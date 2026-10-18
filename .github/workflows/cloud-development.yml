@@ -1,4 +1,4 @@
-name: Approved PR5861 Index-only Release
+name: Approved PR5861 Source Provenance
 on:
   workflow_dispatch:
 permissions: {}
@@ -6,51 +6,27 @@ concurrency:
   group: deploy-prod
   cancel-in-progress: false
 jobs:
-  release:
+  preserve-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 6
     environment:
       name: production
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        with:
-          node-version: '22'
-      - name: Install isolated verification dependencies
+      - name: Install isolated Hosting API client
         run: |
-          python -m venv "$RUNNER_TEMP/hosting-release"
-          "$RUNNER_TEMP/hosting-release/bin/pip" -q install google-auth==2.40.3 requests==2.32.4
-          npm install --prefix "$RUNNER_TEMP/transfer-browser" --no-audit --no-fund playwright@1.56.1
-          "$RUNNER_TEMP/transfer-browser/node_modules/.bin/playwright" install --with-deps chromium
-          node --check scripts/hosting-transfer/public-release.cjs
-          python -m py_compile scripts/hosting-transfer/index-release.py
-          "$RUNNER_TEMP/hosting-release/bin/python" scripts/hosting-transfer/test-index-release.py
-      - name: Capture current live version and proposed one-tag delta
+          python -m venv "$RUNNER_TEMP/hosting-metadata"
+          "$RUNNER_TEMP/hosting-metadata/bin/pip" -q install google-auth==2.40.3 requests==2.32.4
+          "$RUNNER_TEMP/hosting-metadata/bin/python" scripts/hosting-transfer/test-index-release.py
+      - name: Preserve approved HTML source reference and verify immutable asset map
         env:
           FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-        run: '"$RUNNER_TEMP/hosting-release/bin/python" scripts/hosting-transfer/index-release.py preflight'
-      - name: Measure current production before release
-        env:
-          NODE_PATH: ${{ runner.temp }}/transfer-browser/node_modules
-          PHASE: before
-        run: node scripts/hosting-transfer/public-release.cjs
-      - name: Publish only approved HTML delta while preserving all other files
-        env:
-          FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-          APPROVED_MERGE_SHA: 5ccd574471baf7aafd8f380b48396b376b426419
-        run: '"$RUNNER_TEMP/hosting-release/bin/python" scripts/hosting-transfer/index-release.py deploy'
-      - name: Verify production transfer and Japanese rendering after release
-        env:
-          NODE_PATH: ${{ runner.temp }}/transfer-browser/node_modules
-          PHASE: after
-        run: node scripts/hosting-transfer/public-release.cjs
+        run: '"$RUNNER_TEMP/hosting-metadata/bin/python" scripts/hosting-transfer/source-provenance.py'
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
-          name: production-transfer
-          path: |
-            production-transfer/*.json
-            production-transfer/*.png
+          name: production-transfer-metadata
+          path: production-transfer/metadata-release.json
           retention-days: 7
