@@ -24,21 +24,21 @@ async function load(){await page.goto(origin+'/echo-pump',{waitUntil:'domcontent
 async function shot(name,retain,delay=2500){if(retain){await page.screenshot({path:out+'/'+name+'.png'});await hold(delay);}}
 async function run(retain){
  await click('ゲーム開始');await click('スキップして開始');
- const route=['B 整備','A 搬入','中央廊下へ','工具庫へ','ヒューズを回収','中央廊下へ','ポンプ室へ','ヒューズで修理','中央廊下へ','管理室へ','B 整備','C 排水','1ターン待つ','1ターン待つ','中央廊下へ','ポンプ室へ','隔壁を閉じる','排水ポンプを起動','中央廊下へ','管理室へ','出口へ'];
- for(const label of route){
-  const action=page.getByRole(/^[ABC] /.test(label)?'checkbox':'button',{name:label,exact:true});
-  if(['ヒューズで修理','隔壁を閉じる','排水ポンプを起動'].includes(label)){
-   await page.mouse.move(700,500);await page.mouse.wheel(0,30000);await hold(350);
-  }
-  await action.click({timeout:15000});mark(label);
-  if(['ヒューズで修理','隔壁を閉じる','排水ポンプを起動'].includes(label)){
-   await page.mouse.wheel(0,30000);await hold(300);
-   if(retain)await page.screenshot({path:out+'/'+({'ヒューズで修理':'repair','隔壁を閉じる':'seal','排水ポンプを起動':'drain'}[label])+'-transition.png'});
-   await hold(1500);
-   await shot(label==='ヒューズで修理'?'idle':label==='隔壁を閉じる'?'sealed':'live',retain,2500);
-  }else await hold(650);
+ await hold(1800);
+ for(const label of ['B 整備','A 搬入']){
+  await page.getByRole('checkbox',{name:label,exact:true}).click();await hold(500);
  }
- await b('リトライ').waitFor({timeout:15000});mark('escape-confirmed');await shot('escape',retain,2500);
+ for(const [i,label] of ['中央廊下へ','工具庫へ','中央廊下へ','ポンプ室へ','中央廊下へ','管理室へ'].entries()){
+  await b(label).click({timeout:15000});mark(label);
+  await hold(300);
+  if(retain)await page.screenshot({path:out+'/door-'+i+'-opening.png'});
+  await hold(600);
+  if(retain)await page.screenshot({path:out+'/door-'+i+'-closing.png'});
+  await hold(1500);
+  await shot('arrival-'+i,retain,1800);
+ }
+ await b('中央廊下へ').waitFor({state:'visible',timeout:15000});
+ mark('returned-to-control-room');await shot('final-control-room',retain,3000);
 }
 let ready,after;
 try{
@@ -48,10 +48,10 @@ try{
  await click('音をON',1000);await hold(1800);await run(true);await hold(2000);
  after=await version();assert.deepEqual(errors,[]);
 }finally{
- writeFileSync(out+'/evidence.json',JSON.stringify({before,after,ready,events,errors,method:'Actual public repair/seal/drain/escape UI, rehearsed for fonts; clean headed Chromium + dedicated audio sink; no cookies/microphone/state injection'},null,2));
+ writeFileSync(out+'/evidence.json',JSON.stringify({before,after,ready,events,errors,method:'Actual public door opening/blackout/closing/arrival UI, rehearsed for fonts; clean headed Chromium + dedicated audio sink; no cookies/microphone/state injection'},null,2));
  await context.close();await browser.close();audio.stdin.write('q');await stopped;
 }
-const raw=await video.path(),final=out+'/echo-pump-pump-x.mp4';
+const raw=await video.path(),final=out+'/echo-pump-door-x.mp4';
 execFileSync('ffmpeg',['-y','-ss',String(ready),'-i',raw,'-ss',String(ready),'-i',out+'/browser-audio.wav','-map','0:v:0','-map','1:a:0','-shortest','-c:v','libx264','-preset','medium','-b:v','550k','-pix_fmt','yuv420p','-c:a','aac','-b:a','64k','-movflags','+faststart',final],{stdio:'inherit'});
 const probe=JSON.parse(execFileSync('ffprobe',['-v','quiet','-show_format','-show_streams','-of','json',final],{encoding:'utf8'}));
 assert(statSync(final).size<5000000);assert(+probe.format.duration>25&&+probe.format.duration<65);
