@@ -18,7 +18,9 @@
     "test/widgets/echo_pump_motor_art_test.dart",
     "lib/widgets/echo_pump_door_transition.dart",
     "lib/services/echo_pump_motion_stub.dart",
-    "lib/services/echo_pump_motion_web.dart"
+    "lib/services/echo_pump_motion_web.dart",
+    "lib/widgets/echo_pump_keyboard.dart",
+    "test/widgets/echo_pump_keyboard_test.dart"
   ],
   [
     "dart",
@@ -36,7 +38,9 @@
     "test/widgets/echo_pump_motor_art_test.dart",
     "lib/widgets/echo_pump_door_transition.dart",
     "lib/services/echo_pump_motion_stub.dart",
-    "lib/services/echo_pump_motion_web.dart"
+    "lib/services/echo_pump_motion_web.dart",
+    "lib/widgets/echo_pump_keyboard.dart",
+    "test/widgets/echo_pump_keyboard_test.dart"
   ],
   [
     "flutter",
@@ -45,7 +49,8 @@
     "test/models/echo_pump_room_walk_test.dart",
     "test/widgets/echo_pump_room_stage_test.dart",
     "test/widgets/echo_pump_inventory_test.dart",
-    "test/widgets/echo_pump_motor_art_test.dart"
+    "test/widgets/echo_pump_motor_art_test.dart",
+    "test/widgets/echo_pump_keyboard_test.dart"
   ],
   [
     "python3",

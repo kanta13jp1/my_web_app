@@ -44,7 +44,7 @@ async def main():
    after=await call('browser_snapshot',{})
    (OUT/'before-key.txt').write_text(before,encoding='utf8')
    (OUT/'after-key.txt').write_text(after,encoding='utf8')
-   await call('browser_take_screenshot',{'filename':'baseline-desktop.png','fullPage':True})
+   await call('browser_take_screenshot',{'filename':str((OUT/'baseline-desktop.png').resolve()),'fullPage':True})
    await call('browser_console_messages',{'level':'error'})
    await call('browser_close',{})
    evidence['completed']=True
