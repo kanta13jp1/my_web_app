@@ -37,9 +37,9 @@ void main() {
       const channel = MethodChannel('posthog_flutter');
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (call) async {
-            calls++;
-            return null;
-          });
+        calls++;
+        return null;
+      });
       addTearDown(() {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockMethodCallHandler(channel, null);
