@@ -44,6 +44,10 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
       await tester.pumpAndSettle();
       expect(find.text('ターン 2'), findsOneWidget);
+      // Redirect the enemy away from the hall before testing a successful move.
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.pumpAndSettle();
+      expect(find.text('ターン 3'), findsOneWidget);
       final move = tester
           .widget<OutlinedButton>(find.byKey(const Key('echo-move-hall')))
           .onPressed!;
@@ -59,15 +63,15 @@ void main() {
       expect(find.byKey(const Key('echo-door-transition')), findsOneWidget);
       await tester.tap(find.byKey(const Key('echo-door-skip')));
       await tester.pumpAndSettle();
-      expect(find.text('ターン 3'), findsOneWidget);
+      expect(find.text('ターン 4'), findsOneWidget);
       await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
       await tester.pump();
-      expect(find.text('ターン 3'), findsOneWidget);
+      expect(find.text('ターン 4'), findsOneWidget);
       tester.widget<SwitchListTile>(toggle).onChanged!(false);
       await tester.pump();
       await tester.sendKeyEvent(LogicalKeyboardKey.keyW);
       await tester.pump();
-      expect(find.text('ターン 3'), findsOneWidget);
+      expect(find.text('ターン 4'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
