@@ -1,4 +1,4 @@
-name: Approved PR5852 Web Release
+name: Approved PR5856 Web Release
 
 on:
   pull_request:
@@ -46,7 +46,7 @@ on:
   workflow_dispatch:
     inputs:
       approved_release:
-        description: Explicit owner approved PR5852-only release
+        description: Explicit owner approved PR5856-only release
         required: true
         default: false
         type: boolean
