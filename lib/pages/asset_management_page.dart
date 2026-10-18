@@ -18017,12 +18017,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final recorded = _calendarReflectionOwner == _supabase.auth.currentUser?.id
         ? _calendarReflections
         : <AssetCalendarReflection>[];
-    final linked =
-        recorded.map((e) => e.linkedFlowId).whereType<String>().toSet();
-    final reflections = [
-      ...recorded,
-      ..._calendarFlowReflections.where((e) => !linked.contains(e.linkedFlowId))
-    ]
+    final reflections = AssetCalendarReflection.mergeSources(
+      recorded,
+      _calendarFlowReflections,
+    )
         .where((e) =>
             e.date.year == day.date.year &&
             e.date.month == day.date.month &&
