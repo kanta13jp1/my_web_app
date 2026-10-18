@@ -14,16 +14,21 @@ void main() {
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
         var completions = 0;
-        await tester.pumpWidget(MaterialApp(
+        await tester.pumpWidget(
+          MaterialApp(
             home: MediaQuery(
-          data: MediaQueryData(
-              disableAnimations: mode == 'reduce',
-              textScaler: const TextScaler.linear(2),),
-          child: EchoPumpDoorTransition(
-              from: PumpRoom.control,
-              to: PumpRoom.hall,
-              onFinished: () => completions++,),
-        ),),);
+              data: MediaQueryData(
+                disableAnimations: mode == 'reduce',
+                textScaler: const TextScaler.linear(2),
+              ),
+              child: EchoPumpDoorTransition(
+                from: PumpRoom.control,
+                to: PumpRoom.hall,
+                onFinished: () => completions++,
+              ),
+            ),
+          ),
+        );
         if (mode == 'complete') {
           await tester.pump(const Duration(milliseconds: 400));
           expect(completions, 0);
@@ -54,10 +59,11 @@ void main() {
       await tester.tap(find.byKey(const Key('echo-intro-skip')));
       await tester.pumpAndSettle();
       expect(
-          tester
-              .widget<OutlinedButton>(find.byKey(const Key('echo-move-exit')))
-              .onPressed,
-          isNull,);
+        tester
+            .widget<OutlinedButton>(find.byKey(const Key('echo-move-exit')))
+            .onPressed,
+        isNull,
+      );
       final move = tester
           .widget<OutlinedButton>(find.byKey(const Key('echo-move-hall')))
           .onPressed!;

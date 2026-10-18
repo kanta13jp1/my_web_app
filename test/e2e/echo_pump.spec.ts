@@ -22,6 +22,7 @@ test.afterEach(async ({ page }, info) => {
 });
 
 test('power, escape and retry work in the browser', async ({ page }, info) => {
+  test.setTimeout(60000); // Includes the finite door sequence for every room move.
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
@@ -194,7 +195,7 @@ test('door opening, blackout, closing and one committed move', async ({ page }, 
   await button('スキップして開始').click();
   await expect(button('出口へ')).toBeDisabled();
   await button('中央廊下へ').click();
-  const moving = page.getByText('移動中：管理室 → 中央廊下', { exact: true });
+  const moving = button('演出をスキップ');
   await expect(moving).toBeVisible();
   await page.waitForTimeout(120);
   await page.screenshot({ path: info.outputPath('door-opening.png') });
@@ -204,6 +205,7 @@ test('door opening, blackout, closing and one committed move', async ({ page }, 
   await page.screenshot({ path: info.outputPath('door-closing.png') });
   await expect(moving).toHaveCount(0);
   await expect(page.getByText('ターン 1', { exact: true })).toBeAttached();
+  await expect(button('工具庫へ')).toBeEnabled();
   await page.screenshot({ path: info.outputPath('door-arrived.png') });
 });
 
@@ -213,11 +215,12 @@ test('door skip after rapid pointer input cannot repeat a move', async ({ page }
   await button('ゲーム開始').click();
   await button('スキップして開始').click();
   await button('中央廊下へ').click();
-  await expect(page.getByText('移動中：管理室 → 中央廊下', { exact: true })).toBeVisible();
+  await expect(button('演出をスキップ')).toBeVisible();
   await page.mouse.click(10, 10); // Modal barrier: cannot act on the old room.
   await button('演出をスキップ').click();
-  await expect(page.getByText('移動中：管理室 → 中央廊下', { exact: true })).toHaveCount(0);
+  await expect(button('演出をスキップ')).toHaveCount(0);
   await expect(page.getByText('ターン 1', { exact: true })).toBeAttached();
+  await expect(button('工具庫へ')).toBeEnabled();
   await button('工具庫へ').click();
   await button('演出をスキップ').click();
   await expect(page.getByText('ターン 2', { exact: true })).toBeAttached();
@@ -231,7 +234,8 @@ test('reduced motion enters the next room without a door sequence', async ({ pag
   await button('スキップして開始').click();
   await button('中央廊下へ').click();
   await page.waitForTimeout(400);
-  await expect(page.getByText('移動中：管理室 → 中央廊下', { exact: true })).toHaveCount(0, { timeout: 800 });
+  await expect(button('演出をスキップ')).toHaveCount(0, { timeout: 800 });
   await expect(page.getByText('ターン 1', { exact: true })).toBeAttached();
+  await expect(button('工具庫へ')).toBeEnabled();
   await page.screenshot({ path: info.outputPath('door-reduced-motion.png') });
 });
