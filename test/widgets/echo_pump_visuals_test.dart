@@ -6,7 +6,9 @@ import 'package:my_web_app/widgets/echo_pump_machinery.dart';
 
 void main() {
   for (final width in [320.0, 1120.0]) {
-    testWidgets('machinery transitions settle at $width, including reduced motion', (tester) async {
+    testWidgets(
+        'machinery transitions settle at $width, including reduced motion',
+        (tester) async {
       tester.view.physicalSize = Size(width, 1000);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -16,19 +18,29 @@ void main() {
       Future<void> show(bool complete, {bool reduced = false}) async {
         await tester.pumpWidget(MaterialApp(
           home: MediaQuery(
-            data: MediaQueryData(disableAnimations: reduced, textScaler: const TextScaler.linear(2)),
-            child: Scaffold(body: SingleChildScrollView(child: EchoPumpMachinery(
-              repaired: complete, sealed: complete, drained: complete, powered: complete,
-            ))),
+            data: MediaQueryData(
+                disableAnimations: reduced,
+                textScaler: const TextScaler.linear(2),),
+            child: Scaffold(
+                body: SingleChildScrollView(
+                    child: EchoPumpMachinery(
+              repaired: complete,
+              sealed: complete,
+              drained: complete,
+              powered: complete,
+            ),),),
           ),
-        ));
+        ),);
       }
+
       await show(false);
-      expect(find.bySemanticsLabel('設備断面：ヒューズ未装着、隔壁開放、水位高・冠水中、C系統停止'), findsOneWidget);
+      expect(find.bySemanticsLabel('設備断面：ヒューズ未装着、隔壁開放、水位高・冠水中、C系統停止'),
+          findsOneWidget,);
       await show(true);
       await tester.pump(const Duration(milliseconds: 450));
       expect(tester.hasRunningAnimations, isTrue);
-      expect(find.bySemanticsLabel('設備断面：ヒューズ装着済み、隔壁閉鎖、水位低下・排水完了、C系統通電'), findsOneWidget);
+      expect(find.bySemanticsLabel('設備断面：ヒューズ装着済み、隔壁閉鎖、水位低下・排水完了、C系統通電'),
+          findsOneWidget,);
       await tester.pumpAndSettle();
       expect(tester.hasRunningAnimations, isFalse);
       expect(tester.takeException(), isNull);
