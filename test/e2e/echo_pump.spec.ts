@@ -57,6 +57,18 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
     'ポンプ室へ', '隔壁を閉じる', '排水ポンプを起動', '中央廊下へ', '管理室へ', '出口へ',
   ]) {
     await click(label);
+    if (['ヒューズで修理', '隔壁を閉じる', '排水ポンプを起動'].includes(label)) {
+      const state = label === 'ヒューズで修理' ? /設備断面：ヒューズ装着済み、隔壁開放、水位高/
+        : label === '隔壁を閉じる' ? /設備断面：ヒューズ装着済み、隔壁閉鎖、水位高/
+        : /設備断面：ヒューズ装着済み、隔壁閉鎖、水位低下・排水完了/;
+      await expect(page.getByRole('img', { name: state })).toBeAttached();
+      // Scroll the Flutter canvas itself so the equipment is painted on screen.
+      const view = page.viewportSize()!;
+      await page.mouse.move(view.width / 2, view.height / 2);
+      await page.mouse.wheel(0, 30000);
+      await page.waitForTimeout(1300);
+      await page.screenshot({ path: info.outputPath(`machinery-${label}.png`) });
+    }
     if (label === '隔壁を閉じる') {
       await page.mouse.move(100, 200);
       await page.mouse.wheel(0, -30000);
