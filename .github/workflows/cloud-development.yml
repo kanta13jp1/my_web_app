@@ -1457,3 +1457,33 @@ jobs:
   # -----------------------------------------------------------------
   # 通知ジョブ
   # -----------------------------------------------------------------
+
+
+  public-check:
+    name: Verify published pump game
+    needs: deploy
+    if: needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+      - run: node --check scripts/echo_pump_release/public_pump.mjs
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Verify desktop, mobile, missing images and retry on public game
+        env:
+          EXPECTED_PRODUCTION_SHA: ${{ github.sha }}
+        run: node scripts/echo_pump_release/public_pump.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: echo-pump-public-${{ github.run_id }}
+          path: echo-pump-public/
+          retention-days: 14
