@@ -2,6 +2,7 @@
 import asyncio
 import json
 import os
+import shutil
 import subprocess
 import time
 from datetime import datetime, timezone
@@ -59,8 +60,17 @@ async def main():
                 # Discover schema first; follow-up uses exact paths and test contracts.
                 if 'analyze_files' in tools:
                     await call('analyze_files', {'roots':[{'root':ROOT.as_uri(),'paths':['lib/pages/echo_pump_game_page.dart','lib/widgets/echo_pump_title_screen.dart']}]})
-                if 'run_tests' in tools:
-                    await call('run_tests', {'roots':[{'root':ROOT.as_uri(),'paths':['test/widgets/echo_pump_title_screen_test.dart','test/pages/echo_pump_restart_test.dart']}]})
-                save('summary.json', {'tools':len(tools),'calls':len(calls),'errors':sum(bool(c['result'].get('isError')) for c in calls),'sha':os.environ.get('GITHUB_SHA')})
+                if 'resolve_workspace_symbol' in tools:
+                    await call('resolve_workspace_symbol', {'query':'EchoPumpGame'})
+                tests = await call('run_tests', {'roots':[{'root':ROOT.as_uri(),'paths':['test/widgets/echo_pump_title_screen_test.dart','test/pages/echo_pump_restart_test.dart']}], 'testRunnerArgs':{'concurrency':'1','reporter':'expanded'}})
+                output = '\n'.join(getattr(c,'text','') for c in tests.content)
+                passed = 'All tests passed!' in output and 'Some tests failed.' not in output
+                stage = os.environ.get('DART_MCP_STAGE', 'baseline')
+                save('summary.json', {'stage':stage,'tools':len(tools),'calls':len(calls),'mcpErrors':sum(bool(c['result'].get('isError')) for c in calls),'testsPassed':passed,'sha':os.environ.get('GITHUB_SHA')})
+                if stage == 'baseline':
+                    assert not passed and 'Bad state: No element' not in output
+                    assert output.count('Found 0 widgets with text') == 4, output
+                else:
+                    assert passed, output
 
 asyncio.run(main())
