@@ -261,9 +261,11 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
                                   side -
                                   (_walking && !reduced
                                       ? math
-                                              .sin(_walk.value *
-                                                  _strideCount *
-                                                  math.pi,)
+                                              .sin(
+                                                _walk.value *
+                                                    _strideCount *
+                                                    math.pi,
+                                              )
                                               .abs() *
                                           2
                                       : 0),
