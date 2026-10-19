@@ -102,8 +102,8 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
 
   Future<void> _approach(EchoRoomTarget target) async {
     if (_walking || !_foreground || !_routeActive) return;
-    final reduced = MediaQuery.disableAnimationsOf(context) ||
-        motion.prefersReducedMotion;
+    final reduced =
+        MediaQuery.disableAnimationsOf(context) || motion.prefersReducedMotion;
     _route = EchoPumpRoomWalk.route(_position, target);
     _steps = 0;
     final distance = EchoPumpRoomWalk.length(_route);
@@ -114,7 +114,9 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
             milliseconds: (distance * 1800).round().clamp(700, 1600).toInt(),
           );
     _strideCount = ((_walk.duration?.inMilliseconds ?? 700) / 400)
-        .ceil().clamp(2, 4).toInt();
+        .ceil()
+        .clamp(2, 4)
+        .toInt();
     setState(() => _walking = true);
     try {
       await _walk.forward(from: 0).orCancel;
@@ -175,8 +177,8 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
 
   @override
   Widget build(BuildContext context) {
-    final reduced = MediaQuery.disableAnimationsOf(context) ||
-        motion.prefersReducedMotion;
+    final reduced =
+        MediaQuery.disableAnimationsOf(context) || motion.prefersReducedMotion;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -255,9 +257,15 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
                             Positioned(
                               key: const Key('echo-room-actor'),
                               left: _position.x * bounds.maxWidth - side / 2,
-                              top: _position.y * 240 - side -
+                              top: _position.y * 240 -
+                                  side -
                                   (_walking && !reduced
-                                      ? math.sin(_walk.value * _strideCount * math.pi).abs() * 2
+                                      ? math
+                                              .sin(_walk.value *
+                                                  _strideCount *
+                                                  math.pi)
+                                              .abs() *
+                                          2
                                       : 0),
                               child: Transform(
                                 alignment: Alignment.center,
@@ -269,7 +277,8 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
                                 child: _walking && _walkArtReady
                                     ? _WalkingSprite(
                                         frame: (_walk.value * _strideCount * 2)
-                                            .floor() % 4,
+                                                .floor() %
+                                            4,
                                         side: side,
                                       )
                                     : Image.asset(

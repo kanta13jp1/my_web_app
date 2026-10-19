@@ -7,11 +7,16 @@ import 'package:my_web_app/widgets/echo_pump_machinery.dart';
 
 void main() {
   for (final skip in [false, true]) {
-    testWidgets('door audio phase callbacks finish once, skip=$skip', (tester) async {
+    testWidgets('door audio phase callbacks finish once, skip=$skip',
+        (tester) async {
       var opened = 0, closed = 0, finished = 0;
-      await tester.pumpWidget(MaterialApp(home: EchoPumpDoorTransition(
-        from: PumpRoom.control, to: PumpRoom.hall,
-        onOpen: () => opened++, onClose: () => closed++, onFinished: () => finished++,
+      await tester.pumpWidget(MaterialApp(
+          home: EchoPumpDoorTransition(
+        from: PumpRoom.control,
+        to: PumpRoom.hall,
+        onOpen: () => opened++,
+        onClose: () => closed++,
+        onFinished: () => finished++,
       )));
       await tester.pump(const Duration(milliseconds: 200));
       expect(opened, 1);
@@ -27,12 +32,18 @@ void main() {
   }
 
   for (final room in PumpRoom.values) {
-    testWidgets('room backdrop describes ${room.name} without image assets', (tester) async {
+    testWidgets('room backdrop describes ${room.name} without image assets',
+        (tester) async {
       final semantics = tester.ensureSemantics();
-      await tester.pumpWidget(MaterialApp(home: SizedBox(width: 390, height: 240,
+      await tester.pumpWidget(MaterialApp(
+          home: SizedBox(
+        width: 390,
+        height: 240,
         child: EchoPumpRoomBackdrop(room: room),
       )));
-      expect(find.bySemanticsLabel('部屋の背景：${EchoPumpRoomBackdrop.features[room]}'), findsOneWidget);
+      expect(
+          find.bySemanticsLabel('部屋の背景：${EchoPumpRoomBackdrop.features[room]}'),
+          findsOneWidget);
       expect(find.byType(Image), findsNothing);
       expect(tester.takeException(), isNull);
       semantics.dispose();

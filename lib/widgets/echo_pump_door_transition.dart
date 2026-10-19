@@ -42,7 +42,8 @@ class _DoorTransitionState extends State<EchoPumpDoorTransition>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1600),
-    )..addListener(() {
+    )
+      ..addListener(() {
         if (!_finished && !_closeSent && _controller.value >= .58) {
           _closeSent = true;
           widget.onClose?.call();

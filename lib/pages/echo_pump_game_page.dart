@@ -119,6 +119,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
     } finally {
       await _audio.suspendEffects();
       _audio.resumeEffects();
+      if (mounted) _audio.cue(EchoPumpCue.step);
       if (mounted) setState(() => _moving = false);
     }
   }

@@ -30,7 +30,8 @@ class EchoPumpScene extends StatelessWidget {
         child: Stack(
           children: [
             Positioned.fill(
-              child: EchoPumpRoomBackdrop(room: game.room, drained: game.drained),
+              child:
+                  EchoPumpRoomBackdrop(room: game.room, drained: game.drained),
             ),
             const Positioned.fill(
               child: DecoratedBox(
@@ -374,7 +375,8 @@ class _PassagesPainter extends CustomPainter {
 
 /// Original vector scenery remains available without downloading room images.
 class EchoPumpRoomBackdrop extends StatelessWidget {
-  const EchoPumpRoomBackdrop({super.key, required this.room, this.drained = false});
+  const EchoPumpRoomBackdrop(
+      {super.key, required this.room, this.drained = false});
   final PumpRoom room;
   final bool drained;
 
@@ -417,14 +419,20 @@ class _RoomBackdropPainter extends CustomPainter {
       PumpRoom.inspection => const Color(0xFF284A3E),
       PumpRoom.exit => const Color(0xFF746746),
     };
-    canvas.drawRect(bounds, Paint()..shader = LinearGradient(
-      begin: Alignment.topCenter, end: Alignment.bottomCenter,
-      colors: [tint, const Color(0xFF071116)],
-    ).createShader(bounds));
+    canvas.drawRect(
+        bounds,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [tint, const Color(0xFF071116)],
+          ).createShader(bounds));
     final metal = Paint()..color = const Color(0xFF567578);
     final dark = Paint()..color = const Color(0xFF101F25);
     final light = Paint()..color = const Color(0xFF91C7B5);
-    final line = Paint()..color = const Color(0xFF65848A)..strokeWidth = 1;
+    final line = Paint()
+      ..color = const Color(0xFF65848A)
+      ..strokeWidth = 1;
     for (var x = -160.0; x < 600; x += 55) {
       canvas.drawLine(Offset(160, 85), Offset(x, 180), line);
     }
@@ -444,23 +452,41 @@ class _RoomBackdropPainter extends CustomPainter {
       case PumpRoom.hall:
         for (var i = 0; i < 5; i++) {
           final inset = i * 22.0;
-          canvas.drawRect(Rect.fromLTRB(inset, inset * .45, 320 - inset, 150 - inset * .3),
-            Paint()..color = const Color(0xFF567578)..style = PaintingStyle.stroke..strokeWidth = 3);
+          canvas.drawRect(
+              Rect.fromLTRB(inset, inset * .45, 320 - inset, 150 - inset * .3),
+              Paint()
+                ..color = const Color(0xFF567578)
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 3);
         }
         canvas.drawRect(const Rect.fromLTWH(143, 49, 35, 61), dark);
         canvas.drawCircle(const Offset(172, 83), 2, light);
       case PumpRoom.loading:
-        for (final (x, y, w, h) in [(170.0, 62.0, 55.0, 52.0), (226.0, 81.0, 62.0, 48.0), (184.0, 25.0, 42.0, 37.0)]) {
+        for (final (x, y, w, h) in [
+          (170.0, 62.0, 55.0, 52.0),
+          (226.0, 81.0, 62.0, 48.0),
+          (184.0, 25.0, 42.0, 37.0)
+        ]) {
           final box = Rect.fromLTWH(x, y, w, h);
           canvas.drawRect(box, Paint()..color = const Color(0xFF927A52));
-          canvas.drawRect(box.deflate(4), Paint()..color = const Color(0xFF493D2E)..style = PaintingStyle.stroke..strokeWidth = 3);
+          canvas.drawRect(
+              box.deflate(4),
+              Paint()
+                ..color = const Color(0xFF493D2E)
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 3);
           canvas.drawLine(box.topLeft, box.bottomRight, line);
           canvas.drawLine(box.topRight, box.bottomLeft, line);
         }
       case PumpRoom.workshop:
         canvas.drawRect(const Rect.fromLTWH(155, 18, 150, 73), metal);
         for (var x = 165.0; x < 300; x += 22) {
-          canvas.drawLine(Offset(x, 33), Offset(x, 77), Paint()..color = const Color(0xFFD0C5A0)..strokeWidth = 4);
+          canvas.drawLine(
+              Offset(x, 33),
+              Offset(x, 77),
+              Paint()
+                ..color = const Color(0xFFD0C5A0)
+                ..strokeWidth = 4);
           canvas.drawCircle(Offset(x, 32), 6, dark);
         }
         canvas.drawRect(const Rect.fromLTWH(149, 95, 160, 8), metal);
@@ -468,7 +494,10 @@ class _RoomBackdropPainter extends CustomPainter {
         canvas.drawRect(const Rect.fromLTWH(291, 103, 7, 34), metal);
       case PumpRoom.pump:
         for (var x = 166.0; x < 310; x += 64) {
-          canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x, 0, 35, 139), const Radius.circular(12)), metal);
+          canvas.drawRRect(
+              RRect.fromRectAndRadius(
+                  Rect.fromLTWH(x, 0, 35, 139), const Radius.circular(12)),
+              metal);
           for (var y = 18.0; y < 140; y += 32) {
             canvas.drawRect(Rect.fromLTWH(x - 6, y, 47, 7), dark);
           }
@@ -476,7 +505,9 @@ class _RoomBackdropPainter extends CustomPainter {
         canvas.drawOval(const Rect.fromLTWH(201, 103, 77, 40), dark);
       case PumpRoom.inspection:
         canvas.drawRect(const Rect.fromLTWH(160, 30, 137, 129), dark);
-        canvas.drawRect(Rect.fromLTWH(164, drained ? 137 : 81, 129, drained ? 17 : 77), Paint()..color = const Color(0xFF34666B));
+        canvas.drawRect(
+            Rect.fromLTWH(164, drained ? 137 : 81, 129, drained ? 17 : 77),
+            Paint()..color = const Color(0xFF34666B));
         for (var y = 35.0; y < 160; y += 14) {
           canvas.drawLine(Offset(156, y), Offset(300, y), line);
         }
@@ -485,10 +516,14 @@ class _RoomBackdropPainter extends CustomPainter {
         }
       case PumpRoom.exit:
         canvas.drawRect(const Rect.fromLTWH(158, 18, 123, 132), metal);
-        canvas.drawRect(const Rect.fromLTWH(164, 24, 111, 126), Paint()..shader = const LinearGradient(
-          begin: Alignment.topCenter, end: Alignment.bottomCenter,
-          colors: [Color(0xFFBDD8DB), Color(0xFFB9A36D)],
-        ).createShader(bounds));
+        canvas.drawRect(
+            const Rect.fromLTWH(164, 24, 111, 126),
+            Paint()
+              ..shader = const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFBDD8DB), Color(0xFFB9A36D)],
+              ).createShader(bounds));
         for (var x = 170.0; x < 275; x += 12) {
           canvas.drawLine(Offset(x, 27), Offset(x - 7, 110), line);
         }

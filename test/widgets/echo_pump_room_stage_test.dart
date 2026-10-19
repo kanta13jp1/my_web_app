@@ -160,7 +160,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('long walk repeats the gait and stops all footfalls at the door', (tester) async {
+  testWidgets('long walk repeats the gait and stops all footfalls at the door',
+      (tester) async {
     var steps = 0;
     await show(tester, step: () => steps++);
     await tester.tap(find.text('中央廊下の扉を調べる'));
