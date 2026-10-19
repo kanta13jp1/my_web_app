@@ -112,9 +112,13 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
           from: from,
           to: destination,
           onFinished: () => Navigator.of(dialogContext).pop(),
+          onOpen: () => _audio.cue(EchoPumpCue.doorOpen),
+          onClose: () => _audio.cue(EchoPumpCue.doorClose),
         ),
       );
     } finally {
+      await _audio.suspendEffects();
+      _audio.resumeEffects();
       if (mounted) setState(() => _moving = false);
     }
   }

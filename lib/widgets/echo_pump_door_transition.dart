@@ -15,11 +15,15 @@ class EchoPumpDoorTransition extends StatefulWidget {
     required this.from,
     required this.to,
     required this.onFinished,
+    this.onOpen,
+    this.onClose,
   });
 
   final PumpRoom from;
   final PumpRoom to;
   final VoidCallback onFinished;
+  final VoidCallback? onOpen;
+  final VoidCallback? onClose;
 
   @override
   State<EchoPumpDoorTransition> createState() => _DoorTransitionState();
@@ -30,6 +34,7 @@ class _DoorTransitionState extends State<EchoPumpDoorTransition>
   late final AnimationController _controller;
   bool _started = false;
   bool _finished = false;
+  bool _closeSent = false;
 
   @override
   void initState() {
@@ -37,7 +42,13 @@ class _DoorTransitionState extends State<EchoPumpDoorTransition>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1600),
-    )..addStatusListener((status) {
+    )..addListener(() {
+        if (!_finished && !_closeSent && _controller.value >= .58) {
+          _closeSent = true;
+          widget.onClose?.call();
+        }
+      })
+      ..addStatusListener((status) {
         if (status == AnimationStatus.completed) _finish();
       });
   }
@@ -53,6 +64,7 @@ class _DoorTransitionState extends State<EchoPumpDoorTransition>
         if (mounted) _finish();
       });
     } else {
+      widget.onOpen?.call();
       _controller.forward();
     }
   }
