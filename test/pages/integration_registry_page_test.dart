@@ -10,6 +10,7 @@ import 'package:my_web_app/services/integration_registry_service.dart';
 
 class _FakeIntegrationRegistryService
     implements IntegrationRegistryServiceContract {
+  Future<void>? saveWait;
   int savedSystems = 0;
   int publishedInterfaces = 0;
   int importedMappings = 0;
@@ -128,6 +129,8 @@ class _FakeIntegrationRegistryService
     IntegrationSystemDraft draft,
   ) async {
     savedSystems++;
+    final wait = saveWait;
+    if (wait != null) await wait;
     return IntegrationSystemDefinition(
       id: 'new-system',
       systemKey: draft.systemKey,
@@ -142,6 +145,8 @@ class _FakeIntegrationRegistryService
     IntegrationInterfaceDraft draft,
   ) async {
     publishedInterfaces++;
+    final wait = saveWait;
+    if (wait != null) await wait;
     return IntegrationInterfaceDefinition(
       id: 'new-interface',
       interfaceKey: draft.interfaceKey,
@@ -161,6 +166,8 @@ class _FakeIntegrationRegistryService
     IntegrationMappingImportDraft draft,
   ) async {
     importedMappings++;
+    final wait = saveWait;
+    if (wait != null) await wait;
     lastImportedMapping = draft;
     return IntegrationCodeMappingSet(
       id: 'new-mapping',
@@ -215,6 +222,70 @@ Future<void> _tapTab(WidgetTester tester, String label) async {
 }
 
 void main() {
+  for (final kind in <String>['system', 'interface', 'mapping']) {
+    testWidgets('blocks duplicate $kind save and ignores disposed error', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1100, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      final service = _FakeIntegrationRegistryService();
+      final pending = Completer<void>();
+      service.saveWait = pending.future;
+      await _pumpPage(tester, service);
+      if (kind != 'system') {
+        await _tapTab(
+          tester,
+          kind == 'interface' ? 'Interfaces' : 'Code mappings',
+        );
+      }
+      final openKey = switch (kind) {
+        'system' => 'add-system-button',
+        'interface' => 'publish-interface-button',
+        _ => 'import-mapping-button',
+      };
+      final saveKey = switch (kind) {
+        'system' => 'save-system-dialog-button',
+        'interface' => 'publish-interface-dialog-button',
+        _ => 'import-mapping-dialog-button',
+      };
+      await tester.tap(find.byKey(Key(openKey)));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(Key('$kind-name-field')),
+        'Pending save',
+      );
+      final save = find.byKey(Key(saveKey));
+      await tester.ensureVisible(save);
+      await tester.tap(save);
+      await tester.pump();
+      await tester.tap(save);
+      await tester.pump();
+      expect(
+        service.savedSystems +
+            service.publishedInterfaces +
+            service.importedMappings,
+        1,
+      );
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+      pending.completeError(StateError('save failed after disposal'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(
+        service.savedSystems +
+            service.publishedInterfaces +
+            service.importedMappings,
+        1,
+      );
+    });
+  }
+
   testWidgets('ignores CSV picker result after dialog cancellation', (
     tester,
   ) async {

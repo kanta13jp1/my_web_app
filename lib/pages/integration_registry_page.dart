@@ -58,6 +58,7 @@ class _IntegrationRegistryPageState extends State<IntegrationRegistryPage> {
   }
 
   Future<void> _reload() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -79,6 +80,7 @@ class _IntegrationRegistryPageState extends State<IntegrationRegistryPage> {
   }
 
   void _message(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
@@ -107,6 +109,7 @@ Content-Type: application/json
   Future<void> _showSystemDialog([
     IntegrationSystemDefinition? existing,
   ]) async {
+    var submitting = false;
     final name = TextEditingController(text: existing?.name ?? '');
     final key = TextEditingController(text: existing?.systemKey ?? '');
     final owner = TextEditingController(text: existing?.owner ?? '');
@@ -180,10 +183,12 @@ Content-Type: application/json
             FilledButton.icon(
               key: const Key('save-system-dialog-button'),
               onPressed: () async {
+                if (submitting) return;
                 if (name.text.trim().isEmpty) {
                   _message('System name is required.');
                   return;
                 }
+                submitting = true;
                 try {
                   await _service.saveSystem(
                     IntegrationSystemDraft(
@@ -198,7 +203,9 @@ Content-Type: application/json
                     Navigator.pop(dialogContext, true);
                   }
                 } catch (error) {
-                  _message(error.toString());
+                  if (dialogContext.mounted) _message(error.toString());
+                } finally {
+                  submitting = false;
                 }
               },
               icon: const Icon(Icons.publish),
@@ -222,6 +229,7 @@ Content-Type: application/json
       _message('Add at least two systems first.');
       return;
     }
+    var submitting = false;
     final name = TextEditingController(text: existing?.name ?? '');
     final key = TextEditingController(text: existing?.interfaceKey ?? '');
     final protocol = TextEditingController(text: existing?.protocol ?? 'REST');
@@ -357,12 +365,14 @@ Content-Type: application/json
             FilledButton.icon(
               key: const Key('publish-interface-dialog-button'),
               onPressed: () async {
+                if (submitting) return;
                 if (name.text.trim().isEmpty || sourceKey == targetKey) {
                   _message(
                     'Name is required and source must differ from target.',
                   );
                   return;
                 }
+                submitting = true;
                 try {
                   await _service.publishInterface(
                     IntegrationInterfaceDraft(
@@ -380,7 +390,9 @@ Content-Type: application/json
                     Navigator.pop(dialogContext, true);
                   }
                 } catch (error) {
-                  _message(error.toString());
+                  if (dialogContext.mounted) _message(error.toString());
+                } finally {
+                  submitting = false;
                 }
               },
               icon: const Icon(Icons.publish),
@@ -435,6 +447,7 @@ Content-Type: application/json
       _message('Add at least two systems first.');
       return;
     }
+    var submitting = false;
     final name = TextEditingController(text: existing?.name ?? '');
     final key = TextEditingController(text: existing?.mappingKey ?? '');
     final description = TextEditingController(
@@ -619,6 +632,7 @@ Content-Type: application/json
             FilledButton.icon(
               key: const Key('import-mapping-dialog-button'),
               onPressed: () async {
+                if (submitting) return;
                 parsePreview(setDialogState);
                 if (name.text.trim().isEmpty ||
                     sourceKey == targetKey ||
@@ -626,6 +640,7 @@ Content-Type: application/json
                   _message('Complete the mapping details and preview the CSV.');
                   return;
                 }
+                submitting = true;
                 try {
                   await _service.importMappings(
                     IntegrationMappingImportDraft(
@@ -641,7 +656,9 @@ Content-Type: application/json
                     Navigator.pop(dialogContext, true);
                   }
                 } catch (error) {
-                  _message(error.toString());
+                  if (dialogContext.mounted) _message(error.toString());
+                } finally {
+                  submitting = false;
                 }
               },
               icon: const Icon(Icons.publish),
