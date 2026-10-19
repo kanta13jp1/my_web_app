@@ -213,10 +213,18 @@ void main() {
     expect(merged.single.kinds, contains(AssetReflectionKind.tobaccoPurchase));
     expect(AssetReflectionSummary(merged).knownAmount, 1380);
   });
-  test('mixed purchase keeps tobacco and excludes unrelated book or negation', () {
+  test('mixed purchase keeps tobacco and excludes unrelated book or negation',
+      () {
     bool tobacco(String description) => AssetCalendarReflection.fromFlows([
-      {'id': '801', 'action_type': 'expense', 'occurred_at': '2026-10-19T01:01:00', 'description': description, 'amount': 620},
-    ]).any((event) => event.kinds.contains(AssetReflectionKind.tobaccoPurchase));
+          {
+            'id': '801',
+            'action_type': 'expense',
+            'occurred_at': '2026-10-19T01:01:00',
+            'description': description,
+            'amount': 620
+          },
+        ]).any((event) =>
+            event.kinds.contains(AssetReflectionKind.tobaccoPurchase));
     expect(tobacco('書籍935円・たばこ購入620円'), isTrue);
     expect(tobacco('酒は未購入。たばこ購入620円'), isTrue);
     expect(tobacco('書籍 たばこの本'), isFalse);

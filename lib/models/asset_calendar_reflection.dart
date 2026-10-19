@@ -1,6 +1,12 @@
 import 'receipt_category_allocation.dart';
 
-enum AssetReflectionKind { dining, drinkingOut, alcoholPurchase, reading, tobaccoPurchase }
+enum AssetReflectionKind {
+  dining,
+  drinkingOut,
+  alcoholPurchase,
+  reading,
+  tobaccoPurchase
+}
 
 extension AssetReflectionKindLabel on AssetReflectionKind {
   String get label => switch (this) {
@@ -143,10 +149,17 @@ class AssetCalendarReflection {
           (dining && RegExp(r'ビール|飲酒|ハイボール').hasMatch(description));
       final purchase = RegExp(r'酒購入|酒の購入|ビール購入|ビールを購入').hasMatch(description);
       final tobacco = description.split(RegExp(r'[。；;\n、・]')).any((part) {
-        final mentions = RegExp(r'たばこ|タバコ|煙草|マールボロ|マルボロ|marlboro', caseSensitive: false).hasMatch(part);
-        final explicitPurchase = RegExp(r'(たばこ|タバコ|煙草)(を)?(購入|買)|たばこ代|マールボロ|マルボロ|marlboro', caseSensitive: false).hasMatch(part);
-        if (!mentions || RegExp(r'未購入|購入なし|買わな|購入しな').hasMatch(part)) return false;
-        if (RegExp(r'書籍|本の購入|の本').hasMatch(part) && !explicitPurchase) return false;
+        final mentions =
+            RegExp(r'たばこ|タバコ|煙草|マールボロ|マルボロ|marlboro', caseSensitive: false)
+                .hasMatch(part);
+        final explicitPurchase = RegExp(
+                r'(たばこ|タバコ|煙草)(を)?(購入|買)|たばこ代|マールボロ|マルボロ|marlboro',
+                caseSensitive: false)
+            .hasMatch(part);
+        if (!mentions || RegExp(r'未購入|購入なし|買わな|購入しな').hasMatch(part))
+          return false;
+        if (RegExp(r'書籍|本の購入|の本').hasMatch(part) && !explicitPurchase)
+          return false;
         return !part.contains('禁煙') || explicitPurchase;
       });
       final kinds = <AssetReflectionKind>{
