@@ -21,8 +21,10 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      await tap('echo-start');
-      await tap('echo-intro-skip');
+      await tester.tap(find.byKey(const Key('echo-start')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('echo-intro-skip')));
+      await tester.pumpAndSettle();
       await tap('echo-power-b');
       await tap('echo-power-a');
       await tap('echo-move-hall');
@@ -85,6 +87,9 @@ void main() {
       await tester.pump();
       await tester.tap(find.byKey(const Key('echo-intro-skip')));
       await tester.pumpAndSettle();
+      tester.widget<OutlinedButton>(find.byKey(const Key('echo-wait')))
+          .onPressed!();
+      await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('最初からやり直す'));
       await tester.pumpAndSettle();
       expect(find.text('最初からやり直しますか？'), findsOneWidget);
@@ -93,7 +98,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(cancel);
       await tester.pumpAndSettle();
-      expect(find.text('ターン 0'), findsOneWidget);
+      expect(find.text('ターン 1'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
