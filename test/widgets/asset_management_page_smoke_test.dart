@@ -186,7 +186,6 @@ void main() {
       tester,
     ) async {
       final semantics = tester.ensureSemantics();
-      addTearDown(semantics.dispose);
       await tester.binding.setSurfaceSize(Size(width, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
@@ -226,6 +225,7 @@ void main() {
       expect(tester.getSize(note).width, lessThanOrEqualTo(width));
       expect(find.text('戦果レポート (日次損益)'), findsNothing);
       expect(tester.takeException(), isNull);
+      semantics.dispose();
       await _unmount(tester);
     });
   }
