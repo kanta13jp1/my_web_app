@@ -60,7 +60,7 @@ async def main():
                 if 'analyze_files' in tools:
                     await call('analyze_files', {'roots':[{'root':ROOT.as_uri(),'paths':['lib/pages/echo_pump_game_page.dart','lib/widgets/echo_pump_title_screen.dart']}]})
                 if 'run_tests' in tools:
-                    await call('run_tests', {'roots':[{'root':ROOT.as_uri(),'paths':['test/widgets/echo_pump_title_screen_test.dart']}]})
+                    await call('run_tests', {'roots':[{'root':ROOT.as_uri(),'paths':['test/widgets/echo_pump_title_screen_test.dart','test/pages/echo_pump_restart_test.dart']}]})
                 save('summary.json', {'tools':len(tools),'calls':len(calls),'errors':sum(bool(c['result'].get('isError')) for c in calls),'sha':os.environ.get('GITHUB_SHA')})
 
 asyncio.run(main())
