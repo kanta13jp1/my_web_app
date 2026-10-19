@@ -98,6 +98,7 @@ import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_salary_reconciliation_service.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
+import 'package:my_web_app/widgets/weekly_habit_card.dart';
 import 'package:my_web_app/models/daily_todo.dart';
 import 'package:my_web_app/services/daily_todo_store.dart';
 import 'package:my_web_app/services/asset_triage_guide_service.dart';
@@ -10324,6 +10325,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildUnifiedEntryBanner(),
                 const SizedBox(height: 16),
               ],
+              WeeklyHabitCard(
+                userId: _supabase.auth.currentUser?.id,
+              ),
+              const SizedBox(height: 12),
               _buildSyncStatusBanner(),
               _buildUnsyncedBadgeRow(),
               _buildAccountShortfallAlertBanner(assetLiabilityWorkbook),
