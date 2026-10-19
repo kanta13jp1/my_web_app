@@ -29,7 +29,8 @@ def main(argv=None):
     manifest.write_text(json.dumps({'index': args.shard_index, 'total': args.total_shards,
                                    'files': files}, indent=2), encoding='utf-8')
     print(f'VM shard {args.shard_index}/{args.total_shards}: {len(files)} test files', flush=True)
-    return subprocess.run(['flutter', 'test', '--coverage', '--concurrency=2', *files],
+    return subprocess.run(['flutter', 'test', '--coverage', '--concurrency=2',
+                           '--file-reporter=json:.ci-logs/vm-events.jsonl', *files],
                           cwd=root, check=False).returncode
 
 
