@@ -34263,96 +34263,103 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // --- グラフ ---
   Widget _buildChartCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return Semantics(
+      key: const ValueKey('asset-chart-card-semantics'),
+      container: true,
+      explicitChildNodes: true,
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _showDailyChange ? '残高差（前回記録比）' : '戦略マップ (資産推移)',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            height: 1.5,
+                          ),
+                        ),
+                        Text(
+                          _showDailyChange
+                              ? '利益・日次収支とは異なります'
+                              : '国力(富)の総量は増えているか？',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF9CA3AF),
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
                     children: [
-                      Text(
-                        _showDailyChange ? '残高差（前回記録比）' : '戦略マップ (資産推移)',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          height: 1.5,
-                        ),
+                      const Icon(Icons.show_chart, size: 16),
+                      Switch(
+                        value: _showDailyChange,
+                        activeThumbColor: const Color(0xFFB91C1C),
+                        onChanged: (value) {
+                          setState(() {
+                            _showDailyChange = value;
+                          });
+                        },
                       ),
-                      Text(
-                        _showDailyChange
-                            ? '利益・日次収支とは異なります'
-                            : '国力(富)の総量は増えているか？',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF9CA3AF),
-                          height: 1.5,
-                        ),
-                      ),
+                      const Icon(Icons.bar_chart, size: 16),
                     ],
                   ),
+                ],
+              ),
+              if (_showDailyChange)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text(
+                    '直前の記録日との資産・負債合計の差です。記録間隔は一定ではありません。'
+                    '口座の追加・残高訂正・評価額の変更も含むため、利益や昨日との差を表しません。',
+                    style: TextStyle(fontSize: 12, height: 1.5),
+                  ),
                 ),
+              if (!_showDailyChange)
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const Icon(Icons.show_chart, size: 16),
+                    const Text('個別',
+                        style: TextStyle(fontSize: 10, height: 1.5)),
                     Switch(
-                      value: _showDailyChange,
-                      activeThumbColor: const Color(0xFFB91C1C),
+                      value: _isStacked,
+                      activeThumbColor: const Color(0xFF0D9488),
                       onChanged: (value) {
                         setState(() {
-                          _showDailyChange = value;
+                          _isStacked = value;
+                          _updateChartData();
                         });
                       },
                     ),
-                    const Icon(Icons.bar_chart, size: 16),
+                    const Text('合計',
+                        style: TextStyle(fontSize: 10, height: 1.5)),
                   ],
                 ),
-              ],
-            ),
-            if (_showDailyChange)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                  '直前の記録日との資産・負債合計の差です。記録間隔は一定ではありません。'
-                  '口座の追加・残高訂正・評価額の変更も含むため、利益や昨日との差を表しません。',
-                  style: TextStyle(fontSize: 12, height: 1.5),
-                ),
+              const SizedBox(height: 24),
+              SizedBox(
+                height: 300,
+                child: _lineChartBars.isEmpty && _barChartGroups.isEmpty
+                    ? const Center(child: Text('戦況データなし。'))
+                    : _showDailyChange
+                        ? _buildDailyChangeChart()
+                        : _buildAssetTrendChart(),
               ),
-            if (!_showDailyChange)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  const Text('個別', style: TextStyle(fontSize: 10, height: 1.5)),
-                  Switch(
-                    value: _isStacked,
-                    activeThumbColor: const Color(0xFF0D9488),
-                    onChanged: (value) {
-                      setState(() {
-                        _isStacked = value;
-                        _updateChartData();
-                      });
-                    },
-                  ),
-                  const Text('合計', style: TextStyle(fontSize: 10, height: 1.5)),
-                ],
-              ),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 300,
-              child: _lineChartBars.isEmpty && _barChartGroups.isEmpty
-                  ? const Center(child: Text('戦況データなし。'))
-                  : _showDailyChange
-                      ? _buildDailyChangeChart()
-                      : _buildAssetTrendChart(),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
