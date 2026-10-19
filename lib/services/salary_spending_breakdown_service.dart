@@ -137,18 +137,19 @@ class SalarySpendingBreakdownService {
             )
           : amount;
       final reconciled = smoking > 0 && smoking < amount;
-      final receipt = ReceiptCategoryAllocation.parse(entry.description, amount);
+      final receipt =
+          ReceiptCategoryAllocation.parse(entry.description, amount);
       final allocations = receipt != null
           ? <String, double>{
               if (receipt.containsKey('食品')) '食費': receipt['食品']!,
               '娯楽・浪費': (receipt['飲酒'] ?? 0) + (receipt['喫煙'] ?? 0),
             }
           : reconciled
-          ? <String, double>{
-              '食費': amount - smoking,
-              '娯楽・浪費': smoking.toDouble(),
-            }
-          : <String, double>{categorize(entry.description): amount};
+              ? <String, double>{
+                  '食費': amount - smoking,
+                  '娯楽・浪費': smoking.toDouble(),
+                }
+              : <String, double>{categorize(entry.description): amount};
       for (final allocation in allocations.entries) {
         final category = allocation.key;
         totalsByCategory[category] =

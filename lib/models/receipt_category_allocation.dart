@@ -4,7 +4,8 @@ class ReceiptCategoryAllocation {
     final marker = description.lastIndexOf('内訳:');
     if (marker < 0 || !total.isFinite || total <= 0) return null;
     final section = description.substring(marker + 3).split('。').first;
-    final matches = RegExp(r'(食品|飲酒|喫煙)([0-9,]+)円').allMatches(section).toList();
+    final matches =
+        RegExp(r'(食品|飲酒|喫煙)([0-9,]+)円').allMatches(section).toList();
     if (matches.length < 2) return null;
     final values = <String, double>{};
     for (final match in matches) {
