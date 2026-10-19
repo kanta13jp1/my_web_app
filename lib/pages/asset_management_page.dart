@@ -34286,7 +34286,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                       ),
                       Text(
-                        _showDailyChange ? '利益・日次収支とは異なります' : '国力(富)の総量は増えているか？',
+                        _showDailyChange
+                            ? '利益・日次収支とは異なります'
+                            : '国力(富)の総量は増えているか？',
                         style: const TextStyle(
                           fontSize: 10,
                           color: Color(0xFF9CA3AF),
