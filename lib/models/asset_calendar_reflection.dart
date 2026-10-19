@@ -153,9 +153,9 @@ class AssetCalendarReflection {
             RegExp(r'たばこ|タバコ|煙草|マールボロ|マルボロ|marlboro', caseSensitive: false)
                 .hasMatch(part);
         final explicitPurchase = RegExp(
-                r'(たばこ|タバコ|煙草)(を)?(購入|買)|たばこ代|マールボロ|マルボロ|marlboro',
-                caseSensitive: false,)
-            .hasMatch(part);
+          r'(たばこ|タバコ|煙草)(を)?(購入|買)|たばこ代|マールボロ|マルボロ|marlboro',
+          caseSensitive: false,
+        ).hasMatch(part);
         if (!mentions || RegExp(r'未購入|購入なし|買わな|購入しな').hasMatch(part)) {
           return false;
         }
