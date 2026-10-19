@@ -1,3 +1,4 @@
+import 'dart:ui' show Tristate;
 import 'package:flutter/semantics.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -212,9 +213,11 @@ void main() {
       final cardNode = tester.getSemantics(
         find.byKey(const ValueKey('asset-chart-card-semantics')),
       );
-      expect(cardNode.hasFlag(SemanticsFlag.hasToggledState), isFalse);
+      expect(cardNode.flagsCollection.isToggled, Tristate.none);
       expect(
-          cardNode.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
+        cardNode.getSemanticsData().hasAction(SemanticsAction.tap),
+        isFalse,
+      );
 
       final note = find.textContaining('記録間隔は一定ではありません');
       expect(note, findsOneWidget);
