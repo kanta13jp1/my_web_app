@@ -31,7 +31,8 @@ void main() {
       await tap('echo-move-workshop');
       await tap('echo-collect');
       expect(find.text('ターン 5'), findsOneWidget);
-      tester.widget<SwitchListTile>(find.byKey(const Key('echo-keyboard-toggle')))
+      tester
+          .widget<SwitchListTile>(find.byKey(const Key('echo-keyboard-toggle')))
           .onChanged!(true);
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('最初からやり直す'));
@@ -87,7 +88,8 @@ void main() {
       await tester.pump();
       await tester.tap(find.byKey(const Key('echo-intro-skip')));
       await tester.pumpAndSettle();
-      tester.widget<OutlinedButton>(find.byKey(const Key('echo-wait')))
+      tester
+          .widget<OutlinedButton>(find.byKey(const Key('echo-wait')))
           .onPressed!();
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('最初からやり直す'));

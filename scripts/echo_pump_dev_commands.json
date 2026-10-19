@@ -109,7 +109,8 @@
     "lib/widgets/echo_pump_intro.dart",
     "lib/pages/echo_pump_game_page.dart",
     "test/widgets/echo_pump_intro_test.dart",
-    "test/pages/echo_pump_game_page_test.dart"
+    "test/pages/echo_pump_game_page_test.dart",
+    "test/pages/echo_pump_restart_test.dart"
   ],
   [
     "dart",
@@ -124,7 +125,8 @@
     "lib/pages/echo_pump_game_page.dart",
     "test/models/echo_pump_game_test.dart",
     "test/pages/echo_pump_game_page_test.dart",
-    "test/fixtures/echo_pump_app.dart"
+    "test/fixtures/echo_pump_app.dart",
+    "test/pages/echo_pump_restart_test.dart"
   ],
   [
     "flutter",
@@ -133,6 +135,7 @@
     "test/widgets/echo_pump_visuals_test.dart",
     "test/widgets/echo_pump_title_screen_test.dart",
     "test/models/echo_pump_game_test.dart",
-    "test/pages/echo_pump_game_page_test.dart"
+    "test/pages/echo_pump_game_page_test.dart",
+    "test/pages/echo_pump_restart_test.dart"
   ]
 ]
