@@ -223,6 +223,64 @@ Future<void> _tapTab(WidgetTester tester, String label) async {
 
 void main() {
   for (final kind in <String>['system', 'interface', 'mapping']) {
+    testWidgets('allows retry after failed $kind save', (tester) async {
+      tester.view.physicalSize = const Size(1100, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      final service = _FakeIntegrationRegistryService();
+      final pending = Completer<void>();
+      service.saveWait = pending.future;
+      await _pumpPage(tester, service);
+      if (kind != 'system') {
+        await _tapTab(
+          tester,
+          kind == 'interface' ? 'Interfaces' : 'Code mappings',
+        );
+      }
+      final openKey = switch (kind) {
+        'system' => 'add-system-button',
+        'interface' => 'publish-interface-button',
+        _ => 'import-mapping-button',
+      };
+      final saveKey = switch (kind) {
+        'system' => 'save-system-dialog-button',
+        'interface' => 'publish-interface-dialog-button',
+        _ => 'import-mapping-dialog-button',
+      };
+      await tester.tap(find.byKey(Key(openKey)));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(Key('$kind-name-field')),
+        'Retry save',
+      );
+      final save = find.byKey(Key(saveKey));
+      await tester.ensureVisible(save);
+      await tester.tap(save);
+      await tester.pump();
+      pending.completeError(StateError('retryable failure'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(Key(saveKey)), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      service.saveWait = null;
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+
+      expect(
+        service.savedSystems +
+            service.publishedInterfaces +
+            service.importedMappings,
+        2,
+      );
+      expect(find.byKey(Key(saveKey)), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final kind in <String>['system', 'interface', 'mapping']) {
     testWidgets('blocks duplicate $kind save and ignores disposed error', (
       tester,
     ) async {
