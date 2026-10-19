@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/services.dart';
 import 'package:my_web_app/pages/echo_pump_game_page.dart';
 import 'package:my_web_app/widgets/echo_pump_door_transition.dart';
 import 'package:my_web_app/models/echo_pump_game.dart';
@@ -139,6 +140,16 @@ void main() {
       await tap('echo-move-control');
       await tap('echo-move-exit');
       expect(find.text('脱出成功'), findsOneWidget);
+      tester
+          .widget<SwitchListTile>(find.byKey(const Key('echo-keyboard-toggle')))
+          .onChanged!(true);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyW);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyI);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+      await tester.pumpAndSettle();
+      expect(find.text('脱出成功'), findsOneWidget);
+      expect(find.byKey(const Key('echo-inventory-close')), findsNothing);
       await tap('echo-retry');
       expect(find.text('ターン 0'), findsOneWidget);
       expect(find.text('体力 3 / 3'), findsOneWidget);

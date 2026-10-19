@@ -60,14 +60,7 @@ void main() {
     final html = File('web/index.html').readAsStringSync();
     final normalizedHtml = html.replaceAll('\r\n', '\n');
 
-    expect(
-      normalizedHtml,
-      contains(
-        '<link rel="preload" '
-        'href="assets/web/assets/fonts/NotoSansJP-Regular.ttf" '
-        'as="font" type="font/ttf" crossorigin>',
-      ),
-    );
+    // Font delivery and duplicate requests are checked by Hosting Transfer Audit.
     expect(html, contains('position: fixed;'));
     expect(html, contains('inset: 0;'));
     expect(html, contains('transition: opacity 120ms ease-out;'));
