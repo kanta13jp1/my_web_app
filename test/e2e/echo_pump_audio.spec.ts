@@ -187,6 +187,7 @@ test('door sounds play during movement and mute suppresses later transitions', a
   await expect(button('演出をスキップ')).toHaveCount(0);
   await page.screenshot({path: info.outputPath('door-audio-arrived.png')});
   await button('音をOFF').click();
+  await expect.poll(() => page.evaluate(() => (window as any).__echoAudioAudit.media.every((m: HTMLMediaElement) => m.paused || m.ended || !m.getAttribute('src')))).toBe(true);
   const before = await page.evaluate(() => (window as any).__echoAudioAudit.plays.length);
   await button('管理室へ').click();
   await expect(button('演出をスキップ')).toHaveCount(0);
