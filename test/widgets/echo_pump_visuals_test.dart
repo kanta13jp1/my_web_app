@@ -1,3 +1,4 @@
+import 'package:my_web_app/widgets/echo_pump_door_transition.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/echo_pump_game.dart';
@@ -5,6 +6,26 @@ import 'package:my_web_app/widgets/echo_pump_visuals.dart';
 import 'package:my_web_app/widgets/echo_pump_machinery.dart';
 
 void main() {
+  for (final skip in [false, true]) {
+    testWidgets('door audio phase callbacks finish once, skip=$skip', (tester) async {
+      var opened = 0, closed = 0, finished = 0;
+      await tester.pumpWidget(MaterialApp(home: EchoPumpDoorTransition(
+        from: PumpRoom.control, to: PumpRoom.hall,
+        onOpen: () => opened++, onClose: () => closed++, onFinished: () => finished++,
+      )));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(opened, 1);
+      expect(closed, 0);
+      if (skip) await tester.tap(find.text('演出をスキップ'));
+      await tester.pump(const Duration(seconds: 2));
+      expect(finished, 1);
+      expect(closed, skip ? 0 : 1);
+      await tester.pump(const Duration(seconds: 2));
+      expect(finished, 1);
+      expect(closed, skip ? 0 : 1);
+    });
+  }
+
   for (final room in PumpRoom.values) {
     testWidgets('room backdrop describes ${room.name} without image assets', (tester) async {
       final semantics = tester.ensureSemantics();
