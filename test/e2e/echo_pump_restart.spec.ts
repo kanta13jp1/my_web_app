@@ -3,12 +3,9 @@ import { test, expect, Page } from '@playwright/test';
 async function start(page: Page) {
   await page.goto(process.env.ECHO_PUMP_GAME_PATH || '/');
   const opening = page.getByRole('button', { name: 'ゲーム開始', exact: true });
-  const semantics = page.locator('flt-semantics-placeholder');
-  await Promise.race([
-    opening.waitFor({ timeout: 60000 }),
-    semantics.waitFor({ state: 'attached', timeout: 60000 }),
-  ]);
-  if (await semantics.count()) await semantics.dispatchEvent('click');
+  // The fixture and production main both enable semantics during startup.
+  // A transient placeholder can disappear between count and dispatchEvent.
+  await expect(opening).toBeVisible({ timeout: 60000 });
   await opening.click();
   await page.getByRole('button', { name: 'スキップして開始', exact: true }).click();
 }
