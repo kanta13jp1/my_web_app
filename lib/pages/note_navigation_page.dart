@@ -28,6 +28,7 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
   bool _loading = true;
   bool _saving = false;
   String? _error;
+  int _reloadGeneration = 0;
 
   @override
   void initState() {
@@ -38,16 +39,18 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
   }
 
   Future<void> _reload() async {
+    if (!mounted) return;
+    final generation = ++_reloadGeneration;
     try {
       final snapshot = await _repository.load();
-      if (!mounted) return;
+      if (!mounted || generation != _reloadGeneration) return;
       setState(() {
         _snapshot = snapshot;
         _loading = false;
         _error = null;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _reloadGeneration) return;
       setState(() {
         _loading = false;
         _error = error.toString();
