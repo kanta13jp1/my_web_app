@@ -1,3 +1,4 @@
+import '../widgets/asset_recorded_change_details.dart';
 import '../models/asset_income_source_evidence.dart';
 import '../widgets/asset_income_reconciliation_section.dart';
 import '../services/asset_chart_axis_labels.dart';
@@ -34358,6 +34359,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ? _buildDailyChangeChart()
                         : _buildAssetTrendChart(),
               ),
+              if (_showDailyChange)
+                AssetRecordedChangeDetails(
+                  dates: _sortedDates,
+                  changes: [for (final group in _barChartGroups) group.barRods.first.toY],
+                ),
             ],
           ),
         ),
