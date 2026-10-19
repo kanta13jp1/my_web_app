@@ -5,6 +5,19 @@ import 'package:my_web_app/widgets/echo_pump_visuals.dart';
 import 'package:my_web_app/widgets/echo_pump_machinery.dart';
 
 void main() {
+  for (final room in PumpRoom.values) {
+    testWidgets('room backdrop describes ${room.name} without image assets', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(MaterialApp(home: SizedBox(width: 390, height: 240,
+        child: EchoPumpRoomBackdrop(room: room),
+      )));
+      expect(find.bySemanticsLabel('部屋の背景：${EchoPumpRoomBackdrop.features[room]}'), findsOneWidget);
+      expect(find.byType(Image), findsNothing);
+      expect(tester.takeException(), isNull);
+      semantics.dispose();
+    });
+  }
+
   for (final width in [320.0, 1120.0]) {
     testWidgets(
         'machinery transitions settle at $width, including reduced motion',
