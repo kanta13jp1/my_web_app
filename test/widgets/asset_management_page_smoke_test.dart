@@ -179,6 +179,70 @@ void main() {
     AssetRecurringTombstoneSyncService.resetSharedForTest();
   });
 
+  for (final width in <double>[1200, 390]) {
+    testWidgets('balance change explains recorded-date difference at $width', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(Size(width, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 10, 20),
+            debugInitialAssetData: const <String, Map<String, double>>{
+              '2026-09-01': <String, double>{'現金': 1000},
+              '2026-09-10': <String, double>{'現金': 1200},
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      final title = find.text('戦略マップ (資産推移)');
+      await tester.ensureVisible(title);
+      await tester.pump(const Duration(milliseconds: 200));
+      final header = find.ancestor(of: title, matching: find.byType(Row)).first;
+      final toggle = find.descendant(of: header, matching: find.byType(Switch));
+      await tester.tap(toggle);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('残高差（前回記録比）'), findsOneWidget);
+      expect(find.text('利益・日次収支とは異なります'), findsOneWidget);
+      final note = find.textContaining('記録間隔は一定ではありません');
+      expect(note, findsOneWidget);
+      await tester.ensureVisible(note);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(tester.getSize(note).width, lessThanOrEqualTo(width));
+      expect(find.text('戦果レポート (日次損益)'), findsNothing);
+      expect(tester.takeException(), isNull);
+      await _unmount(tester);
+    });
+  }
+
+  testWidgets('balance change returns to the ordinary trend', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await _pumpAssetPage(tester);
+    final title = find.text('戦略マップ (資産推移)');
+    await tester.ensureVisible(title);
+    await tester.pump(const Duration(milliseconds: 200));
+    final header = find.ancestor(of: title, matching: find.byType(Row)).first;
+    await tester.tap(find.descendant(of: header, matching: find.byType(Switch)));
+    await tester.pump(const Duration(milliseconds: 200));
+    final changed = find.text('残高差（前回記録比）');
+    await tester.ensureVisible(changed);
+    final changedHeader = find.ancestor(
+      of: changed,
+      matching: find.byType(Row),
+    ).first;
+    await tester.tap(
+      find.descendant(of: changedHeader, matching: find.byType(Switch)),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(title, findsOneWidget);
+    expect(find.textContaining('記録間隔は一定ではありません'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await _unmount(tester);
+  });
+
   test('Obsidian解約候補は全変更前に現在のサブスクへ再照合する', () {
     const current = <AssetRecurringFixedCost>[
       AssetRecurringFixedCost(
