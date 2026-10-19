@@ -1,4 +1,12 @@
-enum AssetReflectionKind { dining, drinkingOut, alcoholPurchase, reading }
+import 'receipt_category_allocation.dart';
+
+enum AssetReflectionKind {
+  dining,
+  drinkingOut,
+  alcoholPurchase,
+  reading,
+  tobaccoPurchase
+}
 
 extension AssetReflectionKindLabel on AssetReflectionKind {
   String get label => switch (this) {
@@ -6,6 +14,7 @@ extension AssetReflectionKindLabel on AssetReflectionKind {
         AssetReflectionKind.drinkingOut => '外飲み',
         AssetReflectionKind.alcoholPurchase => '酒購入',
         AssetReflectionKind.reading => '読書',
+        AssetReflectionKind.tobaccoPurchase => 'たばこ購入',
       };
 }
 
@@ -82,6 +91,10 @@ class AssetCalendarReflection {
           ),
         )
         .toSet();
+    // Tobacco markers are derived from existing expenses, never imported rows.
+    if (kinds.contains(AssetReflectionKind.tobaccoPurchase)) {
+      throw const FormatException('たばこ購入は既存の支出記録から表示します');
+    }
     final pages = count('pages');
     final minutes = count('minutes');
     if (!kinds.contains(AssetReflectionKind.reading) &&
@@ -124,22 +137,44 @@ class AssetCalendarReflection {
     for (final flow in flows) {
       if (flow['action_type'] != 'expense') continue;
       final id = flow['id']?.toString();
-      final day =
-          DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal();
+      final day = DateTime.tryParse(
+        flow['occurred_at']?.toString() ?? '',
+      )?.toLocal();
       final description = flow['description']?.toString() ?? '';
       if (id == null || day == null) continue;
-      final dining =
-          RegExp(r'外食|店内飲食|レストラン|ラーメンショップ|ラーメン店|定食屋').hasMatch(description);
+      final dining = RegExp(
+        r'外食|店内飲食|レストラン|ラーメンショップ|ラーメン店|定食屋',
+      ).hasMatch(description);
       final outside = RegExp(r'飲み屋|居酒屋|外飲み|飲みに行').hasMatch(description) ||
           (dining && RegExp(r'ビール|飲酒|ハイボール').hasMatch(description));
       final purchase = RegExp(r'酒購入|酒の購入|ビール購入|ビールを購入').hasMatch(description);
+      final tobacco = description.split(RegExp(r'[。；;\n、・]')).any((part) {
+        final mentions =
+            RegExp(r'たばこ|タバコ|煙草|マールボロ|マルボロ|marlboro', caseSensitive: false)
+                .hasMatch(part);
+        final explicitPurchase = RegExp(
+          r'(たばこ|タバコ|煙草)(を)?(購入|買)|たばこ代|マールボロ|マルボロ|marlboro',
+          caseSensitive: false,
+        ).hasMatch(part);
+        if (!mentions || RegExp(r'未購入|購入なし|買わな|購入しな').hasMatch(part)) {
+          return false;
+        }
+        if (RegExp(r'書籍|本の購入|の本').hasMatch(part) && !explicitPurchase) {
+          return false;
+        }
+        return !part.contains('禁煙') || explicitPurchase;
+      });
       final kinds = <AssetReflectionKind>{
         if (dining) AssetReflectionKind.dining,
         if (outside) AssetReflectionKind.drinkingOut,
         if (purchase) AssetReflectionKind.alcoholPurchase,
+        if (tobacco) AssetReflectionKind.tobaccoPurchase,
       };
       if (kinds.isEmpty) continue;
       final value = flow['amount'];
+      final receipt = value is num
+          ? ReceiptCategoryAllocation.parse(description, value.abs().toDouble())
+          : null;
       result.add(
         AssetCalendarReflection(
           sourceKey: 'flow:$id',
@@ -154,11 +189,47 @@ class AssetCalendarReflection {
                   !RegExp(r'金額不明|金額未確認|推定|概算').hasMatch(description)
               ? value.abs().toDouble()
               : null,
+          alcoholAmount: receipt?['飲酒'],
           linkedFlowId: RegExp(r'^[1-9][0-9]*$').hasMatch(id) ? id : null,
         ),
       );
     }
     return result;
+  }
+
+  /// Merge linked observations without hiding purchase markers or summing twice.
+  static List<AssetCalendarReflection> mergeSources(
+    Iterable<AssetCalendarReflection> recorded,
+    Iterable<AssetCalendarReflection> projected,
+  ) {
+    final result = <String, AssetCalendarReflection>{};
+    for (final event in [...recorded, ...projected]) {
+      final key = event.linkedFlowId ?? event.sourceKey;
+      final previous = result[key];
+      if (previous == null) {
+        result[key] = event;
+        continue;
+      }
+      result[key] = AssetCalendarReflection(
+        sourceKey: previous.sourceKey,
+        date: previous.date,
+        kinds: {...previous.kinds, ...event.kinds},
+        title: previous.title,
+        sourceLabel: previous.sourceLabel,
+        memo: {
+          if (previous.memo.isNotEmpty) previous.memo,
+          if (event.memo.isNotEmpty) event.memo,
+          if (event.kinds.any((kind) => !previous.kinds.contains(kind)))
+            '${event.sourceLabel}: ${event.title}',
+        }.join('\n'),
+        verifiedAmount: previous.verifiedAmount ?? event.verifiedAmount,
+        alcoholAmount: previous.alcoholAmount ?? event.alcoholAmount,
+        pages: previous.pages,
+        minutes: previous.minutes,
+        linkedFlowId: previous.linkedFlowId,
+      );
+    }
+    return result.values.toList(growable: false);
   }
 
   Map<String, dynamic> toJson() => {
