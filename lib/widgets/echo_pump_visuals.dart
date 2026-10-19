@@ -376,7 +376,7 @@ class _PassagesPainter extends CustomPainter {
 /// Original vector scenery remains available without downloading room images.
 class EchoPumpRoomBackdrop extends StatelessWidget {
   const EchoPumpRoomBackdrop(
-      {super.key, required this.room, this.drained = false});
+      {super.key, required this.room, this.drained = false,});
   final PumpRoom room;
   final bool drained;
 
@@ -409,7 +409,7 @@ class _RoomBackdropPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     canvas.save();
     canvas.scale(size.width / 320, size.height / 180);
-    final bounds = const Rect.fromLTWH(0, 0, 320, 180);
+    const bounds = Rect.fromLTWH(0, 0, 320, 180);
     final tint = switch (room) {
       PumpRoom.control => const Color(0xFF365B57),
       PumpRoom.hall => const Color(0xFF253F55),
@@ -426,7 +426,7 @@ class _RoomBackdropPainter extends CustomPainter {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [tint, const Color(0xFF071116)],
-          ).createShader(bounds));
+          ).createShader(bounds),);
     final metal = Paint()..color = const Color(0xFF567578);
     final dark = Paint()..color = const Color(0xFF101F25);
     final light = Paint()..color = const Color(0xFF91C7B5);
@@ -434,7 +434,7 @@ class _RoomBackdropPainter extends CustomPainter {
       ..color = const Color(0xFF65848A)
       ..strokeWidth = 1;
     for (var x = -160.0; x < 600; x += 55) {
-      canvas.drawLine(Offset(160, 85), Offset(x, 180), line);
+      canvas.drawLine(const Offset(160, 85), Offset(x, 180), line);
     }
     for (final y in [114.0, 137.0, 165.0]) {
       canvas.drawLine(Offset(0, y), Offset(320, y), line);
@@ -457,7 +457,7 @@ class _RoomBackdropPainter extends CustomPainter {
               Paint()
                 ..color = const Color(0xFF567578)
                 ..style = PaintingStyle.stroke
-                ..strokeWidth = 3);
+                ..strokeWidth = 3,);
         }
         canvas.drawRect(const Rect.fromLTWH(143, 49, 35, 61), dark);
         canvas.drawCircle(const Offset(172, 83), 2, light);
@@ -466,7 +466,7 @@ class _RoomBackdropPainter extends CustomPainter {
           (170.0, 62.0, 55.0, 52.0),
           (226.0, 81.0, 62.0, 48.0),
           (184.0, 25.0, 42.0, 37.0)
-        ]) {
+        ,]) {
           final box = Rect.fromLTWH(x, y, w, h);
           canvas.drawRect(box, Paint()..color = const Color(0xFF927A52));
           canvas.drawRect(
@@ -474,7 +474,7 @@ class _RoomBackdropPainter extends CustomPainter {
               Paint()
                 ..color = const Color(0xFF493D2E)
                 ..style = PaintingStyle.stroke
-                ..strokeWidth = 3);
+                ..strokeWidth = 3,);
           canvas.drawLine(box.topLeft, box.bottomRight, line);
           canvas.drawLine(box.topRight, box.bottomLeft, line);
         }
@@ -486,7 +486,7 @@ class _RoomBackdropPainter extends CustomPainter {
               Offset(x, 77),
               Paint()
                 ..color = const Color(0xFFD0C5A0)
-                ..strokeWidth = 4);
+                ..strokeWidth = 4,);
           canvas.drawCircle(Offset(x, 32), 6, dark);
         }
         canvas.drawRect(const Rect.fromLTWH(149, 95, 160, 8), metal);
@@ -496,8 +496,8 @@ class _RoomBackdropPainter extends CustomPainter {
         for (var x = 166.0; x < 310; x += 64) {
           canvas.drawRRect(
               RRect.fromRectAndRadius(
-                  Rect.fromLTWH(x, 0, 35, 139), const Radius.circular(12)),
-              metal);
+                  Rect.fromLTWH(x, 0, 35, 139), const Radius.circular(12),),
+              metal,);
           for (var y = 18.0; y < 140; y += 32) {
             canvas.drawRect(Rect.fromLTWH(x - 6, y, 47, 7), dark);
           }
@@ -507,7 +507,7 @@ class _RoomBackdropPainter extends CustomPainter {
         canvas.drawRect(const Rect.fromLTWH(160, 30, 137, 129), dark);
         canvas.drawRect(
             Rect.fromLTWH(164, drained ? 137 : 81, 129, drained ? 17 : 77),
-            Paint()..color = const Color(0xFF34666B));
+            Paint()..color = const Color(0xFF34666B),);
         for (var y = 35.0; y < 160; y += 14) {
           canvas.drawLine(Offset(156, y), Offset(300, y), line);
         }
@@ -523,7 +523,7 @@ class _RoomBackdropPainter extends CustomPainter {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [Color(0xFFBDD8DB), Color(0xFFB9A36D)],
-              ).createShader(bounds));
+              ).createShader(bounds),);
         for (var x = 170.0; x < 275; x += 12) {
           canvas.drawLine(Offset(x, 27), Offset(x - 7, 110), line);
         }

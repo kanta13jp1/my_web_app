@@ -17,7 +17,7 @@ void main() {
         onOpen: () => opened++,
         onClose: () => closed++,
         onFinished: () => finished++,
-      )));
+      ),),);
       await tester.pump(const Duration(milliseconds: 200));
       expect(opened, 1);
       expect(closed, 0);
@@ -40,10 +40,10 @@ void main() {
         width: 390,
         height: 240,
         child: EchoPumpRoomBackdrop(room: room),
-      )));
+      ),),);
       expect(
           find.bySemanticsLabel('部屋の背景：${EchoPumpRoomBackdrop.features[room]}'),
-          findsOneWidget);
+          findsOneWidget,);
       expect(find.byType(Image), findsNothing);
       expect(tester.takeException(), isNull);
       semantics.dispose();

@@ -263,7 +263,7 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
                                       ? math
                                               .sin(_walk.value *
                                                   _strideCount *
-                                                  math.pi)
+                                                  math.pi,)
                                               .abs() *
                                           2
                                       : 0),
