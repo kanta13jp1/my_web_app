@@ -1,3 +1,4 @@
+import 'package:flutter/semantics.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -183,6 +184,8 @@ void main() {
     testWidgets('balance change explains recorded-date difference at $width', (
       tester,
     ) async {
+      final semantics = tester.ensureSemantics();
+      addTearDown(semantics.dispose);
       await tester.binding.setSurfaceSize(Size(width, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
@@ -206,6 +209,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       expect(find.text('残高差（前回記録比）'), findsOneWidget);
       expect(find.text('利益・日次収支とは異なります'), findsOneWidget);
+      final cardNode = tester.getSemantics(
+        find.byKey(const ValueKey('asset-chart-card-semantics')),
+      );
+      expect(cardNode.hasFlag(SemanticsFlag.hasToggledState), isFalse);
+      expect(cardNode.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
+
       final note = find.textContaining('記録間隔は一定ではありません');
       expect(note, findsOneWidget);
       await tester.ensureVisible(note);
