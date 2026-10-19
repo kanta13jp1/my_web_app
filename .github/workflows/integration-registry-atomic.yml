@@ -5,6 +5,7 @@ on:
       - 'supabase/migrations/*integration_registry_atomic_versions.sql'
       - 'supabase/functions/enterprise-hub/integration_registry*'
       - 'scripts/registry_atomic_test.py'
+      - 'scripts/registry_atomic_test_test.py'
       - '.github/workflows/integration-registry-atomic.yml'
 permissions: {}
 concurrency:
@@ -32,6 +33,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - name: Verify isolation guard without a database
+        run: python3 scripts/registry_atomic_test_test.py
       - name: Concurrent writes and fail-closed migration
         env:
           PGHOST: localhost

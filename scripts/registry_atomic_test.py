@@ -91,7 +91,20 @@ def forced_lock_overlap():
                 proc.communicate()
 
 
+def require_isolated_ci():
+    expected = {
+        'GITHUB_ACTIONS': 'true',
+        'PGHOST': 'localhost',
+        'PGPORT': '5432',
+        'PGUSER': 'postgres',
+        'PGPASSWORD': 'registry-ci-only',
+    }
+    if any(os.environ.get(key) != value for key, value in expected.items()):
+        raise RuntimeError('Registry database tests require the isolated CI service')
+
+
 def main():
+    require_isolated_ci()
     sql('CREATE ROLE service_role NOLOGIN BYPASSRLS; '
         'CREATE ROLE authenticated NOLOGIN; CREATE ROLE anon NOLOGIN;', 'postgres')
     migration = MIGRATION.read_text(encoding='utf-8')
