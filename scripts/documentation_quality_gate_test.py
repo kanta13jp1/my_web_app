@@ -21,10 +21,10 @@ class DeltaTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             file = root / 'fixture.md'
-            file.write_text('Ameba freee Progate\n', encoding='utf-8')
+            file.write_text('Ameba https://ameba.jp freee Progate\n', encoding='utf-8')
             self.assertEqual(collect(root, ['fixture.md']), [])
             file.write_text(
-                'Ameba freee Progate teh [missing](missing.md)\n',
+                'Ameba https://ameba.jp freee Progate teh [missing](missing.md)\n',
                 encoding='utf-8',
             )
             findings = collect(root, ['fixture.md'])
