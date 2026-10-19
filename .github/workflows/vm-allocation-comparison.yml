@@ -1,7 +1,12 @@
 {
   "name": "Fixed SHA VM allocation comparison",
   "on": {
-    "workflow_dispatch": {}
+    "workflow_dispatch": {},
+    "push": {
+      "branches": [
+        "codex/vm-allocation-comparison-20261019"
+      ]
+    }
   },
   "permissions": {},
   "concurrency": {
