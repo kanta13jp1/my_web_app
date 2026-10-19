@@ -221,10 +221,10 @@ void main() {
             'action_type': 'expense',
             'occurred_at': '2026-10-19T01:01:00',
             'description': description,
-            'amount': 620
+            'amount': 620,
           },
         ]).any((event) =>
-            event.kinds.contains(AssetReflectionKind.tobaccoPurchase));
+            event.kinds.contains(AssetReflectionKind.tobaccoPurchase),);
     expect(tobacco('書籍935円・たばこ購入620円'), isTrue);
     expect(tobacco('酒は未購入。たばこ購入620円'), isTrue);
     expect(tobacco('書籍 たばこの本'), isFalse);

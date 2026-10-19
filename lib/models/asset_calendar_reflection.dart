@@ -154,12 +154,14 @@ class AssetCalendarReflection {
                 .hasMatch(part);
         final explicitPurchase = RegExp(
                 r'(たばこ|タバコ|煙草)(を)?(購入|買)|たばこ代|マールボロ|マルボロ|marlboro',
-                caseSensitive: false)
+                caseSensitive: false,)
             .hasMatch(part);
-        if (!mentions || RegExp(r'未購入|購入なし|買わな|購入しな').hasMatch(part))
+        if (!mentions || RegExp(r'未購入|購入なし|買わな|購入しな').hasMatch(part)) {
           return false;
-        if (RegExp(r'書籍|本の購入|の本').hasMatch(part) && !explicitPurchase)
+        }
+        if (RegExp(r'書籍|本の購入|の本').hasMatch(part) && !explicitPurchase) {
           return false;
+        }
         return !part.contains('禁煙') || explicitPurchase;
       });
       final kinds = <AssetReflectionKind>{
