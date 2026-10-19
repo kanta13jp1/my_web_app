@@ -160,6 +160,21 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('long walk repeats the gait and stops all footfalls at the door', (tester) async {
+    var steps = 0;
+    await show(tester, step: () => steps++);
+    await tester.tap(find.text('中央廊下の扉を調べる'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(steps, greaterThan(2));
+    expect(find.text('中央廊下の扉'), findsOneWidget);
+    final stopped = steps;
+    await tester.pump(const Duration(seconds: 2));
+    expect(steps, stopped);
+    expect(tester.hasRunningAnimations, isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('camera and memo do not advance turns; door commits exactly once',
       (tester) async {
     final game = EchoPumpGame();

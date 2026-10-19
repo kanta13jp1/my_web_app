@@ -1,6 +1,11 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+
+import '../services/echo_pump_motion_stub.dart'
+    if (dart.library.js_interop) '../services/echo_pump_motion_web.dart'
+    as motion;
 
 import '../models/echo_pump_game.dart';
 import '../models/echo_pump_room_walk.dart';
@@ -26,6 +31,7 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
   bool _walking = false, _detail = false, _left = false, _foreground = true;
   bool _animateSteps = true;
   int _steps = 0;
+  int _strideCount = 2;
   AssetBundle? _artBundle;
   int _artRequest = 0;
   bool _walkArtReady = false;
@@ -84,8 +90,8 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
     if ((next.x - _position.x).abs() > 0.0001) _left = next.x < _position.x;
     setState(() => _position = next);
     if (_animateSteps && _foreground) {
-      for (final marker in [0.25, 0.75]) {
-        final index = marker == 0.25 ? 1 : 2;
+      for (var index = 1; index <= _strideCount; index++) {
+        final marker = (index - .5) / _strideCount;
         if (_walk.value >= marker && _steps < index) {
           _steps = index;
           widget.onFootstep?.call();
@@ -96,7 +102,8 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
 
   Future<void> _approach(EchoRoomTarget target) async {
     if (_walking || !_foreground || !_routeActive) return;
-    final reduced = MediaQuery.disableAnimationsOf(context);
+    final reduced = MediaQuery.disableAnimationsOf(context) ||
+        motion.prefersReducedMotion;
     _route = EchoPumpRoomWalk.route(_position, target);
     _steps = 0;
     final distance = EchoPumpRoomWalk.length(_route);
@@ -106,6 +113,8 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
         : Duration(
             milliseconds: (distance * 1800).round().clamp(700, 1600).toInt(),
           );
+    _strideCount = ((_walk.duration?.inMilliseconds ?? 700) / 400)
+        .ceil().clamp(2, 4).toInt();
     setState(() => _walking = true);
     try {
       await _walk.forward(from: 0).orCancel;
@@ -166,7 +175,8 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
 
   @override
   Widget build(BuildContext context) {
-    final reduced = MediaQuery.disableAnimationsOf(context);
+    final reduced = MediaQuery.disableAnimationsOf(context) ||
+        motion.prefersReducedMotion;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -245,7 +255,10 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
                             Positioned(
                               key: const Key('echo-room-actor'),
                               left: _position.x * bounds.maxWidth - side / 2,
-                              top: _position.y * 240 - side,
+                              top: _position.y * 240 - side -
+                                  (_walking && !reduced
+                                      ? math.sin(_walk.value * _strideCount * math.pi).abs() * 2
+                                      : 0),
                               child: Transform(
                                 alignment: Alignment.center,
                                 transform: Matrix4.diagonal3Values(
@@ -255,10 +268,8 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
                                 ),
                                 child: _walking && _walkArtReady
                                     ? _WalkingSprite(
-                                        frame: (_walk.value * 4)
-                                            .floor()
-                                            .clamp(0, 3)
-                                            .toInt(),
+                                        frame: (_walk.value * _strideCount * 2)
+                                            .floor() % 4,
                                         side: side,
                                       )
                                     : Image.asset(
