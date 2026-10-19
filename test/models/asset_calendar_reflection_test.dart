@@ -209,7 +209,19 @@ void main() {
     );
     expect(merged, hasLength(1));
     expect(merged.single.title, 'Confirmed dining');
+    expect(merged.single.memo, contains('Expense: Food and tobacco'));
     expect(merged.single.kinds, contains(AssetReflectionKind.tobaccoPurchase));
     expect(AssetReflectionSummary(merged).knownAmount, 1380);
+  });
+  test('mixed purchase keeps tobacco and excludes unrelated book or negation', () {
+    bool tobacco(String description) => AssetCalendarReflection.fromFlows([
+      {'id': '801', 'action_type': 'expense', 'occurred_at': '2026-10-19T01:01:00', 'description': description, 'amount': 620},
+    ]).any((event) => event.kinds.contains(AssetReflectionKind.tobaccoPurchase));
+    expect(tobacco('書籍935円・たばこ購入620円'), isTrue);
+    expect(tobacco('酒は未購入。たばこ購入620円'), isTrue);
+    expect(tobacco('書籍 たばこの本'), isFalse);
+    expect(tobacco('たばこ未購入'), isFalse);
+    expect(tobacco('禁煙を開始した'), isFalse);
+    expect(tobacco('禁煙を始めたが、たばこ購入620円'), isTrue);
   });
 }

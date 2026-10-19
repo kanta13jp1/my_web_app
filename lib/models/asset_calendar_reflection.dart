@@ -1,10 +1,6 @@
-enum AssetReflectionKind {
-  dining,
-  drinkingOut,
-  alcoholPurchase,
-  reading,
-  tobaccoPurchase,
-}
+import 'receipt_category_allocation.dart';
+
+enum AssetReflectionKind { dining, drinkingOut, alcoholPurchase, reading, tobaccoPurchase }
 
 extension AssetReflectionKindLabel on AssetReflectionKind {
   String get label => switch (this) {
@@ -146,16 +142,13 @@ class AssetCalendarReflection {
       final outside = RegExp(r'飲み屋|居酒屋|外飲み|飲みに行').hasMatch(description) ||
           (dining && RegExp(r'ビール|飲酒|ハイボール').hasMatch(description));
       final purchase = RegExp(r'酒購入|酒の購入|ビール購入|ビールを購入').hasMatch(description);
-      final explicitTobaccoPurchase = RegExp(
-        r'(たばこ|タバコ|煙草)(を)?(購入|買)|たばこ代|マールボロ|マルボロ|marlboro',
-        caseSensitive: false,
-      ).hasMatch(description);
-      final tobacco = RegExp(
-            r'たばこ|タバコ|煙草|マールボロ|マルボロ|marlboro',
-            caseSensitive: false,
-          ).hasMatch(description) &&
-          !RegExp(r'未購入|購入なし|買わな|購入しな|書籍|本の購入').hasMatch(description) &&
-          (!description.contains('禁煙') || explicitTobaccoPurchase);
+      final tobacco = description.split(RegExp(r'[。；;\n、・]')).any((part) {
+        final mentions = RegExp(r'たばこ|タバコ|煙草|マールボロ|マルボロ|marlboro', caseSensitive: false).hasMatch(part);
+        final explicitPurchase = RegExp(r'(たばこ|タバコ|煙草)(を)?(購入|買)|たばこ代|マールボロ|マルボロ|marlboro', caseSensitive: false).hasMatch(part);
+        if (!mentions || RegExp(r'未購入|購入なし|買わな|購入しな').hasMatch(part)) return false;
+        if (RegExp(r'書籍|本の購入|の本').hasMatch(part) && !explicitPurchase) return false;
+        return !part.contains('禁煙') || explicitPurchase;
+      });
       final kinds = <AssetReflectionKind>{
         if (dining) AssetReflectionKind.dining,
         if (outside) AssetReflectionKind.drinkingOut,
@@ -164,6 +157,9 @@ class AssetCalendarReflection {
       };
       if (kinds.isEmpty) continue;
       final value = flow['amount'];
+      final receipt = value is num
+          ? ReceiptCategoryAllocation.parse(description, value.abs().toDouble())
+          : null;
       result.add(
         AssetCalendarReflection(
           sourceKey: 'flow:$id',
@@ -178,6 +174,7 @@ class AssetCalendarReflection {
                   !RegExp(r'金額不明|金額未確認|推定|概算').hasMatch(description)
               ? value.abs().toDouble()
               : null,
+          alcoholAmount: receipt?['飲酒'],
           linkedFlowId: RegExp(r'^[1-9][0-9]*$').hasMatch(id) ? id : null,
         ),
       );
@@ -204,7 +201,12 @@ class AssetCalendarReflection {
         kinds: {...previous.kinds, ...event.kinds},
         title: previous.title,
         sourceLabel: previous.sourceLabel,
-        memo: previous.memo,
+        memo: {
+          if (previous.memo.isNotEmpty) previous.memo,
+          if (event.memo.isNotEmpty) event.memo,
+          if (event.kinds.any((kind) => !previous.kinds.contains(kind)))
+            '${event.sourceLabel}: ${event.title}',
+        }.join('\n'),
         verifiedAmount: previous.verifiedAmount ?? event.verifiedAmount,
         alcoholAmount: previous.alcoholAmount ?? event.alcoholAmount,
         pages: previous.pages,
