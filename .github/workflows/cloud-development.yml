@@ -1,4 +1,4 @@
-name: Approved PR5877 Web Release
+name: Approved PR5863 and PR5867 Web Release
 
 on:
   pull_request:
@@ -46,7 +46,7 @@ on:
   workflow_dispatch:
     inputs:
       approved_release:
-        description: Explicit owner approved PR5877-only release
+        description: Explicit owner approved PR5863 and PR5867-only release
         required: true
         default: false
         type: boolean
@@ -135,20 +135,21 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='cc8c8a5e75c95a9dd3d3e11c38703e154eeb4e51', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='5292c412de3c06de4ade6df4689f85816c7fd6ec', 'Production changed; rebuild selection'
           PY
 
       - name: Verify approved source selection and merged PR
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          test "$(gh pr view 5877 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
-          git fetch --no-tags --depth=1 origin cc8c8a5e75c95a9dd3d3e11c38703e154eeb4e51
+          test "$(gh pr view 5863 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
+          test "$(gh pr view 5867 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
+          git fetch --no-tags --depth=1 origin 5292c412de3c06de4ade6df4689f85816c7fd6ec
           python3 - <<'PY'
           import subprocess,json
-          base='cc8c8a5e75c95a9dd3d3e11c38703e154eeb4e51'
-          source='4e73ba8464ee9f6822c0ce9ed7268501e7b90f5d'
-          paths=['lib/models/receipt_category_allocation.dart', 'lib/models/asset_calendar_reflection.dart', 'lib/services/salary_spending_breakdown_service.dart', 'test/services/receipt_category_allocation_test.dart']
+          base='5292c412de3c06de4ade6df4689f85816c7fd6ec'
+          source='134820ace9fe10feecc60998fd07781dbdd89b77'
+          paths=['lib/models/asset_calendar_reflection.dart', 'lib/pages/asset_management_page.dart', 'lib/widgets/asset_calendar_reflection_panel.dart', 'lib/widgets/asset_reflection_day_badge.dart', 'test/models/asset_calendar_reflection_test.dart', 'test/widgets/asset_calendar_reflection_panel_test.dart', 'lib/models/weekly_habit.dart', 'lib/services/weekly_habit_store.dart', 'lib/widgets/weekly_habit_card.dart', 'test/widgets/weekly_habit_card_test.dart']
           subprocess.run(['git','fetch','--no-tags','--depth=1','origin',source],check=True)
           expected=set(paths+['.github/workflows/cloud-development.yml'])
           actual=set(subprocess.check_output(['git','diff','--name-only',base,'HEAD']).decode().splitlines())
@@ -614,7 +615,7 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='cc8c8a5e75c95a9dd3d3e11c38703e154eeb4e51', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='5292c412de3c06de4ade6df4689f85816c7fd6ec', 'Production changed; rebuild selection'
           PY
 
       - name: Collect pushed files
@@ -634,7 +635,7 @@ jobs:
           mkdir -p .deploy-logs
           python3 - <<'PY'
           from pathlib import Path
-          Path('.deploy-logs/changed-files.txt').write_text('lib/models/receipt_category_allocation.dart\nlib/models/asset_calendar_reflection.dart\nlib/services/salary_spending_breakdown_service.dart\ntest/services/receipt_category_allocation_test.dart\n')
+          Path('.deploy-logs/changed-files.txt').write_text('lib/models/asset_calendar_reflection.dart\nlib/pages/asset_management_page.dart\nlib/widgets/asset_calendar_reflection_panel.dart\nlib/widgets/asset_reflection_day_badge.dart\ntest/models/asset_calendar_reflection_test.dart\ntest/widgets/asset_calendar_reflection_panel_test.dart\nlib/models/weekly_habit.dart\nlib/services/weekly_habit_store.dart\nlib/widgets/weekly_habit_card.dart\ntest/widgets/weekly_habit_card_test.dart\n')
           PY
 
       - name: Reject mixed public-blog deployments
@@ -1329,7 +1330,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         env:
           FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-          EXPECTED_PUBLIC_BASE: cc8c8a5e75c95a9dd3d3e11c38703e154eeb4e51
+          EXPECTED_PUBLIC_BASE: 5292c412de3c06de4ade6df4689f85816c7fd6ec
         run: |
           python3 -m venv /tmp/echo-release-tools
           /tmp/echo-release-tools/bin/pip install google-auth==2.43.0 requests==2.32.5
@@ -1361,7 +1362,7 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          EXPECTED_PUBLIC_BASE=cc8c8a5e75c95a9dd3d3e11c38703e154eeb4e51 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
+          EXPECTED_PUBLIC_BASE=5292c412de3c06de4ade6df4689f85816c7fd6ec /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
 
           npx -y firebase-tools@latest deploy \
             --only hosting \
