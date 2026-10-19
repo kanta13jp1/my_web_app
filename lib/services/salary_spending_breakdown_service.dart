@@ -1,3 +1,4 @@
+import '../models/receipt_category_allocation.dart';
 import 'waste_tracking_service.dart';
 import '../models/asset_income_source_evidence.dart';
 
@@ -136,7 +137,13 @@ class SalarySpendingBreakdownService {
             )
           : amount;
       final reconciled = smoking > 0 && smoking < amount;
-      final allocations = reconciled
+      final receipt = ReceiptCategoryAllocation.parse(entry.description, amount);
+      final allocations = receipt != null
+          ? <String, double>{
+              if (receipt.containsKey('食品')) '食費': receipt['食品']!,
+              '娯楽・浪費': (receipt['飲酒'] ?? 0) + (receipt['喫煙'] ?? 0),
+            }
+          : reconciled
           ? <String, double>{
               '食費': amount - smoking,
               '娯楽・浪費': smoking.toDouble(),
@@ -216,6 +223,10 @@ class SalarySpendingBreakdownService {
 
   String categorize(String description) {
     final text = description.toLowerCase();
+    if (WasteTrackingService.extractWasteCategory(description) == '喫煙' &&
+        !RegExp(r'食品|飲酒|酒購入|書籍|内訳').hasMatch(description)) {
+      return '娯楽・浪費';
+    }
     // 金融機関名を含む手数料を返済元本へ分類しない。
     // fee の部分一致は coffee 等も拾うため単語境界を使う。
     if (text.contains('手数料') || RegExp(r'\bfees?\b').hasMatch(text)) {

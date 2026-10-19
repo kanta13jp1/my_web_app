@@ -1,3 +1,5 @@
+import 'receipt_category_allocation.dart';
+
 enum AssetReflectionKind { dining, drinkingOut, alcoholPurchase, reading }
 
 extension AssetReflectionKindLabel on AssetReflectionKind {
@@ -140,6 +142,9 @@ class AssetCalendarReflection {
       };
       if (kinds.isEmpty) continue;
       final value = flow['amount'];
+      final receipt = value is num
+          ? ReceiptCategoryAllocation.parse(description, value.abs().toDouble())
+          : null;
       result.add(
         AssetCalendarReflection(
           sourceKey: 'flow:$id',
@@ -154,6 +159,7 @@ class AssetCalendarReflection {
                   !RegExp(r'金額不明|金額未確認|推定|概算').hasMatch(description)
               ? value.abs().toDouble()
               : null,
+          alcoholAmount: receipt?['飲酒'],
           linkedFlowId: RegExp(r'^[1-9][0-9]*$').hasMatch(id) ? id : null,
         ),
       );
