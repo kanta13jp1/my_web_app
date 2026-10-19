@@ -38,6 +38,10 @@ def collect(root, paths):
             match = re.match(r'^(.*?):\d+: (.*)$', line)
             if not match:
                 raise RuntimeError('unrecognized codespell result')
+            # Exact product spellings, not dictionary substitutions. Keep case
+            # significant so ordinary misspellings are still reported.
+            if match[2].split(' ==> ', 1)[0] in {'Ameba', 'freee', 'Progate'}:
+                continue
             findings.append({'kind': 'spelling', 'file': match[1], 'detail': match[2]})
     return findings
 
