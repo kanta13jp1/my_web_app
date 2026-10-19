@@ -2,7 +2,7 @@ name: Echo Pump Dart MCP
 on:
   push:
     branches: [codex/echo-pump-dart-mcp]
-    paths: ['scripts/echo_pump_dart_mcp/**', '.github/workflows/echo-pump-dart-mcp.yml', 'lib/widgets/echo_pump_title_screen.dart', 'test/widgets/echo_pump_title_screen_test.dart']
+    paths: ['scripts/echo_pump_dart_mcp/**', '.github/workflows/echo-pump-dart-mcp.yml', 'lib/pages/echo_pump_game_page.dart', 'test/pages/echo_pump_restart_test.dart']
   workflow_dispatch:
 permissions: {}
 concurrency:
@@ -28,6 +28,8 @@ jobs:
           flutter pub get
           python -m pip install mcp==1.26.0
       - name: Call the real Dart MCP server
+        env:
+          DART_MCP_STAGE: candidate
         run: python scripts/echo_pump_dart_mcp/probe.py
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()

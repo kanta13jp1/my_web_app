@@ -38,6 +38,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
   bool _inventoryOpen = false;
   bool _moving = false;
   bool _keyboardEnabled = false;
+  bool _restartDialogOpen = false;
 
   late final EchoPumpAudio _audio;
 
@@ -97,6 +98,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
         _introPlaying ||
         _moving ||
         _inventoryOpen ||
+        _restartDialogOpen ||
         _game.finished) {
       return false;
     }
@@ -147,6 +149,49 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
       );
     } finally {
       if (mounted) setState(() => _moving = false);
+    }
+  }
+
+  Future<void> _requestRestart(BuildContext restartContext) async {
+    if (_restartDialogOpen || _moving || _inventoryOpen) return;
+    if (_game.turn == 0 || _game.finished) {
+      _act(() => _game = EchoPumpGame(), EchoPumpCue.start);
+      return;
+    }
+    final currentGame = _game;
+    _restartDialogOpen = true;
+    bool? confirmed;
+    try {
+      confirmed = await showDialog<bool>(
+        context: restartContext,
+        useRootNavigator: false,
+        builder: (dialogContext) => AlertDialog(
+          scrollable: true,
+          title: const Text('最初からやり直しますか？'),
+          content: Text(
+            '現在のターン ${_game.turn}、所持品、設備の状態はリセットされます。'
+            'この探索を続ける場合は「探索を続ける」を選んでください。',
+          ),
+          actions: [
+            TextButton(
+              key: const Key('echo-restart-cancel'),
+              autofocus: true,
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('探索を続ける'),
+            ),
+            FilledButton(
+              key: const Key('echo-restart-confirm'),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('最初からやり直す'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      _restartDialogOpen = false;
+    }
+    if (mounted && identical(currentGame, _game) && confirmed == true) {
+      _act(() => _game = EchoPumpGame(), EchoPumpCue.start);
     }
   }
 
@@ -250,11 +295,12 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
                   icon: const Icon(Icons.inventory_2_outlined),
                 ),
               ),
-              IconButton(
-                tooltip: '最初からやり直す',
-                onPressed: () =>
-                    _act(() => _game = EchoPumpGame(), EchoPumpCue.start),
-                icon: const Icon(Icons.refresh),
+              Builder(
+                builder: (restartContext) => IconButton(
+                  tooltip: '最初からやり直す',
+                  onPressed: () => _requestRestart(restartContext),
+                  icon: const Icon(Icons.refresh),
+                ),
               ),
             ],
           ),

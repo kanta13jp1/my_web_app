@@ -1,8 +1,10 @@
 """Exercise the SDK-shipped Dart MCP via real stdio, retaining every response."""
 import asyncio
 import json
+import hashlib
 import os
 import shutil
+import re
 import subprocess
 import time
 from datetime import datetime, timezone
@@ -44,6 +46,7 @@ async def main():
                 tool_list = await session.list_tools()
                 save('tools.json', tool_list.model_dump(mode='json'))
                 tools = {tool.name: tool for tool in tool_list.tools}
+                assert {'analyze_files','run_tests','resolve_workspace_symbol','dart_format'} <= tools.keys()
                 calls = []
                 async def call(name, arguments):
                     start=time.monotonic()
@@ -52,25 +55,37 @@ async def main():
                     calls.append(entry)
                     save('calls.json', calls)
                     print(json.dumps({'name':name,'isError':result.isError,'seconds':entry['seconds']},ensure_ascii=False),flush=True)
+                    assert not result.isError, entry
                     return result
                 if 'add_roots' in tools:
                     await call('add_roots', {'roots':[{'uri':ROOT.as_uri(),'name':'echo-pump-test-checkout'}]})
                 elif 'roots' in tools:
                     await call('roots', {'command':'add','roots':[{'uri':ROOT.as_uri(),'name':'echo-pump-test-checkout'}]})
                 # Discover schema first; follow-up uses exact paths and test contracts.
+                stage = os.environ.get('DART_MCP_STAGE', 'baseline')
+                if stage == 'candidate':
+                    changed = ['lib/pages/echo_pump_game_page.dart','test/pages/echo_pump_restart_test.dart']
+                    await call('dart_format', {'roots':[{'root':ROOT.as_uri(),'paths':changed}]})
+                    hashes={}
+                    for path in changed:
+                        target=OUT/'formatted'/path
+                        target.parent.mkdir(parents=True,exist_ok=True)
+                        shutil.copyfile(ROOT/path,target)
+                        hashes[path]=hashlib.sha256(target.read_bytes()).hexdigest()
+                    save('formatted-readback.json',hashes)
                 if 'analyze_files' in tools:
-                    await call('analyze_files', {'roots':[{'root':ROOT.as_uri(),'paths':['lib/pages/echo_pump_game_page.dart','lib/widgets/echo_pump_title_screen.dart']}]})
+                    analysis = await call('analyze_files', {'roots':[{'root':ROOT.as_uri(),'paths':['lib/pages/echo_pump_game_page.dart','test/pages/echo_pump_restart_test.dart']}]})
+                    assert any(getattr(c,'text','') == 'No errors' for c in analysis.content)
                 if 'resolve_workspace_symbol' in tools:
                     await call('resolve_workspace_symbol', {'query':'EchoPumpGame'})
                 tests = await call('run_tests', {'roots':[{'root':ROOT.as_uri(),'paths':['test/widgets/echo_pump_title_screen_test.dart','test/pages/echo_pump_restart_test.dart']}], 'testRunnerArgs':{'concurrency':'1','reporter':'expanded'}})
                 output = '\n'.join(getattr(c,'text','') for c in tests.content)
                 passed = 'All tests passed!' in output and 'Some tests failed.' not in output
-                stage = os.environ.get('DART_MCP_STAGE', 'baseline')
                 save('summary.json', {'stage':stage,'tools':len(tools),'calls':len(calls),'mcpErrors':sum(bool(c['result'].get('isError')) for c in calls),'testsPassed':passed,'sha':os.environ.get('GITHUB_SHA')})
                 if stage == 'baseline':
                     assert not passed and 'Bad state: No element' not in output
                     assert output.count('Found 0 widgets with text') == 4, output
                 else:
-                    assert passed, output
+                    assert passed and re.search(r'\+7: All tests passed!', output), output
 
 asyncio.run(main())
