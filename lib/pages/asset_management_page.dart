@@ -34362,7 +34362,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               if (_showDailyChange)
                 AssetRecordedChangeDetails(
                   dates: _sortedDates,
-                  changes: [for (final group in _barChartGroups) group.barRods.first.toY],
+                  changes: [
+                    for (final group in _barChartGroups) group.barRods.first.toY
+                  ],
                 ),
             ],
           ),

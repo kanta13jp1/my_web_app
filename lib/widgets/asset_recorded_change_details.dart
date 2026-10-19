@@ -17,7 +17,8 @@ class AssetRecordedChangeDetails extends StatelessWidget {
     if (dates.isEmpty || dates.length != changes.length) {
       return const SizedBox.shrink();
     }
-    final money = NumberFormat.currency(locale: 'ja_JP', symbol: '¥', decimalDigits: 0);
+    final money =
+        NumberFormat.currency(locale: 'ja_JP', symbol: '¥', decimalDigits: 0);
     return ExpansionTile(
       title: const Text('記録日ごとの差額を一覧で確認'),
       subtitle: const Text('初回は比較なし。利益・日次収支ではありません。'),
