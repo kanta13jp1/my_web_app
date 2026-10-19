@@ -20,7 +20,18 @@ const txt=name=>page.getByText(name,{exact:true}).first();
 const mark=action=>events.push({seconds:(Date.now()-start)/1000,action});
 page.on('pageerror',e=>errors.push(e.message));
 async function click(name,wait=400){await b(name).click({timeout:15000});mark(name);await hold(wait);}
-async function load(){await page.goto(origin+'/echo-pump',{waitUntil:'domcontentloaded'});const a=page.locator('flt-semantics-placeholder');await a.waitFor({state:'attached',timeout:60000});await a.dispatchEvent('click');await b('ゲーム開始').waitFor({timeout:60000});await hold(2500);}
+async function load(){
+ await page.goto(origin+'/echo-pump',{waitUntil:'domcontentloaded'});
+ const deadline=Date.now()+60000;
+ while(Date.now()<deadline){
+  if(await b('ゲーム開始').isVisible()){await hold(2500);mark('load-ready');return;}
+  const placeholder=page.locator('flt-semantics-placeholder');
+  if(await placeholder.count())await placeholder.dispatchEvent('click');
+  await hold(250);
+ }
+ await page.screenshot({path:out+'/load-failed.png'});
+ throw new Error('Public game start button not visible after bounded semantics initialization');
+}
 async function shot(name,retain,delay=2500){if(retain){await page.screenshot({path:out+'/'+name+'.png'});await hold(delay);}}
 async function run(retain){
  await click('ゲーム開始');await click('スキップして開始');
