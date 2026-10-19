@@ -124,7 +124,7 @@ function sendJson(res, status, body) {
 function createServer(config, dependencies = {}) {
   return http.createServer(async (req, res) => {
     const path = String(req.url || '').split('?')[0];
-    if (req.method === 'GET' && path === '/healthz') {
+    if (req.method === 'GET' && (path === '/health' || path === '/healthz')) {
       return sendJson(res, 200, { status: 'ok' });
     }
     const targetStatus = req.method === 'GET' && path === '/target-status';
