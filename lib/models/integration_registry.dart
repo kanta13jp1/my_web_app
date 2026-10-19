@@ -410,9 +410,8 @@ class IntegrationCodeMappingCsvParser {
           'Row ${rowIndex + 1} requires old_code and new_code.',
         );
       }
-      final activeValue = activeIndex == null
-          ? 'true'
-          : _cell(row, activeIndex).toLowerCase();
+      final activeValue =
+          activeIndex == null ? 'true' : _cell(row, activeIndex).toLowerCase();
       if (activeValue != 'true' && activeValue != 'false') {
         throw FormatException(
           'Row ${rowIndex + 1} requires active to be true or false.',
