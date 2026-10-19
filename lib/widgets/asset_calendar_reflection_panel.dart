@@ -191,19 +191,13 @@ class _AssetCalendarReflectionPanelState
 
   @override
   Widget build(BuildContext context) {
-    final linked =
-        _events.map((e) => e.linkedFlowId).whereType<String>().toSet();
-    final events = [
-      ..._events.where(
-        (e) => !e.date.isBefore(widget.start) && e.date.isBefore(widget.end),
-      ),
-      ...widget.flowEvents.where(
-        (e) =>
-            !linked.contains(e.linkedFlowId) &&
-            !e.date.isBefore(widget.start) &&
-            e.date.isBefore(widget.end),
-      ),
-    ];
+    final events =
+        AssetCalendarReflection.mergeSources(_events, widget.flowEvents)
+            .where(
+              (e) =>
+                  !e.date.isBefore(widget.start) && e.date.isBefore(widget.end),
+            )
+            .toList();
     final summary = AssetReflectionSummary(events);
     final selected = widget.selectedDate;
     final dayEvents = selected == null
@@ -227,7 +221,7 @@ class _AssetCalendarReflectionPanelState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '外食・飲酒・読書の振り返り',
+            '外食・飲酒・たばこ購入・読書の振り返り',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           Wrap(
@@ -235,8 +229,9 @@ class _AssetCalendarReflectionPanelState
             children: [
               for (final kind in AssetReflectionKind.values)
                 Chip(
-                  backgroundColor:
-                      AssetReflectionDayBadge.backgroundFor({kind}),
+                  backgroundColor: AssetReflectionDayBadge.backgroundFor({
+                    kind,
+                  }),
                   label: Text('${kind.label} ${summary.days(kind)}日'),
                 ),
             ],
@@ -249,6 +244,9 @@ class _AssetCalendarReflectionPanelState
           ),
           const Text(
             '記録のある日だけを集計しています。印のない日は未記録の場合があります。振り返りの金額は参考内訳で、支出合計には加算しません。',
+          ),
+          const Text(
+            'たばこ購入は記録済み支出の品目から表示します。喫煙した日や本数は判定しません。混合購入の金額はレシート全体で、たばこ代だけの金額ではありません。',
           ),
           if (_loading) const LinearProgressIndicator(),
           if (_error != null)
@@ -283,10 +281,11 @@ class _AssetCalendarReflectionPanelState
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
-                  '${event.kinds.map((k) => k.label).join('・')}: ${event.title}\n'
-                  '${event.memo}\n出典: ${event.sourceLabel}・金額: ${event.verifiedAmount?.toStringAsFixed(0) ?? '不明'}'
-                  '${event.alcoholAmount == null ? '' : '（うち酒代 ${event.alcoholAmount}円）'}'
-                  '${event.pages == null ? '' : '・${event.pages}ページ'}${event.minutes == null ? '' : '・${event.minutes}分'}'),
+                '${event.kinds.map((k) => k.label).join('・')}: ${event.title}\n'
+                '${event.memo}\n出典: ${event.sourceLabel}・金額: ${event.verifiedAmount?.toStringAsFixed(0) ?? '不明'}'
+                '${event.alcoholAmount == null ? '' : '（うち酒代 ${event.alcoholAmount}円）'}'
+                '${event.pages == null ? '' : '・${event.pages}ページ'}${event.minutes == null ? '' : '・${event.minutes}分'}',
+              ),
             ),
         ],
       ),

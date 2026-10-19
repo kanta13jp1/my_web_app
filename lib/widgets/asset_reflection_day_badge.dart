@@ -5,6 +5,9 @@ class AssetReflectionDayBadge extends StatelessWidget {
   const AssetReflectionDayBadge({super.key, required this.kinds});
   final Set<AssetReflectionKind> kinds;
   static Color? backgroundFor(Set<AssetReflectionKind> kinds) {
+    if (kinds.contains(AssetReflectionKind.tobaccoPurchase)) {
+      return const Color(0xFFCBD5E1);
+    }
     if (kinds.contains(AssetReflectionKind.drinkingOut)) {
       return const Color(0xFFFECACA);
     }
