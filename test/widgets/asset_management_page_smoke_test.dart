@@ -225,14 +225,17 @@ void main() {
     await tester.ensureVisible(title);
     await tester.pump(const Duration(milliseconds: 200));
     final header = find.ancestor(of: title, matching: find.byType(Row)).first;
-    await tester.tap(find.descendant(of: header, matching: find.byType(Switch)));
+    await tester
+        .tap(find.descendant(of: header, matching: find.byType(Switch)));
     await tester.pump(const Duration(milliseconds: 200));
     final changed = find.text('残高差（前回記録比）');
     await tester.ensureVisible(changed);
-    final changedHeader = find.ancestor(
-      of: changed,
-      matching: find.byType(Row),
-    ).first;
+    final changedHeader = find
+        .ancestor(
+          of: changed,
+          matching: find.byType(Row),
+        )
+        .first;
     await tester.tap(
       find.descendant(of: changedHeader, matching: find.byType(Switch)),
     );
