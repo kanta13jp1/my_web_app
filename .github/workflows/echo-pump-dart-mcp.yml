@@ -1,0 +1,37 @@
+name: Echo Pump Dart MCP
+on:
+  push:
+    branches: [codex/echo-pump-dart-mcp]
+    paths: ['scripts/echo_pump_dart_mcp/**', '.github/workflows/echo-pump-dart-mcp.yml', 'lib/widgets/echo_pump_title_screen.dart', 'test/widgets/echo_pump_title_screen_test.dart']
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: echo-pump-dart-mcp-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  probe:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - name: Prepare isolated SDK and client
+        run: |
+          flutter config --no-analytics
+          flutter pub get
+          python -m pip install mcp==1.26.0
+      - name: Call the real Dart MCP server
+        run: python scripts/echo_pump_dart_mcp/probe.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: echo-pump-dart-mcp-${{ github.run_id }}
+          path: dart-mcp-evidence/
+          retention-days: 7
