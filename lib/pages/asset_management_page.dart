@@ -34273,26 +34273,30 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _showDailyChange ? '戦果レポート (日次損益)' : '戦略マップ (資産推移)',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        height: 1.5,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _showDailyChange ? '残高差（前回記録比）' : '戦略マップ (資産推移)',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          height: 1.5,
+                        ),
                       ),
-                    ),
-                    Text(
-                      _showDailyChange ? '昨日の自分に勝ったか？' : '国力(富)の総量は増えているか？',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF9CA3AF),
-                        height: 1.5,
+                      Text(
+                        _showDailyChange
+                            ? '利益・日次収支とは異なります'
+                            : '国力(富)の総量は増えているか？',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF9CA3AF),
+                          height: 1.5,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 Row(
                   children: [
@@ -34311,6 +34315,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ],
             ),
+            if (_showDailyChange)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  '直前の記録日との資産・負債合計の差です。記録間隔は一定ではありません。'
+                  '口座の追加・残高訂正・評価額の変更も含むため、利益や昨日との差を表しません。',
+                  style: TextStyle(fontSize: 12, height: 1.5),
+                ),
+              ),
             if (!_showDailyChange)
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
