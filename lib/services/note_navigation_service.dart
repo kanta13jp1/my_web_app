@@ -284,7 +284,7 @@ class SupabaseNoteNavigationRepository implements NoteNavigationRepository {
   }) async {
     const pageSize = 500;
     final rows = <Map<String, dynamic>>[];
-    for (var offset = 0;; offset += pageSize) {
+    for (var offset = 0;;) {
       final page = List<Map<String, dynamic>>.from(
         await _client
             .from(table)
@@ -293,8 +293,10 @@ class SupabaseNoteNavigationRepository implements NoteNavigationRepository {
             .order('id')
             .range(offset, offset + pageSize - 1),
       );
+      if (page.isEmpty) break;
       rows.addAll(page);
-      if (page.length < pageSize) break;
+      // PostgREST can return fewer rows than requested without reaching EOF.
+      offset += page.length;
     }
     return rows;
   }
