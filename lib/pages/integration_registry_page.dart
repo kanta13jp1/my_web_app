@@ -535,7 +535,7 @@ Content-Type: application/json
                       key: const Key('pick-mapping-csv-button'),
                       onPressed: () async {
                         final bytes = await _mappingCsvPicker();
-                        if (bytes == null) return;
+                        if (!context.mounted || bytes == null) return;
                         try {
                           csv.text = _csvBytesDecoder.decode(
                             bytes,

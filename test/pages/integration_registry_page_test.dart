@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -214,6 +215,36 @@ Future<void> _tapTab(WidgetTester tester, String label) async {
 }
 
 void main() {
+  testWidgets('ignores CSV picker result after dialog cancellation', (
+    tester,
+  ) async {
+    final service = _FakeIntegrationRegistryService();
+    final picked = Completer<Uint8List?>();
+    await _pumpPage(
+      tester,
+      service,
+      mappingCsvPicker: () => picked.future,
+    );
+    await _tapTab(tester, 'Code mappings');
+    await tester.tap(find.byKey(const Key('import-mapping-button')));
+    await tester.pumpAndSettle();
+    final pickButton = find.byKey(const Key('pick-mapping-csv-button'));
+    await tester.ensureVisible(pickButton);
+    await tester.tap(pickButton);
+    await tester.pump();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    picked.complete(
+      Uint8List.fromList('old_code,new_code\nOLD,NEW'.codeUnits),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('mapping-csv-field')), findsNothing);
+    expect(service.importedMappings, 0);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('shows versioned systems and interface inventory', (
     tester,
   ) async {
