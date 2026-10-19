@@ -1,5 +1,6 @@
 import '../models/asset_income_source_evidence.dart';
 import '../widgets/asset_income_reconciliation_section.dart';
+import '../services/asset_chart_axis_labels.dart';
 import '../services/asset_month_end_snapshot_service.dart';
 import '../widgets/asset_month_end_snapshot_card.dart';
 import '../widgets/asset_payroll_deductions_section.dart';
@@ -34449,7 +34450,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           showTitles: true,
           reservedSize: 30,
           getTitlesWidget: _bottomTitleWidgets,
-          interval: max(1, (_sortedDates.length / 5).floor().toDouble()),
+          interval: 1,
         ),
       ),
       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -34458,16 +34459,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _bottomTitleWidgets(double value, TitleMeta meta) {
-    const style = TextStyle(fontSize: 10, height: 1.5);
-    String text = '';
-    if (value.toInt() < _sortedDates.length) {
-      text = DateFormat(
-        'MM/dd',
-      ).format(DateTime.parse(_sortedDates[value.toInt()]));
+    if (!value.isFinite || value < 0 || value != value.roundToDouble()) {
+      return const SizedBox.shrink();
+    }
+    final index = value.toInt();
+    if (!assetChartDateLabelIndices(_sortedDates.length).contains(index)) {
+      return const SizedBox.shrink();
     }
     return SideTitleWidget(
       meta: meta,
-      child: Text(text, style: style),
+      child: Text(
+        DateFormat('MM/dd').format(DateTime.parse(_sortedDates[index])),
+        style: const TextStyle(fontSize: 10, height: 1.5),
+      ),
     );
   }
 
