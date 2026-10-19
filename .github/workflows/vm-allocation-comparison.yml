@@ -1,0 +1,200 @@
+{
+  "name": "Fixed SHA VM allocation comparison",
+  "on": {
+    "workflow_dispatch": {}
+  },
+  "permissions": {},
+  "concurrency": {
+    "group": "vm-allocation-comparison-304bdc3aa6c3e6c9442381c0ac39809f715c2120",
+    "cancel-in-progress": false
+  },
+  "jobs": {
+    "round-1": {
+      "name": "Round 1 / ${{ matrix.total }} shards / ${{ matrix.index }}",
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 20,
+      "permissions": {
+        "contents": "read"
+      },
+      "strategy": {
+        "fail-fast": false,
+        "max-parallel": 5,
+        "matrix": {
+          "include": [
+            {
+              "total": 2,
+              "index": 0
+            },
+            {
+              "total": 2,
+              "index": 1
+            },
+            {
+              "total": 3,
+              "index": 0
+            },
+            {
+              "total": 3,
+              "index": 1
+            },
+            {
+              "total": 3,
+              "index": 2
+            }
+          ]
+        }
+      },
+      "steps": [
+        {
+          "name": "Checkout exact shared source",
+          "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "with": {
+            "ref": "304bdc3aa6c3e6c9442381c0ac39809f715c2120",
+            "persist-credentials": false
+          }
+        },
+        {
+          "name": "Setup Flutter",
+          "uses": "./.github/actions/setup-flutter-sdk",
+          "with": {
+            "flutter-version": "3.38.10"
+          }
+        },
+        {
+          "name": "Cache Flutter pub",
+          "uses": "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+          "with": {
+            "path": "~/.pub-cache",
+            "key": "${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}",
+            "restore-keys": "${{ runner.os }}-pub-"
+          }
+        },
+        {
+          "name": "Install dependencies",
+          "run": "flutter pub get"
+        },
+        {
+          "name": "Record Flutter version",
+          "run": "mkdir -p .ci-logs\nflutter --version --machine > .ci-logs/flutter-version.json"
+        },
+        {
+          "name": "Run measured VM shard",
+          "env": {
+            "SOURCE_SHA": "304bdc3aa6c3e6c9442381c0ac39809f715c2120",
+            "SHARD": "${{ matrix.index }}",
+            "TOTAL": "${{ matrix.total }}",
+            "ROUND": "1"
+          },
+          "run": "python - <<'PY'\nimport datetime,json,os,platform,subprocess,time\nfrom pathlib import Path\np=Path('.ci-logs');p.mkdir(exist_ok=True)\nindex=int(os.environ['SHARD']);total=int(os.environ['TOTAL']);round_no=int(os.environ['ROUND'])\nassert total in (2,3) and 0 <= index < total\nsha=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()\nassert sha==os.environ['SOURCE_SHA']\nstarted=datetime.datetime.now(datetime.timezone.utc).isoformat();clock=time.perf_counter()\nr=subprocess.run(['python','scripts/run_vm_test_shard.py','--total-shards='+str(total),'--shard-index='+str(index)],check=False)\nmetrics={'source_sha':sha,'round':round_no,'total':total,'index':index,'started_at':started,'wall_seconds':time.perf_counter()-clock,'exit_code':r.returncode,'cpu_count':os.cpu_count(),'machine':platform.machine(),'os':platform.platform()}\n(p/'metrics.json').write_text(json.dumps(metrics,indent=2),encoding='utf-8')\nraise SystemExit(r.returncode)\nPY"
+        },
+        {
+          "name": "Upload comparison evidence",
+          "if": "${{ always() }}",
+          "uses": "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+          "with": {
+            "name": "vm-compare-r1-n${{ matrix.total }}-s${{ matrix.index }}",
+            "include-hidden-files": true,
+            "retention-days": 7,
+            "if-no-files-found": "error",
+            "path": ".ci-logs/metrics.json\n.ci-logs/flutter-version.json\n.ci-logs/vm-shard.json\n.ci-logs/vm-events.jsonl\ncoverage/lcov.info"
+          }
+        }
+      ]
+    },
+    "round-2": {
+      "name": "Round 2 / ${{ matrix.total }} shards / ${{ matrix.index }}",
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 20,
+      "permissions": {
+        "contents": "read"
+      },
+      "strategy": {
+        "fail-fast": false,
+        "max-parallel": 5,
+        "matrix": {
+          "include": [
+            {
+              "total": 2,
+              "index": 0
+            },
+            {
+              "total": 2,
+              "index": 1
+            },
+            {
+              "total": 3,
+              "index": 0
+            },
+            {
+              "total": 3,
+              "index": 1
+            },
+            {
+              "total": 3,
+              "index": 2
+            }
+          ]
+        }
+      },
+      "steps": [
+        {
+          "name": "Checkout exact shared source",
+          "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "with": {
+            "ref": "304bdc3aa6c3e6c9442381c0ac39809f715c2120",
+            "persist-credentials": false
+          }
+        },
+        {
+          "name": "Setup Flutter",
+          "uses": "./.github/actions/setup-flutter-sdk",
+          "with": {
+            "flutter-version": "3.38.10"
+          }
+        },
+        {
+          "name": "Cache Flutter pub",
+          "uses": "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+          "with": {
+            "path": "~/.pub-cache",
+            "key": "${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}",
+            "restore-keys": "${{ runner.os }}-pub-"
+          }
+        },
+        {
+          "name": "Install dependencies",
+          "run": "flutter pub get"
+        },
+        {
+          "name": "Record Flutter version",
+          "run": "mkdir -p .ci-logs\nflutter --version --machine > .ci-logs/flutter-version.json"
+        },
+        {
+          "name": "Run measured VM shard",
+          "env": {
+            "SOURCE_SHA": "304bdc3aa6c3e6c9442381c0ac39809f715c2120",
+            "SHARD": "${{ matrix.index }}",
+            "TOTAL": "${{ matrix.total }}",
+            "ROUND": "2"
+          },
+          "run": "python - <<'PY'\nimport datetime,json,os,platform,subprocess,time\nfrom pathlib import Path\np=Path('.ci-logs');p.mkdir(exist_ok=True)\nindex=int(os.environ['SHARD']);total=int(os.environ['TOTAL']);round_no=int(os.environ['ROUND'])\nassert total in (2,3) and 0 <= index < total\nsha=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()\nassert sha==os.environ['SOURCE_SHA']\nstarted=datetime.datetime.now(datetime.timezone.utc).isoformat();clock=time.perf_counter()\nr=subprocess.run(['python','scripts/run_vm_test_shard.py','--total-shards='+str(total),'--shard-index='+str(index)],check=False)\nmetrics={'source_sha':sha,'round':round_no,'total':total,'index':index,'started_at':started,'wall_seconds':time.perf_counter()-clock,'exit_code':r.returncode,'cpu_count':os.cpu_count(),'machine':platform.machine(),'os':platform.platform()}\n(p/'metrics.json').write_text(json.dumps(metrics,indent=2),encoding='utf-8')\nraise SystemExit(r.returncode)\nPY"
+        },
+        {
+          "name": "Upload comparison evidence",
+          "if": "${{ always() }}",
+          "uses": "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+          "with": {
+            "name": "vm-compare-r2-n${{ matrix.total }}-s${{ matrix.index }}",
+            "include-hidden-files": true,
+            "retention-days": 7,
+            "if-no-files-found": "error",
+            "path": ".ci-logs/metrics.json\n.ci-logs/flutter-version.json\n.ci-logs/vm-shard.json\n.ci-logs/vm-events.jsonl\ncoverage/lcov.info"
+          }
+        }
+      ],
+      "needs": [
+        "round-1"
+      ]
+    }
+  }
+}
