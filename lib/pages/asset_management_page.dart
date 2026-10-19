@@ -34450,7 +34450,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           showTitles: true,
           reservedSize: 30,
           getTitlesWidget: _bottomTitleWidgets,
-          interval: max(1, (_sortedDates.length / 5).floor().toDouble()),
+          interval: 1,
         ),
       ),
       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
