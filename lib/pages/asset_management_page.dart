@@ -34333,7 +34333,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const Text('個別', style: TextStyle(fontSize: 10, height: 1.5)),
+                    const Text('個別',
+                        style: TextStyle(fontSize: 10, height: 1.5)),
                     Switch(
                       value: _isStacked,
                       activeThumbColor: const Color(0xFF0D9488),
@@ -34344,7 +34345,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         });
                       },
                     ),
-                    const Text('合計', style: TextStyle(fontSize: 10, height: 1.5)),
+                    const Text('合計',
+                        style: TextStyle(fontSize: 10, height: 1.5)),
                   ],
                 ),
               const SizedBox(height: 24),

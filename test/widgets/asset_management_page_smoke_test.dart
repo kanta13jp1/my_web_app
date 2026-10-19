@@ -213,7 +213,8 @@ void main() {
         find.byKey(const ValueKey('asset-chart-card-semantics')),
       );
       expect(cardNode.hasFlag(SemanticsFlag.hasToggledState), isFalse);
-      expect(cardNode.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
+      expect(
+          cardNode.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
 
       final note = find.textContaining('記録間隔は一定ではありません');
       expect(note, findsOneWidget);
