@@ -24,7 +24,7 @@ AssetCalendarDaySummary summary(List<Map<String, dynamic>> flows) =>
     ).dayFor(DateTime(2026, 6, 20))!;
 
 void main() {
-  test('calendar hides reserved provenance marker without changing source or totals', () {
+  test('marker removal preserves source and totals', () {
     final source = flow(
       '[現金] 使途不明金（残高差分から自動記録） [auto_asset_delta:2026-06-20:synthetic:900:200]',
       700,
