@@ -34,22 +34,28 @@ async function load(){
 }
 async function shot(name,retain,delay=2500){if(retain){await page.screenshot({path:out+'/'+name+'.png'});await hold(delay);}}
 async function run(retain){
- await click('ゲーム開始');await click('スキップして開始');
- await hold(1800);
- for(const label of ['B 整備','A 搬入']){
-  await page.getByRole('checkbox',{name:label,exact:true}).click();await hold(500);
- }
- for(const [i,label] of ['中央廊下へ','工具庫へ','中央廊下へ','ポンプ室へ','中央廊下へ','管理室へ'].entries()){
+ await click('ゲーム開始');await click('スキップして開始');await hold(1000);
+ await b('設備寄りに見る').click();
+ await b('保守メモを調べる').click();
+ await txt('夜間保守メモ 1 / 2').waitFor({state:'visible',timeout:15000});
+ await shot('memo-stopped',retain,1000);await click('メモを閉じる');
+ await b('中央廊下の扉を調べる').click();
+ await txt('歩行中…').waitFor({state:'visible',timeout:15000});
+ if(retain)await page.screenshot({path:out+'/walking.png'});
+ await b('扉を開けて進む').waitFor({state:'visible',timeout:15000});
+ await shot('walk-stopped',retain,1000);
+ await b('扉を開けて進む').click();
+ await b('演出をスキップ').waitFor({state:'visible',timeout:15000});
+ await b('演出をスキップ').waitFor({state:'detached',timeout:15000});
+ await page.mouse.wheel(0,-30000);await shot('hall-background',retain,1800);
+ for(const [i,label] of ['管理室へ','中央廊下へ','搬入区画へ'].entries()){
   await b(label).click({timeout:15000});mark(label);
-  await hold(300);
-  if(retain)await page.screenshot({path:out+'/door-'+i+'-opening.png'});
-  await hold(600);
-  if(retain)await page.screenshot({path:out+'/door-'+i+'-closing.png'});
-  await hold(1500);
-  await shot('arrival-'+i,retain,1800);
+  await hold(300);if(retain)await page.screenshot({path:out+'/door-'+i+'-opening.png'});
+  await hold(600);if(retain)await page.screenshot({path:out+'/door-'+i+'-closing.png'});
+  await b('演出をスキップ').waitFor({state:'detached',timeout:15000});
+  await page.mouse.wheel(0,-30000);await shot('room-'+i,retain,1800);
  }
- await b('中央廊下へ').waitFor({state:'visible',timeout:15000});
- mark('returned-to-control-room');await shot('final-control-room',retain,3000);
+ mark('arrived-loading-room');await shot('final-loading-room',retain,2000);
 }
 let ready,after;
 try{
@@ -59,10 +65,10 @@ try{
  await click('音をON',1000);await hold(1800);await run(true);await hold(2000);
  after=await version();assert.deepEqual(errors,[]);
 }finally{
- writeFileSync(out+'/evidence.json',JSON.stringify({before,after,ready,events,errors,method:'Actual public door opening/blackout/closing/arrival UI, rehearsed for fonts; clean headed Chromium + dedicated audio sink; no cookies/microphone/state injection'},null,2));
+ writeFileSync(out+'/evidence.json',JSON.stringify({before,after,ready,events,errors,method:'Actual public memo walk cycle, door sounds/transitions and room backgrounds UI, rehearsed for fonts; clean headed Chromium + dedicated audio sink; no cookies/microphone/state injection'},null,2));
  await context.close();await browser.close();audio.stdin.write('q');await stopped;
 }
-const raw=await video.path(),final=out+'/echo-pump-door-x.mp4';
+const raw=await video.path(),final=out+'/echo-pump-improvements-x.mp4';
 execFileSync('ffmpeg',['-y','-ss',String(ready),'-i',raw,'-ss',String(ready),'-i',out+'/browser-audio.wav','-map','0:v:0','-map','1:a:0','-shortest','-c:v','libx264','-preset','medium','-b:v','550k','-pix_fmt','yuv420p','-c:a','aac','-b:a','64k','-movflags','+faststart',final],{stdio:'inherit'});
 const probe=JSON.parse(execFileSync('ffprobe',['-v','quiet','-show_format','-show_streams','-of','json',final],{encoding:'utf8'}));
 assert(statSync(final).size<5000000);assert(+probe.format.duration>25&&+probe.format.duration<65);
