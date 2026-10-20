@@ -554,7 +554,8 @@ void main() {
         SharedPreferences.setMockInitialValues(<String, Object>{
           'asset_management_display_mode_v1':
               AssetManagementDisplayMode.full.storageId,
-          'asset_category_budgets_v2_synthetic-budget-owner': jsonEncode({'食費': 5000}),
+          'asset_category_budgets_v2_synthetic-budget-owner':
+              jsonEncode({'食費': 5000}),
         });
         await tester.binding.setSurfaceSize(size);
         addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -598,7 +599,8 @@ void main() {
         );
         final prefs = await SharedPreferences.getInstance();
         expect(
-          jsonDecode(prefs.getString('asset_category_budgets_v2_synthetic-budget-owner')!),
+          jsonDecode(prefs
+              .getString('asset_category_budgets_v2_synthetic-budget-owner')!),
           {'食費': 5000},
         );
         expect(tester.takeException(), isNull);
@@ -789,7 +791,8 @@ void main() {
       testWidgets('budget save retains invalid input $invalid at ${size.width}',
           (tester) async {
         SharedPreferences.setMockInitialValues(<String, Object>{
-          'asset_category_budgets_v2_synthetic-budget-owner': jsonEncode({'食費': 5000}),
+          'asset_category_budgets_v2_synthetic-budget-owner':
+              jsonEncode({'食費': 5000}),
           'asset_management_display_mode_v1':
               AssetManagementDisplayMode.full.storageId,
         });
@@ -835,7 +838,8 @@ void main() {
         );
         final prefs = await SharedPreferences.getInstance();
         expect(
-          jsonDecode(prefs.getString('asset_category_budgets_v2_synthetic-budget-owner')!),
+          jsonDecode(prefs
+              .getString('asset_category_budgets_v2_synthetic-budget-owner')!),
           {'食費': 5000},
         );
         expect(tester.takeException(), isNull);
