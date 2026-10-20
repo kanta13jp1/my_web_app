@@ -25,7 +25,7 @@ void main() {
             '{"message":"offline"}',
             503,
             request: request,
-              headers: {'content-type': 'application/json'},
+            headers: {'content-type': 'application/json'},
           );
         }
         if (request.method == 'PATCH' && !zero) {
@@ -47,7 +47,7 @@ void main() {
           ),
           200,
           request: request,
-              headers: {'content-type': 'application/json'},
+          headers: {'content-type': 'application/json'},
         );
       }),
     );
