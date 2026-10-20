@@ -24,7 +24,8 @@ void main() {
           return http.Response(
             '{"message":"offline"}',
             503,
-            headers: {'content-type': 'application/json'},
+            request: request,
+              headers: {'content-type': 'application/json'},
           );
         }
         if (request.method == 'PATCH' && !zero) {
@@ -45,7 +46,8 @@ void main() {
                   ],
           ),
           200,
-          headers: {'content-type': 'application/json'},
+          request: request,
+              headers: {'content-type': 'application/json'},
         );
       }),
     );
