@@ -129,24 +129,31 @@ void main() {
         ..move(PumpRoom.hall)
         ..move(PumpRoom.workshop);
       var calls = 0;
-      await tester.pumpWidget(MaterialApp(
-        theme: ThemeData.dark(),
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-              textScaler: const TextScaler.linear(2), disableAnimations: true,),
-          child: child!,
-        ),
-        home: Scaffold(
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.dark(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: const TextScaler.linear(2),
+              disableAnimations: true,
+            ),
+            child: child!,
+          ),
+          home: Scaffold(
             body: SingleChildScrollView(
-                child: StatefulBuilder(
-                    builder: (context, setState) => EchoPumpFuseShelf(
-                          game: game,
-                          onCollect: () => setState(() {
-                            calls++;
-                            game.collectFuse();
-                          }),
-                        ),),),),
-      ),);
+              child: StatefulBuilder(
+                builder: (context, setState) => EchoPumpFuseShelf(
+                  game: game,
+                  onCollect: () => setState(() {
+                    calls++;
+                    game.collectFuse();
+                  }),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('echo-workshop-background')), findsOneWidget);
       final before = game.turn;
@@ -157,10 +164,11 @@ void main() {
       expect(game.hasFuse, isTrue);
       expect(game.turn, before + 1);
       expect(
-          tester
-              .widget<FilledButton>(find.byKey(const Key('echo-collect')))
-              .onPressed,
-          isNull,);
+        tester
+            .widget<FilledButton>(find.byKey(const Key('echo-collect')))
+            .onPressed,
+        isNull,
+      );
       expect(calls, 1);
       expect(tester.takeException(), isNull);
     });
