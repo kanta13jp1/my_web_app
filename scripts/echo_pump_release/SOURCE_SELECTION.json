@@ -1,0 +1,34 @@
+{
+  "pr": 5874,
+  "base": "8fbae86f49e2ac6ea9d2a225dc07e3cafd3bffa7",
+  "merge": "35a3c26a2bf05d01763a7cd3189bd91529ccc7be",
+  "selected_files": [
+    "assets/echo_pump/AUDIO_PROVENANCE.json",
+    "assets/echo_pump/doorClose.wav",
+    "assets/echo_pump/doorOpen.wav",
+    "lib/pages/echo_pump_game_page.dart",
+    "lib/services/echo_pump_audio.dart",
+    "lib/widgets/echo_pump_door_transition.dart",
+    "lib/widgets/echo_pump_guidance.dart",
+    "lib/widgets/echo_pump_room_stage.dart",
+    "lib/widgets/echo_pump_visuals.dart",
+    "scripts/generate_echo_pump_audio.py",
+    "test/e2e/echo_pump.spec.ts",
+    "test/e2e/echo_pump_audio.spec.ts",
+    "test/e2e/echo_pump_room_stage.spec.ts",
+    "test/services/echo_pump_audio_test.dart",
+    "test/widgets/echo_pump_room_stage_test.dart",
+    "test/widgets/echo_pump_visuals_test.dart"
+  ],
+  "runtime_sha256": {
+    "assets/echo_pump/AUDIO_PROVENANCE.json": "de1990ba4d5ebf717db7e3ae0a3ff47d9285e65a4ca89636cfccbec7164b2def",
+    "assets/echo_pump/doorClose.wav": "a8685a4d876949614517d9f9ba5047a39039dda922e46a2fa98083ae50535376",
+    "assets/echo_pump/doorOpen.wav": "3669b6c03eb5b65445e187a08c040334a671a36a1798add77317609f4735ace4",
+    "lib/pages/echo_pump_game_page.dart": "69eaa62d0dc82ee1fa3053edea466f20568d108b747f29b6640ab06b8e455745",
+    "lib/services/echo_pump_audio.dart": "7c058f80de281693604c2fd15c925c73c1b4cac02457f74163c4ee5b1c51c1d1",
+    "lib/widgets/echo_pump_door_transition.dart": "199f102cf6286bcae4db18752820105527612d7fa5c93f0a8a96abc4350ddb5b",
+    "lib/widgets/echo_pump_guidance.dart": "78cb9b83c163eaa55c6eaddb4ac8bfc90c00bd437064c282e0672fc16e9bb409",
+    "lib/widgets/echo_pump_room_stage.dart": "4dc6c4868a72fbf3c04dac9fff70b8ef5dd8d86a8d7fcb85713eeecd64171bbf",
+    "lib/widgets/echo_pump_visuals.dart": "3fc8573d7169fe2442ebaae58ee5a36a05bf6922cc03c351c27cf0520daa9913"
+  }
+}

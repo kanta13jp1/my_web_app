@@ -671,7 +671,6 @@ jobs:
           path: |
             coverage/lcov.info
             .ci-logs/vm-shard.json
-            .ci-logs/vm-events.jsonl
           if-no-files-found: error
 
       - name: VM shard summary

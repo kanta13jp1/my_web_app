@@ -58,7 +58,7 @@ class PostHogLandingConversionAnalytics implements LandingConversionAnalytics {
         ..capturePushNotificationOpened = false
         ..capturePushNotificationSubscriptions = false
         ..personProfiles = PostHogPersonProfiles.never
-        ..sendFeatureFlagEvent = false
+        ..sendFeatureFlagEvents = false
         ..sessionReplay = false
         ..surveys = false;
       await Posthog().setup(config);
