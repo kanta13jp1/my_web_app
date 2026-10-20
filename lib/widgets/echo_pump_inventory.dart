@@ -240,9 +240,9 @@ class EchoPumpFuseShelf extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Icon(available ? Icons.search : Icons.check_circle,
-                    color: _mint),
+                    color: _mint,),
                 Text(available ? '作業台の交換ヒューズ' : '回収済み',
-                    style: const TextStyle(color: _mint)),
+                    style: const TextStyle(color: _mint),),
                 if (!powered && available) const Text('B 整備で工具棚を解錠'),
               ],
             ),
@@ -263,7 +263,7 @@ class EchoPumpFuseShelf extends StatelessWidget {
 /// Finite lighting and collection transitions; no looping background ticker.
 class _WorkshopScene extends StatelessWidget {
   const _WorkshopScene(
-      {required this.available, required this.powered, required this.reduced});
+      {required this.available, required this.powered, required this.reduced,});
   final bool available, powered, reduced;
 
   @override
@@ -310,8 +310,8 @@ class _WorkshopScene extends StatelessWidget {
                       colors: [
                         Color.fromRGBO(255, 198, 105, .2 * light),
                         Colors.transparent
-                      ],
-                    )),
+                      ,],
+                    ),),
                   ),
                 ),
                 Positioned(
@@ -320,16 +320,16 @@ class _WorkshopScene extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                         color: const Color(0xDD0B171D),
-                        borderRadius: BorderRadius.circular(20)),
+                        borderRadius: BorderRadius.circular(20),),
                     child: Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                            horizontal: 10, vertical: 6,),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           Icon(powered ? Icons.lightbulb : Icons.lock_outline,
-                              color: powered ? _mint : Colors.amber, size: 18),
+                              color: powered ? _mint : Colors.amber, size: 18,),
                           const SizedBox(width: 6),
                           Text(powered ? '工具棚 解錠' : '工具棚 施錠'),
-                        ])),
+                        ],),),
                   ),
                 ),
                 Positioned.fill(
@@ -340,19 +340,19 @@ class _WorkshopScene extends StatelessWidget {
                       heightFactor: .5,
                       child: TweenAnimationBuilder<double>(
                         tween: Tween(
-                            begin: available ? 1 : 0, end: available ? 1 : 0),
+                            begin: available ? 1 : 0, end: available ? 1 : 0,),
                         duration: duration,
                         builder: (context, value, child) => Transform.translate(
                           offset: Offset(0, -70 * (1 - value)),
                           child: Opacity(
-                              opacity: value.clamp(0.0, 1.0), child: child),
+                              opacity: value.clamp(0.0, 1.0), child: child,),
                         ),
                         child: DecoratedBox(
                           decoration: BoxDecoration(
                               gradient: RadialGradient(colors: [
                             _mint.withValues(alpha: powered ? .35 : .06),
                             Colors.transparent,
-                          ])),
+                          ],),),
                           child: const FittedBox(child: EchoPumpFuseArt()),
                         ),
                       ),
@@ -367,12 +367,12 @@ class _WorkshopScene extends StatelessWidget {
                     duration: duration,
                     child: const Chip(
                         avatar: Icon(Icons.inventory_2_outlined, color: _mint),
-                        label: Text('所持品へ', style: TextStyle(color: _mint))),
+                        label: Text('所持品へ', style: TextStyle(color: _mint)),),
                   ),
                 ),
-              ]),
+              ],),
             );
-          }),
+          },),
         ),
       ),
     );
@@ -386,10 +386,10 @@ class _WorkshopFallback extends StatelessWidget {
         key: Key('echo-workshop-fallback'),
         decoration: BoxDecoration(
             gradient:
-                LinearGradient(colors: [Color(0xFF284249), Color(0xFF101F26)])),
+                LinearGradient(colors: [Color(0xFF284249), Color(0xFF101F26)]),),
         child: Center(
             child:
-                Icon(Icons.handyman_outlined, size: 96, color: Colors.white24)),
+                Icon(Icons.handyman_outlined, size: 96, color: Colors.white24),),
       );
 }
 

@@ -133,7 +133,7 @@ void main() {
         theme: ThemeData.dark(),
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(
-              textScaler: const TextScaler.linear(2), disableAnimations: true),
+              textScaler: const TextScaler.linear(2), disableAnimations: true,),
           child: child!,
         ),
         home: Scaffold(
@@ -145,8 +145,8 @@ void main() {
                             calls++;
                             game.collectFuse();
                           }),
-                        )))),
-      ));
+                        ),),),),
+      ),);
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('echo-workshop-background')), findsOneWidget);
       final before = game.turn;
@@ -160,7 +160,7 @@ void main() {
           tester
               .widget<FilledButton>(find.byKey(const Key('echo-collect')))
               .onPressed,
-          isNull);
+          isNull,);
       expect(calls, 1);
       expect(tester.takeException(), isNull);
     });
