@@ -121,8 +121,8 @@ Deno.test("Writer native guardrail errors are normalized without raw description
 
   assertEquals(result, {
     blocked: true,
-    categories: ["writer_credit_card"],
-    guardrailName: "pii-filter",
+    categories: ["writer_native_guardrail"],
+    guardrailName: null,
   });
 });
 
@@ -135,4 +135,23 @@ Deno.test("Writer provider errors never expose response content", () => {
   assert(!result.includes(secretResponse));
   assert(!result.includes("taro@example.com"));
   assert(!result.includes("super-secret-value"));
+});
+
+Deno.test("Writer native metadata never forwards provider-controlled values", () => {
+  const marker = "private_customer_123456";
+  for (const blocked of [true, false]) {
+    const result = parseWriterNativeGuardrailBlock(JSON.stringify({
+      errors: [{
+        key: blocked ? "fail.guardrail.blocked" : "other.error",
+        description: blocked ? "Content blocked by guardrail" : "Other error",
+        extras: { entity_type: marker, guardrail_name: marker },
+      }],
+    }));
+    assertEquals(result, {
+      blocked,
+      categories: blocked ? ["writer_native_guardrail"] : [],
+      guardrailName: null,
+    });
+    assert(!JSON.stringify(result).includes(marker));
+  }
 });

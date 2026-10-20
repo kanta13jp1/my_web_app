@@ -275,16 +275,6 @@ export function collectProviderInputText(
   return output.join("\n");
 }
 
-function safeCategory(value: unknown): string | null {
-  const normalized = String(value ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 64);
-  return normalized || null;
-}
-
 export function parseWriterNativeGuardrailBlock(
   responseText: string,
 ): WriterNativeGuardrailBlock {
@@ -299,8 +289,6 @@ export function parseWriterNativeGuardrailBlock(
   }
   const record = payload as Record<string, unknown>;
   const errors = Array.isArray(record.errors) ? record.errors : [];
-  const categories: string[] = [];
-  let guardrailName: string | null = null;
   let blocked = false;
   for (const item of errors) {
     if (!item || typeof item !== "object") continue;
@@ -313,18 +301,14 @@ export function parseWriterNativeGuardrailBlock(
     ) {
       blocked = true;
     }
-    const extras = error.extras && typeof error.extras === "object"
-      ? error.extras as Record<string, unknown>
-      : {};
-    const category = safeCategory(extras.entity_type);
-    if (category) categories.push(`writer_${category}`);
-    const name = safeCategory(extras.guardrail_name);
-    if (name) guardrailName = name;
+
   }
   return {
     blocked,
-    categories: [...new Set(categories)],
-    guardrailName,
+    // Provider-controlled names can contain private matched values. Do not
+    // propagate them into audit rows, ordinary logs, or client responses.
+    categories: blocked ? ["writer_native_guardrail"] : [],
+    guardrailName: null,
   };
 }
 
