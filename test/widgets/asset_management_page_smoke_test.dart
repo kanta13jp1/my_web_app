@@ -4679,6 +4679,10 @@ void main() {
 
         expect(find.text('3ヶ月俯瞰（先月・今月・来月）'), findsOneWidget);
         expect(find.text('固定費: ¥104,648'), findsNWidgets(3));
+        expect(
+          find.textContaining('来月の実績・将来残高予測ではありません。'),
+          findsOneWidget,
+        );
 
         await _unmount(tester);
       },
