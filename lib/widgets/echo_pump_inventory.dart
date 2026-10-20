@@ -278,6 +278,7 @@ class _WorkshopScene extends StatelessWidget {
     final duration =
         reduced ? Duration.zero : const Duration(milliseconds: 700);
     return Semantics(
+      container: true,
       image: true,
       label:
           '工具庫の探索画像：${powered ? 'B整備通電' : 'B整備停止'}、${available ? 'ヒューズ未回収' : 'ヒューズ回収済み'}',
