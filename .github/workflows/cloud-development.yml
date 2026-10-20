@@ -138,16 +138,17 @@ jobs:
           assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='8fbae86f49e2ac6ea9d2a225dc07e3cafd3bffa7', 'Production changed; rebuild selection'
           PY
 
-      - name: Verify approved PR5891-only selection
+      - name: Verify test-only budget probe selection
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          test "$CLOUD_PROFILE" = test
           test "$(gh pr view 5891 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
           test "$(gh pr view 5891 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = a0a9ebd3150e96575e5c5a2ac4536f1feaf8d18a
           git fetch --no-tags --depth=1 origin 8fbae86f49e2ac6ea9d2a225dc07e3cafd3bffa7
           python3 - <<'PY'
           import subprocess
-          expected={'lib/pages/asset_management_page.dart', 'test/widgets/asset_must_task_failure_test.dart', '.github/workflows/cloud-development.yml', 'test/services/asset_must_task_repository_test.dart', 'lib/services/asset_must_task_repository.dart'}
+          expected={'.github/workflows/cloud-development.yml', 'test/services/asset_category_budget_owner_probe_test.dart'}
           actual=set(subprocess.check_output(['git','diff','--name-only','8fbae86f49e2ac6ea9d2a225dc07e3cafd3bffa7','HEAD']).decode().splitlines())
           assert actual==expected,(actual,expected)
           expected_blobs={'lib/pages/asset_management_page.dart': '82e25f255d1285e08454332823d820ac9fe7259e', 'lib/services/asset_must_task_repository.dart': '992e418bb029c07ea82ff65d3c039bd58488f55e', 'test/services/asset_must_task_repository_test.dart': '9f86cf52e889fd269523bc0b094bc97191969a80', 'test/widgets/asset_must_task_failure_test.dart': 'cb602646b19e8e9c74297a1dcd5a41f75edc8d05'}
