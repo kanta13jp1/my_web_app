@@ -1,5 +1,7 @@
+import '../widgets/asset_recorded_change_details.dart';
 import '../models/asset_income_source_evidence.dart';
 import '../widgets/asset_income_reconciliation_section.dart';
+import '../services/asset_chart_axis_labels.dart';
 import '../services/asset_month_end_snapshot_service.dart';
 import '../widgets/asset_month_end_snapshot_card.dart';
 import '../widgets/asset_payroll_deductions_section.dart';
@@ -30,6 +32,8 @@ import 'dart:math'; // ← ★この1行を追加してください！
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:my_web_app/services/asset_must_task_repository.dart';
+import 'package:my_web_app/services/closing_record_checks.dart';
 import 'package:my_web_app/widgets/debounced_commit_text_field.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter/services.dart';
@@ -332,6 +336,9 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, Map<String, double>>? debugInitialAssetData;
 
+  @visibleForTesting
+  final AssetMustTaskRepository? debugMustTaskRepository;
+
   /// テスト専用: asset_pref_mirror 行を直接注入し、反映通知の判定を
   /// ネットワークなしで検証する。null なら通常の select。
   @visibleForTesting
@@ -458,6 +465,7 @@ class AssetManagementPage extends StatefulWidget {
     this.entryLabel,
     this.entryDescription,
     this.debugInitialAssetData,
+    this.debugMustTaskRepository,
     this.debugMirrorPrefsRows,
     this.debugInflowDeletedIdsMirror,
     this.debugTombstoneGcConfig,
@@ -999,6 +1007,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // --- 必須タスク用変数 ---
   List<Map<String, dynamic>> _mustTasks = [];
   bool _isLoadingTasks = false;
+  String? _mustTaskLoadError;
+  final Set<String> _savingMustTaskIds = {};
+  AssetMustTaskRepository get _mustTaskRepository =>
+      widget.debugMustTaskRepository ??
+      SupabaseAssetMustTaskRepository(_supabase);
 
   // --- 返済計画用 ---
   late final AssetLiabilityRepository _assetLiabilityRepository;
@@ -6248,51 +6261,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // NOTE: Closing checks intentionally use raw inputs recorded today.
     // Do not use display-complemented values here.
     final todayStock = _assetData[todayStr] ?? {};
-    final allTypesFilledToday = _assetTypes.isNotEmpty &&
-        _assetTypes.every((t) => todayStock.containsKey(t));
-
-    final hasAnyPositive = todayStock.values.any((v) => v >= 0);
-    final hasAnyNegative = todayStock.values.any((v) => v < 0);
-
-    final subsOk = _fixedCostSummaryForMonth(_now).isNotEmpty;
-
-    final checkNow = DateTime.now();
-    final currentMonthFlows = _flowsForCycle(checkNow);
-    final incomeCount =
-        currentMonthFlows.where((r) => r['action_type'] == 'conquer').length;
-    final expenseCount =
-        currentMonthFlows.where((r) => r['action_type'] == 'expense').length;
-    // 給与明細でのみ管理している給料も「収支の記録あり」とみなす。
-    final incomeRecords = _cycleIncomeEvidence(checkNow).records;
-    final flowsOk = (incomeCount + expenseCount) > 0 ||
-        incomeRecords.any(
-          (row) =>
-              !row.evidenceOnly &&
-              row.id != null &&
-              row.amount >= 0 &&
-              DateTime.tryParse(row.date) != null,
-        );
-
-    final now = DateTime.now();
-    final mustThisMonth = _mustTasks.where((t) {
-      final d = DateTime.parse(t['deadline']).toLocal();
-      return d.year == now.year && d.month == now.month;
-    }).toList();
-    final mustOk = mustThisMonth.isNotEmpty;
-
+    final checks = ClosingRecordChecks(
+      assets: _assetsDone,
+      liabilities: _liabilitiesDone,
+      fixedCosts: _fixedCostsDone,
+      flows: _flowsDone,
+      tasks: _mustTasksDone,
+    ).withRecordedBalances(
+      registeredAccounts: _assetTypes.toSet(),
+      recordedToday: todayStock,
+    );
     setState(() {
-      if (allTypesFilledToday && hasAnyPositive) _assetsDone = true;
-      if (allTypesFilledToday && hasAnyNegative) _liabilitiesDone = true;
-      if (subsOk) _fixedCostsDone = true;
-      if (flowsOk) _flowsDone = true;
-      if (mustOk) _mustTasksDone = true;
+      _assetsDone = checks.assets;
+      _liabilitiesDone = checks.liabilities;
+      // Completeness of costs, flows and tasks needs the owner's review.
+      // Keep existing owner checks; the presence of one record is not enough.
     });
 
     await _upsertTodayClosing();
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('自動チェックを反映しました（不足があれば手動でONできます）')),
+      const SnackBar(
+        content: Text(
+          '登録口座の本日記録を確認しました。固定費・収支・必須タスクの全件照合は'
+          '自動判定できないため、本人が確認してチェックしてください。既存チェックは保持します。',
+        ),
+      ),
     );
   }
 
@@ -9651,35 +9646,30 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _fetchMustTasks() async {
+    if (!mounted) return;
     setState(() => _isLoadingTasks = true);
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
-      final data = await _supabase
-          .from('must_tasks')
-          .select()
-          .eq('user_id', userId)
-          .order('deadline', ascending: true);
-
-      if (mounted) {
-        setState(() {
-          _mustTasks = List<Map<String, dynamic>>.from(data);
-          _isLoadingTasks = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _mustTasks = [];
-          _isLoadingTasks = false;
-        });
-      }
+      final data = await _mustTaskRepository.load();
+      if (!mounted) return;
+      setState(() {
+        _mustTasks = data;
+        _mustTaskLoadError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _mustTaskLoadError = '必須タスクを取得できませんでした。表示中の記録は保持しています。';
+      });
+    } finally {
+      if (mounted) setState(() => _isLoadingTasks = false);
     }
   }
 
   Future<void> _addMustTask() async {
     final titleController = TextEditingController();
     DateTime selectedDeadline = DateTime.now();
+    bool saving = false;
+    String? saveError;
 
     await showDialog(
       context: context,
@@ -9696,6 +9686,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     labelText: 'タスク内容 (例: 確定申告)',
                   ),
                 ),
+                if (saveError != null) ...[
+                  const SizedBox(height: 8),
+                  Text(saveError!, style: const TextStyle(color: Colors.red)),
+                ],
                 const SizedBox(height: 16),
                 InkWell(
                   onTap: () async {
@@ -9739,39 +9733,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: saving ? null : () => Navigator.pop(context),
                 child: const Text('キャンセル'),
               ),
               ElevatedButton(
-                onPressed: () async {
-                  final title = titleController.text.trim();
-                  if (title.isEmpty) return;
-                  final userId = _supabase.auth.currentUser?.id;
-                  if (userId != null) {
-                    try {
-                      await _supabase.from('must_tasks').insert({
-                        'user_id': userId,
-                        'title': title,
-                        'deadline': selectedDeadline.toUtc().toIso8601String(),
-                        'is_completed': false,
-                      });
-                      if (context.mounted) Navigator.pop(context);
-                      _fetchMustTasks();
-                    } catch (e) {
-                      debugPrint('Error adding task: $e');
-                      setState(() {
-                        _mustTasks.add({
-                          'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
-                          'title': title,
-                          'deadline':
-                              selectedDeadline.toUtc().toIso8601String(),
-                          'is_completed': false,
+                onPressed: saving
+                    ? null
+                    : () async {
+                        final title = titleController.text.trim();
+                        if (title.isEmpty) return;
+                        setDialogState(() {
+                          saving = true;
+                          saveError = null;
                         });
-                      });
-                      if (context.mounted) Navigator.pop(context);
-                    }
-                  }
-                },
+                        try {
+                          await _mustTaskRepository.add(
+                              title, selectedDeadline);
+                          if (context.mounted) Navigator.pop(context);
+                          await _fetchMustTasks();
+                        } catch (_) {
+                          if (!context.mounted) return;
+                          setDialogState(() {
+                            saveError =
+                                '保存を確認できませんでした。入力を保持しています。通信状態と登録一覧を確認してください。';
+                            saving = false;
+                          });
+                        }
+                      },
                 child: const Text('追加'),
               ),
             ],
@@ -9783,19 +9771,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _toggleTaskStatus(String id, bool currentStatus) async {
+    if (_savingMustTaskIds.contains(id)) return;
+    setState(() => _savingMustTaskIds.add(id));
     try {
-      await _supabase
-          .from('must_tasks')
-          .update({'is_completed': !currentStatus}).eq('id', id);
-      _fetchMustTasks();
-    } catch (e) {
+      await _mustTaskRepository.setCompleted(id, !currentStatus);
+      await _fetchMustTasks();
+    } catch (_) {
       if (!mounted) return;
-      setState(() {
-        final index = _mustTasks.indexWhere((t) => t['id'] == id);
-        if (index != -1) _mustTasks[index]['is_completed'] = !currentStatus;
-      });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('完了状態の保存を確認できませんでした。元の表示を保持しています。再読込して確認してください。'),
+      ));
+    } finally {
+      if (mounted) setState(() => _savingMustTaskIds.remove(id));
     }
-    await _fetchTodayClosing();
+    if (mounted) await _fetchTodayClosing();
   }
 
   Future<void> _editSubscriptionDueDate(Map<String, dynamic> item) async {
@@ -20035,7 +20024,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (bleed <= 0) return const SizedBox.shrink();
     final lostHours = AssetPainMetricService.dailyLostLaborHours(workbook);
     final lostHoursText = lostHours > 0
-        ? ' (毎日約${lostHours.toStringAsFixed(1)}時間の労働が利息だけで消失)'
+        ? '（参考換算: 約${lostHours.toStringAsFixed(1)}時間/日、時給2,500円）'
         : '';
     final stolenFuture = AssetPainMetricService.stolenFutureTotal(
       workbook: workbook,
@@ -20064,18 +20053,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '🩸 本日の利息流血額: ${_formatManagementYen(bleed)} / 日$lostHoursText',
+                  '利息負担の推計: ${_formatManagementYen(bleed)} / 日$lostHoursText',
                   style: const TextStyle(
                     color: Color(0xFF991B1B),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
                 ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text(
+                    '登録残高×年利÷12÷30の概算です。'
+                    '明細で確認した支払利息ではありません。'
+                    '返済・追加利用・金利変更は織り込んでいません。',
+                    style: TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                ),
                 if (stolenFuture > 0)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      '🔥 半年間の利息流出予測: ${_formatManagementYen(stolenFuture)} が将来資金から奪われます',
+                      '6か月の単純試算: ${_formatManagementYen(stolenFuture)}。'
+                      '登録残高・年利が変わらない前提です。',
                       style: const TextStyle(
                         color: Color(0xFFB91C1C),
                         fontSize: 12,
@@ -20236,7 +20235,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              '口座残高・固定費・必須タスクを3ヶ月単位で比較します。',
+              '純資産は各月末以前の最新記録を繰り越した参考値です。今月は途中経過、来月は現在までの記録であり、来月の実績・将来残高予測ではありません。固定費は登録予定額、タスクは登録済みの期限と完了状態です。',
               style: TextStyle(
                 fontSize: 11,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -34197,12 +34196,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
             const SizedBox(height: 16),
+            if (_mustTaskLoadError != null) ...[
+              Text(_mustTaskLoadError!,
+                  style: const TextStyle(color: Colors.red)),
+              TextButton(
+                  onPressed: _fetchMustTasks, child: const Text('必須タスクを再読込')),
+            ],
             _isLoadingTasks
                 ? const Center(child: CircularProgressIndicator())
                 : _mustTasks.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Center(child: Text('登録されたタスクはありません')),
+                    ? Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Center(
+                            child: Text(_mustTaskLoadError == null
+                                ? '登録されたタスクはありません'
+                                : '記録を取得できていません')),
                       )
                     : ListView.builder(
                         shrinkWrap: true,
@@ -34220,8 +34228,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
                           return CheckboxListTile(
                             value: isCompleted,
-                            onChanged: (val) =>
-                                _toggleTaskStatus(task['id'], isCompleted),
+                            onChanged: _savingMustTaskIds.contains(task['id'])
+                                ? null
+                                : (val) =>
+                                    _toggleTaskStatus(task['id'], isCompleted),
                             title: Text(
                               task['title'],
                               style: TextStyle(
@@ -34262,83 +34272,110 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // --- グラフ ---
   Widget _buildChartCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _showDailyChange ? '戦果レポート (日次損益)' : '戦略マップ (資産推移)',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        height: 1.5,
-                      ),
+    return Semantics(
+      key: const ValueKey('asset-chart-card-semantics'),
+      container: true,
+      explicitChildNodes: true,
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _showDailyChange ? '残高差（前回記録比）' : '戦略マップ (資産推移)',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            height: 1.5,
+                          ),
+                        ),
+                        Text(
+                          _showDailyChange
+                              ? '利益・日次収支とは異なります'
+                              : '国力(富)の総量は増えているか？',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF9CA3AF),
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      _showDailyChange ? '昨日の自分に勝ったか？' : '国力(富)の総量は増えているか？',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF9CA3AF),
-                        height: 1.5,
+                  ),
+                  Row(
+                    children: [
+                      const Icon(Icons.show_chart, size: 16),
+                      Switch(
+                        value: _showDailyChange,
+                        activeThumbColor: const Color(0xFFB91C1C),
+                        onChanged: (value) {
+                          setState(() {
+                            _showDailyChange = value;
+                          });
+                        },
                       ),
-                    ),
-                  ],
+                      const Icon(Icons.bar_chart, size: 16),
+                    ],
+                  ),
+                ],
+              ),
+              if (_showDailyChange)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text(
+                    '直前の記録日との資産・負債合計の差です。記録間隔は一定ではありません。'
+                    '口座の追加・残高訂正・評価額の変更も含むため、利益や昨日との差を表しません。',
+                    style: TextStyle(fontSize: 12, height: 1.5),
+                  ),
                 ),
+              if (!_showDailyChange)
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const Icon(Icons.show_chart, size: 16),
+                    const Text('個別',
+                        style: TextStyle(fontSize: 10, height: 1.5)),
                     Switch(
-                      value: _showDailyChange,
-                      activeThumbColor: const Color(0xFFB91C1C),
+                      value: _isStacked,
+                      activeThumbColor: const Color(0xFF0D9488),
                       onChanged: (value) {
                         setState(() {
-                          _showDailyChange = value;
+                          _isStacked = value;
+                          _updateChartData();
                         });
                       },
                     ),
-                    const Icon(Icons.bar_chart, size: 16),
+                    const Text('合計',
+                        style: TextStyle(fontSize: 10, height: 1.5)),
                   ],
                 ),
-              ],
-            ),
-            if (!_showDailyChange)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  const Text('個別', style: TextStyle(fontSize: 10, height: 1.5)),
-                  Switch(
-                    value: _isStacked,
-                    activeThumbColor: const Color(0xFF0D9488),
-                    onChanged: (value) {
-                      setState(() {
-                        _isStacked = value;
-                        _updateChartData();
-                      });
-                    },
-                  ),
-                  const Text('合計', style: TextStyle(fontSize: 10, height: 1.5)),
-                ],
+              const SizedBox(height: 24),
+              SizedBox(
+                height: 300,
+                child: _lineChartBars.isEmpty && _barChartGroups.isEmpty
+                    ? const Center(child: Text('戦況データなし。'))
+                    : _showDailyChange
+                        ? _buildDailyChangeChart()
+                        : _buildAssetTrendChart(),
               ),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 300,
-              child: _lineChartBars.isEmpty && _barChartGroups.isEmpty
-                  ? const Center(child: Text('戦況データなし。'))
-                  : _showDailyChange
-                      ? _buildDailyChangeChart()
-                      : _buildAssetTrendChart(),
-            ),
-          ],
+              if (_showDailyChange)
+                AssetRecordedChangeDetails(
+                  dates: _sortedDates,
+                  changes: [
+                    for (final group in _barChartGroups) group.barRods.first.toY
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -34436,7 +34473,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           showTitles: true,
           reservedSize: 30,
           getTitlesWidget: _bottomTitleWidgets,
-          interval: max(1, (_sortedDates.length / 5).floor().toDouble()),
+          interval: 1,
         ),
       ),
       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -34445,16 +34482,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _bottomTitleWidgets(double value, TitleMeta meta) {
-    const style = TextStyle(fontSize: 10, height: 1.5);
-    String text = '';
-    if (value.toInt() < _sortedDates.length) {
-      text = DateFormat(
-        'MM/dd',
-      ).format(DateTime.parse(_sortedDates[value.toInt()]));
+    if (!value.isFinite || value < 0 || value != value.roundToDouble()) {
+      return const SizedBox.shrink();
+    }
+    final index = value.toInt();
+    if (!assetChartDateLabelIndices(_sortedDates.length).contains(index)) {
+      return const SizedBox.shrink();
     }
     return SideTitleWidget(
       meta: meta,
-      child: Text(text, style: style),
+      child: Text(
+        DateFormat('MM/dd').format(DateTime.parse(_sortedDates[index])),
+        style: const TextStyle(fontSize: 10, height: 1.5),
+      ),
     );
   }
 

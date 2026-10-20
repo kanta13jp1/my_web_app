@@ -596,6 +596,9 @@ class AssetPaymentCalendarService {
       final amount = (flow['amount'] as num?)?.toDouble() ?? 0;
       final actionType = flow['action_type']?.toString() ?? '';
       final description = flow['description']?.toString().trim() ?? '';
+      final expenseLabel = description
+          .replaceAll(RegExp(r'\s*\[auto_asset_delta:[^\]\r\n]+\]'), '')
+          .trim();
       if (expenseActionTypes.contains(actionType)) {
         // 元の記録の見出しに明記されたものだけ。一般購入の説明中の言及は含めない。
         final unreconciled = RegExp(
@@ -608,7 +611,7 @@ class AssetPaymentCalendarService {
           date,
           AssetCalendarEvent(
             kind: AssetCalendarEventKind.expense,
-            label: description.isEmpty ? '支出' : description,
+            label: expenseLabel.isEmpty ? '支出' : expenseLabel,
             unreconciledExpense: unreconciled,
             balanceDifferenceAutoRecorded:
                 unreconciled && description.contains('残高差分から自動記録'),
