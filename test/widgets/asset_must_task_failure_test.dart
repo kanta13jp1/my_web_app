@@ -96,6 +96,8 @@ void main() {
     repository.fail = false;
     await tester.tap(save);
     await tester.pump(const Duration(milliseconds: 300));
+    expect(repository.rows.length, 2);
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(AlertDialog), findsNothing);
     expect(find.text('Synthetic new'), findsOneWidget);
     await tester.ensureVisible(original);
