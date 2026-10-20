@@ -554,13 +554,15 @@ void main() {
         SharedPreferences.setMockInitialValues(<String, Object>{
           'asset_management_display_mode_v1':
               AssetManagementDisplayMode.full.storageId,
-          'asset_category_budgets_v1': jsonEncode({'食費': 5000}),
+          'asset_category_budgets_v2_synthetic-budget-owner':
+              jsonEncode({'食費': 5000}),
         });
         await tester.binding.setSurfaceSize(size);
         addTearDown(() => tester.binding.setSurfaceSize(null));
         await tester.pumpWidget(
           MaterialApp(
             home: AssetManagementPage(
+              debugCategoryBudgetOwnerId: 'synthetic-budget-owner',
               debugNow: DateTime(2026, 6, 20),
               debugCalendarNow: DateTime(2026, 6, 20),
             ),
@@ -597,7 +599,11 @@ void main() {
         );
         final prefs = await SharedPreferences.getInstance();
         expect(
-          jsonDecode(prefs.getString('asset_category_budgets_v1')!),
+          jsonDecode(
+            prefs.getString(
+              'asset_category_budgets_v2_synthetic-budget-owner',
+            )!,
+          ),
           {'食費': 5000},
         );
         expect(tester.takeException(), isNull);
@@ -625,6 +631,7 @@ void main() {
           MaterialApp(
             home: AssetManagementPage(
               categoryBudgetStore: store,
+              debugCategoryBudgetOwnerId: 'synthetic-budget-owner',
               debugNow: DateTime(2026, 6, 20),
               debugCalendarNow: DateTime(2026, 6, 20),
             ),
@@ -787,7 +794,8 @@ void main() {
       testWidgets('budget save retains invalid input $invalid at ${size.width}',
           (tester) async {
         SharedPreferences.setMockInitialValues(<String, Object>{
-          'asset_category_budgets_v1': jsonEncode({'食費': 5000}),
+          'asset_category_budgets_v2_synthetic-budget-owner':
+              jsonEncode({'食費': 5000}),
           'asset_management_display_mode_v1':
               AssetManagementDisplayMode.full.storageId,
         });
@@ -796,6 +804,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: AssetManagementPage(
+              debugCategoryBudgetOwnerId: 'synthetic-budget-owner',
               debugNow: DateTime(2026, 6, 20),
               debugCalendarNow: DateTime(2026, 6, 20),
             ),
@@ -832,7 +841,11 @@ void main() {
         );
         final prefs = await SharedPreferences.getInstance();
         expect(
-          jsonDecode(prefs.getString('asset_category_budgets_v1')!),
+          jsonDecode(
+            prefs.getString(
+              'asset_category_budgets_v2_synthetic-budget-owner',
+            )!,
+          ),
           {'食費': 5000},
         );
         expect(tester.takeException(), isNull);
@@ -860,6 +873,7 @@ void main() {
           MaterialApp(
             home: AssetManagementPage(
               categoryBudgetStore: store,
+              debugCategoryBudgetOwnerId: 'synthetic-budget-owner',
               debugNow: DateTime(2026, 6, 20),
               debugCalendarNow: DateTime(2026, 6, 20),
             ),
@@ -947,7 +961,7 @@ void main() {
       testWidgets('budget search reaches editor $query at ${size.width}',
           (tester) async {
         SharedPreferences.setMockInitialValues(<String, Object>{
-          'asset_category_budgets_v1': '{"食費":10000}',
+          'asset_category_budgets_v2_synthetic-budget-owner': '{"食費":10000}',
           'asset_management_display_mode_v1':
               AssetManagementDisplayMode.full.storageId,
         });
@@ -960,6 +974,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: AssetManagementPage(
+              debugCategoryBudgetOwnerId: 'synthetic-budget-owner',
               debugNow: DateTime(2026, 6, 20),
               debugCalendarNow: DateTime(2026, 6, 20),
               debugInitialAssetData: const {

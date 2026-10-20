@@ -320,7 +320,9 @@ class AssetManagementPage extends StatefulWidget {
   final bool emphasizeMonthlyFlow;
   final AssetWatchlistService watchlistService;
   final AssetLiabilityRepository? assetLiabilityRepository;
-  final AssetCategoryBudgetStore categoryBudgetStore;
+  final AssetCategoryBudgetStore? categoryBudgetStore;
+  @visibleForTesting
+  final String? debugCategoryBudgetOwnerId;
   final InvestmentAssetRepository? investmentAssetRepository;
   final AssetAnomalyDetectionRepository? anomalyDetectionRepository;
   final AssetManagementAiSummaryService? aiSummaryService;
@@ -456,7 +458,8 @@ class AssetManagementPage extends StatefulWidget {
     this.emphasizeMonthlyFlow = false,
     this.watchlistService = const AssetWatchlistService(),
     this.assetLiabilityRepository,
-    this.categoryBudgetStore = const AssetCategoryBudgetStore(),
+    this.categoryBudgetStore,
+    this.debugCategoryBudgetOwnerId,
     this.investmentAssetRepository,
     this.anomalyDetectionRepository,
     this.aiSummaryService,
@@ -865,7 +868,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Set<String> _ignoredRecurringIncomeLabels = <String>{};
   // カテゴリ別 月次予算 (category -> 金額)。予算/カテゴリ予実カードで使用。
   Map<String, double> _categoryBudgets = <String, double>{};
-  bool _hasSavedCategoryBudgets = false;
+  String? _categoryBudgetsOwnerId;
+  String? _categoryBudgetStatus;
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
   // アクションアイテムからジャンプした直後に、対処すべき支払済みチェックボックスへ
   // 視線誘導するため一時的に点滅ハイライトする負債マスタ行ID (2.6 秒で自動解除)。
@@ -1160,8 +1164,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   );
   static const String _duplicateIgnoredMirrorKey =
       'subscription_duplicate_ignored';
+  String? get _categoryBudgetOwnerId =>
+      widget.debugCategoryBudgetOwnerId ?? _supabase.auth.currentUser?.id;
   AssetCategoryBudgetStore get _categoryBudgetStore =>
-      widget.categoryBudgetStore;
+      widget.categoryBudgetStore ??
+      AssetCategoryBudgetStore.forOwner(_categoryBudgetOwnerId);
   // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
   final DrinkChallengeStore _drinkChallengeStore = const DrinkChallengeStore();
   Map<String, DrinkRecordStatus> _drinkRecords = <String, DrinkRecordStatus>{};
@@ -11478,82 +11485,71 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   static const String _revolvingConfigsMirrorKey = 'revolving_credit_configs';
   static const String _categoryBudgetsMirrorKey = 'category_budgets';
 
+  bool _isBudgetOwner(String owner) =>
+      mounted && _categoryBudgetOwnerId == owner;
+
   Future<void> _loadCategoryBudgets() async {
+    final owner = _categoryBudgetOwnerId;
+    if (owner == null) return;
+    final store = _categoryBudgetStore;
     try {
-      final budgets = await _categoryBudgetStore.load();
-      _hasSavedCategoryBudgets = await _categoryBudgetStore.hasSavedSetting();
-      if (mounted && budgets.isNotEmpty) {
-        setState(() {
-          _categoryBudgets = budgets;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading category budgets: $e');
-    }
-    await _restoreCategoryBudgetsFromMirror();
-  }
-
-  /// カテゴリ別予算を `asset_pref_mirror` (pref_key: category_budgets) へ
-  /// 1 行 upsert する (revolving_credit_configs と同じ集約方針 / 削除は空 map で表現)。
-  Future<void> _mirrorCategoryBudgets() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
-      return;
-    }
-    try {
-      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
-        'user_id': userId,
-        'pref_key': _categoryBudgetsMirrorKey,
-        'value': AssetCategoryBudgetStore.encodeMirrorValue(_categoryBudgets),
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      });
-    } catch (e) {
-      debugPrint('category budget mirror upsert failed: $e');
-    }
-  }
-
-  /// サーバ集約ミラーからカテゴリ別予算を復元する。ローカルに既に設定がある場合は
-  /// 上書きしない (オフライン編集を握り潰さない安全側)。サーバ行が無ければ初回
-  /// バックフィルする。設定の有無は map のキー有無で表すため削除トゥームストーン不要。
-  Future<void> _restoreCategoryBudgetsFromMirror() async {
-    if (_supabase.auth.currentUser == null) {
-      return;
-    }
-    final hasLocal = _hasSavedCategoryBudgets || _categoryBudgets.isNotEmpty;
-    try {
-      final rows = await _bootSelectPrefMirror(_categoryBudgetsMirrorKey);
-      if (rows.isEmpty) {
-        if (hasLocal) {
-          unawaited(_mirrorCategoryBudgets());
-        }
-        return;
-      }
-      if (hasLocal || _hasSavedCategoryBudgets) {
-        return;
-      }
-      final serverBudgets = AssetCategoryBudgetStore.decodeMirrorValue(
-        rows.first['value'],
-      );
-      if (serverBudgets.isEmpty || !mounted) {
-        return;
-      }
+      final budgets = await store.load();
+      final saved = await store.hasSavedSetting();
+      final legacy = await const AssetCategoryBudgetStore().hasSavedSetting();
+      if (!_isBudgetOwner(owner)) return;
       setState(() {
-        _categoryBudgets = serverBudgets;
+        _categoryBudgetsOwnerId = owner;
+        _categoryBudgets = budgets;
+        _categoryBudgetStatus =
+            legacy ? '旧端末予算は所有者を確認できないため保留しています。元の保存値は削除していません。' : null;
       });
-      unawaited(_categoryBudgetStore.save(serverBudgets));
-    } catch (e) {
-      debugPrint('category budget mirror restore failed: $e');
+      final rows = await _bootSelectPrefMirror(_categoryBudgetsMirrorKey);
+      if (!_isBudgetOwner(owner)) return;
+      if (saved) return;
+      if (rows.isEmpty) return;
+      final restored = AssetCategoryBudgetStore.decodeOwnedMirrorRow(
+        rows.first,
+        owner,
+      );
+      if (restored == null) return;
+      await store.save(restored);
+      if (!_isBudgetOwner(owner)) return;
+      setState(() {
+        _categoryBudgets = restored;
+      });
+    } catch (_) {
+      if (_isBudgetOwner(owner)) {
+        setState(() => _categoryBudgetStatus = '予算の取得・同期を確認できませんでした。');
+      }
     }
   }
 
   Future<void> _saveCategoryBudgets(Map<String, double> budgets) async {
-    await _categoryBudgetStore.save(budgets);
-    _hasSavedCategoryBudgets = true;
-    if (!mounted) return;
+    final owner = _categoryBudgetOwnerId;
+    if (owner == null) throw StateError('Sign in required');
+    final store = _categoryBudgetStore;
+    await store.save(budgets);
+    if (!_isBudgetOwner(owner)) throw StateError('Account changed');
     setState(() {
-      _categoryBudgets = budgets;
+      _categoryBudgetsOwnerId = owner;
+      _categoryBudgets = Map<String, double>.from(budgets);
+      _categoryBudgetStatus = 'この利用者の端末内に保存済み。サーバ同期は確認中です。';
     });
-    unawaited(_mirrorCategoryBudgets());
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': owner,
+        'pref_key': _categoryBudgetsMirrorKey,
+        'value': AssetCategoryBudgetStore.encodeMirrorValue(budgets),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).timeout(const Duration(seconds: 10));
+      if (_isBudgetOwner(owner)) {
+        setState(() => _categoryBudgetStatus = 'この利用者の端末内保存・サーバ同期を確認しました。');
+      }
+    } catch (_) {
+      if (_isBudgetOwner(owner)) {
+        setState(() => _categoryBudgetStatus = '端末内には保存済みですが、サーバ同期は未確認です。');
+      }
+    }
   }
 
   Future<void> _loadRevolvingConfigs() async {
@@ -19105,8 +19101,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 予算/カテゴリ予実カード。給料サイクルのカテゴリ別実支出(既存 breakdown)に
   /// ユーザー設定の月次予算を重ねて表示する。支出も予算も無ければ非表示。
   Widget _buildCategoryBudgetCard() {
+    final budgets = _categoryBudgetsOwnerId == _categoryBudgetOwnerId
+        ? _categoryBudgets
+        : <String, double>{};
     final breakdown = _buildSalarySpendingBreakdown();
-    if (breakdown.expenseEntryCount == 0 && _categoryBudgets.isEmpty) {
+    if (breakdown.expenseEntryCount == 0 && budgets.isEmpty) {
       return const SizedBox.shrink();
     }
     final actualByCategory = <String, double>{
@@ -19115,19 +19114,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     };
     final report = AssetCategoryBudgetService.build(
       actualByCategory: actualByCategory,
-      budgets: _categoryBudgets,
+      budgets: budgets,
     );
     final start = breakdown.periodStart;
     final end = breakdown.periodEndInclusive;
     return Padding(
       key: _keyCategoryBudgetCard,
       padding: const EdgeInsets.only(bottom: 16),
-      child: AssetCategoryBudgetCard(
-        report: report,
-        currencyFormatter: _formatYen,
-        periodLabel:
-            '${start.month}/${start.day}〜${end.month}/${end.day}(給料サイクル)',
-        onEditBudgets: () => _showCategoryBudgetEditor(actualByCategory),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_categoryBudgetStatus != null) Text(_categoryBudgetStatus!),
+          AssetCategoryBudgetCard(
+            report: report,
+            currencyFormatter: _formatYen,
+            periodLabel:
+                '${start.month}/${start.day}〜${end.month}/${end.day}(給料サイクル)',
+            onEditBudgets: () => _showCategoryBudgetEditor(actualByCategory),
+          ),
+        ],
       ),
     );
   }
@@ -19137,12 +19142,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _showCategoryBudgetEditor(
     Map<String, double> actualByCategory,
   ) async {
+    final editorOwner = _categoryBudgetOwnerId;
+    final savedBudgets = _categoryBudgetsOwnerId == _categoryBudgetOwnerId
+        ? _categoryBudgets
+        : <String, double>{};
     final categories = <String>[
       ...SalarySpendingBreakdownService.categoryLabels,
       for (final category in actualByCategory.keys)
         if (!SalarySpendingBreakdownService.categoryLabels.contains(category))
           category,
-      for (final category in _categoryBudgets.keys)
+      for (final category in savedBudgets.keys)
         if (!SalarySpendingBreakdownService.categoryLabels.contains(category) &&
             !actualByCategory.containsKey(category))
           category,
@@ -19150,8 +19159,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final controllers = <String, TextEditingController>{
       for (final category in categories)
         category: TextEditingController(
-          text: (_categoryBudgets[category] ?? 0) > 0
-              ? (_categoryBudgets[category] ?? 0).round().toString()
+          text: (savedBudgets[category] ?? 0) > 0
+              ? (savedBudgets[category] ?? 0).round().toString()
               : '',
         ),
     };
@@ -19224,6 +19233,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 onPressed: isSaving
                     ? null
                     : () async {
+                        if (editorOwner == null ||
+                            !_isBudgetOwner(editorOwner)) {
+                          setDialogState(() {
+                            saveError = '利用者が変わりました。閉じて開き直してください。';
+                          });
+                          return;
+                        }
                         final next = <String, double>{};
                         for (final category in categories) {
                           final text = controllers[category]!
