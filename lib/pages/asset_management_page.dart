@@ -20037,7 +20037,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (bleed <= 0) return const SizedBox.shrink();
     final lostHours = AssetPainMetricService.dailyLostLaborHours(workbook);
     final lostHoursText = lostHours > 0
-        ? ' (毎日約${lostHours.toStringAsFixed(1)}時間の労働が利息だけで消失)'
+        ? '（参考換算: 約${lostHours.toStringAsFixed(1)}時間/日、時給2,500円）'
         : '';
     final stolenFuture = AssetPainMetricService.stolenFutureTotal(
       workbook: workbook,
@@ -20066,18 +20066,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '🩸 本日の利息流血額: ${_formatManagementYen(bleed)} / 日$lostHoursText',
+                  '利息負担の推計: ${_formatManagementYen(bleed)} / 日$lostHoursText',
                   style: const TextStyle(
                     color: Color(0xFF991B1B),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
                 ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text(
+                    '登録残高×年利÷12÷30の概算です。'
+                    '明細で確認した支払利息ではありません。'
+                    '返済・追加利用・金利変更は織り込んでいません。',
+                    style: TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                ),
                 if (stolenFuture > 0)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      '🔥 半年間の利息流出予測: ${_formatManagementYen(stolenFuture)} が将来資金から奪われます',
+                      '6か月の単純試算: ${_formatManagementYen(stolenFuture)}。'
+                      '登録残高・年利が変わらない前提です。',
                       style: const TextStyle(
                         color: Color(0xFFB91C1C),
                         fontSize: 12,
