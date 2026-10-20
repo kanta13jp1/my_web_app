@@ -458,14 +458,17 @@ class SupabaseSpaceSharingDataSource implements SpaceSharingDataSource {
     String columns,
   ) async {
     final result = <Map<String, dynamic>>[];
-    for (var from = 0;; from += _pageSize) {
-      final response = await _client
-          .from(table)
-          .select(columns)
-          .range(from, from + _pageSize - 1);
+    var from = 0;
+    while (true) {
+      final query = _client.from(table).select(columns);
+      final ordered = table == 'note_space_members'
+          ? query.order('space_id').order('member_user_id')
+          : query.order('id');
+      final response = await ordered.range(from, from + _pageSize - 1);
       final page = List<Map<String, dynamic>>.from(response);
       result.addAll(page);
-      if (page.length < _pageSize) break;
+      if (page.isEmpty) break;
+      from += page.length;
     }
     return result;
   }
