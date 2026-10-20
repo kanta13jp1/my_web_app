@@ -462,8 +462,10 @@ class SupabaseSpaceSharingDataSource implements SpaceSharingDataSource {
     while (true) {
       final query = _client.from(table).select(columns);
       final ordered = table == 'note_space_members'
-          ? query.order('space_id').order('member_user_id')
-          : query.order('id');
+          ? query
+              .order('space_id', ascending: true)
+              .order('member_user_id', ascending: true)
+          : query.order('id', ascending: true);
       final response = await ordered.range(from, from + _pageSize - 1);
       final page = List<Map<String, dynamic>>.from(response);
       result.addAll(page);

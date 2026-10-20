@@ -44,8 +44,8 @@ void main() {
           expect(
             request.url.queryParameters['order'],
             table == 'note_space_members'
-                ? 'space_id.asc,member_user_id.asc'
-                : 'id.asc',
+                ? 'space_id.asc.nullslast,member_user_id.asc.nullslast'
+                : 'id.asc.nullslast',
           );
           final offset = int.parse(request.url.queryParameters['offset']!);
           expect(request.url.queryParameters['limit'], '500');
