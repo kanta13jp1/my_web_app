@@ -75,6 +75,14 @@ class AssetCategoryBudgetStore {
 
   /// `asset_pref_mirror.value` (jsonb) または保存済み JSON から予算マップへ
   /// 復元する。不正キー・非正の金額は黙って捨てる寛容なパース。
+  static Map<String, double>? decodeOwnedMirrorRow(
+    Map<String, dynamic> row,
+    String owner,
+  ) {
+    if (owner.trim().isEmpty || row['user_id'] != owner) return null;
+    return decodeMirrorValue(row['value']);
+  }
+
   static Map<String, double> decodeMirrorValue(dynamic value) {
     final result = <String, double>{};
     if (value is! Map) {

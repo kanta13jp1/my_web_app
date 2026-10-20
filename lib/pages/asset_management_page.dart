@@ -11507,8 +11507,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!_isBudgetOwner(owner)) return;
       if (saved) return;
       if (rows.isEmpty) return;
-      final restored =
-          AssetCategoryBudgetStore.decodeMirrorValue(rows.first['value']);
+      final restored = AssetCategoryBudgetStore.decodeOwnedMirrorRow(
+        rows.first,
+        owner,
+      );
+      if (restored == null) return;
       await store.save(restored);
       if (!_isBudgetOwner(owner)) return;
       setState(() {

@@ -26,4 +26,19 @@ void main() {
     await expectLater(store.save({'food': 123}), throwsStateError);
     await expectLater(store.hasSavedSetting(), throwsStateError);
   });
+  test('mirror restores only the named owner including an explicit clear', () {
+    final row = <String, dynamic>{
+      'user_id': 'owner-a',
+      'value': <String, dynamic>{'food': 123},
+    };
+    expect(AssetCategoryBudgetStore.decodeOwnedMirrorRow(row, 'owner-a'),
+        <String, double>{'food': 123});
+    expect(AssetCategoryBudgetStore.decodeOwnedMirrorRow(row, 'owner-b'), isNull);
+    expect(AssetCategoryBudgetStore.decodeOwnedMirrorRow(row, ''), isNull);
+    expect(AssetCategoryBudgetStore.decodeOwnedMirrorRow(
+        <String, dynamic>{'value': row['value']}, 'owner-a'), isNull);
+    expect(AssetCategoryBudgetStore.decodeOwnedMirrorRow(
+        <String, dynamic>{'user_id': 'owner-a', 'value': <String, dynamic>{}},
+        'owner-a'), isEmpty);
+  });
 }
