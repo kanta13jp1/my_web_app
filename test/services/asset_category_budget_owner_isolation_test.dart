@@ -33,12 +33,18 @@ void main() {
     };
     expect(AssetCategoryBudgetStore.decodeOwnedMirrorRow(row, 'owner-a'),
         <String, double>{'food': 123});
-    expect(AssetCategoryBudgetStore.decodeOwnedMirrorRow(row, 'owner-b'), isNull);
+    expect(
+        AssetCategoryBudgetStore.decodeOwnedMirrorRow(row, 'owner-b'), isNull);
     expect(AssetCategoryBudgetStore.decodeOwnedMirrorRow(row, ''), isNull);
-    expect(AssetCategoryBudgetStore.decodeOwnedMirrorRow(
-        <String, dynamic>{'value': row['value']}, 'owner-a'), isNull);
-    expect(AssetCategoryBudgetStore.decodeOwnedMirrorRow(
-        <String, dynamic>{'user_id': 'owner-a', 'value': <String, dynamic>{}},
-        'owner-a'), isEmpty);
+    expect(
+        AssetCategoryBudgetStore.decodeOwnedMirrorRow(
+            <String, dynamic>{'value': row['value']}, 'owner-a'),
+        isNull);
+    expect(
+        AssetCategoryBudgetStore.decodeOwnedMirrorRow(<String, dynamic>{
+          'user_id': 'owner-a',
+          'value': <String, dynamic>{}
+        }, 'owner-a'),
+        isEmpty);
   });
 }
