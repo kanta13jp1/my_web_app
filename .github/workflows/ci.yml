@@ -22,6 +22,12 @@ on:
       - '.github/**/*.md'
       - '.github/ISSUE_TEMPLATE/**'
       - '.github/PULL_REQUEST_TEMPLATE.md'
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        description: Exact commit to validate without deploying
+        required: true
+        type: string
   workflow_call:
 
 concurrency:
@@ -39,6 +45,18 @@ jobs:
       contents: read
 
     steps:
+      - name: Assert exact manual validation commit
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$EXPECTED_HEAD_SHA" != "$GITHUB_SHA" ]; then
+            echo "::error::Manual CI requires the exact selected branch head SHA."
+            exit 1
+          fi
+
       - name: Checkout code
         shell: bash
         run: |
@@ -60,6 +78,15 @@ jobs:
             git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
           fi
           git checkout --force refs/remotes/origin/checkout
+
+      - name: Verify checked out manual validation commit
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
 
       - name: Collect PR changed files
         if: github.event_name == 'pull_request'
@@ -415,6 +442,18 @@ jobs:
       contents: read
 
     steps:
+      - name: Assert exact manual validation commit
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$EXPECTED_HEAD_SHA" != "$GITHUB_SHA" ]; then
+            echo "::error::Manual CI requires the exact selected branch head SHA."
+            exit 1
+          fi
+
       - name: Checkout code
         shell: bash
         run: |
@@ -436,6 +475,15 @@ jobs:
             git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
           fi
           git checkout --force refs/remotes/origin/checkout
+
+      - name: Verify checked out manual validation commit
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
 
       - name: Run security audit
         run: |
