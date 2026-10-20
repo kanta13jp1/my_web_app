@@ -20231,7 +20231,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              '口座残高・固定費・必須タスクを3ヶ月単位で比較します。',
+              '純資産は各月末以前の最新記録を繰り越した参考値です。今月は途中経過、来月は現在までの記録であり、来月の実績・将来残高予測ではありません。固定費は登録予定額、タスクは登録済みの期限と完了状態です。',
               style: TextStyle(
                 fontSize: 11,
                 color: Theme.of(context).colorScheme.onSurface,
