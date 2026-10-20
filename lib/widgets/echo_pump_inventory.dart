@@ -378,7 +378,8 @@ class _WorkshopScene extends StatelessWidget {
                                 gradient: RadialGradient(
                                   colors: [
                                     _mint.withValues(
-                                        alpha: powered ? .35 : .06),
+                                      alpha: powered ? .35 : .06,
+                                    ),
                                     Colors.transparent,
                                   ],
                                 ),
