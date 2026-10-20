@@ -56,8 +56,13 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(1200, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final repository = FakeTasks();
-    await tester.pumpWidget(MaterialApp(
-        home: AssetManagementPage(debugMustTaskRepository: repository,),),);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugMustTaskRepository: repository,
+        ),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300));
     final original =
@@ -74,11 +79,14 @@ void main() {
     await tester.tap(add);
     await tester.pump(const Duration(milliseconds: 300));
     final field = find.descendant(
-        of: find.byType(AlertDialog), matching: find.byType(TextField),);
+      of: find.byType(AlertDialog),
+      matching: find.byType(TextField),
+    );
     await tester.enterText(field, 'Synthetic new');
     final save = find.descendant(
-        of: find.byType(AlertDialog),
-        matching: find.widgetWithText(ElevatedButton, '追加'),);
+      of: find.byType(AlertDialog),
+      matching: find.widgetWithText(ElevatedButton, '追加'),
+    );
     await tester.tap(save);
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.byType(AlertDialog), findsOneWidget);
