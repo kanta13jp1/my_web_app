@@ -599,8 +599,11 @@ void main() {
         );
         final prefs = await SharedPreferences.getInstance();
         expect(
-          jsonDecode(prefs
-              .getString('asset_category_budgets_v2_synthetic-budget-owner')!),
+          jsonDecode(
+            prefs.getString(
+              'asset_category_budgets_v2_synthetic-budget-owner',
+            )!,
+          ),
           {'食費': 5000},
         );
         expect(tester.takeException(), isNull);
@@ -838,8 +841,11 @@ void main() {
         );
         final prefs = await SharedPreferences.getInstance();
         expect(
-          jsonDecode(prefs
-              .getString('asset_category_budgets_v2_synthetic-budget-owner')!),
+          jsonDecode(
+            prefs.getString(
+              'asset_category_budgets_v2_synthetic-budget-owner',
+            )!,
+          ),
           {'食費': 5000},
         );
         expect(tester.takeException(), isNull);
