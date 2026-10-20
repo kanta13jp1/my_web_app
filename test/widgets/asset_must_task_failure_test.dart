@@ -12,7 +12,7 @@ class FakeTasks implements AssetMustTaskRepository {
       'id': 'one',
       'title': 'Synthetic original',
       'deadline': '2026-10-25T00:00:00Z',
-      'is_completed': false
+      'is_completed': false,
     },
   ];
   @override
@@ -28,7 +28,7 @@ class FakeTasks implements AssetMustTaskRepository {
       'id': 'two',
       'title': title,
       'deadline': deadline.toIso8601String(),
-      'is_completed': false
+      'is_completed': false,
     });
   }
 
@@ -57,7 +57,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final repository = FakeTasks();
     await tester.pumpWidget(MaterialApp(
-        home: AssetManagementPage(debugMustTaskRepository: repository)));
+        home: AssetManagementPage(debugMustTaskRepository: repository,),),);
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300));
     final original =
@@ -74,11 +74,11 @@ void main() {
     await tester.tap(add);
     await tester.pump(const Duration(milliseconds: 300));
     final field = find.descendant(
-        of: find.byType(AlertDialog), matching: find.byType(TextField));
+        of: find.byType(AlertDialog), matching: find.byType(TextField),);
     await tester.enterText(field, 'Synthetic new');
     final save = find.descendant(
         of: find.byType(AlertDialog),
-        matching: find.widgetWithText(ElevatedButton, '追加'));
+        matching: find.widgetWithText(ElevatedButton, '追加'),);
     await tester.tap(save);
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.byType(AlertDialog), findsOneWidget);

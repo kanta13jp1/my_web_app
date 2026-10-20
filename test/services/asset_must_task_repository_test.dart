@@ -22,7 +22,7 @@ void main() {
         requests.add(request);
         if (fail) {
           return http.Response('{"message":"offline"}', 503,
-              headers: {'content-type': 'application/json'});
+              headers: {'content-type': 'application/json'},);
         }
         if (request.method == 'PATCH' && !zero) {
           completed = (jsonDecode(request.body) as Map)['is_completed'] == true;
@@ -36,11 +36,11 @@ void main() {
                       'user_id': 'user-a',
                       'title': 'Synthetic task',
                       'deadline': '2026-10-25T00:00:00Z',
-                      'is_completed': completed
+                      'is_completed': completed,
                     },
-                  ]),
+                  ],),
             200,
-            headers: {'content-type': 'application/json'});
+            headers: {'content-type': 'application/json'},);
       }),
     );
     addTearDown(transport.dispose);
@@ -53,7 +53,7 @@ void main() {
       userMetadata: {},
       aud: 'authenticated',
       createdAt: '2026-01-01',
-    ));
+    ),);
     when(client.from('must_tasks'))
         .thenAnswer((_) => transport.from('must_tasks'));
     final repository = SupabaseAssetMustTaskRepository(client);
@@ -61,16 +61,16 @@ void main() {
     expect(requests.last.url.queryParameters['user_id'], 'eq.user-a');
     fail = true;
     await expectLater(repository.add('Synthetic task', DateTime(2026, 10, 25)),
-        throwsA(isA<Exception>()));
+        throwsA(isA<Exception>()),);
     await expectLater(
-        repository.setCompleted('task-a', true), throwsA(isA<Exception>()));
+        repository.setCompleted('task-a', true), throwsA(isA<Exception>()),);
     expect(completed, false);
     fail = false;
     zero = true;
     await expectLater(
-        repository.setCompleted('task-a', true), throwsStateError);
+        repository.setCompleted('task-a', true), throwsStateError,);
     await expectLater(repository.add('Synthetic task', DateTime(2026, 10, 25)),
-        throwsStateError);
+        throwsStateError,);
     zero = false;
     await repository.add('Synthetic task', DateTime(2026, 10, 25));
     expect((jsonDecode(requests.last.body) as Map)['user_id'], 'user-a');
@@ -80,9 +80,9 @@ void main() {
     expect((await repository.load()).single['is_completed'], true);
     when(auth.currentUser).thenReturn(null);
     final count = requests.length;
-    await expectLater(repository.load(), throwsStateError);
+    await expectLater(repository.load(), throwsStateError,);
     await expectLater(
-        repository.setCompleted('task-a', false), throwsStateError);
+        repository.setCompleted('task-a', false), throwsStateError,);
     expect(requests.length, count);
   });
 }
