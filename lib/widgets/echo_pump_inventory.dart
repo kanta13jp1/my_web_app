@@ -206,7 +206,8 @@ class EchoPumpFuseShelf extends StatelessWidget {
   Widget build(BuildContext context) {
     final available = !game.hasFuse && !game.repaired;
     final powered = game.power.contains(PumpCircuit.b);
-    final reduced = MediaQuery.disableAnimationsOf(context) || motion.prefersReducedMotion;
+    final reduced =
+        MediaQuery.disableAnimationsOf(context) || motion.prefersReducedMotion;
     return Card(
       color: const Color(0xFF172B2E),
       child: Padding(
@@ -238,7 +239,8 @@ class EchoPumpFuseShelf extends StatelessWidget {
               runSpacing: 4,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Icon(available ? Icons.search : Icons.check_circle, color: _mint),
+                Icon(available ? Icons.search : Icons.check_circle,
+                    color: _mint),
                 Text(available ? '作業台の交換ヒューズ' : '回収済み',
                     style: const TextStyle(color: _mint)),
                 if (!powered && available) const Text('B 整備で工具棚を解錠'),
@@ -260,15 +262,18 @@ class EchoPumpFuseShelf extends StatelessWidget {
 
 /// Finite lighting and collection transitions; no looping background ticker.
 class _WorkshopScene extends StatelessWidget {
-  const _WorkshopScene({required this.available, required this.powered, required this.reduced});
+  const _WorkshopScene(
+      {required this.available, required this.powered, required this.reduced});
   final bool available, powered, reduced;
 
   @override
   Widget build(BuildContext context) {
-    final duration = reduced ? Duration.zero : const Duration(milliseconds: 700);
+    final duration =
+        reduced ? Duration.zero : const Duration(milliseconds: 700);
     return Semantics(
       image: true,
-      label: '工具庫の探索画像：${powered ? 'B整備通電' : 'B整備停止'}、${available ? 'ヒューズ未回収' : 'ヒューズ回収済み'}',
+      label:
+          '工具庫の探索画像：${powered ? 'B整備通電' : 'B整備停止'}、${available ? 'ヒューズ未回収' : 'ヒューズ回収済み'}',
       child: ExcludeSemantics(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
@@ -282,8 +287,11 @@ class _WorkshopScene extends StatelessWidget {
                   fit: BoxFit.cover,
                   excludeFromSemantics: true,
                   frameBuilder: (context, child, frame, synchronous) =>
-                      frame == null && !synchronous ? const _WorkshopFallback() : child,
-                  errorBuilder: (context, error, stack) => const _WorkshopFallback(),
+                      frame == null && !synchronous
+                          ? const _WorkshopFallback()
+                          : child,
+                  errorBuilder: (context, error, stack) =>
+                      const _WorkshopFallback(),
                 ),
                 AnimatedOpacity(
                   duration: duration,
@@ -295,37 +303,55 @@ class _WorkshopScene extends StatelessWidget {
                   duration: duration,
                   builder: (context, light, child) => DecoratedBox(
                     key: const Key('echo-workshop-light'),
-                    decoration: BoxDecoration(gradient: RadialGradient(
+                    decoration: BoxDecoration(
+                        gradient: RadialGradient(
                       center: const Alignment(-.25, -.1),
                       radius: .65,
-                      colors: [Color.fromRGBO(255, 198, 105, .2 * light), Colors.transparent],
+                      colors: [
+                        Color.fromRGBO(255, 198, 105, .2 * light),
+                        Colors.transparent
+                      ],
                     )),
                   ),
                 ),
                 Positioned(
-                  left: 12, top: 12,
+                  left: 12,
+                  top: 12,
                   child: DecoratedBox(
-                    decoration: BoxDecoration(color: const Color(0xDD0B171D), borderRadius: BorderRadius.circular(20)),
-                    child: Padding(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(powered ? Icons.lightbulb : Icons.lock_outline, color: powered ? _mint : Colors.amber, size: 18),
-                      const SizedBox(width: 6), Text(powered ? '工具棚 解錠' : '工具棚 施錠'),
-                    ])),
+                    decoration: BoxDecoration(
+                        color: const Color(0xDD0B171D),
+                        borderRadius: BorderRadius.circular(20)),
+                    child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(powered ? Icons.lightbulb : Icons.lock_outline,
+                              color: powered ? _mint : Colors.amber, size: 18),
+                          const SizedBox(width: 6),
+                          Text(powered ? '工具棚 解錠' : '工具棚 施錠'),
+                        ])),
                   ),
                 ),
                 Positioned.fill(
                   child: Align(
                     alignment: const Alignment(-.2, .15),
-                    child: FractionallySizedBox(widthFactor: .4, heightFactor: .5,
+                    child: FractionallySizedBox(
+                      widthFactor: .4,
+                      heightFactor: .5,
                       child: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: available ? 1 : 0, end: available ? 1 : 0),
+                        tween: Tween(
+                            begin: available ? 1 : 0, end: available ? 1 : 0),
                         duration: duration,
                         builder: (context, value, child) => Transform.translate(
                           offset: Offset(0, -70 * (1 - value)),
-                          child: Opacity(opacity: value.clamp(0.0, 1.0), child: child),
+                          child: Opacity(
+                              opacity: value.clamp(0.0, 1.0), child: child),
                         ),
                         child: DecoratedBox(
-                          decoration: BoxDecoration(gradient: RadialGradient(colors: [
-                            _mint.withValues(alpha: powered ? .35 : .06), Colors.transparent,
+                          decoration: BoxDecoration(
+                              gradient: RadialGradient(colors: [
+                            _mint.withValues(alpha: powered ? .35 : .06),
+                            Colors.transparent,
                           ])),
                           child: const FittedBox(child: EchoPumpFuseArt()),
                         ),
@@ -333,11 +359,15 @@ class _WorkshopScene extends StatelessWidget {
                     ),
                   ),
                 ),
-                Positioned(right: 12, bottom: 12,
+                Positioned(
+                  right: 12,
+                  bottom: 12,
                   child: AnimatedScale(
                     scale: available ? 0 : 1,
                     duration: duration,
-                    child: const Chip(avatar: Icon(Icons.inventory_2_outlined, color: _mint), label: Text('所持品へ', style: TextStyle(color: _mint))),
+                    child: const Chip(
+                        avatar: Icon(Icons.inventory_2_outlined, color: _mint),
+                        label: Text('所持品へ', style: TextStyle(color: _mint))),
                   ),
                 ),
               ]),
@@ -353,10 +383,14 @@ class _WorkshopFallback extends StatelessWidget {
   const _WorkshopFallback();
   @override
   Widget build(BuildContext context) => const DecoratedBox(
-    key: Key('echo-workshop-fallback'),
-    decoration: BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF284249), Color(0xFF101F26)])),
-    child: Center(child: Icon(Icons.handyman_outlined, size: 96, color: Colors.white24)),
-  );
+        key: Key('echo-workshop-fallback'),
+        decoration: BoxDecoration(
+            gradient:
+                LinearGradient(colors: [Color(0xFF284249), Color(0xFF101F26)])),
+        child: Center(
+            child:
+                Icon(Icons.handyman_outlined, size: 96, color: Colors.white24)),
+      );
 }
 
 class EchoPumpInventoryDialog extends StatefulWidget {

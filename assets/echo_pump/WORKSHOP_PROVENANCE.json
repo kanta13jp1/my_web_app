@@ -4,7 +4,7 @@
   "file": "workshop_background.png",
   "bytes": 2656979,
   "sha256": "d67476ce11378201f050e620cefcfa1260ababecd8c17ed520cf94df9cc0c6a4",
-  "prompt": "Original cinematic drainage-facility maintenance workshop at night; realistic environmental concept art, workbench, tool wall, pipes, compressor, amber lamp and teal spill, damp concrete; no people, monsters, fuse, text, logos or existing game imitation. Built-in image_gen; generated 2026-10-20.",
+  "prompt": "Create an original cinematic environment background for an indie survival mystery game called Echo Pump Room. Wide landscape 16:9 image, grounded realistic painted 3D concept art. An empty maintenance workshop inside a rain soaked municipal drainage facility at night: damp concrete walls, organized dark metal tool boards, heavy workbench in the central foreground, conduit pipes and a small industrial compressor, warm amber work lamp contrasted with soft teal spill light, worn materials and restrained atmospheric mist. Fixed camera at standing eye level looking diagonally into the workshop, readable central workbench surface with clear space for an interactive item overlay, no people, no monsters, no loose fuse on the table. Keep lighting detailed but sufficiently visible on a phone screen. Entire image is scenery, no text, no lettering, no logos, no UI, no borders. Original environment design, do not imitate any existing game or franchise.",
   "inputs": "Text only; no third-party images or personal data",
   "use": "Original game environment; existing fuse art is separately maintained"
 }
