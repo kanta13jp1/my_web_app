@@ -625,6 +625,7 @@ void main() {
           MaterialApp(
             home: AssetManagementPage(
               categoryBudgetStore: store,
+              debugCategoryBudgetOwnerId: 'synthetic-budget-owner',
               debugNow: DateTime(2026, 6, 20),
               debugCalendarNow: DateTime(2026, 6, 20),
             ),
@@ -860,6 +861,7 @@ void main() {
           MaterialApp(
             home: AssetManagementPage(
               categoryBudgetStore: store,
+              debugCategoryBudgetOwnerId: 'synthetic-budget-owner',
               debugNow: DateTime(2026, 6, 20),
               debugCalendarNow: DateTime(2026, 6, 20),
             ),

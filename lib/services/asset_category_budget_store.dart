@@ -12,11 +12,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AssetCategoryBudgetStore {
   static const String prefsKey = 'asset_category_budgets_v1';
 
-  const AssetCategoryBudgetStore();
+  final String? ownerId;
+  final bool _ownerScoped;
+
+  // Legacy constructor remains available for explicit legacy recovery/tests.
+  const AssetCategoryBudgetStore() : ownerId = null, _ownerScoped = false;
+  const AssetCategoryBudgetStore.forOwner(this.ownerId) : _ownerScoped = true;
+
+  String get storageKey {
+    if (!_ownerScoped) return prefsKey;
+    final owner = ownerId;
+    if (owner == null || owner.trim().isEmpty) {
+      throw StateError('Sign in required for category budgets');
+    }
+    return 'asset_category_budgets_v2_${Uri.encodeComponent(owner)}';
+  }
 
   Future<bool> hasSavedSetting({SharedPreferences? prefs}) async {
     final store = prefs ?? await SharedPreferences.getInstance();
-    final raw = store.getString(prefsKey);
+    final raw = store.getString(storageKey);
     if (raw == null || raw.isEmpty) return false;
     try {
       return jsonDecode(raw) is Map;
@@ -27,7 +41,7 @@ class AssetCategoryBudgetStore {
 
   Future<Map<String, double>> load({SharedPreferences? prefs}) async {
     final store = prefs ?? await SharedPreferences.getInstance();
-    final raw = store.getString(prefsKey);
+    final raw = store.getString(storageKey);
     if (raw == null || raw.isEmpty) {
       return <String, double>{};
     }
@@ -44,7 +58,7 @@ class AssetCategoryBudgetStore {
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     final sanitized = encodeMirrorValue(budgets);
-    if (!await store.setString(prefsKey, jsonEncode(sanitized))) {
+    if (!await store.setString(storageKey, jsonEncode(sanitized))) {
       throw StateError('Could not save category budgets');
     }
   }
