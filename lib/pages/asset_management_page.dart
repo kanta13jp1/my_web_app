@@ -1010,7 +1010,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _mustTaskLoadError;
   final Set<String> _savingMustTaskIds = {};
   AssetMustTaskRepository get _mustTaskRepository =>
-      widget.debugMustTaskRepository ?? SupabaseAssetMustTaskRepository(_supabase);
+      widget.debugMustTaskRepository ??
+      SupabaseAssetMustTaskRepository(_supabase);
 
   // --- 返済計画用 ---
   late final AssetLiabilityRepository _assetLiabilityRepository;
@@ -9736,22 +9737,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 child: const Text('キャンセル'),
               ),
               ElevatedButton(
-                onPressed: saving ? null : () async {
-                  final title = titleController.text.trim();
-                  if (title.isEmpty) return;
-                  setDialogState(() { saving = true; saveError = null; });
-                  try {
-                    await _mustTaskRepository.add(title, selectedDeadline);
-                    if (context.mounted) Navigator.pop(context);
-                    await _fetchMustTasks();
-                  } catch (_) {
-                    if (!context.mounted) return;
-                    setDialogState(() {
-                      saveError = '保存を確認できませんでした。入力を保持しています。通信状態と登録一覧を確認してください。';
-                      saving = false;
-                    });
-                  }
-                },
+                onPressed: saving
+                    ? null
+                    : () async {
+                        final title = titleController.text.trim();
+                        if (title.isEmpty) return;
+                        setDialogState(() {
+                          saving = true;
+                          saveError = null;
+                        });
+                        try {
+                          await _mustTaskRepository.add(
+                              title, selectedDeadline);
+                          if (context.mounted) Navigator.pop(context);
+                          await _fetchMustTasks();
+                        } catch (_) {
+                          if (!context.mounted) return;
+                          setDialogState(() {
+                            saveError =
+                                '保存を確認できませんでした。入力を保持しています。通信状態と登録一覧を確認してください。';
+                            saving = false;
+                          });
+                        }
+                      },
                 child: const Text('追加'),
               ),
             ],
@@ -34189,15 +34197,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 16),
             if (_mustTaskLoadError != null) ...[
-              Text(_mustTaskLoadError!, style: const TextStyle(color: Colors.red)),
-              TextButton(onPressed: _fetchMustTasks, child: const Text('必須タスクを再読込')),
+              Text(_mustTaskLoadError!,
+                  style: const TextStyle(color: Colors.red)),
+              TextButton(
+                  onPressed: _fetchMustTasks, child: const Text('必須タスクを再読込')),
             ],
             _isLoadingTasks
                 ? const Center(child: CircularProgressIndicator())
                 : _mustTasks.isEmpty
                     ? Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Center(child: Text(_mustTaskLoadError == null ? '登録されたタスクはありません' : '記録を取得できていません')),
+                        padding: const EdgeInsets.all(16),
+                        child: Center(
+                            child: Text(_mustTaskLoadError == null
+                                ? '登録されたタスクはありません'
+                                : '記録を取得できていません')),
                       )
                     : ListView.builder(
                         shrinkWrap: true,
@@ -34217,7 +34230,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             value: isCompleted,
                             onChanged: _savingMustTaskIds.contains(task['id'])
                                 ? null
-                                : (val) => _toggleTaskStatus(task['id'], isCompleted),
+                                : (val) =>
+                                    _toggleTaskStatus(task['id'], isCompleted),
                             title: Text(
                               task['title'],
                               style: TextStyle(
