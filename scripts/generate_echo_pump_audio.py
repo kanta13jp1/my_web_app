@@ -62,7 +62,7 @@ def main():
     root = Path(__file__).resolve().parents[1] / 'assets/echo_pump'
     if '--check' in sys.argv:
         catalog = json.loads((root / 'AUDIO_PROVENANCE.json').read_text(encoding='utf-8'))
-        assert len(catalog['files']) == 11
+        assert len(catalog['files']) == 13
         for name, info in catalog['files'].items():
             path = root / name
             assert hashlib.sha256(path.read_bytes()).hexdigest() == info['sha256']
@@ -70,7 +70,7 @@ def main():
                 assert (source.getnchannels(), source.getsampwidth(), source.getframerate()) == (1, 2, RATE)
                 assert abs(source.getnframes() / RATE - info['seconds']) < 1 / RATE
                 assert source.getnframes() > 0
-        print('Verified 11 WAV headers, durations, and provenance hashes')
+        print('Verified 13 WAV headers, durations, and provenance hashes')
         return
     root.mkdir(parents=True, exist_ok=True)
     catalog = {'format': 'PCM WAV, mono, 22050Hz, 16bit',
@@ -87,6 +87,8 @@ def main():
         ('damage', .42, 150, 58, .48),
         ('escape', 1.25, 330, 660, .01),
         ('fail', 1.15, 130, 42, .12),
+        ('doorOpen', .42, 145, 55, .28),
+        ('doorClose', .45, 110, 38, .44),
     ]
     for seed, (name, dur, freq, end, noise) in enumerate(specs):
         catalog['files'][name + '.wav'] = write(root / (name + '.wav'), effect(name, dur, freq, end, noise, seed))
