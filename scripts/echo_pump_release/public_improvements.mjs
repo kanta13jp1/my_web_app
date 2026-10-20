@@ -22,8 +22,8 @@ try {
    page.setDefaultTimeout(30000);page.on('pageerror',e=>errors.push(e.message));
    try {
     await page.addInitScript(()=>{
-     const audit={plays:[],media:[]};window.__audio=audit;const play=HTMLMediaElement.prototype.play;
-     HTMLMediaElement.prototype.play=function(){const src=this.currentSrc||this.src;if(!audit.media.includes(this))audit.media.push(this);const r=play.call(this);r.then(()=>audit.plays.push(src),()=>{});return r;};
+     const audit={plays:[],media:[],calls:[]};window.__audio=audit;const play=HTMLMediaElement.prototype.play;
+     HTMLMediaElement.prototype.play=function(){const call={requested:this.src,currentBefore:this.currentSrc,at:performance.now()};audit.calls.push(call);if(!audit.media.includes(this))audit.media.push(this);const r=play.call(this);r.then(()=>{call.resolved=this.currentSrc||this.src;call.resolvedAt=performance.now();audit.plays.push(call.resolved);},e=>{call.error=String(e);});return r;};
     });
     if(mode==='skip')await page.clock.install({time:new Date('2026-10-19T00:00:00Z')});
     await page.goto(origin+'/echo-pump',{waitUntil:'domcontentloaded'});
@@ -45,7 +45,7 @@ try {
      stage='walk to memo';await page.mouse.move(100,200);await page.mouse.wheel(0,-30000);await page.waitForTimeout(400);
      await b('設備寄りに見る').click();
      await b('保守メモを調べる').click();await waitText('夜間保守メモ 1 / 2');
-     assert.equal(await count('step'),2);observations.memoSteps=2;
+     await page.waitForFunction(()=>window.__audio.plays.filter(x=>x.endsWith('/step.wav')).length===2,{},{timeout:2000});assert.equal(await count('step'),2);observations.memoSteps=2;
      const memoPlays=(await audio()).length;await page.waitForTimeout(700);assert.equal((await audio()).length,memoPlays);
      await shot('memo-stopped');await b('メモを閉じる').click();
      stage='long walk';const stepsBefore=await count('step');
@@ -71,6 +71,7 @@ try {
     observations.audio=await audio();observations.media=await page.evaluate(()=>window.__audio.media.map(m=>({src:m.currentSrc||m.src,paused:m.paused,ended:m.ended,loop:m.loop})));
     assert.deepEqual(errors,[]);passed=true;
    }finally{
+    observations.audio=await audio().catch(()=>[]);observations.calls=await page.evaluate(()=>window.__audio?.calls??[]).catch(()=>[]);
     if(!passed)await shot('failure').catch(()=>{});
     writeFileSync(`${out}/${tag}-accessibility.txt`,await page.locator('body').ariaSnapshot().catch(()=>''));
     reports.push({device,viewport,mode,stage,passed,errors,observations});writeFileSync(out+'/REPORT.json',JSON.stringify({before,expected,reports},null,2));await context.close();
