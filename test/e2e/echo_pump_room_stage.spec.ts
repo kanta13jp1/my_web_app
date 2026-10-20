@@ -166,16 +166,16 @@ test(`workshop artwork, power and collection ${missingWorkshop ? 'with image fal
   await act('中央廊下へ','工具庫へ');
   await page.mouse.move(100,200);await page.mouse.wheel(0,30000);await page.waitForTimeout(350);
   await expect(scene(false,false)).toBeAttached();
-  await page.screenshot({path:info.outputPath('workshop-locked.png'),scale:'css'});
+  await page.mouse.move(200,300);await page.mouse.wheel(0,30000);await page.waitForTimeout(250);await page.mouse.wheel(0,30000);await page.waitForTimeout(100);await page.screenshot({path:info.outputPath('workshop-locked.png'),scale:'css'});
   await act('中央廊下へ','管理室へ','B 整備','A 搬入','中央廊下へ','工具庫へ');
   await page.mouse.move(100,200);await page.mouse.wheel(0,30000);await page.waitForTimeout(350);
   await expect(scene(true,false)).toBeAttached();
-  await page.waitForTimeout(800);await page.screenshot({path:info.outputPath('workshop-lit.png'),scale:'css'});
+  await page.waitForTimeout(800);await page.mouse.move(200,300);await page.mouse.wheel(0,30000);await page.waitForTimeout(250);await page.mouse.wheel(0,30000);await page.waitForTimeout(100);await page.screenshot({path:info.outputPath('workshop-lit.png'),scale:'css'});
   await button('ヒューズを回収').click();
   await expect(scene(true,true)).toBeAttached();
-  if (!missingWorkshop) {await page.waitForTimeout(150);await page.screenshot({path:info.outputPath('workshop-collecting.png'),scale:'css'});}
+  if (!missingWorkshop) {await page.waitForTimeout(150);await page.mouse.move(200,300);await page.mouse.wheel(0,30000);await page.waitForTimeout(250);await page.mouse.wheel(0,30000);await page.waitForTimeout(100);await page.screenshot({path:info.outputPath('workshop-collecting.png'),scale:'css'});}
   await page.waitForTimeout(800);await page.mouse.move(100,200);await page.mouse.wheel(0,30000);await page.waitForTimeout(200);
-  await page.screenshot({path:info.outputPath('workshop-collected.png'),scale:'css'});
+  await page.mouse.move(200,300);await page.mouse.wheel(0,30000);await page.waitForTimeout(250);await page.mouse.wheel(0,30000);await page.waitForTimeout(100);await page.screenshot({path:info.outputPath('workshop-collected.png'),scale:'css'});
   await expect(button('ヒューズを回収')).toBeDisabled();
   await button('所持品を開く').click();await expect(page.getByText('所持数 1',{exact:true})).toBeVisible();
   await button('所持品を閉じる').click();await expect(page.getByText('ターン 9',{exact:true}).first()).toBeAttached();
