@@ -116,4 +116,42 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+  for (final width in [320.0, 1120.0]) {
+    testWidgets('workshop scene collects once and fits 2x text at $width', (tester) async {
+      tester.view.physicalSize = Size(width, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final game = EchoPumpGame()
+        ..togglePower(PumpCircuit.b)
+        ..togglePower(PumpCircuit.a)
+        ..move(PumpRoom.hall)
+        ..move(PumpRoom.workshop);
+      var calls = 0;
+      await tester.pumpWidget(MaterialApp(
+        theme: ThemeData.dark(),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(2), disableAnimations: true),
+          child: child!,
+        ),
+        home: Scaffold(body: SingleChildScrollView(child: StatefulBuilder(builder: (context, setState) => EchoPumpFuseShelf(
+          game: game,
+          onCollect: () => setState(() { calls++; game.collectFuse(); }),
+        )))),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('echo-workshop-background')), findsOneWidget);
+      final before = game.turn;
+      await tester.ensureVisible(find.byKey(const Key('echo-collect')));
+      await tester.tap(find.byKey(const Key('echo-collect')));
+      await tester.pumpAndSettle();
+      expect(find.text('回収済み'), findsOneWidget);
+      expect(game.hasFuse, isTrue);
+      expect(game.turn, before + 1);
+      expect(tester.widget<FilledButton>(find.byKey(const Key('echo-collect'))).onPressed, isNull);
+      expect(calls, 1);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
 }
