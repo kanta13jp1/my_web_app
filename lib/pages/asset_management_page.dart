@@ -32,6 +32,7 @@ import 'dart:math'; // ← ★この1行を追加してください！
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:my_web_app/services/closing_record_checks.dart';
 import 'package:my_web_app/widgets/debounced_commit_text_field.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter/services.dart';
@@ -6250,51 +6251,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // NOTE: Closing checks intentionally use raw inputs recorded today.
     // Do not use display-complemented values here.
     final todayStock = _assetData[todayStr] ?? {};
-    final allTypesFilledToday = _assetTypes.isNotEmpty &&
-        _assetTypes.every((t) => todayStock.containsKey(t));
-
-    final hasAnyPositive = todayStock.values.any((v) => v >= 0);
-    final hasAnyNegative = todayStock.values.any((v) => v < 0);
-
-    final subsOk = _fixedCostSummaryForMonth(_now).isNotEmpty;
-
-    final checkNow = DateTime.now();
-    final currentMonthFlows = _flowsForCycle(checkNow);
-    final incomeCount =
-        currentMonthFlows.where((r) => r['action_type'] == 'conquer').length;
-    final expenseCount =
-        currentMonthFlows.where((r) => r['action_type'] == 'expense').length;
-    // 給与明細でのみ管理している給料も「収支の記録あり」とみなす。
-    final incomeRecords = _cycleIncomeEvidence(checkNow).records;
-    final flowsOk = (incomeCount + expenseCount) > 0 ||
-        incomeRecords.any(
-          (row) =>
-              !row.evidenceOnly &&
-              row.id != null &&
-              row.amount >= 0 &&
-              DateTime.tryParse(row.date) != null,
-        );
-
-    final now = DateTime.now();
-    final mustThisMonth = _mustTasks.where((t) {
-      final d = DateTime.parse(t['deadline']).toLocal();
-      return d.year == now.year && d.month == now.month;
-    }).toList();
-    final mustOk = mustThisMonth.isNotEmpty;
-
+    final checks = ClosingRecordChecks(
+      assets: _assetsDone,
+      liabilities: _liabilitiesDone,
+      fixedCosts: _fixedCostsDone,
+      flows: _flowsDone,
+      tasks: _mustTasksDone,
+    ).withRecordedBalances(
+      registeredAccounts: _assetTypes.toSet(),
+      recordedToday: todayStock,
+    );
     setState(() {
-      if (allTypesFilledToday && hasAnyPositive) _assetsDone = true;
-      if (allTypesFilledToday && hasAnyNegative) _liabilitiesDone = true;
-      if (subsOk) _fixedCostsDone = true;
-      if (flowsOk) _flowsDone = true;
-      if (mustOk) _mustTasksDone = true;
+      _assetsDone = checks.assets;
+      _liabilitiesDone = checks.liabilities;
+      // Completeness of costs, flows and tasks needs the owner's review.
+      // Keep existing owner checks; the presence of one record is not enough.
     });
 
     await _upsertTodayClosing();
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('自動チェックを反映しました（不足があれば手動でONできます）')),
+      const SnackBar(
+        content: Text(
+          '登録口座の本日記録を確認しました。固定費・収支・必須タスクの全件照合は'
+          '自動判定できないため、本人が確認してチェックしてください。既存チェックは保持します。',
+        ),
+      ),
     );
   }
 
