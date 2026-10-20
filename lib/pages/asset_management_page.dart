@@ -32,6 +32,7 @@ import 'dart:math'; // ← ★この1行を追加してください！
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:my_web_app/services/asset_must_task_repository.dart';
 import 'package:my_web_app/services/closing_record_checks.dart';
 import 'package:my_web_app/widgets/debounced_commit_text_field.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -335,6 +336,9 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, Map<String, double>>? debugInitialAssetData;
 
+  @visibleForTesting
+  final AssetMustTaskRepository? debugMustTaskRepository;
+
   /// テスト専用: asset_pref_mirror 行を直接注入し、反映通知の判定を
   /// ネットワークなしで検証する。null なら通常の select。
   @visibleForTesting
@@ -461,6 +465,7 @@ class AssetManagementPage extends StatefulWidget {
     this.entryLabel,
     this.entryDescription,
     this.debugInitialAssetData,
+    this.debugMustTaskRepository,
     this.debugMirrorPrefsRows,
     this.debugInflowDeletedIdsMirror,
     this.debugTombstoneGcConfig,
@@ -1002,6 +1007,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // --- 必須タスク用変数 ---
   List<Map<String, dynamic>> _mustTasks = [];
   bool _isLoadingTasks = false;
+  String? _mustTaskLoadError;
+  final Set<String> _savingMustTaskIds = {};
+  AssetMustTaskRepository get _mustTaskRepository =>
+      widget.debugMustTaskRepository ?? SupabaseAssetMustTaskRepository(_supabase);
 
   // --- 返済計画用 ---
   late final AssetLiabilityRepository _assetLiabilityRepository;
@@ -9636,35 +9645,30 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _fetchMustTasks() async {
+    if (!mounted) return;
     setState(() => _isLoadingTasks = true);
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
-      final data = await _supabase
-          .from('must_tasks')
-          .select()
-          .eq('user_id', userId)
-          .order('deadline', ascending: true);
-
-      if (mounted) {
-        setState(() {
-          _mustTasks = List<Map<String, dynamic>>.from(data);
-          _isLoadingTasks = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _mustTasks = [];
-          _isLoadingTasks = false;
-        });
-      }
+      final data = await _mustTaskRepository.load();
+      if (!mounted) return;
+      setState(() {
+        _mustTasks = data;
+        _mustTaskLoadError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _mustTaskLoadError = '必須タスクを取得できませんでした。表示中の記録は保持しています。';
+      });
+    } finally {
+      if (mounted) setState(() => _isLoadingTasks = false);
     }
   }
 
   Future<void> _addMustTask() async {
     final titleController = TextEditingController();
     DateTime selectedDeadline = DateTime.now();
+    bool saving = false;
+    String? saveError;
 
     await showDialog(
       context: context,
@@ -9681,6 +9685,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     labelText: 'タスク内容 (例: 確定申告)',
                   ),
                 ),
+                if (saveError != null) ...[
+                  const SizedBox(height: 8),
+                  Text(saveError!, style: const TextStyle(color: Colors.red)),
+                ],
                 const SizedBox(height: 16),
                 InkWell(
                   onTap: () async {
@@ -9724,37 +9732,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: saving ? null : () => Navigator.pop(context),
                 child: const Text('キャンセル'),
               ),
               ElevatedButton(
-                onPressed: () async {
+                onPressed: saving ? null : () async {
                   final title = titleController.text.trim();
                   if (title.isEmpty) return;
-                  final userId = _supabase.auth.currentUser?.id;
-                  if (userId != null) {
-                    try {
-                      await _supabase.from('must_tasks').insert({
-                        'user_id': userId,
-                        'title': title,
-                        'deadline': selectedDeadline.toUtc().toIso8601String(),
-                        'is_completed': false,
-                      });
-                      if (context.mounted) Navigator.pop(context);
-                      _fetchMustTasks();
-                    } catch (e) {
-                      debugPrint('Error adding task: $e');
-                      setState(() {
-                        _mustTasks.add({
-                          'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
-                          'title': title,
-                          'deadline':
-                              selectedDeadline.toUtc().toIso8601String(),
-                          'is_completed': false,
-                        });
-                      });
-                      if (context.mounted) Navigator.pop(context);
-                    }
+                  setDialogState(() { saving = true; saveError = null; });
+                  try {
+                    await _mustTaskRepository.add(title, selectedDeadline);
+                    if (context.mounted) Navigator.pop(context);
+                    await _fetchMustTasks();
+                  } catch (_) {
+                    if (!context.mounted) return;
+                    setDialogState(() {
+                      saveError = '保存を確認できませんでした。入力を保持しています。通信状態と登録一覧を確認してください。';
+                      saving = false;
+                    });
                   }
                 },
                 child: const Text('追加'),
@@ -9768,19 +9763,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _toggleTaskStatus(String id, bool currentStatus) async {
+    if (_savingMustTaskIds.contains(id)) return;
+    setState(() => _savingMustTaskIds.add(id));
     try {
-      await _supabase
-          .from('must_tasks')
-          .update({'is_completed': !currentStatus}).eq('id', id);
-      _fetchMustTasks();
-    } catch (e) {
+      await _mustTaskRepository.setCompleted(id, !currentStatus);
+      await _fetchMustTasks();
+    } catch (_) {
       if (!mounted) return;
-      setState(() {
-        final index = _mustTasks.indexWhere((t) => t['id'] == id);
-        if (index != -1) _mustTasks[index]['is_completed'] = !currentStatus;
-      });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('完了状態の保存を確認できませんでした。元の表示を保持しています。再読込して確認してください。'),
+      ));
+    } finally {
+      if (mounted) setState(() => _savingMustTaskIds.remove(id));
     }
-    await _fetchTodayClosing();
+    if (mounted) await _fetchTodayClosing();
   }
 
   Future<void> _editSubscriptionDueDate(Map<String, dynamic> item) async {
@@ -34192,12 +34188,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
             const SizedBox(height: 16),
+            if (_mustTaskLoadError != null) ...[
+              Text(_mustTaskLoadError!, style: const TextStyle(color: Colors.red)),
+              TextButton(onPressed: _fetchMustTasks, child: const Text('必須タスクを再読込')),
+            ],
             _isLoadingTasks
                 ? const Center(child: CircularProgressIndicator())
                 : _mustTasks.isEmpty
-                    ? const Padding(
+                    ? Padding(
                         padding: EdgeInsets.all(16),
-                        child: Center(child: Text('登録されたタスクはありません')),
+                        child: Center(child: Text(_mustTaskLoadError == null ? '登録されたタスクはありません' : '記録を取得できていません')),
                       )
                     : ListView.builder(
                         shrinkWrap: true,
@@ -34215,8 +34215,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
                           return CheckboxListTile(
                             value: isCompleted,
-                            onChanged: (val) =>
-                                _toggleTaskStatus(task['id'], isCompleted),
+                            onChanged: _savingMustTaskIds.contains(task['id'])
+                                ? null
+                                : (val) => _toggleTaskStatus(task['id'], isCompleted),
                             title: Text(
                               task['title'],
                               style: TextStyle(
