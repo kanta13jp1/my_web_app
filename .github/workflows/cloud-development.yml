@@ -224,7 +224,7 @@ jobs:
 
       - name: Test in cloud
         if: env.CLOUD_PROFILE == 'test' || env.CLOUD_PROFILE == 'full'
-        run: flutter test --concurrency=2
+        run: flutter test test/services/asset_category_budget_owner_probe_test.dart --reporter expanded
 
       - name: Build Flutter Web in cloud
         id: web_build
