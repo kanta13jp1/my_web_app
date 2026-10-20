@@ -164,9 +164,11 @@ test(`workshop artwork, power and collection ${missingWorkshop ? 'with image fal
   await page.goto('/');await button('ゲーム開始').click();await button('スキップして開始').click();
   async function act(...names: string[]) {for (const name of names) {await button(name).click();await expect(button('演出をスキップ')).toHaveCount(0);}}
   await act('中央廊下へ','工具庫へ');
+  await page.mouse.move(100,200);await page.mouse.wheel(0,30000);await page.waitForTimeout(350);
   await expect(scene(false,false)).toBeAttached();await scene(false,false).scrollIntoViewIfNeeded();
   await page.screenshot({path:info.outputPath('workshop-locked.png'),scale:'css'});
   await act('中央廊下へ','管理室へ','B 整備','A 搬入','中央廊下へ','工具庫へ');
+  await page.mouse.move(100,200);await page.mouse.wheel(0,30000);await page.waitForTimeout(350);
   await expect(scene(true,false)).toBeAttached();await scene(true,false).scrollIntoViewIfNeeded();
   await page.waitForTimeout(800);await page.screenshot({path:info.outputPath('workshop-lit.png'),scale:'css'});
   await button('ヒューズを回収').click();

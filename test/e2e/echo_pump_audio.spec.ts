@@ -36,6 +36,7 @@ test.afterEach(async ({ page }, info) => {
   await info.attach('uncaught-page-errors', {
     body: JSON.stringify(errors), contentType: 'application/json',
   });
+  await info.attach('audio-observation', {body: JSON.stringify(await page.evaluate(() => ({plays:(window as any).__echoAudioAudit.plays,media:(window as any).__echoAudioAudit.media.map((m: HTMLMediaElement) => ({src:m.currentSrc||m.src,paused:m.paused,ended:m.ended,loop:m.loop,time:m.currentTime}))}))), contentType:'application/json'});
   expect(errors).toEqual([]);
 });
 
@@ -181,6 +182,9 @@ test('door sounds play during movement and mute suppresses later transitions', a
   await button('音をON').click();
   await expect.poll(() => hasPlayed(page, 'bgm')).toBe(true);
   await enterGame(page);
+  // Check the normal door sequence after opt-in/start audio has settled.
+  await expect.poll(() => hasPlayed(page, 'start')).toBe(true);
+  await expect.poll(() => page.evaluate(() => (window as any).__echoAudioAudit.media.filter((m: HTMLMediaElement) => !m.loop).every((m: HTMLMediaElement) => m.paused || m.ended))).toBe(true);
   await button('中央廊下へ').click();
   await expect.poll(() => hasPlayed(page, 'doorOpen')).toBe(true);
   await expect.poll(() => hasPlayed(page, 'doorClose')).toBe(true);
