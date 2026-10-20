@@ -16,7 +16,9 @@ class AssetCategoryBudgetStore {
   final bool _ownerScoped;
 
   // Legacy constructor remains available for explicit legacy recovery/tests.
-  const AssetCategoryBudgetStore() : ownerId = null, _ownerScoped = false;
+  const AssetCategoryBudgetStore()
+      : ownerId = null,
+        _ownerScoped = false;
   const AssetCategoryBudgetStore.forOwner(this.ownerId) : _ownerScoped = true;
 
   String get storageKey {

@@ -11500,15 +11500,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _categoryBudgetsOwnerId = owner;
         _categoryBudgets = budgets;
-        _categoryBudgetStatus = legacy
-            ? '旧端末予算は所有者を確認できないため保留しています。元の保存値は削除していません。'
-            : null;
+        _categoryBudgetStatus =
+            legacy ? '旧端末予算は所有者を確認できないため保留しています。元の保存値は削除していません。' : null;
       });
       final rows = await _bootSelectPrefMirror(_categoryBudgetsMirrorKey);
       if (!_isBudgetOwner(owner)) return;
       if (saved) return;
       if (rows.isEmpty) return;
-      final restored = AssetCategoryBudgetStore.decodeMirrorValue(rows.first['value']);
+      final restored =
+          AssetCategoryBudgetStore.decodeMirrorValue(rows.first['value']);
       await store.save(restored);
       if (!_isBudgetOwner(owner)) return;
       setState(() {
@@ -19099,7 +19099,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// ユーザー設定の月次予算を重ねて表示する。支出も予算も無ければ非表示。
   Widget _buildCategoryBudgetCard() {
     final budgets = _categoryBudgetsOwnerId == _categoryBudgetOwnerId
-        ? _categoryBudgets : <String, double>{};
+        ? _categoryBudgets
+        : <String, double>{};
     final breakdown = _buildSalarySpendingBreakdown();
     if (breakdown.expenseEntryCount == 0 && budgets.isEmpty) {
       return const SizedBox.shrink();
@@ -19120,14 +19121,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        if (_categoryBudgetStatus != null) Text(_categoryBudgetStatus!),
-        AssetCategoryBudgetCard(
-        report: report,
-        currencyFormatter: _formatYen,
-        periodLabel:
-            '${start.month}/${start.day}〜${end.month}/${end.day}(給料サイクル)',
-        onEditBudgets: () => _showCategoryBudgetEditor(actualByCategory),
-      ),
+          if (_categoryBudgetStatus != null) Text(_categoryBudgetStatus!),
+          AssetCategoryBudgetCard(
+            report: report,
+            currencyFormatter: _formatYen,
+            periodLabel:
+                '${start.month}/${start.day}〜${end.month}/${end.day}(給料サイクル)',
+            onEditBudgets: () => _showCategoryBudgetEditor(actualByCategory),
+          ),
         ],
       ),
     );
@@ -19138,8 +19139,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _showCategoryBudgetEditor(
     Map<String, double> actualByCategory,
   ) async {
+    final editorOwner = _categoryBudgetOwnerId;
     final savedBudgets = _categoryBudgetsOwnerId == _categoryBudgetOwnerId
-        ? _categoryBudgets : <String, double>{};
+        ? _categoryBudgets
+        : <String, double>{};
     final categories = <String>[
       ...SalarySpendingBreakdownService.categoryLabels,
       for (final category in actualByCategory.keys)
@@ -19227,6 +19230,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 onPressed: isSaving
                     ? null
                     : () async {
+                        if (editorOwner == null ||
+                            !_isBudgetOwner(editorOwner)) {
+                          setDialogState(() {
+                            saveError = '利用者が変わりました。閉じて開き直してください。';
+                          });
+                          return;
+                        }
                         final next = <String, double>{};
                         for (final category in categories) {
                           final text = controllers[category]!

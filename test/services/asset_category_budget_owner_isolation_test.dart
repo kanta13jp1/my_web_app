@@ -5,7 +5,8 @@ import 'package:my_web_app/services/asset_category_budget_store.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
-  test('owner settings are isolated and restored without adopting legacy', () async {
+  test('owner settings are isolated and restored without adopting legacy',
+      () async {
     const legacy = AssetCategoryBudgetStore();
     const a = AssetCategoryBudgetStore.forOwner('owner-a');
     const b = AssetCategoryBudgetStore.forOwner('owner-b');
