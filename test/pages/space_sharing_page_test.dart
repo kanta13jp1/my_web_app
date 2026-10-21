@@ -87,6 +87,29 @@ void main() {
     expect(find.byKey(const Key('space_leave_7')), findsOneWidget);
     expect(find.byKey(const Key('space_note_open_91')), findsOneWidget);
   });
+  testWidgets('failed refresh warns while retaining visible sharing data',
+      (tester) async {
+    final source = _FakeSpaceSharingDataSource(_ownerSnapshot());
+    await tester.pumpWidget(
+      MaterialApp(home: SpaceSharingPage(dataSource: source)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Shared note'), findsOneWidget);
+
+    source.loadError = StateError('synthetic refresh failure');
+    await tester.tap(find.byKey(const Key('space_sharing_reload')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('space_sharing_stale_warning')), findsOneWidget);
+    expect(find.text('Shared note'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    source.loadError = null;
+    await tester.tap(find.byKey(const Key('space_sharing_reload')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('space_sharing_stale_warning')), findsNothing);
+  });
+
 }
 
 SpaceSharingSnapshot _ownerSnapshot() => SpaceSharingSnapshot(
@@ -177,12 +200,16 @@ class _FakeSpaceSharingDataSource implements SpaceSharingDataSource {
   _FakeSpaceSharingDataSource(this.snapshot);
 
   final SpaceSharingSnapshot snapshot;
+  Object? loadError;
   String? acceptedInvitationId;
   String? invitedEmail;
   SpacePermission? invitedPermission;
 
   @override
-  Future<SpaceSharingSnapshot> load() async => snapshot;
+  Future<SpaceSharingSnapshot> load() async {
+    if (loadError != null) throw loadError!;
+    return snapshot;
+  }
 
   @override
   Future<void> acceptInvitation(String invitationId) async {

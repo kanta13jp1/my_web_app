@@ -198,6 +198,16 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
         key: const Key('space_sharing_list'),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         children: [
+          if (_error != null)
+            const Card(
+              key: Key('space_sharing_stale_warning'),
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  '再読み込みに失敗しました。表示中の共有情報は最新でない可能性があります。',
+                ),
+              ),
+            ),
           if (snapshot.incomingInvitations.isNotEmpty) ...[
             Text(
               'あなたへの招待',
