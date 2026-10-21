@@ -4,7 +4,8 @@ import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 void main() {
   test('empty records are unscored and never invoke AI', () async {
     var calls = 0;
-    final snapshot = _buildSnapshot(expenseEntryCount: 0, recordedExpenseDays: 0, totalExpense: 0);
+    final snapshot = _buildSnapshot(
+        expenseEntryCount: 0, recordedExpenseDays: 0, totalExpense: 0);
     final service = AssetWasteTrainingAiService(invoker: (_) async {
       calls += 1;
       return {'success': true, 'text': 'unused'};

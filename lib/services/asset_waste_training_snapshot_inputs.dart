@@ -51,9 +51,14 @@ class AssetWasteTrainingSnapshotInputs {
       totalExpense += amount;
       expenseEntryCount += 1;
 
-      final observedDate = DateTime.tryParse(item['occurred_at']?.toString() ?? '')?.toLocal();
-      if (observedDate != null && !observedDate.isBefore(periodStart) && !observedDate.isAfter(now) && (!usingCycle || observedDate.isBefore(cycleEndExclusive))) {
-        recordedDateKeys.add('${observedDate.year}-${observedDate.month}-${observedDate.day}');
+      final observedDate =
+          DateTime.tryParse(item['occurred_at']?.toString() ?? '')?.toLocal();
+      if (observedDate != null &&
+          !observedDate.isBefore(periodStart) &&
+          !observedDate.isAfter(now) &&
+          (!usingCycle || observedDate.isBefore(cycleEndExclusive))) {
+        recordedDateKeys.add(
+            '${observedDate.year}-${observedDate.month}-${observedDate.day}');
       }
       final description = item['description']?.toString() ?? '';
       if (wasteCategoryOf(description, actionType) == null) {

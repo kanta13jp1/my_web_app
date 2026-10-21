@@ -19673,7 +19673,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 _buildOverviewStatChip(
                   label: '浪費分類の記録がない支出記録日',
-                  value: '${training.noWasteDays}/${training.recordedExpenseDays}記録日',
+                  value:
+                      '${training.noWasteDays}/${training.recordedExpenseDays}記録日',
                   color: const Color(0xFF0F766E),
                 ),
                 _buildOverviewStatChip(
