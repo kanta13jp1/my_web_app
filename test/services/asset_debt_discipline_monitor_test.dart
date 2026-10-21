@@ -35,17 +35,21 @@ void main() {
         report.newBorrowingViolations.single.problem.contains('追加借入の可能性'),
         isTrue,
       );
-      expect(report.newBorrowingViolations.single.problem,
-          contains('未照合の候補'),
+      expect(
+        report.newBorrowingViolations.single.problem,
+        contains('未照合の候補'),
       );
-      expect(report.newBorrowingViolations.single.problem,
-          contains('確定ではありません'),
+      expect(
+        report.newBorrowingViolations.single.problem,
+        contains('確定ではありません'),
       );
-      expect(report.newBorrowingViolations.single.problem,
-          isNot(contains('発生しました')),
+      expect(
+        report.newBorrowingViolations.single.problem,
+        isNot(contains('発生しました')),
       );
-      expect(report.newBorrowingViolations.single.problem,
-          isNot(contains('誓約に反しています')),
+      expect(
+        report.newBorrowingViolations.single.problem,
+        isNot(contains('誓約に反しています')),
       );
       expect(report.hasPriorMonthData, isTrue);
     });

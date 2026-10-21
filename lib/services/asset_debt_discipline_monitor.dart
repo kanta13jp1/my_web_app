@@ -255,7 +255,8 @@ class AssetDebtDisciplineMonitor {
               amount: inferredNewUsage,
               currentBalance: balance,
               balanceDelta: balanceDiff,
-              problem: '${row.name}の残高差分から、今月 約${_yen(inferredNewUsage)}の追加借入の可能性を推定しています。'
+              problem: '${row.name}の残高差分から、今月 約${_yen(inferredNewUsage)}の'
+                  '追加借入の可能性を推定しています。'
                   '未照合の候補であり、実際の借入や誓約違反の確定ではありません。',
               action: '翌月はこのローン・借入の新規利用を止め、既存の返済計画を優先してください。',
             ),
