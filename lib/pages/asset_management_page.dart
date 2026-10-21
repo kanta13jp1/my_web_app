@@ -1,3 +1,4 @@
+import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
 import '../widgets/asset_recorded_change_details.dart';
 import '../models/asset_income_source_evidence.dart';
 import '../widgets/asset_income_reconciliation_section.dart';
@@ -19633,23 +19634,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                       ),
                       SizedBox(height: 4),
-                      Text(
-                        'お金を浪費しないことは、欲望を観察し、判断力と自己制御を鍛える能力開発トレーニングです。',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF475569),
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              '支出記録日 ${training.recordedExpenseDays}/${training.elapsedDays}日。未記録日の支出・浪費の有無は不明です。点数は記録ベースの参考値で、能力や達成実績の評価ではありません。',
-            ),
+                      AssetWasteObservationStatus(snapshot: training),
             KgiCsfKpiPanel(
               plan: plan,
               accentColor: const Color(0xFF0F766E),
