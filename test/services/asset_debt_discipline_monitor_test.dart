@@ -36,13 +36,17 @@ void main() {
         isTrue,
       );
       expect(report.newBorrowingViolations.single.problem,
-          contains('未照合の候補'));
+          contains('未照合の候補'),
+      );
       expect(report.newBorrowingViolations.single.problem,
-          contains('確定ではありません'));
+          contains('確定ではありません'),
+      );
       expect(report.newBorrowingViolations.single.problem,
-          isNot(contains('発生しました')));
+          isNot(contains('発生しました')),
+      );
       expect(report.newBorrowingViolations.single.problem,
-          isNot(contains('誓約に反しています')));
+          isNot(contains('誓約に反しています')),
+      );
       expect(report.hasPriorMonthData, isTrue);
     });
 
