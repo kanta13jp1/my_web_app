@@ -40,7 +40,7 @@ void main() {
         {
           'action_type': 'expense',
           'amount': 100,
-          'occurred_at': '2026-06-10T09:00:00'
+          'occurred_at': '2026-06-10T09:00:00',
         },
       ]);
       expect(find.textContaining('記録ベースの参考値'), findsOneWidget);
