@@ -1,4 +1,4 @@
-name: Approved PR5897 Web Release
+name: Approved PR5898 Web Release
 
 on:
   pull_request:
@@ -46,7 +46,7 @@ on:
   workflow_dispatch:
     inputs:
       approved_release:
-        description: Explicit owner approved PR5897-only release
+        description: Explicit owner approved PR5898-only release
         required: true
         default: false
         type: boolean
@@ -135,22 +135,22 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='98716647b4e302817531a01ba4331af3ed43ec56', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='a8f7cfd9280813498f3607aae88913f5d0763bcd', 'Production changed; rebuild selection'
           PY
 
-      - name: Verify approved PR5897-only selection
+      - name: Verify approved PR5898-only selection
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          test "$(gh pr view 5897 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
-          test "$(gh pr view 5897 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = e7b53d0404930b4240ef71f945a22680c0e467ad
-          git fetch --no-tags --depth=1 origin 98716647b4e302817531a01ba4331af3ed43ec56
+          test "$(gh pr view 5898 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
+          test "$(gh pr view 5898 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 9e3b1afec4481bf552a524466025fc9dcebf2772
+          git fetch --no-tags --depth=1 origin a8f7cfd9280813498f3607aae88913f5d0763bcd
           python3 - <<'PY'
           import subprocess
-          expected={'.github/workflows/cloud-development.yml', 'lib/services/asset_calendar_reflection_import_parser.dart', 'test/services/asset_calendar_reflection_import_parser_test.dart', 'lib/widgets/asset_calendar_reflection_panel.dart', 'test/e2e/calendar_import_correction_test.dart'}
-          actual=set(subprocess.check_output(['git','diff','--name-only','98716647b4e302817531a01ba4331af3ed43ec56','HEAD']).decode().splitlines())
+          expected={'lib/widgets/asset_waste_observation_status.dart', 'lib/services/asset_waste_training_snapshot_inputs.dart', 'lib/services/asset_waste_training_ai_service.dart', 'lib/pages/asset_management_page.dart', 'test/e2e/waste_observation_test.dart', 'test/services/asset_waste_training_snapshot_inputs_test.dart', '.github/workflows/cloud-development.yml', 'test/services/asset_waste_training_ai_service_test.dart'}
+          actual=set(subprocess.check_output(['git','diff','--name-only','a8f7cfd9280813498f3607aae88913f5d0763bcd','HEAD']).decode().splitlines())
           assert actual==expected,(actual,expected)
-          expected_blobs={'lib/widgets/asset_calendar_reflection_panel.dart': '71a513adab6d24e3c6f832122dd2ffacb22072ee', 'lib/services/asset_calendar_reflection_import_parser.dart': 'ab131007742a5ab47019b06d9bc34b6d2c73aa51', 'test/e2e/calendar_import_correction_test.dart': 'baebb6c1075f2ece962588b4a341955f72068dc2', 'test/services/asset_calendar_reflection_import_parser_test.dart': '402d88ece0f9218af36c8f510635e578169a8634'}
+          expected_blobs={'lib/pages/asset_management_page.dart': '0adcf2ca3274b6c25d2454079a8ea87269240fbc', 'lib/services/asset_waste_training_ai_service.dart': '9e1987d8d759130963165dd3edaca020df800938', 'lib/services/asset_waste_training_snapshot_inputs.dart': '7adbdb51afce8732e8ea7b16338e1c17073b84fe', 'lib/widgets/asset_waste_observation_status.dart': '915a3e1a7a69b34e108947911d15d541facf7c7b', 'test/e2e/waste_observation_test.dart': '239751da54dda808b17c0d689882cd9c26558cef', 'test/services/asset_waste_training_ai_service_test.dart': '6a2b216ab73dc4fbc678571e47aa3657e9821d14', 'test/services/asset_waste_training_snapshot_inputs_test.dart': '6e647ab7fcf8f6f41b8800cef9d4b8fe38f16f77'}
           for path, expected_blob in expected_blobs.items():
               blob=subprocess.check_output(['git','rev-parse','HEAD:'+path]).decode().strip()
               assert blob==expected_blob,(path,blob)
@@ -613,7 +613,7 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='98716647b4e302817531a01ba4331af3ed43ec56', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='a8f7cfd9280813498f3607aae88913f5d0763bcd', 'Production changed; rebuild selection'
           PY
 
       - name: Collect pushed files
@@ -1328,7 +1328,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         env:
           FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-          EXPECTED_PUBLIC_BASE: 98716647b4e302817531a01ba4331af3ed43ec56
+          EXPECTED_PUBLIC_BASE: a8f7cfd9280813498f3607aae88913f5d0763bcd
         run: |
           python3 -m venv /tmp/echo-release-tools
           /tmp/echo-release-tools/bin/pip install google-auth==2.43.0 requests==2.32.5
@@ -1360,7 +1360,7 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          EXPECTED_PUBLIC_BASE=98716647b4e302817531a01ba4331af3ed43ec56 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
+          EXPECTED_PUBLIC_BASE=a8f7cfd9280813498f3607aae88913f5d0763bcd /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
 
           npx -y firebase-tools@latest deploy \
             --only hosting \

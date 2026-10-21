@@ -10,6 +10,7 @@ class AssetWasteTrainingSnapshot {
   final int expenseEntryCount;
   final int wasteEntryCount;
   final int noWasteDays;
+  final int recordedExpenseDays;
   final int elapsedDays;
   final int ruleCompletedCount;
   final int ruleTargetCount;
@@ -25,6 +26,7 @@ class AssetWasteTrainingSnapshot {
     required this.expenseEntryCount,
     required this.wasteEntryCount,
     required this.noWasteDays,
+    this.recordedExpenseDays = 0,
     required this.elapsedDays,
     required this.ruleCompletedCount,
     required this.ruleTargetCount,
@@ -56,6 +58,7 @@ class AssetWasteTrainingSnapshot {
   double get violationProgress => todayViolationCount == 0 ? 1 : 0;
 
   double get trainingProgress {
+    if (recordedExpenseDays == 0) return 0;
     return (noWasteProgress * 0.35 +
             wasteControlProgress * 0.35 +
             ruleProgress * 0.20 +
@@ -76,6 +79,7 @@ class AssetWasteTrainingSnapshot {
         expenseEntryCount,
         wasteEntryCount,
         noWasteDays,
+        recordedExpenseDays,
         elapsedDays,
         ruleCompletedCount,
         ruleTargetCount,
@@ -108,10 +112,10 @@ class AssetWasteTrainingAiReview {
     final reasonText = normalizedReason.isEmpty ? '' : ' $normalizedReason';
     final focus = snapshot.wasteExpense > 0
         ? '今月の浪費額を次の1件から止め、浪費カテゴリを記録ログとして見直してください。'
-        : '支出のたびに「能力を伸ばす支出か」を確認し、浪費ゼロ日の精度を上げてください。';
+        : '支出のたびに「能力を伸ばす支出か」を確認し、未記録日の確認と分類の見直しをしてください。';
     return AssetWasteTrainingAiReview(
       summary:
-          'AIレビュー待機中$reasonText。浪費抑制スコアは${snapshot.disciplineScore}点、浪費比率は${(snapshot.wasteRatio * 100).round()}%、日課達成は${snapshot.ruleCompletedCount}/${snapshot.ruleTargetCount}件です。$focus',
+          'AIレビュー待機中$reasonText。浪費抑制スコアは記録ベースの参考値${snapshot.disciplineScore}点、浪費比率は${(snapshot.wasteRatio * 100).round()}%、日課達成は${snapshot.ruleCompletedCount}/${snapshot.ruleTargetCount}件です。$focus',
       source: 'local-kpi-engine',
       generatedAt: generatedAt,
       isFallback: true,
@@ -133,6 +137,14 @@ class AssetWasteTrainingAiService {
   Future<AssetWasteTrainingAiReview> generateReview(
     AssetWasteTrainingSnapshot snapshot,
   ) async {
+    if (snapshot.recordedExpenseDays == 0) {
+      return AssetWasteTrainingAiReview(
+        summary: '支出記録がないため採点・浪費の有無の判定はできません。未記録日は不明です。',
+        source: 'local-observation-check',
+        generatedAt: _now(),
+        isFallback: true,
+      );
+    }
     try {
       final response = await _chatService.sendProviderChat(
         message: _buildPrompt(snapshot),
@@ -155,14 +167,16 @@ class AssetWasteTrainingAiService {
     return '''
 あなたは浪費抑制を「判断力を鍛える訓練」として支援するAI資産コーチです。
 以下の数値から、現状分析、KGI、KGI達成のためのCSF、CSFに基づくKPI改善、次回モニタリング観点を日本語で3行以内にまとめてください。
-対象月: ${snapshot.month.year}/${snapshot.month.month}
+対象期間開始: ${snapshot.month.year}/${snapshot.month.month}/${snapshot.month.day}
 浪費抑制スコア: ${snapshot.disciplineScore}/100
 支出総額: ${snapshot.totalExpense}円
 浪費額: ${snapshot.wasteExpense}円
 浪費比率: ${(snapshot.wasteRatio * 100).round()}%
 支出件数: ${snapshot.expenseEntryCount}
 浪費件数: ${snapshot.wasteEntryCount}
-浪費ゼロ日: ${snapshot.noWasteDays}/${snapshot.elapsedDays}日
+浪費分類の記録がない支出記録日: ${snapshot.noWasteDays}日
+支出記録日: ${snapshot.recordedExpenseDays}/${snapshot.elapsedDays}日
+未記録日の支出・浪費の有無は不明です。点数は記録ベースの参考値で、能力・達成実績とは断定しないでください。
 日課達成: ${snapshot.ruleCompletedCount}/${snapshot.ruleTargetCount}件
 本日の違反: ${snapshot.todayViolationCount}件
 連続遵守: ${snapshot.compliantStreakDays}日
