@@ -2069,19 +2069,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   KgiCsfKpiPlan _buildWasteTrainingPlan(AssetWasteTrainingSnapshot snapshot) {
-    final zeroWasteTarget = max(1, snapshot.elapsedDays);
+    final zeroWasteTarget = max(1, snapshot.recordedExpenseDays);
     final ruleTarget = max(1, snapshot.ruleTargetCount);
     final violationClear = snapshot.todayViolationCount == 0 ? 1 : 0;
     return KgiCsfKpiPlan(
       domain: '資産管理 / 浪費抑制トレーニング',
       kgi: '浪費しない力を鍛え、判断力と純資産を高める',
-      actualLabel: '${snapshot.disciplineScore}点',
+      actualLabel: snapshot.recordedExpenseDays == 0
+          ? '記録不足・採点なし'
+          : '${snapshot.disciplineScore}点（記録ベース参考値）',
       targetLabel: '100点',
       progress: snapshot.trainingProgress,
       metrics: <KgiCsfKpiMetric>[
         KgiCsfKpiMetric.number(
           csf: '欲望を記録で可視化する',
-          kpi: '今月の浪費ゼロ日',
+          kpi: '支出記録日のうち浪費分類の記録がない日',
           actual: snapshot.noWasteDays,
           target: zeroWasteTarget,
           unit: '日',
@@ -18826,7 +18828,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final formula = '計画式: ${_formatYen(balance.income)} - '
         '${_formatYen(balance.fixedTotal)} - ${_formatYen(balance.debtTotal)} = '
         '${_formatSignedYen(balance.debtReductionSpendingLimit)}。';
-    final recorded = salaryBreakdown.expenseEntryCount == 0
+    final recorded = salaryBreakdown.recordedExpenseDays == 0
         ? '給与日後の支出明細は未入力です。'
         : '給与日後の記録済み支出は${_formatYen(salaryBreakdown.totalExpense)}です。';
     return '$formula $recorded 記録済み支出は上の計画額から未控除です。'
@@ -19105,7 +19107,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ? _categoryBudgets
         : <String, double>{};
     final breakdown = _buildSalarySpendingBreakdown();
-    if (breakdown.expenseEntryCount == 0 && budgets.isEmpty) {
+    if (breakdown.recordedExpenseDays == 0 && budgets.isEmpty) {
       return const SizedBox.shrink();
     }
     final actualByCategory = <String, double>{
@@ -19645,6 +19647,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
             ),
             const SizedBox(height: 14),
+            Text(
+              '支出記録日 ${training.recordedExpenseDays}/${training.elapsedDays}日。未記録日の支出・浪費の有無は不明です。点数は記録ベースの参考値で、能力や達成実績の評価ではありません。',
+            ),
             KgiCsfKpiPanel(
               plan: plan,
               accentColor: const Color(0xFF0F766E),
@@ -19667,8 +19672,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   color: const Color(0xFFF97316),
                 ),
                 _buildOverviewStatChip(
-                  label: '浪費ゼロ日',
-                  value: '${training.noWasteDays}/${training.elapsedDays}日',
+                  label: '浪費分類の記録がない支出記録日',
+                  value: '${training.noWasteDays}/${training.recordedExpenseDays}記録日',
                   color: const Color(0xFF0F766E),
                 ),
                 _buildOverviewStatChip(

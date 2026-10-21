@@ -40,6 +40,7 @@ class AssetWasteTrainingSnapshotInputs {
     var expenseEntryCount = 0;
     var wasteEntryCount = 0;
     final wasteDateKeys = <String>{};
+    final recordedDateKeys = <String>{};
 
     for (final item in monthFlows) {
       final actionType = item['action_type']?.toString() ?? '';
@@ -50,6 +51,10 @@ class AssetWasteTrainingSnapshotInputs {
       totalExpense += amount;
       expenseEntryCount += 1;
 
+      final observedDate = DateTime.tryParse(item['occurred_at']?.toString() ?? '')?.toLocal();
+      if (observedDate != null && !observedDate.isBefore(periodStart) && !observedDate.isAfter(now) && (!usingCycle || observedDate.isBefore(cycleEndExclusive))) {
+        recordedDateKeys.add('${observedDate.year}-${observedDate.month}-${observedDate.day}');
+      }
       final description = item['description']?.toString() ?? '';
       if (wasteCategoryOf(description, actionType) == null) {
         continue;
@@ -92,7 +97,8 @@ class AssetWasteTrainingSnapshotInputs {
       wasteExpense: wasteExpense,
       expenseEntryCount: expenseEntryCount,
       wasteEntryCount: wasteEntryCount,
-      noWasteDays: max(0, elapsedDays - wasteDateKeys.length),
+      noWasteDays: recordedDateKeys.difference(wasteDateKeys).length,
+      recordedExpenseDays: recordedDateKeys.length,
       elapsedDays: max(1, elapsedDays),
       ruleCompletedCount: ruleCompletedCount,
       ruleTargetCount: ruleTargetCount,
