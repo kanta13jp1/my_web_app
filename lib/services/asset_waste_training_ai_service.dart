@@ -137,14 +137,6 @@ class AssetWasteTrainingAiService {
   Future<AssetWasteTrainingAiReview> generateReview(
     AssetWasteTrainingSnapshot snapshot,
   ) async {
-    if (snapshot.recordedExpenseDays == 0) {
-      return AssetWasteTrainingAiReview(
-        summary: '支出記録がないため採点・浪費の有無の判定はできません。未記録日は不明です。',
-        source: 'local-observation-check',
-        generatedAt: _now(),
-        isFallback: true,
-      );
-    }
     try {
       final response = await _chatService.sendProviderChat(
         message: _buildPrompt(snapshot),
