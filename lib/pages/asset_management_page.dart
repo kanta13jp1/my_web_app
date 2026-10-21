@@ -24280,13 +24280,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         children: [
           Icon(icon, color: color, size: 14),
           const SizedBox(width: 4),
-          Text(
-            '$label: $status',
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              height: 1.2,
+          Flexible(
+            child: Text(
+              '$label: $status',
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+              ),
             ),
           ),
         ],
