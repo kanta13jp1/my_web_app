@@ -18828,7 +18828,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final formula = '計画式: ${_formatYen(balance.income)} - '
         '${_formatYen(balance.fixedTotal)} - ${_formatYen(balance.debtTotal)} = '
         '${_formatSignedYen(balance.debtReductionSpendingLimit)}。';
-    final recorded = salaryBreakdown.recordedExpenseDays == 0
+    final recorded = salaryBreakdown.expenseEntryCount == 0
         ? '給与日後の支出明細は未入力です。'
         : '給与日後の記録済み支出は${_formatYen(salaryBreakdown.totalExpense)}です。';
     return '$formula $recorded 記録済み支出は上の計画額から未控除です。'
@@ -19107,7 +19107,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ? _categoryBudgets
         : <String, double>{};
     final breakdown = _buildSalarySpendingBreakdown();
-    if (breakdown.recordedExpenseDays == 0 && budgets.isEmpty) {
+    if (breakdown.expenseEntryCount == 0 && budgets.isEmpty) {
       return const SizedBox.shrink();
     }
     final actualByCategory = <String, double>{
