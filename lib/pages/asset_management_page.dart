@@ -24145,7 +24145,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final hiddenViolationCount =
         report.allViolations.length - violationDisplayLimit;
     final headerColor =
-        compliant ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
+        compliant ? const Color(0xFF6B7280) : const Color(0xFFB45309);
     final bgColor =
         compliant ? const Color(0xFFECFDF5) : const Color(0xFFFFF1F2);
     return Container(
@@ -24162,7 +24162,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           Row(
             children: [
               Icon(
-                compliant ? Icons.verified_outlined : Icons.gpp_maybe_outlined,
+                compliant ? Icons.info_outline : Icons.help_outline,
                 color: headerColor,
                 size: 18,
               ),
@@ -24189,7 +24189,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '違反 ${report.unresolvedViolationCount}件',
+                    '未照合 ${report.allViolations.length}件',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
@@ -24221,10 +24221,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           if (compliant) ...[
             Text(
               report.hasPriorMonthData
-                  ? '🎉 今月は「カード以外の追加借入ゼロ」と「新規利用分を25日に全額返済」を達成しています。'
-                      '既存残高は無理なく圧縮していきましょう。'
-                  : 'カード新規利用分の25日返済ルールは守れています。'
-                      'カード以外の追加借入判定は来月以降の履歴蓄積後に有効化されます。',
+                  ? '登録データから要確認候補は検出されていません。'
+                      '取引明細・実際の支払結果の確認前に達成とは判定しません。'
+                  : '前月残高データがないため、追加借入の推定はできません。'
+                      'カードの支払結果も明細と照合してください。',
               style: const TextStyle(fontSize: 12, height: 1.5),
             ),
             if (report.revolvingBillingsByAccountId.isNotEmpty) ...[
@@ -24261,13 +24261,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }) {
     final color = !evaluated
         ? const Color(0xFF6B7280)
-        : (achieved ? const Color(0xFF0D9488) : const Color(0xFFB91C1C));
+        : (achieved ? const Color(0xFF6B7280) : const Color(0xFFB45309));
     final status = !evaluated
         ? (unevaluatedLabel ?? '判定保留（前月データ欠損・今月のみの推定）')
-        : (achieved ? '達成' : '違反');
+        : (achieved ? '検出なし（未照合）' : '要確認（未照合）');
     final icon = !evaluated
         ? Icons.hourglass_empty
-        : (achieved ? Icons.check_circle_outline : Icons.cancel_outlined);
+        : (achieved ? Icons.info_outline : Icons.help_outline);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -24300,8 +24300,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final color = _assetDebtTrendSeverityColor(violation.severity);
     final amountLabel =
         violation.type == AssetDebtDisciplineViolationType.newBorrowing
-            ? '新規利用'
-            : '繰越額';
+            ? '推定新規利用'
+            : '予定返済の不足額';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(8),
@@ -24454,7 +24454,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     _cardUsagePolicies[violation.accountId]?.enforceOneShot ==
                         true,
                 title: const Text(
-                  'カード会社で「今後一括に固定」を完了済みにする（次回違反から除外）',
+                  'カード会社での変更完了を記録する（借入・支払結果の確認とは別）',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -24654,7 +24654,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              '手入力設定額 ${_formatManagementYen(violation.newUsageAmount ?? 0)} に基づいて誓約違反を判定しています。明細を取り込むと、正確な利用項目ごとにリボ残高組み入れや返済不足を把握できます。',
+              '手入力設定額 ${_formatManagementYen(violation.newUsageAmount ?? 0)} に基づく要確認候補です。違反の確定ではありません。利用明細と実際の支払結果を照合してください。',
               style: const TextStyle(
                 fontSize: 11,
                 height: 1.4,
