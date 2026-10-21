@@ -1,5 +1,5 @@
 import 'asset_reflection_day_badge.dart';
-import 'dart:convert';
+import '../services/asset_calendar_reflection_import_parser.dart';
 import 'package:flutter/material.dart';
 import '../models/asset_calendar_reflection.dart';
 import '../services/asset_calendar_reflection_repository.dart';
@@ -131,30 +131,20 @@ class _AssetCalendarReflectionPanelState
                   ? null
                   : () {
                       try {
-                        final data = jsonDecode(input.text);
-                        if (data is! List ||
-                            data.isEmpty ||
-                            data.length > 200) {
-                          throw const FormatException('1〜200件の配列が必要です');
-                        }
-                        final parsed = data
-                            .map(
-                              (row) => AssetCalendarReflection.fromJson(
-                                Map<String, dynamic>.from(row as Map),
-                              ),
-                            )
-                            .toList();
-                        if (parsed.map((e) => e.sourceKey).toSet().length !=
-                            parsed.length) {
-                          throw const FormatException('出典キーが重複しています');
-                        }
+                        final parsed =
+                            parseAssetCalendarReflectionImport(input.text);
                         update(() {
                           preview = parsed;
                           error = null;
                         });
+                      } on FormatException catch (exception) {
+                        update(() {
+                          error = exception.message;
+                          preview = null;
+                        });
                       } catch (_) {
                         update(() {
-                          error = '形式・日付・種類・金額を確認してください。';
+                          error = '入力を確認できませんでした。内容を保持したまま再試行してください。';
                           preview = null;
                         });
                       }
