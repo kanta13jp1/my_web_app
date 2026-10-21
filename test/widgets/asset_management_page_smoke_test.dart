@@ -3224,7 +3224,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.textContaining('借金しない宣言モニター'), findsOneWidget);
-      expect(find.textContaining('新規利用分は25日に全額返済: 達成'), findsWidgets);
+      expect(find.textContaining('新規利用分は25日に全額返済: 検出なし（未照合）'), findsWidgets);
       expect(find.textContaining('カードは全額一括'), findsNothing);
 
       await _unmount(tester);
