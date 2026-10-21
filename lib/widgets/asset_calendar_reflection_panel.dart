@@ -72,7 +72,7 @@ class _AssetCalendarReflectionPanelState
     List<AssetCalendarReflection>? preview;
     String? error;
     var saving = false;
-    await showDialog<void>(
+    final route = DialogRoute<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
@@ -176,6 +176,8 @@ class _AssetCalendarReflectionPanelState
         ),
       ),
     );
+    await Navigator.of(context).push(route);
+    await route.completed;
     input.dispose();
   }
 

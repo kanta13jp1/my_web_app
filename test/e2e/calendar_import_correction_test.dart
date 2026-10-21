@@ -14,7 +14,8 @@ class _Store implements AssetCalendarReflectionStore {
   }
 
   @override
-  Future<List<AssetCalendarReflection>> load(DateTime start, DateTime end) async {
+  Future<List<AssetCalendarReflection>> load(
+      DateTime start, DateTime end) async {
     return [];
   }
 }
@@ -76,6 +77,7 @@ void main() {
         await tester.tap(find.text('閉じる'));
         await tester.pumpAndSettle();
         expect(store.imports, 0);
+        expect(tester.takeException(), isNull);
       },
     );
   }
