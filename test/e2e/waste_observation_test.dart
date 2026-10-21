@@ -25,7 +25,8 @@ void main() {
         );
         await tester.pumpWidget(
           MaterialApp(
-            home: Scaffold(body: AssetWasteObservationStatus(snapshot: snapshot)),
+            home:
+                Scaffold(body: AssetWasteObservationStatus(snapshot: snapshot)),
           ),
         );
         await tester.pumpAndSettle();
