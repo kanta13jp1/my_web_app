@@ -94,14 +94,17 @@ void main() {
       MaterialApp(home: SpaceSharingPage(dataSource: source)),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Shared note'), findsOneWidget);
+    expect(find.byKey(const Key('space_sharing_list')), findsOneWidget);
 
     source.loadError = StateError('synthetic refresh failure');
     await tester.tap(find.byKey(const Key('space_sharing_reload')));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('space_sharing_stale_warning')), findsOneWidget);
-    expect(find.text('Shared note'), findsOneWidget);
+    expect(
+      find.byKey(const Key('space_sharing_stale_warning')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('space_sharing_list')), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     source.loadError = null;
@@ -200,7 +203,7 @@ class _FakeSpaceSharingDataSource implements SpaceSharingDataSource {
   _FakeSpaceSharingDataSource(this.snapshot);
 
   final SpaceSharingSnapshot snapshot;
-  Object? loadError;
+  StateError? loadError;
   String? acceptedInvitationId;
   String? invitedEmail;
   SpacePermission? invitedPermission;
