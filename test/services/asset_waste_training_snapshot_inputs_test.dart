@@ -43,8 +43,12 @@ void main() {
     final snapshot = build([
       flow('expense', 100, occurredAt: '2026-06-10T09:00:00'),
       flow('expense', 200, occurredAt: '2026-06-10T12:00:00'),
-      flow('expense', 300,
-          occurredAt: '2026-06-12T09:00:00', description: '#浪費'),
+      flow(
+        'expense',
+        300,
+        occurredAt: '2026-06-12T09:00:00',
+        description: '#浪費',
+      ),
       flow('expense', 400),
       flow('expense', 500, occurredAt: '2026-06-20T09:00:00'),
       flow('expense', 600, occurredAt: '2026-05-20T09:00:00'),

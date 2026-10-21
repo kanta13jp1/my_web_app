@@ -5,11 +5,16 @@ void main() {
   test('empty records are unscored and never invoke AI', () async {
     var calls = 0;
     final snapshot = _buildSnapshot(
-        expenseEntryCount: 0, recordedExpenseDays: 0, totalExpense: 0);
-    final service = AssetWasteTrainingAiService(invoker: (_) async {
-      calls += 1;
-      return {'success': true, 'text': 'unused'};
-    });
+      expenseEntryCount: 0,
+      recordedExpenseDays: 0,
+      totalExpense: 0,
+    );
+    final service = AssetWasteTrainingAiService(
+      invoker: (_) async {
+        calls += 1;
+        return {'success': true, 'text': 'unused'};
+      },
+    );
     expect(snapshot.disciplineScore, 0);
     final review = await service.generateReview(snapshot);
     expect(calls, 0);

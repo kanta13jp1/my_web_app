@@ -58,7 +58,8 @@ class AssetWasteTrainingSnapshotInputs {
           !observedDate.isAfter(now) &&
           (!usingCycle || observedDate.isBefore(cycleEndExclusive))) {
         recordedDateKeys.add(
-            '${observedDate.year}-${observedDate.month}-${observedDate.day}');
+          '${observedDate.year}-${observedDate.month}-${observedDate.day}',
+        );
       }
       final description = item['description']?.toString() ?? '';
       if (wasteCategoryOf(description, actionType) == null) {
