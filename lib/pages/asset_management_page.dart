@@ -23318,6 +23318,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           }
           unawaited(_generateAssetManagementAiSummary(report, requestKey: key));
         });
+        // post-frame callbacks do not request a frame themselves. Do not rely
+        // on unrelated network completions to start the debounced summary.
+        WidgetsBinding.instance.ensureVisualUpdate();
       },
     );
   }
