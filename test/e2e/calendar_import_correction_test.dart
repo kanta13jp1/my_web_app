@@ -15,7 +15,9 @@ class _Store implements AssetCalendarReflectionStore {
 
   @override
   Future<List<AssetCalendarReflection>> load(
-      DateTime start, DateTime end) async {
+    DateTime start,
+    DateTime end,
+  ) async {
     return [];
   }
 }
