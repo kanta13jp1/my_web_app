@@ -23843,8 +23843,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String _assetDisciplineTypeLabel(AssetDebtDisciplineViolationType type) {
     return switch (type) {
-      AssetDebtDisciplineViolationType.newBorrowing => '追加借入の発生',
-      AssetDebtDisciplineViolationType.revolvingCard => '新規利用分の25日返済不足',
+      AssetDebtDisciplineViolationType.newBorrowing => '追加借入の可能性（未照合）',
+      AssetDebtDisciplineViolationType.revolvingCard => '新規利用分の25日返済の要確認候補',
     };
   }
 

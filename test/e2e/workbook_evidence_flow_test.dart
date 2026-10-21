@@ -76,6 +76,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       expect(find.text('借金しない宣言モニター'), findsOneWidget);
       expect(find.textContaining('違反 '), findsNothing);
+      expect(find.textContaining('追加借入の発生'), findsNothing);
+      expect(find.text('規律を維持'), findsNothing);
       expect(find.textContaining('を達成しています'), findsNothing);
       if (scenario.usage > 0) {
         expect(find.textContaining('要確認（未照合）'), findsWidgets);
