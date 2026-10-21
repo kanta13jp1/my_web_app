@@ -19634,7 +19634,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                       ),
                       SizedBox(height: 4),
-                      AssetWasteObservationStatus(snapshot: training),
+                      Text(
+                        'お金を浪費しないことは、欲望を観察し、判断力と自己制御を鍛える能力開発トレーニングです。',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF475569),
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            AssetWasteObservationStatus(snapshot: training),
             KgiCsfKpiPanel(
               plan: plan,
               accentColor: const Color(0xFF0F766E),
