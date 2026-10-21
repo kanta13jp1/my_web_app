@@ -31,9 +31,9 @@ void main() {
     testWidgets('unreconciled evidence ${scenario.width}/${scenario.usage}', (
       tester,
     ) async {
-      final monthKey = AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
-        DateTime.now(),
-      );
+      final now = DateTime.now();
+      final monthKey =
+          AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(now);
       SharedPreferences.setMockInitialValues(<String, Object>{
         AssetLiabilityMonthlyStateStore.actualPaymentPrefsKey: jsonEncode(
           <String, Map<String, double>>{
