@@ -1,5 +1,4 @@
 """Resolve generated source links from the concept page directory."""
-import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -29,11 +28,12 @@ class ConceptSourceLinkTest(unittest.TestCase):
                 )
             for source in sources:
                 label = source.relative_to(root).as_posix()
-                match = re.search(
-                    r"\[" + re.escape(label) + r"\]\(([^)]+)\)", rendered
+                prefix = f"- [{label}]("
+                line = next(
+                    line for line in rendered.splitlines() if line.startswith(prefix)
                 )
-                self.assertIsNotNone(match)
-                self.assertEqual((wiki / match.group(1)).resolve(), source.resolve())
+                target = line[len(prefix):-1]
+                self.assertEqual((wiki / target).resolve(), source.resolve())
 
 
 if __name__ == "__main__":
