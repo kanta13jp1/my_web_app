@@ -5,6 +5,9 @@ on:
       - scripts/wiki_compile.py
       - scripts/wiki_compile_test.py
       - .github/workflows/wiki-compile-links.yml
+concurrency:
+  group: wiki-compile-links-${{ github.ref }}
+  cancel-in-progress: true
 permissions: {}
 jobs:
   test:
