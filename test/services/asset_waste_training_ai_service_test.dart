@@ -2,6 +2,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 
 void main() {
+  test('empty records are unscored and never invoke AI', () async {
+    var calls = 0;
+    final snapshot = _buildSnapshot(
+      expenseEntryCount: 0,
+      recordedExpenseDays: 0,
+      totalExpense: 0,
+    );
+    final service = AssetWasteTrainingAiService(
+      invoker: (_) async {
+        calls += 1;
+        return {'success': true, 'text': 'unused'};
+      },
+    );
+    expect(snapshot.disciplineScore, 0);
+    final review = await service.generateReview(snapshot);
+    expect(calls, 0);
+    expect(review.summary, contains('採点'));
+    expect(review.summary, contains('未記録日は不明'));
+  });
+
   test('snapshot converts waste and lockdown metrics into a training score',
       () {
     final snapshot = _buildSnapshot(
@@ -62,6 +82,8 @@ void main() {
 
 AssetWasteTrainingSnapshot _buildSnapshot({
   int totalExpense = 100000,
+  int expenseEntryCount = 24,
+  int recordedExpenseDays = 20,
   int wasteExpense = 12000,
   int noWasteDays = 18,
   int elapsedDays = 20,
@@ -74,7 +96,8 @@ AssetWasteTrainingSnapshot _buildSnapshot({
     monitoredAt: DateTime(2026, 4, 22, 9, 15),
     totalExpense: totalExpense,
     wasteExpense: wasteExpense,
-    expenseEntryCount: 24,
+    expenseEntryCount: expenseEntryCount,
+    recordedExpenseDays: recordedExpenseDays,
     wasteEntryCount: 3,
     noWasteDays: noWasteDays,
     elapsedDays: elapsedDays,

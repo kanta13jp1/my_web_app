@@ -1,3 +1,4 @@
+import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
 import '../widgets/asset_recorded_change_details.dart';
 import '../models/asset_income_source_evidence.dart';
 import '../widgets/asset_income_reconciliation_section.dart';
@@ -2069,19 +2070,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   KgiCsfKpiPlan _buildWasteTrainingPlan(AssetWasteTrainingSnapshot snapshot) {
-    final zeroWasteTarget = max(1, snapshot.elapsedDays);
+    final zeroWasteTarget = max(1, snapshot.recordedExpenseDays);
     final ruleTarget = max(1, snapshot.ruleTargetCount);
     final violationClear = snapshot.todayViolationCount == 0 ? 1 : 0;
     return KgiCsfKpiPlan(
       domain: '資産管理 / 浪費抑制トレーニング',
       kgi: '浪費しない力を鍛え、判断力と純資産を高める',
-      actualLabel: '${snapshot.disciplineScore}点',
+      actualLabel: snapshot.recordedExpenseDays == 0
+          ? '記録不足・採点なし'
+          : '${snapshot.disciplineScore}点（記録ベース参考値）',
       targetLabel: '100点',
       progress: snapshot.trainingProgress,
       metrics: <KgiCsfKpiMetric>[
         KgiCsfKpiMetric.number(
           csf: '欲望を記録で可視化する',
-          kpi: '今月の浪費ゼロ日',
+          kpi: '支出記録日のうち浪費分類の記録がない日',
           actual: snapshot.noWasteDays,
           target: zeroWasteTarget,
           unit: '日',
@@ -19645,6 +19648,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
             ),
             const SizedBox(height: 14),
+            AssetWasteObservationStatus(snapshot: training),
             KgiCsfKpiPanel(
               plan: plan,
               accentColor: const Color(0xFF0F766E),
@@ -19667,8 +19671,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   color: const Color(0xFFF97316),
                 ),
                 _buildOverviewStatChip(
-                  label: '浪費ゼロ日',
-                  value: '${training.noWasteDays}/${training.elapsedDays}日',
+                  label: '浪費分類の記録がない支出記録日',
+                  value:
+                      '${training.noWasteDays}/${training.recordedExpenseDays}記録日',
                   color: const Color(0xFF0F766E),
                 ),
                 _buildOverviewStatChip(
@@ -23313,6 +23318,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           }
           unawaited(_generateAssetManagementAiSummary(report, requestKey: key));
         });
+        // post-frame callbacks do not request a frame themselves. Do not rely
+        // on unrelated network completions to start the debounced summary.
+        WidgetsBinding.instance.ensureVisualUpdate();
       },
     );
   }
