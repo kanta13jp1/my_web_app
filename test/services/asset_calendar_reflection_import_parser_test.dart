@@ -26,23 +26,29 @@ void main() {
   test('syntax error exposes position without echoing input', () {
     expect(
       () => parseAssetCalendarReflectionImport('[private-content'),
-      throwsA(isA<FormatException>().having(
-        (e) => e.message,
-        'message',
-        allOf(contains('JSONの構文'), isNot(contains('private-content'))),
-      )),
+      throwsA(
+        isA<FormatException>().having(
+          (e) => e.message,
+          'message',
+          allOf(contains('JSONの構文'), isNot(contains('private-content'))),
+        ),
+      ),
     );
   });
 
   test('row errors identify record and correction remains possible', () {
     final invalid = row('test:2')..['memo'] = List.filled(2001, 'あ').join();
     expect(
-      () => parseAssetCalendarReflectionImport(jsonEncode([row('test:1'), invalid])),
-      throwsA(isA<FormatException>().having(
-        (e) => e.message,
-        'message',
-        contains('2件目: メモが長すぎます'),
-      )),
+      () => parseAssetCalendarReflectionImport(
+        jsonEncode([row('test:1'), invalid]),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (e) => e.message,
+          'message',
+          contains('2件目: メモが長すぎます'),
+        ),
+      ),
     );
     invalid['memo'] = '訂正';
     expect(
@@ -58,11 +64,13 @@ void main() {
     ]) {
       expect(
         () => parseAssetCalendarReflectionImport(jsonEncode(data)),
-        throwsA(isA<FormatException>().having(
-          (e) => e.message,
-          'message',
-          contains('2件目:'),
-        )),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('2件目:'),
+          ),
+        ),
       );
     }
   });

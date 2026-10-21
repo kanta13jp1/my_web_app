@@ -26,19 +26,21 @@ void main() {
       final store = _Store();
       await tester.binding.setSurfaceSize(Size(width, 1600));
       addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: AssetCalendarReflectionPanel(
-              repository: store,
-              start: DateTime(2026, 10),
-              end: DateTime(2026, 11),
-              selectedDate: null,
-              onLoaded: (_) {},
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: AssetCalendarReflectionPanel(
+                repository: store,
+                start: DateTime(2026, 10),
+                end: DateTime(2026, 11),
+                selectedDate: null,
+                onLoaded: (_) {},
+              ),
             ),
           ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.text('日記・読書データを取り込む'));
       await tester.pumpAndSettle();
