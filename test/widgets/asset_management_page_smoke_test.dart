@@ -2598,7 +2598,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('返済日: 毎月25日'), findsOneWidget);
-      expect(find.textContaining('25日返済'), findsWidgets);
+      expect(find.textContaining('新規利用分は25日に全額返済'), findsWidgets);
 
       await _unmount(tester);
     });
