@@ -112,7 +112,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('space_sharing_stale_warning')), findsNothing);
   });
-
 }
 
 SpaceSharingSnapshot _ownerSnapshot() => SpaceSharingSnapshot(
