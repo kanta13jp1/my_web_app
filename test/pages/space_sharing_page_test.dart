@@ -146,7 +146,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('space_invite_7')), findsNothing);
-      expect(find.byKey(const Key('space_sharing_stale_warning')), findsNothing);
+      expect(
+        find.byKey(const Key('space_sharing_stale_warning')),
+        findsNothing,
+      );
       expect(tester.takeException(), isNull);
     });
   }
