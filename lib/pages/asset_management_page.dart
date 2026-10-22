@@ -620,6 +620,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _mustTasksDone = false;
   bool _isLoadingClosing = false;
   bool _isSavingClosing = false;
+  int _closingFetchGeneration = 0;
   bool _isFetchingSmbc = false;
   bool _isFetchingJibun = false;
   bool _isImportingSmbcCsv = false;
@@ -5971,11 +5972,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _fetchTodayClosing() async {
+    final generation = ++_closingFetchGeneration;
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
+    if (userId == null) {
+      if (mounted) setState(() => _isLoadingClosing = false);
+      return;
+    }
 
     setState(() => _isLoadingClosing = true);
-    final todayStr = _dateOnly(DateTime.now());
+    final todayStr = _dateOnly(widget.debugNow ?? DateTime.now());
 
     try {
       final rows = await _supabase
@@ -5985,7 +5990,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .eq('date', todayStr)
           .limit(1);
 
-      if (!mounted) return;
+      if (!mounted || generation != _closingFetchGeneration) return;
+      if (_supabase.auth.currentUser?.id != userId ||
+          _dateOnly(widget.debugNow ?? DateTime.now()) != todayStr) {
+        await _fetchTodayClosing();
+        return;
+      }
 
       if (rows.isNotEmpty) {
         final r = rows.first;
@@ -6009,7 +6019,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     } catch (e) {
       debugPrint('fetch closing error: $e');
-      if (!mounted) return;
+      if (!mounted || generation != _closingFetchGeneration) return;
+      if (_supabase.auth.currentUser?.id != userId ||
+          _dateOnly(widget.debugNow ?? DateTime.now()) != todayStr) {
+        await _fetchTodayClosing();
+        return;
+      }
       setState(() => _isLoadingClosing = false);
     }
   }
@@ -6039,7 +6054,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _toggleClosing(String key, bool value) async {
-    if (_isSavingClosing) return;
+    if (_isSavingClosing || _isLoadingClosing) return;
     final savingOwner = _supabase.auth.currentUser?.id;
     final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
     final previous = [
@@ -6074,7 +6089,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (_supabase.auth.currentUser?.id != savingOwner ||
         _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate) {
       setState(() {
-        _isSavingClosing = false;
         _assetsDone = false;
         _liabilitiesDone = false;
         _fixedCostsDone = false;
@@ -6082,6 +6096,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _mustTasksDone = false;
       });
       await _fetchTodayClosing();
+      if (mounted) setState(() => _isSavingClosing = false);
       return;
     }
     setState(() {
@@ -6310,7 +6325,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _autoCheckFromData() async {
-    if (_isSavingClosing) return;
+    if (_isSavingClosing || _isLoadingClosing) return;
     final savingOwner = _supabase.auth.currentUser?.id;
     final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
     final previousAssets = _assetsDone;
@@ -6343,7 +6358,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (_supabase.auth.currentUser?.id != savingOwner ||
         _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate) {
       setState(() {
-        _isSavingClosing = false;
         _assetsDone = false;
         _liabilitiesDone = false;
         _fixedCostsDone = false;
@@ -6351,6 +6365,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _mustTasksDone = false;
       });
       await _fetchTodayClosing();
+      if (mounted) setState(() => _isSavingClosing = false);
       return;
     }
     setState(() {
