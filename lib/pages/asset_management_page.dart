@@ -6117,18 +6117,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
     final saved = await _upsertTodayClosing();
     if (!mounted) return;
-    if (_supabase.auth.currentUser?.id != savingOwner ||
-        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate ||
+    final contextChanged = _supabase.auth.currentUser?.id != savingOwner ||
+        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate;
+    if (contextChanged ||
         (!saved && _closingFetchGeneration != savingReadGeneration)) {
       setState(() {
+        if (contextChanged) {
         _assetsDone = false;
         _liabilitiesDone = false;
         _fixedCostsDone = false;
         _flowsDone = false;
         _mustTasksDone = false;
+        }
       });
       await _fetchTodayClosing();
-      if (mounted) setState(() => _isSavingClosing = false);
+      if (!mounted) return;
+      setState(() => _isSavingClosing = false);
+      if (!saved && _supabase.auth.currentUser?.id == savingOwner &&
+          _dateOnly(widget.debugNow ?? DateTime.now()) == savingDate) {
+        final reloadFailed = _closingLoadedOwner != savingOwner ||
+            _closingLoadedDate != savingDate;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(reloadFailed
+              ? 'チェックを保存できませんでした。最新状態の再取得にも失敗しました。表示は直近の確認状態です。同じ操作で再取得してください。'
+              : 'チェックを保存できませんでした。最新状態を再取得しました。内容を確認して再度お試しください。',),),
+        );
+      }
       return;
     }
     setState(() {
@@ -6390,18 +6404,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final saved = await _upsertTodayClosing();
     if (!mounted) return;
-    if (_supabase.auth.currentUser?.id != savingOwner ||
-        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate ||
+    final contextChanged = _supabase.auth.currentUser?.id != savingOwner ||
+        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate;
+    if (contextChanged ||
         (!saved && _closingFetchGeneration != savingReadGeneration)) {
       setState(() {
+        if (contextChanged) {
         _assetsDone = false;
         _liabilitiesDone = false;
         _fixedCostsDone = false;
         _flowsDone = false;
         _mustTasksDone = false;
+        }
       });
       await _fetchTodayClosing();
-      if (mounted) setState(() => _isSavingClosing = false);
+      if (!mounted) return;
+      setState(() => _isSavingClosing = false);
+      if (!saved && _supabase.auth.currentUser?.id == savingOwner &&
+          _dateOnly(widget.debugNow ?? DateTime.now()) == savingDate) {
+        final reloadFailed = _closingLoadedOwner != savingOwner ||
+            _closingLoadedDate != savingDate;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(reloadFailed
+              ? 'チェックを保存できませんでした。最新状態の再取得にも失敗しました。表示は直近の確認状態です。同じ操作で再取得してください。'
+              : 'チェックを保存できませんでした。最新状態を再取得しました。内容を確認して再度お試しください。',),),
+        );
+      }
       return;
     }
     setState(() {
