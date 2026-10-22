@@ -66,12 +66,17 @@ void main() {
           );
         }
         if (request.url.path.endsWith('/cfo_daily_closings') &&
-            request.method == 'GET' && holdRead != null) {
+            request.method == 'GET' &&
+            holdRead != null) {
           delayedReads++;
           final gate = holdRead!;
           await gate.future;
-          return http.Response('[{"assets_done":true,"fixed_costs_done":true}]',
-              200, headers: headers, request: request);
+          return http.Response(
+            '[{"assets_done":true,"fixed_costs_done":true}]',
+            200,
+            headers: headers,
+            request: request,
+          );
         }
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'POST') {
@@ -152,10 +157,16 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(1200, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     holdWrite = Completer<void>();
-    await tester.pumpWidget(MaterialApp(home: AssetManagementPage(
-      debugNow: DateTime(2026, 10, 22),
-      debugInitialAssetData: const {'2026-10-22': {'現金': 1000}},
-    )));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 10, 22),
+          debugInitialAssetData: const {
+            '2026-10-22': {'現金': 1000},
+          },
+        ),
+      ),
+    );
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
@@ -244,9 +255,11 @@ void main() {
     await tester.tap(second);
     await tester.pump(const Duration(milliseconds: 100));
     expect(closingWrites, 1);
-    await tester.pumpWidget(MaterialApp(
-      home: AssetManagementPage(debugNow: DateTime(2026, 10, 24, 0, 1)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(debugNow: DateTime(2026, 10, 24, 0, 1)),
+      ),
+    );
     final pendingRead = holdRead!;
     holdRead = null;
     pendingRead.complete();
