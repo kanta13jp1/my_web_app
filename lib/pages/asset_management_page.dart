@@ -7553,6 +7553,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final previousDate = _lastUpdatedDates[type];
     final previousAmount =
         previousDate == null ? null : _assetData[previousDate]?[type];
+    var balanceSaved = false;
     try {
       final recordedAt = DateTime.now();
       await _supabase.from('cfo_assets').insert({
@@ -7564,6 +7565,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       });
 
+      balanceSaved = true;
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       setState(() {
         if (!_assetData.containsKey(today)) _assetData[today] = {};
         _assetData[today]![type] = amount;
@@ -7576,20 +7579,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final autoRecorded = previousAmount == null
           ? false
           : await _autoRecordUnknownExpenseFromAssetDrop(
+              expectedUserId: userId,
               assetType: type,
               dateKey: today,
               previousAmount: previousAmount,
               currentAmount: amount,
             );
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       if (autoRecorded) {
         await _fetchRecentFlows();
       }
 
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       if (clearController) {
         _controllers[type]?.clear();
       }
 
-      if (!mounted) return;
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -7603,6 +7609,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
     } catch (e) {
       debugPrint('Error saving $type: $e');
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            balanceSaved
+                ? '$type の残高は保存済みです。保存後の関連処理に失敗しました。再保存せず、画面を再読み込みしてください。'
+                : '$type の残高保存を確認できませんでした。入力内容は保持しています。履歴を確認してから再試行してください。',
+          ),
+        ),
+      );
     }
   }
 
@@ -7907,6 +7923,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     if (!hasData) return;
 
+    var balanceSaved = false;
     try {
       final nowIso = AssetBalanceTimestampService.encodeForDatabase(
         DateTime.now(),
@@ -7917,14 +7934,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ? null
               : _assetData[_lastUpdatedDates[entry.key]]?[entry.key],
       };
-      for (var entry in todayData.entries) {
-        await _supabase.from('cfo_assets').insert({
-          'user_id': userId,
-          'title': entry.key,
-          'amount': entry.value,
-          'created_at': nowIso,
-        });
-      }
+      await _supabase.from('cfo_assets').insert([
+        for (final entry in todayData.entries)
+          {
+            'user_id': userId,
+            'title': entry.key,
+            'amount': entry.value,
+            'created_at': nowIso,
+          },
+      ]);
+      balanceSaved = true;
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       setState(() {
         if (!_assetData.containsKey(today)) _assetData[today] = {};
         _assetData[today]!.addAll(todayData);
@@ -7935,16 +7955,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       var autoRecordedCount = 0;
       for (final entry in todayData.entries) {
+        if (!mounted || _supabase.auth.currentUser?.id != userId) return;
         final previousAmount = previousAmounts[entry.key];
         if (previousAmount == null) {
           continue;
         }
         final autoRecorded = await _autoRecordUnknownExpenseFromAssetDrop(
+          expectedUserId: userId,
           assetType: entry.key,
           dateKey: today,
           previousAmount: previousAmount,
           currentAmount: entry.value,
         );
+        if (!mounted || _supabase.auth.currentUser?.id != userId) return;
         if (autoRecorded) {
           autoRecordedCount += 1;
         }
@@ -7952,6 +7975,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (autoRecordedCount > 0) {
         await _fetchRecentFlows();
       }
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       _controllers.forEach((_, controller) => controller.clear());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -7967,9 +7991,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
       // メイン口座の残高更新が給料反映なら、ここで確認候補を更新する
       // (残高増は入金フローを生成しないため、残高窓ベースの検知が要)。
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       _maybeDetectSalaryDeposit();
     } catch (e) {
       debugPrint('Error saving assets: $e');
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            balanceSaved
+                ? '資産・負債の残高は保存済みです。保存後の関連処理に失敗しました。再保存せず、画面を再読み込みしてください。'
+                : '資産・負債の残高保存を確認できませんでした。入力内容は保持しています。履歴を確認してから再試行してください。',
+          ),
+        ),
+      );
     }
   }
 
@@ -8967,13 +9002,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<bool> _autoRecordUnknownExpenseFromAssetDrop({
+    required String expectedUserId,
     required String assetType,
     required String dateKey,
     required double previousAmount,
     required double currentAmount,
   }) async {
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null ||
+    if (!mounted ||
+        userId != expectedUserId ||
         !AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
           assetType: assetType,
           isManagedLiability: _isDebtMasterManagedAccount(assetType),
@@ -9001,6 +9038,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final amount = previousAmount - currentAmount;
     final source = _flowSourceForAssetType(assetType);
     final occurredAt = DateTime.tryParse(dateKey) ?? DateTime.now();
+    if (!mounted || _supabase.auth.currentUser?.id != expectedUserId) {
+      return false;
+    }
     await _supabase.from('wealth_struggles').insert({
       'user_id': userId,
       'action_type': 'expense',
@@ -9017,7 +9057,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       'occurred_at': occurredAt.toUtc().toIso8601String(),
     });
 
-    if (mounted && !_sourceOptions.contains(source)) {
+    if (mounted &&
+        _supabase.auth.currentUser?.id == expectedUserId &&
+        !_sourceOptions.contains(source)) {
       setState(() {
         _sourceOptions = [..._sourceOptions, source];
       });
