@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/services/ai_hub_chat_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 
 void main() {
+  setUp(AiHubChatQuotaGuard.resetForTesting);
   test('empty records are unscored and never invoke AI', () async {
     var calls = 0;
     final snapshot = _buildSnapshot(
@@ -75,9 +77,39 @@ void main() {
     expect(review.isFallback, isTrue);
     expect(review.source, 'local-kpi-engine');
     expect(review.summary, contains('浪費抑制スコア'));
-    expect(review.summary, contains('AI連携に失敗しました。浪費抑制スコア'));
+    expect(review.summary, contains('AIの利用制限により取得できませんでした'));
     expect(review.summary, isNot(contains('。。')));
   });
+  final failureCases = <String, String>{
+    '429 rate limit': 'AIの利用制限',
+    'offline external api blocked': 'オフライン設定',
+    'secret_needed MISSING_PRIVATE_KEY': 'AIの接続設定',
+    '401 unauthorized': '認証またはアクセス権',
+    '403 forbidden': '認証またはアクセス権',
+    'TimeoutException network': 'AIとの通信を完了できませんでした',
+    'unexpected private-request-fragment sk-test-secret': '原因は未確認',
+  };
+  for (final entry in failureCases.entries) {
+    test('failure description is safe: ${entry.value}', () async {
+      var calls = 0;
+      final service = AssetWasteTrainingAiService(
+        invoker: (_) async {
+          calls += 1;
+          throw AiHubChatException(entry.key);
+        },
+      );
+      final review = await service.generateReview(_buildSnapshot());
+      expect(calls, 1);
+      expect(review.isFallback, isTrue);
+      expect(review.source, 'local-kpi-engine');
+      expect(review.summary, contains(entry.value));
+      expect(review.summary, contains('記録から参考値'));
+      expect(review.summary, isNot(contains('待機中')));
+      expect(review.summary, isNot(contains('private-request-fragment')));
+      expect(review.summary, isNot(contains('sk-test-secret')));
+      expect(review.summary, isNot(contains('MISSING_PRIVATE_KEY')));
+    });
+  }
 }
 
 AssetWasteTrainingSnapshot _buildSnapshot({
