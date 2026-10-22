@@ -11,14 +11,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Diagnostic only: no production endpoint, credentials, or persisted user data.
 void main() {
-  var closingWrites = 0;
+
   var balanceWrites = 0;
   var failBalanceAt = 1;
-  final persistedBalances = <Map<String,dynamic>>[];
+  final persistedBalances = <Map<String, dynamic>>[];
   var failSave = true;
   Completer<void>? holdWrite;
   Completer<void>? holdRead;
-  var delayedReads = 0;
+
   var provideTodayBalance = false;
   var failClosingRead = false;
   var persistedClosing = false;
@@ -35,14 +35,14 @@ void main() {
         password: 'synthetic-only',
       );
     }
-    closingWrites = 0;
+
     balanceWrites = 0;
     failBalanceAt = 1;
     persistedBalances.clear();
     failSave = true;
     holdWrite = null;
     holdRead = null;
-    delayedReads = 0;
+
     provideTodayBalance = false;
     failClosingRead = false;
     persistedClosing = false;
@@ -95,16 +95,34 @@ void main() {
             request: request,
           );
         }
-        if (request.url.path.endsWith('/rpc/asset_management_recent_cfo_assets')) {
-          return http.Response('[{"id":1,"title":"現金","amount":1000,"created_at":"2026-01-01T03:00:00Z"},{"id":2,"title":"合成預金","amount":2000,"created_at":"2026-01-01T03:00:00Z"}]',200,headers:headers,request:request,);
+        if (request.url.path
+            .endsWith('/rpc/asset_management_recent_cfo_assets')) {
+          return http.Response(
+            '[{"id":1,"title":"現金","amount":1000,"created_at":"2026-01-01T03:00:00Z"},{"id":2,"title":"合成預金","amount":2000,"created_at":"2026-01-01T03:00:00Z"}]',
+            200,
+            headers: headers,
+            request: request,
+          );
         }
-        if (request.url.path.endsWith('/cfo_assets') && request.method == 'POST') {
+        if (request.url.path.endsWith('/cfo_assets') &&
+            request.method == 'POST') {
           balanceWrites++;
           if (balanceWrites == failBalanceAt) {
-            return http.Response('{"message":"synthetic balance save failure"}',500,headers:headers,request:request,);
+            return http.Response(
+              '{"message":"synthetic balance save failure"}',
+              500,
+              headers: headers,
+              request: request,
+            );
           }
-          persistedBalances.add(jsonDecode(request.body) as Map<String,dynamic>);
-          return http.Response('',201,headers:headers,request:request,);
+          persistedBalances
+              .add(jsonDecode(request.body) as Map<String, dynamic>);
+          return http.Response(
+            '',
+            201,
+            headers: headers,
+            request: request,
+          );
         }
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'GET') {
@@ -170,7 +188,7 @@ void main() {
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'GET' &&
             holdRead != null) {
-          delayedReads++;
+
           final gate = holdRead!;
           await gate.future;
           return http.Response(
@@ -182,7 +200,7 @@ void main() {
         }
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'POST') {
-          closingWrites++;
+
           lastClosingWrite = jsonDecode(request.body) as Map<String, dynamic>;
           await holdWrite?.future;
           if (!failSave) {
@@ -215,32 +233,40 @@ void main() {
     );
   });
 
-
-  for (final bulk in [false,true]) {
-    testWidgets('balance save failure is visible and input retained bulk=$bulk',(tester) async {
-      failBalanceAt=bulk ? 2 : 1;
-      await tester.binding.setSurfaceSize(const Size(1200,2400));
+  for (final bulk in [false, true]) {
+    testWidgets('balance save failure is visible and input retained bulk=$bulk',
+        (tester) async {
+      failBalanceAt = bulk ? 2 : 1;
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
-      for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
-      final fields=find.byWidgetPredicate((w)=> w is TextField && w.decoration?.labelText=='今日の残高');
-      expect(fields,findsNWidgets(2));
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final fields = find.byWidgetPredicate(
+          (w) => w is TextField && w.decoration?.labelText == '今日の残高',);
+      expect(fields, findsNWidgets(2));
       await tester.ensureVisible(fields.at(0));
-      await tester.enterText(fields.at(0),'3000');
+      await tester.enterText(fields.at(0), '3000');
       if (bulk) {
         await tester.ensureVisible(fields.at(1));
-        await tester.enterText(fields.at(1),'4000');
+        await tester.enterText(fields.at(1), '4000');
       }
-      final action=bulk ? find.text('全体状況を保存') : find.widgetWithText(FilledButton,'記録').first;
+      final action = bulk
+          ? find.text('全体状況を保存')
+          : find.widgetWithText(FilledButton, '記録').first;
       await tester.ensureVisible(action);
       await tester.tap(action);
-      for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
-      expect(balanceWrites,bulk ? 2 : 1);
-      expect(persistedBalances.length,bulk ? 1 : 0);
-      expect(tester.widget<TextField>(fields.at(0)).controller!.text,'3000');
-      expect(find.textContaining(RegExp('保存.*(失敗|でき)|記録.*(失敗|でき)|一部.*保存')),findsWidgets);
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(balanceWrites, bulk ? 2 : 1);
+      expect(persistedBalances.length, bulk ? 1 : 0);
+      expect(tester.widget<TextField>(fields.at(0)).controller!.text, '3000');
+      expect(find.textContaining(RegExp('保存.*(失敗|でき)|記録.*(失敗|でき)|一部.*保存')),
+          findsWidgets,);
       await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pump(const Duration(seconds:2));
+      await tester.pump(const Duration(seconds: 2));
     });
   }
 }
