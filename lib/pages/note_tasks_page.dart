@@ -106,8 +106,12 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
               Future<List<NoteFeatureNotification>>.value(
                 const <NoteFeatureNotification>[],
               );
-      final tasks = await tasksFuture;
-      final notifications = await notificationsFuture;
+      final results = await Future.wait<Object>([
+        tasksFuture,
+        notificationsFuture,
+      ]);
+      final tasks = results[0] as List<NoteTask>;
+      final notifications = results[1] as List<NoteFeatureNotification>;
       tasks.sort(_compareTasks);
       notifications.sort(_compareNotifications);
       if (!mounted) return;

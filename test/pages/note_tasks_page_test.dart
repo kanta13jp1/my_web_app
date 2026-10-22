@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/note_tasks_page.dart';
@@ -319,6 +321,35 @@ void main() {
       findsNothing,
     );
   });
+  for (final notificationsFailFirst in [false, true]) {
+    testWidgets('handles early parallel load failure notifications=$notificationsFailFirst',
+        (tester) async {
+      final tasks = Completer<List<NoteTask>>();
+      final notifications = Completer<List<NoteFeatureNotification>>();
+      final repository = _FakeNoteTaskRepository(const <NoteTask>[]);
+      repository.tasksOverride = () => tasks.future;
+      repository.notificationsOverride = () => notifications.future;
+      await tester.pumpWidget(
+        MaterialApp(home: NoteTasksPage(repository: repository)),
+      );
+      if (notificationsFailFirst) {
+        notifications.completeError(StateError('synthetic early failure'));
+      } else {
+        tasks.completeError(StateError('synthetic early failure'));
+      }
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+
+      if (notificationsFailFirst) {
+        tasks.complete(<NoteTask>[]);
+      } else {
+        notifications.complete(<NoteFeatureNotification>[]);
+      }
+      await tester.pumpAndSettle();
+      expect(find.textContaining('synthetic early failure'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
 
 class _FakeNoteTaskRepository
@@ -330,6 +361,8 @@ class _FakeNoteTaskRepository
   })  : _tasks = List<NoteTask>.from(tasks),
         _notifications = List<NoteFeatureNotification>.from(notifications);
 
+  Future<List<NoteTask>> Function()? tasksOverride;
+  Future<List<NoteFeatureNotification>> Function()? notificationsOverride;
   List<NoteTask> _tasks;
   List<NoteFeatureNotification> _notifications;
   final List<(String, bool)> completedChanges = <(String, bool)>[];
@@ -337,7 +370,10 @@ class _FakeNoteTaskRepository
   final List<String> dismissedIds = <String>[];
 
   @override
-  Future<List<NoteTask>> loadAllTasks() async => List<NoteTask>.from(_tasks);
+  Future<List<NoteTask>> loadAllTasks() async {
+    if (tasksOverride != null) return tasksOverride!();
+    return List<NoteTask>.from(_tasks);
+  }
 
   @override
   Future<List<NoteTask>> loadTasks({required int noteId}) async {
@@ -348,6 +384,7 @@ class _FakeNoteTaskRepository
 
   @override
   Future<List<NoteFeatureNotification>> loadNotifications() async {
+    if (notificationsOverride != null) return notificationsOverride!();
     return List<NoteFeatureNotification>.from(_notifications);
   }
 
