@@ -5975,7 +5975,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (userId == null) return;
 
     setState(() => _isLoadingClosing = true);
-    final todayStr = _dateOnly(DateTime.now());
+    final todayStr = _dateOnly(widget.debugNow ?? DateTime.now());
 
     try {
       final rows = await _supabase
@@ -6017,7 +6017,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<bool> _upsertTodayClosing() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return false;
-    final todayStr = _dateOnly(DateTime.now());
+    final todayStr = _dateOnly(widget.debugNow ?? DateTime.now());
 
     try {
       await _supabase.from('cfo_daily_closings').upsert({
@@ -6031,7 +6031,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'user_id,date');
       return _supabase.auth.currentUser?.id == userId &&
-          _dateOnly(DateTime.now()) == todayStr;
+          _dateOnly(widget.debugNow ?? DateTime.now()) == todayStr;
     } catch (e) {
       debugPrint('upsert closing error: $e');
       return false;
@@ -6041,7 +6041,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _toggleClosing(String key, bool value) async {
     if (_isSavingClosing) return;
     final savingOwner = _supabase.auth.currentUser?.id;
-    final savingDate = _dateOnly(DateTime.now());
+    final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
     final previous = [_assetsDone, _liabilitiesDone, _fixedCostsDone,
       _flowsDone, _mustTasksDone];
     setState(() {
@@ -6067,7 +6067,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final saved = await _upsertTodayClosing();
     if (!mounted) return;
     if (_supabase.auth.currentUser?.id != savingOwner ||
-        _dateOnly(DateTime.now()) != savingDate) {
+        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate) {
       setState(() {
         _isSavingClosing = false;
         _assetsDone = false;
@@ -6307,10 +6307,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _autoCheckFromData() async {
     if (_isSavingClosing) return;
     final savingOwner = _supabase.auth.currentUser?.id;
-    final savingDate = _dateOnly(DateTime.now());
+    final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
     final previousAssets = _assetsDone;
     final previousLiabilities = _liabilitiesDone;
-    final todayStr = _dateOnly(DateTime.now());
+    final todayStr = _dateOnly(widget.debugNow ?? DateTime.now());
 
     // NOTE: Closing checks intentionally use raw inputs recorded today.
     // Do not use display-complemented values here.
@@ -6336,7 +6336,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final saved = await _upsertTodayClosing();
     if (!mounted) return;
     if (_supabase.auth.currentUser?.id != savingOwner ||
-        _dateOnly(DateTime.now()) != savingDate) {
+        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate) {
       setState(() {
         _isSavingClosing = false;
         _assetsDone = false;
