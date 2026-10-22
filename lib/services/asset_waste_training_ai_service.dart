@@ -115,7 +115,7 @@ class AssetWasteTrainingAiReview {
         : '支出のたびに「能力を伸ばす支出か」を確認し、未記録日の確認と分類の見直しをしてください。';
     return AssetWasteTrainingAiReview(
       summary:
-          'AIレビュー待機中$reasonText。浪費抑制スコアは記録ベースの参考値${snapshot.disciplineScore}点、浪費比率は${(snapshot.wasteRatio * 100).round()}%、日課達成は${snapshot.ruleCompletedCount}/${snapshot.ruleTargetCount}件です。$focus',
+          'AIレビューを利用できないため、記録から参考値を表示しています$reasonText。浪費抑制スコアは記録ベースの参考値${snapshot.disciplineScore}点、浪費比率は${(snapshot.wasteRatio * 100).round()}%、日課達成は${snapshot.ruleCompletedCount}/${snapshot.ruleTargetCount}件です。$focus',
       source: 'local-kpi-engine',
       generatedAt: generatedAt,
       isFallback: true,
@@ -154,13 +154,37 @@ class AssetWasteTrainingAiService {
         source: response.source,
         generatedAt: _now(),
       );
-    } catch (_) {
+    } catch (error) {
       return AssetWasteTrainingAiReview.fallback(
         snapshot: snapshot,
         generatedAt: _now(),
-        reason: 'AI連携に失敗しました。',
+        reason: _failureReason(error),
       );
     }
+  }
+
+  // Only fixed, user-facing descriptions leave this boundary. Provider error
+  // payloads can contain private request text, URLs or credentials.
+  String _failureReason(Object error) {
+    final detail = error.toString().toLowerCase();
+    if (RegExp(r'429|quota|rate.?limit|cooldown').hasMatch(detail)) {
+      return 'AIの利用制限により取得できませんでした。時間を置いて確認してください';
+    }
+    if (RegExp(r'offline|local.only|external.*blocked').hasMatch(detail)) {
+      return 'オフライン設定などにより外部AIを利用できません。接続設定を確認してください';
+    }
+    if (RegExp(r'secret_needed|missing.*key|not configured').hasMatch(detail)) {
+      return 'AIの接続設定に確認が必要です';
+    }
+    if (RegExp(r'401|403|unauthorized|forbidden|login_required|jwt')
+        .hasMatch(detail)) {
+      return '認証またはアクセス権を確認できません。ログイン状態と接続設定を確認してください';
+    }
+    if (RegExp(r'timeout|timed out|socket|network|failed to fetch')
+        .hasMatch(detail)) {
+      return 'AIとの通信を完了できませんでした。接続状況を確認してください';
+    }
+    return 'AI応答を取得できませんでした。原因は未確認です';
   }
 
   String _buildPrompt(AssetWasteTrainingSnapshot snapshot) {
