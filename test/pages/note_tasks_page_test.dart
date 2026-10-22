@@ -407,9 +407,11 @@ void main() {
       MaterialApp(home: NoteTasksPage(repository: repository)),
     );
     await tester.pumpAndSettle();
-    final complete = tester.widget<Checkbox>(
-      find.byKey(const ValueKey('note_tasks_page_checkbox_overlap')),
-    ).onChanged!;
+    final complete = tester
+        .widget<Checkbox>(
+          find.byKey(const ValueKey('note_tasks_page_checkbox_overlap')),
+        )
+        .onChanged!;
     final older = Completer<List<NoteTask>>();
     var calls = 0;
     repository.tasksOverride = () => calls++ == 0
