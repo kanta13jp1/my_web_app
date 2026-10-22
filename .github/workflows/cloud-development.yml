@@ -25,8 +25,8 @@ jobs:
       - name: Format and analyze closing fix
         run: |
           dart fix --apply --code=require_trailing_commas test/widgets/balance_history_owner_probe_test.dart
-          dart format lib/pages/asset_management_page.dart test/widgets/balance_history_owner_probe_test.dart
-          flutter analyze lib/pages/asset_management_page.dart test/widgets/balance_history_owner_probe_test.dart
+          dart format lib/pages/asset_management_page.dart lib/widgets/asset_balance_history_control.dart test/widgets/balance_history_owner_probe_test.dart test/widgets/asset_balance_history_control_test.dart
+          flutter analyze lib/pages/asset_management_page.dart lib/widgets/asset_balance_history_control.dart test/widgets/balance_history_owner_probe_test.dart test/widgets/asset_balance_history_control_test.dart
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
@@ -34,5 +34,7 @@ jobs:
           path: |
             lib/pages/asset_management_page.dart
             test/widgets/balance_history_owner_probe_test.dart
+            lib/widgets/asset_balance_history_control.dart
+            test/widgets/asset_balance_history_control_test.dart
       - name: Run closing failure probe
         run: flutter test test/widgets/balance_history_owner_probe_test.dart test/widgets/asset_balance_history_control_test.dart --reporter expanded
