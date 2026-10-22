@@ -6050,7 +6050,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _closingLoadedDate == _dateOnly(widget.debugNow ?? DateTime.now());
     if (!loaded) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('現在のチェックを取得できませんでした。保存せず、同じ操作で再取得してください。')),
+        const SnackBar(
+            content: Text('現在のチェックを取得できませんでした。保存せず、同じ操作で再取得してください。')),
       );
     }
     return loaded;
