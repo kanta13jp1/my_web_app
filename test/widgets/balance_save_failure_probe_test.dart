@@ -119,8 +119,9 @@ void main() {
               request: request,
             );
           }
-          persistedBalances
-              .add(jsonDecode(request.body) as Map<String, dynamic>);
+          persistedBalances.addAll(
+            rows.map((row) => Map<String, dynamic>.from(row as Map)),
+          );
           return http.Response(
             '',
             201,
