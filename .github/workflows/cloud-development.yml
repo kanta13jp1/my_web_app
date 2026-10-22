@@ -292,6 +292,18 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
+      - name: Use verified Flutter note keyboard input
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('test/e2e/platform_release_checklist.spec.ts')
+          s=p.read_text()
+          old="  await note.fill('Chrome で確認');"
+          new="  await note.pressSequentially('Chrome で確認', { delay: 25 });\n  await note.press('Tab');\n  await note.focus();\n  await expect(note).toHaveValue('Chrome で確認');"
+          assert s.count(old)==1
+          p.write_text(s.replace(old,new))
+          PY
+
       - name: Run platform release checklist E2E
         shell: bash
         run: |
@@ -568,8 +580,8 @@ jobs:
   deploy:
     name: Deploy to Production Environment
     runs-on: ubuntu-latest
-    needs: [validate, ci]
-    if: always() && inputs.approved_release == true && inputs.deploy_scope == 'web_only' && vars.PRODUCTION_DEPLOY_HOLD == 'false' && needs.validate.result == 'success' && needs.ci.result == 'success'
+    needs: [validate, ci, platform-release-checklist-e2e, ai-search-pending-e2e, slide-number-check-e2e, asset-balance-history-e2e, savings-life-plan-e2e]
+    if: always() && inputs.approved_release == true && inputs.deploy_scope == 'web_only' && vars.PRODUCTION_DEPLOY_HOLD == 'false' && needs.validate.result == 'success' && needs.ci.result == 'success' && needs['platform-release-checklist-e2e'].result == 'success' && needs['ai-search-pending-e2e'].result == 'success' && needs['slide-number-check-e2e'].result == 'success' && needs['asset-balance-history-e2e'].result == 'success' && needs['savings-life-plan-e2e'].result == 'success'
     timeout-minutes: 45
     environment:
       name: production
@@ -1559,3 +1571,4 @@ jobs:
             echo-pump-public/
             mcp-browser-evidence/
           retention-days: 14
+
