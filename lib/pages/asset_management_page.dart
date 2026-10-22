@@ -6092,6 +6092,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return true;
     }
     await _fetchTodayClosing();
+    while (mounted && _isLoadingClosing) {
+      final activeFetch = _closingActiveFetch;
+      if (activeFetch == null) break;
+      await activeFetch;
+    }
     if (!mounted) return false;
     final loaded = _closingLoadedOwner == _supabase.auth.currentUser?.id &&
         _closingLoadedOwner != null &&
@@ -6184,15 +6189,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (contextChanged ||
         (!saved && _closingAppliedRevision != savingReadGeneration) ||
         (saved && _closingFetchGeneration != savingFetchGeneration)) {
-      setState(() {
-        if (contextChanged) {
-          _assetsDone = false;
-          _liabilitiesDone = false;
-          _fixedCostsDone = false;
-          _flowsDone = false;
-          _mustTasksDone = false;
-        }
-      });
       final recoveryRevision = _closingAppliedRevision;
       await _fetchTodayClosing();
       while (mounted && _isLoadingClosing) {
@@ -6520,15 +6516,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (contextChanged ||
         (!saved && _closingAppliedRevision != savingReadGeneration) ||
         (saved && _closingFetchGeneration != savingFetchGeneration)) {
-      setState(() {
-        if (contextChanged) {
-          _assetsDone = false;
-          _liabilitiesDone = false;
-          _fixedCostsDone = false;
-          _flowsDone = false;
-          _mustTasksDone = false;
-        }
-      });
       final recoveryRevision = _closingAppliedRevision;
       await _fetchTodayClosing();
       while (mounted && _isLoadingClosing) {
