@@ -20,6 +20,10 @@ void main() {
   var failClosingRead = false;
   var persistedClosing = false;
   var provideTask = false;
+  Completer<void>? staleRead;
+  var staleReads = 0;
+  var reflectSuccessfulWrite = false;
+  Map<String, dynamic>? serverClosing;
   Map<String, dynamic>? lastClosingWrite;
   setUp(() {
     closingWrites = 0;
@@ -31,6 +35,10 @@ void main() {
     failClosingRead = false;
     persistedClosing = false;
     provideTask = false;
+    staleRead = null;
+    staleReads = 0;
+    reflectSuccessfulWrite = false;
+    serverClosing = null;
     lastClosingWrite = null;
     SharedPreferences.setMockInitialValues({});
   });
@@ -74,6 +82,17 @@ void main() {
             headers: headers,
             request: request,
           );
+        }
+        if (request.url.path.endsWith('/cfo_daily_closings') && request.method == 'GET') {
+          if (staleRead != null && staleReads == 0) {
+            staleReads++;
+            final gate = staleRead!;
+            await gate.future;
+            return http.Response('[{"assets_done":false}]', 200, headers: headers, request: request,);
+          }
+          if (reflectSuccessfulWrite && serverClosing != null) {
+            return http.Response(jsonEncode([serverClosing]), 200, headers: headers, request: request,);
+          }
         }
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'GET') {
@@ -133,6 +152,7 @@ void main() {
           lastClosingWrite = jsonDecode(request.body) as Map<String, dynamic>;
           await holdWrite?.future;
           if (!failSave) {
+            if (reflectSuccessfulWrite) serverClosing = lastClosingWrite;
             return http.Response(
               '',
               201,
@@ -455,16 +475,24 @@ void main() {
   }
 
   for (final automatic in [false, true]) {
-    testWidgets('failed intervening read cannot retain optimistic checks automatic=$automatic', (tester) async {
+    testWidgets(
+        'failed intervening read cannot retain optimistic checks automatic=$automatic',
+        (tester) async {
       provideTask = true;
       provideTodayBalance = true;
       holdWrite = Completer<void>();
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
-        MaterialApp(home: AssetManagementPage(debugNow: DateTime(2026, 10, 22),),),
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 10, 22),
+          ),
+        ),
       );
-      for (var i = 0; i < 12; i++) { await tester.pump(const Duration(milliseconds: 100)); }
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
       final asset = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
       final fixed = find.widgetWithText(CheckboxListTile, '③ 今月の固定費をすべて記録して把握');
       final action = automatic ? find.text('記録状況から自動チェック') : asset;
@@ -474,22 +502,76 @@ void main() {
       expect(closingWrites, 1);
       expect(tester.widget<CheckboxListTile>(asset).value, isTrue);
       failClosingRead = true;
-      final task = find.widgetWithText(CheckboxListTile, 'synthetic review task');
+      final task =
+          find.widgetWithText(CheckboxListTile, 'synthetic review task');
       await tester.ensureVisible(task);
       await tester.tap(task);
-      for (var i = 0; i < 12; i++) { await tester.pump(const Duration(milliseconds: 100)); }
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
       holdWrite!.complete();
-      for (var i = 0; i < 12; i++) { await tester.pump(const Duration(milliseconds: 100)); }
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
       expect(tester.widget<CheckboxListTile>(asset).value, isFalse);
       expect(tester.widget<CheckboxListTile>(fixed).value, isFalse);
       expect(find.textContaining('チェックを保存できませんでした'), findsOneWidget);
       await tester.ensureVisible(action);
       await tester.tap(action);
-      for (var i = 0; i < 12; i++) { await tester.pump(const Duration(milliseconds: 100)); }
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
       expect(closingWrites, 1);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 2));
     });
+  }
+
+  for (final lateRead in [false, true]) {
+    for (final automatic in [false, true]) {
+      testWidgets('successful save reconciles stale read automatic=$automatic late=$lateRead', (tester) async {
+        provideTask = true;
+        provideTodayBalance = true;
+        reflectSuccessfulWrite = true;
+        failSave = false;
+        holdWrite = Completer<void>();
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          MaterialApp(home: AssetManagementPage(debugNow: DateTime(2026, 10, 22),),),
+        );
+        for (var i = 0; i < 12; i++) { await tester.pump(const Duration(milliseconds: 100)); }
+        final asset = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
+        final action = automatic ? find.text('記録状況から自動チェック') : asset;
+        await tester.ensureVisible(action);
+        await tester.tap(action);
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(closingWrites, 1);
+        staleRead = Completer<void>();
+        final task = find.widgetWithText(CheckboxListTile, 'synthetic review task');
+        await tester.ensureVisible(task);
+        await tester.tap(task);
+        for (var i = 0; i < 12; i++) { await tester.pump(const Duration(milliseconds: 100)); }
+        expect(staleReads, 1);
+        if (!lateRead) {
+          staleRead!.complete();
+          for (var i = 0; i < 12; i++) { await tester.pump(const Duration(milliseconds: 100)); }
+          expect(tester.widget<CheckboxListTile>(asset).value, isFalse);
+        }
+        holdWrite!.complete();
+        for (var i = 0; i < 12; i++) { await tester.pump(const Duration(milliseconds: 100)); }
+        expect(serverClosing?['assets_done'], isTrue);
+        expect(tester.widget<CheckboxListTile>(asset).value, isTrue);
+        if (lateRead) {
+          staleRead!.complete();
+          for (var i = 0; i < 12; i++) { await tester.pump(const Duration(milliseconds: 100)); }
+          expect(tester.widget<CheckboxListTile>(asset).value, isTrue);
+        }
+        expect(closingWrites, 1);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(seconds: 2));
+      });
+    }
   }
 
   testWidgets(
