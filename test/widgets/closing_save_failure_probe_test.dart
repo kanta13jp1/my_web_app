@@ -1088,14 +1088,20 @@ void main() {
         }
         expect(delayedReads, 2);
         holdRead!.complete();
-        for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
+        for (var i = 0; i < 12; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
         expect(find.textContaining('再取得できませんでした'), findsNothing);
         await tester.ensureVisible(asset);
         await tester.tap(asset);
-        for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
+        for (var i = 0; i < 12; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
         expect(closingWrites, 2);
         recoveryGate.complete();
-        for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
+        for (var i = 0; i < 12; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
         expect(closingWrites, 2);
         await tester.pumpWidget(const SizedBox.shrink());
         await tester.pump(const Duration(seconds: 2));
@@ -1103,26 +1109,38 @@ void main() {
     }
   }
 
-
-  for (final automatic in [false,true]) {
-    testWidgets('idle logout clears previous checks and rejects action auto=$automatic',(tester) async {
-      persistedClosing=true;
-      await tester.binding.setSurfaceSize(const Size(1200,2400));
+  for (final automatic in [false, true]) {
+    testWidgets(
+        'idle logout clears previous checks and rejects action auto=$automatic',
+        (tester) async {
+      persistedClosing = true;
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.pumpWidget(MaterialApp(home: AssetManagementPage(debugNow: DateTime(2026,10,22),),),);
-      for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
-      final asset=find.widgetWithText(CheckboxListTile,'① 全資産額を記録して把握');
-      expect(tester.widget<CheckboxListTile>(asset).value,isTrue);
-      await tester.runAsync(() => Supabase.instance.client.auth.signOut(scope: SignOutScope.local));
-      final action=automatic ? find.text('記録状況から自動チェック') : asset;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 10, 22),
+          ),
+        ),
+      );
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final asset = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
+      expect(tester.widget<CheckboxListTile>(asset).value, isTrue);
+      await tester.runAsync(() =>
+          Supabase.instance.client.auth.signOut(scope: SignOutScope.local),);
+      final action = automatic ? find.text('記録状況から自動チェック') : asset;
       await tester.ensureVisible(action);
       await tester.tap(action);
-      for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
-      expect(closingWrites,0);
-      expect(tester.widget<CheckboxListTile>(asset).value,isFalse);
-      expect(find.text('チェックを保存するにはログインしてください。'),findsOneWidget);
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(closingWrites, 0);
+      expect(tester.widget<CheckboxListTile>(asset).value, isFalse);
+      expect(find.text('チェックを保存するにはログインしてください。'), findsOneWidget);
       await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pump(const Duration(seconds:2));
+      await tester.pump(const Duration(seconds: 2));
     });
   }
   testWidgets(

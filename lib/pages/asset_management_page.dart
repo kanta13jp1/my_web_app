@@ -6112,7 +6112,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
       if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('チェックを保存するにはログインしてください。'),),
+        const SnackBar(
+          content: Text('チェックを保存するにはログインしてください。'),
+        ),
       );
       return false;
     }
