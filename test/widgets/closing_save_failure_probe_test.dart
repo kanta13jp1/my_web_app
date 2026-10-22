@@ -653,8 +653,10 @@ void main() {
           await tester.pump(const Duration(milliseconds: 100));
         }
         expect(lastClosingWrite?['assets_done'], isTrue);
-        expect(find.text('チェックは保存しましたが、最新状態を再取得できませんでした。同じ操作で再取得してください。'),
-            findsOneWidget,);
+        expect(
+          find.text('チェックは保存しましたが、最新状態を再取得できませんでした。同じ操作で再取得してください。'),
+          findsOneWidget,
+        );
         expect(tester.widget<CheckboxListTile>(asset).value, isTrue);
         if (lateRead) {
           staleRead!.complete();
@@ -670,6 +672,71 @@ void main() {
     }
   }
 
+
+  for (final automatic in [false, true]) {
+    testWidgets('prerequisite date change cancels original action auto=$automatic', (tester) async {
+      failClosingRead = true;
+      failSave = false;
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(MaterialApp(home: AssetManagementPage(debugNow: DateTime(2026, 10, 22),),),);
+      for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
+      failClosingRead = false;
+      holdRead = Completer<void>();
+      final asset=find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
+      final action=automatic ? find.text('記録状況から自動チェック') : asset;
+      await tester.ensureVisible(action);
+      await tester.tap(action);
+      for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
+      expect(delayedReads, greaterThan(0));
+      await tester.pumpWidget(MaterialApp(home: AssetManagementPage(debugNow: DateTime(2026, 10, 23),),),);
+      holdRead!.complete();
+      for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
+      expect(closingWrites, 0);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds:2));
+    });
+    for (final logout in [false, true]) {
+      testWidgets('context changes during successful-save recovery auto=$automatic logout=$logout', (tester) async {
+        provideTask=true;
+        provideTodayBalance=true;
+        failSave=false;
+        holdWrite=Completer<void>();
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(MaterialApp(home: AssetManagementPage(debugNow: DateTime(2026, 10, 22),),),);
+        for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
+        final asset=find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
+        final action=automatic ? find.text('記録状況から自動チェック') : asset;
+        await tester.ensureVisible(action);
+        await tester.tap(action);
+        await tester.pump(const Duration(milliseconds:100));
+        staleRead=Completer<void>();
+        final task=find.widgetWithText(CheckboxListTile, 'synthetic review task');
+        await tester.ensureVisible(task);
+        await tester.tap(task);
+        for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
+        staleRead!.complete();
+        for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
+        holdRead=Completer<void>();
+        holdWrite!.complete();
+        for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
+        expect(delayedReads, greaterThan(0));
+        if (logout) {
+          await tester.runAsync(() => Supabase.instance.client.auth.signOut());
+        } else {
+          await tester.pumpWidget(MaterialApp(home: AssetManagementPage(debugNow: DateTime(2026, 10, 23),),),);
+          failClosingRead=true;
+        }
+        holdRead!.complete();
+        for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
+        expect(tester.widget<CheckboxListTile>(asset).value, isFalse);
+        expect(closingWrites, 1);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(seconds:2));
+      });
+    }
+  }
   testWidgets(
     'logout during a save discards the previous owner completion',
     (tester) async {
