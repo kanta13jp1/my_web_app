@@ -12,6 +12,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 // Diagnostic only: no production endpoint, credentials, or persisted user data.
 void main() {
   var balanceWrites = 0;
+  var relatedWrites = 0;
+  var syntheticUserId = '00000000-0000-4000-8000-000000000001';
+  Completer<void>? balanceGate;
   var failBalanceAt = 1;
   var failRelatedWrite = false;
   var lastBalanceBatchSize = 0;
@@ -39,6 +42,8 @@ void main() {
 
     failRelatedWrite = false;
     balanceWrites = 0;
+    relatedWrites = 0;
+    balanceGate = null;
     failBalanceAt = 1;
     lastBalanceBatchSize = 0;
     persistedBalances.clear();
@@ -85,7 +90,7 @@ void main() {
               'token_type': 'bearer',
               'expires_in': 3600,
               'user': {
-                'id': '00000000-0000-4000-8000-000000000001',
+                'id': syntheticUserId,
                 'aud': 'authenticated',
                 'role': 'authenticated',
                 'app_metadata': {},
@@ -120,6 +125,7 @@ void main() {
         if (request.url.path.endsWith('/cfo_assets') &&
             request.method == 'POST') {
           balanceWrites++;
+          if (balanceGate != null) await balanceGate!.future;
           final payload = jsonDecode(request.body);
           final rows = payload is List ? payload : [payload];
           lastBalanceBatchSize = rows.length;
@@ -366,8 +372,9 @@ void main() {
       }
       expect(lastBalanceBatchSize, bulk ? 2 : 1);
       expect(persistedBalances.length, bulk ? 2 : 1);
-      expect(tester.widget<TextField>(fields.at(bulk ? 0 : 1)).controller!.text,
-          '500',
+      expect(
+        tester.widget<TextField>(fields.at(bulk ? 0 : 1)).controller!.text,
+        '500',
       );
       expect(
         find.descendant(
@@ -378,6 +385,66 @@ void main() {
       );
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 2));
+    });
+  }
+  for (final bulk in [false, true]) {
+    testWidgets(
+        'owner switch while balance insert pending blocks related writes bulk=$bulk',
+        (tester) async {
+      failBalanceAt = 0;
+      failRelatedWrite = false;
+      balanceGate = Completer<void>();
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final fields = find.byWidgetPredicate(
+        (w) => w is TextField && w.decoration?.labelText == '今日の残高',
+      );
+      expect(fields, findsNWidgets(2));
+      await tester.ensureVisible(fields.at(bulk ? 0 : 1));
+      await tester.enterText(fields.at(bulk ? 0 : 1), '500');
+      if (bulk) {
+        await tester.ensureVisible(fields.at(1));
+        await tester.enterText(fields.at(1), '500');
+      }
+      final action = bulk ? find.text('全体状況を保存') : find.text('記録').last;
+      await tester.ensureVisible(action);
+      await tester.tap(action);
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(balanceWrites, 1);
+      syntheticUserId = '00000000-0000-4000-8000-000000000002';
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: 'second@example.invalid',
+        password: 'synthetic-only',
+      );
+      expect(Supabase.instance.client.auth.currentUser!.id, syntheticUserId);
+      balanceGate!.complete();
+
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(balanceWrites, 1);
+      if (!bulk) {
+        expect(persistedBalances.single['title'], '現金');
+      }
+      expect(lastBalanceBatchSize, bulk ? 2 : 1);
+      expect(persistedBalances.length, bulk ? 2 : 1);
+      expect(
+        tester.widget<TextField>(fields.at(bulk ? 0 : 1)).controller!.text,
+        '500',
+      );
+      expect(relatedWrites, 0);
+      expect(find.textContaining('保存済み'), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 2));
+      syntheticUserId = '00000000-0000-4000-8000-000000000001';
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: 'probe@example.invalid',
+        password: 'synthetic-only',
+      );
     });
   }
 }
