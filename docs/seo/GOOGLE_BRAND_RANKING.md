@@ -1116,3 +1116,23 @@ session-start-check/adaptive-model-router適用。Jev astra/medium推奨はadvis
 追跡2文書のみ既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)へ追記。全28行JSON、日付重複防止、順位整合、参照URL集合一致、remote再読一致を検証。docs-onlyにつき専用Flutter test/analyze/release build、新規生成HTML、対象Flutter起動後描画は未実施。最新headのPR CIは別途結果を報告し、前headの成功を流用しない。rollbackは当日追記コミットのrevert。マージ・デプロイなし、日次監視継続・アーカイブ保留。
 
 session-start-check/adaptive-model-router適用。Jev astra/medium推奨はadvisory、lead実行・モデル切替なし。ディスク38.57GiB、RAM72.7%・空き8.66GiB、cloud-preferredでremote-only。元branch fix/salary-deposit-payslip-signal、HEAD c3e1d46077、upstream0/0、7 dirty paths・32 worktreesは保持、新規worktree/workerなし。ルールdriftなし。tool-watchの公式更新は既存#1422等へルーティング。NotebookLM一覧取得失敗、本作業は非依存。次回は7位と競合順位、サイト名、PAA/AI概要を確認。順位1位は保証しない。
+
+## 2026-10-22 日次監視：ブラウザ操作失敗で順位未確認
+
+09:00 JST頃に `自分株式会社`、hl=ja/gl=jp/pws=0を指定して実アプリ内ブラウザの検索タブ作成を試行。30秒timeoutでruntime reset。fresh inventoryは成功したがタブはabout:blank、既存タブ再接続は初期navigation待ち25秒timeout。同じブラウザの新規確認タブも30秒timeout。本日はSERP本文未取得、検索結果の確認0ページ・自然検索0件。国/言語は要求条件JP/jaであり、実際の地域・ログイン状態・CAPTCHAは未確認。
+
+|項目|本日の結果|
+|---|---|
+|1ページ目自然検索一覧（順位・タイトル・URL・ドメイン・種別・意図）|取得不能。前回の9件を当日一覧として転記しない|
+|対象サイト順位|未確認・確認範囲外（100位圏外と断定しない）|
+|最後の成功観測|2026-10-21 09:06頃、自然検索7位。これは本日の順位ではない|
+|前回差分、競合増減、URL構成|算出不能|
+|広告・AI概要・強調スニペット等|未確認|
+
+### 分析・変更・検証
+
+本日の競合本文分析・対象サイトSEO監査は未実施。観測根拠がないためアプリ改修なし。検索APIや過去のキャッシュを実ブラウザ順位の代用品として扱わない。追跡2文書だけ既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)へ追加。JSON29行、当日一意、rank=null・0件、前回成功値を別フィールドに分離、remote再読一致を検証。docs-onlyにつきFlutter test/analyze/release build・新規生成HTML・対象起動後描画は未実施。最新PR CIは別途確認。rollbackは当日記録コミットのrevert。マージ・デプロイなし、日次監視継続・アーカイブ保留。
+
+session-start-check/adaptive-model-router適用、lead実行・モデル切替/workerなし。元branch fix/salary-deposit-payslip-signal、HEAD c3e1d46077、upstream0/0、7 dirty paths・32 worktreesを保持。cloud-preferred、remote-only、新規worktreeや重いtoolchainなし。ルールdriftなし、tool-watchは既存#1422等へルーティング。NotebookLM一覧失敗、本作業は非依存。
+
+recover-cua-runtimeを適用してinventory・既存タブ再接続・新規同ブラウザ確認まで試したがページアクセスは復旧せず。保存/送信操作なし、ユーザーのブラウザタブ・アプリは閉じず、キャッシュ/権限変更や強制終了なし。根本原因は未特定。次回は接続復旧の有無を先に確認し、未保存作業を保存したうえでCodexの通常再起動が可能なら依頼する。同じ失敗を延々再試行せず、次の成功観測と10/21の7位を比較する。順位1位は保証しない。
