@@ -356,7 +356,9 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
       }
       expect(balanceWrites, 1);
-      if (!bulk) expect(persistedBalances.single['title'], '現金');
+      if (!bulk) {
+        expect(persistedBalances.single['title'], '現金');
+      }
       expect(lastBalanceBatchSize, bulk ? 2 : 1);
       expect(persistedBalances.length, bulk ? 2 : 1);
       expect(tester.widget<TextField>(fields.at(bulk ? 0 : 1)).controller!.text, '500');
