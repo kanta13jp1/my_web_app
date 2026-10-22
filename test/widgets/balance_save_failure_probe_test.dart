@@ -112,6 +112,10 @@ void main() {
             request: request,
           );
         }
+        if (request.method == 'POST' &&
+            request.url.path.endsWith('/wealth_struggles')) {
+          relatedWrites++;
+        }
         if (failRelatedWrite &&
             request.method == 'POST' &&
             request.url.path.endsWith('/wealth_struggles')) {
@@ -367,6 +371,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
       }
       expect(balanceWrites, 1);
+      expect(relatedWrites, 1);
       if (!bulk) {
         expect(persistedBalances.single['title'], '現金');
       }
