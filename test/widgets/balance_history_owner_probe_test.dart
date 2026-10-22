@@ -276,41 +276,45 @@ void main() {
   });
 
   for (final switchOwner in [false, true]) {
-  testWidgets('history response respects owner switch=$switchOwner',
-      (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 2400));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
-    for (var i = 0; i < 12; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-    final action = find.text('残高履歴').first;
-    await tester.ensureVisible(action);
-    await tester.tap(action);
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(historyReads, 1);
-    expect(find.text('合成預金の残高履歴'), findsOneWidget);
-    if (switchOwner) {
-    syntheticUserId = '00000000-0000-4000-8000-000000000002';
-    await Supabase.instance.client.auth.signInWithPassword(
-      email: 'second@example.invalid',
-      password: 'synthetic-only',
-    );
-    expect(Supabase.instance.client.auth.currentUser!.id, syntheticUserId);
-    }
-    historyGate.complete();
-    for (var i = 0; i < 12; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-    expect(find.text('¥7,654,321'), switchOwner ? findsNothing : findsOneWidget);
-    expect(find.text('2001-01-01 09:00 JST'),
-      switchOwner ? findsNothing : findsOneWidget,
-    );
-    expect(balanceWrites, 0);
-    expect(lastBalanceBatchSize, 0);
-    expect(relatedWrites, 0);
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 2));
-  });
+    testWidgets('history response respects owner switch=$switchOwner',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final action = find.text('残高履歴').first;
+      await tester.ensureVisible(action);
+      await tester.tap(action);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(historyReads, 1);
+      expect(find.text('合成預金の残高履歴'), findsOneWidget);
+      if (switchOwner) {
+        syntheticUserId = '00000000-0000-4000-8000-000000000002';
+        await Supabase.instance.client.auth.signInWithPassword(
+          email: 'second@example.invalid',
+          password: 'synthetic-only',
+        );
+        expect(Supabase.instance.client.auth.currentUser!.id, syntheticUserId);
+      }
+      historyGate.complete();
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(
+        find.text('¥7,654,321'),
+        switchOwner ? findsNothing : findsOneWidget,
+      );
+      expect(
+        find.text('2001-01-01 09:00 JST'),
+        switchOwner ? findsNothing : findsOneWidget,
+      );
+      expect(balanceWrites, 0);
+      expect(lastBalanceBatchSize, 0);
+      expect(relatedWrites, 0);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 2));
+    });
   }
 }
