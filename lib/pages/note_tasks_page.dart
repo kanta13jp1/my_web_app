@@ -153,6 +153,7 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
     if (!_localNotificationSchedulingEnabled) return;
     final now = DateTime.now().toUtc();
     for (final notification in notifications) {
+      if (!mounted) return;
       final notifyAt = notification.notifyAt;
       if (!notification.isReminder ||
           notification.isRead ||

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/note_tasks_page.dart';
 import 'package:my_web_app/services/note_task_service.dart';
+import 'package:my_web_app/services/notification_service.dart';
 
 void main() {
   testWidgets(
@@ -429,6 +430,39 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('disposed task page stops remaining reminder scheduling',
+      (tester) async {
+    final service = _DelayedReminderService();
+    final repository = _FakeNoteTaskRepository(
+      const <NoteTask>[],
+      notifications: [
+        for (final id in ['first', 'second'])
+          _notification(
+            id: id,
+            kind: NoteFeatureNotificationKind.taskReminder,
+            title: id,
+            message: 'Synthetic reminder',
+            noteId: 1,
+            notifyAt: DateTime.now().add(const Duration(days: 1)),
+          ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NoteTasksPage(
+          repository: repository,
+          notificationService: service,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(service.scheduledKeys.length, 1);
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    service.pending.complete();
+    await tester.pumpAndSettle();
+    expect(service.scheduledKeys.length, 1);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _FakeNoteTaskRepository
@@ -635,4 +669,20 @@ NoteTask _task({
     assigneeEmail: assigneeEmail,
     assigneeDisplayName: assigneeDisplayName,
   );
+}
+
+class _DelayedReminderService extends NotificationService {
+  final pending = Completer<void>();
+  final scheduledKeys = <String>[];
+
+  @override
+  Future<void> scheduleNoteFeatureReminder({
+    required String sourceKey,
+    required String title,
+    required String body,
+    required DateTime notifyAt,
+  }) async {
+    scheduledKeys.add(sourceKey);
+    await pending.future;
+  }
 }
