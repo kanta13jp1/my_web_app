@@ -13,7 +13,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 void main() {
   var balanceWrites = 0;
   var historyReads = 0;
-  final historyGate = Completer<void>();
+  var historyGate = Completer<void>();
   var relatedWrites = 0;
   var syntheticUserId = '00000000-0000-4000-8000-000000000001';
   Completer<void>? balanceGate;
@@ -35,7 +35,10 @@ void main() {
   Map<String, dynamic>? serverClosing;
   Map<String, dynamic>? lastClosingWrite;
   setUp(() async {
-    if (Supabase.instance.client.auth.currentUser == null) {
+    historyReads = 0;
+    historyGate = Completer<void>();
+    syntheticUserId = '00000000-0000-4000-8000-000000000001';
+    if (Supabase.instance.client.auth.currentUser?.id != syntheticUserId) {
       await Supabase.instance.client.auth.signInWithPassword(
         email: 'probe@example.invalid',
         password: 'synthetic-only',
@@ -272,7 +275,8 @@ void main() {
     );
   });
 
-  testWidgets('history rejects previous owner response after account switch',
+  for (final switchOwner in [false, true]) {
+  testWidgets('history response respects owner switch=$switchOwner',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -286,22 +290,27 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(historyReads, 1);
     expect(find.text('合成預金の残高履歴'), findsOneWidget);
+    if (switchOwner) {
     syntheticUserId = '00000000-0000-4000-8000-000000000002';
     await Supabase.instance.client.auth.signInWithPassword(
       email: 'second@example.invalid',
       password: 'synthetic-only',
     );
     expect(Supabase.instance.client.auth.currentUser!.id, syntheticUserId);
+    }
     historyGate.complete();
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    expect(find.text('¥7,654,321'), findsNothing);
-    expect(find.text('2001-01-01 09:00 JST'), findsNothing);
+    expect(find.text('¥7,654,321'), switchOwner ? findsNothing : findsOneWidget);
+    expect(find.text('2001-01-01 09:00 JST'),
+      switchOwner ? findsNothing : findsOneWidget,
+    );
     expect(balanceWrites, 0);
     expect(lastBalanceBatchSize, 0);
     expect(relatedWrites, 0);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
   });
+  }
 }
