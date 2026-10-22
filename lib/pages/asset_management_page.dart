@@ -7961,14 +7961,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           continue;
         }
         final autoRecorded = await _autoRecordUnknownExpenseFromAssetDrop(
-              expectedUserId: userId,
+          expectedUserId: userId,
           assetType: entry.key,
           dateKey: today,
           previousAmount: previousAmount,
           currentAmount: entry.value,
         );
         if (!mounted || _supabase.auth.currentUser?.id != userId) return;
-      if (autoRecorded) {
+        if (autoRecorded) {
           autoRecordedCount += 1;
         }
       }
@@ -9009,7 +9009,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required double currentAmount,
   }) async {
     final userId = _supabase.auth.currentUser?.id;
-    if (!mounted || userId != expectedUserId ||
+    if (!mounted ||
+        userId != expectedUserId ||
         !AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
           assetType: assetType,
           isManagedLiability: _isDebtMasterManagedAccount(assetType),
@@ -9037,7 +9038,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final amount = previousAmount - currentAmount;
     final source = _flowSourceForAssetType(assetType);
     final occurredAt = DateTime.tryParse(dateKey) ?? DateTime.now();
-    if (!mounted || _supabase.auth.currentUser?.id != expectedUserId) return false;
+    if (!mounted || _supabase.auth.currentUser?.id != expectedUserId) {
+      return false;
+    }
     await _supabase.from('wealth_struggles').insert({
       'user_id': userId,
       'action_type': 'expense',
@@ -9054,7 +9057,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       'occurred_at': occurredAt.toUtc().toIso8601String(),
     });
 
-    if (mounted && _supabase.auth.currentUser?.id == expectedUserId && !_sourceOptions.contains(source)) {
+    if (mounted &&
+        _supabase.auth.currentUser?.id == expectedUserId &&
+        !_sourceOptions.contains(source)) {
       setState(() {
         _sourceOptions = [..._sourceOptions, source];
       });
