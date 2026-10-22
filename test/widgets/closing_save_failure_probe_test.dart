@@ -17,6 +17,9 @@ void main() {
   Completer<void>? holdRead;
   var delayedReads = 0;
   var provideTodayBalance = false;
+  var failClosingRead = false;
+  var persistedClosing = false;
+  Map<String, dynamic>? lastClosingWrite;
   setUp(() {
     closingWrites = 0;
     failSave = true;
@@ -24,6 +27,9 @@ void main() {
     holdRead = null;
     delayedReads = 0;
     provideTodayBalance = false;
+    failClosingRead = false;
+    persistedClosing = false;
+    lastClosingWrite = null;
     SharedPreferences.setMockInitialValues({});
   });
   setUpAll(() async {
@@ -67,6 +73,25 @@ void main() {
             request: request,
           );
         }
+        if (request.url.path.endsWith('/cfo_daily_closings') &&
+            request.method == 'GET') {
+          if (failClosingRead) {
+            return http.Response(
+              '{"message":"synthetic read failure"}',
+              500,
+              headers: headers,
+              request: request,
+            );
+          }
+          if (persistedClosing) {
+            return http.Response(
+              '[{"fixed_costs_done":true}]',
+              200,
+              headers: headers,
+              request: request,
+            );
+          }
+        }
         if (provideTodayBalance &&
             request.url.path
                 .endsWith('/rpc/asset_management_recent_cfo_assets')) {
@@ -93,6 +118,7 @@ void main() {
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'POST') {
           closingWrites++;
+          lastClosingWrite = jsonDecode(request.body) as Map<String, dynamic>;
           await holdWrite?.future;
           if (!failSave) {
             return http.Response(
@@ -292,6 +318,71 @@ void main() {
     expect(tester.widget<CheckboxListTile>(second).value, isFalse);
     expect(tester.widget<CheckboxListTile>(item).value, isFalse);
     expect(find.textContaining('元の状態に戻しました'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets(
+      'failed recovery reads block manual and automatic writes until retry succeeds',
+      (tester) async {
+    failSave = false;
+    holdWrite = Completer<void>();
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 10, 22),
+        ),
+      ),
+    );
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    final asset = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
+    final fixed = find.widgetWithText(CheckboxListTile, '③ 今月の固定費をすべて記録して把握');
+    await tester.ensureVisible(asset);
+    await tester.tap(asset);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(closingWrites, 1);
+    failClosingRead = true;
+    persistedClosing = true;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: DateTime(2026, 10, 23),
+        ),
+      ),
+    );
+    holdWrite!.complete();
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.ensureVisible(asset);
+    await tester.tap(asset);
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(closingWrites, 1);
+    expect(find.textContaining('現在のチェックを取得できませんでした'), findsOneWidget);
+    final auto = find.text('記録状況から自動チェック');
+    await tester.ensureVisible(auto);
+    await tester.tap(auto);
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(closingWrites, 1);
+    failClosingRead = false;
+    holdWrite = null;
+    await tester.ensureVisible(asset);
+    await tester.tap(asset);
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(closingWrites, 2);
+    expect(lastClosingWrite?['fixed_costs_done'], isTrue);
+    expect(lastClosingWrite?['date'], '2026-10-23');
+    expect(tester.widget<CheckboxListTile>(fixed).value, isTrue);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
   });
