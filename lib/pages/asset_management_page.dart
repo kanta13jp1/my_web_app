@@ -619,6 +619,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _flowsDone = false;
   bool _mustTasksDone = false;
   bool _isLoadingClosing = false;
+  bool _isSavingClosing = false;
+  int _closingFetchGeneration = 0;
+  int _closingAppliedRevision = 0;
+  String? _closingLoadedOwner;
+  String? _closingLoadedDate;
+  String? _closingDisplayOwner;
+  String? _closingDisplayDate;
+  Future<void>? _closingActiveFetch;
+  Completer<void>? _closingFetchChanged;
   bool _isFetchingSmbc = false;
   bool _isFetchingJibun = false;
   bool _isImportingSmbcCsv = false;
@@ -1449,6 +1458,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   @override
   void dispose() {
+    final closingChanged = _closingFetchChanged;
+    if (closingChanged != null && !closingChanged.isCompleted) {
+      closingChanged.complete();
+    }
     _controllers.forEach((_, controller) => controller.dispose());
     _monthlyPaymentControllers.forEach((_, controller) => controller.dispose());
     _actualPaymentControllers.forEach((_, controller) => controller.dispose());
@@ -5969,12 +5982,65 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return done / 5.0;
   }
 
-  Future<void> _fetchTodayClosing() async {
+  Future<void> _fetchTodayClosing() {
+    if (!mounted) return Future<void>.value();
+    final previousChanged = _closingFetchChanged;
+    _closingFetchChanged = Completer<void>();
+    final fetch = _fetchTodayClosingRequest();
+    _closingActiveFetch = fetch;
+    if (previousChanged != null && !previousChanged.isCompleted) {
+      previousChanged.complete();
+    }
+    return _waitForLatestClosingFetch();
+  }
+
+  Future<void> _waitForLatestClosingFetch() async {
+    while (mounted) {
+      final active = _closingActiveFetch;
+      final changed = _closingFetchChanged;
+      if (active == null || changed == null) return;
+      await Future.any<void>([active, changed.future]);
+      if (identical(active, _closingActiveFetch)) return;
+    }
+  }
+
+
+  Future<void> _fetchTodayClosingRequest() async {
+    if (!mounted) return;
+    final generation = ++_closingFetchGeneration;
+    final displayOwner = _supabase.auth.currentUser?.id;
+    final displayDate = _dateOnly(widget.debugNow ?? DateTime.now());
+    if (_closingDisplayOwner != displayOwner ||
+        _closingDisplayDate != displayDate) {
+      setState(() {
+        _assetsDone = false;
+        _liabilitiesDone = false;
+        _fixedCostsDone = false;
+        _flowsDone = false;
+        _mustTasksDone = false;
+        _closingDisplayOwner = displayOwner;
+        _closingDisplayDate = displayDate;
+      });
+    }
+    _closingLoadedOwner = null;
+    _closingLoadedDate = null;
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
+    if (userId == null) {
+      if (mounted) {
+        setState(() {
+          _assetsDone = false;
+          _liabilitiesDone = false;
+          _fixedCostsDone = false;
+          _flowsDone = false;
+          _mustTasksDone = false;
+        });
+        setState(() => _isLoadingClosing = false);
+      }
+      return;
+    }
 
     setState(() => _isLoadingClosing = true);
-    final todayStr = _dateOnly(DateTime.now());
+    final todayStr = _dateOnly(widget.debugNow ?? DateTime.now());
 
     try {
       final rows = await _supabase
@@ -5984,7 +6050,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .eq('date', todayStr)
           .limit(1);
 
-      if (!mounted) return;
+      if (!mounted || generation != _closingFetchGeneration) return;
+      if (_supabase.auth.currentUser?.id != userId ||
+          _dateOnly(widget.debugNow ?? DateTime.now()) != todayStr) {
+        setState(() {
+          _assetsDone = false;
+          _liabilitiesDone = false;
+          _fixedCostsDone = false;
+          _flowsDone = false;
+          _mustTasksDone = false;
+        });
+        await _fetchTodayClosing();
+        return;
+      }
+
+      _closingAppliedRevision++;
+      _closingLoadedOwner = userId;
+      _closingLoadedDate = todayStr;
 
       if (rows.isNotEmpty) {
         final r = rows.first;
@@ -6008,15 +6090,62 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     } catch (e) {
       debugPrint('fetch closing error: $e');
-      if (!mounted) return;
+      if (!mounted || generation != _closingFetchGeneration) return;
+      if (_supabase.auth.currentUser?.id != userId ||
+          _dateOnly(widget.debugNow ?? DateTime.now()) != todayStr) {
+        setState(() {
+          _assetsDone = false;
+          _liabilitiesDone = false;
+          _fixedCostsDone = false;
+          _flowsDone = false;
+          _mustTasksDone = false;
+        });
+        await _fetchTodayClosing();
+        return;
+      }
       setState(() => _isLoadingClosing = false);
     }
   }
 
-  Future<void> _upsertTodayClosing() async {
+
+  Future<bool> _ensureClosingLoaded() async {
+    final owner = _supabase.auth.currentUser?.id;
+    if (owner == null) {
+      await _fetchTodayClosing();
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('チェックを保存するにはログインしてください。'),
+        ),
+      );
+      return false;
+    }
+    if (_closingLoadedOwner == owner &&
+        _closingLoadedDate == _dateOnly(widget.debugNow ?? DateTime.now())) {
+      return true;
+    }
+    await _fetchTodayClosing();
+    while (mounted && _isLoadingClosing) {
+      await _waitForLatestClosingFetch();
+    }
+    if (!mounted) return false;
+    final loaded = _closingLoadedOwner == _supabase.auth.currentUser?.id &&
+        _closingLoadedOwner != null &&
+        _closingLoadedDate == _dateOnly(widget.debugNow ?? DateTime.now());
+    if (!loaded) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('現在のチェックを取得できませんでした。保存せず、同じ操作で再取得してください。')),
+      );
+    }
+    return loaded;
+  }
+
+
+  Future<bool> _upsertTodayClosing() async {
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
-    final todayStr = _dateOnly(DateTime.now());
+    if (userId == null) return false;
+    final todayStr = _dateOnly(widget.debugNow ?? DateTime.now());
 
     try {
       await _supabase.from('cfo_daily_closings').upsert({
@@ -6029,13 +6158,41 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'must_tasks_done': _mustTasksDone,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'user_id,date');
+      return _supabase.auth.currentUser?.id == userId &&
+          _dateOnly(widget.debugNow ?? DateTime.now()) == todayStr;
     } catch (e) {
       debugPrint('upsert closing error: $e');
+      return false;
     }
   }
 
   Future<void> _toggleClosing(String key, bool value) async {
+    if (_supabase.auth.currentUser == null) {
+      await _ensureClosingLoaded();
+      return;
+    }
+    if (_isSavingClosing || _isLoadingClosing) return;
+    final initiatingOwner = _supabase.auth.currentUser?.id;
+    final initiatingDate = _dateOnly(widget.debugNow ?? DateTime.now());
+    if (!await _ensureClosingLoaded() || !mounted) return;
+    if (_supabase.auth.currentUser?.id != initiatingOwner ||
+        _dateOnly(widget.debugNow ?? DateTime.now()) != initiatingDate) {
+      return;
+    }
+    if (_isSavingClosing || _isLoadingClosing) return;
+    final savingOwner = _supabase.auth.currentUser?.id;
+    final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
+    final savingReadGeneration = _closingAppliedRevision;
+    final savingFetchGeneration = _closingFetchGeneration;
+    final previous = [
+      _assetsDone,
+      _liabilitiesDone,
+      _fixedCostsDone,
+      _flowsDone,
+      _mustTasksDone
+    ];
     setState(() {
+      _isSavingClosing = true;
       switch (key) {
         case 'assets':
           _assetsDone = value;
@@ -6054,7 +6211,82 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           break;
       }
     });
-    await _upsertTodayClosing();
+    final submitted = [
+      _assetsDone,
+      _liabilitiesDone,
+      _fixedCostsDone,
+      _flowsDone,
+      _mustTasksDone
+    ];
+    final saved = await _upsertTodayClosing();
+    if (!mounted) return;
+    final contextChanged = _supabase.auth.currentUser?.id != savingOwner ||
+        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate;
+    if (contextChanged ||
+        (!saved && _closingAppliedRevision != savingReadGeneration) ||
+        (saved && _closingFetchGeneration != savingFetchGeneration)) {
+      final recoveryRevision = _closingAppliedRevision;
+      await _fetchTodayClosing();
+      while (mounted && _isLoadingClosing) {
+        await _waitForLatestClosingFetch();
+      }
+      if (!mounted) return;
+      final sameContext = _supabase.auth.currentUser?.id == savingOwner &&
+          _dateOnly(widget.debugNow ?? DateTime.now()) == savingDate;
+      final refreshFailed = _closingLoadedOwner != savingOwner ||
+          _closingLoadedDate != savingDate;
+      if (saved &&
+          sameContext &&
+          refreshFailed &&
+          _closingAppliedRevision == recoveryRevision) {
+        setState(() {
+          _assetsDone = submitted[0];
+          _liabilitiesDone = submitted[1];
+          _fixedCostsDone = submitted[2];
+          _flowsDone = submitted[3];
+          _mustTasksDone = submitted[4];
+        });
+      }
+      setState(() => _isSavingClosing = false);
+      if (saved && sameContext && refreshFailed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('チェックは保存しましたが、最新状態を再取得できませんでした。ページを再読み込みしてください。'),
+          ),
+        );
+      }
+      if (!saved &&
+          _supabase.auth.currentUser?.id == savingOwner &&
+          _dateOnly(widget.debugNow ?? DateTime.now()) == savingDate) {
+        final reloadFailed = _closingLoadedOwner != savingOwner ||
+            _closingLoadedDate != savingDate;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              reloadFailed
+                  ? 'チェックを保存できませんでした。最新状態の再取得にも失敗しました。表示は直近の確認状態です。同じ操作で再取得してください。'
+                  : 'チェックを保存できませんでした。最新状態を再取得しました。内容を確認して再度お試しください。',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+    setState(() {
+      _isSavingClosing = false;
+      if (!saved) {
+        _assetsDone = previous[0];
+        _liabilitiesDone = previous[1];
+        _fixedCostsDone = previous[2];
+        _flowsDone = previous[3];
+        _mustTasksDone = previous[4];
+      }
+    });
+    if (!saved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('チェックを保存できませんでした。元の状態に戻しました。再度お試しください。')),
+      );
+    }
   }
 
   void _scrollTo(GlobalKey key) {
@@ -6266,7 +6498,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _autoCheckFromData() async {
-    final todayStr = _dateOnly(DateTime.now());
+    if (_supabase.auth.currentUser == null) {
+      await _ensureClosingLoaded();
+      return;
+    }
+    if (_isSavingClosing || _isLoadingClosing) return;
+    final initiatingOwner = _supabase.auth.currentUser?.id;
+    final initiatingDate = _dateOnly(widget.debugNow ?? DateTime.now());
+    if (!await _ensureClosingLoaded() || !mounted) return;
+    if (_supabase.auth.currentUser?.id != initiatingOwner ||
+        _dateOnly(widget.debugNow ?? DateTime.now()) != initiatingDate) {
+      return;
+    }
+    if (_isSavingClosing || _isLoadingClosing) return;
+    final savingOwner = _supabase.auth.currentUser?.id;
+    final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
+    final savingReadGeneration = _closingAppliedRevision;
+    final savingFetchGeneration = _closingFetchGeneration;
+    final previousAssets = _assetsDone;
+    final previousLiabilities = _liabilitiesDone;
+    final todayStr = _dateOnly(widget.debugNow ?? DateTime.now());
 
     // NOTE: Closing checks intentionally use raw inputs recorded today.
     // Do not use display-complemented values here.
@@ -6282,15 +6533,87 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       recordedToday: todayStock,
     );
     setState(() {
+      _isSavingClosing = true;
       _assetsDone = checks.assets;
       _liabilitiesDone = checks.liabilities;
       // Completeness of costs, flows and tasks needs the owner's review.
       // Keep existing owner checks; the presence of one record is not enough.
     });
 
-    await _upsertTodayClosing();
-
+    final submitted = [
+      _assetsDone,
+      _liabilitiesDone,
+      _fixedCostsDone,
+      _flowsDone,
+      _mustTasksDone
+    ];
+    final saved = await _upsertTodayClosing();
     if (!mounted) return;
+    final contextChanged = _supabase.auth.currentUser?.id != savingOwner ||
+        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate;
+    if (contextChanged ||
+        (!saved && _closingAppliedRevision != savingReadGeneration) ||
+        (saved && _closingFetchGeneration != savingFetchGeneration)) {
+      final recoveryRevision = _closingAppliedRevision;
+      await _fetchTodayClosing();
+      while (mounted && _isLoadingClosing) {
+        await _waitForLatestClosingFetch();
+      }
+      if (!mounted) return;
+      final sameContext = _supabase.auth.currentUser?.id == savingOwner &&
+          _dateOnly(widget.debugNow ?? DateTime.now()) == savingDate;
+      final refreshFailed = _closingLoadedOwner != savingOwner ||
+          _closingLoadedDate != savingDate;
+      if (saved &&
+          sameContext &&
+          refreshFailed &&
+          _closingAppliedRevision == recoveryRevision) {
+        setState(() {
+          _assetsDone = submitted[0];
+          _liabilitiesDone = submitted[1];
+          _fixedCostsDone = submitted[2];
+          _flowsDone = submitted[3];
+          _mustTasksDone = submitted[4];
+        });
+      }
+      setState(() => _isSavingClosing = false);
+      if (saved && sameContext && refreshFailed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('チェックは保存しましたが、最新状態を再取得できませんでした。ページを再読み込みしてください。'),
+          ),
+        );
+      }
+      if (!saved &&
+          _supabase.auth.currentUser?.id == savingOwner &&
+          _dateOnly(widget.debugNow ?? DateTime.now()) == savingDate) {
+        final reloadFailed = _closingLoadedOwner != savingOwner ||
+            _closingLoadedDate != savingDate;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              reloadFailed
+                  ? 'チェックを保存できませんでした。最新状態の再取得にも失敗しました。表示は直近の確認状態です。同じ操作で再取得してください。'
+                  : 'チェックを保存できませんでした。最新状態を再取得しました。内容を確認して再度お試しください。',
+            ),
+          ),
+        );
+      }
+      if (!saved || !sameContext || refreshFailed) return;
+    }
+    setState(() {
+      _isSavingClosing = false;
+      if (!saved) {
+        _assetsDone = previousAssets;
+        _liabilitiesDone = previousLiabilities;
+      }
+    });
+    if (!saved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('チェックを保存できませんでした。元の状態に戻しました。再度お試しください。')),
+      );
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
