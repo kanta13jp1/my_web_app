@@ -653,7 +653,8 @@ void main() {
           await tester.pump(const Duration(milliseconds: 100));
         }
         expect(lastClosingWrite?['assets_done'], isTrue);
-        expect(find.text('チェックは保存しましたが、最新状態を再取得できませんでした。同じ操作で再取得してください。'), findsOneWidget);
+        expect(find.text('チェックは保存しましたが、最新状態を再取得できませんでした。同じ操作で再取得してください。'),
+            findsOneWidget,);
         expect(tester.widget<CheckboxListTile>(asset).value, isTrue);
         if (lateRead) {
           staleRead!.complete();
