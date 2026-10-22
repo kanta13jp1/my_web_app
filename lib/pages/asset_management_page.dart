@@ -7553,7 +7553,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final previousDate = _lastUpdatedDates[type];
     final previousAmount =
         previousDate == null ? null : _assetData[previousDate]?[type];
-    debugPrint('synthetic probe type=$type previous=$previousAmount amount=$amount');
     var balanceSaved = false;
     try {
       final recordedAt = DateTime.now();

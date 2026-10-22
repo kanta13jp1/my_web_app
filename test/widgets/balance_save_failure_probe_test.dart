@@ -115,7 +115,6 @@ void main() {
         if (request.url.path.endsWith('/cfo_assets') &&
             request.method == 'POST') {
           balanceWrites++;
-          debugPrint('synthetic balance POST: ${request.body}');
           final payload = jsonDecode(request.body);
           final rows = payload is List ? payload : [payload];
           lastBalanceBatchSize = rows.length;
@@ -344,22 +343,23 @@ void main() {
         (w) => w is TextField && w.decoration?.labelText == '今日の残高',
       );
       expect(fields, findsNWidgets(2));
-      await tester.ensureVisible(fields.at(0));
-      await tester.enterText(fields.at(0), '500');
+      await tester.ensureVisible(fields.at(bulk ? 0 : 1));
+      await tester.enterText(fields.at(bulk ? 0 : 1), '500');
       if (bulk) {
         await tester.ensureVisible(fields.at(1));
         await tester.enterText(fields.at(1), '500');
       }
-      final action = bulk ? find.text('全体状況を保存') : find.text('記録').first;
+      final action = bulk ? find.text('全体状況を保存') : find.text('記録').last;
       await tester.ensureVisible(action);
       await tester.tap(action);
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
       expect(balanceWrites, 1);
+      if (!bulk) expect(persistedBalances.single['title'], '現金');
       expect(lastBalanceBatchSize, bulk ? 2 : 1);
       expect(persistedBalances.length, bulk ? 2 : 1);
-      expect(tester.widget<TextField>(fields.at(0)).controller!.text, '500');
+      expect(tester.widget<TextField>(fields.at(bulk ? 0 : 1)).controller!.text, '500');
       expect(
         find.descendant(
           of: find.byType(SnackBar),
