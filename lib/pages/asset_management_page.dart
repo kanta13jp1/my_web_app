@@ -6004,7 +6004,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-
   Future<void> _fetchTodayClosingRequest() async {
     if (!mounted) return;
     final generation = ++_closingFetchGeneration;
@@ -6107,7 +6106,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-
   Future<bool> _ensureClosingLoaded() async {
     final owner = _supabase.auth.currentUser?.id;
     if (owner == null) {
@@ -6140,7 +6138,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     return loaded;
   }
-
 
   Future<bool> _upsertTodayClosing() async {
     final userId = _supabase.auth.currentUser?.id;

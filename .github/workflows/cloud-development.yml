@@ -147,10 +147,10 @@ jobs:
           git fetch --no-tags --depth=1 origin 53f23c486dbd39354c9f4fcf4b3dc9ccb254b608
           python3 - <<'PY'
           import subprocess
-          expected={'lib/pages/asset_management_page.dart', 'test/widgets/closing_save_failure_probe_test.dart', 'test/widgets/asset_management_fixed_cost_action_regression_test.dart', '.github/workflows/cloud-development.yml'}
+          expected={'.github/workflows/cloud-development.yml', 'lib/pages/asset_management_page.dart', 'test/widgets/asset_management_fixed_cost_action_regression_test.dart', 'test/widgets/closing_save_failure_probe_test.dart'}
           actual=set(subprocess.check_output(['git','diff','--name-only','53f23c486dbd39354c9f4fcf4b3dc9ccb254b608','HEAD']).decode().splitlines())
           assert actual==expected,(actual,expected)
-          expected_blobs={'lib/pages/asset_management_page.dart': '0595faf6464bb389367ec8f6088642f13cf3fcff', 'test/widgets/closing_save_failure_probe_test.dart': '6dc925279102b7aa4e8e5906f2ade362d8d9c308', 'test/widgets/asset_management_fixed_cost_action_regression_test.dart': '96e361deb2423f2083913361ec70ea2a5364956c'}
+          expected_blobs={'lib/pages/asset_management_page.dart': '9e5b280b491bfb9b7c845cd83fec1e5b440e7011', 'test/widgets/closing_save_failure_probe_test.dart': '6dc925279102b7aa4e8e5906f2ade362d8d9c308', 'test/widgets/asset_management_fixed_cost_action_regression_test.dart': '96e361deb2423f2083913361ec70ea2a5364956c'}
           for path, expected_blob in expected_blobs.items():
               blob=subprocess.check_output(['git','rev-parse','HEAD:'+path]).decode().strip()
               assert blob==expected_blob,(path,blob)
