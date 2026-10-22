@@ -167,4 +167,31 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
   });
+  testWidgets('logout during a save discards the previous owner completion',
+      (tester) async {
+    failSave = false;
+    holdWrite = Completer<void>();
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    final item = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
+    await tester.ensureVisible(item);
+    await tester.tap(item);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(closingWrites, 1);
+    await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
+    holdWrite!.complete();
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(Supabase.instance.client.auth.currentUser, isNull);
+    expect(tester.widget<CheckboxListTile>(item).value, isFalse);
+    expect(find.textContaining('元の状態に戻しました'), findsNothing,
+        reason: 'the old owner snapshot must not be restored after logout');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+  });
 }
