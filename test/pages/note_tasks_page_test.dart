@@ -351,6 +351,40 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+  for (final olderFails in [false, true]) {
+    testWidgets('newest task reload wins olderFails=$olderFails',
+        (tester) async {
+      final repository = _FakeNoteTaskRepository(const <NoteTask>[]);
+      await tester.pumpWidget(
+        MaterialApp(home: NoteTasksPage(repository: repository)),
+      );
+      await tester.pumpAndSettle();
+      final older = Completer<List<NoteTask>>();
+      final newer = Completer<List<NoteTask>>();
+      var calls = 0;
+      repository.tasksOverride = () => calls++ == 0 ? older.future : newer.future;
+      final refresh = tester.widget<IconButton>(
+        find.byKey(const Key('note_tasks_page_refresh')),
+      ).onPressed!;
+      refresh();
+      refresh();
+      newer.complete([
+        _task(id: 'newest', title: 'Latest task', noteId: 1, noteTitle: 'Latest'),
+      ]);
+      await tester.pumpAndSettle();
+      expect(find.text('Latest task'), findsOneWidget);
+
+      if (olderFails) {
+        older.completeError(StateError('obsolete failure'));
+      } else {
+        older.complete(<NoteTask>[]);
+      }
+      await tester.pumpAndSettle();
+      expect(find.text('Latest task'), findsOneWidget);
+      expect(find.textContaining('obsolete failure'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
 
 class _FakeNoteTaskRepository

@@ -67,6 +67,7 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
   NoteTaskOverviewFilter _filter = NoteTaskOverviewFilter.open;
   _NoteTasksSection _section = _NoteTasksSection.tasks;
   bool _isLoading = true;
+  int _loadGeneration = 0;
   final Set<String> _mutatingTaskIds = <String>{};
   final Set<String> _mutatingNotificationIds = <String>{};
   String _searchQuery = '';
@@ -93,6 +94,7 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
   }
 
   Future<void> _loadTasks({bool showLoading = true}) async {
+    final generation = ++_loadGeneration;
     if (showLoading && mounted) {
       setState(() {
         _isLoading = true;
@@ -114,7 +116,7 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
       final notifications = results[1] as List<NoteFeatureNotification>;
       tasks.sort(_compareTasks);
       notifications.sort(_compareNotifications);
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _tasks = tasks;
         _notifications = notifications;
@@ -122,12 +124,12 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
       });
       unawaited(_schedulePendingNotifications(notifications));
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _error = error.toString();
       });
     } finally {
-      if (mounted && showLoading) {
+      if (mounted && generation == _loadGeneration && showLoading) {
         setState(() {
           _isLoading = false;
         });
