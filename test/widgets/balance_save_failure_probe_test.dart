@@ -250,9 +250,7 @@ void main() {
         await tester.ensureVisible(fields.at(1));
         await tester.enterText(fields.at(1), '4000');
       }
-      final action = bulk
-          ? find.text('全体状況を保存')
-          : find.text('記録').first;
+      final action = bulk ? find.text('全体状況を保存') : find.text('記録').first;
       await tester.ensureVisible(action);
       await tester.tap(action);
       for (var i = 0; i < 12; i++) {
@@ -262,7 +260,10 @@ void main() {
       expect(persistedBalances.length, bulk ? 1 : 0);
       expect(tester.widget<TextField>(fields.at(0)).controller!.text, '3000');
       expect(
-        find.descendant(of: find.byType(SnackBar), matching: find.textContaining(RegExp('保存.*(失敗|でき)|記録.*(失敗|でき)|一部.*保存'))),
+        find.descendant(
+            of: find.byType(SnackBar),
+            matching:
+                find.textContaining(RegExp('保存.*(失敗|でき)|記録.*(失敗|でき)|一部.*保存')),),
         findsWidgets,
       );
       await tester.pumpWidget(const SizedBox.shrink());
