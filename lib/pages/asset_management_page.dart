@@ -626,6 +626,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _closingLoadedDate;
   String? _closingDisplayOwner;
   String? _closingDisplayDate;
+  Future<void>? _closingActiveFetch;
   bool _isFetchingSmbc = false;
   bool _isFetchingJibun = false;
   bool _isImportingSmbcCsv = false;
@@ -5976,11 +5977,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return done / 5.0;
   }
 
-  Future<void> _fetchTodayClosing() async {
+  Future<void> _fetchTodayClosing() {
+    final fetch = _fetchTodayClosingRequest();
+    _closingActiveFetch = fetch;
+    return fetch;
+  }
+
+  Future<void> _fetchTodayClosingRequest() async {
     final generation = ++_closingFetchGeneration;
     final displayOwner = _supabase.auth.currentUser?.id;
     final displayDate = _dateOnly(widget.debugNow ?? DateTime.now());
-    if (_closingDisplayOwner != displayOwner || _closingDisplayDate != displayDate) {
+    if (_closingDisplayOwner != displayOwner ||
+        _closingDisplayDate != displayDate) {
       setState(() {
         _assetsDone = false;
         _liabilitiesDone = false;
@@ -6187,6 +6195,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       final recoveryRevision = _closingAppliedRevision;
       await _fetchTodayClosing();
+      while (mounted && _isLoadingClosing) {
+        final activeFetch = _closingActiveFetch;
+        if (activeFetch == null) break;
+        await activeFetch;
+      }
       if (!mounted) return;
       final sameContext = _supabase.auth.currentUser?.id == savingOwner &&
           _dateOnly(widget.debugNow ?? DateTime.now()) == savingDate;
@@ -6518,6 +6531,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       final recoveryRevision = _closingAppliedRevision;
       await _fetchTodayClosing();
+      while (mounted && _isLoadingClosing) {
+        final activeFetch = _closingActiveFetch;
+        if (activeFetch == null) break;
+        await activeFetch;
+      }
       if (!mounted) return;
       final sameContext = _supabase.auth.currentUser?.id == savingOwner &&
           _dateOnly(widget.debugNow ?? DateTime.now()) == savingDate;
