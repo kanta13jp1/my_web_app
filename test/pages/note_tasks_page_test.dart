@@ -322,7 +322,8 @@ void main() {
     );
   });
   for (final notificationsFailFirst in [false, true]) {
-    testWidgets('handles early parallel load failure notifications=$notificationsFailFirst',
+    testWidgets(
+        'handles early parallel load failure notifications=$notificationsFailFirst',
         (tester) async {
       final tasks = Completer<List<NoteTask>>();
       final notifications = Completer<List<NoteFeatureNotification>>();
