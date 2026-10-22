@@ -129,7 +129,7 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
         _error = error.toString();
       });
     } finally {
-      if (mounted && generation == _loadGeneration && showLoading) {
+      if (mounted && generation == _loadGeneration) {
         setState(() {
           _isLoading = false;
         });
