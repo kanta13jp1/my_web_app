@@ -74,8 +74,13 @@ void main() {
       );
       expect(fixedCostCheck.value, isFalse);
       expect(
-        find.textContaining('本人が確認してチェックしてください。既存チェックは保持します。'),
+        find.text('チェックを保存できませんでした。元の状態に戻しました。再度お試しください。'),
         findsOneWidget,
+      );
+
+      expect(
+        find.textContaining('本人が確認してチェックしてください。既存チェックは保持します。'),
+        findsNothing,
       );
 
       String? clipboardText;
