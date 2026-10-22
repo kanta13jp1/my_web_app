@@ -19,6 +19,7 @@ void main() {
   var provideTodayBalance = false;
   var failClosingRead = false;
   var persistedClosing = false;
+  var provideTask = false;
   Map<String, dynamic>? lastClosingWrite;
   setUp(() {
     closingWrites = 0;
@@ -29,6 +30,7 @@ void main() {
     provideTodayBalance = false;
     failClosingRead = false;
     persistedClosing = false;
+    provideTask = false;
     lastClosingWrite = null;
     SharedPreferences.setMockInitialValues({});
   });
@@ -85,12 +87,22 @@ void main() {
           }
           if (persistedClosing) {
             return http.Response(
-              '[{"fixed_costs_done":true}]',
+              '[{"assets_done":true,"fixed_costs_done":true}]',
               200,
               headers: headers,
               request: request,
             );
           }
+        }
+        if (provideTask && request.url.path.endsWith('/must_tasks')) {
+          return http.Response(
+            request.method == 'GET'
+                ? '[{"id":"synthetic-task","title":"synthetic review task","deadline":"2026-10-22","is_completed":false}]'
+                : '[{"id":"synthetic-task"}]',
+            200,
+            headers: headers,
+            request: request,
+          );
         }
         if (provideTodayBalance &&
             request.url.path
@@ -386,6 +398,52 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
   });
+
+  for (final automatic in [false, true]) {
+    testWidgets('newer closing read survives failed save automatic=$automatic',
+        (tester) async {
+      provideTask = true;
+      provideTodayBalance = true;
+      holdWrite = Completer<void>();
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 10, 22),
+          ),
+        ),
+      );
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final asset = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
+      final fixed = find.widgetWithText(CheckboxListTile, '③ 今月の固定費をすべて記録して把握');
+      final action = automatic ? find.text('記録状況から自動チェック') : asset;
+      await tester.ensureVisible(action);
+      await tester.tap(action);
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(closingWrites, 1);
+      persistedClosing = true;
+      final task =
+          find.widgetWithText(CheckboxListTile, 'synthetic review task');
+      await tester.ensureVisible(task);
+      await tester.tap(task);
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(tester.widget<CheckboxListTile>(fixed).value, isTrue);
+      holdWrite!.complete();
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(tester.widget<CheckboxListTile>(asset).value, isTrue);
+      expect(tester.widget<CheckboxListTile>(fixed).value, isTrue);
+      expect(closingWrites, 1);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 2));
+    });
+  }
 
   testWidgets(
     'logout during a save discards the previous owner completion',

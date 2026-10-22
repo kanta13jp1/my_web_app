@@ -6087,6 +6087,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (_isSavingClosing || _isLoadingClosing) return;
     final savingOwner = _supabase.auth.currentUser?.id;
     final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
+    final savingReadGeneration = _closingFetchGeneration;
     final previous = [
       _assetsDone,
       _liabilitiesDone,
@@ -6117,7 +6118,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final saved = await _upsertTodayClosing();
     if (!mounted) return;
     if (_supabase.auth.currentUser?.id != savingOwner ||
-        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate) {
+        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate ||
+        (!saved && _closingFetchGeneration != savingReadGeneration)) {
       setState(() {
         _assetsDone = false;
         _liabilitiesDone = false;
@@ -6360,6 +6362,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (_isSavingClosing || _isLoadingClosing) return;
     final savingOwner = _supabase.auth.currentUser?.id;
     final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
+    final savingReadGeneration = _closingFetchGeneration;
     final previousAssets = _assetsDone;
     final previousLiabilities = _liabilitiesDone;
     final todayStr = _dateOnly(widget.debugNow ?? DateTime.now());
@@ -6388,7 +6391,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final saved = await _upsertTodayClosing();
     if (!mounted) return;
     if (_supabase.auth.currentUser?.id != savingOwner ||
-        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate) {
+        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate ||
+        (!saved && _closingFetchGeneration != savingReadGeneration)) {
       setState(() {
         _assetsDone = false;
         _liabilitiesDone = false;
