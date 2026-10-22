@@ -6124,9 +6124,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     await _fetchTodayClosing();
     while (mounted && _isLoadingClosing) {
-      final activeFetch = _closingActiveFetch;
-      if (activeFetch == null) break;
-      await activeFetch;
+      await _waitForLatestClosingFetch();
     }
     if (!mounted) return false;
     final loaded = _closingLoadedOwner == _supabase.auth.currentUser?.id &&
@@ -6166,6 +6164,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _toggleClosing(String key, bool value) async {
+    if (_supabase.auth.currentUser == null) {
+      await _ensureClosingLoaded();
+      return;
+    }
     if (_isSavingClosing || _isLoadingClosing) return;
     final initiatingOwner = _supabase.auth.currentUser?.id;
     final initiatingDate = _dateOnly(widget.debugNow ?? DateTime.now());
@@ -6223,9 +6225,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final recoveryRevision = _closingAppliedRevision;
       await _fetchTodayClosing();
       while (mounted && _isLoadingClosing) {
-        final activeFetch = _closingActiveFetch;
-        if (activeFetch == null) break;
-        await activeFetch;
+        await _waitForLatestClosingFetch();
       }
       if (!mounted) return;
       final sameContext = _supabase.auth.currentUser?.id == savingOwner &&
@@ -6495,6 +6495,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _autoCheckFromData() async {
+    if (_supabase.auth.currentUser == null) {
+      await _ensureClosingLoaded();
+      return;
+    }
     if (_isSavingClosing || _isLoadingClosing) return;
     final initiatingOwner = _supabase.auth.currentUser?.id;
     final initiatingDate = _dateOnly(widget.debugNow ?? DateTime.now());
@@ -6550,9 +6554,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final recoveryRevision = _closingAppliedRevision;
       await _fetchTodayClosing();
       while (mounted && _isLoadingClosing) {
-        final activeFetch = _closingActiveFetch;
-        if (activeFetch == null) break;
-        await activeFetch;
+        await _waitForLatestClosingFetch();
       }
       if (!mounted) return;
       final sameContext = _supabase.auth.currentUser?.id == savingOwner &&
@@ -6594,7 +6596,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
         );
       }
-      return;
+      if (!saved || !sameContext || refreshFailed) return;
     }
     setState(() {
       _isSavingClosing = false;
