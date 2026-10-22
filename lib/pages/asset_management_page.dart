@@ -6042,8 +6042,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (_isSavingClosing) return;
     final savingOwner = _supabase.auth.currentUser?.id;
     final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
-    final previous = [_assetsDone, _liabilitiesDone, _fixedCostsDone,
-      _flowsDone, _mustTasksDone];
+    final previous = [
+      _assetsDone,
+      _liabilitiesDone,
+      _fixedCostsDone,
+      _flowsDone,
+      _mustTasksDone
+    ];
     setState(() {
       _isSavingClosing = true;
       switch (key) {
