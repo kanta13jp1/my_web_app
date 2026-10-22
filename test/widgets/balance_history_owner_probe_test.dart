@@ -302,6 +302,10 @@ void main() {
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
+      final dialogTexts = tester.widgetList<Text>(
+        find.descendant(of: find.byType(AlertDialog), matching: find.byType(Text)),
+      ).map((text) => text.data).join(' | ');
+      debugPrint('synthetic history dialog: $dialogTexts');
       expect(
         find.text('¥7,654,321'),
         switchOwner ? findsNothing : findsOneWidget,
