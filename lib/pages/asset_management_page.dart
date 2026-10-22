@@ -621,6 +621,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isLoadingClosing = false;
   bool _isSavingClosing = false;
   int _closingFetchGeneration = 0;
+  String? _closingLoadedOwner;
+  String? _closingLoadedDate;
   bool _isFetchingSmbc = false;
   bool _isFetchingJibun = false;
   bool _isImportingSmbcCsv = false;
@@ -5973,6 +5975,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _fetchTodayClosing() async {
     final generation = ++_closingFetchGeneration;
+    _closingLoadedOwner = null;
+    _closingLoadedDate = null;
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
       if (mounted) setState(() => _isLoadingClosing = false);
@@ -5996,6 +6000,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         await _fetchTodayClosing();
         return;
       }
+
+      _closingLoadedOwner = userId;
+      _closingLoadedDate = todayStr;
 
       if (rows.isNotEmpty) {
         final r = rows.first;
@@ -6029,6 +6036,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  Future<bool> _ensureClosingLoaded() async {
+    final owner = _supabase.auth.currentUser?.id;
+    if (owner == null) return true;
+    if (_closingLoadedOwner == owner &&
+        _closingLoadedDate == _dateOnly(widget.debugNow ?? DateTime.now())) {
+      return true;
+    }
+    await _fetchTodayClosing();
+    if (!mounted) return false;
+    final loaded = _closingLoadedOwner == _supabase.auth.currentUser?.id &&
+        _closingLoadedOwner != null &&
+        _closingLoadedDate == _dateOnly(widget.debugNow ?? DateTime.now());
+    if (!loaded) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('現在のチェックを取得できませんでした。保存せず、同じ操作で再取得してください。')),
+      );
+    }
+    return loaded;
+  }
+
   Future<bool> _upsertTodayClosing() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return false;
@@ -6054,6 +6081,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _toggleClosing(String key, bool value) async {
+    if (_isSavingClosing || _isLoadingClosing) return;
+    if (!await _ensureClosingLoaded() || !mounted) return;
     if (_isSavingClosing || _isLoadingClosing) return;
     final savingOwner = _supabase.auth.currentUser?.id;
     final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
@@ -6325,6 +6354,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _autoCheckFromData() async {
+    if (_isSavingClosing || _isLoadingClosing) return;
+    if (!await _ensureClosingLoaded() || !mounted) return;
     if (_isSavingClosing || _isLoadingClosing) return;
     final savingOwner = _supabase.auth.currentUser?.id;
     final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
