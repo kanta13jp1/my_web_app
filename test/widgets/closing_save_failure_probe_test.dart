@@ -167,6 +167,36 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
   });
+  testWidgets('a save completing after midnight cannot mark the new day done',
+      (tester) async {
+    failSave = false;
+    holdWrite = Completer<void>();
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(MaterialApp(
+      home: AssetManagementPage(debugNow: DateTime(2026, 10, 22, 23, 59)),
+    ));
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    final item = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
+    await tester.ensureVisible(item);
+    await tester.tap(item);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(closingWrites, 1);
+    await tester.pumpWidget(MaterialApp(
+      home: AssetManagementPage(debugNow: DateTime(2026, 10, 23, 0, 1)),
+    ));
+    holdWrite!.complete();
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(tester.widget<CheckboxListTile>(item).value, isFalse);
+    expect(find.textContaining('元の状態に戻しました'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
   testWidgets('logout during a save discards the previous owner completion',
       (tester) async {
     failSave = false;
