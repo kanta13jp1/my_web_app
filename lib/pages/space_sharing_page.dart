@@ -63,7 +63,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
     Future<void> Function() operation,
     String success,
   ) async {
-    if (_saving) return;
+    if (!mounted || _saving) return;
     setState(() => _saving = true);
     try {
       await operation();
@@ -547,7 +547,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
         ),
       ),
     );
-    if (accepted != true) return;
+    if (!mounted || accepted != true) return;
     await _mutate(
       () => _dataSource.invite(
         spaceId: space.id,
@@ -636,7 +636,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
         ),
       ),
     );
-    if (accepted != true) return;
+    if (!mounted || accepted != true) return;
     await _mutate(
       () => _dataSource.moveNote(
         noteId: note.id,
@@ -673,7 +673,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
         ],
       ),
     );
-    if (accepted != true) return;
+    if (!mounted || accepted != true) return;
     await _mutate(
       () => _dataSource.removeMember(
         spaceId: space.id,

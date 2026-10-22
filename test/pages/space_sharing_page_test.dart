@@ -153,6 +153,55 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+  for (final action in ['invite', 'move', 'remove']) {
+    testWidgets('disposed sharing page ignores $action dialog confirmation',
+        (tester) async {
+      final source = _FakeSpaceSharingDataSource(_ownerSnapshot());
+      final visible = ValueNotifier<bool>(true);
+      addTearDown(visible.dispose);
+      await tester.binding.setSurfaceSize(const Size(800, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ValueListenableBuilder<bool>(
+            valueListenable: visible,
+            builder: (context, show, child) => show
+                ? SpaceSharingPage(dataSource: source)
+                : const Scaffold(body: Text('Replacement')),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final openKey = switch (action) {
+        'invite' => 'space_invite_7',
+        'move' => 'space_note_move_91',
+        _ => 'space_member_remove_member',
+      };
+      final open = find.byKey(Key(openKey));
+      await tester.ensureVisible(open);
+      await tester.tap(open);
+      await tester.pumpAndSettle();
+      if (action == 'invite') {
+        await tester.enterText(
+          find.byKey(const Key('space_invite_email')),
+          'fixture@example.invalid',
+        );
+      }
+      visible.value = false;
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('space_sharing_page')), findsNothing);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      final confirmKey = switch (action) {
+        'invite' => 'space_invite_submit',
+        'move' => 'space_note_move_submit',
+        _ => 'space_member_remove_confirm',
+      };
+      await tester.tap(find.byKey(Key(confirmKey)));
+      await tester.pumpAndSettle();
+      expect(source.mutationCalls, 0);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
 
 SpaceSharingSnapshot _ownerSnapshot() => SpaceSharingSnapshot(
@@ -243,6 +292,7 @@ class _FakeSpaceSharingDataSource implements SpaceSharingDataSource {
   _FakeSpaceSharingDataSource(this.snapshot);
 
   final SpaceSharingSnapshot snapshot;
+  int mutationCalls = 0;
   StateError? loadError;
   Future<SpaceSharingSnapshot> Function()? loadOverride;
   String? acceptedInvitationId;
@@ -273,6 +323,7 @@ class _FakeSpaceSharingDataSource implements SpaceSharingDataSource {
     required String email,
     required SpacePermission permission,
   }) async {
+    mutationCalls += 1;
     invitedEmail = email;
     invitedPermission = permission;
   }
@@ -288,7 +339,9 @@ class _FakeSpaceSharingDataSource implements SpaceSharingDataSource {
   Future<void> removeMember({
     required int spaceId,
     required String memberUserId,
-  }) async {}
+  }) async {
+    mutationCalls += 1;
+  }
 
   @override
   Future<int> createDirectNote({
@@ -302,5 +355,7 @@ class _FakeSpaceSharingDataSource implements SpaceSharingDataSource {
   Future<void> moveNote({
     required int noteId,
     int? destinationNotebookId,
-  }) async {}
+  }) async {
+    mutationCalls += 1;
+  }
 }
