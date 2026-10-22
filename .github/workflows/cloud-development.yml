@@ -1362,7 +1362,7 @@ jobs:
 
           EXPECTED_PUBLIC_BASE=a8f7cfd9280813498f3607aae88913f5d0763bcd /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
 
-          if npx -y firebase-tools@latest deploy \
+          if npx -y firebase-tools@15.34.0 deploy \
             --only hosting \
             --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
             --json > "$output_file"; then
