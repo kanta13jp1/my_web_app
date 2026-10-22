@@ -6112,7 +6112,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final initiatingDate = _dateOnly(widget.debugNow ?? DateTime.now());
     if (!await _ensureClosingLoaded() || !mounted) return;
     if (_supabase.auth.currentUser?.id != initiatingOwner ||
-        _dateOnly(widget.debugNow ?? DateTime.now()) != initiatingDate) return;
+        _dateOnly(widget.debugNow ?? DateTime.now()) != initiatingDate) {
+      return;
+    }
     if (_isSavingClosing || _isLoadingClosing) return;
     final savingOwner = _supabase.auth.currentUser?.id;
     final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
@@ -6443,7 +6445,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final initiatingDate = _dateOnly(widget.debugNow ?? DateTime.now());
     if (!await _ensureClosingLoaded() || !mounted) return;
     if (_supabase.auth.currentUser?.id != initiatingOwner ||
-        _dateOnly(widget.debugNow ?? DateTime.now()) != initiatingDate) return;
+        _dateOnly(widget.debugNow ?? DateTime.now()) != initiatingDate) {
+      return;
+    }
     if (_isSavingClosing || _isLoadingClosing) return;
     final savingOwner = _supabase.auth.currentUser?.id;
     final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
