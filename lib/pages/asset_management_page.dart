@@ -624,6 +624,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   int _closingAppliedRevision = 0;
   String? _closingLoadedOwner;
   String? _closingLoadedDate;
+  String? _closingDisplayOwner;
+  String? _closingDisplayDate;
   bool _isFetchingSmbc = false;
   bool _isFetchingJibun = false;
   bool _isImportingSmbcCsv = false;
@@ -5976,6 +5978,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _fetchTodayClosing() async {
     final generation = ++_closingFetchGeneration;
+    final displayOwner = _supabase.auth.currentUser?.id;
+    final displayDate = _dateOnly(widget.debugNow ?? DateTime.now());
+    if (_closingDisplayOwner != displayOwner || _closingDisplayDate != displayDate) {
+      setState(() {
+        _assetsDone = false;
+        _liabilitiesDone = false;
+        _fixedCostsDone = false;
+        _flowsDone = false;
+        _mustTasksDone = false;
+        _closingDisplayOwner = displayOwner;
+        _closingDisplayDate = displayDate;
+      });
+    }
     _closingLoadedOwner = null;
     _closingLoadedDate = null;
     final userId = _supabase.auth.currentUser?.id;
@@ -6193,7 +6208,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (saved && sameContext && refreshFailed) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('チェックは保存しましたが、最新状態を再取得できませんでした。同じ操作で再取得してください。'),
+            content: Text('チェックは保存しましたが、最新状態を再取得できませんでした。ページを再読み込みしてください。'),
           ),
         );
       }
@@ -6524,7 +6539,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (saved && sameContext && refreshFailed) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('チェックは保存しましたが、最新状態を再取得できませんでした。同じ操作で再取得してください。'),
+            content: Text('チェックは保存しましたが、最新状態を再取得できませんでした。ページを再読み込みしてください。'),
           ),
         );
       }
