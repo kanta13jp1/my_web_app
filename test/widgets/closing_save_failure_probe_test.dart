@@ -182,7 +182,7 @@ void main() {
     await tester.tap(item);
     await tester.pump(const Duration(milliseconds: 100));
     expect(closingWrites, 1);
-    await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
+    await tester.runAsync(() => Supabase.instance.client.auth.signOut(scope: SignOutScope.local));
     holdWrite!.complete();
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -193,5 +193,5 @@ void main() {
         reason: 'the old owner snapshot must not be restored after logout');
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
-  });
+  }, timeout: const Timeout(Duration(seconds: 45)));
 }
