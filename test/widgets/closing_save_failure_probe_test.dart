@@ -98,8 +98,11 @@ void main() {
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    expect(closingWrites, greaterThan(0),
-        reason: 'must exercise the failing write',);
+    expect(
+      closingWrites,
+      greaterThan(0),
+      reason: 'must exercise the failing write',
+    );
     expect(
       tester.widget<CheckboxListTile>(item).value,
       isFalse,
@@ -233,8 +236,9 @@ void main() {
       await tester.tap(item);
       await tester.pump(const Duration(milliseconds: 100));
       expect(closingWrites, 1);
-      await tester.runAsync(() =>
-          Supabase.instance.client.auth.signOut(scope: SignOutScope.local),);
+      await tester.runAsync(
+        () => Supabase.instance.client.auth.signOut(scope: SignOutScope.local),
+      );
       holdWrite!.complete();
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(milliseconds: 100));
