@@ -602,6 +602,9 @@ void main() {
           expect(tester.widget<CheckboxListTile>(asset).value, isTrue);
         }
         expect(closingWrites, 1);
+        if (automatic) {
+          expect(find.textContaining('登録口座の本日記録を確認しました。'), findsOneWidget);
+        }
         await tester.pumpWidget(const SizedBox.shrink());
         await tester.pump(const Duration(seconds: 2));
       });
@@ -1128,8 +1131,9 @@ void main() {
       }
       final asset = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
       expect(tester.widget<CheckboxListTile>(asset).value, isTrue);
-      await tester.runAsync(() =>
-          Supabase.instance.client.auth.signOut(scope: SignOutScope.local),);
+      await tester.runAsync(
+        () => Supabase.instance.client.auth.signOut(scope: SignOutScope.local),
+      );
       final action = automatic ? find.text('記録状況から自動チェック') : asset;
       await tester.ensureVisible(action);
       await tester.tap(action);
@@ -1139,6 +1143,48 @@ void main() {
       expect(closingWrites, 0);
       expect(tester.widget<CheckboxListTile>(asset).value, isFalse);
       expect(find.text('チェックを保存するにはログインしてください。'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 2));
+    });
+  }
+  for (final automatic in [false, true]) {
+    testWidgets(
+        'pending save logout clears checks before request completes auto=$automatic',
+        (tester) async {
+      persistedClosing = false;
+      failSave = false;
+      holdWrite = Completer<void>();
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 10, 22),
+          ),
+        ),
+      );
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final asset = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
+      await tester.ensureVisible(asset);
+      await tester.tap(asset);
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(tester.widget<CheckboxListTile>(asset).value, isTrue);
+      await tester.runAsync(
+        () => Supabase.instance.client.auth.signOut(scope: SignOutScope.local),
+      );
+      final action = automatic ? find.text('記録状況から自動チェック') : asset;
+      await tester.ensureVisible(action);
+      await tester.tap(action);
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(closingWrites, 1);
+      expect(tester.widget<CheckboxListTile>(asset).value, isFalse);
+      expect(find.text('チェックを保存するにはログインしてください。'), findsOneWidget);
+      holdWrite!.complete();
+      for (var i=0;i<12;i++) { await tester.pump(const Duration(milliseconds:100)); }
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 2));
     });
