@@ -627,6 +627,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _closingDisplayOwner;
   String? _closingDisplayDate;
   Future<void>? _closingActiveFetch;
+  Completer<void>? _closingFetchChanged;
   bool _isFetchingSmbc = false;
   bool _isFetchingJibun = false;
   bool _isImportingSmbcCsv = false;
@@ -1457,6 +1458,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   @override
   void dispose() {
+    final closingChanged = _closingFetchChanged;
+    if (closingChanged != null && !closingChanged.isCompleted) {
+      closingChanged.complete();
+    }
     _controllers.forEach((_, controller) => controller.dispose());
     _monthlyPaymentControllers.forEach((_, controller) => controller.dispose());
     _actualPaymentControllers.forEach((_, controller) => controller.dispose());
@@ -5978,12 +5983,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _fetchTodayClosing() {
+    if (!mounted) return Future<void>.value();
+    final previousChanged = _closingFetchChanged;
+    _closingFetchChanged = Completer<void>();
     final fetch = _fetchTodayClosingRequest();
     _closingActiveFetch = fetch;
-    return fetch;
+    if (previousChanged != null && !previousChanged.isCompleted) {
+      previousChanged.complete();
+    }
+    return _waitForLatestClosingFetch();
+  }
+
+  Future<void> _waitForLatestClosingFetch() async {
+    while (mounted) {
+      final active = _closingActiveFetch;
+      final changed = _closingFetchChanged;
+      if (active == null || changed == null) return;
+      await Future.any<void>([active, changed.future]);
+      if (identical(active, _closingActiveFetch)) return;
+    }
   }
 
   Future<void> _fetchTodayClosingRequest() async {
+    if (!mounted) return;
     final generation = ++_closingFetchGeneration;
     final displayOwner = _supabase.auth.currentUser?.id;
     final displayDate = _dateOnly(widget.debugNow ?? DateTime.now());
@@ -6086,7 +6108,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<bool> _ensureClosingLoaded() async {
     final owner = _supabase.auth.currentUser?.id;
-    if (owner == null) return true;
+    if (owner == null) {
+      await _fetchTodayClosing();
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('チェックを保存するにはログインしてください。'),
+        ),
+      );
+      return false;
+    }
     if (_closingLoadedOwner == owner &&
         _closingLoadedDate == _dateOnly(widget.debugNow ?? DateTime.now())) {
       return true;

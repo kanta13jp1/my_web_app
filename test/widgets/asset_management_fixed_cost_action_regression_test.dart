@@ -74,7 +74,7 @@ void main() {
       );
       expect(fixedCostCheck.value, isFalse);
       expect(
-        find.text('チェックを保存できませんでした。元の状態に戻しました。再度お試しください。'),
+        find.text('チェックを保存するにはログインしてください。'),
         findsOneWidget,
       );
 
