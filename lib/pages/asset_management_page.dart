@@ -7605,7 +7605,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('Error saving $type: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$type の残高を保存できませんでした。入力内容を保持しています。再度お試しください。'),),
+        SnackBar(
+          content: Text('$type の残高を保存できませんでした。入力内容を保持しています。再度お試しください。'),
+        ),
       );
     }
   }
@@ -7977,7 +7979,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('Error saving assets: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('資産・負債の残高を保存できませんでした。入力内容を保持しています。再度お試しください。'),),
+        const SnackBar(
+          content: Text('資産・負債の残高を保存できませんでした。入力内容を保持しています。再度お試しください。'),
+        ),
       );
     }
   }

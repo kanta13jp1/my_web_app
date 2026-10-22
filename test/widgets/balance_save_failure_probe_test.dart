@@ -267,9 +267,51 @@ void main() {
       expect(tester.widget<TextField>(fields.at(0)).controller!.text, '3000');
       expect(
         find.descendant(
-            of: find.byType(SnackBar),
-            matching:
-                find.textContaining(RegExp('保存.*(失敗|でき)|記録.*(失敗|でき)|一部.*保存')),),
+          of: find.byType(SnackBar),
+          matching:
+              find.textContaining(RegExp('保存.*(失敗|でき)|記録.*(失敗|でき)|一部.*保存')),
+        ),
+        findsWidgets,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 2));
+    });
+  }  for (final bulk in [false, true]) {
+    testWidgets('balance save success sends one request and clears input bulk=$bulk',
+        (tester) async {
+      failBalanceAt = 0;
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final fields = find.byWidgetPredicate(
+        (w) => w is TextField && w.decoration?.labelText == '今日の残高',
+      );
+      expect(fields, findsNWidgets(2));
+      await tester.ensureVisible(fields.at(0));
+      await tester.enterText(fields.at(0), '3000');
+      if (bulk) {
+        await tester.ensureVisible(fields.at(1));
+        await tester.enterText(fields.at(1), '4000');
+      }
+      final action = bulk ? find.text('全体状況を保存') : find.text('記録').first;
+      await tester.ensureVisible(action);
+      await tester.tap(action);
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(balanceWrites, 1);
+      expect(lastBalanceBatchSize, bulk ? 2 : 1);
+      expect(persistedBalances.length, bulk ? 2 : 1);
+      expect(tester.widget<TextField>(fields.at(0)).controller!.text, '');
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching:
+              find.textContaining(RegExp('記録しました|一括記録')),
+        ),
         findsWidgets,
       );
       await tester.pumpWidget(const SizedBox.shrink());
