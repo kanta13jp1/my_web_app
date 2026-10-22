@@ -16,12 +16,14 @@ void main() {
   Completer<void>? holdWrite;
   Completer<void>? holdRead;
   var delayedReads = 0;
+  var provideTodayBalance = false;
   setUp(() {
     closingWrites = 0;
     failSave = true;
     holdWrite = null;
     holdRead = null;
     delayedReads = 0;
+    provideTodayBalance = false;
     SharedPreferences.setMockInitialValues({});
   });
   setUpAll(() async {
@@ -64,6 +66,9 @@ void main() {
             headers: headers,
             request: request,
           );
+        }
+        if (provideTodayBalance && request.url.path.endsWith('/rpc/asset_management_recent_cfo_assets')) {
+          return http.Response('[{"id":1,"title":"現金","amount":1000,"created_at":"2026-10-22T03:00:00Z"}]', 200, headers: headers, request: request);
         }
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'GET' &&
@@ -156,6 +161,7 @@ void main() {
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
+    provideTodayBalance = true;
     holdWrite = Completer<void>();
     await tester.pumpWidget(
       MaterialApp(
