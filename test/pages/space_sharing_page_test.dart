@@ -178,7 +178,14 @@ void main() {
         _ => 'space_member_remove_member',
       };
       final open = find.byKey(Key(openKey));
-      await tester.ensureVisible(open);
+      await tester.scrollUntilVisible(
+        open,
+        200,
+        scrollable: find.descendant(
+          of: find.byKey(const Key('space_sharing_list')),
+          matching: find.byType(Scrollable),
+        ),
+      );
       await tester.tap(open);
       await tester.pumpAndSettle();
       if (action == 'invite') {
