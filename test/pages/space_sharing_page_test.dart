@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/space_sharing_page.dart';
@@ -112,6 +114,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('space_sharing_stale_warning')), findsNothing);
   });
+  for (final olderFails in [false, true]) {
+    testWidgets('latest sharing refresh wins when olderFails=$olderFails',
+        (tester) async {
+      final source = _FakeSpaceSharingDataSource(_ownerSnapshot());
+      await tester.pumpWidget(
+        MaterialApp(home: SpaceSharingPage(dataSource: source)),
+      );
+      await tester.pumpAndSettle();
+
+      final older = Completer<SpaceSharingSnapshot>();
+      final newer = Completer<SpaceSharingSnapshot>();
+      var calls = 0;
+      source.loadOverride = () => calls++ == 0 ? older.future : newer.future;
+      final refresh = tester.widget<RefreshIndicator>(
+        find.byType(RefreshIndicator),
+      );
+      final olderRefresh = refresh.onRefresh();
+      final newerRefresh = refresh.onRefresh();
+      newer.complete(_viewerSnapshot());
+      await newerRefresh;
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('space_invite_7')), findsNothing);
+
+      if (olderFails) {
+        older.completeError(StateError('synthetic older failure'));
+      } else {
+        older.complete(_ownerSnapshot());
+      }
+      await olderRefresh;
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('space_invite_7')), findsNothing);
+      expect(find.byKey(const Key('space_sharing_stale_warning')), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
 
 SpaceSharingSnapshot _ownerSnapshot() => SpaceSharingSnapshot(
@@ -203,12 +241,14 @@ class _FakeSpaceSharingDataSource implements SpaceSharingDataSource {
 
   final SpaceSharingSnapshot snapshot;
   StateError? loadError;
+  Future<SpaceSharingSnapshot> Function()? loadOverride;
   String? acceptedInvitationId;
   String? invitedEmail;
   SpacePermission? invitedPermission;
 
   @override
   Future<SpaceSharingSnapshot> load() async {
+    if (loadOverride != null) return loadOverride!();
     if (loadError != null) throw loadError!;
     return snapshot;
   }

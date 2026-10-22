@@ -25,6 +25,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
   Object? _error;
   bool _loading = true;
   bool _saving = false;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -35,6 +36,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
   }
 
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
     if (mounted) {
       setState(() {
         _loading = true;
@@ -43,13 +45,13 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
     }
     try {
       final snapshot = await _dataSource.load();
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _snapshot = snapshot;
         _loading = false;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _error = error;
         _loading = false;
