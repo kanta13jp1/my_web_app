@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -12,9 +13,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 void main() {
   var closingWrites = 0;
   var failSave = true;
+  Completer<void>? holdWrite;
   setUp(() {
     closingWrites = 0;
     failSave = true;
+    holdWrite = null;
     SharedPreferences.setMockInitialValues({});
   });
   setUpAll(() async {
@@ -50,6 +53,7 @@ void main() {
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'POST') {
           closingWrites++;
+          await holdWrite?.future;
           if (!failSave) {
             return http.Response('', 201, headers: headers, request: request);
           }
@@ -130,6 +134,36 @@ void main() {
     expect(closingWrites, 1);
     expect(find.textContaining('チェックを保存できませんでした'), findsOneWidget);
     expect(find.textContaining('登録口座の本日記録を確認しました。'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('a pending save prevents a second write and rolls back on failure',
+      (tester) async {
+    holdWrite = Completer<void>();
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    final first = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
+    final second = find.widgetWithText(CheckboxListTile, '② 全負債額を記録して把握');
+    await tester.ensureVisible(first);
+    await tester.tap(first);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(closingWrites, 1);
+    await tester.ensureVisible(second);
+    await tester.tap(second);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(closingWrites, 1, reason: 'only one request may be in flight');
+    expect(tester.widget<CheckboxListTile>(second).value, isFalse);
+    holdWrite!.complete();
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(tester.widget<CheckboxListTile>(first).value, isFalse);
+    expect(find.textContaining('チェックを保存できませんでした'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
   });
