@@ -3,16 +3,16 @@
   "electionMode": "local",
   "sourceUrl": "https://new-kokumin.jp/local-election-list",
   "sourceAsOf": "2026-10-21",
-  "sourceDocumentSha256": "ae224947e9118f13f25b8198560cc9411d829d210b0269a488b2302d537a4e5e",
-  "candidateRowCount": 426,
+  "sourceDocumentSha256": "f5d3bd7cc969f80a2ebe93a3369dd418d79d569c226950d0a68c51c12257bc03",
+  "candidateRowCount": 430,
   "officialEndorsements": {
-    "totalCount": 412,
-    "incumbentCount": 170,
+    "totalCount": 416,
+    "incumbentCount": 174,
     "newcomerCount": 231,
     "formerCount": 11,
     "prefectureCount": 42,
     "prefecturalCount": 113,
-    "municipalCount": 299
+    "municipalCount": 303
   },
   "recommendations": {
     "totalCount": 14
@@ -191,12 +191,12 @@
     },
     {
       "prefecture": "愛知",
-      "totalCount": 61,
-      "incumbentCount": 33,
+      "totalCount": 65,
+      "incumbentCount": 37,
       "newcomerCount": 28,
       "formerCount": 0,
       "prefecturalCount": 18,
-      "municipalCount": 43
+      "municipalCount": 47
     },
     {
       "prefecture": "三重",
