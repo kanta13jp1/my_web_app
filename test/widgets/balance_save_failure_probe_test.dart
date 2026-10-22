@@ -13,6 +13,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 void main() {
   var balanceWrites = 0;
   var failBalanceAt = 1;
+  var failRelatedWrite = false;
   var lastBalanceBatchSize = 0;
   final persistedBalances = <Map<String, dynamic>>[];
   var failSave = true;
@@ -36,6 +37,7 @@ void main() {
       );
     }
 
+    failRelatedWrite = false;
     balanceWrites = 0;
     failBalanceAt = 1;
     lastBalanceBatchSize = 0;
@@ -104,6 +106,11 @@ void main() {
             headers: headers,
             request: request,
           );
+        }
+        if (failRelatedWrite && request.method == 'POST' &&
+            request.url.path.endsWith('/wealth_struggles')) {
+          return http.Response('{"message":"synthetic related failure"}', 500,
+              headers: headers, request: request);
         }
         if (request.url.path.endsWith('/cfo_assets') &&
             request.method == 'POST') {
@@ -277,8 +284,10 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 2));
     });
-  }  for (final bulk in [false, true]) {
-    testWidgets('balance save success sends one request and clears input bulk=$bulk',
+  }
+  for (final bulk in [false, true]) {
+    testWidgets(
+        'balance save success sends one request and clears input bulk=$bulk',
         (tester) async {
       failBalanceAt = 0;
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
@@ -310,8 +319,92 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(SnackBar),
+          matching: find.textContaining(RegExp('記録しました|一括記録')),
+        ),
+        findsWidgets,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 2));
+    });
+  }
+  for (final bulk in [false, true]) {
+    testWidgets('balance save failure is visible and input retained bulk=$bulk',
+        (tester) async {
+      failBalanceAt = 1;
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final fields = find.byWidgetPredicate(
+        (w) => w is TextField && w.decoration?.labelText == '今日の残高',
+      );
+      expect(fields, findsNWidgets(2));
+      await tester.ensureVisible(fields.at(0));
+      await tester.enterText(fields.at(0), '500');
+      if (bulk) {
+        await tester.ensureVisible(fields.at(1));
+        await tester.enterText(fields.at(1), '500');
+      }
+      final action = bulk ? find.text('全体状況を保存') : find.text('記録').first;
+      await tester.ensureVisible(action);
+      await tester.tap(action);
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(balanceWrites, 1);
+      expect(lastBalanceBatchSize, bulk ? 2 : 1);
+      expect(persistedBalances.length, 0);
+      expect(tester.widget<TextField>(fields.at(0)).controller!.text, '500');
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
           matching:
-              find.textContaining(RegExp('記録しました|一括記録')),
+              find.textContaining(RegExp('保存.*(失敗|でき|確認)|記録.*(失敗|でき)|一部.*保存')),
+        ),
+        findsWidgets,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 2));
+    });
+  }
+  for (final bulk in [false, true]) {
+    testWidgets(
+        'balance saved but related failure warns against resaving bulk=$bulk',
+        (tester) async {
+      failBalanceAt = 0;
+      failRelatedWrite = true;
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final fields = find.byWidgetPredicate(
+        (w) => w is TextField && w.decoration?.labelText == '今日の残高',
+      );
+      expect(fields, findsNWidgets(2));
+      await tester.ensureVisible(fields.at(0));
+      await tester.enterText(fields.at(0), '500');
+      if (bulk) {
+        await tester.ensureVisible(fields.at(1));
+        await tester.enterText(fields.at(1), '500');
+      }
+      final action = bulk ? find.text('全体状況を保存') : find.text('記録').first;
+      await tester.ensureVisible(action);
+      await tester.tap(action);
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(balanceWrites, 1);
+      expect(lastBalanceBatchSize, bulk ? 2 : 1);
+      expect(persistedBalances.length, bulk ? 2 : 1);
+      expect(tester.widget<TextField>(fields.at(0)).controller!.text, '500');
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.textContaining(RegExp('保存済み.*再保存せず')),
         ),
         findsWidgets,
       );
