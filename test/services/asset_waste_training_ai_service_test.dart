@@ -110,7 +110,6 @@ void main() {
       expect(review.summary, isNot(contains('MISSING_PRIVATE_KEY')));
     });
   }
-
 }
 
 AssetWasteTrainingSnapshot _buildSnapshot({

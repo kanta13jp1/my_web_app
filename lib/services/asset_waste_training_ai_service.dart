@@ -176,10 +176,12 @@ class AssetWasteTrainingAiService {
     if (RegExp(r'secret_needed|missing.*key|not configured').hasMatch(detail)) {
       return 'AIの接続設定に確認が必要です';
     }
-    if (RegExp(r'401|403|unauthorized|forbidden|login_required|jwt').hasMatch(detail)) {
+    if (RegExp(r'401|403|unauthorized|forbidden|login_required|jwt')
+        .hasMatch(detail)) {
       return '認証またはアクセス権を確認できません。ログイン状態と接続設定を確認してください';
     }
-    if (RegExp(r'timeout|timed out|socket|network|failed to fetch').hasMatch(detail)) {
+    if (RegExp(r'timeout|timed out|socket|network|failed to fetch')
+        .hasMatch(detail)) {
       return 'AIとの通信を完了できませんでした。接続状況を確認してください';
     }
     return 'AI応答を取得できませんでした。原因は未確認です';
