@@ -23,11 +23,17 @@ void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues({});
-    final payload = base64Url.encode(utf8.encode(jsonEncode({
-      'sub': '00000000-0000-4000-8000-000000000001',
-      'exp': 4102444800,
-      'role': 'authenticated',
-    }))).replaceAll('=', '');
+    final payload = base64Url
+        .encode(
+          utf8.encode(
+            jsonEncode({
+              'sub': '00000000-0000-4000-8000-000000000001',
+              'exp': 4102444800,
+              'role': 'authenticated',
+            }),
+          ),
+        )
+        .replaceAll('=', '');
     await Supabase.initialize(
       url: 'http://127.0.0.1:9999',
       publishableKey: 'diagnostic-test-key',
@@ -35,20 +41,25 @@ void main() {
       httpClient: MockClient((request) async {
         const headers = {'content-type': 'application/json'};
         if (request.url.path == '/auth/v1/token') {
-          return http.Response(jsonEncode({
-            'access_token': 'e30.$payload.test',
-            'refresh_token': 'diagnostic-refresh',
-            'token_type': 'bearer',
-            'expires_in': 3600,
-            'user': {
-              'id': '00000000-0000-4000-8000-000000000001',
-              'aud': 'authenticated',
-              'role': 'authenticated',
-              'app_metadata': {},
-              'user_metadata': {},
-              'created_at': '2026-01-01T00:00:00Z',
-            },
-          }), 200, headers: headers, request: request);
+          return http.Response(
+            jsonEncode({
+              'access_token': 'e30.$payload.test',
+              'refresh_token': 'diagnostic-refresh',
+              'token_type': 'bearer',
+              'expires_in': 3600,
+              'user': {
+                'id': '00000000-0000-4000-8000-000000000001',
+                'aud': 'authenticated',
+                'role': 'authenticated',
+                'app_metadata': {},
+                'user_metadata': {},
+                'created_at': '2026-01-01T00:00:00Z',
+              },
+            }),
+            200,
+            headers: headers,
+            request: request,
+          );
         }
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'POST') {
@@ -87,9 +98,13 @@ void main() {
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    expect(closingWrites, greaterThan(0), reason: 'must exercise the failing write');
-    expect(tester.widget<CheckboxListTile>(item).value, isFalse,
-        reason: 'a failed write cannot be presented as completed');
+    expect(closingWrites, greaterThan(0),
+        reason: 'must exercise the failing write',);
+    expect(
+      tester.widget<CheckboxListTile>(item).value,
+      isFalse,
+      reason: 'a failed write cannot be presented as completed',
+    );
     expect(find.textContaining('チェックを保存できませんでした'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
@@ -138,7 +153,8 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
   });
 
-  testWidgets('a pending save prevents a second write and rolls back on failure',
+  testWidgets(
+      'a pending save prevents a second write and rolls back on failure',
       (tester) async {
     holdWrite = Completer<void>();
     await tester.binding.setSurfaceSize(const Size(1200, 2400));
@@ -173,9 +189,11 @@ void main() {
     holdWrite = Completer<void>();
     await tester.binding.setSurfaceSize(const Size(1200, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(MaterialApp(
-      home: AssetManagementPage(debugNow: DateTime(2026, 10, 22, 23, 59)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(debugNow: DateTime(2026, 10, 22, 23, 59)),
+      ),
+    );
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
@@ -184,9 +202,11 @@ void main() {
     await tester.tap(item);
     await tester.pump(const Duration(milliseconds: 100));
     expect(closingWrites, 1);
-    await tester.pumpWidget(MaterialApp(
-      home: AssetManagementPage(debugNow: DateTime(2026, 10, 23, 0, 1)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(debugNow: DateTime(2026, 10, 23, 0, 1)),
+      ),
+    );
     holdWrite!.complete();
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -197,31 +217,38 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
   });
 
-  testWidgets('logout during a save discards the previous owner completion',
-      (tester) async {
-    failSave = false;
-    holdWrite = Completer<void>();
-    await tester.binding.setSurfaceSize(const Size(1200, 2400));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
-    for (var i = 0; i < 12; i++) {
+  testWidgets(
+    'logout during a save discards the previous owner completion',
+    (tester) async {
+      failSave = false;
+      holdWrite = Completer<void>();
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final item = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
+      await tester.ensureVisible(item);
+      await tester.tap(item);
       await tester.pump(const Duration(milliseconds: 100));
-    }
-    final item = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
-    await tester.ensureVisible(item);
-    await tester.tap(item);
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(closingWrites, 1);
-    await tester.runAsync(() => Supabase.instance.client.auth.signOut(scope: SignOutScope.local));
-    holdWrite!.complete();
-    for (var i = 0; i < 12; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-    expect(Supabase.instance.client.auth.currentUser, isNull);
-    expect(tester.widget<CheckboxListTile>(item).value, isFalse);
-    expect(find.textContaining('元の状態に戻しました'), findsNothing,
-        reason: 'the old owner snapshot must not be restored after logout');
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 2));
-  }, timeout: const Timeout(Duration(seconds: 45)));
+      expect(closingWrites, 1);
+      await tester.runAsync(() =>
+          Supabase.instance.client.auth.signOut(scope: SignOutScope.local),);
+      holdWrite!.complete();
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(Supabase.instance.client.auth.currentUser, isNull);
+      expect(tester.widget<CheckboxListTile>(item).value, isFalse);
+      expect(
+        find.textContaining('元の状態に戻しました'),
+        findsNothing,
+        reason: 'the old owner snapshot must not be restored after logout',
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 2));
+    },
+    timeout: const Timeout(Duration(seconds: 45)),
+  );
 }
