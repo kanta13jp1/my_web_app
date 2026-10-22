@@ -13,6 +13,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 void main() {
   var balanceWrites = 0;
   var historyReads = 0;
+  var historyResponses = Completer<void>();
   var historyGate = Completer<void>();
   var relatedWrites = 0;
   var syntheticUserId = '00000000-0000-4000-8000-000000000001';
@@ -36,6 +37,7 @@ void main() {
   Map<String, dynamic>? lastClosingWrite;
   setUp(() async {
     historyReads = 0;
+    historyResponses = Completer<void>();
     historyGate = Completer<void>();
     syntheticUserId = '00000000-0000-4000-8000-000000000001';
     if (Supabase.instance.client.auth.currentUser?.id != syntheticUserId) {
@@ -136,6 +138,7 @@ void main() {
             request.url.queryParameters['title'] == 'eq.合成預金') {
           historyReads++;
           await historyGate.future;
+          historyResponses.complete();
           return http.Response(
             '[{"id":9001,"title":"合成預金","amount":7654321,"created_at":"2001-01-01T00:00:00Z"}]',
             200,
@@ -298,7 +301,11 @@ void main() {
         );
         expect(Supabase.instance.client.auth.currentUser!.id, syntheticUserId);
       }
-      historyGate.complete();
+      await tester.runAsync(() async {
+        historyGate.complete();
+        await historyResponses.future;
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      });
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
@@ -312,6 +319,7 @@ void main() {
           .map((text) => text.data)
           .join(' | ');
       debugPrint('synthetic history dialog: $dialogTexts');
+      expect(historyResponses.isCompleted, isTrue);
       expect(
         find.text('¥7,654,321'),
         switchOwner ? findsNothing : findsOneWidget,
