@@ -299,6 +299,7 @@ void main() {
     expect(find.text('¥7,654,321'), findsNothing);
     expect(find.text('2001-01-01 09:00 JST'), findsNothing);
     expect(balanceWrites, 0);
+    expect(lastBalanceBatchSize, 0);
     expect(relatedWrites, 0);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
