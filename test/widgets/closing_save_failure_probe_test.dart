@@ -25,7 +25,13 @@ void main() {
   var reflectSuccessfulWrite = false;
   Map<String, dynamic>? serverClosing;
   Map<String, dynamic>? lastClosingWrite;
-  setUp(() {
+  setUp(() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: 'probe@example.invalid',
+        password: 'synthetic-only',
+      );
+    }
     closingWrites = 0;
     failSave = true;
     holdWrite = null;
