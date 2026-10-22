@@ -39,7 +39,7 @@ void main() {
               'user_metadata': {},
               'created_at': '2026-01-01T00:00:00Z',
             },
-          }), 200, headers: headers);
+          }), 200, headers: headers, request: request);
         }
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'POST') {
@@ -48,9 +48,10 @@ void main() {
             '{"code":"XX000","message":"simulated save failure"}',
             500,
             headers: headers,
+            request: request,
           );
         }
-        return http.Response('[]', 200, headers: headers);
+        return http.Response('[]', 200, headers: headers, request: request);
       }),
     );
     await Supabase.instance.client.auth.signInWithPassword(
