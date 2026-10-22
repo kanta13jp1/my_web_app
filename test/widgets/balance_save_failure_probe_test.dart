@@ -107,10 +107,15 @@ void main() {
             request: request,
           );
         }
-        if (failRelatedWrite && request.method == 'POST' &&
+        if (failRelatedWrite &&
+            request.method == 'POST' &&
             request.url.path.endsWith('/wealth_struggles')) {
-          return http.Response('{"message":"synthetic related failure"}', 500,
-              headers: headers, request: request);
+          return http.Response(
+            '{"message":"synthetic related failure"}',
+            500,
+            headers: headers,
+            request: request,
+          );
         }
         if (request.url.path.endsWith('/cfo_assets') &&
             request.method == 'POST') {
@@ -361,7 +366,9 @@ void main() {
       }
       expect(lastBalanceBatchSize, bulk ? 2 : 1);
       expect(persistedBalances.length, bulk ? 2 : 1);
-      expect(tester.widget<TextField>(fields.at(bulk ? 0 : 1)).controller!.text, '500');
+      expect(tester.widget<TextField>(fields.at(bulk ? 0 : 1)).controller!.text,
+          '500',
+      );
       expect(
         find.descendant(
           of: find.byType(SnackBar),
