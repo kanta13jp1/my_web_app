@@ -7603,6 +7603,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
     } catch (e) {
       debugPrint('Error saving $type: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$type の残高を保存できませんでした。入力内容を保持しています。再度お試しください。'),),
+      );
     }
   }
 
@@ -7917,14 +7921,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ? null
               : _assetData[_lastUpdatedDates[entry.key]]?[entry.key],
       };
-      for (var entry in todayData.entries) {
-        await _supabase.from('cfo_assets').insert({
-          'user_id': userId,
-          'title': entry.key,
-          'amount': entry.value,
-          'created_at': nowIso,
-        });
-      }
+      await _supabase.from('cfo_assets').insert([
+        for (final entry in todayData.entries)
+          {
+            'user_id': userId,
+            'title': entry.key,
+            'amount': entry.value,
+            'created_at': nowIso,
+          },
+      ]);
       setState(() {
         if (!_assetData.containsKey(today)) _assetData[today] = {};
         _assetData[today]!.addAll(todayData);
@@ -7970,6 +7975,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _maybeDetectSalaryDeposit();
     } catch (e) {
       debugPrint('Error saving assets: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('資産・負債の残高を保存できませんでした。入力内容を保持しています。再度お試しください。'),),
+      );
     }
   }
 

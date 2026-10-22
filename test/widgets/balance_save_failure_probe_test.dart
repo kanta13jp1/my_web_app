@@ -13,6 +13,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 void main() {
   var balanceWrites = 0;
   var failBalanceAt = 1;
+  var lastBalanceBatchSize = 0;
   final persistedBalances = <Map<String, dynamic>>[];
   var failSave = true;
   Completer<void>? holdWrite;
@@ -37,6 +38,7 @@ void main() {
 
     balanceWrites = 0;
     failBalanceAt = 1;
+    lastBalanceBatchSize = 0;
     persistedBalances.clear();
     failSave = true;
     holdWrite = null;
@@ -106,6 +108,9 @@ void main() {
         if (request.url.path.endsWith('/cfo_assets') &&
             request.method == 'POST') {
           balanceWrites++;
+          final payload = jsonDecode(request.body);
+          final rows = payload is List ? payload : [payload];
+          lastBalanceBatchSize = rows.length;
           if (balanceWrites == failBalanceAt) {
             return http.Response(
               '{"message":"synthetic balance save failure"}',
@@ -233,7 +238,7 @@ void main() {
   for (final bulk in [false, true]) {
     testWidgets('balance save failure is visible and input retained bulk=$bulk',
         (tester) async {
-      failBalanceAt = bulk ? 2 : 1;
+      failBalanceAt = 1;
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
@@ -256,8 +261,9 @@ void main() {
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
-      expect(balanceWrites, bulk ? 2 : 1);
-      expect(persistedBalances.length, bulk ? 1 : 0);
+      expect(balanceWrites, 1);
+      expect(lastBalanceBatchSize, bulk ? 2 : 1);
+      expect(persistedBalances.length, 0);
       expect(tester.widget<TextField>(fields.at(0)).controller!.text, '3000');
       expect(
         find.descendant(
