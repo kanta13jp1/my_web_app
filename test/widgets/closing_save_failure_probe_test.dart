@@ -67,8 +67,15 @@ void main() {
             request: request,
           );
         }
-        if (provideTodayBalance && request.url.path.endsWith('/rpc/asset_management_recent_cfo_assets')) {
-          return http.Response('[{"id":1,"title":"現金","amount":1000,"created_at":"2026-10-22T03:00:00Z"}]', 200, headers: headers, request: request);
+        if (provideTodayBalance &&
+            request.url.path
+                .endsWith('/rpc/asset_management_recent_cfo_assets')) {
+          return http.Response(
+              '[{"id":1,"title":"現金","amount":1000,"created_at":"2026-10-22T03:00:00Z"}]',
+              200,
+              headers: headers,
+              request: request,
+          );
         }
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'GET' &&
@@ -88,7 +95,8 @@ void main() {
           closingWrites++;
           await holdWrite?.future;
           if (!failSave) {
-            return http.Response('', 201, headers: headers, request: request);
+            return http.Response('', 201, headers: headers, request: request,
+          );
           }
           return http.Response(
             '{"code":"XX000","message":"simulated save failure"}',
@@ -97,7 +105,8 @@ void main() {
             request: request,
           );
         }
-        return http.Response('[]', 200, headers: headers, request: request);
+        return http.Response('[]', 200, headers: headers, request: request,
+          );
       }),
     );
     await Supabase.instance.client.auth.signInWithPassword(
