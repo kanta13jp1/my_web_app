@@ -393,6 +393,40 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+  testWidgets('background reload clears overlapping foreground spinner',
+      (tester) async {
+    final repository = _FakeNoteTaskRepository([
+      _task(
+        id: 'overlap',
+        title: 'Initial task',
+        noteId: 1,
+        noteTitle: 'Initial',
+      ),
+    ]);
+    await tester.pumpWidget(
+      MaterialApp(home: NoteTasksPage(repository: repository)),
+    );
+    await tester.pumpAndSettle();
+    final complete = tester.widget<Checkbox>(
+      find.byKey(const ValueKey('note_tasks_page_checkbox_overlap')),
+    ).onChanged!;
+    final older = Completer<List<NoteTask>>();
+    var calls = 0;
+    repository.tasksOverride = () => calls++ == 0
+        ? older.future
+        : Future<List<NoteTask>>.value(<NoteTask>[]);
+    await tester.tap(find.byKey(const Key('note_tasks_page_refresh')));
+    complete(true);
+    await tester.pumpAndSettle();
+
+    expect(repository.completedChanges, <(String, bool)>[('overlap', true)]);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('未完了のタスクはありません。'), findsOneWidget);
+    older.complete(<NoteTask>[]);
+    await tester.pumpAndSettle();
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _FakeNoteTaskRepository
