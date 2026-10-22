@@ -14,10 +14,14 @@ void main() {
   var closingWrites = 0;
   var failSave = true;
   Completer<void>? holdWrite;
+  Completer<void>? holdRead;
+  var delayedReads = 0;
   setUp(() {
     closingWrites = 0;
     failSave = true;
     holdWrite = null;
+    holdRead = null;
+    delayedReads = 0;
     SharedPreferences.setMockInitialValues({});
   });
   setUpAll(() async {
@@ -60,6 +64,14 @@ void main() {
             headers: headers,
             request: request,
           );
+        }
+        if (request.url.path.endsWith('/cfo_daily_closings') &&
+            request.method == 'GET' && holdRead != null) {
+          delayedReads++;
+          final gate = holdRead!;
+          await gate.future;
+          return http.Response('[{"assets_done":true,"fixed_costs_done":true}]',
+              200, headers: headers, request: request);
         }
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'POST') {
@@ -139,7 +151,11 @@ void main() {
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
+    holdWrite = Completer<void>();
+    await tester.pumpWidget(MaterialApp(home: AssetManagementPage(
+      debugNow: DateTime(2026, 10, 22),
+      debugInitialAssetData: const {'2026-10-22': {'現金': 1000}},
+    )));
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
@@ -149,6 +165,13 @@ void main() {
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
+    final assetCheck = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
+    expect(tester.widget<CheckboxListTile>(assetCheck).value, isTrue);
+    holdWrite!.complete();
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(tester.widget<CheckboxListTile>(assetCheck).value, isFalse);
     expect(closingWrites, 1);
     expect(find.textContaining('チェックを保存できませんでした'), findsOneWidget);
     expect(find.textContaining('登録口座の本日記録を確認しました。'), findsNothing);
@@ -210,10 +233,27 @@ void main() {
         home: AssetManagementPage(debugNow: DateTime(2026, 10, 23, 0, 1)),
       ),
     );
+    holdRead = Completer<void>();
     holdWrite!.complete();
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
+    expect(delayedReads, 1);
+    final second = find.widgetWithText(CheckboxListTile, '③ 今月の固定費をすべて記録して把握');
+    await tester.ensureVisible(second);
+    await tester.tap(second);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(closingWrites, 1);
+    await tester.pumpWidget(MaterialApp(
+      home: AssetManagementPage(debugNow: DateTime(2026, 10, 24, 0, 1)),
+    ));
+    final pendingRead = holdRead!;
+    holdRead = null;
+    pendingRead.complete();
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(tester.widget<CheckboxListTile>(second).value, isFalse);
     expect(tester.widget<CheckboxListTile>(item).value, isFalse);
     expect(find.textContaining('元の状態に戻しました'), findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
