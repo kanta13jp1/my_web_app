@@ -115,7 +115,7 @@ void main() {
         if (request.url.path.endsWith('/cfo_assets') &&
             request.method == 'POST') {
           balanceWrites++;
-          print("synthetic balance POST: ${request.body}");
+          debugPrint('synthetic balance POST: ${request.body}');
           final payload = jsonDecode(request.body);
           final rows = payload is List ? payload : [payload];
           lastBalanceBatchSize = rows.length;
