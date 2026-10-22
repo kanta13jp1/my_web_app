@@ -11,7 +11,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Diagnostic only: no production endpoint, credentials, or persisted user data.
 void main() {
-
   var balanceWrites = 0;
   var failBalanceAt = 1;
   final persistedBalances = <Map<String, dynamic>>[];
@@ -188,7 +187,6 @@ void main() {
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'GET' &&
             holdRead != null) {
-
           final gate = holdRead!;
           await gate.future;
           return http.Response(
@@ -200,7 +198,6 @@ void main() {
         }
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'POST') {
-
           lastClosingWrite = jsonDecode(request.body) as Map<String, dynamic>;
           await holdWrite?.future;
           if (!failSave) {
@@ -244,7 +241,8 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
       }
       final fields = find.byWidgetPredicate(
-          (w) => w is TextField && w.decoration?.labelText == '今日の残高',);
+        (w) => w is TextField && w.decoration?.labelText == '今日の残高',
+      );
       expect(fields, findsNWidgets(2));
       await tester.ensureVisible(fields.at(0));
       await tester.enterText(fields.at(0), '3000');
@@ -254,7 +252,7 @@ void main() {
       }
       final action = bulk
           ? find.text('全体状況を保存')
-          : find.widgetWithText(FilledButton, '記録').first;
+          : find.text('記録').first;
       await tester.ensureVisible(action);
       await tester.tap(action);
       for (var i = 0; i < 12; i++) {
@@ -263,8 +261,10 @@ void main() {
       expect(balanceWrites, bulk ? 2 : 1);
       expect(persistedBalances.length, bulk ? 1 : 0);
       expect(tester.widget<TextField>(fields.at(0)).controller!.text, '3000');
-      expect(find.textContaining(RegExp('保存.*(失敗|でき)|記録.*(失敗|でき)|一部.*保存')),
-          findsWidgets,);
+      expect(
+        find.descendant(of: find.byType(SnackBar), matching: find.textContaining(RegExp('保存.*(失敗|でき)|記録.*(失敗|でき)|一部.*保存'))),
+        findsWidgets,
+      );
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 2));
     });
