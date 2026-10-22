@@ -166,7 +166,7 @@ void main() {
           home: ValueListenableBuilder<bool>(
             valueListenable: visible,
             builder: (context, show, child) => show
-                ? SpaceSharingPage(dataSource: source)
+                ? SpaceSharingPage(dataSource: source, initialSpaceId: 7)
                 : const Scaffold(body: Text('Replacement')),
           ),
         ),
