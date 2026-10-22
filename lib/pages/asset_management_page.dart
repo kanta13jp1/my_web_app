@@ -7553,6 +7553,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final previousDate = _lastUpdatedDates[type];
     final previousAmount =
         previousDate == null ? null : _assetData[previousDate]?[type];
+    var balanceSaved = false;
     try {
       final recordedAt = DateTime.now();
       await _supabase.from('cfo_assets').insert({
@@ -7564,6 +7565,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       });
 
+      balanceSaved = true;
+      if (!mounted) return;
       setState(() {
         if (!_assetData.containsKey(today)) _assetData[today] = {};
         _assetData[today]![type] = amount;
@@ -7606,7 +7609,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$type の残高を保存できませんでした。入力内容を保持しています。再度お試しください。'),
+          content: Text(
+            balanceSaved
+                ? '$type の残高は保存済みです。保存後の関連処理に失敗しました。再保存せず、画面を再読み込みしてください。'
+                : '$type の残高保存を確認できませんでした。入力内容は保持しています。履歴を確認してから再試行してください。',
+          ),
         ),
       );
     }
@@ -7913,6 +7920,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     if (!hasData) return;
 
+    var balanceSaved = false;
     try {
       final nowIso = AssetBalanceTimestampService.encodeForDatabase(
         DateTime.now(),
@@ -7932,6 +7940,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             'created_at': nowIso,
           },
       ]);
+      balanceSaved = true;
+      if (!mounted) return;
       setState(() {
         if (!_assetData.containsKey(today)) _assetData[today] = {};
         _assetData[today]!.addAll(todayData);
@@ -7979,8 +7989,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('Error saving assets: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('資産・負債の残高を保存できませんでした。入力内容を保持しています。再度お試しください。'),
+        SnackBar(
+          content: Text(
+            balanceSaved
+                ? '資産・負債の残高は保存済みです。保存後の関連処理に失敗しました。再保存せず、画面を再読み込みしてください。'
+                : '資産・負債の残高保存を確認できませんでした。入力内容は保持しています。履歴を確認してから再試行してください。',
+          ),
         ),
       );
     }

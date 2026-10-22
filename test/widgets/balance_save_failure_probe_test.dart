@@ -270,7 +270,7 @@ void main() {
         find.descendant(
           of: find.byType(SnackBar),
           matching:
-              find.textContaining(RegExp('保存.*(失敗|でき)|記録.*(失敗|でき)|一部.*保存')),
+              find.textContaining(RegExp('保存.*(失敗|でき|確認)|記録.*(失敗|でき)|一部.*保存')),
         ),
         findsWidgets,
       );
