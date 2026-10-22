@@ -11,6 +11,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 // Diagnostic only: no production endpoint, credentials, or persisted user data.
 void main() {
   var closingWrites = 0;
+  var failSave = true;
+  setUp(() {
+    closingWrites = 0;
+    failSave = true;
+    SharedPreferences.setMockInitialValues({});
+  });
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues({});
@@ -44,6 +50,9 @@ void main() {
         if (request.url.path.endsWith('/cfo_daily_closings') &&
             request.method == 'POST') {
           closingWrites++;
+          if (!failSave) {
+            return http.Response('', 201, headers: headers, request: request);
+          }
           return http.Response(
             '{"code":"XX000","message":"simulated save failure"}',
             500,
@@ -77,6 +86,50 @@ void main() {
     expect(closingWrites, greaterThan(0), reason: 'must exercise the failing write');
     expect(tester.widget<CheckboxListTile>(item).value, isFalse,
         reason: 'a failed write cannot be presented as completed');
+    expect(find.textContaining('チェックを保存できませんでした'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('successful closing save keeps the requested completion',
+      (tester) async {
+    failSave = false;
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    final item = find.widgetWithText(CheckboxListTile, '① 全資産額を記録して把握');
+    await tester.ensureVisible(item);
+    await tester.tap(item);
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(closingWrites, 1);
+    expect(tester.widget<CheckboxListTile>(item).value, isTrue);
+    expect(find.textContaining('チェックを保存できませんでした'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('automatic check reports a failed save instead of success',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(const MaterialApp(home: AssetManagementPage()));
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    final action = find.text('記録状況から自動チェック');
+    await tester.ensureVisible(action);
+    await tester.tap(action);
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(closingWrites, 1);
+    expect(find.textContaining('チェックを保存できませんでした'), findsOneWidget);
+    expect(find.textContaining('登録口座の本日記録を確認しました。'), findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
   });
