@@ -36,6 +36,7 @@ class _VoiceAiGovernancePageState extends State<VoiceAiGovernancePage> {
   }
 
   Future<void> _load() async {
+    if (!mounted || _saving) return;
     setState(() => _loading = true);
     try {
       final settings = await _service.loadSettings();
@@ -55,6 +56,7 @@ class _VoiceAiGovernancePageState extends State<VoiceAiGovernancePage> {
   }
 
   Future<void> _toggleConsent(bool enabled) async {
+    if (!mounted || _loading || _saving) return;
     setState(() => _saving = true);
     try {
       final settings = await _service.updateTrainingConsent(enabled);
@@ -93,7 +95,7 @@ class _VoiceAiGovernancePageState extends State<VoiceAiGovernancePage> {
         ),
         actions: [
           IconButton(
-            onPressed: _loading ? null : _load,
+            onPressed: _loading || _saving ? null : _load,
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
           ),
