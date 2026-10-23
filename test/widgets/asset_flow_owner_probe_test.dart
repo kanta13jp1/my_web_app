@@ -12,6 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 void main() {
   var owner = '00000000-0000-4000-8000-000000000001';
   var posts = 0;
+  var failResponse = false;
   Map<String, dynamic>? posted;
   var writeGate = Completer<void>();
   var responseSent = Completer<void>();
@@ -82,18 +83,22 @@ void main() {
           posted = jsonDecode(request.body) as Map<String, dynamic>;
           await writeGate.future;
           responseSent.complete();
-          return http.Response('', 201, headers: headers, request: request);
+          return http.Response(
+            failResponse ? jsonEncode({'code': 'XX000', 'message': 'synthetic failure'}) : '',
+            failResponse ? 400 : 201, headers: headers, request: request); 
         }
         return http.Response('[]', 200, headers: headers, request: request);
       }),
     );
   });
-  for (final mode in [0, 1, 2]) {
+  for (final scenario in [0, 1, 2, 3, 4, 5]) {
+    final mode = scenario % 3;
     final switchOwner = mode != 0;
-    testWidgets('flow completion respects owner mode=$mode',
+    testWidgets('flow completion respects owner scenario=$scenario',
         (tester) async {
       owner = '00000000-0000-4000-8000-000000000001';
       posts = 0;
+      failResponse = scenario >= 3;
       posted = null;
       writeGate = Completer<void>();
       responseSent = Completer<void>();
@@ -163,15 +168,17 @@ void main() {
       expect(posts, 1);
       expect(
         tester.widget<TextField>(memo).controller!.text,
-        switchOwner ? 'synthetic B draft' : '',
+        switchOwner ? 'synthetic B draft' : (failResponse ? 'synthetic A draft' : ''),
       );
       expect(
         tester.widget<TextField>(amount).controller!.text,
-        switchOwner ? '222' : '',
+        switchOwner ? '222' : (failResponse ? '111' : ''),
       );
-      if (switchOwner) {
+      if (switchOwner || failResponse) {
         expect(find.text('収支を記録しました'), findsNothing);
       }
+      expect(find.text('記録処理に失敗しました。履歴を確認してから再試行してください。'),
+        failResponse && !switchOwner ? findsOneWidget : findsNothing);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 2));
     });
