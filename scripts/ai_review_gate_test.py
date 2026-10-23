@@ -62,6 +62,7 @@ class GateTests(unittest.TestCase):
         cases = [(['Attachments/receipt.pdf'], 'private'), (['a.py'], 'Binary files a and b differ'),
                  (['a.py'], 'x'*(gate.MAX_DIFF+1)), (['a.xyz'], 'unknown'),
                  (['a.py'], 'new file mode 120000'), (['a.py']*41, 'too many')]
+        cases.append((['a.py'], 'index abc..def 120000'))
         for paths, diff in cases:
             with self.subTest(paths=paths), self.assertRaises(ValueError): gate.validate_scope(paths, diff)
 

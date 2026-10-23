@@ -72,7 +72,7 @@ def validate_scope(paths, diff):
     require(0 < len(paths) <= MAX_FILES and len(paths) == len(set(paths)), 'Unsupported file count')
     require(0 < len(diff.encode()) <= MAX_DIFF, 'Review input exceeds limit; split the PR')
     require(not re.search(r'^(?:GIT binary patch|Binary files )', diff, re.M), 'Binary diff cannot be approved')
-    require(not re.search(r'^(?:new file|deleted file|new|old) mode (?:120000|160000)', diff, re.M), 'Symlink/submodule changes need a dedicated review')
+    require(not re.search(r'^(?:(?:new file|deleted file|new|old) mode |index [0-9a-f]+\.\.[0-9a-f]+ )(?:120000|160000)', diff, re.M), 'Symlink/submodule changes need a dedicated review')
     for path in paths:
         require(not PRIVATE_PATH.search(path), 'Private records must not be sent to AI review')
         require(Path(path).suffix.lower() in SAFE_SUFFIXES, 'Unsupported file type; expand policy through review')
@@ -184,7 +184,13 @@ def review(directory):
         'generationConfig': {'responseMimeType': 'application/json', 'responseJsonSchema': schema(), 'maxOutputTokens': 16000}}
     result = request(endpoint+'models/'+model+':generateContent', headers, payload)
     candidates = result.get('candidates', [])
-    require(len(candidates) == 1 and candidates[0].get('finishReason') == 'STOP', 'Provider result incomplete or blocked')
+    provider = {'model': model, 'model_version': result.get('modelVersion'),
+                'response_id': result.get('responseId'), 'usage': result.get('usageMetadata'),
+                'finish_reasons': [c.get('finishReason') for c in candidates],
+                'prompt_block_reason': result.get('promptFeedback', {}).get('blockReason')}
+    write(directory/'provider.json', provider)
+    require(len(candidates) == 1 and candidates[0].get('finishReason') == 'STOP',
+            'Provider result incomplete or blocked: '+json.dumps(provider['finish_reasons'])+'; '+str(provider['prompt_block_reason']))
     text = ''.join(p.get('text', '') for p in candidates[0].get('content', {}).get('parts', []) if not p.get('thought'))
     parsed = json.loads(text)
     validate_review(parsed, state)
@@ -198,6 +204,8 @@ def publish(directory):
     require(state_path.exists(), 'No check was opened; approval is unavailable')
     state = json.loads(state_path.read_text(encoding='utf-8'))
     evidence = dict(state)
+    if (directory/'provider.json').exists():
+        evidence['provider'] = json.loads((directory/'provider.json').read_text(encoding='utf-8'))
     approved = False
     try:
         result = json.loads((directory/'result.json').read_text(encoding='utf-8'))
