@@ -486,7 +486,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
   }
 
   Future<void> _showInviteDialog(SpaceAccessRecord space) async {
-    final emailController = TextEditingController();
+    var email = '';
     var permission = SpacePermission.edit;
     final accepted = await showDialog<bool>(
       context: context,
@@ -500,7 +500,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
               children: [
                 TextField(
                   key: const Key('space_invite_email'),
-                  controller: emailController,
+                  onChanged: (value) => email = value,
                   autofocus: true,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
@@ -551,7 +551,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
     await _mutate(
       () => _dataSource.invite(
         spaceId: space.id,
-        email: emailController.text,
+        email: email,
         permission: permission,
       ),
       '招待を送信しました。',

@@ -209,6 +209,37 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+  testWidgets('cancelled invitation resets email when reopened', (tester) async {
+    final source = _FakeSpaceSharingDataSource(_ownerSnapshot());
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SpaceSharingPage(dataSource: source, initialSpaceId: 7),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('space_invite_7')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('space_invite_email')),
+      'cancelled@example.invalid',
+    );
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+    expect(source.mutationCalls, 0);
+    await tester.tap(find.byKey(const Key('space_invite_7')));
+    await tester.pumpAndSettle();
+    final input = tester.widget<EditableText>(
+      find.descendant(
+        of: find.byKey(const Key('space_invite_email')),
+        matching: find.byType(EditableText),
+      ),
+    );
+    expect(input.controller.text, isEmpty);
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+    expect(source.mutationCalls, 0);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 SpaceSharingSnapshot _ownerSnapshot() => SpaceSharingSnapshot(
