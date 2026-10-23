@@ -464,8 +464,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('new reload stops obsolete reminder scheduling',
-      (tester) async {
+  testWidgets('new reload stops obsolete reminder scheduling', (tester) async {
     final service = _DelayedReminderService();
     final repository = _FakeNoteTaskRepository(
       const <NoteTask>[],
@@ -491,8 +490,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(service.scheduledKeys.length, 1);
-    repository.notificationsOverride =
-        () async => <NoteFeatureNotification>[];
+    repository.notificationsOverride = () async => <NoteFeatureNotification>[];
     await tester.tap(find.byKey(const Key('note_tasks_page_refresh')));
     await tester.pumpAndSettle();
     service.pending.complete();
