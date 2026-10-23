@@ -153,7 +153,10 @@ class SalarySpendingBreakdownService {
                   '食費': amount - smoking,
                   '娯楽・浪費': smoking.toDouble(),
                 }
-              : <String, double>{categorize(entry.categoryDescription ?? entry.description): amount};
+              : <String, double>{
+                  categorize(entry.categoryDescription ?? entry.description):
+                      amount,
+                };
       for (final allocation in allocations.entries) {
         final category = allocation.key;
         totalsByCategory[category] =
