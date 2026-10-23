@@ -9234,7 +9234,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
     } catch (e) {
       debugPrint('Error recording flow: $e');
-      if (canApplyResult()) {
+      if (mounted && canApplyResult()) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
