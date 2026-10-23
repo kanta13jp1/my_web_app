@@ -10,7 +10,6 @@ void main() {
   testWidgets('consent save rejects duplicate writes and stale refresh',
       (tester) async {
     final service = _DelayedConsentService();
-    addTearDown(() => tester.runAsync(service.client.dispose));
     await tester.pumpWidget(
       MaterialApp(home: VoiceAiGovernancePage(service: service)),
     );
@@ -47,18 +46,8 @@ void main() {
 }
 
 class _DelayedConsentService extends VoiceAiSettingsService {
-  _DelayedConsentService()
-      : this._(
-          SupabaseClient(
-            'https://fixture.invalid',
-            'synthetic-key',
-            authOptions: const AuthClientOptions(autoRefreshToken: false),
-          ),
-        );
+  _DelayedConsentService() : super(_UnusedSupabaseClient());
 
-  _DelayedConsentService._(this.client) : super(client);
-
-  final SupabaseClient client;
   final saved = Completer<VoiceAiSettings>();
   final writes = <bool>[];
   int loads = 0;
@@ -77,4 +66,10 @@ class _DelayedConsentService extends VoiceAiSettingsService {
     writes.add(enabled);
     return saved.future;
   }
+}
+
+// All service methods used by the page are overridden above.
+class _UnusedSupabaseClient implements SupabaseClient {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
