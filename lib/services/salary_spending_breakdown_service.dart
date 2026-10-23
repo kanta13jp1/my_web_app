@@ -323,7 +323,6 @@ const List<_SalarySpendingCategoryRule> _categoryRules =
     'paypayカード',
     '楽天カード',
     'エポス',
-    '三井住友',
     'セゾン',
     'カードローン',
   ]),
