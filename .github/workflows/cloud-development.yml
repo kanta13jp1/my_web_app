@@ -1,4 +1,4 @@
-name: Approved PR5902 Web Release
+name: Approved PR5903 Web Release
 
 on:
   pull_request:
@@ -46,7 +46,7 @@ on:
   workflow_dispatch:
     inputs:
       approved_release:
-        description: Explicit owner approved PR5902-only release
+        description: Explicit owner approved PR5903-only release
         required: true
         default: false
         type: boolean
@@ -135,22 +135,22 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='9933c08db4e8438d5715e8c60d4b98714591f720', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='5deda1b204581d42a3ba0a0e33a075da60c98e81', 'Production changed; rebuild selection'
           PY
 
-      - name: Verify approved PR5902-only selection
+      - name: Verify approved PR5903-only selection
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          test "$(gh pr view 5902 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
-          test "$(gh pr view 5902 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = cfa9d883394b923ad62a721347462f230d565e3e
-          git fetch --no-tags --depth=1 origin 9933c08db4e8438d5715e8c60d4b98714591f720
+          test "$(gh pr view 5903 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
+          test "$(gh pr view 5903 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 7eb115595f239e14344f12a3a72f3ebf21d66a7f
+          git fetch --no-tags --depth=1 origin 5deda1b204581d42a3ba0a0e33a075da60c98e81
           python3 - <<'PY'
           import subprocess
-          expected={'.github/workflows/cloud-development.yml', 'test/widgets/asset_management_balance_history_owner_regression_test.dart', 'lib/pages/asset_management_page.dart', 'test/widgets/asset_balance_history_control_test.dart', 'lib/widgets/asset_balance_history_control.dart'}
-          actual=set(subprocess.check_output(['git','diff','--name-only','9933c08db4e8438d5715e8c60d4b98714591f720','HEAD']).decode().splitlines())
+          expected={'lib/services/asset_salary_spending_entries.dart', 'lib/services/salary_spending_breakdown_service.dart', 'test/services/salary_category_source_probe_test.dart', '.github/workflows/cloud-development.yml', 'lib/pages/asset_management_page.dart'}
+          actual=set(subprocess.check_output(['git','diff','--name-only','5deda1b204581d42a3ba0a0e33a075da60c98e81','HEAD']).decode().splitlines())
           assert actual==expected,(actual,expected)
-          expected_blobs={'lib/pages/asset_management_page.dart': '1d7e731663e0bdfce419da4e7a73b7227be74dae', 'lib/widgets/asset_balance_history_control.dart': '2129161f71e3db591dd69e1257caaa2585aa0789', 'test/widgets/asset_balance_history_control_test.dart': '9cc4d0ebc2d16a2d07e463dc97059478df6ab921', 'test/widgets/asset_management_balance_history_owner_regression_test.dart': '1600521df618bd91e41a2b5a799d483d6f14c893'}
+          expected_blobs={'lib/services/salary_spending_breakdown_service.dart': '1f85507e9a24375858d7824fbda96803878ee436', 'lib/services/asset_salary_spending_entries.dart': 'adb939071cf7fa93ac9e2d35315a7af2538b7afd', 'lib/pages/asset_management_page.dart': 'cb64b1ff3f8b9555b86deb439c770f455f8858b7', 'test/services/salary_category_source_probe_test.dart': 'e805207879dbcbf7c479b86cfa619aa48cdd9a94'}
           for path, expected_blob in expected_blobs.items():
               blob=subprocess.check_output(['git','rev-parse','HEAD:'+path]).decode().strip()
               assert blob==expected_blob,(path,blob)
@@ -625,7 +625,7 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='9933c08db4e8438d5715e8c60d4b98714591f720', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='5deda1b204581d42a3ba0a0e33a075da60c98e81', 'Production changed; rebuild selection'
           PY
 
       - name: Collect pushed files
@@ -645,7 +645,7 @@ jobs:
           mkdir -p .deploy-logs
           python3 - <<'PY'
           from pathlib import Path
-          Path('.deploy-logs/changed-files.txt').write_text('lib/models/asset_calendar_reflection.dart\nlib/pages/asset_management_page.dart\nlib/widgets/asset_calendar_reflection_panel.dart\nlib/widgets/asset_reflection_day_badge.dart\ntest/models/asset_calendar_reflection_test.dart\ntest/widgets/asset_calendar_reflection_panel_test.dart\nlib/models/weekly_habit.dart\nlib/services/weekly_habit_store.dart\nlib/widgets/weekly_habit_card.dart\ntest/widgets/weekly_habit_card_test.dart\n')
+          Path('.deploy-logs/changed-files.txt').write_text('lib/services/salary_spending_breakdown_service.dart\nlib/services/asset_salary_spending_entries.dart\nlib/pages/asset_management_page.dart\ntest/services/salary_category_source_probe_test.dart\n')
           PY
 
       - name: Reject mixed public-blog deployments
@@ -1340,7 +1340,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         env:
           FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-          EXPECTED_PUBLIC_BASE: 9933c08db4e8438d5715e8c60d4b98714591f720
+          EXPECTED_PUBLIC_BASE: 5deda1b204581d42a3ba0a0e33a075da60c98e81
         run: |
           python3 -m venv /tmp/echo-release-tools
           /tmp/echo-release-tools/bin/pip install google-auth==2.43.0 requests==2.32.5
@@ -1372,7 +1372,7 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          EXPECTED_PUBLIC_BASE=9933c08db4e8438d5715e8c60d4b98714591f720 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
+          EXPECTED_PUBLIC_BASE=5deda1b204581d42a3ba0a0e33a075da60c98e81 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
 
           if npx -y firebase-tools@15.34.0 deploy \
             --only hosting \
