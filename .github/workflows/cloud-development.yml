@@ -22,6 +22,16 @@ jobs:
         with:
           flutter-version: '3.38.x'
       - run: flutter pub get
+      - run: dart fix --apply --code=require_trailing_commas lib/services/salary_spending_breakdown_service.dart test/services/salary_category_source_probe_test.dart
       - run: dart format lib/services/asset_salary_spending_entries.dart lib/services/salary_spending_breakdown_service.dart lib/pages/asset_management_page.dart test/services/salary_category_source_probe_test.dart
       - run: flutter analyze lib/services/asset_salary_spending_entries.dart lib/services/salary_spending_breakdown_service.dart lib/pages/asset_management_page.dart test/services/salary_category_source_probe_test.dart
       - run: flutter test test/services/salary_category_source_probe_test.dart test/services/salary_spending_breakdown_service_test.dart test/services/asset_salary_spending_entries_test.dart --reporter expanded
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: category-formatted
+          path: |
+            lib/services/asset_salary_spending_entries.dart
+            lib/services/salary_spending_breakdown_service.dart
+            lib/pages/asset_management_page.dart
+            test/services/salary_category_source_probe_test.dart
