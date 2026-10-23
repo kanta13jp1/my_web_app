@@ -9187,6 +9187,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final actionType = _flowLabelToActionType(_selectedFlowType);
+    var ownerChanged = false;
+    final ownerSubscription = _supabase.auth.onAuthStateChange.listen((event) {
+      if (event.session?.user.id != userId) ownerChanged = true;
+    });
+    bool canApplyResult() =>
+        mounted && !ownerChanged && _supabase.auth.currentUser?.id == userId;
     setState(() => _isRecordingFlow = true);
 
     try {
@@ -9205,7 +9211,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
 
       // 保存開始時の利用者だけに入力更新・結果表示を反映する。
-      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
+      if (!canApplyResult()) return;
       _flowMemoController.clear();
       _flowAmountController.clear();
       if (mounted) {
@@ -9215,6 +9221,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         });
       }
       await _fetchRecentFlows();
+      if (!canApplyResult()) return;
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -9227,7 +9234,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
     } catch (e) {
       debugPrint('Error recording flow: $e');
-      if (mounted && _supabase.auth.currentUser?.id == userId) {
+      if (canApplyResult()) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -9241,6 +9248,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       }
     } finally {
+      await ownerSubscription.cancel();
       if (mounted) setState(() => _isRecordingFlow = false);
     }
   }
