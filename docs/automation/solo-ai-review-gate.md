@@ -14,6 +14,9 @@ GitHub Actions app (15368) の `AI Review Gate` 必須checkを技術レビュー
 Claude/Codexの有料停止設定は変更しない。Gemini APIの構造化応答を独立して検証する。
 `AI_REVIEW_MODEL`（初期値 `gemini-3.8-flash`）は実行時ListModelsで
 generateContent対応を確認する。未対応なら失敗する。別モデルへの無言の代替はない。
+Gemini 3系のthinkingLevel=low、最大出力16,000 tokensを使用する。
+思考tokenも上限に含まれるため、終了理由・usage・応答IDを成功/失敗の両方で保存する。
+MAX_TOKENS等の未完了応答は合格にしない。
 
 - 全変更ファイルと省略しないdiffを読み、正確なhead SHA、base SHA、入力SHA-256を固定する。
 - 40ファイル、240,000バイトを超えたPR、非対応拡張子、バイナリ、symlink/submodule、

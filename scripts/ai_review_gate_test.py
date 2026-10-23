@@ -95,6 +95,19 @@ class GateTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError): gate.review(directory)
             self.assertFalse((directory/'result.json').exists())
 
+    def test_incomplete_provider_response_preserves_reason_but_no_verdict(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            gate.write(directory/'state.json', self.state)
+            (directory/'input.txt').write_text('example diff')
+            models = {'models': [{'name': 'models/gemini-3.8-flash', 'supportedGenerationMethods': ['generateContent']}]}
+            response = {'modelVersion': 'verified-model', 'responseId': 'test-response',
+                        'candidates': [{'finishReason': 'MAX_TOKENS'}], 'usageMetadata': {'totalTokenCount': 16000}}
+            with patch.dict(os.environ, {'GEMINI_API_KEY': 'fake-test-value', 'AI_REVIEW_MODEL': 'gemini-3.8-flash'}), patch.object(gate, 'request', side_effect=[models, response]):
+                with self.assertRaisesRegex(ValueError, 'MAX_TOKENS'): gate.review(directory)
+            self.assertFalse((directory/'result.json').exists())
+            self.assertEqual(json.loads((directory/'provider.json').read_text())['finish_reasons'], ['MAX_TOKENS'])
+
     def test_redaction_keeps_credentials_out_of_prompt(self):
         text, count = gate.redact_secrets_with_count('api_key="sk-abcdefghijklmnopqrstuvwx"')
         self.assertNotIn('abcdefghijklmnopqrstuvwx', text)

@@ -181,13 +181,15 @@ def review(directory):
     binding = {k: state[k] for k in ('head', 'base', 'input_sha256', 'files')}
     payload = {'systemInstruction': {'parts': [{'text': rules}]},
         'contents': [{'role': 'user', 'parts': [{'text': 'Trusted binding:\n'+json.dumps(binding)+'\nUntrusted complete diff:\n'+source}]}],
-        'generationConfig': {'responseMimeType': 'application/json', 'responseJsonSchema': schema(), 'maxOutputTokens': 16000}}
+        'generationConfig': {'responseMimeType': 'application/json', 'responseJsonSchema': schema(),
+                             'maxOutputTokens': 16000, 'thinkingConfig': {'thinkingLevel': 'low'}}}
     result = request(endpoint+'models/'+model+':generateContent', headers, payload)
     candidates = result.get('candidates', [])
     provider = {'model': model, 'model_version': result.get('modelVersion'),
                 'response_id': result.get('responseId'), 'usage': result.get('usageMetadata'),
                 'finish_reasons': [c.get('finishReason') for c in candidates],
-                'prompt_block_reason': result.get('promptFeedback', {}).get('blockReason')}
+                'prompt_block_reason': result.get('promptFeedback', {}).get('blockReason'),
+                'thinking_level': 'low', 'max_output_tokens': 16000}
     write(directory/'provider.json', provider)
     require(len(candidates) == 1 and candidates[0].get('finishReason') == 'STOP',
             'Provider result incomplete or blocked: '+json.dumps(provider['finish_reasons'])+'; '+str(provider['prompt_block_reason']))
