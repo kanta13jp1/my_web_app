@@ -43,7 +43,8 @@ void main() {
     expect(entries.expenses.first.description, '[三井住友銀行] 水道料');
     expect(entries.expenses.first.categoryDescription, '水道料');
   });
-  test('classification uses caller-cleaned metadata and keeps visible text', () {
+  test('classification uses caller-cleaned metadata and keeps visible text',
+      () {
     final entries = AssetSalarySpendingEntries.build(
       cardStatementLines: [],
       recentFlows: [
