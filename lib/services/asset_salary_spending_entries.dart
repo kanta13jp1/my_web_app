@@ -35,6 +35,7 @@ class AssetSalarySpendingEntries {
     required List<Map<String, dynamic>> payslipSalaryIncomes,
     required List<Map<String, dynamic>> payslipRows,
     required String Function(Map<String, dynamic> flow) flowDisplayTitle,
+    String Function(Map<String, dynamic> flow)? flowCategoryDescription,
   }) {
     final expenses = <SalarySpendingEntry>[];
     final incomes = <SalaryIncomeEntry>[];
@@ -107,10 +108,11 @@ class AssetSalarySpendingEntries {
             date: occurredAt,
             amount: amount,
             description: displayTitle.isEmpty ? description : displayTitle,
-            categoryDescription: AssetFlowDescriptionService.parse(
-              description,
-              actionType: actionType,
-            ).memo,
+            categoryDescription: flowCategoryDescription?.call(flow) ??
+                AssetFlowDescriptionService.parse(
+                  description,
+                  actionType: actionType,
+                ).memo,
             sourceLabel: _flowLabel(actionType),
           ),
         );
