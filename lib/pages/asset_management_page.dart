@@ -17283,6 +17283,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       payslipSalaryIncomes: _payslipSalaryIncomes,
       payslipRows: _payslipRows,
       flowDisplayTitle: _flowDisplayTitle,
+      flowCategoryDescription: (flow) => _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: flow['action_type']?.toString() ?? '',
+      ).memo,
     );
     final breakdown = _buildSalarySpendingBreakdown();
     const categories = {'食費', '交通', '医療', '日用品', '娯楽・浪費'};
@@ -17294,8 +17298,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             !entry.date.isBefore(breakdown.periodStart) &&
             entry.date.isBefore(breakdown.periodEndExclusive) &&
             !entry.date.isAfter(_now) &&
-            categories.contains(
-                _salarySpendingBreakdownService.categorize(entry.description)))
+            categories.contains(_salarySpendingBreakdownService
+                .categorize(entry.categoryDescription ?? entry.description)))
         .map((entry) => SavingsLifePlan.dateText(entry.date))
         .toSet()
         .length;
@@ -18840,6 +18844,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       payslipSalaryIncomes: _payslipSalaryIncomes,
       payslipRows: _payslipRows,
       flowDisplayTitle: _flowDisplayTitle,
+      flowCategoryDescription: (flow) => _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: flow['action_type']?.toString() ?? '',
+      ).memo,
     );
     return _salarySpendingBreakdownService.build(
       referenceDate: _now,
