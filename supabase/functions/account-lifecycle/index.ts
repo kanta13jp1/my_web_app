@@ -11,6 +11,9 @@ import {
   ACCOUNT_DELETION_POLICY_VERSION,
   bearerToken,
   blockingDependencyCount,
+  importedHistoryBlockerCount,
+  storageInventoryExhausted,
+  validatedStorageInventory,
   canCancelDeletionRequest,
   deletionScheduledFor,
   isServiceRoleRequest,
@@ -446,7 +449,16 @@ async function dependencyBlockers(
     { p_user_id: userId },
   );
   if (error) throw error;
-  return blockingDependencyCount(data);
+  // Imported recovery evidence has BEFORE DELETE guards. Do not cancel billing
+  // or remove Storage objects before discovering that the auth cascade is blocked.
+  // Deliberate account-deletion cleanup remains a separate reviewed operation.
+  const { count, error: historyError } = await admin
+    .from("note_versions")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("source_system", "evernote");
+  if (historyError) throw historyError;
+  return blockingDependencyCount(data) + importedHistoryBlockerCount(count);
 }
 
 async function dependencyMatches(
@@ -504,14 +516,18 @@ async function deleteOwnedStorageObjects(
         deleted,
       );
     }
-    const objects = Array.isArray(data) ? data as JsonRecord[] : [];
-    if (objects.length === 0) return deleted;
+    let objects;
+    try {
+      objects = validatedStorageInventory(data);
+    } catch {
+      throw new StorageDeletionError("storage inventory invalid", deleted);
+    }
+    if (storageInventoryExhausted(objects.length)) return deleted;
 
     const byBucket = new Map<string, string[]>();
     for (const object of objects) {
-      const bucket = asString(object.bucket_id);
-      const name = asString(object.object_name);
-      if (bucket === "" || name === "") continue;
+      const bucket = object.bucket_id;
+      const name = object.object_name;
       byBucket.set(bucket, [...(byBucket.get(bucket) ?? []), name]);
     }
     for (const [bucket, paths] of byBucket.entries()) {
@@ -526,7 +542,7 @@ async function deleteOwnedStorageObjects(
       }
       deleted += paths.length;
     }
-    if (objects.length < 1000) return deleted;
+    // A server row cap may return a short page; re-query until empty.
   }
   throw new StorageDeletionError(
     "storage deletion failed: batch limit exceeded",
