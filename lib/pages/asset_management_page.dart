@@ -9204,6 +9204,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'occurred_at': _selectedFlowDate.toUtc().toIso8601String(),
       });
 
+      // 保存開始時の利用者だけに入力更新・結果表示を反映する。
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       _flowMemoController.clear();
       _flowAmountController.clear();
       if (mounted) {
@@ -9225,7 +9227,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
     } catch (e) {
       debugPrint('Error recording flow: $e');
-      if (mounted) {
+      if (mounted && _supabase.auth.currentUser?.id == userId) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(

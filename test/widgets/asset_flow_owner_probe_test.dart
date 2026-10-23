@@ -137,8 +137,10 @@ void main() {
         expect(Supabase.instance.client.auth.currentUser!.id, owner);
         await tester.enterText(memo, 'synthetic B draft');
         await tester.enterText(amount, '222');
-        expect(tester.widget<TextField>(memo).controller!.text,
-            'synthetic B draft');
+        expect(
+          tester.widget<TextField>(memo).controller!.text,
+          'synthetic B draft',
+        );
         expect(tester.widget<TextField>(amount).controller!.text, '222');
       }
       await tester.runAsync(() async {
