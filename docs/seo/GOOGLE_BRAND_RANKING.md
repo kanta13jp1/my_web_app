@@ -1136,3 +1136,37 @@ session-start-check/adaptive-model-router適用。Jev astra/medium推奨はadvis
 session-start-check/adaptive-model-router適用、lead実行・モデル切替/workerなし。元branch fix/salary-deposit-payslip-signal、HEAD c3e1d46077、upstream0/0、7 dirty paths・32 worktreesを保持。cloud-preferred、remote-only、新規worktreeや重いtoolchainなし。ルールdriftなし、tool-watchは既存#1422等へルーティング。NotebookLM一覧失敗、本作業は非依存。
 
 recover-cua-runtimeを適用してinventory・既存タブ再接続・新規同ブラウザ確認まで試したがページアクセスは復旧せず。保存/送信操作なし、ユーザーのブラウザタブ・アプリは閉じず、キャッシュ/権限変更や強制終了なし。根本原因は未特定。次回は接続復旧の有無を先に確認し、未保存作業を保存したうえでCodexの通常再起動が可能なら依頼する。同じ失敗を延々再試行せず、次の成功観測と10/21の7位を比較する。順位1位は保証しない。
+
+## 2026-10-23 日次監視：接続復旧、対象は2ページ目2件目
+
+09:02 JST頃、Google実アプリ内ブラウザ、検索語 `自分株式会社`、hl=ja/gl=jp/pws=0、未ログイン、日本/府中市東京都(IP由来)、CAPTCHAなし。inventoryに続き本文読取り成功。復旧の根本原因は未特定。10/22は未観測のまま維持。
+
+対象は1ページ目に不在、可視「次へ」から2ページ目で2件目に検出。1ページ目自然検索9件+2件目なので観測通算11番目。Googleページ開始パラメータはstart=10であり、欠落した10件目を推測して12位とはしない。通算観測順とページ位置を併記。2ページ19件確認、発見済みにつき100位まで追加確認不要。
+
+|順位(観測順)|タイトル|参照URL / ドメイン|種別|主な意図|
+|---:|---|---|---|---|
+|1|会社に依存しない「自分株式会社」の考え方｜moto（戸塚俊介）|[note.com](https://note.com/recruit_man_note/n/n1032c32fbc36)|著者ブログ記事|会社に依存しないキャリア設計と収支管理を学ぶ|
+|2|「自分株式会社」という考え方と、この考え方を活用するために ...|[note.com](https://note.com/famous_knot742/n/n0c1a89bc7c77)|個人ブログ記事|概念の定義、参考情報、実践方法を知る|
+|3|“自分株式会社”という考え方|[ifa-japan.co.jp](https://www.ifa-japan.co.jp/%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%84%E3%81%86%E8%80%83%E3%81%88%E6%96%B9/)|専門家ブログ記事|人的資本・資産形成として理解する|
+|4|経営支援サービスを総合的にサポートする ITベンダー M社|[solution.lmi.ne.jp](https://solution.lmi.ne.jp/hr_development/case/1180)|法人研修の導入事例|研修での活用例と成果を確認する|
+|5|「自分株式会社」を経営せよ。副業年収4000万円のmotoが ...|[r25.jp](https://r25.jp/articles/928885293145522178)|編集部記事・書籍抜粋|キャリアと副業の具体例を読む|
+|6|わたしブランド～自分株式会社を設立してみよう|[akikofujisaki.com](https://akikofujisaki.com/selfpromotion/)|専門家ブログ記事|自己ブランディングへ応用する|
+|7|サラリーマンこそ自分株式会社をつくりなさい――1000万円 ...|[amazon.co.jp](https://www.amazon.co.jp/dp/4478067449)|書籍商品ページ|内容、著者、評価、購入条件を確認する|
+|8|なぜ自分の会社をつくるのか？人生を楽しく生きるための2つの ...|[diamond.jp](https://diamond.jp/articles/-/78525?page=3)|書籍連載・解説記事|起業の目的と法人化の判断を理解する|
+|9|NewsPicks [ニューズピックス]|[x.com](https://x.com/newspicks/status/1449692163042856961)|SNS投稿|著名人の発言と反応を見る|
+
+当日hrefは不透明な/goto。表は過去照合の参照URLで、正確な当日遷移先は未確定。前日未確認につき日次順位差は算出不能。最後の成功観測10/21の7位から本日は観測通算11番目へ。上位note1/2・IFA3・X9は同じ、LMI5→4、R25 6→5、藤崎8→6、Amazon4→7、ダイヤモンド新規8、対象は1ページ目から退出。対象title省略/snippet/site-name Googleは同じ。藤崎snippetは著者プロフィール文へ変化。
+
+広告・強調スニペットなし。AI概要は概念、会社役割/収支/資産対応、依存低減の説明。可視ラベルmoto/IFA、カードmoto/みおつくし（全ソースではない）。PAA4件のうち自社株質問が勤務先呼称へ変化、表示位置は自然検索3件目の後へ。サイトリンク、Amazon1470円・4.2/36件、関連検索を確認。
+
+### 分析・改善案
+
+[moto](https://note.com/recruit_man_note/n/n1032c32fbc36)と[みおつくし](https://note.com/famous_knot742/n/n0c1a89bc7c77)は定義・収支/資産・実践と著者/参考資料の構造を継続。[新規ダイヤモンド参照候補](https://diamond.jp/articles/-/78525?page=3)は書籍連載・著者・日付、起業の目的/法人化判断の構造。本文取得はキャッシュを含み、当日SERPの厳密遷移先確認ではない。歴史的な税務数値・固有表現・画像を転用しない。[対象理念](https://my-web-app-b67f4.web.app/philosophy)は自己経営と法人設立の違い、収支/資産・人的資本・6部署・30日運用・架空例・FAQ/編集方針を既に説明。5ページの当日HTTP初期HTMLでtitle/H1/canonical/内部リンク/JSON-LDを解析、詳細と失敗はJSONL。
+
+改善案は概念説明と具体的な利用例への既存導線を維持し、次回も同条件で下落と意図変化が続くか確認すること。単一地域・単日の変動だけで原因は特定できず、法人化テーマの追加やキーワード増量の根拠にもならない。新規不足テーマを特定せず、アプリ改修なし、追跡2文書のみ更新。
+
+### 検証・PR・次回
+
+既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)を更新。全30行JSON、日付一意、順位整合、前日未観測と最後の成功値の区別、remote再読一致を検証。専用Flutter test/analyze/release build・新規生成HTML・対象起動後描画はdocs-onlyで未実施。最新CI結果は別途報告。rollbackは当日記録コミットのrevert。マージ・デプロイなし、日次監視継続・アーカイブ保留。
+
+session-start-check/adaptive-model-router/recover-cua-runtime適用。Jev astra/medium推奨はadvisory、lead実行・モデル切替/workerなし。cloud-preferredでremote-only、ディスク39.06GiB・RAM78%/空き6.97GiB。元branch fix/salary-deposit-payslip-signal・HEAD c3e1d46077・upstream0/0・7dirty paths/32worktrees保持、新規worktreeなし。ルールdriftなし、tool-watchは既存#1422等へルーティング、NotebookLM一覧失敗は非依存。次回は2ページ目位置と観測順、1ページ目復帰、競合意図とサイト名/AI概要を確認。順位1位は保証しない。
