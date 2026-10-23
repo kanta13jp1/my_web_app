@@ -30,25 +30,51 @@ void main() {
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
       httpClient: MockClient((request) async {
         if (request.url.path == '/auth/v1/token') {
-          final payload = base64Url.encode(utf8.encode(jsonEncode({
-            'sub': owner,
-            'exp': 4102444800,
-            'role': 'authenticated',
-          }))).replaceAll('=', '');
-          return http.Response(jsonEncode({
-            'access_token': 'e30.$payload.test',
-            'refresh_token': 'synthetic-refresh',
-            'token_type': 'bearer',
-            'expires_in': 3600,
-            'user': {
+          final payload = base64Url
+              .encode(
+                utf8.encode(
+                  jsonEncode({
+                    'sub': owner,
+                    'exp': 4102444800,
+                    'role': 'authenticated',
+                  }),
+                ),
+              )
+              .replaceAll('=', '');
+          return http.Response(
+            jsonEncode({
+              'access_token': 'e30.$payload.test',
+              'refresh_token': 'synthetic-refresh',
+              'token_type': 'bearer',
+              'expires_in': 3600,
+              'user': {
+                'id': owner,
+                'aud': 'authenticated',
+                'role': 'authenticated',
+                'app_metadata': {},
+                'user_metadata': {},
+                'created_at': '2026-01-01T00:00:00Z',
+              },
+            }),
+            200,
+            headers: headers,
+            request: request,
+          );
+        }
+        if (request.url.path == '/auth/v1/user') {
+          return http.Response(
+            jsonEncode({
               'id': owner,
               'aud': 'authenticated',
               'role': 'authenticated',
               'app_metadata': {},
               'user_metadata': {},
               'created_at': '2026-01-01T00:00:00Z',
-            },
-          }), 200, headers: headers, request: request);
+            }),
+            200,
+            headers: headers,
+            request: request,
+          );
         }
         if (request.method == 'POST' &&
             request.url.path.endsWith('/wealth_struggles')) {
@@ -81,10 +107,13 @@ void main() {
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
-      final memo = find.byWidgetPredicate((widget) =>
-          widget is TextField && widget.decoration?.labelText == '内容');
-      final amount = find.byWidgetPredicate((widget) =>
-          widget is TextField && widget.decoration?.labelText == '金額 (円)');
+      final memo = find.byWidgetPredicate(
+        (widget) => widget is TextField && widget.decoration?.labelText == '内容',
+      );
+      final amount = find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField && widget.decoration?.labelText == '金額 (円)',
+      );
       expect(memo, findsOneWidget);
       await tester.ensureVisible(memo);
       await tester.enterText(memo, 'synthetic A draft');
@@ -108,6 +137,9 @@ void main() {
         expect(Supabase.instance.client.auth.currentUser!.id, owner);
         await tester.enterText(memo, 'synthetic B draft');
         await tester.enterText(amount, '222');
+        expect(tester.widget<TextField>(memo).controller!.text,
+            'synthetic B draft');
+        expect(tester.widget<TextField>(amount).controller!.text, '222');
       }
       await tester.runAsync(() async {
         writeGate.complete();
@@ -118,10 +150,14 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
       }
       expect(posts, 1);
-      expect(tester.widget<TextField>(memo).controller!.text,
-          switchOwner ? 'synthetic B draft' : '');
-      expect(tester.widget<TextField>(amount).controller!.text,
-          switchOwner ? '222' : '');
+      expect(
+        tester.widget<TextField>(memo).controller!.text,
+        switchOwner ? 'synthetic B draft' : '',
+      );
+      expect(
+        tester.widget<TextField>(amount).controller!.text,
+        switchOwner ? '222' : '',
+      );
       if (switchOwner) {
         expect(find.text('収支を記録しました'), findsNothing);
       }
