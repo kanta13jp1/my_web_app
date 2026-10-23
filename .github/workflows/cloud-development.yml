@@ -1,4 +1,4 @@
-name: Borrowing receipt diagnostic only
+name: Borrowing constraint isolated SQL only
 on:
   workflow_dispatch:
     inputs:
@@ -7,36 +7,35 @@ on:
         type: string
 permissions: {}
 jobs:
-  probe:
+  sql-probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     permissions:
       contents: read
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: synthetic-ci-only
+          POSTGRES_DB: borrowing_fixture
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Assert exact source
         env:
           EXPECTED_SHA: ${{ inputs.expected_head_sha }}
         run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
-      - uses: ./.github/actions/setup-flutter-sdk
-        with:
-          flutter-version: '3.38.x'
-      - run: flutter pub get
-      - name: Format scoped draft
-        run: dart format lib/services/asset_flow_kind.dart lib/pages/asset_management_page.dart lib/services/asset_payment_calendar_service.dart lib/services/behavior_review_service.dart test/services/asset_flow_kind_test.dart test/services/asset_borrowing_receipt_test.dart
-      - name: Analyze scoped draft
-        run: flutter analyze lib/services/asset_flow_kind.dart lib/pages/asset_management_page.dart lib/services/asset_payment_calendar_service.dart lib/services/behavior_review_service.dart test/services/asset_flow_kind_test.dart test/services/asset_borrowing_receipt_test.dart
-      - name: Financing isolation and existing regressions
-        run: flutter test test/services/asset_flow_kind_test.dart test/services/asset_borrowing_receipt_test.dart test/services/asset_payment_calendar_service_test.dart test/services/behavior_review_service_test.dart test/services/salary_category_source_probe_test.dart --reporter expanded
-      - name: Preserve formatted sources
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: borrowing-probe-sources
-          path: |
-            lib/services/asset_flow_kind.dart
-            lib/pages/asset_management_page.dart
-            lib/services/asset_payment_calendar_service.dart
-            lib/services/behavior_review_service.dart
-            test/services/asset_flow_kind_test.dart
-            test/services/asset_borrowing_receipt_test.dart
+      - name: Verify actual constraint script in disposable PostgreSQL
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: synthetic-ci-only
+          PGDATABASE: borrowing_fixture
+        run: psql -X -v ON_ERROR_STOP=1 -f test/sql/BORROWING_DB_CONSTRAINT_TEST.sql
