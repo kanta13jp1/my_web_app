@@ -71,7 +71,7 @@ def assert_current(state, pr):
 def validate_scope(paths, diff):
     require(0 < len(paths) <= MAX_FILES and len(paths) == len(set(paths)), 'Unsupported file count')
     require(0 < len(diff.encode()) <= MAX_DIFF, 'Review input exceeds limit; split the PR')
-    require('GIT binary patch' not in diff and 'Binary files ' not in diff, 'Binary diff cannot be approved')
+    require(not re.search(r'^(?:GIT binary patch|Binary files )', diff, re.M), 'Binary diff cannot be approved')
     require(not re.search(r'^(?:new file|deleted file|new|old) mode (?:120000|160000)', diff, re.M), 'Symlink/submodule changes need a dedicated review')
     for path in paths:
         require(not PRIVATE_PATH.search(path), 'Private records must not be sent to AI review')

@@ -65,6 +65,9 @@ class GateTests(unittest.TestCase):
         for paths, diff in cases:
             with self.subTest(paths=paths), self.assertRaises(ValueError): gate.validate_scope(paths, diff)
 
+    def test_binary_header_mentioned_in_source_is_not_a_binary_change(self):
+        gate.validate_scope(['a.py'], '+message = "Binary files are unsupported"')
+
     def test_provider_failure_missing_evidence_and_moved_base_publish_failure(self):
         for result_kind in ('missing', 'malformed', 'moved_base', 'changes'):
             with self.subTest(kind=result_kind), tempfile.TemporaryDirectory() as temp:
