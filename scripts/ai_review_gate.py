@@ -12,7 +12,10 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from security_review_input import redact_secrets_with_count
+try:
+    from security_review_input import redact_secrets_with_count
+except ModuleNotFoundError:
+    from scripts.security_review_input import redact_secrets_with_count
 
 CHECK = 'AI Review Gate'
 MAX_DIFF = 240_000
