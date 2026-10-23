@@ -540,29 +540,9 @@ export function handleCartesiaRealtimeWebSocket(
           generationInFlight = false;
           return;
         }
-        const usage = await recordVoiceAiUsage(db, {
-          userId,
-          provider: "cartesia",
-          feature: String(message.feature ?? "cartesia_realtime_tts").slice(
-            0,
-            80,
-          ),
-          metricType: "tts_chars",
-          quantity: countVoiceTextChars(transcript),
-          estimatedCostUsd: estimateVoiceAiCostUsd(
-            "cartesia",
-            "tts_chars",
-            countVoiceTextChars(transcript),
-          ),
-          policy: activePolicy,
-          metadata: {
-            realtime: true,
-            cartesia_version: CARTESIA_VERSION,
-            cartesia_zdr_enforced: isCartesiaZdrEnabled(),
-          },
-          dailyLimit: DEFAULT_TTS_DAILY_CHAR_LIMIT,
-          monthlyLimit: DEFAULT_TTS_MONTHLY_CHAR_LIMIT,
-        });
+        const usage = await reserveCartesiaRealtimeUsage(
+          db, userId, message, transcript, activePolicy,
+        );
 
         if (usage.blocked) {
           sendClient(socket, {
@@ -622,6 +602,38 @@ export function handleCartesiaRealtimeWebSocket(
   };
 
   return response;
+}
+
+export async function reserveCartesiaRealtimeUsage(
+  db: VoiceAiDb,
+  userId: string,
+  message: UnknownRecord,
+  transcript: string,
+  activePolicy: VoiceAiPolicy,
+): Promise<VoiceAiUsageResult> {
+  return await recordVoiceAiUsage(db, {
+    userId,
+    provider: "cartesia",
+    feature: String(message.feature ?? "cartesia_realtime_tts").slice(
+      0,
+      80,
+    ),
+    metricType: "tts_chars",
+    quantity: countVoiceTextChars(transcript),
+    estimatedCostUsd: estimateVoiceAiCostUsd(
+      "cartesia",
+      "tts_chars",
+      countVoiceTextChars(transcript),
+    ),
+    policy: activePolicy,
+    metadata: {
+      realtime: true,
+      cartesia_version: CARTESIA_VERSION,
+      cartesia_zdr_enforced: isCartesiaZdrEnabled(),
+    },
+    dailyLimit: readLimit(undefined, "VOICE_AI_TTS_DAILY_CHAR_LIMIT", DEFAULT_TTS_DAILY_CHAR_LIMIT),
+    monthlyLimit: readLimit(undefined, "VOICE_AI_TTS_MONTHLY_CHAR_LIMIT", DEFAULT_TTS_MONTHLY_CHAR_LIMIT),
+  });
 }
 
 export function observeCartesiaChunkTiming(params: {

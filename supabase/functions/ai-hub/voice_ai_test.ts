@@ -5,6 +5,7 @@ import {
   estimateVoiceSttSeconds,
   observeCartesiaChunkTiming,
   reserveVoiceTtsUsage,
+  reserveCartesiaRealtimeUsage,
   verifyVoiceProxyToken,
   type VoiceAiDb,
   type VoiceAiDbQuery,
@@ -227,3 +228,26 @@ class FakeQuery implements VoiceAiDbQuery {
     });
   }
 }
+
+Deno.test("realtime reservations enforce configured server caps", async () => {
+  const daily = Deno.env.get("VOICE_AI_TTS_DAILY_CHAR_LIMIT");
+  const monthly = Deno.env.get("VOICE_AI_TTS_MONTHLY_CHAR_LIMIT");
+  Deno.env.set("VOICE_AI_TTS_DAILY_CHAR_LIMIT", "4");
+  Deno.env.set("VOICE_AI_TTS_MONTHLY_CHAR_LIMIT", "40");
+  try {
+    const db = new FakeDb();
+    const result = await reserveCartesiaRealtimeUsage(
+      db,
+      "00000000-0000-0000-0000-000000000001",
+      { daily_char_limit: 999999, monthly_char_limit: 999999 },
+      "12345",
+      { trainingConsent: false, zeroDataRetentionRequested: true, consentUpdatedAt: null },
+    );
+    assertEquals(db.rpcCalls[0].args.p_daily_limit, 4);
+    assertEquals(db.rpcCalls[0].args.p_monthly_limit, 40);
+    assertEquals(result.blocked, true);
+  } finally {
+    restoreEnv("VOICE_AI_TTS_DAILY_CHAR_LIMIT", daily);
+    restoreEnv("VOICE_AI_TTS_MONTHLY_CHAR_LIMIT", monthly);
+  }
+});
