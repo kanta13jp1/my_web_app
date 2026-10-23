@@ -230,9 +230,17 @@ class SalarySpendingBreakdownService {
   }
 
   String categorize(String description) {
-    final text = description.toLowerCase();
-    if (WasteTrackingService.extractWasteCategory(description) == '喫煙' &&
-        !RegExp(r'食品|飲酒|酒購入|書籍|内訳').hasMatch(description)) {
+    // 未確定の用途候補は取引の事実ではない。原文は表示用に保持する。
+    final classificationText = description.replaceAll(
+      RegExp(
+        r'(?:返済|贈与|自分口座間振替)(?:・(?:返済|贈与|自分口座間振替))+'
+        r'等の用途は未確認で推定しない[。]?',
+      ),
+      '',
+    );
+    final text = classificationText.toLowerCase();
+    if (WasteTrackingService.extractWasteCategory(classificationText) == '喫煙' &&
+        !RegExp(r'食品|飲酒|酒購入|書籍|内訳').hasMatch(classificationText)) {
       return '娯楽・浪費';
     }
     // 金融機関名を含む手数料を返済元本へ分類しない。
