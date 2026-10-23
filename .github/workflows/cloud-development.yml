@@ -22,5 +22,6 @@ jobs:
         with:
           flutter-version: '3.38.x'
       - run: flutter pub get
-      - run: flutter analyze test/services/salary_category_source_probe_test.dart
-      - run: flutter test test/services/salary_category_source_probe_test.dart test/services/salary_spending_breakdown_service_test.dart --reporter expanded
+      - run: dart format lib/services/asset_salary_spending_entries.dart lib/services/salary_spending_breakdown_service.dart lib/pages/asset_management_page.dart test/services/salary_category_source_probe_test.dart
+      - run: flutter analyze lib/services/asset_salary_spending_entries.dart lib/services/salary_spending_breakdown_service.dart lib/pages/asset_management_page.dart test/services/salary_category_source_probe_test.dart
+      - run: flutter test test/services/salary_category_source_probe_test.dart test/services/salary_spending_breakdown_service_test.dart test/services/asset_salary_spending_entries_test.dart --reporter expanded

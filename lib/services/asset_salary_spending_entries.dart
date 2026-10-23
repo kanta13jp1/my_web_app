@@ -1,3 +1,4 @@
+import 'asset_flow_description_service.dart';
 import '../models/asset_income_source_evidence.dart';
 import 'asset_liability_monthly_state_store.dart';
 import '../models/asset_liability_workbook.dart';
@@ -106,6 +107,10 @@ class AssetSalarySpendingEntries {
             date: occurredAt,
             amount: amount,
             description: displayTitle.isEmpty ? description : displayTitle,
+            categoryDescription: AssetFlowDescriptionService.parse(
+              description,
+              actionType: actionType,
+            ).memo,
             sourceLabel: _flowLabel(actionType),
           ),
         );

@@ -8,12 +8,16 @@ class SalarySpendingEntry {
     required this.amount,
     required this.description,
     required this.sourceLabel,
+    this.categoryDescription,
   });
 
   final DateTime date;
   final double amount;
   final String description;
   final String sourceLabel;
+
+  /// 用途分類専用の本文。表示用の出所口座名は含めない。
+  final String? categoryDescription;
 }
 
 class SalaryIncomeEntry {
@@ -149,7 +153,7 @@ class SalarySpendingBreakdownService {
                   '食費': amount - smoking,
                   '娯楽・浪費': smoking.toDouble(),
                 }
-              : <String, double>{categorize(entry.description): amount};
+              : <String, double>{categorize(entry.categoryDescription ?? entry.description): amount};
       for (final allocation in allocations.entries) {
         final category = allocation.key;
         totalsByCategory[category] =
