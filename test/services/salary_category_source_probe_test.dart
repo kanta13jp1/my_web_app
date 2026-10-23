@@ -75,8 +75,10 @@ void main() {
     expect(result.totalExpense, 2500);
     expect(result.sections.any((s) => s.category == '借入返済'), isFalse);
     expect(entries.expenses.first.categoryDescription, '水道料');
-    expect(entries.expenses.first.description,
-        '[三井住友銀行] 水道料 __import_metadata__');
+    expect(
+      entries.expenses.first.description,
+      '[三井住友銀行] 水道料 __import_metadata__',
+    );
     expect(entries.expenses.last.categoryDescription, isEmpty);
   });
   test('explicit repayments and fees retain their categories', () {
