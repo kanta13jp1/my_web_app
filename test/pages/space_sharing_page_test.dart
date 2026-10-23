@@ -209,7 +209,8 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
-  testWidgets('cancelled invitation resets email when reopened', (tester) async {
+  testWidgets('cancelled invitation resets email when reopened',
+      (tester) async {
     final source = _FakeSpaceSharingDataSource(_ownerSnapshot());
     await tester.pumpWidget(
       MaterialApp(
