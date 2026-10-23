@@ -15,12 +15,15 @@ void main() {
       MaterialApp(home: VoiceAiGovernancePage(service: service)),
     );
     await tester.pumpAndSettle();
-    final toggle = tester.widget<SwitchListTile>(
-      find.byType(SwitchListTile),
-    ).onChanged!;
-    final refresh = tester.widget<IconButton>(
-      find.byTooltip('Refresh'),
-    ).onPressed!;
+    final toggle = tester
+        .widget<SwitchListTile>(
+          find.byType(SwitchListTile),
+        )
+        .onChanged!;
+    final refreshButton = find.byWidgetPredicate(
+      (widget) => widget is IconButton && widget.tooltip == 'Refresh',
+    );
+    final refresh = tester.widget<IconButton>(refreshButton).onPressed!;
     toggle(true);
     toggle(false);
     refresh();
@@ -28,13 +31,16 @@ void main() {
     expect(service.writes, <bool>[true]);
     expect(service.loads, 1);
     expect(
-      tester.widget<IconButton>(find.byTooltip('Refresh')).onPressed,
+      tester.widget<IconButton>(refreshButton).onPressed,
       isNull,
     );
 
     service.saved.complete(const VoiceAiSettings(trainingConsent: true));
     await tester.pumpAndSettle();
-    expect(tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value, isTrue);
+    expect(
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+      isTrue,
+    );
     expect(service.loads, 1);
     expect(tester.takeException(), isNull);
   });
