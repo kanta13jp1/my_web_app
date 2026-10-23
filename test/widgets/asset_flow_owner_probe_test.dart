@@ -88,8 +88,9 @@ void main() {
       }),
     );
   });
-  for (final switchOwner in [false, true]) {
-    testWidgets('flow completion respects owner switch=$switchOwner',
+  for (final mode in [0, 1, 2]) {
+    final switchOwner = mode != 0;
+    testWidgets('flow completion respects owner mode=$mode',
         (tester) async {
       owner = '00000000-0000-4000-8000-000000000001';
       posts = 0;
@@ -135,6 +136,14 @@ void main() {
           password: 'synthetic-only',
         );
         expect(Supabase.instance.client.auth.currentUser!.id, owner);
+        if (mode == 2) {
+          owner = '00000000-0000-4000-8000-000000000001';
+          await Supabase.instance.client.auth.signInWithPassword(
+            email: 'returned@example.invalid',
+            password: 'synthetic-only',
+          );
+          expect(Supabase.instance.client.auth.currentUser!.id, owner);
+        }
         await tester.enterText(memo, 'synthetic B draft');
         await tester.enterText(amount, '222');
         expect(
