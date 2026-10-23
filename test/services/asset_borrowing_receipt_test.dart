@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../lib/services/asset_payment_calendar_service.dart';
-import '../../lib/services/behavior_review_service.dart';
+import 'package:my_web_app/services/asset_payment_calendar_service.dart';
+import 'package:my_web_app/services/behavior_review_service.dart';
 
 void main() {
   final receipt = <String, dynamic>{

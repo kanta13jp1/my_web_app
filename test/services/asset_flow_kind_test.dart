@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../lib/services/asset_flow_kind.dart';
+import 'package:my_web_app/services/asset_flow_kind.dart';
 
 void main() {
   test('borrowed receipts do not inflate income or expense totals', () {
