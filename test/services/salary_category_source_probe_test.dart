@@ -3,6 +3,18 @@ import 'package:my_web_app/services/asset_salary_spending_entries.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 
 void main() {
+  test('unconfirmed purpose candidates are not repayment evidence', () {
+    const service = SalarySpendingBreakdownService();
+    const caution = '返済・贈与・自分口座間振替等の用途は未確認で推定しない。';
+    expect(service.categorize('個人宛振込（用途未確認）。$caution'), 'その他');
+    expect(service.categorize('家賃。$caution'), '住居');
+    expect(service.categorize('水道料。$caution'), '光熱費');
+    expect(service.categorize('水道料 $caution'), '光熱費');
+    expect(service.categorize('家賃\n$caution'), '住居');
+    expect(service.categorize('ローン返済 $caution'), '借入返済');
+    expect(service.categorize('ATM手数料。$caution'), '手数料・税金');
+    expect(service.categorize('ローン返済。残高は未確認。'), '借入返済');
+  });
   test('source metadata does not change utilities, totals, or visible text',
       () {
     final entries = AssetSalarySpendingEntries.build(
