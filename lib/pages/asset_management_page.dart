@@ -7063,12 +7063,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// Fetch older rows only when the user opens a specific account's history.
   /// This path is read-only and deliberately does not use the 400-day summary.
+  AssetBalanceHistoryLoader _balanceHistoryLoader(String type) {
+    final ownerId = _supabase.auth.currentUser?.id;
+    return (offset) => _loadBalanceHistoryPage(type, offset, ownerId);
+  }
+
   Future<List<AssetBalanceObservation>> _loadBalanceHistoryPage(
     String type,
     int offset,
+    String? expectedOwnerId,
   ) async {
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) throw StateError('ログインが必要です。');
+    if (userId == null || userId != expectedOwnerId) {
+      throw StateError('利用者が変更されました。');
+    }
     final data = await _supabase
         .from('cfo_assets')
         .select('id,title,amount,created_at')
@@ -7077,6 +7085,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         .order('created_at', ascending: false)
         .order('id', ascending: false)
         .range(offset, offset + 49);
+    if (_supabase.auth.currentUser?.id != expectedOwnerId) {
+      throw StateError('利用者が変更されました。');
+    }
     return data.map(AssetBalanceObservation.fromRow).toList(growable: false);
   }
 
@@ -33156,7 +33167,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               AssetBalanceHistoryControl(
                 accountName: type,
                 latest: _latestBalanceObservations[type],
-                loadPage: (offset) => _loadBalanceHistoryPage(type, offset),
+                loadPage: _balanceHistoryLoader(type),
+                ownerId: _supabase.auth.currentUser?.id,
+                ownerChanges: _supabase.auth.onAuthStateChange
+                    .map((event) => event.session?.user.id),
               ),
             ],
           ),
