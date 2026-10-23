@@ -15,6 +15,7 @@ on:
         default: full
         type: choice
         options:
+          - voice
           - workspace
           - format
           - analyze
@@ -150,3 +151,19 @@ jobs:
             echo '| local Flutter/Dart work | none |'
             echo '| artifact retention | 1 day when a web build or formatter output runs |'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  voice:
+    if: inputs.profile == 'voice'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
+        with:
+          deno-version: v2.x
+      - name: Check and test synthetic voice governance
+        run: |
+          deno check supabase/functions/ai-hub/voice_ai.ts
+          deno test --allow-env supabase/functions/ai-hub/voice_ai_test.ts
