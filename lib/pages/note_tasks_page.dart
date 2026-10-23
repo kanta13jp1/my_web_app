@@ -122,7 +122,7 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
         _notifications = notifications;
         _error = null;
       });
-      unawaited(_schedulePendingNotifications(notifications));
+      unawaited(_schedulePendingNotifications(notifications, generation));
     } catch (error) {
       if (!mounted || generation != _loadGeneration) return;
       setState(() {
@@ -149,11 +149,12 @@ class _NoteTasksPageState extends State<NoteTasksPage> {
 
   Future<void> _schedulePendingNotifications(
     List<NoteFeatureNotification> notifications,
+    int generation,
   ) async {
     if (!_localNotificationSchedulingEnabled) return;
     final now = DateTime.now().toUtc();
     for (final notification in notifications) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       final notifyAt = notification.notifyAt;
       if (!notification.isReminder ||
           notification.isRead ||

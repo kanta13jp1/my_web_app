@@ -463,6 +463,43 @@ void main() {
     expect(service.scheduledKeys.length, 1);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('new reload stops obsolete reminder scheduling',
+      (tester) async {
+    final service = _DelayedReminderService();
+    final repository = _FakeNoteTaskRepository(
+      const <NoteTask>[],
+      notifications: [
+        for (final id in ['first', 'second'])
+          _notification(
+            id: id,
+            kind: NoteFeatureNotificationKind.taskReminder,
+            title: id,
+            message: 'Synthetic reminder',
+            noteId: 1,
+            notifyAt: DateTime.now().add(const Duration(days: 1)),
+          ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NoteTasksPage(
+          repository: repository,
+          notificationService: service,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(service.scheduledKeys.length, 1);
+    repository.notificationsOverride =
+        () async => <NoteFeatureNotification>[];
+    await tester.tap(find.byKey(const Key('note_tasks_page_refresh')));
+    await tester.pumpAndSettle();
+    service.pending.complete();
+    await tester.pumpAndSettle();
+    expect(service.scheduledKeys.length, 1);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _FakeNoteTaskRepository
