@@ -10,7 +10,7 @@ void main() {
   testWidgets('consent save rejects duplicate writes and stale refresh',
       (tester) async {
     final service = _DelayedConsentService();
-    addTearDown(service.client.dispose);
+    addTearDown(() => tester.runAsync(service.client.dispose));
     await tester.pumpWidget(
       MaterialApp(home: VoiceAiGovernancePage(service: service)),
     );
@@ -48,7 +48,13 @@ void main() {
 
 class _DelayedConsentService extends VoiceAiSettingsService {
   _DelayedConsentService()
-      : this._(SupabaseClient('https://fixture.invalid', 'synthetic-key'));
+      : this._(
+          SupabaseClient(
+            'https://fixture.invalid',
+            'synthetic-key',
+            authOptions: const AuthClientOptions(autoRefreshToken: false),
+          ),
+        );
 
   _DelayedConsentService._(this.client) : super(client);
 
