@@ -26,10 +26,15 @@ class LegacyAiCredentialCleanup {
   }
 
   Future<void> run() async {
-    final preferences = await _preferencesProvider();
-    for (final key in legacyCredentialKeys) {
-      await preferences.remove(key);
-      await _secureDelete(key);
-    }
+    await Future.wait<void>([
+      Future<void>.sync(() async {
+        final preferences = await _preferencesProvider();
+        for (final key in legacyCredentialKeys) {
+          await preferences.remove(key);
+        }
+      }),
+      for (final key in legacyCredentialKeys)
+        Future<void>.sync(() => _secureDelete(key)),
+    ]);
   }
 }
