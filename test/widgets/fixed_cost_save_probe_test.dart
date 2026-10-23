@@ -19,8 +19,8 @@ void main() {
               calls++;
               expect(cost.name, '合成固定費');
               expect(cost.amount, 1234);
-              if (calls == 1) await gate.future;
-              if (fails && calls == 1) throw StateError('synthetic failure');
+              if (calls == 1) { await gate.future; }
+              if (fails && calls == 1) { throw StateError('synthetic failure'); }
             });
           closed = true;
         }, child: const Text('open')),
