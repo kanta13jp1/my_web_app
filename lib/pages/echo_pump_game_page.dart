@@ -144,10 +144,17 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
         builder: (dialogContext) => EchoPumpDoorTransition(
           from: from,
           to: destination,
-          onFinished: () => Navigator.of(dialogContext).pop(),
+          onFinished: () async {
+            await _audio.suspendEffects();
+            if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+          },
+          onOpen: () => _audio.cue(EchoPumpCue.doorOpen),
+          onClose: () => _audio.cue(EchoPumpCue.doorClose),
         ),
       );
     } finally {
+      _audio.resumeEffects();
+      if (mounted) _audio.cue(EchoPumpCue.step);
       if (mounted) setState(() => _moving = false);
     }
   }
