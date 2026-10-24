@@ -40,7 +40,7 @@ jobs:
         run: |
           python -m venv /tmp/dependency-check
           if [ "$PROFILE" = root-minimum ]; then
-            /tmp/dependency-check/bin/python -m pip install -r requirements.txt "supabase==2.32.0" "google-genai==2.29.0" "notebooklm-py==0.8.4"
+            /tmp/dependency-check/bin/python -m pip install -r requirements.txt "supabase==2.33.0" "google-genai==2.31.0" "notebooklm-py==0.8.5"
           elif [ "$PROFILE" = root ]; then
             /tmp/dependency-check/bin/python -m pip install -r requirements.txt
           else
