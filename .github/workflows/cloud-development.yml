@@ -1,4 +1,4 @@
-name: Approved PR5913 Web Release
+name: Approved PR5909 Web Release
 
 on:
   pull_request:
@@ -46,7 +46,7 @@ on:
   workflow_dispatch:
     inputs:
       approved_release:
-        description: Explicit owner approved PR5913-only release
+        description: Explicit owner approved PR5909-only release
         required: true
         default: false
         type: boolean
@@ -135,22 +135,31 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='4e58530b76dd8b094833d1a90126b99661ffbae5', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='11eca15f0f24ae3fe950d70b4da3fa5e5dba374f', 'Production changed; rebuild selection'
           PY
 
-      - name: Verify approved PR5913-only selection
+      - name: Verify approved PR5909-only selection
         env:
           GH_TOKEN: ${{ github.token }}
+          APPROVED_RELEASE: ${{ inputs.approved_release }}
+          DEPLOY_SCOPE: ${{ inputs.deploy_scope }}
         run: |
-          test "$(gh pr view 5913 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
-          test "$(gh pr view 5913 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 7dcfb937c404c7437ca8b3af8be103fdbf771744
-          git fetch --no-tags --depth=1 origin 4e58530b76dd8b094833d1a90126b99661ffbae5
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
+          test "$APPROVED_RELEASE" = true
+          test "$DEPLOY_SCOPE" = web_only
+          test "$CLOUD_PROFILE" = full
+          test "$EXPECTED_HEAD_SHA" = "$GITHUB_SHA"
+          test "$(gh pr view 5909 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
+          test "$(gh pr view 5909 --repo kanta13jp1/my_web_app --json headRefOid --jq .headRefOid)" = 897124303bd7ba5ec2ee22202ead727ef735bd2c
+          test "$(gh pr view 5909 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 2b5c60313ed21a2f08ae53fcc06b83fe725b6247
+          git fetch --no-tags --depth=1 origin 11eca15f0f24ae3fe950d70b4da3fa5e5dba374f
           python3 - <<'PY'
           import subprocess
-          expected={'test/services/workbook_calendar_gap_test.dart', 'lib/services/asset_liability_history_service.dart', 'lib/services/asset_liability_monthly_report_service.dart', '.github/workflows/cloud-development.yml', 'lib/services/asset_snapshot_calendar.dart'}
-          actual=set(subprocess.check_output(['git','diff','--name-only','4e58530b76dd8b094833d1a90126b99661ffbae5','HEAD']).decode().splitlines())
+          expected=['.github/workflows/cloud-development.yml', 'test/web/seo_shell_handoff.test.cjs', 'test/web_index_trial_handoff_test.dart', 'web/index.html']
+          actual=sorted(subprocess.check_output(['git','diff','--name-only','11eca15f0f24ae3fe950d70b4da3fa5e5dba374f','HEAD']).decode().splitlines())
           assert actual==expected,(actual,expected)
-          expected_blobs={'lib/services/asset_liability_history_service.dart': '6c968e081a78d6f2f2bb1a1db8aed45b0be22796', 'lib/services/asset_liability_monthly_report_service.dart': 'c6636d992199814c9842f0ca109d65a590f839bd', 'lib/services/asset_snapshot_calendar.dart': 'a05c9fca083e7bc73343a8031205928ffa98f7d6', 'test/services/workbook_calendar_gap_test.dart': 'bef78ed7f4d4eb5fd5783a13e305530f71036166'}
+          expected_blobs={'web/index.html': 'ae79943cadb5f2a11cae7c6284277287c4f6440d', 'test/web/seo_shell_handoff.test.cjs': '23f2ae1657aee898963ed2101b0d11c18436093b', 'test/web_index_trial_handoff_test.dart': 'b1164f4647046871aaedfd31b2401c244ca20f87'}
           for path, expected_blob in expected_blobs.items():
               blob=subprocess.check_output(['git','rev-parse','HEAD:'+path]).decode().strip()
               assert blob==expected_blob,(path,blob)
@@ -625,7 +634,7 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='4e58530b76dd8b094833d1a90126b99661ffbae5', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='11eca15f0f24ae3fe950d70b4da3fa5e5dba374f', 'Production changed; rebuild selection'
           PY
 
       - name: Collect pushed files
@@ -645,7 +654,7 @@ jobs:
           mkdir -p .deploy-logs
           python3 - <<'PY'
           from pathlib import Path
-          Path('.deploy-logs/changed-files.txt').write_text('lib/pages/asset_management_page.dart\ntest/widgets/asset_flow_owner_probe_test.dart\n')
+          Path('.deploy-logs/changed-files.txt').write_text('web/index.html\ntest/web/seo_shell_handoff.test.cjs\ntest/web_index_trial_handoff_test.dart\n')
           PY
 
       - name: Reject mixed public-blog deployments
@@ -1340,7 +1349,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         env:
           FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-          EXPECTED_PUBLIC_BASE: 4e58530b76dd8b094833d1a90126b99661ffbae5
+          EXPECTED_PUBLIC_BASE: 11eca15f0f24ae3fe950d70b4da3fa5e5dba374f
         run: |
           python3 -m venv /tmp/echo-release-tools
           /tmp/echo-release-tools/bin/pip install google-auth==2.43.0 requests==2.32.5
@@ -1372,7 +1381,7 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          EXPECTED_PUBLIC_BASE=4e58530b76dd8b094833d1a90126b99661ffbae5 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
+          EXPECTED_PUBLIC_BASE=11eca15f0f24ae3fe950d70b4da3fa5e5dba374f /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
 
           if npx -y firebase-tools@15.34.0 deploy \
             --only hosting \
