@@ -187,6 +187,8 @@ class AssetLiabilityHistoryService {
         '期限超過件数',
         'actual_paid_payment_total',
         'payment_difference_total',
+        'securities_total',
+        'monthly_received_income_total',
       ],
       for (final snapshot in sorted)
         <Object?>[
@@ -202,6 +204,8 @@ class AssetLiabilityHistoryService {
           snapshot.overduePaymentCount,
           snapshot.monthlyActualPaymentTotal,
           snapshot.monthlyPaymentDifferenceTotal,
+          snapshot.securitiesTotal,
+          snapshot.monthlyReceivedIncomeTotal,
         ],
     ]);
   }
