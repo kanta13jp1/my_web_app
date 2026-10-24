@@ -25,8 +25,7 @@ void main() {
     expect(
       shortages,
       hasLength(2),
-      reason: 'fixture must contain two independent shortages: ' +
-          book.accountCashflowSummaries.map((x) => '${x.accountId}:${x.currentBalance}:${x.upcomingPayments}:${x.projectedBalance}').join(','),
+      reason: 'fixture must contain two independent deposit-account shortages',
     );
     expect(book.transferSuggestions, isNotEmpty);
     final total = book.transferSuggestions
