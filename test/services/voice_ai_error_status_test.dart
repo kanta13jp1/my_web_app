@@ -7,8 +7,8 @@ void main() {
     expect(
       voiceAiErrorStatus(
         const FunctionException(
-        status: 429,
-        details: {'error': 'voice_usage_limit_exceeded'},
+          status: 429,
+          details: {'error': 'voice_usage_limit_exceeded'},
         ),
       ),
       'blocked',
@@ -18,8 +18,8 @@ void main() {
     expect(
       voiceAiErrorStatus(
         const FunctionException(
-        status: 403,
-        details: {'error': 'voice_training_consent_or_provider_zdr_required'},
+          status: 403,
+          details: {'error': 'voice_training_consent_or_provider_zdr_required'},
         ),
       ),
       'privacy_blocked',
