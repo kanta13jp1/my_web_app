@@ -65,7 +65,7 @@ class AssetManagementFixedCostSummaryService {
     }
 
     for (final cost in recurringFixedCosts) {
-      if (!cost.appliesToMonth(target.month)) {
+      if (!cost.appliesToBillingMonth(target)) {
         continue;
       }
       addEntry(
