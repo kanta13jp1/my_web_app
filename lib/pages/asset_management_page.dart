@@ -28310,8 +28310,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               '${row.name} / 支払日 ${row.paymentDay ?? '-'}日 / '
               '予定 ${_formatManagementYen(row.scheduledPaymentAmount)} / '
               '最低推定 ${_formatManagementYen(row.minimumPaymentEstimate)} / '
-              '元金 ${_formatManagementYen(row.principalPaymentEstimate)} / '
-              '金利 ${_formatManagementYen(row.monthlyInterestEstimate)}',
+              '元金返済の概算 ${_formatManagementYen(row.principalPaymentEstimate)} / '
+              '月利息の概算 ${_formatManagementYen(row.monthlyInterestEstimate)}',
               style: const TextStyle(fontSize: 12, height: 1.5),
             ),
           ),
@@ -29588,6 +29588,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 lineTouchData: LineTouchData(
                   enabled: true,
                   touchTooltipData: LineTouchTooltipData(
+                    fitInsideHorizontally: true,
+                    fitInsideVertically: true,
                     getTooltipItems: (spots) {
                       return spots.map((spot) {
                         if (spot.barIndex < 0 ||
@@ -31081,7 +31083,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 value: _formatManagementYen(row.minimumPaymentEstimate),
               ),
               _buildDebtMasterMetric(
-                label: '月利息',
+                label: '月利息の概算',
                 value: _formatManagementYen(row.monthlyInterestEstimate),
               ),
               _buildDebtMasterMetric(
