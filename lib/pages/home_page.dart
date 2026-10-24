@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/services/asset_flow_request.dart';
 import 'package:intl/intl.dart';
 
 // Services
@@ -683,8 +684,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
     }
 
     try {
-      final dynamic rowsRaw = await Supabase.instance.client
-          .from('wealth_struggles')
+      final dynamic rowsRaw = await AssetFlowRequest.table(Supabase.instance.client)
           .select('action_type,amount,occurred_at')
           .eq('user_id', userId)
           .gte('occurred_at', monthStart.toUtc().toIso8601String())
@@ -751,8 +751,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
     ).add(const Duration(days: 1));
 
     try {
-      final dynamic rowsRaw = await Supabase.instance.client
-          .from('wealth_struggles')
+      final dynamic rowsRaw = await AssetFlowRequest.table(Supabase.instance.client)
           .select('action_type,amount,occurred_at')
           .eq('user_id', userId)
           .gte('occurred_at', normalizedStart.toUtc().toIso8601String())
@@ -995,8 +994,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
             .select('title,amount,created_at')
             .eq('user_id', userId)
             .order('created_at', ascending: true),
-        Supabase.instance.client
-            .from('wealth_struggles')
+        AssetFlowRequest.table(Supabase.instance.client)
             .select('amount,description,occurred_at,action_type')
             .eq('user_id', userId)
             .order('occurred_at', ascending: true),
