@@ -4,6 +4,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -40,19 +41,25 @@ void main() {
     AssetRecurringTombstoneSyncService.resetSharedForTest();
     final repository = _ReadOnlyFixtureRepository();
     final now = DateTime(2026, 9, 1);
+    final fixtureWorkbook = const AssetLiabilityPlanningService().buildWorkbook(
+      latestSnapshot: const <String, double>{'財布(現金)': 1000, '三井住友銀行': 500000, 'モビット': -100000},
+      baseDate: now,
+    );
+    expect(fixtureWorkbook.billingConfirmationPendingRows, isNotEmpty);
     await tester.pumpWidget(MaterialApp(home: AssetManagementPage(
       debugNow: now,
       debugCalendarNow: now,
       assetLiabilityRepository: repository,
       debugInitialAssetData: const <String, Map<String, double>>{
-        '2026-09-01': <String, double>{'財布(現金)': 1000, '三井住友銀行': 500000},
+        '2026-09-01': <String, double>{'財布(現金)': 1000, '三井住友銀行': 500000, 'モビット': -100000},
       },
     ),),);
     for (var frame = 0; frame < 8; frame++) {
       await tester.pump(const Duration(milliseconds: 300));
     }
-    final row = find.textContaining('元金返済の概算').first;
-    expect(row, findsOneWidget);
+    final rows = find.textContaining('元金返済の概算');
+    expect(rows, findsWidgets);
+    final row = rows.first;
     expect(tester.widget<Text>(row).data, contains('月利息の概算'));
     await Scrollable.ensureVisible(tester.element(row), alignment: 0.5);
     for (var frame = 0; frame < 3; frame++) {
