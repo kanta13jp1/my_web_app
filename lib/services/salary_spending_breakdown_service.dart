@@ -1,3 +1,4 @@
+import '../models/receipt_category_allocation.dart';
 import 'waste_tracking_service.dart';
 import '../models/asset_income_source_evidence.dart';
 
@@ -7,12 +8,16 @@ class SalarySpendingEntry {
     required this.amount,
     required this.description,
     required this.sourceLabel,
+    this.categoryDescription,
   });
 
   final DateTime date;
   final double amount;
   final String description;
   final String sourceLabel;
+
+  /// 用途分類専用の本文。表示用の出所口座名は含めない。
+  final String? categoryDescription;
 }
 
 class SalaryIncomeEntry {
@@ -136,12 +141,22 @@ class SalarySpendingBreakdownService {
             )
           : amount;
       final reconciled = smoking > 0 && smoking < amount;
-      final allocations = reconciled
+      final receipt =
+          ReceiptCategoryAllocation.parse(entry.description, amount);
+      final allocations = receipt != null
           ? <String, double>{
-              '食費': amount - smoking,
-              '娯楽・浪費': smoking.toDouble(),
+              if (receipt.containsKey('食品')) '食費': receipt['食品']!,
+              '娯楽・浪費': (receipt['飲酒'] ?? 0) + (receipt['喫煙'] ?? 0),
             }
-          : <String, double>{categorize(entry.description): amount};
+          : reconciled
+              ? <String, double>{
+                  '食費': amount - smoking,
+                  '娯楽・浪費': smoking.toDouble(),
+                }
+              : <String, double>{
+                  categorize(entry.categoryDescription ?? entry.description):
+                      amount,
+                };
       for (final allocation in allocations.entries) {
         final category = allocation.key;
         totalsByCategory[category] =
@@ -215,7 +230,19 @@ class SalarySpendingBreakdownService {
   }
 
   String categorize(String description) {
-    final text = description.toLowerCase();
+    // 未確定の用途候補は取引の事実ではない。原文は表示用に保持する。
+    final classificationText = description.replaceAll(
+      RegExp(
+        r'(?:返済|贈与|自分口座間振替)(?:・(?:返済|贈与|自分口座間振替))+'
+        r'等の用途は未確認で推定しない[。]?',
+      ),
+      '',
+    );
+    final text = classificationText.toLowerCase();
+    if (WasteTrackingService.extractWasteCategory(classificationText) == '喫煙' &&
+        !RegExp(r'食品|飲酒|酒購入|書籍|内訳').hasMatch(classificationText)) {
+      return '娯楽・浪費';
+    }
     // 金融機関名を含む手数料を返済元本へ分類しない。
     // fee の部分一致は coffee 等も拾うため単語境界を使う。
     if (text.contains('手数料') || RegExp(r'\bfees?\b').hasMatch(text)) {
@@ -296,7 +323,6 @@ const List<_SalarySpendingCategoryRule> _categoryRules =
     'paypayカード',
     '楽天カード',
     'エポス',
-    '三井住友',
     'セゾン',
     'カードローン',
   ]),
