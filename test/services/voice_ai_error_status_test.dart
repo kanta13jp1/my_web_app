@@ -5,19 +5,23 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 void main() {
   test('quota response is shown as blocked', () {
     expect(
-      voiceAiErrorStatus(const FunctionException(
+      voiceAiErrorStatus(
+        const FunctionException(
         status: 429,
         details: {'error': 'voice_usage_limit_exceeded'},
-      )),
+        ),
+      ),
       'blocked',
     );
   });
   test('privacy response requests consent', () {
     expect(
-      voiceAiErrorStatus(const FunctionException(
+      voiceAiErrorStatus(
+        const FunctionException(
         status: 403,
         details: {'error': 'voice_training_consent_or_provider_zdr_required'},
-      )),
+        ),
+      ),
       'privacy_blocked',
     );
   });
