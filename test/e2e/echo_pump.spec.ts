@@ -260,3 +260,30 @@ test('reduced motion enters the next room without a door sequence', async ({ pag
   await expect(button('工具庫へ')).toBeEnabled();
   await page.screenshot({ path: info.outputPath('door-reduced-motion.png') });
 });
+
+test('seven room backgrounds follow the actual exploration route', async ({ page }, info) => {
+  test.setTimeout(120000);
+  await page.goto('/');
+  const button = (name: string) => page.getByRole(/^[ABC] /.test(name) ? 'checkbox' : 'button', {name, exact: true});
+  await button('ゲーム開始').click();await button('スキップして開始').click();
+  const scenes: Record<string, string> = {
+    control: '配電盤と計器の管理室', hall: '奥へ続く扉と配管の中央廊下',
+    loading: '木箱と搬入口の搬入区画', workshop: '工具壁と作業台の工具庫',
+    pump: '大型配管と排水機のポンプ室', inspection: '水路と格子床の点検槽', exit: '雨と外光が差す出口',
+  };
+  async function capture(room: string) {
+    await expect(button('演出をスキップ')).toHaveCount(0);
+    await expect(page.getByRole('img', {name: '部屋の背景：'+scenes[room], exact: true})).toBeAttached();
+    await page.mouse.move(100, 200);await page.mouse.wheel(0, -30000);await page.waitForTimeout(200);
+    await page.screenshot({path: info.outputPath('room-'+room+'.png'), scale:'css'});
+  }
+  async function act(...names: string[]) {for (const name of names) {await button(name).click();await expect(button('演出をスキップ')).toHaveCount(0);}}
+  await capture('control');
+  await act('中央廊下へ');await capture('hall');
+  await act('搬入区画へ');await capture('loading');
+  await act('中央廊下へ','管理室へ','B 整備','A 搬入','中央廊下へ','工具庫へ');await capture('workshop');
+  await act('ヒューズを回収','中央廊下へ','ポンプ室へ');await capture('pump');
+  await act('点検槽へ');await capture('inspection');
+  await act('ポンプ室へ','中央廊下へ','管理室へ','B 整備','C 排水','1ターン待つ','1ターン待つ','中央廊下へ','ポンプ室へ','隔壁を閉じる','ヒューズで修理','排水ポンプを起動','中央廊下へ','管理室へ','出口へ');
+  await capture('exit');await expect(page.getByText('脱出成功', {exact:true})).toBeVisible();
+});

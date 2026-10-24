@@ -1,5 +1,5 @@
 import 'asset_reflection_day_badge.dart';
-import 'dart:convert';
+import '../services/asset_calendar_reflection_import_parser.dart';
 import 'package:flutter/material.dart';
 import '../models/asset_calendar_reflection.dart';
 import '../services/asset_calendar_reflection_repository.dart';
@@ -72,7 +72,7 @@ class _AssetCalendarReflectionPanelState
     List<AssetCalendarReflection>? preview;
     String? error;
     var saving = false;
-    await showDialog<void>(
+    final route = DialogRoute<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
@@ -131,30 +131,20 @@ class _AssetCalendarReflectionPanelState
                   ? null
                   : () {
                       try {
-                        final data = jsonDecode(input.text);
-                        if (data is! List ||
-                            data.isEmpty ||
-                            data.length > 200) {
-                          throw const FormatException('1〜200件の配列が必要です');
-                        }
-                        final parsed = data
-                            .map(
-                              (row) => AssetCalendarReflection.fromJson(
-                                Map<String, dynamic>.from(row as Map),
-                              ),
-                            )
-                            .toList();
-                        if (parsed.map((e) => e.sourceKey).toSet().length !=
-                            parsed.length) {
-                          throw const FormatException('出典キーが重複しています');
-                        }
+                        final parsed =
+                            parseAssetCalendarReflectionImport(input.text);
                         update(() {
                           preview = parsed;
                           error = null;
                         });
+                      } on FormatException catch (exception) {
+                        update(() {
+                          error = exception.message;
+                          preview = null;
+                        });
                       } catch (_) {
                         update(() {
-                          error = '形式・日付・種類・金額を確認してください。';
+                          error = '入力を確認できませんでした。内容を保持したまま再試行してください。';
                           preview = null;
                         });
                       }
@@ -186,24 +176,20 @@ class _AssetCalendarReflectionPanelState
         ),
       ),
     );
+    await Navigator.of(context).push(route);
+    await route.completed;
     input.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final linked =
-        _events.map((e) => e.linkedFlowId).whereType<String>().toSet();
-    final events = [
-      ..._events.where(
-        (e) => !e.date.isBefore(widget.start) && e.date.isBefore(widget.end),
-      ),
-      ...widget.flowEvents.where(
-        (e) =>
-            !linked.contains(e.linkedFlowId) &&
-            !e.date.isBefore(widget.start) &&
-            e.date.isBefore(widget.end),
-      ),
-    ];
+    final events =
+        AssetCalendarReflection.mergeSources(_events, widget.flowEvents)
+            .where(
+              (e) =>
+                  !e.date.isBefore(widget.start) && e.date.isBefore(widget.end),
+            )
+            .toList();
     final summary = AssetReflectionSummary(events);
     final selected = widget.selectedDate;
     final dayEvents = selected == null
@@ -227,7 +213,7 @@ class _AssetCalendarReflectionPanelState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '外食・飲酒・読書の振り返り',
+            '外食・飲酒・たばこ購入・読書の振り返り',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           Wrap(
@@ -235,8 +221,9 @@ class _AssetCalendarReflectionPanelState
             children: [
               for (final kind in AssetReflectionKind.values)
                 Chip(
-                  backgroundColor:
-                      AssetReflectionDayBadge.backgroundFor({kind}),
+                  backgroundColor: AssetReflectionDayBadge.backgroundFor({
+                    kind,
+                  }),
                   label: Text('${kind.label} ${summary.days(kind)}日'),
                 ),
             ],
@@ -249,6 +236,9 @@ class _AssetCalendarReflectionPanelState
           ),
           const Text(
             '記録のある日だけを集計しています。印のない日は未記録の場合があります。振り返りの金額は参考内訳で、支出合計には加算しません。',
+          ),
+          const Text(
+            'たばこ購入は記録済み支出の品目から表示します。喫煙した日や本数は判定しません。混合購入の金額はレシート全体で、たばこ代だけの金額ではありません。',
           ),
           if (_loading) const LinearProgressIndicator(),
           if (_error != null)
@@ -283,10 +273,11 @@ class _AssetCalendarReflectionPanelState
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
-                  '${event.kinds.map((k) => k.label).join('・')}: ${event.title}\n'
-                  '${event.memo}\n出典: ${event.sourceLabel}・金額: ${event.verifiedAmount?.toStringAsFixed(0) ?? '不明'}'
-                  '${event.alcoholAmount == null ? '' : '（うち酒代 ${event.alcoholAmount}円）'}'
-                  '${event.pages == null ? '' : '・${event.pages}ページ'}${event.minutes == null ? '' : '・${event.minutes}分'}'),
+                '${event.kinds.map((k) => k.label).join('・')}: ${event.title}\n'
+                '${event.memo}\n出典: ${event.sourceLabel}・金額: ${event.verifiedAmount?.toStringAsFixed(0) ?? '不明'}'
+                '${event.alcoholAmount == null ? '' : '（うち酒代 ${event.alcoholAmount}円）'}'
+                '${event.pages == null ? '' : '・${event.pages}ページ'}${event.minutes == null ? '' : '・${event.minutes}分'}',
+              ),
             ),
         ],
       ),
