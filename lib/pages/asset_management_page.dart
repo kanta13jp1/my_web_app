@@ -171,6 +171,7 @@ import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 import 'package:my_web_app/widgets/investment_asset_management_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/services/asset_flow_request.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart'
     // ignore: uri_does_not_exist
@@ -8709,8 +8710,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final data = await AssetManagementEgressPolicy.fetchBoundedPages(
         maxRows: AssetManagementEgressPolicy.maxRecentFlowRows,
         fetchPage: (from, to) async {
-          final dynamic response = await _supabase
-              .from('wealth_struggles')
+          final dynamic response = await AssetFlowRequest.table(_supabase)
               .select('id,action_type,amount,description,occurred_at')
               .eq('user_id', userId)
               .gte('occurred_at', cutoff)
@@ -8789,8 +8789,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final rows = await AssetManagementEgressPolicy.fetchBoundedPages(
       maxRows: AssetManagementEgressPolicy.maxImportDedupRows,
       fetchPage: (from, to) async {
-        final dynamic response = await _supabase
-            .from('wealth_struggles')
+        final dynamic response = await AssetFlowRequest.table(_supabase)
             .select('id,description,occurred_at')
             .eq('user_id', userId)
             .gte('occurred_at', start.toIso8601String())
@@ -8899,7 +8898,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       for (var i = 0; i < records.length; i += 200) {
         final chunk = records.sublist(i, min(i + 200, records.length));
-        await _supabase.from('wealth_struggles').insert(chunk);
+        await AssetFlowRequest.table(_supabase).insert(chunk);
       }
       if (classificationExpenses.isNotEmpty) {
         unawaited(_classifyImportedExpenses(classificationExpenses));
@@ -9055,7 +9054,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!mounted || _supabase.auth.currentUser?.id != expectedUserId) {
       return false;
     }
-    await _supabase.from('wealth_struggles').insert({
+    await AssetFlowRequest.table(_supabase).insert({
       'user_id': userId,
       'action_type': 'expense',
       'amount': amount.round(),
@@ -9203,7 +9202,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     setState(() => _isRecordingFlow = true);
 
     try {
-      await _supabase.from('wealth_struggles').insert({
+      await AssetFlowRequest.table(_supabase).insert({
         'user_id': userId,
         'action_type': actionType,
         'amount': amount,
@@ -9511,7 +9510,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
 
-      await _supabase.from('wealth_struggles').update({
+      await AssetFlowRequest.table(_supabase).update({
         'action_type': _flowLabelToActionType(selectedType),
         'amount': amount,
         'description': _composeFlowDescription(
@@ -9605,8 +9604,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!shouldDelete) return;
 
     try {
-      await _supabase
-          .from('wealth_struggles')
+      await AssetFlowRequest.table(_supabase)
           .delete()
           .eq('id', flowId)
           .eq('user_id', userId);
