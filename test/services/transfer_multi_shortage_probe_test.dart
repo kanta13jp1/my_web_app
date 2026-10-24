@@ -7,7 +7,7 @@ void main() {
       latestSnapshot: <String, double>{
         'cash': 100000,
         'bank': 10000,
-        'other': 10000,
+        'bank_two': 10000,
         'mobit': -100000,
         'paypay': -100000,
       },
@@ -18,14 +18,15 @@ void main() {
       },
       paymentSourceAccountIds: const <String, String>{
         'mobit': 'custom_bank',
-        'paypay_card': 'custom_other',
+        'paypay_card': 'custom_bank_two',
       },
     );
     final shortages = book.accountCashflowSummaries.where((x) => x.isShort).toList();
     expect(
       shortages,
       hasLength(2),
-      reason: 'fixture must contain two independent shortages',
+      reason: 'fixture must contain two independent shortages: ' +
+          book.accountCashflowSummaries.map((x) => '${x.accountId}:${x.currentBalance}:${x.upcomingPayments}:${x.projectedBalance}').join(','),
     );
     expect(book.transferSuggestions, isNotEmpty);
     final total = book.transferSuggestions
