@@ -70,6 +70,20 @@ jobs:
          assert hits.get('4',0)>0, ('probe library not measured',mode,hits)
          report[mode+'_constructor_line_hits']=hits
          (p/('probe-'+mode+'.lcov')).write_text(Path('coverage/lcov.info').read_text())
+        # Same fixture tests in opposite suite orders, with per-runner concurrency fixed.
+        a=p/'order_a_test.dart';b=p/'order_b_test.dart'
+        a.write_text("import 'package:flutter_test/flutter_test.dart';\nimport 'package:my_web_app/coverage_constructor_probe.dart';\nvoid main() { test('const value path', () { const value = CoverageConstructorProbe(7); expect(value.read(), 7); }); }\n")
+        b.write_text("import 'package:flutter_test/flutter_test.dart';\nimport 'package:my_web_app/coverage_constructor_probe.dart';\nvoid main() { test('type-only path', () { expect(CoverageConstructorProbe.toString(), 'CoverageConstructorProbe'); }); }\n")
+        for label,files in [('ab',[a,b]),('ba',[b,a])]:
+         subprocess.run(['flutter','test','--coverage','--concurrency=1','--file-reporter=json:.ci-logs/order-'+label+'.jsonl',*[str(f) for f in files]],check=True)
+         sf=False;hits={}
+         for line in Path('coverage/lcov.info').read_text().splitlines():
+          if line.startswith('SF:'):sf=line.endswith('lib/coverage_constructor_probe.dart')
+          elif sf and line.startswith('DA:'):
+           n,c,*_=line[3:].split(',');hits[n]=int(c)
+         events=[json.loads(e) for e in (p/('order-'+label+'.jsonl')).read_text().splitlines() if e.strip()]
+         names=[e['test']['name'] for e in events if e.get('type')=='testStart' and e['test']['name'] in ['const value path','type-only path']]
+         report['order_'+label]={'hits':hits,'executed_order':names}
         probe.unlink()
         (p/'cause-probe.json').write_text(json.dumps(report,indent=2));print(json.dumps(report))
 
