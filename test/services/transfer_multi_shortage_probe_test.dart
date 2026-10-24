@@ -9,16 +9,16 @@ void main() {
         'bank': 10000,
         'other': 10000,
         'mobit': -100000,
-        'PayPayカード': -100000,
+        'paypay': -100000,
       },
       baseDate: DateTime(2026, 5, 1),
       monthlyPaymentOverrides: const <String, double>{
         'mobit': 60000,
-        'PayPayカード': 60000,
+        'paypay_card': 60000,
       },
       paymentSourceAccountIds: const <String, String>{
         'mobit': 'custom_bank',
-        'PayPayカード': 'custom_other',
+        'paypay_card': 'custom_other',
       },
     );
     final shortages = book.accountCashflowSummaries.where((x) => x.isShort).toList();
