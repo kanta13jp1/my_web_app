@@ -24,10 +24,16 @@ void main() {
     final rows = history.compareSnapshots([snap('2026-08', 100), snap('2026-10', 200),],);
     expect(rows.first.snapshot.monthKey, '2026-10');
     expect(rows.first.netWorthDelta, isNull);
+    expect(rows.first.positiveAssetDelta, isNull);
+    expect(rows.first.liabilityDelta, isNull);
+    expect(rows.first.cashLikeDelta, isNull);
   },);
   test('missing September does not produce a chart month delta', () {
     final chart = history.buildMonthlyChartData([snap('2026-08', 100), snap('2026-10', 200),],);
-    expect(chart.series.first.points.last.deltaFromPrevious, isNull);
+    for (final series in chart.series) {
+      expect(series.points.last.deltaFromPrevious, isNull);
+      expect(series.points.last.worsened, isFalse);
+    }
   },);
   test('missing September does not produce a report month delta', () {
     final views = reports.buildReportViews(

@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import '../models/asset_liability_workbook.dart';
+import 'asset_snapshot_calendar.dart';
 
 class AssetLiabilityMonthlyReportView {
   final String monthKey;
@@ -135,9 +136,10 @@ class AssetLiabilityMonthlyReportService {
   ) {
     final sorted = List<AssetLiabilityMonthlySnapshot>.from(snapshots)
       ..sort((a, b) => a.monthKey.compareTo(b.monthKey));
+    final byMonth = {for (final snapshot in sorted) snapshot.monthKey: snapshot,};
     return <String, AssetLiabilityMonthlySnapshot?>{
-      for (var index = 0; index < sorted.length; index++)
-        sorted[index].monthKey: index == 0 ? null : sorted[index - 1],
+      for (final snapshot in sorted)
+        snapshot.monthKey: byMonth[previousSnapshotCalendarMonthKey(snapshot.monthKey)],
     };
   }
 }

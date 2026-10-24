@@ -1,4 +1,4 @@
-name: Workbook month-gap reproduction
+name: Workbook calendar-month comparison verification
 on:
   workflow_dispatch:
 permissions:
@@ -13,20 +13,23 @@ jobs:
         with:
           flutter-version: '3.38.x'
       - run: flutter pub get
-      - run: dart format test/services/workbook_calendar_gap_probe_test.dart
-      - run: flutter analyze test/services/workbook_calendar_gap_probe_test.dart
-      - name: Reproduce calendar gap against public implementation
+      - run: dart format lib/services/asset_liability_history_service.dart lib/services/asset_liability_monthly_report_service.dart lib/services/asset_snapshot_calendar.dart test/services/workbook_calendar_gap_probe_test.dart
+      - run: flutter analyze lib/services/asset_liability_history_service.dart lib/services/asset_liability_monthly_report_service.dart lib/services/asset_snapshot_calendar.dart test/services/workbook_calendar_gap_probe_test.dart
+      - name: Verify repaired gap and existing history/report regressions
         shell: bash
         run: |
           set -o pipefail
           mkdir -p .ci-logs
-          flutter test test/services/workbook_calendar_gap_probe_test.dart --reporter expanded 2>&1 | tee .ci-logs/month-gap-probe.log
+          flutter test test/services/workbook_calendar_gap_probe_test.dart test/services/asset_liability_history_service_test.dart test/services/asset_liability_monthly_report_service_test.dart --reporter expanded 2>&1 | tee .ci-logs/month-gap-probe.log
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: workbook-gap-${{ github.run_id }}
           path: |
             .ci-logs/month-gap-probe.log
+            lib/services/asset_liability_history_service.dart
+            lib/services/asset_liability_monthly_report_service.dart
+            lib/services/asset_snapshot_calendar.dart
             test/services/workbook_calendar_gap_probe_test.dart
           include-hidden-files: true
           retention-days: 7
