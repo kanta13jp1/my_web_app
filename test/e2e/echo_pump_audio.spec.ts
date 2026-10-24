@@ -36,6 +36,7 @@ test.afterEach(async ({ page }, info) => {
   await info.attach('uncaught-page-errors', {
     body: JSON.stringify(errors), contentType: 'application/json',
   });
+  await info.attach('audio-observation', {body: JSON.stringify(await page.evaluate(() => ({plays:(window as any).__echoAudioAudit.plays,media:(window as any).__echoAudioAudit.media.map((m: HTMLMediaElement) => ({src:m.currentSrc||m.src,paused:m.paused,ended:m.ended,loop:m.loop,time:m.currentTime}))}))), contentType:'application/json'});
   expect(errors).toEqual([]);
 });
 
