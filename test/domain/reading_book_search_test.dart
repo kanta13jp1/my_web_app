@@ -6,6 +6,49 @@ import 'package:my_web_app/data/services/reading_book_search.dart';
 import 'package:my_web_app/data/catalogs/philosophy_catalog.dart';
 
 void main() {
+  test(
+      'partial Four Books editions search title and ISBN offline without merging formats',
+      () async {
+    final client =
+        MockClient((_) => throw StateError('Offline curated source'));
+    for (final (isbn, isbn10, year, source) in [
+      (
+        '9784003322215',
+        '4003322215',
+        '1998',
+        'https://www.books.or.jp/book-details/9784003322215'
+      ),
+      (
+        '9784000072281',
+        '4000072285',
+        '2003',
+        'https://ci.nii.ac.jp/ncid/BA62894477'
+      ),
+      (
+        '9784007610400',
+        '4007610401',
+        '2026',
+        'https://www.books.or.jp/book-details/9784007610400'
+      ),
+    ]) {
+      for (final query in ['四書章句集注', '大学・中庸', '大学章句', isbn, isbn10]) {
+        final results = await const ReadingBookSearch()
+            .search(query, author: '朱熹', client: client);
+        final book = results.singleWhere((b) => b.edition.isbn == isbn);
+        expect(book.workId, 'zhu-xi:four-books');
+        expect(book.edition.publisher, '岩波書店');
+        expect(book.edition.translator, '金谷治（訳注）');
+        expect(book.edition.editor, isEmpty);
+        expect(book.edition.totalPages, isNull);
+        expect(book.edition.year, year);
+        expect(book.edition.volume, contains('部分収録'));
+        expect(book.edition.sourceUrl, source);
+        expect(Uri.parse(book.edition.bookUrl).queryParameters['k'], isbn);
+        expect(book.note, contains('全体の訳ではなく'));
+      }
+    }
+  });
+
   test('historical Iwanami first volume keeps unknown ISBN and scope',
       () async {
     final client =
