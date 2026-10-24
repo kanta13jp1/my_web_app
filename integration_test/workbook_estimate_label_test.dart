@@ -15,7 +15,7 @@ class _ReadOnlyFixtureRepository extends SharedPreferencesAssetLiabilityReposito
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async =>
       const AssetLiabilityMonthlyState();
   @override
-  Future<void> saveMonth({required DateTime month, required AssetLiabilityMonthlyState state}) async {
+  Future<void> saveMonth({required DateTime month, required AssetLiabilityMonthlyState state,}) async {
     saveCalls += 1;
   }
 }
@@ -44,10 +44,10 @@ void main() {
       debugNow: now,
       debugCalendarNow: now,
       assetLiabilityRepository: repository,
-      debugInitialAssetData: <String, Map<String, double>>{
+      debugInitialAssetData: const <String, Map<String, double>>{
         '2026-09-01': <String, double>{'財布(現金)': 1000, '三井住友銀行': 500000},
       },
-    )));
+    ),),);
     for (var frame = 0; frame < 8; frame++) {
       await tester.pump(const Duration(milliseconds: 300));
     }
