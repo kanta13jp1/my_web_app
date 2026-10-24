@@ -27,13 +27,17 @@ void main() {
       hasLength(2),
       reason: 'fixture must contain two independent deposit-account shortages',
     );
-    expect(book.transferSuggestions, isNotEmpty);
+    expect(book.transferSuggestions, hasLength(2));
+    expect(
+      book.transferSuggestions.map((x) => x.amount).toList(),
+      <double>[50000, 20000],
+    );
     final total = book.transferSuggestions
         .where((x) => x.fromAccountId == 'custom_cash')
         .fold<double>(0, (a, x) => a + x.amount);
     expect(
       total,
-      lessThanOrEqualTo(70000),
+      70000,
       reason: '100000 current cash minus 30000 reserve covers the combined plan',
     );
   });
