@@ -100,33 +100,54 @@ void main() {
     final repository = _RecordingRepository();
     await _pump(tester, repository);
     final dropdown = find.byKey(const Key('asset_flow_type_dropdown'));
-    expect(dropdown, findsOneWidget,);
+    expect(
+      dropdown,
+      findsOneWidget,
+    );
     await tester.ensureVisible(dropdown);
     await tester.tap(dropdown);
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('借入受取').last);
     await tester.pump(const Duration(milliseconds: 300));
     expect(
-        tester.widget<DropdownButtonFormField<String>>(dropdown).initialValue,
-        '借入受取',);
-    expect(find.descendant(of: dropdown, matching: find.text('借入受取')),
-        findsOneWidget,);
+      tester.widget<DropdownButtonFormField<String>>(dropdown).initialValue,
+      '借入受取',
+    );
+    expect(
+      find.descendant(of: dropdown, matching: find.text('借入受取')),
+      findsOneWidget,
+    );
     final title = find.text('合成借入受取検査');
-    expect(title, findsOneWidget,);
+    expect(
+      title,
+      findsOneWidget,
+    );
     final history = find.ancestor(of: title, matching: find.byType(ListTile));
-    expect(history, findsOneWidget,);
-    expect(find.descendant(of: history, matching: find.textContaining('借入受取')),
-        findsOneWidget,);
-    expect(find.descendant(of: history, matching: find.text('+￥10,000')),
-        findsOneWidget,);
-    expect(find.descendant(of: history, matching: find.textContaining('支出')),
-        findsNothing,);
+    expect(
+      history,
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: history, matching: find.text('10/14 ・ 借入受取 ・ タップで編集')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: history, matching: find.text('+￥10,000')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: history, matching: find.textContaining('支出')),
+      findsNothing,
+    );
     for (final target in [dropdown, history]) {
       await Scrollable.ensureVisible(tester.element(target), alignment: 0.5);
       await tester.pump(const Duration(milliseconds: 500));
       await Scrollable.ensureVisible(tester.element(target), alignment: 0.5);
       await tester.pump();
-      expect(target.hitTestable(), findsOneWidget,);
+      expect(
+        target.hitTestable(),
+        findsOneWidget,
+      );
       await binding.takeScreenshot(
         '${mobile ? 'mobile' : 'desktop'}-borrowing-${target == dropdown ? 'selection' : 'history'}',
         <String, Object?>{
