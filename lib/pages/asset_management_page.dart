@@ -29588,6 +29588,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 lineTouchData: LineTouchData(
                   enabled: true,
                   touchTooltipData: LineTouchTooltipData(
+                    fitInsideHorizontally: true,
+                    fitInsideVertically: true,
                     getTooltipItems: (spots) {
                       return spots.map((spot) {
                         if (spot.barIndex < 0 ||
