@@ -1,4 +1,4 @@
-name: Approved PR5912 Web Release
+name: Approved PR5913 Web Release
 
 on:
   pull_request:
@@ -46,7 +46,7 @@ on:
   workflow_dispatch:
     inputs:
       approved_release:
-        description: Explicit owner approved PR5912-only release
+        description: Explicit owner approved PR5913-only release
         required: true
         default: false
         type: boolean
@@ -135,22 +135,22 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='04385c74ed3dd0b5a937fec596503f4e59b03664', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='4e58530b76dd8b094833d1a90126b99661ffbae5', 'Production changed; rebuild selection'
           PY
 
-      - name: Verify approved PR5912-only selection
+      - name: Verify approved PR5913-only selection
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          test "$(gh pr view 5912 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
-          test "$(gh pr view 5912 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 6e4f0b14753ca19b0c67677290d5dd2aaa604481
-          git fetch --no-tags --depth=1 origin 04385c74ed3dd0b5a937fec596503f4e59b03664
+          test "$(gh pr view 5913 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
+          test "$(gh pr view 5913 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 7dcfb937c404c7437ca8b3af8be103fdbf771744
+          git fetch --no-tags --depth=1 origin 4e58530b76dd8b094833d1a90126b99661ffbae5
           python3 - <<'PY'
           import subprocess
-          expected={'lib/pages/asset_management_page.dart', '.github/workflows/cloud-development.yml'}
-          actual=set(subprocess.check_output(['git','diff','--name-only','04385c74ed3dd0b5a937fec596503f4e59b03664','HEAD']).decode().splitlines())
+          expected={'test/services/workbook_calendar_gap_test.dart', 'lib/services/asset_liability_history_service.dart', 'lib/services/asset_liability_monthly_report_service.dart', '.github/workflows/cloud-development.yml', 'lib/services/asset_snapshot_calendar.dart'}
+          actual=set(subprocess.check_output(['git','diff','--name-only','4e58530b76dd8b094833d1a90126b99661ffbae5','HEAD']).decode().splitlines())
           assert actual==expected,(actual,expected)
-          expected_blobs={'lib/pages/asset_management_page.dart': 'c39b561b6157384e80f3847717ebf7692c52de2c'}
+          expected_blobs={'lib/services/asset_liability_history_service.dart': '6c968e081a78d6f2f2bb1a1db8aed45b0be22796', 'lib/services/asset_liability_monthly_report_service.dart': 'c6636d992199814c9842f0ca109d65a590f839bd', 'lib/services/asset_snapshot_calendar.dart': 'a05c9fca083e7bc73343a8031205928ffa98f7d6', 'test/services/workbook_calendar_gap_test.dart': 'bef78ed7f4d4eb5fd5783a13e305530f71036166'}
           for path, expected_blob in expected_blobs.items():
               blob=subprocess.check_output(['git','rev-parse','HEAD:'+path]).decode().strip()
               assert blob==expected_blob,(path,blob)
@@ -625,7 +625,7 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='04385c74ed3dd0b5a937fec596503f4e59b03664', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='4e58530b76dd8b094833d1a90126b99661ffbae5', 'Production changed; rebuild selection'
           PY
 
       - name: Collect pushed files
@@ -1340,7 +1340,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         env:
           FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-          EXPECTED_PUBLIC_BASE: 04385c74ed3dd0b5a937fec596503f4e59b03664
+          EXPECTED_PUBLIC_BASE: 4e58530b76dd8b094833d1a90126b99661ffbae5
         run: |
           python3 -m venv /tmp/echo-release-tools
           /tmp/echo-release-tools/bin/pip install google-auth==2.43.0 requests==2.32.5
@@ -1372,7 +1372,7 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          EXPECTED_PUBLIC_BASE=04385c74ed3dd0b5a937fec596503f4e59b03664 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
+          EXPECTED_PUBLIC_BASE=4e58530b76dd8b094833d1a90126b99661ffbae5 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
 
           if npx -y firebase-tools@15.34.0 deploy \
             --only hosting \
