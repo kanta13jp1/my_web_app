@@ -60,6 +60,7 @@ async def main():
    if FEATURE:
     for label,key,turn in [('キーボード操作を有効にする','w',1)]:
      await click(label)
+     await call('browser_wait_for',{'time':1})
      await call('browser_press_key',{'key':key})
      snapshot=await call('browser_snapshot',{})
      assert f'ターン {turn}' in snapshot,snapshot
@@ -80,6 +81,7 @@ async def main():
     await call('browser_take_screenshot',{'filename':str((OUT/'keyboard-desktop.png').resolve()),'fullPage':True})
     assert re.search(r'Errors:\s*0\b',await call('browser_console_messages',{'level':'error'}))
     await click('キーボード操作を有効にする')
+    await call('browser_wait_for',{'time':1})
     await call('browser_press_key',{'key':'w'})
     snapshot=await call('browser_snapshot',{})
     assert 'ターン 2' in snapshot,snapshot
@@ -91,6 +93,7 @@ async def main():
     snapshot=await call('browser_snapshot',{})
     assert 'ターン 0' in snapshot,snapshot
     await click('キーボード操作を有効にする')
+    await call('browser_wait_for',{'time':1})
     await call('browser_press_key',{'key':'w'})
     snapshot=await call('browser_snapshot',{})
     assert 'ターン 1' in snapshot,snapshot
