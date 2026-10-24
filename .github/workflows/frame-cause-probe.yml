@@ -1,0 +1,62 @@
+{
+  "name": "Isolated image and constructor cause probe",
+  "on": {
+    "push": {
+      "branches": [
+        "codex/frame-cause-probe-20261024"
+      ]
+    }
+  },
+  "permissions": {},
+  "jobs": {
+    "probe": {
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 8,
+      "permissions": {
+        "contents": "read"
+      },
+      "steps": [
+        {
+          "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "with": {
+            "ref": "e53f1bd296072cfde66083d7f77235d649688244",
+            "fetch-depth": 0,
+            "persist-credentials": false
+          }
+        },
+        {
+          "uses": "./.github/actions/setup-flutter-sdk",
+          "with": {
+            "flutter-version": "3.38.10"
+          }
+        },
+        {
+          "uses": "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+          "with": {
+            "path": "~/.pub-cache",
+            "key": "${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}",
+            "restore-keys": "${{ runner.os }}-pub-"
+          }
+        },
+        {
+          "run": "flutter pub get"
+        },
+        {
+          "name": "Run isolated causal probes",
+          "run": "python - <<'PY'\nimport json,re,subprocess,hashlib\nfrom pathlib import Path\np=Path('.ci-logs');p.mkdir(exist_ok=True)\nwidget=Path('lib/widgets/echo_pump_motor_art.dart');test=Path('test/widgets/echo_pump_motor_art_test.dart')\noriginal_widget=widget.read_bytes();fixed_test=test.read_bytes()\nbaseline=subprocess.check_output(['git','show','1b704dfa950d1bc9d67102f24b45b9cadab65f99:test/widgets/echo_pump_motor_art_test.dart'])\nreport={}\ndef run_test(label):\n r=subprocess.run(['flutter','test','--file-reporter=json:.ci-logs/'+label+'.jsonl',str(test)],check=False)\n events=[json.loads(x) for x in (p/(label+'.jsonl')).read_text().splitlines() if x.strip()]\n names={e['test']['id']:e['test']['name'] for e in events if e.get('type')=='testStart'}\n failed=[names[e['testID']] for e in events if e.get('type')=='testDone' and e['result']!='success']\n return {'exit_code':r.returncode,'failed_tests':failed}\ntry:\n source=original_widget.decode();mutated,count=re.subn(r'frameBuilder:.*?errorBuilder:', 'frameBuilder: (context, child, frame, synchronous) => const SizedBox.shrink(),\\n      errorBuilder:',source,count=1,flags=re.S)\n assert count==1;widget.write_text(mutated)\n test.write_bytes(baseline);report['baseline_with_hidden_frame']=run_test('baseline-mutant');assert report['baseline_with_hidden_frame']['exit_code']==0\n test.write_bytes(fixed_test);report['fixed_with_hidden_frame']=run_test('fixed-mutant');assert report['fixed_with_hidden_frame']['exit_code']!=0\n assert set(report['fixed_with_hidden_frame']['failed_tests'])=={'pump image follows repaired and powered facts','pending image keeps schematic until its first decoded frame'}\nfinally:\n widget.write_bytes(original_widget);test.write_bytes(fixed_test)\nsubprocess.run(['git','diff','--exit-code'],check=True)\nreport['tracked_files_restored']=True\n# Isolated construction-mode probe: diagnose declaration counters, not product behavior.\nprobe=Path('lib/coverage_constructor_probe.dart')\nprobe.write_text('class CoverageConstructorProbe {\\n  const CoverageConstructorProbe(this.value);\\n  final int value;\\n}\\n')\nfor mode in ['const','runtime']:\n f=p/(mode+'_test.dart')\n expression='const CoverageConstructorProbe(7)' if mode=='const' else 'CoverageConstructorProbe(int.parse('7'))'\n f.write_text(\"import 'package:flutter_test/flutter_test.dart';\\nimport '../lib/coverage_constructor_probe.dart';\\nvoid main() { test('construction preserves the value', () { final value = \"+expression+\"; expect(value.value, 7); }); }\\n\")\n subprocess.run(['flutter','test','--coverage',str(f)],check=True)\n sf=False;hits={}\n for line in Path('coverage/lcov.info').read_text().splitlines():\n  if line.startswith('SF:'):sf=line.endswith('lib/coverage_constructor_probe.dart')\n  elif sf and line.startswith('DA:'):\n   n,c,*_=line[3:].split(',');hits[n]=int(c)\n report[mode+'_constructor_line_hits']=hits\nprobe.unlink()\n(p/'cause-probe.json').write_text(json.dumps(report,indent=2));print(json.dumps(report))\n\nPY"
+        },
+        {
+          "uses": "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+          "if": "${{ always() }}",
+          "with": {
+            "name": "frame-cause-probe",
+            "include-hidden-files": true,
+            "path": ".ci-logs/cause-probe.json\n.ci-logs/*-mutant.jsonl",
+            "retention-days": 7,
+            "if-no-files-found": "warn"
+          }
+        }
+      ]
+    }
+  }
+}
