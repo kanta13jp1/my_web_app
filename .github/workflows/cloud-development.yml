@@ -32,6 +32,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          mkdir -p .ci-logs
           chromedriver --port=4444 > .ci-logs/borrowing-chromedriver.log 2>&1 &
           driver_pid=$!
           trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
