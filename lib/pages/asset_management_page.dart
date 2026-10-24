@@ -140,6 +140,7 @@ import 'package:my_web_app/services/konbini_udon_challenge_service.dart';
 import 'package:my_web_app/widgets/asset_legacy_meal_rule_card.dart';
 import 'package:my_web_app/services/profile_service.dart';
 import 'package:my_web_app/services/asset_flow_description_service.dart';
+import 'package:my_web_app/services/asset_flow_kind.dart';
 import 'package:my_web_app/services/asset_salary_spending_entries.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
@@ -170,6 +171,7 @@ import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 import 'package:my_web_app/widgets/investment_asset_management_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/services/asset_flow_request.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart'
     // ignore: uri_does_not_exist
@@ -1281,7 +1283,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ];
 
   static const double _compactWidthBreakpoint = 420;
-  static const List<String> _flowTypeOptions = ['支出', '収入', '振替'];
+  static const List<String> _flowTypeOptions = ['支出', '収入', '振替', '借入受取'];
   static const String _smbcCsvSource = '[三井住友銀行]';
   static final RegExp _flowImportMarkerPattern = RegExp(
     r'\s*\[import:smbc:[^\]]+\]\s*$',
@@ -1730,27 +1732,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return options.first;
   }
 
-  bool _isIncomeActionType(String actionType) => actionType == 'conquer';
+  bool _isIncomeActionType(String actionType) =>
+      AssetFlowKind.fromActionType(actionType).countsAsIncome;
 
-  bool _isExpenseActionType(String actionType) => actionType == 'expense';
+  bool _isExpenseActionType(String actionType) =>
+      AssetFlowKind.fromActionType(actionType).countsAsExpense;
 
   bool _isTransferActionType(String actionType) => actionType == 'transfer';
 
   bool get _isExpenseFlowSelected => _selectedFlowType == '支出';
 
   String _flowAmountPrefix(String actionType) {
-    if (_isIncomeActionType(actionType)) return '+';
-    if (_isTransferActionType(actionType)) return '↔';
-    return '-';
+    return AssetFlowKind.fromActionType(actionType).amountPrefix;
   }
 
   IconData _flowActionIcon(String actionType) {
+    if (actionType == 'borrowing') return Icons.account_balance_outlined;
     if (_isIncomeActionType(actionType)) return Icons.add_circle;
     if (_isTransferActionType(actionType)) return Icons.swap_horiz;
     return Icons.remove_circle;
   }
 
   Color _flowActionColor(String actionType) {
+    if (actionType == 'borrowing') return const Color(0xFFB45309);
     if (_isIncomeActionType(actionType)) return const Color(0xFF0D9488);
     if (_isTransferActionType(actionType)) return const Color(0xFF6366F1);
     return const Color(0xFFB91C1C);
@@ -8706,8 +8710,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final data = await AssetManagementEgressPolicy.fetchBoundedPages(
         maxRows: AssetManagementEgressPolicy.maxRecentFlowRows,
         fetchPage: (from, to) async {
-          final dynamic response = await _supabase
-              .from('wealth_struggles')
+          final dynamic response = await AssetFlowRequest.table(_supabase)
               .select('id,action_type,amount,description,occurred_at')
               .eq('user_id', userId)
               .gte('occurred_at', cutoff)
@@ -8786,8 +8789,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final rows = await AssetManagementEgressPolicy.fetchBoundedPages(
       maxRows: AssetManagementEgressPolicy.maxImportDedupRows,
       fetchPage: (from, to) async {
-        final dynamic response = await _supabase
-            .from('wealth_struggles')
+        final dynamic response = await AssetFlowRequest.table(_supabase)
             .select('id,description,occurred_at')
             .eq('user_id', userId)
             .gte('occurred_at', start.toIso8601String())
@@ -8896,7 +8898,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       for (var i = 0; i < records.length; i += 200) {
         final chunk = records.sublist(i, min(i + 200, records.length));
-        await _supabase.from('wealth_struggles').insert(chunk);
+        await AssetFlowRequest.table(_supabase).insert(chunk);
       }
       if (classificationExpenses.isNotEmpty) {
         unawaited(_classifyImportedExpenses(classificationExpenses));
@@ -9052,7 +9054,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!mounted || _supabase.auth.currentUser?.id != expectedUserId) {
       return false;
     }
-    await _supabase.from('wealth_struggles').insert({
+    await AssetFlowRequest.table(_supabase).insert({
       'user_id': userId,
       'action_type': 'expense',
       'amount': amount.round(),
@@ -9133,6 +9135,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     switch (label) {
       case '収入':
         return 'conquer';
+      case '借入受取':
+        return 'borrowing';
       case '振替':
         return 'transfer';
       default:
@@ -9142,6 +9146,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String _actionTypeToFlowLabel(String actionType) {
     switch (actionType) {
+      case 'borrowing':
+        return '借入受取';
       case 'conquer':
         return '収入';
       case 'transfer':
@@ -9187,10 +9193,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final actionType = _flowLabelToActionType(_selectedFlowType);
+    var ownerChanged = false;
+    final ownerSubscription = _supabase.auth.onAuthStateChange.listen((event) {
+      if (event.session?.user.id != userId) ownerChanged = true;
+    });
+    bool canApplyResult() =>
+        mounted && !ownerChanged && _supabase.auth.currentUser?.id == userId;
     setState(() => _isRecordingFlow = true);
 
     try {
-      await _supabase.from('wealth_struggles').insert({
+      await AssetFlowRequest.table(_supabase).insert({
         'user_id': userId,
         'action_type': actionType,
         'amount': amount,
@@ -9204,6 +9216,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'occurred_at': _selectedFlowDate.toUtc().toIso8601String(),
       });
 
+      // 保存開始時の利用者だけに入力更新・結果表示を反映する。
+      if (!canApplyResult()) return;
       _flowMemoController.clear();
       _flowAmountController.clear();
       if (mounted) {
@@ -9213,6 +9227,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         });
       }
       await _fetchRecentFlows();
+      if (!canApplyResult()) return;
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -9225,7 +9240,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
     } catch (e) {
       debugPrint('Error recording flow: $e');
-      if (mounted) {
+      if (mounted && canApplyResult()) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -9239,6 +9254,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       }
     } finally {
+      await ownerSubscription.cancel();
       if (mounted) setState(() => _isRecordingFlow = false);
     }
   }
@@ -9494,7 +9510,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
 
-      await _supabase.from('wealth_struggles').update({
+      await AssetFlowRequest.table(_supabase).update({
         'action_type': _flowLabelToActionType(selectedType),
         'amount': amount,
         'description': _composeFlowDescription(
@@ -9588,8 +9604,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!shouldDelete) return;
 
     try {
-      await _supabase
-          .from('wealth_struggles')
+      await AssetFlowRequest.table(_supabase)
           .delete()
           .eq('id', flowId)
           .eq('user_id', userId);
@@ -17283,6 +17298,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       payslipSalaryIncomes: _payslipSalaryIncomes,
       payslipRows: _payslipRows,
       flowDisplayTitle: _flowDisplayTitle,
+      flowCategoryDescription: (flow) => _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: flow['action_type']?.toString() ?? '',
+      ).memo,
     );
     final breakdown = _buildSalarySpendingBreakdown();
     const categories = {'食費', '交通', '医療', '日用品', '娯楽・浪費'};
@@ -17294,8 +17313,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             !entry.date.isBefore(breakdown.periodStart) &&
             entry.date.isBefore(breakdown.periodEndExclusive) &&
             !entry.date.isAfter(_now) &&
-            categories.contains(
-                _salarySpendingBreakdownService.categorize(entry.description)))
+            categories.contains(_salarySpendingBreakdownService
+                .categorize(entry.categoryDescription ?? entry.description)))
         .map((entry) => SavingsLifePlan.dateText(entry.date))
         .toSet()
         .length;
@@ -18401,6 +18420,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (day.hasSalary) const Color(0xFF0D9488),
       if (day.hasExpectedInflow) const Color(0xFF0EA5E9),
       if (day.hasIncome) const Color(0xFF2563EB),
+      if (day.hasBorrowing) const Color(0xFFB45309),
       if (day.hasTransfer) const Color(0xFF64748B),
     ];
 
@@ -18532,6 +18552,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return Icons.remove_circle_outline;
       case AssetCalendarEventKind.income:
         return Icons.add_circle_outline;
+      case AssetCalendarEventKind.borrowing:
+        return Icons.account_balance_outlined;
       case AssetCalendarEventKind.transfer:
         return Icons.swap_horiz;
     }
@@ -18551,6 +18573,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return const Color(0xFFC05621);
       case AssetCalendarEventKind.income:
         return const Color(0xFF2563EB);
+      case AssetCalendarEventKind.borrowing:
+        return const Color(0xFFB45309);
       case AssetCalendarEventKind.transfer:
         return const Color(0xFF64748B);
     }
@@ -18840,6 +18864,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       payslipSalaryIncomes: _payslipSalaryIncomes,
       payslipRows: _payslipRows,
       flowDisplayTitle: _flowDisplayTitle,
+      flowCategoryDescription: (flow) => _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: flow['action_type']?.toString() ?? '',
+      ).memo,
     );
     return _salarySpendingBreakdownService.build(
       referenceDate: _now,

@@ -8,12 +8,16 @@ class SalarySpendingEntry {
     required this.amount,
     required this.description,
     required this.sourceLabel,
+    this.categoryDescription,
   });
 
   final DateTime date;
   final double amount;
   final String description;
   final String sourceLabel;
+
+  /// 用途分類専用の本文。表示用の出所口座名は含めない。
+  final String? categoryDescription;
 }
 
 class SalaryIncomeEntry {
@@ -149,7 +153,10 @@ class SalarySpendingBreakdownService {
                   '食費': amount - smoking,
                   '娯楽・浪費': smoking.toDouble(),
                 }
-              : <String, double>{categorize(entry.description): amount};
+              : <String, double>{
+                  categorize(entry.categoryDescription ?? entry.description):
+                      amount,
+                };
       for (final allocation in allocations.entries) {
         final category = allocation.key;
         totalsByCategory[category] =
@@ -223,9 +230,17 @@ class SalarySpendingBreakdownService {
   }
 
   String categorize(String description) {
-    final text = description.toLowerCase();
-    if (WasteTrackingService.extractWasteCategory(description) == '喫煙' &&
-        !RegExp(r'食品|飲酒|酒購入|書籍|内訳').hasMatch(description)) {
+    // 未確定の用途候補は取引の事実ではない。原文は表示用に保持する。
+    final classificationText = description.replaceAll(
+      RegExp(
+        r'(?:返済|贈与|自分口座間振替)(?:・(?:返済|贈与|自分口座間振替))+'
+        r'等の用途は未確認で推定しない[。]?',
+      ),
+      '',
+    );
+    final text = classificationText.toLowerCase();
+    if (WasteTrackingService.extractWasteCategory(classificationText) == '喫煙' &&
+        !RegExp(r'食品|飲酒|酒購入|書籍|内訳').hasMatch(classificationText)) {
       return '娯楽・浪費';
     }
     // 金融機関名を含む手数料を返済元本へ分類しない。
@@ -308,7 +323,6 @@ const List<_SalarySpendingCategoryRule> _categoryRules =
     'paypayカード',
     '楽天カード',
     'エポス',
-    '三井住友',
     'セゾン',
     'カードローン',
   ]),
