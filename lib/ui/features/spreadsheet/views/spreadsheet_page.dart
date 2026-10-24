@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../domain/models/spreadsheet_document.dart';
+import '../../../../domain/use_cases/spreadsheet_xlsx_codec.dart';
 import '../../../../services/auto_save_service.dart';
 import '../view_models/spreadsheet_view_model.dart';
 
@@ -186,6 +187,22 @@ class _SpreadsheetPageState extends State<SpreadsheetPage> {
         onPressed: viewModel.isExporting
             ? null
             : () => unawaited(viewModel.exportCsv()),
+      ),
+      _ToolbarButton(
+        key: const Key('spreadsheet-import-xlsx'),
+        icon: Icons.table_chart_outlined,
+        tooltip: 'XLSXのシートを追加（セル値・通常の数式のみ）',
+        onPressed: viewModel.isImporting || viewModel.isExporting
+            ? null
+            : () => unawaited(_confirmXlsx(viewModel, importing: true)),
+      ),
+      _ToolbarButton(
+        key: const Key('spreadsheet-export-xlsx'),
+        icon: Icons.save_alt,
+        tooltip: '全シートをXLSXへ別名で書き出す',
+        onPressed: viewModel.isImporting || viewModel.isExporting
+            ? null
+            : () => unawaited(_confirmXlsx(viewModel, importing: false)),
       ),
       FilledButton.tonalIcon(
         key: const Key('spreadsheet-save'),
@@ -458,6 +475,38 @@ class _SpreadsheetPageState extends State<SpreadsheetPage> {
       builder: (context) => _RenameSheetDialog(initialName: sheet.name),
     );
     if (result != null) viewModel.renameSheet(sheet.id, result);
+  }
+
+  Future<void> _confirmXlsx(
+    SpreadsheetViewModel viewModel, {
+    required bool importing,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(importing ? 'XLSXの読み込み範囲' : 'XLSXの書き出し範囲'),
+        content: const SingleChildScrollView(
+          child: Text(SpreadsheetXlsxCodec.compatibilityNotice),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            key: const Key('spreadsheet-xlsx-confirm'),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('続ける'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    if (importing) {
+      await viewModel.importXlsx();
+    } else {
+      await viewModel.exportXlsx();
+    }
   }
 
   void _syncControllers(SpreadsheetViewModel viewModel) {

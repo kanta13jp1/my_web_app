@@ -1,0 +1,53 @@
+name: Spreadsheet XLSX Checks
+
+on:
+  pull_request:
+    paths:
+      - 'lib/domain/models/spreadsheet_document.dart'
+      - 'lib/domain/use_cases/*spreadsheet*'
+      - 'lib/data/services/spreadsheet_file_gateway.dart'
+      - 'lib/ui/features/spreadsheet/**'
+      - 'test/**/spreadsheet*'
+      - 'test/main_spreadsheet_windows_test.dart'
+      - 'scripts/check_spreadsheet_xlsx_interop.py'
+      - '.github/workflows/spreadsheet-xlsx.yml'
+  push:
+    branches: ['codex/spreadsheet-xlsx-20261001']
+permissions: {}
+concurrency:
+  group: spreadsheet-xlsx-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  xlsx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Set isolated interoperability directory
+        run: echo "XLSX_INTEROP_DIR=$RUNNER_TEMP/xlsx-interop" >> "$GITHUB_ENV"
+      - name: Check exact committed formatting
+        run: dart format --output=none --set-exit-if-changed lib/domain/models/spreadsheet_document.dart lib/domain/use_cases/evaluate_spreadsheet_formula_use_case.dart lib/domain/use_cases/spreadsheet_xlsx_codec.dart lib/data/services/spreadsheet_file_gateway.dart lib/ui/features/spreadsheet/view_models/spreadsheet_view_model.dart lib/ui/features/spreadsheet/views/spreadsheet_page.dart test/domain/use_cases/spreadsheet_xlsx_codec_test.dart test/ui/features/spreadsheet/spreadsheet_view_model_test.dart test/ui/features/spreadsheet/spreadsheet_page_test.dart test/main_spreadsheet_windows_test.dart
+      - name: Analyze spreadsheet feature
+        run: flutter analyze lib/domain/models/spreadsheet_document.dart lib/domain/use_cases/evaluate_spreadsheet_formula_use_case.dart lib/domain/use_cases/spreadsheet_xlsx_codec.dart lib/data/services/spreadsheet_file_gateway.dart lib/ui/features/spreadsheet test/domain/use_cases/spreadsheet_xlsx_codec_test.dart test/ui/features/spreadsheet test/main_spreadsheet_windows_test.dart
+      - name: Generate independent XLSX fixture
+        run: |
+          python -m pip install openpyxl==3.1.5
+          python scripts/check_spreadsheet_xlsx_interop.py generate "$XLSX_INTEROP_DIR"
+      - name: Test spreadsheet feature and CSV regressions
+        run: flutter test --concurrency=2 test/domain/use_cases/spreadsheet_xlsx_codec_test.dart test/domain/use_cases/spreadsheet_csv_codec_test.dart test/domain/use_cases/evaluate_spreadsheet_formula_use_case_test.dart test/ui/features/spreadsheet test/data/repositories/spreadsheet_repository_test.dart test/main_spreadsheet_windows_test.dart
+      - name: Verify independent XLSX reader
+        run: python scripts/check_spreadsheet_xlsx_interop.py verify "$XLSX_INTEROP_DIR"
+      - name: Preserve synthetic interoperability files
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: xlsx-interop-${{ github.run_id }}
+          path: ${{ runner.temp }}/xlsx-interop
+          if-no-files-found: ignore
+          retention-days: 3
