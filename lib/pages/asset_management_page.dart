@@ -140,6 +140,7 @@ import 'package:my_web_app/services/konbini_udon_challenge_service.dart';
 import 'package:my_web_app/widgets/asset_legacy_meal_rule_card.dart';
 import 'package:my_web_app/services/profile_service.dart';
 import 'package:my_web_app/services/asset_flow_description_service.dart';
+import 'package:my_web_app/services/asset_flow_kind.dart';
 import 'package:my_web_app/services/asset_salary_spending_entries.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
@@ -1281,7 +1282,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ];
 
   static const double _compactWidthBreakpoint = 420;
-  static const List<String> _flowTypeOptions = ['支出', '収入', '振替'];
+  static const List<String> _flowTypeOptions = ['支出', '収入', '振替', '借入受取'];
   static const String _smbcCsvSource = '[三井住友銀行]';
   static final RegExp _flowImportMarkerPattern = RegExp(
     r'\s*\[import:smbc:[^\]]+\]\s*$',
@@ -1730,27 +1731,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return options.first;
   }
 
-  bool _isIncomeActionType(String actionType) => actionType == 'conquer';
+  bool _isIncomeActionType(String actionType) =>
+      AssetFlowKind.fromActionType(actionType).countsAsIncome;
 
-  bool _isExpenseActionType(String actionType) => actionType == 'expense';
+  bool _isExpenseActionType(String actionType) =>
+      AssetFlowKind.fromActionType(actionType).countsAsExpense;
 
   bool _isTransferActionType(String actionType) => actionType == 'transfer';
 
   bool get _isExpenseFlowSelected => _selectedFlowType == '支出';
 
   String _flowAmountPrefix(String actionType) {
-    if (_isIncomeActionType(actionType)) return '+';
-    if (_isTransferActionType(actionType)) return '↔';
-    return '-';
+    return AssetFlowKind.fromActionType(actionType).amountPrefix;
   }
 
   IconData _flowActionIcon(String actionType) {
+    if (actionType == 'borrowing') return Icons.account_balance_outlined;
     if (_isIncomeActionType(actionType)) return Icons.add_circle;
     if (_isTransferActionType(actionType)) return Icons.swap_horiz;
     return Icons.remove_circle;
   }
 
   Color _flowActionColor(String actionType) {
+    if (actionType == 'borrowing') return const Color(0xFFB45309);
     if (_isIncomeActionType(actionType)) return const Color(0xFF0D9488);
     if (_isTransferActionType(actionType)) return const Color(0xFF6366F1);
     return const Color(0xFFB91C1C);
@@ -9133,6 +9136,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     switch (label) {
       case '収入':
         return 'conquer';
+      case '借入受取':
+        return 'borrowing';
       case '振替':
         return 'transfer';
       default:
@@ -9142,6 +9147,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String _actionTypeToFlowLabel(String actionType) {
     switch (actionType) {
+      case 'borrowing':
+        return '借入受取';
       case 'conquer':
         return '収入';
       case 'transfer':
@@ -18415,6 +18422,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (day.hasSalary) const Color(0xFF0D9488),
       if (day.hasExpectedInflow) const Color(0xFF0EA5E9),
       if (day.hasIncome) const Color(0xFF2563EB),
+      if (day.hasBorrowing) const Color(0xFFB45309),
       if (day.hasTransfer) const Color(0xFF64748B),
     ];
 
@@ -18546,6 +18554,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return Icons.remove_circle_outline;
       case AssetCalendarEventKind.income:
         return Icons.add_circle_outline;
+      case AssetCalendarEventKind.borrowing:
+        return Icons.account_balance_outlined;
       case AssetCalendarEventKind.transfer:
         return Icons.swap_horiz;
     }
@@ -18565,6 +18575,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return const Color(0xFFC05621);
       case AssetCalendarEventKind.income:
         return const Color(0xFF2563EB);
+      case AssetCalendarEventKind.borrowing:
+        return const Color(0xFFB45309);
       case AssetCalendarEventKind.transfer:
         return const Color(0xFF64748B);
     }
