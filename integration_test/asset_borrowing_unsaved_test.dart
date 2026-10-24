@@ -54,7 +54,7 @@ Future<void> _pump(
     MaterialApp(
       home: AssetManagementPage(
         debugNow: _date,
-        debugInitialRecentFlows: <Map<String, dynamic>>[
+        debugInitialRecentFlows: const <Map<String, dynamic>>[
           <String, dynamic>{
             'id': -10001,
             'action_type': 'borrowing',
@@ -80,7 +80,6 @@ Future<void> _unmount(WidgetTester tester) async {
   await tester.pump(const Duration(seconds: 2));
 }
 
-
 // Synthetic fixture only. Never press save/edit/delete or use a real backend.
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -94,38 +93,40 @@ void main() {
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
     );
   });
-  testWidgets('borrowed receipt selection and history without saving', (tester) async {
+  testWidgets('borrowed receipt selection and history without saving',
+      (tester) async {
     await tester.binding.setSurfaceSize(viewport);
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final repository = _RecordingRepository();
     await _pump(tester, repository);
     final dropdown = find.byKey(const Key('asset_flow_type_dropdown'));
-    expect(dropdown, findsOneWidget);
+    expect(dropdown, findsOneWidget,);
     await tester.ensureVisible(dropdown);
     await tester.tap(dropdown);
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('借入受取').last);
     await tester.pump(const Duration(milliseconds: 300));
-    expect(tester.widget<DropdownButtonFormField<String>>(dropdown).initialValue,
-        '借入受取');
+    expect(
+        tester.widget<DropdownButtonFormField<String>>(dropdown).initialValue,
+        '借入受取',);
     expect(find.descendant(of: dropdown, matching: find.text('借入受取')),
-        findsOneWidget);
+        findsOneWidget,);
     final title = find.text('合成借入受取検査');
-    expect(title, findsOneWidget);
+    expect(title, findsOneWidget,);
     final history = find.ancestor(of: title, matching: find.byType(ListTile));
-    expect(history, findsOneWidget);
+    expect(history, findsOneWidget,);
     expect(find.descendant(of: history, matching: find.textContaining('借入受取')),
-        findsOneWidget);
+        findsOneWidget,);
     expect(find.descendant(of: history, matching: find.text('+￥10,000')),
-        findsOneWidget);
+        findsOneWidget,);
     expect(find.descendant(of: history, matching: find.textContaining('支出')),
-        findsNothing);
+        findsNothing,);
     for (final target in [dropdown, history]) {
       await Scrollable.ensureVisible(tester.element(target), alignment: 0.5);
       await tester.pump(const Duration(milliseconds: 500));
       await Scrollable.ensureVisible(tester.element(target), alignment: 0.5);
       await tester.pump();
-      expect(target.hitTestable(), findsOneWidget);
+      expect(target.hitTestable(), findsOneWidget,);
       await binding.takeScreenshot(
         '${mobile ? 'mobile' : 'desktop'}-borrowing-${target == dropdown ? 'selection' : 'history'}',
         <String, Object?>{
