@@ -149,4 +149,57 @@ void main() {
       expect(result.signal, SalaryDepositSignal.flowAmountMatch);
     });
   });
+  group('MainAccountBalanceWindow.fromHistory', () {
+    MainAccountBalanceWindow window(Map<DateTime, double> observations,
+        {double? previous = 10000}) {
+      return MainAccountBalanceWindow.fromHistory(
+        previousCycleEndBalance: previous,
+        currentBalance: 50000,
+        observations: observations,
+        cycleStart: DateTime(2026, 9, 25),
+        asOf: DateTime(2026, 10, 5),
+      );
+    }
+
+    test('deposit remains detectable after spending', () {
+      final balances = window({DateTime(2026, 9, 25): 310000});
+      final result = AssetSalaryDepositDetector.detect(
+        cycleIncomeFlows: const [],
+        balances: balances,
+        expectedSalaryAmount: 300000,
+      );
+      expect(result.signal, SalaryDepositSignal.balanceJump);
+      expect(result.matchedAmount, 300000);
+    });
+
+    test('previous cycle and future observations cannot confirm salary', () {
+      final result = AssetSalaryDepositDetector.detect(
+        cycleIncomeFlows: const [],
+        balances: window({
+          DateTime(2026, 9, 24): 310000,
+          DateTime(2026, 10, 6): 310000,
+        }),
+        expectedSalaryAmount: 300000,
+      );
+      expect(result.detected, isFalse);
+    });
+
+    test('missing baseline remains unknown', () {
+      expect(
+        window({DateTime(2026, 9, 25): 310000}, previous: null).delta,
+        isNull,
+      );
+    });
+
+    test('invalid values ignored and current balance remains available', () {
+      expect(window({DateTime(2026, 9, 25): double.nan}).currentBalance, 50000);
+      expect(window({DateTime(2026, 9, 25): double.infinity}).currentBalance,
+          50000);
+    });
+
+    test('today observations are inclusive despite time of day', () {
+      expect(
+          window({DateTime(2026, 10, 5, 20): 310000}).currentBalance, 310000);
+    });
+  });
 }
