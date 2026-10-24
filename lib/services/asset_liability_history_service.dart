@@ -191,7 +191,7 @@ class AssetLiabilityHistoryService {
       for (final snapshot in sorted)
         <Object?>[
           snapshot.monthKey,
-          DateFormat('yyyy-MM-dd HH:mm:ss').format(snapshot.savedAt),
+          snapshot.savedAt.toUtc().toIso8601String(),
           snapshot.positiveAssetTotal,
           snapshot.liabilityTotal,
           snapshot.netWorth,
