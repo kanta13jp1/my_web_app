@@ -56,18 +56,20 @@ jobs:
         (p/'cause-probe.json').write_text(json.dumps(report,indent=2))
         # Isolated construction-mode probe: diagnose declaration counters, not product behavior.
         probe=Path('lib/coverage_constructor_probe.dart')
-        probe.write_text('class CoverageConstructorProbe {\n  const CoverageConstructorProbe(this.value);\n  final int value;\n}\n')
+        probe.write_text('class CoverageConstructorProbe {\n  const CoverageConstructorProbe(this.value);\n  final int value;\n  int read() => value;\n}\n')
         for mode in ['const','runtime']:
          f=p/(mode+'_test.dart')
          expression='const CoverageConstructorProbe(7)' if mode=='const' else "CoverageConstructorProbe(int.parse('7'))"
-         f.write_text("import 'package:flutter_test/flutter_test.dart';\nimport '../lib/coverage_constructor_probe.dart';\nvoid main() { test('construction preserves the value', () { final value = "+expression+"; expect(value.value, 7); }); }\n")
+         f.write_text("import 'package:flutter_test/flutter_test.dart';\nimport 'package:my_web_app/coverage_constructor_probe.dart';\nvoid main() { test('construction preserves the value', () { final value = "+expression+"; expect(value.read(), 7); }); }\n")
          subprocess.run(['flutter','test','--coverage',str(f)],check=True)
          sf=False;hits={}
          for line in Path('coverage/lcov.info').read_text().splitlines():
           if line.startswith('SF:'):sf=line.endswith('lib/coverage_constructor_probe.dart')
           elif sf and line.startswith('DA:'):
            n,c,*_=line[3:].split(',');hits[n]=int(c)
+         assert hits.get('4',0)>0, ('probe library not measured',mode,hits)
          report[mode+'_constructor_line_hits']=hits
+         (p/('probe-'+mode+'.lcov')).write_text(Path('coverage/lcov.info').read_text())
         probe.unlink()
         (p/'cause-probe.json').write_text(json.dumps(report,indent=2));print(json.dumps(report))
 
@@ -80,5 +82,6 @@ jobs:
         path: |-
           .ci-logs/cause-probe.json
           .ci-logs/*-mutant.jsonl
+          .ci-logs/probe-*.lcov
         retention-days: 7
         if-no-files-found: warn
