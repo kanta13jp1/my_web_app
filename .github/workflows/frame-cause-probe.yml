@@ -73,7 +73,7 @@ jobs:
         # Same fixture tests in opposite suite orders, with per-runner concurrency fixed.
         a=p/'order_a_test.dart';b=p/'order_b_test.dart'
         a.write_text("import 'package:flutter_test/flutter_test.dart';\nimport 'package:my_web_app/coverage_constructor_probe.dart';\nvoid main() { test('const value path', () { const value = CoverageConstructorProbe(7); expect(value.read(), 7); }); }\n")
-        b.write_text("import 'package:flutter_test/flutter_test.dart';\nimport 'package:my_web_app/coverage_constructor_probe.dart';\nvoid main() { test('type-only path', () { expect(CoverageConstructorProbe.toString(), 'CoverageConstructorProbe'); }); }\n")
+        b.write_text("import 'package:flutter_test/flutter_test.dart';\nimport 'package:my_web_app/coverage_constructor_probe.dart';\nvoid main() { test('type-only path', () { final type = CoverageConstructorProbe; expect(type.toString(), 'CoverageConstructorProbe'); }); }\n")
         for label,files in [('ab',[a,b]),('ba',[b,a])]:
          subprocess.run(['flutter','test','--coverage','--concurrency=1','--file-reporter=json:.ci-logs/order-'+label+'.jsonl',*[str(f) for f in files]],check=True)
          sf=False;hits={}
