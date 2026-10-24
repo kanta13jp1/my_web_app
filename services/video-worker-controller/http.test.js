@@ -146,3 +146,19 @@ test('HTTP target status rejects unsupported methods without cloud reads', async
   assert.equal(response.status, 404);
   assert.deepEqual(await response.json(), { error: 'not_found' });
 });
+
+
+test('HTTP public health alias is process-only and never contacts cloud APIs', async t => {
+  let calls = 0;
+  const request = await harness(t, async () => { calls++; throw new Error('unexpected_cloud_request'); });
+  for (const path of ['/health', '/health?probe=1', '/healthz']) {
+    const response = await request(path);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { status: 'ok' });
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+  }
+  const response = await request('/health', { method: 'POST' });
+  assert.equal(response.status, 404);
+  assert.deepEqual(await response.json(), { error: 'not_found' });
+  assert.equal(calls, 0);
+});

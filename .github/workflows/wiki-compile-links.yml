@@ -1,0 +1,22 @@
+name: Wiki compile source link regression
+on:
+  pull_request:
+    paths:
+      - scripts/wiki_compile.py
+      - scripts/wiki_compile_test.py
+      - .github/workflows/wiki-compile-links.yml
+concurrency:
+  group: wiki-compile-links-${{ github.ref }}
+  cancel-in-progress: true
+permissions: {}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - run: python scripts/wiki_compile_test.py
