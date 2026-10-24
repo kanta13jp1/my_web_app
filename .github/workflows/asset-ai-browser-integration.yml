@@ -87,7 +87,7 @@ jobs:
             dimensions=1440x1000@1
             mobile=false
             if [ "$viewport" = mobile ]; then
-              dimensions=393x851@2.75
+              dimensions=390x851@2.75
               mobile=true
             fi
             flutter drive --verbose \
