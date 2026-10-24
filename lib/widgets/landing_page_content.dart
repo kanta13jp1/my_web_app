@@ -2421,26 +2421,22 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     final stats = [
       (
         icon: Icons.people_alt_outlined,
-        color: _totalUsers > 10
-            ? const Color(0xFF7986CB)
-            : const Color(0xFFFFB74D),
-        bgColor: _totalUsers > 10
-            ? const Color(0xFF3D5AFE).withValues(alpha: 0.15)
-            : const Color(0xFFFF9800).withValues(alpha: 0.15),
+        color: const Color(0xFFF0E5D0),
+        bgColor: const Color(0xFFF0E5D0).withValues(alpha: 0.15),
         value: _totalUsers > 10 ? '$_totalUsers' : '募集中',
         label: _totalUsers > 10 ? '登録ユーザー数' : '初期ユーザー',
       ),
       (
         icon: Icons.article_outlined,
-        color: const Color(0xFF4FC3F7),
-        bgColor: const Color(0xFF0284C7).withValues(alpha: 0.15),
+        color: const Color(0xFFF0E5D0),
+        bgColor: const Color(0xFFF0E5D0).withValues(alpha: 0.15),
         value: _publicMemoCount > 0 ? '$_publicMemoCount' : '–',
         label: '公開メモ数',
       ),
       (
         icon: Icons.check_circle_outline,
-        color: const Color(0xFF81C784),
-        bgColor: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+        color: const Color(0xFFF0E5D0),
+        bgColor: const Color(0xFFF0E5D0).withValues(alpha: 0.15),
         value: _achievementCount > 0 ? '$_achievementCount' : '本番',
         label: _achievementCount > 0 ? '実装済み機能数' : 'サービス稼働',
       ),
@@ -2450,23 +2446,16 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       key: const Key('landing_social_proof_stats'),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFF101D2B),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.bar_chart, color: Color(0xFF7986CB), size: 18),
+              const Icon(Icons.bar_chart, color: Color(0xFFF0E5D0), size: 18),
               const SizedBox(width: 8),
               const Text(
                 '現在の利用状況',
@@ -2481,7 +2470,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
+                  color: const Color(0xFF263A42),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: const Text(
@@ -2489,7 +2478,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF15803D),
+                    color: Color(0xFFD6E6DF),
                     letterSpacing: 0.5,
                     height: 1.5,
                   ),
@@ -2509,7 +2498,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                           height: 40,
                           decoration: BoxDecoration(
                             color: s.bgColor,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(18),
                           ),
                           child: Icon(s.icon, color: s.color, size: 20),
                         ),
@@ -2528,7 +2517,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                           s.label,
                           style: const TextStyle(
                             fontSize: 11,
-                            color: Color(0xFFB0B0B0),
+                            color: Color(0xFFBCC6CE),
                             height: 1.6,
                           ),
                           textAlign: TextAlign.center,
@@ -3623,27 +3612,37 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
 
     Widget outcomeRow({
       required Key key,
-      required IconData icon,
-      required Color color,
+      required String number,
       required String title,
       required String description,
     }) {
       return Padding(
         key: key,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 24),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+                color: const Color(0xFFE7DED0),
+                borderRadius: BorderRadius.circular(99),
               ),
-              child: Icon(icon, size: 20, color: color),
+              child: ExcludeSemantics(
+                child: Center(
+                  child: Text(
+                    number,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF654A35),
+                    ),
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 18),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -3651,17 +3650,17 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                   Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 22,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF172033),
-                      height: 1.45,
+                      height: 1.35,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 8),
                   Text(
                     description,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 14,
                       color: Color(0xFF526174),
                       height: 1.55,
                     ),
@@ -3683,7 +3682,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           const Text(
             '最初に、3つの成果から始める',
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 26,
               fontWeight: FontWeight.w800,
               color: Color(0xFF172033),
               height: 1.4,
@@ -3691,9 +3690,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           const SizedBox(height: 8),
           const Text(
-            '悩みを1文入力すると、AIが最初の一手を提案します。実行するかはあなたが決め、役立つ提案だけ登録後に引き継げます。',
+            '困っていることを1文に。AIの提案から、あなたが次の一手を選べます。',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 14,
               color: Color(0xFF526174),
               height: 1.6,
             ),
@@ -3701,38 +3700,35 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           const SizedBox(height: 10),
           outcomeRow(
             key: const Key('landing_h15_outcome_work'),
-            icon: Icons.task_alt,
-            color: const Color(0xFF1F6FEB),
+            number: '01',
             title: '仕事を1件に絞る',
             description: '散らかったタスクから、今日動かす1件の候補と次の一手を提案します。',
           ),
-          const Divider(height: 1, color: Color(0xFFDDE4EE)),
+          const Divider(height: 1, color: Color(0xFFD6CFC4)),
           outcomeRow(
             key: const Key('landing_h15_outcome_money'),
-            icon: Icons.savings_outlined,
-            color: const Color(0xFF0B7A53),
+            number: '02',
             title: '見直す支出を1件決める',
             description: '家計の悩みから、最初に確認する固定費や明細の候補を具体化します。',
           ),
-          const Divider(height: 1, color: Color(0xFFDDE4EE)),
+          const Divider(height: 1, color: Color(0xFFD6CFC4)),
           outcomeRow(
             key: const Key('landing_h15_outcome_learning'),
-            icon: Icons.school_outlined,
-            color: const Color(0xFF9A5A00),
+            number: '03',
             title: '今日の復習を1件決める',
             description: '学びたい内容から、今日取り組む復習や練習の候補を提案します。',
           ),
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            height: 46,
+            height: 48,
             child: FilledButton.icon(
               key: const Key('landing_h15_try_without_signup'),
               onPressed: () {
                 unawaited(_recordConversionStage('feature_outcome_trial'));
                 _scrollToTrialSection();
               },
-              icon: const Icon(Icons.bolt, size: 18),
+              icon: const Icon(Icons.arrow_forward, size: 18),
               label: const Text(
                 '登録なしで1件試す',
                 style: TextStyle(
@@ -3742,9 +3738,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF1F6FEB),
+                backgroundColor: const Color(0xFF101D2B),
+                foregroundColor: const Color(0xFFF0E5D0),
+                visualDensity: VisualDensity.standard,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(999),
                 ),
               ),
             ),
@@ -3790,6 +3788,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
               TextButton.icon(
                 key: const Key('landing_h15_pricing_link'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF172033),
+                  minimumSize: const Size(44, 44),
+                  visualDensity: VisualDensity.standard,
+                ),
                 onPressed: () => Navigator.of(context).pushNamed('/billing'),
                 icon: const Icon(Icons.payments_outlined, size: 17),
                 label: const Text('料金を見る'),
@@ -4038,40 +4041,29 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       (
         Icons.play_circle_outline,
         '1. 無料トライアル',
-        'まず登録なしで1件試す。AIが今日の最優先タスクを提案。',
-        Color(0xFF6366F1),
+        '登録なしで1件試し、\nAIの提案から次の一手を選びます。',
+        Color(0xFF654A35),
       ),
       (
         Icons.save_outlined,
         '2. 無料登録して保存',
-        'Google認証またはメールのログインリンクで登録し、今回の提案を引き継ぎます。',
-        Color(0xFF10B981),
+        'Google認証かメールで登録し、\n今回の提案を引き継ぎます。',
+        Color(0xFF654A35),
       ),
       (
         Icons.upload_file_outlined,
         '3. 既存データを移行 (XLSX/DOCX/CSV/ENEX)',
-        '必要になったらインポート画面で対応形式と取り込み内容を確認します。',
-        Color(0xFFF59E0B),
+        '必要になったら対応形式を確認し、\nインポート画面から取り込みます。',
+        Color(0xFF654A35),
       ),
     ];
 
-    final isDarkSteps = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDarkSteps ? const Color(0xFF1A1A1A) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color:
-              isDarkSteps ? const Color(0xFF2A2A2A) : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: const Color(0xFFF7F1E7),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFD6CFC4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4079,7 +4071,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           const Text(
             '3ステップで始める',
             style: TextStyle(
-              fontSize: 17,
+              fontSize: 22,
               fontWeight: FontWeight.w800,
               color: Color(0xFF1E293B),
               height: 1.5,
@@ -4087,7 +4079,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           const SizedBox(height: 4),
           const Text(
-            '登録画面でカード情報は求めません。所要時間は認証方法や通信環境で変わります。',
+            '登録時のカード入力は不要です。\n所要時間は認証方法や通信環境で変わります。',
             style: TextStyle(
               fontSize: 13,
               color: Color(0xFF64748B),
@@ -4098,7 +4090,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ...steps.map((s) {
             final (icon, title, desc, color) = s;
             return Padding(
-              padding: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.only(bottom: 22),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -4119,17 +4111,17 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                         Text(
                           title,
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1E293B),
                             height: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 6),
                         Text(
                           desc,
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             color: Color(0xFF64748B),
                             height: 1.5,
                           ),
@@ -4147,7 +4139,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             height: 48,
             child: FilledButton.icon(
               onPressed: _showSignupAndScroll,
-              icon: const Icon(Icons.rocket_launch, size: 18),
+              icon: const Icon(Icons.arrow_forward, size: 18),
               label: const Text(
                 '無料登録へ進む',
                 style: TextStyle(
@@ -4157,9 +4149,11 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 ),
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF3949AB),
+                backgroundColor: const Color(0xFF101D2B),
+                foregroundColor: const Color(0xFFF0E5D0),
+                visualDensity: VisualDensity.standard,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(999),
                 ),
               ),
             ),
@@ -4337,7 +4331,12 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                       minLines: heroMode ? 1 : 2,
                       maxLines: heroMode ? 2 : 3,
                       decoration: InputDecoration(
-                        labelText: '例: 今日いちばん詰まっていることを簡単に書く',
+                        labelText: compactHero
+                            ? 'いま詰まっていること'
+                            : '例: 今日いちばん詰まっていることを簡単に書く',
+                        hintText: compactHero ? '例: 何から始めるか決められない' : null,
+                        hintStyle:
+                            compactHero ? const TextStyle(fontSize: 12) : null,
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.bolt),
                         isDense: compactHero,
@@ -4669,17 +4668,21 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
       key: const Key('landing_h11_answer_preview'),
       width: double.infinity,
       padding: EdgeInsets.all(compact ? 10 : 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF6FAFE),
-        border: Border(left: BorderSide(color: Color(0xFF1F7AE0), width: 3)),
+      decoration: BoxDecoration(
+        color: heroMode ? const Color(0xFF0B1823) : const Color(0xFFF6FAFE),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: heroMode ? const Color(0xFF41505C) : const Color(0xFFDCE7F2),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             '入力例と提案サンプル',
             style: TextStyle(
-              color: Color(0xFF1D4ED8),
+              color:
+                  heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1D4ED8),
               fontSize: 11,
               fontWeight: FontWeight.w800,
               height: 1.4,
@@ -4687,10 +4690,12 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           if (!compact) ...[
             const SizedBox(height: 4),
-            const Text(
+            Text(
               '入力例: 「$samplePrompt」',
               style: TextStyle(
-                color: Color(0xFF64748B),
+                color: heroMode
+                    ? const Color(0xFFBCC6CE)
+                    : const Color(0xFF64748B),
                 fontSize: 12,
                 height: 1.45,
               ),
@@ -4701,7 +4706,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           Text(
             '提案例: 止まっている案件を1つ選ぶ',
             style: TextStyle(
-              color: const Color(0xFF172033),
+              color:
+                  heroMode ? const Color(0xFFF6F0E5) : const Color(0xFF172033),
               fontSize: compact ? 13 : 14,
               fontWeight: FontWeight.w800,
               height: 1.4,
@@ -4709,10 +4715,12 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           if (!compact) ...[
             const SizedBox(height: 2),
-            const Text(
+            Text(
               '次の一手例: 確認先を1人決め、連絡文の下書きを作る',
               style: TextStyle(
-                color: Color(0xFF475569),
+                color: heroMode
+                    ? const Color(0xFFBCC6CE)
+                    : const Color(0xFF475569),
                 fontSize: 12,
                 height: 1.45,
               ),
@@ -4722,7 +4730,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           Text(
             '実際の提案は、入力内容によって変わります。',
             style: TextStyle(
-              color: const Color(0xFF64748B),
+              color:
+                  heroMode ? const Color(0xFFBCC6CE) : const Color(0xFF64748B),
               fontSize: compact ? 10 : 11,
               height: 1.45,
             ),
@@ -4760,9 +4769,16 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               icon: const Icon(Icons.bolt, size: 17),
               label: const Text('この入力例でAIに提案させる'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1F7AE0),
-                minimumSize: Size.fromHeight(compact ? 40 : 44),
-                side: const BorderSide(color: Color(0xFF93C5FD)),
+                foregroundColor: heroMode
+                    ? const Color(0xFFF0E5D0)
+                    : const Color(0xFF1F7AE0),
+                minimumSize: const Size.fromHeight(44),
+                visualDensity: VisualDensity.standard,
+                side: BorderSide(
+                  color: heroMode
+                      ? const Color(0xFF70818D)
+                      : const Color(0xFF93C5FD),
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -4897,45 +4913,53 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
 
     if (compact && !_showCompactTrialSaveForm) {
-      return Container(
-        key: const Key('landing_h04_inline_magic_capture'),
-        decoration: decoration,
-        child: InkWell(
-          key: const Key('landing_h04_inline_save_expansion'),
-          borderRadius: BorderRadius.circular(8),
-          onTap: _showCompactTrialSaveOptions,
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            child: Row(
-              children: [
-                Icon(Icons.bookmark_add_outlined, color: Color(0xFF172033)),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'この提案を保存',
-                        style: TextStyle(
-                          color: Color(0xFF172033),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          height: 1.4,
+      return Semantics(
+        container: true,
+        button: true,
+        label: 'この提案を保存',
+        hint: '必要なときだけ無料登録（カード不要）',
+        onTap: _showCompactTrialSaveOptions,
+        excludeSemantics: true,
+        child: Container(
+          key: const Key('landing_h04_inline_magic_capture'),
+          decoration: decoration,
+          child: InkWell(
+            key: const Key('landing_h04_inline_save_expansion'),
+            borderRadius: BorderRadius.circular(8),
+            onTap: _showCompactTrialSaveOptions,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              child: Row(
+                children: [
+                  Icon(Icons.bookmark_add_outlined, color: Color(0xFF172033)),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'この提案を保存',
+                          style: TextStyle(
+                            color: Color(0xFF172033),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                      Text(
-                        '必要なときだけ無料登録（カード不要）',
-                        style: TextStyle(
-                          color: Color(0xFF64748B),
-                          fontSize: 11,
-                          height: 1.35,
+                        Text(
+                          '必要なときだけ無料登録（カード不要）',
+                          style: TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 11,
+                            height: 1.35,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Icon(Icons.expand_more, color: Color(0xFF172033)),
-              ],
+                  Icon(Icons.expand_more, color: Color(0xFF172033)),
+                ],
+              ),
             ),
           ),
         ),
@@ -5730,7 +5754,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
         final title = Semantics(
           header: true,
           child: const Text(
-            '迷いを、判断に変えるための4章。',
+            '試してから、\n続けるか決める。',
             style: TextStyle(
               color: Color(0xFF111D2B),
               fontSize: 38,
@@ -5741,7 +5765,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
         );
         const copy = Text(
-          '機能を並べるのではなく、理解して、1件で試し、続ける理由を確かめ、最後に不安を解消する順番で案内します。',
+          'まず1件試し、役立ったら保存。\n使い方と、始める前の疑問を確認。',
           style: TextStyle(
             color: Color(0xFF52606D),
             fontSize: 15,
@@ -5757,7 +5781,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'THE DECISION JOURNEY',
+                'YOUR NEXT STEP',
                 style: TextStyle(
                   color: Color(0xFFB45F42),
                   fontSize: 11,
@@ -6052,8 +6076,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               _buildEditorialChapter(
                 number: 3,
                 eyebrow: 'Build continuity',
-                title: '続ける理由を、具体で比べる。',
-                description: '始め方、得られる価値、料金を同じ章に集約。登録後の生活がどう変わるかを判断できます。',
+                title: '続ける理由を、\n暮らしの中に。',
+                description: '仕事、お金、学び。\nいま困っていることから試せます。',
                 children: [
                   _buildUniqueValueSection(),
                   _buildGetStartedStepsSection(),
@@ -6063,7 +6087,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               _buildEditorialChapter(
                 number: 4,
                 eyebrow: 'Decide with confidence',
-                title: '不安を残さず、始めるか決める。',
+                title: '疑問を確かめて、\n始めるか決める。',
                 description: 'AIの役割、登録、保存、料金について、実際の動作に沿って説明します。',
                 children: [_buildFaqSection(), _buildEditorialArchive()],
               ),
@@ -6408,8 +6432,7 @@ class _WorkflowLandingHero extends StatelessWidget {
               ),
             ],
           ),
-          maxLines: condensed ? 3 : null,
-          overflow: condensed ? TextOverflow.ellipsis : null,
+          softWrap: true,
         ),
         SizedBox(height: condensed ? 10 : (compact ? 20 : 26)),
         ConstrainedBox(
@@ -6424,8 +6447,7 @@ class _WorkflowLandingHero extends StatelessWidget {
               height: condensed ? 1.45 : 1.8,
               fontWeight: FontWeight.w400,
             ),
-            maxLines: condensed ? 2 : null,
-            overflow: condensed ? TextOverflow.ellipsis : null,
+            softWrap: true,
           ),
         ),
         if (achievementCount > 0 && !condensed) ...[
@@ -6517,10 +6539,14 @@ class _WorkflowLandingHero extends StatelessWidget {
           compactTrial ? 12 : (compact ? 20 : 64),
           compactTrial ? 32 : (compact ? 46 : 70),
         );
-        final heroCopy = _buildHeroCopy(
-          compact: compact,
-          condensed: compactTrial,
-          headingSize: headingSize,
+        final heroCopy = LayoutBuilder(
+          builder: (context, copyConstraints) => _buildHeroCopy(
+            compact: compact,
+            condensed: compactTrial,
+            headingSize: compact
+                ? headingSize
+                : (copyConstraints.maxWidth / 11.5).clamp(0.0, headingSize),
+          ),
         );
 
         return Container(

@@ -32,7 +32,7 @@ class LandingStoryJourney extends StatefulWidget {
       label: '分散',
       eyebrow: '01 · 迷いの正体',
       title: '情報が増えるほど、\n次の一手が遠くなる。',
-      body: '予定、メモ、お金、学び。大切な情報が別々の場所に散らばると、判断だけで一日が終わってしまいます。',
+      body: '予定やメモが散らばると、探すことに追われ、次の一手が見えなくなります。',
       note: '予定 · メモ · 家計 · 学習',
       assetPath: 'assets/landing_journey/01-scattered.webp',
     ),
@@ -40,7 +40,7 @@ class LandingStoryJourney extends StatefulWidget {
       label: '集約',
       eyebrow: '02 · ひとつの仕事OSへ',
       title: '人生の情報を、\n一か所へ戻す。',
-      body: '仕事・学習・お金・健康を同じ作業空間へ。探す時間を減らし、自分が決めるための全体像をつくります。',
+      body: '仕事・学習・お金を同じ作業空間へ。探す時間を減らし、自分で判断できる全体像をつくります。',
       note: '自分自身を、一つの会社として見る',
       assetPath: 'assets/landing_journey/02-unified.webp',
     ),
@@ -48,7 +48,7 @@ class LandingStoryJourney extends StatefulWidget {
       label: '整理',
       eyebrow: '03 · AIが優先順位をつくる',
       title: '複雑さを、\n今日の優先順位へ。',
-      body: 'AIが状況を整理し、止まっている理由と最初の確認先を提案。最後に決めるのは、あなたです。',
+      body: 'AIが状況を整理し、最初の確認先を提案。\n最後に決めるのは、あなたです。',
       note: '整理 · 提案 · 最終判断',
       assetPath: 'assets/landing_journey/03-prioritized.webp',
     ),
@@ -56,7 +56,7 @@ class LandingStoryJourney extends StatefulWidget {
       label: '実行',
       eyebrow: '04 · 今日の1件',
       title: 'いま動かす、\n1件だけが見える。',
-      body: '短時間で着手できる一手から始め、結果を保存して明日へつなぐ。前進が、毎日の履歴になります。',
+      body: 'いま着手できる1件から始め、\n結果を保存して明日へつなぎます。',
       note: '登録前に体験 · 無料登録時カード不要',
       assetPath: 'assets/landing_journey/04-action.webp',
     ),
@@ -116,6 +116,9 @@ class _LandingStoryJourneyState extends State<LandingStoryJourney> {
   }
 
   double _stageHeight(Size viewport, double availableWidth) {
+    if (viewport.height < 560) {
+      return (viewport.height - 96).clamp(220.0, 480.0);
+    }
     final compact = availableWidth < _compactBreakpoint;
     final target = viewport.height * (compact ? 0.72 : 0.78);
     return target.clamp(compact ? 500.0 : 560.0, compact ? 660.0 : 720.0);
@@ -237,6 +240,7 @@ class _LandingStoryJourneyState extends State<LandingStoryJourney> {
                       width: double.infinity,
                       child: _JourneyStage(
                         progress: _progress,
+                        availableSize: Size(constraints.maxWidth, stageHeight),
                         activeChapter: _activeChapter,
                         compact: compact,
                         reduceMotion: reduceMotion,
@@ -261,6 +265,7 @@ class _JourneyStage extends StatelessWidget {
   static const double _mediaWarmupThreshold = 0.02;
 
   final double progress;
+  final Size availableSize;
   final int activeChapter;
   final bool compact;
   final bool reduceMotion;
@@ -271,6 +276,7 @@ class _JourneyStage extends StatelessWidget {
 
   const _JourneyStage({
     required this.progress,
+    required this.availableSize,
     required this.activeChapter,
     required this.compact,
     required this.reduceMotion,
@@ -299,18 +305,24 @@ class _JourneyStage extends StatelessWidget {
     final chapter = LandingStoryJourney.chapters[activeChapter];
     final isFinal = activeChapter == LandingStoryJourney.chapters.length - 1;
     final visibleMediaIndices = _visibleMediaIndices();
+    final shortViewport = availableSize.height < 500;
+    var copyWidth = compact
+        ? availableSize.width - 60
+        : (availableSize.width * 0.40).clamp(300.0, 510.0);
+    var headingSize = compact ? 30.0 : (copyWidth / 9.9).clamp(30.0, 52.0);
+    if (shortViewport) {
+      copyWidth = availableSize.width - 96;
+      headingSize = 26;
+    }
+    final exampleWidth = (availableSize.width * 0.30).clamp(220.0, 350.0);
+    final showExample =
+        !compact || MediaQuery.textScalerOf(context).scale(1) <= 1.15;
 
     return DecoratedBox(
       decoration: BoxDecoration(
         color: const Color(0xFF061126),
         borderRadius: BorderRadius.circular(compact ? 18 : 28),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF102A5C).withValues(alpha: 0.22),
-            blurRadius: 34,
-            offset: const Offset(0, 18),
-          ),
-        ],
+        border: Border.all(color: const Color(0x263E5367)),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(compact ? 18 : 28),
@@ -366,17 +378,38 @@ class _JourneyStage extends StatelessWidget {
                 ),
               ),
             ),
-            Positioned(
-              left: compact ? 18 : 36,
-              right: compact ? 18 : 36,
-              top: compact ? 16 : 24,
-              child: _JourneyTopBar(compact: compact),
-            ),
+            if (shortViewport)
+              const Positioned.fill(
+                child: ColoredBox(color: Color(0xC0050C1D)),
+              ),
+            if (!shortViewport)
+              Positioned(
+                left: compact ? 18 : 36,
+                right: compact ? 18 : 36,
+                top: compact ? 16 : 24,
+                child: _JourneyTopBar(compact: compact),
+              ),
+            if (showExample && !shortViewport)
+              Positioned(
+                left: compact ? 18 : null,
+                right: compact ? 56 : 144,
+                top: compact ? 68 : 0,
+                bottom: compact ? null : 0,
+                width: compact ? null : exampleWidth,
+                child: Center(
+                  child: _JourneyExample(
+                    chapterIndex: activeChapter,
+                    compact: compact,
+                    availableWidth:
+                        compact ? availableSize.width - 74 : exampleWidth,
+                  ),
+                ),
+              ),
             Positioned(
               left: compact ? 18 : 48,
               right: compact ? 42 : 120,
               top: compact ? null : 0,
-              bottom: compact ? 58 : 0,
+              bottom: shortViewport ? 32 : (compact ? 58 : 0),
               child: Align(
                 alignment:
                     compact ? Alignment.bottomLeft : Alignment.centerLeft,
@@ -402,7 +435,9 @@ class _JourneyStage extends StatelessWidget {
                     key: ValueKey<int>(activeChapter),
                     chapter: chapter,
                     chapterIndex: activeChapter,
-                    compact: compact,
+                    compact: compact || shortViewport,
+                    copyWidth: copyWidth,
+                    headingSize: headingSize,
                     showActions: isFinal,
                     onPrimaryAction: onPrimaryAction,
                     onSecondaryAction: onSecondaryAction,
@@ -417,7 +452,7 @@ class _JourneyStage extends StatelessWidget {
               child: Center(
                 child: _JourneyRail(
                   activeChapter: activeChapter,
-                  compact: compact,
+                  compact: compact || shortViewport,
                   reduceMotion: reduceMotion,
                   onChapterSelected: onChapterSelected,
                 ),
@@ -457,6 +492,198 @@ class _JourneyStage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _JourneyExample extends StatelessWidget {
+  final int chapterIndex;
+  final bool compact;
+
+  final double availableWidth;
+
+  const _JourneyExample({
+    required this.chapterIndex,
+    required this.compact,
+    required this.availableWidth,
+  });
+
+  static const concerns = <String>[
+    '返信待ちの案件',
+    '明日の予定',
+    '読みたい資料',
+    '今月の支出',
+  ];
+
+  Widget _note(String text) {
+    return Container(
+      padding: EdgeInsets.all(compact ? 10 : 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF14212B),
+        border: Border.all(color: const Color(0xFF41505C)),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: const Color(0xFFE8EEF2),
+          fontSize: compact ? 12 : 14,
+          height: 1.5,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final finalChapter = chapterIndex == 3;
+    final titleSize = compact ? 16.0 : (availableWidth / 13).clamp(18.0, 24.0);
+    return Semantics(
+      container: true,
+      label: '相談の例',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Color(0xFF0B1823),
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                child: Text(
+                  '相談の例',
+                  style: TextStyle(
+                    color: Color(0xFFBCC6CE),
+                    fontSize: 11,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (chapterIndex == 0)
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (var index = 0; index < concerns.length; index++)
+                      SizedBox(
+                        width: (constraints.maxWidth - 10) / 2,
+                        child: Transform.rotate(
+                          angle: index.isEven ? -0.035 : 0.035,
+                          child: _note(concerns[index]),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            )
+          else
+            Container(
+              padding: EdgeInsets.all(compact ? 14 : 24),
+              decoration: BoxDecoration(
+                color: const Color(0xF20B1823),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: finalChapter
+                      ? const Color(0xFFF0E5D0)
+                      : const Color(0xFF41505C),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!(compact && finalChapter)) ...[
+                    Text(
+                      chapterIndex == 1
+                          ? 'ひとつの作業空間で見る'
+                          : chapterIndex == 2
+                              ? '先に動かすことを絞る'
+                              : '今日の1件',
+                      style: TextStyle(
+                        color: const Color(0xFFF0E5D0),
+                        fontSize: compact ? 13 : 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: compact ? 10 : 18),
+                  ],
+                  if (chapterIndex == 1)
+                    for (final concern in concerns)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Text(
+                          concern,
+                          style: TextStyle(
+                            color: const Color(0xFFBCC6CE),
+                            fontSize: compact ? 12 : 14,
+                            height: 1.4,
+                          ),
+                        ),
+                      )
+                  else if (chapterIndex == 2) ...[
+                    Text(
+                      '01  案件の確認先を決める',
+                      style: TextStyle(
+                        color: const Color(0xFFF0E5D0),
+                        fontSize: compact ? 14 : 18,
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '02  明日の予定を確認する',
+                      style: TextStyle(
+                        color: const Color(0xFFBCC6CE),
+                        fontSize: compact ? 12 : 14,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '03  資料と支出を確認する',
+                      style: TextStyle(
+                        color: const Color(0xFFBCC6CE),
+                        fontSize: compact ? 12 : 14,
+                        height: 1.5,
+                      ),
+                    ),
+                  ] else ...[
+                    Text(
+                      compact ? '確認先を1人決める' : '止まっている案件の\n確認先を1人決める',
+                      style: TextStyle(
+                        color: const Color(0xFFF6F0E5),
+                        fontSize: titleSize,
+                        fontWeight: FontWeight.w700,
+                        height: 1.4,
+                      ),
+                    ),
+                    if (!compact) ...[
+                      const SizedBox(height: 18),
+                      const Text(
+                        'まずは連絡文の下書きから',
+                        style: TextStyle(
+                          color: Color(0xFFBCC6CE),
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ],
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -532,6 +759,8 @@ class _JourneyCopy extends StatelessWidget {
   final LandingStoryChapter chapter;
   final int chapterIndex;
   final bool compact;
+  final double copyWidth;
+  final double headingSize;
   final bool showActions;
   final VoidCallback onPrimaryAction;
   final VoidCallback onSecondaryAction;
@@ -541,6 +770,8 @@ class _JourneyCopy extends StatelessWidget {
     required this.chapter,
     required this.chapterIndex,
     required this.compact,
+    required this.copyWidth,
+    required this.headingSize,
     required this.showActions,
     required this.onPrimaryAction,
     required this.onSecondaryAction,
@@ -553,7 +784,7 @@ class _JourneyCopy extends StatelessWidget {
       container: true,
       liveRegion: true,
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: compact ? 520 : 510),
+        constraints: BoxConstraints(maxWidth: copyWidth),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -574,7 +805,7 @@ class _JourneyCopy extends StatelessWidget {
                 chapter.title,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: compact ? 30 : 52,
+                  fontSize: headingSize,
                   height: 1.12,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -1.1,
@@ -592,20 +823,13 @@ class _JourneyCopy extends StatelessWidget {
               ),
             ),
             SizedBox(height: compact ? 12 : 18),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(99),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-              ),
-              child: Text(
-                chapter.note,
-                style: const TextStyle(
-                  color: Color(0xCCFFFFFF),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                ),
+            Text(
+              chapter.note,
+              style: const TextStyle(
+                color: Color(0xFFB8C6D2),
+                fontSize: 11,
+                height: 1.5,
+                fontWeight: FontWeight.w500,
               ),
             ),
             if (showActions) ...[
@@ -620,11 +844,12 @@ class _JourneyCopy extends StatelessWidget {
                     icon: const Icon(Icons.arrow_forward_rounded, size: 18),
                     label: const Text('無料で保存を始める'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF8C42),
-                      foregroundColor: const Color(0xFF111827),
+                      backgroundColor: const Color(0xFFF0E5D0),
+                      foregroundColor: const Color(0xFF101A24),
+                      visualDensity: VisualDensity.standard,
                       minimumSize: const Size(184, 48),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(999),
                       ),
                       textStyle: const TextStyle(fontWeight: FontWeight.w800),
                     ),
@@ -636,10 +861,11 @@ class _JourneyCopy extends StatelessWidget {
                     label: const Text('登録なしで1件試す'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
+                      visualDensity: VisualDensity.standard,
                       minimumSize: const Size(184, 48),
                       side: const BorderSide(color: Color(0x80FFFFFF)),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(999),
                       ),
                       textStyle: const TextStyle(fontWeight: FontWeight.w800),
                     ),
@@ -685,29 +911,50 @@ class _JourneyRail extends StatelessWidget {
                 key: Key('landing_story_dot_$index'),
                 onPressed: () => onChapterSelected(index),
                 tooltip: LandingStoryJourney.chapters[index].label,
-                icon: AnimatedContainer(
-                  duration: reduceMotion
-                      ? Duration.zero
-                      : const Duration(milliseconds: 180),
-                  width: index == activeChapter ? 12 : 7,
-                  height: index == activeChapter ? 12 : 7,
-                  decoration: BoxDecoration(
-                    color: index == activeChapter
-                        ? const Color(0xFFFFA85C)
-                        : const Color(0x99FFFFFF),
-                    shape: BoxShape.circle,
-                    boxShadow: index == activeChapter
-                        ? const [
-                            BoxShadow(
-                              color: Color(0x66FFA85C),
-                              blurRadius: 10,
-                              spreadRadius: 3,
-                            ),
-                          ]
-                        : null,
-                  ),
+                icon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!compact) ...[
+                      Text(
+                        LandingStoryJourney.chapters[index].label,
+                        style: TextStyle(
+                          color: index == activeChapter
+                              ? const Color(0xFFF0E5D0)
+                              : const Color(0xFFB8C6D2),
+                          fontSize: 11,
+                          fontWeight: index == activeChapter
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    AnimatedContainer(
+                      duration: reduceMotion
+                          ? Duration.zero
+                          : const Duration(milliseconds: 180),
+                      width: index == activeChapter ? 12 : 7,
+                      height: index == activeChapter ? 12 : 7,
+                      decoration: BoxDecoration(
+                        color: index == activeChapter
+                            ? const Color(0xFFFFA85C)
+                            : const Color(0x99FFFFFF),
+                        shape: BoxShape.circle,
+                        boxShadow: index == activeChapter
+                            ? const [
+                                BoxShadow(
+                                  color: Color(0x66FFA85C),
+                                  blurRadius: 10,
+                                  spreadRadius: 3,
+                                ),
+                              ]
+                            : null,
+                      ),
+                    ),
+                  ],
                 ),
                 color: Colors.white,
+                visualDensity: VisualDensity.standard,
                 padding: EdgeInsets.all(compact ? 10 : 12),
                 constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
               ),

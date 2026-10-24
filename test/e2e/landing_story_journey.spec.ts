@@ -7,13 +7,48 @@ test.describe('Landing story journey', () => {
 
   test('moves from the scattered state to the final actionable chapter', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    const layoutIssues: string[] = [];
+    page.on('pageerror', error => layoutIssues.push(error.message));
+    page.on('console', message => {
+      if (/overflowed by|RenderFlex|unbounded|BoxConstraints forces/.test(message.text())) layoutIssues.push(message.text());
+    });
     await openLanding(page);
     const story = await focusStory(page);
 
     await expect(story).toHaveAccessibleName(/1 \/ 4/);
 
-    await activateChapter(page, '実行');
+    for (const [index, label] of ['分散', '集約', '整理', '実行'].entries()) {
+      await activateChapter(page, label);
+      await expect(story).toHaveAccessibleName(new RegExp(`${index + 1} / 4`));
+      await page.waitForTimeout(650);
+      await page.screenshot({ path: testInfo.outputPath(`story-${index + 1}.png`), scale: 'css' });
+    }
+
+    const originalViewport = page.viewportSize()!;
+    for (const width of [768, 1024]) {
+      await page.setViewportSize({ width, height: 1024 });
+      for (const [index, label] of [[1, '分散'], [4, '実行']] as const) {
+        await activateChapter(page, label);
+        await expect(story).toHaveAccessibleName(new RegExp(`${index} / 4`));
+        await page.waitForTimeout(650);
+        await page.screenshot({ path: testInfo.outputPath(`story-${width}-${index}.png`), scale: 'css' });
+      }
+    }
+    await page.setViewportSize(originalViewport);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    expect(await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
+    // Start the reduced-motion journey after Flutter mounts at the restored size.
+    // Resizing a pinned story mid-scroll changes its geometry asynchronously.
+    await openLanding(page);
+    await expect(await focusStory(page)).toHaveAccessibleName(/1 \/ 4/);
+    for (const [index, label] of [[1, '分散'], [4, '実行']] as const) {
+      await activateChapter(page, label);
+      await expect(story).toHaveAccessibleName(new RegExp(`${index} / 4`));
+      await page.waitForTimeout(650);
+      await page.screenshot({ path: testInfo.outputPath(`story-reduced-${index}.png`), scale: 'css' });
+    }
+    expect(layoutIssues).toEqual([]);
 
     await expect(story).toHaveAccessibleName(/4 \/ 4/);
     await expect(
@@ -22,6 +57,184 @@ test.describe('Landing story journey', () => {
     await expect(
       story.getByRole('button', { name: '登録なしで1件試す' }),
     ).toBeVisible();
+    for (const name of ['無料で保存を始める', '登録なしで1件試す']) {
+      const action = story.getByRole('button', { name, exact: true });
+      await expect(action).toBeInViewport();
+      const bounds = await action.boundingBox();
+      expect(bounds).not.toBeNull();
+      expect(bounds!.height).toBeGreaterThanOrEqual(44);
+    }
+
+  });
+
+  test('reads every chapter forward and backward using native page scrolling', async ({ page }, testInfo) => {
+    const layoutIssues: string[] = [];
+    page.on('pageerror', error => layoutIssues.push(error.message));
+    page.on('console', message => {
+      if (/overflowed by|RenderFlex|unbounded|BoxConstraints forces/.test(message.text())) layoutIssues.push(message.text());
+    });
+    await openLanding(page);
+    const story = await focusStory(page);
+    const scrollToChapter = async (index: number, direction: number) => {
+      const chapter = page.getByRole('group', { name: new RegExp(`${index} / 4`) });
+      for (let step = 0; step < 90; step++) {
+        if (await chapter.count()) break;
+        await page.mouse.move(180, 320);
+        await page.mouse.wheel(0, direction * 120);
+        await page.waitForTimeout(150);
+      }
+      await expect(story).toHaveAccessibleName(new RegExp(`${index} / 4`));
+    };
+    // Enter the stage through ordinary scrolling, without DOM click helpers.
+    const firstChapter = page.getByRole('button', { name: '分散の章へ移動', exact: true });
+    for (let step = 0; step < 30; step++) {
+      const bounds = await firstChapter.boundingBox();
+      if (bounds && bounds.y >= 80 && bounds.y + bounds.height < page.viewportSize()!.height - 100) break;
+      await page.mouse.move(180, 320);
+      await page.mouse.wheel(0, 120);
+      await page.waitForTimeout(150);
+    }
+    await expect(firstChapter).toBeInViewport();
+    for (const index of [1, 2, 3, 4]) {
+      await scrollToChapter(index, 1);
+      await page.waitForTimeout(450);
+      await page.screenshot({ path: testInfo.outputPath(`native-scroll-chapter-${index}.png`), scale: 'css' });
+    }
+    const trial = story.getByRole('button', { name: '登録なしで1件試す', exact: true });
+    await expect(trial).toBeInViewport();
+    for (const index of [3, 2, 1]) await scrollToChapter(index, -1);
+    await expect(story).toHaveAccessibleName(/1 \/ 4/);
+    for (const index of [2, 3, 4]) await scrollToChapter(index, 1);
+    await trial.click();
+    await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
+    expect(layoutIssues).toEqual([]);
+  });
+
+  test('keeps final story actions in view on landscape and short desktop screens', async ({ page }, testInfo) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    for (const size of [{ width: 844, height: 390 }, { width: 1280, height: 600 }]) {
+      await page.setViewportSize(size);
+      await openLanding(page);
+      const story = await focusStory(page);
+      await activateChapter(page, '実行');
+      await expect(story).toHaveAccessibleName(/4 \/ 4/);
+      await page.screenshot({ path: testInfo.outputPath(`short-story-${size.width}-${size.height}.png`), scale: 'css' });
+      for (const name of ['無料で保存を始める', '登録なしで1件試す']) {
+        const action = story.getByRole('button', { name, exact: true });
+        await expect(action).toBeInViewport();
+        const bounds = await action.boundingBox();
+        expect(bounds!.y).toBeGreaterThanOrEqual(60);
+        expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(size.height - 16);
+        expect(bounds!.height).toBeGreaterThanOrEqual(44);
+      }
+      await story.getByRole('button', { name: '登録なしで1件試す', exact: true }).click();
+      await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
+    }
+  });
+
+  test('keeps story actions usable when every chapter image fails', async ({ page }, testInfo) => {
+    const failedAssets = new Set<string>();
+    const layoutIssues: string[] = [];
+    page.on('pageerror', error => layoutIssues.push(error.message));
+    page.on('console', message => {
+      if (/overflowed by|RenderFlex|unbounded|BoxConstraints forces/.test(message.text())) layoutIssues.push(message.text());
+    });
+    await page.route('**/landing_journey/*.webp', async route => {
+      failedAssets.add(route.request().url());
+      await route.fulfill({ status: 404, body: '' });
+    });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openLanding(page);
+    const story = await focusStory(page);
+    for (const [index, label] of ['分散', '集約', '整理', '実行'].entries()) {
+      await activateChapter(page, label);
+      await expect(story).toHaveAccessibleName(new RegExp(`${index + 1} / 4`));
+    }
+    await expect.poll(() => failedAssets.size).toBe(4);
+    await expect(story.getByRole('button', { name: '無料で保存を始める', exact: true })).toBeInViewport();
+    await page.screenshot({ path: testInfo.outputPath('story-without-images.png'), scale: 'css' });
+    await story.getByRole('button', { name: '登録なしで1件試す', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
+    expect(layoutIssues).toEqual([]);
+  });
+
+  test('keeps the lower outcomes readable and connects them to the trial', async ({ page }, testInfo) => {
+    await openLanding(page);
+    await focusStory(page);
+    await activateChapter(page, '実行');
+    await expect(await focusStory(page)).toHaveAccessibleName(/4 \/ 4/);
+    const heading = page.getByText('最初に、3つの成果から始める', { exact: true });
+    for (let step = 0; step < 100; step++) {
+      const bounds = await heading.boundingBox();
+      if (bounds && bounds.y > 80 && bounds.y + bounds.height < page.viewportSize()!.height - 120) break;
+      await page.mouse.move(180, 320);
+      await page.mouse.wheel(0, 400);
+      await page.waitForTimeout(180);
+    }
+    await expect(heading).toBeInViewport();
+    await page.screenshot({ path: testInfo.outputPath('lower-outcomes.png'), scale: 'css' });
+    const trial = page.getByRole('button', { name: '登録なしで1件試す', exact: true }).last();
+    for (let step = 0; step < 24; step++) {
+      const bounds = await trial.boundingBox();
+      if (bounds && bounds.y > 90 && bounds.y + bounds.height < page.viewportSize()!.height - 100) break;
+      await page.mouse.wheel(0, 180);
+      await page.waitForTimeout(180);
+    }
+    await expect(trial).toBeInViewport();
+    await page.screenshot({ path: testInfo.outputPath('lower-outcomes-action.png'), scale: 'css' });
+    await trial.click();
+    await expect(page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ })).toBeInViewport();
+  });
+
+  test('shows the getting-started path before pricing without clipping its action', async ({ page }, testInfo) => {
+    await openLanding(page);
+    await activateChapter(page, '実行');
+    await expect(await focusStory(page)).toHaveAccessibleName(/4 \/ 4/);
+    const action = page.getByRole('button', { name: '無料登録へ進む', exact: true });
+    for (let step = 0; step < 100; step++) {
+      const bounds = await action.boundingBox();
+      if (bounds && bounds.y > 90 && bounds.y + bounds.height < page.viewportSize()!.height - 100) break;
+      await page.mouse.move(180, 320);
+      await page.mouse.wheel(0, 400);
+      await page.waitForTimeout(180);
+    }
+    await expect(action).toBeInViewport();
+    expect((await action.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await page.screenshot({ path: testInfo.outputPath('getting-started.png'), scale: 'css' });
+    await action.click();
+    await expect(page.getByRole('textbox', { name: 'メールアドレス', exact: true }).first()).toBeInViewport();
+  });
+
+  test('opens and closes the primary decision questions after pricing', async ({ page }, testInfo) => {
+    const layoutIssues: string[] = [];
+    page.on('pageerror', error => layoutIssues.push(error.message));
+    page.on('console', message => {
+      if (/overflowed by|RenderFlex|unbounded|BoxConstraints forces/.test(message.text())) layoutIssues.push(message.text());
+    });
+    await openLanding(page);
+    await activateChapter(page, '実行');
+    const question = page.getByText('AIが勝手に「やること」を決めるのですか?', { exact: true });
+    for (let step = 0; step < 120; step++) {
+      const bounds = await question.boundingBox();
+      if (bounds && bounds.y > 160 && bounds.y + bounds.height < page.viewportSize()!.height - 180) break;
+      await page.mouse.move(180, 320);
+      await page.mouse.wheel(0, 350);
+      await page.waitForTimeout(180);
+    }
+    await expect(question).toBeInViewport();
+    await page.screenshot({ path: testInfo.outputPath('faq-closed.png'), scale: 'css' });
+    await page.getByRole('button', { name: 'AIが勝手に「やること」を決めるのですか?', exact: true }).click();
+    const answer = page.getByRole('group', { name: /いいえ。AIは入力内容を整理して、次に動かす1件の候補と理由を提案します。実行するか、別の行動を選ぶかはユーザーが決めます。/ });
+    await expect(answer).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath('faq-open.png'), scale: 'css' });
+    const toggle = page.getByRole('button', { name: 'AIが勝手に「やること」を決めるのですか?', exact: true });
+    expect((await toggle.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await toggle.focus();
+    await toggle.press('Enter');
+    await expect(answer).toHaveCount(0);
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(layoutIssues).toEqual([]);
   });
 
   test('connects the final chapter to the existing no-signup trial', async ({
@@ -34,7 +247,7 @@ test.describe('Landing story journey', () => {
     await story.getByRole('button', { name: '登録なしで1件試す' }).click();
 
     await expect(
-      page.getByRole('textbox', { name: /登録なしで試す/ }),
+      page.getByRole('textbox', { name: /例: 今日いちばん詰まっていること|いま詰まっていること/ }),
     ).toBeInViewport();
     await expect(
       page.getByRole('button', { name: '今やる1件を試す', exact: true }),
@@ -77,6 +290,7 @@ async function openLanding(page: Page) {
     '自分株式会社とは？ | 人生を経営するAIライフマネジメントアプリ',
     { timeout: 60_000 },
   );
+  await expect(page.locator('#seo-shell')).toBeHidden({ timeout: 30000 });
 }
 
 async function focusStory(page: Page) {
