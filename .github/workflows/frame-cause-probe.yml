@@ -49,8 +49,11 @@ jobs:
          assert set(report['fixed_with_hidden_frame']['failed_tests'])=={'pump image follows repaired and powered facts','pending image keeps schematic until its first decoded frame'}
         finally:
          widget.write_bytes(original_widget);test.write_bytes(fixed_test)
-        subprocess.run(['git','diff','--exit-code'],check=True)
-        report['tracked_files_restored']=True
+        subprocess.run(['git','diff','--exit-code','--',str(widget),str(test)],check=True)
+        report['target_files_restored']=True
+        report['resolved_lock_sha256']=hashlib.sha256(Path('pubspec.lock').read_bytes()).hexdigest()
+        report['input_lock_sha256']=hashlib.sha256(subprocess.check_output(['git','show','HEAD:pubspec.lock'])).hexdigest()
+        (p/'cause-probe.json').write_text(json.dumps(report,indent=2))
         # Isolated construction-mode probe: diagnose declaration counters, not product behavior.
         probe=Path('lib/coverage_constructor_probe.dart')
         probe.write_text('class CoverageConstructorProbe {\n  const CoverageConstructorProbe(this.value);\n  final int value;\n}\n')
