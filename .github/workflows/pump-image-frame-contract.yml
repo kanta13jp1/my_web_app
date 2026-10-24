@@ -1,69 +1,65 @@
-{
-  "name": "Pump image frame contract",
-  "on": {
-    "pull_request": {
-      "paths": [
-        "test/widgets/echo_pump_motor_art_test.dart",
-        ".github/workflows/pump-image-frame-contract.yml"
-      ]
-    },
-    "workflow_dispatch": {}
-  },
-  "permissions": {},
-  "jobs": {
-    "frame-contract": {
-      "runs-on": "ubuntu-latest",
-      "timeout-minutes": 8,
-      "permissions": {
-        "contents": "read"
-      },
-      "steps": [
-        {
-          "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"
-        },
-        {
-          "uses": "./.github/actions/setup-flutter-sdk",
-          "with": {
-            "flutter-version": "3.38.10"
-          }
-        },
-        {
-          "uses": "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
-          "with": {
-            "path": "~/.pub-cache",
-            "key": "${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}",
-            "restore-keys": "${{ runner.os }}-pub-"
-          }
-        },
-        {
-          "name": "Install dependencies",
-          "run": "flutter pub get"
-        },
-        {
-          "name": "Check formatting",
-          "run": "dart format --output=none --set-exit-if-changed test/widgets/echo_pump_motor_art_test.dart"
-        },
-        {
-          "name": "Repeat frame contracts with real decoding",
-          "run": "set -euo pipefail\nmkdir -p .ci-logs\nfor attempt in 1 2 3; do\n  flutter test --coverage --concurrency=2 --file-reporter=json:.ci-logs/frame-${attempt}.jsonl test/widgets/echo_pump_motor_art_test.dart\n  cp coverage/lcov.info .ci-logs/frame-${attempt}.lcov\n done"
-        },
-        {
-          "name": "Verify decoded-frame coverage",
-          "run": "python - <<'PY'\nimport json\nfrom pathlib import Path\nsource=Path('lib/widgets/echo_pump_motor_art.dart').read_text().splitlines()\nmarkers=[': DecoratedBox(', 'decoration: BoxDecoration(', 'borderRadius: BorderRadius.circular(8),']\nrequired=[next(i for i,line in enumerate(source,1) if line.strip()==m) for m in markers]\nresults=[]\nfor attempt in range(1,4):\n    hits={}; current=False\n    for line in Path(f'.ci-logs/frame-{attempt}.lcov').read_text().splitlines():\n        if line.startswith('SF:'): current=line[3:].endswith('lib/widgets/echo_pump_motor_art.dart')\n        elif current and line.startswith('DA:'):\n            n,count,*_=line[3:].split(',');hits[int(n)]=hits.get(int(n),0)+int(count)\n    assert all(hits.get(n,0)>0 for n in required), (attempt,required,hits)\n    results.append({'attempt':attempt,'required_lines':required,'hits':{str(n):hits[n] for n in required}})\nPath('.ci-logs/frame-coverage-proof.json').write_text(json.dumps(results,indent=2))\nprint(json.dumps(results))\nPY"
-        },
-        {
-          "name": "Upload frame evidence",
-          "if": "${{ always() }}",
-          "uses": "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
-          "with": {
-            "name": "pump-image-frame-contract",
-            "include-hidden-files": true,
-            "path": ".ci-logs/frame-*",
-            "retention-days": 7,
-            "if-no-files-found": "warn"
-          }
-        }
-      ]
-    }
-  }
-}
+name: Pump image frame contract
+'on':
+  pull_request:
+    paths:
+    - test/widgets/echo_pump_motor_art_test.dart
+    - .github/workflows/pump-image-frame-contract.yml
+  workflow_dispatch: {}
+permissions: {}
+jobs:
+  frame-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+    - uses: ./.github/actions/setup-flutter-sdk
+      with:
+        flutter-version: 3.38.10
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: ~/.pub-cache
+        key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+        restore-keys: ${{ runner.os }}-pub-
+    - name: Install dependencies
+      run: flutter pub get
+    - name: Check formatting
+      run: dart format --output=none --set-exit-if-changed test/widgets/echo_pump_motor_art_test.dart
+    - name: Repeat frame contracts with real decoding
+      run: |-
+        set -euo pipefail
+        mkdir -p .ci-logs
+        for attempt in 1 2 3; do
+          flutter test --coverage --concurrency=2 --file-reporter=json:.ci-logs/frame-${attempt}.jsonl test/widgets/echo_pump_motor_art_test.dart
+          cp coverage/lcov.info .ci-logs/frame-${attempt}.lcov
+         done
+    - name: Verify decoded-frame coverage
+      run: |-
+        python - <<'PY'
+        import json
+        from pathlib import Path
+        source=Path('lib/widgets/echo_pump_motor_art.dart').read_text().splitlines()
+        markers=[': DecoratedBox(', 'decoration: BoxDecoration(', 'borderRadius: BorderRadius.circular(8),']
+        required=[next(i for i,line in enumerate(source,1) if line.strip()==m) for m in markers]
+        results=[]
+        for attempt in range(1,4):
+            hits={}; current=False
+            for line in Path(f'.ci-logs/frame-{attempt}.lcov').read_text().splitlines():
+                if line.startswith('SF:'): current=line[3:].endswith('lib/widgets/echo_pump_motor_art.dart')
+                elif current and line.startswith('DA:'):
+                    n,count,*_=line[3:].split(',');hits[int(n)]=hits.get(int(n),0)+int(count)
+            assert all(hits.get(n,0)>0 for n in required), (attempt,required,hits)
+            results.append({'attempt':attempt,'required_lines':required,'hits':{str(n):hits[n] for n in required}})
+        Path('.ci-logs/frame-coverage-proof.json').write_text(json.dumps(results,indent=2))
+        print(json.dumps(results))
+        PY
+    - name: Upload frame evidence
+      if: ${{ always() }}
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: pump-image-frame-contract
+        include-hidden-files: true
+        path: .ci-logs/frame-*
+        retention-days: 7
+        if-no-files-found: warn
