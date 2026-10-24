@@ -13,11 +13,11 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
     - uses: ./.github/actions/setup-flutter-sdk
       with:
         flutter-version: 3.38.10
-    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
         path: ~/.pub-cache
         key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
@@ -56,7 +56,7 @@ jobs:
         PY
     - name: Upload frame evidence
       if: ${{ always() }}
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
       with:
         name: pump-image-frame-contract
         include-hidden-files: true
