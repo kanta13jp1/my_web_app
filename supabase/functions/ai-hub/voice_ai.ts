@@ -362,7 +362,7 @@ export async function verifyVoiceProxyToken(
     const valid = await crypto.subtle.verify(
       "HMAC",
       key,
-      base64UrlDecode(parts[1]),
+      new Uint8Array(base64UrlDecode(parts[1])),
       new TextEncoder().encode(parts[0]),
     );
     if (!valid) return null;
