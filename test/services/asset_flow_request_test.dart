@@ -16,6 +16,7 @@ void main() {
         '[]',
         request.method == 'POST' ? 201 : 200,
         headers: const <String, String>{'content-type': 'application/json'},
+        request: request,
       );
     });
     final client = SupabaseClient(
@@ -53,8 +54,9 @@ void main() {
         requests.last.headers['authorization'],
       );
     }
-    expect(requests.last.headers.containsKey(AssetFlowRequest.headerName),
-        isFalse,
+    expect(
+      requests.last.headers.containsKey(AssetFlowRequest.headerName),
+      isFalse,
     );
     expect(requests.first.url.queryParameters['user_id'], 'eq.synthetic-owner');
     expect(requests[2].url.queryParameters['id'], 'eq.-1');
