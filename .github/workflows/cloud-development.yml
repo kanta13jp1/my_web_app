@@ -299,7 +299,7 @@ jobs:
           p=Path('test/e2e/platform_release_checklist.spec.ts')
           s=p.read_text()
           old="  await note.fill('Chrome で確認');"
-          new="  await note.press('Tab');\n  await note.focus();\n  await expect(note).toBeFocused();\n  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));\n  await note.pressSequentially('Chrome で確認', { delay: 75 });\n  await note.press('Tab');\n  await note.focus();\n  await expect(note).toHaveValue('Chrome で確認');"
+          new="  await note.press('Tab');\n  await expect(note).not.toBeFocused();\n  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));\n  await note.click();\n  await expect(note).toBeFocused();\n  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));\n  await note.pressSequentially('Chrome で確認', { delay: 75 });\n  await note.press('Tab');\n  await note.focus();\n  await expect(note).toHaveValue('Chrome で確認');"
           assert s.count(old)==1
           p.write_text(s.replace(old,new))
           PY
