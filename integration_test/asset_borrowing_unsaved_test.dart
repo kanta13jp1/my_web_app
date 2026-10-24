@@ -161,6 +161,39 @@ void main() {
         },
       );
     }
+    for (final kind in ['収入', '支出']) {
+      final metric = find.byWidgetPredicate(
+        (widget) => widget is Column && widget.children.whereType<Text>().any(
+          (child) => child.data == '2026/10 $kind',
+        ),
+      );
+      expect(metric, findsOneWidget);
+      expect(
+        find.descendant(of: metric, matching: find.text('￥0')),
+        findsOneWidget,
+      );
+    }
+    final calendarDay = find.byKey(const Key('asset_calendar_day_14'));
+    expect(calendarDay, findsOneWidget);
+    await tester.ensureVisible(calendarDay);
+    await tester.tap(calendarDay);
+    await tester.pump(const Duration(milliseconds: 500));
+    final event = find.text('借入受取（収入集計外）: 合成借入受取検査');
+    expect(event, findsOneWidget);
+    await Scrollable.ensureVisible(tester.element(event), alignment: 0.5);
+    await tester.pump(const Duration(milliseconds: 500));
+    await Scrollable.ensureVisible(tester.element(event), alignment: 0.5);
+    await tester.pump();
+    expect(event.hitTestable(), findsOneWidget);
+    await binding.takeScreenshot(
+      '${mobile ? 'mobile' : 'desktop'}-borrowing-calendar',
+      <String, Object?>{
+        'width': viewport.width,
+        'height': viewport.height,
+        'devicePixelRatio': mobile ? 2.75 : 1.0,
+        'targetHitTestable': true,
+      },
+    );
     expect(repository.saveCalls, 0);
     expect(repository.current.transferTasks, isEmpty);
     expect(tester.takeException(), isNull);
