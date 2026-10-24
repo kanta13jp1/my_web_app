@@ -299,9 +299,43 @@ void main() {
       },
     );
 
-    final response = await service.sendProviderChat(message: 'hello');
+    final response = await service.sendProviderChat(
+      message: 'hello',
+      provider: 'deepinfra',
+    );
 
     expect(response.text, 'blocked before provider fetch in ai-hub');
+  });
+
+  test('sendProviderChat without provider or model routes via chat_auto',
+      () async {
+    final actions = <String>[];
+    final service = AiHubChatService(
+      invoker: (body) async {
+        actions.add(body['action'] as String);
+        return {'success': true, 'text': 'ok', 'provider': 'nebius'};
+      },
+    );
+
+    final response = await service.sendProviderChat(message: 'hello');
+
+    expect(actions, ['provider.chat_auto']);
+    expect(response.observability?.provider, 'nebius');
+  });
+
+  test('sendProviderChat keeps an explicitly chosen provider pinned', () async {
+    final bodies = <Map<String, dynamic>>[];
+    final service = AiHubChatService(
+      invoker: (body) async {
+        bodies.add(body);
+        return {'success': true, 'text': 'ok'};
+      },
+    );
+
+    await service.sendProviderChat(message: 'hello', provider: 'openai');
+
+    expect(bodies.single['action'], 'provider.chat');
+    expect(bodies.single['provider'], 'openai');
   });
 
   test('verifyAnnualRateEvidence calls ai-hub vision verifier', () async {
