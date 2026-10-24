@@ -697,4 +697,79 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
   });
+
+  testWidgets('contract rate survives save and remount into AI interest input',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1': 'full',
+    });
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+    await tester.binding.setSurfaceSize(const Size(1600, 3200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _MonthlyRepository();
+    final ai = _ControlledAi();
+    Widget page(_ControlledAi provider) => MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repository,
+            aiSummaryService: provider,
+            aiAnalysisHistoryService: _EmptyHistory(),
+            debugNow: DateTime(2026, 9, 6, 12),
+            debugInitialAssetData: const <String, Map<String, double>>{
+              '2026-09-06': <String, double>{
+                'bank': 30000,
+                'モビット': -120000,
+              },
+            },
+          ),
+        );
+    await tester.pumpWidget(page(ai));
+    await _pumpUntil(tester, () => ai.requests.isNotEmpty);
+    final initialDebt = ai.requests.single.workbook.debtMasterRows
+        .singleWhere((row) => row.id == 'mobit');
+    expect(initialDebt.annualRate, 0.15);
+    ai.complete(0, 'Synthetic initial rate');
+    await _pumpUntil(
+      tester,
+      () => find
+          .text('Synthetic initial rate', findRichText: true)
+          .evaluate()
+          .isNotEmpty,
+    );
+    final rateField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.helperText == '契約書の年利を入力（証跡は任意）',
+    );
+    expect(rateField, findsOneWidget);
+    await tester.ensureVisible(rateField);
+    await tester.enterText(rateField, '12');
+    await _pumpUntil(
+      tester,
+      () => repository.state.annualRateOverrides['mobit'] == 0.12,
+    );
+    await _pumpUntil(tester, () => ai.requests.length == 2);
+    final updatedDebt = ai.requests.last.workbook.debtMasterRows
+        .singleWhere((row) => row.id == 'mobit');
+    expect(updatedDebt.annualRate, 0.12);
+    expect(updatedDebt.monthlyInterestEstimate, closeTo(1200, 0.001));
+    expect(
+      find.text('Synthetic initial rate', findRichText: true),
+      findsNothing,
+    );
+    ai.complete(1, 'Synthetic confirmed rate');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+    final reloadedAi = _ControlledAi();
+    await tester.pumpWidget(page(reloadedAi));
+    await _pumpUntil(tester, () => reloadedAi.requests.isNotEmpty);
+    final restoredDebt = reloadedAi.requests.single.workbook.debtMasterRows
+        .singleWhere((row) => row.id == 'mobit');
+    expect(restoredDebt.annualRate, 0.12);
+    expect(restoredDebt.monthlyInterestEstimate, closeTo(1200, 0.001));
+    expect(repository.state.annualRateOverrides['mobit'], 0.12);
+    reloadedAi.complete(0, 'Synthetic reloaded rate');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
 }
