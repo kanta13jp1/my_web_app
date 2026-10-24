@@ -684,12 +684,13 @@ class _HomePageState extends State<HomePage> with RouteAware {
     }
 
     try {
-      final dynamic rowsRaw = await AssetFlowRequest.table(Supabase.instance.client)
-          .select('action_type,amount,occurred_at')
-          .eq('user_id', userId)
-          .gte('occurred_at', monthStart.toUtc().toIso8601String())
-          .lt('occurred_at', nextMonth.toUtc().toIso8601String())
-          .order('occurred_at', ascending: false);
+      final dynamic rowsRaw =
+          await AssetFlowRequest.table(Supabase.instance.client,)
+              .select('action_type,amount,occurred_at')
+              .eq('user_id', userId)
+              .gte('occurred_at', monthStart.toUtc().toIso8601String())
+              .lt('occurred_at', nextMonth.toUtc().toIso8601String())
+              .order('occurred_at', ascending: false);
       final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
 
       var incomeTotal = 0;
@@ -751,7 +752,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
     ).add(const Duration(days: 1));
 
     try {
-      final dynamic rowsRaw = await AssetFlowRequest.table(Supabase.instance.client)
+      final dynamic rowsRaw = await AssetFlowRequest.table(Supabase.instance.client,)
           .select('action_type,amount,occurred_at')
           .eq('user_id', userId)
           .gte('occurred_at', normalizedStart.toUtc().toIso8601String())
@@ -994,7 +995,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
             .select('title,amount,created_at')
             .eq('user_id', userId)
             .order('created_at', ascending: true),
-        AssetFlowRequest.table(Supabase.instance.client)
+        AssetFlowRequest.table(Supabase.instance.client,)
             .select('amount,description,occurred_at,action_type')
             .eq('user_id', userId)
             .order('occurred_at', ascending: true),
