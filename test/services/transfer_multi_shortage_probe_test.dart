@@ -6,15 +6,15 @@ void main() {
     final book = const AssetLiabilityPlanningService().buildWorkbook(
       latestSnapshot: <String, double>{
         'cash': 100000,
-        'bank': 0,
-        'other': 0,
+        'bank': 10000,
+        'other': 10000,
         'mobit': -100000,
         'PayPayカード': -100000,
       },
       baseDate: DateTime(2026, 5, 1),
       monthlyPaymentOverrides: const <String, double>{
-        'mobit': 50000,
-        'PayPayカード': 50000,
+        'mobit': 60000,
+        'PayPayカード': 60000,
       },
       paymentSourceAccountIds: const <String, String>{
         'mobit': 'custom_bank',
