@@ -22,7 +22,10 @@ void main() {
     );
   });
   test('unstructured or unrelated failures remain generic', () {
-    expect(voiceAiErrorStatus(StateError('voice_usage_limit_exceeded')), 'error');
+    expect(
+      voiceAiErrorStatus(StateError('voice_usage_limit_exceeded')),
+      'error',
+    );
     expect(
       voiceAiErrorStatus(const FunctionException(status: 500, details: 'bad')),
       'error',
