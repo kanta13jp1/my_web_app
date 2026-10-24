@@ -42,7 +42,7 @@ void main() {
     final repository = _ReadOnlyFixtureRepository();
     final now = DateTime(2026, 9, 1);
     final fixtureWorkbook = const AssetLiabilityPlanningService().buildWorkbook(
-      latestSnapshot: const <String, double>{'財布(現金)': 1000, '三井住友銀行': 500000, 'モビット': -100000},
+      latestSnapshot: const <String, double>{'財布(現金)': 1000, '三井住友銀行': 500000, 'モビット': -100000,},
       baseDate: now,
     );
     expect(fixtureWorkbook.billingConfirmationPendingRows, isNotEmpty);
@@ -51,7 +51,7 @@ void main() {
       debugCalendarNow: now,
       assetLiabilityRepository: repository,
       debugInitialAssetData: const <String, Map<String, double>>{
-        '2026-09-01': <String, double>{'財布(現金)': 1000, '三井住友銀行': 500000, 'モビット': -100000},
+        '2026-09-01': <String, double>{'財布(現金)': 1000, '三井住友銀行': 500000, 'モビット': -100000,},
       },
     ),),);
     for (var frame = 0; frame < 8; frame++) {
