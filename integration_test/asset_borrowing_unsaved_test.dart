@@ -128,7 +128,10 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.descendant(of: history, matching: find.text('10/14 ・ 借入受取 ・ タップで編集')),
+      find.descendant(
+        of: history,
+        matching: find.text('10/14 ・ 借入受取 ・ タップで編集'),
+      ),
       findsOneWidget,
     );
     expect(
