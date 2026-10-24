@@ -1,3 +1,4 @@
+import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
 import '../widgets/asset_recorded_change_details.dart';
 import '../models/asset_income_source_evidence.dart';
 import '../widgets/asset_income_reconciliation_section.dart';
@@ -139,6 +140,7 @@ import 'package:my_web_app/services/konbini_udon_challenge_service.dart';
 import 'package:my_web_app/widgets/asset_legacy_meal_rule_card.dart';
 import 'package:my_web_app/services/profile_service.dart';
 import 'package:my_web_app/services/asset_flow_description_service.dart';
+import 'package:my_web_app/services/asset_flow_kind.dart';
 import 'package:my_web_app/services/asset_salary_spending_entries.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
@@ -169,6 +171,7 @@ import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 import 'package:my_web_app/widgets/investment_asset_management_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/services/asset_flow_request.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart'
     // ignore: uri_does_not_exist
@@ -618,6 +621,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _flowsDone = false;
   bool _mustTasksDone = false;
   bool _isLoadingClosing = false;
+  bool _isSavingClosing = false;
+  int _closingFetchGeneration = 0;
+  int _closingAppliedRevision = 0;
+  String? _closingLoadedOwner;
+  String? _closingLoadedDate;
+  String? _closingDisplayOwner;
+  String? _closingDisplayDate;
+  Future<void>? _closingActiveFetch;
+  Completer<void>? _closingFetchChanged;
   bool _isFetchingSmbc = false;
   bool _isFetchingJibun = false;
   bool _isImportingSmbcCsv = false;
@@ -1271,7 +1283,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ];
 
   static const double _compactWidthBreakpoint = 420;
-  static const List<String> _flowTypeOptions = ['支出', '収入', '振替'];
+  static const List<String> _flowTypeOptions = ['支出', '収入', '振替', '借入受取'];
   static const String _smbcCsvSource = '[三井住友銀行]';
   static final RegExp _flowImportMarkerPattern = RegExp(
     r'\s*\[import:smbc:[^\]]+\]\s*$',
@@ -1448,6 +1460,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   @override
   void dispose() {
+    final closingChanged = _closingFetchChanged;
+    if (closingChanged != null && !closingChanged.isCompleted) {
+      closingChanged.complete();
+    }
     _controllers.forEach((_, controller) => controller.dispose());
     _monthlyPaymentControllers.forEach((_, controller) => controller.dispose());
     _actualPaymentControllers.forEach((_, controller) => controller.dispose());
@@ -1716,27 +1732,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return options.first;
   }
 
-  bool _isIncomeActionType(String actionType) => actionType == 'conquer';
+  bool _isIncomeActionType(String actionType) =>
+      AssetFlowKind.fromActionType(actionType).countsAsIncome;
 
-  bool _isExpenseActionType(String actionType) => actionType == 'expense';
+  bool _isExpenseActionType(String actionType) =>
+      AssetFlowKind.fromActionType(actionType).countsAsExpense;
 
   bool _isTransferActionType(String actionType) => actionType == 'transfer';
 
   bool get _isExpenseFlowSelected => _selectedFlowType == '支出';
 
   String _flowAmountPrefix(String actionType) {
-    if (_isIncomeActionType(actionType)) return '+';
-    if (_isTransferActionType(actionType)) return '↔';
-    return '-';
+    return AssetFlowKind.fromActionType(actionType).amountPrefix;
   }
 
   IconData _flowActionIcon(String actionType) {
+    if (actionType == 'borrowing') return Icons.account_balance_outlined;
     if (_isIncomeActionType(actionType)) return Icons.add_circle;
     if (_isTransferActionType(actionType)) return Icons.swap_horiz;
     return Icons.remove_circle;
   }
 
   Color _flowActionColor(String actionType) {
+    if (actionType == 'borrowing') return const Color(0xFFB45309);
     if (_isIncomeActionType(actionType)) return const Color(0xFF0D9488);
     if (_isTransferActionType(actionType)) return const Color(0xFF6366F1);
     return const Color(0xFFB91C1C);
@@ -2069,19 +2087,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   KgiCsfKpiPlan _buildWasteTrainingPlan(AssetWasteTrainingSnapshot snapshot) {
-    final zeroWasteTarget = max(1, snapshot.elapsedDays);
+    final zeroWasteTarget = max(1, snapshot.recordedExpenseDays);
     final ruleTarget = max(1, snapshot.ruleTargetCount);
     final violationClear = snapshot.todayViolationCount == 0 ? 1 : 0;
     return KgiCsfKpiPlan(
       domain: '資産管理 / 浪費抑制トレーニング',
       kgi: '浪費しない力を鍛え、判断力と純資産を高める',
-      actualLabel: '${snapshot.disciplineScore}点',
+      actualLabel: snapshot.recordedExpenseDays == 0
+          ? '記録不足・採点なし'
+          : '${snapshot.disciplineScore}点（記録ベース参考値）',
       targetLabel: '100点',
       progress: snapshot.trainingProgress,
       metrics: <KgiCsfKpiMetric>[
         KgiCsfKpiMetric.number(
           csf: '欲望を記録で可視化する',
-          kpi: '今月の浪費ゼロ日',
+          kpi: '支出記録日のうち浪費分類の記録がない日',
           actual: snapshot.noWasteDays,
           target: zeroWasteTarget,
           unit: '日',
@@ -5966,12 +5986,64 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return done / 5.0;
   }
 
-  Future<void> _fetchTodayClosing() async {
+  Future<void> _fetchTodayClosing() {
+    if (!mounted) return Future<void>.value();
+    final previousChanged = _closingFetchChanged;
+    _closingFetchChanged = Completer<void>();
+    final fetch = _fetchTodayClosingRequest();
+    _closingActiveFetch = fetch;
+    if (previousChanged != null && !previousChanged.isCompleted) {
+      previousChanged.complete();
+    }
+    return _waitForLatestClosingFetch();
+  }
+
+  Future<void> _waitForLatestClosingFetch() async {
+    while (mounted) {
+      final active = _closingActiveFetch;
+      final changed = _closingFetchChanged;
+      if (active == null || changed == null) return;
+      await Future.any<void>([active, changed.future]);
+      if (identical(active, _closingActiveFetch)) return;
+    }
+  }
+
+  Future<void> _fetchTodayClosingRequest() async {
+    if (!mounted) return;
+    final generation = ++_closingFetchGeneration;
+    final displayOwner = _supabase.auth.currentUser?.id;
+    final displayDate = _dateOnly(widget.debugNow ?? DateTime.now());
+    if (_closingDisplayOwner != displayOwner ||
+        _closingDisplayDate != displayDate) {
+      setState(() {
+        _assetsDone = false;
+        _liabilitiesDone = false;
+        _fixedCostsDone = false;
+        _flowsDone = false;
+        _mustTasksDone = false;
+        _closingDisplayOwner = displayOwner;
+        _closingDisplayDate = displayDate;
+      });
+    }
+    _closingLoadedOwner = null;
+    _closingLoadedDate = null;
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
+    if (userId == null) {
+      if (mounted) {
+        setState(() {
+          _assetsDone = false;
+          _liabilitiesDone = false;
+          _fixedCostsDone = false;
+          _flowsDone = false;
+          _mustTasksDone = false;
+        });
+        setState(() => _isLoadingClosing = false);
+      }
+      return;
+    }
 
     setState(() => _isLoadingClosing = true);
-    final todayStr = _dateOnly(DateTime.now());
+    final todayStr = _dateOnly(widget.debugNow ?? DateTime.now());
 
     try {
       final rows = await _supabase
@@ -5981,7 +6053,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .eq('date', todayStr)
           .limit(1);
 
-      if (!mounted) return;
+      if (!mounted || generation != _closingFetchGeneration) return;
+      if (_supabase.auth.currentUser?.id != userId ||
+          _dateOnly(widget.debugNow ?? DateTime.now()) != todayStr) {
+        setState(() {
+          _assetsDone = false;
+          _liabilitiesDone = false;
+          _fixedCostsDone = false;
+          _flowsDone = false;
+          _mustTasksDone = false;
+        });
+        await _fetchTodayClosing();
+        return;
+      }
+
+      _closingAppliedRevision++;
+      _closingLoadedOwner = userId;
+      _closingLoadedDate = todayStr;
 
       if (rows.isNotEmpty) {
         final r = rows.first;
@@ -6005,15 +6093,60 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     } catch (e) {
       debugPrint('fetch closing error: $e');
-      if (!mounted) return;
+      if (!mounted || generation != _closingFetchGeneration) return;
+      if (_supabase.auth.currentUser?.id != userId ||
+          _dateOnly(widget.debugNow ?? DateTime.now()) != todayStr) {
+        setState(() {
+          _assetsDone = false;
+          _liabilitiesDone = false;
+          _fixedCostsDone = false;
+          _flowsDone = false;
+          _mustTasksDone = false;
+        });
+        await _fetchTodayClosing();
+        return;
+      }
       setState(() => _isLoadingClosing = false);
     }
   }
 
-  Future<void> _upsertTodayClosing() async {
+  Future<bool> _ensureClosingLoaded() async {
+    final owner = _supabase.auth.currentUser?.id;
+    if (owner == null) {
+      await _fetchTodayClosing();
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('チェックを保存するにはログインしてください。'),
+        ),
+      );
+      return false;
+    }
+    if (_closingLoadedOwner == owner &&
+        _closingLoadedDate == _dateOnly(widget.debugNow ?? DateTime.now())) {
+      return true;
+    }
+    await _fetchTodayClosing();
+    while (mounted && _isLoadingClosing) {
+      await _waitForLatestClosingFetch();
+    }
+    if (!mounted) return false;
+    final loaded = _closingLoadedOwner == _supabase.auth.currentUser?.id &&
+        _closingLoadedOwner != null &&
+        _closingLoadedDate == _dateOnly(widget.debugNow ?? DateTime.now());
+    if (!loaded) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('現在のチェックを取得できませんでした。保存せず、同じ操作で再取得してください。')),
+      );
+    }
+    return loaded;
+  }
+
+  Future<bool> _upsertTodayClosing() async {
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
-    final todayStr = _dateOnly(DateTime.now());
+    if (userId == null) return false;
+    final todayStr = _dateOnly(widget.debugNow ?? DateTime.now());
 
     try {
       await _supabase.from('cfo_daily_closings').upsert({
@@ -6026,13 +6159,41 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'must_tasks_done': _mustTasksDone,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'user_id,date');
+      return _supabase.auth.currentUser?.id == userId &&
+          _dateOnly(widget.debugNow ?? DateTime.now()) == todayStr;
     } catch (e) {
       debugPrint('upsert closing error: $e');
+      return false;
     }
   }
 
   Future<void> _toggleClosing(String key, bool value) async {
+    if (_supabase.auth.currentUser == null) {
+      await _ensureClosingLoaded();
+      return;
+    }
+    if (_isSavingClosing || _isLoadingClosing) return;
+    final initiatingOwner = _supabase.auth.currentUser?.id;
+    final initiatingDate = _dateOnly(widget.debugNow ?? DateTime.now());
+    if (!await _ensureClosingLoaded() || !mounted) return;
+    if (_supabase.auth.currentUser?.id != initiatingOwner ||
+        _dateOnly(widget.debugNow ?? DateTime.now()) != initiatingDate) {
+      return;
+    }
+    if (_isSavingClosing || _isLoadingClosing) return;
+    final savingOwner = _supabase.auth.currentUser?.id;
+    final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
+    final savingReadGeneration = _closingAppliedRevision;
+    final savingFetchGeneration = _closingFetchGeneration;
+    final previous = [
+      _assetsDone,
+      _liabilitiesDone,
+      _fixedCostsDone,
+      _flowsDone,
+      _mustTasksDone
+    ];
     setState(() {
+      _isSavingClosing = true;
       switch (key) {
         case 'assets':
           _assetsDone = value;
@@ -6051,7 +6212,82 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           break;
       }
     });
-    await _upsertTodayClosing();
+    final submitted = [
+      _assetsDone,
+      _liabilitiesDone,
+      _fixedCostsDone,
+      _flowsDone,
+      _mustTasksDone
+    ];
+    final saved = await _upsertTodayClosing();
+    if (!mounted) return;
+    final contextChanged = _supabase.auth.currentUser?.id != savingOwner ||
+        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate;
+    if (contextChanged ||
+        (!saved && _closingAppliedRevision != savingReadGeneration) ||
+        (saved && _closingFetchGeneration != savingFetchGeneration)) {
+      final recoveryRevision = _closingAppliedRevision;
+      await _fetchTodayClosing();
+      while (mounted && _isLoadingClosing) {
+        await _waitForLatestClosingFetch();
+      }
+      if (!mounted) return;
+      final sameContext = _supabase.auth.currentUser?.id == savingOwner &&
+          _dateOnly(widget.debugNow ?? DateTime.now()) == savingDate;
+      final refreshFailed = _closingLoadedOwner != savingOwner ||
+          _closingLoadedDate != savingDate;
+      if (saved &&
+          sameContext &&
+          refreshFailed &&
+          _closingAppliedRevision == recoveryRevision) {
+        setState(() {
+          _assetsDone = submitted[0];
+          _liabilitiesDone = submitted[1];
+          _fixedCostsDone = submitted[2];
+          _flowsDone = submitted[3];
+          _mustTasksDone = submitted[4];
+        });
+      }
+      setState(() => _isSavingClosing = false);
+      if (saved && sameContext && refreshFailed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('チェックは保存しましたが、最新状態を再取得できませんでした。ページを再読み込みしてください。'),
+          ),
+        );
+      }
+      if (!saved &&
+          _supabase.auth.currentUser?.id == savingOwner &&
+          _dateOnly(widget.debugNow ?? DateTime.now()) == savingDate) {
+        final reloadFailed = _closingLoadedOwner != savingOwner ||
+            _closingLoadedDate != savingDate;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              reloadFailed
+                  ? 'チェックを保存できませんでした。最新状態の再取得にも失敗しました。表示は直近の確認状態です。同じ操作で再取得してください。'
+                  : 'チェックを保存できませんでした。最新状態を再取得しました。内容を確認して再度お試しください。',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+    setState(() {
+      _isSavingClosing = false;
+      if (!saved) {
+        _assetsDone = previous[0];
+        _liabilitiesDone = previous[1];
+        _fixedCostsDone = previous[2];
+        _flowsDone = previous[3];
+        _mustTasksDone = previous[4];
+      }
+    });
+    if (!saved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('チェックを保存できませんでした。元の状態に戻しました。再度お試しください。')),
+      );
+    }
   }
 
   void _scrollTo(GlobalKey key) {
@@ -6263,7 +6499,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _autoCheckFromData() async {
-    final todayStr = _dateOnly(DateTime.now());
+    if (_supabase.auth.currentUser == null) {
+      await _ensureClosingLoaded();
+      return;
+    }
+    if (_isSavingClosing || _isLoadingClosing) return;
+    final initiatingOwner = _supabase.auth.currentUser?.id;
+    final initiatingDate = _dateOnly(widget.debugNow ?? DateTime.now());
+    if (!await _ensureClosingLoaded() || !mounted) return;
+    if (_supabase.auth.currentUser?.id != initiatingOwner ||
+        _dateOnly(widget.debugNow ?? DateTime.now()) != initiatingDate) {
+      return;
+    }
+    if (_isSavingClosing || _isLoadingClosing) return;
+    final savingOwner = _supabase.auth.currentUser?.id;
+    final savingDate = _dateOnly(widget.debugNow ?? DateTime.now());
+    final savingReadGeneration = _closingAppliedRevision;
+    final savingFetchGeneration = _closingFetchGeneration;
+    final previousAssets = _assetsDone;
+    final previousLiabilities = _liabilitiesDone;
+    final todayStr = _dateOnly(widget.debugNow ?? DateTime.now());
 
     // NOTE: Closing checks intentionally use raw inputs recorded today.
     // Do not use display-complemented values here.
@@ -6279,15 +6534,87 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       recordedToday: todayStock,
     );
     setState(() {
+      _isSavingClosing = true;
       _assetsDone = checks.assets;
       _liabilitiesDone = checks.liabilities;
       // Completeness of costs, flows and tasks needs the owner's review.
       // Keep existing owner checks; the presence of one record is not enough.
     });
 
-    await _upsertTodayClosing();
-
+    final submitted = [
+      _assetsDone,
+      _liabilitiesDone,
+      _fixedCostsDone,
+      _flowsDone,
+      _mustTasksDone
+    ];
+    final saved = await _upsertTodayClosing();
     if (!mounted) return;
+    final contextChanged = _supabase.auth.currentUser?.id != savingOwner ||
+        _dateOnly(widget.debugNow ?? DateTime.now()) != savingDate;
+    if (contextChanged ||
+        (!saved && _closingAppliedRevision != savingReadGeneration) ||
+        (saved && _closingFetchGeneration != savingFetchGeneration)) {
+      final recoveryRevision = _closingAppliedRevision;
+      await _fetchTodayClosing();
+      while (mounted && _isLoadingClosing) {
+        await _waitForLatestClosingFetch();
+      }
+      if (!mounted) return;
+      final sameContext = _supabase.auth.currentUser?.id == savingOwner &&
+          _dateOnly(widget.debugNow ?? DateTime.now()) == savingDate;
+      final refreshFailed = _closingLoadedOwner != savingOwner ||
+          _closingLoadedDate != savingDate;
+      if (saved &&
+          sameContext &&
+          refreshFailed &&
+          _closingAppliedRevision == recoveryRevision) {
+        setState(() {
+          _assetsDone = submitted[0];
+          _liabilitiesDone = submitted[1];
+          _fixedCostsDone = submitted[2];
+          _flowsDone = submitted[3];
+          _mustTasksDone = submitted[4];
+        });
+      }
+      setState(() => _isSavingClosing = false);
+      if (saved && sameContext && refreshFailed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('チェックは保存しましたが、最新状態を再取得できませんでした。ページを再読み込みしてください。'),
+          ),
+        );
+      }
+      if (!saved &&
+          _supabase.auth.currentUser?.id == savingOwner &&
+          _dateOnly(widget.debugNow ?? DateTime.now()) == savingDate) {
+        final reloadFailed = _closingLoadedOwner != savingOwner ||
+            _closingLoadedDate != savingDate;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              reloadFailed
+                  ? 'チェックを保存できませんでした。最新状態の再取得にも失敗しました。表示は直近の確認状態です。同じ操作で再取得してください。'
+                  : 'チェックを保存できませんでした。最新状態を再取得しました。内容を確認して再度お試しください。',
+            ),
+          ),
+        );
+      }
+      if (!saved || !sameContext || refreshFailed) return;
+    }
+    setState(() {
+      _isSavingClosing = false;
+      if (!saved) {
+        _assetsDone = previousAssets;
+        _liabilitiesDone = previousLiabilities;
+      }
+    });
+    if (!saved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('チェックを保存できませんでした。元の状態に戻しました。再度お試しください。')),
+      );
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
@@ -6740,12 +7067,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// Fetch older rows only when the user opens a specific account's history.
   /// This path is read-only and deliberately does not use the 400-day summary.
+  AssetBalanceHistoryLoader _balanceHistoryLoader(String type) {
+    final ownerId = _supabase.auth.currentUser?.id;
+    return (offset) => _loadBalanceHistoryPage(type, offset, ownerId);
+  }
+
   Future<List<AssetBalanceObservation>> _loadBalanceHistoryPage(
     String type,
     int offset,
+    String? expectedOwnerId,
   ) async {
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) throw StateError('ログインが必要です。');
+    if (userId == null || userId != expectedOwnerId) {
+      throw StateError('利用者が変更されました。');
+    }
     final data = await _supabase
         .from('cfo_assets')
         .select('id,title,amount,created_at')
@@ -6754,6 +7089,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         .order('created_at', ascending: false)
         .order('id', ascending: false)
         .range(offset, offset + 49);
+    if (_supabase.auth.currentUser?.id != expectedOwnerId) {
+      throw StateError('利用者が変更されました。');
+    }
     return data.map(AssetBalanceObservation.fromRow).toList(growable: false);
   }
 
@@ -7230,6 +7568,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final previousDate = _lastUpdatedDates[type];
     final previousAmount =
         previousDate == null ? null : _assetData[previousDate]?[type];
+    var balanceSaved = false;
     try {
       final recordedAt = DateTime.now();
       await _supabase.from('cfo_assets').insert({
@@ -7241,6 +7580,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       });
 
+      balanceSaved = true;
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       setState(() {
         if (!_assetData.containsKey(today)) _assetData[today] = {};
         _assetData[today]![type] = amount;
@@ -7253,20 +7594,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final autoRecorded = previousAmount == null
           ? false
           : await _autoRecordUnknownExpenseFromAssetDrop(
+              expectedUserId: userId,
               assetType: type,
               dateKey: today,
               previousAmount: previousAmount,
               currentAmount: amount,
             );
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       if (autoRecorded) {
         await _fetchRecentFlows();
       }
 
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       if (clearController) {
         _controllers[type]?.clear();
       }
 
-      if (!mounted) return;
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -7280,6 +7624,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
     } catch (e) {
       debugPrint('Error saving $type: $e');
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            balanceSaved
+                ? '$type の残高は保存済みです。保存後の関連処理に失敗しました。再保存せず、画面を再読み込みしてください。'
+                : '$type の残高保存を確認できませんでした。入力内容は保持しています。履歴を確認してから再試行してください。',
+          ),
+        ),
+      );
     }
   }
 
@@ -7584,6 +7938,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     if (!hasData) return;
 
+    var balanceSaved = false;
     try {
       final nowIso = AssetBalanceTimestampService.encodeForDatabase(
         DateTime.now(),
@@ -7594,14 +7949,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ? null
               : _assetData[_lastUpdatedDates[entry.key]]?[entry.key],
       };
-      for (var entry in todayData.entries) {
-        await _supabase.from('cfo_assets').insert({
-          'user_id': userId,
-          'title': entry.key,
-          'amount': entry.value,
-          'created_at': nowIso,
-        });
-      }
+      await _supabase.from('cfo_assets').insert([
+        for (final entry in todayData.entries)
+          {
+            'user_id': userId,
+            'title': entry.key,
+            'amount': entry.value,
+            'created_at': nowIso,
+          },
+      ]);
+      balanceSaved = true;
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       setState(() {
         if (!_assetData.containsKey(today)) _assetData[today] = {};
         _assetData[today]!.addAll(todayData);
@@ -7612,16 +7970,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       var autoRecordedCount = 0;
       for (final entry in todayData.entries) {
+        if (!mounted || _supabase.auth.currentUser?.id != userId) return;
         final previousAmount = previousAmounts[entry.key];
         if (previousAmount == null) {
           continue;
         }
         final autoRecorded = await _autoRecordUnknownExpenseFromAssetDrop(
+          expectedUserId: userId,
           assetType: entry.key,
           dateKey: today,
           previousAmount: previousAmount,
           currentAmount: entry.value,
         );
+        if (!mounted || _supabase.auth.currentUser?.id != userId) return;
         if (autoRecorded) {
           autoRecordedCount += 1;
         }
@@ -7629,6 +7990,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (autoRecordedCount > 0) {
         await _fetchRecentFlows();
       }
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       _controllers.forEach((_, controller) => controller.clear());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -7644,9 +8006,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
       // メイン口座の残高更新が給料反映なら、ここで確認候補を更新する
       // (残高増は入金フローを生成しないため、残高窓ベースの検知が要)。
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
       _maybeDetectSalaryDeposit();
     } catch (e) {
       debugPrint('Error saving assets: $e');
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            balanceSaved
+                ? '資産・負債の残高は保存済みです。保存後の関連処理に失敗しました。再保存せず、画面を再読み込みしてください。'
+                : '資産・負債の残高保存を確認できませんでした。入力内容は保持しています。履歴を確認してから再試行してください。',
+          ),
+        ),
+      );
     }
   }
 
@@ -8337,8 +8710,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final data = await AssetManagementEgressPolicy.fetchBoundedPages(
         maxRows: AssetManagementEgressPolicy.maxRecentFlowRows,
         fetchPage: (from, to) async {
-          final dynamic response = await _supabase
-              .from('wealth_struggles')
+          final dynamic response = await AssetFlowRequest.table(_supabase)
               .select('id,action_type,amount,description,occurred_at')
               .eq('user_id', userId)
               .gte('occurred_at', cutoff)
@@ -8417,8 +8789,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final rows = await AssetManagementEgressPolicy.fetchBoundedPages(
       maxRows: AssetManagementEgressPolicy.maxImportDedupRows,
       fetchPage: (from, to) async {
-        final dynamic response = await _supabase
-            .from('wealth_struggles')
+        final dynamic response = await AssetFlowRequest.table(_supabase)
             .select('id,description,occurred_at')
             .eq('user_id', userId)
             .gte('occurred_at', start.toIso8601String())
@@ -8527,7 +8898,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       for (var i = 0; i < records.length; i += 200) {
         final chunk = records.sublist(i, min(i + 200, records.length));
-        await _supabase.from('wealth_struggles').insert(chunk);
+        await AssetFlowRequest.table(_supabase).insert(chunk);
       }
       if (classificationExpenses.isNotEmpty) {
         unawaited(_classifyImportedExpenses(classificationExpenses));
@@ -8644,13 +9015,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<bool> _autoRecordUnknownExpenseFromAssetDrop({
+    required String expectedUserId,
     required String assetType,
     required String dateKey,
     required double previousAmount,
     required double currentAmount,
   }) async {
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null ||
+    if (!mounted ||
+        userId != expectedUserId ||
         !AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
           assetType: assetType,
           isManagedLiability: _isDebtMasterManagedAccount(assetType),
@@ -8678,7 +9051,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final amount = previousAmount - currentAmount;
     final source = _flowSourceForAssetType(assetType);
     final occurredAt = DateTime.tryParse(dateKey) ?? DateTime.now();
-    await _supabase.from('wealth_struggles').insert({
+    if (!mounted || _supabase.auth.currentUser?.id != expectedUserId) {
+      return false;
+    }
+    await AssetFlowRequest.table(_supabase).insert({
       'user_id': userId,
       'action_type': 'expense',
       'amount': amount.round(),
@@ -8694,7 +9070,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       'occurred_at': occurredAt.toUtc().toIso8601String(),
     });
 
-    if (mounted && !_sourceOptions.contains(source)) {
+    if (mounted &&
+        _supabase.auth.currentUser?.id == expectedUserId &&
+        !_sourceOptions.contains(source)) {
       setState(() {
         _sourceOptions = [..._sourceOptions, source];
       });
@@ -8757,6 +9135,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     switch (label) {
       case '収入':
         return 'conquer';
+      case '借入受取':
+        return 'borrowing';
       case '振替':
         return 'transfer';
       default:
@@ -8766,6 +9146,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String _actionTypeToFlowLabel(String actionType) {
     switch (actionType) {
+      case 'borrowing':
+        return '借入受取';
       case 'conquer':
         return '収入';
       case 'transfer':
@@ -8811,10 +9193,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final actionType = _flowLabelToActionType(_selectedFlowType);
+    var ownerChanged = false;
+    final ownerSubscription = _supabase.auth.onAuthStateChange.listen((event) {
+      if (event.session?.user.id != userId) ownerChanged = true;
+    });
+    bool canApplyResult() =>
+        mounted && !ownerChanged && _supabase.auth.currentUser?.id == userId;
     setState(() => _isRecordingFlow = true);
 
     try {
-      await _supabase.from('wealth_struggles').insert({
+      await AssetFlowRequest.table(_supabase).insert({
         'user_id': userId,
         'action_type': actionType,
         'amount': amount,
@@ -8828,6 +9216,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'occurred_at': _selectedFlowDate.toUtc().toIso8601String(),
       });
 
+      // 保存開始時の利用者だけに入力更新・結果表示を反映する。
+      if (!canApplyResult()) return;
       _flowMemoController.clear();
       _flowAmountController.clear();
       if (mounted) {
@@ -8837,6 +9227,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         });
       }
       await _fetchRecentFlows();
+      if (!canApplyResult()) return;
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -8849,7 +9240,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
     } catch (e) {
       debugPrint('Error recording flow: $e');
-      if (mounted) {
+      if (mounted && canApplyResult()) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -8863,6 +9254,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       }
     } finally {
+      await ownerSubscription.cancel();
       if (mounted) setState(() => _isRecordingFlow = false);
     }
   }
@@ -9118,7 +9510,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
 
-      await _supabase.from('wealth_struggles').update({
+      await AssetFlowRequest.table(_supabase).update({
         'action_type': _flowLabelToActionType(selectedType),
         'amount': amount,
         'description': _composeFlowDescription(
@@ -9212,8 +9604,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!shouldDelete) return;
 
     try {
-      await _supabase
-          .from('wealth_struggles')
+      await AssetFlowRequest.table(_supabase)
           .delete()
           .eq('id', flowId)
           .eq('user_id', userId);
@@ -16907,6 +17298,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       payslipSalaryIncomes: _payslipSalaryIncomes,
       payslipRows: _payslipRows,
       flowDisplayTitle: _flowDisplayTitle,
+      flowCategoryDescription: (flow) => _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: flow['action_type']?.toString() ?? '',
+      ).memo,
     );
     final breakdown = _buildSalarySpendingBreakdown();
     const categories = {'食費', '交通', '医療', '日用品', '娯楽・浪費'};
@@ -16918,8 +17313,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             !entry.date.isBefore(breakdown.periodStart) &&
             entry.date.isBefore(breakdown.periodEndExclusive) &&
             !entry.date.isAfter(_now) &&
-            categories.contains(
-                _salarySpendingBreakdownService.categorize(entry.description)))
+            categories.contains(_salarySpendingBreakdownService
+                .categorize(entry.categoryDescription ?? entry.description)))
         .map((entry) => SavingsLifePlan.dateText(entry.date))
         .toSet()
         .length;
@@ -18025,6 +18420,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (day.hasSalary) const Color(0xFF0D9488),
       if (day.hasExpectedInflow) const Color(0xFF0EA5E9),
       if (day.hasIncome) const Color(0xFF2563EB),
+      if (day.hasBorrowing) const Color(0xFFB45309),
       if (day.hasTransfer) const Color(0xFF64748B),
     ];
 
@@ -18156,6 +18552,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return Icons.remove_circle_outline;
       case AssetCalendarEventKind.income:
         return Icons.add_circle_outline;
+      case AssetCalendarEventKind.borrowing:
+        return Icons.account_balance_outlined;
       case AssetCalendarEventKind.transfer:
         return Icons.swap_horiz;
     }
@@ -18175,6 +18573,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return const Color(0xFFC05621);
       case AssetCalendarEventKind.income:
         return const Color(0xFF2563EB);
+      case AssetCalendarEventKind.borrowing:
+        return const Color(0xFFB45309);
       case AssetCalendarEventKind.transfer:
         return const Color(0xFF64748B);
     }
@@ -18464,6 +18864,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       payslipSalaryIncomes: _payslipSalaryIncomes,
       payslipRows: _payslipRows,
       flowDisplayTitle: _flowDisplayTitle,
+      flowCategoryDescription: (flow) => _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: flow['action_type']?.toString() ?? '',
+      ).memo,
     );
     return _salarySpendingBreakdownService.build(
       referenceDate: _now,
@@ -19645,6 +20049,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
             ),
             const SizedBox(height: 14),
+            AssetWasteObservationStatus(snapshot: training),
             KgiCsfKpiPanel(
               plan: plan,
               accentColor: const Color(0xFF0F766E),
@@ -19667,8 +20072,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   color: const Color(0xFFF97316),
                 ),
                 _buildOverviewStatChip(
-                  label: '浪費ゼロ日',
-                  value: '${training.noWasteDays}/${training.elapsedDays}日',
+                  label: '浪費分類の記録がない支出記録日',
+                  value:
+                      '${training.noWasteDays}/${training.recordedExpenseDays}記録日',
                   color: const Color(0xFF0F766E),
                 ),
                 _buildOverviewStatChip(
@@ -23313,6 +23719,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           }
           unawaited(_generateAssetManagementAiSummary(report, requestKey: key));
         });
+        // post-frame callbacks do not request a frame themselves. Do not rely
+        // on unrelated network completions to start the debounced summary.
+        WidgetsBinding.instance.ensureVisualUpdate();
       },
     );
   }
@@ -23843,8 +24252,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String _assetDisciplineTypeLabel(AssetDebtDisciplineViolationType type) {
     return switch (type) {
-      AssetDebtDisciplineViolationType.newBorrowing => '追加借入の発生',
-      AssetDebtDisciplineViolationType.revolvingCard => '新規利用分の25日返済不足',
+      AssetDebtDisciplineViolationType.newBorrowing => '追加借入の可能性（未照合）',
+      AssetDebtDisciplineViolationType.revolvingCard => '新規利用分の25日返済の要確認候補',
     };
   }
 
@@ -24145,7 +24554,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final hiddenViolationCount =
         report.allViolations.length - violationDisplayLimit;
     final headerColor =
-        compliant ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
+        compliant ? const Color(0xFF6B7280) : const Color(0xFFB45309);
     final bgColor =
         compliant ? const Color(0xFFECFDF5) : const Color(0xFFFFF1F2);
     return Container(
@@ -24162,7 +24571,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           Row(
             children: [
               Icon(
-                compliant ? Icons.verified_outlined : Icons.gpp_maybe_outlined,
+                compliant ? Icons.info_outline : Icons.help_outline,
                 color: headerColor,
                 size: 18,
               ),
@@ -24189,7 +24598,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '違反 ${report.unresolvedViolationCount}件',
+                    '未照合 ${report.allViolations.length}件',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
@@ -24221,10 +24630,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           if (compliant) ...[
             Text(
               report.hasPriorMonthData
-                  ? '🎉 今月は「カード以外の追加借入ゼロ」と「新規利用分を25日に全額返済」を達成しています。'
-                      '既存残高は無理なく圧縮していきましょう。'
-                  : 'カード新規利用分の25日返済ルールは守れています。'
-                      'カード以外の追加借入判定は来月以降の履歴蓄積後に有効化されます。',
+                  ? '登録データから要確認候補は検出されていません。'
+                      '取引明細・実際の支払結果の確認前に達成とは判定しません。'
+                  : '前月残高データがないため、追加借入の推定はできません。'
+                      'カードの支払結果も明細と照合してください。',
               style: const TextStyle(fontSize: 12, height: 1.5),
             ),
             if (report.revolvingBillingsByAccountId.isNotEmpty) ...[
@@ -24261,13 +24670,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }) {
     final color = !evaluated
         ? const Color(0xFF6B7280)
-        : (achieved ? const Color(0xFF0D9488) : const Color(0xFFB91C1C));
+        : (achieved ? const Color(0xFF6B7280) : const Color(0xFFB45309));
     final status = !evaluated
         ? (unevaluatedLabel ?? '判定保留（前月データ欠損・今月のみの推定）')
-        : (achieved ? '達成' : '違反');
+        : (achieved ? '検出なし（未照合）' : '要確認（未照合）');
     final icon = !evaluated
         ? Icons.hourglass_empty
-        : (achieved ? Icons.check_circle_outline : Icons.cancel_outlined);
+        : (achieved ? Icons.info_outline : Icons.help_outline);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -24280,13 +24689,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         children: [
           Icon(icon, color: color, size: 14),
           const SizedBox(width: 4),
-          Text(
-            '$label: $status',
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              height: 1.2,
+          Flexible(
+            child: Text(
+              '$label: $status',
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+              ),
             ),
           ),
         ],
@@ -24300,8 +24711,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final color = _assetDebtTrendSeverityColor(violation.severity);
     final amountLabel =
         violation.type == AssetDebtDisciplineViolationType.newBorrowing
-            ? '新規利用'
-            : '繰越額';
+            ? '推定新規利用'
+            : '予定返済の不足額';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(8),
@@ -24454,7 +24865,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     _cardUsagePolicies[violation.accountId]?.enforceOneShot ==
                         true,
                 title: const Text(
-                  'カード会社で「今後一括に固定」を完了済みにする（次回違反から除外）',
+                  'カード会社での変更完了を記録する（借入・支払結果の確認とは別）',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -24654,7 +25065,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              '手入力設定額 ${_formatManagementYen(violation.newUsageAmount ?? 0)} に基づいて誓約違反を判定しています。明細を取り込むと、正確な利用項目ごとにリボ残高組み入れや返済不足を把握できます。',
+              '手入力設定額 ${_formatManagementYen(violation.newUsageAmount ?? 0)} に基づく要確認候補です。違反の確定ではありません。利用明細と実際の支払結果を照合してください。',
               style: const TextStyle(
                 fontSize: 11,
                 height: 1.4,
@@ -27899,8 +28310,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               '${row.name} / 支払日 ${row.paymentDay ?? '-'}日 / '
               '予定 ${_formatManagementYen(row.scheduledPaymentAmount)} / '
               '最低推定 ${_formatManagementYen(row.minimumPaymentEstimate)} / '
-              '元金 ${_formatManagementYen(row.principalPaymentEstimate)} / '
-              '金利 ${_formatManagementYen(row.monthlyInterestEstimate)}',
+              '元金返済の概算 ${_formatManagementYen(row.principalPaymentEstimate)} / '
+              '月利息の概算 ${_formatManagementYen(row.monthlyInterestEstimate)}',
               style: const TextStyle(fontSize: 12, height: 1.5),
             ),
           ),
@@ -29177,6 +29588,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 lineTouchData: LineTouchData(
                   enabled: true,
                   touchTooltipData: LineTouchTooltipData(
+                    fitInsideHorizontally: true,
+                    fitInsideVertically: true,
                     getTooltipItems: (spots) {
                       return spots.map((spot) {
                         if (spot.barIndex < 0 ||
@@ -30670,7 +31083,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 value: _formatManagementYen(row.minimumPaymentEstimate),
               ),
               _buildDebtMasterMetric(
-                label: '月利息',
+                label: '月利息の概算',
                 value: _formatManagementYen(row.monthlyInterestEstimate),
               ),
               _buildDebtMasterMetric(
@@ -32784,7 +33197,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               AssetBalanceHistoryControl(
                 accountName: type,
                 latest: _latestBalanceObservations[type],
-                loadPage: (offset) => _loadBalanceHistoryPage(type, offset),
+                loadPage: _balanceHistoryLoader(type),
+                ownerId: _supabase.auth.currentUser?.id,
+                ownerChanges: _supabase.auth.onAuthStateChange
+                    .map((event) => event.session?.user.id),
               ),
             ],
           ),
