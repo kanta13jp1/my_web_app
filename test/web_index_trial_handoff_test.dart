@@ -4,6 +4,20 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('SEO shell handoff handles paused rendering and failed boot', () async {
+    // Node is available in CI; execute the deployed JavaScript with separate
+    // deterministic animation-frame and timer queues, without a Flutter build.
+    final result = await Process.run(
+      'node',
+      ['--test', 'test/web/seo_shell_handoff.test.cjs'],
+    );
+    expect(
+      result.exitCode,
+      0,
+      reason: '${result.stdout}\n${result.stderr}',
+    );
+  });
+
   test('SEO entities use one canonical publisher identity', () {
     final html = File('web/index.html').readAsStringSync();
     final blocks = RegExp(
@@ -60,14 +74,7 @@ void main() {
     final html = File('web/index.html').readAsStringSync();
     final normalizedHtml = html.replaceAll('\r\n', '\n');
 
-    expect(
-      normalizedHtml,
-      contains(
-        '<link rel="preload" '
-        'href="assets/web/assets/fonts/NotoSansJP-Regular.ttf" '
-        'as="font" type="font/ttf" crossorigin>',
-      ),
-    );
+    // Font delivery and duplicate requests are checked by Hosting Transfer Audit.
     expect(html, contains('position: fixed;'));
     expect(html, contains('inset: 0;'));
     expect(html, contains('transition: opacity 120ms ease-out;'));

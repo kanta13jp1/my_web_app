@@ -54,7 +54,7 @@ jobs:
           flutter-version: '3.38.x'
 
       - name: Set up Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
           cache: npm
@@ -118,6 +118,14 @@ jobs:
           echo '::error::The temporary Flutter Web server did not become ready.'
           exit 1
 
+      - name: Verify model-free Jwenv input checks
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/jwenv-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: jwenv-results
+        run: |
+          node --test test/web/jwenv_hosting.test.mjs test/web/jwenv_validation.test.mjs
+          npx playwright test test/e2e/jwenv_lab.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+
       - name: Compare or generate reviewed baselines
         shell: bash
         run: |
@@ -131,6 +139,15 @@ jobs:
             --project=mobile-chrome \
             --retries=0 \
             "${snapshot_args[@]}"
+
+      - name: Verify monthly budget allocation and recovery
+        shell: bash
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/budget-balance-results.json
+          PLAYWRIGHT_TEST_OUTPUT_DIR: budget-balance-results
+        run: |
+          flutter test test/services/budget_balance_calculator_test.dart test/widgets/budget_balance_card_test.dart
+          npx playwright test test/e2e/budget_balance.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
 
       - name: Verify integrated Lumen Path route
         shell: bash
@@ -216,15 +233,17 @@ jobs:
 
       - name: Upload actual, expected, diff, and candidate evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: visual-regression-${{ github.run_id }}
           path: |
             playwright-report/
             test-results/
+            jwenv-results/
             api-reference-results/
             chat-replay-results/
             hiragana-results/
+            budget-balance-results/
             test/e2e/visual_regression.spec.ts-snapshots/
             .ci-logs/visual-regression-server.log
           if-no-files-found: warn

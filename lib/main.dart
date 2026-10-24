@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:my_web_app/pages/aero_lab_page.dart';
 import 'package:my_web_app/pages/sound_bloom_page.dart';
 import 'package:my_web_app/pages/lumen_path_page.dart';
+import 'package:my_web_app/pages/kinetic_forge_page.dart';
 import 'package:my_web_app/pages/flow_city_page.dart';
 
 import 'package:flutter/material.dart';
@@ -267,6 +268,7 @@ import 'package:my_web_app/pages/meal_log_page.dart';
 import 'package:my_web_app/pages/life_goals_kpi_page.dart';
 import 'package:my_web_app/pages/language_learning_page.dart';
 import 'package:my_web_app/pages/focus_capture_game_page.dart';
+import 'package:my_web_app/pages/echo_pump_game_page.dart';
 import 'package:my_web_app/pages/code_playground_page.dart';
 import 'package:my_web_app/pages/real_estate_tracker_page.dart';
 import 'package:my_web_app/ui/features/local_business_map/local_business_map_feature.dart';
@@ -1430,6 +1432,11 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const FlowCityPage(),
         settings: settings,
       );
+    case '/kinetic-forge':
+      return MaterialPageRoute(
+        builder: (_) => const KineticForgePage(),
+        settings: settings,
+      );
     case '/lumen-path':
       return MaterialPageRoute(
         builder: (_) => const LumenPathPage(),
@@ -1608,6 +1615,10 @@ Route<dynamic> generateAppRoute(
         builder: (_) => const HabitCenterPage(
           initialSection: HabitCenterSection.rewards,
         ),
+      );
+    case '/echo-pump':
+      return MaterialPageRoute(
+        builder: (_) => const EchoPumpGamePage(),
       );
     case '/focus-capture':
       return MaterialPageRoute(

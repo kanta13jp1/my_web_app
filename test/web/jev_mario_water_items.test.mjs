@@ -41,3 +41,45 @@ test('2-4 stopped crouching players exit the low tunnel in either power state',(
 test('manual release under a ceiling allows slow movement without standing through tiles',()=>{const g=new World11(8);g.power=1;Object.assign(g.p,{x:367,y:192,h:16,crouching:true,grounded:true});g.invincible=1200;g.buttons('right');g.step();assert.equal(g.p.h,16);assert.ok(g.p.x>367);for(let i=0;i<60;i++)g.step();assert.ok(g.p.x>384);assert.equal(g.p.h,28);});
 
 test("running crouch crawls into a castle ledge without alternating standing",()=>{const g=new World11(16);g.power=2;Object.assign(g.p,{x:676,y:180,h:28,grounded:true});g.invincible=5000;g.buttons("right_run_down");for(let i=0;i<100;i++)g.step();assert.ok(g.p.x>736);assert.equal(g.p.h,16);});
+
+test('6-2 overhang route escapes the reported pipe position in both big forms',()=>{
+ for(const power of [1,2]){const g=new World11(22);g.power=power;Object.assign(g.p,{x:2484,y:180,h:28,grounded:true});g.camera=2388;g.invincible=5000;
+  const trace=[];for(let i=0;i<140&&g.phase==='playing'&&g.p.x<2544;i++){const a=plan(g,'right_jump').action;advance(g,a,8);if(i%5===0)trace.push([a,g.room,Math.round(g.p.x),Math.round(g.p.y)]);}
+  assert.ok(g.p.x>=2544,JSON.stringify(trace));
+ }
+});
+test('6-2 pipe room preserves course and restores geometry and score',()=>{const g=new World11(22);const cells=g.cells,lifts=g.lifts;g.score=900;g.power=2;Object.assign(g.p,{x:62*16+8,y:160-28,h:28,grounded:true});assert.equal(g.enterRoom(),true);assert.equal(g.room,'underground');assert.equal(g.width,256);assert.equal(g.lifts.length,0);g.collectCoin();assert.equal(g.exitRoom(),true);assert.equal(g.stage,22);assert.equal(g.cells,cells);assert.equal(g.lifts,lifts);assert.equal(g.p.x,65*16);assert.equal(g.score,1100);assert.equal(g.power,2);assert.ok(g.visitedPipes.includes('22:62'));});
+
+import {pipeRoute} from '../../web/labs/jev-mario/pipe-route.mjs';
+test('shortcut pipe does not skip uncollected power items',()=>{const g=new World11();Object.assign(g.p,{x:57*16+8,y:128,grounded:true});assert.equal(pipeRoute(g),null);g.contents.clear();assert.equal(pipeRoute(g),'down');});
+
+
+import {LiveGuard} from '../../web/labs/jev-mario/live-guard.mjs';
+test('6-2 first entrance has one continuous rim and one plant',()=>{const g=new World11(22);assert.equal(g.tile(61,11),undefined);assert.equal(g.tile(62,10),'pipe-top');assert.equal(g.tile(63,10),'pipe-top');assert.equal(g.enemies.filter(e=>e.kind==='piranha'&&e.x>=61*16&&e.x<64*16).length,1);});
+test('6-2 small player passes the first pipe with active enemies and saved retry experience',()=>{const g=new World11(22),guard=new LiveGuard();Object.assign(g.p,{x:900,y:192,vx:0,vy:0,grounded:true});g.camera=804;const failures=[{stage:22,room:'overworld',x:988,y:160,kind:'death',count:4}];const trace=[];let action='right_jump';for(let i=0;i<900&&g.phase==='playing'&&!(g.room==='overworld'&&g.p.x>=1100);i++){if(i%8===0)action=plan(g,ACTIONS[predict(model,features(g)).index],failures).action;g.buttons(guard.decide(g,action,failures));g.step();g.drainSounds();if(i%12===0)trace.push([i,g.room,g.p.x,g.p.y,g.phase]);}mkdirSync('test-results',{recursive:true});writeFileSync('test-results/jev-water-six-two.json',JSON.stringify({x:g.p.x,room:g.room,phase:g.phase,power:g.power,lives:g.lives,visited:g.visitedPipes,trace}));assert.equal(g.phase,'playing',JSON.stringify(trace.slice(-10)));assert.ok(g.p.x>=1100&&g.room==='overworld',JSON.stringify(trace.slice(-10)));assert.equal(g.deaths,0);});
+
+
+test('6-2 complete assisted course retains active hazards and collects power-ups',()=>{const g=new World11(22),guard=new LiveGuard();let action='noop';const failures=[{stage:22,room:'overworld',x:988,y:160,kind:'death',count:4},{stage:22,room:'overworld',x:2484,y:180,kind:'stalled',count:4}];const trace=[];let progress=0,lastX=g.p.x,lastRoom=g.room;while(g.phase==='playing'&&g.frames<5000&&g.frames-progress<600){if(g.frames%8===0)action=plan(g,ACTIONS[predict(model,features(g)).index],failures).action;g.buttons(guard.decide(g,action,failures));g.step();g.drainSounds();if(g.room!==lastRoom||g.p.x>lastX+12){progress=g.frames;lastX=g.p.x;lastRoom=g.room;}if(g.frames%60===0)trace.push([g.frames,g.room,g.p.x,g.p.y,g.phase,g.power]);}mkdirSync('test-results',{recursive:true});writeFileSync('test-results/jev-water-six-two-course.json',JSON.stringify({phase:g.phase,x:g.p.x,y:g.p.y,frames:g.frames,lives:g.lives,pickups:g.pickups,visited:g.visitedPipes,trace}));assert.equal(g.phase,'won',JSON.stringify(trace.slice(-10)));assert.ok(Object.values(g.pickups).some(n=>n>0));});
+
+
+test('live guard jumps below an actual power block even when a delayed proposal runs past it',()=>{const g=new World11(22),guard=new LiveGuard();Object.assign(g.p,{x:218,y:192,vx:1.55,grounded:true});const action=guard.decide(g,'right_run');assert.equal(action,'jump');assert.equal(guard.lastReason,'item_pickup_route');g.buttons(action);g.step();assert.ok(g.p.vy<0);for(let i=0;i<18;i++){g.buttons(guard.decide(g,'right_run'));g.step();g.drainSounds();}assert.ok(!g.contents.has('14,9'));assert.ok(g.items.some(i=>i.kind==='mushroom'));});
+
+
+test('live item assistance jumps toward a flower above the left shoulder',()=>{const g=new World11(),guard=new LiveGuard();g.contents.clear();g.items=[{kind:'flower',x:84,y:144,w:14,h:16,emerging:0,vx:0,vy:0}];Object.assign(g.p,{x:96,y:192,vx:0,vy:0,grounded:true});assert.equal(guard.decide(g,'right_run'),'left_jump');});
+
+
+test('overworld pickup assistance never interrupts a castle tunnel slide',()=>{const g=new World11(8),guard=new LiveGuard();g.power=1;Object.assign(g.p,{x:367,y:192,h:16,crouching:true,grounded:true});g.camera=271;g.invincible=1200;g.contents.set('23,9','mushroom');g.cells.set('23,9','question');assert.equal(guard.decide(g,'right_run_down'),'right_run_down');});
+
+test('live pickup yields after a stalled acquisition and resumes after avoidance expires',()=>{const g=new World11(22),guard=new LiveGuard();Object.assign(g.p,{x:218,y:192,vx:0,grounded:true});const avoidance=[{stage:22,room:'overworld',x:218,until:240}];assert.equal(guard.decide(g,'noop',[],avoidance),'noop');assert.equal(guard.lastReason,null);g.frames=241;assert.equal(guard.decide(g,'noop',[],avoidance),'jump');assert.equal(guard.lastReason,'item_pickup_route');});
+
+
+test('6-2 reward descent leaves the wider support instead of stopping beside the upper block',()=>{const g=new World11(22),guard=new LiveGuard();g.enemies=[];g.cells.delete('74,3');g.contents.delete('74,3');g.cells.set('74,5','question');g.contents.set('74,5','star');g.power=1;Object.assign(g.p,{x:1172,y:68,h:28,vx:0,vy:0,grounded:true});g.camera=1076;assert.equal(guard.decide(g,'noop'),'left');for(let i=0;i<120&&g.phase==='playing';i++){g.buttons(guard.decide(g,'noop'));g.step();g.drainSounds();}assert.equal(g.phase,'playing');assert.ok(g.p.y>100,JSON.stringify(g.p));});
+
+
+test('6-2 fractional edge position clears the whole body before descent stops',()=>{const g=new World11(22),guard=new LiveGuard();g.enemies=[];g.power=1;Object.assign(g.p,{x:1910.74,y:116,h:28,vx:0,vy:0,grounded:true});g.camera=1814.74;assert.equal(guard.decide(g,'noop'),'left');for(let i=0;i<100&&g.phase==='playing';i++){g.buttons(guard.decide(g,'noop'));g.step();g.drainSounds();}assert.equal(g.phase,'playing');assert.ok(g.p.y>150,JSON.stringify(g.p));});
+
+
+test('reward descent commits to the opposite edge when the nearest landing is occupied',()=>{const g=new World11(22),guard=new LiveGuard();g.power=1;Object.assign(g.p,{x:1910.74,y:116,h:28,vx:0,vy:0,grounded:true});g.camera=1814.74;g.enemies=[{x:1874,y:192,w:14,h:16,vx:0,vy:0,grounded:true,kind:'spiny',dead:0}];assert.equal(guard.decide(g,'noop'),'right');assert.equal(guard.descentSide,'right');let descended=false;for(let i=0;i<150&&g.phase==='playing';i++){g.buttons(guard.decide(g,'noop'));g.step();g.drainSounds();if(g.p.y>150&&g.p.x>2000)descended=true;}assert.equal(g.phase,'playing');assert.equal(g.power,1);assert.ok(descended,JSON.stringify(g.p));});
+
+
+test('night-course reward has enough headroom above the terrace for big Mario',()=>{for(const stage of [9,18,22]){const g=new World11(stage);assert.equal(g.contents.get('74,3'),'star');assert.equal(g.tile(74,3),'question');assert.equal(g.tile(74,4),undefined);assert.equal(g.tile(74,5),undefined);assert.equal(g.tile(74,6),'brick');}});

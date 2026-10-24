@@ -1,6 +1,9 @@
 name: AI Agent PR Review
 
 on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
@@ -29,293 +32,65 @@ on:
         type: string
 
 concurrency:
-  group: claude-agent-review-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
+  group: claude-agent-review-${{ github.event_name == 'pull_request' && 'contract' || 'gate' }}-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
   cancel-in-progress: true
 
-# Multi-provider AI PR review with manual, main-only credential access:
-#   Primary:  Claude claude-sonnet-5 (ANTHROPIC_API_KEY)
-#   Fallback: Gemini 1.5 Flash free tier (GEMINI_API_KEY)
-#   Both fail → skip gracefully with a ::warning::, PRs are never blocked
-#
-# Measured 2026-07-29: no PR had ever actually been reviewed. Both providers
-# rejected every request while the job reported success, and logging only status
-# codes hid why. With response bodies logged, both causes appeared at once:
-#   Claude HTTP 400 - "Your credit balance is too low to access the Anthropic
-#                      API"  -> account billing, NOT the model id
-#   Gemini HTTP 404 - "models/gemini-1.5-flash is not found for API version
-#                      v1beta"  -> genuinely retired
-# Neither is fixable in this file. The gemini-1.5-flash pin appears in 5
-# workflows and needs one consistent change to an id verified via ListModels.
-# Keep logging the bodies: the status codes alone pointed at the wrong cause.
+# AI Review Gate is a separate check on the immutable PR head, emitted only
+# after a real structured review. See docs/automation/solo-ai-review-gate.md.
+# Existing optional ultrareview and high-risk contracts remain independent.
 
 permissions: {}
 
 jobs:
   review:
+    name: Run trusted AI review
+    if: >-
+      (github.event_name == 'pull_request_target' ||
+       (github.event_name == 'workflow_dispatch' && inputs.ultrareview != 'true')) &&
+      (github.ref == 'refs/heads/main' || github.sha == vars.AI_REVIEW_BOOTSTRAP_SHA)
     environment:
       name: ai-review-production
       deployment: false
     permissions:
       contents: read
-      issues: read
-      pull-requests: write
-    name: AI Agent Code Review
+      pull-requests: read
+      checks: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # A pull_request workflow is branch-controlled and must never receive a
-    # repository or environment credential. Review is explicitly dispatched
-    # from main; PR contents are fetched as immutable data and never executed.
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.ultrareview != 'true' && github.ref == 'refs/heads/main'
-
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+      REVIEW_DIR: /tmp/ai-review
     steps:
-      - name: Resolve PR number
-        id: pr
-        env:
-          INPUT_PR_NUMBER: ${{ github.event.inputs.pr_number }}
-        run: |
-          PR_NUM=$(printf '%s' "$INPUT_PR_NUMBER" | tr -d '[:space:]#')
-          case "$PR_NUM" in
-            ''|*[!0-9]*)
-              echo "::error::pr_number must be a non-empty integer."
-              exit 1
-              ;;
-          esac
-          echo "number=$PR_NUM" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout code
+      - name: Checkout trusted workflow source only
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
-
-      - name: Fetch immutable PR commits
-        id: commits
+      - name: Verify the fail-closed contract without credentials
+        run: python -B scripts/ai_review_gate_test.py
+      - name: Open head-bound check and prepare redacted review data
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ steps.pr.outputs.number }}
-        run: |
-          set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" > /tmp/pr.json
-          BASE_REF=$(jq -r '.base.ref' /tmp/pr.json)
-          BASE_SHA=$(jq -r '.base.sha' /tmp/pr.json)
-          HEAD_SHA=$(jq -r '.head.sha' /tmp/pr.json)
-          if [ "$BASE_REF" != "main" ]; then
-            echo "::error::Credential-bearing review is restricted to PRs targeting main."
-            exit 1
-          fi
-          test "$BASE_SHA" != null && test "$HEAD_SHA" != null
-          git cat-file -e "${BASE_SHA}^{commit}" || git fetch --no-tags origin "$BASE_SHA"
-          git fetch --no-tags origin \
-            "+refs/pull/${PR_NUMBER}/head:refs/remotes/pull/${PR_NUMBER}/head"
-          FETCHED_HEAD=$(git rev-parse "refs/remotes/pull/${PR_NUMBER}/head")
-          if [ "$FETCHED_HEAD" != "$HEAD_SHA" ]; then
-            echo "::error::Fetched PR head does not match the GitHub API head SHA."
-            exit 1
-          fi
-          echo "base=$BASE_SHA" >> "$GITHUB_OUTPUT"
-          echo "head=$HEAD_SHA" >> "$GITHUB_OUTPUT"
-
-      - name: Resolve paid Claude/Codex policy
-        id: paid_ai_policy
-        uses: ./.github/actions/paid-ai-policy
-        with:
-          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
-
-      - name: Extract PR diff
-        id: diff
+        run: python -B scripts/ai_review_gate.py prepare
+      - name: Review immutable data with Gemini
         env:
-          BASE_SHA: ${{ steps.commits.outputs.base }}
-          HEAD_SHA: ${{ steps.commits.outputs.head }}
-        run: |
-          set -euo pipefail
-          RANGE="${BASE_SHA}...${HEAD_SHA}"
-
-          # These must match the extensions the repo actually uses. The list
-          # previously carried '*.yaml' (4 files) while omitting '*.yml' (124,
-          # including all 117 workflows) and '*.py' (218), so workflow and
-          # script changes were never reviewed — the job just reported
-          # "Diff extracted: 0 lines" and passed.
-          # Never persist or send the raw diff. Stream the bounded input
-          # through the trusted-main redactor before any external AI provider
-          # can read it. Only pr_diff.txt is consumed by the review step.
-          git diff "$RANGE" -- \
-            '*.dart' '*.ts' '*.yml' '*.yaml' '*.sql' '*.json' '*.py' '*.ps1' \
-            | sed -n '1,400p' \
-            | python scripts/security_review_input.py \
-                --redact-only \
-                --stdin \
-                --output pr_diff.txt \
-                --github-output "$GITHUB_OUTPUT"
-
-          LINES=$(wc -l < pr_diff.txt | tr -d ' ')
-          echo "lines=$LINES" >> $GITHUB_OUTPUT
-          echo "Diff extracted and sanitized: ${LINES} lines"
-
-          # An allowlist drifts silently. If files changed but none matched,
-          # say so and name the extensions, so the next drift is visible
-          # instead of looking like "nothing to review".
-          CHANGED=$(git diff --name-only "$RANGE" | wc -l | tr -d ' ')
-          if [ "$LINES" -eq 0 ] && [ "$CHANGED" -gt 0 ]; then
-            EXTS=$(git diff --name-only "$RANGE" | sed -n 's/.*\.//p' | sort -u | tr '\n' ' ')
-            echo "::warning::AI review skipped: ${CHANGED} changed file(s), none matching the reviewed extensions (saw: ${EXTS})"
-          fi
-
-      - name: AI Review (Claude primary / Gemini fallback)
-        id: review
-        env:
-          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          DIFF_LINES="${{ steps.diff.outputs.lines }}"
-          if [ "${DIFF_LINES:-0}" -le 5 ]; then
-            echo "差分が少ないためスキップ (${DIFF_LINES} lines)"
-            exit 0
-          fi
-
-          DIFF=$(head -c 10000 pr_diff.txt)
-
-          REVIEW_PROMPT="自分株式会社 (Flutter Web + Supabase) のPRをレビューしてください。
-
-          【観点 — static アナライザが検出できないものに集中】
-          1. ルール違反: ダミーデータ使用 / flutter analyze スキップ / continue-on-error 不適切追加
-          2. EF 上限管理: 新規 supabase function が Tier1 (100本デプロイ制限) 超過リスク
-          3. アーキテクチャ: 複雑ロジックがフロントに置かれ Edge Function ファーストに反する
-          4. データ整合性: 実 Supabase データを使っているか (ダミーデータ禁止)
-
-          セキュリティ観点は独立した high-risk-dual-security-review.yml に委譲する。
-
-          問題なし → 「✅ LGTM — 問題なし」の1行のみ。
-          問題あり → 各問題を「### 問題N: タイトル\n**ファイル:** path\n**内容:** 説明\n**修正:** 方法」で列挙。
-
-          差分:
-          \`\`\`
-          ${DIFF}
-          \`\`\`"
-
-          USED_MODEL=""
-          REVIEW_TEXT=""
-
-          # ── Primary: Claude ────────────────────────────────────────────────
-          if [ -n "$ANTHROPIC_API_KEY" ]; then
-            echo "🤖 Claude API 試行中..."
-            PAYLOAD=$(jq -cn --arg prompt "$REVIEW_PROMPT" '{
-              model: "claude-sonnet-5",
-              max_tokens: 1500,
-              messages: [{ role: "user", content: $prompt }]
-            }')
-
-            HTTP_RESP=$(curl -s -w "\n%{http_code}" \
-              -H "x-api-key: $ANTHROPIC_API_KEY" \
-              -H "anthropic-version: 2023-06-01" \
-              -H "content-type: application/json" \
-              --max-time 60 \
-              -d "$PAYLOAD" \
-              https://api.anthropic.com/v1/messages)
-
-            HTTP_CODE=$(echo "$HTTP_RESP" | tail -n1)
-            RESP_BODY=$(echo "$HTTP_RESP" | head -n -1)
-
-            if [ "$HTTP_CODE" = "200" ]; then
-              REVIEW_TEXT=$(echo "$RESP_BODY" | jq -r '.content[0].text // ""')
-              USED_MODEL="claude-sonnet-5"
-              echo "✅ Claude レビュー成功"
-            else
-              # Print the body. Logging only the status code is why a retired
-              # model id sat here undetected: every run showed "HTTP 400" with
-              # no indication of what was wrong.
-              echo "⚠️ Claude API HTTP $HTTP_CODE — Gemini にフォールバック"
-              echo "$RESP_BODY" | head -c 500
-            fi
-          fi
-
-          # ── Fallback: Gemini 1.5 Flash (free tier) ────────────────────────
-          if [ -z "$REVIEW_TEXT" ] && [ -n "$GEMINI_API_KEY" ]; then
-            echo "🤖 Gemini API 試行中..."
-            GEMINI_PAYLOAD=$(jq -cn --arg prompt "$REVIEW_PROMPT" '{
-              contents: [{ parts: [{ text: $prompt }] }],
-              generationConfig: { maxOutputTokens: 1500 }
-            }')
-
-            GEMINI_RESP=$(curl -s -w "\n%{http_code}" \
-              -H "Content-Type: application/json" \
-              --max-time 60 \
-              -d "$GEMINI_PAYLOAD" \
-              "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}")
-
-            GEMINI_CODE=$(echo "$GEMINI_RESP" | tail -n1)
-            GEMINI_BODY=$(echo "$GEMINI_RESP" | head -n -1)
-
-            if [ "$GEMINI_CODE" = "200" ]; then
-              REVIEW_TEXT=$(echo "$GEMINI_BODY" | jq -r '.candidates[0].content.parts[0].text // ""')
-              USED_MODEL="gemini-1.5-flash"
-              echo "✅ Gemini レビュー成功"
-            else
-              echo "⚠️ Gemini API HTTP $GEMINI_CODE"
-              echo "$GEMINI_BODY" | head -c 500
-            fi
-          fi
-
-          # ── No usable result → graceful skip ──────────────────────────────
-          # Still non-blocking, but no longer silent: the old message asserted
-          # "keys missing or quota exceeded" even when both keys were set and
-          # the real cause was a rejected model id, so every failure read as
-          # expected behaviour.
-          if [ -z "$REVIEW_TEXT" ]; then
-            REASON="不明"
-            if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$GEMINI_API_KEY" ]; then
-              REASON="API キー未設定"
-            else
-              REASON="全プロバイダーが応答せず (上のログの HTTP コードと本文を確認)"
-            fi
-            echo "::warning::AI レビューは実行されませんでした — ${REASON}"
-            echo "AI レビュースキップ: ${REASON}" | tee -a "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          {
-            echo "text<<REVIEW_EOF"
-            echo "$REVIEW_TEXT"
-            echo "REVIEW_EOF"
-            echo "model=$USED_MODEL"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Post Review Comment
-        if: steps.review.outputs.text != '' && !startsWith(steps.review.outputs.text, '✅ LGTM')
-        continue-on-error: true
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
-        env:
-          REVIEW_BODY: ${{ steps.review.outputs.text }}
-          REVIEW_MODEL: ${{ steps.review.outputs.model }}
-        with:
-          script: |
-            const body = process.env.REVIEW_BODY || '';
-            const model = process.env.REVIEW_MODEL || 'AI';
-            if (!body || body.startsWith('✅ LGTM')) return;
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: Number('${{ steps.pr.outputs.number }}'),
-              body: `## 🤖 AI Agent コードレビュー\n\n${body}\n\n---\n*Powered by ${model}*`
-            });
-
-      - name: Job Summary
+          AI_REVIEW_MODEL: ${{ vars.AI_REVIEW_MODEL || 'gemini-3.8-flash' }}
+        run: python -B scripts/ai_review_gate.py review
+      - name: Publish fail-closed check on the reviewed PR head
         if: always()
-        run: |
-          RESULT="${{ steps.review.outputs.text }}"
-          MODEL="${{ steps.review.outputs.model }}"
-          {
-            echo "## AI Agent PR Review — \`${GITHUB_SHA:0:7}\`"
-            echo ""
-            if [ -n "$RESULT" ]; then
-              echo "**モデル**: ${MODEL}"
-              echo ""
-              echo "$RESULT"
-            else
-              echo "スキップ (差分なし / API キー未設定 / 両プロバイダー quota 超過)"
-            fi
-            echo ""
-            echo "**PR**: #${{ steps.pr.outputs.number }} | **Actor**: ${{ github.actor }}"
-          } >> $GITHUB_STEP_SUMMARY
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -B scripts/ai_review_gate.py publish
+      - name: Preserve machine-readable review evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ai-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/ai-review/evidence.json
+          if-no-files-found: error
+          retention-days: 30
 
   high-risk-ultrareview-gate:
     name: High-risk ultrareview gate
@@ -360,7 +135,7 @@ jobs:
 
       - name: Upload gate evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: high-risk-ultrareview-gate
           path: .ci-logs/high-risk-*.txt
@@ -426,7 +201,7 @@ jobs:
 
       - name: Setup Node.js
         if: steps.paid_ai_policy.outputs.enabled == 'true'
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '20'
 

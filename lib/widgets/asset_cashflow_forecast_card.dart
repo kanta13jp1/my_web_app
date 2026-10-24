@@ -130,28 +130,33 @@ class AssetCashflowForecastCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               _buildSummary(context),
-              ExpansionTile(
-                key: const Key('asset_cashflow_forecast_month_details'),
-                tilePadding: EdgeInsets.zero,
-                title: const Text('月別内訳（月末・月内最低）'),
-                children: [
-                  for (final month in months)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          '${month.month.year}/${month.month.month} '
-                          '月末 ${_yen(month.closingBalance)} / '
-                          '月内最低 ${_yen(month.worstBalance)}',
-                          style: TextStyle(
-                            color: month.isShortfall ? _danger : null,
-                            fontSize: 12,
+              Semantics(
+                container: true,
+                explicitChildNodes: true,
+                child: ExpansionTile(
+                  key: const Key('asset_cashflow_forecast_month_details'),
+                  internalAddSemanticForOnTap: true,
+                  tilePadding: EdgeInsets.zero,
+                  title: const Text('月別内訳（月末・月内最低）'),
+                  children: [
+                    for (final month in months)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '${month.month.year}/${month.month.month} '
+                            '月末 ${_yen(month.closingBalance)} / '
+                            '月内最低 ${_yen(month.worstBalance)}',
+                            style: TextStyle(
+                              color: month.isShortfall ? _danger : null,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ],
           ],
@@ -262,7 +267,9 @@ class AssetCashflowForecastCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           '現金・預金 ${_yen(forecast.startingBalance)} を起点に、繰り返し収入・固定費・返済予定を'
-          '毎月積み上げた見込みです。未登録の入出金は含まれません。',
+          '毎月積み上げた見込みです。未登録の入出金は含まれません。'
+          '支払済みの設定は対象の給与サイクル内だけ反映します。'
+          '支払結果を反映した残高が起点という前提です。',
           style: TextStyle(
             fontSize: 11,
             height: 1.5,
