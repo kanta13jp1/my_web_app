@@ -16,6 +16,7 @@ on:
         type: choice
         options:
           - voice
+          - voice-ui
           - workspace
           - format
           - analyze
@@ -167,3 +168,17 @@ jobs:
         run: |
           deno check supabase/functions/ai-hub/voice_ai.ts
           deno test --allow-env supabase/functions/ai-hub/voice_ai_test.ts
+
+  voice-ui:
+    if: inputs.profile == 'voice-ui'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - run: flutter test test/services/voice_ai_error_status_test.dart

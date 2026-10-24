@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:web/web.dart' as web_api;
 
 import '../services/ai_fsrs_service.dart';
+import '../services/voice_ai_error_status.dart';
 
 class AiUniversityVoicePage extends StatefulWidget {
   const AiUniversityVoicePage({super.key});
@@ -117,13 +118,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
       setState(() => _ttsStatus = 'playing');
     } catch (error) {
       if (!mounted) return;
-      setState(
-        () => _ttsStatus = error.toString().contains(
-                  'voice_training_consent_or_provider_zdr_required',
-                )
-            ? 'privacy_blocked'
-            : 'error',
-      );
+      setState(() => _ttsStatus = voiceAiErrorStatus(error));
     }
   }
 
