@@ -1521,7 +1521,7 @@ class AssetManagementAiSummaryService {
         // must directly modify the debt without crossing clauses.
         const paidMarker =
             r'(?:(?:支払|支払い|決済|返済|引落|引き落とし|振込|口座振替|振替|処理|確認|清算|精算)'
-            r'[^。、;；\r\n]{0,6}(?:済(?:み)?|完了|終了)|済(?:み)?|完済|'
+            r'(?:は|が)?(?:今月)?(?:既に|すでに)?(?:済(?:み)?|完了|終了)|済(?:み)?|完済|'
             r'引き落とされ(?:た|てい(?:る|ます)|ました)?|引落とされ(?:た|てい(?:る|ます)|ました)?)';
         final paidPattern = RegExp(
           '${RegExp.escape(row.name)}([^。;；\\r\\n]{0,60}?)($paidMarker)'

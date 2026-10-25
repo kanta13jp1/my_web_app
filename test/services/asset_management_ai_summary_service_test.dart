@@ -980,6 +980,43 @@ void main() {
     });
 
     test(
+        'rejects payment registration completion followed by an unpaid claim', () async {
+      const planner = AssetLiabilityPlanningService();
+      const insight = AssetManagementInsightService();
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 100000,
+          'au': -27395,
+        },
+        baseDate: DateTime(2026, 9, 3),
+        paidAccountNames: const <String>{'au'},
+      );
+      final report = insight.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+        minimumSafetyBalance: 10000,
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async => <String, dynamic>{
+            'success': true,
+            'text': '純資産は72,605円、負債合計は27,395円です。'
+                'auの支払い登録完了ですが未払いです。',
+            'provider': 'openai',
+          },
+        ),
+        now: () => DateTime(2026, 9, 3, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.status, isNot(AssetManagementAiSummaryStatus.aiGenerated));
+      expect(result.usedExternalAi, isTrue);
+      expect(result.errorMessage, isNotNull);
+    });
+
+    test(
         'rejects an AI summary when a received salary is claimed to be '
         'unreceived or urged for deposit check', () async {
       const planner = AssetLiabilityPlanningService();
