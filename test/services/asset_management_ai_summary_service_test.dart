@@ -979,8 +979,7 @@ void main() {
       expect(result.errorMessage, isNull);
     });
 
-    test(
-        'rejects payment registration completion followed by an unpaid claim', () async {
+    test('rejects registration-only payment evidence', () async {
       const planner = AssetLiabilityPlanningService();
       const insight = AssetManagementInsightService();
       final workbook = planner.buildWorkbook(
