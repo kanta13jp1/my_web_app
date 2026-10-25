@@ -29,7 +29,7 @@ $('stage').onchange=()=>{stop('ステージを変更しました');world.stage=N
 const student = new StudentSession();
 // Search-taught LightGBM alone: main-thread trees every frame; no worker, search, safety check or API.
 // Not a ranking controller: its plays are not saved to history or shared.
-let rawStudent=null,rawToken=0;
+let rawStudent=null,rawToken=0,rawLoading=false;
 function showRetryMemory(){const count=student.failures.reduce((n,r)=>n+r.count,0);$('retry-status').textContent=`このブラウザの攻略経験: ${student.failures.length}か所・失敗／停滞${count}回。再挑戦時はその手前の予測を長くします。モデルの再学習ではなく探索の補助です。`;}
 $('clear-retry').onclick=()=>{if(gameRunning)return status('プレイを停止してから攻略経験を消去してください');student.clearFailures();showRetryMemory();};
 showRetryMemory();
@@ -100,7 +100,7 @@ function controls(action) {
   }
   $('action').textContent = `操作: ${action}`;
 }
-function stop(reason = '停止しました') { if(!internalTransition&&campaign.active&&isRecreation())saveAttempt(world.phase==='dead'&&world.lives===0?'dead':'stopped'); if(!gameRunning&&isRecreation()&&world.phase!=='playing')finalizeStageResult();if(gameRunning&&isRecreation()&&world.phase==='playing')saveAttempt('stopped');transition=null; rawToken++; if(rawStudent)metadata.student_result={phase:world.phase,x:world.p.x,frames:world.frames,controller:'search_taught_lightgbm_only',decisions:rawStudent.decisions}; rawStudent=null; if(student.active)metadata.student_result={phase:world.phase,x:world.p.x,frames:world.frames,...student.stats};student.stop();audio.stop(); loop.stop(reason); gameRunning = false; controls('noop'); status(reason); }
+function stop(reason = '停止しました') { if(!internalTransition&&campaign.active&&isRecreation())saveAttempt(world.phase==='dead'&&world.lives===0?'dead':'stopped'); if(!gameRunning&&isRecreation()&&world.phase!=='playing')finalizeStageResult();if(gameRunning&&isRecreation()&&world.phase==='playing')saveAttempt('stopped');transition=null; rawToken++; rawLoading=false; if(rawStudent)metadata.student_result={phase:world.phase,x:world.p.x,frames:world.frames,controller:'search_taught_lightgbm_only',decisions:rawStudent.decisions}; rawStudent=null; if(student.active)metadata.student_result={phase:world.phase,x:world.p.x,frames:world.frames,...student.stats};student.stop();audio.stop(); loop.stop(reason); gameRunning = false; controls('noop'); status(reason); }
 function state() {
   const value = isRecreation() ? world.telemetry(lastResponse) : isRom() ? readState(nes.cpu.mem, lastResponse) : fixture();
   if(isRecreation()&&metadata.input_profile==='prediction_v1')value.prediction=prediction(world,lastResponse);
@@ -184,16 +184,16 @@ async function startRawStudent(continuing=false){
   if(loop.pending||pendingBridge)return status('API応答の終了を待ってから開始してください');
   if(!continuing){stop();world.reset();frameCount=0;samples=[];interventions=[];metadata={lab_revision:'stage-3',course_id:world.stage,...courseInfo(world.stage),controller:'search_taught_lightgbm_only',play_policy:'continuous_until_terminal_or_user_stop',mode:'recreation',started_at:new Date().toISOString(),timing:'Main-thread tree inference every frame; no search, safety check, rewind or API requests'};}
   update();$('last-error').textContent='';void unlockAudio();status('学習済みモデルを読み込んでいます…');
-  const token=++rawToken;
+  const token=++rawToken;rawLoading=true;
   try{
     const [{default:model},{features2},{predict2}]=await Promise.all([import('./student2-model.mjs?v=student-1'),import('./student2-features.mjs?v=student-1'),import('./student2-predict.mjs?v=student-1')]);
     if(token!==rawToken)return;
     rawStudent={model,features2,predict2,next:0,action:'noop',decisions:0};
     gameRunning=true;frameBudget=0;(watchMode?presentation:canvas).focus();status('探索教師LightGBM単体でプレイ中（探索・補助・API呼び出しなし）');
-  }catch{if(token===rawToken){gameRunning=false;controls('noop');status('モデルを読み込めませんでした。再読み込みして再試行してください。');}}
+  }catch{if(token===rawToken){gameRunning=false;controls('noop');status('モデルを読み込めませんでした。再読み込みして再試行してください。');}}finally{if(token===rawToken)rawLoading=false;}
 }
 $('start').onclick = () => {
-  if(student.active)return status('ローカルプレイを停止してからJev測定を開始してください');
+  if(student.active||rawStudent||rawLoading)return status('ローカルプレイを停止してからJev測定を開始してください');
   $('last-error').textContent = '';
   if (!$('consent').checked) return status('ゲーム状態の送信に同意してください');
   if (!connected) return status('アプリから開いてログインしてください');

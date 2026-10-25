@@ -23,3 +23,18 @@ test('compact multiclass trees follow <= thresholds and softmax scores',()=>{
  assert.equal(predict2(model,[0]).action,'a');assert.equal(predict2(model,[1]).action,'b');
  assert.ok(Math.abs(predict2(model,[.5]).probabilities.reduce((a,b)=>a+b,0)-1)<1e-12);
 });
+
+test('API start rejects every local controller including pending raw loading',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const source=readFileSync(new URL('../../web/labs/jev-mario/lab.mjs',import.meta.url),'utf8');
+ const marker="$('start').onclick = () => {";
+ const start=source.indexOf(marker)+marker.length;
+ assert.ok(start>=marker.length);
+ const end=source.indexOf("$('last-error').textContent",start);
+ assert.ok(end>start);
+ const guard=new Function('student','rawStudent','rawLoading','status',source.slice(start,end)+"return 'allowed';");
+ for(const [active,raw,loading] of [[true,null,false],[false,{},false],[false,null,true]]){
+  assert.equal(guard({active},raw,loading,()=> 'blocked'),'blocked');
+ }
+ assert.equal(guard({active:false},null,false,()=> 'blocked'),'allowed');
+});
