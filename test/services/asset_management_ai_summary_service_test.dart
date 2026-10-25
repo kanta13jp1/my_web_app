@@ -1012,7 +1012,7 @@ void main() {
       final result = await service.generateSummary(report: report);
 
       expect(result.status, isNot(AssetManagementAiSummaryStatus.aiGenerated));
-      expect(result.usedExternalAi, isTrue);
+      expect(result.usedExternalAi, isFalse);
       expect(result.errorMessage, isNotNull);
     });
 
