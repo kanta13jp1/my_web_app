@@ -21,10 +21,16 @@ void main() {
     );
     final provisional = reminders.buildCandidates(workbook: pending, now: now);
     expect(provisional, hasLength(1));
-    expect(provisional.single.status, AssetLiabilityPaymentReminderStatus.dueToday);
+    expect(
+      provisional.single.status,
+      AssetLiabilityPaymentReminderStatus.dueToday,
+    );
     expect(reminders.buildCandidates(workbook: restored, now: now), isEmpty);
     // The service cannot infer whether an empty paid set is still restoring.
     // This reproduces data sensitivity, not a rendered widget or load failure.
-    expect(reminders.buildCandidates(workbook: pending, now: now), hasLength(1));
+    expect(
+      reminders.buildCandidates(workbook: pending, now: now),
+      hasLength(1),
+    );
   });
 }
