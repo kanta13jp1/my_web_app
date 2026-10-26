@@ -165,8 +165,7 @@ void main() {
       );
     });
 
-    test(
-        'uses the recorded actual payment for principal when the row is paid',
+    test('uses the recorded actual payment for principal when the row is paid',
         () {
       // 今月支払予定額は 0 円のまま、実際には 15,000 円を支払済みとして記録した月。
       final workbook = service.buildWorkbook(
