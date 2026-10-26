@@ -2,20 +2,20 @@
   "schemaVersion": 1,
   "electionMode": "local",
   "sourceUrl": "https://new-kokumin.jp/local-election-list",
-  "sourceAsOf": "2026-10-21",
-  "sourceDocumentSha256": "f5d3bd7cc969f80a2ebe93a3369dd418d79d569c226950d0a68c51c12257bc03",
-  "candidateRowCount": 430,
+  "sourceAsOf": "2026-10-26",
+  "sourceDocumentSha256": "289f536fc5ce9f92e68801681799d4a21f9cf90de39fc47144f91c8b687a87e4",
+  "candidateRowCount": 427,
   "officialEndorsements": {
-    "totalCount": 416,
+    "totalCount": 414,
     "incumbentCount": 174,
-    "newcomerCount": 231,
+    "newcomerCount": 229,
     "formerCount": 11,
-    "prefectureCount": 42,
-    "prefecturalCount": 113,
-    "municipalCount": 303
+    "prefectureCount": 40,
+    "prefecturalCount": 112,
+    "municipalCount": 302
   },
   "recommendations": {
-    "totalCount": 14
+    "totalCount": 13
   },
   "prefectures": [
     {
@@ -53,15 +53,6 @@
       "formerCount": 0,
       "prefecturalCount": 2,
       "municipalCount": 3
-    },
-    {
-      "prefecture": "福島",
-      "totalCount": 1,
-      "incumbentCount": 0,
-      "newcomerCount": 1,
-      "formerCount": 0,
-      "prefecturalCount": 1,
-      "municipalCount": 0
     },
     {
       "prefecture": "茨城",
@@ -386,15 +377,6 @@
       "formerCount": 0,
       "prefecturalCount": 1,
       "municipalCount": 0
-    },
-    {
-      "prefecture": "沖縄",
-      "totalCount": 1,
-      "incumbentCount": 0,
-      "newcomerCount": 1,
-      "formerCount": 0,
-      "prefecturalCount": 0,
-      "municipalCount": 1
     }
   ]
 }

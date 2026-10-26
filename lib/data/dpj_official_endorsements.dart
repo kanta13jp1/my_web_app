@@ -6,10 +6,10 @@ import '../models/election_intelligence.dart';
 
 const String dpjOfficialEndorsementSourceUrl =
     'https://new-kokumin.jp/local-election-list';
-const String dpjOfficialEndorsementSourceAsOf = '2026-10-21';
+const String dpjOfficialEndorsementSourceAsOf = '2026-10-26';
 const String dpjOfficialEndorsementSourceDocumentSha256 =
-    'f5d3bd7cc969f80a2ebe93a3369dd418d79d569c226950d0a68c51c12257bc03';
-const int dpjOfficialRecommendationEntryCount = 14;
+    '289f536fc5ce9f92e68801681799d4a21f9cf90de39fc47144f91c8b687a87e4';
+const int dpjOfficialRecommendationEntryCount = 13;
 
 const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     <OfficialEndorsementPrefecture>[
@@ -48,15 +48,6 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     formerCount: 0,
     prefecturalCount: 2,
     municipalCount: 3,
-  ),
-  OfficialEndorsementPrefecture(
-    prefecture: '福島',
-    totalCount: 1,
-    incumbentCount: 0,
-    newcomerCount: 1,
-    formerCount: 0,
-    prefecturalCount: 1,
-    municipalCount: 0,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '茨城',
@@ -382,24 +373,15 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     prefecturalCount: 1,
     municipalCount: 0,
   ),
-  OfficialEndorsementPrefecture(
-    prefecture: '沖縄',
-    totalCount: 1,
-    incumbentCount: 0,
-    newcomerCount: 1,
-    formerCount: 0,
-    prefecturalCount: 0,
-    municipalCount: 1,
-  ),
 ];
 
-const int dpjOfficialEndorsementTotal = 416;
+const int dpjOfficialEndorsementTotal = 414;
 const int dpjOfficialEndorsementIncumbentTotal = 174;
-const int dpjOfficialEndorsementNewcomerTotal = 231;
+const int dpjOfficialEndorsementNewcomerTotal = 229;
 const int dpjOfficialEndorsementFormerTotal = 11;
-const int dpjOfficialEndorsementPrefectureCount = 42;
-const int dpjOfficialEndorsementPrefecturalTotal = 113;
-const int dpjOfficialEndorsementMunicipalTotal = 303;
+const int dpjOfficialEndorsementPrefectureCount = 40;
+const int dpjOfficialEndorsementPrefecturalTotal = 112;
+const int dpjOfficialEndorsementMunicipalTotal = 302;
 
 OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(
   String prefecture,
