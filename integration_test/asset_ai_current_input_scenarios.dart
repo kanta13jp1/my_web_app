@@ -226,7 +226,7 @@ void main() {
             '2026-09-14': <String, double>{'bank': 500000, 'モビット': -100000},
           },
         ),
-      ));
+      ),);
       await _pumpUntil(tester, () => ai.requests.isNotEmpty);
       final row = ai.requests.last.workbook.debtMasterRows
           .singleWhere((row) => row.name == 'モビット');
@@ -234,7 +234,7 @@ void main() {
       expect(row.monthlyInterestEstimate, closeTo(1250, 0.001));
       expect(row.principalPaymentEstimate, closeTo(paid ? 13750 : 3750, 0.001));
       expect(row.balanceAfterPaymentEstimate,
-          closeTo(paid ? -86250 : -96250, 0.001));
+          closeTo(paid ? -86250 : -96250, 0.001),);
       ai.complete(0, 'Synthetic paid amount report');
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 3));
