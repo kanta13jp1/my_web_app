@@ -28614,7 +28614,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildRestoredAssetPaymentReminderPanel(AssetLiabilityWorkbook workbook) {
+  Widget _buildRestoredAssetPaymentReminderPanel(
+    AssetLiabilityWorkbook workbook,
+  ) {
     final reminders = _assetLiabilityReminderService.buildCandidates(
       workbook: workbook,
       now: _now,
