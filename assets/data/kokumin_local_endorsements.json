@@ -3,15 +3,15 @@
   "electionMode": "local",
   "sourceUrl": "https://new-kokumin.jp/local-election-list",
   "sourceAsOf": "2026-10-26",
-  "sourceDocumentSha256": "289f536fc5ce9f92e68801681799d4a21f9cf90de39fc47144f91c8b687a87e4",
-  "candidateRowCount": 427,
+  "sourceDocumentSha256": "5dad28ebb965c001720e1062c9687e41834e711bc2c0f0e647d201caf54cd790",
+  "candidateRowCount": 428,
   "officialEndorsements": {
-    "totalCount": 414,
+    "totalCount": 415,
     "incumbentCount": 174,
-    "newcomerCount": 229,
+    "newcomerCount": 230,
     "formerCount": 11,
     "prefectureCount": 40,
-    "prefecturalCount": 112,
+    "prefecturalCount": 113,
     "municipalCount": 302
   },
   "recommendations": {
@@ -236,11 +236,11 @@
     },
     {
       "prefecture": "奈良",
-      "totalCount": 6,
+      "totalCount": 7,
       "incumbentCount": 2,
-      "newcomerCount": 4,
+      "newcomerCount": 5,
       "formerCount": 0,
-      "prefecturalCount": 1,
+      "prefecturalCount": 2,
       "municipalCount": 5
     },
     {
