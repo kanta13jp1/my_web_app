@@ -233,7 +233,8 @@ void main() {
       expect(row.scheduledPaymentAmount, 5000);
       expect(row.monthlyInterestEstimate, closeTo(1250, 0.001));
       expect(row.principalPaymentEstimate, closeTo(paid ? 13750 : 3750, 0.001));
-      expect(row.balanceAfterPaymentEstimate, closeTo(paid ? -86250 : -96250, 0.001));
+      expect(row.balanceAfterPaymentEstimate,
+          closeTo(paid ? -86250 : -96250, 0.001));
       ai.complete(0, 'Synthetic paid amount report');
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 3));
