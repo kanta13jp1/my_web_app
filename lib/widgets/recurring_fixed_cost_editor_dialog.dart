@@ -474,7 +474,8 @@ class _RecurringFixedCostEditorDialogState
                     validator: (value) {
                       final text = (value ?? '').trim();
                       if (text.isNotEmpty &&
-                          AssetRecurringFixedCost.parseBillingDate(text) == null) {
+                          AssetRecurringFixedCost.parseBillingDate(text) ==
+                              null) {
                         return '実在する日付をYYYY-MM-DD形式で入力してください';
                       }
                       return null;
