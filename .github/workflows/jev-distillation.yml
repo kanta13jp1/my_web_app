@@ -8,6 +8,10 @@ on:
       - '.github/workflows/jev-distillation.yml'
   workflow_dispatch:
     inputs:
+      contract_only:
+        description: Run only synthetic campaign contracts without training
+        type: boolean
+        default: false
       experiment:
         description: jev166 = published Jev-label pilot; search_student = DAgger student taught by exact-state search
         type: choice
@@ -35,7 +39,7 @@ jobs:
           python -m py_compile scripts/jev_search_student/train.py
           node --test scripts/jev_search_student/campaign.test.mjs
   search_student:
-    if: github.event_name == 'workflow_dispatch' && inputs.experiment == 'search_student'
+    if: github.event_name == 'workflow_dispatch' && inputs.experiment == 'search_student' && !inputs.contract_only
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -64,7 +68,7 @@ jobs:
           path: out/search_student/
           retention-days: 14
   experiment:
-    if: github.event_name != 'workflow_dispatch' || inputs.experiment != 'search_student'
+    if: (github.event_name != 'workflow_dispatch' || inputs.experiment != 'search_student') && !inputs.contract_only
     permissions:
       contents: read
     runs-on: ubuntu-latest
