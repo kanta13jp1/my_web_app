@@ -31,7 +31,9 @@ void main() {
               workbook: workbook,
               now: now,
             );
-            return Text(candidates.isEmpty ? '候補なし' : candidates.single.title);
+            return Text(
+              candidates.isEmpty ? '候補なし' : candidates.single.title,
+            );
           },
         ),
       );
