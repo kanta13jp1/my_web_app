@@ -187,14 +187,19 @@ jobs:
               test ! -e /var/run/docker.sock
               socket_path=$(find "$PWD" "$FLUTTER_ROOT" "$PUB_CACHE" -type s -print -quit)
               test -z "$socket_path"
+              test ! -e probe-reports
               mkdir -p "$XDG_CACHE_HOME" probe-reports
               git --version
               "$FLUTTER_ROOT/bin/cache/dart-sdk/bin/dart" --version
               # Report all synthetic cases to a disposable JSON file; no skips.
-              timeout 360s "$FLUTTER_ROOT/bin/flutter" test --no-pub --reporter json \
+              # package:test writes JSON directly to its dedicated file; Flutter
+              # and test stdout/stderr are retained separately, never filtered
+              # into the report. Any malformed report line remains a failure.
+              timeout 360s "$FLUTTER_ROOT/bin/flutter" test --no-pub --reporter silent \
+                --file-reporter=json:probe-reports/results.jsonl \
                 test/owner_workspace_probe/debt_workspace_controller_union_DRAFT_test.dart \
                 test/owner_workspace_probe/debt_legacy_guard_DRAFT_test.dart \
-                > probe-reports/results.jsonl 2> probe-reports/stderr.txt
+                > probe-reports/flutter-stdout.txt 2> probe-reports/flutter-stderr.txt
             ')"
           trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
           test "$(docker inspect --format '{{.HostConfig.NetworkMode}}' "$cid")" = none
@@ -216,15 +221,39 @@ jobs:
           docker start -a "$cid"
           rc=$?
           set -e
-          printf 'Container exit status: %s\n' "$rc"
-          if test -s "$GITHUB_WORKSPACE/base/probe-reports/stderr.txt"; then
-            echo 'Test stderr (first 80 lines):'
-            sed -n '1,80p' "$GITHUB_WORKSPACE/base/probe-reports/stderr.txt"
-          fi
+          container_rc="$(docker inspect --format '{{.State.ExitCode}}' "$cid")"
+          oom="$(docker inspect --format '{{.State.OOMKilled}}' "$cid")"
+          printf 'Docker exit=%s container exit=%s OOMKilled=%s\n' "$rc" "$container_rc" "$oom"
+          # Diagnostic-only, bounded and redacted samples of each separate
+          # Flutter stream. Raw files remain only on the disposable runner.
+          python3 - "$GITHUB_WORKSPACE/base/probe-reports/flutter-stdout.txt" "$GITHUB_WORKSPACE/base/probe-reports/flutter-stderr.txt" <<'PY'
+          import hashlib, json, pathlib, re, sys
+          def preview(value):
+              value = re.sub(r'\x1b\[[0-9;?]*[ -/]*[@-~]', '', value)
+              value = re.sub(r'(?:https?://|file://|/)[^\s]+', '<path>', value)
+              value = re.sub(r'(?i)\b[a-z]:\\[^\s]+', '<path>', value)
+              value = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b', '<email>', value)
+              if re.search(r'(?i)token|secret|password|authorization|bearer|cookie|session|api[_-]?key', value):
+                  return json.dumps('<sensitive-keyword-redacted>')
+              value = re.sub(r'\b[A-Za-z0-9_-]{24,}\b', '<long-token>', value)
+              return json.dumps(value[:120], ensure_ascii=True)
+          for label, raw in zip(('flutter-stdout', 'flutter-stderr'), sys.argv[1:]):
+              p = pathlib.Path(raw)
+              if not p.is_file():
+                  print(label, 'missing')
+                  continue
+              lines = p.read_text(encoding='utf-8', errors='replace').splitlines()
+              visible = [(i, line) for i, line in enumerate(lines, 1) if line.strip()]
+              print(label, 'nonempty-line-count=', len(visible))
+              for number, line in visible[:12]:
+                  print(label, 'line=', number, 'sha256-prefix=', hashlib.sha256(line.encode('utf-8')).hexdigest()[:12], 'preview=', preview(line))
+              if len(visible) > 12:
+                  print(label, 'remaining-lines-withheld=', len(visible) - 12)
+          PY
           # Print bounded synthetic errors without matching stack line syntax.
           set +e
           python3 - "$GITHUB_WORKSPACE/base/probe-reports/results.jsonl" "$GITHUB_WORKSPACE/base/test/owner_workspace_probe/owner_workspace_union_61_cases_DRAFT.json" <<'PY'
-          import collections, json, pathlib, sys
+          import collections, hashlib, json, pathlib, re, sys
           path = pathlib.Path(sys.argv[1])
           if not path.is_file():
               print('ENVIRONMENT/STARTUP FAILURE: no test report')
@@ -233,14 +262,19 @@ jobs:
           duplicate_events = []
           invalid_test_events = 0
           bad_lines = 0
+          bad_samples = []
           suite_done = []
-          for line in path.read_text(encoding='utf-8', errors='replace').splitlines():
+          for number, line in enumerate(path.read_text(encoding='utf-8', errors='replace').splitlines(), 1):
               try: event = json.loads(line)
               except ValueError:
                   bad_lines += 1
+                  if len(bad_samples) < 12:
+                      bad_samples.append((number, line))
                   continue
               if not isinstance(event, dict):
                   bad_lines += 1
+                  if len(bad_samples) < 12:
+                      bad_samples.append((number, line))
                   continue
               if event.get('type') == 'testStart':
                   test = event.get('test')
@@ -279,6 +313,15 @@ jobs:
               failures = True
           if bad_lines:
               print('ENVIRONMENT: malformed/non-JSON lines:', bad_lines)
+              for number, raw in bad_samples:
+                  value = re.sub(r'\x1b\[[0-9;?]*[ -/]*[@-~]', '', raw)
+                  value = re.sub(r'(?:https?://|file://|/)[^\s]+', '<path>', value)
+                  value = re.sub(r'(?i)\b[a-z]:\\[^\s]+', '<path>', value)
+                  value = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b', '<email>', value)
+                  if re.search(r'(?i)token|secret|password|authorization|bearer|cookie|session|api[_-]?key', value):
+                      value = '<sensitive-keyword-redacted>'
+                  value = re.sub(r'\b[A-Za-z0-9_-]{24,}\b', '<long-token>', value)
+                  print('REPORT non-JSON line=', number, 'sha256-prefix=', hashlib.sha256(raw.encode('utf-8')).hexdigest()[:12], 'preview=', json.dumps(value[:120], ensure_ascii=True))
               failures = True
           if len(suite_done) != 1 or suite_done[0].get('success') is not True:
               print('ENVIRONMENT OR SUITE FAILURE: missing, duplicate or unsuccessful done event')
@@ -329,4 +372,5 @@ jobs:
           # Preserve a failing test/container exit; even rc=0 fails when report
           # validation detects missing/skipped/failed cases or malformed events.
           if test "$rc" -ne 0; then exit "$rc"; fi
+          if test "$container_rc" -ne 0; then exit "$container_rc"; fi
           exit "$report_rc"
