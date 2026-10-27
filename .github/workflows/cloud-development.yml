@@ -125,7 +125,10 @@ jobs:
           # A mismatch, including unsupported virtual/t64 alternatives, is fatal.
           dep_expr=$(paste -sd, "$deps")
           printf 'Source: synthetic-chrome-preflight\nBuild-Depends: %s\n' "$dep_expr" > "$PROBE_TMP/debian-control"
-          dpkg-checkbuilddeps "$PROBE_TMP/debian-control"
+          # Only the implicit distro build toolchain is irrelevant to running a
+          # prebuilt browser. Explicit Build-Depends below are all still checked.
+          # Clear build-profile/architecture overrides from the runner environment.
+          env -i PATH=/usr/bin:/bin LC_ALL=C /usr/bin/dpkg-checkbuilddeps -I "$PROBE_TMP/debian-control"
           # Enumerate ELF DT_NEEDED without starting Chrome or its loader.
           # Resolve only runner multiarch system libs, recursively; copy bytes
           # by exact SONAME into a new directory, no host home/config/socket.
