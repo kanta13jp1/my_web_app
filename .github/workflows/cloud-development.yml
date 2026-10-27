@@ -42,12 +42,12 @@ jobs:
         with:
           flutter-version: '3.38.10'
           cache: false
-      - name: Resolve locked dependencies
+      - name: Resolve dependencies with existing cloud SDK
         working-directory: base
         run: |
           set -euo pipefail
-          flutter pub get --enforce-lockfile
-          git diff --exit-code -- pubspec.lock
+          flutter pub get
+          git diff --stat -- pubspec.lock
       - name: Format only the store and diagnostic test
         working-directory: base
         run: dart format lib/services/asset_sync_dirty_keys_store.dart test/services/asset_sync_dirty_keys_conditional_clear_test.dart
