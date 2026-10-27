@@ -327,7 +327,7 @@ _Stored _decode(DebtScope scope, String raw) {
         (phase != DurablePhase.prepared && !_sameEnvelope(current, proposed))) {
       throw const DebtJournalException('invalid_operation');
     }
-    op = DurableOperation(id: id, baseVersion: base as int?, proposed: proposed, phase: phase);
+    op = DurableOperation(id: id, baseVersion: base, proposed: proposed, phase: phase);
   }
   if (op == null && (current != null || ids.isNotEmpty)) {
     throw const DebtJournalException('invalid_record');

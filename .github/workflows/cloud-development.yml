@@ -35,7 +35,7 @@ jobs:
           d=inputs/diagnostics/ordered_patch_work
           echo '8464f9522f87acd0985e77d4f4e8b3cc6fac15068c66d8a78e758621695a8f60  '"$d/debt_owner_atomic_journal_DRAFT.dart" | sha256sum -c -
           echo 'fe0d4210f8dccaa73942fe6f5e346dc975edd86c68dd7ce338d3715db93b0677  '"$d/debt_owner_durable_journal_DRAFT.dart" | sha256sum -c -
-          echo '4a398dd3ea55f4df2377753502c9785edd2e5b282ad970880cbf7769adc20cd8  '"$d/debt_owner_indexeddb_adapter_DRAFT.dart" | sha256sum -c -
+          echo 'e618f62be2e0fda1a7435dfd8acc53a21329b6d453fec43505430d6638ec71f5  '"$d/debt_owner_indexeddb_adapter_DRAFT.dart" | sha256sum -c -
           echo '199b1205846e1908934273126ddd6c4b69ec5bdba549e620530bb3a66b2682b6  '"$d/debt_owner_indexeddb_adapter_DRAFT_test.dart" | sha256sum -c -
           test "$(git -C base rev-parse HEAD)" = 237d9290183c3bb3df73388ec9cf4563bb0186ef
           test "$(git -C base rev-parse HEAD:lib/pages/asset_management_page.dart)" = 35749bb77a1e93fcb8b4bf9a2c0c715baa892193
