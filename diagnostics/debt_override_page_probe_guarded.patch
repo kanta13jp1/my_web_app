@@ -1,0 +1,81 @@
+--- a/lib/pages/asset_management_page.dart
++++ b/lib/pages/asset_management_page.dart
+@@ -394,7 +394,14 @@
+   /// テスト専用: 支払日上書きの集約ミラー値 (`{debtId: day}`) を注入し、端末間同期
+   /// (union マージ) をネットワークなしで検証する。
+   @visibleForTesting
+-  final Map<String, dynamic>? debugDebtOverridesMirror;
++  final Map<String, dynamic>? debugDebtOverridesMirror;
++
++  // Diagnostic injection only: separate from the restore fixture.
++  @visibleForTesting
++  final String? debugDebtOverrideProbeOwner;
++  @visibleForTesting
++  final Future<void> Function(String owner, Map<String, int> values)?
++      debugDebtOverrideProbeWriter;
+ 
+   /// テスト専用: リボ設定の削除トゥームストーン値 (`{'ids': [...]}`) を注入し、
+   /// 削除伝播 (他端末で削除→ローカルから除去) をネットワークなしで検証する。
+@@ -482,7 +489,9 @@
+     this.debugMainAccountMirror,
+     this.debugWatchlistMirror,
+     this.debugMirrorReadsAuthoritative,
+-    this.debugDebtOverridesMirror,
++    this.debugDebtOverridesMirror,
++    this.debugDebtOverrideProbeOwner,
++    this.debugDebtOverrideProbeWriter,
+     this.debugRevolvingDeletedMirror,
+     this.debugWatchlistDeletedMirror,
+     this.debugInitialRecurringFixedCosts,
+@@ -15194,17 +15203,28 @@
+     Map<String, int> overrides,
+   ) async {
+     unawaited(_syncTimestampStore.markChanged('debt_payment_day_overrides'));
+-    final userId = _supabase.auth.currentUser?.id;
+-    if (userId == null) {
+-      return;
+-    }
+-    try {
+-      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+-        'user_id': userId,
+-        'pref_key': 'debt_payment_day_overrides',
+-        'value': overrides,
+-        'updated_at': DateTime.now().toUtc().toIso8601String(),
+-      });
++    final probeWriter = widget.debugDebtOverrideProbeWriter;
++    final probeOwner = widget.debugDebtOverrideProbeOwner;
++    if ((probeWriter == null) != (probeOwner == null)) {
++      throw StateError('Incomplete diagnostic injection');
++    }
++    final userId = probeWriter == null
++        ? _supabase.auth.currentUser?.id
++        : probeOwner;
++    if (userId == null) {
++      return;
++    }
++    try {
++      if (probeWriter != null) {
++        await probeWriter(userId, Map<String, int>.from(overrides));
++      } else {
++        await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
++          'user_id': userId,
++          'pref_key': 'debt_payment_day_overrides',
++          'value': overrides,
++          'updated_at': DateTime.now().toUtc().toIso8601String(),
++        });
++      }
+       // 全量 upsert 成功 = 全キー同期済み → dirty クリア。
+       await _syncDirtyKeysStore.clearDomain('debt_payment_day_overrides');
+     } catch (e) {
+@@ -30959,8 +30979,9 @@
+         children: [
+           _buildTextStatusChip(label: statusLabel, color: statusColor),
+           const SizedBox(height: 4),
+-          DropdownButton<int?>(
+-            value: row.paymentDay,
++          DropdownButton<int?>(
++            key: Key('probe_debt_payment_day_${row.id}'),
++            value: row.paymentDay,
+             isExpanded: true,
+             isDense: true,
+             items: [
