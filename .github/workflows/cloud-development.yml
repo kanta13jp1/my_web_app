@@ -1,6 +1,6 @@
 # DRAFT ONLY. Not registered, dispatched, executed, or verified.
 # Two intentionally failing KNOWN RED cases remain enabled; no result is made green.
-name: Owner workspace synthetic isolated diagnostic (draft)
+name: Owner workspace synthetic JSON diagnostic (draft)
 on:
   workflow_dispatch:
 permissions:
@@ -214,7 +214,7 @@ jobs:
           fi
           # Classification is diagnostic only; an assertion failure remains red.
           python3 - "$GITHUB_WORKSPACE/base/probe-reports/results.jsonl" "$GITHUB_WORKSPACE/base/test/owner_workspace_probe/debt_workspace_controller_DRAFT_test.dart" <<'PY'
-          import collections, json, pathlib, sys
+          import collections, json, pathlib, re, sys
           path = pathlib.Path(sys.argv[1])
           if not path.is_file():
               print('ENVIRONMENT/STARTUP FAILURE: no test report')
@@ -226,11 +226,14 @@ jobs:
               except ValueError:
                   bad_lines += 1
                   continue
-              if ev.get('type') == 'testStart': tests[ev['test']['id']] = ev['test']['name']
-              elif ev.get('type') == 'testDone': done[ev['testID']] = ev
+              if not isinstance(ev, dict):
+                  bad_lines += 1
+                  continue
+              if ev.get('type') == 'testStart':
+                  test = ev.get('test') or {}
+                  if 'id' in test: tests[test['id']] = test.get('name', '<no-name>')
+              elif ev.get('type') == 'testDone': done[ev.get('testID')] = ev
               elif ev.get('type') == 'error': errors[ev.get('testID')].append(ev)
-          # Derive assertion lines from the hash-verified fixture, not a hardcoded
-          # formatter-sensitive number. A missing or duplicate marker is unknown.
           fixture = pathlib.Path(sys.argv[2]).read_text(encoding='utf-8').splitlines()
           markers = {
               'KNOWN RED: notification should stop old merge before fence commits': 'expect(afterOldMerge, isEmpty)',
@@ -240,25 +243,60 @@ jobs:
           for name, marker in markers.items():
               positions = [i for i, source in enumerate(fixture, 1) if marker in source]
               expected[name] = f':{positions[0]}:' if len(positions) == 1 else None
+          def show(value, limit=900):
+              # Both test files are verified synthetic fixtures; bound output and
+              # escape controls so the diagnostic logs remain human-readable.
+              text = str(value)
+              return json.dumps(text[:limit], ensure_ascii=True) + (' [truncated]' if len(text) > limit else '')
+          def detail(ident):
+              event = done.get(ident, {})
+              print('  testID=', show(ident, 80), 'done=', show(event, 500),
+                    'errorEvents=', len(errors.get(ident, [])))
+              for e in errors.get(ident, [])[:4]:
+                  print('  error keys=', sorted(map(str, e.keys())),
+                        'isFailure=', show(e.get('isFailure'), 30))
+                  print('  error=', show(e.get('error', '<missing>')))
+                  # Flutter package/test versions differ in stack structure;
+                  # bounded stack prefix and matching source lines aid review.
+                  stack = str(e.get('stackTrace', '<missing>')).splitlines()
+                  selected = stack[:5] + [line for line in stack[5:] if 'debt_workspace_controller_DRAFT_test.dart' in line][:4]
+                  for frame in selected:
+                      print('  frame=', show(frame, 350))
           print('Report malformed/non-JSON lines:', bad_lines)
+          print('KNOWN RED testStart names and IDs:')
+          for ident, name in tests.items():
+              if 'KNOWN RED' in name:
+                  print(' ', show(name, 250), 'id=', show(ident, 80))
+                  if name not in expected: detail(ident)
           for name, line in expected.items():
               ids = [i for i, n in tests.items() if n == name]
-              ok = len(ids) == 1 and ids[0] in done and not done[ids[0]].get('skipped', False) and done[ids[0]].get('result') != 'success'
+              ok = len(ids) == 1 and ids[0] in done and not done[ids[0]].get('skipped', False)
+              if ok: ok = done[ids[0]].get('result') in ('error', 'failure')
               evidence = errors.get(ids[0], []) if len(ids) == 1 else []
-              ok = ok and line is not None and bool(evidence) and all('Expected: empty' in str(e.get('error', '')) and 'debt_workspace_controller_DRAFT_test.dart' in str(e.get('stackTrace', '')) and line in str(e.get('stackTrace', '')) for e in evidence)
-              print(('EXPECTED RED CANDIDATE' if ok else 'UNEXPECTED/MISSING/SKIPPED'), name)
-          uncompleted = [name for ident, name in tests.items() if ident not in done]
-          for name in uncompleted: print('ENVIRONMENT/TIMEOUT/UNFINISHED:', name)
+              ok = ok and line is not None and bool(evidence) and all(
+                  e.get('isFailure') is True and
+                  'Expected: empty' in str(e.get('error', '')) and
+                  'synthetic-debt' in str(e.get('error', '')) and
+                  re.search(r'\b10\b', str(e.get('error', ''))) is not None and
+                  'debt_workspace_controller_DRAFT_test.dart' in str(e.get('stackTrace', '')) and
+                  line in str(e.get('stackTrace', '')) for e in evidence)
+              print(('EXPECTED RED CANDIDATE' if ok else 'UNEXPECTED/MISSING/SKIPPED'), show(name, 250),
+                    'markerLine=', show(line, 30), 'exactNameIDs=', len(ids))
+              for ident in ids: detail(ident)
+          for ident, name in tests.items():
+              if ident not in done: print('ENVIRONMENT/TIMEOUT/UNFINISHED:', show(name, 250))
           completed_cases = [name for ident, name in tests.items() if ident in done and not name.startswith('loading ')]
           print('Completed case count (expected 37, excluding load events):', len(completed_cases))
           if len(completed_cases) != 37: print('UNEXPECTED CASE COUNT: inspect missing or extra cases')
           for ident, event in done.items():
               name = tests.get(ident, '<unknown test>')
               if name not in expected and (event.get('result') != 'success' or event.get('skipped', False)):
-                  print('OTHER FAILURE OR SKIP:', name, event.get('result'))
+                  print('OTHER FAILURE OR SKIP:', show(name, 250), show(event.get('result'), 50))
+                  detail(ident)
           for ident in errors:
               if ident not in tests:
-                  print('ENVIRONMENT/LOAD ERROR: no matching test id')
+                  print('ENVIRONMENT/LOAD ERROR: no matching test id:', show(ident, 80))
+                  detail(ident)
           if not done: print('ENVIRONMENT/LOAD FAILURE: no completed tests')
           PY
           # Exit nonzero for every failing run; no `continue-on-error` and no
