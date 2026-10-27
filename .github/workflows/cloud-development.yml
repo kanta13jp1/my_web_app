@@ -145,7 +145,7 @@ jobs:
             --user "$user_id" --cap-drop=ALL --security-opt=no-new-privileges:true \
             --read-only --pids-limit=512 --memory=4g \
             --tmpfs /tmp:rw,nosuid,nodev,size=1g \
-            --env XDG_CACHE_HOME=/tmp/cache --env PUB_CACHE="$PUB_CACHE" --env FLUTTER_ROOT="$FLUTTER_ROOT" \
+            --env XDG_CACHE_HOME=/tmp/cache --env XDG_CONFIG_HOME=/tmp/config --env PUB_CACHE="$PUB_CACHE" --env FLUTTER_ROOT="$FLUTTER_ROOT" \
             --env PATH="$GITHUB_WORKSPACE/base/.isolation-tools/bin:$FLUTTER_ROOT/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
             --env WORKSPACE_BASE="$GITHUB_WORKSPACE/base" --env HOST_NETNS="$host_netns" \
             --mount "type=bind,src=$GITHUB_WORKSPACE/base,dst=$GITHUB_WORKSPACE/base" \
