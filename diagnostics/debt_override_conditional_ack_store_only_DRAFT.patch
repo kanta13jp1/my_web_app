@@ -1,6 +1,6 @@
 --- a/lib/services/asset_sync_dirty_keys_store.dart
 +++ b/lib/services/asset_sync_dirty_keys_store.dart
-@@ -175,6 +175,24 @@
+@@ -175,6 +175,28 @@
      });
    }
  
@@ -17,8 +17,12 @@
 +      final store = prefs ?? await SharedPreferences.getInstance();
 +      final all = await _loadAll(store);
 +      // _runLocked itself increments the generation when enqueueing this clear.
-+      if (_mutationGeneration != generation + 1 || !isCurrent(Set<String>.unmodifiable(all[prefKey] ?? <String>{}))) return;
-+      if (all.remove(prefKey) != null) await _writeAll(store, all);
++      if (_mutationGeneration != generation + 1 || !isCurrent(Set<String>.unmodifiable(all[prefKey] ?? <String>{}))) {
++        return;
++      }
++      if (all.remove(prefKey) != null) {
++        await _writeAll(store, all);
++      }
 +    });
 +  }
 +

@@ -28,7 +28,7 @@ jobs:
           set -euo pipefail
           patch=diagnostic-inputs/diagnostics/debt_override_conditional_ack_store_only_DRAFT.patch
           testfile=diagnostic-inputs/diagnostics/debt_override_conditional_ack_store_test_DRAFT.dart
-          echo '0715d4ea0822a8e1b47880db74adc1a66fb391fdcc8701222b988d19b6f69660  '"$patch" | sha256sum -c -
+          echo '047b0bfebf46902b565262b7fbcc825c87a0820385e7cdcc1f168063abc9aa39  '"$patch" | sha256sum -c -
           echo '3eb854b2fde562e9ac88e92bf9b86cec73fa10b09340fbaa2705cd29026a52ed  '"$testfile" | sha256sum -c -
           test "$(git -C base rev-parse HEAD)" = 237d9290183c3bb3df73388ec9cf4563bb0186ef
           test "$(git -C base rev-parse HEAD:lib/services/asset_sync_dirty_keys_store.dart)" = 3a6501a032f6623374ec222474bcc4408327233c
