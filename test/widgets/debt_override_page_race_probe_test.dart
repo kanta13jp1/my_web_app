@@ -47,10 +47,11 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(1200, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
       home: AssetManagementPage(
         assetLiabilityRepository: repo,
-        debugInitialAssetData: {date: {'モビット': -100000}},
+        debugInitialAssetData: {date: const {'モビット': -100000}},
         debugDebtOverrideProbeOwner: 'synthetic-owner',
         debugDebtOverrideProbeWriter: (owner, values) {
           expect(owner, 'synthetic-owner');
@@ -58,7 +59,8 @@ void main() {
           return sent.length == 1 ? first.future : second.future;
         },
       ),
-    ));
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300));
     final field = find.byKey(const Key('probe_debt_payment_day_mobit'));
