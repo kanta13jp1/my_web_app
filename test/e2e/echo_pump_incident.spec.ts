@@ -25,7 +25,25 @@ for (const skip of [false, true]) {
     await button('スキップして開始').click();
     await button('保守メモを調べる').click();
     await expect(page.getByText('歩行中…', { exact: true }).first()).toBeVisible();
-    await button('異常灯を調べる').dispatchEvent('click');
+    try {
+      await button('異常灯を調べる').dispatchEvent('click');
+    } catch (error) {
+      // Capture the blocked state without changing the click or timeout contract.
+      const state = await page.evaluate(() => ({
+        viewport: { width: innerWidth, height: innerHeight, x: scrollX, y: scrollY },
+        buttons: Array.from(document.querySelectorAll('[role="button"]')).map(el => ({
+          label: el.getAttribute('aria-label'), text: el.textContent,
+          rect: el.getBoundingClientRect().toJSON(),
+        })),
+        dialogs: Array.from(document.querySelectorAll('[role="dialog"]')).map(el => ({
+          label: el.getAttribute('aria-label'), text: el.textContent,
+        })),
+      })).catch(() => ({ captureFailed: true }));
+      await info.attach('incident-open-blocked-state', {
+        body: JSON.stringify(state, null, 2), contentType: 'application/json',
+      });
+      throw error;
+    }
     await expect(page.getByText('予備灯だけが、揺れている。', { exact: true })).toBeVisible();
     await expect(page.getByText('歩行中…', { exact: true })).toHaveCount(0);
     const opened = await page.evaluate(() => performance.now());
