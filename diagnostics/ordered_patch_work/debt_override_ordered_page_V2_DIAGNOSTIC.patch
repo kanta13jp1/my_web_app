@@ -1,5 +1,13 @@
 --- a/lib/pages/asset_management_page.dart
 +++ b/lib/pages/asset_management_page.dart
+@@ -32,6 +32,7 @@
+ 
+ import 'package:file_picker/file_picker.dart';
+ import 'package:fl_chart/fl_chart.dart';
++import 'package:flutter/foundation.dart' show ValueListenable;
+ import 'package:flutter/material.dart';
+ import '../widgets/asset_payment_reminder_gate.dart';
+ import 'package:my_web_app/services/asset_must_task_repository.dart';
 @@ -395,6 +395,17 @@
    /// (union マージ) をネットワークなしで検証する。
    @visibleForTesting

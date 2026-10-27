@@ -37,7 +37,7 @@ jobs:
           set -euo pipefail
           d=diagnostic-inputs/diagnostics/ordered_patch_work
           echo 'a06e16281ccff741e34eadf000de9ad9e2f51601ee414505191c50cc18bdb1b4  '"$d/debt_override_ordered_page_V2_DRAFT.patch" | sha256sum -c -
-          echo 'c84aa24badf8eb0dcf2637adc98bf0a35a12acf54a986dd9fa48aba4f4c75bfc  '"$d/debt_override_ordered_page_V2_DIAGNOSTIC.patch" | sha256sum -c -
+          echo 'd047f2740976035886a071385351ce8cb1aaf1499c07659dead127c2503cc8be  '"$d/debt_override_ordered_page_V2_DIAGNOSTIC.patch" | sha256sum -c -
           echo 'd5b837da27f8fcb98d22b87677fda6782afef09720cf1dd813e5c091ad814e85  '"$d/debt_override_ordered_page_V2_widget_DRAFT_test.dart" | sha256sum -c -
           test "$(git -C base rev-parse HEAD)" = 237d9290183c3bb3df73388ec9cf4563bb0186ef
           test "$(git -C base rev-parse HEAD:lib/pages/asset_management_page.dart)" = 35749bb77a1e93fcb8b4bf9a2c0c715baa892193
@@ -80,6 +80,11 @@ jobs:
               flutter $args
           done
           git diff --stat -- pubspec.lock
+          # Pinned SDK identity, independently from the synthetic freshness stamp.
+          test "$(git -C "$FLUTTER_ROOT" rev-parse HEAD)" = c6f67dede3d4aa1aa7a69dd56a3494a5cde6cc80
+          # Prevent a pointless online version freshness check inside network=none.
+          # This is not evidence that the SDK is the latest version.
+          printf '{"lastTimeVersionWasChecked":"%s"}' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$FLUTTER_ROOT/bin/cache/flutter_version_check.stamp"
           # Verify all resolved package roots are contained in the exact three
           # mounted directories. Do not print any untrusted path or config value.
           python3 - "$GITHUB_WORKSPACE/base" "$FLUTTER_ROOT" "$PUB_CACHE" <<'PY'
