@@ -70,7 +70,8 @@ jobs:
           python3 - <<'PY'
           import pathlib, re
           s = pathlib.Path('pubspec.lock').read_text(encoding='utf-8')
-          m = re.search(r'^  web:\n(?:(?!  [A-Za-z0-9_]+:\n).)*?^    version: "?([^"\n]+)"?', s, re.M | re.S)
+          section = re.search(r'^  web:\s*\n(.*?)(?=^  [A-Za-z0-9_]+:\s*$|\Z)', s, re.M | re.S)
+          m = re.search(r'^    version: "?([^"\n]+)"?\s*$', section.group(1), re.M) if section else None
           if not m or m.group(1) != '1.1.1':
               raise SystemExit('Locked web version is not 1.1.1')
           PY
