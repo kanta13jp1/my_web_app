@@ -6,6 +6,33 @@ void main() {
   group('AssetLiabilityMonthlyReportService', () {
     const service = AssetLiabilityMonthlyReportService();
 
+    test('displayed net worth and previous delta use a consistent observation',
+        () {
+      final views = service.buildReportViews(
+        snapshots: [
+          _snapshot('2026-05', netWorth: 100),
+          _snapshot('2026-06', netWorth: 150),
+        ],
+        reports: [
+          AssetLiabilityMonthlyReport(
+            monthKey: '2026-06',
+            generatedAt: DateTime.utc(2026, 7, 1),
+            totalAssets: 200,
+            totalLiabilities: 0,
+            netWorth: 200,
+            aiSummary: 'Synthetic report',
+            aiModel: 'fixture',
+          ),
+        ],
+      );
+      final current = views.first;
+      expect(current.netWorth, 150);
+      expect(current.totalAssets, 100000);
+      expect(current.totalLiabilities, -99850);
+      expect(current.summary, 'Synthetic report');
+      expect(current.netWorthDelta, current.netWorth - views.last.netWorth);
+    });
+
     test('merges generated reports with local KPI snapshots by month', () {
       final views = service.buildReportViews(
         snapshots: <AssetLiabilityMonthlySnapshot>[

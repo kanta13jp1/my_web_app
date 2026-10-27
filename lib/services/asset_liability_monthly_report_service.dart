@@ -39,12 +39,12 @@ class AssetLiabilityMonthlyReportView {
   }
 
   double get totalAssets =>
-      report?.totalAssets ?? snapshot?.positiveAssetTotal ?? 0;
+      snapshot?.positiveAssetTotal ?? report?.totalAssets ?? 0;
 
   double get totalLiabilities =>
-      report?.totalLiabilities ?? snapshot?.liabilityTotal ?? 0;
+      snapshot?.liabilityTotal ?? report?.totalLiabilities ?? 0;
 
-  double get netWorth => report?.netWorth ?? snapshot?.netWorth ?? 0;
+  double get netWorth => snapshot?.netWorth ?? report?.netWorth ?? 0;
 
   double? get netWorthDelta {
     if (snapshot == null || previousSnapshot == null) {
