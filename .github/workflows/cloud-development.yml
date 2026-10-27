@@ -115,14 +115,14 @@ jobs:
           # Official Ubuntu is minimal. Flutter requires Git; copy only the host
           # executable and its ldd-resolved libraries inside the disposable checkout.
           root="$GITHUB_WORKSPACE/base/.isolation-tools"
-          mkdir -p "$root/bin" "$root/lib"
+          mkdir -p "$root/bin/.git-runtime" "$root/lib"
           gitbin="$(command -v git)"
-          cp -L "$gitbin" "$root/bin/git-real"
+          cp -L "$gitbin" "$root/bin/.git-runtime/git"
           cat > "$root/bin/git" <<'WRAPPER'
           #!/bin/sh
           toolroot=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
           export LD_LIBRARY_PATH="$toolroot/lib"
-          exec "$toolroot/bin/git-real" "$@"
+          exec "$toolroot/bin/.git-runtime/git" "$@"
           WRAPPER
           chmod 0755 "$root/bin/git"
           ldd "$gitbin" > "$RUNNER_TEMP/debt-probe-git-ldd.txt"
