@@ -1,4 +1,4 @@
-name: Approved PR5921 Web Release
+name: Approved PR5922 Web Release
 
 on:
   pull_request:
@@ -46,7 +46,7 @@ on:
   workflow_dispatch:
     inputs:
       approved_release:
-        description: Explicit owner approved PR5921-only release
+        description: Explicit owner approved PR5922-only release
         required: true
         default: false
         type: boolean
@@ -135,22 +135,22 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='86f86a97d24358fd85bbba6569b81608b9d93e7c', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='491297dbe6e2968cf41d5fff2c5231afa0eec385', 'Production changed; rebuild selection'
           PY
 
-      - name: Verify approved PR5921-only selection
+      - name: Verify approved PR5922-only selection
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          test "$(gh pr view 5921 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
-          test "$(gh pr view 5921 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 8051e8829049217251c11d84c8cf5ee4fb42ad73
-          git fetch --no-tags --depth=1 origin 86f86a97d24358fd85bbba6569b81608b9d93e7c
+          test "$(gh pr view 5922 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
+          test "$(gh pr view 5922 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 1de908467a8236b2dafbea9f7f84dc78ab45af7e
+          git fetch --no-tags --depth=1 origin 491297dbe6e2968cf41d5fff2c5231afa0eec385
           python3 - <<'PY'
           import subprocess
-          expected={'test/widgets/asset_payment_reminder_gate_test.dart', 'lib/pages/asset_management_page.dart', '.github/workflows/cloud-development.yml', 'lib/widgets/asset_payment_reminder_gate.dart'}
-          actual=set(subprocess.check_output(['git','diff','--name-only','86f86a97d24358fd85bbba6569b81608b9d93e7c','HEAD']).decode().splitlines())
+          expected={'lib/services/asset_liability_monthly_report_service.dart', '.github/workflows/cloud-development.yml', 'test/services/asset_liability_monthly_report_service_test.dart'}
+          actual=set(subprocess.check_output(['git','diff','--name-only','491297dbe6e2968cf41d5fff2c5231afa0eec385','HEAD']).decode().splitlines())
           assert actual==expected,(actual,expected)
-          expected_blobs={'lib/pages/asset_management_page.dart': '35749bb77a1e93fcb8b4bf9a2c0c715baa892193', 'lib/widgets/asset_payment_reminder_gate.dart': '7482de608867418567253b2dc222c5a7ca58f4ca', 'test/widgets/asset_payment_reminder_gate_test.dart': 'e1e528029d07f9919f04f748f6fa3a6d2afe26b0'}
+          expected_blobs={'lib/services/asset_liability_monthly_report_service.dart': '0b6408d1cba48be6e13084bb8cb48f43dce571d9', 'test/services/asset_liability_monthly_report_service_test.dart': '4f84403fb59895d871acebb306a3b05ab423476d'}
           for path, expected_blob in expected_blobs.items():
               blob=subprocess.check_output(['git','rev-parse','HEAD:'+path]).decode().strip()
               assert blob==expected_blob,(path,blob)
@@ -625,7 +625,7 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='86f86a97d24358fd85bbba6569b81608b9d93e7c', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='491297dbe6e2968cf41d5fff2c5231afa0eec385', 'Production changed; rebuild selection'
           PY
 
       - name: Collect pushed files
@@ -645,7 +645,7 @@ jobs:
           mkdir -p .deploy-logs
           python3 - <<'PY'
           from pathlib import Path
-          Path('.deploy-logs/changed-files.txt').write_text('lib/pages/asset_management_page.dart\nlib/widgets/asset_payment_reminder_gate.dart\ntest/widgets/asset_payment_reminder_gate_test.dart\n')
+          Path('.deploy-logs/changed-files.txt').write_text('lib/services/asset_liability_monthly_report_service.dart\ntest/services/asset_liability_monthly_report_service_test.dart\n')
           PY
 
       - name: Reject mixed public-blog deployments
@@ -1340,7 +1340,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         env:
           FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-          EXPECTED_PUBLIC_BASE: 86f86a97d24358fd85bbba6569b81608b9d93e7c
+          EXPECTED_PUBLIC_BASE: 491297dbe6e2968cf41d5fff2c5231afa0eec385
         run: |
           python3 -m venv /tmp/echo-release-tools
           /tmp/echo-release-tools/bin/pip install google-auth==2.43.0 requests==2.32.5
@@ -1372,7 +1372,7 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          EXPECTED_PUBLIC_BASE=86f86a97d24358fd85bbba6569b81608b9d93e7c /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
+          EXPECTED_PUBLIC_BASE=491297dbe6e2968cf41d5fff2c5231afa0eec385 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
 
           if npx -y firebase-tools@15.34.0 deploy \
             --only hosting \
