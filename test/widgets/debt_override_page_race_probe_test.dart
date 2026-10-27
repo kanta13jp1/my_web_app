@@ -39,6 +39,7 @@ void main() {
     final first = Completer<void>();
     final second = Completer<void>();
     final sent = <Map<String, int>>[];
+    final owners = <String>[];
     final repo = _LocalDebtRepository();
     final day = DateTime.now();
     final date = '${day.year.toString().padLeft(4, '0')}-'
@@ -58,7 +59,7 @@ void main() {
         },
         debugDebtOverrideProbeOwner: 'synthetic-owner',
         debugDebtOverrideProbeWriter: (owner, values) {
-          expect(owner, 'synthetic-owner');
+          owners.add(owner);
           sent.add(Map<String, int>.from(values));
           return sent.length == 1 ? first.future : second.future;
         },
@@ -77,6 +78,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 20));
     }
     expect(sent, hasLength(1));
+    expect(owners, <String>['synthetic-owner']);
     expect(sent.first['mobit'], 10);
 
     tester.widget<DropdownButton<int?>>(field).onChanged!(20);
