@@ -1,0 +1,165 @@
+--- a/lib/pages/asset_management_page.dart
++++ b/lib/pages/asset_management_page.dart
+@@ -395,6 +395,17 @@
+   /// (union マージ) をネットワークなしで検証する。
+   @visibleForTesting
+   final Map<String, dynamic>? debugDebtOverridesMirror;
++  // Non-shipping test-only auth, restore, and write injection.
++  @visibleForTesting
++  final String? debugDebtOverrideProbeOwner;
++  @visibleForTesting
++  final ValueListenable<String?>? debugDebtOverrideProbeAuth;
++  @visibleForTesting
++  final Future<void> Function()? debugDebtRestoreBarrier;
++  @visibleForTesting
++  final Future<void> Function(String, Map<String, int>)? debugDebtOverrideProbeWriter;
++  @visibleForTesting
++  final Future<void> Function(String, Set<String>)? debugDebtOverrideDeletedProbeWriter;
+ 
+   /// テスト専用: リボ設定の削除トゥームストーン値 (`{'ids': [...]}`) を注入し、
+   /// 削除伝播 (他端末で削除→ローカルから除去) をネットワークなしで検証する。
+@@ -483,6 +494,11 @@
+     this.debugWatchlistMirror,
+     this.debugMirrorReadsAuthoritative,
+     this.debugDebtOverridesMirror,
++    this.debugDebtOverrideProbeOwner,
++    this.debugDebtOverrideProbeAuth,
++    this.debugDebtRestoreBarrier,
++    this.debugDebtOverrideProbeWriter,
++    this.debugDebtOverrideDeletedProbeWriter,
+     this.debugRevolvingDeletedMirror,
+     this.debugWatchlistDeletedMirror,
+     this.debugInitialRecurringFixedCosts,
+@@ -893,9 +909,25 @@
+     return prefs.setString(_debtOwnerBindingKey, owner);
+   }
+ 
++  String? get _debugEffectiveDebtOwner => widget.debugDebtOverrideProbeAuth != null
++      ? widget.debugDebtOverrideProbeAuth!.value
++      : (widget.debugDebtOverrideProbeOwner ?? _supabase.auth.currentUser?.id);
++
++  void _debugDebtOwnerChanged() => _acceptDebtOwner(_debugEffectiveDebtOwner);
++
++  void _acceptDebtOwner(String? nextOwner) {
++    final previousOwner = _debtSyncOwner;
++    if (nextOwner == previousOwner) return;
++    _debtSyncRevision++;
++    _debtSyncOwner = nextOwner;
++    if (previousOwner != null) {
++        _debtSyncBlocked = true;
++    }
++  }
++
+   bool _debtOwnerValid(String? owner) => owner != null && mounted &&
+       !_debtSyncBlocked && _debtSyncOwner == owner &&
+-      _supabase.auth.currentUser?.id == owner;
++      _debugEffectiveDebtOwner == owner;
+ 
+   bool _debtLocalOwnerValid(String? owner) => mounted;
+ 
+@@ -1367,20 +1399,13 @@
+   @override
+   void initState() {
+     super.initState();
+-    _debtSyncOwner = _supabase.auth.currentUser?.id;
+-    _debtSyncOwnerChanges = _supabase.auth.onAuthStateChange.listen((event) {
+-      final nextOwner = event.session?.user.id;
+-      final previousOwner = _debtSyncOwner;
+-      if (nextOwner == previousOwner) return;
+-      _debtSyncRevision++;
+-      _debtSyncOwner = nextOwner;
+-      // A first sign-in is not an error. A change away from a known owner
+-      // quarantines remote writes; local edits continue.
+-      if (previousOwner != null) {
+-        _debtSyncBlocked = true;
+-      }
+-
+-    });
++    _debtSyncOwner = _debugEffectiveDebtOwner;
++    if (widget.debugDebtOverrideProbeAuth != null) {
++      widget.debugDebtOverrideProbeAuth!.addListener(_debugDebtOwnerChanged);
++    } else if (widget.debugDebtOverrideProbeOwner == null) {
++      _debtSyncOwnerChanges = _supabase.auth.onAuthStateChange.listen(
++          (event) => _acceptDebtOwner(event.session?.user.id));
++    }
+     _assetManagementAiSummaryService =
+         widget.aiSummaryService ?? AssetManagementAiSummaryService();
+     _assetManagementAiAnalysisHistoryService =
+@@ -1544,6 +1569,7 @@
+   void dispose() {
+     _debtSyncBlocked = true;
+     _debtSyncRevision++;
++    widget.debugDebtOverrideProbeAuth?.removeListener(_debugDebtOwnerChanged);
+     unawaited(_debtSyncOwnerChanges?.cancel());
+     final closingChanged = _closingFetchChanged;
+     if (closingChanged != null && !closingChanged.isCompleted) {
+@@ -15285,6 +15311,7 @@
+     final restoreRevision = _debtSyncRevision;
+     _debtRestoreBusy = true;
+     try {
++    if (widget.debugDebtRestoreBarrier != null) await widget.debugDebtRestoreBarrier!();
+     final debugMirror = widget.debugDebtOverridesMirror;
+     if (debugMirror == null && _supabase.auth.currentUser == null) {
+       return;
+@@ -30919,7 +30946,7 @@
+       MirrorTombstoneStore(storageKey: 'debt_payment_day_override_deleted_v1');
+ 
+   void _setDebtPaymentDayOverride(AssetLiabilityDebtRow row, int? day) {
+-    if (_supabase.auth.currentUser?.id == null) _debtHasUnownedEdit = true;
++    if (_debugEffectiveDebtOwner == null) _debtHasUnownedEdit = true;
+     _debtLocalEditRevision++;
+     setState(() {
+       if (day == null) {
+@@ -30935,7 +30962,7 @@
+   Future<void> _queueDebtSnapshot(Map<String, int> values,
+       {String? editedId, bool deleted = false}) {
+     // Capture the owner at edit time. A null owner can save locally only.
+-    final owner = _supabase.auth.currentUser?.id;
++    final owner = _debugEffectiveDebtOwner;
+     final editAt = DateTime.now().toUtc();
+     final snapshot = Map<String, int>.unmodifiable(values);
+     final revision = ++_debtSyncRevision;
+@@ -30990,16 +31017,26 @@
+         return;
+       }
+       final generation = AssetSyncDirtyKeysStore.mutationGeneration;
+-        await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+-          'user_id': owner, 'pref_key': 'debt_payment_day_overrides',
+-          'value': snapshot, 'updated_at': DateTime.now().toUtc().toIso8601String(),
+-        });
++        if (widget.debugDebtOverrideProbeWriter != null && widget.debugDebtOverrideDeletedProbeWriter != null) {
++          await widget.debugDebtOverrideProbeWriter!(owner, snapshot);
++        } else if (widget.debugDebtOverrideProbeOwner != null || widget.debugDebtOverrideProbeAuth != null) {
++          throw StateError('Both synthetic writers are required');
++        } else {
++          await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
++            'user_id': owner, 'pref_key': 'debt_payment_day_overrides',
++            'value': snapshot, 'updated_at': DateTime.now().toUtc().toIso8601String(),
++          });
++        }
+         if (!_debtOwnerValid(owner)) return;
+-        await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+-          'user_id': owner, 'pref_key': 'debt_payment_day_override_deleted',
+-          'value': MirrorTombstoneStore.encodeMirror(tombstones),
+-          'updated_at': DateTime.now().toUtc().toIso8601String(),
+-        });
++        if (widget.debugDebtOverrideDeletedProbeWriter != null) {
++          await widget.debugDebtOverrideDeletedProbeWriter!(owner, tombstones);
++        } else {
++          await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
++            'user_id': owner, 'pref_key': 'debt_payment_day_override_deleted',
++            'value': MirrorTombstoneStore.encodeMirror(tombstones),
++            'updated_at': DateTime.now().toUtc().toIso8601String(),
++          });
++        }
+         if (!_debtOwnerValid(owner)) return;
+         await _syncDirtyKeysStore.clearDomainIfUnchanged(
+           'debt_payment_day_overrides', generation: generation,
+@@ -31112,6 +31149,7 @@
+           _buildTextStatusChip(label: statusLabel, color: statusColor),
+           const SizedBox(height: 4),
+           DropdownButton<int?>(
++            key: Key('probe_debt_payment_day_${row.id}'),
+             value: row.paymentDay,
+             isExpanded: true,
+             isDense: true,

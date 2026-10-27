@@ -1,0 +1,483 @@
+--- a/lib/pages/asset_management_page.dart
++++ b/lib/pages/asset_management_page.dart
+@@ -856,6 +856,69 @@
+   Map<String, String> _paymentDifferenceReasons = <String, String>{};
+   Map<String, double> _annualRateOverrides = <String, double>{};
+   Map<String, int> _debtPaymentDayOverrides = <String, int>{};
++  String? _debtSyncOwner;
++  StreamSubscription<AuthState>? _debtSyncOwnerChanges;
++  Future<void> _debtLocalTail = Future<void>.value();
++  Future<void> _debtRemoteTail = Future<void>.value();
++  int _debtSyncRevision = 0;
++  int _debtSyncPending = 0;
++  bool _debtSyncBlocked = false;
++  bool _debtRestoreBusy = false;
++  bool _debtHasUnownedEdit = false;
++  bool _debtRestoreRetryRequested = false;
++  bool _debtPullRetryRequested = false;
++  bool _debtQuarantineNotified = false;
++  int _debtLocalEditRevision = 0;
++  late Future<bool> _debtInitiallyBlank;
++  static const _debtOwnerBindingKey = 'debt_payment_day_sync_owner_v2';
++  static const _debtUnownedKey = 'debt_payment_day_unowned_v2';
++
++  Future<bool> _debtReadInitiallyBlank() async {
++    final revision = _debtLocalEditRevision;
++    final prefs = await SharedPreferences.getInstance();
++    final values = await _assetLiabilityRepository.loadDebtPaymentDayOverrides();
++    final dirty = await _syncDirtyKeysStore.loadDirty('debt_payment_day_overrides', prefs: prefs);
++    return revision == _debtLocalEditRevision && values.isEmpty && dirty.isEmpty &&
++        _debtOverrideTombstones.activeIds(prefs).isEmpty;
++  }
++
++  // Legacy values without an owner tag and all anonymous edits stay local.
++  Future<bool> _debtMaySend(String owner) async {
++    final prefs = await SharedPreferences.getInstance();
++    if (_debtHasUnownedEdit || (prefs.getBool(_debtUnownedKey) ?? false)) return false;
++    final bound = prefs.getString(_debtOwnerBindingKey);
++    if (bound != null) return bound == owner;
++    if (!await _debtInitiallyBlank) return false;
++    if (!_debtOwnerValid(owner)) return false;
++    return prefs.setString(_debtOwnerBindingKey, owner);
++  }
++
++  bool _debtOwnerValid(String? owner) => owner != null && mounted &&
++      !_debtSyncBlocked && _debtSyncOwner == owner &&
++      _supabase.auth.currentUser?.id == owner;
++
++  bool _debtLocalOwnerValid(String? owner) => mounted;
++
++  void _debtNotifyQuarantine() {
++    if (_debtQuarantineNotified) return;
++    _debtQuarantineNotified = true;
++    if (mounted) {
++      ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(
++        content: Text('支払日の変更は端末に保持しています。同期先の確認が必要です。'),
++      ));
++    }
++  }
++
++  void _debtSyncFail(Object error) {
++    _debtSyncBlocked = true;
++    debugPrint('支払日の同期を停止しました: $error');
++    if (mounted) {
++      ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(
++        content: Text('支払日の保存・同期を確認できません。再読込前に状態を確認してください。'),
++      ));
++    }
++  }
++
+   // リボ払いカードの返済ルール (最低返済額 + 新規利用額を25日に返済)。
+   Map<String, AssetLiabilityRevolvingCreditConfig> _revolvingConfigs =
+       <String, AssetLiabilityRevolvingCreditConfig>{};
+@@ -1304,6 +1367,20 @@
+   @override
+   void initState() {
+     super.initState();
++    _debtSyncOwner = _supabase.auth.currentUser?.id;
++    _debtSyncOwnerChanges = _supabase.auth.onAuthStateChange.listen((event) {
++      final nextOwner = event.session?.user.id;
++      final previousOwner = _debtSyncOwner;
++      if (nextOwner == previousOwner) return;
++      _debtSyncRevision++;
++      _debtSyncOwner = nextOwner;
++      // A first sign-in is not an error. A change away from a known owner
++      // quarantines remote writes; local edits continue.
++      if (previousOwner != null) {
++        _debtSyncBlocked = true;
++      }
++
++    });
+     _assetManagementAiSummaryService =
+         widget.aiSummaryService ?? AssetManagementAiSummaryService();
+     _assetManagementAiAnalysisHistoryService =
+@@ -1366,6 +1443,10 @@
+             unawaited(_refreshSyncSources());
+           },
+         );
++    _debtInitiallyBlank = _debtReadInitiallyBlank().catchError((Object e) {
++      _debtSyncFail(e);
++      return false;
++    });
+     _investmentAssetRepository = widget.investmentAssetRepository ??
+         SupabaseInvestmentAssetRepository(client: _supabase);
+     _anomalyDetectionRepository = widget.anomalyDetectionRepository ??
+@@ -1461,6 +1542,9 @@
+ 
+   @override
+   void dispose() {
++    _debtSyncBlocked = true;
++    _debtSyncRevision++;
++    unawaited(_debtSyncOwnerChanges?.cancel());
+     final closingChanged = _closingFetchChanged;
+     if (closingChanged != null && !closingChanged.isCompleted) {
+       closingChanged.complete();
+@@ -2324,6 +2408,7 @@
+     String monthKey,
+     int inputRevision,
+   ) async {
++    final debtReadRevision = _debtSyncRevision;
+     try {
+       final state = await _assetLiabilityRepository.loadMonth(targetMonth);
+       final defaultPaymentSettings =
+@@ -2342,13 +2427,6 @@
+         for (final entry in loadedDebtOverrides.entries)
+           if (!debtTombstones.contains(entry.key)) entry.key: entry.value,
+       };
+-      if (debtPaymentDayOverrides.length != loadedDebtOverrides.length) {
+-        unawaited(
+-          _assetLiabilityRepository.saveDebtPaymentDayOverrides(
+-            Map<String, int>.from(debtPaymentDayOverrides),
+-          ),
+-        );
+-      }
+       final templates =
+           await _assetLiabilityRepository.loadRecurringIncomeTemplates();
+       final monthlySnapshots =
+@@ -2425,9 +2503,13 @@
+         _defaultCardBillingAccountIds = Map<String, String>.from(
+           defaultCardBillingAccounts,
+         );
+-        _debtPaymentDayOverrides = Map<String, int>.from(
+-          debtPaymentDayOverrides,
+-        );
++        if (!_debtRestoreBusy && _debtSyncPending == 0 &&
++            _debtSyncRevision == debtReadRevision && !_debtSyncBlocked) {
++          _debtPaymentDayOverrides = Map<String, int>.from(
++            debtPaymentDayOverrides,
++          );
++          _debtSyncRevision++;
++        }
+         final reconciledIncomePlans = _reconcileIncomePlans(
+           incomePlansWithTemplates,
+         );
+@@ -15190,29 +15272,19 @@
+     }
+   }
+ 
+-  Future<void> _mirrorDebtPaymentDayOverrides(
+-    Map<String, int> overrides,
+-  ) async {
+-    unawaited(_syncTimestampStore.markChanged('debt_payment_day_overrides'));
+-    final userId = _supabase.auth.currentUser?.id;
+-    if (userId == null) {
++  Future<void> _mirrorDebtPaymentDayOverrides(Map<String, int> overrides) =>
++      _queueDebtSnapshot(overrides);
++
++  Future<void> _restoreDebtPaymentDayOverridesFromMirror() async {
++    if (_debtRestoreBusy) {
++      _debtRestoreRetryRequested = true;
+       return;
+     }
++    if (!_debtOwnerValid(_debtSyncOwner)) return;
++    final restoreOwner = _debtSyncOwner;
++    final restoreRevision = _debtSyncRevision;
++    _debtRestoreBusy = true;
+     try {
+-      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+-        'user_id': userId,
+-        'pref_key': 'debt_payment_day_overrides',
+-        'value': overrides,
+-        'updated_at': DateTime.now().toUtc().toIso8601String(),
+-      });
+-      // 全量 upsert 成功 = 全キー同期済み → dirty クリア。
+-      await _syncDirtyKeysStore.clearDomain('debt_payment_day_overrides');
+-    } catch (e) {
+-      debugPrint('pref mirror upsert failed: $e');
+-    }
+-  }
+-
+-  Future<void> _restoreDebtPaymentDayOverridesFromMirror() async {
+     final debugMirror = widget.debugDebtOverridesMirror;
+     if (debugMirror == null && _supabase.auth.currentUser == null) {
+       return;
+@@ -15248,7 +15320,9 @@
+           rows.first['updated_at']?.toString() ?? '',
+         );
+       }
+-      if (value is! Map || !mounted) {
++      if (value is! Map || !mounted || !_debtOwnerValid(restoreOwner) ||
++          restoreRevision != _debtSyncRevision) {
++        if (restoreRevision != _debtSyncRevision) _debtRestoreRetryRequested = true;
+         return;
+       }
+       // 削除トゥームストーン済みの支払日上書きは復元しない (#part293 3例目)。
+@@ -15281,13 +15355,17 @@
+       final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+         'debt_payment_day_overrides',
+       );
++      if (!_debtOwnerValid(restoreOwner) || restoreRevision != _debtSyncRevision) {
++        if (restoreRevision != _debtSyncRevision) _debtRestoreRetryRequested = true;
++        return;
++      }
+       serverOverrides.forEach((key, day) {
+         // #3415 保守的 per-key ガード: ローカル編集済み (dirty) キーは、ドメイン
+         // 全体 adopt の巻き添えで上書きしない (同一キー衝突はローカル優先)。
+         // フラグ OFF はここに来ても merged が local 由来 (空) なので
+         // !containsKey が先に成立し no-op (本番無変更)。
+-        if (!merged.containsKey(key) ||
+-            (adoptConflicts && !dirtyKeys.contains(key))) {
++        if (!dirtyKeys.contains(key) &&
++            (!merged.containsKey(key) || adoptConflicts)) {
+           merged[key] = day;
+           changed = true;
+         }
+@@ -15324,6 +15402,17 @@
+       }
+     } catch (e) {
+       debugPrint('pref mirror restore failed: $e');
++    }
++    } finally {
++      _debtRestoreBusy = false;
++      if (_debtPullRetryRequested && mounted) {
++        _debtPullRetryRequested = false;
++        unawaited(_debtLocalTail.then((_) => _pullDebtOverrideDeleted()));
++      }
++      if (_debtRestoreRetryRequested && mounted) {
++        _debtRestoreRetryRequested = false;
++        unawaited(_debtLocalTail.then((_) => _restoreDebtPaymentDayOverridesFromMirror()));
++      }
+     }
+   }
+ 
+@@ -30830,6 +30919,8 @@
+       MirrorTombstoneStore(storageKey: 'debt_payment_day_override_deleted_v1');
+ 
+   void _setDebtPaymentDayOverride(AssetLiabilityDebtRow row, int? day) {
++    if (_supabase.auth.currentUser?.id == null) _debtHasUnownedEdit = true;
++    _debtLocalEditRevision++;
+     setState(() {
+       if (day == null) {
+         _debtPaymentDayOverrides.remove(row.id);
+@@ -30837,54 +30928,107 @@
+         _debtPaymentDayOverrides[row.id] = day.clamp(1, 31).toInt();
+       }
+     });
+-    if (day == null) {
+-      // 削除はトゥームストーン化、再設定は解除 (ID 再利用ドメイン)。
+-      unawaited(_recordDebtOverrideTombstone(row.id, deleted: true));
+-    } else {
+-      unawaited(_recordDebtOverrideTombstone(row.id, deleted: false));
+-      // ローカル編集を dirty 記録 (巻き添え上書き防止)。
+-      unawaited(
+-        _syncDirtyKeysStore.markDirty('debt_payment_day_overrides', row.id),
+-      );
+-    }
+-    unawaited(_saveDebtPaymentDayOverrides());
+-  }
+-
+-  Future<void> _recordDebtOverrideTombstone(
+-    String id, {
+-    required bool deleted,
+-  }) async {
+-    final store = await SharedPreferences.getInstance();
+-    if (deleted) {
+-      await _debtOverrideTombstones.addId(store, id);
+-    } else {
+-      await _debtOverrideTombstones.removeId(store, id);
+-    }
+-    unawaited(_mirrorDebtOverrideDeleted());
+-  }
+-
+-  /// 支払日上書きの削除トゥームストーンをサーバへ反映 (他端末伝播 / #part294)。
+-  Future<void> _mirrorDebtOverrideDeleted() async {
+-    final userId = _supabase.auth.currentUser?.id;
+-    if (userId == null) {
+-      return;
+-    }
+-    try {
+-      final store = await SharedPreferences.getInstance();
+-      final ids = _debtOverrideTombstones.activeIds(store);
+-      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+-        'user_id': userId,
+-        'pref_key': 'debt_payment_day_override_deleted',
+-        'value': MirrorTombstoneStore.encodeMirror(ids),
+-        'updated_at': DateTime.now().toUtc().toIso8601String(),
+-      });
+-    } catch (e) {
+-      debugPrint('debt override tombstone mirror upsert failed: $e');
+-    }
++    unawaited(_queueDebtSnapshot(Map<String, int>.from(_debtPaymentDayOverrides),
++        editedId: row.id, deleted: day == null));
++  }
++
++  Future<void> _queueDebtSnapshot(Map<String, int> values,
++      {String? editedId, bool deleted = false}) {
++    // Capture the owner at edit time. A null owner can save locally only.
++    final owner = _supabase.auth.currentUser?.id;
++    final editAt = DateTime.now().toUtc();
++    final snapshot = Map<String, int>.unmodifiable(values);
++    final revision = ++_debtSyncRevision;
++    _debtSyncPending++;
++    // Queue mark immediately, even when a previous network request is pending.
++    final mark = editedId == null ? Future<bool>.value(true) :
++        _syncDirtyKeysStore.markDirty('debt_payment_day_overrides', editedId)
++            .then<bool>((_) => true, onError: (Object e, StackTrace s) {
++              _debtSyncFail(e);
++              return false;
++            });
++    final local = _debtLocalTail.then<Set<String>?>((_) async {
++      if (!await mark || !_debtLocalOwnerValid(owner)) return null;
++      try {
++        final prefs = await SharedPreferences.getInstance();
++        if (!_debtLocalOwnerValid(owner)) return null;
++        if (editedId != null && owner == null) {
++          if (!await prefs.setBool(_debtUnownedKey, true)) {
++            throw StateError('本人未確定の支払日を保留できません');
++          }
++        }
++        // The published mirror path records this even while signed out.
++        await _syncTimestampStore.markChanged('debt_payment_day_overrides', at: editAt);
++        if (editedId != null) {
++          if (deleted) {
++            await _debtOverrideTombstones.addId(prefs, editedId);
++          } else {
++            await _debtOverrideTombstones.removeId(prefs, editedId);
++          }
++        }
++        if (!_debtLocalOwnerValid(owner)) return null;
++        await _assetLiabilityRepository.saveDebtPaymentDayOverrides(snapshot);
++        if (!_debtLocalOwnerValid(owner)) return null;
++        return _debtOverrideTombstones.activeIds(prefs);
++      } catch (e) {
++        _debtSyncFail(e);
++        return null;
++      }
++    });
++    _debtLocalTail = local.then<void>((_) {});
++    final remote = _debtRemoteTail.then<void>((_) async {
++      final tombstones = await local;
++      if (tombstones == null || owner == null || !_debtOwnerValid(owner)) return;
++      try {
++        if (!await _debtMaySend(owner)) {
++          _debtNotifyQuarantine();
++          return;
++        }
++        if (!_debtOwnerValid(owner)) return;
++      if (tombstones.any(snapshot.containsKey)) {
++        _debtSyncFail(StateError('支払日と削除記録が競合しています'));
++        return;
++      }
++      final generation = AssetSyncDirtyKeysStore.mutationGeneration;
++        await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
++          'user_id': owner, 'pref_key': 'debt_payment_day_overrides',
++          'value': snapshot, 'updated_at': DateTime.now().toUtc().toIso8601String(),
++        });
++        if (!_debtOwnerValid(owner)) return;
++        await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
++          'user_id': owner, 'pref_key': 'debt_payment_day_override_deleted',
++          'value': MirrorTombstoneStore.encodeMirror(tombstones),
++          'updated_at': DateTime.now().toUtc().toIso8601String(),
++        });
++        if (!_debtOwnerValid(owner)) return;
++        await _syncDirtyKeysStore.clearDomainIfUnchanged(
++          'debt_payment_day_overrides', generation: generation,
++          isCurrent: (keys) => _debtOwnerValid(owner) &&
++              _debtSyncRevision == revision &&
++              keys.every((key) => snapshot.containsKey(key) || tombstones.contains(key)),
++        );
++      } catch (e) {
++        // Outcome can be unknown after a timeout. Do not start later requests.
++        _debtSyncFail(e);
++      }
++    });
++    _debtRemoteTail = remote.whenComplete(() => _debtSyncPending--);
++    return _debtRemoteTail;
+   }
+ 
+   /// 他端末で削除された支払日上書きを取り込み、ローカルからも除去する。
+   Future<void> _pullDebtOverrideDeleted() async {
++    if (_debtRestoreBusy) {
++      _debtPullRetryRequested = true;
++      return;
++    }
++    if (!_debtOwnerValid(_debtSyncOwner)) return;
++    final restoreOwner = _debtSyncOwner;
++    final restoreRevision = _debtSyncRevision;
++    _debtRestoreBusy = true;
++    try {
++      final dirty = await _syncDirtyKeysStore.loadDirty('debt_payment_day_overrides');
++      if (dirty.isNotEmpty || !_debtOwnerValid(restoreOwner)) return;
+     final debugMirror = widget.debugDebtOverrideDeletedMirror;
+     if (debugMirror == null && _supabase.auth.currentUser == null) {
+       return;
+@@ -30909,7 +31053,16 @@
+         return;
+       }
+       final store = await SharedPreferences.getInstance();
+-      final incoming = await _debtOverrideTombstones.mergeRemoteIds(store, ids);
++      if (!_debtOwnerValid(restoreOwner) || restoreRevision != _debtSyncRevision) return;
++      final merge = _debtLocalTail.then<Set<String>?>((_) async {
++        if (!_debtOwnerValid(restoreOwner) || restoreRevision != _debtSyncRevision) return null;
++        return _debtOverrideTombstones.mergeRemoteIds(store, ids);
++      });
++      _debtLocalTail = merge.then<void>((_) {}, onError: (Object error, StackTrace stack) {
++        _debtSyncFail(error);
++      });
++      final incoming = await merge;
++      if (incoming == null || !_debtOwnerValid(restoreOwner) || restoreRevision != _debtSyncRevision) return;
+       final before = _debtPaymentDayOverrides.length;
+       _debtPaymentDayOverrides.removeWhere((key, _) => incoming.contains(key));
+       if (_debtPaymentDayOverrides.length == before || !mounted) {
+@@ -30920,22 +31073,21 @@
+     } catch (e) {
+       debugPrint('debt override tombstone pull failed: $e');
+     }
+-  }
+-
+-  Future<void> _saveDebtPaymentDayOverrides() async {
+-    try {
+-      await _assetLiabilityRepository.saveDebtPaymentDayOverrides(
+-        Map<String, int>.from(_debtPaymentDayOverrides),
+-      );
+-    } catch (e) {
+-      debugPrint('Error saving debt payment day overrides: $e');
+-    }
+-    unawaited(
+-      _mirrorDebtPaymentDayOverrides(
+-        Map<String, int>.from(_debtPaymentDayOverrides),
+-      ),
+-    );
+-  }
++    } finally {
++      _debtRestoreBusy = false;
++      if (_debtRestoreRetryRequested && mounted) {
++        _debtRestoreRetryRequested = false;
++        unawaited(_debtLocalTail.then((_) => _restoreDebtPaymentDayOverridesFromMirror()));
++      }
++      if (_debtPullRetryRequested && mounted) {
++        _debtPullRetryRequested = false;
++        unawaited(_debtLocalTail.then((_) => _pullDebtOverrideDeleted()));
++      }
++    }
++  }
++
++  Future<void> _saveDebtPaymentDayOverrides() =>
++      _queueDebtSnapshot(Map<String, int>.from(_debtPaymentDayOverrides));
+ 
+   Widget _buildDebtPaymentDayInput(AssetLiabilityDebtRow row) {
+     final hasOverride = row.isRevolving
+--- a/lib/services/asset_sync_dirty_keys_store.dart
++++ b/lib/services/asset_sync_dirty_keys_store.dart
+@@ -175,6 +175,21 @@
+     });
+   }
+ 
++  /// Atomically compare queued mutation generation and caller state before clear.
++  Future<void> clearDomainIfUnchanged(String prefKey, {
++    required int generation,
++    required bool Function(Set<String>) isCurrent,
++    SharedPreferences? prefs,
++  }) {
++    return _runLocked(() async {
++      final store = prefs ?? await SharedPreferences.getInstance();
++      final all = await _loadAll(store);
++      if (_mutationGeneration != generation + 1 ||
++          !isCurrent(Set<String>.unmodifiable(all[prefKey] ?? <String>{}))) return;
++      if (all.remove(prefKey) != null) await _writeAll(store, all);
++    });
++  }
++
+   /// [prefKey] ドメインの全 dirty キーを消す (= 全量 upsert 成功で同期済み)。
+   Future<void> clearDomain(
+     String prefKey, {
