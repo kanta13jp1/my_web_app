@@ -144,7 +144,7 @@ jobs:
           cid="$(docker create --pull=never --network=none --platform=linux/amd64 \
             --user "$user_id" --cap-drop=ALL --security-opt=no-new-privileges:true \
             --read-only --pids-limit=512 --memory=4g \
-            --tmpfs /tmp:rw,nosuid,nodev,size=1g \
+            --tmpfs /tmp:rw,nosuid,nodev,size=1g --tmpfs /.dart-tool:rw,nosuid,nodev,size=64m,mode=1777 \
             --env XDG_CACHE_HOME=/tmp/cache --env XDG_CONFIG_HOME=/tmp/config --env PUB_CACHE="$PUB_CACHE" --env FLUTTER_ROOT="$FLUTTER_ROOT" \
             --env PATH="$GITHUB_WORKSPACE/base/.isolation-tools/bin:$FLUTTER_ROOT/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
             --env WORKSPACE_BASE="$GITHUB_WORKSPACE/base" --env HOST_NETNS="$host_netns" \
@@ -173,7 +173,7 @@ jobs:
           test "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' "$cid")" = true
           test "$(docker inspect --format '{{.Config.User}}' "$cid")" = "$user_id"
           test "$(docker inspect --format '{{.HostConfig.PublishAllPorts}}' "$cid")" = false
-          docker inspect "$cid" | python3 -c 'import json,sys; d=json.load(sys.stdin)[0]; h=d["HostConfig"]; assert "ALL" in h["CapDrop"]; assert any("no-new-privileges" in x for x in h["SecurityOpt"]); assert not h.get("PortBindings"); assert {m["Destination"] for m in d["Mounts"]} == set(sys.argv[1:])' "$GITHUB_WORKSPACE/base" "$FLUTTER_ROOT" "$PUB_CACHE"
+          docker inspect "$cid" | python3 -c 'import json,sys; d=json.load(sys.stdin)[0]; h=d["HostConfig"]; assert "ALL" in h["CapDrop"]; assert any("no-new-privileges" in x for x in h["SecurityOpt"]); assert not h.get("PortBindings"); assert {m["Destination"] for m in d["Mounts"] if m["Type"] == "bind"} == set(sys.argv[1:]); assert {m["Destination"] for m in d["Mounts"] if m["Type"] == "tmpfs"}.issubset({"/tmp", "/.dart-tool"}); assert all(m["Type"] in ("bind", "tmpfs") for m in d["Mounts"]); assert set((h.get("Tmpfs") or {}).keys()) == {"/tmp", "/.dart-tool"}' "$GITHUB_WORKSPACE/base" "$FLUTTER_ROOT" "$PUB_CACHE"
           # stdout/stderr are synthetic only. Any preflight or test failure fails
           # the job; no expected failure is transformed into success.
           docker start -a "$cid"
