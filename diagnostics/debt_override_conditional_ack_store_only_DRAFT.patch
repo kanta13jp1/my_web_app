@@ -1,0 +1,27 @@
+--- a/lib/services/asset_sync_dirty_keys_store.dart
++++ b/lib/services/asset_sync_dirty_keys_store.dart
+@@ -175,6 +175,24 @@
+     });
+   }
+ 
++  /// Clear only if nothing has entered this process-wide write queue since
++  /// [generation] was observed and the caller's context remains current.
++  /// The predicate must be synchronous and must not mutate this store.
++  Future<void> clearDomainIfUnchanged(
++    String prefKey, {
++    required int generation,
++    required bool Function(Set<String>) isCurrent,
++    SharedPreferences? prefs,
++  }) {
++    return _runLocked(() async {
++      final store = prefs ?? await SharedPreferences.getInstance();
++      final all = await _loadAll(store);
++      // _runLocked itself increments the generation when enqueueing this clear.
++      if (_mutationGeneration != generation + 1 || !isCurrent(Set<String>.unmodifiable(all[prefKey] ?? <String>{}))) return;
++      if (all.remove(prefKey) != null) await _writeAll(store, all);
++    });
++  }
++
+   /// [prefKey] ドメインの全 dirty キーを消す (= 全量 upsert 成功で同期済み)。
+   Future<void> clearDomain(
+     String prefKey, {
