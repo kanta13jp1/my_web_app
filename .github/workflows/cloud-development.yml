@@ -14,9 +14,12 @@ jobs:
     timeout-minutes: 30
     env:
       IMAGE: docker.io/library/ubuntu@sha256:a2d43bffc46670d7108bb3c0468c67c5557c4c92e83e1e34cbff1322ad1b94dc
-      DOCKER_CONFIG: ${{ runner.temp }}/debt-probe-empty-docker-config
-      PUB_CACHE: ${{ runner.temp }}/debt-probe-pub-cache
     steps:
+      - name: Initialize isolated paths
+        shell: bash
+        run: |
+          echo "DOCKER_CONFIG=$RUNNER_TEMP/debt-probe-empty-docker-config" >> "$GITHUB_ENV"
+          echo "PUB_CACHE=$RUNNER_TEMP/debt-probe-pub-cache" >> "$GITHUB_ENV"
       - name: Check out diagnostic inputs without stored credentials
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
