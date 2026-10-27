@@ -21,6 +21,10 @@ void main() {
         ],
       );
       final current = views.first;
+      expect(current.netWorth, 150);
+      expect(current.totalAssets, 100000);
+      expect(current.totalLiabilities, -99850);
+      expect(current.summary, 'Synthetic report');
       expect(current.netWorthDelta, current.netWorth - views.last.netWorth);
     });
 
