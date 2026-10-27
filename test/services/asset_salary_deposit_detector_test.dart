@@ -151,7 +151,7 @@ void main() {
   });
   group('MainAccountBalanceWindow.fromHistory', () {
     MainAccountBalanceWindow window(Map<DateTime, double> observations,
-        {double? previous = 10000}) {
+        {double? previous = 10000,}) {
       return MainAccountBalanceWindow.fromHistory(
         previousCycleEndBalance: previous,
         currentBalance: 50000,
@@ -194,12 +194,12 @@ void main() {
     test('invalid values ignored and current balance remains available', () {
       expect(window({DateTime(2026, 9, 25): double.nan}).currentBalance, 50000);
       expect(window({DateTime(2026, 9, 25): double.infinity}).currentBalance,
-          50000);
+          50000,);
     });
 
     test('today observations are inclusive despite time of day', () {
       expect(
-          window({DateTime(2026, 10, 5, 20): 310000}).currentBalance, 310000);
+          window({DateTime(2026, 10, 5, 20): 310000}).currentBalance, 310000,);
     });
   });
 }
