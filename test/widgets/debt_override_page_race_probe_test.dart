@@ -51,7 +51,11 @@ void main() {
       MaterialApp(
       home: AssetManagementPage(
         assetLiabilityRepository: repo,
-        debugInitialAssetData: {date: const {'モビット': -100000}},
+        debugInitialAssetData: <String, Map<String, double>>{
+          date: const <String, double>{
+            'モビット': -100000,
+          },
+        },
         debugDebtOverrideProbeOwner: 'synthetic-owner',
         debugDebtOverrideProbeWriter: (owner, values) {
           expect(owner, 'synthetic-owner');
