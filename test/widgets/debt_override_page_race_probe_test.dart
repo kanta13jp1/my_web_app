@@ -36,6 +36,7 @@ void main() {
 
   testWidgets('new same-key edit stays dirty after an older upsert completes',
       (tester) async {
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
     final first = Completer<void>();
     final second = Completer<void>();
     final sent = <Map<String, int>>[];
@@ -96,6 +97,9 @@ void main() {
         break;
       }
     }
+    debugPrint('PROBE dirty generation=${AssetSyncDirtyKeysStore.mutationGeneration} ' 
+        'pending=${AssetSyncDirtyKeysStore.hasPendingMutations} ' 
+        'blob=${prefs.getString(AssetSyncDirtyKeysStore.prefsKey)}');
     expect(await dirty.loadDirty(domain, prefs: prefs), contains('mobit'));
 
     first.complete();
