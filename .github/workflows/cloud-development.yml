@@ -117,7 +117,7 @@ jobs:
           test "$(id -u)" -ne 0
           cid="$(docker create --pull=never --network=none --platform=linux/amd64 \
             --user "$(id -u):$(id -g)" --cap-drop=ALL --security-opt=no-new-privileges:true \
-            --read-only --pids-limit=256 --memory=3g --tmpfs /tmp:rw,nosuid,nodev,size=1g --tmpfs /.dart-tool:rw,nosuid,nodev,size=64m,mode=1777 \
+            --read-only --pids-limit=256 --memory=3g --tmpfs /tmp:rw,nosuid,nodev,size=1g --tmpfs /.dart-tool:rw,nosuid,nodev,size=64m,mode=1777 --tmpfs /.dartServer:rw,nosuid,nodev,size=64m,mode=1777 \
             --env XDG_CONFIG_HOME=/tmp/config --env XDG_CACHE_HOME=/tmp/cache --env PUB_CACHE="$PUB_CACHE" --env PATH=/usr/bin:/bin \
             --mount "type=bind,src=$GITHUB_WORKSPACE/base,dst=$GITHUB_WORKSPACE/base" \
             --mount "type=bind,src=$FLUTTER_ROOT,dst=$FLUTTER_ROOT,readonly" \
@@ -136,5 +136,6 @@ jobs:
           test "$(docker inspect --format '{{.HostConfig.NetworkMode}}' "$cid")" = none
           test "$(docker inspect --format '{{.HostConfig.Privileged}}' "$cid")" = false
           test "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' "$cid")" = true
+          docker inspect "$cid" | python3 -c 'import json,sys; d=json.load(sys.stdin)[0]; h=d["HostConfig"]; assert "ALL" in h["CapDrop"]; assert any("no-new-privileges" in x for x in h["SecurityOpt"]); assert not h.get("PortBindings"); assert {m["Destination"] for m in d["Mounts"] if m["Type"] == "bind"} == set(sys.argv[1:]); assert {m["Destination"] for m in d["Mounts"] if m["Type"] == "tmpfs"}.issubset({"/tmp", "/.dart-tool", "/.dartServer"}); assert all(m["Type"] in ("bind", "tmpfs") for m in d["Mounts"]); assert set((h.get("Tmpfs") or {}).keys()) == {"/tmp", "/.dart-tool", "/.dartServer"}' "$GITHUB_WORKSPACE/base" "$FLUTTER_ROOT" "$PUB_CACHE"
           docker start -a "$cid"
           test "$(docker inspect --format '{{.State.ExitCode}}' "$cid")" -eq 0
