@@ -90,6 +90,12 @@ void main() {
     const domain = 'debt_payment_day_overrides';
     const dirty = AssetSyncDirtyKeysStore();
     final prefs = await SharedPreferences.getInstance();
+    for (var i = 0; i < 25; i++) {
+      await tester.pump(const Duration(milliseconds: 20));
+      if ((await dirty.loadDirty(domain, prefs: prefs)).contains('mobit')) {
+        break;
+      }
+    }
     expect(await dirty.loadDirty(domain, prefs: prefs), contains('mobit'));
 
     first.complete();
