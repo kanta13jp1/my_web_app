@@ -1,4 +1,5 @@
 # DRAFT ONLY. Not registered, dispatched, executed, or browser-tested.
+# Fix proposal for run 40590751096: collect host sha256sum ELF dependencies.
 # 156.0.8078.47 digest came from run 40580833335; it is a byte fingerprint,
 # not an independently published Google checksum/signature.
 # Draft adds synthetic-only Flutter/IndexedDB after the separate Chrome preflight.
@@ -287,7 +288,7 @@ jobs:
           # Container tools used by preflight also need their ELF libraries.
           programs = ['/bin/bash', '/usr/bin/awk', '/usr/bin/grep', '/usr/bin/readlink',
                       '/usr/bin/ls', '/usr/bin/find', '/usr/bin/id', '/usr/bin/mkdir',
-                      '/usr/bin/timeout', '/usr/bin/git', '/usr/bin/realpath', '/usr/bin/cat', '/usr/bin/date', '/usr/bin/rm', '/usr/bin/chmod', os.environ['FLUTTER_ROOT'] + '/bin/cache/dart-sdk/bin/dart']
+                      '/usr/bin/timeout', '/usr/bin/git', '/usr/bin/realpath', '/usr/bin/cat', '/usr/bin/date', '/usr/bin/rm', '/usr/bin/chmod', '/usr/bin/sha256sum', os.environ['FLUTTER_ROOT'] + '/bin/cache/dart-sdk/bin/dart']
           queue = [chrome] + [pathlib.Path(p).resolve(strict=True) for p in programs]
           queue.append(root / 'ld-linux-x86-64.so.2')
           examined = set()
