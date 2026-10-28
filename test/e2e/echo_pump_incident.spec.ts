@@ -25,6 +25,13 @@ for (const skip of [false, true]) {
     await button('スキップして開始').click();
     await button('保守メモを調べる').click();
     await expect(page.getByText('歩行中…', { exact: true }).first()).toBeVisible();
+    console.log('INCIDENT_BEFORE_OPEN ' + JSON.stringify(await page.evaluate(() => ({
+      controls: Array.from(document.querySelectorAll('[role="button"]')).map(el => ({
+        text: el.textContent, label: el.getAttribute('aria-label'),
+      })).slice(0, 40),
+      walking: Array.from(document.querySelectorAll('flt-semantics')).some(el =>
+        (el.textContent || el.getAttribute('aria-label') || '').includes('歩行中…')),
+    }))));
     try {
       await button('異常灯を調べる').dispatchEvent('click');
     } catch (error) {
