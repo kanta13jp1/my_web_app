@@ -75,6 +75,7 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
       _walking = false;
     }
   }
+
   Future<void> _precacheWalkArt(int request) async {
     var failed = false;
     await precacheImage(
