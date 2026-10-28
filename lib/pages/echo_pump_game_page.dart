@@ -87,7 +87,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
 
   Future<void> _openInventory(BuildContext inventoryContext) async {
     if (_inventoryOpen || _incidentOpen) return;
-    _inventoryOpen = true;
+    setState(() => _inventoryOpen = true);
     final effectsStopped = _audio.suspendEffects();
     final inspectedGame = _game;
     EchoPumpInventoryAction? result;
@@ -142,7 +142,7 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
       );
       return;
     }
-    _incidentOpen = true;
+    setState(() => _incidentOpen = true);
     final stopped = _audio.suspendEffects();
     bool? finished;
     try {

@@ -65,6 +65,16 @@ class _EchoPumpRoomStageState extends State<EchoPumpRoomStage>
     unawaited(_precacheWalkArt(++_artRequest));
   }
 
+  @override
+  void didUpdateWidget(covariant EchoPumpRoomStage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A covered/offscreen route can mute ticks. Cancel when the modal opens,
+    // rather than letting a pending walk finish after the modal closes.
+    if (_walking && !_canInteract) {
+      _walk.stop(canceled: true);
+      _walking = false;
+    }
+  }
   Future<void> _precacheWalkArt(int request) async {
     var failed = false;
     await precacheImage(
