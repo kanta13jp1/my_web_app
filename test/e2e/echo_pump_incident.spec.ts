@@ -68,7 +68,22 @@ for (const skip of [false, true]) {
       await page.screenshot({ path: info.outputPath('incident-shadow.png') });
       await expect(page.getByText('音は、誘導にもなる。', { exact: true })).toBeVisible();
     }
-    await expect(button('異常灯：確認済み')).toBeVisible({ timeout: 15000 });
+    try {
+      await expect(button('異常灯：確認済み')).toBeVisible({ timeout: 15000 });
+    } catch (error) {
+      const state = await page.evaluate(() => ({
+        viewport: { width: innerWidth, height: innerHeight, x: scrollX, y: scrollY },
+        controls: Array.from(document.querySelectorAll('[role="button"], [role="dialog"], flt-semantics')).map(el => ({
+          role: el.getAttribute('role'), label: el.getAttribute('aria-label'),
+          text: (el.textContent || '').slice(0, 180), rect: el.getBoundingClientRect().toJSON(),
+        })).filter(x => x.role === 'button' || x.role === 'dialog' || /異常|探索|設備|歩行|ターン/.test(x.label || x.text)).slice(0, 60),
+      })).catch(() => ({ captureFailed: true }));
+      console.log('INCIDENT_RETURN_STATE ' + JSON.stringify(state));
+      await info.attach('incident-return-state', {
+        body: JSON.stringify(state, null, 2), contentType: 'application/json',
+      });
+      throw error;
+    }
     await expect(page.getByText('ターン 0', { exact: true })).toBeVisible();
     await button('異常灯：確認済み').click();
     await expect(button('探索へ戻る')).toBeVisible();
