@@ -1291,3 +1291,35 @@ AI概要の書換えと競合交代から新規不足テーマや技術的欠陥
 既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)を更新。34行JSON・日付一意・順位連番・前日9と差0・remote再読一致を検証。専用Flutter test/analyze/release build、新規生成HTML、対象起動後描画はdocs-onlyで未実施。保存前head dcc7bbf6のCIは14成功/2失敗/6skip、既知のmain側draft AIレビュー起動条件問題。最新head結果はPRコメントに報告。rollbackは当日記録コミットのrevert。マージ・デプロイなし、日次監視継続、アーカイブ保留。
 
 session-start-check/adaptive-model-router適用。Jev astra/mediumはadvisory、lead実行、worker/切替なし。cloud-preferred（ディスク38.76GiB・RAM82.4%/空き5.58GiB）でremote API編集、新規worktree/toolchainなし。元branch fix/salary-deposit-payslip-signal/HEAD c3e1d46077/upstream0/0、7dirty paths/33worktreesを保持。注入ルールdriftなし、tool-watchは既存#1422等へルーティング。NotebookLM一覧失敗は非依存。次回は9位・競合上位・AI概要/サイト名と既知CI問題を確認。順位1位は保証しない。
+
+## 2026-10-28 日次監視：自然検索9位継続
+
+09:06 JST頃、Google実アプリ内ブラウザ、検索語 `自分株式会社`、hl=ja/gl=jp/pws=0、未ログイン、府中市東京都(IP由来)、CAPTCHAなし。1ページ目9件中9位で検出し停止。広告/AI概要を自然順位から除外。前日9位から変化なし、10/21の7位基準では2つ下。
+
+|順位|タイトル|参照URL / ドメイン|種別|主な検索意図|
+|---:|---|---|---|---|
+|1|会社に依存しない「自分株式会社」の考え方｜moto（戸塚俊介）|[note.com](https://note.com/recruit_man_note/n/n1032c32fbc36)|著者ブログ記事|会社に依存しないキャリア設計と収支管理を学ぶ|
+|2|“自分株式会社”という考え方|[ifa-japan.co.jp](https://www.ifa-japan.co.jp/%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%84%E3%81%86%E8%80%83%E3%81%88%E6%96%B9/)|専門家ブログ記事|人的資本・資産形成として理解する|
+|3|経営支援サービスを総合的にサポートする ITベンダー M社|[solution.lmi.ne.jp](https://solution.lmi.ne.jp/hr_development/case/1180)|法人研修の導入事例|研修での活用例と成果を確認する|
+|4|「自分株式会社」を経営せよ。副業年収4000万円のmotoが ...|[r25.jp](https://r25.jp/articles/928885293145522178)|編集部記事・書籍抜粋|キャリアと副業の具体例を読む|
+|5|「自分株式会社」という考え方と、この考え方を活用するために ...|[note.com](https://note.com/famous_knot742/n/n0c1a89bc7c77)|個人ブログ記事|概念の定義、参考情報、実践方法を知る|
+|6|サラリーマンこそ自分株式会社をつくりなさい――1000万円 ...|[amazon.co.jp](https://www.amazon.co.jp/dp/4478067449)|書籍商品ページ|内容、著者、評価、購入条件を確認する|
+|7|わたしブランド～自分株式会社を設立してみよう|[akikofujisaki.com](https://akikofujisaki.com/selfpromotion/)|専門家ブログ記事|自己ブランディングへ応用する|
+|8|NewsPicks [ニューズピックス]|[x.com](https://x.com/newspicks/status/1449692163042856961)|SNS投稿|著名人の発言と反応を見る|
+|9|自分株式会社とは？ ｜ 人生を経営するAIライフマネジメントアプリ|[my-web-app-b67f4.web.app](https://my-web-app-b67f4.web.app/)|サービスホーム|概念を理解し、AIによる日常管理を試す|
+
+当日hrefは不透明な/goto。表は既存照合の参照URLで、正確な当日遷移先とURL集合差分は未確定。対象は可視ドメインで同定。
+
+### 差分・分析・改善案
+
+顔ぶれは同じ。IFA3→2、LMI4→3、R25 2→4、他6件は同じ。対象title全文/snippet/site-name Googleも同じ。広告・強調スニペットなし。AI概要は画像ボタンが再表示され、要素対比・主体性・ROI・リスク分散の説明へ変化。motoとAmazon、書籍と「株式会社自分」という別名順序の企業へのリンクを可視確認。AI概要内の企業情報の正確性は未検証で、対象サイトとの同一性を主張しない。カードmoto/Amazonは継続。PAAは概念/自社敬称/自社株/勤務先呼称の4問、位置が自然検索4件後→5件後。サイトリンク、Amazon1470円・4.2/36件、関連検索を確認。
+
+[moto](https://note.com/recruit_man_note/n/n1032c32fbc36)は概念→収支/資産→実践と著者/書籍導線。[IFA](https://www.ifa-japan.co.jp/自分株式会社という考え方/)は人的資本・長期自己経営と著者/日付/書籍/会社方針導線。[対象理念](https://my-web-app-b67f4.web.app/philosophy)は定義・人的資本・資源配分・P/L/B/S・運用例・FAQに加え法人設立推奨でないことを明示済み。Web本文取得はキャッシュを含む。4ページの当日HTTP初期HTMLでtitle/H1/canonical/内部リンク/JSON-LDを解析しJSONLへ保存。文章・画像・固有の実績をコピーしない。
+
+新規不足テーマや技術的欠陥を確定できず、アプリ改修なし。改善案は概念→架空例→体験の導線と自己経営/法人設立の区別を維持し、AI概要の別企業言及とサイト名Google表示が続くか次回確認すること。検索文面の変化だけでキーワードや法人化テーマを追加せず、追跡2文書のみ更新。
+
+### 検証・PR・次回
+
+既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)を更新。35行JSON、日付一意、順位連番、前日9と差0、remote再読一致を検証。専用Flutter test/analyze/release build、新規生成HTML、対象起動後描画はdocs-onlyで未実施。保存前head2cbae185のCIは14成功/2失敗/6skip、既知のmain側draft AIレビュー起動条件問題。新headの結果はPRコメントに別途記録。rollbackは当日記録コミットのrevert。マージ・デプロイなし、日次監視継続・アーカイブ保留。
+
+session-start-check/adaptive-model-router適用。Jev astra/mediumはadvisory、lead実行、worker/切替なし。cloud-preferred（ディスク37.02GiB・RAM66.8%/空き10.52GiB）でremote API編集、新規worktree/toolchainなし。元branch fix/salary-deposit-payslip-signal/HEAD c3e1d46077/upstream0/0、7dirty paths/33worktrees保持。注入ルールdriftなし、tool-watchは既存#1422等へルーティング、NotebookLM一覧失敗は非依存。次回は9位・競合上位/AI概要/サイト名と既知CI問題を確認。順位1位は保証しない。
