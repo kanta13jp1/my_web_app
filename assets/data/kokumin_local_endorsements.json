@@ -2,20 +2,20 @@
   "schemaVersion": 1,
   "electionMode": "local",
   "sourceUrl": "https://new-kokumin.jp/local-election-list",
-  "sourceAsOf": "2026-10-26",
-  "sourceDocumentSha256": "5dad28ebb965c001720e1062c9687e41834e711bc2c0f0e647d201caf54cd790",
-  "candidateRowCount": 428,
+  "sourceAsOf": "2026-10-28",
+  "sourceDocumentSha256": "09feecb87d2cdf31b28efe7d9f3091416a922208e05e3e91583c30f4f9586d99",
+  "candidateRowCount": 430,
   "officialEndorsements": {
-    "totalCount": 415,
-    "incumbentCount": 174,
+    "totalCount": 416,
+    "incumbentCount": 175,
     "newcomerCount": 230,
     "formerCount": 11,
-    "prefectureCount": 40,
+    "prefectureCount": 41,
     "prefecturalCount": 113,
-    "municipalCount": 302
+    "municipalCount": 303
   },
   "recommendations": {
-    "totalCount": 13
+    "totalCount": 14
   },
   "prefectures": [
     {
@@ -154,13 +154,22 @@
       "municipalCount": 5
     },
     {
-      "prefecture": "長野",
-      "totalCount": 6,
+      "prefecture": "山梨",
+      "totalCount": 1,
       "incumbentCount": 0,
-      "newcomerCount": 6,
+      "newcomerCount": 1,
+      "formerCount": 0,
+      "prefecturalCount": 0,
+      "municipalCount": 1
+    },
+    {
+      "prefecture": "長野",
+      "totalCount": 5,
+      "incumbentCount": 0,
+      "newcomerCount": 5,
       "formerCount": 0,
       "prefecturalCount": 3,
-      "municipalCount": 3
+      "municipalCount": 2
     },
     {
       "prefecture": "岐阜",
@@ -191,12 +200,12 @@
     },
     {
       "prefecture": "三重",
-      "totalCount": 5,
-      "incumbentCount": 2,
+      "totalCount": 6,
+      "incumbentCount": 3,
       "newcomerCount": 3,
       "formerCount": 0,
       "prefecturalCount": 4,
-      "municipalCount": 1
+      "municipalCount": 2
     },
     {
       "prefecture": "滋賀",
