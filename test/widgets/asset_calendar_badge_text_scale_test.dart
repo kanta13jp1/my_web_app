@@ -38,17 +38,33 @@ void main() {
   testWidgets('expanded labels retain the user text scale', (tester) async {
     await tester.pumpWidget(_app(1, preserve: true));
     final normalHeight = tester.getSize(find.text(_labels)).height;
+    final normalUnknownHeight = tester.getSize(find.text('不明')).height;
     await tester.pumpWidget(_app(2, preserve: true));
     expect(find.byType(FittedBox), findsNothing);
     expect(tester.getSize(find.text(_labels)).height,
         greaterThan(normalHeight * 1.7));
     expect(find.text('不明'), findsOneWidget);
+    expect(
+      tester.getSize(find.text('不明')).height,
+      greaterThan(normalUnknownHeight * 1.7),
+    );
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('default badges keep the existing scale-down layout',
       (tester) async {
-    await tester.pumpWidget(_app(1, preserve: false));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              AssetReflectionDayBadge(kinds: _kinds),
+              AssetUnreconciledExpenseBadge(),
+            ],
+          ),
+        ),
+      ),
+    );
     expect(find.byType(FittedBox), findsNWidgets(2));
     expect(find.text(_labels), findsOneWidget);
     expect(find.text('不明'), findsOneWidget);
