@@ -151,7 +151,10 @@ class AssetCalendarReflection {
         final clause = following.split(RegExp(r'[。；;\n、・]')).first;
         final purchase = RegExp(r'^\s*(?:は|を|が)?\s*購入').hasMatch(clause);
         if (!purchase) return true;
-        return RegExp(r'飲んだ|飲みました|飲酒した').hasMatch(clause);
+        return RegExp(
+          r'^\s*(?:は|を|が)?\s*購入(?:してから|して|したが)\s*'
+          r'(?:飲んだ|飲みました|飲酒した)',
+        ).hasMatch(clause);
       });
     }
 
