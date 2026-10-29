@@ -12,7 +12,7 @@ on:
       - 'test/models/asset_calendar_reflection_test.dart'
       - 'lib/widgets/asset_reflection_day_badge.dart'
       - 'test/widgets/asset_calendar_reflection_panel_test.dart'
-      - 'integration_test/asset_calendar_projection_scenarios.dart'
+      - 'test/e2e/asset_calendar_projection_test.dart'
       - 'lib/widgets/asset_month_end_snapshot_card.dart'
       - 'test/services/asset_month_end_snapshot_service_test.dart'
   workflow_dispatch:
@@ -63,7 +63,7 @@ jobs:
           flutter-version: '3.38.x'
       - run: flutter pub get
       - name: Verify committed Dart formatting
-        run: dart format --output=none --set-exit-if-changed lib/models/asset_calendar_reflection.dart lib/services/asset_calendar_reflection_repository.dart lib/widgets/asset_calendar_reflection_panel.dart lib/pages/asset_management_page.dart test/models/asset_calendar_reflection_test.dart lib/widgets/asset_reflection_day_badge.dart test/widgets/asset_calendar_reflection_panel_test.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart integration_test/asset_calendar_projection_scenarios.dart
+        run: dart format --output=none --set-exit-if-changed lib/models/asset_calendar_reflection.dart lib/services/asset_calendar_reflection_repository.dart lib/widgets/asset_calendar_reflection_panel.dart lib/pages/asset_management_page.dart test/models/asset_calendar_reflection_test.dart lib/widgets/asset_reflection_day_badge.dart test/widgets/asset_calendar_reflection_panel_test.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart test/e2e/asset_calendar_projection_test.dart
       - name: Preserve exact tested source for review
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -78,9 +78,10 @@ jobs:
             test/models/asset_calendar_reflection_test.dart
             lib/widgets/asset_reflection_day_badge.dart
             test/widgets/asset_calendar_reflection_panel_test.dart
+            test/e2e/asset_calendar_projection_test.dart
             lib/widgets/asset_month_end_snapshot_card.dart
             test/services/asset_month_end_snapshot_service_test.dart
-      - run: flutter analyze lib/models/asset_calendar_reflection.dart lib/services/asset_calendar_reflection_repository.dart lib/widgets/asset_calendar_reflection_panel.dart lib/pages/asset_management_page.dart test/models/asset_calendar_reflection_test.dart lib/widgets/asset_reflection_day_badge.dart test/widgets/asset_calendar_reflection_panel_test.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart integration_test/asset_calendar_projection_scenarios.dart
+      - run: flutter analyze lib/models/asset_calendar_reflection.dart lib/services/asset_calendar_reflection_repository.dart lib/widgets/asset_calendar_reflection_panel.dart lib/pages/asset_management_page.dart test/models/asset_calendar_reflection_test.dart lib/widgets/asset_reflection_day_badge.dart test/widgets/asset_calendar_reflection_panel_test.dart lib/widgets/asset_month_end_snapshot_card.dart test/services/asset_month_end_snapshot_service_test.dart test/e2e/asset_calendar_projection_test.dart
       - run: timeout 300s flutter test --no-pub --timeout 60s test/models/asset_calendar_reflection_test.dart test/widgets/asset_calendar_refresh_control_test.dart test/widgets/asset_calendar_reflection_panel_test.dart test/services/asset_month_end_snapshot_service_test.dart --concurrency=2
       - name: Verify reflection projection in the panel
-        run: timeout 300s flutter test --no-pub --timeout 60s integration_test/asset_calendar_projection_scenarios.dart
+        run: timeout 300s flutter test --no-pub --timeout 60s test/e2e/asset_calendar_projection_test.dart
