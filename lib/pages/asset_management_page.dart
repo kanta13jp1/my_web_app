@@ -33,6 +33,7 @@ import 'dart:math'; // ← ★この1行を追加してください！
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../widgets/asset_payment_reminder_gate.dart';
 import 'package:my_web_app/services/asset_must_task_repository.dart';
 import 'package:my_web_app/services/closing_record_checks.dart';
 import 'package:my_web_app/widgets/debounced_commit_text_field.dart';
@@ -28310,8 +28311,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               '${row.name} / 支払日 ${row.paymentDay ?? '-'}日 / '
               '予定 ${_formatManagementYen(row.scheduledPaymentAmount)} / '
               '最低推定 ${_formatManagementYen(row.minimumPaymentEstimate)} / '
-              '元金 ${_formatManagementYen(row.principalPaymentEstimate)} / '
-              '金利 ${_formatManagementYen(row.monthlyInterestEstimate)}',
+              '元金返済の概算 ${_formatManagementYen(row.principalPaymentEstimate)} / '
+              '月利息の概算 ${_formatManagementYen(row.monthlyInterestEstimate)}',
               style: const TextStyle(fontSize: 12, height: 1.5),
             ),
           ),
@@ -28602,6 +28603,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildAssetPaymentReminderPanel(AssetLiabilityWorkbook workbook) {
+    final ready = _assetLiabilityBootStateLoaded &&
+        !_assetLiabilityMonthlyStateLoadFailed &&
+        _assetLiabilityMonthlyStateInFlight == null &&
+        _loadedAssetLiabilityMonthKey == _assetLiabilityStateMonthKey(_now);
+    return AssetPaymentReminderGate(
+      ready: ready,
+      loadFailed: _assetLiabilityMonthlyStateLoadFailed,
+      builder: (_) => _buildRestoredAssetPaymentReminderPanel(workbook),
+    );
+  }
+
+  Widget _buildRestoredAssetPaymentReminderPanel(
+    AssetLiabilityWorkbook workbook,
+  ) {
     final reminders = _assetLiabilityReminderService.buildCandidates(
       workbook: workbook,
       now: _now,
@@ -29588,6 +29603,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 lineTouchData: LineTouchData(
                   enabled: true,
                   touchTooltipData: LineTouchTooltipData(
+                    fitInsideHorizontally: true,
+                    fitInsideVertically: true,
                     getTooltipItems: (spots) {
                       return spots.map((spot) {
                         if (spot.barIndex < 0 ||
@@ -31081,7 +31098,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 value: _formatManagementYen(row.minimumPaymentEstimate),
               ),
               _buildDebtMasterMetric(
-                label: '月利息',
+                label: '月利息の概算',
                 value: _formatManagementYen(row.monthlyInterestEstimate),
               ),
               _buildDebtMasterMetric(

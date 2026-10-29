@@ -44,6 +44,23 @@ class GateTests(unittest.TestCase):
             with self.subTest(field=field), self.assertRaises(ValueError):
                 gate.validate_review(malformed, self.state)
 
+    def test_short_assessments_reject_with_target_and_length(self):
+        for collection, label in (('files', 'path'), ('areas', 'area')):
+            malformed = copy.deepcopy(self.review)
+            item = malformed[collection][0]
+            item['assessment'] = ' ' + 'x'*29 + ' '
+            with self.subTest(collection=collection), self.assertRaises(ValueError) as raised:
+                gate.validate_review(malformed, self.state)
+            self.assertIn(collection, str(raised.exception))
+            self.assertIn(item[label], str(raised.exception))
+            self.assertIn('29 trimmed characters; minimum 30', str(raised.exception))
+
+    def test_thirty_character_assessments_preserve_boundary(self):
+        review = copy.deepcopy(self.review)
+        for item in review['files'] + review['areas']:
+            item['assessment'] = ' ' + 'x'*30 + ' '
+        gate.validate_review(review, self.state)
+
     def test_duplicate_coverage_rejects(self):
         malformed = dict(self.review, files=self.review['files']*2)
         with self.assertRaises(ValueError): gate.validate_review(malformed, self.state)

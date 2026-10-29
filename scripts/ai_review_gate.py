@@ -116,13 +116,14 @@ def prepare(directory):
 
 def schema():
     string = {'type': 'string'}
+    assessment = {'type': 'string', 'description': 'At least 30 non-whitespace-trimmed characters explaining concrete evidence and implications; do not use a generic approval.'}
     def obj(properties):
         return {'type': 'object', 'properties': properties, 'required': list(properties), 'additionalProperties': False}
     return obj({'schema_version': {'type': 'integer'}, 'head': string, 'base': string,
         'input_sha256': string, 'verdict': {'type': 'string', 'enum': ['approve', 'changes_requested']},
         'summary': string,
-        'areas': {'type': 'array', 'items': obj({'area': {'type': 'string', 'enum': sorted(AREAS)}, 'assessment': string})},
-        'files': {'type': 'array', 'items': obj({'path': string, 'assessment': string})},
+        'areas': {'type': 'array', 'items': obj({'area': {'type': 'string', 'enum': sorted(AREAS)}, 'assessment': assessment})},
+        'files': {'type': 'array', 'items': obj({'path': string, 'assessment': assessment})},
         'findings': {'type': 'array', 'items': obj({'path': string, 'line': {'type': 'integer'},
             'severity': {'type': 'string', 'enum': ['critical', 'high', 'medium', 'low']},
             'blocking': {'type': 'boolean'}, 'explanation': string, 'recommendation': string})}})
@@ -140,8 +141,12 @@ def validate_review(review, state):
     require(sorted(f.get('path', '') for f in review['files']) == sorted(state['files']), 'Incomplete file coverage')
     require(isinstance(review['areas'], list) and len(review['areas']) == len(AREAS), 'Missing review areas')
     require({a.get('area') for a in review['areas']} == AREAS, 'Missing review areas')
-    for item in review['files']+review['areas']:
-        require(isinstance(item.get('assessment'), str) and len(item['assessment'].strip()) >= 30, 'Missing substantive assessment')
+    for collection, label in (('files', 'path'), ('areas', 'area')):
+        for item in review[collection]:
+            value = item.get('assessment')
+            length = len(value.strip()) if isinstance(value, str) else 0
+            require(isinstance(value, str) and length >= 30,
+                    f'Missing substantive assessment: {collection} {item.get(label)!r} has {length} trimmed characters; minimum 30')
     require(isinstance(review['findings'], list), 'Invalid findings')
     for finding in review['findings']:
         require(isinstance(finding, dict) and set(finding) == set(schema()['properties']['findings']['items']['properties']), 'Invalid finding')
@@ -177,6 +182,9 @@ def review(directory):
              'that policy decision is settled, but independently review whether its implementation is secure. '
              'The existing CI and explicit human product/release decisions remain required. '
              'Monetary observations and secret values are intentionally redacted. '
+             'The summary and EVERY files[].assessment and areas[].assessment must contain at least 30 characters after trimming whitespace. '
+             'For each changed file and review area, explain the concrete behavior, evidence, risks and test adequacy; generic approval is insufficient. '
+             'Each finding explanation and recommendation must contain at least 20 characters after trimming whitespace. '
              'Prefer Japanese explanations. No markdown fences.')
     binding = {k: state[k] for k in ('head', 'base', 'input_sha256', 'files')}
     payload = {'systemInstruction': {'parts': [{'text': rules}]},

@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import '../models/asset_liability_workbook.dart';
+import 'asset_snapshot_calendar.dart';
 
 class AssetLiabilityMonthlyReportView {
   final String monthKey;
@@ -38,12 +39,12 @@ class AssetLiabilityMonthlyReportView {
   }
 
   double get totalAssets =>
-      report?.totalAssets ?? snapshot?.positiveAssetTotal ?? 0;
+      snapshot?.positiveAssetTotal ?? report?.totalAssets ?? 0;
 
   double get totalLiabilities =>
-      report?.totalLiabilities ?? snapshot?.liabilityTotal ?? 0;
+      snapshot?.liabilityTotal ?? report?.totalLiabilities ?? 0;
 
-  double get netWorth => report?.netWorth ?? snapshot?.netWorth ?? 0;
+  double get netWorth => snapshot?.netWorth ?? report?.netWorth ?? 0;
 
   double? get netWorthDelta {
     if (snapshot == null || previousSnapshot == null) {
@@ -135,9 +136,13 @@ class AssetLiabilityMonthlyReportService {
   ) {
     final sorted = List<AssetLiabilityMonthlySnapshot>.from(snapshots)
       ..sort((a, b) => a.monthKey.compareTo(b.monthKey));
+    final byMonth = {
+      for (final snapshot in sorted) snapshot.monthKey: snapshot,
+    };
     return <String, AssetLiabilityMonthlySnapshot?>{
-      for (var index = 0; index < sorted.length; index++)
-        sorted[index].monthKey: index == 0 ? null : sorted[index - 1],
+      for (final snapshot in sorted)
+        snapshot.monthKey:
+            byMonth[previousSnapshotCalendarMonthKey(snapshot.monthKey)],
     };
   }
 }
