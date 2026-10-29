@@ -8,36 +8,49 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/business_execution_test.dart' as fixtures;
 import '../view_models/business_execution_controller_test.dart' as fakes;
 
+Future<void> reveal(WidgetTester tester, Finder finder) async {
+  // Text editing schedules layout and caret scrolling after enterText returns.
+  // Settle that work before calculating the next target's scroll position.
+  await tester.pumpAndSettle();
+  final scrollable = find.descendant(
+    of: find.byType(BusinessExecutionPanel),
+    matching: find.byType(Scrollable),
+  ).first;
+  if (finder.evaluate().isEmpty) {
+    tester.state<ScrollableState>(scrollable).position.jumpTo(0);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      finder,
+      250,
+      scrollable: scrollable,
+    );
+  }
+  expect(finder, findsOneWidget);
+  await tester.ensureVisible(finder);
+  // ensureVisible may change scroll offset before the frame is laid out.
+  await tester.pumpAndSettle();
+}
+
 Future<void> enter(
   WidgetTester tester,
   String label,
   String value,
 ) async {
   final field = find.widgetWithText(TextField, label);
-  if (field.evaluate().isEmpty) {
-    tester.state<ScrollableState>(find.byType(Scrollable).first)
-        .position.jumpTo(0);
-    await tester.pump();
-    await tester.scrollUntilVisible(
-      field, 250, scrollable: find.byType(Scrollable).first,
-    );
-  }
-  await tester.ensureVisible(field);
+  await reveal(tester, field);
   await tester.enterText(field, value);
+  await tester.pumpAndSettle();
 }
 
 Future<void> tapText(WidgetTester tester, String text) async {
   final finder = find.text(text);
-  if (finder.evaluate().isEmpty) {
-    tester.state<ScrollableState>(find.byType(Scrollable).first)
-        .position.jumpTo(0);
-    await tester.pump();
-    await tester.scrollUntilVisible(
-      finder, 250, scrollable: find.byType(Scrollable).first,
-    );
-  }
-  await tester.ensureVisible(finder);
-  await tester.tap(finder);
+  await reveal(tester, finder);
+  expect(
+    finder.hitTestable(),
+    findsOneWidget,
+    reason: 'The visible control must receive the tap: $text',
+  );
+  await tester.tap(finder.hitTestable());
   await tester.pumpAndSettle();
 }
 
@@ -185,7 +198,10 @@ void main() {
     await tapText(tester, 'この日の記録を保存');
     expect(find.text('未対応でも残す'), findsOneWidget);
     expect(await store.read('a'), raw);
-    expect(find.textContaining('この環境では安全に保存できません。'), findsOneWidget);
+    final error = find.textContaining('この環境では安全に保存できません。');
+    // The notice is a separate lazy ListView child above the long detail form.
+    await reveal(tester, error);
+    expect(error, findsOneWidget);
   });
 
   testWidgets('starting date becomes selectable on a later rebuild',

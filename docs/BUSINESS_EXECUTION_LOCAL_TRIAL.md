@@ -122,3 +122,19 @@ PR #5931、CI run 40947972686 / Static checks and web job 123708238536では、s
 CI summary回帰のID抽出は汎用YAMLパーサーではなく、現ci.ymlのblock形式（stepのlist itemは6スペース、後続キーは8スペース）を対象にする。IDのplain/単引用符/二重引用符、末尾コメント、先頭の `- id:` は扱い、job-levelやshell本文のidを除く回帰を追加した。flow mapping・alias・escapeを使う別形式へ変更する場合は構造パーサーへの移行が必要。既存PyYAMLはagent-skill-contractの別jobにのみ明示導入されており、この早期CI stepで使える保証がないため、今回新しいインストール工程は追加していない。
 
 ID抽出ではインデント一致だけで数えず、jobs→job→steps→stepの現在位置を追跡する。steps以前/以後のenv・outputs、別jobのenv、step内部のenvを除外する。実ci.ymlから本物のbusiness_execution_e2e IDを取り除き、同じIDをjob envへ挿入しても未登録として検出する回帰を追加した。対応するblock構造の範囲は維持し、依存追加・workflow変更はしていない。
+
+## VM shard 1の初回画面失敗を診断（6061c0d）
+
+job 123720175592の全文ログを確認。business_execution_panel_testの10ケース中7件が失敗、アカウント切替・320px文字2倍・開始日切替の3件は成功。7件の最初の例外と、その直前の観測は次のとおり。
+
+| ケース | 最初の具体例外 | 直前の観測 |
+| --- | --- | --- |
+| 作成→0→月次→復元 | TestFailure: 未入力1日のTextが0件 | 計画保存tapがhit-test miss |
+| 保存失敗→再試行 | Null check operator used on a null value（保存後record参照） | 日次保存tapがy=858、画面高600の外 |
+| ロック非対応 | TestFailure: 非対応error Textが0件 | errorはフォームより上のlazy ListView子、保存内容は不変 |
+| remote archive競合 | StateError: No element（再読込ボタン探索） | 日次保存tapがhit-test miss |
+| 同日/月次上書き確認 | StateError: No element（再読込ボタン探索） | 更新tapがhit-test miss |
+| 新規計画の失敗通知 | StateError: No element（再読込ボタン探索） | 計画保存tapがhit-test miss |
+| 未編集記録の同期 | StateError: No element（再読込ボタン探索） | 更新tapがy=1120、画面高600の外 |
+
+6件は未到達の保存tapから後段の期待不一致へ連鎖している。共通helperはenterText後のcaret scrolling/layoutとensureVisible後のframeを待たずにtapしていたため、操作前・入力後・スクロール後をpumpAndSettleで同期する。tap直前にhitTestableを必須検査し、missを黙殺しない。非対応errorは画面上部へ実際にスクロールしてから確認する。7ケースの保存値・入力保持・競合確認の期待は削除しない。製品のUI/保存ロジックには変更を入れず、修正後の実テストでこの診断を確認する必要がある。修正後widget test・formatter・analyzerは未実行。
