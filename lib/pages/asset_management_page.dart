@@ -18234,7 +18234,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                             height: 1.4,
                           ),
                         ),
@@ -18290,13 +18291,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ...reflectionWidths.map((width) => width + 12),
                   ...weekdayWidths.map((width) => width + 12),
                   textWidth(
-                    '12/31',
-                    const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-                  ) + 12,
+                        '12/31',
+                        const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w800),
+                      ) +
+                      12,
                   textWidth(
-                    '不明',
-                    const TextStyle(fontSize: 9, color: Color(0xFF92400E)),
-                  ) + 24,
+                        '不明',
+                        const TextStyle(fontSize: 9, color: Color(0xFF92400E)),
+                      ) +
+                      24,
                 ].reduce(max);
                 final viewportWidth = constraints.hasBoundedWidth
                     ? constraints.maxWidth
@@ -18312,40 +18316,41 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         const SizedBox(height: 4),
                       ],
                       Scrollbar(
-                      controller: _assetCalendarScrollController,
-                      thumbVisibility: canScroll,
-                      child: SingleChildScrollView(
                         controller: _assetCalendarScrollController,
-                        scrollDirection: Axis.horizontal,
-                        child: SizedBox(
-                          width: max(viewportWidth, 7 * minCellWidth),
-                          child: Column(
-                            children: [
-                              weekdayRow,
-                              const SizedBox(height: 4),
-                              for (final week in calendar.weeks)
-                                IntrinsicHeight(
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
-                                      for (final day in week)
-                                        Expanded(
-                                          child: _buildAssetCalendarCell(
-                                            day,
-                                            today,
-                                            expandedText: true,
+                        thumbVisibility: canScroll,
+                        child: SingleChildScrollView(
+                          controller: _assetCalendarScrollController,
+                          scrollDirection: Axis.horizontal,
+                          child: SizedBox(
+                            width: max(viewportWidth, 7 * minCellWidth),
+                            child: Column(
+                              children: [
+                                weekdayRow,
+                                const SizedBox(height: 4),
+                                for (final week in calendar.weeks)
+                                  IntrinsicHeight(
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        for (final day in week)
+                                          Expanded(
+                                            child: _buildAssetCalendarCell(
+                                              day,
+                                              today,
+                                              expandedText: true,
+                                            ),
                                           ),
-                                        ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 );
               },
             ),
@@ -18523,7 +18528,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
   }
-
   Widget _buildAssetCalendarCell(
     AssetCalendarDaySummary? day,
     DateTime today, {
@@ -18653,7 +18657,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
   }
-
   String _formatCalendarAmount(double value) {
     if (value >= 10000) {
       final man = value / 10000;
