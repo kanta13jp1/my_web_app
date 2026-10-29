@@ -22939,7 +22939,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           final scaler = MediaQuery.textScalerOf(context);
           final textScale = max(
             1.0,
-            max(scaler.scale(12) / 12, scaler.scale(11) / 11),
+            max(
+              scaler.scale(10) / 10,
+              max(scaler.scale(12) / 12, scaler.scale(11) / 11),
+            ),
           );
           if (constraints.maxWidth < 300 * textScale) {
             return Column(
