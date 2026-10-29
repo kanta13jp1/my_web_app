@@ -58,6 +58,18 @@ Future<void> tapText(WidgetTester tester, String text) async {
   await tester.pumpAndSettle();
 }
 
+Future<void> scrollPanelToTop(WidgetTester tester) async {
+  // Use the panel padding, outside the nested editable scrollables.
+  final bounds = tester.getRect(find.byType(BusinessExecutionPanel));
+  await tester.sendEventToBinding(
+    PointerScrollEvent(
+      position: bounds.topLeft + const Offset(4, 4),
+      scrollDelta: const Offset(0, -10000),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
 Widget app(
   BusinessExecutionStore store, {
   String user = 'a',
@@ -151,21 +163,34 @@ void main() {
 
   testWidgets('account switch removes the previous account and its draft',
       (tester) async {
+    tester.view.physicalSize = const Size(320, 500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final store = fakes.MemoryExecutionStore()
       ..data['a'] = BusinessExecutionCodec.encode([fixtures.plan()]);
-    await tester.pumpWidget(app(store));
+    await tester.pumpWidget(app(store, scale: 2));
     await tester.pumpAndSettle();
     await tapText(tester, '相談申込数');
     await enter(tester, '日次の振り返り・次の一手', '前のアカウントの未保存入力');
-    await tester.pumpWidget(app(store, user: 'b'));
+    final oldField = find.widgetWithText(TextField, '日次の振り返り・次の一手');
+    await scrollPanelToTop(tester);
+    expect(tester.getRect(oldField).top, greaterThan(750));
+    await tester.pumpWidget(app(store, user: 'b', scale: 2));
     await tester.pumpAndSettle();
     expect(find.text('前のアカウントの未保存入力'), findsNothing);
     expect(find.text('相談申込数'), findsNothing);
     expect(store.data['b'], isNull);
-    expect(
-      find.text('まだ計画がありません。解決したい課題から始めましょう。'),
-      findsOneWidget,
-    );
+    final empty = find.text('まだ計画がありません。解決したい課題から始めましょう。');
+    await reveal(tester, empty);
+    expect(empty, findsOneWidget);
+    await tester.pumpWidget(app(store, scale: 2));
+    await tester.pumpAndSettle();
+    await tapText(tester, '相談申込数');
+    final note = find.widgetWithText(TextField, '日次の振り返り・次の一手');
+    await reveal(tester, note);
+    expect(tester.widget<TextField>(note).controller!.text, isEmpty);
+    expect(store.data['b'], isNull);
   });
 
   testWidgets('320px at double text size can reach and save the report',
@@ -465,16 +490,17 @@ void main() {
       expect(editingFocus.hasFocus, isTrue);
 
       // A real pointer wheel causes a user-scroll notification, unlike jumpTo.
-      await tester.sendEventToBinding(
-        PointerScrollEvent(
-          position: tester.getCenter(find.byType(BusinessExecutionPanel)),
-          scrollDelta: const Offset(0, -10000),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await scrollPanelToTop(tester);
       expect(editingFocus.hasFocus, isFalse);
       expect(tester.testTextInput.isVisible, isFalse);
       expect(tester.getRect(firstField).top, greaterThan(750));
+      final panelScope = editingFocus.enclosingScope!;
+      expect(FocusManager.instance.primaryFocus, same(panelScope));
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      final traversed = FocusManager.instance.primaryFocus!;
+      expect(traversed, isNot(same(panelScope)));
+      expect(traversed.enclosingScope, same(panelScope));
 
       await reveal(tester, firstField);
       expect(
@@ -489,6 +515,58 @@ void main() {
       );
       expect(lastController.text, '回');
       expect(store.data['a'], storedBefore);
+
+      await tester.tap(lastField);
+      await tester.pumpAndSettle();
+      expect(editingFocus.hasFocus, isTrue);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: '回数',
+          selection: TextSelection.collapsed(offset: 2),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(lastController.text, '回数');
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      expect(editingFocus.hasFocus, isFalse);
+      if (detail) {
+        await enter(tester, 'この日の行動実績（回）', '0');
+        await tapText(tester, 'この日の記録を保存');
+        await tapText(tester, '月次の振り返りを保存');
+      } else {
+        final next = find.widgetWithText(TextField, '1日あたりの行動目標');
+        final editable = tester.widget<EditableText>(
+          find.descendant(of: next, matching: find.byType(EditableText)),
+        );
+        expect(editable.focusNode.hasFocus, isTrue);
+        await enter(tester, '成果指標（KPI）例：月内の相談申込数', '相談申込数');
+        await enter(tester, '成果の単位 例：件', '件');
+        await enter(tester, '期間終了時の成果目標', '3');
+        await enter(tester, '行動指標（KDI）例：顧客へのヒアリング', 'ヒアリング');
+        await enter(tester, '1日あたりの行動目標', '2');
+        await tapText(tester, '計画を端末に保存');
+      }
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(app(store));
+      await tester.pumpAndSettle();
+      await tapText(tester, '相談申込数');
+      final saved = BusinessExecutionCodec.decode(store.data['a']).single;
+      if (detail) {
+        expect(saved.reports['2026-10-30']!.note, 'スクロール前の未保存入力');
+        expect(saved.reflection, '回数');
+      } else {
+        expect(saved.issue, 'スクロール前の未保存入力');
+        expect(saved.actionUnit, '回数');
+      }
+      final restoredLabel = detail ? lastLabel : 'この日の行動実績（回数）';
+      await reveal(tester, find.widgetWithText(TextField, restoredLabel));
+      if (detail) {
+        final restoredField = find.widgetWithText(TextField, restoredLabel);
+        final restoredController =
+            tester.widget<TextField>(restoredField).controller!;
+        expect(restoredController.text, '回数');
+      }
       expect(tester.takeException(), isNull);
     });
   }
@@ -566,4 +644,113 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('user scroll preserves composing text and selection until commit',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final store = fakes.MemoryExecutionStore();
+    await tester.pumpWidget(app(store, scale: 2));
+    await tester.pumpAndSettle();
+    await tapText(tester, '月の実行計画を作る');
+    await enter(tester, '行動の単位 例：回', '');
+    final field = find.widgetWithText(TextField, '行動の単位 例：回');
+    final controller = tester.widget<TextField>(field).controller!;
+    final editingFocus = FocusManager.instance.primaryFocus!;
+    // A synthetic IME update checks widget policy, not the web IME bridge.
+    const composing = TextEditingValue(
+      text: 'にほん',
+      selection: TextSelection(baseOffset: 1, extentOffset: 3),
+      composing: TextRange(start: 0, end: 3),
+    );
+    tester.testTextInput.updateEditingValue(composing);
+    await tester.pumpAndSettle();
+    await scrollPanelToTop(tester);
+    expect(editingFocus.hasFocus, isTrue);
+    expect(controller.value, composing);
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+
+    await reveal(tester, field);
+    const committed = TextEditingValue(
+      text: '日本',
+      selection: TextSelection.collapsed(offset: 2),
+    );
+    tester.testTextInput.updateEditingValue(committed);
+    await tester.pumpAndSettle();
+    await scrollPanelToTop(tester);
+    expect(editingFocus.hasFocus, isFalse);
+    expect(controller.value, committed);
+    await reveal(tester, field);
+    await tester.tap(field);
+    await tester.pumpAndSettle();
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: '日本語',
+        selection: TextSelection.collapsed(offset: 3),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(controller.text, '日本語');
+    expect(controller.value.composing, TextRange.empty);
+    expect(store.data['a'], isNull);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('panel scrolling leaves external focus selection and Tab intact',
+      (tester) async {
+    final firstFocus = FocusNode();
+    final secondFocus = FocusNode();
+    final outside = TextEditingController();
+    addTearDown(firstFocus.dispose);
+    addTearDown(secondFocus.dispose);
+    addTearDown(outside.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              TextField(
+                focusNode: firstFocus,
+                controller: outside,
+                decoration: const InputDecoration(labelText: '外側の入力'),
+              ),
+              TextField(
+                focusNode: secondFocus,
+                decoration: const InputDecoration(labelText: '外側の次の入力'),
+              ),
+              Expanded(
+                child: BusinessExecutionPanel(
+                  userId: 'a',
+                  currentUserId: () => 'a',
+                  store: fakes.MemoryExecutionStore(),
+                  now: () => DateTime(2026, 10, 30),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tapText(tester, '月の実行計画を作る');
+    await enter(tester, '行動の単位 例：回', '回');
+    final field = find.widgetWithText(TextField, '外側の入力');
+    await tester.enterText(field, '外部入力');
+    await tester.pumpAndSettle();
+    const value = TextEditingValue(
+      text: '外部入力',
+      selection: TextSelection(baseOffset: 1, extentOffset: 3),
+    );
+    tester.testTextInput.updateEditingValue(value);
+    await tester.pumpAndSettle();
+    await scrollPanelToTop(tester);
+    expect(firstFocus.hasFocus, isTrue);
+    expect(outside.value, value);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pumpAndSettle();
+    expect(secondFocus.hasFocus, isTrue);
+    expect(outside.value, value);
+    expect(tester.takeException(), isNull);
+  });
 }
