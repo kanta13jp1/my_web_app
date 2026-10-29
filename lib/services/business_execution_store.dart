@@ -4,7 +4,12 @@ import 'business_execution_lock.dart';
 
 abstract class BusinessExecutionStore {
   Future<String?> read(String userId);
-  Future<void> write(String userId, String? expected, String value);
+  Future<void> write(
+    String userId,
+    String? expected,
+    String value, {
+    required bool Function() isCurrent,
+  });
 }
 
 /// Personal device storage; intentionally excluded from financial pref mirroring.
@@ -22,13 +27,28 @@ class LocalBusinessExecutionStore implements BusinessExecutionStore {
 
   @override
   Future<String?> read(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    return prefs.getString(keyFor(userId));
+  }
+
+  @override
+  Future<void> write(
+    String userId,
+    String? expected,
+    String value, {
+    required bool Function() isCurrent,
+  }) async {
     await withLock('business-execution:$userId', () async {
+      if (!isCurrent()) throw StateError('アカウントが変更されました。');
       final prefs = await SharedPreferences.getInstance();
       await prefs.reload();
       final key = keyFor(userId);
       if (prefs.getString(key) != expected) {
         throw StateError('別画面で記録が変更されました。再読み込みしてください。');
       }
+      // Recheck after every wait and immediately before starting the write.
+      if (!isCurrent()) throw StateError('アカウントが変更されました。');
       if (!await prefs.setString(key, value)) {
         throw StateError('端末への保存に失敗しました。');
       }

@@ -18,7 +18,13 @@ class MemoryExecutionStore implements BusinessExecutionStore {
       pendingRead == null ? data[userId] : pendingRead!.future;
 
   @override
-  Future<void> write(String userId, String? expected, String value) async {
+  Future<void> write(
+    String userId,
+    String? expected,
+    String value, {
+    required bool Function() isCurrent,
+  }) async {
+    if (!isCurrent()) throw StateError('account changed');
     if (failWrite || data[userId] != expected) throw StateError('save failed');
     data[userId] = value;
   }
@@ -111,10 +117,10 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     const store = LocalBusinessExecutionStore(withLock: testExecutionLock);
     final raw = BusinessExecutionCodec.encode([fixtures.plan()]);
-    await store.write('a', null, raw);
+    await store.write('a', null, raw, isCurrent: () => true);
     expect(await store.read('a'), raw);
     expect(await store.read('b'), isNull);
-    await expectLater(store.write('a', null, 'other'), throwsStateError);
+    await expectLater(store.write('a', null, 'other', isCurrent: () => true), throwsStateError);
     expect(await store.read('a'), raw);
   });
   test('archive retains history and permits the next active plan', () async {
@@ -136,6 +142,56 @@ void main() {
     expect(controller.plans.length, 25);
     expect(controller.plans.first.archived, isTrue);
     expect(await controller.setArchived('0', false), isFalse);
+  });
+
+  test('reload keeps the previous snapshot and blocks save until it settles',
+      () async {
+    final store = MemoryExecutionStore()
+      ..data['a'] = BusinessExecutionCodec.encode([fixtures.plan()]);
+    final controller = BusinessExecutionController(
+      userId: 'a',
+      currentUserId: () => 'a',
+      store: store,
+    );
+    addTearDown(controller.dispose);
+    await controller.load();
+    store.pendingRead = Completer<String?>();
+    final reloading = controller.load();
+    expect(controller.ready, isTrue);
+    expect(controller.plans.single.id, 'plan');
+    expect(await controller.add(fixtures.plan(id: 'racing')), isFalse);
+    store.pendingRead!.complete(store.data['a']);
+    await reloading;
+    expect(controller.refreshing, isFalse);
+    expect(controller.plans.length, 1);
+  });
+
+  test('owner switch while waiting for the lock prevents the actual write',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final waiting = Completer<void>();
+    final release = Completer<void>();
+    var current = true;
+    final store = LocalBusinessExecutionStore(
+      withLock: (name, action) async {
+        waiting.complete();
+        await release.future;
+        await action();
+      },
+    );
+    final writing = store.write(
+      'a',
+      null,
+      BusinessExecutionCodec.encode([fixtures.plan()]),
+      isCurrent: () => current,
+    );
+    final rejected = expectLater(writing, throwsStateError);
+    await waiting.future;
+    current = false;
+    release.complete();
+    await rejected;
+    expect(await store.read('a'), isNull);
+    expect(await store.read('b'), isNull);
   });
 
 }

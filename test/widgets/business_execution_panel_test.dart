@@ -14,12 +14,28 @@ Future<void> enter(
   String value,
 ) async {
   final field = find.widgetWithText(TextField, label);
+  if (field.evaluate().isEmpty) {
+    tester.state<ScrollableState>(find.byType(Scrollable).first)
+        .position.jumpTo(0);
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      field, 250, scrollable: find.byType(Scrollable).first,
+    );
+  }
   await tester.ensureVisible(field);
   await tester.enterText(field, value);
 }
 
 Future<void> tapText(WidgetTester tester, String text) async {
   final finder = find.text(text);
+  if (finder.evaluate().isEmpty) {
+    tester.state<ScrollableState>(find.byType(Scrollable).first)
+        .position.jumpTo(0);
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      finder, 250, scrollable: find.byType(Scrollable).first,
+    );
+  }
   await tester.ensureVisible(finder);
   await tester.tap(finder);
   await tester.pumpAndSettle();
@@ -202,6 +218,37 @@ void main() {
       0,
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('remote archive conflict retains drafts through reload and reopen',
+      (tester) async {
+    final original = fixtures.plan();
+    final store = fakes.MemoryExecutionStore()
+      ..data['a'] = BusinessExecutionCodec.encode([original]);
+    await tester.pumpWidget(app(store));
+    await tester.pumpAndSettle();
+    await tapText(tester, '相談申込数');
+    await enter(tester, 'この日の行動実績（回）', '2');
+    await enter(tester, '日次の振り返り・次の一手', '競合後にも残す日次');
+    await enter(
+      tester,
+      '月次の振り返り（続けること・変えること・次月の行動）',
+      '競合後にも残す月次',
+    );
+    store.data['a'] =
+        BusinessExecutionCodec.encode([original.withArchived(true)]);
+    await tapText(tester, 'この日の記録を保存');
+    await tapText(tester, '保存結果を再読み込み');
+    expect(find.textContaining('競合後にも残す日次'), findsOneWidget);
+    expect(find.textContaining('競合後にも残す月次'), findsOneWidget);
+    await tapText(tester, 'この計画を再開');
+    expect(find.text('競合後にも残す日次'), findsOneWidget);
+    expect(find.text('競合後にも残す月次'), findsOneWidget);
+    await tapText(tester, 'この日の記録を保存');
+    await tapText(tester, '月次の振り返りを保存');
+    final restored = BusinessExecutionCodec.decode(store.data['a']).single;
+    expect(restored.reports['2026-10-30']!.note, '競合後にも残す日次');
+    expect(restored.reflection, '競合後にも残す月次');
   });
 
 }

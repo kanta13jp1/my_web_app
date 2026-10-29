@@ -99,7 +99,9 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                     style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                   TextButton(
-                    onPressed: _controller.saving ? null : _controller.load,
+                    onPressed: _controller.saving || _controller.refreshing
+                        ? null
+                        : _controller.load,
                     child: const Text('保存結果を再読み込み'),
                   ),
                 ],
@@ -112,14 +114,14 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                       child: const Text('計画一覧へ（未保存入力は破棄）'),
                     ),
                     BusinessExecutionDetail(
-                      key: ValueKey('${selected.id}:${selected.archived}'),
+                      key: ValueKey(selected.id),
                       plan: selected,
                       controller: _controller,
                     ),
                   ] else if (_creating) ...[
                     BusinessExecutionPlanForm(
                       now: _controller.now(),
-                      saving: _controller.saving,
+                      saving: _controller.saving || _controller.refreshing,
                       onSave: (plan) async {
                         final saved = await _controller.add(plan);
                         if (mounted && saved) {

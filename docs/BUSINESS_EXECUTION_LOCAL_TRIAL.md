@@ -43,3 +43,5 @@ Lead: Codex。モデルルーティングで選択された実装workerが上記
 ## 独立レビューへの修正
 
 ロック内の照合と保存、保存失敗後の再読み込みでフォームを保持、開始日を跨ぐ再描画で日付を選択、24実行計画上限から履歴を残してアーカイブする経路を追加。テストも追加した。Web Lockのブラウザーテストは `flutter test --platform chrome test/web/business_execution_lock_test.dart` をクラウドで明示実行する必要がある。標準VMテストでブラウザー排他を検証したとは扱わない。
+
+検査配線：標準CIのVM shardは `test/widgets/business_execution_panel_test.dart` を含む通常テストを列挙する。標準CIのChrome smokeに `test/web/business_execution_lock_test.dart` を追加し、ロック検査を省略しない。整形はcloud-developmentのformat profile artifactから対象ファイルをGitHub APIで反映する。Minimal E2E Gateはユーザー入力/出力で3代表フロー（通常、失敗復旧、アカウント境界）をカバーするwidgetテストであり、ブラウザー全体のE2E未実施を明記した例外記載が必要。今回のWeb Lock単体Chrome検査を業務フローE2Eとは呼ばない。

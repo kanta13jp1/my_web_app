@@ -19,6 +19,7 @@ class BusinessExecutionController extends ChangeNotifier {
   List<BusinessExecutionPlan> get plans => _plans;
   bool loading = true;
   bool saving = false;
+  bool refreshing = false;
   bool ready = false;
   String? error;
   String? _raw;
@@ -28,7 +29,8 @@ class BusinessExecutionController extends ChangeNotifier {
       !_disposed && userId.isNotEmpty && currentUserId() == userId;
 
   Future<void> load() async {
-    if (!_sameAccount || saving) return;
+    if (!_sameAccount || saving || refreshing) return;
+    refreshing = true;
     loading = !ready;
     error = null;
     notifyListeners();
@@ -46,6 +48,7 @@ class BusinessExecutionController extends ChangeNotifier {
     } finally {
       if (_sameAccount) {
         loading = false;
+        refreshing = false;
         notifyListeners();
       }
     }
@@ -106,14 +109,14 @@ class BusinessExecutionController extends ChangeNotifier {
   }
 
   Future<bool> _save(List<BusinessExecutionPlan> plans) async {
-    if (!_sameAccount || !ready || saving) return false;
+    if (!_sameAccount || !ready || saving || refreshing) return false;
     saving = true;
     error = null;
     notifyListeners();
     try {
       final raw = BusinessExecutionCodec.encode(plans);
       if (!_sameAccount) return false;
-      await store.write(userId, _raw, raw);
+      await store.write(userId, _raw, raw, isCurrent: () => _sameAccount);
       if (!_sameAccount) return false;
       final verified = await store.read(userId);
       if (!_sameAccount) return false;

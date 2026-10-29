@@ -260,7 +260,7 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
     final dates = plan.expectedDates(now);
     final missing = plan.missingDates(now);
     final outcome = plan.latestOutcome;
-    final saving = widget.controller.saving;
+    final saving = widget.controller.saving || widget.controller.refreshing;
     final readOnly = plan.archived;
     final expired = dayKey(now).compareTo(plan.dueDate) > 0;
     final reports = plan.reports.entries.toList()
@@ -275,10 +275,21 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
               ? null
               : () => widget.controller.setArchived(plan.id, !plan.archived),
           child: Text(
-            readOnly ? 'この計画を再開' : '履歴を残してアーカイブ（未保存入力は破棄）',
+            readOnly ? 'この計画を再開' : '履歴を残してアーカイブ',
           ),
         ),
-        if (readOnly) const Text('アーカイブ済み・閲覧のみ'),
+        if (readOnly) ...[
+          const Text(
+            'アーカイブ済み・閲覧のみ。未保存入力はこの画面内に残しています。'
+            '必要な文章をコピーするか、計画を再開して保存してください。'
+            '一覧に戻ると未保存入力は破棄されます。',
+          ),
+          SelectableText(
+            '入力中の日付: ${_day ?? '未選択'}\n'
+            '行動実績: ${_actual.text}\n成果実績: ${_outcomeActual.text}\n'
+            '日次振り返り: ${_note.text}\n月次振り返り: ${_reflection.text}',
+          ),
+        ],
         Text('課題: ${plan.issue}'),
         Text('担当: ${plan.owner}'),
         Text('期間: ${plan.startDate}〜${plan.dueDate}'),
