@@ -118,3 +118,5 @@ PR #5931、CI run 40947972686 / Static checks and web job 123708238536では、s
 直前のHTTPError 504/ResourceWarningは、既存kg_index_common_testのurlopen mockが作る失敗・再試行ケースの出力と一致し、該当13件は成功している。これを本番接続障害やfixture server失敗の証拠にしない。この別機能の警告修正は本差分に含めない。
 
 後続のFlutter準備・analyzer・formatter・Chrome lock・fixture build・Playwrightは先行step失敗によってskipされた。ここまでのPython成功をそれらの成功とは扱わない。修正は元PR headを動かさず、別scratchに保存する。修正後の再実行は共有CI順番の管理担当による許可待ち。
+
+CI summary回帰のID抽出は汎用YAMLパーサーではなく、現ci.ymlのblock形式（stepのlist itemは6スペース、後続キーは8スペース）を対象にする。IDのplain/単引用符/二重引用符、末尾コメント、先頭の `- id:` は扱い、job-levelやshell本文のidを除く回帰を追加した。flow mapping・alias・escapeを使う別形式へ変更する場合は構造パーサーへの移行が必要。既存PyYAMLはagent-skill-contractの別jobにのみ明示導入されており、この早期CI stepで使える保証がないため、今回新しいインストール工程は追加していない。

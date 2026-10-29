@@ -12,10 +12,16 @@ from ci_job_summary import CHECKS, main, render_summary
 
 
 def workflow_step_ids(workflow):
-    # Match the workflow's unquoted step IDs, including valid digits/hyphens.
-    # The old [a-z_]+ silently dropped business_execution_e2e.
-    return re.findall(r"^        id: ([A-Za-z_][A-Za-z0-9_-]*)[ \t]*$", workflow, re.M)
-
+    # This is a style-scoped scanner, not a general YAML parser. ci.yml uses
+    # block jobs/steps with six-space list items and eight-space step keys.
+    # Support plain/quoted ID scalars, inline comments, and a leading '- id:'.
+    # Flow mappings, aliases, and escaped scalars need a real YAML parser.
+    # PyYAML is installed by a different workflow, not this early CI step.
+    pattern = (
+        r"^(?: {8}| {6}- )id:[ \t]+(?P<quote>['\"]?)"
+        r"(?P<id>[A-Za-z_][A-Za-z0-9_-]*)(?P=quote)(?:[ \t]+#.*)?[ \t]*$"
+    )
+    return [match.group('id') for match in re.finditer(pattern, workflow, re.M)]
 
 class CiJobSummaryTest(unittest.TestCase):
     def test_dependency_failure_never_claims_downstream_success(self):
@@ -117,6 +123,24 @@ class CiJobSummaryTest(unittest.TestCase):
         self.assertEqual(workflow_step_ids(workflow), [
             "flutter_web_test", "business_execution_e2e",
             "Browser-E2E-2", "_internal_2",
+        ])
+
+    def test_step_id_style_supports_quotes_comments_and_first_key(self):
+        workflow = "\n".join([
+            "        id: 'business_execution_e2e'",
+            '        id: "business_execution_e2e" # browser gate',
+            "        id: business_execution_e2e # browser gate",
+            "      - id: 'business_execution_e2e' # first step key",
+            '      - id: "Browser-E2E-2"',
+            "      - id: plain_first_key",
+            "    id: job_level_is_not_a_step",
+            "          id: shell_body_is_not_a_step",
+            "        id: 'mismatched_quote\"",
+        ])
+        self.assertEqual(workflow_step_ids(workflow), [
+            "business_execution_e2e", "business_execution_e2e",
+            "business_execution_e2e", "business_execution_e2e",
+            "Browser-E2E-2", "plain_first_key",
         ])
 
     def test_actual_workflow_wires_every_reported_step_and_regression_suite(self):
