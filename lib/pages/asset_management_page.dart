@@ -33051,34 +33051,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '日時推移グラフ',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        height: 1.4,
-                      ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const title = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '日時推移グラフ',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      height: 1.4,
                     ),
-                    SizedBox(height: 2),
-                    Text(
-                      '総資産・純資産・負債を期間ごとに確認できます。',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF64748B),
-                        height: 1.5,
-                      ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    '総資産・純資産・負債を期間ごとに確認できます。',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                      height: 1.5,
                     ),
-                  ],
-                ),
-              ),
-              Wrap(
+                  ),
+                ],
+              );
+              final choices = Wrap(
                 spacing: 6,
                 runSpacing: 6,
                 children: [
@@ -33092,8 +33089,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       visualDensity: VisualDensity.compact,
                     ),
                 ],
-              ),
-            ],
+              );
+              final scaler = MediaQuery.textScalerOf(context);
+              final scale = max(
+                1.0,
+                max(scaler.scale(11) / 11, scaler.scale(14) / 14),
+              );
+              if (constraints.maxWidth < 400 * scale) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [title, const SizedBox(height: 6), choices],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Expanded(child: title),
+                  Flexible(child: choices),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 12),
           SizedBox(
