@@ -117,18 +117,21 @@ class AssetCashflowForecastCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  const Text('現在', style: TextStyle(fontSize: 11)),
-                  Text(
-                    '${months.first.month.year}/${months.first.month.month}〜'
-                    '${months.last.month.year}/${months.last.month.month}',
-                    style: const TextStyle(fontSize: 11),
-                  ),
-                ],
+              SizedBox(
+                width: double.infinity,
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    const Text('現在', style: TextStyle(fontSize: 11)),
+                    Text(
+                      '${months.first.month.year}/${months.first.month.month}〜'
+                      '${months.last.month.year}/${months.last.month.month}',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
               _buildSummary(context),
