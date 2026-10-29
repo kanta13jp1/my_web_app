@@ -46,10 +46,10 @@ void main() {
           DateTime.utc(year, month, 28, 23),
         ]) {
           final range = HomeCalendarVisibleRange.forMonth(anchor);
-          final legacy = _legacyRange(anchor);
-          expect(range.monthAnchor, legacy.$1, reason: '$anchor');
-          expect(range.startDay, legacy.$2, reason: '$anchor');
-          expect(range.endDay, legacy.$3, reason: '$anchor');
+          final (legacyAnchor, legacyStart, legacyEnd) = _legacyRange(anchor);
+          expect(range.monthAnchor, legacyAnchor, reason: '$anchor');
+          expect(range.startDay, legacyStart, reason: '$anchor');
+          expect(range.endDay, legacyEnd, reason: '$anchor');
         }
       }
     }
