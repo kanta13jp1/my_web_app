@@ -20674,12 +20674,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               children: [
                 Icon(Icons.view_timeline, color: Color(0xFF6366F1)),
                 SizedBox(width: 8),
-                Text(
-                  '3ヶ月俯瞰（先月・今月・来月）',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    height: 1.5,
+                Expanded(
+                  Text(
+                    '3ヶ月俯瞰（先月・今月・来月）',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
@@ -21945,12 +21947,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               children: [
                 Icon(Icons.table_chart_outlined, color: Color(0xFF0F766E)),
                 SizedBox(width: 8),
-                Text(
-                  '資産/負債 管理ボード',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    height: 1.4,
+                Expanded(
+                  Text(
+                    '資産/負債 管理ボード',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ],
@@ -26982,9 +26986,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             children: [
               Icon(Icons.fact_check_outlined, color: Color(0xFF2563EB)),
               SizedBox(width: 8),
-              Text(
-                'カード請求内訳レビュー',
-                style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+              Expanded(
+                Text(
+                  'カード請求内訳レビュー',
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+                ),
               ),
             ],
           ),
@@ -34345,13 +34351,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         children: [
                           Icon(Icons.credit_card_off, color: Color(0xFF991B1B)),
                           SizedBox(width: 8),
-                          Text(
-                            '③固定費をすべて把握',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF64748B),
-                              height: 1.5,
+                          Expanded(
+                            Text(
+                              '③固定費をすべて把握',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF64748B),
+                                height: 1.5,
+                              ),
                             ),
                           ),
                         ],
@@ -34718,12 +34726,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               children: [
                 Icon(Icons.assignment_late, color: Color(0xFFFF6B35)),
                 SizedBox(width: 8),
-                Text(
-                  '⑤今月の必須タスク',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    height: 1.4,
+                Expanded(
+                  Text(
+                    '⑤今月の必須タスク',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ],
