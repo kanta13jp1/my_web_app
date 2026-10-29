@@ -300,6 +300,25 @@ void main() {
       3,
     );
     await tapText(tester, '最新記録を確認し、この日次入力で上書きする');
+    final changedAgain = remote.withReport(
+      '2026-10-30',
+      BusinessDailyReport(actual: 4, note: '確認後に別タブが再更新'),
+    );
+    store.data['a'] = BusinessExecutionCodec.encode([changedAgain]);
+    await tapText(tester, 'この日の記録を更新');
+    await tapText(tester, '保存結果を再読み込み');
+    expect(
+      tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'この日の記録を更新'),
+      ).onPressed,
+      isNull,
+    );
+    expect(
+      BusinessExecutionCodec.decode(store.data['a'])
+          .single.reports['2026-10-30']!.actual,
+      4,
+    );
+    await tapText(tester, '最新記録を確認し、この日次入力で上書きする');
     await tapText(tester, 'この日の記録を更新');
     await tapText(tester, '最新記録を確認し、この月次入力で上書きする');
     await tapText(tester, '月次の振り返りを保存');
@@ -329,6 +348,39 @@ void main() {
     await tapText(tester, '計画を端末に保存');
     expect(BusinessExecutionCodec.decode(store.data['a']).single.issue,
         '作成中の課題を残す');
+  });
+
+  testWidgets('unedited report and reflection adopt latest values on reload',
+      (tester) async {
+    final original = fixtures.plan()
+        .withReport(
+          '2026-10-30',
+          BusinessDailyReport(actual: 1, note: '読込時の日次'),
+        )
+        .withReflection('読込時の月次');
+    final store = fakes.MemoryExecutionStore()
+      ..data['a'] = BusinessExecutionCodec.encode([original]);
+    await tester.pumpWidget(app(store));
+    await tester.pumpAndSettle();
+    await tapText(tester, '相談申込数');
+    store.data['a'] = BusinessExecutionCodec.encode([
+      original.withReport(
+        '2026-10-30',
+        BusinessDailyReport(actual: 3, note: '最新の日次へ同期'),
+      ).withReflection('最新の月次へ同期'),
+    ]);
+    await tapText(tester, 'この日の記録を更新');
+    await tapText(tester, '保存結果を再読み込み');
+    expect(find.text('最新の日次へ同期'), findsWidgets);
+    expect(find.text('最新の月次へ同期'), findsOneWidget);
+    expect(
+      find.text('最新記録を確認し、この日次入力で上書きする'),
+      findsNothing,
+    );
+    expect(
+      find.text('最新記録を確認し、この月次入力で上書きする'),
+      findsNothing,
+    );
   });
 
 }
