@@ -722,22 +722,22 @@ void main() {
       try {
         await tester.pumpWidget(
           MaterialApp(
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: TextScaler.linear(scenario.scale),
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(scenario.scale),
+              ),
+              child: child!,
             ),
-            child: child!,
+            home: AssetManagementPage(
+              assetLiabilityRepository: repository,
+              aiSummaryService: ai,
+              aiAnalysisHistoryService: _EmptyHistory(),
+              debugNow: DateTime(2026, 9, 6, 12),
+              debugInitialAssetData: const <String, Map<String, double>>{
+                '2026-09-06': <String, double>{'bank': 30000},
+              },
+            ),
           ),
-          home: AssetManagementPage(
-            assetLiabilityRepository: repository,
-            aiSummaryService: ai,
-            aiAnalysisHistoryService: _EmptyHistory(),
-            debugNow: DateTime(2026, 9, 6, 12),
-            debugInitialAssetData: const <String, Map<String, double>>{
-              '2026-09-06': <String, double>{'bank': 30000},
-            },
-          ),
-        ),
         );
         final explanation = find.textContaining(
           '計算に取り込まれた台帳の未払いの直接支払',
