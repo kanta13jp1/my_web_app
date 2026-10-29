@@ -25350,9 +25350,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final badge = Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
@@ -25366,19 +25366,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  action.headline,
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                    height: 1.4,
-                  ),
+              );
+              final headline = Text(
+                action.headline,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                  height: 1.4,
                 ),
-              ),
-            ],
+              );
+              final scaler = MediaQuery.textScalerOf(context);
+              final headlineSize =
+                  DefaultTextStyle.of(context).style.fontSize ?? 14;
+              final textScale = max(
+                1.0,
+                max(
+                  scaler.scale(11) / 11,
+                  scaler.scale(headlineSize) / headlineSize,
+                ),
+              );
+              if (constraints.maxWidth < 300 * textScale) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [badge, const SizedBox(height: 4), headline],
+                );
+              }
+              return Row(
+                children: [
+                  Flexible(child: badge),
+                  const SizedBox(width: 8),
+                  Expanded(child: headline),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 4),
           Text(
