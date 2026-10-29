@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 /// 既存支出に含まれる未照合内訳の印。追加の支出ではない。
 class AssetUnreconciledExpenseBadge extends StatelessWidget {
-  const AssetUnreconciledExpenseBadge(
-      {super.key, this.preserveTextScale = false});
+  const AssetUnreconciledExpenseBadge({
+    super.key,
+    this.preserveTextScale = false,
+  });
 
   final bool preserveTextScale;
 
