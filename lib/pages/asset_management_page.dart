@@ -18298,19 +18298,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     const TextStyle(fontSize: 9, color: Color(0xFF92400E)),
                   ) + 24,
                 ].reduce(max);
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('曜日と日付は左右にスクロールできます。'),
-                    const SizedBox(height: 4),
-                    Scrollbar(
+                final viewportWidth = constraints.hasBoundedWidth
+                    ? constraints.maxWidth
+                    : 7 * minCellWidth;
+                final canScroll = 7 * minCellWidth > viewportWidth;
+                return SizedBox(
+                  width: viewportWidth,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (canScroll) ...[
+                        const Text('曜日と日付は左右にスクロールできます。'),
+                        const SizedBox(height: 4),
+                      ],
+                      Scrollbar(
                       controller: _assetCalendarScrollController,
-                      thumbVisibility: true,
+                      thumbVisibility: canScroll,
                       child: SingleChildScrollView(
                         controller: _assetCalendarScrollController,
                         scrollDirection: Axis.horizontal,
                         child: SizedBox(
-                          width: max(constraints.maxWidth, 7 * minCellWidth),
+                          width: max(viewportWidth, 7 * minCellWidth),
                           child: Column(
                             children: [
                               weekdayRow,
@@ -18337,6 +18345,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                     ),
                   ],
+                ),
                 );
               },
             ),
