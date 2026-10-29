@@ -79,6 +79,15 @@ void main() {
       AssetReflectionKind.dining,
       AssetReflectionKind.drinkingOut,
     });
+    expect(kinds('外食、ビールを購入したが飲酒なし'), {
+      AssetReflectionKind.dining,
+      AssetReflectionKind.alcoholPurchase,
+    });
+    expect(kinds('外食、ビールを購入して飲んだ'), {
+      AssetReflectionKind.dining,
+      AssetReflectionKind.drinkingOut,
+      AssetReflectionKind.alcoholPurchase,
+    });
     expect(kinds('外食、酒は買わずビールを飲んだ'), {
       AssetReflectionKind.dining,
       AssetReflectionKind.drinkingOut,
