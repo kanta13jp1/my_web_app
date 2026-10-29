@@ -12,16 +12,49 @@ from ci_job_summary import CHECKS, main, render_summary
 
 
 def workflow_step_ids(workflow):
-    # This is a style-scoped scanner, not a general YAML parser. ci.yml uses
-    # block jobs/steps with six-space list items and eight-space step keys.
-    # Support plain/quoted ID scalars, inline comments, and a leading '- id:'.
+    # Style-scoped block scanner, not a general YAML parser: jobs at column 0,
+    # job keys at 2 spaces, steps at 4, list items at 6, step fields at 8.
+    # Track every level so a job env/output key cannot impersonate a step ID.
     # Flow mappings, aliases, and escaped scalars need a real YAML parser.
     # PyYAML is installed by a different workflow, not this early CI step.
-    pattern = (
+    id_pattern = re.compile(
         r"^(?: {8}| {6}- )id:[ \t]+(?P<quote>['\"]?)"
         r"(?P<id>[A-Za-z_][A-Za-z0-9_-]*)(?P=quote)(?:[ \t]+#.*)?[ \t]*$"
     )
-    return [match.group('id') for match in re.finditer(pattern, workflow, re.M)]
+    ids = []
+    in_jobs = in_job = in_steps = in_step = False
+    for line in workflow.splitlines():
+        if not line.strip() or line.lstrip().startswith('#'):
+            continue
+        indent = len(line) - len(line.lstrip(' '))
+        if indent == 0:
+            in_jobs = bool(re.fullmatch(r"jobs:[ \t]*(?:#.*)?", line))
+            in_job = in_steps = in_step = False
+            continue
+        if not in_jobs:
+            continue
+        if indent == 2:
+            in_job = bool(re.fullmatch(
+                r"  [A-Za-z_][A-Za-z0-9_-]*:[ \t]*(?:#.*)?", line,
+            ))
+            in_steps = in_step = False
+            continue
+        if not in_job:
+            continue
+        if indent == 4:
+            in_steps = bool(re.fullmatch(r"    steps:[ \t]*(?:#.*)?", line))
+            in_step = False
+            continue
+        if not in_steps:
+            continue
+        if indent <= 6:
+            in_step = line.startswith('      - ')
+        if in_step:
+            match = id_pattern.fullmatch(line)
+            if match:
+                ids.append(match.group('id'))
+    return ids
+
 
 class CiJobSummaryTest(unittest.TestCase):
     def test_dependency_failure_never_claims_downstream_success(self):
@@ -112,36 +145,66 @@ class CiJobSummaryTest(unittest.TestCase):
         self.assertIn("continue-on-error: true", download)
 
     def test_step_id_discovery_includes_digits_and_hyphens(self):
-        workflow = "\n".join([
-            "        id: flutter_web_test",
-            "        id: business_execution_e2e",
-            "        id: Browser-E2E-2",
-            "        id: _internal_2",
-            "        id: 2invalid",
-            "        id: invalid.dot",
+        values = [
+            'flutter_web_test', 'business_execution_e2e',
+            'Browser-E2E-2', '_internal_2', '2invalid', 'invalid.dot',
+        ]
+        workflow = '\n'.join([
+            'jobs:', '  check:', '    steps:',
+            *[f'      - id: {value}' for value in values],
         ])
-        self.assertEqual(workflow_step_ids(workflow), [
-            "flutter_web_test", "business_execution_e2e",
-            "Browser-E2E-2", "_internal_2",
-        ])
+        self.assertEqual(workflow_step_ids(workflow), values[:4])
 
     def test_step_id_style_supports_quotes_comments_and_first_key(self):
         workflow = "\n".join([
+            'jobs:', '  check:', '    steps:',
+            '      - name: single quoted',
             "        id: 'business_execution_e2e'",
+            '      - name: double quoted',
             '        id: "business_execution_e2e" # browser gate',
+            '      - name: plain',
             "        id: business_execution_e2e # browser gate",
             "      - id: 'business_execution_e2e' # first step key",
             '      - id: "Browser-E2E-2"',
             "      - id: plain_first_key",
-            "    id: job_level_is_not_a_step",
             "          id: shell_body_is_not_a_step",
-            "        id: 'mismatched_quote\"",
+            "      - id: 'mismatched_quote\"",
+            "    id: job_level_is_not_a_step",
         ])
         self.assertEqual(workflow_step_ids(workflow), [
-            "business_execution_e2e", "business_execution_e2e",
-            "business_execution_e2e", "business_execution_e2e",
-            "Browser-E2E-2", "plain_first_key",
+            'business_execution_e2e', 'business_execution_e2e',
+            'business_execution_e2e', 'business_execution_e2e',
+            'Browser-E2E-2', 'plain_first_key',
         ])
+
+    def test_non_step_ids_before_after_and_between_jobs_are_ignored(self):
+        workflow = '\n'.join([
+            'env:', '        id: global_env',
+            'jobs:', '  first:',
+            '    env:', '        id: before_steps',
+            '    steps:', '      - id: first_real_step',
+            '        env:', '          id: nested_step_env',
+            '    outputs:', '        id: after_steps',
+            '  second:', '    env:', '        id: next_job_env',
+            '    steps: # another job', '      - id: second_real_step',
+        ])
+        self.assertEqual(workflow_step_ids(workflow), [
+            'first_real_step', 'second_real_step',
+        ])
+
+    def test_env_id_cannot_replace_a_missing_real_e2e_step(self):
+        workflow = (Path(__file__).resolve().parents[1] /
+                    '.github/workflows/ci.yml').read_text(encoding='utf-8')
+        real_id = '        id: business_execution_e2e\n'
+        self.assertEqual(workflow.count(real_id), 1)
+        without_step_id = workflow.replace(real_id, '', 1)
+        forged = without_step_id.replace(
+            '    steps:\n',
+            '    env:\n        id: business_execution_e2e\n    steps:\n',
+            1,
+        )
+        self.assertEqual(workflow_step_ids(workflow).count('business_execution_e2e'), 1)
+        self.assertNotIn('business_execution_e2e', workflow_step_ids(forged))
 
     def test_actual_workflow_wires_every_reported_step_and_regression_suite(self):
         workflow = (Path(__file__).resolve().parents[1] /
