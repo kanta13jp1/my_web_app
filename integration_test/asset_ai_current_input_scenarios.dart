@@ -715,8 +715,6 @@ void main() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();
       });
-      final semantics = tester.ensureSemantics();
-      addTearDown(semantics.dispose);
       final repository = _MonthlyRepository();
       final ai = _ControlledAi();
       expect(Supabase.instance.client.auth.currentUser, isNull);
@@ -724,6 +722,7 @@ void main() {
       if (previousErrorHandler == null) {
         throw StateError('test error handler unavailable');
       }
+      final semantics = tester.ensureSemantics();
       var flexOverflow = 0;
       var otherFlutter = 0;
       var otherError = 0;
@@ -821,11 +820,15 @@ void main() {
         }
         expect(tester.takeException(), isNull);
       } finally {
-        FlutterError.onError = previousErrorHandler;
-        debugPrint(
-          'synthetic-errors flex=$flexOverflow flutter=$otherFlutter '
-          'other=$otherError observer=$observerError',
-        );
+        try {
+          semantics.dispose();
+        } finally {
+          FlutterError.onError = previousErrorHandler;
+          debugPrint(
+            'synthetic-errors flex=$flexOverflow flutter=$otherFlutter '
+            'other=$otherError observer=$observerError',
+          );
+        }
       }
     });
   }
