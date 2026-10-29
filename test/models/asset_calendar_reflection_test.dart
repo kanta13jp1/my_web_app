@@ -4,13 +4,14 @@ import 'package:my_web_app/models/asset_calendar_reflection.dart';
 Map<String, dynamic> fixture({
   String key = 'diary:one',
   String date = '2026-01-02',
-}) => {
-  'source_key': key,
-  'occurred_on': date,
-  'kinds': ['dining', 'drinkingOut'],
-  'title': 'Test meal',
-  'source_label': 'Test diary',
-};
+}) =>
+    {
+      'source_key': key,
+      'occurred_on': date,
+      'kinds': ['dining', 'drinkingOut'],
+      'title': 'Test meal',
+      'source_label': 'Test diary',
+    };
 void main() {
   test('numeric production flow ids roundtrip and deduplicate projections', () {
     final event = AssetCalendarReflection.fromJson({
@@ -32,12 +33,12 @@ void main() {
     'flow projection requires explicit context and never infers reading',
     () {
       Map<String, dynamic> flow(String title) => {
-        'id': '333',
-        'occurred_at': '2026-01-02T03:00:00Z',
-        'action_type': 'expense',
-        'description': title,
-        'amount': 1000,
-      };
+            'id': '333',
+            'occurred_at': '2026-01-02T03:00:00Z',
+            'action_type': 'expense',
+            'description': title,
+            'amount': 1000,
+          };
       expect(AssetCalendarReflection.fromFlows([flow('本購入')]), isEmpty);
       expect(AssetCalendarReflection.fromFlows([flow('ビール')]), isEmpty);
       final event = AssetCalendarReflection.fromFlows([
@@ -58,12 +59,12 @@ void main() {
     'flow projection preserves positive mentions beside explicit denials',
     () {
       Map<String, dynamic> flow(String title, {int id = 333}) => {
-        'id': id,
-        'occurred_at': '2026-01-02T03:00:00Z',
-        'action_type': 'expense',
-        'description': title,
-        'amount': 1000,
-      };
+            'id': id,
+            'occurred_at': '2026-01-02T03:00:00Z',
+            'action_type': 'expense',
+            'description': title,
+            'amount': 1000,
+          };
 
       Set<AssetReflectionKind> kinds(String title) =>
           AssetCalendarReflection.fromFlows([flow(title)]).single.kinds;
@@ -211,12 +212,12 @@ void main() {
   });
   test('tobacco purchases include mixed receipts but exclude declarations', () {
     Map<String, dynamic> flow(String text, {String type = 'expense'}) => {
-      'id': 77,
-      'occurred_at': '2026-10-07T12:00:00',
-      'action_type': type,
-      'description': text,
-      'amount': 1380,
-    };
+          'id': 77,
+          'occurred_at': '2026-10-07T12:00:00',
+          'action_type': type,
+          'description': text,
+          'amount': 1380,
+        };
     for (final text in [
       'セブン：マールボロBOX（たばこ代）',
       '食品760円・タバコ620円',
@@ -295,8 +296,7 @@ void main() {
   test(
     'mixed purchase keeps tobacco and excludes unrelated book or negation',
     () {
-      bool tobacco(String description) =>
-          AssetCalendarReflection.fromFlows([
+      bool tobacco(String description) => AssetCalendarReflection.fromFlows([
             {
               'id': '801',
               'action_type': 'expense',
