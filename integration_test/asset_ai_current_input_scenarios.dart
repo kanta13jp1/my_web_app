@@ -699,8 +699,8 @@ void main() {
   });
 
   for (final scenario in <({String name, Size size, double scale})>[
-    (name: 'desktop', size: Size(1600, 1000), scale: 1),
-    (name: 'narrow large text', size: Size(360, 800), scale: 2),
+    (name: 'desktop', size: const Size(1600, 1000), scale: 1),
+    (name: 'narrow large text', size: const Size(360, 800), scale: 2),
   ]) {
     testWidgets('available amount explanation: ${scenario.name}', (tester) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
@@ -720,7 +720,8 @@ void main() {
       final ai = _ControlledAi();
       expect(Supabase.instance.client.auth.currentUser, isNull);
       try {
-        await tester.pumpWidget(MaterialApp(
+        await tester.pumpWidget(
+          MaterialApp(
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(
               textScaler: TextScaler.linear(scenario.scale),
@@ -736,13 +737,16 @@ void main() {
               '2026-09-06': <String, double>{'bank': 30000},
             },
           ),
-        ));
+        ),
+        );
         final explanation = find.textContaining(
           '計算に取り込まれた台帳の未払いの直接支払',
           skipOffstage: false,
         );
-        await _pumpUntil(tester, () =>
-            explanation.evaluate().isNotEmpty || ai.responses.isNotEmpty);
+        await _pumpUntil(
+          tester,
+          () => explanation.evaluate().isNotEmpty || ai.responses.isNotEmpty,
+        );
         if (ai.responses.isNotEmpty) {
           ai.complete(0, 'Synthetic explanation test');
         }
@@ -751,10 +755,14 @@ void main() {
         await tester.pump();
         expect(explanation, findsOneWidget);
         final context = tester.element(explanation);
-        expect(MediaQuery.textScalerOf(context).scale(10),
-            closeTo(10 * scenario.scale, 0.001));
-        expect(MediaQuery.sizeOf(context).width,
-            closeTo(scenario.size.width, 0.001));
+        expect(
+          MediaQuery.textScalerOf(context).scale(10),
+          closeTo(10 * scenario.scale, 0.001),
+        );
+        expect(
+          MediaQuery.sizeOf(context).width,
+          closeTo(scenario.size.width, 0.001),
+        );
         final text = tester.widget<Text>(explanation).data!;
         expect(text, contains('今週は基準日から日曜まで'));
         expect(text, contains('暦月ではありません'));
