@@ -8,19 +8,16 @@ import 'payroll_snapshot_fixture.dart'
     show SyntheticSnapshotStore, showForm, showSnapshot;
 
 class _DelayedSnapshotStore extends SyntheticSnapshotStore {
-  final Completer<void> commitGate = Completer<void>();
   final List<String> submittedRequests = [];
   final List<String> checkedRequests = [];
-  Future<void>? serverCommit;
+  PayrollSnapshotDraft? pendingCommit;
   PayrollSnapshotRecord? currentSelection;
 
   @override
   Future<void> confirm(PayrollSnapshotDraft draft) async {
     writes++;
     submittedRequests.add(draft.requestId);
-    serverCommit = commitGate.future.then((_) {
-      saved = draft;
-    });
+    pendingCommit = draft;
     throw TimeoutException('synthetic response lost before commit');
   }
 
@@ -44,10 +41,11 @@ class _DelayedSnapshotStore extends SyntheticSnapshotStore {
     return super.selected(accountId, month);
   }
 
-  Future<void> releaseCommit() async {
-    if (!commitGate.isCompleted) commitGate.complete();
-    final commit = serverCommit;
-    if (commit != null) await commit;
+  void releaseCommit() {
+    final draft = pendingCommit;
+    if (draft == null) throw StateError('no synthetic commit pending');
+    saved = draft;
+    pendingCommit = null;
   }
 }
 
@@ -87,10 +85,12 @@ Future<void> _submitUncertain(
   _DelayedSnapshotStore store,
   double textScale,
 ) async {
+  debugPrint('payroll-phase: form');
   await showForm(tester, store, textScale: textScale);
   await tester.ensureVisible(find.byType(CheckboxListTile));
   await tester.tap(find.byType(CheckboxListTile));
   await tester.pumpAndSettle();
+  debugPrint('payroll-phase: submit');
   await _tapVisible(tester, '確認して保存');
   expect(store.writes, 1);
   expect(store.submittedRequests, hasLength(1));
@@ -105,6 +105,7 @@ void main() {
       (
     tester,
   ) async {
+    debugPrint('payroll-phase: goal start');
     final store = SyntheticSnapshotStore()..failTargetAfterCommit = true;
     await showSnapshot(tester, store, textScale: mobile ? 2 : 1);
     // Let Japanese fallback fonts settle before editing an active text painter.
@@ -140,6 +141,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('前月比の増加目標：10000円'));
     expect(tester.takeException(), isNull);
+    debugPrint('payroll-phase: goal screenshot');
     await binding.takeScreenshot(
       mobile ? 'payroll-goal-mobile' : 'payroll-goal-desktop',
       {
@@ -153,6 +155,7 @@ void main() {
   testWidgets(
     'explicit preview and owner assertion save use synthetic storage only',
     (tester) async {
+      debugPrint('payroll-phase: preview start');
       final store = SyntheticSnapshotStore();
       await showForm(tester, store, textScale: mobile ? 2 : 1);
       expect(store.writes, 0);
@@ -163,6 +166,7 @@ void main() {
         await Future<void>.delayed(const Duration(seconds: 2));
       });
       await tester.pumpAndSettle();
+      debugPrint('payroll-phase: preview screenshot');
       await binding.takeScreenshot(
         mobile
             ? 'payroll-snapshot-preview-mobile'
@@ -188,12 +192,13 @@ void main() {
   testWidgets('late commit remains locked and reconciles the same request', (
     tester,
   ) async {
+    debugPrint('payroll-phase: late start');
     final store = _DelayedSnapshotStore();
-    addTearDown(store.releaseCommit);
     await _submitUncertain(tester, store, mobile ? 2 : 1);
     final request = store.submittedRequests.single;
     _expectInputPreserved(tester);
 
+    debugPrint('payroll-phase: reconcile');
     await _tapVisible(tester, '保存結果を照合');
     expect(store.saved, isNull);
     expect(store.checkedRequests, [request]);
@@ -214,23 +219,27 @@ void main() {
     expect(store.writes, 1);
     expect(tester.takeException(), isNull);
 
-    await store.releaseCommit();
+    debugPrint('payroll-phase: commit');
+    store.releaseCommit();
+    debugPrint('payroll-phase: late reconcile after commit');
     await _tapVisible(tester, '保存結果を照合');
     expect(store.checkedRequests, [request, request]);
     expect(store.submittedRequests, [request]);
     expect(store.writes, 1);
     expect(find.text('本人確認の直後残高：120000円'), findsOneWidget);
     expect(tester.takeException(), isNull);
-  });
+    debugPrint('payroll-phase: late done');
+  }, timeout: const Timeout(Duration(minutes: 2)));
 
   testWidgets('a changed selection requires explicit acknowledgement', (
     tester,
   ) async {
+    debugPrint('payroll-phase: selection start');
     final store = _DelayedSnapshotStore();
-    addTearDown(store.releaseCommit);
     await _submitUncertain(tester, store, mobile ? 2 : 1);
     final request = store.submittedRequests.single;
-    await store.releaseCommit();
+    debugPrint('payroll-phase: selection commit');
+    store.releaseCommit();
     store.currentSelection = PayrollSnapshotRecord(
       id: 'synthetic-correction',
       ownerId: store.ownerId,
@@ -241,6 +250,7 @@ void main() {
       note: 'synthetic correction',
     );
 
+    debugPrint('payroll-phase: selection reconcile');
     await _tapVisible(tester, '保存結果を照合');
     expect(store.checkedRequests, [request]);
     expect(find.textContaining('照合時点の選択は別の記録'), findsOneWidget);
@@ -254,7 +264,7 @@ void main() {
     _expectInputPreserved(tester);
     expect(store.writes, 1);
     expect(tester.takeException(), isNull);
-
+    debugPrint('payroll-phase: acknowledge');
     await _tapVisible(tester, '現在の選択を確認して保留解除');
     expect(find.text('保存結果を照合'), findsNothing);
     expect(
@@ -266,5 +276,6 @@ void main() {
     expect(store.submittedRequests, [request]);
     expect(store.writes, 1);
     expect(tester.takeException(), isNull);
-  });
+    debugPrint('payroll-phase: selection done');
+  }, timeout: const Timeout(Duration(minutes: 2)));
 }
