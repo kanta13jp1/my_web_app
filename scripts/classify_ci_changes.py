@@ -20,6 +20,10 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "analysis_options.yaml",
         "l10n.yaml",
         "firebase.json",
+        "playwright.config.ts",
+        "playwright.business-execution.config.ts",
+        "package.json",
+        "package-lock.json",
     ),
     "web": (
         "lib/**",

@@ -63,6 +63,19 @@ class ClassifyCiChangesTest(unittest.TestCase):
         self.assertFalse(result["web"])
         self.assertFalse(result["deployable"])
 
+    def test_business_browser_config_requires_checks_without_deployment(self) -> None:
+        for path in [
+            "playwright.config.ts", "playwright.business-execution.config.ts",
+            "package.json", "package-lock.json",
+            "test/e2e/business_execution.spec.ts",
+            "test/fixtures/business_execution_app.dart",
+        ]:
+            with self.subTest(path=path):
+                result = classify([path])
+                self.assertTrue(result["flutter"])
+                self.assertFalse(result["web"])
+                self.assertFalse(result["deployable"])
+
     def test_app_code_needs_flutter_and_web(self) -> None:
         result = classify(["lib/pages/ai_university_page.dart"])
 

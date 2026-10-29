@@ -50,7 +50,7 @@ Lead: Codex。モデルルーティングで選択された実装workerが上記
 
 ## 実ブラウザーの最小業務E2E（追加・実行待ち）
 
-既存Playwright依存・設定の desktop/mobile Chrome を再利用する。テスト専用entrypoint `test/fixtures/business_execution_app.dart` は本物のパネル・SharedPreferences・Web Locksを使用し、架空ownerと固定時計だけを渡す。保存済みJSONの注入・mock store・アプリ内部メソッドの直接呼出しはしない。
+既存Playwright依存・desktop/mobile Chrome設定を専用 `playwright.business-execution.config.ts` で再利用する。通常 `playwright.config.ts` はこのfixture用specをtestIgnoreし、専用configがこの1本だけを明示収集する。テスト専用entrypoint `test/fixtures/business_execution_app.dart` は本物のパネル・SharedPreferences・Web Locksを使用し、架空ownerと固定時計だけを渡す。保存済みJSONの注入・mock store・アプリ内部メソッドの直接呼出しはしない。
 
 通常の `lib/main.dart` からfixtureを読み込まない。明示ビルドフラグとloopbackホストの両方がなければfixture自体も起動を拒否する。Playwrightもloopback以外へのナビゲーションを拒否する。実認証・本番ルーティング・他端末同期の検証ではない。
 
@@ -73,7 +73,11 @@ python3 scripts/serve_spa.py build/web --port 7360
 同じクラウド環境の別プロセスで：
 
 ~~~sh
-E2E_BASE_URL=http://127.0.0.1:7360 npx playwright test test/e2e/business_execution.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+E2E_BASE_URL=http://127.0.0.1:7360 npm run e2e:business-execution -- --forbid-only
 ~~~
 
-合計6ケースになる。既存Playwright設定のHTML/JSON report、失敗時trace/videoと代表状態のスクリーンショットを証拠にする。起動したサーバーは実行担当が終了させる。新規workflowや依存は追加しておらず、現時点ではこの専用fixtureのbuild/Playwright呼出しは既存CIへ未接続。CI担当が順番を確保した後に実行し、head SHA・結果・desktop/mobile画像を確認する必要がある。未実行のファイル追加をgate成功とは報告しない。
+合計6ケースになる。専用configのHTML/JSON report、失敗時trace/videoと代表状態のスクリーンショットを証拠にする。起動したサーバーは実行担当が終了させる。新規workflow・job・依存は追加しない。既存CIのStatic checks and webジョブに、この専用fixtureのbuild/Playwright呼出しを追加した。flutter=trueで実行し、失敗はジョブを失敗させる。通常のbuild/webを上書きしない別出力先を使用する。CI担当が順番を確保した後に実行し、head SHA・結果・desktop/mobile画像を確認する必要がある。未実行のファイル追加をgate成功とは報告しない。
+
+通常 `npm run e2e` はfixture specを自動収集しない。専用 `npm run e2e:business-execution` はBASE_URL未指定・非loopback・資格情報付きURLを設定読込時に拒否し、失敗をskipへ置換しない。専用configは通常configのtestIgnoreを明示的に解除し、この3ケースだけをdesktop/mobileで実行する。
+
+専用/通常Playwright configとnpm manifest/lockの変更もFlutter検査側に分類する。これによりテスト設定だけのPRでも専用E2Eを省略しない。web/deployableの分類は変えず、テスト設定変更を本番配信の理由にしない。classifier回帰テストを追加した。workflow配線を含め実行はまだ行っていない。
