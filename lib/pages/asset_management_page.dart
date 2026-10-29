@@ -23472,13 +23472,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'AI分析を生成中… (1分ほど) 完了すると上の要約が更新されます',
-                        style: TextStyle(
-                          color: color,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          height: 1.5,
+                      Flexible(
+                        child: Text(
+                          'AI分析を生成中… (1分ほど) 完了すると上の要約が更新されます',
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            height: 1.5,
+                          ),
                         ),
                       ),
                     ],
