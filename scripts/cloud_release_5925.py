@@ -35,11 +35,11 @@ class Blocked(RuntimeError):
     pass
 
 
-def command(args, *, data=None):
+def command(args, *, data=None, env=None):
     try:
         proc = subprocess.run(args, input=None if data is None else json.dumps(data),
             text=True, encoding="utf-8", errors="replace", stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, timeout=30, check=False)
+            stderr=subprocess.PIPE, timeout=30, check=False, env=env)
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise Blocked("command outcome unknown: " + type(exc).__name__) from exc
     return proc.returncode, proc.stdout, proc.stderr
@@ -99,7 +99,7 @@ def check_remote():
                 raise Blocked("live production base changed")
     except (OSError, ValueError, TypeError) as exc:
         raise Blocked("live production base unknown") from exc
-    runs = gh_json(API + "/actions/workflows/" + WORKFLOW + "/runs?branch=" + BRANCH + "&event=workflow_dispatch&per_page=100")
+    runs = gh_json(API + "/actions/runs?branch=" + BRANCH + "&per_page=100")
     items = runs.get("workflow_runs")
     if not isinstance(items, list) or runs.get("total_count") != len(items):
         raise Blocked("same-branch run inventory incomplete")
@@ -109,14 +109,19 @@ def check_remote():
 
 
 def slot(action, token=None):
-    args = ["powershell", "-NoProfile", "-File", SLOT, "-Action", action, "-TaskId", TASK]
-    if action == "request":
-        args += ["-Stage", "PR5925 release dispatch"]
-    if token is not None:
-        args += ["-Token", token]
-        if action == "release":
-            args += ["-WorkStopped"]
-    code, out, _ = command(args)
+    # The FIFO token is passed in the child environment, not process arguments.
+    env = os.environ.copy()
+    env.update({
+        "CODEX_RELEASE_SLOT": SLOT, "CODEX_RELEASE_ACTION": action,
+        "CODEX_RELEASE_TASK": TASK, "CODEX_RELEASE_TOKEN": token or "",
+    })
+    script = (
+        "& $env:CODEX_RELEASE_SLOT -Action $env:CODEX_RELEASE_ACTION "
+        "-TaskId $env:CODEX_RELEASE_TASK -Stage 'PR5925 release dispatch' "
+        "-Token $env:CODEX_RELEASE_TOKEN "
+        "-WorkStopped:($env:CODEX_RELEASE_ACTION -eq 'release')"
+    )
+    code, out, _ = command(["powershell", "-NoProfile", "-Command", script], env=env)
     if code:
         raise Blocked("shared FIFO operation failed or unknown: " + action)
     try:
@@ -189,7 +194,7 @@ def do_execute(journal):
     finally:
         released = slot("release", token)
         if released.get("result") != "released":
-            raise Blocked("shared FIFO release unconfirmed")
+            raise Blocked("shared FIFO release unconfirmed; reconcile journal before retry")
 
 
 def main(argv):

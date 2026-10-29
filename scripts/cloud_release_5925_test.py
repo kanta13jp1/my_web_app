@@ -97,7 +97,7 @@ class ReleaseTest(unittest.TestCase):
             endpoint + "/git/commits/" + release.HEAD: {"tree": {"sha": release.TREE}, "parents": [{"sha": release.PARENT}]},
             endpoint + "/compare/" + release.BASE + "..." + release.HEAD: {"files": [{"filename": p, "sha": h} for p, h in release.CHANGED.items()]},
             endpoint + "/pulls/5925": {"merged": True, "merge_commit_sha": release.MERGE},
-            endpoint + "/actions/workflows/" + release.WORKFLOW + "/runs?branch=" + release.BRANCH + "&event=workflow_dispatch&per_page=100": {"total_count": 0, "workflow_runs": []},
+            endpoint + "/actions/runs?branch=" + release.BRANCH + "&per_page=100": {"total_count": 0, "workflow_runs": []},
         }
         class FakeResponse(io.BytesIO):
             status = 200
@@ -121,6 +121,19 @@ class ReleaseTest(unittest.TestCase):
                 release.check_remote()
             responses[endpoint + "/rules/branches/" + release.BRANCH] = []
             responses[endpoint + "/git/commits/" + release.HEAD]["tree"]["sha"] = "0" * 40
+            with self.assertRaises(release.Blocked):
+                release.check_remote()
+            responses[endpoint + "/git/commits/" + release.HEAD]["tree"]["sha"] = release.TREE
+            cp = endpoint + "/compare/" + release.BASE + "..." + release.HEAD
+            responses[cp]["files"].append({"filename": "extra", "sha": "x"})
+            with self.assertRaises(release.Blocked):
+                release.check_remote()
+            responses[cp]["files"].pop()
+            run_path = endpoint + "/actions/runs?branch=" + release.BRANCH + "&per_page=100"
+            responses[run_path] = {"total_count": 1, "workflow_runs": [{"status": "queued"}]}
+            with self.assertRaises(release.Blocked):
+                release.check_remote()
+            responses[run_path] = {"total_count": 1, "workflow_runs": []}
             with self.assertRaises(release.Blocked):
                 release.check_remote()
 
