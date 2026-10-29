@@ -22,7 +22,7 @@ class _ReadOnlyStore implements AssetCalendarReflectionStore {
 
 Map<String, dynamic> _flow(String description) => {
       'id': 333,
-      'occurred_at': '2026-01-02T12:00:00Z',
+      'occurred_at': '2026-01-02T12:00:00',
       'action_type': 'expense',
       'description': description,
       'amount': 1000,
