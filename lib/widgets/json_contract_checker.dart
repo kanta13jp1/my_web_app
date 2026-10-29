@@ -15,7 +15,18 @@ class _JsonContractCheckerState extends State<JsonContractChecker> {
   bool? _isValid;
 
   @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_handleInputChange);
+  }
+
+  void _handleInputChange() {
+    setState(() => _isValid = null);
+  }
+
+  @override
   void dispose() {
+    _controller.removeListener(_handleInputChange);
     _controller.dispose();
     super.dispose();
   }
@@ -52,7 +63,6 @@ class _JsonContractCheckerState extends State<JsonContractChecker> {
                 border: OutlineInputBorder(),
                 labelText: '確認するテキスト',
               ),
-              onChanged: (_) => setState(() => _isValid = null),
             ),
             const SizedBox(height: 12),
             FilledButton(

@@ -20,7 +20,11 @@ void main() {
 
     await tester.ensureVisible(field);
     await tester.enterText(field, '```json\n{"sum":10}\n```');
-    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(field).controller!.text,
+      '```json\n{"sum":10}\n```',
+    );
     expect(find.text('入力全文はJSONとして読み取れます。'), findsNothing);
     await tester.ensureVisible(button);
     await tester.tap(button);
