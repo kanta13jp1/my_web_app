@@ -853,76 +853,112 @@ void main() {
   for (final direction in [TextDirection.ltr, TextDirection.rtl]) {
     testWidgets('expanded calendar scrolls and selects a day: $direction',
         (tester) async {
-      SharedPreferences.setMockInitialValues(<String, Object>{
-        'asset_management_display_mode_v1': 'full',
-      });
-      AssetSyncDirtyKeysStore.resetWriteLockForTest();
-      AssetRecurringTombstoneSyncService.resetSharedForTest();
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(360, 800);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-      final repository = _CalendarCountingRepository();
+      final previousErrorHandler = FlutterError.onError;
+      if (previousErrorHandler == null) {
+        throw StateError('test error handler unavailable');
+      }
+      var phase = 'setup';
+      FlutterError.onError = (details) {
+        try {
+          final error = details.exception;
+          if (error is FlutterError &&
+              error.toString().contains('RenderFlex') &&
+              error.toString().contains('overflowed by')) {
+            debugPrintSynchronously(
+              'calendar-overflow direction=$direction phase=$phase\n'
+              '${details.toString()}',
+            );
+          }
+        } catch (_) {
+          // Do not let diagnostic formatting alter the test result.
+        } finally {
+          previousErrorHandler(details);
+        }
+      };
       try {
-        expect(Supabase.instance.client.auth.currentUser, isNull);
-        await tester.pumpWidget(
-          MaterialApp(
-            builder: (context, child) => Directionality(
-              textDirection: direction,
-              child: MediaQuery(
-                data: MediaQuery.of(context).copyWith(
-                  textScaler: const TextScaler.linear(2),
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1': 'full',
+        });
+        AssetSyncDirtyKeysStore.resetWriteLockForTest();
+        AssetRecurringTombstoneSyncService.resetSharedForTest();
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(360, 800);
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+        final repository = _CalendarCountingRepository();
+        try {
+          expect(Supabase.instance.client.auth.currentUser, isNull);
+          phase = 'setup/pumpWidget';
+          await tester.pumpWidget(
+            MaterialApp(
+              builder: (context, child) => Directionality(
+                textDirection: direction,
+                child: MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    textScaler: const TextScaler.linear(2),
+                  ),
+                  child: child!,
                 ),
-                child: child!,
+              ),
+              home: AssetManagementPage(
+                assetLiabilityRepository: repository,
+                aiSummaryService: _ControlledAi(),
+                aiAnalysisHistoryService: _EmptyHistory(),
+                debugNow: DateTime(2026, 9, 6, 12),
+                debugCalendarNow: DateTime(2026, 9, 6, 12),
+                debugInitialAssetData: const <String, Map<String, double>>{
+                  '2026-09-06': <String, double>{'bank': 30000},
+                },
               ),
             ),
-            home: AssetManagementPage(
-              assetLiabilityRepository: repository,
-              aiSummaryService: _ControlledAi(),
-              aiAnalysisHistoryService: _EmptyHistory(),
-              debugNow: DateTime(2026, 9, 6, 12),
-              debugCalendarNow: DateTime(2026, 9, 6, 12),
-              debugInitialAssetData: const <String, Map<String, double>>{
-                '2026-09-06': <String, double>{'bank': 30000},
-              },
-            ),
-          ),
-        );
-        final scroll = find.byKey(const Key('asset_calendar_expanded_scroll'));
-        await _pumpUntil(tester, () => scroll.evaluate().isNotEmpty);
-        await tester.ensureVisible(scroll);
-        await tester.pump();
-        final controller =
-            tester.widget<SingleChildScrollView>(scroll).controller!;
-        expect(controller.position.maxScrollExtent, greaterThan(0));
-        await tester.drag(
-          scroll,
-          Offset(direction == TextDirection.ltr ? -600 : 600, 0),
-        );
-        await tester.pump(const Duration(milliseconds: 500));
-        expect(controller.offset, greaterThan(0));
+          );
+          final scroll = find.byKey(const Key('asset_calendar_expanded_scroll'));
+          phase = 'wait/scroll-visible';
+          await _pumpUntil(tester, () => scroll.evaluate().isNotEmpty);
+          phase = 'scroll/ensure-visible';
+          await tester.ensureVisible(scroll);
+          await tester.pump();
+          final controller =
+              tester.widget<SingleChildScrollView>(scroll).controller!;
+          expect(controller.position.maxScrollExtent, greaterThan(0));
+          phase = 'scroll/drag';
+          await tester.drag(
+            scroll,
+            Offset(direction == TextDirection.ltr ? -600 : 600, 0),
+          );
+          phase = 'pump/after-drag';
+          await tester.pump(const Duration(milliseconds: 500));
+          expect(controller.offset, greaterThan(0));
 
-        final day = find.byKey(const Key('asset_calendar_day_5'));
-        expect(day, findsOneWidget);
-        final viewportRect = tester.getRect(scroll);
-        final dayRect = tester.getRect(day);
-        expect(dayRect.left, greaterThanOrEqualTo(viewportRect.left - 1));
-        expect(dayRect.right, lessThanOrEqualTo(viewportRect.right + 1));
-        await tester.ensureVisible(day);
-        await tester.pump();
-        final savesBeforeSelection = repository.saveCalls;
-        await tester.tap(day);
-        await tester.pump();
-        await tester.pump(const Duration(seconds: 3));
-        expect(find.text('9月5日 のイベント'), findsOneWidget);
-        expect(repository.saveCalls, savesBeforeSelection);
-        expect(Supabase.instance.client.auth.currentUser, isNull);
-        expect(tester.takeException(), isNull);
+          final day = find.byKey(const Key('asset_calendar_day_5'));
+          expect(day, findsOneWidget);
+          final viewportRect = tester.getRect(scroll);
+          final dayRect = tester.getRect(day);
+          expect(dayRect.left, greaterThanOrEqualTo(viewportRect.left - 1));
+          expect(dayRect.right, lessThanOrEqualTo(viewportRect.right + 1));
+          phase = 'scroll/ensure-day';
+          await tester.ensureVisible(day);
+          await tester.pump();
+          final savesBeforeSelection = repository.saveCalls;
+          phase = 'tap/day';
+          await tester.tap(day);
+          phase = 'pump/after-tap';
+          await tester.pump();
+          phase = 'wait/after-tap';
+          await tester.pump(const Duration(seconds: 3));
+          expect(find.text('9月5日 のイベント'), findsOneWidget);
+          expect(repository.saveCalls, savesBeforeSelection);
+          expect(Supabase.instance.client.auth.currentUser, isNull);
+          expect(tester.takeException(), isNull);
+        } finally {
+          phase = 'cleanup';
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump(const Duration(seconds: 3));
+        }
       } finally {
-        await tester.pumpWidget(const SizedBox.shrink());
-        await tester.pump(const Duration(seconds: 3));
+        FlutterError.onError = previousErrorHandler;
       }
     });
   }
