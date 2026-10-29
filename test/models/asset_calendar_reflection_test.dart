@@ -69,6 +69,20 @@ void main() {
 
     expect(kinds('外食、飲酒なし'), {AssetReflectionKind.dining});
     expect(kinds('外食、ビール、飲酒なし'), {AssetReflectionKind.dining});
+    expect(kinds('外食、飲酒なし、ビールを飲んだことはない'), {
+      AssetReflectionKind.dining,
+    });
+    expect(kinds('外食、ビールを飲んだことはない'), {
+      AssetReflectionKind.dining,
+    });
+    expect(kinds('外食、ビールを飲んだことはない、ハイボールを飲んだ'), {
+      AssetReflectionKind.dining,
+      AssetReflectionKind.drinkingOut,
+    });
+    expect(kinds('外食、飲酒なし、飲みに行った'), {
+      AssetReflectionKind.dining,
+      AssetReflectionKind.drinkingOut,
+    });
     expect(AssetCalendarReflection.fromFlows([flow('居酒屋で食事、飲酒なし')]), isEmpty);
     expect(kinds('外食、ビール購入のみ'), {
       AssetReflectionKind.dining,
