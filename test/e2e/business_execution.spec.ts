@@ -335,7 +335,9 @@ test('two real tabs retain a stale draft and require confirmation before replaci
       await click(second, 'この日の記録を保存');
       await expect(button(second, '保存結果を再読み込み')).toBeEnabled();
       await click(second, '保存結果を再読み込み');
+      await reveal(second, button(second, 'この日の記録を更新'));
       await expect(button(second, 'この日の記録を更新')).toBeDisabled();
+      await reveal(second, button(second, '月次の振り返りを保存'));
       await expect(button(second, '月次の振り返りを保存')).toBeDisabled();
       await inputValue(second, '日次の振り返り・次の一手', 'タブBの日次下書き');
       await inputValue(second, reflectionLabel, 'タブBの月次下書き');
