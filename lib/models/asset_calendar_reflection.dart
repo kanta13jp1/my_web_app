@@ -138,7 +138,7 @@ class AssetCalendarReflection {
       final denial = RegExp(
         r'^\s*(?:は|を|が)?\s*(?:なし|無し|しな|していな|せず|せな|'
         r'飲まな|飲まず|買わな|買わず|購入しな|購入せず|購入なし|'
-        r'に行かな|かなかった)',
+        r'には行かな|に行かな|かない|かなかった)',
       );
       return pattern.allMatches(description).any(
             (match) => !denial.hasMatch(description.substring(match.end)),
