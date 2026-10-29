@@ -199,7 +199,7 @@ class AssetCalendarReflection {
           r'(?:酒|ビール|ハイボール)\s*(?:は|を)?\s*'
           r'(?:飲まず|飲まな|飲んだこと(?:は|が)?ない)|'
           r'(?:ビール|ハイボール)\s*(?:を|は)?\s*購入'
-          r'(?:してから|して|したが)\s*飲んだこと(?:は|が)?ない',
+          r'(?:してから|して|したが|せず)\s*飲んだこと(?:は|が)?ない',
         ).hasMatch(context);
         if (!noDrinking) return true;
         return drinkWithoutPurchase || hasAffirmedMatch(
