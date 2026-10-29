@@ -851,8 +851,9 @@ void main() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();
       });
-      expect(Supabase.instance.client.auth.currentUser, isNull);
-      await tester.pumpWidget(
+      try {
+        expect(Supabase.instance.client.auth.currentUser, isNull);
+        await tester.pumpWidget(
         MaterialApp(
           builder: (context, child) => Directionality(
             textDirection: direction,
@@ -901,9 +902,11 @@ void main() {
       await tester.pump();
       expect(find.text('9月5日 のイベント'), findsOneWidget);
       expect(Supabase.instance.client.auth.currentUser, isNull);
-      expect(tester.takeException(), isNull);
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pump(const Duration(seconds: 3));
+        expect(tester.takeException(), isNull);
+      } finally {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(seconds: 3));
+      }
     });
   }
 }
