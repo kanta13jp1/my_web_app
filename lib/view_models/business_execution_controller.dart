@@ -131,7 +131,8 @@ class BusinessExecutionController extends ChangeNotifier {
       return false;
     } on UnsupportedError {
       _showError(
-          'この環境では安全に保存できません。Web Locksに対応したHTTPSブラウザーを利用してください。入力は残しています。');
+        'この環境では安全に保存できません。Web Locksに対応したHTTPSブラウザーを利用してください。入力は残しています。',
+      );
       return false;
     } catch (_) {
       _showError(

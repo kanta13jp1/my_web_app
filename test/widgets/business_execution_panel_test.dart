@@ -56,8 +56,11 @@ Future<void> tapText(WidgetTester tester, String text) async {
   await tester.pumpAndSettle();
 }
 
-Widget app(BusinessExecutionStore store,
-        {String user = 'a', double scale = 1}) =>
+Widget app(
+  BusinessExecutionStore store, {
+  String user = 'a',
+  double scale = 1,
+}) =>
     MaterialApp(
       home: Scaffold(
         body: MediaQuery(

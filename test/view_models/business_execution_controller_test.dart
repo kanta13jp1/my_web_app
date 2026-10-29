@@ -122,8 +122,10 @@ void main() {
     await store.write('a', null, raw, isCurrent: () => true);
     expect(await store.read('a'), raw);
     expect(await store.read('b'), isNull);
-    await expectLater(store.write('a', null, 'other', isCurrent: () => true),
-        throwsStateError);
+    await expectLater(
+      store.write('a', null, 'other', isCurrent: () => true),
+      throwsStateError,
+    );
     expect(await store.read('a'), raw);
   });
   test('archive retains history and permits the next active plan', () async {

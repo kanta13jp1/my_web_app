@@ -133,17 +133,31 @@ class _BusinessExecutionPlanFormState extends State<BusinessExecutionPlanForm> {
         _field(_owner, '担当者（連絡は送信されません）', limit: 80, enabled: !widget.saving),
         _field(_outcome, '成果指標（KPI）例：月内の相談申込数', enabled: !widget.saving),
         _field(_outcomeUnit, '成果の単位 例：件', limit: 20, enabled: !widget.saving),
-        _field(_outcomeTarget, '期間終了時の成果目標',
-            numeric: true, limit: 20, enabled: !widget.saving),
+        _field(
+          _outcomeTarget,
+          '期間終了時の成果目標',
+          numeric: true,
+          limit: 20,
+          enabled: !widget.saving,
+        ),
         const Text('2. 毎日の行動'),
         const SizedBox(height: 12),
         _field(_action, '行動指標（KDI）例：顧客へのヒアリング', enabled: !widget.saving),
         _field(_actionUnit, '行動の単位 例：回', limit: 20, enabled: !widget.saving),
-        _field(_dailyTarget, '1日あたりの行動目標',
-            numeric: true, limit: 20, enabled: !widget.saving),
+        _field(
+          _dailyTarget,
+          '1日あたりの行動目標',
+          numeric: true,
+          limit: 20,
+          enabled: !widget.saving,
+        ),
         _field(_start, '開始日 YYYY-MM-DD', limit: 10, enabled: !widget.saving),
-        _field(_due, '期限 YYYY-MM-DD（開始日と同じ月）',
-            limit: 10, enabled: !widget.saving),
+        _field(
+          _due,
+          '期限 YYYY-MM-DD（開始日と同じ月）',
+          limit: 10,
+          enabled: !widget.saving,
+        ),
         const Text(
           '開始日から期限まで毎日を対象にします。休日も含みます。'
           '成果は「大きいほどよい」指標の期間内累計値や到達値を使います。'
