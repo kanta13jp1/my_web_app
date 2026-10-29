@@ -85,6 +85,11 @@ void main() {
     });
     expect(AssetCalendarReflection.fromFlows([flow('酒購入しなかった')]), isEmpty);
     expect(AssetCalendarReflection.fromFlows([flow('外食しなかった')]), isEmpty);
+    expect(AssetCalendarReflection.fromFlows([flow('飲み屋には行かなかった')]), isEmpty);
+    expect(AssetCalendarReflection.fromFlows([flow('飲みに行かない')]), isEmpty);
+    expect(kinds('飲み屋には行かなかったが居酒屋に行った'), {
+      AssetReflectionKind.drinkingOut,
+    });
 
     final events = AssetCalendarReflection.fromFlows([
       flow('外食、飲酒なし', id: 333),
