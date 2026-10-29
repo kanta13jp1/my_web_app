@@ -222,6 +222,8 @@ def do_execute(journal):
         raise Blocked("FIFO ownership/token unknown; do not release or dispatch")
     try:
         check_remote()
+        # Renewal accepts an expired matching token, so first prove it is live.
+        verify_fifo_lease(slot("status"), token, "status")
         verify_fifo_lease(slot("renew", token), token, "renewed")
         check_send_fence()
         operation_id = secrets.token_hex(16)

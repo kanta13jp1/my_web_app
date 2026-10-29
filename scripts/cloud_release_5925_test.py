@@ -211,13 +211,13 @@ class ReleaseTest(unittest.TestCase):
                 self.calls = []
                 def changing_slot(action, token=None):
                     result = self.slot(action, token)
-                    if action == "status" and mode == "expired_flag":
+                    if action == "status" and journal.exists() and mode == "expired_flag":
                         result["expired"] = True
-                    if action == "status" and mode == "elapsed_clock":
+                    if action == "status" and journal.exists() and mode == "elapsed_clock":
                         result["state"]["owner"]["expires"] = "2026-10-30T00:00:00+00:00"
-                    if action == "status" and mode == "other_owner":
+                    if action == "status" and journal.exists() and mode == "other_owner":
                         result["state"]["owner"]["task"] = "someone-else"
-                    if action == "status" and mode == "other_token":
+                    if action == "status" and journal.exists() and mode == "other_token":
                         result["state"]["owner"]["token"] = "not-owned"
                     if action == "renew" and mode == "renew_expired" and journal.exists():
                         result["expired"] = True
@@ -235,6 +235,25 @@ class ReleaseTest(unittest.TestCase):
                 self.assertEqual(marker["operation_id"], pending["operation_id"])
                 self.assertEqual(marker["status"], "aborted_before_dispatch")
                 self.assertEqual(self.calls[-1], ("slot", "release", "fake"))
+
+
+    def test_preflight_expiry_never_renews_or_sends(self):
+        from datetime import datetime, timezone
+
+        def expired_after_preflight(action, token=None):
+            result = self.slot(action, token)
+            if action == "status":
+                result["state"]["owner"]["expires"] = "2026-10-30T00:00:00+00:00"
+            return result
+        with patch.object(release, "slot", expired_after_preflight), \
+             patch.object(release, "utc_now", return_value=datetime(2026, 10, 30, 0, 1, tzinfo=timezone.utc)), \
+             patch.object(release, "check_remote"), patch.object(release, "command") as send:
+            with self.assertRaisesRegex(release.Blocked, "expired"):
+                release.do_execute(self.journal)
+        send.assert_not_called()
+        self.assertFalse(self.journal.exists())
+        self.assertFalse(any(call[0] == "slot" and call[1] == "renew" for call in self.calls))
+        self.assertEqual(self.calls[-1], ("slot", "release", "fake"))
 
     def test_legacy_cli_routes_only_explicit_release_switch(self):
         with patch.object(release, "main", return_value=7) as m:
