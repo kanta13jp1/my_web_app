@@ -212,7 +212,10 @@ Future<void> _pumpUntil(WidgetTester tester, bool Function() ready) async {
   expect(ready(), isTrue, reason: 'Expected UI transition within ten seconds');
 }
 
-void main() {
+void main({
+  void Function(String direction, String phase, FlutterErrorDetails details)?
+      onCalendarOverflow,
+}) {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -865,6 +868,7 @@ void main() {
           if (error is FlutterError &&
               error.toString().contains('RenderFlex') &&
               error.toString().contains('overflowed by')) {
+            onCalendarOverflow?.call(direction.toString(), phase, details);
             debugPrintSynchronously(
               'calendar-overflow direction=$direction phase=$phase\n'
               '${details.toString()}',
