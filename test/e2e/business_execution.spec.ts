@@ -365,17 +365,28 @@ test('a fixture redirect is blocked before any destination navigation',
         external.push(request.url());
       }
     });
-    await expect(page.goto(fixtureOrigin() + '/__business_execution_redirect_probe'))
-      .rejects.toThrow();
     const blocked = blockedRequests.get(context);
+    // An aborted navigation can still commit Chrome's error page after goto
+    // rejects. Isolate and close that page before navigating the normal fixture.
+    const probe = await context.newPage();
+    try {
+      await expect(probe.goto(fixtureOrigin() + '/__business_execution_redirect_probe'))
+        .rejects.toThrow();
+      expect(blocked).toEqual([
+        'Redirect or wrong fixture identity: /__business_execution_redirect_probe',
+      ]);
+      expect(external).toEqual([]);
+    } finally {
+      await probe.close();
+    }
+    expect(probe.isClosed()).toBe(true);
+    // The original page and probe share the same context-wide network guard.
+    assertFixturePage(page);
+    await open(page);
+    expect(external).toEqual([]);
     expect(blocked).toEqual([
       'Redirect or wrong fixture identity: /__business_execution_redirect_probe',
     ]);
-    expect(external).toEqual([]);
-    // Confirm normal fixture navigation still works after the rejected request.
-    await open(page);
-    expect(external).toEqual([]);
-    expect(blocked).toHaveLength(1);
     await info.attach('expected-redirect-denial', {
       body: JSON.stringify({ blocked, external, restoredUrl: page.url() }, null, 2),
       contentType: 'application/json',
