@@ -1344,7 +1344,7 @@ session-start-check/adaptive-model-router適用。Jev astra/mediumはadvisory、
 
 ### 前回差分・分析・改善案
 
-上位5件は同じ、X8→6、Amazon6→7、akiko7→8、Diamondが9に再登場し対象が1ページ目から退出。対象の可視titleは「人生を経営するAIライフマネジメントアプリ: 自分株式会社と ...」へ短縮・並替え、snippetとサイト名Google表示は継続。広告・強調スニペットなし。AI概要は画像ボタンなし、CEO/収支/資産と主体性・依存脱却を説明、法人設立・マイクロ法人を別文脈として補足。可視参照moto/Amazon/R25/freee、カードmoto/Amazon（全参照一覧ではない）。PAA4問と自然検索5件後の位置、サイトリンク、Amazon価格/評価、関連検索を確認。
+上位5件は同じ、X8→6、Amazon6→7、akiko7→8、Diamondが9に再登場し対象が1ページ目から退出。対象の可視titleは「人生を経営するAIライフマネジメントアプリ: 自分株式会社と ...」へ短縮・並替え、snippetとサイト名Google表示は継続。広告・強調スニペットなし。AI概要は画像ボタンなし、CEO/収支/資産と主体性・依存脱却を説明、法人設立・マイクロ法人を別文脈として補足。可視参照moto/Amazon/R25/フリー、カードmoto/Amazon（全参照一覧ではない）。PAA4問と自然検索5件後の位置、サイトリンク、Amazon価格/評価、関連検索を確認。
 
 [moto](https://note.com/recruit_man_note/n/n1032c32fbc36)は定義→収支/資産→実践と著者/日付/書籍導線、[IFA](https://www.ifa-japan.co.jp/自分株式会社という考え方/)は人的資本と長期自己経営、著者・書籍・会社方針を提示。[Diamond](https://diamond.jp/articles/-/78525?page=3)は法人化/書籍連載の意図。[対象理念](https://my-web-app-b67f4.web.app/philosophy)は定義、人的資本、P/L/B/S、運用例、FAQ、法人設立を推奨しないことを既に説明する。Web本文はキャッシュを含む。5ページHTTP初期HTMLのtitle/H1/canonical/内部リンク/JSON-LD種別を当日監査しJSONLへ記録。競合の文章・画像や古い税制数値は転用しない。
 
