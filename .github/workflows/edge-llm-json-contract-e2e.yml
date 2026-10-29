@@ -1,0 +1,51 @@
+name: Edge LLM JSON contract browser test
+
+on:
+  pull_request:
+    paths:
+      - lib/pages/edge_llm_playground_page.dart
+      - lib/widgets/json_contract_checker.dart
+      - integration_test/edge_llm_json_contract_test.dart
+      - .github/workflows/edge-llm-json-contract-e2e.yml
+
+permissions: {}
+
+concurrency:
+  group: edge-llm-json-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Resolve test dependencies
+        run: flutter pub get
+      - name: Run synthetic page flow at desktop and mobile widths
+        shell: bash
+        run: |
+          set -euo pipefail
+          chromedriver --port=4444 > /tmp/edge-json-chromedriver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:4444/status > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:4444/status > /dev/null
+          for dimensions in 1440x900@1 393x851@2.75; do
+            flutter drive --driver=test_driver/asset_ai_integration.dart \
+              --target=integration_test/edge_llm_json_contract_test.dart \
+              --browser-dimension="$dimensions" \
+              -d web-server --browser-name=chrome --headless
+          done
