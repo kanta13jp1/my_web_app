@@ -1,4 +1,6 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/business_execution.dart';
 import 'package:my_web_app/services/business_execution_store.dart';
@@ -424,4 +426,144 @@ void main() {
       findsNothing,
     );
   });
+  for (final detail in [false, true]) {
+    final screen = detail ? 'detail' : 'plan';
+    testWidgets('user scroll keeps $screen drafts and dismisses editing',
+        (tester) async {
+      tester.view.physicalSize = const Size(320, 500);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final store = fakes.MemoryExecutionStore();
+      if (detail) {
+        store.data['a'] = BusinessExecutionCodec.encode([fixtures.plan()]);
+      }
+      final storedBefore = store.data['a'];
+      await tester.pumpWidget(app(store, scale: 2));
+      await tester.pumpAndSettle();
+      await tapText(tester, detail ? '相談申込数' : '月の実行計画を作る');
+      final firstLabel = detail ? '日次の振り返り・次の一手' : '解決したい課題';
+      final lastLabel = detail
+          ? '月次の振り返り（続けること・変えること・次月の行動）'
+          : '行動の単位 例：回';
+      await enter(tester, firstLabel, 'スクロール前の未保存入力');
+      final firstField = find.widgetWithText(
+        TextField,
+        firstLabel,
+        skipOffstage: false,
+      );
+      final firstController =
+          tester.widget<TextField>(firstField).controller!;
+      await enter(tester, lastLabel, '回');
+      final lastField = find.widgetWithText(
+        TextField,
+        lastLabel,
+        skipOffstage: false,
+      );
+      final lastController = tester.widget<TextField>(lastField).controller!;
+      final editingFocus = FocusManager.instance.primaryFocus!;
+      expect(editingFocus.hasFocus, isTrue);
+
+      // A real pointer wheel causes a user-scroll notification, unlike jumpTo.
+      await tester.sendEventToBinding(
+        PointerScrollEvent(
+          position: tester.getCenter(find.byType(BusinessExecutionPanel)),
+          scrollDelta: const Offset(0, -10000),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(editingFocus.hasFocus, isFalse);
+      expect(tester.testTextInput.isVisible, isFalse);
+      expect(tester.getRect(firstField).top, greaterThan(750));
+
+      await reveal(tester, firstField);
+      expect(
+        tester.widget<TextField>(firstField).controller,
+        same(firstController),
+      );
+      expect(firstController.text, 'スクロール前の未保存入力');
+      await reveal(tester, lastField);
+      expect(
+        tester.widget<TextField>(lastField).controller,
+        same(lastController),
+      );
+      expect(lastController.text, '回');
+      expect(store.data['a'], storedBefore);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('caret selection and keyboard focus scrolling keep editing',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(app(fakes.MemoryExecutionStore()));
+    await tester.pumpAndSettle();
+    await tapText(tester, '月の実行計画を作る');
+    await enter(tester, '行動の単位 例：回', '回数');
+    final field = find.widgetWithText(TextField, '行動の単位 例：回');
+    final controller = tester.widget<TextField>(field).controller!;
+    final editingFocus = FocusManager.instance.primaryFocus!;
+
+    // Programmatic visibility changes must not be treated as user scrolling.
+    await tester.ensureVisible(
+      find.widgetWithText(TextField, '開始日 YYYY-MM-DD'),
+    );
+    await tester.pumpAndSettle();
+    expect(editingFocus.hasFocus, isTrue);
+    await reveal(tester, field);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pumpAndSettle();
+    expect(editingFocus.hasFocus, isTrue);
+    expect(controller.text, '回数');
+    expect(controller.selection.baseOffset, 1);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus, isNot(same(editingFocus)));
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: '4',
+        selection: TextSelection.collapsed(offset: 1),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final next = find.widgetWithText(TextField, '1日あたりの行動目標');
+    expect(tester.widget<TextField>(next).controller!.text, '4');
+    expect(controller.text, '回数');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('scrolling inside a multiline field keeps its editing focus',
+      (tester) async {
+    final store = fakes.MemoryExecutionStore()
+      ..data['a'] = BusinessExecutionCodec.encode([fixtures.plan()]);
+    await tester.pumpWidget(app(store));
+    await tester.pumpAndSettle();
+    await tapText(tester, '相談申込数');
+    final draft = List.filled(20, '段落').join('\n');
+    await enter(tester, '日次の振り返り・次の一手', draft);
+    final field = find.widgetWithText(TextField, '日次の振り返り・次の一手');
+    final editingFocus = FocusManager.instance.primaryFocus!;
+    final inner = tester.state<ScrollableState>(
+      find.descendant(of: field, matching: find.byType(Scrollable)),
+    );
+    final before = inner.position.pixels;
+    expect(before, greaterThan(0));
+    await tester.sendEventToBinding(
+      PointerScrollEvent(
+        position: tester.getCenter(field),
+        scrollDelta: const Offset(0, -60),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(inner.position.pixels, lessThan(before));
+    expect(editingFocus.hasFocus, isTrue);
+    expect(tester.widget<TextField>(field).controller!.text, draft);
+    expect(tester.takeException(), isNull);
+  });
+
 }

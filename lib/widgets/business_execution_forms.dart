@@ -52,7 +52,8 @@ class BusinessExecutionPlanForm extends StatefulWidget {
       _BusinessExecutionPlanFormState();
 }
 
-class _BusinessExecutionPlanFormState extends State<BusinessExecutionPlanForm> {
+class _BusinessExecutionPlanFormState extends State<BusinessExecutionPlanForm>
+    with AutomaticKeepAliveClientMixin<BusinessExecutionPlanForm> {
   final _issue = TextEditingController();
   final _owner = TextEditingController(text: '自分');
   final _outcome = TextEditingController();
@@ -65,6 +66,10 @@ class _BusinessExecutionPlanFormState extends State<BusinessExecutionPlanForm> {
   final _due = TextEditingController();
   String? _error;
   late final String _id;
+
+  // Scrolling outside the ListView cache must not discard unsaved input.
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -118,6 +123,7 @@ class _BusinessExecutionPlanFormState extends State<BusinessExecutionPlanForm> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -197,7 +203,8 @@ class BusinessExecutionDetail extends StatefulWidget {
       _BusinessExecutionDetailState();
 }
 
-class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
+class _BusinessExecutionDetailState extends State<BusinessExecutionDetail>
+    with AutomaticKeepAliveClientMixin<BusinessExecutionDetail> {
   final _actual = TextEditingController();
   final _outcomeActual = TextEditingController();
   final _note = TextEditingController();
@@ -208,6 +215,10 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
   String _reflectionBaseline = '';
   bool _reportConflict = false;
   bool _reflectionConflict = false;
+
+  // Scrolling outside the ListView cache must not discard unsaved input.
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -322,6 +333,7 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final plan = widget.plan;
     final now = widget.controller.now();
     final dates = plan.expectedDates(now);
