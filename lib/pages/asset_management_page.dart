@@ -18529,6 +18529,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
   }
+
   Widget _buildAssetCalendarCell(
     AssetCalendarDaySummary? day,
     DateTime today, {
@@ -18658,6 +18659,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
   }
+
   String _formatCalendarAmount(double value) {
     if (value >= 10000) {
       final man = value / 10000;
@@ -22257,6 +22259,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
   }
+
   Widget _buildAssetLiabilitySyncPanel() {
     final syncEnabled = _assetLiabilityRepository.supabaseSyncEnabled;
     final statusColor = _assetLiabilityManualSyncStatusColor(
@@ -23109,6 +23112,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
   }
+
   Widget _buildDrinkChoiceButton({
     required String label,
     required bool selected,
@@ -23357,6 +23361,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
   }
+
   Widget _buildAssetManagementAiSummaryPanel(
     AssetManagementInsightReport report,
   ) {
@@ -25977,6 +25982,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       builder: (_) => DebtProgressShareDialog(data: data, month: _now),
     );
   }
+
   Widget _buildAssetManagementMonthlyDebtTrendList(
     List<AssetDebtTrendInsight> insights, [
     AssetLiabilityWorkbook? workbook,
@@ -27197,6 +27203,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
   }
+
   Widget _buildCardBillingReviewRiskNotice(
     AssetLiabilityCardBillingReviewData review,
   ) {
@@ -32035,6 +32042,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
   }
+
   Widget _buildPaidCheckbox(AssetLiabilityDebtRow row) {
     if (row.includedInBillingAccount) {
       return _buildTextStatusChip(
@@ -34475,6 +34483,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
   }
+
   Widget _buildSubscriptionCard() {
     final visibleSubscriptions = _subscriptionsForMonth(
       _selectedSubscriptionHistoryMonth,
