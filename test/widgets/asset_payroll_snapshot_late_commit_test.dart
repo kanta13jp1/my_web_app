@@ -31,7 +31,8 @@ class _DelayedCommitStore extends SyntheticSnapshotStore {
 
   Future<void> releaseCommit() async {
     if (!commitGate.isCompleted) commitGate.complete();
-    await serverCommit;
+    final commit = serverCommit;
+    if (commit != null) await commit;
   }
 }
 
@@ -60,7 +61,9 @@ void main() {
       expect(store.checkedRequests, [originalRequest]);
       expect(store.saved, isNull);
       expect(
-        tester.widget<TextButton>(find.widgetWithText(TextButton, '再読込')).onPressed,
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, '再読込'))
+            .onPressed,
         isNull,
         reason: 'A read before commit cannot prove that the request failed.',
       );
