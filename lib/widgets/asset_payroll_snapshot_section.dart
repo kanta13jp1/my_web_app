@@ -236,8 +236,7 @@ class _AssetPayrollSnapshotSectionState
     } catch (_) {
       if (mounted) {
         setState(() {
-          _error =
-              '保存結果が未確認です。画面を閉じず、再送せず「保存結果を照合」を押してください。';
+          _error = '保存結果が未確認です。画面を閉じず、再送せず「保存結果を照合」を押してください。';
         });
       }
     } finally {
@@ -410,9 +409,7 @@ class _AssetPayrollSnapshotSectionState
                   child: const Text('翌月'),
                 ),
                 TextButton(
-                  onPressed: !_busy &&
-                          _pendingGoal == null &&
-                          _pending == null
+                  onPressed: !_busy && _pendingGoal == null && _pending == null
                       ? () {
                           _pending = null;
                           _load();
