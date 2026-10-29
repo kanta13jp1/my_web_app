@@ -515,10 +515,33 @@ jobs:
           input_commit="$(git rev-parse HEAD)"
           [[ "$input_commit" =~ ^[0-9a-f]{40}$ ]]
           [[ "$PR_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]
-          test "$input_commit" = "$GITHUB_SHA"
+          # A shallow merge checkout has parent IDs in its raw commit header,
+          # even when the parent commit objects have not been fetched yet.
+          if [[ "$input_commit" = "$PR_HEAD_SHA" ]]; then
+            checkout_kind=pr-head
+          else
+            test "$input_commit" = "$GITHUB_SHA"
+            mapfile -t checkout_parents < <(
+              git cat-file -p "$input_commit" | sed -n '1,/^$/s/^parent //p'
+            )
+            test "${#checkout_parents[@]}" -eq 2
+            test "${checkout_parents[1]}" = "$PR_HEAD_SHA"
+            checkout_kind=pr-merge
+          fi
+          if ! git cat-file -e "${PR_HEAD_SHA}^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=1 origin "$PR_HEAD_SHA"
+          fi
+          test "$(git cat-file -t "$PR_HEAD_SHA")" = commit
           for file in "${files[@]}"; do
             git ls-files --error-unmatch -- "$file" > /dev/null
-            test -f "$file" && test ! -L "$file"
+            test -f "$file"
+            test ! -L "$file"
+            source_blob="$(git rev-parse "$input_commit:$file")"
+            pr_blob="$(git rev-parse "$PR_HEAD_SHA:$file")"
+            if [[ "$source_blob" != "$pr_blob" ]]; then
+              echo "::error::Formatter input differs from the fixed PR head: $file"
+              exit 1
+            fi
           done
           # Refuse to overwrite any target that was already changed by another step.
           git diff --quiet "$input_commit" -- "${files[@]}"
@@ -528,6 +551,7 @@ jobs:
           mkdir -p "$artifact_dir/files"
           printf '%s\n' "$input_commit" > "$artifact_dir/tested-commit.txt"
           printf '%s\n' "$PR_HEAD_SHA" > "$artifact_dir/pr-head-sha.txt"
+          printf '%s\n' "$checkout_kind" > "$artifact_dir/checkout-kind.txt"
           printf '%s\n' "$GITHUB_RUN_ID" > "$artifact_dir/run-id.txt"
           printf '%s\n' "$GITHUB_RUN_ATTEMPT" > "$artifact_dir/run-attempt.txt"
           for file in "${files[@]}"; do
