@@ -216,8 +216,8 @@ void main() {
       failRestoration
           ? 'failed monthly restoration never generates or saves AI input'
           : ownershipChanges
-          ? 'changed user never displays or saves an in-flight AI response'
-          : 'slow monthly restoration blocks automatic and manual AI input',
+              ? 'changed user never displays or saves an in-flight AI response'
+              : 'slow monthly restoration blocks automatic and manual AI input',
       (tester) async {
         SharedPreferences.setMockInitialValues(<String, Object>{
           'asset_management_display_mode_v1': 'full',
@@ -322,8 +322,8 @@ void main() {
       SystemChannels.platform,
       (call) async {
         if (call.method == 'Clipboard.setData') {
-          clipboardText = (call.arguments as Map<Object?, Object?>)['text']
-              ?.toString();
+          clipboardText =
+              (call.arguments as Map<Object?, Object?>)['text']?.toString();
         }
         return null;
       },
@@ -484,8 +484,8 @@ void main() {
       SystemChannels.platform,
       (call) async {
         if (call.method == 'Clipboard.setData') {
-          clipboardText = (call.arguments as Map<Object?, Object?>)['text']
-              ?.toString();
+          clipboardText =
+              (call.arguments as Map<Object?, Object?>)['text']?.toString();
         }
         return null;
       },
@@ -593,8 +593,8 @@ void main() {
       SystemChannels.platform,
       (call) async {
         if (call.method == 'Clipboard.setData') {
-          clipboardText = (call.arguments as Map<Object?, Object?>)['text']
-              ?.toString();
+          clipboardText =
+              (call.arguments as Map<Object?, Object?>)['text']?.toString();
         }
         return null;
       },
