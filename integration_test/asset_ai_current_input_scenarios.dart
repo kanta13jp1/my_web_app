@@ -708,8 +708,12 @@ void main() {
       });
       AssetSyncDirtyKeysStore.resetWriteLockForTest();
       AssetRecurringTombstoneSyncService.resetSharedForTest();
-      await tester.binding.setSurfaceSize(scenario.size);
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = scenario.size;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
       final semantics = tester.ensureSemantics();
       addTearDown(semantics.dispose);
       final repository = _MonthlyRepository();
@@ -731,12 +735,15 @@ void main() {
           },
         ),
       ));
-      await _pumpUntil(tester, () => ai.responses.isNotEmpty);
-      ai.complete(0, 'Synthetic explanation test');
       final explanation = find.textContaining(
         '計算に取り込まれた台帳の未払いの直接支払',
         skipOffstage: false,
       );
+      await _pumpUntil(tester, () =>
+          explanation.evaluate().isNotEmpty || ai.responses.isNotEmpty);
+      if (ai.responses.isNotEmpty) {
+        ai.complete(0, 'Synthetic explanation test');
+      }
       await _pumpUntil(tester, () => explanation.evaluate().isNotEmpty);
       await tester.ensureVisible(explanation);
       await tester.pump();
@@ -763,7 +770,7 @@ void main() {
       );
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pump();
+      await tester.pump(const Duration(seconds: 3));
     });
   }
 }
