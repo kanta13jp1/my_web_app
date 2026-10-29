@@ -13427,9 +13427,7924 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   '削除しますか？過去の月次履歴・取引履歴は残ります。'
               : '「${cost.name}」を削除しますか？',
         ),
-        a
-... 312443 bytes omitted ...
-completedRuleIds.length}/${rules.length}',
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await _deleteRecurringFixedCost(cost);
+    }
+  }
+
+  Widget _buildRecurringFixedCostCard(AssetLiabilityWorkbook? workbook) {
+    final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
+    final sourceOptions = recurringFixedCostSourceOptions(accounts);
+    final sourceNames = <String, String>{
+      for (final account in accounts) account.id: account.name,
+    };
+    // サブスク区分は専用カードに分離し、ここでは従来の固定費 (utility) だけ表示する。
+    final utilityCosts = <AssetRecurringFixedCost>[
+      for (final cost in _recurringFixedCosts)
+        if (cost.category == AssetRecurringFixedCostCategory.utility) cost,
+    ]..sort(_compareRecurringFixedCostsByPaymentDay);
+    return RecurringFixedCostCard(
+      costs: utilityCosts,
+      sourceAccountNames: sourceNames,
+      onAdd: () => unawaited(
+        _openRecurringFixedCostEditor(sourceOptions: sourceOptions),
+      ),
+      onEdit: (cost) => unawaited(
+        _openRecurringFixedCostEditor(
+          existing: cost,
+          sourceOptions: sourceOptions,
+        ),
+      ),
+      onDelete: (cost) => unawaited(_confirmDeleteRecurringFixedCost(cost)),
+    );
+  }
+
+  Widget _buildSubscriptionFixedCostCard(AssetLiabilityWorkbook? workbook) {
+    final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
+    // サブスクはカード (ファミペイ等) へ請求されることが多いため、残高<=0 のカードも
+    // 請求先として選べるようにする。
+    final sourceOptions = recurringFixedCostSourceOptions(
+      accounts,
+      includeCards: true,
+      includeCarrierBilling: true,
+    );
+    final sourceNames = <String, String>{
+      for (final account in accounts) account.id: account.name,
+    };
+    final subscriptionCosts = <AssetRecurringFixedCost>[
+      for (final cost in _recurringFixedCosts)
+        if (cost.category == AssetRecurringFixedCostCategory.subscription) cost,
+    ]..sort(_compareRecurringFixedCostsByPaymentDay);
+    return SubscriptionFixedCostCard(
+      costs: subscriptionCosts,
+      sourceAccountNames: sourceNames,
+      onScanStatement: () => unawaited(
+        _openSubscriptionStatementScanDialog(subscriptionCosts, sourceNames),
+      ),
+      onAddPreset: (preset) => unawaited(
+        _openRecurringFixedCostEditor(
+          prefill: preset.toPrefill(
+            paymentDay: AssetSubscriptionCatalog.defaultPaymentDay,
+          ),
+          sourceOptions: sourceOptions,
+          category: AssetRecurringFixedCostCategory.subscription,
+        ),
+      ),
+      onAddCustom: () => unawaited(
+        _openRecurringFixedCostEditor(
+          sourceOptions: sourceOptions,
+          category: AssetRecurringFixedCostCategory.subscription,
+        ),
+      ),
+      onEdit: (cost) => unawaited(
+        _openRecurringFixedCostEditor(
+          existing: cost,
+          sourceOptions: sourceOptions,
+        ),
+      ),
+      onDelete: (cost) => unawaited(_confirmDeleteRecurringFixedCost(cost)),
+      onReviewDecisionChanged: (cost, decision) => _saveRecurringFixedCost(
+        cost.copyWith(subscriptionReviewDecision: decision),
+      ),
+    );
+  }
+
+  Future<void> _openSubscriptionStatementScanDialog(
+    List<AssetRecurringFixedCost> existingSubscriptions,
+    Map<String, String> sourceAccountNames,
+  ) async {
+    final viewModel = AssetSubscriptionStatementScanViewModel(
+      imagePicker: const FilePickerAssetSubscriptionStatementImagePicker(),
+      analyzer: const AssetSubscriptionStatementScanService(),
+      existingSubscriptions: existingSubscriptions,
+    );
+    await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AssetSubscriptionStatementScanDialog(
+        viewModel: viewModel,
+        sourceAccountNames: sourceAccountNames,
+        onImport: _importSubscriptionStatementCosts,
+        onLogin: _openAssetSubscriptionLoginDialog,
+      ),
+    );
+  }
+
+  Future<bool> _openAssetSubscriptionLoginDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const AssetSubscriptionLoginDialog(),
+        ) ??
+        false;
+  }
+
+  Future<void> _importSubscriptionStatementCosts(
+    List<AssetRecurringFixedCost> importedCosts,
+  ) async {
+    if (importedCosts.isEmpty) return;
+    final addedCount = await _recurringTombstoneSyncService.runSerialized(
+      () async {
+        final previous = List<AssetRecurringFixedCost>.from(
+          _recurringFixedCosts,
+        );
+        final next = List<AssetRecurringFixedCost>.from(previous);
+        final existingNames = <String>{
+          for (final cost in next) _normalizeSubscriptionName(cost.name),
+        };
+        final added = <AssetRecurringFixedCost>[];
+        for (final cost in importedCosts) {
+          final normalized = _normalizeSubscriptionName(cost.name);
+          if (normalized.isEmpty || existingNames.contains(normalized)) {
+            continue;
+          }
+          next.add(cost);
+          added.add(cost);
+          existingNames.add(normalized);
+        }
+        if (added.isEmpty) return 0;
+        next.sort(_compareRecurringFixedCostsByPaymentDay);
+        await _commitRecurringFixedCostReadditionsNow(
+          previous: previous,
+          next: next,
+          ids: added.map((cost) => cost.id).toSet(),
+        );
+        return added.length;
+      },
+    );
+    if (!mounted) return;
+    if (addedCount == 0) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('追加できる新しいサブスクはありませんでした。')));
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('$addedCount件のサブスクを棚卸しに追加しました。')));
+  }
+
+  String _normalizeSubscriptionName(String value) {
+    return value.toLowerCase().replaceAll(RegExp(r'[\s\-_./・（）()]+'), '');
+  }
+
+  /// `_recentFlows`(複数月分の収支履歴)から、支出のみを description パースして
+  /// 定期取引検出用の観測列を作る。
+  List<RecurringTransactionObservation>
+      _buildRecurringTransactionObservations() {
+    final observations = <RecurringTransactionObservation>[];
+    for (final flow in _recentFlows) {
+      final actionType = flow['action_type']?.toString() ?? '';
+      if (!_isExpenseActionType(actionType)) {
+        continue;
+      }
+      final occurredAt = DateTime.tryParse(
+        flow['occurred_at']?.toString() ?? '',
+      )?.toLocal();
+      if (occurredAt == null) {
+        continue;
+      }
+      final amount = ((flow['amount'] as num?)?.toDouble() ?? 0).abs().round();
+      if (amount <= 0) {
+        continue;
+      }
+      final parsed = _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: actionType,
+      );
+      final label = AssetRecurringTransactionDetector.buildLabel(
+        source: parsed.source,
+        memo: parsed.memo,
+      );
+      if (label.isEmpty) {
+        continue;
+      }
+      observations.add(
+        RecurringTransactionObservation(
+          label: label,
+          amount: amount,
+          occurredAt: occurredAt,
+          sourceName: AssetRecurringTransactionDetector.stripAccountBrackets(
+            parsed.source,
+          ),
+        ),
+      );
+    }
+    return observations;
+  }
+
+  /// 定期取引を検出し、登録済み固定費と「無視」した候補を除外する。
+  List<DetectedRecurringTransaction> _detectRecurringTransactions() {
+    final detected = AssetRecurringTransactionDetector.detect(
+      observations: _buildRecurringTransactionObservations(),
+      asOf: _now,
+    );
+    if (detected.isEmpty) {
+      return detected;
+    }
+    final registered = <String>{
+      for (final cost in _recurringFixedCosts)
+        _normalizeRecurringLabel(cost.name),
+    }..removeWhere((name) => name.isEmpty);
+    return detected.where((item) {
+      final label = _normalizeRecurringLabel(item.label);
+      if (label.isEmpty) {
+        return true;
+      }
+      if (_ignoredRecurringLabels.contains(label)) {
+        return false;
+      }
+      for (final name in registered) {
+        if (label.contains(name) || name.contains(label)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+  }
+
+  String _normalizeRecurringLabel(String value) =>
+      value.replaceAll(RegExp(r'\s+'), '').toLowerCase();
+
+  /// 検出された定期取引を `prefill` として固定費登録ダイアログを開く。
+  /// 周期(毎月/隔月)と最頻の引落元口座も初期値に反映する。
+  Future<void> _registerDetectedRecurringTransaction(
+    DetectedRecurringTransaction detected, {
+    required List<RecurringFixedCostSourceOption> sourceOptions,
+  }) {
+    final suggestedSource = detected.suggestedSourceName;
+    String? sourceAccountId;
+    if (suggestedSource != null) {
+      for (final option in sourceOptions) {
+        if (option.name == suggestedSource) {
+          sourceAccountId = option.id;
+          break;
+        }
+      }
+    }
+    final draft = AssetRecurringFixedCost(
+      id: 'fc_suggestion',
+      name: detected.label,
+      amount: detected.typicalAmount.toDouble(),
+      paymentDay: detected.typicalPaymentDay,
+      cadence: detected.cadence,
+      sourceAccountId: sourceAccountId,
+    );
+    return _openRecurringFixedCostEditor(
+      prefill: draft,
+      sourceOptions: sourceOptions,
+    );
+  }
+
+  Widget _buildRecurringTransactionSuggestionCard(
+    AssetLiabilityWorkbook? workbook,
+  ) {
+    final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
+    final sourceOptions = recurringFixedCostSourceOptions(accounts);
+    return AssetRecurringTransactionSuggestionCard(
+      suggestions: _detectRecurringTransactions(),
+      currencyFormatter: _formatYen,
+      onRegister: (detected) => unawaited(
+        _registerDetectedRecurringTransaction(
+          detected,
+          sourceOptions: sourceOptions,
+        ),
+      ),
+      onIgnore: _ignoreDetectedRecurringTransaction,
+    );
+  }
+
+  /// `_recentFlows` の入金(action_type == 'conquer')を定期取引検出用の観測列にする。
+  List<RecurringTransactionObservation> _buildRecurringIncomeObservations() {
+    final observations = <RecurringTransactionObservation>[];
+    for (final flow in _recentFlows) {
+      final actionType = flow['action_type']?.toString() ?? '';
+      if (!_isIncomeActionType(actionType)) {
+        continue;
+      }
+      final occurredAt = DateTime.tryParse(
+        flow['occurred_at']?.toString() ?? '',
+      )?.toLocal();
+      if (occurredAt == null) {
+        continue;
+      }
+      final amount = ((flow['amount'] as num?)?.toDouble() ?? 0).abs().round();
+      if (amount <= 0) {
+        continue;
+      }
+      final parsed = _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: actionType,
+      );
+      final label = AssetRecurringTransactionDetector.buildLabel(
+        source: parsed.source,
+        memo: parsed.memo,
+      );
+      if (label.isEmpty) {
+        continue;
+      }
+      observations.add(
+        RecurringTransactionObservation(
+          label: label,
+          amount: amount,
+          occurredAt: occurredAt,
+          // 入金の `[口座名]` は入金先口座 → destination prefill に使う。
+          sourceName: AssetRecurringTransactionDetector.stripAccountBrackets(
+            parsed.source,
+          ),
+        ),
+      );
+    }
+    return observations;
+  }
+
+  /// 定期入金を検出し、登録済みの定期収入テンプレと一致するものは除外する。
+  List<DetectedRecurringTransaction> _detectRecurringIncome() {
+    final detected = AssetRecurringTransactionDetector.detect(
+      observations: _buildRecurringIncomeObservations(),
+      asOf: _now,
+    );
+    if (detected.isEmpty) {
+      return detected;
+    }
+    final registered = <String>{
+      for (final template in _recurringIncomeTemplates)
+        _normalizeRecurringLabel(template.name),
+    }..removeWhere((name) => name.isEmpty);
+    return detected.where((item) {
+      // Income templates generate a plan every month; do not silently
+      // convert a detected bimonthly income into a monthly plan.
+      if (item.cadence != AssetRecurringFixedCostCadence.monthly) {
+        return false;
+      }
+      final label = _normalizeRecurringLabel(item.label);
+      if (label.isEmpty) {
+        return true;
+      }
+      if (_ignoredRecurringIncomeLabels.contains(label)) {
+        return false;
+      }
+      for (final name in registered) {
+        if (label.contains(name) || name.contains(label)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+  }
+
+  /// 検出された定期入金を `prefill` として定期収入テンプレ追加ダイアログを開く。
+  /// 最頻の入金先口座を destination に反映する。
+  Future<void> _registerDetectedRecurringIncome(
+    DetectedRecurringTransaction detected,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final suggestedSource = detected.suggestedSourceName;
+    String? destinationAccountId;
+    String? destinationAccountName;
+    if (suggestedSource != null) {
+      final options = incomeDestinationAccountOptions(workbook.accounts);
+      for (final account in options) {
+        if (account.name == suggestedSource) {
+          destinationAccountId = account.id;
+          destinationAccountName = account.name;
+          break;
+        }
+      }
+    }
+    final draft = AssetLiabilityRecurringIncomeTemplate(
+      id: 'income_template_suggestion',
+      dayOfMonth: detected.typicalPaymentDay,
+      name: detected.label,
+      amount: detected.typicalAmount.toDouble(),
+      destinationAccountId: destinationAccountId,
+      destinationAccountName: destinationAccountName,
+    );
+    return _showRecurringIncomeTemplateDialog(workbook, prefill: draft);
+  }
+
+  Widget _buildRecurringIncomeSuggestionCard(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null) {
+      return const SizedBox.shrink();
+    }
+    return AssetRecurringTransactionSuggestionCard(
+      keyPrefix: 'asset_recurring_income',
+      title: '定期収入の自動検出',
+      description: '過去の入金から繰り返しを検出しました。定期収入に登録すると将来予測に反映されます。',
+      registerLabel: '定期収入に登録',
+      suggestions: _detectRecurringIncome(),
+      currencyFormatter: _formatYen,
+      onRegister: (detected) =>
+          unawaited(_registerDetectedRecurringIncome(detected, workbook)),
+      onIgnore: _ignoreDetectedRecurringIncome,
+    );
+  }
+
+  Future<void> _loadDrinkChallenge() async {
+    try {
+      final records = await _drinkChallengeStore.load();
+      if (mounted && records.isNotEmpty) {
+        setState(() {
+          _drinkRecords = records;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading drink challenge records: $e');
+    }
+  }
+
+  void _setDrinkRecord(DateTime date, DrinkRecordStatus? status) {
+    final key = DrinkChallengeService.dateKey(date);
+    setState(() {
+      final next = Map<String, DrinkRecordStatus>.from(_drinkRecords);
+      if (status == null) {
+        next.remove(key);
+      } else {
+        next[key] = status;
+      }
+      _drinkRecords = next;
+    });
+    unawaited(_drinkChallengeStore.save(_drinkRecords));
+  }
+
+  /// リボ設定を `asset_pref_mirror` (pref_key: revolving_credit_configs) へ
+  /// 1 行 upsert する (支払日上書きと同じ集約方針 / #part293-295)。
+  Future<void> _mirrorRevolvingConfigs() async {
+    unawaited(_syncTimestampStore.markChanged(_revolvingConfigsMirrorKey));
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _revolvingConfigsMirrorKey,
+        'value': AssetRevolvingCreditConfigStore.encodeMirrorValue(
+          _revolvingConfigs,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      // 全量 upsert 成功 = 全キー同期済み → dirty クリア。
+      await _syncDirtyKeysStore.clearDomain(_revolvingConfigsMirrorKey);
+    } catch (e) {
+      debugPrint('revolving config mirror upsert failed: $e');
+    }
+    unawaited(_refreshSyncSources());
+  }
+
+  /// サーバ集約ミラーからリボ設定を復元する (集約優先 + legacy local fallback)。
+  /// ローカルに既に設定がある場合は上書きしない (オフライン編集を握り潰さない
+  /// 安全側 / 支払日上書きの復元と同じ。削除トゥームストーンは設定の有無を
+  /// map のキー有無で表現するため不要)。
+  Future<void> _restoreRevolvingConfigsFromMirror() async {
+    final debugMirror = widget.debugRevolvingConfigsMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    final localBefore = Map<String, AssetLiabilityRevolvingCreditConfig>.from(
+      _revolvingConfigs,
+    );
+    final hasLocal = localBefore.isNotEmpty;
+    // 削除トゥームストーン: 復活させない / バックフィルしない。
+    final tombstoned = _revolvingConfigTombstones.activeIds(
+      await SharedPreferences.getInstance(),
+    );
+    try {
+      final Map<String, AssetLiabilityRevolvingCreditConfig> serverConfigs;
+      final DateTime? mirrorUpdatedAt;
+      if (debugMirror != null) {
+        serverConfigs = AssetRevolvingCreditConfigStore.decodeMirrorValue(
+          debugMirror,
+        );
+        mirrorUpdatedAt = DateTime.now().toUtc();
+      } else {
+        final rows = await _bootSelectPrefMirror(_revolvingConfigsMirrorKey);
+        if (rows.isEmpty) {
+          // サーバ行が無い: ローカルにあれば初回バックフィル (旧端末で設定済みの
+          // リボ設定をサーバへ上げ、他端末へ同期させる)。
+          if (hasLocal) {
+            unawaited(_mirrorRevolvingConfigs());
+          }
+          return;
+        }
+        serverConfigs = AssetRevolvingCreditConfigStore.decodeMirrorValue(
+          rows.first['value'],
+        );
+        mirrorUpdatedAt = DateTime.tryParse(
+          rows.first['updated_at']?.toString() ?? '',
+        );
+      }
+      if (!mounted) {
+        return;
+      }
+      // 衝突キー (ローカルとサーバ両方にある負債) をサーバ採用するかは LWW
+      // (フラグ ON のみ。OFF はローカル維持)。
+      final adoptConflicts = await _shouldAdoptMirror(
+        prefKey: _revolvingConfigsMirrorKey,
+        hasLocal: hasLocal,
+        mirrorUpdatedAt: mirrorUpdatedAt,
+      );
+      // union マージ: ローカルに無い負債キーはサーバから追加 (additive・安全)。
+      // これで「他端末で設定したカードのリボ設定」がこの端末にも反映される。
+      final merged = Map<String, AssetLiabilityRevolvingCreditConfig>.from(
+        localBefore,
+      );
+      var changed = false;
+      // 削除トゥームストーン済みキーはローカルからも除く (clear 伝播 / 復活防止)。
+      merged.removeWhere((key, _) {
+        if (tombstoned.contains(key)) {
+          changed = true;
+          return true;
+        }
+        return false;
+      });
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        _revolvingConfigsMirrorKey,
+      );
+      serverConfigs.forEach((key, config) {
+        if (tombstoned.contains(key)) {
+          return;
+        }
+        // #3415 保守的 per-key ガード: ローカル編集済み (dirty) キーは、ドメイン
+        // 全体 adopt の巻き添えで上書きしない (同一キー衝突はローカル優先)。
+        // フラグ OFF はここに来ても merged が local 由来 (空) なので
+        // !containsKey が先に成立し no-op (本番無変更)。
+        if (!merged.containsKey(key) ||
+            (adoptConflicts && !dirtyKeys.contains(key))) {
+          merged[key] = config;
+          changed = true;
+        }
+      });
+      if (changed && mounted) {
+        setState(() {
+          _revolvingConfigs = merged;
+        });
+        _persistInBackground(
+          _revolvingConfigStore.save(merged),
+          'revolving restore save',
+        );
+        // additive 追加 / tombstone 除去でもデータが変化したので時刻を整合させる
+        // (review #2 / ローカルが新しければ退行しない)。
+        unawaited(
+          _realignMirrorTimestamp(_revolvingConfigsMirrorKey, mirrorUpdatedAt),
+        );
+      }
+      // ローカルにあってサーバに無い負債キーは、マージ結果をサーバへ
+      // バックフィルし、サーバを全端末の和集合に保つ。
+      final localHasExtra = localBefore.keys.any(
+        (key) => !tombstoned.contains(key) && !serverConfigs.containsKey(key),
+      );
+      if (localHasExtra && debugMirror == null) {
+        unawaited(_mirrorRevolvingConfigs());
+      }
+    } catch (e) {
+      debugPrint('revolving config mirror restore failed: $e');
+    }
+  }
+
+  /// 削除した (リボ OFF にした) リボ設定のトゥームストーン。union マージ/backfill
+  /// での復活を防ぎ、他端末へ削除を伝播する (debt 上書きと同じパターン)。
+  static const MirrorTombstoneStore _revolvingConfigTombstones =
+      MirrorTombstoneStore(storageKey: 'revolving_credit_configs_deleted_v1');
+
+  void _persistRevolvingConfig(
+    String debtId,
+    AssetLiabilityRevolvingCreditConfig? config,
+  ) {
+    setState(() {
+      final next = Map<String, AssetLiabilityRevolvingCreditConfig>.from(
+        _revolvingConfigs,
+      );
+      if (config == null) {
+        next.remove(debtId);
+      } else {
+        next[debtId] = config;
+      }
+      _revolvingConfigs = next;
+    });
+    unawaited(_revolvingConfigStore.save(_revolvingConfigs));
+    // 削除はトゥームストーン化、再設定は解除 (debtId 再利用ドメイン)。
+    unawaited(_recordRevolvingTombstone(debtId, deleted: config == null));
+    if (config != null) {
+      // ローカル編集を dirty 記録 (authoritative reads の巻き添え上書き防止)。
+      unawaited(
+        _syncDirtyKeysStore.markDirty(_revolvingConfigsMirrorKey, debtId),
+      );
+    }
+    unawaited(_mirrorRevolvingConfigs());
+  }
+
+  Future<void> _recordRevolvingTombstone(
+    String id, {
+    required bool deleted,
+  }) async {
+    final store = await SharedPreferences.getInstance();
+    if (deleted) {
+      await _revolvingConfigTombstones.addId(store, id);
+    } else {
+      await _revolvingConfigTombstones.removeId(store, id);
+    }
+    unawaited(_mirrorRevolvingDeleted());
+  }
+
+  /// リボ設定の削除トゥームストーンをサーバへ反映 (他端末伝播)。
+  Future<void> _mirrorRevolvingDeleted() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final store = await SharedPreferences.getInstance();
+      final ids = _revolvingConfigTombstones.activeIds(store);
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'revolving_credit_configs_deleted',
+        'value': MirrorTombstoneStore.encodeMirror(ids),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('revolving tombstone mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末で削除されたリボ設定を取り込み、ローカルからも除去する。
+  Future<void> _pullRevolvingDeleted() async {
+    final debugMirror = widget.debugRevolvingDeletedMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      Map<String, dynamic>? value = debugMirror;
+      if (value == null) {
+        final rows = await _bootSelectPrefMirror(
+          'revolving_credit_configs_deleted',
+        );
+        if (rows.isEmpty) {
+          return;
+        }
+        final raw = rows.first['value'];
+        if (raw is! Map) {
+          return;
+        }
+        value = Map<String, dynamic>.from(raw);
+      }
+      final ids = MirrorTombstoneStore.decodeMirror(value);
+      if (ids.isEmpty) {
+        return;
+      }
+      final store = await SharedPreferences.getInstance();
+      final incoming = await _revolvingConfigTombstones.mergeRemoteIds(
+        store,
+        ids,
+      );
+      final next = Map<String, AssetLiabilityRevolvingCreditConfig>.from(
+        _revolvingConfigs,
+      );
+      final before = next.length;
+      next.removeWhere((key, _) => incoming.contains(key));
+      if (next.length == before || !mounted) {
+        return;
+      }
+      setState(() {
+        _revolvingConfigs = next;
+      });
+      unawaited(_revolvingConfigStore.save(_revolvingConfigs));
+    } catch (e) {
+      debugPrint('revolving tombstone pull failed: $e');
+    }
+  }
+
+  void _toggleRevolving(AssetLiabilityDebtRow row, bool enabled) {
+    if (!enabled) {
+      _persistRevolvingConfig(row.id, null);
+      return;
+    }
+    _persistRevolvingConfig(
+      row.id,
+      _revolvingConfigs[row.id] ??
+          const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 0,
+            creditLimit: 0,
+          ),
+    );
+  }
+
+  void _updateRevolvingMonthlyAmount(String debtId, double amount) {
+    final existing = _revolvingConfigs[debtId] ??
+        const AssetLiabilityRevolvingCreditConfig(
+          monthlyAmount: 0,
+          creditLimit: 0,
+        );
+    _persistRevolvingConfig(
+      debtId,
+      AssetLiabilityRevolvingCreditConfig(
+        monthlyAmount: amount < 0 ? 0 : amount,
+        newUsageAmount: existing.newUsageAmount,
+        paymentDay: existing.paymentDay,
+        creditLimit: existing.creditLimit,
+      ),
+    );
+  }
+
+  void _updateRevolvingNewUsageAmount(String debtId, double amount) {
+    final existing = _revolvingConfigs[debtId] ??
+        const AssetLiabilityRevolvingCreditConfig(
+          monthlyAmount: 0,
+          creditLimit: 0,
+        );
+    _persistRevolvingConfig(
+      debtId,
+      AssetLiabilityRevolvingCreditConfig(
+        monthlyAmount: existing.monthlyAmount,
+        newUsageAmount: amount < 0 ? 0 : amount,
+        paymentDay: 25,
+        creditLimit: existing.creditLimit,
+      ),
+    );
+  }
+
+  void _updateRevolvingCreditLimit(String debtId, double amount) {
+    final existing = _revolvingConfigs[debtId] ??
+        const AssetLiabilityRevolvingCreditConfig(monthlyAmount: 0);
+    _persistRevolvingConfig(
+      debtId,
+      AssetLiabilityRevolvingCreditConfig(
+        monthlyAmount: existing.monthlyAmount,
+        newUsageAmount: existing.newUsageAmount,
+        paymentDay: 25,
+        creditLimit: amount < 0 ? 0 : amount,
+      ),
+    );
+  }
+
+  Future<void> _loadAssetChatPrivacySettings() async {
+    final enabled =
+        await _assetChatPrivacySettingsService.loadMaskMoneyAmounts();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _assetChatMaskMoneyAmounts = enabled;
+    });
+  }
+
+  Future<void> _setAssetChatMaskMoneyAmounts(bool enabled) async {
+    await _assetChatPrivacySettingsService.saveMaskMoneyAmounts(enabled);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _assetChatMaskMoneyAmounts = enabled;
+    });
+  }
+
+  Future<void> _loadDisplayMode() async {
+    final mode = await _displayModeStore.load();
+    final overrides = await _displayModeStore.loadOverrides();
+    final hadStored = await _displayModeStore.hasStoredMode();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _displayMode = mode;
+      _sectionOverrides = overrides;
+    });
+    unawaited(_refreshDisplayModeStats());
+    if (!hadStored && overrides.isEmpty) {
+      unawaited(_restoreDisplayPrefsFromMirror());
+    } else {
+      unawaited(_checkDisplayPrefsMirrorNewer());
+    }
+  }
+
+  Future<void> _applyDisplayPrefs(
+    AssetManagementDisplayMode? mode,
+    AssetManagementSectionOverrides? overrides,
+  ) async {
+    if (mode != null && mode != _displayMode) {
+      setState(() {
+        _displayMode = mode;
+      });
+      await _displayModeStore.save(mode, recordEvent: false);
+    }
+    if (overrides != null) {
+      for (final entry in overrides.entries) {
+        final saved = await _displayModeStore.saveOverride(
+          entry.key,
+          entry.value,
+        );
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _sectionOverrides = saved;
+        });
+      }
+    }
+  }
+
+  /// 他端末がミラーを更新していたら、自動適用せず通知して選ばせる。
+  /// 判定は AssetManagementDisplayModeStore.evaluateMirrorPrefRows に委譲。
+  Future<void> _checkDisplayPrefsMirrorNewer() async {
+    final debugRows = widget.debugMirrorPrefsRows;
+    if (_supabase.auth.currentUser == null && debugRows == null) {
+      return;
+    }
+    try {
+      final stats = await _displayModeStore.loadStats();
+      final deletedSectionIds = await _displayModeStore.loadDeletedSectionIds();
+      final rows = debugRows ?? await _fetchDisplayPrefRows();
+      if (rows.isEmpty || !mounted) {
+        return;
+      }
+      final diff = AssetManagementDisplayModeStore.evaluateMirrorPrefRows(
+        rows: rows,
+        currentMode: _displayMode,
+        currentOverrides: _sectionOverrides,
+        localChangedAt: stats.lastChangedAt,
+        deletedSectionIds: deletedSectionIds,
+      );
+      if (diff.isEmpty || !mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 8),
+          content: const Text('他端末で表示設定が更新されています'),
+          action: SnackBarAction(
+            label: '取り込む',
+            onPressed: () => unawaited(_showMirrorDiffPreview(diff)),
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('display pref mirror check failed: $e');
+    }
+  }
+
+  /// 取り込み前に「旧 → 新」を見せて確定させる差分プレビュー。
+  Future<void> _showMirrorDiffPreview(AssetMirrorPrefsDiff diff) async {
+    if (!mounted) {
+      return;
+    }
+    final lines = AssetManagementDisplayModeStore.describeMirrorPrefsDiff(
+      currentMode: _displayMode,
+      currentOverrides: _sectionOverrides,
+      diff: diff,
+    );
+    if (lines.isEmpty) {
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('表示設定の取り込みプレビュー'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final line in lines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  line,
+                  style: const TextStyle(fontSize: 12, height: 1.5),
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            key: const Key('asset_mirror_diff_apply'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('適用する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await _applyDisplayPrefs(diff.mode, diff.overrides);
+    }
+  }
+
+  /// 表示設定を集約する 1 行 jsonb の pref_key (#part293)。
+  static const String _displayPrefsAggregatedKey = 'asset_display_prefs_v1';
+
+  Future<void> _mirrorDisplayPrefs() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final now = DateTime.now().toUtc().toIso8601String();
+      // #part293: display_mode / section_overrides / section_override_deleted を
+      // 1 行 jsonb (asset_display_prefs_v1) へ集約し upsert を 1 回に削減。
+      final aggregated =
+          AssetManagementDisplayModeStore.buildAggregatedMirrorValue(
+        mode: _displayMode,
+        overrides: _sectionOverrides,
+        deletedIds: await _displayModeStore.loadDeletedSectionIds(),
+      );
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _displayPrefsAggregatedKey,
+        'value': aggregated,
+        'updated_at': now,
+      });
+      // #part294: 集約済みなので legacy per-key 行を best-effort で掃除する
+      // (移行完了後に読みフォールバックを撤去するための前段。詳細は
+      // docs/MIRROR_PREF_AGGREGATION_MIGRATION.md)。
+      unawaited(_cleanupLegacyDisplayPrefRows());
+    } catch (e) {
+      debugPrint('display pref mirror upsert failed: $e');
+    }
+  }
+
+  /// 集約行へ移行済みの legacy per-key 行を削除する (best-effort / #part294)。
+  Future<void> _cleanupLegacyDisplayPrefRows() async {
+    try {
+      await _supabase.from('asset_pref_mirror').delete().inFilter(
+        'pref_key',
+        <String>[
+          'display_mode',
+          'section_overrides',
+          'section_override_deleted',
+        ],
+      );
+    } catch (e) {
+      debugPrint('legacy display pref cleanup failed: $e');
+    }
+  }
+
+  /// 集約行を優先し、無ければ legacy per-key 行を per-key 形へ正規化して返す。
+  Future<List<Map<String, dynamic>>> _fetchDisplayPrefRows() async {
+    final rows = await _bootSelectPrefMirrorKeys(
+      AssetMirrorReadPolicy.readPrefKeys(
+        aggregatedKey: _displayPrefsAggregatedKey,
+        legacyKeys: const <String>['display_mode', 'section_overrides'],
+      ),
+    );
+    for (final row in rows) {
+      if (row['pref_key'] == _displayPrefsAggregatedKey) {
+        return AssetManagementDisplayModeStore.aggregatedMirrorToRows(
+          row['value'],
+          updatedAt: row['updated_at']?.toString() ??
+              DateTime.now().toUtc().toIso8601String(),
+        );
+      }
+    }
+    return rows
+        .where((row) => row['pref_key'] != _displayPrefsAggregatedKey)
+        .toList();
+  }
+
+  /// 他端末で「自動へ戻した(削除した)」セクション上書きを取り込み、
+  /// ローカルからも除去する (削除伝播 / #part292)。
+  Future<void> _pullDeletedSectionIds() async {
+    final debugMirror = widget.debugSectionOverrideDeletedMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final List<String> ids;
+      if (debugMirror != null) {
+        ids = AssetManagementDisplayModeStore.decodeDeletedSectionIdsMirror(
+          debugMirror,
+        );
+      } else {
+        // 集約行 (asset_display_prefs_v1) を優先、無ければ legacy 行。
+        final rows = await _bootSelectPrefMirrorKeys(
+          AssetMirrorReadPolicy.readPrefKeys(
+            aggregatedKey: _displayPrefsAggregatedKey,
+            legacyKeys: const <String>['section_override_deleted'],
+          ),
+        );
+        Map<String, dynamic>? aggregated;
+        Map<String, dynamic>? legacy;
+        for (final row in rows) {
+          if (row['pref_key'] == _displayPrefsAggregatedKey) {
+            aggregated = row;
+          } else if (row['pref_key'] == 'section_override_deleted') {
+            legacy = row;
+          }
+        }
+        if (aggregated != null) {
+          ids = AssetManagementDisplayModeStore.aggregatedDeletedSectionIds(
+            aggregated['value'],
+          );
+        } else if (legacy != null && legacy['value'] is Map) {
+          ids = AssetManagementDisplayModeStore.decodeDeletedSectionIdsMirror(
+            Map<String, dynamic>.from(legacy['value'] as Map),
+          );
+        } else {
+          return;
+        }
+      }
+      if (ids.isEmpty) {
+        return;
+      }
+      final removed = await _displayModeStore.applyRemoteDeletedSectionIds(ids);
+      if (removed > 0 && mounted) {
+        final overrides = await _displayModeStore.loadOverrides();
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _sectionOverrides = overrides;
+        });
+      }
+    } catch (e) {
+      debugPrint('section override tombstone pull failed: $e');
+    }
+  }
+
+  Future<void> _restoreDisplayPrefsFromMirror() async {
+    final debugRows = widget.debugMirrorPrefsRows;
+    if (_supabase.auth.currentUser == null && debugRows == null) {
+      return;
+    }
+    if (await _displayModeStore.isRestoreDeclined()) {
+      return;
+    }
+    try {
+      final rows = debugRows ?? await _fetchDisplayPrefRows();
+      if (rows.isEmpty || !mounted) {
+        return;
+      }
+      // 他端末で削除されたセクション上書きは復元候補から除外する (削除伝播)。
+      // 通知フロー (evaluateMirrorPrefRows) と同じく storageId 文字列で照合する。
+      final deletedSectionIds = await _displayModeStore.loadDeletedSectionIds();
+
+      AssetManagementDisplayMode? pendingMode;
+      final pendingOverrides = <AssetManagementSectionId,
+          AssetManagementSectionVisibilityOverride>{};
+      for (final row in rows) {
+        final value = row['value'];
+        if (value is! Map) {
+          continue;
+        }
+        if (row['pref_key'] == 'display_mode') {
+          final raw = value['mode']?.toString();
+          for (final mode in AssetManagementDisplayMode.values) {
+            if (mode.storageId == raw && mode != _displayMode) {
+              pendingMode = mode;
+            }
+          }
+        }
+        if (row['pref_key'] == 'section_overrides') {
+          for (final entry in value.entries) {
+            // 削除トゥームストーン済みのセクションは再提案しない (復活防止)。
+            if (deletedSectionIds.contains(entry.key.toString())) {
+              continue;
+            }
+            AssetManagementSectionId? section;
+            for (final candidate in AssetManagementSectionId.values) {
+              if (candidate.storageId == entry.key.toString()) {
+                section = candidate;
+              }
+            }
+            AssetManagementSectionVisibilityOverride? override;
+            for (final candidate
+                in AssetManagementSectionVisibilityOverride.values) {
+              if (candidate.storageId == entry.value.toString()) {
+                override = candidate;
+              }
+            }
+            if (section == null ||
+                override == null ||
+                override == AssetManagementSectionVisibilityOverride.auto) {
+              continue;
+            }
+            pendingOverrides[section] = override;
+          }
+        }
+      }
+      if (pendingMode == null && pendingOverrides.isEmpty) {
+        return;
+      }
+      if (!mounted) {
+        return;
+      }
+
+      // 他端末の設定で不意に上書きしないよう、適用前に必ず確認する。
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('表示設定のバックアップ'),
+          content: Text(
+            'サーバに表示設定のバックアップがあります'
+            '${pendingMode == null ? '' : '(表示モード: ${pendingMode.label})'}。'
+            'この端末に適用しますか?適用しない場合、次回以降は確認しません。',
+          ),
+          actions: [
+            TextButton(
+              key: const Key('asset_display_restore_decline'),
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('適用しない'),
+            ),
+            ElevatedButton(
+              key: const Key('asset_display_restore_accept'),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('適用する'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) {
+        await _displayModeStore.markRestoreDeclined();
+        return;
+      }
+      if (!mounted) {
+        return;
+      }
+
+      if (pendingMode != null) {
+        setState(() {
+          _displayMode = pendingMode!;
+        });
+        await _displayModeStore.save(pendingMode, recordEvent: false);
+      }
+      for (final entry in pendingOverrides.entries) {
+        final overrides = await _displayModeStore.saveOverride(
+          entry.key,
+          entry.value,
+        );
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _sectionOverrides = overrides;
+        });
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('表示設定をサーバのバックアップから復元しました')),
+        );
+      }
+    } catch (e) {
+      debugPrint('display pref mirror restore failed: $e');
+    }
+  }
+
+  Future<void> _refreshDisplayModeStats() async {
+    final stats = await _displayModeStore.loadStats();
+    if (!mounted) {
+      return;
+    }
+    final hadData = stats.initialHadData == true ? '既存データあり' : '新規';
+    final initialLabel = stats.initialMode == null
+        ? '初期解決なし'
+        : '初期=${stats.initialMode}($hadData)';
+    setState(() {
+      _displayModeStatsLabel = '$initialLabel / 切替 ${stats.switchCount}回';
+    });
+  }
+
+  Future<void> _loadExpectedInflows() async {
+    final entries = await _expectedInflowStore.loadAll();
+    final rules = await _expectedInflowStore.loadRules();
+    final prefs = await SharedPreferences.getInstance();
+    final promptDismissed =
+        prefs.getBool(_salaryInflowPromptDismissedKey) ?? false;
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _expectedInflows = entries;
+      _expectedInflowRules = rules;
+      _salaryInflowPromptDismissed = promptDismissed;
+    });
+    if (entries.isEmpty && rules.isEmpty) {
+      unawaited(_restoreInflowsFromMirror());
+    }
+    unawaited(_refreshSyncSources());
+  }
+
+  Future<void> _removeExpectedInflowRule(String id) async {
+    final rules = await _expectedInflowStore.removeRule(id);
+    unawaited(_deleteInflowMirror(id));
+    unawaited(_mirrorInflowDeletedIds());
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _expectedInflowRules = rules;
+    });
+  }
+
+  DateTime _nextSalaryDate() {
+    final now = DateTime.now();
+    final thisMonth = DateTime(now.year, now.month, _salaryDay);
+    if (!now.isAfter(thisMonth)) {
+      return thisMonth;
+    }
+    return DateTime(now.year, now.month + 1, _salaryDay);
+  }
+
+  /// 給料を入金予定ルールへ登録する提案カードの提示金額 (円)。
+  /// 表示条件を満たさない場合は null (= カード非表示)。
+  ///
+  /// 給料らしいルール (給料日と同日 or ラベルに給料/給与) が既にあれば出さない。
+  /// 金額は 想定給料額 (設定) → 最新の給与明細/salary_incomes の手取り の順で採用。
+  double? _salaryInflowSuggestionAmount() {
+    if (_salaryInflowPromptDismissed) {
+      return null;
+    }
+    final hasSalaryLikeRule = _expectedInflowRules.any(
+      (rule) =>
+          rule.dayOfMonth == _salaryDay ||
+          rule.label.contains('給料') ||
+          rule.label.contains('給与'),
+    );
+    if (hasSalaryLikeRule) {
+      return null;
+    }
+    final explicit = _salaryAmount;
+    if (explicit != null && explicit > 0) {
+      return explicit;
+    }
+    DateTime? latestDate;
+    double? latestAmount;
+    void consider(Object? payDateRaw, double amount) {
+      final payDate = DateTime.tryParse(payDateRaw?.toString() ?? '');
+      if (payDate == null || amount <= 0) {
+        return;
+      }
+      if (latestDate == null || payDate.isAfter(latestDate!)) {
+        latestDate = payDate;
+        latestAmount = amount;
+      }
+    }
+
+    for (final row in _payslipSalaryIncomes) {
+      consider(row['pay_date'], _numberFromDynamic(row['amount']));
+    }
+    for (final row in _payslipRows) {
+      consider(row['pay_date'], _numberFromDynamic(row['net_amount']));
+    }
+    return latestAmount;
+  }
+
+  /// 提案カードのワンタップ登録: 毎月 [_salaryDay] 日の「給料」ルールを追加し
+  /// サーバへミラーする (入金予定ダイアログの繰り返し登録と同経路)。
+  Future<void> _registerSalaryInflowRule(double amount) async {
+    final beforeRuleIds = _expectedInflowRules.map((rule) => rule.id).toSet();
+    final rules = await _expectedInflowStore.addRule(
+      dayOfMonth: _salaryDay,
+      amount: amount,
+      label: '給料',
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _expectedInflowRules = rules;
+    });
+    unawaited(
+      _mirrorInflowsToSupabase(<Map<String, dynamic>>[
+        for (final rule in rules)
+          if (!beforeRuleIds.contains(rule.id))
+            <String, dynamic>{
+              'id': rule.id,
+              'kind': 'rule',
+              'day_of_month': rule.dayOfMonth,
+              'amount': rule.amount,
+              'label': rule.label,
+            },
+      ]),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('毎月$_salaryDay日の給料を入金予定に登録しました。見込み残高に反映されます')),
+    );
+  }
+
+  Future<void> _dismissSalaryInflowPrompt() async {
+    setState(() {
+      _salaryInflowPromptDismissed = true;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_salaryInflowPromptDismissedKey, true);
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('あとから「毎月の入金ルール」や入金予定ダイアログでも登録できます')),
+    );
+  }
+
+  Future<void> _sendDisplayModeEvent({
+    required String eventType,
+    required AssetManagementDisplayMode mode,
+    bool? hasData,
+  }) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('display_mode_events').insert(<String, dynamic>{
+        'user_id': userId,
+        'event_type': eventType,
+        'mode': mode.storageId,
+        'has_data': hasData,
+      });
+    } catch (e) {
+      debugPrint('display_mode_events insert failed: $e');
+    }
+  }
+
+  Future<void> _removeExpectedInflow(String id) async {
+    final entries = await _expectedInflowStore.remove(id);
+    unawaited(_deleteInflowMirror(id));
+    unawaited(_mirrorInflowDeletedIds());
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _expectedInflows = entries;
+    });
+  }
+
+  void _prefillFlowDateFromCalendar(DateTime date) {
+    setState(() {
+      _selectedFlowDate = date;
+    });
+    final dateLabel = DateFormat('M月d日').format(date);
+    if (_isSectionShown(AssetManagementSectionId.flow)) {
+      _scrollTo(_keyFlow);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$dateLabelを記録日にセットしました')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$dateLabelを記録日にセットしました。収支セクション(標準/フル)で記録できます')),
+      );
+    }
+  }
+
+  Future<void> _showAddExpectedInflowDialog(
+    DateTime initialDate, {
+    double? initialAmount,
+    String? initialLabel,
+    bool initialRepeatMonthly = false,
+  }) async {
+    var selectedDate = initialDate;
+    var repeatMonthly = initialRepeatMonthly;
+    final amountController = TextEditingController(
+      text: initialAmount != null && initialAmount > 0
+          ? initialAmount.round().toString()
+          : '',
+    );
+    final labelController = TextEditingController(text: initialLabel ?? '');
+
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (dialogContext, setDialogState) => AlertDialog(
+            title: const Text('入金予定を追加'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        DateFormat('yyyy/MM/dd').format(selectedDate),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        final picked = await showDatePicker(
+                          context: dialogContext,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2035),
+                        );
+                        if (picked == null) {
+                          return;
+                        }
+                        setDialogState(() {
+                          selectedDate = picked;
+                        });
+                      },
+                      child: const Text('日付変更'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: '金額(円)',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: labelController,
+                  decoration: const InputDecoration(
+                    labelText: 'メモ(例: 給料、フリマ売上)',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                CheckboxListTile(
+                  key: const Key('asset_inflow_repeat_checkbox'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  value: repeatMonthly,
+                  onChanged: (value) {
+                    setDialogState(() {
+                      repeatMonthly = value ?? false;
+                    });
+                  },
+                  title: const Text(
+                    '毎月この日に繰り返す(給料など)',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('追加'),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (confirmed != true) {
+        return;
+      }
+      final amount = double.tryParse(
+        amountController.text.replaceAll(',', '').trim(),
+      );
+      if (amount == null || amount <= 0) {
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('金額を1円以上で入力してください')));
+        return;
+      }
+      if (repeatMonthly) {
+        final beforeRuleIds =
+            _expectedInflowRules.map((rule) => rule.id).toSet();
+        final rules = await _expectedInflowStore.addRule(
+          dayOfMonth: selectedDate.day,
+          amount: amount,
+          label: labelController.text,
+        );
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _expectedInflowRules = rules;
+        });
+        unawaited(
+          _mirrorInflowsToSupabase(<Map<String, dynamic>>[
+            for (final rule in rules)
+              if (!beforeRuleIds.contains(rule.id))
+                <String, dynamic>{
+                  'id': rule.id,
+                  'kind': 'rule',
+                  'day_of_month': rule.dayOfMonth,
+                  'amount': rule.amount,
+                  'label': rule.label,
+                },
+          ]),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('毎月${selectedDate.day}日の入金予定を登録しました')),
+        );
+        return;
+      }
+      final beforeIds = _expectedInflows.map((entry) => entry.id).toSet();
+      final entries = await _expectedInflowStore.add(
+        date: selectedDate,
+        amount: amount,
+        label: labelController.text,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _expectedInflows = entries;
+      });
+      unawaited(
+        _mirrorInflowsToSupabase(<Map<String, dynamic>>[
+          for (final entry in entries)
+            if (!beforeIds.contains(entry.id))
+              <String, dynamic>{
+                'id': entry.id,
+                'kind': 'one_time',
+                'date': DateFormat('yyyy-MM-dd').format(entry.date),
+                'amount': entry.amount,
+                'label': entry.label,
+              },
+        ]),
+      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('入金予定を追加しました。見込み残高に反映されます')));
+    } finally {
+      amountController.dispose();
+      labelController.dispose();
+    }
+  }
+
+  Future<void> _setDisplayMode(AssetManagementDisplayMode mode) async {
+    if (mode == _displayMode) {
+      return;
+    }
+    setState(() {
+      _displayMode = mode;
+    });
+    await _displayModeStore.save(mode);
+    unawaited(_sendDisplayModeEvent(eventType: 'switch', mode: mode));
+    unawaited(_mirrorDisplayPrefs());
+    await _refreshDisplayModeStats();
+  }
+
+  Future<void> _resolveInitialDisplayMode({
+    required bool hasExistingData,
+  }) async {
+    final hadStored = await _displayModeStore.hasStoredMode();
+    final mode = await _displayModeStore.resolveInitialMode(
+      hasExistingData: hasExistingData,
+    );
+    if (!hadStored) {
+      unawaited(
+        _sendDisplayModeEvent(
+          eventType: 'initial',
+          mode: mode,
+          hasData: hasExistingData,
+        ),
+      );
+    }
+    if (!mounted) {
+      return;
+    }
+    unawaited(_refreshDisplayModeStats());
+    if (mode == _displayMode) {
+      return;
+    }
+    setState(() {
+      _displayMode = mode;
+    });
+  }
+
+  Future<void> _setSectionOverride(
+    AssetManagementSectionId section,
+    AssetManagementSectionVisibilityOverride override,
+  ) async {
+    final overrides = await _displayModeStore.saveOverride(section, override);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _sectionOverrides = overrides;
+    });
+    unawaited(_mirrorDisplayPrefs());
+  }
+
+  Future<void> _fetchExperimentSummary() async {
+    try {
+      final dynamic result = await _supabase.rpc(
+        'display_mode_experiment_summary',
+      );
+      if (!mounted || result is! Map) {
+        return;
+      }
+      final data = Map<String, dynamic>.from(result);
+      final parsed = AssetManagementDisplayModeStore.parseServerSummary(data);
+      setState(() {
+        _experimentServerSummary = parsed.summaryLabel;
+        _experimentWeekly = parsed.weekly;
+      });
+    } catch (e) {
+      debugPrint('experiment summary fetch failed: $e');
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _experimentServerSummary = '全体集計を取得できませんでした(ネットワーク/権限)';
+      });
+    }
+  }
+
+  /// 複数の入金実体行を 1 回の upsert でまとめてミラーする (#part297 バッチ化)。
+  /// 行ごとに upsert を呼ぶと N 往復になるため、追加分はまとめて送る。
+  Future<void> _mirrorInflowsToSupabase(List<Map<String, dynamic>> rows) async {
+    if (rows.isEmpty) {
+      return;
+    }
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_expected_inflow_items').upsert(
+        <Map<String, dynamic>>[
+          for (final row in rows) <String, dynamic>{...row, 'user_id': userId},
+        ],
+      );
+    } catch (e) {
+      debugPrint('inflow mirror upsert failed: $e');
+    }
+  }
+
+  Future<void> _deleteInflowMirror(String id) async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_expected_inflow_items').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('inflow mirror delete failed: $e');
+    }
+  }
+
+  void _shiftDebtPaymentAfterSalary(
+    AssetLiabilityWorkbook? workbook,
+    String debtRowId,
+  ) {
+    final rows = workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[];
+    AssetLiabilityDebtRow? target;
+    for (final row in rows) {
+      if (row.id == debtRowId) {
+        target = row;
+      }
+    }
+    if (target == null) {
+      return;
+    }
+    final newDay = _salaryDay + 1;
+    _setDebtPaymentDayOverride(target, newDay);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${target.name} の支払日を毎月$newDay日へ変更しました(負債マスタの支払日設定から戻せます)',
+        ),
+      ),
+    );
+  }
+
+  String _shiftPreviewLabel({
+    required AssetCalendarEvent event,
+    required AssetPaymentCalendarMonth calendar,
+    required List<AssetCalendarDebtInput> debts,
+    required List<Map<String, dynamic>> subscriptions,
+    required List<AssetCalendarInflowInput> inflows,
+    required double? startingCashBalance,
+  }) {
+    final newDay = _salaryDay + 1;
+    final shifted = AssetPaymentCalendarService.buildRange(
+      start: _calendarCycleStart,
+      endExclusive: _calendarCycleEndExclusive,
+      flows: _recentFlows,
+      subscriptions: subscriptions,
+      debts: [
+        for (final debt in debts)
+          if (debt.id == event.sourceId)
+            AssetCalendarDebtInput(
+              id: debt.id,
+              name: debt.name,
+              balance: debt.balance,
+              paymentDay: newDay,
+              scheduledPaymentAmount: debt.scheduledPaymentAmount,
+              isDirectCashflowTarget: debt.isDirectCashflowTarget,
+            )
+          else
+            debt,
+      ],
+      salaryDay: _salaryDay,
+      asOf: _calendarNow,
+      startingCashBalance: startingCashBalance,
+      expectedInflows: inflows,
+    );
+    final shiftedShortfall = shifted.firstShortfallDate;
+    if (shiftedShortfall == null) {
+      return '(試算上の不足なし)';
+    }
+    final currentShortfall = calendar.firstShortfallDate;
+    if (currentShortfall != null &&
+        shiftedShortfall.isAfter(currentShortfall)) {
+      return '(${DateFormat('M/d').format(shiftedShortfall)}へ後退)';
+    }
+    return '(単独では回避不可)';
+  }
+
+  Future<void> _restoreInflowsFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase.from('asset_expected_inflow_items').select();
+      final restored = await _expectedInflowStore.restoreFromMirrorRows(
+        List<Map<String, dynamic>>.from(rows),
+      );
+      if (!restored || !mounted) {
+        return;
+      }
+      await _loadExpectedInflows();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('入金予定をサーバのバックアップから復元しました')));
+    } catch (e) {
+      debugPrint('inflow mirror restore failed: $e');
+    }
+  }
+
+  Future<void> _mirrorDebtPaymentDayOverrides(
+    Map<String, int> overrides,
+  ) async {
+    unawaited(_syncTimestampStore.markChanged('debt_payment_day_overrides'));
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'debt_payment_day_overrides',
+        'value': overrides,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      // 全量 upsert 成功 = 全キー同期済み → dirty クリア。
+      await _syncDirtyKeysStore.clearDomain('debt_payment_day_overrides');
+    } catch (e) {
+      debugPrint('pref mirror upsert failed: $e');
+    }
+  }
+
+  Future<void> _restoreDebtPaymentDayOverridesFromMirror() async {
+    final debugMirror = widget.debugDebtOverridesMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    final hasLocal = _debtPaymentDayOverrides.isNotEmpty;
+    // フラグ OFF + ローカル値あり: サーバに無ければ初回バックフィルして終了。
+    if (!_mirrorReadsAuthoritative && hasLocal && debugMirror == null) {
+      unawaited(
+        _backfillPrefIfServerMissing(
+          'debt_payment_day_overrides',
+          () => _mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides),
+        ),
+      );
+      return;
+    }
+    try {
+      final dynamic value;
+      final DateTime? mirrorUpdatedAt;
+      if (debugMirror != null) {
+        value = debugMirror;
+        mirrorUpdatedAt = DateTime.now().toUtc();
+      } else {
+        final rows = await _bootSelectPrefMirror('debt_payment_day_overrides');
+        if (rows.isEmpty) {
+          // サーバ行が無い: ローカルにあれば初回バックフィル。
+          if (hasLocal) {
+            unawaited(_mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides));
+          }
+          return;
+        }
+        value = rows.first['value'];
+        mirrorUpdatedAt = DateTime.tryParse(
+          rows.first['updated_at']?.toString() ?? '',
+        );
+      }
+      if (value is! Map || !mounted) {
+        return;
+      }
+      // 削除トゥームストーン済みの支払日上書きは復元しない (#part293 3例目)。
+      final tombstoned = _debtOverrideTombstones.activeIds(
+        await SharedPreferences.getInstance(),
+      );
+      final serverOverrides = <String, int>{};
+      value.forEach((key, dynamic raw) {
+        final day = (raw as num?)?.toInt();
+        if (key is String &&
+            day != null &&
+            day >= 1 &&
+            day <= 31 &&
+            !tombstoned.contains(key)) {
+          serverOverrides[key] = day;
+        }
+      });
+      if (serverOverrides.isEmpty || !mounted) {
+        return;
+      }
+      final adoptConflicts = await _shouldAdoptMirror(
+        prefKey: 'debt_payment_day_overrides',
+        hasLocal: hasLocal,
+        mirrorUpdatedAt: mirrorUpdatedAt,
+      );
+      // union マージ: ローカルに無い負債キーはサーバから追加 (他の上書きは維持)。
+      final localKeys = _debtPaymentDayOverrides.keys.toSet();
+      final merged = Map<String, int>.from(_debtPaymentDayOverrides);
+      var changed = false;
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        'debt_payment_day_overrides',
+      );
+      serverOverrides.forEach((key, day) {
+        // #3415 保守的 per-key ガード: ローカル編集済み (dirty) キーは、ドメイン
+        // 全体 adopt の巻き添えで上書きしない (同一キー衝突はローカル優先)。
+        // フラグ OFF はここに来ても merged が local 由来 (空) なので
+        // !containsKey が先に成立し no-op (本番無変更)。
+        if (!merged.containsKey(key) ||
+            (adoptConflicts && !dirtyKeys.contains(key))) {
+          merged[key] = day;
+          changed = true;
+        }
+      });
+      if (changed && mounted) {
+        setState(() {
+          _debtPaymentDayOverrides = merged;
+        });
+        _persistInBackground(
+          _saveDebtPaymentDayOverrides(),
+          'debt override restore save',
+        );
+        // additive 追加 / tombstone 除去でもデータが変化したので時刻を整合させる
+        // (review #2 / ローカルが新しければ退行しない)。
+        unawaited(
+          _realignMirrorTimestamp(
+            'debt_payment_day_overrides',
+            mirrorUpdatedAt,
+          ),
+        );
+        // 初回復元 (ローカル空) のときだけ通知。
+        if (!hasLocal) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('支払日設定をサーバのバックアップから復元しました')),
+          );
+        }
+      }
+      // ローカルにあってサーバに無い負債キーは、マージ結果をサーバへバックフィル。
+      final localHasExtra = localKeys.any(
+        (key) => !serverOverrides.containsKey(key),
+      );
+      if (localHasExtra && debugMirror == null) {
+        unawaited(_mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides));
+      }
+    } catch (e) {
+      debugPrint('pref mirror restore failed: $e');
+    }
+  }
+
+  /// 入金予定のミラー取り込みプレビュー行を組み立てる。
+  /// 口座別残高履歴を asset_pref_mirror へ丸ごと退避する（端末跨ぎ同期）。
+  ///
+  /// 汎用 jsonb ミラーの 1 pref_key を使うためマイグレーション不要。値は
+  /// `{monthKey: {accountId: 残高}}`。負債トレンドの前月比を別端末でも使える。
+  Future<void> _mirrorAssetBalanceHistory() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final history = await _assetBalanceHistoryStore.loadAll();
+      if (history.isEmpty) {
+        return;
+      }
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'account_balance_history',
+        'value': history,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('balance history mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末の残高履歴をミラーから取り込み、ローカルへ和集合マージする。
+  ///
+  /// マージは非破壊（月キー・口座を消さない/巻き戻さない）。取り込みで前月残高が
+  /// 変わったら、当月基準の前月残高キャッシュを更新して負債トレンドを再評価する。
+  Future<void> _restoreAssetBalanceHistoryFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _bootSelectPrefMirror('account_balance_history');
+      if (rows.isEmpty) {
+        return;
+      }
+      final changed = await _assetBalanceHistoryStore.mergeRemote(
+        rows.first['value'],
+      );
+      if (!changed || !mounted) {
+        return;
+      }
+      final monthKey = AssetAccountBalanceHistoryStore.formatMonthKey(_now);
+      final prior = await _assetBalanceHistoryStore.priorMonthBalances(_now);
+      if (!mounted) {
+        return;
+      }
+      if (_assetDebtTrendPriorBalancesMonth != monthKey ||
+          !_sameDoubleMap(_assetDebtTrendPriorBalances, prior)) {
+        setState(() {
+          _assetDebtTrendPriorBalances = prior;
+          _assetDebtTrendPriorBalancesMonth = monthKey;
+        });
+      }
+    } catch (e) {
+      debugPrint('balance history mirror restore failed: $e');
+    }
+  }
+
+  String _inflowMergeRowLabel(Map<String, dynamic> row) {
+    final label = row['label']?.toString() ?? '入金予定';
+    final amount = (row['amount'] as num?)?.toDouble() ?? 0;
+    if (row['kind']?.toString() == 'rule') {
+      final day = (row['day_of_month'] as num?)?.toInt() ?? 0;
+      return '毎月$day日 $label  +${_formatYen(amount)}';
+    }
+    final date = DateTime.tryParse(row['date']?.toString() ?? '')?.toLocal();
+    final when = date == null ? '' : '${DateFormat('M/d').format(date)} ';
+    return '$when$label  +${_formatYen(amount)}';
+  }
+
+  /// 削除トゥームストーンをサーバへ反映 (他端末の削除伝播用 / #part285)。
+  /// 入金 pref を集約する 1 行 jsonb の pref_key (#part294)。
+  static const String _inflowPrefsAggregatedKey = 'asset_inflow_prefs_v1';
+
+  // 削除トゥームストーンと GC 設定の更新は同じ集約行へ書き込む (後方互換維持)。
+  Future<void> _mirrorInflowDeletedIds() => _mirrorInflowPrefs();
+
+  /// 入金 pref (削除トゥームストーン + GC 設定) を 1 行 jsonb へ集約 upsert
+  /// し、legacy per-key 行を best-effort で掃除する (#part294)。
+  Future<void> _mirrorInflowPrefs() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final ids = await _expectedInflowStore.loadDeletedIds();
+      final value = AssetExpectedInflowStore.buildAggregatedInflowMirrorValue(
+        deletedIds: ids,
+        gcConfig: _tombstoneGcConfig,
+      );
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _inflowPrefsAggregatedKey,
+        'value': value,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      unawaited(_cleanupLegacyInflowPrefRows());
+    } catch (e) {
+      debugPrint('inflow pref mirror upsert failed: $e');
+    }
+  }
+
+  Future<void> _cleanupLegacyInflowPrefRows() async {
+    try {
+      await _supabase.from('asset_pref_mirror').delete().inFilter(
+        'pref_key',
+        <String>['inflow_deleted_ids', 'inflow_tombstone_gc'],
+      );
+    } catch (e) {
+      debugPrint('legacy inflow pref cleanup failed: $e');
+    }
+  }
+
+  /// サーバのトゥームストーンを取り込み、該当ローカル項目を削除する。
+  Future<void> _pullInflowDeletedIds() async {
+    final debugMirror = widget.debugInflowDeletedIdsMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final List<String> ids;
+      if (debugMirror != null) {
+        ids = AssetExpectedInflowStore.decodeDeletedIdsMirror(debugMirror);
+      } else {
+        // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
+        final rows = await _bootSelectPrefMirrorKeys(
+          AssetMirrorReadPolicy.readPrefKeys(
+            aggregatedKey: _inflowPrefsAggregatedKey,
+            legacyKeys: const <String>['inflow_deleted_ids'],
+          ),
+        );
+        Map<String, dynamic>? aggregated;
+        Map<String, dynamic>? legacy;
+        for (final row in rows) {
+          if (row['pref_key'] == _inflowPrefsAggregatedKey) {
+            aggregated = row;
+          } else if (row['pref_key'] == 'inflow_deleted_ids') {
+            legacy = row;
+          }
+        }
+        if (aggregated != null) {
+          ids = AssetExpectedInflowStore.aggregatedInflowDeletedIds(
+            aggregated['value'],
+          );
+        } else if (legacy != null && legacy['value'] is Map) {
+          ids = AssetExpectedInflowStore.decodeDeletedIdsMirror(
+            Map<String, dynamic>.from(legacy['value'] as Map),
+          );
+        } else {
+          return;
+        }
+      }
+      if (ids.isEmpty) {
+        return;
+      }
+      final removed = await _expectedInflowStore.applyRemoteDeletedIds(ids);
+      if (removed > 0 && mounted) {
+        await _loadExpectedInflows();
+      }
+    } catch (e) {
+      debugPrint('inflow tombstone pull failed: $e');
+    }
+  }
+
+  /// トゥームストーン GC の上限/期限をサーバ (asset_pref_mirror) から取得し、
+  /// ストアへ反映する (#part287 リモート調整)。未設定なら既定のまま。
+  Future<void> _initTombstoneGcAndPull() async {
+    await _applyLocalTombstoneGcConfig();
+    await _loadTombstoneGcConfig();
+    await _pullInflowDeletedIds();
+  }
+
+  /// ローカル保存 (またはテスト注入) の GC 設定をストアへ反映する。
+  Future<void> _applyLocalTombstoneGcConfig() async {
+    final config = widget.debugTombstoneGcConfig ??
+        await AssetExpectedInflowStore.loadGcConfig();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _tombstoneGcConfig = config;
+      _expectedInflowStore = AssetExpectedInflowStore(gcConfig: config);
+    });
+  }
+
+  Future<void> _loadTombstoneGcConfig() async {
+    // テスト注入時はサーバ取得を行わない (ネットワーク非依存)。
+    if (widget.debugTombstoneGcConfig != null ||
+        _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
+      final rows = await _bootSelectPrefMirrorKeys(
+        AssetMirrorReadPolicy.readPrefKeys(
+          aggregatedKey: _inflowPrefsAggregatedKey,
+          legacyKeys: const <String>['inflow_tombstone_gc'],
+        ),
+      );
+      Map<String, dynamic>? aggregated;
+      Map<String, dynamic>? legacy;
+      for (final row in rows) {
+        if (row['pref_key'] == _inflowPrefsAggregatedKey) {
+          aggregated = row;
+        } else if (row['pref_key'] == 'inflow_tombstone_gc') {
+          legacy = row;
+        }
+      }
+      final AssetTombstoneGcConfig config;
+      if (aggregated != null) {
+        config = AssetExpectedInflowStore.aggregatedInflowGcConfig(
+          aggregated['value'],
+        );
+      } else if (legacy != null) {
+        config = AssetTombstoneGcConfig.fromMirrorValue(legacy['value']);
+      } else {
+        return;
+      }
+      if (!mounted) {
+        return;
+      }
+      await AssetExpectedInflowStore.saveGcConfig(config);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _tombstoneGcConfig = config;
+        _expectedInflowStore = AssetExpectedInflowStore(gcConfig: config);
+      });
+    } catch (e) {
+      debugPrint('tombstone gc config fetch failed: $e');
+    }
+  }
+
+  /// GC 設定 (上限/期限) の編集ダイアログ。保存でローカル+ミラーへ反映する。
+  /// 手動 GC: 期限切れ・上限超過の削除記録を今すぐ掃除し、件数を SnackBar 表示。
+  Future<void> _pruneTombstonesNow() async {
+    // 入金予定 + 表示設定 override + 支払日上書きの全トゥームストーンを一括掃除
+    // (#part292/296)。
+    final removed = await _pruneAllTombstones();
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('古い削除記録を${removed.total}件 掃除しました')));
+  }
+
+  /// 各ドメインのトゥームストーンを掃除し、ドメイン別の削除件数を返す。
+  Future<
+      ({
+        int inflow,
+        int override,
+        int debt,
+        int revolving,
+        int watchlist,
+        int total,
+      })> _pruneAllTombstones() async {
+    final store = await SharedPreferences.getInstance();
+    final inflow = await _expectedInflowStore.pruneDeletedIds();
+    final override = await _displayModeStore.pruneDeletedSectionIds();
+    final debt = await _debtOverrideTombstones.prune(store);
+    final revolving = await _revolvingConfigTombstones.prune(store);
+    final watchlist = await _watchlistTombstones.prune(store);
+    return (
+      inflow: inflow,
+      override: override,
+      debt: debt,
+      revolving: revolving,
+      watchlist: watchlist,
+      total: inflow + override + debt + revolving + watchlist,
+    );
+  }
+
+  /// boot 時に期限切れ・上限超過のトゥームストーンを自動で掃除する
+  /// (SharedPreferences 肥大化の自動抑制 / #part296)。UI 通知はせず、
+  /// 掃除件数を debug ログに出して肥大化を観測する (#part297)。
+  Future<void> _pruneTombstonesOnBoot() async {
+    try {
+      final removed = await _pruneAllTombstones();
+      if (removed.total > 0) {
+        debugPrint(
+          'boot tombstone prune: removed ${removed.total} '
+          '(inflow=${removed.inflow} override=${removed.override} '
+          'debt=${removed.debt} revolving=${removed.revolving} '
+          'watchlist=${removed.watchlist})',
+        );
+      }
+    } catch (e) {
+      debugPrint('boot tombstone prune failed: $e');
+    }
+  }
+
+  Future<void> _showTombstoneGcSettings(
+    void Function(void Function()) setOuterState,
+  ) async {
+    final countController = TextEditingController(
+      text: '${_tombstoneGcConfig.maxCount}',
+    );
+    final ageController = TextEditingController(
+      text: '${_tombstoneGcConfig.maxAgeDays}',
+    );
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('削除履歴の保持設定'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              '削除した入金予定の「復活防止」記録を、どれだけ保持するか。',
+              style: TextStyle(fontSize: 12, height: 1.5),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              key: const Key('asset_tombstone_gc_maxcount'),
+              controller: countController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: '最大件数'),
+            ),
+            TextField(
+              key: const Key('asset_tombstone_gc_maxage'),
+              controller: ageController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: '保持日数'),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                key: const Key('asset_tombstone_gc_prune'),
+                onPressed: () => unawaited(_pruneTombstonesNow()),
+                icon: const Icon(Icons.auto_delete_outlined, size: 16),
+                label: const Text('今すぐ古い記録を掃除'),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            key: const Key('asset_tombstone_gc_save'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+    if (saved != true || !mounted) {
+      return;
+    }
+    final config = AssetTombstoneGcConfig.fromMirrorValue(<String, dynamic>{
+      'max_count': int.tryParse(countController.text.trim()),
+      'max_age_days': int.tryParse(ageController.text.trim()),
+    });
+    await AssetExpectedInflowStore.saveGcConfig(config);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _tombstoneGcConfig = config;
+      _expectedInflowStore = AssetExpectedInflowStore(gcConfig: config);
+    });
+    setOuterState(() {});
+    unawaited(_mirrorInflowPrefs());
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '保持設定を更新しました(最大${config.maxCount}件 / ${config.maxAgeDays}日)',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _mergeInflowsFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      // 先に他端末の削除を取り込み、復活候補から除外する。
+      await _pullInflowDeletedIds();
+      final rows = List<Map<String, dynamic>>.from(
+        await _supabase.from('asset_expected_inflow_items').select(),
+      );
+      final additions = await _expectedInflowStore.previewMergeAdditions(rows);
+      if (!mounted) {
+        return;
+      }
+      if (additions.isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('サーバとの差分はありませんでした')));
+        return;
+      }
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('サーバから取り込む入金予定'),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '以下の${additions.length}件をローカルへ追加します(削除済みは復活しません)。',
+                    style: const TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final row in additions)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '・${_inflowMergeRowLabel(row)}',
+                        style: const TextStyle(fontSize: 12, height: 1.4),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('キャンセル'),
+            ),
+            ElevatedButton(
+              key: const Key('asset_inflow_merge_apply'),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('取り込む'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) {
+        return;
+      }
+      final added = await _expectedInflowStore.mergeFromMirrorRows(rows);
+      if (added > 0 && mounted) {
+        await _loadExpectedInflows();
+      }
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$added件をサーバから統合しました')));
+    } catch (e) {
+      debugPrint('inflow mirror merge failed: $e');
+    }
+  }
+
+  AssetLiabilityDebtRow? _debtRowById(
+    AssetLiabilityWorkbook? workbook,
+    String debtRowId,
+  ) {
+    final rows = workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[];
+    for (final row in rows) {
+      if (row.id == debtRowId) {
+        return row;
+      }
+    }
+    return null;
+  }
+
+  void _shiftDebtPaymentsAfterSalaryCombo(
+    AssetLiabilityWorkbook? workbook,
+    List<String> debtRowIds,
+  ) {
+    final newDay = _salaryDay + 1;
+    var shiftedCount = 0;
+    for (final id in debtRowIds) {
+      final target = _debtRowById(workbook, id);
+      if (target == null) {
+        continue;
+      }
+      _setDebtPaymentDayOverride(target, newDay);
+      shiftedCount += 1;
+    }
+    if (shiftedCount == 0) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$shiftedCount件の支払日を毎月$newDay日へまとめて変更しました(負債マスタから戻せます)'),
+      ),
+    );
+  }
+
+  Widget _buildExperimentTrendBars() {
+    final weeks = _experimentWeekly.reversed.toList(growable: false);
+    var maxTotal = 1;
+    for (final week in weeks) {
+      final initials = (week['initials'] as num?)?.toInt() ?? 0;
+      final switches = (week['switches'] as num?)?.toInt() ?? 0;
+      if (initials + switches > maxTotal) {
+        maxTotal = initials + switches;
+      }
+    }
+    return SizedBox(
+      height: 60,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (final week in weeks)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${(week['initials'] as num?)?.toInt() ?? 0}/${(week['switches'] as num?)?.toInt() ?? 0}',
+                      style: const TextStyle(fontSize: 8, height: 1.2),
+                    ),
+                    Container(
+                      height: 2 +
+                          30 *
+                              ((week['switches'] as num?)?.toInt() ?? 0) /
+                              maxTotal,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF97316),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Container(
+                      height: 2 +
+                          30 *
+                              ((week['initials'] as num?)?.toInt() ?? 0) /
+                              maxTotal,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6366F1),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      (week['week_start']?.toString() ?? '').length >= 10
+                          ? week['week_start'].toString().substring(5, 10)
+                          : '',
+                      style: const TextStyle(fontSize: 7, height: 1.2),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showInflowRulesDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('毎月の入金ルール'),
+          content: SizedBox(
+            width: 360,
+            child: _expectedInflowRules.isEmpty
+                ? const Text(
+                    'ルールはありません。入金予定ダイアログの「毎月この日に繰り返す」で登録できます。',
+                    style: TextStyle(fontSize: 12, height: 1.5),
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final rule in _expectedInflowRules)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '毎月${rule.dayOfMonth}日 ${rule.label} ${_formatYen(rule.amount)}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    height: 1.5,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              IconButton(
+                                key: Key('asset_inflow_rule_delete_${rule.id}'),
+                                tooltip: '削除',
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                ),
+                                onPressed: () async {
+                                  await _removeExpectedInflowRule(rule.id);
+                                  setDialogState(() {});
+                                },
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+          ),
+          actions: [
+            TextButton.icon(
+              key: const Key('asset_tombstone_gc_edit'),
+              onPressed: () => _showTombstoneGcSettings(setDialogState),
+              icon: const Icon(Icons.cleaning_services_outlined, size: 16),
+              label: Text(
+                '保持設定 '
+                '(${_tombstoneGcConfig.maxCount}件/${_tombstoneGcConfig.maxAgeDays}日)',
+              ),
+            ),
+            TextButton.icon(
+              key: const Key('asset_inflow_merge_button'),
+              onPressed: () async {
+                await _mergeInflowsFromMirror();
+                setDialogState(() {});
+              },
+              icon: const Icon(Icons.cloud_sync, size: 16),
+              label: const Text('サーバと統合'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('閉じる'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionOverrideDropdown(
+    AssetManagementSectionId section,
+    void Function(void Function()) setDialogState,
+  ) {
+    final current = _sectionOverrides[section] ??
+        AssetManagementSectionVisibilityOverride.auto;
+    return DropdownButton<AssetManagementSectionVisibilityOverride>(
+      key: Key('asset_section_override_${section.storageId}'),
+      value: current,
+      isDense: true,
+      items: [
+        for (final option in AssetManagementSectionVisibilityOverride.values)
+          DropdownMenuItem(
+            value: option,
+            child: Text(option.label, style: const TextStyle(fontSize: 12)),
+          ),
+      ],
+      onChanged: (value) async {
+        if (value == null) {
+          return;
+        }
+        await _setSectionOverride(section, value);
+        setDialogState(() {});
+      },
+    );
+  }
+
+  Future<void> _showSectionCustomizeDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('セクション表示のカスタマイズ'),
+          content: SizedBox(
+            width: 360,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        dialogContext,
+                      ).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: SwitchListTile.adaptive(
+                      key: const Key('asset_chat_money_range_toggle'),
+                      value: _assetChatMaskMoneyAmounts,
+                      secondary: const Icon(Icons.privacy_tip_outlined),
+                      title: const Text(
+                        'AIチャットの金額をレンジ化',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'ONではAIへ送る直前に金額を「¥100k-500k」などへ変換します。'
+                        '入力原文はチャット履歴に残ります（既定OFF）。',
+                        style: TextStyle(fontSize: 11, height: 1.4),
+                      ),
+                      onChanged: (enabled) async {
+                        try {
+                          await _setAssetChatMaskMoneyAmounts(enabled);
+                          if (!dialogContext.mounted) {
+                            return;
+                          }
+                          setDialogState(() {});
+                        } catch (_) {
+                          if (!dialogContext.mounted) {
+                            return;
+                          }
+                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                            const SnackBar(
+                              content: Text('AIチャットのプライバシー設定を保存できませんでした'),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (_displayModeStatsLabel != null) ...[
+                    Text(
+                      '実験ログ: $_displayModeStatsLabel',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                  ],
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _experimentServerSummary ?? '全体集計は未取得です。',
+                          style: const TextStyle(fontSize: 11, height: 1.5),
+                        ),
+                      ),
+                      TextButton(
+                        key: const Key('asset_experiment_summary_button'),
+                        onPressed: () async {
+                          await _fetchExperimentSummary();
+                          setDialogState(() {});
+                        },
+                        child: const Text('全体集計'),
+                      ),
+                    ],
+                  ),
+                  if (_experimentWeekly.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    _buildExperimentTrendBars(),
+                    const SizedBox(height: 2),
+                    Wrap(
+                      spacing: 10,
+                      children: [
+                        _buildCalendarLegendItem(
+                          const Color(0xFF6366F1),
+                          '初期解決',
+                        ),
+                        _buildCalendarLegendItem(const Color(0xFFF97316), '切替'),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 6),
+                  Text(
+                    '「自動」は表示モード(ミニマム/標準/フル)に従います。「常に表示」「隠す」はモードより優先されます。',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(
+                        dialogContext,
+                      ).colorScheme.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final section in AssetManagementSectionId.values)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              section.label,
+                              style: const TextStyle(fontSize: 12, height: 1.4),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          _buildSectionOverrideDropdown(
+                            section,
+                            setDialogState,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('閉じる'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDisplayModeSwitcher() {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.tune, size: 18, color: Color(0xFF7C3AED)),
+                const SizedBox(width: 8),
+                const Text(
+                  '表示モード',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _displayMode.description,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  key: const Key('asset_section_customize_button'),
+                  onPressed: _showSectionCustomizeDialog,
+                  icon: const Icon(Icons.playlist_add_check, size: 16),
+                  label: const Text('カスタマイズ'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final mode in AssetManagementDisplayMode.values)
+                  ChoiceChip(
+                    key: Key('asset_display_mode_${mode.name}'),
+                    selected: _displayMode == mode,
+                    onSelected: (_) => _setDisplayMode(mode),
+                    selectedColor: const Color(0xFF7C3AED),
+                    labelStyle: TextStyle(
+                      color: _displayMode == mode
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                      height: 1.5,
+                    ),
+                    label: Text(mode.label),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// マネーカレンダーの「今日」。サイクル決定・予定系(返済/固定費/入金予定)の
+  /// 計上起点・本日ハイライトに使う。テストは [AssetManagementPage.debugCalendarNow]
+  /// で固定できる。
+  DateTime get _calendarNow => widget.debugCalendarNow ?? _now;
+
+  /// 表示中サイクルの開始日(= 給料日)。
+  DateTime get _calendarCycleStart =>
+      AssetLiabilityMonthlyStateStore.salaryCycleStart(
+        _calendarCycleAnchor,
+        salaryDay: _salaryDay,
+      );
+
+  /// 表示中サイクルの終了(排他 = 次の給料日)。
+  DateTime get _calendarCycleEndExclusive =>
+      AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+        _calendarCycleAnchor,
+        salaryDay: _salaryDay,
+      );
+
+  void _shiftCalendarCycle(int delta) {
+    setState(() {
+      final start = _calendarCycleStart;
+      // start.day = 給料日 (clamp 1-28) なので月加算で日あふれしない。
+      _calendarCycleAnchor = DateTime(
+        start.year,
+        start.month + delta,
+        start.day,
+      );
+      _calendarSelectedDate = null;
+    });
+  }
+
+  // 支払日を過ぎた自動振替・固定費の「引落確認待ち」カード。引落済みなら
+  // ユーザーが確認 → 支払済み(現在残高に反映済み)扱いにし、見込み残高の
+  // 二重控除を防ぐ。引落失敗の可能性があるため自動では支払済みにしない。
+  /// 新しい給料サイクルに入ったが給料振込をまだ検知できていないとき、前サイクルの
+  /// 支払済みチェックを保持しつつメイン口座の残高更新を促すカード。残高を更新すると
+  /// 給料反映が検知され、新サイクルへ自動で切り替わる(支払済みチェックがリセット)。
+  Widget _buildSalaryDepositNudgeCard(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null || !_salaryResetPending) {
+      return const SizedBox.shrink();
+    }
+    final scheme = Theme.of(context).colorScheme;
+    // 登録給料額が無いと検知は汎用しきい値 (heuristicFloor) 頼みで精度が落ちる。
+    // 未登録時は想定給料額の登録を促し、入金額一致での精密検知へ誘導する。
+    final salaryRegistered = _registeredSalaryAmount() != null;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        color: scheme.tertiaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 18,
+                    color: scheme.onTertiaryContainer,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '給与の口座入金は未確認です',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: scheme.onTertiaryContainer,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '給与明細から収入に計上された金額と、口座への入金確認は別です。'
+                '現在、メイン口座への給与着金は未確認です。'
+                '支払済みチェックは前サイクルのまま保持しています。'
+                '口座の入出金明細を確認し、残高を更新してください。'
+                '金額の一致や残高の増加だけでは新しいサイクルへ切り替えません。'
+                '入金後の支出などで検知できない場合は、入金を確認したうえで'
+                '「給料を受け取った（リセット）」を選んでください。',
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.5,
+                  color: scheme.onTertiaryContainer,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (_salaryDepositCandidate.detected) ...[
+                Text(
+                  '給与入金の候補があります。収入額や残高の増加は推定のため、'
+                  '明細で実際の給与着金を確認してから切り替えてください。',
+                  key: const Key('asset_salary_deposit_candidate'),
+                  style:
+                      TextStyle(color: scheme.onTertiaryContainer, height: 1.5),
+                ),
+                const SizedBox(height: 8),
+              ],
+              _buildTextStatusChip(
+                label: '前サイクルの支払済みを表示中',
+                color: const Color(0xFF0E7490),
+              ),
+              if (!salaryRegistered) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '想定給料額を登録すると、金額の一致から確認候補を見つけやすくなります。'
+                  '候補は着金済みの証拠ではありません。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: scheme.onTertiaryContainer,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: () => _scrollTo(_keyStock),
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: const Text('残高を更新'),
+                  ),
+                  if (!salaryRegistered)
+                    TextButton.icon(
+                      onPressed: () => unawaited(_showSalaryAmountDialog()),
+                      icon: const Icon(Icons.payments_outlined, size: 16),
+                      label: const Text('想定給料額を登録'),
+                    ),
+                  TextButton.icon(
+                    onPressed: _confirmManualSalaryReset,
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: const Text('給料を受け取った（リセット）'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 支払原資口座の見込み残高不足を先読みしてページ最上部に警告する。
+  /// 全体の使用可能額が黒字でも口座割り当て次第で引き落とし失敗が起きるため、
+  /// 不足口座・不足額・解消のための口座移動提案とタスク化導線をセットで出す。
+  Widget _buildAccountShortfallAlertBanner(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null || !workbook.hasAccountShortage) {
+      return const SizedBox.shrink();
+    }
+    final summaries = workbook.shortAccountSummaries
+      ..sort((a, b) => b.shortfall.compareTo(a.shortfall));
+    // 不足口座を移動先とする提案を紐付ける（同一移動先は先勝ち）。
+    final suggestionsByAccountId = <String, AssetLiabilityTransferSuggestion>{};
+    for (final suggestion in workbook.transferSuggestions) {
+      suggestionsByAccountId.putIfAbsent(
+        suggestion.toAccountId,
+        () => suggestion,
+      );
+    }
+    return Container(
+      key: const Key('asset_account_shortfall_banner'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8, bottom: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                size: 16,
+                color: Color(0xFFB91C1C),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '支払原資口座の残高不足見込み（${summaries.length}口座）',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFB91C1C),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          for (final summary in summaries.take(3)) ...[
+            Text(
+              '「${summary.accountName}」が${_formatManagementYen(summary.shortfall)}不足'
+              '（支払後見込み ${_formatManagementYen(summary.projectedBalance)}）',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFFB91C1C),
+                height: 1.5,
+              ),
+            ),
+            // 結論(不足額)だけでは「なぜ足りないのか / 設定が悪いのか」が判らず
+            // 対処できない。計算の根拠 (現在残高・引き落とし明細・入金予定) と
+            // 原因の見立て、設定修正への導線をその場に出す。
+            _buildAccountShortfallBasis(workbook, summary.accountId),
+            if (suggestionsByAccountId[summary.accountId]
+                case final suggestion?)
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    '${suggestion.fromAccountName} → ${summary.accountName} '
+                    '${_formatManagementYen(suggestion.amount)}'
+                    '${suggestion.neededBy == null ? '' : '（${DateFormat('M月d日').format(suggestion.neededBy!)}まで）'}'
+                    // 移動元の現在残高で上限を掛けるため、不足額の全額を
+                    // 賄えないことがある。full/partial を明示しないと
+                    // 「移動したのにまだ足りない」と誤解させる。
+                    '${suggestion.amount + 0.5 < summary.shortfall ? '（一部・移動後も${_formatManagementYen(summary.shortfall - suggestion.amount)}不足）' : ''}',
+                    // 背景が固定の淡赤のため、ダークテーマの onSurface(白)だと
+                    // 読めなくなる。文字色も固定の濃赤系にする。
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF7F1D1D),
+                      height: 1.5,
+                    ),
+                  ),
+                  TextButton.icon(
+                    key: Key(
+                      'asset_account_shortfall_create_task_${summary.accountId}',
+                    ),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      foregroundColor: const Color(0xFFB91C1C),
+                    ),
+                    onPressed: () =>
+                        _createTransferTaskFromSuggestion(suggestion),
+                    icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                    label: const Text('移動タスクを作成'),
+                  ),
+                ],
+              )
+            else
+              Text(
+                '移動元の候補が見つかりません。入金予定の登録または他口座からの出金で'
+                '${_formatManagementYen(summary.shortfall)}以上を確保してください。',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF7F1D1D),
+                  height: 1.5,
+                ),
+              ),
+            const SizedBox(height: 4),
+          ],
+          if (summaries.length > 3)
+            Text(
+              'ほか${summaries.length - 3}口座で不足見込みがあります。口座別資金繰りを確認してください。',
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF7F1D1D),
+                height: 1.5,
+              ),
+            ),
+          // ジャンプ先の口座間移動セクションは workbookBoard 内にあり、表示
+          // モード次第で非描画になる。その場合スクロールが silent no-op に
+          // なるため、ボタン自体を出さない（タスク化ボタンは常に使える）。
+          if (_isSectionShown(AssetManagementSectionId.workbookBoard))
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('asset_account_shortfall_jump'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB91C1C),
+                ),
+                onPressed: _jumpToTransferSuggestionSection,
+                icon: const Icon(Icons.arrow_downward, size: 16),
+                label: const Text('口座間移動の提案へ移動'),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// 残高不足の「根拠」をその場に開示する。
+  ///
+  /// 見込み残高 = 現在残高 − 引き落とし予定 + この口座への入金予定 (±移動) で、
+  /// **入金予定は入金先口座がこの口座のものだけ**が数えられる。そのため収入予定の
+  /// 入金先が未設定だと、収入があるのに口座別では不足に見える。この盲点を
+  /// バナー内で名指しし、設定修正へ飛べるようにする。
+  Widget _buildAccountShortfallBasis(
+    AssetLiabilityWorkbook workbook,
+    String accountId,
+  ) {
+    final basis = const AssetAccountShortfallBasisService().buildBasis(
+      workbook: workbook,
+      accountId: accountId,
+    );
+    if (basis == null) {
+      return const SizedBox.shrink();
+    }
+    const detailStyle = TextStyle(
+      fontSize: 11,
+      color: Color(0xFF7F1D1D),
+      height: 1.5,
+    );
+    const shownPaymentLimit = 3;
+    final shownPayments = basis.paymentLines.take(shownPaymentLimit).toList();
+    final hiddenPaymentCount = basis.paymentLines.length - shownPayments.length;
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, top: 2, bottom: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '根拠: 現在残高 ${_formatManagementYen(basis.currentBalance)}'
+            ' − 引き落とし予定${basis.paymentLines.length}件 '
+            '${_formatManagementYen(basis.paymentTotal)}'
+            ' ＋ この口座への入金予定 ${_formatManagementYen(basis.incomeTotal)}'
+            '${basis.pendingTransferIn > 0 ? ' ＋ 移動入 ${_formatManagementYen(basis.pendingTransferIn)}' : ''}'
+            '${basis.pendingTransferOut > 0 ? ' − 移動出 ${_formatManagementYen(basis.pendingTransferOut)}' : ''}'
+            ' = ${_formatManagementYen(basis.projectedBalance)}',
+            style: detailStyle,
+          ),
+          for (final line in shownPayments)
+            Text(
+              '・${DateFormat('M月d日').format(line.date)} ${line.name} '
+              '${_formatManagementYen(line.amount)}',
+              style: detailStyle,
+            ),
+          if (hiddenPaymentCount > 0)
+            Text('・ほか$hiddenPaymentCount件', style: detailStyle),
+          // 原因の見立てと修正導線。入金先未設定は「設定だけで解消し得る」ため
+          // 最優先で名指しする。
+          if (basis.cause ==
+              AssetAccountShortfallCause.incomeDestinationUnassigned) ...[
+            Text(
+              '⚠ 入金先口座が未設定の収入予定が'
+              '${_formatManagementYen(basis.unassignedIncomeTotal)}あります'
+              '（${basis.unassignedIncomeNames.take(2).join('・')}'
+              '${basis.unassignedIncomeNames.length > 2 ? ' ほか' : ''}）。'
+              '未設定の収入は口座別の見込みに反映されません。'
+              '${basis.unassignedIncomeCouldCover ? 'この口座が入金先なら、設定するだけでこの不足は解消します。' : ''}',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF7F1D1D),
+                height: 1.5,
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: Key('asset_shortfall_fix_income_destination_$accountId'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB91C1C),
+                ),
+                onPressed: _jumpToIncomePlanSection,
+                icon: const Icon(Icons.tune, size: 16),
+                label: const Text('収入予定の入金先を設定'),
+              ),
+            ),
+          ] else if (basis.cause ==
+              AssetAccountShortfallCause.noIncomeForAccount) ...[
+            const Text(
+              'この口座への入金予定は登録されていません。'
+              '給料などの入金先がこの口座なら「収入予定」に登録すると見込みへ反映されます。',
+              style: detailStyle,
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: Key('asset_shortfall_add_income_$accountId'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB91C1C),
+                ),
+                onPressed: _jumpToIncomePlanSection,
+                icon: const Icon(Icons.add_circle_outline, size: 16),
+                label: const Text('収入予定を確認・登録'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// 支払原資口座が未設定の支払いをページ最上部で警告する。
+  /// 原資未設定の支払いはどの口座の見込み残高からも差し引かれず、
+  /// 残高不足バナー（口座別先読み）が働かない盲点になるため、
+  /// 件数・金額・残高付きの設定候補と設定導線をセットで出す。
+  Widget _buildPaymentSourceMissingBanner(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null || !workbook.hasPaymentSourceMissingRows) {
+      return const SizedBox.shrink();
+    }
+    final rows = workbook.paymentSourceMissingRows
+      ..sort(
+        (a, b) => b.scheduledPaymentAmount.compareTo(a.scheduledPaymentAmount),
+      );
+    final bulkPlan = const AssetBulkPaymentSourceAssigner().buildPlan(workbook);
+    return Container(
+      key: const Key('asset_payment_source_missing_banner'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8, bottom: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.account_balance_wallet_outlined,
+                size: 16,
+                color: Color(0xFFB45309),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '支払原資口座が未設定の支払い'
+                  '（${rows.length}件 / 合計 ${_formatManagementYen(workbook.paymentSourceMissingTotal)}）',
+                  // 背景が固定の淡黄のため、ダークテーマの onSurface(白)だと
+                  // 読めなくなる。文字色も固定の濃橙系にする。
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFB45309),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          for (final row in rows.take(3))
+            _buildPaymentSourceMissingBannerRow(row, workbook),
+          if (rows.length > 3)
+            Text(
+              'ほか${rows.length - 3}件の支払いで原資口座が未設定です。',
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF92400E),
+                height: 1.5,
+              ),
+            ),
+          // 見込み残高が最大の口座へ一括で原資を割り当てる (プレビュー→確定)。
+          if (bulkPlan.hasAssignments)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('asset_payment_source_bulk_assign'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB45309),
+                ),
+                onPressed: () =>
+                    _showBulkPaymentSourceAssignSheet(workbook, bulkPlan),
+                icon: const Icon(Icons.auto_fix_high, size: 16),
+                label: Text('原資を一括設定（${bulkPlan.assignments.length}件）'),
+              ),
+            ),
+          // ジャンプ先の原資未設定一覧は workbookBoard 内にあり、表示モード次第で
+          // 非描画になる。その場合スクロールが silent no-op になるため出さない。
+          if (_isSectionShown(AssetManagementSectionId.workbookBoard))
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('asset_payment_source_missing_jump'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB45309),
+                ),
+                onPressed: _jumpToDebtControlReviewSection,
+                icon: const Icon(Icons.arrow_downward, size: 16),
+                label: const Text('原資未設定の一覧へ移動'),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentSourceMissingBannerRow(
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    // じぶん銀行のように預金と負債が同一 id になる名前があるため自分自身は除外。
+    _PaymentSourceCandidate? candidate;
+    for (final entry in _paymentSourceCandidatesForRow(row, workbook)) {
+      if (entry.account.id != row.id) {
+        candidate = entry;
+        break;
+      }
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '「${row.name}」支払日 ${row.paymentDay ?? '-'}日 / '
+            '予定 ${_formatManagementYen(row.scheduledPaymentAmount)}',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFFB45309),
+              height: 1.5,
+            ),
+          ),
+          Text(
+            candidate == null
+                ? '残高のある現金・預金口座が見つかりません。入金後に原資口座を設定してください。'
+                : '候補: ${candidate.account.name}'
+                    '（現在 ${_formatManagementYen(candidate.currentBalance)} / '
+                    '支払後見込み ${_formatManagementYen(candidate.projectedAfterPayment)}）',
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF92400E),
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 原資未設定の支払いへ、見込み残高最大の口座を一括割当するプレビューシート。
+  /// プレビューはバナーの「候補」と同一ルールで、確定時のみ永続化する。
+  Future<void> _showBulkPaymentSourceAssignSheet(
+    AssetLiabilityWorkbook workbook,
+    AssetBulkPaymentSourcePlan plan,
+  ) async {
+    final scope = await showModalBottomSheet<_PaymentSourceSaveScope>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        final scheme = Theme.of(sheetContext).colorScheme;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '原資を一括設定',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: scheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '未設定の支払いに、支払後の見込み残高が最大の口座を割り当てます。'
+                  '設定後に各支払いで個別に変更できます。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final assignment in plan.assignments)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '「${assignment.row.name}」'
+                                  '${_formatManagementYen(assignment.row.scheduledPaymentAmount)}'
+                                  ' → ${assignment.account.name}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: scheme.onSurface,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                Text(
+                                  '支払後見込み '
+                                  '${_formatManagementYen(assignment.projectedAfterPayment)}'
+                                  '${assignment.projectedAfterPayment < AssetBulkPaymentSourceAssigner.safetyBalance ? '（残高が細くなります）' : ''}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    height: 1.4,
+                                    color: assignment.projectedAfterPayment < 0
+                                        ? scheme.error
+                                        : scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (plan.hasUnassignable) ...[
+                          const Divider(height: 16),
+                          Text(
+                            '割当先なし（残高のある現金・預金口座が見つかりません）',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: scheme.error,
+                              height: 1.4,
+                            ),
+                          ),
+                          for (final row in plan.unassignableRows)
+                            Text(
+                              '・${row.name} '
+                              '${_formatManagementYen(row.scheduledPaymentAmount)}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                height: 1.5,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          Text(
+                            '入金後にこれらの原資口座を設定してください。',
+                            style: TextStyle(
+                              fontSize: 11,
+                              height: 1.5,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        key: const Key(
+                          'asset_payment_source_bulk_apply_monthly',
+                        ),
+                        onPressed: () => Navigator.of(
+                          sheetContext,
+                        ).pop(_PaymentSourceSaveScope.monthlyOverride),
+                        child: const Text('今月だけ設定'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton(
+                        key: const Key(
+                          'asset_payment_source_bulk_apply_default',
+                        ),
+                        onPressed: () => Navigator.of(
+                          sheetContext,
+                        ).pop(_PaymentSourceSaveScope.defaultSetting),
+                        child: const Text('毎月の既定にする'),
+                      ),
+                    ),
+                  ],
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(sheetContext).pop(),
+                    child: const Text('キャンセル'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (scope != null) {
+      _applyBulkPaymentSourceAssignment(plan, scope);
+    }
+  }
+
+  /// [plan] の割当を一括で適用する。単一の setState + 単一の保存でまとめて反映し、
+  /// 個別 setter を N 回回すことによる保存レース (原資マップの書き込み取りこぼし)
+  /// を避ける。マップ操作の意味は [_savePaymentSourceReviewChoice] と同一。
+  void _applyBulkPaymentSourceAssignment(
+    AssetBulkPaymentSourcePlan plan,
+    _PaymentSourceSaveScope scope,
+  ) {
+    if (plan.assignments.isEmpty) {
+      return;
+    }
+    setState(() {
+      for (final assignment in plan.assignments) {
+        if (scope == _PaymentSourceSaveScope.defaultSetting) {
+          _defaultPaymentSourceAccountIds[assignment.row.id] =
+              assignment.account.id;
+          _paymentSourceAccountIds.remove(assignment.row.id);
+        } else {
+          _paymentSourceAccountIds[assignment.row.id] = assignment.account.id;
+        }
+      }
+    });
+    if (scope == _PaymentSourceSaveScope.defaultSetting) {
+      unawaited(_saveDefaultPaymentSources());
+    }
+    unawaited(_saveAssetLiabilityMonthlyState());
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${plan.assignments.length}件の支払いに原資口座を設定しました。')),
+      );
+    }
+  }
+
+  Widget _buildAutoDebitConfirmationCard(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null) {
+      return const SizedBox.shrink();
+    }
+    final details = const AssetAutoDebitConfirmationService()
+        .pendingConfirmationDetails(workbook);
+    final entries =
+        <MapEntry<AssetAutoDebitConfirmation, AssetLiabilityDebtRow>>[];
+    for (final detail in details) {
+      for (final debt in workbook.debtMasterRows) {
+        if (debt.id == detail.row.accountId) {
+          entries.add(MapEntry(detail, debt));
+          break;
+        }
+      }
+    }
+    if (entries.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        color: scheme.tertiaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.help_outline, color: scheme.onTertiaryContainer),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '引落の確認待ち (${entries.length}件)',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: scheme.onTertiaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '支払日を過ぎた自動振替・固定費です。引落が完了していれば「引落済み」を'
+                '押してください。現在の口座残高に反映済みとして扱い、見込み残高の'
+                '二重控除を防ぎます。引落が失敗している場合は押さないでください。',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onTertiaryContainer,
+                ),
+              ),
+              if (entries.where((e) => e.key.isEligibleForBulkConfirm).length >=
+                  2) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: () =>
+                        unawaited(_confirmAllAutoDebitsWithoutWarning(entries)),
+                    icon: const Icon(Icons.done_all, size: 16),
+                    label: Text(
+                      '警告のない'
+                      '${entries.where((e) => e.key.isEligibleForBulkConfirm).length}'
+                      '件をまとめて引落済み',
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              for (final entry in entries)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              entry.key.row.accountName,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: scheme.onTertiaryContainer,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              _autoDebitConfirmationSubtitle(entry.key.row),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onTertiaryContainer,
+                              ),
+                            ),
+                            if (entry.key.sourceBalanceInsufficient)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.warning_amber_rounded,
+                                      size: 16,
+                                      color: scheme.error,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        // 残高は「この行の引落前の見込み」= 先行する
+                                        // 成功見込み引落を差し引いた値 (同一口座から
+                                        // 複数引落がある場合の合計不足も検出する)。
+                                        entry.key.shortfallWarningMessage(
+                                          formattedSourceBalance:
+                                              _formatManagementYen(entry
+                                                  .key.sourceAccountBalance!),
+                                          formattedCreditLimit: entry.key
+                                                      .sourceAccountCreditLimit ==
+                                                  null
+                                              ? null
+                                              : _formatManagementYen(entry.key
+                                                  .sourceAccountCreditLimit!),
+                                        )!,
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color: scheme.error,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          FilledButton.tonal(
+                            onPressed: () {
+                              unawaited(
+                                _toggleMonthlyPaymentPaid(entry.value, true),
+                              );
+                            },
+                            child: const Text('引落済み'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              unawaited(
+                                _showAutoDebitAlternateSourceSheet(
+                                  entry.value,
+                                  entry.key.row,
+                                  workbook,
+                                ),
+                              );
+                            },
+                            child: const Text('別口座で支払った'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 引落が設定上の振替元で失敗し、別の口座・カード (例: アコムショッピング枠) で
+  // 支払った場合に、実際の振替元を記録するためのシート。残高は自動変更せず、振替元の
+  // 上書き (今回のみ / 今後も) + 引落済み化のみ行う。見込み残高・AI・借入モニターは
+  // 記録した振替元基準で再計算される。
+  Future<void> _showAutoDebitAlternateSourceSheet(
+    AssetLiabilityDebtRow debtRow,
+    AssetLiabilityCashflowRow cashflowRow,
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    // サブスク等はカード (ファミペイ等) やアコムショッピング枠 (shoppingDebt) へ
+    // 請求されるため、残高<=0 のカード/与信枠・キャリア決済も候補に含める。
+    final options = recurringFixedCostSourceOptions(
+      workbook.accounts,
+      includeCards: true,
+      includeCarrierBilling: true,
+    );
+    final currentSource = _paymentSourceAccountIds[debtRow.id] ??
+        _defaultPaymentSourceAccountIds[debtRow.id] ??
+        debtRow.paymentSourceAccountId;
+    final theme = Theme.of(context);
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '実際に支払った振替元を選択',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${cashflowRow.accountName} / '
+                  '${_formatManagementYen(cashflowRow.paymentAmount)}\n'
+                  '引落が失敗し別の口座・カードで支払った場合に、実際の振替元を記録します。'
+                  '残高は自動変更しません。',
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                if (options.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text('選択できる振替元がありません。'),
+                  )
+                else
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        for (final option in options)
+                          ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            selected: option.id == currentSource,
+                            title: Text(option.name),
+                            trailing: Wrap(
+                              spacing: 6,
+                              children: [
+                                OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.of(sheetContext).pop();
+                                    _applyAutoDebitAlternateSource(
+                                      debtRow,
+                                      option,
+                                      _PaymentSourceSaveScope.monthlyOverride,
+                                    );
+                                  },
+                                  child: const Text('今回のみ'),
+                                ),
+                                OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.of(sheetContext).pop();
+                                    _applyAutoDebitAlternateSource(
+                                      debtRow,
+                                      option,
+                                      _PaymentSourceSaveScope.defaultSetting,
+                                    );
+                                  },
+                                  child: const Text('今後も'),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _applyAutoDebitAlternateSource(
+    AssetLiabilityDebtRow debtRow,
+    RecurringFixedCostSourceOption option,
+    _PaymentSourceSaveScope scope,
+  ) {
+    // 振替元の上書きを in-memory に設定してから引落済み化する。`_toggleMonthlyPaymentPaid`
+    // が月次 state を 1 回だけ保存し、その snapshot に上書きも paid も両方含める。
+    // (`_savePaymentSourceReviewChoice` を呼ぶと月次 state の保存が 2 回走り、上書きのみの
+    //  古い snapshot が paid 付き snapshot の後に着地して paid を取りこぼす競合があるため避ける。)
+    setState(() {
+      if (scope == _PaymentSourceSaveScope.defaultSetting) {
+        _defaultPaymentSourceAccountIds[debtRow.id] = option.id;
+        _paymentSourceAccountIds.remove(debtRow.id);
+      } else {
+        _paymentSourceAccountIds[debtRow.id] = option.id;
+      }
+    });
+    if (scope == _PaymentSourceSaveScope.defaultSetting) {
+      // 既定の振替元は月次 state とは別ストアのため独立保存で競合しない。
+      unawaited(_saveDefaultPaymentSources());
+    }
+    unawaited(_toggleMonthlyPaymentPaid(debtRow, true));
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          autoDebitAlternateSourcePaidHint(
+            option.name,
+            _formatManagementYen(debtRow.scheduledPaymentAmount),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _autoDebitConfirmationSubtitle(AssetLiabilityCashflowRow row) {
+    final buffer = StringBuffer(
+      '${row.paymentDay}日 / ${_formatManagementYen(row.paymentAmount)}',
+    );
+    final source = row.paymentSourceAccountName;
+    if (source != null && source.isNotEmpty) {
+      buffer.write(' / $source');
+    }
+    return buffer.toString();
+  }
+
+  int? _savingsPlanNetIncome() {
+    // Only registered salary / observed payslip net pay. No inflow plans,
+    // side income, future bonuses or assumed raises.
+    if (_salaryAmount != null &&
+        _salaryAmount!.isFinite &&
+        _salaryAmount! > 0) {
+      return _salaryAmount!.floor();
+    }
+    DateTime? latest;
+    int? amount;
+    for (final row in _payslipRows) {
+      final date = DateTime.tryParse(row['pay_date']?.toString() ?? '');
+      final net = _numberFromDynamic(row['net_amount']);
+      if (date == null || date.isAfter(_now) || !net.isFinite || net <= 0) {
+        continue;
+      }
+      if (latest == null || date.isAfter(latest)) {
+        latest = date;
+        amount = net.floor();
+      }
+    }
+    return amount;
+  }
+
+  Future<SavingsPlanProposal> _proposeSavingsLifePlan(
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    final entries = AssetSalarySpendingEntries.build(
+      cardStatementLines: _cardStatementLines,
+      recentFlows: _recentFlows,
+      monthlyIncomePlans: _monthlyIncomePlans,
+      payslipSalaryIncomes: _payslipSalaryIncomes,
+      payslipRows: _payslipRows,
+      flowDisplayTitle: _flowDisplayTitle,
+      flowCategoryDescription: (flow) => _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: flow['action_type']?.toString() ?? '',
+      ).memo,
+    );
+    final breakdown = _buildSalarySpendingBreakdown();
+    const categories = {'食費', '交通', '医療', '日用品', '娯楽・浪費'};
+    final living = breakdown.sections
+        .where((section) => categories.contains(section.category))
+        .fold<double>(0, (total, section) => total + section.amount);
+    final days = entries.expenses
+        .where((entry) =>
+            !entry.date.isBefore(breakdown.periodStart) &&
+            entry.date.isBefore(breakdown.periodEndExclusive) &&
+            !entry.date.isAfter(_now) &&
+            categories.contains(_salarySpendingBreakdownService
+                .categorize(entry.categoryDescription ?? entry.description)))
+        .map((entry) => SavingsLifePlan.dateText(entry.date))
+        .toSet()
+        .length;
+    return SavingsPlanProposalService().propose(SavingsPlanProposalInput(
+      cashBalance: workbook.cashLikeTotal.floor(),
+      monthlyIncome: _savingsPlanNetIncome(),
+      monthlyCommitments: workbook.monthlyScheduledPaymentTotal.ceil(),
+      observedLivingExpense: living.ceil(),
+      recordedDays: days,
+      estimatedPayments: workbook.estimatedPaymentCount > 0,
+    ));
+  }
+
+  ({DateTime start, DateTime endExclusive})? _loadedDebtPaidPeriod() {
+    if (_loadedAssetLiabilityMonthKey != _assetLiabilityStateMonthKey(_now)) {
+      return null;
+    }
+    final month = _assetLiabilityStateMonth(_now);
+    final start = DateTime(
+      month.year,
+      month.month,
+      _salaryDay.clamp(1, 28).toInt(),
+    );
+    return (
+      start: start,
+      endExclusive: DateTime(start.year, start.month + 1, start.day),
+    );
+  }
+
+  Widget _buildCashflowForecastCard(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null) {
+      return const SizedBox.shrink();
+    }
+    final paidPeriod = _loadedDebtPaidPeriod();
+    final inputs = AssetCashflowForecastInputs.fromAssetData(
+      accounts: workbook.accounts,
+      debtRows: workbook.debtMasterRows,
+      recurringIncomeTemplates: _recurringIncomeTemplates,
+      inflowRules: _expectedInflowRules,
+      oneTimeInflows: _expectedInflows,
+      subscriptions: _subscriptions,
+      paymentDayOverrides: _debtPaymentDayOverrides,
+      paidPeriodStart: paidPeriod?.start,
+      paidPeriodEndExclusive: paidPeriod?.endExclusive,
+    );
+    if (!inputs.hasData) {
+      return const SizedBox.shrink();
+    }
+
+    final forecast = AssetCashflowForecastService.project(
+      asOf: DateTime.now(),
+      startingBalance: inputs.startingBalance,
+      horizonMonths: _forecastHorizonMonths,
+      recurringIncome: inputs.recurringIncome,
+      recurringOutflow: inputs.recurringOutflow,
+      oneTimeIncome: inputs.oneTimeIncome,
+      safetyMargin: _assetForecastSafetyMargin,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (inputs.unverifiedPaymentLabels.isNotEmpty)
+            Text(
+              '支払方法未照合の支払を現金支出に仮置きした条件付き予測です。'
+              '確定した不足ではありません。対象: ${inputs.unverifiedPaymentLabels.join('、')}',
+              key: const Key('asset_forecast_unverified_payments'),
+            ),
+          AssetCashflowForecastCard(
+            forecast: forecast,
+            currencyFormatter: _formatYen,
+            currentHorizon: _forecastHorizonMonths,
+            onHorizonChanged: (months) =>
+                setState(() => _forecastHorizonMonths = months),
+            onReviewPaymentDays: () => _scrollTo(_keyCalendar),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 月次キャッシュフローパネル (Issue #2474)。履歴スナップショット + ライブの当月から
+  /// 「当月CF (月収 − 月支出)」「年初来累積CF」「直近12か月の黒字/赤字月数」を集計する。
+  /// 金額計算は純サービス [AssetCashflowStatementService] で deterministic に行う。
+  /// 月次資産ダッシュボード (Issue #2472)。純資産 / キャッシュフロー / 投資 / アラートを
+  /// responsive な 2x2 グリッド (mobile 1 列) に並べる。
+  ///
+  /// 投資パネルは未登録状態でも追加導線を表示するため常に配列へ含める。
+  Widget _buildMonthlyDashboardGrid(AssetLiabilityWorkbook? workbook) {
+    final panels = <AssetDashboardPanel>[];
+
+    // 各パネルは表示設定ダイアログに専用の項目 (純資産パネル / 月次キャッシュフロー /
+    // アラートセンター) を持つ。ダイアログは「『常に表示』『隠す』はモードより優先されます」
+    // と明示しているので、grid 側でもユーザーの上書きを必ず通す。通さないと設定項目が
+    // 操作できるのに一切効かない (= 設定が嘘をつく) 状態になる。
+    // 投資パネルは対応するセクション ID を持たないため、従来どおり常に含める。
+    final netWorth = _assetNetWorthPanelChild(workbook);
+    if (netWorth != null &&
+        _isDashboardPanelShown(AssetManagementSectionId.netWorthPanel)) {
+      panels.add(
+        AssetDashboardPanel(
+          title: '純資産',
+          onOpenDetail: () => _scrollTo(_keyStock),
+          child: netWorth,
+        ),
+      );
+    }
+
+    final cashflow = _cashflowStatementPanelChild(workbook);
+    if (cashflow != null &&
+        _isDashboardPanelShown(AssetManagementSectionId.cashflowStatement)) {
+      panels.add(
+        AssetDashboardPanel(
+          title: 'キャッシュフロー',
+          onOpenDetail: () => _scrollTo(_keyFlow),
+          child: cashflow,
+        ),
+      );
+    }
+
+    panels.add(
+      AssetDashboardPanel(
+        title: '投資',
+        child: InvestmentAssetManagementPanel(
+          repository: _investmentAssetRepository,
+          userId: _supabase.auth.currentUser?.id,
+          currencyFormatter: (value) => _formatYen(value),
+        ),
+      ),
+    );
+
+    final alerts = _assetAlertCenterPanelChild(workbook);
+    if (alerts != null &&
+        _isDashboardPanelShown(AssetManagementSectionId.alertCenter)) {
+      panels.add(
+        AssetDashboardPanel(
+          title: 'アラート',
+          onOpenDetail: () => _scrollTo(_keyCalendar),
+          child: alerts,
+        ),
+      );
+    }
+
+    if (panels.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: AssetDashboardGrid(panels: panels),
+    );
+  }
+
+  /// キャッシュフローパネルの中身。データが無ければ null (グリッドから除外される)。
+  Widget? _cashflowStatementPanelChild(AssetLiabilityWorkbook? workbook) {
+    // 前サイクルの支払済みを当月の実績として再集計しない。
+    AssetLiabilityMonthlySnapshot? currentMonthSnapshot;
+    if (workbook != null &&
+        _assetLiabilityBootStateLoaded &&
+        !_salaryResetPending &&
+        _loadedAssetLiabilityMonthKey == _currentSalaryCycleKey()) {
+      final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+        DateTime.now(),
+      );
+      currentMonthSnapshot = _assetLiabilityHistoryService.buildSnapshot(
+        monthKey: monthKey,
+        workbook: workbook,
+        savedAt: DateTime.now(),
+      );
+    }
+    final statement = const AssetCashflowStatementService().build(
+      snapshots: _monthlySnapshots,
+      currentMonthSnapshot: currentMonthSnapshot,
+      asOf: DateTime.now(),
+    );
+    if (!statement.hasData) {
+      return null;
+    }
+    return AssetCashflowStatementCard(
+      statement: statement,
+      currencyFormatter: _formatYen,
+    );
+  }
+
+  /// 純資産パネル (Issue #2473)。履歴スナップショット + ライブの当月から
+  /// 「純資産」「前月比 ±¥ / ±%」「直近6月スパークライン」を集計する。
+  /// 金額・変化率は純サービス [AssetNetWorthPanelService] で deterministic に算出。
+  Widget? _assetNetWorthPanelChild(AssetLiabilityWorkbook? workbook) {
+    AssetLiabilityMonthlySnapshot? currentMonthSnapshot;
+    if (workbook != null) {
+      final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+        DateTime.now(),
+      );
+      currentMonthSnapshot = _assetLiabilityHistoryService.buildSnapshot(
+        monthKey: monthKey,
+        workbook: workbook,
+        savedAt: DateTime.now(),
+      );
+    }
+    final panel = const AssetNetWorthPanelService().build(
+      snapshots: _monthlySnapshots,
+      currentMonthSnapshot: currentMonthSnapshot,
+    );
+    if (!panel.hasData) {
+      return null;
+    }
+    return AssetNetWorthPanelCard(panel: panel, currencyFormatter: _formatYen);
+  }
+
+  /// dismiss 済みアラート id をローカルから読み込む (Issue #2475)。
+  Future<void> _loadAssetAlertDismissedIds() async {
+    final ids = await _assetAlertDismissalStore.load();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _assetAlertDismissedIds = ids);
+  }
+
+  /// RLS に加え user_id を明示して、未確認の異常だけを取得する (Issue #2479)。
+  Future<void> _loadActiveAssetAnomalies() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final anomalies = await _anomalyDetectionRepository.fetchActive(
+        userId: userId,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() => _activeAssetAnomalies = anomalies);
+    } catch (error, stackTrace) {
+      debugPrint('Failed to load asset anomalies: $error\n$stackTrace');
+    }
+  }
+
+  Future<void> _dismissAssetAlert(String id) async {
+    if (AssetAnomalyDetection.isAnomalyAlertId(id)) {
+      await _dismissAssetAnomaly(id);
+      return;
+    }
+    final next = await _assetAlertDismissalStore.dismiss(id);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _assetAlertDismissedIds = next);
+  }
+
+  Future<void> _dismissAssetAnomaly(String alertId) async {
+    if (!_dismissingAssetAnomalyIds.add(alertId)) {
+      return;
+    }
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      _dismissingAssetAnomalyIds.remove(alertId);
+      return;
+    }
+    try {
+      await _anomalyDetectionRepository.dismiss(
+        userId: userId,
+        detectionId: AssetAnomalyDetection.detectionIdFromAlertId(alertId),
+        dismissedAt: DateTime.now().toUtc(),
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(
+        () => _activeAssetAnomalies = _activeAssetAnomalies
+            .where((anomaly) => anomaly.alertId != alertId)
+            .toList(growable: false),
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Failed to dismiss asset anomaly: $error\n$stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('異常の非表示に失敗しました。もう一度お試しください。')),
+        );
+      }
+    } finally {
+      _dismissingAssetAnomalyIds.remove(alertId);
+    }
+  }
+
+  Future<void> _restoreDismissedAssetAlerts() async {
+    final store = await SharedPreferences.getInstance();
+    await store.remove(AssetAlertDismissalStore.prefsKey);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _assetAlertDismissedIds = <String>{});
+  }
+
+  /// 統合アラートパネル (Issue #2475)。延滞・口座ショート・支払リマインダー(#2453)・
+  /// 支払原資未設定・異常検知を重要度別に集約する。金額・重要度判定は純サービスで
+  /// deterministic に行う。
+  /// アラートパネルの中身。データが無ければ null (グリッドから除外される)。
+  Widget? _assetAlertCenterPanelChild(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null) {
+      return null;
+    }
+    final center = _assetAlertCenterService.build(
+      workbook: workbook,
+      now: _now,
+      dismissedIds: _assetAlertDismissedIds,
+      anomalyAlerts: [
+        for (final anomaly in _activeAssetAnomalies) anomaly.toAlert(),
+      ],
+    );
+    // 表示するアラートも dismiss 済みも無ければカードを出さない。
+    if (!center.hasAlerts && center.dismissedCount == 0) {
+      return null;
+    }
+    return AssetAlertCenterCard(
+      center: center,
+      onDismiss: _dismissAssetAlert,
+      onRestoreDismissed: center.dismissedCount > 0
+          ? () => unawaited(_restoreDismissedAssetAlerts())
+          : null,
+    );
+  }
+
+  Widget _buildAssetCalendarCard(AssetLiabilityWorkbook? workbook) {
+    final debtRows =
+        workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[];
+    double? startingCashBalance;
+    if (workbook != null) {
+      var liquid = 0.0;
+      for (final account in workbook.accounts) {
+        final isLiquid = account.kind == AssetLiabilityAccountKind.cash ||
+            account.kind == AssetLiabilityAccountKind.deposit;
+        if (isLiquid && account.balance > 0) {
+          liquid += account.balance;
+        }
+      }
+      startingCashBalance = liquid;
+    }
+    final cycleStart = _calendarCycleStart;
+    final cycleEndExclusive = _calendarCycleEndExclusive;
+    final cycleLastDay = DateTime(
+      cycleEndExclusive.year,
+      cycleEndExclusive.month,
+      cycleEndExclusive.day - 1,
+    );
+    // サイクルは高々2暦月に跨るので、両月へ展開してから窓内へ絞る。
+    final inflowMonths = <DateTime>[
+      DateTime(cycleStart.year, cycleStart.month),
+      if (cycleLastDay.month != cycleStart.month ||
+          cycleLastDay.year != cycleStart.year)
+        DateTime(cycleLastDay.year, cycleLastDay.month),
+    ];
+    final monthInflowEntries = <AssetExpectedInflow>[
+      for (final month in inflowMonths)
+        ...AssetExpectedInflowStore.materializeMonth(
+          oneTime: _expectedInflows,
+          rules: _expectedInflowRules,
+          month: month,
+        ).where(
+          (inflow) =>
+              !inflow.date.isBefore(cycleStart) &&
+              inflow.date.isBefore(cycleEndExclusive),
+        ),
+    ];
+    final monthSubscriptions = _subscriptionsForRange(
+      cycleStart,
+      cycleEndExclusive,
+    );
+    // Paid flags belong to the loaded effective salary cycle, not whichever
+    // future month happens to be selected in the calendar.
+    final paidPeriod = _loadedDebtPaidPeriod();
+    final debtInputs = <AssetCalendarDebtInput>[
+      for (final row in debtRows)
+        AssetCalendarDebtInput.fromDebtRow(
+          row,
+          paymentDayOverrides: _debtPaymentDayOverrides,
+          sourceAccountKindsById: {
+            for (final account
+                in workbook?.accounts ?? <AssetLiabilityAccount>[])
+              account.id: account.kind,
+          },
+          paidPeriodStart: paidPeriod?.start,
+          paidPeriodEndExclusive: paidPeriod?.endExclusive,
+        ),
+    ];
+    final inflowInputs = <AssetCalendarInflowInput>[
+      for (final inflow in monthInflowEntries)
+        AssetCalendarInflowInput(
+          date: inflow.date,
+          amount: inflow.amount,
+          label: inflow.label,
+        ),
+    ];
+    final calendar = AssetPaymentCalendarService.buildRange(
+      start: cycleStart,
+      endExclusive: cycleEndExclusive,
+      flows: _recentFlows,
+      subscriptions: monthSubscriptions,
+      debts: debtInputs,
+      salaryDay: _salaryDay,
+      asOf: _calendarNow,
+      startingCashBalance: startingCashBalance,
+      expectedInflows: inflowInputs,
+    );
+    final selectedDate = _calendarSelectedDate;
+    final selectedDay =
+        selectedDate == null ? null : calendar.dayFor(selectedDate);
+    final today = _calendarNow;
+    final todayDate = DateTime(today.year, today.month, today.day);
+    // サイクル終了(排他)が今日以前なら予定系イベントが存在しない過去サイクル。
+    // 予定チップの代わりに記録済みフローの実績サマリを見せる。
+    final isPastCycle = !cycleEndExclusive.isAfter(todayDate);
+    var cycleActualExpenseTotal = 0.0;
+    var cycleActualIncomeTotal = 0.0;
+    var cycleRecordedDayCount = 0;
+    for (final day in calendar.days) {
+      cycleActualExpenseTotal += day.expenseTotal;
+      cycleActualIncomeTotal += day.incomeTotal;
+      if (day.expenseTotal > 0 || day.incomeTotal > 0) {
+        cycleRecordedDayCount++;
+      }
+    }
+    final cycleActualNet = cycleActualIncomeTotal - cycleActualExpenseTotal;
+    final shortfallDaySummary = calendar.firstShortfallDate == null
+        ? null
+        : calendar.dayFor(calendar.firstShortfallDate!);
+    final shortfallDebtEvents = <AssetCalendarEvent>[
+      if (shortfallDaySummary != null)
+        ...shortfallDaySummary.events.where(
+          (event) =>
+              event.kind == AssetCalendarEventKind.debtPayment &&
+              event.sourceId != null &&
+              debtInputs.any(
+                (debt) =>
+                    debt.id == event.sourceId &&
+                    debt.paymentDay != _salaryDay + 1,
+              ),
+        ),
+    ];
+    final shiftCandidates = <MapEntry<AssetCalendarEvent, String>>[
+      for (final event in shortfallDebtEvents)
+        MapEntry(
+          event,
+          _shiftPreviewLabel(
+            event: event,
+            calendar: calendar,
+            debts: debtInputs,
+            subscriptions: monthSubscriptions,
+            inflows: inflowInputs,
+            startingCashBalance: startingCashBalance,
+          ),
+        ),
+    ];
+    final comboIds = <String>[
+      for (final event in shortfallDebtEvents)
+        if (event.sourceId != null) event.sourceId!,
+    ];
+    final comboSuggestionIds = comboIds.length >= 2 &&
+            shiftCandidates.every((entry) => entry.value == '(単独では回避不可)')
+        ? AssetPaymentCalendarService.findMinimalShiftSet(
+            month: cycleStart,
+            rangeStart: cycleStart,
+            rangeEndExclusive: cycleEndExclusive,
+            flows: _recentFlows,
+            subscriptions: monthSubscriptions,
+            debts: debtInputs,
+            candidateIds: comboIds,
+            shiftToDay: _salaryDay + 1,
+            salaryDay: _salaryDay,
+            asOf: _calendarNow,
+            startingCashBalance: startingCashBalance,
+            expectedInflows: inflowInputs,
+          )
+        : null;
+    final comboSuggestionLabel = comboSuggestionIds == null
+        ? null
+        : shortfallDebtEvents
+            .where((event) => comboSuggestionIds.contains(event.sourceId))
+            .map((event) => event.label)
+            .join(' + ');
+    const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
+    final salarySuggestionAmount = _salaryInflowSuggestionAmount();
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.calendar_month, color: Color(0xFF1D4ED8)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'マネーカレンダー',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  key: const Key('asset_calendar_prev_month'),
+                  tooltip: '前のサイクル',
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: () => _shiftCalendarCycle(-1),
+                ),
+                Flexible(
+                  child: Text(
+                    '${DateFormat('yyyy/M/d').format(calendar.rangeStart)}'
+                    '〜${DateFormat('M/d').format(cycleLastDay)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  key: const Key('asset_calendar_next_month'),
+                  tooltip: '次のサイクル',
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () => _shiftCalendarCycle(1),
+                ),
+              ],
+            ),
+            AssetCalendarRefreshControl(
+              onRefresh: () async {
+                await _fetchRecentFlows(
+                  runSalaryReconciliation: false,
+                  reportErrors: true,
+                );
+                if (mounted) setState(() => _calendarReflectionRevision++);
+              },
+            ),
+            if (_supabase.auth.currentUser?.id != null)
+              AssetCalendarReflectionPanel(
+                key: ValueKey(
+                    'reflection_${_supabase.auth.currentUser!.id}_$_calendarReflectionRevision'),
+                repository: AssetCalendarReflectionRepository(_supabase),
+                flowEvents: _calendarFlowReflections,
+                start: cycleStart,
+                end: cycleEndExclusive,
+                selectedDate: _calendarSelectedDate,
+                onLoaded: (events) {
+                  if (!mounted) return;
+                  setState(() {
+                    _calendarReflections = events;
+                    _calendarReflectionOwner = _supabase.auth.currentUser?.id;
+                  });
+                },
+              ),
+            const SizedBox(height: 4),
+            Text(
+                'この表示期間の浪費危険日: ${AssetSpendingAttentionCalendar.countDays(calendar.days.map((day) => day.date))}日'),
+            const Text(
+                '金曜・土日・公式祝日・その休前日の注意表示です。実際の浪費・飲酒の記録とは別です。休前日は翌日が土日・公式祝日の日で、本人の個別休暇は含みません。'),
+            const Text('祝日データ: 内閣府 2026–2027年（2026-10-15取得）。未対応年の祝日は推測しません。'),
+            const SizedBox(height: 4),
+            Text(
+              '給料日サイクル(給料日〜翌給料日前日)で、日ごとの支出と返済日・固定費・給料日のイベントをまとめて見渡せます。',
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.5,
+              ),
+            ),
+            if (salarySuggestionAmount != null) ...[
+              const SizedBox(height: 10),
+              Container(
+                key: const Key('asset_salary_inflow_suggestion'),
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F9FF),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFBAE6FD)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.savings,
+                          size: 16,
+                          color: Color(0xFF0369A1),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '給料が入金予定に未登録です。登録すると給料日以降の見込み残高とショート判定が正確になります。',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context).colorScheme.onSurface,
+                              height: 1.6,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          key: const Key('asset_salary_inflow_dismiss'),
+                          tooltip: '表示しない',
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 28,
+                            minHeight: 28,
+                          ),
+                          icon: const Icon(Icons.close, size: 16),
+                          onPressed: _dismissSalaryInflowPrompt,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          key: const Key('asset_salary_inflow_register'),
+                          onPressed: () =>
+                              _registerSalaryInflowRule(salarySuggestionAmount),
+                          icon: const Icon(Icons.repeat, size: 16),
+                          label: Text(
+                            '給料 ${_formatYen(salarySuggestionAmount)} を毎月$_salaryDay日に登録',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        TextButton(
+                          key: const Key('asset_salary_inflow_adjust'),
+                          onPressed: () => _showAddExpectedInflowDialog(
+                            _nextSalaryDate(),
+                            initialAmount: salarySuggestionAmount,
+                            initialLabel: '給料',
+                            initialRepeatMonthly: true,
+                          ),
+                          child: const Text(
+                            '金額・日付を調整して登録',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            if (isPastCycle)
+              Container(
+                key: const Key('asset_calendar_cycle_actual_summary'),
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.history,
+                          size: 16,
+                          color: Color(0xFF475569),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'このサイクルの実績サマリ'
+                            '(${DateFormat('M/d').format(calendar.rangeStart)}'
+                            '〜${DateFormat('M/d').format(cycleLastDay)})',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildOverviewStatChip(
+                          label: '収入実績',
+                          value: _formatYen(cycleActualIncomeTotal),
+                          color: const Color(0xFF2563EB),
+                        ),
+                        _buildOverviewStatChip(
+                          label: '支出実績',
+                          value: _formatYen(cycleActualExpenseTotal),
+                          color: const Color(0xFFB91C1C),
+                        ),
+                        _buildOverviewStatChip(
+                          label: '差引収支',
+                          value: _formatSignedYen(cycleActualNet),
+                          color: cycleActualNet >= 0
+                              ? const Color(0xFF047857)
+                              : const Color(0xFFB91C1C),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      cycleRecordedDayCount > 0
+                          ? '記録がある日: $cycleRecordedDayCount日。終了したサイクルのため予定(返済・固定費・入金予定)は表示せず、記録済みフローのみを集計しています。'
+                          : '終了したサイクルです。この期間に記録されたフローはありません。',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildOverviewStatChip(
+                    label: '返済予定',
+                    value: _formatYen(calendar.scheduledDebtPaymentTotal),
+                    color: const Color(0xFFB91C1C),
+                  ),
+                  _buildOverviewStatChip(
+                    label: '固定費予定',
+                    value: _formatYen(calendar.subscriptionTotal),
+                    color: const Color(0xFF9333EA),
+                  ),
+                  _buildOverviewStatChip(
+                    label: '支払予定合計',
+                    value: _formatYen(calendar.scheduledOutflowTotal),
+                    color: const Color(0xFFC05621),
+                  ),
+                ],
+              ),
+            if (!isPastCycle)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  '固定費予定は、この給与サイクル内の支払予定を集計しています。サブスク一覧の登録額合計とは対象期間が異なります。同じ請求を通常固定費・サブスク・返済へ重複登録しないよう明細で照合してください。',
+                  key: Key('asset_calendar_fixed_cost_scope'),
+                  style: TextStyle(fontSize: 11, height: 1.5),
+                ),
+              ),
+            if (calendar.firstShortfallDate != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                key: const Key('asset_calendar_shortfall_warning'),
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFECACA)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          size: 16,
+                          color: Color(0xFFB91C1C),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '${DateFormat('M月d日').format(calendar.firstShortfallDate!)} に残高ショート見込み',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFFB91C1C),
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    AssetCalendarShortfallDetails(
+                      calendar: calendar,
+                      asOf: _calendarNow,
+                      startingCashBalance: startingCashBalance,
+                      // Aggregate balances have no single verified observation
+                      // timestamp here; do not manufacture one from a date key.
+                      onReviewPayments: () => _scrollTo(
+                        _sectionAnchorKey(
+                          AssetManagementSectionId.workbookBoard,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      key: const Key('asset_calendar_add_inflow_button'),
+                      onPressed: () => _showAddExpectedInflowDialog(
+                        calendar.firstShortfallDate!,
+                        initialAmount: calendar.shortfallRecoveryAmount,
+                      ),
+                      icon: const Icon(Icons.savings, size: 16),
+                      label: const Text('入金予定を追加して再計算'),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '以下はアプリ内の支払日設定です。契約上の返済期限は変わりません。明細に記載された支払日を確認し、設定が古い場合のみ修正してください。',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                    ),
+                    if (shortfallDebtEvents.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          for (final entry in shiftCandidates)
+                            OutlinedButton.icon(
+                              key: Key(
+                                'asset_shift_payment_${entry.key.sourceId}',
+                              ),
+                              onPressed: () => _shiftDebtPaymentAfterSalary(
+                                workbook,
+                                entry.key.sourceId!,
+                              ),
+                              icon: const Icon(Icons.schedule_send, size: 14),
+                              label: Text(
+                                '${entry.key.label}の設定を${_salaryDay + 1}日へ${entry.value}',
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                    if (comboSuggestionIds != null) ...[
+                      const SizedBox(height: 6),
+                      OutlinedButton.icon(
+                        key: const Key('asset_shift_payment_combo'),
+                        onPressed: () => _shiftDebtPaymentsAfterSalaryCombo(
+                          workbook,
+                          comboSuggestionIds,
+                        ),
+                        icon: const Icon(Icons.double_arrow, size: 14),
+                        label: Text(
+                          '$comboSuggestionLabelの設定を${_salaryDay + 1}日へ(試算上の不足なし)',
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                for (final weekday in weekdayLabels)
+                  Expanded(
+                    child: Text(
+                      weekday,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            for (final week in calendar.weeks)
+              Row(
+                children: [
+                  for (final day in week)
+                    Expanded(child: _buildAssetCalendarCell(day, today)),
+                ],
+              ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              children: [
+                _buildCalendarLegendItem(
+                    AssetAttentionDayLabel.background, '浪費危険日（注意の背景）'),
+                _buildCalendarLegendItem(const Color(0xFFB91C1C), '返済日'),
+                _buildCalendarLegendItem(const Color(0xFF9333EA), '固定費'),
+                _buildCalendarLegendItem(const Color(0xFF0D9488), '給料日'),
+                _buildCalendarLegendItem(const Color(0xFF2563EB), '収入'),
+                _buildCalendarLegendItem(const Color(0xFF64748B), '振替（支出集計外）'),
+                _buildCalendarLegendItem(const Color(0xFF0EA5E9), '入金予定'),
+                _buildCalendarLegendItem(
+                    const Color(0xFF92400E), '不明: 使途不明金（内訳未照合）'),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('asset_inflow_rules_button'),
+                onPressed: _showInflowRulesDialog,
+                icon: const Icon(Icons.repeat, size: 16),
+                label: const Text('毎月の入金ルール'),
+              ),
+            ),
+            if (monthInflowEntries.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final inflow in monthInflowEntries)
+                    InputChip(
+                      key: Key('asset_inflow_chip_${inflow.id}'),
+                      avatar: inflow.sourceRuleId != null
+                          ? const Icon(Icons.repeat, size: 14)
+                          : null,
+                      label: Text(
+                        '${DateFormat('M/d').format(inflow.date)} ${inflow.label} ${_formatYen(inflow.amount)}',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      onDeleted: () {
+                        final ruleId = inflow.sourceRuleId;
+                        if (ruleId != null) {
+                          _removeExpectedInflowRule(ruleId);
+                        } else {
+                          _removeExpectedInflow(inflow.id);
+                        }
+                      },
+                    ),
+                ],
+              ),
+            ],
+            if (selectedDay != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                AssetSpendingAttentionCalendar.forDate(selectedDay.date)
+                    .description,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700, color: Color(0xFF78350F)),
+              ),
+              Text(
+                '${DateFormat('M月d日').format(selectedDay.date)} のイベント',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  OutlinedButton.icon(
+                    key: const Key('asset_calendar_prefill_flow_button'),
+                    onPressed: () =>
+                        _prefillFlowDateFromCalendar(selectedDay.date),
+                    icon: const Icon(Icons.edit_calendar, size: 16),
+                    label: const Text('この日に記録'),
+                  ),
+                  OutlinedButton.icon(
+                    key: const Key('asset_calendar_day_inflow_button'),
+                    onPressed: () =>
+                        _showAddExpectedInflowDialog(selectedDay.date),
+                    icon: const Icon(Icons.savings, size: 16),
+                    label: const Text('入金予定'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              if (selectedDay.hasUnreconciledExpense)
+                Text(
+                  '使途不明金 ${_formatYen(selectedDay.unreconciledExpenseTotal)}（日別支出に含まれる参考内訳）です。使途の照合が必要です。',
+                  key: const Key('asset_calendar_unreconciled_details'),
+                  style:
+                      const TextStyle(fontSize: 11, color: Color(0xFF92400E)),
+                ),
+              if (selectedDay.events.any(
+                (event) => event.balanceDifferenceAutoRecorded,
+              ))
+                const Text(
+                  '残高差分からの自動記録を含みます。消費の確定ではありません。',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
+                ),
+              if (!selectedDay.hasAnyEvent)
+                Text(
+                  'この日の収支・支払イベントはありません。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                )
+              else
+                for (final event in selectedDay.events.take(10))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              _calendarEventIcon(event.kind),
+                              size: 14,
+                              color: _calendarEventColor(event.kind),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                event.label,
+                                style:
+                                    const TextStyle(fontSize: 12, height: 1.5),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (event.amount != null)
+                              Text(
+                                _formatYen(event.amount!),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.5,
+                                ),
+                              ),
+                          ],
+                        ),
+                        if (event.balanceDifferenceAutoRecorded)
+                          const Text(
+                            '残高差分から自動記録された未照合額です。消費を確認した記録ではありません。',
+                            style: TextStyle(
+                                fontSize: 11, color: Color(0xFF92400E)),
+                          ),
+                      ],
+                    ),
+                  ),
+            ],
+            const SizedBox(height: 4),
+            Text(
+              '支出・収入は記録済みフロー(直近取得分)に基づく概算です。残高の見込みには登録済み入金予定を含みます（着金未確認）。支払方法未照合の固定費は現金支出に仮置きしています。',
+              style: TextStyle(
+                fontSize: 10,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAssetCalendarCell(AssetCalendarDaySummary? day, DateTime today) {
+    if (day == null) {
+      return const SizedBox(height: 84);
+    }
+    final isToday = day.date.year == today.year &&
+        day.date.month == today.month &&
+        day.date.day == today.day;
+    final selectedDate = _calendarSelectedDate;
+    final isSelected = selectedDate != null &&
+        day.date.year == selectedDate.year &&
+        day.date.month == selectedDate.month &&
+        day.date.day == selectedDate.day;
+    final recorded = _calendarReflectionOwner == _supabase.auth.currentUser?.id
+        ? _calendarReflections
+        : <AssetCalendarReflection>[];
+    final reflections = AssetCalendarReflection.mergeSources(
+      recorded,
+      _calendarFlowReflections,
+    )
+        .where((e) =>
+            e.date.year == day.date.year &&
+            e.date.month == day.date.month &&
+            e.date.day == day.date.day)
+        .toList();
+    final kinds = reflections.expand((e) => e.kinds).toSet();
+    final reflectionColor = AssetReflectionDayBadge.backgroundFor(kinds);
+    final attention = AssetSpendingAttentionCalendar.forDate(day.date);
+    final markers = <Color>[
+      if (day.hasDebtPayment) const Color(0xFFB91C1C),
+      if (day.hasSubscription) const Color(0xFF9333EA),
+      if (day.hasSalary) const Color(0xFF0D9488),
+      if (day.hasExpectedInflow) const Color(0xFF0EA5E9),
+      if (day.hasIncome) const Color(0xFF2563EB),
+      if (day.hasBorrowing) const Color(0xFFB45309),
+      if (day.hasTransfer) const Color(0xFF64748B),
+    ];
+
+    return InkWell(
+      key: Key('asset_calendar_day_${day.date.day}'),
+      borderRadius: BorderRadius.circular(6),
+      onTap: () {
+        setState(() {
+          _calendarSelectedDate = day.date;
+        });
+      },
+      child: Container(
+        height: 84,
+        margin: const EdgeInsets.all(1),
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        decoration: BoxDecoration(
+          color: reflectionColor ??
+              (isSelected
+                  ? const Color(0xFF7C3AED).withValues(alpha: 0.14)
+                  : day.isShortfall
+                      ? const Color(0xFFFEE2E2)
+                      : attention.isAttentionDay
+                          ? AssetAttentionDayLabel.background
+                          : null),
+          borderRadius: BorderRadius.circular(6),
+          border: isSelected || isToday
+              ? Border.all(
+                  color: const Color(0xFF7C3AED), width: isSelected ? 2.5 : 1.5)
+              : null,
+        ),
+        child: Column(
+          children: [
+            Text(
+              // サイクルは月を跨ぐので、月替わりの初日は M/d で区切りを示す。
+              day.date.day == 1
+                  ? DateFormat('M/d').format(day.date)
+                  : '${day.date.day}',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                height: 1.2,
+              ),
+            ),
+            if (day.expenseTotal > 0)
+              Text(
+                _formatCalendarAmount(day.expenseTotal),
+                style: const TextStyle(
+                  fontSize: 9,
+                  color: Color(0xFFB91C1C),
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                ),
+              ),
+            if (day.hasUnreconciledExpense)
+              AssetUnreconciledExpenseBadge(
+                key: Key(
+                  'asset_calendar_unreconciled_${day.date.year}_${day.date.month}_${day.date.day}',
+                ),
+              ),
+            AssetAttentionDayLabel(day: attention),
+            if (kinds.isNotEmpty)
+              Expanded(child: AssetReflectionDayBadge(kinds: kinds))
+            else
+              const Spacer(),
+            if (markers.isNotEmpty)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (final color in markers.take(4))
+                    Container(
+                      width: 5,
+                      height: 5,
+                      margin: const EdgeInsets.symmetric(horizontal: 1),
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatCalendarAmount(double value) {
+    if (value >= 10000) {
+      final man = value / 10000;
+      final label = man >= 10 ? man.round().toString() : man.toStringAsFixed(1);
+      return '$label万';
+    }
+    return NumberFormat('#,###').format(value.round());
+  }
+
+  Widget _buildCalendarLegendItem(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  IconData _calendarEventIcon(AssetCalendarEventKind kind) {
+    switch (kind) {
+      case AssetCalendarEventKind.salary:
+        return Icons.payments_outlined;
+      case AssetCalendarEventKind.expectedInflow:
+        return Icons.savings;
+      case AssetCalendarEventKind.debtPayment:
+        return Icons.account_balance_outlined;
+      case AssetCalendarEventKind.subscription:
+        return Icons.autorenew;
+      case AssetCalendarEventKind.expense:
+        return Icons.remove_circle_outline;
+      case AssetCalendarEventKind.income:
+        return Icons.add_circle_outline;
+      case AssetCalendarEventKind.borrowing:
+        return Icons.account_balance_outlined;
+      case AssetCalendarEventKind.transfer:
+        return Icons.swap_horiz;
+    }
+  }
+
+  Color _calendarEventColor(AssetCalendarEventKind kind) {
+    switch (kind) {
+      case AssetCalendarEventKind.salary:
+        return const Color(0xFF0D9488);
+      case AssetCalendarEventKind.expectedInflow:
+        return const Color(0xFF0EA5E9);
+      case AssetCalendarEventKind.debtPayment:
+        return const Color(0xFFB91C1C);
+      case AssetCalendarEventKind.subscription:
+        return const Color(0xFF9333EA);
+      case AssetCalendarEventKind.expense:
+        return const Color(0xFFC05621);
+      case AssetCalendarEventKind.income:
+        return const Color(0xFF2563EB);
+      case AssetCalendarEventKind.borrowing:
+        return const Color(0xFFB45309);
+      case AssetCalendarEventKind.transfer:
+        return const Color(0xFF64748B);
+    }
+  }
+
+  Widget _buildUnifiedEntryBanner() {
+    final label = widget.entryLabel?.trim();
+    final description = widget.entryDescription?.trim();
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFECFDF5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF99F6E4)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F766E).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.merge_type, color: Color(0xFF0F766E)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    const Text(
+                      'お金まわりの操作は資産管理に統合しました',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        height: 1.4,
+                      ),
+                    ),
+                    if (label != null && label.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFCCFBF1),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          label,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF115E59),
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                if (description != null && description.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF134E4A),
+                      fontWeight: FontWeight.w600,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // -------------------------
+  // 各カードUIコンポーネント
+  // -------------------------
+
+  Widget _buildMonthlyFlowFirstCard() {
+    final cycleRangeLabel = _salaryCycleRangeLabel(_now);
+    final flows = _flowsForCycle(_now);
+    var totalExpense = 0;
+
+    for (final item in flows) {
+      final amount = (item['amount'] as num?)?.toInt() ?? 0;
+      final actionType = item['action_type'] as String? ?? '';
+      if (actionType == 'expense') {
+        totalExpense += amount;
+      }
+    }
+    // 給与明細(payslips/salary_incomes)でのみ管理している給料も収入へ合算する。
+    final evidence = _cycleIncomeEvidence(_now);
+    final totalIncome = evidence.combinedRecordedTotal;
+    // A verified empty snapshot can offer entry without claiming income is zero.
+    // Unready, stale, failed, owner-unknown and limited reads carry issues.
+    final showIncomeEntry = totalIncome == 0 ||
+        (evidence.records.isEmpty && evidence.issues.isEmpty);
+
+    final net = totalIncome == null ? null : totalIncome - totalExpense;
+    // フローが無くても給与明細の給料収入があれば「未記録」とは扱わない。
+    final hasNoData = flows.isEmpty && evidence.records.isEmpty;
+    final hasRecordedExpense =
+        flows.any((flow) => flow['action_type'] == 'expense');
+    final netText = net == null
+        ? '未計算'
+        : '${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'}';
+    final statusText = totalIncome == null
+        ? _incomeEvidenceReason(evidence)
+        : hasNoData
+            ? 'まだこのサイクルの収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
+            : !hasRecordedExpense
+                ? '支出はまだ記録されていません。差額は記録済み収入だけの集計で、支払済みチェックや予定額とは異なります。現在残高や今後の支払後に使える額とは異なります。'
+                : 'このサイクルの記録上の収支差額は $netText です。現在残高や今後の支払後に使える額とは異なります。';
+
+    return Card(
+      key: const Key('asset_monthly_flow_priority_card'),
+      elevation: widget.emphasizeMonthlyFlow ? 6 : 3,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: widget.emphasizeMonthlyFlow
+              ? const Color(0xFF2DD4BF)
+              : const Color(0xFFCCFBF1),
+          width: widget.emphasizeMonthlyFlow ? 2 : 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D9488).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.receipt_long,
+                    color: Color(0xFF1B5E20),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '給料サイクル($cycleRangeLabel)の収支を最優先で把握',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        statusText,
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.4,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _buildFlowPriorityMetric(
+                  label: '収入',
+                  value: totalIncome == null
+                      ? '未計算'
+                      : '¥${NumberFormat('#,###').format(totalIncome)}',
+                  color: const Color(0xFF0F766E),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '支出',
+                  value: '¥${NumberFormat('#,###').format(totalExpense)}',
+                  color: const Color(0xFFB91C1C),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '差額',
+                  value: net == null
+                      ? '未計算'
+                      : '${net >= 0 ? '+' : '-'}¥${NumberFormat('#,###').format(net.abs())}',
+                  color: net != null && net >= 0
+                      ? const Color(0xFF065F46)
+                      : const Color(0xFF7F1D1D),
+                ),
+              ],
+            ),
+            AssetIncomeReconciliationSection(
+              projection: evidence,
+              memoryDecisionCount: _incomeEvidenceSession.decisions.length,
+              busy: _incomeEvidenceReadBusy ||
+                  (_isLoadingPayslipFinance &&
+                      _incomeFinanceLoadingScope ==
+                          _incomeEvidenceScope(_now)) ||
+                  _incomeFlowLoading,
+              onReload: () => unawaited(_reloadIncomeEvidence()),
+              onDecision: _decideIncomeRelationship,
+              onClear: () => setState(() {
+                _incomeEvidenceSession.clearDecisions();
+                _incomeRelationshipPage = 0;
+              }),
+              onPage: (page) => setState(() => _incomeRelationshipPage = page),
+            ),
+            if (showIncomeEntry) ...[
+              const SizedBox(height: 14),
+              Container(
+                key: const Key('asset_monthly_flow_income_cta'),
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F766E).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF99F6E4)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '収入がまだ記録されていません。給与明細を使わなくても、'
+                      '手入力で収入を記録すれば黒字/赤字を正しく把握できます。',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.5,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FilledButton.icon(
+                        key: const Key('asset_monthly_flow_income_cta_button'),
+                        onPressed: () {
+                          _updateSelectedFlowType('収入');
+                          _scrollTo(_keyFlow);
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF0F766E),
+                        ),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('収入を記録する'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  SalarySpendingBreakdown _buildSalarySpendingBreakdown() {
+    final entries = AssetSalarySpendingEntries.build(
+      cardStatementLines: _cardStatementLines,
+      recentFlows: _recentFlows,
+      monthlyIncomePlans: _monthlyIncomePlans,
+      payslipSalaryIncomes: _payslipSalaryIncomes,
+      payslipRows: _payslipRows,
+      flowDisplayTitle: _flowDisplayTitle,
+      flowCategoryDescription: (flow) => _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: flow['action_type']?.toString() ?? '',
+      ).memo,
+    );
+    return _salarySpendingBreakdownService.build(
+      referenceDate: _now,
+      expenses: entries.expenses,
+      incomeEvidence: _cycleIncomeEvidence(_now),
+      salaryDay: _salaryDay,
+    );
+  }
+
+  DisposableBalanceResult _buildDisposableBalance(
+    SalarySpendingBreakdown salaryBreakdown,
+  ) {
+    final payslips = <DisposableBalancePayslip>[
+      for (final row in _payslipRows)
+        if (DateTime.tryParse(row['pay_date']?.toString() ?? '') != null)
+          DisposableBalancePayslip(
+            payDate: DateTime.parse(row['pay_date'].toString()),
+            netAmount: _numberFromDynamic(row['net_amount']),
+            companyName: row['company_name']?.toString() ?? '',
+            confidence: _numberFromDynamic(row['confidence']),
+          ),
+    ];
+    final nextPayday = _disposableBalanceService.nextPaydayFor(
+      asOfDate: _now,
+      salaryDay: _salaryDay,
+    );
+    final cycleStart = _disposableBalanceService.salaryCycleStartFor(
+      asOfDate: _now,
+      salaryDay: _salaryDay,
+    );
+    final cycleStartOnly = DateTime(
+      cycleStart.year,
+      cycleStart.month,
+      cycleStart.day,
+    );
+    final recurringExpenses = <DisposableBalanceRecurringExpense>[];
+    final recurringExpenseKeys = <String>{};
+    void addRecurringExpense(DisposableBalanceRecurringExpense expense) {
+      if (expense.amount <= 0) {
+        return;
+      }
+      final normalizedName = expense.name.trim().toLowerCase();
+      final key =
+          '$normalizedName|${expense.dayOfMonth}|${expense.amount.round()}';
+      if (!recurringExpenseKeys.add(key)) {
+        return;
+      }
+      recurringExpenses.add(expense);
+    }
+
+    for (final row in _subscriptionsThreeMonths) {
+      final dueDate = DateTime.tryParse(row['due_date']?.toString() ?? '');
+      if (dueDate == null) {
+        continue;
+      }
+      final dueDateOnly = DateTime(dueDate.year, dueDate.month, dueDate.day);
+      if (dueDateOnly.isBefore(cycleStartOnly) ||
+          !dueDateOnly.isBefore(nextPayday)) {
+        continue;
+      }
+      final amount = _numberFromDynamic(row['price'] ?? row['amount']);
+      if (amount <= 0) {
+        continue;
+      }
+      addRecurringExpense(
+        DisposableBalanceRecurringExpense(
+          name: row['name']?.toString() ?? 'サブスク',
+          amount: amount,
+          dayOfMonth: dueDate.day.clamp(1, 28).toInt(),
+          category: 'subscription',
+        ),
+      );
+    }
+
+    final debts = <DisposableBalanceDebt>[];
+    final latestSnapshot = _latestSnapshotForDisplay();
+    if (latestSnapshot.isNotEmpty) {
+      final workbook = _assetLiabilityPlanner.buildWorkbook(
+        latestSnapshot: latestSnapshot,
+        baseDate: _now,
+        confirmedPaymentDays: _confirmedPaymentDays,
+        monthlyPaymentOverrides: _monthlyPaymentOverrides,
+        actualPaymentAmounts: _actualPaymentAmounts,
+        paymentDifferenceReasons: _paymentDifferenceReasons,
+        annualRateOverrides: _annualRateOverrides,
+        paymentDayOverrides: _debtPaymentDayOverrides,
+        paidAccountNames: _monthlyPaidAccountNames,
+        billingConfirmedAccountIds: _billingConfirmedAccountIds,
+        paymentSourceAccountIds: _paymentSourceAccountIds,
+        defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
+        defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
+        cardBillingAccountIds: _cardBillingAccountIds,
+        revolvingConfigs: _revolvingConfigs,
+        cardUsagePolicies: _cardUsagePolicies,
+        incomePlans: _monthlyIncomePlans,
+        cardStatementLines: _cardStatementLines,
+        transferTasks: _transferTasks,
+        recurringFixedCosts: _recurringFixedCosts,
+        includeDefaultFixedPayments: true,
+        salaryDay: _salaryDay,
+      );
+      final assetLiabilityInputs =
+          _disposableBalanceAssetLiabilityAdapter.build(
+        workbook: workbook,
+        cycleStart: cycleStartOnly,
+        nextPayday: nextPayday,
+        lastUpdatedForDebt: (row) {
+          return DateTime.tryParse(_lastUpdatedDates[row.name] ?? '');
+        },
+      );
+      for (final expense in assetLiabilityInputs.recurringExpenses) {
+        addRecurringExpense(expense);
+      }
+      debts.addAll(assetLiabilityInputs.debts);
+    }
+
+    return _disposableBalanceService.build(
+      asOfDate: _now,
+      payslips: payslips,
+      recurringExpenses: recurringExpenses,
+      debts: debts,
+      salaryDay: _salaryDay,
+    );
+  }
+
+  Widget _buildDisposableBalanceCard() {
+    final salaryBreakdown = _buildSalarySpendingBreakdown();
+    final balance = _buildDisposableBalance(salaryBreakdown);
+    final serverActions =
+        (_serverDisposableBalanceResult?['required_actions'] as List?)
+                ?.whereType<Map>()
+                .map((action) => Map<String, dynamic>.from(action))
+                .toList(growable: false) ??
+            const <Map<String, dynamic>>[];
+    final localActions = balance.requiredActions
+        .map(
+          (action) => <String, dynamic>{
+            'action_key': action.actionKey,
+            'title': action.title,
+            'instruction': action.instruction,
+            'amount_impact': action.amountImpact,
+          },
+        )
+        .toList(growable: false);
+    final actions = _effectiveDisposableBalanceActions(
+      serverActions: serverActions,
+      localActions: localActions,
+    );
+    final periodLabel =
+        '${DateFormat('yyyy/MM/dd').format(_disposableBalanceService.salaryCycleStartFor(asOfDate: balance.asOfDate, salaryDay: balance.salaryDay))}〜'
+        '${DateFormat('yyyy/MM/dd').format(balance.nextPayday.subtract(const Duration(days: 1)))}';
+    final breakdownMessage = switch (_disposableBalanceBreakdownKey) {
+      'fixed' => _buildDisposableBalanceFixedBreakdown(balance),
+      'debt' => _buildDisposableBalanceDebtBreakdown(balance),
+      _ => null,
+    };
+
+    return Card(
+      key: const Key('asset_disposable_balance_card'),
+      elevation: 3,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFA7F3D0)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F766E).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    color: Color(0xFF0F766E),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '給与サイクルの収支計画',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$periodLabel の給与ベースの計画です。現在残高・支払結果・記録済み支出を照合した使用可能額ではありません。日割り使用可能額は未算出です。',
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.5,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _buildFlowPriorityMetric(
+                  label: '収入',
+                  value: _formatYen(balance.income),
+                  color: const Color(0xFF0F766E),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '固定費',
+                  value: '-${_formatYen(balance.fixedTotal)}',
+                  color: const Color(0xFFB45309),
+                  isSelected: _disposableBalanceBreakdownKey == 'fixed',
+                  onHoverStart: () => _setDisposableBalanceBreakdown('fixed'),
+                  onHoverEnd: () => _clearDisposableBalanceBreakdown('fixed'),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '返済',
+                  value: '-${_formatYen(balance.debtTotal)}',
+                  color: const Color(0xFFB91C1C),
+                  isSelected: _disposableBalanceBreakdownKey == 'debt',
+                  onHoverStart: () => _setDisposableBalanceBreakdown('debt'),
+                  onHoverEnd: () => _clearDisposableBalanceBreakdown('debt'),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '返済元金',
+                  value: '-${_formatYen(balance.debtPrincipalTotal)}',
+                  color: const Color(0xFF7C2D12),
+                  isSelected: _disposableBalanceBreakdownKey == 'debt',
+                  onHoverStart: () => _setDisposableBalanceBreakdown('debt'),
+                  onHoverEnd: () => _clearDisposableBalanceBreakdown('debt'),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '金利',
+                  value: '-${_formatYen(balance.debtInterestTotal)}',
+                  color: const Color(0xFF9F1239),
+                  isSelected: _disposableBalanceBreakdownKey == 'debt',
+                  onHoverStart: () => _setDisposableBalanceBreakdown('debt'),
+                  onHoverEnd: () => _clearDisposableBalanceBreakdown('debt'),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '固定費・返済を除いた計画額',
+                  value: _formatSignedYen(balance.debtReductionSpendingLimit),
+                  color: balance.debtReductionSpendingLimit >= 0
+                      ? const Color(0xFF065F46)
+                      : const Color(0xFF7F1D1D),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '日割り使用可能額',
+                  value: '未算出',
+                  color: const Color(0xFF2563EB),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              _disposableBalanceReviewText(salaryBreakdown, balance),
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (breakdownMessage != null) ...[
+              const SizedBox(height: 10),
+              _buildDisposableBalanceBreakdownPanel(breakdownMessage),
+            ],
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  onPressed:
+                      _isUploadingPayslip ? null : _pickAndUploadPayslipPdf,
+                  icon: _isUploadingPayslip
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.upload_file_outlined),
+                  label: const Text('給与明細PDFをアップロード'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _isComputingDisposableBalance
+                      ? null
+                      : () => _computeDisposableBalanceFromServer(),
+                  icon: _isComputingDisposableBalance
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.auto_awesome_outlined),
+                  label: const Text('AI提案を更新'),
+                ),
+              ],
+            ),
+            if (_isLoadingPayslipFinance ||
+                _payslipIngestionMessage != null ||
+                _disposableBalanceMessage != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _isLoadingPayslipFinance
+                    ? '給与明細データを読み込んでいます...'
+                    : (_payslipIngestionMessage ??
+                        _disposableBalanceMessage ??
+                        ''),
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.4,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+            const SizedBox(height: 14),
+            if (actions.isEmpty)
+              Text(
+                '自動提案がない場合も、現在残高・支払日・生活費を確認してください。',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+              )
+            else
+              Column(
+                children: [
+                  for (var i = 0; i < actions.take(3).length; i++)
+                    _buildDisposableBalanceActionRow(
+                      index: i + 1,
+                      action: actions[i],
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _disposableBalanceReviewText(
+    SalarySpendingBreakdown salaryBreakdown,
+    DisposableBalanceResult balance,
+  ) {
+    final formula = '計画式: ${_formatYen(balance.income)} - '
+        '${_formatYen(balance.fixedTotal)} - ${_formatYen(balance.debtTotal)} = '
+        '${_formatSignedYen(balance.debtReductionSpendingLimit)}。';
+    final recorded = salaryBreakdown.expenseEntryCount == 0
+        ? '給与日後の支出明細は未入力です。'
+        : '給与日後の記録済み支出は${_formatYen(salaryBreakdown.totalExpense)}です。';
+    return '$formula $recorded 記録済み支出は上の計画額から未控除です。'
+        '固定費・返済との重複やカード請求の内包を照合せず、支出全額を単純に引くこともできません。'
+        '現在の口座残高、未払い予定、必要な生活費が未照合のため、日割り使用可能額は未算出です。'
+        'この計画額だけで追加支出や債務減少を判断しないでください。';
+  }
+
+  String _buildDisposableBalanceFixedBreakdown(
+    DisposableBalanceResult balance,
+  ) {
+    final rows =
+        List<DisposableBalanceRecurringExpense>.from(balance.recurringExpenses)
+          ..sort((a, b) {
+            final day = a.dayOfMonth.compareTo(b.dayOfMonth);
+            if (day != 0) return day;
+            return b.amount.compareTo(a.amount);
+          });
+    return _buildDisposableBalanceBreakdownText(
+      title: '固定費内訳',
+      totalLabel: '固定費合計',
+      total: balance.fixedTotal,
+      lines: [
+        for (final row in rows)
+          '${row.dayOfMonth}日 ${row.name.trim().isEmpty ? '固定費' : row.name.trim()} ${_formatYen(row.amount)}',
+      ],
+    );
+  }
+
+  String _buildDisposableBalanceDebtBreakdown(DisposableBalanceResult balance) {
+    final rows = List<DisposableBalanceDebt>.from(balance.debts)
+      ..sort((a, b) {
+        final day = (a.dayOfMonth ?? 99).compareTo(b.dayOfMonth ?? 99);
+        if (day != 0) return day;
+        return b.monthlyPayment.compareTo(a.monthlyPayment);
+      });
+    return _buildDisposableBalanceBreakdownText(
+      title: '返済内訳',
+      totalLabel: '返済合計',
+      total: balance.debtTotal,
+      lines: [
+        for (final row in rows)
+          '${row.dayOfMonth == null ? '' : '${row.dayOfMonth}日 '}'
+              '${row.name.trim().isEmpty ? '返済' : row.name.trim()} ${_formatYen(row.monthlyPayment)}'
+              ' / 元金 ${_formatYen(_disposableBalanceService.principalPaymentFor(row))}'
+              ' / 金利 ${_formatYen(_disposableBalanceService.interestPaymentFor(row))}'
+              '${row.principal > 0 ? ' / 残高 ${_formatYen(row.principal)}' : ''}',
+        '元金合計 ${_formatYen(balance.debtPrincipalTotal)}',
+        '金利合計 ${_formatYen(balance.debtInterestTotal)}',
+      ],
+    );
+  }
+
+  String _buildDisposableBalanceBreakdownText({
+    required String title,
+    required String totalLabel,
+    required double total,
+    required List<String> lines,
+  }) {
+    return <String>[
+      title,
+      if (lines.isEmpty) '対象なし' else ...lines,
+      '$totalLabel ${_formatYen(total)}',
+    ].join('\n');
+  }
+
+  void _setDisposableBalanceBreakdown(String key) {
+    if (_disposableBalanceBreakdownKey == key) {
+      return;
+    }
+    setState(() => _disposableBalanceBreakdownKey = key);
+  }
+
+  void _clearDisposableBalanceBreakdown(String key) {
+    if (_disposableBalanceBreakdownKey != key) {
+      return;
+    }
+    setState(() => _disposableBalanceBreakdownKey = null);
+  }
+
+  Widget _buildDisposableBalanceBreakdownPanel(String message) {
+    final lines = message.split('\n');
+    final title = lines.isEmpty ? '内訳' : lines.first;
+    final detailLines =
+        lines.length <= 1 ? const <String>[] : lines.skip(1).toList();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFECFDF5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFA7F3D0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF047857),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          for (final line in detailLines)
+            Text(
+              line,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF0F172A),
+                height: 1.5,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDisposableBalanceActionRow({
+    required int index,
+    required Map<String, dynamic> action,
+  }) {
+    final actionKey =
+        (action['action_key'] ?? action['actionKey'])?.toString().trim() ?? '';
+    final rawTitle = action['title']?.toString().trim() ?? '';
+    final rawInstruction = action['instruction']?.toString().trim() ?? '';
+    final impact = _numberFromDynamic(action['amount_impact']);
+    final title = _localizedDisposableActionTitle(actionKey, rawTitle);
+    final instruction = _localizedDisposableActionInstruction(
+      actionKey,
+      rawTitle,
+      rawInstruction,
+      impact,
+    );
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFBBF7D0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 13,
+            backgroundColor: const Color(0xFF0F766E),
+            child: Text(
+              '$index',
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title.isEmpty ? 'おすすめアクション' : title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+                if (instruction.isNotEmpty)
+                  Text(
+                    instruction,
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.45,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                if (impact > 0)
+                  Text(
+                    '効果目安: ${_formatYen(impact)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F766E),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _effectiveDisposableBalanceActions({
+    required List<Map<String, dynamic>> serverActions,
+    required List<Map<String, dynamic>> localActions,
+  }) {
+    return _disposableBalanceActionMergeService.merge(
+      serverActions: serverActions,
+      localActions: localActions,
+    );
+  }
+
+  String _localizedDisposableActionTitle(String actionKey, String rawTitle) {
+    if (actionKey == 'upload_current_payslip') {
+      return '今月の給与明細が未登録です';
+    }
+    if (actionKey == 'add_recurring_expenses') {
+      return '固定費が未登録です';
+    }
+    if (actionKey.startsWith('refresh_debt_')) {
+      final staleDebtName = _englishStaleDebtName(rawTitle);
+      if (staleDebtName != null && staleDebtName.isNotEmpty) {
+        return '$staleDebtNameの残高が古くなっています';
+      }
+      return rawTitle.isEmpty ? '借入残高を更新してください' : rawTitle;
+    }
+    if (actionKey.startsWith('cancel_duplicate_')) {
+      final group = actionKey.substring('cancel_duplicate_'.length);
+      return '${_duplicateSubscriptionLabel(group)}サブスクが重複しています';
+    }
+    return rawTitle;
+  }
+
+  String _localizedDisposableActionInstruction(
+    String actionKey,
+    String rawTitle,
+    String rawInstruction,
+    double impact,
+  ) {
+    if (actionKey == 'upload_current_payslip') {
+      return '最新の給与明細PDFをアップロードして、収入を明細データで計算してください（約10秒）。';
+    }
+    if (actionKey == 'add_recurring_expenses') {
+      return '家賃・公共料金・サブスクを固定費として登録してください（約180秒）。';
+    }
+    if (actionKey.startsWith('refresh_debt_')) {
+      final debtName = _englishStaleDebtName(rawTitle);
+      final subject = debtName == null || debtName.isEmpty ? '借入' : debtName;
+      return '返済順を決める前に、$subjectの現在残高を入力してください（約60秒）。';
+    }
+    if (actionKey.startsWith('cancel_duplicate_')) {
+      final group = actionKey.substring('cancel_duplicate_'.length);
+      final label = _duplicateSubscriptionLabel(group);
+      final impactLabel =
+          impact > 0 ? '毎月${_formatYen(impact)}を削減できます' : '毎月の固定費を削減できます';
+      return '$labelサブスクを1つに絞ると、$impactLabel（約120秒）。';
+    }
+    return rawInstruction;
+  }
+
+  String? _englishStaleDebtName(String rawTitle) {
+    const suffix = ' balance is stale';
+    final lowerTitle = rawTitle.toLowerCase();
+    if (!lowerTitle.endsWith(suffix)) {
+      return null;
+    }
+    return rawTitle.substring(0, rawTitle.length - suffix.length).trim();
+  }
+
+  String _duplicateSubscriptionLabel(String group) {
+    switch (group) {
+      case 'music':
+        return '音楽';
+      case 'video':
+        return '動画';
+    }
+    return group.isEmpty ? '対象' : group;
+  }
+
+  /// 予算/カテゴリ予実カード。給料サイクルのカテゴリ別実支出(既存 breakdown)に
+  /// ユーザー設定の月次予算を重ねて表示する。支出も予算も無ければ非表示。
+  Widget _buildCategoryBudgetCard() {
+    final budgets = _categoryBudgetsOwnerId == _categoryBudgetOwnerId
+        ? _categoryBudgets
+        : <String, double>{};
+    final breakdown = _buildSalarySpendingBreakdown();
+    if (breakdown.expenseEntryCount == 0 && budgets.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final actualByCategory = <String, double>{
+      for (final section in breakdown.sections)
+        section.category: section.amount,
+    };
+    final report = AssetCategoryBudgetService.build(
+      actualByCategory: actualByCategory,
+      budgets: budgets,
+    );
+    final start = breakdown.periodStart;
+    final end = breakdown.periodEndInclusive;
+    return Padding(
+      key: _keyCategoryBudgetCard,
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_categoryBudgetStatus != null) Text(_categoryBudgetStatus!),
+          AssetCategoryBudgetCard(
+            report: report,
+            currencyFormatter: _formatYen,
+            periodLabel:
+                '${start.month}/${start.day}〜${end.month}/${end.day}(給料サイクル)',
+            onEditBudgets: () => _showCategoryBudgetEditor(actualByCategory),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// カテゴリ別の月次予算を編集するダイアログ。既定カテゴリ + 実支出/既存予算に
+  /// 現れたカテゴリへ数値入力し、保存でローカル永続 + ミラーする。
+  Future<void> _showCategoryBudgetEditor(
+    Map<String, double> actualByCategory,
+  ) async {
+    final editorOwner = _categoryBudgetOwnerId;
+    final savedBudgets = _categoryBudgetsOwnerId == _categoryBudgetOwnerId
+        ? _categoryBudgets
+        : <String, double>{};
+    final categories = <String>[
+      ...SalarySpendingBreakdownService.categoryLabels,
+      for (final category in actualByCategory.keys)
+        if (!SalarySpendingBreakdownService.categoryLabels.contains(category))
+          category,
+      for (final category in savedBudgets.keys)
+        if (!SalarySpendingBreakdownService.categoryLabels.contains(category) &&
+            !actualByCategory.containsKey(category))
+          category,
+    ];
+    final controllers = <String, TextEditingController>{
+      for (final category in categories)
+        category: TextEditingController(
+          text: (savedBudgets[category] ?? 0) > 0
+              ? (savedBudgets[category] ?? 0).round().toString()
+              : '',
+        ),
+    };
+    var isSaving = false;
+    String? saveError;
+    final route = DialogRoute<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => PopScope(
+          canPop: !isSaving,
+          child: AlertDialog(
+            title: const Text('カテゴリ別の月次予算'),
+            content: SizedBox(
+              width: 420,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '給料サイクル(25日始まり)あたりの予算を入力します。空欄・0は予算なし。',
+                      style: TextStyle(fontSize: 12, height: 1.5),
+                    ),
+                    if (saveError != null)
+                      Text(
+                        saveError!,
+                        key: const Key('asset_category_budget_save_error'),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error),
+                      ),
+                    const SizedBox(height: 8),
+                    for (final category in categories)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                                child: Text(category,
+                                    style: const TextStyle(fontSize: 13))),
+                            SizedBox(
+                              width: 130,
+                              child: TextField(
+                                key: ValueKey(
+                                    'asset_category_budget_input_$category'),
+                                controller: controllers[category],
+                                enabled: !isSaving,
+                                keyboardType: TextInputType.number,
+                                decoration: InputDecoration(
+                                  labelText: category,
+                                  prefixText: '¥',
+                                  isDense: true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                key: const Key('asset_category_budget_save'),
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        if (editorOwner == null ||
+                            !_isBudgetOwner(editorOwner)) {
+                          setDialogState(() {
+                            saveError = '利用者が変わりました。閉じて開き直してください。';
+                          });
+                          return;
+                        }
+                        final next = <String, double>{};
+                        for (final category in categories) {
+                          final text = controllers[category]!
+                              .text
+                              .replaceAll(',', '')
+                              .trim();
+                          if (text.isEmpty) continue;
+                          final parsed = double.tryParse(text);
+                          if (parsed == null ||
+                              !parsed.isFinite ||
+                              parsed < 0) {
+                            setDialogState(() {
+                              saveError =
+                                  '$category は0以上の金額を入力してください。空欄は予算なしです。';
+                            });
+                            return;
+                          }
+                          if (parsed > 0) next[category] = parsed;
+                        }
+                        setDialogState(() {
+                          isSaving = true;
+                          saveError = null;
+                        });
+                        try {
+                          await _saveCategoryBudgets(next);
+                          if (dialogContext.mounted) {
+                            Navigator.pop(dialogContext);
+                          }
+                        } catch (error) {
+                          debugPrint('Error saving category budgets: $error');
+                          if (dialogContext.mounted) {
+                            setDialogState(() {
+                              isSaving = false;
+                              saveError = '予算を保存できませんでした。入力を確認し、もう一度保存してください。';
+                            });
+                          }
+                        }
+                      },
+                child: Text(isSaving ? '保存中…' : '保存'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    try {
+      await Navigator.of(context).push(route);
+      await route.completed;
+    } finally {
+      for (final controller in controllers.values) {
+        controller.dispose();
+      }
+    }
+  }
+
+  Widget _buildSalarySpendingBreakdownCard() {
+    final breakdown = _buildSalarySpendingBreakdown();
+    final periodLabel = '${DateFormat('M/d').format(breakdown.periodStart)}〜'
+        '${DateFormat('M/d').format(breakdown.periodEndInclusive)}';
+    final remaining = breakdown.remainingAfterExpense;
+    final topSection = breakdown.topSection;
+    final chartSections = breakdown.sections.take(8).toList(growable: false);
+    SalarySpendingCategorySlice? unknownSection;
+    for (final section in breakdown.sections) {
+      if (section.category == '使途不明金') {
+        unknownSection = section;
+        break;
+      }
+    }
+
+    return Card(
+      key: const Key('asset_salary_spending_breakdown_card'),
+      elevation: 3,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFDBEAFE)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.pie_chart_outline,
+                    color: Color(0xFF2563EB),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '前回給料の使いみち',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '給料日${breakdown.salaryDay}日基準の $periodLabel を集計。支出カテゴリ別に、前回給料が何へ消えたかを見ます。',
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.5,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _buildFlowPriorityMetric(
+                  label: unknownSection == null ? '期間支出' : '期間支出（未照合含む）',
+                  value: _formatYen(breakdown.totalExpense),
+                  color: const Color(0xFFB91C1C),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '記録上の合算収入',
+                  value: breakdown.salaryIncomeTotal == null
+                      ? '収入未照合・未計算'
+                      : _formatYen(breakdown.salaryIncomeTotal!),
+                  color: const Color(0xFF0F766E),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '収支差額',
+                  value:
+                      remaining == null ? '未計算' : _formatSignedYen(remaining),
+                  color: remaining == null || remaining >= 0
+                      ? const Color(0xFF065F46)
+                      : const Color(0xFF7F1D1D),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '最大カテゴリ',
+                  value: topSection == null
+                      ? '未記録'
+                      : '${topSection.category} ${(topSection.ratio * 100).round()}%',
+                  color: const Color(0xFF2563EB),
+                ),
+                if (unknownSection != null)
+                  _buildFlowPriorityMetric(
+                    label: '使途不明金',
+                    value: _formatYen(unknownSection.amount),
+                    color: const Color(0xFFD97706),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '受取済みの収入を集計しています。収支差額は現在の現金残高や、今後の支払後に使える額ではありません。',
+              style: TextStyle(fontSize: 12, height: 1.5),
+            ),
+            const SizedBox(height: 16),
+            if (breakdown.sections.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                child: const Text(
+                  'この給与サイクルの支出がまだありません。収支入力またはカード明細取込を行うと円グラフが表示されます。',
+                  style: TextStyle(color: Color(0xFF1E3A8A), height: 1.5),
+                ),
+              )
+            else
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 620;
+                  final chart = SizedBox(
+                    height: compact ? 210 : 240,
+                    width: compact ? double.infinity : 260,
+                    child: PieChart(
+                      PieChartData(
+                        sectionsSpace: 2,
+                        centerSpaceRadius: compact ? 42 : 50,
+                        sections: [
+                          for (var i = 0; i < chartSections.length; i++)
+                            PieChartSectionData(
+                              color: _salarySpendingChartColors[
+                                  i % _salarySpendingChartColors.length],
+                              value: chartSections[i].amount,
+                              title:
+                                  '${(chartSections[i].ratio * 100).round()}%',
+                              radius: compact ? 72 : 82,
+                              titleStyle: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                  final legend = Column(
+                    children: [
+                      for (var i = 0; i < chartSections.length; i++)
+                        _buildSalarySpendingLegendRow(
+                          section: chartSections[i],
+                          color: _salarySpendingChartColors[
+                              i % _salarySpendingChartColors.length],
+                        ),
+                    ],
+                  );
+                  if (compact) {
+                    return Column(
+                      children: [chart, const SizedBox(height: 12), legend],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      chart,
+                      const SizedBox(width: 18),
+                      Expanded(child: legend),
+                    ],
+                  );
+                },
+              ),
+            if (unknownSection != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFBBF24)),
+                ),
+                child: Text(
+                  '使途不明金 ${_formatYen(unknownSection.amount)} は内訳の照合が必要です。'
+                  '残高差分からの自動記録には、口座間移動・現金引出し・返済などが含まれる可能性があり、全額が消費や浪費とは限りません。'
+                  '収支履歴を明細と照合し、振替・返済・支出を確認してください。',
+                  style: const TextStyle(
+                    color: Color(0xFF92400E),
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: () => _scrollTo(_keyFlow),
+                icon: const Icon(Icons.add_chart),
+                label: Text(
+                  unknownSection == null ? '支出を追加して内訳を更新' : '使途不明金を分類して内訳を更新',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSalarySpendingLegendRow({
+    required SalarySpendingCategorySlice section,
+    required Color color,
+  }) {
+    final samples = section.sampleDescriptions
+        .where((sample) => sample.trim().isNotEmpty)
+        .take(2)
+        .join(' / ');
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            margin: const EdgeInsets.only(top: 4),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${section.category} ${_formatYen(section.amount)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+                Text(
+                  '${(section.ratio * 100).toStringAsFixed(1)}% / ${section.entryCount}件'
+                  '${samples.isEmpty ? '' : ' / $samples'}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF64748B),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthlyFlowPrimaryActionBar() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: FilledButton.icon(
+        key: const Key('asset_monthly_flow_priority_button'),
+        onPressed: () => _scrollTo(_keyFlow),
+        icon: const Icon(Icons.arrow_downward),
+        label: const Text('今月の収支入力へ進む'),
+        style: FilledButton.styleFrom(
+          backgroundColor: const Color(0xFF1B5E20),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWasteTrainingAiCard() {
+    final training = _buildWasteTrainingSnapshot();
+    final plan = _buildWasteTrainingPlan(training);
+    final reviewFuture = _wasteTrainingReviewFor(training);
+    final wasteRatioLabel = '${(training.wasteRatio * 100).round()}%';
+
+    return Card(
+      key: const Key('asset_waste_training_ai_card'),
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFCCFBF1)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F766E).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.psychology_alt_outlined,
+                    color: Color(0xFF0F766E),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'AI浪費抑制トレーニング',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          height: 1.5,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'お金を浪費しないことは、欲望を観察し、判断力と自己制御を鍛える能力開発トレーニングです。',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF475569),
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            AssetWasteObservationStatus(snapshot: training),
+            KgiCsfKpiPanel(
+              plan: plan,
+              accentColor: const Color(0xFF0F766E),
+              initiallyExpanded: true,
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildDailyInterestBleedBanner(),
+                _buildOverviewStatChip(
+                  label: '浪費額',
+                  value: _formatYen(training.wasteExpense),
+                  color: const Color(0xFFB91C1C),
+                ),
+                _buildOverviewStatChip(
+                  label: '浪費比率',
+                  value: wasteRatioLabel,
+                  color: const Color(0xFFF97316),
+                ),
+                _buildOverviewStatChip(
+                  label: '浪費分類の記録がない支出記録日',
+                  value:
+                      '${training.noWasteDays}/${training.recordedExpenseDays}記録日',
+                  color: const Color(0xFF0F766E),
+                ),
+                _buildOverviewStatChip(
+                  label: '日課達成',
+                  value:
+                      '${training.ruleCompletedCount}/${training.ruleTargetCount}件',
+                  color: const Color(0xFF2563EB),
+                ),
+                _buildOverviewStatChip(
+                  label: '連続達成',
+                  value: '${training.compliantStreakDays}日',
+                  color: const Color(0xFF7C3AED),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            FutureBuilder<AssetWasteTrainingAiReview>(
+              future: reviewFuture,
+              builder: (context, snapshot) {
+                final review = snapshot.data;
+                final isLoading =
+                    snapshot.connectionState == ConnectionState.waiting &&
+                        review == null;
+                return _buildWasteTrainingReviewBox(
+                  review: review,
+                  isLoading: isLoading,
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF99F6E4)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.trending_up,
+                    color: Color(0xFF0F766E),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _wasteTrainingNextAction(training),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF134E4A),
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWasteTrainingReviewBox({
+    required AssetWasteTrainingAiReview? review,
+    required bool isLoading,
+  }) {
+    final source = review?.source ?? 'ai-hub provider.chat';
+    final summary = review?.summary ?? 'AIが現在の支出・浪費・日課達成を分析しています。';
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (isLoading)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                Icon(
+                  review?.isFallback == true
+                      ? Icons.auto_awesome_motion_outlined
+                      : Icons.auto_awesome,
+                  size: 18,
+                  color: isDark
+                      ? const Color(0xFF3D5AFE)
+                      : const Color(0xFF2563EB),
+                ),
+              const SizedBox(width: 8),
+              Text(
+                'AI現状分析',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  source,
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark
+                        ? const Color(0xFFB0B0B0)
+                        : const Color(0xFF64748B),
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            summary,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? const Color(0xFFB0B0B0) : const Color(0xFF334155),
+              height: 1.55,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlowPriorityMetric({
+    required String label,
+    required String value,
+    required Color color,
+    bool isSelected = false,
+    VoidCallback? onHoverStart,
+    VoidCallback? onHoverEnd,
+  }) {
+    final metric = Container(
+      constraints: const BoxConstraints(minWidth: 108),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: isSelected ? Border.all(color: color, width: 1.2) : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+    if (onHoverStart == null && onHoverEnd == null) {
+      return metric;
+    }
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => onHoverStart?.call(),
+      onExit: (_) => onHoverEnd?.call(),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onHoverStart,
+        child: metric,
+      ),
+    );
+  }
+
+  Widget _buildDeadlineChecklistCard() {
+    final remainText = _remainingToDeadlineText();
+    final p = _progress();
+    final isCompact = _isCompact;
+
+    return Card(
+      elevation: 3,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.flag, color: Color(0xFFFF6B35)),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    '本日18:00までに必ず完了（①〜⑤）',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                if (_isLoadingClosing)
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              remainText,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+            LinearProgressIndicator(
+              value: p,
+              minHeight: 10,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${(p * 100).toInt()}% 完了',
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+            ),
+            const SizedBox(height: 12),
+            CheckboxListTile(
+              value: _assetsDone,
+              onChanged: (v) => _toggleClosing('assets', v ?? false),
+              title: const Text('① 全資産額を記録して把握'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              secondary: IconButton(
+                icon: const Icon(Icons.arrow_downward),
+                onPressed: () => _scrollTo(_keyStock),
+                tooltip: '資産・負債へ移動',
+              ),
+            ),
+            CheckboxListTile(
+              value: _liabilitiesDone,
+              onChanged: (v) => _toggleClosing('liabilities', v ?? false),
+              title: const Text('② 全負債額を記録して把握'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              secondary: IconButton(
+                icon: const Icon(Icons.arrow_downward),
+                onPressed: () => _scrollTo(_keyStock),
+                tooltip: '資産・負債へ移動',
+              ),
+            ),
+            CheckboxListTile(
+              value: _fixedCostsDone,
+              onChanged: (v) => _toggleClosing('fixed', v ?? false),
+              title: const Text('③ 今月の固定費をすべて記録して把握'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              secondary: IconButton(
+                icon: const Icon(Icons.arrow_downward),
+                onPressed: () => _scrollTo(_keySubs),
+                tooltip: '固定費へ移動',
+              ),
+            ),
+            CheckboxListTile(
+              value: _flowsDone,
+              onChanged: (v) => _toggleClosing('flows', v ?? false),
+              title: const Text('④ 今月の支出と収入をすべて記録して把握'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              secondary: IconButton(
+                icon: const Icon(Icons.arrow_downward),
+                onPressed: () => _scrollTo(_keyFlow),
+                tooltip: '収支へ移動',
+              ),
+            ),
+            CheckboxListTile(
+              value: _mustTasksDone,
+              onChanged: (v) => _toggleClosing('must', v ?? false),
+              title: const Text('⑤ 今月の必須タスクをすべて記録して把握'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              secondary: IconButton(
+                icon: const Icon(Icons.arrow_downward),
+                onPressed: () => _scrollTo(_keyMust),
+                tooltip: '必須タスクへ移動',
+              ),
+            ),
+            const SizedBox(height: 8),
+            isCompact
+                ? Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _autoCheckFromData,
+                          icon: const Icon(Icons.auto_fix_high),
+                          label: const Text('記録状況から自動チェック'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _copyDailySummary,
+                          icon: const Icon(Icons.copy),
+                          label: const Text('提出用サマリーをコピー'),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _autoCheckFromData,
+                          icon: const Icon(Icons.auto_fix_high),
+                          label: const Text('記録状況から自動チェック'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _copyDailySummary,
+                          icon: const Icon(Icons.copy),
+                          label: const Text('提出用サマリーをコピー'),
+                        ),
+                      ),
+                    ],
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDailyInterestBleedBanner() {
+    final workbook = _buildCurrentAssetLiabilityWorkbook();
+    if (workbook == null) return const SizedBox.shrink();
+    final bleed = AssetPainMetricService.calculateDailyInterestBleed(workbook);
+    if (bleed <= 0) return const SizedBox.shrink();
+    final lostHours = AssetPainMetricService.dailyLostLaborHours(workbook);
+    final lostHoursText = lostHours > 0
+        ? '（参考換算: 約${lostHours.toStringAsFixed(1)}時間/日、時給2,500円）'
+        : '';
+    final stolenFuture = AssetPainMetricService.stolenFutureTotal(
+      workbook: workbook,
+      months: 6,
+    );
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF87171)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.bloodtype_outlined,
+            color: Color(0xFFDC2626),
+            size: 24,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '利息負担の推計: ${_formatManagementYen(bleed)} / 日$lostHoursText',
+                  style: const TextStyle(
+                    color: Color(0xFF991B1B),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text(
+                    '登録残高×年利÷12÷30の概算です。'
+                    '明細で確認した支払利息ではありません。'
+                    '返済・追加利用・金利変更は織り込んでいません。',
+                    style: TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                ),
+                if (stolenFuture > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '6か月の単純試算: ${_formatManagementYen(stolenFuture)}。'
+                      '登録残高・年利が変わらない前提です。',
+                      style: const TextStyle(
+                        color: Color(0xFFB91C1C),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOverviewStatChip({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: Theme.of(context).colorScheme.onSurface,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThreeMonthOverviewTile({
+    required DateTime month,
+    required double? netWorth,
+    required int fixedCost,
+    required int totalTasks,
+    required int completedTasks,
+    required int pendingTasks,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF64748B),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _monthLabelWithRole(month),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '純資産: ${netWorth == null ? "未記録" : _formatYen(netWorth)}',
+            style: const TextStyle(fontSize: 12, height: 1.5),
+          ),
+          Text(
+            '固定費: ${_formatYen(fixedCost)}',
+            style: const TextStyle(fontSize: 12, height: 1.5),
+          ),
+          Text(
+            'タスク: $completedTasks/$totalTasks 完了',
+            style: const TextStyle(fontSize: 12, height: 1.5),
+          ),
+          Text(
+            '未完了: $pendingTasks',
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).colorScheme.onSurface,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThreeMonthOverviewCard() {
+    final months = _overviewMonthStarts();
+    final monthKeys = months.map(_monthKey).toList();
+    final netWorthByMonth = _netWorthByOverviewMonth(months);
+    final fixedCostByMonth = _fixedCostByOverviewMonth(months);
+    final taskStatsByMonth = _taskStatsByOverviewMonth(months);
+
+    final prevKey = monthKeys[0];
+    final currentKey = monthKeys[1];
+    final nextKey = monthKeys[2];
+
+    final prevNet = netWorthByMonth[prevKey];
+    final currentNet = netWorthByMonth[currentKey];
+    final netDiffText = (prevNet != null && currentNet != null)
+        ? _formatSignedYen(currentNet - prevNet)
+        : 'データ不足';
+    final netDiffColor = (prevNet != null && currentNet != null)
+        ? ((currentNet - prevNet) >= 0
+            ? const Color(0xFF0D9488)
+            : const Color(0xFFB91C1C))
+        : const Color(0xFF9CA3AF);
+
+    final fixedDiff =
+        (fixedCostByMonth[currentKey] ?? 0) - (fixedCostByMonth[prevKey] ?? 0);
+    final fixedDiffColor =
+        fixedDiff <= 0 ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
+
+    final currentTask = taskStatsByMonth[currentKey] ??
+        {'total': 0, 'completed': 0, 'pending': 0};
+    final nextTask =
+        taskStatsByMonth[nextKey] ?? {'total': 0, 'completed': 0, 'pending': 0};
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.view_timeline, color: Color(0xFF6366F1)),
+                SizedBox(width: 8),
+                Text(
+                  '3ヶ月俯瞰（先月・今月・来月）',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '純資産は各月末以前の最新記録を繰り越した参考値です。今月は途中経過、来月は現在までの記録であり、来月の実績・将来残高予測ではありません。固定費は登録予定額、タスクは登録済みの期限と完了状態です。',
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _isCompact
+                ? Column(
+                    children: [
+                      for (int i = 0; i < months.length; i++) ...[
+                        _buildThreeMonthOverviewTile(
+                          month: months[i],
+                          netWorth: netWorthByMonth[monthKeys[i]],
+                          fixedCost: fixedCostByMonth[monthKeys[i]] ?? 0,
+                          totalTasks:
+                              taskStatsByMonth[monthKeys[i]]?['total'] ?? 0,
+                          completedTasks:
+                              taskStatsByMonth[monthKeys[i]]?['completed'] ?? 0,
+                          pendingTasks:
+                              taskStatsByMonth[monthKeys[i]]?['pending'] ?? 0,
+                        ),
+                        if (i != months.length - 1) const SizedBox(height: 8),
+                      ],
+                    ],
+                  )
+                : Row(
+                    children: [
+                      for (int i = 0; i < months.length; i++) ...[
+                        Expanded(
+                          child: _buildThreeMonthOverviewTile(
+                            month: months[i],
+                            netWorth: netWorthByMonth[monthKeys[i]],
+                            fixedCost: fixedCostByMonth[monthKeys[i]] ?? 0,
+                            totalTasks:
+                                taskStatsByMonth[monthKeys[i]]?['total'] ?? 0,
+                            completedTasks: taskStatsByMonth[monthKeys[i]]
+                                    ?['completed'] ??
+                                0,
+                            pendingTasks:
+                                taskStatsByMonth[monthKeys[i]]?['pending'] ?? 0,
+                          ),
+                        ),
+                        if (i != months.length - 1) const SizedBox(width: 8),
+                      ],
+                    ],
+                  ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildOverviewStatChip(
+                  label: '純資産 先月比',
+                  value: netDiffText,
+                  color: netDiffColor,
+                ),
+                _buildOverviewStatChip(
+                  label: '固定費 先月比',
+                  value: _formatSignedYen(fixedDiff),
+                  color: fixedDiffColor,
+                ),
+                _buildOverviewStatChip(
+                  label: '今月タスク進捗',
+                  value:
+                      '${currentTask['completed'] ?? 0}/${currentTask['total'] ?? 0}',
+                  color: const Color(0xFF6366F1),
+                ),
+                _buildOverviewStatChip(
+                  label: '来月タスク件数',
+                  value: '${nextTask['total'] ?? 0}件',
+                  color: const Color(0xFFFF6B35),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 借金返済プランカード
+  Widget _buildDebtPlannerCard(AssetLiabilityWorkbook? workbook) {
+    final hasAssetLiabilityData =
+        _assetData.isNotEmpty || _effectiveAssetDataByDate.isNotEmpty;
+    final latestSnapshot = !hasAssetLiabilityData
+        ? const <String, double>{}
+        : _latestSnapshotForDisplay();
+
+    final liabilities = latestSnapshot.entries
+        .where((e) => e.value < 0)
+        .toList()
+      ..sort((a, b) => a.value.compareTo(b.value));
+    final totalDebt = liabilities.fold<double>(
+      0,
+      (sum, e) => sum + e.value.abs(),
+    );
+    final debtSafetySnapshot = workbook == null
+        ? null
+        : DebtLockdownService.buildSafetySnapshot(
+            debts: workbook.debtMasterRows.map(
+              (row) => DebtSafetyDebtInput(
+                accountId: row.id,
+                accountName: row.name,
+                balance: row.balance.abs(),
+                annualRate: row.annualRate,
+              ),
+            ),
+          );
+    if (_supabase.auth.currentUser != null) {
+      _ensureDebtLockdownSnapshotLoaded(totalDebt);
+      _ensureKonbiniUdonSnapshotLoaded(totalDebt);
+    }
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.auto_awesome, color: Color(0xFF7C3AED)),
+                SizedBox(width: 8),
+                Text(
+                  '借金返済プラン',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '負債データをもとに、返済優先順位と3ヶ月アクションを自動生成します。',
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildOverviewStatChip(
+                  label: '負債件数',
+                  value:
+                      hasAssetLiabilityData ? '${liabilities.length}件' : '未登録',
+                  color: const Color(0xFFB91C1C),
+                ),
+                _buildOverviewStatChip(
+                  label: '負債合計',
+                  value: hasAssetLiabilityData ? _formatYen(totalDebt) : '未登録',
+                  color: const Color(0xFFFF6B35),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (debtSafetySnapshot != null &&
+                debtSafetySnapshot.hasSignals) ...[
+              _buildDebtSafetyPanel(debtSafetySnapshot),
+              const SizedBox(height: 12),
+            ],
+            _buildDebtLockdownPanel(
+              totalDebt,
+              hasDebtData: hasAssetLiabilityData,
+            ),
+            const SizedBox(height: 12),
+            _buildKonbiniUdonChallengePanel(
+              totalDebt,
+              workbook,
+              hasDebtData: hasAssetLiabilityData,
+            ),
+            const SizedBox(height: 12),
+            _isCompact
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed:
+                            _isGeneratingDebtPlan ? null : _showDebtPlanDialog,
+                        icon: _isGeneratingDebtPlan
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.play_arrow),
+                        label: Text(
+                          _isGeneratingDebtPlan ? '返済プラン作成中...' : '返済プランを作成',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _debtPlanMarkdown == null
+                            ? null
+                            : () async {
+                                await Clipboard.setData(
+                                  ClipboardData(text: _debtPlanMarkdown!),
+                                );
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('返済プランをコピーしました'),
+                                  ),
+                                );
+                              },
+                        icon: const Icon(Icons.copy),
+                        label: const Text('プランをコピー'),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _isGeneratingDebtPlan
+                              ? null
+                              : _showDebtPlanDialog,
+                          icon: _isGeneratingDebtPlan
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.play_arrow),
+                          label: Text(
+                            _isGeneratingDebtPlan ? '返済プラン作成中...' : '返済プランを作成',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: _debtPlanMarkdown == null
+                            ? null
+                            : () async {
+                                await Clipboard.setData(
+                                  ClipboardData(text: _debtPlanMarkdown!),
+                                );
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('返済プランをコピーしました'),
+                                  ),
+                                );
+                              },
+                        icon: const Icon(Icons.copy),
+                        label: const Text('プランをコピー'),
+                      ),
+                    ],
+                  ),
+            if (_debtPlanGeneratedAt != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                '生成日時: ${DateFormat('yyyy/MM/dd HH:mm').format(_debtPlanGeneratedAt!)}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  height: 1.5,
+                ),
+              ),
+            ],
+            if (_debtPlanMarkdown != null && _debtExecutionPlan != null) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildDebtPlannerModeChip(
+                    mode: AssetDebtPlannerMode.ask,
+                    label: 'Ask',
+                    icon: Icons.chat_bubble_outline,
+                  ),
+                  _buildDebtPlannerModeChip(
+                    mode: AssetDebtPlannerMode.code,
+                    label: 'Code',
+                    icon: Icons.code,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _debtPlannerMode == AssetDebtPlannerMode.ask
+                    ? 'Ask は返済プランを読むモードです。'
+                    : 'Code は返済プランを must tasks に反映するモードです。',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  height: 1.5,
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            if (_isGeneratingDebtPlan)
+              const Center(child: CircularProgressIndicator())
+            else if (_debtPlanMarkdown == null)
+              Text(
+                'まだ返済プランは作成されていません。',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+              )
+            else
+              _debtPlannerMode == AssetDebtPlannerMode.ask
+                  ? Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: MarkdownBody(
+                        data: _debtPlanMarkdown!,
+                        selectable: true,
+                      ),
+                    )
+                  : _buildDebtCodeModePanel(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDebtSafetyPanel(DebtSafetySnapshot snapshot) {
+    final color = snapshot.hasBlockingAnnualRates
+        ? const Color(0xFFB91C1C)
+        : const Color(0xFFD97706);
+    final background = snapshot.hasBlockingAnnualRates
+        ? const Color(0xFFFEF2F2)
+        : const Color(0xFFFFFBEB);
+
+    return Container(
+      key: const Key('asset_debt_safety_panel'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.32)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.health_and_safety_outlined, color: color),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  '貸付自粛・違法業者ガード',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '年利20%超は登録を保存しません。多重債務の兆候がある場合は貸付自粛制度と公的な相談窓口を自動で提示します。',
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurface,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildOverviewStatChip(
+                label: '負債件数',
+                value: '${snapshot.debtCount}件',
+                color: const Color(0xFFB91C1C),
+              ),
+              _buildOverviewStatChip(
+                label: '対象残高',
+                value: _formatManagementYen(snapshot.totalDebt),
+                color: const Color(0xFFFF6B35),
+              ),
+              _buildOverviewStatChip(
+                label: '金利警告',
+                value: '${snapshot.annualRateRisks.length}件',
+                color: color,
+              ),
+              if (snapshot.shouldShowSelfExclusionGuidance)
+                _buildTextStatusChip(
+                  label: '貸付自粛制度を案内中',
+                  color: const Color(0xFF7C2D12),
+                ),
+            ],
+          ),
+          if (snapshot.annualRateRisks.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            for (final risk in snapshot.annualRateRisks.take(3))
+              _buildDebtSafetyWarningRow(risk),
+          ],
+          if (snapshot.guidanceCards.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            for (final guidance in snapshot.guidanceCards.take(4))
+              _buildDebtSafetyGuidanceRow(guidance),
+          ],
+          if (snapshot.educationNotices.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Text(
+              'アプリ内通知',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 4),
+            for (final notice in snapshot.educationNotices)
+              _buildDebtEducationNoticeRow(notice),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebtSafetyWarningRow(DebtAnnualRateRisk risk) {
+    final color = _debtSafetySeverityColor(risk.severity);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            risk.blocksRegistration
+                ? Icons.gpp_bad_outlined
+                : Icons.warning_amber_rounded,
+            size: 18,
+            color: color,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${risk.title}: ${risk.detail}',
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebtSafetyGuidanceRow(DebtSafetyGuidance guidance) {
+    final color = _debtSafetySeverityColor(guidance.severity);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.64),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.open_in_new, size: 18, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  guidance.title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  guidance.body,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton.icon(
+            onPressed: () => _openDebtSafetyUrl(guidance.url),
+            icon: const Icon(Icons.open_in_new, size: 14),
+            label: Text(guidance.actionLabel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebtEducationNoticeRow(DebtEducationNotice notice) {
+    final color = _debtSafetySeverityColor(notice.severity);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.notifications_active_outlined, size: 18, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${notice.title}: ${notice.body}',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.5,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: () => _openDebtSafetyUrl(notice.url),
+            child: Text(notice.actionLabel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _debtSafetySeverityColor(DebtSafetySeverity severity) {
+    return switch (severity) {
+      DebtSafetySeverity.info => const Color(0xFF2563EB),
+      DebtSafetySeverity.warning => const Color(0xFFD97706),
+      DebtSafetySeverity.danger => const Color(0xFFB91C1C),
+    };
+  }
+
+  Future<void> _openDebtSafetyUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      return;
+    }
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!mounted || opened) {
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('URLを開けませんでした: $url')));
+  }
+
+  Widget _buildDebtLockdownPanel(
+    double remainingDebt, {
+    required bool hasDebtData,
+  }) {
+    final snapshot = _debtLockdownSnapshot;
+    final isReleased = hasDebtData && snapshot?.isReleased == true;
+    final isEnabled = snapshot?.isActive == true && !isReleased;
+    final rules = snapshot?.rules ?? DebtLockdownService.builtinRules;
+    final completedRuleIds = snapshot?.completedRuleIds ?? const <String>{};
+    final todayViolations =
+        snapshot?.todayViolations ?? const <DebtLockdownViolation>[];
+    final recentViolations =
+        snapshot?.recentViolations ?? const <DebtLockdownViolation>[];
+    final statusLabel = !hasDebtData
+        ? '判定不可'
+        : remainingDebt <= 0
+            ? '登録残高0円'
+            : isEnabled
+                ? '実施中'
+                : '未開始';
+    final statusColor = !hasDebtData
+        ? const Color(0xFF64748B)
+        : isReleased
+            ? const Color(0xFF0D9488)
+            : isEnabled
+                ? const Color(0xFF6366F1)
+                : const Color(0xFF475569);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: !hasDebtData
+            ? const Color(0xFFF8FAFC)
+            : isReleased
+                ? const Color(0xFFF0FDFA)
+                : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: !hasDebtData
+              ? const Color(0xFFCBD5E1)
+              : isReleased
+                  ? const Color(0xFF99F6E4)
+                  : const Color(0xFFCBD5E1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                !hasDebtData
+                    ? Icons.help_outline
+                    : isReleased
+                        ? Icons.lock_open
+                        : Icons.lock_outline,
+                color: statusColor,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  '返済中の生活ルール',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            !hasDebtData
+                ? '資産・負債が未登録のため、完済状態を判定できません。まず残高を登録してください。'
+                : remainingDebt <= 0
+                    ? '登録済み負債の合計は0円です。未登録の負債がないか確認してください。'
+                    : '生活費を確保しながら、必要に応じて生活ルールを開始・中断できます。項目ごとの編集はまだできません。',
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurface,
+              height: 1.5,
+            ),
+          ),
+          if (_isLoadingDebtLockdown && snapshot == null) ...[
+            const SizedBox(height: 10),
+            const LinearProgressIndicator(minHeight: 3),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildOverviewStatChip(
+                label: '状態',
+                value: statusLabel,
+                color: statusColor,
+              ),
+              _buildOverviewStatChip(
+                label: '本日の振り返り',
+                value: '${todayViolations.length}件',
+                color: todayViolations.isEmpty
+                    ? const Color(0xFF0D9488)
+                    : const Color(0xFF6366F1),
+              ),
+              _buildOverviewStatChip(
+                label: '継続記録',
+                value: '${snapshot?.currentCompliantStreakDays ?? 0}日',
+                color: const Color(0xFF6366F1),
+              ),
+              _buildOverviewStatChip(
+                label: '日課達成',
+                value: '${completedRuleIds.length}/${rules.length}',
                 color: const Color(0xFF7C3AED),
               ),
             ],
