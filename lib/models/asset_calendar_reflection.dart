@@ -190,6 +190,8 @@ class AssetCalendarReflection {
         if (!noDrinking) return true;
         return hasAffirmedMatch(
           RegExp(
+            r'(?:ビール|ハイボール)\s*(?:を|は)?\s*購入'
+            r'(?:してから|して|したが)\s*(?:飲んだ|飲みました)|'
             r'(?:ビール|ハイボール|酒)\s*(?:を|は)?\s*(?:飲んだ|飲みました)|'
             r'飲酒\s*(?:を)?\s*した|'
             r'(?:居酒屋|飲み屋|外飲み)\s*(?:で)?\s*(?:飲んだ|飲みました)',
