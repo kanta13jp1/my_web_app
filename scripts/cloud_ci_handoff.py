@@ -249,6 +249,112 @@ def dispatch_and_locate(
         sleeper(poll_seconds)
 
 
+
+# PR5925 release assessment is intentionally non-executing. Its evidence
+# container is not an authentication boundary; production dispatch remains
+# unavailable until atomic ref/run provenance and queue fencing are solved.
+@dataclass(frozen=True)
+class Release5925Evidence:
+    branch: str
+    head_sha: str
+    tree_sha: str
+    parent_sha: str
+    workflow_blob: str
+    changed_blobs: dict[str, str]
+    pr_merged: bool
+    pr_merge_sha: str
+    live_sha: str
+    hold_value: str
+    branch_protected: bool | None
+    effective_rules: tuple[str, ...] | None
+    active_or_queued_runs: tuple[str, ...] | None
+    fifo_lease_verified: bool
+    approved_release: bool
+    scope: str
+    profile: str
+
+
+_RELEASE_5925_BRANCH = "codex/approved-5925-calendar-release"
+_RELEASE_5925_HEAD = "9bdb9933a16cb9b8dce517c2bf7c61fafc5969e6"
+_RELEASE_5925_TREE = "b510e0d508dfafdb1d0a8c9e9e4fc6a46312f98a"
+_RELEASE_5925_BASE = "237d9290183c3bb3df73388ec9cf4563bb0186ef"
+_RELEASE_5925_MERGE = "fa105154b7a09c291fd739d3ae1245cebb90069d"
+_RELEASE_5925_WORKFLOW = "372ca0816e65fcf972a959be12c67a0479684e82"
+_RELEASE_5925_CHANGED_BLOBS = {
+    ".github/workflows/cloud-development.yml": _RELEASE_5925_WORKFLOW,
+    "lib/models/asset_calendar_reflection.dart": "431d6730e832695e536690a8e1d4499c1da86f32",
+    "test/models/asset_calendar_reflection_test.dart": "f0dafa73fb05e8ea79baa30a0f42212b5e1144ed",
+    "test/e2e/asset_calendar_projection_test.dart": "9ef6ce7f2f83697d4583d6b40aaa03901b3d3c19",
+}
+
+
+def release_5925_blockers(evidence: Release5925Evidence) -> tuple[str, ...]:
+    # Tree pins repo-local workflow dependencies too; it does not pin external
+    # downloads, prove API freshness, or prevent ref changes after inspection.
+    checks = (
+        (evidence.branch == _RELEASE_5925_BRANCH, "unexpected release branch"),
+        (evidence.head_sha == _RELEASE_5925_HEAD, "unexpected candidate head"),
+        (evidence.tree_sha == _RELEASE_5925_TREE, "candidate tree mismatch"),
+        (evidence.parent_sha == _RELEASE_5925_BASE, "candidate parent mismatch"),
+        (evidence.workflow_blob == _RELEASE_5925_WORKFLOW, "workflow blob mismatch"),
+        (evidence.changed_blobs == _RELEASE_5925_CHANGED_BLOBS, "release paths or blobs differ"),
+        (evidence.pr_merged is True and evidence.pr_merge_sha == _RELEASE_5925_MERGE, "PR merge unconfirmed"),
+        (evidence.live_sha == _RELEASE_5925_BASE, "production base changed or unknown"),
+        (evidence.hold_value == "false", "production hold active or unknown"),
+        (evidence.branch_protected is False, "branch protection present or unknown"),
+        (evidence.effective_rules == (), "branch rules present or unknown"),
+        (evidence.active_or_queued_runs == (), "existing runs present or unknown"),
+        (evidence.fifo_lease_verified is True, "shared FIFO lease unverified"),
+        (evidence.approved_release is True, "release authorization unverified"),
+        (evidence.scope == "web_only" and evidence.profile == "full", "release scope/profile mismatch"),
+    )
+    reasons = [reason for ok, reason in checks if not ok]
+    # These cannot be established for the fixed 9bdb candidate by supplied
+    # booleans: no operation input/run-name, no atomic immutable-ref guarantee,
+    # and no shared FIFO binding for all dispatchers.
+    reasons.extend((
+        "candidate workflow has no verifiable operation ID binding",
+        "FIFO binding and immediate ref/run rechecks are unimplemented",
+        "approved release dispatch is unimplemented",
+    ))
+    return tuple(reasons)
+
+
+
+def create_release_5925_pending_journal(journal_path: Path, operation_id: str) -> None:
+    # Exclusive creation makes an existing pending or ambiguous operation
+    # durable evidence, never permission to retry or replace it.
+    import os
+
+    if not re.fullmatch(r"[0-9a-f]{32}", operation_id):
+        raise ValueError("operation ID must be 32 lowercase hex characters")
+    data = json.dumps({
+        "operation_id": operation_id,
+        "head": _RELEASE_5925_HEAD,
+        "workflow": CLOUD_DEVELOPMENT_WORKFLOW,
+        "status": "pending_or_unknown",
+    }, sort_keys=True).encode("utf-8")
+    fd = os.open(str(journal_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "wb") as output:
+        output.write(data)
+        output.flush()
+        os.fsync(output.fileno())
+
+
+def parse_release_5925_run_id(http_status: int, payload: Any) -> int:
+    # Failed/lost/malformed replies must stay unknown, not be auto-retried.
+    if http_status != 200 or not isinstance(payload, dict):
+        raise RuntimeError("dispatch outcome unknown; do not retry")
+    run_id = payload.get("workflow_run_id")
+    if isinstance(run_id, bool) or not isinstance(run_id, int) or run_id <= 0:
+        raise RuntimeError("dispatch outcome unknown; do not retry")
+    return run_id
+
+
+def dispatch_release_5925(*args: Any, **kwargs: Any) -> None:
+    raise RuntimeError("PR5925 release dispatch is not implemented; no request sent")
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
