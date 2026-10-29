@@ -769,8 +769,15 @@ void main() {
         findsWidgets,
       );
       expect(tester.takeException(), isNull);
+      for (var index = 0; index < ai.responses.length; index++) {
+        if (!ai.responses[index].isCompleted) {
+          ai.complete(index, 'Synthetic explanation test');
+        }
+      }
+      await tester.pump();
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 3));
+      expect(tester.takeException(), isNull);
     });
   }
 }
