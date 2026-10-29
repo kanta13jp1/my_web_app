@@ -915,6 +915,7 @@ void main() {
         final savesBeforeSelection = repository.saveCalls;
         await tester.tap(day);
         await tester.pump();
+        await tester.pump(const Duration(seconds: 3));
         expect(find.text('9月5日 のイベント'), findsOneWidget);
         expect(repository.saveCalls, savesBeforeSelection);
         expect(Supabase.instance.client.auth.currentUser, isNull);
