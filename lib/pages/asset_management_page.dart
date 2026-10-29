@@ -34300,6 +34300,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 16),
             Container(
+              width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: const Color(0xFF64748B),
