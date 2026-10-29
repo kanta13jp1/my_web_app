@@ -175,7 +175,10 @@ class AssetCalendarReflection {
         description,
       );
       final outside = description.split(RegExp(r'[。；;\n]')).any((context) {
-        final venue = hasAffirmedMatch(RegExp(r'飲み屋|居酒屋|外飲み|飲みに行った|飲みに行きました|飲みに行'), context);
+        final venue = hasAffirmedMatch(
+          RegExp(r'飲み屋|居酒屋|外飲み|飲みに行った|飲みに行きました|飲みに行'),
+          context,
+        );
         final drink =
             dining &&
             hasAffirmedMatch(
