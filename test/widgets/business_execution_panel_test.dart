@@ -140,8 +140,10 @@ void main() {
     expect(find.text('前のアカウントの未保存入力'), findsNothing);
     expect(find.text('相談申込数'), findsNothing);
     expect(store.data['b'], isNull);
-    expect(find.text('まだ計画がありません。解決したい課題から始めましょう。'),
-        findsOneWidget);
+    expect(
+      find.text('まだ計画がありません。解決したい課題から始めましょう。'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('320px at double text size can reach and save the report',
@@ -346,8 +348,10 @@ void main() {
     expect(find.text('作成中の課題を残す'), findsOneWidget);
     store.failWrite = false;
     await tapText(tester, '計画を端末に保存');
-    expect(BusinessExecutionCodec.decode(store.data['a']).single.issue,
-        '作成中の課題を残す');
+    expect(
+      BusinessExecutionCodec.decode(store.data['a']).single.issue,
+      '作成中の課題を残す',
+    );
   });
 
   testWidgets('unedited report and reflection adopt latest values on reload',

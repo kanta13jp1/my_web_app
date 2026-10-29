@@ -51,8 +51,10 @@ void main() {
       ['2026-12-31'],
     );
     expect(() => parseDay('2026-02-29'), throwsFormatException);
-    expect(() => plan(start: '2026-10-31', due: '2026-11-01'),
-        throwsFormatException);
+    expect(
+      () => plan(start: '2026-10-31', due: '2026-11-01'),
+      throwsFormatException,
+    );
   });
 
   test('roundtrip keeps daily and monthly notes and replaces same day once', () {
