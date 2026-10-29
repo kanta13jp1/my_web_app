@@ -141,7 +141,8 @@ class AssetCalendarReflection {
     }) {
       final denial = RegExp(
         r'^\s*(?:は|を|が)?\s*(?:なし|無し|しな|していな|せず|せな|'
-        r'飲まな|飲まず|買わな|買わず|購入しな|購入せず|購入なし|'
+        r'飲まな|飲まず|飲んだこと(?:は|が)?ない|こと(?:は|が)?ない|'
+        r'買わな|買わず|購入しな|購入せず|購入なし|'
         r'には行かな|に行かな|かない|かなかった)',
       );
       return pattern.allMatches(description).any((match) {
@@ -185,7 +186,8 @@ class AssetCalendarReflection {
         if (!venue && !drink) return false;
         final noDrinking = RegExp(
           r'飲酒\s*(?:は|を)?\s*(?:なし|無し|しな|していな|せず)|'
-          r'(?:酒|ビール|ハイボール)\s*(?:は|を)?\s*(?:飲まず|飲まな)',
+          r'(?:酒|ビール|ハイボール)\s*(?:は|を)?\s*'
+          r'(?:飲まず|飲まな|飲んだこと(?:は|が)?ない)',
         ).hasMatch(context);
         if (!noDrinking) return true;
         return hasAffirmedMatch(
@@ -194,7 +196,8 @@ class AssetCalendarReflection {
             r'(?:してから|して|したが)\s*(?:飲んだ|飲みました)|'
             r'(?:ビール|ハイボール|酒)\s*(?:を|は)?\s*(?:飲んだ|飲みました)|'
             r'飲酒\s*(?:を)?\s*した|'
-            r'(?:居酒屋|飲み屋|外飲み)\s*(?:で)?\s*(?:飲んだ|飲みました)',
+            r'(?:居酒屋|飲み屋|外飲み)\s*(?:で)?\s*(?:飲んだ|飲みました)|'
+            r'飲みに(?:行った|行きました)',
           ),
           context,
         );
