@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -719,77 +720,113 @@ void main() {
       final repository = _MonthlyRepository();
       final ai = _ControlledAi();
       expect(Supabase.instance.client.auth.currentUser, isNull);
-      try {
-        await tester.pumpWidget(
-          MaterialApp(
-            builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                textScaler: TextScaler.linear(scenario.scale),
-              ),
-              child: child!,
-            ),
-            home: AssetManagementPage(
-              assetLiabilityRepository: repository,
-              aiSummaryService: ai,
-              aiAnalysisHistoryService: _EmptyHistory(),
-              debugNow: DateTime(2026, 9, 6, 12),
-              debugInitialAssetData: const <String, Map<String, double>>{
-                '2026-09-06': <String, double>{'bank': 30000},
-              },
-            ),
-          ),
-        );
-        final explanation = find.textContaining(
-          '計算に取り込まれた台帳の未払いの直接支払',
-          skipOffstage: false,
-        );
-        await _pumpUntil(
-          tester,
-          () => explanation.evaluate().isNotEmpty || ai.responses.isNotEmpty,
-        );
-        if (ai.responses.isNotEmpty) {
-          ai.complete(0, 'Synthetic explanation test');
+      final previousErrorHandler = FlutterError.onError;
+      if (previousErrorHandler == null) {
+        throw StateError('test error handler unavailable');
+      }
+      var flexOverflow = 0;
+      var otherFlutter = 0;
+      var otherError = 0;
+      var observerError = 0;
+      FlutterError.onError = (details) {
+        try {
+          final error = details.exception;
+          if (error is FlutterError) {
+            final description = error.toString();
+            if (description.contains('RenderFlex') &&
+                description.contains('overflowed by')) {
+              flexOverflow++;
+            } else {
+              otherFlutter++;
+            }
+          } else {
+            otherError++;
+          }
+        } catch (_) {
+          observerError++;
+        } finally {
+          previousErrorHandler(details);
         }
-        await _pumpUntil(tester, () => explanation.evaluate().isNotEmpty);
-        await tester.ensureVisible(explanation);
-        await tester.pump();
-        expect(explanation, findsOneWidget);
-        final context = tester.element(explanation);
-        expect(
-          MediaQuery.textScalerOf(context).scale(10),
-          closeTo(10 * scenario.scale, 0.001),
-        );
-        expect(
-          MediaQuery.sizeOf(context).width,
-          closeTo(scenario.size.width, 0.001),
-        );
-        final text = tester.widget<Text>(explanation).data!;
-        expect(text, contains('今週は基準日から日曜まで'));
-        expect(text, contains('暦月ではありません'));
-        expect(text, contains('給与日設定は使いません'));
-        expect(text, contains('貯蓄計画は別途反映しません'));
-        expect(text, contains('証券等はすぐに使える現金とは限りません'));
-        final rect = tester.getRect(explanation);
-        expect(rect.left, greaterThanOrEqualTo(0));
-        expect(rect.right, lessThanOrEqualTo(scenario.size.width));
-        expect(
-          find.bySemanticsLabel(
-            RegExp('計算に取り込まれた台帳の未払いの直接支払'),
-          ),
-          findsWidgets,
-        );
+      };
+      try {
+        try {
+          await tester.pumpWidget(
+            MaterialApp(
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: TextScaler.linear(scenario.scale),
+                ),
+                child: child!,
+              ),
+              home: AssetManagementPage(
+                assetLiabilityRepository: repository,
+                aiSummaryService: ai,
+                aiAnalysisHistoryService: _EmptyHistory(),
+                debugNow: DateTime(2026, 9, 6, 12),
+                debugInitialAssetData: const <String, Map<String, double>>{
+                  '2026-09-06': <String, double>{'bank': 30000},
+                },
+              ),
+            ),
+          );
+          final explanation = find.textContaining(
+            '計算に取り込まれた台帳の未払いの直接支払',
+            skipOffstage: false,
+          );
+          await _pumpUntil(
+            tester,
+            () => explanation.evaluate().isNotEmpty || ai.responses.isNotEmpty,
+          );
+          if (ai.responses.isNotEmpty) {
+            ai.complete(0, 'Synthetic explanation test');
+          }
+          await _pumpUntil(tester, () => explanation.evaluate().isNotEmpty);
+          await tester.ensureVisible(explanation);
+          await tester.pump();
+          expect(explanation, findsOneWidget);
+          final context = tester.element(explanation);
+          expect(
+            MediaQuery.textScalerOf(context).scale(10),
+            closeTo(10 * scenario.scale, 0.001),
+          );
+          expect(
+            MediaQuery.sizeOf(context).width,
+            closeTo(scenario.size.width, 0.001),
+          );
+          final text = tester.widget<Text>(explanation).data!;
+          expect(text, contains('今週は基準日から日曜まで'));
+          expect(text, contains('暦月ではありません'));
+          expect(text, contains('給与日設定は使いません'));
+          expect(text, contains('貯蓄計画は別途反映しません'));
+          expect(text, contains('証券等はすぐに使える現金とは限りません'));
+          final rect = tester.getRect(explanation);
+          expect(rect.left, greaterThanOrEqualTo(0));
+          expect(rect.right, lessThanOrEqualTo(scenario.size.width));
+          expect(
+            find.bySemanticsLabel(
+              RegExp('計算に取り込まれた台帳の未払いの直接支払'),
+            ),
+            findsWidgets,
+          );
+          expect(tester.takeException(), isNull);
+        } finally {
+          for (var index = 0; index < ai.responses.length; index++) {
+            if (!ai.responses[index].isCompleted) {
+              ai.complete(index, 'Synthetic explanation test');
+            }
+          }
+          await tester.pump();
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump(const Duration(seconds: 3));
+        }
         expect(tester.takeException(), isNull);
       } finally {
-        for (var index = 0; index < ai.responses.length; index++) {
-          if (!ai.responses[index].isCompleted) {
-            ai.complete(index, 'Synthetic explanation test');
-          }
-        }
-        await tester.pump();
-        await tester.pumpWidget(const SizedBox.shrink());
-        await tester.pump(const Duration(seconds: 3));
+        FlutterError.onError = previousErrorHandler;
+        debugPrint(
+          'synthetic-errors flex=$flexOverflow flutter=$otherFlutter '
+          'other=$otherError observer=$observerError',
+        );
       }
-      expect(tester.takeException(), isNull);
     });
   }
 }
