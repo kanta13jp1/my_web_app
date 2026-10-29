@@ -8,18 +8,15 @@ import '../../integration_test/payroll_snapshot_fixture.dart';
 
 /// Simulates a lost response while the server transaction is still pending.
 class _DelayedCommitStore extends SyntheticSnapshotStore {
-  final Completer<void> commitGate = Completer<void>();
   final List<String> submittedRequests = [];
   final List<String> checkedRequests = [];
-  Future<void>? serverCommit;
+  PayrollSnapshotDraft? pendingCommit;
 
   @override
   Future<void> confirm(PayrollSnapshotDraft draft) async {
     writes++;
     submittedRequests.add(draft.requestId);
-    serverCommit = commitGate.future.then((_) {
-      saved = draft;
-    });
+    pendingCommit = draft;
     throw TimeoutException('synthetic response lost before commit');
   }
 
@@ -29,10 +26,11 @@ class _DelayedCommitStore extends SyntheticSnapshotStore {
     return super.byRequest(draft);
   }
 
-  Future<void> releaseCommit() async {
-    if (!commitGate.isCompleted) commitGate.complete();
-    final commit = serverCommit;
-    if (commit != null) await commit;
+  void releaseCommit() {
+    final draft = pendingCommit;
+    if (draft == null) throw StateError('no synthetic commit pending');
+    saved = draft;
+    pendingCommit = null;
   }
 }
 
@@ -41,8 +39,8 @@ void main() {
     'an absent reconciliation keeps the request locked until a delayed commit',
     (tester) async {
       final store = _DelayedCommitStore();
-      addTearDown(store.releaseCommit);
 
+      debugPrint('payroll-late-phase: form');
       await showForm(tester, store);
       await tester.tap(find.byType(CheckboxListTile));
       await tester.pumpAndSettle();
@@ -54,6 +52,7 @@ void main() {
       expect(store.saved, isNull);
       expect(find.textContaining('保存結果が未確認'), findsOneWidget);
 
+      debugPrint('payroll-late-phase: reconcile');
       await tester.ensureVisible(find.text('保存結果を照合'));
       await tester.tap(find.text('保存結果を照合'));
       await tester.pumpAndSettle();
@@ -75,7 +74,8 @@ void main() {
       );
       expect(store.submittedRequests, [originalRequest]);
 
-      await store.releaseCommit();
+      debugPrint('payroll-late-phase: commit');
+      store.releaseCommit();
       await tester.ensureVisible(find.text('保存結果を照合'));
       await tester.tap(find.text('保存結果を照合'));
       await tester.pumpAndSettle();
@@ -86,5 +86,6 @@ void main() {
       expect(find.text('本人確認の直後残高：120000円'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
+    timeout: const Timeout(Duration(minutes: 2)),
   );
 }
