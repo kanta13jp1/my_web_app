@@ -60,7 +60,10 @@ void main() {
       isNotNull,
     );
     expect(
-      tester.widget<TextFormField>(find.byType(TextFormField).at(1)).controller!.text,
+      tester
+          .widget<TextFormField>(find.byType(TextFormField).at(1))
+          .controller!
+          .text,
       '120000',
     );
     expect(store.writes, 1);
@@ -94,7 +97,10 @@ void main() {
       isNotNull,
     );
     expect(
-      tester.widget<TextFormField>(find.byType(TextFormField).at(1)).controller!.text,
+      tester
+          .widget<TextFormField>(find.byType(TextFormField).at(1))
+          .controller!
+          .text,
       '120000',
     );
     expect(store.writes, 1);
