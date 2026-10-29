@@ -1,4 +1,4 @@
-name: Approved PR5922 Web Release
+name: Approved PR5925 Web Release
 
 on:
   pull_request:
@@ -46,7 +46,7 @@ on:
   workflow_dispatch:
     inputs:
       approved_release:
-        description: Explicit owner approved PR5922-only release
+        description: Explicit owner approved PR5925-only release
         required: true
         default: false
         type: boolean
@@ -135,22 +135,22 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='491297dbe6e2968cf41d5fff2c5231afa0eec385', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='237d9290183c3bb3df73388ec9cf4563bb0186ef', 'Production changed; rebuild selection'
           PY
 
-      - name: Verify approved PR5922-only selection
+      - name: Verify approved PR5925-only selection
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          test "$(gh pr view 5922 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
-          test "$(gh pr view 5922 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 1de908467a8236b2dafbea9f7f84dc78ab45af7e
-          git fetch --no-tags --depth=1 origin 491297dbe6e2968cf41d5fff2c5231afa0eec385
+          test "$(gh pr view 5925 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
+          test "$(gh pr view 5925 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = fa105154b7a09c291fd739d3ae1245cebb90069d
+          git fetch --no-tags --depth=1 origin 237d9290183c3bb3df73388ec9cf4563bb0186ef
           python3 - <<'PY'
           import subprocess
-          expected={'lib/services/asset_liability_monthly_report_service.dart', '.github/workflows/cloud-development.yml', 'test/services/asset_liability_monthly_report_service_test.dart'}
-          actual=set(subprocess.check_output(['git','diff','--name-only','491297dbe6e2968cf41d5fff2c5231afa0eec385','HEAD']).decode().splitlines())
+          expected={'lib/models/asset_calendar_reflection.dart', '.github/workflows/cloud-development.yml', 'test/models/asset_calendar_reflection_test.dart', 'test/e2e/asset_calendar_projection_test.dart'}
+          actual=set(subprocess.check_output(['git','diff','--name-only','237d9290183c3bb3df73388ec9cf4563bb0186ef','HEAD']).decode().splitlines())
           assert actual==expected,(actual,expected)
-          expected_blobs={'lib/services/asset_liability_monthly_report_service.dart': '0b6408d1cba48be6e13084bb8cb48f43dce571d9', 'test/services/asset_liability_monthly_report_service_test.dart': '4f84403fb59895d871acebb306a3b05ab423476d'}
+          expected_blobs={'lib/models/asset_calendar_reflection.dart': '431d6730e832695e536690a8e1d4499c1da86f32', 'test/models/asset_calendar_reflection_test.dart': 'f0dafa73fb05e8ea79baa30a0f42212b5e1144ed', 'test/e2e/asset_calendar_projection_test.dart': '9ef6ce7f2f83697d4583d6b40aaa03901b3d3c19'}
           for path, expected_blob in expected_blobs.items():
               blob=subprocess.check_output(['git','rev-parse','HEAD:'+path]).decode().strip()
               assert blob==expected_blob,(path,blob)
@@ -221,6 +221,10 @@ jobs:
       - name: Analyze in cloud
         if: env.CLOUD_PROFILE == 'analyze' || env.CLOUD_PROFILE == 'full'
         run: flutter analyze
+
+      - name: Verify PR5925 calendar scenarios
+        if: env.CLOUD_PROFILE == 'full'
+        run: flutter test --concurrency=2 test/models/asset_calendar_reflection_test.dart test/e2e/asset_calendar_projection_test.dart
 
       - name: Test in cloud
         if: env.CLOUD_PROFILE == 'test' || env.CLOUD_PROFILE == 'full'
@@ -568,7 +572,7 @@ jobs:
     name: Run CI Checks
     # Pull requests already passed this required workflow. Re-run it only for
     # an operator-triggered deployment that has no preceding protected PR.
-    if: github.event_name == 'workflow_dispatch' && inputs.approved_release == true && inputs.deploy_scope == 'web_only' && vars.PRODUCTION_DEPLOY_HOLD == 'false'
+    if: github.event_name == 'workflow_dispatch' && inputs.approved_release == true && inputs.deploy_scope == 'web_only' && inputs.profile == 'full' && inputs.expected_head_sha == github.sha && vars.PRODUCTION_DEPLOY_HOLD == 'false'
     needs: validate
     uses: ./.github/workflows/ci.yml
     with:
@@ -581,7 +585,7 @@ jobs:
     name: Deploy to Production Environment
     runs-on: ubuntu-latest
     needs: [validate, ci, platform-release-checklist-e2e, ai-search-pending-e2e, slide-number-check-e2e, asset-balance-history-e2e, savings-life-plan-e2e]
-    if: always() && inputs.approved_release == true && inputs.deploy_scope == 'web_only' && vars.PRODUCTION_DEPLOY_HOLD == 'false' && needs.validate.result == 'success' && needs.ci.result == 'success' && needs['platform-release-checklist-e2e'].result == 'success' && needs['ai-search-pending-e2e'].result == 'success' && needs['slide-number-check-e2e'].result == 'success' && needs['asset-balance-history-e2e'].result == 'success' && needs['savings-life-plan-e2e'].result == 'success'
+    if: always() && inputs.approved_release == true && inputs.deploy_scope == 'web_only' && inputs.profile == 'full' && inputs.expected_head_sha == github.sha && vars.PRODUCTION_DEPLOY_HOLD == 'false' && needs.validate.result == 'success' && needs.ci.result == 'success' && needs['platform-release-checklist-e2e'].result == 'success' && needs['ai-search-pending-e2e'].result == 'success' && needs['slide-number-check-e2e'].result == 'success' && needs['asset-balance-history-e2e'].result == 'success' && needs['savings-life-plan-e2e'].result == 'success'
     timeout-minutes: 45
     environment:
       name: production
@@ -625,7 +629,7 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='491297dbe6e2968cf41d5fff2c5231afa0eec385', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='237d9290183c3bb3df73388ec9cf4563bb0186ef', 'Production changed; rebuild selection'
           PY
 
       - name: Collect pushed files
@@ -645,7 +649,7 @@ jobs:
           mkdir -p .deploy-logs
           python3 - <<'PY'
           from pathlib import Path
-          Path('.deploy-logs/changed-files.txt').write_text('lib/services/asset_liability_monthly_report_service.dart\ntest/services/asset_liability_monthly_report_service_test.dart\n')
+          Path('.deploy-logs/changed-files.txt').write_text('lib/models/asset_calendar_reflection.dart\ntest/models/asset_calendar_reflection_test.dart\ntest/e2e/asset_calendar_projection_test.dart\n')
           PY
 
       - name: Reject mixed public-blog deployments
@@ -1340,7 +1344,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         env:
           FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-          EXPECTED_PUBLIC_BASE: 491297dbe6e2968cf41d5fff2c5231afa0eec385
+          EXPECTED_PUBLIC_BASE: 237d9290183c3bb3df73388ec9cf4563bb0186ef
         run: |
           python3 -m venv /tmp/echo-release-tools
           /tmp/echo-release-tools/bin/pip install google-auth==2.43.0 requests==2.32.5
@@ -1372,7 +1376,7 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          EXPECTED_PUBLIC_BASE=491297dbe6e2968cf41d5fff2c5231afa0eec385 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
+          EXPECTED_PUBLIC_BASE=237d9290183c3bb3df73388ec9cf4563bb0186ef /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
 
           if npx -y firebase-tools@15.34.0 deploy \
             --only hosting \
