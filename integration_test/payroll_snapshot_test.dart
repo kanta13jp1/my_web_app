@@ -189,93 +189,101 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
-  testWidgets('late commit remains locked and reconciles the same request', (
-    tester,
-  ) async {
-    debugPrint('payroll-phase: late start');
-    final store = _DelayedSnapshotStore();
-    await _submitUncertain(tester, store, mobile ? 2 : 1);
-    final request = store.submittedRequests.single;
-    _expectInputPreserved(tester);
+  testWidgets(
+    'late commit remains locked and reconciles the same request',
+    (
+      tester,
+    ) async {
+      debugPrint('payroll-phase: late start');
+      final store = _DelayedSnapshotStore();
+      await _submitUncertain(tester, store, mobile ? 2 : 1);
+      final request = store.submittedRequests.single;
+      _expectInputPreserved(tester);
 
-    debugPrint('payroll-phase: reconcile');
-    await _tapVisible(tester, '保存結果を照合');
-    expect(store.saved, isNull);
-    expect(store.checkedRequests, [request]);
-    expect(find.textContaining('保存結果はまだ確認できません'), findsOneWidget);
-    expect(
-      tester
-          .widget<TextButton>(find.widgetWithText(TextButton, '再読込'))
-          .onPressed,
-      isNull,
-    );
-    expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, '保存前の確認へ'))
-          .onPressed,
-      isNull,
-    );
-    _expectInputPreserved(tester);
-    expect(store.writes, 1);
-    expect(tester.takeException(), isNull);
+      debugPrint('payroll-phase: reconcile');
+      await _tapVisible(tester, '保存結果を照合');
+      expect(store.saved, isNull);
+      expect(store.checkedRequests, [request]);
+      expect(find.textContaining('保存結果はまだ確認できません'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, '再読込'))
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, '保存前の確認へ'))
+            .onPressed,
+        isNull,
+      );
+      _expectInputPreserved(tester);
+      expect(store.writes, 1);
+      expect(tester.takeException(), isNull);
 
-    debugPrint('payroll-phase: commit');
-    store.releaseCommit();
-    debugPrint('payroll-phase: late reconcile after commit');
-    await _tapVisible(tester, '保存結果を照合');
-    expect(store.checkedRequests, [request, request]);
-    expect(store.submittedRequests, [request]);
-    expect(store.writes, 1);
-    expect(find.text('本人確認の直後残高：120000円'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-    debugPrint('payroll-phase: late done');
-  }, timeout: const Timeout(Duration(minutes: 2)));
+      debugPrint('payroll-phase: commit');
+      store.releaseCommit();
+      debugPrint('payroll-phase: late reconcile after commit');
+      await _tapVisible(tester, '保存結果を照合');
+      expect(store.checkedRequests, [request, request]);
+      expect(store.submittedRequests, [request]);
+      expect(store.writes, 1);
+      expect(find.text('本人確認の直後残高：120000円'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      debugPrint('payroll-phase: late done');
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
 
-  testWidgets('a changed selection requires explicit acknowledgement', (
-    tester,
-  ) async {
-    debugPrint('payroll-phase: selection start');
-    final store = _DelayedSnapshotStore();
-    await _submitUncertain(tester, store, mobile ? 2 : 1);
-    final request = store.submittedRequests.single;
-    debugPrint('payroll-phase: selection commit');
-    store.releaseCommit();
-    store.currentSelection = PayrollSnapshotRecord(
-      id: 'synthetic-correction',
-      ownerId: store.ownerId,
-      accountId: 'synthetic-account',
-      month: DateTime(2020),
-      balanceYen: 130000,
-      depositDate: DateTime(2020, 1, 25),
-      note: 'synthetic correction',
-    );
+  testWidgets(
+    'a changed selection requires explicit acknowledgement',
+    (
+      tester,
+    ) async {
+      debugPrint('payroll-phase: selection start');
+      final store = _DelayedSnapshotStore();
+      await _submitUncertain(tester, store, mobile ? 2 : 1);
+      final request = store.submittedRequests.single;
+      debugPrint('payroll-phase: selection commit');
+      store.releaseCommit();
+      store.currentSelection = PayrollSnapshotRecord(
+        id: 'synthetic-correction',
+        ownerId: store.ownerId,
+        accountId: 'synthetic-account',
+        month: DateTime(2020),
+        balanceYen: 130000,
+        depositDate: DateTime(2020, 1, 25),
+        note: 'synthetic correction',
+      );
 
-    debugPrint('payroll-phase: selection reconcile');
-    await _tapVisible(tester, '保存結果を照合');
-    expect(store.checkedRequests, [request]);
-    expect(find.textContaining('照合時点の選択は別の記録'), findsOneWidget);
-    expect(find.text('本人確認の直後残高：130000円'), findsOneWidget);
-    expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, '保存前の確認へ'))
-          .onPressed,
-      isNull,
-    );
-    _expectInputPreserved(tester);
-    expect(store.writes, 1);
-    expect(tester.takeException(), isNull);
-    debugPrint('payroll-phase: acknowledge');
-    await _tapVisible(tester, '現在の選択を確認して保留解除');
-    expect(find.text('保存結果を照合'), findsNothing);
-    expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, '保存前の確認へ'))
-          .onPressed,
-      isNotNull,
-    );
-    expect(store.submittedRequests, [request]);
-    expect(store.writes, 1);
-    expect(tester.takeException(), isNull);
-    debugPrint('payroll-phase: selection done');
-  }, timeout: const Timeout(Duration(minutes: 2)));
+      debugPrint('payroll-phase: selection reconcile');
+      await _tapVisible(tester, '保存結果を照合');
+      expect(store.checkedRequests, [request]);
+      expect(find.textContaining('照合時点の選択は別の記録'), findsOneWidget);
+      expect(find.text('本人確認の直後残高：130000円'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, '保存前の確認へ'))
+            .onPressed,
+        isNull,
+      );
+      _expectInputPreserved(tester);
+      expect(store.writes, 1);
+      expect(tester.takeException(), isNull);
+      debugPrint('payroll-phase: acknowledge');
+      await _tapVisible(tester, '現在の選択を確認して保留解除');
+      expect(find.text('保存結果を照合'), findsNothing);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, '保存前の確認へ'))
+            .onPressed,
+        isNotNull,
+      );
+      expect(store.submittedRequests, [request]);
+      expect(store.writes, 1);
+      expect(tester.takeException(), isNull);
+      debugPrint('payroll-phase: selection done');
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
 }
