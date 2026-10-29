@@ -33,7 +33,7 @@ class ReleaseTest(unittest.TestCase):
         def identify(run_id, nonce):
             self.assertEqual((run_id, nonce), (123, operation))
             return {"html_url": "https://example.invalid/run"}
-        with patch.object(release, "slot", self.slot), patch.object(release, "check_remote"), \
+        with patch.object(release, "slot", self.slot), patch.object(release, "check_remote"), patch.object(release, "check_send_fence"), \
              patch.object(release, "command", cmd), patch.object(release, "identify_run", identify), \
              patch.object(release.secrets, "token_hex", return_value=operation), redirect_stdout(io.StringIO()) as output:
             self.assertEqual(release.do_execute(self.journal), 0)
@@ -49,7 +49,7 @@ class ReleaseTest(unittest.TestCase):
         def timeout(args, data=None):
             self.calls.append(("send", data))
             raise release.Blocked("unknown")
-        with patch.object(release, "slot", self.slot), patch.object(release, "check_remote"), \
+        with patch.object(release, "slot", self.slot), patch.object(release, "check_remote"), patch.object(release, "check_send_fence"), \
              patch.object(release, "command", timeout):
             with self.assertRaises(release.Blocked):
                 release.do_execute(self.journal)
@@ -142,12 +142,62 @@ class ReleaseTest(unittest.TestCase):
             if action == "renew":
                 return {"result": "waiting"}
             return self.slot(action, token)
-        with patch.object(release, "slot", invalid_renew), patch.object(release, "check_remote"), \
+        with patch.object(release, "slot", invalid_renew), patch.object(release, "check_remote"), patch.object(release, "check_send_fence"), \
              patch.object(release, "command") as send:
             with self.assertRaisesRegex(release.Blocked, "renewal"):
                 release.do_execute(self.journal)
         send.assert_not_called()
         self.assertFalse(self.journal.exists())
+
+
+    def test_last_moment_ref_change_never_dispatches(self):
+        with patch.object(release, "slot", self.slot), patch.object(release, "check_remote"), \
+             patch.object(release, "check_send_fence", side_effect=release.Blocked("moved")), \
+             patch.object(release, "command") as send:
+            with self.assertRaisesRegex(release.Blocked, "moved"):
+                release.do_execute(self.journal)
+        send.assert_not_called()
+        self.assertFalse(self.journal.exists())
+        self.assertEqual(self.calls[-1], ("slot", "release", "fake"))
+
+
+    def test_send_fence_rechecks_branch_rules_hold_live_and_runs(self):
+        base = release.API
+        branch = base + "/branches/" + release.BRANCH
+        rules = base + "/rules/branches/" + release.BRANCH
+        runs = base + "/actions/runs?branch=" + release.BRANCH + "&per_page=100"
+        replies = {
+            branch: {"protected": False, "commit": {"sha": release.HEAD}},
+            rules: [],
+            runs: {"total_count": 0, "workflow_runs": []},
+        }
+        with patch.object(release, "gh_json", side_effect=lambda path: replies[path]), \
+             patch.object(release, "check_group") as group, \
+             patch.object(release, "check_public_base") as public, \
+             patch.object(release, "command", return_value=(0, "false", "")):
+            release.check_send_fence()
+            group.assert_called_once()
+            public.assert_called_once()
+            replies[branch]["commit"]["sha"] = "0" * 40
+            with self.assertRaises(release.Blocked):
+                release.check_send_fence()
+            replies[branch]["commit"]["sha"] = release.HEAD
+            replies[rules] = [{"name": "new-rule"}]
+            with self.assertRaises(release.Blocked):
+                release.check_send_fence()
+            replies[rules] = []
+            public.side_effect = release.Blocked("live base changed")
+            with self.assertRaises(release.Blocked):
+                release.check_send_fence()
+            public.side_effect = None
+            replies[runs] = {"total_count": 1, "workflow_runs": [{"status": "queued"}]}
+            with self.assertRaises(release.Blocked):
+                release.check_send_fence()
+        with patch.object(release, "gh_json", side_effect=lambda path: replies[path]), \
+             patch.object(release, "command", return_value=(0, "true", "")):
+            replies[runs] = {"total_count": 0, "workflow_runs": []}
+            with self.assertRaises(release.Blocked):
+                release.check_send_fence()
 
     def test_legacy_cli_routes_only_explicit_release_switch(self):
         with patch.object(release, "main", return_value=7) as m:

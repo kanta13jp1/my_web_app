@@ -70,6 +70,16 @@ def check_group():
         raise Blocked("deploy-prod group response invalid") from exc
 
 
+def check_public_base():
+    try:
+        req = urllib.request.Request(URL, headers={"Cache-Control": "no-cache"})
+        with urllib.request.urlopen(req, timeout=15) as response:
+            if response.status != 200 or json.load(response).get("commit") != BASE:
+                raise Blocked("live production base changed")
+    except (OSError, ValueError, TypeError) as exc:
+        raise Blocked("live production base unknown") from exc
+
+
 def check_remote():
     wf = gh_json(API + "/actions/workflows/" + WORKFLOW)
     if wf.get("state") != "active" or wf.get("path") != ".github/workflows/" + WORKFLOW:
@@ -92,13 +102,27 @@ def check_remote():
     code, out, _ = command(["gh", "variable", "get", "PRODUCTION_DEPLOY_HOLD", "--repo", REPO])
     if code or out.strip() != "false":
         raise Blocked("production hold active or unknown")
-    try:
-        req = urllib.request.Request(URL, headers={"Cache-Control": "no-cache"})
-        with urllib.request.urlopen(req, timeout=15) as response:
-            if response.status != 200 or json.load(response).get("commit") != BASE:
-                raise Blocked("live production base changed")
-    except (OSError, ValueError, TypeError) as exc:
-        raise Blocked("live production base unknown") from exc
+    check_public_base()
+    runs = gh_json(API + "/actions/runs?branch=" + BRANCH + "&per_page=100")
+    items = runs.get("workflow_runs")
+    if not isinstance(items, list) or runs.get("total_count") != len(items):
+        raise Blocked("same-branch run inventory incomplete")
+    if any(r.get("status") != "completed" for r in items):
+        raise Blocked("same-branch run active, queued, or unknown")
+    check_group()
+
+
+def check_send_fence():
+    # Last-moment reads reduce, but cannot eliminate, non-cooperating races.
+    branch = gh_json(API + "/branches/" + BRANCH)
+    if branch.get("protected") is not False or branch.get("commit", {}).get("sha") != HEAD:
+        raise Blocked("branch moved or protection changed before dispatch")
+    if gh_json(API + "/rules/branches/" + BRANCH) != []:
+        raise Blocked("branch rules changed before dispatch")
+    code, out, _ = command(["gh", "variable", "get", "PRODUCTION_DEPLOY_HOLD", "--repo", REPO])
+    if code or out.strip() != "false":
+        raise Blocked("production hold changed before dispatch")
+    check_public_base()
     runs = gh_json(API + "/actions/runs?branch=" + BRANCH + "&per_page=100")
     items = runs.get("workflow_runs")
     if not isinstance(items, list) or runs.get("total_count") != len(items):
@@ -171,6 +195,7 @@ def do_execute(journal):
         renewed_owner = renewed.get("state", {}).get("owner") or {}
         if renewed.get("result") != "renewed" or renewed_owner.get("task") != TASK or renewed_owner.get("token") != token:
             raise Blocked("FIFO renewal/ownership unconfirmed")
+        check_send_fence()
         operation_id = secrets.token_hex(16)
         journal_create(journal, operation_id)
         data = {"ref": BRANCH, "return_run_details": True, "inputs": {
