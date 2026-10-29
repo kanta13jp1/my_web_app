@@ -117,8 +117,10 @@ class AssetCashflowForecastCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                spacing: 8,
+                runSpacing: 4,
                 children: [
                   const Text('現在', style: TextStyle(fontSize: 11)),
                   Text(
