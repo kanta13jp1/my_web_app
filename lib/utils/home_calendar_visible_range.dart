@@ -10,7 +10,8 @@ class HomeCalendarVisibleRange {
     required this.endDay,
   });
 
-  /// Preserves Home's local-date and Duration-based week padding.
+  /// Uses the supplied year/month without converting the input time zone.
+  /// Constructs local dates and preserves Home's Duration-based week padding.
   factory HomeCalendarVisibleRange.forMonth(DateTime month) {
     final monthAnchor = DateTime(month.year, month.month, 1);
     final firstDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month, 1);
