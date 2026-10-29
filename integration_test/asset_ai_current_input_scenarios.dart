@@ -45,6 +45,19 @@ class _MonthlyRepository extends SharedPreferencesAssetLiabilityRepository {
   }
 }
 
+class _CalendarCountingRepository extends _MonthlyRepository {
+  int saveCalls = 0;
+
+  @override
+  Future<void> saveMonth({
+    required DateTime month,
+    required AssetLiabilityMonthlyState state,
+  }) async {
+    saveCalls++;
+    await super.saveMonth(month: month, state: state);
+  }
+}
+
 class _DelayedMonthlyRepository extends _MonthlyRepository {
   final restored = Completer<AssetLiabilityMonthlyState>();
   int loads = 0;
@@ -851,6 +864,7 @@ void main() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();
       });
+      final repository = _CalendarCountingRepository();
       try {
         expect(Supabase.instance.client.auth.currentUser, isNull);
         await tester.pumpWidget(
@@ -865,7 +879,7 @@ void main() {
               ),
             ),
             home: AssetManagementPage(
-              assetLiabilityRepository: _MonthlyRepository(),
+              assetLiabilityRepository: repository,
               aiSummaryService: _ControlledAi(),
               aiAnalysisHistoryService: _EmptyHistory(),
               debugNow: DateTime(2026, 9, 6, 12),
@@ -898,9 +912,11 @@ void main() {
         expect(dayRect.right, lessThanOrEqualTo(viewportRect.right + 1));
         await tester.ensureVisible(day);
         await tester.pump();
+        final savesBeforeSelection = repository.saveCalls;
         await tester.tap(day);
         await tester.pump();
         expect(find.text('9月5日 のイベント'), findsOneWidget);
+        expect(repository.saveCalls, savesBeforeSelection);
         expect(Supabase.instance.client.auth.currentUser, isNull);
         expect(tester.takeException(), isNull);
       } finally {
