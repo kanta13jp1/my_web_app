@@ -37,7 +37,6 @@ class _AssetPayrollSnapshotSectionState
   bool _loading = true;
   bool _dataReady = false;
   bool _busy = false;
-  bool _reconciledAbsent = false;
   String? _error;
   int _epoch = 0;
 
@@ -228,7 +227,6 @@ class _AssetPayrollSnapshotSectionState
       if (!mounted) return;
       setState(() {
         _pending = null;
-        _reconciledAbsent = false;
       });
       _balance.clear();
       _date.clear();
@@ -239,7 +237,7 @@ class _AssetPayrollSnapshotSectionState
       if (mounted) {
         setState(() {
           _error =
-              '保存結果が未確認です。再送せず「保存結果を照合」を押してください。画面を開き直した場合は同じ口座・月を選び、取得結果を確認してください。';
+              '保存結果が未確認です。画面を閉じず、再送せず「保存結果を照合」を押してください。';
         });
       }
     } finally {
@@ -257,7 +255,6 @@ class _AssetPayrollSnapshotSectionState
       if (record != null) {
         setState(() {
           _pending = null;
-          _reconciledAbsent = false;
         });
         _balance.clear();
         _date.clear();
@@ -266,8 +263,7 @@ class _AssetPayrollSnapshotSectionState
         await _load();
       } else {
         setState(() {
-          _reconciledAbsent = true;
-          _error = '同内容の保存記録は見つかりません。再読込して編集へ戻れます。';
+          _error = '保存結果はまだ確認できません。画面を閉じず、時間を置いて再照合してください。';
         });
       }
     } catch (_) {
@@ -416,10 +412,9 @@ class _AssetPayrollSnapshotSectionState
                 TextButton(
                   onPressed: !_busy &&
                           _pendingGoal == null &&
-                          (_pending == null || _reconciledAbsent)
+                          _pending == null
                       ? () {
                           _pending = null;
-                          _reconciledAbsent = false;
                           _load();
                         }
                       : null,
