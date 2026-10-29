@@ -502,6 +502,7 @@ class AssetManagementPage extends StatefulWidget {
 }
 
 class _AssetManagementPageState extends State<AssetManagementPage> {
+  final ScrollController _assetCalendarScrollController = ScrollController();
   static const String _bankSheetId =
       '1WZlHr6YWG8ZbT9r-wXtYPEdPT5E4b47PSpNSNl8A1MM';
   static const String _smbcSheetGid = '0';
@@ -1461,6 +1462,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   @override
   void dispose() {
+    _assetCalendarScrollController.dispose();
     final closingChanged = _closingFetchChanged;
     if (closingChanged != null && !closingChanged.isCompleted) {
       closingChanged.complete();
@@ -18216,31 +18218,128 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ],
             const SizedBox(height: 10),
-            Row(
-              children: [
-                for (final weekday in weekdayLabels)
-                  Expanded(
-                    child: Text(
-                      weekday,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        height: 1.4,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final scaler = MediaQuery.textScalerOf(context);
+                final expandedText = scaler.scale(9) > 9 ||
+                    scaler.scale(10) > 10 ||
+                    scaler.scale(11) > 11;
+                final weekdayRow = Row(
+                  children: [
+                    for (final weekday in weekdayLabels)
+                      Expanded(
+                        child: Text(
+                          weekday,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+                if (!expandedText) {
+                  return Column(
+                    children: [
+                      weekdayRow,
+                      const SizedBox(height: 4),
+                      for (final week in calendar.weeks)
+                        Row(
+                          children: [
+                            for (final day in week)
+                              Expanded(
+                                child: _buildAssetCalendarCell(day, today),
+                              ),
+                          ],
+                        ),
+                    ],
+                  );
+                }
+                double textWidth(String value, TextStyle style) {
+                  final painter = TextPainter(
+                    text: TextSpan(
+                      text: value,
+                      style: DefaultTextStyle.of(context).style.merge(style),
+                    ),
+                    textDirection: Directionality.of(context),
+                    textScaler: scaler,
+                    locale: Localizations.maybeLocaleOf(context),
+                  )..layout();
+                  final width = painter.width;
+                  painter.dispose();
+                  return width;
+                }
+
+                final reflectionWidths = AssetReflectionKind.values.map(
+                  (kind) => textWidth(
+                    kind.label,
+                    const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+                  ),
+                );
+                final weekdayWidths = weekdayLabels.map(
+                  (label) => textWidth(
+                    label,
+                    const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                  ),
+                );
+                final minCellWidth = [
+                  60.0,
+                  ...reflectionWidths.map((width) => width + 12),
+                  ...weekdayWidths.map((width) => width + 12),
+                  textWidth(
+                    '12/31',
+                    const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                  ) + 12,
+                  textWidth(
+                    '不明',
+                    const TextStyle(fontSize: 9, color: Color(0xFF92400E)),
+                  ) + 24,
+                ].reduce(max);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('曜日と日付は左右にスクロールできます。'),
+                    const SizedBox(height: 4),
+                    Scrollbar(
+                      controller: _assetCalendarScrollController,
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        controller: _assetCalendarScrollController,
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
+                          width: max(constraints.maxWidth, 7 * minCellWidth),
+                          child: Column(
+                            children: [
+                              weekdayRow,
+                              const SizedBox(height: 4),
+                              for (final week in calendar.weeks)
+                                IntrinsicHeight(
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      for (final day in week)
+                                        Expanded(
+                                          child: _buildAssetCalendarCell(
+                                            day,
+                                            today,
+                                            expandedText: true,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                  ],
+                );
+              },
             ),
-            const SizedBox(height: 4),
-            for (final week in calendar.weeks)
-              Row(
-                children: [
-                  for (final day in week)
-                    Expanded(child: _buildAssetCalendarCell(day, today)),
-                ],
-              ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 12,
@@ -18416,7 +18515,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildAssetCalendarCell(AssetCalendarDaySummary? day, DateTime today) {
+  Widget _buildAssetCalendarCell(
+    AssetCalendarDaySummary? day,
+    DateTime today, {
+    bool expandedText = false,
+  }) {
     if (day == null) {
       return const SizedBox(height: 84);
     }
@@ -18462,7 +18565,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         });
       },
       child: Container(
-        height: 84,
+        height: expandedText ? null : 84,
+        constraints: expandedText ? const BoxConstraints(minHeight: 84) : null,
         margin: const EdgeInsets.all(1),
         padding: const EdgeInsets.symmetric(vertical: 3),
         decoration: BoxDecoration(
@@ -18481,6 +18585,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               : null,
         ),
         child: Column(
+          mainAxisSize: expandedText ? MainAxisSize.min : MainAxisSize.max,
           children: [
             Text(
               // サイクルは月を跨ぐので、月替わりの初日は M/d で区切りを示す。
@@ -18505,14 +18610,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             if (day.hasUnreconciledExpense)
               AssetUnreconciledExpenseBadge(
+                preserveTextScale: expandedText,
                 key: Key(
                   'asset_calendar_unreconciled_${day.date.year}_${day.date.month}_${day.date.day}',
                 ),
               ),
             AssetAttentionDayLabel(day: attention),
             if (kinds.isNotEmpty)
-              Expanded(child: AssetReflectionDayBadge(kinds: kinds))
-            else
+              if (expandedText)
+                AssetReflectionDayBadge(kinds: kinds, preserveTextScale: true)
+              else
+                Expanded(child: AssetReflectionDayBadge(kinds: kinds))
+            else if (!expandedText)
               const Spacer(),
             if (markers.isNotEmpty)
               Row(
