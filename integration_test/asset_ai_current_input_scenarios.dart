@@ -718,6 +718,7 @@ void main() {
       addTearDown(semantics.dispose);
       final repository = _MonthlyRepository();
       final ai = _ControlledAi();
+      expect(Supabase.instance.client.auth.currentUser, isNull);
       await tester.pumpWidget(MaterialApp(
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(
