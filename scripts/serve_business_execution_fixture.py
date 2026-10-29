@@ -23,6 +23,14 @@ class FixtureHandler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_GET(self) -> None:  # noqa: N802 - HTTP handler API
+        # Test-only adversarial probe. The reserved .invalid destination never
+        # denotes production; browser guards must reject this before following.
+        if urlsplit(self.path).path == "/__business_execution_redirect_probe":
+            self.send_response(302)
+            self.send_header("Location", "https://business-execution-fixture.invalid/blocked")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
         if urlsplit(self.path).path == IDENTITY_PATH:
             body = json.dumps(self.server.identity).encode("utf-8")
             self.send_response(200)

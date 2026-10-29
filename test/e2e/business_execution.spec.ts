@@ -286,3 +286,31 @@ test('two real tabs retain a stale draft and require confirmation before replaci
       await second.close();
     }
   });
+
+test('a fixture redirect is blocked before any destination navigation',
+  async ({ page, context }, info) => {
+    const external: string[] = [];
+    context.on('request', request => {
+      if (new URL(request.url()).origin !== fixtureOrigin()) {
+        external.push(request.url());
+      }
+    });
+    await expect(page.goto(fixtureOrigin() + '/__business_execution_redirect_probe'))
+      .rejects.toThrow();
+    const blocked = blockedRequests.get(context);
+    expect(blocked).toEqual([
+      'Redirect or wrong fixture identity: /__business_execution_redirect_probe',
+    ]);
+    expect(external).toEqual([]);
+    // Confirm normal fixture navigation still works after the rejected request.
+    await open(page);
+    expect(external).toEqual([]);
+    expect(blocked).toHaveLength(1);
+    await info.attach('expected-redirect-denial', {
+      body: JSON.stringify({ blocked, external, restoredUrl: page.url() }, null, 2),
+      contentType: 'application/json',
+    });
+    // Only this deliberately exercised, asserted denial is expected. Retain the
+    // same array so the route handler/afterEach still report any later request.
+    blocked!.splice(0, 1);
+  });

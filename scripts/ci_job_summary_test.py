@@ -61,6 +61,17 @@ class CiJobSummaryTest(unittest.TestCase):
         self.assertIn("| Production web build | true | — skipped |", summary)
         self.assertIn("workflow_call", summary)
 
+    def test_business_e2e_success_does_not_imply_lock_test_success(self):
+        summary = render_summary({
+            "changes": {"outputs": {"web": "false", "business_execution": "true"}},
+            "flutter_web_test": {"outcome": "skipped"},
+            "business_execution_locks": {"outcome": "failure"},
+            "business_execution_e2e": {"outcome": "success"},
+        })
+        self.assertIn("| Web import smoke tests | false | — skipped |", summary)
+        self.assertIn("| Business execution browser locks | true | ❌ failure |", summary)
+        self.assertIn("| Business execution browser E2E | true | ✅ success |", summary)
+
     def test_main_appends_utf8_summary(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "summary.md"

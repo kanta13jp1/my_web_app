@@ -44,7 +44,7 @@ Lead: Codex。モデルルーティングで選択された実装workerが上記
 
 ロック内の照合と保存、保存失敗後の再読み込みでフォームを保持、開始日を跨ぐ再描画で日付を選択、24実行計画上限から履歴を残してアーカイブする経路を追加。テストも追加した。Web Lockのブラウザーテストは `flutter test --platform chrome test/web/business_execution_lock_test.dart` をクラウドで明示実行する必要がある。標準VMテストでブラウザー排他を検証したとは扱わない。
 
-検査配線：標準CIのVM shardは `test/widgets/business_execution_panel_test.dart` を含む通常テストを列挙する。標準CIのChrome smokeに `test/web/business_execution_lock_test.dart` を追加し、ロック検査を省略しない。整形はcloud-developmentのformat profile artifactから対象ファイルをGitHub APIで反映する。Minimal E2E Gate向けに後述のPlaywright業務フローを追加した。追加ファイルの存在とE2E成功は別であり、実行結果は未取得。Web Lock単体Chrome検査を業務フローE2Eとは呼ばない。
+検査配線：標準CIのVM shardは `test/widgets/business_execution_panel_test.dart` を含む通常テストを列挙する。標準CIの独立したbusiness_execution条件のChrome stepで `test/web/business_execution_lock_test.dart` を実行する。lock test単独変更でweb=falseでも省略しない。web import smokeと専用E2Eの成否をロック単体の証拠に代用しない。整形はcloud-developmentのformat profile artifactから対象ファイルをGitHub APIで反映する。Minimal E2E Gate向けに後述のPlaywright業務フローを追加した。追加ファイルの存在とE2E成功は別であり、実行結果は未取得。Web Lock単体Chrome検査を業務フローE2Eとは呼ばない。
 
 同日実績・月次文章の別タブ更新は編集開始時の元値と比較する。再読込で最新の保存値と保持下書きが食い違った場合は保存を止め、最新値を表示し、利用者の明示的な上書き確認を受けた後でのみ再保存できる。別タブでアーカイブされても下書きを退避表示し、再開後に復旧する。Web Lock待ち中の本人切替は実書込前のowner再確認で拒否する。
 
@@ -54,11 +54,13 @@ Lead: Codex。モデルルーティングで選択された実装workerが上記
 
 通常の `lib/main.dart` からfixtureを読み込まない。明示ビルドフラグとloopbackホストの両方がなければfixture自体も起動を拒否する。Playwrightもloopback以外へのナビゲーションを拒否する。実認証・本番ルーティング・他端末同期の検証ではない。
 
-`test/e2e/business_execution.spec.ts` の3シナリオ：
+`test/e2e/business_execution.spec.ts` の業務3シナリオと通信境界1ケース：
 
 1. 課題とKPI/KDI計画を画面から作成し、日次実績と月次文章を保存。ページ遷移でDart runtimeを破棄し、翌月の固定時計で期間終了・保存済み実績・月次文章を復元確認。
 2. 実績の空欄を拒否。再読み込みで未入力のままと確認し、0を保存して再読み込み。0の記録、残る未入力日、成果の未入力を区別。
 3. 同一BrowserContextに実際の2タブを開く。先にタブAが日次/月次を保存し、古いタブBの保存を拒否。再照合後もBの下書きを保持し、最新値を表示、明示上書き確認まで保存不可。確認後に保存し、Aの再読み込みでBの記録を確認。
+
+4. 専用loopbackサーバーの試験用302経路から予約済み.invalid宛のredirectを返す。Playwrightが拒否し、移動先要求を出さず、拒否理由を記録したことを確認。その後に正規fixtureへ再移動できることを確認する。
 
 クラウド実行用の準備コマンド（この時点では未実行）：
 
@@ -91,9 +93,9 @@ npm run e2e:business-execution -- --forbid-only
 python3 scripts/serve_business_execution_fixture.py verify --ready-file "$ready_file" --pid "$server_pid" --source-sha "$source_sha"
 ~~~
 
-合計6ケースになる。専用configのHTML/JSON report、失敗時trace/videoと代表状態のスクリーンショットを証拠にする。起動したサーバーは実行担当が終了させる。新規workflow・job・依存は追加しない。既存CIのStatic checks and webジョブに、この専用fixtureのbuild/Playwright呼出しを追加した。専用business_execution分類がtrueのとき実行し、失敗はジョブを失敗させる。通常のbuild/webを上書きしない別出力先を使用する。CI担当が順番を確保した後に実行し、head SHA・結果・desktop/mobile画像を確認する必要がある。未実行のファイル追加をgate成功とは報告しない。
+desktop/mobileで合計8ケースになる。専用configのHTML/JSON report、失敗時trace/videoと代表状態のスクリーンショットを証拠にする。起動したサーバーは実行担当が終了させる。新規workflow・job・依存は追加しない。既存CIのStatic checks and webジョブに、この専用fixtureのbuild/Playwright呼出しを追加した。専用business_execution分類がtrueのとき実行し、失敗はジョブを失敗させる。通常のbuild/webを上書きしない別出力先を使用する。CI担当が順番を確保した後に実行し、head SHA・結果・desktop/mobile画像を確認する必要がある。未実行のファイル追加をgate成功とは報告しない。
 
-通常 `npm run e2e` はfixture specを自動収集しない。専用 `npm run e2e:business-execution` はE2E_BASE_URL未指定・非loopback・資格情報付きURL・fixture token未指定を設定読込時に拒否し、失敗をskipへ置換しない。専用configは通常configのtestIgnoreを明示的に解除し、この3ケースだけをdesktop/mobileで実行する。
+通常 `npm run e2e` はfixture specを自動収集しない。専用 `npm run e2e:business-execution` はE2E_BASE_URL未指定・非loopback・資格情報付きURL・fixture token未指定を設定読込時に拒否し、失敗をskipへ置換しない。専用configは通常configのtestIgnoreを明示的に解除し、この4ケースだけをdesktop/mobileで実行する。
 
 専用/通常Playwright config・npm manifest/lock・ci.yml・分類器と専用サーバースクリプトの単独変更もbusiness_execution検査側に分類し、必要なFlutter準備を有効にする。これによりテスト設定だけのPRでも専用E2Eを省略しない。web/deployableの分類は変えず、テスト設定変更を本番配信の理由にしない。classifier回帰テストを追加した。workflow配線を含め実行はまだ行っていない。
 
@@ -104,3 +106,7 @@ python3 scripts/serve_business_execution_fixture.py verify --ready-file "$ready_
 PlaywrightのBrowserContextに通信制限を設定し、両タブ・popup・frame・資産要求を同一fixture originに限定する。HTTPはredirectを追わず、3xxとidentity header不一致を拒否する。Service Workerは無効化し、不要なWebSocketも拒否。操作直前にも現在の最終URLを確認する。ブロックされた要求は記録し、テスト失敗にする。外部CDN例外は設けず、--no-web-resources-cdnでエンジンも同梱する。これにより初期URLだけloopbackでredirect後は本番という経路を許可しない。
 
 新しいserver helperのOS port割当・PID/nonce/SHA照合・stale ready拒否・redirect拒否の回帰を既存Python検査に追加した。専用分類は無関係なFlutterソース/テスト変更でfixture buildを増やさない。workflow_dispatchとdeployのworkflow_callは既存のforce-all契約を維持するため専用検査も実行し、その追加時間はクラウド実測待ち。元のジョブtimeoutは延長していない。必要チェックを省略して配信を早める変更はしていない。
+
+検査範囲の判断：fixture buildが利用する `.github/actions/setup-flutter-sdk/**` と `assets/**` の単独変更も専用ブラウザー検査を要求する。既存のtiger生成データ除外は維持する。無関係なFlutter画面/テストは専用E2Eを増やさない。非PRのpush/workflow_dispatch/workflow_callは変更一覧を収集せずforce-allを使う既存契約のため、この検査だけ常時省略する変更はしない。配信呼出にもfixture build・Chromium準備・8ケースの追加時間が生じる。30分のStatic checks枠で完走するかは実測待ちで、未検証のまま配信可能とは扱わない。差分ベースの配信ゲート最適化は、今回の小変更で欠落を作らず別途設計する。
+
+CI summaryにもロック単体と専用E2Eを別行で記録し、E2E成功時でもロック失敗/skipを成功表示しない。分類と実workflow条件を合わせた回帰、SDK/assetの分類回帰、summaryの独立した結果表示を追加した。すべて実行待ち。

@@ -90,6 +90,46 @@ class ClassifyCiChangesTest(unittest.TestCase):
                 self.assertTrue(result["flutter"])
                 self.assertFalse(result["deployable"])
 
+    def test_lock_test_only_change_runs_its_own_required_chrome_step(self) -> None:
+        result = classify(["test/web/business_execution_lock_test.dart"])
+        self.assertTrue(result["business_execution"])
+        self.assertTrue(result["flutter"])
+        self.assertFalse(result["web"])
+        self.assertFalse(result["deployable"])
+        workflow = (Path(__file__).resolve().parents[1] /
+                    ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        step = workflow.split(
+            "      - name: Run business execution browser lock tests\n", 1,
+        )[1].split("      - name:", 1)[0]
+        self.assertIn("id: business_execution_locks", step)
+        self.assertIn("if: steps.changes.outputs.business_execution == 'true'", step)
+        self.assertIn(
+            "run: flutter test --platform chrome "
+            "test/web/business_execution_lock_test.dart", step,
+        )
+        self.assertIn("continue-on-error: false", step)
+        self.assertNotIn("steps.changes.outputs.web", step)
+        smoke = workflow.split(
+            "      - name: Run web import smoke tests\n", 1,
+        )[1].split("      - name:", 1)[0]
+        self.assertIn("if: steps.changes.outputs.web == 'true'", smoke)
+        self.assertNotIn("business_execution_lock_test.dart", smoke)
+
+    def test_fixture_sdk_and_asset_dependencies_require_browser_gate(self) -> None:
+        for path in [
+            ".github/actions/setup-flutter-sdk/action.yml",
+            ".github/actions/setup-flutter-sdk/install.sh",
+            "assets/fonts/test.ttf",
+            "assets/images/test.png",
+        ]:
+            with self.subTest(path=path):
+                result = classify([path])
+                self.assertTrue(result["business_execution"])
+                self.assertTrue(result["flutter"])
+        self.assertFalse(classify([
+            "assets/data/tiger_remediation_status.json",
+        ])["business_execution"])
+
     def test_unrelated_flutter_changes_do_not_build_business_fixture(self) -> None:
         for path in [
             "lib/pages/reading_page.dart",

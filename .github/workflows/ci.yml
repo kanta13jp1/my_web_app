@@ -495,7 +495,13 @@ jobs:
       - name: Run web import smoke tests
         if: steps.changes.outputs.web == 'true'
         id: flutter_web_test
-        run: flutter test --platform chrome test/web_import_smoke_test.dart test/web/business_execution_lock_test.dart
+        run: flutter test --platform chrome test/web_import_smoke_test.dart
+        continue-on-error: false
+
+      - name: Run business execution browser lock tests
+        id: business_execution_locks
+        if: steps.changes.outputs.business_execution == 'true'
+        run: flutter test --platform chrome test/web/business_execution_lock_test.dart
         continue-on-error: false
 
       # workflow_call (deploy-prod) 経由の場合はビルドをスキップ — deploy-prod が再ビルドするため重複回避

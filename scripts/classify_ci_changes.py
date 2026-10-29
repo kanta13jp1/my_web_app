@@ -60,6 +60,8 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "scripts/classify_ci_changes_test.py",
         "scripts/serve_business_execution_fixture.py",
         "scripts/serve_business_execution_fixture_test.py",
+        ".github/actions/setup-flutter-sdk/**",
+        "assets/**",
     ),
     "edge": (
         "supabase/functions/**",
@@ -91,6 +93,7 @@ NOTION_AUDIT_TESTS = (
 IGNORED_PATTERNS: dict[str, tuple[str, ...]] = {
     "flutter": ("assets/data/tiger_*", *SKILL_CONTRACT_TESTS, *NOTION_AUDIT_TESTS),
     "web": ("assets/data/tiger_*",),
+    "business_execution": ("assets/data/tiger_*",),
 }
 
 
