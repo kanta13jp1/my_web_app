@@ -171,16 +171,32 @@ class AssetCalendarReflection {
         RegExp(r'外食|店内飲食|レストラン|ラーメンショップ|ラーメン店|定食屋'),
         description,
       );
-      final outside = hasAffirmedMatch(
-            RegExp(r'飲み屋|居酒屋|外飲み|飲みに行'),
-            description,
-          ) ||
-          (dining &&
-              hasAffirmedMatch(
-                RegExp(r'ビール|飲酒|ハイボール'),
-                description,
-                excludePurchaseOnly: true,
-              ));
+      final outside = description.split(RegExp(r'[。；;\n]')).any((context) {
+        final venue = hasAffirmedMatch(
+          RegExp(r'飲み屋|居酒屋|外飲み|飲みに行'),
+          context,
+        );
+        final drink = dining &&
+            hasAffirmedMatch(
+              RegExp(r'ビール|飲酒|ハイボール'),
+              context,
+              excludePurchaseOnly: true,
+            );
+        if (!venue && !drink) return false;
+        final noDrinking = RegExp(
+          r'飲酒\s*(?:は|を)?\s*(?:なし|無し|しな|していな|せず)|'
+          r'(?:酒|ビール|ハイボール)\s*(?:は|を)?\s*(?:飲まず|飲まな)',
+        ).hasMatch(context);
+        if (!noDrinking) return true;
+        return hasAffirmedMatch(
+          RegExp(
+            r'(?:ビール|ハイボール|酒)\s*(?:を|は)?\s*(?:飲んだ|飲みました)|'
+            r'飲酒\s*(?:を)?\s*した|'
+            r'(?:居酒屋|飲み屋|外飲み)\s*(?:で)?\s*(?:飲んだ|飲みました)',
+          ),
+          context,
+        );
+      });
       final purchase = hasAffirmedMatch(
         RegExp(r'酒購入|酒の購入|ビール購入|ビールを購入'),
         description,
