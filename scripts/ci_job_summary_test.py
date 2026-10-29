@@ -11,6 +11,12 @@ from unittest.mock import patch
 from ci_job_summary import CHECKS, main, render_summary
 
 
+def workflow_step_ids(workflow):
+    # Match the workflow's unquoted step IDs, including valid digits/hyphens.
+    # The old [a-z_]+ silently dropped business_execution_e2e.
+    return re.findall(r"^        id: ([A-Za-z_][A-Za-z0-9_-]*)[ \t]*$", workflow, re.M)
+
+
 class CiJobSummaryTest(unittest.TestCase):
     def test_dependency_failure_never_claims_downstream_success(self):
         steps = {"changes": {"outputs": {"flutter": "true"}},
@@ -99,10 +105,24 @@ class CiJobSummaryTest(unittest.TestCase):
         self.assertNotIn("needs.lint-and-test.result", download)
         self.assertIn("continue-on-error: true", download)
 
+    def test_step_id_discovery_includes_digits_and_hyphens(self):
+        workflow = "\n".join([
+            "        id: flutter_web_test",
+            "        id: business_execution_e2e",
+            "        id: Browser-E2E-2",
+            "        id: _internal_2",
+            "        id: 2invalid",
+            "        id: invalid.dot",
+        ])
+        self.assertEqual(workflow_step_ids(workflow), [
+            "flutter_web_test", "business_execution_e2e",
+            "Browser-E2E-2", "_internal_2",
+        ])
+
     def test_actual_workflow_wires_every_reported_step_and_regression_suite(self):
         workflow = (Path(__file__).resolve().parents[1] /
                     ".github/workflows/ci.yml").read_text(encoding="utf-8")
-        ids = re.findall(r"^        id: ([a-z_]+)$", workflow, re.M)
+        ids = workflow_step_ids(workflow)
         for _, _, step in CHECKS:
             self.assertEqual(ids.count(step), 2 if step == 'flutter_dependencies' else 1, step)
         summary = workflow.split("      - name: Job Summary\n", 1)[1].split(

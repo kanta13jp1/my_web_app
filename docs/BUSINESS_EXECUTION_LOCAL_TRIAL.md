@@ -110,3 +110,11 @@ PlaywrightのBrowserContextに通信制限を設定し、両タブ・popup・fra
 検査範囲の判断：fixture buildが利用する `.github/actions/setup-flutter-sdk/**` と `assets/**` の単独変更も専用ブラウザー検査を要求する。既存のtiger生成データ除外は維持する。無関係なFlutter画面/テストは専用E2Eを増やさない。非PRのpush/workflow_dispatch/workflow_callは変更一覧を収集せずforce-allを使う既存契約のため、この検査だけ常時省略する変更はしない。配信呼出にもfixture build・Chromium準備・8ケースの追加時間が生じる。30分のStatic checks枠で完走するかは実測待ちで、未検証のまま配信可能とは扱わない。差分ベースの配信ゲート最適化は、今回の小変更で欠落を作らず別途設計する。
 
 CI summaryにもロック単体と専用E2Eを別行で記録し、E2E成功時でもロック失敗/skipを成功表示しない。分類と実workflow条件を合わせた回帰、SDK/assetの分類回帰、summaryの独立した結果表示を追加した。すべて実行待ち。
+
+## 初回PR CIの診断（e27e0e0）
+
+PR #5931、CI run 40947972686 / Static checks and web job 123708238536では、scope classifier 19件とfixture server 5件は成功した。2026-10-29 20:19:36 UTCに、同じ「Test CI scope classifier」step内のci_job_summary_testが失敗。workflowのstep IDを抽出する正規表現[a-z_]+がbusiness_execution_e2e内の数字を認識せず、実在するstepを0件と誤判定した。英数字・underscore・hyphenを扱う抽出へ修正し、数字/ハイフンを含むIDと不正IDの回帰を追加した。workflow条件や本物のE2Eを省略する修正はしていない。
+
+直前のHTTPError 504/ResourceWarningは、既存kg_index_common_testのurlopen mockが作る失敗・再試行ケースの出力と一致し、該当13件は成功している。これを本番接続障害やfixture server失敗の証拠にしない。この別機能の警告修正は本差分に含めない。
+
+後続のFlutter準備・analyzer・formatter・Chrome lock・fixture build・Playwrightは先行step失敗によってskipされた。ここまでのPython成功をそれらの成功とは扱わない。修正は元PR headを動かさず、別scratchに保存する。修正後の再実行は共有CI順番の管理担当による許可待ち。
