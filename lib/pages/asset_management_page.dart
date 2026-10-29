@@ -23235,7 +23235,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
   }
-
   Widget _buildAssetManagementAiSummaryPanel(
     AssetManagementInsightReport report,
   ) {
@@ -33904,7 +33903,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          child: Text(DateFormat('MM/dd').format(_selectedFlowDate)),
+                          child: Text(
+                              DateFormat('MM/dd').format(_selectedFlowDate)),
                         ),
                         const SizedBox(width: 8),
                         Icon(
@@ -34356,7 +34356,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
   }
-
   Widget _buildSubscriptionCard() {
     final visibleSubscriptions = _subscriptionsForMonth(
       _selectedSubscriptionHistoryMonth,
