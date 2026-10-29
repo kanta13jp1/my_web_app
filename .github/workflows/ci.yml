@@ -534,6 +534,43 @@ jobs:
           --dart-define=BUSINESS_EXECUTION_E2E=true
           --dart-define=ENVIRONMENT=visual-test
 
+      # The Flutter web engine otherwise downloads its default Roboto font
+      # from fonts.gstatic.com. Keep this synthetic fixture entirely local.
+      - name: Add local Roboto to business execution fixture
+        if: steps.changes.outputs.business_execution == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter_bin="$(readlink -f "$(command -v flutter)")"
+          font_source="$(dirname "$flutter_bin")/cache/artifacts/material_fonts/roboto-regular.ttf"
+          python3 - "$font_source" build/business-execution-fixture <<'PY'
+          import json
+          import shutil
+          import sys
+          from pathlib import Path
+
+          source = Path(sys.argv[1])
+          root = Path(sys.argv[2])
+          manifest_path = root / "assets" / "FontManifest.json"
+          if not source.is_file() or source.stat().st_size == 0:
+              raise SystemExit("Flutter SDK Roboto font is missing or empty")
+          license_source = source.with_name("roboto_license.txt")
+          if not license_source.is_file() or license_source.stat().st_size == 0:
+              raise SystemExit("Flutter SDK Roboto license is missing or empty")
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          if not isinstance(manifest, list) or any(
+              family.get("family") == "Roboto" for family in manifest
+          ):
+              raise SystemExit("Unexpected fixture font manifest")
+          asset = "fixture-fonts/roboto-regular.ttf"
+          destination = root / "assets" / asset
+          destination.parent.mkdir(parents=True, exist_ok=True)
+          shutil.copyfile(source, destination)
+          shutil.copyfile(license_source, destination.with_name("roboto_license.txt"))
+          manifest.append({"family": "Roboto", "fonts": [{"asset": asset}]})
+          manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+          PY
+
       - name: Set up Node for business execution E2E
         if: steps.changes.outputs.business_execution == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
