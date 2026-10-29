@@ -31850,11 +31850,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ? (value) => _toggleBillingConfirmed(row.id, value ?? false)
                 : null,
           ),
-          _buildTextStatusChip(
-            label: effectiveConfirmed ? '確認済み' : '未確認',
-            color: effectiveConfirmed
-                ? const Color(0xFF0D9488)
-                : const Color(0xFFD97706),
+          Flexible(
+            child: _buildTextStatusChip(
+              label: effectiveConfirmed ? '確認済み' : '未確認',
+              color: effectiveConfirmed
+                  ? const Color(0xFF0D9488)
+                  : const Color(0xFFD97706),
+            ),
           ),
         ],
       ),
