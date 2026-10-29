@@ -202,17 +202,18 @@ class AssetCalendarReflection {
           r'(?:してから|して|したが|せず)\s*飲んだこと(?:は|が)?ない',
         ).hasMatch(context);
         if (!noDrinking) return true;
-        return drinkWithoutPurchase || hasAffirmedMatch(
-          RegExp(
-            r'(?:ビール|ハイボール)\s*(?:を|は)?\s*購入'
-            r'(?:してから|して|したが)\s*(?:飲んだ|飲みました)|'
-            r'(?:ビール|ハイボール|酒)\s*(?:を|は)?\s*(?:飲んだ|飲みました)|'
-            r'飲酒\s*(?:を)?\s*した|'
-            r'(?:居酒屋|飲み屋|外飲み)\s*(?:で)?\s*(?:飲んだ|飲みました)|'
-            r'飲みに(?:行った|行きました)',
-          ),
-          context,
-        );
+        return drinkWithoutPurchase ||
+            hasAffirmedMatch(
+              RegExp(
+                r'(?:ビール|ハイボール)\s*(?:を|は)?\s*購入'
+                r'(?:してから|して|したが)\s*(?:飲んだ|飲みました)|'
+                r'(?:ビール|ハイボール|酒)\s*(?:を|は)?\s*(?:飲んだ|飲みました)|'
+                r'飲酒\s*(?:を)?\s*した|'
+                r'(?:居酒屋|飲み屋|外飲み)\s*(?:で)?\s*(?:飲んだ|飲みました)|'
+                r'飲みに(?:行った|行きました)',
+              ),
+              context,
+            );
       });
       final purchase = hasAffirmedMatch(
         RegExp(r'酒購入|酒の購入|ビール購入|ビールを購入'),
