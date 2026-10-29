@@ -6,6 +6,15 @@ import '../../integration_test/payroll_snapshot_fixture.dart';
 
 class _RejectedConflictStore extends SyntheticSnapshotStore {
   bool failRefresh = false;
+  bool replaceAccountAfterConflict = false;
+
+  @override
+  Future<List<PayrollSnapshotAccount>> accounts() async {
+    if (writes > 0 && replaceAccountAfterConflict) {
+      return [const PayrollSnapshotAccount('synthetic-other', '別の合成口座')];
+    }
+    return super.accounts();
+  }
 
   @override
   Future<void> confirm(PayrollSnapshotDraft draft) async {
@@ -66,6 +75,22 @@ void main() {
           .text,
       '120000',
     );
+    expect(store.writes, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a missing conflict account never switches to another account',
+      (tester) async {
+    final store = _RejectedConflictStore()..replaceAccountAfterConflict = true;
+    await _submit(tester, store);
+
+    expect(find.textContaining('現在の選択を取得できません'), findsOneWidget);
+    expect(find.text('保存前の確認へ'), findsNothing);
+    await tester.ensureVisible(find.text('再読込'));
+    await tester.tap(find.text('再読込'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('対象の給与口座を確認できません'), findsOneWidget);
+    expect(find.text('保存前の確認へ'), findsNothing);
     expect(store.writes, 1);
     expect(tester.takeException(), isNull);
   });
