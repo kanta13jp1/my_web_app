@@ -16151,7 +16151,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             LayoutBuilder(
               builder: (context, constraints) {
                 final textScale =
-                    MediaQuery.textScalerOf(context).scale(14) / 14;
+                    max(1.0, MediaQuery.textScalerOf(context).scale(14) / 14);
                 const icon =
                     Icon(Icons.tune, size: 18, color: Color(0xFF7C3AED));
                 const title = Text(
@@ -16180,17 +16180,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          icon,
-                          const SizedBox(width: 8),
-                          const Flexible(child: title),
-                        ],
+                      const Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [icon, title],
                       ),
                       const SizedBox(height: 4),
                       description,
                       Align(
-                        alignment: Alignment.centerLeft,
+                        alignment: AlignmentDirectional.centerStart,
                         child: customize,
                       ),
                     ],
