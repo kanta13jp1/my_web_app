@@ -5,17 +5,17 @@ enum AssetReflectionKind {
   drinkingOut,
   alcoholPurchase,
   reading,
-  tobaccoPurchase
+  tobaccoPurchase,
 }
 
 extension AssetReflectionKindLabel on AssetReflectionKind {
   String get label => switch (this) {
-        AssetReflectionKind.dining => '外食',
-        AssetReflectionKind.drinkingOut => '外飲み',
-        AssetReflectionKind.alcoholPurchase => '酒購入',
-        AssetReflectionKind.reading => '読書',
-        AssetReflectionKind.tobaccoPurchase => 'たばこ購入',
-      };
+    AssetReflectionKind.dining => '外食',
+    AssetReflectionKind.drinkingOut => '外飲み',
+    AssetReflectionKind.alcoholPurchase => '酒購入',
+    AssetReflectionKind.reading => '読書',
+    AssetReflectionKind.tobaccoPurchase => 'たばこ購入',
+  };
 }
 
 /// Nonfinancial observations: never an input to balance or cashflow totals.
@@ -173,11 +173,9 @@ class AssetCalendarReflection {
         description,
       );
       final outside = description.split(RegExp(r'[。；;\n]')).any((context) {
-        final venue = hasAffirmedMatch(
-          RegExp(r'飲み屋|居酒屋|外飲み|飲みに行'),
-          context,
-        );
-        final drink = dining &&
+        final venue = hasAffirmedMatch(RegExp(r'飲み屋|居酒屋|外飲み|飲みに行'), context);
+        final drink =
+            dining &&
             hasAffirmedMatch(
               RegExp(r'ビール|飲酒|ハイボール'),
               context,
@@ -207,9 +205,10 @@ class AssetCalendarReflection {
         description,
       );
       final tobacco = description.split(RegExp(r'[。；;\n、・]')).any((part) {
-        final mentions =
-            RegExp(r'たばこ|タバコ|煙草|マールボロ|マルボロ|marlboro', caseSensitive: false)
-                .hasMatch(part);
+        final mentions = RegExp(
+          r'たばこ|タバコ|煙草|マールボロ|マルボロ|marlboro',
+          caseSensitive: false,
+        ).hasMatch(part);
         final explicitPurchase = RegExp(
           r'(たばこ|タバコ|煙草)(を)?(購入|買)|たばこ代|マールボロ|マルボロ|marlboro',
           caseSensitive: false,
@@ -242,7 +241,8 @@ class AssetCalendarReflection {
               ? description.substring(0, 200)
               : description,
           sourceLabel: '記録済み支出の明示された内容',
-          verifiedAmount: value is num &&
+          verifiedAmount:
+              value is num &&
                   value.isFinite &&
                   !RegExp(r'金額不明|金額未確認|推定|概算').hasMatch(description)
               ? value.abs().toDouble()
@@ -291,24 +291,24 @@ class AssetCalendarReflection {
   }
 
   Map<String, dynamic> toJson() => {
-        'source_key': sourceKey,
-        'occurred_on': date.toIso8601String().substring(0, 10),
-        'kinds': kinds.map((kind) => kind.name).toList(),
-        'title': title,
-        'source_label': sourceLabel,
-        'memo': memo,
-        'verified_amount': verifiedAmount,
-        'alcohol_amount': alcoholAmount,
-        'pages': pages,
-        'minutes': minutes,
-        'linked_flow_id': linkedFlowId,
-      };
+    'source_key': sourceKey,
+    'occurred_on': date.toIso8601String().substring(0, 10),
+    'kinds': kinds.map((kind) => kind.name).toList(),
+    'title': title,
+    'source_label': sourceLabel,
+    'memo': memo,
+    'verified_amount': verifiedAmount,
+    'alcohol_amount': alcoholAmount,
+    'pages': pages,
+    'minutes': minutes,
+    'linked_flow_id': linkedFlowId,
+  };
 }
 
 /// Multiple sources on the same day count as one day, with explicit unknowns.
 class AssetReflectionSummary {
   AssetReflectionSummary(Iterable<AssetCalendarReflection> events)
-      : events = events.toList(growable: false);
+    : events = events.toList(growable: false);
   final List<AssetCalendarReflection> events;
   int days(AssetReflectionKind kind) => events
       .where((e) => e.kinds.contains(kind))
