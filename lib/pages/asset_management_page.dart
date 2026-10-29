@@ -34423,13 +34423,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 color: Color(0xFF991B1B),
                               ),
                               SizedBox(width: 8),
-                              Text(
-                                '③固定費をすべて把握',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF64748B),
-                                  height: 1.5,
+                              Expanded(
+                                child: Text(
+                                  '③固定費をすべて把握',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF64748B),
+                                    height: 1.5,
+                                  ),
                                 ),
                               ),
                             ],
