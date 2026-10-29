@@ -23114,15 +23114,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 10),
           _buildMainAccountSelector(report.workbook),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              const Text(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final textScale = max(
+                1.0,
+                MediaQuery.textScalerOf(context).scale(12) / 12,
+              );
+              final compact = constraints.maxWidth < 360 * textScale;
+              const label = Text(
                 '安全残高(生活防衛費):',
                 style: TextStyle(fontSize: 12, height: 1.4),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                width: 110,
+              );
+              final field = SizedBox(
+                width: compact ? min(220.0, constraints.maxWidth) : 110,
                 child: TextField(
                   key: const Key('asset_safety_balance_field'),
                   controller: _minimumSafetyBalanceController,
@@ -23132,6 +23136,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     isDense: true,
                     suffixText: '円',
                     helperText: '1,000〜100,000円',
+                    helperMaxLines: 2,
                     helperStyle: TextStyle(fontSize: 10),
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(
@@ -23142,15 +23147,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   onSubmitted: (value) =>
                       unawaited(_updateMinimumSafetyBalance(value)),
                 ),
-              ),
-              const SizedBox(width: 6),
-              const Tooltip(
+              );
+              const information = Tooltip(
                 message: '使用可能額の計算から常に確保しておく金額です。'
                     '大きくしすぎると常に「不足」表示になります。',
                 triggerMode: TooltipTriggerMode.tap,
                 child: Icon(Icons.info_outline, size: 16),
-              ),
-            ],
+              );
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    label,
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [field, information],
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  label,
+                  const SizedBox(width: 8),
+                  field,
+                  const SizedBox(width: 6),
+                  information,
+                ],
+              );
+            },
           ),
           const SizedBox(height: 8),
           Wrap(
