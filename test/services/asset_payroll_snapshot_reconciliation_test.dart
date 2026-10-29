@@ -42,6 +42,31 @@ void main() {
     );
   });
 
+  test('initial observation accepts only an explicit null predecessor', () {
+    final initial = PayrollSnapshotDraft(
+      accountId: accountId,
+      month: DateTime(2020, 1),
+      depositDate: DateTime(2020, 1, 25),
+      balanceYen: 120000,
+      note: 'synthetic source',
+      reason: 'synthetic correction',
+      requestId: requestId,
+      previousId: null,
+    );
+    final firstRecord = <String, dynamic>{
+      ...matching,
+      'expected_previous_id': null,
+    };
+    expect(
+      payrollObservationMatchesDraft(firstRecord, initial, ownerId),
+      isTrue,
+    );
+    expect(
+      payrollObservationMatchesDraft(matching, initial, ownerId),
+      isFalse,
+    );
+  });
+
   test('every conflicting payload field is rejected', () {
     final conflicts = <String, dynamic>{
       'user_id': 'bbbbbbbb-0000-0000-0000-000000000002',
