@@ -22890,57 +22890,92 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     final badge = isHoliday ? '祝' : (isHolidayEve ? '祝前' : '');
 
+    final dateLabel = Text(
+      '${occasion.date.month}/${occasion.date.day}($weekday)',
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+        color: isToday ? const Color(0xFF7C3AED) : null,
+      ),
+    );
+    final badgeWidget = badge.isEmpty
+        ? null
+        : Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              color: const Color(0xFFB91C1C).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              badge,
+              style: const TextStyle(fontSize: 10, color: Color(0xFFB91C1C)),
+            ),
+          );
+    final abstainButton = _buildDrinkChoiceButton(
+      label: '我慢した',
+      selected: status == DrinkRecordStatus.abstained,
+      selectedColor: const Color(0xFF0D9488),
+      onTap: () => _setDrinkRecord(
+        occasion.date,
+        status == DrinkRecordStatus.abstained
+            ? null
+            : DrinkRecordStatus.abstained,
+      ),
+    );
+    final drankButton = _buildDrinkChoiceButton(
+      label: '飲んだ',
+      selected: status == DrinkRecordStatus.drank,
+      selectedColor: const Color(0xFFB91C1C),
+      onTap: () => _setDrinkRecord(
+        occasion.date,
+        status == DrinkRecordStatus.drank ? null : DrinkRecordStatus.drank,
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        children: [
-          Text(
-            '${occasion.date.month}/${occasion.date.day}($weekday)',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-              color: isToday ? const Color(0xFF7C3AED) : null,
-            ),
-          ),
-          if (badge.isNotEmpty) ...[
-            const SizedBox(width: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              decoration: BoxDecoration(
-                color: const Color(0xFFB91C1C).withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                badge,
-                style: const TextStyle(fontSize: 10, color: Color(0xFFB91C1C)),
-              ),
-            ),
-          ],
-          const Spacer(),
-          _buildDrinkChoiceButton(
-            label: '我慢した',
-            selected: status == DrinkRecordStatus.abstained,
-            selectedColor: const Color(0xFF0D9488),
-            onTap: () => _setDrinkRecord(
-              occasion.date,
-              status == DrinkRecordStatus.abstained
-                  ? null
-                  : DrinkRecordStatus.abstained,
-            ),
-          ),
-          const SizedBox(width: 6),
-          _buildDrinkChoiceButton(
-            label: '飲んだ',
-            selected: status == DrinkRecordStatus.drank,
-            selectedColor: const Color(0xFFB91C1C),
-            onTap: () => _setDrinkRecord(
-              occasion.date,
-              status == DrinkRecordStatus.drank
-                  ? null
-                  : DrinkRecordStatus.drank,
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final scaler = MediaQuery.textScalerOf(context);
+          final textScale = max(
+            1.0,
+            max(scaler.scale(12) / 12, scaler.scale(11) / 11),
+          );
+          if (constraints.maxWidth < 300 * textScale) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    dateLabel,
+                    if (badgeWidget != null) badgeWidget,
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [abstainButton, drankButton],
+                ),
+              ],
+            );
+          }
+          return Row(
+            children: [
+              dateLabel,
+              if (badgeWidget != null) ...[
+                const SizedBox(width: 4),
+                badgeWidget,
+              ],
+              const Spacer(),
+              abstainButton,
+              const SizedBox(width: 6),
+              drankButton,
+            ],
+          );
+        },
       ),
     );
   }
