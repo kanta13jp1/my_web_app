@@ -85,6 +85,7 @@ async function enter(page: Page, label: string, value: string) {
   await expect(input).toHaveValue(value);
   assertFixturePage(page);
   await input.press('Tab');
+  await expect(input).not.toBeFocused();
   assertFixturePage(page);
   await input.click();
   await expect(input).toBeFocused();
@@ -142,6 +143,15 @@ async function createPlan(page: Page) {
   await click(page, '計画を端末に保存');
   await expect(button(page, 'キャンセル（入力は破棄）')).toHaveCount(0);
   await expect(button(page, '計画一覧へ（未保存入力は破棄）')).toBeVisible();
+  // These static detail labels come from the saved/read-back plan, not from
+  // any editable DOM value. They cover the fields lost in the mobile failure.
+  await expect(
+    textOutput(page, '期間: 2026-10-29〜2026-10-31'),
+  ).toBeVisible();
+  await expect(
+    textOutput(page, '毎日の行動: ヒアリング / 2 回'),
+  ).toBeVisible();
+  await expect(textOutput(page, '成果目標: 3 件')).toBeVisible();
   await expect(
     textOutput(page, '未入力: 2日（今日を含む対象日のみ）'),
   ).toBeVisible();
