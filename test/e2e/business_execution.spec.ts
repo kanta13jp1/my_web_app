@@ -137,13 +137,19 @@ async function savedDayVisible(page: Page, text: string) {
   for (let step = 0; step < 32; step++) {
     assertFixturePage(page);
     if (await output.isVisible()) {
-      await expect(output).toBeVisible();
-      return;
+      const box = await output.boundingBox();
+      if (box && box.x < viewport.width && box.x + box.width > 0 &&
+          box.y < viewport.height - 8 && box.y + box.height > 60) {
+        await expect(output).toBeVisible();
+        await expect(output).toBeInViewport();
+        return;
+      }
     }
     await page.mouse.wheel(0, 250);
     await afterFlutterFrames(page);
   }
   await expect(output).toBeVisible();
+  await expect(output).toBeInViewport();
 }
 
 async function open(page: Page, monthEnd = false) {
