@@ -1,4 +1,5 @@
 name: Approved PR5925 Web Release
+run-name: PR5925 release operation ${{ inputs.operation_id }}
 
 on:
   pull_request:
@@ -45,6 +46,10 @@ on:
       - AGENTS.md
   workflow_dispatch:
     inputs:
+      operation_id:
+        description: Unique 32-character lowercase hex release operation ID
+        required: true
+        type: string
       approved_release:
         description: Explicit owner approved PR5925-only release
         required: true
@@ -113,6 +118,15 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
+
+      - name: Verify release operation ID
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          RELEASE_OPERATION_ID: ${{ inputs.operation_id }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_OPERATION_ID" =~ ^[0-9a-f]{32}$ ]]
 
       - name: Verify exact cloud handoff SHA
         if: env.EXPECTED_HEAD_SHA != ''
