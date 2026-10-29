@@ -39,11 +39,23 @@ function assertFixturePage(page: Page) {
     .toBe(fixtureOrigin());
 }
 
+// DOM focus precedes Flutter's semantics update that connects text editing.
+// Give those rendering turns a chance to run before typing, blurring, or
+// reading back. A DOM value alone still does not prove model persistence.
+async function afterFlutterFrames(page: Page) {
+  assertFixturePage(page);
+  await page.evaluate(() => new Promise<void>(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  }));
+  assertFixturePage(page);
+}
+
 // Scroll the Flutter view itself. Scrolling only a semantics DOM element does
 // not necessarily move the canvas hit target. Never use force-click or raw x/y
 // input to bypass a missing user-visible control.
 async function reveal(page: Page, target: Locator) {
   assertFixturePage(page);
+  await page.bringToFront();
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('A fixed desktop/mobile viewport is required.');
   await page.mouse.move(viewport.width / 2, viewport.height / 2);
@@ -75,19 +87,28 @@ async function enter(page: Page, label: string, value: string) {
   const input = field(page, label);
   await reveal(page, input);
   assertFixturePage(page);
-  // Activate Flutter's text editing bridge with a real visible control click.
-  // A focused semantics input can hold a DOM-only value on mobile; check again
-  // after leaving and re-entering the field so that value is not our evidence.
   await input.click();
+  await afterFlutterFrames(page);
   await expect(input).toBeFocused();
   assertFixturePage(page);
-  await input.fill(value);
+  // Use keyboard editing after Flutter has processed the focus transition.
+  // Do not set DOM values or retry a lost edit until an assertion happens to pass.
+  await page.keyboard.press('ControlOrMeta+A');
+  await afterFlutterFrames(page);
+  await page.keyboard.press('Backspace');
+  await afterFlutterFrames(page);
+  await expect(input).toHaveValue('');
+  await expect(input).toBeFocused();
+  await page.keyboard.type(value, { delay: 30 });
+  await afterFlutterFrames(page);
   await expect(input).toHaveValue(value);
   assertFixturePage(page);
-  await input.press('Tab');
+  await page.keyboard.press('Tab');
+  await afterFlutterFrames(page);
   await expect(input).not.toBeFocused();
   assertFixturePage(page);
   await input.click();
+  await afterFlutterFrames(page);
   await expect(input).toBeFocused();
   await expect(input).toHaveValue(value);
 }
@@ -97,8 +118,32 @@ async function inputValue(page: Page, label: string, value: string) {
   await reveal(page, input);
   assertFixturePage(page);
   await input.click();
+  await afterFlutterFrames(page);
   await expect(input).toBeFocused();
   await expect(input).toHaveValue(value);
+}
+
+// Flutter omits offscreen history cards from semantics. Scroll the actual
+// viewport before requiring the same saved date/value, never substitute totals.
+async function savedDayVisible(page: Page, text: string) {
+  assertFixturePage(page);
+  await page.bringToFront();
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error('A fixed desktop/mobile viewport is required.');
+  await page.mouse.move(viewport.width / 2, viewport.height / 2);
+  await page.mouse.wheel(0, -10000);
+  await afterFlutterFrames(page);
+  const output = textOutput(page, text);
+  for (let step = 0; step < 32; step++) {
+    assertFixturePage(page);
+    if (await output.isVisible()) {
+      await expect(output).toBeVisible();
+      return;
+    }
+    await page.mouse.wheel(0, 250);
+    await afterFlutterFrames(page);
+  }
+  await expect(output).toBeVisible();
 }
 
 async function open(page: Page, monthEnd = false) {
@@ -232,9 +277,9 @@ test('monthly review restores a user-created plan and daily results after naviga
     await expect(
       textOutput(page, '期間終了・月次の振り返り'),
     ).toBeVisible();
-    await expect(textOutput(page, '2026-10-30: 2 回')).toBeVisible();
     await expect(textOutput(page, '成果実績（2026-10-30時点）: 1 件 / 目標 3 件')).toBeVisible();
     await expect(textOutput(page, '未入力: 2日（今日を含む対象日のみ）')).toBeVisible();
+    await savedDayVisible(page, '2026-10-30: 2 回');
     await inputValue(page, reflectionLabel, '次月は紹介経路を試す');
     await page.screenshot({ path: info.outputPath('monthly-restored.png') });
   });
