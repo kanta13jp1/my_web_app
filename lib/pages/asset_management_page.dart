@@ -16148,36 +16148,65 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.tune, size: 18, color: Color(0xFF7C3AED)),
-                const SizedBox(width: 8),
-                const Text(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final textScale =
+                    MediaQuery.textScalerOf(context).scale(14) / 14;
+                const icon =
+                    Icon(Icons.tune, size: 18, color: Color(0xFF7C3AED));
+                const title = Text(
                   '表示モード',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     height: 1.4,
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _displayMode.description,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      height: 1.4,
-                    ),
+                );
+                final description = Text(
+                  _displayMode.description,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.4,
                   ),
-                ),
-                TextButton.icon(
+                );
+                final customize = TextButton.icon(
                   key: const Key('asset_section_customize_button'),
                   onPressed: _showSectionCustomizeDialog,
                   icon: const Icon(Icons.playlist_add_check, size: 16),
                   label: const Text('カスタマイズ'),
-                ),
-              ],
+                );
+                if (constraints.maxWidth < 450 * textScale) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          icon,
+                          const SizedBox(width: 8),
+                          const Flexible(child: title),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      description,
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: customize,
+                      ),
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    icon,
+                    const SizedBox(width: 8),
+                    title,
+                    const SizedBox(width: 12),
+                    Expanded(child: description),
+                    customize,
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 8),
             Wrap(
