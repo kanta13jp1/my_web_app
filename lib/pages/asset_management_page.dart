@@ -33846,82 +33846,101 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: DropdownButtonFormField<String>(
-                    key: const Key('asset_flow_type_dropdown'),
-                    initialValue: _selectedFlowType,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 8,
-                      ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final typePicker = DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  key: const Key('asset_flow_type_dropdown'),
+                  initialValue: _selectedFlowType,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
                     ),
-                    items: _flowTypeOptions
-                        .map(
-                          (value) => DropdownMenuItem(
-                            value: value,
-                            child: Text(
-                              value,
-                              style: const TextStyle(fontSize: 13, height: 1.6),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        _updateSelectedFlowType(value);
-                      }
-                    },
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 3,
-                  child: InkWell(
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _selectedFlowDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
-                      );
-                      if (date != null) {
-                        setState(() => _selectedFlowDate = date);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  items: _flowTypeOptions
+                      .map(
+                        (value) => DropdownMenuItem(
+                          value: value,
+                          child: Text(
+                            value,
+                            style: const TextStyle(fontSize: 13, height: 1.6),
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(4),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      _updateSelectedFlowType(value);
+                    }
+                  },
+                );
+                final datePicker = InkWell(
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: _selectedFlowDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(),
+                    );
+                    if (date != null) {
+                      setState(() => _selectedFlowDate = date);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(DateFormat('MM/dd').format(_selectedFlowDate)),
-                          Icon(
-                            Icons.calendar_today,
-                            size: 16,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                          ),
-                        ],
-                      ),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(DateFormat('MM/dd').format(_selectedFlowDate)),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.calendar_today,
+                          size: 16,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                );
+                final scaler = MediaQuery.textScalerOf(context);
+                final textScale = max(
+                  1.0,
+                  max(scaler.scale(13) / 13, scaler.scale(14) / 14),
+                );
+                if (constraints.maxWidth < 400 * textScale) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      typePicker,
+                      const SizedBox(height: 8),
+                      datePicker,
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(flex: 2, child: typePicker),
+                    const SizedBox(width: 8),
+                    Expanded(flex: 3, child: datePicker),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 8),
             Container(
