@@ -854,54 +854,54 @@ void main() {
       try {
         expect(Supabase.instance.client.auth.currentUser, isNull);
         await tester.pumpWidget(
-        MaterialApp(
-          builder: (context, child) => Directionality(
-            textDirection: direction,
-            child: MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                textScaler: const TextScaler.linear(2),
+          MaterialApp(
+            builder: (context, child) => Directionality(
+              textDirection: direction,
+              child: MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: const TextScaler.linear(2),
+                ),
+                child: child!,
               ),
-              child: child!,
+            ),
+            home: AssetManagementPage(
+              assetLiabilityRepository: _MonthlyRepository(),
+              aiSummaryService: _ControlledAi(),
+              aiAnalysisHistoryService: _EmptyHistory(),
+              debugNow: DateTime(2026, 9, 6, 12),
+              debugCalendarNow: DateTime(2026, 9, 6, 12),
+              debugInitialAssetData: const <String, Map<String, double>>{
+                '2026-09-06': <String, double>{'bank': 30000},
+              },
             ),
           ),
-          home: AssetManagementPage(
-            assetLiabilityRepository: _MonthlyRepository(),
-            aiSummaryService: _ControlledAi(),
-            aiAnalysisHistoryService: _EmptyHistory(),
-            debugNow: DateTime(2026, 9, 6, 12),
-            debugCalendarNow: DateTime(2026, 9, 6, 12),
-            debugInitialAssetData: const <String, Map<String, double>>{
-              '2026-09-06': <String, double>{'bank': 30000},
-            },
-          ),
-        ),
-      );
-      final scroll = find.byKey(const Key('asset_calendar_expanded_scroll'));
-      await _pumpUntil(tester, () => scroll.evaluate().isNotEmpty);
-      await tester.ensureVisible(scroll);
-      await tester.pump();
-      final controller =
-          tester.widget<SingleChildScrollView>(scroll).controller!;
-      expect(controller.position.maxScrollExtent, greaterThan(0));
-      await tester.drag(
-        scroll,
-        Offset(direction == TextDirection.ltr ? -600 : 600, 0),
-      );
-      await tester.pump(const Duration(milliseconds: 500));
-      expect(controller.offset, greaterThan(0));
+        );
+        final scroll = find.byKey(const Key('asset_calendar_expanded_scroll'));
+        await _pumpUntil(tester, () => scroll.evaluate().isNotEmpty);
+        await tester.ensureVisible(scroll);
+        await tester.pump();
+        final controller =
+            tester.widget<SingleChildScrollView>(scroll).controller!;
+        expect(controller.position.maxScrollExtent, greaterThan(0));
+        await tester.drag(
+          scroll,
+          Offset(direction == TextDirection.ltr ? -600 : 600, 0),
+        );
+        await tester.pump(const Duration(milliseconds: 500));
+        expect(controller.offset, greaterThan(0));
 
-      final day = find.byKey(const Key('asset_calendar_day_5'));
-      expect(day, findsOneWidget);
-      final viewportRect = tester.getRect(scroll);
-      final dayRect = tester.getRect(day);
-      expect(dayRect.left, greaterThanOrEqualTo(viewportRect.left - 1));
-      expect(dayRect.right, lessThanOrEqualTo(viewportRect.right + 1));
-      await tester.ensureVisible(day);
-      await tester.pump();
-      await tester.tap(day);
-      await tester.pump();
-      expect(find.text('9月5日 のイベント'), findsOneWidget);
-      expect(Supabase.instance.client.auth.currentUser, isNull);
+        final day = find.byKey(const Key('asset_calendar_day_5'));
+        expect(day, findsOneWidget);
+        final viewportRect = tester.getRect(scroll);
+        final dayRect = tester.getRect(day);
+        expect(dayRect.left, greaterThanOrEqualTo(viewportRect.left - 1));
+        expect(dayRect.right, lessThanOrEqualTo(viewportRect.right + 1));
+        await tester.ensureVisible(day);
+        await tester.pump();
+        await tester.tap(day);
+        await tester.pump();
+        expect(find.text('9月5日 のイベント'), findsOneWidget);
+        expect(Supabase.instance.client.auth.currentUser, isNull);
         expect(tester.takeException(), isNull);
       } finally {
         await tester.pumpWidget(const SizedBox.shrink());
