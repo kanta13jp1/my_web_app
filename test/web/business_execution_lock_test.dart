@@ -38,7 +38,8 @@ void main() {
     const store = LocalBusinessExecutionStore();
     Future<bool> attempt(String value) async {
       try {
-        await store.write('lock-test-account', null, value, isCurrent: () => true);
+        await store.write('lock-test-account', null, value,
+            isCurrent: () => true);
         return true;
       } on StateError {
         return false;

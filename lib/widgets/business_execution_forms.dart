@@ -101,7 +101,8 @@ class _BusinessExecutionPlanFormState extends State<BusinessExecutionPlanForm> {
         owner: _owner.text.trim(),
         outcome: _outcome.text.trim(),
         outcomeUnit: _outcomeUnit.text.trim(),
-        outcomeTarget: double.tryParse(_outcomeTarget.text.trim()) ?? double.nan,
+        outcomeTarget:
+            double.tryParse(_outcomeTarget.text.trim()) ?? double.nan,
         action: _action.text.trim(),
         actionUnit: _actionUnit.text.trim(),
         dailyTarget: double.tryParse(_dailyTarget.text.trim()) ?? double.nan,
@@ -132,14 +133,17 @@ class _BusinessExecutionPlanFormState extends State<BusinessExecutionPlanForm> {
         _field(_owner, '担当者（連絡は送信されません）', limit: 80, enabled: !widget.saving),
         _field(_outcome, '成果指標（KPI）例：月内の相談申込数', enabled: !widget.saving),
         _field(_outcomeUnit, '成果の単位 例：件', limit: 20, enabled: !widget.saving),
-        _field(_outcomeTarget, '期間終了時の成果目標', numeric: true, limit: 20, enabled: !widget.saving),
+        _field(_outcomeTarget, '期間終了時の成果目標',
+            numeric: true, limit: 20, enabled: !widget.saving),
         const Text('2. 毎日の行動'),
         const SizedBox(height: 12),
         _field(_action, '行動指標（KDI）例：顧客へのヒアリング', enabled: !widget.saving),
         _field(_actionUnit, '行動の単位 例：回', limit: 20, enabled: !widget.saving),
-        _field(_dailyTarget, '1日あたりの行動目標', numeric: true, limit: 20, enabled: !widget.saving),
+        _field(_dailyTarget, '1日あたりの行動目標',
+            numeric: true, limit: 20, enabled: !widget.saving),
         _field(_start, '開始日 YYYY-MM-DD', limit: 10, enabled: !widget.saving),
-        _field(_due, '期限 YYYY-MM-DD（開始日と同じ月）', limit: 10, enabled: !widget.saving),
+        _field(_due, '期限 YYYY-MM-DD（開始日と同じ月）',
+            limit: 10, enabled: !widget.saving),
         const Text(
           '開始日から期限まで毎日を対象にします。休日も含みます。'
           '成果は「大きいほどよい」指標の期間内累計値や到達値を使います。'
@@ -175,7 +179,8 @@ class BusinessExecutionDetail extends StatefulWidget {
   final BusinessExecutionController controller;
 
   @override
-  State<BusinessExecutionDetail> createState() => _BusinessExecutionDetailState();
+  State<BusinessExecutionDetail> createState() =>
+      _BusinessExecutionDetailState();
 }
 
 class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
@@ -245,9 +250,8 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
     _reportBaseline = report;
     _reportConflict = false;
     _actual.text = report == null ? '' : _number(report.actual);
-    _outcomeActual.text = report?.outcomeActual == null
-        ? ''
-        : _number(report!.outcomeActual!);
+    _outcomeActual.text =
+        report?.outcomeActual == null ? '' : _number(report!.outcomeActual!);
     _note.text = report?.note ?? '';
     _message = null;
   }
@@ -272,7 +276,8 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
             : double.tryParse(outcomeText) ?? double.nan,
         note: _note.text.trim(),
       );
-      final saved = await widget.controller.report(widget.plan.id, _day!, report);
+      final saved =
+          await widget.controller.report(widget.plan.id, _day!, report);
       if (mounted) {
         if (saved) {
           _reportBaseline = report;
@@ -371,8 +376,7 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
         const Text('未入力は0として扱いません。行動をしなかった日は実績0を記録できます。'),
         const Divider(height: 32),
         Text('日次の実績', style: Theme.of(context).textTheme.titleMedium),
-        if (!readOnly && dates.isEmpty)
-          const Text('計画の開始日を迎えると実績を入力できます。'),
+        if (!readOnly && dates.isEmpty) const Text('計画の開始日を迎えると実績を入力できます。'),
         if (!readOnly && dates.isNotEmpty) ...[
           const Text('日付を切り替えると、この日の未保存入力は破棄されます。'),
           const SizedBox(height: 12),
@@ -442,9 +446,8 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
             ),
           ],
           FilledButton(
-            onPressed: saving || _day == null || _reportConflict
-                ? null
-                : _saveReport,
+            onPressed:
+                saving || _day == null || _reportConflict ? null : _saveReport,
             child: Text(
               plan.reports.containsKey(_day) ? 'この日の記録を更新' : 'この日の記録を保存',
             ),
@@ -454,33 +457,33 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
         if (readOnly)
           Text('月次の振り返り: ${plan.reflection}')
         else ...[
-        _field(
-          _reflection,
-          '月次の振り返り（続けること・変えること・次月の行動）',
-          limit: 1000,
-          lines: 4,
-          enabled: !saving,
-        ),
-        if (_reflectionConflict) ...[
-          const Text(
-            '別タブで月次の振り返りが変わりました。現在の入力は残しています。'
-            '最新の文章と比較してから、上書きする入力を確認してください。',
+          _field(
+            _reflection,
+            '月次の振り返り（続けること・変えること・次月の行動）',
+            limit: 1000,
+            lines: 4,
+            enabled: !saving,
           ),
-          SelectableText('最新の月次振り返り: ${plan.reflection}'),
-          TextButton(
-            onPressed: saving
-                ? null
-                : () => setState(() {
-                      _reflectionBaseline = plan.reflection;
-                      _reflectionConflict = false;
-                    }),
-            child: const Text('最新記録を確認し、この月次入力で上書きする'),
+          if (_reflectionConflict) ...[
+            const Text(
+              '別タブで月次の振り返りが変わりました。現在の入力は残しています。'
+              '最新の文章と比較してから、上書きする入力を確認してください。',
+            ),
+            SelectableText('最新の月次振り返り: ${plan.reflection}'),
+            TextButton(
+              onPressed: saving
+                  ? null
+                  : () => setState(() {
+                        _reflectionBaseline = plan.reflection;
+                        _reflectionConflict = false;
+                      }),
+              child: const Text('最新記録を確認し、この月次入力で上書きする'),
+            ),
+          ],
+          FilledButton.tonal(
+            onPressed: saving || _reflectionConflict ? null : _saveReflection,
+            child: const Text('月次の振り返りを保存'),
           ),
-        ],
-        FilledButton.tonal(
-          onPressed: saving || _reflectionConflict ? null : _saveReflection,
-          child: const Text('月次の振り返りを保存'),
-        ),
         ],
         if (_message != null)
           Padding(

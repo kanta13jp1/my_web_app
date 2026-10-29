@@ -57,7 +57,8 @@ void main() {
     );
   });
 
-  test('roundtrip keeps daily and monthly notes and replaces same day once', () {
+  test('roundtrip keeps daily and monthly notes and replaces same day once',
+      () {
     final original = plan()
         .withReport(
           '2026-10-29',
@@ -77,7 +78,8 @@ void main() {
     expect(restored.reports['2026-10-29']!.note, '訂正');
   });
 
-  test('rejects nonfinite numbers, out of range dates and excessive content', () {
+  test('rejects nonfinite numbers, out of range dates and excessive content',
+      () {
     for (final number in [double.nan, double.infinity, -1.0, 1000000001.0]) {
       expect(
         () => BusinessDailyReport(actual: number, note: ''),

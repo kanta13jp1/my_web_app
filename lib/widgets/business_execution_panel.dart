@@ -59,8 +59,10 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
         final selected = _controller.plans
             .where((plan) => plan.id == _selectedId)
             .firstOrNull;
-        final active = _controller.plans.where((plan) => !plan.archived).toList();
-        final archived = _controller.plans.where((plan) => plan.archived).toList();
+        final active =
+            _controller.plans.where((plan) => !plan.archived).toList();
+        final archived =
+            _controller.plans.where((plan) => plan.archived).toList();
         final visible = _showArchived
             ? archived.reversed.skip(_archivePage * 24).take(24)
             : active.reversed;
@@ -88,7 +90,8 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                   '共用端末には機密情報を入力しないでください。保存にはWeb Locksに対応したHTTPSブラウザーが必要です。',
                 ),
                 TextButton(
-                  onPressed: () => Navigator.of(context).pushNamed('/life-goals'),
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/life-goals'),
                   child: const Text('長期の目標を整理する'),
                 ),
                 if (_controller.loading)
@@ -96,7 +99,8 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                 if (_controller.error != null) ...[
                   Text(
                     _controller.error!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style:
+                        TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                   TextButton(
                     onPressed: _controller.saving || _controller.refreshing
@@ -137,9 +141,10 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                   ] else ...[
                     const SizedBox(height: 12),
                     FilledButton.icon(
-                      onPressed: active.length >= BusinessExecutionCodec.maxPlans
-                          ? null
-                          : () => setState(() => _creating = true),
+                      onPressed:
+                          active.length >= BusinessExecutionCodec.maxPlans
+                              ? null
+                              : () => setState(() => _creating = true),
                       icon: const Icon(Icons.add),
                       label: const Text('月の実行計画を作る'),
                     ),
@@ -172,9 +177,10 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                             child: const Text('前の24件'),
                           ),
                           TextButton(
-                            onPressed: (_archivePage + 1) * 24 >= archived.length
-                                ? null
-                                : () => setState(() => _archivePage++),
+                            onPressed:
+                                (_archivePage + 1) * 24 >= archived.length
+                                    ? null
+                                    : () => setState(() => _archivePage++),
                             child: const Text('次の24件'),
                           ),
                         ],

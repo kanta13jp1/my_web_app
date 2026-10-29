@@ -12,10 +12,12 @@ Future<void> reveal(WidgetTester tester, Finder finder) async {
   // Text editing schedules layout and caret scrolling after enterText returns.
   // Settle that work before calculating the next target's scroll position.
   await tester.pumpAndSettle();
-  final scrollable = find.descendant(
-    of: find.byType(BusinessExecutionPanel),
-    matching: find.byType(Scrollable),
-  ).first;
+  final scrollable = find
+      .descendant(
+        of: find.byType(BusinessExecutionPanel),
+        matching: find.byType(Scrollable),
+      )
+      .first;
   if (finder.evaluate().isEmpty) {
     tester.state<ScrollableState>(scrollable).position.jumpTo(0);
     await tester.pumpAndSettle();
@@ -54,7 +56,8 @@ Future<void> tapText(WidgetTester tester, String text) async {
   await tester.pumpAndSettle();
 }
 
-Widget app(BusinessExecutionStore store, {String user = 'a', double scale = 1}) =>
+Widget app(BusinessExecutionStore store,
+        {String user = 'a', double scale = 1}) =>
     MaterialApp(
       home: Scaffold(
         body: MediaQuery(
@@ -74,7 +77,8 @@ void main() {
   testWidgets('create plan, save zero and reflection, then restore on reopen',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
-    const store = LocalBusinessExecutionStore(withLock: fakes.testExecutionLock);
+    const store =
+        LocalBusinessExecutionStore(withLock: fakes.testExecutionLock);
     await tester.pumpWidget(app(store));
     await tester.pumpAndSettle();
     await tapText(tester, '月の実行計画を作る');
@@ -238,7 +242,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('remote archive conflict retains drafts through reload and reopen',
+  testWidgets(
+      'remote archive conflict retains drafts through reload and reopen',
       (tester) async {
     final original = fixtures.plan();
     final store = fakes.MemoryExecutionStore()
@@ -271,7 +276,8 @@ void main() {
 
   testWidgets('same-day and monthly remote changes require explicit overwrite',
       (tester) async {
-    final original = fixtures.plan()
+    final original = fixtures
+        .plan()
         .withReport(
           '2026-10-30',
           BusinessDailyReport(actual: 1, note: '元の記録'),
@@ -299,22 +305,28 @@ void main() {
     await tapText(tester, 'この日の記録を更新');
     await tapText(tester, '保存結果を再読み込み');
     expect(
-      tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'この日の記録を更新'),
-      ).onPressed,
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'この日の記録を更新'),
+          )
+          .onPressed,
       isNull,
     );
     expect(
-      tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, '月次の振り返りを保存'),
-      ).onPressed,
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, '月次の振り返りを保存'),
+          )
+          .onPressed,
       isNull,
     );
     expect(find.text('手元の日次下書き'), findsOneWidget);
     expect(find.textContaining('最新の日次振り返り: 別タブの日次'), findsOneWidget);
     expect(
       BusinessExecutionCodec.decode(store.data['a'])
-          .single.reports['2026-10-30']!.actual,
+          .single
+          .reports['2026-10-30']!
+          .actual,
       3,
     );
     await tapText(tester, '最新記録を確認し、この日次入力で上書きする');
@@ -326,14 +338,18 @@ void main() {
     await tapText(tester, 'この日の記録を更新');
     await tapText(tester, '保存結果を再読み込み');
     expect(
-      tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'この日の記録を更新'),
-      ).onPressed,
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'この日の記録を更新'),
+          )
+          .onPressed,
       isNull,
     );
     expect(
       BusinessExecutionCodec.decode(store.data['a'])
-          .single.reports['2026-10-30']!.actual,
+          .single
+          .reports['2026-10-30']!
+          .actual,
       4,
     );
     await tapText(tester, '最新記録を確認し、この日次入力で上書きする');
@@ -372,7 +388,8 @@ void main() {
 
   testWidgets('unedited report and reflection adopt latest values on reload',
       (tester) async {
-    final original = fixtures.plan()
+    final original = fixtures
+        .plan()
         .withReport(
           '2026-10-30',
           BusinessDailyReport(actual: 1, note: '読込時の日次'),
@@ -384,10 +401,12 @@ void main() {
     await tester.pumpAndSettle();
     await tapText(tester, '相談申込数');
     store.data['a'] = BusinessExecutionCodec.encode([
-      original.withReport(
-        '2026-10-30',
-        BusinessDailyReport(actual: 3, note: '最新の日次へ同期'),
-      ).withReflection('最新の月次へ同期'),
+      original
+          .withReport(
+            '2026-10-30',
+            BusinessDailyReport(actual: 3, note: '最新の日次へ同期'),
+          )
+          .withReflection('最新の月次へ同期'),
     ]);
     await tapText(tester, 'この日の記録を更新');
     await tapText(tester, '保存結果を再読み込み');
@@ -402,5 +421,4 @@ void main() {
       findsNothing,
     );
   });
-
 }

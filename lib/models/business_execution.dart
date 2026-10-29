@@ -188,8 +188,7 @@ class BusinessDailyReport {
       );
 }
 
-String dayKey(DateTime day) =>
-    '${day.year.toString().padLeft(4, '0')}-'
+String dayKey(DateTime day) => '${day.year.toString().padLeft(4, '0')}-'
     '${day.month.toString().padLeft(2, '0')}-'
     '${day.day.toString().padLeft(2, '0')}';
 
