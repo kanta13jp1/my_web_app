@@ -41,8 +41,10 @@ void main() {
     final normalUnknownHeight = tester.getSize(find.text('不明')).height;
     await tester.pumpWidget(_app(2, preserve: true));
     expect(find.byType(FittedBox), findsNothing);
-    expect(tester.getSize(find.text(_labels)).height,
-        greaterThan(normalHeight * 1.7));
+    expect(
+      tester.getSize(find.text(_labels)).height,
+      greaterThan(normalHeight * 1.7),
+    );
     expect(find.text('不明'), findsOneWidget);
     expect(
       tester.getSize(find.text('不明')).height,
