@@ -35,6 +35,7 @@ class _AssetPayrollSnapshotSectionState
   PayrollSnapshotRecord? _previous;
   PayrollSnapshotDraft? _pending;
   String? _reconciledChangedId;
+  String? _conflictAccountId;
   bool _loading = true;
   bool _dataReady = false;
   bool _busy = false;
@@ -71,11 +72,22 @@ class _AssetPayrollSnapshotSectionState
     try {
       final accounts = await widget.store.accounts();
       if (!mounted || epoch != _epoch) return;
-      final selected = accounts.any((a) => a.id == _account)
-          ? _account
-          : accounts.isEmpty
-              ? null
-              : accounts.first.id;
+      final conflictAccount = _conflictAccountId;
+      if (conflictAccount != null &&
+          !accounts.any((account) => account.id == conflictAccount)) {
+        setState(() {
+          _loading = false;
+          _dataReady = false;
+          _error = '対象の給与口座を確認できません。再読込してください。';
+        });
+        return;
+      }
+      final selected = conflictAccount ??
+          (accounts.any((a) => a.id == _account)
+              ? _account
+              : accounts.isEmpty
+                  ? null
+                  : accounts.first.id);
       final values = selected == null
           ? <PayrollSnapshotRecord?>[null, null]
           : await Future.wait([
@@ -98,6 +110,7 @@ class _AssetPayrollSnapshotSectionState
         _previous = values[1];
         _loading = false;
         _dataReady = true;
+        _conflictAccountId = null;
       });
     } catch (_) {
       if (!mounted || epoch != _epoch) return;
@@ -234,6 +247,20 @@ class _AssetPayrollSnapshotSectionState
       _note.clear();
       _reason.clear();
       await _load();
+    } on PayrollSnapshotConflict catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _pending = null;
+        _reconciledChangedId = null;
+        _conflictAccountId = draft.accountId;
+      });
+      await _load();
+      if (!mounted) return;
+      setState(() {
+        _error = _dataReady
+            ? '競合により今回の記録は保存されませんでした。照合時点の現在の選択と入力内容を確認してください。'
+            : '競合により今回の記録は保存されませんでした。現在の選択を取得できません。再読込してください。';
+      });
     } catch (_) {
       if (mounted) {
         setState(() {
