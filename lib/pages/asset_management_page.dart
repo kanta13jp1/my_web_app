@@ -18319,6 +18319,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         controller: _assetCalendarScrollController,
                         thumbVisibility: canScroll,
                         child: SingleChildScrollView(
+                          key: const Key('asset_calendar_expanded_scroll'),
                           controller: _assetCalendarScrollController,
                           scrollDirection: Axis.horizontal,
                           child: SizedBox(
