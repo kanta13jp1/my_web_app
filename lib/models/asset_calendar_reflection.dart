@@ -134,15 +134,25 @@ class AssetCalendarReflection {
     Iterable<Map<String, dynamic>> flows,
   ) {
     // Reject only a denial immediately associated with this matched phrase.
-    bool hasAffirmedMatch(RegExp pattern, String description) {
+    bool hasAffirmedMatch(
+      RegExp pattern,
+      String description, {
+      bool excludePurchaseOnly = false,
+    }) {
       final denial = RegExp(
         r'^\s*(?:は|を|が)?\s*(?:なし|無し|しな|していな|せず|せな|'
         r'飲まな|飲まず|買わな|買わず|購入しな|購入せず|購入なし|'
         r'には行かな|に行かな|かない|かなかった)',
       );
-      return pattern.allMatches(description).any(
-            (match) => !denial.hasMatch(description.substring(match.end)),
-          );
+      return pattern.allMatches(description).any((match) {
+        final following = description.substring(match.end);
+        if (denial.hasMatch(following)) return false;
+        if (!excludePurchaseOnly) return true;
+        final clause = following.split(RegExp(r'[。；;\n、・]')).first;
+        final purchase = RegExp(r'^\s*(?:は|を|が)?\s*購入').hasMatch(clause);
+        if (!purchase) return true;
+        return RegExp(r'飲んだ|飲みました|飲酒した').hasMatch(clause);
+      });
     }
 
     final result = <AssetCalendarReflection>[];
@@ -163,7 +173,11 @@ class AssetCalendarReflection {
             description,
           ) ||
           (dining &&
-              hasAffirmedMatch(RegExp(r'ビール|飲酒|ハイボール'), description));
+              hasAffirmedMatch(
+                RegExp(r'ビール|飲酒|ハイボール'),
+                description,
+                excludePurchaseOnly: true,
+              ));
       final purchase = hasAffirmedMatch(
         RegExp(r'酒購入|酒の購入|ビール購入|ビールを購入'),
         description,
