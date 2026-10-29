@@ -133,6 +133,18 @@ class AssetCalendarReflection {
   static List<AssetCalendarReflection> fromFlows(
     Iterable<Map<String, dynamic>> flows,
   ) {
+    // Reject only a denial immediately associated with this matched phrase.
+    bool hasAffirmedMatch(RegExp pattern, String description) {
+      final denial = RegExp(
+        r'^\s*(?:は|を|が)?\s*(?:なし|無し|しな|していな|せず|せな|'
+        r'飲まな|飲まず|買わな|買わず|購入しな|購入せず|購入なし|'
+        r'に行かな|かなかった)',
+      );
+      return pattern.allMatches(description).any(
+            (match) => !denial.hasMatch(description.substring(match.end)),
+          );
+    }
+
     final result = <AssetCalendarReflection>[];
     for (final flow in flows) {
       if (flow['action_type'] != 'expense') continue;
@@ -142,12 +154,20 @@ class AssetCalendarReflection {
       )?.toLocal();
       final description = flow['description']?.toString() ?? '';
       if (id == null || day == null) continue;
-      final dining = RegExp(
-        r'外食|店内飲食|レストラン|ラーメンショップ|ラーメン店|定食屋',
-      ).hasMatch(description);
-      final outside = RegExp(r'飲み屋|居酒屋|外飲み|飲みに行').hasMatch(description) ||
-          (dining && RegExp(r'ビール|飲酒|ハイボール').hasMatch(description));
-      final purchase = RegExp(r'酒購入|酒の購入|ビール購入|ビールを購入').hasMatch(description);
+      final dining = hasAffirmedMatch(
+        RegExp(r'外食|店内飲食|レストラン|ラーメンショップ|ラーメン店|定食屋'),
+        description,
+      );
+      final outside = hasAffirmedMatch(
+            RegExp(r'飲み屋|居酒屋|外飲み|飲みに行'),
+            description,
+          ) ||
+          (dining &&
+              hasAffirmedMatch(RegExp(r'ビール|飲酒|ハイボール'), description));
+      final purchase = hasAffirmedMatch(
+        RegExp(r'酒購入|酒の購入|ビール購入|ビールを購入'),
+        description,
+      );
       final tobacco = description.split(RegExp(r'[。；;\n、・]')).any((part) {
         final mentions =
             RegExp(r'たばこ|タバコ|煙草|マールボロ|マルボロ|marlboro', caseSensitive: false)
