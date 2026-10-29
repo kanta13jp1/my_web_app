@@ -919,7 +919,8 @@ void main({
               ),
             ),
           );
-          final scroll = find.byKey(const Key('asset_calendar_expanded_scroll'));
+          final scroll =
+              find.byKey(const Key('asset_calendar_expanded_scroll'));
           phase = 'wait/scroll-visible';
           await _pumpUntil(tester, () => scroll.evaluate().isNotEmpty);
           phase = 'scroll/ensure-visible';

@@ -24,7 +24,8 @@ void main() {
         'calendarOverflows',
         () => <Map<String, String>>[],
       ) as List<Map<String, String>>;
-      if (entries.where((entry) => entry['direction'] == direction).length >= 5) {
+      if (entries.where((entry) => entry['direction'] == direction).length >=
+          5) {
         return;
       }
       final description = details.toString();
