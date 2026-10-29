@@ -32,11 +32,11 @@ SharedPreferences の新しい本人ID別キーに保存する。既存の資産
 
 初回保存時点ではテスト・formatter・analyzerは未実行。ローカル空き容量が30GiB未満のためローカルFlutter/Dart・worktree作成を行わずGitHub APIで実装を保存。親担当が共有CI順番を管理する。CI結果はそのhead SHAに限った証拠として追記する。
 
-実認証・ブラウザー再読み込み・本番UIの検査は別の未完了ゲート。widgetテストを実ブラウザーE2Eや本番の保存証拠とみなさない。新しいアカウント境界の取り扱いはリリース前に人間レビューを必要とする。
+実認証・本番UIの検査は別の未完了ゲート。実ブラウザー再読み込みと2タブ競合のPlaywrightテストを追加したが、実行はCI枠待ち。widgetテストを実ブラウザーE2Eや本番の保存証拠とみなさない。新しいアカウント境界の取り扱いはリリース前に人間レビューを必要とする。
 
 ## 作業範囲
 
-Lead: Codex。モデルルーティングで選択された実装workerが上記の独立した14ファイルを担当。remote scratch branchで保存し、既存ローカルworktreeや金融開発ファイルは変更しない。重複調査ではvirtual関連のopen PRなし。既存目標階層・月次KPI機能を確認し、既存の人生目標画面への導線を残した。
+Lead: Codex。モデルルーティングで選択された実装workerが上記の機能・検証ファイルを担当。remote scratch branchで保存し、既存ローカルworktreeや金融開発ファイルは変更しない。重複調査ではvirtual関連のopen PRなし。既存目標階層・月次KPI機能を確認し、既存の人生目標画面への導線を残した。
 
 ロールバック時はこのUI導線の追加を戻し、端末に保存された記録を自動削除しない。
 
@@ -44,6 +44,36 @@ Lead: Codex。モデルルーティングで選択された実装workerが上記
 
 ロック内の照合と保存、保存失敗後の再読み込みでフォームを保持、開始日を跨ぐ再描画で日付を選択、24実行計画上限から履歴を残してアーカイブする経路を追加。テストも追加した。Web Lockのブラウザーテストは `flutter test --platform chrome test/web/business_execution_lock_test.dart` をクラウドで明示実行する必要がある。標準VMテストでブラウザー排他を検証したとは扱わない。
 
-検査配線：標準CIのVM shardは `test/widgets/business_execution_panel_test.dart` を含む通常テストを列挙する。標準CIのChrome smokeに `test/web/business_execution_lock_test.dart` を追加し、ロック検査を省略しない。整形はcloud-developmentのformat profile artifactから対象ファイルをGitHub APIで反映する。Minimal E2E Gateはユーザー入力/出力で3代表フロー（通常、失敗復旧、アカウント境界）をカバーするwidgetテストであり、ブラウザー全体のE2E未実施を明記した例外記載が必要。今回のWeb Lock単体Chrome検査を業務フローE2Eとは呼ばない。
+検査配線：標準CIのVM shardは `test/widgets/business_execution_panel_test.dart` を含む通常テストを列挙する。標準CIのChrome smokeに `test/web/business_execution_lock_test.dart` を追加し、ロック検査を省略しない。整形はcloud-developmentのformat profile artifactから対象ファイルをGitHub APIで反映する。Minimal E2E Gate向けに後述のPlaywright業務フローを追加した。追加ファイルの存在とE2E成功は別であり、実行結果は未取得。Web Lock単体Chrome検査を業務フローE2Eとは呼ばない。
 
 同日実績・月次文章の別タブ更新は編集開始時の元値と比較する。再読込で最新の保存値と保持下書きが食い違った場合は保存を止め、最新値を表示し、利用者の明示的な上書き確認を受けた後でのみ再保存できる。別タブでアーカイブされても下書きを退避表示し、再開後に復旧する。Web Lock待ち中の本人切替は実書込前のowner再確認で拒否する。
+
+## 実ブラウザーの最小業務E2E（追加・実行待ち）
+
+既存Playwright依存・設定の desktop/mobile Chrome を再利用する。テスト専用entrypoint `test/fixtures/business_execution_app.dart` は本物のパネル・SharedPreferences・Web Locksを使用し、架空ownerと固定時計だけを渡す。保存済みJSONの注入・mock store・アプリ内部メソッドの直接呼出しはしない。
+
+通常の `lib/main.dart` からfixtureを読み込まない。明示ビルドフラグとloopbackホストの両方がなければfixture自体も起動を拒否する。Playwrightもloopback以外へのナビゲーションを拒否する。実認証・本番ルーティング・他端末同期の検証ではない。
+
+`test/e2e/business_execution.spec.ts` の3シナリオ：
+
+1. 課題とKPI/KDI計画を画面から作成し、日次実績と月次文章を保存。ページ遷移でDart runtimeを破棄し、翌月の固定時計で期間終了・保存済み実績・月次文章を復元確認。
+2. 実績の空欄を拒否。再読み込みで未入力のままと確認し、0を保存して再読み込み。0の記録、残る未入力日、成果の未入力を区別。
+3. 同一BrowserContextに実際の2タブを開く。先にタブAが日次/月次を保存し、古いタブBの保存を拒否。再照合後もBの下書きを保持し、最新値を表示、明示上書き確認まで保存不可。確認後に保存し、Aの再読み込みでBの記録を確認。
+
+クラウド実行用の準備コマンド（この時点では未実行）：
+
+~~~sh
+flutter pub get
+flutter build web --release --pwa-strategy=none --target=test/fixtures/business_execution_app.dart --dart-define=BUSINESS_EXECUTION_E2E=true --dart-define=ENVIRONMENT=visual-test
+npm ci
+npx playwright install --with-deps chromium
+python3 scripts/serve_spa.py build/web --port 7360
+~~~
+
+同じクラウド環境の別プロセスで：
+
+~~~sh
+E2E_BASE_URL=http://127.0.0.1:7360 npx playwright test test/e2e/business_execution.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+~~~
+
+合計6ケースになる。既存Playwright設定のHTML/JSON report、失敗時trace/videoと代表状態のスクリーンショットを証拠にする。起動したサーバーは実行担当が終了させる。新規workflowや依存は追加しておらず、現時点ではこの専用fixtureのbuild/Playwright呼出しは既存CIへ未接続。CI担当が順番を確保した後に実行し、head SHA・結果・desktop/mobile画像を確認する必要がある。未実行のファイル追加をgate成功とは報告しない。
