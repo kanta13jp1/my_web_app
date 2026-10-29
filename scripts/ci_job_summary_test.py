@@ -220,5 +220,138 @@ class CiJobSummaryTest(unittest.TestCase):
         self.assertIn("python scripts/ci_job_summary_test.py", workflow)
 
 
+
+class FixtureFontAliasTest(unittest.TestCase):
+    """Execute the actual workflow program against a tiny in-memory build."""
+
+    class BuildPath:
+        def __init__(self, files, name="", writes=None, symlinks=None):
+            self.files = files
+            self.name = name
+            self.writes = writes if writes is not None else []
+            self.symlinks = symlinks if symlinks is not None else set()
+
+        def __truediv__(self, name):
+            return FixtureFontAliasTest.BuildPath(
+                self.files, f"{self.name}/{name}".lstrip("/"),
+                self.writes, self.symlinks,
+            )
+
+        def is_file(self):
+            return self.name in self.files
+
+        def is_symlink(self):
+            return self.name in self.symlinks
+
+        def read_bytes(self):
+            return self.files[self.name]
+
+        def read_text(self, encoding):
+            return self.read_bytes().decode(encoding)
+
+        def write_text(self, value, encoding):
+            self.writes.append(self.name)
+            self.files[self.name] = value.encode(encoding)
+
+    def setUp(self):
+        import hashlib
+        import textwrap
+
+        workflow = (Path(__file__).resolve().parents[1] /
+                    ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        step = workflow.split(
+            "- name: Register local Noto Sans fixture fallback\n", 1,
+        )[1].split("\n      - name:", 1)[0]
+        program = textwrap.dedent(
+            step.split("<<'PY'\n", 1)[1].split("\n          PY", 1)[0],
+        )
+        self.namespace = {"__name__": "fixture_font_test"}
+        exec(compile(program, "ci.yml:fixture-font", "exec"), self.namespace)
+        self.register = self.namespace["register_fixture_font"]
+        self.manifest_path = "assets/FontManifest.json"
+        self.font_path = "assets/" + self.namespace["FONT_ASSET"]
+        self.license_path = "assets/" + self.namespace["LICENSE_ASSET"]
+        self.manifest = [
+            {"family": "NotoSans", "fonts": [
+                {"asset": self.namespace["FONT_ASSET"]},
+            ]},
+            {"family": "NotoSansJP", "fonts": [{"asset": "other.ttf"}]},
+        ]
+        # Synthetic bytes keep unit tests independent of real font binaries.
+        self.files = {
+            self.manifest_path: json.dumps(self.manifest).encode("utf-8"),
+            self.font_path: b"synthetic font bytes",
+            self.license_path: b"synthetic license bytes",
+        }
+        self.namespace["FONT_SHA256"] = hashlib.sha256(
+            self.files[self.font_path],
+        ).hexdigest()
+        self.namespace["LICENSE_SHA256"] = hashlib.sha256(
+            self.files[self.license_path],
+        ).hexdigest()
+        self.root = self.BuildPath(self.files)
+
+    def assert_rejected_without_mutation(self):
+        before = dict(self.files)
+        with self.assertRaises(ValueError):
+            self.register(self.root)
+        self.assertEqual(self.files, before)
+        self.assertEqual(self.root.writes, [])
+
+    def test_registers_alias_without_copying_or_modifying_font_and_license(self):
+        before = dict(self.files)
+        self.register(self.root)
+        result = json.loads(self.files[self.manifest_path])
+        self.assertEqual(result[:-1], self.manifest)
+        self.assertEqual(result[-1], {
+            "family": "Roboto",
+            "fonts": [{"asset": self.namespace["FONT_ASSET"]}],
+        })
+        self.assertEqual(self.files.keys(), before.keys())
+        self.assertEqual(self.files[self.font_path], before[self.font_path])
+        self.assertEqual(self.files[self.license_path], before[self.license_path])
+        self.assertEqual(self.root.writes, [self.manifest_path])
+
+    def test_rejects_missing_duplicate_or_preexisting_family(self):
+        for manifest in (
+            self.manifest[1:],
+            [*self.manifest, self.manifest[0]],
+            [*self.manifest, {"family": "Roboto", "fonts": []}],
+        ):
+            with self.subTest(manifest=manifest):
+                self.files[self.manifest_path] = json.dumps(manifest).encode()
+                self.assert_rejected_without_mutation()
+
+    def test_rejects_invalid_manifest_or_unexpected_asset(self):
+        for manifest in (
+            {},
+            ["invalid family"],
+            [{"family": "NotoSans", "fonts": [
+                {"asset": "../outside.ttf"},
+            ]}],
+            [{"family": "NotoSans", "fonts": [
+                {"asset": "https://fonts.example/font.ttf"},
+            ]}],
+        ):
+            with self.subTest(manifest=manifest):
+                self.files[self.manifest_path] = json.dumps(manifest).encode()
+                self.assert_rejected_without_mutation()
+
+    def test_rejects_missing_empty_or_changed_font_and_license(self):
+        for path in (self.font_path, self.license_path):
+            for invalid in (None, b"", b"unexpected bytes"):
+                with self.subTest(path=path, invalid=invalid):
+                    original = self.files.pop(path)
+                    if invalid is not None:
+                        self.files[path] = invalid
+                    self.assert_rejected_without_mutation()
+                    self.files[path] = original
+
+    def test_rejects_symlink_font_or_license(self):
+        for path in (self.font_path, self.license_path):
+            with self.subTest(path=path):
+                self.root.symlinks = {path}
+                self.assert_rejected_without_mutation()
+
 if __name__ == "__main__":
     unittest.main()
