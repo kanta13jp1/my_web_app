@@ -105,7 +105,8 @@ void main() {
     },
   );
 
-  testWidgets('selection read failure keeps the request pending', (tester) async {
+  testWidgets('selection read failure keeps the request pending',
+      (tester) async {
     final store = _CorrectedSelectionStore();
     await _submitWithLostResponse(tester, store);
     store.failCurrentSelection = true;
@@ -115,7 +116,9 @@ void main() {
     expect(find.textContaining('現在の選択を確認できません'), findsOneWidget);
     expect(find.text('保存結果を照合'), findsOneWidget);
     expect(
-      tester.widget<TextButton>(find.widgetWithText(TextButton, '再読込')).onPressed,
+      tester
+          .widget<TextButton>(find.widgetWithText(TextButton, '再読込'))
+          .onPressed,
       isNull,
     );
     expect(store.writes, 1);
