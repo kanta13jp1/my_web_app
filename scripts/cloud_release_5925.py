@@ -9,6 +9,7 @@ import secrets
 import subprocess
 import sys
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = "kanta13jp1/my_web_app"
@@ -157,12 +158,42 @@ def slot(action, token=None):
         raise Blocked("shared FIFO response invalid") from exc
 
 
+def verify_fifo_lease(payload, token, expected_result):
+    if payload.get("result") != expected_result or payload.get("expired") is not False:
+        raise Blocked("FIFO lease status or expiry unknown")
+    owner = payload.get("state", {}).get("owner") or {}
+    if owner.get("task") != TASK or owner.get("token") != token:
+        raise Blocked("FIFO ownership changed")
+    try:
+        expiry = datetime.fromisoformat(owner["expires"].replace("Z", "+00:00"))
+        if expiry.tzinfo is None or expiry <= utc_now():
+            raise Blocked("FIFO lease expired")
+    except (KeyError, ValueError, TypeError, AttributeError) as exc:
+        raise Blocked("FIFO expiry invalid or unknown") from exc
+
+
+def utc_now():
+    return datetime.now(timezone.utc)
+
+
 def journal_create(path, operation_id):
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {"operation_id": operation_id, "head": HEAD, "status": "pending_or_unknown"}
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         json.dump(payload, f, sort_keys=True)
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def journal_mark_not_sent(path, operation_id):
+    # Keep the original pending journal; a separate exclusive marker records
+    # that the final lease check failed before the POST was attempted.
+    marker = path.with_name(path.name + ".not_sent")
+    fd = os.open(marker, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump({"operation_id": operation_id, "head": HEAD,
+                   "status": "aborted_before_dispatch"}, f, sort_keys=True)
         f.flush()
         os.fsync(f.fileno())
 
@@ -191,13 +222,17 @@ def do_execute(journal):
         raise Blocked("FIFO ownership/token unknown; do not release or dispatch")
     try:
         check_remote()
-        renewed = slot("renew", token)
-        renewed_owner = renewed.get("state", {}).get("owner") or {}
-        if renewed.get("result") != "renewed" or renewed_owner.get("task") != TASK or renewed_owner.get("token") != token:
-            raise Blocked("FIFO renewal/ownership unconfirmed")
+        verify_fifo_lease(slot("renew", token), token, "renewed")
         check_send_fence()
         operation_id = secrets.token_hex(16)
         journal_create(journal, operation_id)
+        try:
+            # Check status before renewal, so renewal cannot hide expiry.
+            verify_fifo_lease(slot("status"), token, "status")
+            verify_fifo_lease(slot("renew", token), token, "renewed")
+        except Blocked:
+            journal_mark_not_sent(journal, operation_id)
+            raise
         data = {"ref": BRANCH, "return_run_details": True, "inputs": {
             "operation_id": operation_id, "approved_release": True,
             "deploy_scope": "web_only", "expected_head_sha": HEAD, "profile": "full"}}
