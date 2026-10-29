@@ -879,7 +879,8 @@ void main() {
       await _pumpUntil(tester, () => scroll.evaluate().isNotEmpty);
       await tester.ensureVisible(scroll);
       await tester.pump();
-      final controller = tester.widget<SingleChildScrollView>(scroll).controller!;
+      final controller =
+          tester.widget<SingleChildScrollView>(scroll).controller!;
       expect(controller.position.maxScrollExtent, greaterThan(0));
       await tester.drag(
         scroll,
@@ -905,5 +906,4 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     });
   }
-
 }
