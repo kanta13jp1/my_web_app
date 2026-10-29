@@ -138,3 +138,13 @@ job 123720175592の全文ログを確認。business_execution_panel_testの10ケ
 | 未編集記録の同期 | StateError: No element（再読込ボタン探索） | 更新tapがy=1120、画面高600の外 |
 
 6件は未到達の保存tapから後段の期待不一致へ連鎖している。共通helperはenterText後のcaret scrolling/layoutとensureVisible後のframeを待たずにtapしていたため、操作前・入力後・スクロール後をpumpAndSettleで同期する。tap直前にhitTestableを必須検査し、missを黙殺しない。非対応errorは画面上部へ実際にスクロールしてから確認する。7ケースの保存値・入力保持・競合確認の期待は削除しない。製品のUI/保存ロジックには変更を入れず、修正後の実テストでこの診断を確認する必要がある。修正後widget test・formatter・analyzerは未実行。
+
+## 一時formatter証跡案（実行前）
+
+5f3d9cdのStatic checks job 123731962647は全体analyzeとdeprecated API negative controlに成功し、Check formattingだけが8ファイル差分で失敗した。probeのdeprecated_member_useは期待したnegative controlであり、同時実行の汚染根拠ではない。remote-only dispatch helper案にはbranch protection/rulesets、実行workflowの信頼、dispatch固有識別、先行run取消との競合が未解決であり、実行に使わない。
+
+代案の一時stepはPR #5931の既存Check formattingが実際に失敗した場合だけ、固定8 Dartを同じcheckoutで整形する。元のexit1/必須判定は維持し、jobを成功扱いにしない。新job/build/dispatchは追加しない。対象がHEADから既に変更されている・stagedされている・symlinkである場合は拒否、実checkoutがevent GITHUB_SHAと違えば拒否する。
+
+成果物はtested merge commit、PR head、run/attempt、元8 blob、Dart version、対象限定patch、整形後SHA-256、8ファイルを記録し保持1日。処理のEXIT trapで固定8対象だけを入力commitへ復元し、restore失敗時はartifactをuploadしない。他の変更やユーザーデータを削除・リセットしない。
+
+適用前にrun/attempt・tested commit・PR headをGitHub記録と照合し、source-blobsが適用先の固定PR headの8ファイルと一致すること、出力hashとpatch範囲、整形だけの差分であることを確認する。未確認・不一致のartifactは使わない。8ファイル適用と同時にこの一時step/uploadと本節を削除し、通常CIを改めて通す。formatter evidence run自体のfailureをgate成功とは扱わない。現在は別scratchの準備のみで、PR更新・CI起動・実formatter実行はしていない。
