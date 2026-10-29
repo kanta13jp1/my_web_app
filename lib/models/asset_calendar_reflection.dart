@@ -152,10 +152,12 @@ class AssetCalendarReflection {
         final clause = following.split(RegExp(r'[。；;\n、・]')).first;
         final purchase = RegExp(r'^\s*(?:は|を|が)?\s*購入').hasMatch(clause);
         if (!purchase) return true;
-        return RegExp(
+        final drankAfterPurchase = RegExp(
           r'^\s*(?:は|を|が)?\s*購入(?:してから|して|したが)\s*'
           r'(?:飲んだ|飲みました|飲酒した)',
-        ).hasMatch(clause);
+        ).firstMatch(clause);
+        return drankAfterPurchase != null &&
+            !denial.hasMatch(clause.substring(drankAfterPurchase.end));
       });
     }
 
@@ -173,7 +175,7 @@ class AssetCalendarReflection {
         description,
       );
       final outside = description.split(RegExp(r'[。；;\n]')).any((context) {
-        final venue = hasAffirmedMatch(RegExp(r'飲み屋|居酒屋|外飲み|飲みに行'), context);
+        final venue = hasAffirmedMatch(RegExp(r'飲み屋|居酒屋|外飲み|飲みに行った|飲みに行きました|飲みに行'), context);
         final drink =
             dining &&
             hasAffirmedMatch(
@@ -185,7 +187,9 @@ class AssetCalendarReflection {
         final noDrinking = RegExp(
           r'飲酒\s*(?:は|を)?\s*(?:なし|無し|しな|していな|せず)|'
           r'(?:酒|ビール|ハイボール)\s*(?:は|を)?\s*'
-          r'(?:飲まず|飲まな|飲んだこと(?:は|が)?ない)',
+          r'(?:飲まず|飲まな|飲んだこと(?:は|が)?ない)|'
+          r'(?:ビール|ハイボール)\s*(?:を|は)?\s*購入'
+          r'(?:してから|して|したが)\s*飲んだこと(?:は|が)?ない',
         ).hasMatch(context);
         if (!noDrinking) return true;
         return hasAffirmedMatch(
