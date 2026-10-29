@@ -104,6 +104,50 @@ The GitHub CLI commands remain available for incident diagnosis, but do not
 dispatch either workflow by hand: the required SHA input and new-run fencing
 belong to `cloud_ci_handoff.py`.
 
+## Remote-only Formatter Handoff
+
+For GitHub-only edits, the same helper accepts an explicit remote source without
+reading or changing the caller's local Git checkout. This mode currently supports
+only `cloud-development.yml --profile format`; local handoffs keep their existing
+clean-checkout requirements.
+
+Use a reviewed copy of `scripts/cloud_ci_handoff.py`. A small temporary copy of
+that script is sufficient; do not create a worktree or install dependencies.
+Start with read-only preflight:
+
+```powershell
+python <reviewed-helper-path> --remote-repo owner/repository --remote-branch codex/reviewed-branch --expected-head-sha <40-character-SHA> --profile format --json
+```
+
+Only after the shared CI slot is available and dispatch is authorized, append
+`--execute` (and optionally `--watch`). Do not invoke `gh workflow run` separately.
+The helper pins github.com and repository on every remote command and checks:
+
+- Current authenticated GitHub account, without printing credentials.
+- Explicit non-protected branch, also excluding the repository's default branch.
+- Repository identity/write permission and exact remote branch commit SHA.
+- Active workflow at the expected path.
+- A repeated preflight immediately before the single dispatch request.
+- Runs absent from the pre-dispatch snapshot with the expected SHA; old IDs and
+  other SHAs cannot qualify. Multiple matching new runs are reported as ambiguous.
+
+`source=remote` and `clean=null` mean local checkout state is not used as source
+evidence. This does not label unrelated local edits as clean. A branch change
+before the final preflight prevents dispatch; a later change is still checked
+against `expected_head_sha` by the workflow. Authentication/read success and repo
+push permission do not prove that the token has Actions write permission; the
+actual dispatch may still be denied. A denied/unknown request or an unlocated run
+is never automatically resent. Inspect history before retrying. Serialize remote
+handoffs through the shared queue; overlapping same-branch/SHA dispatches can
+make identification ambiguous.
+
+The format profile produces `cloud-format-<runid>` containing a patch, manifest
+and formatted files, retained for one day. Verify run/head identity and review
+the targeted Dart diff before applying it. It is formatter output, not analyzer,
+test, browser, or release proof. Helper changes can stay on a separate scratch
+branch while formatting the existing feature branch; adding helper/docs changes
+to a PR may trigger the existing Cloud Development PR workflow.
+
 ## Cleanup Boundary
 
 - Close only servers and browser tabs opened for the current task.

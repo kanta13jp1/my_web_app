@@ -12,6 +12,7 @@ import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable, Sequence
+from urllib.parse import quote
 
 
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
@@ -33,11 +34,13 @@ class HandoffState:
     branch: str
     head_sha: str
     remote_sha: str | None
-    clean: bool
+    clean: bool | None
     workflow: str
     ready: bool
     reasons: tuple[str, ...]
     profile: str | None = None
+    repository: str | None = None
+    source: str = "local"
 
 
 Runner = Callable[[Sequence[str], Path], CommandResult]
@@ -153,6 +156,84 @@ def inspect_handoff(
     )
 
 
+def remote_api(path: str, root: Path, runner: Runner) -> Any:
+    payload = json.loads(_require(
+        runner(["gh", "api", "--hostname", "github.com", path], root),
+        "remote GitHub preflight",
+    ))
+    if not isinstance(payload, dict):
+        raise RuntimeError("Remote GitHub preflight returned a non-object payload")
+    return payload
+
+
+def inspect_remote_handoff(
+    root: Path,
+    repository: str,
+    branch: str,
+    head_sha: str,
+    workflow: str,
+    profile: str,
+    runner: Runner = run_command,
+) -> HandoffState:
+    """Inspect only committed GitHub source; never inspect/reset a local checkout."""
+    reasons: list[str] = []
+    if (not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+", repository)
+            or repository.rsplit("/", 1)[-1] in {".", ".."}):
+        reasons.append("remote repository must be an explicit github.com owner/name")
+    if (
+        not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", branch)
+        or any(not part or part.startswith(".") or part.endswith((".", ".lock"))
+               for part in branch.split("/"))
+        or ".." in branch
+        or branch == "HEAD"
+        or branch in PROTECTED_BRANCHES
+    ):
+        reasons.append("remote branch must be an explicit unprotected branch")
+    if not FULL_SHA.fullmatch(head_sha):
+        reasons.append("expected remote HEAD must be a lowercase 40-character SHA")
+    # Keep the new remote-only path limited to the requested formatter use case.
+    if workflow != CLOUD_DEVELOPMENT_WORKFLOW or profile != "format":
+        reasons.append("remote-only handoff currently supports cloud-development format only")
+    remote_sha: str | None = None
+    if not reasons:
+        authenticated_id = _require(
+            runner(["gh", "api", "--hostname", "github.com", "user", "--jq", ".id"], root),
+            "GitHub authentication check",
+        )
+        if not authenticated_id.isdigit():
+            raise RuntimeError("GitHub authentication check did not identify an account")
+        metadata = remote_api(f"repos/{repository}", root, runner)
+        if metadata.get("full_name", "").lower() != repository.lower():
+            reasons.append("remote repository identity changed")
+        if metadata.get("default_branch") == branch:
+            reasons.append("remote default branch cannot be handed off")
+        if metadata.get("permissions", {}).get("push") is not True:
+            reasons.append("repository write permission is unavailable")
+        ref = remote_api(
+            f"repos/{repository}/git/ref/heads/{quote(branch, safe='')}", root, runner,
+        )
+        if ref.get("ref") != f"refs/heads/{branch}" or ref.get("object", {}).get("type") != "commit":
+            reasons.append("remote ref is not the requested branch commit")
+        remote_sha = ref.get("object", {}).get("sha")
+        if remote_sha != head_sha:
+            reasons.append("remote branch does not match expected HEAD")
+        info = remote_api(
+            f"repos/{repository}/actions/workflows/{workflow}", root, runner,
+        )
+        if info.get("state") != "active" or info.get("path") != f".github/workflows/{workflow}":
+            reasons.append("requested workflow is missing, inactive, or has a different path")
+    return HandoffState(
+        root=str(root), branch=branch, head_sha=head_sha, remote_sha=remote_sha,
+        clean=None, workflow=workflow, ready=not reasons, reasons=tuple(reasons),
+        profile=profile, repository=repository, source="remote",
+    )
+
+
+def repository_args(state: HandoffState) -> list[str]:
+    # Pin the host too; GH_HOST or the caller's unrelated cwd must not retarget a run.
+    return ["--repo", f"github.com/{state.repository}"] if state.repository else []
+
+
 def dispatch_command(state: HandoffState) -> list[str]:
     command = [
         "gh",
@@ -166,6 +247,7 @@ def dispatch_command(state: HandoffState) -> list[str]:
     ]
     if state.profile is not None:
         command.extend(["-f", f"profile={state.profile}"])
+    command.extend(repository_args(state))
     return command
 
 
@@ -189,6 +271,7 @@ def list_runs(
             "20",
             "--json",
             "databaseId,headSha,status,conclusion,url,createdAt",
+            *repository_args(state),
         ],
         root,
     )
@@ -204,7 +287,9 @@ def select_new_exact_run(
     *,
     head_sha: str,
     previous_ids: set[int],
+    require_unique: bool = False,
 ) -> dict[str, Any] | None:
+    candidates = []
     for run in runs:
         database_id = run.get("databaseId")
         if (
@@ -212,8 +297,10 @@ def select_new_exact_run(
             and database_id not in previous_ids
             and str(run.get("headSha", "")).lower() == head_sha.lower()
         ):
-            return run
-    return None
+            candidates.append(run)
+    if require_unique and len(candidates) > 1:
+        raise RuntimeError("Multiple new runs match the remote HEAD; inspect history before retrying")
+    return candidates[0] if candidates else None
 
 
 def dispatch_and_locate(
@@ -224,6 +311,8 @@ def dispatch_and_locate(
     runner: Runner = run_command,
     sleeper: Callable[[float], None] = time.sleep,
 ) -> dict[str, Any]:
+    if not state.ready:
+        raise RuntimeError("Handoff preflight is not ready")
     root = Path(state.root)
     before = list_runs(state, root, runner)
     previous_ids = {
@@ -231,7 +320,20 @@ def dispatch_and_locate(
         for item in before
         if isinstance(item.get("databaseId"), int)
     }
-    _require(runner(dispatch_command(state), root), "workflow dispatch")
+    if state.repository:
+        # Fence branch movement between the original preflight and dispatch.
+        fresh = inspect_remote_handoff(
+            root, state.repository, state.branch, state.head_sha,
+            state.workflow, state.profile or "", runner,
+        )
+        if not fresh.ready:
+            raise RuntimeError("Remote preflight changed before dispatch: " + "; ".join(fresh.reasons))
+    dispatched = runner(dispatch_command(state), root)
+    if dispatched.code != 0:
+        raise RuntimeError(
+            "Workflow dispatch failed or its outcome is unknown; inspect run history "
+            "before retrying. " + (dispatched.stderr or dispatched.stdout)
+        )
 
     deadline = time.monotonic() + timeout_seconds
     while True:
@@ -239,12 +341,14 @@ def dispatch_and_locate(
             list_runs(state, root, runner),
             head_sha=state.head_sha,
             previous_ids=previous_ids,
+            require_unique=state.repository is not None,
         )
         if run is not None:
             return run
         if time.monotonic() >= deadline:
             raise RuntimeError(
-                "timed out waiting for a new workflow_dispatch run at the exact HEAD"
+                "timed out waiting for a new workflow_dispatch run at the exact HEAD; "
+                "the request was sent, so inspect run history before retrying"
             )
         sleeper(poll_seconds)
 
@@ -253,6 +357,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--workflow", default=CLOUD_DEVELOPMENT_WORKFLOW)
+    parser.add_argument("--remote-repo", help="Explicit github.com owner/name; no local Git source.")
+    parser.add_argument("--remote-branch", help="Existing unprotected remote branch.")
+    parser.add_argument("--expected-head-sha", help="Exact committed remote SHA for formatter handoff.")
     parser.add_argument(
         "--profile",
         choices=CLOUD_PROFILES,
@@ -275,7 +382,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--timeout-seconds", type=float, default=90.0)
     parser.add_argument("--poll-seconds", type=float, default=2.0)
     parser.add_argument("--json", action="store_true", dest="as_json")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    remote = (args.remote_repo, args.remote_branch, args.expected_head_sha)
+    if any(remote) and not all(remote):
+        parser.error("--remote-repo, --remote-branch and --expected-head-sha must be supplied together")
+    return args
 
 
 def _emit(payload: dict[str, Any], as_json: bool) -> None:
@@ -284,6 +395,10 @@ def _emit(payload: dict[str, Any], as_json: bool) -> None:
         return
     state = payload["handoff"]
     print(f"Cloud CI handoff: {payload['status'].upper()}")
+    print(f"- Source: {state['source']}")
+    if state.get("repository"):
+        print(f"- Repository: github.com/{state['repository']}")
+        print("- Local checkout: not inspected or modified")
     print(f"- Branch: {state['branch']}")
     print(f"- Exact HEAD: {state['head_sha']}")
     print(f"- Origin HEAD: {state['remote_sha'] or 'missing'}")
@@ -310,11 +425,17 @@ def main(argv: list[str]) -> int:
             if Path(args.workflow).name == CLOUD_DEVELOPMENT_WORKFLOW
             else None
         )
-        state = inspect_handoff(
-            args.repo_root.resolve(),
-            args.workflow,
-            profile=profile,
-        )
+        if args.remote_repo:
+            state = inspect_remote_handoff(
+                args.repo_root.resolve(), args.remote_repo, args.remote_branch,
+                args.expected_head_sha, args.workflow, profile or "",
+            )
+        else:
+            state = inspect_handoff(
+                args.repo_root.resolve(),
+                args.workflow,
+                profile=profile,
+            )
         payload: dict[str, Any] = {
             "status": "ready" if state.ready else "blocked",
             "handoff": {**asdict(state), "reasons": list(state.reasons)},
@@ -337,7 +458,7 @@ def main(argv: list[str]) -> int:
                     print("dispatched run has no databaseId", file=sys.stderr)
                     return 2
                 result = run_command(
-                    ["gh", "run", "watch", str(run_id), "--exit-status"],
+                    ["gh", "run", "watch", str(run_id), "--exit-status", *repository_args(state)],
                     Path(state.root),
                 )
                 if result.stdout:

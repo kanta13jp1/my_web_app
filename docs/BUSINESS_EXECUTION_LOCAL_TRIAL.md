@@ -138,3 +138,15 @@ job 123720175592の全文ログを確認。business_execution_panel_testの10ケ
 | 未編集記録の同期 | StateError: No element（再読込ボタン探索） | 更新tapがy=1120、画面高600の外 |
 
 6件は未到達の保存tapから後段の期待不一致へ連鎖している。共通helperはenterText後のcaret scrolling/layoutとensureVisible後のframeを待たずにtapしていたため、操作前・入力後・スクロール後をpumpAndSettleで同期する。tap直前にhitTestableを必須検査し、missを黙殺しない。非対応errorは画面上部へ実際にスクロールしてから確認する。7ケースの保存値・入力保持・競合確認の期待は削除しない。製品のUI/保存ロジックには変更を入れず、修正後の実テストでこの診断を確認する必要がある。修正後widget test・formatter・analyzerは未実行。
+
+## 5f3d9cd静的検査の診断とクラウド整形経路
+
+CI run 40954792624 / job 123731962647を全文ログとstep状態で照合。全体Analyze codeは2026-10-29 21:07:13 UTCにNo issues found/exit0、Verify deprecated API rejectionもsuccessだった。withOpacityのprobeエラーはsupported→deprecatedの直列negative controlであり、VERIFIED deprecated: status=code_findings exit=1を確認して終了している。TemporaryDirectoryは自身のprobeを終了時に削除する。別jobとの同時汚染や全体analyze失敗の根拠はない。既存analyzer lockは解析プロセスの排他であり、別の外部プロセスとのファイル全寿命の排他まで保証するものではない。
+
+実際の停止stepはCheck formattingで1978 files (8 changed)、exit1。対象はlib/models/business_execution.dart、lib/view_models/business_execution_controller.dart、lib/widgets/business_execution_forms.dart、lib/widgets/business_execution_panel.dart、test/models/business_execution_test.dart、test/view_models/business_execution_controller_test.dart、test/web/business_execution_lock_test.dart、test/widgets/business_execution_panel_test.dart。lint除外やprobe変更で回避しない。
+
+公式cloud-development.yml（ID345716266、active）のformat profileは固定headを確認後、変更Dartをクラウド整形してcloud-format-<runid> artifact（patch/manifest/files、保持1日）を返す。dispatch formatでは他E2E jobsは起動しない。当該headには既存format dispatchなし。gh2.92による認証確認はauthenticated:true、repo APIはadmin/pushを返した。トークンは表示していない。Actionsの書込成否はdispatch未実施なので未確認。
+
+GitHub-only編集のため公式helperへformat限定remote-only事前確認を追加する。固定repo/branch/SHA、認証、書込権限、保護/default branch拒否、branch commit一致、active workflow、送信直前再照合、送信前run一覧と送信後の新規同SHA run識別を保持。別SHA/旧IDは選ばず、同時候補複数や送信結果不明では再送しない。ローカルGitや既存dirty checkoutには触れず、source=remote/clean=nullで区別する。詳細はdocs/CLOUD_FIRST_DEVELOPMENT.md。
+
+新helperは別scratchだけに保存。helper/docsを機能PRに混ぜると既存のCloud Development PR path triggerが追加されるため、共有枠が空いた後にレビュー済みhelperで元の機能branch/SHAを整形し、artifact内の該当8 Dartだけを機能branchへ反映する。CI workflowは変更しない。dependency-free Python回帰17件（既存9＋remote-only8）は専用TEMP fixtureで成功、実dispatch/Flutter/新worktreeは行っていない。後続Chrome lock/fixture build/Playwrightは元runでskipのため未検証。
