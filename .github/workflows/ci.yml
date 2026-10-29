@@ -142,6 +142,7 @@ jobs:
       - name: Test CI scope classifier
         run: |
           python scripts/classify_ci_changes_test.py
+          python scripts/serve_business_execution_fixture_test.py
           python scripts/cloud_ci_handoff_test.py
           python scripts/cloud_first_route_test.py
           python scripts/claude_remote_control_server_plan_test.py
@@ -519,47 +520,57 @@ jobs:
           ls -la build/web
 
       - name: Build business execution browser fixture
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.business_execution == 'true'
         run: >
-          flutter build web --release --pwa-strategy=none
+          flutter build web --release --pwa-strategy=none --no-web-resources-cdn
           --output=build/business-execution-fixture
           --target=test/fixtures/business_execution_app.dart
           --dart-define=BUSINESS_EXECUTION_E2E=true
           --dart-define=ENVIRONMENT=visual-test
 
       - name: Set up Node for business execution E2E
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.business_execution == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
           cache: npm
 
       - name: Install existing Playwright browser dependencies
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.business_execution == 'true'
         run: |
           npm ci
           npx playwright install --with-deps chromium
 
       - name: Run business execution fixture E2E
         id: business_execution_e2e
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.business_execution == 'true'
         shell: bash
-        env:
-          E2E_BASE_URL: http://127.0.0.1:7360
         run: |
           set -euo pipefail
-          python3 scripts/serve_spa.py build/business-execution-fixture --port 7360 > business-execution-server.log 2>&1 &
+          ready_file="$RUNNER_TEMP/business-execution-ready-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"
+          source_sha="$(git rev-parse HEAD)"
+          python3 scripts/serve_business_execution_fixture.py serve build/business-execution-fixture \
+            --ready-file "$ready_file" --source-sha "$source_sha" > business-execution-server.log 2>&1 &
           server_pid=$!
-          trap 'kill "$server_pid" || true' EXIT
+          trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
           for _ in {1..20}; do
-            if curl --fail --silent "$E2E_BASE_URL/" > /dev/null; then break; fi
+            kill -0 "$server_pid"
+            if [ -s "$ready_file" ]; then break; fi
             sleep 1
           done
-          curl --fail --silent "$E2E_BASE_URL/" > /dev/null
+          kill -0 "$server_pid"
+          E2E_BASE_URL="$(python3 scripts/serve_business_execution_fixture.py verify \
+            --ready-file "$ready_file" --pid "$server_pid" --source-sha "$source_sha")"
+          BUSINESS_EXECUTION_FIXTURE_TOKEN="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["token"])' "$ready_file")"
+          export E2E_BASE_URL BUSINESS_EXECUTION_FIXTURE_TOKEN
+          cp "$ready_file" business-execution-ready.json
           npm run e2e:business-execution -- --forbid-only
+          kill -0 "$server_pid"
+          python3 scripts/serve_business_execution_fixture.py verify \
+            --ready-file "$ready_file" --pid "$server_pid" --source-sha "$source_sha"
 
       - name: Preserve business execution browser evidence
-        if: always() && steps.changes.outputs.flutter == 'true'
+        if: always() && steps.changes.outputs.business_execution == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: business-execution-e2e-${{ github.run_id }}
@@ -567,6 +578,7 @@ jobs:
             business-execution-report/
             business-execution-results/
             business-execution-server.log
+            business-execution-ready.json
           if-no-files-found: ignore
 
       - name: Job Summary

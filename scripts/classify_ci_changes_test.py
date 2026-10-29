@@ -76,6 +76,28 @@ class ClassifyCiChangesTest(unittest.TestCase):
                 self.assertFalse(result["web"])
                 self.assertFalse(result["deployable"])
 
+    def test_fixture_infrastructure_changes_cannot_skip_its_browser_gate(self) -> None:
+        for path in [
+            ".github/workflows/ci.yml",
+            "scripts/classify_ci_changes.py",
+            "scripts/classify_ci_changes_test.py",
+            "scripts/serve_business_execution_fixture.py",
+            "scripts/serve_business_execution_fixture_test.py",
+        ]:
+            with self.subTest(path=path):
+                result = classify([path])
+                self.assertTrue(result["business_execution"])
+                self.assertTrue(result["flutter"])
+                self.assertFalse(result["deployable"])
+
+    def test_unrelated_flutter_changes_do_not_build_business_fixture(self) -> None:
+        for path in [
+            "lib/pages/reading_page.dart",
+            "test/services/unrelated_test.dart",
+        ]:
+            with self.subTest(path=path):
+                self.assertFalse(classify([path])["business_execution"])
+
     def test_app_code_needs_flutter_and_web(self) -> None:
         result = classify(["lib/pages/ai_university_page.dart"])
 

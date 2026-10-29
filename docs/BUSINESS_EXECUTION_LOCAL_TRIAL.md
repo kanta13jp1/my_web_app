@@ -64,20 +64,43 @@ Lead: Codex。モデルルーティングで選択された実装workerが上記
 
 ~~~sh
 flutter pub get
-flutter build web --release --pwa-strategy=none --target=test/fixtures/business_execution_app.dart --dart-define=BUSINESS_EXECUTION_E2E=true --dart-define=ENVIRONMENT=visual-test
+flutter build web --release --pwa-strategy=none --no-web-resources-cdn --target=test/fixtures/business_execution_app.dart --dart-define=BUSINESS_EXECUTION_E2E=true --dart-define=ENVIRONMENT=visual-test
 npm ci
 npx playwright install --with-deps chromium
-python3 scripts/serve_spa.py build/web --port 7360
 ~~~
 
-同じクラウド環境の別プロセスで：
+同じクラウド環境で専用サーバーを起動・識別してから実行する（CIは同じ手順を自動実行）：
 
 ~~~sh
-E2E_BASE_URL=http://127.0.0.1:7360 npm run e2e:business-execution -- --forbid-only
+set -euo pipefail
+ready_dir="$(mktemp -d)"
+ready_file="$ready_dir/ready.json"
+source_sha="$(git rev-parse HEAD)"
+python3 scripts/serve_business_execution_fixture.py serve build/web --ready-file "$ready_file" --source-sha "$source_sha" &
+server_pid=$!
+trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
+for _ in {1..20}; do
+  kill -0 "$server_pid"
+  if [ -s "$ready_file" ]; then break; fi
+  sleep 1
+done
+E2E_BASE_URL="$(python3 scripts/serve_business_execution_fixture.py verify --ready-file "$ready_file" --pid "$server_pid" --source-sha "$source_sha")"
+BUSINESS_EXECUTION_FIXTURE_TOKEN="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["token"])' "$ready_file")"
+export E2E_BASE_URL BUSINESS_EXECUTION_FIXTURE_TOKEN
+npm run e2e:business-execution -- --forbid-only
+python3 scripts/serve_business_execution_fixture.py verify --ready-file "$ready_file" --pid "$server_pid" --source-sha "$source_sha"
 ~~~
 
-合計6ケースになる。専用configのHTML/JSON report、失敗時trace/videoと代表状態のスクリーンショットを証拠にする。起動したサーバーは実行担当が終了させる。新規workflow・job・依存は追加しない。既存CIのStatic checks and webジョブに、この専用fixtureのbuild/Playwright呼出しを追加した。flutter=trueで実行し、失敗はジョブを失敗させる。通常のbuild/webを上書きしない別出力先を使用する。CI担当が順番を確保した後に実行し、head SHA・結果・desktop/mobile画像を確認する必要がある。未実行のファイル追加をgate成功とは報告しない。
+合計6ケースになる。専用configのHTML/JSON report、失敗時trace/videoと代表状態のスクリーンショットを証拠にする。起動したサーバーは実行担当が終了させる。新規workflow・job・依存は追加しない。既存CIのStatic checks and webジョブに、この専用fixtureのbuild/Playwright呼出しを追加した。専用business_execution分類がtrueのとき実行し、失敗はジョブを失敗させる。通常のbuild/webを上書きしない別出力先を使用する。CI担当が順番を確保した後に実行し、head SHA・結果・desktop/mobile画像を確認する必要がある。未実行のファイル追加をgate成功とは報告しない。
 
-通常 `npm run e2e` はfixture specを自動収集しない。専用 `npm run e2e:business-execution` はBASE_URL未指定・非loopback・資格情報付きURLを設定読込時に拒否し、失敗をskipへ置換しない。専用configは通常configのtestIgnoreを明示的に解除し、この3ケースだけをdesktop/mobileで実行する。
+通常 `npm run e2e` はfixture specを自動収集しない。専用 `npm run e2e:business-execution` はE2E_BASE_URL未指定・非loopback・資格情報付きURL・fixture token未指定を設定読込時に拒否し、失敗をskipへ置換しない。専用configは通常configのtestIgnoreを明示的に解除し、この3ケースだけをdesktop/mobileで実行する。
 
-専用/通常Playwright configとnpm manifest/lockの変更もFlutter検査側に分類する。これによりテスト設定だけのPRでも専用E2Eを省略しない。web/deployableの分類は変えず、テスト設定変更を本番配信の理由にしない。classifier回帰テストを追加した。workflow配線を含め実行はまだ行っていない。
+専用/通常Playwright config・npm manifest/lock・ci.yml・分類器と専用サーバースクリプトの単独変更もbusiness_execution検査側に分類し、必要なFlutter準備を有効にする。これによりテスト設定だけのPRでも専用E2Eを省略しない。web/deployableの分類は変えず、テスト設定変更を本番配信の理由にしない。classifier回帰テストを追加した。workflow配線を含め実行はまだ行っていない。
+
+## サーバー識別とブラウザー通信境界
+
+固定ポートの事前探索は行わず、専用サーバーが127.0.0.1のport 0へbindして割り当てを保持する。bind後にPID・実port・ランダムnonce・チェックアウトSHAを新規readyファイルへ保存し、HTTP identity応答と完全一致すること、起動したPIDが検査前後に生存することを検証する。古いreadyファイル、別PID/別SHA/別nonce、identity応答のredirectは拒否する。サーバー起動失敗を他プロセスの200応答で補わない。正常・失敗いずれでも起動PIDだけを終了する。
+
+PlaywrightのBrowserContextに通信制限を設定し、両タブ・popup・frame・資産要求を同一fixture originに限定する。HTTPはredirectを追わず、3xxとidentity header不一致を拒否する。Service Workerは無効化し、不要なWebSocketも拒否。操作直前にも現在の最終URLを確認する。ブロックされた要求は記録し、テスト失敗にする。外部CDN例外は設けず、--no-web-resources-cdnでエンジンも同梱する。これにより初期URLだけloopbackでredirect後は本番という経路を許可しない。
+
+新しいserver helperのOS port割当・PID/nonce/SHA照合・stale ready拒否・redirect拒否の回帰を既存Python検査に追加した。専用分類は無関係なFlutterソース/テスト変更でfixture buildを増やさない。workflow_dispatchとdeployのworkflow_callは既存のforce-all契約を維持するため専用検査も実行し、その追加時間はクラウド実測待ち。元のジョブtimeoutは延長していない。必要チェックを省略して配信を早める変更はしていない。

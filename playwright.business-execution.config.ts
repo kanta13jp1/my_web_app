@@ -12,6 +12,10 @@ if (!['http:', 'https:'].includes(url.protocol) ||
   throw new Error('Business execution E2E only permits a loopback fixture.');
 }
 
+if (!/^[A-Za-z0-9_-]{40,64}$/.test(process.env.BUSINESS_EXECUTION_FIXTURE_TOKEN ?? '')) {
+  throw new Error('A verified business execution fixture token is required.');
+}
+
 export default defineConfig({
   ...base,
   testMatch: '**/business_execution.spec.ts',
@@ -29,6 +33,7 @@ export default defineConfig({
   use: {
     ...base.use,
     baseURL: url.origin,
+    serviceWorkers: 'block',
     trace: 'retain-on-failure',
   },
 });

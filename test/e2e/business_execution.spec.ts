@@ -1,8 +1,9 @@
-import { test, expect, type Locator, type Page } from '@playwright/test';
+import { test, expect, type BrowserContext, type Locator, type Page } from '@playwright/test';
 
 // Build test/fixtures/business_execution_app.dart and serve it on loopback.
 // Do not point these mutation scenarios at a deployment or a real user account.
 test.setTimeout(90_000);
+const blockedRequests = new WeakMap<BrowserContext, string[]>();
 
 const title = '相談申込数';
 const reflectionLabel = '月次の振り返り（続けること・変えること・次月の行動）';
@@ -22,13 +23,20 @@ function fixtureOrigin(): string {
   return url.origin;
 }
 
+function assertFixturePage(page: Page) {
+  expect(new URL(page.url()).origin, 'final page must remain on the fixture')
+    .toBe(fixtureOrigin());
+}
+
 // Scroll the Flutter view itself. Scrolling only a semantics DOM element does
 // not necessarily move the canvas hit target. Never use force-click or raw x/y
 // input to bypass a missing user-visible control.
 async function reveal(page: Page, target: Locator) {
+  assertFixturePage(page);
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('A fixed desktop/mobile viewport is required.');
   await page.mouse.move(viewport.width / 2, viewport.height / 2);
+  assertFixturePage(page);
   await page.mouse.wheel(0, -10000);
   await page.waitForTimeout(80);
   for (let step = 0; step < 32; step++) {
@@ -36,6 +44,7 @@ async function reveal(page: Page, target: Locator) {
       const box = await target.boundingBox();
       if (box && box.y >= 60 && box.y + box.height <= viewport.height - 8) return;
     }
+    assertFixturePage(page);
     await page.mouse.wheel(0, 250);
     // Wait only for each real scroll frame; assertions still have bounded waits.
     await page.waitForTimeout(80);
@@ -46,16 +55,22 @@ async function reveal(page: Page, target: Locator) {
 async function click(page: Page, label: string) {
   const target = button(page, label);
   await reveal(page, target);
+  assertFixturePage(page);
   await target.click();
+  assertFixturePage(page);
 }
 
 async function enter(page: Page, label: string, value: string) {
   const input = field(page, label);
   await reveal(page, input);
+  assertFixturePage(page);
   await input.focus();
   await expect(input).toBeFocused();
+  assertFixturePage(page);
   await input.press('ControlOrMeta+A');
+  assertFixturePage(page);
   await input.press('Backspace');
+  assertFixturePage(page);
   await input.pressSequentially(value);
   await expect(input).toHaveValue(value);
 }
@@ -63,22 +78,32 @@ async function enter(page: Page, label: string, value: string) {
 async function inputValue(page: Page, label: string, value: string) {
   const input = field(page, label);
   await reveal(page, input);
+  assertFixturePage(page);
   await input.focus();
   await expect(input).toHaveValue(value);
 }
 
 async function open(page: Page, monthEnd = false) {
   await page.goto(fixtureOrigin() + (monthEnd ? '/?monthEnd=1' : '/'));
+  assertFixturePage(page);
   await expect(
     page.getByText('架空データ検証：経営の実行記録', { exact: true }),
   ).toBeVisible({ timeout: 30_000 });
   await expect(button(page, '月の実行計画を作る')).toBeEnabled();
 }
 
+async function reload(page: Page) {
+  assertFixturePage(page);
+  await page.reload();
+  assertFixturePage(page);
+}
+
 async function openPlan(page: Page) {
   const plan = page.getByRole('button', { name: new RegExp('^' + title) });
   await reveal(page, plan);
+  assertFixturePage(page);
   await plan.click();
+  assertFixturePage(page);
   await expect(button(page, '計画一覧へ（未保存入力は破棄）')).toBeVisible();
 }
 
@@ -107,8 +132,53 @@ async function saveDay(page: Page, amount: string, note: string, update = false)
   ).toBeVisible();
 }
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, context }) => {
+  const origin = fixtureOrigin();
+  const token = process.env.BUSINESS_EXECUTION_FIXTURE_TOKEN;
+  if (!token) throw new Error('A verified fixture server token is required.');
+  const blocked: string[] = [];
+  blockedRequests.set(context, blocked);
+  // Context interception covers both tabs, popups, frames and assets.
+  // Fetch without following redirects; do not let a loopback redirect forward
+  // browser traffic to production. Every response must identify this server.
+  await context.route('**/*', async route => {
+    const requested = new URL(route.request().url());
+    if (requested.origin !== origin) {
+      blocked.push('Non-fixture request: ' + requested.origin);
+      await route.abort('blockedbyclient');
+      return;
+    }
+    const response = await route.fetch({ maxRedirects: 0, timeout: 10000 });
+    try {
+      if ((response.status() >= 300 && response.status() < 400) ||
+          response.headers()['x-business-execution-fixture'] !== token) {
+        blocked.push('Redirect or wrong fixture identity: ' + requested.pathname);
+        await route.abort('blockedbyclient');
+        return;
+      }
+      await route.fulfill({ response });
+    } finally {
+      await response.dispose();
+    }
+  });
+  // This fixture does not need any WebSocket connection.
+  await context.routeWebSocket('**/*', socket => {
+    blocked.push('Unexpected WebSocket connection');
+    socket.close();
+  });
   await open(page);
+});
+
+test.afterEach(async ({ context }, info) => {
+  const blocked = blockedRequests.get(context) ?? [];
+  if (blocked.length) {
+    await info.attach('blocked-fixture-requests', {
+      body: JSON.stringify(blocked, null, 2),
+      contentType: 'application/json',
+    });
+  }
+  expect(blocked, 'no external/redirected/unidentified traffic is permitted')
+    .toEqual([]);
 });
 
 test('monthly review restores a user-created plan and daily results after navigation',
@@ -144,7 +214,7 @@ test('blank actual is rejected while zero is saved and missing days remain visib
     await expect(
       page.getByText('実績は0〜10億で入力してください。', { exact: true }),
     ).toBeVisible();
-    await page.reload();
+    await reload(page);
     await expect(button(page, '月の実行計画を作る')).toBeEnabled();
     await openPlan(page);
     await expect(page.getByText('未入力: 2日（今日を含む対象日のみ）',
@@ -152,7 +222,7 @@ test('blank actual is rejected while zero is saved and missing days remain visib
     await inputValue(page, 'この日の行動実績（回）', '');
 
     await saveDay(page, '0', '今日は実行しなかった');
-    await page.reload();
+    await reload(page);
     await expect(button(page, '月の実行計画を作る')).toBeEnabled();
     await openPlan(page);
     await expect(page.getByText('未入力: 1日（今日を含む対象日のみ）',
@@ -205,7 +275,7 @@ test('two real tabs retain a stale draft and require confirmation before replaci
       await expect(second.getByText('月次の振り返りを保存して読み戻しました。',
         { exact: true })).toBeVisible();
 
-      await page.reload();
+      await reload(page);
       await expect(button(page, '月の実行計画を作る')).toBeEnabled();
       await openPlan(page);
       await inputValue(page, 'この日の行動実績（回）', '2');

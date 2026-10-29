@@ -36,6 +36,31 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "l10n.yaml",
         "firebase.json",
     ),
+    "business_execution": (
+        "lib/models/business_execution.dart",
+        "lib/pages/virtual_organization_page.dart",
+        "lib/services/business_execution*.dart",
+        "lib/view_models/business_execution_controller.dart",
+        "lib/widgets/business_execution*.dart",
+        "test/models/business_execution_test.dart",
+        "test/view_models/business_execution_controller_test.dart",
+        "test/widgets/business_execution_panel_test.dart",
+        "test/web/business_execution_lock_test.dart",
+        "test/e2e/business_execution.spec.ts",
+        "test/fixtures/business_execution_app.dart",
+        "playwright.config.ts",
+        "playwright.business-execution.config.ts",
+        "package.json",
+        "package-lock.json",
+        "pubspec.yaml",
+        "pubspec.lock",
+        "web/**",
+        ".github/workflows/ci.yml",
+        "scripts/classify_ci_changes.py",
+        "scripts/classify_ci_changes_test.py",
+        "scripts/serve_business_execution_fixture.py",
+        "scripts/serve_business_execution_fixture_test.py",
+    ),
     "edge": (
         "supabase/functions/**",
         "supabase/config.toml",
@@ -84,6 +109,8 @@ def classify(paths: list[str], force_all: bool = False) -> dict[str, bool]:
         )
         for group, patterns in GROUPS.items()
     }
+    # The fixture needs the existing SDK/dependency steps, but is not a release.
+    result["flutter"] = result["flutter"] or result["business_execution"]
     result["deployable"] = result["web"] or result["edge"] or result["migration"]
     return result
 
