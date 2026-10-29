@@ -34305,8 +34305,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 color: const Color(0xFF64748B),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              child: Wrap(
+                alignment: WrapAlignment.spaceAround,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 12,
+                runSpacing: 12,
                 children: [
                   Column(
                     children: [
