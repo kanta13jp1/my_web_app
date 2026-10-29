@@ -55,6 +55,46 @@ void main() {
     },
   );
 
+  test('flow projection preserves positive mentions beside explicit denials', () {
+    Map<String, dynamic> flow(String title, {int id = 333}) => {
+          'id': id,
+          'occurred_at': '2026-01-02T03:00:00Z',
+          'action_type': 'expense',
+          'description': title,
+          'amount': 1000,
+        };
+
+    Set<AssetReflectionKind> kinds(String title) =>
+        AssetCalendarReflection.fromFlows([flow(title)]).single.kinds;
+
+    expect(kinds('外食、飲酒なし'), {AssetReflectionKind.dining});
+    expect(kinds('外食、ビールを購入しなかった'), {
+      AssetReflectionKind.dining,
+    });
+    expect(kinds('外食、飲酒なし、ビールを飲んだ'), {
+      AssetReflectionKind.dining,
+      AssetReflectionKind.drinkingOut,
+    });
+    expect(kinds('外食、ビールは飲まずハイボールを飲んだ'), {
+      AssetReflectionKind.dining,
+      AssetReflectionKind.drinkingOut,
+    });
+    expect(kinds('外食、酒は買わずビールを飲んだ'), {
+      AssetReflectionKind.dining,
+      AssetReflectionKind.drinkingOut,
+    });
+    expect(AssetCalendarReflection.fromFlows([flow('酒購入しなかった')]), isEmpty);
+    expect(AssetCalendarReflection.fromFlows([flow('外食しなかった')]), isEmpty);
+
+    final events = AssetCalendarReflection.fromFlows([
+      flow('外食、飲酒なし', id: 333),
+      flow('外食 ビールを含む', id: 334),
+    ]);
+    expect(events.map((event) => event.sourceKey), ['flow:333', 'flow:334']);
+    expect(events.last.linkedFlowId, '334');
+    expect(events.last.kinds, contains(AssetReflectionKind.drinkingOut));
+  });
+
   test('unknown amounts remain null through roundtrip', () {
     final event = AssetCalendarReflection.fromJson(fixture());
     expect(event.verifiedAmount, isNull);
