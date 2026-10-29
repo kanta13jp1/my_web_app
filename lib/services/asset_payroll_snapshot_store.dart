@@ -123,6 +123,15 @@ bool payrollObservationMatchesDraft(
       row['confirmation_version'] == 'immediate-balance-v1';
 }
 
+/// A server-reported serialization failure means that RPC transaction rolled back.
+class PayrollSnapshotConflict implements Exception {
+  const PayrollSnapshotConflict();
+}
+
+/// Message text or a transport error alone cannot establish a rollback.
+bool isPayrollSnapshotDefiniteConflict(Object error) =>
+    error is PostgrestException && error.code == '40001';
+
 abstract class PayrollSnapshotStore {
   String get ownerId;
   Future<void> setTarget(String accountId, int? expected, int? next);
@@ -272,10 +281,18 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
         draft.reason.length > 300) {
       throw ArgumentError('確認資料メモと理由は1〜300文字です。');
     }
-    await client.rpc(
-      'confirm_payroll_balance_observation',
-      params: draft.toRpc(),
-    );
+    try {
+      await client.rpc(
+        'confirm_payroll_balance_observation',
+        params: draft.toRpc(),
+      );
+    } on PostgrestException catch (error) {
+      _checkOwner();
+      if (isPayrollSnapshotDefiniteConflict(error)) {
+        throw const PayrollSnapshotConflict();
+      }
+      rethrow;
+    }
     _checkOwner();
   }
 }
