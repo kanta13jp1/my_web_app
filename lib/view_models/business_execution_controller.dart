@@ -29,10 +29,8 @@ class BusinessExecutionController extends ChangeNotifier {
 
   Future<void> load() async {
     if (!_sameAccount || saving) return;
-    loading = true;
-    ready = false;
+    loading = !ready;
     error = null;
-    _plans = const [];
     notifyListeners();
     try {
       final raw = await store.read(userId);
@@ -66,6 +64,7 @@ class BusinessExecutionController extends ChangeNotifier {
       if (parseDay(day).isAfter(parseDay(dayKey(now())))) {
         throw const FormatException('未来日の実績は記録できません。');
       }
+      if (_plans.any((plan) => plan.id == id && plan.archived)) return false;
       return _save(
         _replace(id, (plan) => plan.withReport(day, report)),
       );
@@ -77,9 +76,19 @@ class BusinessExecutionController extends ChangeNotifier {
 
   Future<bool> reflect(String id, String reflection) async {
     try {
+      if (_plans.any((plan) => plan.id == id && plan.archived)) return false;
       return _save(
         _replace(id, (plan) => plan.withReflection(reflection)),
       );
+    } on FormatException catch (exception) {
+      _showError(exception.message);
+      return false;
+    }
+  }
+
+  Future<bool> setArchived(String id, bool archived) async {
+    try {
+      return _save(_replace(id, (plan) => plan.withArchived(archived)));
     } on FormatException catch (exception) {
       _showError(exception.message);
       return false;
@@ -116,6 +125,9 @@ class BusinessExecutionController extends ChangeNotifier {
       return true;
     } on FormatException catch (exception) {
       _showError(exception.message);
+      return false;
+    } on UnsupportedError {
+      _showError('この環境では安全に保存できません。Web Locksに対応したHTTPSブラウザーを利用してください。入力は残しています。');
       return false;
     } catch (_) {
       _showError(

@@ -28,6 +28,8 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
   late final BusinessExecutionController _controller;
   bool _creating = false;
   String? _selectedId;
+  bool _showArchived = false;
+  int _archivePage = 0;
 
   @override
   void initState() {
@@ -57,6 +59,11 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
         final selected = _controller.plans
             .where((plan) => plan.id == _selectedId)
             .firstOrNull;
+        final active = _controller.plans.where((plan) => !plan.archived).toList();
+        final archived = _controller.plans.where((plan) => plan.archived).toList();
+        final visible = _showArchived
+            ? archived.reversed.skip(_archivePage * 24).take(24)
+            : active.reversed;
         return Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
@@ -78,7 +85,7 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                   'このアカウントの記録は、このブラウザー・端末内だけに保存されます。'
                   '履歴やサイトデータの削除で失われます。共同編集・他端末との同期・'
                   '担当者への通知・AIによるタスク実行はありません。'
-                  '共用端末には機密情報を入力しないでください。編集は1つのタブで行ってください。',
+                  '共用端末には機密情報を入力しないでください。保存にはWeb Locksに対応したHTTPSブラウザーが必要です。',
                 ),
                 TextButton(
                   onPressed: () => Navigator.of(context).pushNamed('/life-goals'),
@@ -105,7 +112,7 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                       child: const Text('計画一覧へ（未保存入力は破棄）'),
                     ),
                     BusinessExecutionDetail(
-                      key: ValueKey(selected.id),
+                      key: ValueKey('${selected.id}:${selected.archived}'),
                       plan: selected,
                       controller: _controller,
                     ),
@@ -127,23 +134,49 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                   ] else ...[
                     const SizedBox(height: 12),
                     FilledButton.icon(
-                      onPressed: _controller.plans.length >=
-                              BusinessExecutionCodec.maxPlans
+                      onPressed: active.length >= BusinessExecutionCodec.maxPlans
                           ? null
                           : () => setState(() => _creating = true),
                       icon: const Icon(Icons.add),
                       label: const Text('月の実行計画を作る'),
                     ),
                     const Text(
-                      '1計画は同じ月の期間・1担当・1行動です。最大24計画まで。'
-                      '保存後の目標は固定し、実績と振り返りを更新できます。',
+                      '1計画は同じ月の期間・1担当・1行動です。実行中は24計画まで。'
+                      '保存後の目標は固定し、実績と振り返りを更新できます。'
+                      '終了した計画は履歴を残してアーカイブできます。'
+                      '履歴を含む1000件または保存容量の上限では追加保存を停止します。',
                     ),
                     if (_controller.plans.isEmpty)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 24),
                         child: Text('まだ計画がありません。解決したい課題から始めましょう。'),
                       ),
-                    for (final plan in _controller.plans.reversed)
+                    TextButton(
+                      onPressed: () => setState(() {
+                        _showArchived = !_showArchived;
+                        _archivePage = 0;
+                      }),
+                      child: Text(_showArchived ? '実行中の計画を表示' : 'アーカイブを表示'),
+                    ),
+                    if (_showArchived)
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          TextButton(
+                            onPressed: _archivePage == 0
+                                ? null
+                                : () => setState(() => _archivePage--),
+                            child: const Text('前の24件'),
+                          ),
+                          TextButton(
+                            onPressed: (_archivePage + 1) * 24 >= archived.length
+                                ? null
+                                : () => setState(() => _archivePage++),
+                            child: const Text('次の24件'),
+                          ),
+                        ],
+                      ),
+                    for (final plan in visible)
                       Card(
                         child: ListTile(
                           title: Text(plan.outcome),

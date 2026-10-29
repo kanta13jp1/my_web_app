@@ -194,6 +194,15 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
     _reflection.text = widget.plan.reflection;
   }
 
+  @override
+  void didUpdateWidget(covariant BusinessExecutionDetail oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_day == null) {
+      final dates = widget.plan.expectedDates(widget.controller.now());
+      if (dates.isNotEmpty) _selectDay(dates.last);
+    }
+  }
+
   void _selectDay(String day) {
     _day = day;
     final report = widget.plan.reports[day];
@@ -215,6 +224,7 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
   }
 
   Future<void> _saveReport() async {
+    if (_day == null) return;
     try {
       final outcomeText = _outcomeActual.text.trim();
       final report = BusinessDailyReport(
@@ -251,6 +261,7 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
     final missing = plan.missingDates(now);
     final outcome = plan.latestOutcome;
     final saving = widget.controller.saving;
+    final readOnly = plan.archived;
     final expired = dayKey(now).compareTo(plan.dueDate) > 0;
     final reports = plan.reports.entries.toList()
       ..sort((a, b) => b.key.compareTo(a.key));
@@ -259,6 +270,15 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(plan.outcome, style: Theme.of(context).textTheme.titleLarge),
+        TextButton(
+          onPressed: saving
+              ? null
+              : () => widget.controller.setArchived(plan.id, !plan.archived),
+          child: Text(
+            readOnly ? 'この計画を再開' : '履歴を残してアーカイブ（未保存入力は破棄）',
+          ),
+        ),
+        if (readOnly) const Text('アーカイブ済み・閲覧のみ'),
         Text('課題: ${plan.issue}'),
         Text('担当: ${plan.owner}'),
         Text('期間: ${plan.startDate}〜${plan.dueDate}'),
@@ -292,9 +312,9 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
         const Text('未入力は0として扱いません。行動をしなかった日は実績0を記録できます。'),
         const Divider(height: 32),
         Text('日次の実績', style: Theme.of(context).textTheme.titleMedium),
-        if (dates.isEmpty)
+        if (!readOnly && dates.isEmpty)
           const Text('計画の開始日を迎えると実績を入力できます。'),
-        if (dates.isNotEmpty) ...[
+        if (!readOnly && dates.isNotEmpty) ...[
           const Text('日付を切り替えると、この日の未保存入力は破棄されます。'),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
@@ -343,13 +363,16 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
             enabled: !saving,
           ),
           FilledButton(
-            onPressed: saving ? null : _saveReport,
+            onPressed: saving || _day == null ? null : _saveReport,
             child: Text(
               plan.reports.containsKey(_day) ? 'この日の記録を更新' : 'この日の記録を保存',
             ),
           ),
         ],
         const Divider(height: 32),
+        if (readOnly)
+          Text('月次の振り返り: ${plan.reflection}')
+        else ...[
         _field(
           _reflection,
           '月次の振り返り（続けること・変えること・次月の行動）',
@@ -361,6 +384,7 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
           onPressed: saving ? null : _saveReflection,
           child: const Text('月次の振り返りを保存'),
         ),
+        ],
         if (_message != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),

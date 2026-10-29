@@ -24,6 +24,11 @@ class MemoryExecutionStore implements BusinessExecutionStore {
   }
 }
 
+Future<void> testExecutionLock(
+  String name,
+  Future<void> Function() action,
+) => action();
+
 void main() {
   test('save readback, failure retention, retry and future-day rejection', () async {
     final store = MemoryExecutionStore();
@@ -104,7 +109,7 @@ void main() {
 
   test('device store separates accounts and refuses stale overwrite', () async {
     SharedPreferences.setMockInitialValues({});
-    const store = LocalBusinessExecutionStore();
+    const store = LocalBusinessExecutionStore(withLock: testExecutionLock);
     final raw = BusinessExecutionCodec.encode([fixtures.plan()]);
     await store.write('a', null, raw);
     expect(await store.read('a'), raw);
@@ -112,4 +117,25 @@ void main() {
     await expectLater(store.write('a', null, 'other'), throwsStateError);
     expect(await store.read('a'), raw);
   });
+  test('archive retains history and permits the next active plan', () async {
+    final store = MemoryExecutionStore()
+      ..data['a'] = BusinessExecutionCodec.encode(
+        List.generate(24, (index) => fixtures.plan(id: '$index')),
+      );
+    final controller = BusinessExecutionController(
+      userId: 'a',
+      currentUserId: () => 'a',
+      store: store,
+    );
+    addTearDown(controller.dispose);
+    await controller.load();
+    expect(await controller.add(fixtures.plan(id: 'next')), isFalse);
+    expect(await controller.setArchived('0', true), isTrue);
+    expect(await controller.add(fixtures.plan(id: 'next')), isTrue);
+    await controller.load();
+    expect(controller.plans.length, 25);
+    expect(controller.plans.first.archived, isTrue);
+    expect(await controller.setArchived('0', false), isFalse);
+  });
+
 }

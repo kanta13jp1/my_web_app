@@ -16,6 +16,7 @@ class BusinessExecutionPlan {
     required this.dueDate,
     Map<String, BusinessDailyReport> reports = const {},
     this.reflection = '',
+    this.archived = false,
   }) : reports = Map.unmodifiable(reports) {
     _text(id, 80);
     _text(issue, 500);
@@ -56,6 +57,7 @@ class BusinessExecutionPlan {
   final String dueDate;
   final Map<String, BusinessDailyReport> reports;
   final String reflection;
+  final bool archived;
 
   BusinessExecutionPlan withReport(String date, BusinessDailyReport report) =>
       _copy(reports: {...reports, date: report});
@@ -63,9 +65,12 @@ class BusinessExecutionPlan {
   BusinessExecutionPlan withReflection(String value) =>
       _copy(reflection: value.trim());
 
+  BusinessExecutionPlan withArchived(bool value) => _copy(archived: value);
+
   BusinessExecutionPlan _copy({
     Map<String, BusinessDailyReport>? reports,
     String? reflection,
+    bool? archived,
   }) =>
       BusinessExecutionPlan(
         id: id,
@@ -81,6 +86,7 @@ class BusinessExecutionPlan {
         dueDate: dueDate,
         reports: reports ?? this.reports,
         reflection: reflection ?? this.reflection,
+        archived: archived ?? this.archived,
       );
 
   List<String> expectedDates(DateTime now) {
@@ -124,6 +130,7 @@ class BusinessExecutionPlan {
         'dueDate': dueDate,
         'reports': reports.map((day, report) => MapEntry(day, report.toJson())),
         'reflection': reflection,
+        'archived': archived,
       };
 
   factory BusinessExecutionPlan.fromJson(Map<String, dynamic> json) =>
@@ -146,6 +153,7 @@ class BusinessExecutionPlan {
           ),
         ),
         reflection: json['reflection'] as String,
+        archived: json['archived'] as bool? ?? false,
       );
 }
 
@@ -251,9 +259,10 @@ class BusinessExecutionCodec {
   }
 
   static void _validate(List<BusinessExecutionPlan> plans) {
-    if (plans.length > maxPlans ||
+    if (plans.where((plan) => !plan.archived).length > maxPlans ||
+        plans.length > 1000 ||
         plans.map((plan) => plan.id).toSet().length != plans.length) {
-      throw const FormatException('計画は重複なしで24件まで保存できます。');
+      throw const FormatException('実行中は24件、アーカイブを含めて1000件まで保存できます。');
     }
   }
 }
