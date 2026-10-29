@@ -20675,7 +20675,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 Icon(Icons.view_timeline, color: Color(0xFF6366F1)),
                 SizedBox(width: 8),
                 Expanded(
-                  Text(
+                  child: Text(
                     '3ヶ月俯瞰（先月・今月・来月）',
                     style: TextStyle(
                       fontSize: 18,
@@ -21948,7 +21948,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 Icon(Icons.table_chart_outlined, color: Color(0xFF0F766E)),
                 SizedBox(width: 8),
                 Expanded(
-                  Text(
+                  child: Text(
                     '資産/負債 管理ボード',
                     style: TextStyle(
                       fontSize: 18,
@@ -26987,7 +26987,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               Icon(Icons.fact_check_outlined, color: Color(0xFF2563EB)),
               SizedBox(width: 8),
               Expanded(
-                Text(
+                child: Text(
                   'カード請求内訳レビュー',
                   style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
                 ),
@@ -34352,7 +34352,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           Icon(Icons.credit_card_off, color: Color(0xFF991B1B)),
                           SizedBox(width: 8),
                           Expanded(
-                            Text(
+                            child: Text(
                               '③固定費をすべて把握',
                               style: TextStyle(
                                 fontSize: 18,
@@ -34727,7 +34727,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 Icon(Icons.assignment_late, color: Color(0xFFFF6B35)),
                 SizedBox(width: 8),
                 Expanded(
-                  Text(
+                  child: Text(
                     '⑤今月の必須タスク',
                     style: TextStyle(
                       fontSize: 18,
