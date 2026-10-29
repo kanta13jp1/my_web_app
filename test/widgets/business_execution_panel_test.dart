@@ -251,4 +251,84 @@ void main() {
     expect(restored.reflection, '競合後にも残す月次');
   });
 
+  testWidgets('same-day and monthly remote changes require explicit overwrite',
+      (tester) async {
+    final original = fixtures.plan()
+        .withReport(
+          '2026-10-30',
+          BusinessDailyReport(actual: 1, note: '元の記録'),
+        )
+        .withReflection('元の月次');
+    final store = fakes.MemoryExecutionStore()
+      ..data['a'] = BusinessExecutionCodec.encode([original]);
+    await tester.pumpWidget(app(store));
+    await tester.pumpAndSettle();
+    await tapText(tester, '相談申込数');
+    await enter(tester, 'この日の行動実績（回）', '2');
+    await enter(tester, '日次の振り返り・次の一手', '手元の日次下書き');
+    await enter(
+      tester,
+      '月次の振り返り（続けること・変えること・次月の行動）',
+      '手元の月次下書き',
+    );
+    final remote = original
+        .withReport(
+          '2026-10-30',
+          BusinessDailyReport(actual: 3, note: '別タブの日次'),
+        )
+        .withReflection('別タブの月次');
+    store.data['a'] = BusinessExecutionCodec.encode([remote]);
+    await tapText(tester, 'この日の記録を更新');
+    await tapText(tester, '保存結果を再読み込み');
+    expect(
+      tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'この日の記録を更新'),
+      ).onPressed,
+      isNull,
+    );
+    expect(
+      tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, '月次の振り返りを保存'),
+      ).onPressed,
+      isNull,
+    );
+    expect(find.text('手元の日次下書き'), findsOneWidget);
+    expect(find.textContaining('最新の日次振り返り: 別タブの日次'), findsOneWidget);
+    expect(
+      BusinessExecutionCodec.decode(store.data['a'])
+          .single.reports['2026-10-30']!.actual,
+      3,
+    );
+    await tapText(tester, '最新記録を確認し、この日次入力で上書きする');
+    await tapText(tester, 'この日の記録を更新');
+    await tapText(tester, '最新記録を確認し、この月次入力で上書きする');
+    await tapText(tester, '月次の振り返りを保存');
+    final saved = BusinessExecutionCodec.decode(store.data['a']).single;
+    expect(saved.reports['2026-10-30']!.note, '手元の日次下書き');
+    expect(saved.reflection, '手元の月次下書き');
+  });
+
+  testWidgets('new plan draft survives insertion of a save-error notice',
+      (tester) async {
+    final store = fakes.MemoryExecutionStore()..failWrite = true;
+    await tester.pumpWidget(app(store));
+    await tester.pumpAndSettle();
+    await tapText(tester, '月の実行計画を作る');
+    await enter(tester, '解決したい課題', '作成中の課題を残す');
+    await enter(tester, '成果指標（KPI）例：月内の相談申込数', '相談申込数');
+    await enter(tester, '成果の単位 例：件', '件');
+    await enter(tester, '期間終了時の成果目標', '3');
+    await enter(tester, '行動指標（KDI）例：顧客へのヒアリング', 'ヒアリング');
+    await enter(tester, '行動の単位 例：回', '回');
+    await enter(tester, '1日あたりの行動目標', '2');
+    await tapText(tester, '計画を端末に保存');
+    expect(find.text('作成中の課題を残す'), findsOneWidget);
+    await tapText(tester, '保存結果を再読み込み');
+    expect(find.text('作成中の課題を残す'), findsOneWidget);
+    store.failWrite = false;
+    await tapText(tester, '計画を端末に保存');
+    expect(BusinessExecutionCodec.decode(store.data['a']).single.issue,
+        '作成中の課題を残す');
+  });
+
 }

@@ -120,6 +120,7 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                     ),
                   ] else if (_creating) ...[
                     BusinessExecutionPlanForm(
+                      key: const ValueKey('business-execution-plan-form'),
                       now: _controller.now(),
                       saving: _controller.saving || _controller.refreshing,
                       onSave: (plan) async {

@@ -185,6 +185,10 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
   final _reflection = TextEditingController();
   String? _day;
   String? _message;
+  BusinessDailyReport? _reportBaseline;
+  String _reflectionBaseline = '';
+  bool _reportConflict = false;
+  bool _reflectionConflict = false;
 
   @override
   void initState() {
@@ -192,6 +196,7 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
     final dates = widget.plan.expectedDates(widget.controller.now());
     if (dates.isNotEmpty) _selectDay(dates.last);
     _reflection.text = widget.plan.reflection;
+    _reflectionBaseline = widget.plan.reflection;
   }
 
   @override
@@ -200,12 +205,45 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
     if (_day == null) {
       final dates = widget.plan.expectedDates(widget.controller.now());
       if (dates.isNotEmpty) _selectDay(dates.last);
+    } else {
+      final latest = widget.plan.reports[_day];
+      if (!_sameReport(latest, _reportBaseline)) {
+        if (_reportDraftChanged) {
+          _reportConflict = true;
+        } else {
+          _selectDay(_day!);
+        }
+      }
+    }
+    if (widget.plan.reflection != _reflectionBaseline) {
+      if (_reflection.text.trim() != _reflectionBaseline) {
+        _reflectionConflict = true;
+      } else {
+        _reflection.text = widget.plan.reflection;
+        _reflectionBaseline = widget.plan.reflection;
+      }
     }
   }
+
+  bool get _reportDraftChanged =>
+      _actual.text.trim() !=
+          (_reportBaseline == null ? '' : _number(_reportBaseline!.actual)) ||
+      _outcomeActual.text.trim() !=
+          (_reportBaseline?.outcomeActual == null
+              ? ''
+              : _number(_reportBaseline!.outcomeActual!)) ||
+      _note.text.trim() != (_reportBaseline?.note ?? '');
+
+  bool _sameReport(BusinessDailyReport? a, BusinessDailyReport? b) =>
+      a?.actual == b?.actual &&
+      a?.outcomeActual == b?.outcomeActual &&
+      a?.note == b?.note;
 
   void _selectDay(String day) {
     _day = day;
     final report = widget.plan.reports[day];
+    _reportBaseline = report;
+    _reportConflict = false;
     _actual.text = report == null ? '' : _number(report.actual);
     _outcomeActual.text = report?.outcomeActual == null
         ? ''
@@ -224,7 +262,7 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
   }
 
   Future<void> _saveReport() async {
-    if (_day == null) return;
+    if (_day == null || _reportConflict) return;
     try {
       final outcomeText = _outcomeActual.text.trim();
       final report = BusinessDailyReport(
@@ -236,6 +274,10 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
       );
       final saved = await widget.controller.report(widget.plan.id, _day!, report);
       if (mounted) {
+        if (saved) {
+          _reportBaseline = report;
+          _reportConflict = false;
+        }
         setState(() => _message = saved ? '日次実績を保存して読み戻しました。' : null);
       }
     } on FormatException catch (error) {
@@ -244,11 +286,17 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
   }
 
   Future<void> _saveReflection() async {
+    if (_reflectionConflict) return;
+    final submitted = _reflection.text.trim();
     final saved = await widget.controller.reflect(
       widget.plan.id,
-      _reflection.text,
+      submitted,
     );
     if (mounted) {
+      if (saved) {
+        _reflectionBaseline = submitted;
+        _reflectionConflict = false;
+      }
       setState(() => _message = saved ? '月次の振り返りを保存して読み戻しました。' : null);
     }
   }
@@ -373,8 +421,30 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
             limit: 500,
             enabled: !saving,
           ),
+          if (_reportConflict) ...[
+            const Text(
+              '別タブでこの日の記録が変わりました。現在の入力は残しています。'
+              '下の最新記録と比較してから、上書きする入力を確認してください。',
+            ),
+            SelectableText(
+              '最新の行動実績: ${plan.reports[_day]?.actual ?? '未入力'}\n'
+              '最新の成果実績: ${plan.reports[_day]?.outcomeActual ?? '未入力'}\n'
+              '最新の日次振り返り: ${plan.reports[_day]?.note ?? ''}',
+            ),
+            TextButton(
+              onPressed: saving
+                  ? null
+                  : () => setState(() {
+                        _reportBaseline = plan.reports[_day];
+                        _reportConflict = false;
+                      }),
+              child: const Text('最新記録を確認し、この日次入力で上書きする'),
+            ),
+          ],
           FilledButton(
-            onPressed: saving || _day == null ? null : _saveReport,
+            onPressed: saving || _day == null || _reportConflict
+                ? null
+                : _saveReport,
             child: Text(
               plan.reports.containsKey(_day) ? 'この日の記録を更新' : 'この日の記録を保存',
             ),
@@ -391,8 +461,24 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail> {
           lines: 4,
           enabled: !saving,
         ),
+        if (_reflectionConflict) ...[
+          const Text(
+            '別タブで月次の振り返りが変わりました。現在の入力は残しています。'
+            '最新の文章と比較してから、上書きする入力を確認してください。',
+          ),
+          SelectableText('最新の月次振り返り: ${plan.reflection}'),
+          TextButton(
+            onPressed: saving
+                ? null
+                : () => setState(() {
+                      _reflectionBaseline = plan.reflection;
+                      _reflectionConflict = false;
+                    }),
+            child: const Text('最新記録を確認し、この月次入力で上書きする'),
+          ),
+        ],
         FilledButton.tonal(
-          onPressed: saving ? null : _saveReflection,
+          onPressed: saving || _reflectionConflict ? null : _saveReflection,
           child: const Text('月次の振り返りを保存'),
         ),
         ],
