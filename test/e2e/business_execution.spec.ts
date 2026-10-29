@@ -13,6 +13,17 @@ const button = (page: Page, name: string) =>
 const field = (page: Page, label: string) =>
   page.getByRole('textbox', { name: new RegExp('^' + label + '(?: |$)') });
 
+// Flutter merges adjacent Text widgets into a group's accessible name.
+// Match the complete expected message at whitespace boundaries in either
+// representation; never accept a different count or omit a message assertion.
+const textOutput = (page: Page, text: string) => {
+  const escaped = text.replace(/[.*+?^{}()|[\]\\$]/g, '\\$&');
+  const message = new RegExp('(?:^|\\s)' + escaped + '(?:\\s|$)');
+  return page.getByText(message)
+    .or(page.getByRole('group', { name: message }))
+    .first();
+};
+
 function fixtureOrigin(): string {
   const raw = process.env.E2E_BASE_URL;
   if (!raw) throw new Error('Set E2E_BASE_URL to the locally served browser fixture.');
@@ -64,14 +75,19 @@ async function enter(page: Page, label: string, value: string) {
   const input = field(page, label);
   await reveal(page, input);
   assertFixturePage(page);
-  await input.focus();
+  // Activate Flutter's text editing bridge with a real visible control click.
+  // A focused semantics input can hold a DOM-only value on mobile; check again
+  // after leaving and re-entering the field so that value is not our evidence.
+  await input.click();
   await expect(input).toBeFocused();
   assertFixturePage(page);
-  await input.press('ControlOrMeta+A');
+  await input.fill(value);
+  await expect(input).toHaveValue(value);
   assertFixturePage(page);
-  await input.press('Backspace');
+  await input.press('Tab');
   assertFixturePage(page);
-  await input.pressSequentially(value);
+  await input.click();
+  await expect(input).toBeFocused();
   await expect(input).toHaveValue(value);
 }
 
@@ -79,7 +95,8 @@ async function inputValue(page: Page, label: string, value: string) {
   const input = field(page, label);
   await reveal(page, input);
   assertFixturePage(page);
-  await input.focus();
+  await input.click();
+  await expect(input).toBeFocused();
   await expect(input).toHaveValue(value);
 }
 
@@ -117,9 +134,16 @@ async function createPlan(page: Page) {
   await enter(page, '行動の単位 例：回', '回');
   await enter(page, '1日あたりの行動目標', '2');
   await enter(page, '開始日 YYYY-MM-DD', '2026-10-29');
+  // Revisit the fields that appeared filled in DOM but were empty at submit
+  // in the mobile failure. Verify them before claiming plan creation.
+  await inputValue(page, '行動の単位 例：回', '回');
+  await inputValue(page, '1日あたりの行動目標', '2');
+  await inputValue(page, '開始日 YYYY-MM-DD', '2026-10-29');
   await click(page, '計画を端末に保存');
+  await expect(button(page, 'キャンセル（入力は破棄）')).toHaveCount(0);
+  await expect(button(page, '計画一覧へ（未保存入力は破棄）')).toBeVisible();
   await expect(
-    page.getByText('未入力: 2日（今日を含む対象日のみ）', { exact: true }),
+    textOutput(page, '未入力: 2日（今日を含む対象日のみ）'),
   ).toBeVisible();
 }
 
@@ -128,7 +152,7 @@ async function saveDay(page: Page, amount: string, note: string, update = false)
   await enter(page, '日次の振り返り・次の一手', note);
   await click(page, update ? 'この日の記録を更新' : 'この日の記録を保存');
   await expect(
-    page.getByText('日次実績を保存して読み戻しました。', { exact: true }),
+    textOutput(page, '日次実績を保存して読み戻しました。'),
   ).toBeVisible();
 }
 
@@ -189,20 +213,18 @@ test('monthly review restores a user-created plan and daily results after naviga
     await enter(page, reflectionLabel, '次月は紹介経路を試す');
     await click(page, '月次の振り返りを保存');
     await expect(
-      page.getByText('月次の振り返りを保存して読み戻しました。', { exact: true }),
+      textOutput(page, '月次の振り返りを保存して読み戻しました。'),
     ).toBeVisible();
 
     // Full page navigation destroys the Dart runtime and restores real storage.
     await open(page, true);
     await openPlan(page);
     await expect(
-      page.getByText('期間終了・月次の振り返り', { exact: true }),
+      textOutput(page, '期間終了・月次の振り返り'),
     ).toBeVisible();
-    await expect(page.getByText('2026-10-30: 2 回', { exact: true })).toBeVisible();
-    await expect(page.getByText('成果実績（2026-10-30時点）: 1 件 / 目標 3 件',
-      { exact: true })).toBeVisible();
-    await expect(page.getByText('未入力: 2日（今日を含む対象日のみ）',
-      { exact: true })).toBeVisible();
+    await expect(textOutput(page, '2026-10-30: 2 回')).toBeVisible();
+    await expect(textOutput(page, '成果実績（2026-10-30時点）: 1 件 / 目標 3 件')).toBeVisible();
+    await expect(textOutput(page, '未入力: 2日（今日を含む対象日のみ）')).toBeVisible();
     await inputValue(page, reflectionLabel, '次月は紹介経路を試す');
     await page.screenshot({ path: info.outputPath('monthly-restored.png') });
   });
@@ -212,23 +234,20 @@ test('blank actual is rejected while zero is saved and missing days remain visib
     await createPlan(page);
     await click(page, 'この日の記録を保存');
     await expect(
-      page.getByText('実績は0〜10億で入力してください。', { exact: true }),
+      textOutput(page, '実績は0〜10億で入力してください。'),
     ).toBeVisible();
     await reload(page);
     await expect(button(page, '月の実行計画を作る')).toBeEnabled();
     await openPlan(page);
-    await expect(page.getByText('未入力: 2日（今日を含む対象日のみ）',
-      { exact: true })).toBeVisible();
+    await expect(textOutput(page, '未入力: 2日（今日を含む対象日のみ）')).toBeVisible();
     await inputValue(page, 'この日の行動実績（回）', '');
 
     await saveDay(page, '0', '今日は実行しなかった');
     await reload(page);
     await expect(button(page, '月の実行計画を作る')).toBeEnabled();
     await openPlan(page);
-    await expect(page.getByText('未入力: 1日（今日を含む対象日のみ）',
-      { exact: true })).toBeVisible();
-    await expect(page.getByText('成果実績（KPI）は未入力です。',
-      { exact: true })).toBeVisible();
+    await expect(textOutput(page, '未入力: 1日（今日を含む対象日のみ）')).toBeVisible();
+    await expect(textOutput(page, '成果実績（KPI）は未入力です。')).toBeVisible();
     await inputValue(page, 'この日の行動実績（回）', '0');
     await inputValue(page, 'この日時点の成果実績（任意・件）', '');
     await page.screenshot({ path: info.outputPath('zero-is-not-missing.png') });
@@ -248,8 +267,7 @@ test('two real tabs retain a stale draft and require confirmation before replaci
       await saveDay(page, '1', 'タブAが先に保存した日次');
       await enter(page, reflectionLabel, 'タブAが先に保存した月次');
       await click(page, '月次の振り返りを保存');
-      await expect(page.getByText('月次の振り返りを保存して読み戻しました。',
-        { exact: true })).toBeVisible();
+      await expect(textOutput(page, '月次の振り返りを保存して読み戻しました。')).toBeVisible();
 
       // Both pages use real LocalBusinessExecutionStore and origin-wide locks.
       // No localStorage edits, injected records or mock transport are used.
@@ -260,20 +278,17 @@ test('two real tabs retain a stale draft and require confirmation before replaci
       await expect(button(second, '月次の振り返りを保存')).toBeDisabled();
       await inputValue(second, '日次の振り返り・次の一手', 'タブBの日次下書き');
       await inputValue(second, reflectionLabel, 'タブBの月次下書き');
-      await expect(second.getByText(/最新の日次振り返り: タブAが先に保存した日次/))
+      await expect(textOutput(second, '最新の日次振り返り: タブAが先に保存した日次'))
         .toBeVisible();
-      await expect(second.getByText('最新の月次振り返り: タブAが先に保存した月次',
-        { exact: true })).toBeVisible();
+      await expect(textOutput(second, '最新の月次振り返り: タブAが先に保存した月次')).toBeVisible();
       await second.screenshot({ path: info.outputPath('two-tab-conflict.png') });
 
       await click(second, '最新記録を確認し、この日次入力で上書きする');
       await click(second, 'この日の記録を更新');
-      await expect(second.getByText('日次実績を保存して読み戻しました。',
-        { exact: true })).toBeVisible();
+      await expect(textOutput(second, '日次実績を保存して読み戻しました。')).toBeVisible();
       await click(second, '最新記録を確認し、この月次入力で上書きする');
       await click(second, '月次の振り返りを保存');
-      await expect(second.getByText('月次の振り返りを保存して読み戻しました。',
-        { exact: true })).toBeVisible();
+      await expect(textOutput(second, '月次の振り返りを保存して読み戻しました。')).toBeVisible();
 
       await reload(page);
       await expect(button(page, '月の実行計画を作る')).toBeEnabled();
