@@ -396,55 +396,83 @@ test('blank actual is rejected while zero is saved and missing days remain visib
 
 test('two real tabs retain a stale draft and require confirmation before replacing saved work',
   async ({ page, context }, info) => {
-    await createPlan(page);
-    const second = await context.newPage();
+    // This two-tab flow has more bounded interactions than the single-tab cases.
+    test.setTimeout(180_000);
+    const timed = async <T>(stage: string, action: () => Promise<T>): Promise<T> => {
+      const started = performance.now();
+      let status = 'failed';
+      try {
+        const result = await action();
+        status = 'passed';
+        return result;
+      } finally {
+        await info.attach('fixture-timing-' + stage, {
+          body: JSON.stringify({ stage, elapsedMs: Math.round(performance.now() - started), status }),
+          contentType: 'application/json',
+        });
+      }
+    };
+    await timed('create-plan', () => createPlan(page));
+    const second = await timed('create-second-tab', () => context.newPage());
     try {
-      await open(second);
-      await openPlan(second);
-      await enter(second, 'この日の行動実績（回）', '2');
-      await enter(second, '日次の振り返り・次の一手', 'タブBの日次下書き');
-      await enter(second, reflectionLabel, 'タブBの月次下書き');
+      await timed('prepare-second-draft', async () => {
+        await open(second);
+        await openPlan(second);
+        await enter(second, 'この日の行動実績（回）', '2');
+        await enter(second, '日次の振り返り・次の一手', 'タブBの日次下書き');
+        await enter(second, reflectionLabel, 'タブBの月次下書き');
+      });
 
-      await saveDay(page, '1', 'タブAが先に保存した日次');
-      await enter(page, reflectionLabel, 'タブAが先に保存した月次');
-      await click(page, '月次の振り返りを保存');
-      await expect(textOutput(page, '月次の振り返りを保存して読み戻しました。')).toBeVisible();
+      await timed('save-first-tab', async () => {
+        await saveDay(page, '1', 'タブAが先に保存した日次');
+        await enter(page, reflectionLabel, 'タブAが先に保存した月次');
+        await click(page, '月次の振り返りを保存');
+        await expect(textOutput(page, '月次の振り返りを保存して読み戻しました。')).toBeVisible();
+      });
 
       // Both pages use real LocalBusinessExecutionStore and origin-wide locks.
       // No localStorage edits, injected records or mock transport are used.
-      await click(second, 'この日の記録を保存');
-      await expect(button(second, '保存結果を再読み込み')).toBeEnabled();
-      await click(second, '保存結果を再読み込み');
-      await reveal(second, button(second, 'この日の記録を更新'));
-      await expect(button(second, 'この日の記録を更新')).toBeDisabled();
-      await reveal(second, button(second, '月次の振り返りを保存'));
-      await expect(button(second, '月次の振り返りを保存')).toBeDisabled();
-      await inputValue(second, '日次の振り返り・次の一手', 'タブBの日次下書き');
-      await inputValue(second, reflectionLabel, 'タブBの月次下書き');
-      await expectVisibleLatest(
-        second,
-        '最新の日次振り返り: タブAが先に保存した日次',
-        info,
-        ['最新の行動実績: 1', '最新の成果実績: 未入力',
-          '最新の日次振り返り: タブAが先に保存した日次'].join('\n'),
-      );
-      await expectVisibleLatest(second, '最新の月次振り返り: タブAが先に保存した月次', info);
-      await second.screenshot({ path: info.outputPath('two-tab-conflict.png') });
+      await timed('stale-save-and-reload-control', async () => {
+        await click(second, 'この日の記録を保存');
+        await expect(button(second, '保存結果を再読み込み')).toBeEnabled();
+      });
+      await timed('inspect-conflicts', async () => {
+        await click(second, '保存結果を再読み込み');
+        await reveal(second, button(second, 'この日の記録を更新'));
+        await expect(button(second, 'この日の記録を更新')).toBeDisabled();
+        await reveal(second, button(second, '月次の振り返りを保存'));
+        await expect(button(second, '月次の振り返りを保存')).toBeDisabled();
+        await inputValue(second, '日次の振り返り・次の一手', 'タブBの日次下書き');
+        await inputValue(second, reflectionLabel, 'タブBの月次下書き');
+        await expectVisibleLatest(
+          second,
+          '最新の日次振り返り: タブAが先に保存した日次',
+          info,
+          ['最新の行動実績: 1', '最新の成果実績: 未入力',
+            '最新の日次振り返り: タブAが先に保存した日次'].join('\n'),
+        );
+        await expectVisibleLatest(second, '最新の月次振り返り: タブAが先に保存した月次', info);
+        await second.screenshot({ path: info.outputPath('two-tab-conflict.png') });
+      });
 
-      await click(second, '最新記録を確認し、この日次入力で上書きする');
-      await click(second, 'この日の記録を更新');
-      await expect(textOutput(second, '日次実績を保存して読み戻しました。')).toBeVisible();
-      await click(second, '最新記録を確認し、この月次入力で上書きする');
-      await click(second, '月次の振り返りを保存');
-      await expect(textOutput(second, '月次の振り返りを保存して読み戻しました。')).toBeVisible();
+      await timed('confirm-and-save', async () => {
+        await click(second, '最新記録を確認し、この日次入力で上書きする');
+        await click(second, 'この日の記録を更新');
+        await expect(textOutput(second, '日次実績を保存して読み戻しました。')).toBeVisible();
+        await click(second, '最新記録を確認し、この月次入力で上書きする');
+        await click(second, '月次の振り返りを保存');
+        await expect(textOutput(second, '月次の振り返りを保存して読み戻しました。')).toBeVisible();
+      });
 
-      await reload(page);
-      await expect(button(page, '月の実行計画を作る')).toBeEnabled();
-      await openPlan(page);
-      await inputValue(page, 'この日の行動実績（回）', '2');
-      await inputValue(page, '日次の振り返り・次の一手', 'タブBの日次下書き');
-      await inputValue(page, reflectionLabel, 'タブBの月次下書き');
-      await page.screenshot({ path: info.outputPath('two-tab-recovered.png') });
+      await timed('verify-reopened', async () => {
+        await reload(page);
+        await expect(button(page, '月の実行計画を作る')).toBeEnabled();
+        await openPlan(page);
+        await inputValue(page, 'この日の行動実績（回）', '2');
+        await inputValue(page, '日次の振り返り・次の一手', 'タブBの日次下書き');
+        await inputValue(page, reflectionLabel, 'タブBの月次下書き');
+        await page.screenshot({ path: info.outputPath('two-tab-recovered.png') });
+      });
     } finally {
       await second.close();
     }
