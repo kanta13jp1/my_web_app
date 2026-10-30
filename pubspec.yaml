@@ -15,7 +15,7 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   # Keep generated Mockito signatures compatible with the current client API.
-  supabase_flutter: 2.18.3
+  supabase_flutter: 2.14.2
   posthog_flutter: ^5.56.2
   crypto: ^3.0.7
   cupertino_icons: ^1.0.6
@@ -79,7 +79,7 @@ dev_dependencies:
   # 2.4.8 requires meta ^1.18.0, but Flutter 3.38/3.41 pins meta 1.17.0.
   flutter_native_splash: ">=2.4.7 <2.4.8"
 
-  supabase: 2.16.5
+  supabase: 2.12.2
   image_picker_platform_interface: 2.11.1
 
 flutter_launcher_icons:
