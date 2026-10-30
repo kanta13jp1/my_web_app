@@ -1,4 +1,4 @@
-import { test, expect, type BrowserContext, type Locator, type Page } from '@playwright/test';
+import { test, expect, type BrowserContext, type Locator, type Page, type TestInfo } from '@playwright/test';
 
 // Build test/fixtures/business_execution_app.dart and serve it on loopback.
 // Do not point these mutation scenarios at a deployment or a real user account.
@@ -152,6 +152,60 @@ async function savedDayVisible(page: Page, text: string) {
   await expect(output).toBeInViewport();
 }
 
+// SelectableText can appear as a disabled semantic text field instead of
+// a text node. Accept only a visible, exact line from its actual DOM value.
+// If neither representation exposes the value, retain a bounded diagnostic
+// from this synthetic fixture and fail rather than inferring a successful UI.
+async function expectVisibleLatest(page: Page, text: string, info: TestInfo) {
+  assertFixturePage(page);
+  await page.bringToFront();
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error('A fixed desktop/mobile viewport is required.');
+  const diagnostic: { step: number; tag: string; value: string }[] = [];
+  await page.mouse.move(viewport.width / 2, viewport.height / 2);
+  await page.mouse.wheel(0, -10000);
+  await afterFlutterFrames(page);
+  const inside = async (element: Locator) => {
+    if (!await element.isVisible()) return false;
+    const box = await element.boundingBox();
+    return !!box && box.x < viewport.width && box.x + box.width > 0 &&
+      box.y < viewport.height - 8 && box.y + box.height > 60;
+  };
+  for (let step = 0; step < 32; step++) {
+    assertFixturePage(page);
+    const output = textOutput(page, text);
+    if (await inside(output)) {
+      await expect(output).toBeVisible();
+      await expect(output).toBeInViewport();
+      return;
+    }
+    const candidates = page.locator(
+      'input[data-semantics-role="text-field"]:disabled, textarea[data-semantics-role="text-field"]:disabled',
+    );
+    const count = await candidates.count();
+    for (let i = 0; i < count; i++) {
+      const candidate = candidates.nth(i);
+      const value = await candidate.inputValue();
+      if (diagnostic.length < 64) {
+        const tag = await candidate.evaluate(element => element.tagName);
+        diagnostic.push({ step, tag, value: value.slice(0, 2000) });
+      }
+      if (value.split(/\r?\n/).includes(text) && await inside(candidate)) {
+        await expect(candidate).toBeVisible();
+        await expect(candidate).toBeInViewport();
+        return;
+      }
+    }
+    await page.mouse.wheel(0, 250);
+    await afterFlutterFrames(page);
+  }
+  await info.attach('selectable-latest-diagnostic', {
+    body: JSON.stringify({ expected: text, disabledFields: diagnostic }, null, 2),
+    contentType: 'application/json',
+  });
+  throw new Error('Could not verify the exact latest value in a visible UI element.');
+}
+
 async function open(page: Page, monthEnd = false) {
   await page.goto(fixtureOrigin() + (monthEnd ? '/?monthEnd=1' : '/'));
   assertFixturePage(page);
@@ -173,6 +227,7 @@ async function openPlan(page: Page) {
   assertFixturePage(page);
   await plan.click();
   assertFixturePage(page);
+  await reveal(page, button(page, '計画一覧へ（未保存入力は破棄）'));
   await expect(button(page, '計画一覧へ（未保存入力は破棄）')).toBeVisible();
 }
 
@@ -193,6 +248,7 @@ async function createPlan(page: Page) {
   await inputValue(page, '開始日 YYYY-MM-DD', '2026-10-29');
   await click(page, '計画を端末に保存');
   await expect(button(page, 'キャンセル（入力は破棄）')).toHaveCount(0);
+  await reveal(page, button(page, '計画一覧へ（未保存入力は破棄）'));
   await expect(button(page, '計画一覧へ（未保存入力は破棄）')).toBeVisible();
   // These static detail labels come from the saved/read-back plan, not from
   // any editable DOM value. They cover the fields lost in the mobile failure.
@@ -341,9 +397,8 @@ test('two real tabs retain a stale draft and require confirmation before replaci
       await expect(button(second, '月次の振り返りを保存')).toBeDisabled();
       await inputValue(second, '日次の振り返り・次の一手', 'タブBの日次下書き');
       await inputValue(second, reflectionLabel, 'タブBの月次下書き');
-      await expect(textOutput(second, '最新の日次振り返り: タブAが先に保存した日次'))
-        .toBeVisible();
-      await expect(textOutput(second, '最新の月次振り返り: タブAが先に保存した月次')).toBeVisible();
+      await expectVisibleLatest(second, '最新の日次振り返り: タブAが先に保存した日次', info);
+      await expectVisibleLatest(second, '最新の月次振り返り: タブAが先に保存した月次', info);
       await second.screenshot({ path: info.outputPath('two-tab-conflict.png') });
 
       await click(second, '最新記録を確認し、この日次入力で上書きする');
