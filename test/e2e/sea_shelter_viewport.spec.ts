@@ -32,7 +32,7 @@ test(
     for (let i = 0; i < 23; i++) await page.locator("#collect").click();
     await page.locator('.tabs [data-view="build"]').focus();
     await page.keyboard.press("Enter");
-    for (let i = 0; i < 4; i++) await page.keyboard.press("Tab");
+    for (let i = 0; i < 5; i++) await page.keyboard.press("Tab");
     await expect(page.locator('[data-kind="deck"]')).toBeFocused();
     await page.keyboard.press("Tab");
     await page.keyboard.press("Tab");
@@ -126,7 +126,7 @@ test(
       const cell = await page.locator("#board button").first().boundingBox();
       expect(cell!.width).toBeGreaterThanOrEqual(44);
       expect(cell!.height).toBeGreaterThanOrEqual(44);
-      for (const view of ["build", "residents", "quests", "farm"]) {
+      for (const view of ["build", "residents", "quests", "farm", "storage"]) {
         await page.locator(`.tabs [data-view="${view}"]`).click();
         await expect(page.locator(`[data-panel="${view}"]`)).toBeVisible();
         await expect(page.locator("#collect")).toBeInViewport();
