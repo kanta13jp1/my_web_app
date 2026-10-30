@@ -88,6 +88,22 @@ Future<void> scrollPanelAwayFromField(
   expect(find.widgetWithText(TextField, label).hitTestable(), findsNothing);
 }
 
+Future<void> revealPanelFieldByWheel(WidgetTester tester, String label) async {
+  final visibleField = find.widgetWithText(TextField, label).hitTestable();
+  await scrollPanelToTop(tester);
+  for (var i = 0; i < 60 && visibleField.evaluate().isEmpty; i++) {
+    final bounds = tester.getRect(find.byType(BusinessExecutionPanel));
+    await tester.sendEventToBinding(
+      PointerScrollEvent(
+        position: bounds.topLeft + const Offset(4, 4),
+        scrollDelta: const Offset(0, 250),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+  expect(visibleField, findsOneWidget);
+}
+
 Widget app(
   BusinessExecutionStore store, {
   String user = 'a',
@@ -517,13 +533,13 @@ void main() {
       expect(traversed, isNot(same(panelScope)));
       expect(traversed.enclosingScope, same(panelScope));
 
-      await reveal(tester, firstField);
+      await revealPanelFieldByWheel(tester, firstLabel);
       expect(
         tester.widget<TextField>(firstField).controller,
         same(firstController),
       );
       expect(firstController.text, 'スクロール前の未保存入力');
-      await reveal(tester, lastField);
+      await revealPanelFieldByWheel(tester, lastLabel);
       expect(
         tester.widget<TextField>(lastField).controller,
         same(lastController),
