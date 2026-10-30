@@ -20,7 +20,10 @@ void main() {
       await tester.pump();
       expect(find.text('入力全文はJSONとして読み取れます。'), findsOneWidget);
       expect(
-        tester.getSemantics(find.text('入力全文はJSONとして読み取れます。')).flagsCollection.isLiveRegion,
+        tester
+            .getSemantics(find.text('入力全文はJSONとして読み取れます。'))
+            .flagsCollection
+            .isLiveRegion,
         isTrue,
       );
     }
