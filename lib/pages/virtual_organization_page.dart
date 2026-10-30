@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/models/virtual_org_agent.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
+import 'package:my_web_app/widgets/business_execution_panel.dart';
 
 /// 仮想AI組織マネージャー
 /// 部署ごとに自分のAIエージェントを登録・一覧する。
@@ -133,18 +134,22 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
         icon: const Icon(Icons.person_add_alt_1),
         label: const Text('エージェント追加'),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-              ? _buildError()
-              : TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildDepartmentsTab(),
-                    _buildAgentsTab(),
-                    _buildTasksTab(),
-                  ],
-                ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage != null
+                  ? _buildError()
+                  : _buildDepartmentsTab(),
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage != null
+                  ? _buildError()
+                  : _buildAgentsTab(),
+          _buildTasksTab(),
+        ],
+      ),
     );
   }
 
@@ -264,32 +269,29 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
     );
   }
 
-  /// タスクの自動実行はサーバー側に実行系が無い (`agent.run` は記録を
-  /// 積むだけで、読み出す処理も実行する処理も存在しない)。入力を受けて
-  /// 捨てる UI は置かず、未提供であることをそのまま伝える。
+  /// Local execution records remain available when the organization API fails.
   Widget _buildTasksTab() {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.assignment, size: 48, color: Color(0xFF9CA3AF)),
-            SizedBox(height: 12),
-            Text(
-              'タスクの自動割り振りは未提供です',
-              style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+    return StreamBuilder<AuthState>(
+      stream: _supabase.auth.onAuthStateChange,
+      builder: (context, snapshot) {
+        final userId = _supabase.auth.currentUser?.id;
+        if (snapshot.hasError || userId == null) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Text(
+                '経営の実行記録を利用するにはログイン状態を確認してください。'
+                '\nAIによるタスクの自動実行は未提供です。',
+              ),
             ),
-            SizedBox(height: 8),
-            Text(
-              'エージェントにタスクを実行させる仕組みはまだありません。\n'
-              '現在は「エージェント」タブで組織の構成を登録・確認できます。',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
-            ),
-          ],
-        ),
-      ),
+          );
+        }
+        return BusinessExecutionPanel(
+          key: ValueKey(userId),
+          userId: userId,
+          currentUserId: () => _supabase.auth.currentUser?.id,
+        );
+      },
     );
   }
 
