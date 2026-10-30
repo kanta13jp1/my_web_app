@@ -135,7 +135,8 @@ Future<void> expectReadableLatest(WidgetTester tester, String value) async {
     matching: find.byType(EditableText),
   );
   expect(editable, findsOneWidget);
-  expect(tester.getSemantics(editable).hasAction(SemanticsAction.setSelection), isTrue);
+  expect(tester.getSemantics(editable).hasAction(SemanticsAction.setSelection),
+      isTrue);
 }
 
 void main() {
@@ -460,10 +461,13 @@ void main() {
   ) async {
     final semantics = tester.ensureSemantics();
     addTearDown(semantics.dispose);
-    final original = fixtures.plan().withReport(
-      '2026-10-30',
-      BusinessDailyReport(actual: 1, note: '元の日次'),
-    ).withReflection('元の月次');
+    final original = fixtures
+        .plan()
+        .withReport(
+          '2026-10-30',
+          BusinessDailyReport(actual: 1, note: '元の日次'),
+        )
+        .withReflection('元の月次');
     final store = fakes.MemoryExecutionStore()
       ..data['a'] = BusinessExecutionCodec.encode([original]);
     await tester.pumpWidget(app(store));
@@ -472,10 +476,12 @@ void main() {
     await enter(tester, 'この日の行動実績（回）', '2');
     await enter(tester, '日次の振り返り・次の一手', '手元の日次');
     await enter(tester, '月次の振り返り（続けること・変えること・次月の行動）', '手元の月次');
-    final remote = original.withReport(
-      '2026-10-30',
-      BusinessDailyReport(actual: 3, note: ''),
-    ).withReflection('');
+    final remote = original
+        .withReport(
+          '2026-10-30',
+          BusinessDailyReport(actual: 3, note: ''),
+        )
+        .withReflection('');
     store.data['a'] = BusinessExecutionCodec.encode([remote]);
     await tapText(tester, 'この日の記録を更新');
     await tapText(tester, '保存結果を再読み込み');
@@ -495,10 +501,13 @@ void main() {
   ) async {
     final semantics = tester.ensureSemantics();
     addTearDown(semantics.dispose);
-    final original = fixtures.plan().withReport(
-      '2026-10-30',
-      BusinessDailyReport(actual: 1, note: '元の日次'),
-    ).withReflection('元の月次');
+    final original = fixtures
+        .plan()
+        .withReport(
+          '2026-10-30',
+          BusinessDailyReport(actual: 1, note: '元の日次'),
+        )
+        .withReflection('元の月次');
     final bPayload = fixtures.plan(id: 'b-plan').toJson()
       ..['outcome'] = 'B専用の成果指標';
     final bPlan = BusinessExecutionPlan.fromJson(bPayload);
@@ -511,10 +520,12 @@ void main() {
     await enter(tester, 'この日の行動実績（回）', '2');
     await enter(tester, '日次の振り返り・次の一手', '手元の下書き');
     await enter(tester, '月次の振り返り（続けること・変えること・次月の行動）', '手元の月次');
-    final remote = original.withReport(
-      '2026-10-30',
-      BusinessDailyReport(actual: 3, note: '旧アカウントの最新日次'),
-    ).withReflection('旧アカウントの最新月次');
+    final remote = original
+        .withReport(
+          '2026-10-30',
+          BusinessDailyReport(actual: 3, note: '旧アカウントの最新日次'),
+        )
+        .withReflection('旧アカウントの最新月次');
     store.data['a'] = BusinessExecutionCodec.encode([remote]);
     await tapText(tester, 'この日の記録を更新');
     await tapText(tester, '保存結果を再読み込み');
