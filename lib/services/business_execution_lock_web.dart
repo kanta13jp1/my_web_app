@@ -40,7 +40,8 @@ Future<void> withBusinessExecutionLock(
   await manager.request(name.toJS, callback).toDart;
   final failure = actionFailure;
   if (failure != null) {
-    Error.throwWithStackTrace(failure.$1, failure.$2);
+    final (error, stackTrace) = failure;
+    Error.throwWithStackTrace(error, stackTrace);
   }
   if (!actionCompleted) {
     throw StateError('排他ロック内の保存処理が完了しませんでした。');
