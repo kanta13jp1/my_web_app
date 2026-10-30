@@ -548,7 +548,8 @@ void main() {
       await tester.pumpWidget(app(store, user: 'b'));
       await tester.pumpAndSettle();
       expect(find.bySemanticsLabel(oldDay, skipOffstage: false), findsNothing);
-      expect(find.bySemanticsLabel(oldMonth, skipOffstage: false), findsNothing);
+      expect(
+          find.bySemanticsLabel(oldMonth, skipOffstage: false), findsNothing);
       expect(find.text(oldDay, skipOffstage: false), findsNothing);
       expect(find.text(oldMonth, skipOffstage: false), findsNothing);
       expect(find.text('手元の下書き', skipOffstage: false), findsNothing);
@@ -560,7 +561,8 @@ void main() {
       await reveal(tester, find.text('B専用の成果指標'));
       expect(find.text('B専用の成果指標'), findsOneWidget);
       expect(find.bySemanticsLabel(RegExp('B専用の成果指標')), findsWidgets);
-      expect(BusinessExecutionCodec.decode(store.data['b']).single.id, 'b-plan');
+      expect(
+          BusinessExecutionCodec.decode(store.data['b']).single.id, 'b-plan');
     } finally {
       semantics.dispose();
     }
