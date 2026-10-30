@@ -1,5 +1,5 @@
-name: Approved PR5924 Web Release
-run-name: PR5924 release operation ${{ inputs.operation_id }}
+name: Approved PR5931 Web Release
+run-name: PR5931 release operation ${{ inputs.operation_id }}
 
 on:
   pull_request:
@@ -51,7 +51,7 @@ on:
         required: true
         type: string
       approved_release:
-        description: Explicit owner approved PR5924-only release
+        description: Explicit owner approved PR5931-only release
         required: true
         default: false
         type: boolean
@@ -149,22 +149,22 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='25b07d270cf1874149561630cebea3d9a8c0efed', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='ce9a312062342073ac2be148b5fb3baa2cc7ea02', 'Production changed; rebuild selection'
           PY
 
-      - name: Verify approved PR5924-only selection
+      - name: Verify approved PR5931-only selection
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          test "$(gh pr view 5924 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
-          test "$(gh pr view 5924 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 0173d92631df978b0ca7049435acfc34cdfc7fa6
-          git fetch --no-tags --depth=1 origin 25b07d270cf1874149561630cebea3d9a8c0efed
+          test "$(gh pr view 5931 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
+          test "$(gh pr view 5931 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 8840314d47bce63c1826d7ae70a18032d2ba97a1
+          git fetch --no-tags --depth=1 origin ce9a312062342073ac2be148b5fb3baa2cc7ea02
           python3 - <<'PY'
           import subprocess
-          expected=set(["integration_test/asset_ai_current_input_scenarios.dart","integration_test/asset_management_ai_current_input_test.dart","lib/pages/asset_management_page.dart","lib/widgets/asset_cashflow_forecast_card.dart","lib/widgets/asset_cashflow_statement_card.dart","lib/widgets/asset_net_worth_panel_card.dart","lib/widgets/asset_reflection_day_badge.dart","lib/widgets/asset_unreconciled_expense_badge.dart","test/services/asset_management_available_money_test.dart","test/widgets/asset_calendar_badge_text_scale_test.dart",".github/workflows/cloud-development.yml"])
-          actual=set(subprocess.check_output(['git','diff','--name-only','25b07d270cf1874149561630cebea3d9a8c0efed','HEAD']).decode().splitlines())
+          expected=set(["docs/BUSINESS_EXECUTION_LOCAL_TRIAL.md","lib/models/business_execution.dart","lib/pages/virtual_organization_page.dart","lib/services/business_execution_lock.dart","lib/services/business_execution_lock_stub.dart","lib/services/business_execution_lock_web.dart","lib/services/business_execution_store.dart","lib/view_models/business_execution_controller.dart","lib/widgets/business_execution_forms.dart","lib/widgets/business_execution_panel.dart","package.json","playwright.business-execution.config.ts","playwright.config.ts","scripts/ci_job_summary.py","scripts/ci_job_summary_test.py","scripts/classify_ci_changes.py","scripts/classify_ci_changes_test.py","scripts/serve_business_execution_fixture.py","scripts/serve_business_execution_fixture_test.py","test/e2e/business_execution.spec.ts","test/fixtures/business_execution_app.dart","test/models/business_execution_test.dart","test/view_models/business_execution_controller_test.dart","test/web/business_execution_lock_test.dart","test/widgets/business_execution_panel_test.dart","web/assets/fonts/NotoSans-OFL.txt",".github/workflows/ci.yml",".github/workflows/cloud-development.yml"])
+          actual=set(subprocess.check_output(['git','diff','--name-only','ce9a312062342073ac2be148b5fb3baa2cc7ea02','HEAD']).decode().splitlines())
           assert actual==expected,(actual,expected)
-          expected_blobs={"integration_test/asset_ai_current_input_scenarios.dart":"6079a21ef7f6f7be72bbec28a4ba83355c464ae0","integration_test/asset_management_ai_current_input_test.dart":"a6ff05ce99ddcc1be5fb21c6af27f0305aa24622","lib/pages/asset_management_page.dart":"9287bb20b594c011e8b85134f50a54e9be4544c5","lib/widgets/asset_cashflow_forecast_card.dart":"9cbb60e936963e2cb861229e362763bf466e86a2","lib/widgets/asset_cashflow_statement_card.dart":"3921da89316a3e2c13e91c6b2da798db611f4e4c","lib/widgets/asset_net_worth_panel_card.dart":"c4361a425202eafaff69e115fb7af12225592fb7","lib/widgets/asset_reflection_day_badge.dart":"8965209404a9e6d4acfc61087f814aa636a4d139","lib/widgets/asset_unreconciled_expense_badge.dart":"1121e0780827938713ea95737dbd62ea576ed988","test/services/asset_management_available_money_test.dart":"68aa87cd6f358d23a3846437812cb0a07620293d","test/widgets/asset_calendar_badge_text_scale_test.dart":"31cad27fcf239d5be2e04d63faba1cf1d19fc00a"}
+          expected_blobs={"docs/BUSINESS_EXECUTION_LOCAL_TRIAL.md":"7f86b89d16aa2243e6336166e2cf4b4c3da57bdb","lib/models/business_execution.dart":"ea82db94a85e752ba3251850e1af2f1c6114fd33","lib/pages/virtual_organization_page.dart":"842fbe8ab6ac67b1e0cfdeaf686fe3f3121db4a9","lib/services/business_execution_lock.dart":"b128213e98f8c65b654980997f05caf4c2287b0b","lib/services/business_execution_lock_stub.dart":"6ca5b91a0fb96ef8ce6ecfccf0c0f22f64b3abbc","lib/services/business_execution_lock_web.dart":"c789c2eaa585cdf66b97568d6040076d3f76c4b0","lib/services/business_execution_store.dart":"6270df585a17c7332830584a0fbe8b3617dc9a50","lib/view_models/business_execution_controller.dart":"d0d26a3c70305d24874b331f32b67e2810b48341","lib/widgets/business_execution_forms.dart":"dc515ecf05e681667a808c3a07407427f83fe0fe","lib/widgets/business_execution_panel.dart":"91ce8dcfa33c43d320ea0e42d526d67050c146fd","package.json":"033b625fe3757378dada75829e7acb7ed47f253a","playwright.business-execution.config.ts":"cecbb27fcfb34c1ab8d71a0dbd4fbc18b1b4e54f","playwright.config.ts":"3e31f12b4c0ce906eea8c0edd92d24499af6d8a8","scripts/ci_job_summary.py":"e756105fcb8766cd94b7ce5756946eeec82b3c0b","scripts/ci_job_summary_test.py":"adce963907c5c03d1dcec7ffe2c9a5874ee45332","scripts/classify_ci_changes.py":"57312f59e1e283b4d1358971023a6a0cc58e0bb4","scripts/classify_ci_changes_test.py":"68a68256322269dad88cfc0858cc6f2b7d85c0eb","scripts/serve_business_execution_fixture.py":"fe17b056abdb93092d81a6d1eb3e2b1fb4c39071","scripts/serve_business_execution_fixture_test.py":"de278dcf6e5d288ddc8165baf71d8a7b9f6fdbd3","test/e2e/business_execution.spec.ts":"9ae4c802a3e67fd43ddba944710998c2b2ffdbb5","test/fixtures/business_execution_app.dart":"a4b8b426462ed5f338fab8f8b2b545d74ebfb6fb","test/models/business_execution_test.dart":"4d2c857e3919f881d0cb0d9d0ad06dd7896f521c","test/view_models/business_execution_controller_test.dart":"397c67e01de5041fd9faa82d364232981c92ab4f","test/web/business_execution_lock_test.dart":"528d57e43d7b6c2fcc6c534c0dfa1fed5e38bcc4","test/widgets/business_execution_panel_test.dart":"0cca60f47db6e3998b3dc2bf9db5f7a47d2503db","web/assets/fonts/NotoSans-OFL.txt":"c41e63c5c590e12f9b557120ad76818481c24907",".github/workflows/ci.yml":"00ca6f2391a6fadc5317ac1c05ec11e01ce3de1c"}
           for path, expected_blob in expected_blobs.items():
               blob=subprocess.check_output(['git','rev-parse','HEAD:'+path]).decode().strip()
               assert blob==expected_blob,(path,blob)
@@ -680,7 +680,7 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='25b07d270cf1874149561630cebea3d9a8c0efed', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='ce9a312062342073ac2be148b5fb3baa2cc7ea02', 'Production changed; rebuild selection'
           PY
 
       - name: Collect pushed files
@@ -700,7 +700,7 @@ jobs:
           mkdir -p .deploy-logs
           python3 - <<'PY'
           from pathlib import Path
-          Path('.deploy-logs/changed-files.txt').write_text("integration_test/asset_ai_current_input_scenarios.dart\nintegration_test/asset_management_ai_current_input_test.dart\nlib/pages/asset_management_page.dart\nlib/widgets/asset_cashflow_forecast_card.dart\nlib/widgets/asset_cashflow_statement_card.dart\nlib/widgets/asset_net_worth_panel_card.dart\nlib/widgets/asset_reflection_day_badge.dart\nlib/widgets/asset_unreconciled_expense_badge.dart\ntest/services/asset_management_available_money_test.dart\ntest/widgets/asset_calendar_badge_text_scale_test.dart\n")
+          Path('.deploy-logs/changed-files.txt').write_text("docs/BUSINESS_EXECUTION_LOCAL_TRIAL.md\nlib/models/business_execution.dart\nlib/pages/virtual_organization_page.dart\nlib/services/business_execution_lock.dart\nlib/services/business_execution_lock_stub.dart\nlib/services/business_execution_lock_web.dart\nlib/services/business_execution_store.dart\nlib/view_models/business_execution_controller.dart\nlib/widgets/business_execution_forms.dart\nlib/widgets/business_execution_panel.dart\npackage.json\nplaywright.business-execution.config.ts\nplaywright.config.ts\nscripts/ci_job_summary.py\nscripts/ci_job_summary_test.py\nscripts/classify_ci_changes.py\nscripts/classify_ci_changes_test.py\nscripts/serve_business_execution_fixture.py\nscripts/serve_business_execution_fixture_test.py\ntest/e2e/business_execution.spec.ts\ntest/fixtures/business_execution_app.dart\ntest/models/business_execution_test.dart\ntest/view_models/business_execution_controller_test.dart\ntest/web/business_execution_lock_test.dart\ntest/widgets/business_execution_panel_test.dart\nweb/assets/fonts/NotoSans-OFL.txt\n.github/workflows/ci.yml\n")
           PY
 
       - name: Reject mixed public-blog deployments
@@ -1395,7 +1395,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         env:
           FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-          EXPECTED_PUBLIC_BASE: 25b07d270cf1874149561630cebea3d9a8c0efed
+          EXPECTED_PUBLIC_BASE: ce9a312062342073ac2be148b5fb3baa2cc7ea02
         run: |
           python3 -m venv /tmp/echo-release-tools
           /tmp/echo-release-tools/bin/pip install google-auth==2.43.0 requests==2.32.5
@@ -1427,7 +1427,7 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          EXPECTED_PUBLIC_BASE=25b07d270cf1874149561630cebea3d9a8c0efed /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
+          EXPECTED_PUBLIC_BASE=ce9a312062342073ac2be148b5fb3baa2cc7ea02 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
 
           if npx -y firebase-tools@15.34.0 deploy \
             --only hosting \
