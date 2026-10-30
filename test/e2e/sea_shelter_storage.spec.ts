@@ -184,6 +184,58 @@ test(
       path: info.outputPath("capacity-320-568.png"),
       fullPage: true,
     });
+    // Combine the narrowest viewport, expanded capacities and enlarged text.
+    // Extra page height is allowed for legibility; overlapping values are not.
+    await page.addStyleTag({ content: ":root { font-size: 24px; }" });
+    const stockMetrics = await page.locator(".resources > div").evaluateAll((
+      els,
+    ) =>
+      els.map((el) => {
+        const cell = el.getBoundingClientRect();
+        const value = el.querySelector("strong")!;
+        const box = value.getBoundingClientRect();
+        return {
+          x: cell.x,
+          y: cell.y,
+          right: cell.right,
+          bottom: cell.bottom,
+          width: value.clientWidth,
+          content: value.scrollWidth,
+          valueX: box.x,
+          valueRight: box.right,
+          font: parseFloat(getComputedStyle(value).fontSize),
+        };
+      })
+    );
+    for (const metric of stockMetrics) {
+      expect(metric.content).toBeLessThanOrEqual(metric.width);
+      expect(metric.valueX).toBeGreaterThanOrEqual(metric.x);
+      expect(metric.valueRight).toBeLessThanOrEqual(metric.right);
+      expect(metric.font).toBeGreaterThanOrEqual(20);
+    }
+    expect(new Set(stockMetrics.map((m) => m.y)).size).toBeGreaterThan(1);
+    for (let i = 0; i < stockMetrics.length; i++) {
+      for (const other of stockMetrics.slice(i + 1)) {
+        const cell = stockMetrics[i];
+        expect(
+          cell.right <= other.x || other.right <= cell.x ||
+            cell.bottom <= other.y || other.bottom <= cell.y,
+        ).toBe(true);
+      }
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth))
+      .toBeLessThanOrEqual(320);
+    await page.locator("#storage-farm").scrollIntoViewIfNeeded();
+    await page.locator("#storage-farm").click();
+    await expect(page.locator("#donate-food")).toBeFocused();
+    await page.locator("#donate-food").click();
+    await expect(page.locator("#food")).toHaveText("199996");
+    await expect(page.locator('[data-panel="storage"]')).toBeVisible();
+    await page.locator("#collect").scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: info.outputPath("capacity-320-568-large-text.png"),
+      fullPage: true,
+    });
   },
 );
 
