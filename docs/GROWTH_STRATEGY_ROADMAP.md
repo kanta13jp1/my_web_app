@@ -67453,3 +67453,8 @@ Persist capped device-local failure clusters and extend search/collision foresig
 ## 2026-10-18 Hosting通信量の削減（PR5861）
 
 同梱日本語フォントのCSS preloadとCanvasKit Fetchの二重転送を除去。フォント本体/文字/SEO描画安定化は維持。クラウドの日本語環境でPC各3回/mobile各1回の初回・離脱後再訪問を比較し、Hosting転送量はPC中央値で初回23.019→15.083MB（34.48%減）、再訪19.558→11.622MB（40.58%減）。16サンプルで正常描画・日本語フォントFetch維持・重複取得除去を確認。マージ/本番反映は未実施。条件と限界はdocs/HOSTING_TRANSFER_MEASUREMENT.mdを参照。
+
+
+## 2026-10-30 海上拠点ゲーム試作
+
+「潮灯のシェルター」をweb/labsとFlutterの/sea-shelter、ホーム一覧へ追加。回収・隣接建設・住民依頼3件・EXP解放・プロフィール・端末内保存を実装。独立worktreeで既存作業を保護。モデル8件と通常/狭幅UI6件成功。ユーザーの公開許可に従いPRの必須CIと通常AIレビューを通してmain・本番へ進める。現時点のCI/公開結果はPRを参照。課金・認証・金融データ・DB権限の変更なし。詳細はdocs/SEA_SHELTER_PROTOTYPE.md。
