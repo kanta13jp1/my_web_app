@@ -401,19 +401,29 @@ test('two real tabs retain a stale draft and require confirmation before replaci
     const timed = async <T>(stage: string, action: () => Promise<T>): Promise<T> => {
       const started = performance.now();
       let status = 'failed';
+      let actionFailed = false;
       try {
         const result = await action();
         status = 'passed';
         return result;
+      } catch (error) {
+        actionFailed = true;
+        throw error;
       } finally {
-        await info.attach('fixture-timing-' + stage, {
-          body: JSON.stringify({ stage, elapsedMs: Math.round(performance.now() - started), status }),
-          contentType: 'application/json',
-        });
+        try {
+          await info.attach('fixture-timing-' + stage, {
+            body: JSON.stringify({ stage, elapsedMs: Math.round(performance.now() - started), status }),
+            contentType: 'application/json',
+          });
+        } catch (attachmentError) {
+          if (!actionFailed) throw attachmentError;
+          console.error('Fixture timing attachment failed; original test failure preserved.');
+        }
       }
     };
     await timed('create-plan', () => createPlan(page));
     const second = await timed('create-second-tab', () => context.newPage());
+    let flowFailed = false;
     try {
       await timed('prepare-second-draft', async () => {
         await open(second);
@@ -473,8 +483,16 @@ test('two real tabs retain a stale draft and require confirmation before replaci
         await inputValue(page, reflectionLabel, 'タブBの月次下書き');
         await page.screenshot({ path: info.outputPath('two-tab-recovered.png') });
       });
+    } catch (error) {
+      flowFailed = true;
+      throw error;
     } finally {
-      await second.close();
+      try {
+        await second.close();
+      } catch (closeError) {
+        if (!flowFailed) throw closeError;
+        console.error('Fixture second-tab cleanup failed; original test failure preserved.');
+      }
     }
   });
 
