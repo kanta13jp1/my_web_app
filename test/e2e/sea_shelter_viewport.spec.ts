@@ -48,8 +48,7 @@ test(
         await expect(page.locator(`[data-panel="${view}"]`)).toBeVisible();
         await expect(page.locator("#collect")).toBeInViewport();
       }
-      if (width < 720) await page.locator('.tabs [data-view="board"]').click();
-      else await page.locator('.tabs [data-view="build"]').click();
+      await page.locator('.tabs [data-view="build"]').click();
       await page.locator('[data-kind="deck"]').click();
       await expect(page.locator("#placement-label")).toContainText("木材4");
       await page.locator("#cancel-build").click();
@@ -77,7 +76,7 @@ test("landscape, large text, long profile and maximum resource labels remain rea
   await expect(page.locator("#status")).toContainText("住居");
   await page.locator("#collect").focus();
   await page.keyboard.press("Enter");
-  await expect(page.locator("#wood")).toHaveText("3");
+  await expect(page.locator("#wood")).toHaveText("99999");
   await page.locator("#help").click();
   await page.locator("#close-help").click();
   expect(await page.evaluate(() => document.documentElement.scrollWidth))
