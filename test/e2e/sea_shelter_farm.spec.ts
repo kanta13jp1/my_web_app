@@ -56,6 +56,19 @@ test("clock reversal pauses growth and reset cancels or clears the crop", async 
   await page.getByRole("button", { name: "収穫する", exact: true }).click();
   await expect(page.locator("#status")).toContainText("時計を確認");
   await expect(page.locator("#food")).toHaveText("0");
+  const protectedWood = await page.locator("#wood").textContent();
+  await page.evaluate(() => {
+    const key = "my_web_app.sea_shelter.v1";
+    const saved = JSON.parse(localStorage.getItem(key)!);
+    saved.farm.food = -1;
+    localStorage.setItem(key, JSON.stringify(saved));
+  });
+  await page.reload();
+  await expect(page.locator("#status")).toContainText("農園だけを初期化");
+  await expect(page.locator("#wood")).toHaveText(protectedWood!);
+  await page.locator('.tabs [data-view="farm"]').click();
+  await expect(page.locator("#crops")).toContainText("種まきできます");
+  await page.getByRole("button", { name: "種をまく 木材2" }).click();
   if (!(await page.locator("#help-dialog").isVisible())) {
     await page.locator("#help").click();
   }

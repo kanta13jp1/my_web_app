@@ -66,6 +66,14 @@ test("old saves migrate and corrupt farm storage is rejected", () => {
       crops: { "0,0": now },
     }, { food: 0, harvested: 0, crops: { "3,2": -1 } }]
   ) {
-    assert.throws(() => decode(JSON.stringify({ ...garden(), farm })));
+    assert.throws(
+      () => decode(JSON.stringify({ ...garden(), farm })),
+      (error) => {
+        assert.equal(error.recoveredState.wood, garden().wood);
+        assert.deepEqual(error.recoveredState.tiles, garden().tiles);
+        assert.equal(error.recoveredState.farm.food, 0);
+        return true;
+      },
+    );
   }
 });

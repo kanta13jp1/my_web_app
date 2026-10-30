@@ -187,8 +187,15 @@ export function decode(raw) {
   });
   if (s.residents < 1 || s.residents > capacity(s)) throw Error("progress");
   if (s.farm === undefined) s.farm = newFarm();
-  checkFarm(s.farm, s.tiles);
   const checked = act(s, { type: "profile", profile: s.profile });
   if (!checked.changed) throw Error("profile");
+  try {
+    checkFarm(checked.state.farm, checked.state.tiles);
+  } catch {
+    // Invalid new farm data must not discard established shelter progress.
+    throw Object.assign(Error("farm"), {
+      recoveredState: { ...checked.state, farm: newFarm() },
+    });
+  }
   return checked.state;
 }

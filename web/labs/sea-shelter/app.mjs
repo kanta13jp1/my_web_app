@@ -17,9 +17,11 @@ let state = initialState(),
 try {
   const raw = localStorage.getItem(SAVE_KEY);
   if (raw !== null) state = decode(raw);
-} catch {
-  saveWarning =
-    "保存を読み込めません。初期状態で開始しました。次の操作でこのゲームの保存を更新します。";
+} catch (error) {
+  if (error.recoveredState) state = error.recoveredState;
+  saveWarning = error.recoveredState
+    ? "農園の保存を読み込めません。農園だけを初期化し、拠点・資源・依頼・プロフィールは保護しました。次の操作で保存を更新します。"
+    : "保存を読み込めません。初期状態で開始しました。次の操作でこのゲームの保存を更新します。";
 }
 const symbols = { dock: "⚑", deck: "▦", home: "⌂", garden: "♧" };
 const iconSymbols = { 灯台: "♜", 帆船: "⛵", 貝: "◉" };
