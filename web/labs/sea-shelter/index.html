@@ -44,6 +44,7 @@
             <button data-view="residents" aria-pressed="false">住民</button>
             <button data-view="quests" aria-pressed="false">依頼</button>
             <button data-view="farm" aria-pressed="false">菜園</button>
+            <button data-view="storage" aria-pressed="false">倉庫</button>
           </nav>
           <section class="panel" data-panel="build" aria-label="建設">
             <h2>建設する施設</h2>
@@ -57,6 +58,9 @@
               aria-label="建設する施設"
             >
             </div>
+            <button id="choose-warehouse">
+              倉庫（船着場に増設）
+            </button>
           </section>
           <section class="panel" data-panel="residents" aria-label="住民">
             <h2>仲間を迎える</h2>
@@ -85,6 +89,63 @@
               お礼：木材4・金属1・EXP2。繰り返し届けられます。
             </p>
           </section>
+          <section
+            class="panel"
+            data-panel="storage"
+            aria-label="倉庫と保管量"
+          >
+            <h2 id="storage-heading" tabindex="-1">倉庫と保管量</h2>
+            <div class="stock-row">
+              <label for="meter-wood">木材 <output
+                  id="storage-wood"
+                ></output></label><meter
+                id="meter-wood"
+                min="0"
+                max="99999"
+                value="0"
+              >
+              </meter>
+            </div>
+            <div class="stock-row">
+              <label for="meter-metal">金属 <output
+                  id="storage-metal"
+                ></output></label><meter
+                id="meter-metal"
+                min="0"
+                max="99999"
+                value="0"
+              >
+              </meter>
+            </div>
+            <div class="stock-row">
+              <label for="meter-food">食料 <output
+                  id="storage-food"
+                ></output></label><meter
+                id="meter-food"
+                min="0"
+                max="99999"
+                value="0"
+              >
+              </meter>
+            </div>
+            <p id="warehouse-state"></p>
+            <button id="warehouse-build">
+              倉庫を増設 木材30 / 金属15
+            </button>
+            <p id="warehouse-requirements"></p>
+            <div class="storage-links">
+              <button id="storage-collect">回収へ</button>
+              <button id="storage-build">建設へ</button>
+              <button id="storage-farm">菜園・食卓へ</button>
+            </div>
+            <p id="delivery-room"></p>
+            <button id="share-food">
+              食料3を分ける（お礼なし・確認あり）
+            </button>
+            <p>
+              満杯時の収穫は作物を残します。食卓の依頼はお礼まで保管できるときだけ食料を使います。回収は受け取れる量を表示します。
+            </p>
+          </section>
         </aside>
       </div>
       <p id="status" tabindex="-1" role="status" aria-live="polite">
@@ -107,6 +168,12 @@
       <p id="save-status" role="status"></p>
       <p>
         このブラウザ内のみ自動保存。端末間同期なし。ブラウザデータ削除で進行は失われます。時計・保存の改ざん防止はありません。
+      </p>
+      <button id="export-recovery" hidden>
+        退避した元の保存を書き出す
+      </button>
+      <p>
+        保存に不整合がある場合は元の保存を退避してから更新します。退避できない場合は元の保存を上書きしません。複数タブの同時編集には対応していません。
       </p>
       <button id="reset">最初からやり直す</button>
       <button id="close-help">閉じる</button>
@@ -146,6 +213,16 @@
           <button type="submit" class="primary">保存</button>
         </div>
       </form>
+    </dialog>
+    <dialog id="share-dialog" aria-labelledby="share-heading">
+      <h2 id="share-heading">食料3を分けますか？</h2>
+      <p>
+        住民へ食料3を渡します。資材のお礼・EXPはありません。通常のお礼がほしい場合はキャンセルして、建設や種まきで保管の空きを作ってください。
+      </p>
+      <div class="dialog-actions">
+        <button id="cancel-share" autofocus>キャンセル</button>
+        <button id="confirm-share">お礼なしで食料3を届ける</button>
+      </div>
     </dialog>
     <dialog id="reset-dialog" aria-labelledby="reset-heading">
       <h2 id="reset-heading">最初から始めますか？</h2>
