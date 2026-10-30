@@ -49,7 +49,8 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: Scaffold(body: JsonContractChecker())),
     );
-    await tester.enterText(find.byKey(const Key('json-contract-input')), 'null');
+    await tester.enterText(
+        find.byKey(const Key('json-contract-input')), 'null');
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.pump();
