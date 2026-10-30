@@ -20,9 +20,11 @@ void main() {
     await tester.ensureVisible(button);
     await tester.pumpAndSettle();
     expect(
-      tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'JSON構文を確認する'),
-      ).onPressed,
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'JSON構文を確認する'),
+          )
+          .onPressed,
       isNotNull,
     );
     await tester.tap(button);
