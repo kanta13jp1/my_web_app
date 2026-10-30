@@ -1,3 +1,4 @@
+import { cropStatus } from "./farm.mjs";
 import {
   act,
   capacity,
@@ -9,7 +10,10 @@ import {
   SAVE_KEY,
 } from "./model.mjs";
 const $ = (id) => document.getElementById(id);
-let state = initialState(), selected = "deck", saveWarning = "";
+let state = initialState(),
+  selected = null,
+  selectedGarden = null,
+  saveWarning = "";
 try {
   const raw = localStorage.getItem(SAVE_KEY);
   if (raw !== null) state = decode(raw);
@@ -30,9 +34,13 @@ function save() {
 function dispatch(action) {
   const result = act(state, action);
   state = result.state;
+  if (result.changed && action.type === "build") selected = null;
   if (result.changed) save();
   render();
   $("status").textContent = result.message;
+  if (result.changed && saveWarning.startsWith("保存できません")) {
+    $("status").textContent += ` ${saveWarning}`;
+  }
 }
 function render() {
   for (const key of ["wood", "metal", "xp"]) $(key).textContent = state[key];
@@ -76,6 +84,13 @@ function render() {
     cell.firstChild.textContent = tile ? symbols[tile.kind] : "≈";
     cell.lastChild.textContent = tile ? name : "";
   }
+  $("cancel-build").hidden = !selected;
+  $("placement-label").textContent = selected
+    ? `${facilities[selected].name}を配置：木材${
+      facilities[selected].wood
+    } / 金属${facilities[selected].metal}`
+    : "菜園を選ぶか、建設タブで施設を選びましょう";
+  renderFarm();
   for (const button of $("facilities").children) {
     const kind = button.dataset.kind, f = facilities[kind];
     button.setAttribute("aria-pressed", String(kind === selected));
@@ -98,7 +113,17 @@ for (let y = 0; y < 5; y++) {
     b.append(document.createElement("span"), document.createElement("small"));
     b.addEventListener(
       "click",
-      () => dispatch({ type: "build", x, y, kind: selected }),
+      () => {
+        if (selected) dispatch({ type: "build", x, y, kind: selected });
+        else if (
+          state.tiles.some((t) => t.x === x && t.y === y && t.kind === "garden")
+        ) {
+          selectedGarden = `${x},${y}`;
+          setView("farm");
+          renderFarm();
+        } else {$("status").textContent =
+            "建設タブで施設を選ぶと配置できます。菜園はタップして栽培できます。";}
+      },
     );
     $("board").append(b);
   }
@@ -112,6 +137,7 @@ for (const [kind, f] of Object.entries(facilities)) {
   );
   b.addEventListener("click", () => {
     selected = kind;
+    setView("board");
     render();
     $("status").textContent =
       `${f.name}を選択。建設先の海をタップしてください。`;
@@ -135,7 +161,9 @@ $("reset").addEventListener("click", () => $("reset-dialog").showModal());
 $("cancel-reset").addEventListener("click", () => $("reset-dialog").close());
 $("confirm-reset").addEventListener("click", () => {
   state = initialState();
-  selected = "deck";
+  selected = null;
+  selectedGarden = null;
+  setView("board");
   save();
   render();
   $("status").textContent = "新しい船出です。漂流物から集めましょう。";
@@ -170,4 +198,68 @@ $("profile-form").addEventListener("submit", (event) => {
     $("profile-dialog").close();
   } else $("profile-error").textContent = result.message;
 });
+
+function renderFarm() {
+  $("food").textContent = state.farm.food;
+  const allGardens = state.tiles.filter((t) => t.kind === "garden");
+  const current = allGardens.find((t) => `${t.x},${t.y}` === selectedGarden) ??
+    allGardens[0];
+  selectedGarden = current ? `${current.x},${current.y}` : null;
+  const gardens = current ? [current] : [];
+  $("farm-empty").hidden = gardens.length > 0;
+  const container = $("crops");
+  const keys = new Set(gardens.map((t) => `${t.x},${t.y}`));
+  for (const row of [...container.children]) {
+    if (!keys.has(row.dataset.key)) row.remove();
+  }
+  for (const t of gardens) {
+    const key = `${t.x},${t.y}`;
+    let row = [...container.children].find((r) => r.dataset.key === key);
+    if (!row) {
+      row = document.createElement("div");
+      row.className = "quest";
+      row.dataset.key = key;
+      const label = document.createElement("p");
+      const button = document.createElement("button");
+      button.addEventListener("click", () =>
+        dispatch({
+          type: state.farm.crops[key] === undefined ? "plant" : "harvest",
+          x: t.x,
+          y: t.y,
+        }));
+      row.append(label, button);
+      container.append(row);
+    }
+    const start = state.farm.crops[key];
+    row.firstChild.textContent = `${t.y + 1}行${t.x + 1}列 菜園：${
+      start === undefined ? "種まきできます" : cropStatus(start, Date.now())
+    }`;
+    row.lastChild.textContent = start === undefined
+      ? "種をまく 木材2"
+      : "収穫する";
+  }
+}
+$("donate-food").addEventListener(
+  "click",
+  () => dispatch({ type: "donate-food" }),
+);
+setInterval(renderFarm, 1000);
+
+function setView(view) {
+  document.querySelector("main").dataset.view = view;
+  for (const button of document.querySelectorAll(".tabs button")) {
+    button.setAttribute("aria-pressed", String(button.dataset.view === view));
+  }
+}
+for (const button of document.querySelectorAll(".tabs button")) {
+  button.addEventListener("click", () => setView(button.dataset.view));
+}
+$("cancel-build").addEventListener("click", () => {
+  selected = null;
+  render();
+  $("status").textContent = "建設を取り消しました。資材は使っていません。";
+});
+$("help").addEventListener("click", () => $("help-dialog").showModal());
+$("close-help").addEventListener("click", () => $("help-dialog").close());
 render();
+if (saveWarning) $("status").textContent = saveWarning;

@@ -8,51 +8,47 @@
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <main>
-      <header>
-        <p class="eyebrow">SEA SHELTER / 小さな海上拠点</p>
+    <main data-view="board">
+      <header class="topbar">
         <h1>潮灯のシェルター</h1>
-        <p>
-          拾い集めたひとかけらから、みんなの居場所を。
-        </p>
+        <button id="edit-profile" aria-label="プロフィール">
+          <span id="captain-name"></span>
+        </button>
+        <button id="help" aria-label="遊び方と保存">？</button>
       </header>
-      <section class="captain" aria-label="船長プロフィール">
-        <div id="avatar" aria-hidden="true"></div>
-        <div>
-          <strong id="captain-name"></strong><small
-            id="captain-title"
-          ></small><p id="bubble"></p>
-        </div>
-        <button id="edit-profile">プロフィール</button>
-      </section>
-      <section class="resources" aria-label="資材">
+      <section class="resources" aria-label="資源">
         <div>木材<strong id="wood">0</strong></div>
         <div>金属<strong id="metal">0</strong></div>
-        <div>住民 / 定員<strong id="residents">1 / 1</strong></div>
+        <div>食料<strong id="food">0</strong></div>
+        <div>住民/定員<strong id="residents">1 / 1</strong></div>
         <div>EXP<strong id="xp">0</strong></div>
       </section>
-      <div class="layout">
-        <section class="play">
-          <div class="section-title">
-            <h2>あなたの海上拠点</h2><span id="tile-count"
-            >1 / 25区画</span>
+      <div class="workspace">
+        <section class="play" aria-label="海上拠点">
+          <div class="placement">
+            <span id="placement-label"
+            >菜園を選ぶか、建設タブで施設を選びましょう</span><button
+              id="cancel-build"
+              hidden
+            >
+              取消
+            </button>
           </div>
-          <p id="guide">
-            ① 漂流物を回収して、最初の依頼を達成しよう。
-          </p>
           <div id="board" aria-label="5×5の海上盤面"></div>
-          <button id="collect" class="primary">
-            漂流物を回収　木材 +3 / 金属 +2
-          </button>
-          <p id="status" role="status" aria-live="polite">
-            船長、ここから始めましょう。
-          </p>
+          <span id="tile-count">1 / 25区画</span>
         </section>
         <aside>
-          <section class="panel">
-            <h2>拠点を広げる</h2>
+          <nav class="tabs" aria-label="ゲーム操作">
+            <button data-view="board" aria-pressed="true">拠点</button>
+            <button data-view="build" aria-pressed="false">建設</button>
+            <button data-view="residents" aria-pressed="false">住民</button>
+            <button data-view="quests" aria-pressed="false">依頼</button>
+            <button data-view="farm" aria-pressed="false">菜園</button>
+          </nav>
+          <section class="panel" data-panel="build" aria-label="建設">
+            <h2>建設する施設</h2>
             <p>
-              施設を選び、拠点の上下左右に接する海をタップ。既存区画も同じ費用で施設変更できます（資材の返却なし）。船着場と住民の必要な住居は保護されます。
+              選んでから盤面をタップ。隣接する海へ拡張できます。
             </p>
             <div
               id="facilities"
@@ -61,29 +57,64 @@
               aria-label="建設する施設"
             >
             </div>
-            <button id="invite">住民を迎える　木材3 / 金属1</button>
+          </section>
+          <section class="panel" data-panel="residents" aria-label="住民">
+            <h2>仲間を迎える</h2>
+            <p>住居1軒で定員+2。住民3人ごとに回収木材+1。</p>
+            <button id="invite">住民を迎える 木材3 / 金属1</button>
             <p>
-              住民3人ごとに、回収できる木材が1増えます。
+              定員不足なら住居を、資材不足なら漂流物を回収しましょう。
             </p>
           </section>
-          <section class="panel">
-            <h2>住民からの依頼</h2>
+          <section
+            class="panel"
+            data-panel="quests"
+            aria-label="住民の依頼"
+          >
+            <h2>住民の依頼</h2>
             <div id="quests"></div>
+          </section>
+          <section class="panel" data-panel="farm" aria-label="菜園と食卓">
+            <h2>菜園と食卓</h2>
+            <p id="farm-empty">
+              EXP24で菜園を解放し、建設しましょう。
+            </p>
+            <div id="crops"></div>
+            <button id="donate-food">食卓に届ける 食料3</button>
+            <p>
+              お礼：木材4・金属1・EXP2。繰り返し届けられます。
+            </p>
           </section>
         </aside>
       </div>
-      <footer>
-        <p id="save-status" role="status"></p>
-        <p>
-          このブラウザ内のみ自動保存。端末間同期なし。ブラウザデータ削除で進行が消えます。
-        </p>
-        <button id="reset">最初からやり直す</button>
-        <p>
-          試作版：戦闘・課金なし。目標は3件の依頼達成。海上25区画まで自由に拡張できます。
-        </p>
-      </footer>
+      <p id="status" role="status" aria-live="polite">
+        船長、漂流物の回収から始めましょう。
+      </p>
+      <button id="collect" class="primary">
+        漂流物を回収 木材 +3 / 金属 +2
+      </button>
     </main>
+    <dialog id="help-dialog" aria-labelledby="help-heading">
+      <h2 id="help-heading">遊び方と保存</h2>
+      <p id="guide"></p>
+      <p>
+        海上25区画へ拡張できます。施設の建て替えは同じ資材を消費し、返却はありません。船着場と必要な住居は保護されます。
+      </p>
+      <p>
+        菜園：木材2で種まき、60秒で食料3。閉じている間も育ちます。時計を戻すと待機し、7日を超える変化では育て直します。
+      </p>
+      <p id="save-status" role="status"></p>
+      <p>
+        このブラウザ内のみ自動保存。端末間同期なし。ブラウザデータ削除で進行は失われます。時計・保存の改ざん防止はありません。
+      </p>
+      <button id="reset">最初からやり直す</button>
+      <button id="close-help">閉じる</button>
+    </dialog>
     <dialog id="profile-dialog" aria-labelledby="profile-heading">
+      <div class="captain">
+        <div id="avatar" aria-hidden="true"></div>
+        <div><small id="captain-title"></small><p id="bubble"></p></div>
+      </div>
       <form id="profile-form">
         <h2 id="profile-heading">船長プロフィール</h2><label
         >名前（16文字まで）<input
