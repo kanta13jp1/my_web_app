@@ -1,5 +1,18 @@
 import { expect, test } from "@playwright/test";
 
+test("embedded game retains the full compact viewport on small phones", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/sea-shelter");
+  const game = page.frameLocator('iframe[title="潮灯のシェルター"]');
+  await expect(game.locator("#collect")).toBeVisible();
+  await expect.poll(async () =>
+    game.locator("html").evaluate((e) => ({
+      width: e.scrollWidth <= e.clientWidth,
+      height: e.scrollHeight <= e.clientHeight,
+    }))
+  ).toEqual({ width: true, height: true });
+});
+
 test("integrated route opens the local game and survives browser navigation", async ({ page }) => {
   await page.goto("/sea-shelter");
   const game = page.frameLocator('iframe[title="潮灯のシェルター"]');
