@@ -1,5 +1,5 @@
-name: Approved PR5931 Web Release
-run-name: PR5931 release operation ${{ inputs.operation_id }}
+name: Approved PR5933 Web Release
+run-name: PR5933 release operation ${{ inputs.operation_id }}
 
 on:
   pull_request:
@@ -51,7 +51,7 @@ on:
         required: true
         type: string
       approved_release:
-        description: Explicit owner approved PR5931-only release
+        description: Explicit owner approved PR5933-only release
         required: true
         default: false
         type: boolean
@@ -126,7 +126,7 @@ jobs:
           RELEASE_OPERATION_ID: ${{ inputs.operation_id }}
         run: |
           set -euo pipefail
-          [[ "$RELEASE_OPERATION_ID" =~ ^[0-9a-f]{32}$ ]]
+          [[ "$RELEASE_OPERATION_ID" == "a940308821b09bfbdfe4d570af32bb25" ]]
 
       - name: Verify exact cloud handoff SHA
         if: env.EXPECTED_HEAD_SHA != ''
@@ -149,25 +149,30 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='ce9a312062342073ac2be148b5fb3baa2cc7ea02', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='2be38ee926eab208771164ce441e1036f674f091', 'Production changed; rebuild selection'
           PY
 
-      - name: Verify approved PR5931-only selection
+      - name: Verify approved PR5933-only selection
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          test "$(gh pr view 5931 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
-          test "$(gh pr view 5931 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 8840314d47bce63c1826d7ae70a18032d2ba97a1
-          git fetch --no-tags --depth=1 origin ce9a312062342073ac2be148b5fb3baa2cc7ea02
+          set -euo pipefail
+          test "$(gh pr view 5933 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
+          test "$(gh pr view 5933 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 7bb44be7f177d1727390086fa4c00a8c8278cae2
+          test "$(gh api repos/kanta13jp1/my_web_app/actions/workflows/deploy-prod.yml --jq .state)" = disabled_manually
+          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41057351631 --jq .conclusion)" = success
+          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41057351545 --jq .conclusion)" = success
+          git fetch --no-tags --depth=1 origin 2be38ee926eab208771164ce441e1036f674f091
           python3 - <<'PY'
           import subprocess
-          expected=set(["docs/BUSINESS_EXECUTION_LOCAL_TRIAL.md","lib/models/business_execution.dart","lib/pages/virtual_organization_page.dart","lib/services/business_execution_lock.dart","lib/services/business_execution_lock_stub.dart","lib/services/business_execution_lock_web.dart","lib/services/business_execution_store.dart","lib/view_models/business_execution_controller.dart","lib/widgets/business_execution_forms.dart","lib/widgets/business_execution_panel.dart","package.json","playwright.business-execution.config.ts","playwright.config.ts","scripts/ci_job_summary.py","scripts/ci_job_summary_test.py","scripts/classify_ci_changes.py","scripts/classify_ci_changes_test.py","scripts/serve_business_execution_fixture.py","scripts/serve_business_execution_fixture_test.py","test/e2e/business_execution.spec.ts","test/fixtures/business_execution_app.dart","test/models/business_execution_test.dart","test/view_models/business_execution_controller_test.dart","test/web/business_execution_lock_test.dart","test/widgets/business_execution_panel_test.dart","web/assets/fonts/NotoSans-OFL.txt",".github/workflows/ci.yml",".github/workflows/cloud-development.yml"])
-          actual=set(subprocess.check_output(['git','diff','--name-only','ce9a312062342073ac2be148b5fb3baa2cc7ea02','HEAD']).decode().splitlines())
+          expected=set(['.github/workflows/cloud-development.yml', '.github/workflows/sea-shelter-checks.yml', 'lib/data/home_tool_catalog.dart', 'lib/main.dart', 'lib/pages/sea_shelter_page.dart', 'lib/ui/features/sea_shelter/sea_shelter_surface.dart', 'lib/ui/features/sea_shelter/sea_shelter_surface_stub.dart', 'lib/ui/features/sea_shelter/sea_shelter_surface_web.dart', 'lib/utils/feature_route_labels.dart', 'test/e2e/sea_shelter.spec.ts', 'test/e2e/sea_shelter_lifecycle.spec.ts', 'test/e2e/sea_shelter_route.spec.ts', 'test/fixtures/sea_shelter_lifecycle_app.dart', 'test/routes/app_route_names.dart', 'test/widgets/sea_shelter_page_test.dart', 'web/labs/sea-shelter/README.md', 'web/labs/sea-shelter/app.mjs', 'web/labs/sea-shelter/index.html', 'web/labs/sea-shelter/model.mjs', 'web/labs/sea-shelter/model.test.mjs', 'web/labs/sea-shelter/serve.py', 'web/labs/sea-shelter/style.css'])
+          actual=set(subprocess.check_output(['git','diff','--name-only','2be38ee926eab208771164ce441e1036f674f091','HEAD']).decode().splitlines())
           assert actual==expected,(actual,expected)
-          expected_blobs={"docs/BUSINESS_EXECUTION_LOCAL_TRIAL.md":"7f86b89d16aa2243e6336166e2cf4b4c3da57bdb","lib/models/business_execution.dart":"ea82db94a85e752ba3251850e1af2f1c6114fd33","lib/pages/virtual_organization_page.dart":"842fbe8ab6ac67b1e0cfdeaf686fe3f3121db4a9","lib/services/business_execution_lock.dart":"b128213e98f8c65b654980997f05caf4c2287b0b","lib/services/business_execution_lock_stub.dart":"6ca5b91a0fb96ef8ce6ecfccf0c0f22f64b3abbc","lib/services/business_execution_lock_web.dart":"c789c2eaa585cdf66b97568d6040076d3f76c4b0","lib/services/business_execution_store.dart":"6270df585a17c7332830584a0fbe8b3617dc9a50","lib/view_models/business_execution_controller.dart":"d0d26a3c70305d24874b331f32b67e2810b48341","lib/widgets/business_execution_forms.dart":"dc515ecf05e681667a808c3a07407427f83fe0fe","lib/widgets/business_execution_panel.dart":"91ce8dcfa33c43d320ea0e42d526d67050c146fd","package.json":"033b625fe3757378dada75829e7acb7ed47f253a","playwright.business-execution.config.ts":"cecbb27fcfb34c1ab8d71a0dbd4fbc18b1b4e54f","playwright.config.ts":"3e31f12b4c0ce906eea8c0edd92d24499af6d8a8","scripts/ci_job_summary.py":"e756105fcb8766cd94b7ce5756946eeec82b3c0b","scripts/ci_job_summary_test.py":"adce963907c5c03d1dcec7ffe2c9a5874ee45332","scripts/classify_ci_changes.py":"57312f59e1e283b4d1358971023a6a0cc58e0bb4","scripts/classify_ci_changes_test.py":"68a68256322269dad88cfc0858cc6f2b7d85c0eb","scripts/serve_business_execution_fixture.py":"fe17b056abdb93092d81a6d1eb3e2b1fb4c39071","scripts/serve_business_execution_fixture_test.py":"de278dcf6e5d288ddc8165baf71d8a7b9f6fdbd3","test/e2e/business_execution.spec.ts":"9ae4c802a3e67fd43ddba944710998c2b2ffdbb5","test/fixtures/business_execution_app.dart":"a4b8b426462ed5f338fab8f8b2b545d74ebfb6fb","test/models/business_execution_test.dart":"4d2c857e3919f881d0cb0d9d0ad06dd7896f521c","test/view_models/business_execution_controller_test.dart":"397c67e01de5041fd9faa82d364232981c92ab4f","test/web/business_execution_lock_test.dart":"528d57e43d7b6c2fcc6c534c0dfa1fed5e38bcc4","test/widgets/business_execution_panel_test.dart":"0cca60f47db6e3998b3dc2bf9db5f7a47d2503db","web/assets/fonts/NotoSans-OFL.txt":"c41e63c5c590e12f9b557120ad76818481c24907",".github/workflows/ci.yml":"00ca6f2391a6fadc5317ac1c05ec11e01ce3de1c"}
+          expected_blobs={'.github/workflows/sea-shelter-checks.yml': '1dfcf5ede19756a47c5e82ff23cd1fdfa1183e88', 'lib/data/home_tool_catalog.dart': 'a27694d8de53f2873cea8edc26ccf428fedccde6', 'lib/main.dart': 'b2ddd5966446bc0d2e870e623462baf57553c7c1', 'lib/pages/sea_shelter_page.dart': 'cae1728388fcaa6ffcd383626610d50cda98c0b7', 'lib/ui/features/sea_shelter/sea_shelter_surface.dart': 'c329493f2400d4da68828678c600c01df4bf7d5c', 'lib/ui/features/sea_shelter/sea_shelter_surface_stub.dart': '139d48c6b5485ea1e3b67076e5d3e300ed55256f', 'lib/ui/features/sea_shelter/sea_shelter_surface_web.dart': '9edf6bfe873b4c602fcf65d729995a051d8ae147', 'lib/utils/feature_route_labels.dart': 'cb18bfbeae2ce8cc2371db395ff965f53d038bfb', 'test/e2e/sea_shelter.spec.ts': '699d9753464d3c9d175aae711a749b1258f7c2ef', 'test/e2e/sea_shelter_lifecycle.spec.ts': '6406ca2d20b87246bf24adcd8cb9b3749b2e1ff6', 'test/e2e/sea_shelter_route.spec.ts': '42647be8873a29b2fafe4688a64777553af1a025', 'test/fixtures/sea_shelter_lifecycle_app.dart': 'fe76020972891dab6a4d2a2dcd1b69ff72c9333d', 'test/routes/app_route_names.dart': '7918e1b580d2ae55bc7c4c919a5b60e12369f06e', 'test/widgets/sea_shelter_page_test.dart': '15dd0b62971145c7aaf9dc68f638cdfca662873b', 'web/labs/sea-shelter/README.md': '529fa321b96b629b1ea827edd147995e80dc20b7', 'web/labs/sea-shelter/app.mjs': '961e8a9f5b30878018355718c501da4e3c767981', 'web/labs/sea-shelter/index.html': '5fc0383c30b4f82a91383a3a54ceb79ca49e2a4d', 'web/labs/sea-shelter/model.mjs': 'c761954f21cf7ceb0e4d64023a065513e7e06320', 'web/labs/sea-shelter/model.test.mjs': '3f7658eeab52cbdec872ad6223da3cf77bc9e6f8', 'web/labs/sea-shelter/serve.py': 'da72cabedfc27052337406115dbe78837b3f92d0', 'web/labs/sea-shelter/style.css': '9248b9478e0444911c6b23f680f3cb85ef7597ac'}
           for path, expected_blob in expected_blobs.items():
-              blob=subprocess.check_output(['git','rev-parse','HEAD:'+path]).decode().strip()
-              assert blob==expected_blob,(path,blob)
+              actual_blob=subprocess.check_output(['git','rev-parse','HEAD:'+path]).decode().strip()
+              assert actual_blob==expected_blob,(path,actual_blob,expected_blob)
+          print('Approved game-only selection verified; all other production blobs unchanged')
           PY
 
       - name: Validate cloud workspace descriptors
@@ -635,8 +640,8 @@ jobs:
   deploy:
     name: Deploy to Production Environment
     runs-on: ubuntu-latest
-    needs: [validate, ci, platform-release-checklist-e2e, ai-search-pending-e2e, slide-number-check-e2e, asset-balance-history-e2e, savings-life-plan-e2e]
-    if: always() && inputs.approved_release == true && inputs.deploy_scope == 'web_only' && inputs.profile == 'full' && inputs.expected_head_sha == github.sha && vars.PRODUCTION_DEPLOY_HOLD == 'false' && needs.validate.result == 'success' && needs.ci.result == 'success' && needs['platform-release-checklist-e2e'].result == 'success' && needs['ai-search-pending-e2e'].result == 'success' && needs['slide-number-check-e2e'].result == 'success' && needs['asset-balance-history-e2e'].result == 'success' && needs['savings-life-plan-e2e'].result == 'success'
+    needs: [validate, ci, platform-release-checklist-e2e, ai-search-pending-e2e, slide-number-check-e2e, asset-balance-history-e2e, savings-life-plan-e2e, sea-model, sea-integrated]
+    if: always() && inputs.approved_release == true && inputs.deploy_scope == 'web_only' && inputs.profile == 'full' && inputs.expected_head_sha == github.sha && vars.PRODUCTION_DEPLOY_HOLD == 'false' && needs.validate.result == 'success' && needs.ci.result == 'success' && needs['platform-release-checklist-e2e'].result == 'success' && needs['ai-search-pending-e2e'].result == 'success' && needs['slide-number-check-e2e'].result == 'success' && needs['asset-balance-history-e2e'].result == 'success' && needs['savings-life-plan-e2e'].result == 'success' && needs['sea-model'].result == 'success' && needs['sea-integrated'].result == 'success'
     timeout-minutes: 45
     environment:
       name: production
@@ -680,7 +685,7 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='ce9a312062342073ac2be148b5fb3baa2cc7ea02', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='2be38ee926eab208771164ce441e1036f674f091', 'Production changed; rebuild selection'
           PY
 
       - name: Collect pushed files
@@ -700,7 +705,7 @@ jobs:
           mkdir -p .deploy-logs
           python3 - <<'PY'
           from pathlib import Path
-          Path('.deploy-logs/changed-files.txt').write_text("docs/BUSINESS_EXECUTION_LOCAL_TRIAL.md\nlib/models/business_execution.dart\nlib/pages/virtual_organization_page.dart\nlib/services/business_execution_lock.dart\nlib/services/business_execution_lock_stub.dart\nlib/services/business_execution_lock_web.dart\nlib/services/business_execution_store.dart\nlib/view_models/business_execution_controller.dart\nlib/widgets/business_execution_forms.dart\nlib/widgets/business_execution_panel.dart\npackage.json\nplaywright.business-execution.config.ts\nplaywright.config.ts\nscripts/ci_job_summary.py\nscripts/ci_job_summary_test.py\nscripts/classify_ci_changes.py\nscripts/classify_ci_changes_test.py\nscripts/serve_business_execution_fixture.py\nscripts/serve_business_execution_fixture_test.py\ntest/e2e/business_execution.spec.ts\ntest/fixtures/business_execution_app.dart\ntest/models/business_execution_test.dart\ntest/view_models/business_execution_controller_test.dart\ntest/web/business_execution_lock_test.dart\ntest/widgets/business_execution_panel_test.dart\nweb/assets/fonts/NotoSans-OFL.txt\n.github/workflows/ci.yml\n")
+          Path('.deploy-logs/changed-files.txt').write_text('.github/workflows/sea-shelter-checks.yml\nlib/data/home_tool_catalog.dart\nlib/main.dart\nlib/pages/sea_shelter_page.dart\nlib/ui/features/sea_shelter/sea_shelter_surface.dart\nlib/ui/features/sea_shelter/sea_shelter_surface_stub.dart\nlib/ui/features/sea_shelter/sea_shelter_surface_web.dart\nlib/utils/feature_route_labels.dart\ntest/e2e/sea_shelter.spec.ts\ntest/e2e/sea_shelter_lifecycle.spec.ts\ntest/e2e/sea_shelter_route.spec.ts\ntest/fixtures/sea_shelter_lifecycle_app.dart\ntest/routes/app_route_names.dart\ntest/widgets/sea_shelter_page_test.dart\nweb/labs/sea-shelter/README.md\nweb/labs/sea-shelter/app.mjs\nweb/labs/sea-shelter/index.html\nweb/labs/sea-shelter/model.mjs\nweb/labs/sea-shelter/model.test.mjs\nweb/labs/sea-shelter/serve.py\nweb/labs/sea-shelter/style.css\n')
           PY
 
       - name: Reject mixed public-blog deployments
@@ -741,6 +746,13 @@ jobs:
           else
             echo "required=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Require Web-only release without backend writes
+        run: |
+          test "${{ steps.changes.outputs.web }}" = true
+          test "${{ steps.changes.outputs.edge }}" = false
+          test "${{ steps.changes.outputs.migration }}" = false
+          test "${{ steps.db_edge_smoke.outputs.required }}" = false
 
       - name: Setup Flutter
         if: steps.changes.outputs.web == 'true'
@@ -1395,7 +1407,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         env:
           FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-          EXPECTED_PUBLIC_BASE: ce9a312062342073ac2be148b5fb3baa2cc7ea02
+          EXPECTED_PUBLIC_BASE: 2be38ee926eab208771164ce441e1036f674f091
         run: |
           python3 -m venv /tmp/echo-release-tools
           /tmp/echo-release-tools/bin/pip install google-auth==2.43.0 requests==2.32.5
@@ -1427,7 +1439,7 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          EXPECTED_PUBLIC_BASE=ce9a312062342073ac2be148b5fb3baa2cc7ea02 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
+          EXPECTED_PUBLIC_BASE=2be38ee926eab208771164ce441e1036f674f091 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
 
           if npx -y firebase-tools@15.34.0 deploy \
             --only hosting \
@@ -1643,3 +1655,145 @@ jobs:
             mcp-browser-evidence/
           retention-days: 14
 
+
+  sea-model:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - run: node --test web/labs/sea-shelter/model.test.mjs
+      - run: node --check web/labs/sea-shelter/app.mjs
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Browser checks against candidate only
+        shell: bash
+        run: |
+          python3 web/labs/sea-shelter/serve.py &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8765/labs/sea-shelter/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:8765 npx playwright test test/e2e/sea_shelter.spec.ts --workers=1 --retries=0
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: sea-shelter-browser-evidence
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+
+  sea-integrated:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - run: |
+          flutter pub get
+          dart format --output=none --set-exit-if-changed lib/pages/sea_shelter_page.dart lib/ui/features/sea_shelter test/widgets/sea_shelter_page_test.dart test/fixtures/sea_shelter_lifecycle_app.dart
+          flutter analyze lib/pages/sea_shelter_page.dart lib/ui/features/sea_shelter
+          flutter test test/widgets/sea_shelter_page_test.dart
+          flutter build web --release --pwa-strategy=none --dart-define=ENVIRONMENT=visual-test --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+      - name: Validate browser test syntax
+        run: npx playwright test test/e2e/sea_shelter_route.spec.ts test/e2e/sea_shelter_lifecycle.spec.ts --list
+      - name: Integrated desktop and mobile route checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/flutter_spa_server.py --directory build/web --port 7357 > sea-shelter-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7357/sea-shelter > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7357 npx playwright test test/e2e/sea_shelter_route.spec.ts --workers=1 --retries=0
+      - name: Build real surface lifecycle fixture
+        run: flutter build web --release --pwa-strategy=none --target=test/fixtures/sea_shelter_lifecycle_app.dart --output=build/sea-shelter-lifecycle
+      - name: Verify covering route, return and disposal
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/flutter_spa_server.py --directory build/sea-shelter-lifecycle --port 7358 > sea-shelter-lifecycle-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7358 PLAYWRIGHT_TEST_OUTPUT_DIR=lifecycle-results PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/lifecycle-results.json npx playwright test test/e2e/sea_shelter_lifecycle.spec.ts --workers=1 --retries=0
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: sea-shelter-integrated-evidence
+          path: |
+            test-results/
+            playwright-report/
+            sea-shelter-server.log
+            sea-shelter-lifecycle-server.log
+            lifecycle-results/
+          retention-days: 7
+
+  sea-public:
+    name: Verify published Sea Shelter
+    needs: deploy
+    if: needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Verify live version and asset MIME
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json,os,urllib.request
+          root='https://my-web-app-b67f4.web.app'
+          req=urllib.request.Request(root+'/version.json',headers={'Cache-Control':'no-cache'})
+          assert json.load(urllib.request.urlopen(req,timeout=30))['commit']==os.environ['EXPECTED_SHA']
+          with urllib.request.urlopen(root+'/labs/sea-shelter/app.mjs',timeout=30) as response:
+              assert response.status==200 and 'javascript' in response.headers.get('Content-Type','')
+          PY
+      - name: Verify live gameplay, saving, profile, reset and Flutter route
+        env:
+          E2E_BASE_URL: https://my-web-app-b67f4.web.app
+        run: npx playwright test test/e2e/sea_shelter.spec.ts test/e2e/sea_shelter_route.spec.ts --workers=1 --retries=0
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: sea-shelter-public-evidence
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 14
