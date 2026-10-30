@@ -1,3 +1,4 @@
+import { cropStatus } from "./farm.mjs";
 import {
   act,
   capacity,
@@ -9,13 +10,18 @@ import {
   SAVE_KEY,
 } from "./model.mjs";
 const $ = (id) => document.getElementById(id);
-let state = initialState(), selected = "deck", saveWarning = "";
+let state = initialState(),
+  selected = null,
+  selectedGarden = null,
+  saveWarning = "";
 try {
   const raw = localStorage.getItem(SAVE_KEY);
   if (raw !== null) state = decode(raw);
-} catch {
-  saveWarning =
-    "保存を読み込めません。初期状態で開始しました。次の操作でこのゲームの保存を更新します。";
+} catch (error) {
+  if (error.recoveredState) state = error.recoveredState;
+  saveWarning = error.recoveredState
+    ? "農園の保存を読み込めません。農園だけを初期化し、拠点・資源・依頼・プロフィールは保護しました。次の操作で保存を更新します。"
+    : "保存を読み込めません。初期状態で開始しました。次の操作でこのゲームの保存を更新します。";
 }
 const symbols = { dock: "⚑", deck: "▦", home: "⌂", garden: "♧" };
 const iconSymbols = { 灯台: "♜", 帆船: "⛵", 貝: "◉" };
@@ -30,9 +36,13 @@ function save() {
 function dispatch(action) {
   const result = act(state, action);
   state = result.state;
+  if (result.changed && action.type === "build") selected = null;
   if (result.changed) save();
   render();
   $("status").textContent = result.message;
+  if (result.changed && saveWarning.startsWith("保存できません")) {
+    $("status").textContent += ` ${saveWarning}`;
+  }
 }
 function render() {
   for (const key of ["wood", "metal", "xp"]) $(key).textContent = state[key];
@@ -76,6 +86,13 @@ function render() {
     cell.firstChild.textContent = tile ? symbols[tile.kind] : "≈";
     cell.lastChild.textContent = tile ? name : "";
   }
+  $("cancel-build").hidden = !selected;
+  $("placement-label").textContent = selected
+    ? `${facilities[selected].name}を配置：木材${
+      facilities[selected].wood
+    } / 金属${facilities[selected].metal}`
+    : "菜園を選ぶか、建設タブで施設を選びましょう";
+  renderFarm();
   for (const button of $("facilities").children) {
     const kind = button.dataset.kind, f = facilities[kind];
     button.setAttribute("aria-pressed", String(kind === selected));
@@ -98,7 +115,22 @@ for (let y = 0; y < 5; y++) {
     b.append(document.createElement("span"), document.createElement("small"));
     b.addEventListener(
       "click",
-      () => dispatch({ type: "build", x, y, kind: selected }),
+      (event) => {
+        if (selected) dispatch({ type: "build", x, y, kind: selected });
+        else if (
+          state.tiles.some((t) => t.x === x && t.y === y && t.kind === "garden")
+        ) {
+          selectedGarden = `${x},${y}`;
+          setView("farm");
+          renderFarm();
+          if (event.detail === 0) {
+            $("crops").querySelector("button:not(:disabled)")?.focus({
+              preventScroll: true,
+            });
+          }
+        } else {$("status").textContent =
+            "建設タブで施設を選ぶと配置できます。菜園はタップして栽培できます。";}
+      },
     );
     $("board").append(b);
   }
@@ -110,9 +142,11 @@ for (const [kind, f] of Object.entries(facilities)) {
     document.createTextNode(`${symbols[kind]} ${f.name}`),
     document.createElement("small"),
   );
-  b.addEventListener("click", () => {
+  b.addEventListener("click", (event) => {
     selected = kind;
+    setView("board");
     render();
+    if (event.detail === 0) focusBoard();
     $("status").textContent =
       `${f.name}を選択。建設先の海をタップしてください。`;
   });
@@ -135,7 +169,9 @@ $("reset").addEventListener("click", () => $("reset-dialog").showModal());
 $("cancel-reset").addEventListener("click", () => $("reset-dialog").close());
 $("confirm-reset").addEventListener("click", () => {
   state = initialState();
-  selected = "deck";
+  selected = null;
+  selectedGarden = null;
+  setView("board");
   save();
   render();
   $("status").textContent = "新しい船出です。漂流物から集めましょう。";
@@ -170,4 +206,102 @@ $("profile-form").addEventListener("submit", (event) => {
     $("profile-dialog").close();
   } else $("profile-error").textContent = result.message;
 });
+
+function renderFarm() {
+  $("food").textContent = state.farm.food;
+  const allGardens = state.tiles.filter((t) => t.kind === "garden");
+  const current = allGardens.find((t) => `${t.x},${t.y}` === selectedGarden) ??
+    allGardens[0];
+  selectedGarden = current ? `${current.x},${current.y}` : null;
+  const gardens = current ? [current] : [];
+  $("farm-empty").hidden = gardens.length > 0;
+  const container = $("crops");
+  const keys = new Set(gardens.map((t) => `${t.x},${t.y}`));
+  for (const row of [...container.children]) {
+    if (!keys.has(row.dataset.key)) row.remove();
+  }
+  for (const t of gardens) {
+    const key = `${t.x},${t.y}`;
+    let row = [...container.children].find((r) => r.dataset.key === key);
+    if (!row) {
+      row = document.createElement("div");
+      row.className = "quest";
+      row.dataset.key = key;
+      const label = document.createElement("p");
+      const plant = document.createElement("button");
+      const harvest = document.createElement("button");
+      plant.textContent = "種をまく 木材2";
+      harvest.textContent = "収穫する";
+      for (const [button, type] of [[plant, "plant"], [harvest, "harvest"]]) {
+        button.addEventListener("click", (event) => {
+          dispatch({ type, x: t.x, y: t.y });
+          // A completed keyboard action must not focus another paid action.
+          if (event.detail === 0) $("status").focus({ preventScroll: true });
+        });
+      }
+      // Keep two distinct controls and positions: a second harvest click can
+      // never turn into planting, even when a crop completes between clicks.
+      row.append(label, plant, harvest);
+      container.append(row);
+    }
+    const start = state.farm.crops[key];
+    row.firstChild.textContent = `${t.y + 1}行${t.x + 1}列 菜園：${
+      start === undefined ? "種まきできます" : cropStatus(start, Date.now())
+    }`;
+    row.children[1].disabled = start !== undefined;
+    row.children[2].disabled = start === undefined;
+  }
+}
+$("donate-food").addEventListener(
+  "click",
+  () => dispatch({ type: "donate-food" }),
+);
+setInterval(renderFarm, 1000);
+
+function setView(view) {
+  document.querySelector("main").dataset.view = view;
+  for (const button of document.querySelectorAll(".tabs button")) {
+    button.setAttribute("aria-pressed", String(button.dataset.view === view));
+  }
+}
+for (const button of document.querySelectorAll(".tabs button")) {
+  button.addEventListener("click", () => setView(button.dataset.view));
+}
+$("cancel-build").addEventListener("click", (event) => {
+  selected = null;
+  render();
+  $("status").textContent = "建設を取り消しました。資材は使っていません。";
+  if (event.detail === 0) focusBoard();
+});
+$("help").addEventListener("click", () => $("help-dialog").showModal());
+$("close-help").addEventListener("click", () => $("help-dialog").close());
 render();
+if (saveWarning) $("status").textContent = saveWarning;
+
+function focusBoard() {
+  (document.querySelector("#board button.near") ?? $("board").firstElementChild)
+    ?.focus({ preventScroll: true });
+}
+function fitBoard() {
+  const play = document.querySelector(".play");
+  if (!play.clientHeight) return;
+  const main = document.querySelector("main");
+  const previousExtra = Number(main.dataset.layoutExtra ?? 0);
+  const tileCount = $("tile-count").getBoundingClientRect().height;
+  const room = play.clientHeight -
+    document.querySelector(".placement").getBoundingClientRect().height -
+    tileCount - 8;
+  // Long warnings and enlarged text may need more than a viewport. Preserve
+  // 44px cells by adding reachable page height instead of overlapping controls.
+  const extra = Math.max(0, Math.ceil(246 - (room - previousExtra)));
+  if (extra !== previousExtra) {
+    main.dataset.layoutExtra = String(extra);
+    main.style.setProperty("--layout-extra", `${extra}px`);
+  }
+  const size = Math.max(246, Math.floor(Math.min(play.clientWidth, room)));
+  $("board").style.setProperty("--board-size", `${size}px`);
+}
+new ResizeObserver(() => requestAnimationFrame(fitBoard)).observe(
+  document.querySelector(".play"),
+);
+fitBoard();

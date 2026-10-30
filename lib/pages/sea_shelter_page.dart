@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../ui/features/sea_shelter/sea_shelter_surface.dart';
@@ -10,7 +11,8 @@ class SeaShelterPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('潮灯のシェルター')),
+        // The web game supplies its own compact header and viewport layout.
+        appBar: kIsWeb ? null : AppBar(title: const Text('潮灯のシェルター')),
         body: const SafeArea(child: SeaShelterSurface()),
       );
 }
