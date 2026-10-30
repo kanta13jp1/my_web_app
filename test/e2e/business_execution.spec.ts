@@ -62,7 +62,10 @@ async function reveal(page: Page, target: Locator, diagnostics?: unknown[]) {
   assertFixturePage(page);
   await page.mouse.wheel(0, -10000);
   await page.waitForTimeout(80);
-  for (let step = 0; step < 32; step++) {
+  let previousY: number | null = null;
+  let unchanged = 0;
+  let pointerX = viewport.width / 2;
+  for (let step = 0; step < 64; step++) {
     const count = await target.count();
     const box = count === 1 ? await target.boundingBox() : null;
     if (diagnostics) {
@@ -82,16 +85,30 @@ async function reveal(page: Page, target: Locator, diagnostics?: unknown[]) {
             root = shadow;
           }
           return { windowX: window.scrollX, windowY: window.scrollY, hits };
-        }, { x: viewport.width / 2, y: viewport.height / 2 });
-        diagnostics.push({ step, count, box, viewport, surface });
+        }, { x: pointerX, y: viewport.height / 2 });
+        diagnostics.push({ step, count, box, viewport, pointerX, surface });
       } catch {
         diagnostics.push({ step, captureFailed: true });
       }
       assertFixturePage(page);
     }
     if (box && box.y >= 60 && box.y + box.height <= viewport.height - 8) return;
+    if (box && previousY !== null && Math.abs(box.y - previousY) < 1) {
+      unchanged++;
+    } else {
+      unchanged = 0;
+    }
+    previousY = box?.y ?? null;
+    if (unchanged >= 3) {
+      // Move away from nested inputs if wheel events stopped moving the target.
+      pointerX = pointerX < viewport.width / 2 ? viewport.width - 4 : 4;
+      assertFixturePage(page);
+      await page.mouse.move(pointerX, viewport.height / 2);
+      unchanged = 0;
+    }
     assertFixturePage(page);
-    await page.mouse.wheel(0, 250);
+    const direction = box && box.y < 60 ? -250 : 250;
+    await page.mouse.wheel(0, direction);
     // Wait only for each real scroll frame; assertions still have bounded waits.
     await page.waitForTimeout(80);
   }
