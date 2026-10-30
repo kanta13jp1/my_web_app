@@ -499,8 +499,12 @@ void main() {
       '2026-10-30',
       BusinessDailyReport(actual: 1, note: '元の日次'),
     ).withReflection('元の月次');
+    final bPayload = fixtures.plan(id: 'b-plan').toJson()
+      ..['outcome'] = 'B専用の成果指標';
+    final bPlan = BusinessExecutionPlan.fromJson(bPayload);
     final store = fakes.MemoryExecutionStore()
-      ..data['a'] = BusinessExecutionCodec.encode([original]);
+      ..data['a'] = BusinessExecutionCodec.encode([original])
+      ..data['b'] = BusinessExecutionCodec.encode([bPlan]);
     await tester.pumpWidget(app(store));
     await tester.pumpAndSettle();
     await tapText(tester, '相談申込数');
@@ -520,12 +524,26 @@ void main() {
     const oldMonth = '最新の月次振り返り: 旧アカウントの最新月次';
     await expectReadableLatest(tester, oldDay);
     await expectReadableLatest(tester, oldMonth);
+    expect(find.text(oldDay, skipOffstage: false), findsOneWidget);
+    expect(find.text(oldMonth, skipOffstage: false), findsOneWidget);
+    expect(find.text('手元の下書き', skipOffstage: false), findsOneWidget);
+    expect(find.text('手元の月次', skipOffstage: false), findsOneWidget);
     await tester.pumpWidget(app(store, user: 'b'));
     await tester.pumpAndSettle();
     expect(find.bySemanticsLabel(oldDay, skipOffstage: false), findsNothing);
     expect(find.bySemanticsLabel(oldMonth, skipOffstage: false), findsNothing);
-    expect(find.text('旧アカウントの最新日次', skipOffstage: false), findsNothing);
-    expect(store.data['b'], isNull);
+    expect(find.text(oldDay, skipOffstage: false), findsNothing);
+    expect(find.text(oldMonth, skipOffstage: false), findsNothing);
+    expect(find.text('手元の下書き', skipOffstage: false), findsNothing);
+    expect(find.text('手元の月次', skipOffstage: false), findsNothing);
+    expect(
+      find.bySemanticsLabel(RegExp('手元の下書き|手元の月次'), skipOffstage: false),
+      findsNothing,
+    );
+    await reveal(tester, find.text('B専用の成果指標'));
+    expect(find.text('B専用の成果指標'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('B専用の成果指標')), findsWidgets);
+    expect(BusinessExecutionCodec.decode(store.data['b']).single.id, 'b-plan');
   });
 
   testWidgets('new plan draft survives insertion of a save-error notice', (
