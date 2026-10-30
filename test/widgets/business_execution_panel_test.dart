@@ -70,6 +70,24 @@ Future<void> scrollPanelToTop(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+Future<void> scrollPanelAwayFromField(
+  WidgetTester tester,
+  String label,
+) async {
+  final scrollable = find
+      .descendant(
+        of: find.byType(BusinessExecutionPanel),
+        matching: find.byType(Scrollable),
+      )
+      .first;
+  final position = tester.state<ScrollableState>(scrollable).position;
+  final before = position.pixels;
+  expect(before - position.minScrollExtent, greaterThan(500));
+  await scrollPanelToTop(tester);
+  expect(position.pixels, closeTo(position.minScrollExtent, 0.1));
+  expect(find.widgetWithText(TextField, label).hitTestable(), findsNothing);
+}
+
 Widget app(
   BusinessExecutionStore store, {
   String user = 'a',
@@ -173,9 +191,7 @@ void main() {
     await tester.pumpAndSettle();
     await tapText(tester, '相談申込数');
     await enter(tester, '日次の振り返り・次の一手', '前のアカウントの未保存入力');
-    final oldField = find.widgetWithText(TextField, '日次の振り返り・次の一手');
-    await scrollPanelToTop(tester);
-    expect(tester.getRect(oldField).top, greaterThan(750));
+    await scrollPanelAwayFromField(tester, '日次の振り返り・次の一手');
     await tester.pumpWidget(app(store, user: 'b', scale: 2));
     await tester.pumpAndSettle();
     expect(find.text('前のアカウントの未保存入力'), findsNothing);
@@ -490,10 +506,9 @@ void main() {
       expect(editingFocus.hasFocus, isTrue);
 
       // A real pointer wheel causes a user-scroll notification, unlike jumpTo.
-      await scrollPanelToTop(tester);
+      await scrollPanelAwayFromField(tester, firstLabel);
       expect(editingFocus.hasFocus, isFalse);
       expect(tester.testTextInput.isVisible, isFalse);
-      expect(tester.getRect(firstField).top, greaterThan(750));
       final panelScope = editingFocus.enclosingScope!;
       expect(FocusManager.instance.primaryFocus, same(panelScope));
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
