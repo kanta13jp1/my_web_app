@@ -135,8 +135,8 @@ Future<void> expectReadableLatest(WidgetTester tester, String value) async {
     matching: find.byType(EditableText),
   );
   expect(editable, findsOneWidget);
-  expect(tester.getSemantics(editable).hasAction(SemanticsAction.setSelection),
-      isTrue);
+  final editableSemantics = tester.getSemantics(editable).getSemanticsData();
+  expect(editableSemantics.hasAction(SemanticsAction.setSelection), isTrue);
 }
 
 void main() {
