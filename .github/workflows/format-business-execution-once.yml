@@ -1,0 +1,132 @@
+name: Temporary business execution formatter evidence
+
+on:
+  push:
+    branches: [codex/format-5931-818d-once-20261030]
+
+permissions: {}
+
+concurrency:
+  group: format-5931-818d-once
+  cancel-in-progress: false
+
+jobs:
+  format:
+    name: Produce two-file formatter evidence
+    if: github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/format-5931-818d-once-20261030'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout event commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Verify parent and immutable inputs
+        shell: bash
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+          ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          parent=818d0b621826f615807f83fc2f220f5060881678
+          test "$ATTEMPT" = 1
+          test "$BEFORE" = "$parent"
+          test "$AFTER" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git show -s --format=%P HEAD)" = "$parent"
+          test "$(git diff --name-only "$parent" HEAD)" = ".github/workflows/format-business-execution-once.yml"
+          test "$(git rev-parse "$parent:lib/widgets/business_execution_forms.dart")" = dc515ecf05e681667a808c3a07407427f83fe0fe
+          test "$(git rev-parse "$parent:test/widgets/business_execution_panel_test.dart")" = 3303c4ecd2bec1a44ecb0b874f264ff630001326
+          for f in lib/widgets/business_execution_forms.dart test/widgets/business_execution_panel_test.dart; do
+            test -f "$f" && test ! -L "$f"
+            test "$(git ls-tree HEAD -- "$f" | cut -d' ' -f1)" = 100644
+            test "$(git rev-parse "HEAD:$f")" = "$(git rev-parse "$parent:$f")"
+            git diff --quiet HEAD -- "$f"
+            git diff --cached --quiet HEAD -- "$f"
+          done
+
+      - name: Checkout pinned Flutter source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: flutter/flutter
+          ref: c6f67dede3d4aa1aa7a69dd56a3494a5cde6cc80
+          path: .flutter-format-sdk
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Format fixed files and record evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk="$RUNNER_TEMP/formatter-flutter-sdk"
+          test ! -e "$sdk"
+          mv -- .flutter-format-sdk "$sdk"
+          expected=c6f67dede3d4aa1aa7a69dd56a3494a5cde6cc80
+          test "$(git -C "$sdk" rev-parse HEAD)" = "$expected"
+          git -C "$sdk" fetch --no-tags --depth=1 https://github.com/flutter/flutter.git refs/tags/3.38.10:refs/tags/3.38.10
+          test "$(git -C "$sdk" rev-parse 'refs/tags/3.38.10^{commit}')" = "$expected"
+          "$sdk/bin/flutter" config --no-analytics
+          "$sdk/bin/flutter" --version
+          # Match PR CI: pub get creates the package language-version config.
+          "$sdk/bin/flutter" pub get
+          "$sdk/bin/flutter" pub get --dry-run
+          echo "Verifying pubspec and resolved package language version"
+          git diff --quiet HEAD -- pubspec.yaml || { echo "::error::pubspec.yaml changed during dependency resolution."; exit 1; }
+          python3 -c 'from pathlib import Path; assert "  sdk: " + chr(39) + ">=3.6.0 <4.0.0" + chr(39) in Path("pubspec.yaml").read_text(encoding="utf-8").splitlines(), "unexpected pubspec SDK constraint"'
+          test -s .dart_tool/package_config.json || { echo "::error::package_config.json is missing."; exit 1; }
+          python3 -c 'import json; d=json.load(open(".dart_tool/package_config.json", encoding="utf-8")); p=[x for x in d["packages"] if x["name"]=="my_web_app"]; assert len(p)==1 and p[0]["rootUri"]=="../" and p[0]["packageUri"]=="lib/" and p[0]["languageVersion"]=="3.6", "unexpected app package language configuration"'
+          # CI permits pub get to update its runner-local lockfile. Never export it.
+          while IFS= read -r changed; do
+            case "$changed" in pubspec.lock) ;; *) echo "::error::Unexpected tracked change after pub get: $changed"; exit 1 ;; esac
+          done < <(git diff --name-only HEAD)
+          if git diff --quiet HEAD -- pubspec.lock; then lock_changed=false; else lock_changed=true; fi
+          echo "Dependency resolution guards passed; runner lockfile changed: $lock_changed"
+          dart="$sdk/bin/dart"
+          files=(lib/widgets/business_execution_forms.dart test/widgets/business_execution_panel_test.dart)
+          out="$RUNNER_TEMP/business-execution-format"
+          test ! -e "$out"
+          mkdir -p "$out/files/lib/widgets" "$out/files/test/widgets"
+          "$dart" --version > "$out/dart-version.txt" 2>&1
+          printf '%s\n' "$GITHUB_SHA" > "$out/tested-commit.txt"
+          printf '%s\n' 818d0b621826f615807f83fc2f220f5060881678 > "$out/parent-commit.txt"
+          printf '%s\n' "$GITHUB_RUN_ID" > "$out/run-id.txt"
+          printf '%s\n' "$GITHUB_RUN_ATTEMPT" > "$out/run-attempt.txt"
+          printf '%s\n' 'my_web_app 3.6 (verified package_config)' > "$out/app-language-version.txt"
+          printf '%s\n' '>=3.6.0 <4.0.0' > "$out/pubspec-sdk-constraint.txt"
+          printf '%s\n' "$lock_changed" > "$out/runner-lockfile-changed.txt"
+          for f in "${files[@]}"; do printf '%s\t%s\n' "$(git rev-parse "HEAD:$f")" "$f" >> "$out/source-blobs.txt"; done
+          "$dart" format --output=write "${files[@]}"
+          "$dart" format --output=none --set-exit-if-changed "${files[@]}"
+          # Same whole-repository read-only format gate as PR CI.
+          "$dart" format --output=none --set-exit-if-changed .
+          git diff --check -- "${files[@]}"
+          while IFS= read -r changed; do
+            case "$changed" in
+              pubspec.lock|lib/widgets/business_execution_forms.dart|test/widgets/business_execution_panel_test.dart) ;;
+              *) echo "::error::Unexpected tracked change after formatting: $changed"; exit 1 ;;
+            esac
+          done < <(git diff --name-only HEAD)
+          for f in "${files[@]}"; do
+            if git diff --quiet HEAD -- "$f"; then
+              echo "::error::Expected a formatter change in $f."
+              exit 1
+            fi
+          done
+          git diff --binary HEAD -- "${files[@]}" > "$out/format.patch"
+          sha256sum -- "${files[@]}" > "$out/formatted-sha256.txt"
+          cp -- "${files[0]}" "$out/files/${files[0]}"
+          cp -- "${files[1]}" "$out/files/${files[1]}"
+
+      - name: Preserve explicit formatter evidence
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: business-execution-format-${{ github.run_id }}
+          path: ${{ runner.temp }}/business-execution-format/
+          if-no-files-found: error
+          retention-days: 1
