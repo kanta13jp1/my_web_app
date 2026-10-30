@@ -58,8 +58,8 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
     }
     final focus = FocusManager.instance.primaryFocus;
     if (focus == null || focus.enclosingScope != _editingScope) return false;
-    final editable =
-        focus.context?.findAncestorWidgetOfExactType<EditableText>();
+    final editable = focus.context
+        ?.findAncestorWidgetOfExactType<EditableText>();
     if (editable == null || editable.readOnly || editable.focusNode != focus) {
       return false;
     }
@@ -84,10 +84,12 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
         final selected = _controller.plans
             .where((plan) => plan.id == _selectedId)
             .firstOrNull;
-        final active =
-            _controller.plans.where((plan) => !plan.archived).toList();
-        final archived =
-            _controller.plans.where((plan) => plan.archived).toList();
+        final active = _controller.plans
+            .where((plan) => !plan.archived)
+            .toList();
+        final archived = _controller.plans
+            .where((plan) => plan.archived)
+            .toList();
         final visible = _showArchived
             ? archived.reversed.skip(_archivePage * 24).take(24)
             : active.reversed;
@@ -128,8 +130,9 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                     if (_controller.error != null) ...[
                       Text(
                         _controller.error!,
-                        style:
-                            TextStyle(color: Theme.of(context).colorScheme.error),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                       ),
                       TextButton(
                         onPressed: _controller.saving || _controller.refreshing
@@ -172,8 +175,8 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                         FilledButton.icon(
                           onPressed:
                               active.length >= BusinessExecutionCodec.maxPlans
-                                  ? null
-                                  : () => setState(() => _creating = true),
+                              ? null
+                              : () => setState(() => _creating = true),
                           icon: const Icon(Icons.add),
                           label: const Text('月の実行計画を作る'),
                         ),
@@ -208,8 +211,8 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                               TextButton(
                                 onPressed:
                                     (_archivePage + 1) * 24 >= archived.length
-                                        ? null
-                                        : () => setState(() => _archivePage++),
+                                    ? null
+                                    : () => setState(() => _archivePage++),
                                 child: const Text('次の24件'),
                               ),
                             ],
@@ -224,7 +227,8 @@ class _BusinessExecutionPanelState extends State<BusinessExecutionPanel> {
                                 '${plan.missingDates(_controller.now()).length}日',
                               ),
                               trailing: const Icon(Icons.chevron_right),
-                              onTap: () => setState(() => _selectedId = plan.id),
+                              onTap: () =>
+                                  setState(() => _selectedId = plan.id),
                             ),
                           ),
                       ],
