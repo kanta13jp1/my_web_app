@@ -249,6 +249,47 @@ test(
       path: info.outputPath("residents-mobile-reduced-motion.png"),
       fullPage: true,
     });
+    // Narrow + enlarged text + a real long refusal must keep the bottom action
+    // after the complete message. Extra page scrolling is intentional here.
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.evaluate((key) => {
+      const s = JSON.parse(localStorage.getItem(key)!);
+      s.wood = 99999;
+      s.metal = 99999;
+      s.farm.food = 99999;
+      s.storage = {
+        version: 1,
+        built: true,
+        reserve: { wood: 99999, metal: 99999, food: 99999 },
+      };
+      localStorage.setItem(key, JSON.stringify(s));
+    }, key);
+    await page.reload();
+    await expect(page.locator(".crew-actor")).toHaveCount(3);
+    await view(page, "farm");
+    await page.addStyleTag({ content: ":root { font-size: 24px; }" });
+    await page.locator("#donate-food").click();
+    await expect(page.locator('[data-panel="storage"]')).toBeVisible();
+    await expect(page.locator("#food")).toHaveText("199998");
+    await expect.poll(async () => {
+      const workspace = await page.locator(".workspace").boundingBox();
+      const tabs = await page.locator(".tabs").boundingBox();
+      const status = await page.locator("#status").boundingBox();
+      const collect = await page.locator("#collect").boundingBox();
+      const panel = await page.locator('[data-panel="storage"]').boundingBox();
+      const rail = await page.locator("#crew-feedback").boundingBox();
+      return workspace!.y + workspace!.height <= status!.y &&
+        tabs!.y + tabs!.height <= status!.y &&
+        status!.y + status!.height <= collect!.y &&
+        panel!.y + panel!.height <= rail!.y;
+    }).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth))
+      .toBeLessThanOrEqual(320);
+    await page.locator("#collect").scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: info.outputPath("residents-large-text-capacity-recovery.png"),
+      fullPage: true,
+    });
   },
 );
 

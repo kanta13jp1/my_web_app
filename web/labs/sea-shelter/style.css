@@ -587,6 +587,11 @@ main[data-resident-art="missing"] .resident-art {
     pointer-events: none;
   }
   main[data-resident-scene="ready"]:not([data-view="board"]) {
+    height: auto;
+    min-height: max(
+      100dvh,
+      calc(var(--base-min-height) + var(--layout-extra, 0px))
+    );
     grid-template-rows: auto auto minmax(min-content, 1fr) auto auto;
   }
   main[data-resident-scene="ready"]:not([data-view="board"]) .workspace {
@@ -596,7 +601,10 @@ main[data-resident-art="missing"] .resident-art {
     );
   }
   main[data-resident-scene="ready"]:not([data-view="board"]) .panel {
-    height: max(120px, calc(100% - var(--crew-feedback-room, 72px)));
+    position: absolute;
+    inset: 0 0 calc(var(--tabs-room, 50px) + var(--crew-feedback-room, 72px));
+    height: auto;
+    min-height: 120px;
     scroll-padding-bottom: 8px;
   }
   .panel button {
