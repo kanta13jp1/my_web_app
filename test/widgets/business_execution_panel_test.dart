@@ -97,20 +97,21 @@ Widget app(
   BusinessExecutionStore store, {
   String user = 'a',
   double scale = 1,
-}) => MaterialApp(
-  home: Scaffold(
-    body: MediaQuery(
-      data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-      child: BusinessExecutionPanel(
-        key: ValueKey(user),
-        userId: user,
-        currentUserId: () => user,
-        store: store,
-        now: () => DateTime(2026, 10, 30),
+}) =>
+    MaterialApp(
+      home: Scaffold(
+        body: MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+          child: BusinessExecutionPanel(
+            key: ValueKey(user),
+            userId: user,
+            currentUserId: () => user,
+            store: store,
+            now: () => DateTime(2026, 10, 30),
+          ),
+        ),
       ),
-    ),
-  ),
-);
+    );
 
 void main() {
   testWidgets('create plan, save zero and reflection, then restore on reopen', (
@@ -265,15 +266,15 @@ void main() {
     final store = fakes.MemoryExecutionStore()
       ..data['a'] = BusinessExecutionCodec.encode([fixtures.plan()]);
     Widget build() => MaterialApp(
-      home: Scaffold(
-        body: BusinessExecutionPanel(
-          userId: 'a',
-          currentUserId: () => 'a',
-          store: store,
-          now: () => now,
-        ),
-      ),
-    );
+          home: Scaffold(
+            body: BusinessExecutionPanel(
+              userId: 'a',
+              currentUserId: () => 'a',
+              store: store,
+              now: () => now,
+            ),
+          ),
+        );
     await tester.pumpWidget(build());
     await tester.pumpAndSettle();
     await tapText(tester, '相談申込数');
@@ -570,9 +571,8 @@ void main() {
       await reveal(tester, find.widgetWithText(TextField, restoredLabel));
       if (detail) {
         final restoredField = find.widgetWithText(TextField, restoredLabel);
-        final restoredController = tester
-            .widget<TextField>(restoredField)
-            .controller!;
+        final restoredController =
+            tester.widget<TextField>(restoredField).controller!;
         expect(restoredController.text, '回数');
       }
       expect(tester.takeException(), isNull);
