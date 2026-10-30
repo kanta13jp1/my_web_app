@@ -430,6 +430,15 @@ void main() {
         ).single.reports['2026-10-30']!.actual,
         4,
       );
+      expect(
+        find.bySemanticsLabel(
+          '最新の行動実績: 3.0\n'
+          '最新の成果実績: 未入力\n'
+          '最新の日次振り返り: 別タブの日次',
+          skipOffstage: false,
+        ),
+        findsNothing,
+      );
       await expectReadableLatest(
         tester,
         '最新の行動実績: 4.0\n'
@@ -479,6 +488,44 @@ void main() {
     await expectReadableLatest(tester, '最新の月次振り返り: ');
     expect(find.text('手元の日次'), findsOneWidget);
     expect(find.text('手元の月次'), findsOneWidget);
+  });
+
+  testWidgets('account switch removes old conflict values from semantics', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+    final original = fixtures.plan().withReport(
+      '2026-10-30',
+      BusinessDailyReport(actual: 1, note: '元の日次'),
+    ).withReflection('元の月次');
+    final store = fakes.MemoryExecutionStore()
+      ..data['a'] = BusinessExecutionCodec.encode([original]);
+    await tester.pumpWidget(app(store));
+    await tester.pumpAndSettle();
+    await tapText(tester, '相談申込数');
+    await enter(tester, 'この日の行動実績（回）', '2');
+    await enter(tester, '日次の振り返り・次の一手', '手元の下書き');
+    await enter(tester, '月次の振り返り（続けること・変えること・次月の行動）', '手元の月次');
+    final remote = original.withReport(
+      '2026-10-30',
+      BusinessDailyReport(actual: 3, note: '旧アカウントの最新日次'),
+    ).withReflection('旧アカウントの最新月次');
+    store.data['a'] = BusinessExecutionCodec.encode([remote]);
+    await tapText(tester, 'この日の記録を更新');
+    await tapText(tester, '保存結果を再読み込み');
+    const oldDay = '最新の行動実績: 3.0\n'
+        '最新の成果実績: 未入力\n'
+        '最新の日次振り返り: 旧アカウントの最新日次';
+    const oldMonth = '最新の月次振り返り: 旧アカウントの最新月次';
+    await expectReadableLatest(tester, oldDay);
+    await expectReadableLatest(tester, oldMonth);
+    await tester.pumpWidget(app(store, user: 'b'));
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel(oldDay, skipOffstage: false), findsNothing);
+    expect(find.bySemanticsLabel(oldMonth, skipOffstage: false), findsNothing);
+    expect(find.text('旧アカウントの最新日次', skipOffstage: false), findsNothing);
+    expect(store.data['b'], isNull);
   });
 
   testWidgets('new plan draft survives insertion of a save-error notice', (
