@@ -353,12 +353,122 @@ void main() {
     'same-day and monthly remote changes require explicit overwrite',
     (tester) async {
       final semantics = tester.ensureSemantics();
-      addTearDown(semantics.dispose);
+      try {
+        final original = fixtures
+            .plan()
+            .withReport(
+              '2026-10-30',
+              BusinessDailyReport(actual: 1, note: '元の記録'),
+            )
+            .withReflection('元の月次');
+        final store = fakes.MemoryExecutionStore()
+          ..data['a'] = BusinessExecutionCodec.encode([original]);
+        await tester.pumpWidget(app(store));
+        await tester.pumpAndSettle();
+        await tapText(tester, '相談申込数');
+        await enter(tester, 'この日の行動実績（回）', '2');
+        await enter(tester, '日次の振り返り・次の一手', '手元の日次下書き');
+        await enter(tester, '月次の振り返り（続けること・変えること・次月の行動）', '手元の月次下書き');
+        final remote = original
+            .withReport(
+              '2026-10-30',
+              BusinessDailyReport(actual: 3, note: '別タブの日次'),
+            )
+            .withReflection('別タブの月次');
+        store.data['a'] = BusinessExecutionCodec.encode([remote]);
+        await tapText(tester, 'この日の記録を更新');
+        await tapText(tester, '保存結果を再読み込み');
+        expect(
+          tester
+              .widget<FilledButton>(
+                find.widgetWithText(FilledButton, 'この日の記録を更新'),
+              )
+              .onPressed,
+          isNull,
+        );
+        expect(
+          tester
+              .widget<FilledButton>(
+                find.widgetWithText(FilledButton, '月次の振り返りを保存'),
+              )
+              .onPressed,
+          isNull,
+        );
+        expect(find.text('手元の日次下書き'), findsOneWidget);
+        expect(find.textContaining('最新の日次振り返り: 別タブの日次'), findsOneWidget);
+        await expectReadableLatest(
+          tester,
+          '最新の行動実績: 3.0\n'
+          '最新の成果実績: 未入力\n'
+          '最新の日次振り返り: 別タブの日次',
+        );
+        await expectReadableLatest(tester, '最新の月次振り返り: 別タブの月次');
+        expect(
+          BusinessExecutionCodec.decode(
+            store.data['a'],
+          ).single.reports['2026-10-30']!.actual,
+          3,
+        );
+        await tapText(tester, '最新記録を確認し、この日次入力で上書きする');
+        final changedAgain = remote.withReport(
+          '2026-10-30',
+          BusinessDailyReport(actual: 4, note: '確認後に別タブが再更新'),
+        );
+        store.data['a'] = BusinessExecutionCodec.encode([changedAgain]);
+        await tapText(tester, 'この日の記録を更新');
+        await tapText(tester, '保存結果を再読み込み');
+        expect(
+          tester
+              .widget<FilledButton>(
+                find.widgetWithText(FilledButton, 'この日の記録を更新'),
+              )
+              .onPressed,
+          isNull,
+        );
+        expect(
+          BusinessExecutionCodec.decode(
+            store.data['a'],
+          ).single.reports['2026-10-30']!.actual,
+          4,
+        );
+        expect(
+          find.bySemanticsLabel(
+            '最新の行動実績: 3.0\n'
+            '最新の成果実績: 未入力\n'
+            '最新の日次振り返り: 別タブの日次',
+            skipOffstage: false,
+          ),
+          findsNothing,
+        );
+        await expectReadableLatest(
+          tester,
+          '最新の行動実績: 4.0\n'
+          '最新の成果実績: 未入力\n'
+          '最新の日次振り返り: 確認後に別タブが再更新',
+        );
+        await tapText(tester, '最新記録を確認し、この日次入力で上書きする');
+        await tapText(tester, 'この日の記録を更新');
+        await tapText(tester, '最新記録を確認し、この月次入力で上書きする');
+        await tapText(tester, '月次の振り返りを保存');
+        final saved = BusinessExecutionCodec.decode(store.data['a']).single;
+        expect(saved.reports['2026-10-30']!.note, '手元の日次下書き');
+        expect(saved.reflection, '手元の月次下書き');
+      } finally {
+        semantics.dispose();
+      }
+    },
+  );
+
+  testWidgets('empty latest conflict text remains available to semantics', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
       final original = fixtures
           .plan()
           .withReport(
             '2026-10-30',
-            BusinessDailyReport(actual: 1, note: '元の記録'),
+            BusinessDailyReport(actual: 1, note: '元の日次'),
           )
           .withReflection('元の月次');
       final store = fakes.MemoryExecutionStore()
@@ -367,194 +477,93 @@ void main() {
       await tester.pumpAndSettle();
       await tapText(tester, '相談申込数');
       await enter(tester, 'この日の行動実績（回）', '2');
-      await enter(tester, '日次の振り返り・次の一手', '手元の日次下書き');
-      await enter(tester, '月次の振り返り（続けること・変えること・次月の行動）', '手元の月次下書き');
+      await enter(tester, '日次の振り返り・次の一手', '手元の日次');
+      await enter(tester, '月次の振り返り（続けること・変えること・次月の行動）', '手元の月次');
       final remote = original
           .withReport(
             '2026-10-30',
-            BusinessDailyReport(actual: 3, note: '別タブの日次'),
+            BusinessDailyReport(actual: 3, note: ''),
           )
-          .withReflection('別タブの月次');
+          .withReflection('');
       store.data['a'] = BusinessExecutionCodec.encode([remote]);
       await tapText(tester, 'この日の記録を更新');
       await tapText(tester, '保存結果を再読み込み');
-      expect(
-        tester
-            .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'この日の記録を更新'),
-            )
-            .onPressed,
-        isNull,
-      );
-      expect(
-        tester
-            .widget<FilledButton>(
-              find.widgetWithText(FilledButton, '月次の振り返りを保存'),
-            )
-            .onPressed,
-        isNull,
-      );
-      expect(find.text('手元の日次下書き'), findsOneWidget);
-      expect(find.textContaining('最新の日次振り返り: 別タブの日次'), findsOneWidget);
       await expectReadableLatest(
         tester,
         '最新の行動実績: 3.0\n'
         '最新の成果実績: 未入力\n'
-        '最新の日次振り返り: 別タブの日次',
+        '最新の日次振り返り: ',
       );
-      await expectReadableLatest(tester, '最新の月次振り返り: 別タブの月次');
-      expect(
-        BusinessExecutionCodec.decode(
-          store.data['a'],
-        ).single.reports['2026-10-30']!.actual,
-        3,
-      );
-      await tapText(tester, '最新記録を確認し、この日次入力で上書きする');
-      final changedAgain = remote.withReport(
-        '2026-10-30',
-        BusinessDailyReport(actual: 4, note: '確認後に別タブが再更新'),
-      );
-      store.data['a'] = BusinessExecutionCodec.encode([changedAgain]);
-      await tapText(tester, 'この日の記録を更新');
-      await tapText(tester, '保存結果を再読み込み');
-      expect(
-        tester
-            .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'この日の記録を更新'),
-            )
-            .onPressed,
-        isNull,
-      );
-      expect(
-        BusinessExecutionCodec.decode(
-          store.data['a'],
-        ).single.reports['2026-10-30']!.actual,
-        4,
-      );
-      expect(
-        find.bySemanticsLabel(
-          '最新の行動実績: 3.0\n'
-          '最新の成果実績: 未入力\n'
-          '最新の日次振り返り: 別タブの日次',
-          skipOffstage: false,
-        ),
-        findsNothing,
-      );
-      await expectReadableLatest(
-        tester,
-        '最新の行動実績: 4.0\n'
-        '最新の成果実績: 未入力\n'
-        '最新の日次振り返り: 確認後に別タブが再更新',
-      );
-      await tapText(tester, '最新記録を確認し、この日次入力で上書きする');
-      await tapText(tester, 'この日の記録を更新');
-      await tapText(tester, '最新記録を確認し、この月次入力で上書きする');
-      await tapText(tester, '月次の振り返りを保存');
-      final saved = BusinessExecutionCodec.decode(store.data['a']).single;
-      expect(saved.reports['2026-10-30']!.note, '手元の日次下書き');
-      expect(saved.reflection, '手元の月次下書き');
-    },
-  );
-
-  testWidgets('empty latest conflict text remains available to semantics', (
-    tester,
-  ) async {
-    final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
-    final original = fixtures
-        .plan()
-        .withReport(
-          '2026-10-30',
-          BusinessDailyReport(actual: 1, note: '元の日次'),
-        )
-        .withReflection('元の月次');
-    final store = fakes.MemoryExecutionStore()
-      ..data['a'] = BusinessExecutionCodec.encode([original]);
-    await tester.pumpWidget(app(store));
-    await tester.pumpAndSettle();
-    await tapText(tester, '相談申込数');
-    await enter(tester, 'この日の行動実績（回）', '2');
-    await enter(tester, '日次の振り返り・次の一手', '手元の日次');
-    await enter(tester, '月次の振り返り（続けること・変えること・次月の行動）', '手元の月次');
-    final remote = original
-        .withReport(
-          '2026-10-30',
-          BusinessDailyReport(actual: 3, note: ''),
-        )
-        .withReflection('');
-    store.data['a'] = BusinessExecutionCodec.encode([remote]);
-    await tapText(tester, 'この日の記録を更新');
-    await tapText(tester, '保存結果を再読み込み');
-    await expectReadableLatest(
-      tester,
-      '最新の行動実績: 3.0\n'
-      '最新の成果実績: 未入力\n'
-      '最新の日次振り返り: ',
-    );
-    await expectReadableLatest(tester, '最新の月次振り返り: ');
-    expect(find.text('手元の日次'), findsOneWidget);
-    expect(find.text('手元の月次'), findsOneWidget);
+      await expectReadableLatest(tester, '最新の月次振り返り: ');
+      expect(find.text('手元の日次'), findsOneWidget);
+      expect(find.text('手元の月次'), findsOneWidget);
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets('account switch removes old conflict values from semantics', (
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
-    final original = fixtures
-        .plan()
-        .withReport(
-          '2026-10-30',
-          BusinessDailyReport(actual: 1, note: '元の日次'),
-        )
-        .withReflection('元の月次');
-    final bPayload = fixtures.plan(id: 'b-plan').toJson()
-      ..['outcome'] = 'B専用の成果指標';
-    final bPlan = BusinessExecutionPlan.fromJson(bPayload);
-    final store = fakes.MemoryExecutionStore()
-      ..data['a'] = BusinessExecutionCodec.encode([original])
-      ..data['b'] = BusinessExecutionCodec.encode([bPlan]);
-    await tester.pumpWidget(app(store));
-    await tester.pumpAndSettle();
-    await tapText(tester, '相談申込数');
-    await enter(tester, 'この日の行動実績（回）', '2');
-    await enter(tester, '日次の振り返り・次の一手', '手元の下書き');
-    await enter(tester, '月次の振り返り（続けること・変えること・次月の行動）', '手元の月次');
-    final remote = original
-        .withReport(
-          '2026-10-30',
-          BusinessDailyReport(actual: 3, note: '旧アカウントの最新日次'),
-        )
-        .withReflection('旧アカウントの最新月次');
-    store.data['a'] = BusinessExecutionCodec.encode([remote]);
-    await tapText(tester, 'この日の記録を更新');
-    await tapText(tester, '保存結果を再読み込み');
-    const oldDay = '最新の行動実績: 3.0\n'
-        '最新の成果実績: 未入力\n'
-        '最新の日次振り返り: 旧アカウントの最新日次';
-    const oldMonth = '最新の月次振り返り: 旧アカウントの最新月次';
-    await expectReadableLatest(tester, oldDay);
-    await expectReadableLatest(tester, oldMonth);
-    expect(find.text(oldDay, skipOffstage: false), findsOneWidget);
-    expect(find.text(oldMonth, skipOffstage: false), findsOneWidget);
-    expect(find.text('手元の下書き', skipOffstage: false), findsOneWidget);
-    expect(find.text('手元の月次', skipOffstage: false), findsOneWidget);
-    await tester.pumpWidget(app(store, user: 'b'));
-    await tester.pumpAndSettle();
-    expect(find.bySemanticsLabel(oldDay, skipOffstage: false), findsNothing);
-    expect(find.bySemanticsLabel(oldMonth, skipOffstage: false), findsNothing);
-    expect(find.text(oldDay, skipOffstage: false), findsNothing);
-    expect(find.text(oldMonth, skipOffstage: false), findsNothing);
-    expect(find.text('手元の下書き', skipOffstage: false), findsNothing);
-    expect(find.text('手元の月次', skipOffstage: false), findsNothing);
-    expect(
-      find.bySemanticsLabel(RegExp('手元の下書き|手元の月次'), skipOffstage: false),
-      findsNothing,
-    );
-    await reveal(tester, find.text('B専用の成果指標'));
-    expect(find.text('B専用の成果指標'), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('B専用の成果指標')), findsWidgets);
-    expect(BusinessExecutionCodec.decode(store.data['b']).single.id, 'b-plan');
+    try {
+      final original = fixtures
+          .plan()
+          .withReport(
+            '2026-10-30',
+            BusinessDailyReport(actual: 1, note: '元の日次'),
+          )
+          .withReflection('元の月次');
+      final bPayload = fixtures.plan(id: 'b-plan').toJson()
+        ..['outcome'] = 'B専用の成果指標';
+      final bPlan = BusinessExecutionPlan.fromJson(bPayload);
+      final store = fakes.MemoryExecutionStore()
+        ..data['a'] = BusinessExecutionCodec.encode([original])
+        ..data['b'] = BusinessExecutionCodec.encode([bPlan]);
+      await tester.pumpWidget(app(store));
+      await tester.pumpAndSettle();
+      await tapText(tester, '相談申込数');
+      await enter(tester, 'この日の行動実績（回）', '2');
+      await enter(tester, '日次の振り返り・次の一手', '手元の下書き');
+      await enter(tester, '月次の振り返り（続けること・変えること・次月の行動）', '手元の月次');
+      final remote = original
+          .withReport(
+            '2026-10-30',
+            BusinessDailyReport(actual: 3, note: '旧アカウントの最新日次'),
+          )
+          .withReflection('旧アカウントの最新月次');
+      store.data['a'] = BusinessExecutionCodec.encode([remote]);
+      await tapText(tester, 'この日の記録を更新');
+      await tapText(tester, '保存結果を再読み込み');
+      const oldDay = '最新の行動実績: 3.0\n'
+          '最新の成果実績: 未入力\n'
+          '最新の日次振り返り: 旧アカウントの最新日次';
+      const oldMonth = '最新の月次振り返り: 旧アカウントの最新月次';
+      await expectReadableLatest(tester, oldDay);
+      await expectReadableLatest(tester, oldMonth);
+      expect(find.text(oldDay, skipOffstage: false), findsOneWidget);
+      expect(find.text(oldMonth, skipOffstage: false), findsOneWidget);
+      expect(find.text('手元の下書き', skipOffstage: false), findsOneWidget);
+      expect(find.text('手元の月次', skipOffstage: false), findsOneWidget);
+      await tester.pumpWidget(app(store, user: 'b'));
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel(oldDay, skipOffstage: false), findsNothing);
+      expect(find.bySemanticsLabel(oldMonth, skipOffstage: false), findsNothing);
+      expect(find.text(oldDay, skipOffstage: false), findsNothing);
+      expect(find.text(oldMonth, skipOffstage: false), findsNothing);
+      expect(find.text('手元の下書き', skipOffstage: false), findsNothing);
+      expect(find.text('手元の月次', skipOffstage: false), findsNothing);
+      expect(
+        find.bySemanticsLabel(RegExp('手元の下書き|手元の月次'), skipOffstage: false),
+        findsNothing,
+      );
+      await reveal(tester, find.text('B専用の成果指標'));
+      expect(find.text('B専用の成果指標'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp('B専用の成果指標')), findsWidgets);
+      expect(BusinessExecutionCodec.decode(store.data['b']).single.id, 'b-plan');
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets('new plan draft survives insertion of a save-error notice', (
