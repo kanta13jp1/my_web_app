@@ -15,10 +15,18 @@ void main() {
     await tester.tap(field);
     await tester.pumpAndSettle();
     await tester.enterText(field, '{"sum":10}');
-    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(field).controller!.text, '{"sum":10}');
     await tester.ensureVisible(button);
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'JSON構文を確認する'),
+      ).onPressed,
+      isNotNull,
+    );
     await tester.tap(button);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('入力全文はJSONとして読み取れます。'), findsOneWidget);
 
     await tester.ensureVisible(field);
@@ -33,8 +41,9 @@ void main() {
     );
     expect(find.text('入力全文はJSONとして読み取れます。'), findsNothing);
     await tester.ensureVisible(button);
+    await tester.pumpAndSettle();
     await tester.tap(button);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.textContaining('入力全文はJSONとして読み取れません。'), findsOneWidget);
 
     await tester.ensureVisible(field);
@@ -44,8 +53,9 @@ void main() {
     await tester.enterText(field, 'null');
     await tester.pump();
     await tester.ensureVisible(button);
+    await tester.pumpAndSettle();
     await tester.tap(button);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('入力全文はJSONとして読み取れます。'), findsOneWidget);
   });
 }
