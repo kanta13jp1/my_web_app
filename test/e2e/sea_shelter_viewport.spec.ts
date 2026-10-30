@@ -75,6 +75,38 @@ test(
           "--board-size",
         )
       );
+      const contrasts = await page.evaluate(() => {
+        const luminance = (color: string) => {
+          const rgb = color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(
+            (n) => {
+              const v = n / 255;
+              return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+            },
+          );
+          return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
+        };
+        const ratio = (a: string, b: string) => {
+          const [lo, hi] = [luminance(a), luminance(b)].sort((x, y) => x - y);
+          return (hi + 0.05) / (lo + 0.05);
+        };
+        return ["#board button.sea:not(.near)", "#edit-profile", "#collect"]
+          .map((selector) => {
+            const style = getComputedStyle(document.querySelector(selector)!);
+            return {
+              selector,
+              text: ratio(style.color, style.backgroundColor),
+              border: ratio(style.borderColor, style.backgroundColor),
+            };
+          });
+      });
+      for (const contrast of contrasts) {
+        expect(contrast.text).toBeGreaterThanOrEqual(4.5);
+      }
+      expect(contrasts[0].border).toBeGreaterThanOrEqual(3);
+      await info.attach(`contrast-${width}-${height}`, {
+        body: JSON.stringify(contrasts),
+        contentType: "application/json",
+      });
       const size = await page.evaluate(() => ({
         width: document.documentElement.scrollWidth,
         height: document.documentElement.scrollHeight,
