@@ -96,6 +96,7 @@ p {
 .resources strong {
   display: block;
   font-size: clamp(0.875rem, 3.8vw, 1rem);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.025em;
   white-space: nowrap;
