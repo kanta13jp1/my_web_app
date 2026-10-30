@@ -92,7 +92,8 @@ async function reveal(page: Page, target: Locator, diagnostics?: unknown[]) {
       }
       assertFixturePage(page);
     }
-    if (box && box.y >= 60 && box.y + box.height <= viewport.height - 8) return;
+    if (box && box.x >= 0 && box.x + box.width <= viewport.width &&
+        box.y >= 60 && box.y + box.height <= viewport.height - 8) return;
     if (box && previousY !== null && Math.abs(box.y - previousY) < 1) {
       unchanged++;
     } else {
