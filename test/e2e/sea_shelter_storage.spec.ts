@@ -143,7 +143,7 @@ test(
     await page.locator("#cancel-share").click();
     await expect(page.locator("#food")).toHaveText("199996");
     await page.locator("#share-food").click();
-    await page.locator("#confirm-share").click();
+    await page.locator("#confirm-share").dblclick();
     await expect(page.locator("#food")).toHaveText("199993");
     await expect(page.locator("#xp")).toHaveText(xp!);
     await view(page, "farm");

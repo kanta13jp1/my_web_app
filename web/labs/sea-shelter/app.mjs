@@ -386,8 +386,9 @@ $("storage-farm").addEventListener("click", () => {
 $("share-food").addEventListener("click", () => $("share-dialog").showModal());
 $("cancel-share").addEventListener("click", () => $("share-dialog").close());
 $("confirm-share").addEventListener("click", () => {
-  dispatch({ type: "share-food" });
+  if (!$("share-dialog").open) return;
   $("share-dialog").close();
+  dispatch({ type: "share-food" });
   $("status").focus({ preventScroll: true });
 });
 $("export-recovery").addEventListener("click", () => {
