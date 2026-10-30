@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/widgets/json_contract_checker.dart';
 
@@ -43,5 +44,17 @@ void main() {
     await tester.pump();
     expect(find.textContaining('入力全文はJSONとして'), findsNothing);
     semantics.dispose();
+  });
+  testWidgets('キーボードで入力欄から確認ボタンへ移動して判定する', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: JsonContractChecker())),
+    );
+    await tester.enterText(find.byKey(const Key('json-contract-input')), 'null');
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.text('入力全文はJSONとして読み取れます。'), findsOneWidget);
   });
 }
