@@ -1,0 +1,105 @@
+name: Temporary business execution formatter evidence
+
+on:
+  push:
+    branches: [codex/format-5931-acc7-once-20261030]
+
+permissions: {}
+
+concurrency:
+  group: format-5931-acc7-once
+  cancel-in-progress: false
+
+jobs:
+  format:
+    name: Produce two-file formatter evidence
+    if: github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/format-5931-acc7-once-20261030'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout event commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Verify parent and immutable inputs
+        shell: bash
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+          ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          parent=acc7bbceb23b90c04ec26c7c27c20a27d4753009
+          test "$ATTEMPT" = 1
+          test "$BEFORE" = "$parent"
+          test "$AFTER" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git show -s --format=%P HEAD)" = "$parent"
+          test "$(git diff --name-only "$parent" HEAD)" = ".github/workflows/format-business-execution-once.yml"
+          test "$(git rev-parse "$parent:lib/widgets/business_execution_panel.dart")" = 0b1a28f37cc2cafb6dad5417bd05f97b83862a2f
+          test "$(git rev-parse "$parent:test/widgets/business_execution_panel_test.dart")" = 03f9d817084b215312a176f2e57c0da943732549
+          for f in lib/widgets/business_execution_panel.dart test/widgets/business_execution_panel_test.dart; do
+            test -f "$f" && test ! -L "$f"
+            test "$(git ls-tree HEAD -- "$f" | cut -d' ' -f1)" = 100644
+            test "$(git rev-parse "HEAD:$f")" = "$(git rev-parse "$parent:$f")"
+            git diff --quiet HEAD -- "$f"
+            git diff --cached --quiet HEAD -- "$f"
+          done
+
+      - name: Checkout pinned Flutter source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: flutter/flutter
+          ref: c6f67dede3d4aa1aa7a69dd56a3494a5cde6cc80
+          path: .flutter-format-sdk
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Format fixed files and record evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk=.flutter-format-sdk
+          expected=c6f67dede3d4aa1aa7a69dd56a3494a5cde6cc80
+          test "$(git -C "$sdk" rev-parse HEAD)" = "$expected"
+          git -C "$sdk" fetch --no-tags --depth=1 https://github.com/flutter/flutter.git refs/tags/3.38.10:refs/tags/3.38.10
+          test "$(git -C "$sdk" rev-parse 'refs/tags/3.38.10^{commit}')" = "$expected"
+          "$sdk/bin/flutter" config --no-analytics
+          "$sdk/bin/flutter" --version
+          dart="$GITHUB_WORKSPACE/$sdk/bin/dart"
+          files=(lib/widgets/business_execution_panel.dart test/widgets/business_execution_panel_test.dart)
+          out="$RUNNER_TEMP/business-execution-format"
+          test ! -e "$out"
+          mkdir -p "$out/files/lib/widgets" "$out/files/test/widgets"
+          "$dart" --version > "$out/dart-version.txt" 2>&1
+          printf '%s\n' "$GITHUB_SHA" > "$out/tested-commit.txt"
+          printf '%s\n' acc7bbceb23b90c04ec26c7c27c20a27d4753009 > "$out/parent-commit.txt"
+          printf '%s\n' "$GITHUB_RUN_ID" > "$out/run-id.txt"
+          printf '%s\n' "$GITHUB_RUN_ATTEMPT" > "$out/run-attempt.txt"
+          for f in "${files[@]}"; do printf '%s\t%s\n' "$(git rev-parse "HEAD:$f")" "$f" >> "$out/source-blobs.txt"; done
+          "$dart" format --output=write "${files[@]}"
+          "$dart" format --output=none --set-exit-if-changed "${files[@]}"
+          git diff --check -- "${files[@]}"
+          for f in "${files[@]}"; do
+            if git diff --quiet HEAD -- "$f"; then
+              echo "::error::Expected a formatter change in $f."
+              exit 1
+            fi
+          done
+          git diff --binary HEAD -- "${files[@]}" > "$out/format.patch"
+          sha256sum -- "${files[@]}" > "$out/formatted-sha256.txt"
+          cp -- "${files[0]}" "$out/files/${files[0]}"
+          cp -- "${files[1]}" "$out/files/${files[1]}"
+
+      - name: Preserve explicit formatter evidence
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: business-execution-format-${{ github.run_id }}
+          path: ${{ runner.temp }}/business-execution-format/
+          if-no-files-found: error
+          retention-days: 1
