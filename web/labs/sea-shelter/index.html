@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>潮灯のシェルター</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">SEA SHELTER / 小さな海上拠点</p>
+        <h1>潮灯のシェルター</h1>
+        <p>
+          拾い集めたひとかけらから、みんなの居場所を。
+        </p>
+      </header>
+      <section class="captain" aria-label="船長プロフィール">
+        <div id="avatar" aria-hidden="true"></div>
+        <div>
+          <strong id="captain-name"></strong><small
+            id="captain-title"
+          ></small><p id="bubble"></p>
+        </div>
+        <button id="edit-profile">プロフィール</button>
+      </section>
+      <section class="resources" aria-label="資材">
+        <div>木材<strong id="wood">0</strong></div>
+        <div>金属<strong id="metal">0</strong></div>
+        <div>住民 / 定員<strong id="residents">1 / 1</strong></div>
+        <div>EXP<strong id="xp">0</strong></div>
+      </section>
+      <div class="layout">
+        <section class="play">
+          <div class="section-title">
+            <h2>あなたの海上拠点</h2><span id="tile-count"
+            >1 / 25区画</span>
+          </div>
+          <p id="guide">
+            ① 漂流物を回収して、最初の依頼を達成しよう。
+          </p>
+          <div id="board" aria-label="5×5の海上盤面"></div>
+          <button id="collect" class="primary">
+            漂流物を回収　木材 +3 / 金属 +2
+          </button>
+          <p id="status" role="status" aria-live="polite">
+            船長、ここから始めましょう。
+          </p>
+        </section>
+        <aside>
+          <section class="panel">
+            <h2>拠点を広げる</h2>
+            <p>
+              施設を選び、拠点の上下左右に接する海をタップ。既存区画も同じ費用で施設変更できます（資材の返却なし）。船着場と住民の必要な住居は保護されます。
+            </p>
+            <div
+              id="facilities"
+              class="facilities"
+              role="group"
+              aria-label="建設する施設"
+            >
+            </div>
+            <button id="invite">住民を迎える　木材3 / 金属1</button>
+            <p>
+              住民3人ごとに、回収できる木材が1増えます。
+            </p>
+          </section>
+          <section class="panel">
+            <h2>住民からの依頼</h2>
+            <div id="quests"></div>
+          </section>
+        </aside>
+      </div>
+      <footer>
+        <p id="save-status" role="status"></p>
+        <p>
+          このブラウザ内のみ自動保存。端末間同期なし。ブラウザデータ削除で進行が消えます。
+        </p>
+        <button id="reset">最初からやり直す</button>
+        <p>
+          試作版：戦闘・課金なし。目標は3件の依頼達成。海上25区画まで自由に拡張できます。
+        </p>
+      </footer>
+    </main>
+    <dialog id="profile-dialog" aria-labelledby="profile-heading">
+      <form id="profile-form">
+        <h2 id="profile-heading">船長プロフィール</h2><label
+        >名前（16文字まで）<input
+            name="name"
+            maxlength="16"
+            required
+          ></label><label>アイコン<select
+            name="icon"
+            aria-label="アイコン"
+          >
+            <option>灯台</option>
+            <option>帆船</option>
+            <option>貝</option>
+          </select></label><label>枠<select name="frame" aria-label="枠">
+            <option>波</option>
+            <option>夕日</option>
+            <option>星</option>
+          </select></label><label>吹き出し（40文字まで）<input
+            name="bubble"
+            maxlength="40"
+          ></label><label>称号<select name="title" aria-label="称号">
+          </select></label><p>
+          「海の建築家」はEXP24、「潮灯の守り手」は依頼3件で解放。
+        </p>
+        <p id="profile-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button type="button" id="cancel-profile">キャンセル</button>
+          <button type="submit" class="primary">保存</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="reset-dialog" aria-labelledby="reset-heading">
+      <h2 id="reset-heading">最初から始めますか？</h2>
+      <p>
+        このゲームの資材・拠点・依頼・プロフィールが初期状態になります。
+      </p>
+      <div class="dialog-actions">
+        <button id="cancel-reset" autofocus>キャンセル</button>
+        <button id="confirm-reset">やり直す</button>
+      </div>
+    </dialog>
+    <script type="module" src="app.mjs"></script>
+  </body>
+</html>

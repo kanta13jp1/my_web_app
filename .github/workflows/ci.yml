@@ -142,6 +142,7 @@ jobs:
       - name: Test CI scope classifier
         run: |
           python scripts/classify_ci_changes_test.py
+          python -B scripts/check_claude_review_workflow_test.py
           python scripts/serve_business_execution_fixture_test.py
           python scripts/cloud_ci_handoff_test.py
           python scripts/cloud_first_route_test.py

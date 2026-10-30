@@ -100,7 +100,16 @@ class CicdEfficiencyTest(unittest.TestCase):
             checkout = root / "checkout"
             source.mkdir()
             checkout.mkdir()
-            env = dict(os.environ, GIT_CONFIG_NOSYSTEM="1",
+            # Hooks export repository-local Git variables. Never let the
+            # temporary fixture initialize or commit in the caller's repository.
+            local_git_environment = set(subprocess.check_output(
+                ["git", "rev-parse", "--local-env-vars"], text=True,
+            ).splitlines())
+            isolated_environment = {
+                key: value for key, value in os.environ.items()
+                if key not in local_git_environment
+            }
+            env = dict(isolated_environment, GIT_CONFIG_NOSYSTEM="1",
                        GIT_CONFIG_GLOBAL=os.devnull,
                        GIT_AUTHOR_NAME="Fixture", GIT_AUTHOR_EMAIL="fixture@example.invalid",
                        GIT_COMMITTER_NAME="Fixture", GIT_COMMITTER_EMAIL="fixture@example.invalid")
@@ -121,16 +130,16 @@ class CicdEfficiencyTest(unittest.TestCase):
             env.update(GITHUB_SHA=event_sha, GITHUB_REF="refs/heads/main",
                        GITHUB_REPOSITORY="fixture/repo", FIXTURE_REMOTE=str(source))
             result = subprocess.run(
-                ["bash", "-c", script], cwd=checkout, env=env, text=True,
+                [shutil.which("bash"), "-c", script], cwd=checkout, env=env, text=True,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             )
             self.assertEqual(result.returncode, 0, result.stdout)
             actual = subprocess.check_output(
-                ["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True
+                ["git", "-C", str(checkout), "rev-parse", "HEAD"], env=env, text=True
             ).strip()
             self.assertEqual(actual, event_sha)
             tags = subprocess.check_output(
-                ["git", "-C", str(checkout), "tag", "--list"], text=True
+                ["git", "-C", str(checkout), "tag", "--list"], env=env, text=True
             )
             self.assertIn("v1.0.0", tags)
 

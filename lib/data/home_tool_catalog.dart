@@ -1944,6 +1944,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => Navigator.of(context).pushNamed('/echo-pump'),
     ),
     HomeToolEntry(
+      id: 'sea-shelter',
+      sectionId: 'personal',
+      title: '潮灯のシェルター',
+      subtitle: '漂流物を集め、住民と海上拠点を育てるサバイバル試作',
+      icon: Icons.sailing_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['ゲーム', '海', 'サバイバル', '拠点', '住民', 'sea shelter'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/sea-shelter'),
+    ),
+    HomeToolEntry(
       id: 'focus-capture',
       sectionId: 'personal',
       title: 'フォーカス捕獲ゲーム',
