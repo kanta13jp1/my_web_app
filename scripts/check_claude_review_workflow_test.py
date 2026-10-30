@@ -61,6 +61,24 @@ class ClaudeReviewWorkflowTest(unittest.TestCase):
         self.assertIn("python scripts/check_high_risk_ultrareview_gate.py", contract)
         self.assertIn("persist-credentials: false", contract)
 
+    def test_wiring_check_runs_in_contract_and_independent_ci(self) -> None:
+        contract = job_block(self.workflow, "high-risk-ultrareview-gate")
+        step = (
+            "      - name: Verify high-risk workflow event and security boundaries\n"
+            "        run: python -B scripts/check_claude_review_workflow_test.py\n"
+        )
+        self.assertEqual(contract.count(step), 1)
+        self.assertNotIn("secrets.", contract)
+        self.assertNotIn("github.token", contract)
+        self.assertNotRegex(contract, r"(?m)^\s*env:[ \t]*$")
+        ci = (WORKFLOW.parent / "ci.yml").read_text(encoding="utf-8")
+        start = ci.index("      - name: Test CI scope classifier\n")
+        end = ci.index("\n      - name:", start + 1)
+        self.assertIn(
+            "          python -B scripts/check_claude_review_workflow_test.py\n",
+            ci[start:end],
+        )
+
     def test_ready_event_does_not_expand_trusted_review(self) -> None:
         self.assertEqual(
             types(event_block(self.workflow, "pull_request_target")),
