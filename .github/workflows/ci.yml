@@ -619,7 +619,7 @@ jobs:
           E2E_BASE_URL="$(python3 scripts/serve_business_execution_fixture.py verify \
             --ready-file "$ready_file" --pid "$server_pid" --source-sha "$source_sha")"
           fixture_nonce="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["token"])' "$ready_file")"
-          BUSINESS_EXECUTION_FIXTURE_TOKEN="$fixture_nonce"
+          printf -v BUSINESS_EXECUTION_FIXTURE_TOKEN '%s' "$fixture_nonce"
           export E2E_BASE_URL BUSINESS_EXECUTION_FIXTURE_TOKEN
           cp "$ready_file" business-execution-ready.json
           npm run e2e:business-execution -- --forbid-only
