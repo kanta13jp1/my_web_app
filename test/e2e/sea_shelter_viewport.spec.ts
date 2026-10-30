@@ -70,6 +70,17 @@ test("landscape, large text, long profile and maximum resource labels remain rea
     "海の仲間と長い船長名あいうえお",
   );
   await page.locator('#profile-form button[type="submit"]').click();
+  // A persisted-data fixture stresses label width separately from user-I/O farm tests.
+  await page.evaluate(() => {
+    const key = "my_web_app.sea_shelter.v1";
+    const saved = JSON.parse(localStorage.getItem(key)!);
+    saved.wood = 99999;
+    saved.metal = 99999;
+    saved.xp = 99999;
+    localStorage.setItem(key, JSON.stringify(saved));
+  });
+  await page.reload();
+  await expect(page.locator("#wood")).toHaveText("99999");
   await page.addStyleTag({ content: ":root { font-size: 24px; }" });
   await page.locator('.tabs [data-view="residents"]').click();
   await page.locator("#invite").click();
