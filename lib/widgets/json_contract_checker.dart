@@ -71,10 +71,13 @@ class _JsonContractCheckerState extends State<JsonContractChecker> {
             ),
             if (_isValid != null) ...[
               const SizedBox(height: 8),
-              Text(
-                _isValid!
-                    ? '入力全文はJSONとして読み取れます。'
-                    : '入力全文はJSONとして読み取れません。Markdownの囲みもJSONには含められません。',
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _isValid!
+                      ? '入力全文はJSONとして読み取れます。'
+                      : '入力全文はJSONとして読み取れません。Markdownの囲みもJSONには含められません。',
+                ),
               ),
             ],
           ],

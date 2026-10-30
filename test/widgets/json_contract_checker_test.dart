@@ -4,6 +4,7 @@ import 'package:my_web_app/widgets/json_contract_checker.dart';
 
 void main() {
   testWidgets('全文を端末内で検査し、入力変更で結果を消す', (tester) async {
+    final semantics = tester.ensureSemantics();
     await tester.pumpWidget(
       const MaterialApp(home: Scaffold(body: JsonContractChecker())),
     );
@@ -18,6 +19,10 @@ void main() {
       await tester.tap(button);
       await tester.pump();
       expect(find.text('入力全文はJSONとして読み取れます。'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.text('入力全文はJSONとして読み取れます。')).flagsCollection.isLiveRegion,
+        isTrue,
+      );
     }
 
     for (final value in ['```json\n{"sum":10}\n```', '{"sum":}']) {
@@ -34,5 +39,6 @@ void main() {
     await tester.enterText(field, '{}');
     await tester.pump();
     expect(find.textContaining('入力全文はJSONとして'), findsNothing);
+    semantics.dispose();
   });
 }
