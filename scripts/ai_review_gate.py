@@ -111,7 +111,8 @@ def prepare(directory):
     state.update(files=paths, input_sha256=digest(sanitized), redactions=redactions,
                  input_bytes=len(sanitized.encode()), complete_diff=True)
     write(directory/'state.json', state)
-    (directory/'input.txt').write_text(sanitized, encoding='utf-8')
+    # Preserve exactly the UTF-8 bytes bound by input_sha256 on every platform.
+    (directory/'input.txt').write_bytes(sanitized.encode('utf-8'))
 
 
 def schema():
@@ -159,7 +160,7 @@ def validate_review(review, state):
 
 def review(directory):
     state = json.loads((directory/'state.json').read_text(encoding='utf-8'))
-    source = (directory/'input.txt').read_text(encoding='utf-8')
+    source = (directory/'input.txt').read_bytes().decode('utf-8')
     require(digest(source) == state['input_sha256'], 'Review data changed')
     key = os.environ.get('GEMINI_API_KEY')
     require(key, 'GEMINI_API_KEY missing')
