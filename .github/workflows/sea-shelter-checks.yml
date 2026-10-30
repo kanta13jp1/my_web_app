@@ -22,6 +22,7 @@ jobs:
         with:
           node-version: '22'
       - run: node --test web/labs/sea-shelter/model.test.mjs web/labs/sea-shelter/farm.test.mjs web/labs/sea-shelter/storage.test.mjs
+      - run: node --test web/labs/sea-shelter/arena/model.test.mjs
       - run: node --check web/labs/sea-shelter/app.mjs
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps chromium
