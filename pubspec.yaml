@@ -50,7 +50,7 @@ dependencies:
   google_generative_ai: ^0.4.7
   confetti: ^0.8.0
   audioplayers: 6.7.1
-  table_calendar: ^3.3.0
+  table_calendar: ^3.2.1
   flutter_local_notifications: ^22.3.1
   timezone: ^0.11.2
   flutter_map: ^8.3.2
