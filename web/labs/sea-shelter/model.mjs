@@ -1,6 +1,8 @@
+import { checkFarm, farmAction, newFarm } from "./farm.mjs";
 export const SAVE_KEY = "my_web_app.sea_shelter.v1";
 export const initialState = () => ({
   version: 1,
+  farm: newFarm(),
   wood: 0,
   metal: 0,
   xp: 0,
@@ -45,7 +47,10 @@ export const capacity = (s) =>
   1 + s.tiles.filter((t) => t.kind === "home").length * 2;
 export const neighbors = (s, x, y) =>
   s.tiles.some((t) => Math.abs(t.x - x) + Math.abs(t.y - y) === 1);
-export function act(state, action) {
+export function act(state, action, now = Date.now()) {
+  if (["plant", "harvest", "donate-food"].includes(action.type)) {
+    return farmAction(state, action, now);
+  }
   const s = structuredClone(state);
   const fail = (message) => ({ state, message, changed: false });
   let message;
@@ -85,6 +90,9 @@ export function act(state, action) {
           Math.max(0, f.metal - s.metal)
         }`,
       );
+    }
+    if (existing >= 0 && s.farm?.crops[`${x},${y}`] !== undefined) {
+      return fail("栽培中の菜園は収穫してから建て替えましょう。");
     }
     if (existing >= 0) s.tiles[existing] = { x, y, kind };
     else s.tiles.push({ x, y, kind });
@@ -178,7 +186,16 @@ export function decode(raw) {
     seen.add(key);
   });
   if (s.residents < 1 || s.residents > capacity(s)) throw Error("progress");
+  if (s.farm === undefined) s.farm = newFarm();
   const checked = act(s, { type: "profile", profile: s.profile });
   if (!checked.changed) throw Error("profile");
+  try {
+    checkFarm(checked.state.farm, checked.state.tiles);
+  } catch {
+    // Invalid new farm data must not discard established shelter progress.
+    throw Object.assign(Error("farm"), {
+      recoveredState: { ...checked.state, farm: newFarm() },
+    });
+  }
   return checked.state;
 }
