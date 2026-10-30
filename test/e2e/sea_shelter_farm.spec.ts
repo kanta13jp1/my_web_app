@@ -21,6 +21,7 @@ test("grow, reload, harvest once and deliver to the residents", async ({ page })
     const key = "my_web_app.sea_shelter.v1";
     const legacy = JSON.parse(localStorage.getItem(key)!);
     delete legacy.farm;
+    delete legacy.storage;
     localStorage.setItem(key, JSON.stringify(legacy));
   });
   await page.reload();

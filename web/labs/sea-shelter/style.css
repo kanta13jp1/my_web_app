@@ -423,3 +423,40 @@ main {
     height: auto;
   }
 }
+
+main[data-view="storage"] [data-panel="storage"] {
+  display: block;
+}
+.stock-row {
+  border-bottom: 1px solid #638795;
+  padding: 6px 0;
+}
+.stock-row label {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  margin: 0;
+}
+.stock-row output {
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+.stock-row meter {
+  display: block;
+  width: 100%;
+  height: 14px;
+}
+.storage-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+#choose-warehouse {
+  width: 100%;
+  margin-top: 8px;
+}
+@media (max-width: 720px) {
+  .workspace {
+    padding-bottom: var(--tabs-room, 50px);
+  }
+}
