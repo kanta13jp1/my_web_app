@@ -213,6 +213,7 @@ async function expectVisibleLatest(
     value: string;
     metrics: { width: number; height: number; scrollWidth: number; scrollHeight: number; left: number; top: number };
   }[] = [];
+  const wheelPositions: unknown[] = [];
   await page.mouse.move(viewport.width / 2, viewport.height / 2);
   await page.mouse.wheel(0, -10000);
   await afterFlutterFrames(page);
@@ -222,7 +223,24 @@ async function expectVisibleLatest(
     return !!box && box.x >= 0 && box.x + box.width <= viewport.width &&
       box.y >= 60 && box.y + box.height <= viewport.height - 8;
   };
-  for (let step = 0; step < 32; step++) {
+  for (let step = 0; step < 64; step++) {
+    assertFixturePage(page);
+    try {
+      const textCandidates = page.getByText(text);
+      const groupCandidates = page.getByRole('group', { name: text });
+      const textCount = await textCandidates.count();
+      const groupCount = await groupCandidates.count();
+      wheelPositions.push({
+        step,
+        textCount,
+        textBox: textCount ? await textCandidates.first().boundingBox() : null,
+        groupCount,
+        groupBox: groupCount ? await groupCandidates.first().boundingBox() : null,
+        window: await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY })),
+      });
+    } catch {
+      wheelPositions.push({ step, captureFailed: true });
+    }
     assertFixturePage(page);
     const output = textOutput(page, text);
     if (await inside(output)) {
@@ -248,8 +266,8 @@ async function expectVisibleLatest(
           top: element.scrollTop,
         },
       }));
-      if (diagnostic.length < 64) {
-        diagnostic.push({ step, tag: state.tag, value: value.slice(0, 2000), metrics: state.metrics });
+      if (value === expectedValue && diagnostic.length < 64) {
+        diagnostic.push({ step, tag: state.tag, value, metrics: state.metrics });
       }
       const m = state.metrics;
       const unclipped = m.width > 0 && m.height > 0 &&
@@ -265,7 +283,7 @@ async function expectVisibleLatest(
     await afterFlutterFrames(page);
   }
   await info.attach('selectable-latest-diagnostic', {
-    body: JSON.stringify({ expected: text, expectedValue, disabledFields: diagnostic }, null, 2),
+    body: JSON.stringify({ expected: text, expectedValue, viewport, wheelPositions, disabledFields: diagnostic }, null, 2),
     contentType: 'application/json',
   });
   throw new Error('Could not verify the exact latest value in a visible UI element.');
