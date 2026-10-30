@@ -72,11 +72,23 @@ class ClaudeReviewWorkflowTest(unittest.TestCase):
         self.assertNotIn("github.token", contract)
         self.assertNotRegex(contract, r"(?m)^\s*env:[ \t]*$")
         ci = (WORKFLOW.parent / "ci.yml").read_text(encoding="utf-8")
-        start = ci.index("      - name: Test CI scope classifier\n")
-        end = ci.index("\n      - name:", start + 1)
-        self.assertIn(
-            "          python -B scripts/check_claude_review_workflow_test.py\n",
-            ci[start:end],
+        lint = job_block(ci, "lint-and-test")
+        self.assertIn("    steps:\n", lint)
+        job_settings = lint.split("    steps:\n", 1)[0]
+        self.assertNotRegex(job_settings, r"(?m)^    (?:if|continue-on-error):")
+        step_name = "      - name: Test CI scope classifier\n"
+        self.assertEqual(lint.count(step_name), 1)
+        start = lint.index(step_name)
+        end = lint.index("\n      - name:", start + len(step_name))
+        ci_step = lint[start:end]
+        self.assertNotRegex(ci_step, r"(?m)^        (?:if|continue-on-error|shell):")
+        self.assertRegex(ci_step, r"(?m)^        run: \|$")
+        self.assertNotRegex(ci_step, r"(?m)^\s*set\s+\+e(?:\s|$)")
+        self.assertEqual(
+            ci_step.count(
+                "          python -B scripts/check_claude_review_workflow_test.py\n"
+            ),
+            1,
         )
 
     def test_ready_event_does_not_expand_trusted_review(self) -> None:
