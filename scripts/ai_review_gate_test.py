@@ -131,5 +131,46 @@ class GateTests(unittest.TestCase):
         self.assertGreater(count, 0)
 
 
+
+    def test_prepare_review_preserves_newlines_and_utf8(self):
+        for ending in ('\n', '\r\n', '\r', '\r\n+mixed\n', ''):
+            raw = 'diff --git a/a.py b/a.py\n+説明' + ending
+            with self.subTest(ending=repr(ending)), tempfile.TemporaryDirectory() as temp:
+                directory = Path(temp)
+                env = {'PR_NUMBER': '1', 'GITHUB_REPOSITORY': 'example/repo',
+                       'GITHUB_SHA': 'd'*40, 'GITHUB_RUN_ID': '1',
+                       'GITHUB_RUN_ATTEMPT': '1', 'GITHUB_EVENT_NAME': 'workflow_dispatch',
+                       'GEMINI_API_KEY': 'fake-test-value'}
+                def git_result(*args):
+                    if args[:2] == ('rev-parse', 'HEAD'): return b'd'*40
+                    if args[0] == 'rev-parse': return b'a'*40
+                    if '--name-only' in args: return b'a.py\0'
+                    if args[0] == 'diff': return raw.encode('utf-8')
+                    return b''
+                with patch.dict(os.environ, env), patch.object(gate, 'github', side_effect=[self.pr, {'id': 12}]), patch.object(gate, 'git', side_effect=git_result):
+                    gate.prepare(directory)
+                self.assertEqual((directory/'input.txt').read_bytes(), raw.encode('utf-8'))
+                state = json.loads((directory/'state.json').read_text(encoding='utf-8'))
+                self.assertEqual(state['input_bytes'], len(raw.encode('utf-8')))
+                self.assertEqual(state['input_sha256'], gate.digest(raw))
+                with patch.dict(os.environ, env), patch.object(gate, 'request', side_effect=RuntimeError('provider reached')) as provider:
+                    with self.assertRaisesRegex(RuntimeError, 'provider reached'):
+                        gate.review(directory)
+                    provider.assert_called_once()
+
+    def test_changed_input_rejects_before_provider_call(self):
+        original = 'diff\r\n+説明\r\n'
+        for changed in (original.replace('\r\n', '\n'), original + 'x', original[:-1]):
+            with self.subTest(changed=repr(changed)), tempfile.TemporaryDirectory() as temp:
+                directory = Path(temp)
+                gate.write(directory/'state.json', dict(self.state, input_sha256=gate.digest(original)))
+                (directory/'input.txt').write_bytes(changed.encode('utf-8'))
+                with patch.object(gate, 'request') as provider:
+                    with self.assertRaisesRegex(ValueError, 'Review data changed'):
+                        gate.review(directory)
+                    provider.assert_not_called()
+                self.assertFalse((directory/'result.json').exists())
+
+
 if __name__ == '__main__':
     unittest.main()
