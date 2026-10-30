@@ -189,7 +189,13 @@ export function createResidentScene(
     }
   }
   function wander() {
-    if (disposed || paused || media.matches) return;
+    if (disposed || paused) return;
+    // Reconcile the preference on the existing scheduler too: some hosts queue
+    // MediaQueryList events until their frame clock resumes.
+    if (media.matches) {
+      for (const actor of actors.values()) cancelMotion(actor);
+      return;
+    }
     for (const actor of actors.values()) {
       const near = tiles.filter((t) =>
         Math.abs(t.x - actor.tile.x) + Math.abs(t.y - actor.tile.y) === 1 &&

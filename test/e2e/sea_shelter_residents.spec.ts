@@ -3,6 +3,10 @@ import type { Page } from "@playwright/test";
 
 const key = "my_web_app.sea_shelter.v1";
 const issues = new WeakMap<Page, string[]>();
+const downloads = new WeakMap<
+  Page,
+  Promise<{ name: string; body: number; wire: number; error?: string }>[]
+>();
 const view = (page: Page, name: string) =>
   page.locator(`.tabs [data-view="${name}"]`).click();
 async function village(page: Page) {
@@ -39,6 +43,7 @@ test.beforeEach(async ({ page }, info) => {
   const intentional = (url: string) =>
     missing && /\/residents(?:-original-v2\.png|\.mjs)/.test(url);
   issues.set(page, []);
+  if (info.title.startsWith("old seven-person")) downloads.set(page, []);
   page.on("pageerror", (e) => issues.get(page)!.push(e.message));
   page.on("console", (m) => {
     if (m.type() === "error" && !intentional(m.location().url)) {
@@ -50,6 +55,29 @@ test.beforeEach(async ({ page }, info) => {
   });
   page.on("response", (r) => {
     if (r.status() >= 500) issues.get(page)!.push(`${r.status()} ${r.url()}`);
+    if (
+      downloads.has(page) &&
+      new URL(r.url()).pathname.startsWith("/labs/sea-shelter/") && r.ok()
+    ) {
+      downloads.get(page)!.push((async () => {
+        try {
+          await r.finished();
+          const body = (await r.body()).byteLength;
+          let wire = 0;
+          try {
+            wire = (await r.request().sizes()).responseBodySize;
+          } catch { /* Raw bytes remain a conservative bound. */ }
+          return { name: new URL(r.url()).pathname, body, wire };
+        } catch (error) {
+          return {
+            name: new URL(r.url()).pathname,
+            body: 0,
+            wire: 0,
+            error: String(error),
+          };
+        }
+      })());
+    }
   });
   await page.route("**/favicon.ico", (r) => r.fulfill({ status: 204 }));
   if (missing) {
@@ -76,24 +104,18 @@ test.afterEach(async ({ page }, info) => {
 test(
   "old seven-person village gets three original residents, conversations and collection/construction reactions",
   async ({ page }, info) => {
-    const transfer = await page.evaluate(() => {
-      const entries = performance.getEntriesByType(
-        "resource",
-      ) as PerformanceResourceTiming[];
-      const own = entries.filter((e) =>
-        new URL(e.name).pathname.startsWith("/labs/sea-shelter/")
-      );
-      return {
-        encodedBytes: own.reduce((n, e) => n + e.encodedBodySize, 0),
-        transferBytes: own.reduce((n, e) => n + e.transferSize, 0),
-        resources: own.map((e) => ({
-          name: new URL(e.name).pathname,
-          encoded: e.encodedBodySize,
-        })),
-      };
-    });
-    expect(transfer.encodedBytes).toBeGreaterThan(2269800);
-    expect(transfer.encodedBytes).toBeLessThan(3 * 1024 * 1024);
+    // The virtual frame clock supplies no ResourceTiming sizes. Read actual
+    // completed browser responses; decoded bodies conservatively bound transfer.
+    const resources = await Promise.all(downloads.get(page)!);
+    downloads.delete(page);
+    expect(resources.filter((r) => r.error)).toEqual([]);
+    const transfer = {
+      resources,
+      bodyBytes: resources.reduce((n, r) => n + r.body, 0),
+      wireBytes: resources.reduce((n, r) => n + r.wire, 0),
+    };
+    expect(transfer.bodyBytes).toBeGreaterThan(2269800);
+    expect(transfer.bodyBytes).toBeLessThan(3 * 1024 * 1024);
     await info.attach("initial-game-surface-transfer", {
       body: JSON.stringify(transfer),
       contentType: "application/json",

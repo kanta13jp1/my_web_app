@@ -608,3 +608,9 @@ main[data-resident-art="missing"] .resident-art {
     transition: none;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .crew-sprite {
+    transform: none !important;
+  }
+}
