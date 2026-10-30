@@ -1,3 +1,10 @@
+import {
+  collectionPlan,
+  resourceLimit,
+  resourceRoom,
+  resourceTotal,
+  WAREHOUSE_COST,
+} from "./storage.mjs";
 import { cropStatus } from "./farm.mjs";
 import {
   act,
@@ -14,23 +21,72 @@ let state = initialState(),
   selected = null,
   selectedGarden = null,
   saveWarning = "";
+const RECOVERY_PREFIX = `${SAVE_KEY}.recovery.`;
+const RECOVERY_LATEST = `${SAVE_KEY}.recovery-latest`;
+let recoveryRaw = null, recoverySafe = true, originalReadable = false;
+let rawSave = null;
 try {
-  const raw = localStorage.getItem(SAVE_KEY);
-  if (raw !== null) state = decode(raw);
+  rawSave = localStorage.getItem(SAVE_KEY);
+  originalReadable = true;
+  if (rawSave !== null) state = decode(rawSave);
 } catch (error) {
   if (error.recoveredState) state = error.recoveredState;
-  saveWarning = error.recoveredState
-    ? "農園の保存を読み込めません。農園だけを初期化し、拠点・資源・依頼・プロフィールは保護しました。次の操作で保存を更新します。"
-    : "保存を読み込めません。初期状態で開始しました。次の操作でこのゲームの保存を更新します。";
+  saveWarning = error.recoveryMessage ??
+    "保存を読み込めません。初期状態で開始しました。元の保存の退避を確認するまで上書きしません。";
+  if (rawSave !== null) {
+    recoveryRaw = rawSave;
+    recoverySafe = preserveOriginal();
+    saveWarning += recoverySafe
+      ? " 元の保存を退避しました。遊び方と保存から書き出せます。"
+      : " 退避できないため、元の保存は上書きしません。遊び方と保存から書き出せます。";
+  }
+}
+if (recoveryRaw === null) {
+  try {
+    const key = localStorage.getItem(RECOVERY_LATEST);
+    if (key?.startsWith(RECOVERY_PREFIX)) {
+      recoveryRaw = localStorage.getItem(key);
+    }
+  } catch {
+    /* Saving availability is reported separately; export is optional. */
+  }
+}
+function preserveOriginal() {
+  if (recoveryRaw === null) return true;
+  try {
+    for (let n = 0; n < 1000; n++) {
+      const key = `${RECOVERY_PREFIX}${Date.now()}-${n}`;
+      if (localStorage.getItem(key) !== null) continue;
+      localStorage.setItem(key, recoveryRaw);
+      if (localStorage.getItem(key) !== recoveryRaw) return false;
+      localStorage.setItem(RECOVERY_LATEST, key);
+      return true;
+    }
+  } catch { /* Do not overwrite the original if backup cannot be verified. */ }
+  return false;
 }
 const symbols = { dock: "⚑", deck: "▦", home: "⌂", garden: "♧" };
 const iconSymbols = { 灯台: "♜", 帆船: "⛵", 貝: "◉" };
 function save() {
+  if (!originalReadable) {
+    saveWarning =
+      "保存できません。既存保存を読み取れないため上書きしていません。再読込して確認してください。";
+    return false;
+  }
+  if (!recoverySafe) recoverySafe = preserveOriginal();
+  if (!recoverySafe) {
+    saveWarning =
+      "保存できません。元の保存の退避に失敗したため上書きしていません。遊び方と保存から書き出してください。";
+    return false;
+  }
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(state));
     saveWarning = "このブラウザに保存しました。";
+    return true;
   } catch {
-    saveWarning = "保存できません。この画面を閉じると進行が失われます。";
+    saveWarning =
+      "保存できません。この画面を閉じると未保存の進行は失われます。";
+    return false;
   }
 }
 function dispatch(action) {
@@ -38,6 +94,7 @@ function dispatch(action) {
   state = result.state;
   if (result.changed && action.type === "build") selected = null;
   if (result.changed) save();
+  if (result.remedy === "storage") setView("storage");
   render();
   $("status").textContent = result.message;
   if (result.changed && saveWarning.startsWith("保存できません")) {
@@ -45,7 +102,10 @@ function dispatch(action) {
   }
 }
 function render() {
-  for (const key of ["wood", "metal", "xp"]) $(key).textContent = state[key];
+  for (const key of ["wood", "metal"]) {
+    $(key).textContent = resourceTotal(state, key);
+  }
+  $("xp").textContent = state.xp;
   $("residents").textContent = `${state.residents} / ${capacity(state)}`;
   $("tile-count").textContent = `${state.tiles.length} / 25区画`;
   $("captain-name").textContent = state.profile.name;
@@ -56,9 +116,13 @@ function render() {
     { 波: "", 夕日: "sun", 星: "star" }[state.profile.frame];
   $("save-status").textContent = saveWarning ||
     "回収・建設などの操作後に自動保存します。";
-  $("collect").textContent = `漂流物を回収　木材 +${
-    3 + Math.floor(state.residents / 3)
-  } / 金属 +2`;
+  const plan = collectionPlan(state);
+  $("collect").textContent = state.collected >= 10000
+    ? "回収回数の上限（10,000回）"
+    : plan.wood + plan.metal === 0
+    ? "保管が満杯です 倉庫を確認"
+    : `漂流物を回収 木材 +${plan.wood} / 金属 +${plan.metal}`;
+  $("export-recovery").hidden = recoveryRaw === null;
   $("guide").textContent = state.claimed.length === 3
     ? "3件の依頼達成！ 潮灯の守り手の称号をプロフィールで選べます。自由に拡張を続けましょう。"
     : !state.claimed.includes("supplies")
@@ -75,7 +139,9 @@ function render() {
       ? "built"
       : `sea ${neighbors(state, x, y) ? "near" : ""}`;
     const name = tile
-      ? (tile.kind === "dock" ? "船着場" : facilities[tile.kind].name)
+      ? (tile.kind === "dock"
+        ? (state.storage.built ? "船着場・倉庫" : "船着場")
+        : facilities[tile.kind].name)
       : "海";
     cell.setAttribute(
       "aria-label",
@@ -84,7 +150,9 @@ function render() {
       }`,
     );
     cell.firstChild.textContent = tile ? symbols[tile.kind] : "≈";
-    cell.lastChild.textContent = tile ? name : "";
+    cell.lastChild.textContent = tile
+      ? (tile.kind === "dock" && state.storage.built ? "倉庫" : name)
+      : "";
   }
   $("cancel-build").hidden = !selected;
   $("placement-label").textContent = selected
@@ -93,6 +161,7 @@ function render() {
     } / 金属${facilities[selected].metal}`
     : "菜園を選ぶか、建設タブで施設を選びましょう";
   renderFarm();
+  renderStorage();
   for (const button of $("facilities").children) {
     const kind = button.dataset.kind, f = facilities[kind];
     button.setAttribute("aria-pressed", String(kind === selected));
@@ -118,6 +187,14 @@ for (let y = 0; y < 5; y++) {
       (event) => {
         if (selected) dispatch({ type: "build", x, y, kind: selected });
         else if (
+          state.tiles.some((t) => t.x === x && t.y === y && t.kind === "dock")
+        ) {
+          setView("storage");
+          renderStorage();
+          if (event.detail === 0) {
+            $("storage-heading").focus({ preventScroll: true });
+          }
+        } else if (
           state.tiles.some((t) => t.x === x && t.y === y && t.kind === "garden")
         ) {
           selectedGarden = `${x},${y}`;
@@ -208,7 +285,7 @@ $("profile-form").addEventListener("submit", (event) => {
 });
 
 function renderFarm() {
-  $("food").textContent = state.farm.food;
+  $("food").textContent = resourceTotal(state, "food");
   const allGardens = state.tiles.filter((t) => t.kind === "garden");
   const current = allGardens.find((t) => `${t.x},${t.y}` === selectedGarden) ??
     allGardens[0];
@@ -252,6 +329,79 @@ function renderFarm() {
     row.children[2].disabled = start === undefined;
   }
 }
+function renderStorage() {
+  const names = { wood: "木材", metal: "金属", food: "食料" };
+  for (const key of Object.keys(names)) {
+    const total = resourceTotal(state, key), cap = resourceLimit(state);
+    $(`storage-${key}`).textContent = `${total.toLocaleString("ja-JP")} / ${
+      cap.toLocaleString("ja-JP")
+    }${total === cap ? " 満杯" : ""}`;
+    const meter = $(`meter-${key}`);
+    meter.max = cap;
+    meter.value = total;
+    meter.setAttribute("aria-label", `${names[key]} ${total} / ${cap}`);
+  }
+  $("warehouse-state").textContent = state.storage.built
+    ? "船着場に増設済み。各資源の保管上限は199,998です。"
+    : "船着場へ1棟増設すると、木材・金属・食料の保管上限が各99,999から199,998になります。";
+  const wood = Math.max(0, WAREHOUSE_COST.wood - resourceTotal(state, "wood"));
+  const metal = Math.max(
+    0,
+    WAREHOUSE_COST.metal - resourceTotal(state, "metal"),
+  );
+  $("warehouse-requirements").textContent = state.storage.built
+    ? "倉庫は1棟まで。資材は追加で使いません。"
+    : wood || metal
+    ? `不足：木材あと${wood} / 金属あと${metal}。下の「回収へ」から集められます。`
+    : "増設できます。新しい区画は使わず、盤面25区画でも増設できます。";
+  $("warehouse-build").disabled = state.storage.built;
+  $("delivery-room").textContent =
+    resourceRoom(state, "wood") >= 4 && resourceRoom(state, "metal") >= 1
+      ? "食卓のお礼（木材4・金属1）を保管できます。食料3が必要です。"
+      : "食卓のお礼を保管する空きが足りません。食料は自動で使いません。建設・種まきで空きを作るか、お礼なしで分けられます。";
+  $("share-food").disabled = resourceTotal(state, "food") < 3;
+}
+$("choose-warehouse").addEventListener("click", (event) => {
+  selected = null;
+  setView("storage");
+  render();
+  if (event.detail === 0) $("storage-heading").focus({ preventScroll: true });
+});
+$("warehouse-build").addEventListener("click", (event) => {
+  dispatch({ type: "build-warehouse" });
+  if (event.detail === 0) $("status").focus({ preventScroll: true });
+});
+$("storage-collect").addEventListener("click", () => {
+  setView("board");
+  $("collect").focus({ preventScroll: true });
+});
+$("storage-build").addEventListener("click", () => {
+  setView("build");
+  $("facilities").firstElementChild.focus({ preventScroll: true });
+});
+$("storage-farm").addEventListener("click", () => {
+  setView("farm");
+  $("donate-food").focus({ preventScroll: true });
+});
+$("share-food").addEventListener("click", () => $("share-dialog").showModal());
+$("cancel-share").addEventListener("click", () => $("share-dialog").close());
+$("confirm-share").addEventListener("click", () => {
+  if (!$("share-dialog").open) return;
+  $("share-dialog").close();
+  dispatch({ type: "share-food" });
+  $("status").focus({ preventScroll: true });
+});
+$("export-recovery").addEventListener("click", () => {
+  if (recoveryRaw === null) return;
+  const url = URL.createObjectURL(
+    new Blob([recoveryRaw], { type: "application/json" }),
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `sea-shelter-recovery-${Date.now()}.json`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
 $("donate-food").addEventListener(
   "click",
   () => dispatch({ type: "donate-food" }),
@@ -305,3 +455,15 @@ new ResizeObserver(() => requestAnimationFrame(fitBoard)).observe(
   document.querySelector(".play"),
 );
 fitBoard();
+
+new ResizeObserver(() => {
+  const main = document.querySelector("main");
+  const height =
+    Math.ceil(document.querySelector(".tabs").getBoundingClientRect().height) +
+    6;
+  const value = `${height}px`;
+  if (main.style.getPropertyValue("--tabs-room") !== value) {
+    main.style.setProperty("--tabs-room", value);
+  }
+  requestAnimationFrame(fitBoard);
+}).observe(document.querySelector(".tabs"));

@@ -1,3 +1,4 @@
+import { changeResources, resourceRoom, resourceTotal } from "./storage.mjs";
 export const GROW_MS = 60000;
 const MAX_GAP = 7 * 86400000;
 const validTime = (n) =>
@@ -34,25 +35,44 @@ export function cropStatus(start, now) {
 }
 
 export function farmAction(state, action, now) {
-  const fail = (message) => ({ state, message, changed: false });
-  const s = structuredClone(state);
+  const fail = (message, remedy) => ({
+    state,
+    message,
+    changed: false,
+    remedy,
+  });
+  const s = changeResources(structuredClone(state));
   s.farm ??= newFarm();
+  const done = (message) => ({
+    state: changeResources(s),
+    changed: true,
+    message,
+  });
   const f = s.farm;
   if (action.type === "donate-food") {
-    if (f.food < 3) {
+    if (resourceTotal(s, "food") < 3) {
       return fail(
         "食卓の依頼には食料3が必要です。菜園で育てて収穫しましょう。",
       );
     }
-    f.food -= 3;
-    s.wood = Math.min(99999, s.wood + 4);
-    s.metal = Math.min(99999, s.metal + 1);
+    if (resourceRoom(s, "wood") < 4 || resourceRoom(s, "metal") < 1) {
+      return fail(
+        "お礼の木材4・金属1を保管できません。食料は使っていません。倉庫で空きを作るか、お礼なしで届ける方法を確認しましょう。",
+        "storage",
+      );
+    }
+    changeResources(s, { food: -3, wood: 4, metal: 1 });
     s.xp = Math.min(99999, s.xp + 2);
-    return {
-      state: s,
-      changed: true,
-      message: "食卓の依頼を達成！ 食料 -3 / 木材 +4 / 金属 +1 / EXP +2",
-    };
+    return done("食卓の依頼を達成！ 食料 -3 / 木材 +4 / 金属 +1 / EXP +2");
+  }
+  if (action.type === "share-food") {
+    if (resourceTotal(s, "food") < 3) {
+      return fail("分ける食料3がありません。菜園で育てて収穫しましょう。");
+    }
+    changeResources(s, { food: -3 });
+    return done(
+      "住民へ食料3を分けました。確認したとおり資材のお礼・EXPはありません。",
+    );
   }
   if (!validTime(now)) return fail("端末の時計を確認してください。");
   const tile = s.tiles.find((t) =>
@@ -66,10 +86,10 @@ export function farmAction(state, action, now) {
       return fail("この菜園は栽培中です。収穫まで待ちましょう。");
     }
     if (s.wood < 2) return fail("種まきには木材2が必要です。");
-    s.wood -= 2;
+    changeResources(s, { wood: -2 });
     f.crops[key] = now;
     return {
-      state: s,
+      state: changeResources(s),
       changed: true,
       message:
         "種をまきました。60秒で食料3を収穫できます。閉じている間も育ちます。",
@@ -80,21 +100,20 @@ export function farmAction(state, action, now) {
   if (now - start > MAX_GAP) {
     f.crops[key] = now;
     return {
-      state: s,
+      state: changeResources(s),
       changed: true,
       message:
         "7日を超える時刻の変化を検出しました。報酬を増やさず、今から60秒育て直します。",
     };
   }
-  if (f.food > 99996) {
-    return fail("食料がいっぱいです。食卓の依頼に届けましょう。");
+  if (resourceRoom(s, "food") < 3) {
+    return fail(
+      "食料の空きが3必要です。作物は収穫せず残しています。倉庫と食卓を確認しましょう。",
+      "storage",
+    );
   }
   delete f.crops[key];
-  f.food += 3;
+  changeResources(s, { food: 3 });
   f.harvested = Math.min(99999, f.harvested + 1);
-  return {
-    state: s,
-    changed: true,
-    message: "収穫できました！ 食料 +3。食卓の依頼に届けられます。",
-  };
+  return done("収穫できました！ 食料 +3。食卓の依頼に届けられます。");
 }
