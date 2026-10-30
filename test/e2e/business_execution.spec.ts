@@ -425,7 +425,7 @@ test('two real tabs retain a stale draft and require confirmation before replaci
         second,
         '最新の日次振り返り: タブAが先に保存した日次',
         info,
-        ['最新の行動実績: 1', '最新の成果実績: 未入力',
+        ['最新の行動実績: 1.0', '最新の成果実績: 未入力',
           '最新の日次振り返り: タブAが先に保存した日次'].join('\n'),
       );
       await expectVisibleLatest(second, '最新の月次振り返り: タブAが先に保存した月次', info);
