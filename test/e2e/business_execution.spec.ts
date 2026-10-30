@@ -153,23 +153,33 @@ async function savedDayVisible(page: Page, text: string) {
 }
 
 // SelectableText can appear as a disabled semantic text field instead of
-// a text node. Accept only a visible, exact line from its actual DOM value.
+// a text node. Accept only the complete, unclipped expected DOM value.
 // If neither representation exposes the value, retain a bounded diagnostic
 // from this synthetic fixture and fail rather than inferring a successful UI.
-async function expectVisibleLatest(page: Page, text: string, info: TestInfo) {
+async function expectVisibleLatest(
+  page: Page,
+  text: string,
+  info: TestInfo,
+  expectedValue = text,
+) {
   assertFixturePage(page);
   await page.bringToFront();
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('A fixed desktop/mobile viewport is required.');
-  const diagnostic: { step: number; tag: string; value: string }[] = [];
+  const diagnostic: {
+    step: number;
+    tag: string;
+    value: string;
+    metrics: { width: number; height: number; scrollWidth: number; scrollHeight: number; left: number; top: number };
+  }[] = [];
   await page.mouse.move(viewport.width / 2, viewport.height / 2);
   await page.mouse.wheel(0, -10000);
   await afterFlutterFrames(page);
   const inside = async (element: Locator) => {
     if (!await element.isVisible()) return false;
     const box = await element.boundingBox();
-    return !!box && box.x < viewport.width && box.x + box.width > 0 &&
-      box.y < viewport.height - 8 && box.y + box.height > 60;
+    return !!box && box.x >= 0 && box.x + box.width <= viewport.width &&
+      box.y >= 60 && box.y + box.height <= viewport.height - 8;
   };
   for (let step = 0; step < 32; step++) {
     assertFixturePage(page);
@@ -186,13 +196,27 @@ async function expectVisibleLatest(page: Page, text: string, info: TestInfo) {
     for (let i = 0; i < count; i++) {
       const candidate = candidates.nth(i);
       const value = await candidate.inputValue();
+      const state = await candidate.evaluate(element => ({
+        tag: element.tagName,
+        metrics: {
+          width: element.clientWidth,
+          height: element.clientHeight,
+          scrollWidth: element.scrollWidth,
+          scrollHeight: element.scrollHeight,
+          left: element.scrollLeft,
+          top: element.scrollTop,
+        },
+      }));
       if (diagnostic.length < 64) {
-        const tag = await candidate.evaluate(element => element.tagName);
-        diagnostic.push({ step, tag, value: value.slice(0, 2000) });
+        diagnostic.push({ step, tag: state.tag, value: value.slice(0, 2000), metrics: state.metrics });
       }
-      if (value.split(/\r?\n/).includes(text) && await inside(candidate)) {
+      const m = state.metrics;
+      const unclipped = m.width > 0 && m.height > 0 &&
+        m.scrollWidth <= m.width && m.scrollHeight <= m.height && m.left === 0 && m.top === 0;
+      if (value === expectedValue && unclipped && await inside(candidate)) {
+        await expect(candidate).toHaveValue(expectedValue);
         await expect(candidate).toBeVisible();
-        await expect(candidate).toBeInViewport();
+        await expect(candidate).toBeInViewport({ ratio: 1 });
         return;
       }
     }
@@ -200,7 +224,7 @@ async function expectVisibleLatest(page: Page, text: string, info: TestInfo) {
     await afterFlutterFrames(page);
   }
   await info.attach('selectable-latest-diagnostic', {
-    body: JSON.stringify({ expected: text, disabledFields: diagnostic }, null, 2),
+    body: JSON.stringify({ expected: text, expectedValue, disabledFields: diagnostic }, null, 2),
     contentType: 'application/json',
   });
   throw new Error('Could not verify the exact latest value in a visible UI element.');
@@ -397,7 +421,13 @@ test('two real tabs retain a stale draft and require confirmation before replaci
       await expect(button(second, '月次の振り返りを保存')).toBeDisabled();
       await inputValue(second, '日次の振り返り・次の一手', 'タブBの日次下書き');
       await inputValue(second, reflectionLabel, 'タブBの月次下書き');
-      await expectVisibleLatest(second, '最新の日次振り返り: タブAが先に保存した日次', info);
+      await expectVisibleLatest(
+        second,
+        '最新の日次振り返り: タブAが先に保存した日次',
+        info,
+        ['最新の行動実績: 1', '最新の成果実績: 未入力',
+          '最新の日次振り返り: タブAが先に保存した日次'].join('\n'),
+      );
       await expectVisibleLatest(second, '最新の月次振り返り: タブAが先に保存した月次', info);
       await second.screenshot({ path: info.outputPath('two-tab-conflict.png') });
 
