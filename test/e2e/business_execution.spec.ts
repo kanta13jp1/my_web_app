@@ -66,8 +66,8 @@ async function reveal(page: Page, target: Locator, diagnostics?: unknown[]) {
     const count = await target.count();
     const box = count === 1 ? await target.boundingBox() : null;
     if (diagnostics) {
+      assertFixturePage(page);
       try {
-        assertFixturePage(page);
         const surface = await page.evaluate(({ x, y }) => {
           const hits: { tag: string; top: number; height: number; scrollHeight: number }[] = [];
           let root: Document | ShadowRoot = document;
@@ -83,11 +83,11 @@ async function reveal(page: Page, target: Locator, diagnostics?: unknown[]) {
           }
           return { windowX: window.scrollX, windowY: window.scrollY, hits };
         }, { x: viewport.width / 2, y: viewport.height / 2 });
-        assertFixturePage(page);
         diagnostics.push({ step, count, box, viewport, surface });
       } catch {
         diagnostics.push({ step, captureFailed: true });
       }
+      assertFixturePage(page);
     }
     if (box && box.y >= 60 && box.y + box.height <= viewport.height - 8) return;
     assertFixturePage(page);
@@ -527,6 +527,7 @@ test('two real tabs retain a stale draft and require confirmation before replaci
           body: JSON.stringify(monthlyRevealSamples),
           contentType: 'application/json',
         });
+        assertFixturePage(second);
         await info.attach('fixture-second-tab-screenshot', {
           body: await second.screenshot(),
           contentType: 'image/png',
