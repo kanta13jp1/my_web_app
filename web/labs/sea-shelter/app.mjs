@@ -263,3 +263,16 @@ $("help").addEventListener("click", () => $("help-dialog").showModal());
 $("close-help").addEventListener("click", () => $("help-dialog").close());
 render();
 if (saveWarning) $("status").textContent = saveWarning;
+
+function fitBoard() {
+  const play = document.querySelector(".play");
+  if (!play.clientHeight) return;
+  const tileCount = $("tile-count").getBoundingClientRect().height;
+  const room = play.clientHeight -
+    document.querySelector(".placement").getBoundingClientRect().height -
+    tileCount - 8;
+  const size = Math.max(246, Math.floor(Math.min(play.clientWidth, room)));
+  $("board").style.setProperty("--board-size", `${size}px`);
+}
+new ResizeObserver(fitBoard).observe(document.querySelector(".play"));
+fitBoard();

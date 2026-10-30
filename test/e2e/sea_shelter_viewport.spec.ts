@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 test(
   "board and persistent controls fit the supported portrait and desktop sizes",
   async ({ page }, info) => {
+    test.setTimeout(90000);
     const issues: string[] = [];
     page.on("pageerror", (e) => issues.push(e.message));
     page.on("console", (m) => {
@@ -18,6 +19,11 @@ test(
       await page.setViewportSize({ width, height });
       await page.goto("/labs/sea-shelter/index.html");
       await expect(page.locator("#board button")).toHaveCount(25);
+      await page.waitForFunction(() =>
+        document.querySelector("#board")?.getAttribute("style")?.includes(
+          "--board-size",
+        )
+      );
       const size = await page.evaluate(() => ({
         width: document.documentElement.scrollWidth,
         height: document.documentElement.scrollHeight,

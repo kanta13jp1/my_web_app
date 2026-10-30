@@ -378,3 +378,30 @@ input, select {
     scroll-behavior: auto;
   }
 }
+
+a {
+  color: #9ae6cd;
+  display: inline-block;
+  min-height: 44px;
+  padding: 8px 0;
+}
+
+main {
+  width: 100%;
+}
+.workspace, .play, aside, .panel, .resources, .topbar h1 {
+  min-width: 0;
+}
+#board {
+  width: var(--board-size, 246px);
+  height: var(--board-size, 246px);
+  min-width: 246px;
+  min-height: 246px;
+  align-self: center;
+  justify-self: center;
+}
+@media (max-width: 720px) {
+  .resources strong {
+    font-size: 0.85rem;
+  }
+}

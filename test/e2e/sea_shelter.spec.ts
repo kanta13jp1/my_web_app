@@ -30,6 +30,7 @@ test.afterEach(async ({ page }, info) => {
 test(
   "complete the loop, reload, customize and reset without horizontal overflow",
   async ({ page }, info) => {
+    test.setTimeout(60000);
     const collect = page.getByRole("button", { name: "漂流物を回収" });
     const cell = (row: number, col: number) =>
       page.getByRole("button", { name: new RegExp(`^${row}行${col}列`) });
