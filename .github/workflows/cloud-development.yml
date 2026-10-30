@@ -1,5 +1,5 @@
-name: Approved PR5925 Web Release
-run-name: PR5925 release operation ${{ inputs.operation_id }}
+name: Approved PR5924 Web Release
+run-name: PR5924 release operation ${{ inputs.operation_id }}
 
 on:
   pull_request:
@@ -51,7 +51,7 @@ on:
         required: true
         type: string
       approved_release:
-        description: Explicit owner approved PR5925-only release
+        description: Explicit owner approved PR5924-only release
         required: true
         default: false
         type: boolean
@@ -149,22 +149,22 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='237d9290183c3bb3df73388ec9cf4563bb0186ef', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='25b07d270cf1874149561630cebea3d9a8c0efed', 'Production changed; rebuild selection'
           PY
 
-      - name: Verify approved PR5925-only selection
+      - name: Verify approved PR5924-only selection
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          test "$(gh pr view 5925 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
-          test "$(gh pr view 5925 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = fa105154b7a09c291fd739d3ae1245cebb90069d
-          git fetch --no-tags --depth=1 origin 237d9290183c3bb3df73388ec9cf4563bb0186ef
+          test "$(gh pr view 5924 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
+          test "$(gh pr view 5924 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 0173d92631df978b0ca7049435acfc34cdfc7fa6
+          git fetch --no-tags --depth=1 origin 25b07d270cf1874149561630cebea3d9a8c0efed
           python3 - <<'PY'
           import subprocess
-          expected={'lib/models/asset_calendar_reflection.dart', '.github/workflows/cloud-development.yml', 'test/models/asset_calendar_reflection_test.dart', 'test/e2e/asset_calendar_projection_test.dart'}
-          actual=set(subprocess.check_output(['git','diff','--name-only','237d9290183c3bb3df73388ec9cf4563bb0186ef','HEAD']).decode().splitlines())
+          expected=set(["integration_test/asset_ai_current_input_scenarios.dart","integration_test/asset_management_ai_current_input_test.dart","lib/pages/asset_management_page.dart","lib/widgets/asset_cashflow_forecast_card.dart","lib/widgets/asset_cashflow_statement_card.dart","lib/widgets/asset_net_worth_panel_card.dart","lib/widgets/asset_reflection_day_badge.dart","lib/widgets/asset_unreconciled_expense_badge.dart","test/services/asset_management_available_money_test.dart","test/widgets/asset_calendar_badge_text_scale_test.dart",".github/workflows/cloud-development.yml"])
+          actual=set(subprocess.check_output(['git','diff','--name-only','25b07d270cf1874149561630cebea3d9a8c0efed','HEAD']).decode().splitlines())
           assert actual==expected,(actual,expected)
-          expected_blobs={'lib/models/asset_calendar_reflection.dart': '431d6730e832695e536690a8e1d4499c1da86f32', 'test/models/asset_calendar_reflection_test.dart': 'f0dafa73fb05e8ea79baa30a0f42212b5e1144ed', 'test/e2e/asset_calendar_projection_test.dart': '9ef6ce7f2f83697d4583d6b40aaa03901b3d3c19'}
+          expected_blobs={"integration_test/asset_ai_current_input_scenarios.dart":"6079a21ef7f6f7be72bbec28a4ba83355c464ae0","integration_test/asset_management_ai_current_input_test.dart":"a6ff05ce99ddcc1be5fb21c6af27f0305aa24622","lib/pages/asset_management_page.dart":"9287bb20b594c011e8b85134f50a54e9be4544c5","lib/widgets/asset_cashflow_forecast_card.dart":"9cbb60e936963e2cb861229e362763bf466e86a2","lib/widgets/asset_cashflow_statement_card.dart":"3921da89316a3e2c13e91c6b2da798db611f4e4c","lib/widgets/asset_net_worth_panel_card.dart":"c4361a425202eafaff69e115fb7af12225592fb7","lib/widgets/asset_reflection_day_badge.dart":"8965209404a9e6d4acfc61087f814aa636a4d139","lib/widgets/asset_unreconciled_expense_badge.dart":"1121e0780827938713ea95737dbd62ea576ed988","test/services/asset_management_available_money_test.dart":"68aa87cd6f358d23a3846437812cb0a07620293d","test/widgets/asset_calendar_badge_text_scale_test.dart":"31cad27fcf239d5be2e04d63faba1cf1d19fc00a"}
           for path, expected_blob in expected_blobs.items():
               blob=subprocess.check_output(['git','rev-parse','HEAD:'+path]).decode().strip()
               assert blob==expected_blob,(path,blob)
@@ -236,9 +236,46 @@ jobs:
         if: env.CLOUD_PROFILE == 'analyze' || env.CLOUD_PROFILE == 'full'
         run: flutter analyze
 
-      - name: Verify PR5925 calendar scenarios
+      - name: Verify PR5924 calendar scenarios
         if: env.CLOUD_PROFILE == 'full'
         run: flutter test --concurrency=2 test/models/asset_calendar_reflection_test.dart test/e2e/asset_calendar_projection_test.dart
+
+      - name: Verify PR5924 synthetic available-money and calendar scenarios
+        if: env.CLOUD_PROFILE == 'full'
+        run: flutter test --concurrency=2 test/services/asset_management_available_money_test.dart test/widgets/asset_calendar_badge_text_scale_test.dart
+
+      - name: Verify PR5924 synthetic asset browser flows
+        if: env.CLOUD_PROFILE == 'full'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-logs
+          google-chrome --version
+          chromedriver --version
+          chromedriver --port=4444 > .ci-logs/asset-ai-chromedriver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:4444/status > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:4444/status
+          flutter drive --verbose \
+            --driver=test_driver/asset_ai_integration.dart \
+            --target=integration_test/asset_management_ai_current_input_test.dart \
+            -d web-server --browser-name=chrome --headless \
+            2>&1 | tee .ci-logs/asset-ai-browser.log
+
+      - name: Preserve PR5924 synthetic browser evidence
+        if: always() && env.CLOUD_PROFILE == 'full'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: asset-5924-release-browser-${{ github.run_id }}
+          path: .ci-logs/asset-ai-*.log
+          retention-days: 3
+          if-no-files-found: ignore
 
       - name: Test in cloud
         if: env.CLOUD_PROFILE == 'test' || env.CLOUD_PROFILE == 'full'
@@ -643,7 +680,7 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='237d9290183c3bb3df73388ec9cf4563bb0186ef', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='25b07d270cf1874149561630cebea3d9a8c0efed', 'Production changed; rebuild selection'
           PY
 
       - name: Collect pushed files
@@ -663,7 +700,7 @@ jobs:
           mkdir -p .deploy-logs
           python3 - <<'PY'
           from pathlib import Path
-          Path('.deploy-logs/changed-files.txt').write_text('lib/models/asset_calendar_reflection.dart\ntest/models/asset_calendar_reflection_test.dart\ntest/e2e/asset_calendar_projection_test.dart\n')
+          Path('.deploy-logs/changed-files.txt').write_text("integration_test/asset_ai_current_input_scenarios.dart\nintegration_test/asset_management_ai_current_input_test.dart\nlib/pages/asset_management_page.dart\nlib/widgets/asset_cashflow_forecast_card.dart\nlib/widgets/asset_cashflow_statement_card.dart\nlib/widgets/asset_net_worth_panel_card.dart\nlib/widgets/asset_reflection_day_badge.dart\nlib/widgets/asset_unreconciled_expense_badge.dart\ntest/services/asset_management_available_money_test.dart\ntest/widgets/asset_calendar_badge_text_scale_test.dart\n")
           PY
 
       - name: Reject mixed public-blog deployments
@@ -1358,7 +1395,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         env:
           FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-          EXPECTED_PUBLIC_BASE: 237d9290183c3bb3df73388ec9cf4563bb0186ef
+          EXPECTED_PUBLIC_BASE: 25b07d270cf1874149561630cebea3d9a8c0efed
         run: |
           python3 -m venv /tmp/echo-release-tools
           /tmp/echo-release-tools/bin/pip install google-auth==2.43.0 requests==2.32.5
@@ -1390,7 +1427,7 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          EXPECTED_PUBLIC_BASE=237d9290183c3bb3df73388ec9cf4563bb0186ef /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
+          EXPECTED_PUBLIC_BASE=25b07d270cf1874149561630cebea3d9a8c0efed /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
 
           if npx -y firebase-tools@15.34.0 deploy \
             --only hosting \
