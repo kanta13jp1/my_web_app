@@ -11,6 +11,9 @@ void main() {
     final field = find.byKey(const Key('json-contract-input'));
     final button = find.text('JSON構文を確認する');
     await tester.ensureVisible(field);
+    await tester.pumpAndSettle();
+    await tester.tap(field);
+    await tester.pumpAndSettle();
     await tester.enterText(field, '{"sum":10}');
     await tester.pump();
     await tester.ensureVisible(button);
@@ -19,6 +22,9 @@ void main() {
     expect(find.text('入力全文はJSONとして読み取れます。'), findsOneWidget);
 
     await tester.ensureVisible(field);
+    await tester.pumpAndSettle();
+    await tester.tap(field);
+    await tester.pumpAndSettle();
     await tester.enterText(field, '```json\n{"sum":10}\n```');
     await tester.pumpAndSettle();
     expect(
@@ -32,6 +38,9 @@ void main() {
     expect(find.textContaining('入力全文はJSONとして読み取れません。'), findsOneWidget);
 
     await tester.ensureVisible(field);
+    await tester.pumpAndSettle();
+    await tester.tap(field);
+    await tester.pumpAndSettle();
     await tester.enterText(field, 'null');
     await tester.pump();
     await tester.ensureVisible(button);
