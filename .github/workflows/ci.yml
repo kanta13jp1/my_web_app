@@ -150,6 +150,7 @@ jobs:
           python scripts/cicd_efficiency_test.py
           python scripts/ci_parallel_test.py
           python scripts/run_vm_test_shard_test.py
+          python scripts/ai_review_gate_test.py
           python scripts/pre_commit_quality_gate_test.py
           python scripts/container_cleanup_guard_test.py
           python scripts/check_rootless_container_setup_test.py
