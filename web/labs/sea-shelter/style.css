@@ -95,8 +95,10 @@ p {
 }
 .resources strong {
   display: block;
-  font-size: 1rem;
-  overflow-wrap: anywhere;
+  font-size: clamp(0.875rem, 3.8vw, 1rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.025em;
+  white-space: nowrap;
   color: #fff;
 }
 .workspace {
