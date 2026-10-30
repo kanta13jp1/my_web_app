@@ -346,28 +346,60 @@ test.afterEach(async ({ context }, info) => {
     .toEqual([]);
 });
 
+// Record only stage labels and elapsed time from the synthetic fixture.
+async function measureFixtureStage<T>(info: TestInfo, stage: string, action: () => Promise<T>): Promise<T> {
+  const started = performance.now();
+  let status = 'failed';
+  let actionFailed = false;
+  try {
+    const result = await action();
+    status = 'passed';
+    return result;
+  } catch (error) {
+    actionFailed = true;
+    throw error;
+  } finally {
+    try {
+      await info.attach('fixture-timing-' + stage, {
+        body: JSON.stringify({ stage, elapsedMs: Math.round(performance.now() - started), status }),
+        contentType: 'application/json',
+      });
+    } catch (attachmentError) {
+      if (!actionFailed) throw attachmentError;
+      console.error('Fixture timing attachment failed; original test failure preserved.');
+    }
+  }
+}
+
 test('monthly review restores a user-created plan and daily results after navigation',
   async ({ page }, info) => {
-    await createPlan(page);
-    await enter(page, 'この日時点の成果実績（任意・件）', '1');
-    await saveDay(page, '2', '質問の順番を改善した');
-    await enter(page, reflectionLabel, '次月は紹介経路を試す');
-    await click(page, '月次の振り返りを保存');
-    await expect(
-      textOutput(page, '月次の振り返りを保存して読み戻しました。'),
-    ).toBeVisible();
+    test.setTimeout(180_000);
+    await measureFixtureStage(info, 'monthly-create-plan', () => createPlan(page));
+    await measureFixtureStage(info, 'monthly-save-day', async () => {
+      await enter(page, 'この日時点の成果実績（任意・件）', '1');
+      await saveDay(page, '2', '質問の順番を改善した');
+    });
+    await measureFixtureStage(info, 'monthly-save-reflection', async () => {
+      await enter(page, reflectionLabel, '次月は紹介経路を試す');
+      await click(page, '月次の振り返りを保存');
+      await expect(
+        textOutput(page, '月次の振り返りを保存して読み戻しました。'),
+      ).toBeVisible();
+    });
 
     // Full page navigation destroys the Dart runtime and restores real storage.
-    await open(page, true);
-    await openPlan(page);
-    await expect(
-      textOutput(page, '期間終了・月次の振り返り'),
-    ).toBeVisible();
-    await expect(textOutput(page, '成果実績（2026-10-30時点）: 1 件 / 目標 3 件')).toBeVisible();
-    await expect(textOutput(page, '未入力: 2日（今日を含む対象日のみ）')).toBeVisible();
-    await savedDayVisible(page, '2026-10-30: 2 回');
-    await inputValue(page, reflectionLabel, '次月は紹介経路を試す');
-    await page.screenshot({ path: info.outputPath('monthly-restored.png') });
+    await measureFixtureStage(info, 'monthly-reopen-and-verify', async () => {
+      await open(page, true);
+      await openPlan(page);
+      await expect(
+        textOutput(page, '期間終了・月次の振り返り'),
+      ).toBeVisible();
+      await expect(textOutput(page, '成果実績（2026-10-30時点）: 1 件 / 目標 3 件')).toBeVisible();
+      await expect(textOutput(page, '未入力: 2日（今日を含む対象日のみ）')).toBeVisible();
+      await savedDayVisible(page, '2026-10-30: 2 回');
+      await inputValue(page, reflectionLabel, '次月は紹介経路を試す');
+      await page.screenshot({ path: info.outputPath('monthly-restored.png') });
+    });
   });
 
 test('blank actual is rejected while zero is saved and missing days remain visible',
@@ -398,29 +430,8 @@ test('two real tabs retain a stale draft and require confirmation before replaci
   async ({ page, context }, info) => {
     // This two-tab flow has more bounded interactions than the single-tab cases.
     test.setTimeout(180_000);
-    const timed = async <T>(stage: string, action: () => Promise<T>): Promise<T> => {
-      const started = performance.now();
-      let status = 'failed';
-      let actionFailed = false;
-      try {
-        const result = await action();
-        status = 'passed';
-        return result;
-      } catch (error) {
-        actionFailed = true;
-        throw error;
-      } finally {
-        try {
-          await info.attach('fixture-timing-' + stage, {
-            body: JSON.stringify({ stage, elapsedMs: Math.round(performance.now() - started), status }),
-            contentType: 'application/json',
-          });
-        } catch (attachmentError) {
-          if (!actionFailed) throw attachmentError;
-          console.error('Fixture timing attachment failed; original test failure preserved.');
-        }
-      }
-    };
+    const timed = <T>(stage: string, action: () => Promise<T>) =>
+      measureFixtureStage(info, stage, action);
     await timed('create-plan', () => createPlan(page));
     const second = await timed('create-second-tab', () => context.newPage());
     let flowFailed = false;
@@ -444,6 +455,7 @@ test('two real tabs retain a stale draft and require confirmation before replaci
       // No localStorage edits, injected records or mock transport are used.
       await timed('stale-save-and-reload-control', async () => {
         await click(second, 'この日の記録を保存');
+        await reveal(second, button(second, '保存結果を再読み込み'));
         await expect(button(second, '保存結果を再読み込み')).toBeEnabled();
       });
       await timed('inspect-conflicts', async () => {
