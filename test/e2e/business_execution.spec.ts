@@ -53,7 +53,7 @@ async function afterFlutterFrames(page: Page) {
 // Scroll the Flutter view itself. Scrolling only a semantics DOM element does
 // not necessarily move the canvas hit target. Never use force-click or raw x/y
 // input to bypass a missing user-visible control.
-async function reveal(page: Page, target: Locator) {
+async function reveal(page: Page, target: Locator, diagnostics?: unknown[]) {
   assertFixturePage(page);
   await page.bringToFront();
   const viewport = page.viewportSize();
@@ -63,10 +63,33 @@ async function reveal(page: Page, target: Locator) {
   await page.mouse.wheel(0, -10000);
   await page.waitForTimeout(80);
   for (let step = 0; step < 32; step++) {
-    if (await target.count() === 1) {
-      const box = await target.boundingBox();
-      if (box && box.y >= 60 && box.y + box.height <= viewport.height - 8) return;
+    const count = await target.count();
+    const box = count === 1 ? await target.boundingBox() : null;
+    if (diagnostics) {
+      try {
+        assertFixturePage(page);
+        const surface = await page.evaluate(({ x, y }) => {
+          const hits: { tag: string; top: number; height: number; scrollHeight: number }[] = [];
+          let root: Document | ShadowRoot = document;
+          for (let depth = 0; depth < 6; depth++) {
+            const elements = root.elementsFromPoint(x, y);
+            for (const element of elements.slice(0, 4)) {
+              hits.push({ tag: element.tagName, top: element.scrollTop,
+                height: element.clientHeight, scrollHeight: element.scrollHeight });
+            }
+            const shadow = elements[0]?.shadowRoot;
+            if (!shadow) break;
+            root = shadow;
+          }
+          return { windowX: window.scrollX, windowY: window.scrollY, hits };
+        }, { x: viewport.width / 2, y: viewport.height / 2 });
+        assertFixturePage(page);
+        diagnostics.push({ step, count, box, viewport, surface });
+      } catch {
+        diagnostics.push({ step, captureFailed: true });
+      }
     }
+    if (box && box.y >= 60 && box.y + box.height <= viewport.height - 8) return;
     assertFixturePage(page);
     await page.mouse.wheel(0, 250);
     // Wait only for each real scroll frame; assertions still have bounded waits.
@@ -435,6 +458,7 @@ test('two real tabs retain a stale draft and require confirmation before replaci
     await timed('create-plan', () => createPlan(page));
     const second = await timed('create-second-tab', () => context.newPage());
     let flowFailed = false;
+    const monthlyRevealSamples: unknown[] = [];
     try {
       await timed('prepare-second-draft', async () => {
         await open(second);
@@ -462,7 +486,7 @@ test('two real tabs retain a stale draft and require confirmation before replaci
         await click(second, '保存結果を再読み込み');
         await reveal(second, button(second, 'この日の記録を更新'));
         await expect(button(second, 'この日の記録を更新')).toBeDisabled();
-        await reveal(second, button(second, '月次の振り返りを保存'));
+        await reveal(second, button(second, '月次の振り返りを保存'), monthlyRevealSamples);
         await expect(button(second, '月次の振り返りを保存')).toBeDisabled();
         await inputValue(second, '日次の振り返り・次の一手', 'タブBの日次下書き');
         await inputValue(second, reflectionLabel, 'タブBの月次下書き');
@@ -497,6 +521,19 @@ test('two real tabs retain a stale draft and require confirmation before replaci
       });
     } catch (error) {
       flowFailed = true;
+      try {
+        assertFixturePage(second);
+        await info.attach('fixture-second-tab-scroll', {
+          body: JSON.stringify(monthlyRevealSamples),
+          contentType: 'application/json',
+        });
+        await info.attach('fixture-second-tab-screenshot', {
+          body: await second.screenshot(),
+          contentType: 'image/png',
+        });
+      } catch {
+        console.error('Fixture second-tab diagnostic failed; original test failure preserved.');
+      }
       throw error;
     } finally {
       try {
