@@ -15,6 +15,18 @@ test.beforeEach(async ({ page }) => {
 
 test("grow, reload, harvest once and deliver to the residents", async ({ page }) => {
   await buildGarden(page);
+  const legacyWood = await page.locator("#wood").textContent();
+  // Public version-1 storage fixture: the released prototype has no farm field.
+  await page.evaluate(() => {
+    const key = "my_web_app.sea_shelter.v1";
+    const legacy = JSON.parse(localStorage.getItem(key)!);
+    delete legacy.farm;
+    localStorage.setItem(key, JSON.stringify(legacy));
+  });
+  await page.reload();
+  await expect(page.locator("#wood")).toHaveText(legacyWood!);
+  await page.locator('.tabs [data-view="farm"]').click();
+  await expect(page.locator("#crops")).toContainText("種まきできます");
   await page.getByRole("button", { name: "種をまく 木材2" }).click();
   await expect(page.locator("#crops")).toContainText("収穫まで");
   await page.clock.fastForward(61000);
