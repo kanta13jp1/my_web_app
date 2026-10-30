@@ -60,7 +60,7 @@ class _SeaShelterSurfaceState extends State<SeaShelterSurface> with RouteAware {
               ..referrerPolicy = 'no-referrer'
               ..allow =
                   "display-capture 'none'; camera 'none'; microphone 'none'; "
-                  "geolocation 'none'"
+                      "geolocation 'none'"
               ..style.border = 'none'
               ..style.width = '100%'
               ..style.height = '100%';

@@ -5,12 +5,12 @@ class SeaShelterSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Center(
-    child: Padding(
-      padding: EdgeInsets.all(24),
-      child: Text(
-        '潮灯のシェルターはWeb版のmy_web_appで遊べます。',
-        textAlign: TextAlign.center,
-      ),
-    ),
-  );
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            '潮灯のシェルターはWeb版のmy_web_appで遊べます。',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
 }

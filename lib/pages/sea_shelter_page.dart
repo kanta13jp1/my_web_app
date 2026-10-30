@@ -10,7 +10,7 @@ class SeaShelterPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('潮灯のシェルター')),
-    body: const SafeArea(child: SeaShelterSurface()),
-  );
+        appBar: AppBar(title: const Text('潮灯のシェルター')),
+        body: const SafeArea(child: SeaShelterSurface()),
+      );
 }

@@ -17,15 +17,15 @@ class _Home extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    body: Center(
-      child: ElevatedButton(
-        onPressed: () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute<void>(builder: (_) => const _Game())),
-        child: const Text('ゲームを開く'),
-      ),
-    ),
-  );
+        body: Center(
+          child: ElevatedButton(
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute<void>(builder: (_) => const _Game())),
+            child: const Text('ゲームを開く'),
+          ),
+        ),
+      );
 }
 
 class _Game extends StatelessWidget {
@@ -33,22 +33,22 @@ class _Game extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(
-            context,
-          ).push(MaterialPageRoute<void>(builder: (_) => const _Cover())),
-          child: const Text('別画面'),
+        appBar: AppBar(
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute<void>(builder: (_) => const _Cover())),
+              child: const Text('別画面'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('ゲームを閉じる'),
+            ),
+          ],
         ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('ゲームを閉じる'),
-        ),
-      ],
-    ),
-    body: const SeaShelterSurface(),
-  );
+        body: const SeaShelterSurface(),
+      );
 }
 
 class _Cover extends StatelessWidget {
@@ -56,11 +56,11 @@ class _Cover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    body: Center(
-      child: ElevatedButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: const Text('ゲームに戻る'),
-      ),
-    ),
-  );
+        body: Center(
+          child: ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('ゲームに戻る'),
+          ),
+        ),
+      );
 }
