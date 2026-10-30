@@ -35,7 +35,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:8765/labs/sea-shelter/ > /dev/null; then break; fi
             sleep 1
           done
-          E2E_BASE_URL=http://127.0.0.1:8765 npx playwright test test/e2e/sea_shelter.spec.ts test/e2e/sea_shelter_farm.spec.ts test/e2e/sea_shelter_viewport.spec.ts test/e2e/sea_shelter_storage.spec.ts --workers=1 --retries=0
+          E2E_BASE_URL=http://127.0.0.1:8765 npx playwright test test/e2e/sea_shelter.spec.ts test/e2e/sea_shelter_farm.spec.ts test/e2e/sea_shelter_viewport.spec.ts test/e2e/sea_shelter_storage.spec.ts test/e2e/sea_shelter_residents.spec.ts test/e2e/sea_shelter_residents_component.spec.ts --workers=1 --retries=0
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
