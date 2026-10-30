@@ -75,13 +75,13 @@ class ClaudeReviewWorkflowTest(unittest.TestCase):
         lint = job_block(ci, "lint-and-test")
         self.assertIn("    steps:\n", lint)
         job_settings = lint.split("    steps:\n", 1)[0]
-        self.assertNotRegex(job_settings, r"(?m)^    (?:if|continue-on-error):")
+        self.assertNotRegex(job_settings, r"""(?m)^    ['"]?(?:if|continue-on-error)['"]?[ \t]*:""")
         step_name = "      - name: Test CI scope classifier\n"
         self.assertEqual(lint.count(step_name), 1)
         start = lint.index(step_name)
         end = lint.index("\n      - name:", start + len(step_name))
         ci_step = lint[start:end]
-        self.assertNotRegex(ci_step, r"(?m)^        (?:if|continue-on-error|shell):")
+        self.assertNotRegex(ci_step, r"""(?m)^        ['"]?(?:if|continue-on-error|shell)['"]?[ \t]*:""")
         self.assertRegex(ci_step, r"(?m)^        run: \|$")
         self.assertNotRegex(ci_step, r"(?m)^\s*set\s+\+e(?:\s|$)")
         self.assertEqual(
