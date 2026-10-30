@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsAction;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -112,6 +114,29 @@ Widget app(
         ),
       ),
     );
+
+Future<void> expectReadableLatest(WidgetTester tester, String value) async {
+  final parent = find.byWidgetPredicate(
+    (widget) => widget is Semantics && widget.properties.label == value,
+  );
+  await reveal(tester, parent);
+  expect(find.bySemanticsLabel(value), findsOneWidget);
+  final selectable = find.descendant(
+    of: parent,
+    matching: find.byWidgetPredicate(
+      (widget) => widget is SelectableText && widget.data == value,
+    ),
+  );
+  expect(selectable, findsOneWidget);
+  await tester.tap(selectable);
+  await tester.pumpAndSettle();
+  final editable = find.descendant(
+    of: selectable,
+    matching: find.byType(EditableText),
+  );
+  expect(editable, findsOneWidget);
+  expect(tester.getSemantics(editable).hasAction(SemanticsAction.setSelection), isTrue);
+}
 
 void main() {
   testWidgets('create plan, save zero and reflection, then restore on reopen', (
@@ -326,6 +351,8 @@ void main() {
   testWidgets(
     'same-day and monthly remote changes require explicit overwrite',
     (tester) async {
+      final semantics = tester.ensureSemantics();
+      addTearDown(semantics.dispose);
       final original = fixtures
           .plan()
           .withReport(
@@ -368,6 +395,13 @@ void main() {
       );
       expect(find.text('手元の日次下書き'), findsOneWidget);
       expect(find.textContaining('最新の日次振り返り: 別タブの日次'), findsOneWidget);
+      await expectReadableLatest(
+        tester,
+        '最新の行動実績: 3.0\n'
+        '最新の成果実績: 未入力\n'
+        '最新の日次振り返り: 別タブの日次',
+      );
+      await expectReadableLatest(tester, '最新の月次振り返り: 別タブの月次');
       expect(
         BusinessExecutionCodec.decode(
           store.data['a'],
@@ -396,6 +430,12 @@ void main() {
         ).single.reports['2026-10-30']!.actual,
         4,
       );
+      await expectReadableLatest(
+        tester,
+        '最新の行動実績: 4.0\n'
+        '最新の成果実績: 未入力\n'
+        '最新の日次振り返り: 確認後に別タブが再更新',
+      );
       await tapText(tester, '最新記録を確認し、この日次入力で上書きする');
       await tapText(tester, 'この日の記録を更新');
       await tapText(tester, '最新記録を確認し、この月次入力で上書きする');
@@ -405,6 +445,41 @@ void main() {
       expect(saved.reflection, '手元の月次下書き');
     },
   );
+
+  testWidgets('empty latest conflict text remains available to semantics', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+    final original = fixtures.plan().withReport(
+      '2026-10-30',
+      BusinessDailyReport(actual: 1, note: '元の日次'),
+    ).withReflection('元の月次');
+    final store = fakes.MemoryExecutionStore()
+      ..data['a'] = BusinessExecutionCodec.encode([original]);
+    await tester.pumpWidget(app(store));
+    await tester.pumpAndSettle();
+    await tapText(tester, '相談申込数');
+    await enter(tester, 'この日の行動実績（回）', '2');
+    await enter(tester, '日次の振り返り・次の一手', '手元の日次');
+    await enter(tester, '月次の振り返り（続けること・変えること・次月の行動）', '手元の月次');
+    final remote = original.withReport(
+      '2026-10-30',
+      BusinessDailyReport(actual: 3, note: ''),
+    ).withReflection('');
+    store.data['a'] = BusinessExecutionCodec.encode([remote]);
+    await tapText(tester, 'この日の記録を更新');
+    await tapText(tester, '保存結果を再読み込み');
+    await expectReadableLatest(
+      tester,
+      '最新の行動実績: 3.0\n'
+      '最新の成果実績: 未入力\n'
+      '最新の日次振り返り: ',
+    );
+    await expectReadableLatest(tester, '最新の月次振り返り: ');
+    expect(find.text('手元の日次'), findsOneWidget);
+    expect(find.text('手元の月次'), findsOneWidget);
+  });
 
   testWidgets('new plan draft survives insertion of a save-error notice', (
     tester,

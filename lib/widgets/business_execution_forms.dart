@@ -341,6 +341,10 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail>
     final outcome = plan.latestOutcome;
     final saving = widget.controller.saving || widget.controller.refreshing;
     final readOnly = plan.archived;
+    final latestDay = '最新の行動実績: ${plan.reports[_day]?.actual ?? '未入力'}\n'
+        '最新の成果実績: ${plan.reports[_day]?.outcomeActual ?? '未入力'}\n'
+        '最新の日次振り返り: ${plan.reports[_day]?.note ?? ''}';
+    final latestReflection = '最新の月次振り返り: ${plan.reflection}';
     final expired = dayKey(now).compareTo(plan.dueDate) > 0;
     final reports = plan.reports.entries.toList()
       ..sort((a, b) => b.key.compareTo(a.key));
@@ -456,10 +460,11 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail>
               '別タブでこの日の記録が変わりました。現在の入力は残しています。'
               '下の最新記録と比較してから、上書きする入力を確認してください。',
             ),
-            SelectableText(
-              '最新の行動実績: ${plan.reports[_day]?.actual ?? '未入力'}\n'
-              '最新の成果実績: ${plan.reports[_day]?.outcomeActual ?? '未入力'}\n'
-              '最新の日次振り返り: ${plan.reports[_day]?.note ?? ''}',
+            Semantics(
+              container: true,
+              explicitChildNodes: true,
+              label: latestDay,
+              child: SelectableText(latestDay),
             ),
             TextButton(
               onPressed: saving
@@ -495,7 +500,12 @@ class _BusinessExecutionDetailState extends State<BusinessExecutionDetail>
               '別タブで月次の振り返りが変わりました。現在の入力は残しています。'
               '最新の文章と比較してから、上書きする入力を確認してください。',
             ),
-            SelectableText('最新の月次振り返り: ${plan.reflection}'),
+            Semantics(
+              container: true,
+              explicitChildNodes: true,
+              label: latestReflection,
+              child: SelectableText(latestReflection),
+            ),
             TextButton(
               onPressed: saving
                   ? null
