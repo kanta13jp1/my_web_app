@@ -170,6 +170,16 @@ test(
     await expect(page.locator("#xp")).toHaveText(afterPartialXp!);
     expect(await page.evaluate(() => document.documentElement.scrollWidth))
       .toBeLessThanOrEqual(320);
+    for (const id of ["wood", "metal", "food"]) {
+      const metrics = await page.locator(`#${id}`).evaluate((el) => ({
+        width: el.clientWidth,
+        content: el.scrollWidth,
+        height: el.getBoundingClientRect().height,
+        line: parseFloat(getComputedStyle(el).lineHeight),
+      }));
+      expect(metrics.content).toBeLessThanOrEqual(metrics.width);
+      expect(metrics.height).toBeLessThanOrEqual(metrics.line + 1);
+    }
     await page.screenshot({
       path: info.outputPath("capacity-320-568.png"),
       fullPage: true,
