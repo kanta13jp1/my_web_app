@@ -1,6 +1,57 @@
 import { expect, test } from "@playwright/test";
 
 test(
+  "long recovery warnings do not overlap the board and keyboard construction keeps focus",
+  async ({ page }, info) => {
+    const issues: string[] = [];
+    page.on("pageerror", (error) => issues.push(error.message));
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto("/labs/sea-shelter/index.html");
+    await page.locator("#collect").click();
+    await page.evaluate(() => {
+      const key = "my_web_app.sea_shelter.v1";
+      const saved = JSON.parse(localStorage.getItem(key)!);
+      saved.farm.food = -1;
+      localStorage.setItem(key, JSON.stringify(saved));
+    });
+    await page.reload();
+    await expect(page.locator("#status")).toContainText("農園だけを初期化");
+    await expect.poll(async () => {
+      const board = await page.locator("#board").boundingBox();
+      const tabs = await page.locator(".tabs").boundingBox();
+      const status = await page.locator("#status").boundingBox();
+      const collect = await page.locator("#collect").boundingBox();
+      return board!.y + board!.height <= tabs!.y &&
+        tabs!.y + tabs!.height <= status!.y &&
+        status!.y + status!.height <= collect!.y;
+    }).toBe(true);
+    await page.screenshot({
+      path: info.outputPath("recovery-320-568.png"),
+      fullPage: true,
+    });
+    for (let i = 0; i < 23; i++) await page.locator("#collect").click();
+    await page.locator('.tabs [data-view="build"]').focus();
+    await page.keyboard.press("Enter");
+    for (let i = 0; i < 4; i++) await page.keyboard.press("Tab");
+    await expect(page.locator('[data-kind="deck"]')).toBeFocused();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab");
+    await expect(page.locator('[data-kind="garden"]')).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#board button.near").first()).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#board button:focus")).toContainText("菜園");
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("button", { name: "種をまく 木材2" }))
+      .toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#status")).toBeFocused();
+    await expect(page.locator("#status")).toContainText("種をまきました");
+    expect(issues).toEqual([]);
+  },
+);
+
+test(
   "board and persistent controls fit the supported portrait and desktop sizes",
   async ({ page }, info) => {
     test.setTimeout(90000);

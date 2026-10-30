@@ -54,7 +54,7 @@ main {
     max(8px, env(safe-area-inset-left));
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto auto;
-  gap: 6px;
+  gap: 4px;
 }
 .topbar {
   display: flex;
@@ -403,5 +403,23 @@ main {
 @media (max-width: 720px) {
   .resources strong {
     font-size: 0.85rem;
+  }
+}
+
+main {
+  --base-min-height: 540px;
+  height: calc(100vh + var(--layout-extra, 0px));
+  height: calc(100dvh + var(--layout-extra, 0px));
+  min-height: calc(var(--base-min-height) + var(--layout-extra, 0px));
+}
+@media (max-width: 720px) {
+  main {
+    --base-min-height: 568px;
+  }
+}
+@media (max-height: 540px) {
+  main {
+    --base-min-height: 620px;
+    height: auto;
   }
 }

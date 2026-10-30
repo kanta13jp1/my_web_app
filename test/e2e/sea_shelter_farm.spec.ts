@@ -21,10 +21,12 @@ test("grow, reload, harvest once and deliver to the residents", async ({ page })
   await page.reload();
   await page.locator('.tabs [data-view="farm"]').click();
   await expect(page.locator("#crops")).toContainText("収穫できます");
-  await page.getByRole("button", { name: "収穫する", exact: true }).click();
+  const beforeHarvest = await page.locator("#wood").textContent();
+  await page.getByRole("button", { name: "収穫する", exact: true }).dblclick();
   await expect(page.locator("#food")).toHaveText("3");
+  await expect(page.locator("#wood")).toHaveText(beforeHarvest!);
   await expect(page.getByRole("button", { name: "収穫する", exact: true }))
-    .toHaveCount(0);
+    .toBeDisabled();
   const wood = Number(await page.locator("#wood").textContent());
   await page.locator("#donate-food").click();
   await expect(page.locator("#food")).toHaveText("0");
