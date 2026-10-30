@@ -43,9 +43,24 @@ jobs:
             sleep 1
           done
           curl --fail --silent http://localhost:4444/status > /dev/null
-          for dimensions in 1440x900@1 393x851@2.75; do
-            flutter drive --driver=test_driver/asset_ai_integration.dart \
+          for viewport in desktop mobile; do
+            dimensions=1440x900@1
+            mobile=false
+            if [ "$viewport" = mobile ]; then
+              dimensions=393x851@2.75
+              mobile=true
+            fi
+            flutter drive --driver=test_driver/asset_triage_visual.dart \
               --target=integration_test/edge_llm_json_contract_test.dart \
               --browser-dimension="$dimensions" \
+              --dart-define="JSON_QA_MOBILE=$mobile" \
               -d web-server --browser-name=chrome --headless
           done
+      - name: Preserve synthetic page screenshots
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: edge-llm-json-visual-${{ github.run_id }}
+          path: .ci-logs/asset-triage-visual/**
+          retention-days: 3
+          if-no-files-found: warn

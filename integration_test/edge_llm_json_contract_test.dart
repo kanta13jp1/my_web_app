@@ -4,7 +4,25 @@ import 'package:integration_test/integration_test.dart';
 import 'package:my_web_app/pages/edge_llm_playground_page.dart';
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  const mobile = bool.fromEnvironment('JSON_QA_MOBILE');
+  const viewport = mobile ? Size(393, 851) : Size(1440, 900);
+
+  Future<void> capture(WidgetTester tester, String state) async {
+    for (var frame = 0; frame < 3; frame++) {
+      await tester.pump(const Duration(milliseconds: 500));
+      await binding.takeScreenshot(
+        '${mobile ? 'mobile' : 'desktop'}-json-$state-$frame',
+        <String, Object?>{
+          'width': viewport.width,
+          'height': viewport.height,
+          'devicePixelRatio': mobile ? 2.75 : 1.0,
+          'frame': frame,
+          'settling': 'Flutter pump 500ms',
+        },
+      );
+    }
+  }
 
   testWidgets('Edge LLM画面で入力全文のJSON構文を確認する', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: EdgeLlmPlaygroundPage()));
@@ -30,6 +48,9 @@ void main() {
     await tester.tap(button);
     await tester.pumpAndSettle();
     expect(find.text('入力全文はJSONとして読み取れます。'), findsOneWidget);
+    await tester.ensureVisible(find.text('入力全文はJSONとして読み取れます。'));
+    await tester.pumpAndSettle();
+    await capture(tester, 'valid');
 
     await tester.ensureVisible(field);
     await tester.pumpAndSettle();
@@ -47,6 +68,9 @@ void main() {
     await tester.tap(button);
     await tester.pumpAndSettle();
     expect(find.textContaining('入力全文はJSONとして読み取れません。'), findsOneWidget);
+    await tester.ensureVisible(find.textContaining('入力全文はJSONとして読み取れません。'));
+    await tester.pumpAndSettle();
+    await capture(tester, 'invalid');
 
     await tester.ensureVisible(field);
     await tester.pumpAndSettle();
