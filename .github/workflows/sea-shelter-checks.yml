@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [main]
-    paths: ['web/labs/sea-shelter/**', 'test/e2e/sea_shelter.spec.ts', 'test/e2e/sea_shelter_farm.spec.ts', 'test/e2e/sea_shelter_viewport.spec.ts', 'test/e2e/sea_shelter_storage.spec.ts', 'test/fixtures/sea_shelter_v2269/**', '.github/workflows/sea-shelter-checks.yml', 'lib/pages/sea_shelter_page.dart', 'lib/ui/features/sea_shelter/**', 'test/e2e/sea_shelter_route.spec.ts', 'lib/data/home_tool_catalog.dart', 'lib/main.dart', 'test/widgets/sea_shelter_page_test.dart', 'test/fixtures/sea_shelter_lifecycle_app.dart', 'test/e2e/sea_shelter_lifecycle.spec.ts']
+    paths: ['scripts/build_sea_shelter_arena.mjs', 'package.json', 'package-lock.json', 'test/e2e/sea_shelter_arena.spec.ts', 'test/e2e/sea_shelter_arena_component.spec.ts', 'web/labs/sea-shelter/**', 'test/e2e/sea_shelter.spec.ts', 'test/e2e/sea_shelter_farm.spec.ts', 'test/e2e/sea_shelter_viewport.spec.ts', 'test/e2e/sea_shelter_storage.spec.ts', 'test/fixtures/sea_shelter_v2269/**', '.github/workflows/sea-shelter-checks.yml', 'lib/pages/sea_shelter_page.dart', 'lib/ui/features/sea_shelter/**', 'test/e2e/sea_shelter_route.spec.ts', 'lib/data/home_tool_catalog.dart', 'lib/main.dart', 'test/widgets/sea_shelter_page_test.dart', 'test/fixtures/sea_shelter_lifecycle_app.dart', 'test/e2e/sea_shelter_lifecycle.spec.ts']
 permissions: {}
 concurrency:
   group: sea-shelter-${{ github.ref }}
@@ -13,7 +13,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -21,9 +21,10 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
-      - run: node --test web/labs/sea-shelter/model.test.mjs web/labs/sea-shelter/farm.test.mjs web/labs/sea-shelter/storage.test.mjs
+      - run: node --test web/labs/sea-shelter/model.test.mjs web/labs/sea-shelter/farm.test.mjs web/labs/sea-shelter/storage.test.mjs web/labs/sea-shelter/arena/model.test.mjs
       - run: node --check web/labs/sea-shelter/app.mjs
       - run: npm ci --ignore-scripts
+      - run: node scripts/build_sea_shelter_arena.mjs
       - run: npx playwright install --with-deps chromium
       - name: Browser checks against candidate only
         shell: bash
@@ -35,7 +36,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:8765/labs/sea-shelter/ > /dev/null; then break; fi
             sleep 1
           done
-          E2E_BASE_URL=http://127.0.0.1:8765 npx playwright test test/e2e/sea_shelter.spec.ts test/e2e/sea_shelter_farm.spec.ts test/e2e/sea_shelter_viewport.spec.ts test/e2e/sea_shelter_storage.spec.ts test/e2e/sea_shelter_residents.spec.ts test/e2e/sea_shelter_residents_component.spec.ts --workers=1 --retries=0
+          E2E_BASE_URL=http://127.0.0.1:8765 npx playwright test test/e2e/sea_shelter.spec.ts test/e2e/sea_shelter_farm.spec.ts test/e2e/sea_shelter_viewport.spec.ts test/e2e/sea_shelter_storage.spec.ts test/e2e/sea_shelter_residents.spec.ts test/e2e/sea_shelter_residents_component.spec.ts test/e2e/sea_shelter_arena.spec.ts test/e2e/sea_shelter_arena_component.spec.ts --workers=1 --retries=0
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
@@ -62,6 +63,8 @@ jobs:
         with:
           node-version: '22'
       - run: |
+          npm ci --ignore-scripts
+          node scripts/build_sea_shelter_arena.mjs
           flutter pub get
           dart format --output=none --set-exit-if-changed lib/pages/sea_shelter_page.dart lib/ui/features/sea_shelter test/widgets/sea_shelter_page_test.dart test/fixtures/sea_shelter_lifecycle_app.dart
           flutter analyze lib/pages/sea_shelter_page.dart lib/ui/features/sea_shelter
