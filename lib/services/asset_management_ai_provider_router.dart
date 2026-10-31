@@ -243,6 +243,7 @@ class AssetManagementAiProviderRouter {
         _defaultFallbackChain[2], // google (gemini-3.1-pro)
         _defaultFallbackChain[1], // openai (gpt-5)
         _defaultFallbackChain[0], // anthropic (claude-opus-4-7)
+        _defaultFallbackChain[4], // nebius
       ];
     } else if (jevResult.bestChoiceId == 'performance') {
       reorderedCandidates = <AssetManagementAiProviderCandidate>[
@@ -250,6 +251,7 @@ class AssetManagementAiProviderRouter {
         _defaultFallbackChain[1], // openai (gpt-5)
         _defaultFallbackChain[0], // anthropic (claude-opus-4-7)
         _defaultFallbackChain[3], // google_flash_lite
+        _defaultFallbackChain[4], // nebius
       ];
     } else {
       reorderedCandidates = _defaultFallbackChain;
@@ -293,6 +295,14 @@ class AssetManagementAiProviderRouter {
       providerId: 'google_flash_lite',
       modelId: 'gemini-2.5-flash-lite',
       displayName: 'Gemini 2.5 Flash-Lite',
+      tier: 'fallback',
+    ),
+    // 上記4社が残高枯渇などで全滅しても稼働できる最終フォールバック。
+    // ai-hub の PROVIDER_CONFIGS キー (`nebius`) と表記を一致させること。
+    AssetManagementAiProviderCandidate(
+      providerId: 'nebius',
+      modelId: 'meta-llama/Llama-3.3-70B-Instruct',
+      displayName: 'Nebius Llama 3.3 70B',
       tier: 'fallback',
     ),
   ];

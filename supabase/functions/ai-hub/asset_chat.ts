@@ -7,7 +7,12 @@ export type AssetChatProviderRequest = {
   provider: string;
   model?: string;
   messages: AssetChatMessage[];
+  /** フォールバック候補への再試行。利用回数など 1 リクエスト 1 回の課金処理は再計上しない。 */
+  isFallback?: boolean;
 };
+
+/** 主プロバイダが残高枯渇・429・5xx 等で失敗したときに順に試す既定の候補。 */
+export const ASSET_CHAT_FALLBACK_PROVIDERS: readonly string[] = ["nebius"];
 
 export type AssetChatProviderResult = {
   ok: boolean;
@@ -266,6 +271,7 @@ export async function handleAssetChatAction(options: {
   body: UnknownRecord;
   userId: string;
   invokeProvider?: AssetChatProviderInvoker;
+  fallbackProviders?: readonly string[];
   cache?: AssetChatContextCache;
   now?: () => number;
 }): Promise<AssetChatResult> {
@@ -366,15 +372,41 @@ export async function handleAssetChatAction(options: {
       "providerUnavailable",
     );
   }
-  const providerResult = await options.invokeProvider({
-    provider,
-    model: requestedModel || undefined,
-    messages: providerMessages,
-  });
+  // isRetriable (残高枯渇 / 429 / 5xx / タイムアウト) の失敗だけ次の候補へ進む。
+  // 401/403・400・apiKeyRequired・利用上限/予算超過は isRetriable=false で即終了。
+  const chain = [provider];
+  for (
+    const fallback of options.fallbackProviders ?? ASSET_CHAT_FALLBACK_PROVIDERS
+  ) {
+    if (!chain.includes(fallback)) chain.push(fallback);
+  }
+  let providerResult: AssetChatProviderResult = { ok: false };
+  let usedProvider = provider;
+  const failures: string[] = [];
+  for (let i = 0; i < chain.length; i++) {
+    usedProvider = chain[i];
+    providerResult = await options.invokeProvider({
+      provider: usedProvider,
+      // 明示モデルは主プロバイダ専用。フォールバック先は既定モデルを使う。
+      model: i === 0 ? requestedModel || undefined : undefined,
+      messages: providerMessages,
+      ...(i > 0 ? { isFallback: true } : {}),
+    });
+    if (providerResult.ok && readString(providerResult.text)) break;
+    failures.push(
+      `${usedProvider}: ${
+        readString(providerResult.error) || "empty response"
+      }`,
+    );
+    if (!providerResult.isRetriable) break;
+  }
   const rawReply = readString(providerResult.text);
   if (!providerResult.ok || !rawReply) {
     throw new AssetChatActionError(
-      providerResult.error || "asset chat provider returned an empty response",
+      failures.length > 1
+        ? `all providers failed: ${failures.join(" | ")}`.slice(0, 600)
+        : providerResult.error ||
+          "asset chat provider returned an empty response",
       providerResult.httpStatus ?? providerFailureStatus(providerResult.error),
       "providerFailed",
     );
@@ -389,9 +421,9 @@ export async function handleAssetChatAction(options: {
   const tokensOut = estimateTokens(rawReply.length);
   const createdAt = new Date(nowMs).toISOString();
   const assistantCreatedAt = new Date(nowMs + 1).toISOString();
-  const model =
-    (readString(providerResult.modelUsed) || requestedModel || provider)
-      .slice(0, 200);
+  const model = (readString(providerResult.modelUsed) ||
+    (usedProvider === provider ? requestedModel : "") || usedProvider)
+    .slice(0, 200);
 
   let threadCreated = false;
   if (!thread) {
@@ -425,7 +457,7 @@ export async function handleAssetChatAction(options: {
     thread_title: thread.title,
     thread_created: threadCreated,
     reply,
-    provider,
+    provider: usedProvider,
     model,
     tokens_in: tokensIn,
     tokens_out: tokensOut,
