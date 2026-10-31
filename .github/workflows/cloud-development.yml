@@ -1,5 +1,5 @@
-name: Approved PR5937 Web Release
-run-name: PR5937 release operation ${{ inputs.operation_id }}
+name: Approved PR5938 Web Release
+run-name: PR5938 release operation ${{ inputs.operation_id }}
 
 on:
   pull_request:
@@ -51,7 +51,7 @@ on:
         required: true
         type: string
       approved_release:
-        description: Explicit owner approved PR5937-only release
+        description: Explicit owner approved PR5938-only release
         required: true
         default: false
         type: boolean
@@ -126,7 +126,7 @@ jobs:
           RELEASE_OPERATION_ID: ${{ inputs.operation_id }}
         run: |
           set -euo pipefail
-          [[ "$RELEASE_OPERATION_ID" == "b9a0cf8dc88bd55c36d9bab924a0f780" ]]
+          [[ "$RELEASE_OPERATION_ID" == "e9487d2ce97207bb8299a9cce5276e8e" ]]
 
       - name: Verify exact cloud handoff SHA
         if: env.EXPECTED_HEAD_SHA != ''
@@ -149,44 +149,44 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='fbc5274036fc5d9ff748916792a46e5e9afdf76b', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='c5deed635bb1b0b46659901962f09cd7c592cf55', 'Production changed; rebuild selection'
           PY
 
-      - name: Verify approved PR5937-only selection
+      - name: Verify approved PR5938-only selection
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          test "$(gh pr view 5937 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
-          test "$(gh pr view 5937 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 7978448dac0ff2b66b8bc764d022a635f207517d
-          test "$(gh pr view 5937 --repo kanta13jp1/my_web_app --json headRefOid --jq .headRefOid)" = 36a8561c315581a8da0608909a8b51e6164bb051
+          test "$(gh pr view 5938 --repo kanta13jp1/my_web_app --json state --jq .state)" = MERGED
+          test "$(gh pr view 5938 --repo kanta13jp1/my_web_app --json mergeCommit --jq .mergeCommit.oid)" = 9fff7bcef7166d1809ffd00edfe05dc54867a79b
+          test "$(gh pr view 5938 --repo kanta13jp1/my_web_app --json headRefOid --jq .headRefOid)" = 43da2c5dfb1d8051aca6cbdaf35d891112709244
           test "$(gh api repos/kanta13jp1/my_web_app/actions/workflows/deploy-prod.yml --jq .state)" = disabled_manually
-          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41097081962 --jq .conclusion)" = success
-          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41097081962 --jq .head_sha)" = 36a8561c315581a8da0608909a8b51e6164bb051
-          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41097081967 --jq .conclusion)" = success
-          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41097081967 --jq .head_sha)" = 36a8561c315581a8da0608909a8b51e6164bb051
-          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41097081800 --jq .conclusion)" = success
-          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41097081800 --jq .head_sha)" = 36a8561c315581a8da0608909a8b51e6164bb051
-          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41097078102 --jq .conclusion)" = success
-          gh api repos/kanta13jp1/my_web_app/commits/36a8561c315581a8da0608909a8b51e6164bb051/check-runs > /tmp/storage-reviewed-checks.json
+          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41167520229 --jq .conclusion)" = success
+          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41167520229 --jq .head_sha)" = 43da2c5dfb1d8051aca6cbdaf35d891112709244
+          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41167520309 --jq .conclusion)" = success
+          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41167520309 --jq .head_sha)" = 43da2c5dfb1d8051aca6cbdaf35d891112709244
+          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41167520206 --jq .conclusion)" = success
+          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41167520206 --jq .head_sha)" = 43da2c5dfb1d8051aca6cbdaf35d891112709244
+          test "$(gh api repos/kanta13jp1/my_web_app/actions/runs/41167520170 --jq .conclusion)" = success
+          gh api repos/kanta13jp1/my_web_app/commits/43da2c5dfb1d8051aca6cbdaf35d891112709244/check-runs > /tmp/storage-reviewed-checks.json
           python3 - <<'PY'
           import json
-          reviewed='36a8561c315581a8da0608909a8b51e6164bb051'
-          review_run='41097078102'
+          reviewed='43da2c5dfb1d8051aca6cbdaf35d891112709244'
+          review_run='41167520170'
           checks=json.load(open('/tmp/storage-reviewed-checks.json'))['check_runs']
           assert any(c['name']=='AI Review Gate' and c['conclusion']=='success' and reviewed in (c['output'].get('summary') or '') and 'Result: **approved**.' in (c['output'].get('summary') or '') and review_run in (c['output'].get('summary') or '') for c in checks), 'No genuine head-bound approved review evidence'
           PY
-          git fetch --no-tags --depth=1 origin fbc5274036fc5d9ff748916792a46e5e9afdf76b
+          git fetch --no-tags --depth=1 origin c5deed635bb1b0b46659901962f09cd7c592cf55
           python3 - <<'PY'
           import subprocess
-          expected=set(['.github/workflows/cloud-development.yml', '.github/workflows/sea-shelter-checks.yml', 'test/e2e/sea_shelter_farm.spec.ts', 'test/e2e/sea_shelter_storage.spec.ts', 'test/e2e/sea_shelter_viewport.spec.ts', 'test/fixtures/sea_shelter_v2269/README.md', 'test/fixtures/sea_shelter_v2269/farm.mjs', 'test/fixtures/sea_shelter_v2269/model.mjs', 'web/labs/sea-shelter/STORAGE.md', 'web/labs/sea-shelter/app.mjs', 'web/labs/sea-shelter/farm.mjs', 'web/labs/sea-shelter/index.html', 'web/labs/sea-shelter/model.mjs', 'web/labs/sea-shelter/storage.mjs', 'web/labs/sea-shelter/storage.test.mjs', 'web/labs/sea-shelter/style.css'])
-          actual=set(subprocess.check_output(['git','diff','--name-only','fbc5274036fc5d9ff748916792a46e5e9afdf76b','HEAD']).decode().splitlines())
+          expected=set(['.github/workflows/cloud-development.yml', '.github/workflows/sea-shelter-checks.yml', 'test/e2e/sea_shelter_residents.spec.ts', 'test/e2e/sea_shelter_residents_component.spec.ts', 'web/labs/sea-shelter/RESIDENTS.md', 'web/labs/sea-shelter/app.mjs', 'web/labs/sea-shelter/assets/residents-original-v2.README.md', 'web/labs/sea-shelter/assets/residents-original-v2.png', 'web/labs/sea-shelter/index.html', 'web/labs/sea-shelter/residents.mjs', 'web/labs/sea-shelter/style.css'])
+          actual=set(subprocess.check_output(['git','diff','--name-only','c5deed635bb1b0b46659901962f09cd7c592cf55','HEAD']).decode().splitlines())
           assert actual==expected,(actual,expected)
-          expected_blobs={'.github/workflows/sea-shelter-checks.yml': '92aaa906f9fc10e4ea20df8b1204c948c5d10efc', 'test/e2e/sea_shelter_farm.spec.ts': '60d07180dfba845978dd61aa9bf80ac74ccbe4e5', 'test/e2e/sea_shelter_storage.spec.ts': 'cba0b6d87bb652bf538d7feb6ce2ff5f149bec02', 'test/e2e/sea_shelter_viewport.spec.ts': '9f53724f0f0e94e504c979d1ec646ad3702b4919', 'test/fixtures/sea_shelter_v2269/farm.mjs': '440f60406b88de0699462107f85f270a2b410ebc', 'test/fixtures/sea_shelter_v2269/model.mjs': '6ccd76f091317327b3d4472f0355119c188f2302', 'test/fixtures/sea_shelter_v2269/README.md': '5d60e72a26b34219a70361183debd938bd6b87ee', 'web/labs/sea-shelter/app.mjs': '97affa3f31e5725c0c15033062452e761d0ecbcd', 'web/labs/sea-shelter/farm.mjs': '1bbea1d1619521d240b5060232ae3795e6b962a0', 'web/labs/sea-shelter/index.html': '8e2202dc5d37e0690671a4b8b87033b5f90340e2', 'web/labs/sea-shelter/model.mjs': 'c1f0325dabbe416fb4f892cd8e4cef52ee8e27a6', 'web/labs/sea-shelter/storage.mjs': '86e85aaeb4ec65dfbfafa00e44364ec9772128ea', 'web/labs/sea-shelter/storage.test.mjs': '22390e92a51981997e72eb872383da9750f08e5d', 'web/labs/sea-shelter/STORAGE.md': 'fd4f7195add6a3c91a87b9b3560c35b9ba9c2705', 'web/labs/sea-shelter/style.css': 'a870bac99590bd7245584c3f9d4cd9a6ceed866a'}
+          expected_blobs={'.github/workflows/sea-shelter-checks.yml': 'd2f4fcddca6845b57d370b04545a2d9e68a4d96b', 'test/e2e/sea_shelter_residents.spec.ts': 'fd8dc76c3820d79b6311ca77f5e97eff0ac45ae4', 'test/e2e/sea_shelter_residents_component.spec.ts': '7e11c4bc4ca11c02b9335ff8758d0d60b9e5a8ec', 'web/labs/sea-shelter/assets/residents-original-v2.png': '63ba92836077fd783b4e7326fcfbe35569360033', 'web/labs/sea-shelter/assets/residents-original-v2.README.md': '19184f9e4973163b42b28091a394d60824ef2431', 'web/labs/sea-shelter/app.mjs': 'd0349a7ab6b52bfba57ffd460f616789d294e3e1', 'web/labs/sea-shelter/index.html': 'a06b225e2be8170f912e593f15478b0d618a3ea5', 'web/labs/sea-shelter/style.css': '19849ef26eb8b6fc7bdc862190d2549f6894dcca', 'web/labs/sea-shelter/residents.mjs': '0081372631287dcaf549892ec819b476dd53f3ec', 'web/labs/sea-shelter/RESIDENTS.md': '431fc61122a1f16442d174514d26e744c8f463ba'}
           for path, expected_blob in expected_blobs.items():
               actual_blob=subprocess.check_output(['git','rev-parse','HEAD:'+path]).decode().strip()
               assert actual_blob==expected_blob,(path,actual_blob,expected_blob)
-          print('Approved PR5937 selection verified; all other production blobs unchanged')
+          print('Approved PR5938 selection verified; all other production blobs unchanged')
           PY
 
       - name: Validate cloud workspace descriptors
@@ -699,7 +699,7 @@ jobs:
           python3 - <<'PY'
           import json,urllib.request
           r=urllib.request.Request('https://my-web-app-b67f4.web.app/version.json',headers={'Cache-Control':'no-cache'})
-          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='fbc5274036fc5d9ff748916792a46e5e9afdf76b', 'Production changed; rebuild selection'
+          assert json.load(urllib.request.urlopen(r,timeout=20))['commit']=='c5deed635bb1b0b46659901962f09cd7c592cf55', 'Production changed; rebuild selection'
           PY
 
       - name: Collect pushed files
@@ -719,7 +719,7 @@ jobs:
           mkdir -p .deploy-logs
           python3 - <<'PY'
           from pathlib import Path
-          Path('.deploy-logs/changed-files.txt').write_text('.github/workflows/sea-shelter-checks.yml\ntest/e2e/sea_shelter_farm.spec.ts\ntest/e2e/sea_shelter_storage.spec.ts\ntest/e2e/sea_shelter_viewport.spec.ts\ntest/fixtures/sea_shelter_v2269/farm.mjs\ntest/fixtures/sea_shelter_v2269/model.mjs\ntest/fixtures/sea_shelter_v2269/README.md\nweb/labs/sea-shelter/app.mjs\nweb/labs/sea-shelter/farm.mjs\nweb/labs/sea-shelter/index.html\nweb/labs/sea-shelter/model.mjs\nweb/labs/sea-shelter/storage.mjs\nweb/labs/sea-shelter/storage.test.mjs\nweb/labs/sea-shelter/STORAGE.md\nweb/labs/sea-shelter/style.css\n')
+          Path('.deploy-logs/changed-files.txt').write_text('.github/workflows/sea-shelter-checks.yml\ntest/e2e/sea_shelter_residents.spec.ts\ntest/e2e/sea_shelter_residents_component.spec.ts\nweb/labs/sea-shelter/assets/residents-original-v2.png\nweb/labs/sea-shelter/assets/residents-original-v2.README.md\nweb/labs/sea-shelter/app.mjs\nweb/labs/sea-shelter/index.html\nweb/labs/sea-shelter/style.css\nweb/labs/sea-shelter/residents.mjs\nweb/labs/sea-shelter/RESIDENTS.md\n')
           PY
 
       - name: Reject mixed public-blog deployments
@@ -1421,7 +1421,7 @@ jobs:
         if: steps.changes.outputs.web == 'true'
         env:
           FIREBASE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
-          EXPECTED_PUBLIC_BASE: fbc5274036fc5d9ff748916792a46e5e9afdf76b
+          EXPECTED_PUBLIC_BASE: c5deed635bb1b0b46659901962f09cd7c592cf55
         run: |
           python3 -m venv /tmp/echo-release-tools
           /tmp/echo-release-tools/bin/pip install google-auth==2.43.0 requests==2.32.5
@@ -1453,7 +1453,7 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          EXPECTED_PUBLIC_BASE=fbc5274036fc5d9ff748916792a46e5e9afdf76b /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
+          EXPECTED_PUBLIC_BASE=c5deed635bb1b0b46659901962f09cd7c592cf55 /tmp/echo-release-tools/bin/python scripts/echo_pump_release/preserve_live_labs.py guard
 
           if npx -y firebase-tools@15.34.0 deploy \
             --only hosting \
@@ -1696,7 +1696,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:8765/labs/sea-shelter/ > /dev/null; then break; fi
             sleep 1
           done
-          E2E_BASE_URL=http://127.0.0.1:8765 npx playwright test test/e2e/sea_shelter.spec.ts test/e2e/sea_shelter_farm.spec.ts test/e2e/sea_shelter_viewport.spec.ts test/e2e/sea_shelter_storage.spec.ts --workers=1 --retries=0
+          E2E_BASE_URL=http://127.0.0.1:8765 npx playwright test test/e2e/sea_shelter.spec.ts test/e2e/sea_shelter_farm.spec.ts test/e2e/sea_shelter_viewport.spec.ts test/e2e/sea_shelter_storage.spec.ts test/e2e/sea_shelter_residents.spec.ts test/e2e/sea_shelter_residents_component.spec.ts --workers=1 --retries=0
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
@@ -1796,13 +1796,18 @@ jobs:
           root='https://my-web-app-b67f4.web.app'
           req=urllib.request.Request(root+'/version.json',headers={'Cache-Control':'no-cache'})
           assert json.load(urllib.request.urlopen(req,timeout=30))['commit']==os.environ['EXPECTED_SHA']
-          with urllib.request.urlopen(root+'/labs/sea-shelter/storage.mjs',timeout=30) as response:
+          with urllib.request.urlopen(root+'/labs/sea-shelter/residents.mjs',timeout=30) as response:
               assert response.status==200 and 'javascript' in response.headers.get('Content-Type','')
+          import hashlib
+          with urllib.request.urlopen(root+'/labs/sea-shelter/assets/residents-original-v2.png',timeout=30) as asset:
+              data=asset.read()
+              assert asset.status==200 and 'image/png' in asset.headers.get('Content-Type','')
+              assert len(data)==2269806 and hashlib.sha256(data).hexdigest()=='0b5b09baaa7aa22a598af01e5adcb60f3aae177d6d5610ee27016d48b3dc70f0'
           PY
       - name: Verify live gameplay, saving, profile, reset and Flutter route
         env:
           E2E_BASE_URL: https://my-web-app-b67f4.web.app
-        run: npx playwright test test/e2e/sea_shelter.spec.ts test/e2e/sea_shelter_farm.spec.ts test/e2e/sea_shelter_viewport.spec.ts test/e2e/sea_shelter_storage.spec.ts test/e2e/sea_shelter_route.spec.ts --workers=1 --retries=0
+        run: npx playwright test test/e2e/sea_shelter.spec.ts test/e2e/sea_shelter_farm.spec.ts test/e2e/sea_shelter_viewport.spec.ts test/e2e/sea_shelter_storage.spec.ts test/e2e/sea_shelter_residents.spec.ts test/e2e/sea_shelter_residents_component.spec.ts test/e2e/sea_shelter_route.spec.ts --workers=1 --retries=0
       - name: Confirm public revision after browser verification
         env:
           EXPECTED_SHA: ${{ github.sha }}
