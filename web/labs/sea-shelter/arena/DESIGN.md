@@ -46,3 +46,5 @@ model9/9とformat/lint成功。実ブラウザ・GPU・転送・画像監査はC
 公式出典：[WebGLRenderer](https://threejs.org/docs/pages/WebGLRenderer.html)、[cleanup](https://threejs.org/manual/pages/cleanup.html)、[固定版registry](https://registry.npmjs.org/three/0.186.0)。WebGLRendererはWebGL2を必要とする。Unity6.3のiOS対応を否定する判断ではなく、今回の軽い独立Web画面にThreeを選択した。
 
 初回CIでr186にmin配布ファイルがないことを検出した。公式tarballの実ファイル一覧とintegrityを再確認し、固定esbuild-wasm0.28.2（公式npm/MIT、build専用）でcore/rendererのESMをminifyする。LICENSEを保持し同一originへ出力。最初の失敗は未実行の描画試験の代わりに成功扱いしない。
+
+コード点検で、入力ごとにRAF基準時刻をリセットすると連打がsimulationを遅らせる問題を発見し修正。動作中のRAFは維持し、再開時だけ基準をリセットする。UIから攻撃を繰り返しても24秒の無防備敗北が進む回帰を追加。勝利後の短い動き/カメラ復帰はsimulationとは別の最大1.2秒で、操作や再挑戦を妨げない。resize時の停止画面再描画も追加。ソフトウェアWebGLの勝利シナリオは375x667/軽量設定で実施し、標準描画/両DPRは別のcomponentと敗北/viewportケースで測定する。実機性能と混同しない。

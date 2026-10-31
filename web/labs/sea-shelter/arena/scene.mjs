@@ -11,7 +11,10 @@ export function createTrainingScene(
 ) {
   let renderer, observer;
   try {
-    let disposed = false, quiet = reducedMotion, lastEvent = 0;
+    let disposed = false,
+      quiet = reducedMotion,
+      lastEvent = 0,
+      lastSnapshot = null;
     renderer = new T.WebGLRenderer({
       antialias: !low,
       alpha: true,
@@ -140,6 +143,7 @@ export function createTrainingScene(
       renderer.setSize(Math.max(1, width), Math.max(1, height), false);
       camera.aspect = width / Math.max(1, height);
       camera.updateProjectionMatrix();
+      if (lastSnapshot) render(lastSnapshot, [], performance.now());
     };
     observer = new ResizeObserver(resize);
     observer.observe(host);
@@ -155,6 +159,7 @@ export function createTrainingScene(
     renderer.domElement.addEventListener("webglcontextlost", lost);
     const render = (s, events = [], now = performance.now()) => {
       if (disposed) return;
+      lastSnapshot = s;
       for (const e of events) {
         if (e.id <= lastEvent) continue;
         lastEvent = e.id;
@@ -198,6 +203,7 @@ export function createTrainingScene(
       hero.legs[1].rotation.x = quiet ? 0 : attack * .25;
       if (s.status === "won") {
         hero.arms[1].rotation.x = -2.5;
+        hero.arms[1].rotation.z = quiet ? 0 : Math.sin(age("win") * 7) * .12;
         hero.arms[0].rotation.z = -.4;
       }
       if (s.status === "lost") {
@@ -213,7 +219,7 @@ export function createTrainingScene(
         : age("hurt") < .35
         ? 1.1
         : .2;
-      dummy.root.scale.setScalar(s.status === "won" ? .85 : 1);
+      dummy.body.rotation.x = s.status === "won" ? .24 : 0;
       ring.position.set(special > 0 ? 1.4 : -1.4, 1.25, 0);
       ring.scale.setScalar(1 + (1 - special) * 1.9);
       ring.material.opacity = quiet ? 0 : special * .7;
@@ -245,7 +251,7 @@ export function createTrainingScene(
       desired.set(narrow ? 7.8 : 6.4, narrow ? 5.4 : 4.2, narrow ? 11.5 : 8.3);
       if (!quiet && special > 0) desired.multiplyScalar(1 - special * .16);
       camera.position.lerp(desired, quiet ? 1 : .16);
-      target.set(!quiet && special > 0 ? .35 : 0, 1.0, 0);
+      target.set(quiet ? 0 : special > 0 ? .35 : attack * .12, 1.0, 0);
       camera.lookAt(target);
       renderer.render(scene, camera);
       observed.peakTriangles = Math.max(

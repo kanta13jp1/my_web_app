@@ -30,6 +30,10 @@ test(
     });
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
+    page.on("console", (m) => {
+      if (m.type() === "error") errors.push(m.text());
+    });
+    await page.route("**/favicon.ico", (r) => r.fulfill({ status: 204 }));
     await page.clock.install({ time: new Date("2026-10-31T12:00:00Z") });
     await page.goto("/labs/sea-shelter/index.html");
     await page.locator("#collect").click();
@@ -48,10 +52,14 @@ test(
     await page.locator('.tabs [data-view="residents"]').click();
     await expect(page.locator("#residents")).toHaveText("7 / 7");
     expect(requests.some((u) => u.includes("/arena/vendor/"))).toBe(false);
-    const saved = await snapshot(page);
     await page.locator(".training-entry").click();
+    const saved = await snapshot(page);
     await expect(page.locator("#sound")).not.toBeChecked();
     expect(requests.some((u) => u.includes("/arena/vendor/"))).toBe(false);
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.locator("summary").click();
+    await page.locator("#low").check();
+    await page.locator("summary").click();
     await page.clock.pauseAt(new Date("2026-10-31T12:01:00Z"));
     await ready(page);
     await page.clock.runFor(250);
@@ -125,6 +133,9 @@ test(
     const saved = await snapshot(page);
     await expect(page.locator("#quiet")).toBeChecked();
     await ready(page);
+    await page.screenshot({
+      path: info.outputPath("arena-default-quality.png"),
+    });
     await page.locator("#attack").focus();
     await page.keyboard.press("a");
     await page.keyboard.press("a");
@@ -137,7 +148,10 @@ test(
     await expect(page.locator("#hp")).toHaveText(health);
     await expect(page.locator("#attack")).toBeDisabled();
     await page.locator("#pause").click();
-    await page.clock.runFor(24000);
+    for (let i = 0; i < 120; i++) {
+      await page.keyboard.press("a");
+      await page.clock.runFor(200);
+    }
     await expect(page.locator("body")).toHaveAttribute("data-status", "lost");
     expect(await snapshot(page)).toBe(saved);
     await page.locator("#retry").click();

@@ -15,7 +15,11 @@ let state = null,
   loading = false,
   ended = false,
   audio = null;
-let latestMessage = "", lastCue = "", lastPaint = 0, short = false;
+let latestMessage = "",
+  lastCue = "",
+  lastPaint = 0,
+  short = false,
+  endingUntil = 0;
 $("quiet").checked = motion.matches;
 function announce(text) {
   if (text !== lastCue) {
@@ -34,7 +38,8 @@ function controls() {
   $("pause").textContent = state?.status === "paused"
     ? "訓練を再開"
     : "一時停止";
-  $("skip").disabled = !state || !["running", "paused"].includes(state.status);
+  $("skip").disabled = !state ||
+    !["running", "paused", "won", "lost"].includes(state.status);
   $("retry").hidden = !state ||
     !["won", "lost", "stopped"].includes(state.status);
 }
@@ -105,19 +110,29 @@ function draw(events = [], now = performance.now()) {
 }
 function tick(now) {
   frame = 0;
-  if (!scene || state?.status !== "running" || document.hidden) return;
-  const delta = last ? Math.min(50, Math.max(0, now - last)) : 0;
-  last = now;
-  const result = advanceTraining(state, delta);
-  state = result.state;
-  update(result.events);
-  draw(result.events, now);
-  if (scene && state.status === "running") frame = requestAnimationFrame(tick);
-  else diagnostics();
+  if (!scene || !state || document.hidden) return;
+  let events = [];
+  if (state.status === "running") {
+    const delta = last ? Math.min(50, Math.max(0, now - last)) : 0;
+    last = now;
+    const result = advanceTraining(state, delta);
+    state = result.state;
+    events = result.events;
+    update(events);
+    if (state.status === "won" || state.status === "lost") {
+      endingUntil = now + 1200;
+    }
+  } else if (!["won", "lost"].includes(state.status) || now >= endingUntil) {
+    return;
+  }
+  draw(events, now);
+  if (scene && (state.status === "running" || now < endingUntil)) {
+    frame = requestAnimationFrame(tick);
+  } else diagnostics();
 }
 function run() {
-  last = 0;
   if (!frame && scene && state?.status === "running" && !document.hidden) {
+    last = 0;
     frame = requestAnimationFrame(tick);
   }
 }

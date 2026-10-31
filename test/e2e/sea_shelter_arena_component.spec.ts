@@ -48,7 +48,7 @@ test(
           document.body.append(host);
           const scene = createTrainingScene({
             host,
-            low: true,
+            low: i % 2 === 0,
             onFailure: () => {
               throw Error("Unexpected context loss");
             },
@@ -86,6 +86,8 @@ test(
     for (const r of results.results) {
       expect(r.geometries).toBe(0);
       expect(r.textures).toBe(0);
+      expect(r.peakTriangles).toBeGreaterThan(0);
+      expect(r.peakDrawCalls).toBeGreaterThan(0);
       expect(r.peakTriangles).toBeLessThanOrEqual(30000);
       expect(r.peakDrawCalls).toBeLessThanOrEqual(60);
       expect(r.dpr).toBeLessThanOrEqual(1.5);
