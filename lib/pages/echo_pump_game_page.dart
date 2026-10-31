@@ -134,6 +134,10 @@ class _EchoPumpGamePageState extends State<EchoPumpGamePage>
     }
     _moving = true;
     try {
+      // Settle pending footsteps before starting the timed door cues.
+      await _audio.suspendEffects();
+      if (!mounted) return;
+      _audio.resumeEffects();
       await showDialog<void>(
         context: context,
         useRootNavigator: false,
