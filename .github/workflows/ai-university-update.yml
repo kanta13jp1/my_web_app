@@ -1,7 +1,7 @@
 name: AI大学コンテンツ更新 (4時間毎)
 
 # 登録済みAIプロバイダーの最新ニュースを RSS 取得し ai_university_content テーブルを更新する
-# プロバイダーは固定せず随時追加可能 (現在54社: google/openai/anthropic/microsoft/meta/x/deepseek/mistral/perplexity/groq/cohere/amazon/stability/huggingface/nvidia/ibm/sakana/baidu/oracle/reka/aleph_alpha/together_ai/fireworks_ai/replicate/writer/ai21/voyage/elevenlabs/openrouter/ollama/runway/suno/ideogram/udio/luma/kling/pika/assemblyai/twelve_labs/qwen/moonshot/midjourney/hailuo/adobe_firefly/01ai/coze/apple/databricks/samsung/zhipu/character_ai/inflection_ai/allen_ai/naver)
+# Active providers: scripts/ai_university_providers.json (single execution/report source)
 # 4時間毎に自動実行。深いリサーチは Claude Code Schedule (ai-university-update タスク) が NotebookLM で担当
 on:
   schedule:
@@ -183,14 +183,15 @@ jobs:
 
       # ── Step 2: 各プロバイダーの RSS から最新ニュースを取得・UPSERT ──────
       - name: Step 2 - Fetch and upsert AI provider news
-        if: steps.quota_check.outputs.anthropic_available == 'true'
         id: update
         env:
           FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
         run: |
           TODAY=$(TZ=Asia/Tokyo date +'%Y-%m-%d')
-          SUCCESS_COUNT=0
-          FAILED_PROVIDERS=""
+          cp scripts/ai_university_update_report.py "$RUNNER_TEMP/provider-report.py"
+          cp scripts/ai_university_providers.json "$RUNNER_TEMP/providers.json"
+          python3 "$RUNNER_TEMP/provider-report.py" list --manifest "$RUNNER_TEMP/providers.json" > "$RUNNER_TEMP/providers.tsv"
+          : > "$RUNNER_TEMP/provider-outcomes.tsv"
 
           upsert_provider() {
             local provider="$1"
@@ -201,7 +202,7 @@ jobs:
             local CONTENT
             if ! CONTENT=$(python3 scripts/parse_rss.py "$rss_url" "$provider_name" "$TODAY"); then
               echo "skip ${provider_name}: RSS fetch failed"
-              FAILED_PROVIDERS="${FAILED_PROVIDERS} ${provider}"
+              printf "%s\tfailed\n" "$provider" >> "$RUNNER_TEMP/provider-outcomes.tsv"
               return 0
             fi
 
@@ -222,118 +223,36 @@ jobs:
                 \"sort_order\": 1,
                 \"is_active\": true
               }" \
-              --max-time 15)
+              --max-time 15) || HTTP_CODE=000
 
             if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
               echo "✅ ${provider_name}: 更新完了 (${HTTP_CODE})"
-              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+              printf "%s\tsucceeded\n" "$provider" >> "$RUNNER_TEMP/provider-outcomes.tsv"
             else
               echo "⚠️ ${provider_name}: 更新失敗 (HTTP ${HTTP_CODE})"
-              FAILED_PROVIDERS="${FAILED_PROVIDERS} ${provider}"
+              printf "%s\tfailed\n" "$provider" >> "$RUNNER_TEMP/provider-outcomes.tsv"
             fi
           }
 
-          # RSS有効プロバイダーのみ更新 (無効URLは静的seedコンテンツを維持)
-          upsert_provider "google"      "https://blog.google/technology/ai/rss/"              "Google AI"
-          upsert_provider "openai"      "https://openai.com/news/rss.xml"                     "OpenAI"
-          upsert_provider "microsoft"   "https://blogs.microsoft.com/ai/feed/"                "Microsoft AI"
-          upsert_provider "amazon"      "https://aws.amazon.com/blogs/machine-learning/feed/" "Amazon Bedrock"
-          upsert_provider "huggingface" "https://huggingface.co/blog/feed.xml"                "Hugging Face"
-          upsert_provider "nvidia"      "https://blogs.nvidia.com/feed/"                      "NVIDIA"
-          upsert_provider "lightricks"  "https://www.lightricks.com/blog/feed"                "Lightricks LTX-2"
-          upsert_provider "arcee_ai"    "https://www.arcee.ai/blog/rss.xml"                   "Arcee AI Trinity"
-          upsert_provider "minimax"     "https://www.minimax.io/blog/rss.xml"                 "MiniMax Hailuo"
-          upsert_provider "moondream"   "https://moondream.ai/blog/rss.xml"                   "Moondream VLM"
-          upsert_provider "rakuten_ai"  "https://global.rakuten.com/corp/news/press.rss"      "Rakuten AI 3.0"
-          upsert_provider "pfn"         "https://www.preferred.jp/en/feed/"                   "Preferred Networks (PLaMo)"
-          upsert_provider "siliconflow" "https://siliconflow.cn/blog/rss.xml"                 "SiliconFlow"
-          upsert_provider "novita_ai"   "https://novita.ai/blog/rss.xml"                      "Novita AI"
-          upsert_provider "deepinfra"   "https://deepinfra.com/blog/rss.xml"                  "DeepInfra"
-          upsert_provider "nebius"      "https://nebius.com/blog/rss.xml"                     "Nebius AI Studio"
-          upsert_provider "fal_ai"      "https://blog.fal.ai/rss/"                            "fal.ai"
-          upsert_provider "fish_audio"  "https://fish.audio/blog/rss.xml"                     "Fish Audio"
-          upsert_provider "atlas_cloud" "https://www.atlascloud.ai/blog/rss"                  "Atlas Cloud"
-          upsert_provider "mira_network" "https://docs.mira.network/blog/rss.xml"             "Mira Network"
-          upsert_provider "gmi_cloud"   "https://www.gmicloud.ai/blog/rss.xml"                "GMI Cloud"
-          upsert_provider "inworld"     "https://inworld.ai/blog/rss.xml"                     "Inworld AI"
-          upsert_provider "coreweave"   "https://www.coreweave.com/blog/rss.xml"              "CoreWeave"
-          upsert_provider "lambda_labs" "https://lambda.ai/blog/rss.xml"                      "Lambda Labs"
-          upsert_provider "hyperbolic"  "https://hyperbolic.ai/blog/rss.xml"                  "Hyperbolic Labs"
-          upsert_provider "anyscale"    "https://www.anyscale.com/blog/rss.xml"               "Anyscale"
-          upsert_provider "cerebrium"   "https://www.cerebrium.ai/blog/rss.xml"               "Cerebrium"
-          upsert_provider "magic_ai"    "https://magic.dev/blog/rss.xml"                      "Magic AI"
-          upsert_provider "nous_research" "https://nousresearch.com/feed/"                    "Nous Research (Hermes 4 / Psyche)"
-          upsert_provider "sierra_ai"    "https://sierra.ai/blog/rss.xml"                    "Sierra (Bret Taylor)"
-          upsert_provider "figure_ai"    "https://figure.ai/news/rss.xml"                    "Figure AI (Figure 03 / Helix VLA)"
-          upsert_provider "replit"       "https://blog.replit.com/rss.xml"                   "Replit (Agent 4)"
-          upsert_provider "cursor"       "https://cursor.com/blog/rss.xml"                   "Cursor (Anysphere)"
-          upsert_provider "lovable"      "https://lovable.dev/blog/rss.xml"                  "Lovable (Anton Osika)"
-          upsert_provider "bolt_new"     "https://bolt.new/blog/rss.xml"                     "Bolt.new (StackBlitz)"
-          upsert_provider "v0"           "https://vercel.com/blog/rss.xml"                   "v0 by Vercel"
-          upsert_provider "windsurf"     "https://windsurf.com/blog/rss.xml"                 "Windsurf (旧 Codeium / Cascade)"
-          upsert_provider "hume_ai"     "https://www.hume.ai/blog/rss.xml"                   "Hume AI (EVI / 感情知能 Voice AI)"
-          upsert_provider "glean"       "https://www.glean.com/blog/rss.xml"                 "Glean (Enterprise Work AI)"
-          upsert_provider "vapi"        "https://vapi.ai/blog/rss.xml"                       "Vapi (Voice AI Platform)"
-          upsert_provider "e2b"         "https://e2b.dev/blog/rss.xml"                       "E2B (AI Agent Code Execution)"
-          upsert_provider "firecrawl"   "https://www.firecrawl.dev/blog/rss.xml"              "Firecrawl (Web Scraping for AI)"
-          upsert_provider "weaviate"    "https://weaviate.io/blog/rss.xml"                    "Weaviate (AI-Native Vector DB)"
-          upsert_provider "livekit"    "https://blog.livekit.io/rss/"                        "LiveKit (Realtime AI Agents)"
-          upsert_provider "higgsfield"   "https://higgsfield.ai/blog/rss.xml"                "Higgsfield AI (Multi-Model Video)"
-          upsert_provider "browserbase"  "https://www.browserbase.com/blog/rss.xml"          "Browserbase (AI Browser Automation)"
-          upsert_provider "tavily"       "https://blog.tavily.com/rss.xml"                   "Tavily (AI Search API for Agents)"
-          upsert_provider "nomic_ai"     "https://www.nomic.ai/blog/rss.xml"                 "Nomic AI (Open Source Embeddings)"
-          upsert_provider "chroma"       "https://www.trychroma.com/blog/rss.xml"             "Chroma (Open Source Vector DB)"
-          upsert_provider "upstage"      "https://www.upstage.ai/blog/rss.xml"                "Upstage (Solar LLM / Korea AI Unicorn)"
-          upsert_provider "modal"        "https://modal.com/blog/rss.xml"                     "Modal (Serverless GPU Cloud)"
-          upsert_provider "runpod"       "https://blog.runpod.io/rss/"                        "RunPod (GPU Cloud Marketplace)"
-          upsert_provider "scale_ai"     "https://scale.com/blog/rss"                         "Scale AI (Data & Enterprise AI)"
-          upsert_provider "baseten"      "https://www.baseten.co/blog/rss.xml"                "Baseten (ML Inference Platform)"
-          upsert_provider "arize_ai"     "https://arize.com/blog/rss/"                        "Arize AI (LLM Observability)"
-          upsert_provider "langsmith"    "https://blog.langchain.dev/rss/"                    "LangSmith (LLM Observability by LangChain)"
-          upsert_provider "comet_ml"     "https://www.comet.com/site/blog/feed/"              "Comet ML (ML Experiment Tracking & LLM Evals)"
-          upsert_provider "braintrust"   "https://www.braintrust.dev/blog/rss.xml"            "Braintrust (AI Observability & Eval Platform)"
-          upsert_provider "galileo"      "https://www.galileo.ai/blog/rss.xml"               "Galileo AI (LLM Eval Guardrails Monitoring)"
-          upsert_provider "prefect"      "https://www.prefect.io/blog/rss.xml"               "Prefect (Python Workflow Orchestration)"
-          upsert_provider "confident_ai" "https://www.confident-ai.com/blog/rss.xml"         "Confident AI / DeepEval (LLM Evaluation)"
-          upsert_provider "crewai"       "https://www.crewai.com/blog/rss.xml"               "CrewAI (Multi-Agent Orchestration)"
-          upsert_provider "patronus_ai"  "https://www.patronus.ai/blog/rss.xml"              "Patronus AI (LLM Evaluation & Safety)"
-          upsert_provider "autogen"      "https://devblogs.microsoft.com/autogen/feed/"      "AutoGen (Microsoft Research Multi-Agent OSS)"
-          upsert_provider "agno"         "https://www.agno.com/blog/rss.xml"                 "Agno / phidata (Python-native Agent Framework)"
-          upsert_provider "haystack"     "https://haystack.deepset.ai/blog/feed"             "Haystack deepset (OSS RAG & LLM App Framework)"
-          upsert_provider "zenml"        "https://www.zenml.io/blog/rss.xml"                 "ZenML (MLOps Pipeline OSS)"
-          upsert_provider "vllm"         "https://blog.vllm.ai/feed.xml"                    "vLLM (UC Berkeley High-Throughput LLM Serving)"
-          upsert_provider "ragas"        "https://docs.ragas.io/blog/rss.xml"               "Ragas (RAG Evaluation Framework OSS)"
-          upsert_provider "continue_dev" "https://blog.continue.dev/rss.xml"               "Continue.dev (OSS AI Coding Assistant for VS Code/JetBrains)"
-          upsert_provider "aider"        "https://aider.chat/feed.xml"                     "Aider (AI Pair Programmer CLI with Git Integration)"
-          upsert_provider "dspy"         "https://dspy.ai/blog/rss.xml"                    "DSPy (Stanford — Programming not Prompting LLM Framework)"
-          upsert_provider "pydantic_ai"  "https://ai.pydantic.dev/blog/rss.xml"            "Pydantic AI (Type-Safe Production Agent Framework)"
-          upsert_provider "litellm"      "https://blog.litellm.ai/rss.xml"                "LiteLLM (100+ LLM Unified Proxy / OpenAI Compatible)"
-          upsert_provider "langgraph"    "https://blog.langchain.dev/rss/"                "LangGraph (Stateful Multi-Actor LLM Graph Framework)"
-
-          # RSS廃止/URL無効 (静的seedコンテンツを維持):
-          # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
-          # black_forest_labs, liquid_ai, recraft, krea, tencent, bytedance, inception_labs, world_labs, runware, sambanova
-          # decart, goodfire, prime_intellect, exa, pleias, imbue, thinking_machines, kyutai, contextual_ai, snorkel_ai, haize_labs, physical_intelligence, isomorphic_labs (seed only — RSS なし)
-          # xai, openai, google, microsoft, cursor, lovable, bolt_new (seed only — RSS 別途管理)
-          # sora (OpenAI 動画生成 / openai 親 RSS で代替), meshy (3D 生成 / 公式 RSS なし) — seed only
-          # 新規追加時は upsert_provider 行を追加する
-
-          echo "success_count=${SUCCESS_COUNT}" >> $GITHUB_OUTPUT
-          echo "failed_providers=${FAILED_PROVIDERS}" >> $GITHUB_OUTPUT
-          echo "updated_at=${TODAY}" >> $GITHUB_OUTPUT
-          TOTAL_PROVIDERS=14  # RSS有効プロバイダー数
-          echo "📊 更新結果: ${SUCCESS_COUNT}/${TOTAL_PROVIDERS} 成功"
-          echo "total_providers=${TOTAL_PROVIDERS}" >> $GITHUB_OUTPUT
+          while IFS=$'\t' read -r provider rss_url provider_name; do
+            if [ "${{ steps.quota_check.outputs.anthropic_available }}" != "true" ]; then
+              printf "%s\tskipped\n" "$provider" >> "$RUNNER_TEMP/provider-outcomes.tsv"
+            else
+              upsert_provider "$provider" "$rss_url" "$provider_name"
+            fi
+          done < "$RUNNER_TEMP/providers.tsv"
+          python3 "$RUNNER_TEMP/provider-report.py" validate \
+            --manifest "$RUNNER_TEMP/providers.json" \
+            --journal "$RUNNER_TEMP/provider-outcomes.tsv" \
+            --evidence "$RUNNER_TEMP/provider-evidence.json"
 
       # ── Step 3: 日次レポートへ追記 + PR 経由コミット ─────────────────────
-      - name: Step 3 - Append to daily report and commit to main
+      - name: Step 3 - Validate and upsert run-keyed daily report
         env:
           GH_TOKEN: ${{ secrets.BYPASS_RULES }}
           BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
         run: |
           TODAY=$(TZ=Asia/Tokyo date +'%Y-%m-%d')
-          SUCCESS_COUNT="${{ steps.update.outputs.success_count }}"
-          FAILED="${{ steps.update.outputs.failed_providers }}"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -341,30 +260,11 @@ jobs:
           git checkout main
           git reset --hard origin/main
 
-          # 日次レポートが存在しない場合は作成
           REPORT="docs/daily-reports/${TODAY}.md"
-          if [ ! -f "$REPORT" ]; then
-            echo "# 自分株式会社 日次レポート ${TODAY}" > "$REPORT"
-          fi
-
-          {
-            echo ""
-            echo "## AI大学コンテンツ更新 (ai-university-update)"
-            echo ""
-            echo "- Google AI: RSS 取得・UPSERT"
-            echo "- OpenAI: RSS 取得・UPSERT"
-            echo "- Anthropic: RSS 取得・UPSERT"
-            echo "- Microsoft AI: RSS 取得・UPSERT"
-            echo "- Meta AI: RSS 取得・UPSERT"
-            echo "- X/xAI: RSS 取得・UPSERT"
-            echo "- DeepSeek: RSS 取得・UPSERT"
-            echo "- Mistral AI: RSS 取得・UPSERT"
-            echo "- Perplexity AI: RSS 取得・UPSERT"
-            echo "- 更新成功: ${SUCCESS_COUNT}/9"
-            if [ -n "$FAILED" ]; then
-              echo "- 失敗プロバイダー:${FAILED}"
-            fi
-          } >> "$REPORT"
+          python3 "$RUNNER_TEMP/provider-report.py" report \
+            --manifest "$RUNNER_TEMP/providers.json" \
+            --journal "$RUNNER_TEMP/provider-outcomes.tsv" \
+            --report "$REPORT"
 
           git add "$REPORT"
           if git diff --cached --quiet; then
@@ -381,11 +281,12 @@ jobs:
       - name: Step 4 - Record to schedule_task_runs
         if: always()
         run: |
-          SUCCESS_COUNT="${{ steps.update.outputs.success_count }}"
-          FAILED="${{ steps.update.outputs.failed_providers }}"
-          STATUS="success"
-          [ "$SUCCESS_COUNT" -lt 7 ] 2>/dev/null && STATUS="partial"
-          SUMMARY="ai-university-update: ${SUCCESS_COUNT}/9 プロバイダー更新完了 failed=${FAILED}"
+          STATUS="${{ steps.update.outputs.status }}"
+          SUMMARY="${{ steps.update.outputs.summary }}"
+          if [ -z "$SUMMARY" ]; then
+            STATUS="failed"
+            SUMMARY="ai-university-update: accounting incomplete; no valid provider total"
+          fi
           curl -s -o /dev/null \
             -X POST \
             -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -396,39 +297,24 @@ jobs:
             "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/schedule_task_runs" \
             --max-time 10 || true
 
+      - name: Publish provider accounting evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ai-university-provider-accounting
+          path: |
+            ${{ runner.temp }}/providers.json
+            ${{ runner.temp }}/provider-outcomes.tsv
+            ${{ runner.temp }}/provider-evidence.json*
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Job Summary
         if: always()
         run: |
-          TODAY=$(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')
-          SUCCESS_COUNT="${{ steps.update.outputs.success_count }}"
-          FAILED="${{ steps.update.outputs.failed_providers }}"
-          {
-            echo "## AI大学コンテンツ更新 ${TODAY}"
-            echo ""
-            echo "| プロバイダー | ステータス |"
-            echo "| --- | --- |"
-            echo "| Google AI | RSS取得・UPSERT |"
-            echo "| OpenAI | RSS取得・UPSERT |"
-            echo "| Anthropic | RSS取得・UPSERT |"
-            echo "| Microsoft AI | RSS取得・UPSERT |"
-            echo "| Meta AI | RSS取得・UPSERT |"
-            echo "| X/xAI | RSS取得・UPSERT |"
-            echo "| DeepSeek | RSS取得・UPSERT |"
-            echo "| Mistral AI | RSS取得・UPSERT |"
-            echo "| Perplexity AI | RSS取得・UPSERT |"
-            echo "| Groq | RSS取得・UPSERT |"
-            echo "| Cohere | RSS取得・UPSERT |"
-            echo "| Amazon Bedrock | RSS取得・UPSERT |"
-            echo "| Stability AI | RSS取得・UPSERT |"
-            echo "| Hugging Face | RSS取得・UPSERT |"
-            echo "| NVIDIA | RSS取得・UPSERT |"
-            echo "| IBM watsonx | RSS取得・UPSERT |"
-            echo "| Sakana AI | RSS取得・UPSERT |"
-            echo "| Baidu ERNIE | RSS取得・UPSERT |"
-            echo ""
-            TOTAL="${{ steps.update.outputs.total_providers }}"
-          echo "**更新成功**: ${SUCCESS_COUNT}/${TOTAL}"
-            if [ -n "$FAILED" ]; then
-              echo "**失敗**:${FAILED}"
-            fi
-          } >> $GITHUB_STEP_SUMMARY
+          if [ -f "$RUNNER_TEMP/provider-evidence.json.md" ]; then
+            cat "$RUNNER_TEMP/provider-evidence.json.md" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Provider accounting incomplete; success ratio unavailable." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
