@@ -47,7 +47,7 @@ class _GitIgnoreExamplesCardState extends State<GitIgnoreExamplesCard> {
           ),
           const SizedBox(height: 10),
           const Text(
-            '無視するファイル名を指定しても、すでにGitの管理対象に入ったファイルは自動では外れません。架空の4例を切り替えて確認できます。',
+            '.gitignore: .env\n無視するファイル名を指定しても、すでにGitの管理対象に入ったファイルは自動では外れません。架空の4例を切り替えて確認できます。',
             style: TextStyle(color: Color(0xFFCBD5E1), height: 1.6),
           ),
           const SizedBox(height: 12),
