@@ -48,3 +48,11 @@ model9/9とformat/lint成功。実ブラウザ・GPU・転送・画像監査はC
 初回CIでr186にmin配布ファイルがないことを検出した。公式tarballの実ファイル一覧とintegrityを再確認し、固定esbuild-wasm0.28.2（公式npm/MIT、build専用）でcore/rendererのESMをminifyする。LICENSEを保持し同一originへ出力。最初の失敗は未実行の描画試験の代わりに成功扱いしない。
 
 コード点検で、入力ごとにRAF基準時刻をリセットすると連打がsimulationを遅らせる問題を発見し修正。動作中のRAFは維持し、再開時だけ基準をリセットする。UIから攻撃を繰り返しても24秒の無防備敗北が進む回帰を追加。勝利後の短い動き/カメラ復帰はsimulationとは別の最大1.2秒で、操作や再挑戦を妨げない。resize時の停止画面再描画も追加。ソフトウェアWebGLの勝利シナリオは375x667/軽量設定で実施し、標準描画/両DPRは別のcomponentと敗北/viewportケースで測定する。実機性能と混同しない。
+
+実画像監査で人物の顔/服/道具/甲板と必殺の寄り・軌跡を確認した。訓練人形の顔も読める向きに調整。最初の標準高解像度ソフトウェアWebGL勝利試験は240秒timeout（残HP20/60、守りは成功）で未完了だった。描画は最大約30fpsへ制限し、simulation/inputの更新は独立して維持する。
+
+実Threeのdispose後はgeometry0だが内部textureカウンター1を検出した。公式FAQ
+https://threejs.org/manual/pages/how-to-dispose-of-objects.html
+にある内部cacheと区別し、カウンターを書き換えたりtexture0と捏造しない。全material/到達可能texture/geometry/rendererをdisposeし、実context
+loss後のisContextLost=true、20回の生counter一定、canvas/observer/global
+listener増加なしを測る。文言は集落の保存保護と再挑戦可否を示す。

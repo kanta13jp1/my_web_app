@@ -19,8 +19,12 @@ let latestMessage = "",
   lastCue = "",
   lastPaint = 0,
   short = false,
-  endingUntil = 0;
+  endingUntil = 0,
+  lastRender = -Infinity;
 $("quiet").checked = motion.matches;
+function text(id, value) {
+  if ($(id).textContent !== value) $(id).textContent = value;
+}
 function announce(text) {
   if (text !== lastCue) {
     $("cue").textContent = text;
@@ -46,9 +50,9 @@ function controls() {
 function update(events = []) {
   if (!state) return;
   document.body.dataset.status = state.status;
-  $("hp").textContent = `${state.playerHp} / ${RULES.playerHp}`;
-  $("enemy-hp").textContent = `${state.targetHp} / ${RULES.targetHp}`;
-  $("charge").textContent = `${state.charge} / 100`;
+  text("hp", `${state.playerHp} / ${RULES.playerHp}`);
+  text("enemy-hp", `${state.targetHp} / ${RULES.targetHp}`);
+  text("charge", `${state.charge} / 100`);
   $("cue").dataset.warning = String(
     state.telegraphing && state.status === "running",
   );
@@ -98,6 +102,7 @@ function diagnostics() {
 function draw(events = [], now = performance.now()) {
   try {
     scene?.render(state, events, now);
+    lastRender = now;
     if (now - lastPaint > 300) {
       lastPaint = now;
       diagnostics();
@@ -125,7 +130,9 @@ function tick(now) {
   } else if (!["won", "lost"].includes(state.status) || now >= endingUntil) {
     return;
   }
-  draw(events, now);
+  if (events.length || now - lastRender >= 33 || state.status !== "running") {
+    draw(events, now);
+  }
   if (scene && (state.status === "running" || now < endingUntil)) {
     frame = requestAnimationFrame(tick);
   } else diagnostics();
@@ -144,10 +151,9 @@ function halt() {
 function release(keepAudio = false) {
   halt();
   if (scene) {
-    const m = scene.dispose();
+    scene.dispose();
     scene = null;
-    $("cleanup").textContent =
-      `描画を解放しました：geometry ${m.geometries} / texture ${m.textures}`;
+    $("cleanup").textContent = "描画を終了しました。集落の保存はそのままです。";
   }
   if (audio && !keepAudio) {
     const closing = audio;

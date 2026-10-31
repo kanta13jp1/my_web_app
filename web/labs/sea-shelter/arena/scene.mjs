@@ -24,6 +24,15 @@ export function createTrainingScene(
     renderer.outputColorSpace = T.SRGBColorSpace;
     renderer.toneMapping = T.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.3;
+    renderer.debug.onShaderError = () =>
+      queueMicrotask(() => {
+        if (!disposed) {
+          onFailure(
+            "この端末では3Dの光を描画できません。軽量描画で再試行するか、集落へ戻れます。",
+          );
+        }
+      });
+    const context = renderer.getContext();
     const scene = new T.Scene();
     scene.fog = new T.Fog(0x183e50, 11, 35);
     const camera = new T.PerspectiveCamera(37, 1, .1, 65);
@@ -40,7 +49,7 @@ export function createTrainingScene(
     hero.root.position.x = -1.45;
     hero.root.rotation.y = Math.PI / 2;
     dummy.root.position.x = 1.55;
-    dummy.root.rotation.y = -Math.PI / 2;
+    dummy.root.rotation.y = -.55;
     scene.add(hero.root, dummy.root, createDeck(palette));
     const waterGeometry = new T.PlaneGeometry(80, 80, 26, 26);
     waterGeometry.rotateX(-Math.PI / 2);
@@ -278,6 +287,13 @@ export function createTrainingScene(
         }
       });
       geometries.forEach((g) => g.dispose());
+      const textures = new Set();
+      for (const material of materials) {
+        for (const value of Object.values(material)) {
+          if (value?.isTexture) textures.add(value);
+        }
+      }
+      textures.forEach((texture) => texture.dispose());
       materials.forEach((m) => m.dispose());
       renderer.renderLists.dispose();
       renderer.dispose();
@@ -296,7 +312,7 @@ export function createTrainingScene(
         quiet = value;
       },
       diagnostics() {
-        return { ...observed, disposed };
+        return { ...observed, disposed, contextLost: context.isContextLost() };
       },
     };
   } catch (error) {

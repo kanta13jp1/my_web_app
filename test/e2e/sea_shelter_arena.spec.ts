@@ -235,9 +235,7 @@ test(
     });
     await expect(page.locator("#cue")).toContainText("接続が切れました");
     await expect(page.locator("#scene canvas")).toHaveCount(0);
-    await expect(page.locator("#cleanup")).toContainText(
-      "geometry 0 / texture 0",
-    );
+    await expect(page.locator("#cleanup")).toContainText("描画を終了しました");
     expect(await snapshot(page)).toBe(saved);
     await page.screenshot({
       path: info.outputPath("arena-context-recovery.png"),

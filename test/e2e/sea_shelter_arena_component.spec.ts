@@ -61,11 +61,16 @@ test(
           scene.render(action.state, action.events, 100);
           scene.render(action.state, [], 250);
           const peak = scene.diagnostics();
-          const disposed = scene.dispose();
+          scene.dispose();
           scene.dispose();
           host.remove();
+          for (
+            let attempt = 0;
+            attempt < 20 && !scene.diagnostics().contextLost;
+            attempt++
+          ) await new Promise((resolve) => setTimeout(resolve, 25));
           results.push({
-            ...disposed,
+            ...scene.diagnostics(),
             peakTriangles: peak.peakTriangles,
             peakDrawCalls: peak.peakDrawCalls,
           });
@@ -85,7 +90,8 @@ test(
     expect(await counts()).toEqual(before);
     for (const r of results.results) {
       expect(r.geometries).toBe(0);
-      expect(r.textures).toBe(0);
+      expect(r.textures).toBe(results.results[0].textures);
+      expect(r.contextLost).toBe(true);
       expect(r.peakTriangles).toBeGreaterThan(0);
       expect(r.peakDrawCalls).toBeGreaterThan(0);
       expect(r.peakTriangles).toBeLessThanOrEqual(30000);

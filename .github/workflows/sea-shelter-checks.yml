@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [main]
-    paths: ['scripts/build_sea_shelter_arena.mjs', 'package.json', 'package-lock.json', 'test/e2e/sea_shelter_arena.spec.ts', 'test/e2e/sea_shelter_arena_component.spec.ts', 'web/labs/sea-shelter/**', 'test/e2e/sea_shelter.spec.ts', 'test/e2e/sea_shelter_farm.spec.ts', 'test/e2e/sea_shelter_viewport.spec.ts', 'test/e2e/sea_shelter_storage.spec.ts', 'test/fixtures/sea_shelter_v2269/**', '.github/workflows/sea-shelter-checks.yml', 'lib/pages/sea_shelter_page.dart', 'lib/ui/features/sea_shelter/**', 'test/e2e/sea_shelter_route.spec.ts', 'lib/data/home_tool_catalog.dart', 'lib/main.dart', 'test/widgets/sea_shelter_page_test.dart', 'test/fixtures/sea_shelter_lifecycle_app.dart', 'test/e2e/sea_shelter_lifecycle.spec.ts']
+    paths: ['test/e2e/sea_shelter_arena_host.spec.ts', 'scripts/build_sea_shelter_arena.mjs', 'package.json', 'package-lock.json', 'test/e2e/sea_shelter_arena.spec.ts', 'test/e2e/sea_shelter_arena_component.spec.ts', 'web/labs/sea-shelter/**', 'test/e2e/sea_shelter.spec.ts', 'test/e2e/sea_shelter_farm.spec.ts', 'test/e2e/sea_shelter_viewport.spec.ts', 'test/e2e/sea_shelter_storage.spec.ts', 'test/fixtures/sea_shelter_v2269/**', '.github/workflows/sea-shelter-checks.yml', 'lib/pages/sea_shelter_page.dart', 'lib/ui/features/sea_shelter/**', 'test/e2e/sea_shelter_route.spec.ts', 'lib/data/home_tool_catalog.dart', 'lib/main.dart', 'test/widgets/sea_shelter_page_test.dart', 'test/fixtures/sea_shelter_lifecycle_app.dart', 'test/e2e/sea_shelter_lifecycle.spec.ts']
 permissions: {}
 concurrency:
   group: sea-shelter-${{ github.ref }}
@@ -73,7 +73,7 @@ jobs:
           npm ci --ignore-scripts
           npx playwright install --with-deps chromium
       - name: Validate browser test syntax
-        run: npx playwright test test/e2e/sea_shelter_route.spec.ts test/e2e/sea_shelter_lifecycle.spec.ts --list
+        run: npx playwright test test/e2e/sea_shelter_route.spec.ts test/e2e/sea_shelter_lifecycle.spec.ts test/e2e/sea_shelter_arena_host.spec.ts --list
       - name: Integrated desktop and mobile route checks
         shell: bash
         run: |
@@ -99,7 +99,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
             sleep 1
           done
-          E2E_BASE_URL=http://127.0.0.1:7358 PLAYWRIGHT_TEST_OUTPUT_DIR=lifecycle-results PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/lifecycle-results.json npx playwright test test/e2e/sea_shelter_lifecycle.spec.ts --workers=1 --retries=0
+          E2E_BASE_URL=http://127.0.0.1:7358 PLAYWRIGHT_TEST_OUTPUT_DIR=lifecycle-results PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/lifecycle-results.json npx playwright test test/e2e/sea_shelter_lifecycle.spec.ts test/e2e/sea_shelter_arena_host.spec.ts --workers=1 --retries=0
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
