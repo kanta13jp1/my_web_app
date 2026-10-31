@@ -1,5 +1,5 @@
 // Original procedural models. No image planes, purchased meshes or game assets.
-import * as T from "./vendor/three.module.min.js";
+import * as T from "./vendor/three.module.js";
 
 // Bake static pieces by material within each articulated joint, keeping draw calls low.
 function batch(group) {

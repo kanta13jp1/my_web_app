@@ -1,6 +1,8 @@
 // Build-only dependency delivery. No CDN, runtime package resolution or network.
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import esbuild from "esbuild-wasm";
+if (esbuild.version !== "0.28.2") throw Error("Unexpected build minifier");
 const root = resolve(import.meta.dirname, "..");
 const pkg = JSON.parse(
   await readFile(resolve(root, "node_modules/three/package.json"), "utf8"),
@@ -14,12 +16,18 @@ const output = resolve(
   "labs/sea-shelter/arena/vendor",
 );
 await mkdir(output, { recursive: true });
-const files = ["three.module.min.js", "three.core.min.js"];
+const files = ["three.module.js", "three.core.js"];
 let total = 0;
 for (const file of files) {
   const source = resolve(root, "node_modules/three/build", file);
-  total += (await readFile(source)).length;
-  await copyFile(source, resolve(output, file));
+  const { code } = await esbuild.transform(await readFile(source, "utf8"), {
+    minify: true,
+    format: "esm",
+    target: "es2022",
+    legalComments: "inline",
+  });
+  total += Buffer.byteLength(code);
+  await writeFile(resolve(output, file), code);
 }
 await copyFile(
   resolve(root, "node_modules/three/LICENSE"),

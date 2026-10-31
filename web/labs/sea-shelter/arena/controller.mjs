@@ -305,6 +305,7 @@ on(window, "pagehide", (event) => {
 on(window, "pageshow", (event) => {
   if (event.persisted) {
     state = null;
+    document.body.dataset.status = "idle";
     $("intro").hidden = false;
     $("start").disabled = false;
     $("retry").hidden = true;

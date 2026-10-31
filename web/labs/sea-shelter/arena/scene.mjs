@@ -1,4 +1,4 @@
-import * as T from "./vendor/three.module.min.js";
+import * as T from "./vendor/three.module.js";
 import {
   createDeck,
   createDummy,

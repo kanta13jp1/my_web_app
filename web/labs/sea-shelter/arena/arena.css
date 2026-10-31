@@ -280,3 +280,9 @@ body[data-status="lost"] #scene {
     scroll-behavior: auto !important;
   }
 }
+
+#scene:has(#intro:not([hidden])) {
+  height: auto;
+  min-height: 320px;
+  padding-bottom: 16px;
+}
