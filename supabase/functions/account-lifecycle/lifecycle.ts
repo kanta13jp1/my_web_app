@@ -168,3 +168,34 @@ export function safeErrorCode(error: unknown): string {
   if (message.includes("auth")) return "auth_deletion_failed";
   return "account_deletion_failed";
 }
+
+
+// Missing or malformed exact-count metadata must never mean no blockers.
+export function importedHistoryBlockerCount(count: unknown): number {
+  if (typeof count !== "number" || !Number.isSafeInteger(count) || count < 0) {
+    throw new Error("imported_history_count_unavailable");
+  }
+  return count;
+}
+
+
+// SQL's requested limit does not guarantee the REST server's returned page size.
+export function storageInventoryExhausted(returnedRows: number): boolean {
+  return returnedRows === 0;
+}
+
+
+export function validatedStorageInventory(
+  data: unknown,
+): Array<{ bucket_id: string; object_name: string }> {
+  if (
+    !Array.isArray(data) || data.some((row) =>
+      typeof row !== "object" || row === null ||
+      typeof row.bucket_id !== "string" || row.bucket_id.trim() === "" ||
+      typeof row.object_name !== "string" || row.object_name.trim() === ""
+    )
+  ) {
+    throw new Error("storage_inventory_invalid");
+  }
+  return data;
+}
