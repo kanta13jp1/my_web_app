@@ -9,6 +9,50 @@ import {
   sha256,
   verifyArena,
 } from "./verify_sea_shelter_arena.mjs";
+test("default preview is ignored and preserves source plus original ignore bytes", async () => {
+  const sourceStatus = () =>
+    execFileSync("git", [
+      "status",
+      "--porcelain",
+      "--untracked-files=all",
+      "--",
+      "web/labs/sea-shelter",
+      ".gitignore",
+    ]).toString();
+  const before = sourceStatus();
+  const ignore = await readFile(".gitignore");
+  assert.throws(
+    () =>
+      execFileSync(process.execPath, [
+        "scripts/build_sea_shelter_arena.mjs",
+        "web",
+      ], { stdio: "pipe" }),
+    /never the source web directory/,
+  );
+  execFileSync(process.execPath, ["scripts/build_sea_shelter_arena.mjs"]);
+  const preview = "build/sea-shelter-preview";
+  await verifyArena(preview);
+  for (
+    const file of ["arena/vendor/three.module.js", "arena/engine-build.json"]
+  ) {
+    execFileSync("git", [
+      "check-ignore",
+      "--quiet",
+      "--",
+      `${preview}/labs/sea-shelter/${file}`,
+    ]);
+  }
+  for (
+    const file of ["index.html", "app.mjs", "assets/residents-original-v2.png"]
+  ) {
+    assert.deepEqual(
+      await readFile(`${preview}/labs/sea-shelter/${file}`),
+      await readFile(`web/labs/sea-shelter/${file}`),
+    );
+  }
+  assert.deepEqual(await readFile(".gitignore"), ignore);
+  assert.equal(sourceStatus(), before);
+});
 test("post-build packaging is reproducible and rejects missing, corrupt and mismatched assets", async () => {
   const temp = await mkdtemp(resolve(tmpdir(), "arena-packaging-"));
   try {

@@ -30,7 +30,7 @@ jobs:
       - name: Browser checks against candidate only
         shell: bash
         run: |
-          python3 web/labs/sea-shelter/serve.py &
+          python3 web/labs/sea-shelter/serve.py --directory build/sea-shelter-preview &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
           for attempt in $(seq 1 20); do

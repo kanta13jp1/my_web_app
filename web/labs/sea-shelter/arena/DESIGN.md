@@ -24,11 +24,9 @@ lossは理由と再読込/再挑戦/集落への戻り口を表示。低い高�
 
 公式npm
 three0.186.0を正確に固定し、lockの公式integrityで検証する。coreとrendererは同版。`npm ci --ignore-scripts`後に`node scripts/build_sea_shelter_arena.mjs`を実行し、vendorの同一origin
-module2個とMIT
-LICENSEを生成する。生成物をGitへ重複コミットしない。訓練開始操作までengineを読み込まず、集落の初期loadにも追加しない。
+module2個とMIT LICENSEを生成する。既定の出力は既存ignore対象の`build/sea-shelter-preview`で、ゲームのソースをその中へコピーしてから生成する。`.gitignore`は変更前blobをそのまま保持し、source webへの生成は拒否する。生成物をGitへ重複コミットしない。訓練開始操作までengineを読み込まず、集落の初期loadにも追加しない。
 
-独立Webビルドでは上記生成をFlutter
-buildの前に実行する。既にbuild済みなら同scriptへ`build/web`を渡して出力できる。将来の限定公開ではこの生成とvendor/ライセンス存在・版・容量guardをdeploy前に組み込む必要がある。本PRで自動配信を有効にせず、公開workflowや権限を変更しない。
+単独プレビューは`python web/labs/sea-shelter/serve.py --directory build/sea-shelter-preview`で開く。Flutter経路ではbuild後に同scriptへ`build/web`等の成果物ディレクトリを渡す。CI・汎用cloud・通常本番workflowに共通actionを接続し、vendor/ライセンス・版・SHA256・容量の検証を成果物公開前に行う。限定公開時はこのactionを含む新しい固定base/allowlist運用planが必要。本PRは自動配信・権限を変更せず、配信を実行しない。詳細は`BUILD.md`。
 
 目標：初期追加3D転送2MB未満、三角形3万以下、drawcalls60以下、DPR最大1.5、粒子最大128。現時点は目標で、実測はCI証跡へ追記する。実機iPhone
 Safariの性能は保証しない。
@@ -40,8 +38,7 @@ contextloss→再挑戦/戻る。別component
 contractで実Three20生成破棄とGPUgeometry/texture/observer/canvas/global
 listenerを計測。集落の既存20model/32browser/Flutter導線とlifecycleも回帰確認する。
 
-現在：軽量local
-model9/9とformat/lint成功。実ブラウザ・GPU・転送・画像監査はCI待ち。Designプラグイン/実機Safari/ATは未実施。
+既検証の基準head15b1da0では、モデル29件・パッケージ再生成/破損検出・ブラウザ40件・Flutter導線4件・実ホスト4件と通常CI/表示回帰/cloud全体検証が成功。実画像も確認した。プレビュー生成先とmain同期の今回の変更は新headで再検証する。Designプラグイン/実機Safari/ATは未実施。
 
 公式出典：[WebGLRenderer](https://threejs.org/docs/pages/WebGLRenderer.html)、[cleanup](https://threejs.org/manual/pages/cleanup.html)、[固定版registry](https://registry.npmjs.org/three/0.186.0)。WebGLRendererはWebGL2を必要とする。Unity6.3のiOS対応を否定する判断ではなく、今回の軽い独立Web画面にThreeを選択した。
 
@@ -68,4 +65,4 @@ skip/flaky/unexpected、193.4秒。Flutter統合も成功。3D勝利はsimulatio
 HTML/CSS/JSとengine、既存Flutter/集落を除く）。engine2ファイル765772bytes。最大三角形10692、drawcalls43、DPR1〜1.5、粒子24/64。各project20回でgeometry0、内部textureカウンター1一定、全contextLost=true、observer/canvas0、global
 listeners[2,2]→[2,2]。これはソフトウェアChromiumの機能/資源測定であり実機fpsではない。勝利I/Oは375x667/軽量設定、標準描画は別ケースと交互品質componentで確認。
 
-最後の44px/通常縦viewport下端・命中前pause/演出時刻束縛の修正は次headで再検証する。実機Safari/AT、正式AIレビューと公開用ビルド統合・merge/deployは未実施。
+その後の44px/通常縦viewport下端・命中前pause/演出時刻束縛・フォーカス限定キー・終了描画間隔と通常ビルド統合はhead15b1da0で再検証済み。上記d1193de8の値は過去候補の記録で、各headの正確な結果はPRのCI証跡を参照する。実機Safari/AT、正式AIレビュー、限定公開plan・merge/deployは未実施。

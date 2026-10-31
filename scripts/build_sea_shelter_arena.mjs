@@ -1,6 +1,6 @@
 // Build-only dependency delivery. No CDN, runtime package resolution or network.
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, resolve, sep } from "node:path";
 import esbuild from "esbuild-wasm";
 import {
   engineFiles,
@@ -15,11 +15,20 @@ const pkg = JSON.parse(
 if (pkg.version !== "0.186.0" || pkg.license !== "MIT") {
   throw Error("Unexpected Three.js package");
 }
-const output = resolve(
-  root,
-  process.argv[2] ?? "web",
-  "labs/sea-shelter/arena/vendor",
-);
+const webRoot = resolve(root, process.argv[2] ?? "build/sea-shelter-preview");
+const sourceRoot = resolve(root, "web");
+if (webRoot === sourceRoot || webRoot.startsWith(sourceRoot + sep)) {
+  throw Error("Generate into a build output, never the source web directory");
+}
+if (!process.argv[2]) {
+  // Preview only: keep source and its existing ignore rules byte-for-byte intact.
+  await cp(
+    resolve(root, "web/labs/sea-shelter"),
+    resolve(webRoot, "labs/sea-shelter"),
+    { recursive: true },
+  );
+}
+const output = resolve(webRoot, "labs/sea-shelter/arena/vendor");
 await mkdir(output, { recursive: true });
 const files = ["three.module.js", "three.core.js"];
 let total = 0;
@@ -49,5 +58,5 @@ await writeFile(
     files: assets,
   }),
 );
-await verifyArena(resolve(root, process.argv[2] ?? "web"));
+await verifyArena(webRoot);
 console.log(`Three.js ${pkg.version}: ${total} bytes, same-origin ${output}`);
