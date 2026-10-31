@@ -54,6 +54,7 @@ button {
   cursor: pointer;
 }
 button:focus-visible,
+.actions:focus-visible,
 a:focus-visible,
 summary:focus-visible,
 input:focus-visible {
