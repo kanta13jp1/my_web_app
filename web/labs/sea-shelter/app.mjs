@@ -17,6 +17,21 @@ import {
   SAVE_KEY,
 } from "./model.mjs";
 const $ = (id) => document.getElementById(id);
+let residentScene = null;
+function residentCall(method, ...args) {
+  if (!residentScene) return;
+  try {
+    residentScene[method](...args);
+  } catch {
+    try {
+      residentScene.dispose();
+    } catch { /* Keep the playable core available. */ }
+    residentScene = null;
+    $("resident-art-note").hidden = false;
+    $("resident-art-note").textContent =
+      "住民の演出を表示できません。集落の操作は続けられます。";
+  }
+}
 let state = initialState(),
   selected = null,
   selectedGarden = null,
@@ -100,6 +115,7 @@ function dispatch(action) {
   if (result.changed && saveWarning.startsWith("保存できません")) {
     $("status").textContent += ` ${saveWarning}`;
   }
+  if (result.changed) residentCall("react", action);
 }
 function render() {
   for (const key of ["wood", "metal"]) {
@@ -175,6 +191,7 @@ function render() {
     button.disabled = done || !q.ready(state);
     button.textContent = done ? "報告済み ✓" : `報告する　EXP +${q.reward}`;
   });
+  residentCall("update", state);
 }
 for (let y = 0; y < 5; y++) {
   for (let x = 0; x < 5; x++) {
@@ -413,6 +430,7 @@ function setView(view) {
   for (const button of document.querySelectorAll(".tabs button")) {
     button.setAttribute("aria-pressed", String(button.dataset.view === view));
   }
+  residentCall("refreshVisibility");
 }
 for (const button of document.querySelectorAll(".tabs button")) {
   button.addEventListener("click", () => setView(button.dataset.view));
@@ -467,3 +485,40 @@ new ResizeObserver(() => {
   }
   requestAnimationFrame(fitBoard);
 }).observe(document.querySelector(".tabs"));
+
+// Optional decoration boots after the playable core. Failed art/module loading
+// cannot prevent resource actions, saving, keyboard controls or navigation.
+let residentBoot = 0;
+const boot = ++residentBoot;
+import("./residents.mjs").then(({ createResidentScene }) => {
+  if (boot !== residentBoot) return;
+  residentScene = createResidentScene({
+    main: document.querySelector("main"),
+    board: $("board"),
+    play: document.querySelector(".play"),
+    roster: $("crew-roster"),
+    feedback: $("crew-feedback"),
+    onTalk: (line) => {
+      $("status").textContent = line;
+    },
+    onFlavor: (flavor) => {
+      if (!selected) {
+        $("placement-label").textContent = flavor
+          ? `${flavor.crew.name}「${flavor.line}」`
+          : "菜園を選ぶか、建設タブで施設を選びましょう";
+      }
+    },
+  });
+  residentCall("update", state);
+}).catch(() => {
+  $("resident-art-note").hidden = false;
+  $("resident-art-note").textContent =
+    "住民の演出を読み込めません。集落の操作は続けられます。";
+});
+globalThis.addEventListener("pagehide", (event) => {
+  if (!event.persisted) {
+    residentBoot++;
+    residentScene?.dispose();
+    residentScene = null;
+  }
+});
