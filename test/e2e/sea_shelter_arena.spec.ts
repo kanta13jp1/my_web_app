@@ -110,7 +110,7 @@ test(
       contentType: "application/json",
     });
     await info.attach("render-budget", {
-      body: await page.locator("#metrics").innerText(),
+      body: (await page.locator("#metrics").textContent()) ?? "",
       contentType: "text/plain",
     });
     await page.screenshot({ path: info.outputPath("arena-victory.png") });
@@ -139,6 +139,10 @@ test(
     await page.locator("#attack").focus();
     await page.keyboard.press("a");
     await page.keyboard.press("a");
+    await page.locator("#pause").click();
+    await page.clock.runFor(20000);
+    await expect(page.locator("#enemy-hp")).toHaveText("60 / 60");
+    await page.locator("#pause").click();
     await page.clock.runFor(250);
     await expect(page.locator("#enemy-hp")).toHaveText("59 / 60");
     await page.locator("#pause").click();
@@ -192,6 +196,10 @@ test(
         expect(box).not.toBeNull();
         expect(box!.x).toBeGreaterThanOrEqual(0);
         expect(box!.x + box!.width).toBeLessThanOrEqual(size.width + 1);
+        if (size.height >= 568) {
+          expect(box!.y + box!.height).toBeLessThanOrEqual(size.height + 1);
+        }
+        expect(box!.height).toBeGreaterThanOrEqual(44);
       }
     }
     await page.setViewportSize({ width: 320, height: 568 });

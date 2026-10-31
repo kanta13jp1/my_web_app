@@ -56,3 +56,16 @@ https://threejs.org/manual/pages/how-to-dispose-of-objects.html
 にある内部cacheと区別し、カウンターを書き換えたりtexture0と捏造しない。全material/到達可能texture/geometry/rendererをdisposeし、実context
 loss後のisContextLost=true、20回の生counter一定、canvas/observer/global
 listener増加なしを測る。文言は集落の保存保護と再挑戦可否を示す。
+
+一時停止中の攻撃予備動作も飛ばないよう、戦闘演出のageをsimulation時刻へ束縛。勝敗後の1.2秒だけ独立したwall-clockで収束させる。命中前にpauseし、長時間待っても敵HPが変わらず、再開して一回だけ命中する実I/Oを追加。主要操作の44px到達領域と通常縦viewportの下端も検証する。
+
+## 実測済み候補 d1193de8
+
+CI41174311416：Node29件（既存20＋訓練9）/ブラウザ40件すべて成功、0
+skip/flaky/unexpected、193.4秒。Flutter統合も成功。3D勝利はsimulation49秒・guard10回・必殺3回・HP5/5、旧保存不変。新規の敗北・再開・欠落素材復旧・実contextloss・再試行と旧ゲーム回帰も通過。PC/スマホ/必殺/勝利/拡大文字の実画像を確認した。
+
+追加取得body807729bytes（arena
+HTML/CSS/JSとengine、既存Flutter/集落を除く）。engine2ファイル765772bytes。最大三角形10692、drawcalls43、DPR1〜1.5、粒子24/64。各project20回でgeometry0、内部textureカウンター1一定、全contextLost=true、observer/canvas0、global
+listeners[2,2]→[2,2]。これはソフトウェアChromiumの機能/資源測定であり実機fpsではない。勝利I/Oは375x667/軽量設定、標準描画は別ケースと交互品質componentで確認。
+
+最後の44px/通常縦viewport下端・命中前pause/演出時刻束縛の修正は次headで再検証する。実機Safari/AT、正式AIレビューと公開用ビルド統合・merge/deployは未実施。

@@ -14,7 +14,8 @@ export function createTrainingScene(
     let disposed = false,
       quiet = reducedMotion,
       lastEvent = 0,
-      lastSnapshot = null;
+      lastSnapshot = null,
+      endingWall = null;
     renderer = new T.WebGLRenderer({
       antialias: !low,
       alpha: true,
@@ -182,9 +183,14 @@ export function createTrainingScene(
           "enemy-tell": "tell",
           win: "win",
         }[e.type];
-        if (key) cueTimes[key] = now;
+        if (key) cueTimes[key] = e.time;
+        if (e.type === "win" || e.type === "lose") endingWall = now;
       }
-      const age = (key) => (now - cueTimes[key]) / 1000;
+      const cueClock = s.time +
+        (["won", "lost"].includes(s.status) && endingWall !== null
+          ? Math.min(1200, Math.max(0, now - endingWall))
+          : 0);
+      const age = (key) => (cueClock - cueTimes[key]) / 1000;
       const attack = Math.max(0, 1 - age("attack") / .55),
         special = Math.max(0, 1 - age("special") / 1.05),
         hit = Math.max(0, 1 - age("hit") / .3),

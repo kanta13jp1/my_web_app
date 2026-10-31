@@ -286,3 +286,12 @@ body[data-status="lost"] #scene {
   min-height: 320px;
   padding-bottom: 16px;
 }
+
+header a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+summary {
+  min-height: 44px;
+}
