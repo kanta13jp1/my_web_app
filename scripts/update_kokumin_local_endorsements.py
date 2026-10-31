@@ -34,6 +34,10 @@ MAX_ALLOWED_DROP_RATIO = 0.25
 _AS_OF_RE = re.compile(r"(\d{4})/(\d{2})/(\d{2})\s*現在")
 _ROW_RE = re.compile(r"^\s*(\d+)\s*([^\s\d]+)\s+")
 _CAREER_RE = re.compile(r"\s[男女]\s+\d+\s+(現|元|新)\s")
+# 選挙名の議会種別。「都道府県議会」= prefectural、「市区町村議会」= municipal。
+# lib/models/local_election_reality.dart の isLocalAssemblyElection と同じ判定基準。
+_ASSEMBLY_RE = re.compile(r"(都|道|府|県|市|区|町|村)議会議員(?:補欠|再)?選挙")
+_PREFECTURAL_ASSEMBLY_CHARS = {"都", "道", "府", "県"}
 
 
 def _normalize_line(value: str) -> str:
@@ -44,6 +48,21 @@ def _short_prefecture_name(value: str) -> str:
     if value == "北海道":
         return value
     return re.sub(r"[都府県]$", "", value)
+
+
+def _assembly_category(line: str) -> str:
+    """Classify a candidate row's assembly level from its election name.
+
+    Returns "prefectural" (都道府県議会), "municipal" (市区町村議会), or ""
+    when the row's election name does not match either pattern (e.g. a
+    format change upstream). An empty result is excluded from the assembly
+    breakdown but still counted in totalCount.
+    """
+
+    match = _ASSEMBLY_RE.search(line)
+    if match is None:
+        return ""
+    return "prefectural" if match.group(1) in _PREFECTURAL_ASSEMBLY_CHARS else "municipal"
 
 
 def parse_candidate_rows(page_texts: Iterable[str]) -> list[dict[str, str]]:
@@ -67,6 +86,7 @@ def parse_candidate_rows(page_texts: Iterable[str]) -> list[dict[str, str]]:
                 {
                     "prefecture": _short_prefecture_name(match.group(2)),
                     "decision": "endorsement" if "公認" in line else "recommendation",
+                    "assemblyCategory": _assembly_category(line),
                     "career": {
                         "現": "incumbent",
                         "元": "former",
@@ -101,15 +121,24 @@ def build_snapshot(pdf_bytes: bytes, page_texts: list[str], source_url: str) -> 
                 "incumbentCount": 0,
                 "newcomerCount": 0,
                 "formerCount": 0,
+                "prefecturalCount": 0,
+                "municipalCount": 0,
             },
         )
         entry["totalCount"] = int(entry["totalCount"]) + 1
         count_key = f"{row['career']}Count"
         entry[count_key] = int(entry[count_key]) + 1
+        if row["assemblyCategory"]:
+            assembly_key = f"{row['assemblyCategory']}Count"
+            entry[assembly_key] = int(entry[assembly_key]) + 1
 
     career_counts = {
         career: sum(1 for row in endorsements if row["career"] == career)
         for career in ("incumbent", "newcomer", "former")
+    }
+    assembly_counts = {
+        assembly: sum(1 for row in endorsements if row["assemblyCategory"] == assembly)
+        for assembly in ("prefectural", "municipal")
     }
     snapshot = {
         "schemaVersion": 1,
@@ -124,6 +153,8 @@ def build_snapshot(pdf_bytes: bytes, page_texts: list[str], source_url: str) -> 
             "newcomerCount": career_counts["newcomer"],
             "formerCount": career_counts["former"],
             "prefectureCount": len(by_prefecture),
+            "prefecturalCount": assembly_counts["prefectural"],
+            "municipalCount": assembly_counts["municipal"],
         },
         "recommendations": {"totalCount": len(recommendations)},
         "prefectures": list(by_prefecture.values()),
@@ -156,6 +187,13 @@ def validate_snapshot(snapshot: dict, previous: dict | None = None) -> None:
         )
     if int(summary.get("prefectureCount", 0)) != len(prefectures):
         raise ValueError("Prefecture summary does not match prefecture rows.")
+    assembly_total = int(summary.get("prefecturalCount", 0)) + int(
+        summary.get("municipalCount", 0)
+    )
+    if assembly_total > total:
+        raise ValueError(
+            f"Assembly breakdown {assembly_total} exceeds total {total}."
+        )
     for row in prefectures:
         row_total = sum(
             int(row.get(key, 0))
@@ -164,6 +202,13 @@ def validate_snapshot(snapshot: dict, previous: dict | None = None) -> None:
         if row_total != int(row.get("totalCount", 0)):
             raise ValueError(
                 f"Career breakdown does not match for {row.get('prefecture', '')}."
+            )
+        row_assembly_total = int(row.get("prefecturalCount", 0)) + int(
+            row.get("municipalCount", 0)
+        )
+        if row_assembly_total > row_total:
+            raise ValueError(
+                f"Assembly breakdown exceeds total for {row.get('prefecture', '')}."
             )
 
     if previous is not None:
@@ -275,6 +320,8 @@ def render_dart_fallback(snapshot: dict) -> str:
                 f"    incumbentCount: {int(row['incumbentCount'])},",
                 f"    newcomerCount: {int(row['newcomerCount'])},",
                 f"    formerCount: {int(row['formerCount'])},",
+                f"    prefecturalCount: {int(row['prefecturalCount'])},",
+                f"    municipalCount: {int(row['municipalCount'])},",
                 "  ),",
             ]
         )
@@ -292,6 +339,10 @@ def render_dart_fallback(snapshot: dict) -> str:
             f"{int(summary['formerCount'])};",
             "const int dpjOfficialEndorsementPrefectureCount = "
             f"{int(summary['prefectureCount'])};",
+            "const int dpjOfficialEndorsementPrefecturalTotal = "
+            f"{int(summary['prefecturalCount'])};",
+            "const int dpjOfficialEndorsementMunicipalTotal = "
+            f"{int(summary['municipalCount'])};",
             "",
             "OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(",
             "  String prefecture,",

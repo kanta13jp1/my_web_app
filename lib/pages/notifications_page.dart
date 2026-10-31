@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import '../widgets/browser_reminder_settings.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -173,6 +174,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       ),
       body: Column(
         children: [
+          const BrowserReminderSettingsTile(),
           // フィルターチップ
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

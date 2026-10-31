@@ -41,7 +41,10 @@ void main() {
         payments: const <String, double>{'ファミペイ': 10000},
       );
 
-      final card = service.build(workbook: workbook);
+      final card = service.build(
+        workbook: workbook,
+        confirmedAnnualRateAccountKeys: {debtId(workbook, 'ファミペイ')},
+      );
 
       expect(card, isNotNull);
       expect(card!.totalDebt, 100000);
@@ -112,7 +115,7 @@ void main() {
     });
 
     test(
-      'excludes debts with no prior record instead of treating them as zero',
+      'withholds whole-report delta when one prior stock is missing',
       () {
         // 🔑 前月に記録が無い負債を 0 円扱いすると「今月まるごと増えた」と
         // 出てしまい、実際は返済が進んでいるのに増加と報告する事故になる。
@@ -134,9 +137,9 @@ void main() {
           priorBalancesByAccountId: <String, double>{trackedId: 100000},
         );
 
-        // 記録のある1件だけで比較する = -10,000 (新規カードの30万は混ぜない)。
-        expect(card!.monthOverMonthDelta, -10000);
-        expect(card.isImproving, isTrue);
+        // 対象集合が一致しないため、一部の差分を全体の前月比にしない。
+        expect(card!.monthOverMonthDelta, isNull);
+        expect(card.isImproving, isNull);
         // 残債総額そのものは全件の合計であることは変わらない。
         expect(card.totalDebt, 390000);
         expect(card.debtCount, 2);
@@ -168,6 +171,8 @@ void main() {
       int? payoffMonths = 38,
       double? interest = 234567,
       double? delta = -50000,
+      DebtProgressProjectionStatus status =
+          DebtProgressProjectionStatus.estimated,
     }) =>
         DebtProgressCardData(
           totalDebt: 1234567,
@@ -175,6 +180,7 @@ void main() {
           payoffMonths: payoffMonths,
           estimatedInterest: interest,
           monthOverMonthDelta: delta,
+          projectionStatus: status,
           debtCount: 3,
         );
 
@@ -188,7 +194,7 @@ void main() {
       expect(text, contains('2026年7月の返済報告'));
       expect(text, contains('残債 1,234,567円'));
       expect(text, contains('前月比 -50,000円'));
-      expect(text, contains('今月の返済 45,000円'));
+      expect(text, contains('毎月の返済予定（登録額） 45,000円'));
       expect(text, contains('完済まで あと3年2ヶ月'));
       expect(text, contains('利息見込み 234,567円'));
       expect(text, contains('#借金返済'));
@@ -206,11 +212,15 @@ void main() {
     test('states plainly when the current payment never clears the debt', () {
       // 完済しない事実を黙って省くと報告として誠実でなくなる。
       final text = service.buildDraftText(
-        card(payoffMonths: null, interest: null),
+        card(
+          payoffMonths: null,
+          interest: null,
+          status: DebtProgressProjectionStatus.insufficientPayment,
+        ),
         month: DateTime(2026, 7, 1),
       );
 
-      expect(text, contains('元金が減りません'));
+      expect(text, contains('返済額の見直し'));
       expect(text, isNot(contains('利息見込み')));
     });
 
@@ -336,7 +346,7 @@ void main() {
         month: DateTime(2026, 7, 1),
       );
 
-      expect(alt, contains('完済しない見込み'));
+      expect(alt, contains('算出できません'));
     });
 
     test('attaches media only when a url is supplied', () {

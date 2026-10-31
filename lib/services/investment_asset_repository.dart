@@ -35,7 +35,7 @@ class SupabaseInvestmentAssetRepository implements InvestmentAssetRepository {
   static const int _assetPageSize = 1000;
   static const int _historyPageSize = 1000;
   static const String selectColumns =
-      'id,user_id,asset_type,ticker,quantity,buy_price_jpy,buy_date,'
+      'id,user_id,asset_type,ticker,display_name,quantity,buy_price_jpy,buy_date,'
       'current_price_jpy,last_priced_at,created_at,updated_at';
 
   final SupabaseClient _client;

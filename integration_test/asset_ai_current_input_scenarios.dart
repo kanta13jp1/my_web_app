@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrintSynchronously;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,6 +43,68 @@ class _MonthlyRepository extends SharedPreferencesAssetLiabilityRepository {
     required AssetLiabilityMonthlyState state,
   }) async {
     this.state = state;
+  }
+}
+
+class _CalendarCountingRepository extends _MonthlyRepository {
+  int saveCalls = 0;
+
+  @override
+  Future<void> saveMonth({
+    required DateTime month,
+    required AssetLiabilityMonthlyState state,
+  }) async {
+    saveCalls++;
+    await super.saveMonth(month: month, state: state);
+  }
+}
+
+class _DelayedMonthlyRepository extends _MonthlyRepository {
+  final restored = Completer<AssetLiabilityMonthlyState>();
+  int loads = 0;
+  int failures = 0;
+  bool failRestoration = false;
+  bool ownershipCurrent = true;
+
+  @override
+  bool isMonthVerifiedForAi(DateTime month) => ownershipCurrent;
+
+  @override
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
+    return <String, int>{'synthetic debt': 5};
+  }
+
+  @override
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
+    loads++;
+    final state = await restored.future;
+    if (failRestoration) {
+      failures++;
+      throw StateError('synthetic restore failed');
+    }
+    return state;
+  }
+}
+
+class _CountingHistory extends _EmptyHistory {
+  int reads = 0;
+  int saves = 0;
+
+  @override
+  Future<AssetManagementAiAnalysisHistoryEntry?> loadLatestForBaseDate({
+    required String reportBaseDate,
+  }) async {
+    reads++;
+    return null;
+  }
+
+  @override
+  Future<void> saveResult({
+    required AssetManagementAiSummaryResult result,
+    required AssetManagementInsightReport report,
+    required String requestFingerprint,
+  }) async {
+    saves++;
   }
 }
 
@@ -149,7 +212,10 @@ Future<void> _pumpUntil(WidgetTester tester, bool Function() ready) async {
   expect(ready(), isTrue, reason: 'Expected UI transition within ten seconds');
 }
 
-void main() {
+void main({
+  void Function(String direction, String phase, FlutterErrorDetails details)?
+      onCalendarOverflow,
+}) {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -160,8 +226,107 @@ void main() {
     );
   });
 
-  testWidgets('received income removes old AI prose before regeneration',
+  for (final mode in <int>[0, 1, 2]) {
+    final failRestoration = mode == 1;
+    final ownershipChanges = mode == 2;
+    testWidgets(
+      failRestoration
+          ? 'failed monthly restoration never generates or saves AI input'
+          : ownershipChanges
+              ? 'changed user never displays or saves an in-flight AI response'
+              : 'slow monthly restoration blocks automatic and manual AI input',
       (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1': 'full',
+        });
+        AssetSyncDirtyKeysStore.resetWriteLockForTest();
+        AssetRecurringTombstoneSyncService.resetSharedForTest();
+        await tester.binding.setSurfaceSize(const Size(1600, 1000));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final repository = _DelayedMonthlyRepository();
+        final ai = _ControlledAi();
+        final history = _CountingHistory();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              assetLiabilityRepository: repository,
+              aiSummaryService: ai,
+              aiAnalysisHistoryService: history,
+              debugNow: DateTime(2026, 9, 6, 12),
+              debugInitialAssetData: const <String, Map<String, double>>{
+                '2026-09-06': <String, double>{
+                  'bank': 30000,
+                  'synthetic debt': -10000,
+                },
+              },
+            ),
+          ),
+        );
+        await _pumpUntil(tester, () => repository.loads > 0);
+        // Longer than the old 2.5-second debounce, with an unresolved loader.
+        for (var frame = 0; frame < 60; frame++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        expect(ai.requests, isEmpty);
+        expect(history.reads, 0);
+        expect(history.saves, 0);
+        final updateButton = find.ancestor(
+          of: find.text('AI要約を更新'),
+          matching: find.byType(OutlinedButton),
+        );
+        expect(tester.widget<OutlinedButton>(updateButton).onPressed, isNull);
+        if (failRestoration) {
+          // Raise the error in the requesting widget's error zone. A failed
+          // Completer created in the test zone cannot cross error-zone boundaries.
+          repository.failRestoration = true;
+          repository.restored.complete(const AssetLiabilityMonthlyState());
+          for (var frame = 0; frame < 60; frame++) {
+            await tester.pump(const Duration(milliseconds: 100));
+          }
+          expect(repository.failures, 1);
+          expect(ai.requests, isEmpty);
+          expect(history.reads, 0);
+          expect(history.saves, 0);
+          expect(tester.widget<OutlinedButton>(updateButton).onPressed, isNull);
+        } else {
+          repository.restored.complete(
+            const AssetLiabilityMonthlyState(
+              paymentOverrides: <String, double>{'synthetic debt': 1000},
+              paidAccountNames: <String>{'synthetic debt'},
+              actualPaymentAmounts: <String, double>{'synthetic debt': 1000},
+            ),
+          );
+          await _pumpUntil(tester, () => ai.requests.isNotEmpty);
+          expect(ai.requests, hasLength(1));
+          final debt = ai.requests.single.workbook.debtMasterRows.singleWhere(
+            (row) => row.name == 'synthetic debt',
+          );
+          expect(debt.paid, isTrue);
+          expect(ai.requests.single.workbook.monthlyActualPaymentTotal, 1000);
+          if (ownershipChanges) repository.ownershipCurrent = false;
+          ai.complete(0, 'Restored synthetic payment is paid');
+          if (ownershipChanges) {
+            for (var frame = 0; frame < 60; frame++) {
+              await tester.pump(const Duration(milliseconds: 100));
+            }
+            expect(history.saves, 0);
+            expect(
+              find.textContaining('Restored synthetic payment is paid'),
+              findsNothing,
+            );
+          } else {
+            await _pumpUntil(tester, () => history.saves == 1);
+          }
+        }
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(seconds: 3));
+      },
+    );
+  }
+
+  testWidgets('received income removes old AI prose before regeneration', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues(<String, Object>{
       'asset_management_display_mode_v1': 'full',
     });
@@ -260,8 +425,9 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
   });
-  testWidgets('a late old response stays hidden after a receipt edit',
-      (tester) async {
+  testWidgets('a late old response stays hidden after a receipt edit', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues(<String, Object>{
       'asset_management_display_mode_v1': 'full',
     });
@@ -320,8 +486,9 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 
-  testWidgets('failed regeneration keeps fallback and retry recovers',
-      (tester) async {
+  testWidgets('failed regeneration keeps fallback and retry recovers', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues(<String, Object>{
       'asset_management_display_mode_v1': 'full',
     });
@@ -428,8 +595,9 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 
-  testWidgets('page remount rejects an obsolete persisted summary',
-      (tester) async {
+  testWidgets('page remount rejects an obsolete persisted summary', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues(<String, Object>{
       'asset_management_display_mode_v1': 'full',
     });
@@ -552,4 +720,252 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
   });
+
+  for (final scenario in <({String name, Size size, double scale})>[
+    (name: 'desktop', size: const Size(1600, 1000), scale: 1),
+    (name: 'narrow large text', size: const Size(360, 800), scale: 2),
+  ]) {
+    testWidgets('available amount explanation: ${scenario.name}', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1': 'full',
+      });
+      AssetSyncDirtyKeysStore.resetWriteLockForTest();
+      AssetRecurringTombstoneSyncService.resetSharedForTest();
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = scenario.size;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      final repository = _MonthlyRepository();
+      final ai = _ControlledAi();
+      expect(Supabase.instance.client.auth.currentUser, isNull);
+      final previousErrorHandler = FlutterError.onError;
+      if (previousErrorHandler == null) {
+        throw StateError('test error handler unavailable');
+      }
+      final semantics = tester.ensureSemantics();
+      var flexOverflow = 0;
+      var otherFlutter = 0;
+      var otherError = 0;
+      var observerError = 0;
+      FlutterError.onError = (details) {
+        try {
+          final error = details.exception;
+          if (error is FlutterError) {
+            final description = error.toString();
+            if (description.contains('RenderFlex') &&
+                description.contains('overflowed by')) {
+              flexOverflow++;
+            } else {
+              otherFlutter++;
+            }
+          } else {
+            otherError++;
+          }
+        } catch (_) {
+          observerError++;
+        } finally {
+          previousErrorHandler(details);
+        }
+      };
+      try {
+        try {
+          await tester.pumpWidget(
+            MaterialApp(
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(scenario.scale)),
+                child: child!,
+              ),
+              home: AssetManagementPage(
+                assetLiabilityRepository: repository,
+                aiSummaryService: ai,
+                aiAnalysisHistoryService: _EmptyHistory(),
+                debugNow: DateTime(2026, 9, 6, 12),
+                debugInitialAssetData: const <String, Map<String, double>>{
+                  '2026-09-06': <String, double>{'bank': 30000},
+                },
+              ),
+            ),
+          );
+          final explanation = find.textContaining(
+            '計算に取り込まれた台帳の未払いの直接支払',
+            skipOffstage: false,
+          );
+          await _pumpUntil(
+            tester,
+            () => explanation.evaluate().isNotEmpty || ai.responses.isNotEmpty,
+          );
+          if (ai.responses.isNotEmpty) {
+            ai.complete(0, 'Synthetic explanation test');
+          }
+          await _pumpUntil(tester, () => explanation.evaluate().isNotEmpty);
+          await tester.ensureVisible(explanation);
+          await tester.pump();
+          expect(explanation, findsOneWidget);
+          final context = tester.element(explanation);
+          expect(
+            MediaQuery.textScalerOf(context).scale(10),
+            closeTo(10 * scenario.scale, 0.001),
+          );
+          expect(
+            MediaQuery.sizeOf(context).width,
+            closeTo(scenario.size.width, 0.001),
+          );
+          final text = tester.widget<Text>(explanation).data!;
+          expect(text, contains('今週は基準日から日曜まで'));
+          expect(text, contains('暦月ではありません'));
+          expect(text, contains('給与日設定は使いません'));
+          expect(text, contains('貯蓄計画は別途反映しません'));
+          expect(text, contains('証券等はすぐに使える現金とは限りません'));
+          final rect = tester.getRect(explanation);
+          expect(rect.left, greaterThanOrEqualTo(0));
+          expect(rect.right, lessThanOrEqualTo(scenario.size.width));
+          expect(
+            find.bySemanticsLabel(RegExp('計算に取り込まれた台帳の未払いの直接支払')),
+            findsWidgets,
+          );
+          expect(tester.takeException(), isNull);
+        } finally {
+          for (var index = 0; index < ai.responses.length; index++) {
+            if (!ai.responses[index].isCompleted) {
+              ai.complete(index, 'Synthetic explanation test');
+            }
+          }
+          await tester.pump();
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump(const Duration(seconds: 3));
+        }
+        expect(tester.takeException(), isNull);
+      } finally {
+        try {
+          semantics.dispose();
+        } finally {
+          FlutterError.onError = previousErrorHandler;
+          debugPrint(
+            'synthetic-errors flex=$flexOverflow flutter=$otherFlutter '
+            'other=$otherError observer=$observerError',
+          );
+        }
+      }
+    });
+  }
+  for (final direction in [TextDirection.ltr, TextDirection.rtl]) {
+    testWidgets('expanded calendar scrolls and selects a day: $direction',
+        (tester) async {
+      final previousErrorHandler = FlutterError.onError;
+      if (previousErrorHandler == null) {
+        throw StateError('test error handler unavailable');
+      }
+      var phase = 'setup';
+      FlutterError.onError = (details) {
+        try {
+          final error = details.exception;
+          if (error is FlutterError &&
+              error.toString().contains('RenderFlex') &&
+              error.toString().contains('overflowed by')) {
+            onCalendarOverflow?.call(direction.toString(), phase, details);
+            debugPrintSynchronously(
+              'calendar-overflow direction=$direction phase=$phase\n'
+              '${details.toString()}',
+            );
+          }
+        } catch (_) {
+          // Do not let diagnostic formatting alter the test result.
+        } finally {
+          previousErrorHandler(details);
+        }
+      };
+      try {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1': 'full',
+        });
+        AssetSyncDirtyKeysStore.resetWriteLockForTest();
+        AssetRecurringTombstoneSyncService.resetSharedForTest();
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(360, 800);
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+        final repository = _CalendarCountingRepository();
+        try {
+          expect(Supabase.instance.client.auth.currentUser, isNull);
+          phase = 'setup/pumpWidget';
+          await tester.pumpWidget(
+            MaterialApp(
+              builder: (context, child) => Directionality(
+                textDirection: direction,
+                child: MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    textScaler: const TextScaler.linear(2),
+                  ),
+                  child: child!,
+                ),
+              ),
+              home: AssetManagementPage(
+                assetLiabilityRepository: repository,
+                aiSummaryService: _ControlledAi(),
+                aiAnalysisHistoryService: _EmptyHistory(),
+                debugNow: DateTime(2026, 9, 6, 12),
+                debugCalendarNow: DateTime(2026, 9, 6, 12),
+                debugInitialAssetData: const <String, Map<String, double>>{
+                  '2026-09-06': <String, double>{'bank': 30000},
+                },
+              ),
+            ),
+          );
+          final scroll =
+              find.byKey(const Key('asset_calendar_expanded_scroll'));
+          phase = 'wait/scroll-visible';
+          await _pumpUntil(tester, () => scroll.evaluate().isNotEmpty);
+          phase = 'scroll/ensure-visible';
+          await tester.ensureVisible(scroll);
+          await tester.pump();
+          final controller =
+              tester.widget<SingleChildScrollView>(scroll).controller!;
+          expect(controller.position.maxScrollExtent, greaterThan(0));
+          phase = 'scroll/drag';
+          await tester.drag(
+            scroll,
+            Offset(direction == TextDirection.ltr ? -600 : 600, 0),
+          );
+          phase = 'pump/after-drag';
+          await tester.pump(const Duration(milliseconds: 500));
+          expect(controller.offset, greaterThan(0));
+
+          final day = find.byKey(const Key('asset_calendar_day_5'));
+          expect(day, findsOneWidget);
+          final viewportRect = tester.getRect(scroll);
+          final dayRect = tester.getRect(day);
+          expect(dayRect.left, greaterThanOrEqualTo(viewportRect.left - 1));
+          expect(dayRect.right, lessThanOrEqualTo(viewportRect.right + 1));
+          phase = 'scroll/ensure-day';
+          await tester.ensureVisible(day);
+          await tester.pump();
+          final savesBeforeSelection = repository.saveCalls;
+          phase = 'tap/day';
+          await tester.tap(day);
+          phase = 'pump/after-tap';
+          await tester.pump();
+          phase = 'wait/after-tap';
+          await tester.pump(const Duration(seconds: 3));
+          expect(find.text('9月5日 のイベント'), findsOneWidget);
+          expect(repository.saveCalls, savesBeforeSelection);
+          expect(Supabase.instance.client.auth.currentUser, isNull);
+          expect(tester.takeException(), isNull);
+        } finally {
+          phase = 'cleanup';
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump(const Duration(seconds: 3));
+        }
+      } finally {
+        FlutterError.onError = previousErrorHandler;
+      }
+    });
+  }
 }

@@ -234,6 +234,8 @@ class OfficialEndorsementPrefecture {
   final int incumbentCount;
   final int newcomerCount;
   final int formerCount;
+  final int prefecturalCount;
+  final int municipalCount;
 
   const OfficialEndorsementPrefecture({
     required this.prefecture,
@@ -241,6 +243,8 @@ class OfficialEndorsementPrefecture {
     required this.incumbentCount,
     required this.newcomerCount,
     required this.formerCount,
+    this.prefecturalCount = 0,
+    this.municipalCount = 0,
   });
 
   factory OfficialEndorsementPrefecture.fromJson(Map<String, dynamic> json) {
@@ -250,6 +254,8 @@ class OfficialEndorsementPrefecture {
       incumbentCount: _readInt(json['incumbentCount']),
       newcomerCount: _readInt(json['newcomerCount']),
       formerCount: _readInt(json['formerCount']),
+      prefecturalCount: _readInt(json['prefecturalCount']),
+      municipalCount: _readInt(json['municipalCount']),
     );
   }
 
@@ -259,6 +265,8 @@ class OfficialEndorsementPrefecture {
         'incumbentCount': incumbentCount,
         'newcomerCount': newcomerCount,
         'formerCount': formerCount,
+        'prefecturalCount': prefecturalCount,
+        'municipalCount': municipalCount,
       };
 
   bool get hasBreakdown =>
@@ -268,6 +276,16 @@ class OfficialEndorsementPrefecture {
         if (incumbentCount > 0) '現職$incumbentCount',
         if (newcomerCount > 0) '新人$newcomerCount',
         if (formerCount > 0) '元職$formerCount',
+      ].join(' / ');
+
+  /// 都道府県議会 (prefecturalCount) と 市区町村議会 (municipalCount) の内訳。
+  /// 党公式一覧の選挙名から議会種別を判定できた行のみを集計しているため、
+  /// 合計が [totalCount] を下回ることがある (未分類行は除外)。
+  bool get hasAssemblyBreakdown => prefecturalCount > 0 || municipalCount > 0;
+
+  String get assemblyBreakdownLabel => <String>[
+        if (prefecturalCount > 0) '都道府県議$prefecturalCount',
+        if (municipalCount > 0) '市区町村議$municipalCount',
       ].join(' / ');
 }
 
@@ -281,6 +299,8 @@ class OfficialEndorsementSnapshot {
   final int formerCount;
   final int recommendationCount;
   final int prefectureCount;
+  final int prefecturalCount;
+  final int municipalCount;
   final List<OfficialEndorsementPrefecture> prefectures;
 
   const OfficialEndorsementSnapshot({
@@ -293,6 +313,8 @@ class OfficialEndorsementSnapshot {
     required this.formerCount,
     required this.recommendationCount,
     required this.prefectureCount,
+    this.prefecturalCount = 0,
+    this.municipalCount = 0,
     this.prefectures = const <OfficialEndorsementPrefecture>[],
   });
 
@@ -306,6 +328,8 @@ class OfficialEndorsementSnapshot {
         formerCount = 0,
         recommendationCount = 0,
         prefectureCount = 0,
+        prefecturalCount = 0,
+        municipalCount = 0,
         prefectures = const <OfficialEndorsementPrefecture>[];
 
   factory OfficialEndorsementSnapshot.fromJson(Map<String, dynamic> json) {
@@ -319,6 +343,8 @@ class OfficialEndorsementSnapshot {
       formerCount: _readInt(json['formerCount']),
       recommendationCount: _readInt(json['recommendationCount']),
       prefectureCount: _readInt(json['prefectureCount']),
+      prefecturalCount: _readInt(json['prefecturalCount']),
+      municipalCount: _readInt(json['municipalCount']),
       prefectures: _readMapList(json['prefectures'])
           .map(OfficialEndorsementPrefecture.fromJson)
           .toList(growable: false),
@@ -335,6 +361,8 @@ class OfficialEndorsementSnapshot {
         'formerCount': formerCount,
         'recommendationCount': recommendationCount,
         'prefectureCount': prefectureCount,
+        'prefecturalCount': prefecturalCount,
+        'municipalCount': municipalCount,
         'prefectures': prefectures.map((item) => item.toJson()).toList(),
       };
 

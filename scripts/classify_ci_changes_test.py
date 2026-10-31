@@ -6,7 +6,7 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 
 from check_cicd_path_filters import _extract_paths_ignore
-from classify_ci_changes import SKILL_CONTRACT_TESTS, classify
+from classify_ci_changes import NOTION_AUDIT_TESTS, SKILL_CONTRACT_TESTS, classify
 
 
 class ClassifyCiChangesTest(unittest.TestCase):
@@ -63,6 +63,81 @@ class ClassifyCiChangesTest(unittest.TestCase):
         self.assertFalse(result["web"])
         self.assertFalse(result["deployable"])
 
+    def test_business_browser_config_requires_checks_without_deployment(self) -> None:
+        for path in [
+            "playwright.config.ts", "playwright.business-execution.config.ts",
+            "package.json", "package-lock.json",
+            "test/e2e/business_execution.spec.ts",
+            "test/fixtures/business_execution_app.dart",
+        ]:
+            with self.subTest(path=path):
+                result = classify([path])
+                self.assertTrue(result["flutter"])
+                self.assertFalse(result["web"])
+                self.assertFalse(result["deployable"])
+
+    def test_fixture_infrastructure_changes_cannot_skip_its_browser_gate(self) -> None:
+        for path in [
+            ".github/workflows/ci.yml",
+            "scripts/classify_ci_changes.py",
+            "scripts/classify_ci_changes_test.py",
+            "scripts/serve_business_execution_fixture.py",
+            "scripts/serve_business_execution_fixture_test.py",
+        ]:
+            with self.subTest(path=path):
+                result = classify([path])
+                self.assertTrue(result["business_execution"])
+                self.assertTrue(result["flutter"])
+                self.assertFalse(result["deployable"])
+
+    def test_lock_test_only_change_runs_its_own_required_chrome_step(self) -> None:
+        result = classify(["test/web/business_execution_lock_test.dart"])
+        self.assertTrue(result["business_execution"])
+        self.assertTrue(result["flutter"])
+        self.assertFalse(result["web"])
+        self.assertFalse(result["deployable"])
+        workflow = (Path(__file__).resolve().parents[1] /
+                    ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        step = workflow.split(
+            "      - name: Run business execution browser lock tests\n", 1,
+        )[1].split("      - name:", 1)[0]
+        self.assertIn("id: business_execution_locks", step)
+        self.assertIn("if: steps.changes.outputs.business_execution == 'true'", step)
+        self.assertIn(
+            "run: flutter test --platform chrome "
+            "test/web/business_execution_lock_test.dart", step,
+        )
+        self.assertIn("continue-on-error: false", step)
+        self.assertNotIn("steps.changes.outputs.web", step)
+        smoke = workflow.split(
+            "      - name: Run web import smoke tests\n", 1,
+        )[1].split("      - name:", 1)[0]
+        self.assertIn("if: steps.changes.outputs.web == 'true'", smoke)
+        self.assertNotIn("business_execution_lock_test.dart", smoke)
+
+    def test_fixture_sdk_and_asset_dependencies_require_browser_gate(self) -> None:
+        for path in [
+            ".github/actions/setup-flutter-sdk/action.yml",
+            ".github/actions/setup-flutter-sdk/install.sh",
+            "assets/fonts/test.ttf",
+            "assets/images/test.png",
+        ]:
+            with self.subTest(path=path):
+                result = classify([path])
+                self.assertTrue(result["business_execution"])
+                self.assertTrue(result["flutter"])
+        self.assertFalse(classify([
+            "assets/data/tiger_remediation_status.json",
+        ])["business_execution"])
+
+    def test_unrelated_flutter_changes_do_not_build_business_fixture(self) -> None:
+        for path in [
+            "lib/pages/reading_page.dart",
+            "test/services/unrelated_test.dart",
+        ]:
+            with self.subTest(path=path):
+                self.assertFalse(classify([path])["business_execution"])
+
     def test_app_code_needs_flutter_and_web(self) -> None:
         result = classify(["lib/pages/ai_university_page.dart"])
 
@@ -109,6 +184,39 @@ class ClassifyCiChangesTest(unittest.TestCase):
                      "test/services/example_test.dart", "pubspec.lock"]:
             with self.subTest(path=path):
                 self.assertTrue(classify([*SKILL_CONTRACT_TESTS, path])["flutter"])
+
+    def test_notion_suites_have_dedicated_pr_validation(self) -> None:
+        self.assertEqual(NOTION_AUDIT_TESTS, (
+            "test/scripts/test_notion_migration_cloud_audit.py",
+            "test/scripts/test_notion_wbs_import_plan.py",
+        ))
+        workflow = (Path(__file__).resolve().parents[1] /
+                    ".github/workflows/notion-migration-cloud-audit.yml").read_text(
+                        encoding="utf-8")
+        pr_paths = workflow.split("  pull_request:\n    paths:\n", 1)[1].split(
+            "  workflow_dispatch:", 1)[0]
+        paths = [line.strip().removeprefix("- ") for line in pr_paths.splitlines()
+                 if line.strip().startswith("- ")]
+        validate = workflow.split("  validate:\n", 1)[1].split("  audit:\n", 1)[0]
+        self.assertIn("if: github.event_name == 'pull_request'", validate)
+        self.assertNotIn("continue-on-error", validate)
+        for path in NOTION_AUDIT_TESTS:
+            with self.subTest(path=path):
+                self.assertIn(path, paths)
+                self.assertIn("          PYTHONPATH=. python " + path + "\n", validate)
+                self.assertFalse(any(classify([path]).values()))
+        self.assertFalse(any(classify([
+            "scripts/notion_migration_cloud_audit.py", *NOTION_AUDIT_TESTS,
+        ]).values()))
+
+    def test_notion_exceptions_preserve_mixed_and_forced_validation(self) -> None:
+        for path in ["lib/main.dart", "web/index.html", "pubspec.lock",
+                     "test/scripts/tool_test.dart", "test/unknown_test.py",
+                     "test/scripts/test_notion_other.py"]:
+            with self.subTest(path=path):
+                self.assertTrue(classify([*NOTION_AUDIT_TESTS, path])["flutter"])
+        self.assertTrue(classify([*NOTION_AUDIT_TESTS, "lib/main.dart"])["web"])
+        self.assertTrue(all(classify(list(NOTION_AUDIT_TESTS), force_all=True).values()))
 
     def test_unknown_python_tests_remain_conservative(self) -> None:
         self.assertTrue(classify(["test/scripts/new_tool_test.py"])["flutter"])

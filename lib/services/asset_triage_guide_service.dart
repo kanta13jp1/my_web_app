@@ -47,11 +47,17 @@ class AssetTriageStep {
   final AssetTriageStepKind kind;
   final String title;
   final String detail;
+  final String? withdrawalSourceAccountId;
+  final String? withdrawalSourceAccountName;
+  final List<double> withdrawalTemplates;
 
   const AssetTriageStep({
     required this.kind,
     required this.title,
     required this.detail,
+    this.withdrawalSourceAccountId,
+    this.withdrawalSourceAccountName,
+    this.withdrawalTemplates = const <double>[],
   });
 }
 
@@ -173,15 +179,23 @@ class AssetTriageGuideService {
           ? '手元現金が${_yen(cashOnHand)}しかありません。'
           : '本日の使用可能額が${_yen(todayAvailableAmount)}です。';
       final String detail;
+      List<double> templates = const <double>[];
       if (source == null || sourceProjected <= 0) {
         detail = '$reason現金・預金として登録された口座に余力が見つかりません。'
             '他に使える資産がないか確認し、無ければ今日の食費は家族・自治体・'
             'フードバンク等への相談も選択肢にしてください。食事を抜く判断はしないでください。';
       } else if (sourceProjected >= 20000) {
+        templates = const <double>[10000, 20000];
         detail = '$reason${source.name}（残高 ${_yen(source.balance)} / '
             '引落予定を除いた余力 ${_yen(sourceProjected)}）から'
             '1〜2万円を下ろして今日の食費・移動費を確保してください。'
-            '食事を抜く判断はしないでください。';
+            '生活費は専用財布へ（食事を抜く判断はしないでください）。';
+      } else if (sourceProjected >= 10000) {
+        templates = const <double>[10000];
+        detail = '$reason${source.name}の引落予定を除いた余力は'
+            '${_yen(sourceProjected)}です。引き落としに影響しないよう、'
+            'この範囲で今日の食費・移動費を確保してください。'
+            '生活費は専用財布へ（食事を抜く判断はしないでください）。';
       } else {
         detail = '$reason${source.name}の引落予定を除いた余力は'
             '${_yen(sourceProjected)}です。引き落としに影響しないよう、'
@@ -193,6 +207,9 @@ class AssetTriageGuideService {
           kind: AssetTriageStepKind.secureLivingExpense,
           title: '食費・移動費を確保する',
           detail: detail,
+          withdrawalSourceAccountId: source?.id,
+          withdrawalSourceAccountName: source?.name,
+          withdrawalTemplates: templates,
         ),
       );
     }
@@ -267,7 +284,9 @@ class AssetTriageGuideService {
           kind: AssetTriageStepKind.stopNewCardUsage,
           title: 'カードを財布から抜く',
           detail: '$namesを今日から使わないでください。$newBorrowingNote'
-              '「増やさない」が返済より先です。支払いは現金かデビットに切り替えてください。',
+              '「増やさない」が返済より先です。支払いは現金かデビットに切り替えてください。'
+              'カード会社の公式アプリにある利用停止・ロック機能、または窓口での利用停止の相談を'
+              '検討してください(連絡先はカード裏面か公式サイトで確認)。',
         ),
       );
     }

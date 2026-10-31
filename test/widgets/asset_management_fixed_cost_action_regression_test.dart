@@ -29,7 +29,7 @@ void main() {
   });
 
   testWidgets(
-    'recurring costs feed the fixed-cost card, closing, and daily summary',
+    'recurring costs feed summaries without completing the full cost review',
     (tester) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         'asset_management_display_mode_v1':
@@ -72,7 +72,16 @@ void main() {
           '③ 今月の固定費をすべて記録して把握',
         ),
       );
-      expect(fixedCostCheck.value, isTrue);
+      expect(fixedCostCheck.value, isFalse);
+      expect(
+        find.text('チェックを保存するにはログインしてください。'),
+        findsOneWidget,
+      );
+
+      expect(
+        find.textContaining('本人が確認してチェックしてください。既存チェックは保持します。'),
+        findsNothing,
+      );
 
       String? clipboardText;
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(

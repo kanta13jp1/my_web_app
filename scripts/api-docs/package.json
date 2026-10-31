@@ -1,0 +1,6 @@
+{
+  "name": "lab-api-reference-tooling",
+  "private": true,
+  "version": "1.0.0",
+  "devDependencies": { "jsdoc": "4.0.5" }
+}

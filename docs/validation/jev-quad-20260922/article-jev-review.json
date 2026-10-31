@@ -1,0 +1,19 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "editorial": {
+      "type": "choice",
+      "choice": "keep",
+      "confidence": 0.17,
+      "probabilities": {
+        "keep": 0.44,
+        "clarify": 0.38,
+        "condense": 0.18
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 1503,
+    "output_tokens": 42
+  }
+}

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>アクセス比較チェック | 自分株式会社</title><meta name="description" content="アクセス数の変化を、期間・記録の抜け・比較ページ・日付の区切りから確かめます。入力データはブラウザー内で計算します。">
+<link rel="stylesheet" href="style.css"><script type="module" src="app.mjs"></script></head>
+<body><header><a href="/">自分株式会社</a><span>データで確かめる道具</span></header>
+<main><section class="intro"><p class="eyebrow">ACQUISITION CHECK</p><h1>アクセスが増えた。<br>何が変わった？</h1><p>件数だけで判断する前に、日数と記録の抜けを確認しましょう。自分のデータを貼り付けて、変更前後を比較できます。</p><p class="privacy">登録不要 · 入力はこの画面内で計算 · サーバーへの送信・自動保存なし</p></section>
+<section aria-labelledby="input-title"><div class="section-head"><h2 id="input-title">1. 日別の件数を入れる</h2><button id="sample" type="button">記事の実測例を読み込む</button></div>
+<p>1行に「日付,件数」。先頭行は <code>date,count</code>。CSVは、値をカンマで区切った表形式です。記録がない日は行を作らず、確認できた0件だけを <code>0</code> と入力します。</p>
+<label for="data">日別の記録</label><textarea id="data" rows="9" spellcheck="false" placeholder="date,count&#10;2026-09-13,7&#10;2026-09-20,8"></textarea>
+<p id="provenance" class="note">自分のデータを入力してください。氏名やメールアドレスなどは不要です。</p>
+<details><summary>比較ページや検索での表示回数も入れる</summary><p><code>date,count,control,impressions</code> の4列を使います。controlは変更していない比較ページの件数、impressionsは自分のサイトが検索結果に表示された回数です。比較ページだけなら3列でも使えます。</p><p>Google Search Console（Google検索での表示・クリックを調べる管理画面）の値は、太平洋時間の日付で集計されます。日付の区切りが異なるデータを同じ表に混ぜないでください。表示回数は順位などにも左右され、世の中全体の検索回数ではありません。</p></details>
+<div class="fields"><label>変更前の開始日<input id="beforeStart" type="date" value="2026-09-13"></label><label>変更前の終了日<input id="beforeEnd" type="date" value="2026-09-19"></label><label>変更後の開始日<input id="afterStart" type="date" value="2026-09-20"></label><label>変更後の終了日<input id="afterEnd" type="date" value="2026-09-26"></label></div>
+<label>この表の日付の区切り<select id="zone"><option value="Asia/Tokyo">日本時間</option><option value="America/Los_Angeles">米国太平洋時間（Google検索計測）</option><option value="UTC">UTC（世界共通の基準時刻）</option></select></label><p class="note">これはデータの説明です。日別の合計を別の時間帯の合計へ自動変換するものではありません。</p>
+<button id="compare" class="primary" type="button">比較する</button><p id="error" role="alert"></p></section>
+<section id="result" hidden aria-live="polite"><h2>2. 比較結果</h2><div id="result-content"></div><button id="download" type="button">結果をファイルに保存</button><p class="note">JSONは計算結果を再利用できるデータ形式です。入力値・条件・結果を保存します。</p></section>
+<section><h2>日付の区切りを確かめる</h2><p>タイムゾーンは地域ごとの時刻の基準です。1件の記録がどの日に入るかを確認できます。</p><label>時差を含む記録時刻<input id="instant" value="2026-09-20T15:30:00Z"></label><button id="date-check" type="button">3地域の日付を見る</button><p id="date-result" role="status"></p></section>
+<section><h2>記録が届いたか照合する</h2><p>操作が起きた番号を、送信・受付・保存の各段階で揃えると、どこまで確認できたかが分かります。<strong>各段階のログ自体がなければ、過去の取りこぼしは復元できません。</strong></p>
+<details><summary>入力の書き方</summary><p>先頭行は <code>id,stage</code>。idは個人を表さない照合用番号です。stageには occurred（操作発生）、attempted（送信試行）、accepted（受付）、duplicate（重複として処理）、saved（保存）のいずれかを書きます。再送で同じ段階が重複しても1回として数えます。</p></details>
+<label for="delivery">段階ごとの記録</label><textarea id="delivery" rows="5" spellcheck="false" placeholder="id,stage&#10;example-1,occurred&#10;example-1,attempted"></textarea><button id="reconcile" type="button">届いた段階を調べる</button><p id="delivery-result" role="status"></p></section>
+<section><h2>「変更が原因」と言えるか</h2><p>件数の増加だけでは原因を決められません。比較する文章2案、数える行動、期間、必要な件数を実験の前に決めます。比較する人の振り分け方を揃え、途中で別の変更を加えないことも必要です。</p><p>季節の影響を見るには前年の同じ時期などの記録が必要です。この道具は不足する観測を補ったり、AI（文章などを生成する人工知能）の効果を自動認定したりしません。</p><a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer">Google Search Consoleを開く ↗</a></section>
+<section class="next"><h2>比較して気づいたことを、次の改善へ</h2><p>自分株式会社では、日々の記録やメモをまとめて振り返れます。今回の結果を保存し、次に試す変更と確認日をメモしておきましょう。</p><a class="primary" href="/">自分株式会社を開く</a></section></main><footer>入力データはページを閉じると消えます。必要な結果は保存してください。</footer></body></html>

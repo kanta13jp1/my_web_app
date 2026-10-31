@@ -90,7 +90,7 @@ jobs:
       - name: Publish official-source audit evidence
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ai-university-source-audit
           path: .artifacts/ai-university-source-audit/current/
@@ -132,7 +132,7 @@ jobs:
       - name: Publish reliability metrics
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ai-university-reliability-metrics
           path: .artifacts/ai-university-reliability/metrics.*

@@ -90,7 +90,7 @@ class PostHogPhilosophyFunnelAnalytics implements PhilosophyFunnelAnalytics {
         ..capturePushNotificationOpened = false
         ..capturePushNotificationSubscriptions = false
         ..personProfiles = PostHogPersonProfiles.never
-        ..sendFeatureFlagEvents = false
+        ..sendFeatureFlagEvent = false
         ..sessionReplay = false
         ..surveys = false;
       await Posthog().setup(config);

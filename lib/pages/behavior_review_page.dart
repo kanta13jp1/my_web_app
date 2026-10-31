@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/services/asset_flow_request.dart';
 
 import '../services/ai_service.dart';
 import '../services/behavior_review_service.dart';
@@ -98,8 +99,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
             .gte('created_at', since.toUtc().toIso8601String())
             .order('created_at', ascending: false)
             .limit(80),
-        _supabase
-            .from('wealth_struggles')
+        AssetFlowRequest.table(_supabase)
             .select('id,action_type,amount,description,occurred_at')
             .eq('user_id', userId)
             .gte('occurred_at', since.toUtc().toIso8601String())

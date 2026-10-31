@@ -50,11 +50,11 @@ concurrency:
 
 jobs:
   lint-and-test:
-    name: Lint, Format, and Test
+    name: Static checks and web
     outputs:
       analyzer_evidence_uploaded: ${{ steps.upload_analyzer_evidence.outcome == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
       contents: read
 
@@ -142,12 +142,17 @@ jobs:
       - name: Test CI scope classifier
         run: |
           python scripts/classify_ci_changes_test.py
+          python -B scripts/check_claude_review_workflow_test.py
+          python scripts/serve_business_execution_fixture_test.py
           python scripts/cloud_ci_handoff_test.py
           python scripts/cloud_first_route_test.py
           python scripts/claude_remote_control_server_plan_test.py
           python -m unittest scripts/kg_index_common_test.py scripts/kg_index_workflow_test.py
           python scripts/generate_infrastructure_map_test.py
           python scripts/cicd_efficiency_test.py
+          python scripts/ci_parallel_test.py
+          python scripts/run_vm_test_shard_test.py
+          python scripts/ai_review_gate_test.py
           python scripts/pre_commit_quality_gate_test.py
           python scripts/container_cleanup_guard_test.py
           python scripts/check_rootless_container_setup_test.py
@@ -228,7 +233,7 @@ jobs:
 
       - name: Upload deprecated API gate evidence
         if: always() && steps.changes.outputs.flutter == 'true' && hashFiles('.ci-logs/deprecated-api-gate/**/result.json') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: deprecated-api-gate-evidence
           path: .ci-logs/deprecated-api-gate
@@ -237,7 +242,7 @@ jobs:
       - name: Upload analyzer evidence
         id: upload_analyzer_evidence
         if: always() && steps.changes.outputs.flutter == 'true' && hashFiles('.ci-logs/analyzer/result.json') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: analyzer-evidence
           path: .ci-logs/analyzer
@@ -270,7 +275,7 @@ jobs:
 
       - name: Upload impossible task degradation report
         if: always() && hashFiles('.ci-logs/impossible-task-degradation.json') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: impossible-task-degradation-report
           path: .ci-logs/impossible-task-degradation.json
@@ -292,7 +297,7 @@ jobs:
 
       - name: Upload Deno lint log
         if: always() && steps.changes.outputs.edge == 'true' && hashFiles('.ci-logs/deno-lint.log') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: deno-lint-log
           path: .ci-logs/deno-lint.log
@@ -398,6 +403,13 @@ jobs:
           fi
         continue-on-error: false  # migration 構文エラーはCIブロック
 
+      - name: Verify acquisition measurement audit
+        run: |
+          python -m unittest discover -s test/scripts -p 'test_seo_measurement_audit.py'
+          python -m unittest discover -s test/scripts -p 'test_search_console_measurement.py'
+          python scripts/seo_measurement_audit.py docs/evidence/seo-measurement-20260927/observations.json --output /tmp/seo-audit.json
+          diff -u docs/evidence/seo-measurement-20260927/report.json /tmp/seo-audit.json
+
       - name: Check GitHub Actions Node runtime floor
         run: |
           python -m unittest discover \
@@ -482,17 +494,16 @@ jobs:
         # #1372: treat Dart formatting as a required static-analysis gate.
         run: dart format --output=none --set-exit-if-changed .
 
-      - name: Run VM tests
-        if: steps.changes.outputs.flutter == 'true'
-        id: flutter_test
-        # Keep coverage while bounding Dart VM workers on Windows-sized runners.
-        run: flutter test --coverage --concurrency=2
-        continue-on-error: false  # VSCode S21: 9 test files @TestOn('browser') 追加で VM contamination 完全解消
-
       - name: Run web import smoke tests
         if: steps.changes.outputs.web == 'true'
         id: flutter_web_test
         run: flutter test --platform chrome test/web_import_smoke_test.dart
+        continue-on-error: false
+
+      - name: Run business execution browser lock tests
+        id: business_execution_locks
+        if: steps.changes.outputs.business_execution == 'true'
+        run: flutter test --platform chrome test/web/business_execution_lock_test.dart
         continue-on-error: false
 
       # workflow_call (deploy-prod) 経由の場合はビルドをスキップ — deploy-prod が再ビルドするため重複回避
@@ -516,6 +527,119 @@ jobs:
           echo "Build successful!"
           ls -la build/web
 
+      - name: Build business execution browser fixture
+        if: steps.changes.outputs.business_execution == 'true'
+        run: >
+          flutter build web --release --pwa-strategy=none --no-web-resources-cdn
+          --output=build/business-execution-fixture
+          --target=test/fixtures/business_execution_app.dart
+          --dart-define=BUSINESS_EXECUTION_E2E=true
+          --dart-define=ENVIRONMENT=visual-test
+
+      # Noto Sans is already bundled and licensed in the repository. The test
+      # fixture aliases it as the engine's Roboto fallback; it is not Roboto.
+      - name: Register local Noto Sans fixture fallback
+        if: steps.changes.outputs.business_execution == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - build/business-execution-fixture <<'PY'
+          import hashlib
+          import json
+          import sys
+          from pathlib import Path
+          
+          FONT_ASSET = "web/assets/fonts/NotoSans-Regular.ttf"
+          FONT_SHA256 = "b85c38ecea8a7cfb39c24e395a4007474fa5a4fc864f6ee33309eb4948d232d5"
+          LICENSE_ASSET = "web/assets/fonts/NotoSans-OFL.txt"
+          LICENSE_SHA256 = "138b7f6e5d8ab96671ef7604f936d3d077beed67911acfb1b0adb71359dc44bc"
+          
+          
+          def register_fixture_font(root):
+              manifest_path = root / "assets" / "FontManifest.json"
+              manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+              if not isinstance(manifest, list) or not all(
+                  isinstance(family, dict) for family in manifest
+              ):
+                  raise ValueError("Unexpected fixture font manifest")
+              families = [family.get("family") for family in manifest]
+              if "Roboto" in families or families.count("NotoSans") != 1:
+                  raise ValueError("Expected one NotoSans family and no Roboto family")
+              noto = next(family for family in manifest if family.get("family") == "NotoSans")
+              if noto.get("fonts") != [{"asset": FONT_ASSET}]:
+                  raise ValueError("Unexpected NotoSans asset registration")
+              for asset, expected in (
+                  (FONT_ASSET, FONT_SHA256),
+                  (LICENSE_ASSET, LICENSE_SHA256),
+              ):
+                  path = root / "assets" / asset
+                  if not path.is_file() or path.is_symlink():
+                      raise ValueError("Missing or unsafe fixture font/license asset")
+                  if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+                      raise ValueError("Fixture font/license provenance mismatch")
+              # Alias existing bytes only. Do not copy, rewrite, or rename the font.
+              result = [*manifest, {"family": "Roboto", "fonts": [{"asset": FONT_ASSET}]}]
+              manifest_path.write_text(json.dumps(result) + "\n", encoding="utf-8")
+          
+          
+          if __name__ == "__main__":
+              register_fixture_font(Path(sys.argv[1]))
+          PY
+
+      - name: Set up Node for business execution E2E
+        if: steps.changes.outputs.business_execution == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install existing Playwright browser dependencies
+        if: steps.changes.outputs.business_execution == 'true'
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run business execution fixture E2E
+        id: business_execution_e2e
+        if: steps.changes.outputs.business_execution == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ready_file="$RUNNER_TEMP/business-execution-ready-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"
+          source_sha="$(git rev-parse HEAD)"
+          python3 scripts/serve_business_execution_fixture.py serve build/business-execution-fixture \
+            --ready-file "$ready_file" --source-sha "$source_sha" > business-execution-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
+          for _ in {1..20}; do
+            kill -0 "$server_pid"
+            if [ -s "$ready_file" ]; then break; fi
+            sleep 1
+          done
+          kill -0 "$server_pid"
+          E2E_BASE_URL="$(python3 scripts/serve_business_execution_fixture.py verify \
+            --ready-file "$ready_file" --pid "$server_pid" --source-sha "$source_sha")"
+          fixture_nonce="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["token"])' "$ready_file")"
+          printf -v BUSINESS_EXECUTION_FIXTURE_TOKEN '%s' "$fixture_nonce"
+          export E2E_BASE_URL BUSINESS_EXECUTION_FIXTURE_TOKEN
+          cp "$ready_file" business-execution-ready.json
+          npm run e2e:business-execution -- --forbid-only
+          kill -0 "$server_pid"
+          python3 scripts/serve_business_execution_fixture.py verify \
+            --ready-file "$ready_file" --pid "$server_pid" --source-sha "$source_sha"
+
+      - name: Preserve business execution browser evidence
+        if: always() && steps.changes.outputs.business_execution == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: business-execution-e2e-${{ github.run_id }}
+          path: |
+            business-execution-report/
+            business-execution-results/
+            business-execution-server.log
+            business-execution-ready.json
+          if-no-files-found: ignore
+
       - name: Job Summary
         if: always()
         env:
@@ -531,12 +655,169 @@ jobs:
 
       - name: Upload tested-source context
         if: always() && hashFiles('.ci-logs/ci-context/manifest.json') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: tested-source-context
           path: .ci-logs/ci-context
           if-no-files-found: error
 
+
+  vm-tests:
+    name: VM tests (${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1]
+    steps:
+      - name: Checkout code
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            ref="refs/pull/${{ github.event.pull_request.number }}/merge"
+            if ! git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"; then
+              echo "::warning::PR merge ref ${ref} is unavailable; falling back to PR head SHA."
+              git fetch --depth=1 \
+                "https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git" \
+                "${{ github.event.pull_request.head.sha }}"
+              git checkout --force FETCH_HEAD
+              exit 0
+            fi
+          else
+            # Pin push, workflow_call, and cloud-first manual runs to the event
+            # SHA. Fetching a moving branch ref here could silently validate a
+            # later commit than the one handed off from the local control plane.
+            ref="${GITHUB_SHA}"
+            git fetch --depth=1 origin "${ref}"
+            git checkout --force FETCH_HEAD
+            exit 0
+          fi
+          git checkout --force refs/remotes/origin/checkout
+
+      - name: Verify manual cloud gate SHA
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          set -euo pipefail
+          actual_head_sha="$(git rev-parse HEAD)"
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_head_sha must be a lowercase 40-character Git SHA."
+            exit 1
+          fi
+          if [ "$actual_head_sha" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Cloud handoff mismatch: expected $EXPECTED_HEAD_SHA, checked out $actual_head_sha."
+            exit 1
+          fi
+          echo "Verified exact cloud handoff SHA: $actual_head_sha"
+
+      - name: Collect PR changed files
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const fs = require('fs');
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            fs.mkdirSync('.ci-logs', { recursive: true });
+            fs.writeFileSync(
+              '.ci-logs/changed-files.txt',
+              files.map((file) => file.filename).join('\n') + '\n',
+            );
+
+      - name: Classify CI scope
+        id: changes
+        shell: bash
+        env:
+          FORCE_ALL: ${{ github.event_name != 'pull_request' }}
+        run: |
+          mkdir -p .ci-logs
+          touch .ci-logs/changed-files.txt
+          args=()
+          if [ "$FORCE_ALL" = "true" ]; then
+            args+=(--all)
+          fi
+          python scripts/classify_ci_changes.py \
+            --changed-files .ci-logs/changed-files.txt \
+            --github-output "$GITHUB_OUTPUT" \
+            "${args[@]}"
+
+      - name: Setup Flutter
+        if: steps.changes.outputs.flutter == 'true'
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x' # 指定のバージョンに戻しました
+
+      - name: Get Flutter version
+        if: steps.changes.outputs.flutter == 'true'
+        run: flutter --version
+
+      - name: Cache Flutter pub
+        if: steps.changes.outputs.flutter == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Install dependencies
+        id: flutter_dependencies
+        if: steps.changes.outputs.flutter == 'true'
+        run: flutter pub get
+
+      - name: Run VM tests
+        if: steps.changes.outputs.flutter == 'true'
+        id: flutter_test
+        # Keep coverage while bounding Dart VM workers on Windows-sized runners.
+        run: python scripts/run_vm_test_shard.py --total-shards=2 --shard-index=${{ matrix.shard }}
+        continue-on-error: false  # VSCode S21: 9 test files @TestOn('browser') 追加で VM contamination 完全解消
+
+      - name: Upload VM shard coverage
+        if: success() && steps.changes.outputs.flutter == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: vm-coverage-${{ matrix.shard }}
+          include-hidden-files: true
+          path: |
+            coverage/lcov.info
+            .ci-logs/vm-shard.json
+            .ci-logs/vm-events.jsonl
+          if-no-files-found: error
+
+      - name: VM shard summary
+        if: always()
+        env:
+          CI_STEPS_JSON: ${{ toJSON(steps) }}
+        run: python scripts/ci_job_summary.py
+
+  ci-complete:
+    # Keep the protected check name; no failed/cancelled shard may turn green.
+    name: Lint, Format, and Test
+    needs: [lint-and-test, vm-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Require every parallel check
+        env:
+          STATIC_RESULT: ${{ needs.lint-and-test.result }}
+          VM_RESULT: ${{ needs.vm-tests.result }}
+        run: |
+          test "$STATIC_RESULT" = success
+          test "$VM_RESULT" = success
 
   actionlint:
     name: GitHub Actions syntax
@@ -621,7 +902,7 @@ jobs:
     timeout-minutes: 5
     name: PR Comment
     runs-on: ubuntu-latest
-    needs: [lint-and-test, security-check]
+    needs: [lint-and-test, vm-tests, ci-complete, security-check]
     if: github.event_name == 'pull_request' && always()
     permissions:
       pull-requests: write
@@ -630,7 +911,7 @@ jobs:
       - name: Download analyzer evidence
         if: needs.lint-and-test.outputs.analyzer_evidence_uploaded == 'true'
         continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: analyzer-evidence
           path: .ci-logs/analyzer
@@ -643,7 +924,7 @@ jobs:
           script: |
             const fs = require('fs');
             const passed =
-              '${{ needs.lint-and-test.result }}' === 'success' &&
+              '${{ needs.ci-complete.result }}' === 'success' &&
               '${{ needs.security-check.result }}' === 'success';
             let body = passed
               ? '✅ 変更パスに対応するCIチェックが通過しました。不要なFlutter・Web・Deno処理はスキップされています。'

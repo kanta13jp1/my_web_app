@@ -209,6 +209,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       _officialEndorsements.formerCount;
   int get dpjOfficialEndorsementPrefectureCount =>
       _officialEndorsements.prefectureCount;
+  int get dpjOfficialEndorsementPrefecturalTotal =>
+      _officialEndorsements.prefecturalCount;
+  int get dpjOfficialEndorsementMunicipalTotal =>
+      _officialEndorsements.municipalCount;
   int get dpjOfficialRecommendationEntryCount =>
       _officialEndorsements.recommendationCount;
   String get dpjLocalElectionOfficialListAsOf =>
@@ -5078,6 +5082,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final incumbent = dpjOfficialEndorsementIncumbentTotal;
     final newcomer = dpjOfficialEndorsementNewcomerTotal;
     final former = dpjOfficialEndorsementFormerTotal;
+    final prefectural = dpjOfficialEndorsementPrefecturalTotal;
+    final municipal = dpjOfficialEndorsementMunicipalTotal;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -5144,10 +5150,34 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
             ],
           ),
+          if (prefectural + municipal > 0) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (prefectural > 0)
+                  _buildMiniStatChip(
+                    '都道府県議',
+                    prefectural,
+                    color: const Color(0xFF0EA5E9),
+                    suffix: '件',
+                  ),
+                if (municipal > 0)
+                  _buildMiniStatChip(
+                    '市区町村議',
+                    municipal,
+                    color: const Color(0xFF16A34A),
+                    suffix: '件',
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 8),
           Text(
             '党公式一覧で「公認」と明記された掲載行を集計しています(擁立目標とは別)。'
-            '推薦$dpjOfficialRecommendationEntryCount件は含めず、公式表の表記を独自補正していません。',
+            '推薦$dpjOfficialRecommendationEntryCount件は含めず、公式表の表記を独自補正していません。'
+            '${prefectural + municipal > 0 ? '都道府県議/市区町村議の内訳は選挙名から判定できた掲載行のみを集計しています。' : ''}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -5196,6 +5226,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     const color = Color(0xFF1D4ED8);
     final breakdown =
         endorsement.hasBreakdown ? ' (${endorsement.breakdownLabel})' : '';
+    final assemblyBreakdown = endorsement.hasAssemblyBreakdown
+        ? ' [${endorsement.assemblyBreakdownLabel}]'
+        : '';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
@@ -5205,7 +5238,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       ),
       child: Text(
         '${endorsement.prefecture} ${_formatInt(endorsement.totalCount)}件'
-        '$breakdown',
+        '$breakdown$assemblyBreakdown',
         style: const TextStyle(
           color: color,
           fontSize: 12,

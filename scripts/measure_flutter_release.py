@@ -1,0 +1,101 @@
+"""Cloud-only release artifact comparison; never publishes to production."""
+import argparse
+import gzip
+import hashlib
+import json
+import os
+import re
+from pathlib import Path
+import subprocess
+import sys
+import time
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--entry', choices=['normal', 'isolated'], required=True)
+    args = parser.parse_args()
+    if sys.platform != 'linux' or os.environ.get('GITHUB_ACTIONS') != 'true':
+        raise SystemExit('Release measurement requires an isolated Linux GitHub runner')
+    root = Path(__file__).resolve().parents[1]
+    output = root / '.ci-logs/release-prototype'
+    output.mkdir(parents=True, exist_ok=True)
+    target = 'lib/main.dart' if args.entry == 'normal' else 'test/fixtures/echo_pump_app.dart'
+    command = ['flutter', 'build', 'web', '--release', '--pwa-strategy=none',
+               '--no-web-resources-cdn', '--base-href=/prototype/echo-pump/',
+               '--target=' + target, '--dart-define=ENVIRONMENT=development',
+               '--dart-define=SUPABASE_URL=http://127.0.0.1:7366',
+               '--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_local_benchmark_only']
+    report = {'schema': 1, 'entry': args.entry, 'head_sha': os.environ['GITHUB_SHA'],
+              'command': command, 'result': 'failure',
+              'conditions': {'mode': 'release', 'samples': 1, 'fresh_runner': True,
+                             'dependencies_and_queue_excluded': True,
+                             'backend': 'loopback synthetic only', 'production_published': False}}
+    index_path = root / 'web/index.html'
+    original_index = index_path.read_bytes()
+    index = original_index.decode('utf-8')
+    matches = re.findall(r'<base\s+href=["\'][^"\']*["\']\s*/?>', index)
+    if len(matches) != 1:
+        raise SystemExit('Expected exactly one base href before temporary build configuration')
+    index = index.replace(matches[0], '<base href="$FLUTTER_BASE_HREF">')
+    # A separate app needs an explicit host return, independent of router history.
+    return_link = ('<header style="position:fixed;top:0;left:0;right:0;height:44px;'
+                   'z-index:2147483647;display:flex;align-items:center;'
+                   'justify-content:flex-end;background:#eef4f5;padding:0 12px">'
+                   '<a id="prototype-host-return" href="/" '
+                   'style="color:#123;font:14px sans-serif">'
+                   '\u5165\u53e3\u3078\u623b\u308b</a></header>'
+                   '<div id="prototype-app-host" '
+                   'style="position:fixed;top:44px;bottom:0;left:0;right:0"></div>')
+    index = index.replace('<body>', '<body>' + return_link)
+    bootstrap_path = root / 'web/flutter_bootstrap.js'
+    original_bootstrap = bootstrap_path.read_bytes() if bootstrap_path.exists() else None
+    bootstrap_path.write_text('''{{flutter_js}}
+{{flutter_build_config}}
+_flutter.loader.load({
+  onEntrypointLoaded: async function(initializer) {
+    const app = await initializer.initializeEngine({
+      hostElement: document.getElementById('prototype-app-host')
+    });
+    await app.runApp();
+  }
+});
+''', encoding='utf-8')
+    report['conditions']['host_return'] = 'explicit same-origin host link; not browser history'
+    report['source_index_before'] = hashlib.sha256(original_index).hexdigest()
+    index_path.write_text(index, encoding='utf-8')
+    start = time.monotonic()
+    try:
+        with (output / 'build.log').open('w') as log:
+            code = subprocess.call(command, cwd=root, stdout=log, stderr=subprocess.STDOUT)
+        report['build_seconds'] = time.monotonic() - start
+    finally:
+        index_path.write_bytes(original_index)
+        report['source_index_restored'] = index_path.read_bytes() == original_index
+        if original_bootstrap is None:
+            bootstrap_path.unlink()
+        else:
+            bootstrap_path.write_bytes(original_bootstrap)
+        report['source_bootstrap_restored'] = (not bootstrap_path.exists() if original_bootstrap is None
+                                               else bootstrap_path.read_bytes() == original_bootstrap)
+    report['exit_code'] = code
+    if code == 0:
+        web = root / 'build/web'
+        files = []
+        for item in sorted(web.rglob('*')):
+            if item.is_file():
+                data = item.read_bytes()
+                files.append({'path': item.relative_to(web).as_posix(), 'bytes': len(data),
+                              'sha256': hashlib.sha256(data).hexdigest()})
+        main_js = (web / 'main.dart.js').read_bytes()
+        report.update(result='success', files=files, file_count=len(files),
+                      total_bytes=sum(f['bytes'] for f in files),
+                      asset_bytes=sum(f['bytes'] for f in files if f['path'].startswith('assets/')),
+                      main_js_bytes=len(main_js), main_js_gzip_bytes=len(gzip.compress(main_js, mtime=0)))
+    (output / 'BUILD.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+    print(json.dumps({k: v for k, v in report.items() if k not in ['files', 'command']}))
+    raise SystemExit(code)
+
+
+if __name__ == '__main__':
+    main()

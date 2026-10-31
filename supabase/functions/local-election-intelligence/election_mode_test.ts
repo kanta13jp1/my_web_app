@@ -125,6 +125,8 @@ Deno.test("local snapshot resolves goal progress and official achievements", () 
       formerCount: 9,
       recommendationCount: 9,
       prefectureCount: 0,
+      prefecturalCount: 0,
+      municipalCount: 0,
       prefectures: [],
     },
     officialCurrentLocalMembers: 360,

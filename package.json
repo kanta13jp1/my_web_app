@@ -2,6 +2,7 @@
   "private": true,
   "scripts": {
     "e2e": "playwright test",
+    "e2e:business-execution": "playwright test --config=playwright.business-execution.config.ts",
     "e2e:smoke": "playwright test test/e2e/public_smoke.spec.ts test/e2e/generated/public_no_signup_trial.spec.ts",
     "e2e:agents": "playwright test test/e2e/generated/public_no_signup_trial.spec.ts",
     "e2e:visual": "playwright test test/e2e/visual_evidence.spec.ts",
@@ -16,7 +17,7 @@
     "quality:no-verify": "python scripts/check_no_verify_bypass.py --range HEAD~1..HEAD"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0",
-    "lefthook": "^2.1.14"
+    "@playwright/test": "^1.64.0",
+    "lefthook": "^2.2.1"
   }
 }

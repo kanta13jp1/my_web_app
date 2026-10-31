@@ -275,17 +275,15 @@ class KonbiniUdonChallengeService {
 
   Future<KonbiniUdonChallengeSnapshot> loadSnapshot({
     required double remainingDebt,
+    bool debtFullyVerified = false,
     SharedPreferences? prefs,
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     final now = _now();
     final history = _readHistory(store.getString(_historyKey));
-    final isReleased = remainingDebt <= 0;
+    // A partial or empty balance list is not evidence of full repayment.
+    final isReleased = debtFullyVerified && remainingDebt <= 0;
     final storedEnabled = store.getBool(_enabledKey) ?? false;
-
-    if (isReleased && storedEnabled) {
-      await store.setBool(_enabledKey, false);
-    }
 
     final todayRecord = history[_dateKey(now)] ?? _emptyDayRecord();
 

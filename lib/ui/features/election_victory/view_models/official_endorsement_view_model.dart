@@ -39,7 +39,9 @@ class OfficialEndorsementViewModel extends ChangeNotifier {
         current.newcomerCount == next.newcomerCount &&
         current.formerCount == next.formerCount &&
         current.recommendationCount == next.recommendationCount &&
-        current.prefectureCount == next.prefectureCount;
+        current.prefectureCount == next.prefectureCount &&
+        current.prefecturalCount == next.prefecturalCount &&
+        current.municipalCount == next.municipalCount;
     if (!summariesMatch ||
         current.prefectures.length != next.prefectures.length) {
       return false;
@@ -51,7 +53,10 @@ class OfficialEndorsementViewModel extends ChangeNotifier {
           currentPrefecture.totalCount != nextPrefecture.totalCount ||
           currentPrefecture.incumbentCount != nextPrefecture.incumbentCount ||
           currentPrefecture.newcomerCount != nextPrefecture.newcomerCount ||
-          currentPrefecture.formerCount != nextPrefecture.formerCount) {
+          currentPrefecture.formerCount != nextPrefecture.formerCount ||
+          currentPrefecture.prefecturalCount !=
+              nextPrefecture.prefecturalCount ||
+          currentPrefecture.municipalCount != nextPrefecture.municipalCount) {
         return false;
       }
     }

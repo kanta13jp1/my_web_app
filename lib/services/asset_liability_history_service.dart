@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 
 import '../models/asset_liability_workbook.dart';
 import 'asset_liability_planning_service.dart';
+import 'asset_snapshot_calendar.dart';
 
 class AssetLiabilityHistoryService {
   const AssetLiabilityHistoryService();
@@ -57,10 +58,14 @@ class AssetLiabilityHistoryService {
   ) {
     final sorted = List<AssetLiabilityMonthlySnapshot>.from(snapshots)
       ..sort((a, b) => a.monthKey.compareTo(b.monthKey));
+    final byMonth = {
+      for (final snapshot in sorted) snapshot.monthKey: snapshot,
+    };
     final comparisons = <AssetLiabilityMonthlySnapshotComparison>[];
     for (var index = 0; index < sorted.length; index++) {
       final current = sorted[index];
-      final previous = index == 0 ? null : sorted[index - 1];
+      final previous =
+          byMonth[previousSnapshotCalendarMonthKey(current.monthKey)];
       comparisons.add(
         AssetLiabilityMonthlySnapshotComparison(
           snapshot: current,
@@ -124,11 +129,16 @@ class AssetLiabilityHistoryService {
     String label,
     double Function(AssetLiabilityMonthlySnapshot snapshot) valueOf,
   ) {
+    final byMonth = {
+      for (final snapshot in snapshots) snapshot.monthKey: snapshot,
+    };
     final points = <AssetLiabilityMonthlyChartPoint>[];
     for (var index = 0; index < snapshots.length; index++) {
       final current = snapshots[index];
       final value = valueOf(current);
-      final previousValue = index == 0 ? null : valueOf(snapshots[index - 1]);
+      final previous =
+          byMonth[previousSnapshotCalendarMonthKey(current.monthKey)];
+      final previousValue = previous == null ? null : valueOf(previous);
       final delta = previousValue == null ? null : value - previousValue;
       points.add(
         AssetLiabilityMonthlyChartPoint(
@@ -177,11 +187,13 @@ class AssetLiabilityHistoryService {
         '期限超過件数',
         'actual_paid_payment_total',
         'payment_difference_total',
+        'securities_total',
+        'monthly_received_income_total',
       ],
       for (final snapshot in sorted)
         <Object?>[
           snapshot.monthKey,
-          DateFormat('yyyy-MM-dd HH:mm:ss').format(snapshot.savedAt),
+          snapshot.savedAt.toUtc().toIso8601String(),
           snapshot.positiveAssetTotal,
           snapshot.liabilityTotal,
           snapshot.netWorth,
@@ -192,6 +204,8 @@ class AssetLiabilityHistoryService {
           snapshot.overduePaymentCount,
           snapshot.monthlyActualPaymentTotal,
           snapshot.monthlyPaymentDifferenceTotal,
+          snapshot.securitiesTotal,
+          snapshot.monthlyReceivedIncomeTotal,
         ],
     ]);
   }

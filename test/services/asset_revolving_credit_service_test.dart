@@ -80,5 +80,62 @@ void main() {
       expect(billing.billedAmount, 30000);
       expect(billing.paymentDay, 25);
     });
+
+    test('取込明細がある場合、各明細行の内訳とカバー状況ステータスを生成する', () {
+      final billing = service.computeBilling(
+        balance: 200000,
+        config: const AssetLiabilityRevolvingCreditConfig(monthlyAmount: 10000),
+        statementLines: const <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_1',
+            billingAccountId: 'card_1',
+            billingAccountName: 'カード',
+            postedAt: null,
+            description: 'スーパー食費',
+            amount: 5000,
+          ),
+          AssetLiabilityCardStatementLine(
+            id: 'line_2',
+            billingAccountId: 'card_1',
+            billingAccountName: 'カード',
+            postedAt: null,
+            description: '家電購入',
+            amount: 25000,
+          ),
+        ],
+        newUsageAmount: 30000,
+        scheduledPayment:
+            20000, // 最低返済10000 + 新規返済枠10000 (line_1はカバー、line_2は不足)
+      );
+
+      expect(billing.hasImportedStatement, isTrue);
+      expect(billing.usageItems, hasLength(2));
+      expect(billing.usageItems[0].description, 'スーパー食費');
+      expect(
+        billing.usageItems[0].status,
+        AssetLiabilityRevolvingUsageStatus.covered,
+      );
+      expect(billing.usageItems[0].statusLabel, '今月返済でカバー');
+
+      expect(billing.usageItems[1].description, '家電購入');
+      expect(
+        billing.usageItems[1].status,
+        AssetLiabilityRevolvingUsageStatus.uncoveredShortfall,
+      );
+      expect(billing.usageItems[1].statusLabel, contains('不足'));
+    });
+
+    test('明細未取込で手入力設定がある場合、未取込フラグと手入力アイテムを保持する', () {
+      final billing = service.computeBilling(
+        balance: 100000,
+        config: const AssetLiabilityRevolvingCreditConfig(
+          monthlyAmount: 10000,
+          newUsageAmount: 6000,
+        ),
+      );
+      expect(billing.hasImportedStatement, isFalse);
+      expect(billing.usageItems, hasLength(1));
+      expect(billing.usageItems.first.id, 'manual_usage');
+    });
   });
 }

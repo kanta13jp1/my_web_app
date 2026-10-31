@@ -1,0 +1,738 @@
+{
+  "schema": "instruction-evidence-v1",
+  "recordedDate": "2026-09-22",
+  "exportedDate": "2026-10-03",
+  "sourceCommit": "432d28c6531708d045a6646f6bf19b3c1a84b4ed",
+  "prompt": "Without calling any tools, print only the values of every LOADMARK line present in your project instruction context, one per line. If there are none, print NONE. Do not guess and do not describe files.",
+  "flags": [
+    "--model",
+    "claude-sonnet-5",
+    "--effort",
+    "low",
+    "--setting-sources",
+    "project,local",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "{\"mcpServers\":{}}",
+    "--disable-slash-commands",
+    "--tools",
+    "",
+    "--permission-mode",
+    "dontAsk",
+    "--no-session-persistence",
+    "--max-budget-usd",
+    "1",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--no-chrome"
+  ],
+  "marks": {
+    "C": "LOADMARK_C_4f12c8a7",
+    "A": "LOADMARK_A_79bd0e31"
+  },
+  "records": [
+    {
+      "id": "old-N",
+      "condition": "N",
+      "startedAt": "2026-09-22T10:46:31.212368+00:00",
+      "version": "2.1.170",
+      "model": "claude-sonnet-5",
+      "effort": "low",
+      "fixture": {},
+      "settings": {},
+      "answer": "NONE",
+      "sourceEventCount": 4,
+      "omittedEventTypes": [
+        "rate_limit_event"
+      ],
+      "toolCalls": [],
+      "availableTools": [],
+      "exitCode": 0,
+      "timeout": false,
+      "events": [
+        {
+          "sourceLine": 1,
+          "event": {
+            "type": "system",
+            "subtype": "init",
+            "tools": [],
+            "model": "claude-sonnet-5",
+            "claude_code_version": "2.1.170"
+          }
+        },
+        {
+          "sourceLine": 3,
+          "event": {
+            "type": "assistant",
+            "message": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "NONE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "sourceLine": 4,
+          "event": {
+            "type": "result",
+            "subtype": "success",
+            "is_error": false,
+            "result": "NONE",
+            "num_turns": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "old-C",
+      "condition": "C",
+      "startedAt": "2026-09-22T10:46:33.810934+00:00",
+      "version": "2.1.170",
+      "model": "claude-sonnet-5",
+      "effort": "low",
+      "fixture": {
+        "CLAUDE.md": "LOADMARK: LOADMARK_C_4f12c8a7\n"
+      },
+      "settings": {},
+      "answer": "LOADMARK_C_4f12c8a7",
+      "sourceEventCount": 4,
+      "omittedEventTypes": [
+        "rate_limit_event"
+      ],
+      "toolCalls": [],
+      "availableTools": [],
+      "exitCode": 0,
+      "timeout": false,
+      "events": [
+        {
+          "sourceLine": 1,
+          "event": {
+            "type": "system",
+            "subtype": "init",
+            "tools": [],
+            "model": "claude-sonnet-5",
+            "claude_code_version": "2.1.170"
+          }
+        },
+        {
+          "sourceLine": 3,
+          "event": {
+            "type": "assistant",
+            "message": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "LOADMARK_C_4f12c8a7"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "sourceLine": 4,
+          "event": {
+            "type": "result",
+            "subtype": "success",
+            "is_error": false,
+            "result": "LOADMARK_C_4f12c8a7",
+            "num_turns": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "old-A",
+      "condition": "A",
+      "startedAt": "2026-09-22T10:46:36.536623+00:00",
+      "version": "2.1.170",
+      "model": "claude-sonnet-5",
+      "effort": "low",
+      "fixture": {
+        "AGENTS.md": "LOADMARK: LOADMARK_A_79bd0e31\n"
+      },
+      "settings": {},
+      "answer": "NONE",
+      "sourceEventCount": 4,
+      "omittedEventTypes": [
+        "rate_limit_event"
+      ],
+      "toolCalls": [],
+      "availableTools": [],
+      "exitCode": 0,
+      "timeout": false,
+      "events": [
+        {
+          "sourceLine": 1,
+          "event": {
+            "type": "system",
+            "subtype": "init",
+            "tools": [],
+            "model": "claude-sonnet-5",
+            "claude_code_version": "2.1.170"
+          }
+        },
+        {
+          "sourceLine": 3,
+          "event": {
+            "type": "assistant",
+            "message": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "NONE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "sourceLine": 4,
+          "event": {
+            "type": "result",
+            "subtype": "success",
+            "is_error": false,
+            "result": "NONE",
+            "num_turns": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "old-B",
+      "condition": "B",
+      "startedAt": "2026-09-22T10:46:39.542998+00:00",
+      "version": "2.1.170",
+      "model": "claude-sonnet-5",
+      "effort": "low",
+      "fixture": {
+        "CLAUDE.md": "LOADMARK: LOADMARK_C_4f12c8a7\n",
+        "AGENTS.md": "LOADMARK: LOADMARK_A_79bd0e31\n"
+      },
+      "settings": {},
+      "answer": "LOADMARK_C_4f12c8a7",
+      "sourceEventCount": 4,
+      "omittedEventTypes": [
+        "rate_limit_event"
+      ],
+      "toolCalls": [],
+      "availableTools": [],
+      "exitCode": 0,
+      "timeout": false,
+      "events": [
+        {
+          "sourceLine": 1,
+          "event": {
+            "type": "system",
+            "subtype": "init",
+            "tools": [],
+            "model": "claude-sonnet-5",
+            "claude_code_version": "2.1.170"
+          }
+        },
+        {
+          "sourceLine": 3,
+          "event": {
+            "type": "assistant",
+            "message": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "LOADMARK_C_4f12c8a7"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "sourceLine": 4,
+          "event": {
+            "type": "result",
+            "subtype": "success",
+            "is_error": false,
+            "result": "LOADMARK_C_4f12c8a7",
+            "num_turns": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "old-I",
+      "condition": "I",
+      "startedAt": "2026-09-22T10:46:42.412844+00:00",
+      "version": "2.1.170",
+      "model": "claude-sonnet-5",
+      "effort": "low",
+      "fixture": {
+        "AGENTS.md": "LOADMARK: LOADMARK_A_79bd0e31\n",
+        "CLAUDE.md": "@AGENTS.md\nLOADMARK: LOADMARK_C_4f12c8a7\n"
+      },
+      "settings": {},
+      "answer": "LOADMARK_C_4f12c8a7\nLOADMARK_A_79bd0e31",
+      "sourceEventCount": 4,
+      "omittedEventTypes": [
+        "rate_limit_event"
+      ],
+      "toolCalls": [],
+      "availableTools": [],
+      "exitCode": 0,
+      "timeout": false,
+      "events": [
+        {
+          "sourceLine": 1,
+          "event": {
+            "type": "system",
+            "subtype": "init",
+            "tools": [],
+            "model": "claude-sonnet-5",
+            "claude_code_version": "2.1.170"
+          }
+        },
+        {
+          "sourceLine": 3,
+          "event": {
+            "type": "assistant",
+            "message": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "LOADMARK_C_4f12c8a7\nLOADMARK_A_79bd0e31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "sourceLine": 4,
+          "event": {
+            "type": "result",
+            "subtype": "success",
+            "is_error": false,
+            "result": "LOADMARK_C_4f12c8a7\nLOADMARK_A_79bd0e31",
+            "num_turns": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "old-E",
+      "condition": "E",
+      "startedAt": "2026-09-22T10:46:45.042435+00:00",
+      "version": "2.1.170",
+      "model": "claude-sonnet-5",
+      "effort": "low",
+      "fixture": {
+        "CLAUDE.md": "LOADMARK: LOADMARK_C_4f12c8a7\n",
+        "AGENTS.md": "LOADMARK: LOADMARK_A_79bd0e31\n"
+      },
+      "settings": {
+        "pluginConfigs": {
+          "agents-md@builtin": {
+            "options": {
+              "instructionFiles": "claude-md-and-agents-md"
+            }
+          }
+        }
+      },
+      "answer": "LOADMARK_C_4f12c8a7",
+      "sourceEventCount": 4,
+      "omittedEventTypes": [
+        "rate_limit_event"
+      ],
+      "toolCalls": [],
+      "availableTools": [],
+      "exitCode": 0,
+      "timeout": false,
+      "events": [
+        {
+          "sourceLine": 1,
+          "event": {
+            "type": "system",
+            "subtype": "init",
+            "tools": [],
+            "model": "claude-sonnet-5",
+            "claude_code_version": "2.1.170"
+          }
+        },
+        {
+          "sourceLine": 3,
+          "event": {
+            "type": "assistant",
+            "message": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "LOADMARK_C_4f12c8a7"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "sourceLine": 4,
+          "event": {
+            "type": "result",
+            "subtype": "success",
+            "is_error": false,
+            "result": "LOADMARK_C_4f12c8a7",
+            "num_turns": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "new-N",
+      "condition": "N",
+      "startedAt": "2026-09-22T10:46:47.790799+00:00",
+      "version": "2.1.278",
+      "model": "claude-sonnet-5",
+      "effort": "low",
+      "fixture": {},
+      "settings": {},
+      "answer": "NONE",
+      "sourceEventCount": 4,
+      "omittedEventTypes": [
+        "rate_limit_event"
+      ],
+      "toolCalls": [],
+      "availableTools": [],
+      "exitCode": 0,
+      "timeout": false,
+      "events": [
+        {
+          "sourceLine": 1,
+          "event": {
+            "type": "system",
+            "subtype": "init",
+            "tools": [],
+            "model": "claude-sonnet-5",
+            "claude_code_version": "2.1.278"
+          }
+        },
+        {
+          "sourceLine": 2,
+          "event": {
+            "type": "assistant",
+            "message": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "NONE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "sourceLine": 4,
+          "event": {
+            "type": "result",
+            "subtype": "success",
+            "is_error": false,
+            "result": "NONE",
+            "num_turns": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "new-C",
+      "condition": "C",
+      "startedAt": "2026-09-22T10:46:50.482003+00:00",
+      "version": "2.1.278",
+      "model": "claude-sonnet-5",
+      "effort": "low",
+      "fixture": {
+        "CLAUDE.md": "LOADMARK: LOADMARK_C_4f12c8a7\n"
+      },
+      "settings": {},
+      "answer": "LOADMARK_C_4f12c8a7",
+      "sourceEventCount": 4,
+      "omittedEventTypes": [
+        "rate_limit_event"
+      ],
+      "toolCalls": [],
+      "availableTools": [],
+      "exitCode": 0,
+      "timeout": false,
+      "events": [
+        {
+          "sourceLine": 1,
+          "event": {
+            "type": "system",
+            "subtype": "init",
+            "tools": [],
+            "model": "claude-sonnet-5",
+            "claude_code_version": "2.1.278"
+          }
+        },
+        {
+          "sourceLine": 2,
+          "event": {
+            "type": "assistant",
+            "message": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "LOADMARK_C_4f12c8a7"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "sourceLine": 4,
+          "event": {
+            "type": "result",
+            "subtype": "success",
+            "is_error": false,
+            "result": "LOADMARK_C_4f12c8a7",
+            "num_turns": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "new-A",
+      "condition": "A",
+      "startedAt": "2026-09-22T10:46:52.981545+00:00",
+      "version": "2.1.278",
+      "model": "claude-sonnet-5",
+      "effort": "low",
+      "fixture": {
+        "AGENTS.md": "LOADMARK: LOADMARK_A_79bd0e31\n"
+      },
+      "settings": {},
+      "answer": "NONE",
+      "sourceEventCount": 4,
+      "omittedEventTypes": [
+        "rate_limit_event"
+      ],
+      "toolCalls": [],
+      "availableTools": [],
+      "exitCode": 0,
+      "timeout": false,
+      "events": [
+        {
+          "sourceLine": 1,
+          "event": {
+            "type": "system",
+            "subtype": "init",
+            "tools": [],
+            "model": "claude-sonnet-5",
+            "claude_code_version": "2.1.278"
+          }
+        },
+        {
+          "sourceLine": 2,
+          "event": {
+            "type": "assistant",
+            "message": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "NONE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "sourceLine": 4,
+          "event": {
+            "type": "result",
+            "subtype": "success",
+            "is_error": false,
+            "result": "NONE",
+            "num_turns": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "new-B",
+      "condition": "B",
+      "startedAt": "2026-09-22T10:46:57.672319+00:00",
+      "version": "2.1.278",
+      "model": "claude-sonnet-5",
+      "effort": "low",
+      "fixture": {
+        "CLAUDE.md": "LOADMARK: LOADMARK_C_4f12c8a7\n",
+        "AGENTS.md": "LOADMARK: LOADMARK_A_79bd0e31\n"
+      },
+      "settings": {},
+      "answer": "LOADMARK_C_4f12c8a7",
+      "sourceEventCount": 4,
+      "omittedEventTypes": [
+        "rate_limit_event"
+      ],
+      "toolCalls": [],
+      "availableTools": [],
+      "exitCode": 0,
+      "timeout": false,
+      "events": [
+        {
+          "sourceLine": 1,
+          "event": {
+            "type": "system",
+            "subtype": "init",
+            "tools": [],
+            "model": "claude-sonnet-5",
+            "claude_code_version": "2.1.278"
+          }
+        },
+        {
+          "sourceLine": 2,
+          "event": {
+            "type": "assistant",
+            "message": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "LOADMARK_C_4f12c8a7"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "sourceLine": 4,
+          "event": {
+            "type": "result",
+            "subtype": "success",
+            "is_error": false,
+            "result": "LOADMARK_C_4f12c8a7",
+            "num_turns": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "new-I",
+      "condition": "I",
+      "startedAt": "2026-09-22T10:47:00.155456+00:00",
+      "version": "2.1.278",
+      "model": "claude-sonnet-5",
+      "effort": "low",
+      "fixture": {
+        "AGENTS.md": "LOADMARK: LOADMARK_A_79bd0e31\n",
+        "CLAUDE.md": "@AGENTS.md\nLOADMARK: LOADMARK_C_4f12c8a7\n"
+      },
+      "settings": {},
+      "answer": "LOADMARK_C_4f12c8a7\nLOADMARK_A_79bd0e31",
+      "sourceEventCount": 4,
+      "omittedEventTypes": [
+        "rate_limit_event"
+      ],
+      "toolCalls": [],
+      "availableTools": [],
+      "exitCode": 0,
+      "timeout": false,
+      "events": [
+        {
+          "sourceLine": 1,
+          "event": {
+            "type": "system",
+            "subtype": "init",
+            "tools": [],
+            "model": "claude-sonnet-5",
+            "claude_code_version": "2.1.278"
+          }
+        },
+        {
+          "sourceLine": 2,
+          "event": {
+            "type": "assistant",
+            "message": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "LOADMARK_C_4f12c8a7\nLOADMARK_A_79bd0e31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "sourceLine": 4,
+          "event": {
+            "type": "result",
+            "subtype": "success",
+            "is_error": false,
+            "result": "LOADMARK_C_4f12c8a7\nLOADMARK_A_79bd0e31",
+            "num_turns": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "new-E",
+      "condition": "E",
+      "startedAt": "2026-09-22T10:47:03.624357+00:00",
+      "version": "2.1.278",
+      "model": "claude-sonnet-5",
+      "effort": "low",
+      "fixture": {
+        "CLAUDE.md": "LOADMARK: LOADMARK_C_4f12c8a7\n",
+        "AGENTS.md": "LOADMARK: LOADMARK_A_79bd0e31\n"
+      },
+      "settings": {
+        "pluginConfigs": {
+          "agents-md@builtin": {
+            "options": {
+              "instructionFiles": "claude-md-and-agents-md"
+            }
+          }
+        }
+      },
+      "answer": "LOADMARK_C_4f12c8a7\nLOADMARK_A_79bd0e31",
+      "sourceEventCount": 4,
+      "omittedEventTypes": [
+        "rate_limit_event"
+      ],
+      "toolCalls": [],
+      "availableTools": [],
+      "exitCode": 0,
+      "timeout": false,
+      "events": [
+        {
+          "sourceLine": 1,
+          "event": {
+            "type": "system",
+            "subtype": "init",
+            "tools": [],
+            "model": "claude-sonnet-5",
+            "claude_code_version": "2.1.278"
+          }
+        },
+        {
+          "sourceLine": 2,
+          "event": {
+            "type": "assistant",
+            "message": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "LOADMARK_C_4f12c8a7\nLOADMARK_A_79bd0e31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "sourceLine": 4,
+          "event": {
+            "type": "result",
+            "subtype": "success",
+            "is_error": false,
+            "result": "LOADMARK_C_4f12c8a7\nLOADMARK_A_79bd0e31",
+            "num_turns": 1
+          }
+        }
+      ]
+    }
+  ]
+}

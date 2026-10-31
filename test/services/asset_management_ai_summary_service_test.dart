@@ -13,6 +13,76 @@ void main() {
   group('AssetManagementAiSummaryService', () {
     setUp(AiHubChatQuotaGuard.resetForTesting);
 
+    test(
+        'payment groups reject mixed counts and totals but accept exact values',
+        () async {
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 10000,
+          'Yesterday': -1000,
+          'Today': -100,
+          'Tomorrow': -200,
+        },
+        baseDate: DateTime(2026, 10, 12),
+        paymentDayOverrides: const <String, int>{
+          'Yesterday': 11,
+          'Today': 12,
+          'Tomorrow': 13,
+        },
+        monthlyPaymentOverrides: const <String, double>{
+          'Yesterday': 1000,
+          'Today': 100,
+          'Tomorrow': 200,
+        },
+      );
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+      );
+      final prompt = const AssetManagementInsightPromptBuilder()
+          .buildDetailedAdvicePrompt(report);
+      expect(prompt, contains('期限超過: 1件 / 合計 1000円'));
+      expect(prompt, contains('本日期日: 1件 / 合計 100円'));
+      expect(prompt, contains('今後の支払い: 1件 / 合計 200円'));
+      final overdueIds = report.actionItems
+          .where(
+            (item) =>
+                item.type == AssetManagementInsightActionType.overduePayment,
+          )
+          .map((item) => item.relatedAccountId);
+      final todayId =
+          workbook.currentDebtRows.singleWhere((row) => row.name == 'Today').id;
+      expect(overdueIds, isNot(contains(todayId)));
+      for (final response in <String>[
+        '期限超過は2件、合計1,000円です。',
+        '期限超過は1件、合計1,100円です。',
+        'Todayは期限超過です。',
+        '期限超過は1件、合計1,000円です。本日期日は1件、合計100円です。',
+        'Todayは本日期日で、期限超過ではありません。',
+      ]) {
+        AiHubChatQuotaGuard.resetForTesting();
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (_) async => <String, dynamic>{
+              'success': true,
+              'text': response,
+              'provider': 'google',
+            },
+          ),
+        );
+        final result = await service.generateSummary(report: report);
+        final valid = response.startsWith('期限超過は1件、合計1,000円') ||
+            response.contains('期限超過ではありません');
+        final expectedStatus = valid
+            ? AssetManagementAiSummaryStatus.aiGenerated
+            : AssetManagementAiSummaryStatus.fallback;
+        expect(result.status, expectedStatus);
+        if (!valid) {
+          expect(result.text, contains('本日期日: 1件 / 合計 100円'));
+        }
+      }
+    });
+
     test('does not call ai-hub when feature flag is off', () async {
       var calls = 0;
       final service = AssetManagementAiSummaryService(
@@ -159,7 +229,7 @@ void main() {
       expect(prompt, isNot(contains('占いスタイル:')));
       expect(prompt, isNot(contains('時々笑える毒舌')));
       expect(prompt, isNot(contains('1. 宿命・本質')));
-      expect(service.buildPayload(_report())['response_policy_version'], 3);
+      expect(service.buildPayload(_report())['response_policy_version'], 4);
     });
 
     test('includes previous persisted analyses in the AI prompt', () async {
@@ -193,6 +263,7 @@ void main() {
       expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
       expect(message.contains('previous_ai_analyses'), true);
       expect(message.contains('これまでのAI分析履歴'), true);
+      expect(RegExp(r'"id":"history-1"').allMatches(message), hasLength(1));
       // 過去分析の本文(prose)は LLM へ渡さない (= 当時の期限超過/負の値を
       // 現在として再生産させないための物理除外)。
       expect(message.contains('前回は支払い確認と生活費確保'), false);

@@ -70,3 +70,8 @@ The recreation exposes an opt-in `prediction_v1` input profile. Baseline remains
 The supplied course-1 run is Jev-only: `right`, `right`, `right_run`, three applied answers, zero stale/failures and one pending cancellation. At the third arrival (frame178), gap119.02px; collision at frame218/x308.26 while the next reply was pending. Tests replay this state separately from live API evaluation.
 
 Local assistance now preserves running intent through jump/landing release. Item emergence lasts16 simulation frames before movement/collection, reversal produces one skid sound per braking episode, and the original soundtrack has distinct25%/50% pulse voices. This is an independent reconstruction, not an original ROM or sampled soundtrack.
+
+
+## Feedback revision (2026-09-22)
+
+Jump held at stomp contact produces a higher rebound; scores float after stomps and powerups. Fireballs hit at most one enemy, wall impacts render a short burst and original synthesized SE. Effects briefly lower the original BGM channel without lowering effect or recording volume. No original soundtrack is bundled. Stale Jev replies still release controls; local assistance only acts on rightward intent. This does not solve real-time latency or demonstrate a clear.

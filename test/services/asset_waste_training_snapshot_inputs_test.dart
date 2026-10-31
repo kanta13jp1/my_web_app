@@ -39,6 +39,25 @@ void main() {
     );
   }
 
+  test('sparse records do not turn unrecorded days into zero-waste days', () {
+    final snapshot = build([
+      flow('expense', 100, occurredAt: '2026-06-10T09:00:00'),
+      flow('expense', 200, occurredAt: '2026-06-10T12:00:00'),
+      flow(
+        'expense',
+        300,
+        occurredAt: '2026-06-12T09:00:00',
+        description: '#浪費',
+      ),
+      flow('expense', 400),
+      flow('expense', 500, occurredAt: '2026-06-20T09:00:00'),
+      flow('expense', 600, occurredAt: '2026-05-20T09:00:00'),
+    ]);
+    expect(snapshot.elapsedDays, 15);
+    expect(snapshot.recordedExpenseDays, 2);
+    expect(snapshot.noWasteDays, 1);
+  });
+
   test('aggregates expenses and waste, ignoring income/transfer', () {
     final snapshot = build([
       flow('expense', 1000, description: 'ランチ'),
@@ -83,9 +102,10 @@ void main() {
       ),
     ]);
 
-    // 浪費は2日 (10日・12日)。elapsedDays 15 → noWasteDays = 13。
+    // 記録のある2日はいずれも浪費分類あり。未記録13日は不明。
     expect(snapshot.wasteEntryCount, 3);
-    expect(snapshot.noWasteDays, 13);
+    expect(snapshot.noWasteDays, 0);
+    expect(snapshot.recordedExpenseDays, 2);
   });
 
   test('passes through lockdown metrics and clamps elapsedDays to >= 1', () {
@@ -99,7 +119,8 @@ void main() {
 
     expect(snapshot.totalExpense, 0);
     expect(snapshot.elapsedDays, 1); // 1日 → max(1, 1)
-    expect(snapshot.noWasteDays, 1);
+    expect(snapshot.noWasteDays, 0);
+    expect(snapshot.recordedExpenseDays, 0);
     expect(snapshot.ruleCompletedCount, 4);
     expect(snapshot.ruleTargetCount, 6);
     expect(snapshot.todayViolationCount, 0);
@@ -156,7 +177,8 @@ void main() {
     expect(snapshot.totalExpense, 3000);
     expect(snapshot.wasteExpense, 2000);
     expect(snapshot.elapsedDays, 22); // 5/25→6/15 = 21日 + 1
-    expect(snapshot.noWasteDays, 21); // 浪費1日 (5/27)
+    expect(snapshot.noWasteDays, 1); // 記録あり・浪費分類なしは6/10だけ
+    expect(snapshot.recordedExpenseDays, 2);
   });
 
   test('ended salary cycle uses the full cycle length for elapsedDays', () {

@@ -1,0 +1,14 @@
+id,name_ja,name_original,activity_centuries,region,tradition,representative_work_candidate,attribution_note,source_url,review_status
+plato,プラトン,Plato,紀元前5世紀;紀元前4世紀,古代ギリシア,古代ギリシア哲学,国家,邦訳と版は別途確認,https://plato.stanford.edu/entries/plato/,candidate
+aristotle,アリストテレス,Aristotle,紀元前4世紀,古代ギリシア,古代ギリシア哲学,ニコマコス倫理学,邦訳と版は別途確認,https://plato.stanford.edu/entries/aristotle/,candidate
+confucius,孔子,Confucius,紀元前6世紀;紀元前5世紀,古代中国,儒家,論語,孔子の教説を伝える編集テキストであり本人執筆と断定しない,https://plato.stanford.edu/entries/confucius/,candidate
+laozi,老子,Laozi,不明,古代中国,道家,道徳経,人物の実在や年代および著作の成立と帰属に諸説,https://plato.stanford.edu/entries/laozi/,candidate
+zhuangzi,荘子,Zhuangzi,紀元前4世紀;紀元前3世紀,古代中国,道家,荘子,全篇を一人の著作と断定しない,https://plato.stanford.edu/entries/zhuangzi/,candidate
+nagarjuna,龍樹,Nagarjuna,2世紀;3世紀,南アジア,仏教;中観,中論,年代は概数であり帰属は著作ごとに確認,https://plato.stanford.edu/entries/nagarjuna/,candidate
+shankara,シャンカラ,Shankara,8世紀,南アジア,ヴェーダーンタ;不二一元論,ブラフマ・スートラ註解,年代や他の著作の帰属には異説がある,https://plato.stanford.edu/entries/shankara/,candidate
+descartes,デカルト,Rene Descartes,17世紀,フランス;ネーデルラント,近代合理論,省察,地域は活動との関係を表し国籍ではない,https://plato.stanford.edu/entries/descartes/,candidate
+spinoza,スピノザ,Baruch Spinoza,17世紀,ネーデルラント,近代合理論,エチカ,邦訳と版は別途確認,https://plato.stanford.edu/entries/spinoza/,candidate
+hume,ヒューム,David Hume,18世紀,スコットランド,経験論,人間本性論,邦訳と版は別途確認,https://plato.stanford.edu/entries/hume/,candidate
+kant,カント,Immanuel Kant,18世紀;19世紀,プロイセン,批判哲学,純粋理性批判,地域は歴史的表記であり現在の国に固定しない,https://plato.stanford.edu/entries/kant/,candidate
+nishida,西田幾多郎,Nishida Kitaro,20世紀,日本,京都学派,善の研究,活動世紀は生没年の全区間ではなく著述活動の候補,https://plato.stanford.edu/entries/nishida-kitaro/,candidate
+beauvoir,ボーヴォワール,Simone de Beauvoir,20世紀,フランス,実存主義;フェミニズム,第二の性,邦訳と版は別途確認,https://plato.stanford.edu/entries/beauvoir/,candidate

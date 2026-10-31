@@ -1,0 +1,70 @@
+name: Payslip explicit review preflight
+on:
+  pull_request:
+    paths:
+      - integration_test/payslip_review_fixture.dart
+      - integration_test/payslip_review_test.dart
+      - lib/services/asset_payslip_review_store.dart
+      - lib/widgets/asset_payroll_deductions_card.dart
+      - lib/widgets/asset_payroll_deductions_section.dart
+      - lib/widgets/asset_payslip_review_dialog.dart
+      - test/services/asset_payslip_review_store_test.dart
+      - test/widgets/asset_payslip_review_dialog_test.dart
+      - .github/workflows/payslip-review-preflight.yml
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: payslip-explicit-review-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Verify format analysis and original review contract
+        run: |
+          dart format --output=none --set-exit-if-changed integration_test/payslip_review_fixture.dart integration_test/payslip_review_test.dart lib/services/asset_payslip_review_store.dart lib/widgets/asset_payroll_deductions_card.dart lib/widgets/asset_payroll_deductions_section.dart lib/widgets/asset_payslip_review_dialog.dart test/services/asset_payslip_review_store_test.dart test/widgets/asset_payslip_review_dialog_test.dart
+          flutter analyze integration_test/payslip_review_fixture.dart integration_test/payslip_review_test.dart lib/services/asset_payslip_review_store.dart lib/widgets/asset_payroll_deductions_card.dart lib/widgets/asset_payroll_deductions_section.dart lib/widgets/asset_payslip_review_dialog.dart test/services/asset_payslip_review_store_test.dart test/widgets/asset_payslip_review_dialog_test.dart
+          flutter test test/services/asset_payslip_review_store_test.dart test/widgets/asset_payslip_review_dialog_test.dart --reporter expanded
+      - name: Synthetic browser preview on desktop and enlarged narrow viewport
+        shell: bash
+        run: |
+          mkdir -p .ci-logs
+          chromedriver --port=4444 > .ci-logs/payslip-review-driver.log 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:4444/status
+          set -o pipefail
+          for viewport in desktop mobile; do
+            dimensions=1440x1000@1
+            mobile=false
+            if [ "$viewport" = mobile ]; then dimensions=320x900@1; mobile=true; fi
+            flutter drive --driver=test_driver/asset_triage_visual.dart \
+              --target=integration_test/payslip_review_test.dart \
+              --dart-define="PAYSLIP_REVIEW_MOBILE=$mobile" \
+              --browser-dimension="$dimensions" \
+              -d web-server --browser-name=chrome --headless \
+              2>&1 | tee ".ci-logs/payslip-review-$viewport.log"
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: payslip-explicit-review-${{ github.run_id }}
+          path: |
+            .ci-logs/payslip-review-*.log
+            .ci-logs/asset-triage-visual/payslip-review-*
+          include-hidden-files: true
+          retention-days: 3

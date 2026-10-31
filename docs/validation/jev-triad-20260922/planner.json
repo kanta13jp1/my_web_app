@@ -1,0 +1,43 @@
+{
+  "source": "d224c892c1f16895f24978358717717f96bad657",
+  "mode": "planner",
+  "description": "Frozen independent recreation; online search with exact simulator access; not pure-model clear or browser real-time benchmark",
+  "episodes": [
+    {
+      "seed": 0,
+      "clear": true,
+      "phase": "won",
+      "x": 3170.3599999999306,
+      "frames": 1257,
+      "calls": 210,
+      "accepted": 0,
+      "overrides": 0,
+      "releases": 13,
+      "planner_ms_median": 98.89926500000001
+    },
+    {
+      "seed": 1,
+      "clear": true,
+      "phase": "won",
+      "x": 3170.3599999999306,
+      "frames": 1257,
+      "calls": 210,
+      "accepted": 0,
+      "overrides": 0,
+      "releases": 12,
+      "planner_ms_median": 97.210916
+    },
+    {
+      "seed": 2,
+      "clear": true,
+      "phase": "won",
+      "x": 3169.7999999999306,
+      "frames": 1255,
+      "calls": 210,
+      "accepted": 0,
+      "overrides": 0,
+      "releases": 10,
+      "planner_ms_median": 96.56177199999365
+    }
+  ]
+}

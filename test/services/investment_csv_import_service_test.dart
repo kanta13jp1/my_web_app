@@ -24,6 +24,7 @@ void main() {
     expect(reit.draft.assetType, InvestmentAssetType.reit);
     final toyota = result.rows.last;
     expect(toyota.draft.normalizedTicker, '7203');
+    expect(toyota.draft.displayName, 'トヨタ自動車');
     expect(toyota.draft.quantity, 150);
     expect(toyota.draft.buyPriceJpy, closeTo(2333.333333, 0.000001));
     expect(toyota.draft.currentPriceJpy, 2500);
@@ -95,6 +96,7 @@ AAPL Apple,3,16000
       ticker: 'AAPL',
       quantity: 1,
       assetType: InvestmentAssetType.etf,
+      displayName: '既存の名前',
       buyDate: DateTime.utc(2025, 4, 1),
       currentPriceJpy: 19000,
       lastPricedAt: DateTime.utc(2026, 8, 1),
@@ -108,6 +110,7 @@ AAPL Apple,3,16000
 
     final draft = plan.updates.single.draft;
     expect(draft.assetType, InvestmentAssetType.etf);
+    expect(draft.displayName, '既存の名前');
     expect(draft.buyDate, DateTime.utc(2025, 4, 1));
     expect(draft.currentPriceJpy, 19000);
     expect(draft.lastPricedAt, DateTime.utc(2026, 8, 1));
@@ -129,6 +132,7 @@ InvestmentAsset _asset({
   required String id,
   required String ticker,
   required double quantity,
+  String? displayName,
   InvestmentAssetType assetType = InvestmentAssetType.stock,
   DateTime? buyDate,
   double? currentPriceJpy,
@@ -139,6 +143,7 @@ InvestmentAsset _asset({
     userId: 'user-1',
     assetType: assetType,
     ticker: ticker,
+    displayName: displayName,
     quantity: quantity,
     buyPriceJpy: 10000,
     buyDate: buyDate,

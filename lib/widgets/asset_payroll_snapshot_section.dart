@@ -1,0 +1,655 @@
+import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
+import '../services/asset_payroll_snapshot_store.dart';
+import '../services/asset_payroll_snapshot_goal.dart';
+
+/// Records explicit owner confirmation; never infers a deposit from a date.
+class AssetPayrollSnapshotSection extends StatefulWidget {
+  const AssetPayrollSnapshotSection({
+    super.key,
+    required this.store,
+    required this.initialMonth,
+  });
+  final PayrollSnapshotStore store;
+  final DateTime initialMonth;
+
+  @override
+  State<AssetPayrollSnapshotSection> createState() =>
+      _AssetPayrollSnapshotSectionState();
+}
+
+class _AssetPayrollSnapshotSectionState
+    extends State<AssetPayrollSnapshotSection> {
+  final _target = TextEditingController();
+  ({String accountId, int? expected, int? next})? _pendingGoal;
+  String? _goalMessage;
+  final _balance = TextEditingController();
+  final _date = TextEditingController();
+  final _note = TextEditingController();
+  final _reason = TextEditingController();
+  final _form = GlobalKey<FormState>();
+  List<PayrollSnapshotAccount> _accounts = [];
+  String? _account;
+  late DateTime _month;
+  PayrollSnapshotRecord? _current;
+  PayrollSnapshotRecord? _previous;
+  PayrollSnapshotDraft? _pending;
+  String? _reconciledChangedId;
+  String? _conflictAccountId;
+  bool _loading = true;
+  bool _dataReady = false;
+  bool _busy = false;
+  String? _error;
+  int _epoch = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _month = DateTime(widget.initialMonth.year, widget.initialMonth.month);
+    _load();
+  }
+
+  @override
+  void dispose() {
+    for (final controller in [_balance, _date, _note, _reason, _target]) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final epoch = ++_epoch;
+    setState(() {
+      _loading = true;
+      _dataReady = false;
+      _accounts = [];
+      _current = null;
+      _previous = null;
+      _error = null;
+      _goalMessage = null;
+      _target.clear();
+    });
+    try {
+      final accounts = await widget.store.accounts();
+      if (!mounted || epoch != _epoch) return;
+      final conflictAccount = _conflictAccountId;
+      if (conflictAccount != null &&
+          !accounts.any((account) => account.id == conflictAccount)) {
+        setState(() {
+          _loading = false;
+          _dataReady = false;
+          _error = '対象の給与口座を確認できません。再読込してください。';
+        });
+        return;
+      }
+      final selected = conflictAccount ??
+          (accounts.any((a) => a.id == _account)
+              ? _account
+              : accounts.isEmpty
+                  ? null
+                  : accounts.first.id);
+      final values = selected == null
+          ? <PayrollSnapshotRecord?>[null, null]
+          : await Future.wait([
+              widget.store.selected(selected, _month),
+              widget.store
+                  .selected(selected, DateTime(_month.year, _month.month - 1)),
+            ]);
+      if (!mounted || epoch != _epoch) return;
+      setState(() {
+        _accounts = accounts;
+        _account = selected;
+        _target.text = selected == null
+            ? ''
+            : accounts
+                    .firstWhere((a) => a.id == selected)
+                    .targetIncreaseYen
+                    ?.toString() ??
+                '';
+        _current = values[0];
+        _previous = values[1];
+        _loading = false;
+        _dataReady = true;
+        _conflictAccountId = null;
+      });
+    } catch (_) {
+      if (!mounted || epoch != _epoch) return;
+      setState(() {
+        _loading = false;
+        _error = '取得できませんでした。再読込してください。';
+      });
+    }
+  }
+
+  Future<void> _createAccount() async {
+    final controller = TextEditingController();
+    final label = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('給与口座の呼び名'),
+        content: TextField(
+          controller: controller,
+          maxLength: 120,
+          decoration: const InputDecoration(labelText: '呼び名（口座番号は入力しない）'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('戻る'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                Navigator.pop(context, controller.text.trim());
+              }
+            },
+            child: const Text('追加'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (!mounted || label == null) return;
+    setState(() => _busy = true);
+    try {
+      await widget.store.createAccount(label);
+      if (mounted) await _load();
+    } catch (_) {
+      if (mounted) setState(() => _error = '口座設定の保存結果を確認できません。再追加前に再読込してください。');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  DateTime? _validDate(String value) {
+    if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) return null;
+    final date = DateTime.tryParse(value);
+    return date != null &&
+            payrollDate(date) == value &&
+            !date.isAfter(DateUtils.dateOnly(DateTime.now()))
+        ? date
+        : null;
+  }
+
+  Future<void> _review() async {
+    if (!_form.currentState!.validate() || _account == null) return;
+    final draft = PayrollSnapshotDraft(
+      accountId: _account!,
+      month: _month,
+      depositDate: _validDate(_date.text.trim())!,
+      balanceYen: int.parse(_balance.text.trim()),
+      note: _note.text.trim(),
+      reason: _current == null ? '初回の本人確認' : _reason.text.trim(),
+      requestId: const Uuid().v4(),
+      previousId: _current?.id,
+    );
+    var acknowledged = false;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('給与入金直後の残高を確認'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '口座：${_accounts.firstWhere((a) => a.id == _account).label}',
+                ),
+                Text('対象月：${_month.year}/${_month.month}'),
+                Text('給与入金日：${payrollDate(draft.depositDate)}（時刻未取得）'),
+                Text('入金直後残高：${draft.balanceYen}円'),
+                Text('確認資料メモ：${draft.note}'),
+                if (_current != null)
+                  Text('旧記録：${_current!.balanceYen}円／訂正理由：${draft.reason}'),
+                const Text(
+                  '記録種別は本人確認です。銀行検証済みではありません。資料は短文メモで残し、画像・PDFは送信しません。口座の呼び名・対象月・直後残高・訂正履歴を本人限定で保存し、既存残高・収支は変更しません。',
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('後日の残高ではなく、給与入金取引の直後残高を確認しました'),
+                  value: acknowledged,
+                  onChanged: (value) =>
+                      setDialogState(() => acknowledged = value ?? false),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('保留する'),
+            ),
+            FilledButton(
+              onPressed:
+                  acknowledged ? () => Navigator.pop(context, true) : null,
+              child: const Text('確認して保存'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+    setState(() {
+      _pending = draft;
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await widget.store.confirm(draft);
+      if (!mounted) return;
+      setState(() {
+        _pending = null;
+      });
+      _balance.clear();
+      _date.clear();
+      _note.clear();
+      _reason.clear();
+      await _load();
+    } on PayrollSnapshotConflict catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _pending = null;
+        _reconciledChangedId = null;
+        _conflictAccountId = draft.accountId;
+      });
+      await _load();
+      if (!mounted) return;
+      setState(() {
+        _error = _dataReady
+            ? '競合により今回の記録は保存されませんでした。照合時点の現在の選択と入力内容を確認してください。'
+            : '競合により今回の記録は保存されませんでした。現在の選択を取得できません。再読込してください。';
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _error = '保存結果が未確認です。画面を閉じず、再送せず「保存結果を照合」を押してください。';
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  bool _pendingSelectionIsReadable(PayrollSnapshotDraft pending) =>
+      _dataReady &&
+      _account == pending.accountId &&
+      _month.year == pending.month.year &&
+      _month.month == pending.month.month &&
+      _current != null;
+
+  void _clearConfirmedPending() {
+    setState(() {
+      _pending = null;
+      _reconciledChangedId = null;
+    });
+    _balance.clear();
+    _date.clear();
+    _note.clear();
+    _reason.clear();
+  }
+
+  Future<void> _reconcile() async {
+    final pending = _pending;
+    if (pending == null) return;
+    setState(() {
+      _busy = true;
+      _reconciledChangedId = null;
+    });
+    try {
+      final record = await widget.store.byRequest(pending);
+      if (!mounted) return;
+      if (record == null) {
+        setState(() {
+          _error = '保存結果はまだ確認できません。画面を閉じず、時間を置いて再照合してください。';
+        });
+        return;
+      }
+
+      // Keep the pending request locked until the current selection is read.
+      await _load();
+      if (!mounted) return;
+      if (!_pendingSelectionIsReadable(pending)) {
+        setState(() {
+          _error = '今回の記録は保存済みですが、現在の選択を確認できません。時間を置いて再照合してください。';
+        });
+        return;
+      }
+      if (_current!.id == record.id) {
+        _clearConfirmedPending();
+        return;
+      }
+      setState(() {
+        _reconciledChangedId = _current!.id;
+        _error = '今回の記録は保存済みですが、照合時点の選択は別の記録です。表示中の選択を確認し、保留を解除してください。';
+      });
+    } catch (_) {
+      if (mounted) setState(() => _error = '照合できませんでした。再登録せず、時間を置いて照合してください。');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _acknowledgeChangedSelection() async {
+    final pending = _pending;
+    final observedId = _reconciledChangedId;
+    if (pending == null || observedId == null || _busy) return;
+    setState(() => _busy = true);
+    try {
+      // Re-read at acknowledgement; a later save still uses expected ID.
+      await _load();
+      if (!mounted) return;
+      if (!_pendingSelectionIsReadable(pending)) {
+        setState(() {
+          _reconciledChangedId = null;
+          _error = '今回の記録は保存済みですが、現在の選択を確認できません。時間を置いて再照合してください。';
+        });
+        return;
+      }
+      if (_current!.id != observedId) {
+        setState(() {
+          _reconciledChangedId = _current!.id;
+          _error = '照合時点の選択は別の記録に更新されました。表示中の選択をもう一度確認してください。';
+        });
+        return;
+      }
+      _clearConfirmedPending();
+      setState(() {
+        _error = '照合時点の現在の選択を確認しました。';
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _reconciledChangedId = null;
+          _error = '現在の選択を確認できません。時間を置いて再照合してください。';
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  PayrollSnapshotAccount? get _selectedAccount {
+    for (final account in _accounts) {
+      if (account.id == _account) return account;
+    }
+    return null;
+  }
+
+  Future<void> _saveTarget() async {
+    final account = _selectedAccount;
+    if (!_dataReady ||
+        account == null ||
+        _busy ||
+        _pending != null ||
+        _pendingGoal != null) {
+      return;
+    }
+    final text = _target.text.trim();
+    final next = text.isEmpty ? null : int.tryParse(text);
+    if (text.isNotEmpty &&
+        (!RegExp(r'^\d+$').hasMatch(text) ||
+            next == null ||
+            next > 9007199254740991)) {
+      setState(() => _goalMessage = '目標は0以上の整数、または未設定の空欄にしてください。');
+      return;
+    }
+    if (next == account.targetIncreaseYen) {
+      setState(() => _goalMessage = '現在の目標と同じため更新していません。');
+      return;
+    }
+    final request = (
+      accountId: account.id,
+      expected: account.targetIncreaseYen,
+      next: next
+    );
+    setState(() {
+      _busy = true;
+      _goalMessage = null;
+    });
+    try {
+      await widget.store
+          .setTarget(request.accountId, request.expected, request.next);
+      if (!mounted) return;
+      await _load();
+      if (mounted) {
+        setState(
+          () => _goalMessage = _dataReady
+              ? '目標の更新応答を受け取りました。表示は再取得した現在値です。'
+              : '目標の更新応答は受け取りましたが、現在値の再取得に失敗しました。再読込してください。',
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _pendingGoal = request;
+        _goalMessage = '目標の更新結果が不明です。再送せず現在値を照合してください。';
+      });
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _reconcileTarget() async {
+    final request = _pendingGoal;
+    if (request == null || _busy) return;
+    setState(() => _busy = true);
+    try {
+      final accounts = await widget.store.accounts();
+      if (!mounted) return;
+      final matching =
+          accounts.where((a) => a.id == request.accountId).toList();
+      if (matching.length != 1) throw StateError('Account unavailable');
+      final current = matching.single.targetIncreaseYen;
+      setState(() {
+        _accounts = accounts;
+        _target.text = current?.toString() ?? '';
+        _pendingGoal = null;
+        _goalMessage =
+            '照合時点の目標は${current == null ? '未設定' : '$current円'}です。今回の更新の成否は確定できません。自動再送はしません。';
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _goalMessage = '現在値を照合できませんでした。再送せず、時間を置いて照合してください。');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = _dataReady &&
+        !_loading &&
+        !_busy &&
+        _pending == null &&
+        _pendingGoal == null;
+    final target = _selectedAccount?.targetIncreaseYen;
+    final comparison = _account == null
+        ? null
+        : PayrollSnapshotGoal.compare(
+            ownerId: widget.store.ownerId,
+            accountId: _account!,
+            month: _month,
+            current: _current,
+            previous: _previous,
+            targetYen: target,
+          );
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('給与入金直後の残高', style: Theme.of(context).textTheme.titleMedium),
+            const Text('銀行の自動取得は未対応です。予定日や現在残高から推定しません。'),
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: enabled
+                      ? () {
+                          _month = DateTime(_month.year, _month.month - 1);
+                          _load();
+                        }
+                      : null,
+                  child: const Text('前月'),
+                ),
+                Text('${_month.year}/${_month.month}'),
+                TextButton(
+                  onPressed: enabled
+                      ? () {
+                          _month = DateTime(_month.year, _month.month + 1);
+                          _load();
+                        }
+                      : null,
+                  child: const Text('翌月'),
+                ),
+                TextButton(
+                  onPressed: !_busy && _pendingGoal == null && _pending == null
+                      ? () {
+                          _pending = null;
+                          _load();
+                        }
+                      : null,
+                  child: const Text('再読込'),
+                ),
+              ],
+            ),
+            if (_loading) const LinearProgressIndicator(),
+            if (_error != null) Text(_error!),
+            if (_pending != null)
+              TextButton(
+                onPressed: _busy ? null : _reconcile,
+                child: const Text('保存結果を照合'),
+              ),
+            if (_pending != null && _reconciledChangedId != null)
+              TextButton(
+                onPressed: _busy ? null : _acknowledgeChangedSelection,
+                child: const Text('現在の選択を確認して保留解除'),
+              ),
+            if (!_loading && _accounts.isEmpty)
+              TextButton(
+                onPressed: enabled ? _createAccount : null,
+                child: const Text('給与口座の呼び名を設定'),
+              ),
+            if (_accounts.isNotEmpty) ...[
+              DropdownButtonFormField<String>(
+                initialValue: _account,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: '給与口座'),
+                items: [
+                  for (final account in _accounts)
+                    DropdownMenuItem(
+                      value: account.id,
+                      child: Text(account.label),
+                    ),
+                ],
+                onChanged: enabled
+                    ? (value) {
+                        _account = value;
+                        _load();
+                      }
+                    : null,
+              ),
+              Text(
+                '本人確認の直後残高：${_current == null ? '未取得' : '${_current!.balanceYen}円'}',
+              ),
+              Text(
+                '前月との差：${comparison?.deltaYen == null ? '比較対象未取得' : '${comparison!.deltaYen}円'}',
+              ),
+              Text('前月比の増加目標：${target == null ? '未設定' : '$target円'}'),
+              Text(
+                target == null
+                    ? '目標判定：目標未設定'
+                    : comparison?.reached == null
+                        ? '目標判定：比較対象未取得'
+                        : comparison!.reached!
+                            ? '目標判定：達成'
+                            : '目標判定：未達成',
+              ),
+              TextField(
+                controller: _target,
+                enabled: enabled,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: '前月比の増加目標（円・空欄は未設定）',
+                  hintText: '例：10000',
+                ),
+              ),
+              TextButton(
+                onPressed: enabled ? _saveTarget : null,
+                child: const Text('目標を保存・解除'),
+              ),
+              if (_goalMessage != null) Text(_goalMessage!),
+              if (_pendingGoal != null)
+                TextButton(
+                  onPressed: _busy ? null : _reconcileTarget,
+                  child: const Text('目標の現在値を照合'),
+                ),
+              const Text('目標はこの口座だけに適用します。銀行残高・収支・確認済み残高は変更しません。'),
+              Form(
+                key: _form,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _date,
+                      enabled: enabled,
+                      decoration:
+                          const InputDecoration(labelText: '給与入金日（YYYY-MM-DD）'),
+                      validator: (value) =>
+                          _validDate(value?.trim() ?? '') == null
+                              ? '実際の入金日を入力してください'
+                              : null,
+                    ),
+                    TextFormField(
+                      controller: _balance,
+                      enabled: enabled,
+                      decoration:
+                          const InputDecoration(labelText: '給与入金取引の直後残高（円）'),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(signed: true),
+                      validator: (value) =>
+                          RegExp(r'^-?\d+$').hasMatch(value?.trim() ?? '') &&
+                                  int.tryParse(value!.trim()) != null
+                              ? null
+                              : '整数の残高を入力してください',
+                    ),
+                    TextFormField(
+                      controller: _note,
+                      enabled: enabled,
+                      maxLength: 300,
+                      decoration: const InputDecoration(
+                        labelText: '確認資料の短文メモ（口座番号などは入力しない）',
+                      ),
+                      validator: (value) => value?.trim().isNotEmpty == true
+                          ? null
+                          : '確認資料を入力してください',
+                    ),
+                    if (_current != null)
+                      TextFormField(
+                        controller: _reason,
+                        enabled: enabled,
+                        maxLength: 300,
+                        decoration: const InputDecoration(
+                          labelText: '訂正理由（旧記録は履歴に残ります）',
+                        ),
+                        validator: (value) => value?.trim().isNotEmpty == true
+                            ? null
+                            : '訂正理由を入力してください',
+                      ),
+                    FilledButton(
+                      onPressed: enabled ? _review : null,
+                      child: const Text('保存前の確認へ'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

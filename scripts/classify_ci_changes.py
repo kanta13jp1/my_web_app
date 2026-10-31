@@ -20,6 +20,10 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "analysis_options.yaml",
         "l10n.yaml",
         "firebase.json",
+        "playwright.config.ts",
+        "playwright.business-execution.config.ts",
+        "package.json",
+        "package-lock.json",
     ),
     "web": (
         "lib/**",
@@ -31,6 +35,33 @@ GROUPS: dict[str, tuple[str, ...]] = {
         "analysis_options.yaml",
         "l10n.yaml",
         "firebase.json",
+    ),
+    "business_execution": (
+        "lib/models/business_execution.dart",
+        "lib/pages/virtual_organization_page.dart",
+        "lib/services/business_execution*.dart",
+        "lib/view_models/business_execution_controller.dart",
+        "lib/widgets/business_execution*.dart",
+        "test/models/business_execution_test.dart",
+        "test/view_models/business_execution_controller_test.dart",
+        "test/widgets/business_execution_panel_test.dart",
+        "test/web/business_execution_lock_test.dart",
+        "test/e2e/business_execution.spec.ts",
+        "test/fixtures/business_execution_app.dart",
+        "playwright.config.ts",
+        "playwright.business-execution.config.ts",
+        "package.json",
+        "package-lock.json",
+        "pubspec.yaml",
+        "pubspec.lock",
+        "web/**",
+        ".github/workflows/ci.yml",
+        "scripts/classify_ci_changes.py",
+        "scripts/classify_ci_changes_test.py",
+        "scripts/serve_business_execution_fixture.py",
+        "scripts/serve_business_execution_fixture_test.py",
+        ".github/actions/setup-flutter-sdk/**",
+        "assets/**",
     ),
     "edge": (
         "supabase/functions/**",
@@ -52,9 +83,17 @@ SKILL_CONTRACT_TESTS = (
     "test/scripts/test_youtube_skill_scripts.py",
 )
 
+# Notion Migration Cloud Audit validates these exact suites on matching PRs.
+# Do not expand this to test/scripts/**: other tests may require Flutter.
+NOTION_AUDIT_TESTS = (
+    "test/scripts/test_notion_migration_cloud_audit.py",
+    "test/scripts/test_notion_wbs_import_plan.py",
+)
+
 IGNORED_PATTERNS: dict[str, tuple[str, ...]] = {
-    "flutter": ("assets/data/tiger_*", *SKILL_CONTRACT_TESTS),
+    "flutter": ("assets/data/tiger_*", *SKILL_CONTRACT_TESTS, *NOTION_AUDIT_TESTS),
     "web": ("assets/data/tiger_*",),
+    "business_execution": ("assets/data/tiger_*",),
 }
 
 
@@ -73,6 +112,8 @@ def classify(paths: list[str], force_all: bool = False) -> dict[str, bool]:
         )
         for group, patterns in GROUPS.items()
     }
+    # The fixture needs the existing SDK/dependency steps, but is not a release.
+    result["flutter"] = result["flutter"] or result["business_execution"]
     result["deployable"] = result["web"] or result["edge"] or result["migration"]
     return result
 

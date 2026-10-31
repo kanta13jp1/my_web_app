@@ -1,0 +1,87 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:my_web_app/pages/edge_llm_playground_page.dart';
+
+void main() {
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  const mobile = bool.fromEnvironment('JSON_QA_MOBILE');
+  const viewport = mobile ? Size(393, 851) : Size(1440, 900);
+
+  Future<void> capture(WidgetTester tester, String state) async {
+    for (var frame = 0; frame < 3; frame++) {
+      await tester.pump(const Duration(milliseconds: 500));
+      await binding.takeScreenshot(
+        '${mobile ? 'mobile' : 'desktop'}-json-$state-$frame',
+        <String, Object?>{
+          'width': viewport.width,
+          'height': viewport.height,
+          'devicePixelRatio': mobile ? 2.75 : 1.0,
+          'frame': frame,
+          'settling': 'Flutter pump 500ms',
+        },
+      );
+    }
+  }
+
+  testWidgets('Edge LLM画面で入力全文のJSON構文を確認する', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: EdgeLlmPlaygroundPage()));
+    final field = find.byKey(const Key('json-contract-input'));
+    final button = find.text('JSON構文を確認する');
+    await tester.ensureVisible(field);
+    await tester.pumpAndSettle();
+    await tester.tap(field);
+    await tester.pumpAndSettle();
+    await tester.enterText(field, '{"sum":10}');
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(field).controller!.text, '{"sum":10}');
+    await tester.ensureVisible(button);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'JSON構文を確認する'),
+          )
+          .onPressed,
+      isNotNull,
+    );
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    expect(find.text('入力全文はJSONとして読み取れます。'), findsOneWidget);
+    await tester.ensureVisible(find.text('入力全文はJSONとして読み取れます。'));
+    await tester.pumpAndSettle();
+    await capture(tester, 'valid');
+
+    await tester.ensureVisible(field);
+    await tester.pumpAndSettle();
+    await tester.tap(field);
+    await tester.pumpAndSettle();
+    await tester.enterText(field, '```json\n{"sum":10}\n```');
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(field).controller!.text,
+      '```json\n{"sum":10}\n```',
+    );
+    expect(find.text('入力全文はJSONとして読み取れます。'), findsNothing);
+    await tester.ensureVisible(button);
+    await tester.pumpAndSettle();
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('入力全文はJSONとして読み取れません。'), findsOneWidget);
+    await tester.ensureVisible(find.textContaining('入力全文はJSONとして読み取れません。'));
+    await tester.pumpAndSettle();
+    await capture(tester, 'invalid');
+
+    await tester.ensureVisible(field);
+    await tester.pumpAndSettle();
+    await tester.tap(field);
+    await tester.pumpAndSettle();
+    await tester.enterText(field, 'null');
+    await tester.pump();
+    await tester.ensureVisible(button);
+    await tester.pumpAndSettle();
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    expect(find.text('入力全文はJSONとして読み取れます。'), findsOneWidget);
+  });
+}

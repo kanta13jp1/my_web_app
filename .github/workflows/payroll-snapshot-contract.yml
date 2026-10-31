@@ -1,0 +1,53 @@
+name: Payroll snapshot proposal contract
+on:
+  pull_request:
+    paths:
+      - docs/proposals/payroll_snapshot/**
+      - supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
+      - .github/workflows/payroll-snapshot-contract.yml
+      - scripts/check_migration_time_relative_check.py
+      - scripts/test_check_migration_time_relative_check.py
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: payroll-snapshot-proposal-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  disposable-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: synthetic-contract-only
+          POSTGRES_DB: payroll_contract
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: synthetic-contract-only
+      PGDATABASE: payroll_contract
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Verify schema-qualified migration guard
+        run: python scripts/test_check_migration_time_relative_check.py
+      - name: Verify reviewed proposal equals applied migration
+        run: cmp docs/proposals/payroll_snapshot/DRAFT_PAYROLL_SCHEMA.sql supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
+      - name: Test draft schema in disposable database only
+        working-directory: docs/proposals/payroll_snapshot
+        run: psql -X -v ON_ERROR_STOP=1 -f contract.sql
+      - name: Test concurrent correction and atomic audit
+        working-directory: docs/proposals/payroll_snapshot
+        run: python concurrency.py
