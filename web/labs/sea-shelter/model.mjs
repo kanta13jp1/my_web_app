@@ -1,6 +1,17 @@
+import {
+  buildWarehouse,
+  changeResources,
+  checkStorage,
+  collectionPlan,
+  newStorage,
+  recoverStorage,
+} from "./storage.mjs";
+import { checkFarm, farmAction, newFarm } from "./farm.mjs";
 export const SAVE_KEY = "my_web_app.sea_shelter.v1";
 export const initialState = () => ({
   version: 1,
+  farm: newFarm(),
+  storage: newStorage(),
   wood: 0,
   metal: 0,
   xp: 0,
@@ -45,20 +56,42 @@ export const capacity = (s) =>
   1 + s.tiles.filter((t) => t.kind === "home").length * 2;
 export const neighbors = (s, x, y) =>
   s.tiles.some((t) => Math.abs(t.x - x) + Math.abs(t.y - y) === 1);
-export function act(state, action) {
-  const s = structuredClone(state);
-  const fail = (message) => ({ state, message, changed: false });
+export function act(state, action, now = Date.now()) {
+  if (action.type === "build-warehouse") return buildWarehouse(state);
+  if (["plant", "harvest", "donate-food", "share-food"].includes(action.type)) {
+    return farmAction(state, action, now);
+  }
+  const s = changeResources(structuredClone(state));
+  const fail = (message, remedy) => ({
+    state,
+    message,
+    changed: false,
+    remedy,
+  });
   let message;
   if (action.type === "collect") {
     if (s.collected >= 10000) {
-      return fail("回収上限です。拠点づくりを楽しんでください。");
+      return fail(
+        "回収回数の上限10,000回です。建設・菜園・食卓を続けられます。",
+      );
     }
-    const wood = 3 + Math.floor(s.residents / 3);
-    s.wood = Math.min(99999, s.wood + wood);
-    s.metal = Math.min(99999, s.metal + 2);
+    const plan = collectionPlan(s);
+    if (plan.wood === 0 && plan.metal === 0) {
+      return fail(
+        "木材と金属の保管が満杯です。倉庫で空きと解消方法を確認しましょう。",
+        "storage",
+      );
+    }
+    changeResources(s, { wood: plan.wood, metal: plan.metal });
     s.collected++;
     s.xp = Math.min(99999, s.xp + 1);
-    message = `漂流物を回収！ 木材 +${wood} / 金属 +2`;
+    const partial = plan.wood < plan.desired.wood ||
+      plan.metal < plan.desired.metal;
+    message = `漂流物を回収！ 木材 +${plan.wood} / 金属 +${plan.metal}${
+      partial
+        ? "。保管できる分だけ受け取り、満杯の資源は回収していません。"
+        : ""
+    }`;
   } else if (action.type === "build") {
     const { x, y, kind } = action,
       f = Object.hasOwn(facilities, kind) ? facilities[kind] : null;
@@ -86,6 +119,9 @@ export function act(state, action) {
         }`,
       );
     }
+    if (existing >= 0 && s.farm?.crops[`${x},${y}`] !== undefined) {
+      return fail("栽培中の菜園は収穫してから建て替えましょう。");
+    }
     if (existing >= 0) s.tiles[existing] = { x, y, kind };
     else s.tiles.push({ x, y, kind });
     if (s.residents > capacity(s)) {
@@ -93,8 +129,7 @@ export function act(state, action) {
         "住民が暮らす住居は減らせません。先に別の住居を建てましょう。",
       );
     }
-    s.wood -= f.wood;
-    s.metal -= f.metal;
+    changeResources(s, { wood: -f.wood, metal: -f.metal });
     s.xp = Math.min(99999, s.xp + 3);
     message = `${f.name}を建設しました！`;
   } else if (action.type === "invite") {
@@ -104,8 +139,7 @@ export function act(state, action) {
     if (s.wood < 3 || s.metal < 1) {
       return fail("迎え入れには木材3・金属1が必要です。");
     }
-    s.wood -= 3;
-    s.metal--;
+    changeResources(s, { wood: -3, metal: -1 });
     s.residents++;
     s.xp = Math.min(99999, s.xp + 2);
     message = "新しい住民が到着！ 住民3人ごとに回収木材が1増えます。";
@@ -178,7 +212,37 @@ export function decode(raw) {
     seen.add(key);
   });
   if (s.residents < 1 || s.residents > capacity(s)) throw Error("progress");
-  const checked = act(s, { type: "profile", profile: s.profile });
+  if (s.farm === undefined) s.farm = newFarm();
+  const checked = act({ ...s, farm: newFarm(), storage: newStorage() }, {
+    type: "profile",
+    profile: s.profile,
+  });
   if (!checked.changed) throw Error("profile");
-  return checked.state;
+  s.profile = checked.state.profile;
+  const recovery = [];
+  try {
+    checkFarm(s.farm, s.tiles);
+  } catch {
+    s.farm = newFarm();
+    recovery.push(
+      "農園の保存を読み込めません。農園だけを初期化し、拠点・基礎資源・依頼・プロフィールは保護しました。",
+    );
+  }
+  if (s.storage === undefined) s.storage = newStorage();
+  try {
+    checkStorage(s.storage);
+  } catch {
+    s.storage = recoverStorage(s.storage);
+    recovery.push(
+      "倉庫の保存に不整合があります。基礎資源と有効な拡張枠を保護して復旧しました。",
+    );
+  }
+  changeResources(s);
+  if (recovery.length) {
+    throw Object.assign(Error("recovery"), {
+      recoveredState: s,
+      recoveryMessage: recovery.join(" "),
+    });
+  }
+  return s;
 }

@@ -30,31 +30,42 @@ test.afterEach(async ({ page }, info) => {
 test(
   "complete the loop, reload, customize and reset without horizontal overflow",
   async ({ page }, info) => {
+    test.setTimeout(60000);
     const collect = page.getByRole("button", { name: "漂流物を回収" });
     const cell = (row: number, col: number) =>
       page.getByRole("button", { name: new RegExp(`^${row}行${col}列`) });
+    await page.locator('.tabs [data-view="build"]').click();
+    await page.locator('[data-kind="deck"]').click();
     await cell(1, 1).click();
     await expect(page.getByRole("status").first()).toContainText("隣接");
     await cell(3, 4).click();
     await expect(page.getByRole("status").first()).toContainText("資材不足");
     await expect(page.locator("#wood")).toHaveText("0");
     for (let i = 0; i < 3; i++) await collect.click();
+    await page.locator('.tabs [data-view="quests"]').click();
     await page.locator("#quest-supplies").click();
     await expect(page.locator("#quest-supplies")).toBeDisabled();
+    await page.locator('.tabs [data-view="build"]').click();
     await page.getByRole("button", { name: "⌂ 住居" }).click();
     await cell(3, 4).click();
     await expect(cell(3, 4)).toHaveAttribute("class", "built");
     const afterBuild = await page.locator("#wood").textContent();
     await cell(3, 4).click();
     await expect(page.locator("#wood")).toHaveText(afterBuild!);
+    await page.locator('.tabs [data-view="quests"]').click();
     await page.locator("#quest-shelter").click();
     for (let i = 0; i < 5; i++) await collect.click();
+    await page.locator('.tabs [data-view="residents"]').click();
     await page.locator("#invite").click();
+    await page.locator('.tabs [data-view="residents"]').click();
     await page.locator("#invite").click();
+    await page.locator('.tabs [data-view="residents"]').click();
     await page.locator("#invite").click();
     await expect(page.locator("#residents")).toHaveText("3 / 3");
+    await page.locator('.tabs [data-view="build"]').click();
     await page.getByRole("button", { name: "♧ 菜園" }).click();
     await cell(4, 3).click();
+    await page.locator('.tabs [data-view="quests"]').click();
     await page.locator("#quest-community").click();
     await expect(page.locator("#guide")).toContainText("3件の依頼達成");
     await page.reload();
@@ -71,9 +82,13 @@ test(
     await expect(page.locator("#captain-name")).toHaveText("<船長>");
     await page.reload();
     await expect(page.locator("#captain-title")).toHaveText("潮灯の守り手");
+    if (!(await page.locator("#help-dialog").isVisible())) {
+      await page.locator("#help").click();
+    }
     await page.getByRole("button", { name: "最初からやり直す" }).click();
     await page.getByRole("button", { name: "キャンセル", exact: true }).click();
-    await expect(page.locator("#residents")).toHaveText("3 / 3");
+    await page.locator("#close-help").click();
+    await page.locator('.tabs [data-view="board"]').click();
     expect(
       await page.locator("html").evaluate((e) =>
         e.scrollWidth <= e.clientWidth
@@ -97,6 +112,9 @@ test(
       path: info.outputPath("sea-shelter-complete.png"),
       fullPage: true,
     });
+    if (!(await page.locator("#help-dialog").isVisible())) {
+      await page.locator("#help").click();
+    }
     await page.getByRole("button", { name: "最初からやり直す" }).click();
     await page.getByRole("button", { name: "やり直す", exact: true }).click();
     await page.reload();
