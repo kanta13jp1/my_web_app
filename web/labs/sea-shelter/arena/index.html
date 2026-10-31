@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>灯守の甲板訓練 — 潮灯のシェルター</title>
+    <link rel="stylesheet" href="arena.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <small>SHIOAKARI / TRAINING</small><h1>灯守の甲板訓練</h1>
+        </div><a href="../index.html" id="return">集落へ戻る</a>
+      </header>
+      <section
+        id="scene"
+        aria-label="灯守と浮標人形の3D甲板"
+        aria-describedby="cue"
+      >
+        <div class="sea-label" aria-hidden="true">DAWN DECK · 01</div>
+        <div class="hud">
+          <span>灯守 <strong id="hp">5 / 5</strong></span><span>浮標人形
+            <strong id="enemy-hp">60 / 60</strong></span><span>必殺 <strong
+              id="charge"
+            >0 / 100</strong></span>
+        </div>
+        <div id="intro">
+          <p class="eyebrow">海の灯りを、その手に。</p>
+          <h2>予兆を読んで、受け止める。</h2>
+          <p>
+            約1分の一対一。浮標人形の合図を見てガード、反撃で必殺技をためよう。
+          </p>
+          <p>
+            資材の消費・報酬・セーブへの変更はありません。
+          </p>
+          <button id="start" class="primary">3D訓練を始める</button>
+        </div>
+      </section>
+      <p id="cue" role="status" aria-live="polite">
+        まだ訓練は始まっていません。
+      </p>
+      <div
+        class="actions"
+        tabindex="0"
+        role="group"
+        aria-label="戦闘操作（ここにフォーカスがある間だけ A・G・S キーが使えます）"
+      >
+        <button id="attack" disabled>攻撃 <kbd>A</kbd></button>
+        <button id="guard" disabled>ガード <kbd>G</kbd></button>
+        <button id="special" disabled>灯の一閃 <kbd>S</kbd></button>
+      </div>
+      <div class="utility">
+        <button id="pause" disabled>一時停止</button>
+        <button id="retry" hidden>もう一度訓練</button>
+        <button id="reload" hidden>再読み込みして再試行</button>
+        <button id="skip" disabled>演出を短くする</button>
+      </div>
+      <details>
+        <summary>遊び方・描画設定</summary>
+        <p>
+          合図「打ち込みが来る」の終わりにガード。成功すると必殺ゲージが増え、次の攻撃が反撃になります。早すぎるガードは切れます。攻撃だけの連打では勝てません。
+        </p>
+        <div class="settings">
+          <label><input
+              id="assist"
+              type="checkbox"
+            >予兆を長くする（次の訓練から）</label><label><input
+              id="quiet"
+              type="checkbox"
+            >カメラと動きを控えめに</label><label><input
+              id="low"
+              type="checkbox"
+            >軽量描画（次の訓練から）</label><label><input
+              id="sound"
+              type="checkbox"
+            >効果音をON（初期OFF）</label>
+        </div>
+        <p>
+          A・G・S
+          は戦闘操作にフォーカスがある間だけ使えます。Tab
+          で移動、Enter・Space でも各ボタンを操作できます。
+        </p>
+        <p id="metrics">
+          3Dは開始操作後に同じサイトから読み込みます。
+        </p>
+        <p id="cleanup"></p>
+      </details>
+      <noscript>JavaScriptが必要です。<a href="../index.html"
+        >集落へ戻る</a></noscript>
+    </main>
+    <script type="module" src="controller.mjs"></script>
+  </body>
+</html>

@@ -622,3 +622,13 @@ main[data-resident-art="missing"] .resident-art {
     transform: none !important;
   }
 }
+
+.training-entry {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: #baf5df;
+  border: 1px solid #82b7bd;
+  border-radius: 8px;
+  padding: 8px;
+}
