@@ -16,11 +16,15 @@ class CellAddress {
     ).firstMatch(value.trim());
     if (match == null) return null;
 
+    final row = int.tryParse(match.group(2)!);
+    if (row == null || row > 1048576) return null;
+
     var column = 0;
     for (final unit in match.group(1)!.toUpperCase().codeUnits) {
       column = (column * 26) + unit - 64;
+      if (column > 16384) return null;
     }
-    return CellAddress(row: int.parse(match.group(2)!) - 1, column: column - 1);
+    return CellAddress(row: row - 1, column: column - 1);
   }
 
   static String columnLabel(int column) {
@@ -50,6 +54,7 @@ class SpreadsheetSheet {
     required this.rowCount,
     required this.columnCount,
     required this.cells,
+    this.textCells = const <String>[],
   });
 
   factory SpreadsheetSheet.blank({
@@ -76,6 +81,9 @@ class SpreadsheetSheet {
       rowCount: _positiveInt(json['rowCount'], fallback: 30),
       columnCount: _positiveInt(json['columnCount'], fallback: 12),
       cells: _readCells(json['cells']),
+      textCells: List<String>.unmodifiable(
+        (json['textCells'] as List?)?.whereType<String>() ?? const <String>[],
+      ),
     );
   }
 
@@ -84,6 +92,8 @@ class SpreadsheetSheet {
   final int rowCount;
   final int columnCount;
   final Map<String, String> cells;
+  // XLSX literal strings must not become formulas or lose leading zeros.
+  final List<String> textCells;
 
   String inputAt(CellAddress address) => cells[address.key] ?? '';
 
@@ -92,6 +102,7 @@ class SpreadsheetSheet {
     int? rowCount,
     int? columnCount,
     Map<String, String>? cells,
+    List<String>? textCells,
   }) {
     return SpreadsheetSheet(
       id: id,
@@ -99,6 +110,7 @@ class SpreadsheetSheet {
       rowCount: rowCount ?? this.rowCount,
       columnCount: columnCount ?? this.columnCount,
       cells: Map<String, String>.unmodifiable(cells ?? this.cells),
+      textCells: List<String>.unmodifiable(textCells ?? this.textCells),
     );
   }
 
@@ -109,6 +121,7 @@ class SpreadsheetSheet {
       'rowCount': rowCount,
       'columnCount': columnCount,
       'cells': cells,
+      'textCells': textCells,
     };
   }
 
