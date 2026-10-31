@@ -83,6 +83,15 @@ test(
       }
       if (!warning) handled = false;
       if (await page.locator("#special").isEnabled()) {
+        if (specials === 0) {
+          const charge = await page.locator("#charge").innerText();
+          await page.locator("#return").focus();
+          await page.keyboard.press("s");
+          await expect(page.locator("#charge")).toHaveText(charge);
+          await page.locator("summary").focus();
+          await page.keyboard.press("s");
+          await expect(page.locator("#charge")).toHaveText(charge);
+        }
         await page.locator("#special").click();
         specials++;
         await page.clock.runFor(150);
@@ -136,7 +145,17 @@ test(
     await page.screenshot({
       path: info.outputPath("arena-default-quality.png"),
     });
+    await page.locator("summary").focus();
+    await page.keyboard.press("g");
+    expect(await page.locator("#guard").isEnabled()).toBe(true);
+    await page.locator("#return").focus();
+    await page.keyboard.press("a");
+    await page.clock.runFor(250);
+    await expect(page.locator("#enemy-hp")).toHaveText("60 / 60");
     await page.locator("#attack").focus();
+    await page.keyboard.press("Shift+A");
+    await page.clock.runFor(250);
+    await expect(page.locator("#enemy-hp")).toHaveText("60 / 60");
     await page.keyboard.press("a");
     await page.keyboard.press("a");
     await page.locator("#pause").click();
@@ -152,6 +171,7 @@ test(
     await expect(page.locator("#hp")).toHaveText(health);
     await expect(page.locator("#attack")).toBeDisabled();
     await page.locator("#pause").click();
+    await page.locator("#attack").focus();
     for (let i = 0; i < 120; i++) {
       await page.keyboard.press("a");
       await page.clock.runFor(200);
