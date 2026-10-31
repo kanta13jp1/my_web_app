@@ -1355,3 +1355,35 @@ session-start-check/adaptive-model-router適用。Jev astra/mediumはadvisory、
 既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)を更新。36行JSON・日付一意・順位連番・前回9から観測順21/差12・remote再読一致を検証。専用Flutter test/analyze/release build、新規生成HTML、対象起動後描画はdocs-onlyで未実施。保存前head f496ae68のCIは14成功/2失敗/6skip。既知のmain側draft AIレビュー起動条件問題は未解消で、最新head結果はPRコメントへ報告する。rollbackは当日記録コミットのrevert。マージ・デプロイなし、日次監視継続、アーカイブ保留。
 
 session-start-check/adaptive-model-router適用、Jev astra/medium advisory、lead実行。cloud-preferred（ディスク35.69GiB・RAM78%/空き6.91GiB）でremote API編集、新規worktree/toolchainなし。元branch fix/salary-deposit-payslip-signal/HEAD c3e1d46077/upstream0/0、7dirty paths/33worktreesを保持。NotebookLM一覧失敗は非依存。次回は3ページ目2件目からの推移・競合上位・AI概要/サイト名と既知CI問題を確認。順位1位は保証しない。
+
+## 2026-10-31 日次監視：10ページ94件で対象未検出
+
+08:59〜09:03 JST頃、Google実Chrome、検索語 `自分株式会社`、hl=ja/gl=jp/pws=0、府中市東京都(IP由来)、CAPTCHAなし。IABが利用できずChromeへ切替。ログイン済みだがフッターには「検索結果はパーソナライズされていません」。前回の未ログインIAB/00時台と環境差がある。読み取りタイムアウトはAX取得と再接続で回復、原因未確定。
+
+対象は10ページ(start=0〜90)の自然検索94件で未検出。各ページ件数9/9/10/10/9/9/9/10/10/9、画像枠は除外、ページ間重複を含む。「確認範囲外」とし、100位圏外と断定しない。前回3ページ目2件目(観測順21)との差は計算不可。
+
+|順位|タイトル|当日URL / ドメイン|種別|主な検索意図|
+|---:|---|---|---|---|
+|1|会社に依存しない「自分株式会社」の考え方｜moto（戸塚俊介）|[note.com](https://note.com/recruit_man_note/n/n1032c32fbc36)|著者ブログ記事|会社に依存しないキャリア設計と収支管理を学ぶ|
+|2|“自分株式会社”という考え方|[ifa-japan.co.jp](https://www.ifa-japan.co.jp/%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%84%E3%81%86%E8%80%83%E3%81%88%E6%96%B9/)|専門家ブログ記事|人的資本・資産形成として理解する|
+|3|経営支援サービスを総合的にサポートする ITベンダー M社|[solution.lmi.ne.jp](https://solution.lmi.ne.jp/hr_development/case/1180)|法人研修の導入事例|研修での活用例と成果を確認する|
+|4|「自分株式会社」を経営せよ。副業年収4000万円のmotoが ...|[r25.jp](https://r25.jp/articles/928885293145522178)|編集部記事・書籍抜粋|キャリアと副業の具体例を読む|
+|5|「自分株式会社」という考え方と、この考え方を活用するために ...|[note.com](https://note.com/famous_knot742/n/n0c1a89bc7c77)|個人ブログ記事|概念の定義、参考情報、実践方法を知る|
+|6|NewsPicks [ニューズピックス]|[x.com](https://x.com/newspicks/status/1449692163042856961)|SNS投稿|著名人の発言と反応を見る|
+|7|サラリーマンこそ自分株式会社をつくりなさい――1000万円 ...|[amazon.co.jp](https://www.amazon.co.jp/%E3%82%B5%E3%83%A9%E3%83%AA%E3%83%BC%E3%83%9E%E3%83%B3%E3%81%93%E3%81%9D%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%82%92%E3%81%A4%E3%81%8F%E3%82%8A%E3%81%AA%E3%81%95%E3%81%84%E2%80%95%E2%80%951000%E4%B8%87%E5%86%86%E7%94%9F%E6%B4%BB%E3%82%92%E8%AC%B3%E6%AD%8C%E3%81%99%E3%82%8B-%E5%90%89%E5%B7%9D-%E8%8B%B1%E4%B8%80/dp/4478067449)|書籍商品ページ|内容、著者、評価、購入条件を確認する|
+|8|わたしブランド～自分株式会社を設立してみよう|[akikofujisaki.com](https://akikofujisaki.com/selfpromotion/)|専門家ブログ記事|自己ブランディングへ応用する|
+|9|なぜ自分の会社をつくるのか？人生を楽しく生きるための2つの ...|[diamond.jp](https://diamond.jp/articles/-/78525)|書籍連載・解説記事|起業の目的と法人化の判断を理解する|
+
+当日はhrefを直接確認できた。前回hrefは不透明だったため厳密なURL集合の増減は比較不可。1ページ目9件は顔ぶれ・順序とも同じ。広告/強調スニペットなし。AI概要は収支/資産に商品・提供価値、市場価値の棚卸し・収入源分散を説明。可視参照moto/R25/LMI/IFA、カードmoto/みおつくし（全参照一覧ではない）。PAAは自然検索3件後へ移動し「自分の会社は貴社」質問が復帰。サイトリンク、Amazon1470円・4.2/36件を確認。対象title/snippet/site-nameは未検出のため当日値なし。
+
+### 分析・改善案・変更
+
+[moto](https://note.com/recruit_man_note/n/n1032c32fbc36)は概念→収支/資産→実践と著者・日付・書籍導線、[IFA](https://www.ifa-japan.co.jp/自分株式会社という考え方/)は人的資本と長期自己経営、著者・書籍・会社方針を提示。[対象理念](https://my-web-app-b67f4.web.app/philosophy)は定義、人的資本、P/L/B/S、架空例、FAQ、6部署と体験導線を既に説明する。当日Web本文はキャッシュを含む。4ページのHTTP初期HTML、title/H1/canonical/内部リンク/構造化データ、noindex文字列とX-Robots-Tagを監査しJSONLへ保存。Flutter起動後描画ではない。
+
+今回の未検出から原因を断定できず、アプリ改修は行わず追跡2文書のみ更新。改善案は、次回も環境を記録して未検出の継続を確認し、アクセス権の範囲でSearch Consoleのクエリ別実績・掲載URL・正規URL/インデックス情報を優先確認すること。既存説明テーマはAI概要の提供価値にも対応し、新規不足テーマや技術的欠陥は未確定。競合の文章/画像を転用せず、キーワードを増量しない。
+
+### 検証・PR・次回
+
+既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)を更新。37行JSON・日付一意・順位連番・ページ件数合計94・target null・remote再読一致を検証。docs-onlyのため専用Flutter test/analyze/release build、新規生成HTML、起動後描画は未実施。保存前head263c798cのCIは14成功/2失敗/6skip、既知main側draft AIレビュー条件問題。最新head結果はPRコメントに報告。rollbackは当日追記コミットのrevert。次回は未検出の継続/復帰と競合上位・AI概要を確認。マージ・デプロイなし、日次監視継続、アーカイブ保留。
+
+session-start-check/adaptive-model-router適用、Jev astra/medium advisoryでlead実行。CLOUD_REQUIRED（ディスク26.54GiB、RAM86%/空き4.18GiB）のためremote API編集、worktree/toolchain/workerなし。元branch fix/salary-deposit-payslip-signal/HEADc3e1d46077/upstream0/0、7dirty paths/35worktrees保持。注入ルールdriftなし。tool-watchは既存監視ルートへ、NotebookLM一覧失敗は非依存。順位1位は保証しない。
