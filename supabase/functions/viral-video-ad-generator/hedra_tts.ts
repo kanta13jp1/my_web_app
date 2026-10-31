@@ -35,13 +35,15 @@ export function buildHedraTextToSpeechAudioGeneration(params: {
   modelId?: string | null;
   text: string;
   language: string;
+  stability?: number;
+  speed?: number;
 }): HedraTextToSpeechAudioGeneration {
   const audioGeneration: HedraTextToSpeechAudioGeneration = {
     type: "text_to_speech",
     voice_id: params.voiceId,
     text: params.text,
-    stability: 0.5,
-    speed: 1.0,
+    stability: params.stability ?? 0.5,
+    speed: params.speed ?? 1.0,
     language: params.language,
   };
   if (params.modelId) {
@@ -182,9 +184,11 @@ export function scoreHedraVoice(
   const id = firstNonEmptyString(voice["id"], voice["voice_id"], voice["uuid"]);
   const haystack = flattenVoiceText(voice).toLowerCase();
   let score = 0;
+  const normalizedPreferred = preferred?.toLowerCase() ?? "";
+  const prefersFemale = normalizedPreferred.includes("female");
+  const prefersMale = !prefersFemale && normalizedPreferred.includes("male");
 
   if (preferred) {
-    const normalizedPreferred = preferred.toLowerCase();
     if (id?.toLowerCase() === normalizedPreferred) score += 100;
     if (haystack.includes(normalizedPreferred)) score += 40;
   }
@@ -200,14 +204,14 @@ export function scoreHedraVoice(
     ["female", "feminine", "woman", "women", "lady", "女性", "女声", "女"]
       .some((marker) => haystack.includes(marker))
   ) {
-    score += 80;
+    score += prefersMale ? -100 : 80;
   }
   if (
     ["male", "masculine", "man", "men", "男性", "男声", "男"].some((marker) =>
       haystack.includes(marker)
     )
   ) {
-    score -= 100;
+    score += prefersMale ? 80 : -100;
   }
   if (
     ["secretary", "assistant", "concierge", "executive", "professional", "秘書"]
