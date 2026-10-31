@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>潮灯のシェルター</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main data-view="board">
+      <header class="topbar">
+        <h1>潮灯のシェルター</h1>
+        <button id="edit-profile" aria-label="プロフィール">
+          <span id="captain-name"></span>
+        </button>
+        <button id="help" aria-label="遊び方と保存">？</button>
+      </header>
+      <section class="resources" aria-label="資源">
+        <div>木材<strong id="wood">0</strong></div>
+        <div>金属<strong id="metal">0</strong></div>
+        <div>食料<strong id="food">0</strong></div>
+        <div>住民/定員<strong id="residents">1 / 1</strong></div>
+        <div>EXP<strong id="xp">0</strong></div>
+      </section>
+      <div class="workspace">
+        <section class="play" aria-label="海上拠点">
+          <div class="placement">
+            <span id="placement-label"
+            >菜園を選ぶか、建設タブで施設を選びましょう</span><button
+              id="cancel-build"
+              hidden
+            >
+              取消
+            </button>
+          </div>
+          <div id="board" aria-label="5×5の海上盤面"></div>
+          <span id="tile-count">1 / 25区画</span>
+        </section>
+        <aside>
+          <nav class="tabs" aria-label="ゲーム操作">
+            <button data-view="board" aria-pressed="true">拠点</button>
+            <button data-view="build" aria-pressed="false">建設</button>
+            <button data-view="residents" aria-pressed="false">住民</button>
+            <button data-view="quests" aria-pressed="false">依頼</button>
+            <button data-view="farm" aria-pressed="false">菜園</button>
+            <button data-view="storage" aria-pressed="false">倉庫</button>
+          </nav>
+          <section class="panel" data-panel="build" aria-label="建設">
+            <h2>建設する施設</h2>
+            <p>
+              選んでから盤面をタップ。隣接する海へ拡張できます。
+            </p>
+            <div
+              id="facilities"
+              class="facilities"
+              role="group"
+              aria-label="建設する施設"
+            >
+            </div>
+            <button id="choose-warehouse">
+              倉庫（船着場に増設）
+            </button>
+          </section>
+          <section class="panel" data-panel="residents" aria-label="住民">
+            <h2>仲間を迎える</h2>
+            <p>住居1軒で定員+2。住民3人ごとに回収木材+1。</p>
+            <button id="invite">住民を迎える 木材3 / 金属1</button>
+            <p>
+              定員不足なら住居を、資材不足なら漂流物を回収しましょう。
+            </p>
+            <div
+              id="crew-roster"
+              class="crew-roster"
+              role="group"
+              aria-label="集落の仲間"
+            >
+            </div>
+            <p id="resident-art-note" hidden></p>
+          </section>
+          <section
+            class="panel"
+            data-panel="quests"
+            aria-label="住民の依頼"
+          >
+            <h2>住民の依頼</h2>
+            <div id="quests"></div>
+          </section>
+          <section class="panel" data-panel="farm" aria-label="菜園と食卓">
+            <h2>菜園と食卓</h2>
+            <p id="farm-empty">
+              EXP24で菜園を解放し、建設しましょう。
+            </p>
+            <div id="crops"></div>
+            <button id="donate-food">食卓に届ける 食料3</button>
+            <p>
+              お礼：木材4・金属1・EXP2。繰り返し届けられます。
+            </p>
+          </section>
+          <section
+            class="panel"
+            data-panel="storage"
+            aria-label="倉庫と保管量"
+          >
+            <h2 id="storage-heading" tabindex="-1">倉庫と保管量</h2>
+            <div class="stock-row">
+              <label for="meter-wood">木材 <output
+                  id="storage-wood"
+                ></output></label><meter
+                id="meter-wood"
+                min="0"
+                max="99999"
+                value="0"
+              >
+              </meter>
+            </div>
+            <div class="stock-row">
+              <label for="meter-metal">金属 <output
+                  id="storage-metal"
+                ></output></label><meter
+                id="meter-metal"
+                min="0"
+                max="99999"
+                value="0"
+              >
+              </meter>
+            </div>
+            <div class="stock-row">
+              <label for="meter-food">食料 <output
+                  id="storage-food"
+                ></output></label><meter
+                id="meter-food"
+                min="0"
+                max="99999"
+                value="0"
+              >
+              </meter>
+            </div>
+            <p id="warehouse-state"></p>
+            <button id="warehouse-build">
+              倉庫を増設 木材30 / 金属15
+            </button>
+            <p id="warehouse-requirements"></p>
+            <div class="storage-links">
+              <button id="storage-collect">回収へ</button>
+              <button id="storage-build">建設へ</button>
+              <button id="storage-farm">菜園・食卓へ</button>
+            </div>
+            <p id="delivery-room"></p>
+            <button id="share-food">
+              食料3を分ける（お礼なし・確認あり）
+            </button>
+            <p>
+              満杯時の収穫は作物を残します。食卓の依頼はお礼まで保管できるときだけ食料を使います。回収は受け取れる量を表示します。
+            </p>
+          </section>
+        </aside>
+        <div id="crew-feedback" class="crew-feedback" aria-hidden="true"></div>
+      </div>
+      <p id="status" tabindex="-1" role="status" aria-live="polite">
+        船長、漂流物の回収から始めましょう。
+      </p>
+      <button id="collect" class="primary">
+        漂流物を回収 木材 +3 / 金属 +2
+      </button>
+    </main>
+    <dialog id="help-dialog" aria-labelledby="help-heading">
+      <h2 id="help-heading">遊び方と保存</h2>
+      <p><a href="/" target="_top">my_web_appへ戻る</a></p>
+      <p id="guide"></p>
+      <p>
+        海上25区画へ拡張できます。施設の建て替えは同じ資材を消費し、返却はありません。船着場と必要な住居は保護されます。
+      </p>
+      <p>
+        菜園：木材2で種まき、60秒で食料3。閉じている間も育ちます。時計を戻すと待機し、7日を超える変化では育て直します。
+      </p>
+      <p id="save-status" role="status"></p>
+      <p>
+        このブラウザ内のみ自動保存。端末間同期なし。ブラウザデータ削除で進行は失われます。時計・保存の改ざん防止はありません。
+      </p>
+      <button id="export-recovery" hidden>
+        退避した元の保存を書き出す
+      </button>
+      <p>
+        保存に不整合がある場合は元の保存を退避してから更新します。退避できない場合は元の保存を上書きしません。複数タブの同時編集には対応していません。
+      </p>
+      <button id="reset">最初からやり直す</button>
+      <button id="close-help">閉じる</button>
+    </dialog>
+    <dialog id="profile-dialog" aria-labelledby="profile-heading">
+      <div class="captain">
+        <div id="avatar" aria-hidden="true"></div>
+        <div><small id="captain-title"></small><p id="bubble"></p></div>
+      </div>
+      <form id="profile-form">
+        <h2 id="profile-heading">船長プロフィール</h2><label
+        >名前（16文字まで）<input
+            name="name"
+            maxlength="16"
+            required
+          ></label><label>アイコン<select
+            name="icon"
+            aria-label="アイコン"
+          >
+            <option>灯台</option>
+            <option>帆船</option>
+            <option>貝</option>
+          </select></label><label>枠<select name="frame" aria-label="枠">
+            <option>波</option>
+            <option>夕日</option>
+            <option>星</option>
+          </select></label><label>吹き出し（40文字まで）<input
+            name="bubble"
+            maxlength="40"
+          ></label><label>称号<select name="title" aria-label="称号">
+          </select></label><p>
+          「海の建築家」はEXP24、「潮灯の守り手」は依頼3件で解放。
+        </p>
+        <p id="profile-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button type="button" id="cancel-profile">キャンセル</button>
+          <button type="submit" class="primary">保存</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="share-dialog" aria-labelledby="share-heading">
+      <h2 id="share-heading">食料3を分けますか？</h2>
+      <p>
+        住民へ食料3を渡します。資材のお礼・EXPはありません。通常のお礼がほしい場合はキャンセルして、建設や種まきで保管の空きを作ってください。
+      </p>
+      <div class="dialog-actions">
+        <button id="cancel-share" autofocus>キャンセル</button>
+        <button id="confirm-share">お礼なしで食料3を届ける</button>
+      </div>
+    </dialog>
+    <dialog id="reset-dialog" aria-labelledby="reset-heading">
+      <h2 id="reset-heading">最初から始めますか？</h2>
+      <p>
+        このゲームの資材・拠点・依頼・プロフィールが初期状態になります。
+      </p>
+      <div class="dialog-actions">
+        <button id="cancel-reset" autofocus>キャンセル</button>
+        <button id="confirm-reset">やり直す</button>
+      </div>
+    </dialog>
+    <script type="module" src="app.mjs"></script>
+  </body>
+</html>

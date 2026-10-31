@@ -142,6 +142,8 @@ jobs:
       - name: Test CI scope classifier
         run: |
           python scripts/classify_ci_changes_test.py
+          python -B scripts/check_claude_review_workflow_test.py
+          python scripts/serve_business_execution_fixture_test.py
           python scripts/cloud_ci_handoff_test.py
           python scripts/cloud_first_route_test.py
           python scripts/claude_remote_control_server_plan_test.py
@@ -150,6 +152,7 @@ jobs:
           python scripts/cicd_efficiency_test.py
           python scripts/ci_parallel_test.py
           python scripts/run_vm_test_shard_test.py
+          python scripts/ai_review_gate_test.py
           python scripts/pre_commit_quality_gate_test.py
           python scripts/container_cleanup_guard_test.py
           python scripts/check_rootless_container_setup_test.py
@@ -497,6 +500,12 @@ jobs:
         run: flutter test --platform chrome test/web_import_smoke_test.dart
         continue-on-error: false
 
+      - name: Run business execution browser lock tests
+        id: business_execution_locks
+        if: steps.changes.outputs.business_execution == 'true'
+        run: flutter test --platform chrome test/web/business_execution_lock_test.dart
+        continue-on-error: false
+
       # workflow_call (deploy-prod) 経由の場合はビルドをスキップ — deploy-prod が再ビルドするため重複回避
       - name: Build web (production)
         id: web_build
@@ -517,6 +526,119 @@ jobs:
           fi
           echo "Build successful!"
           ls -la build/web
+
+      - name: Build business execution browser fixture
+        if: steps.changes.outputs.business_execution == 'true'
+        run: >
+          flutter build web --release --pwa-strategy=none --no-web-resources-cdn
+          --output=build/business-execution-fixture
+          --target=test/fixtures/business_execution_app.dart
+          --dart-define=BUSINESS_EXECUTION_E2E=true
+          --dart-define=ENVIRONMENT=visual-test
+
+      # Noto Sans is already bundled and licensed in the repository. The test
+      # fixture aliases it as the engine's Roboto fallback; it is not Roboto.
+      - name: Register local Noto Sans fixture fallback
+        if: steps.changes.outputs.business_execution == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - build/business-execution-fixture <<'PY'
+          import hashlib
+          import json
+          import sys
+          from pathlib import Path
+          
+          FONT_ASSET = "web/assets/fonts/NotoSans-Regular.ttf"
+          FONT_SHA256 = "b85c38ecea8a7cfb39c24e395a4007474fa5a4fc864f6ee33309eb4948d232d5"
+          LICENSE_ASSET = "web/assets/fonts/NotoSans-OFL.txt"
+          LICENSE_SHA256 = "138b7f6e5d8ab96671ef7604f936d3d077beed67911acfb1b0adb71359dc44bc"
+          
+          
+          def register_fixture_font(root):
+              manifest_path = root / "assets" / "FontManifest.json"
+              manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+              if not isinstance(manifest, list) or not all(
+                  isinstance(family, dict) for family in manifest
+              ):
+                  raise ValueError("Unexpected fixture font manifest")
+              families = [family.get("family") for family in manifest]
+              if "Roboto" in families or families.count("NotoSans") != 1:
+                  raise ValueError("Expected one NotoSans family and no Roboto family")
+              noto = next(family for family in manifest if family.get("family") == "NotoSans")
+              if noto.get("fonts") != [{"asset": FONT_ASSET}]:
+                  raise ValueError("Unexpected NotoSans asset registration")
+              for asset, expected in (
+                  (FONT_ASSET, FONT_SHA256),
+                  (LICENSE_ASSET, LICENSE_SHA256),
+              ):
+                  path = root / "assets" / asset
+                  if not path.is_file() or path.is_symlink():
+                      raise ValueError("Missing or unsafe fixture font/license asset")
+                  if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+                      raise ValueError("Fixture font/license provenance mismatch")
+              # Alias existing bytes only. Do not copy, rewrite, or rename the font.
+              result = [*manifest, {"family": "Roboto", "fonts": [{"asset": FONT_ASSET}]}]
+              manifest_path.write_text(json.dumps(result) + "\n", encoding="utf-8")
+          
+          
+          if __name__ == "__main__":
+              register_fixture_font(Path(sys.argv[1]))
+          PY
+
+      - name: Set up Node for business execution E2E
+        if: steps.changes.outputs.business_execution == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install existing Playwright browser dependencies
+        if: steps.changes.outputs.business_execution == 'true'
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run business execution fixture E2E
+        id: business_execution_e2e
+        if: steps.changes.outputs.business_execution == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ready_file="$RUNNER_TEMP/business-execution-ready-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"
+          source_sha="$(git rev-parse HEAD)"
+          python3 scripts/serve_business_execution_fixture.py serve build/business-execution-fixture \
+            --ready-file "$ready_file" --source-sha "$source_sha" > business-execution-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
+          for _ in {1..20}; do
+            kill -0 "$server_pid"
+            if [ -s "$ready_file" ]; then break; fi
+            sleep 1
+          done
+          kill -0 "$server_pid"
+          E2E_BASE_URL="$(python3 scripts/serve_business_execution_fixture.py verify \
+            --ready-file "$ready_file" --pid "$server_pid" --source-sha "$source_sha")"
+          fixture_nonce="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["token"])' "$ready_file")"
+          printf -v BUSINESS_EXECUTION_FIXTURE_TOKEN '%s' "$fixture_nonce"
+          export E2E_BASE_URL BUSINESS_EXECUTION_FIXTURE_TOKEN
+          cp "$ready_file" business-execution-ready.json
+          npm run e2e:business-execution -- --forbid-only
+          kill -0 "$server_pid"
+          python3 scripts/serve_business_execution_fixture.py verify \
+            --ready-file "$ready_file" --pid "$server_pid" --source-sha "$source_sha"
+
+      - name: Preserve business execution browser evidence
+        if: always() && steps.changes.outputs.business_execution == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: business-execution-e2e-${{ github.run_id }}
+          path: |
+            business-execution-report/
+            business-execution-results/
+            business-execution-server.log
+            business-execution-ready.json
+          if-no-files-found: ignore
 
       - name: Job Summary
         if: always()
