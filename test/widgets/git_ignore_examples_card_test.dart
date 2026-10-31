@@ -8,7 +8,8 @@ void main() {
   ) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(body: SingleChildScrollView(child: GitIgnoreExamplesCard())),
+        home: Scaffold(
+            body: SingleChildScrollView(child: GitIgnoreExamplesCard())),
       ),
     );
     expect(find.textContaining('未登録の .env は通常の変更一覧に表示されません'), findsOneWidget);

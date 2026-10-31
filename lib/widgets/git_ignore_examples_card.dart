@@ -41,9 +41,9 @@ class _GitIgnoreExamplesCardState extends State<GitIgnoreExamplesCard> {
           Text(
             'Gitの無視設定：登録前と登録後',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: const Color(0xFFFAFAFA),
-              fontWeight: FontWeight.bold,
-            ),
+                  color: const Color(0xFFFAFAFA),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           const SizedBox(height: 10),
           const Text(
