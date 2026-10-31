@@ -188,6 +188,12 @@ jobs:
         if: env.CLOUD_PROFILE == 'web-build' || env.CLOUD_PROFILE == 'full'
         run: flutter build web --release --pwa-strategy=none
 
+      - name: Package verified Sea Shelter 3D assets
+        if: env.CLOUD_PROFILE == 'web-build' || env.CLOUD_PROFILE == 'full'
+        uses: ./.github/actions/prepare-sea-shelter-arena
+        with:
+          web-root: build/web
+
       - name: Preserve web build briefly
         if: steps.web_build.outcome == 'success'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

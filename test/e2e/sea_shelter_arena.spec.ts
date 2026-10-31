@@ -15,6 +15,16 @@ async function snapshot(page: Page) {
 test(
   "old village enters lazy 3D, guards and special win without changing saved assets",
   async ({ page }, info) => {
+    await page.addInitScript(() => {
+      const original = WebGL2RenderingContext.prototype.clear;
+      (window as unknown as { arenaPaints: number[] }).arenaPaints = [];
+      WebGL2RenderingContext.prototype.clear = function (mask) {
+        (window as unknown as { arenaPaints: number[] }).arenaPaints.push(
+          performance.now(),
+        );
+        return original.call(this, mask);
+      };
+    });
     const requests: string[] = [];
     const resources: Promise<{ path: string; bytes: number }>[] = [];
     page.on("request", (r) => requests.push(r.url()));
@@ -108,6 +118,14 @@ test(
       elapsed += 200;
     }
     await expect(page.locator("body")).toHaveAttribute("data-status", "won");
+    const endStart = await page.evaluate(() =>
+      (window as unknown as { arenaPaints: number[] }).arenaPaints.length
+    );
+    await page.clock.runFor(1200);
+    const endPaints = await page.evaluate(() =>
+      (window as unknown as { arenaPaints: number[] }).arenaPaints.length
+    );
+    expect(endPaints - endStart).toBeLessThanOrEqual(37);
     await expect(page.locator("#hp")).toHaveText("5 / 5");
     expect(specials).toBeGreaterThan(0);
     await expect(page.locator("#cue")).toContainText("訓練成功");
@@ -158,6 +176,7 @@ test(
     await expect(page.locator("#enemy-hp")).toHaveText("60 / 60");
     await page.keyboard.press("a");
     await page.keyboard.press("a");
+    await expect(page.locator(".actions")).toBeFocused();
     await page.locator("#pause").click();
     await page.clock.runFor(20000);
     await expect(page.locator("#enemy-hp")).toHaveText("60 / 60");

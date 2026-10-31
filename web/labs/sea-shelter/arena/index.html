@@ -41,7 +41,12 @@
       <p id="cue" role="status" aria-live="polite">
         まだ訓練は始まっていません。
       </p>
-      <div class="actions" aria-label="戦闘操作">
+      <div
+        class="actions"
+        tabindex="0"
+        role="group"
+        aria-label="戦闘操作（ここにフォーカスがある間だけ A・G・S キーが使えます）"
+      >
         <button id="attack" disabled>攻撃 <kbd>A</kbd></button>
         <button id="guard" disabled>ガード <kbd>G</kbd></button>
         <button id="special" disabled>灯の一閃 <kbd>S</kbd></button>
@@ -72,6 +77,11 @@
               type="checkbox"
             >効果音をON（初期OFF）</label>
         </div>
+        <p>
+          A・G・S
+          は戦闘操作にフォーカスがある間だけ使えます。Tab
+          で移動、Enter・Space でも各ボタンを操作できます。
+        </p>
         <p id="metrics">
           3Dは開始操作後に同じサイトから読み込みます。
         </p>

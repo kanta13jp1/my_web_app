@@ -25,6 +25,7 @@ jobs:
       - run: node --check web/labs/sea-shelter/app.mjs
       - run: npm ci --ignore-scripts
       - run: node scripts/build_sea_shelter_arena.mjs
+      - run: node --test scripts/sea_shelter_arena_build.test.mjs
       - run: npx playwright install --with-deps chromium
       - name: Browser checks against candidate only
         shell: bash
@@ -64,7 +65,6 @@ jobs:
           node-version: '22'
       - run: |
           npm ci --ignore-scripts
-          node scripts/build_sea_shelter_arena.mjs
           flutter pub get
           dart format --output=none --set-exit-if-changed lib/pages/sea_shelter_page.dart lib/ui/features/sea_shelter test/widgets/sea_shelter_page_test.dart test/fixtures/sea_shelter_lifecycle_app.dart
           flutter analyze lib/pages/sea_shelter_page.dart lib/ui/features/sea_shelter
@@ -72,6 +72,9 @@ jobs:
           flutter build web --release --pwa-strategy=none --dart-define=ENVIRONMENT=visual-test --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
           npm ci --ignore-scripts
           npx playwright install --with-deps chromium
+      - uses: ./.github/actions/prepare-sea-shelter-arena
+        with:
+          web-root: build/web
       - name: Validate browser test syntax
         run: npx playwright test test/e2e/sea_shelter_route.spec.ts test/e2e/sea_shelter_lifecycle.spec.ts test/e2e/sea_shelter_arena_host.spec.ts --list
       - name: Integrated desktop and mobile route checks
@@ -88,6 +91,9 @@ jobs:
           E2E_BASE_URL=http://127.0.0.1:7357 npx playwright test test/e2e/sea_shelter_route.spec.ts --workers=1 --retries=0
       - name: Build real surface lifecycle fixture
         run: flutter build web --release --pwa-strategy=none --target=test/fixtures/sea_shelter_lifecycle_app.dart --output=build/sea-shelter-lifecycle
+      - uses: ./.github/actions/prepare-sea-shelter-arena
+        with:
+          web-root: build/sea-shelter-lifecycle
       - name: Verify covering route, return and disposal
         shell: bash
         run: |

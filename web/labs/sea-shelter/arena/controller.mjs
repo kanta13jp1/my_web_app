@@ -21,6 +21,7 @@ let latestMessage = "",
   short = false,
   endingUntil = 0,
   lastRender = -Infinity;
+let pendingVisuals = [];
 $("quiet").checked = motion.matches;
 function text(id, value) {
   if ($(id).textContent !== value) $(id).textContent = value;
@@ -130,8 +131,9 @@ function tick(now) {
   } else if (!["won", "lost"].includes(state.status) || now >= endingUntil) {
     return;
   }
-  if (events.length || now - lastRender >= 33 || state.status !== "running") {
-    draw(events, now);
+  pendingVisuals.push(...events);
+  if (now - lastRender >= 1000 / 30) {
+    draw(pendingVisuals.splice(0), now);
   }
   if (scene && (state.status === "running" || now < endingUntil)) {
     frame = requestAnimationFrame(tick);
@@ -150,6 +152,7 @@ function halt() {
 }
 function release(keepAudio = false) {
   halt();
+  pendingVisuals = [];
   if (scene) {
     scene.dispose();
     scene = null;
@@ -222,7 +225,10 @@ function command(name) {
   if (name === "resume") audio?.resume().catch(() => {});
   if (state.status === "paused") halt();
   update(result.events);
-  draw(result.events);
+  pendingVisuals.push(...result.events);
+  // Running inputs, including rejected cooldown commands, wait for the next paint.
+  // Pause is a single immediate snapshot because its animation loop has stopped.
+  if (state.status === "paused") draw(pendingVisuals.splice(0));
   if (state.status === "running") run();
 }
 function beep(kind) {
@@ -297,13 +303,16 @@ on($("sound"), "change", async () => {
 });
 on(document, "keydown", (event) => {
   if (
-    event.repeat || event.altKey || event.ctrlKey || event.metaKey ||
+    event.repeat || event.shiftKey || event.altKey || event.ctrlKey ||
+    event.metaKey || !(event.target instanceof Element) ||
+    !event.target.closest(".actions") ||
     event.target.closest("input,select,textarea,[contenteditable=true]")
   ) return;
   const name =
     { a: "attack", g: "guard", s: "special" }[event.key.toLowerCase()];
   if (name) {
     event.preventDefault();
+    event.target.closest(".actions").focus({ preventScroll: true });
     command(name);
   }
 });

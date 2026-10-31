@@ -1,0 +1,13 @@
+# Reproducible 3D artifact delivery
+
+The reusable `.github/actions/prepare-sea-shelter-arena` runs Node22, `npm ci --ignore-scripts`, generation and independent verification **after** Flutter builds. It is wired before normal CI output checking, generic cloud artifact upload and canonical Hosting deployment. Automatic deployment remains disabled; this Draft does not dispatch a deployment.
+
+Three0.186.0 and esbuild-wasm0.28.2 are exact MIT npm versions with lockfile integrity. Core/renderer are same-origin siblings. Legal comments and full Three LICENSE.txt are retained. engine-build.json records compiler/version/bytes/SHA-256. Verification rejects missing/corrupt files, wrong versions, missing MIT attribution/runtime source, incorrect core linkage and a >2MB engine transfer. Cloud packaging tests rebuild two clean output trees and compare manifests/hashes, then test corruption/missing/version/size/license failures. Real Flutter-host I/O consumes post-build packaged output.
+
+A future separately authorized fixed-base/allowlist selected release must include this reviewed action and scripts/lockfile and invoke it on its selected Flutter output before Hosting, retaining selection and reviewed-head guards. Prior operational release branches/configs are immutable and untouched. No selected release is executed here; a newly fixed release plan and normal formal review/gates remain required. Production1.0.2271 is unchanged.
+
+## Focus and paint cadence
+
+Regression-only head5f3d803 reproduced the global shortcut defect in real Chromium CI41176777582: Return-focused S spent charge100 to0 and settings-summary G activated guard (4 failures,36 passes). Shortcuts now require focus in the labelled battle-control group and reject Shift/modifiers/repeats/editable targets. Focus remains on the group when cooldown disables a button. Tab/Enter/Space stay native. This uses the focus-only option in [WCAG2.1.4](https://www.w3.org/WAI/WCAG21/Understanding/character-key-shortcuts.html); full WCAG conformance is not claimed.
+
+Simulation events queue until the next paint. Running inputs, cooldown rejections and the1.2-second ending no longer bypass the1000/30ms interval. Initial creation, explicit pause snapshots and ResizeObserver reflow can paint immediately. This is an animation cadence, not an absolute cap on every browser/layout event or a hardware FPS guarantee.
