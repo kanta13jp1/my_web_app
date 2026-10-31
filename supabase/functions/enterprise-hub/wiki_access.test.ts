@@ -25,6 +25,9 @@ function database(fail = false, concurrent = false) {
       const predicates: ((row: Row) => boolean)[] = [];
       let patch: { metadata: Record<string, unknown> } | undefined;
       let single = false;
+      let from = 0;
+      let to = Infinity;
+      const orders: { key: string; ascending: boolean }[] = [];
       const query = {
         select(_columns: string) { return query; },
         eq(key: "id" | "source" | "metadata", value: string) {
@@ -39,14 +42,25 @@ function database(fail = false, concurrent = false) {
           return query;
         },
         ilike(_key: string, _value: string) { return query; },
-        order(_key: string, _options: unknown) { return query; },
+        order(key: string, options: { ascending: boolean }) { orders.push({ key, ascending: options.ascending }); return query; },
+        range(start: number, end: number) { from = start; to = end; return query; },
         limit(_count: number) { return query; },
         update(value: { metadata: Record<string, unknown> }) { patch = value; return query; },
         maybeSingle() { single = true; return query; },
         then(resolve: (result: unknown) => unknown) {
           if (fail) return Promise.resolve(resolve({ data: null, error: { message: "query_failed" } }));
           if (patch && concurrent) rows[0].metadata = { ...rows[0].metadata, content: "concurrent edit" };
-          const found = rows.filter((row) => predicates.every((p) => p(row)));
+          const filtered = rows.filter((row) => predicates.every((p) => p(row)));
+          filtered.sort((a, b) => {
+            for (const order of orders) {
+              const left = String((a as unknown as Record<string, unknown>)[order.key] ?? "");
+              const right = String((b as unknown as Record<string, unknown>)[order.key] ?? "");
+              const compared = left < right ? -1 : left > right ? 1 : 0;
+              if (compared) return order.ascending ? compared : -compared;
+            }
+            return 0;
+          });
+          const found = filtered.slice(from, to + 1);
           if (patch) for (const row of found) row.metadata = patch.metadata;
           return Promise.resolve(resolve({ data: structuredClone(single ? found[0] ?? null : found), error: null }));
         },
@@ -120,4 +134,52 @@ Deno.test("concurrent metadata change returns conflict without overwriting", asy
   const result = await handler("wiki.update")(db, "alice", { id: "a", content: "overwrite" }, json);
   check(result.status === 409, "Concurrent update was not rejected");
   check(db.rows[0].metadata.content === "concurrent edit", "Concurrent content overwritten");
+});
+
+Deno.test("wiki.list traverses more than 50 owner pages without duplicates", async () => {
+  const db = database();
+  for (let n = 0; n < 75; n++) {
+    db.rows.push({ id: `page-${String(n).padStart(3, "0")}`, source: "wiki_page", metadata: { user_id: "alice" } });
+  }
+  const first = await handler("wiki.list")(db, "alice", {}, json);
+  check(first.value.pages.length === 50 && first.value.next_offset === 50, "Missing continuation");
+  const second = await handler("wiki.list")(db, "alice", { offset: first.value.next_offset }, json);
+  const ids = [...first.value.pages, ...second.value.pages].map((row: Row) => row.id);
+  check(ids.length === 76 && new Set(ids).size === 76, "Page loss or duplication");
+  check(!ids.includes("b") && !ids.includes("c"), "Owner/source isolation lost");
+  check(second.value.next_offset === null, "Final page has spurious continuation");
+  check(first.value.pages[0].id === "page-074", "Stable tie ordering missing");
+});
+for (const body of [{ offset: -1 }, { offset: 1.5 }, { offset: "0" }, { offset: 1000001 }, { limit: 0 }, { limit: 101 }, { limit: "50" }]) {
+  Deno.test(`wiki.list rejects invalid pagination ${JSON.stringify(body)}`, async () => {
+    const result = await handler("wiki.list")(database(), "alice", body, json);
+    check(result.status === 400, "Invalid pagination accepted");
+  });
+}
+Deno.test("wiki.list exact and empty boundaries do not invent next pages", async () => {
+  const db = database();
+  const first = await handler("wiki.list")(db, "alice", { limit: 1 }, json);
+  check(first.value.pages.length === 1 && first.value.next_offset === null, "Exact boundary incorrect");
+  const empty = await handler("wiki.list")(db, "alice", { offset: 10 }, json);
+  check(empty.value.pages.length === 0 && empty.value.next_offset === null, "Empty boundary incorrect");
+});
+for (const id of ["b", "c", "missing"]) {
+  Deno.test(`wiki.get hides inaccessible target ${id}`, async () => {
+    const result = await handler("wiki.get")(database(), "alice", { id }, json);
+    check(result.status === 404, "Inaccessible page exposed");
+  });
+}
+Deno.test("wiki.get retrieves exact owner page independently of list limit", async () => {
+  const db = database();
+  for (let n = 0; n < 75; n++) db.rows.push({ id: `z-${n}`, source: "wiki_page", metadata: { user_id: "alice" } });
+  const result = await handler("wiki.get")(db, "alice", { id: "a" }, json);
+  check(result.status === 200 && result.value.page.metadata.content === "original", "Direct page lookup failed");
+});
+Deno.test("wiki.get rejects absent id and propagates query errors", async () => {
+  const missing = await handler("wiki.get")(database(), "alice", {}, json);
+  check(missing.status === 400, "Missing id accepted");
+  let failed = false;
+  try { await handler("wiki.get")(database(true), "alice", { id: "a" }, json); }
+  catch (error) { failed = error instanceof Error && error.message === "query_failed"; }
+  check(failed, "Lookup failure reported as success");
 });

@@ -1126,12 +1126,36 @@ serve(async (req) => {
 
       // ── Wiki / Knowledge Base ─────────────────────────────────────────────────
       case "wiki.list": {
+        const offset = body.offset ?? 0;
+        const limit = body.limit ?? 50;
+        if (!Number.isSafeInteger(offset) || offset < 0 || offset > 1000000 ||
+          !Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
+          return json({ error: "Invalid pagination" }, 400);
+        }
         const { data, error } = await admin.from("hub_data")
           .select("id, metadata, created_at").eq("source", "wiki_page")
-            .filter("metadata->>user_id", "eq", userId)
-          .order("created_at", { ascending: false }).limit(50);
+          .filter("metadata->>user_id", "eq", userId)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false }).range(offset, offset + limit);
         if (error) throw new Error(error.message);
-        return json({ success: true, pages: data ?? [] });
+        const pages = (data ?? []).slice(0, limit);
+        return json({
+          success: true,
+          pages,
+          next_offset: (data ?? []).length > limit ? offset + limit : null,
+        });
+      }
+      case "wiki.get": {
+        if (typeof body.id !== "string" || body.id.trim().length === 0) {
+          return json({ error: "Page id is required" }, 400);
+        }
+        const { data, error } = await admin.from("hub_data")
+          .select("id, metadata, created_at").eq("source", "wiki_page")
+          .filter("metadata->>user_id", "eq", userId)
+          .eq("id", body.id).maybeSingle();
+        if (error) throw new Error(error.message);
+        if (!data) return json({ error: "Not found" }, 404);
+        return json({ success: true, page: data });
       }
       case "wiki.create": {
         const item = await addItem(admin, "wiki_page", userId, {
