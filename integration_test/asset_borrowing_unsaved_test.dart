@@ -171,8 +171,10 @@ void main() {
         (widget) =>
             widget is Column &&
             widget.children.whereType<Text>().any(
-                  (child) => child.data == '${_date.year}/'
-                      '${_date.month.toString().padLeft(2, '0')} $kind',
+                  (child) =>
+                      child.data ==
+                      '${_date.year}/'
+                          '${_date.month.toString().padLeft(2, '0')} $kind',
                 ),
       );
       expect(metric, findsOneWidget);
