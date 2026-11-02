@@ -8,6 +8,7 @@ import hashlib
 import os
 import re
 import subprocess
+import threading
 
 
 def verify_local_text_diff(repo, binding, expected_paths, expected_digest, assets, validate_scope, redact):
@@ -28,10 +29,33 @@ def verify_local_text_diff(repo, binding, expected_paths, expected_digest, asset
     env = dict(os.environ, GIT_CONFIG_NOSYSTEM='1', GIT_OPTIONAL_LOCKS='0', GIT_TERMINAL_PROMPT='0')
     comparison = binding.base + '...' + binding.head
     def git(*args):
-        p = subprocess.run(['git', '-C', str(repo), *args], capture_output=True, env=env, timeout=30)
-        if p.returncode:
-            raise ValueError('local immutable diff unavailable')
-        return p.stdout
+        limit = 240_000
+        process = subprocess.Popen(['git', '-C', str(repo), *args], stdout=subprocess.PIPE,
+                                   stderr=subprocess.DEVNULL, env=env)
+        output = []
+        def read_limited():
+            output.append(process.stdout.read(limit + 1))
+        worker = threading.Thread(target=read_limited, daemon=True)
+        worker.start()
+        try:
+            worker.join(30)
+            if worker.is_alive():
+                raise ValueError('local immutable diff timed out')
+            if not output or len(output[0]) > limit:
+                raise ValueError('local immutable diff exceeds output limit')
+            if process.wait(timeout=5):
+                raise ValueError('local immutable diff unavailable')
+            return output[0]
+        finally:
+            if process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+            worker.join(5)
+            process.stdout.close()
     names = git('diff', '--no-ext-diff', '--no-renames', '--name-only', '-z', comparison)
     paths = names.decode('utf-8').rstrip('\0').split('\0')
     if len(paths) != len(expected_paths) or set(paths) != set(expected_paths):

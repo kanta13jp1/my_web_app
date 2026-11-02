@@ -66,6 +66,15 @@ class InputIntegrityTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.verify(assets=[{'path': 'image.png'}])
 
+    def test_large_git_diff_is_rejected_at_read_limit(self):
+        base = self.binding.head
+        (self.repo / 'example.txt').write_text('z' * 250_000 + '\n', encoding='utf-8')
+        self.git('add', 'example.txt')
+        self.commit('oversize')
+        head = self.git('rev-parse', 'HEAD').decode().strip()
+        with self.assertRaisesRegex(ValueError, 'output limit'):
+            self.verify(binding=Binding('example/app', 123, base, head))
+
 
 if __name__ == '__main__':
     unittest.main()
