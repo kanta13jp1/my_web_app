@@ -12,7 +12,11 @@ import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-final _date = DateTime(2026, 10, 14);
+final _now = DateTime.now();
+final _date = DateTime(_now.year, _now.month, _now.day, 12);
+final _dateKey = '${_date.year.toString().padLeft(4, '0')}-'
+    '${_date.month.toString().padLeft(2, '0')}-'
+    '${_date.day.toString().padLeft(2, '0')}';
 
 class _RecordingRepository extends SharedPreferencesAssetLiabilityRepository {
   _RecordingRepository() {
@@ -54,19 +58,19 @@ Future<void> _pump(
     MaterialApp(
       home: AssetManagementPage(
         debugNow: _date,
-        debugInitialRecentFlows: const <Map<String, dynamic>>[
+        debugInitialRecentFlows: <Map<String, dynamic>>[
           <String, dynamic>{
             'id': -10001,
             'action_type': 'borrowing',
             'amount': 10000,
             'description': '合成借入受取検査',
-            'occurred_at': '2026-10-14T12:00:00',
+            'occurred_at': _date.toIso8601String(),
           },
         ],
         debugCalendarNow: _date,
         assetLiabilityRepository: repository,
         debugInitialAssetData: <String, Map<String, double>>{
-          '2026-10-14': <String, double>{'財布(現金)': 1000, '三井住友銀行': bank},
+          _dateKey: <String, double>{'財布(現金)': 1000, '三井住友銀行': bank},
         },
       ),
     ),
@@ -130,7 +134,8 @@ void main() {
     expect(
       find.descendant(
         of: history,
-        matching: find.text('10/14 ・ 借入受取 ・ タップで編集'),
+        matching: find.text('${_date.month.toString().padLeft(2, '0')}/'
+            '${_date.day.toString().padLeft(2, '0')} ・ 借入受取 ・ タップで編集'),
       ),
       findsOneWidget,
     );
@@ -166,7 +171,8 @@ void main() {
         (widget) =>
             widget is Column &&
             widget.children.whereType<Text>().any(
-                  (child) => child.data == '2026/10 $kind',
+                  (child) => child.data == '${_date.year}/'
+                      '${_date.month.toString().padLeft(2, '0')} $kind',
                 ),
       );
       expect(metric, findsOneWidget);
@@ -175,7 +181,7 @@ void main() {
         findsOneWidget,
       );
     }
-    final calendarDay = find.byKey(const Key('asset_calendar_day_14'));
+    final calendarDay = find.byKey(Key('asset_calendar_day_${_date.day}'));
     expect(calendarDay, findsOneWidget);
     await tester.ensureVisible(calendarDay);
     await tester.tap(calendarDay);
