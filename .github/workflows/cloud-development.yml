@@ -34,6 +34,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Characterize payment-day acknowledgement with synthetic data
+        timeout-minutes: 3
         shell: bash
         run: |
           set -euo pipefail

@@ -53,8 +53,10 @@ void main() {
     final pending = <Completer<void>>[];
     final sent = <Map<String, int>>[];
     final key = GlobalKey();
+    print('REPRO_STAGE surface-size');
     await tester.binding.setSurfaceSize(const Size(1200, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
+    print('REPRO_STAGE pump-widget');
     await tester.pumpWidget(MaterialApp(
       home: AssetManagementPage(
         key: key,
@@ -67,35 +69,46 @@ void main() {
         },
       ),
     ));
+    print('REPRO_STAGE initial-pump-start');
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300));
+    print('REPRO_STAGE initial-pump-end');
+    print('REPRO_STAGE initial-pump-done');
     final dynamic page = key.currentState;
     expect(page, isNotNull);
+    print('REPRO_STAGE mark-a');
     await store.markDirty(domain, 'debt-a');
+    print('REPRO_STAGE send-a');
     final Future<void> first = page.debugMirrorDebtOverrideForRepro({'debt-a': 10});
     await tester.pump();
     expect(sent, hasLength(1));
     expect(sent.first, {'debt-a': 10});
 
     // Invoke the actual edit handler while A's network response is pending.
+    print('REPRO_STAGE edit-b');
     page.debugEditDebtOverrideForRepro(rowA, 11);
     for (var i = 0; i < 20 && sent.length < 2; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(sent.length, greaterThanOrEqualTo(2));
     expect(sent.last['debt-a'], 11);
+    print('REPRO_STAGE check-dirty-b');
     expect(await store.loadDirty(domain), contains('debt-a'));
 
+    print('REPRO_STAGE complete-a');
     pending.first.complete();
     await tester.pump();
+    print('REPRO_STAGE await-a-result');
     await first;
     // Characterization of the bug, not a desired-behavior assertion.
+    print('REPRO_STAGE check-result');
     expect(await store.loadDirty(domain), isNot(contains('debt-a')),
         reason: 'old acknowledgement clears the newer real page edit');
     for (final response in pending.skip(1)) {
       if (!response.isCompleted) response.complete();
     }
     await tester.pump(const Duration(milliseconds: 100));
+    print('REPRO_STAGE unmount');
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 1));
   });
