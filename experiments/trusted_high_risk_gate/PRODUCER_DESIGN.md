@@ -10,6 +10,12 @@
 
 **停止時間の保証は未完成。** 出力上限は適用するが、Gitの子孫がstdoutを保持すると、親プロセス終了後もreaderのロックにより `close()` が待ち続け得る。合成プロセスで再現済み。現状は制御された合成データに限定し、実データ・本番CIには接続しない。Windowsのshimを含む所有プロセスツリーの安全な隔離・終了と、タイムアウト・残存プロセス・他プロセス非干渉の検証が必要。
 
+`rest_diff_fixture.py` はGitを起動せず、合成のRESTファイル応答でバイト上限・件数・hunkサイズ・追加削除件数・renameやpatch欠損を検査する別案。`experimental-rest-files-v1` は現producerのGit `--unified=40` 形式と互換性がなく、既存レビュー証跡のハッシュを検証できない。認証HTTPS・リダイレクト制限・完全なページ検証・REST patchの網羅性・信頼済みredactor・実producerとの対応は未検証。追加削除数の一致だけではpatch全体の完全性を証明できないため、本番接続や必須化はしない。
+
+`read_capped` の容量制限は時間制限ではない。実HTTPでの無応答を自力では中断できず、実接続は不可。接続および各readのtimeout、全取得を通す単調時計の総期限、期限切れ時のキャンセルと確実な後始末を備えた信頼済みtransportを別途実装・検証する。合成検査では途中まで受信後にtimeoutとなる場合、部分データを返さず例外を伝播することのみ確認する。
+
+公式仕様では [PRのファイル一覧](https://docs.github.com/en/rest/pulls/pulls#list-pull-requests-files) は最大3,000ファイル、[コミット比較](https://docs.github.com/en/rest/commits/commits#compare-two-commits) のファイル一覧は最大300ファイルであり、上限到達時には網羅性を仮定しない。試作ではより厳しく100件以上を拒否する。
+
 ## 5観点の生成と段階を区別
 
 既存の承認済み通常AI reviewerは correctness/security/tests の3観点。安全な拡張には、security、rollback、data migration、production smoke、observability それぞれの対象と具体的な根拠、実施/計画/未確認を構造化し、欠落や未確認を勝手に「完了」にしない producer が必要。ユーザーが承認した既存経路を利用し、追加の有料Claude設定を変更しない。秘匿パス・添付・個人の金融観測は除外し、redaction失敗や過大入力時は外部送信を中止する。
