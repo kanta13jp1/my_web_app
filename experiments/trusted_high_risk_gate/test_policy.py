@@ -41,6 +41,11 @@ class TrustedRiskPolicyTest(unittest.TestCase):
     def test_payroll_risk_cannot_be_removed_by_editing_pr_body(self):
         self.assertFalse(self.decision(None, body=''))
 
+    def test_review_gate_implementation_and_reusable_actions_are_high_risk(self):
+        for path in ('scripts/ai_review_gate.py', 'scripts/check_high_risk_ultrareview_gate.py',
+                     '.github/actions/paid-ai-policy/action.yml'):
+            self.assertFalse(self.decision(None, paths=[path]), path)
+
 
 if __name__ == '__main__':
     unittest.main()

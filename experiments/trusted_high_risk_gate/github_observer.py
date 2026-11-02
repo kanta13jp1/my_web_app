@@ -59,8 +59,20 @@ def observe(binding, get=github_json, download=github_bytes):
     count = pr.get('changed_files')
     if type(count) is not int or count <= 0 or len(files) != count:
         raise ValueError('changed-file list incomplete')
-    paths = [item['filename'] for item in files]
-    if not is_high_risk(paths, pr['title'], pr.get('body') or '', [x['name'] for x in pr['labels']]):
+    paths = []
+    risk_paths = []
+    for item in files:
+        name = item.get('filename')
+        if not isinstance(name, str) or not name:
+            raise ValueError('missing changed-file path')
+        paths.append(name)
+        risk_paths.append(name)
+        if item.get('status') == 'renamed':
+            previous = item.get('previous_filename')
+            if not isinstance(previous, str) or not previous:
+                raise ValueError('renamed file missing previous path')
+            risk_paths.append(previous)
+    if not is_high_risk(risk_paths, pr['title'], pr.get('body') or '', [x['name'] for x in pr['labels']]):
         if not unchanged(get(pr_path)):
             raise ValueError('PR changed during evaluation')
         return True, 'no high-risk trigger'
@@ -92,7 +104,7 @@ def observe(binding, get=github_json, download=github_bytes):
     artifact = candidates[0]
     archive = download(f"{root}/actions/artifacts/{artifact['id']}/zip")
     evidence = attest(binding, run, check, artifact, archive, workflow['id'], paths)
-    result = evaluate(binding, paths, pr['title'], pr.get('body') or '', [x['name'] for x in pr['labels']], evidence)
+    result = evaluate(binding, risk_paths, pr['title'], pr.get('body') or '', [x['name'] for x in pr['labels']], evidence)
     if not unchanged(get(pr_path)):
         raise ValueError('PR changed during evaluation')
     return result

@@ -63,6 +63,40 @@ class ObserverTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             observe(self.fixture.b, self.get, self.download)
 
+    def test_renaming_high_risk_file_to_low_risk_path_does_not_hide_risk(self):
+        def renamed(path):
+            if '/pulls/123/files?' in path:
+                return [{'filename': 'lib/widgets/simple_text.dart', 'status': 'renamed',
+                         'previous_filename': 'lib/services/asset_payroll_snapshot_store.dart'}]
+            if '/check-runs?' in path:
+                return {'check_runs': []}
+            return self.get(path)
+        with self.assertRaises(Pending):
+            observe(self.fixture.b, renamed, self.download)
+
+    def test_renamed_file_without_previous_path_fails_closed(self):
+        def missing_previous(path):
+            if '/pulls/123/files?' in path:
+                return [{'filename': 'lib/widgets/simple_text.dart', 'status': 'renamed'}]
+            return self.get(path)
+        with self.assertRaises(ValueError):
+            observe(self.fixture.b, missing_previous, self.download)
+
+    def test_renamed_file_review_binds_new_name_only(self):
+        f = self.fixture
+        new_name = 'lib/widgets/simple_text.dart'
+        f.files = [new_name]
+        f.evidence['files'] = [new_name]
+        f.evidence['review']['files'][0]['path'] = new_name
+        self.artifact, self.archive = f.archive()
+        self.artifact['id'] = 77
+        def renamed(path):
+            if '/pulls/123/files?' in path:
+                return [{'filename': new_name, 'status': 'renamed',
+                         'previous_filename': 'lib/services/asset_payroll_snapshot_store.dart'}]
+            return self.get(path)
+        self.assertTrue(observe(f.b, renamed, self.download)[0])
+
     def test_pagination_reads_all_pages_and_fails_at_cap(self):
         def get_page(path):
             return {'items': list(range(100)) if path.endswith('page=1') else [100]}
