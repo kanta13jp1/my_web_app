@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "repository": "kanta13jp1/my_web_app",
+  "pull_request": 5938,
+  "provider": "google-gemini",
+  "endpoint": "https://generativelanguage.googleapis.com/v1beta/",
+  "method": "generateContent",
+  "owner_consent": "2026-10-31 03:57 UTC",
+  "related_paths": [
+    ".github/workflows/sea-shelter-checks.yml",
+    "test/e2e/sea_shelter_residents.spec.ts",
+    "test/e2e/sea_shelter_residents_component.spec.ts",
+    "web/labs/sea-shelter/assets/residents-original-v2.png",
+    "web/labs/sea-shelter/assets/residents-original-v2.README.md",
+    "web/labs/sea-shelter/app.mjs",
+    "web/labs/sea-shelter/index.html",
+    "web/labs/sea-shelter/style.css",
+    "web/labs/sea-shelter/residents.mjs",
+    "web/labs/sea-shelter/RESIDENTS.md"
+  ],
+  "assets": [
+    {
+      "path": "web/labs/sea-shelter/assets/residents-original-v2.png",
+      "head_blob": "63ba92836077fd783b4e7326fcfbe35569360033",
+      "sha256": "0b5b09baaa7aa22a598af01e5adcb60f3aae177d6d5610ee27016d48b3dc70f0",
+      "bytes": 2269806,
+      "width": 1536,
+      "height": 1024,
+      "bit_depth": 8,
+      "color_type": 6,
+      "mime_type": "image/png",
+      "source_commit": "02a075f9327b08c1b78540815acd215acbb0f4a9"
+    }
+  ]
+}

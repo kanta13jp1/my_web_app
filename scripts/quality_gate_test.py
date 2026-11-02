@@ -83,9 +83,14 @@ class QualityGateTest(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn(
-            "run: flutter test --coverage --concurrency=2",
+            "run: python scripts/run_vm_test_shard.py --total-shards=2",
             workflow,
         )
+        shard_runner = (root / "scripts" / "run_vm_test_shard.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("'--coverage'", shard_runner)
+        self.assertIn("'--concurrency=2'", shard_runner)
 
     def test_analyzer_lock_is_shared_across_worktrees(self) -> None:
         root = Path(__file__).resolve().parents[1]
