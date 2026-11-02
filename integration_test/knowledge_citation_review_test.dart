@@ -13,7 +13,9 @@ void main() {
       MaterialApp(home: KnowledgeGraphPage(gateway: _SyntheticGateway())),
     );
     await tester.enterText(
-        find.byKey(const Key('knowledge-query-field')), '数は？');
+      find.byKey(const Key('knowledge-query-field')),
+      '数は？',
+    );
     await tester.ensureVisible(find.byKey(const Key('knowledge-query-button')));
     await tester.tap(find.byKey(const Key('knowledge-query-button')));
     await tester.pumpAndSettle();
@@ -23,7 +25,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-        find.byKey(const Key('knowledge-citation-preview-1')), findsOneWidget);
+      find.byKey(const Key('knowledge-citation-preview-1')),
+      findsOneWidget,
+    );
     expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
     final first = find.byKey(const Key('knowledge-citation-review-0'));
     await tester.ensureVisible(first);
