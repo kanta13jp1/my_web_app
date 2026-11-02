@@ -40,7 +40,6 @@ jobs:
       PGPASSWORD: synthetic-contract-only
       PGDATABASE: payroll_contract
       PYTHONDONTWRITEBYTECODE: '1'
-      FIXTURE_CONTAINER_ID: ${{ job.services.postgres.id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -52,6 +51,8 @@ jobs:
         run: python -m unittest -v test_http_transport_safety.py
       - name: Initialize isolated synthetic contract
         working-directory: docs/proposals/payroll_snapshot
+        env:
+          FIXTURE_CONTAINER_ID: ${{ job.services.postgres.id }}
         shell: bash
         run: |
           set -euo pipefail
