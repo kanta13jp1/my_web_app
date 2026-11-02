@@ -6,8 +6,10 @@ on:
       - 'scripts/task_budget_rpc_contract.sql'
       - '.github/workflows/task-budget-rpc-security.yml'
   workflow_dispatch:
-permissions:
-  contents: read
+permissions: {}
+concurrency:
+  group: task-budget-rpc-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   isolated-postgres:
     runs-on: ubuntu-latest
