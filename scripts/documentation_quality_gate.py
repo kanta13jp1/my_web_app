@@ -36,7 +36,15 @@ def known_competitor_brand_row(root, name, line_number, detail):
     if not pattern:
         return False
     lines = (root / name).read_text(encoding='utf-8').splitlines()
-    return 0 < line_number <= len(lines) and bool(re.match(pattern, lines[line_number - 1]))
+    if not 0 < line_number <= len(lines):
+        return False
+    row = lines[line_number - 1]
+    prefix = re.match(pattern, row)
+    if not prefix:
+        return False
+    # codespell reports a line, not a column. Keep the finding if the same
+    # word also occurs outside the verified brand-and-URL prefix.
+    return not re.search(r'\b' + re.escape(brand) + r'\b', row[prefix.end():], re.IGNORECASE)
 
 
 def collect(root, paths):
