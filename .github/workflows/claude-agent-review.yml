@@ -111,6 +111,9 @@ jobs:
       - name: Verify high-risk workflow event and security boundaries
         run: python -B scripts/check_claude_review_workflow_test.py
 
+      - name: Test bounded gate status generation
+        run: python -B scripts/test_gate_status_workflow.py
+
       - name: Collect changed files
         run: |
           mkdir -p .ci-logs
