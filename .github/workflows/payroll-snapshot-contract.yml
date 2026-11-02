@@ -51,3 +51,6 @@ jobs:
       - name: Test concurrent correction and atomic audit
         working-directory: docs/proposals/payroll_snapshot
         run: python concurrency.py
+      - name: Test synthetic initial races and delayed commit
+        working-directory: docs/proposals/payroll_snapshot
+        run: python concurrency_extra.py
