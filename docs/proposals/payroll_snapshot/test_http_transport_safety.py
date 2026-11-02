@@ -1,9 +1,12 @@
 """No database or network access: validate transport fixture boundaries."""
 import os
+import runpy
 import subprocess
 import sys
 import unittest
 from uuid import uuid4
+from pathlib import Path
+from unittest.mock import patch
 
 from http_transport_safety import validate_environment, validate_marker_count
 
@@ -45,6 +48,15 @@ class TransportFixtureSafetyTest(unittest.TestCase):
             with self.subTest(count=count):
                 with self.assertRaises(RuntimeError):
                     validate_marker_count(count)
+
+    def test_script_rejects_unsafe_environment_before_starting_psql(self):
+        # Exercise the real entry point while intercepting every subprocess.
+        env = {**self.safe, 'PGHOST': 'unsafe.example.invalid'}
+        path = Path(__file__).with_name('http_transport.py')
+        with patch.dict(os.environ, env, clear=True), patch('subprocess.run') as run:
+            with self.assertRaisesRegex(RuntimeError, 'unsafe test environment: PGHOST'):
+                runpy.run_path(str(path), run_name='__main__')
+            run.assert_not_called()
 
     def test_optimized_python_is_rejected_without_connecting(self):
         # -O removes assert statements; the boundary must still fail closed.
