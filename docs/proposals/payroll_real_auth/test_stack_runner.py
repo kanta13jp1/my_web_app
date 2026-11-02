@@ -3,6 +3,7 @@ import hashlib
 import json
 from pathlib import Path
 import queue
+import subprocess
 import unittest
 import stack_runner as runner
 
@@ -39,6 +40,19 @@ class RunnerTests(unittest.TestCase):
         with self.assertRaises(runner.OwnerClientExited) as error:
             runner.Fixture.wait_marker(Exited(), output, 'SYNTHETIC_INITIAL_READY', timeout=10)
         self.assertEqual(error.exception.exit_code, 7)
+
+    def test_sql_failure_reports_only_sqlstate(self):
+        fixture = runner.Fixture.__new__(runner.Fixture)
+        fixture.db_id, fixture.token = 'synthetic-id', 'synthetic-token'
+        fixture.check_db = lambda **_kwargs: None
+        fixture.check_network = lambda: None
+        def fail(*_args, **_kwargs):
+            raise subprocess.CalledProcessError(1, 'synthetic', stderr='ERROR:  42723\nprivate synthetic detail')
+        fixture.cmd = fail
+        with self.assertRaises(runner.FixtureSqlError) as error:
+            fixture.db_sql('synthetic')
+        self.assertEqual(error.exception.sqlstate, '42723')
+        self.assertNotIn('private synthetic detail', str(error.exception))
 
 
 if __name__ == '__main__': unittest.main()

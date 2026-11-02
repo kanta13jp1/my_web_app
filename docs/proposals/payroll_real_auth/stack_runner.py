@@ -35,6 +35,12 @@ class OwnerClientExited(RuntimeError):
         super().__init__('Synthetic owner client ended before marker')
 
 
+class FixtureSqlError(RuntimeError):
+    def __init__(self, code):
+        self.sqlstate = code if isinstance(code, str) and re.fullmatch(r'[0-9A-Z]{5}', code) else None
+        super().__init__('Synthetic SQL failed')
+
+
 EMPTY_CHECK = """\\set ON_ERROR_STOP on
 select case when current_database()='payroll_auth_fixture' and current_user='postgres'
  and current_setting('server_version_num')::int between 170000 and 179999
@@ -117,10 +123,16 @@ class Fixture:
         if marker:
             sql = ("\\set ON_ERROR_STOP on\nselect 1 / ((count(*) = 1)::int) "
                    "from public.payroll_auth_fixture_guard where token=:'fixture_token'::uuid;\n" + sql)
-        result = self.cmd('exec', '-i', '-u', 'postgres', self.db_id,
-            '/usr/bin/env', '-i', 'PATH=' + PATH_INSIDE, '/usr/local/bin/psql',
-            '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-v', 'fixture_token=' + self.token,
-            '-h', '/var/run/postgresql', '-U', 'postgres', '-d', DB, data=sql)
+        try:
+            result = self.cmd('exec', '-i', '-u', 'postgres', self.db_id,
+                '/usr/bin/env', '-i', 'PATH=' + PATH_INSIDE, '/usr/local/bin/psql',
+                '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-v', 'VERBOSITY=sqlstate',
+                '-v', 'fixture_token=' + self.token,
+                '-h', '/var/run/postgresql', '-U', 'postgres', '-d', DB, data=sql)
+        except subprocess.CalledProcessError as error:
+            # Only expose a syntactically valid SQLSTATE, never the raw SQL or rows.
+            match = re.search(r'(?:ERROR|FATAL):\s*([0-9A-Z]{5})\b', error.stderr or '')
+            raise FixtureSqlError(match.group(1) if match else None) from None
         return result.stdout
 
     def pull_images(self):
@@ -328,11 +340,14 @@ print('RESTORED')
         })
         self.start_component('auth')
         self.wait_http('http://synthetic-auth:9999/health')
-        self.stage = 'apply fixed synthetic migration'
-        self.db_sql("create function auth.uid() returns uuid language sql stable as "
-                    "'select nullif(current_setting(''request.jwt.claims'', true)::jsonb ->> ''sub'', '''')::uuid'; "
-                    "grant usage on schema auth to anon,authenticated; "
+        self.stage = 'verify Auth-provided uid function'
+        status = self.db_sql("select case when to_regprocedure('auth.uid()') is not null "
+                             "then 'UID_PRESENT' else 'UID_MISSING' end;").strip().splitlines()[-1]
+        if status != 'UID_PRESENT':
+            raise RuntimeError('Auth-provided uid function missing')
+        self.db_sql("grant usage on schema auth to anon,authenticated; "
                     "grant execute on function auth.uid() to anon,authenticated;\n")
+        self.stage = 'apply fixed synthetic migration'
         self.db_sql(migration)
         self.stage = 'start synthetic PostgREST and Envoy'
         self.create_component('rest', env={
@@ -419,6 +434,10 @@ def main():
         fixture.execute(fixed['migration.sql'], fixed['synthetic_client.py'],
                         fixed['auth_gateway_client.py'], fixed['envoy-fixture.yaml'])
         print('Synthetic real Auth + test Envoy + PostgREST checks passed.')
+    except FixtureSqlError as error:
+        print('Synthetic fixture failed at stage:', fixture.stage,
+              'SQLSTATE:', error.sqlstate or 'unavailable')
+        raise SystemExit(1) from None
     except OwnerClientExited as error:
         print('Synthetic fixture failed at stage:', fixture.stage,
               'owner client exited before marker; exit code:', error.exit_code)
