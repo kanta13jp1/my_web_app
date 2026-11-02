@@ -6,7 +6,25 @@ import 'package:my_web_app/pages/knowledge_graph_page.dart';
 import 'package:my_web_app/services/knowledge_graph_rag_service.dart';
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  const mobile = bool.fromEnvironment('CITATION_QA_MOBILE');
+  const viewport = mobile ? Size(393, 851) : Size(1440, 900);
+
+  Future<void> capture(WidgetTester tester, String state) async {
+    for (var frame = 0; frame < 3; frame++) {
+      await tester.pump(const Duration(milliseconds: 500));
+      await binding.takeScreenshot(
+        '${mobile ? 'mobile' : 'desktop'}-citation-$state-$frame',
+        <String, Object?>{
+          'width': viewport.width,
+          'height': viewport.height,
+          'devicePixelRatio': mobile ? 2.75 : 1.0,
+          'frame': frame,
+          'settling': 'Flutter pump 500ms',
+        },
+      );
+    }
+  }
 
   testWidgets('引用を開き、確認・解除・再表示できる', (tester) async {
     await tester.pumpWidget(
@@ -34,9 +52,14 @@ void main() {
     await tester.tap(first);
     await tester.pumpAndSettle();
     expect(find.text('回答と引用を確認 1/3'), findsOneWidget);
+    await capture(tester, 'checked');
     await tester.tap(first);
     await tester.pumpAndSettle();
     expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
+    await tester
+        .ensureVisible(find.byKey(const Key('knowledge-citation-review-0')));
+    await tester.pumpAndSettle();
+    await capture(tester, 'reset');
     await tester.tap(first);
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('閉じる'));
@@ -44,6 +67,10 @@ void main() {
     await tester.tap(find.byKey(const Key('knowledge-citation-link-1')));
     await tester.pumpAndSettle();
     expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
+    await tester
+        .ensureVisible(find.byKey(const Key('knowledge-citation-review-0')));
+    await tester.pumpAndSettle();
+    await capture(tester, 'reopened');
   });
 }
 
