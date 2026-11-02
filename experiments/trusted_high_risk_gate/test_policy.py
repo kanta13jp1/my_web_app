@@ -34,9 +34,10 @@ class TrustedRiskPolicyTest(unittest.TestCase):
             wrong['unresolved'] = unresolved
             self.assertFalse(self.decision(wrong), unresolved)
 
-    def test_missing_file_data_fails_closed_but_low_risk_can_pass(self):
+    def test_missing_file_data_and_unknown_paths_fail_closed(self):
         self.assertFalse(self.decision(paths=[]))
-        self.assertTrue(self.decision(paths=['lib/widgets/simple_text.dart']))
+        for path in ('lib/widgets/simple_text.dart', 'docs/ordinary.md', 'README.md', 'new/unknown.bin'):
+            self.assertFalse(self.decision(paths=[path]), path)
 
     def test_payroll_risk_cannot_be_removed_by_editing_pr_body(self):
         self.assertFalse(self.decision(None, body=''))
@@ -45,7 +46,8 @@ class TrustedRiskPolicyTest(unittest.TestCase):
         for path in ('scripts/ai_review_gate.py', 'scripts/check_high_risk_ultrareview_gate.py',
                      '.github/actions/paid-ai-policy/action.yml', '.github/workflows/ci.yml',
                      '.github/workflows/ordinary.yaml', 'lib/services/supabase_client_provider.dart',
-                     'lib/services/supabase_runtime_config.dart'):
+                     'lib/services/supabase_runtime_config.dart', 'lib/pages/two_factor_auth_page.dart',
+                     'lib/services/billing_service.dart'):
             self.assertFalse(self.decision(None, paths=[path]), path)
 
 

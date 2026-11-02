@@ -6,13 +6,10 @@ from dataclasses import dataclass
 import re
 
 REQUIRED_AREAS = frozenset({'security', 'rollback', 'data migration', 'prod smoke', 'observability'})
-RISKY_PATH = re.compile(
-    r'(^supabase/(migrations|functions)/|^lib/(auth|billing|payments|subscription|firebase|supabase)/'
-    r'|^\.github/workflows/.*\.ya?ml$|^\.github/actions/'
-    r'|^scripts/[^/]*(review|gate|risk|security|policy)[^/]*\.py$'
-    r'|^lib/services/supabase[^/]*\.dart$'
-    r'|^firebase\.json$|^firestore\.|^storage\.|(^|/)\.env'
-    r'|secret|credential|service[_-]?role|rls|payroll)', re.I)
+# Empty until each candidate path's entire downstream execution/use chain and
+# all possible file types/content are independently shown to be inert. Do not
+# treat a directory glob, suffix or PR-provided text as proof of low risk.
+ALLOWLISTED_INERT_PATHS = frozenset()
 RISKY_TEXT = re.compile(r'\b(secret|credential|token|auth|payment|billing|stripe|subscription|production|deploy|migration|rls|service[_ -]?role)\b', re.I)
 RISKY_LABELS = frozenset({'security', 'supabase', 'edge-function', 'workflow-failure', 'priority:critical', 'deploy', 'production'})
 
@@ -28,9 +25,10 @@ class Binding:
 def is_high_risk(paths, title, body, labels):
     if not isinstance(paths, list) or not paths or not all(isinstance(x, str) and x for x in paths):
         raise ValueError('incomplete changed-file list')
-    if not isinstance(title, str) or not isinstance(body, str) or not isinstance(labels, list):
+    if (not isinstance(title, str) or not isinstance(body, str) or not isinstance(labels, list)
+            or not all(isinstance(x, str) for x in labels)):
         raise ValueError('incomplete PR data')
-    return (any(RISKY_PATH.search(path.replace('\\', '/')) for path in paths)
+    return (any(path not in ALLOWLISTED_INERT_PATHS for path in paths)
             or bool(RISKY_TEXT.search(title + '\n' + body))
             or bool(RISKY_LABELS.intersection(x.lower() for x in labels)))
 
