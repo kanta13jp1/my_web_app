@@ -4,7 +4,8 @@ CREATE ROLE authenticated NOLOGIN;
 CREATE ROLE service_role NOLOGIN;
 CREATE SCHEMA auth;
 CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$
-  SELECT NULLIF(current_setting('request.jwt.claim.role', true), '')
+  SELECT COALESCE(NULLIF(current_setting('request.jwt.claim.role', true), ''),
+    (NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role'))::text
 $$;
 CREATE FUNCTION public.update_updated_at_column() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN NEW.updated_at = now(); RETURN NEW; END;
@@ -60,10 +61,17 @@ END $$;
 SELECT set_config('request.jwt.claim.role', 'service_role', false);
 SELECT public.record_task_budget_spend('ef', 'test_allowed', 1.25);
 SELECT public.record_task_budget_spend('ef', 'test_allowed', 0.75);
+-- PostgREST also supplies role inside the JSON claims setting.
+SELECT set_config('request.jwt.claim.role', '', false);
+SELECT set_config('request.jwt.claims', '{"role":"service_role"}', false);
+SELECT public.record_task_budget_spend('ef', 'test_json_claim', 0.5);
 RESET ROLE;
 DO $$ BEGIN
   IF (SELECT spent_usd FROM public.task_budget WHERE scope='ef' AND scope_id='test_allowed') IS DISTINCT FROM 2.00 THEN
     RAISE EXCEPTION 'service role spending did not accumulate';
+  END IF;
+  IF (SELECT spent_usd FROM public.task_budget WHERE scope='ef' AND scope_id='test_json_claim') IS DISTINCT FROM 0.50 THEN
+    RAISE EXCEPTION 'JSON service role claim did not record spending';
   END IF;
   IF EXISTS (SELECT 1 FROM public.task_budget WHERE scope_id IN ('test_anon','test_authenticated','test_no_claim','test_wrong_claim')) THEN
     RAISE EXCEPTION 'denied calls created records';
