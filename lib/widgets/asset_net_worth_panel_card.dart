@@ -148,10 +148,11 @@ class AssetNetWorthPanelCard extends StatelessWidget {
   }
 
   Widget _buildBreakdown(ThemeData theme) {
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: [
         _chip(theme, '資産', _yen(panel.positiveAssetTotal!), _positive),
-        const SizedBox(width: 8),
         _chip(theme, '負債', _yen(panel.liabilityTotal!), _negative),
       ],
     );
@@ -164,8 +165,7 @@ class AssetNetWorthPanelCard extends StatelessWidget {
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Wrap(
         children: [
           Text(
             '$label ',

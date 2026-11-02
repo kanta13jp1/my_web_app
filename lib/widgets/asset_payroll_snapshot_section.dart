@@ -34,10 +34,11 @@ class _AssetPayrollSnapshotSectionState
   PayrollSnapshotRecord? _current;
   PayrollSnapshotRecord? _previous;
   PayrollSnapshotDraft? _pending;
+  String? _reconciledChangedId;
+  String? _conflictAccountId;
   bool _loading = true;
   bool _dataReady = false;
   bool _busy = false;
-  bool _reconciledAbsent = false;
   String? _error;
   int _epoch = 0;
 
@@ -71,11 +72,22 @@ class _AssetPayrollSnapshotSectionState
     try {
       final accounts = await widget.store.accounts();
       if (!mounted || epoch != _epoch) return;
-      final selected = accounts.any((a) => a.id == _account)
-          ? _account
-          : accounts.isEmpty
-              ? null
-              : accounts.first.id;
+      final conflictAccount = _conflictAccountId;
+      if (conflictAccount != null &&
+          !accounts.any((account) => account.id == conflictAccount)) {
+        setState(() {
+          _loading = false;
+          _dataReady = false;
+          _error = '対象の給与口座を確認できません。再読込してください。';
+        });
+        return;
+      }
+      final selected = conflictAccount ??
+          (accounts.any((a) => a.id == _account)
+              ? _account
+              : accounts.isEmpty
+                  ? null
+                  : accounts.first.id);
       final values = selected == null
           ? <PayrollSnapshotRecord?>[null, null]
           : await Future.wait([
@@ -98,6 +110,7 @@ class _AssetPayrollSnapshotSectionState
         _previous = values[1];
         _loading = false;
         _dataReady = true;
+        _conflictAccountId = null;
       });
     } catch (_) {
       if (!mounted || epoch != _epoch) return;
@@ -228,18 +241,30 @@ class _AssetPayrollSnapshotSectionState
       if (!mounted) return;
       setState(() {
         _pending = null;
-        _reconciledAbsent = false;
       });
       _balance.clear();
       _date.clear();
       _note.clear();
       _reason.clear();
       await _load();
+    } on PayrollSnapshotConflict catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _pending = null;
+        _reconciledChangedId = null;
+        _conflictAccountId = draft.accountId;
+      });
+      await _load();
+      if (!mounted) return;
+      setState(() {
+        _error = _dataReady
+            ? '競合により今回の記録は保存されませんでした。照合時点の現在の選択と入力内容を確認してください。'
+            : '競合により今回の記録は保存されませんでした。現在の選択を取得できません。再読込してください。';
+      });
     } catch (_) {
       if (mounted) {
         setState(() {
-          _error =
-              '保存結果が未確認です。再送せず「保存結果を照合」を押してください。画面を開き直した場合は同じ口座・月を選び、取得結果を確認してください。';
+          _error = '保存結果が未確認です。画面を閉じず、再送せず「保存結果を照合」を押してください。';
         });
       }
     } finally {
@@ -247,31 +272,99 @@ class _AssetPayrollSnapshotSectionState
     }
   }
 
+  bool _pendingSelectionIsReadable(PayrollSnapshotDraft pending) =>
+      _dataReady &&
+      _account == pending.accountId &&
+      _month.year == pending.month.year &&
+      _month.month == pending.month.month &&
+      _current != null;
+
+  void _clearConfirmedPending() {
+    setState(() {
+      _pending = null;
+      _reconciledChangedId = null;
+    });
+    _balance.clear();
+    _date.clear();
+    _note.clear();
+    _reason.clear();
+  }
+
   Future<void> _reconcile() async {
     final pending = _pending;
     if (pending == null) return;
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _reconciledChangedId = null;
+    });
     try {
       final record = await widget.store.byRequest(pending);
       if (!mounted) return;
-      if (record != null) {
+      if (record == null) {
         setState(() {
-          _pending = null;
-          _reconciledAbsent = false;
+          _error = '保存結果はまだ確認できません。画面を閉じず、時間を置いて再照合してください。';
         });
-        _balance.clear();
-        _date.clear();
-        _note.clear();
-        _reason.clear();
-        await _load();
-      } else {
-        setState(() {
-          _reconciledAbsent = true;
-          _error = '同内容の保存記録は見つかりません。再読込して編集へ戻れます。';
-        });
+        return;
       }
+
+      // Keep the pending request locked until the current selection is read.
+      await _load();
+      if (!mounted) return;
+      if (!_pendingSelectionIsReadable(pending)) {
+        setState(() {
+          _error = '今回の記録は保存済みですが、現在の選択を確認できません。時間を置いて再照合してください。';
+        });
+        return;
+      }
+      if (_current!.id == record.id) {
+        _clearConfirmedPending();
+        return;
+      }
+      setState(() {
+        _reconciledChangedId = _current!.id;
+        _error = '今回の記録は保存済みですが、照合時点の選択は別の記録です。表示中の選択を確認し、保留を解除してください。';
+      });
     } catch (_) {
       if (mounted) setState(() => _error = '照合できませんでした。再登録せず、時間を置いて照合してください。');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _acknowledgeChangedSelection() async {
+    final pending = _pending;
+    final observedId = _reconciledChangedId;
+    if (pending == null || observedId == null || _busy) return;
+    setState(() => _busy = true);
+    try {
+      // Re-read at acknowledgement; a later save still uses expected ID.
+      await _load();
+      if (!mounted) return;
+      if (!_pendingSelectionIsReadable(pending)) {
+        setState(() {
+          _reconciledChangedId = null;
+          _error = '今回の記録は保存済みですが、現在の選択を確認できません。時間を置いて再照合してください。';
+        });
+        return;
+      }
+      if (_current!.id != observedId) {
+        setState(() {
+          _reconciledChangedId = _current!.id;
+          _error = '照合時点の選択は別の記録に更新されました。表示中の選択をもう一度確認してください。';
+        });
+        return;
+      }
+      _clearConfirmedPending();
+      setState(() {
+        _error = '照合時点の現在の選択を確認しました。';
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _reconciledChangedId = null;
+          _error = '現在の選択を確認できません。時間を置いて再照合してください。';
+        });
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -414,12 +507,9 @@ class _AssetPayrollSnapshotSectionState
                   child: const Text('翌月'),
                 ),
                 TextButton(
-                  onPressed: !_busy &&
-                          _pendingGoal == null &&
-                          (_pending == null || _reconciledAbsent)
+                  onPressed: !_busy && _pendingGoal == null && _pending == null
                       ? () {
                           _pending = null;
-                          _reconciledAbsent = false;
                           _load();
                         }
                       : null,
@@ -433,6 +523,11 @@ class _AssetPayrollSnapshotSectionState
               TextButton(
                 onPressed: _busy ? null : _reconcile,
                 child: const Text('保存結果を照合'),
+              ),
+            if (_pending != null && _reconciledChangedId != null)
+              TextButton(
+                onPressed: _busy ? null : _acknowledgeChangedSelection,
+                child: const Text('現在の選択を確認して保留解除'),
               ),
             if (!_loading && _accounts.isEmpty)
               TextButton(

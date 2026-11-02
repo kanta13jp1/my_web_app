@@ -1,0 +1,68 @@
+# 灯守の甲板訓練 — 独立3D試作
+
+本番の住民版1.0.2271は変更しない。この変更は開発・検証・Draft
+PRまで。新3D版のmainマージと公開は未許可。
+
+## 遊びと境界
+
+約45〜90秒の一対一。攻撃 / ガード /
+灯の一閃の3操作。予兆中にガードして被弾を防ぎ、反撃と必殺ゲージを得る。早すぎるガードは切れ、攻撃連打だけでは敗北する。先行の純粋モデル9テストを維持。結果はsimulationのimpact時刻で確定し、描画や演出完了に依存しない。
+
+訓練は一時sessionのみ。集落model/save/経済のimportもlocalStorage書込みもない。人口7人など旧保存から入り直せる。勝敗・中断・再挑戦・reloadで資材/人口/EXP/建物を変更しない。集落へ戻れば農園の既存通常時間処理が続く。
+
+## 表現と操作
+
+Three.jsの実メッシュ/親子関節で制作した独自の灯守（顔・髪・コート・スカーフ・ブーツ・真鍮の道具）と貝殻浮標の訓練人形、木の甲板。静的部品をjoint内でmaterial別にbatchして描画回数を抑える。2D
+PNG/billboardや外部モデルは使わない。createHero境界を将来のGLB差替え点にする。
+
+待機呼吸、踏込み、腕/道具の攻撃、ガード、被弾、勝利姿勢。必殺は短い寄り/追従/引きと海色の輪・光の軌跡・粒子。敵の予兆はDOM文字とパドルの構えで示し、全画面点滅をしない。reduced-motionと任意の短縮ではカメラ/水面/粒子等を抑える。背景はpauseし、復帰後は明示再開。音は初期OFF、明示ON時だけ短い生成音。DOMボタン/キーボード/文字予告/長い予告補助を保持。
+
+WebGL2/素材失敗やcontext
+lossは理由と再読込/再挑戦/集落への戻り口を表示。低い高さと拡大文字では可読性と操作到達を優先してページが伸びる。
+
+## 配信とライセンス
+
+公式npm
+three0.186.0を正確に固定し、lockの公式integrityで検証する。coreとrendererは同版。`npm ci --ignore-scripts`後に`node scripts/build_sea_shelter_arena.mjs`を実行し、vendorの同一origin
+module2個とMIT LICENSEを生成する。既定の出力は既存ignore対象の`build/sea-shelter-preview`で、ゲームのソースをその中へコピーしてから生成する。`.gitignore`は変更前blobをそのまま保持し、source webへの生成は拒否する。生成物をGitへ重複コミットしない。訓練開始操作までengineを読み込まず、集落の初期loadにも追加しない。
+
+単独プレビューは`python web/labs/sea-shelter/serve.py --directory build/sea-shelter-preview`で開く。Flutter経路ではbuild後に同scriptへ`build/web`等の成果物ディレクトリを渡す。CI・汎用cloud・通常本番workflowに共通actionを接続し、vendor/ライセンス・版・SHA256・容量の検証を成果物公開前に行う。限定公開時はこのactionを含む新しい固定base/allowlist運用planが必要。本PRは自動配信・権限を変更せず、配信を実行しない。詳細は`BUILD.md`。
+
+目標：初期追加3D転送2MB未満、三角形3万以下、drawcalls60以下、DPR最大1.5、粒子最大128。現時点は目標で、実測はCI証跡へ追記する。実機iPhone
+Safariの性能は保証しない。
+
+## 検証
+
+純粋model9件：連打/早すぎるguard/成功guard/必殺一回消費/勝敗/45〜90秒戦略/pause/不正delta/stop/tie。ユーザーI/Oは3ケース：旧7人保存→lazy入場→guard/必殺勝利→再挑戦/戻る、初回→敗北/pause/背景/時計変化/7viewport/拡大文字/reload、engine失敗→明示reload復旧→実WebGL
+contextloss→再挑戦/戻る。別component
+contractで実Three20生成破棄とGPUgeometry/texture/observer/canvas/global
+listenerを計測。集落の既存20model/32browser/Flutter導線とlifecycleも回帰確認する。
+
+既検証の基準head15b1da0では、モデル29件・パッケージ再生成/破損検出・ブラウザ40件・Flutter導線4件・実ホスト4件と通常CI/表示回帰/cloud全体検証が成功。実画像も確認した。プレビュー生成先とmain同期の今回の変更は新headで再検証する。Designプラグイン/実機Safari/ATは未実施。
+
+公式出典：[WebGLRenderer](https://threejs.org/docs/pages/WebGLRenderer.html)、[cleanup](https://threejs.org/manual/pages/cleanup.html)、[固定版registry](https://registry.npmjs.org/three/0.186.0)。WebGLRendererはWebGL2を必要とする。Unity6.3のiOS対応を否定する判断ではなく、今回の軽い独立Web画面にThreeを選択した。
+
+初回CIでr186にmin配布ファイルがないことを検出した。公式tarballの実ファイル一覧とintegrityを再確認し、固定esbuild-wasm0.28.2（公式npm/MIT、build専用）でcore/rendererのESMをminifyする。LICENSEを保持し同一originへ出力。最初の失敗は未実行の描画試験の代わりに成功扱いしない。
+
+コード点検で、入力ごとにRAF基準時刻をリセットすると連打がsimulationを遅らせる問題を発見し修正。動作中のRAFは維持し、再開時だけ基準をリセットする。UIから攻撃を繰り返しても24秒の無防備敗北が進む回帰を追加。勝利後の短い動き/カメラ復帰はsimulationとは別の最大1.2秒で、操作や再挑戦を妨げない。resize時の停止画面再描画も追加。ソフトウェアWebGLの勝利シナリオは375x667/軽量設定で実施し、標準描画/両DPRは別のcomponentと敗北/viewportケースで測定する。実機性能と混同しない。
+
+実画像監査で人物の顔/服/道具/甲板と必殺の寄り・軌跡を確認した。訓練人形の顔も読める向きに調整。最初の標準高解像度ソフトウェアWebGL勝利試験は240秒timeout（残HP20/60、守りは成功）で未完了だった。描画は最大約30fpsへ制限し、simulation/inputの更新は独立して維持する。
+
+実Threeのdispose後はgeometry0だが内部textureカウンター1を検出した。公式FAQ
+https://threejs.org/manual/pages/how-to-dispose-of-objects.html
+にある内部cacheと区別し、カウンターを書き換えたりtexture0と捏造しない。全material/到達可能texture/geometry/rendererをdisposeし、実context
+loss後のisContextLost=true、20回の生counter一定、canvas/observer/global
+listener増加なしを測る。文言は集落の保存保護と再挑戦可否を示す。
+
+一時停止中の攻撃予備動作も飛ばないよう、戦闘演出のageをsimulation時刻へ束縛。勝敗後の1.2秒だけ独立したwall-clockで収束させる。命中前にpauseし、長時間待っても敵HPが変わらず、再開して一回だけ命中する実I/Oを追加。主要操作の44px到達領域と通常縦viewportの下端も検証する。
+
+## 実測済み候補 d1193de8
+
+CI41174311416：Node29件（既存20＋訓練9）/ブラウザ40件すべて成功、0
+skip/flaky/unexpected、193.4秒。Flutter統合も成功。3D勝利はsimulation49秒・guard10回・必殺3回・HP5/5、旧保存不変。新規の敗北・再開・欠落素材復旧・実contextloss・再試行と旧ゲーム回帰も通過。PC/スマホ/必殺/勝利/拡大文字の実画像を確認した。
+
+追加取得body807729bytes（arena
+HTML/CSS/JSとengine、既存Flutter/集落を除く）。engine2ファイル765772bytes。最大三角形10692、drawcalls43、DPR1〜1.5、粒子24/64。各project20回でgeometry0、内部textureカウンター1一定、全contextLost=true、observer/canvas0、global
+listeners[2,2]→[2,2]。これはソフトウェアChromiumの機能/資源測定であり実機fpsではない。勝利I/Oは375x667/軽量設定、標準描画は別ケースと交互品質componentで確認。
+
+その後の44px/通常縦viewport下端・命中前pause/演出時刻束縛・フォーカス限定キー・終了描画間隔と通常ビルド統合はhead15b1da0で再検証済み。上記d1193de8の値は過去候補の記録で、各headの正確な結果はPRのCI証跡を参照する。実機Safari/AT、正式AIレビュー、限定公開plan・merge/deployは未実施。

@@ -107,6 +107,7 @@ enum AssetCalendarEventKind {
   subscription,
   expense,
   income,
+  borrowing,
   transfer,
 }
 
@@ -197,6 +198,8 @@ class AssetCalendarDaySummary {
   bool get hasExpectedInflow => _has(AssetCalendarEventKind.expectedInflow);
 
   bool get hasIncome => incomeTotal > 0;
+
+  bool get hasBorrowing => _has(AssetCalendarEventKind.borrowing);
 
   bool get hasTransfer => _has(AssetCalendarEventKind.transfer);
 
@@ -616,6 +619,19 @@ class AssetPaymentCalendarService {
             balanceDifferenceAutoRecorded:
                 unreconciled && description.contains('残高差分から自動記録'),
             amount: amount.abs(),
+          ),
+        );
+      } else if (actionType == 'borrowing') {
+        // Financing is neither earned income nor spending.
+        addEvent(
+          date,
+          AssetCalendarEvent(
+            kind: AssetCalendarEventKind.borrowing,
+            label: description.isEmpty
+                ? '借入受取（収入集計外）'
+                : '借入受取（収入集計外）: $description',
+            amount: amount.abs(),
+            sourceId: flow['id']?.toString(),
           ),
         );
       } else if (actionType == 'transfer') {
