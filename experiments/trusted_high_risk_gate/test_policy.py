@@ -43,7 +43,9 @@ class TrustedRiskPolicyTest(unittest.TestCase):
 
     def test_review_gate_implementation_and_reusable_actions_are_high_risk(self):
         for path in ('scripts/ai_review_gate.py', 'scripts/check_high_risk_ultrareview_gate.py',
-                     '.github/actions/paid-ai-policy/action.yml'):
+                     '.github/actions/paid-ai-policy/action.yml', '.github/workflows/ci.yml',
+                     '.github/workflows/ordinary.yaml', 'lib/services/supabase_client_provider.dart',
+                     'lib/services/supabase_runtime_config.dart'):
             self.assertFalse(self.decision(None, paths=[path]), path)
 
 

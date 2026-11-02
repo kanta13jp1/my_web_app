@@ -82,6 +82,17 @@ class ObserverTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             observe(self.fixture.b, missing_previous, self.download)
 
+    def test_workflow_renamed_to_ordinary_path_is_still_high_risk(self):
+        def renamed(path):
+            if '/pulls/123/files?' in path:
+                return [{'filename': 'lib/widgets/simple_text.dart', 'status': 'renamed',
+                         'previous_filename': '.github/workflows/ci.yml'}]
+            if '/check-runs?' in path:
+                return {'check_runs': []}
+            return self.get(path)
+        with self.assertRaises(Pending):
+            observe(self.fixture.b, renamed, self.download)
+
     def test_renamed_file_review_binds_new_name_only(self):
         f = self.fixture
         new_name = 'lib/widgets/simple_text.dart'

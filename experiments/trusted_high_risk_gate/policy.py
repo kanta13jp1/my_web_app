@@ -8,8 +8,9 @@ import re
 REQUIRED_AREAS = frozenset({'security', 'rollback', 'data migration', 'prod smoke', 'observability'})
 RISKY_PATH = re.compile(
     r'(^supabase/(migrations|functions)/|^lib/(auth|billing|payments|subscription|firebase|supabase)/'
-    r'|^\.github/workflows/.*(deploy|review|gate|failure).*\.ya?ml$|^\.github/actions/'
+    r'|^\.github/workflows/.*\.ya?ml$|^\.github/actions/'
     r'|^scripts/[^/]*(review|gate|risk|security|policy)[^/]*\.py$'
+    r'|^lib/services/supabase[^/]*\.dart$'
     r'|^firebase\.json$|^firestore\.|^storage\.|(^|/)\.env'
     r'|secret|credential|service[_-]?role|rls|payroll)', re.I)
 RISKY_TEXT = re.compile(r'\b(secret|credential|token|auth|payment|billing|stripe|subscription|production|deploy|migration|rls|service[_ -]?role)\b', re.I)
