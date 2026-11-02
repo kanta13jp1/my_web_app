@@ -9,6 +9,27 @@ import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+Future<Object?> pumpUntil<T>(WidgetTester tester, Future<T> operation, String phase) async {
+  var done = false;
+  Object? result;
+  Object? failure;
+  StackTrace? failureStack;
+  operation.then<void>((value) {
+    result = value;
+    done = true;
+  }, onError: (Object error, StackTrace stack) {
+    failure = error;
+    failureStack = stack;
+    done = true;
+  });
+  for (var i = 0; i < 100 && !done; i++) {
+    await tester.pump(const Duration(milliseconds: 20));
+  }
+  if (!done) throw TestFailure('Synthetic operation did not finish: $phase');
+  if (failure != null) Error.throwWithStackTrace(failure!, failureStack!);
+  return result;
+}
+
 class FakeRepository extends SharedPreferencesAssetLiabilityRepository {
   @override
   Future<Map<String, int>> loadDebtPaymentDayOverrides() async => {'debt-a': 10};
@@ -77,7 +98,7 @@ void main() {
     final dynamic page = key.currentState;
     expect(page, isNotNull);
     print('REPRO_STAGE mark-a');
-    await store.markDirty(domain, 'debt-a');
+    await pumpUntil<void>(tester, store.markDirty(domain, 'debt-a'), 'mark-a');
     print('REPRO_STAGE send-a');
     final Future<void> first = page.debugMirrorDebtOverrideForRepro({'debt-a': 10});
     await tester.pump();
@@ -93,16 +114,16 @@ void main() {
     expect(sent.length, greaterThanOrEqualTo(2));
     expect(sent.last['debt-a'], 11);
     print('REPRO_STAGE check-dirty-b');
-    expect(await store.loadDirty(domain), contains('debt-a'));
+    expect(await pumpUntil(tester, store.loadDirty(domain), 'dirty-b'), contains('debt-a'));
 
     print('REPRO_STAGE complete-a');
     pending.first.complete();
     await tester.pump();
     print('REPRO_STAGE await-a-result');
-    await first;
+    await pumpUntil<void>(tester, first, 'first-response');
     // Characterization of the bug, not a desired-behavior assertion.
     print('REPRO_STAGE check-result');
-    expect(await store.loadDirty(domain), isNot(contains('debt-a')),
+    expect(await pumpUntil(tester, store.loadDirty(domain), 'dirty-after-a'), isNot(contains('debt-a')),
         reason: 'old acknowledgement clears the newer real page edit');
     for (final response in pending.skip(1)) {
       if (!response.isCompleted) response.complete();
