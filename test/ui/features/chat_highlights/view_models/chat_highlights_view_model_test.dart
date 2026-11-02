@@ -42,6 +42,40 @@ void main() {
     expect(gateway.saved.events, hasLength(2));
   });
 
+  test('デモ追加を繰り返しても500件上限と再読込後の内容が一致する', () async {
+    final gateway = _MemoryGateway();
+    final exporter = _MemoryExporter();
+    gateway.saved = ChatHighlightSnapshot(
+      events: List.generate(
+        499,
+        (index) => ChatHighlightEvent(
+          id: 'existing-$index',
+          offset: Duration(seconds: index),
+          author: 'viewer',
+          message: 'message $index',
+        ),
+      ),
+    );
+    final viewModel = ChatHighlightsViewModel(
+      gateway: gateway,
+      exportGateway: exporter,
+    );
+    await viewModel.load();
+    await viewModel.addDemoEvents();
+    await viewModel.addDemoEvents();
+    expect(viewModel.snapshot.events, hasLength(500));
+    expect(gateway.saved.events, hasLength(500));
+    final reloaded = ChatHighlightsViewModel(
+      gateway: gateway,
+      exportGateway: exporter,
+    );
+    await reloaded.load();
+    expect(
+      reloaded.snapshot.events.map((event) => event.id).toList(),
+      viewModel.snapshot.events.map((event) => event.id).toList(),
+    );
+  });
+
   test('有効な動画URLと候補がある場合だけ指示書を出力する', () async {
     final gateway = _MemoryGateway();
     final exporter = _MemoryExporter();

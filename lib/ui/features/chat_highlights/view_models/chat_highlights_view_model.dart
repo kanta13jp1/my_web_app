@@ -199,6 +199,9 @@ class ChatHighlightsViewModel extends ChangeNotifier {
         final order = left.offset.compareTo(right.offset);
         return order != 0 ? order : left.id.compareTo(right.id);
       });
+    if (sorted.length > maximumEvents) {
+      sorted.removeRange(0, sorted.length - maximumEvents);
+    }
     snapshot = snapshot.copyWith(events: sorted);
     candidates = _detector(sorted, snapshot.settings);
   }

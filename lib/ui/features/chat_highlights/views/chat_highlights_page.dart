@@ -460,17 +460,19 @@ class _ChatHighlightsPageState extends State<ChatHighlightsPage> {
       ).showSnackBar(const SnackBar(content: Text('時刻は「1:23」または秒数で入力してください。')));
       return;
     }
+    final submittedTime = _eventTime.text;
+    final submittedMessage = _eventMessage.text;
     unawaited(
       viewModel
           .addEvent(
         offset: offset,
         author: _eventAuthor.text,
-        message: _eventMessage.text,
+        message: submittedMessage,
       )
           .then((added) {
         if (!added || !mounted) return;
-        _eventTime.clear();
-        _eventMessage.clear();
+        if (_eventTime.text == submittedTime) _eventTime.clear();
+        if (_eventMessage.text == submittedMessage) _eventMessage.clear();
       }),
     );
   }
