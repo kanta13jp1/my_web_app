@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-10-17",
+    "date": "2026-10-18",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-10-17T00:00:00Z",
+  "generatedAt": "2026-10-18T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -31,396 +31,396 @@
       "changes": [
         {
           "category": "feature",
-          "id": "pr-5821",
+          "id": "pr-5861",
           "links": [
             {
-              "title": "PR #5821",
+              "title": "PR #5861",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5821"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5861"
             }
           ],
-          "mergedAt": "2026-10-17T08:15:54Z",
-          "summary": "#5821 予算の全解除後に古い設定が復元される経路を防ぐ"
+          "mergedAt": "2026-10-18T16:30:13Z",
+          "summary": "#5861 Hostingの通信量を測定し大きな転送を削減する"
         },
         {
           "category": "feature",
-          "id": "pr-5820",
+          "id": "pr-5864",
           "links": [
             {
-              "title": "PR #5820",
+              "title": "PR #5864",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5820"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5864"
             }
           ],
-          "mergedAt": "2026-10-17T07:36:30Z",
-          "summary": "#5820 資産管理の予算設定を検索から見つけられるようにする"
+          "mergedAt": "2026-10-18T16:04:20Z",
+          "summary": "#5864 残響ポンプ室の部屋移動に扉の開閉と暗転を追加"
         },
         {
           "category": "feature",
-          "id": "pr-5816",
+          "id": "pr-5865",
           "links": [
             {
-              "title": "PR #5816",
+              "title": "PR #5865",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5816"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5865"
             }
           ],
-          "mergedAt": "2026-10-17T06:51:20Z",
-          "summary": "#5816 残響ポンプ室に短い導入演出と状態連動のビジュアルを追加"
+          "mergedAt": "2026-10-18T13:14:32Z",
+          "summary": "#5865 Blender MCP製の排水ポンプで故障・停止・通電の状態を表示する"
         },
         {
           "category": "feature",
-          "id": "pr-5819",
+          "id": "pr-5866",
           "links": [
             {
-              "title": "PR #5819",
+              "title": "PR #5866",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5819"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5866"
             }
           ],
-          "mergedAt": "2026-10-17T06:24:15Z",
-          "summary": "#5819 資産管理：定期収入を検索して操作ボタンへ直接移動できるようにする"
+          "mergedAt": "2026-10-18T12:31:48Z",
+          "summary": "#5866 test(reading): モバイルの長い読書履歴をスクロールして検証"
         },
         {
           "category": "feature",
-          "id": "pr-5818",
+          "id": "pr-5862",
           "links": [
             {
-              "title": "PR #5818",
+              "title": "PR #5862",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5818"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5862"
             }
           ],
-          "mergedAt": "2026-10-17T02:24:15Z",
-          "summary": "#5818 資産管理：予算保存の無効入力と保存失敗から復帰できるようにする"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5817",
-          "links": [
-            {
-              "title": "PR #5817",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5817"
-            }
-          ],
-          "mergedAt": "2026-10-17T01:51:15Z",
-          "summary": "#5817 資産管理：定期収入の削除失敗を通知し再試行できるよう修正"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5815",
-          "links": [
-            {
-              "title": "PR #5815",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5815"
-            }
-          ],
-          "mergedAt": "2026-10-17T01:19:17Z",
-          "summary": "#5815 残響ポンプ室の最小脱出ゲームを追加"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5814",
-          "links": [
-            {
-              "title": "PR #5814",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5814"
-            }
-          ],
-          "mergedAt": "2026-10-17T00:39:05Z",
-          "summary": "#5814 資産管理：定期収入の保存失敗で入力を保持し再試行できるよう修正"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5813",
-          "links": [
-            {
-              "title": "PR #5813",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5813"
-            }
-          ],
-          "mergedAt": "2026-10-16T23:43:09Z",
-          "summary": "#5813 資産管理：隔月収入を毎月の登録候補へ表示しない"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5812",
-          "links": [
-            {
-              "title": "PR #5812",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5812"
-            }
-          ],
-          "mergedAt": "2026-10-16T12:43:00Z",
-          "summary": "#5812 資産管理：欠損月をまたぐ純資産差を月次CFへ表示しない"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5811",
-          "links": [
-            {
-              "title": "PR #5811",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5811"
-            }
-          ],
-          "mergedAt": "2026-10-16T12:22:49Z",
-          "summary": "#5811 資産管理：将来予測の二重控除と月別内訳の操作を修正"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5810",
-          "links": [
-            {
-              "title": "PR #5810",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5810"
-            }
-          ],
-          "mergedAt": "2026-10-16T09:35:50Z",
-          "summary": "#5810 返済試算から継続固定費を除外し対象元本と未算出を明示する"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5809",
-          "links": [
-            {
-              "title": "PR #5809",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5809"
-            }
-          ],
-          "mergedAt": "2026-10-16T08:40:18Z",
-          "summary": "#5809 長い読書メモの保存条件をPOST本文へ移して競合保護を維持"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5808",
-          "links": [
-            {
-              "title": "PR #5808",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5808"
-            }
-          ],
-          "mergedAt": "2026-10-16T06:53:37Z",
-          "summary": "#5808 給与サイクルの収入を出典単位で照合し未確認の合算を保留する"
-        },
-        {
-          "category": "feature",
-          "id": "pr-5807",
-          "links": [
-            {
-              "title": "PR #5807",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5807"
-            }
-          ],
-          "mergedAt": "2026-10-16T01:14:53Z",
-          "summary": "#5807 給与照合の支給・勤怠項目を日本語で表示する"
+          "mergedAt": "2026-10-18T11:49:50Z",
+          "summary": "#5862 test(reading): 今回追加した岩波文庫版の公開後検証を追加"
         },
         {
           "category": "fix",
-          "id": "pr-5797",
+          "id": "pr-5841",
           "links": [
             {
-              "title": "PR #5797",
+              "title": "PR #5841",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5797"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5841"
             }
           ],
-          "mergedAt": "2026-10-16T00:45:40Z",
-          "summary": "#5797 fix(reading): 形而上学の岩波文庫上下巻を版候補・自動検索に追加"
+          "mergedAt": "2026-10-18T11:32:51Z",
+          "summary": "#5841 fix(reading): 未登録19著作の岩波文庫版を出典付きで追加"
         },
         {
           "category": "feature",
-          "id": "pr-5806",
+          "id": "pr-5860",
           "links": [
             {
-              "title": "PR #5806",
+              "title": "PR #5860",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5806"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5860"
             }
           ],
-          "mergedAt": "2026-10-15T23:24:58Z",
-          "summary": "#5806 返済生活ルールの未照合残高表示と旧食費履歴を改善"
+          "mergedAt": "2026-10-18T11:12:33Z",
+          "summary": "#5860 残響ポンプ室の設備図と修理・隔壁・排水のアニメーションを追加"
         },
         {
           "category": "feature",
-          "id": "pr-5805",
+          "id": "pr-5859",
           "links": [
             {
-              "title": "PR #5805",
+              "title": "PR #5859",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5805"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5859"
             }
           ],
-          "mergedAt": "2026-10-15T21:58:52Z",
-          "summary": "#5805 貯蓄計画の表示設定と検索の連動を修正"
+          "mergedAt": "2026-10-18T07:18:03Z",
+          "summary": "#5859 残響ポンプ室にBlender MCPのヒューズ素材を導入"
         },
         {
           "category": "feature",
-          "id": "pr-5804",
+          "id": "pr-5858",
           "links": [
             {
-              "title": "PR #5804",
+              "title": "PR #5858",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5804"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5858"
             }
           ],
-          "mergedAt": "2026-10-15T21:04:11Z",
-          "summary": "#5804 資産管理の保存状況を現在値と観測世代で確認する"
+          "mergedAt": "2026-10-18T07:05:25Z",
+          "summary": "#5858 貯蓄計画の手取り入力・保存・再読込を修正"
         },
         {
           "category": "feature",
-          "id": "pr-5803",
+          "id": "pr-5857",
           "links": [
             {
-              "title": "PR #5803",
+              "title": "PR #5857",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5803"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5857"
             }
           ],
-          "mergedAt": "2026-10-15T19:33:40Z",
-          "summary": "#5803 カレンダーで使途不明金の参考内訳と自動由来を表示"
+          "mergedAt": "2026-10-18T03:56:52Z",
+          "summary": "#5857 Blender MCPで制作したバルブを操作する3D実習と実証を追加"
         },
         {
           "category": "feature",
-          "id": "pr-5802",
+          "id": "pr-5856",
           "links": [
             {
-              "title": "PR #5802",
+              "title": "PR #5856",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5802"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5856"
             }
           ],
-          "mergedAt": "2026-10-15T19:05:51Z",
-          "summary": "#5802 給与明細を元値照合して本人確認済みにする導線を追加"
+          "mergedAt": "2026-10-18T03:33:20Z",
+          "summary": "#5856 酒購入を店舗名だけで食費に分類する不具合を修正"
         },
         {
           "category": "feature",
-          "id": "pr-5801",
+          "id": "pr-5854",
           "links": [
             {
-              "title": "PR #5801",
+              "title": "PR #5854",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5801"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5854"
             }
           ],
-          "mergedAt": "2026-10-15T18:47:51Z",
-          "summary": "#5801 返済報告で元本と支払予定を分け根拠未確認を表示"
+          "mergedAt": "2026-10-17T21:18:39Z",
+          "summary": "#5854 音声プレイヤーの停止と再生を直列化してBGMの中断を防ぐ"
         },
         {
           "category": "feature",
-          "id": "pr-5800",
+          "id": "pr-5853",
           "links": [
             {
-              "title": "PR #5800",
+              "title": "PR #5853",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5800"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5853"
             }
           ],
-          "mergedAt": "2026-10-15T18:30:53Z",
-          "summary": "#5800 不足試算の二重控除を防ぎ支払根拠と未照合を表示"
+          "mergedAt": "2026-10-17T20:43:21Z",
+          "summary": "#5853 所持品の閲覧前に予約済みの足音SEを停止する"
         },
         {
           "category": "feature",
-          "id": "pr-5799",
+          "id": "pr-5852",
           "links": [
             {
-              "title": "PR #5799",
+              "title": "PR #5852",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5799"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5852"
             }
           ],
-          "mergedAt": "2026-10-15T18:11:20Z",
-          "summary": "#5799 給与入金直後残高の前月比目標を口座別に設定"
+          "mergedAt": "2026-10-17T20:31:15Z",
+          "summary": "#5852 食品・書籍の給与消費内訳と予算分類を修正"
         },
         {
           "category": "feature",
-          "id": "pr-5798",
+          "id": "pr-5835",
           "links": [
             {
-              "title": "PR #5798",
+              "title": "PR #5835",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5798"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5835"
             }
           ],
-          "mergedAt": "2026-10-15T17:46:32Z",
-          "summary": "#5798 資産管理ページに操作可能なスクロールバーと記録欄検索を追加"
+          "mergedAt": "2026-10-17T20:06:14Z",
+          "summary": "#5835 6か月予測のカード原資固定費による誤ショートを修正"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5850",
+          "links": [
+            {
+              "title": "PR #5850",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5850"
+            }
+          ],
+          "mergedAt": "2026-10-17T19:50:28Z",
+          "summary": "#5850 fix: 城の斧を越えたプレイヤーを実ゴールへ戻す (#5849)"
         },
         {
           "category": "feature",
-          "id": "pr-5796",
+          "id": "pr-5851",
           "links": [
             {
-              "title": "PR #5796",
+              "title": "PR #5851",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5796"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5851"
             }
           ],
-          "mergedAt": "2026-10-15T16:56:58Z",
-          "summary": "#5796 給与控除の取得状態と本人確認状態をサマリーで区別"
+          "mergedAt": "2026-10-17T19:31:42Z",
+          "summary": "#5851 第4段階: 動画worker制御をFlutterなしで独立検証する"
         },
         {
           "category": "feature",
-          "id": "pr-5794",
+          "id": "pr-5846",
           "links": [
             {
-              "title": "PR #5794",
+              "title": "PR #5846",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5794"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5846"
             }
           ],
-          "mergedAt": "2026-10-15T16:39:36Z",
-          "summary": "#5794 給与入金直後の本人確認残高を保存前確認して記録する画面を追加"
+          "mergedAt": "2026-10-17T19:26:49Z",
+          "summary": "#5846 残響ポンプ室に所持品とヒューズ取得・装着の図解を追加する"
         },
         {
           "category": "feature",
-          "id": "pr-5795",
+          "id": "pr-5842",
           "links": [
             {
-              "title": "PR #5795",
+              "title": "PR #5842",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5795"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5842"
             }
           ],
-          "mergedAt": "2026-10-15T16:08:31Z",
-          "summary": "#5795 給与入金の推定候補と本人の着金確認を分離する"
+          "mergedAt": "2026-10-17T19:15:29Z",
+          "summary": "#5842 第3段階: 残響ポンプ室の独立ビルド試作と日本語表示を検証する"
         },
         {
           "category": "feature",
-          "id": "pr-5793",
+          "id": "pr-5847",
           "links": [
             {
-              "title": "PR #5793",
+              "title": "PR #5847",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5793"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5847"
             }
           ],
-          "mergedAt": "2026-10-15T15:48:17Z",
-          "summary": "#5793 給与控除の別名と介護・年金基金の内訳表示を修正"
+          "mergedAt": "2026-10-17T18:42:59Z",
+          "summary": "#5847 test: 生活費メモへキーボードでフォーカスを移す"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5845",
+          "links": [
+            {
+              "title": "PR #5845",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5845"
+            }
+          ],
+          "mergedAt": "2026-10-17T18:15:13Z",
+          "summary": "#5845 fix: 停止経験クラスタを回復ガードの有効範囲内に保つ"
         },
         {
           "category": "feature",
-          "id": "pr-5792",
+          "id": "pr-5843",
           "links": [
             {
-              "title": "PR #5792",
+              "title": "PR #5843",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/5792"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5843"
             }
           ],
-          "mergedAt": "2026-10-15T14:44:39Z",
-          "summary": "#5792 給与入金直後の本人確認残高を所有者限定で保存する基盤を追加"
+          "mergedAt": "2026-10-17T17:47:59Z",
+          "summary": "#5843 残響ポンプ室の初回歩行画像を先読みし主人公の表示を維持する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5839",
+          "links": [
+            {
+              "title": "PR #5839",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5839"
+            }
+          ],
+          "mergedAt": "2026-10-17T16:32:21Z",
+          "summary": "#5839 開発時間計測のフォント取得条件をそろえ、描画例外を検出する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5840",
+          "links": [
+            {
+              "title": "PR #5840",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5840"
+            }
+          ],
+          "mergedAt": "2026-10-17T16:22:02Z",
+          "summary": "#5840 test: ノート検索E2Eの入力を通常のキー操作に合わせる"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5838",
+          "links": [
+            {
+              "title": "PR #5838",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5838"
+            }
+          ],
+          "mergedAt": "2026-10-17T15:33:35Z",
+          "summary": "#5838 通常入口と専用入口の起動・Hot Reloadを実画面で比較する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5837",
+          "links": [
+            {
+              "title": "PR #5837",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5837"
+            }
+          ],
+          "mergedAt": "2026-10-17T15:21:35Z",
+          "summary": "#5837 カード原資固定費による月次不足の誤表示を修正"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5836",
+          "links": [
+            {
+              "title": "PR #5836",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5836"
+            }
+          ],
+          "mergedAt": "2026-10-17T14:59:00Z",
+          "summary": "#5836 test(reading): 本番検証で版候補の開始操作を明示する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5833",
+          "links": [
+            {
+              "title": "PR #5833",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5833"
+            }
+          ],
+          "mergedAt": "2026-10-17T14:51:10Z",
+          "summary": "#5833 test: スライド入力切替と確認メモ保存のE2E同期を改善"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5834",
+          "links": [
+            {
+              "title": "PR #5834",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5834"
+            }
+          ],
+          "mergedAt": "2026-10-17T14:50:47Z",
+          "summary": "#5834 残響ポンプ室の開発中チェックを集約し短い確認経路を追加"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5832",
+          "links": [
+            {
+              "title": "PR #5832",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5832"
+            }
+          ],
+          "mergedAt": "2026-10-17T14:18:31Z",
+          "summary": "#5832 混合レシートの履歴と予算を照合済み内訳へ修正"
         }
       ],
-      "date": "2026-10-17",
+      "date": "2026-10-18",
       "extensions": {
         "aiToolWatch": {
           "changedSourceCount": 5,

@@ -38,8 +38,15 @@ test('room walking, memo and door preserve turn rules with real footsteps', asyn
   await expect(page.getByText('夜間保守メモ 1 / 2', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => (window as any).__roomSteps)).toBe(2);
   await button('メモを閉じる').click();
+  const beforeLongWalk = await page.evaluate(() => (window as any).__roomSteps);
   await button('中央廊下の扉を調べる').click();
+  await page.mouse.move(100, 200);await page.mouse.wheel(0, -30000);
+  await page.waitForTimeout(200);
+  await page.screenshot({path: info.outputPath('walk-cycle-first.png'), scale:'css'});
+  await page.waitForTimeout(300);
+  await page.screenshot({path: info.outputPath('walk-cycle-repeat.png'), scale:'css'});
   await expect(button('扉を開けて進む')).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__roomSteps)-beforeLongWalk).toBeGreaterThan(2);
   await page.screenshot({ path: info.outputPath('door-confirmation.png') });
   await button('戻る').click();
   await expect(page.getByText('ターン 0', { exact: true })).toBeVisible();

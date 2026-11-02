@@ -166,10 +166,11 @@ class AssetCashflowStatementCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
             children: [
               _buildInlineFigure(theme, '収入', _yen(current.income!), _safe),
-              const SizedBox(width: 16),
               _buildInlineFigure(theme, '支出', _yen(current.expense), _danger),
             ],
           ),
@@ -184,8 +185,7 @@ class AssetCashflowStatementCard extends StatelessWidget {
     String value,
     Color color,
   ) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
       children: [
         Text(
           '$label ',

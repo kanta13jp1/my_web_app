@@ -1,3 +1,4 @@
+import 'asset_flow_description_service.dart';
 import '../models/asset_income_source_evidence.dart';
 import 'asset_liability_monthly_state_store.dart';
 import '../models/asset_liability_workbook.dart';
@@ -34,6 +35,7 @@ class AssetSalarySpendingEntries {
     required List<Map<String, dynamic>> payslipSalaryIncomes,
     required List<Map<String, dynamic>> payslipRows,
     required String Function(Map<String, dynamic> flow) flowDisplayTitle,
+    String Function(Map<String, dynamic> flow)? flowCategoryDescription,
   }) {
     final expenses = <SalarySpendingEntry>[];
     final incomes = <SalaryIncomeEntry>[];
@@ -106,6 +108,11 @@ class AssetSalarySpendingEntries {
             date: occurredAt,
             amount: amount,
             description: displayTitle.isEmpty ? description : displayTitle,
+            categoryDescription: flowCategoryDescription?.call(flow) ??
+                AssetFlowDescriptionService.parse(
+                  description,
+                  actionType: actionType,
+                ).memo,
             sourceLabel: _flowLabel(actionType),
           ),
         );

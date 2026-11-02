@@ -24,6 +24,16 @@ on:
         description: Published application commit (defaults to verification source revision)
         required: false
         type: string
+      iwanami_remaining_mobile_only:
+        description: Resume the remaining-edition audit on mobile after desktop evidence is complete
+        required: false
+        default: false
+        type: boolean
+      iwanami_remaining:
+        description: Verify the 45 Iwanami associations added in PR5841 and seven representative editions on mobile
+        required: false
+        default: false
+        type: boolean
       iwanami_audit:
         description: Verify all 15 added Iwanami editions on desktop and seven representative editions on mobile
         required: false
@@ -72,7 +82,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:16.6
@@ -191,7 +201,7 @@ jobs:
   production:
     if: github.event_name == 'workflow_dispatch' && inputs.production && github.ref == 'refs/heads/main' && inputs.expected_head_sha == github.sha
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 60
     environment:
       name: observability-production
       deployment: false
@@ -216,6 +226,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Published reading catalog and authenticated persistence
         env:
+          READING_QA_IWANAMI_REMAINING_MOBILE_ONLY: ${{ inputs.iwanami_remaining_mobile_only }}
+          READING_QA_IWANAMI_REMAINING: ${{ inputs.iwanami_remaining }}
           READING_QA_IWANAMI_AUDIT: ${{ inputs.iwanami_audit }}
           READING_QA_METAPHYSICS: ${{ inputs.metaphysics }}
           READING_QA_GROUPS: ${{ inputs.groups }}

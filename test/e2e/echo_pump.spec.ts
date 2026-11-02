@@ -22,6 +22,7 @@ test.afterEach(async ({ page }, info) => {
 });
 
 test('power, escape and retry work in the browser', async ({ page }, info) => {
+  test.setTimeout(60000); // Includes the finite door sequence for every room move.
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
@@ -57,6 +58,20 @@ test('power, escape and retry work in the browser', async ({ page }, info) => {
     'ポンプ室へ', '隔壁を閉じる', '排水ポンプを起動', '中央廊下へ', '管理室へ', '出口へ',
   ]) {
     await click(label);
+    if (['ヒューズで修理', '隔壁を閉じる', '排水ポンプを起動'].includes(label)) {
+      const state = label === 'ヒューズで修理' ? /設備断面：ヒューズ装着済み、隔壁開放、水位高/
+        : label === '隔壁を閉じる' ? /設備断面：ヒューズ装着済み、隔壁閉鎖、水位高/
+        : /設備断面：ヒューズ装着済み、隔壁閉鎖、水位低下・排水完了/;
+      await expect(page.getByRole('img', { name: state })).toBeAttached();
+      // Scroll the Flutter canvas itself so the equipment is painted on screen.
+      const view = page.viewportSize()!;
+      await page.mouse.move(view.width / 2, view.height / 2);
+      await page.mouse.wheel(0, 30000);
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: info.outputPath(`machinery-${label}-transition.png`) });
+      await page.waitForTimeout(1200);
+      await page.screenshot({ path: info.outputPath(`machinery-${label}.png`) });
+    }
     if (label === '隔壁を閉じる') {
       await page.mouse.move(100, 200);
       await page.mouse.wheel(0, -30000);
@@ -170,4 +185,105 @@ test('character art, locations and threat update with play', async ({ page }, in
   await expect(cast('敵 / 音を追う影：搬入区画、接近注意')).toBeVisible();
   await page.waitForTimeout(650);
   await page.screenshot({ path: info.outputPath('character-nearby.png') });
+});
+
+
+test('door opening, blackout, closing and one committed move', async ({ page }, info) => {
+  await page.clock.install({ time: new Date('2026-10-18T00:00:00Z') });
+  await page.goto('/');
+  const button = (name: string) => page.getByRole('button', { name, exact: true });
+  await button('ゲーム開始').click();
+  await button('スキップして開始').click();
+  await expect(button('出口へ')).toBeDisabled();
+  await page.clock.pauseAt(new Date('2026-10-18T00:10:00Z'));
+  await button('中央廊下へ').click();
+  await page.clock.runFor(160);
+  const moving = button('演出をスキップ');
+  await expect(moving).toBeVisible();
+  await page.screenshot({ path: info.outputPath('door-opening.png'), scale: 'css' });
+  await page.clock.runFor(640);
+  await page.screenshot({ path: info.outputPath('door-blackout.png'), scale: 'css' });
+  await page.clock.runFor(450);
+  await page.screenshot({ path: info.outputPath('door-closing.png'), scale: 'css' });
+  await page.clock.runFor(1000);
+  await expect(moving).toHaveCount(0);
+  await expect(page.getByText('ターン 1', { exact: true })).toBeAttached();
+  await expect(button('工具庫へ')).toBeEnabled();
+  await page.screenshot({ path: info.outputPath('door-arrived.png'), scale: 'css' });
+});
+
+test('door skip after rapid pointer input cannot repeat a move', async ({ page, isMobile }) => {
+  await page.clock.install({ time: new Date('2026-10-18T00:00:00Z') });
+  await page.goto('/');
+  const button = (name: string) => page.getByRole('button', { name, exact: true });
+  await button('ゲーム開始').click();
+  await button('スキップして開始').click();
+  await expect(button('中央廊下へ')).toBeVisible();
+  await page.clock.pauseAt(new Date('2026-10-18T00:10:00Z'));
+  const physicalTap = async (x: number, y: number) => {
+    if (isMobile) await page.touchscreen.tap(x, y);
+    else await page.mouse.click(x, y);
+  };
+  const skip = async () => {
+    const box = await button('演出をスキップ').boundingBox();
+    expect(box).not.toBeNull();
+    const x = box!.x + box!.width / 2, y = box!.y + box!.height / 2;
+    expect(y).toBeLessThan(page.viewportSize()!.height);
+    await physicalTap(x, y);
+    await page.clock.runFor(400);
+    await expect(button('演出をスキップ')).toHaveCount(0);
+  };
+  await button('中央廊下へ').click();
+  await page.clock.runFor(200);
+  await expect(button('演出をスキップ')).toBeVisible();
+  await physicalTap(10, 10); // Modal surface cannot act on the old room.
+  await expect(button('演出をスキップ')).toBeVisible();
+  await skip();
+  await expect(page.getByText('ターン 1', { exact: true })).toBeAttached();
+  await expect(button('工具庫へ')).toBeEnabled();
+  await button('工具庫へ').click();
+  await page.clock.runFor(200);
+  await skip();
+  await expect(page.getByText('ターン 2', { exact: true })).toBeAttached();
+});
+
+test('reduced motion enters the next room without a door sequence', async ({ page }, info) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const button = (name: string) => page.getByRole('button', { name, exact: true });
+  await button('ゲーム開始').click();
+  await button('スキップして開始').click();
+  await button('中央廊下へ').click();
+  await page.waitForTimeout(400);
+  await expect(button('演出をスキップ')).toHaveCount(0, { timeout: 800 });
+  await expect(page.getByText('ターン 1', { exact: true })).toBeAttached();
+  await expect(button('工具庫へ')).toBeEnabled();
+  await page.screenshot({ path: info.outputPath('door-reduced-motion.png') });
+});
+
+test('seven room backgrounds follow the actual exploration route', async ({ page }, info) => {
+  test.setTimeout(120000);
+  await page.goto('/');
+  const button = (name: string) => page.getByRole(/^[ABC] /.test(name) ? 'checkbox' : 'button', {name, exact: true});
+  await button('ゲーム開始').click();await button('スキップして開始').click();
+  const scenes: Record<string, string> = {
+    control: '配電盤と計器の管理室', hall: '奥へ続く扉と配管の中央廊下',
+    loading: '木箱と搬入口の搬入区画', workshop: '工具壁と作業台の工具庫',
+    pump: '大型配管と排水機のポンプ室', inspection: '水路と格子床の点検槽', exit: '雨と外光が差す出口',
+  };
+  async function capture(room: string) {
+    await expect(button('演出をスキップ')).toHaveCount(0);
+    await expect(page.getByRole('img', {name: '部屋の背景：'+scenes[room], exact: true})).toBeAttached();
+    await page.mouse.move(100, 200);await page.mouse.wheel(0, -30000);await page.waitForTimeout(200);
+    await page.screenshot({path: info.outputPath('room-'+room+'.png'), scale:'css'});
+  }
+  async function act(...names: string[]) {for (const name of names) {await button(name).click();await expect(button('演出をスキップ')).toHaveCount(0);}}
+  await capture('control');
+  await act('中央廊下へ');await capture('hall');
+  await act('搬入区画へ');await capture('loading');
+  await act('中央廊下へ','管理室へ','B 整備','A 搬入','中央廊下へ','工具庫へ');await capture('workshop');
+  await act('ヒューズを回収','中央廊下へ','ポンプ室へ');await capture('pump');
+  await act('点検槽へ');await capture('inspection');
+  await act('ポンプ室へ','中央廊下へ','管理室へ','B 整備','C 排水','1ターン待つ','1ターン待つ','中央廊下へ','ポンプ室へ','隔壁を閉じる','ヒューズで修理','排水ポンプを起動','中央廊下へ','管理室へ','出口へ');
+  await capture('exit');await expect(page.getByText('脱出成功', {exact:true})).toBeVisible();
 });

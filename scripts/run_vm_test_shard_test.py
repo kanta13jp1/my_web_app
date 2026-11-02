@@ -43,6 +43,7 @@ class VmFileShardTest(unittest.TestCase):
                 run.return_value.returncode = 7
                 self.assertEqual(shard.main(['--shard-index', '0', '--total-shards', '2']), 7)
                 run.assert_called_once_with(['flutter', 'test', '--coverage', '--concurrency=2',
+                                             '--file-reporter=json:.ci-logs/vm-events.jsonl',
                                              'test/a_test.dart'], cwd=root, check=False)
                 manifest = json.loads((root / '.ci-logs/vm-shard.json').read_text())
                 self.assertEqual(manifest['files'], ['test/a_test.dart'])

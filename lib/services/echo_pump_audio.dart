@@ -13,7 +13,9 @@ enum EchoPumpCue {
   drain,
   damage,
   escape,
-  fail
+  fail,
+  doorOpen,
+  doorClose
 }
 
 /// Keeps platform playback separate from game rules and testable state.

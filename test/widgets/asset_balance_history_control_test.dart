@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_balance_observation.dart';
@@ -19,6 +21,7 @@ Future<void> openHistory(
   WidgetTester tester,
   AssetBalanceHistoryLoader loader, {
   AssetBalanceObservation? latest,
+  Stream<String?>? ownerChanges,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -27,6 +30,8 @@ Future<void> openHistory(
           accountName: 'サンプル銀行',
           latest: latest,
           loadPage: loader,
+          ownerId: 'owner-a',
+          ownerChanges: ownerChanges,
         ),
       ),
     ),
@@ -101,5 +106,38 @@ void main() {
     expect(offsets, [0, 50]);
     expect(more, findsNothing);
     expect(find.text('2024-01-01 09:00 JST'), findsOneWidget);
+  });
+  testWidgets('owner change clears displayed rows and permanently stops paging',
+      (tester) async {
+    final changes = StreamController<String?>.broadcast();
+    addTearDown(changes.close);
+    final offsets = <int>[];
+    await openHistory(
+      tester,
+      (offset) async {
+        offsets.add(offset);
+        return [
+          for (var id = 1; id <= 50; id++)
+            observation(id, '2026-10-11T08:44:00Z'),
+        ];
+      },
+      ownerChanges: changes.stream,
+    );
+    expect(find.text('2026-10-11 17:44 JST'), findsWidgets);
+    changes.add('owner-b');
+    await tester.pumpAndSettle();
+    expect(find.text('2026-10-11 17:44 JST'), findsNothing);
+    expect(find.text('さらに読み込む'), findsNothing);
+    expect(
+      find.text('利用者が変更されました。履歴を閉じて開き直してください。'),
+      findsOneWidget,
+    );
+    changes.add('owner-a');
+    await tester.pumpAndSettle();
+    expect(find.text('2026-10-11 17:44 JST'), findsNothing);
+    expect(find.text('さらに読み込む'), findsNothing);
+    expect(offsets, [0]);
+    await tester.tap(find.text('閉じる'));
+    await tester.pumpAndSettle();
   });
 }

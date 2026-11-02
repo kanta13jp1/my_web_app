@@ -169,6 +169,8 @@ class EchoPumpActionVisual extends StatelessWidget {
             EchoPumpCue.escape => (Icons.wb_twilight, '外へ到達'),
             EchoPumpCue.fail => (Icons.warning_amber, '探索失敗'),
             EchoPumpCue.start => (Icons.explore_outlined, '探索開始'),
+            EchoPumpCue.doorOpen => (Icons.door_front_door, '扉を開く'),
+            EchoPumpCue.doorClose => (Icons.door_back_door, '扉を閉じる'),
             null => (Icons.hearing, '耳を澄ます'),
           };
     return Semantics(

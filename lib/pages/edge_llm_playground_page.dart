@@ -9,6 +9,7 @@ import '../services/edge_llm_playground_service.dart';
 import '../services/local_rag_runtime_service.dart';
 import '../widgets/ai_response_observability_panel.dart';
 import '../widgets/pleias_citation_text.dart';
+import '../widgets/json_contract_checker.dart';
 import 'offline_secure_mode_settings_page.dart';
 
 class EdgeLlmPlaygroundPage extends StatefulWidget {
@@ -182,6 +183,8 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
               _buildConfigCard(cardColor, outlineColor, isDark),
               const SizedBox(height: 16),
               _buildPromptCard(cardColor, outlineColor, isDark),
+              const SizedBox(height: 16),
+              const JsonContractChecker(),
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 _buildErrorCard(cardColor, outlineColor, isDark),

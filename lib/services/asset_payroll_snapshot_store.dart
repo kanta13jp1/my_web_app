@@ -78,6 +78,60 @@ class PayrollSnapshotDraft {
       };
 }
 
+/// A reconciliation must match the complete owner-confirmed RPC payload.
+bool payrollObservationMatchesDraft(
+  Map<String, dynamic> row,
+  PayrollSnapshotDraft draft,
+  String ownerId,
+) {
+  const requiredColumns = <String>{
+    'id',
+    'user_id',
+    'request_id',
+    'account_id',
+    'payroll_month',
+    'deposit_reference',
+    'deposit_date',
+    'date_precision',
+    'deposited_at',
+    'observed_at',
+    'balance_yen',
+    'source_note',
+    'selection_reason',
+    'expected_previous_id',
+    'evidence_kind',
+    'confirmation_version',
+  };
+  if (!requiredColumns.every(row.containsKey) || row['id'] is! String) {
+    return false;
+  }
+  final request = draft.toRpc();
+  return row['user_id'] == ownerId &&
+      row['request_id'] == request['p_request_id'] &&
+      row['account_id'] == request['p_account_id'] &&
+      row['payroll_month'] == request['p_payroll_month'] &&
+      row['deposit_reference'] == request['p_deposit_reference'] &&
+      row['deposit_date'] == request['p_deposit_date'] &&
+      row['date_precision'] == request['p_date_precision'] &&
+      row['deposited_at'] == request['p_deposited_at'] &&
+      row['observed_at'] == request['p_observed_at'] &&
+      row['balance_yen'] == request['p_balance_yen'] &&
+      row['source_note'] == request['p_source_note'] &&
+      row['selection_reason'] == request['p_reason'] &&
+      row['expected_previous_id'] == request['p_expected_previous_id'] &&
+      row['evidence_kind'] == 'owner_confirmed_at_deposit' &&
+      row['confirmation_version'] == 'immediate-balance-v1';
+}
+
+/// A server-reported serialization failure means that RPC transaction rolled back.
+class PayrollSnapshotConflict implements Exception {
+  const PayrollSnapshotConflict();
+}
+
+/// Message text or a transport error alone cannot establish a rollback.
+bool isPayrollSnapshotDefiniteConflict(Object error) =>
+    error is PostgrestException && error.code == '40001';
+
 abstract class PayrollSnapshotStore {
   String get ownerId;
   Future<void> setTarget(String accountId, int? expected, int? next);
@@ -202,21 +256,17 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
     final row = await client
         .from('asset_payroll_balance_observations')
         .select(
-          'id,user_id,balance_yen,deposit_date,source_note,account_id,payroll_month,selection_reason,expected_previous_id',
+          'id,user_id,request_id,account_id,payroll_month,'
+          'deposit_reference,deposit_date,date_precision,deposited_at,'
+          'observed_at,balance_yen,source_note,selection_reason,'
+          'expected_previous_id,evidence_kind,confirmation_version',
         )
         .eq('user_id', ownerId)
         .eq('request_id', draft.requestId)
         .maybeSingle();
     _checkOwner();
     if (row == null) return null;
-    if (row['account_id'] != draft.accountId ||
-        row['payroll_month'] !=
-            payrollDate(DateTime(draft.month.year, draft.month.month)) ||
-        row['deposit_date'] != payrollDate(draft.depositDate) ||
-        row['balance_yen'] != draft.balanceYen ||
-        row['source_note'] != draft.note ||
-        row['selection_reason'] != draft.reason ||
-        row['expected_previous_id'] != draft.previousId) {
+    if (!payrollObservationMatchesDraft(row, draft, ownerId)) {
       throw StateError('保存内容が一致しません。再登録せず確認してください。');
     }
     return _record(row);
@@ -231,10 +281,18 @@ class SupabasePayrollSnapshotStore implements PayrollSnapshotStore {
         draft.reason.length > 300) {
       throw ArgumentError('確認資料メモと理由は1〜300文字です。');
     }
-    await client.rpc(
-      'confirm_payroll_balance_observation',
-      params: draft.toRpc(),
-    );
+    try {
+      await client.rpc(
+        'confirm_payroll_balance_observation',
+        params: draft.toRpc(),
+      );
+    } on PostgrestException catch (error) {
+      _checkOwner();
+      if (isPayrollSnapshotDefiniteConflict(error)) {
+        throw const PayrollSnapshotConflict();
+      }
+      rethrow;
+    }
     _checkOwner();
   }
 }
