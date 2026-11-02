@@ -340,6 +340,8 @@ class AssetLiabilityCsvRestoreService {
           monthlyUnpaidPaymentTotal: unpaid,
           monthlyActualPaymentTotal: _parseDouble(_cell(row, 10)) ?? paid,
           monthlyPaymentDifferenceTotal: _parseDouble(_cell(row, 11)) ?? 0,
+          securitiesTotal: _parseDouble(_cell(row, 12)),
+          monthlyReceivedIncomeTotal: _parseDouble(_cell(row, 13)),
           overduePaymentCount: overdue,
         ),
       );

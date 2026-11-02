@@ -1,6 +1,16 @@
 // Explicit geometry/pipe assistance. It never changes the actual player's position.
+import {itemTargets,itemIntent} from './item-goal.mjs?v=student-1';
 export function pipeRoute(g){
- if(g.room==='underground')return g.p.x>=160?'right_jump':null;
+ if(g.room==='underground'){
+  const target=itemTargets(g)[0],p=g.p;
+  if(target){
+   if(!p.grounded)return 'noop';
+   const intent=itemIntent(g,target);if(intent)return intent;
+   const dx=target.x-p.x-p.w/2;
+   return Math.abs(dx)<12?'jump':dx<0?'left':'right';
+  }
+  return g.p.x>=160?'right_jump':null;
+ }
  const p=g.p,entries=g.usablePipes().filter(t=>!g.visitedPipes.includes(t.id)&&!(t.exit-t.x>128&&[...g.contents].some(([key,kind])=>Number(key.split(',')[0])*16>=Math.max(g.camera,p.x-80)&&Number(key.split(',')[0])*16<t.exit&&['mushroom','flower','life','star'].includes(kind))));
  const entry=entries.find(t=>Math.abs(t.x+16-p.x-p.w/2)<12&&Math.abs(p.y+p.h-t.y)<1&&p.grounded);
  if(entry)return 'down';

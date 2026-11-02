@@ -9,6 +9,8 @@ class AssetCashflowRecurringEntry {
     this.label = '',
     this.fixedCostMatchKey,
     this.isFixedCostRow = false,
+    this.paidPeriodStart,
+    this.paidPeriodEndExclusive,
   });
 
   final int dayOfMonth;
@@ -19,6 +21,21 @@ class AssetCashflowRecurringEntry {
   /// 実際の発生日は月末への丸め後に比較する。
   final String? fixedCostMatchKey;
   final bool isFixedCostRow;
+
+  /// A confirmed paid occurrence is excluded only inside its saved cycle.
+  /// Unknown or invalid periods never suppress future recurring payments.
+  final DateTime? paidPeriodStart;
+  final DateTime? paidPeriodEndExclusive;
+
+  bool isPaidOn(DateTime date) {
+    final start = paidPeriodStart;
+    final end = paidPeriodEndExclusive;
+    return start != null &&
+        end != null &&
+        start.isBefore(end) &&
+        !date.isBefore(start) &&
+        date.isBefore(end);
+  }
 }
 
 /// 特定日に1回だけ発生する収入・支出の1項目。
@@ -177,7 +194,8 @@ class AssetCashflowForecastService {
               entry.fixedCostMatchKey!,
         };
         for (final entry in recurringOutflow) {
-          if (entry.amount > _epsilon &&
+          if (!entry.isPaidOn(date) &&
+              entry.amount > _epsilon &&
               _clampDay(entry.dayOfMonth, monthStart) == day) {
             if (!entry.isFixedCostRow &&
                 entry.fixedCostMatchKey != null &&

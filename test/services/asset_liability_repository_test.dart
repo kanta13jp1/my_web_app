@@ -2029,6 +2029,7 @@ void main() {
       // transfer_tasks を取りこぼし、リモートへ一切書かれず端末間で同期されなかった
       // (= paid_account_ids と同型の潜在バグ)。
       final state = AssetLiabilityMonthlyState(
+        confirmedPaymentDays: const <String, double>{'aupay_card': 13},
         paidAccountNames: const <String>{'kddi_provider'},
         billingConfirmedAccountIds: const <String>{'mobit', 'paypay_card'},
         transferTasks: <AssetLiabilityTransferTask>[
@@ -2068,6 +2069,7 @@ void main() {
       // 取りこぼしていた 2 キーが monthly_states payload に含まれること。
       expect(payload.containsKey('billing_confirmed_account_ids'), isTrue);
       expect(payload.containsKey('transfer_tasks'), isTrue);
+      expect(payload['confirmed_payment_days'], {'aupay_card': 13});
       expect(
         payload['billing_confirmed_account_ids'],
         containsAll(<String>['mobit', 'paypay_card']),
@@ -2085,6 +2087,7 @@ void main() {
       expect(
         payload.keys.toSet(),
         <String>{
+          'confirmed_payment_days',
           'payment_overrides',
           'actual_payment_amounts',
           'payment_difference_reasons',
@@ -2105,6 +2108,7 @@ void main() {
         'save split and load merge round-trip preserves billing confirmations '
         'and transfer tasks across the two tables', () {
       final state = AssetLiabilityMonthlyState(
+        confirmedPaymentDays: const <String, double>{'aupay_card': 13},
         billingConfirmedAccountIds: const <String>{'mobit'},
         transferTasks: <AssetLiabilityTransferTask>[
           AssetLiabilityTransferTask(
@@ -2149,6 +2153,7 @@ void main() {
         mergedPayload,
       ).toState();
 
+      expect(restored.confirmedPaymentDays, {'aupay_card': 13});
       expect(restored.billingConfirmedAccountIds, contains('mobit'));
       expect(restored.transferTasks.single.id, 'transfer_bank_topup');
       expect(restored.transferTasks.single.amount, 10000);
