@@ -320,6 +320,8 @@ class _IncomeFinanceReadSnapshot {
 }
 
 class AssetManagementPage extends StatefulWidget {
+  @visibleForTesting
+  final Future<void> Function(Map<String, int>)? debugDebtOverrideReproWriter;
   final AssetManagementInitialFocus initialFocus;
   final bool emphasizeMonthlyFlow;
   final AssetWatchlistService watchlistService;
@@ -458,6 +460,7 @@ class AssetManagementPage extends StatefulWidget {
 
   const AssetManagementPage({
     super.key,
+    this.debugDebtOverrideReproWriter,
     this.initialFocus = AssetManagementInitialFocus.overview,
     this.emphasizeMonthlyFlow = false,
     this.watchlistService = const AssetWatchlistService(),
@@ -502,6 +505,12 @@ class AssetManagementPage extends StatefulWidget {
 }
 
 class _AssetManagementPageState extends State<AssetManagementPage> {
+  @visibleForTesting
+  Future<void> debugMirrorDebtOverrideForRepro(Map<String, int> values) =>
+      _mirrorDebtPaymentDayOverrides(values);
+  @visibleForTesting
+  void debugEditDebtOverrideForRepro(AssetLiabilityDebtRow row, int day) =>
+      _setDebtPaymentDayOverride(row, day);
   final ScrollController _assetCalendarScrollController = ScrollController();
   static const String _bankSheetId =
       '1WZlHr6YWG8ZbT9r-wXtYPEdPT5E4b47PSpNSNl8A1MM';
@@ -15197,16 +15206,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) async {
     unawaited(_syncTimestampStore.markChanged('debt_payment_day_overrides'));
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
+    final debugWriter = widget.debugDebtOverrideReproWriter;
+    if (userId == null && debugWriter == null) {
       return;
     }
     try {
-      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
-        'user_id': userId,
-        'pref_key': 'debt_payment_day_overrides',
-        'value': overrides,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      });
+      if (debugWriter != null) {
+        await debugWriter(Map<String, int>.from(overrides));
+      } else {
+        await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+          'user_id': userId,
+          'pref_key': 'debt_payment_day_overrides',
+          'value': overrides,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        });
+      }
       // 全量 upsert 成功 = 全キー同期済み → dirty クリア。
       await _syncDirtyKeysStore.clearDomain('debt_payment_day_overrides');
     } catch (e) {

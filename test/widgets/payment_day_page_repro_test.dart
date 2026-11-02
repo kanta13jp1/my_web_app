@@ -1,0 +1,102 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_liability_repository.dart';
+import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class FakeRepository extends SharedPreferencesAssetLiabilityRepository {
+  @override
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() async => {'debt-a': 10};
+
+  @override
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) async {}
+}
+
+const rowA = AssetLiabilityDebtRow(
+  id: 'debt-a', name: 'synthetic', kind: AssetLiabilityAccountKind.cardLoan,
+  balance: 0, paymentDay: 10, paymentSourceAccountId: null,
+  paymentSourceAccountName: null, paymentMethod: AssetLiabilityPaymentMethod.direct,
+  paymentMethodLabel: null,
+  paymentMethodSettingSource: AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+  billingAccountId: null, billingAccountName: null, includedInBillingAccount: false,
+  annualRate: 0, minimumPaymentEstimate: 0, manualPaymentAmount: null,
+  scheduledPaymentAmount: 0, monthlyInterestEstimate: 0,
+  principalPaymentEstimate: 0, balanceAfterPaymentEstimate: 0, liabilityShare: 0,
+  priorityLabel: '', paymentAmountEstimated: false, billingConfirmed: false,
+  paid: false, requiresAction: false,
+);
+
+void main() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await Supabase.initialize(
+      url: 'http://127.0.0.1:9999', publishableKey: 'synthetic-key',
+      authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
+    );
+  });
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+  });
+
+  testWidgets('characterize actual mirror acknowledgement after newer edit',
+      (tester) async {
+    const domain = 'debt_payment_day_overrides';
+    const store = AssetSyncDirtyKeysStore();
+    final pending = <Completer<void>>[];
+    final sent = <Map<String, int>>[];
+    final key = GlobalKey();
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(MaterialApp(
+      home: AssetManagementPage(
+        key: key,
+        assetLiabilityRepository: FakeRepository(),
+        debugDebtOverrideReproWriter: (payload) {
+          sent.add(Map<String, int>.from(payload));
+          final response = Completer<void>();
+          pending.add(response);
+          return response.future;
+        },
+      ),
+    ));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    final dynamic page = key.currentState;
+    expect(page, isNotNull);
+    await store.markDirty(domain, 'debt-a');
+    final Future<void> first = page.debugMirrorDebtOverrideForRepro({'debt-a': 10});
+    await tester.pump();
+    expect(sent, hasLength(1));
+    expect(sent.first, {'debt-a': 10});
+
+    // Invoke the actual edit handler while A's network response is pending.
+    page.debugEditDebtOverrideForRepro(rowA, 11);
+    for (var i = 0; i < 20 && sent.length < 2; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(sent.length, greaterThanOrEqualTo(2));
+    expect(sent.last['debt-a'], 11);
+    expect(await store.loadDirty(domain), contains('debt-a'));
+
+    pending.first.complete();
+    await tester.pump();
+    await first;
+    // Characterization of the bug, not a desired-behavior assertion.
+    expect(await store.loadDirty(domain), isNot(contains('debt-a')),
+        reason: 'old acknowledgement clears the newer real page edit');
+    for (final response in pending.skip(1)) {
+      if (!response.isCompleted) response.complete();
+    }
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
+  });
+}
