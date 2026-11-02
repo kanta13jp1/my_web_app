@@ -516,6 +516,12 @@ jobs:
         env:
           FLUTTER_WEB: true
 
+      - name: Package verified Sea Shelter 3D assets
+        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        uses: ./.github/actions/prepare-sea-shelter-arena
+        with:
+          web-root: build/web
+
       - name: Check build output
         id: web_build_output
         if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
