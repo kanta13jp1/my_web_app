@@ -484,6 +484,11 @@ class _AssetPayrollSnapshotSectionState
           children: [
             Text('給与入金直後の残高', style: Theme.of(context).textTheme.titleMedium),
             const Text('銀行の自動取得は未対応です。予定日や現在残高から推定しません。'),
+            const Text(
+              '保存結果が不明なまま画面を閉じると、再開後に自動照合できません。'
+              '表示されなくても保存中または保存済みの可能性があります。'
+              '内容を確認できるまで再登録しないでください。',
+            ),
             Wrap(
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
