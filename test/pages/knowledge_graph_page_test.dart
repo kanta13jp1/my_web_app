@@ -5,6 +5,46 @@ import 'package:my_web_app/pages/knowledge_graph_page.dart';
 import 'package:my_web_app/services/knowledge_graph_rag_service.dart';
 
 void main() {
+  testWidgets('citation checks are optional, reversible and not retained', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(home: KnowledgeGraphPage(gateway: _FakeGateway())),
+    );
+    await tester.enterText(
+      find.byKey(const Key('knowledge-query-field')),
+      '優先事項',
+    );
+    await tester.ensureVisible(find.byKey(const Key('knowledge-query-button')));
+    await tester.tap(find.byKey(const Key('knowledge-query-button')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const Key('knowledge-citation-link-1')),
+    );
+    await tester.tap(find.byKey(const Key('knowledge-citation-link-1')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
+    final first = find.byKey(const Key('knowledge-citation-review-0'));
+    await tester.ensureVisible(first);
+    await tester.tap(first);
+    await tester.pumpAndSettle();
+    expect(find.text('回答と引用を確認 1/3'), findsOneWidget);
+    await tester.tap(first);
+    await tester.pumpAndSettle();
+    expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
+    await tester.tap(first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('閉じる'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('knowledge-citation-link-1')));
+    await tester.pumpAndSettle();
+    expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('opens each inline citation in an in-page highlighted viewer', (
     tester,
   ) async {
