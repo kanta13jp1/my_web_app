@@ -45,11 +45,12 @@ class RunnerTests(unittest.TestCase):
         class Exited:
             def poll(self): return 1
         output = queue.Queue()
-        output.put('SYNTHETIC_CLIENT_ERROR:signup_failed:422')
+        output.put('SYNTHETIC_CLIENT_ERROR:signup_failed:signup:422:validation_failed')
         with self.assertRaises(runner.OwnerClientFailure) as error:
             runner.Fixture.wait_marker(Exited(), output, 'SYNTHETIC_INITIAL_READY', timeout=2)
         self.assertEqual((error.exception.category, error.exception.status), ('signup_failed', 422))
-        output.put('SYNTHETIC_CLIENT_ERROR:arbitrary_secret:422')
+        self.assertEqual((error.exception.operation, error.exception.response_code), ('signup', 'validation_failed'))
+        output.put('SYNTHETIC_CLIENT_ERROR:arbitrary_secret:signup:422:validation_failed')
         output.put(None)
         with self.assertRaises(runner.OwnerClientExited) as error:
             runner.Fixture.wait_marker(Exited(), output, 'SYNTHETIC_INITIAL_READY', timeout=2)

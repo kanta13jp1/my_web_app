@@ -23,8 +23,8 @@ HERE = Path(__file__).resolve().parent
 MIGRATION_SHA = '23641f86ff7534a209a2089adc5a0b47fdc70e031af72f6301cffd9ce92586ba'
 FIXED = {'migration.sql': MIGRATION_SHA,
          'envoy-fixture.yaml': 'd88fa8007c405b34e37531ae708af964586bc4d6c1c1e1ffb0d83c7462b30977',
-         'synthetic_client.py': '2c36ec512a29815dc3e2053de0764c0ff3ed01ac72a8a27899b75aa16db54c28',
-         'auth_gateway_client.py': '9a34f6cb621067d42a6f7cc3e6a8fe2101c0caf8347c7fbaa121dbb554f5b422'}
+         'synthetic_client.py': 'fd86b9cfb84d8cff2464005efe44a910eeb4e3498410d23f46a997e75c2c4e31',
+         'auth_gateway_client.py': '7c783263ae830851ccdca67aaf71d749b60093b68f28d82405b9f7bdb63da009'}
 DB = 'payroll_auth_fixture'
 PATH_INSIDE = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 
@@ -42,8 +42,9 @@ class FixtureSqlError(RuntimeError):
 
 
 class OwnerClientFailure(RuntimeError):
-    def __init__(self, category, status):
+    def __init__(self, category, status, operation, response_code):
         self.category, self.status = category, status
+        self.operation, self.response_code = operation, response_code
         super().__init__('Synthetic owner client check failed')
 
 
@@ -51,8 +52,13 @@ SAFE_CLIENT_ERRORS = frozenset({
     'signup_failed', 'login_failed', 'jwt_claims', 'jwt_signature', 'account_insert',
     'confirm_rpc', 'target_update', 'table_read', 'owner_rows', 'foreign_visible',
     'anon_denial', 'cross_update', 'cross_rpc', 'recovery_a', 'recovery_b',
-    'other_check', 'unexpected',
+    'write_inconclusive', 'other_check', 'unexpected',
 })
+SAFE_CLIENT_OPERATIONS = frozenset({'signup', 'login', 'account_create', 'target_patch',
+                                    'confirm_rpc', 'table_read', 'other'})
+SAFE_RESPONSE_CODES = frozenset({'42501', '23502', '23503', '23505', '42P01',
+    'PGRST301', 'PGRST302', 'PGRST303', 'unexpected_failure',
+    'validation_failed', 'email_provider_disabled', 'invalid_credentials', 'unavailable'})
 
 
 EMPTY_CHECK = """\\set ON_ERROR_STOP on
@@ -238,11 +244,13 @@ class Fixture:
                         except subprocess.TimeoutExpired:
                             pass
                     raise OwnerClientExited(code)
-                match = re.fullmatch(r'SYNTHETIC_CLIENT_ERROR:([a-z_]+):([0-9]{3})', line)
-                if match and match.group(1) in SAFE_CLIENT_ERRORS:
-                    status = int(match.group(2))
+                match = re.fullmatch(r'SYNTHETIC_CLIENT_ERROR:([a-z_]+):([a-z_]+):([0-9]{3}):([A-Za-z0-9_]+)', line)
+                if (match and match.group(1) in SAFE_CLIENT_ERRORS
+                    and match.group(2) in SAFE_CLIENT_OPERATIONS
+                    and match.group(4) in SAFE_RESPONSE_CODES):
+                    status = int(match.group(3))
                     if status == 0 or 100 <= status <= 599:
-                        raise OwnerClientFailure(match.group(1), status)
+                        raise OwnerClientFailure(match.group(1), status, match.group(2), match.group(4))
                 if line == expected:
                     return
             except queue.Empty as error:
@@ -455,7 +463,8 @@ def main():
         print('Synthetic real Auth + test Envoy + PostgREST checks passed.')
     except OwnerClientFailure as error:
         print('Synthetic fixture failed at stage:', fixture.stage,
-              'check:', error.category, 'HTTP status:', error.status or 'unavailable')
+              'check:', error.category, 'operation:', error.operation,
+              'HTTP status:', error.status or 'unavailable', 'response code:', error.response_code)
         raise SystemExit(1) from None
     except FixtureSqlError as error:
         print('Synthetic fixture failed at stage:', fixture.stage,

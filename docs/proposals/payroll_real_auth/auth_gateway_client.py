@@ -18,6 +18,19 @@ TABLES = (
 )
 ACCOUNT = TABLES[0]
 RPC = '/rest/v1/rpc/confirm_payroll_balance_observation'
+SAFE_RESPONSE_CODES = frozenset({'42501', '23502', '23503', '23505', '42P01',
+    'PGRST301', 'PGRST302', 'PGRST303', 'unexpected_failure',
+    'validation_failed', 'email_provider_disabled', 'invalid_credentials'})
+
+
+def operation_name(method, path):
+    if method == 'POST' and path == '/auth/v1/signup': return 'signup'
+    if method == 'POST' and path == '/auth/v1/token?grant_type=password': return 'login'
+    if method == 'POST' and path == '/rest/v1/' + ACCOUNT: return 'account_create'
+    if method == 'POST' and path == RPC: return 'confirm_rpc'
+    if method == 'PATCH' and path.startswith('/rest/v1/' + ACCOUNT + '?'): return 'target_patch'
+    if method == 'GET' and path.startswith('/rest/v1/'): return 'table_read'
+    return 'other'
 
 
 class CheckFailed(Exception):
@@ -99,9 +112,13 @@ class SyntheticClient:
         self._secret = jwt_secret
         self._issuer = expected_issuer
         self.last_http_status = None
+        self.last_operation = 'other'
+        self.last_response_code = 'unavailable'
 
     def _request(self, method, path, *, bearer=None, data=None, write=False):
         self.last_http_status = None
+        self.last_operation = operation_name(method, path)
+        self.last_response_code = 'unavailable'
         headers = {'apikey': self._anon, 'Authorization': 'Bearer ' + (bearer or self._anon),
                    'Accept': 'application/json'}
         body = None
@@ -121,6 +138,14 @@ class SyntheticClient:
                 raise UnknownWriteResult('write response envelope invalid; do not retry')
             raise CheckFailed('invalid response envelope')
         self.last_http_status = status if 100 <= status <= 599 else None
+        try:
+            diagnostic = json.loads(raw) if raw else None
+            if isinstance(diagnostic, dict):
+                code = diagnostic.get('error_code') or diagnostic.get('code')
+                if isinstance(code, str) and code in SAFE_RESPONSE_CODES:
+                    self.last_response_code = code
+        except (ValueError, UnicodeError):
+            pass
         if write and (300 <= status <= 399 or status in (408, 425, 429) or 500 <= status <= 599):
             raise UnknownWriteResult('write response inconclusive; do not retry')
         try:

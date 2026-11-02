@@ -63,6 +63,19 @@ class ClientTests(unittest.TestCase):
                 subject._request('POST', client.RPC, data={'test': True}, write=True)
             self.assertEqual(transport.calls, 1)
 
+    def test_diagnostic_operation_and_code_are_allowlisted(self):
+        for code, expected in (('unexpected_failure', 'unexpected_failure'),
+                               ('secret_synthetic_value', 'unavailable')):
+            transport = FakeTransport((500, json.dumps({'error_code': code,
+                'message': 'never display synthetic token'}).encode()))
+            subject = client.SyntheticClient(transport, 'key', SECRET, ISSUER)
+            with self.assertRaises(client.UnknownWriteResult):
+                subject._request('POST', '/auth/v1/signup', data={'test': True}, write=True)
+            self.assertEqual(subject.last_operation, 'signup')
+            self.assertEqual(subject.last_http_status, 500)
+            self.assertEqual(subject.last_response_code, expected)
+            self.assertEqual(transport.calls, 1)
+
     def test_missing_own_rows_and_foreign_rows_fail_closed(self):
         subject = client.SyntheticClient(FakeTransport((200, b'[]')), 'key', SECRET, ISSUER)
         with self.assertRaises(client.CheckFailed):

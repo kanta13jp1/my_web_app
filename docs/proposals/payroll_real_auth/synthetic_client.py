@@ -30,6 +30,7 @@ SAFE_ERRORS = {
     'cross-owner RPC rejection not established; do not retry': 'cross_rpc',
     'owner A unavailable or changed after recovery': 'recovery_a',
     'owner B unavailable or changed after recovery': 'recovery_b',
+    'write response inconclusive; do not retry': 'write_inconclusive',
 }
 
 
@@ -76,10 +77,10 @@ def main():
     except CheckFailed as error:
         category = SAFE_ERRORS.get(str(error), 'other_check')
         status = client.last_http_status or 0
-        print(f'SYNTHETIC_CLIENT_ERROR:{category}:{status:03d}', flush=True)
+        print(f'SYNTHETIC_CLIENT_ERROR:{category}:{client.last_operation}:{status:03d}:{client.last_response_code}', flush=True)
         raise SystemExit(1) from None
     except Exception:
-        print('SYNTHETIC_CLIENT_ERROR:unexpected:000', flush=True)
+        print('SYNTHETIC_CLIENT_ERROR:unexpected:other:000:unavailable', flush=True)
         raise SystemExit(1) from None
 
 
