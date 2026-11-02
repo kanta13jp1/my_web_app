@@ -29,6 +29,7 @@ FIXED = {
     'session-b.sql.disabled': 'c60b32763a1535f8230d3fe551775ef74a20d7594c77ebc76d58eeea7cb78fb5',
     'verify-after.sql.disabled': '5486506b3d5bdd01234694b44d9ad5102b4d781c959a4b6372bbe902605bd84a',
     'verify-existing.sql.disabled': '5b601b6ee3e439656b1e41d2d3bdcacf0545ea64da90d7cb80cba10a8f4468da',
+    'owner-rls.sql.disabled': '59fba6a7c52c073157222b4e53b5e02713cd5bd19396046fa24c527cc9612ba5',
 }
 RPC_STOP = "do $review_only$ begin\n  raise exception 'REVIEW ONLY: draft DDL execution is prohibited';\nend $review_only$;"
 ACL_STOP = "do $stop$ begin\n  raise exception 'REVIEW ONLY: ACL candidate execution is prohibited';\nend $stop$;"
@@ -227,6 +228,7 @@ def execute(service, s):
     if b.wait(timeout=10) != 0:
         raise RuntimeError('Second transaction failed')
     service.sql(s['verify-after.sql.disabled'])
+    service.sql(s['owner-rls.sql.disabled'])
     service.sql(s['verify-existing.sql.disabled'])
 
 

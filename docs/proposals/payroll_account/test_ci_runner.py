@@ -89,6 +89,21 @@ class SafetyTests(unittest.TestCase):
         self.assertIn('EMPTY_FIXTURE', service.calls[0][0])
         self.assertFalse(service.calls[0][1])
 
+    def test_owner_fixture_has_positive_negative_and_rollback_boundaries(self):
+        text = runner.load_sources()['owner-rls.sql.disabled'].lower()
+        for label in ('owner c positive rows missing', 'owner d positive rows missing',
+                      'owner c can read owner d rows', 'owner d can read owner c rows',
+                      'owner c updated owner d target', 'owner d updated owner c target',
+                      'owner c foreign account rpc unexpectedly succeeded',
+                      'owner d foreign account rpc unexpectedly succeeded',
+                      'anon account select unexpectedly succeeded',
+                      'anon observation select unexpectedly succeeded',
+                      'anon selection select unexpectedly succeeded',
+                      'anon history select unexpectedly succeeded',
+                      'anon rpc unexpectedly succeeded', 'synthetic owner post-state differs'):
+            self.assertIn(label, text)
+        self.assertTrue(text.rstrip().endswith('rollback;'))
+
 
 if __name__ == '__main__':
     unittest.main()
