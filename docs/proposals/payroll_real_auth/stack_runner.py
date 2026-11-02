@@ -23,8 +23,8 @@ HERE = Path(__file__).resolve().parent
 MIGRATION_SHA = '23641f86ff7534a209a2089adc5a0b47fdc70e031af72f6301cffd9ce92586ba'
 FIXED = {'migration.sql': MIGRATION_SHA,
          'envoy-fixture.yaml': 'd88fa8007c405b34e37531ae708af964586bc4d6c1c1e1ffb0d83c7462b30977',
-         'synthetic_client.py': 'a9161327ed9f3d58412dd49393730097f6cd30f03fa5b0964039d45045faddb3',
-         'auth_gateway_client.py': '4b02928f082f921ddfb24e89fd2bc9909c043cf3c1a1c695f2e3b7c0a0b35733'}
+         'synthetic_client.py': '2c36ec512a29815dc3e2053de0764c0ff3ed01ac72a8a27899b75aa16db54c28',
+         'auth_gateway_client.py': '9a34f6cb621067d42a6f7cc3e6a8fe2101c0caf8347c7fbaa121dbb554f5b422'}
 DB = 'payroll_auth_fixture'
 PATH_INSIDE = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 
@@ -39,6 +39,20 @@ class FixtureSqlError(RuntimeError):
     def __init__(self, code):
         self.sqlstate = code if isinstance(code, str) and re.fullmatch(r'[0-9A-Z]{5}', code) else None
         super().__init__('Synthetic SQL failed')
+
+
+class OwnerClientFailure(RuntimeError):
+    def __init__(self, category, status):
+        self.category, self.status = category, status
+        super().__init__('Synthetic owner client check failed')
+
+
+SAFE_CLIENT_ERRORS = frozenset({
+    'signup_failed', 'login_failed', 'jwt_claims', 'jwt_signature', 'account_insert',
+    'confirm_rpc', 'target_update', 'table_read', 'owner_rows', 'foreign_visible',
+    'anon_denial', 'cross_update', 'cross_rpc', 'recovery_a', 'recovery_b',
+    'other_check', 'unexpected',
+})
 
 
 EMPTY_CHECK = """\\set ON_ERROR_STOP on
@@ -224,6 +238,11 @@ class Fixture:
                         except subprocess.TimeoutExpired:
                             pass
                     raise OwnerClientExited(code)
+                match = re.fullmatch(r'SYNTHETIC_CLIENT_ERROR:([a-z_]+):([0-9]{3})', line)
+                if match and match.group(1) in SAFE_CLIENT_ERRORS:
+                    status = int(match.group(2))
+                    if status == 0 or 100 <= status <= 599:
+                        raise OwnerClientFailure(match.group(1), status)
                 if line == expected:
                     return
             except queue.Empty as error:
@@ -434,6 +453,10 @@ def main():
         fixture.execute(fixed['migration.sql'], fixed['synthetic_client.py'],
                         fixed['auth_gateway_client.py'], fixed['envoy-fixture.yaml'])
         print('Synthetic real Auth + test Envoy + PostgREST checks passed.')
+    except OwnerClientFailure as error:
+        print('Synthetic fixture failed at stage:', fixture.stage,
+              'check:', error.category, 'HTTP status:', error.status or 'unavailable')
+        raise SystemExit(1) from None
     except FixtureSqlError as error:
         print('Synthetic fixture failed at stage:', fixture.stage,
               'SQLSTATE:', error.sqlstate or 'unavailable')

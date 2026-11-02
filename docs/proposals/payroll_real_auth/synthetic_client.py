@@ -11,9 +11,26 @@ import sys
 import time
 
 sys.path.insert(0, '/tmp')
-from auth_gateway_client import SyntheticClient, exercise_fixture, verify_after_recovery
+from auth_gateway_client import CheckFailed, SyntheticClient, exercise_fixture, verify_after_recovery
 
 ISSUER = 'http://synthetic-gateway:8000/auth/v1'
+SAFE_ERRORS = {
+    'signup failed': 'signup_failed',
+    'password login failed': 'login_failed',
+    'JWT claims mismatch': 'jwt_claims',
+    'JWT signature mismatch': 'jwt_signature',
+    'own account insert result not established; do not retry': 'account_insert',
+    'own confirmation RPC result not established; do not retry': 'confirm_rpc',
+    'own target update result not established; do not retry': 'target_update',
+    'table response is not a complete list': 'table_read',
+    'own positive or owner isolation failed': 'owner_rows',
+    'foreign owner rows visible': 'foreign_visible',
+    'anonymous denial not established': 'anon_denial',
+    'cross-owner update result not established; do not retry': 'cross_update',
+    'cross-owner RPC rejection not established; do not retry': 'cross_rpc',
+    'owner A unavailable or changed after recovery': 'recovery_a',
+    'owner B unavailable or changed after recovery': 'recovery_b',
+}
 
 
 def b64(data):
@@ -49,12 +66,21 @@ def main():
         raise RuntimeError('Missing synthetic JWT secret')
     key = value.encode('ascii')
     client = SyntheticClient(FixtureTransport(), anon_token(key), key, ISSUER)
-    state = exercise_fixture(client, secrets.token_urlsafe(24), secrets.token_urlsafe(24))
-    print('SYNTHETIC_INITIAL_READY', flush=True)
-    if sys.stdin.readline().strip() != 'SYNTHETIC_RESTORED':
-        raise RuntimeError('Unexpected synthetic recovery signal')
-    verify_after_recovery(client, state)
-    print('SYNTHETIC_RECOVERY_VERIFIED', flush=True)
+    try:
+        state = exercise_fixture(client, secrets.token_urlsafe(24), secrets.token_urlsafe(24))
+        print('SYNTHETIC_INITIAL_READY', flush=True)
+        if sys.stdin.readline().strip() != 'SYNTHETIC_RESTORED':
+            raise RuntimeError('Unexpected synthetic recovery signal')
+        verify_after_recovery(client, state)
+        print('SYNTHETIC_RECOVERY_VERIFIED', flush=True)
+    except CheckFailed as error:
+        category = SAFE_ERRORS.get(str(error), 'other_check')
+        status = client.last_http_status or 0
+        print(f'SYNTHETIC_CLIENT_ERROR:{category}:{status:03d}', flush=True)
+        raise SystemExit(1) from None
+    except Exception:
+        print('SYNTHETIC_CLIENT_ERROR:unexpected:000', flush=True)
+        raise SystemExit(1) from None
 
 
 if __name__ == '__main__': main()

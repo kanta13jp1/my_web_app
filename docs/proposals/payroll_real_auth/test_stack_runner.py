@@ -41,6 +41,20 @@ class RunnerTests(unittest.TestCase):
             runner.Fixture.wait_marker(Exited(), output, 'SYNTHETIC_INITIAL_READY', timeout=10)
         self.assertEqual(error.exception.exit_code, 7)
 
+    def test_client_diagnostic_requires_allowlisted_category_and_status(self):
+        class Exited:
+            def poll(self): return 1
+        output = queue.Queue()
+        output.put('SYNTHETIC_CLIENT_ERROR:signup_failed:422')
+        with self.assertRaises(runner.OwnerClientFailure) as error:
+            runner.Fixture.wait_marker(Exited(), output, 'SYNTHETIC_INITIAL_READY', timeout=2)
+        self.assertEqual((error.exception.category, error.exception.status), ('signup_failed', 422))
+        output.put('SYNTHETIC_CLIENT_ERROR:arbitrary_secret:422')
+        output.put(None)
+        with self.assertRaises(runner.OwnerClientExited) as error:
+            runner.Fixture.wait_marker(Exited(), output, 'SYNTHETIC_INITIAL_READY', timeout=2)
+        self.assertNotIn('arbitrary_secret', str(error.exception))
+
     def test_sql_failure_reports_only_sqlstate(self):
         fixture = runner.Fixture.__new__(runner.Fixture)
         fixture.db_id, fixture.token = 'synthetic-id', 'synthetic-token'

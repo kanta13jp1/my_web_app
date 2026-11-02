@@ -98,8 +98,10 @@ class SyntheticClient:
         self._anon = anon_key
         self._secret = jwt_secret
         self._issuer = expected_issuer
+        self.last_http_status = None
 
     def _request(self, method, path, *, bearer=None, data=None, write=False):
+        self.last_http_status = None
         headers = {'apikey': self._anon, 'Authorization': 'Bearer ' + (bearer or self._anon),
                    'Accept': 'application/json'}
         body = None
@@ -118,6 +120,7 @@ class SyntheticClient:
             if write:
                 raise UnknownWriteResult('write response envelope invalid; do not retry')
             raise CheckFailed('invalid response envelope')
+        self.last_http_status = status if 100 <= status <= 599 else None
         if write and (300 <= status <= 399 or status in (408, 425, 429) or 500 <= status <= 599):
             raise UnknownWriteResult('write response inconclusive; do not retry')
         try:
