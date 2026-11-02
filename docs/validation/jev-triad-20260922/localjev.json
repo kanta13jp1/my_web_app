@@ -1,0 +1,34 @@
+{
+  "source": "d224c892c1f16895f24978358717717f96bad657",
+  "lane": "localjev",
+  "backend": "LocalJev 3f23e36 + Qwen2.5-0.5B-Instruct Q4_K_M + llama.cpp b6000 CPU",
+  "timing": "STEP-LOCKED diagnostic. Simulation pauses for API/search; not real-time clear. HTTP is not pure inference.",
+  "episodes": [
+    {
+      "assisted": false,
+      "clear": false,
+      "phase": "playing",
+      "x": 32,
+      "frames": 300,
+      "calls": 10,
+      "valid": 10,
+      "accepted": 0,
+      "overrides": 0,
+      "releases": 0,
+      "budget_remaining": 40
+    },
+    {
+      "assisted": true,
+      "clear": true,
+      "phase": "won",
+      "x": 3168.3799999999383,
+      "frames": 1259,
+      "calls": 42,
+      "valid": 20,
+      "accepted": 12,
+      "overrides": 198,
+      "releases": 9,
+      "budget_remaining": 8
+    }
+  ]
+}

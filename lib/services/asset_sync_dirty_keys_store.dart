@@ -46,23 +46,44 @@ class AssetSyncDirtyKeysStore {
   /// ため dormant (= 安全) だが、将来ログイン状態の編集 smoke を足す場合に備え
   /// 既に smoke の setUp で reset 済み。
   static Future<void> _writeLock = Future<void>.value();
+  static int _mutationGeneration = 0;
+  static int _pendingMutations = 0;
+  static int _mutationEpoch = 0;
+
+  /// A read-only observation cannot acknowledge a queued or concurrent edit.
+  static int get mutationGeneration => _mutationGeneration;
+  static bool get hasPendingMutations => _pendingMutations > 0;
 
   /// [_writeLock] を現在の zone の完了済み future に再初期化する (テスト専用)。
   /// FakeAsync zone を跨いだ static future の orphan-hang を防ぐ (上記参照)。
   @visibleForTesting
   static void resetWriteLockForTest() {
     _writeLock = Future<void>.value();
+    _mutationEpoch++;
+    _mutationGeneration++;
+    _pendingMutations = 0;
   }
 
   /// [action] を前の write 完了後に直列実行する。action の結果/例外は戻り値の
   /// future へ伝播するが、ロック鎖は失敗で途切れさせない。
   Future<void> _runLocked(Future<void> Function() action) {
+    final epoch = _mutationEpoch;
+    _mutationGeneration++;
+    _pendingMutations++;
     final run = _writeLock.then((_) => action());
-    _writeLock = run.catchError((_) {});
-    return run;
+    final tracked = run.whenComplete(() {
+      if (epoch == _mutationEpoch) _pendingMutations--;
+    });
+    _writeLock = tracked.catchError((_) {});
+    return tracked;
   }
 
   Future<Map<String, Set<String>>> _loadAll(SharedPreferences store) async {
+    return readDirtySnapshot(store);
+  }
+
+  /// All domains from a single local blob, with no asynchronous gaps.
+  Map<String, Set<String>> readDirtySnapshot(SharedPreferences store) {
     final raw = store.getString(prefsKey);
     if (raw == null || raw.isEmpty) {
       return <String, Set<String>>{};
@@ -122,6 +143,34 @@ class AssetSyncDirtyKeysStore {
       final store = prefs ?? await SharedPreferences.getInstance();
       final all = await _loadAll(store);
       (all[prefKey] ??= <String>{}).add(key);
+      await _writeAll(store, all);
+    });
+  }
+
+  /// [prefKey] の dirty 集合を 1 回のロック区間で差分更新する。
+  /// 同じ論理IDの add/remove のように、相反する操作を入れ替える用途で使う。
+  Future<void> updateDirty(
+    String prefKey, {
+    Iterable<String> addKeys = const <String>[],
+    Iterable<String> removeKeys = const <String>[],
+    SharedPreferences? prefs,
+  }) {
+    final additions = addKeys.where((key) => key.isNotEmpty).toSet();
+    final removals = removeKeys.where((key) => key.isNotEmpty).toSet();
+    if (additions.isEmpty && removals.isEmpty) {
+      return Future<void>.value();
+    }
+    return _runLocked(() async {
+      final store = prefs ?? await SharedPreferences.getInstance();
+      final all = await _loadAll(store);
+      final dirty = all[prefKey] ?? <String>{};
+      dirty.removeAll(removals);
+      dirty.addAll(additions);
+      if (dirty.isEmpty) {
+        all.remove(prefKey);
+      } else {
+        all[prefKey] = dirty;
+      }
       await _writeAll(store, all);
     });
   }

@@ -6,13 +6,14 @@ AssetLiabilityMonthlySnapshot _snapshot(
   String monthKey, {
   double? income,
   double expense = 0,
+  double netWorth = 0,
 }) {
   return AssetLiabilityMonthlySnapshot(
     monthKey: monthKey,
     savedAt: DateTime(2026, 1, 1),
     positiveAssetTotal: 0,
     liabilityTotal: 0,
-    netWorth: 0,
+    netWorth: netWorth,
     cashLikeTotal: 0,
     monthlyScheduledPaymentTotal: 0,
     monthlyPaidPaymentTotal: expense,
@@ -26,6 +27,50 @@ void main() {
   const service = AssetCashflowStatementService();
 
   group('AssetCashflowStatementService.build', () {
+    test('adjacent months across a year retain the estimate', () {
+      final statement = service.build(
+        snapshots: [
+          _snapshot('2025-12', netWorth: -1000),
+          _snapshot('2026-01', netWorth: -700),
+        ],
+        asOf: DateTime(2026, 1, 15),
+      );
+      expect(statement.months.last.estimatedCashflowFromNetWorth, 300);
+      expect(statement.yearToDateCashflow, 0);
+    });
+
+    test('tracked income remains actual cashflow despite a missing month', () {
+      final statement = service.build(
+        snapshots: [
+          _snapshot('2026-05', netWorth: -1000),
+          _snapshot('2026-07', income: 500, expense: 100, netWorth: -700),
+        ],
+        asOf: DateTime(2026, 7, 15),
+      );
+      expect(statement.currentMonth!.netWorthDelta, isNull);
+      expect(statement.currentMonthCashflow, 400);
+      expect(statement.yearToDateCashflow, 400);
+      expect(statement.trackedMonthCount, 1);
+    });
+
+    test('a missing month is not a one-month net worth estimate', () {
+      final statement = service.build(
+        snapshots: [
+          _snapshot('2026-05', netWorth: -1000),
+          _snapshot('2026-07', netWorth: -1200),
+          _snapshot('2026-08', netWorth: -1100),
+        ],
+        asOf: DateTime(2026, 8, 15),
+      );
+      final july = statement.months[1];
+      final august = statement.months[2];
+      expect(july.netWorthDelta, isNull);
+      expect(july.displayCashflow, isNull);
+      expect(august.estimatedCashflowFromNetWorth, 100);
+      expect(statement.yearToDateCashflow, 0);
+      expect(statement.trackedMonthCount, 0);
+    });
+
     test('empty snapshots produce no data', () {
       final statement = service.build(
         snapshots: const <AssetLiabilityMonthlySnapshot>[],
@@ -38,9 +83,7 @@ void main() {
 
     test('current month cashflow = income - expense', () {
       final statement = service.build(
-        snapshots: [
-          _snapshot('2026-07', income: 400000, expense: 250000),
-        ],
+        snapshots: [_snapshot('2026-07', income: 400000, expense: 250000)],
         asOf: DateTime(2026, 7, 15),
       );
       expect(statement.hasCurrentMonthCashflow, isTrue);
@@ -50,11 +93,12 @@ void main() {
 
     test('current month snapshot overrides same-month history (fresher)', () {
       final statement = service.build(
-        snapshots: [
-          _snapshot('2026-07', income: 100000, expense: 100000),
-        ],
-        currentMonthSnapshot:
-            _snapshot('2026-07', income: 400000, expense: 250000),
+        snapshots: [_snapshot('2026-07', income: 100000, expense: 100000)],
+        currentMonthSnapshot: _snapshot(
+          '2026-07',
+          income: 400000,
+          expense: 250000,
+        ),
         asOf: DateTime(2026, 7, 15),
       );
       expect(statement.currentMonthCashflow, 150000);
@@ -90,6 +134,42 @@ void main() {
       expect(statement.yearToDateUntrackedMonths, 1);
       expect(statement.hasUntrackedYearToDateMonths, isTrue);
     });
+
+    test(
+      'untracked income exposes net worth delta as display-only estimate',
+      () {
+        final statement = service.build(
+          snapshots: [
+            _snapshot('2026-05', netWorth: -1000),
+            _snapshot('2026-06', netWorth: -1200),
+            _snapshot('2026-07', income: 500, expense: 300, netWorth: -1100),
+          ],
+          asOf: DateTime(2026, 7, 15),
+        );
+
+        final may = statement.months[0];
+        final june = statement.months[1];
+        final july = statement.months[2];
+
+        expect(may.displayCashflow, isNull);
+        expect(may.usesNetWorthEstimate, isFalse);
+        expect(june.cashflow, isNull);
+        expect(june.estimatedCashflowFromNetWorth, -200);
+        expect(june.displayCashflow, -200);
+        expect(june.usesNetWorthEstimate, isTrue);
+        expect(july.cashflow, 200);
+        expect(july.estimatedCashflowFromNetWorth, isNull);
+        expect(july.displayCashflow, 200);
+        expect(july.usesNetWorthEstimate, isFalse);
+
+        // 推定値は実績の年初来累積・黒字/赤字件数へ混ぜない。
+        expect(statement.yearToDateCashflow, 200);
+        expect(statement.yearToDateTrackedMonths, 1);
+        expect(statement.yearToDateUntrackedMonths, 2);
+        expect(statement.surplusMonthCount, 1);
+        expect(statement.deficitMonthCount, 0);
+      },
+    );
 
     test('surplus/deficit counts over trailing 12 months, tracked only', () {
       final statement = service.build(
@@ -146,17 +226,16 @@ void main() {
         ],
         asOf: DateTime(2026, 3, 15),
       );
-      expect(
-        statement.months.map((m) => m.monthKey).toList(),
-        ['2026-01', '2026-02', '2026-03'],
-      );
+      expect(statement.months.map((m) => m.monthKey).toList(), [
+        '2026-01',
+        '2026-02',
+        '2026-03',
+      ]);
     });
 
     test('current month with untracked income cannot compute cashflow', () {
       final statement = service.build(
-        snapshots: [
-          _snapshot('2026-07', income: null, expense: 250000),
-        ],
+        snapshots: [_snapshot('2026-07', income: null, expense: 250000)],
         asOf: DateTime(2026, 7, 15),
       );
       expect(statement.currentMonth, isNotNull);

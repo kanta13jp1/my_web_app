@@ -268,8 +268,9 @@ class AssetAdvisoryBriefingService {
         if (!pledgeOneEvaluated) {
           pledgeOneLabel = '判定保留';
         } else {
-          pledgeOneLabel =
-              disciplineReport.zeroNewBorrowingAchieved ? '達成' : '未達';
+          pledgeOneLabel = disciplineReport.zeroNewBorrowingAchieved
+              ? '検出なし（未照合）'
+              : '要確認（未照合）';
         }
         actions.add(
           AdvisoryAction(
@@ -278,10 +279,12 @@ class AssetAdvisoryBriefingService {
                 ? AdvisorySeverity.critical
                 : AdvisorySeverity.warning,
             signalKey: 'discipline_violation',
-            headline: '「借金しない宣言」に違反',
-            detail: '${violation.action}'
-                '（誓約①追加借入ゼロ: $pledgeOneLabel / '
-                '誓約②カード一括: ${disciplineReport.lumpSumAchieved ? '達成' : '未達'}）',
+            headline: '「借金しない宣言」の要確認候補（未照合）',
+            detail: '取引明細・支払結果との照合前の候補です。'
+                '実借入や違反の確定ではありません。${violation.action}'
+                '（誓約①カード以外の追加借入ゼロ: $pledgeOneLabel / '
+                '誓約②新規利用分の25日全額返済: '
+                '${disciplineReport.newUsageRepaymentAchieved ? '検出なし（未照合）' : '要確認（未照合）'}）',
           ),
         );
       } else if (pledgeOneEvaluated) {
@@ -290,8 +293,8 @@ class AssetAdvisoryBriefingService {
             department: AdvisoryDepartment.chro,
             severity: AdvisorySeverity.info,
             signalKey: 'discipline_ok',
-            headline: '規律を維持',
-            detail: '今月は追加借入ゼロ・カード一括返済を達成。'
+            headline: '宣言モニター：候補検出なし（未照合）',
+            detail: '登録データから要確認候補は検出されていません。実際の借入・支払結果は未照合です。'
                 '習慣として来月も固定費の自動引落を月初に点検する。',
           ),
         );
@@ -301,9 +304,9 @@ class AssetAdvisoryBriefingService {
             department: AdvisoryDepartment.chro,
             severity: AdvisorySeverity.info,
             signalKey: 'discipline_ok',
-            headline: 'カード一括は維持（追加借入は判定保留）',
-            detail: '今月はカードの繰越（リボ/分割）はありません。'
-                '追加借入ゼロは前月残高が未蓄積のため判定しておらず、来月以降に有効化されます。'
+            headline: '宣言モニター：追加借入は判定保留（未照合）',
+            detail: 'カード新規利用分の返済は要確認候補の検出なしですが、実際の支払結果は未照合です。'
+                'カード以外の追加借入ゼロは前月残高が未蓄積のため判定しておらず、来月以降に有効化されます。'
                 '習慣として来月も固定費の自動引落を月初に点検する。',
           ),
         );

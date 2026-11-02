@@ -26,20 +26,20 @@ MIN_ACTION_MAJOR = {
 }
 
 USES_RE = re.compile(
-    r"^\s*uses:\s*(?P<action>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)@"
-    r"(?P<ref>v?(?P<major>\d+)(?:[.\w-]*)?)\s*(?:#.*)?$"
+    r"^\s*(?:-\s*)?uses:\s*(?P<action>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)@"
+    r"(?P<ref>[^\s#]+)\s*(?:#\s*(?P<label>v(?P<label_major>\d+)[.\w-]*).*)?$"
 )
+TAG_MAJOR_RE = re.compile(r"^v?(?P<major>\d+)(?:[.\w-]*)?$", re.IGNORECASE)
+FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
-def main() -> int:
-    if not WORKFLOW_DIR.exists():
-        print(f"workflow directory not found: {WORKFLOW_DIR}", file=sys.stderr)
-        return 1
-
+def find_violations(paths: list[Path]) -> tuple[list[str], int]:
     violations: list[str] = []
     checked = 0
-    for path in sorted(WORKFLOW_DIR.glob("*.yml")) + sorted(WORKFLOW_DIR.glob("*.yaml")):
-        for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+    for path in paths:
+        for line_number, line in enumerate(
+            path.read_text(encoding="utf-8-sig").splitlines(), 1
+        ):
             match = USES_RE.match(line)
             if not match:
                 continue
@@ -50,12 +50,40 @@ def main() -> int:
                 continue
 
             checked += 1
-            major = int(match.group("major"))
+            ref = match.group("ref")
+            tag_match = TAG_MAJOR_RE.fullmatch(ref)
+            if FULL_SHA_RE.fullmatch(ref) and match.group("label_major"):
+                major = int(match.group("label_major"))
+            elif FULL_SHA_RE.fullmatch(ref):
+                violations.append(
+                    f"{path}:{line_number}: {action}@{ref} must include a "
+                    "trailing version comment such as `# v7`"
+                )
+                continue
+            elif tag_match:
+                major = int(tag_match.group("major"))
+            else:
+                violations.append(
+                    f"{path}:{line_number}: {action}@{ref} must include a "
+                    "trailing version comment such as `# v7`"
+                )
+                continue
+
             if major < minimum_major:
                 violations.append(
-                    f"{path}:{line_number}: {action}@{match.group('ref')} "
+                    f"{path}:{line_number}: {action}@{ref} "
                     f"must be >= v{minimum_major} for the Node.js 24 runner transition"
                 )
+    return violations, checked
+
+
+def main() -> int:
+    if not WORKFLOW_DIR.exists():
+        print(f"workflow directory not found: {WORKFLOW_DIR}", file=sys.stderr)
+        return 1
+
+    paths = sorted(WORKFLOW_DIR.glob("*.yml")) + sorted(WORKFLOW_DIR.glob("*.yaml"))
+    violations, checked = find_violations(paths)
 
     if violations:
         print("GitHub Actions Node runtime floor violations:")

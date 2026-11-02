@@ -72,7 +72,9 @@ Do not add a new video-player dependency when the repository iframe abstraction 
 Create a UTF-8 Markdown content file, then run:
 
 ```powershell
-$skillDir = "C:\Users\kanta\GitHub\my_web_app\.agents\skills\youtube-video-pipeline"
+$appRepo = (git rev-parse --show-toplevel).Trim()
+if ($LASTEXITCODE -ne 0) { throw "Run from the chosen repository checkout." }
+$skillDir = Join-Path $appRepo ".agents/skills/youtube-video-pipeline"
 python "$skillDir\scripts\ai_university_content.py" generate `
   --repo "<clean-worktree>" `
   --provider openai `

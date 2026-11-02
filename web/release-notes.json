@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-08-17",
+    "date": "2026-10-18",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-08-17T00:00:00Z",
+  "generatedAt": "2026-10-18T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -25,403 +25,402 @@
       "build": "1",
       "category": "release",
       "changeCategories": [
-        "automation",
         "feature",
         "fix"
       ],
       "changes": [
         {
           "category": "feature",
-          "id": "pr-4581",
+          "id": "pr-5861",
           "links": [
             {
-              "title": "PR #4581",
+              "title": "PR #5861",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4581"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5861"
             }
           ],
-          "mergedAt": "2026-08-17T17:51:22Z",
-          "summary": "#4581 feat(ai-hub): add asset chat context endpoint"
+          "mergedAt": "2026-10-18T16:30:13Z",
+          "summary": "#5861 Hostingの通信量を測定し大きな転送を削減する"
         },
         {
           "category": "feature",
-          "id": "pr-4575",
+          "id": "pr-5864",
           "links": [
             {
-              "title": "PR #4575",
+              "title": "PR #5864",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4575"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5864"
             }
           ],
-          "mergedAt": "2026-08-17T15:48:40Z",
-          "summary": "#4575 Add owner-scoped asset chat persistence"
+          "mergedAt": "2026-10-18T16:04:20Z",
+          "summary": "#5864 残響ポンプ室の部屋移動に扉の開閉と暗転を追加"
         },
         {
           "category": "feature",
-          "id": "pr-4569",
+          "id": "pr-5865",
           "links": [
             {
-              "title": "PR #4569",
+              "title": "PR #5865",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4569"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5865"
             }
           ],
-          "mergedAt": "2026-08-16T18:18:17Z",
-          "summary": "#4569 Add department finance summary action"
+          "mergedAt": "2026-10-18T13:14:32Z",
+          "summary": "#5865 Blender MCP製の排水ポンプで故障・停止・通電の状態を表示する"
         },
         {
           "category": "feature",
-          "id": "pr-4568",
+          "id": "pr-5866",
           "links": [
             {
-              "title": "PR #4568",
+              "title": "PR #5866",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4568"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5866"
             }
           ],
-          "mergedAt": "2026-08-16T04:27:02Z",
-          "summary": "#4568 db: add six-department KPI routing (#2480)"
+          "mergedAt": "2026-10-18T12:31:48Z",
+          "summary": "#5866 test(reading): モバイルの長い読書履歴をスクロールして検証"
         },
         {
           "category": "feature",
-          "id": "pr-4566",
+          "id": "pr-5862",
           "links": [
             {
-              "title": "PR #4566",
+              "title": "PR #5862",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4566"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5862"
             }
           ],
-          "mergedAt": "2026-08-15T21:14:56Z",
-          "summary": "#4566 feat: complete cited research, adaptive routing, and A2A runtime"
+          "mergedAt": "2026-10-18T11:49:50Z",
+          "summary": "#5862 test(reading): 今回追加した岩波文庫版の公開後検証を追加"
         },
         {
           "category": "fix",
-          "id": "pr-4565",
+          "id": "pr-5841",
           "links": [
             {
-              "title": "PR #4565",
+              "title": "PR #5841",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4565"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5841"
             }
           ],
-          "mergedAt": "2026-08-15T20:25:36Z",
-          "summary": "#4565 fix: note editor console errors and conveni report payload"
+          "mergedAt": "2026-10-18T11:32:51Z",
+          "summary": "#5841 fix(reading): 未登録19著作の岩波文庫版を出典付きで追加"
         },
         {
           "category": "feature",
-          "id": "pr-4564",
+          "id": "pr-5860",
           "links": [
             {
-              "title": "PR #4564",
+              "title": "PR #5860",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4564"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5860"
             }
           ],
-          "mergedAt": "2026-08-15T19:54:15Z",
-          "summary": "#4564 feat: add durable AI company runtime"
+          "mergedAt": "2026-10-18T11:12:33Z",
+          "summary": "#5860 残響ポンプ室の設備図と修理・隔壁・排水のアニメーションを追加"
         },
         {
           "category": "feature",
-          "id": "pr-4561",
+          "id": "pr-5859",
           "links": [
             {
-              "title": "PR #4561",
+              "title": "PR #5859",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4561"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5859"
             }
           ],
-          "mergedAt": "2026-08-15T19:03:17Z",
-          "summary": "#4561 feat: add local election candidate release skill"
+          "mergedAt": "2026-10-18T07:18:03Z",
+          "summary": "#5859 残響ポンプ室にBlender MCPのヒューズ素材を導入"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5858",
+          "links": [
+            {
+              "title": "PR #5858",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5858"
+            }
+          ],
+          "mergedAt": "2026-10-18T07:05:25Z",
+          "summary": "#5858 貯蓄計画の手取り入力・保存・再読込を修正"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5857",
+          "links": [
+            {
+              "title": "PR #5857",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5857"
+            }
+          ],
+          "mergedAt": "2026-10-18T03:56:52Z",
+          "summary": "#5857 Blender MCPで制作したバルブを操作する3D実習と実証を追加"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5856",
+          "links": [
+            {
+              "title": "PR #5856",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5856"
+            }
+          ],
+          "mergedAt": "2026-10-18T03:33:20Z",
+          "summary": "#5856 酒購入を店舗名だけで食費に分類する不具合を修正"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5854",
+          "links": [
+            {
+              "title": "PR #5854",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5854"
+            }
+          ],
+          "mergedAt": "2026-10-17T21:18:39Z",
+          "summary": "#5854 音声プレイヤーの停止と再生を直列化してBGMの中断を防ぐ"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5853",
+          "links": [
+            {
+              "title": "PR #5853",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5853"
+            }
+          ],
+          "mergedAt": "2026-10-17T20:43:21Z",
+          "summary": "#5853 所持品の閲覧前に予約済みの足音SEを停止する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5852",
+          "links": [
+            {
+              "title": "PR #5852",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5852"
+            }
+          ],
+          "mergedAt": "2026-10-17T20:31:15Z",
+          "summary": "#5852 食品・書籍の給与消費内訳と予算分類を修正"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5835",
+          "links": [
+            {
+              "title": "PR #5835",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5835"
+            }
+          ],
+          "mergedAt": "2026-10-17T20:06:14Z",
+          "summary": "#5835 6か月予測のカード原資固定費による誤ショートを修正"
         },
         {
           "category": "fix",
-          "id": "pr-4550",
+          "id": "pr-5850",
           "links": [
             {
-              "title": "PR #4550",
+              "title": "PR #5850",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4550"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5850"
             }
           ],
-          "mergedAt": "2026-08-15T13:04:52Z",
-          "summary": "#4550 fix: enforce fail-closed RLS for exposed tables (#2773)"
+          "mergedAt": "2026-10-17T19:50:28Z",
+          "summary": "#5850 fix: 城の斧を越えたプレイヤーを実ゴールへ戻す (#5849)"
         },
         {
           "category": "feature",
-          "id": "pr-4547",
+          "id": "pr-5851",
           "links": [
             {
-              "title": "PR #4547",
+              "title": "PR #5851",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4547"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5851"
             }
           ],
-          "mergedAt": "2026-08-15T10:21:57Z",
-          "summary": "#4547 feat: add privacy-safe LP conversion analytics"
+          "mergedAt": "2026-10-17T19:31:42Z",
+          "summary": "#5851 第4段階: 動画worker制御をFlutterなしで独立検証する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5846",
+          "links": [
+            {
+              "title": "PR #5846",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5846"
+            }
+          ],
+          "mergedAt": "2026-10-17T19:26:49Z",
+          "summary": "#5846 残響ポンプ室に所持品とヒューズ取得・装着の図解を追加する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5842",
+          "links": [
+            {
+              "title": "PR #5842",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5842"
+            }
+          ],
+          "mergedAt": "2026-10-17T19:15:29Z",
+          "summary": "#5842 第3段階: 残響ポンプ室の独立ビルド試作と日本語表示を検証する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5847",
+          "links": [
+            {
+              "title": "PR #5847",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5847"
+            }
+          ],
+          "mergedAt": "2026-10-17T18:42:59Z",
+          "summary": "#5847 test: 生活費メモへキーボードでフォーカスを移す"
         },
         {
           "category": "fix",
-          "id": "pr-4546",
+          "id": "pr-5845",
           "links": [
             {
-              "title": "PR #4546",
+              "title": "PR #5845",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4546"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5845"
             }
           ],
-          "mergedAt": "2026-08-15T08:22:50Z",
-          "summary": "#4546 fix(wbs): avoid duplicate issue links in revenue migration"
+          "mergedAt": "2026-10-17T18:15:13Z",
+          "summary": "#5845 fix: 停止経験クラスタを回復ガードの有効範囲内に保つ"
         },
         {
           "category": "feature",
-          "id": "pr-4543",
+          "id": "pr-5843",
           "links": [
             {
-              "title": "PR #4543",
+              "title": "PR #5843",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4543"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5843"
             }
           ],
-          "mergedAt": "2026-08-15T07:40:24Z",
-          "summary": "#4543 feat: add AI foundations video to AI University"
-        },
-        {
-          "category": "automation",
-          "id": "pr-4544",
-          "links": [
-            {
-              "title": "PR #4544",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4544"
-            }
-          ],
-          "mergedAt": "2026-08-15T07:37:22Z",
-          "summary": "#4544 test: keep endorsement validator in sync with generated asset"
+          "mergedAt": "2026-10-17T17:47:59Z",
+          "summary": "#5843 残響ポンプ室の初回歩行画像を先読みし主人公の表示を維持する"
         },
         {
           "category": "feature",
-          "id": "pr-4537",
+          "id": "pr-5839",
           "links": [
             {
-              "title": "PR #4537",
+              "title": "PR #5839",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4537"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5839"
             }
           ],
-          "mergedAt": "2026-08-15T06:14:51Z",
-          "summary": "#4537 feat: publish AGI Fireworks video page"
+          "mergedAt": "2026-10-17T16:32:21Z",
+          "summary": "#5839 開発時間計測のフォント取得条件をそろえ、描画例外を検出する"
         },
         {
           "category": "feature",
-          "id": "pr-4540",
+          "id": "pr-5840",
           "links": [
             {
-              "title": "PR #4540",
+              "title": "PR #5840",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4540"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5840"
             }
           ],
-          "mergedAt": "2026-08-15T05:55:59Z",
-          "summary": "#4540 feat: optimize homepage for 自分株式会社 brand search"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4536",
-          "links": [
-            {
-              "title": "PR #4536",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4536"
-            }
-          ],
-          "mergedAt": "2026-08-14T16:20:01Z",
-          "summary": "#4536 fix: keep all published AI University videos visible"
+          "mergedAt": "2026-10-17T16:22:02Z",
+          "summary": "#5840 test: ノート検索E2Eの入力を通常のキー操作に合わせる"
         },
         {
           "category": "feature",
-          "id": "pr-4534",
+          "id": "pr-5838",
           "links": [
             {
-              "title": "PR #4534",
+              "title": "PR #5838",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4534"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5838"
             }
           ],
-          "mergedAt": "2026-08-14T14:15:28Z",
-          "summary": "#4534 feat: publish custom review rules lesson in AI University"
+          "mergedAt": "2026-10-17T15:33:35Z",
+          "summary": "#5838 通常入口と専用入口の起動・Hot Reloadを実画面で比較する"
         },
         {
           "category": "feature",
-          "id": "pr-4525",
+          "id": "pr-5837",
           "links": [
             {
-              "title": "PR #4525",
+              "title": "PR #5837",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4525"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5837"
             }
           ],
-          "mergedAt": "2026-08-14T06:01:29Z",
-          "summary": "#4525 feat: add daily progressive guitar course"
+          "mergedAt": "2026-10-17T15:21:35Z",
+          "summary": "#5837 カード原資固定費による月次不足の誤表示を修正"
         },
         {
           "category": "feature",
-          "id": "pr-4533",
+          "id": "pr-5836",
           "links": [
             {
-              "title": "PR #4533",
+              "title": "PR #5836",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4533"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5836"
             }
           ],
-          "mergedAt": "2026-08-14T05:57:34Z",
-          "summary": "#4533 feat: add Codex solution engineering lesson"
-        },
-        {
-          "category": "automation",
-          "id": "pr-4529",
-          "links": [
-            {
-              "title": "PR #4529",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4529"
-            }
-          ],
-          "mergedAt": "2026-08-14T05:36:35Z",
-          "summary": "#4529 ci: keep generated endorsement data format-compatible"
+          "mergedAt": "2026-10-17T14:59:00Z",
+          "summary": "#5836 test(reading): 本番検証で版候補の開始操作を明示する"
         },
         {
           "category": "feature",
-          "id": "pr-4527",
+          "id": "pr-5833",
           "links": [
             {
-              "title": "PR #4527",
+              "title": "PR #5833",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4527"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5833"
             }
           ],
-          "mergedAt": "2026-08-14T04:51:19Z",
-          "summary": "#4527 Add asset management WBS release skill"
+          "mergedAt": "2026-10-17T14:51:10Z",
+          "summary": "#5833 test: スライド入力切替と確認メモ保存のE2E同期を改善"
         },
         {
           "category": "feature",
-          "id": "pr-4522",
+          "id": "pr-5834",
           "links": [
             {
-              "title": "PR #4522",
+              "title": "PR #5834",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4522"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5834"
             }
           ],
-          "mergedAt": "2026-08-13T20:11:31Z",
-          "summary": "#4522 feat: add Codex iOS lesson to AI University"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4520",
-          "links": [
-            {
-              "title": "PR #4520",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4520"
-            }
-          ],
-          "mergedAt": "2026-08-13T17:19:38Z",
-          "summary": "#4520 fix: make every AI University video selectable"
-        },
-        {
-          "category": "automation",
-          "id": "pr-4519",
-          "links": [
-            {
-              "title": "PR #4519",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4519"
-            }
-          ],
-          "mergedAt": "2026-08-13T16:17:23Z",
-          "summary": "#4519 ci: skip redundant validation and deploy work"
+          "mergedAt": "2026-10-17T14:50:47Z",
+          "summary": "#5834 残響ポンプ室の開発中チェックを集約し短い確認経路を追加"
         },
         {
           "category": "feature",
-          "id": "pr-4517",
+          "id": "pr-5832",
           "links": [
             {
-              "title": "PR #4517",
+              "title": "PR #5832",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4517"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5832"
             }
           ],
-          "mergedAt": "2026-08-13T15:48:17Z",
-          "summary": "#4517 feat: publish Codex customer demo lesson in AI University"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4513",
-          "links": [
-            {
-              "title": "PR #4513",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4513"
-            }
-          ],
-          "mergedAt": "2026-08-13T12:11:46Z",
-          "summary": "#4513 fix: restore AI University YouTube playback"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4512",
-          "links": [
-            {
-              "title": "PR #4512",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4512"
-            }
-          ],
-          "mergedAt": "2026-08-13T10:26:54Z",
-          "summary": "#4512 feat: publish YouTube lesson in AI University"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4510",
-          "links": [
-            {
-              "title": "PR #4510",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4510"
-            }
-          ],
-          "mergedAt": "2026-08-13T07:48:25Z",
-          "summary": "#4510 MUSUBIの投稿リンクをクリック可能にする"
-        },
-        {
-          "category": "fix",
-          "id": "pr-4509",
-          "links": [
-            {
-              "title": "PR #4509",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4509"
-            }
-          ],
-          "mergedAt": "2026-08-13T03:55:40Z",
-          "summary": "#4509 fix(musubi): support existing pg_trgm extension schemas"
-        },
-        {
-          "category": "feature",
-          "id": "pr-4506",
-          "links": [
-            {
-              "title": "PR #4506",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/4506"
-            }
-          ],
-          "mergedAt": "2026-08-13T02:53:37Z",
-          "summary": "#4506 feat: launch MUSUBI social MVP"
+          "mergedAt": "2026-10-17T14:18:31Z",
+          "summary": "#5832 混合レシートの履歴と予算を照合済み内訳へ修正"
         }
       ],
-      "date": "2026-08-17",
+      "date": "2026-10-18",
       "extensions": {
         "aiToolWatch": {
           "changedSourceCount": 5,

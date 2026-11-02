@@ -1,0 +1,50 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Containers: audit cleanup safety",
+      "type": "process",
+      "command": "python3",
+      "windows": {
+        "command": "python"
+      },
+      "args": [
+        "${workspaceFolder}/scripts/container_cleanup_guard.py"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "clear": true,
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Containers: safe prune (volumes excluded)",
+      "type": "process",
+      "command": "python3",
+      "windows": {
+        "command": "python"
+      },
+      "args": [
+        "${workspaceFolder}/scripts/container_cleanup_guard.py",
+        "--apply",
+        "--older-than-hours",
+        "168",
+        "--confirm",
+        "${input:containerCleanupConfirmation}"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "clear": true,
+        "reveal": "always"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "containerCleanupConfirmation",
+      "type": "promptString",
+      "description": "Type PRUNE_WITHOUT_VOLUMES to remove only unused non-volume resources older than 7 days",
+      "password": false
+    }
+  ]
+}

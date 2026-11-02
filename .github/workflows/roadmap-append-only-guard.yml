@@ -19,8 +19,7 @@ on:
       - ".github/workflows/roadmap-append-only-guard.yml"
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: roadmap-append-only-guard-${{ github.ref }}
@@ -28,18 +27,20 @@ concurrency:
 
 jobs:
   guard:
+    permissions:
+      contents: read
     name: Check ROADMAP destructive rewrite
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 

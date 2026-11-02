@@ -61,6 +61,10 @@ import {
 } from "../_shared/mcp_external_file.ts";
 import { callExternalMcpTool } from "../_shared/mcp_external_file_client.ts";
 import {
+  dispatchLocalBusinessReferenceAction,
+  fetchLocalBusinessReferences,
+} from "../_shared/local_business_reference.ts";
+import {
   createSupabaseJibunApiStore,
   handleJibunApiAction,
 } from "./jibun_api.ts";
@@ -74,10 +78,12 @@ import {
   buildWbsReschedulePlan,
 } from "./wbs_reschedule_realistic.ts";
 
+import { handleReading, ReadingError, readingActions } from "./reading.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, traceparent, tracestate, baggage, sentry-trace",
   "Access-Control-Max-Age": "86400",
 };
 
@@ -1031,6 +1037,7 @@ async function handleMcpFacade(
           "mcp.wbs.list",
           "mcp.feature_request.create",
           "mcp.user_tasks.list",
+          "mcp.public_businesses.reference_list",
           "mcp.notes.list",
           "mcp.notes.create",
         ],
@@ -1165,6 +1172,41 @@ async function handleMcpFacade(
       },
       content: mcpTextResult(`Found ${enriched.length} user task(s).`),
     });
+  }
+
+  if (toolName === "public_businesses.reference_list") {
+    const targetId = String(args.target_id ?? "fuchu-honmachi-1").trim();
+    if (targetId !== "fuchu-honmachi-1") {
+      await logMcpInvocation(auth.ctx, toolName, args, 400, req);
+      return mcpToolResponse(body, {
+        success: false,
+        tool: toolName,
+        error: "unsupported_target",
+      }, 400);
+    }
+    try {
+      const payload = await fetchLocalBusinessReferences({
+        limit: args.limit ?? 30,
+      });
+      await logMcpInvocation(auth.ctx, toolName, args, 200, req);
+      return mcpToolResponse(body, {
+        success: true,
+        tool: toolName,
+        structuredContent: payload,
+        content: mcpTextResult(
+          `Found ${payload.publicReference.count} public reference place(s). ` +
+            "Ownership type is unknown and the list does not identify the census aggregate.",
+        ),
+      });
+    } catch (error) {
+      console.error("MCP public business reference failed", error);
+      await logMcpInvocation(auth.ctx, toolName, args, 502, req);
+      return mcpToolResponse(body, {
+        success: false,
+        tool: toolName,
+        error: "public_reference_unavailable",
+      }, 502);
+    }
   }
 
   if (toolName === "feature_request.create") {
@@ -5872,6 +5914,14 @@ serve(async (req) => {
     const mcpResponse = await handleMcpFacade(req, action, body, admin);
     if (mcpResponse) return mcpResponse;
 
+    // Public, read-only business references used by the regional map. Keep this
+    // in tools-hub so the browser and authenticated MCP tool share one fetcher
+    // without consuming another production Edge Function slot.
+    if (action === "public_businesses.reference_list") {
+      const result = await dispatchLocalBusinessReferenceAction(body);
+      return json(result.body, result.status);
+    }
+
     // ── 自分API (Notion Developer Platform 対抗 / 2026-07-12 WEB版) ─────────
     // jibunapi.* = 管理系 (Supabase JWT) / api.* = 外部公開系 (jibun_sk_ キー)。
     // GET 呼び出し (AI エージェント / curl) 向けに query params も body へマージする。
@@ -9567,6 +9617,10 @@ ${reportText ? `> ${reportText}` : ""}`,
     const userId = await getUserId(req);
     if (!userId) return json({ error: "Unauthorized" }, 401);
 
+    if (readingActions.has(action)) {
+      return json(await handleReading(admin, userId, action, body));
+    }
+
     switch (action) {
       case "mcp_file.connectors": {
         const connectors = connectorsAvailableToUser(
@@ -9884,35 +9938,6 @@ ${reportText ? `> ${reportText}` : ""}`,
       }
       case "contact.delete": {
         await deleteItem(admin, "contact", userId, String(body.id ?? ""));
-        return json({ success: true });
-      }
-
-      // ── Reading List ────────────────────────────────────────────────────────
-      case "reading.list":
-        return json({
-          success: true,
-          items: await listItems(admin, "reading", userId),
-        });
-      case "reading.add": {
-        const item = await addItem(admin, "reading", userId, {
-          url: body.url,
-          title: body.title,
-          author: body.author ?? "",
-          status: "unread",
-        });
-        return json({ success: true, item });
-      }
-      case "reading.mark_read": {
-        const { error } = await admin.from("hub_data")
-          .update({
-            metadata: {
-              user_id: userId,
-              status: "read",
-              read_at: new Date().toISOString(),
-            },
-          })
-          .eq("id", String(body.id ?? "")).eq("source", "reading");
-        if (error) throw new Error(error.message);
         return json({ success: true });
       }
 
@@ -10786,6 +10811,9 @@ ${reportText ? `> ${reportText}` : ""}`,
             "contact.delete",
             "reading.list",
             "reading.add",
+            "reading.save",
+            "reading.authors",
+            "reading.author.add",
             "reading.mark_read",
             "tag.list",
             "tag.create",
@@ -10870,6 +10898,7 @@ ${reportText ? `> ${reportText}` : ""}`,
             "mcp.wbs.list",
             "mcp.feature_request.create",
             "mcp.user_tasks.list",
+            "mcp.public_businesses.reference_list",
             "mcp.notes.list",
             "mcp.notes.create",
             "mcp_file.connectors",
@@ -10882,7 +10911,7 @@ ${reportText ? `> ${reportText}` : ""}`,
         }, 400);
     }
   } catch (e) {
-    if (e instanceof ToolsHubRequestError) {
+    if (e instanceof ReadingError || e instanceof ToolsHubRequestError) {
       return json({ error: e.message }, e.status);
     }
     return json({ error: String(e) }, 500);

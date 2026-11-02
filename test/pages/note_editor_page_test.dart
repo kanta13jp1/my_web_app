@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/note_editor_page.dart';
+import 'package:my_web_app/pages/ai_search_page.dart';
 import 'package:my_web_app/services/note_semantic_search_service.dart';
 import 'package:my_web_app/services/theme_service.dart';
 import 'package:provider/provider.dart';
@@ -37,6 +38,9 @@ class _RecordingSupabaseClient extends Fake implements SupabaseClient {
 }
 
 class _FakeGoTrueClient extends Fake implements GoTrueClient {
+  @override
+  Stream<AuthState> get onAuthStateChange => const Stream.empty();
+
   @override
   User? get currentUser => const User(
         id: 'test-user-id',
@@ -365,6 +369,44 @@ TextEditingController _contentController(WidgetTester tester) {
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
+  testWidgets(
+      'search opens the saved note in the real editor without overwriting it',
+      (tester) async {
+    final client = _RecordingSupabaseClient(noteRow: _noteRow());
+    await tester.pumpWidget(
+      ChangeNotifierProvider<ThemeService>(
+        create: (_) => ThemeService(),
+        child: MaterialApp(
+          home: AiSearchPage(
+            supabaseClient: client,
+            search: (_) async => {
+              'results': [
+                {'id': 429, 'title': '検索の抜粋', 'content': '短縮された内容'},
+              ],
+              'searchMode': 'text',
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.enterText(find.byType(TextField), '読書');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('検索の抜粋'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NoteEditorPage>(find.byType(NoteEditorPage)).noteId,
+      '429',
+    );
+    expect(_contentController(tester).text, _noteRow()['content']);
+    expect(client.inserts, isEmpty);
+    expect(client.updates, isEmpty);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('「読書」の結果（1件）'), findsOneWidget);
+    expect(find.text('検索の抜粋'), findsOneWidget);
   });
 
   group('note editor autosave', () {

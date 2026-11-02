@@ -1,0 +1,4171 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "label": "文化庁 博物館総合サイト",
+    "url": "https://museum.bunka.go.jp/guide/",
+    "downloadUrl": "https://museum.bunka.go.jp/wp-content/uploads/2026/08/MuseumList_20260820.csv",
+    "asOf": "2026-08-20"
+  },
+  "museums": [
+    {
+      "name": "北海道立函館美術館",
+      "prefecture": "北海道",
+      "municipality": "函館市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://artmuseum.pref.hokkaido.lg.jp/hbj"
+    },
+    {
+      "name": "北一ヴェネツィア美術館",
+      "prefecture": "北海道",
+      "municipality": "小樽市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://venezia-museum.or.jp/"
+    },
+    {
+      "name": "小樽芸術村",
+      "prefecture": "北海道",
+      "municipality": "小樽市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.nitorihd.co.jp/otaru-art-base/"
+    },
+    {
+      "name": "市立小樽美術館",
+      "prefecture": "北海道",
+      "municipality": "小樽市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.otaru.lg.jp/categories/bunya/shisetsu/bunka_kanko/bijyutsukan/"
+    },
+    {
+      "name": "荒井記念美術館",
+      "prefecture": "北海道",
+      "municipality": "岩内町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.iwanai-h.com/art/"
+    },
+    {
+      "name": "北海道立帯広美術館",
+      "prefecture": "北海道",
+      "municipality": "帯広市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://artmuseum.pref.hokkaido.lg.jp/obj/"
+    },
+    {
+      "name": "中原悌二郎記念旭川市彫刻美術館",
+      "prefecture": "北海道",
+      "municipality": "旭川市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.asahikawa.hokkaido.jp/sculpture/"
+    },
+    {
+      "name": "北海道立旭川美術館",
+      "prefecture": "北海道",
+      "municipality": "旭川市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://artmuseum.pref.hokkaido.lg.jp/abj"
+    },
+    {
+      "name": "北海道立三岸好太郎美術館",
+      "prefecture": "北海道",
+      "municipality": "札幌市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://artmuseum.pref.hokkaido.lg.jp/mkb/"
+    },
+    {
+      "name": "北海道立近代美術館",
+      "prefecture": "北海道",
+      "municipality": "札幌市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://artmuseum.pref.hokkaido.lg.jp/knb/"
+    },
+    {
+      "name": "本郷新記念札幌彫刻美術館",
+      "prefecture": "北海道",
+      "municipality": "札幌市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.hongoshin-smos.jp/"
+    },
+    {
+      "name": "札幌芸術の森美術館",
+      "prefecture": "北海道",
+      "municipality": "札幌市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://artpark.or.jp/shisetsu/sapporo-art-museum/"
+    },
+    {
+      "name": "神田日勝記念美術館",
+      "prefecture": "北海道",
+      "municipality": "河東郡鹿追町",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "http://kandanissho.com/"
+    },
+    {
+      "name": "福原記念美術館",
+      "prefecture": "北海道",
+      "municipality": "河東郡鹿追町",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "https://art-fukuhara.jp/"
+    },
+    {
+      "name": "ロイズミュージアム",
+      "prefecture": "北海道",
+      "municipality": "石狩郡当別町",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "https://www.royce.com/cct/"
+    },
+    {
+      "name": "網走市立美術館",
+      "prefecture": "北海道",
+      "municipality": "網走市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.abashiri.hokkaido.jp/site/artmuseum/"
+    },
+    {
+      "name": "安田侃彫刻美術館アルテピアッツァ美唄",
+      "prefecture": "北海道",
+      "municipality": "美唄市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://artepiazza.jp/"
+    },
+    {
+      "name": "北海道立釧路芸術館",
+      "prefecture": "北海道",
+      "municipality": "釧路市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.kushiro-artmu.jp/"
+    },
+    {
+      "name": "釧路市立美術館",
+      "prefecture": "北海道",
+      "municipality": "釧路市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://k-bijutsukan.net/"
+    },
+    {
+      "name": "八戸市美術館",
+      "prefecture": "青森県",
+      "municipality": "八戸市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://hachinohe-art-museum.jp/"
+    },
+    {
+      "name": "弘前れんが倉庫美術館",
+      "prefecture": "青森県",
+      "municipality": "弘前市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.hirosaki-moca.jp/"
+    },
+    {
+      "name": "青森県立美術館",
+      "prefecture": "青森県",
+      "municipality": "青森市",
+      "registrationStatus": "指定施設",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.aomori-museum.jp/"
+    },
+    {
+      "name": "石神の丘美術館",
+      "prefecture": "岩手県",
+      "municipality": "岩手郡岩手町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://ishigami-iwate.jp/"
+    },
+    {
+      "name": "岩手県立美術館",
+      "prefecture": "岩手県",
+      "municipality": "盛岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.ima.or.jp/"
+    },
+    {
+      "name": "深沢紅子野の花美術館",
+      "prefecture": "岩手県",
+      "municipality": "盛岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般社団法人",
+      "officialUrl": "http://www.nonohana.hs.plala.or.jp/"
+    },
+    {
+      "name": "萬鉄五郎記念美術館",
+      "prefecture": "岩手県",
+      "municipality": "花巻市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.hanamaki.iwate.jp/bunkasports/bunka/1019887/yorozutetsugoro/1002101.html"
+    },
+    {
+      "name": "宮城県美術館",
+      "prefecture": "宮城県",
+      "municipality": "仙台市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.pref.miyagi.jp/site/mmoa/"
+    },
+    {
+      "name": "東北福祉大学芹沢銈介美術工芸館",
+      "prefecture": "宮城県",
+      "municipality": "仙台市",
+      "registrationStatus": "登録博物館",
+      "operator": "公立大学付属",
+      "officialUrl": "https://www.tfu.ac.jp/kogeikan/"
+    },
+    {
+      "name": "塩竃市杉村惇美術館",
+      "prefecture": "宮城県",
+      "municipality": "塩竈市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://sugimurajun.shiomo.jp/"
+    },
+    {
+      "name": "瑞巌寺宝物館",
+      "prefecture": "宮城県",
+      "municipality": "宮城郡松島町",
+      "registrationStatus": "登録博物館",
+      "operator": "宗教法人",
+      "officialUrl": "https://zuiganji.or.jp/museum/"
+    },
+    {
+      "name": "気仙沼市リアス・アーク美術館",
+      "prefecture": "宮城県",
+      "municipality": "気仙沼市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.kesennuma.miyagi.jp/riasark/"
+    },
+    {
+      "name": "横手市増田まんが美術館",
+      "prefecture": "秋田県",
+      "municipality": "横手市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://manga-museum.com/"
+    },
+    {
+      "name": "秋田県立近代美術館",
+      "prefecture": "秋田県",
+      "municipality": "横手市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://akita-kinbi.jp/"
+    },
+    {
+      "name": "秋田市立千秋美術館",
+      "prefecture": "秋田県",
+      "municipality": "秋田市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.akita.lg.jp/kanko/kanrenshisetsu/1003643/index.html"
+    },
+    {
+      "name": "秋田県立美術館",
+      "prefecture": "秋田県",
+      "municipality": "秋田市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.akita-museum-of-art.jp/index.htm"
+    },
+    {
+      "name": "出羽桜美術館",
+      "prefecture": "山形県",
+      "municipality": "天童市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.dewazakura.co.jp/museum/"
+    },
+    {
+      "name": "天童市美術館",
+      "prefecture": "山形県",
+      "municipality": "天童市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://tendocity-museum.jp/"
+    },
+    {
+      "name": "広重美術館",
+      "prefecture": "山形県",
+      "municipality": "天童市",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "https://www.hiroshige-tendo.jp/"
+    },
+    {
+      "name": "山形美術館",
+      "prefecture": "山形県",
+      "municipality": "山形市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.yamagata-art-museum.or.jp/"
+    },
+    {
+      "name": "掬粋巧芸館",
+      "prefecture": "山形県",
+      "municipality": "東置賜郡川西町",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "http://www.taruhei.co.jp/MuseumFolder/"
+    },
+    {
+      "name": "本間美術館",
+      "prefecture": "山形県",
+      "municipality": "酒田市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.homma-museum.or.jp/"
+    },
+    {
+      "name": "鶴岡アートフォーラム",
+      "prefecture": "山形県",
+      "municipality": "鶴岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.t-artforum.net/"
+    },
+    {
+      "name": "いわき市立美術館",
+      "prefecture": "福島県",
+      "municipality": "いわき市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.city.iwaki.lg.jp/www/genre/1444022369394/index.html"
+    },
+    {
+      "name": "喜多方市美術館",
+      "prefecture": "福島県",
+      "municipality": "喜多方市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.kcmofa.com/"
+    },
+    {
+      "name": "やないづ町立斎藤清美術館",
+      "prefecture": "福島県",
+      "municipality": "河沼郡柳津町",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.town.yanaizu.fukushima.jp/bijutsu/"
+    },
+    {
+      "name": "福島県立美術館",
+      "prefecture": "福島県",
+      "municipality": "福島市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://art-museum.fcs.ed.jp/"
+    },
+    {
+      "name": "諸橋近代美術館",
+      "prefecture": "福島県",
+      "municipality": "耶麻郡北塩原村",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://dali.jp/"
+    },
+    {
+      "name": "はじまりの美術館",
+      "prefecture": "福島県",
+      "municipality": "耶麻郡猪苗代町",
+      "registrationStatus": "指定施設",
+      "operator": "社会福祉法人",
+      "officialUrl": "https://hajimari-ac.com/"
+    },
+    {
+      "name": "郡山市立美術館",
+      "prefecture": "福島県",
+      "municipality": "郡山市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.koriyama.lg.jp/site/artmuseum/"
+    },
+    {
+      "name": "テツ・アートプラザ",
+      "prefecture": "茨城県",
+      "municipality": "水戸市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://tap-mito.jp/"
+    },
+    {
+      "name": "水戸芸術館",
+      "prefecture": "茨城県",
+      "municipality": "水戸市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.arttowermito.or.jp/"
+    },
+    {
+      "name": "茨城県近代美術館・つくば分館・天心記念五浦分館",
+      "prefecture": "茨城県",
+      "municipality": "水戸市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "http://www.modernart.museum.ibk.ed.jp/"
+    },
+    {
+      "name": "笠間日動美術館",
+      "prefecture": "茨城県",
+      "municipality": "笠間市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.nichido-museum.or.jp/"
+    },
+    {
+      "name": "茨城県陶芸美術館",
+      "prefecture": "茨城県",
+      "municipality": "笠間市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.tougei.museum.ibk.ed.jp/index.html"
+    },
+    {
+      "name": "しもだて美術館",
+      "prefecture": "茨城県",
+      "municipality": "筑西市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.chikusei.lg.jp/museum/index.html"
+    },
+    {
+      "name": "佐野市立吉澤記念美術館",
+      "prefecture": "栃木県",
+      "municipality": "佐野市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.sano.lg.jp/sp/yoshizawakinembijutsukan/index.html"
+    },
+    {
+      "name": "和気記念館",
+      "prefecture": "栃木県",
+      "municipality": "塩谷郡塩谷町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://boubou.jp/"
+    },
+    {
+      "name": "宇都宮美術館",
+      "prefecture": "栃木県",
+      "municipality": "宇都宮市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://u-moa.jp/"
+    },
+    {
+      "name": "栃木県立美術館",
+      "prefecture": "栃木県",
+      "municipality": "宇都宮市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "http://www.art.pref.tochigi.lg.jp/"
+    },
+    {
+      "name": "小杉放菴記念日光美術館",
+      "prefecture": "栃木県",
+      "municipality": "日光市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.khmoan.jp/"
+    },
+    {
+      "name": "栃木市立美術館",
+      "prefecture": "栃木県",
+      "municipality": "栃木市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.tochigi.lg.jp/site/museum-tcam/"
+    },
+    {
+      "name": "濱田庄司記念益子参考館",
+      "prefecture": "栃木県",
+      "municipality": "芳賀郡益子町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://mashiko-sankokan.net/"
+    },
+    {
+      "name": "益子陶芸美術館",
+      "prefecture": "栃木県",
+      "municipality": "芳賀郡益子町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.mashiko-museum.jp/"
+    },
+    {
+      "name": "大久保分校スタートアップミュージアム",
+      "prefecture": "栃木県",
+      "municipality": "足利市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://okubomuseum.com"
+    },
+    {
+      "name": "栗田美術館",
+      "prefecture": "栃木県",
+      "municipality": "足利市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "http://www.kurita.or.jp/"
+    },
+    {
+      "name": "足利市立美術館",
+      "prefecture": "栃木県",
+      "municipality": "足利市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.watv.ne.jp/ashi-bi/"
+    },
+    {
+      "name": "那珂川町馬頭広重美術館",
+      "prefecture": "栃木県",
+      "municipality": "那須郡那珂川町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.hiroshige.bato.tochigi.jp/"
+    },
+    {
+      "name": "藤城清治美術館那須高原",
+      "prefecture": "栃木県",
+      "municipality": "那須郡那須町",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "http://fujishiro-seiji-museum.jp/"
+    },
+    {
+      "name": "富弘美術館",
+      "prefecture": "群馬県",
+      "municipality": "みどり市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.midori.gunma.jp/tomihiro/"
+    },
+    {
+      "name": "天一美術館",
+      "prefecture": "群馬県",
+      "municipality": "利根郡みなかみ町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://tenichi-museum.com/"
+    },
+    {
+      "name": "アーツ前橋",
+      "prefecture": "群馬県",
+      "municipality": "前橋市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.artsmaebashi.jp/"
+    },
+    {
+      "name": "太田市美術館・図書館",
+      "prefecture": "群馬県",
+      "municipality": "太田市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.artmuseumlibraryota.jp/"
+    },
+    {
+      "name": "富岡市立美術博物館・福沢一郎記念美術館",
+      "prefecture": "群馬県",
+      "municipality": "富岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.tomioka.lg.jp/www/genre/1387242529968/index.html"
+    },
+    {
+      "name": "公益財団法人大川美術館",
+      "prefecture": "群馬県",
+      "municipality": "桐生市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://okawamuseum.jp/"
+    },
+    {
+      "name": "公益財団法人竹久夢二伊香保記念館",
+      "prefecture": "群馬県",
+      "municipality": "渋川市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://yumeji.or.jp/"
+    },
+    {
+      "name": "原美術館 ARC",
+      "prefecture": "群馬県",
+      "municipality": "渋川市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.haramuseum.or.jp/jp/arc/"
+    },
+    {
+      "name": "群馬県立館林美術館",
+      "prefecture": "群馬県",
+      "municipality": "館林市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "http://www.gmat.pref.gunma.jp/"
+    },
+    {
+      "name": "群馬県立近代美術館",
+      "prefecture": "群馬県",
+      "municipality": "高崎市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://mmag.pref.gunma.jp/"
+    },
+    {
+      "name": "高崎市タワー美術館",
+      "prefecture": "群馬県",
+      "municipality": "高崎市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.takasaki.gunma.jp/site/tower/"
+    },
+    {
+      "name": "高崎市美術館",
+      "prefecture": "群馬県",
+      "municipality": "高崎市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.takasaki.gunma.jp/site/art-museum/"
+    },
+    {
+      "name": "埼玉県立近代美術館",
+      "prefecture": "埼玉県",
+      "municipality": "さいたま市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://pref.spec.ed.jp/momas/"
+    },
+    {
+      "name": "山崎美術館",
+      "prefecture": "埼玉県",
+      "municipality": "川越市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.koedo-kameya.com/sp.html"
+    },
+    {
+      "name": "川越市立美術館",
+      "prefecture": "埼玉県",
+      "municipality": "川越市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.kawagoe.saitama.jp/artmuseum/"
+    },
+    {
+      "name": "跡見学園女子大学花蹊記念資料館",
+      "prefecture": "埼玉県",
+      "municipality": "新座市",
+      "registrationStatus": "指定施設",
+      "operator": "私立大学付属",
+      "officialUrl": "https://www.atomi.ac.jp/univ/museum/"
+    },
+    {
+      "name": "遠山記念館",
+      "prefecture": "埼玉県",
+      "municipality": "比企郡川島町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.e-kinenkan.com/"
+    },
+    {
+      "name": "熊谷市立熊谷図書館美術・郷土資料展示室",
+      "prefecture": "埼玉県",
+      "municipality": "熊谷市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.kumagayacity.library.ne.jp/kyoudo/"
+    },
+    {
+      "name": "やまとーあーとみゅーじあむ",
+      "prefecture": "埼玉県",
+      "municipality": "秩父市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "http://www.chichibu.ne.jp/~yamato-a-t/"
+    },
+    {
+      "name": "河鍋暁斎記念美術館",
+      "prefecture": "埼玉県",
+      "municipality": "蕨市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://kyosai-museum.jp/"
+    },
+    {
+      "name": "DIC川村記念美術館",
+      "prefecture": "千葉県",
+      "municipality": "佐倉市",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "https://kawamura-museum.dic.co.jp/"
+    },
+    {
+      "name": "佐倉市立美術館",
+      "prefecture": "千葉県",
+      "municipality": "佐倉市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.sakura.lg.jp/section/museum/"
+    },
+    {
+      "name": "塚本美術館",
+      "prefecture": "千葉県",
+      "municipality": "佐倉市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.city.sakura.lg.jp/soshiki/sakuranomiryoku/1/3036.html"
+    },
+    {
+      "name": "千葉市美術館",
+      "prefecture": "千葉県",
+      "municipality": "千葉市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.ccma-net.jp/"
+    },
+    {
+      "name": "千葉県立美術館",
+      "prefecture": "千葉県",
+      "municipality": "千葉市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "http://www2.chiba-muse.or.jp/ART/"
+    },
+    {
+      "name": "鋸山美術館",
+      "prefecture": "千葉県",
+      "municipality": "富津市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://nokogiriyama.com/"
+    },
+    {
+      "name": "成田山書道美術館",
+      "prefecture": "千葉県",
+      "municipality": "成田市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.naritashodo.jp/"
+    },
+    {
+      "name": "城西国際大学水田美術館",
+      "prefecture": "千葉県",
+      "municipality": "東金市",
+      "registrationStatus": "指定施設",
+      "operator": "私立大学付属",
+      "officialUrl": "https://www.jiu.ac.jp/museum/"
+    },
+    {
+      "name": "茂原市立美術館・郷土資料館",
+      "prefecture": "千葉県",
+      "municipality": "茂原市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.mobara.chiba.jp/soshiki/13-10-0-0-0_1.html"
+    },
+    {
+      "name": "茂木本家美術館",
+      "prefecture": "千葉県",
+      "municipality": "野田市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.momoa.jp/"
+    },
+    {
+      "name": "中近東文化センター付属博物館",
+      "prefecture": "東京都",
+      "municipality": "三鷹市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.meccj.or.jp/"
+    },
+    {
+      "name": "世田谷区立世田谷美術館",
+      "prefecture": "東京都",
+      "municipality": "世田谷区",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.setagayaartmuseum.or.jp/"
+    },
+    {
+      "name": "五島美術館",
+      "prefecture": "東京都",
+      "municipality": "世田谷区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.gotoh-museum.or.jp/"
+    },
+    {
+      "name": "長谷川町子美術館",
+      "prefecture": "東京都",
+      "municipality": "世田谷区",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://www.hasegawamachiko.jp/"
+    },
+    {
+      "name": "アーティゾン美術館",
+      "prefecture": "東京都",
+      "municipality": "中央区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.artizon.museum/"
+    },
+    {
+      "name": "三井記念美術館",
+      "prefecture": "東京都",
+      "municipality": "中央区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.mitsui-museum.jp/"
+    },
+    {
+      "name": "国立映画アーカイブ",
+      "prefecture": "東京都",
+      "municipality": "中央区",
+      "registrationStatus": "指定施設",
+      "operator": "独立行政法人",
+      "officialUrl": "https://www.nfaj.go.jp/"
+    },
+    {
+      "name": "東京工芸大学芸術学部写大ギャラリー",
+      "prefecture": "東京都",
+      "municipality": "中野区",
+      "registrationStatus": "指定施設",
+      "operator": "私立学校法人",
+      "officialUrl": "http://www.shadai.t-kougei.ac.jp/index.html"
+    },
+    {
+      "name": "村内美術館",
+      "prefecture": "東京都",
+      "municipality": "八王子市",
+      "registrationStatus": "指定施設",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.murauchi.net/museum/"
+    },
+    {
+      "name": "東京富士美術館",
+      "prefecture": "東京都",
+      "municipality": "八王子市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.fujibi.or.jp/"
+    },
+    {
+      "name": "東京造形大学附属美術館",
+      "prefecture": "東京都",
+      "municipality": "八王子市",
+      "registrationStatus": "指定施設",
+      "operator": "私立学校法人",
+      "officialUrl": "https://www.zokei.ac.jp/museum/"
+    },
+    {
+      "name": "大谷美術館",
+      "prefecture": "東京都",
+      "municipality": "北区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.otanimuseum.or.jp/kyufurukawatei/"
+    },
+    {
+      "name": "三菱一号館美術館",
+      "prefecture": "東京都",
+      "municipality": "千代田区",
+      "registrationStatus": "登録博物館",
+      "operator": "会社",
+      "officialUrl": "https://mimt.jp"
+    },
+    {
+      "name": "共立女子大学博物館",
+      "prefecture": "東京都",
+      "municipality": "千代田区",
+      "registrationStatus": "登録博物館",
+      "operator": "私立学校法人",
+      "officialUrl": "https://www.kyoritsu-wu.ac.jp/muse/"
+    },
+    {
+      "name": "出光美術館",
+      "prefecture": "東京都",
+      "municipality": "千代田区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://idemitsu-museum.or.jp/"
+    },
+    {
+      "name": "東京ステーションギャラリー",
+      "prefecture": "東京都",
+      "municipality": "千代田区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.ejrcf.or.jp/gallery/index.html"
+    },
+    {
+      "name": "東京国立近代美術館",
+      "prefecture": "東京都",
+      "municipality": "千代田区",
+      "registrationStatus": "指定施設",
+      "operator": "独立行政法人",
+      "officialUrl": "https://www.momat.go.jp/"
+    },
+    {
+      "name": "皇居三の丸尚蔵館",
+      "prefecture": "東京都",
+      "municipality": "千代田区",
+      "registrationStatus": "指定施設",
+      "operator": "独立行政法人",
+      "officialUrl": "https://shozokan.nich.go.jp/"
+    },
+    {
+      "name": "静嘉堂文庫美術館",
+      "prefecture": "東京都",
+      "municipality": "千代田区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.seikado.or.jp/"
+    },
+    {
+      "name": "上野の森美術館",
+      "prefecture": "東京都",
+      "municipality": "台東区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.ueno-mori.org/"
+    },
+    {
+      "name": "国立西洋美術館",
+      "prefecture": "東京都",
+      "municipality": "台東区",
+      "registrationStatus": "指定施設",
+      "operator": "独立行政法人",
+      "officialUrl": "http://www.nmwa.go.jp/jp/"
+    },
+    {
+      "name": "大名時計博物館",
+      "prefecture": "東京都",
+      "municipality": "台東区",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": ""
+    },
+    {
+      "name": "東京国立博物館",
+      "prefecture": "東京都",
+      "municipality": "台東区",
+      "registrationStatus": "指定施設",
+      "operator": "独立行政法人",
+      "officialUrl": "https://www.tnm.jp/"
+    },
+    {
+      "name": "東京都美術館",
+      "prefecture": "東京都",
+      "municipality": "台東区",
+      "registrationStatus": "指定施設",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.tobikan.jp/"
+    },
+    {
+      "name": "横山大観記念館",
+      "prefecture": "東京都",
+      "municipality": "台東区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://taikan.tokyo/"
+    },
+    {
+      "name": "たましん美術館",
+      "prefecture": "東京都",
+      "municipality": "国立市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.tamashinmuseum.org/"
+    },
+    {
+      "name": "刀剣博物館",
+      "prefecture": "東京都",
+      "municipality": "墨田区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.touken.or.jp/museum/"
+    },
+    {
+      "name": "多摩美術大学附属美術館",
+      "prefecture": "東京都",
+      "municipality": "多摩市",
+      "registrationStatus": "指定施設",
+      "operator": "私立学校法人",
+      "officialUrl": "https://museum.tamabi.ac.jp/"
+    },
+    {
+      "name": "武蔵野美術大学 美術館・図書館",
+      "prefecture": "東京都",
+      "municipality": "小平市",
+      "registrationStatus": "登録博物館",
+      "operator": "私立学校法人",
+      "officialUrl": "https://mauml.musabi.ac.jp/"
+    },
+    {
+      "name": "府中市美術館",
+      "prefecture": "東京都",
+      "municipality": "府中市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.fuchu.tokyo.jp/art/"
+    },
+    {
+      "name": "永青文庫",
+      "prefecture": "東京都",
+      "municipality": "文京区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.eiseibunko.com/"
+    },
+    {
+      "name": "SOMPO美術館",
+      "prefecture": "東京都",
+      "municipality": "新宿区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.sompo-museum.org/"
+    },
+    {
+      "name": "佐藤美術館",
+      "prefecture": "東京都",
+      "municipality": "新宿区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://sato-museum.la.coocan.jp/"
+    },
+    {
+      "name": "早稲田大学會津八一記念博物館",
+      "prefecture": "東京都",
+      "municipality": "新宿区",
+      "registrationStatus": "指定施設",
+      "operator": "私立学校法人",
+      "officialUrl": "https://www.waseda.jp/culture/aizu-museum/"
+    },
+    {
+      "name": "東京オペラシティアートギャラリー",
+      "prefecture": "東京都",
+      "municipality": "新宿区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.operacity.jp/ag/"
+    },
+    {
+      "name": "草間彌生美術館",
+      "prefecture": "東京都",
+      "municipality": "新宿区",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://yayoikusamamuseum.jp/"
+    },
+    {
+      "name": "日本書道美術館",
+      "prefecture": "東京都",
+      "municipality": "板橋区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://shodo-bijutsukan.or.jp/"
+    },
+    {
+      "name": "東京都現代美術館",
+      "prefecture": "東京都",
+      "municipality": "江東区",
+      "registrationStatus": "指定施設",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.mot-art-museum.jp/"
+    },
+    {
+      "name": "Bunkamuraザ・ミュージアム",
+      "prefecture": "東京都",
+      "municipality": "渋谷区",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "https://www.bunkamura.co.jp/museum/"
+    },
+    {
+      "name": "太田記念美術館",
+      "prefecture": "東京都",
+      "municipality": "渋谷区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.ukiyoe-ota-muse.jp/"
+    },
+    {
+      "name": "実践女子学園香雪記念資料館",
+      "prefecture": "東京都",
+      "municipality": "渋谷区",
+      "registrationStatus": "指定施設",
+      "operator": "私立学校法人",
+      "officialUrl": "https://www.jissen.ac.jp/kosetsu/"
+    },
+    {
+      "name": "山種美術館",
+      "prefecture": "東京都",
+      "municipality": "渋谷区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.yamatane-museum.jp/"
+    },
+    {
+      "name": "戸栗美術館",
+      "prefecture": "東京都",
+      "municipality": "渋谷区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.toguri-museum.or.jp/"
+    },
+    {
+      "name": "パナソニック汐留美術館",
+      "prefecture": "東京都",
+      "municipality": "港区",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "https://panasonic.co.jp/ew/museum/"
+    },
+    {
+      "name": "大倉集古館",
+      "prefecture": "東京都",
+      "municipality": "港区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.shukokan.org/"
+    },
+    {
+      "name": "慶應義塾大学アート・センター",
+      "prefecture": "東京都",
+      "municipality": "港区",
+      "registrationStatus": "登録博物館",
+      "operator": "私立学校法人",
+      "officialUrl": "http://www.art-c.keio.ac.jp/"
+    },
+    {
+      "name": "東京都庭園美術館",
+      "prefecture": "東京都",
+      "municipality": "港区",
+      "registrationStatus": "指定施設",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.teien-art-museum.ne.jp/"
+    },
+    {
+      "name": "根津美術館",
+      "prefecture": "東京都",
+      "municipality": "港区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.nezu-muse.or.jp/"
+    },
+    {
+      "name": "森美術館",
+      "prefecture": "東京都",
+      "municipality": "港区",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "https://www.mori.art.museum/jp/"
+    },
+    {
+      "name": "泉屋博古館東京",
+      "prefecture": "東京都",
+      "municipality": "港区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://sen-oku.or.jp/tokyo/"
+    },
+    {
+      "name": "荏原 畠山美術館",
+      "prefecture": "東京都",
+      "municipality": "港区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.hatakeyama-museum.org"
+    },
+    {
+      "name": "菊池寛実記念智美術館",
+      "prefecture": "東京都",
+      "municipality": "港区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.musee-tomo.or.jp/"
+    },
+    {
+      "name": "宗教法人長泉院附属現代彫刻美術館",
+      "prefecture": "東京都",
+      "municipality": "目黒区",
+      "registrationStatus": "登録博物館",
+      "operator": "宗教法人",
+      "officialUrl": "http://museum-of-sculpture.org/"
+    },
+    {
+      "name": "日本民藝館",
+      "prefecture": "東京都",
+      "municipality": "目黒区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://mingeikan.or.jp/"
+    },
+    {
+      "name": "東京都写真美術館",
+      "prefecture": "東京都",
+      "municipality": "目黒区",
+      "registrationStatus": "指定施設",
+      "operator": "都道府県立",
+      "officialUrl": "https://topmuseum.jp/"
+    },
+    {
+      "name": "ちひろ美術館・東京",
+      "prefecture": "東京都",
+      "municipality": "練馬区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://chihiro.jp/tokyo/"
+    },
+    {
+      "name": "日本大学芸術学部芸術資料館",
+      "prefecture": "東京都",
+      "municipality": "練馬区",
+      "registrationStatus": "指定施設",
+      "operator": "私立学校法人",
+      "officialUrl": "https://www.art.nihon-u.ac.jp/facility/attached/archives/"
+    },
+    {
+      "name": "練馬区立美術館",
+      "prefecture": "東京都",
+      "municipality": "練馬区",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.neribun.or.jp/museum.html"
+    },
+    {
+      "name": "石洞美術館",
+      "prefecture": "東京都",
+      "municipality": "足立区",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://sekido-museum.jp/"
+    },
+    {
+      "name": "青梅市立美術館　青梅市立小島善太郎美術館",
+      "prefecture": "東京都",
+      "municipality": "青梅市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.ome.tokyo.jp/site/art-museum/"
+    },
+    {
+      "name": "山口蓬春記念館",
+      "prefecture": "神奈川県",
+      "municipality": "三浦郡葉山町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.hoshun.jp/"
+    },
+    {
+      "name": "神奈川県立近代美術館",
+      "prefecture": "神奈川県",
+      "municipality": "三浦郡葉山町",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "http://www.moma.pref.kanagawa.jp/"
+    },
+    {
+      "name": "小田原文化財団　江之浦測候所",
+      "prefecture": "神奈川県",
+      "municipality": "小田原市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.odawara-af.com/ja/enoura/"
+    },
+    {
+      "name": "平塚市美術館",
+      "prefecture": "神奈川県",
+      "municipality": "平塚市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.hiratsuka.kanagawa.jp/art-muse/index.html"
+    },
+    {
+      "name": "そごう美術館",
+      "prefecture": "神奈川県",
+      "municipality": "横浜市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://sogo-museum.jp/"
+    },
+    {
+      "name": "日吉の森庭園美術館",
+      "prefecture": "神奈川県",
+      "municipality": "横浜市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://hiyoshinomori.com/"
+    },
+    {
+      "name": "横浜美術館",
+      "prefecture": "神奈川県",
+      "municipality": "横浜市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://yokohama.art.museum/"
+    },
+    {
+      "name": "横須賀美術館",
+      "prefecture": "神奈川県",
+      "municipality": "横須賀市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.yokosuka-moa.jp/"
+    },
+    {
+      "name": "女子美術館大学美術館　女子美アートミュージアム",
+      "prefecture": "神奈川県",
+      "municipality": "相模原市",
+      "registrationStatus": "指定施設",
+      "operator": "私立大学付属",
+      "officialUrl": "http://www.joshibi.net/museum/jam/"
+    },
+    {
+      "name": "茅ケ崎市美術館",
+      "prefecture": "神奈川県",
+      "municipality": "茅ヶ崎市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.chigasaki-museum.jp/"
+    },
+    {
+      "name": "町立湯河原美術館",
+      "prefecture": "神奈川県",
+      "municipality": "足柄下郡湯河原町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.town.yugawara.kanagawa.jp/site/museum/"
+    },
+    {
+      "name": "ポーラ美術館",
+      "prefecture": "神奈川県",
+      "municipality": "足柄下郡箱根町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.polamuseum.or.jp/"
+    },
+    {
+      "name": "彫刻の森美術館",
+      "prefecture": "神奈川県",
+      "municipality": "足柄下郡箱根町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.hakone-oam.or.jp/"
+    },
+    {
+      "name": "箱根ラリック美術館",
+      "prefecture": "神奈川県",
+      "municipality": "足柄下郡箱根町",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "http://www.lalique-museum.com/"
+    },
+    {
+      "name": "箱根・芦ノ湖成川美術館",
+      "prefecture": "神奈川県",
+      "municipality": "足柄下郡箱根町",
+      "registrationStatus": "指定施設",
+      "operator": "一般財団法人",
+      "officialUrl": "http://www.narukawamuseum.co.jp/"
+    },
+    {
+      "name": "箱根美術館",
+      "prefecture": "神奈川県",
+      "municipality": "足柄下郡箱根町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.moaart.or.jp/hakone/"
+    },
+    {
+      "name": "鎌倉国宝館",
+      "prefecture": "神奈川県",
+      "municipality": "鎌倉市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.kamakura.kanagawa.jp/kokuhoukan/"
+    },
+    {
+      "name": "鎌倉彫資料館",
+      "prefecture": "神奈川県",
+      "municipality": "鎌倉市",
+      "registrationStatus": "指定施設",
+      "operator": "組合",
+      "officialUrl": "http://kamakuraborikaikan.jp/museum/"
+    },
+    {
+      "name": "小林古径記念美術館",
+      "prefecture": "新潟県",
+      "municipality": "上越市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.joetsu.niigata.jp/site/kokei/"
+    },
+    {
+      "name": "大棟山美術博物館",
+      "prefecture": "新潟県",
+      "municipality": "十日町市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://daitozan.jimdofree.com/"
+    },
+    {
+      "name": "池田記念美術館",
+      "prefecture": "新潟県",
+      "municipality": "南魚沼市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.ikedaart.jp/"
+    },
+    {
+      "name": "敦井美術館",
+      "prefecture": "新潟県",
+      "municipality": "新潟市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.tsurui.co.jp/museum/"
+    },
+    {
+      "name": "新潟市新津美術館",
+      "prefecture": "新潟県",
+      "municipality": "新潟市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.niigata.lg.jp/nam/"
+    },
+    {
+      "name": "新潟市美術館",
+      "prefecture": "新潟県",
+      "municipality": "新潟市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.ncam.jp/sp/"
+    },
+    {
+      "name": "新潟県立万代島美術館",
+      "prefecture": "新潟県",
+      "municipality": "新潟市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://banbi.pref.niigata.lg.jp/"
+    },
+    {
+      "name": "知足美術館",
+      "prefecture": "新潟県",
+      "municipality": "新潟市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://chisoku.jp/"
+    },
+    {
+      "name": "雪梁舎美術館",
+      "prefecture": "新潟県",
+      "municipality": "新潟市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.komeri.bit.or.jp/setsuryosha/"
+    },
+    {
+      "name": "木村茶道美術館",
+      "prefecture": "新潟県",
+      "municipality": "柏崎市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://sadoukan.jp/"
+    },
+    {
+      "name": "新潟県立近代美術館",
+      "prefecture": "新潟県",
+      "municipality": "長岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://kinbi.pref.niigata.lg.jp/"
+    },
+    {
+      "name": "長岡市栃尾美術館",
+      "prefecture": "新潟県",
+      "municipality": "長岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.lib.city.nagaoka.niigata.jp/tochibi"
+    },
+    {
+      "name": "駒形十吉記念美術館",
+      "prefecture": "新潟県",
+      "municipality": "長岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://www.komagata-museum.com/"
+    },
+    {
+      "name": "入善町下山芸術の森アートスペース（発電所美術館）",
+      "prefecture": "富山県",
+      "municipality": "下新川郡入善町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.town.nyuzen.toyama.jp/gyosei/bijutsukan/index.html"
+    },
+    {
+      "name": "一般財団法人　百河豚美術館",
+      "prefecture": "富山県",
+      "municipality": "下新川郡朝日町",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "http://ippukumuseum.g2.xrea.com//index.html"
+    },
+    {
+      "name": "朝日町立ふるさと美術館",
+      "prefecture": "富山県",
+      "municipality": "下新川郡朝日町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.town.asahi.toyama.jp/section/buntai/bijyutukanannai.html"
+    },
+    {
+      "name": "南砺市立福光美術館",
+      "prefecture": "富山県",
+      "municipality": "南砺市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://nanto-museum.com/"
+    },
+    {
+      "name": "ギャルリ・ミレー",
+      "prefecture": "富山県",
+      "municipality": "富山市",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "https://www.gmillet.jp/"
+    },
+    {
+      "name": "公益財団法人秋水美術館",
+      "prefecture": "富山県",
+      "municipality": "富山市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.shusui-museum.jp/"
+    },
+    {
+      "name": "富山市ガラス美術館",
+      "prefecture": "富山県",
+      "municipality": "富山市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://toyama-glass-art-museum.jp/"
+    },
+    {
+      "name": "富山県民会館美術館",
+      "prefecture": "富山県",
+      "municipality": "富山市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.bunka-toyama.jp/kenminkaikan/"
+    },
+    {
+      "name": "富山県水墨美術館",
+      "prefecture": "富山県",
+      "municipality": "富山市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.pref.toyama.jp/1738/miryokukankou/bunka/bunkazai/3044/index.html"
+    },
+    {
+      "name": "富山県美術館",
+      "prefecture": "富山県",
+      "municipality": "富山市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://tad-toyama.jp/"
+    },
+    {
+      "name": "砺波市美術館",
+      "prefecture": "富山県",
+      "municipality": "砺波市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.tonami-art-museum.jp/"
+    },
+    {
+      "name": "ミュゼふくおかカメラ館",
+      "prefecture": "富山県",
+      "municipality": "高岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.camerakan.com/"
+    },
+    {
+      "name": "高岡市美術館",
+      "prefecture": "富山県",
+      "municipality": "高岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.e-tam.info/"
+    },
+    {
+      "name": "黒部市美術館",
+      "prefecture": "富山県",
+      "municipality": "黒部市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.kurobe.toyama.jp/category/page.aspx?servno=79"
+    },
+    {
+      "name": "石川県七尾美術館",
+      "prefecture": "石川県",
+      "municipality": "七尾市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://nanao-art-museum.jp/"
+    },
+    {
+      "name": "石川県能登島ガラス美術館",
+      "prefecture": "石川県",
+      "municipality": "七尾市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://nanao-af.jp/glass/"
+    },
+    {
+      "name": "加賀市美術館",
+      "prefecture": "石川県",
+      "municipality": "加賀市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://kagabi.kagashi-ss.com/"
+    },
+    {
+      "name": "石川県九谷焼美術館",
+      "prefecture": "石川県",
+      "municipality": "加賀市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.kaga.ishikawa.jp/kutani-mus/index.html"
+    },
+    {
+      "name": "小松市立宮本三郎美術館／宮本三郎ふるさと館",
+      "prefecture": "石川県",
+      "municipality": "小松市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://komatsu-museum.jp/miyamoto/"
+    },
+    {
+      "name": "小松市立本陣記念美術館",
+      "prefecture": "石川県",
+      "municipality": "小松市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://komatsu-museum.jp/honjin/"
+    },
+    {
+      "name": "白山市立松任中川一政記念美術館",
+      "prefecture": "石川県",
+      "municipality": "白山市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.hakusan-museum.jp/nakagawakinen/"
+    },
+    {
+      "name": "能美市九谷焼美術館「五彩館」",
+      "prefecture": "石川県",
+      "municipality": "能美市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.kutaniyaki.or.jp/about_museum/gosai.html"
+    },
+    {
+      "name": "石川県輪島漆芸美術館",
+      "prefecture": "石川県",
+      "municipality": "輪島市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.art.city.wajima.ishikawa.jp/"
+    },
+    {
+      "name": "成巽閣",
+      "prefecture": "石川県",
+      "municipality": "金沢市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.seisonkaku.com/"
+    },
+    {
+      "name": "石川県立美術館",
+      "prefecture": "石川県",
+      "municipality": "金沢市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.ishibi.pref.ishikawa.jp/"
+    },
+    {
+      "name": "谷口吉郎・吉生記念金沢建築館",
+      "prefecture": "石川県",
+      "municipality": "金沢市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.kanazawa-museum.jp/architecture/"
+    },
+    {
+      "name": "金沢21世紀美術館",
+      "prefecture": "石川県",
+      "municipality": "金沢市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.kanazawa21.jp/"
+    },
+    {
+      "name": "金沢市立中村記念美術館",
+      "prefecture": "石川県",
+      "municipality": "金沢市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.kanazawa-museum.jp/nakamura/"
+    },
+    {
+      "name": "金沢市立安江金箔工芸館",
+      "prefecture": "石川県",
+      "municipality": "金沢市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.kanazawa-museum.jp/kinpaku/"
+    },
+    {
+      "name": "金沢湯涌夢二館",
+      "prefecture": "石川県",
+      "municipality": "金沢市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.kanazawa-museum.jp/yumeji/"
+    },
+    {
+      "name": "金津創作の森美術館アートコア",
+      "prefecture": "福井県",
+      "municipality": "あわら市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://sosaku.jp/"
+    },
+    {
+      "name": "ふくい藤田美術館",
+      "prefecture": "福井県",
+      "municipality": "福井市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.ff-museum.com"
+    },
+    {
+      "name": "福井市美術館（アートラボふくい）",
+      "prefecture": "福井県",
+      "municipality": "福井市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://art-museum.city.fukui.lg.jp/"
+    },
+    {
+      "name": "福井県立美術館",
+      "prefecture": "福井県",
+      "municipality": "福井市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://fukui-kenbi.pref.fukui.lg.jp/"
+    },
+    {
+      "name": "一般社団法人アフリカンアートミュージアム",
+      "prefecture": "山梨県",
+      "municipality": "北杜市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "http://www.africanartmuseum.jp/"
+    },
+    {
+      "name": "平山郁夫シルクロード美術館",
+      "prefecture": "山梨県",
+      "municipality": "北杜市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.silkroad-museum.jp/"
+    },
+    {
+      "name": "清春白樺美術館",
+      "prefecture": "山梨県",
+      "municipality": "北杜市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.kiyoharu-art.com/"
+    },
+    {
+      "name": "南アルプス市立美術館",
+      "prefecture": "山梨県",
+      "municipality": "南アルプス市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.minamialps-museum.jp/"
+    },
+    {
+      "name": "近藤浩一路記念南部町立美術館",
+      "prefecture": "山梨県",
+      "municipality": "南巨摩郡南部町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.town.nanbu.yamanashi.jp/shisetsu/syakaikyouiku/museum.html"
+    },
+    {
+      "name": "河口湖美術館",
+      "prefecture": "山梨県",
+      "municipality": "南都留郡富士河口湖町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.fkchannel.jp/facility-01"
+    },
+    {
+      "name": "四季の杜おしの公園　岡田紅陽写真美術館･小池邦夫絵手紙美術館",
+      "prefecture": "山梨県",
+      "municipality": "南都留郡忍野村",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://oshino-artmuseum.com/"
+    },
+    {
+      "name": "富士山美術館（フジヤマミュージアム）",
+      "prefecture": "山梨県",
+      "municipality": "富士吉田市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.fujiyama-museum.com/"
+    },
+    {
+      "name": "山梨県立美術館",
+      "prefecture": "山梨県",
+      "municipality": "甲府市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.art-museum.pref.yamanashi.jp/"
+    },
+    {
+      "name": "笛吹市青楓美術館",
+      "prefecture": "山梨県",
+      "municipality": "笛吹市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.fuefuki.yamanashi.jp/shisetsu/museum/001.html"
+    },
+    {
+      "name": "韮崎大村美術館",
+      "prefecture": "山梨県",
+      "municipality": "韮崎市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://nirasakiomura-artmuseum.com/"
+    },
+    {
+      "name": "辰野美術館",
+      "prefecture": "長野県",
+      "municipality": "上伊那郡辰野町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://artm.town.tatsuno.nagano.jp/"
+    },
+    {
+      "name": "上田市立美術館",
+      "prefecture": "長野県",
+      "municipality": "上田市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.santomyuze.com/museum/"
+    },
+    {
+      "name": "美ヶ原高原美術館",
+      "prefecture": "長野県",
+      "municipality": "上田市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.utsukushi-oam.jp/"
+    },
+    {
+      "name": "おぶせミュージアム・中島千波館",
+      "prefecture": "長野県",
+      "municipality": "上高井郡小布施町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.town.obuse.nagano.jp/site/obusemuseum/"
+    },
+    {
+      "name": "グレイスフル芸術館　おぶせ藤岡牧夫美術館",
+      "prefecture": "長野県",
+      "municipality": "上高井郡小布施町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://fujiokamakio.jp/"
+    },
+    {
+      "name": "北斎館",
+      "prefecture": "長野県",
+      "municipality": "上高井郡小布施町",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://hokusai-kan.com/"
+    },
+    {
+      "name": "佐久市立天来記念館",
+      "prefecture": "長野県",
+      "municipality": "佐久市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.saku.nagano.jp/bunka/sakubun/tenraikinenkan/index.html"
+    },
+    {
+      "name": "佐久市立近代美術館",
+      "prefecture": "長野県",
+      "municipality": "佐久市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.saku.nagano.jp/museum/"
+    },
+    {
+      "name": "セゾン現代美術館",
+      "prefecture": "長野県",
+      "municipality": "北佐久郡軽井沢町",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://smma.or.jp/"
+    },
+    {
+      "name": "ルヴァン美術館",
+      "prefecture": "長野県",
+      "municipality": "北佐久郡軽井沢町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.levent.or.jp/"
+    },
+    {
+      "name": "一般財団法人 Karuizawa New Art Museum",
+      "prefecture": "長野県",
+      "municipality": "北佐久郡軽井沢町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://knam.jp/"
+    },
+    {
+      "name": "一般財団法人　田崎美術館",
+      "prefecture": "長野県",
+      "municipality": "北佐久郡軽井沢町",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "http://tasaki-museum.org/"
+    },
+    {
+      "name": "脇田美術館",
+      "prefecture": "長野県",
+      "municipality": "北佐久郡軽井沢町",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "http://www.wakita-museum.com/"
+    },
+    {
+      "name": "安曇野ちひろ美術館",
+      "prefecture": "長野県",
+      "municipality": "北安曇郡松川村",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://chihiro.jp/azumino/"
+    },
+    {
+      "name": "北アルプス展望美術館（池田町立美術館）",
+      "prefecture": "長野県",
+      "municipality": "北安曇郡池田町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://navam.jp/"
+    },
+    {
+      "name": "小海町高原美術館",
+      "prefecture": "長野県",
+      "municipality": "南佐久郡小海町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.koumi-museum.com/"
+    },
+    {
+      "name": "坂城町鉄の展示館",
+      "prefecture": "長野県",
+      "municipality": "埴科郡坂城町",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.tetsu-museum.info/"
+    },
+    {
+      "name": "TRIAD　IIDA・KAN",
+      "prefecture": "長野県",
+      "municipality": "安曇野市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.harmonicito-f.or.jp/iida_kan/"
+    },
+    {
+      "name": "公益財団法人 碌山美術館",
+      "prefecture": "長野県",
+      "municipality": "安曇野市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://rokuzan.jp/"
+    },
+    {
+      "name": "安曇野市美術館",
+      "prefecture": "長野県",
+      "municipality": "安曇野市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.azumino-museum.com/"
+    },
+    {
+      "name": "安曇野高橋節郎記念美術館",
+      "prefecture": "長野県",
+      "municipality": "安曇野市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://azumino-bunka.com/facility/setsuro-museum/"
+    },
+    {
+      "name": "田淵行男記念館",
+      "prefecture": "長野県",
+      "municipality": "安曇野市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://azumino-bunka.com/facility/tabuchi-museum/"
+    },
+    {
+      "name": "小諸市立小山敬三美術館",
+      "prefecture": "長野県",
+      "municipality": "小諸市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.komoro.lg.jp/soshikikarasagasu/kyoikuiinkaijimukyoku/bunkazai_shogaigakushuka/4/2/2/2084.html"
+    },
+    {
+      "name": "市立小諸高原美術館・白鳥映雪館",
+      "prefecture": "長野県",
+      "municipality": "小諸市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.komoro.lg.jp/soshikikarasagasu/kyoikuiinkaijimukyoku/bunkazai_shogaigakushuka/4/2/4/index.html"
+    },
+    {
+      "name": "小さな絵本美術館・八ヶ岳小さな絵本美術館（分館）",
+      "prefecture": "長野県",
+      "municipality": "岡谷市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://www.ba-ba.net/"
+    },
+    {
+      "name": "日本童画美術館（イルフ童画館）",
+      "prefecture": "長野県",
+      "municipality": "岡谷市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.ilf.jp/"
+    },
+    {
+      "name": "朝日美術館",
+      "prefecture": "長野県",
+      "municipality": "東筑摩郡朝日村",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.vill.asahi.nagano.jp/special/asahibijutsukan/index.html"
+    },
+    {
+      "name": "日本浮世絵博物館",
+      "prefecture": "長野県",
+      "municipality": "松本市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "http://www.japan-ukiyoe-museum.com/"
+    },
+    {
+      "name": "松本市美術館",
+      "prefecture": "長野県",
+      "municipality": "松本市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://matsumoto-artmuse.jp/"
+    },
+    {
+      "name": "京都造形芸術大学附属康耀堂美術館",
+      "prefecture": "長野県",
+      "municipality": "茅野市",
+      "registrationStatus": "指定施設",
+      "operator": "私立学校法人",
+      "officialUrl": "http://www.koyodo-museum.com/"
+    },
+    {
+      "name": "サンリツ服部美術館",
+      "prefecture": "長野県",
+      "municipality": "諏訪市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.sunritz-hattori-museum.or.jp/"
+    },
+    {
+      "name": "伊東近代美術館",
+      "prefecture": "長野県",
+      "municipality": "諏訪市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": ""
+    },
+    {
+      "name": "北澤美術館",
+      "prefecture": "長野県",
+      "municipality": "諏訪市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://kitazawa-museum.or.jp/"
+    },
+    {
+      "name": "諏訪市原田泰治美術館",
+      "prefecture": "長野県",
+      "municipality": "諏訪市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.taizi-artmuseum.jp/"
+    },
+    {
+      "name": "諏訪市美術館",
+      "prefecture": "長野県",
+      "municipality": "諏訪市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.suwa.lg.jp/site/museum/"
+    },
+    {
+      "name": "公益財団法人 濵財団　ハーモ美術館",
+      "prefecture": "長野県",
+      "municipality": "諏訪郡下諏訪町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.harmo-museum.jp/"
+    },
+    {
+      "name": "北野美術館",
+      "prefecture": "長野県",
+      "municipality": "長野市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://kitano-museum.or.jp/"
+    },
+    {
+      "name": "北野美術館分館北野カルチュラルセンター",
+      "prefecture": "長野県",
+      "municipality": "長野市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://kitano-museum.or.jp/cultural/"
+    },
+    {
+      "name": "水野美術館",
+      "prefecture": "長野県",
+      "municipality": "長野市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://mizuno-museum.jp/"
+    },
+    {
+      "name": "長野市立博物館分館　信州新町美術館　有島生馬記念館",
+      "prefecture": "長野県",
+      "municipality": "長野市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.ngn.janis.or.jp/~shinmachi-museum/"
+    },
+    {
+      "name": "長野県立美術館",
+      "prefecture": "長野県",
+      "municipality": "長野市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://nagano.art.museum/"
+    },
+    {
+      "name": "荒川豊蔵資料館",
+      "prefecture": "岐阜県",
+      "municipality": "可児市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.kani.lg.jp/10013.htm"
+    },
+    {
+      "name": "岐阜県現代陶芸美術館",
+      "prefecture": "岐阜県",
+      "municipality": "多治見市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.cpm-gifu.jp/museum/"
+    },
+    {
+      "name": "三甲美術館",
+      "prefecture": "岐阜県",
+      "municipality": "岐阜市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://sanko-museum.or.jp/"
+    },
+    {
+      "name": "岐阜市歴史博物館分館　加藤栄三・東一記念美術館",
+      "prefecture": "岐阜県",
+      "municipality": "岐阜市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.rekihaku.gifu.gifu.jp/katoukinen/"
+    },
+    {
+      "name": "岐阜県美術館",
+      "prefecture": "岐阜県",
+      "municipality": "岐阜市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://kenbi.pref.gifu.lg.jp/"
+    },
+    {
+      "name": "岐阜県博物館",
+      "prefecture": "岐阜県",
+      "municipality": "関市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.gifu-kenpaku.jp/"
+    },
+    {
+      "name": "飛騨高山茶の湯の森",
+      "prefecture": "岐阜県",
+      "municipality": "高山市",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "http://www.nakada-net.jp/chanoyu/"
+    },
+    {
+      "name": "公益社団法人佐野美術館",
+      "prefecture": "静岡県",
+      "municipality": "三島市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.sanobi.or.jp/"
+    },
+    {
+      "name": "上原美術館",
+      "prefecture": "静岡県",
+      "municipality": "下田市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://uehara-museum.or.jp/"
+    },
+    {
+      "name": "崔如琢美術館",
+      "prefecture": "静岡県",
+      "municipality": "伊東市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.yoko.or.jp/about/"
+    },
+    {
+      "name": "池田２０世紀美術館",
+      "prefecture": "静岡県",
+      "municipality": "伊東市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://ikeda20.or.jp/"
+    },
+    {
+      "name": "掛川市二の丸美術館",
+      "prefecture": "静岡県",
+      "municipality": "掛川市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://k-kousya.or.jp/ninomaru/"
+    },
+    {
+      "name": "公益財団法人　平野美術館",
+      "prefecture": "静岡県",
+      "municipality": "浜松市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.hirano-museum.jp/"
+    },
+    {
+      "name": "浜松市秋野不矩美術館",
+      "prefecture": "静岡県",
+      "municipality": "浜松市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.akinofuku-museum.jp/"
+    },
+    {
+      "name": "浜松市美術館",
+      "prefecture": "静岡県",
+      "municipality": "浜松市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.hamamatsu.shizuoka.jp/artmuse/"
+    },
+    {
+      "name": "ＭＯＡ美術館",
+      "prefecture": "静岡県",
+      "municipality": "熱海市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.moaart.or.jp/"
+    },
+    {
+      "name": "磐田市香りの博物館",
+      "prefecture": "静岡県",
+      "municipality": "磐田市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.iwata-kaori.jp/"
+    },
+    {
+      "name": "静岡市東海道広重美術館",
+      "prefecture": "静岡県",
+      "municipality": "静岡市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://tokaido-hiroshige.jp/"
+    },
+    {
+      "name": "静岡市立芹沢銈介美術館",
+      "prefecture": "静岡県",
+      "municipality": "静岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.seribi.jp/"
+    },
+    {
+      "name": "静岡市美術館",
+      "prefecture": "静岡県",
+      "municipality": "静岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://shizubi.jp/"
+    },
+    {
+      "name": "静岡県立美術館",
+      "prefecture": "静岡県",
+      "municipality": "静岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://spmoa.shizuoka.shizuoka.jp/"
+    },
+    {
+      "name": "駿府博物館",
+      "prefecture": "静岡県",
+      "municipality": "静岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.sbs-bunkafukushi.com/activities#museum"
+    },
+    {
+      "name": "ベルナール・ビュフェ美術館",
+      "prefecture": "静岡県",
+      "municipality": "駿東郡長泉町",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://www.buffet-museum.jp/"
+    },
+    {
+      "name": "刈谷市美術館",
+      "prefecture": "愛知県",
+      "municipality": "刈谷市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.kariya.lg.jp/museum/"
+    },
+    {
+      "name": "公益財団法人かみや美術館",
+      "prefecture": "愛知県",
+      "municipality": "半田市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.kamiya-muse.or.jp/"
+    },
+    {
+      "name": "古川美術館",
+      "prefecture": "愛知県",
+      "municipality": "名古屋市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.furukawa-museum.or.jp/"
+    },
+    {
+      "name": "名古屋市美術館",
+      "prefecture": "愛知県",
+      "municipality": "名古屋市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://art-museum.city.nagoya.jp/"
+    },
+    {
+      "name": "唐九郎記念館（翠松園陶芸記念館）",
+      "prefecture": "愛知県",
+      "municipality": "名古屋市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.tokuro-tougei.or.jp/"
+    },
+    {
+      "name": "徳川美術館",
+      "prefecture": "愛知県",
+      "municipality": "名古屋市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.tokugawa-art-museum.jp/"
+    },
+    {
+      "name": "愛知芸術文化センター愛知県美術館",
+      "prefecture": "愛知県",
+      "municipality": "名古屋市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://apmoa.museum/"
+    },
+    {
+      "name": "昭和美術館",
+      "prefecture": "愛知県",
+      "municipality": "名古屋市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.shouwa-museum.com/"
+    },
+    {
+      "name": "桑山美術館",
+      "prefecture": "愛知県",
+      "municipality": "名古屋市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.kuwayama-museum.jp/"
+    },
+    {
+      "name": "楽只美術館",
+      "prefecture": "愛知県",
+      "municipality": "名古屋市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "http://www.mc.ccnw.ne.jp/nagoya-taikan/rakusi.html"
+    },
+    {
+      "name": "横山美術館",
+      "prefecture": "愛知県",
+      "municipality": "名古屋市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.yokoyama-art-museum.or.jp/"
+    },
+    {
+      "name": "岡崎市美術博物館",
+      "prefecture": "愛知県",
+      "municipality": "岡崎市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.okazaki.lg.jp/museum/"
+    },
+    {
+      "name": "INAXライブミュージアム",
+      "prefecture": "愛知県",
+      "municipality": "常滑市",
+      "registrationStatus": "登録博物館",
+      "operator": "会社",
+      "officialUrl": "https://livingculture.lixil.com/ilm/"
+    },
+    {
+      "name": "春日井市道風記念館",
+      "prefecture": "愛知県",
+      "municipality": "春日井市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.kasugai.lg.jp/shisei/shisetsu/bunka/tofu/index.html"
+    },
+    {
+      "name": "愛知県陶磁美術館",
+      "prefecture": "愛知県",
+      "municipality": "瀬戸市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://aitou.museum/"
+    },
+    {
+      "name": "瀬戸市美術館",
+      "prefecture": "愛知県",
+      "municipality": "瀬戸市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.seto-cul.jp/seto-museum/"
+    },
+    {
+      "name": "碧南市藤井達吉現代美術館",
+      "prefecture": "愛知県",
+      "municipality": "碧南市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.hekinan.lg.jp/museum/index.html"
+    },
+    {
+      "name": "稲沢市荻須記念美術館",
+      "prefecture": "愛知県",
+      "municipality": "稲沢市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.city.inazawa.aichi.jp/museum/"
+    },
+    {
+      "name": "豊橋市美術博物館",
+      "prefecture": "愛知県",
+      "municipality": "豊橋市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.toyohashi-bihaku.jp/"
+    },
+    {
+      "name": "豊田市美術館",
+      "prefecture": "愛知県",
+      "municipality": "豊田市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.museum.toyota.aichi.jp/"
+    },
+    {
+      "name": "名都美術館",
+      "prefecture": "愛知県",
+      "municipality": "長久手市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://meito-museum.or.jp/"
+    },
+    {
+      "name": "愛知県立芸術大学芸術資料館・法隆寺金堂壁画模写展示館",
+      "prefecture": "愛知県",
+      "municipality": "長久手市",
+      "registrationStatus": "指定施設",
+      "operator": "公立大学付属",
+      "officialUrl": "https://www.aichi-fam-u.ac.jp/#top"
+    },
+    {
+      "name": "高浜市やきものの里かわら美術館・図書館",
+      "prefecture": "愛知県",
+      "municipality": "高浜市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.takahama-kawara-museum.com/index.html"
+    },
+    {
+      "name": "パラミタ・ミュージアム",
+      "prefecture": "三重県",
+      "municipality": "三重郡菰野町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://paramitamuseum.com/index.html"
+    },
+    {
+      "name": "式年遷宮記念神宮美術館",
+      "prefecture": "三重県",
+      "municipality": "伊勢市",
+      "registrationStatus": "登録博物館",
+      "operator": "宗教法人",
+      "officialUrl": "https://museum.isejingu.or.jp/artmuseum/index.html"
+    },
+    {
+      "name": "澄懐堂美術館",
+      "prefecture": "三重県",
+      "municipality": "四日市市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://chokaido.jp/"
+    },
+    {
+      "name": "桑名市博物館",
+      "prefecture": "三重県",
+      "municipality": "桑名市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.kuwana.lg.jp/shisetsu/bunka/005.html"
+    },
+    {
+      "name": "三重県立美術館",
+      "prefecture": "三重県",
+      "municipality": "津市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.bunka.pref.mie.lg.jp/art-museum/index.shtm"
+    },
+    {
+      "name": "石水博物館",
+      "prefecture": "三重県",
+      "municipality": "津市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://sekisui-museum.or.jp/"
+    },
+    {
+      "name": "木下美術館",
+      "prefecture": "滋賀県",
+      "municipality": "大津市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.kinoshita-museum.com/"
+    },
+    {
+      "name": "滋賀県立美術館",
+      "prefecture": "滋賀県",
+      "municipality": "大津市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.shigamuseum.jp/"
+    },
+    {
+      "name": "膳所焼美術館",
+      "prefecture": "滋賀県",
+      "municipality": "大津市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://zezeyaki.or.jp/"
+    },
+    {
+      "name": "佐川美術館",
+      "prefecture": "滋賀県",
+      "municipality": "守山市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.sagawa-artmuseum.or.jp/"
+    },
+    {
+      "name": "彦根城博物館",
+      "prefecture": "滋賀県",
+      "municipality": "彦根市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://hikone-castle-museum.jp/"
+    },
+    {
+      "name": "日登美美術館",
+      "prefecture": "滋賀県",
+      "municipality": "東近江市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://sam.shiga.jp/%E8%B2%A1%E5%9B%A3%E6%B3%95%E4%BA%BA-%E6%97%A5%E7%99%BB%E7%BE%8E%E7%BE%8E%E8%A1%93%E9%A4%A8/"
+    },
+    {
+      "name": "滋賀県立陶芸の森",
+      "prefecture": "滋賀県",
+      "municipality": "甲賀市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.sccp.jp"
+    },
+    {
+      "name": "ＭＩＨＯ　ＭＵＳＥＵＭ",
+      "prefecture": "滋賀県",
+      "municipality": "甲賀市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.miho.jp/"
+    },
+    {
+      "name": "ボーダレス・アートミュージアムＮＯーＭＡ",
+      "prefecture": "滋賀県",
+      "municipality": "近江八幡市",
+      "registrationStatus": "指定施設",
+      "operator": "社会福祉法人",
+      "officialUrl": "https://www.no-ma.jp/"
+    },
+    {
+      "name": "アサヒグループ大山崎山荘美術館",
+      "prefecture": "京都府",
+      "municipality": "乙訓郡大山崎町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.asahigroup-oyamazaki.com/"
+    },
+    {
+      "name": "KCIギャラリー",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "指定施設",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.kci.or.jp/gallery/"
+    },
+    {
+      "name": "並河靖之七宝記念館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://namikawa-kyoto.jp"
+    },
+    {
+      "name": "京都国立近代美術館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "指定施設",
+      "operator": "独立行政法人",
+      "officialUrl": "https://www.momak.go.jp/"
+    },
+    {
+      "name": "京都工芸繊維大学美術工芸資料館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "指定施設",
+      "operator": "国立大学法人",
+      "officialUrl": "https://www.museum.kit.ac.jp/"
+    },
+    {
+      "name": "京都市京セラ美術館（京都市美術館）",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://kyotocity-kyocera.museum/"
+    },
+    {
+      "name": "京都市立芸術大学芸術資料館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "指定施設",
+      "operator": "公立大学付属",
+      "officialUrl": "http://libmuse.kcua.ac.jp/muse/"
+    },
+    {
+      "name": "京都府立堂本印象美術館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "指定施設",
+      "operator": "都道府県立",
+      "officialUrl": "https://insho-domoto.com/"
+    },
+    {
+      "name": "京都精華大学ギャラリー",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "指定施設",
+      "operator": "私立大学付属",
+      "officialUrl": "https://gallery.kyoto-seika.ac.jp/"
+    },
+    {
+      "name": "京都芸術大学芸術館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "指定施設",
+      "operator": "私立大学付属",
+      "officialUrl": "https://kyoto-geijutsu-kan.com/"
+    },
+    {
+      "name": "北村美術館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://kitamura-museum.com/"
+    },
+    {
+      "name": "大西清右衛門美術館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": ""
+    },
+    {
+      "name": "嵯峨美術大学・嵯峨美術短期大学附属博物館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "指定施設",
+      "operator": "私立大学付属",
+      "officialUrl": "https://www.kyoto-saga.ac.jp/about/museum/"
+    },
+    {
+      "name": "樂美術館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.raku-yaki.or.jp/museum/"
+    },
+    {
+      "name": "泉屋博古館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://sen-oku.or.jp/"
+    },
+    {
+      "name": "白沙村荘　橋本関雪記念館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.hakusasonso.jp/"
+    },
+    {
+      "name": "福田美術館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://fukuda-art-museum.jp/"
+    },
+    {
+      "name": "細見美術館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.emuseum.or.jp/"
+    },
+    {
+      "name": "茶道資料館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://www.urasenke.or.jp/textc/kon/gallery.html"
+    },
+    {
+      "name": "角屋もてなしの文化美術館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://sumiyaho.sakura.ne.jp/"
+    },
+    {
+      "name": "醍醐寺霊宝館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "指定施設",
+      "operator": "宗教法人",
+      "officialUrl": "https://www.daigoji.or.jp/grounds/reihoukan.html"
+    },
+    {
+      "name": "野村美術館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://nomura-museum.or.jp/"
+    },
+    {
+      "name": "養源院",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "指定施設",
+      "operator": "宗教法人",
+      "officialUrl": "https://yougenin.jp/"
+    },
+    {
+      "name": "高麗美術館",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.koryomuseum.or.jp/"
+    },
+    {
+      "name": "龍安寺",
+      "prefecture": "京都府",
+      "municipality": "京都市",
+      "registrationStatus": "指定施設",
+      "operator": "宗教法人",
+      "officialUrl": "http://www.ryoanji.jp/smph/"
+    },
+    {
+      "name": "平等院ミュージアム鳳翔館",
+      "prefecture": "京都府",
+      "municipality": "宇治市",
+      "registrationStatus": "登録博物館",
+      "operator": "宗教法人",
+      "officialUrl": "https://www.byodoin.or.jp/museum/"
+    },
+    {
+      "name": "大阪芸術大学博物館",
+      "prefecture": "大阪府",
+      "municipality": "南河内郡河南町",
+      "registrationStatus": "指定施設",
+      "operator": "私立大学付属",
+      "officialUrl": "https://www.osaka-geidai.ac.jp/guide/museum"
+    },
+    {
+      "name": "和泉市久保惣記念美術館",
+      "prefecture": "大阪府",
+      "municipality": "和泉市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.ikm-art.jp/"
+    },
+    {
+      "name": "あべのハルカス美術館",
+      "prefecture": "大阪府",
+      "municipality": "大阪市",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "https://www.aham.jp/"
+    },
+    {
+      "name": "中之島香雪美術館",
+      "prefecture": "大阪府",
+      "municipality": "大阪市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.kosetsu-museum.or.jp/nakanoshima/"
+    },
+    {
+      "name": "国立国際美術館",
+      "prefecture": "大阪府",
+      "municipality": "大阪市",
+      "registrationStatus": "指定施設",
+      "operator": "独立行政法人",
+      "officialUrl": "https://www.nmao.go.jp/"
+    },
+    {
+      "name": "大阪中之島美術館",
+      "prefecture": "大阪府",
+      "municipality": "大阪市",
+      "registrationStatus": "登録博物館",
+      "operator": "地方独立行政法人",
+      "officialUrl": "https://nakka-art.jp/"
+    },
+    {
+      "name": "大阪市立東洋陶磁美術館",
+      "prefecture": "大阪府",
+      "municipality": "大阪市",
+      "registrationStatus": "登録博物館",
+      "operator": "地方独立行政法人",
+      "officialUrl": "https://www.moco.or.jp/"
+    },
+    {
+      "name": "大阪市立美術館",
+      "prefecture": "大阪府",
+      "municipality": "大阪市",
+      "registrationStatus": "登録博物館",
+      "operator": "地方独立行政法人",
+      "officialUrl": "https://www.osaka-art-museum.jp/"
+    },
+    {
+      "name": "湯木美術館",
+      "prefecture": "大阪府",
+      "municipality": "大阪市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.yuki-museum.or.jp/"
+    },
+    {
+      "name": "藤田美術館",
+      "prefecture": "大阪府",
+      "municipality": "大阪市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://fujita-museum.or.jp/"
+    },
+    {
+      "name": "逸翁美術館",
+      "prefecture": "大阪府",
+      "municipality": "池田市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.hankyu-bunka.or.jp/itsuo-museum/"
+    },
+    {
+      "name": "正木美術館",
+      "prefecture": "大阪府",
+      "municipality": "泉北郡忠岡町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://masaki-art-museum.jp/"
+    },
+    {
+      "name": "奥内陶芸美術館",
+      "prefecture": "大阪府",
+      "municipality": "豊中市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.okuuchi-museum.or.jp/"
+    },
+    {
+      "name": "兵庫陶芸美術館",
+      "prefecture": "兵庫県",
+      "municipality": "丹波篠山市",
+      "registrationStatus": "指定施設",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.mcart.jp/"
+    },
+    {
+      "name": "南あわじ市滝川記念美術館　玉青館",
+      "prefecture": "兵庫県",
+      "municipality": "南あわじ市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.minamiawaji.hyogo.jp/soshiki/gyokuseikan/main.html"
+    },
+    {
+      "name": "三木美術館",
+      "prefecture": "兵庫県",
+      "municipality": "姫路市",
+      "registrationStatus": "登録博物館",
+      "operator": "会社",
+      "officialUrl": "https://www.miki-m.jp"
+    },
+    {
+      "name": "姫路市立美術館",
+      "prefecture": "兵庫県",
+      "municipality": "姫路市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.himeji.lg.jp/art/"
+    },
+    {
+      "name": "鉄斎美術館",
+      "prefecture": "兵庫県",
+      "municipality": "宝塚市",
+      "registrationStatus": "登録博物館",
+      "operator": "宗教法人",
+      "officialUrl": "http://www.kiyoshikojin.or.jp/tessai_museum/"
+    },
+    {
+      "name": "兵庫県立美術館　兵庫県立美術館王子分館",
+      "prefecture": "兵庫県",
+      "municipality": "神戸市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.artm.pref.hyogo.jp/"
+    },
+    {
+      "name": "白鶴美術館",
+      "prefecture": "兵庫県",
+      "municipality": "神戸市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.hakutsuru-museum.org/"
+    },
+    {
+      "name": "神戸市立小磯記念美術館",
+      "prefecture": "兵庫県",
+      "municipality": "神戸市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.kobe.lg.jp/kanko/bunka/bunkashisetsu/koisogallery/index.html"
+    },
+    {
+      "name": "香雪美術館",
+      "prefecture": "兵庫県",
+      "municipality": "神戸市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.kosetsu-museum.or.jp/"
+    },
+    {
+      "name": "俵美術館",
+      "prefecture": "兵庫県",
+      "municipality": "芦屋市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.tawara-museum.or.jp/"
+    },
+    {
+      "name": "滴翠美術館",
+      "prefecture": "兵庫県",
+      "municipality": "芦屋市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://tekisui-museum.biz-web.jp/"
+    },
+    {
+      "name": "芦屋市立美術博物館",
+      "prefecture": "兵庫県",
+      "municipality": "芦屋市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://ashiya-museum.jp/"
+    },
+    {
+      "name": "公益財団法人　西宮市大谷記念美術館",
+      "prefecture": "兵庫県",
+      "municipality": "西宮市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://otanimuseum.jp/"
+    },
+    {
+      "name": "中野美術館",
+      "prefecture": "奈良県",
+      "municipality": "奈良市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.nakano-museum.jp/"
+    },
+    {
+      "name": "大和文華館",
+      "prefecture": "奈良県",
+      "municipality": "奈良市",
+      "registrationStatus": "指定施設",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.kintetsu-g-hd.co.jp/culture/yamato/"
+    },
+    {
+      "name": "奈良国立博物館",
+      "prefecture": "奈良県",
+      "municipality": "奈良市",
+      "registrationStatus": "指定施設",
+      "operator": "独立行政法人",
+      "officialUrl": "https://www.narahaku.go.jp/"
+    },
+    {
+      "name": "寧楽美術館",
+      "prefecture": "奈良県",
+      "municipality": "奈良市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://isuien.or.jp/museum"
+    },
+    {
+      "name": "春日大社国宝殿",
+      "prefecture": "奈良県",
+      "municipality": "奈良市",
+      "registrationStatus": "登録博物館",
+      "operator": "宗教法人",
+      "officialUrl": "https://www.kasugataisha.or.jp/museum/"
+    },
+    {
+      "name": "松伯美術館",
+      "prefecture": "奈良県",
+      "municipality": "奈良市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.kintetsu-g-hd.co.jp/culture/shohaku/"
+    },
+    {
+      "name": "大亀和尚民芸館",
+      "prefecture": "奈良県",
+      "municipality": "宇陀市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "http://daiki-mingeikan.or.jp/"
+    },
+    {
+      "name": "喜多美術館",
+      "prefecture": "奈良県",
+      "municipality": "桜井市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://kitamuseum.my.canva.site"
+    },
+    {
+      "name": "和歌山県立近代美術館",
+      "prefecture": "和歌山県",
+      "municipality": "和歌山市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.momaw.jp/"
+    },
+    {
+      "name": "熊野神宝館",
+      "prefecture": "和歌山県",
+      "municipality": "新宮市",
+      "registrationStatus": "指定施設",
+      "operator": "宗教法人",
+      "officialUrl": "https://kumanohayatama.jp/?page_id=14"
+    },
+    {
+      "name": "米子市美術館",
+      "prefecture": "鳥取県",
+      "municipality": "米子市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.yonagobunka.net/y-moa/"
+    },
+    {
+      "name": "渡辺美術館",
+      "prefecture": "鳥取県",
+      "municipality": "鳥取市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://watart.jp/"
+    },
+    {
+      "name": "鳥取民藝美術舘",
+      "prefecture": "鳥取県",
+      "municipality": "鳥取市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://mingei.exblog.jp/"
+    },
+    {
+      "name": "今岡美術館",
+      "prefecture": "島根県",
+      "municipality": "出雲市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "http://www.imaoka-museum.jp/"
+    },
+    {
+      "name": "出雲文化伝承館",
+      "prefecture": "島根県",
+      "municipality": "出雲市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.izumo-zaidan.jp/izumodenshokan/"
+    },
+    {
+      "name": "手錢美術館",
+      "prefecture": "島根県",
+      "municipality": "出雲市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.tezenmuseum.com/"
+    },
+    {
+      "name": "安来市加納美術館",
+      "prefecture": "島根県",
+      "municipality": "安来市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.art-kano.jp/"
+    },
+    {
+      "name": "足立美術館",
+      "prefecture": "島根県",
+      "municipality": "安来市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.adachi-museum.or.jp/"
+    },
+    {
+      "name": "安部榮四郎記念館",
+      "prefecture": "島根県",
+      "municipality": "松江市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://izumomingeishi.com/abeeishirou/"
+    },
+    {
+      "name": "島根県立美術館",
+      "prefecture": "島根県",
+      "municipality": "松江市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.shimane-art-museum.jp/"
+    },
+    {
+      "name": "田部美術館",
+      "prefecture": "島根県",
+      "municipality": "松江市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.tanabe-museum.or.jp/"
+    },
+    {
+      "name": "浜田市世界こども美術館創作活動館",
+      "prefecture": "島根県",
+      "municipality": "浜田市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.hamada-kodomo-art.com/"
+    },
+    {
+      "name": "浜田市立石正美術館",
+      "prefecture": "島根県",
+      "municipality": "浜田市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.sekisho-art-museum.jp/"
+    },
+    {
+      "name": "石見安達美術館",
+      "prefecture": "島根県",
+      "municipality": "浜田市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www2.crosstalk.or.jp/shinmachi/a8/"
+    },
+    {
+      "name": "島根県立石見美術館",
+      "prefecture": "島根県",
+      "municipality": "益田市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.grandtoit.jp/museum/"
+    },
+    {
+      "name": "井原市立平櫛田中美術館",
+      "prefecture": "岡山県",
+      "municipality": "井原市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.ibara.okayama.jp/site/denchu-museum/"
+    },
+    {
+      "name": "華鴒大塚美術館",
+      "prefecture": "岡山県",
+      "municipality": "井原市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.hanatori-museum.jp/"
+    },
+    {
+      "name": "倉敷市立美術館",
+      "prefecture": "岡山県",
+      "municipality": "倉敷市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.kurashiki.okayama.jp/kcam/"
+    },
+    {
+      "name": "倉敷民藝館",
+      "prefecture": "岡山県",
+      "municipality": "倉敷市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://kurashiki-mingeikan.com/"
+    },
+    {
+      "name": "大原美術館",
+      "prefecture": "岡山県",
+      "municipality": "倉敷市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.ohara.or.jp/"
+    },
+    {
+      "name": "BIZEN中南米美術館",
+      "prefecture": "岡山県",
+      "municipality": "備前市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://www.latinamerica.jp/"
+    },
+    {
+      "name": "奈義町現代美術館",
+      "prefecture": "岡山県",
+      "municipality": "勝田郡奈義町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.town.nagi.okayama.jp/moca/"
+    },
+    {
+      "name": "やかげ郷土美術館",
+      "prefecture": "岡山県",
+      "municipality": "小田郡矢掛町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://museum.yakage-kyouiku.info/"
+    },
+    {
+      "name": "夢二郷土美術館",
+      "prefecture": "岡山県",
+      "municipality": "岡山市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://yumeji-art-museum.com/"
+    },
+    {
+      "name": "岡山市立オリエント美術館",
+      "prefecture": "岡山県",
+      "municipality": "岡山市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.okayama.jp/orientmuseum/"
+    },
+    {
+      "name": "岡山県立美術館",
+      "prefecture": "岡山県",
+      "municipality": "岡山市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://okayama-kenbi.info/"
+    },
+    {
+      "name": "林原美術館",
+      "prefecture": "岡山県",
+      "municipality": "岡山市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "http://www.hayashibara-museumofart.jp/"
+    },
+    {
+      "name": "福武トレス",
+      "prefecture": "岡山県",
+      "municipality": "岡山市",
+      "registrationStatus": "指定施設",
+      "operator": "個人",
+      "officialUrl": "https://fukutaketres.com/"
+    },
+    {
+      "name": "新見美術館",
+      "prefecture": "岡山県",
+      "municipality": "新見市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://niimi-museum.or.jp/"
+    },
+    {
+      "name": "瀬戸内市立美術館",
+      "prefecture": "岡山県",
+      "municipality": "瀬戸内市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.setouchi.lg.jp/site/museum/"
+    },
+    {
+      "name": "笠岡市立竹喬美術館",
+      "prefecture": "岡山県",
+      "municipality": "笠岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.kasaoka.okayama.jp/site/museum/"
+    },
+    {
+      "name": "高梁市成羽美術館",
+      "prefecture": "岡山県",
+      "municipality": "高梁市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://nariwa-museum.jp/"
+    },
+    {
+      "name": "呉市立美術館",
+      "prefecture": "広島県",
+      "municipality": "呉市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.kure-bi.jp/"
+    },
+    {
+      "name": "下瀬美術館",
+      "prefecture": "広島県",
+      "municipality": "大竹市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://www.simose-museum.jp/"
+    },
+    {
+      "name": "尾道市立美術館",
+      "prefecture": "広島県",
+      "municipality": "尾道市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.onomichi-museum.jp/"
+    },
+    {
+      "name": "平山郁夫美術館",
+      "prefecture": "広島県",
+      "municipality": "尾道市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://hirayama-museum.or.jp/"
+    },
+    {
+      "name": "耕三寺博物館",
+      "prefecture": "広島県",
+      "municipality": "尾道市",
+      "registrationStatus": "登録博物館",
+      "operator": "宗教法人",
+      "officialUrl": "https://www.kousanji.or.jp/"
+    },
+    {
+      "name": "ひろしま美術館",
+      "prefecture": "広島県",
+      "municipality": "広島市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.hiroshima-museum.jp/"
+    },
+    {
+      "name": "広島市現代美術館",
+      "prefecture": "広島県",
+      "municipality": "広島市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.hiroshima-moca.jp/"
+    },
+    {
+      "name": "広島市立大学芸術資料館",
+      "prefecture": "広島県",
+      "municipality": "広島市",
+      "registrationStatus": "指定施設",
+      "operator": "公立大学付属",
+      "officialUrl": "http://museum.hiroshima-cu.ac.jp/index.cgi/ja"
+    },
+    {
+      "name": "広島県立美術館",
+      "prefecture": "広島県",
+      "municipality": "広島市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.hpam.jp/"
+    },
+    {
+      "name": "泉美術館",
+      "prefecture": "広島県",
+      "municipality": "広島市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.izumi-museum.jp/"
+    },
+    {
+      "name": "アートギャラリーミヤウチ",
+      "prefecture": "広島県",
+      "municipality": "廿日市市",
+      "registrationStatus": "指定施設",
+      "operator": "公益財団法人",
+      "officialUrl": "https://miyauchiaf.or.jp/"
+    },
+    {
+      "name": "公益財団法人ウッドワン美術館",
+      "prefecture": "広島県",
+      "municipality": "廿日市市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.woodone-museum.jp/"
+    },
+    {
+      "name": "厳島神社宝物館",
+      "prefecture": "広島県",
+      "municipality": "廿日市市",
+      "registrationStatus": "登録博物館",
+      "operator": "宗教法人",
+      "officialUrl": "https://www.itsukushimajinja.jp/jp/culture.html#culture05"
+    },
+    {
+      "name": "海の見える杜美術館",
+      "prefecture": "広島県",
+      "municipality": "廿日市市",
+      "registrationStatus": "登録博物館",
+      "operator": "宗教法人",
+      "officialUrl": "https://www.umam.jp/"
+    },
+    {
+      "name": "東広島市立美術館",
+      "prefecture": "広島県",
+      "municipality": "東広島市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://hhmoa.jp/"
+    },
+    {
+      "name": "しぶや美術館",
+      "prefecture": "広島県",
+      "municipality": "福山市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://vessel-group.co.jp/shibuya-museum/"
+    },
+    {
+      "name": "ふくやま美術館",
+      "prefecture": "広島県",
+      "municipality": "福山市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.fukuyama.hiroshima.jp/site/fukuyama-museum/"
+    },
+    {
+      "name": "下関市立美術館",
+      "prefecture": "山口県",
+      "municipality": "下関市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.shimonoseki.lg.jp/site/art/"
+    },
+    {
+      "name": "周南市美術博物館",
+      "prefecture": "山口県",
+      "municipality": "周南市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://s-bunka.jp/bihaku/"
+    },
+    {
+      "name": "のむら美術館",
+      "prefecture": "山口県",
+      "municipality": "山口市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://yamaguchi-tourism.jp/spot/detail_12223.html"
+    },
+    {
+      "name": "山口県立美術館",
+      "prefecture": "山口県",
+      "municipality": "山口市",
+      "registrationStatus": "指定施設",
+      "operator": "都道府県立",
+      "officialUrl": "https://y-pam.jp/"
+    },
+    {
+      "name": "山口県立萩美術館・浦上記念館",
+      "prefecture": "山口県",
+      "municipality": "萩市",
+      "registrationStatus": "指定施設",
+      "operator": "都道府県立",
+      "officialUrl": "https://hum-web.jp/"
+    },
+    {
+      "name": "熊谷美術館",
+      "prefecture": "山口県",
+      "municipality": "萩市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://kumaya.art/"
+    },
+    {
+      "name": "萩陶芸美術館　吉賀大眉記念館",
+      "prefecture": "山口県",
+      "municipality": "萩市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.taibi-hagi.jp/"
+    },
+    {
+      "name": "徳島県立近代美術館",
+      "prefecture": "徳島県",
+      "municipality": "徳島市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://art.bunmori.tokushima.jp/"
+    },
+    {
+      "name": "大塚国際美術館",
+      "prefecture": "徳島県",
+      "municipality": "鳴門市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://o-museum.or.jp/"
+    },
+    {
+      "name": "丸亀市猪熊弦一郎現代美術館",
+      "prefecture": "香川県",
+      "municipality": "丸亀市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.mimoca.jp"
+    },
+    {
+      "name": "池川彫刻美術館",
+      "prefecture": "香川県",
+      "municipality": "木田郡三木町",
+      "registrationStatus": "指定施設",
+      "operator": "一般財団法人",
+      "officialUrl": "https://www.ikegawa-museum.or.jp"
+    },
+    {
+      "name": "地中美術館",
+      "prefecture": "香川県",
+      "municipality": "香川郡直島町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://benesse-artsite.jp/art/chichu.html"
+    },
+    {
+      "name": "李禹煥美術館",
+      "prefecture": "香川県",
+      "municipality": "香川郡直島町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://benesse-artsite.jp/art/lee-ufan.html"
+    },
+    {
+      "name": "直島新美術館",
+      "prefecture": "香川県",
+      "municipality": "香川郡直島町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://benesse-artsite.jp/nnmoa/"
+    },
+    {
+      "name": "イサム・ノグチ庭園美術館",
+      "prefecture": "香川県",
+      "municipality": "高松市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.isamunoguchi.or.jp/"
+    },
+    {
+      "name": "ナガレスタジオ「流政之美術館」",
+      "prefecture": "香川県",
+      "municipality": "高松市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://nagarestudio.jp/#1"
+    },
+    {
+      "name": "美術館「川島猛アートファクトリー」",
+      "prefecture": "香川県",
+      "municipality": "高松市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://kawashima-af.com/"
+    },
+    {
+      "name": "高松市美術館",
+      "prefecture": "香川県",
+      "municipality": "高松市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.takamatsu.kagawa.jp/museum/takamatsu/"
+    },
+    {
+      "name": "久万高原町立久万美術館",
+      "prefecture": "愛媛県",
+      "municipality": "上浮穴郡久万高原町",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.kumakogen.jp/site/muse/"
+    },
+    {
+      "name": "今治市大三島美術館本館　今治市大三島美術館別館 ところミュージアム大三島　今治市大三島美術館別館 今治市岩田健母と子のミュージアム",
+      "prefecture": "愛媛県",
+      "municipality": "今治市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.imabari.ehime.jp/museum/omishima/"
+    },
+    {
+      "name": "今治市玉川近代美術館（徳生記念館）",
+      "prefecture": "愛媛県",
+      "municipality": "今治市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.imabari.ehime.jp/museum/tamagawa/"
+    },
+    {
+      "name": "愛媛文華館",
+      "prefecture": "愛媛県",
+      "municipality": "今治市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://ehimebunkakan.jp/"
+    },
+    {
+      "name": "新居浜市美術館",
+      "prefecture": "愛媛県",
+      "municipality": "新居浜市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.niihama.lg.jp/soshiki/bijutu/"
+    },
+    {
+      "name": "高畠華宵大正ロマン館",
+      "prefecture": "愛媛県",
+      "municipality": "東温市",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "https://www.kashomuseum.org/"
+    },
+    {
+      "name": "伊丹十三記念館",
+      "prefecture": "愛媛県",
+      "municipality": "松山市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://itami-kinenkan.jp/"
+    },
+    {
+      "name": "愛媛県美術館",
+      "prefecture": "愛媛県",
+      "municipality": "松山市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.ehime-art.jp/"
+    },
+    {
+      "name": "愛媛民芸館",
+      "prefecture": "愛媛県",
+      "municipality": "西条市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://ehimemingeikan.jp/"
+    },
+    {
+      "name": "安芸市立書道美術館",
+      "prefecture": "高知県",
+      "municipality": "安芸市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.aki.kochi.jp/life/dtl.php?hdnKey=49"
+    },
+    {
+      "name": "香美市立やなせたかし記念館アンパンマンミュージアム",
+      "prefecture": "高知県",
+      "municipality": "香美市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://anpanman-museum.net/"
+    },
+    {
+      "name": "香美市立美術館",
+      "prefecture": "高知県",
+      "municipality": "香美市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.kami.lg.jp/site/bijutukan/"
+    },
+    {
+      "name": "横山隆一記念まんが館",
+      "prefecture": "高知県",
+      "municipality": "高知市",
+      "registrationStatus": "指定施設",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.kfca.jp/mangakan/"
+    },
+    {
+      "name": "高知県立美術館",
+      "prefecture": "高知県",
+      "municipality": "高知市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://moak.jp/"
+    },
+    {
+      "name": "久留米市美術館　石橋正二郎記念館",
+      "prefecture": "福岡県",
+      "municipality": "久留米市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.ishibashi-bunka.jp/kcam/"
+    },
+    {
+      "name": "出光美術館（門司）",
+      "prefecture": "福岡県",
+      "municipality": "北九州市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://s-idemitsu-mm.or.jp/"
+    },
+    {
+      "name": "北九州市漫画ミュージアム",
+      "prefecture": "福岡県",
+      "municipality": "北九州市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.ktqmm.jp/"
+    },
+    {
+      "name": "北九州市立美術館",
+      "prefecture": "福岡県",
+      "municipality": "北九州市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://kmma.jp/"
+    },
+    {
+      "name": "秋月美術館",
+      "prefecture": "福岡県",
+      "municipality": "朝倉市",
+      "registrationStatus": "指定施設",
+      "operator": "公益財団法人",
+      "officialUrl": "http://akizuki-foundation.or.jp/museum"
+    },
+    {
+      "name": "九州産業大学美術館",
+      "prefecture": "福岡県",
+      "municipality": "福岡市",
+      "registrationStatus": "指定施設",
+      "operator": "私立大学付属",
+      "officialUrl": "https://www.kyusan-u.ac.jp/ksumuseum/"
+    },
+    {
+      "name": "福岡アジア美術館",
+      "prefecture": "福岡県",
+      "municipality": "福岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://faam.city.fukuoka.lg.jp/"
+    },
+    {
+      "name": "福岡市美術館",
+      "prefecture": "福岡県",
+      "municipality": "福岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.fukuoka-art-museum.jp/"
+    },
+    {
+      "name": "福岡県立美術館",
+      "prefecture": "福岡県",
+      "municipality": "福岡市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://fukuoka-kenbi.jp/"
+    },
+    {
+      "name": "佐賀県立美術館",
+      "prefecture": "佐賀県",
+      "municipality": "佐賀市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://saga-museum.jp/museum/"
+    },
+    {
+      "name": "河村美術館",
+      "prefecture": "佐賀県",
+      "municipality": "唐津市",
+      "registrationStatus": "指定施設",
+      "operator": "公益財団法人",
+      "officialUrl": "https://kawamura.or.jp/"
+    },
+    {
+      "name": "陽光美術館",
+      "prefecture": "佐賀県",
+      "municipality": "武雄市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.yokomuseum.jp/"
+    },
+    {
+      "name": "今右衛門古陶磁美術館",
+      "prefecture": "佐賀県",
+      "municipality": "西松浦郡有田町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.imaemon.co.jp/museum/"
+    },
+    {
+      "name": "佐賀県立九州陶磁文化館",
+      "prefecture": "佐賀県",
+      "municipality": "西松浦郡有田町",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://saga-museum.jp/ceramic/"
+    },
+    {
+      "name": "有田ポーセリンパーク",
+      "prefecture": "佐賀県",
+      "municipality": "西松浦郡有田町",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "https://www.arita-touki.com/"
+    },
+    {
+      "name": "有田陶磁美術館",
+      "prefecture": "佐賀県",
+      "municipality": "西松浦郡有田町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.town.arita.lg.jp/kiji0031926/index.html"
+    },
+    {
+      "name": "ハウステンボス美術館・博物館",
+      "prefecture": "長崎県",
+      "municipality": "佐世保市",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "https://www.huistenbosch.co.jp/enjoy/162"
+    },
+    {
+      "name": "長崎県美術館",
+      "prefecture": "長崎県",
+      "municipality": "長崎市",
+      "registrationStatus": "指定施設",
+      "operator": "都道府県立",
+      "officialUrl": "http://www.nagasaki-museum.jp/"
+    },
+    {
+      "name": "雲仙ビードロ美術館",
+      "prefecture": "長崎県",
+      "municipality": "雲仙市",
+      "registrationStatus": "指定施設",
+      "operator": "会社",
+      "officialUrl": "https://unzenvidro.weebly.com/"
+    },
+    {
+      "name": "島田美術館",
+      "prefecture": "熊本県",
+      "municipality": "熊本市",
+      "registrationStatus": "指定施設",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.shimada-museum.net/index.php"
+    },
+    {
+      "name": "熊本国際民藝館",
+      "prefecture": "熊本県",
+      "municipality": "熊本市",
+      "registrationStatus": "指定施設",
+      "operator": "公益財団法人",
+      "officialUrl": "https://kumamoto-mingeikan.com/"
+    },
+    {
+      "name": "熊本県立美術館",
+      "prefecture": "熊本県",
+      "municipality": "熊本市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.pref.kumamoto.jp/site/museum/"
+    },
+    {
+      "name": "湯前まんが美術館",
+      "prefecture": "熊本県",
+      "municipality": "球磨郡湯前町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://yunomae-manga.com/"
+    },
+    {
+      "name": "芦北町立星野富弘美術館",
+      "prefecture": "熊本県",
+      "municipality": "葦北郡芦北町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://hoshino-museum.com/"
+    },
+    {
+      "name": "大分市美術館",
+      "prefecture": "大分県",
+      "municipality": "大分市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "http://www.city.oita.oita.jp/bunkasports/bunka/bijutsukan/"
+    },
+    {
+      "name": "大分県立美術館",
+      "prefecture": "大分県",
+      "municipality": "大分市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.opam.jp/"
+    },
+    {
+      "name": "公益財団法人 二階堂美術館",
+      "prefecture": "大分県",
+      "municipality": "速見郡日出町",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://nikaidou-bijyutukan.com/"
+    },
+    {
+      "name": "高鍋町美術館",
+      "prefecture": "宮崎県",
+      "municipality": "児湯郡高鍋町",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.town.takanabe.lg.jp/museum/index.html"
+    },
+    {
+      "name": "宮崎県立美術館",
+      "prefecture": "宮崎県",
+      "municipality": "宮崎市",
+      "registrationStatus": "登録博物館",
+      "operator": "都道府県立",
+      "officialUrl": "https://www.miyazaki-archive.jp/bijutsu/"
+    },
+    {
+      "name": "都城市立美術館",
+      "prefecture": "宮崎県",
+      "municipality": "都城市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.miyakonojo.miyazaki.jp/site/artmuseum/"
+    },
+    {
+      "name": "吉井淳二美術館",
+      "prefecture": "鹿児島県",
+      "municipality": "南さつま市",
+      "registrationStatus": "登録博物館",
+      "operator": "社会福祉法人",
+      "officialUrl": "http://www.nonohanakai.or.jp/museum/"
+    },
+    {
+      "name": "岩崎美術館",
+      "prefecture": "鹿児島県",
+      "municipality": "指宿市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://www.iwasaki-zaidan.org/artmuseum/"
+    },
+    {
+      "name": "松下美術館",
+      "prefecture": "鹿児島県",
+      "municipality": "霧島市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://matsushita-art.synapse.kagoshima.jp/matushita_index.htm"
+    },
+    {
+      "name": "三宅美術館",
+      "prefecture": "鹿児島県",
+      "municipality": "鹿児島市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://www.miyake-art.com/"
+    },
+    {
+      "name": "中村晋也美術館",
+      "prefecture": "鹿児島県",
+      "municipality": "鹿児島市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "http://www.ne.jp/asahi/musee/nakamura/"
+    },
+    {
+      "name": "児玉美術館",
+      "prefecture": "鹿児島県",
+      "municipality": "鹿児島市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://www.kodama-art-museum.or.jp/"
+    },
+    {
+      "name": "長島美術館",
+      "prefecture": "鹿児島県",
+      "municipality": "鹿児島市",
+      "registrationStatus": "登録博物館",
+      "operator": "公益財団法人",
+      "officialUrl": "https://ngp.jp/nagashima-museum/"
+    },
+    {
+      "name": "陽山美術館",
+      "prefecture": "鹿児島県",
+      "municipality": "鹿児島市",
+      "registrationStatus": "登録博物館",
+      "operator": "一般財団法人",
+      "officialUrl": "https://www.musee-yozan.or.jp/index.html"
+    },
+    {
+      "name": "鹿児島市立美術館",
+      "prefecture": "鹿児島県",
+      "municipality": "鹿児島市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://www.city.kagoshima.lg.jp/artmuseum/"
+    },
+    {
+      "name": "浦添市美術館",
+      "prefecture": "沖縄県",
+      "municipality": "浦添市",
+      "registrationStatus": "登録博物館",
+      "operator": "市区町村立",
+      "officialUrl": "https://urasoe-artmuseum.jp/"
+    },
+    {
+      "name": "沖縄県立芸術大学附属図書・芸術資料館",
+      "prefecture": "沖縄県",
+      "municipality": "那覇市",
+      "registrationStatus": "指定施設",
+      "operator": "公立大学付属",
+      "officialUrl": "https://www2.lib.okigei.ac.jp/lib/lib.html"
+    }
+  ]
+}

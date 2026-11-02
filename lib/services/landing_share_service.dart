@@ -254,19 +254,11 @@ $shareUrl
       return;
     }
 
-    var shareCountRecorded = false;
-    try {
-      await client.rpc('increment_share_count');
-      shareCountRecorded = true;
-    } catch (error) {
-      debugPrint('Share count rpc failed: $error');
-    }
-
     await _incrementSourceDetail(
       client: client,
       sourceKey: _shareActionKeys[channel]!,
       now: now,
-      fallbackShareCount: shareCountRecorded ? 0 : 1,
+      shareIncrement: 1,
     );
   }
 
@@ -274,7 +266,7 @@ $shareUrl
     required SupabaseClient? client,
     required String sourceKey,
     DateTime? now,
-    int fallbackShareCount = 0,
+    int shareIncrement = 0,
   }) async {
     if (client == null) {
       return;
@@ -282,83 +274,23 @@ $shareUrl
 
     final dateKey = _formatDate(now ?? DateTime.now());
     try {
-      await client.rpc(
-        'increment_app_analytics_source_detail',
-        params: <String, dynamic>{
-          'p_source_key': sourceKey,
-          'p_event_date': dateKey,
-          'p_share_increment': fallbackShareCount,
+      final response = await client.functions.invoke(
+        'growth-hub',
+        body: <String, dynamic>{
+          'action': 'acquisition.signal',
+          'signalKey': sourceKey,
+          'dateKey': dateKey,
+          'shareIncrement': shareIncrement,
         },
       );
-      return;
-    } catch (error) {
-      debugPrint('Atomic funnel analytics rpc failed: $error');
-    }
-
-    final currentRow = await _fetchAnalyticsRow(
-      client: client,
-      dateKey: dateKey,
-    );
-    final sourceDetails = _normalizeSourceDetails(currentRow?['source_details'])
-      ..update(sourceKey, (count) => count + 1, ifAbsent: () => 1);
-
-    try {
-      if (currentRow == null) {
-        await client.from('app_analytics').upsert(<String, dynamic>{
-          'date': dateKey,
-          'landing_views': 0,
-          'conversions': 0,
-          'share_count': fallbackShareCount,
-          'source_details': sourceDetails,
-        });
+      final payload = response.data;
+      if (payload is Map<String, dynamic> && payload['success'] == true) {
         return;
       }
-
-      await client
-          .from('app_analytics')
-          .update(<String, dynamic>{'source_details': sourceDetails}).eq(
-        'date',
-        dateKey,
-      );
+      debugPrint('Analytics Edge Function returned an unexpected payload');
     } catch (error) {
-      debugPrint('Share analytics update failed: $error');
+      debugPrint('Analytics Edge Function failed: $error');
     }
-  }
-
-  static Future<Map<String, dynamic>?> _fetchAnalyticsRow({
-    required SupabaseClient client,
-    required String dateKey,
-  }) async {
-    try {
-      final raw = await client
-          .from('app_analytics')
-          .select(
-            'date, landing_views, conversions, share_count, source_details',
-          )
-          .eq('date', dateKey)
-          .limit(1);
-      if (raw.isNotEmpty) {
-        return Map<String, dynamic>.from(raw.first);
-      }
-    } catch (error) {
-      debugPrint('Share analytics fetch failed: $error');
-    }
-    return null;
-  }
-
-  static Map<String, int> _normalizeSourceDetails(dynamic raw) {
-    if (raw is! Map) {
-      return <String, int>{};
-    }
-
-    final result = <String, int>{};
-    raw.forEach((key, value) {
-      final count = value is num ? value.toInt() : 0;
-      if (count > 0) {
-        result[key.toString()] = count;
-      }
-    });
-    return result;
   }
 
   static Future<void> _resetTodayCounterIfNeeded({

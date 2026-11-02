@@ -121,7 +121,7 @@ RECOVERY_DRAFTS: dict[str, tuple[str, ...]] = {
     ),
     "supabase-push": (
         "- Inspect the Supabase CLI error and identify whether the failure is SQL, auth, or network related.",
-        "- Validate the newest migration locally, then retry `supabase db push` with the expected project credentials.",
+        "- Validate the newest migration with the approved cloud gate before any authorized retry of `supabase db push` with the expected project credentials.",
         "- If the remote state changed, record the recovery command in the issue before re-running CI.",
     ),
     "deno-lint": (
@@ -130,12 +130,12 @@ RECOVERY_DRAFTS: dict[str, tuple[str, ...]] = {
         "- Re-run the same workflow after the lint/test patch is pushed.",
     ),
     "flutter-analyze": (
-        "- Run `flutter pub get` and `flutter analyze` locally on a clean checkout.",
+        "- Run `flutter pub get` and `flutter analyze` on the exact-head GitHub-hosted runner; respect the cloud-first resource gate.",
         "- Fix the analyzer diagnostic at the referenced Dart file, keeping generated plugin files out of the patch.",
         "- Re-run the CI workflow after analyzer output is clean.",
     ),
     "flutter-build": (
-        "- Run the failing `flutter build` target locally with the same flavor or web flags.",
+        "- Run the failing `flutter build` target on the exact-head GitHub-hosted runner with the same flavor or web flags.",
         "- Check dependency resolution, asset declarations, and generated files before changing application code.",
         "- Re-run the build workflow and attach the successful run URL.",
     ),
@@ -146,7 +146,7 @@ RECOVERY_DRAFTS: dict[str, tuple[str, ...]] = {
     ),
     "generic-ci": (
         "- Inspect the failed step and the normalized error signature in this issue.",
-        "- Reproduce the command locally or with `gh run view --log` before editing code.",
+        "- Inspect the exact-head cloud gate or `gh run view --log` before editing code.",
         "- Push the smallest recovery patch and confirm a later successful workflow closes this issue.",
     ),
 }
@@ -181,6 +181,16 @@ def latest_migrations(migrations_dir: Path, limit: int) -> list[Path]:
     return sorted(files, key=lambda p: p.name, reverse=True)[:limit]
 
 
+def local_migration_versions(migrations_dir: Path) -> set[str]:
+    if not migrations_dir.exists():
+        return set()
+    return {
+        match.group(1)
+        for path in migrations_dir.iterdir()
+        if path.is_file() and (match := MIGRATION_FILE_RE.match(path.name))
+    }
+
+
 def read_log_text(path: Path) -> str:
     data = path.read_bytes()
     sample = data[:2000]
@@ -202,11 +212,64 @@ def compact_line(line: str, max_chars: int = 180) -> str:
     return cleaned[: max_chars - 1].rstrip() + "..."
 
 
+def diagnostic_lines(log_text: str) -> list[str]:
+    """Remove runner framing and echoed commands before selecting evidence."""
+    lines = []
+    for raw in (log_text or "").splitlines():
+        line = strip_ansi(raw).lstrip("\ufeff")
+        line = re.sub(
+            r"^(?:[^\t]*\t[^\t]*\t)?"
+            r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\s+",
+            "", line,
+        ).strip()
+        line = re.sub(r"^##\[error\]\s*", "error: ", line)
+        if not line or NOISE_LINE_RE.search(line):
+            continue
+        if re.match(
+            r"^(?:##\[(?:start-action|endgroup)|(?:echo|printf)\s|"
+            r"(?:shell|env):|[A-Z_][A-Z_0-9]*=|\|)", line,
+        ):
+            continue
+        if re.search(r"Process completed with exit code|^FAILED \(|^Error: Process", line):
+            continue
+        lines.append(line)
+    return lines
+
+
+def diagnostic_score(line: str) -> int:
+    if re.search(
+        r"\b\w*(?:Error|Exception)\s*:|\berror\s*[:•\[]|"
+        r"\bfatal\b|\bpanic\b|\bsqlstate\b|\bduplicate key\b",
+        line, re.IGNORECASE,
+    ):
+        return 2
+    if re.search(r"\bfailed\b|\bfailure\b|\bdenied\b", line, re.IGNORECASE):
+        return 1
+    return 0
+
+
 def classify_workflow_failure(workflow_name: str, failed_step: str, log_text: str) -> str:
-    haystack = "\n".join([workflow_name or "", failed_step or "", log_text or ""]).lower()
+    evidence = "\n".join(
+        line for line in diagnostic_lines(log_text) if diagnostic_score(line)
+    ).lower()
+    step = (failed_step or "").lower()
     for category, patterns in WORKFLOW_CATEGORY_PATTERNS:
-        if any(pattern in haystack for pattern in patterns):
+        if any(pattern in step for pattern in patterns):
+            if category == "supabase-push" and any(
+                pattern in evidence for pattern in WORKFLOW_CATEGORY_PATTERNS[0][1]
+            ):
+                return "migration-collision"
             return category
+    # Generic policy tests/formatters must not inherit unrelated job commands.
+    if "test ci scope classifier" in step or "check formatting" in step:
+        return "generic-ci"
+    for category, patterns in WORKFLOW_CATEGORY_PATTERNS:
+        if any(pattern in evidence for pattern in patterns):
+            return category
+    if not evidence:
+        for category, patterns in WORKFLOW_CATEGORY_PATTERNS:
+            if any(pattern in (workflow_name or "").lower() for pattern in patterns):
+                return category
     return "generic-ci"
 
 
@@ -225,23 +288,11 @@ def workflow_recovery_draft(
 
 
 def extract_error_signature(log_text: str, fallback: str = "unknown-step", max_chars: int = 180) -> str:
-    candidates: list[str] = []
-    for raw in (log_text or "").splitlines():
-        line = compact_line(raw, max_chars=max_chars)
-        if not line or NOISE_LINE_RE.search(line):
-            continue
-        if SIGNATURE_HINT_RE.search(line):
-            candidates.append(line)
+    lines = diagnostic_lines(log_text)
+    candidates = [(diagnostic_score(line), index, line) for index, line in enumerate(lines)]
+    candidates = [item for item in candidates if item[0] > 0]
     if candidates:
-        return candidates[-1]
-
-    tail = [
-        compact_line(line, max_chars=max_chars)
-        for line in (log_text or "").splitlines()[-20:]
-        if compact_line(line, max_chars=max_chars)
-    ]
-    if tail:
-        return tail[-1]
+        return compact_line(max(candidates)[2], max_chars=max_chars)
     return compact_line(fallback or "unknown-step", max_chars=max_chars)
 
 
@@ -547,12 +598,68 @@ def log_digest(log_text: str, kind: str, max_lines: int) -> list[str]:
 
 def classify_migration_failure(log_text: str) -> tuple[str, list[str]]:
     lower = log_text.lower()
-    versions = sorted(set(VERSION_RE.findall(log_text)))
-    if "schema_migrations_pkey" in lower or "duplicate key" in lower:
-        return "applied", versions
+    recommended_statuses: set[str] = set()
+    recommended_versions: set[str] = set()
+    for line in log_text.splitlines():
+        if "supabase migration repair" not in line.lower():
+            continue
+        status_match = re.search(r"--status\s+(applied|reverted)\b", line, re.IGNORECASE)
+        versions = VERSION_RE.findall(line)
+        if status_match and versions:
+            recommended_statuses.add(status_match.group(1).lower())
+            recommended_versions.update(versions)
+    if len(recommended_statuses) == 1 and recommended_versions:
+        return recommended_statuses.pop(), sorted(recommended_versions)
+    if len(recommended_statuses) > 1:
+        return "unknown", []
+
+    if "schema_migrations_pkey" in lower and "duplicate key" in lower:
+        lines = log_text.splitlines()
+        duplicate_versions: set[str] = set()
+        for index, line in enumerate(lines):
+            match = re.search(
+                r"key\s*\(\s*version\s*\)\s*=\s*\(\s*(\d{14})\s*\)",
+                line,
+                re.IGNORECASE,
+            )
+            if not match:
+                continue
+            diagnostic_block = "\n".join(
+                lines[max(0, index - 3) : min(len(lines), index + 4)]
+            ).lower()
+            if (
+                "schema_migrations_pkey" in diagnostic_block
+                and "duplicate key" in diagnostic_block
+            ):
+                duplicate_versions.add(match.group(1))
+        return "applied", sorted(duplicate_versions)
     if "remote migration" in lower or "migration versions not found" in lower:
-        return "reverted", versions
-    return "unknown", versions
+        lines = log_text.splitlines()
+        marker = next(
+            (
+                index
+                for index, line in enumerate(lines)
+                if "remote migration" in line.lower()
+                or "migration versions not found" in line.lower()
+            ),
+            None,
+        )
+        if marker is not None:
+            remote_versions: set[str] = set()
+            table_started = False
+            for line in lines[marker + 1 : marker + 30]:
+                match = re.match(r"^\s*\|?\s*(\d{14})\s*(?:\|.*)?$", line)
+                if match:
+                    table_started = True
+                    remote_versions.add(match.group(1))
+                    continue
+                if table_started:
+                    break
+                if not line.strip() or re.match(r"^\s*[|+:-]+\s*$", line):
+                    continue
+                break
+            return "reverted", sorted(remote_versions)
+    return "unknown", []
 
 
 def run_command(command: list[str], log_path: Path) -> int:
@@ -641,8 +748,15 @@ def supabase_db_push(args: argparse.Namespace) -> int:
     log_dir.mkdir(parents=True, exist_ok=True)
     push_log = log_dir / "supabase-db-push.log"
     migration_list_log = log_dir / "supabase-migration-list.log"
+    preflight_log = log_dir / "supabase-migration-preflight.log"
 
-    recent = latest_migrations(Path(args.migrations_dir), args.recent_limit)
+    # Each invocation must classify only its own command output. Reusing a log
+    # directory must never replay an earlier repair recommendation or error.
+    push_log.write_text("", encoding="utf-8")
+    migration_list_log.write_text("", encoding="utf-8")
+
+    migrations_dir = Path(args.migrations_dir)
+    recent = latest_migrations(migrations_dir, args.recent_limit)
     timestamp = datetime.now(timezone.utc).isoformat()
     summary_lines = [
         f"- Checked at: `{timestamp}`",
@@ -655,7 +769,7 @@ def supabase_db_push(args: argparse.Namespace) -> int:
         summary_lines.append("```")
     append_summary(args.summary, "Supabase migration preflight", summary_lines)
 
-    with push_log.open("w", encoding="utf-8", newline="\n") as fh:
+    with preflight_log.open("w", encoding="utf-8", newline="\n") as fh:
         fh.write(f"checked_at={timestamp}\n")
         fh.write("recent_migrations:\n")
         for migration in recent:
@@ -689,8 +803,45 @@ def supabase_db_push(args: argparse.Namespace) -> int:
         print("No safe migration repair action detected; leaving failure intact.")
         return first_exit
 
+    local_versions = local_migration_versions(migrations_dir)
+    invalid_versions = (
+        [version for version in versions if version not in local_versions]
+        if repair_status == "applied"
+        else [version for version in versions if version in local_versions]
+    )
+    if invalid_versions:
+        append_summary(
+            args.summary,
+            "Supabase migration repair rejected",
+            [
+                f"- Repair status: `{repair_status}`",
+                f"- Unsafe versions: `{', '.join(invalid_versions)}`",
+                "- Result: no migration history changes were attempted.",
+            ],
+        )
+        print(
+            "Migration repair direction did not match the local migration set; "
+            "leaving failure intact."
+        )
+        return first_exit
+
     for version in versions:
-        run_command(["supabase", "migration", "repair", "--status", repair_status, version], push_log)
+        repair_exit = run_command(
+            ["supabase", "migration", "repair", "--status", repair_status, version],
+            push_log,
+        )
+        if repair_exit != 0:
+            append_summary(
+                args.summary,
+                "Supabase migration repair failed",
+                [
+                    f"- Repair status: `{repair_status}`",
+                    f"- Failed version: `{version}`",
+                    f"- Repair exit: `{repair_exit}`",
+                    "- Result: database push was not retried.",
+                ],
+            )
+            return repair_exit
 
     retry_exit = run_command(push_args, push_log)
     result = "succeeded" if retry_exit == 0 else "failed"

@@ -28,22 +28,29 @@ on:
         required: false
         default: 'true'
 
+permissions: {}
+
 concurrency:
   group: blog-engagement
   cancel-in-progress: false
 
 jobs:
   engagement:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: read
     name: Blog Engagement Analytics
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
 
@@ -73,11 +80,14 @@ jobs:
 
       - name: Summary
         if: always()
+        env:
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run || 'false' }}
+          DEVTO_KEY_STATUS: ${{ secrets.DEVTO_API_KEY != '' && 'set' || '⚠️ not set' }}
         run: |
           echo "## Blog Engagement $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')" >> $GITHUB_STEP_SUMMARY
           echo "| 項目 | 値 |" >> $GITHUB_STEP_SUMMARY
           echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
           echo "| mode | read-only analytics (auto-reply/follow 恒久廃止 2026-07-13) |" >> $GITHUB_STEP_SUMMARY
-          echo "| dry_run | ${{ github.event.inputs.dry_run || 'false' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| dry_run | $DRY_RUN_INPUT |" >> $GITHUB_STEP_SUMMARY
           echo "| Qiita | ⛔ 停止中 (2026-07-12 アカウント利用停止 → 接触停止) |" >> $GITHUB_STEP_SUMMARY
-          echo "| dev.to key | ${{ secrets.DEVTO_API_KEY != '' && 'set' || '⚠️ not set' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| dev.to key | $DEVTO_KEY_STATUS |" >> $GITHUB_STEP_SUMMARY

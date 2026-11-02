@@ -69,6 +69,9 @@ class LocalElectionShareService {
   static const int maxWeekendWindowCount = 60;
   static const int _syntheticNoteIdBase = 90000000000000;
   static const int _planDashboardNoteId = _syntheticNoteIdBase + 7002027;
+
+  static String generatedMemoSourceKey(int syntheticNoteId) =>
+      'local-election:$syntheticNoteId';
   // 統一地方選 2027 の仮日程 (官報告示前の推定 / 単一正本)。
   // 告示日は公選法の告示日数ルールと 2023 実績 (前半: 知事選17日前 /
   // 後半: 市区議・市区長7日前) に合わせる。確定後はここだけ更新する。

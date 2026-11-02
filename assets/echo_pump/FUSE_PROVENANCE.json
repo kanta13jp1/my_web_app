@@ -1,0 +1,28 @@
+{
+  "origin": "Original parameterized Blender model made through community MCP; no third-party models/textures",
+  "authoring_tool": "Blender 4.0.2 + mcp-for-blender 2.1.9",
+  "source": "scripts/echo_pump_mcp/model.py",
+  "generation_run": "https://github.com/kanta13jp1/my_web_app/actions/runs/39094773820",
+  "mcp_calls": 5,
+  "file": {
+    "name": "fuse_blender.png",
+    "bytes": 290017,
+    "sha256": "f7fb7fe7c84630824cbb026ccd536e78f8c8259b2879f342d57461e4c5b9ba71"
+  },
+  "masters": {
+    "fuse.blend": {
+      "bytes": 1165316,
+      "sha256": "752b0b11c310e9db6c29f8d4158fa5c0da0252a7a3603cc0366e02e8022e3059"
+    },
+    "fuse.glb": {
+      "bytes": 85576,
+      "sha256": "2748744ea5936b83ca33e5a34495ed5e72e2a7b931b893d86f65acc909706a6b"
+    },
+    "fuse.png": {
+      "bytes": 290017,
+      "sha256": "f7fb7fe7c84630824cbb026ccd536e78f8c8259b2879f342d57461e4c5b9ba71"
+    }
+  },
+  "rights_review": "Original geometry; broader commercial/privacy review pending",
+  "telemetry_disabled": true
+}

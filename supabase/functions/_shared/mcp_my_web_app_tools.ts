@@ -2,6 +2,7 @@ export const MCP_MY_WEB_APP_TOOL_NAMES = [
   "wbs.tasks.list",
   "feature_request.create",
   "user_tasks.list",
+  "public_businesses.reference_list",
   "notes.list",
   "notes.create",
 ] as const;
@@ -22,6 +23,7 @@ const MCP_ACTION_TO_TOOL: Record<string, McpMyWebAppToolName> = {
   "mcp.wbs.list": "wbs.tasks.list",
   "mcp.feature_request.create": "feature_request.create",
   "mcp.user_tasks.list": "user_tasks.list",
+  "mcp.public_businesses.reference_list": "public_businesses.reference_list",
   "mcp.notes.list": "notes.list",
   "mcp.notes.create": "notes.create",
 };
@@ -149,6 +151,26 @@ export function buildMcpToolCatalog(): McpToolDefinition[] {
         properties: {
           include_completed: { type: "boolean", default: false },
           limit: { type: "integer", minimum: 1, maximum: 50, default: 10 },
+        },
+      },
+    },
+    {
+      name: "public_businesses.reference_list",
+      title: "List Public Business References",
+      description:
+        "Read OpenStreetMap reference places near Fuchu Honmachi 1-chome together with the separate official census aggregate. Ownership type is never inferred.",
+      requested_scopes: ["read"],
+      write_confirmation_required: false,
+      invoke_action: "mcp.public_businesses.reference_list",
+      input_schema: {
+        type: "object",
+        properties: {
+          target_id: {
+            type: "string",
+            enum: ["fuchu-honmachi-1"],
+            default: "fuchu-honmachi-1",
+          },
+          limit: { type: "integer", minimum: 1, maximum: 50, default: 30 },
         },
       },
     },

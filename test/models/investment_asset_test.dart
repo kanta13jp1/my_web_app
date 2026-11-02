@@ -18,6 +18,8 @@ void main() {
         'updated_at': '2026-05-22T03:00:00Z',
       });
 
+      expect(asset.displayName, isNull);
+      expect(asset.displayLabel, '7203');
       expect(asset.assetType, InvestmentAssetType.stock);
       expect(asset.quantity, 12.5);
       expect(asset.buyPriceJpy, 2500);
@@ -39,12 +41,40 @@ void main() {
         'user_id': 'user-1',
         'asset_type': 'crypto',
         'ticker': 'BTC-JPY',
+        'display_name': null,
         'quantity': 0.125,
         'buy_price_jpy': 10000000,
         'buy_date': '2026-05-01',
         'current_price_jpy': null,
         'last_priced_at': null,
       });
+    });
+
+    test('preserves a Japanese name separately from the ticker', () {
+      final asset = InvestmentAsset.fromMap(<String, dynamic>{
+        'id': 'asset-1',
+        'user_id': 'user-1',
+        'asset_type': 'stock',
+        'ticker': '8766',
+        'display_name': ' 東京海上 ',
+        'quantity': 2,
+        'buy_price_jpy': 1000,
+        'created_at': '2026-10-13T00:00:00Z',
+        'updated_at': '2026-10-13T00:00:00Z',
+      });
+      expect(asset.displayLabel, '東京海上 (8766)');
+      expect(asset.toDraft().toUpdateMap()['display_name'], '東京海上');
+      expect(asset.toDraft().toUpdateMap()['ticker'], '8766');
+      expect(
+        const InvestmentAssetDraft(
+          assetType: InvestmentAssetType.stock,
+          ticker: '8766',
+          displayName: '  ',
+          quantity: 2,
+          buyPriceJpy: 1000,
+        ).toUpdateMap()['display_name'],
+        isNull,
+      );
     });
 
     test('rejects blank and invalid tickers', () {

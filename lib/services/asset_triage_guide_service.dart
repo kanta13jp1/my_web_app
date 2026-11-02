@@ -29,7 +29,7 @@ enum AssetTriageStepKind {
   /// 今週: 期限超過の支払いを上から処理する。
   processOverdue,
 
-  /// 今週: リボ/分割の設定解除を支払先へ電話する。
+  /// 今週: カード新規利用分の25日返済ルールを直す。
   disableRevolving,
 
   /// 今月: サブスク区分の固定費を名指しで解約候補として見直す。
@@ -47,11 +47,17 @@ class AssetTriageStep {
   final AssetTriageStepKind kind;
   final String title;
   final String detail;
+  final String? withdrawalSourceAccountId;
+  final String? withdrawalSourceAccountName;
+  final List<double> withdrawalTemplates;
 
   const AssetTriageStep({
     required this.kind,
     required this.title,
     required this.detail,
+    this.withdrawalSourceAccountId,
+    this.withdrawalSourceAccountName,
+    this.withdrawalTemplates = const <double>[],
   });
 }
 
@@ -104,7 +110,7 @@ class AssetTriagePlan {
 /// 資産管理レポートの計算結果から段階別トリアージ計画を組み立てる。
 ///
 /// 優先順位の設計原則: ①生活費 (健康) → ②本日期日 → ③止血 (新規利用停止)
-/// → ④期限超過の処理 → ⑤リボ解除 → ⑥返済ペース → ⑦収支ギャップ。
+/// → ④期限超過の処理 → ⑤新規利用分の25日返済 → ⑥返済ペース → ⑦収支ギャップ。
 /// 「増やさない」を「返す」より先に置く。
 class AssetTriageGuideService {
   const AssetTriageGuideService();
@@ -173,15 +179,23 @@ class AssetTriageGuideService {
           ? '手元現金が${_yen(cashOnHand)}しかありません。'
           : '本日の使用可能額が${_yen(todayAvailableAmount)}です。';
       final String detail;
+      List<double> templates = const <double>[];
       if (source == null || sourceProjected <= 0) {
         detail = '$reason現金・預金として登録された口座に余力が見つかりません。'
             '他に使える資産がないか確認し、無ければ今日の食費は家族・自治体・'
             'フードバンク等への相談も選択肢にしてください。食事を抜く判断はしないでください。';
       } else if (sourceProjected >= 20000) {
+        templates = const <double>[10000, 20000];
         detail = '$reason${source.name}（残高 ${_yen(source.balance)} / '
             '引落予定を除いた余力 ${_yen(sourceProjected)}）から'
             '1〜2万円を下ろして今日の食費・移動費を確保してください。'
-            '食事を抜く判断はしないでください。';
+            '生活費は専用財布へ（食事を抜く判断はしないでください）。';
+      } else if (sourceProjected >= 10000) {
+        templates = const <double>[10000];
+        detail = '$reason${source.name}の引落予定を除いた余力は'
+            '${_yen(sourceProjected)}です。引き落としに影響しないよう、'
+            'この範囲で今日の食費・移動費を確保してください。'
+            '生活費は専用財布へ（食事を抜く判断はしないでください）。';
       } else {
         detail = '$reason${source.name}の引落予定を除いた余力は'
             '${_yen(sourceProjected)}です。引き落としに影響しないよう、'
@@ -193,6 +207,9 @@ class AssetTriageGuideService {
           kind: AssetTriageStepKind.secureLivingExpense,
           title: '食費・移動費を確保する',
           detail: detail,
+          withdrawalSourceAccountId: source?.id,
+          withdrawalSourceAccountName: source?.name,
+          withdrawalTemplates: templates,
         ),
       );
     }
@@ -260,14 +277,16 @@ class AssetTriageGuideService {
         for (final violation in discipline.allViolations) violation.accountName,
       }.take(3).join('・');
       final newBorrowingNote = discipline.totalNewBorrowing > 0
-          ? '今月すでに約${_yen(discipline.totalNewBorrowing)}の新規利用があります。'
-          : '残高が翌月へ繰り越され利息が発生しています。';
+          ? '今月すでに約${_yen(discipline.totalNewBorrowing)}の新規借入があります。'
+          : 'カード新規利用分の25日返済額が不足しています。';
       todaySteps.add(
         AssetTriageStep(
           kind: AssetTriageStepKind.stopNewCardUsage,
           title: 'カードを財布から抜く',
           detail: '$namesを今日から使わないでください。$newBorrowingNote'
-              '「増やさない」が返済より先です。支払いは現金かデビットに切り替えてください。',
+              '「増やさない」が返済より先です。支払いは現金かデビットに切り替えてください。'
+              'カード会社の公式アプリにある利用停止・ロック機能、または窓口での利用停止の相談を'
+              '検討してください(連絡先はカード裏面か公式サイトで確認)。',
         ),
       );
     }
@@ -316,9 +335,7 @@ class AssetTriageGuideService {
               !subscriptionIds.contains(row.id),
         )
         .toList()
-      ..sort(
-        (a, b) => (a.paymentDay ?? 99).compareTo(b.paymentDay ?? 99),
-      );
+      ..sort((a, b) => (a.paymentDay ?? 99).compareTo(b.paymentDay ?? 99));
     if (lifelineRows.isNotEmpty) {
       final total = lifelineRows.fold<double>(
         0,
@@ -403,7 +420,7 @@ class AssetTriageGuideService {
       );
     }
 
-    // ⑤ リボ/分割の設定解除 (全額返済は不要、増やさない設定が目的)。
+    // ⑤ カード新規利用分の25日返済ルールを是正する。
     final revolving = discipline?.revolvingCardViolations ??
         const <AssetDebtDisciplineViolation>[];
     if (revolving.isNotEmpty) {
@@ -412,10 +429,10 @@ class AssetTriageGuideService {
       weekSteps.add(
         AssetTriageStep(
           kind: AssetTriageStepKind.disableRevolving,
-          title: 'リボ/分割の設定解除を電話する',
-          detail: '$namesに電話し、今後の利用分の支払い方式を一括（1回払い）に'
-              '変更してください。理想は残高の一括返済ですが、難しい場合でも'
-              'まず「これ以上リボが増えない設定」へ変えることが目的です。',
+          title: '新規利用分の25日返済を確保する',
+          detail: '$namesは、最低返済額に当月の新規利用分を全額上乗せし、'
+              '給料日の25日に返済できる予定へ直してください。'
+              '既存残高の一括返済は求めず、これ以上残高を増やさないことを優先します。',
         ),
       );
     }
@@ -470,8 +487,9 @@ class AssetTriageGuideService {
     final planned =
         revolving.where((violation) => violation.hasEscapePlan).toList()
           ..sort(
-            (a, b) => (annualRateById[b.accountId] ?? 0)
-                .compareTo(annualRateById[a.accountId] ?? 0),
+            (a, b) => (annualRateById[b.accountId] ?? 0).compareTo(
+              annualRateById[a.accountId] ?? 0,
+            ),
           );
     if (planned.isNotEmpty) {
       final top = planned.first;

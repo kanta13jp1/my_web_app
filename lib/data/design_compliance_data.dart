@@ -862,7 +862,7 @@ const List<PageComplianceRecord> kDesignComplianceData = [
   ),
   PageComplianceRecord(
     route: '/spreadsheet-database',
-    name: 'スプレッドシートDB',
+    name: '表計算',
     category: DesignCategory.notes,
   ),
   PageComplianceRecord(

@@ -30,6 +30,8 @@ class OfficialEndorsementRepository {
         formerCount: dpjOfficialEndorsementFormerTotal,
         recommendationCount: dpjOfficialRecommendationEntryCount,
         prefectureCount: dpjOfficialEndorsementPrefectureCount,
+        prefecturalCount: dpjOfficialEndorsementPrefecturalTotal,
+        municipalCount: dpjOfficialEndorsementMunicipalTotal,
         prefectures: dpjOfficialEndorsements,
       );
 }

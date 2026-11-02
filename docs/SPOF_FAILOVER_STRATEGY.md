@@ -32,17 +32,16 @@
 **スキーマ**: `supabase/migrations/` が SSOT (repo 内 / GitHub + 各端末に分散済み) → スキーマ喪失リスクは実質ゼロ。
 
 **データ** (= 本丸):
-1. **現状確認 `【確認事項: CEO/dashboard】`**: 現プランの自動バックアップ保持期間と **PITR (Point-in-Time Recovery) 加入有無**を Supabase dashboard で確認し、本表を更新する。**確認まで「バックアップがある」とは言わない**。
-2. **手動エクスポート手順 (即日実行可能 / 要 `SUPABASE_DB_URL`)**:
-   ```bash
-   # スキーマ + データの論理ダンプ (Supabase CLI / 公式手順)
-   supabase db dump --db-url "$SUPABASE_DB_URL" -f backup_schema.sql            # スキーマ
-   supabase db dump --db-url "$SUPABASE_DB_URL" -f backup_data.sql --data-only  # データ
-   ```
-   - 頻度案: 課金開始 (`paying-100` 助走) 前は週 1 / 課金開始後は日次自動化 (L2 で GHA cron 化 = 別タスク)。保管先: 暗号化した別クラウド (`【CEO確定】`)。
-3. **復元手順 (別リージョン/別プロジェクトへの再構築)**:
-   - (a) 新 Supabase プロジェクト作成 (リージョン選択可) → (b) `supabase link --project-ref <new>` → (c) `supabase db push` (migrations = スキーマ再現) → (d) `backup_data.sql` を `psql` で投入 → (e) EF を §4-3 で deploy → (f) クライアントの URL/anon key 差替 ([`lib/main.dart`](../lib/main.dart) の 2 定数) → ビルド・配信 (§4-4)。
-   - **未検証**: この手順の通し実行 (restore drill) は未実施 — 初回 drill を `paying-100` 開始前に 1 回実行する (`【CEO確定: 実施日】`)。**drill 完了までこの復元手順は「設計」であって「実証済み」ではない** (正直な区別)。
+1. **現状 (2026-08-26)**: Production は Free plan。Supabase platformの日次backup/PITRに依存せず、
+   [database backup / restore runbook](SUPABASE_BACKUP_RESTORE_RUNBOOK.md) を正本とする。
+2. **自動export**: `.github/workflows/supabase-backup-restore.yml` が毎週、roles/schema/dataの
+   logical dumpを作り、AES-256暗号化artifactを35日保持する。平文DB dumpはartifactへ保存しない。
+3. **restore drill**: 各backup runで暗号化bundleを再展開し、production/stagingから隔離した
+   ephemeral Supabase Postgres 17へtransactional restoreする。`public` 全tableのdump行数と
+   restore後行数を照合する。初回production-data drillのrun URLはrunbook/Issue #1291へ記録する。
+4. **別projectへの実災害復旧**: replacement project作成、Auth/Realtime/Storage/EF再設定、
+   client URL/key切替を含むため、Incident Issue上のCEO承認を要する。週次drillは外部projectを
+   作成・上書き・削除しない。
 
 ## 4. S2 対応 — GHA 障害時の代替デプロイ手順 (基準 2)
 
@@ -79,8 +78,8 @@ npx -y firebase-tools@latest deploy --only hosting --project <FIREBASE_PROJECT_I
 
 | 何を | どこへ |
 |------|--------|
-| バックアップ状況・PITR 確認 | `【確認事項】` 解消後、本書 §3 を更新 + [`IT_SECURITY_POLICY_V1.md`](IT_SECURITY_POLICY_V1.md) §7 四半期点検に組込 |
-| restore drill (初回) | `paying-100` 開始前に 1 回 (`【CEO確定: 日程】`) |
+| バックアップ状況 | [backup / restore runbook](SUPABASE_BACKUP_RESTORE_RUNBOOK.md) + `supabase-backup-restore.yml` の週次証跡 |
+| restore drill | backup runごとにephemeral targetへ復元。実replacement project drillは別途CEO承認 |
 | 障害発生時 | [`ONCALL_INCIDENT_SOP.md`](ONCALL_INCIDENT_SOP.md) (Sev 判定 → 対応) — 本書は予防/復旧設計 |
 | Phase A/B 実装 | Issue #2599 (open 維持) → L2 |
 

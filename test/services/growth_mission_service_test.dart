@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/growth_acquisition_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../fixtures/growth_weekly_digest_fixture.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -137,6 +140,79 @@ void main() {
       expect(snapshot.touchpoints.single.touchCount, 12);
       expect(snapshot.touchpoints.single.signupSubmitCount, 3);
       expect(snapshot.importPreviews.single.previewCount, 5);
+    });
+
+    test('parses the shared weekly digest success fixture', () {
+      final envelope = growthWeeklyDigestSuccessFixture();
+      final snapshot = WeeklyDigestSnapshot.fromJson(
+        Map<String, dynamic>.from(envelope['digest']! as Map),
+      );
+
+      expect(snapshot.currentWeekStart, '2026-08-23');
+      expect(snapshot.currentWeekEnd, '2026-08-29');
+      expect(snapshot.channels, hasLength(2));
+      expect(snapshot.channels.first.label, 'ランディングページ');
+      expect(snapshot.channels.first.cvr, 5);
+      expect(snapshot.signupSubmitTotal, 1);
+      expect(snapshot.referralsCompleted, 3);
+      expect(snapshot.importCtaClicks, 3);
+      expect(snapshot.publicMemoCtaClicks, 2);
+      expect(snapshot.decision.owner, isNotEmpty);
+      expect(snapshot.decision.id, 'growth-weekly:2026-08-29:profile:cvr-5');
+      expect(snapshot.decision.priorityChannelId, 'profile');
+      expect(snapshot.decision.targetCvr, 5);
+      expect(snapshot.decision.dueDate, '2026-09-05');
+      expect(snapshot.previousDecisionOutcome.status, 'met');
+      expect(
+        snapshot.previousDecisionOutcome.decisionId,
+        'growth-weekly:2026-08-22:landing:cvr-5',
+      );
+      expect(snapshot.previousDecisionOutcome.actualTouches, 20);
+    });
+  });
+
+  group('Session hygiene', () {
+    test('parses active session hygiene status', () {
+      final status = SessionHygieneStatus.fromJson(<String, dynamic>{
+        'status': 'active',
+        'requires_relogin': false,
+        'message': 'Session is active.',
+        'expires_at': '2026-06-12T10:00:00Z',
+      });
+
+      expect(status.state, SessionHygieneState.active);
+      expect(status.isActive, isTrue);
+      expect(status.requiresRelogin, isFalse);
+      expect(status.expiresAt, DateTime.parse('2026-06-12T10:00:00Z'));
+    });
+
+    test('parses expired session hygiene status as relogin required', () {
+      final status = SessionHygieneStatus.fromJson(<String, dynamic>{
+        'status': 'expired',
+        'invalidated_at': '2026-06-12T10:05:00Z',
+        'reason': 'idle_timeout',
+      });
+
+      expect(status.state, SessionHygieneState.expired);
+      expect(status.isActive, isFalse);
+      expect(status.requiresRelogin, isTrue);
+      expect(status.message, SessionHygieneStatus.expiredMessage);
+      expect(status.reason, 'idle_timeout');
+      expect(status.invalidatedAt, DateTime.parse('2026-06-12T10:05:00Z'));
+    });
+
+    test('rotates local presence session after expiry reset', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+
+      const service = GrowthMissionService();
+      final firstSessionId = await service.ensureGuestSessionId();
+
+      await service.resetLocalPresenceSession();
+      final secondSessionId = await service.ensureGuestSessionId();
+
+      expect(firstSessionId, isNotEmpty);
+      expect(secondSessionId, isNotEmpty);
+      expect(secondSessionId, isNot(firstSessionId));
     });
   });
 

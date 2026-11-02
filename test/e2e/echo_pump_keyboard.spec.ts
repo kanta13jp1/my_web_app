@@ -1,0 +1,46 @@
+import { test, expect } from '@playwright/test';
+
+test('opt-in keyboard, repeat guard, modal guard and reload', async ({ page }, info) => {
+  test.setTimeout(60000);
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto('/');
+  await page.getByRole('button', {name: 'ゲーム開始', exact: true}).click();
+  await page.getByRole('button', {name: 'スキップして開始', exact: true}).click();
+  await expect(page.getByText('ターン 0', {exact: true})).toBeVisible();
+  await page.keyboard.press('w');
+  await expect(page.getByText('ターン 0', {exact: true})).toBeVisible();
+  const toggle = page.getByRole('switch', {name: /キーボード操作を有効にする/});
+  await toggle.click();
+  await expect(toggle).toBeChecked();
+  await expect(toggle).toHaveAccessibleName(/W：1ターン待つ/);
+  await page.keyboard.down('w');
+  await page.keyboard.down('w');
+  await page.keyboard.up('w');
+  await expect(page.getByText('ターン 1', {exact: true})).toBeVisible();
+  await page.keyboard.press('Control+b');
+  await expect(page.getByText('ターン 1', {exact: true})).toBeVisible();
+  await page.keyboard.press('i');
+  await expect(page.getByText('所持品は空', {exact: true})).toBeVisible();
+  await page.keyboard.press('w');
+  await page.keyboard.press('b');
+  await page.getByRole('button', {name: '所持品を閉じる', exact: true}).click();
+  // Semantics detach before Flutter finishes the closing route transition.
+  await page.waitForTimeout(1000);
+  await expect(page.getByText('ターン 1', {exact: true})).toBeVisible();
+  await page.keyboard.press('b');
+  await expect(page.getByRole('checkbox', {name: 'B 整備', exact: true})).toBeChecked();
+  await expect(page.getByText('ターン 2', {exact: true})).toBeVisible();
+  await page.mouse.move(100, 200);
+  await page.mouse.wheel(0, -30000);
+  await page.waitForTimeout(250);
+  await page.screenshot({path: info.outputPath('keyboard-enabled.png')});
+  await toggle.click();
+  await page.keyboard.press('w');
+  await expect(page.getByText('ターン 2', {exact: true})).toBeVisible();
+  await page.reload();
+  await page.getByRole('button', {name: 'ゲーム開始', exact: true}).click();
+  await page.getByRole('button', {name: 'スキップして開始', exact: true}).click();
+  await expect(toggle).not.toBeChecked();
+  expect(errors).toEqual([]);
+});

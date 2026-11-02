@@ -53,6 +53,24 @@ void main() {
     });
   });
 
+  group('AssetManagementAiSummaryRefresh.canReusePersisted', () {
+    test('reuses only an exact financial-data fingerprint', () {
+      expect(
+        AssetManagementAiSummaryRefresh.canReusePersisted(
+          currentKey: 'sha256:current',
+          cachedKey: 'sha256:current',
+        ),
+        isTrue,
+      );
+      expect(
+        AssetManagementAiSummaryRefresh.canReusePersisted(
+          currentKey: 'sha256:paid-and-updated-rate',
+          cachedKey: 'sha256:unpaid-and-old-rate',
+        ),
+        isFalse,
+      );
+    });
+  });
   group('AssetManagementAiSummaryRefresh.shouldThrottleFailedRetry', () {
     const cooldown = Duration(minutes: 60);
 

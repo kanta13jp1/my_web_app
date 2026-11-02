@@ -10,20 +10,24 @@ concurrency:
   group: edge-function-audit
   cancel-in-progress: true  # ci-cost-audit 2026-06-14: manual dispatch と schedule 競合防止
 
-permissions:
-  contents: read
-  pull-requests: read
-  issues: write
+permissions: {}
 
 jobs:
   audit:
+    environment:
+      name: platform-security-production
+      deployment: false
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: write
     name: Check Edge Function UI Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 10  # EF 16本 (hub統合後) × grep -rl で余裕を持たせる
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
@@ -38,6 +42,15 @@ jobs:
           MISSING=""
           TOTAL=0
           COVERED=0
+          EXEMPT_COUNT=0
+          # These endpoints are intentionally called only by trusted backend
+          # workers. Wiring them from lib/ would expose a privileged API surface.
+          declare -A UI_EXEMPTIONS=(
+            [decision-events]="Internal decision log sink authenticated with SUPABASE_SERVICE_ROLE_KEY"
+            [video-commerce-hub]="Owner-authorized publication worker called by hourly automation or authenticated Video Studio"
+            [video-worker-hub]="Dedicated video worker API authenticated with VIDEO_WORKER_TOKEN"
+          )
+          : > /tmp/ui_exempt_functions.txt
           # Supabase upsert 用JSON配列
           UPSERT_PAYLOAD="["
 
@@ -45,6 +58,13 @@ jobs:
             FUNC=$(basename "$DIR")
             # _shared, deno.json等を除外
             if [ "$FUNC" = "_shared" ] || [ ! -f "$DIR/index.ts" ]; then
+              continue
+            fi
+
+            if [ -n "${UI_EXEMPTIONS[$FUNC]:-}" ]; then
+              EXEMPT_COUNT=$((EXEMPT_COUNT + 1))
+              echo "$FUNC" >> /tmp/ui_exempt_functions.txt
+              echo "| $FUNC | ➖ backend-only | ${UI_EXEMPTIONS[$FUNC]} |" >> /tmp/audit_report.txt
               continue
             fi
 
@@ -56,11 +76,11 @@ jobs:
             if [ -n "$REF" ]; then
               COVERED=$((COVERED + 1))
               echo "| $FUNC | ✅ | $REF |" >> /tmp/audit_report.txt
-              UPSERT_PAYLOAD="${UPSERT_PAYLOAD}{\"function_name\":\"${FUNC}\",\"has_ui_caller\":true,\"caller_file\":\"${REF}\",\"last_checked\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+              UPSERT_PAYLOAD="${UPSERT_PAYLOAD}{\"function_name\":\"${FUNC}\",\"has_ui_caller\":true,\"caller_file\":\"${REF}\",\"last_checked\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"},"
             else
               MISSING="${MISSING}${FUNC}\n"
               echo "| $FUNC | ❌ 未接続 | - |" >> /tmp/audit_report.txt
-              UPSERT_PAYLOAD="${UPSERT_PAYLOAD}{\"function_name\":\"${FUNC}\",\"has_ui_caller\":false,\"caller_file\":null,\"last_checked\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+              UPSERT_PAYLOAD="${UPSERT_PAYLOAD}{\"function_name\":\"${FUNC}\",\"has_ui_caller\":false,\"caller_file\":null,\"last_checked\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"},"
             fi
           done
 
@@ -68,12 +88,13 @@ jobs:
           UPSERT_PAYLOAD="${UPSERT_PAYLOAD%,}]"
 
           echo "" >> /tmp/audit_report.txt
-          echo "**カバレッジ: ${COVERED}/${TOTAL}**" >> /tmp/audit_report.txt
+          echo "**カバレッジ: ${COVERED}/${TOTAL}（backend-only除外: ${EXEMPT_COUNT}）**" >> /tmp/audit_report.txt
 
           MISSING_COUNT=$((TOTAL - COVERED))
           echo "total=$TOTAL" >> $GITHUB_OUTPUT
           echo "covered=$COVERED" >> $GITHUB_OUTPUT
           echo "missing_count=$MISSING_COUNT" >> $GITHUB_OUTPUT
+          echo "exempt_count=$EXEMPT_COUNT" >> $GITHUB_OUTPUT
 
           if [ $MISSING_COUNT -gt 0 ]; then
             echo "has_missing=true" >> $GITHUB_OUTPUT
@@ -84,8 +105,15 @@ jobs:
             echo "has_missing=false" >> $GITHUB_OUTPUT
           fi
 
+          if [ $EXEMPT_COUNT -gt 0 ]; then
+            echo "exempt<<EOF" >> $GITHUB_OUTPUT
+            cat /tmp/ui_exempt_functions.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
           # upsert payload をファイルに保存
           echo "$UPSERT_PAYLOAD" > /tmp/upsert_payload.json
+          python -m json.tool /tmp/upsert_payload.json > /dev/null
 
           cat /tmp/audit_report.txt
 
@@ -105,16 +133,32 @@ jobs:
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
             -H "Prefer: resolution=merge-duplicates" \
-            "$SUPABASE_URL/rest/v1/edge_function_ui_status" \
+            "$SUPABASE_URL/rest/v1/edge_function_ui_status?on_conflict=function_name" \
             -d @/tmp/upsert_payload.json \
             --max-time 15)
 
           echo "Supabase upsert HTTP status: $HTTP_CODE"
           if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
             echo "✅ Supabase upsert 成功"
+            while IFS= read -r FUNC; do
+              [ -z "$FUNC" ] && continue
+              DELETE_CODE=$(curl -s -o /tmp/delete_exempt_result.json -w "%{http_code}" \
+                -X DELETE \
+                -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+                -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+                -H "Prefer: return=minimal" \
+                "$SUPABASE_URL/rest/v1/edge_function_ui_status?function_name=eq.${FUNC}" \
+                --max-time 15)
+              if [ "$DELETE_CODE" -ge 200 ] && [ "$DELETE_CODE" -lt 300 ]; then
+                echo "✅ backend-only除外行を削除: $FUNC"
+              else
+                echo "⚠️ backend-only除外行の削除失敗: $FUNC (HTTP $DELETE_CODE)"
+              fi
+            done < /tmp/ui_exempt_functions.txt
           else
             echo "⚠️ Supabase upsert 失敗 (HTTP $HTTP_CODE)"
             cat /tmp/upsert_result.json 2>/dev/null || true
+            exit 1
           fi
 
       - name: Create/Update Issue if missing functions
@@ -130,6 +174,7 @@ jobs:
           **日時**: $DATE
           **カバレッジ**: ${{ steps.audit.outputs.covered }}/${{ steps.audit.outputs.total }}
           **未接続**: ${{ steps.audit.outputs.missing_count }}件
+          **Backend-only除外**: ${{ steps.audit.outputs.exempt_count }}件
 
           ### 未接続の Edge Functions
           \`\`\`
@@ -138,6 +183,11 @@ jobs:
 
           ### 対応方法
           各 Edge Function に対して \`lib/\` 内にUIからの呼び出しを追加してください。
+
+          ### UI接続を要求しない backend-only Functions
+          \`\`\`
+          ${{ steps.audit.outputs.exempt }}
+          \`\`\`
 
           ---
           *自動生成: edge-function-audit.yml*"
@@ -172,9 +222,10 @@ jobs:
           COVERED="${{ steps.audit.outputs.covered }}"
           TOTAL="${{ steps.audit.outputs.total }}"
           MISSING="${{ steps.audit.outputs.missing_count }}"
+          EXEMPT="${{ steps.audit.outputs.exempt_count }}"
           STATUS="success"
           [ "$MISSING" != "0" ] && STATUS="partial"
-          SUMMARY="Edge Function UI Audit: ${COVERED}/${TOTAL} covered, ${MISSING} missing"
+          SUMMARY="Edge Function UI Audit: ${COVERED}/${TOTAL} covered, ${MISSING} missing, ${EXEMPT} backend-only exempt"
           curl -s -o /dev/null \
             -X POST \
             -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -191,6 +242,7 @@ jobs:
           COVERED="${{ steps.audit.outputs.covered }}"
           TOTAL="${{ steps.audit.outputs.total }}"
           MISSING="${{ steps.audit.outputs.missing_count }}"
+          EXEMPT="${{ steps.audit.outputs.exempt_count }}"
           COVERAGE_ICON=$([ "$MISSING" = "0" ] && echo "✅" || echo "⚠️")
           {
             echo "## Edge Function UI導線チェック $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
@@ -199,6 +251,7 @@ jobs:
             echo "|-----|---|"
             echo "| カバレッジ | $COVERAGE_ICON ${COVERED}/${TOTAL} |"
             echo "| 未接続 | ${MISSING}件 |"
+            echo "| backend-only除外 | ${EXEMPT}件 |"
             if [ -n "${{ steps.audit.outputs.missing }}" ] && [ "$MISSING" != "0" ]; then
               echo ""
               echo "### 未接続 Edge Functions"
@@ -210,3 +263,4 @@ jobs:
           echo "✅ Edge Function UI導線チェック完了"
           echo "  カバレッジ: ${COVERED}/${TOTAL}"
           echo "  未接続: ${MISSING}件"
+          echo "  backend-only除外: ${EXEMPT}件"

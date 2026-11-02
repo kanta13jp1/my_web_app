@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; media-src blob:; base-uri 'none'; form-action 'none'">
+  <title>AERO LAB — エンジンの内側へ</title>
+  <link rel="stylesheet" href="./lab.css">
+</head>
+<body>
+<main class="lab">
+  <header class="masthead">
+    <div class="brand"><span class="brand-mark">A/</span>AERO LAB <span class="edition">01 — TURBOFAN</span></div>
+    <div class="header-actions"><button id="record" type="button">○ 画面を録画</button><a id="download" hidden download="aero-lab-browser-recording.webm">動画を保存</a></div>
+  </header>
+  <p id="record-message" class="record-message" role="status"></p>
+  <section class="workbench">
+    <div class="viewport">
+      <div class="scene-title"><span class="eyebrow">空気が、推力になる。</span><h1 id="title">エンジンの内側へ。</h1><p id="description">回して、開いて、流れを追う。</p></div>
+      <div class="mode-badge"><span id="mode">CUTAWAY VIEW</span><span id="running-status">● RUNNING</span></div>
+      <div id="scene" class="scene-mount"><p id="scene-status" class="scene-error" role="status">3Dモデルを準備しています…</p></div>
+      <div class="stage-detail" id="detail" hidden><span id="detail-name"></span><p id="detail-text"></p><button id="clear-stage">部位の選択を解除</button></div>
+      <div class="view-controls"><button data-view="overview">全体を見る</button><button data-view="front">吸気側へ</button><button data-view="side">横から見る</button><button id="pause">Ⅱ 回転を止める</button></div>
+      <div class="scene-caption"><span>ドラッグで回転 · スクロールで拡大</span><span><i class="cyan-dot"></i>バイパス流 <i class="orange-dot"></i>コア流</span></div>
+    </div>
+    <aside class="instrument-panel" aria-label="実験コントロール">
+      <div class="panel-heading"><span>実験コントロール</span><span>LIVE</span></div>
+      <section class="control-section"><label class="control-label" for="throttle"><span>出力指令</span><strong><output id="power-value">35</output><small>%</small></strong></label><input id="throttle" type="range" min="0" max="100" value="35"><div class="range-label"><span>IDLE</span><span>FULL</span></div><div class="power-presets"><button data-power="20">20%</button><button data-power="60">60%</button><button data-power="100">100%</button></div></section>
+      <section class="control-section toggles"><label for="cutaway">外殻を開く<input id="cutaway" type="checkbox" role="switch" checked></label><label for="flow">空気の流れ<input id="flow" type="checkbox" role="switch" checked></label></section>
+      <section class="control-section"><label class="control-label" for="explode"><span>構造を分解</span><output id="explode-value">0%</output></label><input id="explode" type="range" min="0" max="100" value="0"><div class="power-presets"><button id="assemble">組み立て</button><button id="disassemble">分解する</button></div></section>
+      <section class="metrics"><div class="metric-heading">相対指標 <span>簡略モデル</span></div><div class="metric"><div><span>推力</span><strong><output id="thrust"></output><small>%</small></strong></div><div class="metric-track"><i id="thrust-bar" class="cyan"></i></div></div><div class="metric"><div><span>熱負荷</span><strong><output id="heat"></output><small>/100</small></strong></div><div class="metric-track"><i id="heat-bar" class="orange"></i></div></div></section>
+      <label class="fault-control" for="fault">効率低下を試す<input id="fault" type="checkbox" role="switch"></label><output id="fault-note" class="fault-note" hidden>同じ出力指令でも、推力↓・熱負荷↑。スイッチを戻すと回復します。</output>
+      <p class="model-note">教育用の架空モデル。数値・回転速度・気流は説明用で、実機の性能や物理シミュレーションではありません。</p>
+    </aside>
+  </section>
+  <nav id="stages" class="stage-strip" aria-label="エンジンの部位"></nav>
+  <footer class="sources"><a href="https://www.grc.nasa.gov/www/k-12/BGP/turbfan.html" target="_blank" rel="noopener noreferrer">構造の参考: NASA — Turbofan Engine</a><span>手続き型3D / 外部モデル・画像素材なし</span><a href="/home" target="_top">my_web_appへ戻る</a></footer>
+</main>
+<noscript>実験室にはJavaScriptが必要です。</noscript>
+<script type="module" src="./bootstrap.js"></script>
+</body>
+</html>

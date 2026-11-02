@@ -22,11 +22,13 @@ or user-visible copy.
 1. List the changed routes or surfaces in the PR body.
 2. Fill the Minimal E2E Gate section in `.github/PULL_REQUEST_TEMPLATE.md`.
 3. Fill the Visual E2E Evidence section in `.github/PULL_REQUEST_TEMPLATE.md`.
-4. Run targeted static checks for the touched stack.
-5. Capture browser evidence with Codex in-app browser, Playwright, or both.
-6. Record console/page errors, request failures, and HTTP 5xx findings.
-7. Attach or link screenshots, Playwright artifacts, or the exact reason the PR is documentation-only.
-8. If generated imagery is used, record the prompt, intended use, rights statement, and asset path.
+4. For new or materially revised UI, complete
+   `docs/DESIGN_ACCESSIBILITY_AUDIT.md` and its PR evidence section.
+5. Run targeted static checks for the touched stack.
+6. Capture browser evidence with Codex in-app browser, Playwright, or both.
+7. Record console/page errors, request failures, and HTTP 5xx findings.
+8. Attach or link screenshots, Playwright artifacts, or the exact reason the PR is documentation-only.
+9. If generated imagery is used, record the prompt, intended use, rights statement, and asset path.
 
 ## Minimal Browser Evidence
 

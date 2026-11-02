@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "threeVersion": "0.185.1",
+  "baseCommit": "80b0b1869d22506afd7e7ce7d01c6e87fa0ce646",
+  "origin": "Original procedural AERO LAB, preserved separately in company vault",
+  "runtime": "No AI API, CDN, authentication bridge, or data persistence",
+  "sha256": {
+    "web/labs/aero-lab/bootstrap.js": "7d98fb2ccdc92ba665699aa23f5725961f109630aa48761ae627be54f90995ed",
+    "web/labs/aero-lab/index.html": "bffce3358f8e537f175762f30043222ca3ae27cfe2fb24900c2263e907616201",
+    "web/labs/aero-lab/lab.css": "08dfc0bbe1b928b0ea5566d5b0e680e82b0e917bf07f33266472fea61a696991",
+    "web/labs/aero-lab/lab.js": "0d627a8f5a787668ed319b3839479fe58d8643b64afb5d94370b152573175b54",
+    "web/labs/aero-lab/package.json": "a90fc33418afa2b9cbf4768524b021135b965ecdf993457505bfae3ac44a8428",
+    "web/labs/aero-lab/recorder.js": "47fe532a5f9e1396de15b9beb7c173dcbc3d9a5831ea3ccff7c831b33f919a6a",
+    "web/labs/aero-lab/scene.js": "68f6a28d9dfd84195cb3e33ef24d0522be752ca96c14e3e1c1434d670ac67c09",
+    "web/labs/aero-lab/aero-engine.js": "4a4c0664343673482314b7639c70eb806e24d7fb5c2ea63d6eb3f350ad191838",
+    "web/labs/aero-lab/simulation.js": "7aac226c656ba3de0bed9bda16f4d026f0bf6e34013f8c63f1fbd56c42f9f787",
+    "web/labs/aero-lab/vendor/three.module.js": "da59f44e42c5f9e0da21a6ad58322c5f665e0fd6b49cd3d654c0fd7aa68c65f5",
+    "web/labs/aero-lab/vendor/three.core.js": "05b2609338c76cd65daf74f3ac515bc9a5045e1b3b33edc07d8c9bd55250fa90",
+    "web/labs/aero-lab/vendor/OrbitControls.js": "3f40137b0620b375637d6bce55dc830d86d79cb80b4d93aaf1b8ca6c5cb4741a",
+    "web/labs/aero-lab/vendor/RoomEnvironment.js": "77d4d2bed2b60cb98424764264aedd84b56bbf3211e0f48430e15608aeded9dc",
+    "web/labs/aero-lab/vendor/LICENSE": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+  }
+}

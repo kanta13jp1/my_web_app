@@ -125,7 +125,7 @@ def extract_json(text: str) -> dict:
 
 def fallback_template(target_date: str, gitlog: str) -> tuple[str, str]:
     """Last-resort template — never skip a day."""
-    ja = textwrap.dedent(f"""\
+    ja = textwrap.dedent("""\
         ---
         title: "自分株式会社 開発日誌 {target_date}"
         tags: Flutter,Supabase,buildinpublic,個人開発
@@ -145,8 +145,8 @@ def fallback_template(target_date: str, gitlog: str) -> tuple[str, str]:
         ---
         自分株式会社: https://my-web-app-b67f4.web.app/
         #FlutterWeb #Supabase #buildinpublic #個人開発
-    """)
-    en = textwrap.dedent(f"""\
+    """).format(target_date=target_date, gitlog=gitlog)
+    en = textwrap.dedent("""\
         ---
         title: "Jibun Inc. Dev Log {target_date}"
         tags: Flutter,Supabase,buildinpublic,webdev
@@ -166,7 +166,7 @@ def fallback_template(target_date: str, gitlog: str) -> tuple[str, str]:
         ---
         Building in public: https://my-web-app-b67f4.web.app/
         #FlutterWeb #Supabase #buildinpublic
-    """)
+    """).format(target_date=target_date, gitlog=gitlog)
     return ja, en
 
 

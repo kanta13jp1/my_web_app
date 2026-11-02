@@ -1,82 +1,131 @@
-import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
+  assert,
+  assertEquals,
+} from "https://deno.land/std@0.224.0/assert/mod.ts";
+import {
+  ACTION_POLICIES,
+  actionPolicy,
+  authorizeAction,
   PUBLIC_ACTIONS,
   requiredAuthLevel,
+  SCHEDULE_HUB_ACTIONS,
   SERVICE_ROLE_ONLY_ACTIONS,
+  type ScheduleHubAction,
 } from "./action_auth.ts";
 
-Deno.test("Stripe account readiness is service-role only", () => {
+Deno.test("all 53 switch actions exactly match the policy registry", async () => {
+  const indexSource = await Deno.readTextFile(
+    new URL("./index.ts", import.meta.url),
+  );
+  const switchActions = [...indexSource.matchAll(/^\s*case\s+"([^"]+)"\s*:/gm)]
+    .map((match) => match[1]);
+
+  assertEquals(switchActions.length, 53);
+  assertEquals(new Set(switchActions).size, switchActions.length);
+  assertEquals(new Set(SCHEDULE_HUB_ACTIONS).size, SCHEDULE_HUB_ACTIONS.length);
   assertEquals(
-    requiredAuthLevel("billing.get_stripe_account_readiness"),
-    "service_role",
+    [...switchActions].sort(),
+    [...SCHEDULE_HUB_ACTIONS].sort(),
   );
 });
 
-Deno.test("blog/x 書き込み系 4 action は service_role 必須", () => {
-  for (
-    const action of [
-      "blog.auto_publish",
-      "blog.create",
-      "blog.backfill_from_apis",
-      "x.post_with_media",
-    ]
-  ) {
-    assertEquals(requiredAuthLevel(action), "service_role");
+Deno.test("anonymous, user, and service-role handler matrix is exhaustive", () => {
+  for (const action of SCHEDULE_HUB_ACTIONS) {
+    const policy = ACTION_POLICIES[action];
+    const anonymous = authorizeAction(action, {
+      authenticatedUser: false,
+      serviceRoleRequest: false,
+    });
+    const user = authorizeAction(action, {
+      authenticatedUser: true,
+      serviceRoleRequest: false,
+    });
+    const serviceRole = authorizeAction(action, {
+      authenticatedUser: false,
+      serviceRoleRequest: true,
+    });
+
+    assertEquals(anonymous.allowed, policy.auth === "public", `${action}: anon`);
+    assertEquals(user.allowed, policy.auth !== "service_role", `${action}: user`);
+    assertEquals(serviceRole.allowed, true, `${action}: service role`);
   }
 });
 
-Deno.test("notion/wbs/reminders 書き込み系 7 action は service_role 必須", () => {
-  for (
-    const action of [
-      "notion.sync_wbs",
-      "notion.preflight_wbs",
-      "notion.sync_roadmap",
-      "notion.sync_memory_index",
-      "notion.fix_wbs_all_instances",
-      "wbs.unblock_dependents",
-      "reminders.study",
-    ]
-  ) {
-    assertEquals(requiredAuthLevel(action), "service_role");
+Deno.test("unknown and empty actions fail closed before authentication", () => {
+  for (const action of ["", "nonexistent.action", "blog.publish.typo"]) {
+    assertEquals(actionPolicy(action), null);
+    assertEquals(requiredAuthLevel(action), null);
+    assertEquals(
+      authorizeAction(action, {
+        authenticatedUser: false,
+        serviceRoleRequest: false,
+      }),
+      { allowed: false, error: "UnknownAction", status: 400 },
+    );
+    assertEquals(
+      authorizeAction(action, {
+        authenticatedUser: true,
+        serviceRoleRequest: false,
+      }),
+      { allowed: false, error: "UnknownAction", status: 400 },
+    );
+    assertEquals(
+      authorizeAction(action, {
+        authenticatedUser: false,
+        serviceRoleRequest: true,
+      }),
+      { allowed: false, error: "UnknownAction", status: 400 },
+    );
   }
 });
 
-Deno.test("read-only public action + 非ログイン支援者導線は public のまま", () => {
-  for (
-    const action of [
-      "health.check",
-      "blog.recent_posted",
-      "maintenance.list_active",
-      "billing.create_supporter_checkout_session",
-    ]
-  ) {
-    assertEquals(requiredAuthLevel(action), "public");
+Deno.test("owner credentials and shared system writes require service role", () => {
+  for (const action of SCHEDULE_HUB_ACTIONS) {
+    const policy = ACTION_POLICIES[action];
+    if (
+      policy.sideEffect === "owner_credential_read" ||
+      policy.sideEffect === "owner_credential_write" ||
+      policy.sideEffect === "system_write"
+    ) {
+      assertEquals(policy.auth, "service_role", action);
+    }
   }
 });
 
-Deno.test("digest.run は user レベルへ降格 (public から削除)", () => {
-  assertEquals(requiredAuthLevel("digest.run"), "user");
-  assertEquals(PUBLIC_ACTIONS.includes("digest.run"), false);
-  assertEquals(SERVICE_ROLE_ONLY_ACTIONS.includes("digest.run"), false);
-});
+Deno.test("owner publish, update, delete, and Notion routes are protected", () => {
+  const protectedActions: readonly ScheduleHubAction[] = [
+    "x.post",
+    "blog.publish",
+    "blog.publish_post",
+    "blog.update_post",
+    "blog.delete_post",
+    "blog.insert_post",
+    "blog.news_signal_draft",
+    "blog.qiita_list",
+    "blog.qiita_comments",
+    "blog.qiita_comment_post",
+    "blog.qiita_likers",
+    "blog.qiita_delete",
+    "blog.qiita_update",
+    "blog.devto_list",
+    "blog.devto_sync_engagement",
+    "blog.sync_engagement",
+    "blog.devto_delete",
+    "notion.sync_wiki_index",
+  ];
 
-Deno.test("動画クレジット購入はログイン user JWT 必須", () => {
-  const action = "billing.create_video_credit_checkout_session";
-  assertEquals(requiredAuthLevel(action), "user");
-  assertEquals(PUBLIC_ACTIONS.includes(action), false);
-  assertEquals(SERVICE_ROLE_ONLY_ACTIONS.includes(action), false);
-});
-
-Deno.test("未知 / user 向け action は user JWT 必須", () => {
-  assertEquals(requiredAuthLevel("billing.status"), "user");
-  assertEquals(requiredAuthLevel("blog.list"), "user");
-  assertEquals(requiredAuthLevel("blog.publish_post"), "user");
-  assertEquals(requiredAuthLevel(""), "user");
-  assertEquals(requiredAuthLevel("nonexistent.action"), "user");
-});
-
-Deno.test("service_role 集合と public 集合は重複しない", () => {
-  for (const action of SERVICE_ROLE_ONLY_ACTIONS) {
-    assertEquals(PUBLIC_ACTIONS.includes(action), false);
+  for (const action of protectedActions) {
+    assertEquals(requiredAuthLevel(action), "service_role", action);
+    assertEquals(SERVICE_ROLE_ONLY_ACTIONS.includes(action), true, action);
   }
+});
+
+Deno.test("public actions remain a narrow explicit allowlist", () => {
+  assertEquals([...PUBLIC_ACTIONS].sort(), [
+    "billing.create_supporter_checkout_session",
+    "blog.recent_posted",
+    "health.check",
+    "maintenance.list_active",
+  ]);
+  assert(PUBLIC_ACTIONS.every((action) => actionPolicy(action) !== null));
 });

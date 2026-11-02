@@ -32,7 +32,10 @@ class AssetLiabilityPaymentReminderService {
     final candidates = <AssetLiabilityPaymentReminderCandidate>[];
 
     for (final row in workbook.cashflowRows) {
-      if (!row.isPayment || !row.isDirectCashflowTarget || row.paid) {
+      if (!row.isPayment ||
+          !row.isDirectCashflowTarget ||
+          row.paid ||
+          row.paymentAmount <= 0) {
         continue;
       }
 

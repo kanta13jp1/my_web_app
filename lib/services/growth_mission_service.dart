@@ -18,6 +18,76 @@ class GrowthBenchmarks {
   static const int beatEvernoteTarget = evernoteUsersFloor + 1;
 }
 
+enum SessionHygieneState { active, expired, invalidated, unknown, unavailable }
+
+class SessionHygieneStatus {
+  static const expiredMessage = 'Session expired. Please sign in again.';
+
+  final SessionHygieneState state;
+  final bool requiresRelogin;
+  final String message;
+  final DateTime? expiresAt;
+  final DateTime? invalidatedAt;
+  final String? reason;
+
+  const SessionHygieneStatus({
+    required this.state,
+    required this.requiresRelogin,
+    required this.message,
+    this.expiresAt,
+    this.invalidatedAt,
+    this.reason,
+  });
+
+  const SessionHygieneStatus.unavailable()
+      : state = SessionHygieneState.unavailable,
+        requiresRelogin = false,
+        message = 'Session hygiene is unavailable.',
+        expiresAt = null,
+        invalidatedAt = null,
+        reason = null;
+
+  const SessionHygieneStatus.active()
+      : state = SessionHygieneState.active,
+        requiresRelogin = false,
+        message = 'Session is active.',
+        expiresAt = null,
+        invalidatedAt = null,
+        reason = null;
+
+  factory SessionHygieneStatus.fromJson(Map<String, dynamic> json) {
+    final rawState = (json['status'] as String?)?.toLowerCase();
+    final state = switch (rawState) {
+      'active' => SessionHygieneState.active,
+      'expired' => SessionHygieneState.expired,
+      'invalidated' => SessionHygieneState.invalidated,
+      'unavailable' => SessionHygieneState.unavailable,
+      _ => SessionHygieneState.unknown,
+    };
+    final inferredRequiresRelogin = state == SessionHygieneState.expired ||
+        state == SessionHygieneState.invalidated;
+    final requiresRelogin =
+        json['requires_relogin'] as bool? ?? inferredRequiresRelogin;
+
+    return SessionHygieneStatus(
+      state: state,
+      requiresRelogin: requiresRelogin,
+      message: json['message'] as String? ??
+          (requiresRelogin ? expiredMessage : 'Session state is unknown.'),
+      expiresAt: _parseOptionalDateTime(json['expires_at']),
+      invalidatedAt: _parseOptionalDateTime(json['invalidated_at']),
+      reason: json['reason'] as String?,
+    );
+  }
+
+  bool get isActive => state == SessionHygieneState.active && !requiresRelogin;
+
+  static DateTime? _parseOptionalDateTime(Object? value) {
+    if (value == null) return null;
+    return DateTime.tryParse(value.toString());
+  }
+}
+
 class ReferralGrowthSnapshot {
   final ReferralCode? myReferralCode;
   final int totalReferrals;
@@ -455,6 +525,101 @@ class WeeklyDigestChannelMetrics {
   }
 }
 
+class WeeklyDigestDecision {
+  final String id;
+  final String owner;
+  final String priorityChannelId;
+  final String priorityChannelLabel;
+  final int targetCvr;
+  final int minimumTouches;
+  final String nextAction;
+  final String dueDate;
+  final String outcomeStatus;
+
+  const WeeklyDigestDecision({
+    required this.id,
+    required this.owner,
+    required this.priorityChannelId,
+    required this.priorityChannelLabel,
+    required this.targetCvr,
+    required this.minimumTouches,
+    required this.nextAction,
+    required this.dueDate,
+    required this.outcomeStatus,
+  });
+
+  const WeeklyDigestDecision.empty()
+      : id = '',
+        owner = '',
+        priorityChannelId = '',
+        priorityChannelLabel = '',
+        targetCvr = 0,
+        minimumTouches = 0,
+        nextAction = '',
+        dueDate = '',
+        outcomeStatus = '';
+
+  factory WeeklyDigestDecision.fromJson(Map<String, dynamic> json) {
+    final priorityChannel = _weeklyDigestMap(json['priorityChannel']);
+    final threshold = _weeklyDigestMap(json['threshold']);
+    final outcome = _weeklyDigestMap(json['outcome']);
+    return WeeklyDigestDecision(
+      id: json['id']?.toString() ?? '',
+      owner: json['owner']?.toString() ?? '',
+      priorityChannelId: priorityChannel['id']?.toString() ?? '',
+      priorityChannelLabel: priorityChannel['label']?.toString() ?? '',
+      targetCvr: (threshold['target'] as num?)?.toInt() ?? 0,
+      minimumTouches: (threshold['minimumTouches'] as num?)?.toInt() ?? 0,
+      nextAction: json['nextAction']?.toString() ?? '',
+      dueDate: json['dueDate']?.toString() ?? '',
+      outcomeStatus: outcome['status']?.toString() ?? '',
+    );
+  }
+}
+
+class WeeklyDigestDecisionOutcome {
+  final String decisionId;
+  final String priorityChannelId;
+  final String priorityChannelLabel;
+  final String status;
+  final int actualCvr;
+  final int actualTouches;
+  final int actualSignupSubmits;
+
+  const WeeklyDigestDecisionOutcome({
+    required this.decisionId,
+    required this.priorityChannelId,
+    required this.priorityChannelLabel,
+    required this.status,
+    required this.actualCvr,
+    required this.actualTouches,
+    required this.actualSignupSubmits,
+  });
+
+  const WeeklyDigestDecisionOutcome.empty()
+      : decisionId = '',
+        priorityChannelId = '',
+        priorityChannelLabel = '',
+        status = '',
+        actualCvr = 0,
+        actualTouches = 0,
+        actualSignupSubmits = 0;
+
+  factory WeeklyDigestDecisionOutcome.fromJson(Map<String, dynamic> json) {
+    final priorityChannel = _weeklyDigestMap(json['priorityChannel']);
+    final actual = _weeklyDigestMap(json['actual']);
+    return WeeklyDigestDecisionOutcome(
+      decisionId: json['decisionId']?.toString() ?? '',
+      priorityChannelId: priorityChannel['id']?.toString() ?? '',
+      priorityChannelLabel: priorityChannel['label']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      actualCvr: (actual['cvr'] as num?)?.toInt() ?? 0,
+      actualTouches: (actual['touches'] as num?)?.toInt() ?? 0,
+      actualSignupSubmits: (actual['signupSubmits'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 class WeeklyDigestSnapshot {
   final String currentWeekStart;
   final String currentWeekEnd;
@@ -465,6 +630,8 @@ class WeeklyDigestSnapshot {
   final int referralsDelta;
   final int importCtaClicks;
   final int publicMemoCtaClicks;
+  final WeeklyDigestDecision decision;
+  final WeeklyDigestDecisionOutcome previousDecisionOutcome;
   final String brief;
 
   const WeeklyDigestSnapshot({
@@ -477,6 +644,8 @@ class WeeklyDigestSnapshot {
     required this.referralsDelta,
     required this.importCtaClicks,
     required this.publicMemoCtaClicks,
+    required this.decision,
+    required this.previousDecisionOutcome,
     required this.brief,
   });
 
@@ -490,6 +659,8 @@ class WeeklyDigestSnapshot {
         referralsDelta = 0,
         importCtaClicks = 0,
         publicMemoCtaClicks = 0,
+        decision = const WeeklyDigestDecision.empty(),
+        previousDecisionOutcome = const WeeklyDigestDecisionOutcome.empty(),
         brief = '';
 
   factory WeeklyDigestSnapshot.fromJson(Map<String, dynamic> json) {
@@ -518,9 +689,19 @@ class WeeklyDigestSnapshot {
       referralsDelta: (json['referralsDelta'] as num?)?.toInt() ?? 0,
       importCtaClicks: (json['importCtaClicks'] as num?)?.toInt() ?? 0,
       publicMemoCtaClicks: (json['publicMemoCtaClicks'] as num?)?.toInt() ?? 0,
+      decision: WeeklyDigestDecision.fromJson(
+        _weeklyDigestMap(json['decision']),
+      ),
+      previousDecisionOutcome: WeeklyDigestDecisionOutcome.fromJson(
+        _weeklyDigestMap(json['previousDecisionOutcome']),
+      ),
       brief: json['brief']?.toString() ?? '',
     );
   }
+}
+
+Map<String, dynamic> _weeklyDigestMap(dynamic value) {
+  return value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};
 }
 
 class GrowthMissionService {
@@ -528,6 +709,7 @@ class GrowthMissionService {
   static const _pendingReferralCodeKey = 'growth_pending_referral_code';
   static const _referralAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   static const Duration _aggregateRefreshCooldown = Duration(minutes: 3);
+  static const Duration _sessionHygieneTimeout = Duration(hours: 48);
   static DateTime? _lastAggregateRefreshAt;
   static Future<void>? _aggregateRefreshInFlight;
 
@@ -634,24 +816,40 @@ $inviteUrl
     return created;
   }
 
+  Future<void> resetLocalPresenceSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_guestSessionIdKey);
+    _lastGuestCleanupSession = null;
+  }
+
   Future<void> syncPresence({required String pagePath}) async {
     final client = _client;
     if (client == null) {
       return;
     }
 
-    final nowIso = DateTime.now().toUtc().toIso8601String();
+    final now = DateTime.now().toUtc();
+    final nowIso = now.toIso8601String();
     final sessionId = await ensureGuestSessionId();
     final user = client.auth.currentUser;
 
     try {
       if (user != null) {
+        final hygieneStatus = await checkSessionHygiene(sessionId: sessionId);
+        if (hygieneStatus.requiresRelogin) {
+          await _signOutForExpiredSession(client, hygieneStatus);
+          return;
+        }
+
         await client.from('user_presence').upsert(
           <String, dynamic>{
             'user_id': user.id,
             'session_id': sessionId,
             'is_online': true,
             'last_seen': nowIso,
+            'expires_at': now.add(_sessionHygieneTimeout).toIso8601String(),
+            'invalidated_at': null,
+            'invalidation_reason': null,
             'page_path': pagePath,
           },
           onConflict: 'user_id,session_id',
@@ -677,6 +875,51 @@ $inviteUrl
       }
     } catch (error) {
       debugPrint('Growth presence sync failed: $error');
+    }
+  }
+
+  Future<SessionHygieneStatus> checkSessionHygiene({String? sessionId}) async {
+    final client = _client;
+    if (client == null || client.auth.currentUser == null) {
+      return const SessionHygieneStatus.unavailable();
+    }
+
+    final resolvedSessionId = sessionId ?? await ensureGuestSessionId();
+    try {
+      final response = await client.rpc(
+        'get_session_hygiene_status',
+        params: <String, dynamic>{'p_session_id': resolvedSessionId},
+      );
+      if (response is Map<String, dynamic>) {
+        return SessionHygieneStatus.fromJson(response);
+      }
+      if (response is Map) {
+        return SessionHygieneStatus.fromJson(
+          Map<String, dynamic>.from(response),
+        );
+      }
+    } catch (error) {
+      debugPrint('get_session_hygiene_status failed: $error');
+    }
+
+    return const SessionHygieneStatus(
+      state: SessionHygieneState.unknown,
+      requiresRelogin: false,
+      message: 'Session hygiene status could not be checked.',
+    );
+  }
+
+  Future<void> _signOutForExpiredSession(
+    SupabaseClient client,
+    SessionHygieneStatus status,
+  ) async {
+    debugPrint(status.message);
+    try {
+      await client.auth.signOut();
+    } catch (error) {
+      debugPrint('Session hygiene signOut failed: $error');
+    } finally {
+      await resetLocalPresenceSession();
     }
   }
 
@@ -714,12 +957,6 @@ $inviteUrl
   }
 
   Future<void> _runAggregateRefresh(SupabaseClient client) async {
-    try {
-      await client.rpc('cleanup_old_presence');
-    } catch (error) {
-      debugPrint('cleanup_old_presence failed: $error');
-    }
-
     try {
       await client.rpc('update_site_statistics');
     } catch (error) {
