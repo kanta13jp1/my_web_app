@@ -35,6 +35,27 @@ class _DelayedCommitStore extends SyntheticSnapshotStore {
 }
 
 void main() {
+  testWidgets('warning remains after recreating an uncertain save',
+      (tester) async {
+    final store = _DelayedCommitStore();
+    await showForm(tester, store);
+    await tester.tap(find.byType(CheckboxListTile));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('確認して保存'));
+    await tester.pumpAndSettle();
+    expect(store.writes, 1);
+    expect(store.saved, isNull);
+
+    await tester.pumpWidget(const SizedBox());
+    await showSnapshot(tester, store);
+    expect(find.textContaining('再開後に自動照合できません'), findsOneWidget);
+    expect(find.textContaining('表示されなくても保存中または保存済みの可能性'), findsOneWidget);
+    expect(find.text('保存結果を照合'), findsNothing);
+    expect(store.writes, 1);
+    expect(store.pendingCommit, isNotNull);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'an absent reconciliation keeps the request locked until a delayed commit',
     (tester) async {
