@@ -42,8 +42,29 @@ jobs:
           persist-credentials: false
       - name: Guard reviewed SQL and initialize disposable database
         working-directory: docs/proposals/payroll_snapshot
+        env:
+          PG_SERVICE_ID: ${{ job.services.postgres.id }}
+        shell: bash
         run: |
+          set -euo pipefail
           cmp DRAFT_PAYROLL_SCHEMA.sql ../../..//supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
+          [[ "$PG_SERVICE_ID" =~ ^[0-9a-f]{64}$ ]] || { echo 'Missing PostgreSQL service identity' >&2; exit 1; }
+          service_info="$(docker inspect --format '{{.Id}}|{{.Config.Image}}|{{.State.Running}}' "$PG_SERVICE_ID")"
+          [[ "$service_info" == "$PG_SERVICE_ID|postgres:17-alpine|true" ]] || { echo 'Unexpected PostgreSQL service' >&2; exit 1; }
+          fixture_nonce="$(docker exec "$PG_SERVICE_ID" sh -c "od -An -N32 -tx1 /dev/urandom | tr -d '[:space:]'")"
+          [[ "$fixture_nonce" =~ ^[0-9a-f]{64}$ ]] || { echo 'Invalid fixture nonce' >&2; exit 1; }
+          echo "::add-mask::$fixture_nonce"
+          # This write is inside the GitHub-created disposable service container.
+          # Check the host-side psql connection reaches the same database BEFORE
+          # contract.sql or any setup changes are applied through that connection.
+          docker exec -i "$PG_SERVICE_ID" psql -U postgres -d payroll_contract -X -v ON_ERROR_STOP=1 -v fixture_nonce="$fixture_nonce" <<'SQL'
+          create schema payroll_http_control;
+          create table payroll_http_control.fixture_marker(nonce text not null);
+          insert into payroll_http_control.fixture_marker values (:'fixture_nonce');
+          SQL
+          actual_nonce="$(psql -X -A -t -v ON_ERROR_STOP=1 -c 'select nonce from payroll_http_control.fixture_marker')"
+          [[ "$actual_nonce" == "$fixture_nonce" ]] || { echo 'Host PostgreSQL connection is not the disposable service' >&2; exit 1; }
+          printf 'PAYROLL_HTTP_NONCE=%s\n' "$fixture_nonce" >> "$GITHUB_ENV"
           psql -X -v ON_ERROR_STOP=1 -f contract.sql
           if guard_output=$(psql -X -v ON_ERROR_STOP=1 -f http_isolation_setup.sql 2>&1); then
             echo 'Standalone setup unexpectedly accepted' >&2; exit 1
@@ -52,9 +73,6 @@ jobs:
             *'Explicit disposable HTTP fixture opt-in required'*) echo 'PASS: setup rejects missing opt-in' ;;
             *) printf '%s\n' "$guard_output" >&2; exit 1 ;;
           esac
-          fixture_nonce="$(python -c 'import secrets; print(secrets.token_hex(32))')"
-          echo "::add-mask::$fixture_nonce"
-          printf 'PAYROLL_HTTP_NONCE=%s\n' "$fixture_nonce" >> "$GITHUB_ENV"
           psql -X -v ON_ERROR_STOP=1 \
             -c "SET payroll_test.disposable_http = 'explicit-synthetic-http-fixture'" \
             -v fixture_nonce="$fixture_nonce" \
