@@ -35,12 +35,12 @@ def scalar(sql):
     return psql(sql).strip().splitlines()[-1]
 
 
-fixture_token = validate_environment(os.environ)
+fixture_marker = validate_environment(os.environ)
 if scalar('select current_database()') != 'payroll_contract':
     raise RuntimeError('Refusing to use a non-fixture database')
 validate_marker_count(scalar(
     f"select count(*) from public.payroll_transport_fixture_guard "
-    f"where token='{fixture_token}'::uuid"))
+    f"where token='{fixture_marker}'::uuid"))
 
 
 def save(month, request, delay=0):
