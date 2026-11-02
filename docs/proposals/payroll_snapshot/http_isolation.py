@@ -9,10 +9,28 @@ import hashlib
 import hmac
 import json
 import os
+import subprocess
 import time
 import urllib.error
 import urllib.request
 
+
+if not __debug__:
+    raise SystemExit('Optimized Python would disable required assertions')
+if (os.environ.get('GITHUB_ACTIONS') != 'true' or
+        os.environ.get('PAYROLL_HTTP_ISOLATION') != 'explicit-synthetic-http-fixture'):
+    raise SystemExit('Explicit GitHub Actions synthetic HTTP fixture required')
+container = os.environ.get('PAYROLL_HTTP_CONTAINER', '')
+expected_container = 'payroll-http-{}-{}'.format(
+    os.environ.get('GITHUB_RUN_ID', ''), os.environ.get('GITHUB_RUN_ATTEMPT', ''))
+if container != expected_container or container == 'payroll-http--':
+    raise SystemExit('Expected owned synthetic container is required')
+image = subprocess.run(
+    ['docker', 'inspect', '--format', '{{.Config.Image}}|{{.State.Running}}|{{.HostConfig.NetworkMode}}', container],
+    capture_output=True, text=True, check=True, timeout=5,
+).stdout.strip()
+if image != ('postgrest/postgrest@sha256:5f4ce744539bbba786b4e24dbbd95bdb2a956dcf568c5374995a0ff4a68f5bd2|true|host'):
+    raise SystemExit('Expected owned pinned synthetic PostgREST container is required')
 
 BASE = 'http://127.0.0.1:31337'
 SECRET = os.environ['SYNTHETIC_JWT_SECRET'].encode()

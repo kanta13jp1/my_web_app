@@ -4,6 +4,10 @@ do $guard$ begin
   if current_database() <> 'payroll_contract' then
     raise exception 'Disposable payroll_contract database required';
   end if;
+  if current_setting('payroll_test.disposable_http', true)
+      is distinct from 'explicit-synthetic-http-fixture' then
+    raise exception 'Explicit disposable HTTP fixture opt-in required';
+  end if;
 end $guard$;
 
 -- PostgREST supplies request.jwt.claims; the contract test's minimal auth.uid()
