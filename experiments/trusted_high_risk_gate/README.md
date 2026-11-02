@@ -1,0 +1,24 @@
+# 高リスクレビューの証跡照合: 未接続の試作
+
+このディレクトリは合成検査と設計レビュー用の試作です。**本番ワークフロー・ブランチ保護には接続していません。** レビューが実施された、実利用可能になった、または本番設定の変更を許可するものではありません。
+
+給与訂正 PR #5930 の最終 head には Gemini の通常 AI レビュー承認が存在します。その機械証跡の観点は correctness / security / tests であり、高リスク向けの rollback / data migration / prod smoke / observability を完了した証拠ではありません。Claude ultrareview の有料オプションは無効であり、実施したと記録してはいけません。
+
+試作は、別途認証した GitHub API 由来の run・check・成果物について immutable head/base、workflow source、発行元 app、SHA-256、対象ファイル、判定および観点を照合します。`policy.evaluate` に直接任意の辞書を渡しても真正性は得られず、認証済みの取得および `provenance.attest` との結合が必須です。PR本文の自己申告や例外ラベルを実レビューの証拠として採用しません。
+
+以下を解決するまで、実際の必須チェックとして使わないでください。
+
+1. 信頼済み base 上の workflow がレビュー実行結果を対象 head へ結びつけ、非対象 PR にも安定した結果を出す bootstrap の実イベント検証。PR head のコードを特権付きで実行しない。
+2. 5観点について実際の証拠を取得し、未実施を未実施と扱う、利用者承認済みのレビュー producer。現在の Gemini 出力は3観点のみで、追加観点について実行結果を捏造できない。
+3. PR 本文・ラベルを同一 head のまま変更したときの分類、イベントとチェック競合、すべてのリスクパス、削除・rename・多数ファイル、PR base の更新、API失敗、再実行と古い成功チェックの挙動。
+4. GitHub 発行元の真正性、署名済みではない artifact の制限、複数 check/run、第三者の権限、独立レビュー、既存 branch protection と ruleset との共存。
+5. shadow 検証・レビュー・ロールバック計画を先に完了し、保護の変更は確認後に別工程で行う。
+
+依存パッケージを導入しない軽量の合成検査：
+
+```sh
+cd experiments/trusted_high_risk_gate
+python -B -m unittest test_policy test_provenance test_observer
+```
+
+この試作のテスト成功は、実PRイベント・新しいレビュー・DBや給与操作の安全性を証明しません。
