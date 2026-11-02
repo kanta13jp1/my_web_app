@@ -742,6 +742,32 @@ void main() {
       expect(remote.monthState('2026-09')!.paidAccountNames, {'rent'});
     });
 
+    test('a read requested after a queued save observes the saved state',
+        () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _DelayedMonthReadRemoteStore();
+      final month = DateTime(2026, 9);
+      remote.seedMonth(month, const AssetLiabilityMonthlyState());
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        remoteWritesEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final oldRead = repository.loadMonth(month);
+      await remote.started.future;
+      final save = repository.saveMonth(
+        month: month,
+        state: const AssetLiabilityMonthlyState(paidAccountNames: {'rent'}),
+      );
+      final laterRead = repository.loadMonth(month);
+      remote.release.complete();
+      await oldRead;
+      await save;
+      expect((await laterRead).paidAccountNames, {'rent'});
+    });
+
     test('a corrupt journal retains latest local edits and blocks upload',
         () async {
       final prefs = await SharedPreferences.getInstance();

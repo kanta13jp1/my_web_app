@@ -754,6 +754,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     final userId = _userIdOrNull();
     final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
     final key = '$userId:$monthKey';
+    // A read requested after this save must wait for it, not reuse an older read.
+    _inFlightMonthLoads.remove(key);
     return _runMonthMutation<void>(month, userId, () async {
       if (_userIdOrNull() != userId) return;
       final previousLocal = await localRepository.loadMonth(month);
