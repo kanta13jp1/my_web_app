@@ -3,6 +3,8 @@
 Callbacks must be imported from the independently verified protected base; PR
 code, PR-supplied callbacks or artifacts containing review text are untrusted.
 Never print/upload the raw or sanitized diff. Image assets are not supported.
+Known issue: a descendant retaining stdout can block cleanup after timeout.
+Only run with controlled synthetic fixtures until process-tree isolation exists.
 """
 import hashlib
 import os

@@ -8,6 +8,8 @@
 
 `input_integrity.py` は架空Gitデータと模擬redactorを使った局所試作。正規のscope・redactorが保護済み base から読み込まれること、入力の上限や全パス、binary・symlink・rename・画像バインディング、Git設定・版差、完成したproducerと独立した実装の比較は未検証。実ユーザーのdiffを外部送信しない。
 
+**停止時間の保証は未完成。** 出力上限は適用するが、Gitの子孫がstdoutを保持すると、親プロセス終了後もreaderのロックにより `close()` が待ち続け得る。合成プロセスで再現済み。現状は制御された合成データに限定し、実データ・本番CIには接続しない。Windowsのshimを含む所有プロセスツリーの安全な隔離・終了と、タイムアウト・残存プロセス・他プロセス非干渉の検証が必要。
+
 ## 5観点の生成と段階を区別
 
 既存の承認済み通常AI reviewerは correctness/security/tests の3観点。安全な拡張には、security、rollback、data migration、production smoke、observability それぞれの対象と具体的な根拠、実施/計画/未確認を構造化し、欠落や未確認を勝手に「完了」にしない producer が必要。ユーザーが承認した既存経路を利用し、追加の有料Claude設定を変更しない。秘匿パス・添付・個人の金融観測は除外し、redaction失敗や過大入力時は外部送信を中止する。
