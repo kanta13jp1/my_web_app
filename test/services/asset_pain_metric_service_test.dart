@@ -13,20 +13,20 @@ void main() {
           '三井住友銀行': 100000,
         },
         annualRateOverrides: const <String, double>{
-          'mobit': 18.0,
+          'mobit': 0.18,
         },
       );
 
       final bleed =
           AssetPainMetricService.calculateDailyInterestBleed(workbook);
-      expect(bleed, greaterThan(0));
+      expect(bleed, closeTo(250, 0.000001));
       final hours = AssetPainMetricService.dailyLostLaborHours(workbook);
-      expect(hours, greaterThan(0));
+      expect(hours, closeTo(0.1, 0.000001));
       final stolen = AssetPainMetricService.stolenFutureTotal(
         workbook: workbook,
         months: 6,
       );
-      expect(stolen, greaterThan(bleed * 30));
+      expect(stolen, closeTo(45000, 0.000001));
     });
 
     test('calculates hourly wage from income correctly', () {

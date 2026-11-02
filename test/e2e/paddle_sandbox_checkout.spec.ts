@@ -23,7 +23,8 @@ type PaddleEvent = {
 
 type Scenario = 'success' | 'failure' | 'cancel' | 'b2b-vat';
 
-const realSandboxEnabled = process.env.PADDLE_SANDBOX_E2E === 'true';
+const { readSandboxConfiguration } = require('../../scripts/paddle_sandbox_config.cjs');
+const { realSandboxEnabled, b2bVatEnabled } = readSandboxConfiguration();
 const testEmail = 'paddle-sandbox-e2e@example.com';
 const b2bEmail = process.env.PADDLE_SANDBOX_B2B_EMAIL ?? '';
 const b2bCountryCode = process.env.PADDLE_SANDBOX_B2B_COUNTRY_CODE ?? '';
@@ -110,37 +111,44 @@ test.describe('real Paddle sandbox checkout', () => {
     ).toBeVisible({ timeout: 30_000 });
   });
 
-  test('business VAT ID is accepted and tax is recalculated', async ({
-    page,
-    browser,
-  }, testInfo) => {
-    await openFlutterCheckout(page);
-    const { before, after } = await enterBusinessTaxDetails(page);
+  test.describe('optional B2B VAT', () => {
+    test.skip(
+      !b2bVatEnabled,
+      'B2B VAT requires explicit opt-in and an Owner-authorized valid scenario.',
+    );
 
-    expect(after.hasBusiness).toBe(true);
-    expect(after.hasTaxIdentifier).toBe(true);
-    expect(after.tax).toBe(b2bExpectedTax);
-    expect(
-      before.tax !== after.tax || before.total !== after.total,
-      'The configured B2B scenario must produce a changed tax or total.',
-    ).toBe(true);
-    await expectFlutterText(page, 'VAT / Tax ID を反映したSandbox税額');
+    test('business VAT ID is accepted and tax is recalculated', async ({
+      page,
+      browser,
+    }, testInfo) => {
+      await openFlutterCheckout(page);
+      const { before, after } = await enterBusinessTaxDetails(page);
 
-    await completeCardPayment(page, '4242424242424242');
-    await expectFlutterText(page, 'Sandbox 決済が完了しました。', 90_000);
-    await closeCheckoutIfPresent(page);
+      expect(after.hasBusiness).toBe(true);
+      expect(after.hasTaxIdentifier).toBe(true);
+      expect(after.tax).toBe(b2bExpectedTax);
+      expect(
+        before.tax !== after.tax || before.total !== after.total,
+        'The configured B2B scenario must produce a changed tax or total.',
+      ).toBe(true);
+      await expectFlutterText(page, 'VAT / Tax ID を反映したSandbox税額');
 
-    const events = await collectEvidence(page, testInfo, 'b2b-vat', {
-      browserVersion: browser.version(),
+      await completeCardPayment(page, '4242424242424242');
+      await expectFlutterText(page, 'Sandbox 決済が完了しました。', 90_000);
+      await closeCheckoutIfPresent(page);
+
+      const events = await collectEvidence(page, testInfo, 'b2b-vat', {
+        browserVersion: browser.version(),
+      });
+      expect(eventNames(events)).toContain('checkout.completed');
+      expect(events.some((event) => event.hasTaxIdentifier)).toBe(true);
+      expect(
+        events.some((event) =>
+          Object.prototype.hasOwnProperty.call(event, 'taxIdentifier'),
+        ),
+        'Raw tax identifiers must never be written to evidence.',
+      ).toBe(false);
     });
-    expect(eventNames(events)).toContain('checkout.completed');
-    expect(events.some((event) => event.hasTaxIdentifier)).toBe(true);
-    expect(
-      events.some((event) =>
-        Object.prototype.hasOwnProperty.call(event, 'taxIdentifier'),
-      ),
-      'Raw tax identifiers must never be written to evidence.',
-    ).toBe(false);
   });
 });
 
@@ -480,7 +488,11 @@ async function collectEvidence(
     contentType: 'application/json',
   });
   await testInfo.attach(`${scenario}-flutter-result.png`, {
-    body: await page.screenshot({ fullPage: true }),
+    // The failed-card overlay may still be open. Never capture its fields.
+    body: await page.screenshot({
+      fullPage: true,
+      mask: [page.locator('iframe')],
+    }),
     contentType: 'image/png',
   });
   return events;

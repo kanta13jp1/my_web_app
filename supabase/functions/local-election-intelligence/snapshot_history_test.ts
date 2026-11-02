@@ -210,12 +210,16 @@ function intelligenceSnapshot(): JsonRecord {
       formerCount: 0,
       recommendationCount: 0,
       prefectureCount: 1,
+      prefecturalCount: 0,
+      municipalCount: 1,
       prefectures: [{
         prefecture: "東京",
         totalCount: 1,
         incumbentCount: 0,
         newcomerCount: 1,
         formerCount: 0,
+        prefecturalCount: 0,
+        municipalCount: 1,
       }],
     },
   };

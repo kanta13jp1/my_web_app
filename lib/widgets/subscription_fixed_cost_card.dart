@@ -199,6 +199,14 @@ class SubscriptionFixedCostCard extends StatelessWidget {
                   ],
                 ),
               ],
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  '上の合計は登録サブスクの金額を集計したもので、当サイクルの未払い額ではありません。通常の固定費とは別管理です。解約済み・請求周期・請求先を照合してください。',
+                  key: Key('subscription_totals_scope'),
+                  style: TextStyle(fontSize: 11, height: 1.5),
+                ),
+              ),
               if (availablePresets.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(

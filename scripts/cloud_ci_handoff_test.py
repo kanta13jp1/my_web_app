@@ -6,8 +6,10 @@ import unittest
 from pathlib import Path
 
 from cloud_ci_handoff import (
+    CLOUD_DEVELOPMENT_WORKFLOW,
     HandoffState,
     dispatch_command,
+    parse_args,
     readiness_reasons,
     run_command,
     select_new_exact_run,
@@ -62,9 +64,10 @@ class CloudCiHandoffTest(unittest.TestCase):
             head_sha=HEAD,
             remote_sha=HEAD,
             clean=True,
-            workflow="ci.yml",
+            workflow=CLOUD_DEVELOPMENT_WORKFLOW,
             ready=True,
             reasons=(),
+            profile="test",
         )
 
         self.assertEqual(
@@ -73,13 +76,40 @@ class CloudCiHandoffTest(unittest.TestCase):
                 "gh",
                 "workflow",
                 "run",
-                "ci.yml",
+                CLOUD_DEVELOPMENT_WORKFLOW,
                 "--ref",
                 "codex/cloud-first",
                 "-f",
                 f"expected_head_sha={HEAD}",
+                "-f",
+                "profile=test",
             ],
         )
+
+    def test_default_handoff_uses_cloud_development_full_profile(self) -> None:
+        args = parse_args([])
+
+        self.assertEqual(args.workflow, CLOUD_DEVELOPMENT_WORKFLOW)
+        self.assertEqual(args.profile, "full")
+
+    def test_workspace_profile_is_available_without_flutter(self) -> None:
+        args = parse_args(["--profile", "workspace"])
+
+        self.assertEqual(args.profile, "workspace")
+
+    def test_legacy_ci_handoff_does_not_send_profile(self) -> None:
+        state = HandoffState(
+            root="C:/repo",
+            branch="codex/cloud-first",
+            head_sha=HEAD,
+            remote_sha=HEAD,
+            clean=True,
+            workflow="ci.yml",
+            ready=True,
+            reasons=(),
+        )
+
+        self.assertNotIn("profile=full", dispatch_command(state))
 
     def test_run_lookup_ignores_old_or_different_sha_runs(self) -> None:
         runs = [
@@ -99,11 +129,13 @@ class CloudCiHandoffTest(unittest.TestCase):
 
     def test_workflow_pins_manual_gate_to_event_and_expected_sha(self) -> None:
         workflow = (
-            Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ci.yml"
+            Path(__file__).resolve().parents[1]
+            / ".github"
+            / "workflows"
+            / CLOUD_DEVELOPMENT_WORKFLOW
         ).read_text(encoding="utf-8")
 
         self.assertIn("expected_head_sha:", workflow)
-        self.assertIn('ref="${GITHUB_SHA}"', workflow)
         self.assertIn("actual_head_sha=\"$(git rev-parse HEAD)\"", workflow)
 
 

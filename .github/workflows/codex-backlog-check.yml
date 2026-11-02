@@ -54,8 +54,8 @@ jobs:
             --json number,title,headRefName,isDraft,url \
             --jq '.[] |
               select(.headRefName | startswith("codex/")) |
-              select(.isDraft == false) |
-              [.number, .headRefName, .title, .url] |
+
+              [.number, .headRefName, ((if .isDraft then "[Draft] " else "" end) + .title), .url] |
               @tsv' \
             | while IFS=$'\t' read -r number head title url; do
               branch="origin/$head"

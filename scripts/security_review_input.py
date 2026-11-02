@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import sys
 from pathlib import Path
 
 try:
@@ -24,19 +25,50 @@ except ModuleNotFoundError:  # Imported as scripts.security_review_input in unit
 
 MAX_DIFF_CHARS = 120_000
 SECRET_ASSIGNMENT = re.compile(
-    r"(?im)(?P<prefix>(?:api[_-]?key|secret|token|password|private[_-]?key|service[_-]?role)[^\n:=]{0,30}[=:]\s*)"
-    r"(?P<value>[^\s,;]{8,})"
+    r"(?im)(?P<prefix>(?:api[_-]?key|secret|token|password|passwd|private[_-]?key|"
+    r"service[_-]?role|signing[_-]?key|client[_-]?secret|access[_-]?key|database[_-]?url)"
+    r"[^\n:=]{0,30}[=:]\s*[\"']?)"
+    r"(?P<value>[^\s\"',;}{]{8,})"
 )
 BEARER = re.compile(r"(?i)Bearer\s+[A-Za-z0-9._~+/-]{8,}")
 PEM = re.compile(
     r"-----BEGIN [^-]+-----.*?-----END [^-]+-----", re.DOTALL
 )
+JWT = re.compile(
+    r"(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]{8,}\."
+    r"[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}(?![A-Za-z0-9_-])"
+)
+PROVIDER_TOKEN = re.compile(
+    r"(?<![A-Za-z0-9])(?:sb_secret_|sbp_|github_pat_|gh[pousr]_|glpat-|"
+    r"sk-(?:proj-)?|AIzaSy)[A-Za-z0-9._-]{12,}"
+)
+
+
+def redact_secrets_with_count(value: str) -> tuple[str, int]:
+    """Redact known credential shapes without exposing matched values."""
+    redactions = 0
+    for pattern, replacement in (
+        (PEM, "[REDACTED_PEM]"),
+        (BEARER, "Bearer [REDACTED]"),
+        (SECRET_ASSIGNMENT, r"\g<prefix>[REDACTED]"),
+        (JWT, "[REDACTED_JWT]"),
+        (PROVIDER_TOKEN, "[REDACTED_TOKEN]"),
+    ):
+        value, count = pattern.subn(replacement, value)
+        redactions += count
+    return value, redactions
 
 
 def redact_secrets(value: str) -> str:
-    value = PEM.sub("[REDACTED_PEM]", value)
-    value = BEARER.sub("Bearer [REDACTED]", value)
-    return SECRET_ASSIGNMENT.sub(r"\g<prefix>[REDACTED]", value)
+    return redact_secrets_with_count(value)[0]
+
+
+def write_github_output(path: Path | None, values: dict[str, object]) -> None:
+    if not path:
+        return
+    with path.open("a", encoding="utf-8") as output:
+        for key, value in values.items():
+            output.write(f"{key}={str(value).lower()}\n")
 
 
 def risk_reasons(event: dict[str, object], changed: list[str]) -> list[str]:
@@ -59,12 +91,31 @@ def risk_reasons(event: dict[str, object], changed: list[str]) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--event", type=Path, required=True)
-    parser.add_argument("--changed-files", type=Path, required=True)
-    parser.add_argument("--diff", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--event", type=Path)
+    parser.add_argument("--changed-files", type=Path)
+    parser.add_argument("--diff", type=Path)
+    parser.add_argument("--stdin", action="store_true")
+    parser.add_argument("--redact-only", action="store_true")
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--github-output", type=Path)
     args = parser.parse_args()
+
+    if args.redact_only:
+        if not args.output or (args.diff is None) == (not args.stdin):
+            parser.error("--redact-only requires --output and exactly one of --diff/--stdin")
+        raw = (
+            sys.stdin.read()
+            if args.stdin
+            else args.diff.read_text(encoding="utf-8", errors="replace")
+        )
+        redacted, count = redact_secrets_with_count(raw)
+        args.output.write_text(redacted, encoding="utf-8")
+        write_github_output(args.github_output, {"redactions": count})
+        print(f"Redacted {count} possible secret(s) from AI review input.")
+        return 0
+
+    if not all((args.event, args.changed_files, args.diff, args.output)):
+        parser.error("classification requires --event, --changed-files, --diff, and --output")
 
     import json
 
@@ -73,7 +124,9 @@ def main() -> int:
     reasons = risk_reasons(event, changed)
     high_risk = bool(reasons)
 
-    diff = redact_secrets(args.diff.read_text(encoding="utf-8", errors="replace"))
+    diff, redactions = redact_secrets_with_count(
+        args.diff.read_text(encoding="utf-8", errors="replace")
+    )
     truncated = len(diff) > MAX_DIFF_CHARS
     diff = diff[:MAX_DIFF_CHARS]
     header = (
@@ -83,10 +136,14 @@ def main() -> int:
         f"Input truncated: {str(truncated).lower()}\n\n"
     )
     args.output.write_text(header + diff, encoding="utf-8")
-    if args.github_output:
-        with args.github_output.open("a", encoding="utf-8") as output:
-            output.write(f"high_risk={str(high_risk).lower()}\n")
-            output.write(f"input_truncated={str(truncated).lower()}\n")
+    write_github_output(
+        args.github_output,
+        {
+            "high_risk": high_risk,
+            "input_truncated": truncated,
+            "redactions": redactions,
+        },
+    )
     return 0
 
 

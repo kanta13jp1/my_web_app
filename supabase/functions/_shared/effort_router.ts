@@ -16,6 +16,22 @@ export interface EffortSelection {
   source: "db" | "local";
 }
 
+export type ClaudeModelFamily = "haiku" | "sonnet";
+
+export interface ClaudeModelRoute {
+  family: ClaudeModelFamily;
+  model: string;
+  rationale: string;
+}
+
+export interface ClaudeModelOverrides {
+  haikuModel?: string | null;
+  sonnetModel?: string | null;
+}
+
+export const DEFAULT_CLAUDE_HAIKU_MODEL = "claude-haiku-4-5-20251001";
+export const DEFAULT_CLAUDE_SONNET_MODEL = "claude-sonnet-5";
+
 type EffortRow = {
   action: string;
   default_effort: Effort;
@@ -122,6 +138,31 @@ function modelForEffort(effort: Effort): string {
     case "xhigh":
       return "gpt-5.5";
   }
+}
+
+/**
+ * Maps the shared difficulty decision to the two-model Claude cost lane.
+ * Low and medium work stays Haiku-first; only high/xhigh work escalates to
+ * Sonnet. Deployment-specific model IDs may be supplied without changing the
+ * routing policy or accepting caller-controlled model names.
+ */
+export function selectClaudeModelForEffort(
+  effort: Effort,
+  overrides: ClaudeModelOverrides = {},
+): ClaudeModelRoute {
+  const useSonnet = effort === "high" || effort === "xhigh";
+  const configuredModel = useSonnet
+    ? overrides.sonnetModel
+    : overrides.haikuModel;
+  const model = configuredModel?.trim() ||
+    (useSonnet ? DEFAULT_CLAUDE_SONNET_MODEL : DEFAULT_CLAUDE_HAIKU_MODEL);
+  return {
+    family: useSonnet ? "sonnet" : "haiku",
+    model,
+    rationale: useSonnet
+      ? `${effort} effort requires the higher-capability Claude lane.`
+      : `${effort} effort remains on the Haiku-first cost lane.`,
+  };
 }
 
 function localConfigFor(action: string): EffortConfig {

@@ -45,6 +45,13 @@ def source_violations(label: str, text: str) -> list[str]:
     for description, pattern in SOURCE_PATTERNS:
         if pattern.search(normalized_text):
             violations.append(f"{label}: {description}")
+    if label.startswith(("integration_test/", "test_driver/")):
+        credential_literal = re.compile(
+            r"\bpassword\s*(?::|=)\s*['\"][^'\"\r\n]+['\"]",
+            re.IGNORECASE,
+        )
+        if credential_literal.search(normalized_text):
+            violations.append(f"{label}: literal integration-test password")
     return violations
 
 
@@ -69,7 +76,11 @@ def check_runtime_config(text: str) -> list[str]:
 
 def check_repository(root: Path = ROOT) -> list[str]:
     violations: list[str] = []
-    source_files = sorted((root / "lib").rglob("*.dart")) + [root / "web/index.html"]
+    source_files = sorted(
+        path
+        for directory in ("lib", "integration_test", "test_driver")
+        for path in (root / directory).rglob("*.dart")
+    ) + [root / "web/index.html"]
     for path in source_files:
         violations.extend(
             source_violations(path.relative_to(root).as_posix(), path.read_text(encoding="utf-8"))

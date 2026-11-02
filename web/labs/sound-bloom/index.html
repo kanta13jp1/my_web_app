@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="光を植えて、音楽を育てる。触れる音と光の庭、SOUND BLOOM。">
+  <title>SOUND BLOOM — 光を植えて、音楽を育てる</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><a href="/">自分株式会社</a><span class="brand">✳ SOUND BLOOM</span><span class="edition">INTERACTIVE SOUND GARDEN / 02</span></header>
+  <main>
+    <section class="intro"><div><p class="eyebrow">TOUCH. LISTEN. GROW.</p><h1>光を植えて、<br>音楽を育てる。</h1><p>ひとつの点から、あなただけの響きへ。</p></div><div class="guide"><span>01 点を選ぶ</span><span>02 再生する</span><span>03 音を重ねる</span><p>4つの輪は4つの音色。点を押すと音の種を置けます。</p></div></section>
+    <section class="garden" aria-label="音と光の庭">
+      <canvas id="garden" aria-label="演奏に反応する光の花"></canvas>
+      <div class="garden-label"><span id="scene-label">01 / DEW</span><span id="play-state">READY TO BLOOM</span></div>
+      <div id="rings" aria-label="円環シーケンサー"></div>
+      <div class="center"><span id="beat">✳</span><small>音の庭</small></div>
+      <div class="garden-footer"><span>16 STEPS · C MAJOR</span><span>音は操作後に再生されます</span></div>
+    </section>
+    <section class="desk" aria-label="演奏コントロール">
+      <div class="transport"><button id="play" class="primary">▶ 音を咲かせる</button><label>テンポ <output id="tempo-value">88</output><input id="tempo" type="range" min="60" max="160" value="88"></label><label>音量<input id="volume" type="range" min="0" max="70" value="35"></label></div>
+      <div class="presets"><span>SCENES</span><button data-preset="0" aria-pressed="true">01 朝露</button><button data-preset="1" aria-pressed="false">02 木漏れ日</button><button data-preset="2" aria-pressed="false">03 夜光</button></div>
+      <div id="tracks" class="tracks"></div>
+      <div class="tools"><button id="undo" disabled>ひとつ戻す</button><button id="clear">種をすべて消す</button><button id="save">構成を保存</button><label class="file-button">構成を開く<input id="load" type="file" accept="application/json,.json"></label></div>
+      <p id="status" role="status">準備できました。まず「音を咲かせる」を押してください。</p>
+    </section>
+    <footer><p>曲を聴くだけではなく、音楽が生まれる場所をつくる。</p><small>ブラウザー内の音響合成と描画。AI音楽生成API・録音済み楽曲は使用しません。<br>保存するのは音の配置とテンポです。音声ファイルではありません。</small></footer>
+  </main>
+  <script type="module" src="app.mjs"></script>
+</body></html>

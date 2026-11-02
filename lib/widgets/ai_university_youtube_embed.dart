@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -10,11 +12,15 @@ class AiUniversityYoutubeEmbed extends StatefulWidget {
     required this.videoId,
     required this.title,
     required this.onOpen,
+    this.maxPlayerHeight,
   });
 
   final String videoId;
   final String title;
   final VoidCallback onOpen;
+
+  /// Height available for the picture, excluding the controls below it.
+  final double? maxPlayerHeight;
 
   @override
   State<AiUniversityYoutubeEmbed> createState() =>
@@ -53,35 +59,51 @@ class _AiUniversityYoutubeEmbedState extends State<AiUniversityYoutubeEmbed> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: kIsWeb
-                  ? HtmlElementView(viewType: _viewType)
-                  : Container(
-                      color: const Color(0xFF111827),
-                      alignment: Alignment.center,
-                      child: const Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.smart_display_rounded,
-                            color: Color(0xFFFF6B35),
-                            size: 52,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'YouTubeで動画を再生できます',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              height: 1.5,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final heightLimit = widget.maxPlayerHeight ??
+                  MediaQuery.sizeOf(context).height * 0.6;
+              final width =
+                  math.min(constraints.maxWidth, heightLimit * 16 / 9);
+              return Center(
+                child: SizedBox(
+                  width: width,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: kIsWeb
+                          ? HtmlElementView(viewType: _viewType)
+                          : Container(
+                              color: const Color(0xFF111827),
+                              alignment: Alignment.center,
+                              child: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.smart_display_rounded,
+                                      color: Color(0xFFFF6B35),
+                                      size: 52,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'YouTubeで動画を再生できます',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
                     ),
-            ),
+                  ),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 8),
           Row(

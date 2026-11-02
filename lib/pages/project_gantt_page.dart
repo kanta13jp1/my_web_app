@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show PointerDeviceKind;
 
@@ -159,6 +160,61 @@ class WbsTask {
     this.updatedAt,
     this.githubIssueState = '',
   });
+
+  WbsTask copyWith({
+    String? id,
+    String? category,
+    String? categoryIcon,
+    int? categoryOrder,
+    String? title,
+    String? description,
+    String? instance,
+    String? status,
+    int? progress,
+    DateTime? startDate,
+    DateTime? endDate,
+    DateTime? plannedStartDate,
+    DateTime? plannedEndDate,
+    String? milestoneCode,
+    String? priority,
+    String? ownerInstance,
+    String? recoveryPlan,
+    int? rescheduledCount,
+    String? remainingWork,
+    List<String>? dependsOnTitles,
+    int? githubIssueNumber,
+    String? githubIssueUrl,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? githubIssueState,
+  }) =>
+      WbsTask(
+        id: id ?? this.id,
+        category: category ?? this.category,
+        categoryIcon: categoryIcon ?? this.categoryIcon,
+        categoryOrder: categoryOrder ?? this.categoryOrder,
+        title: title ?? this.title,
+        description: description ?? this.description,
+        instance: instance ?? this.instance,
+        status: status ?? this.status,
+        progress: progress ?? this.progress,
+        startDate: startDate ?? this.startDate,
+        endDate: endDate ?? this.endDate,
+        plannedStartDate: plannedStartDate ?? this.plannedStartDate,
+        plannedEndDate: plannedEndDate ?? this.plannedEndDate,
+        milestoneCode: milestoneCode ?? this.milestoneCode,
+        priority: priority ?? this.priority,
+        ownerInstance: ownerInstance ?? this.ownerInstance,
+        recoveryPlan: recoveryPlan ?? this.recoveryPlan,
+        rescheduledCount: rescheduledCount ?? this.rescheduledCount,
+        remainingWork: remainingWork ?? this.remainingWork,
+        dependsOnTitles: dependsOnTitles ?? this.dependsOnTitles,
+        githubIssueNumber: githubIssueNumber ?? this.githubIssueNumber,
+        githubIssueUrl: githubIssueUrl ?? this.githubIssueUrl,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+        githubIssueState: githubIssueState ?? this.githubIssueState,
+      );
 
   bool get isEffectivelyCompleted =>
       status == 'completed' ||
@@ -379,13 +435,18 @@ class WbsTask {
   String get activeInstanceKey => _activeWbsInstanceKey(instance);
   String get activeOwnerKey =>
       _activeWbsInstanceKey(ownerInstance.isEmpty ? instance : ownerInstance);
+  String get assignmentOwnerKey => _activeWbsInstanceKey(
+        ownerInstance.isEmpty ? _kWbsUnassignedOwnerKey : ownerInstance,
+      );
   String get activeInstanceLabel => _activeWbsInstanceLabel(activeInstanceKey);
   String get activeOwnerLabel => _activeWbsInstanceLabel(activeOwnerKey);
   Color get activeInstanceColor => _activeWbsInstanceColor(activeInstanceKey);
   Color get activeOwnerColor => _activeWbsInstanceColor(activeOwnerKey);
 
   bool matchesActiveInstanceFilter(String key) =>
-      activeInstanceKey == key || activeOwnerKey == key;
+      activeInstanceKey == key ||
+      activeOwnerKey == key ||
+      (key == _kWbsUnassignedOwnerKey && assignmentOwnerKey == key);
 
   bool get isFeatureRequestTask =>
       category == _kUserRequestCategoryText ||
@@ -560,17 +621,42 @@ Color _hexColor(String hex) {
 
 typedef _WbsInstanceFilter = ({String label, String? value, Color color});
 
+const String _kWbsUnassignedOwnerKey = 'unassigned';
+const Set<String> _wbsAssignableOwnerKeys = {
+  'claude',
+  'codex',
+  'user',
+  'automation',
+};
+const List<String> _wbsAssignmentLaneKeys = [
+  'claude',
+  'codex',
+  'user',
+  'automation',
+];
+
 const List<_WbsInstanceFilter> _activeWbsInstanceFilters = [
   (label: '全て', value: null, color: Color(0xFFFF6B35)),
   (label: 'Claude Code', value: 'claude', color: Color(0xFF2563EB)),
   (label: 'Codex', value: 'codex', color: Color(0xFF10B981)),
   (label: 'User', value: 'user', color: Color(0xFFEF4444)),
   (label: 'Automation', value: 'automation', color: Color(0xFFEAB308)),
+  (
+    label: 'Unassigned',
+    value: _kWbsUnassignedOwnerKey,
+    color: Color(0xFF64748B),
+  ),
 ];
 
 String _activeWbsInstanceKey(String raw) {
   final key = raw.trim().toLowerCase().replaceAll('_', '-');
   if (key.isEmpty) return 'claude';
+  if (key == _kWbsUnassignedOwnerKey ||
+      key == 'unassigned-owner' ||
+      key == 'none' ||
+      key == 'no-owner') {
+    return _kWbsUnassignedOwnerKey;
+  }
   if (key == 'codex' ||
       key == 'codex1' ||
       key == 'codex-1' ||
@@ -603,6 +689,7 @@ String _activeWbsInstanceLabel(String key) => switch (key) {
       'codex' => 'Codex',
       'user' => 'User',
       'automation' => 'Automation',
+      _kWbsUnassignedOwnerKey => 'Unassigned',
       _ => 'Claude Code',
     };
 
@@ -610,6 +697,7 @@ String _activeWbsShortInstance(String key) => switch (key) {
       'codex' => 'CX',
       'user' => 'USR',
       'automation' => 'AUTO',
+      _kWbsUnassignedOwnerKey => 'NONE',
       _ => 'CC',
     };
 
@@ -617,10 +705,50 @@ Color _activeWbsInstanceColor(String key) => switch (key) {
       'codex' => const Color(0xFF10B981),
       'user' => const Color(0xFFEF4444),
       'automation' => const Color(0xFFEAB308),
+      _kWbsUnassignedOwnerKey => const Color(0xFF64748B),
       _ => const Color(0xFF2563EB),
     };
 
 // ── ページ本体 ────────────────────────────────────────────────────────────────
+
+bool canAssignWbsTaskToOwner(WbsTask task, String ownerKey) {
+  final key = _activeWbsInstanceKey(ownerKey);
+  if (!_wbsAssignableOwnerKeys.contains(key)) return false;
+  if (task.isEffectivelyCompleted) return false;
+  return task.assignmentOwnerKey != key;
+}
+
+bool canUnassignWbsTaskOwner(WbsTask task) {
+  if (task.isEffectivelyCompleted) return false;
+  return task.assignmentOwnerKey != _kWbsUnassignedOwnerKey;
+}
+
+bool canMoveWbsTaskToOwner(WbsTask task, String ownerKey) {
+  final key = _activeWbsInstanceKey(ownerKey);
+  if (key == _kWbsUnassignedOwnerKey) return canUnassignWbsTaskOwner(task);
+  return canAssignWbsTaskToOwner(task, key);
+}
+
+String wbsOwnerStorageValue(String ownerKey) => _activeWbsInstanceKey(ownerKey);
+
+WbsTask reassignWbsTaskOwner(WbsTask task, String ownerKey) =>
+    task.copyWith(ownerInstance: wbsOwnerStorageValue(ownerKey));
+
+List<WbsTask> filterWbsTasksForAssignmentBoard(
+  List<WbsTask> tasks, {
+  String? filterMilestone,
+  bool hideCompleted = false,
+}) {
+  return tasks.where((task) {
+    if (filterMilestone != null && task.milestoneCode != filterMilestone) {
+      return false;
+    }
+    if (hideCompleted && task.isEffectivelyCompleted) {
+      return false;
+    }
+    return true;
+  }).toList();
+}
 
 class ProjectGanttPage extends StatefulWidget {
   const ProjectGanttPage({super.key});
@@ -788,6 +916,55 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
     await _loadProjects();
   }
 
+  void _queueWbsTaskOwnerMove(WbsTask task, String ownerKey) {
+    unawaited(_moveWbsTaskOwner(task, ownerKey));
+  }
+
+  Future<void> _moveWbsTaskOwner(WbsTask task, String ownerKey) async {
+    if (!canMoveWbsTaskToOwner(task, ownerKey)) return;
+
+    final targetOwner = wbsOwnerStorageValue(ownerKey);
+    final originalTask = _tasks.firstWhere(
+      (current) => current.id == task.id,
+      orElse: () => task,
+    );
+    final updatedTask = reassignWbsTaskOwner(task, targetOwner);
+
+    setState(() {
+      _tasks = _tasks
+          .map((current) => current.id == task.id ? updatedTask : current)
+          .toList()
+        ..sort(_compareWbsTasks);
+    });
+
+    try {
+      await _supabase
+          .from('wbs_tasks')
+          .update({'owner_instance': targetOwner}).eq('id', task.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'WBS owner updated: ${updatedTask.activeOwnerLabel}',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _tasks = _tasks.map((current) {
+          if (current.id != task.id) return current;
+          if (current.ownerInstance != targetOwner) return current;
+          return originalTask;
+        }).toList()
+          ..sort(_compareWbsTasks);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('WBS owner update failed: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -844,6 +1021,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             onFilterMilestone: (v) => setState(() => _filterMilestone = v),
             onToggleHideCompleted: (v) =>
                 setState(() => _hideCompleted = v ?? false),
+            onMoveTaskOwner: _queueWbsTaskOwnerMove,
           ),
           _GanttTimelineTab(
             milestones: _milestones,
@@ -967,6 +1145,7 @@ class _WbsTab extends StatelessWidget {
   final ValueChanged<String?> onFilterInstance;
   final ValueChanged<String?> onFilterMilestone;
   final ValueChanged<bool?> onToggleHideCompleted;
+  final void Function(WbsTask task, String ownerKey) onMoveTaskOwner;
 
   const _WbsTab({
     required this.milestones,
@@ -978,6 +1157,7 @@ class _WbsTab extends StatelessWidget {
     required this.onFilterInstance,
     required this.onFilterMilestone,
     required this.onToggleHideCompleted,
+    required this.onMoveTaskOwner,
   });
 
   List<WbsTask> get _filtered => tasks.where((t) {
@@ -1021,6 +1201,11 @@ class _WbsTab extends StatelessWidget {
     // part 156: hideCompleted ON 時は filter 後タスクで進捗 + 件数算出
     // (= GitHub Issue close 反映が visible になる)
     final progressBase = hideCompleted ? _filtered : tasks;
+    final assignmentTasks = filterWbsTasksForAssignmentBoard(
+      tasks,
+      filterMilestone: filterMilestone,
+      hideCompleted: hideCompleted,
+    );
     final overallProgress = _overallProgress(progressBase);
 
     return ListView(
@@ -1103,6 +1288,11 @@ class _WbsTab extends StatelessWidget {
         const SizedBox(height: 12),
 
         // ── カテゴリ別タスク ───────────────────────────────────────────────
+        _WbsAssignmentBoard(
+          tasks: assignmentTasks,
+          onMoveTaskOwner: onMoveTaskOwner,
+        ),
+        const SizedBox(height: 16),
         if (grouped.isEmpty)
           const _EmptyCard(message: 'WBSデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
         else
@@ -1116,6 +1306,379 @@ class _WbsTab extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _WbsAssignmentBoard extends StatelessWidget {
+  final List<WbsTask> tasks;
+  final void Function(WbsTask task, String ownerKey) onMoveTaskOwner;
+
+  const _WbsAssignmentBoard({
+    required this.tasks,
+    required this.onMoveTaskOwner,
+  });
+
+  List<WbsTask> _tasksForOwner(String ownerKey) {
+    final key = wbsOwnerStorageValue(ownerKey);
+    return tasks
+        .where(
+          (task) =>
+              !task.isEffectivelyCompleted && task.assignmentOwnerKey == key,
+        )
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final activeCount =
+        tasks.where((task) => !task.isEffectivelyCompleted).length;
+    final unassignedTasks = _tasksForOwner(_kWbsUnassignedOwnerKey);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF101010),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF242424)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.swap_horiz_outlined,
+                size: 18,
+                color: Color(0xFFFF6B35),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'WBS assignment',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              _WbsAssignmentCountBadge(label: '$activeCount active'),
+              const SizedBox(width: 6),
+              _WbsAssignmentCountBadge(
+                label: '${unassignedTasks.length} open',
+                color: _activeWbsInstanceColor(_kWbsUnassignedOwnerKey),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final laneWidth = constraints.maxWidth < 720
+                  ? constraints.maxWidth
+                  : (constraints.maxWidth - 12) / 2;
+              final ownerLanes = _wbsAssignmentLaneKeys.map((ownerKey) {
+                return SizedBox(
+                  width: laneWidth,
+                  child: _WbsOwnerDropLane(
+                    ownerKey: ownerKey,
+                    tasks: _tasksForOwner(ownerKey),
+                    onMoveTaskOwner: onMoveTaskOwner,
+                  ),
+                );
+              }).toList();
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _WbsOwnerDropLane(
+                    ownerKey: _kWbsUnassignedOwnerKey,
+                    tasks: unassignedTasks,
+                    onMoveTaskOwner: onMoveTaskOwner,
+                    icon: Icons.delete_outline,
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(spacing: 12, runSpacing: 12, children: ownerLanes),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WbsOwnerDropLane extends StatelessWidget {
+  final String ownerKey;
+  final IconData icon;
+  final List<WbsTask> tasks;
+  final void Function(WbsTask task, String ownerKey) onMoveTaskOwner;
+
+  const _WbsOwnerDropLane({
+    required this.ownerKey,
+    required this.tasks,
+    required this.onMoveTaskOwner,
+    this.icon = Icons.person_outline,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ownerColor = _activeWbsInstanceColor(ownerKey);
+
+    return DragTarget<WbsTask>(
+      onWillAcceptWithDetails: (details) =>
+          canMoveWbsTaskToOwner(details.data, ownerKey),
+      onAcceptWithDetails: (details) => onMoveTaskOwner(details.data, ownerKey),
+      builder: (context, candidateData, rejectedData) {
+        final canDrop = candidateData.isNotEmpty;
+        final rejected = rejectedData.isNotEmpty;
+        final borderColor = rejected
+            ? const Color(0xFFEF4444)
+            : canDrop
+                ? const Color(0xFF22C55E)
+                : ownerColor;
+        final backgroundColor = rejected
+            ? const Color(0xFF3F1111)
+            : canDrop
+                ? const Color(0xFF0F2F1F)
+                : const Color(0xFF151515);
+        final headerIcon = rejected
+            ? Icons.block
+            : canDrop
+                ? Icons.check_circle_outline
+                : icon;
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          constraints: const BoxConstraints(minHeight: 120),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderColor, width: canDrop ? 2 : 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(headerIcon, size: 18, color: borderColor),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _activeWbsInstanceLabel(ownerKey),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: borderColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  _WbsAssignmentCountBadge(
+                    label: '${tasks.length}',
+                    color: borderColor,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              if (tasks.isEmpty)
+                const SizedBox(
+                  height: 44,
+                  child: Center(
+                    child: Text(
+                      'No tasks',
+                      style: TextStyle(
+                        color: Color(0xFF707070),
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 280),
+                  child: ListView.separated(
+                    primary: false,
+                    shrinkWrap: true,
+                    itemCount: tasks.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      return _DraggableWbsTaskChip(
+                        task: tasks[index],
+                        onMoveTaskOwner: onMoveTaskOwner,
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _DraggableWbsTaskChip extends StatelessWidget {
+  final WbsTask task;
+  final void Function(WbsTask task, String ownerKey) onMoveTaskOwner;
+
+  const _DraggableWbsTaskChip({
+    required this.task,
+    required this.onMoveTaskOwner,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final child = _WbsTaskAssignmentChip(
+      task: task,
+      onMoveTaskOwner: onMoveTaskOwner,
+    );
+    return Draggable<WbsTask>(
+      data: task,
+      feedback: Material(
+        color: Colors.transparent,
+        child: SizedBox(
+          width: 300,
+          child: _WbsTaskAssignmentChip(
+            task: task,
+            dragging: true,
+            onMoveTaskOwner: onMoveTaskOwner,
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(opacity: 0.35, child: child),
+      child: child,
+    );
+  }
+}
+
+class _WbsTaskAssignmentChip extends StatelessWidget {
+  final WbsTask task;
+  final bool dragging;
+  final void Function(WbsTask task, String ownerKey) onMoveTaskOwner;
+
+  const _WbsTaskAssignmentChip({
+    required this.task,
+    required this.onMoveTaskOwner,
+    this.dragging = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final assignmentOwnerKey = task.assignmentOwnerKey;
+    final ownerColor = _activeWbsInstanceColor(assignmentOwnerKey);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: dragging ? const Color(0xFF202020) : const Color(0xFF0F0F0F),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: ownerColor.withValues(alpha: 0.55)),
+        boxShadow: dragging
+            ? const [
+                BoxShadow(
+                  color: Color(0x66000000),
+                  blurRadius: 14,
+                  offset: Offset(0, 6),
+                ),
+              ]
+            : null,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.drag_indicator, size: 16, color: ownerColor),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              task.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            _activeWbsShortInstance(assignmentOwnerKey),
+            style: TextStyle(
+              color: ownerColor,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(width: 2),
+          PopupMenuButton<String>(
+            tooltip: 'Change WBS owner',
+            enabled: !task.isEffectivelyCompleted,
+            icon: Icon(
+              Icons.more_vert,
+              size: 16,
+              color: ownerColor,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 160),
+            onSelected: (ownerKey) {
+              if (canMoveWbsTaskToOwner(task, ownerKey)) {
+                onMoveTaskOwner(task, ownerKey);
+              }
+            },
+            itemBuilder: (context) {
+              return const [
+                PopupMenuItem(value: 'claude', child: Text('Claude Code')),
+                PopupMenuItem(value: 'codex', child: Text('Codex')),
+                PopupMenuItem(value: 'user', child: Text('User')),
+                PopupMenuItem(value: 'automation', child: Text('Automation')),
+                PopupMenuDivider(),
+                PopupMenuItem(value: 'unassigned', child: Text('Unassigned')),
+              ];
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WbsAssignmentCountBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _WbsAssignmentCountBadge({
+    required this.label,
+    this.color = const Color(0xFFFF6B35),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          height: 1.5,
+        ),
+      ),
     );
   }
 }

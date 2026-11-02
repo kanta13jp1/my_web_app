@@ -9,6 +9,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:my_web_app/pages/real_world_danshari_page.dart';
 import 'package:my_web_app/services/theme_service.dart'; // 追加
 
+import 'support/local_integration_config.dart';
+
 // --- 1. ImagePickerのみモック化 ---
 class MockImagePicker extends Mock implements ImagePicker {
   @override
@@ -98,27 +100,29 @@ void main() {
 
   testWidgets('結合テスト: 実機でSupabase APIを叩いて断捨離判定を行う',
       (WidgetTester tester) async {
-    // --- 2. 初期設定（Supabase初期化） ---
-    const supabaseUrl = 'https://smmkxxavexumewbfaqpy.supabase.co';
-    const supabaseKey =
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw';
-
-    try {
-      await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
-    } catch (_) {}
-
-    final supabase = Supabase.instance.client;
-
-    // ★ ログイン処理を強化
-    final authResponse = await supabase.auth.signInWithPassword(
-      email: 'kanta13jp@gmail.com',
-      password: 'P@ssw0rd01',
+    // Explicit, disposable local test configuration only. Never use live accounts.
+    const enabled = bool.fromEnvironment('RUN_LOCAL_DANSHARI_INTEGRATION');
+    const supabaseUrl = String.fromEnvironment('TEST_SUPABASE_URL');
+    const supabaseKey = String.fromEnvironment('TEST_SUPABASE_PUBLISHABLE_KEY');
+    const email = String.fromEnvironment('TEST_SUPABASE_EMAIL');
+    const password = String.fromEnvironment('TEST_SUPABASE_PASSWORD');
+    validateLocalIntegrationConfig(
+      enabled: enabled,
+      url: supabaseUrl,
+      publishableKey: supabaseKey,
+      email: email,
+      password: password,
     );
-
+    await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
+    addTearDown(() => Supabase.instance.dispose());
+    final supabase = Supabase.instance.client;
+    final authResponse = await supabase.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
     if (authResponse.session == null) {
       fail('Supabaseへのログインに失敗しました。ユーザーが正しく作成されているか確認してください。');
     }
-    debugPrint('Login Success! User ID: ${authResponse.user?.id}');
 
     final mockPicker = MockImagePicker();
 

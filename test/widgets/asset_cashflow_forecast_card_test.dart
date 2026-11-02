@@ -43,6 +43,86 @@ AssetCashflowForecast _shortfallForecast() {
 
 void main() {
   group('AssetCashflowForecastCard', () {
+    for (final width in [390.0, 1440.0]) {
+      testWidgets(
+          'paid-cycle forecast explanation and monthly detail at $width',
+          (tester) async {
+        tester.view.physicalSize = Size(width, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final semantics = tester.ensureSemantics();
+        try {
+          final forecast = AssetCashflowForecastService.project(
+            asOf: DateTime(2026, 6, 1),
+            startingBalance: 10000,
+            horizonMonths: 2,
+            recurringOutflow: [
+              AssetCashflowRecurringEntry(
+                dayOfMonth: 10,
+                amount: 2000,
+                paidPeriodStart: DateTime(2026, 6, 1),
+                paidPeriodEndExclusive: DateTime(2026, 7, 1),
+              ),
+            ],
+          );
+          await _pump(tester, forecast);
+          expect(find.textContaining('対象の給与サイクル内だけ反映'), findsOneWidget);
+          final details =
+              find.byKey(const Key('asset_cashflow_forecast_month_details'));
+          final tile = find.descendant(
+            of: details,
+            matching: find.byType(ListTile),
+          );
+          final semanticsData = tester.getSemantics(tile).getSemanticsData();
+          expect(semanticsData.flagsCollection.isButton, isTrue);
+          await tester.ensureVisible(details);
+          await tester.tap(find.text('月別内訳（月末・月内最低）'));
+          await tester.pumpAndSettle();
+          expect(find.text('2026/6 月末 ¥10000 / 月内最低 ¥10000'), findsOneWidget);
+          expect(find.text('2026/7 月末 ¥8000 / 月内最低 ¥8000'), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        } finally {
+          semantics.dispose();
+        }
+      });
+    }
+
+    testWidgets('shows a negative monthly low even when month-end recovers', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final forecast = AssetCashflowForecastService.project(
+        asOf: DateTime(2026, 9, 5),
+        startingBalance: 172928,
+        horizonMonths: 1,
+        recurringIncome: const [
+          AssetCashflowRecurringEntry(dayOfMonth: 25, amount: 421277),
+        ],
+        recurringOutflow: const [
+          AssetCashflowRecurringEntry(dayOfMonth: 15, amount: 233498),
+        ],
+      );
+      expect(forecast.worstBalance, -60570);
+      expect(forecast.months.single.closingBalance, 360707);
+      await _pump(tester, forecast);
+      expect(find.textContaining('登録データに基づく不足額の試算'), findsOneWidget);
+      expect(find.textContaining('明細と照合してから判断'), findsOneWidget);
+      expect(find.text('● 月末残高'), findsOneWidget);
+      expect(find.text('◆ 月内最低残高'), findsOneWidget);
+      final details = find.byKey(
+        const Key('asset_cashflow_forecast_month_details'),
+      );
+      await tester.ensureVisible(details);
+      await tester.tap(find.text('月別内訳（月末・月内最低）'));
+      await tester.pumpAndSettle();
+      expect(find.text('2026/9 月末 ¥360707 / 月内最低 ¥-60570'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('renders the chart and a shortfall warning', (tester) async {
       await _pump(tester, _shortfallForecast());
 

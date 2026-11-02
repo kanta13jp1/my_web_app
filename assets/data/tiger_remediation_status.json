@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-02T14:56:04.145228+00:00",
+  "generated_at": "2026-09-02T18:20:58.390737+00:00",
   "entries": [
     {
       "status": "existing",
@@ -20,7 +20,7 @@
       "remediation_label": "対策済み・Issue #4737 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "SUCCEEDED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": 4983,
         "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/4983",
@@ -48,7 +48,7 @@
       "remediation_label": "対策済み・Issue #4734 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "SUCCEEDED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": 4966,
         "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/4966",
@@ -75,7 +75,7 @@
       "remediation_label": "対策待ち・Issue #4757",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -94,7 +94,7 @@
       "remediation_label": "対策済み・Issue #4763 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "EXTERNAL_IN_PROGRESS",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": 4994,
         "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/4994",
@@ -122,7 +122,7 @@
       "remediation_label": "対策済み・Issue #4850 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "SUCCEEDED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": 5060,
         "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5060",
@@ -152,7 +152,7 @@
       "remediation_label": "対策済み・Issue #4855 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": null,
         "pr_url": null,
@@ -182,7 +182,7 @@
       "remediation_label": "対策済み・Issue #4878 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": null,
         "pr_url": null,
@@ -210,7 +210,7 @@
       "remediation_label": "Issue #4905 終了・反映証拠確認待ち",
       "remediation_detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
       "queue_status": "SUCCEEDED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -230,7 +230,7 @@
       "remediation_label": "対策済み・Issue #4941 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "SUCCEEDED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": 5139,
         "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5139",
@@ -253,12 +253,12 @@
       "content_id": "955ae2e6-9909-4635-aacd-790ab23aa7c8",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\courses\\20260828T021401+0900-cycle.json",
       "closed_at": "2026-09-02T14:33:15Z",
-      "github_updated_at": "2026-09-02T14:33:15Z",
+      "github_updated_at": "2026-09-02T15:17:01Z",
       "remediation_state": "production_verified",
       "remediation_label": "対策済み・Issue #4945 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
-      "queue_status": "RUNNING",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "queue_status": "SUCCEEDED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": 5222,
         "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5222",
@@ -286,7 +286,7 @@
       "remediation_label": "対策待ち・Issue #4951",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -306,7 +306,7 @@
       "remediation_label": "対策待ち・Issue #4979",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -326,7 +326,7 @@
       "remediation_label": "対策済み・Issue #4982 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": 5048,
         "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5048",
@@ -354,7 +354,7 @@
       "remediation_label": "対策待ち・Issue #5049",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -374,13 +374,13 @@
       "remediation_label": "対策待ち・Issue #5093",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
       "number": 5126,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/5126",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-course-review:20260830T230009+0900:41283504-615b-4911-9ebb-af81298a5770",
       "cycle_id": "20260830T230009+0900",
       "lane": "course_review",
@@ -388,19 +388,27 @@
       "recorded_at": "2026-08-30T14:09:51.765649+00:00",
       "content_id": "41283504-615b-4911-9ebb-af81298a5770",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\courses\\20260830T230009+0900-cycle.json",
-      "closed_at": null,
-      "github_updated_at": "2026-08-30T14:09:50Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #5126",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "closed_at": "2026-09-02T17:52:16Z",
+      "github_updated_at": "2026-09-02T17:52:16Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #5126 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "implementation": {
+        "pr_number": 5259,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5259",
+        "commit_sha": "33d62e0653f9b4dccfb848183274b3c411e56c1b",
+        "workflow_run": "33663671984",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33663671984/job/100360194193",
+        "release_status": "passed"
+      }
     },
     {
       "status": "created",
       "number": 5142,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/5142",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-course-review:20260831T030006+0900:6dba658f-c89c-4a8e-86c6-750c26d51fa2",
       "cycle_id": "20260831T030006+0900",
       "lane": "course_review",
@@ -408,19 +416,27 @@
       "recorded_at": "2026-08-30T18:24:02.223098+00:00",
       "content_id": "6dba658f-c89c-4a8e-86c6-750c26d51fa2",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\courses\\20260831T030006+0900-cycle.json",
-      "closed_at": null,
-      "github_updated_at": "2026-08-30T18:24:00Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #5142",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "closed_at": "2026-09-02T17:12:37Z",
+      "github_updated_at": "2026-09-02T17:12:37Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #5142 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "implementation": {
+        "pr_number": 5255,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5255",
+        "commit_sha": "71a621ea9fac2526170b3c56ae19bcaca49471c3",
+        "workflow_run": "33659559471",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33659559471/job/100346577094",
+        "release_status": "passed"
+      }
     },
     {
       "status": "created",
       "number": 5144,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/5144",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-course-review:20260831T033107+0900:363d108c-37e3-4bb5-a4a2-a34f65416938",
       "cycle_id": "20260831T033107+0900",
       "lane": "course_review",
@@ -428,19 +444,27 @@
       "recorded_at": "2026-08-30T18:39:51.191975+00:00",
       "content_id": "363d108c-37e3-4bb5-a4a2-a34f65416938",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\courses\\20260831T033107+0900-cycle.json",
-      "closed_at": null,
-      "github_updated_at": "2026-08-30T18:39:49Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #5144",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "closed_at": "2026-09-02T17:02:37Z",
+      "github_updated_at": "2026-09-02T17:02:37Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #5144 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "implementation": {
+        "pr_number": 5254,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5254",
+        "commit_sha": "689262b3e47a8fe8661a8dd14bd1a8c2e6a11341",
+        "workflow_run": "33658559238",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33658559238/job/100343322833",
+        "release_status": "passed"
+      }
     },
     {
       "status": "created",
       "number": 5150,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/5150",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-course-review:20260831T061237+0900:5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
       "cycle_id": "20260831T061237+0900",
       "lane": "course_review",
@@ -448,19 +472,27 @@
       "recorded_at": "2026-08-30T21:18:16.661234+00:00",
       "content_id": "5f422a5a-81ec-4776-9a2b-8e27ec19e6f8",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\courses\\20260831T061237+0900-cycle.json",
-      "closed_at": null,
-      "github_updated_at": "2026-08-30T21:18:14Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #5150",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "closed_at": "2026-09-02T16:52:27Z",
+      "github_updated_at": "2026-09-02T16:52:27Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #5150 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "implementation": {
+        "pr_number": 5251,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5251",
+        "commit_sha": "ea9722f907ebbd4ee13e55e0c73027562fcdfb61",
+        "workflow_run": "33657491204",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33657491204/job/100339754176",
+        "release_status": "passed"
+      }
     },
     {
       "status": "created",
       "number": 5157,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/5157",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-course-review:20260831T134103+0900:9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
       "cycle_id": "20260831T134103+0900",
       "lane": "course_review",
@@ -468,19 +500,27 @@
       "recorded_at": "2026-08-31T04:51:10.295273+00:00",
       "content_id": "9138a4ef-d8e8-4308-aa4f-4b93aac6ff39",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\courses\\20260831T134103+0900-cycle.json",
-      "closed_at": null,
-      "github_updated_at": "2026-08-31T04:51:08Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #5157",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "closed_at": "2026-09-02T16:52:27Z",
+      "github_updated_at": "2026-09-02T16:52:27Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #5157 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "implementation": {
+        "pr_number": 5251,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5251",
+        "commit_sha": "ea9722f907ebbd4ee13e55e0c73027562fcdfb61",
+        "workflow_run": "33657491204",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33657491204/job/100339754176",
+        "release_status": "passed"
+      }
     },
     {
       "status": "created",
       "number": 5160,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/5160",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-course-review:20260831T170208+0900:0ee90f87-2319-4b2f-af0f-d298083c752c",
       "cycle_id": "20260831T170208+0900",
       "lane": "course_review",
@@ -488,19 +528,27 @@
       "recorded_at": "2026-08-31T08:16:39.403974+00:00",
       "content_id": "0ee90f87-2319-4b2f-af0f-d298083c752c",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\courses\\20260831T170208+0900-cycle.json",
-      "closed_at": null,
-      "github_updated_at": "2026-08-31T08:16:37Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #5160",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "closed_at": "2026-09-02T16:42:44Z",
+      "github_updated_at": "2026-09-02T16:42:44Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #5160 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "implementation": {
+        "pr_number": 5250,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5250",
+        "commit_sha": "c397877425b046c27aacf8cd85791a15124bc881",
+        "workflow_run": "33656480182",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33656480182/job/100336507252",
+        "release_status": "passed"
+      }
     },
     {
       "status": "created",
       "number": 5165,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/5165",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-course-review:20260831T211401+0900:2240c679-a2bc-4322-8643-7499385a1bde",
       "cycle_id": "20260831T211401+0900",
       "lane": "course_review",
@@ -508,19 +556,27 @@
       "recorded_at": "2026-08-31T12:23:27.207908+00:00",
       "content_id": "2240c679-a2bc-4322-8643-7499385a1bde",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\courses\\20260831T211401+0900-cycle.json",
-      "closed_at": null,
-      "github_updated_at": "2026-08-31T12:23:26Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #5165",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "closed_at": "2026-09-02T16:42:43Z",
+      "github_updated_at": "2026-09-02T16:42:43Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #5165 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "implementation": {
+        "pr_number": 5250,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5250",
+        "commit_sha": "c397877425b046c27aacf8cd85791a15124bc881",
+        "workflow_run": "33656480182",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33656480182/job/100336507252",
+        "release_status": "passed"
+      }
     },
     {
       "status": "created",
       "number": 5227,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/5227",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-course-review:20260902T183425+0900:256fce47-54de-4716-ad2c-478bc2e9613b",
       "cycle_id": "20260902T183425+0900",
       "lane": "course_review",
@@ -528,13 +584,49 @@
       "recorded_at": "2026-09-02T10:21:32.055623+00:00",
       "content_id": "256fce47-54de-4716-ad2c-478bc2e9613b",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\courses\\20260902T183425+0900-cycle.json",
-      "closed_at": null,
-      "github_updated_at": "2026-09-02T10:21:37Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #5227",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "closed_at": "2026-09-02T15:42:37Z",
+      "github_updated_at": "2026-09-02T15:42:37Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #5227 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "implementation": {
+        "pr_number": 5245,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5245",
+        "commit_sha": "f7d45fba21d8366680ecad2dbb34eb21edfccd4f",
+        "workflow_run": "33650190827",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33650190827/job/100315105541",
+        "release_status": "passed"
+      }
+    },
+    {
+      "status": "created",
+      "number": 5253,
+      "url": "https://github.com/kanta13jp1/my_web_app/issues/5253",
+      "github_state": "CLOSED",
+      "dedupe_key": "tiger-course-review:20260903T014418+0900:183e7514-c5ac-487f-a78a-ddbbcbbd1088",
+      "cycle_id": "20260903T014418+0900",
+      "lane": "course_review",
+      "subject_id": "183e7514-c5ac-487f-a78a-ddbbcbbd1088",
+      "recorded_at": "2026-09-02T16:59:18.149343+00:00",
+      "content_id": "183e7514-c5ac-487f-a78a-ddbbcbbd1088",
+      "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\courses\\20260903T014418+0900-cycle.json",
+      "closed_at": "2026-09-02T17:02:38Z",
+      "github_updated_at": "2026-09-02T17:02:38Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #5253 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "implementation": {
+        "pr_number": 5254,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5254",
+        "commit_sha": "689262b3e47a8fe8661a8dd14bd1a8c2e6a11341",
+        "workflow_run": "33658559238",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33658559238/job/100343322833",
+        "release_status": "passed"
+      }
     },
     {
       "status": "created",
@@ -553,7 +645,7 @@
       "remediation_label": "対策待ち・Issue #4916",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "PARTIAL_WAIT",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -572,7 +664,7 @@
       "remediation_label": "対策済み・Issue #4937 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "SUCCEEDED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": 4987,
         "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/4987",
@@ -599,7 +691,7 @@
       "remediation_label": "対策済み・Issue #4943 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "SUCCEEDED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": 5162,
         "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5162",
@@ -621,12 +713,12 @@
       "recorded_at": "2026-08-27T19:36:16.502329+00:00",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\features\\20260828T042953+0900-cycle.json",
       "closed_at": null,
-      "github_updated_at": "2026-08-27T19:36:15Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #4946",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "github_updated_at": "2026-09-02T15:41:56Z",
+      "remediation_state": "needs_attention",
+      "remediation_label": "要確認・Issue #4946",
+      "remediation_detail": "legal_responsible_gambling_review_required",
+      "queue_status": "NEEDS_ATTENTION",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -645,7 +737,7 @@
       "remediation_label": "対策待ち・Issue #4948",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -664,7 +756,7 @@
       "remediation_label": "対策待ち・Issue #4952",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -683,7 +775,7 @@
       "remediation_label": "対策待ち・Issue #4958",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "existing",
@@ -702,7 +794,7 @@
       "remediation_label": "Issue #4984 終了・反映証拠確認待ち",
       "remediation_detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -721,7 +813,7 @@
       "remediation_label": "対策待ち・Issue #5110",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -740,26 +832,34 @@
       "remediation_label": "対策待ち・Issue #5131",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
       "number": 5146,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/5146",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-feature-review:20260831T040750+0900:ai_university",
       "cycle_id": "20260831T040750+0900",
       "lane": "feature_review",
       "subject_id": "ai_university",
       "recorded_at": "2026-08-30T19:40:02.208523+00:00",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\features\\20260831T040750+0900-cycle.json",
-      "closed_at": null,
-      "github_updated_at": "2026-08-30T19:40:00Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #5146",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "closed_at": "2026-09-02T17:40:21Z",
+      "github_updated_at": "2026-09-02T17:40:21Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #5146 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "implementation": {
+        "pr_number": 5256,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5256",
+        "commit_sha": "ec74b6513711ef26a61675fc9c410778f215fa5e",
+        "workflow_run": "33660836621",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33660836621/job/100356069883",
+        "release_status": "passed"
+      }
     },
     {
       "status": "created",
@@ -778,7 +878,7 @@
       "remediation_label": "対策待ち・Issue #5158",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -797,61 +897,85 @@
       "remediation_label": "対策待ち・Issue #5161",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
       "number": 5166,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/5166",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-feature-review:20260831T233058+0900:home",
       "cycle_id": "20260831T233058+0900",
       "lane": "feature_review",
       "subject_id": "home",
       "recorded_at": "2026-08-31T14:51:29.227385+00:00",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\features\\20260831T233058+0900-cycle.json",
-      "closed_at": null,
-      "github_updated_at": "2026-08-31T14:51:28Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #5166",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "closed_at": "2026-09-02T16:38:29Z",
+      "github_updated_at": "2026-09-02T16:38:29Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #5166 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "implementation": {
+        "pr_number": 5249,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5249",
+        "commit_sha": "da66d4dee5d553934aed3d2e488f4b40fa34d5dd",
+        "workflow_run": "33654594831",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33654594831/job/100334909924",
+        "release_status": "passed"
+      }
     },
     {
       "status": "created",
       "number": 5237,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/5237",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-feature-review:20260902T222324+0900:ai_hub",
       "cycle_id": "20260902T222324+0900",
       "lane": "feature_review",
       "subject_id": "ai_hub",
       "recorded_at": "2026-09-02T14:30:02.238758+00:00",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\features\\20260902T222324+0900-cycle.json",
-      "closed_at": null,
-      "github_updated_at": "2026-09-02T14:30:07Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #5237",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "closed_at": "2026-09-02T15:20:24Z",
+      "github_updated_at": "2026-09-02T15:20:24Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #5237 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "implementation": {
+        "pr_number": 5241,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5241",
+        "commit_sha": "d1831d8c6c4f38dea9435705115289311355fb37",
+        "workflow_run": "33646921593",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33646921593/job/100304145217",
+        "release_status": "passed"
+      }
     },
     {
       "number": 5234,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/5234",
       "status": "created",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-feature-review:20260902T222324+0900:core_hub",
-      "remediation_state": "queued",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "remediation_state": "production_verified",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "cycle_id": "20260902T222324+0900",
       "lane": "feature_review",
-      "closed_at": null,
-      "github_updated_at": "2026-09-02T13:39:09Z",
-      "remediation_label": "対策待ち・Issue #5234",
-      "remediation_detail": "専用対策キューで順番待ちです。"
+      "closed_at": "2026-09-02T15:32:49Z",
+      "github_updated_at": "2026-09-02T15:32:49Z",
+      "remediation_label": "対策済み・Issue #5234 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "implementation": {
+        "pr_number": 5243,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5243",
+        "commit_sha": "63e19633c2530c3df7a0e52314698853f7a1569d",
+        "workflow_run": "33649090163",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33649090163/job/100311557056",
+        "release_status": "passed"
+      }
     },
     {
       "number": 4738,
@@ -861,7 +985,7 @@
       "dedupe_key": "tiger-legacy-review:20260823T152316+0900:ai_university",
       "remediation_state": "closed_pending_proof",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "cycle_id": "20260823T152316+0900",
       "lane": "site_review",
       "closed_at": "2026-08-30T06:44:46Z",
@@ -877,7 +1001,7 @@
       "dedupe_key": "tiger-legacy-review:20260823T153734+0900:comparison",
       "remediation_state": "closed_pending_proof",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "cycle_id": "20260823T153734+0900",
       "lane": "site_review",
       "closed_at": "2026-08-26T02:01:32Z",
@@ -902,7 +1026,7 @@
       "remediation_label": "統合済み・Issue #4746 → #4744",
       "remediation_detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "superseded_by_issue": 4744
     },
     {
@@ -922,7 +1046,7 @@
       "remediation_label": "統合済み・Issue #4755 → #4834",
       "remediation_detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "superseded_by_issue": 4834
     },
     {
@@ -942,7 +1066,7 @@
       "remediation_label": "統合済み・Issue #4800 → #4834",
       "remediation_detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "superseded_by_issue": 4834
     },
     {
@@ -962,7 +1086,7 @@
       "remediation_label": "統合済み・Issue #4803 → #4834",
       "remediation_detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "superseded_by_issue": 4834
     },
     {
@@ -982,7 +1106,7 @@
       "remediation_label": "統合済み・Issue #4810 → #4834",
       "remediation_detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "superseded_by_issue": 4834
     },
     {
@@ -1002,7 +1126,7 @@
       "remediation_label": "統合済み・Issue #4811 → #4834",
       "remediation_detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "superseded_by_issue": 4834
     },
     {
@@ -1022,7 +1146,7 @@
       "remediation_label": "Issue #4834 終了・反映証拠確認待ち",
       "remediation_detail": "Issueは終了済みですが、merge commitと成功workflowの両方は確認できません。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -1041,7 +1165,7 @@
       "remediation_label": "対策待ち・Issue #4900",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "PARTIAL_WAIT",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -1060,7 +1184,7 @@
       "remediation_label": "対策待ち・Issue #4936",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "PARTIAL_WAIT",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -1079,7 +1203,7 @@
       "remediation_label": "対策済み・Issue #4944 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "SUCCEEDED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": 5168,
         "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5168",
@@ -1093,20 +1217,21 @@
       "status": "created",
       "number": 4947,
       "url": "https://github.com/kanta13jp1/my_web_app/issues/4947",
-      "github_state": "OPEN",
+      "github_state": "CLOSED",
       "dedupe_key": "tiger-site-review:20260828T051725+0900:whole_site",
       "cycle_id": "20260828T051725+0900",
       "lane": "site_review",
       "subject_id": "whole_site",
       "recorded_at": "2026-08-27T20:24:40.553762+00:00",
       "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\site\\20260828T051725+0900-cycle.json",
-      "closed_at": null,
-      "github_updated_at": "2026-08-27T20:24:39Z",
-      "remediation_state": "queued",
-      "remediation_label": "対策待ち・Issue #4947",
-      "remediation_detail": "専用対策キューで順番待ちです。",
-      "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "closed_at": "2026-09-02T18:16:43Z",
+      "github_updated_at": "2026-09-02T18:20:55Z",
+      "remediation_state": "superseded",
+      "remediation_label": "統合済み・Issue #4947 → #4985",
+      "remediation_detail": "重複Issueとして別Issueへ統合されました。修正完了としては扱いません。",
+      "queue_status": "RUNNING",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "superseded_by_issue": 4985
     },
     {
       "status": "created",
@@ -1125,7 +1250,7 @@
       "remediation_label": "対策待ち・Issue #4950",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -1144,7 +1269,7 @@
       "remediation_label": "対策待ち・Issue #4955",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -1163,7 +1288,7 @@
       "remediation_label": "対策済み・Issue #4961 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": 5014,
         "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5014",
@@ -1190,7 +1315,7 @@
       "remediation_label": "対策済み・Issue #4985 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": 5025,
         "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5025",
@@ -1217,7 +1342,7 @@
       "remediation_label": "対策待ち・Issue #5085",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -1236,7 +1361,7 @@
       "remediation_label": "対策待ち・Issue #5096",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -1255,7 +1380,7 @@
       "remediation_label": "対策待ち・Issue #5108",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -1274,7 +1399,7 @@
       "remediation_label": "対策待ち・Issue #5119",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -1293,7 +1418,7 @@
       "remediation_label": "対策待ち・Issue #5135",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -1312,7 +1437,7 @@
       "remediation_label": "対策待ち・Issue #5149",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -1331,7 +1456,7 @@
       "remediation_label": "対策済み・Issue #5156 本番検証済み",
       "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
       "queue_status": "ALREADY_RESOLVED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
       "implementation": {
         "pr_number": 5164,
         "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5164",
@@ -1358,7 +1483,7 @@
       "remediation_label": "対策待ち・Issue #5159",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -1377,7 +1502,7 @@
       "remediation_label": "対策待ち・Issue #5163",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
     },
     {
       "status": "created",
@@ -1396,7 +1521,34 @@
       "remediation_label": "対策待ち・Issue #5169",
       "remediation_detail": "専用対策キューで順番待ちです。",
       "queue_status": "QUEUED",
-      "synced_at": "2026-09-02T14:56:04.145228+00:00"
+      "synced_at": "2026-09-02T18:20:58.390737+00:00"
+    },
+    {
+      "status": "created",
+      "number": 5246,
+      "url": "https://github.com/kanta13jp1/my_web_app/issues/5246",
+      "github_state": "CLOSED",
+      "dedupe_key": "tiger-site-review:20260903T000018+0900:whole_site",
+      "cycle_id": "20260903T000018+0900",
+      "lane": "site_review",
+      "subject_id": "whole_site",
+      "recorded_at": "2026-09-02T15:43:01.853789+00:00",
+      "report_path": "C:\\Users\\kanta\\.codex\\review-runs\\my_web_app\\site\\20260903T000018+0900-cycle.json",
+      "closed_at": "2026-09-02T16:10:24Z",
+      "github_updated_at": "2026-09-02T16:10:24Z",
+      "remediation_state": "production_verified",
+      "remediation_label": "対策済み・Issue #5246 本番検証済み",
+      "remediation_detail": "Issueの終了、merge commit、成功workflowを再同期しました。",
+      "queue_status": "ALREADY_RESOLVED",
+      "synced_at": "2026-09-02T18:20:58.390737+00:00",
+      "implementation": {
+        "pr_number": 5247,
+        "pr_url": "https://github.com/kanta13jp1/my_web_app/pull/5247",
+        "commit_sha": "efbe365c91f67d36d460fd22b8ebdba05b03f537",
+        "workflow_run": "33651743844",
+        "workflow_url": "https://github.com/kanta13jp1/my_web_app/actions/runs/33651743844/job/100325209631",
+        "release_status": "passed"
+      }
     }
   ]
 }

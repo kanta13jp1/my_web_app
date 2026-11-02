@@ -15,6 +15,7 @@ class AssetObsidianVaultImportDialog extends StatefulWidget {
     required this.onApply,
     this.importService = const AssetObsidianVaultImportService(),
     this.pickVault = pickAssetObsidianVault,
+    this.pickFiles = pickAssetObsidianFiles,
     this.pickerSupported,
   });
 
@@ -23,6 +24,7 @@ class AssetObsidianVaultImportDialog extends StatefulWidget {
   final Future<void> Function(AssetObsidianApplySelection selection) onApply;
   final AssetObsidianVaultImportService importService;
   final AssetObsidianVaultPicker pickVault;
+  final AssetObsidianVaultPicker pickFiles;
   final bool? pickerSupported;
 
   @override
@@ -66,13 +68,14 @@ class _AssetObsidianVaultImportDialogState
         .toList(growable: false);
   }
 
-  Future<void> _selectVault() async {
+  Future<void> _selectVault({bool filesOnly = false}) async {
     setState(() {
       _isSelecting = true;
       _error = null;
     });
     try {
-      final selection = await widget.pickVault();
+      final selection =
+          await (filesOnly ? widget.pickFiles : widget.pickVault)();
       if (selection == null || !mounted) return;
       final preview = widget.importService.preview(
         files: selection.files,
@@ -225,10 +228,18 @@ class _AssetObsidianVaultImportDialogState
                 const SizedBox(height: 14),
                 if (!_isPickerSupported)
                   const Text('この機能はChromeなどのWebブラウザ版で利用できます。')
-                else
+                else ...[
                   OutlinedButton.icon(
-                    onPressed:
-                        _isSelecting || _isApplying ? null : _selectVault,
+                    onPressed: _isSelecting || _isApplying
+                        ? null
+                        : () => _selectVault(filesOnly: true),
+                    icon: const Icon(Icons.description_outlined),
+                    label: const Text('Markdownファイルを選択'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _isSelecting || _isApplying
+                        ? null
+                        : () => _selectVault(),
                     icon: _isSelecting
                         ? const SizedBox(
                             width: 18,
@@ -240,6 +251,7 @@ class _AssetObsidianVaultImportDialogState
                       _selection == null ? 'Obsidian保管庫を選択' : '別の保管庫を選択',
                     ),
                   ),
+                ],
                 if (_error != null) ...[
                   const SizedBox(height: 12),
                   _buildMessageBox(

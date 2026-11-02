@@ -28,6 +28,7 @@ if hasattr(sys.stderr, "reconfigure"):
 DEFAULT_BASE_URL = "https://my-web-app-b67f4.web.app"
 JOURNEY_PATHS = (
     "/",
+    "/referral",
     "/subscription-billing",
     "/privacy",
     "/terms",

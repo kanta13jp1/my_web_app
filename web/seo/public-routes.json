@@ -27,10 +27,13 @@
     },
     {
       "path": "/gemini-university",
-      "title": "AI大学 259社 | Google・OpenAI・Anthropicを学ぶ",
-      "description": "Google / OpenAI / Anthropic など259社を体系的に学ぶ無料のAI大学。クイズ・ランキング・バッジで、最新のAIプロバイダーを継続的に習得できます。",
-      "h1": "AI大学 — 259社のAIを学ぶ",
-      "points": ["Google・OpenAI・Anthropic含む259社を網羅", "最新AIプロバイダーの動向を継続キャッチアップ", "クイズとバッジで学習を継続", "無料で利用可能"]
+      "title": "AI大学 {provider_count}社 | Google・OpenAI・Anthropicを学ぶ",
+      "description": "Google / OpenAI / Anthropic など{provider_count}社を体系的に学ぶ無料のAI大学。クイズ・ランキング・バッジで、最新のAIプロバイダーを継続的に習得できます。",
+      "h1": "AI大学 — {provider_count}社のAIを学ぶ",
+      "points": ["Google・OpenAI・Anthropic含む{provider_count}社を網羅", "最新AIプロバイダーの動向を継続キャッチアップ", "クイズとバッジで学習を継続", "無料で利用可能"],
+      "sections": [{"id": "first-learning-action", "heading": "最初の学習を3ステップで始める", "points": ["プロバイダーを検索する", "教材を1つ開いて要点を読む", "クイズを1問完了して理解を確認する"]}],
+      "links": [{"href": "/gemini-university?tab=openai", "label": "OpenAIの教材から始める"}],
+      "contract_markers": ["最初の学習を3ステップで始める", "OpenAIの教材から始める"]
     },
     {
       "path": "/project-gantt",
@@ -61,14 +64,31 @@
       "points": ["ユーザーが公開したメモをAI要約付きで一覧", "学び・気づき・実装ログを発見できる", "各メモは検索・関連参照に対応", "誰でも閲覧可能"]
     },
     {
+      "path": "/referral",
+      "title": "友達紹介プログラム | 自分株式会社",
+      "description": "自分株式会社の紹介プログラム。招待リンクから友達が登録してPro課金すると、招待した人と招待された人のStripe請求残高へPro月額1か月分のクレジットを付与します。登録だけでは付与されません。",
+      "h1": "友達を招待",
+      "points": [
+        "ログイン後に専用の紹介コードと招待リンクを発行",
+        "招待コードは端末に保存され、ログイン後に紹介登録へ紐付け",
+        "友達のPro課金成立時に両者へPro月額1か月分のクレジット",
+        "登録だけでは特典を付与しません"
+      ],
+      "links": [
+        {"href": "/", "label": "自分株式会社を無料で始める"},
+        {"href": "/subscription-billing", "label": "Proプランと料金を確認する"}
+      ],
+      "contract_markers": ["Pro月額1か月分", "登録だけでは特典を付与しません"]
+    },
+    {
       "path": "/subscription-billing",
       "title": "プランと応援 | 自分株式会社",
-      "description": "自分株式会社のFree、Pro、Teamプランと1回100円の応援を確認できます。Proは月額980円、Teamは月額2,980円です。",
+      "description": "自分株式会社のFree、Pro、Teamプランと1回100円の応援を確認できます。Proは月額980円、Teamは1席あたり月額2,980円です。",
       "h1": "プランと応援",
       "points": [
         "Free: 0円。最初の一手、ノート、学習・資産管理の基本機能を試せます。",
         "Pro: 月額980円。AIの利用量と優先機能が増えます。",
-        "Team: 月額2,980円。共有ワークスペースと監査ログを使うチーム向けです。",
+        "Team: 1席あたり月額2,980円。共有ワークスペースと監査ログを使うチーム向けです。",
         "応援: 1回100円・自動更新なし。"
       ],
       "sections": [
@@ -83,7 +103,7 @@
         {"href": "/", "label": "無料で使い続ける"},
         {"href": "/privacy", "label": "プライバシーポリシーを確認する"}
       ],
-      "contract_markers": ["月額980円", "月額2,980円", "1回100円", "entry=static_pricing"]
+      "contract_markers": ["月額980円", "1席あたり月額2,980円", "1回100円", "entry=static_pricing"]
     },
     {
       "path": "/privacy",

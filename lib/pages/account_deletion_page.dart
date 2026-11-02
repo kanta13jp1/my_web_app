@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../models/account_deletion_request.dart';
 import '../services/account_lifecycle_service.dart';
 import '../view_models/account_deletion_view_model.dart';
+import '../widgets/critical_action_dialog.dart';
+import '../widgets/google_oauth_disclosure_dialog.dart';
 
 class AccountDeletionPage extends StatefulWidget {
   const AccountDeletionPage({super.key, this.gateway});
@@ -76,8 +78,16 @@ class _AccountDeletionPageState extends State<AccountDeletionPage> {
                             );
                             _reauthenticationPasswordController.clear();
                           },
-                          onGoogleReauthenticate:
-                              _viewModel.reauthenticateWithGoogle,
+                          onGoogleReauthenticate: () async {
+                            final accepted =
+                                await showGoogleOAuthDisclosureDialog(
+                              context: context,
+                              purpose: GoogleOAuthDisclosurePurpose
+                                  .accountDeletionReauthentication,
+                            );
+                            if (!accepted) return;
+                            await _viewModel.reauthenticateWithGoogle();
+                          },
                           onOpenBilling: () =>
                               Navigator.of(context).pushNamed('/billing'),
                         ),
@@ -140,24 +150,15 @@ class _AccountDeletionPageState extends State<AccountDeletionPage> {
   }
 
   Future<void> _confirmAndSubmit(BuildContext context) async {
-    final accepted = await showDialog<bool>(
+    final accepted = await showCriticalActionDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('退会申請を送信しますか？'),
-        content: const Text('30日の取消猶予後、アカウントと関連データは復元できなくなります。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('戻る'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('退会申請を送信'),
-          ),
-        ],
-      ),
+      title: '退会申請を送信しますか？',
+      impact: '30日の取消猶予後、アカウントと関連データは復元できなくなります。',
+      actionLabel: '退会申請を送信',
+      cancelLabel: '戻る',
+      confirmButtonKey: const Key('account-deletion-final-confirm'),
     );
-    if (accepted == true) {
+    if (accepted) {
       await _viewModel.requestDeletion(_confirmationController.text.trim());
     }
   }

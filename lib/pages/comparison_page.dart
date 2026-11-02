@@ -5,9 +5,12 @@ import 'package:my_web_app/models/competitor_claim_evidence.dart';
 import 'package:my_web_app/services/competitor_claim_evidence_repository.dart';
 import 'package:my_web_app/services/supabase_client_provider.dart';
 import 'package:my_web_app/ui/features/comparison/view_models/comparison_evidence_view_model.dart';
+import 'package:my_web_app/ui/features/comparison/widgets/comparison_cta_panel.dart';
 import 'package:my_web_app/ui/features/comparison/widgets/comparison_evidence_section.dart';
 
 import '../services/growth_acquisition_service.dart';
+
+typedef ComparisonTouchRecorder = Future<void> Function(String competitorKey);
 
 /// Competitor-specific comparison landing page.
 /// Each competitor gets a dedicated route (/vs-notion, /vs-evernote, …)
@@ -16,11 +19,13 @@ import '../services/growth_acquisition_service.dart';
 class ComparisonPage extends StatefulWidget {
   final String competitorKey;
   final CompetitorClaimEvidenceRepository? evidenceRepository;
+  final ComparisonTouchRecorder? touchRecorder;
 
   const ComparisonPage({
     super.key,
     required this.competitorKey,
     this.evidenceRepository,
+    this.touchRecorder,
   });
 
   @override
@@ -71,6 +76,7 @@ class _ComparisonPageState extends State<ComparisonPage> {
       competitorKey: widget.competitorKey.toLowerCase(),
       evidenceStatus: _evidenceViewModel.status,
       evidenceClaims: _evidenceViewModel.claims,
+      touchRecorder: widget.touchRecorder,
     );
   }
 }
@@ -67161,11 +67167,13 @@ class _ComparisonShell extends StatefulWidget {
   final String competitorKey;
   final ComparisonEvidenceStatus evidenceStatus;
   final List<CompetitorClaimEvidence> evidenceClaims;
+  final ComparisonTouchRecorder? touchRecorder;
   const _ComparisonShell({
     required this.info,
     required this.competitorKey,
     required this.evidenceStatus,
     required this.evidenceClaims,
+    this.touchRecorder,
   });
 
   @override
@@ -67594,7 +67602,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   @override
   void initState() {
     super.initState();
-    unawaited(_acquisitionService.recordComparisonTouch(widget.competitorKey));
+    final recorder =
+        widget.touchRecorder ?? _acquisitionService.recordComparisonTouch;
+    unawaited(recorder(widget.competitorKey));
   }
 
   _CompetitorInfo get _info => widget.info;
@@ -67684,7 +67694,11 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                 _buildFeatureTable(),
                 _buildSwitchPlan(context),
                 _buildRelatedComparisons(context),
-                _buildCta(context),
+                ComparisonCtaPanel(
+                  competitorName: _info.name,
+                  accentColor: _info.accentColor,
+                  hasImportSupport: _hasImportSupport,
+                ),
               ],
             ),
           ),
@@ -68398,107 +68412,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCta(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  _info.accentColor.withValues(alpha: 0.9),
-                  _indigo,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              children: [
-                Text(
-                  '次は ${_info.name} の代替を\n実際に試す番です',
-                  style: const TextStyle(
-                    fontFamily: 'NotoSansJP',
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: _textPrimary,
-                    letterSpacing: 0.96,
-                    height: 1.4,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  _hasImportSupport
-                      ? '既存データを残したまま移行できます。まずは無料で登録して、必要ならインポートから始めてください。'
-                      : 'クレジットカード不要。比較しながら試して、必要な機能だけあとから広げられます。',
-                  style: const TextStyle(
-                    color: Color(0xFFE5E7EB),
-                    fontSize: 14,
-                    height: 1.8,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    FilledButton.icon(
-                      onPressed: () => Navigator.of(context)
-                          .pushNamedAndRemoveUntil('/', (_) => false),
-                      icon: const Icon(Icons.rocket_launch, size: 18),
-                      label: const Text(
-                        '無料で自分株式会社を始める',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: _textPrimary,
-                        foregroundColor: _indigo,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 28,
-                          vertical: 16,
-                        ),
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => Navigator.of(context).pushNamed(
-                        _hasImportSupport ? '/import' : '/',
-                      ),
-                      icon: Icon(
-                        _hasImportSupport
-                            ? Icons.upload_file_rounded
-                            : Icons.dashboard_customize_rounded,
-                        size: 18,
-                      ),
-                      label: Text(
-                        _hasImportSupport
-                            ? '${_info.name} からインポート'
-                            : 'ホームで全機能を見る',
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _textPrimary,
-                        side: const BorderSide(color: Color(0xFFE5E7EB)),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
           ),
         ),
       ),

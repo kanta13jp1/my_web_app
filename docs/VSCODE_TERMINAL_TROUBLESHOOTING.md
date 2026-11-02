@@ -1,6 +1,6 @@
 # VS Code Terminal Troubleshooting Guide
 
-Status: repo-managed wiki page for Issues #1294 and #2857.
+Status: repo-managed wiki page for Issues #1294, #2856, and #2857.
 
 This guide standardizes first-response checks when the VS Code integrated
 terminal fails to start, exits immediately, or returns a shell exit code before
@@ -186,7 +186,98 @@ root and let each CLI discover its own project files.
 Do not place tokens or `.env` values in `.vscode/settings.json`. Load secrets
 through the existing local environment or approved secret workflow instead.
 
-## 4. Exit Code Reading Guide
+## 4. Endpoint Security and Least-Privilege Policy
+
+The normal operating state is **VS Code and every integrated shell running as a
+standard user**. Do not run the editor, Git, Flutter, Supabase, development
+servers, or repository tests as administrator. Use elevation only for a bounded
+operating-system task such as an approved installer, driver, or centrally
+managed security policy change; close that elevated process immediately after
+the task.
+
+If a terminal executable is configured to always elevate, open its Properties,
+clear **Run this program as administrator**, and retry from a non-elevated VS
+Code window. If workspace or tool directories require administrator access,
+ask IT to repair their ownership/ACLs instead of permanently elevating the
+editor. This follows Microsoft's UAC model: routine applications run with a
+standard-user token and request elevation only for the specific operation that
+needs it.
+
+Confirm the current PowerShell is not elevated:
+
+```powershell
+$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$principal = [Security.Principal.WindowsPrincipal]::new($identity)
+$principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+```
+
+The expected result for normal development is `False`.
+
+### Antivirus or EDR exception approval
+
+An antivirus exception is a protection gap, not a routine setup step. A
+developer must not add one speculatively or disable Microsoft Defender,
+real-time protection, network protection, Attack Surface Reduction, or the
+organization's EDR agent.
+
+Use this approval sequence only after sections 1–3 have ruled out shell,
+profile, setting, and extension causes:
+
+1. Reproduce the native terminal exception on a fully updated OS and VS Code,
+   with extensions disabled, and retain a redacted Trace log.
+2. Confirm the matching block in Windows Security **Protection history** or the
+   managed EDR console. A timing correlation without a product detection event
+   is not sufficient.
+3. Resolve the actual VS Code install path. For each detected component, record
+   its full path, SHA-256 hash, Authenticode signer, VS Code version, device,
+   ticket, approver, reason, creation time, expiry time, and rollback owner:
+
+   ```powershell
+   Get-AuthenticodeSignature -LiteralPath '<exact detected file>' |
+     Select-Object Status, StatusMessage, SignerCertificate
+   Get-FileHash -Algorithm SHA256 -LiteralPath '<exact detected file>'
+   ```
+
+4. Prefer updating VS Code/security intelligence, correcting the vendor false
+   positive, or using an approved file indicator. If an exception is still
+   required, the endpoint-security owner—not the developer—must deploy the
+   narrowest product-supported, time-bound exception to a pilot device first.
+5. Verify that a non-elevated VS Code terminal starts, normal protection stays
+   enabled, and unrelated files are still scanned. Remove the exception and
+   retest after the next VS Code or security-product update; changed hashes or
+   paths require a new review.
+
+VS Code's official native-exception guidance currently identifies only these
+files below the active installation's
+`resources\app\node_modules.asar.unpacked\node-pty\build\Release` directory:
+
+- `winpty.dll`
+- `winpty-agent.exe`
+- `conpty.node`
+- `conpty_console_list.node`
+
+Treat that list as investigation candidates, not a blanket allowlist. Approve
+only the exact file that the security product demonstrably blocked. Never allow
+the whole VS Code install directory, `node_modules`, a file extension, the
+workspace, the user profile, `Code.exe`, `powershell.exe`, `pwsh.exe`, or
+`cmd.exe`. A process exclusion is especially broad because it can also reduce
+network-protection and ASR inspection. Certificate/publisher rules are allowed
+only when the managed EDR product can also constrain product and path and the
+endpoint-security owner documents why an exact-file rule is insufficient.
+
+For third-party antivirus products, use the vendor's managed administration
+console and false-positive process. Apply the same evidence, exact-target,
+pilot, expiry, verification, and rollback requirements; do not translate this
+guide into an unreviewed consumer-console click path.
+
+Authoritative references:
+
+- [VS Code: Troubleshoot Terminal launch failures](https://code.visualstudio.com/docs/supporting/troubleshoot-terminal-launch)
+- [Microsoft Defender Antivirus exclusions](https://learn.microsoft.com/defender-endpoint/configure-contextual-file-folder-exclusions-microsoft-defender-antivirus)
+- [Microsoft: User Account Control](https://learn.microsoft.com/windows/security/application-security/application-control/user-account-control/)
+- [Microsoft: Local accounts](https://learn.microsoft.com/windows/security/identity-protection/access-control/local-accounts)
+
+## 5. Exit Code Reading Guide
 
 Record the exact exit code, shell, and launch command.
 
@@ -208,7 +299,7 @@ $Error[0] | Format-List * -Force
 Get-ExecutionPolicy -List
 ```
 
-## 5. Search Known Issues
+## 6. Search Known Issues
 
 Search by shell, OS, exit code, and VS Code terminal component.
 
@@ -231,7 +322,7 @@ When opening a repo issue, include:
 - trace log excerpt with secrets redacted
 - exact exit code
 
-## 6. Recovery Decision Tree
+## 7. Recovery Decision Tree
 
 1. **External shell fails**: fix shell install, PATH, profile, or permissions.
 2. **External shell works, VS Code clean profile works**: normal profile setting
@@ -244,7 +335,7 @@ When opening a repo issue, include:
    [`DEV_ENV_SETUP_GUIDE.md`](DEV_ENV_SETUP_GUIDE.md) section 4 before changing
    terminal profiles.
 
-## 7. Minimal Evidence Template
+## 8. Minimal Evidence Template
 
 ```markdown
 ## VS Code terminal failure
@@ -258,5 +349,8 @@ When opening a repo issue, include:
 - `code --disable-extensions` result:
 - Relevant terminal settings:
 - Redacted trace log excerpt:
+- Protection-history / EDR event ID (if security software is suspected):
+- Exact blocked path, SHA-256, signer, and product version:
+- Exception ticket, approver, expiry, and rollback owner (if approved):
 - Suspected cause:
 ```

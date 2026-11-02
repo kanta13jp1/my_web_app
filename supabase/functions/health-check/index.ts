@@ -89,6 +89,23 @@ serve(async (req) => {
       detail: cbError ? cbError.message : "ai_circuit_breaker reachable",
     };
     if (!checks["ai_circuit_breaker"].ok) failCount++;
+
+    // Check 5: session hygiene cleanup visibility (#2910)
+    const { data: hygieneData, error: hygieneError } = await admin.rpc(
+      "get_session_hygiene_health",
+    );
+    const hygieneStatus = typeof hygieneData === "object" &&
+        hygieneData !== null &&
+        "status" in hygieneData
+      ? String((hygieneData as { status?: unknown }).status)
+      : "unknown";
+    checks["session_hygiene"] = {
+      ok: !hygieneError && hygieneStatus === "healthy",
+      detail: hygieneError
+        ? hygieneError.message
+        : `session hygiene ${hygieneStatus}`,
+    };
+    if (!checks["session_hygiene"].ok) failCount++;
   }
 
   const status: HealthResponse["status"] = failCount === 0

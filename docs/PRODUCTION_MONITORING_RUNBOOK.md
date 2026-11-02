@@ -4,7 +4,7 @@ Status: v1 (Accepted baseline / 反復運用ドキュメント / **本番運用�
 Date: 2026-06-09
 Owner: Win Claude (L3 設計レーン / architect / ops docs lane / [DYNAMIC-CLAIM] で codex→win claim)
 WBS: `2e8be6a7-6741-4e38-a910-e96267caa018` 「[運用] 本番監視・インシデント対応 runbook」(cs-check / ci-cd-audit / incident report を定常運用として WBS に接続 + escalation paths + recurring health-check evidence)
-Sources: 実 `.github/workflows/*.yml` (監視 cron 群) / claude.ai Routines (cs-check / ci-cd-cost-audit) / [`ONCALL_INCIDENT_SOP.md`](ONCALL_INCIDENT_SOP.md) (障害対応=赤の道) / [`RELEASE_CHECKLIST_ROLLBACK.md`](RELEASE_CHECKLIST_ROLLBACK.md) (リリース) / [`SUPABASE_CAPACITY_PLAN.md`](SUPABASE_CAPACITY_PLAN.md) (DB/compute capacity) / [`OPERATIONS_CHARTER.md`](OPERATIONS_CHARTER.md) (5 正本)
+Sources: 実 `.github/workflows/*.yml` (監視 cron 群) / claude.ai Routines (cs-check / ci-cd-cost-audit) / [`ONCALL_INCIDENT_SOP.md`](ONCALL_INCIDENT_SOP.md) (障害対応=赤の道) / [`RELEASE_CHECKLIST_ROLLBACK.md`](RELEASE_CHECKLIST_ROLLBACK.md) (リリース) / [`OPERATIONS_CHARTER.md`](OPERATIONS_CHARTER.md) (5 正本)
 
 ---
 
@@ -37,7 +37,6 @@ Sources: 実 `.github/workflows/*.yml` (監視 cron 群) / claude.ai Routines (c
 | **ci-cd-cost-audit** (claude.ai Routine / 日次 23:00 JST) | 定期 | CI/CD 冗長・コスト | 最適 | 冗長検出 → 低リスク改善 PR / 高リスクは Issue 提案 |
 | Sentry + `ErrorReporter` (lib/main.dart) | realtime | Flutter/Dart 実行時エラー | 新規エラーなし | エラー急増 |
 | deploy-prod 状態 | event | 本番デプロイ可否 | green | RED 継続 |
-| Supabase capacity review | 週次 + 大規模 release/import 前後 | plan/compute、DB size と増加率、CPU/memory、connection、disk I/O | capacity plan の `NORMAL` | `WATCH` 以上 → [`SUPABASE_CAPACITY_PLAN.md`](SUPABASE_CAPACITY_PLAN.md) |
 
 > **監視の過剰増殖も負債** ([OPERATIONS_CHARTER.md](OPERATIONS_CHARTER.md) §4.5 の逆)。新規監視を足す前に、既存 source で捕まえられないかを先に確認する。
 
@@ -53,7 +52,6 @@ Sources: 実 `.github/workflows/*.yml` (監視 cron 群) / claude.ai Routines (c
 | **定期 (機械)** | cs-check / quota-monitor / mcp-audit-anomaly | cron 自動 → 異常時 Slack/Issue | 未対応 ticket / quota / MCP 異常 → §4 |
 | **障害発生時** | incident report | [`ONCALL_INCIDENT_SOP.md`](ONCALL_INCIDENT_SOP.md) §7 postmortem を `docs/incident-reports/` に記録 | SEV1/2 は GitHub Issue 恒久記録 |
 | **週次** | 監視棚卸し | 形骸化した通知 / 過剰監視 / 取りこぼしを点検 | 不要監視は削減提案 |
-| **週次 + 大規模 release/import 前後** | Supabase capacity review | plan/compute と容量・増加率・負荷を読み取り専用で記録 | `WATCH` 以上は [`SUPABASE_CAPACITY_PLAN.md`](SUPABASE_CAPACITY_PLAN.md) の単一 Issue / 承認フローへ |
 
 - **WBS 接続の原則**: 定常運用そのものは WBS task 化しない (cron で回る)。**異常・改善・恒久対応のみ**を Issue/WBS 化し、定常運用と一過性タスクを混同しない。
 
@@ -97,8 +95,12 @@ Sources: 実 `.github/workflows/*.yml` (監視 cron 群) / claude.ai Routines (c
 
 [`PHILOSOPHY.md`](PHILOSOPHY.md) 9 原則で **7+/9 ✅**: 原則 1 (夜間 SEV1 のみ人=CEO へ) · 原則 3-4 (mentor / チェックリストで負荷軽減 / 本社=運用即応性) · 原則 6 (時間 = 自動監視で人の確認時間を最小化) · 原則 7 (安定運用 = 資産 / 監視の過剰増殖 = 負債) · 原則 8 (KPI = 健全率・検知遅延を昨日の自分基準で改善) · 原則 9 (夜間の人的負荷を抑制)。[`AI_DEV_PRINCIPLES.md`](AI_DEV_PRINCIPLES.md) (circuit-breaker / DLQ / trace_id) + [`OPERATIONS_CHARTER.md`](OPERATIONS_CHARTER.md) (5 正本 / 通知規律) に整合。
 
+## Supabase capacity review
+
+週次および大規模 release/import 前後に、plan/compute、DB容量・増加率、physical disk、CPU/memory、connection、disk I/O を確認する。判断と承認手順は [Supabase capacity plan](SUPABASE_CAPACITY_PLAN.md) を参照する。
+
 ## 8. 運用 (Living Document) / Links
 
 - 監視を足す/減らすたびに §1 表を更新 (薄く保つ)。Sentry 連携が深化したら §1/§3 を更新。
-- ops 三部作: 本書 (監視) / [`ONCALL_INCIDENT_SOP.md`](ONCALL_INCIDENT_SOP.md) (対応) / [`RELEASE_CHECKLIST_ROLLBACK.md`](RELEASE_CHECKLIST_ROLLBACK.md) (リリース) / capacity: [`SUPABASE_CAPACITY_PLAN.md`](SUPABASE_CAPACITY_PLAN.md) / 憲章: [`OPERATIONS_CHARTER.md`](OPERATIONS_CHARTER.md)
+- ops 三部作: 本書 (監視) / [`ONCALL_INCIDENT_SOP.md`](ONCALL_INCIDENT_SOP.md) (対応) / [`RELEASE_CHECKLIST_ROLLBACK.md`](RELEASE_CHECKLIST_ROLLBACK.md) (リリース) / 憲章: [`OPERATIONS_CHARTER.md`](OPERATIONS_CHARTER.md)
 - 実行計画: WBS (project-gantt) / task `2e8be6a7-6741-4e38-a910-e96267caa018`

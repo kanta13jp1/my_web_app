@@ -65,9 +65,10 @@ class AssetPainMetricService {
     var monthlyInterest = 0.0;
     for (final debt in workbook.debtMasterRows) {
       if (debt.isDirectCashflowTarget && debt.balance < 0) {
+        // Rates are fractions (15% = 0.15), not percentage points.
         final annualRate = debt.annualRate;
         if (annualRate > 0) {
-          monthlyInterest += (-debt.balance) * (annualRate / 100.0) / 12.0;
+          monthlyInterest += (-debt.balance) * annualRate / 12.0;
         }
       }
     }

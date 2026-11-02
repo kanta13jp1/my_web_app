@@ -38,6 +38,26 @@ class CheckFlutterSupabaseConfigTest(unittest.TestCase):
 
         self.assertEqual(source_violations("web/index.html", text), [])
 
+    def test_rejects_test_password_literals_without_disclosing_values(self) -> None:
+        for directory in ("integration_test", "test_driver"):
+            for literal in ("password: 'synthetic-only'", 'password = "synthetic-only"'):
+                with self.subTest(directory=directory, literal=literal):
+                    violations = source_violations(f"{directory}/sample.dart", literal)
+                    self.assertEqual(
+                        violations,
+                        [f"{directory}/sample.dart: literal integration-test password"],
+                    )
+                    self.assertNotIn("synthetic-only", str(violations))
+
+    def test_allows_explicit_test_password_configuration(self) -> None:
+        self.assertEqual(
+            source_violations(
+                "integration_test/sample.dart",
+                "const password = String.fromEnvironment('TEST_PASSWORD'); "
+                "password: password",
+            ),
+            [],
+        )
     def test_runtime_config_must_fail_closed(self) -> None:
         unsafe = """
         String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://example.test')
@@ -83,6 +103,20 @@ class CheckFlutterSupabaseConfigTest(unittest.TestCase):
 
             self.assertEqual(check_repository(root), [])
 
+            for directory in ("integration_test", "test_driver"):
+                with self.subTest(directory=directory):
+                    fixture = root / directory / "example_test.dart"
+                    fixture.parent.mkdir(parents=True, exist_ok=True)
+                    fixture.write_text(
+                        "const url = 'https://abcdefghijklmnopqrst.supabase.co';",
+                        encoding="utf-8",
+                    )
+                    self.assertIn(
+                        f"{directory}/example_test.dart: concrete Supabase project URL",
+                        check_repository(root),
+                    )
+                    fixture.unlink()
+            self.assertEqual(check_repository(root), [])
             broken = root / DEPLOY_WORKFLOWS[0]
             broken.write_text(
                 broken.read_text(encoding="utf-8").replace(

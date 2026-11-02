@@ -105,7 +105,7 @@ class RecurringFixedCostCard extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
-                    'まだ登録がありません。「追加」から固定費を登録できます。',
+                    '通常の固定費（家賃・光熱費など）は未登録です。サブスクは下の専用一覧で別管理しています。同じ請求を両方へ登録しないでください。',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),

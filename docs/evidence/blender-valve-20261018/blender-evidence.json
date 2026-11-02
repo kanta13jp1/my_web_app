@@ -1,0 +1,75 @@
+{
+  "started_utc": "2026-10-18T03:23:12.081290+00:00",
+  "execution": "Codex-orchestrated GitHub Actions; MCP Python SDK client, not native Desktop tool discovery",
+  "upstream_sha": "7a0373ec9199183cb460068c4f96aed9c579fb4f",
+  "calls": [
+    {
+      "tool": "get_addon_status",
+      "seconds": 0.733,
+      "is_error": false,
+      "result": "{\n  \"up_to_date\": true,\n  \"protocol_version\": 13,\n  \"expected_protocol_version\": 13,\n  \"addon_version\": [\n    1,\n    8\n  ],\n  \"capabilities\": [\n    \"bpy_api_lookup\",\n    \"describe_node_type\",\n    \"drain_human_activity\",\n    \"execute_code\",\n    \"get_addon_info\",\n    \"get_object_info\",\n    \"get_scene_info\",\n    \"get_telemetry_consent\",\n    \"get_viewport_screenshot\",\n    \"get_world_state_snapshot\",\n    \"list_scene_items\",\n    \"pick_viewport_object\",\n    \"set_telemetry_consent\"\n  ],\n  \"blender_version\": \"4.0.2\",\n  \"premium_generators\": [],\n  \"libraries\": {\n    \"polyhaven\": \"off\",\n    \"sketchfab\": \"off\",\n    \"polypizza\": \"off\"\n  },\n  \"generators\": {\n    \"tripo\": \"off (Premium only)\",\n    \"hunyuan3d\": \"off\",\n    \"hyper3d\": \"off\"\n  },\n  \"source\": \"native\",\n  \"warning\": null,\n  \"telemetry_consent\": false,\n  \"update_command\": \"uvx mcp-for-blender install-addon\",\n  \"after_install\": \"If the addon file was updated: in Blender, Preferences \\u2192 Add-ons \\u2192 disable/enable 'Interface: Blender MCP', or restart Blender, then Start MCP Server.\"\n}"
+    },
+    {
+      "tool": "get_scene_info",
+      "seconds": 0.054,
+      "is_error": false,
+      "result": "Scene 'Scene' | 1 camera, 1 light, 1 mesh | active Cube | selected Cube | mode OBJECT\n\nShowing 3 of 3 (name | type | location | size | hidden | children):\nCube | mesh | at (0.0, 0.0, 0.0) | size 2.0x2.0x2.0\nLight | light | at (4.08, 1.01, 5.9)\nCamera | camera | at (7.36, -6.93, 4.96)"
+    },
+    {
+      "tool": "execute_blender_code",
+      "seconds": 6.675,
+      "is_error": false,
+      "result": "Code executed successfully: Info: Saved \"valve.blend\"\n03:23:16 | ERROR: Draco mesh compression is not available because library could not be found at /usr/bin/4.0/python/lib/python3.12/site-packages/libextern_draco.so\n03:23:16 | INFO: Starting glTF 2.0 export\n03:23:16 | INFO: Extracting primitive: Cylinder\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.001\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.002\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.003\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.004\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.005\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.006\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.007\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.008\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.009\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.010\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.011\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.012\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.013\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.014\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.015\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.016\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.021\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.017\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.018\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.019\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.020\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Cylinder.022\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Extracting primitive: Torus\n03:23:16 | INFO: Primitives created: 1\n03:23:16 | INFO: Finished glTF 2.0 export in 0.025560855865478516 s\n\nVALVE_CREATED 4.0.2\n"
+    },
+    {
+      "tool": "execute_blender_code",
+      "seconds": 0.234,
+      "is_error": false,
+      "result": "Code executed successfully: {\"blender\": \"4.0.2\", \"meshes\": 24, \"vertices\": 1360, \"triangles\": 2628, \"handwheel\": true}\n"
+    },
+    {
+      "tool": "get_scene_info",
+      "seconds": 0.13,
+      "is_error": false,
+      "result": "Scene 'Scene' | 1 camera, 1 empty, 3 light, 24 mesh | active Area.002 | selected Area.002 | mode OBJECT\n\nShowing 3 of 3 (name | type | location | size | hidden | children):\nHandwheel | empty | at (0.0, 0.0, 1.52) | 7 children\nWheelRim | mesh | at (0.0, 0.0, 1.52) | size 1.35x1.35x0.13\nWheelPositionMarker | mesh | at (0.6, 0.0, 1.6) | size 0.18x0.18x0.05"
+    }
+  ],
+  "installed_distribution": {
+    "name": "mcp-for-blender",
+    "version": "2.1.9",
+    "wheel_sha256": "a5cbc6cf316fa7433566eb505a0c26ca22e28c10083bd1b09a23d9e357821ccc"
+  },
+  "protocol": "2025-11-25",
+  "tools": [
+    "get_addon_status",
+    "disable_telemetry",
+    "get_scene_info",
+    "execute_blender_code",
+    "record_trajectory_feedback",
+    "look",
+    "generate_3d",
+    "search_assets",
+    "import_asset"
+  ],
+  "inspection": "Code executed successfully: {\"blender\": \"4.0.2\", \"meshes\": 24, \"vertices\": 1360, \"triangles\": 2628, \"handwheel\": true}\n",
+  "files": {
+    "valve.blend": {
+      "bytes": 1222636,
+      "sha256": "89a8ded73d4489d8d680d7d15034ef87dfc1aeba1d4788d49bae02d134900343"
+    },
+    "valve.glb": {
+      "bytes": 162376,
+      "sha256": "fb4f13445da78845915db407b62df42783beefd8e02632af7d25e4aa9fd0562d"
+    },
+    "valve.png": {
+      "bytes": 509503,
+      "sha256": "87b025b1fa3427c7ae99e6c86ba596de13a2fdef40c2bd72785dfdb20be391ec"
+    }
+  },
+  "gltf": {
+    "nodes": 25,
+    "meshes": 24,
+    "handwheel": true
+  },
+  "passed": true
+}
