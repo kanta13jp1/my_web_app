@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import subprocess
 import time
 import urllib.error
@@ -25,12 +26,28 @@ expected_container = 'payroll-http-{}-{}'.format(
     os.environ.get('GITHUB_RUN_ID', ''), os.environ.get('GITHUB_RUN_ATTEMPT', ''))
 if container != expected_container or container == 'payroll-http--':
     raise SystemExit('Expected owned synthetic container is required')
-image = subprocess.run(
-    ['docker', 'inspect', '--format', '{{.Config.Image}}|{{.State.Running}}|{{.HostConfig.NetworkMode}}', container],
+inspection = subprocess.run(
+    ['docker', 'inspect', container],
     capture_output=True, text=True, check=True, timeout=5,
 ).stdout.strip()
-if image != ('postgrest/postgrest@sha256:5f4ce744539bbba786b4e24dbbd95bdb2a956dcf568c5374995a0ff4a68f5bd2|true|host'):
+metadata = json.loads(inspection)
+if len(metadata) != 1:
+    raise SystemExit('Exactly one owned synthetic container is required')
+config = metadata[0]
+container_env = dict(item.split('=', 1) for item in config['Config']['Env'] if '=' in item)
+expected_env = {
+    'PGRST_DB_URI': 'postgres://payroll_http_authenticator:synthetic-http-only@localhost:5432/payroll_contract',
+    'PGRST_DB_SCHEMAS': 'public', 'PGRST_DB_ANON_ROLE': 'anon',
+    'PGRST_SERVER_HOST': '127.0.0.1', 'PGRST_SERVER_PORT': '31337',
+    'PGRST_JWT_SECRET': os.environ.get('SYNTHETIC_JWT_SECRET', ''),
+}
+if (config['Config']['Image'] != 'postgrest/postgrest@sha256:5f4ce744539bbba786b4e24dbbd95bdb2a956dcf568c5374995a0ff4a68f5bd2'
+        or not config['State']['Running'] or config['HostConfig']['NetworkMode'] != 'host'
+        or any(container_env.get(key) != value for key, value in expected_env.items())):
     raise SystemExit('Expected owned pinned synthetic PostgREST container is required')
+nonce = os.environ.get('PAYROLL_HTTP_NONCE', '')
+if not re.fullmatch('[0-9a-f]{64}', nonce):
+    raise SystemExit('Expected a fresh synthetic database marker')
 
 BASE = 'http://127.0.0.1:31337'
 SECRET = os.environ['SYNTHETIC_JWT_SECRET'].encode()
@@ -89,6 +106,9 @@ for attempt in range(40):
     time.sleep(.5)
 else:
     raise AssertionError('synthetic PostgREST did not become ready')
+
+status, marker = request('/payroll_http_fixture_marker?select=nonce', A)
+assert status == 200 and marker == [{'nonce': nonce}], 'Wrong synthetic HTTP/database fixture'
 
 for table in TABLES:
     status, own = request('/' + table + '?select=*', A)
@@ -153,6 +173,19 @@ assert status == 200 and retry_id == own_id, ('owner retry not idempotent', stat
 status, foreign = request('/asset_payroll_balance_observations?select=*', B)
 assert status == 200 and foreign == [], ('foreign observation after RPC', status)
 print('PASS: synthetic B cannot call A RPC; A retry preserves its observation')
+
+# Populate B using its own authenticated RPC, then check mutual isolation with
+# both owners present in all four tables, including the audit/selection rows.
+payload_b = dict(payload, p_account_id=ACCOUNT_B,
+                 p_request_id='00000000-0000-0000-0000-000000000061')
+status, b_id = request('/rpc/confirm_payroll_balance_observation', B, 'POST', payload_b)
+assert status == 200 and isinstance(b_id, str), ('B own RPC failed', status)
+for table in TABLES:
+    for subject in (A, B):
+        status, rows = request('/' + table + '?select=user_id', subject)
+        assert status == 200 and rows and all(row['user_id'] == subject for row in rows), (
+            table, 'mixed-owner row isolation failed', status)
+print('PASS: synthetic A and B each see only their own rows across all four tables')
 
 for subject in (None, A, B):
     status, result = request('/__synthetic_missing__?select=*', subject,

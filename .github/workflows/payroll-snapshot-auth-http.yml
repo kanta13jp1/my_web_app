@@ -52,8 +52,12 @@ jobs:
             *'Explicit disposable HTTP fixture opt-in required'*) echo 'PASS: setup rejects missing opt-in' ;;
             *) printf '%s\n' "$guard_output" >&2; exit 1 ;;
           esac
+          fixture_nonce="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+          echo "::add-mask::$fixture_nonce"
+          printf 'PAYROLL_HTTP_NONCE=%s\n' "$fixture_nonce" >> "$GITHUB_ENV"
           psql -X -v ON_ERROR_STOP=1 \
             -c "SET payroll_test.disposable_http = 'explicit-synthetic-http-fixture'" \
+            -v fixture_nonce="$fixture_nonce" \
             -f http_isolation_setup.sql
       - name: Exercise synthetic authenticated HTTP isolation
         working-directory: docs/proposals/payroll_snapshot
