@@ -3,6 +3,11 @@ on:
   pull_request:
     paths:
       - docs/proposals/payroll_snapshot/http_transport.py
+      - docs/proposals/payroll_snapshot/http_transport_safety.py
+      - docs/proposals/payroll_snapshot/test_http_transport_safety.py
+      - docs/proposals/payroll_snapshot/contract.sql
+      - docs/proposals/payroll_snapshot/DRAFT_PAYROLL_SCHEMA.sql
+      - supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
       - .github/workflows/payroll-snapshot-transport.yml
   workflow_dispatch:
 permissions: {}
@@ -29,20 +34,35 @@ jobs:
           --health-timeout 5s
           --health-retries 12
     env:
-      PGHOST: localhost
+      PGHOST: 127.0.0.1
       PGPORT: '5432'
       PGUSER: postgres
       PGPASSWORD: synthetic-contract-only
       PGDATABASE: payroll_contract
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
       - name: Verify proposal matches migration
         run: cmp docs/proposals/payroll_snapshot/DRAFT_PAYROLL_SCHEMA.sql supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
+      - name: Check fail-closed fixture guards
+        working-directory: docs/proposals/payroll_snapshot
+        run: python -m unittest -v test_http_transport_safety.py
       - name: Initialize isolated synthetic contract
         working-directory: docs/proposals/payroll_snapshot
-        run: psql -X -v ON_ERROR_STOP=1 -f contract.sql
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture_token="$(python -c 'import uuid; print(uuid.uuid4())')"
+          export PAYROLL_TRANSPORT_FIXTURE_TOKEN="$fixture_token"
+          python -c 'import os; from http_transport_safety import validate_environment; validate_environment(os.environ)'
+          psql -X -v ON_ERROR_STOP=1 -f contract.sql
+          psql -X -v ON_ERROR_STOP=1 -v fixture_token="$fixture_token" <<'SQL'
+          create table public.payroll_transport_fixture_guard (token uuid primary key);
+          insert into public.payroll_transport_fixture_guard(token) values (:'fixture_token'::uuid);
+          SQL
+          echo "PAYROLL_TRANSPORT_FIXTURE_TOKEN=$fixture_token" >> "$GITHUB_ENV"
       - name: Disconnect actual loopback HTTP transport
         working-directory: docs/proposals/payroll_snapshot
         run: python http_transport.py

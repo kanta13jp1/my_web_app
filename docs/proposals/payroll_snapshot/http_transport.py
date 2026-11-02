@@ -5,6 +5,7 @@ Never point this script at a production database.
 """
 import http.client
 import json
+import os
 import re
 import socket
 import struct
@@ -12,6 +13,8 @@ import subprocess
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+from http_transport_safety import validate_environment, validate_marker_count
 
 OWNER = 'aaaaaaaa-0000-0000-0000-000000000001'
 ACCOUNT = 'aaaaaaaa-1111-1111-1111-111111111111'
@@ -32,7 +35,12 @@ def scalar(sql):
     return psql(sql).strip().splitlines()[-1]
 
 
-assert scalar('select current_database()') == 'payroll_contract'
+fixture_token = validate_environment(os.environ)
+if scalar('select current_database()') != 'payroll_contract':
+    raise RuntimeError('Refusing to use a non-fixture database')
+validate_marker_count(scalar(
+    f"select count(*) from public.payroll_transport_fixture_guard "
+    f"where token='{fixture_token}'::uuid"))
 
 
 def save(month, request, delay=0):
