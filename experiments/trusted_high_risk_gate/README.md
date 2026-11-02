@@ -16,11 +16,13 @@
 4. GitHub 発行元の真正性、署名済みではない artifact の制限、複数 check/run、第三者の権限、独立レビュー、既存 branch protection と ruleset との共存。`input_sha256` は現在、成果物内の2か所の一致を調べるだけで、対象差分から独立再計算していない。redaction・差分生成・切詰め検知を含め再現できるまでは、内容の網羅性は信頼済み producer の保証に依存する。
 5. shadow 検証・レビュー・ロールバック計画を先に完了し、保護の変更は確認後に別工程で行う。
 
+`input_integrity.py` は架空Gitデータを使ったローカル差分ハッシュ再構成の試作であり、現行のobserverには接続していません。`PRODUCER_DESIGN.md` に信頼済みコードの読込み、秘匿データの扱いと本番smokeの前後関係を記録しています。
+
 依存パッケージを導入しない軽量の合成検査：
 
 ```sh
 cd experiments/trusted_high_risk_gate
-python -B -m unittest test_policy test_provenance test_observer
+python -B -m unittest test_policy test_provenance test_observer test_input_integrity
 ```
 
 この試作のテスト成功は、実PRイベント・新しいレビュー・DBや給与操作の安全性を証明しません。
