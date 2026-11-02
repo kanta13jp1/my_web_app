@@ -142,13 +142,15 @@ jobs:
       - name: Prepare bounded gate status
         id: gate_status
         if: always()
-        env:
-          GATE_OUTCOME: ${{ steps.high_risk_contract.outcome }}
         run: |
           set -euo pipefail
           status_dir=$(mktemp -d "${RUNNER_TEMP}/high-risk-gate-status.XXXXXX")
-          case "$GATE_OUTCOME" in
-            success|failure|cancelled|skipped) status="$GATE_OUTCOME" ;;
+          # GitHub Actions supplies this field as a fixed step-outcome enum.
+          case '${{ steps.high_risk_contract.outcome }}' in
+            success) status=success ;;
+            failure) status=failure ;;
+            cancelled) status=cancelled ;;
+            skipped) status=skipped ;;
             *) status=unknown ;;
           esac
           printf 'high-risk-gate-step: %s\nindependent-review-evidence: not-established\n' "$status" > "$status_dir/status.txt"

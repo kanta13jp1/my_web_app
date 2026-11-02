@@ -19,7 +19,8 @@ class WorkflowContractTest(unittest.TestCase):
         self.assertIn('if: always()', prepare)
         self.assertIn('steps.high_risk_contract.outcome', prepare)
         self.assertIn('mktemp -d', prepare)
-        self.assertIn('case "$GATE_OUTCOME" in', prepare)
+        self.assertIn("case '${{ steps.high_risk_contract.outcome }}' in", prepare)
+        self.assertNotIn('env:', prepare)
         self.assertIn('independent-review-evidence: not-established', prepare)
         self.assertIn('if: always()', upload)
         self.assertIn('path: ${{ steps.gate_status.outputs.path }}', upload)
@@ -47,8 +48,10 @@ class WorkflowContractTest(unittest.TestCase):
                 run_dir.mkdir()
                 output = run_dir / 'github-output'
                 output.touch()
-                env = dict(os.environ, RUNNER_TEMP=shell_path(run_dir), GITHUB_OUTPUT=shell_path(output), GATE_OUTCOME=outcome)
-                result = subprocess.run([bash, '-c', script], env=env, capture_output=True, timeout=10, check=True)
+                env = dict(os.environ, RUNNER_TEMP=shell_path(run_dir), GITHUB_OUTPUT=shell_path(output))
+                # GitHub guarantees the real outcome is an enum; these are synthetic inputs.
+                rendered = script.replace('${{ steps.high_risk_contract.outcome }}', outcome)
+                result = subprocess.run([bash, '-c', rendered], env=env, capture_output=True, timeout=10, check=True)
                 expected = outcome if outcome in ('success', 'failure', 'skipped', 'cancelled') else 'unknown'
                 files = list(run_dir.glob('high-risk-gate-status.*/status.txt'))
                 self.assertEqual(len(files), 1)
