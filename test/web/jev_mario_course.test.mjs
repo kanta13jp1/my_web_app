@@ -16,5 +16,6 @@ test('bounded stage comparison records failure as evidence, not a Jev benchmark'
  }
  mkdirSync('test-results',{recursive:true});writeFileSync('test-results/jev-course-comparison.json',JSON.stringify({kind:'fixed_intent_simulation_no_API',max_frames:7200,results},null,2));
  assert.ok(results.every(r=>Number.isFinite(r.x)&&r.frames<=7200));
- assert.equal(results[0].phase,'dead');
+ // Held right now stalls at the opening step: record this failure to progress exactly.
+ assert.equal(results[0].phase,'playing');assert.equal(results[0].x,148);assert.equal(results[0].frames,7200);
 });

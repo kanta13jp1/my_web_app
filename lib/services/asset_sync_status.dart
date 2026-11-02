@@ -4,6 +4,9 @@
 /// ローカル永続 (SharedPreferences) を一次ストアとし Supabase へミラーする構成のため、
 /// 「サーバにまだ無い = 他端末に出ない」状態を画面上で可視化するのに使う。
 enum AssetSyncSource {
+  /// 現在値とサーバ値の照合が完了していない。
+  unverified,
+
   /// Supabase に保存済み (他端末でも参照できる)。
   synced,
 
@@ -39,13 +42,19 @@ extension AssetSyncDomainLabel on AssetSyncDomain {
       case AssetSyncDomain.inflow:
         return '入金予定';
       case AssetSyncDomain.monthlyState:
-        return '資産・負債データ';
+        return '月次の支払・計画設定';
     }
   }
 }
 
 /// 全体の同期ステータスのレベル (チップの色/文言の決定に使う)。
 enum AssetSyncLevel {
+  /// 対象領域の取得・照合が未完了。
+  unverified,
+
+  /// 対象6領域に保存対象がないことを確認済み。
+  noData,
+
   /// 未ログイン: 何も同期されない (この端末のみ)。
   loggedOut,
 
@@ -77,9 +86,19 @@ class AssetSyncStatusSummary {
   /// 未同期領域の件数。
   int get localOnlyCount => localOnlyDomains.length;
 
+  List<AssetSyncDomain> get unverifiedDomains => <AssetSyncDomain>[
+        for (final domain in AssetSyncDomain.values)
+          if (sources[domain] == null ||
+              sources[domain] == AssetSyncSource.unverified)
+            domain,
+      ];
+
   /// 同期対象 (synced か localOnly) のデータが1つでもあるか。
-  bool get hasAnyData =>
-      sources.values.any((source) => source != AssetSyncSource.empty);
+  bool get hasAnyData => sources.values.any(
+        (source) =>
+            source == AssetSyncSource.synced ||
+            source == AssetSyncSource.localOnly,
+      );
 
   AssetSyncLevel get level {
     if (!loggedIn) {
@@ -87,6 +106,12 @@ class AssetSyncStatusSummary {
     }
     if (localOnlyCount > 0) {
       return AssetSyncLevel.partialLocal;
+    }
+    if (unverifiedDomains.isNotEmpty) {
+      return AssetSyncLevel.unverified;
+    }
+    if (!hasAnyData) {
+      return AssetSyncLevel.noData;
     }
     return AssetSyncLevel.allSynced;
   }
@@ -98,6 +123,10 @@ class AssetSyncStatusSummary {
   /// 全体ステータスチップの見出し文言。
   String get headline {
     switch (level) {
+      case AssetSyncLevel.unverified:
+        return '保存状況：未照合 ${unverifiedDomains.length} 項目';
+      case AssetSyncLevel.noData:
+        return '対象6領域に保存対象なし';
       case AssetSyncLevel.loggedOut:
         return '未ログイン：この端末にのみ保存';
       case AssetSyncLevel.partialLocal:

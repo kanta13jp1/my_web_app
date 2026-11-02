@@ -62,6 +62,7 @@ void main() {
       // ③ 止血 (カード新規利用停止)。
       expect(plan.todaySteps[2].kind, AssetTriageStepKind.stopNewCardUsage);
       expect(plan.todaySteps[2].detail.contains('ファミペイ'), isTrue);
+      expect(plan.todaySteps[2].detail.contains('利用停止'), isTrue);
       // 今週: 期限超過処理 + 新規利用分の25日返済確保。期限超過は昨日以前の支払のみ
       // (本日期日のモビット10,000円は②に載せ、④へは二重計上しない)。
       expect(

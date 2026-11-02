@@ -7,8 +7,8 @@ import {plan} from '../../web/labs/jev-mario/search-assist.mjs';
 import {StudentSession} from '../../web/labs/jev-mario/student-session.mjs';
 
 test('live guard corrects repeated stale right commands before first enemy without changing world state',()=>{
- const run=guard=>{const g=new World11();let furthest=g.p.x;for(let i=0;i<240&&g.phase==='playing';i++){const before=JSON.stringify(g.snapshot()),action=guard?guard.decide(g,'right'):'right';assert.equal(JSON.stringify(g.snapshot()),before);g.buttons(action);g.step();g.drainSounds();furthest=Math.max(furthest,g.p.x);}return {phase:g.phase,x:g.p.x,furthest,frames:g.frames,interventions:guard?.interventions??0};};
- const baseline=run(null),assisted=run(new LiveGuard());mkdirSync('test-results',{recursive:true});writeFileSync('test-results/jev-live-guard.json',JSON.stringify({scenario:'1-1 first enemy, repeated right command, 240-frame budget; deterministic assistance, no measured worker inference',baseline,assisted},null,2));
+ const run=guard=>{const g=new World11();g.p.x=192;let furthest=g.p.x;for(let i=0;i<240&&g.phase==='playing';i++){const before=JSON.stringify(g.snapshot()),action=guard?guard.decide(g,'right'):'right';assert.equal(JSON.stringify(g.snapshot()),before);g.buttons(action);g.step();g.drainSounds();furthest=Math.max(furthest,g.p.x);}return {phase:g.phase,x:g.p.x,furthest,frames:g.frames,interventions:guard?.interventions??0};};
+ const baseline=run(null),assisted=run(new LiveGuard());mkdirSync('test-results',{recursive:true});writeFileSync('test-results/jev-live-guard.json',JSON.stringify({scenario:'1-1 after opening step (x192), first enemy, repeated right command, 240-frame budget; deterministic assistance, no measured worker inference',baseline,assisted},null,2));
  assert.equal(baseline.phase,'dead');assert.ok(assisted.furthest>baseline.furthest+40);assert.ok(assisted.interventions>0);
 });
 test('worker retries receive failure memory and manual new run can clear it',()=>{
@@ -44,4 +44,49 @@ test('castle failure recovery takes priority locally without disabling ordinary 
  assert.equal(run([failure]).action,'noop');assert.notEqual(run([failure]).reason,'item_pickup_route');
  for(const record of [{...failure,stage:28},{...failure,room:'overworld'},{...failure,x:500},{...failure,x:170}]){assert.equal(run([record]).action,'jump');assert.equal(run([record]).reason,'item_pickup_route');}
  assert.equal(run([]).action,'jump');
+});
+
+
+test('castle guard returns toward the real axe after overshooting without mutating world',()=>{
+ const g=new World11(32),guard=new LiveGuard();g.power=1;
+ Object.assign(g.p,{x:3380,y:180,h:28,vx:0,vy:0,grounded:true});
+ const before=JSON.stringify(g.snapshot());
+ assert.equal(guard.decide(g,'right'),'left','safe forward motion beyond the axe is not goal progress');
+ assert.equal(JSON.stringify(g.snapshot()),before,'only real game steps may change state or award a clear');
+});
+
+test('overshot castle recovers by actual axe collision with normal hazards and unchanged clear rule',()=>{
+ for(const stage of [4,32])for(const power of [0,1]){
+  const g=new World11(stage),guard=new LiveGuard();g.power=power;
+  Object.assign(g.p,{x:3380,y:208-(power?28:16),h:power?28:16,vx:0,vy:0,grounded:true});
+  for(let i=0;i<240&&g.phase==='playing';i++){
+   const before=JSON.stringify(g.snapshot()),action=guard.decide(g,'right');
+   assert.equal(JSON.stringify(g.snapshot()),before);
+   g.buttons(action);g.step();g.drainSounds();
+  }
+  assert.equal(g.phase,'won',JSON.stringify({power,x:g.p.x,y:g.p.y,phase:g.phase}));
+  assert.equal(g.lives,3,'recovery cannot spend lives to manufacture a clear');
+ }
+});
+
+
+test('castle exit return stays inactive before the axe and outside a playing castle',()=>{
+ for(const stage of [1,2,4,30,32]){
+  const g=new World11(stage),guard=new LiveGuard();
+  g.p.x=[4,32].includes(stage)?3000:3380;
+  const before=JSON.stringify(g.snapshot());guard.decide(g,'noop');
+  assert.equal(JSON.stringify(g.snapshot()),before);
+  assert.notEqual(guard.lastReason,'castle_exit_return');
+ }
+ const g=new World11(32),guard=new LiveGuard();g.p.x=3380;g.phase='won';
+ assert.equal(guard.decide(g,'noop'),'noop');assert.equal(guard.interventions,0);
+});
+
+
+test('small castle exit return jumps into the axe vertical span without changing its collider',()=>{
+ const g=new World11(32),guard=new LiveGuard();
+ Object.assign(g.p,{x:3380,y:192,h:16,vx:0,vy:0,grounded:true});
+ const before=JSON.stringify(g.snapshot());
+ assert.equal(guard.decide(g,'right'),'left_jump');
+ assert.equal(JSON.stringify(g.snapshot()),before);
 });

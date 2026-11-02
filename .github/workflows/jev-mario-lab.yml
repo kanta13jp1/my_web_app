@@ -49,7 +49,7 @@ jobs:
         with:
           persist-credentials: false
       - run: node --test test/web/jev_mario_escape.test.mjs test/web/jev_mario_water_items.test.mjs test/web/jev_mario_retry.test.mjs test/web/jev_mario_history.test.mjs test/web/jev_mario_presentation.test.mjs test/web/jev_mario_stage12.test.mjs test/web/jev_mario_student.test.mjs test/web/jev_mario_live_guard.test.mjs test/web/jev_mario_prediction.test.mjs test/web/jev_mario_course.test.mjs test/web/jev_mario_reaction.test.mjs test/web/jev_mario_recording.test.mjs test/web/jev_mario_audio.test.mjs test/web/jev_mario_core.test.mjs test/web/jev_mario_world11.test.mjs test/web/jev_mario_hosting.test.mjs
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: jev-reaction-comparison
@@ -94,7 +94,7 @@ jobs:
           else
             npx playwright test --config=test/e2e/jev_mario.config.ts
           fi
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: jev-mario-browser-${{ github.run_id }}
@@ -118,7 +118,7 @@ jobs:
         with:
           persist-credentials: false
       - run: node scripts/jev_mario/course-audit.mjs ${{ matrix.group }}
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: jev-course-audit-${{ matrix.group }}
