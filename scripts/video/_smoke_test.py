@@ -167,12 +167,19 @@ def test_embed_video_dup_guard() -> None:
         expect_returncode=2,
     )
 
-    # Duplicate (existing video #1 ID) → exit 1
-    run_subprocess(
-        [PYTHON, str(embed_script), "--video-id", "Zclp_zK9cYM",
-         "--label", "dup", "--duration", "5:42", "--description", "x", "--dry-run"],
-        expect_returncode=1,
-    )
+    # Duplicate rejection must not depend on the mutable production catalog.
+    with tempfile.TemporaryDirectory() as tmp:
+        fixture = Path(tmp) / "philosophy_page.dart"
+        original = "const _videos = [\n  _Video(id: 'Zclp_zK9cYM'),\n];\n"
+        fixture.write_text(original, encoding="utf-8")
+        proc = run_subprocess(
+            [PYTHON, str(embed_script), "--video-id", "Zclp_zK9cYM",
+             "--label", "dup", "--duration", "5:42", "--description", "x",
+             "--file", str(fixture), "--dry-run"],
+            expect_returncode=1,
+        )
+        assert "already present" in proc.stderr, proc.stderr
+        assert fixture.read_text(encoding="utf-8") == original
 
 
 def test_make_cards() -> None:

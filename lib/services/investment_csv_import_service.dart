@@ -130,6 +130,7 @@ class InvestmentCsvImportService {
     final broker = _detectBroker(header);
     final tickerIndex = _requiredIndex(header, _tickerHeaders, '銘柄コード');
     final quantityIndex = _requiredIndex(header, _quantityHeaders, '保有数量/数量');
+    final nameIndex = _optionalIndex(header, const ['銘柄名']);
     final buyPriceIndex = _requiredIndex(
       header,
       _buyPriceHeaders,
@@ -165,6 +166,7 @@ class InvestmentCsvImportService {
         final draft = InvestmentAssetDraft(
           assetType: _assetType(typeText),
           ticker: ticker,
+          displayName: nameIndex == null ? null : _cell(row, nameIndex),
           quantity: quantity,
           buyPriceJpy: buyPrice,
           buyDate: dateIndex == null ? null : _parseDate(_cell(row, dateIndex)),
@@ -260,6 +262,9 @@ class InvestmentCsvImportService {
           ? existing.assetType
           : imported.assetType,
       ticker: imported.normalizedTicker,
+      displayName: (imported.displayName?.trim().isNotEmpty ?? false)
+          ? imported.displayName
+          : existing.displayName,
       quantity: imported.quantity,
       buyPriceJpy: imported.buyPriceJpy,
       buyDate: imported.buyDate ?? existing.buyDate,
@@ -280,6 +285,9 @@ class InvestmentCsvImportService {
           ? right.assetType
           : left.assetType,
       ticker: left.normalizedTicker,
+      displayName: (right.displayName?.trim().isNotEmpty ?? false)
+          ? right.displayName
+          : left.displayName,
       quantity: quantity,
       buyPriceJpy: acquisitionCost / quantity,
       buyDate: _earlier(left.buyDate, right.buyDate),

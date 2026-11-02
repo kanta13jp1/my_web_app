@@ -27,3 +27,39 @@ test('life restart immediately requests a new decision and rejects the old attem
  worker.onmessage({data:{type:'decision',requestId:old,action:'left',accepted:true,issued:100,frame:120}});assert.equal(updated,0);assert.equal(s.pending,true);assert.equal(s.action,'noop');
  worker.onmessage({data:{type:'decision',requestId:messages[1].requestId,action:'right',accepted:true,issued:100,frame:0}});assert.equal(updated,1);assert.equal(s.action,'right');
 });
+
+function escapeHarness(){
+ const messages=[],worker={terminate(){},postMessage(m){messages.push(m);}};
+ const s=new StudentSession(()=>worker,()=>100,null);
+ s.start({ready(){},update(){},error(){assert.fail('worker error');}});
+ worker.onmessage({data:{type:'ready'}});
+ const g={phase:'playing',stage:32,room:'castle',frames:100,power:1,lives:5,p:{x:500,grounded:true},wasJump:false};
+ // This test isolates session lifecycle; actual physics guard is tested separately.
+ s.guard.decide=function(_g,a,_f,_i,commands){this.lastReason=commands?'retry_sequence':null;this.action=a;return a;};
+ s.tick(g);
+ const reply=(changes={})=>worker.onmessage({data:{type:'decision',requestId:messages[0].requestId,action:'right_run',accepted:false,issued:100,frame:100,
+  escapeSequence:[{action:'right_run',frames:7},{action:'right_run_jump',frames:11},{action:'right_run',frames:60}],
+  escapeOrigin:{stage:32,room:'castle',frame:100,x:500,power:1,lives:5},...changes}});
+ return {s,g,messages,reply};
+}
+test('escape phases consume elapsed frames once and suspend new worker requests',()=>{
+ const {s,g,messages,reply}=escapeHarness();reply();
+ assert.equal(s.tick(g),'right_run');assert.equal(s.tick(g),'right_run');
+ assert.equal(s.escape.commands[0].frames,7);
+ g.frames+=7;assert.equal(s.tick(g),'right_run_jump');assert.equal(messages.length,1);
+ g.frames+=11;assert.equal(s.tick(g),'right_run');assert.equal(s.escape.commands[0].frames,60);
+ g.frames+=60;s.tick(g);assert.equal(s.escape,null);assert.equal(messages.length,2);
+});
+test('escape rejects stale and mismatched replies without accepting a plan',()=>{
+ for(const changes of [{requestId:999},{escapeOrigin:{stage:32,room:'castle',frame:0,x:500,power:1,lives:5}},
+  {escapeSequence:[{action:'right_run',frames:999}]}]){
+  const {s,reply}=escapeHarness();reply(changes);assert.ok(!s.escape);
+ }
+});
+test('escape is discarded on damage, stage/room changes, rewind, replacement and stop',()=>{
+ for(const change of [{power:0},{lives:4},{stage:31},{room:'overworld'},{frames:99},{phase:'dead'}]){
+  const {s,g,reply}=escapeHarness();reply();Object.assign(g,change);s.tick(g);assert.equal(s.escape,null);
+ }
+ const {s,g,reply}=escapeHarness();reply();s.tick({...g});assert.equal(s.escape,null);
+ const other=escapeHarness();other.reply();other.s.stop();assert.equal(other.s.escape,null);
+});

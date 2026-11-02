@@ -4,6 +4,25 @@
 -- Deduplication protected via NOT EXISTS guards.
 -- nocheck: time-relative
 
+-- Extend the existing owner allowlist before seeding Antigravity tasks.
+-- Preserve legacy owners and explicit NULL/empty unassigned semantics.
+ALTER TABLE public.wbs_tasks DROP CONSTRAINT IF EXISTS wbs_tasks_owner_instance_check;
+
+ALTER TABLE public.wbs_tasks ADD CONSTRAINT wbs_tasks_owner_instance_check
+  CHECK (
+    owner_instance IS NULL
+    OR owner_instance = ''
+    OR owner_instance IN (
+      'antigravity', 'claude', 'codex', 'codex1', 'codex2', 'cx', 'automation', 'auto',
+      'user', 'usr', 'human',
+      'gemini', 'co-pilot', 'copilot',
+      'vscode', 'win', 'windows',
+      'ps', 'ps1', 'ps2', 'ps3', 'ps4', 'ps5', 'ps6',
+      'web', 'mobile', 'schedule', 'scheduled', 'gha', 'github-actions',
+      'github-copilot', 'all', 'unassigned'
+    )
+  );
+
 INSERT INTO public.wbs_tasks (
   title, category, status, progress, priority, owner_instance, phase, description, created_at, updated_at
 )
