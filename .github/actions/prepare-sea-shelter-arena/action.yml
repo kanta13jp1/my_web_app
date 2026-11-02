@@ -1,0 +1,23 @@
+name: Prepare same-origin Sea Shelter 3D engine
+description: Generate and verify pinned engine assets in an existing Flutter web artifact; fails before upload/deploy.
+inputs:
+  web-root:
+    description: Existing Flutter web output relative to the repository root
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: '22'
+        cache: npm
+    - shell: bash
+      env:
+        ARENA_WEB_ROOT: ${{ inputs.web-root }}
+      run: |
+        set -euo pipefail
+        test -f "$ARENA_WEB_ROOT/index.html"
+        test -f "$ARENA_WEB_ROOT/labs/sea-shelter/arena/index.html"
+        npm ci --ignore-scripts
+        node scripts/build_sea_shelter_arena.mjs "$ARENA_WEB_ROOT"
+        node scripts/verify_sea_shelter_arena.mjs "$ARENA_WEB_ROOT"
