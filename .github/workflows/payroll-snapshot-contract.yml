@@ -48,6 +48,9 @@ jobs:
       - name: Test draft schema in disposable database only
         working-directory: docs/proposals/payroll_snapshot
         run: psql -X -v ON_ERROR_STOP=1 -f contract.sql
+      - name: Test synthetic initial races and delayed commit
+        working-directory: docs/proposals/payroll_snapshot
+        run: python concurrency_extra.py
       - name: Test concurrent correction and atomic audit
         working-directory: docs/proposals/payroll_snapshot
         run: python concurrency.py
