@@ -4,6 +4,10 @@ from __future__ import annotations
 from pathlib import Path
 import unittest
 import os
+import re
+import sys
+import hashlib
+from unittest.mock import patch
 import shutil
 import subprocess
 import tempfile
@@ -245,6 +249,115 @@ class CicdEfficiencyTest(unittest.TestCase):
         self.assertIn("name: Security Check", workflow)
         self.assertNotIn("\n    if:", lint_job)
         self.assertNotIn("\n    if:", security_job)
+
+
+SHELL_SHA256 = {
+    'Deploy to Firebase Hosting (Production)': '48948c34093076cb86a5271e3d5b19b47be442885266e60a54f5920aef0eb08d',
+    'Verify deploy reflects current commit': '2f263bfa5a16f9cf174cb1b823f2a164b42ebe07fe659938cad0a0feee0103f9',
+}
+
+
+def step(text, name):
+    return text.split(f'      - name: {name}\n', 1)[1].split('\n      - name:', 1)[0]
+
+
+def bash_executable():
+    candidate = shutil.which('bash')
+    # The Windows system32 launcher is WSL, which may be unconfigured.
+    if os.name == 'nt' and candidate and Path(candidate).parent.name.lower() == 'system32':
+        return None
+    return candidate
+
+
+def approved_script(workflow, name):
+    raw = step(workflow, name).split('        run: |\n', 1)[1].split('\n        env:', 1)[0]
+    digest = hashlib.sha256(raw.encode('utf-8')).hexdigest()
+    if digest != SHELL_SHA256[name]:
+        raise ValueError('Unreviewed workflow shell: refusing execution')
+    return '\n'.join(line[10:] for line in raw.splitlines())
+
+
+def isolated_environment(**test_values):
+    # Never inherit BASH_ENV, proxy settings, credentials, PYTHONPATH or PATH.
+    env = {key: os.environ[key] for key in ('SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP') if key in os.environ}
+    env.update(PATH='', TEST_PYTHON=sys.executable)
+    env.update(test_values)
+    return env
+
+
+class DeploymentGateTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.workflow = (ROOT / '.github/workflows/deploy-prod.yml').read_text(encoding='utf-8')
+
+    def test_web_scope_and_failure_are_enforced(self):
+        for name in ('Deploy to Firebase Hosting (Production)', 'Verify deploy reflects current commit'):
+            with self.subTest(name=name):
+                s = step(self.workflow, name)
+                self.assertIn("if: steps.changes.outputs.web == 'true'", s)
+                self.assertNotIn('continue-on-error', s)
+        self.assertIn("vars.PRODUCTION_DEPLOY_HOLD == 'false'", self.workflow)
+        self.assertIn('cancel-in-progress: false', self.workflow)
+
+    def test_approved_shell_fingerprints(self):
+        for name in SHELL_SHA256:
+            with self.subTest(name=name):
+                self.assertTrue(approved_script(self.workflow, name))
+
+    def test_unknown_shell_never_runs(self):
+        self.workflow = self.workflow.replace('if RESPONSE=$(curl -sf "$SITE"); then',
+                                              'if RESPONSE=$(command curl -sf "$SITE"); then')
+        with patch.object(subprocess, 'run') as execute:
+            with self.assertRaisesRegex(ValueError, 'Unreviewed workflow shell'):
+                self.run_verification('{"commit":"test-sha"}', 0)
+            execute.assert_not_called()
+
+    @unittest.skipUnless(bash_executable(), 'Bash not available; shell execution not verified')
+    def test_firebase_cli_failure_propagates(self):
+        script = approved_script(self.workflow, 'Deploy to Firebase Hosting (Production)')
+        script = re.sub(r'\$\{\{\s*secrets\.[^}]+\}\}', 'synthetic', script)
+        prefix = 'mktemp() { printf /dev/null; }\nrm() { :; }\nnpx() { return 42; }\n'
+        run = subprocess.run([bash_executable(), '-c', prefix + script], env=isolated_environment(), capture_output=True, text=True, timeout=15)
+        self.assertEqual(run.returncode, 42, run.stdout + run.stderr)
+
+    def run_verification(self, payload, status):
+        script = approved_script(self.workflow, 'Verify deploy reflects current commit')
+        script = script.replace('${{ github.sha }}', 'test-sha')
+        # Only a byte-for-byte approved shell may reach these local stubs.
+        prefix = 'sleep() { :; }\ncurl() { printf "%s" "$FAKE_RESPONSE"; return "$FAKE_CURL_STATUS"; }\npython3() { "$TEST_PYTHON" -I "$@"; }\n'
+        env = isolated_environment(FAKE_RESPONSE=payload, FAKE_CURL_STATUS=str(status))
+        return subprocess.run([bash_executable(), '-c', prefix + script], env=env, capture_output=True, text=True, timeout=15)
+
+    @unittest.skipUnless(bash_executable(), 'Bash not available; shell execution not verified')
+    def test_untrusted_startup_environment_is_not_inherited(self):
+        with tempfile.TemporaryDirectory(prefix='deploy-env-test-') as directory:
+            startup = Path(directory) / 'startup.sh'
+            startup.write_text('echo INHERITED_ENV_EXECUTED\n', encoding='utf-8')
+            poisoned = {'BASH_ENV': str(startup), 'PYTHONPATH': directory,
+                        'HTTP_PROXY': 'http://invalid.test', 'DUMMY_SECRET': 'synthetic'}
+            with patch.dict(os.environ, poisoned):
+                child = isolated_environment()
+                for key in poisoned:
+                    self.assertNotIn(key, child)
+                result = self.run_verification('{"commit":"test-sha"}', 0)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertNotIn('INHERITED_ENV_EXECUTED', result.stdout)
+
+    @unittest.skipUnless(bash_executable(), 'Bash not available; shell execution not verified')
+    def test_verified_sha_succeeds(self):
+        result = self.run_verification('{"commit":"test-sha"}', 0)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Deploy verified', result.stdout)
+
+    @unittest.skipUnless(bash_executable(), 'Bash not available; shell execution not verified')
+    def test_all_uncertain_states_fail(self):
+        cases = [('{"commit":"other-sha"}', 0), ('not-json', 0), ('', 22), ('{"commit":"test-sha"}', 22)]
+        for response, status in cases:
+            with self.subTest(response=response, status=status):
+                result = self.run_verification(response, status)
+                self.assertNotEqual(result.returncode, 0, result.stdout)
+                self.assertEqual(result.stdout.count('attempt '), 4)
+                self.assertNotIn('Deploy verified', result.stdout)
 
 
 if __name__ == "__main__":
