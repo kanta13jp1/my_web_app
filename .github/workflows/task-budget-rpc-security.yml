@@ -12,6 +12,8 @@ jobs:
   isolated-postgres:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
     services:
       postgres:
         image: postgres:17
