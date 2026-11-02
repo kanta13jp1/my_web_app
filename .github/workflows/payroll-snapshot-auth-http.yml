@@ -1,0 +1,62 @@
+name: Payroll synthetic authenticated HTTP isolation
+on:
+  pull_request:
+    paths:
+      - docs/proposals/payroll_snapshot/**
+      - supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
+      - .github/workflows/payroll-snapshot-auth-http.yml
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: payroll-snapshot-auth-http-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  synthetic-postgrest-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: synthetic-contract-only
+          POSTGRES_DB: payroll_contract
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: synthetic-contract-only
+      PGDATABASE: payroll_contract
+      SYNTHETIC_JWT_SECRET: synthetic-payroll-test-secret-0123456789
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Guard reviewed SQL and initialize disposable database
+        working-directory: docs/proposals/payroll_snapshot
+        run: |
+          cmp DRAFT_PAYROLL_SCHEMA.sql ../../..//supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
+          psql -X -v ON_ERROR_STOP=1 -f contract.sql
+          psql -X -v ON_ERROR_STOP=1 -f http_isolation_setup.sql
+      - name: Exercise synthetic authenticated HTTP isolation
+        working-directory: docs/proposals/payroll_snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          container="payroll-http-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
+          docker run --rm -d --name "$container" --network host \
+            -e PGRST_DB_URI='postgres://payroll_http_authenticator:synthetic-http-only@localhost:5432/payroll_contract' \
+            -e PGRST_DB_SCHEMAS=public -e PGRST_DB_ANON_ROLE=anon \
+            -e PGRST_SERVER_HOST=127.0.0.1 -e PGRST_SERVER_PORT=31337 \
+            -e PGRST_JWT_SECRET="$SYNTHETIC_JWT_SECRET" \
+            postgrest/postgrest@sha256:5f4ce744539bbba786b4e24dbbd95bdb2a956dcf568c5374995a0ff4a68f5bd2 >/dev/null
+          python -B http_isolation.py
