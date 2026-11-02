@@ -1181,6 +1181,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   @override
   Future<AssetLiabilityManualSyncResult> syncMonth(DateTime month) {
     final userId = _userIdOrNull();
+    final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    _inFlightMonthLoads.remove('$userId:$monthKey');
     return _runMonthMutation<AssetLiabilityManualSyncResult>(month, userId, () {
       if (_userIdOrNull() != userId) {
         return Future.value(
