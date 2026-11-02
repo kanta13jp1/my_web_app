@@ -17,8 +17,10 @@ class SupabaseCapacityPlanTest(unittest.TestCase):
     def test_free_baseline_and_primary_sources_are_explicit(self) -> None:
         for marker in (
             "Nano, shared CPU, up to 0.5 GB memory",
-            "500 MB per project",
-            "1 GB included",
+            "500 MB organization quota",
+            "2 GB fixed per Free project",
+            "At 95% disk usage",
+            "billing-period average",
             "60 direct database connections",
             "200 pooler clients",
             "https://supabase.com/docs/guides/platform/compute-and-disk",
@@ -36,6 +38,8 @@ class SupabaseCapacityPlanTest(unittest.TestCase):
             "30 days or less",
             "14 days or less",
             "7 days or less",
+            "each project physical disk separately",
+            "Free disks do not autoscale",
         ):
             self.assertIn(marker, PLAN)
 

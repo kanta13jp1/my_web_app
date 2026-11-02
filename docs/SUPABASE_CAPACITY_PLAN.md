@@ -4,7 +4,7 @@ Status: proposed operational baseline for Issue #2861
 
 Owner: repository owner / production database owner
 
-Last verified against vendor documentation: 2026-09-03
+Last verified against vendor documentation: 2026-11-03
 
 ## 1. Scope and safety boundary
 
@@ -26,8 +26,8 @@ As of the verification date, the official Supabase documentation states:
 | Resource | Free baseline | Planning consequence |
 | --- | --- | --- |
 | Compute | Nano, shared CPU, up to 0.5 GB memory | Treat sustained CPU, memory, swap, or I/O pressure as a right-sizing signal. |
-| Database size | 500 MB per project | A Free project can enter read-only mode when database size exceeds 500 MB. |
-| Physical disk | 1 GB included for a Free project | Free enforcement is based on the 500 MB database-size quota, not physical disk utilization. |
+| Database size | 500 MB organization quota | The billing quota is evaluated across projects using the billing-period average; exceeding it can cause a Fair Use restriction, separate from disk read-only mode. |
+| Physical disk | 2 GB fixed per Free project; no autoscaling | At 95% disk usage Supabase applies best-effort read-only mode. A full disk can stop Postgres; WAL can fill disk even when database size is low. |
 | Connections | 60 direct database connections and 200 pooler clients for Nano | Use the current configured limit if it differs; these vendor values are the default planning baseline. |
 
 Database and disk are different measurements. Database size is tables,
@@ -67,7 +67,7 @@ and related Issue. Store privileged Metrics API credentials only in an approved
 secret manager. The API is beta, so metric-name changes must fail closed and
 open an operator task rather than silently reporting green.
 
-For a Free 500 MB database quota, apply these thresholds:
+For a Free 500 MB organization database-size quota, apply these planning thresholds to the organization total and billing-period average. Review each project separately as a contributor, not as an independent quota:
 
 | State | Database-size trigger | Forecast trigger | Required action |
 | --- | --- | --- | --- |
@@ -79,7 +79,16 @@ For a Free 500 MB database quota, apply these thresholds:
 
 Forecast days are `remaining quota bytes / max(7-day daily growth, 30-day
 daily growth)`. If history is missing or growth is zero/negative, record the
-forecast as `unknown`; a missing forecast never lowers a size-based state.
+forecast as `unknown`; a missing forecast never lowers a size-based state. Forecasting a live total does not by itself establish the billing-period average or a Fair Use restriction.
+
+Monitor each project physical disk separately from the organization database
+quota. Apply internal `WATCH` / `ACTION` / `CRITICAL` thresholds at 70% / 80% /
+90% of its evidenced disk allocation. At 95% treat read-only or imminent
+read-only mode as an incident; at full capacity Postgres can stop. Disk metrics
+may be delayed: use the freshest available platform reports and error signals,
+and never claim the alert is real-time. Free disks do not autoscale. The owner
+must review the current vendor guidance and options; no upgrade, billing change,
+manual read-only override, or deletion is authorized by this runbook.
 
 Use these internal compute thresholds with the built-in Database report or an
 approved Metrics API collector. They are operational thresholds, not Supabase
