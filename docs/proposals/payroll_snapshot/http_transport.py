@@ -86,14 +86,24 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         length = int(self.headers.get('Content-Length', '0'))
-        assert json.loads(self.rfile.read(length)) == {'fixture': 'synthetic'}
-        if self.path == '/lost-after-commit':
-            state['after_id'] = save(6, 50)
-            self.close_connection = True
-            self.connection.shutdown(socket.SHUT_RDWR)
-            self.connection.close()
+        body = self.rfile.read(length)
+        expected = {'/after-commit': 50, '/in-flight': 60}
+        assert self.path in expected
+        request_id = f"00000000-0000-0000-0000-{expected[self.path]:012d}"
+        assert json.loads(body) == {'request_id': request_id}
+        observed = (self.command, self.path, tuple(sorted(self.headers.items())), body)
+        calls = state.setdefault(self.path, [])
+        calls.append(observed)
+        if self.path == '/after-commit':
+            if len(calls) == 1:
+                state['after_id'] = save(6, 50)
+                self.close_connection = True
+                self.connection.shutdown(socket.SHUT_RDWR)
+                self.connection.close()
+                return
+            self._respond(save(6, 50))
             return
-        if self.path == '/lost-in-flight':
+        if len(calls) == 1:
             started.set()
             state['inflight_id'] = save(7, 60, 4)
             try:
@@ -103,13 +113,9 @@ class Handler(BaseHTTPRequestHandler):
             finally:
                 finished.set()
             return
-        if self.path == '/retry-after-commit':
-            self._respond(save(6, 50))
-            return
-        if self.path == '/retry-in-flight':
+        if self.path == '/in-flight':
             self._respond(save(7, 60))
             return
-        raise AssertionError('unexpected fixture route')
 
     def _respond(self, record_id):
         payload = json.dumps({'id': record_id}).encode()
@@ -128,16 +134,17 @@ thread.start()
 host, port = server.server_address
 
 
-def request(route):
+def request(route, request_number):
     conn = http.client.HTTPConnection(host, port, timeout=10)
-    conn.request('POST', route, body=json.dumps({'fixture': 'synthetic'}),
+    request_id = f'00000000-0000-0000-0000-{request_number:012d}'
+    conn.request('POST', route, body=json.dumps({'request_id': request_id}),
                  headers={'Content-Type': 'application/json'})
     return conn
 
 
 try:
     # Server committed but closes TCP before sending any response.
-    conn = request('/lost-after-commit')
+    conn = request('/after-commit', 50)
     try:
         conn.getresponse()
         raise AssertionError('expected actual lost HTTP response')
@@ -146,16 +153,18 @@ try:
     finally:
         conn.close()
     assert counts(6) == '1|1|1', counts(6)
-    conn = request('/retry-after-commit')
+    conn = request('/after-commit', 50)
     response = conn.getresponse()
     assert response.status == 200
     assert json.loads(response.read())['id'] == state['after_id']
     conn.close()
+    assert len(state['/after-commit']) == 2
+    assert state['/after-commit'][0] == state['/after-commit'][1]
     assert counts(6) == '1|1|1', counts(6)
     print('PASS: TCP response lost after commit; exact retry returns same id')
 
     # Reset the HTTP client while the SQL transaction is visibly still open.
-    conn = request('/lost-in-flight')
+    conn = request('/in-flight', 60)
     assert started.wait(5), 'gateway did not start'
     for _ in range(60):
         waiting = scalar("""select count(*) from pg_stat_activity
@@ -172,11 +181,13 @@ try:
     assert finished.wait(10), 'database transaction did not finish'
     assert transport_failed.is_set(), 'server did not observe disconnected client'
     assert counts(7) == '1|1|1', counts(7)
-    conn = request('/retry-in-flight')
+    conn = request('/in-flight', 60)
     response = conn.getresponse()
     assert response.status == 200
     assert json.loads(response.read())['id'] == state['inflight_id']
     conn.close()
+    assert len(state['/in-flight']) == 2
+    assert state['/in-flight'][0] == state['/in-flight'][1]
     assert counts(7) == '1|1|1', counts(7)
     print('PASS: HTTP client reset before commit; server commits and retry stays idempotent')
 finally:

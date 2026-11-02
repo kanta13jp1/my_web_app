@@ -40,6 +40,7 @@ jobs:
       PGPASSWORD: synthetic-contract-only
       PGDATABASE: payroll_contract
       PYTHONDONTWRITEBYTECODE: '1'
+      FIXTURE_CONTAINER_ID: ${{ job.services.postgres.id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -57,11 +58,18 @@ jobs:
           fixture_token="$(python -c 'import uuid; print(uuid.uuid4())')"
           export PAYROLL_TRANSPORT_FIXTURE_TOKEN="$fixture_token"
           python -c 'import os; from http_transport_safety import validate_environment; validate_environment(os.environ)'
-          psql -X -v ON_ERROR_STOP=1 -f contract.sql
-          psql -X -v ON_ERROR_STOP=1 -v fixture_token="$fixture_token" <<'SQL'
+          [[ "$FIXTURE_CONTAINER_ID" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$(docker inspect -f '{{.State.Running}} {{.Config.Image}}' "$FIXTURE_CONTAINER_ID")" == 'true postgres:17-alpine' ]]
+          docker exec -i "$FIXTURE_CONTAINER_ID" psql -X -U postgres -d payroll_contract -v ON_ERROR_STOP=1 -v fixture_token="$fixture_token" <<'SQL'
           create table public.payroll_transport_fixture_guard (token uuid primary key);
           insert into public.payroll_transport_fixture_guard(token) values (:'fixture_token'::uuid);
           SQL
+          marker_count="$(psql -X -A -t -v ON_ERROR_STOP=1 -v fixture_token="$fixture_token" <<'SQL'
+          select count(*) from public.payroll_transport_fixture_guard where token=:'fixture_token'::uuid;
+          SQL
+          )"
+          python -c 'import sys; from http_transport_safety import validate_marker_count; validate_marker_count(sys.argv[1])' "$marker_count"
+          psql -X -v ON_ERROR_STOP=1 -f contract.sql
           echo "PAYROLL_TRANSPORT_FIXTURE_TOKEN=$fixture_token" >> "$GITHUB_ENV"
       - name: Disconnect actual loopback HTTP transport
         working-directory: docs/proposals/payroll_snapshot
