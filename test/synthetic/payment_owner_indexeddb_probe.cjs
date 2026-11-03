@@ -173,12 +173,16 @@ async function main() {
     });
     assert.equal((await apply(tabA, winner)).status, 'alreadyApplied');
     assert.equal(await read(tabA, 'fake-a'), null);
-    console.log('PASS: synthetic multi-tab CAS, receipt reuse, abort, owner isolation and missing-state hold');
+    console.log('PASS: synthetic multi-tab CAS, receipt reuse, abort, owner isolation and uninitialized-record rejection');
+    console.log('LIMITATION: historical receipt does not prove current record exists');
     console.log('LIMITATION: no real Auth/ABA fencing, old-writer exclusion, storage eviction or server CAS was tested');
     await context.close();
   } finally {
-    if (browser) await browser.close();
-    await new Promise((resolve) => server.close(resolve));
+    try {
+      if (browser) await browser.close();
+    } finally {
+      await new Promise((resolve) => server.close(resolve));
+    }
   }
 }
 main().catch((error) => { console.error(error); process.exitCode = 1; });
