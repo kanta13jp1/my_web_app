@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 PREPARE_SHA = '4d593369e675b3a8fa12fb7b0ee67e6f5fa8a99883a4273b93341f9d771bb539'
-TEST_SHA = 'ac34af4f715c965323c30bb6a28c3109134e344bd2a2707f091d344a2bd231c3'
+TEST_SHA = '6e0cb1992eb1a525db3ee80c557793a60378e02b65112472193b60cb2339bf50'
 
 
 def checked_file(path, root, digest=None):

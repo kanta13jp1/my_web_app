@@ -42,28 +42,29 @@ class _Transport {
   final owners = <String>[];
   final writes = <Map<String, int>>[];
   final started = Completer<void>();
-  final result = Completer<List<Map<String, dynamic>>>();
+  final release = Completer<void>();
+  int errorsEmitted = 0;
   Future<List<Map<String, dynamic>>> read(String owner) async {
     owners.add(owner);
     if (!started.isCompleted) started.complete();
-    return result.future;
-  }
-  void respond() {
+    await release.future;
     if (scenario == _Scenario.failed) {
-      result.completeError(StateError('synthetic read failure'));
+      errorsEmitted++;
+      throw StateError('synthetic read failure');
     } else if (scenario == _Scenario.missing) {
-      result.complete(<Map<String, dynamic>>[]);
+      return <Map<String, dynamic>>[];
     } else {
-      result.complete(<Map<String, dynamic>>[
+      return <Map<String, dynamic>>[
       <String, dynamic>{
         'user_id': _owner,
         'pref_key': 'debt_payment_day_overrides',
         'value': <String, int>{id: 17},
         'updated_at': null,
       },
-      ]);
+      ];
     }
   }
+  void respond() => release.complete();
   Future<void> write(Map<String, int> value) async {
     writes.add(Map<String, int>.of(value));
   }
@@ -138,6 +139,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(transport.owners, <String>[_owner]);
+      expect(transport.errorsEmitted, scenario == _Scenario.failed ? 1 : 0);
       final expectedDay = scenario == _Scenario.existing ? 17 : 10;
       if (scenario == _Scenario.failed) {
         expect(transport.writes, isEmpty);
