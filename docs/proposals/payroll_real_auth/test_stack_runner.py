@@ -69,5 +69,12 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(error.exception.sqlstate, '42723')
         self.assertNotIn('private synthetic detail', str(error.exception))
 
+    def test_auth_log_diagnostic_returns_only_fixed_categories(self):
+        raw = 'permission denied synthetic-email-and-token-secret'
+        result = runner.classify_auth_log(raw)
+        self.assertEqual(result, ['db_permission'])
+        self.assertNotIn('synthetic-email-and-token-secret', str(result))
+        self.assertEqual(runner.classify_auth_log('unrecognized private data'), [])
+
 
 if __name__ == '__main__': unittest.main()

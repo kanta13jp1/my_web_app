@@ -59,6 +59,24 @@ SAFE_CLIENT_OPERATIONS = frozenset({'signup', 'login', 'account_create', 'target
 SAFE_RESPONSE_CODES = frozenset({'42501', '23502', '23503', '23505', '42P01',
     'PGRST301', 'PGRST302', 'PGRST303', 'unexpected_failure',
     'validation_failed', 'email_provider_disabled', 'invalid_credentials', 'unavailable'})
+AUTH_LOG_PATTERNS = {
+    'db_permission': ('permission denied', 'sqlstate 42501'),
+    'db_missing_relation': ('undefined table', 'sqlstate 42p01', 'relation does not exist'),
+    'db_missing_column': ('undefined column', 'sqlstate 42703'),
+    'db_missing_function': ('undefined function', 'sqlstate 42883'),
+    'db_connection': ('failed to connect', 'connection refused', 'connection reset'),
+    'db_constraint': ('duplicate key', 'violates not-null constraint', 'foreign key constraint',
+                      'check constraint', 'sqlstate 23505', 'sqlstate 23502', 'sqlstate 23503'),
+    'email_delivery': ('error sending confirmation email', 'failed to send mail', 'smtp connection failed'),
+    'jwt_configuration': ('error generating jwt', 'failed to sign jwt', 'invalid jwt secret'),
+}
+
+
+def classify_auth_log(text):
+    """Return fixed labels only; do not expose raw synthetic Auth logs."""
+    lowered = text.lower()
+    return sorted(label for label, patterns in AUTH_LOG_PATTERNS.items()
+                  if any(pattern in lowered for pattern in patterns))
 
 
 EMPTY_CHECK = """\\set ON_ERROR_STOP on
@@ -336,6 +354,19 @@ print('RESTORED')
         if self.snapshot() != before:
             raise RuntimeError('Synthetic rows changed during read-only outage')
 
+    def auth_failure_diagnostic(self):
+        auth = self.check_component('auth')
+        captured = self.cmd('logs', '--tail', '120', auth)
+        labels = classify_auth_log((captured.stdout or '') + '\n' + (captured.stderr or ''))
+        # This read concerns only the fixed synthetic address, and is not a retry.
+        result = self.db_sql("select case when count(*)=0 then 'ZERO' else 'PRESENT' end "
+                             "from auth.users where email='fixture-a@example.invalid';")
+        observed = result.strip().splitlines()[-1]
+        if observed not in ('ZERO', 'PRESENT'):
+            raise RuntimeError('Unexpected synthetic user observation')
+        print('Synthetic Auth diagnostic categories:', ','.join(labels) if labels else 'other',
+              'synthetic user row:', observed)
+
     def execute(self, migration, client_source, client_module, gateway_config):
         self.stage = 'pull pinned fixture images'
         self.pull_images()
@@ -465,6 +496,11 @@ def main():
         print('Synthetic fixture failed at stage:', fixture.stage,
               'check:', error.category, 'operation:', error.operation,
               'HTTP status:', error.status or 'unavailable', 'response code:', error.response_code)
+        if error.operation == 'signup' and error.status == 500:
+            try:
+                fixture.auth_failure_diagnostic()
+            except Exception:
+                print('Synthetic Auth diagnostic unavailable')
         raise SystemExit(1) from None
     except FixtureSqlError as error:
         print('Synthetic fixture failed at stage:', fixture.stage,
