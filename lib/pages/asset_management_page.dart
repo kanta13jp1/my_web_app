@@ -504,7 +504,24 @@ class AssetManagementPage extends StatefulWidget {
   State<AssetManagementPage> createState() => _AssetManagementPageState();
 }
 
-class _AssetManagementPageState extends State<AssetManagementPage> {
+@visibleForTesting
+abstract class WriteOrderDiagnosticAccess {
+  bool diagnosticSetDebtDay(String id, int day);
+  int get diagnosticMirrorEntries;
+}
+
+class _AssetManagementPageState extends State<AssetManagementPage>
+    implements WriteOrderDiagnosticAccess {
+  int _diagnosticMirrorEntries = 0;
+  @override
+  int get diagnosticMirrorEntries => _diagnosticMirrorEntries;
+
+  @override
+  bool diagnosticSetDebtDay(String id, int day) {
+    final row = _debtRowById(_buildCurrentAssetLiabilityWorkbook(), id);
+    return row != null && _setDebtPaymentDayOverride(row, day);
+  }
+
   final ScrollController _assetCalendarScrollController = ScrollController();
   static const String _bankSheetId =
       '1WZlHr6YWG8ZbT9r-wXtYPEdPT5E4b47PSpNSNl8A1MM';
@@ -15209,6 +15226,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _mirrorDebtPaymentDayOverrides(
     Map<String, int> overrides,
   ) async {
+    _diagnosticMirrorEntries += 1;
     unawaited(_syncTimestampStore.markChanged('debt_payment_day_overrides'));
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {

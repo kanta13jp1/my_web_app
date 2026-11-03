@@ -2,6 +2,7 @@
 // Place under test/widgets/ only for isolated review with the warning candidate.
 // The legacy reset case checks a temporary UI restriction; it does not prove
 // that legacy-key recovery or deletion is available.
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -67,6 +68,27 @@ class _SyntheticDebtRepository
     saveCalls++;
     values = Map.of(overrides);
     lastSaved = Map.of(overrides);
+  }
+}
+
+class _ControlledRepository extends _SyntheticDebtRepository {
+  _ControlledRepository(super.seed);
+  bool holdWrites = false;
+  bool rejectWrites = false;
+  final List<Completer<void>> permits = [];
+  final List<Map<String, int>> snapshots = [];
+
+  @override
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) async {
+    if (!holdWrites && !rejectWrites) {
+      return super.saveDebtPaymentDayOverrides(overrides);
+    }
+    snapshots.add(Map.of(overrides));
+    if (rejectWrites) throw StateError('synthetic write failure');
+    final permit = Completer<void>();
+    permits.add(permit);
+    await permit.future;
+    values = Map.of(overrides);
   }
 }
 
@@ -613,6 +635,40 @@ void main() {
       find.byKey(const Key('asset_shift_payment_aupay_card')),
       findsOneWidget,
     );
+    await _finishSyntheticPage(tester);
+  });
+
+  testWidgets('diagnostic write completes out of order with held fake', (tester) async {
+    final repo = _ControlledRepository({'mobit': 12});
+    await _pumpSyntheticPage(tester, repository: repo, accountName: 'Synthetic mobit');
+    final access = tester.state(find.byType(AssetManagementPage)) as WriteOrderDiagnosticAccess;
+    repo.holdWrites = true;
+    expect(access.diagnosticSetDebtDay('mobit', 15), isTrue);
+    expect(access.diagnosticSetDebtDay('mobit', 20), isTrue);
+    await tester.pump();
+    expect(repo.snapshots, [{'mobit': 15}, {'mobit': 20}]);
+    expect(repo.permits, hasLength(2));
+    repo.permits[1].complete();
+    await tester.pump();
+    expect(repo.values, {'mobit': 20});
+    repo.permits[0].complete();
+    await tester.pump();
+    expect(repo.values, {'mobit': 15}, reason: 'the delayed older synthetic write overwrote the newer write');
+    await _finishSyntheticPage(tester);
+  });
+
+  testWidgets('diagnostic write failure still enters mirror function', (tester) async {
+    final repo = _ControlledRepository({'mobit': 12});
+    await _pumpSyntheticPage(tester, repository: repo, accountName: 'Synthetic mobit');
+    final access = tester.state(find.byType(AssetManagementPage)) as WriteOrderDiagnosticAccess;
+    final mirrorBefore = access.diagnosticMirrorEntries;
+    repo.rejectWrites = true;
+    expect(access.diagnosticSetDebtDay('mobit', 20), isTrue);
+    await tester.pump();
+    expect(repo.values, {'mobit': 12});
+    expect(repo.snapshots, [{'mobit': 20}]);
+    expect(access.diagnosticMirrorEntries, mirrorBefore + 1, reason: 'the mirror method is entered after the synthetic local error');
+    expect(Supabase.instance.client.auth.currentUser, isNull);
     await _finishSyntheticPage(tester);
   });
 }
