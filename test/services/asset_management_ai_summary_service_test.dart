@@ -102,7 +102,9 @@ void main() {
           .toList();
       expect(headers, List.generate(8, (index) => '## ${index + 1}. '));
       expect(
-          RegExp(r'^## ', multiLine: true).allMatches(result.text).length, 8);
+        RegExp(r'^## ', multiLine: true).allMatches(result.text).length,
+        8,
+      );
       expect(result.text, contains('使用可能額:'));
       expect(result.text, contains('未払い項目'));
       for (final row in report.workbook.cashflowRows.where(
@@ -187,6 +189,43 @@ void main() {
       }
       expect(section, isNot(contains(workbook.repaymentPriorityRows[5].name)));
       expect(text, contains('使用可能額:'));
+    });
+
+    test('fallback excludes card-included debt from direct unpaid items', () {
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 85266,
+          'auPayカード': -505608,
+          'au': -27395,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        paidAccountNames: const <String>{'auPayカード'},
+      );
+      final child =
+          workbook.currentDebtRows.singleWhere((row) => row.name == 'au');
+      expect(child.includedInBillingAccount, isTrue);
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+      );
+      final text =
+          AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      final section = text.split('## 4. 未払い項目').last.split('## 5.').first;
+      expect(section, isNot(contains('au:')));
+    });
+
+    test('fallback does not list a zero scheduled amount as unpaid', () {
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 0},
+      );
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+      );
+      final text =
+          AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      final section = text.split('## 4. 未払い項目').last.split('## 5.').first;
+      expect(section, isNot(contains('PayPay:')));
     });
 
     test('does not call ai-hub when feature flag is off', () async {
