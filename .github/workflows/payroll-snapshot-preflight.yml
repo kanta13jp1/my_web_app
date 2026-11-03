@@ -1,4 +1,4 @@
-name: Forecast keyed label accessibility diagnostic
+name: Forecast keyed label full diagnostic
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ on:
 
 permissions: {}
 concurrency:
-  group: forecast-key-accessibility-diagnostic-${{ github.run_id }}
+  group: forecast-key-full-diagnostic-${{ github.run_id }}
   cancel-in-progress: false
 jobs:
   diagnostic:
@@ -27,7 +27,7 @@ jobs:
           EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
         run: |
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
-          test "$(git rev-parse HEAD:integration_test/asset_cashflow_forecast_conditional_test.dart)" = "d2de915c552d218b655d20162b299f16c1351c0c"
+          test "$(git rev-parse HEAD:integration_test/asset_cashflow_forecast_conditional_test.dart)" = "add4ef3237ab2831bfe2f2beef7cecadc25d24d7"
           test "$(git rev-parse HEAD:lib/widgets/asset_cashflow_forecast_card.dart)" = "c09b32ded48f22c59f13e4e9c0a4ec629f1369d7"
       - uses: ./.github/actions/setup-flutter-sdk
         with:
@@ -35,8 +35,20 @@ jobs:
       - name: Resolve synthetic dependencies
         id: prepare
         run: flutter pub get
-      - name: Accessibility default
+      - name: Check Flutter 3.38 formatting
+        id: format
+        run: dart format --output=none --set-exit-if-changed lib/widgets/asset_cashflow_forecast_card.dart integration_test/asset_cashflow_forecast_conditional_test.dart
+      - name: Show diagnostic formatting diff
+        if: ${{ !cancelled() && steps.format.outcome == 'failure' }}
+        run: |
+          dart format lib/widgets/asset_cashflow_forecast_card.dart integration_test/asset_cashflow_forecast_conditional_test.dart
+          git diff -- lib/widgets/asset_cashflow_forecast_card.dart integration_test/asset_cashflow_forecast_conditional_test.dart
+      - name: Targeted Flutter analyzer
+        id: analyze
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        run: flutter analyze lib/widgets/asset_cashflow_forecast_card.dart integration_test/asset_cashflow_forecast_conditional_test.dart
+      - name: Accessibility default
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && steps.format.outcome == 'success' && steps.analyze.outcome == 'success' }}
         shell: bash
         run: |
           chromedriver --port=4444 > /tmp/forecast-key-a11y-default.log 2>&1 &
@@ -52,7 +64,7 @@ jobs:
             --target=integration_test/asset_cashflow_forecast_conditional_test.dart \
             -d web-server --browser-name=chrome --headless
       - name: Accessibility mobile
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && steps.format.outcome == 'success' && steps.analyze.outcome == 'success' }}
         shell: bash
         run: |
           chromedriver --port=4444 > /tmp/forecast-key-a11y-mobile.log 2>&1 &

@@ -127,8 +127,7 @@ void main() {
     expect(tester.widget<ChoiceChip>(six).selected, isFalse);
     final initialSemantics = tester.getSemantics(six).getSemanticsData();
     expect(initialSemantics.label, contains('6ヶ月'));
-    expect(initialSemantics.hasFlag(ui.SemanticsFlag.hasCheckedState), isTrue);
-    expect(initialSemantics.hasFlag(ui.SemanticsFlag.isChecked), isFalse);
+    expect(initialSemantics.flagsCollection.isChecked, ui.CheckedState.isFalse);
     final before = tester.element(sixLabel);
     final sixFocus = Focus.of(before);
     sixFocus.requestFocus();
@@ -142,7 +141,7 @@ void main() {
     expect(identical(before, selectedElement), isFalse);
     final selectedSemantics = tester.getSemantics(six).getSemanticsData();
     expect(selectedSemantics.label, contains('6ヶ月'));
-    expect(selectedSemantics.hasFlag(ui.SemanticsFlag.isChecked), isTrue);
+    expect(selectedSemantics.flagsCollection.isChecked, ui.CheckedState.isTrue);
     expect(find.textContaining('将来残高予測(今後6ヶ月)'), findsNWidgets(2));
     final threeLabel = find.descendant(of: three, matching: find.text('3ヶ月'));
     final threeFocus = Focus.of(tester.element(threeLabel));
@@ -155,9 +154,9 @@ void main() {
     expect(identical(selectedElement, tester.element(sixLabel)), isFalse);
     final threeSemantics = tester.getSemantics(three).getSemanticsData();
     expect(threeSemantics.label, contains('3ヶ月'));
-    expect(threeSemantics.hasFlag(ui.SemanticsFlag.isChecked), isTrue);
-    expect(tester.getSemantics(six).getSemanticsData()
-        .hasFlag(ui.SemanticsFlag.isChecked), isFalse);
+    expect(threeSemantics.flagsCollection.isChecked, ui.CheckedState.isTrue);
+    final resetSemantics = tester.getSemantics(six).getSemanticsData();
+    expect(resetSemantics.flagsCollection.isChecked, ui.CheckedState.isFalse);
     expect(find.textContaining('将来残高予測(今後3ヶ月)'), findsNWidgets(2));
   });
 
