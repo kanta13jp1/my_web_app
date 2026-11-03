@@ -100,12 +100,12 @@ store; do not suppress TLS verification.
 ## 3. Reproduce once with verbose output
 
 Only after the Remote Control security and host-resource gates pass, run one
-sandboxed, single-session reproduction:
+sandboxed, single-session reproduction on a supported macOS, Linux or WSL2 host. Confirm effective sandbox settings and strict unsandboxed-retry policy first; native Windows shell commands are not sandboxed:
 
 ```powershell
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $log = Join-Path $env:TEMP "claude-remote-control-$stamp.log"
-claude remote-control --verbose --sandbox --spawn session 2>&1 |
+claude remote-control --verbose --spawn session 2>&1 |
   Tee-Object -FilePath $log
 ```
 

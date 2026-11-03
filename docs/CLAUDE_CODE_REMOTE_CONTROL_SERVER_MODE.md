@@ -1,6 +1,6 @@
 # Claude Code Remote Control server mode policy
 
-Last reviewed: 2026-09-03 JST
+Last reviewed: 2026-11-03 JST
 
 This policy supplements the security decision tracked in Issue #2877 and Draft
 PR #5265. It does not approve Remote Control or start a server. Complete that
@@ -10,7 +10,7 @@ security decision and the external Owner/OAuth/device checks first.
 
 | Need | Mode | Repository policy |
 | --- | --- | --- |
-| One remotely controlled task | `--spawn session` | Default; always add `--sandbox`; do not pass `--capacity` |
+| One remotely controlled task | `--spawn session` | Default; configure sandbox in settings; do not pass `--capacity` |
 | Two isolated tasks | `--spawn worktree --capacity 2` | Allowed only after the resource and security gates pass |
 | Shared working directory | `--spawn same-dir` | Prohibited; concurrent edits can conflict |
 
@@ -18,7 +18,7 @@ The Claude Code default server capacity is 32. This repository never accepts
 that default. Multi-session mode is capped at 2 and uses git worktrees with
 `--no-create-session-in-dir` so an on-demand session does not silently share the
 launch directory. `--permission-mode default` preserves normal permission
-prompts; sandboxing does not replace them.
+prompts; sandboxing does not replace them. The `--sandbox` and `--no-sandbox` server flags were removed in Claude Code v2.1.300. Set `sandbox.enabled` and the strict retry policy in effective settings instead. Native Windows shell commands are unsandboxed; use a supported macOS, Linux or WSL2 environment. Shell sandboxing does not cover file tools, MCP servers or hooks.
 
 ## Resource gate
 
@@ -40,12 +40,13 @@ python scripts/claude_remote_control_server_plan.py --mode single --json
 ```
 
 The command is withheld and the process exits nonzero until the security review
-is recorded and resource measurements are healthy:
+is recorded, sandbox configuration is independently confirmed, the host platform is supported, and resource measurements are healthy. The confirmation flag is an operator assertion; the planner does not inspect effective settings or prove isolation:
 
 ```powershell
 python scripts/claude_remote_control_server_plan.py `
   --mode single `
   --security-review-recorded `
+  --sandbox-config-confirmed `
   --json
 ```
 
@@ -56,6 +57,7 @@ python scripts/claude_remote_control_server_plan.py `
   --mode multi `
   --capacity 2 `
   --security-review-recorded `
+  --sandbox-config-confirmed `
   --json
 ```
 
@@ -67,12 +69,10 @@ Review the output before manually running it.
 Use a disposable, secret-free test repository. Do not test against this
 repository's production credentials or the user's home directory.
 
-1. Confirm the generated argument vector contains `--sandbox` and
-   `--permission-mode default`.
+1. Confirm effective settings enable sandboxing, disable unsandboxed retry, and include the intended filesystem/network restrictions. The planner does not verify settings precedence. Confirm the command contains `--permission-mode default` and does not use removed `--sandbox` flags.
 2. Start only one test session and inspect the Remote Control status panel.
 3. Ask the session to create and remove a marker inside the disposable repo.
-4. Ask it to read a non-sensitive marker immediately outside that repo. The
-   sandbox must block the read or require an explicit permission expansion.
+4. Configure a disposable denied path and ask the shell to access its non-sensitive marker. Verify denial. The default sandbox allows reading much of the filesystem, so an arbitrary outside-read test is not a valid default expectation.
 5. Ask it to reach a benign endpoint that is not allowlisted. The sandbox must
    block the request or require explicit approval. Do not weaken organization
    privacy controls to make the test pass.
