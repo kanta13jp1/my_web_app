@@ -1,0 +1,49 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- SYNTHETIC SERVICE ONLY. NEVER RUN ON AN EXISTING DATABASE.
+-- The caller must verify owned ephemeral service+token; this marker is forgeable.
+set codex.debt_cas_fixture='isolated-debt-cas-v2';
+create temp table synthetic_truncate_baseline as select user_id,pref_key,value,updated_at from public.asset_pref_mirror;
+do $$ begin
+ if (select count(*) from synthetic_truncate_baseline) <> 5 then raise exception 'fixture baseline mismatch'; end if;
+end $$;
+begin;
+-- Synthetic contrast reproduces production metadata grants; no production privileges changed.
+grant truncate on public.asset_pref_mirror to anon,authenticated;
+savepoint before_authenticated;
+set local role authenticated;
+select pg_catalog.set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
+truncate table public.asset_pref_mirror;
+reset role;
+do $$ begin
+ if (select count(*) from public.asset_pref_mirror)<>0 then raise exception 'authenticated truncate not observed'; end if;
+end $$;
+rollback to savepoint before_authenticated;
+savepoint before_anon;
+set local role anon;
+truncate table public.asset_pref_mirror;
+reset role;
+do $$ begin
+ if (select count(*) from public.asset_pref_mirror)<>0 then raise exception 'anon truncate not observed'; end if;
+end $$;
+rollback to savepoint before_anon;
+revoke truncate on public.asset_pref_mirror from anon,authenticated;
+set local role authenticated;
+do $$ declare blocked boolean:=false; begin
+ begin truncate table public.asset_pref_mirror; exception when insufficient_privilege then blocked:=true; end;
+ if not blocked then raise exception 'authenticated truncate still allowed'; end if;
+end $$;
+reset role;
+set local role anon;
+do $$ declare blocked boolean:=false; begin
+ begin truncate table public.asset_pref_mirror; exception when insufficient_privilege then blocked:=true; end;
+ if not blocked then raise exception 'anon truncate still allowed'; end if;
+end $$;
+reset role;
+do $$ begin
+ if exists((select * from synthetic_truncate_baseline except all select user_id,pref_key,value,updated_at from public.asset_pref_mirror)
+   union all (select user_id,pref_key,value,updated_at from public.asset_pref_mirror except all select * from synthetic_truncate_baseline)) then
+  raise exception 'synthetic fixture not preserved'; end if;
+end $$;
+rollback;
+\echo SYNTHETIC_TRUNCATE_CONTRAST_PASSED

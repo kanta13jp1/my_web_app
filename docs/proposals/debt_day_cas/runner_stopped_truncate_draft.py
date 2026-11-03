@@ -82,6 +82,17 @@ def load_replay_sources():
     return result
 
 
+TRUNCATE_STOPPED_SHA = 'c4a1c47a65684da4d8637d03ee613f36e7dff016071392700529e6dacd4d0132'
+TRUNCATE_ORIGINAL_SHA = 'fb349d1804691ed2be8d65e48ccfe47c94ee523680fafbb5e278bf6ac292bfb6'
+
+
+def load_truncate_source():
+    path = HERE / 'truncate_fixture_review_stopped.sql.txt'
+    if path.is_symlink() or not path.is_file() or path.resolve().parent != HERE:
+        raise RuntimeError('invalid stopped truncate fixture')
+    return decode_stopped(path.read_bytes(), TRUNCATE_STOPPED_SHA, TRUNCATE_ORIGINAL_SHA)
+
+
 def job_identity(env):
     run, attempt = env.get('GITHUB_RUN_ID', ''), env.get('GITHUB_RUN_ATTEMPT', '')
     if (env.get('GITHUB_ACTIONS') != 'true' or env.get('RUNNER_ENVIRONMENT') != 'github-hosted'
@@ -447,9 +458,17 @@ def concurrency_same_request(service, sources):
         raise RuntimeError('replay final verification absent')
 
 
+def sequential_checks(service, sources, truncate_source):
+    service.sql(sources['fixture_v5_assertions.sql.txt'])
+    service.sql(sources['fixture_v5_rollback.sql.txt'])
+    if 'SYNTHETIC_TRUNCATE_CONTRAST_PASSED' not in service.sql(truncate_source).splitlines():
+        raise RuntimeError('synthetic truncate contrast verification absent')
+
+
 def main():
     sources, stopped_setup = load_sources()  # Capture verified bytes before service access.
     replay_sources = load_replay_sources()  # Verify and capture all stopped replay files.
+    truncate_source = load_truncate_source()  # Capture and verify before service access.
     label = job_identity(os.environ)
     ids = [os.environ.get('FIXTURE_SEQUENTIAL_ID', ''), os.environ.get('FIXTURE_CONCURRENCY_ID', '')]
     if ids[0] == ids[1] or any(not re.fullmatch(r'[0-9a-f]{64}', cid) for cid in ids):
@@ -470,8 +489,7 @@ def main():
                 owned.append(Service(cid, lane, label, docker, env, image, network))
             seq, parallel = owned
             seq.initialize(sources, stopped_setup)
-            seq.sql(sources['fixture_v5_assertions.sql.txt'])
-            seq.sql(sources['fixture_v5_rollback.sql.txt'])
+            sequential_checks(seq, sources, truncate_source)
             parallel.initialize(sources, stopped_setup)
             concurrency_same_request(parallel, replay_sources)
         finally:
@@ -530,6 +548,34 @@ class StoppedInputTests(unittest.TestCase):
         service = FakeService(fail=True)
         with self.assertRaises(RuntimeError): concurrency_same_request(service, sources)
         self.assertNotIn(('write', 'holder', True), service.events)
+
+    def test_truncate_source_guard_and_sequential_failure(self):
+        source = load_truncate_source()
+        self.assertIn('SYNTHETIC_TRUNCATE_CONTRAST_PASSED', source)
+        data = (HERE / 'truncate_fixture_review_stopped.sql.txt').read_bytes()
+        for bad in (data + b'x', data[len(STOP):], STOP + data):
+            with self.assertRaises(RuntimeError):
+                decode_stopped(bad, TRUNCATE_STOPPED_SHA, TRUNCATE_ORIGINAL_SHA)
+        class FakeService:
+            def __init__(self, output): self.calls, self.output = [], output
+            def sql(self, value):
+                self.calls.append(value)
+                return self.output if value == 'truncate' else ''
+        inputs = {'fixture_v5_assertions.sql.txt': 'assertions', 'fixture_v5_rollback.sql.txt': 'rollback'}
+        good = FakeService('SYNTHETIC_TRUNCATE_CONTRAST_PASSED')
+        sequential_checks(good, inputs, 'truncate')
+        self.assertEqual(good.calls, ['assertions', 'rollback', 'truncate'])
+        bad = FakeService('no verification marker')
+        with self.assertRaises(RuntimeError): sequential_checks(bad, inputs, 'truncate')
+        self.assertEqual(bad.calls, ['assertions', 'rollback', 'truncate'])
+        class BrokenService(FakeService):
+            def sql(self, value):
+                self.calls.append(value)
+                if value == 'rollback': raise RuntimeError('synthetic failure')
+                return ''
+        broken = BrokenService('')
+        with self.assertRaises(RuntimeError): sequential_checks(broken, inputs, 'truncate')
+        self.assertEqual(broken.calls, ['assertions', 'rollback'])
 
     def test_fixed_inputs_unwrap_to_verified_originals(self):
         sources, stopped_setup = load_sources()
