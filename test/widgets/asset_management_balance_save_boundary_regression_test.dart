@@ -33,7 +33,9 @@ void main() {
   Map<String, dynamic>? serverClosing;
   Map<String, dynamic>? lastClosingWrite;
   setUp(() async {
-    if (Supabase.instance.client.auth.currentUser == null) {
+    // Restore the synthetic owner even if a previous test stopped early.
+    syntheticUserId = '00000000-0000-4000-8000-000000000001';
+    if (Supabase.instance.client.auth.currentUser?.id != syntheticUserId) {
       await Supabase.instance.client.auth.signInWithPassword(
         email: 'probe@example.invalid',
         password: 'synthetic-only',
@@ -415,6 +417,14 @@ void main() {
         await tester.ensureVisible(fields.at(1));
         await tester.enterText(fields.at(1), '500');
       }
+      // Verify both fields before save so a focus/scroll issue is not hidden.
+      expect(
+        tester.widget<TextField>(fields.at(bulk ? 0 : 1)).controller!.text,
+        '500',
+      );
+      if (bulk) {
+        expect(tester.widget<TextField>(fields.at(1)).controller!.text, '500');
+      }
       final action = bulk ? find.text('全体状況を保存') : find.text('記録').last;
       await tester.ensureVisible(action);
       await tester.tap(action);
@@ -442,7 +452,13 @@ void main() {
         '500',
       );
       expect(relatedWrites, 0);
-      expect(find.textContaining('保存済み'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.textContaining(RegExp('保存済み|を記録し|一括記録し')),
+        ),
+        findsNothing,
+      );
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 2));
       syntheticUserId = '00000000-0000-4000-8000-000000000001';
