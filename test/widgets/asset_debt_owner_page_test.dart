@@ -86,6 +86,7 @@ Future<void> _pumpSyntheticPage(
 }) async {
   final syntheticNow = DateTime(2026, 10, 20);
   await tester.binding.setSurfaceSize(const Size(1200, 2400));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
     MaterialApp(
       home: AssetManagementPage(
@@ -159,17 +160,13 @@ void main() {
     HttpOverrides.global = previousOverrides;
   });
 
-  tearDown(() async {
-    try {
-      expect(
-        [networkGuard.blockedCalls, deniedSupabaseRequests],
-        [0, 0],
-        reason:
-            'Synthetic page attempted an unsupported client operation or request',
-      );
-    } finally {
-      await TestWidgetsFlutterBinding.ensureInitialized().setSurfaceSize(null);
-    }
+  tearDown(() {
+    expect(
+      [networkGuard.blockedCalls, deniedSupabaseRequests],
+      [0, 0],
+      reason:
+          'Synthetic page attempted an unsupported client operation or request',
+    );
   });
 
   testWidgets('legacy name override displays warning on the actual card', (
