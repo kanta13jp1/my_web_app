@@ -381,6 +381,15 @@ print('RESTORED')
             raise RuntimeError('Unexpected synthetic metadata observation')
         print('Synthetic fixed metadata, separate postgres session:', state)
 
+    def verify_postgres_user_resolution(self):
+        # The Auth connection may still override its session setting; this probe
+        # confirms only the default in a fresh connection of the same role.
+        state = self.db_sql("select case when to_regclass('users') is not null and "
+                            "to_regclass('users') = to_regclass('auth.users') "
+                            "then 'AUTH_USERS_RESOLVED' else 'AUTH_USERS_UNRESOLVED' end;")
+        if state.strip().splitlines()[-1] != 'AUTH_USERS_RESOLVED':
+            raise RuntimeError('Synthetic postgres role cannot resolve auth.users')
+
     def execute(self, migration, client_source, client_module, gateway_config):
         self.stage = 'pull pinned fixture images'
         self.pull_images()
@@ -392,7 +401,8 @@ print('RESTORED')
                     "insert into public.payroll_auth_fixture_guard values (:'fixture_token'::uuid);\n", marker=False)
         self.db_sql("create role anon nologin; create role authenticated nologin; "
                     "create role authenticator noinherit login password '" + self.password + "'; "
-                    "grant anon, authenticated to authenticator; create schema auth;\n")
+                    "grant anon, authenticated to authenticator; create schema auth; "
+                    "alter role postgres set search_path to auth, public;\n")
         self.stage = 'start synthetic client and Auth'
         self.create_component('client', command=['python', '-c', 'import time; time.sleep(600)'])
         self.start_component('client')
@@ -412,6 +422,8 @@ print('RESTORED')
         })
         self.start_component('auth')
         self.wait_http('http://synthetic-auth:9999/health')
+        self.stage = 'verify synthetic postgres role search path'
+        self.verify_postgres_user_resolution()
         self.stage = 'verify Auth-provided uid function'
         status = self.db_sql("select case when to_regprocedure('auth.uid()') is not null "
                              "then 'UID_PRESENT' else 'UID_MISSING' end;").strip().splitlines()[-1]

@@ -93,5 +93,14 @@ class RunnerTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(RuntimeError, 'metadata'):
             fixture.auth_failure_diagnostic()
 
+    def test_search_path_probe_rejects_unresolved_or_unexpected_values(self):
+        fixture = runner.Fixture.__new__(runner.Fixture)
+        fixture.db_sql = lambda _sql: '1\nAUTH_USERS_RESOLVED\n'
+        fixture.verify_postgres_user_resolution()
+        for result in ('AUTH_USERS_UNRESOLVED', 'unexpected'):
+            fixture.db_sql = lambda _sql: result
+            with self.assertRaisesRegex(RuntimeError, 'cannot resolve'):
+                fixture.verify_postgres_user_resolution()
+
 
 if __name__ == '__main__': unittest.main()
