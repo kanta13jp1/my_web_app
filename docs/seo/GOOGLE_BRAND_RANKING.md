@@ -1419,3 +1419,35 @@ session-start-check/adaptive-model-router適用、Jev astra/medium advisoryでle
 既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)を更新。38行JSON・日付一意・順位連番・件数合計96・target null・remote再読一致を検証。docs-onlyで専用Flutter test/analyze/release build、新規生成HTML、対象起動後描画は未実施。旧head1e5af545は14成功/3失敗/6skip、draft判定のAIレビュー失敗。最新head結果はPRコメントへ。rollbackは当日記録コミットのrevert。次回は未検出の継続/復帰、上位3と競合順序、AI/PAAを確認。マージ・デプロイなし、日次監視継続、アーカイブ保留。
 
 session-start-check/adaptive-model-router適用、Jev astra/medium advisory、lead実行。cloud-preferred（ディスク35.29GiB、RAM58%/空き13.26GiB）でremote API編集、worktree/toolchain/workerなし。元branch fix/salary-deposit-payslip-signal/HEADc3e1d46077/upstream0/0、7dirty paths/35worktrees保持。注入ルールdriftなし、tool-watchは既存#1422等へ、NotebookLM一覧失敗は非依存。順位1位は保証しない。
+
+## 2026-11-03 日次監視：未検出継続、上位9件は同順序
+
+09:01 JST頃からGoogle実Edge、検索語 `自分株式会社`、hl=ja/gl=jp/pws=0、府中市東京都(IP由来)、CAPTCHAなし、ログイン済み、Googleはパーソナライズなしと表示。サイトブロック拡張UIあり、設定/影響は未検証で変更なし。2/3ページ目のDOM取得タイムアウトをAX表示で回復して全10ページを確認。
+
+10ページ(start=0〜90)の自然検索92件で対象未検出。各ページ9/10/9/10/8/8/9/10/9/10、画像枠は除外、ページ間重複を含む。「確認範囲外」とし、100位圏外とは断定しない。前回11/2も96件で未検出、順位差は計算不可。最後の検出は10/30の3ページ目2件目(観測順21)。
+
+|順位|タイトル|当日URL / ドメイン|種別|主な検索意図|
+|---:|---|---|---|---|
+|1|会社に依存しない「自分株式会社」の考え方｜moto（戸塚俊介）|[note.com](https://note.com/recruit_man_note/n/n1032c32fbc36)|著者ブログ記事|会社に依存しないキャリア設計と収支管理を学ぶ|
+|2|“自分株式会社”という考え方|[ifa-japan.co.jp](https://www.ifa-japan.co.jp/%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%84%E3%81%86%E8%80%83%E3%81%88%E6%96%B9/)|専門家ブログ記事|人的資本・資産形成として理解する|
+|3|経営支援サービスを総合的にサポートする ITベンダー M社|[solution.lmi.ne.jp](https://solution.lmi.ne.jp/hr_development/case/1180)|法人研修の導入事例|研修での活用例と成果を確認する|
+|4|「自分株式会社」という考え方と、この考え方を活用するために ...|[note.com](https://note.com/famous_knot742/n/n0c1a89bc7c77)|個人ブログ記事|概念の定義、参考情報、実践方法を知る|
+|5|サラリーマンこそ自分株式会社をつくりなさい――1000万円 ...|[amazon.co.jp](https://www.amazon.co.jp/%E3%82%B5%E3%83%A9%E3%83%AA%E3%83%BC%E3%83%9E%E3%83%B3%E3%81%93%E3%81%9D%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%82%92%E3%81%A4%E3%81%8F%E3%82%8A%E3%81%AA%E3%81%95%E3%81%84%E2%80%95%E2%80%951000%E4%B8%87%E5%86%86%E7%94%9F%E6%B4%BB%E3%82%92%E8%AC%B3%E6%AD%8C%E3%81%99%E3%82%8B-%E5%90%89%E5%B7%9D-%E8%8B%B1%E4%B8%80/dp/4478067449)|書籍商品ページ|内容、著者、評価、購入条件を確認する|
+|6|「自分株式会社」を経営せよ。副業年収4000万円のmotoが ...|[r25.jp](https://r25.jp/articles/928885293145522178)|編集部記事・書籍抜粋|キャリアと副業の具体例を読む|
+|7|わたしブランド～自分株式会社を設立してみよう|[akikofujisaki.com](https://akikofujisaki.com/selfpromotion/)|専門家ブログ記事|自己ブランディングへ応用する|
+|8|なぜ自分の会社をつくるのか？人生を楽しく生きるための2つの ...|[diamond.jp](https://diamond.jp/articles/-/78525)|書籍連載・解説記事|起業の目的と法人化の判断を理解する|
+|9|NewsPicks [ニューズピックス]|[x.com](https://x.com/newspicks/status/1449692163042856961)|SNS投稿|著名人の発言と反応を見る|
+
+当日hrefを確認。1ページ目9件の顔ぶれ/順序/URL集合は同じ。広告・強調スニペットなし。AI概要は収支/資産/経営判断の対比表、自律的キャリア/収入分散/ROIを説明。可視moto/Amazon/IFA/R25、カードmoto/Amazon（全参照一覧ではない）。PAAは6件後へ移動、4問は前回同じ。Amazon価格/評価は当日表示範囲で未確認。対象title/snippet/site-nameは当日値なし。
+
+### 分析・改善案・変更
+
+[moto](https://note.com/recruit_man_note/n/n1032c32fbc36)は定義→収支/資産→実践と著者・日付・書籍導線。[IFA](https://www.ifa-japan.co.jp/自分株式会社という考え方/)は人的資本と長期自己経営、著者・書籍・会社方針。[対象理念](https://my-web-app-b67f4.web.app/philosophy)には人的資本/P/L/B/S/架空例/FAQ/運用サイクルが既存。当日Web本文はキャッシュを含む。4ページのHTTP初期HTML/title/H1/canonical/内部リンク/JSON-LD/noindex文字列/X-Robots-Tagを当日監査してJSONLへ保存。HTML全体のnoindex単語検出はrobots指定を意味しない。Flutter起動後描画は未確認。
+
+新規不足テーマや原因となる技術的欠陥は確定できず、アプリ変更なし、追跡2文書のみ。今回、対象URL-prefixの[Search Console](https://search.google.com/search-console?resource_id=https%3A%2F%2Fmy-web-app-b67f4.web.app%2F)を実ブラウザで開いたが、現在のアカウントにプロパティへのアクセス権限がない画面を確認。実績/正規URL/インデックス情報は取得不可。所有権確認、権限変更、アカウント切替は行わない。診断を進めるには所有者が閲覧できる環境でクエリ別実績とURL検査情報の確認が必要。順位変動の原因を推測した改修やキーワード増量、競合文面の転用はしない。
+
+### 検証・PR・次回
+
+既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)を更新。39行JSON・日付一意・順位連番・件数合計92・target null・remote再読一致を検証。docs-onlyのため専用Flutter test/analyze/release build、新規生成HTML、起動後描画は未実施。旧head55fd7eefは14成功/3失敗/6skip、既知draft判定AIレビュー問題。最新head結果はPRコメントへ。rollbackは当日記録コミットのrevert。次回は未検出の継続/復帰、競合上位とAI/PAA、Search Console実績の参照可否を確認。マージ・デプロイなし、日次監視継続、アーカイブ保留。
+
+session-start-check/adaptive-model-router適用、Jev astra/medium advisory、lead実行。cloud-preferred（ディスク36.23GiB、RAM74%/空き8.09GiB）でremote API編集、worktree/toolchain/workerなし。元branch fix/salary-deposit-payslip-signal/HEADc3e1d46077/upstream0/0、7dirty paths保持。注入ルールdriftなし、tool-watchは既存#1422等へ、NotebookLM一覧失敗は非依存。順位1位は保証しない。
