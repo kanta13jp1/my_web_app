@@ -15336,7 +15336,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             restoreOwner == _debtRestoreOwnerAtPageStart &&
             _debugDebtOwner == restoreOwner &&
             _debugDebtToken == restoreToken);
-    if (debugMirror == null && _supabase.auth.currentUser == null) {
+    if (debugMirror == null && _debugDebtOwner == null) {
       return;
     }
     final hasLocal = _debtPaymentDayOverrides.isNotEmpty;
