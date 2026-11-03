@@ -1,0 +1,96 @@
+name: Payment-day prune browser regression
+on:
+  pull_request:
+    paths:
+      - lib/pages/asset_management_page.dart
+      - integration_test/asset_payment_day_prune_test.dart
+      - test_driver/asset_payment_day_prune.dart
+      - .github/workflows/asset-payment-day-prune-browser.yml
+permissions:
+  contents: read
+concurrency:
+  group: payment-day-prune-browser-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Prepare browser dependencies
+        run: |
+          set -euo pipefail
+          flutter pub get
+          flutter precache --web
+          google-chrome --version
+          chromedriver --version
+      - name: Analyze integration test and driver
+        run: |
+          set -euo pipefail
+          flutter analyze --no-pub integration_test/asset_payment_day_prune_test.dart
+          flutter analyze --no-pub test_driver/asset_payment_day_prune.dart
+      - name: Exercise synthetic page in network-isolated Chrome
+        timeout-minutes: 12
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo unshare --net -- bash -c '
+            set -euo pipefail
+            ip link set lo up
+            test "$(ip -o link show | wc -l)" -eq 1
+            driver_log="$2"
+            setsid runuser -u "$1" -- chromedriver --port=4444 > "$driver_log" 2>&1 &
+            driver_pid=$!
+            cleanup() {
+              result=$?
+              trap - EXIT
+              group=$(ps -o pgid= -p "$driver_pid" 2>/dev/null | tr -d "[:space:]" || true)
+              if [ "$group" = "$driver_pid" ]; then
+                kill -TERM -- "-$driver_pid" 2>/dev/null || true
+              fi
+              wait "$driver_pid" 2>/dev/null || true
+              if [ "$result" -ne 0 ] && [ -f "$driver_log" ]; then tail -n 80 "$driver_log" >&2; fi
+              exit "$result"
+            }
+            trap cleanup EXIT
+            group=""
+            for attempt in {1..20}; do
+              group=$(ps -o pgid= -p "$driver_pid" 2>/dev/null | tr -d "[:space:]" || true)
+              if [ "$group" = "$driver_pid" ]; then break; fi
+              sleep 0.1
+            done
+            test "$group" = "$driver_pid"
+            for attempt in {1..30}; do
+              if curl --fail --silent http://127.0.0.1:4444/status >/dev/null; then break; fi
+              sleep 1
+            done
+            curl --fail --silent http://127.0.0.1:4444/status >/dev/null
+            for viewport in desktop mobile; do
+              dimensions=1440x1000@1
+              mobile=false
+              if [ "$viewport" = mobile ]; then
+                dimensions=390x851@2.75
+                mobile=true
+              fi
+              echo "Synthetic browser viewport=$viewport dimensions=$dimensions"
+              if timeout --signal=TERM --kill-after=15s 300s \
+                runuser -u "$1" -- env -i PATH="$3" HOME="$4" CI=true \
+                flutter drive --verbose --no-pub --no-web-resources-cdn \
+                --driver=test_driver/asset_payment_day_prune.dart \
+                --target=integration_test/asset_payment_day_prune_test.dart \
+                --dart-define="PRUNE_MOBILE=$mobile" \
+                --browser-dimension="$dimensions" \
+                -d web-server --browser-name=chrome --headless; then
+                echo "Synthetic browser completed viewport=$viewport"
+              else
+                status=$?
+                echo "Synthetic browser failed viewport=$viewport status=$status" >&2
+                exit "$status"
+              fi
+            done
+          ' _ "$(id -un)" "$RUNNER_TEMP/prune-chromedriver.log" "$PATH" "$HOME"
