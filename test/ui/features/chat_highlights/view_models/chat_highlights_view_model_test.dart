@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/ui/features/chat_highlights/data/chat_highlight_export_gateway.dart';
 import 'package:my_web_app/ui/features/chat_highlights/data/chat_highlight_gateway.dart';
@@ -96,6 +98,31 @@ void main() {
     expect(gateway.saved.events, hasLength(2));
   });
 
+  test('同時の同一入力は共有し、異なる入力は保持する', () async {
+    final gateway = _ControlledGateway();
+    final viewModel = ChatHighlightsViewModel(
+      gateway: gateway,
+      exportGateway: _MemoryExporter(),
+    );
+    await viewModel.load();
+    Future<bool> submit(String message) => viewModel.addEvent(
+          offset: const Duration(seconds: 10),
+          author: 'viewer',
+          message: message,
+        );
+    final first = submit('first');
+    final duplicate = submit('first');
+    final second = submit('second');
+    expect(viewModel.snapshot.events, hasLength(2));
+    gateway.release.complete();
+    expect(await Future.wait([first, duplicate, second]), [true, true, true]);
+    expect(gateway.saved.events.map((event) => event.message), [
+      'first',
+      'second',
+    ]);
+    expect(gateway.saves, 2);
+  });
+
   test('指示書の出力失敗を利用者へ通知する', () async {
     final viewModel = ChatHighlightsViewModel(
       gateway: _MemoryGateway(),
@@ -158,6 +185,22 @@ class _MemoryGateway implements ChatHighlightGateway {
 
   @override
   Future<void> save(ChatHighlightSnapshot snapshot) async {
+    saved = snapshot;
+  }
+}
+
+class _ControlledGateway implements ChatHighlightGateway {
+  final release = Completer<void>();
+  ChatHighlightSnapshot saved = const ChatHighlightSnapshot();
+  int saves = 0;
+
+  @override
+  Future<ChatHighlightSnapshot> load() async => saved;
+
+  @override
+  Future<void> save(ChatHighlightSnapshot snapshot) async {
+    saves++;
+    await release.future;
     saved = snapshot;
   }
 }
