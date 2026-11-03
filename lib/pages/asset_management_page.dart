@@ -504,7 +504,16 @@ class AssetManagementPage extends StatefulWidget {
   State<AssetManagementPage> createState() => _AssetManagementPageState();
 }
 
-class _AssetManagementPageState extends State<AssetManagementPage> {
+@visibleForTesting
+abstract class DebtCollisionDiagnosticAccess {
+  int get diagnosticViewGeneration;
+  void diagnosticReplaceSnapshot(Map<String, Map<String, double>> snapshot);
+  void diagnosticShiftOne(String id, int generation);
+  void diagnosticShiftMany(List<String> ids, int generation);
+}
+
+class _AssetManagementPageState extends State<AssetManagementPage>
+    implements DebtCollisionDiagnosticAccess {
   final ScrollController _assetCalendarScrollController = ScrollController();
   static const String _bankSheetId =
       '1WZlHr6YWG8ZbT9r-wXtYPEdPT5E4b47PSpNSNl8A1MM';
@@ -17813,13 +17822,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final hasHeldShiftCandidates = shortfallDaySummary?.events.any(
           (event) =>
               event.kind == AssetCalendarEventKind.debtPayment &&
-              event.sourceId != null &&
-              !previewEligibleIds.contains(event.sourceId) &&
-              debtInputs.any(
-                (debt) =>
-                    debt.id == event.sourceId &&
-                    debt.paymentDay != _salaryDay + 1,
-              ),
+              (event.sourceId == null ||
+                  (!previewEligibleIds.contains(event.sourceId) &&
+                      debtInputs.any(
+                        (debt) =>
+                            debt.id == event.sourceId &&
+                            debt.paymentDay != _salaryDay + 1,
+                      ))),
         ) ??
         false;
     final shortfallDebtEvents = <AssetCalendarEvent>[
@@ -31185,10 +31194,42 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         current.paymentDay == row.paymentDay;
   }
 
+  @override
+  int get diagnosticViewGeneration => _debtViewGeneration;
+
+  @override
+  void diagnosticReplaceSnapshot(Map<String, Map<String, double>> snapshot) {
+    setState(() {
+      _assetData = {
+        for (final entry in snapshot.entries)
+          entry.key: Map<String, double>.from(entry.value),
+      };
+      _effectiveAssetDataByDate = {};
+    });
+  }
+
+  @override
+  void diagnosticShiftOne(String id, int generation) {
+    _shiftDebtPaymentAfterSalary(
+      _buildCurrentAssetLiabilityWorkbook(),
+      id,
+      generation,
+    );
+  }
+
+  @override
+  void diagnosticShiftMany(List<String> ids, int generation) {
+    _shiftDebtPaymentsAfterSalaryCombo(
+      _buildCurrentAssetLiabilityWorkbook(),
+      ids,
+      generation,
+    );
+  }
+
   void _showDebtIdHeld() {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('口座の識別子を確認できないため変更を保留しました。'),
+      content: Text('画面が更新されたか口座の識別子を確認できないため、変更を保留しました。'),
     ));
   }
 
