@@ -64,11 +64,13 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
-    AssetSyncDirtyKeysStore.resetWriteLockForTest();
   });
 
   testWidgets('characterize actual mirror acknowledgement after newer edit',
       (tester) async {
+    // Reset before mounting any page so the completed lock is made in the
+    // same FakeAsync zone as all of this test's production store operations.
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
     const domain = 'debt_payment_day_overrides';
     const store = AssetSyncDirtyKeysStore();
     final pending = <Completer<void>>[];
