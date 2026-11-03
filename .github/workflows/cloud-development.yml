@@ -1,23 +1,19 @@
-name: Cloud Development Checks
-
+name: Isolated synthetic Chrome loopback diagnostic
 on:
   workflow_dispatch:
     inputs:
       expected_head_sha:
-        description: Exact synthetic-only test branch commit
+        description: Exact synthetic diagnostic branch commit
         required: true
         type: string
-
 permissions:
   contents: read
-
 jobs:
-  synthetic-payment-day-repro:
+  loopback:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 4
     steps:
-      - name: Checkout synthetic branch
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
       - name: Check exact head
@@ -27,41 +23,16 @@ jobs:
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-      - name: Set up Flutter
-        uses: ./.github/actions/setup-flutter-sdk
-        with:
-          flutter-version: '3.38.x'
-      - name: Install dependencies
-        run: flutter pub get
-      - name: Characterize payment-day acknowledgement with synthetic data
-        timeout-minutes: 3
+      - name: Navigate a synthetic local page without external IP connectivity
+        timeout-minutes: 2
         shell: bash
         run: |
           set -euo pipefail
-          # Dependency installation has completed. Run the test in an isolated
-          # network namespace with only loopback, as the unprivileged runner.
-          sudo unshare --net -- bash -c '
-            set -euo pipefail
-            ip link set lo up
-            test "$(ip -o link show | wc -l)" -eq 1
-            ip link show lo > /dev/null
-            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true \
-              flutter test test/widgets/payment_day_page_repro_test.dart test/models/asset_calendar_reflection_test.dart test/widgets/asset_calendar_reflection_panel_test.dart --reporter expanded
-          ' _ "$(id -un)" "$PATH" "$HOME"
-
-      - name: Prepare browser test dependencies
-        run: |
-          flutter precache --web
           google-chrome --version
           chromedriver --version
-      - name: Exercise synthetic candidate in a browser
-        timeout-minutes: 8
-        shell: bash
-        run: |
-          set -euo pipefail
           sudo unshare --net -- bash -c '
             set -euo pipefail
             ip link set lo up
             test "$(ip -o link show | wc -l)" -eq 1
-            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true bash test/fixtures/dining_review_browser_runner.sh
+            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true python3 test/fixtures/chrome_loopback_diagnostic.py
           ' _ "$(id -un)" "$PATH" "$HOME"
