@@ -117,5 +117,5 @@ jobs:
             set -euo pipefail
             ip link set lo up
             test "$(ip -o link show | wc -l)" -eq 1
-            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true timeout 180s flutter test --no-pub --platform chrome test/widgets/asset_calendar_dining_review_candidate_test.dart --reporter expanded
+            exec runuser -u "${1}" -- env -i PATH="${2}" HOME="${3}" CI=true timeout 180s flutter test --no-pub --platform chrome test/widgets/asset_calendar_dining_review_candidate_test.dart --reporter expanded
           ' _ "$(id -un)" "$PATH" "$HOME"
