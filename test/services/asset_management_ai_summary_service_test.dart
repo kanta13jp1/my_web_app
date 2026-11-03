@@ -87,9 +87,11 @@ void main() {
       final report = _report();
       final service = AssetManagementAiSummaryService(
         aiEnabled: true,
-        chatService: AiHubChatService(invoker: (_) async {
-          throw StateError('simulated provider failure');
-        }),
+        chatService: AiHubChatService(
+          invoker: (_) async {
+            throw StateError('simulated provider failure');
+          },
+        ),
       );
       final result = await service.generateSummary(report: report);
       expect(result.status, AssetManagementAiSummaryStatus.fallback);
@@ -106,6 +108,52 @@ void main() {
         expect(result.text, contains(row.accountName));
       }
       expect(result.text, service.buildDeterministicSummary(report));
+    });
+
+    test('fallback keeps paid rows out of direct unpaid section', () {
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 85266,
+          'auPayカード': -505608,
+          'モビット': -1452644,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        paidAccountNames: const <String>{'auPayカード'},
+      );
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+        minimumSafetyBalance: 10000,
+      );
+      final text = AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      final section = text.split('## 4. 未払い項目').last.split('## 5.').first;
+      expect(section, isNot(contains('auPayカード')));
+      for (final row in workbook.cashflowRows.where(
+        (row) => row.isPayment && row.isDirectCashflowTarget && !row.paid,
+      )) {
+        expect(section, contains(row.accountName));
+      }
+    });
+
+    test('fallback debt section is bounded to five priority rows', () {
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 1000, 'debt-a': -100, 'debt-b': -200,
+          'debt-c': -300, 'debt-d': -400, 'debt-e': -500, 'debt-f': -600,
+        },
+        baseDate: DateTime(2026, 9, 14),
+      );
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+        minimumSafetyBalance: 10000,
+      );
+      expect(workbook.repaymentPriorityRows.length, greaterThan(5));
+      final text = AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      final section = text.split('## 3. 負債の確認（優先順上位5件）').last.split('## 4.').first;
+      for (final row in workbook.repaymentPriorityRows.take(5)) {
+        expect(section, contains(row.name));
+      }
+      expect(section, isNot(contains(workbook.repaymentPriorityRows[5].name)));
+      expect(text, contains('使用可能額:'));
     });
 
     test('does not call ai-hub when feature flag is off', () async {
