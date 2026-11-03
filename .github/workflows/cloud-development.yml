@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-parse HEAD:test/synthetic/payment_owner_indexeddb_probe.cjs)" = "a8bfc9da6253e27ceee9861928e371f16dcaadc6"
+          test "$(git rev-parse HEAD:test/synthetic/payment_owner_indexeddb_probe.cjs)" = "2d639197043daa122c483d7675dbf435d4f065da"
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'

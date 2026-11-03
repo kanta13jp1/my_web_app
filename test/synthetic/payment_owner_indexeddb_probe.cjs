@@ -240,6 +240,19 @@ async function main() {
     assert.equal((await apply(tabB, winner)).status, 'recoveryHold');
     assert.equal((await apply(tabA, { owner: 'fake-a', expectedRevision: 4,
       requestId: 'new-on-corrupt', payload: 'x' })).status, 'recoveryHold');
+    await tabA.evaluate(async (won) => {
+      const db = await window.openSynthetic();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(['records', 'receipts'], 'readwrite');
+        tx.objectStore('records').put({ owner: 'fake-a', revision: 1, value: won.payload });
+        tx.objectStore('receipts').put({ owner: 'fake-a', requestId: won.requestId,
+          payload: won.payload, expectedRevision: 'corrupt', revision: 1 });
+        tx.oncomplete = resolve;
+        tx.onabort = () => reject(new Error('synthetic malformed-receipt setup aborted'));
+      });
+      db.close();
+    }, winner);
+    assert.equal((await apply(tabB, winner)).status, 'recoveryHold');
     assert.equal((await apply(tabA, { ...winner, owner: '' })).status, 'invalid');
     assert.equal((await apply(tabA, { ...winner, expectedRevision: Number.MAX_SAFE_INTEGER })).status, 'invalid');
     console.log('PASS: synthetic multi-tab CAS, receipt reuse, abort, owner isolation and uninitialized-record rejection');
