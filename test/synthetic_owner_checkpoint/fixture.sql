@@ -56,13 +56,15 @@ CREATE FUNCTION lab_private.state_digest(p_owner uuid, p_generation uuid, p_revi
 $$;
 ALTER FUNCTION lab_private.state_digest(uuid,uuid,bigint,jsonb,jsonb) OWNER TO lab_rpc_owner;
 REVOKE ALL ON FUNCTION lab_private.state_digest(uuid,uuid,bigint,jsonb,jsonb) FROM PUBLIC;
--- Two explicitly provisioned synthetic owners; no automatic enrollment or migration.
+-- Five explicitly provisioned synthetic owners; no automatic enrollment or migration.
 INSERT INTO lab_private.stream
  SELECT o, g, 0, '{}'::jsonb, '[]'::jsonb,
   lab_private.state_digest(o,g,0,'{}'::jsonb,'[]'::jsonb)
  FROM (VALUES ('00000000-0000-0000-0000-000000000001'::uuid,'10000000-0000-0000-0000-000000000001'::uuid),
               ('00000000-0000-0000-0000-000000000002'::uuid,'10000000-0000-0000-0000-000000000002'::uuid),
-              ('00000000-0000-0000-0000-000000000003'::uuid,'10000000-0000-0000-0000-000000000003'::uuid)) AS f(o,g);
+              ('00000000-0000-0000-0000-000000000003'::uuid,'10000000-0000-0000-0000-000000000003'::uuid),
+              ('00000000-0000-0000-0000-000000000004'::uuid,'10000000-0000-0000-0000-000000000004'::uuid),
+              ('00000000-0000-0000-0000-000000000005'::uuid,'10000000-0000-0000-0000-000000000005'::uuid)) AS f(o,g);
 INSERT INTO lab_private.checkpoint SELECT owner_id,generation,revision,digest,0,pg_catalog.repeat('0',64),digest FROM lab_private.stream;
 
 CREATE FUNCTION lab_private.entry_digest(p_owner uuid, p_seq bigint, p_request uuid, p_previous text,

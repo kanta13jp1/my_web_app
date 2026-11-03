@@ -53,8 +53,57 @@ DO $$ DECLARE s jsonb; first jsonb; again jsonb; wrong jsonb; b jsonb; BEGIN
  b:=lab_api.read_current();
  IF b->>'owner' IS DISTINCT FROM '00000000-0000-0000-0000-000000000002' OR (b->>'revision')::bigint IS DISTINCT FROM 0 OR
     b->'values' IS DISTINCT FROM '{}'::jsonb THEN RAISE EXCEPTION 'owner B state leaked'; END IF;
+ PERFORM pg_catalog.set_config('lab.owner','00000000-0000-0000-0000-000000000004',false);
+ wrong:=lab_api.apply_request('40000000-0000-0000-0000-000000000001',
+    (s->>'generation')::uuid,0,s->>'digest','{"synthetic-debt":15}'::jsonb,'[]'::jsonb);
+ IF wrong->>'status' IS DISTINCT FROM 'conflict' THEN RAISE EXCEPTION 'foreign owner evidence accepted'; END IF;
+ b:=lab_api.read_current();
+ IF b->>'owner' IS DISTINCT FROM '00000000-0000-0000-0000-000000000004' OR
+    (b->>'revision')::bigint IS DISTINCT FROM 0 OR b->'values' IS DISTINCT FROM '{}'::jsonb THEN
+   RAISE EXCEPTION 'foreign owner evidence changed state'; END IF;
 END $$;
 RESET ROLE;
+-- Test-only failure after state/checkpoint UPDATE and before journal INSERT.
+CREATE FUNCTION lab_private.synthetic_journal_failure() RETURNS trigger LANGUAGE plpgsql SET search_path = '' AS $$
+BEGIN
+ IF pg_catalog.current_setting('lab.fail_journal',true)='on' THEN
+  IF NEW.outcome->>'status' IS DISTINCT FROM 'applied' OR
+     (SELECT count(*) FROM lab_private.stream s JOIN lab_private.checkpoint c USING(owner_id)
+       WHERE s.owner_id=NEW.owner_id AND s.revision::text=NEW.outcome->>'revision' AND
+         c.revision=s.revision AND c.digest=s.digest AND s.digest=NEW.outcome->>'digest') IS DISTINCT FROM 1 THEN
+   RAISE EXCEPTION 'synthetic journal failure precondition missing';
+  END IF;
+  RAISE EXCEPTION 'synthetic journal failure';
+ END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER synthetic_journal_failure BEFORE INSERT ON lab_private.journal
+ FOR EACH ROW EXECUTE FUNCTION lab_private.synthetic_journal_failure();
+SET ROLE lab_authenticated;
+SELECT pg_catalog.set_config('lab.owner','00000000-0000-0000-0000-000000000001',false);
+DO $$ DECLARE before_state jsonb; after_state jsonb; BEGIN
+ before_state:=lab_api.read_current();
+ IF before_state->>'status' IS DISTINCT FROM 'snapshot' THEN RAISE EXCEPTION 'failure fixture not healthy'; END IF;
+ PERFORM pg_catalog.set_config('lab.fail_journal','on',true);
+ BEGIN
+  PERFORM lab_api.apply_request('20000000-0000-0000-0000-000000000004',
+   (before_state->>'generation')::uuid,(before_state->>'revision')::bigint,before_state->>'digest,
+   '{"synthetic-debt":14}'::jsonb,'[]'::jsonb);
+  RAISE EXCEPTION 'expected synthetic journal failure did not happen';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM IS DISTINCT FROM 'synthetic journal failure' THEN RAISE; END IF;
+ END;
+ PERFORM pg_catalog.set_config('lab.fail_journal','off',true);
+ after_state:=lab_api.read_current();
+ IF after_state IS DISTINCT FROM before_state THEN RAISE EXCEPTION 'journal failure left partial state'; END IF;
+END $$;
+RESET ROLE;
+DROP TRIGGER synthetic_journal_failure ON lab_private.journal;
+DROP FUNCTION lab_private.synthetic_journal_failure();
+DO $$ BEGIN
+ IF EXISTS (SELECT 1 FROM pg_catalog.pg_trigger WHERE tgname='synthetic_journal_failure' AND NOT tgisinternal) THEN
+  RAISE EXCEPTION 'synthetic trigger unexpectedly remains'; END IF;
+END $$;
 -- A full transaction rollback must undo state, checkpoint and receipt together.
 CREATE TEMP TABLE rollback_stream AS SELECT * FROM lab_private.stream WHERE owner_id='00000000-0000-0000-0000-000000000001';
 CREATE TEMP TABLE rollback_checkpoint AS SELECT * FROM lab_private.checkpoint WHERE owner_id='00000000-0000-0000-0000-000000000001';

@@ -36,8 +36,8 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-parse HEAD:test/synthetic_owner_checkpoint/fixture.sql)" = "6586aaf5aa89d786aa2a5711d2b29ad9a3ed7c53"
-          test "$(git rev-parse HEAD:test/synthetic_owner_checkpoint/sequential.sql)" = "155cbbdf302d41d5909a57ff0d7559b630f8c81f"
+          test "$(git rev-parse HEAD:test/synthetic_owner_checkpoint/fixture.sql)" = "1fa71f50c78d62d0a71a2d1ee069cc04a7ff323d"
+          test "$(git rev-parse HEAD:test/synthetic_owner_checkpoint/sequential.sql)" = "777097b7b040e0d23d1d136b2bcd6cce5a59f3dc"
           test "$(git rev-parse HEAD:test/synthetic_owner_checkpoint/concurrency.sh)" = "8a0fdb8a062c70e824cd981d9dd572e738d381a0"
           [[ "$SYNTHETIC_DB_CONTAINER" =~ ^[0-9a-f]{64}$ ]]
           test "$(docker inspect --format '{{.Config.Image}}' "$SYNTHETIC_DB_CONTAINER")" = 'postgres:17.6'
