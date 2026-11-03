@@ -319,7 +319,12 @@ void main() {
     ]);
     await _finish(tester, page, restore);
     expect(page.debugDebtValuesForTest(), <String, int>{'debt-a': 10, 'debt-b': 5});
-    expect(repository.saved, contains(<String, int>{'debt-a': 10, 'debt-b': 5}));
+    expect(
+      repository.saved.any((value) => value.length == 2 &&
+          value['debt-a'] == 10 && value['debt-b'] == 5),
+      isTrue,
+      reason: 'the restored map must be persisted with both exact keys',
+    );
     for (final payload in transport.writes) {
       expect(payload['debt-b'], 5, reason: 'no incomplete whole-map write');
     }
