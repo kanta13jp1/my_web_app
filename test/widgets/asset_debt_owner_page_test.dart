@@ -6,6 +6,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/testing.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
@@ -99,6 +100,11 @@ Future<void> _finishSyntheticPage(WidgetTester tester) async {
 void main() {
   final previousOverrides = HttpOverrides.current;
   final networkGuard = _DenyAllHttp();
+  var deniedSupabaseRequests = 0;
+  final syntheticSupabaseClient = MockClient((_) async {
+    deniedSupabaseRequests++;
+    throw StateError('Synthetic Supabase request prohibited');
+  });
 
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -108,11 +114,14 @@ void main() {
       url: 'http://127.0.0.1:9999',
       publishableKey: 'synthetic-only',
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
+      httpClient: syntheticSupabaseClient,
     );
+    expect([networkGuard.attempts, deniedSupabaseRequests], [0, 0]);
   });
 
   setUp(() {
     networkGuard.attempts = 0;
+    deniedSupabaseRequests = 0;
     SharedPreferences.setMockInitialValues(<String, Object>{});
     AssetSyncDirtyKeysStore.resetWriteLockForTest();
     AssetRecurringTombstoneSyncService.resetSharedForTest();
@@ -125,9 +134,9 @@ void main() {
   tearDown(() async {
     try {
       expect(
-        networkGuard.attempts,
-        0,
-        reason: 'Synthetic page attempted to create a network client',
+        [networkGuard.attempts, deniedSupabaseRequests],
+        [0, 0],
+        reason: 'Synthetic page attempted a network client or request',
       );
     } finally {
       await TestWidgetsFlutterBinding.ensureInitialized().setSurfaceSize(null);
