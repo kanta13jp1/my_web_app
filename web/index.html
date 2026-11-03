@@ -1,6 +1,32 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<script>
+(() => {
+  const events = [];
+  let dropped = 0;
+  const capture = (event) => {
+    if (events.length >= 120) { dropped++; return; }
+    const fonts = document.fonts;
+    events.push({
+      event,
+      dateNowMs: Date.now(),
+      monotonicEpochMs: performance.timeOrigin + performance.now(),
+      status: fonts ? fonts.status : 'unavailable',
+      count: fonts ? fonts.size : null,
+    });
+  };
+  window.__forecastFontMark = (phase) => capture('phase:' + phase);
+  window.__forecastFontSnapshot = () => JSON.stringify({events, dropped});
+  capture('observer-installed');
+  if (document.fonts) {
+    document.fonts.addEventListener('loading', () => capture('loading'));
+    document.fonts.addEventListener('loadingdone', () => capture('loadingdone'));
+    document.fonts.addEventListener('loadingerror', () => capture('loadingerror'));
+    document.fonts.ready.then(() => capture('ready-observed'));
+  }
+})();
+</script>
   <base href="/">
 
   <meta charset="UTF-8">
