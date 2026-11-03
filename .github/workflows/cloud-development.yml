@@ -42,5 +42,5 @@ jobs:
             set -euo pipefail
             ip link set lo up
             test "$(ip -o link show | wc -l)" -eq 1
-            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true TZ=UTC bash test/fixtures/dining_page_runner.sh
+            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true TZ=UTC bash test/fixtures/run_dining_integration.sh
           ' _ "$(id -un)" "$PATH" "$HOME"
