@@ -83,6 +83,31 @@ void main() {
       }
     });
 
+    test('provider failure renders all fixed sections and direct unpaid items', () async {
+      final report = _report();
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(invoker: (_) async {
+          throw StateError('simulated provider failure');
+        }),
+      );
+      final result = await service.generateSummary(report: report);
+      expect(result.status, AssetManagementAiSummaryStatus.fallback);
+      final headers = RegExp(r'^## [1-8]\. ', multiLine: true)
+          .allMatches(result.text)
+          .map((m) => m.group(0))
+          .toList();
+      expect(headers, List.generate(8, (index) => '## ${index + 1}. '));
+      expect(result.text, contains('使用可能額:'));
+      expect(result.text, contains('未払い項目'));
+      for (final row in report.workbook.cashflowRows.where(
+        (row) => row.isPayment && row.isDirectCashflowTarget && !row.paid,
+      )) {
+        expect(result.text, contains(row.accountName));
+      }
+      expect(result.text, service.buildDeterministicSummary(report));
+    });
+
     test('does not call ai-hub when feature flag is off', () async {
       var calls = 0;
       final service = AssetManagementAiSummaryService(
