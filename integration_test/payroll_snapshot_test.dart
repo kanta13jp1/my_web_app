@@ -95,6 +95,10 @@ Future<void> _submitUncertain(
   expect(store.writes, 1);
   expect(store.submittedRequests, hasLength(1));
   expect(find.textContaining('保存結果が未確認'), findsOneWidget);
+  final notice = find.textContaining('再開後に自動照合できません');
+  await tester.ensureVisible(notice);
+  await tester.pumpAndSettle();
+  expect(notice.hitTestable(), findsOneWidget);
   expect(tester.takeException(), isNull);
 }
 
@@ -186,8 +190,35 @@ void main() {
       await tester.pumpAndSettle();
       expect(store.writes, 1);
       expect(find.text('本人確認の直後残高：120000円'), findsOneWidget);
+      final notice = find.textContaining('再開後に自動照合できません');
+      await tester.ensureVisible(notice);
+      await tester.pumpAndSettle();
+      expect(notice.hitTestable(), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
+  );
+  testWidgets(
+    'uncertain save shows the warning after screen recreation',
+    (tester) async {
+      final store = _DelayedSnapshotStore();
+      await _submitUncertain(tester, store, mobile ? 2 : 1);
+      await tester.pumpWidget(const SizedBox());
+      await showSnapshot(tester, store, textScale: mobile ? 2 : 1);
+      final notice = find.textContaining('再開後に自動照合できません');
+      await tester.ensureVisible(notice);
+      await tester.pumpAndSettle();
+      expect(notice.hitTestable(), findsOneWidget);
+      expect(
+        find.textContaining('表示されなくても保存中または保存済みの可能性'),
+        findsOneWidget,
+      );
+      expect(find.text('保存結果を照合'), findsNothing);
+      expect(store.checkedRequests, isEmpty);
+      expect(store.saved, isNull);
+      expect(store.writes, 1);
+      expect(tester.takeException(), isNull);
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
   );
   testWidgets(
     'late commit remains locked and reconciles the same request',
