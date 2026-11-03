@@ -8,8 +8,8 @@ do $$ begin
     except all select grantor,grantee,privilege_type,is_grantable from public.synthetic_revoke_acl_before)) then raise exception 'failed candidate changed ACL'; end if;
  if not pg_catalog.has_table_privilege('authenticated','public.asset_pref_mirror','TRUNCATE') then raise exception 'expected inherited grant missing'; end if;
  if not pg_catalog.pg_has_role('authenticated','synthetic_inherited_truncate','MEMBER') then raise exception 'membership changed'; end if;
- if exists((select * from public.synthetic_revoke_members_before except all select roleid,member,grantor,admin_option,inherit_option,set_option from pg_catalog.pg_auth_members where member='authenticated'::pg_catalog.regrole)
- union all (select roleid,member,grantor,admin_option,inherit_option,set_option from pg_catalog.pg_auth_members where member='authenticated'::pg_catalog.regrole except all select * from public.synthetic_revoke_members_before)) then raise exception 'membership metadata changed'; end if;
+ if exists((select * from public.synthetic_revoke_members_before except all select pg_catalog.to_jsonb(m) as snapshot from pg_catalog.pg_auth_members m where member='authenticated'::pg_catalog.regrole)
+ union all (select pg_catalog.to_jsonb(m) as snapshot from pg_catalog.pg_auth_members m where member='authenticated'::pg_catalog.regrole except all select * from public.synthetic_revoke_members_before)) then raise exception 'membership metadata changed'; end if;
  if exists((select * from public.synthetic_revoke_relation_before except all select relowner,relrowsecurity,relforcerowsecurity from pg_catalog.pg_class where oid='public.asset_pref_mirror'::pg_catalog.regclass)
  union all (select relowner,relrowsecurity,relforcerowsecurity from pg_catalog.pg_class where oid='public.asset_pref_mirror'::pg_catalog.regclass except all select * from public.synthetic_revoke_relation_before)) then raise exception 'relation security changed'; end if;
  if exists((select * from public.synthetic_revoke_policies_before except all select policyname,permissive,roles,cmd,qual,with_check from pg_catalog.pg_policies where schemaname='public' and tablename='asset_pref_mirror')
