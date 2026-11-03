@@ -43,9 +43,8 @@ class ExampleScreen extends StatelessWidget {
 
 void main() {
   testWidgets('fake backend displays a successful result', (tester) async {
-    await tester.pumpWidget(ExampleScreen(
-      reader: FakeExampleReader(items: ['sample']),
-    ),
+    await tester.pumpWidget(
+      ExampleScreen(reader: FakeExampleReader(items: ['sample'])),
     );
     await tester.pumpAndSettle();
     expect(find.text('sample'), findsOneWidget);
@@ -60,9 +59,8 @@ void main() {
   });
 
   testWidgets('fake backend does not report a failure as empty', (tester) async {
-    await tester.pumpWidget(ExampleScreen(
-      reader: FakeExampleReader(error: Exception('offline')),
-    ),
+    await tester.pumpWidget(
+      ExampleScreen(reader: FakeExampleReader(error: Exception('offline'))),
     );
     await tester.pumpAndSettle();
     expect(find.text('取得できませんでした'), findsOneWidget);
