@@ -484,17 +484,22 @@ class AssetManagementAiSummaryService {
     // the detailed payload. Never label paid or card-included rows as unpaid.
     final debts = report.workbook.repaymentPriorityRows.take(5).toList();
     final unpaid = report.workbook.cashflowRows
-        .where((row) => row.isPayment && row.isDirectCashflowTarget && !row.paid)
+        .where(
+          (row) =>
+              row.isPayment &&
+              row.isDirectCashflowTarget &&
+              !row.paid &&
+              row.paymentAmount > 0,
+        )
         .toList();
     String safeName(String name) => name.replaceAll(RegExp(r'[\r\n]+'), ' ');
-    final status = critical > 0
-        ? '緊急の資金繰り項目があります。'
-        : '緊急度の高い資金繰り項目は検出されていません。';
+    final status = critical > 0 ? '緊急の資金繰り項目があります。' : '緊急度の高い資金繰り項目は検出されていません。';
     final emergency = report.emergencyAdvices.isEmpty
         ? '生活費防衛の追加提案は生成されていません。要確認項目の解消を意味するものではありません。'
         : report.emergencyAdvices
             .take(3)
-            .map((advice) => '${advice.title}: ${advice.description} ${advice.suggestedAction}')
+            .map((advice) =>
+                '${advice.title}: ${advice.description} ${advice.suggestedAction}')
             .join(' ');
     return [
       '## 1. 現状',
@@ -509,6 +514,8 @@ class AssetManagementAiSummaryService {
       if (unpaid.isEmpty) '- 直接支払う未払い項目はありません。',
       for (final row in unpaid)
         '- ${safeName(row.accountName)}: ${_formatYen(row.paymentAmount)}（${row.paymentDate.month}月${row.paymentDate.day}日予定${row.paymentAmountEstimated ? "・推定" : ""}）。',
+      if (report.workbook.billingConfirmationPendingRows.isNotEmpty)
+        '- **請求額の確認待ち**: ${report.workbook.billingConfirmationPendingRows.length}件。',
       '## 5. 優先確認',
       if (critical > 0)
         '- 優先確認: ${report.criticalActions.take(3).map((item) => safeName(item.title)).join('、')}。'
@@ -522,7 +529,10 @@ class AssetManagementAiSummaryService {
           ? '- 現時点で口座移動・出金提案はありません。'
           : '- 口座移動・出金提案を${report.movementSuggestions.length}件確認してください。',
       '## 8. まとめ',
-      '- ${assetPaymentStatusPrompt(report.workbook)}',
+      assetPaymentStatusPrompt(report.workbook).replaceFirst(
+        '## 支払い状態別の確定内訳',
+        '**支払い状態別の確定内訳**',
+      ),
       '- 金額はDartルールで計算済みです。AIは要約のみを行います。',
     ].join('\n');
   }
