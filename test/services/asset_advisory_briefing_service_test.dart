@@ -106,6 +106,28 @@ void main() {
   }
 
   group('AssetAdvisoryBriefingService.build', () {
+    test('ambiguous anchor income does not produce a clear cashflow verdict', () {
+      final conditional = AssetCashflowForecastService.projectScenarios(
+        asOf: DateTime(2026, 6, 25),
+        startingBalance: 100,
+        horizonMonths: 1,
+        recurringIncome: const [
+          AssetCashflowRecurringEntry(dayOfMonth: 25, amount: 200),
+        ],
+        oneTimeOutflow: [
+          AssetCashflowDatedEntry(date: DateTime(2026, 6, 26), amount: 180),
+        ],
+      );
+      expect(conditional.alreadyReflected.hasShortfall, isTrue);
+      expect(conditional.notYetReflected.hasShortfall, isFalse);
+      final briefing = service.build(
+        now: DateTime(2026, 6, 25),
+        forecast: conditional.advisoryForecast,
+      );
+      expect(actionFor(briefing, 'cashflow_clear'), isNull);
+      expect(actionFor(briefing, 'cashflow_shortfall'), isNull);
+    });
+
     test('empty inputs produce an empty briefing with a clean headline', () {
       final briefing = service.build(now: now);
       expect(briefing.isEmpty, isTrue);

@@ -56,15 +56,19 @@ void main() {
           AssetCashflowDatedEntry(date: DateTime(2026, 6, 26), amount: 180),
         ],
       );
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: AssetCashflowForecastScenariosCard(scenarios: scenarios),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: AssetCashflowForecastScenariosCard(scenarios: scenarios),
+            ),
           ),
         ),
-      ));
-      expect(find.byKey(const Key('asset_cashflow_forecast_conditional_notice')),
-          findsOneWidget);
+      );
+      expect(
+        find.byKey(const Key('asset_cashflow_forecast_conditional_notice')),
+        findsOneWidget,
+      );
       expect(find.text('条件A：当日予定入金がすべて起点残高に反映済み'), findsOneWidget);
       expect(find.text('条件B：当日予定入金がすべて起点残高に未反映'), findsOneWidget);
       expect(find.textContaining('実際の上下限や確定額ではありません'), findsOneWidget);

@@ -104,7 +104,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
                 child: Semantics(
                   container: true,
                   image: true,
-                  label: '${_scenarioPrefix}将来残高予測グラフ。${_chartA11yValue()}',
+                  label: '$_scenarioPrefix将来残高予測グラフ。${_chartA11yValue()}',
                   child: ExcludeSemantics(
                     child: CustomPaint(
                       key: _scenarioKey('asset_cashflow_forecast_chart'),
@@ -228,7 +228,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
             color: _danger,
             icon: Icons.warning_amber,
             message:
-                '${_scenarioPrefix}${shortfallDate.month}/${shortfallDate.day} 頃に残高が不足する見込みです。'
+                '$_scenarioPrefix${shortfallDate.month}/${shortfallDate.day} 頃に残高が不足する見込みです。'
                 '登録データに基づく不足額の試算は ${_yen(forecast.shortfallRecoveryAmount)} です。残高・支払済み状態・支払日を明細と照合してから判断してください。',
           )
         else if (hasSafetyBreach)
@@ -236,7 +236,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
             alertKey: _scenarioKey('asset_cashflow_forecast_safety_breach'),
             color: _warn,
             icon: Icons.info_outline,
-            message: '${_scenarioPrefix}残高不足は回避できる見込みですが、安全余裕 ${_yen(forecast.safetyMargin)} を'
+            message: '$_scenarioPrefix残高不足は回避できる見込みですが、安全余裕 ${_yen(forecast.safetyMargin)} を'
                 '割り込む時期があります(最小見込み残高 ${_yen(forecast.worstBalance)})。',
           )
         else
@@ -246,7 +246,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '${_scenarioPrefix}今後${forecast.months.length}ヶ月は残高不足の見込みはありません'
+                  '$_scenarioPrefix今後${forecast.months.length}ヶ月は残高不足の見込みはありません'
                   '(最小見込み残高 ${_yen(forecast.worstBalance)})。',
                   style: const TextStyle(fontSize: 12, height: 1.5),
                 ),

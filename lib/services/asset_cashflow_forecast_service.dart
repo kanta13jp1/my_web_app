@@ -177,9 +177,9 @@ class AssetCashflowForecastService {
     final anchor = DateTime(asOf.year, asOf.month, asOf.day);
     final hasAnchorDayIncome = recurringIncome.any((entry) =>
             entry.amount > _epsilon &&
-            _clampDay(entry.dayOfMonth, anchor) == anchor.day) ||
+            _clampDay(entry.dayOfMonth, anchor) == anchor.day,) ||
         oneTimeIncome.any((entry) =>
-            entry.amount > _epsilon && _isSameDate(entry.date, anchor));
+            entry.amount > _epsilon && _isSameDate(entry.date, anchor),);
     AssetCashflowForecast calculate(bool skipAnchorDayIncome) => project(
           asOf: anchor,
           startingBalance: startingBalance,
