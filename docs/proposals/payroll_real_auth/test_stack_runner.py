@@ -102,5 +102,37 @@ class RunnerTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'cannot resolve'):
                 fixture.verify_postgres_user_resolution()
 
+    def test_replay_count_fails_closed_on_missing_or_extra_rows(self):
+        fixture = runner.Fixture.__new__(runner.Fixture)
+        fixture.db_sql = lambda _sql: '1\nONE_REPLAYED'
+        fixture.verify_replay_count()
+        for value in ('REPLAY_MISMATCH', 'unexpected'):
+            fixture.db_sql = lambda _sql: value
+            with self.assertRaisesRegex(RuntimeError, 'inconsistent'):
+                fixture.verify_replay_count()
+
+    def test_barrier_release_requires_marker_process_exit_and_no_holder(self):
+        class Pipe:
+            def __init__(self): self.value = ''
+            def write(self, value): self.value += value
+            def flush(self): pass
+            def close(self): pass
+        class Proc:
+            def __init__(self): self.stdin = Pipe()
+            def poll(self): return None
+            def wait(self, timeout): return 0
+        fixture = runner.Fixture.__new__(runner.Fixture)
+        proc = Proc()
+        fixture.barrier = (proc, object())
+        fixture.wait_marker = lambda _p, _o, marker, timeout: self.assertEqual(marker, 'SYNTHETIC_LOCK_RELEASED')
+        fixture.db_sql = lambda _sql: '1\nHOLDER_UNLOCKED'
+        fixture.release_write_barrier()
+        self.assertIsNone(fixture.barrier)
+        self.assertIn('pg_advisory_unlock', proc.stdin.value)
+        fixture.barrier = (Proc(), object())
+        fixture.db_sql = lambda _sql: 'HOLDER_STILL_LOCKED'
+        with self.assertRaisesRegex(RuntimeError, 'still held'):
+            fixture.release_write_barrier()
+
 
 if __name__ == '__main__': unittest.main()

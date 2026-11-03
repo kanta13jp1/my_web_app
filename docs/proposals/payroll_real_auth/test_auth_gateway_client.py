@@ -1,14 +1,52 @@
 """Pure unit checks; transport is synthetic and cannot access any network."""
 import base64
 import hmac
+import contextlib
+import io
 import json
+import threading
 import unittest
 from unittest.mock import patch
 import auth_gateway_client as client
+import synthetic_client as fixture_adapter
 
 SECRET = b'fake-fixture-secret-not-production-32-bytes'
 SUBJECT = 'aaaaaaaa-0000-4000-8000-000000000001'
 ISSUER = 'http://synthetic-gateway:8000/auth/v1'
+
+
+class LossBarrierTests(unittest.TestCase):
+    def test_only_confirmed_disconnect_and_matching_replay_pass(self):
+        class Proxy:
+            def __init__(self, disconnect):
+                self.drop = threading.Event()
+                self.forwarded = threading.Event(); self.forwarded.set()
+                self.done = threading.Event(); self.done.set()
+                self.failure = None
+                self.response = (200, b'"id-one"')
+                self.observed_disconnect = disconnect
+        class API:
+            def __init__(self): self._transport = object(); self.replay_payload = None
+            def _rpc_data(self, _account): return {}
+            def _filter(self, _table, **_kwargs): return '/rows'
+            def _request(self, method, _path, *, bearer=None, data=None, write=False):
+                if isinstance(self._transport, Proxy):
+                    raise client.UnknownWriteResult('fixture')
+                if method == 'POST': self.replay_payload = data; return 200, 'id-one'
+                return (200, [{'id': 'id-one'}]) if bearer == 'token-a' else (200, [])
+        state = ('a', 'token-a', 'account-a', 'b', 'token-b', 'account-b', {}, {})
+        api = API()
+        with patch.object(fixture_adapter, 'LossTransport', return_value=Proxy(True)), \
+             patch('sys.stdin', io.StringIO('SYNTHETIC_DROP_RESPONSE\nSYNTHETIC_DB_COMMITTED\n')), \
+             contextlib.redirect_stdout(io.StringIO()):
+            fixture_adapter.check_lost_response(api, state)
+        self.assertEqual(api.replay_payload['p_request_id'], fixture_adapter.LOSS_REQUEST)
+        api = API()
+        with patch.object(fixture_adapter, 'LossTransport', return_value=Proxy(False)), \
+             patch('sys.stdin', io.StringIO('SYNTHETIC_DROP_RESPONSE\n')), \
+             contextlib.redirect_stdout(io.StringIO()), \
+             self.assertRaisesRegex(RuntimeError, 'response loss'):
+            fixture_adapter.check_lost_response(api, state)
 
 
 def token(claims, *, secret=SECRET, header=None):

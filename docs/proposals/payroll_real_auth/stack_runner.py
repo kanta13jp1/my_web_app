@@ -23,7 +23,7 @@ HERE = Path(__file__).resolve().parent
 MIGRATION_SHA = '23641f86ff7534a209a2089adc5a0b47fdc70e031af72f6301cffd9ce92586ba'
 FIXED = {'migration.sql': MIGRATION_SHA,
          'envoy-fixture.yaml': 'd88fa8007c405b34e37531ae708af964586bc4d6c1c1e1ffb0d83c7462b30977',
-         'synthetic_client.py': 'fd86b9cfb84d8cff2464005efe44a910eeb4e3498410d23f46a997e75c2c4e31',
+         'synthetic_client.py': '6b2cf1689c7bf6ca64d69c0e49866550a182ce540e89ec4c7ed7c959bfd4fe74',
          'auth_gateway_client.py': '7c783263ae830851ccdca67aaf71d749b60093b68f28d82405b9f7bdb63da009'}
 DB = 'payroll_auth_fixture'
 PATH_INSIDE = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
@@ -102,6 +102,7 @@ class Fixture:
         self.network_id = None
         self.created = {}
         self.clients = []
+        self.barrier = None
         self.tmp = tempfile.TemporaryDirectory(prefix='synthetic-auth-')
         self.env = {'PATH': '/usr/local/bin:/usr/bin:/bin', 'LANG': 'C'}
         self.docker = ['/usr/bin/docker', '--config', self.tmp.name,
@@ -390,6 +391,108 @@ print('RESTORED')
         if state.strip().splitlines()[-1] != 'AUTH_USERS_RESOLVED':
             raise RuntimeError('Synthetic postgres role cannot resolve auth.users')
 
+    def start_write_barrier(self):
+        # Fixed fixture-only trigger, scoped to the test request.  The marker,
+        # image, container identity and isolated network are checked by db_sql.
+        self.db_sql("""create function payroll_snapshot_private.fixture_delay()
+        returns trigger language plpgsql set search_path = '' as $$
+        begin
+          if new.request_id = 'cb7e027a-d89f-4a09-a720-bc7a8fd60b25'::uuid then
+            perform pg_catalog.pg_advisory_xact_lock(12299,654321);
+          end if;
+          return new;
+        end $$;
+        create trigger fixture_delay before insert on public.asset_payroll_balance_observations
+          for each row execute function payroll_snapshot_private.fixture_delay();""")
+        self.check_db(isolated=True)
+        self.check_network()
+        args = self.docker + ['exec', '-i', '-u', 'postgres', self.db_id,
+            '/usr/bin/env', '-i', 'PATH=' + PATH_INSIDE, '/usr/local/bin/psql',
+            '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-v', 'fixture_token=' + self.token,
+            '-h', '/var/run/postgresql', '-U', 'postgres', '-d', DB]
+        proc = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, text=True, env=self.env, bufsize=1)
+        self.clients.append(proc)
+        output = queue.Queue()
+        def collect():
+            for line in proc.stdout: output.put(line.rstrip())
+            output.put(None)
+        threading.Thread(target=collect, daemon=True).start()
+        self.barrier = (proc, output)
+        proc.stdin.write("select 1 / ((count(*) = 1)::int) from public.payroll_auth_fixture_guard "
+                         "where token=:'fixture_token'::uuid;\n"
+                         "set application_name='fixture_write_blocker';\n"
+                         "select pg_advisory_lock(12299,654321);\n"
+                         "select 'SYNTHETIC_LOCK_HELD';\n")
+        proc.stdin.flush()
+        self.wait_marker(proc, output, 'SYNTHETIC_LOCK_HELD', timeout=20)
+        return proc, output
+
+    def release_write_barrier(self):
+        if self.barrier is None: return
+        proc, output = self.barrier
+        if proc.poll() is not None:
+            raise RuntimeError('Fixture barrier ended without confirmed unlock')
+        proc.stdin.write("select case when pg_advisory_unlock(12299,654321) "
+                         "then 'SYNTHETIC_LOCK_RELEASED' else 'SYNTHETIC_UNLOCK_FAILED' end;\n")
+        proc.stdin.flush()
+        self.wait_marker(proc, output, 'SYNTHETIC_LOCK_RELEASED', timeout=5)
+        proc.stdin.close()
+        if proc.wait(timeout=5) != 0:
+            raise RuntimeError('Synthetic barrier process failed')
+        query = """select case when not exists (
+          select 1 from pg_catalog.pg_locks l join pg_catalog.pg_stat_activity a on a.pid=l.pid
+          where a.application_name='fixture_write_blocker' and l.locktype='advisory'
+          and l.classid=12299 and l.objid=654321 and l.objsubid=2 and l.granted)
+          then 'HOLDER_UNLOCKED' else 'HOLDER_STILL_LOCKED' end;"""
+        if self.db_sql(query).strip().splitlines()[-1] != 'HOLDER_UNLOCKED':
+            raise RuntimeError('Synthetic barrier still held')
+        self.barrier = None
+
+    def wait_write_blocked(self):
+        # Exactly one waiter on the fixed key, blocked by this fixture's holder.
+        query = """select case when count(*) = 1 and not exists (
+          select 1 from public.asset_payroll_balance_observations
+          where request_id='cb7e027a-d89f-4a09-a720-bc7a8fd60b25'::uuid)
+          then 'TARGET_BLOCKED' else 'NOT_BLOCKED' end
+        from pg_catalog.pg_locks w join pg_catalog.pg_locks h
+          on h.locktype=w.locktype and h.database=w.database and h.classid=w.classid
+          and h.objid=w.objid and h.objsubid=w.objsubid and h.granted
+        join pg_catalog.pg_stat_activity a on a.pid=h.pid
+        where w.locktype='advisory' and not w.granted and w.classid=12299
+          and w.objid=654321 and w.objsubid=2
+          and a.application_name='fixture_write_blocker'
+          and h.pid = any(pg_catalog.pg_blocking_pids(w.pid));"""
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            if self.db_sql(query).strip().splitlines()[-1] == 'TARGET_BLOCKED': return
+            time.sleep(.1)
+        raise TimeoutError('Synthetic request did not reach its DB barrier')
+
+    def wait_write_committed(self):
+        query = """select case when count(*)=1 then 'ONE_COMMITTED' else 'NOT_ONE' end
+        from public.asset_payroll_balance_observations
+        where request_id='cb7e027a-d89f-4a09-a720-bc7a8fd60b25'::uuid;"""
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            if self.db_sql(query).strip().splitlines()[-1] == 'ONE_COMMITTED': return
+            time.sleep(.1)
+        raise TimeoutError('Synthetic write did not commit exactly once')
+
+    def verify_replay_count(self):
+        query = """select case when
+          (select count(*) from public.asset_payroll_balance_observations o
+           where o.request_id='cb7e027a-d89f-4a09-a720-bc7a8fd60b25'::uuid)=1 and
+          (select count(*) from public.asset_payroll_balance_selection_history h
+           join public.asset_payroll_balance_observations o on o.id=h.new_observation_id
+           where o.request_id='cb7e027a-d89f-4a09-a720-bc7a8fd60b25'::uuid)=1 and
+          (select count(*) from public.asset_payroll_balance_selections s
+           join public.asset_payroll_balance_observations o on o.id=s.observation_id
+           where o.request_id='cb7e027a-d89f-4a09-a720-bc7a8fd60b25'::uuid)=1
+          then 'ONE_REPLAYED' else 'REPLAY_MISMATCH' end;"""
+        if self.db_sql(query).strip().splitlines()[-1] != 'ONE_REPLAYED':
+            raise RuntimeError('Synthetic replay created inconsistent records')
+
     def execute(self, migration, client_source, client_module, gateway_config):
         self.stage = 'pull pinned fixture images'
         self.pull_images()
@@ -462,6 +565,21 @@ print('RESTORED')
         owner_client.stdin.write('SYNTHETIC_RESTORED\n')
         owner_client.stdin.flush()
         self.wait_marker(owner_client, output, 'SYNTHETIC_RECOVERY_VERIFIED')
+        self.stage = 'synthetic committed write after response loss'
+        holder, holder_output = self.start_write_barrier()
+        owner_client.stdin.write('SYNTHETIC_START_WRITE\n')
+        owner_client.stdin.flush()
+        self.wait_marker(owner_client, output, 'SYNTHETIC_WRITE_FORWARDED', timeout=20)
+        self.wait_write_blocked()
+        owner_client.stdin.write('SYNTHETIC_DROP_RESPONSE\n')
+        owner_client.stdin.flush()
+        self.wait_marker(owner_client, output, 'SYNTHETIC_WRITE_UNKNOWN', timeout=20)
+        self.release_write_barrier()
+        self.wait_write_committed()
+        owner_client.stdin.write('SYNTHETIC_DB_COMMITTED\n')
+        owner_client.stdin.flush()
+        self.wait_marker(owner_client, output, 'SYNTHETIC_REPLAY_VERIFIED', timeout=20)
+        self.verify_replay_count()
         owner_client.stdin.close()
         if owner_client.wait(timeout=10) != 0:
             raise RuntimeError('Synthetic owner client did not exit cleanly')
@@ -469,6 +587,12 @@ print('RESTORED')
     def close(self):
         # Only IDs returned by our own create calls are candidates for removal.
         errors = []
+        try:
+            self.release_write_barrier()
+        except Exception:
+            # Terminating the host docker CLI alone does not prove the psql
+            # session ended. The job's service teardown must still complete.
+            errors.append('fixture DB barrier; service teardown required')
         for proc in self.clients:
             if proc.poll() is None:
                 try:
