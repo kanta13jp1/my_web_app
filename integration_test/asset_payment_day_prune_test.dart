@@ -124,15 +124,56 @@ Future<Finder> _openDebtChoice(
   Finder dropdown,
   int? day,
 ) async {
+  final selectedDay = tester.widget<DropdownButton<int?>>(dropdown).value;
   await tester.ensureVisible(dropdown);
   await tester.tap(dropdown);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 350));
-  final item = find
-      .byWidgetPredicate(
-        (widget) => widget is DropdownMenuItem<int?> && widget.value == day,
-      )
-      .last;
+  expect(selectedDay, isNotNull);
+  final selectedItems = find.byWidgetPredicate(
+    (widget) => widget is DropdownMenuItem<int?> && widget.value == selectedDay,
+  );
+  final selectedMenuItem = selectedItems.hitTestable();
+  expect(selectedMenuItem, findsOneWidget);
+  final menuAncestors = find.ancestor(
+    of: selectedMenuItem,
+    matching: find.byType(Scrollable),
+  );
+  expect(menuAncestors, findsOneWidget);
+  final menuElement = menuAncestors.evaluate().single;
+  final menuScroll = find.byElementPredicate(
+    (element) => identical(element, menuElement),
+  );
+  expect(menuScroll, findsOneWidget);
+  final matches = find.descendant(
+    of: menuScroll,
+    matching: find.byWidgetPredicate(
+      (widget) => widget is DropdownMenuItem<int?> && widget.value == day,
+    ),
+  );
+  // The selected day may open the lazy menu away from the requested item.
+  expect(
+    find.descendant(
+      of: menuScroll,
+      matching: find.byWidgetPredicate(
+        (widget) => widget is DropdownMenuItem<int?>,
+      ),
+    ),
+    findsWidgets,
+  );
+  final direction = day == null || day < selectedDay! ? 120.0 : -120.0;
+  for (var attempt = 0; attempt < 40 && matches.evaluate().isEmpty; attempt++) {
+    await tester.drag(menuScroll, Offset(0, direction));
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+  expect(matches, findsOneWidget);
+  final item = matches;
+  await tester.ensureVisible(item);
+  await tester.pump();
+  if (day == null) {
+    expect(tester.getRect(item).overlaps(tester.getRect(menuScroll)), isTrue);
+    expect(tester.getRect(menuScroll).contains(tester.getCenter(item)), isTrue);
+  }
   expect(item, findsOneWidget);
   return item;
 }
