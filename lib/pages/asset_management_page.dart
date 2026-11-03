@@ -17395,8 +17395,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return const SizedBox.shrink();
     }
 
-    final forecast = AssetCashflowForecastService.project(
-      asOf: DateTime.now(),
+    final scenarios = AssetCashflowForecastService.projectScenarios(
+      asOf: _now,
       startingBalance: inputs.startingBalance,
       horizonMonths: _forecastHorizonMonths,
       recurringIncome: inputs.recurringIncome,
@@ -17416,8 +17416,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               '確定した不足ではありません。対象: ${inputs.unverifiedPaymentLabels.join('、')}',
               key: const Key('asset_forecast_unverified_payments'),
             ),
-          AssetCashflowForecastCard(
-            forecast: forecast,
+          AssetCashflowForecastScenariosCard(
+            scenarios: scenarios,
             currencyFormatter: _formatYen,
             currentHorizon: _forecastHorizonMonths,
             onHorizonChanged: (months) =>
@@ -25370,7 +25370,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 参謀室ブリーフィング用の前方キャッシュフロー予測を組み立てる
   /// (_buildCashflowForecastCard と同じ入力導出。純サービスに委譲)。
-  AssetCashflowForecast? _advisoryCashflowForecast(
+  AssetCashflowForecastScenarios? _advisoryCashflowForecast(
     AssetLiabilityWorkbook? workbook,
   ) {
     if (workbook == null) return null;
@@ -25387,8 +25387,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       paidPeriodEndExclusive: paidPeriod?.endExclusive,
     );
     if (!inputs.hasData) return null;
-    return AssetCashflowForecastService.project(
-      asOf: DateTime.now(),
+    final scenarios = AssetCashflowForecastService.projectScenarios(
+      asOf: _now,
       startingBalance: inputs.startingBalance,
       horizonMonths: _forecastHorizonMonths,
       recurringIncome: inputs.recurringIncome,
@@ -25396,6 +25396,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       oneTimeIncome: inputs.oneTimeIncome,
       safetyMargin: _assetForecastSafetyMargin,
     );
+    return scenarios;
   }
 
   Color _advisorySeverityColor(AdvisorySeverity severity) {
@@ -25414,14 +25415,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetManagementAdvisoryBriefingCard(
     AssetManagementInsightReport report,
   ) {
-    final forecast = _advisoryCashflowForecast(report.workbook);
+    final scenarios = _advisoryCashflowForecast(report.workbook);
+    final forecastUncertain = scenarios?.hasAnchorDayIncome ?? false;
+    final forecast = scenarios?.advisoryForecast;
     final briefing = const AssetAdvisoryBriefingService().build(
-      now: DateTime.now(),
+      now: _now,
       forecast: forecast,
       debtInsights: report.debtTrendInsights,
       disciplineReport: report.disciplineReport,
     );
-    if (briefing.isEmpty) return const SizedBox.shrink();
+    if (briefing.isEmpty && !forecastUncertain) return const SizedBox.shrink();
+    if (briefing.isEmpty) {
+      return const Text(
+        '当日入金の残高反映が未確認のため、参謀室の資金繰り判定は保留中です。',
+        key: Key('asset_advisory_forecast_conditional_notice'),
+      );
+    }
     final headerColor = _advisorySeverityColor(briefing.topSeverity);
     return Container(
       key: const Key('asset_advisory_briefing_card'),
@@ -25469,6 +25478,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
             ],
           ),
+          if (forecastUncertain)
+            const Text(
+              '当日入金の残高反映が未確認のため、資金繰り判定は保留中です。',
+              key: Key('asset_advisory_forecast_conditional_notice'),
+            ),
           const SizedBox(height: 6),
           Text(
             briefing.headline,
