@@ -320,6 +320,18 @@ class _IncomeFinanceReadSnapshot {
 }
 
 class AssetManagementPage extends StatefulWidget {
+  @visibleForTesting
+  final Future<List<Map<String, dynamic>>> Function(String)? debugDebtRead;
+  @visibleForTesting
+  final Future<void> Function(Map<String, int>)? debugDebtWrite;
+  @visibleForTesting
+  final String? Function()? debugDebtOwner;
+  @visibleForTesting
+  final String? Function()? debugDebtToken;
+  @visibleForTesting
+  final Stream<AuthState>? debugDebtAuthEvents;
+  @visibleForTesting
+  final bool debugDisableDebtBoot;
   final AssetManagementInitialFocus initialFocus;
   final bool emphasizeMonthlyFlow;
   final AssetWatchlistService watchlistService;
@@ -458,6 +470,12 @@ class AssetManagementPage extends StatefulWidget {
 
   const AssetManagementPage({
     super.key,
+    this.debugDebtRead,
+    this.debugDebtWrite,
+    this.debugDebtOwner,
+    this.debugDebtToken,
+    this.debugDebtAuthEvents,
+    this.debugDisableDebtBoot = false,
     this.initialFocus = AssetManagementInitialFocus.overview,
     this.emphasizeMonthlyFlow = false,
     this.watchlistService = const AssetWatchlistService(),
@@ -502,6 +520,37 @@ class AssetManagementPage extends StatefulWidget {
 }
 
 class _AssetManagementPageState extends State<AssetManagementPage> {
+  @visibleForTesting
+  Future<void> debugRestoreDebtForTest() => _restoreDebtPaymentDayOverridesFromMirror();
+  @visibleForTesting
+  void debugSetDebtForTest(Map<String, int> value) => _debtPaymentDayOverrides = Map.of(value);
+  @visibleForTesting
+  Map<String, int> debugDebtValuesForTest() => Map.of(_debtPaymentDayOverrides);
+  Future<void>? _debugDebtBackfill;
+  Future<void>? _debugDebtSave;
+  Future<void>? _debugDebtWrite;
+  Future<void> _trackDebtBackfill(Future<void> future) => _debugDebtBackfill = future;
+  Future<void> _trackDebtSave(Future<void> future) => _debugDebtSave = future;
+  Future<void> _trackDebtWrite(Future<void> future) => _debugDebtWrite = future;
+  @visibleForTesting
+  Future<void> debugWaitDebtBackfillsForTest() async {
+    final future = _debugDebtBackfill;
+    if (future != null) await future;
+  }
+  @visibleForTesting
+  Future<void> debugWaitDebtSavesForTest() async {
+    final future = _debugDebtSave;
+    if (future != null) await future;
+  }
+  @visibleForTesting
+  Future<void> debugWaitDebtWritesForTest() async {
+    final future = _debugDebtWrite;
+    if (future != null) await future;
+  }
+  String? get _debugDebtOwner => widget.debugDebtOwner != null
+      ? widget.debugDebtOwner!() : _supabase.auth.currentUser?.id;
+  String? get _debugDebtToken => widget.debugDebtToken != null
+      ? widget.debugDebtToken!() : _supabase.auth.currentSession?.accessToken;
   final ScrollController _assetCalendarScrollController = ScrollController();
   static const String _bankSheetId =
       '1WZlHr6YWG8ZbT9r-wXtYPEdPT5E4b47PSpNSNl8A1MM';
@@ -727,6 +776,34 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         AssetMirrorAdoption.adoptMirror;
   }
 
+  /// This domain must not treat a failed boot prefetch as an absent row.
+  /// A fresh owner-bound read distinguishes a successful empty result from an
+  /// exception. It does not make read-then-upsert atomic across devices.
+  Future<List<Map<String, dynamic>>> _readDebtOverrideMirrorFresh(
+    String expectedOwner,
+  ) async {
+    final sessionOwner = widget.debugDebtOwner != null
+        ? _debugDebtOwner : _supabase.auth.currentSession?.user.id;
+    final sessionToken = _debugDebtToken;
+    if (sessionOwner == null || sessionToken == null || sessionOwner != expectedOwner ||
+        _debtRestoreOwnerAtPageStart != expectedOwner ||
+        _debtRestoreAuthChanged) {
+      throw StateError('Debt override read has no matching session');
+    }
+    final fake = widget.debugDebtRead;
+    final result = fake != null ? await fake(expectedOwner) : await _supabase
+        .from('asset_pref_mirror')
+        .select('user_id,pref_key,value,updated_at')
+        .eq('user_id', expectedOwner)
+        .eq('pref_key', 'debt_payment_day_overrides');
+    if (!mounted || _debtRestoreAuthChanged ||
+        _debugDebtOwner != expectedOwner ||
+        _debugDebtToken != sessionToken) {
+      throw StateError('Debt override session changed during read');
+    }
+    return List<Map<String, dynamic>>.from(result);
+  }
+
   /// サーバに当該 pref 行が無く、ローカルに値がある場合だけローカルをアップロード
   /// する初回バックフィル。旧端末で mirror 化前に設定した値がサーバ未保存のまま
   /// 他端末へ同期されない問題を解消する。
@@ -734,15 +811,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     String prefKey,
     Future<void> Function() uploadLocal,
   ) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = _debugDebtOwner;
     if (userId == null) {
       return;
     }
+    final debtToken = prefKey == 'debt_payment_day_overrides'
+        ? _debugDebtToken
+        : null;
     try {
-      final rows = await _bootSelectPrefMirror(prefKey);
+      final rows = prefKey == 'debt_payment_day_overrides'
+          ? await _readDebtOverrideMirrorFresh(userId)
+          : await _bootSelectPrefMirror(prefKey);
       // select の間にログアウト/別アカウントへ切替わっていないか再確認する。
       // 前アカウントのローカル値を新しい user_id で誤アップロードしない (review medium)。
-      if (_supabase.auth.currentUser?.id != userId) {
+      if (_debugDebtOwner != userId ||
+          (prefKey == 'debt_payment_day_overrides' &&
+              (!mounted || _debtRestoreAuthChanged ||
+               _debugDebtToken != debtToken))) {
         return;
       }
       if (rows.isEmpty) {
@@ -857,6 +942,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, String> _paymentDifferenceReasons = <String, String>{};
   Map<String, double> _annualRateOverrides = <String, double>{};
   Map<String, int> _debtPaymentDayOverrides = <String, int>{};
+  String? _debtRestoreOwnerAtPageStart;
+  String? _debtRestoreTokenAtPageStart;
+  bool _debtRestoreFirstAuthEvent = true;
+  bool _debtRestoreAuthChanged = false;
+  StreamSubscription<AuthState>? _debtRestoreAuthSubscription;
   // リボ払いカードの返済ルール (最低返済額 + 新規利用額を25日に返済)。
   Map<String, AssetLiabilityRevolvingCreditConfig> _revolvingConfigs =
       <String, AssetLiabilityRevolvingCreditConfig>{};
@@ -1305,6 +1395,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   @override
   void initState() {
     super.initState();
+    _debtRestoreOwnerAtPageStart = _debugDebtOwner;
+    _debtRestoreTokenAtPageStart = _debugDebtToken;
+    _debtRestoreAuthSubscription = (widget.debugDebtAuthEvents ?? _supabase.auth.onAuthStateChange).listen((event) {
+      final matchesFirstSnapshot = _debtRestoreFirstAuthEvent &&
+          event.session?.user.id == _debtRestoreOwnerAtPageStart &&
+          event.session?.accessToken == _debtRestoreTokenAtPageStart;
+      _debtRestoreFirstAuthEvent = false;
+      if (!matchesFirstSnapshot &&
+          (event.session?.user.id != _debtRestoreOwnerAtPageStart ||
+              event.event != AuthChangeEvent.tokenRefreshed)) {
+        _debtRestoreAuthChanged = true;
+      }
+    }, onError: (Object _, StackTrace __) {
+      _debtRestoreAuthChanged = true;
+    });
     _assetManagementAiSummaryService =
         widget.aiSummaryService ?? AssetManagementAiSummaryService();
     _assetManagementAiAnalysisHistoryService =
@@ -1462,6 +1567,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   @override
   void dispose() {
+    unawaited(_debtRestoreAuthSubscription?.cancel());
     _assetCalendarScrollController.dispose();
     final closingChanged = _closingFetchChanged;
     if (closingChanged != null && !closingChanged.isCompleted) {
@@ -2427,9 +2533,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _defaultCardBillingAccountIds = Map<String, String>.from(
           defaultCardBillingAccounts,
         );
-        _debtPaymentDayOverrides = Map<String, int>.from(
-          debtPaymentDayOverrides,
-        );
+        if (!widget.debugDisableDebtBoot) {
+          _debtPaymentDayOverrides = Map<String, int>.from(
+            debtPaymentDayOverrides,
+          );
+        }
         final reconciledIncomePlans = _reconcileIncomePlans(
           incomePlansWithTemplates,
         );
@@ -2463,7 +2571,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       unawaited(_refreshSyncSources());
       // ローカル(_debtPaymentDayOverrides)反映後に呼ぶ。空でなくても union
       // マージ/バックフィルするため常に実行する。
-      unawaited(_restoreDebtPaymentDayOverridesFromMirror());
+      if (!widget.debugDisableDebtBoot) unawaited(_restoreDebtPaymentDayOverridesFromMirror());
       // 他端末の残高履歴を取り込み、負債トレンドの前月比を端末跨ぎで有効化。
       unawaited(_restoreAssetBalanceHistoryFromMirror());
       if (generatedTemplatePlans) {
@@ -15196,17 +15304,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     Map<String, int> overrides,
   ) async {
     unawaited(_syncTimestampStore.markChanged('debt_payment_day_overrides'));
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = _debugDebtOwner;
     if (userId == null) {
       return;
     }
     try {
-      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
-        'user_id': userId,
-        'pref_key': 'debt_payment_day_overrides',
-        'value': overrides,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      });
+      final fake = widget.debugDebtWrite;
+      if (fake != null) {
+        await fake(Map<String, int>.from(overrides));
+      } else {
+        await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+          'user_id': userId,
+          'pref_key': 'debt_payment_day_overrides',
+          'value': overrides,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        });
+      }
       // 全量 upsert 成功 = 全キー同期済み → dirty クリア。
       await _syncDirtyKeysStore.clearDomain('debt_payment_day_overrides');
     } catch (e) {
@@ -15216,6 +15329,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _restoreDebtPaymentDayOverridesFromMirror() async {
     final debugMirror = widget.debugDebtOverridesMirror;
+    final restoreOwner = _debugDebtOwner;
+    final restoreToken = _debugDebtToken;
+    bool restoreSessionValid() => debugMirror != null ||
+        (!_debtRestoreAuthChanged && restoreOwner != null &&
+            restoreOwner == _debtRestoreOwnerAtPageStart &&
+            _debugDebtOwner == restoreOwner &&
+            _debugDebtToken == restoreToken);
     if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
     }
@@ -15223,10 +15343,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // フラグ OFF + ローカル値あり: サーバに無ければ初回バックフィルして終了。
     if (!_mirrorReadsAuthoritative && hasLocal && debugMirror == null) {
       unawaited(
-        _backfillPrefIfServerMissing(
+        _trackDebtBackfill(_backfillPrefIfServerMissing(
           'debt_payment_day_overrides',
           () => _mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides),
-        ),
+        )),
       );
       return;
     }
@@ -15237,11 +15357,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         value = debugMirror;
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
-        final rows = await _bootSelectPrefMirror('debt_payment_day_overrides');
+        final userId = _debugDebtOwner;
+        if (userId == null) return;
+        final rows = await _readDebtOverrideMirrorFresh(userId);
+        if (!mounted || !restoreSessionValid()) return;
         if (rows.isEmpty) {
           // サーバ行が無い: ローカルにあれば初回バックフィル。
           if (hasLocal) {
-            unawaited(_mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides));
+            unawaited(_trackDebtBackfill(_mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides)));
           }
           return;
         }
@@ -15283,6 +15406,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
         'debt_payment_day_overrides',
       );
+      if (!mounted || !restoreSessionValid()) return;
       serverOverrides.forEach((key, day) {
         // #3415 保守的 per-key ガード: ローカル編集済み (dirty) キーは、ドメイン
         // 全体 adopt の巻き添えで上書きしない (同一キー衝突はローカル優先)。
@@ -15299,7 +15423,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _debtPaymentDayOverrides = merged;
         });
         _persistInBackground(
-          _saveDebtPaymentDayOverrides(),
+          _trackDebtSave(_saveDebtPaymentDayOverrides(
+            expectedOwner: debugMirror == null ? restoreOwner : null,
+            expectedToken: debugMirror == null ? restoreToken : null,
+          )),
           'debt override restore save',
         );
         // additive 追加 / tombstone 除去でもデータが変化したので時刻を整合させる
@@ -15322,7 +15449,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         (key) => !serverOverrides.containsKey(key),
       );
       if (localHasExtra && debugMirror == null) {
-        unawaited(_mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides));
+        unawaited(_trackDebtBackfill(_mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides)));
       }
     } catch (e) {
       debugPrint('pref mirror restore failed: $e');
@@ -31176,7 +31303,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  Future<void> _saveDebtPaymentDayOverrides() async {
+  Future<void> _saveDebtPaymentDayOverrides({
+    String? expectedOwner,
+    String? expectedToken,
+  }) async {
     try {
       await _assetLiabilityRepository.saveDebtPaymentDayOverrides(
         Map<String, int>.from(_debtPaymentDayOverrides),
@@ -31184,10 +31314,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('Error saving debt payment day overrides: $e');
     }
+    if (expectedOwner != null &&
+        (!mounted || _debtRestoreAuthChanged ||
+            _debugDebtOwner != expectedOwner ||
+            _debugDebtToken != expectedToken)) return;
     unawaited(
-      _mirrorDebtPaymentDayOverrides(
+      _trackDebtWrite(_mirrorDebtPaymentDayOverrides(
         Map<String, int>.from(_debtPaymentDayOverrides),
-      ),
+      )),
     );
   }
 
