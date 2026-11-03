@@ -1,15 +1,15 @@
-name: Synthetic owner atomic RPC (disposable Postgres only)
+name: Isolated owner writer fence candidate
 on:
   workflow_dispatch:
     inputs:
       expected_head_sha:
-        description: Exact isolated experiment commit
+        description: Exact disposable candidate commit
         required: true
         type: string
 permissions:
   contents: read
 jobs:
-  synthetic:
+  fence:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     services:
@@ -27,38 +27,30 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - name: Verify exact experiment head and blobs
+      - name: Verify exact head and files
         env:
           EXPECTED_HEAD: ${{ inputs.expected_head_sha }}
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-parse HEAD:test/synthetic_owner_atomic/fixture.sql)" = "33c17a297d614f05fbe3c71b8fb2cb227be6153d"
-          test "$(git rev-parse HEAD:test/synthetic_owner_atomic/sequential.sql)" = "34d015a436fc60a98aa8b62fb562ecf59d843af5"
-          test "$(git rev-parse HEAD:test/synthetic_owner_atomic/concurrency.sh)" = "bb325a2cd8f901c7f5de044070432bdb5a1430cb"
-          test "$(git rev-parse HEAD:test/synthetic_owner_atomic/mixed_snapshot.sh)" = "f647276ac31edc5371306c413871f1dcba8e7272"
-      - name: Create disposable synthetic fixture
-        id: fixture
+          test "$(git rev-parse HEAD:test/synthetic_owner_fence/fixture.sql)" = "27d07b8fedcccb4f6d7c3470ae33e853a262c007"
+          test "$(git rev-parse HEAD:test/synthetic_owner_fence/candidate.sql)" = "840f56620cd4892163df9d565a9a48ef734c741d"
+          test "$(git rev-parse HEAD:test/synthetic_owner_fence/inflight.sh)" = "77951212b94af8cca2eb68161475822cf73fcbbc"
+          test "$(git rev-parse HEAD:test/synthetic_owner_fence/tests.sql)" = "3d929f16525ef83142d8ad23260ec577379c217c"
+      - name: Synthetic fixture
         env:
           SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
         run: |
           set -euo pipefail
           docker exec -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" psql -U postgres -d owner_sync_lab -v ON_ERROR_STOP=1 -c 'SELECT current_database(), current_user, version();'
-          docker exec -i -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" psql -U postgres -d owner_sync_lab -v ON_ERROR_STOP=1 < test/synthetic_owner_atomic/fixture.sql
-      - name: Sequential rollback and idempotency
-        if: ${{ !cancelled() && steps.fixture.outcome == 'success' }}
+          docker exec -i -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" psql -U postgres -d owner_sync_lab -v ON_ERROR_STOP=1 < test/synthetic_owner_fence/fixture.sql
+      - name: Preflight and inflight legacy writer
+        env:
+          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
+        run: bash test/synthetic_owner_fence/inflight.sh
+      - name: Restricted writes and unrelated CRUD
         env:
           SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
         run: |
           set -euo pipefail
-          docker exec -i -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" psql -U postgres -d owner_sync_lab -v ON_ERROR_STOP=1 < test/synthetic_owner_atomic/sequential.sql
-      - name: Two connections same owner and revision
-        if: ${{ !cancelled() && steps.fixture.outcome == 'success' }}
-        env:
-          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
-        run: bash test/synthetic_owner_atomic/concurrency.sh
-      - name: Separate reads may mix committed revisions
-        if: ${{ !cancelled() && steps.fixture.outcome == 'success' }}
-        env:
-          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
-        run: bash test/synthetic_owner_atomic/mixed_snapshot.sh
+          docker exec -i -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" psql -U postgres -d owner_sync_lab -v ON_ERROR_STOP=1 < test/synthetic_owner_fence/tests.sql
