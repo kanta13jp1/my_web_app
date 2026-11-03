@@ -36,12 +36,17 @@ jobs:
           flutter-version: '3.38.x'
       - name: Resolve project language version
         run: flutter pub get
-      - name: Format detached candidate
+      - name: Check fixed candidate formatting
         run: |
           set -euo pipefail
-          dart format tool/ci/debt_asset_page_for_format.dart
+          test "$(sha256sum tool/ci/debt_asset_page_for_format.dart | cut -d' ' -f1)" = e2ad6dbd97d6151ff5c9b0ad7a98cbe53f0d9c54a6980307900085aeafb330e1
           dart format --output=none --set-exit-if-changed tool/ci/debt_asset_page_for_format.dart
-          sha256sum tool/ci/debt_asset_page_for_format.dart
+      - name: Analyze the production candidate
+        run: |
+          set -euo pipefail
+          cp tool/ci/debt_asset_page_for_format.dart lib/pages/asset_management_page.dart
+          dart format --output=none --set-exit-if-changed lib/pages/asset_management_page.dart
+          flutter analyze --no-pub lib/pages/asset_management_page.dart
       - name: Preserve formatted candidate
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:

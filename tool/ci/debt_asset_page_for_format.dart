@@ -735,7 +735,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) async {
     final auth = _supabase.auth;
     final session = auth.currentSession;
-    if (session == null || session.user.id != expectedOwner ||
+    if (session == null ||
+        session.user.id != expectedOwner ||
         _debtRestoreOwnerAtPageStart != expectedOwner ||
         _debtRestoreAuthChanged) {
       throw StateError('Debt override read has no matching session');
@@ -745,7 +746,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         .select('user_id,pref_key,value,updated_at')
         .eq('user_id', expectedOwner)
         .eq('pref_key', 'debt_payment_day_overrides');
-    if (!mounted || _debtRestoreAuthChanged ||
+    if (!mounted ||
+        _debtRestoreAuthChanged ||
         auth.currentUser?.id != expectedOwner ||
         auth.currentSession?.accessToken != session.accessToken) {
       throw StateError('Debt override session changed during read');
@@ -775,8 +777,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       // 前アカウントのローカル値を新しい user_id で誤アップロードしない (review medium)。
       if (_supabase.auth.currentUser?.id != userId ||
           (prefKey == 'debt_payment_day_overrides' &&
-              (!mounted || _debtRestoreAuthChanged ||
-               _supabase.auth.currentSession?.accessToken != debtToken))) {
+              (!mounted ||
+                  _debtRestoreAuthChanged ||
+                  _supabase.auth.currentSession?.accessToken != debtToken))) {
         return;
       }
       if (rows.isEmpty) {
@@ -1346,7 +1349,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     super.initState();
     _debtRestoreOwnerAtPageStart = _supabase.auth.currentUser?.id;
     _debtRestoreTokenAtPageStart = _supabase.auth.currentSession?.accessToken;
-    _debtRestoreAuthSubscription = _supabase.auth.onAuthStateChange.listen((event) {
+    _debtRestoreAuthSubscription =
+        _supabase.auth.onAuthStateChange.listen((event) {
       final matchesFirstSnapshot = _debtRestoreFirstAuthEvent &&
           event.session?.user.id == _debtRestoreOwnerAtPageStart &&
           event.session?.accessToken == _debtRestoreTokenAtPageStart;
@@ -15273,8 +15277,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final debugMirror = widget.debugDebtOverridesMirror;
     final restoreOwner = _supabase.auth.currentUser?.id;
     final restoreToken = _supabase.auth.currentSession?.accessToken;
-    bool restoreSessionValid() => debugMirror != null ||
-        (!_debtRestoreAuthChanged && restoreOwner != null &&
+    bool restoreSessionValid() =>
+        debugMirror != null ||
+        (!_debtRestoreAuthChanged &&
+            restoreOwner != null &&
             restoreOwner == _debtRestoreOwnerAtPageStart &&
             _supabase.auth.currentUser?.id == restoreOwner &&
             _supabase.auth.currentSession?.accessToken == restoreToken);
@@ -31257,9 +31263,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('Error saving debt payment day overrides: $e');
     }
     if (expectedOwner != null &&
-        (!mounted || _debtRestoreAuthChanged ||
+        (!mounted ||
+            _debtRestoreAuthChanged ||
             _supabase.auth.currentUser?.id != expectedOwner ||
-            _supabase.auth.currentSession?.accessToken != expectedToken)) return;
+            _supabase.auth.currentSession?.accessToken != expectedToken)) {
+      return;
+    }
     unawaited(
       _mirrorDebtPaymentDayOverrides(
         Map<String, int>.from(_debtPaymentDayOverrides),
