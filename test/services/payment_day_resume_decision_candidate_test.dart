@@ -30,25 +30,27 @@ void main() {
         legacyDisposition: disposition,
       );
 
-  test('all prerequisites and resolved disposition allow model write', () {
-    expect(decideOwnerResume(a, evidence()).mayRequestGuardedWrite, isTrue);
-    expect(
-        decideOwnerResume(
-                a,
-                evidence(
-                    disposition: LegacyDisposition.preserveSeparatelyConfirmed))
-            .mayRequestGuardedWrite,
-        isTrue);
+  test('resolved prerequisites allow only guarded request', () {
+    final imported = decideOwnerResume(a, evidence());
+    expect(imported.mayRequestGuardedWrite, isTrue);
+    expect(imported.allowAutomaticDerivedEffects, isFalse);
+    final preserved = decideOwnerResume(
+      a,
+      evidence(disposition: LegacyDisposition.preserveSeparatelyConfirmed),
+    );
+    expect(preserved.mayRequestGuardedWrite, isTrue);
   });
 
-  test('verified no-pending permits request; derived effects remain held', () {
-    final result = decideOwnerResume(
-        a, evidence(pending: PendingDisposition.noPendingVerified));
-    expect(result.mayRequestGuardedWrite, isTrue);
-    expect(result.allowAutomaticDerivedEffects, isFalse);
+  test('verified no-pending is distinct from an unavailable read', () {
+    final noPending = decideOwnerResume(
+      a,
+      evidence(pending: PendingDisposition.noPendingVerified),
+    );
+    expect(noPending.mayRequestGuardedWrite, isTrue);
+    expect(noPending.allowAutomaticDerivedEffects, isFalse);
   });
 
-  test('any missing barrier prevents writes', () {
+  test('any missing barrier prevents a guarded write request', () {
     for (final e in [
       evidence(snapshot: false),
       evidence(checkpoint: false),
@@ -65,50 +67,59 @@ void main() {
     }
   });
 
-  test('unconfirmed or lost snapshot never becomes empty first run', () {
-    expect(
-        decideOwnerResume(a, evidence(snapshot: false)).viewHistoricalSnapshot,
-        isFalse);
-    expect(
-        decideOwnerResume(a, evidence(checkpoint: false))
-            .viewHistoricalSnapshot,
-        isFalse);
+  test('unconfirmed or lost snapshot is never an empty first run', () {
+    final absentSnapshot = decideOwnerResume(a, evidence(snapshot: false));
+    final absentCheckpoint = decideOwnerResume(a, evidence(checkpoint: false));
+    expect(absentSnapshot.viewHistoricalSnapshot, isFalse);
+    expect(absentCheckpoint.viewHistoricalSnapshot, isFalse);
   });
 
-  test('explicit legacy inspection is independent and does not import', () {
+  test('legacy inspection needs separate authorization and does not import',
+      () {
     final requested = decideOwnerResume(
-        a, evidence(inspect: true, disposition: LegacyDisposition.unresolved));
+      a,
+      evidence(inspect: true, disposition: LegacyDisposition.unresolved),
+    );
     expect(requested.inspectQuarantinedLegacy, isTrue);
     expect(requested.viewHistoricalSnapshot, isTrue);
     expect(requested.mayRequestGuardedWrite, isFalse);
-    expect(decideOwnerResume(a, evidence()).inspectQuarantinedLegacy, isFalse);
-    expect(
-        decideOwnerResume(a, evidence(inspect: true, inspectAuthorized: false))
-            .inspectQuarantinedLegacy,
-        isFalse);
-    expect(
-        decideOwnerResume(
-                a,
-                evidence(
-                    snapshot: false,
-                    inspect: true,
-                    disposition: LegacyDisposition.importOutcomeUnknown))
-            .mayRequestGuardedWrite,
-        isFalse);
+    final withoutRequest = decideOwnerResume(a, evidence());
+    final withoutPrivacyAuth = decideOwnerResume(
+      a,
+      evidence(inspect: true, inspectAuthorized: false),
+    );
+    expect(withoutRequest.inspectQuarantinedLegacy, isFalse);
+    expect(withoutPrivacyAuth.inspectQuarantinedLegacy, isFalse);
+    final unknownImport = decideOwnerResume(
+      a,
+      evidence(
+        snapshot: false,
+        inspect: true,
+        disposition: LegacyDisposition.importOutcomeUnknown,
+      ),
+    );
+    expect(unknownImport.mayRequestGuardedWrite, isFalse);
   });
 
   test('expiry and ABA session generation deny every operation', () {
+    final oldForB = decideOwnerResume(
+      const ResumeSession('synthetic-b', 8),
+      evidence(inspect: true),
+    );
+    final oldForAAgain = decideOwnerResume(
+      const ResumeSession('synthetic-a', 9),
+      evidence(inspect: true),
+    );
     for (final result in [
       decideOwnerResume(a, evidence(auth: false, inspect: true)),
-      decideOwnerResume(
-          const ResumeSession('synthetic-b', 8), evidence(inspect: true)),
-      decideOwnerResume(
-          const ResumeSession('synthetic-a', 9), evidence(inspect: true)),
+      oldForB,
+      oldForAAgain,
       decideOwnerResume(const ResumeSession('', 7), evidence(inspect: true)),
     ]) {
       expect(result.inspectQuarantinedLegacy, isFalse);
       expect(result.viewHistoricalSnapshot, isFalse);
       expect(result.mayRequestGuardedWrite, isFalse);
+      expect(result.allowAutomaticDerivedEffects, isFalse);
     }
   });
 }
