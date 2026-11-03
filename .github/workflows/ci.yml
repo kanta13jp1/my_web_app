@@ -110,13 +110,36 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const files = await github.paginate(github.rest.pulls.listFiles, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              per_page: 100,
-            });
+            const pull = context.payload.pull_request;
+            if (!pull || !Number.isSafeInteger(pull.number) || pull.number <= 0 ||
+                !/^[0-9a-f]{40}$/.test(pull.base.sha) || !/^[0-9a-f]{40}$/.test(pull.head.sha)) {
+              throw new Error('Invalid immutable PR identity');
+            }
+            const params = {owner: context.repo.owner, repo: context.repo.repo, pull_number: pull.number};
+            const snapshot = async () => (await github.rest.pulls.get(params)).data;
+            const before = await snapshot();
+            if (before.base.sha !== pull.base.sha || before.head.sha !== pull.head.sha ||
+                !Number.isSafeInteger(before.changed_files) || before.changed_files <= 0 ||
+                before.changed_files >= 3000 ||
+                (pull.changed_files != null && pull.changed_files !== before.changed_files)) {
+              throw new Error('PR refs or file count changed before collection');
+            }
+            const files = await github.paginate(github.rest.pulls.listFiles, {...params, per_page: 100});
+            const after = await snapshot();
+            if (after.base.sha !== pull.base.sha || after.head.sha !== pull.head.sha ||
+                after.changed_files !== before.changed_files || files.length !== before.changed_files) {
+              throw new Error('PR refs or file count changed during collection');
+            }
             fs.mkdirSync('.ci-logs', { recursive: true });
+            const logDir = fs.lstatSync('.ci-logs');
+            if (logDir.isSymbolicLink() || !logDir.isDirectory()) {
+              throw new Error('Unsafe CI metadata directory');
+            }
+            fs.writeFileSync('.ci-logs/debt-read-files.json', JSON.stringify({
+              schema: 1, number: pull.number, base_sha: pull.base.sha, head_sha: pull.head.sha,
+              count: before.changed_files,
+              files: files.map(({filename, status, previous_filename}) => ({filename, status, previous_filename})),
+            }), {flag: 'wx', mode: 0o600});
             fs.writeFileSync(
               '.ci-logs/changed-files.txt',
               files.map((file) => file.filename).join('\n') + '\n',
@@ -139,9 +162,25 @@ jobs:
             --github-output "$GITHUB_OUTPUT" \
             "${args[@]}"
 
+      - name: Classify debt read regression scope
+        id: debt_read_scope
+        run: python -B scripts/classify_debt_read_scope.py
+
+      - name: Require debt read scope decision
+        shell: bash
+        env:
+          DEBT_SCOPE: ${{ steps.debt_read_scope.outputs.run }}
+        run: |
+          case "$DEBT_SCOPE" in
+            true|false) ;;
+            *) echo "::error::Debt read scope decision missing"; exit 1 ;;
+          esac
+
       - name: Test CI scope classifier
         run: |
           python scripts/classify_ci_changes_test.py
+          python -B scripts/test_classify_debt_read_scope.py
+          node --test scripts/test_ci_collection.cjs
           python -B scripts/check_claude_review_workflow_test.py
           python scripts/serve_business_execution_fixture_test.py
           python scripts/cloud_ci_handoff_test.py
@@ -193,17 +232,17 @@ jobs:
             -r scripts/requirements-high-risk-security-review.txt
 
       - name: Setup Flutter
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.flutter == 'true' || steps.debt_read_scope.outputs.run == 'true'
         uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x' # 指定のバージョンに戻しました
 
       - name: Get Flutter version
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.flutter == 'true' || steps.debt_read_scope.outputs.run == 'true'
         run: flutter --version
 
       - name: Cache Flutter pub
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.flutter == 'true' || steps.debt_read_scope.outputs.run == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.pub-cache
@@ -213,13 +252,37 @@ jobs:
 
       - name: Install dependencies
         id: flutter_dependencies
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.flutter == 'true' || steps.debt_read_scope.outputs.run == 'true'
         run: flutter pub get
 
       - name: Verify dependencies
         id: flutter_dependencies_verify
-        if: steps.changes.outputs.flutter == 'true'
+        if: steps.changes.outputs.flutter == 'true' || steps.debt_read_scope.outputs.run == 'true'
         run: flutter pub get --dry-run
+
+      - name: Test debt read failures in a temporary checkout
+        if: steps.debt_read_scope.outputs.run == 'true'
+        shell: bash
+        timeout-minutes: 5
+        env:
+          EVENT_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$EVENT_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$EVENT_COMMIT"
+          scratch="$(mktemp -d "$RUNNER_TEMP/debt-read-ci.XXXXXXXX")"
+          git archive --format=tar "$EVENT_COMMIT" | tar -x -C "$scratch"
+          pub_cache="${PUB_CACHE:-$HOME/.pub-cache}"
+          [[ "$pub_cache" == /* ]]
+          sudo unshare --net -- bash -c '
+            set -euo pipefail
+            ip link set lo up
+            test "$(ip -o link show | wc -l)" -eq 1
+            ip link show lo >/dev/null
+            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" \
+              RUNNER_TEMP="$4" GITHUB_WORKSPACE="$5" PUB_CACHE="$6" \
+              SCRATCH="$7" CI=true bash "$7/scripts/run_debt_read_sandbox.sh"
+          ' _ "$(id -un)" "$PATH" "$HOME" "$RUNNER_TEMP" "$GITHUB_WORKSPACE" "$pub_cache" "$scratch"
 
       - name: Analyze code
         id: flutter_analyze
