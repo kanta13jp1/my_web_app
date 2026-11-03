@@ -163,6 +163,16 @@ async function main() {
     await a.evaluate(() => { window.releaseLock = true; });
     await a.waitForFunction(() => window.lockDone);
     assert.equal(await raw(b, 'fake-a'), beforeTimeout);
+    // Deliberate adversarial case: a coherent prefix loss also advances the
+    // co-located base revision. A safe future adapter must hold, but this
+    // detached candidate lacks an independent checkpoint and may fail here.
+    const prefixLoss = JSON.stringify({ schema: 1, owner: 'fake-a', baseRevision: 1,
+      revision: 2, value: 'later', receipts: [{ requestId: 'r-c',
+        expectedRevision: 1, revision: 2, value: 'later' }] });
+    await putRaw(a, 'fake-a', prefixLoss);
+    const replayAfterLoss = { ...winner, expectedRevision: 2, value: 'replayed' };
+    assert.equal((await call(b, replayAfterLoss)).status, 'recoveryHold',
+      'coherent receipt-prefix loss must be held, not accepted as a new request');
     assert.equal((await call(a, { ...base, owner: 'fake-missing' })).status, 'recoveryHold');
     const corrupt = JSON.stringify({ schema: 1, owner: 'fake-a', baseRevision: 0,
       revision: 2, value: 'later', receipts: [] });
