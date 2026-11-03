@@ -74,6 +74,7 @@ import '../widgets/home_tier/ai_recommended_features_list.dart';
 import '../widgets/home_tier/popular_features_list.dart';
 import '../utils/feature_tap_logger.dart';
 import '../utils/home_feature_request_failure.dart';
+import '../utils/home_calendar_visible_range.dart';
 import '../services/route_visibility_observer.dart';
 
 class HomePage extends StatefulWidget {
@@ -1431,25 +1432,12 @@ class _HomePageState extends State<HomePage> with RouteAware {
     );
   }
 
-  _HomeCalendarVisibleRange _calendarVisibleRange() {
-    final monthAnchor = _calendarAnchorMonth();
-    final firstDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month, 1);
-    final lastDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month + 1, 0);
-    final startOffset = firstDayOfMonth.weekday % 7;
-    final startDay = firstDayOfMonth.subtract(Duration(days: startOffset));
-    final endOffset = 6 - (lastDayOfMonth.weekday % 7);
-    final endDay = lastDayOfMonth.add(Duration(days: endOffset));
-
-    return _HomeCalendarVisibleRange(
-      monthAnchor: monthAnchor,
-      startDay: startDay,
-      endDay: endDay,
-    );
-  }
+  HomeCalendarVisibleRange _calendarVisibleRange() =>
+      HomeCalendarVisibleRange.forMonth(_calendarAnchorMonth());
 
   Future<List<_HomeCalendarDay>> _loadCalendarDays({
     required SharedPreferences prefs,
-    _HomeCalendarVisibleRange? calendarRange,
+    HomeCalendarVisibleRange? calendarRange,
     Map<String, AbstinenceGuardSnapshot>? abstinenceSnapshotsByDate,
   }) async {
     final now = _now();
@@ -9319,18 +9307,6 @@ class _HomeDailyStatusRecord {
   const _HomeDailyStatusRecord({
     this.morningBriefingDone = false,
     this.balanceCheckDone = false,
-  });
-}
-
-class _HomeCalendarVisibleRange {
-  final DateTime monthAnchor;
-  final DateTime startDay;
-  final DateTime endDay;
-
-  const _HomeCalendarVisibleRange({
-    required this.monthAnchor,
-    required this.startDay,
-    required this.endDay,
   });
 }
 

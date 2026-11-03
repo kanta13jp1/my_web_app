@@ -5,7 +5,7 @@ enum AssetReflectionKind {
   drinkingOut,
   alcoholPurchase,
   reading,
-  tobaccoPurchase
+  tobaccoPurchase,
 }
 
 extension AssetReflectionKindLabel on AssetReflectionKind {
@@ -133,6 +133,34 @@ class AssetCalendarReflection {
   static List<AssetCalendarReflection> fromFlows(
     Iterable<Map<String, dynamic>> flows,
   ) {
+    // Reject only a denial immediately associated with this matched phrase.
+    bool hasAffirmedMatch(
+      RegExp pattern,
+      String description, {
+      bool excludePurchaseOnly = false,
+    }) {
+      final denial = RegExp(
+        r'^\s*(?:は|を|が)?\s*(?:なし|無し|しな|していな|せず|せな|'
+        r'飲まな|飲まず|飲んだこと(?:は|が)?ない|こと(?:は|が)?ない|'
+        r'買わな|買わず|購入しな|購入せず|購入なし|'
+        r'には行かな|に行かな|かない|かなかった)',
+      );
+      return pattern.allMatches(description).any((match) {
+        final following = description.substring(match.end);
+        if (denial.hasMatch(following)) return false;
+        if (!excludePurchaseOnly) return true;
+        final clause = following.split(RegExp(r'[。；;\n、・]')).first;
+        final purchase = RegExp(r'^\s*(?:は|を|が)?\s*購入').hasMatch(clause);
+        if (!purchase) return true;
+        final drankAfterPurchase = RegExp(
+          r'^\s*(?:は|を|が)?\s*購入(?:してから|して|したが)\s*'
+          r'(?:飲んだ|飲みました|飲酒した)',
+        ).firstMatch(clause);
+        return drankAfterPurchase != null &&
+            !denial.hasMatch(clause.substring(drankAfterPurchase.end));
+      });
+    }
+
     final result = <AssetCalendarReflection>[];
     for (final flow in flows) {
       if (flow['action_type'] != 'expense') continue;
@@ -142,16 +170,60 @@ class AssetCalendarReflection {
       )?.toLocal();
       final description = flow['description']?.toString() ?? '';
       if (id == null || day == null) continue;
-      final dining = RegExp(
-        r'外食|店内飲食|レストラン|ラーメンショップ|ラーメン店|定食屋',
-      ).hasMatch(description);
-      final outside = RegExp(r'飲み屋|居酒屋|外飲み|飲みに行').hasMatch(description) ||
-          (dining && RegExp(r'ビール|飲酒|ハイボール').hasMatch(description));
-      final purchase = RegExp(r'酒購入|酒の購入|ビール購入|ビールを購入').hasMatch(description);
+      final dining = hasAffirmedMatch(
+        RegExp(r'外食|店内飲食|レストラン|ラーメンショップ|ラーメン店|定食屋'),
+        description,
+      );
+      final outside = description.split(RegExp(r'[。；;\n]')).any((context) {
+        final venue = hasAffirmedMatch(
+          RegExp(r'飲み屋|居酒屋|外飲み|飲みに行った|飲みに行きました|飲みに行'),
+          context,
+        );
+        final drinkWithoutPurchase = hasAffirmedMatch(
+          RegExp(
+            r'(?:ビール|ハイボール)\s*(?:は|を)?\s*購入せず\s*'
+            r'(?:飲んだ|飲みました)',
+          ),
+          context,
+        );
+        final drink = dining &&
+            (drinkWithoutPurchase ||
+                hasAffirmedMatch(
+                  RegExp(r'ビール|飲酒|ハイボール'),
+                  context,
+                  excludePurchaseOnly: true,
+                ));
+        if (!venue && !drink) return false;
+        final noDrinking = RegExp(
+          r'(?:飲酒|アルコール)\s*(?:は|を)?\s*(?:なし|無し|しな|していな|せず)|'
+          r'(?:酒|ビール|ハイボール)\s*(?:は|を)?\s*'
+          r'(?:飲まず|飲まな|飲んだこと(?:は|が)?ない)|'
+          r'(?:ビール|ハイボール)\s*(?:を|は)?\s*購入'
+          r'(?:してから|して|したが|せず)\s*飲んだこと(?:は|が)?ない',
+        ).hasMatch(context);
+        if (!noDrinking) return true;
+        return drinkWithoutPurchase ||
+            hasAffirmedMatch(
+              RegExp(
+                r'(?:ビール|ハイボール)\s*(?:を|は)?\s*購入'
+                r'(?:してから|して|したが)\s*(?:飲んだ|飲みました)|'
+                r'(?:ビール|ハイボール|酒)\s*(?:を|は)?\s*(?:飲んだ|飲みました)|'
+                r'飲酒\s*(?:を)?\s*した|'
+                r'(?:居酒屋|飲み屋|外飲み)\s*(?:で)?\s*(?:飲んだ|飲みました)|'
+                r'飲みに(?:行った|行きました)',
+              ),
+              context,
+            );
+      });
+      final purchase = hasAffirmedMatch(
+        RegExp(r'酒購入|酒の購入|ビール購入|ビールを購入'),
+        description,
+      );
       final tobacco = description.split(RegExp(r'[。；;\n、・]')).any((part) {
-        final mentions =
-            RegExp(r'たばこ|タバコ|煙草|マールボロ|マルボロ|marlboro', caseSensitive: false)
-                .hasMatch(part);
+        final mentions = RegExp(
+          r'たばこ|タバコ|煙草|マールボロ|マルボロ|marlboro',
+          caseSensitive: false,
+        ).hasMatch(part);
         final explicitPurchase = RegExp(
           r'(たばこ|タバコ|煙草)(を)?(購入|買)|たばこ代|マールボロ|マルボロ|marlboro',
           caseSensitive: false,

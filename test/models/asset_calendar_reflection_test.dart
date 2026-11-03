@@ -55,6 +55,104 @@ void main() {
     },
   );
 
+  test(
+    'flow projection preserves positive mentions beside explicit denials',
+    () {
+      Map<String, dynamic> flow(String title, {int id = 333}) => {
+            'id': id,
+            'occurred_at': '2026-01-02T03:00:00Z',
+            'action_type': 'expense',
+            'description': title,
+            'amount': 1000,
+          };
+
+      Set<AssetReflectionKind> kinds(String title) =>
+          AssetCalendarReflection.fromFlows([flow(title)]).single.kinds;
+
+      expect(kinds('外食、飲酒なし'), {AssetReflectionKind.dining});
+      expect(
+        AssetCalendarReflection.fromFlows([
+          flow('居酒屋でビールは購入せず飲んだことはない'),
+        ]),
+        isEmpty,
+      );
+      expect(kinds('外食、ビールは購入せず飲んだことはない、ハイボールを飲んだ'), {
+        AssetReflectionKind.dining,
+        AssetReflectionKind.drinkingOut,
+      });
+      expect(kinds('外食、ビールは購入せず飲んだ'), {
+        AssetReflectionKind.dining,
+        AssetReflectionKind.drinkingOut,
+      });
+      expect(
+        AssetCalendarReflection.fromFlows([flow('居酒屋で食事、アルコールなし')]),
+        isEmpty,
+      );
+      expect(kinds('外食、ビール、飲酒なし'), {AssetReflectionKind.dining});
+      expect(kinds('外食、飲酒なし、ビールを飲んだことはない'), {AssetReflectionKind.dining});
+      expect(kinds('外食、ビールを飲んだことはない'), {AssetReflectionKind.dining});
+      expect(kinds('外食、ビールを飲んだことはない、ハイボールを飲んだ'), {
+        AssetReflectionKind.dining,
+        AssetReflectionKind.drinkingOut,
+      });
+      expect(kinds('外食、飲酒なし、飲みに行った'), {
+        AssetReflectionKind.dining,
+        AssetReflectionKind.drinkingOut,
+      });
+      expect(AssetCalendarReflection.fromFlows([flow('居酒屋で食事、飲酒なし')]), isEmpty);
+      expect(kinds('外食、ビール購入のみ'), {
+        AssetReflectionKind.dining,
+        AssetReflectionKind.alcoholPurchase,
+      });
+      expect(kinds('外食、ビールを購入しなかった'), {AssetReflectionKind.dining});
+      expect(kinds('外食、飲酒なし、ビールを飲んだ'), {
+        AssetReflectionKind.dining,
+        AssetReflectionKind.drinkingOut,
+      });
+      expect(kinds('外食、ビールは飲まずハイボールを飲んだ'), {
+        AssetReflectionKind.dining,
+        AssetReflectionKind.drinkingOut,
+      });
+      expect(kinds('外食、ビールを購入したが飲酒なし'), {
+        AssetReflectionKind.dining,
+        AssetReflectionKind.alcoholPurchase,
+      });
+      expect(kinds('外食、ビールを購入して飲んだ'), {
+        AssetReflectionKind.dining,
+        AssetReflectionKind.drinkingOut,
+        AssetReflectionKind.alcoholPurchase,
+      });
+      expect(kinds('外食、酒は買わずビールを飲んだ'), {
+        AssetReflectionKind.dining,
+        AssetReflectionKind.drinkingOut,
+      });
+      expect(AssetCalendarReflection.fromFlows([flow('酒購入しなかった')]), isEmpty);
+      expect(AssetCalendarReflection.fromFlows([flow('外食しなかった')]), isEmpty);
+      expect(AssetCalendarReflection.fromFlows([flow('飲み屋には行かなかった')]), isEmpty);
+      expect(AssetCalendarReflection.fromFlows([flow('飲みに行かない')]), isEmpty);
+      expect(AssetCalendarReflection.fromFlows([flow('飲みに行ったことはない')]), isEmpty);
+      expect(kinds('飲みに行ったことはないが、飲みに行った'), {AssetReflectionKind.drinkingOut});
+      expect(kinds('外食、ビールを購入して飲んだことはない'), {
+        AssetReflectionKind.dining,
+        AssetReflectionKind.alcoholPurchase,
+      });
+      expect(kinds('外食、ビールを購入して飲んだことはない、ハイボールを飲んだ'), {
+        AssetReflectionKind.dining,
+        AssetReflectionKind.drinkingOut,
+        AssetReflectionKind.alcoholPurchase,
+      });
+      expect(kinds('飲み屋には行かなかったが居酒屋に行った'), {AssetReflectionKind.drinkingOut});
+
+      final events = AssetCalendarReflection.fromFlows([
+        flow('外食、飲酒なし', id: 333),
+        flow('外食 ビールを含む', id: 334),
+      ]);
+      expect(events.map((event) => event.sourceKey), ['flow:333', 'flow:334']);
+      expect(events.last.linkedFlowId, '334');
+      expect(events.last.kinds, contains(AssetReflectionKind.drinkingOut));
+    },
+  );
+
   test('unknown amounts remain null through roundtrip', () {
     final event = AssetCalendarReflection.fromJson(fixture());
     expect(event.verifiedAmount, isNull);
@@ -213,24 +311,27 @@ void main() {
     expect(merged.single.kinds, contains(AssetReflectionKind.tobaccoPurchase));
     expect(AssetReflectionSummary(merged).knownAmount, 1380);
   });
-  test('mixed purchase keeps tobacco and excludes unrelated book or negation',
-      () {
-    bool tobacco(String description) => AssetCalendarReflection.fromFlows([
-          {
-            'id': '801',
-            'action_type': 'expense',
-            'occurred_at': '2026-10-19T01:01:00',
-            'description': description,
-            'amount': 620,
-          },
-        ]).any(
-          (event) => event.kinds.contains(AssetReflectionKind.tobaccoPurchase),
-        );
-    expect(tobacco('書籍935円・たばこ購入620円'), isTrue);
-    expect(tobacco('酒は未購入。たばこ購入620円'), isTrue);
-    expect(tobacco('書籍 たばこの本'), isFalse);
-    expect(tobacco('たばこ未購入'), isFalse);
-    expect(tobacco('禁煙を開始した'), isFalse);
-    expect(tobacco('禁煙を始めたが、たばこ購入620円'), isTrue);
-  });
+  test(
+    'mixed purchase keeps tobacco and excludes unrelated book or negation',
+    () {
+      bool tobacco(String description) => AssetCalendarReflection.fromFlows([
+            {
+              'id': '801',
+              'action_type': 'expense',
+              'occurred_at': '2026-10-19T01:01:00',
+              'description': description,
+              'amount': 620,
+            },
+          ]).any(
+            (event) =>
+                event.kinds.contains(AssetReflectionKind.tobaccoPurchase),
+          );
+      expect(tobacco('書籍935円・たばこ購入620円'), isTrue);
+      expect(tobacco('酒は未購入。たばこ購入620円'), isTrue);
+      expect(tobacco('書籍 たばこの本'), isFalse);
+      expect(tobacco('たばこ未購入'), isFalse);
+      expect(tobacco('禁煙を開始した'), isFalse);
+      expect(tobacco('禁煙を始めたが、たばこ購入620円'), isTrue);
+    },
+  );
 }
