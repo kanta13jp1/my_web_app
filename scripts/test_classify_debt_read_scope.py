@@ -43,7 +43,7 @@ class ScopeTests(unittest.TestCase):
         self.assertTrue(scope.classify_pr(event(), listing(row('lib/new.dart', 'renamed', TARGET))))
         self.assertTrue(scope.classify_pr(event(), listing(row(TARGET, 'renamed', 'lib/old.dart'))))
         self.assertTrue(scope.classify_pr(event(), listing(row('old/location', 'renamed',
-            'test/fixtures/debt_read_fail_closed/debt_read_fail_closed_test.dart.fixture'))))
+            'test/fixtures/debt_read_fail_closed/debt_read_fail_closed_test.dart.txt'))))
         self.assertFalse(scope.classify_pr(event(), listing(row('lib/new.dart', 'renamed', 'lib/old.dart'))))
         self.assertTrue(scope.classify_pr(event(), listing(row('odd\nname', 'renamed', TARGET))))
 

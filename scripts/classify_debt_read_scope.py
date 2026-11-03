@@ -35,9 +35,9 @@ REQUIRED = (
     'integration_test/asset_debt_read_browser_test.dart',
     'integration_test/support/asset_debt_read_contract.dart',
     'integration_test/support/asset_debt_read_factory.dart',
-    FIXTURE_PREFIX + 'browser/asset_debt_read_factory.dart.fixture',
-    FIXTURE_PREFIX + 'build_test_instrumentation.py.fixture',
-    FIXTURE_PREFIX + 'debt_read_fail_closed_test.dart.fixture',
+    FIXTURE_PREFIX + 'browser/asset_debt_read_factory.dart.txt',
+    FIXTURE_PREFIX + 'build_test_instrumentation.py.txt',
+    FIXTURE_PREFIX + 'debt_read_fail_closed_test.dart.txt',
 )
 STATUSES = frozenset({'added', 'modified', 'removed', 'renamed', 'copied', 'changed', 'unchanged'})
 SHA = re.compile(r'[0-9a-f]{40}\Z')

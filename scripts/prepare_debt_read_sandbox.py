@@ -64,8 +64,8 @@ def main() -> None:
         raise RuntimeError('refusing to instrument outside runner scratch')
     page_path = root / 'lib/pages/asset_management_page.dart'
     fixture_dir = root / 'test/fixtures/debt_read_fail_closed'
-    builder_path = fixture_dir / 'build_test_instrumentation.py.fixture'
-    test_path = fixture_dir / 'debt_read_fail_closed_test.dart.fixture'
+    builder_path = fixture_dir / 'build_test_instrumentation.py.txt'
+    test_path = fixture_dir / 'debt_read_fail_closed_test.dart.txt'
     page = require_file(page_path, None, root)
     builder = require_file(builder_path, BUILDER_SHA256, root)
     test = require_file(test_path, FIXTURE_SHA256, root)

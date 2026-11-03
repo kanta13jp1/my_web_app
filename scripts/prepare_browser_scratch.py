@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 import sys
 
-PREPARE_SHA = '4d593369e675b3a8fa12fb7b0ee67e6f5fa8a99883a4273b93341f9d771bb539'
+PREPARE_SHA = 'a829fed78e217785f1b6adc79319c27acb0af0d3334bfbf6f9d82495f895e9a8'
 TEST_SHA = '9e999f9b1701c79a812382d9d61121f17f7a966f46be2c0965c9466d1b6dd265'
 CONTRACT_SHA = 'cf1424065e31b277070a89a21d2d33217ca56b1c49313c19bf660d870350278f'
 STUB_SHA = '26373d186cfbd0c0e39b7a25ffeb0a77075481b7b84633279494ab188435a05d'
@@ -34,7 +34,7 @@ def main():
     if root == temp or not root.is_relative_to(temp) or root.is_relative_to(workspace):
         raise RuntimeError('scratch boundary invalid')
     prepare = root / 'scripts/prepare_debt_read_sandbox.py'
-    fixture = root / 'test/fixtures/debt_read_fail_closed/browser/asset_debt_read_factory.dart.fixture'
+    fixture = root / 'test/fixtures/debt_read_fail_closed/browser/asset_debt_read_factory.dart.txt'
     checked_file(prepare, root, PREPARE_SHA)
     factory = checked_file(fixture, root, FACTORY_SHA)
     checked_file(root / 'integration_test/asset_debt_read_browser_test.dart', root, TEST_SHA)
