@@ -1,4 +1,5 @@
 import 'package:my_web_app/services/asset_debt_payment_day_override.dart';
+import 'package:my_web_app/services/asset_debt_id_conflict.dart';
 import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
 import 'package:my_web_app/widgets/asset_debt_owner_warning.dart';
 import '../widgets/asset_recorded_change_details.dart';
@@ -887,6 +888,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _categoryBudgetsOwnerId;
   String? _categoryBudgetStatus;
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
+  int _debtViewGeneration = 0;
   // アクションアイテムからジャンプした直後に、対処すべき支払済みチェックボックスへ
   // 視線誘導するため一時的に点滅ハイライトする負債マスタ行ID (2.6 秒で自動解除)。
   String? _highlightedDebtCardId;
@@ -10639,6 +10641,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   @override
   Widget build(BuildContext context) {
+    _debtViewGeneration++;
     final isCompact = _isCompact;
     final assetLiabilityWorkbook = _buildCurrentAssetLiabilityWorkbook();
     return Scaffold(
@@ -15103,7 +15106,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   void _shiftDebtPaymentAfterSalary(
     AssetLiabilityWorkbook? workbook,
     String debtRowId,
+    int viewGeneration,
   ) {
+    if (viewGeneration != _debtViewGeneration) {
+      _showDebtIdHeld();
+      return;
+    }
     final rows = workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[];
     AssetLiabilityDebtRow? target;
     for (final row in rows) {
@@ -15112,14 +15120,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     }
     if (target == null) {
+      _showDebtIdHeld();
       return;
     }
     final newDay = _salaryDay + 1;
-    _setDebtPaymentDayOverride(target, newDay);
+    if (!_setDebtPaymentDayOverride(target, newDay)) {
+      _showDebtIdHeld();
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '${target.name} の支払日を毎月$newDay日へ変更しました(負債マスタの支払日設定から戻せます)',
+          '${target.name} の支払日変更を受け付けました（毎月$newDay日）。保存状態を確認してください。',
         ),
       ),
     );
@@ -15818,23 +15830,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   void _shiftDebtPaymentsAfterSalaryCombo(
     AssetLiabilityWorkbook? workbook,
     List<String> debtRowIds,
+    int viewGeneration,
   ) {
-    final newDay = _salaryDay + 1;
-    var shiftedCount = 0;
-    for (final id in debtRowIds) {
-      final target = _debtRowById(workbook, id);
-      if (target == null) {
-        continue;
-      }
-      _setDebtPaymentDayOverride(target, newDay);
-      shiftedCount += 1;
-    }
-    if (shiftedCount == 0) {
+    if (viewGeneration != _debtViewGeneration) {
+      _showDebtIdHeld();
       return;
     }
+    final newDay = _salaryDay + 1;
+    var shiftedCount = 0;
+    var heldCount = 0;
+    for (final id in debtRowIds.toSet()) {
+      final target = _debtRowById(workbook, id);
+      if (target == null) {
+        heldCount += 1;
+        continue;
+      }
+      if (_setDebtPaymentDayOverride(target, newDay)) {
+        shiftedCount += 1;
+      } else {
+        heldCount += 1;
+      }
+    }
+    if (shiftedCount == 0 && heldCount == 0) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$shiftedCount件の支払日を毎月$newDay日へまとめて変更しました(負債マスタから戻せます)'),
+        content:
+            Text('支払日変更の受付 $shiftedCount ID、変更保留 $heldCount ID。保存状態を確認してください。'),
       ),
     );
   }
@@ -17680,6 +17701,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildAssetCalendarCard(AssetLiabilityWorkbook? workbook) {
+    final viewGeneration = _debtViewGeneration;
     final debtRows =
         workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[];
     double? startingCashBalance;
@@ -17782,12 +17804,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final shortfallDaySummary = calendar.firstShortfallDate == null
         ? null
         : calendar.dayFor(calendar.firstShortfallDate!);
+    final previewHeldIds = _debtHeldIds(workbook);
+    final previewEligibleIds = <String>{
+      if (previewHeldIds != null && workbook != null)
+        for (final row in workbook.debtMasterRows)
+          if (!row.isRevolving && !previewHeldIds.contains(row.id)) row.id,
+    };
+    final shiftableDebtIds = <String>{
+      for (final debt in debtInputs)
+        if (debt.paymentDay != _salaryDay + 1) debt.id,
+    };
+    final hasHeldShiftCandidates = shortfallDaySummary?.events.any(
+          (event) => shouldExplainHeldDebtShift(
+            isDebtEvent: event.kind == AssetCalendarEventKind.debtPayment,
+            sourceId: event.sourceId,
+            eligibleIds: previewEligibleIds,
+            shiftableIds: shiftableDebtIds,
+          ),
+        ) ??
+        false;
     final shortfallDebtEvents = <AssetCalendarEvent>[
       if (shortfallDaySummary != null)
         ...shortfallDaySummary.events.where(
           (event) =>
               event.kind == AssetCalendarEventKind.debtPayment &&
               event.sourceId != null &&
+              previewEligibleIds.contains(event.sourceId) &&
               debtInputs.any(
                 (debt) =>
                     debt.id == event.sourceId &&
@@ -17809,6 +17851,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
         ),
     ];
+    final shiftCandidateCounts = <String?, int>{};
+    for (final entry in shiftCandidates) {
+      final id = entry.key.sourceId;
+      shiftCandidateCounts[id] = (shiftCandidateCounts[id] ?? 0) + 1;
+    }
     final comboIds = <String>[
       for (final event in shortfallDebtEvents)
         if (event.sourceId != null) event.sourceId!,
@@ -18184,6 +18231,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         height: 1.5,
                       ),
                     ),
+                    if (hasHeldShiftCandidates)
+                      const Text(
+                        '識別子や保存先の確認が必要な負債は、支払日変更の提案を表示していません。支払いが不要とは限りません。',
+                        style: TextStyle(fontSize: 10, height: 1.5),
+                      ),
                     if (shortfallDebtEvents.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Wrap(
@@ -18192,12 +18244,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         children: [
                           for (final entry in shiftCandidates)
                             OutlinedButton.icon(
-                              key: Key(
-                                'asset_shift_payment_${entry.key.sourceId}',
-                              ),
+                              key: shiftCandidateCounts[entry.key.sourceId] == 1
+                                  ? Key(
+                                      'asset_shift_payment_${entry.key.sourceId}')
+                                  : null,
                               onPressed: () => _shiftDebtPaymentAfterSalary(
                                 workbook,
                                 entry.key.sourceId!,
+                                viewGeneration,
                               ),
                               icon: const Icon(Icons.schedule_send, size: 14),
                               label: Text(
@@ -18215,6 +18269,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         onPressed: () => _shiftDebtPaymentsAfterSalaryCombo(
                           workbook,
                           comboSuggestionIds,
+                          viewGeneration,
                         ),
                         icon: const Icon(Icons.double_arrow, size: 14),
                         label: Text(
@@ -31019,6 +31074,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return const SizedBox.shrink();
     }
 
+    final ambiguousIds = _debtHeldIds(workbook);
     final rows = _filteredDebtMasterRows(workbook)
       ..sort(_compareDebtRowsByPaymentDay);
     return Column(
@@ -31031,6 +31087,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         const SizedBox(height: 8),
         const Text(
           '各負債の支払額、差額、年利、証跡をカード内で確認できます。',
+          style: TextStyle(fontSize: 12, height: 1.4),
+        ),
+        const Text(
+          '画面が更新されると支払日メニューが閉じる場合があります。必要なら開き直してください。',
           style: TextStyle(fontSize: 12, height: 1.4),
         ),
         const SizedBox(height: 4),
@@ -31054,9 +31114,87 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
         ],
         const SizedBox(height: 6),
-        for (final row in rows) _buildDebtMasterCard(row, workbook),
+        for (final row in rows)
+          _buildDebtMasterCard(
+            row,
+            workbook,
+            ambiguousIds == null || ambiguousIds.contains(row.id),
+          ),
       ],
     );
+  }
+
+  // A conflict check describes only the currently assembled, unfiltered rows.
+  // It does not verify owner identity or old-client writes.
+  Set<String>? _debtHeldIds(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null) return null;
+    final rows = workbook.debtMasterRows;
+    if (rows.length > maxDebtIdentityRows) return null;
+    final scan = inspectDebtRowIds([
+      for (final row in rows)
+        DebtRowIdentity(
+          id: row.id,
+          name: row.name,
+          kind: row.isRevolving ? DebtKind.revolving : DebtKind.nonRevolving,
+        ),
+    ], snapshotState: SnapshotState.complete);
+    if (scan.wasTruncated || scan.rows.length != rows.length) return null;
+    return {
+      for (var i = 0; i < rows.length; i++)
+        if (scan.rows[i].concerns.isNotEmpty) rows[i].id
+    };
+  }
+
+  bool _debtIdAmbiguous(AssetLiabilityWorkbook? workbook, String id) {
+    if (workbook == null || id.trim().isEmpty) return true;
+    final rows = workbook.debtMasterRows;
+    if (rows.length > maxDebtIdentityRows) return true;
+    final scan = inspectDebtRowIds(
+      [
+        for (final row in rows)
+          DebtRowIdentity(
+            id: row.id,
+            name: row.name,
+            kind: row.isRevolving ? DebtKind.revolving : DebtKind.nonRevolving,
+          )
+      ],
+      snapshotState: SnapshotState.complete,
+    );
+    if (scan.wasTruncated || scan.rows.length != rows.length) return true;
+    var matched = 0;
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].id == id) {
+        matched++;
+        if (scan.rows[i].concerns.isNotEmpty) return true;
+      }
+    }
+    return matched != 1;
+  }
+
+  AssetLiabilityDebtRow? _currentUnambiguousDebtRow(String id) {
+    if (!mounted) return null;
+    try {
+      final workbook = _buildCurrentAssetLiabilityWorkbook();
+      if (_debtIdAmbiguous(workbook, id)) return null;
+      return workbook!.debtMasterRows.firstWhere((row) => row.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _sameCurrentDebtRow(AssetLiabilityDebtRow row) {
+    final current = _currentUnambiguousDebtRow(row.id);
+    return current != null &&
+        current.name == row.name &&
+        current.isRevolving == row.isRevolving &&
+        current.paymentDay == row.paymentDay;
+  }
+
+  void _showDebtIdHeld() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('画面が更新されたか口座の識別子を確認できないため、変更を保留しました。'),
+    ));
   }
 
   GlobalKey _debtMasterCardKeyFor(String accountId) {
@@ -31067,6 +31205,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   void _jumpToDebtMasterCard(String accountId) {
+    if (_currentUnambiguousDebtRow(accountId) == null) {
+      _showDebtIdHeld();
+      return;
+    }
     if (_debtMasterReviewFilter != _DebtMasterReviewFilter.all) {
       setState(() {
         _debtMasterReviewFilter = _DebtMasterReviewFilter.all;
@@ -31076,6 +31218,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) {
         return;
       }
+      if (_currentUnambiguousDebtRow(accountId) == null) return;
       final key = _debtMasterCardKeys[accountId];
       if (key == null || key.currentContext == null) {
         return;
@@ -31107,7 +31250,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   static const MirrorTombstoneStore _debtOverrideTombstones =
       MirrorTombstoneStore(storageKey: 'debt_payment_day_override_deleted_v1');
 
-  void _setDebtPaymentDayOverride(AssetLiabilityDebtRow row, int? day) {
+  bool _setDebtPaymentDayOverride(AssetLiabilityDebtRow row, int? day) {
+    if (row.isRevolving || !_sameCurrentDebtRow(row)) return false;
     setState(() {
       if (day == null) {
         _debtPaymentDayOverrides.remove(row.id);
@@ -31126,6 +31270,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     }
     unawaited(_saveDebtPaymentDayOverrides());
+    return true;
   }
 
   Future<void> _recordDebtOverrideTombstone(
@@ -31215,7 +31360,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildDebtPaymentDayInput(AssetLiabilityDebtRow row) {
+  Widget _buildDebtPaymentDayInput(
+      AssetLiabilityDebtRow row, bool idAmbiguous) {
+    final viewGeneration = _debtViewGeneration;
     final legacyNameRetained = !row.isRevolving &&
         hasAssetDebtLegacyNameOverride(
           overrides: _debtPaymentDayOverrides,
@@ -31249,8 +31396,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _buildTextStatusChip(label: statusLabel, color: statusColor),
           if ((hasOverride || legacyNameRetained) && !row.isRevolving)
             AssetDebtOwnerWarning(legacyNameRetained: legacyNameRetained),
+          if (idAmbiguous)
+            const Text('識別子または以前の口座名の重なりを確認するまで変更を保留します。既存値が複数行で使われる場合があります。'),
           const SizedBox(height: 4),
           DropdownButton<int?>(
+            key: ValueKey<int>(viewGeneration),
             value: row.paymentDay,
             isExpanded: true,
             isDense: true,
@@ -31263,28 +31413,37 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               for (var day = 1; day <= 31; day++)
                 DropdownMenuItem<int?>(value: day, child: Text('$day日')),
             ],
-            onChanged: (value) {
-              if (!row.isRevolving) {
-                if (value == null &&
-                    hasAssetDebtLegacyNameOverride(
-                      overrides: _debtPaymentDayOverrides,
-                      accountId: row.id,
-                      accountName: row.name,
-                    )) {
-                  return;
-                }
-                _setDebtPaymentDayOverride(row, value);
-                return;
-              }
-              setState(() {
-                if (value == null) {
-                  _confirmedPaymentDays.remove(row.id);
-                } else {
-                  _confirmedPaymentDays[row.id] = value.toDouble();
-                }
-              });
-              unawaited(_saveAssetLiabilityMonthlyState());
-            },
+            onChanged: idAmbiguous
+                ? null
+                : (value) {
+                    if (viewGeneration != _debtViewGeneration ||
+                        !_sameCurrentDebtRow(row)) {
+                      _showDebtIdHeld();
+                      return;
+                    }
+                    if (!row.isRevolving) {
+                      if (value == null &&
+                          hasAssetDebtLegacyNameOverride(
+                            overrides: _debtPaymentDayOverrides,
+                            accountId: row.id,
+                            accountName: row.name,
+                          )) {
+                        return;
+                      }
+                      if (!_setDebtPaymentDayOverride(row, value)) {
+                        _showDebtIdHeld();
+                      }
+                      return;
+                    }
+                    setState(() {
+                      if (value == null) {
+                        _confirmedPaymentDays.remove(row.id);
+                      } else {
+                        _confirmedPaymentDays[row.id] = value.toDouble();
+                      }
+                    });
+                    unawaited(_saveAssetLiabilityMonthlyState());
+                  },
           ),
         ],
       ),
@@ -31294,6 +31453,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildDebtMasterCard(
     AssetLiabilityDebtRow row,
     AssetLiabilityWorkbook workbook,
+    bool idAmbiguous,
   ) {
     final difference = row.paymentDifferenceAmount;
     final differenceColor = difference == null || difference == 0
@@ -31305,7 +31465,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         row.paymentDay == null ? '支払日未設定' : '${row.paymentDay}日支払';
 
     return Container(
-      key: _debtMasterCardKeyFor(row.id),
+      key: idAmbiguous ? null : _debtMasterCardKeyFor(row.id),
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -31425,7 +31585,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             children: [
               _buildDebtMasterControl(
                 label: '支払日',
-                child: _buildDebtPaymentDayInput(row),
+                child: _buildDebtPaymentDayInput(row, idAmbiguous),
                 maxWidth: 150,
               ),
               _buildDebtMasterControl(
