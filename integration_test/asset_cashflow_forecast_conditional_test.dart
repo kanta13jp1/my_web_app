@@ -54,6 +54,24 @@ void main() {
     data['devicePixelRatio'] = tester.view.devicePixelRatio;
   }
 
+  void recordEffectiveLabel(String name, WidgetTester tester, Finder chip) {
+    final data = binding.reportData ??= <String, dynamic>{};
+    try {
+      final text = find.descendant(of: chip, matching: find.byType(Text));
+      final effective = DefaultTextStyle.of(tester.element(text)).style.merge(
+        tester.widget<Text>(text).style,
+      );
+      data['style_' + name] = <String, String>{
+        'color': '${effective.color}',
+        'fontSize': '${effective.fontSize}',
+        'fontWeight': '${effective.fontWeight}',
+        'fontFamily': '${effective.fontFamily}',
+      };
+    } catch (error) {
+      data.putIfAbsent('styleInstrumentationError', () => error.toString());
+    }
+  }
+
   testWidgets('conditional forecast and period switch remain labelled',
       (tester) async {
     var horizon = 3;
@@ -110,10 +128,12 @@ void main() {
     mark('before ensureVisible', tester);
     await tester.ensureVisible(sixMonths);
     mark('before tap', tester);
+    recordEffectiveLabel('beforeTap', tester, sixMonths);
     await tester.tap(sixMonths);
     mark('after tap before settle', tester);
     await tester.pumpAndSettle();
     mark('after final settle', tester);
+    recordEffectiveLabel('afterSettle', tester, sixMonths);
     expect(find.textContaining('将来残高予測(今後6ヶ月)'), findsNWidgets(2));
   });
 

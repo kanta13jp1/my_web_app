@@ -1,4 +1,4 @@
-name: Forecast startup font diagnostic
+name: Forecast fixed label-color diagnostic
 
 on:
   workflow_dispatch:
@@ -10,12 +10,12 @@ on:
 
 permissions: {}
 concurrency:
-  group: forecast-font-diagnostic-${{ github.run_id }}
+  group: forecast-label-color-diagnostic-${{ github.run_id }}
   cancel-in-progress: false
 jobs:
   diagnostic:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     permissions:
       contents: read
     steps:
@@ -27,21 +27,26 @@ jobs:
           EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
         run: |
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
-          test "$(git rev-parse HEAD:integration_test/asset_cashflow_forecast_conditional_test.dart)" = "8d8b446fcf2cc036d56ff2f0b10f25349ac32671"
+          test "$(git rev-parse HEAD:integration_test/asset_cashflow_forecast_conditional_test.dart)" = "d371bdb7f2fb5203a4f3f5194050a1d49e0da47a"
           test "$(git rev-parse HEAD:web/index.html)" = "adf13dcb0249651e376959c2b9da951d3c8985db"
+          test "$(git rev-parse HEAD:lib/widgets/asset_cashflow_forecast_card.dart)" = "b10f20e1f95bb6982cfcb24717c0be43ff187105"
+          test "$(git rev-parse HEAD:.codex-diagnostic/forecast-card-baseline.dart)" = "58667c02e75a3a37fd1d9e7fc08c549bf2fdbe91"
+          test "$(git rev-parse HEAD:.codex-diagnostic/forecast-card-fixed.dart)" = "b10f20e1f95bb6982cfcb24717c0be43ff187105"
       - uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'
       - name: Resolve synthetic dependencies
         id: prepare
         run: flutter pub get
-      - name: Independent browser default-1
+      - name: Comparison default-control-1
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         shell: bash
         run: |
-          chromedriver --port=4444 > /tmp/forecast-font-default-1.log 2>&1 &
+          cp .codex-diagnostic/forecast-card-baseline.dart lib/widgets/asset_cashflow_forecast_card.dart
+          test "$(git hash-object lib/widgets/asset_cashflow_forecast_card.dart)" = "58667c02e75a3a37fd1d9e7fc08c549bf2fdbe91"
+          chromedriver --port=4444 > /tmp/forecast-comparison-default-control-1.log 2>&1 &
           driver_pid=$!
-          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-font-default-1.log; fi; exit "$status"' EXIT
+          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-comparison-default-control-1.log; fi; exit "$status"' EXIT
           for attempt in {1..30}; do
             if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
             sleep 1
@@ -51,15 +56,17 @@ jobs:
             --driver=test_driver/asset_ai_integration.dart \
             --target=integration_test/asset_cashflow_forecast_conditional_test.dart \
             --dart-define=FORECAST_VIEWPORT=default \
-            --dart-define=FORECAST_LAUNCH=default-1 \
+            --dart-define=FORECAST_LAUNCH=default-control-1 \
             -d web-server --browser-name=chrome --headless
-      - name: Independent browser default-2
+      - name: Comparison default-fixed-1
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         shell: bash
         run: |
-          chromedriver --port=4444 > /tmp/forecast-font-default-2.log 2>&1 &
+          cp .codex-diagnostic/forecast-card-fixed.dart lib/widgets/asset_cashflow_forecast_card.dart
+          test "$(git hash-object lib/widgets/asset_cashflow_forecast_card.dart)" = "b10f20e1f95bb6982cfcb24717c0be43ff187105"
+          chromedriver --port=4444 > /tmp/forecast-comparison-default-fixed-1.log 2>&1 &
           driver_pid=$!
-          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-font-default-2.log; fi; exit "$status"' EXIT
+          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-comparison-default-fixed-1.log; fi; exit "$status"' EXIT
           for attempt in {1..30}; do
             if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
             sleep 1
@@ -69,15 +76,17 @@ jobs:
             --driver=test_driver/asset_ai_integration.dart \
             --target=integration_test/asset_cashflow_forecast_conditional_test.dart \
             --dart-define=FORECAST_VIEWPORT=default \
-            --dart-define=FORECAST_LAUNCH=default-2 \
+            --dart-define=FORECAST_LAUNCH=default-fixed-1 \
             -d web-server --browser-name=chrome --headless
-      - name: Independent browser default-3
+      - name: Comparison default-control-2
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         shell: bash
         run: |
-          chromedriver --port=4444 > /tmp/forecast-font-default-3.log 2>&1 &
+          cp .codex-diagnostic/forecast-card-baseline.dart lib/widgets/asset_cashflow_forecast_card.dart
+          test "$(git hash-object lib/widgets/asset_cashflow_forecast_card.dart)" = "58667c02e75a3a37fd1d9e7fc08c549bf2fdbe91"
+          chromedriver --port=4444 > /tmp/forecast-comparison-default-control-2.log 2>&1 &
           driver_pid=$!
-          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-font-default-3.log; fi; exit "$status"' EXIT
+          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-comparison-default-control-2.log; fi; exit "$status"' EXIT
           for attempt in {1..30}; do
             if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
             sleep 1
@@ -87,15 +96,37 @@ jobs:
             --driver=test_driver/asset_ai_integration.dart \
             --target=integration_test/asset_cashflow_forecast_conditional_test.dart \
             --dart-define=FORECAST_VIEWPORT=default \
-            --dart-define=FORECAST_LAUNCH=default-3 \
+            --dart-define=FORECAST_LAUNCH=default-control-2 \
             -d web-server --browser-name=chrome --headless
-      - name: Independent browser mobile-1
+      - name: Comparison default-fixed-2
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         shell: bash
         run: |
-          chromedriver --port=4444 > /tmp/forecast-font-mobile-1.log 2>&1 &
+          cp .codex-diagnostic/forecast-card-fixed.dart lib/widgets/asset_cashflow_forecast_card.dart
+          test "$(git hash-object lib/widgets/asset_cashflow_forecast_card.dart)" = "b10f20e1f95bb6982cfcb24717c0be43ff187105"
+          chromedriver --port=4444 > /tmp/forecast-comparison-default-fixed-2.log 2>&1 &
           driver_pid=$!
-          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-font-mobile-1.log; fi; exit "$status"' EXIT
+          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-comparison-default-fixed-2.log; fi; exit "$status"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:4444/status > /dev/null
+          flutter drive --verbose \
+            --driver=test_driver/asset_ai_integration.dart \
+            --target=integration_test/asset_cashflow_forecast_conditional_test.dart \
+            --dart-define=FORECAST_VIEWPORT=default \
+            --dart-define=FORECAST_LAUNCH=default-fixed-2 \
+            -d web-server --browser-name=chrome --headless
+      - name: Comparison mobile-control-1
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        shell: bash
+        run: |
+          cp .codex-diagnostic/forecast-card-baseline.dart lib/widgets/asset_cashflow_forecast_card.dart
+          test "$(git hash-object lib/widgets/asset_cashflow_forecast_card.dart)" = "58667c02e75a3a37fd1d9e7fc08c549bf2fdbe91"
+          chromedriver --port=4444 > /tmp/forecast-comparison-mobile-control-1.log 2>&1 &
+          driver_pid=$!
+          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-comparison-mobile-control-1.log; fi; exit "$status"' EXIT
           for attempt in {1..30}; do
             if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
             sleep 1
@@ -105,15 +136,17 @@ jobs:
             --driver=test_driver/asset_ai_integration.dart \
             --target=integration_test/asset_cashflow_forecast_conditional_test.dart \
             --dart-define=FORECAST_VIEWPORT=mobile \
-            --dart-define=FORECAST_LAUNCH=mobile-1 \
+            --dart-define=FORECAST_LAUNCH=mobile-control-1 \
             -d web-server --browser-name=chrome --headless --browser-dimension=390x851@2.75
-      - name: Independent browser mobile-2
+      - name: Comparison mobile-fixed-1
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         shell: bash
         run: |
-          chromedriver --port=4444 > /tmp/forecast-font-mobile-2.log 2>&1 &
+          cp .codex-diagnostic/forecast-card-fixed.dart lib/widgets/asset_cashflow_forecast_card.dart
+          test "$(git hash-object lib/widgets/asset_cashflow_forecast_card.dart)" = "b10f20e1f95bb6982cfcb24717c0be43ff187105"
+          chromedriver --port=4444 > /tmp/forecast-comparison-mobile-fixed-1.log 2>&1 &
           driver_pid=$!
-          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-font-mobile-2.log; fi; exit "$status"' EXIT
+          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-comparison-mobile-fixed-1.log; fi; exit "$status"' EXIT
           for attempt in {1..30}; do
             if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
             sleep 1
@@ -123,15 +156,17 @@ jobs:
             --driver=test_driver/asset_ai_integration.dart \
             --target=integration_test/asset_cashflow_forecast_conditional_test.dart \
             --dart-define=FORECAST_VIEWPORT=mobile \
-            --dart-define=FORECAST_LAUNCH=mobile-2 \
+            --dart-define=FORECAST_LAUNCH=mobile-fixed-1 \
             -d web-server --browser-name=chrome --headless --browser-dimension=390x851@2.75
-      - name: Independent browser mobile-3
+      - name: Comparison mobile-control-2
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         shell: bash
         run: |
-          chromedriver --port=4444 > /tmp/forecast-font-mobile-3.log 2>&1 &
+          cp .codex-diagnostic/forecast-card-baseline.dart lib/widgets/asset_cashflow_forecast_card.dart
+          test "$(git hash-object lib/widgets/asset_cashflow_forecast_card.dart)" = "58667c02e75a3a37fd1d9e7fc08c549bf2fdbe91"
+          chromedriver --port=4444 > /tmp/forecast-comparison-mobile-control-2.log 2>&1 &
           driver_pid=$!
-          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-font-mobile-3.log; fi; exit "$status"' EXIT
+          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-comparison-mobile-control-2.log; fi; exit "$status"' EXIT
           for attempt in {1..30}; do
             if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
             sleep 1
@@ -141,5 +176,25 @@ jobs:
             --driver=test_driver/asset_ai_integration.dart \
             --target=integration_test/asset_cashflow_forecast_conditional_test.dart \
             --dart-define=FORECAST_VIEWPORT=mobile \
-            --dart-define=FORECAST_LAUNCH=mobile-3 \
+            --dart-define=FORECAST_LAUNCH=mobile-control-2 \
+            -d web-server --browser-name=chrome --headless --browser-dimension=390x851@2.75
+      - name: Comparison mobile-fixed-2
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        shell: bash
+        run: |
+          cp .codex-diagnostic/forecast-card-fixed.dart lib/widgets/asset_cashflow_forecast_card.dart
+          test "$(git hash-object lib/widgets/asset_cashflow_forecast_card.dart)" = "b10f20e1f95bb6982cfcb24717c0be43ff187105"
+          chromedriver --port=4444 > /tmp/forecast-comparison-mobile-fixed-2.log 2>&1 &
+          driver_pid=$!
+          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-comparison-mobile-fixed-2.log; fi; exit "$status"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:4444/status > /dev/null
+          flutter drive --verbose \
+            --driver=test_driver/asset_ai_integration.dart \
+            --target=integration_test/asset_cashflow_forecast_conditional_test.dart \
+            --dart-define=FORECAST_VIEWPORT=mobile \
+            --dart-define=FORECAST_LAUNCH=mobile-fixed-2 \
             -d web-server --browser-name=chrome --headless --browser-dimension=390x851@2.75
