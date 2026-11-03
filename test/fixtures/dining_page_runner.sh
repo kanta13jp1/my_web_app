@@ -30,6 +30,8 @@ import json, sys
 s = json.load(sys.stdin)
 assert s["auth"] == 2 and s["flows_a"] > 0 and s["flows_b"] > 0
 assert s["reflection_a"] > 0 and s["reflection_b"] > 0
-assert s["rejected_writes"] == 0 and s["rejected_identity"] == 0
-print("fixture audit passed: synthetic owner reads; no write or identity rejection")
+assert s["read_rpc_a"] == 1 and s["read_rpc_b"] == 1
+assert s["rejected_telemetry"] == 1 and s["rejected_authorized_telemetry"] == 1
+assert s["rejected_writes"] == s["rejected_telemetry"] and s["rejected_identity"] == 0
+print("fixture audit passed: synthetic reads; one rejected telemetry write; no persistence")
 '

@@ -15,6 +15,8 @@ USERS = {
 PASSWORD = 'fixture-password-only'
 KEY = b'public-synthetic-test-key-not-a-real-secret'
 COUNTS = {'auth': 0, 'flows_a': 0, 'flows_b': 0, 'reflection_a': 0, 'reflection_b': 0,
+          'read_rpc_a': 0, 'read_rpc_b': 0, 'rejected_telemetry': 0,
+          'rejected_authorized_telemetry': 0,
           'rejected_writes': 0, 'rejected_identity': 0}
 
 
@@ -60,8 +62,29 @@ def dispatch(method, target, headers, body=b''):
         return 200, {'access_token': token(user_id), 'token_type': 'bearer',
                      'expires_in': 3600, 'refresh_token': 'fixture-refresh-' + user_id,
                      'user': user}
+    if method == 'POST' and url.path == '/rest/v1/rpc/asset_management_recent_cfo_assets':
+        owner = next((user_id for user_id in USERS.values()
+                      if headers.get('authorization') == 'Bearer ' + token(user_id)), None)
+        try:
+            params = json.loads(body)
+        except (ValueError, UnicodeDecodeError):
+            params = None
+        if (owner is None or not isinstance(params, dict) or
+                set(params) != {'p_lookback_days'} or
+                type(params['p_lookback_days']) is not int or
+                not 1 <= params['p_lookback_days'] <= 3650):
+            COUNTS['rejected_identity'] += 1
+            return 403, {'error': 'fixture read RPC rejected'}
+        rpc_key = 'read_rpc_a' if owner == USERS['fixture-a@example.invalid'] else 'read_rpc_b'
+        COUNTS[rpc_key] += 1
+        return 200, []
     if method != 'GET':
         COUNTS['rejected_writes'] += 1
+        if method == 'POST' and url.path == '/rest/v1/display_mode_events':
+            COUNTS['rejected_telemetry'] += 1
+            if any(headers.get('authorization') == 'Bearer ' + token(user_id)
+                   for user_id in USERS.values()):
+                COUNTS['rejected_authorized_telemetry'] += 1
         return 403, {'error': 'fixture rejects writes'}
     if url.path not in {'/rest/v1/wealth_struggles', '/rest/v1/asset_calendar_reflections'}:
         return 404, {'error': 'fixture route not implemented'}

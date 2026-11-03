@@ -118,7 +118,11 @@ void main() {
     expect(status['flows_b'], greaterThan(0));
     expect(status['reflection_a'], greaterThan(0));
     expect(status['reflection_b'], greaterThan(0));
-    expect(status['rejected_writes'], 0);
+    expect(status['read_rpc_a'], 1);
+    expect(status['read_rpc_b'], 1);
+    expect(status['rejected_telemetry'], 1);
+    expect(status['rejected_authorized_telemetry'], 1);
+    expect(status['rejected_writes'], status['rejected_telemetry']);
     expect(status['rejected_identity'], 0);
   });
 }

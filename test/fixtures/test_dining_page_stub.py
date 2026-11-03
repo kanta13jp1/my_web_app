@@ -48,6 +48,23 @@ class SyntheticBackendTest(unittest.TestCase):
         self.assertEqual(fixture.dispatch('POST', '/auth/v1/token?grant_type=password', {}, b'[]')[0], 403)
         self.assertEqual(fixture.dispatch('GET', '/rest/v1/other', headers)[0], 404)
 
+    def test_read_rpc_is_authenticated_and_telemetry_is_rejected(self):
+        _, headers = self.login('fixture-a@example.invalid')
+        rpc = '/rest/v1/rpc/asset_management_recent_cfo_assets'
+        body = b'{"p_lookback_days":400}'
+        self.assertEqual(fixture.dispatch('POST', rpc, headers, body), (200, []))
+        self.assertEqual(fixture.dispatch('POST', rpc, {}, body)[0], 403)
+        self.assertEqual(fixture.dispatch('POST', rpc, headers, b'{"p_lookback_days":true}')[0], 403)
+        self.assertEqual(fixture.dispatch('POST', '/rest/v1/display_mode_events', headers, b'{}')[0], 403)
+        self.assertEqual(fixture.dispatch('POST', '/rest/v1/cfo_assets', headers, b'{}')[0], 403)
+        self.assertEqual((fixture.COUNTS['read_rpc_a'], fixture.COUNTS['read_rpc_b']), (1, 0))
+        self.assertEqual(fixture.COUNTS['rejected_telemetry'], 1)
+        self.assertEqual(fixture.COUNTS['rejected_authorized_telemetry'], 1)
+        self.assertEqual(fixture.COUNTS['rejected_writes'], 2)
+        self.assertEqual(fixture.dispatch('POST', '/rest/v1/display_mode_events', {}, b'{}')[0], 403)
+        self.assertEqual(fixture.COUNTS['rejected_telemetry'], 2)
+        self.assertEqual(fixture.COUNTS['rejected_authorized_telemetry'], 1)
+
     def test_oversized_mutation_is_counted_before_body_read(self):
         handler = object.__new__(fixture.Handler)
         handler.headers = {'content-length': '1025'}
