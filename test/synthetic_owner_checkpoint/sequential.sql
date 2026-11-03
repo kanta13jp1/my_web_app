@@ -87,7 +87,7 @@ DO $$ DECLARE before_state jsonb; after_state jsonb; BEGIN
  PERFORM pg_catalog.set_config('lab.fail_journal','on',true);
  BEGIN
   PERFORM lab_api.apply_request('20000000-0000-0000-0000-000000000004',
-   (before_state->>'generation')::uuid,(before_state->>'revision')::bigint,before_state->>'digest,
+   (before_state->>'generation')::uuid,(before_state->>'revision')::bigint,before_state->>'digest',
    '{"synthetic-debt":14}'::jsonb,'[]'::jsonb);
   RAISE EXCEPTION 'expected synthetic journal failure did not happen';
  EXCEPTION WHEN raise_exception THEN
