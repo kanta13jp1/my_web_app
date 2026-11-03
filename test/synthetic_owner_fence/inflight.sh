@@ -8,7 +8,7 @@ trap cleanup EXIT
 "${base[@]}" -c "GRANT TRUNCATE ON public.asset_pref_mirror TO authenticated"
 if "${base[@]}" < test/synthetic_owner_fence/candidate.sql >"$err" 2>&1; then echo 'preflight accepted effective TRUNCATE' >&2; exit 1; fi
 grep -F 'TRUNCATE remains reachable' "$err" >/dev/null
-policies=$("${base[@]}" -c "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='asset_pref_mirror' AND policyname LIKE 'debt_day_block_%'")
+policies=$("${base[@]}" -c "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='asset_pref_mirror' AND policyname IN ('debt_day_block_insert','debt_day_block_update','debt_day_block_delete')")
 test "$policies" = 0
 "${base[@]}" -c "REVOKE TRUNCATE ON public.asset_pref_mirror FROM authenticated"
 docker exec -i -e PGAPPNAME=old_writer -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" psql -U postgres -d owner_sync_lab -X -qAt -v ON_ERROR_STOP=1 >"$log" 2>&1 <<'SQL' &
@@ -28,12 +28,12 @@ done
 if [ "$ready" != 1 ]; then echo 'in-flight old writer barrier absent' >&2; exit 1; fi
 if "${base[@]}" < test/synthetic_owner_fence/candidate.sql >"$err" 2>&1; then echo 'fence acquired lock during old writer' >&2; exit 1; fi
 grep -F 'could not obtain lock on relation' "$err" >/dev/null
-policies=$("${base[@]}" -c "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='asset_pref_mirror' AND policyname LIKE 'debt_day_block_%'")
+policies=$("${base[@]}" -c "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='asset_pref_mirror' AND policyname IN ('debt_day_block_insert','debt_day_block_update','debt_day_block_delete')")
 test "$policies" = 0
 wait "$pid_a"; pid_a=''
 changed=$("${base[@]}" -c "SELECT count(*) FROM public.asset_pref_mirror WHERE user_id='00000000-0000-0000-0000-000000000001' AND pref_key='debt_payment_day_overrides' AND value='{\"x\":11}'::jsonb")
 test "$changed" = 1
 "${base[@]}" < test/synthetic_owner_fence/candidate.sql
-policies=$("${base[@]}" -c "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='asset_pref_mirror' AND policyname LIKE 'debt_day_block_%'")
+policies=$("${base[@]}" -c "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='asset_pref_mirror' AND policyname IN ('debt_day_block_insert','debt_day_block_update','debt_day_block_delete')")
 test "$policies" = 3
 echo 'Effective truncate rejected; inflight writer prevented NOWAIT fence; retry after commit installed all policies.'

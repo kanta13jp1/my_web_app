@@ -35,7 +35,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           test "$(git rev-parse HEAD:test/synthetic_owner_fence/fixture.sql)" = "27d07b8fedcccb4f6d7c3470ae33e853a262c007"
           test "$(git rev-parse HEAD:test/synthetic_owner_fence/candidate.sql)" = "840f56620cd4892163df9d565a9a48ef734c741d"
-          test "$(git rev-parse HEAD:test/synthetic_owner_fence/inflight.sh)" = "77951212b94af8cca2eb68161475822cf73fcbbc"
+          test "$(git rev-parse HEAD:test/synthetic_owner_fence/inflight.sh)" = "4b4cecc21bd327be994113a532d18228e9c7a15d"
           test "$(git rev-parse HEAD:test/synthetic_owner_fence/tests.sql)" = "3d929f16525ef83142d8ad23260ec577379c217c"
       - name: Synthetic fixture
         env:
