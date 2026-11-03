@@ -18,10 +18,12 @@ void main() {
             requestId: args['requestId'] as String,
             value: args['value'] as String,
           )
-          .then((result) => jsonEncode({
-                'status': result.status.name,
-                'revision': result.revision,
-              }).toJS)
+          .then(
+            (result) => jsonEncode({
+              'status': result.status.name,
+              'revision': result.revision,
+            }).toJS,
+          )
           .toJS;
     }).toJS,
   );

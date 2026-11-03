@@ -23,11 +23,11 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate.dart)" = "49679fdf5fd7976ac3973687867bcc73f2eb999c"
+          test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate.dart)" = "bc12ead78b33835b2e83aebb20ff7ea0c876d7da"
           test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate_types.dart)" = "fd28ed0361134f84ebc3a076f92a9757c5d548d0"
-          test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate_stub.dart)" = "6b5eb387b735c175e95ae89721f162b5ac264f07"
-          test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate_web.dart)" = "833667eebfb30929979a44f638e2f5b9bb0fc3dd"
-          test "$(git rev-parse HEAD:web/payment_owner_candidate_probe.dart)" = "5acc97eabebd21f10d0bb6a53d067ac1d4403e10"
+          test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate_stub.dart)" = "cfa13b76cc63f3048dcf629003492093866710bf"
+          test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate_web.dart)" = "f0a506695c249fa79da867c68cadc3a96fec0ec9"
+          test "$(git rev-parse HEAD:web/payment_owner_candidate_probe.dart)" = "3dcd257a69ca2562330cf11192546a0e8d30c899"
           test "$(git rev-parse HEAD:test/payment_owner_candidate_stub_test.dart)" = "19a6a0f8228cf8e7bf7364c4c9e314bfa24ed5dc"
           test "$(git rev-parse HEAD:test/synthetic/payment_owner_dart_idb_probe.cjs)" = "dd133cc82da72e19f2ed408092ff9e488755ad29"
           test "$(git rev-parse HEAD:test/synthetic/run_payment_owner_dart_probe.sh)" = "fa36f274fc32dd81a606cb45496d6d19048550c7"

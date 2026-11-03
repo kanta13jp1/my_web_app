@@ -7,5 +7,6 @@ export 'payment_owner_local_candidate_types.dart';
 /// Diagnostic only: Web implementation accepts loopback and synthetic DB names.
 /// No legacy data may be read, inferred, migrated, cleared, or sent here.
 PaymentOwnerLocalCandidate createPaymentOwnerLocalCandidate(
-        String databaseName) =>
+  String databaseName,
+) =>
     impl.createPaymentOwnerLocalCandidate(databaseName);

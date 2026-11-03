@@ -1,7 +1,8 @@
 import 'payment_owner_local_candidate_types.dart';
 
 PaymentOwnerLocalCandidate createPaymentOwnerLocalCandidate(
-        String databaseName) =>
+  String databaseName,
+) =>
     _Unsupported();
 
 class _Unsupported implements PaymentOwnerLocalCandidate {

@@ -6,7 +6,8 @@ import 'package:web/web.dart' as web;
 import 'payment_owner_local_candidate_types.dart';
 
 PaymentOwnerLocalCandidate createPaymentOwnerLocalCandidate(
-        String databaseName) =>
+  String databaseName,
+) =>
     _Candidate(databaseName);
 
 /// Detached only: no real Auth, owner provenance, migration, old-writer fence,
@@ -111,7 +112,7 @@ class _Candidate implements PaymentOwnerLocalCandidate {
           final raw = request.result?.dartify();
           if (raw is! String || raw.length > 65536) return;
           final decoded = jsonDecode(raw);
-          if (!raw.startsWith('{\"schema\":1,') ||
+          if (!raw.startsWith('{"schema":1,') ||
               jsonEncode(decoded) != raw ||
               decoded is! Map<String, dynamic> ||
               !_exactKeys(decoded, {
@@ -120,50 +121,69 @@ class _Candidate implements PaymentOwnerLocalCandidate {
                 'baseRevision',
                 'revision',
                 'value',
-                'receipts'
+                'receipts',
               }) ||
               decoded['schema'] is! int ||
               decoded['schema'] != 1 ||
-              decoded['owner'] != owner ||
-              decoded['baseRevision'] is! int ||
-              decoded['baseRevision'] < 0 ||
-              decoded['revision'] is! int ||
-              decoded['revision'] < decoded['baseRevision'] ||
-              decoded['revision'] > _maxSafeRevision ||
-              decoded['value'] is! String ||
-              (decoded['value'] as String).length > 8192 ||
-              decoded['receipts'] is! List) {
+              decoded['owner'] != owner) {
             return;
           }
-          final revision = decoded['revision'] as int;
-          final baseRevision = decoded['baseRevision'] as int;
-          final receipts = decoded['receipts'] as List<dynamic>;
+          final baseField = decoded['baseRevision'];
+          final revisionField = decoded['revision'];
+          final valueField = decoded['value'];
+          final receiptField = decoded['receipts'];
+          if (baseField is! int ||
+              baseField < 0 ||
+              revisionField is! int ||
+              revisionField < baseField ||
+              revisionField > _maxSafeRevision ||
+              valueField is! String ||
+              valueField.length > 8192 ||
+              receiptField is! List<dynamic>) {
+            return;
+          }
+          final revision = revisionField;
+          final baseRevision = baseField;
+          final receipts = receiptField;
           if (receipts.length > 100 ||
-              receipts.length != revision - baseRevision) return;
+              receipts.length != revision - baseRevision) {
+            return;
+          }
           final ids = <String>{};
           Map<String, dynamic>? prior;
           for (var index = 0; index < receipts.length; index++) {
             final item = receipts[index];
             if (item is! Map<String, dynamic> ||
-                !_exactKeys(item,
-                    {'requestId', 'expectedRevision', 'revision', 'value'}) ||
-                item['requestId'] is! String ||
-                (item['requestId'] as String).isEmpty ||
-                (item['requestId'] as String).length > 256 ||
-                !ids.add(item['requestId'] as String) ||
-                item['expectedRevision'] is! int ||
-                item['expectedRevision'] != baseRevision + index ||
-                item['expectedRevision'] >= _maxSafeRevision ||
-                item['revision'] is! int ||
-                item['revision'] != item['expectedRevision'] + 1 ||
-                item['value'] is! String ||
-                (item['value'] as String).length > 8192 ||
-                item['revision'] > revision) {
+                !_exactKeys(item, {
+                  'requestId',
+                  'expectedRevision',
+                  'revision',
+                  'value',
+                })) {
               return;
             }
-            if (item['revision'] == revision &&
-                item['value'] != decoded['value']) return;
-            if (item['requestId'] == requestId) prior = item;
+            final idField = item['requestId'];
+            final expectedField = item['expectedRevision'];
+            final itemRevision = item['revision'];
+            final itemValue = item['value'];
+            if (idField is! String ||
+                idField.isEmpty ||
+                idField.length > 256 ||
+                !ids.add(idField) ||
+                expectedField is! int ||
+                expectedField != baseRevision + index ||
+                expectedField >= _maxSafeRevision ||
+                itemRevision is! int ||
+                itemRevision != expectedField + 1 ||
+                itemValue is! String ||
+                itemValue.length > 8192 ||
+                itemRevision > revision) {
+              return;
+            }
+            if (itemRevision == revision && itemValue != valueField) {
+              return;
+            }
+            if (idField == requestId) prior = item;
           }
           if (prior != null) {
             if (prior['expectedRevision'] != expectedRevision ||
@@ -171,14 +191,18 @@ class _Candidate implements PaymentOwnerLocalCandidate {
               tentative =
                   const CandidateResult(CandidateStatus.versionConflict);
             } else {
-              tentative = CandidateResult(CandidateStatus.historicalReceipt,
-                  revision: prior['revision'] as int);
+              tentative = CandidateResult(
+                CandidateStatus.historicalReceipt,
+                revision: prior['revision'] as int,
+              );
             }
             return;
           }
           if (revision != expectedRevision) {
-            tentative = CandidateResult(CandidateStatus.versionConflict,
-                revision: revision);
+            tentative = CandidateResult(
+              CandidateStatus.versionConflict,
+              revision: revision,
+            );
             return;
           }
           if (receipts.length == 100) return;
@@ -198,9 +222,11 @@ class _Candidate implements PaymentOwnerLocalCandidate {
           tentative = CandidateResult(CandidateStatus.applied, revision: next);
         } catch (_) {
           // Never infer empty data from invalid or unrecognized state.
-          tentative = CandidateResult(writeMayBeScheduled
-              ? CandidateStatus.outcomeUnknown
-              : CandidateStatus.recoveryHold);
+          tentative = CandidateResult(
+            writeMayBeScheduled
+                ? CandidateStatus.outcomeUnknown
+                : CandidateStatus.recoveryHold,
+          );
           try {
             tx.abort();
           } catch (_) {/* The outcome can remain unknown. */}
