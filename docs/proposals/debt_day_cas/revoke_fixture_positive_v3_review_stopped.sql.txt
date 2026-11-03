@@ -1,0 +1,46 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- SYNTHETIC ONLY: after candidate success, validate grants, RLS and fake rows.
+do $$ declare r text; p text; begin
+ foreach r in array array['anon','authenticated'] loop
+  if pg_catalog.has_table_privilege(r,'public.asset_pref_mirror','TRUNCATE') then raise exception 'effective truncate remained'; end if;
+  foreach p in array array['SELECT','INSERT','UPDATE','DELETE','REFERENCES','TRIGGER','MAINTAIN'] loop
+   if not pg_catalog.has_table_privilege(r,'public.asset_pref_mirror',p) then raise exception 'other privilege lost'; end if;
+  end loop;
+ end loop;
+ if not pg_catalog.has_table_privilege('service_role','public.asset_pref_mirror','TRUNCATE') then raise exception 'service privilege lost'; end if;
+ foreach p in array array['SELECT','INSERT','UPDATE','DELETE','REFERENCES','TRIGGER','MAINTAIN'] loop
+  if not pg_catalog.has_table_privilege('service_role','public.asset_pref_mirror',p) then raise exception 'service other privilege lost'; end if;
+ end loop;
+ if exists((select grantor,grantee,privilege_type,is_grantable from public.synthetic_revoke_acl_before
+   where not(grantee in ('anon'::pg_catalog.regrole,'authenticated'::pg_catalog.regrole) and privilege_type='TRUNCATE')
+   except all select a.grantor,a.grantee,a.privilege_type,a.is_grantable from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(c.relacl) a where c.oid='public.asset_pref_mirror'::pg_catalog.regclass)
+ union all (select a.grantor,a.grantee,a.privilege_type,a.is_grantable from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(c.relacl) a where c.oid='public.asset_pref_mirror'::pg_catalog.regclass
+   except all select grantor,grantee,privilege_type,is_grantable from public.synthetic_revoke_acl_before where not(grantee in ('anon'::pg_catalog.regrole,'authenticated'::pg_catalog.regrole) and privilege_type='TRUNCATE'))) then
+  raise exception 'unrelated ACL changed'; end if;
+ if exists((select * from public.synthetic_revoke_col_acl_before except all
+  select a.attname,x.grantor,x.grantee,x.privilege_type,x.is_grantable from pg_catalog.pg_attribute a cross join lateral pg_catalog.aclexplode(a.attacl) x where a.attrelid='public.asset_pref_mirror'::pg_catalog.regclass and a.attnum>0 and not a.attisdropped)
+ union all (select a.attname,x.grantor,x.grantee,x.privilege_type,x.is_grantable from pg_catalog.pg_attribute a cross join lateral pg_catalog.aclexplode(a.attacl) x where a.attrelid='public.asset_pref_mirror'::pg_catalog.regclass and a.attnum>0 and not a.attisdropped
+  except all select * from public.synthetic_revoke_col_acl_before)) then raise exception 'column ACL changed'; end if;
+ if not (select relrowsecurity from pg_catalog.pg_class where oid='public.asset_pref_mirror'::pg_catalog.regclass) then raise exception 'RLS disabled'; end if;
+ if exists((select * from public.synthetic_revoke_relation_before except all select relowner,relrowsecurity,relforcerowsecurity from pg_catalog.pg_class where oid='public.asset_pref_mirror'::pg_catalog.regclass)
+ union all (select relowner,relrowsecurity,relforcerowsecurity from pg_catalog.pg_class where oid='public.asset_pref_mirror'::pg_catalog.regclass except all select * from public.synthetic_revoke_relation_before)) then raise exception 'relation security changed'; end if;
+ if exists((select * from public.synthetic_revoke_policies_before except all select policyname,permissive,roles,cmd,qual,with_check from pg_catalog.pg_policies where schemaname='public' and tablename='asset_pref_mirror')
+ union all (select policyname,permissive,roles,cmd,qual,with_check from pg_catalog.pg_policies where schemaname='public' and tablename='asset_pref_mirror' except all select * from public.synthetic_revoke_policies_before)) then raise exception 'policy metadata changed'; end if;
+ if exists((select * from public.synthetic_revoke_members_before where roleid<>'synthetic_inherited_truncate'::pg_catalog.regrole except all select roleid,member,grantor,admin_option,inherit_option,set_option from pg_catalog.pg_auth_members where member='authenticated'::pg_catalog.regrole)
+ union all (select roleid,member,grantor,admin_option,inherit_option,set_option from pg_catalog.pg_auth_members where member='authenticated'::pg_catalog.regrole except all select * from public.synthetic_revoke_members_before where roleid<>'synthetic_inherited_truncate'::pg_catalog.regrole)) then raise exception 'unexpected role membership changed'; end if;
+ if exists((select * from public.synthetic_revoke_rows_before except all select user_id,pref_key,value,updated_at from public.asset_pref_mirror)
+ union all (select user_id,pref_key,value,updated_at from public.asset_pref_mirror except all select * from public.synthetic_revoke_rows_before)) then raise exception 'fake rows changed'; end if;
+end $$;
+set role authenticated;
+select pg_catalog.set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false);
+do $$ begin
+ if (select count(*) from public.asset_pref_mirror)<>3 then raise exception 'authenticated owner select mismatch'; end if;
+end $$;
+reset role;
+set role anon;
+do $$ begin
+ if (select count(*) from public.asset_pref_mirror)<>0 then raise exception 'anon RLS mismatch'; end if;
+end $$;
+reset role;
+\echo SYNTHETIC_REVOKE_POSITIVE_VERIFIED

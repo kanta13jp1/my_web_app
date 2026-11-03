@@ -93,6 +93,23 @@ def load_truncate_source():
     return decode_stopped(path.read_bytes(), TRUNCATE_STOPPED_SHA, TRUNCATE_ORIGINAL_SHA)
 
 
+REVOKE_FIXED = {'revoke_fixture_setup_v5_review_stopped.sql.txt': ('f2742dd2ec380e9dfba2133e9c9f63a5d6f9a596a181e7b747758221c8042679', '2c7adefbb565a6d1a99269839d3a93f89ec123a0d156cf8e19753ce7ccc0de00'), 'revoke_fixture_negative_v3_review_stopped.sql.txt': ('b0fb6feb4c3913091a6f705459bae129cd9b06923e85ff19fcf93614d75c75e3', 'd2b9d411824c7e5a7a48fc0f5525df8abe9d0073a19bd588ffee4e178575fc20'), 'revoke_fixture_positive_v3_review_stopped.sql.txt': ('cdce6814db69af24d04345673f0743a257d225e4681702495ae9539f1bd37465', 'e4b454098c4cd8b537ac850379d2f7b83f5f5dabfef240c469c1a8f659073343'), 'revoke_truncate_candidate_review_stopped.sql.txt': ('481628a46aed4ec6823606cc727f45c27a56e899a169c3723cd11899ec8ab5a0', '56e633776c97636a5ebc026f03c764ee309956cbbc01e445a348c6ba222d2baa')}
+
+def load_revoke_sources():
+    result = {}
+    for name, (outer, inner) in REVOKE_FIXED.items():
+        path = HERE / name
+        if path.is_symlink() or not path.is_file() or path.resolve().parent != HERE:
+            raise RuntimeError('invalid stopped revoke fixture')
+        result[name] = decode_stopped(path.read_bytes(), outer, inner)
+    return result
+
+def verify_revoke_expected_failure(returncode, stdout, stderr):
+    errors = re.findall(r'^ERROR:\s*(.*)$', stderr, flags=re.MULTILINE)
+    if returncode != 3 or stdout.strip() != '1' or errors != ['remaining effective truncate privilege']:
+        raise RuntimeError('synthetic revoke did not fail for the expected fixed reason')
+
+
 def job_identity(env):
     run, attempt = env.get('GITHUB_RUN_ID', ''), env.get('GITHUB_RUN_ATTEMPT', '')
     if (env.get('GITHUB_ACTIONS') != 'true' or env.get('RUNNER_ENVIRONMENT') != 'github-hosted'
@@ -309,6 +326,11 @@ class Service:
         return subprocess.run(self.argv(), input=source, env=self.env, capture_output=True,
                               text=True, check=True, timeout=30).stdout
 
+    def expect_revoke_failure(self, source):
+        result = subprocess.run(self.argv(), input=self.guarded(source), env=self.env,
+            capture_output=True, text=True, check=False, timeout=30)
+        verify_revoke_expected_failure(result.returncode, result.stdout, result.stderr)
+
     def start(self, source):
         child = subprocess.Popen(self.argv(), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT, text=True, env=self.env, bufsize=1)
@@ -465,10 +487,24 @@ def sequential_checks(service, sources, truncate_source):
         raise RuntimeError('synthetic truncate contrast verification absent')
 
 
+def revoke_checks(service, sources):
+    if 'SYNTHETIC_REVOKE_SETUP_READY' not in service.sql(sources['revoke_fixture_setup_v5_review_stopped.sql.txt']).splitlines():
+        raise RuntimeError('synthetic revoke setup verification absent')
+    candidate = sources['revoke_truncate_candidate_review_stopped.sql.txt']
+    service.expect_revoke_failure(candidate)
+    if 'SYNTHETIC_REVOKE_ROLLBACK_VERIFIED' not in service.sql(sources['revoke_fixture_negative_v3_review_stopped.sql.txt']).splitlines():
+        raise RuntimeError('synthetic revoke rollback verification absent')
+    if service.sql(candidate).strip() != '1':
+        raise RuntimeError('synthetic successful revoke output mismatch')
+    if 'SYNTHETIC_REVOKE_POSITIVE_VERIFIED' not in service.sql(sources['revoke_fixture_positive_v3_review_stopped.sql.txt']).splitlines():
+        raise RuntimeError('synthetic revoke positive verification absent')
+
+
 def main():
     sources, stopped_setup = load_sources()  # Capture verified bytes before service access.
     replay_sources = load_replay_sources()  # Verify and capture all stopped replay files.
     truncate_source = load_truncate_source()  # Capture and verify before service access.
+    revoke_sources = load_revoke_sources()  # Capture and verify before service access.
     label = job_identity(os.environ)
     ids = [os.environ.get('FIXTURE_SEQUENTIAL_ID', ''), os.environ.get('FIXTURE_CONCURRENCY_ID', '')]
     if ids[0] == ids[1] or any(not re.fullmatch(r'[0-9a-f]{64}', cid) for cid in ids):
@@ -490,6 +526,7 @@ def main():
             seq, parallel = owned
             seq.initialize(sources, stopped_setup)
             sequential_checks(seq, sources, truncate_source)
+            revoke_checks(seq, revoke_sources)
             parallel.initialize(sources, stopped_setup)
             concurrency_same_request(parallel, replay_sources)
         finally:
@@ -576,6 +613,36 @@ class StoppedInputTests(unittest.TestCase):
         broken = BrokenService('')
         with self.assertRaises(RuntimeError): sequential_checks(broken, inputs, 'truncate')
         self.assertEqual(broken.calls, ['assertions', 'rollback'])
+
+    def test_revoke_sources_and_fixed_failure(self):
+        self.assertEqual(set(load_revoke_sources()), set(REVOKE_FIXED))
+        for name, (outer, inner) in REVOKE_FIXED.items():
+            data = (HERE / name).read_bytes()
+            for bad in (data + b'x', data[len(STOP):], STOP + data):
+                with self.subTest(name=name), self.assertRaises(RuntimeError): decode_stopped(bad, outer, inner)
+        expected = 'ERROR:  remaining effective truncate privilege\nCONTEXT: synthetic\n'
+        verify_revoke_expected_failure(3, '1\n', expected)
+        for rc, out, err in ((0, '1', expected), (3, '', expected), (3, '1', 'ERROR: other\n'), (3, '1', expected+'ERROR: other\n')):
+            with self.subTest(rc=rc), self.assertRaises(RuntimeError): verify_revoke_expected_failure(rc, out, err)
+
+    def test_revoke_failure_prevents_following_steps(self):
+        class FakeService:
+            def __init__(self, fail=None): self.calls, self.fail = [], fail
+            def sql(self, value):
+                self.calls.append(value)
+                if value == self.fail: raise RuntimeError('synthetic failure')
+                return {'setup':'SYNTHETIC_REVOKE_SETUP_READY', 'negative':'SYNTHETIC_REVOKE_ROLLBACK_VERIFIED', 'candidate':'1', 'positive':'SYNTHETIC_REVOKE_POSITIVE_VERIFIED'}.get(value, '')
+            def expect_revoke_failure(self, value):
+                self.calls.append('expected-'+value)
+                if self.fail == 'expected-candidate': raise RuntimeError('synthetic mismatch')
+        sources = dict(zip(REVOKE_FIXED, ('negative','positive','setup','candidate')))
+        sources = {'revoke_fixture_setup_v5_review_stopped.sql.txt':'setup', 'revoke_fixture_negative_v3_review_stopped.sql.txt':'negative', 'revoke_fixture_positive_v3_review_stopped.sql.txt':'positive', 'revoke_truncate_candidate_review_stopped.sql.txt':'candidate'}
+        expected = ['setup','expected-candidate','negative','candidate','positive']
+        good = FakeService(); revoke_checks(good, sources); self.assertEqual(good.calls, expected)
+        for failure in expected:
+            bad = FakeService(failure)
+            with self.subTest(failure=failure), self.assertRaises(RuntimeError): revoke_checks(bad, sources)
+            self.assertEqual(bad.calls, expected[:expected.index(failure)+1])
 
     def test_fixed_inputs_unwrap_to_verified_originals(self):
         sources, stopped_setup = load_sources()
