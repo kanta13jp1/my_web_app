@@ -33,6 +33,8 @@ class ChatHighlightsViewModel extends ChangeNotifier {
   String? errorMessage;
   String? noticeMessage;
   Future<void> _saveTail = Future<void>.value();
+  final Map<(Duration, String, String), ChatHighlightEvent> _pendingAdds = {};
+  final Map<(Duration, String, String), Future<bool>> _inFlightAdds = {};
   var _idSequence = 0;
   var _disposed = false;
 
@@ -100,12 +102,23 @@ class ChatHighlightsViewModel extends ChangeNotifier {
       _setError('コメント本文を入力してください。');
       return false;
     }
+    final normalizedAuthor = author.trim().isEmpty ? '匿名' : author.trim();
+    final normalizedMessage = message.trim();
+    final key = (offset, normalizedAuthor, normalizedMessage);
+    final inFlight = _inFlightAdds[key];
+    if (inFlight != null) return inFlight;
+
+    final pending = _pendingAdds[key];
+    if (pending != null && snapshot.events.any((event) => event.id == pending.id)) {
+      return _savePendingAdd(key, pending);
+    }
     final event = ChatHighlightEvent(
       id: '${_now().microsecondsSinceEpoch}-${_idSequence++}',
       offset: offset,
-      author: author.trim().isEmpty ? '匿名' : author.trim(),
-      message: message.trim(),
+      author: normalizedAuthor,
+      message: normalizedMessage,
     );
+    _pendingAdds[key] = event;
     final events = <ChatHighlightEvent>[...snapshot.events, event]
       ..sort((left, right) {
         final order = left.offset.compareTo(right.offset);
@@ -116,7 +129,24 @@ class ChatHighlightsViewModel extends ChangeNotifier {
     }
     snapshot = snapshot.copyWith(events: events);
     _sortAndAnalyze();
-    return _persist('コメントを時系列へ追加しました。');
+    return _savePendingAdd(key, event);
+  }
+
+  Future<bool> _savePendingAdd(
+    (Duration, String, String) key,
+    ChatHighlightEvent event,
+  ) async {
+    final save = _persist('コメントを時系列へ追加しました。');
+    _inFlightAdds[key] = save;
+    try {
+      final saved = await save;
+      if (saved && identical(_pendingAdds[key], event)) {
+        _pendingAdds.remove(key);
+      }
+      return saved;
+    } finally {
+      if (identical(_inFlightAdds[key], save)) _inFlightAdds.remove(key);
+    }
   }
 
   Future<void> addDemoEvents() async {

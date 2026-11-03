@@ -76,6 +76,26 @@ void main() {
     );
   });
 
+  test('保存失敗後の同じ入力の再試行は同じコメントを保存する', () async {
+    final gateway = _FailOnceGateway();
+    final viewModel = ChatHighlightsViewModel(
+      gateway: gateway,
+      exportGateway: _MemoryExporter(),
+    );
+    await viewModel.load();
+    Future<bool> submit() => viewModel.addEvent(
+          offset: const Duration(seconds: 10),
+          author: 'viewer',
+          message: 'コメント',
+        );
+    expect(await submit(), isFalse);
+    expect(viewModel.snapshot.events, hasLength(1));
+    expect(await submit(), isTrue);
+    expect(gateway.saved.events, hasLength(1));
+    expect(await submit(), isTrue);
+    expect(gateway.saved.events, hasLength(2));
+  });
+
   test('指示書の出力失敗を利用者へ通知する', () async {
     final viewModel = ChatHighlightsViewModel(
       gateway: _MemoryGateway(),
@@ -138,6 +158,23 @@ class _MemoryGateway implements ChatHighlightGateway {
 
   @override
   Future<void> save(ChatHighlightSnapshot snapshot) async {
+    saved = snapshot;
+  }
+}
+
+class _FailOnceGateway implements ChatHighlightGateway {
+  ChatHighlightSnapshot saved = const ChatHighlightSnapshot();
+  bool fail = true;
+
+  @override
+  Future<ChatHighlightSnapshot> load() async => saved;
+
+  @override
+  Future<void> save(ChatHighlightSnapshot snapshot) async {
+    if (fail) {
+      fail = false;
+      throw StateError('storage unavailable');
+    }
     saved = snapshot;
   }
 }
