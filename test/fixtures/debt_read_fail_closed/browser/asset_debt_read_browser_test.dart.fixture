@@ -1,0 +1,179 @@
+// Detached browser integration candidate. Requires the instrumented test-only
+// copy of the page; never install its fake hooks in the product page. This is
+// not a test of real Auth or a real backend. Automatic startup restoration
+// is observed through a test-only completion barrier on its real Future.
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
+import 'package:my_web_app/services/asset_liability_repository.dart';
+import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+const _owner = 'synthetic-owner';
+const _token = 'synthetic-token';
+const _debtName = 'Synthetic Loan';
+final _date = DateTime(2026, 10, 14);
+const _snapshot = <String, double>{_debtName: -10000};
+
+class _LocalRepository extends SharedPreferencesAssetLiabilityRepository {
+  _LocalRepository(this.initial);
+  final Map<String, int> initial;
+  final saves = <Map<String, int>>[];
+  @override
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() async => Map.of(initial);
+  @override
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> value) async {
+    saves.add(Map<String, int>.of(value));
+  }
+}
+
+enum _Scenario { existing, failed, missing }
+
+class _Transport {
+  _Transport(this.scenario, this.id);
+  final _Scenario scenario;
+  final String id;
+  final owners = <String>[];
+  final writes = <Map<String, int>>[];
+  final started = Completer<void>();
+  final result = Completer<List<Map<String, dynamic>>>();
+  Future<List<Map<String, dynamic>>> read(String owner) async {
+    owners.add(owner);
+    if (!started.isCompleted) started.complete();
+    return result.future;
+  }
+  void respond() {
+    if (scenario == _Scenario.failed) {
+      result.completeError(StateError('synthetic read failure'));
+    } else if (scenario == _Scenario.missing) {
+      result.complete(<Map<String, dynamic>>[]);
+    } else {
+      result.complete(<Map<String, dynamic>>[
+      <String, dynamic>{
+        'user_id': _owner,
+        'pref_key': 'debt_payment_day_overrides',
+        'value': <String, int>{id: 17},
+        'updated_at': null,
+      },
+      ]);
+    }
+  }
+  Future<void> write(Map<String, int> value) async {
+    writes.add(Map<String, int>.of(value));
+  }
+}
+
+Session _session() => Session(
+  accessToken: _token,
+  tokenType: 'bearer',
+  user: User(id: _owner, appMetadata: const {}, userMetadata: const {},
+      aud: 'authenticated', createdAt: '2026-01-01T00:00:00Z'),
+);
+
+Future<void> _wait(WidgetTester tester, Future<void> future, String phase) async {
+  bool done = false;
+  Object? failure;
+  StackTrace? stack;
+  future.then<void>((_) { done = true; }, onError: (Object e, StackTrace s) {
+    failure = e; stack = s; done = true;
+  });
+  for (var i = 0; i < 150 && !done; i++) {
+    await tester.pump(const Duration(milliseconds: 20));
+  }
+  if (!done) throw TestFailure('fixture phase timed out: $phase');
+  if (failure != null) Error.throwWithStackTrace(failure!, stack!);
+}
+
+void main() {
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await Supabase.initialize(url: 'http://127.0.0.1:9999',
+      publishableKey: 'synthetic-key',
+      authOptions: const FlutterAuthClientOptions(autoRefreshToken: false));
+  });
+  setUp(() { SharedPreferences.setMockInitialValues(<String, Object>{}); });
+
+  for (final scenario in _Scenario.values) {
+    testWidgets('browser debt display and synthetic read: ${scenario.name}', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1440, 1000));
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(seconds: 1));
+        await tester.binding.setSurfaceSize(null);
+      });
+      AssetSyncDirtyKeysStore.resetWriteLockForTest();
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: _snapshot, baseDate: _date,
+      );
+      final id = workbook.debtMasterRows.singleWhere((r) => r.name == _debtName).id;
+      final transport = _Transport(scenario, id);
+      final repository = _LocalRepository(scenario == _Scenario.existing
+          ? <String, int>{} : <String, int>{id: 10});
+      final key = GlobalKey();
+      Widget root() => MaterialApp(home: AssetManagementPage(
+        key: key, debugNow: _date, debugCalendarNow: _date,
+        debugInitialAssetData: <String, Map<String, double>>{'2026-10-14': _snapshot},
+        assetLiabilityRepository: repository,
+        debugMirrorReadsAuthoritative: true,
+        debugDebtRead: transport.read, debugDebtWrite: transport.write,
+        debugDebtOwner: () => _owner, debugDebtToken: () => _token,
+        debugDebtAuthEvents: Stream<AuthState>.value(AuthState(AuthChangeEvent.signedIn, _session())),
+      ));
+      await tester.pumpWidget(root());
+      await _wait(tester, transport.started.future, 'automatic boot read');
+      final dynamic state = key.currentState;
+      expect(state, isNotNull);
+      transport.respond();
+      await _wait(tester, state.debugWaitDebtAutoRestoreForTest() as Future<void>, 'automatic restore');
+      await _wait(tester, state.debugWaitDebtBackfillsForTest() as Future<void>, 'backfill');
+      await _wait(tester, state.debugWaitDebtSavesForTest() as Future<void>, 'local save');
+      await _wait(tester, state.debugWaitDebtWritesForTest() as Future<void>, 'mirror write');
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(transport.owners, <String>[_owner]);
+      final expectedDay = scenario == _Scenario.existing ? 17 : 10;
+      if (scenario == _Scenario.failed) {
+        expect(transport.writes, isEmpty);
+        expect(repository.saves, isEmpty);
+      } else {
+        // Existing-row restore saves locally then mirrors; empty-row backfills.
+        expect(transport.writes, <Map<String, int>>[<String, int>{id: expectedDay}]);
+      }
+      if (scenario == _Scenario.existing) {
+        expect(repository.saves, <Map<String, int>>[<String, int>{id: 17}]);
+      }
+
+      final name = find.text(_debtName);
+      expect(name, findsWidgets);
+      final card = find.ancestor(of: name,
+        matching: find.byWidgetPredicate((w) => w is Container &&
+          w.key is GlobalKey && w.key.toString().contains('debt_master_card_$id'))).first;
+      expect(card, findsOneWidget);
+      final day = find.descendant(of: card, matching: find.text('${expectedDay}日支払'));
+      expect(day, findsOneWidget);
+      await tester.ensureVisible(day);
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(day.hitTestable(), findsOneWidget);
+      final dropdown = find.descendant(of: card, matching: find.byType(DropdownButton<int?>));
+      expect(dropdown, findsOneWidget);
+      expect(tester.widget<DropdownButton<int?>>(dropdown).value, expectedDay);
+      await binding.takeScreenshot('synthetic-debt-read-${scenario.name}',
+        <String, Object?>{'width': 1440, 'height': 1000, 'devicePixelRatio': 1.0});
+      await tester.ensureVisible(dropdown);
+      await tester.tap(dropdown);
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('${expectedDay}日').last.hitTestable(), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(transport.writes.length, scenario == _Scenario.failed ? 0 : 1);
+      expect(tester.takeException(), isNull);
+    });
+  }
+}
