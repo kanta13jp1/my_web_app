@@ -12,7 +12,7 @@ Issue #2817. This guide covers a UI whose backend contract is not yet available.
 
 ## Reusable contract and fake template
 
-Adapt the names and data to the feature; this is test-only pseudocode, not a production fallback. Put the fake in the feature test, and inject a real implementation at the composition root for deployed behavior.
+Adapt the names and data to the feature; this is a test-only illustration, not a production fallback. A runnable widget-test fixture using the same pattern is `test/examples/edge_ui_mock_template_test.dart`. Put the fake in the feature test, and inject a real implementation at the composition root for deployed behavior.
 
 ```dart
 abstract interface class ExampleReader {
