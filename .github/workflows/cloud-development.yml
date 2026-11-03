@@ -1,4 +1,4 @@
-name: Synthetic owner RLS semantics (disposable Postgres only)
+name: Synthetic inherited truncate (disposable Postgres only)
 on:
   workflow_dispatch:
     inputs:
@@ -33,8 +33,9 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           test "$(git rev-parse HEAD:test/synthetic_owner_rls/fixture.sql)" = "78732354d07d2cc178db409a34d6d3f41fb2e2a6"
-          test "$(git rev-parse HEAD:test/synthetic_owner_rls/permissive_expected_red.sql)" = "de6e30ead4c7b345be9bc4caaad7a28758c0f534"
-          test "$(git rev-parse HEAD:test/synthetic_owner_rls/restrictive_green.sql)" = "b3186d05e0aef7d9350af658a7a57c7801044a4f"
+          test "$(git rev-parse HEAD:test/synthetic_owner_rls/inherited_expected_red.sql)" = "5c3ecaf18de0a8f4474055875e6660fc25df2b73"
+          test "$(git rev-parse HEAD:test/synthetic_owner_rls/inherited_green.sql)" = "c7b53c12741f361b2202631c9612a2d4cb2a4453"
+          test "$(git rev-parse HEAD:test/synthetic_owner_rls/inherited_setup.sql)" = "5bb3f6a6b7966a9935f90aeb1a05a2fad616c959"
       - name: Create synthetic fixture
         env:
           SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
@@ -48,7 +49,10 @@ jobs:
           docker exec -i -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" \
             psql -U postgres -d owner_sync_lab -v ON_ERROR_STOP=1 \
             < test/synthetic_owner_rls/fixture.sql
-      - name: Expected red permissive policy is not restrictive
+          docker exec -i -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" \
+            psql -U postgres -d owner_sync_lab -v ON_ERROR_STOP=1 \
+            < test/synthetic_owner_rls/inherited_setup.sql
+      - name: Expected red inherited and PUBLIC grants remain
         env:
           SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
         if: ${{ !cancelled() && steps.fixture.outcome == 'success' }}
@@ -57,8 +61,8 @@ jobs:
           set -euo pipefail
           docker exec -i -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" \
             psql -U postgres -d owner_sync_lab -v ON_ERROR_STOP=1 \
-            < test/synthetic_owner_rls/permissive_expected_red.sql
-      - name: Restricted policy and truncate scope
+            < test/synthetic_owner_rls/inherited_expected_red.sql
+      - name: Revoke synthetic inherited and PUBLIC grants
         env:
           SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
         if: ${{ !cancelled() && steps.fixture.outcome == 'success' }}
@@ -67,4 +71,4 @@ jobs:
           set -euo pipefail
           docker exec -i -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" \
             psql -U postgres -d owner_sync_lab -v ON_ERROR_STOP=1 \
-            < test/synthetic_owner_rls/restrictive_green.sql
+            < test/synthetic_owner_rls/inherited_green.sql
