@@ -10,7 +10,7 @@ permissions: {}
 jobs:
   synthetic:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -52,4 +52,21 @@ jobs:
             ip link set lo up
             test "$(ip -o link show | wc -l)" -eq 1
             exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true flutter test --no-pub test/widgets/asset_debt_owner_page_test.dart
+          ' _ "$(id -un)" "$PATH" "$HOME"
+      - name: Instrument only disposable checkout for stale callback test
+        run: |
+          set -euo pipefail
+          python -B test/synthetic/instrument_debt_owner_page.py --input lib/pages/asset_management_page.dart --output "$RUNNER_TEMP/asset_management_page.dart"
+          cp "$RUNNER_TEMP/asset_management_page.dart" lib/pages/asset_management_page.dart
+          flutter analyze --no-pub lib/pages/asset_management_page.dart test/widgets/asset_debt_owner_stale_callback_test.dart
+      - name: Check stale callback with isolated network
+        timeout-minutes: 8
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo unshare --net -- bash -c '
+            set -euo pipefail
+            ip link set lo up
+            test "$(ip -o link show | wc -l)" -eq 1
+            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true flutter test --no-pub test/widgets/asset_debt_owner_stale_callback_test.dart --plain-name "stale unset callback checks the restored alias"
           ' _ "$(id -un)" "$PATH" "$HOME"
