@@ -24,21 +24,21 @@ class ExampleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        home: Scaffold(
-          body: FutureBuilder<List<String>>(
-            future: reader.load(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const CircularProgressIndicator();
-              }
-              if (snapshot.hasError) return const Text('取得できませんでした');
-              final items = snapshot.data!;
-              if (items.isEmpty) return const Text('データがありません');
-              return Text(items.join(', '));
-            },
-          ),
-        ),
-      );
+    home: Scaffold(
+      body: FutureBuilder<List<String>>(
+        future: reader.load(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const CircularProgressIndicator();
+          }
+          if (snapshot.hasError) return const Text('取得できませんでした');
+          final items = snapshot.data!;
+          if (items.isEmpty) return const Text('データがありません');
+          return Text(items.join(', '));
+        },
+      ),
+    ),
+  );
 }
 
 void main() {
@@ -58,7 +58,9 @@ void main() {
     expect(find.text('取得できませんでした'), findsNothing);
   });
 
-  testWidgets('fake backend does not report a failure as empty', (tester) async {
+  testWidgets('fake backend does not report a failure as empty', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ExampleScreen(reader: FakeExampleReader(error: Exception('offline'))),
     );
