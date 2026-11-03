@@ -1,12 +1,27 @@
+import 'package:flutter/foundation.dart' show FlutterErrorDetails;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 
+/// Preserve synthetic test exceptions in the driver response on failure.
+class _DiagnosticBinding extends IntegrationTestWidgetsFlutterBinding {
+  @override
+  void reportExceptionNoticed(FlutterErrorDetails exception) {
+    final data = reportData ??= <String, dynamic>{};
+    final errors = data.putIfAbsent(
+      'frameworkErrors',
+      () => <String>[],
+    ) as List<String>;
+    if (errors.length < 20) errors.add(exception.toString());
+    super.reportExceptionNoticed(exception);
+  }
+}
+
 /// Synthetic display only: no account, authentication, or persistence.
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  _DiagnosticBinding();
 
   testWidgets('conditional forecast and period switch remain labelled',
       (tester) async {
