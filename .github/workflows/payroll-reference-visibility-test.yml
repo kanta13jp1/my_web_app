@@ -8,11 +8,16 @@ on:
       - 'test/widgets/asset_payroll_owner_review_isolation_test.dart'
       - '.github/workflows/payroll-reference-visibility-test.yml'
 
-permissions:
-  contents: read
+permissions: {}
+
+concurrency:
+  group: payroll-reference-visibility-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   reference-widget:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
