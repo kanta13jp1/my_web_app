@@ -1,0 +1,28 @@
+name: Payroll reference visibility test
+
+on:
+  pull_request:
+    paths:
+      - 'lib/widgets/asset_payroll_snapshot_section.dart'
+      - 'test/widgets/asset_payroll_snapshot_reference_test.dart'
+      - 'test/widgets/asset_payroll_owner_review_isolation_test.dart'
+      - '.github/workflows/payroll-reference-visibility-test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  reference-widget:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Test synthetic payroll review and owner change
+        run: >-
+          flutter test test/widgets/asset_payroll_snapshot_*_test.dart
+          test/widgets/asset_payroll_owner_review_isolation_test.dart
