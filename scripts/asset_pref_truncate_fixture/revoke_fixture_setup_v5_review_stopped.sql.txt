@@ -1,0 +1,62 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- SYNTHETIC ONLY. Never use on an existing DB; trusted runner must verify ownership/token.
+create role synthetic_inherited_truncate nologin;
+grant all privileges on public.asset_pref_mirror to anon,authenticated,service_role;
+grant truncate on public.asset_pref_mirror to synthetic_inherited_truncate;
+grant synthetic_inherited_truncate to authenticated;
+begin;
+savepoint verify_inheritance;
+revoke truncate on public.asset_pref_mirror from authenticated;
+do $$ begin
+ if exists(select 1 from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(c.relacl) a
+  where c.oid='public.asset_pref_mirror'::pg_catalog.regclass and a.grantee=0 and a.privilege_type='TRUNCATE') then
+  raise exception 'unexpected public truncate grant'; end if;
+ if exists(select 1 from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(c.relacl) a
+  where c.oid='public.asset_pref_mirror'::pg_catalog.regclass and a.grantee='authenticated'::pg_catalog.regrole
+   and a.privilege_type='TRUNCATE') then raise exception 'direct truncate grant remains'; end if;
+ if not exists(select 1 from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(c.relacl) a
+  where c.oid='public.asset_pref_mirror'::pg_catalog.regclass and a.grantee='synthetic_inherited_truncate'::pg_catalog.regrole
+   and a.privilege_type='TRUNCATE') then raise exception 'synthetic parent grant missing'; end if;
+ if not pg_catalog.pg_has_role('authenticated','synthetic_inherited_truncate','USAGE')
+  or exists(select 1 from pg_catalog.pg_auth_members m where m.member='authenticated'::pg_catalog.regrole
+    and m.roleid<>'synthetic_inherited_truncate'::pg_catalog.regrole) then
+  raise exception 'unexpected inherited role graph'; end if;
+ if not pg_catalog.has_table_privilege('authenticated','public.asset_pref_mirror','TRUNCATE') then
+  raise exception 'inherited-only truncate privilege absent'; end if;
+end $$;
+rollback to savepoint verify_inheritance;
+commit;
+do $$ begin
+ if not pg_catalog.has_table_privilege('authenticated','public.asset_pref_mirror','TRUNCATE') then
+  raise exception 'fixture effective inherited privilege absent'; end if;
+end $$;
+create table public.synthetic_revoke_acl_before as
+ select a.grantor,a.grantee,a.privilege_type,a.is_grantable
+ from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(c.relacl) a
+ where c.oid='public.asset_pref_mirror'::pg_catalog.regclass;
+create table public.synthetic_revoke_rows_before as select user_id,pref_key,value,updated_at from public.asset_pref_mirror;
+create table public.synthetic_revoke_members_before as
+ select roleid,member,grantor,admin_option,inherit_option,set_option from pg_catalog.pg_auth_members
+ where member='authenticated'::pg_catalog.regrole;
+create table public.synthetic_revoke_relation_before as
+ select relowner,relrowsecurity,relforcerowsecurity from pg_catalog.pg_class where oid='public.asset_pref_mirror'::pg_catalog.regclass;
+create table public.synthetic_revoke_policies_before as
+ select policyname,permissive,roles,cmd,qual,with_check from pg_catalog.pg_policies where schemaname='public' and tablename='asset_pref_mirror';
+create table public.synthetic_revoke_col_acl_before as
+ select a.attname,x.grantor,x.grantee,x.privilege_type,x.is_grantable from pg_catalog.pg_attribute a
+ cross join lateral pg_catalog.aclexplode(a.attacl) x where a.attrelid='public.asset_pref_mirror'::pg_catalog.regclass and a.attnum>0 and not a.attisdropped;
+do $$ begin
+ if (select count(*) from public.synthetic_revoke_relation_before)<>1
+  or (select count(*) from public.synthetic_revoke_members_before)<>1
+  or (select count(*) from public.synthetic_revoke_policies_before)<>1
+  or not exists(select 1 from public.synthetic_revoke_policies_before where policyname='asset_pref_mirror_own_all' and cmd='ALL' and qual is not null and with_check is not null)
+  then raise exception 'synthetic security baseline mismatch'; end if;
+ if (select count(*) from public.synthetic_revoke_rows_before)<>5
+  or (select count(*) from public.synthetic_revoke_rows_before where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')<>3
+  or (select count(*) from public.synthetic_revoke_rows_before where user_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')<>2
+  or (select value from public.synthetic_revoke_rows_before where user_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and pref_key='debt_payment_day_overrides') is distinct from '{"fictional-b":9}'::jsonb
+  or (select value from public.synthetic_revoke_rows_before where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and pref_key='unrelated-fixture') is distinct from '{"keep":true}'::jsonb then
+  raise exception 'synthetic baseline mismatch'; end if;
+end $$;
+\echo SYNTHETIC_REVOKE_SETUP_READY

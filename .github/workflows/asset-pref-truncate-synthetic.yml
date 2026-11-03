@@ -1,0 +1,95 @@
+# SYNTHETIC PR CANDIDATE; independently review before enabling.
+# No production access; image/network/teardown trust boundaries remain.
+name: Asset preference truncate synthetic check
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions: {}
+concurrency:
+  group: asset-pref-truncate-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+jobs:
+  integrity_preflight:
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'codex/asset-pref-truncate-migration-20261103' && github.event.pull_request.head.sha != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      checked_sha: ${{ steps.approval.outputs.checked_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Check exact PR head and fixed inputs
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          sha256sum -c <<'FIXED_HASHES'
+          515bf0b87ac5a39484b5ae0a7d22cb24a44ebd68de54a9ea5f450b52686ed469  scripts/asset_pref_truncate_fixture/runner.py
+          d0635f7b249e26e93b3f2c2775b249e332653681e00698780f72a742affbb92d  scripts/asset_pref_truncate_fixture/fixture_setup.sql.txt
+          f2742dd2ec380e9dfba2133e9c9f63a5d6f9a596a181e7b747758221c8042679  scripts/asset_pref_truncate_fixture/revoke_fixture_setup_v5_review_stopped.sql.txt
+          b0fb6feb4c3913091a6f705459bae129cd9b06923e85ff19fcf93614d75c75e3  scripts/asset_pref_truncate_fixture/revoke_fixture_negative_v3_review_stopped.sql.txt
+          cdce6814db69af24d04345673f0743a257d225e4681702495ae9539f1bd37465  scripts/asset_pref_truncate_fixture/revoke_fixture_positive_v3_review_stopped.sql.txt
+          481628a46aed4ec6823606cc727f45c27a56e899a169c3723cd11899ec8ab5a0  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
+          56e633776c97636a5ebc026f03c764ee309956cbbc01e445a348c6ba222d2baa  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
+          FIXED_HASHES
+          python3 -B scripts/asset_pref_truncate_fixture/runner.py --self-test
+      - name: Mark exact head checked
+        id: approval
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: echo "checked_sha=$EXPECTED_HEAD" >> "$GITHUB_OUTPUT"
+  debt-cas-isolated:
+    needs: integrity_preflight
+    if: ${{ needs.integrity_preflight.outputs.checked_sha == github.event.pull_request.head.sha && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'codex/asset-pref-truncate-migration-20261103' && github.event.pull_request.head.sha != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    services:
+      sequential:
+        image: postgres@sha256:e4cb93687b062cd25a0e8f672d85a7708235009d70d31f8a7698d9370092a9c4
+        env:
+          POSTGRES_PASSWORD: synthetic-debt-only
+          POSTGRES_DB: debt_contract
+        options: >-
+          --label debt.cas.run=${{ github.run_id }}-${{ github.run_attempt }}
+          --label debt.cas.lane=sequential
+          --tmpfs /var/lib/postgresql/data:rw,nosuid,size=256m
+          --ipc private
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Check exact PR head and fixed inputs
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          sha256sum -c <<'FIXED_HASHES'
+          515bf0b87ac5a39484b5ae0a7d22cb24a44ebd68de54a9ea5f450b52686ed469  scripts/asset_pref_truncate_fixture/runner.py
+          d0635f7b249e26e93b3f2c2775b249e332653681e00698780f72a742affbb92d  scripts/asset_pref_truncate_fixture/fixture_setup.sql.txt
+          f2742dd2ec380e9dfba2133e9c9f63a5d6f9a596a181e7b747758221c8042679  scripts/asset_pref_truncate_fixture/revoke_fixture_setup_v5_review_stopped.sql.txt
+          b0fb6feb4c3913091a6f705459bae129cd9b06923e85ff19fcf93614d75c75e3  scripts/asset_pref_truncate_fixture/revoke_fixture_negative_v3_review_stopped.sql.txt
+          cdce6814db69af24d04345673f0743a257d225e4681702495ae9539f1bd37465  scripts/asset_pref_truncate_fixture/revoke_fixture_positive_v3_review_stopped.sql.txt
+          481628a46aed4ec6823606cc727f45c27a56e899a169c3723cd11899ec8ab5a0  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
+          56e633776c97636a5ebc026f03c764ee309956cbbc01e445a348c6ba222d2baa  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
+          FIXED_HASHES
+          python3 -B scripts/asset_pref_truncate_fixture/runner.py --self-test
+      - name: Run isolated synthetic privilege and rollback checks
+        env:
+          FIXTURE_SEQUENTIAL_ID: ${{ job.services.sequential.id }}
+          FIXTURE_NETWORK_NAME: ${{ job.services.sequential.network }}
+        run: python3 -B scripts/asset_pref_truncate_fixture/runner.py
