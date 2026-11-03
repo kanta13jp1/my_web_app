@@ -22,7 +22,7 @@ abstract interface class ExampleReader {
 class FakeExampleReader implements ExampleReader {
   FakeExampleReader({this.items = const [], this.error});
   final List<String> items;
-  final Object? error;
+  final Exception? error;
 
   @override
   Future<List<String>> load() async {
@@ -32,7 +32,7 @@ class FakeExampleReader implements ExampleReader {
 }
 ```
 
-Use `FakeExampleReader(items: ['example'])`, `FakeExampleReader()` and `FakeExampleReader(error: StateError('offline'))` for success, empty and error tests. Assert the actual screen distinguishes all three and that a failed write is never presented as persisted. Add an independently controlled `Completer` when testing loading, cancellation and out-of-order results. Integrate the adapter with the actual endpoint only after its request/response contract is agreed; replace neither server validation nor security review with this fake.
+Use `FakeExampleReader(items: ['example'])`, `FakeExampleReader()` and `FakeExampleReader(error: Exception('offline'))` for success, empty and error tests. Assert the actual screen distinguishes all three and that a failed write is never presented as persisted. Add an independently controlled `Completer` when testing loading, cancellation and out-of-order results. Integrate the adapter with the actual endpoint only after its request/response contract is agreed; replace neither server validation nor security review with this fake.
 
 ## Tracking template
 
