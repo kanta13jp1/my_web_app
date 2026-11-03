@@ -1,4 +1,4 @@
-name: Isolated synthetic Chrome loopback diagnostic
+name: Synthetic Flutter minimal HTML diagnostic
 on:
   workflow_dispatch:
     inputs:
@@ -9,9 +9,9 @@ on:
 permissions:
   contents: read
 jobs:
-  loopback:
+  fixture-browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -23,16 +23,19 @@ jobs:
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-      - name: Navigate a synthetic local page without external IP connectivity
-        timeout-minutes: 2
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - run: flutter precache --web
+      - name: Run synthetic fixture using minimal web HTML
+        timeout-minutes: 5
         shell: bash
         run: |
           set -euo pipefail
-          google-chrome --version
-          chromedriver --version
           sudo unshare --net -- bash -c '
             set -euo pipefail
             ip link set lo up
             test "$(ip -o link show | wc -l)" -eq 1
-            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true python3 test/fixtures/chrome_loopback_diagnostic.py
+            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true bash test/fixtures/dining_browser_diagnostic_runner.sh
           ' _ "$(id -un)" "$PATH" "$HOME"

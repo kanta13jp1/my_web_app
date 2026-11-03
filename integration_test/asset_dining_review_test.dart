@@ -80,8 +80,10 @@ class _FixtureState extends State<_Fixture> {
 }
 
 void main() {
+  print('diagnostic: fixture main reached');
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('選択日と利用形態に応じ未確定の候補のみを表示する', (tester) async {
+    print('diagnostic: fixture assertion started');
     await tester.pumpWidget(const _Fixture());
     await tester.pumpAndSettle();
     expect(find.textContaining('外食かは要確認'), findsOneWidget);
