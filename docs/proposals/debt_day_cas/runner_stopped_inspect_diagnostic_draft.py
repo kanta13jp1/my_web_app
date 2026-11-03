@@ -151,6 +151,64 @@ def valid_container(info, cid, image, label, lane, network, *, running=True):
     )
 
 
+def inspect_failure_categories(info, cid, image, label, lane, network, *, running=True):
+    # Diagnostics are fixed symbols only. This does not authorize the service;
+    # valid_container remains the sole decision. Never include values or reprs.
+    try:
+        required = ('Id', 'Image', 'Config', 'HostConfig', 'NetworkSettings', 'State', 'Mounts')
+        if not isinstance(info, dict) or any(k not in info for k in required):
+            return ['SHAPE']
+        if any(not isinstance(info[k], dict) for k in ('Config', 'HostConfig', 'NetworkSettings', 'State')):
+            return ['SHAPE']
+        if not isinstance(info['Mounts'], list) or not isinstance(image.get('Config'), dict):
+            return ['SHAPE']
+        config, host, net, state = (info[k] for k in ('Config', 'HostConfig', 'NetworkSettings', 'State'))
+        img = image['Config']
+        required_cfg = ('Image', 'Env', 'Labels', 'Entrypoint', 'Cmd', 'User')
+        required_img = ('Env', 'Entrypoint', 'Cmd', 'User')
+        required_host = ('Privileged', 'Binds', 'PortBindings', 'PublishAllPorts', 'CapAdd', 'Devices',
+            'DeviceRequests', 'ExtraHosts', 'Links', 'VolumesFrom', 'SecurityOpt', 'NetworkMode',
+            'Tmpfs', 'PidMode', 'IpcMode', 'UsernsMode')
+        if (any(k not in config for k in required_cfg) or any(k not in img for k in required_img)
+            or any(k not in host for k in required_host) or any(k not in net for k in ('Ports', 'Networks'))
+            or 'Running' not in state or not isinstance(config['Labels'], dict)):
+            return ['SHAPE']
+        out = []
+        if (info['Id'] != cid or info['Image'] != image.get('Id') or config['Image'] != IMAGE
+            or not isinstance(state['Running'], bool) or (running and state['Running'] is not True)
+            or config['Labels'].get('debt.cas.run') != label or config['Labels'].get('debt.cas.lane') != lane):
+            out.append('IDENTITY')
+        try:
+            expected = env_map(img.get('Env'))
+            expected.update(POSTGRES_DB=DATABASE, POSTGRES_PASSWORD=PASSWORD, GITHUB_ACTIONS='true', CI='true')
+            actual = env_map(config.get('Env'))
+            if actual != expected or actual.get('PGDATA') != '/var/lib/postgresql/data' or 'POSTGRES_INITDB_WALDIR' in actual:
+                out.append('ENVIRONMENT')
+        except (ValueError, TypeError):
+            out.append('ENVIRONMENT')
+        if any(config.get(k) != img.get(k) for k in ('Entrypoint', 'Cmd', 'User')):
+            out.append('IMAGE_CONFIG')
+        if (host['Privileged'] is not False or host['PublishAllPorts'] is not False
+            or any(host.get(k) for k in ('Binds', 'PortBindings', 'CapAdd', 'Devices', 'DeviceRequests',
+                'ExtraHosts', 'Links', 'VolumesFrom', 'SecurityOpt'))
+            or any(host[k] not in ('', 'private') for k in ('PidMode', 'IpcMode', 'UsernsMode'))):
+            out.append('HOST_POLICY')
+        ports, networks = net['Ports'], net['Networks']
+        if (not isinstance(ports, dict) or not isinstance(networks, dict)
+            or host.get('NetworkMode') != network or (isinstance(networks, dict) and set(networks) != {network})
+            or (isinstance(ports, dict) and any(ports.values()))):
+            out.append('NETWORK')
+        tmpfs = host.get('Tmpfs') or {}
+        options = set((tmpfs.get('/var/lib/postgresql/data') or '').split(','))
+        if (set(tmpfs) != {'/var/lib/postgresql/data'} or not {'rw', 'nosuid'} <= options
+            or not ({'size=256m', 'size=268435456'} & options)
+            or any(m.get('Type') != 'tmpfs' or m.get('Destination') != '/var/lib/postgresql/data' for m in info['Mounts'])):
+            out.append('MOUNTS')
+        return out or ['UNCLASSIFIED']
+    except Exception:
+        return ['DIAGNOSTIC_UNAVAILABLE']
+
+
 class Service:
     def __init__(self, cid, lane, label, docker, env, image, network):
         self.cid, self.lane, self.label = cid, lane, label
@@ -165,8 +223,13 @@ class Service:
 
     def inspect(self, *, running=True):
         info = json.loads(self.command('inspect', self.cid).stdout)[0]
-        if not valid_container(info, self.cid, self.image, self.label, self.lane, self.network, running=running):
-            raise RuntimeError('service identity mismatch; teardown required')
+        try:
+            valid = valid_container(info, self.cid, self.image, self.label, self.lane, self.network, running=running)
+        except Exception:
+            raise RuntimeError('service identity mismatch; teardown required: INSPECT_INVALID') from None
+        if not valid:
+            cats = inspect_failure_categories(info, self.cid, self.image, self.label, self.lane, self.network, running=running)
+            raise RuntimeError('service identity mismatch; teardown required: ' + ','.join(cats)) from None
         return info
 
     def argv(self):
@@ -373,6 +436,22 @@ class StoppedInputTests(unittest.TestCase):
                 'NetworkSettings': {'Networks': {net: {}}, 'Ports': {'5432/tcp': None}}, 'Mounts': []}
         def ok(obj): return valid_container(obj, cid, image, '1-1', 'sequential', net)
         self.assertTrue(ok(info))
+        diagnostic_cases = [
+            ('ENVIRONMENT', 'Config', 'Env', ['sensitive=do-not-print']),
+            ('IDENTITY', 'Config', 'Image', 'sensitive=do-not-print'),
+            ('IMAGE_CONFIG', 'Config', 'Cmd', ['sensitive=do-not-print']),
+            ('HOST_POLICY', 'HostConfig', 'IpcMode', 'sensitive=do-not-print'),
+            ('NETWORK', 'HostConfig', 'NetworkMode', 'sensitive=do-not-print'),
+            ('MOUNTS', 'HostConfig', 'Tmpfs', {}),
+        ]
+        for expected_category, section, key, value in diagnostic_cases:
+            changed = copy.deepcopy(info); changed[section][key] = value
+            self.assertFalse(ok(changed))
+            cats = inspect_failure_categories(changed, cid, image, '1-1', 'sequential', net)
+            with self.subTest(category=expected_category):
+                self.assertIn(expected_category, cats)
+                self.assertNotIn('sensitive', ','.join(cats))
+        self.assertEqual(inspect_failure_categories({}, cid, image, '1-1', 'sequential', net), ['SHAPE'])
         for section, key, val in [('HostConfig','PublishAllPorts',True), ('HostConfig','CapAdd',['SYS_ADMIN']),
                                   ('HostConfig','Devices',[{'PathOnHost':'/dev/x'}]), ('HostConfig','ExtraHosts',['x:1.2.3.4']),
                                   ('HostConfig','Links',['x']), ('HostConfig','VolumesFrom',['x']),
