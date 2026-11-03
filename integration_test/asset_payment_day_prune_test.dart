@@ -59,7 +59,9 @@ class _SyntheticDebtRepository
 }
 
 Future<Finder> _openDebtPage(
-    WidgetTester tester, _SyntheticDebtRepository repo) async {
+  WidgetTester tester,
+  _SyntheticDebtRepository repo,
+) async {
   AssetSyncDirtyKeysStore.resetWriteLockForTest();
   AssetRecurringTombstoneSyncService.resetSharedForTest();
   final now = DateTime.now().toUtc().toIso8601String();
@@ -74,18 +76,23 @@ Future<Finder> _openDebtPage(
   await tester.binding
       .setSurfaceSize(mobile ? const Size(390, 851) : const Size(1440, 1000));
   addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.pumpWidget(MaterialApp(
+  await tester.pumpWidget(
+    MaterialApp(
       home: AssetManagementPage(
-    assetLiabilityRepository: repo,
-    debugNow: DateTime(2026, 10, 20),
-    debugInitialAssetData: const <String, Map<String, double>>{
-      '2026-10-20': <String, double>{'Synthetic mobit': -100000},
-    },
-  )));
-  final card = find.byWidgetPredicate((widget) =>
-      widget is Container &&
-      widget.key is GlobalKey &&
-      widget.key.toString().contains('debt_master_card_mobit'));
+        assetLiabilityRepository: repo,
+        debugNow: DateTime(2026, 10, 20),
+        debugInitialAssetData: const <String, Map<String, double>>{
+          '2026-10-20': <String, double>{'Synthetic mobit': -100000},
+        },
+      ),
+    ),
+  );
+  final card = find.byWidgetPredicate(
+    (widget) =>
+        widget is Container &&
+        widget.key is GlobalKey &&
+        widget.key.toString().contains('debt_master_card_mobit'),
+  );
   final warning =
       find.descendant(of: card, matching: find.byType(AssetDebtOwnerWarning));
   for (var attempt = 0; attempt < 30; attempt++) {
@@ -96,29 +103,35 @@ Future<Finder> _openDebtPage(
   expect(warning, findsOneWidget);
   final control = find
       .ancestor(
-          of: warning,
-          matching: find.byWidgetPredicate(
-            (widget) => widget is SizedBox && widget.width == 140,
-          ))
+        of: warning,
+        matching: find.byWidgetPredicate(
+          (widget) => widget is SizedBox && widget.width == 140,
+        ),
+      )
       .first;
   final dropdown = find.descendant(
-      of: control,
-      matching: find.byWidgetPredicate(
-        (widget) => widget is DropdownButton<int?>,
-      ));
+    of: control,
+    matching: find.byWidgetPredicate(
+      (widget) => widget is DropdownButton<int?>,
+    ),
+  );
   expect(dropdown, findsOneWidget);
   return dropdown;
 }
 
 Future<Finder> _openDebtChoice(
-    WidgetTester tester, Finder dropdown, int? day) async {
+  WidgetTester tester,
+  Finder dropdown,
+  int? day,
+) async {
   await tester.ensureVisible(dropdown);
   await tester.tap(dropdown);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 350));
   final item = find
       .byWidgetPredicate(
-          (widget) => widget is DropdownMenuItem<int?> && widget.value == day)
+        (widget) => widget is DropdownMenuItem<int?> && widget.value == day,
+      )
       .last;
   expect(item, findsOneWidget);
   return item;
