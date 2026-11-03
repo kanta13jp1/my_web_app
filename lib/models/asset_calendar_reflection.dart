@@ -319,6 +319,69 @@ class AssetCalendarReflection {
       };
 }
 
+/// A review-only hint derived from an existing expense, not a confirmed meal.
+/// No amount, drinking assertion, calendar badge or database write is created.
+class AssetDiningReviewCandidate {
+  const AssetDiningReviewCandidate(
+      {required this.date, required this.title, required this.flowId});
+  final DateTime date;
+  final String title;
+  final String flowId;
+
+  static List<AssetDiningReviewCandidate> fromOwnedFlows({
+    required String? currentOwner,
+    required String? flowsOwner,
+    required bool reading,
+    required bool failed,
+    required Iterable<Map<String, dynamic>> flows,
+  }) {
+    if (currentOwner == null ||
+        currentOwner.isEmpty ||
+        currentOwner != flowsOwner ||
+        reading ||
+        failed) {
+      return const [];
+    }
+    return fromFlows(flows);
+  }
+
+  static List<AssetDiningReviewCandidate> fromFlows(
+      Iterable<Map<String, dynamic>> flows) {
+    final result = <AssetDiningReviewCandidate>[];
+    final seen = <String>{};
+    for (final flow in flows) {
+      if (flow['action_type'] != 'expense') continue;
+      final id = flow['id']?.toString() ?? '';
+      final date =
+          DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal();
+      final description = flow['description']?.toString() ?? '';
+      // Names indicate candidates only, never confirmed restaurant use.
+      // The list is deliberately incomplete; purchases and denials are excluded.
+      final merchant = RegExp(r'餃子の王将|大阪王将|マクドナルド|吉野家|すき家|松屋|ガスト|サイゼリヤ')
+          .firstMatch(description);
+      if (!RegExp(r'^[1-9][0-9]*$').hasMatch(id) ||
+          date == null ||
+          merchant == null ||
+          RegExp(r'キャンセル|取消|払い戻し|返金|未購入|未利用|買わな|行かな|行っていな|外食しな|外食していな|外食なし|外食ではない|食事していな|冷凍|カップ麺|持ち帰り|持帰り|テイクアウト|出前|デリバリー|食事券|ギフト|株主優待|株価|株式|証券')
+              .hasMatch(description) ||
+          !seen.add(id)) {
+        continue;
+      }
+      final projection = AssetCalendarReflection.fromFlows([flow]);
+      if (projection
+          .any((event) => event.kinds.contains(AssetReflectionKind.dining))) {
+        continue;
+      }
+      result.add(AssetDiningReviewCandidate(
+        date: DateTime(date.year, date.month, date.day),
+        title: merchant.group(0)!,
+        flowId: id,
+      ));
+    }
+    return result;
+  }
+}
+
 /// Multiple sources on the same day count as one day, with explicit unknowns.
 class AssetReflectionSummary {
   AssetReflectionSummary(Iterable<AssetCalendarReflection> events)

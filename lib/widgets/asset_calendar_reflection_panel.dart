@@ -13,8 +13,10 @@ class AssetCalendarReflectionPanel extends StatefulWidget {
     required this.selectedDate,
     required this.onLoaded,
     this.flowEvents = const [],
+    this.diningReviewCandidates = const [],
   });
   final List<AssetCalendarReflection> flowEvents;
+  final List<AssetDiningReviewCandidate> diningReviewCandidates;
   final AssetCalendarReflectionStore repository;
   final DateTime start;
   final DateTime end;
@@ -202,6 +204,22 @@ class _AssetCalendarReflectionPanelState
                   e.date.day == selected.day,
             )
             .toList();
+    final candidates = selected == null || _loading || _error != null
+        ? <AssetDiningReviewCandidate>[]
+        : widget.diningReviewCandidates
+            .where((candidate) =>
+                candidate.date.year == selected.year &&
+                candidate.date.month == selected.month &&
+                candidate.date.day == selected.day &&
+                !candidate.date.isBefore(widget.start) &&
+                candidate.date.isBefore(widget.end) &&
+                !events.any((event) =>
+                    event.linkedFlowId == candidate.flowId &&
+                    event.date.year == candidate.date.year &&
+                    event.date.month == candidate.date.month &&
+                    event.date.day == candidate.date.day &&
+                    event.kinds.contains(AssetReflectionKind.dining)))
+            .toList();
     return Container(
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -268,6 +286,16 @@ class _AssetCalendarReflectionPanelState
             Text(
               '${selected.month}/${selected.day} の振り返り',
               style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          if (candidates.isNotEmpty)
+            const Text('店名は一部のみ対象です。利用形態や記録の重複を確認してください。'),
+          for (final candidate in candidates)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                '支出の内容に「${candidate.title}」という文字があります（飲食店の利用・外食かは要確認）\n'
+                '出典: 記録済み支出。外食日数には含みません。',
+              ),
             ),
           for (final event in dayEvents)
             Padding(
