@@ -2,6 +2,7 @@
 // Place under test/widgets/ only for isolated review with the warning candidate.
 // The legacy reset case checks a temporary UI restriction; it does not prove
 // that legacy-key recovery or deletion is available.
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -575,93 +576,147 @@ void main() {
   });
 
   testWidgets(
-      'diagnostic single and batch hold collisions without false counts',
-      (tester) async {
-    final repo = _SyntheticDebtRepository({'mobit': 12, 'aupay_card': 13});
-    final setupPrefs = await SharedPreferences.getInstance();
-    await setupPrefs.setInt('asset_salary_day_v1', 25);
-    const tombstones = MirrorTombstoneStore(
-      storageKey: 'debt_payment_day_override_deleted_v1',
-    );
-    await tombstones.addId(setupPrefs, 'synthetic_other');
-    await tester.binding.setSurfaceSize(const Size(1200, 2400));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AssetManagementPage(
-          assetLiabilityRepository: repo,
-          debugNow: DateTime(2026, 10, 20),
-          debugInitialAssetData: const <String, Map<String, double>>{
-            '2026-10-20': <String, double>{
-              'Synthetic mobit alpha': -100000,
-              'Synthetic mobit beta': -200000,
-              'Synthetic aupay': -300000,
+    'diagnostic single and batch hold collisions without false counts',
+    (tester) async {
+      final repo = _SyntheticDebtRepository({'mobit': 12, 'aupay_card': 13});
+      final setupPrefs = await SharedPreferences.getInstance();
+      await setupPrefs.setInt('asset_salary_day_v1', 25);
+      const tombstones = MirrorTombstoneStore(
+        storageKey: 'debt_payment_day_override_deleted_v1',
+      );
+      await tombstones.addId(setupPrefs, 'synthetic_other');
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repo,
+            debugNow: DateTime(2026, 10, 20),
+            debugInitialAssetData: const <String, Map<String, double>>{
+              '2026-10-20': <String, double>{
+                'Synthetic mobit alpha': -100000,
+                'Synthetic mobit beta': -200000,
+                'Synthetic aupay': -300000,
+              },
             },
-          },
+          ),
         ),
-      ),
-    );
-    await tester.pump(const Duration(milliseconds: 600));
-    await tester.pump(const Duration(milliseconds: 600));
-    expect(tester.takeException(), isNull);
-    final access = tester.state(find.byType(AssetManagementPage))
-        as DebtCollisionDiagnosticAccess;
-    final prefs = await SharedPreferences.getInstance();
-    final dirtyBefore = prefs.getString(AssetSyncDirtyKeysStore.prefsKey);
-    final domainBefore = await const AssetSyncDirtyKeysStore().loadDirty(
-      'debt_payment_day_overrides',
-      prefs: prefs,
-    );
-    expect(domainBefore, isEmpty);
-    final tombstoneBefore =
-        prefs.getString('debt_payment_day_override_deleted_v1');
-    final before = repo.saveCalls;
-    final valuesBefore = Map<String, int>.from(repo.values);
-    access.diagnosticShiftOne('mobit', access.diagnosticViewGeneration);
-    await tester.pump(const Duration(milliseconds: 600));
-    expect(repo.saveCalls, before);
-    expect(repo.values, valuesBefore);
-    expect(prefs.getString(AssetSyncDirtyKeysStore.prefsKey), dirtyBefore);
-    expect(
-      prefs.getString('debt_payment_day_override_deleted_v1'),
-      tombstoneBefore,
-    );
-    expect(find.text('画面が更新されたか口座の識別子を確認できないため、変更を保留しました。'), findsOneWidget);
-    ScaffoldMessenger.of(tester.element(find.byType(AssetManagementPage)))
-        .removeCurrentSnackBar();
-    await tester.pump();
-    access.diagnosticShiftMany(
-      ['mobit', 'missing', 'mobit'],
-      access.diagnosticViewGeneration,
-    );
-    await tester.pump(const Duration(milliseconds: 600));
-    expect(repo.saveCalls, before);
-    expect(repo.values, valuesBefore);
-    expect(prefs.getString(AssetSyncDirtyKeysStore.prefsKey), dirtyBefore);
-    expect(
-      prefs.getString('debt_payment_day_override_deleted_v1'),
-      tombstoneBefore,
-    );
-    expect(find.textContaining('受付 0 ID、変更保留 2 ID'), findsOneWidget);
-    ScaffoldMessenger.of(tester.element(find.byType(AssetManagementPage)))
-        .removeCurrentSnackBar();
-    await tester.pump();
-    access.diagnosticShiftMany(
-      ['mobit', 'aupay_card', 'missing', 'aupay_card'],
-      access.diagnosticViewGeneration,
-    );
-    await tester.pump(const Duration(milliseconds: 600));
-    expect(repo.saveCalls, before + 1);
-    expect(repo.lastSaved, {'mobit': 12, 'aupay_card': 26});
-    expect(tombstones.activeIds(prefs), contains('synthetic_other'));
-    final dirtyAfter = await const AssetSyncDirtyKeysStore().loadDirty(
-      'debt_payment_day_overrides',
-      prefs: prefs,
-    );
-    expect(dirtyAfter, {'aupay_card'});
-    expect(find.textContaining('受付 1 ID、変更保留 2 ID'), findsOneWidget);
-    await _finishSyntheticPage(tester);
-  });
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(tester.takeException(), isNull);
+      final access = tester.state(find.byType(AssetManagementPage))
+          as DebtCollisionDiagnosticAccess;
+      final prefs = await SharedPreferences.getInstance();
+      final domainBefore = await const AssetSyncDirtyKeysStore().loadDirty(
+        'debt_payment_day_overrides',
+        prefs: prefs,
+      );
+      expect(domainBefore, isEmpty);
+      final tombstoneBefore =
+          prefs.getString('debt_payment_day_override_deleted_v1');
+      expect(AssetSyncDirtyKeysStore.hasPendingMutations, isFalse);
+      AssetSyncDirtyKeysStore.resetWriteLockForTest();
+      expect(Supabase.instance.client.auth.currentUser, isNull);
+      Future<void> observeCompletion(Future<void> work) async {
+        var completed = false;
+        Object? observedError;
+        unawaited(
+          work.then(
+            (_) {
+              completed = true;
+            },
+            onError: (Object error, StackTrace stack) {
+              observedError = error;
+              completed = true;
+            },
+          ),
+        );
+        for (var i = 0; i < 10 && !completed; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        expect(
+          completed,
+          isTrue,
+          reason: 'the observed diagnostic Future did not complete',
+        );
+        expect(observedError, isNull);
+      }
+
+      const dirtyStore = AssetSyncDirtyKeysStore();
+      await observeCompletion(
+        dirtyStore.markDirty(
+          'diagnostic_positive_control',
+          'probe',
+          prefs: prefs,
+        ),
+      );
+      expect(
+        await dirtyStore.loadDirty('diagnostic_positive_control', prefs: prefs),
+        {'probe'},
+      );
+      await observeCompletion(
+        dirtyStore.clearDomain('diagnostic_positive_control', prefs: prefs),
+      );
+      expect(AssetSyncDirtyKeysStore.hasPendingMutations, isFalse);
+      final dirtyBefore = prefs.getString(AssetSyncDirtyKeysStore.prefsKey);
+      final before = repo.saveCalls;
+      final valuesBefore = Map<String, int>.from(repo.values);
+      access.diagnosticShiftOne('mobit', access.diagnosticViewGeneration);
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(access.diagnosticDirtyWrite, isNull);
+      expect(repo.saveCalls, before);
+      expect(repo.values, valuesBefore);
+      expect(prefs.getString(AssetSyncDirtyKeysStore.prefsKey), dirtyBefore);
+      expect(
+        prefs.getString('debt_payment_day_override_deleted_v1'),
+        tombstoneBefore,
+      );
+      expect(
+        find.text('画面が更新されたか口座の識別子を確認できないため、変更を保留しました。'),
+        findsOneWidget,
+      );
+      ScaffoldMessenger.of(tester.element(find.byType(AssetManagementPage)))
+          .removeCurrentSnackBar();
+      await tester.pump();
+      access.diagnosticShiftMany(
+        ['mobit', 'missing', 'mobit'],
+        access.diagnosticViewGeneration,
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(access.diagnosticDirtyWrite, isNull);
+      expect(repo.saveCalls, before);
+      expect(repo.values, valuesBefore);
+      expect(prefs.getString(AssetSyncDirtyKeysStore.prefsKey), dirtyBefore);
+      expect(
+        prefs.getString('debt_payment_day_override_deleted_v1'),
+        tombstoneBefore,
+      );
+      expect(find.textContaining('受付 0 ID、変更保留 2 ID'), findsOneWidget);
+      ScaffoldMessenger.of(tester.element(find.byType(AssetManagementPage)))
+          .removeCurrentSnackBar();
+      await tester.pump();
+      access.diagnosticShiftMany(
+        ['mobit', 'aupay_card', 'missing', 'aupay_card'],
+        access.diagnosticViewGeneration,
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(repo.saveCalls, before + 1);
+      expect(repo.lastSaved, {'mobit': 12, 'aupay_card': 26});
+      expect(tombstones.activeIds(prefs), contains('synthetic_other'));
+      final actualDirtyWrite = access.diagnosticDirtyWrite;
+      expect(actualDirtyWrite, isNotNull);
+      await observeCompletion(actualDirtyWrite!);
+      expect(AssetSyncDirtyKeysStore.hasPendingMutations, isFalse);
+      final dirtyAfter = await dirtyStore.loadDirty(
+        'debt_payment_day_overrides',
+        prefs: prefs,
+      );
+      expect(dirtyAfter, {'aupay_card'});
+      expect(find.textContaining('受付 1 ID、変更保留 2 ID'), findsOneWidget);
+      await _finishSyntheticPage(tester);
+    },
+  );
 
   testWidgets(
       'diagnostic old route and callback fail after rows collide and recover',
@@ -733,6 +788,45 @@ void main() {
     expect(
       prefs.getString('debt_payment_day_override_deleted_v1'),
       tombstoneBefore,
+    );
+    await _finishSyntheticPage(tester);
+  });
+
+  testWidgets(
+      'shortfall retains debt events and explains held shift candidates',
+      (tester) async {
+    final repo = _SyntheticDebtRepository({'mobit': 15, 'aupay_card': 15});
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: repo,
+          debugNow: DateTime(2026, 7, 10),
+          debugCalendarNow: DateTime(2026, 7, 10),
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-07-10': <String, double>{
+              '財布(現金)': 10000,
+              'Synthetic mobit alpha': -300000,
+              'Synthetic mobit beta': -300000,
+              'Synthetic aupay': -300000,
+            },
+          },
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('期間内の最大不足:'), findsOneWidget);
+    expect(
+      find.textContaining('支払日変更の提案を表示していません。支払いが不要とは限りません。'),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('asset_shift_payment_mobit')), findsNothing);
+    expect(
+      find.byKey(const Key('asset_shift_payment_aupay_card')),
+      findsOneWidget,
     );
     await _finishSyntheticPage(tester);
   });

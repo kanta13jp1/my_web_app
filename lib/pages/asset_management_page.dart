@@ -507,6 +507,7 @@ class AssetManagementPage extends StatefulWidget {
 @visibleForTesting
 abstract class DebtCollisionDiagnosticAccess {
   int get diagnosticViewGeneration;
+  Future<void>? get diagnosticDirtyWrite;
   void diagnosticReplaceSnapshot(Map<String, Map<String, double>> snapshot);
   void diagnosticShiftOne(String id, int generation);
   void diagnosticShiftMany(List<String> ids, int generation);
@@ -31197,6 +31198,11 @@ class _AssetManagementPageState extends State<AssetManagementPage>
   @override
   int get diagnosticViewGeneration => _debtViewGeneration;
 
+  Future<void>? _diagnosticDirtyWrite;
+
+  @override
+  Future<void>? get diagnosticDirtyWrite => _diagnosticDirtyWrite;
+
   @override
   void diagnosticReplaceSnapshot(Map<String, Map<String, double>> snapshot) {
     setState(() {
@@ -31301,9 +31307,12 @@ class _AssetManagementPageState extends State<AssetManagementPage>
     } else {
       unawaited(_recordDebtOverrideTombstone(row.id, deleted: false));
       // ローカル編集を dirty 記録 (巻き添え上書き防止)。
-      unawaited(
-        _syncDirtyKeysStore.markDirty('debt_payment_day_overrides', row.id),
+      final dirtyWrite = _syncDirtyKeysStore.markDirty(
+        'debt_payment_day_overrides',
+        row.id,
       );
+      _diagnosticDirtyWrite = dirtyWrite;
+      unawaited(dirtyWrite);
     }
     unawaited(_saveDebtPaymentDayOverrides());
     return true;
