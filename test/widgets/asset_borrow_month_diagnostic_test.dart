@@ -116,6 +116,10 @@ void main() {
     expect(find.descendant(of: history, matching: find.text('+￥10,000')), findsOneWidget);
     expect(repository.saveCalls, 0);
     expect(tester.takeException(), isNull);
+    print('diagnostic: expected month, history and zero saves verified');
     await _unmount(tester);
+    await tester.pump(const Duration(seconds: 10));
+    expect(tester.takeException(), isNull);
+    print('diagnostic: widget disposed and pending timeout elapsed');
   });
 }
