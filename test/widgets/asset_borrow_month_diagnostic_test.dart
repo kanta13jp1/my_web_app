@@ -10,7 +10,10 @@ void main() {
     await Supabase.initialize(
       url: 'http://127.0.0.1:9999',
       publishableKey: 'test-publishable-key',
-      authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
+      authOptions: const FlutterAuthClientOptions(
+        autoRefreshToken: false,
+        detectSessionInUri: false,
+      ),
     ).timeout(const Duration(seconds: 15));
     print('setup diagnostic: Supabase initialize returned');
   });
