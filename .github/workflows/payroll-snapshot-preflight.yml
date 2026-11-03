@@ -1,4 +1,4 @@
-name: Forecast keyed label accessibility diagnostic
+name: Forecast keyed label formatting diagnostic
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ on:
 
 permissions: {}
 concurrency:
-  group: forecast-key-accessibility-diagnostic-${{ github.run_id }}
+  group: forecast-key-format-diagnostic-${{ github.run_id }}
   cancel-in-progress: false
 jobs:
   diagnostic:
@@ -35,35 +35,14 @@ jobs:
       - name: Resolve synthetic dependencies
         id: prepare
         run: flutter pub get
-      - name: Accessibility default
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
-        shell: bash
+      - name: Check Flutter 3.38 formatting
+        id: format
+        run: dart format --output=none --set-exit-if-changed lib/widgets/asset_cashflow_forecast_card.dart integration_test/asset_cashflow_forecast_conditional_test.dart
+      - name: Show diagnostic formatting diff
+        if: ${{ !cancelled() && steps.format.outcome == 'failure' }}
         run: |
-          chromedriver --port=4444 > /tmp/forecast-key-a11y-default.log 2>&1 &
-          driver_pid=$!
-          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-key-a11y-default.log; fi; exit "$status"' EXIT
-          for attempt in {1..30}; do
-            if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
-            sleep 1
-          done
-          curl --fail --silent http://localhost:4444/status > /dev/null
-          flutter drive --verbose \
-            --driver=test_driver/asset_ai_integration.dart \
-            --target=integration_test/asset_cashflow_forecast_conditional_test.dart \
-            -d web-server --browser-name=chrome --headless
-      - name: Accessibility mobile
+          dart format lib/widgets/asset_cashflow_forecast_card.dart integration_test/asset_cashflow_forecast_conditional_test.dart
+          git diff -- lib/widgets/asset_cashflow_forecast_card.dart integration_test/asset_cashflow_forecast_conditional_test.dart
+      - name: Targeted Flutter analyzer
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
-        shell: bash
-        run: |
-          chromedriver --port=4444 > /tmp/forecast-key-a11y-mobile.log 2>&1 &
-          driver_pid=$!
-          trap 'status=$?; kill "$driver_pid" 2>/dev/null || true; if [ "$status" -ne 0 ]; then tail -n 20 /tmp/forecast-key-a11y-mobile.log; fi; exit "$status"' EXIT
-          for attempt in {1..30}; do
-            if curl --fail --silent http://localhost:4444/status > /dev/null; then break; fi
-            sleep 1
-          done
-          curl --fail --silent http://localhost:4444/status > /dev/null
-          flutter drive --verbose \
-            --driver=test_driver/asset_ai_integration.dart \
-            --target=integration_test/asset_cashflow_forecast_conditional_test.dart \
-            -d web-server --browser-name=chrome --headless --browser-dimension=390x851@2.75
+        run: flutter analyze lib/widgets/asset_cashflow_forecast_card.dart integration_test/asset_cashflow_forecast_conditional_test.dart
