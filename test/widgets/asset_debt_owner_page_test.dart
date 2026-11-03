@@ -638,7 +638,7 @@ void main() {
     await _finishSyntheticPage(tester);
   });
 
-  testWidgets('diagnostic write completes out of order with held fake', (tester) async {
+  testWidgets('diagnostic write serializes held fake updates', (tester) async {
     final repo = _ControlledRepository({'mobit': 12});
     await _pumpSyntheticPage(tester, repository: repo, accountName: 'Synthetic mobit');
     final access = tester.state(find.byType(AssetManagementPage)) as WriteOrderDiagnosticAccess;
@@ -646,18 +646,20 @@ void main() {
     expect(access.diagnosticSetDebtDay('mobit', 15), isTrue);
     expect(access.diagnosticSetDebtDay('mobit', 20), isTrue);
     await tester.pump();
+    expect(repo.snapshots, [{'mobit': 15}]);
+    expect(repo.permits, hasLength(1));
+    repo.permits[0].complete();
+    await tester.pump();
+    expect(repo.values, {'mobit': 15});
     expect(repo.snapshots, [{'mobit': 15}, {'mobit': 20}]);
     expect(repo.permits, hasLength(2));
     repo.permits[1].complete();
     await tester.pump();
     expect(repo.values, {'mobit': 20});
-    repo.permits[0].complete();
-    await tester.pump();
-    expect(repo.values, {'mobit': 15}, reason: 'the delayed older synthetic write overwrote the newer write');
     await _finishSyntheticPage(tester);
   });
 
-  testWidgets('diagnostic write failure still enters mirror function', (tester) async {
+  testWidgets('diagnostic write failure does not enter mirror function', (tester) async {
     final repo = _ControlledRepository({'mobit': 12});
     await _pumpSyntheticPage(tester, repository: repo, accountName: 'Synthetic mobit');
     final access = tester.state(find.byType(AssetManagementPage)) as WriteOrderDiagnosticAccess;
@@ -667,7 +669,7 @@ void main() {
     await tester.pump();
     expect(repo.values, {'mobit': 12});
     expect(repo.snapshots, [{'mobit': 20}]);
-    expect(access.diagnosticMirrorEntries, mirrorBefore + 1, reason: 'the mirror method is entered after the synthetic local error');
+    expect(access.diagnosticMirrorEntries, mirrorBefore, reason: 'the mirror method is not entered after the synthetic local error');
     expect(Supabase.instance.client.auth.currentUser, isNull);
     await _finishSyntheticPage(tester);
   });

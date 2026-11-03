@@ -31363,19 +31363,29 @@ class _AssetManagementPageState extends State<AssetManagementPage>
     }
   }
 
-  Future<void> _saveDebtPaymentDayOverrides() async {
-    try {
-      await _assetLiabilityRepository.saveDebtPaymentDayOverrides(
-        Map<String, int>.from(_debtPaymentDayOverrides),
-      );
-    } catch (e) {
-      debugPrint('Error saving debt payment day overrides: $e');
-    }
-    unawaited(
-      _mirrorDebtPaymentDayOverrides(
-        Map<String, int>.from(_debtPaymentDayOverrides),
-      ),
-    );
+  // Isolated diagnostic prototype: does not protect startup mirror, ownership,
+  // other instances, tombstones, or dirty clearing. Not production-ready.
+  Future<void> _diagnosticDebtWriteTail = Future<void>.value();
+  int _diagnosticDebtWriteSequence = 0;
+
+  Future<void> _saveDebtPaymentDayOverrides() {
+    final snapshot = Map<String, int>.from(_debtPaymentDayOverrides);
+    final sequence = ++_diagnosticDebtWriteSequence;
+    final task = _diagnosticDebtWriteTail.then((_) async {
+      try {
+        await _assetLiabilityRepository.saveDebtPaymentDayOverrides(snapshot);
+      } catch (e) {
+        debugPrint('Error saving debt payment day overrides: $e');
+        return;
+      }
+      if (sequence == _diagnosticDebtWriteSequence) {
+        await _mirrorDebtPaymentDayOverrides(snapshot);
+      }
+    });
+    _diagnosticDebtWriteTail = task.catchError((Object error) {
+      debugPrint('Error processing debt payment day overrides: $error');
+    });
+    return task;
   }
 
   Widget _buildDebtPaymentDayInput(
