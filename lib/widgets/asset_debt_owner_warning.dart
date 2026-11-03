@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
 
-/// This local override has no established owner in the current data model.
+/// The ownership of this setting is not established by the current model.
 class AssetDebtOwnerWarning extends StatelessWidget {
-  const AssetDebtOwnerWarning({super.key});
+  const AssetDebtOwnerWarning({super.key, this.legacyNameRetained = false});
+
+  final bool legacyNameRetained;
 
   @override
   Widget build(BuildContext context) {
+    final style = TextStyle(
+      fontSize: 12,
+      color: Theme.of(context).colorScheme.onSurface,
+    );
     return Padding(
       padding: const EdgeInsets.only(top: 4),
-      child: Text(
-        '設定の所有者は未確認です',
-        style: TextStyle(
-          fontSize: 12,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('設定の所有者は未確認です', style: style),
+          if (legacyNameRetained)
+            Text('旧名の設定が残るため、この欄では解除できません。別の日付を選んでも旧名は残ります。', style: style),
+        ],
       ),
     );
   }

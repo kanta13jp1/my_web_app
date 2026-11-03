@@ -24,7 +24,7 @@ void main() {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Text('manual'),
-                        const AssetDebtOwnerWarning(),
+                        const AssetDebtOwnerWarning(legacyNameRetained: true),
                         DropdownButton<int>(
                           value: 5,
                           isExpanded: true,
@@ -48,6 +48,7 @@ void main() {
         );
         expect(find.text(notice), findsOneWidget);
         expect(find.bySemanticsLabel(notice), findsOneWidget);
+        expect(find.textContaining('旧名の設定が残るため、この欄では解除できません'), findsOneWidget);
         final text = tester.widget<Text>(find.text(notice));
         final context = tester.element(find.text(notice));
         expect(text.style!.color, Theme.of(context).colorScheme.onSurface);

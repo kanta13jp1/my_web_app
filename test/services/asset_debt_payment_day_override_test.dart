@@ -20,4 +20,22 @@ void main() {
     expect(resolve({'synthetic-name': 0}), isNull);
     expect(resolve({'synthetic-id': 31}), 31);
   });
+  test('only a valid independent name fallback blocks clearing', () {
+    bool legacy(
+      Map<String, int> values, {
+      String id = 'id',
+      String name = ' Name ',
+    }) => hasAssetDebtLegacyNameOverride(
+      overrides: values,
+      accountId: id,
+      accountName: name,
+    );
+    expect(legacy({'id': 4}), isFalse);
+    expect(legacy({'id': 4, 'Name': 5}), isTrue);
+    expect(legacy({' Name ': 6}), isTrue);
+    expect(legacy({'Name': 99, ' Name ': 6}), isFalse);
+    expect(legacy({'Name': 5}, id: 'Name', name: 'Name'), isFalse);
+    expect(legacy({'Name': 5, ' Name ': 6}, id: 'Name'), isTrue);
+    expect(legacy({'Name': 0}), isFalse);
+  });
 }

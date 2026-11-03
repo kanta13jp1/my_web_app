@@ -31216,6 +31216,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildDebtPaymentDayInput(AssetLiabilityDebtRow row) {
+    final legacyNameRetained = !row.isRevolving &&
+        hasAssetDebtLegacyNameOverride(
+          overrides: _debtPaymentDayOverrides,
+          accountId: row.id,
+          accountName: row.name,
+        );
     final hasOverride = row.isRevolving
         ? _confirmedPaymentDays.containsKey(row.id)
         : resolveAssetDebtPaymentDayOverride(
@@ -31241,20 +31247,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildTextStatusChip(label: statusLabel, color: statusColor),
-          if (hasOverride && !row.isRevolving)
-            const AssetDebtOwnerWarning(),
+          if ((hasOverride || legacyNameRetained) && !row.isRevolving)
+            AssetDebtOwnerWarning(legacyNameRetained: legacyNameRetained),
           const SizedBox(height: 4),
           DropdownButton<int?>(
             value: row.paymentDay,
             isExpanded: true,
             isDense: true,
             items: [
-              const DropdownMenuItem<int?>(value: null, child: Text('未設定')),
+              DropdownMenuItem<int?>(
+                value: null,
+                enabled: !legacyNameRetained,
+                child: const Text('未設定'),
+              ),
               for (var day = 1; day <= 31; day++)
                 DropdownMenuItem<int?>(value: day, child: Text('$day日')),
             ],
             onChanged: (value) {
               if (!row.isRevolving) {
+                if (value == null &&
+                    hasAssetDebtLegacyNameOverride(
+                      overrides: _debtPaymentDayOverrides,
+                      accountId: row.id,
+                      accountName: row.name,
+                    )) {
+                  return;
+                }
                 _setDebtPaymentDayOverride(row, value);
                 return;
               }

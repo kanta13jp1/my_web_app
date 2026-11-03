@@ -35,9 +35,21 @@ jobs:
           lib/widgets/asset_debt_owner_warning.dart
           test/services/asset_debt_payment_day_override_test.dart
           test/widgets/asset_debt_owner_warning_test.dart
+          test/widgets/asset_debt_owner_page_test.dart
       - name: Run synthetic resolver and warning tests
         timeout-minutes: 6
         run: >-
           flutter test --no-pub
           test/services/asset_debt_payment_day_override_test.dart
           test/widgets/asset_debt_owner_warning_test.dart
+      - name: Run actual page tests with isolated network
+        timeout-minutes: 8
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo unshare --net -- bash -c '
+            set -euo pipefail
+            ip link set lo up
+            test "$(ip -o link show | wc -l)" -eq 1
+            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true flutter test --no-pub test/widgets/asset_debt_owner_page_test.dart
+          ' _ "$(id -un)" "$PATH" "$HOME"
