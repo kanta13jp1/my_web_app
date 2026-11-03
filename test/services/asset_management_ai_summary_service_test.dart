@@ -101,7 +101,8 @@ void main() {
           .map((m) => m.group(0))
           .toList();
       expect(headers, List.generate(8, (index) => '## ${index + 1}. '));
-      expect(RegExp(r'^## ', multiLine: true).allMatches(result.text).length, 8);
+      expect(
+          RegExp(r'^## ', multiLine: true).allMatches(result.text).length, 8);
       expect(result.text, contains('使用可能額:'));
       expect(result.text, contains('未払い項目'));
       for (final row in report.workbook.cashflowRows.where(

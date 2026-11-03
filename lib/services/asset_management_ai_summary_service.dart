@@ -498,8 +498,10 @@ class AssetManagementAiSummaryService {
         ? '生活費防衛の追加提案は生成されていません。要確認項目の解消を意味するものではありません。'
         : report.emergencyAdvices
             .take(3)
-            .map((advice) =>
-                '${advice.title}: ${advice.description} ${advice.suggestedAction}')
+            .map(
+              (advice) =>
+                  '${advice.title}: ${advice.description} ${advice.suggestedAction}',
+            )
             .join(' ');
     return [
       '## 1. 現状',
