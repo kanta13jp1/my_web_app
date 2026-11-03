@@ -519,6 +519,10 @@ void main() {
       matching: find.byType(DropdownButton<int?>),
     );
     final pageStateBefore = tester.state(find.byType(AssetManagementPage));
+    expect(
+      find.text('画面が更新されると支払日メニューが閉じる場合があります。必要なら開き直してください。'),
+      findsOneWidget,
+    );
     final option = find.byWidgetPredicate(
       (widget) => widget is DropdownMenuItem<int?> && widget.value == 15,
     );

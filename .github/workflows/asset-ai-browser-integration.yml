@@ -48,40 +48,72 @@ jobs:
         run: |
           google-chrome --version
           chromedriver --version
+      - name: Install Driver matching the system Chrome version
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/matched-driver" .ci-logs
+          browser_path="$(command -v google-chrome)"
+          browser_version="$("$browser_path" --version | awk '{print $NF}')"
+          [[ "$browser_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          printf 'browser path: %s\nbrowser version: %s\n' "$browser_path" "$browser_version" | tee .ci-logs/asset-ai-browser-versions.log
+          printf 'browser resolved launcher: %s\n' "$(readlink -f "$browser_path")" | tee -a .ci-logs/asset-ai-browser-versions.log
+          sha256sum "$(readlink -f "$browser_path")" | tee -a .ci-logs/asset-ai-browser-versions.log
+          curl --fail --silent --show-error --location --max-time 180 \
+            -o "$RUNNER_TEMP/matched-driver/driver.zip" \
+            "https://storage.googleapis.com/chrome-for-testing-public/$browser_version/linux64/chromedriver-linux64.zip"
+          unzip -q "$RUNNER_TEMP/matched-driver/driver.zip" -d "$RUNNER_TEMP/matched-driver"
+          driver="$RUNNER_TEMP/matched-driver/chromedriver-linux64/chromedriver"
+          driver_version="$("$driver" --version | awk '{print $2}')"
+          test "$driver_version" = "$browser_version"
+          printf 'driver path: %s\ndriver version: %s\n' "$driver" "$driver_version" | tee -a .ci-logs/asset-ai-browser-versions.log
+          sha256sum "$driver" | tee -a .ci-logs/asset-ai-browser-versions.log
       - name: Run synthetic page flows in Chrome
         shell: bash
         run: |
           mkdir -p .ci-logs
-          chromedriver --port=4444 > .ci-logs/asset-ai-chromedriver.log 2>&1 &
+          set -euo pipefail
+          driver_port="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
+          "$RUNNER_TEMP/matched-driver/chromedriver-linux64/chromedriver" --port="$driver_port" > .ci-logs/asset-ai-chromedriver.log 2>&1 &
           driver_pid=$!
           trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
           for attempt in {1..30}; do
-            if curl --fail --silent http://localhost:4444/status > /dev/null; then
+            if ! kill -0 "$driver_pid" 2>/dev/null; then cat .ci-logs/asset-ai-chromedriver.log; exit 1; fi
+            if curl --fail --silent "http://127.0.0.1:$driver_port/status" > /dev/null; then
               break
             fi
             sleep 1
           done
-          curl --fail --silent http://localhost:4444/status
+          kill -0 "$driver_pid"
+          ss -ltnp "sport = :$driver_port" | grep -F "pid=$driver_pid,"
+          curl --fail --silent "http://127.0.0.1:$driver_port/status"
           set -o pipefail
           flutter drive --verbose \
             --driver=test_driver/asset_ai_integration.dart \
             --target=integration_test/asset_management_ai_current_input_test.dart \
+            --driver-port "$driver_port" \
+            --chrome-binary "$(command -v google-chrome)" \
             -d web-server --browser-name=chrome --headless \
             2>&1 | tee .ci-logs/asset-ai-browser.log
       - name: Run triage withdrawal flows in Chrome
         shell: bash
         run: |
           mkdir -p .ci-logs
-          chromedriver --port=4444 > .ci-logs/asset-ai-triage-chromedriver.log 2>&1 &
+          set -euo pipefail
+          driver_port="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
+          "$RUNNER_TEMP/matched-driver/chromedriver-linux64/chromedriver" --port="$driver_port" > .ci-logs/asset-ai-triage-chromedriver.log 2>&1 &
           driver_pid=$!
           trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
           for attempt in {1..30}; do
-            if curl --fail --silent http://localhost:4444/status > /dev/null; then
+            if ! kill -0 "$driver_pid" 2>/dev/null; then cat .ci-logs/asset-ai-triage-chromedriver.log; exit 1; fi
+            if curl --fail --silent "http://127.0.0.1:$driver_port/status" > /dev/null; then
               break
             fi
             sleep 1
           done
-          curl --fail --silent http://localhost:4444/status
+          kill -0 "$driver_pid"
+          ss -ltnp "sport = :$driver_port" | grep -F "pid=$driver_pid,"
+          curl --fail --silent "http://127.0.0.1:$driver_port/status"
           set -o pipefail
           for viewport in desktop mobile; do
             dimensions=1440x1000@1
@@ -95,6 +127,8 @@ jobs:
               --target=integration_test/asset_triage_withdrawal_test.dart \
               --dart-define="TRIAGE_MOBILE=$mobile" \
               --browser-dimension="$dimensions" \
+              --driver-port "$driver_port" \
+              --chrome-binary "$(command -v google-chrome)" \
               -d web-server --browser-name=chrome --headless \
               2>&1 | tee ".ci-logs/asset-ai-triage-$viewport-browser.log"
           done
@@ -102,16 +136,21 @@ jobs:
         shell: bash
         run: |
           mkdir -p .ci-logs
-          chromedriver --port=4444 > .ci-logs/asset-ai-borrowing-chromedriver.log 2>&1 &
+          set -euo pipefail
+          driver_port="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
+          "$RUNNER_TEMP/matched-driver/chromedriver-linux64/chromedriver" --port="$driver_port" > .ci-logs/asset-ai-borrowing-chromedriver.log 2>&1 &
           driver_pid=$!
           trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
           for attempt in {1..30}; do
-            if curl --fail --silent http://localhost:4444/status > /dev/null; then
+            if ! kill -0 "$driver_pid" 2>/dev/null; then cat .ci-logs/asset-ai-borrowing-chromedriver.log; exit 1; fi
+            if curl --fail --silent "http://127.0.0.1:$driver_port/status" > /dev/null; then
               break
             fi
             sleep 1
           done
-          curl --fail --silent http://localhost:4444/status
+          kill -0 "$driver_pid"
+          ss -ltnp "sport = :$driver_port" | grep -F "pid=$driver_pid,"
+          curl --fail --silent "http://127.0.0.1:$driver_port/status"
           set -o pipefail
           for viewport in desktop mobile; do
             dimensions=1440x1000@1
@@ -125,6 +164,8 @@ jobs:
               --target=integration_test/asset_borrowing_unsaved_test.dart \
               --dart-define="TRIAGE_MOBILE=$mobile" \
               --browser-dimension="$dimensions" \
+              --driver-port "$driver_port" \
+              --chrome-binary "$(command -v google-chrome)" \
               -d web-server --browser-name=chrome --headless \
               2>&1 | tee ".ci-logs/asset-ai-borrowing-$viewport-browser.log"
           done
