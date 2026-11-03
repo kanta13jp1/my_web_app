@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+  "name": "my_web_app Cloud Control Plane",
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "4gb",
+    "storage": "16gb"
+  },
+  "postCreateCommand": "gh --version && git status --short",
+  "remoteEnv": {
+    "CLOUD_DEVELOPMENT_MODE": "control-plane"
+  },
+  "customizations": {
+    "codespaces": {
+      "openFiles": [
+        "docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md"
+      ]
+    },
+    "vscode": {
+      "extensions": [
+        "Dart-Code.dart-code",
+        "GitHub.vscode-github-actions",
+        "redhat.vscode-yaml"
+      ]
+    }
+  }
+}
