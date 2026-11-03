@@ -1,0 +1,20 @@
+name: Payroll owner dialog probe
+on:
+  pull_request:
+    paths:
+      - test/widgets/payroll_owner_dialog_probe_test.dart
+      - .github/workflows/payroll-owner-dialog-probe.yml
+permissions:
+  contents: read
+jobs:
+  owner-dialog-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Observe synthetic old-route behavior
+        run: flutter test test/widgets/payroll_owner_dialog_probe_test.dart
