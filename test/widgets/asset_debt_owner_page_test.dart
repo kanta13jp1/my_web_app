@@ -2,6 +2,7 @@
 // Place under test/widgets/ only for isolated review with the warning candidate.
 // The legacy reset case checks a temporary UI restriction; it does not prove
 // that legacy-key recovery or deletion is available.
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -18,14 +19,30 @@ import 'package:my_web_app/widgets/asset_debt_owner_warning.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Never create an HTTP client, including for the loopback Supabase fixture.
+/// Allow construction only. Neither this fake nor its close opens a socket.
+class _NoNetworkClient implements HttpClient {
+  _NoNetworkClient(this.guard);
+  final _DenyAllHttp guard;
+
+  @override
+  void close({bool force = false}) {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    // This includes request methods and all other unsupported methods/setters.
+    // Count before throwing: production code may catch the exception.
+    guard.blockedCalls++;
+    throw StateError('Synthetic HttpClient invocation prohibited');
+  }
+}
+
+/// Overrides dart:io HttpClient creation; injected Supabase mock rejects sends.
 class _DenyAllHttp extends HttpOverrides {
-  int attempts = 0;
+  int blockedCalls = 0;
 
   @override
   HttpClient createHttpClient(SecurityContext? context) {
-    attempts++;
-    throw StateError('Synthetic widget test prohibits network access');
+    return _NoNetworkClient(this);
   }
 }
 
@@ -116,13 +133,24 @@ void main() {
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
       httpClient: syntheticSupabaseClient,
     );
-    expect([networkGuard.attempts, deniedSupabaseRequests], [0, 0]);
+    expect(
+      [networkGuard.blockedCalls, deniedSupabaseRequests],
+      [0, 0],
+      reason: 'Supabase initialization attempted a network operation',
+    );
   });
 
   setUp(() {
-    networkGuard.attempts = 0;
+    networkGuard.blockedCalls = 0;
     deniedSupabaseRequests = 0;
-    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final syntheticNow = DateTime.now().toUtc().toIso8601String();
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'fx_rate_usd_jpy_v1': jsonEncode(<String, Object>{
+        'jpyPerUnit': 150.0,
+        'fetchedAt': syntheticNow,
+        'asOf': syntheticNow,
+      }),
+    });
     AssetSyncDirtyKeysStore.resetWriteLockForTest();
     AssetRecurringTombstoneSyncService.resetSharedForTest();
   });
@@ -134,9 +162,10 @@ void main() {
   tearDown(() async {
     try {
       expect(
-        [networkGuard.attempts, deniedSupabaseRequests],
+        [networkGuard.blockedCalls, deniedSupabaseRequests],
         [0, 0],
-        reason: 'Synthetic page attempted a network client or request',
+        reason:
+            'Synthetic page attempted an unsupported client operation or request',
       );
     } finally {
       await TestWidgetsFlutterBinding.ensureInitialized().setSurfaceSize(null);
