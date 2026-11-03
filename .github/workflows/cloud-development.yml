@@ -23,8 +23,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
-    env:
-      SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -38,6 +36,8 @@ jobs:
           test "$(git rev-parse HEAD:test/synthetic_owner_rls/permissive_expected_red.sql)" = "de6e30ead4c7b345be9bc4caaad7a28758c0f534"
           test "$(git rev-parse HEAD:test/synthetic_owner_rls/restrictive_green.sql)" = "b3186d05e0aef7d9350af658a7a57c7801044a4f"
       - name: Create synthetic fixture
+        env:
+          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
         id: fixture
         shell: bash
         run: |
@@ -49,6 +49,8 @@ jobs:
             psql -U postgres -d owner_sync_lab -v ON_ERROR_STOP=1 \
             < test/synthetic_owner_rls/fixture.sql
       - name: Expected red permissive policy is not restrictive
+        env:
+          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
         if: ${{ !cancelled() && steps.fixture.outcome == 'success' }}
         shell: bash
         run: |
@@ -57,6 +59,8 @@ jobs:
             psql -U postgres -d owner_sync_lab -v ON_ERROR_STOP=1 \
             < test/synthetic_owner_rls/permissive_expected_red.sql
       - name: Restricted policy and truncate scope
+        env:
+          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
         if: ${{ !cancelled() && steps.fixture.outcome == 'success' }}
         shell: bash
         run: |
