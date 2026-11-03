@@ -1,4 +1,4 @@
-name: Synthetic Flutter minimal HTML diagnostic
+name: Synthetic Flutter Chrome widget diagnostic
 on:
   workflow_dispatch:
     inputs:
@@ -9,7 +9,7 @@ on:
 permissions:
   contents: read
 jobs:
-  fixture-browser:
+  widget-chrome:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -28,7 +28,7 @@ jobs:
           flutter-version: '3.38.x'
       - run: flutter pub get
       - run: flutter precache --web
-      - name: Run synthetic fixture using minimal web HTML
+      - name: Run synthetic widget checks in Chrome
         timeout-minutes: 5
         shell: bash
         run: |
@@ -37,5 +37,5 @@ jobs:
             set -euo pipefail
             ip link set lo up
             test "$(ip -o link show | wc -l)" -eq 1
-            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true bash test/fixtures/dining_browser_diagnostic_runner.sh
+            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true timeout 180s flutter test --no-pub --platform chrome test/widgets/payment_day_page_repro_test.dart --reporter expanded
           ' _ "$(id -un)" "$PATH" "$HOME"
