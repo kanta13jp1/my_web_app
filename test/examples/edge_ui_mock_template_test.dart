@@ -9,7 +9,7 @@ abstract interface class ExampleReader {
 class FakeExampleReader implements ExampleReader {
   FakeExampleReader({this.items = const [], this.error});
   final List<String> items;
-  final Object? error;
+  final Exception? error;
 
   @override
   Future<List<String>> load() async {
@@ -45,7 +45,8 @@ void main() {
   testWidgets('fake backend displays a successful result', (tester) async {
     await tester.pumpWidget(ExampleScreen(
       reader: FakeExampleReader(items: ['sample']),
-    ));
+    ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('sample'), findsOneWidget);
     expect(find.text('データがありません'), findsNothing);
@@ -60,8 +61,9 @@ void main() {
 
   testWidgets('fake backend does not report a failure as empty', (tester) async {
     await tester.pumpWidget(ExampleScreen(
-      reader: FakeExampleReader(error: StateError('offline')),
-    ));
+      reader: FakeExampleReader(error: Exception('offline')),
+    ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('取得できませんでした'), findsOneWidget);
     expect(find.text('データがありません'), findsNothing);
