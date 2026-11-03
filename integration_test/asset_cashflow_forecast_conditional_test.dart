@@ -61,6 +61,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('実際の上下限や確定額ではありません'), findsOneWidget);
+    expect(find.textContaining('予定が重複して計上される場合があります'), findsOneWidget);
     expect(find.text('条件A：当日予定入金がすべて起点残高に反映済み'), findsOneWidget);
     expect(find.text('条件B：当日予定入金がすべて起点残高に未反映'), findsOneWidget);
     expect(
@@ -107,5 +108,6 @@ void main() {
       find.byKey(const Key('asset_cashflow_forecast_card')),
       findsOneWidget,
     );
+    expect(find.text('予定が重複して計上される場合があります。'), findsOneWidget);
   });
 }

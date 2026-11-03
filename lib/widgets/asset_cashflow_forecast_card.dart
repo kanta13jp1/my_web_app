@@ -495,7 +495,13 @@ class AssetCashflowForecastScenariosCard extends StatelessWidget {
           onReviewPaymentDays: onReviewPaymentDays,
         );
     if (!scenarios.hasAnchorDayIncome) {
-      return card(scenarios.notYetReflected);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('予定が重複して計上される場合があります。'),
+          card(scenarios.notYetReflected),
+        ],
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -503,7 +509,8 @@ class AssetCashflowForecastScenariosCard extends StatelessWidget {
         const Text(
           '当日予定入金の残高反映は未確認のため、2つの条件で比較します。'
           '一部だけ反映済みの可能性もあり、実際の上下限や確定額ではありません。'
-          '未登録の入出金、古い・不足した口座残高、同日内の入出金順序は反映できません。'
+          '予定が重複して計上される場合があります。未登録の入出金、古い・不足した口座残高、'
+          '同日内の入出金順序は考慮できません。'
           'この間、参謀室の資金繰り判定は保留します。',
           key: Key('asset_cashflow_forecast_conditional_notice'),
         ),

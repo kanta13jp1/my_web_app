@@ -43,6 +43,32 @@ AssetCashflowForecast _shortfallForecast() {
 
 void main() {
   group('AssetCashflowForecastCard', () {
+    testWidgets('single forecast also warns that scheduled income can overlap',
+        (tester) async {
+      final scenarios = AssetCashflowForecastService.projectScenarios(
+        asOf: DateTime(2026, 6, 24),
+        startingBalance: 100,
+        horizonMonths: 1,
+        recurringIncome: const [
+          AssetCashflowRecurringEntry(dayOfMonth: 25, amount: 200),
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: AssetCashflowForecastScenariosCard(scenarios: scenarios),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('予定が重複して計上される場合があります。'), findsOneWidget);
+      expect(
+        find.byKey(const Key('asset_cashflow_forecast_card')),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('same-day income shows both conditional forecasts',
         (tester) async {
       final semantics = tester.ensureSemantics();
@@ -73,6 +99,7 @@ void main() {
       expect(find.text('条件A：当日予定入金がすべて起点残高に反映済み'), findsOneWidget);
       expect(find.text('条件B：当日予定入金がすべて起点残高に未反映'), findsOneWidget);
       expect(find.textContaining('実際の上下限や確定額ではありません'), findsOneWidget);
+      expect(find.textContaining('予定が重複して計上される場合があります'), findsOneWidget);
       expect(find.textContaining('¥-80'), findsWidgets);
       expect(find.textContaining('¥120'), findsWidgets);
       expect(find.bySemanticsLabel(RegExp('条件A。将来残高予測グラフ')), findsOneWidget);
