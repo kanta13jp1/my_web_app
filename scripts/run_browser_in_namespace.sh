@@ -20,7 +20,7 @@ for attempt in {1..30}; do
   sleep 1
 done
 curl --fail --silent http://127.0.0.1:4444/status > /dev/null
-flutter drive --no-pub --driver=test_driver/asset_triage_visual.dart \
+flutter drive --no-pub --no-web-resources-cdn --driver=test_driver/asset_triage_visual.dart \
   --target=integration_test/asset_debt_read_browser_test.dart \
   --browser-dimension=1440x1000@1 -d web-server --browser-name=chrome --headless
 for name in existing failed missing; do
