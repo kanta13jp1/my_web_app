@@ -11,6 +11,14 @@ EXACT = frozenset({
     'scripts/prepare_debt_read_sandbox.py',
     'scripts/run_debt_read_sandbox.sh',
     'scripts/verify_debt_read_result.py',
+    'scripts/prepare_browser_scratch.py',
+    'scripts/run_browser_in_namespace.sh',
+    'scripts/test_classify_debt_read_scope.py',
+    'scripts/test_ci_collection.cjs',
+    'test_driver/asset_triage_visual.dart',
+    'integration_test/asset_debt_read_browser_test.dart',
+    'integration_test/support/asset_debt_read_contract.dart',
+    'integration_test/support/asset_debt_read_factory.dart',
 })
 FIXTURE_PREFIX = 'test/fixtures/debt_read_fail_closed/'
 REQUIRED = (
@@ -19,6 +27,15 @@ REQUIRED = (
     'scripts/prepare_debt_read_sandbox.py',
     'scripts/run_debt_read_sandbox.sh',
     'scripts/verify_debt_read_result.py',
+    'scripts/prepare_browser_scratch.py',
+    'scripts/run_browser_in_namespace.sh',
+    'scripts/test_classify_debt_read_scope.py',
+    'scripts/test_ci_collection.cjs',
+    'test_driver/asset_triage_visual.dart',
+    'integration_test/asset_debt_read_browser_test.dart',
+    'integration_test/support/asset_debt_read_contract.dart',
+    'integration_test/support/asset_debt_read_factory.dart',
+    FIXTURE_PREFIX + 'browser/asset_debt_read_factory.dart.fixture',
     FIXTURE_PREFIX + 'build_test_instrumentation.py.fixture',
     FIXTURE_PREFIX + 'debt_read_fail_closed_test.dart.fixture',
 )

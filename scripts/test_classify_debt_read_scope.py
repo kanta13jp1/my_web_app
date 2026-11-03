@@ -33,6 +33,10 @@ class ScopeTests(unittest.TestCase):
     def test_relevant_add_modify_delete_and_unrelated(self):
         for status in ('added', 'modified', 'removed'):
             self.assertTrue(scope.classify_pr(event(), listing(row(TARGET, status))))
+            for path in ('integration_test/asset_debt_read_browser_test.dart',
+                         'integration_test/support/asset_debt_read_factory.dart',
+                         'scripts/run_browser_in_namespace.sh'):
+                self.assertTrue(scope.classify_pr(event(), listing(row(path, status))))
         self.assertFalse(scope.classify_pr(event(), listing(row('lib/unrelated.dart'))))
 
     def test_rename_either_side_and_irrelevant_rename(self):
