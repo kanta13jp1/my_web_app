@@ -7,26 +7,29 @@ void main() {
   testWidgets('task clarification controls have accessible labels and contrast',
       (tester) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
-    final evaluation = TaskClarityEvaluation.fromJson(<String, dynamic>{
-      'score': 3,
-      'threshold': 6,
-      'source': 'test',
-      'questions': <String>['期限は？', '完了条件は？'],
-      'evaluated_at': '2026-07-20T00:00:00Z',
-    });
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: TaskClarityDialog(evaluation: evaluation),
+    try {
+      final evaluation = TaskClarityEvaluation.fromJson(<String, dynamic>{
+        'score': 3,
+        'threshold': 6,
+        'source': 'test',
+        'questions': <String>['期限は？', '完了条件は？'],
+        'evaluated_at': '2026-07-20T00:00:00Z',
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TaskClarityDialog(evaluation: evaluation),
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('期限は？'), findsOneWidget);
-    expect(find.text('完了条件は？'), findsOneWidget);
-    await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-    await expectLater(tester, meetsGuideline(textContrastGuideline));
+      expect(find.text('期限は？'), findsOneWidget);
+      expect(find.text('完了条件は？'), findsOneWidget);
+      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(textContrastGuideline));
+    } finally {
+      semantics.dispose();
+    }
   });
 }
