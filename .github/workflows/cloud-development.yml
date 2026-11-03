@@ -29,7 +29,7 @@ jobs:
           test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate_web.dart)" = "f0a506695c249fa79da867c68cadc3a96fec0ec9"
           test "$(git rev-parse HEAD:web/payment_owner_candidate_probe.dart)" = "3dcd257a69ca2562330cf11192546a0e8d30c899"
           test "$(git rev-parse HEAD:test/payment_owner_candidate_stub_test.dart)" = "19a6a0f8228cf8e7bf7364c4c9e314bfa24ed5dc"
-          test "$(git rev-parse HEAD:test/synthetic/payment_owner_dart_idb_probe.cjs)" = "dd133cc82da72e19f2ed408092ff9e488755ad29"
+          test "$(git rev-parse HEAD:test/synthetic/payment_owner_dart_idb_probe.cjs)" = "c676929014d62954a12b54292d010375b32ec86e"
           test "$(git rev-parse HEAD:test/synthetic/run_payment_owner_dart_probe.sh)" = "fa36f274fc32dd81a606cb45496d6d19048550c7"
       - uses: ./.github/actions/setup-flutter-sdk
         with:
