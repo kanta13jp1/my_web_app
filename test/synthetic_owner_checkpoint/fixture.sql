@@ -217,9 +217,9 @@ END $$;
 ALTER FUNCTION lab_private.apply_request(uuid,uuid,bigint,text,jsonb,jsonb) OWNER TO lab_rpc_owner;
 REVOKE ALL ON FUNCTION lab_private.apply_request(uuid,uuid,bigint,text,jsonb,jsonb) FROM PUBLIC, lab_anon;
 GRANT EXECUTE ON FUNCTION lab_private.apply_request(uuid,uuid,bigint,text,jsonb,jsonb) TO lab_authenticated;
-CREATE FUNCTION lab_api.apply_request(uuid,uuid,bigint,text,jsonb,jsonb) RETURNS jsonb
- LANGUAGE sql SECURITY INVOKER SET search_path = '' AS $$
- SELECT lab_private.apply_request($1,$2,$3,$4,$5,$6)
+CREATE FUNCTION lab_api.apply_request(p_request uuid,p_generation uuid,p_expected bigint,p_digest text,
+ p_values jsonb,p_deleted jsonb) RETURNS jsonb LANGUAGE sql SECURITY INVOKER SET search_path = '' AS $$
+ SELECT lab_private.apply_request(p_request,p_generation,p_expected,p_digest,p_values,p_deleted)
 $$;
 REVOKE ALL ON FUNCTION lab_api.apply_request(uuid,uuid,bigint,text,jsonb,jsonb) FROM PUBLIC, lab_anon;
 GRANT EXECUTE ON FUNCTION lab_api.apply_request(uuid,uuid,bigint,text,jsonb,jsonb) TO lab_authenticated;
@@ -284,9 +284,9 @@ END $$;
 ALTER FUNCTION lab_private.read_checked_v1(uuid,uuid,bigint,text,bigint,text) OWNER TO lab_rpc_owner;
 REVOKE ALL ON FUNCTION lab_private.read_checked_v1(uuid,uuid,bigint,text,bigint,text) FROM PUBLIC, lab_anon;
 GRANT EXECUTE ON FUNCTION lab_private.read_checked_v1(uuid,uuid,bigint,text,bigint,text) TO lab_authenticated;
-CREATE FUNCTION lab_api.read_checked_v1(uuid,uuid,bigint,text,bigint,text) RETURNS jsonb
- LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS $$
- SELECT lab_private.read_checked_v1($1,$2,$3,$4,$5,$6)
+CREATE FUNCTION lab_api.read_checked_v1(p_owner uuid,p_generation uuid,p_revision bigint,p_digest text,
+ p_count bigint,p_head text) RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS $$
+ SELECT lab_private.read_checked_v1(p_owner,p_generation,p_revision,p_digest,p_count,p_head)
 $$;
 REVOKE ALL ON FUNCTION lab_api.read_checked_v1(uuid,uuid,bigint,text,bigint,text) FROM PUBLIC, lab_anon;
 GRANT EXECUTE ON FUNCTION lab_api.read_checked_v1(uuid,uuid,bigint,text,bigint,text) TO lab_authenticated;
