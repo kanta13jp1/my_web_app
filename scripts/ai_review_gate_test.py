@@ -201,6 +201,31 @@ class PublicPngTests(unittest.TestCase):
     def intake(self, directory):
         return self.png.prepare_assets(self.state, self.state['files'], self.git, directory)
 
+    def test_rgb_png_and_row_bounds(self):
+        import struct
+        import zlib
+        signature = b'\x89PNG\r\n\x1a\n'
+        header = self.chunk(b'IHDR', struct.pack('>IIBBBBB', 1, 1, 8, 2, 0, 0, 0))
+        end = self.chunk(b'IEND', b'')
+        valid = signature + header + self.chunk(b'IDAT', zlib.compress(b'\x00\x12\x34\x56')) + end
+        self.assertEqual(self.png.png_info(valid)['color_type'], 2)
+        invalid = signature + header + self.chunk(b'IDAT', zlib.compress(b'\x00\x12\x34')) + end
+        with self.assertRaises(ValueError):
+            self.png.png_info(invalid)
+
+    def test_receipts_are_selected_by_pr_and_unknown_pr_cannot_use_5893(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            original, specific = root/'original.json', root/'5893.json'
+            base = {'schema_version': 1, 'provider': 'google-gemini',
+                    'endpoint': self.png.ENDPOINT, 'method': 'generateContent', 'assets': [{}]}
+            original.write_text(json.dumps(dict(base, pull_request=5938)), encoding='utf-8')
+            specific.write_text(json.dumps(dict(base, pull_request=5893)), encoding='utf-8')
+            with patch.object(self.png, 'RECEIPT', original), patch.object(self.png, 'RECEIPT_5893', specific):
+                self.assertEqual(self.png.load_receipt(5893)['pull_request'], 5893)
+                self.assertEqual(self.png.load_receipt(5938)['pull_request'], 5938)
+                self.assertEqual(self.png.load_receipt(1)['pull_request'], 5938)
+
     def test_pinned_pixels_and_receipt_are_bound(self):
         with tempfile.TemporaryDirectory() as temp, patch.object(self.png, 'load_receipt', return_value=self.receipt):
             directory = Path(temp)

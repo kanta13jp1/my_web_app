@@ -122,6 +122,23 @@ class AssetCashflowForecast {
       worstBalance < safetyMargin ? safetyMargin - worstBalance : 0;
 }
 
+/// Two conditional paths; neither identifies the user's actual balance.
+class AssetCashflowForecastScenarios {
+  const AssetCashflowForecastScenarios({
+    required this.alreadyReflected,
+    required this.notYetReflected,
+    required this.hasAnchorDayIncome,
+  });
+
+  final AssetCashflowForecast alreadyReflected;
+  final AssetCashflowForecast notYetReflected;
+  final bool hasAnchorDayIncome;
+
+  /// Suppress a single advisory verdict when anchor-day receipt is unknown.
+  AssetCashflowForecast? get advisoryForecast =>
+      hasAnchorDayIncome ? null : notYetReflected;
+}
+
 /// 既存の単月 [AssetPaymentCalendarService.buildMonth] を「今日起点・Nヶ月先」
 /// の前方残高予測へ拡張する純関数サービス。
 ///
@@ -142,6 +159,48 @@ class AssetCashflowForecastService {
   static bool _isSameDate(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
+  /// Compare both assumptions for all income scheduled on the anchor day.
+  static AssetCashflowForecastScenarios projectScenarios({
+    required DateTime asOf,
+    required double startingBalance,
+    int horizonMonths = 6,
+    List<AssetCashflowRecurringEntry> recurringIncome =
+        const <AssetCashflowRecurringEntry>[],
+    List<AssetCashflowRecurringEntry> recurringOutflow =
+        const <AssetCashflowRecurringEntry>[],
+    List<AssetCashflowDatedEntry> oneTimeIncome =
+        const <AssetCashflowDatedEntry>[],
+    List<AssetCashflowDatedEntry> oneTimeOutflow =
+        const <AssetCashflowDatedEntry>[],
+    double safetyMargin = 0,
+  }) {
+    final anchor = DateTime(asOf.year, asOf.month, asOf.day);
+    final hasAnchorDayIncome = recurringIncome.any(
+          (entry) =>
+              entry.amount > _epsilon &&
+              _clampDay(entry.dayOfMonth, anchor) == anchor.day,
+        ) ||
+        oneTimeIncome.any(
+          (entry) => entry.amount > _epsilon && _isSameDate(entry.date, anchor),
+        );
+    AssetCashflowForecast calculate(bool skipAnchorDayIncome) => project(
+          asOf: anchor,
+          startingBalance: startingBalance,
+          horizonMonths: horizonMonths,
+          recurringIncome: recurringIncome,
+          recurringOutflow: recurringOutflow,
+          oneTimeIncome: oneTimeIncome,
+          oneTimeOutflow: oneTimeOutflow,
+          safetyMargin: safetyMargin,
+          skipAnchorDayIncome: skipAnchorDayIncome,
+        );
+    return AssetCashflowForecastScenarios(
+      alreadyReflected: calculate(true),
+      notYetReflected: calculate(false),
+      hasAnchorDayIncome: hasAnchorDayIncome,
+    );
+  }
+
   static AssetCashflowForecast project({
     required DateTime asOf,
     required double startingBalance,
@@ -155,6 +214,7 @@ class AssetCashflowForecastService {
     List<AssetCashflowDatedEntry> oneTimeOutflow =
         const <AssetCashflowDatedEntry>[],
     double safetyMargin = 0,
+    bool skipAnchorDayIncome = false,
   }) {
     final anchor = DateTime(asOf.year, asOf.month, asOf.day);
     final horizon = max(1, horizonMonths);
@@ -180,7 +240,8 @@ class AssetCashflowForecastService {
         var dayIn = 0.0;
         var dayOut = 0.0;
         for (final entry in recurringIncome) {
-          if (entry.amount > _epsilon &&
+          if (!(skipAnchorDayIncome && _isSameDate(date, anchor)) &&
+              entry.amount > _epsilon &&
               _clampDay(entry.dayOfMonth, monthStart) == day) {
             dayIn += entry.amount;
           }
@@ -206,7 +267,9 @@ class AssetCashflowForecastService {
           }
         }
         for (final entry in oneTimeIncome) {
-          if (entry.amount > _epsilon && _isSameDate(entry.date, date)) {
+          if (!(skipAnchorDayIncome && _isSameDate(date, anchor)) &&
+              entry.amount > _epsilon &&
+              _isSameDate(entry.date, date)) {
             dayIn += entry.amount;
           }
         }
