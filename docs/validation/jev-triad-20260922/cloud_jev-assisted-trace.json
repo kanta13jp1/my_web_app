@@ -1,0 +1,674 @@
+[
+  {
+    "frame": 0,
+    "x": 32,
+    "raw": "right",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run": 0.33,
+      "jump": 0.02,
+      "left": 0,
+      "right_jump": 0.07,
+      "noop": 0.1,
+      "right": 0.41,
+      "right_run_jump": 0.07
+    },
+    "http_ms": 157.70412899999997
+  },
+  {
+    "frame": 30,
+    "x": 85.29999999999994,
+    "raw": "right_run",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_jump": 0.09,
+      "noop": 0.03,
+      "right_run_jump": 0.07,
+      "left": 0,
+      "jump": 0.02,
+      "right": 0.3,
+      "right_run": 0.49
+    },
+    "http_ms": 103.03900700000008
+  },
+  {
+    "frame": 60,
+    "x": 163.29999999999978,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run": 0.21,
+      "jump": 0.05,
+      "right_run_jump": 0.21,
+      "right": 0.16,
+      "noop": 0.01,
+      "left": 0.01,
+      "right_jump": 0.35
+    },
+    "http_ms": 129.83151100000032
+  },
+  {
+    "frame": 90,
+    "x": 241.2999999999996,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run": 0.22,
+      "jump": 0.07,
+      "noop": 0.03,
+      "right_jump": 0.28,
+      "right": 0.18,
+      "left": 0.01,
+      "right_run_jump": 0.21
+    },
+    "http_ms": 157.74834699999974
+  },
+  {
+    "frame": 120,
+    "x": 319.3000000000001,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run": 0.22,
+      "jump": 0.08,
+      "right": 0.23,
+      "right_run_jump": 0.19,
+      "noop": 0.03,
+      "right_jump": 0.24,
+      "left": 0.01
+    },
+    "http_ms": 146.99737099999993
+  },
+  {
+    "frame": 150,
+    "x": 397.3000000000008,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_jump": 0.32,
+      "noop": 0.05,
+      "right_run": 0.15,
+      "left": 0.02,
+      "right": 0.13,
+      "right_run_jump": 0.2,
+      "jump": 0.13
+    },
+    "http_ms": 128.92055600000003
+  },
+  {
+    "frame": 180,
+    "x": 475.3000000000015,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "left": 0.01,
+      "jump": 0.09,
+      "noop": 0.04,
+      "right_jump": 0.25,
+      "right": 0.21,
+      "right_run_jump": 0.18,
+      "right_run": 0.22
+    },
+    "http_ms": 116.28565299999991
+  },
+  {
+    "frame": 210,
+    "x": 553.3000000000021,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run_jump": 0.2,
+      "right": 0.14,
+      "noop": 0.04,
+      "right_run": 0.16,
+      "left": 0.01,
+      "right_jump": 0.31,
+      "jump": 0.14
+    },
+    "http_ms": 146.83970200000022
+  },
+  {
+    "frame": 240,
+    "x": 631.3000000000028,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right": 0.15,
+      "right_run_jump": 0.23,
+      "noop": 0.05,
+      "right_jump": 0.29,
+      "left": 0.01,
+      "jump": 0.13,
+      "right_run": 0.14
+    },
+    "http_ms": 113.68036499999926
+  },
+  {
+    "frame": 270,
+    "x": 709.3000000000035,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run": 0.2,
+      "left": 0.01,
+      "noop": 0.05,
+      "right_jump": 0.24,
+      "right": 0.21,
+      "jump": 0.09,
+      "right_run_jump": 0.2
+    },
+    "http_ms": 145.04978200000005
+  },
+  {
+    "frame": 300,
+    "x": 784.960000000004,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "jump": 0.11,
+      "right_run_jump": 0.2,
+      "right_jump": 0.29000000000000004,
+      "noop": 0.04,
+      "right": 0.18,
+      "left": 0.01,
+      "right_run": 0.17
+    },
+    "http_ms": 130.14600900000005
+  },
+  {
+    "frame": 330,
+    "x": 862.9600000000047,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right": 0.21,
+      "right_run_jump": 0.17,
+      "right_run": 0.18,
+      "right_jump": 0.29000000000000004,
+      "noop": 0.04,
+      "jump": 0.1,
+      "left": 0.01
+    },
+    "http_ms": 116.33188299999983
+  },
+  {
+    "frame": 360,
+    "x": 900,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "jump": 0.24,
+      "left": 0.03,
+      "right_jump": 0.24,
+      "right_run": 0.1,
+      "right": 0.13,
+      "right_run_jump": 0.15,
+      "noop": 0.11
+    },
+    "http_ms": 117.71130799999992
+  },
+  {
+    "frame": 390,
+    "x": 939.1599999999999,
+    "raw": "right_run",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right": 0.17,
+      "right_run": 0.32,
+      "right_run_jump": 0.19,
+      "right_jump": 0.24,
+      "noop": 0.02,
+      "jump": 0.05,
+      "left": 0.01
+    },
+    "http_ms": 94.91324700000041
+  },
+  {
+    "frame": 420,
+    "x": 1017.1600000000005,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right": 0.19,
+      "right_jump": 0.27,
+      "right_run": 0.22,
+      "right_run_jump": 0.2,
+      "noop": 0.03,
+      "jump": 0.08,
+      "left": 0.01
+    },
+    "http_ms": 121.08558799999992
+  },
+  {
+    "frame": 450,
+    "x": 1095.159999999998,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run_jump": 0.19,
+      "right": 0.21,
+      "noop": 0.05,
+      "jump": 0.08,
+      "left": 0.01,
+      "right_jump": 0.25,
+      "right_run": 0.21
+    },
+    "http_ms": 177.41324900000018
+  },
+  {
+    "frame": 480,
+    "x": 1173.1599999999953,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "jump": 0.11,
+      "right_run_jump": 0.23,
+      "noop": 0.04,
+      "right_run": 0.17,
+      "right": 0.14,
+      "left": 0.01,
+      "right_jump": 0.3
+    },
+    "http_ms": 92.2939179999994
+  },
+  {
+    "frame": 510,
+    "x": 1251.1599999999926,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run_jump": 0.22,
+      "right": 0.16,
+      "right_run": 0.2,
+      "left": 0.01,
+      "noop": 0.02,
+      "jump": 0.09,
+      "right_jump": 0.3
+    },
+    "http_ms": 83.28526899999997
+  },
+  {
+    "frame": 540,
+    "x": 1329.1599999999899,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_jump": 0.32,
+      "right_run_jump": 0.22,
+      "right_run": 0.14,
+      "jump": 0.11,
+      "left": 0.01,
+      "right": 0.17,
+      "noop": 0.03
+    },
+    "http_ms": 155.47243799999887
+  },
+  {
+    "frame": 570,
+    "x": 1407.1599999999871,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run_jump": 0.21,
+      "right": 0.19,
+      "right_run": 0.17,
+      "left": 0.01,
+      "right_jump": 0.3,
+      "jump": 0.09,
+      "noop": 0.03
+    },
+    "http_ms": 117.8519610000003
+  },
+  {
+    "frame": 600,
+    "x": 1478.8599999999847,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "left": 0.01,
+      "right_run_jump": 0.23,
+      "right_run": 0.14,
+      "jump": 0.1,
+      "right_jump": 0.32,
+      "noop": 0.03,
+      "right": 0.17
+    },
+    "http_ms": 138.12550699999883
+  },
+  {
+    "frame": 630,
+    "x": 1553.1399999999826,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right": 0.18,
+      "right_run": 0.19,
+      "jump": 0.1,
+      "right_run_jump": 0.21,
+      "left": 0.01,
+      "noop": 0.03,
+      "right_jump": 0.27999999999999997
+    },
+    "http_ms": 90.47542399999838
+  },
+  {
+    "frame": 660,
+    "x": 1631.1399999999799,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_jump": 0.29,
+      "right": 0.16,
+      "noop": 0.04,
+      "right_run": 0.16,
+      "left": 0.01,
+      "jump": 0.14,
+      "right_run_jump": 0.2
+    },
+    "http_ms": 91.35479300000043
+  },
+  {
+    "frame": 690,
+    "x": 1709.1399999999771,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run_jump": 0.2,
+      "noop": 0.03,
+      "jump": 0.1,
+      "right": 0.17,
+      "right_jump": 0.28,
+      "right_run": 0.2,
+      "left": 0.01
+    },
+    "http_ms": 102.40805499999988
+  },
+  {
+    "frame": 720,
+    "x": 1787.1399999999744,
+    "raw": "right_run",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "noop": 0.03,
+      "right_run": 0.29,
+      "jump": 0.06,
+      "left": 0.01,
+      "right_jump": 0.24,
+      "right": 0.19,
+      "right_run_jump": 0.18
+    },
+    "http_ms": 106.26141800000005
+  },
+  {
+    "frame": 750,
+    "x": 1865.1399999999717,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run": 0.21,
+      "jump": 0.12,
+      "noop": 0.03,
+      "right_jump": 0.29000000000000004,
+      "right": 0.15,
+      "left": 0.01,
+      "right_run_jump": 0.19
+    },
+    "http_ms": 150.16549000000123
+  },
+  {
+    "frame": 780,
+    "x": 1943.139999999969,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run_jump": 0.18,
+      "jump": 0.1,
+      "noop": 0.04,
+      "right_jump": 0.32,
+      "right": 0.19,
+      "right_run": 0.16,
+      "left": 0.01
+    },
+    "http_ms": 122.7442030000002
+  },
+  {
+    "frame": 810,
+    "x": 2021.1399999999662,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "jump": 0.12,
+      "right_run_jump": 0.21,
+      "left": 0.02,
+      "right_jump": 0.29,
+      "noop": 0.04,
+      "right": 0.16,
+      "right_run": 0.16
+    },
+    "http_ms": 185.42015100000026
+  },
+  {
+    "frame": 840,
+    "x": 2099.1399999999635,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run_jump": 0.22,
+      "right_jump": 0.31,
+      "noop": 0.04,
+      "jump": 0.15,
+      "left": 0.01,
+      "right": 0.13,
+      "right_run": 0.14
+    },
+    "http_ms": 94.94524799999999
+  },
+  {
+    "frame": 870,
+    "x": 2177.1399999999608,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run_jump": 0.19,
+      "noop": 0.04,
+      "right_jump": 0.27,
+      "right": 0.19,
+      "left": 0.01,
+      "right_run": 0.22,
+      "jump": 0.08
+    },
+    "http_ms": 100.35812700000133
+  },
+  {
+    "frame": 900,
+    "x": 2255.139999999958,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "noop": 0.04,
+      "right_run": 0.2,
+      "right": 0.15,
+      "jump": 0.1,
+      "right_jump": 0.28,
+      "right_run_jump": 0.22,
+      "left": 0.01
+    },
+    "http_ms": 231.60963700000138
+  },
+  {
+    "frame": 930,
+    "x": 2333.1399999999553,
+    "raw": "right_run",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run_jump": 0.19,
+      "jump": 0.07,
+      "left": 0.01,
+      "right_run": 0.24000000000000002,
+      "noop": 0.04,
+      "right_jump": 0.22,
+      "right": 0.23
+    },
+    "http_ms": 116.85436500000105
+  },
+  {
+    "frame": 960,
+    "x": 2411.1399999999526,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "jump": 0.13,
+      "noop": 0.04,
+      "right_run_jump": 0.19,
+      "right_jump": 0.27,
+      "left": 0.01,
+      "right": 0.18,
+      "right_run": 0.18
+    },
+    "http_ms": 88.72807400000056
+  },
+  {
+    "frame": 990,
+    "x": 2489.13999999995,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run": 0.21,
+      "jump": 0.08,
+      "left": 0.01,
+      "right": 0.21,
+      "right_jump": 0.25,
+      "noop": 0.05,
+      "right_run_jump": 0.19
+    },
+    "http_ms": 123.10624599999937
+  },
+  {
+    "frame": 1020,
+    "x": 2567.139999999947,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "jump": 0.09,
+      "noop": 0.05,
+      "right_run_jump": 0.21,
+      "right_run": 0.18,
+      "left": 0.01,
+      "right": 0.17,
+      "right_jump": 0.29000000000000004
+    },
+    "http_ms": 162.4016539999975
+  },
+  {
+    "frame": 1050,
+    "x": 2645.1399999999444,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right_run_jump": 0.21,
+      "noop": 0.03,
+      "right": 0.14,
+      "jump": 0.11,
+      "right_jump": 0.34,
+      "right_run": 0.16,
+      "left": 0.01
+    },
+    "http_ms": 95.75995500000136
+  },
+  {
+    "frame": 1080,
+    "x": 2723.1399999999417,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right": 0.17,
+      "jump": 0.1,
+      "left": 0.01,
+      "right_run": 0.14,
+      "noop": 0.04,
+      "right_jump": 0.3,
+      "right_run_jump": 0.24
+    },
+    "http_ms": 107.4671079999971
+  },
+  {
+    "frame": 1110,
+    "x": 2801.139999999939,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right": 0.17,
+      "right_jump": 0.26,
+      "jump": 0.1,
+      "right_run": 0.22,
+      "left": 0.01,
+      "noop": 0.03,
+      "right_run_jump": 0.21
+    },
+    "http_ms": 105.48209900000074
+  },
+  {
+    "frame": 1140,
+    "x": 2879.139999999936,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "left": 0.01,
+      "right_run_jump": 0.23,
+      "noop": 0.02,
+      "right_jump": 0.29,
+      "right": 0.16,
+      "jump": 0.06,
+      "right_run": 0.23
+    },
+    "http_ms": 128.50118900000234
+  },
+  {
+    "frame": 1170,
+    "x": 2952.459999999936,
+    "raw": "right_jump",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "jump": 0.1,
+      "right_run": 0.18,
+      "left": 0.01,
+      "noop": 0.03,
+      "right": 0.17,
+      "right_jump": 0.29,
+      "right_run_jump": 0.22
+    },
+    "http_ms": 88.79576000000088
+  },
+  {
+    "frame": 1200,
+    "x": 3021.1399999999353,
+    "raw": "right_run",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right": 0.21,
+      "left": 0.01,
+      "right_jump": 0.24,
+      "right_run": 0.27,
+      "jump": 0.07,
+      "right_run_jump": 0.17,
+      "noop": 0.03
+    },
+    "http_ms": 101.59401499999876
+  },
+  {
+    "frame": 1230,
+    "x": 3099.1399999999326,
+    "raw": "right_run",
+    "model": "jev-1.13.0",
+    "probabilities": {
+      "right": 0.21,
+      "jump": 0.09,
+      "right_jump": 0.24,
+      "right_run_jump": 0.18,
+      "left": 0.01,
+      "right_run": 0.24,
+      "noop": 0.03
+    },
+    "http_ms": 127.49980599999981
+  }
+]

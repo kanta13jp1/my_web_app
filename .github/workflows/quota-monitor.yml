@@ -14,20 +14,30 @@ concurrency:
   group: quota-monitor
   cancel-in-progress: false
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   check-quotas:
+    environment:
+      name: observability-production
+      deployment: false
+    permissions:
+      contents: read
     name: Check AI Tool Quotas
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Resolve paid Claude/Codex policy
+        id: paid_ai_policy
+        uses: ./.github/actions/paid-ai-policy
+        with:
+          requested: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED || 'false' }}
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -38,7 +48,7 @@ jobs:
       - name: Check Anthropic Claude Usage
         id: anthropic
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.ANTHROPIC_API_KEY || '' }}
         run: |
           python3 - << 'EOF'
           import os, requests, json
@@ -100,7 +110,7 @@ jobs:
         id: openai
         env:
           # Admin API キー (sk-admin-...) が必要。通常キーでは 401。
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ vars.PAID_AI_CLAUDE_CODEX_ENABLED == 'true' && steps.paid_ai_policy.outputs.enabled == 'true' && secrets.OPENAI_API_KEY || '' }}
         run: |
           python3 - << 'EOF'
           import os, requests, json
@@ -383,6 +393,7 @@ jobs:
           ANTHROPIC_USAGE: ${{ steps.anthropic.outputs.usage_json }}
           OPENAI_USAGE: ${{ steps.openai.outputs.usage_json }}
           COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json }}
+          ACTIONS_MINUTES: ${{ steps.actions_minutes.outputs.usage_json }}
           GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json }}
           HEDRA_USAGE: ${{ steps.hedra.outputs.usage_json }}
           QUOTA_ALERT_WEBHOOK_URL: ${{ secrets.QUOTA_ALERT_WEBHOOK_URL }}
@@ -403,7 +414,7 @@ jobs:
           }
           today = date.today().isoformat()
 
-          tools = ['ANTHROPIC_USAGE', 'OPENAI_USAGE', 'COPILOT_USAGE', 'GEMINI_USAGE', 'HEDRA_USAGE']
+          tools = ['ANTHROPIC_USAGE', 'OPENAI_USAGE', 'COPILOT_USAGE', 'ACTIONS_MINUTES', 'GEMINI_USAGE', 'HEDRA_USAGE']
           for env_key in tools:
               raw = os.environ.get(env_key, '{}')
               if not raw or raw == '{}':
@@ -454,6 +465,7 @@ jobs:
           ANTHROPIC_USAGE: ${{ steps.anthropic.outputs.usage_json }}
           OPENAI_USAGE: ${{ steps.openai.outputs.usage_json }}
           COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json }}
+          ACTIONS_MINUTES: ${{ steps.actions_minutes.outputs.usage_json }}
           GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json }}
           HEDRA_USAGE: ${{ steps.hedra.outputs.usage_json }}
           ANTHROPIC_STATUS: ${{ steps.anthropic.outputs.status }}
@@ -474,6 +486,7 @@ jobs:
               ('ANTHROPIC_USAGE', 'Claude (Anthropic)'),
               ('OPENAI_USAGE', 'OpenAI (CODEX)'),
               ('COPILOT_USAGE', 'GitHub Copilot'),
+              ('ACTIONS_MINUTES', 'GitHub Actions minutes'),
               ('GEMINI_USAGE', 'Gemini Code Assist'),
               ('HEDRA_USAGE', 'Hedra API credits'),
           ]:

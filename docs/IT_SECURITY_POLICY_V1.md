@@ -40,6 +40,8 @@
 | 3-3 | 画面ロック: 離席時ロック + 自動ロック (数分) を設定 |
 | 3-4 | 端末の譲渡・廃棄時はストレージ消去 (暗号化済みであれば回復キー破棄でも可) |
 | 3-5 | 不審な実行ファイル・ブラウザ拡張を入れない。Microsoft Defender を無効化しない |
+| 3-6 | VS Code・terminal・Git・build/test・開発serverは**標準ユーザーで実行**する。昇格は承認済みinstaller・driver・system policy等の単発taskに限定し、完了後は直ちに非昇格へ戻す。editor/shellの「常に管理者として実行」を禁止する |
+| 3-7 | Antivirus/EDR除外はdefault denyとする。検知eventで因果を確認し、endpoint-security ownerが正確なfile/contextへ期限付き承認した場合だけ許可する。folder/extension/user profile/workspace/editor/shell/process全体の除外を禁止し、手順・証跡・撤回は [`VSCODE_TERMINAL_TROUBLESHOOTING.md`](VSCODE_TERMINAL_TROUBLESHOOTING.md) §4を正本とする |
 
 ## 4. ネットワーク / VPN
 
@@ -58,6 +60,7 @@
 | 5-2 | プロンプト・メモリ・ログに秘密鍵を書かない (§2-1 と同一)。鍵が必要な処理は GHA / EF 側で実行する |
 | 5-3 | MCP server を外部公開する場合は [`MCP_AUTH_SECURITY_PRINCIPLES.md`](MCP_AUTH_SECURITY_PRINCIPLES.md) の 10/10 必須 |
 | 5-4 | 自動化 (cron / routine / workflow) は実行ログを残し、異常は監視 runbook ([`PRODUCTION_MONITORING_RUNBOOK.md`](PRODUCTION_MONITORING_RUNBOOK.md)) の cadence で点検する |
+| 5-5 | AI に渡す差分のマスキング、コンテキスト除外、ベンダー別データ利用設定、四半期確認は [`AI_AGENT_DATA_PROTECTION_STANDARD.md`](AI_AGENT_DATA_PROTECTION_STANDARD.md) を正本とする。未確認のオプトアウト状態を「有効」とみなさない |
 
 ## 6. データ・SaaS アクセス管理
 
@@ -66,6 +69,10 @@
 | 6-1 | ユーザーデータへのアクセスは業務上必要な範囲のみ (本番 DB の直接操作は migration / 検証目的に限定し、履歴が残る経路で行う) |
 | 6-2 | 利用 SaaS は台帳化し (§7 棚卸しで維持)、不要になったら解約・権限剥奪 |
 | 6-3 | 顧客 (法人含む) への約束はセキュリティ FAQ ([`B2B_PROPOSAL_V1.md`](B2B_PROPOSAL_V1.md) §4) と本書の範囲内でのみ行う — 規程にない確約をしない |
+| 6-4 | Supabase Organization Owner はMFAを有効化した人間のCEOに限定し、AI agent/CI/routine automationへ付与しない |
+| 6-5 | Production projectの削除は原則禁止。削除・移管はIssueに対象project ref、理由、実行者、実行時刻、24時間以内のbackup/restore成功証跡を記録し、CEOが明示承認する。詳細は [`SUPABASE_BACKUP_RESTORE_RUNBOOK.md`](SUPABASE_BACKUP_RESTORE_RUNBOOK.md) §7 |
+| 6-6 | Database logical backupは暗号化してSupabase外へ保管し、復元可能性を定期drillで検証する。公開repositoryへ平文dumpを保存しない |
+| 6-7 | Supabaseプラットフォームログの外部転送は [`SUPABASE_LOG_DRAINS_REQUIREMENTS.md`](SUPABASE_LOG_DRAINS_REQUIREMENTS.md) に従い、費用承認、転送先審査、90日削除、最小権限を満たす場合だけ有効化する |
 
 ## 7. 点検・棚卸し (運用 cadence)
 
@@ -73,6 +80,9 @@
 |------|------|
 | 四半期 | クレデンシャル棚卸し: 発行済み PAT / API key / SaaS アカウント一覧を確認し、不要分を失効 (§1-4) |
 | 四半期 | 端末設定確認: 暗号化有効 / OS 更新 / 画面ロック (§3) |
+| 四半期 | Endpoint例外台帳とeditor/shellの「常に管理者として実行」を棚卸しし、期限切れ除外を撤回する (§3-6/3-7) |
+| 四半期 | Supabase Organization Owner一覧と削除・移管権限を確認し、不要なOwnerを削除 (§6-4/6-5) |
+| 週次 | 最新の暗号化database backup、restore drill、artifact保持を確認 (§6-6) |
 | 随時 | 露出検知時は §2-5 即時対応 (定期を待たない) |
 | 年次 | 本書全体の見直し改訂 (SOC 2 準備 `9a564512` 着手時は要求項目との gap 分析で改訂) |
 
@@ -111,5 +121,8 @@
 - [`B2B_PROPOSAL_V1.md`](B2B_PROPOSAL_V1.md) — §4 セキュリティ FAQ (顧客向け表現 / 本書が正本)
 - [`ONCALL_INCIDENT_SOP.md`](ONCALL_INCIDENT_SOP.md) — インシデント対応 (§8)
 - [`PRODUCTION_MONITORING_RUNBOOK.md`](PRODUCTION_MONITORING_RUNBOOK.md) — 監視 cadence (§5-4)
+- [`SUPABASE_LOG_DRAINS_REQUIREMENTS.md`](SUPABASE_LOG_DRAINS_REQUIREMENTS.md) — 外部ログ転送、保持、削除、費用統制 (§6-7)
+- [`AI_AGENT_DATA_PROTECTION_STANDARD.md`](AI_AGENT_DATA_PROTECTION_STANDARD.md) — AI コンテキスト除外、CI マスキング、ベンダー別データ利用設定 (§5-5)
+- [`VSCODE_TERMINAL_TROUBLESHOOTING.md`](VSCODE_TERMINAL_TROUBLESHOOTING.md) — 標準ユーザー実行とendpoint-security例外の承認・検証・撤回 (§3-6/3-7)
 - [`MCP_AUTH_SECURITY_PRINCIPLES.md`](MCP_AUTH_SECURITY_PRINCIPLES.md) / [`AI_DEV_PRINCIPLES.md`](AI_DEV_PRINCIPLES.md) — 技術設計原則 (§5)
 - [`OPERATIONS_CHARTER.md`](OPERATIONS_CHARTER.md) — 運用憲章 (5 正本)

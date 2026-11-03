@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-17",
+  "file": "character_walk.png",
+  "sha256": "56bfeccb0f6d0b2efa4b04d241808b42dde8120ac3ac2b2929c93aa92f56b68c",
+  "generator": "image_gen",
+  "model": "not exposed",
+  "reference_artifact": "20261017-101722-2",
+  "source": "original technician, no third-party game imagery",
+  "rights": "pending",
+  "privacy": "pending",
+  "prompt_reference": "docs/ECHO_PUMP_ROOM_STAGE.md"
+}

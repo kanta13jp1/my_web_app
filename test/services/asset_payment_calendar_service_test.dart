@@ -1,8 +1,145 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 
 void main() {
+  test('transfer principal is visible but excluded from expense and income',
+      () {
+    final calendar = AssetPaymentCalendarService.buildMonth(
+      month: DateTime(2026, 6),
+      flows: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 42,
+          'occurred_at': '2026-06-12T04:00:00Z',
+          'amount': 5000,
+          'action_type': 'transfer',
+          'description': '[銀行A→現金] ATM引出し',
+        },
+        <String, dynamic>{
+          'occurred_at': '2026-06-12T04:00:00Z',
+          'amount': 220,
+          'action_type': 'expense',
+          'description': 'ATM手数料',
+        },
+      ],
+      subscriptions: const <Map<String, dynamic>>[],
+      debts: const <AssetCalendarDebtInput>[],
+      startingCashBalance: 10000,
+    );
+    final day = calendar.dayFor(DateTime(2026, 6, 12))!;
+    expect(day.events, hasLength(2));
+    expect(day.hasTransfer, isTrue);
+    expect(day.expenseTotal, 220);
+    expect(day.incomeTotal, 0);
+    expect(day.projectedBalance, 10000);
+    final transfer = day.events.singleWhere(
+      (event) => event.kind == AssetCalendarEventKind.transfer,
+    );
+    expect(transfer.amount, 5000);
+    expect(transfer.sourceId, '42');
+    expect(transfer.label, contains('銀行A→現金'));
+    expect(transfer.label, contains('支出集計外'));
+    expect(
+      calendar.days.fold<double>(0, (sum, day) => sum + day.expenseTotal),
+      220,
+    );
+  });
+
+  test('transfer without a recorded fee does not invent an expense', () {
+    final calendar = AssetPaymentCalendarService.buildMonth(
+      month: DateTime(2026, 6),
+      flows: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'occurred_at': '2026-06-30T04:00:00Z',
+          'amount': 7000,
+          'action_type': 'transfer',
+        },
+        <String, dynamic>{
+          'occurred_at': '2026-07-01T04:00:00Z',
+          'amount': 8000,
+          'action_type': 'transfer',
+        },
+      ],
+      subscriptions: const <Map<String, dynamic>>[],
+      debts: const <AssetCalendarDebtInput>[],
+    );
+    final day = calendar.dayFor(DateTime(2026, 6, 30))!;
+    expect(day.events.single.kind, AssetCalendarEventKind.transfer);
+    expect(day.events.single.label, '振替（支出集計外）');
+    expect(day.expenseTotal, 0);
+    expect(day.incomeTotal, 0);
+    expect(calendar.days.where((day) => day.hasTransfer), hasLength(1));
+  });
+
   group('AssetPaymentCalendarService', () {
+    test(
+        'Issue #5190: handles paid debt without adding to scheduled outflow and labels (支払済)',
+        () {
+      final calendar = AssetPaymentCalendarService.buildMonth(
+        month: DateTime(2026, 8),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: const <AssetCalendarDebtInput>[
+          AssetCalendarDebtInput(
+            id: 'acom',
+            name: 'アコム',
+            balance: -100000,
+            paymentDay: 26,
+            scheduledPaymentAmount: 10000,
+            paid: true,
+          ),
+          AssetCalendarDebtInput(
+            id: 'mobit',
+            name: 'モビット',
+            balance: -50000,
+            paymentDay: 26,
+            scheduledPaymentAmount: 5000,
+            paid: false,
+          ),
+        ],
+      );
+
+      final day26 = calendar.dayFor(DateTime(2026, 8, 26));
+      expect(day26, isNotNull);
+      expect(day26!.events, hasLength(2));
+      final acomEvent = day26.events.firstWhere((e) => e.sourceId == 'acom');
+      expect(acomEvent.label, 'アコム (支払済)');
+      expect(acomEvent.isPaid, isTrue);
+      expect(acomEvent.amount, isNull);
+
+      final mobitEvent = day26.events.firstWhere((e) => e.sourceId == 'mobit');
+      expect(mobitEvent.label, 'モビット 返済');
+      expect(mobitEvent.isPaid, isFalse);
+      expect(mobitEvent.amount, 5000);
+
+      expect(calendar.scheduledDebtPaymentTotal, 5000);
+    });
+
+    test('maps utility workbook rows to fixed-cost calendar inputs', () {
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{'現金': 100000},
+        baseDate: DateTime(2026, 8, 1),
+        recurringFixedCosts: const <AssetRecurringFixedCost>[
+          AssetRecurringFixedCost(
+            id: 'notion',
+            name: 'Notion',
+            amount: 3712,
+            paymentDay: 17,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+        ],
+      );
+      final row = workbook.debtMasterRows.singleWhere(
+        (candidate) => candidate.name == 'Notion',
+      );
+
+      final input = AssetCalendarDebtInput.fromDebtRow(row);
+
+      expect(input.isFixedCost, isTrue);
+      expect(input.scheduledPaymentAmount, 3712);
+    });
+
     test('aggregates expenses and income per local day', () {
       final calendar = AssetPaymentCalendarService.buildMonth(
         month: DateTime(2026, 6),
@@ -404,6 +541,104 @@ void main() {
   });
 
   group('AssetPaymentCalendarService.buildRange (給料日サイクル窓)', () {
+    test('classifies fixed-cost debt rows separately from debt repayments', () {
+      final calendar = AssetPaymentCalendarService.buildRange(
+        start: DateTime(2026, 8, 1),
+        endExclusive: DateTime(2026, 9, 1),
+        asOf: DateTime(2026, 8, 1),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: const <AssetCalendarDebtInput>[
+          AssetCalendarDebtInput(
+            id: 'notion',
+            name: 'Notion',
+            balance: -3712,
+            paymentDay: 17,
+            scheduledPaymentAmount: 3712,
+            isFixedCost: true,
+          ),
+          AssetCalendarDebtInput(
+            id: 'loan',
+            name: 'ローン',
+            balance: -100000,
+            paymentDay: 20,
+            scheduledPaymentAmount: 5000,
+          ),
+        ],
+      );
+
+      expect(calendar.subscriptionTotal, 3712);
+      expect(calendar.scheduledDebtPaymentTotal, 5000);
+      expect(calendar.dayFor(DateTime(2026, 8, 17))!.hasSubscription, isTrue);
+      expect(calendar.dayFor(DateTime(2026, 8, 17))!.hasDebtPayment, isFalse);
+      expect(calendar.dayFor(DateTime(2026, 8, 20))!.hasDebtPayment, isTrue);
+    });
+
+    test('does not double count matching legacy and current fixed costs', () {
+      final calendar = AssetPaymentCalendarService.buildRange(
+        start: DateTime(2026, 8, 1),
+        endExclusive: DateTime(2026, 9, 1),
+        asOf: DateTime(2026, 8, 1),
+        flows: const <Map<String, dynamic>>[],
+        subscriptionFixedCostIds: const {'legacy-notion': 'cost-notion'},
+        subscriptions: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'legacy-notion',
+            'service_name': 'Notion',
+            'price': 3712,
+            'due_date': '2026-08-17T00:00:00',
+          },
+        ],
+        debts: const <AssetCalendarDebtInput>[
+          AssetCalendarDebtInput(
+            id: 'notion',
+            recurringFixedCostId: 'cost-notion',
+            name: 'Notion',
+            balance: -3712,
+            paymentDay: 17,
+            scheduledPaymentAmount: 3712,
+            isFixedCost: true,
+          ),
+        ],
+      );
+
+      expect(calendar.subscriptionTotal, 3712);
+      expect(
+        calendar.dayFor(DateTime(2026, 8, 17))!.events.where(
+              (event) => event.kind == AssetCalendarEventKind.subscription,
+            ),
+        hasLength(1),
+      );
+      expect(calendar.dayFor(DateTime(2026, 8, 17))!.scheduledOutflow, 3712);
+    });
+
+    test('asOf still excludes fixed costs whose payment day has passed', () {
+      final calendar = AssetPaymentCalendarService.buildRange(
+        start: DateTime(2026, 8, 1),
+        endExclusive: DateTime(2026, 9, 1),
+        asOf: DateTime(2026, 8, 18),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: const <AssetCalendarDebtInput>[
+          AssetCalendarDebtInput(
+            id: 'notion',
+            name: 'Notion',
+            balance: -3712,
+            paymentDay: 17,
+            scheduledPaymentAmount: 3712,
+            isFixedCost: true,
+          ),
+        ],
+      );
+
+      expect(calendar.subscriptionTotal, 0);
+      expect(
+        calendar.dayFor(DateTime(2026, 8, 17))!.hasSubscription,
+        isFalse,
+      );
+      expect(calendar.scheduledOutflowTotal, 0);
+    });
+
     test('cycle window spans two months and resolves payment days', () {
       final calendar = AssetPaymentCalendarService.buildRange(
         start: DateTime(2026, 6, 25),

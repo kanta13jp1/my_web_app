@@ -7,8 +7,15 @@ readonly MODEL_DEVICE="/dev/disk/by-id/google-video-model-cache"
 readonly MODEL_MOUNT="/srv/models"
 readonly MODEL_DIR="${MODEL_MOUNT}/Wan2.2-TI2V-5B"
 readonly STATE_DIR="/var/lib/video-worker"
+readonly GPU_READY_ATTEMPTS=24
+readonly GPU_READY_RETRY_SECONDS=5
 
 exec > >(logger --tag video-gpu-startup) 2>&1
+
+# The unit is intentionally kept disabled between boots. A unit left enabled by
+# an older startup script can otherwise claim a paid job while Docker, the model
+# image, and the GPU runtime are still being provisioned on this boot.
+systemctl disable --now video-worker.service || true
 
 metadata() {
   curl --fail --silent --show-error \
@@ -108,12 +115,26 @@ if [[ ! -f "${revision_marker}" ]] || \
   printf '%s\n' "${MODEL_REVISION}" > "${revision_marker}"
 fi
 
-docker run --rm \
-  --gpus all \
-  --mount "type=bind,src=${MODEL_DIR},dst=/models/Wan2.2-TI2V-5B,readonly" \
-  --entrypoint python3 \
-  "${CONTAINER_IMAGE}" \
-  -c "import flash_attn, torch; assert torch.cuda.is_available(); print(torch.cuda.get_device_name(0))"
+gpu_ready=false
+for gpu_attempt in $(seq 1 "${GPU_READY_ATTEMPTS}"); do
+  if docker run --rm \
+    --gpus all \
+    --mount "type=bind,src=${MODEL_DIR},dst=/models/Wan2.2-TI2V-5B,readonly" \
+    --entrypoint python3 \
+    "${CONTAINER_IMAGE}" \
+    -c "import flash_attn, torch; assert torch.cuda.is_available(); print(torch.cuda.get_device_name(0))"; then
+    gpu_ready=true
+    break
+  fi
+
+  echo "GPU container runtime is not ready (attempt ${gpu_attempt}/${GPU_READY_ATTEMPTS}); retrying in ${GPU_READY_RETRY_SECONDS}s" >&2
+  sleep "${GPU_READY_RETRY_SECONDS}"
+done
+
+if [[ "${gpu_ready}" != "true" ]]; then
+  echo "GPU container runtime did not become ready after ${GPU_READY_ATTEMPTS} attempts" >&2
+  exit 1
+fi
 
 install -m 0755 /dev/stdin /usr/local/sbin/run-video-worker <<'WORKER_SCRIPT'
 #!/usr/bin/env bash
@@ -184,10 +205,11 @@ WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
+systemctl disable video-worker.service || true
 if [[ "${WORKER_ENABLED}" == "true" ]]; then
-  systemctl enable --now video-worker.service
+  systemctl start video-worker.service
 else
-  systemctl disable --now video-worker.service || true
+  systemctl stop video-worker.service || true
 fi
 
 printf '%s\n' "ready" > "${STATE_DIR}/status"

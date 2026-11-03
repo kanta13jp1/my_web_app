@@ -315,6 +315,11 @@ class _ComposerState extends State<_Composer> {
             ),
             controlAffinity: ListTileControlAffinity.leading,
           ),
+          if (viewModel.hasAppliedImprovement ||
+              viewModel.activeAuthorization != null) ...[
+            const SizedBox(height: DesignTokens.space12),
+            _ImprovementAuthorizationCard(viewModel: viewModel),
+          ],
           const SizedBox(height: DesignTokens.space12),
           Container(
             padding: const EdgeInsets.all(DesignTokens.space12),
@@ -369,6 +374,168 @@ class _ComposerState extends State<_Composer> {
       ),
     );
   }
+}
+
+class _ImprovementAuthorizationCard extends StatelessWidget {
+  const _ImprovementAuthorizationCard({required this.viewModel});
+
+  final VideoStudioViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final matching = viewModel.matchingActiveAuthorization;
+    final active = matching ?? viewModel.activeAuthorization;
+    return Container(
+      key: const Key('video-improvement-authorization'),
+      padding: const EdgeInsets.all(DesignTokens.space12),
+      decoration: BoxDecoration(
+        color: DesignTokens.indigo.withValues(alpha: .14),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+        border: Border.all(
+          color: DesignTokens.indigoLight.withValues(alpha: .55),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            '改善ループの継続承認',
+            style: TextStyle(
+              color: DesignTokens.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space8),
+          if (active != null) ...[
+            Text(
+              '承認ID ${active.id}\n'
+              '状態 ${_authorizationStatusLabel(active)}\n'
+              '有効期限 ${_formatAuthorizationDate(active.validUntil)}\n'
+              '残り ${active.remainingRegenerations}回・${active.remainingCredits} credits',
+              key: const Key('video-authorization-status'),
+              style: _secondaryStyle,
+            ),
+            const SizedBox(height: DesignTokens.space8),
+            if (matching != null && viewModel.hasAppliedImprovement)
+              FilledButton.icon(
+                key: const Key('video-run-existing-authorization'),
+                onPressed: viewModel.canRunAuthorizedImprovement
+                    ? () => unawaited(viewModel.runAuthorizedImprovement())
+                    : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: DesignTokens.indigoLight,
+                  foregroundColor: Colors.black,
+                ),
+                icon: const Icon(Icons.loop),
+                label: Text(
+                  viewModel.isAuthorizingImprovement
+                      ? '改善生成を開始しています…'
+                      : '既存承認で300 creditsの改善生成を実行',
+                ),
+              ),
+            TextButton.icon(
+              key: const Key('video-revoke-authorization'),
+              onPressed: viewModel.revokingAuthorizationId == null
+                  ? () => unawaited(viewModel.revokeAuthorization(active.id))
+                  : null,
+              icon: const Icon(Icons.stop_circle_outlined),
+              label: const Text('今後の自動改善を停止'),
+            ),
+          ] else if (viewModel.hasAppliedImprovement) ...[
+            const Text(
+              '期限と反復上限を選ぶと承認IDを保存します。残高・最新レビュー・生成枠が揃えば最初の300 creditsを同時予約し、揃わない場合は理由付きで保留して後から同じ承認IDで再開します。',
+              style: _secondaryStyle,
+            ),
+            const SizedBox(height: DesignTokens.space12),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<int>(
+                    key: const Key('video-authorization-expiry'),
+                    initialValue: viewModel.authorizationValidityHours,
+                    dropdownColor: DesignTokens.surface2,
+                    decoration: _inputDecoration('有効期限'),
+                    items: const [
+                      DropdownMenuItem(value: 24, child: Text('24時間')),
+                      DropdownMenuItem(value: 168, child: Text('7日間')),
+                      DropdownMenuItem(value: 720, child: Text('30日間')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        viewModel.setAuthorizationValidityHours(value);
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: DesignTokens.space8),
+                Expanded(
+                  child: DropdownButtonFormField<int>(
+                    key: const Key('video-authorization-iterations'),
+                    initialValue: viewModel.authorizationRegenerations,
+                    dropdownColor: DesignTokens.surface2,
+                    decoration: _inputDecoration('最大反復'),
+                    items: const [
+                      DropdownMenuItem(value: 1, child: Text('1回')),
+                      DropdownMenuItem(value: 2, child: Text('2回')),
+                      DropdownMenuItem(value: 3, child: Text('3回')),
+                      DropdownMenuItem(value: 5, child: Text('5回')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        viewModel.setAuthorizationRegenerations(value);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: DesignTokens.space8),
+            Text(
+              '1回上限 ${viewModel.requiredCredits} credits・総上限 '
+              '${viewModel.authorizationTotalCredits} credits・自動購入 0円',
+              key: const Key('video-authorization-limits'),
+              style: const TextStyle(color: DesignTokens.amber),
+            ),
+            const SizedBox(height: DesignTokens.space8),
+            FilledButton.icon(
+              key: const Key('video-authorize-and-run'),
+              onPressed: viewModel.canAuthorizeImprovement
+                  ? () => unawaited(viewModel.authorizeAndGenerateImprovement())
+                  : null,
+              style: FilledButton.styleFrom(
+                backgroundColor: DesignTokens.orange,
+                foregroundColor: Colors.black,
+              ),
+              icon: const Icon(Icons.play_circle_outline),
+              label: Text(
+                viewModel.isAuthorizingImprovement
+                    ? '承認と生成を開始しています…'
+                    : '継続承認を保存して最初の300 creditsを実行',
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+String _formatAuthorizationDate(DateTime value) {
+  final local = value.toLocal().toString();
+  return local.length >= 16 ? local.substring(0, 16) : local;
+}
+
+String _authorizationStatusLabel(VideoImprovementAuthorization value) {
+  return switch (value.status) {
+    'active' => '実行可能',
+    'pending_review' => 'レビュー待ち',
+    'pending_funding' => '残高待ち',
+    'pending_execution' => '生成枠待ち',
+    'exhausted' => '上限到達',
+    'expired' => '期限切れ',
+    'revoked' => '停止済み',
+    _ => value.status,
+  };
 }
 
 class _BalanceAndPacks extends StatelessWidget {

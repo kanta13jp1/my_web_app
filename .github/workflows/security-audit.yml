@@ -1,0 +1,57 @@
+name: Security Audit
+
+on:
+  schedule:
+    - cron: "17 22 * * 0" # Monday 07:17 JST
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: security-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Independent security controls audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Enforce GitHub Actions security policy
+        run: python scripts/check_github_actions_security_policy.py
+
+      - name: Check migration ordering
+        run: |
+          python scripts/check_migration_timestamps.py
+          python -m unittest \
+            scripts/test_security_review_input.py \
+            scripts/test_run_dual_security_review.py \
+            scripts/test_decision_event_migration.py
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+
+      - name: Validate decision event API
+        run: |
+          deno fmt --check supabase/functions/decision-events
+          deno lint --config supabase/functions/deno.json supabase/functions/decision-events
+          deno test --frozen --config supabase/functions/deno.json supabase/functions/decision-events/index_test.ts
+
+      - name: Publish audit summary
+        if: always()
+        run: |
+          {
+            echo "## Security audit"
+            echo ""
+            echo "This task is independent from pr-auto-review and dependency-audit."
+            echo "It checks workflow least privilege, migration ordering, and the authenticated decision-event write path."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,5 +1,11 @@
 import 'dart:async';
 
+import '../pages/aero_lab_page.dart';
+import '../pages/sound_bloom_page.dart';
+import '../pages/lumen_path_page.dart';
+import '../pages/kinetic_forge_page.dart';
+import '../pages/flow_city_page.dart';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,8 +18,10 @@ import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
 import '../pages/agent_board_page.dart';
 import '../pages/autonomous_ops_console_page.dart';
+import '../pages/micro_mentor_dashboard_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
 import '../pages/english_reading_curriculum_page.dart';
+import '../ui/features/toeic/toeic_feature.dart';
 import '../pages/ai_company_builder_page.dart';
 import '../pages/ai_secretary_page.dart';
 import '../pages/my_skills_page.dart';
@@ -59,10 +67,12 @@ import '../pages/payment_reminder_page.dart';
 import '../pages/prison_mode_page.dart';
 import '../pages/public_memo_directory_page.dart';
 import '../pages/purchase_log_page.dart';
+import '../pages/process_quality_dashboard_page.dart';
 import '../pages/reality_check_page.dart';
 import '../pages/real_world_danshari_page.dart';
 import '../pages/referral_page.dart';
 import '../pages/shopping_list_page.dart';
+import '../pages/spreadsheet_database_page.dart';
 import '../pages/stock_tasks_page.dart';
 import '../pages/table_data_page.dart';
 import '../pages/tech_blog_tracker_page.dart';
@@ -109,6 +119,8 @@ import '../pages/guitar_recording_studio_page.dart';
 import '../pages/public_guitar_gallery_page.dart';
 import '../pages/music_collaboration_page.dart';
 import '../ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
+import '../ui/features/custom_task_list/custom_task_list_feature.dart';
+import '../ui/features/local_business_map/local_business_map_feature.dart';
 import '../pages/focus_timer_page.dart';
 import '../pages/writing_center_page.dart';
 import '../pages/wiki_database_page.dart';
@@ -141,6 +153,7 @@ import '../pages/gift_registry_page.dart';
 import '../pages/growth_automation_controller_page.dart';
 import '../pages/knowledge_base_page.dart';
 import '../pages/knowledge_graph_page.dart';
+import '../pages/user_knowledge_graph_page.dart';
 import '../pages/landing_ab_test_page.dart';
 import '../pages/loyalty_points_page.dart';
 import '../pages/market_intelligence_page.dart';
@@ -157,6 +170,7 @@ import '../pages/social_feed_page.dart';
 import '../pages/subscription_billing_page.dart';
 import '../pages/digital_product_store_pages.dart';
 import '../pages/viral_ad_generator_page.dart';
+import '../ui/features/palm_reading/palm_reading_feature.dart';
 import '../ui/features/video_studio/video_studio_feature.dart';
 import '../ui/features/notion_migration/notion_migration_feature.dart';
 import '../pages/youtube_stats_page.dart';
@@ -165,6 +179,7 @@ import '../pages/work_menu_page.dart';
 import '../pages/workflow_templates_page.dart';
 import '../pages/crm_sales_pipeline_page.dart';
 import '../pages/travel_itinerary_page.dart';
+import '../pages/art_museum_directory_page.dart';
 import '../pages/virtual_whiteboard_page.dart';
 import '../pages/recipe_meal_planner_page.dart';
 import '../pages/language_learning_page.dart';
@@ -838,6 +853,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
           _pushPage(context, const EnglishReadingCurriculumPage()),
     ),
     HomeToolEntry(
+      id: 'ai-university-toeic',
+      sectionId: 'knowledge',
+      title: 'AI大学 TOEIC対策',
+      subtitle: '毎日5問のPart別ドリルで目標スコアへ',
+      icon: Icons.school_outlined,
+      color: const Color(0xFF2563EB),
+      keywords: const <String>[
+        'TOEIC',
+        '英語',
+        '文法',
+        '語彙',
+        'Part 5',
+        'Part 6',
+        'Part 7',
+        'English',
+      ],
+      onOpen: (context) => _pushPage(context, const ToeicFeature()),
+    ),
+    HomeToolEntry(
       id: 'agent-gpa-dashboard',
       sectionId: 'knowledge',
       title: 'AI Executive GPA',
@@ -853,6 +887,17 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'debug',
       ],
       onOpen: (context) => _pushPage(context, const AgentGpaDashboardPage()),
+      requiresClearDeck: true,
+    ),
+    HomeToolEntry(
+      id: 'micro-mentors',
+      sectionId: 'knowledge',
+      title: 'マイクロAIメンター',
+      subtitle: '領域別メンターの提案を比較する',
+      icon: Icons.psychology_alt_outlined,
+      color: const Color(0xFF00796B),
+      keywords: const <String>['AIメンター', 'ペルソナ', '提案', '予定'],
+      onOpen: (context) => _pushPage(context, MicroMentorDashboardPage()),
       requiresClearDeck: true,
     ),
     HomeToolEntry(
@@ -993,6 +1038,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['性格診断', 'MBTI', '16タイプ', '自己分析'],
       onOpen: (context) =>
           _pushPage(context, const PersonalityTestQuestionsPage(testId: 1)),
+    ),
+    HomeToolEntry(
+      id: 'palm-reading',
+      sectionId: 'knowledge',
+      title: '手相AI占い',
+      subtitle: '手のひらを撮影し、鑑定履歴と変化をAIで振り返る',
+      icon: Icons.back_hand_outlined,
+      color: const Color(0xFF7C4DFF),
+      keywords: const <String>[
+        '手相',
+        '占い',
+        'AI占い',
+        '手のひら',
+        '写真',
+        '変化',
+        '履歴',
+        'palm',
+      ],
+      onOpen: (context) => _pushPage(context, const PalmReadingPage()),
     ),
     HomeToolEntry(
       id: 'iq-test',
@@ -1529,6 +1593,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const UserTasksPage()),
     ),
     HomeToolEntry(
+      id: 'custom-task-list',
+      sectionId: 'personal',
+      title: 'AI カスタムタスクリスト',
+      subtitle: '目標と現状から、編集・完了管理できる具体的な行動リストをAI生成',
+      icon: Icons.playlist_add_check_circle_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>[
+        'AI',
+        'カスタムタスク',
+        'タスクリスト',
+        '目標分解',
+        'TODO',
+        '行動計画',
+      ],
+      onOpen: (context) => _pushPage(context, const CustomTaskListPage()),
+    ),
+    HomeToolEntry(
       id: 'gantt-timeline',
       sectionId: 'growth',
       title: 'ガントチャート (Growth Timeline)',
@@ -1835,6 +1916,44 @@ List<HomeToolEntry> buildHomeToolCatalog({
           Navigator.of(context).pushNamed('/procrastination-reset'),
     ),
     HomeToolEntry(
+      id: 'proactive-form-check',
+      sectionId: 'personal',
+      title: '入力チェックアシスタント',
+      subtitle: '入力中にエラーを見つけ、具体的な修正案を反映',
+      icon: Icons.fact_check_outlined,
+      color: const Color(0xFF2563EB),
+      keywords: const <String>[
+        '入力チェック',
+        'フォーム',
+        'エラー',
+        '検証',
+        '修正案',
+        'validation',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/proactive-form-check'),
+    ),
+    HomeToolEntry(
+      id: 'echo-pump',
+      sectionId: 'personal',
+      title: '残響ポンプ室',
+      subtitle: '電源と音で敵を誘導する、短い脱出ホラーの見取り図版',
+      icon: Icons.flashlight_on,
+      color: const Color(0xFF26796C),
+      keywords: const <String>['ゲーム', 'ホラー', '脱出', 'ポンプ', '残響', 'echo'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/echo-pump'),
+    ),
+    HomeToolEntry(
+      id: 'sea-shelter',
+      sectionId: 'personal',
+      title: '潮灯のシェルター',
+      subtitle: '漂流物を集め、住民と海上拠点を育てるサバイバル試作',
+      icon: Icons.sailing_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['ゲーム', '海', 'サバイバル', '拠点', '住民', 'sea shelter'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/sea-shelter'),
+    ),
+    HomeToolEntry(
       id: 'focus-capture',
       sectionId: 'personal',
       title: 'フォーカス捕獲ゲーム',
@@ -1897,6 +2016,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
           _pushPage(context, const AudioEffectsProcessorPage()),
     ),
     // office セクション
+    HomeToolEntry(
+      id: 'spreadsheet-database',
+      sectionId: 'office',
+      title: '表計算',
+      subtitle: 'セル編集・基本数式・自動保存に対応したデスクトップ表計算',
+      icon: Icons.grid_on_outlined,
+      color: const Color(0xFF107C41),
+      keywords: const <String>['表計算', 'スプレッドシート', 'Excel', '数式', '集計', 'SUM'],
+      onOpen: (context) => _pushPage(context, const SpreadsheetDatabasePage()),
+    ),
     HomeToolEntry(
       id: 'shop',
       sectionId: 'office',
@@ -2021,6 +2150,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const KnowledgeGraphPage()),
     ),
     HomeToolEntry(
+      id: 'my-knowledge-graph',
+      sectionId: 'knowledge',
+      title: 'マイ・ナレッジグラフ',
+      subtitle: '自分の文書を登録し、根拠つきチャットで検索',
+      icon: Icons.account_tree_outlined,
+      color: const Color(0xFF4338CA),
+      keywords: const <String>[
+        'knowledge graph',
+        'writer',
+        'rag',
+        '文書アップロード',
+        '社内検索',
+        '引用',
+      ],
+      onOpen: (context) => _pushPage(context, const UserKnowledgeGraphPage()),
+    ),
+    HomeToolEntry(
       id: 'semantic-search',
       sectionId: 'knowledge',
       title: 'セマンティック検索',
@@ -2076,6 +2222,24 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF00838F),
       keywords: const <String>['受信', 'メール', 'トリアージ', 'inbox', '優先度'],
       onOpen: (context) => _pushPage(context, const SmartInboxTriagePage()),
+    ),
+    HomeToolEntry(
+      id: 'platform-release-checklist',
+      sectionId: 'knowledge',
+      title: 'プラットフォーム別リリース確認',
+      subtitle: 'Web・iOS・Androidの確認状態とメモを分けて記録',
+      icon: Icons.fact_check_outlined,
+      color: const Color(0xFF1565C0),
+      keywords: const <String>[
+        'リリース',
+        'platform',
+        'iOS',
+        'Android',
+        'Web',
+        '確認',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/platform-release-checklist'),
     ),
     HomeToolEntry(
       id: 'form-builder',
@@ -2267,6 +2431,56 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
     ),
     HomeToolEntry(
+      id: 'flow-city',
+      sectionId: 'growth',
+      title: '交通実験室 · FLOW CITY',
+      subtitle: '同じ需要で信号条件を変え、到着と待機を比較',
+      icon: Icons.traffic_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['交通', '信号', '比較', 'FLOW CITY', 'Astra'],
+      onOpen: (context) => _pushPage(context, const FlowCityPage()),
+    ),
+    HomeToolEntry(
+      id: 'kinetic-forge',
+      sectionId: 'growth',
+      title: '描画実験室 · KINETIC FORGE',
+      subtitle: '坂を描き、球を放って、失敗からコースを改善する',
+      icon: Icons.route_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['描画', 'コース', '実験', 'KINETIC FORGE', 'Astra'],
+      onOpen: (context) => _pushPage(context, const KineticForgePage()),
+    ),
+    HomeToolEntry(
+      id: 'lumen-path',
+      sectionId: 'growth',
+      title: '光の道 · LUMEN PATH',
+      subtitle: '鏡を回して、3色の光をゴールへ導く',
+      icon: Icons.route_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['光', '鏡', 'パズル', 'LUMEN PATH', 'Astra'],
+      onOpen: (context) => _pushPage(context, const LumenPathPage()),
+    ),
+    HomeToolEntry(
+      id: 'sound-bloom',
+      sectionId: 'growth',
+      title: '音と光の庭 · SOUND BLOOM',
+      subtitle: '光を植えて、音楽を育てる',
+      icon: Icons.music_note_outlined,
+      color: const Color(0xFF527D62),
+      keywords: const <String>['音楽', '作曲', 'SOUND BLOOM', '楽器', 'Astra'],
+      onOpen: (context) => _pushPage(context, const SoundBloomPage()),
+    ),
+    HomeToolEntry(
+      id: 'aero-lab',
+      sectionId: 'growth',
+      title: '3D実験室 · AERO LAB',
+      subtitle: 'エンジンを回して、開いて、空気の流れを学ぶ',
+      icon: Icons.science_outlined,
+      color: const Color(0xFF00838F),
+      keywords: const <String>['3D', 'AERO LAB', 'エンジン', '実験', 'Astra'],
+      onOpen: (context) => _pushPage(context, const AeroLabPage()),
+    ),
+    HomeToolEntry(
       id: 'video-studio',
       sectionId: 'growth',
       title: 'AI動画スタジオ',
@@ -2328,6 +2542,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF283593),
       keywords: const <String>['法人', 'エンタープライズ', '組織', 'enterprise', 'ビジネス'],
       onOpen: (context) => _pushPage(context, const EnterprisePage()),
+    ),
+    HomeToolEntry(
+      id: 'corporate-site-readiness',
+      sectionId: 'growth',
+      title: '法人口座サイト準備チェック',
+      subtitle: '会社情報の不足確認と事業計画・WBSからのHTML生成',
+      icon: Icons.domain_verification_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>[
+        '法人口座',
+        '銀行審査',
+        '会社概要',
+        'バーチャルオフィス',
+        '事業計画',
+        'WBS',
+        'コーポレートサイト',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/corporate-site-readiness'),
     ),
     HomeToolEntry(
       id: 'feature-flags',
@@ -2457,6 +2690,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const TravelItineraryPage()),
     ),
     HomeToolEntry(
+      id: 'art-museums',
+      sectionId: 'knowledge',
+      title: '全国の美術館',
+      subtitle: '文化庁データから全国の美術館を地域・都道府県・名称で探す',
+      icon: Icons.museum_outlined,
+      color: const Color(0xFF7C3AED),
+      keywords: const <String>[
+        '美術館',
+        'アート',
+        '博物館',
+        '文化',
+        '展覧会',
+        '都道府県',
+        'museum',
+        'art',
+      ],
+      onOpen: (context) => _pushPage(context, const ArtMuseumDirectoryPage()),
+    ),
+    HomeToolEntry(
       id: 'virtual-whiteboard',
       sectionId: 'knowledge',
       title: 'バーチャルホワイトボード',
@@ -2544,6 +2796,27 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'sandbox',
       ],
       onOpen: (context) => _pushPage(context, const CodePlaygroundPage()),
+    ),
+    HomeToolEntry(
+      id: 'local-business-map',
+      sectionId: 'office',
+      title: '地域事業者マップ',
+      subtitle: 'e-Statの公式集計とOpenStreetMapの公開参考事業者を分離して地図表示',
+      icon: Icons.location_city,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        '東京都',
+        '府中市',
+        '本町1丁目',
+        '事業所',
+        '個人経営',
+        '経済センサス',
+        'e-Stat',
+        'OpenStreetMap',
+        'MCP',
+        '地図',
+      ],
+      onOpen: (context) => _pushPage(context, const LocalBusinessMapFeature()),
     ),
     HomeToolEntry(
       id: 'real-estate',
@@ -2719,6 +2992,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => Navigator.of(context).pushNamed('/release-notes'),
     ),
     HomeToolEntry(
+      id: 'process-quality-dashboard',
+      sectionId: 'ai',
+      title: 'プロセス品質ダッシュボード',
+      subtitle: '対象規模あたりのレビュー時間・指摘件数を比較し、閾値未達を確認',
+      icon: Icons.analytics_outlined,
+      color: const Color(0xFF0369A1),
+      keywords: const <String>[
+        'プロセス品質',
+        'レビュー密度',
+        '指摘密度',
+        '品質指標',
+        'ダッシュボード',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const ProcessQualityDashboardPage()),
+    ),
+    HomeToolEntry(
       id: 'tiger-reviewers',
       sectionId: 'ai',
       title: '虎レビュアー成績',
@@ -2786,6 +3076,33 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'observability',
       ],
       onOpen: (context) => _pushPage(context, const EdgeLlmPlaygroundPage()),
+    ),
+    HomeToolEntry(
+      id: 'jev-mario-lab',
+      sectionId: 'ai',
+      title: 'Jev Mario Lab',
+      subtitle: 'マリオの操作とJevの応答速度を測定（ROMなしのAPI測定にも対応）',
+      icon: Icons.sports_esports_outlined,
+      color: const Color(0xFF168A75),
+      keywords: const <String>['Jev', 'Mario', 'マリオ', '応答速度', 'ベンチマーク'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/jev-mario-lab'),
+    ),
+    HomeToolEntry(
+      id: 'jwenv-lab',
+      sectionId: 'ai',
+      title: 'Jwenv WebGPU Lab',
+      subtitle: 'WebGPUによるブラウザ内ローカル軽量LLM・判断判定デモ（Qwen 2.5 0.5B / Jev）',
+      icon: Icons.memory,
+      color: const Color(0xFF2F6FDB),
+      keywords: const <String>[
+        'Jwenv',
+        'WebGPU',
+        'Jev',
+        'Qwen',
+        'ローカルLLM',
+        'ブラウザ内推論',
+      ],
+      onOpen: (context) => Navigator.of(context).pushNamed('/jwenv-lab'),
     ),
     HomeToolEntry(
       id: 'agi-fireworks',

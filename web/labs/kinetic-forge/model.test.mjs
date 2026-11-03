@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {create,step,run,LEVELS,MAX_LINES} from './model.mjs';
+test('all authored sample routes reach goal',()=>{for(let i=0;i<3;i++)assert.equal(run(i,LEVELS[i].sample).status,'won',`room ${i}`);});
+test('no lines loses in all challenges',()=>{for(let i=0;i<3;i++)assert.equal(run(i,[]).status,'lost');});
+test('same course gives exactly same result',()=>assert.deepEqual(run(0,LEVELS[0].sample),run(0,LEVELS[0].sample)));
+test('input constraints reject invalid shape and excess',()=>{assert.throws(()=>create(0,[[NaN,0,10,10]]));assert.throws(()=>create(0,Array(MAX_LINES+1).fill([0,0,10,10])));assert.throws(()=>create(4));});
+test('course is copied, not mutated',()=>{const lines=[[80,180,760,440]],s=create(0,lines);lines[0][0]=999;assert.equal(s.lines[0][0],80);const next=step(s);assert.equal(s.tick,0);assert.equal(next.tick,1);});
+test('vertical, endpoint and reversed lines remain finite',()=>{for(const line of [[120,150,120,350],[120,150,400,150],[400,150,120,150]]){const s=run(0,[line]);assert(['lost','won'].includes(s.status));assert([s.x,s.y,s.vx,s.vy].every(Number.isFinite));}});
+test('stationary trap terminates by bounded time',()=>assert.equal(run(0,[[0,150,900,150]]).status,'lost'));

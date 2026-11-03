@@ -71,6 +71,11 @@ class NotionMigrationPage extends StatelessWidget {
                                 viewModel: viewModel,
                               ),
                             const SizedBox(height: 20),
+                            _VaultManifestCard(
+                              snapshot: viewModel.snapshot,
+                              viewModel: viewModel,
+                            ),
+                            const SizedBox(height: 20),
                             const _SafetyGate(),
                             const SizedBox(height: 20),
                             _FeatureMatrix(
@@ -660,6 +665,186 @@ class _ItemPanel extends StatelessWidget {
       };
 }
 
+class _VaultManifestCard extends StatelessWidget {
+  const _VaultManifestCard({required this.snapshot, required this.viewModel});
+
+  final NotionMigrationSnapshot snapshot;
+  final NotionMigrationViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final preview = viewModel.vaultManifestPreview;
+    final staged = snapshot.vaultManifestSummary;
+    return Card(
+      key: const Key('notion-migration-vault-manifest-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.hub_outlined),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Obsidian保管庫を安全な中継地点にする',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                Chip(label: Text('ローカル先行')),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'ローカル生成したmanifestだけをブラウザ内で検証します。ノート本文・プロパティ値・'
+              '認証情報・除外ファイルのパスは送信せず、許可されたノートと添付の構造情報だけを'
+              '本番データとは分離した安全領域へ保存します。',
+              style: TextStyle(height: 1.5),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 12,
+              runSpacing: 10,
+              children: [
+                OutlinedButton.icon(
+                  key: const Key('notion-migration-vault-manifest-pick'),
+                  onPressed: viewModel.isVaultManifestSelecting ||
+                          viewModel.isVaultManifestStaging
+                      ? null
+                      : () => unawaited(viewModel.selectVaultManifest()),
+                  icon: viewModel.isVaultManifestSelecting
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.file_open_outlined),
+                  label: const Text('manifest JSONを選択'),
+                ),
+                FilledButton.tonalIcon(
+                  key: const Key('notion-migration-vault-manifest-stage'),
+                  onPressed: snapshot.batch == null ||
+                          preview == null ||
+                          viewModel.isVaultManifestSelecting ||
+                          viewModel.isVaultManifestStaging
+                      ? null
+                      : () => unawaited(_confirmAndStage(context)),
+                  icon: viewModel.isVaultManifestStaging
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.inventory_2_outlined),
+                  label: const Text('構造情報を安全領域へ保存'),
+                ),
+              ],
+            ),
+            if (snapshot.batch == null) ...[
+              const SizedBox(height: 8),
+              const Text('保存するには先に移行台帳を作成してください。'),
+            ],
+            if (preview != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                key: const Key('notion-migration-vault-manifest-preview'),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      '${preview.vaultName} / ${preview.sourceFileName}',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        _Metric(label: '全件', value: preview.fileCount),
+                        _Metric(label: '自動保存', value: preview.autoStageCount),
+                        _Metric(
+                          label: '要確認',
+                          value: preview.reviewRequiredCount,
+                          isWarning: preview.reviewRequiredCount > 0,
+                        ),
+                        _Metric(
+                          label: '除外',
+                          value: preview.excludedCount,
+                          isWarning: preview.excludedCount > 0,
+                        ),
+                        _Metric(
+                          label: '認証候補',
+                          value: preview.credentialCandidateCount,
+                          isWarning: preview.credentialCandidateCount > 0,
+                        ),
+                        _Metric(
+                          label: '未解決リンク',
+                          value: preview.unresolvedWikilinkOccurrences,
+                          isWarning: preview.unresolvedWikilinkOccurrences > 0,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (staged != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                key: const Key('notion-migration-vault-manifest-summary'),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  '最新: ${staged.stagedEntryCount}件を${staged.status == 'staged' ? '保存済み' : '処理中'}。'
+                  '要確認${staged.reviewRequiredCount}件、除外${staged.excludedCount}件。'
+                  '除外パスと本文は保持していません。',
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmAndStage(BuildContext context) async {
+    final preview = viewModel.vaultManifestPreview;
+    if (preview == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('構造情報だけを保存しますか？'),
+        content: Text(
+          '${preview.stageableCount}件の相対パス、ハッシュ、リンク・タスク等の構造情報を保存します。'
+          'ノート本文、プロパティ値、認証情報、除外${preview.excludedCount}件のパスは送信しません。'
+          'Notionの元データと本番コンテンツは変更しません。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            key: const Key('notion-migration-vault-manifest-confirm'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('安全領域へ保存'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await viewModel.stageVaultManifest();
+    }
+  }
+}
+
 class _SafetyGate extends StatelessWidget {
   const _SafetyGate();
 
@@ -710,9 +895,7 @@ class _FeatureMatrix extends StatelessWidget {
         .where((capability) => capability.isRequired)
         .toList(growable: false);
     final verified = required
-        .where(
-          (capability) => capability.status == NotionParityStatus.verified,
-        )
+        .where((capability) => capability.status == NotionParityStatus.verified)
         .length;
     return Column(
       key: const Key('notion-migration-feature-matrix'),
@@ -786,10 +969,7 @@ class _CapabilityCard extends StatelessWidget {
                   ),
                 ),
                 Chip(
-                  avatar: Icon(
-                    _statusIcon(capability.status),
-                    size: 18,
-                  ),
+                  avatar: Icon(_statusIcon(capability.status), size: 18),
                   label: Text(capability.status.label),
                   backgroundColor: _statusColor(context, capability.status),
                 ),

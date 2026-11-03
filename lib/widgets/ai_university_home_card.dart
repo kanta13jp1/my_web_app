@@ -234,6 +234,10 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
     Navigator.of(context).pushNamed('/english-reading-curriculum');
   }
 
+  void _openToeicPractice() {
+    Navigator.of(context).pushNamed('/ai-university-toeic');
+  }
+
   String _buildRefreshLabel() {
     final updatedAt = _latestContentUpdatedAt;
     if (updatedAt == null) return '毎週更新';
@@ -823,6 +827,17 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                       SizedBox(
                         width: double.infinity,
                         child: _AiCardActionButton(
+                          label: 'TOEIC対策',
+                          icon: Icons.school_outlined,
+                          foregroundColor: const Color(0xFFFFD966),
+                          borderColor: const Color(0x55FFD966),
+                          onTap: _openToeicPractice,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: _AiCardActionButton(
                           label: '英語速読',
                           icon: Icons.speed_outlined,
                           foregroundColor: DesignTokens.green,
@@ -864,6 +879,14 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             onTap: _openVideoLesson,
                           ),
                           _AiCardActionButton(
+                            label: 'TOEIC対策',
+                            icon: Icons.school_outlined,
+                            foregroundColor: const Color(0xFFFFD966),
+                            borderColor: const Color(0x55FFD966),
+                            compact: true,
+                            onTap: _openToeicPractice,
+                          ),
+                          _AiCardActionButton(
                             label: '英語速読',
                             icon: Icons.speed_outlined,
                             foregroundColor: DesignTokens.green,
@@ -881,6 +904,17 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             onTap: () => Navigator.pushNamed(
                               context,
                               '/ai-university-voice',
+                            ),
+                          ),
+                          _AiCardActionButton(
+                            label: '多言語ダビング',
+                            icon: Icons.record_voice_over_outlined,
+                            foregroundColor: DesignTokens.amber,
+                            borderColor: const Color(0x33FFC107),
+                            compact: true,
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              '/content-dubbing',
                             ),
                           ),
                         ],

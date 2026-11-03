@@ -32,8 +32,16 @@ for _stream in (sys.stdout, sys.stderr):
 
 MIGRATIONS_DIR = Path("supabase/migrations")
 
+SQL_NAME = r'(?:(?:"[^"]+"|[A-Za-z_]\w*)\s*\.\s*)?(?:"[^"]+"|[A-Za-z_]\w*)'
+
+
+def canonical_name(value: str) -> str:
+    parts = [part.strip().strip('"').lower() for part in value.split('.')]
+    return parts[-1] if len(parts) == 1 or parts[0] == "public" else ".".join(parts)
+
+
 FUNC_DEF_RE = re.compile(
-    r"CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(\w+)\s*\([^)]*\)"
+    rf"CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+({SQL_NAME})\s*\([^)]*\)"
     r".*?AS\s+\$\w*\$(.*?)\$\w*\$",
     re.IGNORECASE | re.DOTALL,
 )
@@ -43,11 +51,11 @@ TIME_IN_BODY_RE = re.compile(
 )
 TRIGGER_ATTACH_RE = re.compile(
     r"CREATE\s+(?:OR\s+REPLACE\s+)?TRIGGER\s+\S+\s+"
-    r"BEFORE\s+(?:INSERT\s+OR\s+UPDATE|UPDATE\s+OR\s+INSERT|UPDATE)\s+ON\s+(\w+)",
+    rf"BEFORE\s+(?:INSERT\s+OR\s+UPDATE|UPDATE\s+OR\s+INSERT|UPDATE)\s+ON\s+({SQL_NAME})",
     re.IGNORECASE,
 )
-EXEC_FUNC_RE = re.compile(r"EXECUTE\s+(?:FUNCTION|PROCEDURE)\s+(\w+)", re.IGNORECASE)
-UPDATE_RE = re.compile(r"\bUPDATE\s+(\w+)\b", re.IGNORECASE)
+EXEC_FUNC_RE = re.compile(rf"EXECUTE\s+(?:FUNCTION|PROCEDURE)\s+({SQL_NAME})", re.IGNORECASE)
+UPDATE_RE = re.compile(rf"\bUPDATE\s+({SQL_NAME})", re.IGNORECASE)
 # Detect trigger early-return: IF NEW.status = 'completed' THEN RETURN NEW
 TRIGGER_EARLY_RETURN_RE = re.compile(
     r"IF\s+NEW\s*\.\s*status\s*=\s*'completed'\s+THEN\s+RETURN\s+NEW",
@@ -73,15 +81,15 @@ def get_time_enforcement_tables() -> tuple[set[str], set[str], set[str]]:
         for m in FUNC_DEF_RE.finditer(content):
             body = m.group(2)
             if TIME_IN_BODY_RE.search(body):
-                time_funcs.add(m.group(1).lower())
+                time_funcs.add(canonical_name(m.group(1)))
             if TRIGGER_EARLY_RETURN_RE.search(body):
-                early_return_funcs.add(m.group(1).lower())
+                early_return_funcs.add(canonical_name(m.group(1)))
         for tm in TRIGGER_ATTACH_RE.finditer(content):
-            table = tm.group(1).lower()
+            table = canonical_name(tm.group(1))
             rest = content[tm.start():tm.start() + 600]
             em = EXEC_FUNC_RE.search(rest)
             if em:
-                table_to_funcs.setdefault(table, set()).add(em.group(1).lower())
+                table_to_funcs.setdefault(table, set()).add(canonical_name(em.group(1)))
                 defining_files.add(sql_file.name)
 
     sensitive = {t for t, fns in table_to_funcs.items() if fns & time_funcs}
@@ -152,7 +160,7 @@ def main() -> int:
             print(f"  skip: {sql_file.name} (-- nocheck: time-relative)")
             continue
         for m in UPDATE_RE.finditer(content):
-            table = m.group(1).lower()
+            table = canonical_name(m.group(1))
             if table not in sensitive:
                 continue
             # Safe if trigger short-circuits for completed status and this UPDATE sets it

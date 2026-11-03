@@ -16,6 +16,8 @@ on:
     - cron: '57 0 * * 1'  # weekly Monday 09:57 JST (2026-07-17 ci-audit: 00:00 UTC 8本集中を分散)
   workflow_dispatch:
 
+permissions: {}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -29,7 +31,7 @@ jobs:
       contents: read
       issues: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Run stale EF audit
         run: python3 scripts/audit_hub_migration_completeness.py
@@ -39,7 +41,7 @@ jobs:
 
       - name: Create Issue on failure
         if: failure() && github.event_name != 'pull_request'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const title = '[stale-ef] Stale EF reference detected in client code';

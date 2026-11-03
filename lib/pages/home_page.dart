@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/services/asset_flow_request.dart';
 import 'package:intl/intl.dart';
 
 // Services
@@ -55,6 +56,7 @@ import '../widgets/feature_strategy_monitor_panel.dart';
 import '../widgets/grow_together_share_card.dart';
 import '../widgets/home_billing_nudge.dart';
 import '../widgets/home_primary_action_card.dart';
+import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 import '../widgets/life_waste_elimination_panel.dart';
@@ -71,6 +73,8 @@ import '../widgets/home_tier/new_features_list.dart';
 import '../widgets/home_tier/ai_recommended_features_list.dart';
 import '../widgets/home_tier/popular_features_list.dart';
 import '../utils/feature_tap_logger.dart';
+import '../utils/home_feature_request_failure.dart';
+import '../utils/home_calendar_visible_range.dart';
 import '../services/route_visibility_observer.dart';
 
 class HomePage extends StatefulWidget {
@@ -348,6 +352,23 @@ class _HomePageState extends State<HomePage> with RouteAware {
     return lines.join('\n');
   }
 
+  void _showFeatureRequestFailure(
+    HomeFeatureRequestFailure failure,
+    Future<void> Function() retry,
+  ) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(failure.userMessage),
+        action: SnackBarAction(
+          label: failure.retryLabel,
+          onPressed: () => unawaited(retry()),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
   Future<void> _pickFeatureRequestAttachment() async {
     try {
       final result = await FilePicker.pickFiles(
@@ -369,13 +390,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
         _featureRequestAttachment = file;
         _featureRequestAttachmentAnalysis = null;
       });
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('画像の選択に失敗しました: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
+    } catch (_) {
+      _showFeatureRequestFailure(
+        HomeFeatureRequestFailure.attachmentSelection,
+        _pickFeatureRequestAttachment,
       );
     }
   }
@@ -463,13 +481,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('画像から追加要望の下書きを作成しました')));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('画像AI診断に失敗しました: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
+    } catch (_) {
+      _showFeatureRequestFailure(
+        HomeFeatureRequestFailure.attachmentAnalysis,
+        _analyzeFeatureRequestAttachment,
       );
     } finally {
       if (mounted) {
@@ -542,13 +557,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
           ),
         ),
       );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('追加要望の登録に失敗しました: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
+    } catch (_) {
+      _showFeatureRequestFailure(
+        HomeFeatureRequestFailure.submission,
+        _submitHomeFeatureRequest,
       );
     } finally {
       if (mounted) {
@@ -673,8 +685,9 @@ class _HomePageState extends State<HomePage> with RouteAware {
     }
 
     try {
-      final dynamic rowsRaw = await Supabase.instance.client
-          .from('wealth_struggles')
+      final dynamic rowsRaw = await AssetFlowRequest.table(
+        Supabase.instance.client,
+      )
           .select('action_type,amount,occurred_at')
           .eq('user_id', userId)
           .gte('occurred_at', monthStart.toUtc().toIso8601String())
@@ -741,8 +754,9 @@ class _HomePageState extends State<HomePage> with RouteAware {
     ).add(const Duration(days: 1));
 
     try {
-      final dynamic rowsRaw = await Supabase.instance.client
-          .from('wealth_struggles')
+      final dynamic rowsRaw = await AssetFlowRequest.table(
+        Supabase.instance.client,
+      )
           .select('action_type,amount,occurred_at')
           .eq('user_id', userId)
           .gte('occurred_at', normalizedStart.toUtc().toIso8601String())
@@ -985,8 +999,9 @@ class _HomePageState extends State<HomePage> with RouteAware {
             .select('title,amount,created_at')
             .eq('user_id', userId)
             .order('created_at', ascending: true),
-        Supabase.instance.client
-            .from('wealth_struggles')
+        AssetFlowRequest.table(
+          Supabase.instance.client,
+        )
             .select('amount,description,occurred_at,action_type')
             .eq('user_id', userId)
             .order('occurred_at', ascending: true),
@@ -1417,25 +1432,12 @@ class _HomePageState extends State<HomePage> with RouteAware {
     );
   }
 
-  _HomeCalendarVisibleRange _calendarVisibleRange() {
-    final monthAnchor = _calendarAnchorMonth();
-    final firstDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month, 1);
-    final lastDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month + 1, 0);
-    final startOffset = firstDayOfMonth.weekday % 7;
-    final startDay = firstDayOfMonth.subtract(Duration(days: startOffset));
-    final endOffset = 6 - (lastDayOfMonth.weekday % 7);
-    final endDay = lastDayOfMonth.add(Duration(days: endOffset));
-
-    return _HomeCalendarVisibleRange(
-      monthAnchor: monthAnchor,
-      startDay: startDay,
-      endDay: endDay,
-    );
-  }
+  HomeCalendarVisibleRange _calendarVisibleRange() =>
+      HomeCalendarVisibleRange.forMonth(_calendarAnchorMonth());
 
   Future<List<_HomeCalendarDay>> _loadCalendarDays({
     required SharedPreferences prefs,
-    _HomeCalendarVisibleRange? calendarRange,
+    HomeCalendarVisibleRange? calendarRange,
     Map<String, AbstinenceGuardSnapshot>? abstinenceSnapshotsByDate,
   }) async {
     final now = _now();
@@ -5356,6 +5358,7 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const HomeTodayPriorityGoal(),
                             if (!showInternalOperations) ...[
                               _buildSectionHeader(
                                 '今日の1件',
@@ -6018,64 +6021,64 @@ abstinence_slip_details: $slipDetailsText
         const GaReadinessGatePanel(),
       ],
       const SizedBox(height: 16),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_recent'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_recent'),
         storageKey: 'home_tier_recent',
         title: '最近使った機能',
         icon: Icons.history,
-        iconColor: Color(0xFFFF6B35),
-        initiallyExpanded: true,
-        child: RecentFeaturesList(),
+        iconColor: const Color(0xFFFF6B35),
+        initiallyExpanded: !isCompact,
+        child: const RecentFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_popular'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_popular'),
         storageKey: 'home_tier_popular',
         title: 'よく使われる機能（ユーザー全体）',
         icon: Icons.trending_up,
-        iconColor: Color(0xFF0D9488),
-        initiallyExpanded: true,
-        child: PopularFeaturesList(),
+        iconColor: const Color(0xFF0D9488),
+        initiallyExpanded: !isCompact,
+        child: const PopularFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_system'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_system'),
         storageKey: 'home_tier_system',
         title: 'システム固定機能',
         icon: Icons.lock_outline,
-        iconColor: Color(0xFF6366F1),
-        initiallyExpanded: true,
-        child: SystemFixedFeaturesList(),
+        iconColor: const Color(0xFF6366F1),
+        initiallyExpanded: !isCompact,
+        child: const SystemFixedFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_pinned'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_pinned'),
         storageKey: 'home_tier_pinned',
         title: 'お気に入り（ピン止め）',
         icon: Icons.push_pin_outlined,
-        iconColor: Color(0xFF6366F1),
-        initiallyExpanded: true,
-        child: UserPinnedFeaturesList(),
+        iconColor: const Color(0xFF6366F1),
+        initiallyExpanded: !isCompact,
+        child: const UserPinnedFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_new'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_new'),
         storageKey: 'home_tier_new',
         title: '最近追加された機能',
         icon: Icons.new_releases_outlined,
-        iconColor: Color(0xFFFF6B35),
-        initiallyExpanded: true,
-        child: NewFeaturesList(),
+        iconColor: const Color(0xFFFF6B35),
+        initiallyExpanded: !isCompact,
+        child: const NewFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_recommend'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_recommend'),
         storageKey: 'home_tier_recommend',
         title: 'AIおすすめ機能',
         icon: Icons.auto_awesome,
-        iconColor: Color(0xFF6366F1),
-        initiallyExpanded: true,
-        child: AiRecommendedFeaturesList(),
+        iconColor: const Color(0xFF6366F1),
+        initiallyExpanded: !isCompact,
+        child: const AiRecommendedFeaturesList(),
       ),
     ];
   }
@@ -6985,6 +6988,75 @@ abstinence_slip_details: $slipDetailsText
     final outlineColor =
         isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFFDDE8E4);
     const quickQuestions = <String>['まず何から使えばいい？', '資産管理はどこ？', 'AI大学の始め方は？'];
+
+    if (isCompact) {
+      return Card(
+        key: const Key('home_mobile_site_guide_compact'),
+        elevation: 0,
+        color: cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: outlineColor),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4F46E5).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.support_agent_outlined,
+                  color: Color(0xFF4F46E5),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '使い方をAIに聞く',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: titleColor,
+                        height: 1.35,
+                      ),
+                    ),
+                    Text(
+                      '迷った場所から案内します',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: bodyColor,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: () => _runTrackedAction(
+                  'site-guide-ai',
+                  () => _openSiteGuideAi(),
+                ),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(64, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                ),
+                child: const Text('聞く'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Card(
       elevation: 0,
@@ -9235,18 +9307,6 @@ class _HomeDailyStatusRecord {
   const _HomeDailyStatusRecord({
     this.morningBriefingDone = false,
     this.balanceCheckDone = false,
-  });
-}
-
-class _HomeCalendarVisibleRange {
-  final DateTime monthAnchor;
-  final DateTime startDay;
-  final DateTime endDay;
-
-  const _HomeCalendarVisibleRange({
-    required this.monthAnchor,
-    required this.startDay,
-    required this.endDay,
   });
 }
 

@@ -22,6 +22,15 @@ inspection, or disjoint implementation. The full policy is
 
 Work WBS items from the nearest due date first.
 
+Before choosing a local worker or toolchain, run
+`python scripts/cloud_first_route.py`. When it reports `CLOUD_REQUIRED`, both
+top-level instances must keep the local session lightweight: no dependency
+hydration, full analyzer/test/build, dev server, Docker job, or local child
+worker. Use a sparse checkout for edits and
+`python scripts/cloud_ci_handoff.py --execute --watch` for exact-SHA GitHub
+Actions proof after pushing the branch. The full procedure is
+`docs/CLOUD_FIRST_DEVELOPMENT.md`.
+
 Local tool check on 2026-05-07:
 
 - `claude --version`: `2.1.126 (Claude Code)`
@@ -113,12 +122,18 @@ git worktree prune
 git gc --auto
 ```
 
+The check at session start is a routing decision, not a cleanup request. Free
+disk below 30 GiB, free physical memory below 4 GiB, or memory use at/above 85%
+makes cloud validation mandatory. Never delete another task's worktree or stop
+an unverified process merely to cross the threshold.
+
 Safe cleanup candidates:
 
 - Stop orphaned `dart`, `flutter`, `node`, `git`, or `deno` processes that are not serving the active task.
 - Delete local branches only after the matching PR is merged or the Issue is explicitly closed as obsolete.
 - Remove missing-worktree metadata with `git worktree prune`.
-- Prefer docs-only or CI-only verification when local Flutter tooling is hanging and GitHub Actions already covers the surface.
+- Prefer CI-only verification for all heavy toolchains; local Flutter/Deno
+  execution is an exception reserved for healthy resources or unavailable CI.
 
 Never clean:
 

@@ -1272,6 +1272,7 @@ IconData _iconForType(ShopProductType type) {
     ShopProductType.prompt => Icons.auto_awesome_outlined,
     ShopProductType.idea => Icons.lightbulb_outline,
     ShopProductType.game => Icons.sports_esports_outlined,
+    ShopProductType.application => Icons.grid_on_outlined,
     ShopProductType.template => Icons.dashboard_customize_outlined,
   };
 }

@@ -36,6 +36,21 @@ def main() -> int:
         "workflow curl timeout",
     )
     require(
+        workflow,
+        'if [ "$HTTP_CODE" -lt 500 ] || [ "$attempt" -ge 2 ]; then',
+        "workflow transient 5xx retry guard",
+    )
+    require(
+        workflow,
+        'returned HTTP $HTTP_CODE on attempt $attempt; retrying',
+        "workflow transient 5xx warning",
+    )
+    require(
+        workflow,
+        'if [ "$HTTP_CODE" -ge 400 ]; then',
+        "workflow failed batch isolation guard",
+    )
+    require(
         tools_hub,
         "async function fetchWbsTasksForGithubIssues",
         "scoped WBS task fetcher",

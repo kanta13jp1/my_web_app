@@ -1,0 +1,452 @@
+{
+  "source": "d224c892c1f16895f24978358717717f96bad657",
+  "lane": "laya",
+  "mode": "raw",
+  "started_at": "2026-09-22T02:31:12.377Z",
+  "api_min_start_ms": 500,
+  "max_api_calls": 60,
+  "model_input": "Original full telemetry; Laya truncation measured separately",
+  "forecast": "Predict current held input for previous solve age, rounded/clamped to1..12frames",
+  "timing": "60Hz wall-clock simulation continues during worker search and any API wait; Node CPU, no browser/rendering",
+  "clear": false,
+  "phase": "dead",
+  "x": 314.1000000000001,
+  "frames": 292,
+  "wall_ms": 4875.259163000001,
+  "decisions": 49,
+  "accepted": 20,
+  "overrides": 0,
+  "fallbackDecisions": 29,
+  "releases": 0,
+  "apiCalls": 2,
+  "apiTrace": [
+    {
+      "frame": 0,
+      "received_frame": 170,
+      "choice": "right_run",
+      "probabilities": {
+        "noop": 0.1042,
+        "right": 0.0667,
+        "right_jump": 0.2432,
+        "right_run": 0.247,
+        "right_run_jump": 0.1526,
+        "jump": 0.1314,
+        "left": 0.055
+      },
+      "model": "laya-rl-agent",
+      "uniform": false,
+      "usage": {
+        "input_tokens": 488,
+        "output_tokens": 0
+      },
+      "laya_input": {
+        "state_tokens": 292,
+        "state_budget": 316,
+        "truncated": false,
+        "encoded_tokens": 488,
+        "options": 7
+      },
+      "laya_compute_ms": 2405.615569999995,
+      "http_ms": 2832.315856
+    },
+    {
+      "frame": 170,
+      "error": "cancelled",
+      "http_ms": 2033.9057149999999
+    }
+  ],
+  "trace": [
+    {
+      "frame": 0,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.017612999999997214
+    },
+    {
+      "frame": 6,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.014668000000000347
+    },
+    {
+      "frame": 12,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.01731200000000399
+    },
+    {
+      "frame": 18,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0022739999999998872
+    },
+    {
+      "frame": 24,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0021940000000313375
+    },
+    {
+      "frame": 30,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.002053000000046268
+    },
+    {
+      "frame": 36,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0023650000000543514
+    },
+    {
+      "frame": 42,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0020939999999427528
+    },
+    {
+      "frame": 48,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0020940000000564396
+    },
+    {
+      "frame": 54,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0021939999999176507
+    },
+    {
+      "frame": 60,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0022440000000187865
+    },
+    {
+      "frame": 66,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0022140000000945292
+    },
+    {
+      "frame": 72,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.001954000000068845
+    },
+    {
+      "frame": 78,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0021240000000943837
+    },
+    {
+      "frame": 84,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0023439999999936845
+    },
+    {
+      "frame": 90,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.005169000000023516
+    },
+    {
+      "frame": 96,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0025949999999284046
+    },
+    {
+      "frame": 102,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0021639999999933934
+    },
+    {
+      "frame": 108,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.002424999999902866
+    },
+    {
+      "frame": 114,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0021339999998417625
+    },
+    {
+      "frame": 120,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.002253999999993539
+    },
+    {
+      "frame": 126,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0021240000000943837
+    },
+    {
+      "frame": 132,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0024650000000292493
+    },
+    {
+      "frame": 138,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0024550000002818706
+    },
+    {
+      "frame": 144,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0026350000002821616
+    },
+    {
+      "frame": 150,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0022149999999783176
+    },
+    {
+      "frame": 156,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0021240000000943837
+    },
+    {
+      "frame": 162,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0035669999997480772
+    },
+    {
+      "frame": 168,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0023150000001805893
+    },
+    {
+      "frame": 174,
+      "x": 32,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0027649999997265695
+    },
+    {
+      "frame": 180,
+      "x": 34.730000000000004,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.03811099999984435
+    },
+    {
+      "frame": 186,
+      "x": 42.14,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.025107000000389235
+    },
+    {
+      "frame": 192,
+      "x": 54.22999999999999,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003185999999914202
+    },
+    {
+      "frame": 198,
+      "x": 69.69999999999997,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0039779999997335835
+    },
+    {
+      "frame": 204,
+      "x": 85.29999999999994,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003907000000253902
+    },
+    {
+      "frame": 210,
+      "x": 100.8999999999999,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0039470000001529115
+    },
+    {
+      "frame": 216,
+      "x": 116.49999999999987,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003677000000152475
+    },
+    {
+      "frame": 222,
+      "x": 132.09999999999985,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.005019000000174856
+    },
+    {
+      "frame": 228,
+      "x": 147.69999999999982,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0035769999999502033
+    },
+    {
+      "frame": 234,
+      "x": 163.29999999999978,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0039480000000367
+    },
+    {
+      "frame": 240,
+      "x": 178.89999999999975,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0036359999999149295
+    },
+    {
+      "frame": 246,
+      "x": 194.49999999999972,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003666999999950349
+    },
+    {
+      "frame": 252,
+      "x": 210.09999999999968,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0039470000001529115
+    },
+    {
+      "frame": 258,
+      "x": 225.69999999999965,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0035269999998490675
+    },
+    {
+      "frame": 264,
+      "x": 241.2999999999996,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.004047999999784224
+    },
+    {
+      "frame": 270,
+      "x": 256.8999999999996,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0037069999998493586
+    },
+    {
+      "frame": 276,
+      "x": 272.4999999999997,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0035669999997480772
+    },
+    {
+      "frame": 282,
+      "x": 288.09999999999985,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003876999999192776
+    },
+    {
+      "frame": 288,
+      "x": 303.7,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0035369999995964463
+    }
+  ]
+}

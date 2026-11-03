@@ -73,7 +73,7 @@ firebase service-account:create --json
 3. ダウンロードしたJSONファイルの内容をコピー
 4. GitHub Secretに貼り付け
 
-#### 🗄️ Supabase関連（12個）
+#### 🗄️ Supabase関連（16個、うちlegacy fallback 3個）
 
 | Secret名 | 説明 | 取得方法 |
 | --- | --- | --- |
@@ -87,9 +87,12 @@ firebase service-account:create --json
 | `SUPABASE_URL_DEV` | 開発環境URL | Supabase Dashboard → Settings → API → Project URL |
 | `SUPABASE_URL_STAGING` | ステージング環境URL | 同上（別プロジェクト） |
 | `SUPABASE_URL_PROD` | 本番環境URL | 同上（別プロジェクト） |
-| `SUPABASE_ANON_KEY_DEV` | 開発環境 Anon Key | Supabase Dashboard → Settings → API → anon/public key |
-| `SUPABASE_ANON_KEY_STAGING` | ステージング環境 Anon Key | 同上（別プロジェクト） |
-| `SUPABASE_ANON_KEY_PROD` | 本番環境 Anon Key | 同上（別プロジェクト） |
+| `SUPABASE_PUBLISHABLE_KEY_DEV` | 開発環境 Publishable Key | Supabase Dashboard → Settings → API Keys → Publishable key |
+| `SUPABASE_PUBLISHABLE_KEY_STAGING` | ステージング環境 Publishable Key | 同上（別プロジェクト） |
+| `SUPABASE_PUBLISHABLE_KEY_PROD` | 本番環境 Publishable Key | 同上（別プロジェクト） |
+| `SUPABASE_ANON_KEY_DEV` | Legacy anon fallback（移行期間のみ） | 既存環境との互換用。新規設定では使用しない |
+| `SUPABASE_ANON_KEY_STAGING` | Legacy anon fallback（移行期間のみ） | 同上（別プロジェクト） |
+| `SUPABASE_ANON_KEY_PROD` | Legacy anon fallback（移行期間のみ） | 同上（別プロジェクト） |
 
 #### 📢 通知関連（1個、オプション）
 
@@ -108,18 +111,18 @@ firebase service-account:create --json
 7. 通知先チャネルを選択
 8. 生成されたWebhook URLをコピーしてGitHub Secretに追加
 
-### 環境が1つの場合の設定
+### Supabase環境の分離
 
-現在、開発・ステージング・本番で**同じSupabaseプロジェクト**を使用している場合:
+ステージングと本番は、Project ID と Project URL が異なる別プロジェクトで
+なければデプロイが停止します。開発も別プロジェクトを使用してください。
+単一プロジェクトしかない場合は、ステージングを本番へ接続して回避せず、
+開発・検証用プロジェクトを作成してから設定します。
 
-```text
-SUPABASE_PROJECT_ID_DEV = SUPABASE_PROJECT_ID_STAGING = SUPABASE_PROJECT_ID_PROD
-SUPABASE_DB_PASSWORD_DEV = SUPABASE_DB_PASSWORD_STAGING = SUPABASE_DB_PASSWORD_PROD
-SUPABASE_URL_DEV = SUPABASE_URL_STAGING = SUPABASE_URL_PROD
-SUPABASE_ANON_KEY_DEV = SUPABASE_ANON_KEY_STAGING = SUPABASE_ANON_KEY_PROD
-```
-
-**推奨**: 将来的には環境ごとにSupabaseプロジェクトを分けることを推奨します。
+Flutterへ渡せるのは Project URL と Publishable Key（移行期間中は legacy anon
+key）のみです。Secret Key / `service_role` は
+`--dart-define` へ設定しないでください。詳細は
+[Supabase API keys and JWT signing-key rotation](SUPABASE_API_KEY_ROTATION.md)
+を参照してください。
 
 ### Secretsの検証
 

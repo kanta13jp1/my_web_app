@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "my_web_app" "\0"
+            VALUE "CompanyName", "Kanta Umezawa" "\0"
+            VALUE "FileDescription", "Jibun Spreadsheet for Windows" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "my_web_app" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "my_web_app.exe" "\0"
-            VALUE "ProductName", "my_web_app" "\0"
+            VALUE "InternalName", "JibunSpreadsheet" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Kanta Umezawa. All rights reserved." "\0"
+            VALUE "OriginalFilename", "JibunSpreadsheet.exe" "\0"
+            VALUE "ProductName", "Jibun Spreadsheet" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -2,7 +2,8 @@
   "version": "5",
   "specifiers": {
     "jsr:@b-fuze/deno-dom@0.1.56": "0.1.56",
-    "npm:@supabase/supabase-js@2": "2.105.1"
+    "npm:@supabase/supabase-js@2": "2.105.1",
+    "npm:@supabase/supabase-js@2.105.1": "2.105.1"
   },
   "jsr": {
     "@b-fuze/deno-dom@0.1.56": {

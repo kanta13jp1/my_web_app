@@ -1,0 +1,71 @@
+name: Account retention production config audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/account-retention-config-audit.yml"
+      - "docs/ACCOUNT_RETENTION_AND_DELETION.md"
+      - "docs/ACCOUNT_RETENTION_LEGAL_DECISION_RECORD.md"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: account-retention-config-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Read-only production retention configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID_PROD }}
+    steps:
+      - name: Validate protected inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_ACCESS_TOKEN:-}" || {
+            echo "::error::SUPABASE_ACCESS_TOKEN is required"
+            exit 1
+          }
+          test -n "${PROJECT_REF:-}" || {
+            echo "::error::SUPABASE_PROJECT_ID_PROD is required"
+            exit 1
+          }
+
+      - name: Read production Auth JWT expiry
+        shell: bash
+        run: |
+          set -euo pipefail
+          response_file=$(mktemp)
+          http_code=$(curl -sS -o "$response_file" -w "%{http_code}" \
+            "https://api.supabase.com/v1/projects/${PROJECT_REF}/config/auth" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            --max-time 20)
+
+          if [ "$http_code" != "200" ]; then
+            echo "::error::Supabase Auth configuration lookup failed with HTTP ${http_code}"
+            exit 1
+          fi
+
+          jwt_exp=$(jq -er '.jwt_exp | select(type == "number" and . > 0)' "$response_file")
+          if [ "$jwt_exp" -gt 3600 ]; then
+            echo "::error::Production JWT expiry ${jwt_exp}s exceeds the reviewed 3600s deletion-finalization assumption"
+            exit 1
+          fi
+
+          {
+            echo "## Account retention production configuration"
+            echo ""
+            printf -- '- project ref: `%s`\n' "$PROJECT_REF"
+            printf -- '- Auth JWT expiry: `%s` seconds\n' "$jwt_exp"
+            echo "- result: compatible with the 65-minute deletion finalization wait"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Do not print the complete Auth configuration; it can contain provider settings.
+          echo "Production Auth JWT expiry is ${jwt_exp} seconds."

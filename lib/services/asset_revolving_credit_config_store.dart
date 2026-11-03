@@ -4,13 +4,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/asset_liability_workbook.dart';
 
-/// リボ払いカードの設定 (リボ設定額・利用限度額) を負債IDごとに永続化する。
+/// リボ払いカードの返済ルールを負債IDごとに永続化する。
 ///
 /// ローカル (SharedPreferences) を一次ストアとし、端末間同期は資産管理ページが
 /// `asset_pref_mirror` (pref_key: `revolving_credit_configs`) へ 1 行 jsonb で
 /// ミラーする (支払日上書きと同じ集約方針 / MIRROR_PREF_SCHEMA.md)。
 /// [encodeMirrorValue] / [decodeMirrorValue] がローカルとミラー双方で使う
-/// 共通の往復ロジックで、保存形は `{debtId: {monthlyAmount, creditLimit}}`。
+/// 共通の往復ロジックで、保存形は
+/// `{debtId: {monthlyAmount, newUsageAmount, paymentDay, creditLimit}}`。
+/// `creditLimit` は旧保存データとの互換用で、現行の返済計算には使わない。
 class AssetRevolvingCreditConfigStore {
   static const String prefsKey = 'asset_revolving_credit_configs_v1';
 

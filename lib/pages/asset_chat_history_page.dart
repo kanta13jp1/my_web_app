@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../models/asset_chat.dart';
+import 'chat_replay_page.dart';
 import '../services/asset_chat_history_repository.dart';
 import '../view_models/asset_chat_history_view_model.dart';
+import '../widgets/critical_action_dialog.dart';
 
 class AssetChatHistoryPage extends StatefulWidget {
   final AssetChatHistoryRepository? repository;
@@ -61,30 +63,16 @@ class _AssetChatHistoryPageState extends State<AssetChatHistoryPage> {
   }
 
   Future<void> _confirmDelete(AssetChatThreadSummary thread) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showCriticalActionDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('チャットを削除しますか？'),
-        content: Text(
-          '「${thread.title}」のメッセージをすべて削除します。この操作は元に戻せません。',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            key: const Key('asset_chat_delete_confirm_button'),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('削除する'),
-          ),
-        ],
-      ),
+      title: 'チャットを削除しますか？',
+      impact: '「${thread.title}」のメッセージをすべて削除します。'
+          'この操作は元に戻せません。',
+      actionLabel: '削除する',
+      confirmationPhrase: '削除する',
+      confirmButtonKey: const Key('asset_chat_delete_confirm_button'),
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
     final deleted = await _viewModel.deleteThread(thread);
     if (!mounted) return;
     if (deleted && _showMobileDetail) {
@@ -313,6 +301,34 @@ class _AssetChatHistoryPageState extends State<AssetChatHistoryPage> {
                   _viewModel.isDeleting ? null : () => _confirmDelete(thread),
               icon: const Icon(Icons.delete_outline),
             ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: OutlinedButton.icon(
+            key: const Key('asset_chat_history_present'),
+            onPressed: _viewModel.isLoadingMessages ||
+                    _viewModel.isDeleting ||
+                    _viewModel.messages.isEmpty
+                ? null
+                : () {
+                    final replay = ChatReplayPage(
+                      messages: _viewModel.messages,
+                      hasOlderMessages: _viewModel.hasOlderMessages,
+                    );
+                    Navigator.of(context).push<void>(
+                      MaterialPageRoute(
+                        builder: (_) => replay,
+                        // Reload returns to history; never serialize a transcript
+                        // into the URL or reveal it automatically.
+                        settings: const RouteSettings(
+                          name: '/asset-chat-history?view=presentation',
+                        ),
+                      ),
+                    );
+                  },
+            icon: const Icon(Icons.slideshow),
+            label: const Text('読み込み済みの会話を発表'),
           ),
         ),
         const Divider(height: 1),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/pages/budget_financial_planner_page.dart';
@@ -7,13 +9,18 @@ import 'package:my_web_app/pages/payment_channel_ledger_page.dart';
 
 import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
+import '../services/department_finance_summary_repository.dart';
+import '../view_models/cfo_asset_summary_view_model.dart';
 import '../widgets/agent_workspace_panel.dart';
+import '../widgets/cfo_asset_summary_card.dart';
 import '../widgets/cfo_cost_summary_card.dart';
 import '../widgets/display_mode_experiment_card.dart';
 import 'cfo_cost_ledger_page.dart';
 
 class CfoOfficePage extends StatefulWidget {
-  const CfoOfficePage({super.key});
+  const CfoOfficePage({super.key, this.financeSummaryRepository});
+
+  final DepartmentFinanceSummaryRepository? financeSummaryRepository;
 
   @override
   State<CfoOfficePage> createState() => _CfoOfficePageState();
@@ -21,6 +28,7 @@ class CfoOfficePage extends StatefulWidget {
 
 class _CfoOfficePageState extends State<CfoOfficePage> {
   final AgentOrgService _agentOrgService = AgentOrgService();
+  late final CfoAssetSummaryViewModel _assetSummaryViewModel;
   AgentWorkspaceSnapshot? _workspace;
   bool _isLoadingWorkspace = true;
   int _summaryReloadToken = 0;
@@ -28,7 +36,18 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
   @override
   void initState() {
     super.initState();
+    _assetSummaryViewModel = CfoAssetSummaryViewModel(
+      repository: widget.financeSummaryRepository ??
+          SupabaseDepartmentFinanceSummaryRepository(),
+    );
+    unawaited(_assetSummaryViewModel.load());
     _loadWorkspace();
+  }
+
+  @override
+  void dispose() {
+    _assetSummaryViewModel.dispose();
+    super.dispose();
   }
 
   Future<void> _loadWorkspace() async {
@@ -50,7 +69,10 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
   }
 
   Future<void> _refreshAll() async {
-    await _loadWorkspace();
+    await Future.wait<void>([
+      _loadWorkspace(),
+      _assetSummaryViewModel.load(),
+    ]);
     if (!mounted) {
       return;
     }
@@ -91,6 +113,20 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
     setState(() => _summaryReloadToken += 1);
   }
 
+  Future<void> _openAssetManagement() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/asset-management'),
+        builder: (_) => const AssetManagementPage(),
+      ),
+    );
+    if (!mounted) {
+      return;
+    }
+    await _assetSummaryViewModel.load();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,6 +153,11 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
             CfoCostSummaryCard(
               key: ValueKey<int>(_summaryReloadToken),
               onOpenLedger: _openCostLedger,
+            ),
+            const SizedBox(height: 16),
+            CfoAssetSummaryCard(
+              viewModel: _assetSummaryViewModel,
+              onOpenDetails: _openAssetManagement,
             ),
             const SizedBox(height: 16),
             _buildMenuCard(

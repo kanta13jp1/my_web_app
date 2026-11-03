@@ -39,7 +39,8 @@ $WingetPackages = @(
     @{ Id = "Python.Python.3.12"; Name = "Python 3.12" },
     @{ Id = "Amazon.AWSCLI"; Name = "AWS CLI" },
     @{ Id = "GitHub.cli"; Name = "GitHub CLI" },
-    @{ Id = "DenoLand.Deno"; Name = "Deno" }
+    @{ Id = "DenoLand.Deno"; Name = "Deno" },
+    @{ Id = "RedHat.Podman"; Name = "Podman" }
 )
 
 $VSCodeExtensions = @(
@@ -50,7 +51,8 @@ $VSCodeExtensions = @(
     "GitHub.vscode-github-actions",
     "GitHub.copilot",
     "GitHub.copilot-chat",
-    "ms-azuretools.vscode-docker",
+    "ms-azuretools.vscode-containers",
+    "ms-vscode-remote.remote-containers",
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint"
 )
@@ -152,7 +154,7 @@ function Install-VSCodeExtension {
 
 function Show-VersionSummary {
     Write-Section "Version summary"
-    $commands = @("git", "node", "npm", "python", "deno", "gh", "aws", "java", "code")
+    $commands = @("git", "node", "npm", "python", "deno", "gh", "aws", "java", "code", "podman")
     foreach ($command in $commands) {
         if (-not (Test-CommandExists $command)) {
             Write-Host "${command}: not found" -ForegroundColor Yellow

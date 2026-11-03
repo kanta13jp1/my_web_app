@@ -1,35 +1,120 @@
 import '../models/asset_liability_workbook.dart';
 
-/// リボ払いカードの今月請求額を算出する純関数サービス。
+/// リボ払いカードの今月返済予定額を算出する純関数サービス。
 ///
-/// auPAY カードなどの「あらかじめリボ」方式では、毎月の請求額は利用明細の
-/// 合計ではなく次の式で決まる:
+/// 手元資金で既存残高をいきなり一括返済することは求めず、次の式で
+/// 残高増加を防ぐ:
 ///
-///   請求額 = リボ設定額 + max(0, リボ残高 − 利用限度額)
+///   返済予定額 = 既存残高への最低返済額 + 当月の新規利用額
 ///
-/// 利用限度額の範囲内ならリボ設定額のみが請求され、限度額を超えた分だけが
-/// その月に一括で上乗せ請求される。利用明細(新規利用)はリボ残高に積み増され、
-/// その月の請求額とは直接対応しない(= 明細合計 ≠ 請求額 が正常)。
+/// 新規利用額は同月25日に全額上乗せし、既存残高だけを最低返済額で圧縮する。
 class AssetRevolvingCreditService {
   const AssetRevolvingCreditService();
 
-  /// [config] と現在の [balance] (リボ残高) から今月の請求内訳を算出する。
+  /// [config] と現在の [balance] (リボ残高) から今月の返済内訳を算出する。
+  /// [newUsageAmount] が指定された場合は取込明細の合計として手入力設定より優先する。
+  /// [statementLines] がある場合は明細ごとの利用先・金額および返済カバー状況
+  /// （リボ残高組み入れ・返済不足等）の内訳を生成する。
   AssetLiabilityRevolvingCreditBilling computeBilling({
     required double balance,
     required AssetLiabilityRevolvingCreditConfig config,
+    double? newUsageAmount,
+    List<AssetLiabilityCardStatementLine>? statementLines,
+    bool? hasImportedStatement,
+    double? scheduledPayment,
+    double? confirmedPaymentAmount,
+    int? confirmedPaymentDay,
   }) {
     final normalizedBalance = balance > 0 ? balance : 0.0;
-    // 利用限度額が未設定 (0以下) なら上乗せ請求なしとして設定額のみ請求する。
-    // リボ設定の入力途中で請求額が残高全額へ跳ねるのを防ぐ安全側の扱い。
-    final hasLimit = config.creditLimit > 0;
-    final overLimit = hasLimit ? normalizedBalance - config.creditLimit : 0.0;
-    final overLimitAmount = overLimit > 0 ? overLimit : 0.0;
+    final requestedNewUsage = newUsageAmount ?? config.newUsageAmount;
+    final normalizedNewUsage = requestedNewUsage > 0
+        ? requestedNewUsage.clamp(0.0, normalizedBalance).toDouble()
+        : 0.0;
+    final existingBalance = normalizedBalance - normalizedNewUsage;
+    final requestedMinimum =
+        config.monthlyAmount > 0 ? config.monthlyAmount : 0.0;
+    final minimumPayment =
+        requestedMinimum.clamp(0.0, existingBalance).toDouble();
+    final paymentDay = confirmedPaymentDay != null &&
+            confirmedPaymentDay >= 1 &&
+            confirmedPaymentDay <= 31
+        ? confirmedPaymentDay
+        : 25;
+    final hasConfirmedAmount = confirmedPaymentAmount != null &&
+        confirmedPaymentAmount.isFinite &&
+        confirmedPaymentAmount >= 0;
+    final billedAmount = hasConfirmedAmount
+        ? confirmedPaymentAmount
+        : minimumPayment + normalizedNewUsage;
+
+    final isImported = hasImportedStatement ??
+        (statementLines != null && statementLines.isNotEmpty);
+    final items = <AssetLiabilityRevolvingUsageItem>[];
+
+    if (statementLines != null && statementLines.isNotEmpty) {
+      final effectivePayment =
+          hasConfirmedAmount ? billedAmount : scheduledPayment ?? billedAmount;
+      var remainingCoverageBudget =
+          (effectivePayment - minimumPayment).clamp(0.0, double.infinity);
+
+      for (final line in statementLines) {
+        final lineAmount = line.amount;
+        final AssetLiabilityRevolvingUsageStatus status;
+        final String statusLabel;
+
+        if (lineAmount <= remainingCoverageBudget) {
+          status = AssetLiabilityRevolvingUsageStatus.covered;
+          statusLabel = '今月返済でカバー';
+          remainingCoverageBudget -= lineAmount;
+        } else if (remainingCoverageBudget > 0) {
+          status = AssetLiabilityRevolvingUsageStatus.uncoveredShortfall;
+          statusLabel = '返済一部不足（リボ算入）';
+          remainingCoverageBudget = 0;
+        } else {
+          status = AssetLiabilityRevolvingUsageStatus.uncoveredShortfall;
+          statusLabel = '返済不足（リボ残高算入・繰越）';
+        }
+
+        items.add(
+          AssetLiabilityRevolvingUsageItem(
+            id: line.id,
+            description: line.description,
+            amount: line.amount,
+            postedAt: line.postedAt,
+            status: status,
+            statusLabel: statusLabel,
+          ),
+        );
+      }
+    } else if (normalizedNewUsage > 0) {
+      final effectivePayment =
+          hasConfirmedAmount ? billedAmount : scheduledPayment ?? billedAmount;
+      final hasShortfall =
+          (effectivePayment - minimumPayment) < normalizedNewUsage;
+      items.add(
+        AssetLiabilityRevolvingUsageItem(
+          id: 'manual_usage',
+          description: '当月新規利用額（手入力設定）',
+          amount: normalizedNewUsage,
+          status: hasShortfall
+              ? AssetLiabilityRevolvingUsageStatus.uncoveredShortfall
+              : AssetLiabilityRevolvingUsageStatus.covered,
+          statusLabel: hasShortfall ? '返済不足（リボ残高算入・繰越）' : '今月返済でカバー',
+        ),
+      );
+    }
+
     return AssetLiabilityRevolvingCreditBilling(
       balance: normalizedBalance,
       creditLimit: config.creditLimit,
-      monthlyAmount: config.monthlyAmount,
-      overLimitAmount: overLimitAmount,
-      billedAmount: config.monthlyAmount + overLimitAmount,
+      monthlyAmount: minimumPayment,
+      newUsageAmount: normalizedNewUsage,
+      existingBalanceAmount: existingBalance,
+      paymentDay: paymentDay,
+      overLimitAmount: 0,
+      billedAmount: billedAmount,
+      usageItems: List<AssetLiabilityRevolvingUsageItem>.unmodifiable(items),
+      hasImportedStatement: isImported,
     );
   }
 }

@@ -29,7 +29,25 @@ import json
 import re
 import sys
 from pathlib import Path
+AI_UNIVERSITY_PROVIDER_COUNT_PLACEHOLDER = "{provider_count}"
 
+
+def materialize_ai_university_route(route: dict, provider_count: int | None) -> dict:
+    """Apply one normalized build count to every AI University SEO field."""
+    resolved = dict(route)
+    if route.get("path") != "/gemini-university":
+        return resolved
+    serialized = json.dumps(route, ensure_ascii=False)
+    if AI_UNIVERSITY_PROVIDER_COUNT_PLACEHOLDER not in serialized:
+        return resolved
+    if provider_count is None or provider_count <= 0:
+        raise ValueError("positive AI University provider count is required")
+    return json.loads(
+        serialized.replace(
+            AI_UNIVERSITY_PROVIDER_COUNT_PLACEHOLDER,
+            str(provider_count),
+        )
+    )
 
 def replace_attr_content(html_text: str, selector_regex: str, new_value: str) -> str:
     """`<meta ... content="...">` 等の content 属性値を置換する。1 箇所のみ。"""
@@ -298,6 +316,10 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
     )
     faq_html = _render_public_faq(faq)
     links_html = _render_public_links(route.get("links", []))
+    markdown_html = _render_markdown_source(
+        route.get("_markdown_text"),
+        route.get("markdown_source"),
+    )
     updated_html = ""
     if route.get("date_modified"):
         updated_html = (
@@ -310,6 +332,7 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
         f'<section aria-label="{html.escape(h1)}" data-prerender="public-body">'
         f"<ul>{points_html}</ul></section>"
         f"{updated_html}{sections_html}{faq_html}{links_html}"
+        f"{markdown_html}"
     )
     out = re.sub(
         r'<p\b[^>]*\blang="ja"[^>]*>.*?</p>',
@@ -370,6 +393,26 @@ def _render_public_links(links: list[dict]) -> str:
     )
 
 
+def _render_markdown_source(markdown_text: str | None, source: str | None) -> str:
+    """Expose an approved Markdown source verbatim without re-authoring it.
+
+    Legal copy is deliberately not interpreted as arbitrary HTML. A pre-wrapped,
+    escaped source keeps every heading, table, link and revision marker readable
+    in the initial response while preserving the repository asset as canonical.
+    """
+    if markdown_text is None:
+        return ""
+    source_attr = (
+        f' data-source="{html.escape(source, quote=True)}"' if source else ""
+    )
+    return (
+        '<article aria-label="承認済み原文" data-prerender="markdown-source"'
+        f'{source_attr}><h2>プライバシーポリシー原文</h2>'
+        '<pre style="white-space:pre-wrap;overflow-wrap:anywhere">'
+        f"{html.escape(markdown_text)}</pre></article>"
+    )
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--template", required=True,
@@ -379,6 +422,8 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--routes", default="web/seo/comparison-routes.json")
     ap.add_argument("--public-routes", default=None,
                     help="公開ルート config (web/seo/public-routes.json)")
+    ap.add_argument("--ai-university-catalog", default=None,
+                    help="normalized provider catalog JSON from production")
     ap.add_argument("--base-url", default=None,
                     help="省略時は routes JSON の site を使用")
     args = ap.parse_args(argv)
@@ -396,13 +441,26 @@ def main(argv: list[str]) -> int:
         dest.write_text(page, encoding="utf-8")
         vs_written += 1
 
+    provider_count = None
+    if args.ai_university_catalog:
+        catalog = json.loads(
+            Path(args.ai_university_catalog).read_text(encoding='utf-8'))
+        provider_count = int(catalog['provider_count'])
+
     pub_written = 0
     if args.public_routes:
         pub_config = json.loads(
             Path(args.public_routes).read_text(encoding="utf-8"))
         pub_base = (args.base_url or pub_config["site"]).rstrip("/")
         for route in pub_config["routes"]:
-            page = build_public_route_html(template, route, pub_base)
+            resolved_route = materialize_ai_university_route(
+                route, provider_count)
+            markdown_source = route.get("markdown_source")
+            if markdown_source:
+                resolved_route["_markdown_text"] = Path(markdown_source).read_text(
+                    encoding="utf-8"
+                )
+            page = build_public_route_html(template, resolved_route, pub_base)
             dest = outdir / route["path"].strip("/") / "index.html"
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(page, encoding="utf-8")

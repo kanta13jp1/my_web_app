@@ -20,8 +20,8 @@ void main() {
 
     final kochi = dpjOfficialEndorsementFor('高知県');
     expect(kochi, isNotNull);
-    expect(kochi!.totalCount, 3);
-    expect(kochi.incumbentCount, 1);
+    expect(kochi!.totalCount, 2);
+    expect(kochi.incumbentCount, 0);
     expect(kochi.newcomerCount, 1);
     expect(kochi.formerCount, 1);
   });

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/slide_number_check_card.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// AIプレゼンビルダーページ
@@ -134,6 +135,8 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SlideNumberCheckCard(),
+            const SizedBox(height: 16),
             _buildInputCard(),
             const SizedBox(height: 16),
             if (_result != null) _buildResultCard(),

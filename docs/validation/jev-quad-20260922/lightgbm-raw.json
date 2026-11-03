@@ -1,0 +1,281 @@
+{
+  "source": "d224c892c1f16895f24978358717717f96bad657",
+  "lane": "lightgbm",
+  "mode": "raw",
+  "started_at": "2026-09-22T02:30:39.640Z",
+  "api_min_start_ms": 500,
+  "max_api_calls": 60,
+  "model_input": "Original full telemetry; Laya truncation measured separately",
+  "forecast": "Predict current held input for previous solve age, rounded/clamped to1..12frames",
+  "timing": "60Hz wall-clock simulation continues during worker search and any API wait; Node CPU, no browser/rendering",
+  "clear": false,
+  "phase": "dead",
+  "x": 295.33000000000067,
+  "frames": 190,
+  "wall_ms": 3170.879391,
+  "decisions": 32,
+  "accepted": 32,
+  "overrides": 0,
+  "fallbackDecisions": 0,
+  "releases": 0,
+  "apiCalls": 0,
+  "apiTrace": [],
+  "trace": [
+    {
+      "frame": 0,
+      "x": 32,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.8341639999999941
+    },
+    {
+      "frame": 6,
+      "x": 34.730000000000004,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.7271929999999998
+    },
+    {
+      "frame": 12,
+      "x": 42.129999999999995,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.2208169999999825
+    },
+    {
+      "frame": 18,
+      "x": 51.42999999999998,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.1766230000000064
+    },
+    {
+      "frame": 24,
+      "x": 60.72999999999996,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.3795859999999607
+    },
+    {
+      "frame": 30,
+      "x": 70.02999999999994,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.3052259999999478
+    },
+    {
+      "frame": 36,
+      "x": 79.32999999999993,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.19103999999992993
+    },
+    {
+      "frame": 42,
+      "x": 88.62999999999991,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.1713640000000396
+    },
+    {
+      "frame": 48,
+      "x": 97.9299999999999,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.4041730000000143
+    },
+    {
+      "frame": 54,
+      "x": 107.22999999999988,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.20510699999999815
+    },
+    {
+      "frame": 60,
+      "x": 116.52999999999986,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.1799590000000535
+    },
+    {
+      "frame": 66,
+      "x": 125.82999999999984,
+      "raw": "right",
+      "effective": "right",
+      "accepted": true,
+      "age_ms": 0.17780500000003485
+    },
+    {
+      "frame": 72,
+      "x": 135.12999999999988,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.16993000000002212
+    },
+    {
+      "frame": 78,
+      "x": 144.42999999999995,
+      "raw": "jump",
+      "effective": "jump",
+      "accepted": true,
+      "age_ms": 0.17293599999993603
+    },
+    {
+      "frame": 84,
+      "x": 152.04999999999993,
+      "raw": "jump",
+      "effective": "jump",
+      "accepted": true,
+      "age_ms": 0.23616599999991195
+    },
+    {
+      "frame": 90,
+      "x": 156.78999999999994,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.2098959999998442
+    },
+    {
+      "frame": 96,
+      "x": 163.05999999999995,
+      "raw": "jump",
+      "effective": "jump",
+      "accepted": true,
+      "age_ms": 0.1880949999999757
+    },
+    {
+      "frame": 102,
+      "x": 169.59999999999994,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.20092899999986003
+    },
+    {
+      "frame": 108,
+      "x": 177.54999999999995,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.1684179999999742
+    },
+    {
+      "frame": 114,
+      "x": 186.85000000000002,
+      "raw": "jump",
+      "effective": "jump",
+      "accepted": true,
+      "age_ms": 0.2530070000000251
+    },
+    {
+      "frame": 120,
+      "x": 194.47,
+      "raw": "jump",
+      "effective": "jump",
+      "accepted": true,
+      "age_ms": 0.16448100000002341
+    },
+    {
+      "frame": 126,
+      "x": 199.21,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.16511199999968085
+    },
+    {
+      "frame": 132,
+      "x": 205.48000000000002,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.18391699999983757
+    },
+    {
+      "frame": 138,
+      "x": 214.73000000000008,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.13778999999976804
+    },
+    {
+      "frame": 144,
+      "x": 224.03000000000014,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.1389129999997749
+    },
+    {
+      "frame": 150,
+      "x": 233.3300000000002,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.26468000000022585
+    },
+    {
+      "frame": 156,
+      "x": 242.63000000000028,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.1463869999997769
+    },
+    {
+      "frame": 162,
+      "x": 251.93000000000035,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.1289729999998599
+    },
+    {
+      "frame": 168,
+      "x": 261.2300000000004,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.09981899999957022
+    },
+    {
+      "frame": 174,
+      "x": 270.5300000000005,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.10918600000013612
+    },
+    {
+      "frame": 180,
+      "x": 279.83000000000055,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.11419599999999264
+    },
+    {
+      "frame": 186,
+      "x": 289.1300000000006,
+      "raw": "right_jump",
+      "effective": "right_jump",
+      "accepted": true,
+      "age_ms": 0.1265190000003713
+    }
+  ]
+}

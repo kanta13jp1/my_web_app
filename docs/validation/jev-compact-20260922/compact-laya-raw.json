@@ -1,0 +1,381 @@
+{
+  "source": "d224c892c1f16895f24978358717717f96bad657",
+  "lane": "laya",
+  "mode": "raw",
+  "started_at": "2026-09-22T03:21:36.542Z",
+  "api_min_start_ms": 500,
+  "max_api_calls": 60,
+  "model_input": "compact-v1: same telemetry with binary map and short instructions; no new features",
+  "forecast": "Predict current held input for previous solve age, rounded/clamped to1..12frames",
+  "timing": "60Hz wall-clock simulation continues during worker search and any API wait; Node CPU, no browser/rendering",
+  "clear": false,
+  "phase": "dead",
+  "x": 314.1000000000001,
+  "frames": 214,
+  "wall_ms": 3575.954313,
+  "decisions": 36,
+  "accepted": 20,
+  "overrides": 0,
+  "fallbackDecisions": 16,
+  "releases": 0,
+  "apiCalls": 3,
+  "apiTrace": [
+    {
+      "frame": 0,
+      "received_frame": 95,
+      "choice": "right_run",
+      "probabilities": {
+        "noop": 0.0616,
+        "right": 0.0454,
+        "right_run": 0.54,
+        "left": 0.0123,
+        "jump": 0.0776,
+        "right_jump": 0.1475,
+        "right_run_jump": 0.1157
+      },
+      "model": "laya-rl-agent",
+      "uniform": false,
+      "usage": {
+        "input_tokens": 214,
+        "output_tokens": 0
+      },
+      "laya_input": {
+        "state_tokens": 92,
+        "state_budget": 390,
+        "truncated": false,
+        "encoded_tokens": 214,
+        "options": 7,
+        "question_and_options_tokens": 122,
+        "max_tokens": 512
+      },
+      "laya_compute_ms": 1119.181580000003,
+      "http_ms": 1590.447606
+    },
+    {
+      "frame": 95,
+      "received_frame": 162,
+      "choice": "right_run",
+      "probabilities": {
+        "noop": 0.0616,
+        "right": 0.0454,
+        "right_run": 0.54,
+        "left": 0.0123,
+        "jump": 0.0776,
+        "right_jump": 0.1475,
+        "right_run_jump": 0.1157
+      },
+      "model": "laya-rl-agent",
+      "uniform": false,
+      "usage": {
+        "input_tokens": 214,
+        "output_tokens": 0
+      },
+      "laya_input": {
+        "state_tokens": 92,
+        "state_budget": 390,
+        "truncated": false,
+        "encoded_tokens": 214,
+        "options": 7,
+        "question_and_options_tokens": 122,
+        "max_tokens": 512
+      },
+      "laya_compute_ms": 1113.6895580000044,
+      "http_ms": 1118.60021
+    },
+    {
+      "frame": 163,
+      "error": "cancelled",
+      "http_ms": 854.648083
+    }
+  ],
+  "trace": [
+    {
+      "frame": 0,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.01492799999999761
+    },
+    {
+      "frame": 6,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.014085999999991827
+    },
+    {
+      "frame": 12,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.018914999999992688
+    },
+    {
+      "frame": 18,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.002655000000004293
+    },
+    {
+      "frame": 24,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0023740000000316286
+    },
+    {
+      "frame": 30,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0025650000000041473
+    },
+    {
+      "frame": 36,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0023850000000038563
+    },
+    {
+      "frame": 42,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.002353999999968437
+    },
+    {
+      "frame": 48,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.001993999999967855
+    },
+    {
+      "frame": 54,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0020539999999300562
+    },
+    {
+      "frame": 60,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0034559999999146385
+    },
+    {
+      "frame": 66,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0026149999998779094
+    },
+    {
+      "frame": 72,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.0019640000000435975
+    },
+    {
+      "frame": 78,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.002103999999917505
+    },
+    {
+      "frame": 84,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.002314000000069427
+    },
+    {
+      "frame": 90,
+      "x": 32,
+      "raw": null,
+      "effective": "noop",
+      "accepted": false,
+      "age_ms": 0.002604999999903157
+    },
+    {
+      "frame": 96,
+      "x": 32,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.001242000000047483
+    },
+    {
+      "frame": 102,
+      "x": 34.730000000000004,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.042208999999957086
+    },
+    {
+      "frame": 108,
+      "x": 42.14,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.027281000000130007
+    },
+    {
+      "frame": 114,
+      "x": 54.22999999999999,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003777000000127373
+    },
+    {
+      "frame": 120,
+      "x": 69.69999999999997,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.004268000000138272
+    },
+    {
+      "frame": 126,
+      "x": 85.29999999999994,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.004167000000052212
+    },
+    {
+      "frame": 132,
+      "x": 100.8999999999999,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.005090000000109285
+    },
+    {
+      "frame": 138,
+      "x": 116.49999999999987,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.004157999999733875
+    },
+    {
+      "frame": 144,
+      "x": 132.09999999999985,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003666999999950349
+    },
+    {
+      "frame": 150,
+      "x": 147.69999999999982,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.004378000000087923
+    },
+    {
+      "frame": 156,
+      "x": 163.29999999999978,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.005571000000145432
+    },
+    {
+      "frame": 162,
+      "x": 178.89999999999975,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.004308000000037282
+    },
+    {
+      "frame": 168,
+      "x": 194.49999999999972,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003757999999834283
+    },
+    {
+      "frame": 174,
+      "x": 210.09999999999968,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0035859999998137937
+    },
+    {
+      "frame": 180,
+      "x": 225.69999999999965,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0037469999997483683
+    },
+    {
+      "frame": 186,
+      "x": 241.2999999999996,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003477000000202679
+    },
+    {
+      "frame": 192,
+      "x": 256.8999999999996,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.003545999999914784
+    },
+    {
+      "frame": 198,
+      "x": 272.4999999999997,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0038669999999001448
+    },
+    {
+      "frame": 204,
+      "x": 288.09999999999985,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.0037870000001021253
+    },
+    {
+      "frame": 210,
+      "x": 303.7,
+      "raw": "right_run",
+      "effective": "right_run",
+      "accepted": true,
+      "age_ms": 0.017212000000199623
+    }
+  ]
+}

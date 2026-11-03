@@ -8,8 +8,7 @@ on:
       - "scripts/check_founding_manual_gate.py"
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: founding-manual-gate-${{ github.ref }}
@@ -17,13 +16,15 @@ concurrency:
 
 jobs:
   manual-gate:
+    permissions:
+      contents: read
     name: Founding Manual Gate
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Check founding manual gate
         run: python scripts/check_founding_manual_gate.py

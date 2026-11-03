@@ -26,11 +26,15 @@ concurrency:
   group: x-ai-tool-tracker-queue
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   queue:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -40,6 +44,8 @@ jobs:
       EXPERIMENT_KEY: x_first_user_growth_10k
       VARIANT: ai_tool_tracker
       TARGET_URL: https://my-web-app-b67f4.web.app/?utm_source=x&utm_medium=data_report&utm_campaign=first_user_growth&utm_content=ai_tool_tracker
+      DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
+      FORCE_INPUT: ${{ github.event.inputs.force }}
     steps:
       - name: Validate secrets
         shell: bash
@@ -53,8 +59,8 @@ jobs:
         id: mode
         shell: bash
         run: |
-          dry_run="${{ github.event.inputs.dry_run }}"
-          force="${{ github.event.inputs.force }}"
+          dry_run="$DRY_RUN_INPUT"
+          force="$FORCE_INPUT"
           if [ -z "${dry_run}" ]; then
             dry_run="false"
           fi
@@ -65,7 +71,7 @@ jobs:
           echo "force=${force}" >> "${GITHUB_OUTPUT}"
 
       - name: Checkout report data
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           sparse-checkout: |
             docs/ai-tool-watch

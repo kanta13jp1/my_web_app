@@ -13,8 +13,7 @@ on:
         default: "60"
         type: string
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: blog-backfill-from-apis
@@ -22,14 +21,20 @@ concurrency:
 
 jobs:
   backfill:
+    environment:
+      name: content-automation-production
+      deployment: false
+    permissions:
+      contents: read
     name: Run blog.backfill_from_apis
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
       - name: Call schedule-hub blog.backfill_from_apis
+        env:
+          DAYS: ${{ inputs.days }}
         run: |
-          DAYS="${{ inputs.days }}"
           PAYLOAD=$(jq -n --arg action "blog.backfill_from_apis" --argjson days "${DAYS:-60}" \
             '{action: $action, days: $days}')
           echo "Payload: $PAYLOAD"

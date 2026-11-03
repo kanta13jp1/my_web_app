@@ -41,6 +41,7 @@ ARTIFACT_KINDS = (
     "prompt",
     "idea",
     "game",
+    "application",
     "template",
     "bundle",
 )
