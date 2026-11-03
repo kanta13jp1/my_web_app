@@ -46,5 +46,5 @@ jobs:
             test "$(ip -o link show | wc -l)" -eq 1
             ip link show lo > /dev/null
             exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true \
-              flutter test test/widgets/payment_day_page_repro_test.dart --reporter expanded
+              flutter test test/widgets/payment_day_page_repro_test.dart test/models/asset_calendar_reflection_test.dart test/widgets/asset_calendar_reflection_panel_test.dart --reporter expanded
           ' _ "$(id -un)" "$PATH" "$HOME"
