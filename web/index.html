@@ -66,7 +66,7 @@
   <link rel="dns-prefetch" href="__SUPABASE_URL__">
   <link rel="preload" href="flutter_bootstrap.js" as="script">
   <link rel="preload" href="main.dart.js" as="script" fetchpriority="high">
-  <link rel="preload" href="assets/web/assets/fonts/NotoSansJP-Regular.ttf" as="font" type="font/ttf" crossorigin>
+  <!-- CanvasKit fetches the bundled Japanese font; avoid a second CSS-font preload download. -->
   <!--
     Google Fonts (Noto Sans JP / Noto Serif JP) のランタイム読み込みは廃止した。
     - この CSS は日本語の unicode-range 分割により **458kB / 496 シャード宣言**
@@ -1332,6 +1332,35 @@
       var seoShell = document.getElementById('seo-shell');
       if (!seoShell) return;
 
+      var revealed = false;
+      var animationFrameId;
+      var warmupTimer;
+      // Start only after Flutter reports a rendered frame. Animation callbacks
+      // can pause in background/embedded tabs; they must not leave the opaque
+      // shell covering an already running app. A failed boot keeps its shell.
+      var fallbackTimer = window.setTimeout(revealFlutter, 2000);
+
+      function revealFlutter() {
+        if (revealed) return;
+        revealed = true;
+        window.clearTimeout(fallbackTimer);
+        window.clearTimeout(warmupTimer);
+        window.cancelAnimationFrame(animationFrameId);
+        seoShell.setAttribute('data-flutter-ready', 'true');
+        seoShell.setAttribute('aria-hidden', 'true');
+        window.setTimeout(function () {
+          if (seoShell.isConnected) {
+            seoShell.remove();
+          }
+        }, 150);
+      }
+
+      function nextPaint(callback) {
+        animationFrameId = requestAnimationFrame(function () {
+          if (!revealed) callback();
+        });
+      }
+
       // flutter-first-frame can fire while the web renderer is still warming
       // the bundled Japanese font and glyph atlas. Removing the readable SEO
       // shell immediately exposed a blank frame followed by tofu glyphs in the
@@ -1339,33 +1368,27 @@
       // window and several additional painted frames. Keep it fully opaque
       // during that wait so two different landing pages never appear stacked,
       // then hand off with only a brief fade.
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-          window.setTimeout(function () {
+      nextPaint(function () {
+        nextPaint(function () {
+          warmupTimer = window.setTimeout(function () {
             seoShell.setAttribute('data-flutter-prewarm', 'true');
             var stableFramesRemaining = 12;
             function revealAfterStableFrames() {
-              requestAnimationFrame(function () {
+              nextPaint(function () {
                 stableFramesRemaining -= 1;
                 if (stableFramesRemaining > 0) {
                   revealAfterStableFrames();
                   return;
                 }
 
-                seoShell.setAttribute('data-flutter-ready', 'true');
-                seoShell.setAttribute('aria-hidden', 'true');
-                window.setTimeout(function () {
-                  if (seoShell.isConnected) {
-                    seoShell.remove();
-                  }
-                }, 150);
+                revealFlutter();
               });
             }
             revealAfterStableFrames();
           }, 700);
         });
       });
-    });
+    }, { once: true });
   </script>
   <script>
     // Service worker fallback: this app deploys often, so stale Flutter PWA caches

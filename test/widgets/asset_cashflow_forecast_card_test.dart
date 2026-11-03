@@ -43,6 +43,115 @@ AssetCashflowForecast _shortfallForecast() {
 
 void main() {
   group('AssetCashflowForecastCard', () {
+    testWidgets('single forecast also warns that scheduled income can overlap',
+        (tester) async {
+      final scenarios = AssetCashflowForecastService.projectScenarios(
+        asOf: DateTime(2026, 6, 24),
+        startingBalance: 100,
+        horizonMonths: 1,
+        recurringIncome: const [
+          AssetCashflowRecurringEntry(dayOfMonth: 25, amount: 200),
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: AssetCashflowForecastScenariosCard(scenarios: scenarios),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('予定が重複して計上される場合があります。'), findsOneWidget);
+      expect(
+        find.byKey(const Key('asset_cashflow_forecast_card')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('same-day income shows both conditional forecasts',
+        (tester) async {
+      final semantics = tester.ensureSemantics();
+      final scenarios = AssetCashflowForecastService.projectScenarios(
+        asOf: DateTime(2026, 6, 25),
+        startingBalance: 100,
+        horizonMonths: 1,
+        recurringIncome: const [
+          AssetCashflowRecurringEntry(dayOfMonth: 25, amount: 200),
+        ],
+        oneTimeOutflow: [
+          AssetCashflowDatedEntry(date: DateTime(2026, 6, 26), amount: 180),
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: AssetCashflowForecastScenariosCard(scenarios: scenarios),
+            ),
+          ),
+        ),
+      );
+      expect(
+        find.byKey(const Key('asset_cashflow_forecast_conditional_notice')),
+        findsOneWidget,
+      );
+      expect(find.text('条件A：当日予定入金がすべて起点残高に反映済み'), findsOneWidget);
+      expect(find.text('条件B：当日予定入金がすべて起点残高に未反映'), findsOneWidget);
+      expect(find.textContaining('実際の上下限や確定額ではありません'), findsOneWidget);
+      expect(find.textContaining('予定が重複して計上される場合があります'), findsOneWidget);
+      expect(find.textContaining('¥-80'), findsWidgets);
+      expect(find.textContaining('¥120'), findsWidgets);
+      expect(find.bySemanticsLabel(RegExp('条件A。将来残高予測グラフ')), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp('条件B。将来残高予測グラフ')), findsOneWidget);
+      semantics.dispose();
+    });
+
+    for (final width in [390.0, 1440.0]) {
+      testWidgets(
+          'paid-cycle forecast explanation and monthly detail at $width',
+          (tester) async {
+        tester.view.physicalSize = Size(width, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final semantics = tester.ensureSemantics();
+        try {
+          final forecast = AssetCashflowForecastService.project(
+            asOf: DateTime(2026, 6, 1),
+            startingBalance: 10000,
+            horizonMonths: 2,
+            recurringOutflow: [
+              AssetCashflowRecurringEntry(
+                dayOfMonth: 10,
+                amount: 2000,
+                paidPeriodStart: DateTime(2026, 6, 1),
+                paidPeriodEndExclusive: DateTime(2026, 7, 1),
+              ),
+            ],
+          );
+          await _pump(tester, forecast);
+          expect(find.textContaining('対象の給与サイクル内だけ反映'), findsOneWidget);
+          final details =
+              find.byKey(const Key('asset_cashflow_forecast_month_details'));
+          final tile = find.descendant(
+            of: details,
+            matching: find.byType(ListTile),
+          );
+          final semanticsData = tester.getSemantics(tile).getSemanticsData();
+          expect(semanticsData.flagsCollection.isButton, isTrue);
+          await tester.ensureVisible(details);
+          await tester.tap(find.text('月別内訳（月末・月内最低）'));
+          await tester.pumpAndSettle();
+          expect(find.text('2026/6 月末 ¥10000 / 月内最低 ¥10000'), findsOneWidget);
+          expect(find.text('2026/7 月末 ¥8000 / 月内最低 ¥8000'), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        } finally {
+          semantics.dispose();
+        }
+      });
+    }
+
     testWidgets('shows a negative monthly low even when month-end recovers', (
       tester,
     ) async {

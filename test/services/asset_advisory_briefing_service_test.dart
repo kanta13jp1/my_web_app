@@ -106,6 +106,29 @@ void main() {
   }
 
   group('AssetAdvisoryBriefingService.build', () {
+    test('ambiguous anchor income does not produce a clear cashflow verdict',
+        () {
+      final conditional = AssetCashflowForecastService.projectScenarios(
+        asOf: DateTime(2026, 6, 25),
+        startingBalance: 100,
+        horizonMonths: 1,
+        recurringIncome: const [
+          AssetCashflowRecurringEntry(dayOfMonth: 25, amount: 200),
+        ],
+        oneTimeOutflow: [
+          AssetCashflowDatedEntry(date: DateTime(2026, 6, 26), amount: 180),
+        ],
+      );
+      expect(conditional.alreadyReflected.hasShortfall, isTrue);
+      expect(conditional.notYetReflected.hasShortfall, isFalse);
+      final briefing = service.build(
+        now: DateTime(2026, 6, 25),
+        forecast: conditional.advisoryForecast,
+      );
+      expect(actionFor(briefing, 'cashflow_clear'), isNull);
+      expect(actionFor(briefing, 'cashflow_shortfall'), isNull);
+    });
+
     test('empty inputs produce an empty briefing with a clean headline', () {
       final briefing = service.build(now: now);
       expect(briefing.isEmpty, isTrue);
@@ -193,7 +216,8 @@ void main() {
       final chro = actionFor(briefing, 'discipline_violation');
       expect(chro, isNotNull);
       expect(chro!.department, AdvisoryDepartment.chro);
-      expect(chro.detail, contains('未達'));
+      expect(chro.detail, contains('要確認（未照合）'));
+      expect(chro.headline, isNot(contains('違反')));
     });
 
     test('compliant-but-relevant discipline yields a CHRO info', () {
@@ -201,7 +225,8 @@ void main() {
       final chro = actionFor(briefing, 'discipline_ok');
       expect(chro, isNotNull);
       expect(chro!.severity, AdvisorySeverity.info);
-      expect(chro.detail, contains('達成'));
+      expect(chro.detail, contains('未照合'));
+      expect(chro.detail, isNot(contains('達成')));
     });
 
     test('never claims 追加借入ゼロ was achieved when it was never evaluated', () {
@@ -236,7 +261,7 @@ void main() {
       expect(chro, isNotNull);
       expect(chro!.detail, contains('誓約①カード以外の追加借入ゼロ: 判定保留'));
       // 誓約②は前月データ不要なので、そのまま未達と出る。
-      expect(chro.detail, contains('誓約②新規利用分の25日全額返済: 未達'));
+      expect(chro.detail, contains('誓約②新規利用分の25日全額返済: 要確認（未照合）'));
     });
 
     test('two criticals trigger a CEO priority ruling sorted to the top', () {

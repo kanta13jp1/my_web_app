@@ -22,6 +22,8 @@ class AssetRevolvingCreditService {
     List<AssetLiabilityCardStatementLine>? statementLines,
     bool? hasImportedStatement,
     double? scheduledPayment,
+    double? confirmedPaymentAmount,
+    int? confirmedPaymentDay,
   }) {
     final normalizedBalance = balance > 0 ? balance : 0.0;
     final requestedNewUsage = newUsageAmount ?? config.newUsageAmount;
@@ -33,15 +35,25 @@ class AssetRevolvingCreditService {
         config.monthlyAmount > 0 ? config.monthlyAmount : 0.0;
     final minimumPayment =
         requestedMinimum.clamp(0.0, existingBalance).toDouble();
-    const paymentDay = 25;
-    final billedAmount = minimumPayment + normalizedNewUsage;
+    final paymentDay = confirmedPaymentDay != null &&
+            confirmedPaymentDay >= 1 &&
+            confirmedPaymentDay <= 31
+        ? confirmedPaymentDay
+        : 25;
+    final hasConfirmedAmount = confirmedPaymentAmount != null &&
+        confirmedPaymentAmount.isFinite &&
+        confirmedPaymentAmount >= 0;
+    final billedAmount = hasConfirmedAmount
+        ? confirmedPaymentAmount
+        : minimumPayment + normalizedNewUsage;
 
     final isImported = hasImportedStatement ??
         (statementLines != null && statementLines.isNotEmpty);
     final items = <AssetLiabilityRevolvingUsageItem>[];
 
     if (statementLines != null && statementLines.isNotEmpty) {
-      final effectivePayment = scheduledPayment ?? billedAmount;
+      final effectivePayment =
+          hasConfirmedAmount ? billedAmount : scheduledPayment ?? billedAmount;
       var remainingCoverageBudget =
           (effectivePayment - minimumPayment).clamp(0.0, double.infinity);
 
@@ -75,7 +87,8 @@ class AssetRevolvingCreditService {
         );
       }
     } else if (normalizedNewUsage > 0) {
-      final effectivePayment = scheduledPayment ?? billedAmount;
+      final effectivePayment =
+          hasConfirmedAmount ? billedAmount : scheduledPayment ?? billedAmount;
       final hasShortfall =
           (effectivePayment - minimumPayment) < normalizedNewUsage;
       items.add(

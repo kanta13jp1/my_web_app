@@ -45,3 +45,48 @@ test('castle failure recovery takes priority locally without disabling ordinary 
  for(const record of [{...failure,stage:28},{...failure,room:'overworld'},{...failure,x:500},{...failure,x:170}]){assert.equal(run([record]).action,'jump');assert.equal(run([record]).reason,'item_pickup_route');}
  assert.equal(run([]).action,'jump');
 });
+
+
+test('castle guard returns toward the real axe after overshooting without mutating world',()=>{
+ const g=new World11(32),guard=new LiveGuard();g.power=1;
+ Object.assign(g.p,{x:3380,y:180,h:28,vx:0,vy:0,grounded:true});
+ const before=JSON.stringify(g.snapshot());
+ assert.equal(guard.decide(g,'right'),'left','safe forward motion beyond the axe is not goal progress');
+ assert.equal(JSON.stringify(g.snapshot()),before,'only real game steps may change state or award a clear');
+});
+
+test('overshot castle recovers by actual axe collision with normal hazards and unchanged clear rule',()=>{
+ for(const stage of [4,32])for(const power of [0,1]){
+  const g=new World11(stage),guard=new LiveGuard();g.power=power;
+  Object.assign(g.p,{x:3380,y:208-(power?28:16),h:power?28:16,vx:0,vy:0,grounded:true});
+  for(let i=0;i<240&&g.phase==='playing';i++){
+   const before=JSON.stringify(g.snapshot()),action=guard.decide(g,'right');
+   assert.equal(JSON.stringify(g.snapshot()),before);
+   g.buttons(action);g.step();g.drainSounds();
+  }
+  assert.equal(g.phase,'won',JSON.stringify({power,x:g.p.x,y:g.p.y,phase:g.phase}));
+  assert.equal(g.lives,3,'recovery cannot spend lives to manufacture a clear');
+ }
+});
+
+
+test('castle exit return stays inactive before the axe and outside a playing castle',()=>{
+ for(const stage of [1,2,4,30,32]){
+  const g=new World11(stage),guard=new LiveGuard();
+  g.p.x=[4,32].includes(stage)?3000:3380;
+  const before=JSON.stringify(g.snapshot());guard.decide(g,'noop');
+  assert.equal(JSON.stringify(g.snapshot()),before);
+  assert.notEqual(guard.lastReason,'castle_exit_return');
+ }
+ const g=new World11(32),guard=new LiveGuard();g.p.x=3380;g.phase='won';
+ assert.equal(guard.decide(g,'noop'),'noop');assert.equal(guard.interventions,0);
+});
+
+
+test('small castle exit return jumps into the axe vertical span without changing its collider',()=>{
+ const g=new World11(32),guard=new LiveGuard();
+ Object.assign(g.p,{x:3380,y:192,h:16,vx:0,vy:0,grounded:true});
+ const before=JSON.stringify(g.snapshot());
+ assert.equal(guard.decide(g,'right'),'left_jump');
+ assert.equal(JSON.stringify(g.snapshot()),before);
+});
