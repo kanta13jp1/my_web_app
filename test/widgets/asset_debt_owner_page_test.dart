@@ -405,4 +405,63 @@ void main() {
     expect(repo.lastSaved!['mobit'], 15);
     await _finishSyntheticPage(tester);
   });
+
+  testWidgets('duplicate IDs are held while a unique debt remains editable',
+      (tester) async {
+    final repo = _SyntheticDebtRepository({'mobit': 12, 'aupay_card': 13});
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(MaterialApp(
+        home: AssetManagementPage(
+      assetLiabilityRepository: repo,
+      debugNow: DateTime(2026, 10, 20),
+      debugInitialAssetData: const <String, Map<String, double>>{
+        '2026-10-20': <String, double>{
+          'Synthetic mobit alpha': -100000,
+          'Synthetic mobit beta': -200000,
+          'Synthetic aupay': -300000,
+        },
+      },
+    )));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.takeException(), isNull,
+        reason: 'duplicate ID must not duplicate a GlobalKey');
+    final warnings = find.textContaining('識別子または以前の口座名の重なりを確認するまで');
+    expect(warnings, findsNWidgets(2));
+    for (final warning in warnings.evaluate()) {
+      Element? controlElement;
+      warning.visitAncestorElements((element) {
+        final widget = element.widget;
+        if (widget is SizedBox && widget.width == 140) {
+          controlElement = element;
+          return false;
+        }
+        return true;
+      });
+      expect(controlElement, isNotNull);
+      final control = find.byWidget(controlElement!.widget);
+      final dropdown = find.descendant(
+          of: control, matching: find.byType(DropdownButton<int?>));
+      expect(tester.widget<DropdownButton<int?>>(dropdown).onChanged, isNull);
+    }
+    final unique = find.descendant(
+        of: _debtCard('aupay_card'),
+        matching: find.byType(DropdownButton<int?>));
+    expect(unique, findsOneWidget);
+    final before = repo.saveCalls;
+    final callback = tester.widget<DropdownButton<int?>>(unique).onChanged;
+    expect(callback, isNotNull);
+    callback!(16);
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(repo.saveCalls, greaterThan(before));
+    expect(repo.lastSaved!['aupay_card'], 16);
+    expect(repo.lastSaved!['mobit'], 12);
+    final afterFirst = repo.saveCalls;
+    callback(17); // The old row's value is stale after the first edit.
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(repo.saveCalls, afterFirst);
+    expect(repo.lastSaved!['aupay_card'], 16);
+    await _finishSyntheticPage(tester);
+  });
 }
