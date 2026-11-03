@@ -151,28 +151,58 @@ def valid_container(info, cid, image, label, lane, network, *, running=True):
     )
 
 
+def inspect_shape_labels(info, image):
+    # The labels and inspected key names are literal, not derived from input.
+    if not isinstance(info, dict):
+        return ['SHAPE_INFO_TYPE']
+    if not isinstance(image, dict):
+        return ['SHAPE_IMAGE_TYPE']
+    labels = []
+    for key, label in (('Id', 'SHAPE_INFO_ID_MISSING'), ('Image', 'SHAPE_INFO_IMAGE_MISSING'),
+            ('Config', 'SHAPE_INFO_CONFIG_MISSING'), ('HostConfig', 'SHAPE_INFO_HOST_MISSING'),
+            ('NetworkSettings', 'SHAPE_INFO_NETWORK_MISSING'), ('State', 'SHAPE_INFO_STATE_MISSING'),
+            ('Mounts', 'SHAPE_INFO_MOUNTS_MISSING')):
+        if key not in info: labels.append(label)
+    if labels: return labels
+    for key, label in (('Config', 'SHAPE_INFO_CONFIG_TYPE'), ('HostConfig', 'SHAPE_INFO_HOST_TYPE'),
+            ('NetworkSettings', 'SHAPE_INFO_NETWORK_TYPE'), ('State', 'SHAPE_INFO_STATE_TYPE')):
+        if not isinstance(info[key], dict): labels.append(label)
+    if not isinstance(info['Mounts'], list): labels.append('SHAPE_INFO_MOUNTS_TYPE')
+    if 'Config' not in image: labels.append('SHAPE_IMAGE_CONFIG_MISSING')
+    elif not isinstance(image['Config'], dict): labels.append('SHAPE_IMAGE_CONFIG_TYPE')
+    if labels: return labels
+    config, host, network, state, img = info['Config'], info['HostConfig'], info['NetworkSettings'], info['State'], image['Config']
+    for obj, entries in (
+        (config, (('Image','SHAPE_CONFIG_IMAGE_MISSING'), ('Env','SHAPE_CONFIG_ENV_MISSING'),
+            ('Labels','SHAPE_CONFIG_LABELS_MISSING'), ('Entrypoint','SHAPE_CONFIG_ENTRYPOINT_MISSING'),
+            ('Cmd','SHAPE_CONFIG_CMD_MISSING'), ('User','SHAPE_CONFIG_USER_MISSING'))),
+        (img, (('Env','SHAPE_IMAGE_ENV_MISSING'), ('Entrypoint','SHAPE_IMAGE_ENTRYPOINT_MISSING'),
+            ('Cmd','SHAPE_IMAGE_CMD_MISSING'), ('User','SHAPE_IMAGE_USER_MISSING'))),
+        (host, (('Privileged','SHAPE_HOST_PRIVILEGED_MISSING'), ('Binds','SHAPE_HOST_BINDS_MISSING'),
+            ('PortBindings','SHAPE_HOST_PORTBINDINGS_MISSING'), ('PublishAllPorts','SHAPE_HOST_PUBLISHALLPORTS_MISSING'),
+            ('CapAdd','SHAPE_HOST_CAPADD_MISSING'), ('Devices','SHAPE_HOST_DEVICES_MISSING'),
+            ('DeviceRequests','SHAPE_HOST_DEVICEREQUESTS_MISSING'), ('ExtraHosts','SHAPE_HOST_EXTRAHOSTS_MISSING'),
+            ('Links','SHAPE_HOST_LINKS_MISSING'), ('VolumesFrom','SHAPE_HOST_VOLUMESFROM_MISSING'),
+            ('SecurityOpt','SHAPE_HOST_SECURITYOPT_MISSING'), ('NetworkMode','SHAPE_HOST_NETWORKMODE_MISSING'),
+            ('Tmpfs','SHAPE_HOST_TMPFS_MISSING'), ('PidMode','SHAPE_HOST_PIDMODE_MISSING'),
+            ('IpcMode','SHAPE_HOST_IPCMODE_MISSING'), ('UsernsMode','SHAPE_HOST_USERNSMODE_MISSING'))),
+        (network, (('Ports','SHAPE_NETWORK_PORTS_MISSING'), ('Networks','SHAPE_NETWORK_NETWORKS_MISSING'))),
+        (state, (('Running','SHAPE_STATE_RUNNING_MISSING'),))):
+        for key, label in entries:
+            if key not in obj: labels.append(label)
+    if 'Labels' in config and not isinstance(config['Labels'], dict): labels.append('SHAPE_CONFIG_LABELS_TYPE')
+    return labels
+
+
 def inspect_failure_categories(info, cid, image, label, lane, network, *, running=True):
     # Diagnostics are fixed symbols only. This does not authorize the service;
     # valid_container remains the sole decision. Never include values or reprs.
     try:
-        required = ('Id', 'Image', 'Config', 'HostConfig', 'NetworkSettings', 'State', 'Mounts')
-        if not isinstance(info, dict) or any(k not in info for k in required):
-            return ['SHAPE']
-        if any(not isinstance(info[k], dict) for k in ('Config', 'HostConfig', 'NetworkSettings', 'State')):
-            return ['SHAPE']
-        if not isinstance(info['Mounts'], list) or not isinstance(image.get('Config'), dict):
-            return ['SHAPE']
+        shape = inspect_shape_labels(info, image)
+        if shape:
+            return shape
         config, host, net, state = (info[k] for k in ('Config', 'HostConfig', 'NetworkSettings', 'State'))
         img = image['Config']
-        required_cfg = ('Image', 'Env', 'Labels', 'Entrypoint', 'Cmd', 'User')
-        required_img = ('Env', 'Entrypoint', 'Cmd', 'User')
-        required_host = ('Privileged', 'Binds', 'PortBindings', 'PublishAllPorts', 'CapAdd', 'Devices',
-            'DeviceRequests', 'ExtraHosts', 'Links', 'VolumesFrom', 'SecurityOpt', 'NetworkMode',
-            'Tmpfs', 'PidMode', 'IpcMode', 'UsernsMode')
-        if (any(k not in config for k in required_cfg) or any(k not in img for k in required_img)
-            or any(k not in host for k in required_host) or any(k not in net for k in ('Ports', 'Networks'))
-            or 'Running' not in state or not isinstance(config['Labels'], dict)):
-            return ['SHAPE']
         out = []
         if (info['Id'] != cid or info['Image'] != image.get('Id') or config['Image'] != IMAGE
             or not isinstance(state['Running'], bool) or (running and state['Running'] is not True)
@@ -451,7 +481,24 @@ class StoppedInputTests(unittest.TestCase):
             with self.subTest(category=expected_category):
                 self.assertIn(expected_category, cats)
                 self.assertNotIn('sensitive', ','.join(cats))
-        self.assertEqual(inspect_failure_categories({}, cid, image, '1-1', 'sequential', net), ['SHAPE'])
+        self.assertIn('SHAPE_INFO_ID_MISSING', inspect_failure_categories({}, cid, image, '1-1', 'sequential', net))
+        for section, key, label in (
+            ('Config', 'Image', 'SHAPE_CONFIG_IMAGE_MISSING'),
+            ('HostConfig', 'IpcMode', 'SHAPE_HOST_IPCMODE_MISSING'),
+            ('NetworkSettings', 'Ports', 'SHAPE_NETWORK_PORTS_MISSING'),
+            ('State', 'Running', 'SHAPE_STATE_RUNNING_MISSING'),
+        ):
+            changed = copy.deepcopy(info); del changed[section][key]
+            self.assertFalse(ok(changed))
+            self.assertIn(label, inspect_failure_categories(changed, cid, image, '1-1', 'sequential', net))
+        for section, label in (('Config', 'SHAPE_INFO_CONFIG_TYPE'), ('Mounts', 'SHAPE_INFO_MOUNTS_TYPE')):
+            changed = copy.deepcopy(info); changed[section] = 'sensitive=do-not-print'
+            self.assertFalse(ok(changed))
+            cats = inspect_failure_categories(changed, cid, image, '1-1', 'sequential', net)
+            self.assertIn(label, cats); self.assertNotIn('sensitive', ','.join(cats))
+        changed = copy.deepcopy(info); changed['Config']['Labels'] = 'sensitive=do-not-print'
+        self.assertFalse(ok(changed))
+        self.assertIn('SHAPE_CONFIG_LABELS_TYPE', inspect_failure_categories(changed, cid, image, '1-1', 'sequential', net))
         for section, key, val in [('HostConfig','PublishAllPorts',True), ('HostConfig','CapAdd',['SYS_ADMIN']),
                                   ('HostConfig','Devices',[{'PathOnHost':'/dev/x'}]), ('HostConfig','ExtraHosts',['x:1.2.3.4']),
                                   ('HostConfig','Links',['x']), ('HostConfig','VolumesFrom',['x']),
