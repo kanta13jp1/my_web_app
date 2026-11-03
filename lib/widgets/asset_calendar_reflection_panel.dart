@@ -207,18 +207,22 @@ class _AssetCalendarReflectionPanelState
     final candidates = selected == null || _loading || _error != null
         ? <AssetDiningReviewCandidate>[]
         : widget.diningReviewCandidates
-            .where((candidate) =>
-                candidate.date.year == selected.year &&
-                candidate.date.month == selected.month &&
-                candidate.date.day == selected.day &&
-                !candidate.date.isBefore(widget.start) &&
-                candidate.date.isBefore(widget.end) &&
-                !events.any((event) =>
-                    event.linkedFlowId == candidate.flowId &&
-                    event.date.year == candidate.date.year &&
-                    event.date.month == candidate.date.month &&
-                    event.date.day == candidate.date.day &&
-                    event.kinds.contains(AssetReflectionKind.dining)))
+            .where(
+              (candidate) =>
+                  candidate.date.year == selected.year &&
+                  candidate.date.month == selected.month &&
+                  candidate.date.day == selected.day &&
+                  !candidate.date.isBefore(widget.start) &&
+                  candidate.date.isBefore(widget.end) &&
+                  !events.any(
+                    (event) =>
+                        event.linkedFlowId == candidate.flowId &&
+                        event.date.year == candidate.date.year &&
+                        event.date.month == candidate.date.month &&
+                        event.date.day == candidate.date.day &&
+                        event.kinds.contains(AssetReflectionKind.dining),
+                  ),
+            )
             .toList();
     return Container(
       padding: const EdgeInsets.all(12),

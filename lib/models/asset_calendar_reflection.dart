@@ -322,8 +322,11 @@ class AssetCalendarReflection {
 /// A review-only hint derived from an existing expense, not a confirmed meal.
 /// No amount, drinking assertion, calendar badge or database write is created.
 class AssetDiningReviewCandidate {
-  const AssetDiningReviewCandidate(
-      {required this.date, required this.title, required this.flowId});
+  const AssetDiningReviewCandidate({
+    required this.date,
+    required this.title,
+    required this.flowId,
+  });
   final DateTime date;
   final String title;
   final String flowId;
@@ -346,7 +349,8 @@ class AssetDiningReviewCandidate {
   }
 
   static List<AssetDiningReviewCandidate> fromFlows(
-      Iterable<Map<String, dynamic>> flows) {
+    Iterable<Map<String, dynamic>> flows,
+  ) {
     final result = <AssetDiningReviewCandidate>[];
     final seen = <String>{};
     for (final flow in flows) {
@@ -372,11 +376,13 @@ class AssetDiningReviewCandidate {
           .any((event) => event.kinds.contains(AssetReflectionKind.dining))) {
         continue;
       }
-      result.add(AssetDiningReviewCandidate(
-        date: DateTime(date.year, date.month, date.day),
-        title: merchant.group(0)!,
-        flowId: id,
-      ));
+      result.add(
+        AssetDiningReviewCandidate(
+          date: DateTime(date.year, date.month, date.day),
+          title: merchant.group(0)!,
+          flowId: id,
+        ),
+      );
     }
     return result;
   }
