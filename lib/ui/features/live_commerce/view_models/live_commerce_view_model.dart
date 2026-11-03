@@ -34,6 +34,7 @@ class LiveCommerceViewModel extends ChangeNotifier {
   bool _isResyncing = false;
   bool _disposed = false;
   int _connectionGeneration = 0;
+  int _productGeneration = 0;
   String? _notice;
   String? _errorMessage;
 
@@ -222,6 +223,8 @@ class LiveCommerceViewModel extends ChangeNotifier {
     if (_disposed || _isResyncing || _gateway.isPreview) return;
     _isResyncing = true;
     ++_connectionGeneration;
+    ++_productGeneration;
+    _featuredProduct = null;
     await _subscription?.cancel();
     if (_disposed) return;
     _connectionState = LiveCommerceConnectionState.syncing;
@@ -250,12 +253,21 @@ class LiveCommerceViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadFeaturedProduct(String? productId) async {
-    if (productId == null || productId.trim().isEmpty) {
-      _featuredProduct = null;
-      return;
+    final generation = ++_productGeneration;
+    _featuredProduct = null;
+    _safeNotify();
+    if (productId == null || productId.trim().isEmpty) return;
+    try {
+      final product = await _shopGateway.fetchProduct(productId);
+      if (!_disposed &&
+          generation == _productGeneration &&
+          _snapshot?.featuredProductId == productId) {
+        _featuredProduct = product;
+      }
+    } catch (_) {
+      if (_disposed || generation != _productGeneration) return;
+      rethrow;
     }
-    final product = await _shopGateway.fetchProduct(productId);
-    if (!_disposed) _featuredProduct = product;
   }
 
   void _safeNotify() {

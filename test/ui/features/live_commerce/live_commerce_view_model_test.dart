@@ -40,6 +40,40 @@ void main() {
     expect(viewModel.connectionState, LiveCommerceConnectionState.connecting);
   });
 
+  test('late product response cannot replace the latest selection', () async {
+    final gateway = _ResyncGateway(snapshotSequences: <int>[2]);
+    final shop = _DelayedShopGateway();
+    final viewModel = LiveCommerceViewModel(
+      gateway: gateway,
+      shopGateway: shop,
+      roomId: 'room-1',
+    );
+    addTearDown(() async {
+      viewModel.dispose();
+      await gateway.close();
+    });
+    await viewModel.load();
+    LiveCommerceEvent event(int sequence, String productId) => LiveCommerceEvent(
+          id: 'event-$sequence',
+          roomId: 'room-1',
+          sequence: sequence,
+          type: LiveCommerceEventType.productPushed,
+          occurredAt: DateTime(2026, 8, 26, 12),
+          productId: productId,
+        );
+    gateway.add(event(3, 'product-a'));
+    gateway.add(event(4, 'product-b'));
+    await _flushAsyncWork();
+    expect(viewModel.snapshot?.featuredProductId, 'product-b');
+    expect(viewModel.featuredProduct, isNull);
+    shop.pending['product-b']!.complete(shop.makeProduct('product-b'));
+    await _flushAsyncWork();
+    expect(viewModel.featuredProduct?.id, 'product-b');
+    shop.pending['product-a']!.complete(shop.makeProduct('product-a'));
+    await _flushAsyncWork();
+    expect(viewModel.featuredProduct?.id, 'product-b');
+  });
+
   test('stream completion leaves an honest degraded state', () async {
     final gateway = _ResyncGateway(snapshotSequences: <int>[2]);
     final viewModel = LiveCommerceViewModel(
@@ -135,6 +169,27 @@ class _ResyncGateway implements LiveCommerceGateway {
     required bool highlighted,
   }) {
     throw UnimplementedError();
+  }
+}
+
+class _DelayedShopGateway extends _FakeShopGateway {
+  final Map<String, Completer<ShopProduct?>> pending = {};
+
+  ShopProduct makeProduct(String id) => ShopProduct(
+        id: id,
+        nameJa: id,
+        summaryJa: '説明',
+        priceJpy: 1200,
+        version: '1.0.0',
+        fileSizeBytes: 1024,
+        sha256: 'abc',
+        isPurchasable: true,
+      );
+
+  @override
+  Future<ShopProduct?> fetchProduct(String productId) {
+    if (productId == 'product-1') return Future.value(product);
+    return (pending[productId] = Completer<ShopProduct?>()).future;
   }
 }
 
