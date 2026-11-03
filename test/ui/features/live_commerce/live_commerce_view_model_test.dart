@@ -53,7 +53,8 @@ void main() {
       await gateway.close();
     });
     await viewModel.load();
-    LiveCommerceEvent event(int sequence, String productId) => LiveCommerceEvent(
+    LiveCommerceEvent event(int sequence, String productId) =>
+        LiveCommerceEvent(
           id: 'event-$sequence',
           roomId: 'room-1',
           sequence: sequence,
@@ -74,7 +75,8 @@ void main() {
     expect(viewModel.featuredProduct?.id, 'product-b');
   });
 
-  test('resync prevents an old product response replacing the snapshot', () async {
+  test('resync prevents an old product response replacing the snapshot',
+      () async {
     final gateway = _ResyncGateway(snapshotSequences: <int>[2, 4]);
     final shop = _DelayedShopGateway();
     final viewModel = LiveCommerceViewModel(
@@ -118,7 +120,8 @@ void main() {
     expect(notifications, before);
   });
 
-  test('current product failure clears old product and reports error', () async {
+  test('current product failure clears old product and reports error',
+      () async {
     final gateway = _ResyncGateway(snapshotSequences: <int>[2]);
     final shop = _DelayedShopGateway();
     final viewModel = LiveCommerceViewModel(
