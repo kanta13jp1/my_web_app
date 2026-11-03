@@ -332,85 +332,98 @@ class _AssetPayrollSnapshotSectionState
   }
 
   Widget _buildReviewCard(PayrollSnapshotDraft draft) {
-    return Stack(children: [
-      Positioned.fill(
-        child: ModalBarrier(
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: ModalBarrier(
             color: Colors.black54,
             dismissible: true,
             semanticsLabel:
                 MaterialLocalizations.of(context).modalBarrierDismissLabel,
-            onDismiss: _dismissReview),
-      ),
-      Center(
-        child: Shortcuts(
-          shortcuts: const <ShortcutActivator, Intent>{
-            SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
-          },
-          child: Actions(
-            actions: <Type, Action<Intent>>{
-              DismissIntent: CallbackAction<DismissIntent>(onInvoke: (_) {
-                _dismissReview();
-                return null;
-              }),
+            onDismiss: _dismissReview,
+          ),
+        ),
+        Center(
+          child: Shortcuts(
+            shortcuts: const <ShortcutActivator, Intent>{
+              SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
             },
-            child: FocusScope(
-              autofocus: true,
-              child: Focus(
-                focusNode: _reviewFocus,
-                child: AlertDialog(
-                  key: _reviewKey,
-                  title: const Text('給与入金直後の残高を確認'),
-                  content: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('口座：$_reviewAccountLabel'),
-                        Text('対象月：${draft.month.year}/${draft.month.month}'),
-                        Text('給与入金日：${payrollDate(draft.depositDate)}（時刻未取得）'),
-                        Text('入金直後残高：${draft.balanceYen}円'),
-                        Text('確認資料メモ：${draft.note}'),
-                        if (_reviewPrevious != null)
+            child: Actions(
+              actions: <Type, Action<Intent>>{
+                DismissIntent: CallbackAction<DismissIntent>(
+                  onInvoke: (_) {
+                    _dismissReview();
+                    return null;
+                  },
+                ),
+              },
+              child: FocusScope(
+                autofocus: true,
+                child: Focus(
+                  focusNode: _reviewFocus,
+                  child: AlertDialog(
+                    key: _reviewKey,
+                    title: const Text('給与入金直後の残高を確認'),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('口座：$_reviewAccountLabel'),
+                          Text('対象月：${draft.month.year}/${draft.month.month}'),
                           Text(
-                              '旧記録：${_reviewPrevious!.balanceYen}円／訂正理由：${draft.reason}'),
-                        const Text(
-                          '保存後に結果が不明になった場合に備え、この識別子を控えられます。'
-                          '「確認して保存」を押す前は要求を送信しません。'
-                          '押した後は結果が不明でも保存された可能性があります。'
-                          '画面を閉じるとアプリに再入力できず、自動復元もされません。'
-                          '識別子だけでは保存の成否は分かりません。',
-                        ),
-                        SelectableText(draft.requestId,
+                              '給与入金日：${payrollDate(draft.depositDate)}（時刻未取得）'),
+                          Text('入金直後残高：${draft.balanceYen}円'),
+                          Text('確認資料メモ：${draft.note}'),
+                          if (_reviewPrevious != null)
+                            Text(
+                              '旧記録：${_reviewPrevious!.balanceYen}円／訂正理由：${draft.reason}',
+                            ),
+                          const Text(
+                            '保存後に結果が不明になった場合に備え、この識別子を控えられます。'
+                            '「確認して保存」を押す前は要求を送信しません。'
+                            '押した後は結果が不明でも保存された可能性があります。'
+                            '画面を閉じるとアプリに再入力できず、自動復元もされません。'
+                            '識別子だけでは保存の成否は分かりません。',
+                          ),
+                          SelectableText(
+                            draft.requestId,
                             key: const ValueKey(
-                                'payroll-confirmation-reference')),
-                        const Text(
-                          '記録種別は本人確認です。銀行検証済みではありません。資料は短文メモで残し、画像・PDFは送信しません。口座の呼び名・対象月・直後残高・訂正履歴を本人限定で保存し、既存残高・収支は変更しません。',
-                        ),
-                        CheckboxListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text('後日の残高ではなく、給与入金取引の直後残高を確認しました'),
-                          value: _reviewAcknowledged,
-                          onChanged: (value) => setState(
-                              () => _reviewAcknowledged = value ?? false),
-                        ),
-                      ],
+                              'payroll-confirmation-reference',
+                            ),
+                          ),
+                          const Text(
+                            '記録種別は本人確認です。銀行検証済みではありません。資料は短文メモで残し、画像・PDFは送信しません。口座の呼び名・対象月・直後残高・訂正履歴を本人限定で保存し、既存残高・収支は変更しません。',
+                          ),
+                          CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('後日の残高ではなく、給与入金取引の直後残高を確認しました'),
+                            value: _reviewAcknowledged,
+                            onChanged: (value) => setState(
+                              () => _reviewAcknowledged = value ?? false,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    actions: [
+                      TextButton(
+                        onPressed: _dismissReview,
+                        child: const Text('保留する'),
+                      ),
+                      FilledButton(
+                        onPressed: _reviewAcknowledged ? _submitReview : null,
+                        child: const Text('確認して保存'),
+                      ),
+                    ],
                   ),
-                  actions: [
-                    TextButton(
-                        onPressed: _dismissReview, child: const Text('保留する')),
-                    FilledButton(
-                      onPressed: _reviewAcknowledged ? _submitReview : null,
-                      child: const Text('確認して保存'),
-                    ),
-                  ],
                 ),
               ),
             ),
           ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 
   bool _pendingSelectionIsReadable(PayrollSnapshotDraft pending) =>
@@ -637,8 +650,10 @@ class _AssetPayrollSnapshotSectionState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('給与入金直後の残高',
-                    style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  '給与入金直後の残高',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 const Text('銀行の自動取得は未対応です。予定日や現在残高から推定しません。'),
                 const Text(
                   '保存結果が不明なまま画面を閉じると、再開後に自動照合できません。'
@@ -775,7 +790,8 @@ class _AssetPayrollSnapshotSectionState
                           controller: _date,
                           enabled: enabled,
                           decoration: const InputDecoration(
-                              labelText: '給与入金日（YYYY-MM-DD）'),
+                            labelText: '給与入金日（YYYY-MM-DD）',
+                          ),
                           validator: (value) =>
                               _validDate(value?.trim() ?? '') == null
                                   ? '実際の入金日を入力してください'
@@ -785,9 +801,11 @@ class _AssetPayrollSnapshotSectionState
                           controller: _balance,
                           enabled: enabled,
                           decoration: const InputDecoration(
-                              labelText: '給与入金取引の直後残高（円）'),
+                            labelText: '給与入金取引の直後残高（円）',
+                          ),
                           keyboardType: const TextInputType.numberWithOptions(
-                              signed: true),
+                            signed: true,
+                          ),
                           validator: (value) => RegExp(r'^-?\d+$')
                                       .hasMatch(value?.trim() ?? '') &&
                                   int.tryParse(value!.trim()) != null

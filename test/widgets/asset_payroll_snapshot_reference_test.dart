@@ -67,17 +67,19 @@ void main() {
     final store = _UnknownStore();
     final other = _OtherOwnerStore();
     Future<void> showOwner(String owner) async {
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: AssetPayrollSnapshotConnection(
-              ownerId: owner,
-              initialMonth: DateTime(2020),
-              createStore: (id) => id == 'synthetic-owner' ? store : other,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: AssetPayrollSnapshotConnection(
+                ownerId: owner,
+                initialMonth: DateTime(2020),
+                createStore: (id) => id == 'synthetic-owner' ? store : other,
+              ),
             ),
           ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
     }
 
