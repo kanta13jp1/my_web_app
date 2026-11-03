@@ -59,7 +59,7 @@ void main() {
             },
           ),
         ),
-      ));
+      ),);
       expect(calls, 0);
       expect(find.textContaining('保存済み'), findsNothing);
       expect(find.textContaining('27日'), findsNothing);
@@ -78,7 +78,7 @@ void main() {
           return const Text('架空値 27日');
         },
       ),
-    ));
+    ),);
     expect(calls, 0);
     expect(find.textContaining('架空値'), findsNothing);
     expect(find.textContaining('所有者を確認できません'), findsOneWidget);

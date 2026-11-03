@@ -23,7 +23,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           test "$(git rev-parse HEAD:lib/widgets/payment_day_owner_gate_candidate.dart)" = "009c1acd296cf3aee82d110ddd3d62797b39d063"
-          test "$(git rev-parse HEAD:test/widgets/payment_day_owner_gate_candidate_test.dart)" = "f8aafdaafc60f956436298997894ea2f63b0bd4c"
+          test "$(git rev-parse HEAD:test/widgets/payment_day_owner_gate_candidate_test.dart)" = "7a672b46cbae07762f268093871ab800e7dcf0d9"
       - uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'
