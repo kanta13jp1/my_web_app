@@ -1,5 +1,7 @@
 """Pure checks only; never starts a fixture or opens a socket."""
 import hashlib
+import contextlib
+import io
 import json
 from pathlib import Path
 import queue
@@ -75,6 +77,21 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(result, ['db_permission'])
         self.assertNotIn('synthetic-email-and-token-secret', str(result))
         self.assertEqual(runner.classify_auth_log('unrecognized private data'), [])
+
+    def test_auth_metadata_diagnostic_outputs_only_allowlisted_state(self):
+        fixture = runner.Fixture.__new__(runner.Fixture)
+        fixture.check_component = lambda _name: 'synthetic-container'
+        fixture.cmd = lambda *_args: subprocess.CompletedProcess([], 0, 'SQLSTATE 42P01 secret', '')
+        answers = iter(['ZERO', '1\nAU1,PU0,AI1,AL1,U0'])
+        fixture.db_sql = lambda _sql: next(answers)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            fixture.auth_failure_diagnostic()
+        self.assertIn('AU1,PU0,AI1,AL1,U0', output.getvalue())
+        self.assertNotIn('secret', output.getvalue())
+        answers = iter(['ZERO', 'unexpected secret'])
+        with contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(RuntimeError, 'metadata'):
+            fixture.auth_failure_diagnostic()
 
 
 if __name__ == '__main__': unittest.main()

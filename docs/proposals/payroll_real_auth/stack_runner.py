@@ -366,6 +366,20 @@ print('RESTORED')
             raise RuntimeError('Unexpected synthetic user observation')
         print('Synthetic Auth diagnostic categories:', ','.join(labels) if labels else 'other',
               'synthetic user row:', observed)
+        # This is a separate postgres session, not the Auth connection itself.
+        # Restrict metadata probes and output to this fixed list of schema names.
+        metadata = self.db_sql("select concat_ws(',', "
+            "case when to_regclass('auth.users') is null then 'AU0' else 'AU1' end, "
+            "case when to_regclass('public.users') is null then 'PU0' else 'PU1' end, "
+            "case when to_regclass('auth.identities') is null then 'AI0' else 'AI1' end, "
+            "case when to_regclass('auth.audit_log_entries') is null then 'AL0' else 'AL1' end, "
+            "case when to_regclass('users') is null then 'U0' "
+            "when to_regclass('users') = to_regclass('auth.users') then 'UA' "
+            "when to_regclass('users') = to_regclass('public.users') then 'UP' else 'UX' end);")
+        state = metadata.strip().splitlines()[-1]
+        if not re.fullmatch(r'AU[01],PU[01],AI[01],AL[01],(?:U0|UA|UP|UX)', state):
+            raise RuntimeError('Unexpected synthetic metadata observation')
+        print('Synthetic fixed metadata, separate postgres session:', state)
 
     def execute(self, migration, client_source, client_module, gateway_config):
         self.stage = 'pull pinned fixture images'
