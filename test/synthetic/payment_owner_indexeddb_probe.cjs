@@ -45,6 +45,13 @@ async function main() {
         window.syntheticEvents = [];
         window.releaseFirst = false;
         window.trySyntheticCas = async (input) => {
+          if (typeof input.owner !== 'string' || !input.owner ||
+              typeof input.requestId !== 'string' || !input.requestId ||
+              typeof input.payload !== 'string' ||
+              !Number.isSafeInteger(input.expectedRevision) || input.expectedRevision < 0 ||
+              input.expectedRevision >= Number.MAX_SAFE_INTEGER) {
+            return { status: 'invalid' };
+          }
           const db = await window.openSynthetic();
           try {
             return await new Promise((resolve, reject) => {
@@ -54,22 +61,47 @@ async function main() {
               const receipts = tx.objectStore('receipts');
               let result = { status: 'unknown' };
               const key = [input.owner, input.requestId];
+              const validRecord = (record) => record &&
+                record.owner === input.owner &&
+                Number.isSafeInteger(record.revision) && record.revision >= 0 &&
+                typeof record.value === 'string';
+              const validReceipt = (receipt) => receipt &&
+                receipt.owner === input.owner && receipt.requestId === input.requestId &&
+                Number.isSafeInteger(receipt.expectedRevision) && receipt.expectedRevision >= 0 &&
+                Number.isSafeInteger(receipt.revision) &&
+                receipt.revision === receipt.expectedRevision + 1 &&
+                typeof receipt.payload === 'string';
               const readReceipt = () => {
                 const receiptRead = receipts.get(key);
                 receiptRead.onsuccess = () => {
                 window.syntheticEvents.push(`read:${input.requestId}`);
                 const prior = receiptRead.result;
                 if (prior) {
-                  result = prior.payload === input.payload &&
-                    prior.expectedRevision === input.expectedRevision
-                    ? { status: 'alreadyApplied', revision: prior.revision }
-                    : { status: 'requestIdConflict' };
+                  if (!validReceipt(prior)) { result = { status: 'recoveryHold' }; return; }
+                  if (prior.payload !== input.payload ||
+                      prior.expectedRevision !== input.expectedRevision) {
+                    result = { status: 'requestIdConflict' };
+                    return;
+                  }
+                  const currentRead = records.get(input.owner);
+                  currentRead.onsuccess = () => {
+                    const current = currentRead.result;
+                    if (!validRecord(current) ||
+                        current.revision < prior.revision ||
+                        (current.revision === prior.revision && current.value !== prior.payload)) {
+                      result = { status: 'recoveryHold' };
+                      return;
+                    }
+                    result = { status: 'historicalReceiptFound', revision: prior.revision,
+                      currentRevision: current.revision };
+                  };
                   return;
                 }
                 const recordRead = records.get(input.owner);
                 recordRead.onsuccess = () => {
                   const old = recordRead.result;
                   if (!old) { result = { status: 'missing' }; return; }
+                  if (!validRecord(old)) { result = { status: 'recoveryHold' }; return; }
                   if (old.revision !== input.expectedRevision) {
                     result = { status: 'revisionConflict', revision: old.revision };
                     return;
@@ -147,12 +179,12 @@ async function main() {
     assert.deepEqual(await read(tabA, 'fake-b'), { owner: 'fake-b', revision: 0, value: 'b0' });
     const winner = simultaneous[0].status === 'applied' ? firstA : competing;
     // A result can be lost after commit; same immutable request resolves via receipt.
-    assert.equal((await apply(tabB, winner)).status, 'alreadyApplied');
+    assert.equal((await apply(tabB, winner)).status, 'historicalReceiptFound');
     assert.equal((await apply(tabB, { ...winner, payload: 'changed' })).status, 'requestIdConflict');
     assert.equal((await apply(tabB, { ...winner, expectedRevision: 99 })).status, 'requestIdConflict');
     const second = { owner: 'fake-a', expectedRevision: 1, requestId: 'r-c', payload: 'later' };
     assert.equal((await apply(tabB, second)).status, 'applied');
-    assert.equal((await apply(tabA, winner)).status, 'alreadyApplied');
+    assert.equal((await apply(tabA, winner)).status, 'historicalReceiptFound');
     assert.equal((await read(tabA, 'fake-a')).value, 'later');
     const abort = { owner: 'fake-a', expectedRevision: 2, requestId: 'r-abort', payload: 'aborted', forceAbort: true };
     await assert.rejects(apply(tabA, abort), /transaction aborted/);
@@ -171,10 +203,47 @@ async function main() {
       });
       db.close();
     });
-    assert.equal((await apply(tabA, winner)).status, 'alreadyApplied');
+    assert.equal((await apply(tabA, winner)).status, 'recoveryHold');
     assert.equal(await read(tabA, 'fake-a'), null);
+    await tabA.evaluate(async () => {
+      const db = await window.openSynthetic();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('records', 'readwrite');
+        tx.objectStore('records').put({ owner: 'fake-a', revision: 0, value: 'old' });
+        tx.oncomplete = resolve;
+        tx.onabort = () => reject(new Error('synthetic older-record setup aborted'));
+      });
+      db.close();
+    });
+    assert.equal((await apply(tabB, winner)).status, 'recoveryHold');
+    await tabA.evaluate(async () => {
+      const db = await window.openSynthetic();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('records', 'readwrite');
+        tx.objectStore('records').put({ owner: 'fake-a', revision: 1, value: 'corrupt' });
+        tx.oncomplete = resolve;
+        tx.onabort = () => reject(new Error('synthetic corrupt-record setup aborted'));
+      });
+      db.close();
+    });
+    assert.equal((await apply(tabB, winner)).status, 'recoveryHold');
+    await tabA.evaluate(async () => {
+      const db = await window.openSynthetic();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('records', 'readwrite');
+        tx.objectStore('records').put({ owner: 'fake-a', revision: 4, value: null });
+        tx.oncomplete = resolve;
+        tx.onabort = () => reject(new Error('synthetic malformed-record setup aborted'));
+      });
+      db.close();
+    });
+    assert.equal((await apply(tabB, winner)).status, 'recoveryHold');
+    assert.equal((await apply(tabA, { owner: 'fake-a', expectedRevision: 4,
+      requestId: 'new-on-corrupt', payload: 'x' })).status, 'recoveryHold');
+    assert.equal((await apply(tabA, { ...winner, owner: '' })).status, 'invalid');
+    assert.equal((await apply(tabA, { ...winner, expectedRevision: Number.MAX_SAFE_INTEGER })).status, 'invalid');
     console.log('PASS: synthetic multi-tab CAS, receipt reuse, abort, owner isolation and uninitialized-record rejection');
-    console.log('LIMITATION: historical receipt does not prove current record exists');
+    console.log('LIMITATION: version presence checks do not prove full integrity or detect whole-database rollback');
     console.log('LIMITATION: no real Auth/ABA fencing, old-writer exclusion, storage eviction or server CAS was tested');
     await context.close();
   } finally {
