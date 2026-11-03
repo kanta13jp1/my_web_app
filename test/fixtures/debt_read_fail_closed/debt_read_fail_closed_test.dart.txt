@@ -7,8 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
+import 'package:my_web_app/services/mirror_tombstone_store.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _ownerA = 'synthetic-owner-a';
@@ -90,6 +92,8 @@ class _Transport {
   final readStarted = Completer<void>();
   final result = Completer<List<Map<String, dynamic>>>();
   final writes = <Map<String, int>>[];
+  String? Function()? owner;
+  final writeOwners = <String?>[];
 
   Future<List<Map<String, dynamic>>> read(String owner) {
     reads++;
@@ -99,7 +103,42 @@ class _Transport {
   }
 
   Future<void> write(Map<String, int> value) async {
+    writeOwners.add(owner?.call());
     writes.add(Map<String, int>.of(value));
+  }
+}
+
+class _DeletedTransport {
+  final started = Completer<void>();
+  final result = Completer<List<Map<String, dynamic>>>();
+  final owners = <String>[];
+  Future<List<Map<String, dynamic>>> read(String owner) {
+    owners.add(owner);
+    if (!started.isCompleted) started.complete();
+    return result.future;
+  }
+  void respond() => result.complete(<Map<String, dynamic>>[
+    <String, dynamic>{'user_id': _ownerA, 'pref_key': 'debt_payment_day_override_deleted',
+      'value': <String, dynamic>{'ids': <String>['debt-a']}},
+  ]);
+}
+
+const _deletedStore = MirrorTombstoneStore(storageKey: 'debt_payment_day_override_deleted_v1');
+
+class _DelayedTombstonePlatform extends InMemorySharedPreferencesStore {
+  _DelayedTombstonePlatform() : super.empty();
+  bool armed = false;
+  final started = Completer<void>();
+  final release = Completer<void>();
+  final writes = <Object>[];
+  @override
+  Future<bool> setValue(String valueType, String key, Object value) async {
+    if (armed && key == 'flutter.debt_payment_day_override_deleted_v1') {
+      writes.add(value);
+      if (!started.isCompleted) started.complete();
+      await release.future;
+    }
+    return super.setValue(valueType, key, value);
   }
 }
 
@@ -125,9 +164,11 @@ Future<Object?> _awaitWithPumps<T>(WidgetTester tester, Future<T> future, String
 }
 
 Future<dynamic> _mount(WidgetTester tester, _Auth auth, _Transport transport,
-    _Repository repository, {required bool authoritative}) async {
+    _Repository repository, {required bool authoritative,
+    Future<List<Map<String, dynamic>>> Function(String)? deletedRead}) async {
   // Each testWidgets callback owns a fresh FakeAsync zone.
   AssetSyncDirtyKeysStore.resetWriteLockForTest();
+  transport.owner = () => auth.owner;
   final key = GlobalKey();
   await tester.binding.setSurfaceSize(const Size(1200, 2400));
   addTearDown(() async {
@@ -149,6 +190,7 @@ Future<dynamic> _mount(WidgetTester tester, _Auth auth, _Transport transport,
     debugMirrorReadsAuthoritative: authoritative,
     debugDisableDebtBoot: true,
     debugDebtRead: transport.read,
+    debugDebtDeletedRead: deletedRead,
     debugDebtWrite: transport.write,
     debugDebtOwner: () => auth.owner,
     debugDebtToken: () => auth.token,
@@ -372,6 +414,120 @@ void main() {
     repository.saveRelease!.complete();
     await _finish(tester, page, restore);
     expect(transport.writes, isEmpty);
+  });
+
+  testWidgets('deleted read from A is discarded after switching to B', (tester) async {
+    final auth = _Auth();
+    final mirror = _Transport();
+    final deleted = _DeletedTransport();
+    final repository = _Repository();
+    final prefs = await SharedPreferences.getInstance();
+    await _deletedStore.addId(prefs, 'sentinel');
+    final dynamic page = await _mount(tester, auth, mirror, repository,
+        authoritative: true, deletedRead: deleted.read);
+    page.debugSetDebtForTest(<String, int>{'debt-a': 10, 'debt-b': 20});
+    final pull = page.debugPullDebtDeletedForTest() as Future<void>;
+    await _awaitWithPumps<void>(tester, deleted.started.future, 'A deleted read started');
+    auth.change(_ownerB, _tokenB, AuthChangeEvent.signedIn);
+    await tester.pump();
+    deleted.respond();
+    await _finish(tester, page, pull);
+    expect(deleted.owners, <String>[_ownerA]);
+    expect(_deletedStore.activeIds(prefs), <String>{'sentinel'});
+    expect(page.debugDebtValuesForTest(), <String, int>{'debt-a': 10, 'debt-b': 20});
+    expect(repository.saved, isEmpty);
+    expect(mirror.writes, isEmpty);
+    expect(mirror.writeOwners, isEmpty);
+  });
+
+  testWidgets('switch during tombstone platform write stops subsequent deletion and mirror', (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final platform = _DelayedTombstonePlatform();
+    SharedPreferencesStorePlatform.instance = platform;
+    addTearDown(() {
+      if (!platform.release.isCompleted) platform.release.complete();
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+    });
+    final auth = _Auth();
+    final mirror = _Transport();
+    final deleted = _DeletedTransport();
+    final repository = _Repository();
+    final prefs = await SharedPreferences.getInstance();
+    await _deletedStore.addId(prefs, 'sentinel');
+    platform.armed = true;
+    final dynamic page = await _mount(tester, auth, mirror, repository,
+        authoritative: true, deletedRead: deleted.read);
+    page.debugSetDebtForTest(<String, int>{'debt-a': 10, 'debt-b': 20});
+    final pull = page.debugPullDebtDeletedForTest() as Future<void>;
+    await _awaitWithPumps<void>(tester, deleted.started.future, 'A deleted read started');
+    deleted.respond();
+    await _awaitWithPumps<void>(tester, platform.started.future, 'tombstone platform write started');
+    expect(platform.writes, hasLength(1));
+    expect(_deletedStore.activeIds(prefs), <String>{'sentinel', 'debt-a'},
+        reason: 'shared_preferences cache changes before the delayed platform write completes');
+    final before = await platform.getAll();
+    expect(before['flutter.debt_payment_day_override_deleted_v1'], isNot(platform.writes.single));
+    auth.change(_ownerB, _tokenB, AuthChangeEvent.signedIn);
+    await tester.pump();
+    platform.release.complete();
+    await _finish(tester, page, pull);
+    final after = await platform.getAll();
+    expect(after['flutter.debt_payment_day_override_deleted_v1'], platform.writes.single,
+        reason: 'the already-started shared local write was not cancelled');
+    expect(page.debugDebtValuesForTest(), <String, int>{'debt-a': 10, 'debt-b': 20});
+    expect(repository.saved, isEmpty);
+    expect(mirror.writes, isEmpty);
+    expect(mirror.writeOwners, isEmpty);
+  });
+
+  testWidgets('same owner applies deleted ID and retains other data', (tester) async {
+    final auth = _Auth();
+    final mirror = _Transport();
+    final deleted = _DeletedTransport();
+    final repository = _Repository();
+    final prefs = await SharedPreferences.getInstance();
+    await _deletedStore.addId(prefs, 'sentinel');
+    final dynamic page = await _mount(tester, auth, mirror, repository,
+        authoritative: true, deletedRead: deleted.read);
+    page.debugSetDebtForTest(<String, int>{'debt-a': 10, 'debt-b': 20});
+    final pull = page.debugPullDebtDeletedForTest() as Future<void>;
+    await _awaitWithPumps<void>(tester, deleted.started.future, 'A deleted read started');
+    deleted.respond();
+    await _finish(tester, page, pull);
+    expect(deleted.owners, <String>[_ownerA]);
+    expect(_deletedStore.activeIds(prefs), <String>{'sentinel', 'debt-a'});
+    expect(page.debugDebtValuesForTest(), <String, int>{'debt-b': 20});
+    expect(repository.saved, <Map<String, int>>[<String, int>{'debt-b': 20}]);
+    expect(mirror.writeOwners, <String?>[_ownerA]);
+    expect(mirror.writes, <Map<String, int>>[<String, int>{'debt-b': 20}]);
+  });
+
+  testWidgets('switch while local override save is pending stops later mirror', (tester) async {
+    final auth = _Auth();
+    final mirror = _Transport();
+    final deleted = _DeletedTransport();
+    final repository = _Repository()..saveRelease = Completer<void>();
+    final prefs = await SharedPreferences.getInstance();
+    await _deletedStore.addId(prefs, 'sentinel');
+    final dynamic page = await _mount(tester, auth, mirror, repository,
+        authoritative: true, deletedRead: deleted.read);
+    page.debugSetDebtForTest(<String, int>{'debt-a': 10, 'debt-b': 20});
+    final pull = page.debugPullDebtDeletedForTest() as Future<void>;
+    await _awaitWithPumps<void>(tester, deleted.started.future, 'A deleted read started');
+    deleted.respond();
+    await _awaitWithPumps<void>(tester, repository.saveStarted.future, 'local override save started');
+    expect(_deletedStore.activeIds(prefs), <String>{'sentinel', 'debt-a'});
+    expect(repository.saved, <Map<String, int>>[<String, int>{'debt-b': 20}]);
+    auth.change(_ownerB, _tokenB, AuthChangeEvent.signedIn);
+    await tester.pump();
+    repository.saveRelease!.complete();
+    await _finish(tester, page, pull);
+    expect(deleted.owners, <String>[_ownerA]);
+    expect(mirror.writes, isEmpty);
+    expect(mirror.writeOwners, isEmpty);
+    // Tombstone mutation completed under A before switching; no rollback or
+    // owner isolation of this shared local key is asserted by this test.
+    expect(_deletedStore.activeIds(prefs), <String>{'sentinel', 'debt-a'});
   });
 
   testWidgets('auth stream subscription is released when page is disposed', (tester) async {

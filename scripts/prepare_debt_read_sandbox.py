@@ -10,8 +10,8 @@ from pathlib import Path
 import subprocess
 import sys
 
-BUILDER_SHA256 = '3b1ed941d4f3c0cb70764806a186491c89066717f23341ce40080972a793865f'
-FIXTURE_SHA256 = '8599dc6b5fe2d3bfe9f0ae6c0e73a5299a3d25c9ef4575b4630794bf47a71d70'
+BUILDER_SHA256 = '25c7a27a1f1807b7f2868b110ef07a065451c734e3bf1c7ba7e0b56e180f0e1a'
+FIXTURE_SHA256 = '717813a96020ae81866d8bf686d5ebd612a6a3bf69c6f8424f99d2c58113993c'
 
 
 def require_file(path: Path, digest: str | None, root: Path) -> bytes:
@@ -33,8 +33,10 @@ def check_replacements(page: str) -> None:
          '  Future<void> _restoreDebtPaymentDayOverridesFromMirror()', (1, 0, 0, 0)),
         ('  Future<void> _restoreDebtPaymentDayOverridesFromMirror()',
          '  /// 入金予定のミラー取り込みプレビュー', (3, 2, 1, 2)),
+        ('  Future<void> _pullDebtOverrideDeleted()',
+         '  Future<void> _saveDebtPaymentDayOverrides(', (2, 2, 0, 0)),
         ('  Future<void> _saveDebtPaymentDayOverrides(',
-         '  Widget _buildDebtPaymentDayInput(', (1, 1, 0, 0)),
+         '  Widget _buildDebtPaymentDayInput(', (2, 2, 0, 0)),
     )
     tokens = (
         '_supabase.auth.currentUser?.id',
@@ -42,6 +44,20 @@ def check_replacements(page: str) -> None:
         '_supabase.auth.currentUser == null',
         'unawaited(_mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides));',
     )
+    pull = page.split('  Future<void> _pullDebtOverrideDeleted()', 1)[1].split('  Future<void> _saveDebtPaymentDayOverrides(', 1)[0]
+    for anchor, expected_count in (
+        ('owner == _debtRestoreOwnerAtPageStart', 1),
+        ('!_debtRestoreAuthChanged', 1),
+        ('if (!sameSession()) {', 4),
+        ('expectedOwner: debugMirror == null ? owner : null', 1),
+        ('expectedToken: debugMirror == null ? token : null', 1),
+    ):
+        if pull.count(anchor) != expected_count:
+            raise RuntimeError('tombstone ownership guard changed: re-review')
+    save = page.split('  Future<void> _saveDebtPaymentDayOverrides(', 1)[1].split('  Widget _buildDebtPaymentDayInput(', 1)[0]
+    if save.count('if (expectedOwner != null &&') != 2 or save.count('_debtRestoreAuthChanged') != 2:
+        raise RuntimeError('save ownership guard changed: re-review')
+
     for start, end, expected in sections:
         if page.count(start) != 1:
             raise RuntimeError('missing or ambiguous target section')

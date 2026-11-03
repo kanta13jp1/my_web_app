@@ -31215,7 +31215,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 他端末で削除された支払日上書きを取り込み、ローカルからも除去する。
   Future<void> _pullDebtOverrideDeleted() async {
     final debugMirror = widget.debugDebtOverrideDeletedMirror;
-    if (debugMirror == null && _supabase.auth.currentUser == null) {
+    final owner = _supabase.auth.currentUser?.id;
+    final token = _supabase.auth.currentSession?.accessToken;
+    bool sameSession() =>
+        debugMirror != null ||
+        (mounted &&
+            owner != null &&
+            token != null &&
+            owner == _debtRestoreOwnerAtPageStart &&
+            !_debtRestoreAuthChanged &&
+            _supabase.auth.currentUser?.id == owner &&
+            _supabase.auth.currentSession?.accessToken == token);
+    if (!sameSession()) {
       return;
     }
     try {
@@ -31224,6 +31235,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         final rows = await _bootSelectPrefMirror(
           'debt_payment_day_override_deleted',
         );
+        if (!sameSession()) {
+          return;
+        }
         if (rows.isEmpty) {
           return;
         }
@@ -31238,14 +31252,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
       final store = await SharedPreferences.getInstance();
+      if (!sameSession()) {
+        return;
+      }
       final incoming = await _debtOverrideTombstones.mergeRemoteIds(store, ids);
+      if (!sameSession()) {
+        return;
+      }
       final before = _debtPaymentDayOverrides.length;
       _debtPaymentDayOverrides.removeWhere((key, _) => incoming.contains(key));
       if (_debtPaymentDayOverrides.length == before || !mounted) {
         return;
       }
       setState(() {});
-      unawaited(_saveDebtPaymentDayOverrides());
+      unawaited(
+        _saveDebtPaymentDayOverrides(
+          expectedOwner: debugMirror == null ? owner : null,
+          expectedToken: debugMirror == null ? token : null,
+        ),
+      );
     } catch (e) {
       debugPrint('debt override tombstone pull failed: $e');
     }
@@ -31255,6 +31280,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     String? expectedOwner,
     String? expectedToken,
   }) async {
+    if (expectedOwner != null &&
+        (!mounted ||
+            _debtRestoreAuthChanged ||
+            _supabase.auth.currentUser?.id != expectedOwner ||
+            _supabase.auth.currentSession?.accessToken != expectedToken)) {
+      return;
+    }
     try {
       await _assetLiabilityRepository.saveDebtPaymentDayOverrides(
         Map<String, int>.from(_debtPaymentDayOverrides),

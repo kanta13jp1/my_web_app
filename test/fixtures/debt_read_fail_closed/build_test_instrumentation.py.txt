@@ -168,5 +168,37 @@ part = one(part,
     '      _trackDebtWrite(_mirrorDebtPaymentDayOverrides(\n'
     '        Map<String, int>.from(_debtPaymentDayOverrides),\n      )),\n')
 page = page[:start] + part + page[end:]
+page = one(page, 'class AssetManagementPage extends StatefulWidget {\n',
+    '''class AssetManagementPage extends StatefulWidget {
+  @visibleForTesting
+  final Future<List<Map<String, dynamic>>> Function(String)? debugDebtDeletedRead;
+''')
+page = one(page, '  const AssetManagementPage({\n    super.key,\n',
+    '  const AssetManagementPage({\n    super.key,\n    this.debugDebtDeletedRead,\n')
+page = one(page, 'class _AssetManagementPageState extends State<AssetManagementPage> {\n',
+    '''class _AssetManagementPageState extends State<AssetManagementPage> {
+  @visibleForTesting
+  Future<void> debugPullDebtDeletedForTest() => _pullDebtOverrideDeleted();
+''')
+page = one(page, '    unawaited(_pullDebtOverrideDeleted());\n',
+    '    if (!widget.debugDisableDebtBoot) unawaited(_pullDebtOverrideDeleted());\n')
+start = page.index('  Future<void> _pullDebtOverrideDeleted()')
+end = page.index('  Future<void> _saveDebtPaymentDayOverrides(', start)
+part = page[start:end].replace('_supabase.auth.currentUser?.id', '_debugDebtOwner').replace(
+    '_supabase.auth.currentSession?.accessToken', '_debugDebtToken')
+part = one(part,
+    "        final rows = await _bootSelectPrefMirror(\n          'debt_payment_day_override_deleted',\n        );\n",
+    "        final fake = widget.debugDebtDeletedRead;\n"
+    "        final rows = fake != null ? await fake(owner!) : await _bootSelectPrefMirror(\n"
+    "          'debt_payment_day_override_deleted',\n        );\n")
+part = one(part,
+    '        _saveDebtPaymentDayOverrides(\n'
+    '          expectedOwner: debugMirror == null ? owner : null,\n'
+    '          expectedToken: debugMirror == null ? token : null,\n        ),\n',
+    '        _trackDebtSave(_saveDebtPaymentDayOverrides(\n'
+    '          expectedOwner: debugMirror == null ? owner : null,\n'
+    '          expectedToken: debugMirror == null ? token : null,\n        )),\n')
+page = page[:start] + part + page[end:]
+
 (root / 'instrumented_page.dart').write_text(page, encoding='utf-8', newline='\n')
 print('instrumented sha256', hashlib.sha256(page.encode()).hexdigest())
