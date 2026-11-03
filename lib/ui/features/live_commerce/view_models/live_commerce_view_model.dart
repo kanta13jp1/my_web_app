@@ -264,9 +264,15 @@ class LiveCommerceViewModel extends ChangeNotifier {
           _snapshot?.featuredProductId == productId) {
         _featuredProduct = product;
       }
-    } catch (_) {
-      if (_disposed || generation != _productGeneration) return;
-      rethrow;
+    } catch (error) {
+      if (_disposed ||
+          generation != _productGeneration ||
+          _snapshot?.featuredProductId != productId) {
+        return;
+      }
+      _errorMessage = _friendlyError(error);
+      _notice = '商品情報を読み込めませんでした。再接続して確認してください。';
+      _safeNotify();
     }
   }
 

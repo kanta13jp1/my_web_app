@@ -74,6 +74,72 @@ void main() {
     expect(viewModel.featuredProduct?.id, 'product-b');
   });
 
+  test('resync prevents an old product response replacing the snapshot', () async {
+    final gateway = _ResyncGateway(snapshotSequences: <int>[2, 4]);
+    final shop = _DelayedShopGateway();
+    final viewModel = LiveCommerceViewModel(
+      gateway: gateway,
+      shopGateway: shop,
+      roomId: 'room-1',
+    );
+    addTearDown(() async {
+      viewModel.dispose();
+      await gateway.close();
+    });
+    await viewModel.load();
+    gateway.add(_productEvent(3, 'product-a'));
+    await _flushAsyncWork();
+    gateway.add(_productEvent(5, 'product-b'));
+    await _flushAsyncWork();
+    expect(viewModel.snapshot?.featuredProductId, 'product-1');
+    shop.pending['product-a']!.complete(shop.makeProduct('product-a'));
+    await _flushAsyncWork();
+    expect(viewModel.featuredProduct?.id, 'product-1');
+  });
+
+  test('late product response after disposal does not notify', () async {
+    final gateway = _ResyncGateway(snapshotSequences: <int>[2]);
+    final shop = _DelayedShopGateway();
+    final viewModel = LiveCommerceViewModel(
+      gateway: gateway,
+      shopGateway: shop,
+      roomId: 'room-1',
+    );
+    addTearDown(gateway.close);
+    await viewModel.load();
+    var notifications = 0;
+    viewModel.addListener(() => notifications++);
+    gateway.add(_productEvent(3, 'product-a'));
+    await _flushAsyncWork();
+    viewModel.dispose();
+    final before = notifications;
+    shop.pending['product-a']!.complete(shop.makeProduct('product-a'));
+    await _flushAsyncWork();
+    expect(notifications, before);
+  });
+
+  test('current product failure clears old product and reports error', () async {
+    final gateway = _ResyncGateway(snapshotSequences: <int>[2]);
+    final shop = _DelayedShopGateway();
+    final viewModel = LiveCommerceViewModel(
+      gateway: gateway,
+      shopGateway: shop,
+      roomId: 'room-1',
+    );
+    addTearDown(() async {
+      viewModel.dispose();
+      await gateway.close();
+    });
+    await viewModel.load();
+    gateway.add(_productEvent(3, 'product-a'));
+    await _flushAsyncWork();
+    shop.pending['product-a']!.completeError(StateError('unavailable'));
+    await _flushAsyncWork();
+    expect(viewModel.featuredProduct, isNull);
+    expect(viewModel.notice, contains('商品情報を読み込めませんでした'));
+    expect(viewModel.errorMessage, isNotNull);
+  });
+
   test('stream completion leaves an honest degraded state', () async {
     final gateway = _ResyncGateway(snapshotSequences: <int>[2]);
     final viewModel = LiveCommerceViewModel(
@@ -91,6 +157,16 @@ void main() {
     expect(viewModel.notice, contains('終了'));
   });
 }
+
+LiveCommerceEvent _productEvent(int sequence, String productId) =>
+    LiveCommerceEvent(
+      id: 'event-$sequence',
+      roomId: 'room-1',
+      sequence: sequence,
+      type: LiveCommerceEventType.productPushed,
+      occurredAt: DateTime(2026, 8, 26, 12),
+      productId: productId,
+    );
 
 Future<void> _flushAsyncWork() async {
   for (var index = 0; index < 8; index++) {
