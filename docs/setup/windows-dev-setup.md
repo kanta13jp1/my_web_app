@@ -329,3 +329,26 @@ Official references:
   state.
 - Run `gh auth login` before GitHub issue, PR, or Actions work.
 - Run `flutter doctor` only after confirming the repository's Flutter SDK path.
+
+## Optional Flutter and Supabase setup (Issue #2805)
+
+GitHub Actions is the default for analysis, tests and builds. Install local SDKs only when an interactive task needs them and after checking disk and RAM with `python scripts/cloud_first_route.py`; do not install packages or start local containers under the cloud-first pressure limits in `AGENTS.md`. This guide does not run or upgrade any tool automatically.
+
+1. Review package sources and license terms, then install baseline Windows tools individually as needed. These exact IDs are also listed by `scripts/setup_windows_dev.ps1`:
+
+   ```powershell
+   winget install --id Git.Git --exact --source winget
+   winget install --id OpenJS.NodeJS.LTS --exact --source winget
+   winget install --id GitHub.cli --exact --source winget
+   ```
+
+   WinGet prompts for applicable source and package agreements. Noninteractive consent flags are optional only when the operator has reviewed and accepted those terms. The existing script can preview its broader package list without installing: `powershell -ExecutionPolicy Bypass -File scripts/setup_windows_dev.ps1 -DryRun`.
+2. For Flutter, use the [official Windows SDK installation](https://docs.flutter.dev/install/manual) and select the version required by this repository's CI rather than assuming an unverified WinGet identifier. Extract to a user-writable path and add its `bin` to your user PATH; reopen the terminal. Keep an existing SDK unless the owner explicitly chooses to change it.
+3. Install the Supabase CLI using a current [officially documented method](https://supabase.com/docs/guides/local-development). A project-local npm installation is invoked as `npx supabase`; use `supabase` only if a separately installed executable is already on PATH. A container runtime is needed only for local stack operations, not for CLI version inspection or GitHub Actions.
+4. In a new terminal verify `git --version`, `node --version`, `gh --version`, `flutter --version`, `dart --version`, and either `npx supabase --version` or `supabase --version` according to the installation method. Compare the Flutter SDK with `.github/workflows/ci.yml`. Version checks do not prove authenticated access or start a container.
+
+### Proxy and DNS failures
+
+For `ENOTFOUND`, first verify the host and DNS and check whether the network requires an approved proxy. The proxy inspection and process-scoped `-ClearProxy` option above are diagnostic choices: clearing a required corporate proxy can break connectivity, so never remove user or machine settings automatically. Avoid printing proxy credentials. After correcting the current process environment, retry only the failed read-only version or connectivity check; do not reset WinGet sources or alter persistent Git/npm settings as a first step.
+
+References: [Microsoft WinGet install](https://learn.microsoft.com/en-us/windows/package-manager/winget/install), [Flutter manual installation](https://docs.flutter.dev/install/manual), [Supabase local development and CLI](https://supabase.com/docs/guides/local-development).
