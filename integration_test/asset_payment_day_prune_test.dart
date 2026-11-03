@@ -52,7 +52,7 @@ Future<SharedPreferences> _openPage(WidgetTester tester) async {
     ]),
   });
   const mobile = bool.fromEnvironment('PRUNE_MOBILE');
-  final viewport = mobile ? const Size(390, 851) : const Size(1440, 1000);
+  const viewport = mobile ? Size(390, 851) : Size(1440, 1000);
   await tester.binding.setSurfaceSize(viewport);
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
