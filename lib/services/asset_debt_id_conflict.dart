@@ -142,3 +142,16 @@ IdScan inspectDebtRowIds(
   }
   return IdScan._(snapshotState: snapshotState, limit: null, rows: observed);
 }
+
+/// Whether an unavailable debt-shift suggestion needs an explanation. The
+/// shortfall calculation itself must continue to include all debt events.
+bool shouldExplainHeldDebtShift({
+  required bool isDebtEvent,
+  required String? sourceId,
+  required Set<String> eligibleIds,
+  required Set<String> shiftableIds,
+}) {
+  if (!isDebtEvent) return false;
+  if (sourceId == null) return true;
+  return !eligibleIds.contains(sourceId) && shiftableIds.contains(sourceId);
+}

@@ -259,6 +259,51 @@ void runSyntheticIdCases() {
             .contains(IdConcern.incompleteSnapshot),
     'blank-incomplete',
   );
+  check(
+    shouldExplainHeldDebtShift(
+      isDebtEvent: true,
+      sourceId: null,
+      eligibleIds: {},
+      shiftableIds: {},
+    ),
+    'unknown-debt-source-requires-explanation',
+  );
+  check(
+    !shouldExplainHeldDebtShift(
+      isDebtEvent: false,
+      sourceId: null,
+      eligibleIds: {},
+      shiftableIds: {},
+    ),
+    'non-debt-event-does-not-require-explanation',
+  );
+  check(
+    shouldExplainHeldDebtShift(
+      isDebtEvent: true,
+      sourceId: 'held',
+      eligibleIds: {'safe'},
+      shiftableIds: {'held', 'safe'},
+    ),
+    'held-shiftable-debt-requires-explanation',
+  );
+  check(
+    !shouldExplainHeldDebtShift(
+      isDebtEvent: true,
+      sourceId: 'safe',
+      eligibleIds: {'safe'},
+      shiftableIds: {'held', 'safe'},
+    ),
+    'eligible-debt-does-not-require-explanation',
+  );
+  check(
+    !shouldExplainHeldDebtShift(
+      isDebtEvent: true,
+      sourceId: 'already-shifted',
+      eligibleIds: {},
+      shiftableIds: {'held'},
+    ),
+    'non-shiftable-debt-does-not-require-explanation',
+  );
 }
 
 void main() {

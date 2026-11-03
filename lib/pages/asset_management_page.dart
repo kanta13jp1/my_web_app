@@ -17820,16 +17820,17 @@ class _AssetManagementPageState extends State<AssetManagementPage>
         for (final row in workbook.debtMasterRows)
           if (!row.isRevolving && !previewHeldIds.contains(row.id)) row.id,
     };
+    final shiftableDebtIds = <String>{
+      for (final debt in debtInputs)
+        if (debt.paymentDay != _salaryDay + 1) debt.id,
+    };
     final hasHeldShiftCandidates = shortfallDaySummary?.events.any(
-          (event) =>
-              event.kind == AssetCalendarEventKind.debtPayment &&
-              (event.sourceId == null ||
-                  (!previewEligibleIds.contains(event.sourceId) &&
-                      debtInputs.any(
-                        (debt) =>
-                            debt.id == event.sourceId &&
-                            debt.paymentDay != _salaryDay + 1,
-                      ))),
+          (event) => shouldExplainHeldDebtShift(
+            isDebtEvent: event.kind == AssetCalendarEventKind.debtPayment,
+            sourceId: event.sourceId,
+            eligibleIds: previewEligibleIds,
+            shiftableIds: shiftableDebtIds,
+          ),
         ) ??
         false;
     final shortfallDebtEvents = <AssetCalendarEvent>[
@@ -31096,6 +31097,10 @@ class _AssetManagementPageState extends State<AssetManagementPage>
         const SizedBox(height: 8),
         const Text(
           '各負債の支払額、差額、年利、証跡をカード内で確認できます。',
+          style: TextStyle(fontSize: 12, height: 1.4),
+        ),
+        const Text(
+          '画面が更新されると支払日メニューが閉じる場合があります。必要なら開き直してください。',
           style: TextStyle(fontSize: 12, height: 1.4),
         ),
         const SizedBox(height: 4),

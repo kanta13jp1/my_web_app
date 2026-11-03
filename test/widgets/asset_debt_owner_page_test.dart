@@ -521,6 +521,10 @@ void main() {
       matching: find.byType(DropdownButton<int?>),
     );
     final pageStateBefore = tester.state(find.byType(AssetManagementPage));
+    expect(
+      find.text('画面が更新されると支払日メニューが閉じる場合があります。必要なら開き直してください。'),
+      findsOneWidget,
+    );
     final option = find.byWidgetPredicate(
       (widget) => widget is DropdownMenuItem<int?> && widget.value == 15,
     );
@@ -658,6 +662,10 @@ void main() {
       await observeCompletion(
         dirtyStore.clearDomain('diagnostic_positive_control', prefs: prefs),
       );
+      expect(
+        await dirtyStore.loadDirty('diagnostic_positive_control', prefs: prefs),
+        isEmpty,
+      );
       expect(AssetSyncDirtyKeysStore.hasPendingMutations, isFalse);
       final dirtyBefore = prefs.getString(AssetSyncDirtyKeysStore.prefsKey);
       final before = repo.saveCalls;
@@ -791,6 +799,105 @@ void main() {
     );
     await _finishSyntheticPage(tester);
   });
+
+  testWidgets(
+    'diagnostic dirty completion without an inner lock reset',
+    (tester) async {
+      final repo = _SyntheticDebtRepository({'mobit': 12, 'aupay_card': 13});
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('asset_salary_day_v1', 25);
+      const tombstones = MirrorTombstoneStore(
+        storageKey: 'debt_payment_day_override_deleted_v1',
+      );
+      await tombstones.addId(prefs, 'synthetic_other');
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repo,
+            debugNow: DateTime(2026, 10, 20),
+            debugInitialAssetData: const <String, Map<String, double>>{
+              '2026-10-20': <String, double>{
+                'Synthetic mobit alpha': -100000,
+                'Synthetic mobit beta': -200000,
+                'Synthetic aupay': -300000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(tester.takeException(), isNull);
+      expect(Supabase.instance.client.auth.currentUser, isNull);
+      expect(AssetSyncDirtyKeysStore.hasPendingMutations, isFalse);
+      expect(
+        await const AssetSyncDirtyKeysStore().loadDirty(
+          'debt_payment_day_overrides',
+          prefs: prefs,
+        ),
+        isEmpty,
+      );
+      final access = tester.state(find.byType(AssetManagementPage))
+          as DebtCollisionDiagnosticAccess;
+      final before = repo.saveCalls;
+      access.diagnosticShiftOne('mobit', access.diagnosticViewGeneration);
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(repo.saveCalls, before);
+      ScaffoldMessenger.of(tester.element(find.byType(AssetManagementPage)))
+          .removeCurrentSnackBar();
+      await tester.pump();
+      access.diagnosticShiftMany(
+        ['mobit', 'missing', 'mobit'],
+        access.diagnosticViewGeneration,
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(repo.saveCalls, before);
+      ScaffoldMessenger.of(tester.element(find.byType(AssetManagementPage)))
+          .removeCurrentSnackBar();
+      await tester.pump();
+      access.diagnosticShiftMany(
+        ['mobit', 'aupay_card', 'missing', 'aupay_card'],
+        access.diagnosticViewGeneration,
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(repo.lastSaved, {'mobit': 12, 'aupay_card': 26});
+      final write = access.diagnosticDirtyWrite;
+      expect(write, isNotNull);
+      var completed = false;
+      Object? observedError;
+      unawaited(
+        write!.then(
+          (_) {
+            completed = true;
+          },
+          onError: (Object error, StackTrace stack) {
+            observedError = error;
+            completed = true;
+          },
+        ),
+      );
+      for (var i = 0; i < 10 && !completed; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(
+        completed,
+        isTrue,
+        reason: 'dirty write without inner reset did not complete',
+      );
+      expect(observedError, isNull);
+      expect(AssetSyncDirtyKeysStore.hasPendingMutations, isFalse);
+      expect(
+        await const AssetSyncDirtyKeysStore().loadDirty(
+          'debt_payment_day_overrides',
+          prefs: prefs,
+        ),
+        {'aupay_card'},
+      );
+      await _finishSyntheticPage(tester);
+    },
+  );
 
   testWidgets(
       'shortfall retains debt events and explains held shift candidates',
