@@ -102,13 +102,13 @@ void main() {
       expect(name, findsWidgets);
       // This fixture has exactly one synthetic debt and suppresses built-in
       // fixed-payment rows; an ambiguous visible day is a failure.
-      final day = find.text('${expectedDay}日支払');
+      final day = find.text('$expectedDay日支払');
       expect(day, findsOneWidget);
       await Scrollable.ensureVisible(tester.element(day), alignment: 0.5);
       await tester.pump(const Duration(milliseconds: 500));
       expect(day.hitTestable(), findsOneWidget);
       expect(name.hitTestable(), findsWidgets);
-      final selectedDay = find.text('${expectedDay}日').hitTestable();
+      final selectedDay = find.text('$expectedDay日').hitTestable();
       expect(selectedDay, findsOneWidget);
       await binding.takeScreenshot(
         'synthetic-debt-read-${scenario.name}',
@@ -120,7 +120,7 @@ void main() {
       );
       await tester.tap(selectedDay);
       await tester.pump(const Duration(milliseconds: 500));
-      expect(find.text('${expectedDay}日').last.hitTestable(), findsOneWidget);
+      expect(find.text('$expectedDay日').last.hitTestable(), findsOneWidget);
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pump(const Duration(milliseconds: 300));
       expect(
