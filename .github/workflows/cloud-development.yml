@@ -1,8 +1,9 @@
-name: Dining namespace diagnostic
+name: Synthetic dining actual-page fixture
 on:
   workflow_dispatch:
     inputs:
       expected_head_sha:
+        description: Exact synthetic diagnostic branch commit
         required: true
         type: string
 permissions: {}
@@ -10,21 +11,36 @@ concurrency:
   group: dining-page-fixture-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  check:
+  synthetic-page:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
-      - name: Compare namespace views
-        shell: bash
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Check exact head
         env:
           EXPECTED_HEAD: ${{ inputs.expected_head_sha }}
-          ACTUAL_HEAD: ${{ github.sha }}
         run: |
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
-          test "$EXPECTED_HEAD" = "$ACTUAL_HEAD"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: python3 -B -m unittest discover -s test/fixtures -p 'test_dining_page_stub.py' -v
+      - run: flutter pub get
+      - run: flutter precache --web
+      - name: Run full page with loopback-only synthetic fixture
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
           sudo unshare --net -- bash -c '
             set -euo pipefail
             ip link set lo up
-            python3 -c '\''import json, os, subprocess; links = json.loads(subprocess.check_output(["ip", "-j", "link", "show"], timeout=5)); assert isinstance(links, list); names = [x["ifname"] for x in links]; print("current_namespace_only_lo=" + str(names == ["lo"]).lower()); print("sysfs_only_lo=" + str(set(os.listdir("/sys/class/net")) == {"lo"}).lower()); assert names == ["lo"]'\''
-          '
+            test "$(ip -o link show | wc -l)" -eq 1
+            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" CI=true TZ=UTC bash test/fixtures/dining_page_runner.sh
+          ' _ "$(id -un)" "$PATH" "$HOME"

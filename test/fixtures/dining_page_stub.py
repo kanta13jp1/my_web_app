@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import hashlib
 import hmac
 import json
-import os
+import subprocess
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlsplit
 
@@ -125,7 +125,19 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
 
+def namespace_only_loopback():
+    try:
+        output = subprocess.run(['ip', '-j', 'link', 'show'], check=True,
+                                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                timeout=5).stdout
+        links = json.loads(output)
+        return (isinstance(links, list) and len(links) == 1 and
+                isinstance(links[0], dict) and links[0].get('ifname') == 'lo')
+    except (OSError, subprocess.SubprocessError, ValueError, UnicodeDecodeError):
+        return False
+
+
 if __name__ == '__main__':
-    if set(os.listdir('/sys/class/net')) != {'lo'}:
+    if not namespace_only_loopback():
         raise SystemExit('refusing to start without loopback-only network namespace')
     HTTPServer(('127.0.0.1', 18765), Handler).serve_forever()

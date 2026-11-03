@@ -1,5 +1,7 @@
 import json
 import unittest
+from unittest.mock import patch
+import subprocess
 
 import dining_page_stub as fixture
 
@@ -72,6 +74,21 @@ class SyntheticBackendTest(unittest.TestCase):
             handler._handle()
             self.assertEqual(errors, [400])
         self.assertEqual(fixture.COUNTS['rejected_writes'], 4)
+
+    @patch.object(fixture.subprocess, 'run')
+    def test_namespace_guard_accepts_only_single_loopback(self, run):
+        run.return_value.stdout = b'[{"ifname":"lo"}]'
+        self.assertTrue(fixture.namespace_only_loopback())
+        run.assert_called_once()
+        for value in [b'[]', b'[{"ifname":"lo"},{"ifname":"eth0"}]',
+                      b'[{"ifname":"eth0"}]', b'[{"name":"lo"}]',
+                      b'{}', b'not json', b'[{"ifname":"lo"},{"ifname":"lo"}]']:
+            run.return_value.stdout = value
+            self.assertFalse(fixture.namespace_only_loopback(), value)
+        for error in [OSError(), subprocess.TimeoutExpired('ip', 5),
+                      subprocess.CalledProcessError(1, 'ip')]:
+            run.side_effect = error
+            self.assertFalse(fixture.namespace_only_loopback())
 
 
 if __name__ == '__main__':
