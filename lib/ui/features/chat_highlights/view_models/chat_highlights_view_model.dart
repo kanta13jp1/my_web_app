@@ -15,10 +15,10 @@ class ChatHighlightsViewModel extends ChangeNotifier {
     required ChatHighlightExportGateway exportGateway,
     DetectChatHighlights detector = const DetectChatHighlights(),
     DateTime Function()? now,
-  })  : _gateway = gateway,
-        _exportGateway = exportGateway,
-        _detector = detector,
-        _now = now ?? DateTime.now;
+  }) : _gateway = gateway,
+       _exportGateway = exportGateway,
+       _detector = detector,
+       _now = now ?? DateTime.now;
 
   static const maximumEvents = 500;
 
@@ -109,7 +109,8 @@ class ChatHighlightsViewModel extends ChangeNotifier {
     if (inFlight != null) return inFlight;
 
     final pending = _pendingAdds[key];
-    if (pending != null && snapshot.events.any((event) => event.id == pending.id)) {
+    if (pending != null &&
+        snapshot.events.any((event) => event.id == pending.id)) {
       return _savePendingAdd(key, pending);
     }
     final event = ChatHighlightEvent(
@@ -240,8 +241,9 @@ class ChatHighlightsViewModel extends ChangeNotifier {
     errorMessage = null;
     noticeMessage = notice;
     final value = snapshot;
-    _saveTail =
-        _saveTail.catchError((Object _) {}).then((_) => _gateway.save(value));
+    _saveTail = _saveTail
+        .catchError((Object _) {})
+        .then((_) => _gateway.save(value));
     try {
       await _saveTail;
       _notify();
