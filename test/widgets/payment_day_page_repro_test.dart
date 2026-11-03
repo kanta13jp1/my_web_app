@@ -30,12 +30,16 @@ Future<Object?> pumpUntil<T>(WidgetTester tester, Future<T> operation, String ph
   return result;
 }
 
-class FakeRepository extends SharedPreferencesAssetLiabilityRepository {
+class SyntheticRepository extends SharedPreferencesAssetLiabilityRepository {
+  final saved = <Map<String, int>>[];
+
   @override
   Future<Map<String, int>> loadDebtPaymentDayOverrides() async => {'debt-a': 10};
 
   @override
-  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) async {}
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) async {
+    saved.add(Map<String, int>.from(overrides));
+  }
 }
 
 const rowA = AssetLiabilityDebtRow(
@@ -66,72 +70,65 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('characterize actual mirror acknowledgement after newer edit',
+  testWidgets('characterize stale restore after a newer actual page edit',
       (tester) async {
-    // Reset before mounting any page so the completed lock is made in the
-    // same FakeAsync zone as all of this test's production store operations.
     AssetSyncDirtyKeysStore.resetWriteLockForTest();
     const domain = 'debt_payment_day_overrides';
     const store = AssetSyncDirtyKeysStore();
-    final pending = <Completer<void>>[];
-    final sent = <Map<String, int>>[];
+    final dirtyReadStarted = Completer<void>();
+    final releaseDirtyRead = Completer<Set<String>>();
+    final repo = SyntheticRepository();
     final key = GlobalKey();
-    print('REPRO_STAGE surface-size');
+    var reads = 0;
     await tester.binding.setSurfaceSize(const Size(1200, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    print('REPRO_STAGE pump-widget');
+    print('RESTORE_STAGE mount');
     await tester.pumpWidget(MaterialApp(
       home: AssetManagementPage(
         key: key,
-        assetLiabilityRepository: FakeRepository(),
-        debugDebtOverrideReproWriter: (payload) {
-          sent.add(Map<String, int>.from(payload));
-          final response = Completer<void>();
-          pending.add(response);
-          return response.future;
+        assetLiabilityRepository: repo,
+        // Force the normal union-merge path to add an unrelated server key.
+        debugDebtOverridesMirror: const <String, dynamic>{'debt-b': 5},
+        debugRestoreDirtyReader: () {
+          reads++;
+          if (!dirtyReadStarted.isCompleted) dirtyReadStarted.complete();
+          return releaseDirtyRead.future;
         },
       ),
     ));
-    print('REPRO_STAGE initial-pump-start');
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.pump(const Duration(milliseconds: 300));
-    print('REPRO_STAGE initial-pump-end');
-    print('REPRO_STAGE initial-pump-done');
-    final dynamic page = key.currentState;
-    expect(page, isNotNull);
-    print('REPRO_STAGE mark-a');
-    await pumpUntil<void>(tester, store.markDirty(domain, 'debt-a'), 'mark-a');
-    print('REPRO_STAGE send-a');
-    final Future<void> first = page.debugMirrorDebtOverrideForRepro({'debt-a': 10});
-    await tester.pump();
-    expect(sent, hasLength(1));
-    expect(sent.first, {'debt-a': 10});
-
-    // Invoke the actual edit handler while A's network response is pending.
-    print('REPRO_STAGE edit-b');
-    page.debugEditDebtOverrideForRepro(rowA, 11);
-    for (var i = 0; i < 20 && sent.length < 2; i++) {
+    for (var i = 0; i < 40 && !dirtyReadStarted.isCompleted; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    expect(sent.length, greaterThanOrEqualTo(2));
-    expect(sent.last['debt-a'], 11);
-    print('REPRO_STAGE check-dirty-b');
-    expect(await pumpUntil(tester, store.loadDirty(domain), 'dirty-b'), contains('debt-a'));
+    print('RESTORE_STAGE restore-waiting');
+    expect(dirtyReadStarted.isCompleted, isTrue,
+        reason: 'restore must have captured its Map and entered dirty read');
+    expect(reads, 1);
+    final dynamic page = key.currentState;
+    expect(page, isNotNull);
+    expect(page.debugDebtOverridesForRestoreRepro()['debt-a'], 10);
 
-    print('REPRO_STAGE complete-a');
-    pending.first.complete();
-    await tester.pump();
-    print('REPRO_STAGE await-a-result');
-    await pumpUntil<void>(tester, first, 'first-response');
-    // Characterization of the bug, not a desired-behavior assertion.
-    print('REPRO_STAGE check-result');
-    expect(await pumpUntil(tester, store.loadDirty(domain), 'dirty-after-a'), isNot(contains('debt-a')),
-        reason: 'old acknowledgement clears the newer real page edit');
-    for (final response in pending.skip(1)) {
-      if (!response.isCompleted) response.complete();
-    }
+    // Invoke the actual page edit after the restore copied its old Map.
+    print('RESTORE_STAGE edit');
+    page.debugEditDebtOverrideForRestoreRepro(rowA, 11);
     await tester.pump(const Duration(milliseconds: 100));
-    print('REPRO_STAGE unmount');
+    expect(page.debugDebtOverridesForRestoreRepro()['debt-a'], 11);
+    final actualDirty = await pumpUntil(tester, store.loadDirty(domain), 'dirty-before-release') as Set<String>;
+    expect(actualDirty, contains('debt-a'));
+    print('RESTORE_STAGE release');
+    releaseDirtyRead.complete(actualDirty);
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (page.debugDebtOverridesForRestoreRepro().containsKey('debt-b')) break;
+    }
+
+    print('RESTORE_STAGE observe');
+    final Map<String, int> after = page.debugDebtOverridesForRestoreRepro();
+    expect(after['debt-b'], 5, reason: 'the restore must actually complete');
+    // Characterization of the defect, not the desired behavior.
+    expect(after['debt-a'], 10,
+        reason: 'the stale merged Map overwrote the later actual page edit');
+    expect(await pumpUntil(tester, store.loadDirty(domain), 'dirty-after-restore'), contains('debt-a'),
+        reason: 'this loss can occur even while dirty protection remains set');
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 1));
   });

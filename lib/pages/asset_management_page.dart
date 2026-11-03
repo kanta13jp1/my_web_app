@@ -321,7 +321,7 @@ class _IncomeFinanceReadSnapshot {
 
 class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
-  final Future<void> Function(Map<String, int>)? debugDebtOverrideReproWriter;
+  final Future<Set<String>> Function()? debugRestoreDirtyReader;
   final AssetManagementInitialFocus initialFocus;
   final bool emphasizeMonthlyFlow;
   final AssetWatchlistService watchlistService;
@@ -460,7 +460,7 @@ class AssetManagementPage extends StatefulWidget {
 
   const AssetManagementPage({
     super.key,
-    this.debugDebtOverrideReproWriter,
+    this.debugRestoreDirtyReader,
     this.initialFocus = AssetManagementInitialFocus.overview,
     this.emphasizeMonthlyFlow = false,
     this.watchlistService = const AssetWatchlistService(),
@@ -506,10 +506,10 @@ class AssetManagementPage extends StatefulWidget {
 
 class _AssetManagementPageState extends State<AssetManagementPage> {
   @visibleForTesting
-  Future<void> debugMirrorDebtOverrideForRepro(Map<String, int> values) =>
-      _mirrorDebtPaymentDayOverrides(values);
+  Map<String, int> debugDebtOverridesForRestoreRepro() =>
+      Map<String, int>.from(_debtPaymentDayOverrides);
   @visibleForTesting
-  void debugEditDebtOverrideForRepro(AssetLiabilityDebtRow row, int day) =>
+  void debugEditDebtOverrideForRestoreRepro(AssetLiabilityDebtRow row, int day) =>
       _setDebtPaymentDayOverride(row, day);
   final ScrollController _assetCalendarScrollController = ScrollController();
   static const String _bankSheetId =
@@ -15206,21 +15206,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) async {
     unawaited(_syncTimestampStore.markChanged('debt_payment_day_overrides'));
     final userId = _supabase.auth.currentUser?.id;
-    final debugWriter = widget.debugDebtOverrideReproWriter;
-    if (userId == null && debugWriter == null) {
+    if (userId == null) {
       return;
     }
     try {
-      if (debugWriter != null) {
-        await debugWriter(Map<String, int>.from(overrides));
-      } else {
-        await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
-          'user_id': userId,
-          'pref_key': 'debt_payment_day_overrides',
-          'value': overrides,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        });
-      }
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'debt_payment_day_overrides',
+        'value': overrides,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
       // 全量 upsert 成功 = 全キー同期済み → dirty クリア。
       await _syncDirtyKeysStore.clearDomain('debt_payment_day_overrides');
     } catch (e) {
@@ -15294,9 +15289,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final localKeys = _debtPaymentDayOverrides.keys.toSet();
       final merged = Map<String, int>.from(_debtPaymentDayOverrides);
       var changed = false;
-      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
-        'debt_payment_day_overrides',
-      );
+      final dirtyKeys = await (widget.debugRestoreDirtyReader?.call() ??
+          _syncDirtyKeysStore.loadDirty('debt_payment_day_overrides'));
       serverOverrides.forEach((key, day) {
         // #3415 保守的 per-key ガード: ローカル編集済み (dirty) キーは、ドメイン
         // 全体 adopt の巻き添えで上書きしない (同一キー衝突はローカル優先)。
