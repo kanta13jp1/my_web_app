@@ -36,6 +36,28 @@ REPOSITORY_RUNS_MAX_PAGES = 10
 REPOSITORY_REVALIDATION_MIN_HOURS = 24
 
 
+class RepositoryRunsInvalid(RuntimeError):
+    code = "repository-runs-invalid"
+
+
+class RepositoryPaginationIncomplete(RuntimeError):
+    code = "repository-pagination-incomplete"
+
+
+class PrimaryLatestUnconfirmed(RuntimeError):
+    code = "primary-latest-unconfirmed"
+
+
+def verification_error_code(exc: Exception) -> str:
+    # Only fixed, locally defined codes are public; exception messages may contain secrets.
+    codes = {
+        RepositoryRunsInvalid: RepositoryRunsInvalid.code,
+        RepositoryPaginationIncomplete: RepositoryPaginationIncomplete.code,
+        PrimaryLatestUnconfirmed: PrimaryLatestUnconfirmed.code,
+    }
+    return codes.get(type(exc), type(exc).__name__)
+
+
 @dataclass(frozen=True)
 class WorkflowTarget:
     key: str
@@ -52,9 +74,9 @@ TARGETS = (
     # Require two missed delivery opportunities before opening a high-priority alert.
     WorkflowTarget("cs-check", "cs-check.yml", 6),
     WorkflowTarget("competitor-monitoring", "competitor-monitoring.yml", 30),
-    # A two-hour GitHub schedule may be delayed or drop an individual run.
-    # Require two missed delivery opportunities before opening a high-priority alert.
-    WorkflowTarget("health-monitor", "health-monitor.yml", 6),
+    # A two-hour GitHub schedule is routinely throttled: observed gaps reach ~9h
+    # (10+ gaps over 6h in 100 runs). Alert only past 12h to avoid noise (#5713).
+    WorkflowTarget("health-monitor", "health-monitor.yml", 12),
     WorkflowTarget("notion-sync", "notion-sync.yml", 10),
     WorkflowTarget(
         "supabase-backup-restore",
@@ -113,22 +135,23 @@ def repository_revalidation_start(
     runs: list[dict[str, Any]],
     now: datetime,
 ) -> datetime:
-    if runs:
-        newest = sort_runs_newest(runs)[0]
-        created_at = parse_time(str(newest.get("created_at") or ""))
-        if created_at is None:
-            raise ValueError("Workflow run is missing created_at")
-        return created_at - timedelta(seconds=1)
-
     window_hours = (
         max(target.max_age_hours, REPOSITORY_REVALIDATION_MIN_HOURS)
         if target.max_age_hours > 0
         else 24 * 30
     )
     window_start = now - timedelta(hours=window_hours)
-    if target.introduced_at is None:
-        return window_start
-    return max(target.introduced_at, window_start)
+    if target.introduced_at is not None:
+        window_start = max(target.introduced_at, window_start)
+    if runs:
+        newest = sort_runs_newest(runs)[0]
+        created_at = parse_time(str(newest.get("created_at") or ""))
+        if created_at is None:
+            raise ValueError("Workflow run is missing created_at")
+        # A stale per-workflow response must not expand the repository query
+        # beyond the monitoring window and exhaust its fail-closed page cap.
+        return max(created_at - timedelta(seconds=1), window_start)
+    return window_start
 
 
 def merge_revalidated_runs(
@@ -149,7 +172,7 @@ def merge_revalidated_runs(
             if primary_id is None or not any(
                 candidate.get("id") == primary_id for candidate in repository_runs
             ):
-                raise RuntimeError("Repository run listing did not confirm the primary latest run")
+                raise PrimaryLatestUnconfirmed("Repository run listing did not confirm the primary latest run")
             return merge_runs(primary_runs, repository_runs)
     return repository_runs
 
@@ -456,6 +479,8 @@ class GitHubClient:
         event: str,
         created_after: datetime,
     ) -> list[dict[str, Any]]:
+        if event == "push":
+            return self.latest_repository_push_runs(workflow_file, created_after)
         matches: list[dict[str, Any]] = []
         for page in range(1, REPOSITORY_RUNS_MAX_PAGES + 1):
             query = urlencode(
@@ -470,7 +495,7 @@ class GitHubClient:
             payload = self.request("GET", f"/repos/{self.repo}/actions/runs?{query}")
             page_runs = payload.get("workflow_runs", []) if isinstance(payload, dict) else []
             if not isinstance(page_runs, list):
-                raise RuntimeError("Repository workflow runs response is invalid")
+                raise RepositoryRunsInvalid("Repository workflow runs response is invalid")
             matches.extend(
                 run
                 for run in page_runs
@@ -478,7 +503,95 @@ class GitHubClient:
             )
             if len(page_runs) < REPOSITORY_RUNS_PER_PAGE:
                 return sort_runs_newest(matches)
-        raise RuntimeError("Repository workflow runs pagination was incomplete")
+        raise RepositoryPaginationIncomplete("Repository workflow runs pagination was incomplete")
+
+    def latest_repository_push_runs(
+        self, workflow_file: str, created_after: datetime,
+    ) -> list[dict[str, Any]]:
+        """Prove complete newest time slices, not the entire busy 30-day history."""
+        end = datetime.now(timezone.utc).replace(microsecond=0)
+        start = created_after.astimezone(timezone.utc).replace(microsecond=0)
+        requests_left = 40
+
+        def fetch(lower: datetime, upper: datetime) -> list[dict[str, Any]]:
+            nonlocal requests_left
+            matches: list[dict[str, Any]] = []
+            seen_ids: set[int] = set()
+            expected_count: int | None = None
+            for page in range(1, REPOSITORY_RUNS_MAX_PAGES + 1):
+                if requests_left <= 0:
+                    raise RepositoryPaginationIncomplete("Time-slice request budget exhausted")
+                requests_left -= 1
+                query = urlencode({
+                    "branch": "main", "event": "push",
+                    "created": f"{lower.isoformat()}..{upper.isoformat()}",
+                    "per_page": str(REPOSITORY_RUNS_PER_PAGE), "page": str(page),
+                })
+                payload = self.request("GET", f"/repos/{self.repo}/actions/runs?{query}")
+                runs = payload.get("workflow_runs") if isinstance(payload, dict) else None
+                count = payload.get("total_count") if isinstance(payload, dict) else None
+                if not isinstance(runs, list) or type(count) is not int or count < 0:
+                    raise RepositoryRunsInvalid("Invalid time-slice listing")
+                if count >= 1000:
+                    if (upper - lower).total_seconds() < 2:
+                        raise RepositoryPaginationIncomplete("Unsplittable saturated time slice")
+                    midpoint = lower + timedelta(seconds=int((upper - lower).total_seconds()) // 2)
+                    # Inclusive overlap preserves same-second runs; IDs deduplicate.
+                    newer = fetch(midpoint, upper)
+                    if newer:
+                        return newer
+                    return fetch(lower, midpoint)
+                if expected_count is None:
+                    expected_count = count
+                elif count != expected_count:
+                    raise RepositoryPaginationIncomplete("Time-slice count changed during pagination")
+                for item in runs:
+                    if not isinstance(item, dict):
+                        raise RepositoryRunsInvalid("Invalid run in time slice")
+                    timestamp = parse_time(str(item.get("created_at") or ""))
+                    if timestamp is None or not lower <= timestamp <= upper:
+                        raise RepositoryRunsInvalid("Run outside requested time slice")
+                    run_id = item.get("id")
+                    if type(run_id) is not int or run_id <= 0:
+                        raise RepositoryRunsInvalid("Invalid time-slice run ID")
+                    if run_id in seen_ids:
+                        raise RepositoryPaginationIncomplete("Duplicate run during time-slice pagination")
+                    seen_ids.add(run_id)
+                    if workflow_path_matches(item.get("path"), workflow_file):
+                        matches.append(item)
+                if len(runs) < REPOSITORY_RUNS_PER_PAGE:
+                    if len(seen_ids) != expected_count:
+                        raise RepositoryPaginationIncomplete("Truncated time-slice listing")
+                    return merge_runs(matches)
+            raise RepositoryPaginationIncomplete("Time-slice pagination incomplete")
+
+        while end >= start:
+            lower = max(start, end - timedelta(hours=24))
+            matches = fetch(lower, end)
+            if matches:
+                return matches
+            if lower == start:
+                break
+            end = lower
+        return []
+
+    def confirm_push_run(self, workflow_file: str, primary: dict[str, Any]) -> dict[str, Any]:
+        """Independently confirm an older primary, without losing newer failures."""
+        run_id = primary.get("id")
+        if type(run_id) is not int or run_id <= 0:
+            raise PrimaryLatestUnconfirmed("Invalid primary ID")
+        candidate = self.request("GET", f"/repos/{self.repo}/actions/runs/{run_id}")
+        if (
+            not isinstance(candidate, dict)
+            or candidate.get("id") != run_id
+            or candidate.get("event") != "push"
+            or candidate.get("head_branch") != "main"
+            or not workflow_path_matches(candidate.get("path"), workflow_file)
+            or candidate.get("created_at") != primary.get("created_at")
+            or candidate.get("head_sha") != primary.get("head_sha")
+        ):
+            raise PrimaryLatestUnconfirmed("Primary identity not confirmed")
+        return candidate
 
     def workflow_state(self, workflow_file: str) -> str:
         path = f"/repos/{self.repo}/actions/workflows/{quote(workflow_file)}"
@@ -629,14 +742,15 @@ def render_summary(results: list[dict[str, Any]]) -> str:
     lines = [
         "## Schedule Resilience Watch",
         "",
-        "| Target | Action | Reason | Run |",
-        "|---|---|---|---|",
+        "| Target | Action | Reason | Verification error | Run |",
+        "|---|---|---|---|---|",
     ]
     for result in results:
         run = result.get("url") or ""
         run_cell = f"[run]({run})" if run else "-"
         lines.append(
-            f"| `{result['target']}` | `{result['action']}` | `{result['reason']}` | {run_cell} |"
+            f"| `{result['target']}` | `{result['action']}` | `{result['reason']}` | "
+            f"{result.get('verification_error') or '-'} | {run_cell} |"
         )
     return "\n".join(lines) + "\n"
 
@@ -682,6 +796,15 @@ def main(argv: list[str]) -> int:
                 event=target.event,
                 created_after=created_after,
             )
+            if target.event == "push" and primary_runs:
+                primary = sort_runs_newest(primary_runs)[0]
+                timestamp = parse_time(str(primary.get("created_at") or ""))
+                if timestamp is not None and timestamp >= created_after and not any(
+                    item.get("id") == primary.get("id") for item in repository_runs
+                ):
+                    repository_runs = merge_runs(
+                        repository_runs, [client.confirm_push_run(target.workflow_file, primary)]
+                    )
             runs = merge_revalidated_runs(
                 primary_runs,
                 repository_runs,
@@ -710,7 +833,7 @@ def main(argv: list[str]) -> int:
                     "workflow_file": target.workflow_file,
                     "action": "observe",
                     "reason": "freshness-unverified",
-                    "verification_error": type(exc).__name__,
+                    "verification_error": verification_error_code(exc),
                 }
             )
             continue

@@ -1289,7 +1289,7 @@ void main() {
       expect(cashflowRow.paid, isTrue);
     });
 
-    test('marks unpaid payments due today or earlier as overdue', () {
+    test('keeps unpaid payments due today separate from overdue', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{
           '財布': 50000,
@@ -1310,10 +1310,10 @@ void main() {
         (row) => row.accountId == 'paypay_card',
       );
 
-      expect(mobit.overdue, isTrue);
+      expect(mobit.overdue, isFalse);
       expect(payPay.overdue, isFalse);
-      expect(workbook.hasOverduePayments, isTrue);
-      expect(workbook.overdueCashflowRows, hasLength(1));
+      expect(workbook.hasOverduePayments, isFalse);
+      expect(workbook.overdueCashflowRows, isEmpty);
     });
 
     test('builds cashflow rows by payment day with risk levels', () {

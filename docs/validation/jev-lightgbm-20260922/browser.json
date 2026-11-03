@@ -1,0 +1,31 @@
+{
+  "scope": "cloud headless Chromium; tree inference only, no features/render/network; 200 warmup and 1000 measured calls",
+  "models": {
+    "jev": {
+      "n": 1000,
+      "median_ms": 0,
+      "p95_ms": 0.10000000000582077,
+      "max_ms": 0.20000000001164153,
+      "parity_max_error": 0,
+      "zero_timer_samples": 726,
+      "batch_calls": 100,
+      "batch_n": 100,
+      "batch_per_call_median_ms": 0.025,
+      "batch_per_call_p95_ms": 0.02899999999994179
+    },
+    "rule": {
+      "n": 1000,
+      "median_ms": 0,
+      "p95_ms": 0,
+      "max_ms": 1.1999999999970896,
+      "parity_max_error": 0,
+      "zero_timer_samples": 951,
+      "batch_calls": 100,
+      "batch_n": 100,
+      "batch_per_call_median_ms": 0.005,
+      "batch_per_call_p95_ms": 0.008000000000029104
+    }
+  },
+  "machine": "x86_64",
+  "browser": "140.0.7339.16"
+}

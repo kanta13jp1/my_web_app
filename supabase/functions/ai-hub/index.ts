@@ -6825,6 +6825,7 @@ serve(async (req: Request) => {
         }
       }
 
+      case "expense.jev_search":
       case "expense.jev_suggest": {
         if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
         const offlinePolicy = parseOfflineSecureModePolicy(body);
@@ -6837,6 +6838,7 @@ serve(async (req: Request) => {
         const account = userId ? await admin.auth.admin.getUserById(userId) : null;
         try {
           const result = await classifyJevExpense({
+            semanticSearch: action === "expense.jev_search",
             userId: account?.error ? null : account?.data.user?.id ?? null,
             anonymous: account?.data.user?.is_anonymous !== false,
             body,
@@ -7263,6 +7265,11 @@ serve(async (req: Request) => {
         }
 
         // フリーミアム上限ゲート + 使用量メータリング (#3645 / #3646)
+        // action_access_policy により userId か service role のどちらかが必須。
+        // userId が無いのは内部 EF (service role) 呼び出しのみ。
+        if (!userId && !isServiceRoleRequest(req)) {
+          return json({ error: "Unauthorized" }, 401);
+        }
         if (userId) {
           const usage = await checkAndRecordAiUsage(
             supabaseUsageStore(admin),
@@ -7529,6 +7536,10 @@ serve(async (req: Request) => {
         }
 
         // フリーミアム上限ゲート + 使用量メータリング (#3645 / #3646)
+        // action_access_policy により userId か service role のどちらかが必須。
+        if (!userId && !isServiceRoleRequest(req)) {
+          return json({ error: "Unauthorized" }, 401);
+        }
         if (routingUserId) {
           const usage = await checkAndRecordAiUsage(
             supabaseUsageStore(admin),

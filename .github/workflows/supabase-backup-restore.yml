@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3
         with:
           # Keep the ephemeral Auth/Storage schemas aligned with production.
           # Older 2.84.2 lacked auth.custom_oauth_providers.custom_claims_allowlist.
@@ -154,6 +154,20 @@ jobs:
             | sha256sum --check
           docker cp scripts/sql/supabase_storage_v1_71_0_0062.sql \
             "$db_container:/tmp/storage-compat.sql"
+          # Official Auth compatibility DDL, isolated target only (#5465).
+          echo "1ae2cae8d87ab6df4eb00e211a9e0b966b8254da5c4a8d689641770c234fa571  scripts/sql/supabase_auth_recovery_codes_20260824.sql" \
+            | sha256sum --check
+          docker cp scripts/sql/supabase_auth_recovery_codes_20260824.sql \
+            "$db_container:/tmp/auth-recovery-compat.sql"
+          docker exec "$db_container" sh -c '
+            export PGPASSWORD="$POSTGRES_PASSWORD"
+            exec psql \
+              --host 127.0.0.1 \
+              --username supabase_auth_admin \
+              --dbname postgres \
+              --variable ON_ERROR_STOP=1 \
+              --file /tmp/auth-recovery-compat.sql
+          '
           docker cp "$restore_input/roles.sql" "$db_container:/tmp/roles.sql"
           docker cp "$restore_input/schema.sql" "$db_container:/tmp/schema.sql"
           docker cp "$restore_input/data.sql" "$db_container:/tmp/data.sql"
@@ -169,6 +183,12 @@ jobs:
               --single-transaction \
               --variable ON_ERROR_STOP=1 \
               --file /tmp/storage-compat.sql
+          '
+          echo "139969ce1a32e6385979f5d86fea78f2ba14a23342ece274122bbbd9a863be78  scripts/sql/supabase_storage_lifecycle_0068_0069.sql" | sha256sum --check
+          docker cp scripts/sql/supabase_storage_lifecycle_0068_0069.sql "$db_container:/tmp/storage-lifecycle.sql"
+          docker exec "$db_container" sh -c '
+            export PGPASSWORD="$POSTGRES_PASSWORD"
+            exec psql --host 127.0.0.1 --username supabase_storage_admin --dbname postgres --variable ON_ERROR_STOP=1 --file /tmp/storage-lifecycle.sql
           '
           docker exec "$db_container" psql \
             --username postgres \
@@ -223,7 +243,7 @@ jobs:
 
       - name: Upload encrypted backup and evidence
         if: success()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: supabase-production-backup-${{ github.run_id }}-${{ github.run_attempt }}
           path: |

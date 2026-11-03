@@ -124,7 +124,7 @@ class SmbcCsvImportService {
       final deposit = _parseAmount(_cell(row, depositIndex));
       final content = _cell(row, contentIndex).trim();
       final balance =
-          balanceIndex == null ? null : _parseAmount(_cell(row, balanceIndex));
+          balanceIndex == null ? null : _parseBalance(_cell(row, balanceIndex));
       final memo = memoIndex == null ? '' : _cell(row, memoIndex).trim();
       final label = labelIndex == null ? '' : _cell(row, labelIndex).trim();
 
@@ -248,7 +248,22 @@ class SmbcCsvImportService {
     final day = int.tryParse(parts[2]);
     if (year == null || month == null || day == null) return null;
     if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-    return DateTime(year, month, day);
+    final date = DateTime(year, month, day);
+    if (date.year != year || date.month != month || date.day != day) {
+      return null;
+    }
+    return date;
+  }
+
+  // Balances are signed observations; a negative balance is not an outflow.
+  // Keep the existing absolute-value semantics only for deposit/withdrawal.
+  static int? _parseBalance(final String value) {
+    final normalized = value
+        .replaceAll(',', '')
+        .replaceAll('￥', '')
+        .replaceAll('¥', '')
+        .trim();
+    return normalized.isEmpty ? null : int.tryParse(normalized);
   }
 
   static int? _parseAmount(final String value) {

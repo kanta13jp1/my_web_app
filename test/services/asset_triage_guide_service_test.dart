@@ -62,6 +62,7 @@ void main() {
       // ③ 止血 (カード新規利用停止)。
       expect(plan.todaySteps[2].kind, AssetTriageStepKind.stopNewCardUsage);
       expect(plan.todaySteps[2].detail.contains('ファミペイ'), isTrue);
+      expect(plan.todaySteps[2].detail.contains('利用停止'), isTrue);
       // 今週: 期限超過処理 + 新規利用分の25日返済確保。期限超過は昨日以前の支払のみ
       // (本日期日のモビット10,000円は②に載せ、④へは二重計上しない)。
       expect(
@@ -722,7 +723,80 @@ void main() {
         );
         expect(living.detail.contains('フードバンク'), isTrue);
         expect(living.detail.contains('食事を抜く判断はしないでください'), isTrue);
+        expect(living.withdrawalTemplates, isEmpty);
+        expect(living.withdrawalSourceAccountId, isNull);
       },
     );
+
+    test(
+        'living expense step provides 10k and 20k templates when headroom >= 20k',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 2000,
+          '三井住友銀行': 100000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      final living = plan.todaySteps.firstWhere(
+        (step) => step.kind == AssetTriageStepKind.secureLivingExpense,
+      );
+      expect(living.withdrawalTemplates, equals(<double>[10000, 20000]));
+      expect(living.withdrawalSourceAccountId, isNotNull);
+      expect(living.withdrawalSourceAccountName, '三井住友銀行');
+      expect(living.detail.contains('生活費は専用財布へ（食事を抜く判断はしないでください）'), isTrue);
+    });
+
+    test(
+        'living expense step provides only 10k template when 10k <= headroom < 20k',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 2000,
+          '三井住友銀行': 15000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      final living = plan.todaySteps.firstWhere(
+        (step) => step.kind == AssetTriageStepKind.secureLivingExpense,
+      );
+      expect(living.withdrawalTemplates, equals(<double>[10000]));
+      expect(living.withdrawalSourceAccountId, isNotNull);
+      expect(living.detail.contains('生活費は専用財布へ（食事を抜く判断はしないでください）'), isTrue);
+    });
+
+    test('living expense step provides empty templates when headroom < 10k',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 2000,
+          '三井住友銀行': 8000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      final living = plan.todaySteps.firstWhere(
+        (step) => step.kind == AssetTriageStepKind.secureLivingExpense,
+      );
+      expect(living.withdrawalTemplates, isEmpty);
+      expect(living.detail.contains('食事を抜く判断はしないでください'), isTrue);
+    });
   });
 }

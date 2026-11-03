@@ -9,6 +9,8 @@ import json
 import os
 import re
 import textwrap
+import time
+import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -178,11 +180,26 @@ def upsert_supabase(
                 "Prefer": "resolution=merge-duplicates",
             },
         )
-        with urllib.request.urlopen(request, timeout=60) as response:
-            if response.status not in {200, 201, 204}:
-                raise RuntimeError(
-                    f"Supabase upsert failed: HTTP {response.status}"
+        # Retry only the identical upsert batch, never regenerate embeddings or
+        # replay earlier batches. The source_type/source_id unique key is retained.
+        for attempt in range(3):
+            try:
+                with urllib.request.urlopen(request, timeout=60) as response:
+                    if response.status not in {200, 201, 204}:
+                        raise RuntimeError(
+                            f"Supabase upsert failed: HTTP {response.status}"
+                        )
+                break
+            except urllib.error.HTTPError as error:
+                if error.code not in {502, 503, 504} or attempt == 2:
+                    raise
+                error.close()
+                delay = 2 ** (attempt + 1)
+                print(
+                    f"Supabase upsert HTTP {error.code}; "
+                    f"retry {attempt + 1}/2 in {delay}s"
                 )
+                time.sleep(delay)
         applied += len(chunk)
         print(f"upserted {applied}/{len(payloads)}")
     return applied

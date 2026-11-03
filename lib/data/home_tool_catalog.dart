@@ -3,6 +3,8 @@ import 'dart:async';
 import '../pages/aero_lab_page.dart';
 import '../pages/sound_bloom_page.dart';
 import '../pages/lumen_path_page.dart';
+import '../pages/kinetic_forge_page.dart';
+import '../pages/flow_city_page.dart';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -16,6 +18,7 @@ import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
 import '../pages/agent_board_page.dart';
 import '../pages/autonomous_ops_console_page.dart';
+import '../pages/micro_mentor_dashboard_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
 import '../pages/english_reading_curriculum_page.dart';
 import '../ui/features/toeic/toeic_feature.dart';
@@ -884,6 +887,17 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'debug',
       ],
       onOpen: (context) => _pushPage(context, const AgentGpaDashboardPage()),
+      requiresClearDeck: true,
+    ),
+    HomeToolEntry(
+      id: 'micro-mentors',
+      sectionId: 'knowledge',
+      title: 'マイクロAIメンター',
+      subtitle: '領域別メンターの提案を比較する',
+      icon: Icons.psychology_alt_outlined,
+      color: const Color(0xFF00796B),
+      keywords: const <String>['AIメンター', 'ペルソナ', '提案', '予定'],
+      onOpen: (context) => _pushPage(context, MicroMentorDashboardPage()),
       requiresClearDeck: true,
     ),
     HomeToolEntry(
@@ -1920,6 +1934,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
           Navigator.of(context).pushNamed('/proactive-form-check'),
     ),
     HomeToolEntry(
+      id: 'echo-pump',
+      sectionId: 'personal',
+      title: '残響ポンプ室',
+      subtitle: '電源と音で敵を誘導する、短い脱出ホラーの見取り図版',
+      icon: Icons.flashlight_on,
+      color: const Color(0xFF26796C),
+      keywords: const <String>['ゲーム', 'ホラー', '脱出', 'ポンプ', '残響', 'echo'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/echo-pump'),
+    ),
+    HomeToolEntry(
+      id: 'sea-shelter',
+      sectionId: 'personal',
+      title: '潮灯のシェルター',
+      subtitle: '漂流物を集め、住民と海上拠点を育てるサバイバル試作',
+      icon: Icons.sailing_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['ゲーム', '海', 'サバイバル', '拠点', '住民', 'sea shelter'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/sea-shelter'),
+    ),
+    HomeToolEntry(
       id: 'focus-capture',
       sectionId: 'personal',
       title: 'フォーカス捕獲ゲーム',
@@ -2190,6 +2224,24 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const SmartInboxTriagePage()),
     ),
     HomeToolEntry(
+      id: 'platform-release-checklist',
+      sectionId: 'knowledge',
+      title: 'プラットフォーム別リリース確認',
+      subtitle: 'Web・iOS・Androidの確認状態とメモを分けて記録',
+      icon: Icons.fact_check_outlined,
+      color: const Color(0xFF1565C0),
+      keywords: const <String>[
+        'リリース',
+        'platform',
+        'iOS',
+        'Android',
+        'Web',
+        '確認',
+      ],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/platform-release-checklist'),
+    ),
+    HomeToolEntry(
       id: 'form-builder',
       sectionId: 'knowledge',
       title: 'フォームビルダー',
@@ -2377,6 +2429,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF283593),
       keywords: const <String>['ABテスト', 'ランディング', 'LP', 'CVR', 'コンバージョン'],
       onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
+    ),
+    HomeToolEntry(
+      id: 'flow-city',
+      sectionId: 'growth',
+      title: '交通実験室 · FLOW CITY',
+      subtitle: '同じ需要で信号条件を変え、到着と待機を比較',
+      icon: Icons.traffic_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['交通', '信号', '比較', 'FLOW CITY', 'Astra'],
+      onOpen: (context) => _pushPage(context, const FlowCityPage()),
+    ),
+    HomeToolEntry(
+      id: 'kinetic-forge',
+      sectionId: 'growth',
+      title: '描画実験室 · KINETIC FORGE',
+      subtitle: '坂を描き、球を放って、失敗からコースを改善する',
+      icon: Icons.route_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['描画', 'コース', '実験', 'KINETIC FORGE', 'Astra'],
+      onOpen: (context) => _pushPage(context, const KineticForgePage()),
     ),
     HomeToolEntry(
       id: 'lumen-path',
@@ -3014,6 +3086,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF168A75),
       keywords: const <String>['Jev', 'Mario', 'マリオ', '応答速度', 'ベンチマーク'],
       onOpen: (context) => Navigator.of(context).pushNamed('/jev-mario-lab'),
+    ),
+    HomeToolEntry(
+      id: 'jwenv-lab',
+      sectionId: 'ai',
+      title: 'Jwenv WebGPU Lab',
+      subtitle: 'WebGPUによるブラウザ内ローカル軽量LLM・判断判定デモ（Qwen 2.5 0.5B / Jev）',
+      icon: Icons.memory,
+      color: const Color(0xFF2F6FDB),
+      keywords: const <String>[
+        'Jwenv',
+        'WebGPU',
+        'Jev',
+        'Qwen',
+        'ローカルLLM',
+        'ブラウザ内推論',
+      ],
+      onOpen: (context) => Navigator.of(context).pushNamed('/jwenv-lab'),
     ),
     HomeToolEntry(
       id: 'agi-fireworks',

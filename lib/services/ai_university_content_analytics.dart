@@ -6,7 +6,12 @@ enum AiUniversityContentEvent {
   fallbackShown('fallback_shown'),
   retryRequested('retry_requested'),
   retrySucceeded('retry_succeeded'),
-  retryFailed('retry_failed');
+  retryFailed('retry_failed'),
+  providerSearch('provider_search'),
+  providerSelected('provider_selected'),
+  contentOpened('content_opened'),
+  quizCompleted('quiz_completed'),
+  reviewReturned('review_returned');
 
   const AiUniversityContentEvent(this.databaseValue);
 
@@ -17,7 +22,7 @@ typedef AiUniversityAnalyticsWriter = Future<void> Function(
   Map<String, Object> row,
 );
 
-/// Anonymous, best-effort operational analytics for AI University content.
+/// Anonymous, best-effort reliability and learning-journey analytics for AI University.
 ///
 /// The API intentionally accepts no dynamic properties. It cannot send a user
 /// identifier, URL, exception, location, content, or free-form diagnostic text.
@@ -40,6 +45,11 @@ class AiUniversityContentAnalytics {
     'retry_requested',
     'retry_succeeded',
     'retry_failed',
+    'provider_search',
+    'provider_selected',
+    'content_opened',
+    'quiz_completed',
+    'review_returned',
   };
 
   static const Set<String> allowedPropertyNames = <String>{

@@ -177,15 +177,14 @@ class AssetCashflowStatementService {
     final sortedKeys = rawMonthData.keys.toList()..sort();
     final months = <AssetCashflowMonth>[];
     final byMonth = <String, AssetCashflowMonth>{};
-    double? previousNetWorth;
 
     for (final key in sortedKeys) {
       final data = rawMonthData[key]!;
+      final previousNetWorth = rawMonthData[_previousMonthKey(key)]?.netWorth;
       double? delta;
       if (data.netWorth != null && previousNetWorth != null) {
         delta = data.netWorth! - previousNetWorth;
       }
-      previousNetWorth = data.netWorth;
 
       final month = AssetCashflowMonth(
         monthKey: key,
@@ -255,6 +254,14 @@ class AssetCashflowStatementService {
       trackedMonthCount: tracked,
       windowMonths: trailingWindowMonths,
     );
+  }
+
+  static String? _previousMonthKey(String monthKey) {
+    final month = DateTime.tryParse('$monthKey-01');
+    if (month == null || _formatMonthKey(month) != monthKey) {
+      return null;
+    }
+    return _formatMonthKey(DateTime(month.year, month.month - 1));
   }
 
   static String _formatMonthKey(DateTime date) {
