@@ -76,6 +76,28 @@ void main() {
     );
   });
 
+  test('指示書の出力失敗を利用者へ通知する', () async {
+    final viewModel = ChatHighlightsViewModel(
+      gateway: _MemoryGateway(),
+      exportGateway: _FailingExporter(),
+    );
+    await viewModel.load();
+    await viewModel.updateSource(
+      title: '配信',
+      url: 'https://example.com/video.mp4',
+    );
+    await viewModel.updateSettings(
+      const ChatHighlightSettings(minimumComments: 1),
+    );
+    await viewModel.addEvent(
+      offset: const Duration(seconds: 10),
+      author: 'viewer',
+      message: '盛り上がり',
+    );
+    expect(await viewModel.exportManifest(), isFalse);
+    expect(viewModel.errorMessage, contains('出力できませんでした'));
+  });
+
   test('有効な動画URLと候補がある場合だけ指示書を出力する', () async {
     final gateway = _MemoryGateway();
     final exporter = _MemoryExporter();
@@ -117,6 +139,16 @@ class _MemoryGateway implements ChatHighlightGateway {
   @override
   Future<void> save(ChatHighlightSnapshot snapshot) async {
     saved = snapshot;
+  }
+}
+
+class _FailingExporter implements ChatHighlightExportGateway {
+  @override
+  Future<void> export({
+    required ChatHighlightSnapshot snapshot,
+    required List<ChatHighlightCandidate> candidates,
+  }) async {
+    throw StateError('download unavailable');
   }
 }
 

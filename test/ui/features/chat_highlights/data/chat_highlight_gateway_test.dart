@@ -44,18 +44,21 @@ void main() {
     expect(stored['version'], 1);
   });
 
-  test('壊れたJSONは空スナップショットへ安全に復旧する', () async {
+  test('壊れたデータは読み込み失敗として通知し、原文を保持する', () async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(
-      SharedPreferencesChatHighlightGateway.storageKey,
-      '{broken',
-    );
-
-    final restored = await SharedPreferencesChatHighlightGateway(
-      preferences: preferences,
-    ).load();
-
-    expect(restored.events, isEmpty);
-    expect(restored.sourceVideoUrl, isEmpty);
+    for (final raw in <String>['{broken', '[]', '']) {
+      await preferences.setString(
+        SharedPreferencesChatHighlightGateway.storageKey,
+        raw,
+      );
+      await expectLater(
+        SharedPreferencesChatHighlightGateway(preferences: preferences).load(),
+        throwsFormatException,
+      );
+      expect(
+        preferences.getString(SharedPreferencesChatHighlightGateway.storageKey),
+        raw,
+      );
+    }
   });
 }

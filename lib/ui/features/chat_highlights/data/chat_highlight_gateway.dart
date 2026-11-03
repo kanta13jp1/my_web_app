@@ -21,13 +21,15 @@ class SharedPreferencesChatHighlightGateway implements ChatHighlightGateway {
   Future<ChatHighlightSnapshot> load() async {
     final preferences = _preferences ?? await SharedPreferences.getInstance();
     final raw = preferences.getString(storageKey);
-    if (raw == null || raw.isEmpty) return const ChatHighlightSnapshot();
+    if (raw == null) return const ChatHighlightSnapshot();
     try {
       final decoded = jsonDecode(raw);
-      if (decoded is! Map) return const ChatHighlightSnapshot();
+      if (decoded is! Map) throw const FormatException();
       return ChatHighlightSnapshot.fromJson(Map<String, dynamic>.from(decoded));
     } on Object {
-      return const ChatHighlightSnapshot();
+      throw const FormatException(
+        '保存データを読み取れません。元データを保持しています。',
+      );
     }
   }
 

@@ -76,6 +76,29 @@ void main() {
     expect(tester.widget<TextField>(message).controller!.text, '次のコメント');
   });
 
+  testWidgets('保存失敗時は入力を残してエラーを表示する', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ChatHighlightsFeature(
+          gateway: _FailingGateway(),
+          exportGateway: _MemoryExporter(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final time = find.byKey(const Key('chat-highlight-event-time'));
+    final message = find.byKey(const Key('chat-highlight-event-message'));
+    final add = find.byKey(const Key('chat-highlight-add-event'));
+    await tester.ensureVisible(time);
+    await tester.enterText(time, '10');
+    await tester.enterText(message, '保持するコメント');
+    await tester.ensureVisible(add);
+    await tester.tap(add);
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(message).controller!.text, '保持するコメント');
+    expect(find.textContaining('保存できませんでした'), findsOneWidget);
+  });
+
   testWidgets('広い画面では設定と結果を2カラム表示する', (tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
@@ -105,6 +128,16 @@ class _MemoryGateway implements ChatHighlightGateway {
   @override
   Future<void> save(ChatHighlightSnapshot value) async {
     snapshot = value;
+  }
+}
+
+class _FailingGateway implements ChatHighlightGateway {
+  @override
+  Future<ChatHighlightSnapshot> load() async => const ChatHighlightSnapshot();
+
+  @override
+  Future<void> save(ChatHighlightSnapshot value) async {
+    throw StateError('storage unavailable');
   }
 }
 
