@@ -53,8 +53,10 @@ void main() {
     when(themeService.isDarkMode).thenReturn(false);
   });
 
-  Widget buildPage(PhotoActionAdvisorViewModel viewModel,
-      {bool realManual = false}) {
+  Widget buildPage(
+    PhotoActionAdvisorViewModel viewModel, {
+    bool realManual = false,
+  }) {
     addTearDown(viewModel.dispose);
     return ChangeNotifierProvider<ThemeService>.value(
       value: themeService,
