@@ -28,8 +28,8 @@ const _inflowKey = 'asset_expected_inflow_deleted_ids_v1';
 const _oldDebt =
     '[{"id":"synthetic-unassigned","at":"2020-01-01T00:00:00.000Z"}]';
 String _expired(String id) => jsonEncode(<Map<String, String>>[
-  <String, String>{'id': id, 'at': '2020-01-01T00:00:00.000Z'},
-]);
+      <String, String>{'id': id, 'at': '2020-01-01T00:00:00.000Z'},
+    ]);
 
 Future<SharedPreferences> _openPage(WidgetTester tester) async {
   debugPrint('SYNTHETIC_PRUNE_PHASE: open_page_start');
