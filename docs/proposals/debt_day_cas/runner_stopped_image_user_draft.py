@@ -107,7 +107,7 @@ def valid_container(info, cid, image, label, lane, network, *, running=True):
     config, host, net = info['Config'], info['HostConfig'], info['NetworkSettings']
     image_config = image['Config']
     config_keys = ('Image','Env','Labels','Entrypoint','Cmd','User')
-    image_keys = ('Env','Entrypoint','Cmd','User')
+    image_keys = ('Env','Entrypoint','Cmd')
     host_keys = ('Privileged','Binds','PortBindings','PublishAllPorts','CapAdd','Devices',
                  'DeviceRequests','ExtraHosts','Links','VolumesFrom','SecurityOpt','NetworkMode',
                  'Tmpfs','PidMode','IpcMode','UsernsMode')
@@ -137,7 +137,9 @@ def valid_container(info, cid, image, label, lane, network, *, running=True):
         and labels.get('debt.cas.run') == label and labels.get('debt.cas.lane') == lane
         and actual_env == expected_env and actual_env.get('PGDATA') == '/var/lib/postgresql/data'
         and 'POSTGRES_INITDB_WALDIR' not in actual_env
-        and all(config.get(key) == image_config.get(key) for key in ('Entrypoint', 'Cmd', 'User'))
+        and all(config.get(key) == image_config.get(key) for key in ('Entrypoint', 'Cmd'))
+        and type(config['User']) is str and config['User'] == ''
+        and ('User' not in image_config or (type(image_config['User']) is str and image_config['User'] == ''))
         and host['Privileged'] is False and host['PublishAllPorts'] is False
         and not any(host.get(key) for key in ('Binds','PortBindings',
                     'CapAdd','Devices','DeviceRequests','ExtraHosts','Links','VolumesFrom','SecurityOpt'))
@@ -177,7 +179,7 @@ def inspect_shape_labels(info, image):
             ('Labels','SHAPE_CONFIG_LABELS_MISSING'), ('Entrypoint','SHAPE_CONFIG_ENTRYPOINT_MISSING'),
             ('Cmd','SHAPE_CONFIG_CMD_MISSING'), ('User','SHAPE_CONFIG_USER_MISSING'))),
         (img, (('Env','SHAPE_IMAGE_ENV_MISSING'), ('Entrypoint','SHAPE_IMAGE_ENTRYPOINT_MISSING'),
-            ('Cmd','SHAPE_IMAGE_CMD_MISSING'), ('User','SHAPE_IMAGE_USER_MISSING'))),
+            ('Cmd','SHAPE_IMAGE_CMD_MISSING'))),
         (host, (('Privileged','SHAPE_HOST_PRIVILEGED_MISSING'), ('Binds','SHAPE_HOST_BINDS_MISSING'),
             ('PortBindings','SHAPE_HOST_PORTBINDINGS_MISSING'), ('PublishAllPorts','SHAPE_HOST_PUBLISHALLPORTS_MISSING'),
             ('CapAdd','SHAPE_HOST_CAPADD_MISSING'), ('Devices','SHAPE_HOST_DEVICES_MISSING'),
@@ -216,7 +218,9 @@ def inspect_failure_categories(info, cid, image, label, lane, network, *, runnin
                 out.append('ENVIRONMENT')
         except (ValueError, TypeError):
             out.append('ENVIRONMENT')
-        if any(config.get(k) != img.get(k) for k in ('Entrypoint', 'Cmd', 'User')):
+        if (any(config.get(k) != img.get(k) for k in ('Entrypoint', 'Cmd'))
+            or type(config['User']) is not str or config['User'] != ''
+            or ('User' in img and (type(img['User']) is not str or img['User'] != ''))):
             out.append('IMAGE_CONFIG')
         if (host['Privileged'] is not False or host['PublishAllPorts'] is not False
             or any(host.get(k) for k in ('Binds', 'PortBindings', 'CapAdd', 'Devices', 'DeviceRequests',
@@ -466,6 +470,20 @@ class StoppedInputTests(unittest.TestCase):
                 'NetworkSettings': {'Networks': {net: {}}, 'Ports': {'5432/tcp': None}}, 'Mounts': []}
         def ok(obj): return valid_container(obj, cid, image, '1-1', 'sequential', net)
         self.assertTrue(ok(info))
+        image_without_user = copy.deepcopy(image); del image_without_user['Config']['User']
+        self.assertTrue(valid_container(info, cid, image_without_user, '1-1', 'sequential', net))
+        for value in (None, 0, False, 'postgres', '0'):
+            modified_image = copy.deepcopy(image); modified_image['Config']['User'] = value
+            with self.subTest(image_user=value):
+                self.assertFalse(valid_container(info, cid, modified_image, '1-1', 'sequential', net))
+                self.assertIn('IMAGE_CONFIG', inspect_failure_categories(info, cid, modified_image, '1-1', 'sequential', net))
+            modified_container = copy.deepcopy(info); modified_container['Config']['User'] = value
+            with self.subTest(container_user=value):
+                self.assertFalse(ok(modified_container))
+                self.assertIn('IMAGE_CONFIG', inspect_failure_categories(modified_container, cid, image, '1-1', 'sequential', net))
+        modified_container = copy.deepcopy(info); del modified_container['Config']['User']
+        self.assertFalse(ok(modified_container))
+        self.assertIn('SHAPE_CONFIG_USER_MISSING', inspect_failure_categories(modified_container, cid, image, '1-1', 'sequential', net))
         diagnostic_cases = [
             ('ENVIRONMENT', 'Config', 'Env', ['sensitive=do-not-print']),
             ('IDENTITY', 'Config', 'Image', 'sensitive=do-not-print'),
