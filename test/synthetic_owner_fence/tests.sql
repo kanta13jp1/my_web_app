@@ -8,6 +8,10 @@ END $$;
 SET ROLE authenticated;
 SELECT set_config('lab.owner','00000000-0000-0000-0000-000000000001',false);
 DO $$ DECLARE n integer; BEGIN
+ SELECT count(*) INTO n FROM public.asset_pref_mirror WHERE user_id='00000000-0000-0000-0000-000000000002';
+ IF n<>0 THEN RAISE EXCEPTION 'other owner row visible'; END IF;
+ UPDATE public.asset_pref_mirror SET value='{}' WHERE user_id='00000000-0000-0000-0000-000000000002' AND pref_key='other';
+ GET DIAGNOSTICS n=ROW_COUNT; IF n<>0 THEN RAISE EXCEPTION 'other owner updated'; END IF;
  BEGIN
   INSERT INTO public.asset_pref_mirror VALUES ('00000000-0000-0000-0000-000000000001','debt_payment_day_overrides','{}');
   RAISE EXCEPTION 'protected insert accepted';
@@ -34,6 +38,11 @@ DO $$ DECLARE n integer; BEGIN
  GET DIAGNOSTICS n=ROW_COUNT; IF n<>1 THEN RAISE EXCEPTION 'unrelated delete affected'; END IF;
  UPDATE public.asset_pref_mirror SET value='{"ok":true}' WHERE pref_key='other';
  GET DIAGNOSTICS n=ROW_COUNT; IF n<>1 THEN RAISE EXCEPTION 'unrelated key affected'; END IF;
+END $$;
+SELECT set_config('lab.owner','00000000-0000-0000-0000-000000000002',false);
+DO $$ DECLARE n integer; BEGIN
+ UPDATE public.asset_pref_mirror SET value='{"owner":"B"}' WHERE user_id='00000000-0000-0000-0000-000000000002' AND pref_key='other';
+ GET DIAGNOSTICS n=ROW_COUNT; IF n<>1 THEN RAISE EXCEPTION 'owner B control update failed'; END IF;
 END $$;
 SELECT set_config('lab.owner','00000000-0000-0000-0000-000000000003',false);
 DO $$ DECLARE k text; n integer; BEGIN

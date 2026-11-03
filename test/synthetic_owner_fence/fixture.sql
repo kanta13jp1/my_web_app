@@ -14,4 +14,5 @@ INSERT INTO public.asset_pref_mirror VALUES
  ('00000000-0000-0000-0000-000000000001','debt_payment_day_overrides','{"x":10}'),
  ('00000000-0000-0000-0000-000000000001','debt_payment_day_override_deleted','{"ids":["y"]}'),
  ('00000000-0000-0000-0000-000000000001','other','{}'),
- ('00000000-0000-0000-0000-000000000002','debt_payment_day_overrides','{"x":20}');
+ ('00000000-0000-0000-0000-000000000002','debt_payment_day_overrides','{"x":20}'),
+ ('00000000-0000-0000-0000-000000000002','other','{"owner":"B"}');
