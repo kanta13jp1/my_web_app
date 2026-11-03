@@ -46,10 +46,14 @@ void main() {
     expect(find.textContaining('実際の上下限や確定額ではありません'), findsOneWidget);
     expect(find.text('条件A：当日予定入金がすべて起点残高に反映済み'), findsOneWidget);
     expect(find.text('条件B：当日予定入金がすべて起点残高に未反映'), findsOneWidget);
-    expect(find.byKey(const Key('asset_cashflow_forecast_shortfall_条件A')),
-        findsOneWidget);
-    expect(find.byKey(const Key('asset_cashflow_forecast_shortfall_条件B')),
-        findsNothing);
+    expect(
+      find.byKey(const Key('asset_cashflow_forecast_shortfall_条件A')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('asset_cashflow_forecast_shortfall_条件B')),
+      findsNothing,
+    );
     final sixMonths = find.byKey(
       const Key('asset_cashflow_forecast_horizon_6_条件A'),
     );
@@ -78,8 +82,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('asset_cashflow_forecast_conditional_notice')),
-        findsNothing);
-    expect(find.byKey(const Key('asset_cashflow_forecast_card')), findsOneWidget);
+    expect(
+      find.byKey(const Key('asset_cashflow_forecast_conditional_notice')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('asset_cashflow_forecast_card')),
+      findsOneWidget,
+    );
   });
 }

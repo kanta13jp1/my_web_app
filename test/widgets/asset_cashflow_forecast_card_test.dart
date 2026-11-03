@@ -43,7 +43,8 @@ AssetCashflowForecast _shortfallForecast() {
 
 void main() {
   group('AssetCashflowForecastCard', () {
-    testWidgets('same-day income shows both conditional forecasts', (tester) async {
+    testWidgets('same-day income shows both conditional forecasts',
+        (tester) async {
       final semantics = tester.ensureSemantics();
       final scenarios = AssetCashflowForecastService.projectScenarios(
         asOf: DateTime(2026, 6, 25),

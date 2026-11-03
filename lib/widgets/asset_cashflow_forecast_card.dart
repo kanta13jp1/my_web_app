@@ -236,7 +236,8 @@ class AssetCashflowForecastCard extends StatelessWidget {
             alertKey: _scenarioKey('asset_cashflow_forecast_safety_breach'),
             color: _warn,
             icon: Icons.info_outline,
-            message: '$_scenarioPrefix残高不足は回避できる見込みですが、安全余裕 ${_yen(forecast.safetyMargin)} を'
+            message:
+                '$_scenarioPrefix残高不足は回避できる見込みですが、安全余裕 ${_yen(forecast.safetyMargin)} を'
                 '割り込む時期があります(最小見込み残高 ${_yen(forecast.worstBalance)})。',
           )
         else
@@ -516,7 +517,8 @@ class AssetCashflowForecastScenariosCard extends StatelessWidget {
         Semantics(
           container: true,
           label: '条件B：当日予定入金がすべて起点残高に未反映',
-          child: card(scenarios.notYetReflected, allowHorizon: false, scenarioLabel: '条件B'),
+          child: card(scenarios.notYetReflected,
+              allowHorizon: false, scenarioLabel: '条件B'),
         ),
       ],
     );

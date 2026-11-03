@@ -106,7 +106,8 @@ void main() {
   }
 
   group('AssetAdvisoryBriefingService.build', () {
-    test('ambiguous anchor income does not produce a clear cashflow verdict', () {
+    test('ambiguous anchor income does not produce a clear cashflow verdict',
+        () {
       final conditional = AssetCashflowForecastService.projectScenarios(
         asOf: DateTime(2026, 6, 25),
         startingBalance: 100,

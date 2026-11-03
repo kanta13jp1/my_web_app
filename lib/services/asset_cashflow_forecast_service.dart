@@ -175,11 +175,14 @@ class AssetCashflowForecastService {
     double safetyMargin = 0,
   }) {
     final anchor = DateTime(asOf.year, asOf.month, asOf.day);
-    final hasAnchorDayIncome = recurringIncome.any((entry) =>
-            entry.amount > _epsilon &&
-            _clampDay(entry.dayOfMonth, anchor) == anchor.day,) ||
-        oneTimeIncome.any((entry) =>
-            entry.amount > _epsilon && _isSameDate(entry.date, anchor),);
+    final hasAnchorDayIncome = recurringIncome.any(
+          (entry) =>
+              entry.amount > _epsilon &&
+              _clampDay(entry.dayOfMonth, anchor) == anchor.day,
+        ) ||
+        oneTimeIncome.any(
+          (entry) => entry.amount > _epsilon && _isSameDate(entry.date, anchor),
+        );
     AssetCashflowForecast calculate(bool skipAnchorDayIncome) => project(
           asOf: anchor,
           startingBalance: startingBalance,
@@ -265,7 +268,8 @@ class AssetCashflowForecastService {
         }
         for (final entry in oneTimeIncome) {
           if (!(skipAnchorDayIncome && _isSameDate(date, anchor)) &&
-              entry.amount > _epsilon && _isSameDate(entry.date, date)) {
+              entry.amount > _epsilon &&
+              _isSameDate(entry.date, date)) {
             dayIn += entry.amount;
           }
         }

@@ -3,7 +3,8 @@ import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 
 void main() {
   group('AssetCashflowForecastService.project', () {
-    test('anchor income is conditional, while later recurring income remains', () {
+    test('anchor income is conditional, while later recurring income remains',
+        () {
       final scenarios = AssetCashflowForecastService.projectScenarios(
         asOf: DateTime(2026, 6, 25),
         startingBalance: 100,
@@ -21,7 +22,8 @@ void main() {
       expect(scenarios.hasAnchorDayIncome, isTrue);
       expect(scenarios.advisoryForecast, isNull);
       expect(scenarios.alreadyReflected.months.first.closingBalance, -80);
-      expect(scenarios.alreadyReflected.firstShortfallDate, DateTime(2026, 6, 26));
+      expect(
+          scenarios.alreadyReflected.firstShortfallDate, DateTime(2026, 6, 26));
       expect(scenarios.notYetReflected.months.first.closingBalance, 150);
       expect(scenarios.notYetReflected.firstShortfallDate, isNull);
       expect(scenarios.alreadyReflected.months.last.closingBalance, 120);
