@@ -126,25 +126,46 @@ Future<Finder> _openDebtChoice(
 ) async {
   final selectedDay = tester.widget<DropdownButton<int?>>(dropdown).value;
   await tester.ensureVisible(dropdown);
+  await tester.pump();
+  final previousScrollables = find.byType(Scrollable).evaluate().toSet();
   await tester.tap(dropdown);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 350));
   expect(selectedDay, isNotNull);
-  final selectedItems = find.byWidgetPredicate(
-    (widget) => widget is DropdownMenuItem<int?> && widget.value == selectedDay,
-  );
-  final selectedMenuItem = selectedItems.hitTestable();
-  expect(selectedMenuItem, findsOneWidget);
-  final menuAncestors = find.ancestor(
-    of: selectedMenuItem,
-    matching: find.byType(Scrollable),
-  );
-  expect(menuAncestors, findsOneWidget);
-  final menuElement = menuAncestors.evaluate().single;
+  // Identify the route's newly created scrollable without requiring a
+  // DropdownMenuItem's render object to participate in hit-testing.
+  final addedScrollables = find
+      .byType(Scrollable)
+      .evaluate()
+      .where(
+        (element) => !previousScrollables.contains(element),
+      )
+      .toList();
+  expect(addedScrollables.length, 1);
+  final menuElement = addedScrollables.single;
+  final menuRoute = ModalRoute.of(menuElement);
+  expect(menuRoute, isA<PopupRoute<dynamic>>());
+  expect(menuRoute!.isCurrent, isTrue);
   final menuScroll = find.byElementPredicate(
     (element) => identical(element, menuElement),
   );
   expect(menuScroll, findsOneWidget);
+  final selectedMenuItem = find.descendant(
+    of: menuScroll,
+    matching: find.byWidgetPredicate(
+      (widget) =>
+          widget is DropdownMenuItem<int?> && widget.value == selectedDay,
+    ),
+  );
+  expect(selectedMenuItem, findsOneWidget);
+  debugPrint(
+    'SYNTHETIC_MENU_GEOMETRY: selected='
+    '${tester.getRect(selectedMenuItem)} viewport=${tester.getRect(menuScroll)}',
+  );
+  expect(
+    tester.getRect(menuScroll).contains(tester.getCenter(selectedMenuItem)),
+    isTrue,
+  );
   final matches = find.descendant(
     of: menuScroll,
     matching: find.byWidgetPredicate(
@@ -170,10 +191,8 @@ Future<Finder> _openDebtChoice(
   final item = matches;
   await tester.ensureVisible(item);
   await tester.pump();
-  if (day == null) {
-    expect(tester.getRect(item).overlaps(tester.getRect(menuScroll)), isTrue);
-    expect(tester.getRect(menuScroll).contains(tester.getCenter(item)), isTrue);
-  }
+  expect(tester.getRect(item).overlaps(tester.getRect(menuScroll)), isTrue);
+  expect(tester.getRect(menuScroll).contains(tester.getCenter(item)), isTrue);
   expect(item, findsOneWidget);
   return item;
 }
@@ -325,7 +344,7 @@ void main() {
     final item = await _openDebtChoice(tester, dropdown, null);
     expect(tester.widget<DropdownMenuItem<int?>>(item).enabled, isFalse);
     await tester.ensureVisible(item);
-    await tester.tap(item, warnIfMissed: false);
+    await tester.tapAt(tester.getCenter(item));
     await tester.pump(const Duration(milliseconds: 600));
     expect(repo.values, before);
     expect(repo.saveCalls, count);
@@ -343,9 +362,9 @@ void main() {
     expect(tester.widget<DropdownButton<int?>>(dropdown).value, 12);
     final item = await _openDebtChoice(tester, dropdown, null);
     expect(tester.widget<DropdownMenuItem<int?>>(item).enabled, isTrue);
+    expect(repo.lastSaved, isNull);
     await tester.ensureVisible(item);
-    expect(item.hitTestable(), findsOneWidget);
-    await tester.tap(item);
+    await tester.tapAt(tester.getCenter(item));
     await tester.pump(const Duration(milliseconds: 600));
     expect(repo.lastSaved, isNotNull);
     expect(repo.lastSaved!.containsKey('mobit'), isFalse);
@@ -363,8 +382,9 @@ void main() {
     expect(tester.widget<DropdownButton<int?>>(dropdown).value, 14);
     final item = await _openDebtChoice(tester, dropdown, 15);
     expect(tester.widget<DropdownMenuItem<int?>>(item).enabled, isTrue);
+    expect(repo.lastSaved, isNull);
     await tester.ensureVisible(item);
-    await tester.tap(item);
+    await tester.tapAt(tester.getCenter(item));
     await tester.pump(const Duration(milliseconds: 600));
     expect(repo.lastSaved, isNotNull);
     expect(repo.lastSaved![name], 14);
