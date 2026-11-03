@@ -459,13 +459,27 @@ class _SourcesPanel extends StatelessWidget {
   }
 }
 
-class _CitationDocumentDialog extends StatelessWidget {
+class _CitationDocumentDialog extends StatefulWidget {
   const _CitationDocumentDialog({required this.citation});
 
   final KnowledgeGraphRagCitation citation;
 
   @override
+  State<_CitationDocumentDialog> createState() =>
+      _CitationDocumentDialogState();
+}
+
+class _CitationDocumentDialogState extends State<_CitationDocumentDialog> {
+  final List<bool> _reviewed = [false, false, false];
+  static const _reviewLabels = [
+    '回答と引用の対象が同じ',
+    '日時・数量などの条件が同じ',
+    '引用の文脈が回答の結論を支える',
+  ];
+
+  @override
   Widget build(BuildContext context) {
+    final citation = widget.citation;
     final theme = Theme.of(context);
     final before = citation.previewText.substring(0, citation.highlightStart);
     final highlighted = citation.previewText.substring(
@@ -546,32 +560,59 @@ class _CitationDocumentDialog extends StatelessWidget {
                   ),
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
-                    child: SelectionArea(
-                      child: Text.rich(
-                        key: Key('knowledge-citation-preview-${citation.id}'),
-                        TextSpan(
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            height: 1.6,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                          children: [
-                            if (citation.previewTruncatedBefore)
-                              const TextSpan(text: '…\n'),
-                            TextSpan(text: before),
-                            TextSpan(
-                              text: highlighted,
-                              style: TextStyle(
-                                backgroundColor:
-                                    theme.colorScheme.tertiary.withAlpha(70),
-                                fontWeight: FontWeight.w800,
-                              ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SelectionArea(
+                          child: Text.rich(
+                            key: Key(
+                              'knowledge-citation-preview-${citation.id}',
                             ),
-                            TextSpan(text: after),
-                            if (citation.previewTruncatedAfter)
-                              const TextSpan(text: '\n…'),
-                          ],
+                            TextSpan(
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                height: 1.6,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                              children: [
+                                if (citation.previewTruncatedBefore)
+                                  const TextSpan(text: '…\n'),
+                                TextSpan(text: before),
+                                TextSpan(
+                                  text: highlighted,
+                                  style: TextStyle(
+                                    backgroundColor: theme.colorScheme.tertiary
+                                        .withAlpha(70),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                TextSpan(text: after),
+                                if (citation.previewTruncatedAfter)
+                                  const TextSpan(text: '\n…'),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 20),
+                        Text(
+                          '回答と引用を確認 ${_reviewed.where((value) => value).length}/3',
+                          key: const Key('knowledge-citation-review-count'),
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        const Text('手動の確認メモです。回答の正確性を保証せず、閉じると消えます。'),
+                        for (var i = 0; i < _reviewLabels.length; i++)
+                          CheckboxListTile(
+                            key: Key('knowledge-citation-review-$i'),
+                            value: _reviewed[i],
+                            title: Text(_reviewLabels[i]),
+                            controlAffinity: ListTileControlAffinity.leading,
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            onChanged: (value) => setState(() {
+                              _reviewed[i] = value ?? false;
+                            }),
+                          ),
+                      ],
                     ),
                   ),
                 ),
