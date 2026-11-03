@@ -163,6 +163,21 @@ Deno.test("wiki.list exact and empty boundaries do not invent next pages", async
   const empty = await handler("wiki.list")(db, "alice", { offset: 10 }, json);
   check(empty.value.pages.length === 0 && empty.value.next_offset === null, "Empty boundary incorrect");
 });
+
+Deno.test("wiki.list rejects an unreachable continuation without claiming completion", async () => {
+  for (const [offset, limit] of [[1000000, 1], [999999, 2]]) {
+    const rows = Array.from({ length: limit + 1 }, (_, n) => ({ id: `boundary-${n}` }));
+    const query: Record<string, unknown> = {};
+    for (const method of ["select", "eq", "filter", "order", "range"]) {
+      query[method] = () => query;
+    }
+    query.then = (resolve: (value: unknown) => unknown) => Promise.resolve(resolve({ data: rows, error: null }));
+    const db = { from: () => query };
+    const result = await handler("wiki.list")(db, "alice", { offset, limit }, json);
+    check(result.status === 422, "Expected explicit pagination limit error");
+    check(result.value.error === "Wiki pagination limit reached; more pages exist", "Limit error did not explain remaining pages");
+  }
+});
 for (const id of ["b", "c", "missing"]) {
   Deno.test(`wiki.get hides inaccessible target ${id}`, async () => {
     const result = await handler("wiki.get")(database(), "alice", { id }, json);

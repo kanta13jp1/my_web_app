@@ -1138,11 +1138,15 @@ serve(async (req) => {
           .order("created_at", { ascending: false })
           .order("id", { ascending: false }).range(offset, offset + limit);
         if (error) throw new Error(error.message);
+        const hasMore = (data ?? []).length > limit;
+        if (hasMore && offset + limit > 1000000) {
+          return json({ error: "Wiki pagination limit reached; more pages exist" }, 422);
+        }
         const pages = (data ?? []).slice(0, limit);
         return json({
           success: true,
           pages,
-          next_offset: (data ?? []).length > limit ? offset + limit : null,
+          next_offset: hasMore ? offset + limit : null,
         });
       }
       case "wiki.get": {
