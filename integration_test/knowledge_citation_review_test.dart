@@ -37,8 +37,9 @@ void main() {
     await tester.ensureVisible(find.byKey(const Key('knowledge-query-button')));
     await tester.tap(find.byKey(const Key('knowledge-query-button')));
     await tester.pumpAndSettle();
-    await tester
-        .ensureVisible(find.byKey(const Key('knowledge-citation-link-1')));
+    await tester.ensureVisible(
+      find.byKey(const Key('knowledge-citation-link-1')),
+    );
     await tester.tap(find.byKey(const Key('knowledge-citation-link-1')));
     await tester.pumpAndSettle();
 
@@ -56,8 +57,9 @@ void main() {
     await tester.tap(first);
     await tester.pumpAndSettle();
     expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
-    await tester
-        .ensureVisible(find.byKey(const Key('knowledge-citation-review-0')));
+    await tester.ensureVisible(
+      find.byKey(const Key('knowledge-citation-review-0')),
+    );
     await tester.pumpAndSettle();
     await capture(tester, 'reset');
     await tester.tap(first);
@@ -67,42 +69,93 @@ void main() {
     await tester.tap(find.byKey(const Key('knowledge-citation-link-1')));
     await tester.pumpAndSettle();
     expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
-    await tester
-        .ensureVisible(find.byKey(const Key('knowledge-citation-review-0')));
+    await tester.ensureVisible(
+      find.byKey(const Key('knowledge-citation-review-0')),
+    );
     await tester.pumpAndSettle();
     await capture(tester, 'reopened');
   });
+
+  for (final fixture in <(String, String)>[
+    ('一致', '青い箱は4個で、採用する。'),
+    ('対象違い', '赤い箱は4個で、採用する。'),
+    ('数量違い', '青い箱は5個で、採用する。'),
+    ('結論違い', '青い箱は4個で、保留する。'),
+  ]) {
+    testWidgets('引用の手動照合: ${fixture.$1}', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: KnowledgeGraphPage(gateway: _SyntheticGateway(fixture.$2)),
+        ),
+      );
+      await tester.enterText(
+        find.byKey(const Key('knowledge-query-field')),
+        '数と結論は？',
+      );
+      await tester.ensureVisible(
+        find.byKey(const Key('knowledge-query-button')),
+      );
+      await tester.tap(find.byKey(const Key('knowledge-query-button')));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('青い箱は4個で、採用する。', findRichText: true),
+        findsWidgets,
+      );
+      await tester.ensureVisible(
+        find.byKey(const Key('knowledge-citation-link-1')),
+      );
+      await tester.tap(find.byKey(const Key('knowledge-citation-link-1')));
+      await tester.pumpAndSettle();
+      final preview = tester.widget<Text>(
+        find.byKey(const Key('knowledge-citation-preview-1')),
+      );
+      expect(preview.textSpan!.toPlainText(), contains(fixture.$2));
+      expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
+      final first = find.byKey(const Key('knowledge-citation-review-0'));
+      await tester.ensureVisible(first);
+      await tester.tap(first);
+      await tester.pumpAndSettle();
+      expect(find.text('回答と引用を確認 1/3'), findsOneWidget);
+      await tester.tap(find.byTooltip('閉じる'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('knowledge-citation-link-1')));
+      await tester.pumpAndSettle();
+      expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
+    });
+  }
 }
 
 class _SyntheticGateway implements KnowledgeGraphRagGateway {
+  _SyntheticGateway([this.excerpt = '青い箱は4個です。']);
+
+  final String excerpt;
   @override
   Future<KnowledgeGraphRagAnswer> query({
     required String query,
     required Set<String> sources,
     required bool useLlm,
-  }) async =>
-      const KnowledgeGraphRagAnswer(
-        query: '数は？',
-        answer: '青い箱は4個です [1]。',
-        status: 'ok',
-        traceId: 'synthetic-only',
-        citations: [
-          KnowledgeGraphRagCitation(
-            id: '1',
-            fileName: '合成資料.txt',
-            title: '合成資料',
-            sourceType: 'doc',
-            sourceUrl: 'synthetic.txt',
-            excerpt: '青い箱は4個です。',
-            previewText: '青い箱は4個です。',
-            highlightStart: 0,
-            highlightEnd: 9,
-            highlightText: '青い箱は4個です。',
-            position: KnowledgeGraphCitationPosition(label: 'line 1'),
-            confidence: 1,
-            previewTruncatedBefore: false,
-            previewTruncatedAfter: false,
-          ),
-        ],
-      );
+  }) async => KnowledgeGraphRagAnswer(
+    query: '数は？',
+    answer: excerpt == '青い箱は4個です。' ? '青い箱は4個です [1]。' : '青い箱は4個で、採用する。 [1]',
+    status: 'ok',
+    traceId: 'synthetic-only',
+    citations: [
+      KnowledgeGraphRagCitation(
+        id: '1',
+        fileName: '合成資料.txt',
+        title: '合成資料',
+        sourceType: 'doc',
+        sourceUrl: 'synthetic.txt',
+        excerpt: excerpt,
+        previewText: excerpt,
+        highlightStart: 0,
+        highlightEnd: excerpt.length,
+        highlightText: excerpt,
+        position: const KnowledgeGraphCitationPosition(label: 'line 1'),
+        confidence: 1,
+        previewTruncatedBefore: false,
+        previewTruncatedAfter: false,
+      ),
+    ],
+  );
 }
