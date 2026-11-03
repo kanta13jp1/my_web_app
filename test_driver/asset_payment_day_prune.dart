@@ -16,6 +16,9 @@ Future<void> main() async {
       if (data?['pruneCasesCompleted'] != 3) {
         throw StateError('expected three completed synthetic prune cases');
       }
+      if (data?['debtCasesCompleted'] != 3) {
+        throw StateError('expected three completed synthetic debt cases');
+      }
     },
   );
   stdout.writeln('SYNTHETIC_PRUNE_DRIVER: complete');

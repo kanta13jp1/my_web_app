@@ -71,12 +71,12 @@ class _SyntheticDebtRepository
 }
 
 Finder _debtCard(String syntheticId) => find.byWidgetPredicate(
-  (widget) =>
-      widget is Container &&
-      widget.key is GlobalKey &&
-      widget.key.toString().contains('debt_master_card_$syntheticId'),
-  description: 'synthetic debt card $syntheticId',
-);
+      (widget) =>
+          widget is Container &&
+          widget.key is GlobalKey &&
+          widget.key.toString().contains('debt_master_card_$syntheticId'),
+      description: 'synthetic debt card $syntheticId',
+    );
 
 Future<void> _pumpSyntheticPage(
   WidgetTester tester, {
