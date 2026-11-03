@@ -1,0 +1,19 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- SYNTHETIC ONLY / NEVER APPLY TO EXISTING DATABASE.
+-- The marker is session-local and forgeable; the runner must verify the owned service and token first.
+set codex.debt_cas_fixture='isolated-debt-cas-v2';
+do $$ begin
+ if pg_catalog.current_setting('codex.debt_cas_fixture',true) is distinct from 'isolated-debt-cas-v2' then
+  raise exception 'synthetic fixture marker missing'; end if;
+end $$;
+set application_name='debt-replay-C';
+set role authenticated;
+select pg_catalog.set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',false);
+begin;
+do $$ declare r record; begin
+ select * into strict r from public.debt_day_write_v5('55555555-5555-4555-8555-555555555555',0,'{"fictional-b":10}'::jsonb,'[]'::jsonb,'[]'::jsonb,'["fictional-b"]'::jsonb);
+ if r.revision is distinct from 1 or r.replayed is distinct from false then raise exception 'C independent result mismatch'; end if;
+end $$;
+commit;
+\echo REPLAY_C_COMMITTED

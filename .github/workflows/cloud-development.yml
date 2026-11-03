@@ -37,7 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           sha256sum -c <<'FIXED_HASHES'
-          e80d2e92cecd8024d602c84b0c7d18da70bd2b485796c3f7abbf34fefd838d2f  runner_stopped_image_user_draft.py
+          a7e38def6d4c4e48db505753b0757d1f0768bd8ae6893ee7813cf56d25d64bae  runner_stopped_same_request_v2_draft.py
           d0635f7b249e26e93b3f2c2775b249e332653681e00698780f72a742affbb92d  review_stopped/fixture_setup.sql.txt
           11a616066db4fa5784252a20ffd8c63942b3b26a7044c7f8b21c3faab11d3355  review_stopped/fixture_v5_preseed.sql.txt
           c036cec12bc4d2c371fe5af28d9125805c6630b8d714bf143846cce207eec5a7  review_stopped/candidate_v2_unreviewed.sql.txt
@@ -49,10 +49,15 @@ jobs:
           64d43984a84203dcc7b197994bf5a630461bd7af13590af7ff07bdff73ddb2b5  review_stopped/fixture_session_b.sql.txt
           96d8259d5cf828a5f8846e56080d33058a9706b7757c7e601263d5ebad6d6503  review_stopped/fixture_verify_wait.sql.txt
           618cc9d6e996d98e8fc9335f03e479cceba3e2ed1dda2ac359ae7b190448da6f  review_stopped/fixture_verify_concurrency.sql.txt
+          b8b5361a3241ee9d94bdff39757f1062001391ac637c03613fe4999ef40af473  same_request_runner_review_stopped/session_a.sql.txt
+          eb0b65c74e0c51857505b39416f92778e0ede031791081d1e067d2e7088035f4  same_request_runner_review_stopped/session_b.sql.txt
+          3aeb93706dd54724c46fd719bfed20b86ab425e95dcceb326725755c2662b74e  same_request_runner_review_stopped/session_c.sql.txt
+          cdc4a48d00a8fe5d14cf21a3bcef4fe52016f86b4c7447810786a33dca9b282d  same_request_runner_review_stopped/verify_final.sql.txt
+          420d22925d78c2e679a623202095a3ff018994d6c163b784770719a4c63521b4  same_request_runner_review_stopped/verify_wait.sql.txt
           FIXED_HASHES
       - name: Run pure safety tests
         working-directory: docs/proposals/debt_day_cas
-        run: python3 -B runner_stopped_image_user_draft.py --self-test
+        run: python3 -B runner_stopped_same_request_v2_draft.py --self-test
       - name: Mark reviewed input checks successful
         id: approval
         run: echo "approved=true" >> "$GITHUB_OUTPUT"
@@ -110,7 +115,7 @@ jobs:
         run: |
           set -euo pipefail
           sha256sum -c <<'FIXED_HASHES'
-          e80d2e92cecd8024d602c84b0c7d18da70bd2b485796c3f7abbf34fefd838d2f  runner_stopped_image_user_draft.py
+          a7e38def6d4c4e48db505753b0757d1f0768bd8ae6893ee7813cf56d25d64bae  runner_stopped_same_request_v2_draft.py
           d0635f7b249e26e93b3f2c2775b249e332653681e00698780f72a742affbb92d  review_stopped/fixture_setup.sql.txt
           11a616066db4fa5784252a20ffd8c63942b3b26a7044c7f8b21c3faab11d3355  review_stopped/fixture_v5_preseed.sql.txt
           c036cec12bc4d2c371fe5af28d9125805c6630b8d714bf143846cce207eec5a7  review_stopped/candidate_v2_unreviewed.sql.txt
@@ -122,10 +127,15 @@ jobs:
           64d43984a84203dcc7b197994bf5a630461bd7af13590af7ff07bdff73ddb2b5  review_stopped/fixture_session_b.sql.txt
           96d8259d5cf828a5f8846e56080d33058a9706b7757c7e601263d5ebad6d6503  review_stopped/fixture_verify_wait.sql.txt
           618cc9d6e996d98e8fc9335f03e479cceba3e2ed1dda2ac359ae7b190448da6f  review_stopped/fixture_verify_concurrency.sql.txt
+          b8b5361a3241ee9d94bdff39757f1062001391ac637c03613fe4999ef40af473  same_request_runner_review_stopped/session_a.sql.txt
+          eb0b65c74e0c51857505b39416f92778e0ede031791081d1e067d2e7088035f4  same_request_runner_review_stopped/session_b.sql.txt
+          3aeb93706dd54724c46fd719bfed20b86ab425e95dcceb326725755c2662b74e  same_request_runner_review_stopped/session_c.sql.txt
+          cdc4a48d00a8fe5d14cf21a3bcef4fe52016f86b4c7447810786a33dca9b282d  same_request_runner_review_stopped/verify_final.sql.txt
+          420d22925d78c2e679a623202095a3ff018994d6c163b784770719a4c63521b4  same_request_runner_review_stopped/verify_wait.sql.txt
           FIXED_HASHES
       - name: Run pure safety tests
         working-directory: docs/proposals/debt_day_cas
-        run: python3 -B runner_stopped_image_user_draft.py --self-test
+        run: python3 -B runner_stopped_same_request_v2_draft.py --self-test
       - name: Run synthetic sequential and concurrent fixtures
         working-directory: docs/proposals/debt_day_cas
         env:
@@ -136,4 +146,4 @@ jobs:
         run: |
           set -euo pipefail
           test "$FIXTURE_NETWORK_NAME" = "$CONCURRENCY_NETWORK"
-          python3 -B runner_stopped_image_user_draft.py
+          python3 -B runner_stopped_same_request_v2_draft.py

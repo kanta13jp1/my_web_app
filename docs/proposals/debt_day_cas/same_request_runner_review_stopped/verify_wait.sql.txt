@@ -1,0 +1,27 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- SYNTHETIC ONLY / NEVER APPLY TO EXISTING DATABASE.
+-- The marker is session-local and forgeable; the runner must verify the owned service and token first.
+set codex.debt_cas_fixture='isolated-debt-cas-v2';
+do $$ begin
+ if pg_catalog.current_setting('codex.debt_cas_fixture',true) is distinct from 'isolated-debt-cas-v2' then
+  raise exception 'synthetic fixture marker missing'; end if;
+end $$;
+-- Run as fixture administrator after REPLAY_C_COMMITTED, while A remains held.
+do $$ declare apid integer; bpid integer; hpid integer; begin
+ if (select count(*) from pg_catalog.pg_stat_activity where application_name='debt-replay-A')<>1
+  or (select count(*) from pg_catalog.pg_stat_activity where application_name='debt-replay-B')<>1
+  or (select count(*) from pg_catalog.pg_stat_activity where application_name='debt-cas-fixture-holder')<>1 then
+  raise exception 'ambiguous fixture sessions'; end if;
+ select pid into strict apid from pg_catalog.pg_stat_activity where application_name='debt-replay-A';
+ select pid into strict bpid from pg_catalog.pg_stat_activity where application_name='debt-replay-B';
+ select pid into strict hpid from pg_catalog.pg_stat_activity where application_name='debt-cas-fixture-holder';
+ if exists(select 1 from pg_catalog.pg_stat_activity where pid in(apid,bpid,hpid) and datname is distinct from pg_catalog.current_database()) then raise exception 'database mismatch'; end if;
+ if not (hpid=any(pg_catalog.pg_blocking_pids(apid))) or not exists(select 1 from pg_catalog.pg_locks where pid=apid and locktype='advisory' and not granted and classid=0 and objid=815964117 and objsubid=1) then raise exception 'A not held by expected holder'; end if;
+ if not (apid=any(pg_catalog.pg_blocking_pids(bpid))) or not exists(select 1 from pg_catalog.pg_locks a join pg_catalog.pg_locks b on a.locktype='transactionid' and b.locktype='transactionid' and a.transactionid=b.transactionid where a.pid=apid and a.granted and b.pid=bpid and not b.granted) then raise exception 'B not waiting on A transaction'; end if;
+ if exists(select 1 from public.debt_day_receipt_v2 where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa') then raise exception 'A visible before commit'; end if;
+ if (select count(*) from public.debt_day_receipt_v2 where user_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and request_id='55555555-5555-4555-8555-555555555555' and committed_revision=1)<>1 then raise exception 'C receipt not visible while A held'; end if;
+ if (select revision from public.debt_day_revision_v2 where user_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb') is distinct from 1 then raise exception 'C revision mismatch'; end if;
+ if (select value from public.asset_pref_mirror where user_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and pref_key='debt_payment_day_overrides') is distinct from '{"fictional-b":10}'::jsonb then raise exception 'C values not visible'; end if;
+end $$;
+\echo REPLAY_WAIT_AND_C_VERIFIED

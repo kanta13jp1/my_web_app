@@ -68,6 +68,20 @@ def load_sources():
     return result, stopped_setup
 
 
+REPLAY_FIXED = {'session_a.sql.txt': ('b8b5361a3241ee9d94bdff39757f1062001391ac637c03613fe4999ef40af473', '3141213a27ca2933f40024cdb51d25c82c2ed56111aa517762cc980ca9288c95'), 'session_b.sql.txt': ('eb0b65c74e0c51857505b39416f92778e0ede031791081d1e067d2e7088035f4', 'cc8487ebcab7269082661fd98b1d02d39aae4a2e4997805dbfc520bb4bf742bf'), 'session_c.sql.txt': ('3aeb93706dd54724c46fd719bfed20b86ab425e95dcceb326725755c2662b74e', '887863575bfd3afc992ecf050b556bc07f81c263a7e3f42ce779fa6b14706bfb'), 'verify_final.sql.txt': ('cdc4a48d00a8fe5d14cf21a3bcef4fe52016f86b4c7447810786a33dca9b282d', 'ae518007ad63fcdca581e47661fa332e21592a96b76fc15c21b8d967e43d2509'), 'verify_wait.sql.txt': ('420d22925d78c2e679a623202095a3ff018994d6c163b784770719a4c63521b4', '5f151971ded123407718b14021c7de7d10937e7704ff511a47ddc1237fb5a134')}
+
+
+def load_replay_sources():
+    root = HERE / 'same_request_runner_review_stopped'
+    result = {}
+    for name, (outer, inner) in REPLAY_FIXED.items():
+        path = root / name
+        if path.is_symlink() or not path.is_file() or not path.resolve().is_relative_to(root):
+            raise RuntimeError('invalid stopped replay fixture')
+        result[name] = decode_stopped(path.read_bytes(), outer, inner)
+    return result
+
+
 def job_identity(env):
     run, attempt = env.get('GITHUB_RUN_ID', ''), env.get('GITHUB_RUN_ATTEMPT', '')
     if (env.get('GITHUB_ACTIONS') != 'true' or env.get('RUNNER_ENVIRONMENT') != 'github-hosted'
@@ -387,8 +401,55 @@ def concurrency(service, sources):
     service.sql(sources['fixture_verify_concurrency.sql.txt'])
 
 
+REPLAY_WAIT_PROBE = WAIT_PROBE.replace('debt-cas-fixture-A', 'debt-replay-A').replace('debt-cas-fixture-B', 'debt-replay-B')
+
+
+def concurrency_same_request(service, sources):
+    holder, qh = service.start("set application_name='debt-cas-fixture-holder';\n"
+        "select pg_catalog.pg_advisory_lock(815964117);\n\\echo HOLDER_ACQUIRED\n")
+    service.wait_marker(holder, qh, 'HOLDER_ACQUIRED')
+    a, qa = service.start(sources['session_a.sql.txt'])
+    service.wait_marker(a, qa, 'REPLAY_A_WRITTEN_UNCOMMITTED')
+    b, qb = service.start(sources['session_b.sql.txt'])
+    service.wait_marker(b, qb, 'REPLAY_B_ENTERING')
+    deadline = time.monotonic() + 25
+    while time.monotonic() < deadline:
+        if any(child.poll() is not None for child in (holder, a, b)):
+            raise RuntimeError('replay session ended before lock verification')
+        if service.sql(REPLAY_WAIT_PROBE).strip().splitlines()[-1] == 'BLOCKED':
+            break
+        time.sleep(.2)
+    else:
+        raise TimeoutError('replay concurrent lock timeout')
+    c, qc = service.start(sources['session_c.sql.txt'])
+    service.wait_marker(c, qc, 'REPLAY_C_COMMITTED')
+    c.stdin.close()
+    if c.wait(timeout=10) != 0:
+        raise RuntimeError('independent owner session failed')
+    if 'REPLAY_WAIT_AND_C_VERIFIED' not in service.sql(sources['verify_wait.sql.txt']).splitlines():
+        raise RuntimeError('replay precise wait and independent owner verification absent')
+    holder.stdin.write("do $$ begin if not pg_catalog.pg_advisory_unlock(815964117) then "
+                       "raise exception 'unlock failed'; end if; end $$;\n\\echo HOLDER_UNLOCKED\n")
+    holder.stdin.flush()
+    service.wait_marker(holder, qh, 'HOLDER_UNLOCKED')
+    service.wait_marker(a, qa, 'REPLAY_A_COMMITTED')
+    service.wait_marker(b, qb, 'REPLAY_B_COMMITTED')
+    for child in (holder, a, b):
+        child.stdin.close()
+        if child.wait(timeout=10) != 0:
+            raise RuntimeError('replay synthetic session failed')
+    clear = service.sql("select case when not exists (select 1 from pg_catalog.pg_locks "
+        "where locktype='advisory' and classid=0 and objid=815964117 and objsubid=1) "
+        "then 'CLEAR' else 'NOT_CLEAR' end;")
+    if clear.strip().splitlines()[-1] != 'CLEAR':
+        raise RuntimeError('replay fixture advisory lock remains; teardown required')
+    if 'REPLAY_FINAL_VERIFIED' not in service.sql(sources['verify_final.sql.txt']).splitlines():
+        raise RuntimeError('replay final verification absent')
+
+
 def main():
     sources, stopped_setup = load_sources()  # Capture verified bytes before service access.
+    replay_sources = load_replay_sources()  # Verify and capture all stopped replay files.
     label = job_identity(os.environ)
     ids = [os.environ.get('FIXTURE_SEQUENTIAL_ID', ''), os.environ.get('FIXTURE_CONCURRENCY_ID', '')]
     if ids[0] == ids[1] or any(not re.fullmatch(r'[0-9a-f]{64}', cid) for cid in ids):
@@ -412,7 +473,7 @@ def main():
             seq.sql(sources['fixture_v5_assertions.sql.txt'])
             seq.sql(sources['fixture_v5_rollback.sql.txt'])
             parallel.initialize(sources, stopped_setup)
-            concurrency(parallel, sources)
+            concurrency_same_request(parallel, replay_sources)
         finally:
             errors = []
             for service in reversed(owned):
@@ -426,6 +487,50 @@ def main():
 
 
 class StoppedInputTests(unittest.TestCase):
+    def test_replay_sources_are_exact_and_reject_change(self):
+        sources = load_replay_sources()
+        self.assertEqual(set(sources), set(REPLAY_FIXED))
+        for name, (outer, inner) in REPLAY_FIXED.items():
+            data = (HERE / 'same_request_runner_review_stopped' / name).read_bytes()
+            for bad in (data + b'x', data[len(STOP):], STOP + data):
+                with self.subTest(name=name), self.assertRaises(RuntimeError):
+                    decode_stopped(bad, outer, inner)
+
+    def test_replay_orchestration_and_failure_before_unlock(self):
+        class FakeInput:
+            def __init__(self, events, name): self.events, self.name = events, name
+            def write(self, data): self.events.append(('write', self.name, 'unlock' in data))
+            def flush(self): pass
+            def close(self): self.events.append(('close', self.name))
+        class FakeChild:
+            def __init__(self, events, name): self.stdin, self.name = FakeInput(events, name), name
+            def poll(self): return None
+            def wait(self, timeout): return 0
+        class FakeService:
+            def __init__(self, fail=False): self.events, self.fail = [], fail
+            def start(self, source):
+                name = 'holder' if "set application_name='debt-cas-fixture-holder'" in source else source
+                self.events.append(('start', name)); return FakeChild(self.events, name), None
+            def wait_marker(self, child, q, marker): self.events.append(('marker', child.name, marker))
+            def sql(self, source):
+                if source == REPLAY_WAIT_PROBE:
+                    self.events.append(('probe',)); return 'BLOCKED'
+                if source == 'verify_wait.sql.txt':
+                    self.events.append(('verify_wait',)); return '' if self.fail else 'REPLAY_WAIT_AND_C_VERIFIED'
+                if source == 'verify_final.sql.txt':
+                    self.events.append(('verify_final',)); return 'REPLAY_FINAL_VERIFIED'
+                self.events.append(('clear',)); return 'CLEAR'
+        sources = {name: name for name in REPLAY_FIXED}
+        service = FakeService(); concurrency_same_request(service, sources)
+        events = service.events
+        self.assertLess(events.index(('probe',)), events.index(('start', 'session_c.sql.txt')))
+        self.assertLess(events.index(('marker', 'session_c.sql.txt', 'REPLAY_C_COMMITTED')), events.index(('verify_wait',)))
+        self.assertLess(events.index(('verify_wait',)), events.index(('write', 'holder', True)))
+        self.assertLess(events.index(('write', 'holder', True)), events.index(('verify_final',)))
+        service = FakeService(fail=True)
+        with self.assertRaises(RuntimeError): concurrency_same_request(service, sources)
+        self.assertNotIn(('write', 'holder', True), service.events)
+
     def test_fixed_inputs_unwrap_to_verified_originals(self):
         sources, stopped_setup = load_sources()
         self.assertEqual(set(sources), set(FIXED))
