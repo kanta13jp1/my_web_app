@@ -30,13 +30,13 @@ jobs:
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           sha256sum -c <<'FIXED_HASHES'
-          0c42d129453b57fc0049fddbf4bdd600e67f87509232c6ed30a56e5899db5f89  scripts/asset_pref_truncate_fixture/runner.py
+          59d5b869df9ef0cf7fdcdbc2b325ef9db4a3f386b17b5efab4186df097155719  scripts/asset_pref_truncate_fixture/runner.py
           d0635f7b249e26e93b3f2c2775b249e332653681e00698780f72a742affbb92d  scripts/asset_pref_truncate_fixture/fixture_setup.sql.txt
           f2742dd2ec380e9dfba2133e9c9f63a5d6f9a596a181e7b747758221c8042679  scripts/asset_pref_truncate_fixture/revoke_fixture_setup_v5_review_stopped.sql.txt
           b0fb6feb4c3913091a6f705459bae129cd9b06923e85ff19fcf93614d75c75e3  scripts/asset_pref_truncate_fixture/revoke_fixture_negative_v3_review_stopped.sql.txt
           cdce6814db69af24d04345673f0743a257d225e4681702495ae9539f1bd37465  scripts/asset_pref_truncate_fixture/revoke_fixture_positive_v3_review_stopped.sql.txt
-          4408fe5d7a3b22a32fb0e564c82b9ea8929bba15cac0e4e0dc3b21459aa990bc  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
-          26795c9a6ac7d91c266f55244b585321583f24e920d5ba5600cda0fb9667b34c  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
+          3372910f839d556a35d81dfd6ababe8c73438e52636d7fe8c491835528f1dfb6  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
+          4907ee4aeead6af86ead8756c2841092c55b4436842ad4ad1629cc63478856d8  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
           FIXED_HASHES
           python3 -B scripts/asset_pref_truncate_fixture/runner.py --self-test
       - name: Mark exact head checked
@@ -79,13 +79,13 @@ jobs:
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           sha256sum -c <<'FIXED_HASHES'
-          0c42d129453b57fc0049fddbf4bdd600e67f87509232c6ed30a56e5899db5f89  scripts/asset_pref_truncate_fixture/runner.py
+          59d5b869df9ef0cf7fdcdbc2b325ef9db4a3f386b17b5efab4186df097155719  scripts/asset_pref_truncate_fixture/runner.py
           d0635f7b249e26e93b3f2c2775b249e332653681e00698780f72a742affbb92d  scripts/asset_pref_truncate_fixture/fixture_setup.sql.txt
           f2742dd2ec380e9dfba2133e9c9f63a5d6f9a596a181e7b747758221c8042679  scripts/asset_pref_truncate_fixture/revoke_fixture_setup_v5_review_stopped.sql.txt
           b0fb6feb4c3913091a6f705459bae129cd9b06923e85ff19fcf93614d75c75e3  scripts/asset_pref_truncate_fixture/revoke_fixture_negative_v3_review_stopped.sql.txt
           cdce6814db69af24d04345673f0743a257d225e4681702495ae9539f1bd37465  scripts/asset_pref_truncate_fixture/revoke_fixture_positive_v3_review_stopped.sql.txt
-          4408fe5d7a3b22a32fb0e564c82b9ea8929bba15cac0e4e0dc3b21459aa990bc  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
-          26795c9a6ac7d91c266f55244b585321583f24e920d5ba5600cda0fb9667b34c  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
+          3372910f839d556a35d81dfd6ababe8c73438e52636d7fe8c491835528f1dfb6  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
+          4907ee4aeead6af86ead8756c2841092c55b4436842ad4ad1629cc63478856d8  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
           FIXED_HASHES
           python3 -B scripts/asset_pref_truncate_fixture/runner.py --self-test
       - name: Run isolated synthetic privilege and rollback checks
