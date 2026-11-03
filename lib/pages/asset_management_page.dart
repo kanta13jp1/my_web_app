@@ -1,4 +1,6 @@
+import 'package:my_web_app/services/asset_debt_payment_day_override.dart';
 import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
+import 'package:my_web_app/widgets/asset_debt_owner_warning.dart';
 import '../widgets/asset_recorded_change_details.dart';
 import '../models/asset_income_source_evidence.dart';
 import '../widgets/asset_income_reconciliation_section.dart';
@@ -31216,7 +31218,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildDebtPaymentDayInput(AssetLiabilityDebtRow row) {
     final hasOverride = row.isRevolving
         ? _confirmedPaymentDays.containsKey(row.id)
-        : _debtPaymentDayOverrides.containsKey(row.id);
+        : resolveAssetDebtPaymentDayOverride(
+              overrides: _debtPaymentDayOverrides,
+              accountId: row.id,
+              accountName: row.name,
+            ) !=
+            null;
     final statusLabel = hasOverride
         ? (row.isRevolving ? '今回のみ' : '手動設定')
         : row.paymentDay == null
@@ -31234,6 +31241,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildTextStatusChip(label: statusLabel, color: statusColor),
+          if (hasOverride && !row.isRevolving)
+            const AssetDebtOwnerWarning(),
           const SizedBox(height: 4),
           DropdownButton<int?>(
             value: row.paymentDay,
