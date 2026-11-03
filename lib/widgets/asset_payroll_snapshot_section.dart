@@ -372,7 +372,8 @@ class _AssetPayrollSnapshotSectionState
                           Text('口座：$_reviewAccountLabel'),
                           Text('対象月：${draft.month.year}/${draft.month.month}'),
                           Text(
-                              '給与入金日：${payrollDate(draft.depositDate)}（時刻未取得）'),
+                            '給与入金日：${payrollDate(draft.depositDate)}（時刻未取得）',
+                          ),
                           Text('入金直後残高：${draft.balanceYen}円'),
                           Text('確認資料メモ：${draft.note}'),
                           if (_reviewPrevious != null)
