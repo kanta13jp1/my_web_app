@@ -15,19 +15,22 @@ Future<void> settleSyntheticPage(WidgetTester tester) async {
   // Browser I/O needs real event-loop turns; bounded polling does not infer success.
   for (var i = 0; i < 30; i++) {
     await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 100)));
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
     await tester.pump(const Duration(milliseconds: 100));
   }
 }
 
 Future<void> showPage(WidgetTester tester, DateTime today) async {
-  await tester.pumpWidget(MaterialApp(
-    home: AssetManagementPage(
-      debugNow: today,
-      debugCalendarNow: today,
-      debugInitialAssetData: const {},
+  await tester.pumpWidget(
+    MaterialApp(
+      home: AssetManagementPage(
+        debugNow: today,
+        debugCalendarNow: today,
+        debugInitialAssetData: const {},
+      ),
     ),
-  ));
+  );
   await settleSyntheticPage(tester);
 }
 
@@ -69,11 +72,12 @@ void main() {
     expect(find.text('外食・飲酒・たばこ購入・読書の振り返り'), findsNothing);
     await discardPage(tester);
 
-    await tester
-        .runAsync(() => Supabase.instance.client.auth.signInWithPassword(
-              email: 'fixture-a@example.invalid',
-              password: fixturePassword,
-            ));
+    await tester.runAsync(
+      () => Supabase.instance.client.auth.signInWithPassword(
+        email: 'fixture-a@example.invalid',
+        password: fixturePassword,
+      ),
+    );
     await showPage(tester, now);
     expect(day, findsOneWidget);
     await tester.ensureVisible(day);
@@ -92,11 +96,12 @@ void main() {
     await discardPage(tester);
 
     // A different synthetic owner receives no flow and cannot see A's candidate.
-    await tester
-        .runAsync(() => Supabase.instance.client.auth.signInWithPassword(
-              email: 'fixture-b@example.invalid',
-              password: fixturePassword,
-            ));
+    await tester.runAsync(
+      () => Supabase.instance.client.auth.signInWithPassword(
+        email: 'fixture-b@example.invalid',
+        password: fixturePassword,
+      ),
+    );
     await showPage(tester, now);
     expect(day, findsOneWidget);
     await tester.ensureVisible(day);
