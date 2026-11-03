@@ -256,7 +256,10 @@ void main({
           aiAnalysisHistoryService: _EmptyHistory(),
           debugNow: DateTime(2026, 9, 6, 12),
           debugInitialAssetData: const <String, Map<String, double>>{
-            '2026-09-06': <String, double>{'bank': 30000, 'synthetic debt': -10000},
+            '2026-09-06': <String, double>{
+              'bank': 30000,
+              'synthetic debt': -10000,
+            },
           },
         ),
       ),
@@ -269,7 +272,10 @@ void main({
     for (var section = 1; section <= 8; section++) {
       expect(markdown.data, contains('## $section. '));
     }
-    expect(find.descendant(of: summary, matching: find.byType(RichText)), findsWidgets);
+    expect(
+      find.descendant(of: summary, matching: find.byType(RichText)),
+      findsWidgets,
+    );
     expect(find.textContaining('使用可能額', findRichText: true), findsWidgets);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
