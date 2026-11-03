@@ -36,7 +36,7 @@ jobs:
           test "$(git rev-parse HEAD:test/synthetic_owner_atomic/fixture.sql)" = "33c17a297d614f05fbe3c71b8fb2cb227be6153d"
           test "$(git rev-parse HEAD:test/synthetic_owner_atomic/sequential.sql)" = "34d015a436fc60a98aa8b62fb562ecf59d843af5"
           test "$(git rev-parse HEAD:test/synthetic_owner_atomic/concurrency.sh)" = "bb325a2cd8f901c7f5de044070432bdb5a1430cb"
-          test "$(git rev-parse HEAD:test/synthetic_owner_atomic/mixed_snapshot.sh)" = "0e96eec53632fece358f5a20db1e957f96890be7"
+          test "$(git rev-parse HEAD:test/synthetic_owner_atomic/mixed_snapshot.sh)" = "f647276ac31edc5371306c413871f1dcba8e7272"
       - name: Create disposable synthetic fixture
         id: fixture
         env:

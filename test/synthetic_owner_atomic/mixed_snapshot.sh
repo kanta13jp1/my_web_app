@@ -3,6 +3,7 @@ set -euo pipefail
 psql=(docker exec -i -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" psql -U postgres -d owner_sync_lab -X -qAt -v ON_ERROR_STOP=1)
 # Separate requests and isolated fake owner. This is NOT actual Supabase HTTP or Auth.
 "${psql[@]}" <<'SQL'
+DO $$ BEGIN IF current_database() <> 'owner_sync_lab' OR current_user <> 'postgres' THEN RAISE EXCEPTION 'wrong synthetic database or role'; END IF; END $$;
 INSERT INTO lab_sync.payment_state VALUES ('00000000-0000-0000-0000-000000000005', 0, '{"old":5}', '["new"]');
 SQL
 old_values=$("${psql[@]}" <<'SQL'
