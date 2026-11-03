@@ -1,4 +1,4 @@
-name: Forecast viewport phase diagnostic
+name: Forecast repeated selection diagnostic
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ on:
 
 permissions: {}
 concurrency:
-  group: forecast-viewport-diagnostic-${{ github.run_id }}
+  group: forecast-repeat-diagnostic-${{ github.run_id }}
   cancel-in-progress: false
 jobs:
   diagnostic:
@@ -27,7 +27,7 @@ jobs:
           EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
         run: |
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
-          test "$(git rev-parse HEAD:integration_test/asset_cashflow_forecast_conditional_test.dart)" = "4560f8d408198989b71171f3ffc0a3e524034708"
+          test "$(git rev-parse HEAD:integration_test/asset_cashflow_forecast_conditional_test.dart)" = "8480cc4cc974f4343d8fc081ae1dfd0a21d0c0e6"
       - uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'

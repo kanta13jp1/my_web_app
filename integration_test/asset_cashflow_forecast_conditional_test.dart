@@ -94,6 +94,23 @@ void main() {
     await tester.pumpAndSettle();
     mark('after final settle', tester);
     expect(find.textContaining('将来残高予測(今後6ヶ月)'), findsNWidgets(2));
+    for (var round = 0; round < 10; round++) {
+      for (final months in [3, 6]) {
+        mark('round $round before selecting $months', tester);
+        final button = find.byKey(
+          Key('asset_cashflow_forecast_horizon_${months}_条件A'),
+        );
+        await tester.ensureVisible(button);
+        await tester.tap(button);
+        mark('round $round settling $months', tester);
+        await tester.pumpAndSettle();
+        expect(
+          find.textContaining('将来残高予測(今後$monthsヶ月)'),
+          findsNWidgets(2),
+        );
+      }
+      binding.reportData!['completedRounds'] = round + 1;
+    }
   });
 
   testWidgets('no anchor-day income retains a single forecast', (tester) async {
