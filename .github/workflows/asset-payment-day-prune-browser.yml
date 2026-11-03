@@ -77,12 +77,14 @@ jobs:
                 mobile=true
               fi
               echo "Synthetic browser viewport=$viewport dimensions=$dimensions"
-              runuser -u "$1" -- env -i PATH="$3" HOME="$4" CI=true \
-                flutter drive --no-pub \
+              timeout --signal=TERM --kill-after=15s 300s \
+                runuser -u "$1" -- env -i PATH="$3" HOME="$4" CI=true \
+                flutter drive --verbose --no-pub \
                 --driver=test_driver/asset_payment_day_prune.dart \
                 --target=integration_test/asset_payment_day_prune_test.dart \
                 --dart-define="PRUNE_MOBILE=$mobile" \
                 --browser-dimension="$dimensions" \
                 -d web-server --browser-name=chrome --headless
+              echo "Synthetic browser completed viewport=$viewport"
             done
           ' _ "$(id -un)" "$RUNNER_TEMP/prune-chromedriver.log" "$PATH" "$HOME"

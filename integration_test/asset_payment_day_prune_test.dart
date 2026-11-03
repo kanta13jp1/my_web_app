@@ -32,6 +32,7 @@ String _expired(String id) => jsonEncode(<Map<String, String>>[
 ]);
 
 Future<SharedPreferences> _openPage(WidgetTester tester) async {
+  debugPrint('SYNTHETIC_PRUNE_PHASE: open_page_start');
   AssetSyncDirtyKeysStore.resetWriteLockForTest();
   AssetRecurringTombstoneSyncService.resetSharedForTest();
   SharedPreferences.setMockInitialValues(<String, Object>{
@@ -55,6 +56,7 @@ Future<SharedPreferences> _openPage(WidgetTester tester) async {
   const viewport = mobile ? Size(390, 851) : Size(1440, 1000);
   await tester.binding.setSurfaceSize(viewport);
   addTearDown(() => tester.binding.setSurfaceSize(null));
+  debugPrint('SYNTHETIC_PRUNE_PHASE: before_pump_widget');
   await tester.pumpWidget(
     const MaterialApp(
       home: AssetManagementPage(
@@ -65,6 +67,7 @@ Future<SharedPreferences> _openPage(WidgetTester tester) async {
       ),
     ),
   );
+  debugPrint('SYNTHETIC_PRUNE_PHASE: after_pump_widget');
   final prefs = await SharedPreferences.getInstance();
   // Await the observed fake boot cleanup before reseeding a manual case.
   for (var attempt = 0; attempt < 30; attempt++) {
@@ -74,10 +77,12 @@ Future<SharedPreferences> _openPage(WidgetTester tester) async {
   }
   expect(prefs.getString(_inflowKey), isNotNull);
   expect(prefs.getString(_inflowKey), isNot(contains('boot-old')));
+  debugPrint('SYNTHETIC_PRUNE_PHASE: boot_observed');
   return prefs;
 }
 
 Future<void> _openPruneDialog(WidgetTester tester) async {
+  debugPrint('SYNTHETIC_PRUNE_PHASE: open_dialog');
   final inflow = find.byKey(const Key('asset_inflow_rules_button'));
   await tester.ensureVisible(inflow);
   await tester.tap(inflow);
@@ -87,6 +92,7 @@ Future<void> _openPruneDialog(WidgetTester tester) async {
 }
 
 Future<void> _prune(WidgetTester tester) async {
+  debugPrint('SYNTHETIC_PRUNE_PHASE: tap_prune');
   await tester.tap(find.byKey(const Key('asset_tombstone_gc_prune')));
   await tester.pump(const Duration(milliseconds: 300));
   await tester.pump(const Duration(milliseconds: 300));
@@ -106,6 +112,7 @@ void main() {
   }
 
   setUpAll(() async {
+    debugPrint('SYNTHETIC_PRUNE_PHASE: setup_all');
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await Supabase.initialize(
       url: 'http://127.0.0.1:9999',
@@ -122,6 +129,7 @@ void main() {
     expect(prefs.getString(_inflowKey), isNotNull);
     expect(prefs.getString(_inflowKey), isNot(contains('boot-old')));
     completedCase();
+    debugPrint('SYNTHETIC_PRUNE_PHASE: boot_case_passed');
 
     await _openPruneDialog(tester);
     await prefs.setString(_inflowKey, _expired('manual-old'));
@@ -131,6 +139,7 @@ void main() {
     expect(prefs.getString(_debtKey), _oldDebt);
     expect(prefs.getString(_inflowKey), isNot(contains('manual-old')));
     completedCase();
+    debugPrint('SYNTHETIC_PRUNE_PHASE: manual_one_passed');
 
     // Let the first SnackBar finish before observing the next user action.
     await tester.pump(const Duration(seconds: 5));
@@ -142,6 +151,8 @@ void main() {
     expect(find.textContaining('今回の一括掃除では対象外'), findsOneWidget);
     expect(prefs.getString(_debtKey), _oldDebt);
     completedCase();
+    debugPrint('SYNTHETIC_PRUNE_PHASE: manual_zero_passed');
     await _close(tester);
+    debugPrint('SYNTHETIC_PRUNE_PHASE: unmounted');
   });
 }
