@@ -1,0 +1,121 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- SYNTHETIC FIXTURE ONLY. Requires verified ephemeral runner and reviewed assembly.
+-- Required sequence: fixture_setup, then preseed below, v2 schema, v5 fragment, v5 fixture guard, this file.
+\set ON_ERROR_STOP on
+create temp table synthetic_before as select user_id,pref_key,pg_catalog.jsonb_send(value) value_wire,
+  updated_at,ctid::text row_ctid,xmin::text row_xmin
+ from public.asset_pref_mirror where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+set role authenticated;
+select pg_catalog.set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false);
+do $$
+declare r record; blocked boolean; affected integer;
+begin
+ select * into strict r from public.debt_day_read_v2();
+ if r.revision is distinct from 0 or r.values_map is distinct from '{"fictional-a":5,"fictional-old":3,"untouched":12}'::jsonb
+  or r.deleted_map is distinct from '{"ids":["fictional-old","fictional-old","other"],"extra":"preserve"}'::jsonb then
+  raise exception 'initial snapshot mismatch'; end if;
+ -- A caller setting the custom GUC alone must not bypass the ordinary-role guard.
+ perform pg_catalog.set_config('app.debt_day_write_v5','on',true);
+ blocked:=false;
+ begin
+  update public.asset_pref_mirror set value='{}'::jsonb
+   where user_id=auth.uid() and pref_key='debt_payment_day_overrides';
+ exception when insufficient_privilege then blocked:=true; end;
+ if not blocked then raise exception 'direct update bypassed guard'; end if;
+ perform pg_catalog.set_config('app.debt_day_write_v5','',true);
+ -- The same ordinary role can write other prefs; protected INSERT and DELETE fail.
+ insert into public.asset_pref_mirror(user_id,pref_key,value)
+  values(auth.uid(),'synthetic-temporary-unrelated','{}'::jsonb);
+ get diagnostics affected = row_count;
+ if affected<>1 or not exists(select 1 from public.asset_pref_mirror where user_id=auth.uid() and pref_key='synthetic-temporary-unrelated') then
+  raise exception 'unrelated insert did not take effect'; end if;
+ delete from public.asset_pref_mirror where user_id=auth.uid() and pref_key='synthetic-temporary-unrelated';
+ get diagnostics affected = row_count;
+ if affected<>1 or exists(select 1 from public.asset_pref_mirror where user_id=auth.uid() and pref_key='synthetic-temporary-unrelated') then
+  raise exception 'unrelated delete did not take effect'; end if;
+ blocked:=false;
+ begin
+  insert into public.asset_pref_mirror(user_id,pref_key,value)
+   values(auth.uid(),'debt_payment_day_overrides','{}'::jsonb);
+ exception when insufficient_privilege then blocked:=true; end;
+ if not blocked then raise exception 'protected insert accepted'; end if;
+ blocked:=false;
+ begin
+  delete from public.asset_pref_mirror where user_id=auth.uid() and pref_key='debt_payment_day_override_deleted';
+ exception when insufficient_privilege then blocked:=true; end;
+ if not blocked then raise exception 'protected delete accepted'; end if;
+ blocked:=false;
+ begin
+  insert into public.asset_pref_mirror(user_id,pref_key,value)
+   values(auth.uid(),'debt_payment_day_override_deleted','{}'::jsonb);
+ exception when insufficient_privilege then blocked:=true; end;
+ if not blocked then raise exception 'protected tombstone insert accepted'; end if;
+ blocked:=false;
+ begin
+  delete from public.asset_pref_mirror where user_id=auth.uid() and pref_key='debt_payment_day_overrides';
+ exception when insufficient_privilege then blocked:=true; end;
+ if not blocked then raise exception 'protected value delete accepted'; end if;
+ -- Removing a tombstone without explicit replacement must never revive stale values.
+ blocked:=false;
+ begin
+  perform * from public.debt_day_write_v5('11111111-1111-4111-8111-111111111111',0,
+   '{}'::jsonb,'[]'::jsonb,'[]'::jsonb,'["fictional-old"]'::jsonb);
+ exception when invalid_parameter_value then blocked:=true; end;
+ if not blocked then raise exception 'remove-only was accepted'; end if;
+ select * into strict r from public.debt_day_write_v5('22222222-2222-4222-8222-222222222222',0,
+   '{"fictional-a":6}'::jsonb,'[]'::jsonb,'[]'::jsonb,'["fictional-a"]'::jsonb);
+ if r.revision is distinct from 1 or r.replayed is distinct from false then raise exception 'commit mismatch'; end if;
+ select * into strict r from public.debt_day_write_v5('22222222-2222-4222-8222-222222222222',0,
+   '{"fictional-a":6}'::jsonb,'[]'::jsonb,'[]'::jsonb,'["fictional-a"]'::jsonb);
+ if r.revision is distinct from 1 or r.replayed is distinct from true then raise exception 'identical replay mismatch'; end if;
+ blocked:=false;
+ begin
+  perform * from public.debt_day_write_v5('22222222-2222-4222-8222-222222222222',0,
+   '{"fictional-a":7}'::jsonb,'[]'::jsonb,'[]'::jsonb,'["fictional-a"]'::jsonb);
+ exception when invalid_parameter_value then blocked:=true; end;
+ if not blocked then raise exception 'request payload changed'; end if;
+ select * into strict r from public.debt_day_read_v2();
+ if r.values_map is distinct from '{"fictional-a":6,"fictional-old":3,"untouched":12}'::jsonb
+  or r.deleted_map is distinct from '{"ids":["fictional-old","fictional-old","other"],"extra":"preserve"}'::jsonb then
+  raise exception 'unrelated data changed'; end if;
+end $$;
+reset role;
+do $$ begin
+ if (select count(*) from synthetic_before where pref_key in ('debt_payment_day_override_deleted','unrelated-fixture')) <> 2 then
+   raise exception 'baseline row count mismatch'; end if;
+ if exists(select 1 from synthetic_before b left join public.asset_pref_mirror p using(user_id,pref_key)
+   where b.pref_key in ('debt_payment_day_override_deleted','unrelated-fixture')
+     and (p.user_id is null or b.value_wire is distinct from pg_catalog.jsonb_send(p.value)
+       or b.updated_at is distinct from p.updated_at
+       or b.row_ctid is distinct from p.ctid::text or b.row_xmin is distinct from p.xmin::text)) then
+   raise exception 'untouched row was rewritten'; end if;
+end $$;
+-- jsonb_send is PostgreSQL binary output, not original input bytes or physical page bytes.
+set role authenticated;
+select pg_catalog.set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false);
+do $$ declare r record; begin
+ select * into strict r from public.debt_day_write_v5('55555555-5555-4555-8555-555555555555',1,
+  '{"fictional-old":4}'::jsonb,'[]'::jsonb,'[]'::jsonb,'["fictional-old"]'::jsonb);
+ if r.revision is distinct from 2 or r.replayed is distinct from false then raise exception 'recovery mismatch'; end if;
+ select * into strict r from public.debt_day_write_v5('66666666-6666-4666-8666-666666666666',2,
+  '{}'::jsonb,'["untouched"]'::jsonb,'["untouched"]'::jsonb,'[]'::jsonb);
+ if r.revision is distinct from 3 or r.replayed is distinct from false then raise exception 'unset mismatch'; end if;
+ select * into strict r from public.debt_day_read_v2();
+ if r.values_map is distinct from '{"fictional-a":6,"fictional-old":4}'::jsonb
+  or r.deleted_map is distinct from '{"ids":["other","untouched"],"extra":"preserve"}'::jsonb then
+  raise exception 'restore or unset content mismatch'; end if;
+end $$;
+select pg_catalog.set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',false);
+do $$ declare r record; begin
+ select * into strict r from public.debt_day_read_v2();
+ if r.revision is distinct from 0 or r.values_map is distinct from '{"fictional-b":9}'::jsonb
+  or r.deleted_map is distinct from '{"ids":[]}'::jsonb then raise exception 'owner B changed'; end if;
+end $$;
+reset role;
+set role anon;
+do $$ declare blocked boolean:=false; begin
+ begin perform * from public.debt_day_read_v2(); exception when insufficient_privilege then blocked:=true; end;
+ if not blocked then raise exception 'anon read accepted'; end if;
+end $$;
+reset role;

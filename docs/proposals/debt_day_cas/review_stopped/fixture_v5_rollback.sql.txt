@@ -1,0 +1,52 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- SYNTHETIC ONLY. Run after fixture_v5_assertions on the verified disposable DB.
+\set ON_ERROR_STOP on
+create temp table synthetic_rollback_before as
+ select pref_key,value,updated_at,ctid::text row_ctid,xmin::text row_xmin
+ from public.asset_pref_mirror where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+ and pref_key in ('debt_payment_day_overrides','debt_payment_day_override_deleted');
+do $$ begin
+ if (select value->'fictional-a' from synthetic_rollback_before where pref_key='debt_payment_day_overrides')
+    is distinct from '6'::jsonb then raise exception 'unexpected starting value'; end if;
+end $$;
+create function public.synthetic_reject_tombstone() returns trigger language plpgsql as $$
+begin
+ if new.pref_key='debt_payment_day_override_deleted' and current_setting('codex.synthetic_fail',true)='on' then
+  if (select value->'fictional-a' from public.asset_pref_mirror
+      where user_id=new.user_id and pref_key='debt_payment_day_overrides') is distinct from '10'::jsonb then
+   raise exception 'synthetic first update not visible' using errcode='P0001'; end if;
+  raise exception 'synthetic injected failure after first update' using errcode='23514'; end if;
+ return new;
+end $$;
+create trigger synthetic_reject_tombstone before insert or update on public.asset_pref_mirror
+ for each row execute function public.synthetic_reject_tombstone();
+set role authenticated;
+select pg_catalog.set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false);
+select pg_catalog.set_config('codex.synthetic_fail','on',false);
+do $$ declare blocked boolean:=false; message text; begin
+ begin
+  perform * from public.debt_day_write_v5('77777777-7777-4777-8777-777777777777',3,
+   '{"fictional-a":10}'::jsonb,'[]'::jsonb,'[]'::jsonb,'["fictional-a"]'::jsonb);
+ exception when check_violation then
+  get stacked diagnostics message = message_text;
+  if message is distinct from 'synthetic injected failure after first update' then raise; end if;
+  blocked:=true; end;
+ if not blocked then raise exception 'injected rollback not observed'; end if;
+end $$;
+select pg_catalog.set_config('codex.synthetic_fail','',false);
+reset role;
+do $$ begin
+ if (select count(*) from synthetic_rollback_before)<>2 then raise exception 'baseline missing'; end if;
+ if exists(select 1 from synthetic_rollback_before b left join public.asset_pref_mirror p
+    on p.user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and p.pref_key=b.pref_key
+    where p.user_id is null or p.value is distinct from b.value or p.updated_at is distinct from b.updated_at
+      or p.ctid::text is distinct from b.row_ctid or p.xmin::text is distinct from b.row_xmin) then
+  raise exception 'partial data change'; end if;
+ if (select revision from public.debt_day_revision_v2 where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa') is distinct from 3 then
+  raise exception 'revision changed on failed request'; end if;
+ if exists(select 1 from public.debt_day_receipt_v2 where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+  and request_id='77777777-7777-4777-8777-777777777777') then raise exception 'receipt survived rollback'; end if;
+end $$;
+drop trigger synthetic_reject_tombstone on public.asset_pref_mirror;
+drop function public.synthetic_reject_tombstone();

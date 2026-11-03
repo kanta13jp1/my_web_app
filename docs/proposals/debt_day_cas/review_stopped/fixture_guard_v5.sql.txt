@@ -1,0 +1,29 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- SYNTHETIC FIXTURE ONLY. Never use as a production migration.
+\set ON_ERROR_STOP on
+revoke execute on function public.debt_day_write_v2(uuid,bigint,jsonb,jsonb) from authenticated;
+drop trigger debt_day_guard_v2 on public.asset_pref_mirror;
+create function public.debt_day_guard_v5() returns trigger
+language plpgsql security invoker set search_path='' as $$
+declare rpc_owner name; touches boolean;
+begin
+ select pg_catalog.pg_get_userbyid(p.proowner) into rpc_owner from pg_catalog.pg_proc p
+ where p.oid='public.debt_day_write_v5(uuid,bigint,jsonb,jsonb,jsonb,jsonb)'::pg_catalog.regprocedure;
+ touches := case tg_op
+  when 'INSERT' then new.pref_key in ('debt_payment_day_overrides','debt_payment_day_override_deleted')
+  when 'UPDATE' then old.pref_key in ('debt_payment_day_overrides','debt_payment_day_override_deleted')
+     or new.pref_key in ('debt_payment_day_overrides','debt_payment_day_override_deleted')
+  when 'DELETE' then old.pref_key in ('debt_payment_day_overrides','debt_payment_day_override_deleted')
+  else false end;
+ if touches and (current_user is distinct from rpc_owner
+  or coalesce(pg_catalog.current_setting('app.debt_day_write_v5',true),'') <> 'on') then
+   raise exception 'use debt day RPC' using errcode='42501';
+ end if;
+ if tg_op='DELETE' then return old; end if; return new;
+end $$;
+revoke all on function public.debt_day_write_v5(uuid,bigint,jsonb,jsonb,jsonb,jsonb) from public,anon,authenticated;
+revoke all on function public.debt_day_guard_v5() from public,anon,authenticated;
+grant execute on function public.debt_day_write_v5(uuid,bigint,jsonb,jsonb,jsonb,jsonb) to authenticated;
+create trigger debt_day_guard_v5 before insert or update or delete
+ on public.asset_pref_mirror for each row execute function public.debt_day_guard_v5();

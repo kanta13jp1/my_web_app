@@ -1,0 +1,8 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- SYNTHETIC ONLY: run after fixture_setup and before any candidate guard.
+\set ON_ERROR_STOP on
+update public.asset_pref_mirror set value='{"fictional-a":5,"fictional-old":3,"untouched":12}'::jsonb
+ where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and pref_key='debt_payment_day_overrides';
+update public.asset_pref_mirror set value='{"ids":["fictional-old","fictional-old","other"],"extra":"preserve"}'::jsonb
+ where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and pref_key='debt_payment_day_override_deleted';

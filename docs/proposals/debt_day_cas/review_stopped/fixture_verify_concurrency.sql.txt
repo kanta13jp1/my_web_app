@@ -1,0 +1,22 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- SYNTHETIC ONLY. Run after A commit and B emitted B_CONFLICT_CONFIRMED.
+\set ON_ERROR_STOP on
+set role authenticated;
+select pg_catalog.set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false);
+do $$ declare r record; begin
+ select * into strict r from public.debt_day_write_v5('33333333-3333-4333-8333-333333333333',0,
+  '{"fictional-a":6}'::jsonb,'[]'::jsonb,'[]'::jsonb,'["fictional-a"]'::jsonb);
+ if r.revision is distinct from 1 or r.replayed is distinct from true then raise exception 'same ID did not replay'; end if;
+end $$;
+reset role;
+do $$ begin
+ if (select revision from public.debt_day_revision_v2 where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa') is distinct from 1 then raise exception 'wrong final revision'; end if;
+ if (select count(*) from public.debt_day_receipt_v2 where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')<>1 then raise exception 'unexpected receipt count'; end if;
+ if exists(select 1 from public.debt_day_receipt_v2 where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and request_id='44444444-4444-4444-8444-444444444444') then raise exception 'conflicting request left receipt'; end if;
+ if (select value from public.asset_pref_mirror where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and pref_key='debt_payment_day_overrides') is distinct from '{"fictional-a":6,"fictional-old":3,"untouched":12}'::jsonb then raise exception 'wrong final values'; end if;
+ if (select value from public.asset_pref_mirror where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and pref_key='debt_payment_day_override_deleted') is distinct from '{"ids":["fictional-old","fictional-old","other"],"extra":"preserve"}'::jsonb then raise exception 'tombstone changed'; end if;
+ if (select value from public.asset_pref_mirror where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and pref_key='unrelated-fixture') is distinct from '{"keep":true}'::jsonb then raise exception 'unrelated key changed'; end if;
+ if (select value from public.asset_pref_mirror where user_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and pref_key='debt_payment_day_overrides') is distinct from '{"fictional-b":9}'::jsonb then raise exception 'owner B values changed'; end if;
+ if (select value from public.asset_pref_mirror where user_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and pref_key='debt_payment_day_override_deleted') is distinct from '{"ids":[]}'::jsonb then raise exception 'owner B tombstone changed'; end if;
+end $$;

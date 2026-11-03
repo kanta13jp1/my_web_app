@@ -1,0 +1,97 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- DRAFT FOR REVIEW ONLY. NEVER APPLY TO PRODUCTION.
+-- No execution performed. Direct writer compatibility and privileged bypass unresolved.
+begin;
+create table public.debt_day_revision_v2 (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  revision bigint not null default 0 check (revision >= 0)
+);
+create table public.debt_day_receipt_v2 (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  request_id uuid not null,
+  request_hash bytea not null,
+  committed_revision bigint not null check(committed_revision > 0),
+  primary key(user_id,request_id)
+);
+alter table public.debt_day_revision_v2 enable row level security;
+alter table public.debt_day_receipt_v2 enable row level security;
+revoke all on public.debt_day_revision_v2, public.debt_day_receipt_v2 from public, anon, authenticated;
+
+create function public.debt_day_read_v2()
+returns table(revision bigint, values_map jsonb, deleted_map jsonb)
+language plpgsql security definer set search_path = '' as $$
+declare uid uuid := auth.uid();
+begin
+  if uid is null then raise exception 'authentication required' using errcode='42501'; end if;
+  -- One SQL statement: one PostgreSQL statement snapshot, no data writes.
+  return query select
+    coalesce((select r.revision from public.debt_day_revision_v2 r where r.user_id=uid),0),
+    (select p.value from public.asset_pref_mirror p where p.user_id=uid and p.pref_key='debt_payment_day_overrides'),
+    (select p.value from public.asset_pref_mirror p where p.user_id=uid and p.pref_key='debt_payment_day_override_deleted');
+end $$;
+
+create function public.debt_day_write_v2(request_id uuid, expected_revision bigint, values_map jsonb, deleted_map jsonb)
+returns table(revision bigint, replayed boolean)
+language plpgsql security definer set search_path = '' as $$
+declare uid uuid := auth.uid(); rev bigint; previous_hash bytea; previous_revision bigint; request_hash bytea; previous_guard text;
+begin
+  if uid is null then raise exception 'authentication required' using errcode='42501'; end if;
+  if request_id is null or expected_revision is null or expected_revision < 0
+    or pg_catalog.jsonb_typeof(values_map) is distinct from 'object'
+    or pg_catalog.jsonb_typeof(deleted_map) is distinct from 'object'
+    or pg_catalog.jsonb_typeof(deleted_map->'ids') is distinct from 'array' then
+    raise exception 'invalid request' using errcode='22023';
+  end if;
+  -- JSONB's textual form defines v2 digest input; retain contract across migrations.
+  request_hash := pg_catalog.sha256(pg_catalog.convert_to(
+    pg_catalog.jsonb_build_array(expected_revision,values_map,deleted_map)::text,'UTF8'));
+  insert into public.debt_day_revision_v2(user_id) values(uid) on conflict(user_id) do nothing;
+  select r.revision into rev from public.debt_day_revision_v2 r where r.user_id=uid for update;
+  select x.request_hash,x.committed_revision into previous_hash,previous_revision
+    from public.debt_day_receipt_v2 x where x.user_id=uid and x.request_id=debt_day_write_v2.request_id;
+  if found then
+    if previous_hash is distinct from request_hash then raise exception 'request id reused' using errcode='22023'; end if;
+    return query select previous_revision,true;
+    return;
+  end if;
+  if rev <> expected_revision then raise exception 'revision conflict' using errcode='40001'; end if;
+  previous_guard := pg_catalog.current_setting('app.debt_day_write_v2',true);
+  perform pg_catalog.set_config('app.debt_day_write_v2','on',true);
+  insert into public.asset_pref_mirror(user_id,pref_key,value,updated_at)
+    values(uid,'debt_payment_day_overrides',values_map,pg_catalog.now()),
+          (uid,'debt_payment_day_override_deleted',deleted_map,pg_catalog.now())
+    on conflict(user_id,pref_key) do update set value=excluded.value, updated_at=excluded.updated_at;
+  perform pg_catalog.set_config('app.debt_day_write_v2',coalesce(previous_guard,''),true);
+  update public.debt_day_revision_v2 r set revision=r.revision+1 where r.user_id=uid returning r.revision into rev;
+  insert into public.debt_day_receipt_v2(user_id,request_id,request_hash,committed_revision)
+    values(uid,request_id,request_hash,rev);
+  return query select rev,false;
+end $$;
+
+create function public.debt_day_guard_v2() returns trigger
+language plpgsql security invoker set search_path='' as $$
+declare rpc_owner name; touches boolean;
+begin
+  select pg_catalog.pg_get_userbyid(p.proowner) into rpc_owner from pg_catalog.pg_proc p
+    where p.oid='public.debt_day_write_v2(uuid,bigint,jsonb,jsonb)'::pg_catalog.regprocedure;
+  touches := case tg_op
+    when 'INSERT' then new.pref_key in ('debt_payment_day_overrides','debt_payment_day_override_deleted')
+    when 'UPDATE' then old.pref_key in ('debt_payment_day_overrides','debt_payment_day_override_deleted')
+      or new.pref_key in ('debt_payment_day_overrides','debt_payment_day_override_deleted')
+    when 'DELETE' then old.pref_key in ('debt_payment_day_overrides','debt_payment_day_override_deleted')
+    else false end;
+  if touches and (current_user is distinct from rpc_owner
+    or coalesce(pg_catalog.current_setting('app.debt_day_write_v2',true),'') <> 'on') then
+    raise exception 'use debt day RPC' using errcode='42501';
+  end if;
+  if tg_op='DELETE' then return old; end if; return new;
+end $$;
+revoke all on function public.debt_day_read_v2() from public,anon,authenticated;
+revoke all on function public.debt_day_write_v2(uuid,bigint,jsonb,jsonb) from public,anon,authenticated;
+revoke all on function public.debt_day_guard_v2() from public,anon,authenticated;
+grant execute on function public.debt_day_read_v2() to authenticated;
+grant execute on function public.debt_day_write_v2(uuid,bigint,jsonb,jsonb) to authenticated;
+create trigger debt_day_guard_v2 before insert or update or delete
+  on public.asset_pref_mirror for each row execute function public.debt_day_guard_v2();
+commit;

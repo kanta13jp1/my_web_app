@@ -1,0 +1,26 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- SYNTHETIC ONLY. Verify A and B are uniquely identified before releasing blocker.
+\set ON_ERROR_STOP on
+do $$ declare apid integer; bpid integer; hpid integer; begin
+ if (select count(*) from pg_catalog.pg_stat_activity where application_name='debt-cas-fixture-A')<>1
+  or (select count(*) from pg_catalog.pg_stat_activity where application_name='debt-cas-fixture-B')<>1
+  or (select count(*) from pg_catalog.pg_stat_activity where application_name='debt-cas-fixture-holder')<>1 then
+  raise exception 'ambiguous synthetic session'; end if;
+ select pid into strict apid from pg_catalog.pg_stat_activity where application_name='debt-cas-fixture-A';
+ select pid into strict bpid from pg_catalog.pg_stat_activity where application_name='debt-cas-fixture-B';
+ select pid into strict hpid from pg_catalog.pg_stat_activity where application_name='debt-cas-fixture-holder';
+ if exists(select 1 from pg_catalog.pg_stat_activity where pid in (apid,bpid,hpid) and datname is distinct from pg_catalog.current_database()) then
+  raise exception 'fixture database mismatch'; end if;
+ if not(hpid=any(pg_catalog.pg_blocking_pids(apid))) then raise exception 'unexpected A blocker'; end if;
+ if not exists(select 1 from pg_catalog.pg_locks where pid=apid and locktype='advisory' and not granted
+    and classid=0 and objid=815964117 and objsubid=1) then raise exception 'wrong advisory lock'; end if;
+ if not (apid=any(pg_catalog.pg_blocking_pids(bpid))) then raise exception 'B is not blocked by A'; end if;
+ if not exists(select 1 from pg_catalog.pg_locks a join pg_catalog.pg_locks b
+    on a.locktype='transactionid' and b.locktype='transactionid' and a.transactionid=b.transactionid
+    where a.pid=apid and a.granted and b.pid=bpid and not b.granted) then
+  raise exception 'B is not waiting on A transaction'; end if;
+ if not exists(select 1 from pg_catalog.pg_stat_activity where pid=apid and wait_event_type='Lock' and wait_event='advisory') then
+  raise exception 'A is not held by the test advisory lock'; end if;
+end $$;
+\echo VERIFIED_B_BLOCKED_BY_A

@@ -1,0 +1,108 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- DESIGN FRAGMENT ONLY; requires v2 tables/read with matching guard signature.
+-- NEVER APPLY. Not a migration; no runtime validation yet.
+-- All arguments, size limits, retention and guard deployment require review.
+create function public.debt_day_write_v5(
+ p_request_id uuid, p_expected_revision bigint, p_put jsonb,
+ p_unset jsonb, p_tombstone_add jsonb, p_tombstone_remove jsonb
+) returns table(revision bigint,replayed boolean)
+language plpgsql security definer set search_path='' as $$
+declare
+ uid uuid := auth.uid(); v_rev bigint; v_prev_hash bytea; v_prev_revision bigint;
+ v_hash bytea; v_prior_guard text; v_values jsonb; v_deleted jsonb;
+ v_unset text[]; v_add text[]; v_remove text[]; v_ids jsonb;
+begin
+ if uid is null then raise exception 'authentication required' using errcode='42501'; end if;
+ if p_request_id is null or p_expected_revision is null or p_expected_revision<0
+    or pg_catalog.jsonb_typeof(p_put) is distinct from 'object'
+    or pg_catalog.jsonb_typeof(p_unset) is distinct from 'array'
+    or pg_catalog.jsonb_typeof(p_tombstone_add) is distinct from 'array'
+    or pg_catalog.jsonb_typeof(p_tombstone_remove) is distinct from 'array' then
+   raise exception 'invalid request shape' using errcode='22023';
+ end if;
+ if pg_catalog.octet_length(p_put::text)>262144
+    or pg_catalog.jsonb_array_length(p_unset)>500
+    or pg_catalog.jsonb_array_length(p_tombstone_add)>500
+    or pg_catalog.jsonb_array_length(p_tombstone_remove)>500 then
+   raise exception 'request too large' using errcode='22023';
+ end if;
+ if exists(select 1 from pg_catalog.jsonb_each(p_put) e
+   where pg_catalog.length(e.key) not between 1 and 256
+      or case when pg_catalog.jsonb_typeof(e.value) <> 'number' then true
+         else (e.value::text)::numeric < 1 or (e.value::text)::numeric > 31
+           or pg_catalog.trunc((e.value::text)::numeric) <> (e.value::text)::numeric end)
+   or (select count(*) from pg_catalog.jsonb_object_keys(p_put)) > 500 then
+   raise exception 'invalid payment day entries' using errcode='22023';
+ end if;
+ if exists(select 1 from (
+    select x.value from pg_catalog.jsonb_array_elements(p_unset) x
+    union all select x.value from pg_catalog.jsonb_array_elements(p_tombstone_add) x
+    union all select x.value from pg_catalog.jsonb_array_elements(p_tombstone_remove) x
+   ) z where pg_catalog.jsonb_typeof(z.value) <> 'string'
+      or pg_catalog.length(z.value #>> '{}') not between 1 and 256) then
+   raise exception 'invalid ids' using errcode='22023';
+ end if;
+ select coalesce(pg_catalog.array_agg(x.value #>> '{}'),array[]::text[]) into v_unset from pg_catalog.jsonb_array_elements(p_unset) x;
+ select coalesce(pg_catalog.array_agg(x.value #>> '{}'),array[]::text[]) into v_add from pg_catalog.jsonb_array_elements(p_tombstone_add) x;
+ select coalesce(pg_catalog.array_agg(x.value #>> '{}'),array[]::text[]) into v_remove from pg_catalog.jsonb_array_elements(p_tombstone_remove) x;
+ if v_add && v_remove or exists(select 1 from pg_catalog.jsonb_object_keys(p_put) k where k=any(v_unset) or k=any(v_add) or not (k=any(v_remove)))
+    or exists(select 1 from pg_catalog.unnest(v_unset) k where not (k=any(v_add)))
+    or exists(select 1 from pg_catalog.unnest(v_remove) k where not (p_put ? k)) then
+   raise exception 'inconsistent delta' using errcode='22023';
+ end if;
+ v_hash := pg_catalog.sha256(pg_catalog.convert_to(pg_catalog.jsonb_build_array(
+   'debt-day-v5',p_expected_revision,p_put,p_unset,p_tombstone_add,p_tombstone_remove)::text,'UTF8'));
+ insert into public.debt_day_revision_v2(user_id) values(uid) on conflict(user_id) do nothing;
+ select r.revision into v_rev from public.debt_day_revision_v2 r where r.user_id=uid for update;
+ select x.request_hash,x.committed_revision into v_prev_hash,v_prev_revision
+   from public.debt_day_receipt_v2 x where x.user_id=uid and x.request_id=p_request_id;
+ if found then
+   if v_prev_hash is distinct from v_hash then raise exception 'request id reused' using errcode='22023'; end if;
+   return query select v_prev_revision,true; return;
+ end if;
+ if v_rev <> p_expected_revision then raise exception 'revision conflict' using errcode='40001'; end if;
+ select p.value into v_values from public.asset_pref_mirror p where p.user_id=uid and p.pref_key='debt_payment_day_overrides';
+ select p.value into v_deleted from public.asset_pref_mirror p where p.user_id=uid and p.pref_key='debt_payment_day_override_deleted';
+ if v_values is null then v_values := '{}'::jsonb; end if;
+ if v_deleted is null then v_deleted := '{"ids":[]}'::jsonb; end if;
+ if pg_catalog.jsonb_typeof(v_values) is distinct from 'object'
+   or pg_catalog.jsonb_typeof(v_deleted) is distinct from 'object'
+   or pg_catalog.jsonb_typeof(v_deleted->'ids') is distinct from 'array' then
+   raise exception 'existing data malformed' using errcode='22023';
+ end if;
+ if exists(select 1 from pg_catalog.jsonb_array_elements(v_deleted->'ids') e where pg_catalog.jsonb_typeof(e.value) <> 'string') then
+   raise exception 'existing tombstones malformed' using errcode='22023';
+ end if;
+ if exists(select 1 from pg_catalog.unnest(v_add) k where v_values ? k and not (k=any(v_unset))) then
+   raise exception 'tombstone requires explicit unset' using errcode='22023';
+ end if;
+ v_values := (v_values || p_put) - v_unset;
+ select coalesce(pg_catalog.jsonb_agg(q.id order by q.ord),'[]'::jsonb) into v_ids from (
+   select e.value #>> '{}' as id, e.ord::bigint as ord
+     from pg_catalog.jsonb_array_elements(v_deleted->'ids') with ordinality as e(value,ord)
+     where not ((e.value #>> '{}')=any(v_remove))
+   union all
+   select a.id, 9223372036854000000::bigint + min(a.ord)::bigint
+     from pg_catalog.unnest(v_add) with ordinality as a(id,ord)
+     where not exists (select 1 from pg_catalog.jsonb_array_elements(v_deleted->'ids') e
+                        where e.value #>> '{}' = a.id)
+     group by a.id
+ ) q;
+ -- Preserve any preexisting extra tombstone-object fields.
+ v_deleted := pg_catalog.jsonb_set(v_deleted,'{ids}',v_ids,false);
+ v_prior_guard := pg_catalog.current_setting('app.debt_day_write_v5',true);
+ perform pg_catalog.set_config('app.debt_day_write_v5','on',true);
+ insert into public.asset_pref_mirror(user_id,pref_key,value,updated_at)
+   values(uid,'debt_payment_day_overrides',v_values,pg_catalog.now()),
+         (uid,'debt_payment_day_override_deleted',v_deleted,pg_catalog.now())
+   on conflict(user_id,pref_key) do update set value=excluded.value,updated_at=excluded.updated_at
+   where public.asset_pref_mirror.value is distinct from excluded.value;
+ perform pg_catalog.set_config('app.debt_day_write_v5',coalesce(v_prior_guard,''),true);
+ update public.debt_day_revision_v2 r set revision=r.revision+1 where r.user_id=uid returning r.revision into v_rev;
+ insert into public.debt_day_receipt_v2(user_id,request_id,request_hash,committed_revision)
+   values(uid,p_request_id,v_hash,v_rev);
+ return query select v_rev,false;
+end $$;
+-- STOP: v2 guard rejects v5. Define/review a v5-specific restricted guard;
+-- revoke default PUBLIC execute and grant only explicitly reviewed roles.

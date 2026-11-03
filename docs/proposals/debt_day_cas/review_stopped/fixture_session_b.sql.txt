@@ -1,0 +1,18 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- Dedicated ephemeral test database only; run after A_WRITE_DONE_BEFORE_COMMIT.
+\set ON_ERROR_STOP on
+set application_name='debt-cas-fixture-B';
+set role authenticated;
+select pg_catalog.set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false);
+do $$ declare blocked boolean:=false; message text; begin
+ begin
+  perform * from public.debt_day_write_v5('44444444-4444-4444-8444-444444444444',0,
+    '{"fictional-a":7}'::jsonb,'[]'::jsonb,'[]'::jsonb,'["fictional-a"]'::jsonb);
+ exception when serialization_failure then
+  get stacked diagnostics message = message_text;
+  if message is distinct from 'revision conflict' then raise; end if;
+  blocked:=true; end;
+ if not blocked then raise exception 'stale concurrent write was not rejected'; end if;
+end $$;
+\echo B_CONFLICT_CONFIRMED

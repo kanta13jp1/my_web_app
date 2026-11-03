@@ -1,0 +1,14 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- Dedicated ephemeral test database only; harness must hold advisory key 815964117 first.
+\set ON_ERROR_STOP on
+set application_name='debt-cas-fixture-A';
+set role authenticated;
+select pg_catalog.set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false);
+begin;
+select * from public.debt_day_write_v5('33333333-3333-4333-8333-333333333333',0,
+ '{"fictional-a":6}'::jsonb,'[]'::jsonb,'[]'::jsonb,'["fictional-a"]'::jsonb);
+\echo A_WRITE_DONE_BEFORE_COMMIT
+select pg_catalog.pg_advisory_xact_lock(815964117);
+commit;
+\echo A_COMMIT_DONE
