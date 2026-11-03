@@ -3,10 +3,10 @@ import 'package:my_web_app/services/asset_debt_payment_day_override.dart';
 
 void main() {
   int? resolve(Map<String, int> values) => resolveAssetDebtPaymentDayOverride(
-    overrides: values,
-    accountId: 'synthetic-id',
-    accountName: ' synthetic-name ',
-  );
+        overrides: values,
+        accountId: 'synthetic-id',
+        accountName: ' synthetic-name ',
+      );
 
   test('matches id, then trimmed name, then exact name', () {
     expect(resolve({'synthetic-id': 4, 'synthetic-name': 5}), 4);
@@ -25,11 +25,12 @@ void main() {
       Map<String, int> values, {
       String id = 'id',
       String name = ' Name ',
-    }) => hasAssetDebtLegacyNameOverride(
-      overrides: values,
-      accountId: id,
-      accountName: name,
-    );
+    }) =>
+        hasAssetDebtLegacyNameOverride(
+          overrides: values,
+          accountId: id,
+          accountName: name,
+        );
     expect(legacy({'id': 4}), isFalse);
     expect(legacy({'id': 4, 'Name': 5}), isTrue);
     expect(legacy({' Name ': 6}), isTrue);

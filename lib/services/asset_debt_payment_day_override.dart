@@ -4,8 +4,7 @@ int? resolveAssetDebtPaymentDayOverride({
   required String accountId,
   required String accountName,
 }) {
-  final day =
-      overrides[accountId] ??
+  final day = overrides[accountId] ??
       overrides[accountName.trim()] ??
       overrides[accountName];
   if (day == null || day < 1 || day > 31) return null;
