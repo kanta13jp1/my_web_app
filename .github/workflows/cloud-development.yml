@@ -47,7 +47,8 @@ jobs:
             set -euo pipefail
             ip link set lo up
             test "$(ip -o link show | wc -l)" -eq 1
-            setsid runuser -u "$1" -- chromedriver --port=4444 > "$2" 2>&1 &
+            driver_log="$2"
+            setsid runuser -u "$1" -- chromedriver --port=4444 > "$driver_log" 2>&1 &
             driver_pid=$!
             cleanup() {
               result=$?
@@ -57,7 +58,7 @@ jobs:
                 kill -TERM -- "-$driver_pid" 2>/dev/null || true
               fi
               wait "$driver_pid" 2>/dev/null || true
-              if [ "$result" -ne 0 ] && [ -f "$2" ]; then tail -n 80 "$2" >&2; fi
+              if [ "$result" -ne 0 ] && [ -f "$driver_log" ]; then tail -n 80 "$driver_log" >&2; fi
               exit "$result"
             }
             trap cleanup EXIT
@@ -81,14 +82,19 @@ jobs:
                 mobile=true
               fi
               echo "Synthetic browser viewport=$viewport dimensions=$dimensions"
-              timeout --signal=TERM --kill-after=15s 300s \
+              if timeout --signal=TERM --kill-after=15s 300s \
                 runuser -u "$1" -- env -i PATH="$3" HOME="$4" CI=true \
-                flutter drive --verbose --no-pub \
+                flutter drive --verbose --no-pub --no-web-resources-cdn \
                 --driver=test_driver/asset_payment_day_prune.dart \
                 --target=integration_test/asset_payment_day_prune_test.dart \
                 --dart-define="PRUNE_MOBILE=$mobile" \
                 --browser-dimension="$dimensions" \
-                -d web-server --browser-name=chrome --headless
-              echo "Synthetic browser completed viewport=$viewport"
+                -d web-server --browser-name=chrome --headless; then
+                echo "Synthetic browser completed viewport=$viewport"
+              else
+                status=$?
+                echo "Synthetic browser failed viewport=$viewport status=$status" >&2
+                exit "$status"
+              fi
             done
           ' _ "$(id -un)" "$RUNNER_TEMP/prune-chromedriver.log" "$PATH" "$HOME"
