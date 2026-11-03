@@ -24,13 +24,14 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate.dart)" = "bc12ead78b33835b2e83aebb20ff7ea0c876d7da"
-          test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate_types.dart)" = "fd28ed0361134f84ebc3a076f92a9757c5d548d0"
-          test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate_stub.dart)" = "cfa13b76cc63f3048dcf629003492093866710bf"
-          test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate_web.dart)" = "f0a506695c249fa79da867c68cadc3a96fec0ec9"
-          test "$(git rev-parse HEAD:web/payment_owner_candidate_probe.dart)" = "3dcd257a69ca2562330cf11192546a0e8d30c899"
-          test "$(git rev-parse HEAD:test/payment_owner_candidate_stub_test.dart)" = "19a6a0f8228cf8e7bf7364c4c9e314bfa24ed5dc"
-          test "$(git rev-parse HEAD:test/synthetic/payment_owner_dart_idb_probe.cjs)" = "c676929014d62954a12b54292d010375b32ec86e"
-          test "$(git rev-parse HEAD:test/synthetic/run_payment_owner_dart_probe.sh)" = "fa36f274fc32dd81a606cb45496d6d19048550c7"
+          test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate_types.dart)" = "6e995e73766fcb9d06400089a18ea490531b902b"
+          test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate_stub.dart)" = "7a98d28f44f4e2bf6d40272a524a534920674345"
+          test "$(git rev-parse HEAD:lib/services/payment_owner_local_candidate_web.dart)" = "d9b94f73c91dd716cadef5d550c1a0d468536a8c"
+          test "$(git rev-parse HEAD:web/payment_owner_candidate_probe.dart)" = "db1337d35b3b45324b986eaeeb4c0087055972d6"
+          test "$(git rev-parse HEAD:test/payment_owner_candidate_stub_test.dart)" = "a2fbd734bfe45022394273a00f379092c6f0ec9f"
+          test "$(git rev-parse HEAD:test/synthetic/payment_owner_dart_idb_probe.cjs)" = "d6e883df467cc03919889e1cebf85bcf7a82104f"
+          test "$(git rev-parse HEAD:test/synthetic/run_payment_owner_dart_probe.sh)" = "ab1e6a47b18a5930a6b44cf1445983dc6b4517d0"
+          test "$(git rev-parse HEAD:test/synthetic/payment_owner_prefix_loss_probe.cjs)" = "925ab881cea1cc946fdcabd395087c585170774e"
       - uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'

@@ -7,6 +7,7 @@ void main() {
     final result = await store.compareAndSet(
       owner: 'synthetic',
       expectedRevision: 0,
+      syntheticCheckpointBaseRevision: 0,
       requestId: 'synthetic-request',
       value: 'synthetic-value',
     );

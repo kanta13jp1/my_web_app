@@ -10,6 +10,7 @@ class _Unsupported implements PaymentOwnerLocalCandidate {
   Future<CandidateResult> compareAndSet({
     required String owner,
     required int expectedRevision,
+    required int syntheticCheckpointBaseRevision,
     required String requestId,
     required String value,
   }) async =>

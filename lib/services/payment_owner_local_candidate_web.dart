@@ -61,6 +61,7 @@ class _Candidate implements PaymentOwnerLocalCandidate {
   Future<CandidateResult> compareAndSet({
     required String owner,
     required int expectedRevision,
+    required int syntheticCheckpointBaseRevision,
     required String requestId,
     required String value,
   }) async {
@@ -75,7 +76,9 @@ class _Candidate implements PaymentOwnerLocalCandidate {
         requestId.length > 256 ||
         value.length > 8192 ||
         expectedRevision < 0 ||
-        expectedRevision >= _maxSafeRevision) {
+        expectedRevision >= _maxSafeRevision ||
+        syntheticCheckpointBaseRevision < 0 ||
+        syntheticCheckpointBaseRevision > _maxSafeRevision) {
       return const CandidateResult(CandidateStatus.invalid);
     }
     final db = await _openExisting();
@@ -144,6 +147,7 @@ class _Candidate implements PaymentOwnerLocalCandidate {
           }
           final revision = revisionField;
           final baseRevision = baseField;
+          if (baseRevision != syntheticCheckpointBaseRevision) return;
           final receipts = receiptField;
           if (receipts.length > 100 ||
               receipts.length != revision - baseRevision) {

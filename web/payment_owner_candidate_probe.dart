@@ -15,6 +15,7 @@ void main() {
           .compareAndSet(
             owner: args['owner'] as String,
             expectedRevision: args['expectedRevision'] as int,
+            syntheticCheckpointBaseRevision: args['checkpointBase'] as int,
             requestId: args['requestId'] as String,
             value: args['value'] as String,
           )

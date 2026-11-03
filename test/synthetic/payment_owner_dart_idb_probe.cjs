@@ -40,7 +40,7 @@ async function main() {
     const call = (page, arg) => page.evaluate(async (x) => {
       return JSON.parse(await window.syntheticCandidateRun(JSON.stringify(x)));
     }, arg);
-    const base = { database: dbName, owner: 'fake-a', expectedRevision: 0,
+    const base = { database: dbName, owner: 'fake-a', expectedRevision: 0, checkpointBase: 0,
       requestId: 'r-a', value: 'a1' };
     assert.equal((await call(a, { ...base, database: 'not-a-synthetic-db' })).status, 'invalid');
     assert.equal((await call(a, base)).status, 'recoveryHold');
@@ -87,6 +87,9 @@ async function main() {
         });
       } finally { db.close(); }
     }, { database: dbName, owner, value });
+    const beforeCheckpointMismatch = await raw(a, 'fake-a');
+    assert.equal((await call(a, { ...base, checkpointBase: 1 })).status, 'recoveryHold');
+    assert.equal(await raw(a, 'fake-a'), beforeCheckpointMismatch);
     // Keep one real IDB transaction alive until both Dart calls create queued txs.
     await a.evaluate((database) => {
       window.startSyntheticHold = () => {
