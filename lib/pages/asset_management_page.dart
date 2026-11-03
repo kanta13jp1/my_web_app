@@ -320,6 +320,10 @@ class _IncomeFinanceReadSnapshot {
 }
 
 class AssetManagementPage extends StatefulWidget {
+  @visibleForTesting
+  final Future<Set<String>> Function()? debugRestoreDirtyReader;
+  @visibleForTesting
+  final VoidCallback? debugRestoreGuardAborted;
   final AssetManagementInitialFocus initialFocus;
   final bool emphasizeMonthlyFlow;
   final AssetWatchlistService watchlistService;
@@ -458,6 +462,8 @@ class AssetManagementPage extends StatefulWidget {
 
   const AssetManagementPage({
     super.key,
+    this.debugRestoreDirtyReader,
+    this.debugRestoreGuardAborted,
     this.initialFocus = AssetManagementInitialFocus.overview,
     this.emphasizeMonthlyFlow = false,
     this.watchlistService = const AssetWatchlistService(),
@@ -502,6 +508,10 @@ class AssetManagementPage extends StatefulWidget {
 }
 
 class _AssetManagementPageState extends State<AssetManagementPage> {
+  @visibleForTesting
+  Map<String, int> debugDebtOverridesForRestoreRepro() => Map<String, int>.from(_debtPaymentDayOverrides);
+  @visibleForTesting
+  void debugEditDebtOverrideForRestoreRepro(AssetLiabilityDebtRow row, int? day) => _setDebtPaymentDayOverride(row, day);
   final ScrollController _assetCalendarScrollController = ScrollController();
   static const String _bankSheetId =
       '1WZlHr6YWG8ZbT9r-wXtYPEdPT5E4b47PSpNSNl8A1MM';
@@ -857,6 +867,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, String> _paymentDifferenceReasons = <String, String>{};
   Map<String, double> _annualRateOverrides = <String, double>{};
   Map<String, int> _debtPaymentDayOverrides = <String, int>{};
+  // Invalidates an asynchronous restore when this page changes the map.
+  int _debtPaymentDayRevision = 0;
   // リボ払いカードの返済ルール (最低返済額 + 新規利用額を25日に返済)。
   Map<String, AssetLiabilityRevolvingCreditConfig> _revolvingConfigs =
       <String, AssetLiabilityRevolvingCreditConfig>{};
@@ -2427,6 +2439,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _defaultCardBillingAccountIds = Map<String, String>.from(
           defaultCardBillingAccounts,
         );
+        _debtPaymentDayRevision++;
         _debtPaymentDayOverrides = Map<String, int>.from(
           debtPaymentDayOverrides,
         );
@@ -15215,6 +15228,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _restoreDebtPaymentDayOverridesFromMirror() async {
+    final restoreRevision = _debtPaymentDayRevision;
+    final restoreOwner = _supabase.auth.currentUser?.id;
+    bool isCurrentRestore() => mounted &&
+        restoreRevision == _debtPaymentDayRevision &&
+        restoreOwner == _supabase.auth.currentUser?.id;
     final debugMirror = widget.debugDebtOverridesMirror;
     if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
@@ -15225,7 +15243,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       unawaited(
         _backfillPrefIfServerMissing(
           'debt_payment_day_overrides',
-          () => _mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides),
+          () => isCurrentRestore()
+              ? _mirrorDebtPaymentDayOverrides(Map<String, int>.from(_debtPaymentDayOverrides))
+              : Future<void>.value(),
         ),
       );
       return;
@@ -15238,6 +15258,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
         final rows = await _bootSelectPrefMirror('debt_payment_day_overrides');
+        if (!isCurrentRestore()) return;
         if (rows.isEmpty) {
           // サーバ行が無い: ローカルにあれば初回バックフィル。
           if (hasLocal) {
@@ -15280,9 +15301,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final localKeys = _debtPaymentDayOverrides.keys.toSet();
       final merged = Map<String, int>.from(_debtPaymentDayOverrides);
       var changed = false;
-      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
-        'debt_payment_day_overrides',
-      );
+      final dirtyKeys = await (widget.debugRestoreDirtyReader?.call() ??
+          _syncDirtyKeysStore.loadDirty('debt_payment_day_overrides'));
+      if (!isCurrentRestore()) { widget.debugRestoreGuardAborted?.call(); return; }
       serverOverrides.forEach((key, day) {
         // #3415 保守的 per-key ガード: ローカル編集済み (dirty) キーは、ドメイン
         // 全体 adopt の巻き添えで上書きしない (同一キー衝突はローカル優先)。
@@ -15296,6 +15317,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       if (changed && mounted) {
         setState(() {
+          _debtPaymentDayRevision++;
           _debtPaymentDayOverrides = merged;
         });
         _persistInBackground(
@@ -31084,6 +31106,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       MirrorTombstoneStore(storageKey: 'debt_payment_day_override_deleted_v1');
 
   void _setDebtPaymentDayOverride(AssetLiabilityDebtRow row, int? day) {
+    _debtPaymentDayRevision++;
     setState(() {
       if (day == null) {
         _debtPaymentDayOverrides.remove(row.id);
@@ -31166,6 +31189,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final incoming = await _debtOverrideTombstones.mergeRemoteIds(store, ids);
       final before = _debtPaymentDayOverrides.length;
       _debtPaymentDayOverrides.removeWhere((key, _) => incoming.contains(key));
+      if (_debtPaymentDayOverrides.length != before) _debtPaymentDayRevision++;
       if (_debtPaymentDayOverrides.length == before || !mounted) {
         return;
       }
