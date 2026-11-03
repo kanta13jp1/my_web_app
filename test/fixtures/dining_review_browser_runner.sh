@@ -19,4 +19,4 @@ for i in {1..30}; do
   sleep 1
 done
 curl -fsS http://127.0.0.1:4444/status >/dev/null
-flutter drive --driver=test_driver/asset_ai_integration.dart --target=integration_test/asset_dining_review_test.dart -d web-server --browser-name=chrome --headless
+flutter drive --no-pub --driver=test_driver/asset_ai_integration.dart --target=integration_test/asset_dining_review_test.dart -d web-server --browser-name=chrome --headless
