@@ -1,4 +1,6 @@
-/// Pure, detached diagnostic model. It performs no I/O and proves no owner.
+/// Pure identity collision detector. It performs no I/O and proves no owner.
+const int maxDebtIdentityRows = 1024;
+
 enum DebtKind { revolving, nonRevolving, unknown }
 
 enum SnapshotState { complete, incomplete, unavailable }
@@ -24,8 +26,11 @@ enum ScanLimit {
 }
 
 class DebtRowIdentity {
-  const DebtRowIdentity(
-      {required this.id, required this.name, required this.kind});
+  const DebtRowIdentity({
+    required this.id,
+    required this.name,
+    required this.kind,
+  });
   final String id;
   final String name;
   final DebtKind kind;
@@ -40,11 +45,11 @@ class IdObservation {
 }
 
 class IdScan {
-  IdScan._(
-      {required this.snapshotState,
-      required this.limit,
-      required Iterable<IdObservation> rows})
-      : rows = List.unmodifiable(rows);
+  IdScan._({
+    required this.snapshotState,
+    required this.limit,
+    required Iterable<IdObservation> rows,
+  }) : rows = List.unmodifiable(rows);
   final SnapshotState snapshotState;
   final ScanLimit? limit;
   final List<IdObservation> rows;
@@ -64,7 +69,7 @@ IdScan inspectDebtRowIds(
         limit: reason,
         rows: const [],
       );
-  if (allRows.length > 1024) return limited(ScanLimit.rowCount);
+  if (allRows.length > maxDebtIdentityRows) return limited(ScanLimit.rowCount);
   var totalChars = 0;
   for (final row in allRows) {
     if (row.id.length > 2048) return limited(ScanLimit.individualIdLength);
@@ -99,14 +104,16 @@ IdScan inspectDebtRowIds(
     final normalized = row.id.trim();
     final normalizedName = row.name.trim();
     final concerns = <IdConcern>{};
-    if (snapshotState != SnapshotState.complete)
+    if (snapshotState != SnapshotState.complete) {
       concerns.add(IdConcern.incompleteSnapshot);
+    }
     if (normalized.isEmpty) {
       concerns.add(IdConcern.blankId);
     } else {
       if (hasBlank) concerns.add(IdConcern.blankIdElsewhere);
-      if ((exactCounts[row.id] ?? 0) > 1)
+      if ((exactCounts[row.id] ?? 0) > 1) {
         concerns.add(IdConcern.exactDuplicate);
+      }
       if ((normalizedCounts[normalized] ?? 0) > (exactCounts[row.id] ?? 0)) {
         concerns.add(IdConcern.normalizedCollision);
       }

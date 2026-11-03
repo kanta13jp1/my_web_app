@@ -888,6 +888,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _categoryBudgetsOwnerId;
   String? _categoryBudgetStatus;
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
+  int _debtViewGeneration = 0;
   // アクションアイテムからジャンプした直後に、対処すべき支払済みチェックボックスへ
   // 視線誘導するため一時的に点滅ハイライトする負債マスタ行ID (2.6 秒で自動解除)。
   String? _highlightedDebtCardId;
@@ -10640,6 +10641,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   @override
   Widget build(BuildContext context) {
+    _debtViewGeneration++;
     final isCompact = _isCompact;
     final assetLiabilityWorkbook = _buildCurrentAssetLiabilityWorkbook();
     return Scaffold(
@@ -15104,7 +15106,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   void _shiftDebtPaymentAfterSalary(
     AssetLiabilityWorkbook? workbook,
     String debtRowId,
+    int viewGeneration,
   ) {
+    if (viewGeneration != _debtViewGeneration) {
+      _showDebtIdHeld();
+      return;
+    }
     final rows = workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[];
     AssetLiabilityDebtRow? target;
     for (final row in rows) {
@@ -15823,7 +15830,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   void _shiftDebtPaymentsAfterSalaryCombo(
     AssetLiabilityWorkbook? workbook,
     List<String> debtRowIds,
+    int viewGeneration,
   ) {
+    if (viewGeneration != _debtViewGeneration) {
+      _showDebtIdHeld();
+      return;
+    }
     final newDay = _salaryDay + 1;
     var shiftedCount = 0;
     var heldCount = 0;
@@ -17689,6 +17701,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildAssetCalendarCard(AssetLiabilityWorkbook? workbook) {
+    final viewGeneration = _debtViewGeneration;
     final debtRows =
         workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[];
     double? startingCashBalance;
@@ -17797,6 +17810,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         for (final row in workbook.debtMasterRows)
           if (!row.isRevolving && !previewHeldIds.contains(row.id)) row.id,
     };
+    final hasHeldShiftCandidates = shortfallDaySummary?.events.any(
+          (event) =>
+              event.kind == AssetCalendarEventKind.debtPayment &&
+              event.sourceId != null &&
+              !previewEligibleIds.contains(event.sourceId) &&
+              debtInputs.any(
+                (debt) =>
+                    debt.id == event.sourceId &&
+                    debt.paymentDay != _salaryDay + 1,
+              ),
+        ) ??
+        false;
     final shortfallDebtEvents = <AssetCalendarEvent>[
       if (shortfallDaySummary != null)
         ...shortfallDaySummary.events.where(
@@ -18205,6 +18230,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         height: 1.5,
                       ),
                     ),
+                    if (hasHeldShiftCandidates)
+                      const Text(
+                        '識別子や保存先の確認が必要な負債は、支払日変更の提案を表示していません。支払いが不要とは限りません。',
+                        style: TextStyle(fontSize: 10, height: 1.5),
+                      ),
                     if (shortfallDebtEvents.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Wrap(
@@ -18220,6 +18250,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               onPressed: () => _shiftDebtPaymentAfterSalary(
                                 workbook,
                                 entry.key.sourceId!,
+                                viewGeneration,
                               ),
                               icon: const Icon(Icons.schedule_send, size: 14),
                               label: Text(
@@ -18237,6 +18268,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         onPressed: () => _shiftDebtPaymentsAfterSalaryCombo(
                           workbook,
                           comboSuggestionIds,
+                          viewGeneration,
                         ),
                         icon: const Icon(Icons.double_arrow, size: 14),
                         label: Text(
@@ -31092,6 +31124,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Set<String>? _debtHeldIds(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) return null;
     final rows = workbook.debtMasterRows;
+    if (rows.length > maxDebtIdentityRows) return null;
     final scan = inspectDebtRowIds([
       for (final row in rows)
         DebtRowIdentity(
@@ -31110,6 +31143,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _debtIdAmbiguous(AssetLiabilityWorkbook? workbook, String id) {
     if (workbook == null || id.trim().isEmpty) return true;
     final rows = workbook.debtMasterRows;
+    if (rows.length > maxDebtIdentityRows) return true;
     final scan = inspectDebtRowIds(
       [
         for (final row in rows)
@@ -31323,6 +31357,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildDebtPaymentDayInput(
       AssetLiabilityDebtRow row, bool idAmbiguous) {
+    final viewGeneration = _debtViewGeneration;
     final legacyNameRetained = !row.isRevolving &&
         hasAssetDebtLegacyNameOverride(
           overrides: _debtPaymentDayOverrides,
@@ -31360,6 +31395,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const Text('識別子または以前の口座名の重なりを確認するまで変更を保留します。既存値が複数行で使われる場合があります。'),
           const SizedBox(height: 4),
           DropdownButton<int?>(
+            key: ValueKey<int>(viewGeneration),
             value: row.paymentDay,
             isExpanded: true,
             isDense: true,
@@ -31375,7 +31411,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             onChanged: idAmbiguous
                 ? null
                 : (value) {
-                    if (!_sameCurrentDebtRow(row)) {
+                    if (viewGeneration != _debtViewGeneration ||
+                        !_sameCurrentDebtRow(row)) {
                       _showDebtIdHeld();
                       return;
                     }
@@ -31388,8 +31425,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           )) {
                         return;
                       }
-                      if (!_setDebtPaymentDayOverride(row, value))
+                      if (!_setDebtPaymentDayOverride(row, value)) {
                         _showDebtIdHeld();
+                      }
                       return;
                     }
                     setState(() {

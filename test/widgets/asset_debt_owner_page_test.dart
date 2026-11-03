@@ -411,22 +411,28 @@ void main() {
     final repo = _SyntheticDebtRepository({'mobit': 12, 'aupay_card': 13});
     await tester.binding.setSurfaceSize(const Size(1200, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
         home: AssetManagementPage(
-      assetLiabilityRepository: repo,
-      debugNow: DateTime(2026, 10, 20),
-      debugInitialAssetData: const <String, Map<String, double>>{
-        '2026-10-20': <String, double>{
-          'Synthetic mobit alpha': -100000,
-          'Synthetic mobit beta': -200000,
-          'Synthetic aupay': -300000,
-        },
-      },
-    )));
+          assetLiabilityRepository: repo,
+          debugNow: DateTime(2026, 10, 20),
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-10-20': <String, double>{
+              'Synthetic mobit alpha': -100000,
+              'Synthetic mobit beta': -200000,
+              'Synthetic aupay': -300000,
+            },
+          },
+        ),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(tester.takeException(), isNull,
-        reason: 'duplicate ID must not duplicate a GlobalKey');
+    expect(
+      tester.takeException(),
+      isNull,
+      reason: 'duplicate ID must not duplicate a GlobalKey',
+    );
     final warnings = find.textContaining('識別子または以前の口座名の重なりを確認するまで');
     expect(warnings, findsNWidgets(2));
     for (final warning in warnings.evaluate()) {
@@ -442,12 +448,15 @@ void main() {
       expect(controlElement, isNotNull);
       final control = find.byWidget(controlElement!.widget);
       final dropdown = find.descendant(
-          of: control, matching: find.byType(DropdownButton<int?>));
+        of: control,
+        matching: find.byType(DropdownButton<int?>),
+      );
       expect(tester.widget<DropdownButton<int?>>(dropdown).onChanged, isNull);
     }
     final unique = find.descendant(
-        of: _debtCard('aupay_card'),
-        matching: find.byType(DropdownButton<int?>));
+      of: _debtCard('aupay_card'),
+      matching: find.byType(DropdownButton<int?>),
+    );
     expect(unique, findsOneWidget);
     final before = repo.saveCalls;
     final callback = tester.widget<DropdownButton<int?>>(unique).onChanged;
@@ -462,6 +471,77 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
     expect(repo.saveCalls, afterFirst);
     expect(repo.lastSaved!['aupay_card'], 16);
+    await _finishSyntheticPage(tester);
+  });
+
+  testWidgets('ID colliding with another row name is held', (tester) async {
+    final repo = _SyntheticDebtRepository({'custom_a': 12, 'mobit': 13});
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: repo,
+          debugNow: DateTime(2026, 10, 20),
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-10-20': <String, double>{
+              'a': -100000,
+              'custom_a': -200000,
+              'Synthetic mobit': -300000,
+            },
+          },
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.takeException(), isNull);
+    expect(
+      find.textContaining('識別子または以前の口座名の重なりを確認するまで'),
+      findsNWidgets(2),
+    );
+    final unique = find.descendant(
+      of: _debtCard('mobit'),
+      matching: find.byType(DropdownButton<int?>),
+    );
+    expect(tester.widget<DropdownButton<int?>>(unique).onChanged, isNotNull);
+    await _finishSyntheticPage(tester);
+  });
+
+  testWidgets('an open payment-day menu closes after the page rebuilds',
+      (tester) async {
+    const name = 'Synthetic mobit';
+    final repo = _SyntheticDebtRepository({'mobit': 12});
+    await _pumpSyntheticPage(tester, repository: repo, accountName: name);
+    final card = _debtCard('mobit');
+    final dropdown = find.descendant(
+      of: card,
+      matching: find.byType(DropdownButton<int?>),
+    );
+    await tester.ensureVisible(dropdown);
+    await tester.tap(dropdown);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    final option = find.byWidgetPredicate(
+      (widget) => widget is DropdownMenuItem<int?> && widget.value == 15,
+    );
+    expect(option, findsWidgets, reason: 'the menu must first be open');
+    final before = repo.saveCalls;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: repo,
+          debugNow: DateTime(2026, 10, 20),
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-10-20': <String, double>{name: -100000},
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(option, findsNothing, reason: 'the old menu is no longer active');
+    expect(repo.saveCalls, before);
     await _finishSyntheticPage(tester);
   });
 }
