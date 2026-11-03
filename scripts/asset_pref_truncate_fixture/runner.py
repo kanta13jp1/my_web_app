@@ -5,7 +5,15 @@ import hashlib, copy, sys, unittest, json, os, re, subprocess, tempfile, uuid
 from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-IMAGE = 'postgres@sha256:e4cb93687b062cd25a0e8f672d85a7708235009d70d31f8a7698d9370092a9c4'
+ALLOWED_IMAGES = {
+    '15': 'postgres@sha256:7da5d534f1ffcdb2f69efa6e466a7a29ff89eefd611c7b50c4d69aa77fd4a822',
+    '16': 'postgres@sha256:b95b87e93ceb7594715d5c71fb6e09f6fc878851ab537735d617325eb9ba8b1b',
+    '17': 'postgres@sha256:0b81cec82228160abfa753aeaad0609b709eb26eeb950f2e404ad2326e1cc370',
+}
+PG_MAJOR = os.environ.get('SYNTHETIC_PG_MAJOR', '17')
+if PG_MAJOR not in ALLOWED_IMAGES:
+    raise RuntimeError('Unsupported synthetic Postgres version')
+IMAGE = ALLOWED_IMAGES[PG_MAJOR]
 
 DATABASE = 'debt_contract'
 
@@ -15,7 +23,7 @@ STOP = b"\\set ON_ERROR_STOP on\ndo $review_stop$ begin raise exception 'REVIEW 
 
 EMPTY = r"""\set ON_ERROR_STOP on
 select case when current_database()='debt_contract' and current_user='postgres'
- and current_setting('server_version_num')::int between 170000 and 179999
+ and current_setting('server_version_num')::int / 10000 = :fixture_pg_major
  and not exists (select 1 from pg_catalog.pg_roles where rolname in ('anon','authenticated','service_role'))
  and not exists (select 1 from pg_catalog.pg_namespace where nspname not in ('public','information_schema') and left(nspname,3)<>'pg_')
  and not exists (select 1 from pg_catalog.pg_class c join pg_catalog.pg_namespace n on n.oid=c.relnamespace
@@ -26,8 +34,8 @@ select case when current_database()='debt_contract' and current_user='postgres'
  then 'EMPTY_FIXTURE' else 'NOT_EMPTY' end;
 """
 
-FIXED = {'fixture_setup.sql.txt': ('d0635f7b249e26e93b3f2c2775b249e332653681e00698780f72a742affbb92d', 'a21c5b5825108b9439751b56fe099a40365e50a8019349397df7d44ef1cdf1f5'), 'revoke_fixture_setup_v5_review_stopped.sql.txt': ('f2742dd2ec380e9dfba2133e9c9f63a5d6f9a596a181e7b747758221c8042679', '2c7adefbb565a6d1a99269839d3a93f89ec123a0d156cf8e19753ce7ccc0de00'), 'revoke_fixture_negative_v3_review_stopped.sql.txt': ('b0fb6feb4c3913091a6f705459bae129cd9b06923e85ff19fcf93614d75c75e3', 'd2b9d411824c7e5a7a48fc0f5525df8abe9d0073a19bd588ffee4e178575fc20'), 'revoke_fixture_positive_v3_review_stopped.sql.txt': ('cdce6814db69af24d04345673f0743a257d225e4681702495ae9539f1bd37465', 'e4b454098c4cd8b537ac850379d2f7b83f5f5dabfef240c469c1a8f659073343'), 'revoke_truncate_candidate_review_stopped.sql.txt': ('4408fe5d7a3b22a32fb0e564c82b9ea8929bba15cac0e4e0dc3b21459aa990bc', '26795c9a6ac7d91c266f55244b585321583f24e920d5ba5600cda0fb9667b34c')}
-MIGRATION_SHA = '26795c9a6ac7d91c266f55244b585321583f24e920d5ba5600cda0fb9667b34c'
+FIXED = {'fixture_setup.sql.txt': ('d0635f7b249e26e93b3f2c2775b249e332653681e00698780f72a742affbb92d', 'a21c5b5825108b9439751b56fe099a40365e50a8019349397df7d44ef1cdf1f5'), 'revoke_fixture_setup_v5_review_stopped.sql.txt': ('bb00057978b59a73230faced9df06e5894fa1c2a51b9acd910f9f47bd8a63e0f', '89da4d121f8896e416e3ca43d60bb63268d5b108df4d3a22407fe339bd6aca38'), 'revoke_fixture_negative_v3_review_stopped.sql.txt': ('9f52ac20a5751644c895518e195c05af8433df721ccaf7b15876695a04951c86', '62eff32b4eb1615c11d555df0f4e1c16346f5ec78f1e346eea621050d92e5eeb'), 'revoke_fixture_positive_v3_review_stopped.sql.txt': ('690600999315da035a81675736d054760bad73ef880c2c3f08b8e9b581328c81', '5fe4b14fbce247463eb07d9aa9419c6af9c4eb6a42ce6bbcbd5765133d36f01a'), 'revoke_truncate_candidate_review_stopped.sql.txt': ('3372910f839d556a35d81dfd6ababe8c73438e52636d7fe8c491835528f1dfb6', '4907ee4aeead6af86ead8756c2841092c55b4436842ad4ad1629cc63478856d8')}
+MIGRATION_SHA = '4907ee4aeead6af86ead8756c2841092c55b4436842ad4ad1629cc63478856d8'
 
 def decode_stopped(data, expected_stopped, expected_original):
     if hashlib.sha256(data).hexdigest() != expected_stopped:
@@ -210,6 +218,12 @@ def verify_revoke_expected_failure(returncode, stdout, stderr):
         raise RuntimeError('synthetic revoke did not fail for the expected fixed reason')
 
 
+def verify_missing_start_failure(returncode, stdout, stderr):
+    errors = re.findall(r'^ERROR:\s*(.*)$', stderr, flags=re.MULTILINE)
+    if returncode != 3 or stdout.strip() != '1' or errors != ['unexpected starting truncate privilege']:
+        raise RuntimeError('synthetic drift did not fail for the expected reason')
+
+
 class Service:
     def __init__(self, cid, lane, label, docker, env, image, network):
         self.cid, self.lane, self.label = cid, lane, label
@@ -237,8 +251,8 @@ class Service:
         self.inspect()
         return self.docker + ['exec', '-i', '-u', 'postgres', self.cid,
             '/usr/bin/env', '-i', 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
-            '/usr/local/bin/psql', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1',
-            '-v', 'fixture_token=' + self.token, '-h', '/var/run/postgresql', '-U', 'postgres', '-d', DATABASE]
+            f'/usr/lib/postgresql/{PG_MAJOR}/bin/psql', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1',
+            '-v', 'fixture_token=' + self.token, '-v', 'fixture_pg_major=' + PG_MAJOR, '-h', '/var/run/postgresql', '-U', 'postgres', '-d', DATABASE]
 
     @staticmethod
     def guarded(source):
@@ -255,6 +269,18 @@ class Service:
         result = subprocess.run(self.argv(), input=self.guarded(source), env=self.env,
             capture_output=True, text=True, check=False, timeout=30)
         verify_revoke_expected_failure(result.returncode, result.stdout, result.stderr)
+
+    def expect_missing_start_failure(self, source):
+        result = subprocess.run(self.argv(), input=self.guarded(source), env=self.env,
+            capture_output=True, text=True, check=False, timeout=30)
+        verify_missing_start_failure(result.returncode, result.stdout, result.stderr)
+
+    def expect_fixed_failure(self, source, expected):
+        result = subprocess.run(self.argv(), input=self.guarded(source), env=self.env,
+            capture_output=True, text=True, check=False, timeout=30)
+        errors = re.findall(r'^ERROR:\s*(.*)$', result.stderr, flags=re.MULTILINE)
+        if result.returncode != 3 or result.stdout.strip() != '1' or errors != [expected]:
+            raise RuntimeError('synthetic guard did not fail for the expected reason')
 
     def initialize(self, sources, stopped_setup):
         if self.sql(EMPTY, guarded=False).strip() != 'EMPTY_FIXTURE':
@@ -298,6 +324,153 @@ def revoke_checks(service, sources):
         raise RuntimeError('synthetic revoke positive verification absent')
 
 
+SNAPSHOT = r"""select jsonb_build_object(
+  'acl', (select jsonb_agg(to_jsonb(a) order by a.grantee,a.privilege_type,a.grantor) from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(c.relacl) a where c.oid='public.asset_pref_mirror'::regclass),
+  'relation', (select jsonb_build_object('owner',relowner,'rls',relrowsecurity,'forced',relforcerowsecurity) from pg_catalog.pg_class where oid='public.asset_pref_mirror'::regclass),
+  'rows', (select jsonb_agg(to_jsonb(t) order by t.user_id,t.pref_key) from public.asset_pref_mirror t),
+  'policies', (select jsonb_agg(to_jsonb(p) order by p.policyname) from pg_catalog.pg_policies p where p.schemaname='public' and p.tablename='asset_pref_mirror'),
+  'members', (select jsonb_agg(to_jsonb(m) order by m.roleid,m.member) from pg_catalog.pg_auth_members m where m.member in ('anon'::regrole,'authenticated'::regrole)),
+  'roles', (select jsonb_agg(jsonb_build_object('name',rolname,'inherit',rolinherit) order by rolname) from pg_catalog.pg_roles where rolname in ('anon','authenticated')),
+  'columns', (select jsonb_agg(jsonb_build_object('name',a.attname,'acl',a.attacl) order by a.attname) from pg_catalog.pg_attribute a where a.attrelid='public.asset_pref_mirror'::regclass and a.attnum>0 and not a.attisdropped)
+)::text;"""
+
+
+def fail_without_change(service, candidate, kind):
+    before = service.sql(SNAPSHOT)
+    if kind == 'missing':
+        service.expect_missing_start_failure(candidate)
+    elif kind == 'inherited':
+        service.expect_revoke_failure(candidate)
+    else:
+        service.expect_fixed_failure(candidate, kind)
+    if service.sql(SNAPSHOT) != before:
+        raise RuntimeError('rejected migration changed synthetic state')
+
+
+
+def drift_checks(service, sources):
+    candidate = sources['revoke_truncate_candidate_review_stopped.sql.txt']
+    positive = sources['revoke_fixture_positive_v3_review_stopped.sql.txt']
+
+    def apply_candidate():
+        if service.sql(candidate).strip() != '1':
+            raise RuntimeError('synthetic candidate output mismatch')
+
+    def verify_positive():
+        if 'SYNTHETIC_REVOKE_POSITIVE_VERIFIED' not in service.sql(positive).splitlines():
+            raise RuntimeError('synthetic positive verification absent')
+
+    # Both already absent: idempotent retry must leave the complete snapshot intact.
+    before = service.sql(SNAPSHOT)
+    apply_candidate()
+    if service.sql(SNAPSHOT) != before:
+        raise RuntimeError('idempotent retry changed synthetic state')
+    verify_positive()
+
+    # One granted / one absent in either direction; converge to identical ACL.
+    service.sql('grant truncate on public.asset_pref_mirror to authenticated;')
+    apply_candidate()
+    verify_positive()
+    service.sql('grant truncate on public.asset_pref_mirror to anon;')
+    apply_candidate()
+    verify_positive()
+    service.sql('grant truncate on public.asset_pref_mirror to anon, authenticated;')
+    apply_candidate()
+    verify_positive()
+
+    # Least privilege and a service role without truncate must be preserved, not upgraded.
+    service.sql('revoke insert, update, delete on public.asset_pref_mirror from anon; revoke truncate on public.asset_pref_mirror from service_role;')
+    before = service.sql(SNAPSHOT)
+    apply_candidate()
+    if service.sql(SNAPSHOT) != before:
+        raise RuntimeError('least-privilege retry changed synthetic state')
+    service.sql('grant truncate on public.asset_pref_mirror to anon;')
+    needle = "where c.oid='public.asset_pref_mirror'::regclass),\n  'relation'"
+    replacement = "where c.oid='public.asset_pref_mirror'::regclass and not (a.grantee='anon'::regrole and a.privilege_type='TRUNCATE')),\n  'relation'"
+    if SNAPSHOT.count(needle) != 1:
+        raise RuntimeError('synthetic ACL snapshot structure changed')
+    low_snapshot = SNAPSHOT.replace(needle, replacement)
+    before = service.sql(low_snapshot)
+    apply_candidate()
+    if service.sql(low_snapshot) != before:
+        raise RuntimeError('least-privilege revoke changed unrelated synthetic state')
+    marker = """select case when
+      not has_table_privilege('anon','public.asset_pref_mirror','TRUNCATE') and
+      not has_table_privilege('authenticated','public.asset_pref_mirror','TRUNCATE') and
+      not has_table_privilege('service_role','public.asset_pref_mirror','TRUNCATE') and
+      not has_table_privilege('anon','public.asset_pref_mirror','INSERT') and
+      not has_table_privilege('anon','public.asset_pref_mirror','UPDATE') and
+      not has_table_privilege('anon','public.asset_pref_mirror','DELETE')
+      then 'LEAST_PRIVILEGE_OK' else 'INVALID' end;"""
+    if 'LEAST_PRIVILEGE_OK' not in service.sql(marker).splitlines():
+        raise RuntimeError('least-privilege result mismatch')
+    service.sql('grant insert, update, delete on public.asset_pref_mirror to anon; grant truncate on public.asset_pref_mirror to service_role;')
+    verify_positive()
+
+    # PUBLIC remains effective: candidate must fail and rollback all recorded state.
+    service.sql('grant truncate on public.asset_pref_mirror to public;')
+    fail_without_change(service, candidate, 'inherited')
+    service.sql('revoke truncate on public.asset_pref_mirror from public;')
+
+    # NOINHERIT role cannot use parent's privilege immediately but may SET ROLE.
+    service.sql('create role synthetic_indirect nologin; grant truncate on public.asset_pref_mirror to synthetic_indirect; alter role anon noinherit; grant synthetic_indirect to anon;')
+    marker = """select case when
+      not has_table_privilege('anon','public.asset_pref_mirror','TRUNCATE') and
+      pg_has_role('anon','synthetic_indirect','MEMBER') and
+      has_table_privilege('synthetic_indirect','public.asset_pref_mirror','TRUNCATE')
+      then 'NOINHERIT_SETUP_OK' else 'INVALID' end;"""
+    if 'NOINHERIT_SETUP_OK' not in service.sql(marker).splitlines():
+        raise RuntimeError('synthetic NOINHERIT setup mismatch')
+    fail_without_change(service, candidate, 'truncate privilege reachable through role membership')
+    service.sql('revoke synthetic_indirect from anon; revoke truncate on public.asset_pref_mirror from synthetic_indirect; alter role anon inherit;')
+
+    if PG_MAJOR in ('16', '17'):
+        # MEMBER intentionally rejects even a membership without SET or INHERIT.
+        service.sql('grant truncate on public.asset_pref_mirror to synthetic_indirect; grant synthetic_indirect to anon with inherit false; grant synthetic_indirect to anon with set false;')
+        marker = """select case when
+          pg_has_role('anon','synthetic_indirect','MEMBER') and
+          not pg_has_role('anon','synthetic_indirect','SET') and
+          not has_table_privilege('anon','public.asset_pref_mirror','TRUNCATE')
+          then 'SET_FALSE_SETUP_OK' else 'INVALID' end;"""
+        if 'SET_FALSE_SETUP_OK' not in service.sql(marker).splitlines():
+            raise RuntimeError('synthetic SET FALSE setup mismatch')
+        fail_without_change(service, candidate, 'truncate privilege reachable through role membership')
+        service.sql('revoke synthetic_indirect from anon; revoke truncate on public.asset_pref_mirror from synthetic_indirect;')
+
+    # A two-hop membership is also detected when the parent can truncate.
+    service.sql('create role synthetic_bridge nologin; grant truncate on public.asset_pref_mirror to synthetic_indirect; grant synthetic_indirect to synthetic_bridge; alter role anon noinherit; grant synthetic_bridge to anon;')
+    marker = """select case when
+      pg_has_role('anon','synthetic_indirect','MEMBER') and
+      not has_table_privilege('anon','public.asset_pref_mirror','TRUNCATE')
+      then 'MULTIHOP_SETUP_OK' else 'INVALID' end;"""
+    if 'MULTIHOP_SETUP_OK' not in service.sql(marker).splitlines():
+        raise RuntimeError('synthetic multihop setup mismatch')
+    fail_without_change(service, candidate, 'truncate privilege reachable through role membership')
+    service.sql('revoke synthetic_bridge from anon; revoke synthetic_indirect from synthetic_bridge; revoke truncate on public.asset_pref_mirror from synthetic_indirect; alter role anon inherit;')
+
+    # Owner/superuser membership is rejected even without immediate inheritance.
+    service.sql('alter role anon noinherit; grant postgres to anon;')
+    marker = """select case when
+      pg_has_role('anon','postgres','MEMBER') and
+      not has_table_privilege('anon','public.asset_pref_mirror','TRUNCATE')
+      then 'OWNER_MEMBERSHIP_SETUP_OK' else 'INVALID' end;"""
+    if 'OWNER_MEMBERSHIP_SETUP_OK' not in service.sql(marker).splitlines():
+        raise RuntimeError('synthetic owner membership setup mismatch')
+    fail_without_change(service, candidate, 'truncate privilege reachable through role membership')
+    service.sql('revoke postgres from anon; alter role anon inherit;')
+
+    # RESTRICT must not erase a dependent grant made by anon.
+    service.sql('create role synthetic_delegate nologin; grant truncate on public.asset_pref_mirror to anon with grant option; set role anon; grant truncate on public.asset_pref_mirror to synthetic_delegate; reset role;')
+    fail_without_change(service, candidate, 'dependent privileges exist')
+    service.sql('set role anon; revoke truncate on public.asset_pref_mirror from synthetic_delegate; reset role; revoke truncate on public.asset_pref_mirror from anon;')
+
+    # RLS and unexpected owner are hard failures; test complete state rollback.
+    service.sql('grant truncate on public.asset_pref_mirror to anon, authenticated; alter table public.asset_pref_mirror disable row level security;')
+    fail_without_change(service, candidate, 'query returned no rows')
+    service.sql('alter table public.asset_pref_mirror enable row level security; create role synthetic_other_owner nologin; alter table public.asset_pref_mirror owner to synthetic_other_owner;')
+    fail_without_change(service, candidate, 'unexpected owner')
+
+
 def load_sources():
     result = {}
     stopped_setup = None
@@ -326,7 +499,7 @@ def job_identity(env):
     run, attempt = env.get('GITHUB_RUN_ID', ''), env.get('GITHUB_RUN_ATTEMPT', '')
     if (env.get('GITHUB_ACTIONS') != 'true' or env.get('RUNNER_ENVIRONMENT') != 'github-hosted'
         or env.get('GITHUB_REPOSITORY') != 'kanta13jp1/my_web_app' or env.get('GITHUB_JOB') != 'debt-cas-isolated'
-        or env.get('GITHUB_EVENT_NAME') != 'pull_request'
+        or env.get('GITHUB_EVENT_NAME') != 'workflow_dispatch'
         or not re.fullmatch(r'[0-9]+', run) or not re.fullmatch(r'[0-9]+', attempt)):
         raise RuntimeError('untrusted synthetic job identity')
     return run + '-' + attempt
@@ -350,6 +523,7 @@ def main():
             service = Service(cid, 'sequential', label, docker, env, image, network)
             service.initialize(sources, stopped_setup)
             revoke_checks(service, sources)
+            drift_checks(service, sources)
         finally:
             if service is not None: service.stop_owned()
         print('Synthetic revoke checks and service stop passed.')
