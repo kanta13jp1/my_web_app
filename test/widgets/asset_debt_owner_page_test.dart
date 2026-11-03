@@ -670,6 +670,11 @@ void main() {
     expect(repo.values, {'mobit': 12});
     expect(repo.snapshots, [{'mobit': 20}]);
     expect(access.diagnosticMirrorEntries, mirrorBefore, reason: 'the mirror method is not entered after the synthetic local error');
+    repo.rejectWrites = false;
+    expect(access.diagnosticSetDebtDay('mobit', 25), isTrue);
+    await tester.pump();
+    expect(repo.values, {'mobit': 25}, reason: 'the queue must continue after a local exception');
+    expect(access.diagnosticMirrorEntries, mirrorBefore + 1);
     expect(Supabase.instance.client.auth.currentUser, isNull);
     await _finishSyntheticPage(tester);
   });
