@@ -49,6 +49,11 @@ jobs:
               flutter test test/widgets/payment_day_page_repro_test.dart test/models/asset_calendar_reflection_test.dart test/widgets/asset_calendar_reflection_panel_test.dart --reporter expanded
           ' _ "$(id -un)" "$PATH" "$HOME"
 
+      - name: Prepare browser test dependencies
+        run: |
+          flutter precache --web
+          google-chrome --version
+          chromedriver --version
       - name: Exercise synthetic candidate in a browser
         timeout-minutes: 8
         shell: bash
