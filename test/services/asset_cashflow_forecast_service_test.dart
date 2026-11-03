@@ -23,7 +23,9 @@ void main() {
       expect(scenarios.advisoryForecast, isNull);
       expect(scenarios.alreadyReflected.months.first.closingBalance, -80);
       expect(
-          scenarios.alreadyReflected.firstShortfallDate, DateTime(2026, 6, 26));
+        scenarios.alreadyReflected.firstShortfallDate,
+        DateTime(2026, 6, 26),
+      );
       expect(scenarios.notYetReflected.months.first.closingBalance, 150);
       expect(scenarios.notYetReflected.firstShortfallDate, isNull);
       expect(scenarios.alreadyReflected.months.last.closingBalance, 120);

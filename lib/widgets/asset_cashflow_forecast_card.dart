@@ -517,8 +517,11 @@ class AssetCashflowForecastScenariosCard extends StatelessWidget {
         Semantics(
           container: true,
           label: '条件B：当日予定入金がすべて起点残高に未反映',
-          child: card(scenarios.notYetReflected,
-              allowHorizon: false, scenarioLabel: '条件B'),
+          child: card(
+            scenarios.notYetReflected,
+            allowHorizon: false,
+            scenarioLabel: '条件B',
+          ),
         ),
       ],
     );
