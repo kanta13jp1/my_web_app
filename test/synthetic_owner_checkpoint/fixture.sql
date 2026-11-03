@@ -124,7 +124,7 @@ ALTER FUNCTION lab_private.valid_journal(uuid,uuid,bigint,text,bigint,text,text)
 REVOKE ALL ON FUNCTION lab_private.valid_journal(uuid,uuid,bigint,text,bigint,text,text) FROM PUBLIC;
 
 CREATE FUNCTION lab_private.read_current() RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = '' AS $$
 DECLARE v_owner uuid := lab_auth.fake_uid(); v_row record;
 BEGIN
  IF v_owner IS NULL THEN RAISE EXCEPTION 'unauthenticated' USING ERRCODE='42501'; END IF;
@@ -147,7 +147,7 @@ END $$;
 ALTER FUNCTION lab_private.read_current() OWNER TO lab_rpc_owner;
 REVOKE ALL ON FUNCTION lab_private.read_current() FROM PUBLIC, lab_anon;
 GRANT EXECUTE ON FUNCTION lab_private.read_current() TO lab_authenticated;
-CREATE FUNCTION lab_api.read_current() RETURNS jsonb LANGUAGE sql SECURITY INVOKER SET search_path = ''
+CREATE FUNCTION lab_api.read_current() RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path = ''
  AS $$ SELECT lab_private.read_current() $$;
 REVOKE ALL ON FUNCTION lab_api.read_current() FROM PUBLIC, lab_anon;
 GRANT EXECUTE ON FUNCTION lab_api.read_current() TO lab_authenticated;
@@ -223,3 +223,70 @@ CREATE FUNCTION lab_api.apply_request(uuid,uuid,bigint,text,jsonb,jsonb) RETURNS
 $$;
 REVOKE ALL ON FUNCTION lab_api.apply_request(uuid,uuid,bigint,text,jsonb,jsonb) FROM PUBLIC, lab_anon;
 GRANT EXECUTE ON FUNCTION lab_api.apply_request(uuid,uuid,bigint,text,jsonb,jsonb) TO lab_authenticated;
+
+-- Read-only synthetic comparison with an independently *assumed* prior anchor.
+-- The caller-provided tuple has NO authenticity or monotonicity guarantee here.
+-- All reads use the calling statement snapshot (STABLE). Not a migration.
+CREATE FUNCTION lab_private.read_checked_v1(p_owner uuid,p_generation uuid,p_revision bigint,p_digest text,
+ p_count bigint,p_head text) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = '' AS $$
+DECLARE v_owner uuid := lab_auth.fake_uid(); v_current jsonb; v_head text; v_genesis text;
+ v_anchor_revision bigint; v_anchor_digest text; v_last record; v_test record;
+BEGIN
+ IF v_owner IS NULL THEN RAISE EXCEPTION 'unauthenticated' USING ERRCODE='42501'; END IF;
+ IF p_owner IS NULL OR p_owner<>v_owner OR p_generation IS NULL OR p_revision IS NULL OR p_revision<0 OR
+    p_digest IS NULL OR p_digest !~ '^[0-9a-f]{64}$' OR p_count IS NULL OR p_count<0 OR
+    p_head IS NULL OR p_head !~ '^[0-9a-f]{64}$' THEN
+  RETURN pg_catalog.jsonb_build_object('status','recovery_hold');
+ END IF;
+ v_current:=lab_private.read_current();
+ -- TEST ONLY: deterministic barrier for concurrent-commit snapshot testing.
+ -- Never include this GUC/sleep in a production function.
+ IF pg_catalog.current_setting('lab.synthetic_read_sleep',true)='on' THEN
+  PERFORM pg_catalog.pg_sleep(10);
+  SELECT s.generation,s.revision,s.digest,c.journal_count,c.journal_head INTO v_test
+   FROM lab_private.stream s JOIN lab_private.checkpoint c ON c.owner_id=s.owner_id WHERE s.owner_id=v_owner;
+  IF NOT FOUND OR v_test.generation::text IS DISTINCT FROM v_current->>'generation' OR
+     v_test.revision::text IS DISTINCT FROM v_current->>'revision' OR
+     v_test.digest IS DISTINCT FROM v_current->>'digest' OR
+     v_test.journal_count::text IS DISTINCT FROM v_current->>'journalCount' OR
+     v_test.journal_head IS DISTINCT FROM v_current->>'journalHead' THEN
+   RAISE EXCEPTION 'synthetic post-barrier read used inconsistent snapshot';
+  END IF;
+ END IF;
+ IF v_current->>'status' IS DISTINCT FROM 'snapshot' OR
+    v_current->>'owner' IS DISTINCT FROM v_owner::text OR
+    v_current->>'generation' IS DISTINCT FROM p_generation::text OR
+    (v_current->>'revision')::bigint < p_revision OR (v_current->>'journalCount')::bigint < p_count THEN
+  RETURN pg_catalog.jsonb_build_object('status','recovery_hold');
+ END IF;
+ SELECT genesis_digest INTO v_genesis FROM lab_private.checkpoint WHERE owner_id=v_owner;
+ IF NOT FOUND THEN RETURN pg_catalog.jsonb_build_object('status','recovery_hold'); END IF;
+ IF p_count=0 THEN
+  v_head:=pg_catalog.repeat('0',64);
+ ELSE
+  SELECT entry_hash INTO v_head FROM lab_private.journal WHERE owner_id=v_owner AND seq=p_count;
+  IF NOT FOUND THEN RETURN pg_catalog.jsonb_build_object('status','recovery_hold'); END IF;
+ END IF;
+ IF v_head IS DISTINCT FROM p_head THEN RETURN pg_catalog.jsonb_build_object('status','recovery_hold'); END IF;
+ SELECT outcome INTO v_last FROM lab_private.journal WHERE owner_id=v_owner AND seq<=p_count
+   AND outcome->>'status'='applied' ORDER BY seq DESC LIMIT 1;
+ IF FOUND THEN
+  v_anchor_revision:=(v_last.outcome->>'revision')::bigint;
+  v_anchor_digest:=v_last.outcome->>'digest';
+ ELSE
+  v_anchor_revision:=0; v_anchor_digest:=v_genesis;
+ END IF;
+ IF v_anchor_revision IS DISTINCT FROM p_revision OR v_anchor_digest IS DISTINCT FROM p_digest THEN
+  RETURN pg_catalog.jsonb_build_object('status','recovery_hold');
+ END IF;
+ RETURN v_current || pg_catalog.jsonb_build_object('anchorProtocol',1,'anchorComparison','matched');
+END $$;
+ALTER FUNCTION lab_private.read_checked_v1(uuid,uuid,bigint,text,bigint,text) OWNER TO lab_rpc_owner;
+REVOKE ALL ON FUNCTION lab_private.read_checked_v1(uuid,uuid,bigint,text,bigint,text) FROM PUBLIC, lab_anon;
+GRANT EXECUTE ON FUNCTION lab_private.read_checked_v1(uuid,uuid,bigint,text,bigint,text) TO lab_authenticated;
+CREATE FUNCTION lab_api.read_checked_v1(uuid,uuid,bigint,text,bigint,text) RETURNS jsonb
+ LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS $$
+ SELECT lab_private.read_checked_v1($1,$2,$3,$4,$5,$6)
+$$;
+REVOKE ALL ON FUNCTION lab_api.read_checked_v1(uuid,uuid,bigint,text,bigint,text) FROM PUBLIC, lab_anon;
+GRANT EXECUTE ON FUNCTION lab_api.read_checked_v1(uuid,uuid,bigint,text,bigint,text) TO lab_authenticated;

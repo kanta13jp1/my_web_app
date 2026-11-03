@@ -36,9 +36,11 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-parse HEAD:test/synthetic_owner_checkpoint/fixture.sql)" = "1fa71f50c78d62d0a71a2d1ee069cc04a7ff323d"
+          test "$(git rev-parse HEAD:test/synthetic_owner_checkpoint/fixture.sql)" = "3321b6e1c5f9233738d049b1baf7febeec3a7a41"
           test "$(git rev-parse HEAD:test/synthetic_owner_checkpoint/sequential.sql)" = "14550c0ba3365840b3f88cb617a7ab1a628b1890"
           test "$(git rev-parse HEAD:test/synthetic_owner_checkpoint/concurrency.sh)" = "8a0fdb8a062c70e824cd981d9dd572e738d381a0"
+          test "$(git rev-parse HEAD:test/synthetic_owner_checkpoint/snapshot_concurrency.sh)" = "b473b77711a846fa226a499fceab9ae5b93f78c0"
+          test "$(git rev-parse HEAD:test/synthetic_owner_checkpoint/anchor_checked.sql)" = "d729bafeb3f8384e980f91e8092d960b8894243c"
           [[ "$SYNTHETIC_DB_CONTAINER" =~ ^[0-9a-f]{64}$ ]]
           test "$(docker inspect --format '{{.Config.Image}}' "$SYNTHETIC_DB_CONTAINER")" = 'postgres:17.6'
           test "$(docker inspect --format '{{len .HostConfig.PortBindings}}' "$SYNTHETIC_DB_CONTAINER")" = '0'
@@ -61,3 +63,15 @@ jobs:
           SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
         shell: bash
         run: timeout 90s bash test/synthetic_owner_checkpoint/concurrency.sh
+      - name: Verify checked read during concurrent commit
+        env:
+          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
+        shell: bash
+        run: timeout 90s bash test/synthetic_owner_checkpoint/snapshot_concurrency.sh
+      - name: Verify synthetic prior anchor and rollback comparison
+        env:
+          SYNTHETIC_DB_CONTAINER: ${{ job.services.db.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 60s docker exec -i -e PGCONNECT_TIMEOUT=5 -e 'PGOPTIONS=-c statement_timeout=40s -c lock_timeout=25s' -e PGPASSWORD=synthetic-only "$SYNTHETIC_DB_CONTAINER" psql -U postgres -d owner_sync_lab -X -v ON_ERROR_STOP=1 < test/synthetic_owner_checkpoint/anchor_checked.sql
