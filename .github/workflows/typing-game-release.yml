@@ -2,6 +2,11 @@ name: Reviewed typing-only public-base release
 run-name: Typing-only release ${{ inputs.expected_head_sha }}
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/typing-game-release.yml
+      - scripts/typing_game_release_guard.py
+      - scripts/typing_game_release_guard_test.py
   workflow_dispatch:
     inputs:
       approved_release:
@@ -45,7 +50,7 @@ on:
 
 permissions: {}
 concurrency:
-  group: deploy-prod
+  group: ${{ github.event_name == 'workflow_dispatch' && 'deploy-prod' || format('typing-guard-{0}', github.event.pull_request.number) }}
   cancel-in-progress: false
 
 env:
@@ -60,8 +65,21 @@ env:
   VALIDATION_HEAD: ${{ inputs.validation_head_sha }}
 
 jobs:
+  guard-tests:
+    name: Typing release guard tests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - run: python -B -m unittest discover -s scripts -p typing_game_release_guard_test.py
+
   preflight:
-    if: github.repository == 'kanta13jp1/my_web_app' && github.actor == 'kanta13jp1' && inputs.approved_release && inputs.expected_head_sha == github.sha
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'kanta13jp1/my_web_app' && github.actor == 'kanta13jp1' && inputs.approved_release && inputs.expected_head_sha == github.sha
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

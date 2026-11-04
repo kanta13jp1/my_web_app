@@ -39,7 +39,7 @@ def sha(value):
     return value
 
 
-def reviewed(pr, checks, head, base):
+def reviewed(pr, checks, head, base, extra_required=()):
     if (pr.get('state') != 'closed' or not pr.get('merged') or
             pr['base']['ref'] != 'main' or pr['base']['sha'] != base or
             pr['head']['repo']['full_name'] != REPO or
@@ -65,7 +65,7 @@ def reviewed(pr, checks, head, base):
     public = latest.get('Public E2E stability smoke')
     if public is None or public.get('conclusion') not in {'success', 'skipped'}:
         raise ValueError('Missing or failed required public smoke check')
-    if not approved or not REQUIRED <= successful:
+    if not approved or not (REQUIRED | set(extra_required)) <= successful:
         raise ValueError('Missing genuine head/base-bound review or required CI')
 
 
@@ -116,7 +116,8 @@ def run(args):
         pr = api('pulls/' + str(number))
         checks = json.loads(command('gh', 'api', '--paginate', '--slurp',
             'repos/' + REPO + '/commits/' + head + '/check-runs?per_page=100'))
-        reviewed(pr, [c for page in checks for c in page['check_runs']], head, base)
+        reviewed(pr, [c for page in checks for c in page['check_runs']], head, base,
+                 {'Typing release guard tests'} if number == args.support_pr else set())
         git('merge-base', '--is-ancestor', pr['merge_commit_sha'], 'origin/main')
     git('merge-base', '--is-ancestor', args.public_base, args.expected_head)
     changed = git('diff', '--name-only', args.public_base, args.expected_head).splitlines()

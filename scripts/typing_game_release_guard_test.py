@@ -62,6 +62,14 @@ class GuardTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             guard.reviewed(self.pr, checks, self.head, self.base)
 
+    def test_support_requires_its_guard_test_check(self):
+        extra = {'Typing release guard tests'}
+        with self.assertRaises(ValueError):
+            guard.reviewed(self.pr, self.checks, self.head, self.base, extra)
+        checks = self.checks + [{'name': 'Typing release guard tests', 'app': {'id': 15368},
+                                'conclusion': 'success', 'output': {'summary': ''}}]
+        guard.reviewed(self.pr, checks, self.head, self.base, extra)
+
     def test_exact_selection_passes(self):
         all_blobs = {p: 'blob' for p in guard.GAME | guard.SUPPORT}
         guard.selection(all_blobs, all_blobs, all_blobs, all_blobs)
