@@ -52,7 +52,7 @@ void main() {
         child: child!,
       ),
       home: const TypingGamePage(),
-    ));
+    ),);
     await tester.tap(find.byKey(const Key('typing-start')));
     await tester.pump();
     expect(tester.takeException(), isNull);

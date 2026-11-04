@@ -59,7 +59,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
       setState(() => _feedback = '一文字ずつ入力。削除や貼り付けは使いません');
       return TextEditingValue(
           text: prefix,
-          selection: TextSelection.collapsed(offset: prefix.length));
+          selection: TextSelection.collapsed(offset: prefix.length),);
     }
     final letter = next.text.substring(prefix.length);
     setState(() {
@@ -104,7 +104,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
             ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (_) {
               if (!_game.running) _start();
               return null;
-            }),
+            },),
           },
           child: Focus(
             autofocus: true,
@@ -117,23 +117,23 @@ class _TypingGamePageState extends State<TypingGamePage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text('60秒、ことばに集中。',
-                          style: Theme.of(context).textTheme.headlineMedium),
+                          style: Theme.of(context).textTheme.headlineMedium,),
                       const SizedBox(height: 8),
                       const Text(
-                          '日本語のことばをローマ字で入力しよう。正解1文字10点、1問クリアで50点。間違えてもそのまま続けられます。'),
+                          '日本語のことばをローマ字で入力しよう。正解1文字10点、1問クリアで50点。間違えてもそのまま続けられます。',),
                       const SizedBox(height: 20),
                       Wrap(spacing: 20, runSpacing: 12, children: [
                         Text(
-                            '残り ${(_game.remaining.inMilliseconds / 1000).ceil()}秒'),
+                            '残り ${(_game.remaining.inMilliseconds / 1000).ceil()}秒',),
                         Text('スコア ${_game.score}'),
                         Text('正確さ ${_game.accuracy.toStringAsFixed(1)}%'),
                         Text('クリア ${_game.words}問'),
                         Text('連続 ${_game.combo}文字'),
-                      ]),
+                      ],),
                       const SizedBox(height: 12),
                       LinearProgressIndicator(
                           value: _game.remaining.inMilliseconds /
-                              TypingGame.duration.inMilliseconds),
+                              TypingGame.duration.inMilliseconds,),
                       const SizedBox(height: 20),
                       if (_game.running) ...[
                         Card(
@@ -144,7 +144,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                   style: Theme.of(context)
                                       .textTheme
                                       .headlineMedium,
-                                  textAlign: TextAlign.center),
+                                  textAlign: TextAlign.center,),
                               const SizedBox(height: 8),
                               Text(_game.prompt.reading),
                               const SizedBox(height: 20),
@@ -155,19 +155,19 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                         style: TextStyle(
                                             color: colors.primary,
                                             decoration:
-                                                TextDecoration.underline)),
+                                                TextDecoration.underline,),),
                                     TextSpan(
                                         text: _game.guide
-                                            .substring(_game.prefix.length)),
-                                  ]),
+                                            .substring(_game.prefix.length),),
+                                  ],),
                                   style: const TextStyle(
-                                      fontFamily: 'monospace', fontSize: 24),
-                                  textAlign: TextAlign.center),
+                                      fontFamily: 'monospace', fontSize: 24,),
+                                  textAlign: TextAlign.center,),
                               const SizedBox(height: 12),
                               Text(
                                   '使えるつづり: ${_game.prompt.spellings.join(' / ')}',
-                                  textAlign: TextAlign.center),
-                            ]),
+                                  textAlign: TextAlign.center,),
+                            ],),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -177,7 +177,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
                           focusNode: _focus,
                           onTap: () {
                             _input.selection = TextSelection.collapsed(
-                                offset: _input.text.length);
+                                offset: _input.text.length,);
                           },
                           autocorrect: false,
                           enableSuggestions: false,
@@ -186,11 +186,11 @@ class _TypingGamePageState extends State<TypingGamePage> {
                           textCapitalization: TextCapitalization.none,
                           inputFormatters: [
                             TextInputFormatter.withFunction(_format)
-                          ],
+                          ,],
                           decoration: const InputDecoration(
                               border: OutlineInputBorder(),
                               labelText: 'ローマ字入力',
-                              helperText: '英語キーボード・半角英字 / 入力欄をタップで再開'),
+                              helperText: '英語キーボード・半角英字 / 入力欄をタップで再開',),
                         ),
                         const SizedBox(height: 12),
                         Text(_feedback, textAlign: TextAlign.center),
@@ -205,26 +205,26 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                   Text('おつかれさま！ ${_game.score}点',
                                       style: Theme.of(context)
                                           .textTheme
-                                          .headlineSmall),
+                                          .headlineSmall,),
                                   Text(
-                                      '${_game.words}問クリア / 正確さ ${_game.accuracy.toStringAsFixed(1)}%'),
+                                      '${_game.words}問クリア / 正確さ ${_game.accuracy.toStringAsFixed(1)}%',),
                                   Text(
-                                      '最大連続 ${_game.bestCombo}文字 / ミス ${_game.mistakes}回'),
+                                      '最大連続 ${_game.bestCombo}文字 / ミス ${_game.mistakes}回',),
                                   Text('この画面でのベスト $_best点'),
-                                ]),
-                              ))),
+                                ],),
+                              ),),),
                         const SizedBox(height: 16),
                         FilledButton.icon(
                           key: const Key('typing-start'),
                           onPressed: _start,
                           icon: const Icon(Icons.play_arrow),
                           label: Text(
-                              _game.finished ? 'もう一度挑戦（Enter）' : 'スタート（Enter）'),
+                              _game.finished ? 'もう一度挑戦（Enter）' : 'スタート（Enter）',),
                         ),
                       ],
                       const SizedBox(height: 24),
                       const Text(
-                          '遊び方: IMEをオフにし、表示されたつづりを一文字ずつ入力します。shi / si などは「使えるつづり」にあるものに対応。削除・貼り付け・かな入力は対象外です。スマートフォンでは英語キーボードを選択してください。ベスト記録はこの画面を閉じるまで。'),
+                          '遊び方: IMEをオフにし、表示されたつづりを一文字ずつ入力します。shi / si などは「使えるつづり」にあるものに対応。削除・貼り付け・かな入力は対象外です。スマートフォンでは英語キーボードを選択してください。ベスト記録はこの画面を閉じるまで。',),
                     ],
                   ),
                 ),
