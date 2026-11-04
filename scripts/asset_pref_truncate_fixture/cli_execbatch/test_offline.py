@@ -174,6 +174,21 @@ def run():
     case=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name=='run_case')
     calls=[n.func.attr for n in ast.walk(case) if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute) and n.func.attr in ('wait_final_postmaster','initialize')]
     assert calls.count('wait_final_postmaster')==1 and calls.count('initialize')==1
+    history_gate=m['HISTORY_GATE']
+    route_conditions=("inet_client_addr() IS DISTINCT FROM '127.0.0.1'::inet",
+                      "inet_server_addr() IS DISTINCT FROM '127.0.0.1'::inet",
+                      'inet_server_port() IS DISTINCT FROM 5432')
+    assert all(history_gate.count(condition)==1 for condition in route_conditions)
+    assert 'inet_client_addr() IS NOT NULL' not in history_gate and 'inet_server_addr() IS NOT NULL' not in history_gate
+    # Model SQL IS DISTINCT FROM, including NULL; no database is started.
+    def mocked_route_allowed(client, server, port):
+        return not (client != '127.0.0.1' or server != '127.0.0.1' or port != 5432)
+    assert mocked_route_allowed('127.0.0.1','127.0.0.1',5432)
+    for bad_route in ((None,None,None),('127.0.0.2','127.0.0.1',5432),
+                      ('127.0.0.1','127.0.0.2',5432),('127.0.0.1','127.0.0.1',5433),
+                      ('127.0.0.1','127.0.0.1',None),('::1','::1',5432)):
+        assert not mocked_route_allowed(*bad_route)
+    print('PASS: mocked history route allows fixed IPv4/port and rejects socket/non-loopback/other ports')
     summary=m['summarize_server_logs']('FATAL: password authentication failed for private-user\n')
     assert summary['fatal_line_count']==1 and 'private-user' not in repr(summary)
     class ReadyFake:

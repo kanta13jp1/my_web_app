@@ -807,7 +807,9 @@ CREATE FUNCTION supabase_migrations.synthetic_history_gate() RETURNS trigger LAN
 BEGIN
  IF current_database() <> 'synthetic_execbatch' OR current_user <> 'postgres'
     OR current_setting('server_version_num')::int/10000 <> 17
-    OR inet_client_addr() IS NOT NULL OR inet_server_addr() IS NOT NULL
+    OR inet_client_addr() IS DISTINCT FROM '127.0.0.1'::inet
+    OR inet_server_addr() IS DISTINCT FROM '127.0.0.1'::inet
+    OR inet_server_port() IS DISTINCT FROM 5432
     OR (SELECT count(*) FROM public.codex_execbatch_guard) <> 1
     OR NEW.version <> '20991231000000' THEN
    RAISE EXCEPTION 'SYNTHETIC_ROUTE_OR_HISTORY_MISMATCH';
