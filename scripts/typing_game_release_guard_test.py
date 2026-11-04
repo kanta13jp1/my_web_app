@@ -104,6 +104,12 @@ class GuardTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             guard.selection(all_blobs, changed, all_blobs, all_blobs)
 
+    def test_production_hold_requires_explicit_false(self):
+        guard.production_hold('false')
+        for value in [None, '', 'true', 'False', ' false', 'false\n']:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                guard.production_hold(value)
+
     def test_immutable_sha_validation(self):
         guard.sha(self.head)
         for value in ['main', 'a' * 39, 'A' * 40, 'a' * 40 + '\n']:

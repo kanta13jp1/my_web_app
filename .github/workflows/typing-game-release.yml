@@ -54,6 +54,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  PRODUCTION_DEPLOY_HOLD: ${{ vars.PRODUCTION_DEPLOY_HOLD }}
   EXPECTED_HEAD: ${{ inputs.expected_head_sha }}
   PUBLIC_BASE: ${{ inputs.public_base_sha }}
   SOURCE_HEAD: ${{ inputs.source_head_sha }}
