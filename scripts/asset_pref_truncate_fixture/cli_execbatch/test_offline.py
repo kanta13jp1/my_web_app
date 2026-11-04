@@ -9,6 +9,7 @@ import runpy
 import subprocess
 import tarfile
 import types
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 
@@ -16,7 +17,7 @@ def run():
     ast.parse((HERE / 'runner.py').read_bytes())
     m = runpy.run_path(str(HERE / 'runner.py'), run_name='offline_review')
     pair = m['candidate_pair']()
-    assert set(pair) == {'explicit', 'batch', 'pr_head_06505ee4', 'pr_do_no_boundaries'}
+    assert set(pair) == {'explicit', 'batch', 'pr_head_06505ee4', 'pr_do_no_boundaries', 'locked_single_do'}
     pr=pair['pr_head_06505ee4'].replace(b'\r\n',b'\n')
     assert pr.replace(b'\nbegin;\n',b'\n',1).removesuffix(b'\ncommit;') == pair['pr_do_no_boundaries'].replace(b'\r\n',b'\n')
     branch='refs/heads/codex/asset-pref-cli-execbatch-diagnostic-20261104'
@@ -175,10 +176,7 @@ def run():
     tree=ast.parse((HERE/'runner.py').read_bytes())
     matrix=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name=='run_matrix')
     mode_loops=[x for x in ast.walk(matrix) if isinstance(x,ast.For) and isinstance(x.target,ast.Name) and x.target.id=='mode']
-    assert len(mode_loops)==1 and ast.literal_eval(mode_loops[0].iter)==('pr_do_no_boundaries',)
-    assert m['PROFILE_CASES']==(('anon_select_absent','success'),('authenticated_select_absent','success'),
-        ('both_select_absent','success'),('mixed_absent','success'),('truncate_preabsent','success'),
-        ('both_select_absent','history_failure'),('mixed_absent','history_failure'),('oracle_negative','success'))
+    assert len(mode_loops)==1 and ast.literal_eval(mode_loops[0].iter)==('locked_single_do',)
     case=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name=='run_case')
     calls=[n.func.attr for n in ast.walk(case) if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute) and n.func.attr in ('wait_final_postmaster','initialize')]
     assert calls.count('wait_final_postmaster')==1 and calls.count('initialize')==1
@@ -558,10 +556,8 @@ def run():
             self.executed = False
             self.before = {'owner':'10','rls':True,'force':False,'rows':[], 'policy':[],
                            'hierarchy':[], 'service':True,'anon':True,'authenticated':True,'acl':'initial',
-                           'other_acl':[],'other_effective':[[r,p,True] for r in ('anon','authenticated','service_role')
-                               for p in ('SELECT','INSERT','UPDATE','DELETE','REFERENCES','TRIGGER','MAINTAIN')],
-                           'columns':[],'memberships':[],'role_attributes':[]}
-            self.after = copy.deepcopy(self.before)
+                           'other_acl':[],'other_effective':[],'columns':[],'memberships':[],'role_attributes':[]}
+            self.after = dict(self.before)
             if outcome == 'success' or (outcome == 'history_failure' and mode == 'explicit'):
                 self.after.update(anon=False,authenticated=False,acl='revoked')
         def create(self): pass
@@ -572,31 +568,35 @@ def run():
             self.verified_negative_fatals=[{'pid':'120','sqlstate':'28000','fatal_line':'[120] FATAL:  28000: expected database refusal'},
                                            {'pid':'121','sqlstate':'28P01','fatal_line':'[121] FATAL:  28P01: expected password refusal'}]
         def psql(self, sql):
-            matching=[k for k,v in m['PROFILE_SQL'].items() if sql==v]
-            if matching:
-                profile=matching[0]
-                for snapshot in (self.before,self.after):
-                    for e in snapshot['other_effective']:
-                        if (e[0],e[1]) in m['PROFILE_MISSING'][profile]:e[2]=False
-                if profile=='truncate_preabsent':self.before['anon']=False
-                return ''
             if sql == m['SNAPSHOT']: return json.dumps(self.after if self.executed else self.before)
             if 'FROM supabase_migrations.schema_migrations;' in sql:
                 return json.dumps([{'version':'20991231000000','name':'synthetic_acl','statement_count':2}]) if self.outcome == 'success' else '[]'
             if 'FROM pg_catalog.pg_stat_activity' in sql:return '0'
             return ''
         def stage(self, binary, migration): pass
+        def start_conflict_holder(self):
+            self.holder=types.SimpleNamespace(poll=lambda:None)
+            return '200'
+        def conflict_holder_pid(self): return '200'
         def cli_push(self):
             self.executed=True
             output = {'success':'applied', 'history_failure':'P0001 SYNTHETIC_HISTORY_FAILURE INSERT INTO supabase_migrations.schema_migrations',
-                      'candidate_failure':'P0001 inheritance or partition relationship requires separate review'}[self.outcome]
+                      'candidate_failure':'P0001 inheritance or partition relationship requires separate review',
+                      'inheritance_parent':'P0001 inheritance or partition relationship requires separate review',
+                      'inheritance_child':'P0001 inheritance or partition relationship requires separate review',
+                      'partition_parent':'P0001 ordinary target table required',
+                      'lock_conflict':'55P03 could not obtain lock on relation "asset_pref_mirror"'}[self.outcome]
             return types.SimpleNamespace(returncode=0 if self.outcome=='success' else 1,
                                          stdout=output.encode(),stderr=b'')
         def logs(self):
             host = '[local]' if self.bad_route else '127.0.0.1 port=48392'
             failure = {'success':'', 'history_failure':'SYNTHETIC_HISTORY_FAILURE',
-                       'candidate_failure':'inheritance or partition relationship requires separate review'}[self.outcome]
-            error = '' if not failure else '[140] ERROR:  P0001: ' + failure + '\n'
+                       'candidate_failure':'inheritance or partition relationship requires separate review',
+                       'inheritance_parent':'inheritance or partition relationship requires separate review',
+                       'inheritance_child':'inheritance or partition relationship requires separate review',
+                       'partition_parent':'ordinary target table required',
+                       'lock_conflict':'could not obtain lock on relation "asset_pref_mirror"'}[self.outcome]
+            error = '' if not failure else '[140] ERROR:  ' + ('55P03' if self.outcome=='lock_conflict' else 'P0001') + ': ' + failure + '\n'
             statement = '[140] STATEMENT:  INSERT INTO supabase_migrations.schema_migrations\n' if self.outcome == 'history_failure' else ''
             return ('\n'.join(e['fatal_line'] for e in self.verified_negative_fatals)+'\n'
                     '[140] LOG:  00000: connection received: host=' + host + '\n'
@@ -613,6 +613,11 @@ def run():
                 expected = 'only_target_truncate_removed' if mode=='explicit' else 'complete_acl_unchanged'
                 assert observed['history_failure_effect'] == expected
             assert observed['history_count']==(1 if outcome=='success' else 0)
+    for outcome in ('success','history_failure','lock_conflict','inheritance_parent','inheritance_child','partition_parent'):
+        with contextlib.redirect_stdout(io.StringIO()):
+            observed=m['run_case'](SimulatedService('locked_single_do',outcome),'locked_single_do',outcome,b'fake',pair['locked_single_do'])
+        assert observed['history_count']==(1 if outcome=='success' else 0)
+        if outcome=='lock_conflict': assert observed['conflict_holder_pid']=='200'
     try:
         with contextlib.redirect_stdout(io.StringIO()):
             m['run_case'](SimulatedService('batch','success',bad_route=True),'batch','success',b'fake',pair['batch'])
@@ -624,21 +629,6 @@ def run():
                 m['run_case'](service,mode,outcome,b'fake',pair[mode])
         except RuntimeError: return
         raise AssertionError('unsafe case accepted: ' + mode + '/' + outcome)
-    for profile,outcome in m['PROFILE_CASES']:
-        service=SimulatedService('pr_do_no_boundaries',outcome)
-        with contextlib.redirect_stdout(io.StringIO()):
-            observed=m['run_case'](service,'pr_do_no_boundaries',outcome,b'fake',pair['pr_do_no_boundaries'],profile)
-        assert observed['profile']==profile
-        assert observed['oracle_negative_detected'] is (profile=='oracle_negative')
-        if outcome=='history_failure':assert observed['history_failure_effect']=='complete_acl_unchanged'
-    bad_baseline=SimulatedService('pr_do_no_boundaries','success').before
-    try:m['validate_profile_baseline'](bad_baseline,'anon_select_absent')
-    except RuntimeError:pass
-    else:raise AssertionError('missing-privilege baseline was not actually verified')
-    try:m['validate_profile_baseline'](bad_baseline,'unknown_profile')
-    except RuntimeError:pass
-    else:raise AssertionError('unknown synthetic profile accepted')
-    print('PASS: selected profile baselines, history failure controls and perturbed snapshot oracle (mock only)')
     # A known 25P01 at batch/success must be retained as a failed control.
     known_failure=SimulatedService('batch','success')
     known_failure.after=dict(known_failure.before)
@@ -674,6 +664,51 @@ def run():
     assert_case_rejected(partial,'batch','history_failure')
     guard_changed=SimulatedService('batch','candidate_failure');guard_changed.after['acl']='unexpected-acl'
     assert_case_rejected(guard_changed,'batch','candidate_failure')
+    missing_holder=SimulatedService('locked_single_do','lock_conflict')
+    missing_holder.conflict_holder_pid=lambda:'201'
+    assert_case_rejected(missing_holder,'locked_single_do','lock_conflict')
+    overlapping_holder=SimulatedService('locked_single_do','lock_conflict')
+    def start_overlap():
+        overlapping_holder.holder=types.SimpleNamespace(poll=lambda:None)
+        return '140'
+    overlapping_holder.start_conflict_holder=start_overlap
+    overlapping_holder.conflict_holder_pid=lambda:'140'
+    assert_case_rejected(overlapping_holder,'locked_single_do','lock_conflict')
+    changed_locked=SimulatedService('locked_single_do','history_failure')
+    changed_locked.after['acl']='unexpected'
+    assert_case_rejected(changed_locked,'locked_single_do','history_failure')
+    exited_holder=SimulatedService('locked_single_do','lock_conflict')
+    def start_exited():
+        exited_holder.holder=types.SimpleNamespace(poll=lambda:0)
+        return '200'
+    exited_holder.start_conflict_holder=start_exited
+    assert_case_rejected(exited_holder,'locked_single_do','lock_conflict')
+    wrong_error=SimulatedService('locked_single_do','lock_conflict')
+    orig_logs=wrong_error.logs
+    wrong_error.logs=lambda:orig_logs().replace('[140] ERROR:  55P03:', '[141] ERROR:  55P03:')
+    assert_case_rejected(wrong_error,'locked_single_do','lock_conflict')
+    holder=m['OwnedService'](['/fake/docker'],{},image,'123-1')
+    holder.cid='a'*64;holder.nonce='b'*32;holder.token='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    holder.verified=True;holder.inspect=lambda **kwargs:None
+    holder.psql=lambda sql:'200'
+    fake_process=mock.Mock();fake_process.poll.return_value=None
+    with mock.patch.object(subprocess,'Popen',return_value=fake_process) as spawn:
+        assert holder.start_conflict_holder()=='200'
+        args=spawn.call_args.args[0]
+        assert args[:2]==['/fake/docker','exec'] and holder.cid in args
+        assert 'LOCK TABLE ONLY public.asset_pref_mirror IN ACCESS SHARE MODE' in args[-1]
+        assert 'PGAPPNAME=codex_conflict_'+holder.nonce in args
+        assert spawn.call_count==1
+    holder.psql=lambda sql:'200,201'
+    try: holder.conflict_holder_pid()
+    except RuntimeError: pass
+    else: raise AssertionError('ambiguous holder PID accepted')
+    not_owned=m['OwnedService'](['/fake/docker'],{},image,'123-1')
+    with mock.patch.object(subprocess,'Popen',side_effect=AssertionError('unexpected spawn')):
+        try:not_owned.start_conflict_holder()
+        except RuntimeError:pass
+        else:raise AssertionError('unverified holder was started')
+    print('PASS: mock holder identity, escaped/ambiguous PID and non-owner rejection; no subprocess started')
     print('PASS: same-PID ERROR/INSERT proof, unexpected partial ACL and guard-drift refusals')
     print('PASS: AST; fixed STOP candidate pair/diff; safe synthetic tar; ELF; seven archive, ten container and nine workflow identity rejections')
     print('PASS: ten synthetic result-classification cases and wrong-route refusal')

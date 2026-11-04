@@ -34,6 +34,7 @@ CANDIDATES = {
  'batch': ('candidate_lock_rc_cli_batch_review_stopped.sql.txt', 'e522e693c83dbc517ba26345546fdd06f0c02bb032ead12c124444227bf60a79'),
  'pr_head_06505ee4': ('revoke_truncate_candidate_review_stopped.sql.txt', '3372910f839d556a35d81dfd6ababe8c73438e52636d7fe8c491835528f1dfb6'),
  'pr_do_no_boundaries': ('candidate_pr_do_without_boundaries_review_stopped.sql.txt', '1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f'),
+ 'locked_single_do': ('candidate_single_do_lock_review_stopped.sql.txt', 'ee18141eb1390ce6446ffe3696f677495f809606e144ff9164faf62d03db5f19'),
 }
 VERSION = '20991231000000'
 MIGRATION = '/tmp/codex-cli/supabase/migrations/20991231000000_synthetic_acl.sql'
@@ -134,6 +135,11 @@ def candidate_pair():
         or not pr.endswith(b'\ncommit;')
         or pr.replace(b'\nbegin;\n', b'\n', 1).removesuffix(b'\ncommit;') != no_boundaries):
         raise RuntimeError('PR comparison differs beyond transaction boundaries')
+    locked = decoded['locked_single_do']
+    if (sha(locked) != '75191bde9ec18b47cdb9b1b8170245fd150ed653834de585e91b24f256781d4f'
+        or locked.lower().count(b'do $$') != 1 or b'\nbegin;\n' in locked.lower()
+        or b'\ncommit;' in locked.lower()):
+        raise RuntimeError('locked candidate body or transaction boundary mismatch')
     return decoded
 
 
@@ -343,6 +349,7 @@ class OwnedService:
         self.cli_binary_sha = None
         self.expected_migration_sha = None
         self.expected_migration_length = None
+        self.holder = None
 
     def command(self, args, *, input=None, timeout=30, check=True):
         return subprocess.run(self.docker + args, env=self.env, input=input,
@@ -761,6 +768,40 @@ class OwnedService:
             'guarded_loopback_positive':True,
             'scope':'two negative controls; not a proof against same-UID races'},sort_keys=True),flush=True)
 
+    def conflict_holder_pid(self):
+        if not re.fullmatch(r'[0-9a-f]{32}',self.nonce): raise RuntimeError('invalid holder nonce')
+        app='codex_conflict_'+self.nonce
+        sql = ("SELECT coalesce(string_agg(DISTINCT a.pid::text,','),'') FROM pg_catalog.pg_stat_activity a "
+               "JOIN pg_catalog.pg_locks l ON l.pid=a.pid WHERE a.application_name='"+app+"' "
+               "AND a.datname='synthetic_execbatch' AND a.usename='postgres' "
+               "AND l.relation='public.asset_pref_mirror'::regclass AND l.mode='AccessShareLock' AND l.granted;")
+        value=self.psql(sql).strip()
+        if value and not re.fullmatch(r'[1-9][0-9]*',value):
+            raise RuntimeError('ambiguous synthetic conflict holder')
+        return value
+
+    def start_conflict_holder(self):
+        if self.holder is not None or not self.verified:
+            raise RuntimeError('invalid synthetic conflict holder state')
+        self.inspect(running=True)
+        if not re.fullmatch(r'[0-9a-f-]{36}',self.token) or not re.fullmatch(r'[0-9a-f]{32}',self.nonce):
+            raise RuntimeError('invalid synthetic holder identity')
+        sql=("SELECT 1/((count(*)=1)::int) FROM public.codex_execbatch_guard WHERE token='"+self.token+"'::uuid; "
+             "BEGIN; LOCK TABLE ONLY public.asset_pref_mirror IN ACCESS SHARE MODE; SELECT pg_sleep(30); ROLLBACK;")
+        args=self.docker+['exec','-i','-u','postgres',self.cid,'/usr/bin/env','-i',
+            'PATH=/usr/local/bin:/usr/bin:/bin','HOME=/tmp/codex-cli','PGAPPNAME=codex_conflict_'+self.nonce,
+            '/usr/lib/postgresql/17/bin/psql','-X','-qAt','-v','ON_ERROR_STOP=1',
+            '-h','/var/run/postgresql','-U','postgres','-d',DB,'-c',sql]
+        self.holder=subprocess.Popen(args,env=self.env,stdin=subprocess.DEVNULL,
+                                     stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        deadline=time.monotonic()+10
+        while time.monotonic()<deadline:
+            if self.holder.poll() is not None: raise RuntimeError('synthetic conflict holder exited early')
+            pid=self.conflict_holder_pid()
+            if pid and self.holder.poll() is None:return pid
+            time.sleep(0.1)
+        raise RuntimeError('synthetic conflict holder readiness deadline exceeded')
+
     def cli_push(self):
         self.psql('SELECT 1;')
         self.verify_cli_binary()
@@ -779,6 +820,15 @@ class OwnedService:
         if not self.verified:
             raise RuntimeError('container was not verified; no stop attempted; manual inspection required: ' + str(self.cid))
         started = time.monotonic()
+        holder_error = None
+        if self.holder is not None:
+            try:
+                if self.holder.poll() is None: self.holder.terminate()
+                try: self.holder.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    self.holder.kill(); self.holder.wait(timeout=5)
+            except Exception as exc:
+                holder_error = type(exc).__name__
         info = self.inspect()
         if info['State']['Running']:
             self.command(['stop','--time','5',self.cid], timeout=20)
@@ -789,8 +839,11 @@ class OwnedService:
         verify_removed(self.cid, missing.returncode, missing.stdout.decode('utf-8',errors='replace'),
             missing.stderr.decode('utf-8',errors='replace'), listed.returncode,
             listed.stdout.decode('utf-8',errors='replace'), listed.stderr.decode('utf-8',errors='replace'))
+        if holder_error:
+            raise RuntimeError('holder client cleanup failed after confirmed container removal: '+holder_error)
         print('SYNTHETIC_EXECBATCH_TEARDOWN ' + json.dumps({'run_id':self.run_id,'nonce':self.nonce,
             'container_id':self.cid,'stopped_removed':True,'inspect_absent':True,'ps_absent':True,
+            'holder_client_stopped':self.holder is None or self.holder.poll() is not None,
             'seconds':time.monotonic()-started}, sort_keys=True), flush=True)
 
 
@@ -807,63 +860,6 @@ GRANT ALL PRIVILEGES ON public.asset_pref_mirror TO anon,authenticated,service_r
 CREATE SCHEMA supabase_migrations;
 CREATE TABLE supabase_migrations.schema_migrations (version text NOT NULL PRIMARY KEY, statements text[], name text);
 """
-PROFILE_SQL = {
- 'baseline': 'SELECT 1;',
- 'anon_select_absent': 'REVOKE SELECT ON public.asset_pref_mirror FROM anon;',
- 'authenticated_select_absent': 'REVOKE SELECT ON public.asset_pref_mirror FROM authenticated;',
- 'both_select_absent': 'REVOKE SELECT ON public.asset_pref_mirror FROM anon, authenticated;',
- 'mixed_absent': ('REVOKE SELECT, INSERT ON public.asset_pref_mirror FROM anon; '
-                  'REVOKE UPDATE, DELETE ON public.asset_pref_mirror FROM authenticated;'),
- 'truncate_preabsent': 'REVOKE TRUNCATE ON public.asset_pref_mirror FROM anon;',
- 'oracle_negative': 'REVOKE SELECT ON public.asset_pref_mirror FROM anon;',
-}
-PROFILE_MISSING = {
- 'baseline': frozenset(),
- 'anon_select_absent': frozenset({('anon','SELECT')}),
- 'authenticated_select_absent': frozenset({('authenticated','SELECT')}),
- 'both_select_absent': frozenset({('anon','SELECT'),('authenticated','SELECT')}),
- 'mixed_absent': frozenset({('anon','SELECT'),('anon','INSERT'),('authenticated','UPDATE'),('authenticated','DELETE')}),
- 'truncate_preabsent': frozenset(),
- 'oracle_negative': frozenset({('anon','SELECT')}),
-}
-PROFILE_CASES = (
- ('anon_select_absent','success'), ('authenticated_select_absent','success'),
- ('both_select_absent','success'), ('mixed_absent','success'),
- ('truncate_preabsent','success'), ('both_select_absent','history_failure'),
- ('mixed_absent','history_failure'), ('oracle_negative','success'),
-)
-
-
-def validate_profile_baseline(snapshot, profile):
-    if profile not in PROFILE_SQL or profile not in PROFILE_MISSING:
-        raise RuntimeError('unapproved synthetic privilege profile')
-    roles = ('anon','authenticated','service_role')
-    privileges = ('SELECT','INSERT','UPDATE','DELETE','REFERENCES','TRIGGER','MAINTAIN')
-    entries = snapshot.get('other_effective')
-    if not isinstance(entries,list) or len(entries) != len(roles)*len(privileges):
-        raise RuntimeError('synthetic privilege baseline incomplete')
-    observed = {}
-    for entry in entries:
-        if (not isinstance(entry,list) or len(entry)!=3 or entry[0] not in roles
-            or entry[1] not in privileges or type(entry[2]) is not bool):
-            raise RuntimeError('invalid synthetic privilege baseline')
-        key=(entry[0],entry[1])
-        if key in observed: raise RuntimeError('duplicate synthetic privilege baseline')
-        observed[key]=entry[2]
-    for role in roles:
-        for privilege in privileges:
-            if observed.get((role,privilege)) is not ((role,privilege) not in PROFILE_MISSING[profile]):
-                raise RuntimeError('synthetic privilege profile mismatch')
-    if (snapshot.get('anon') is not (profile!='truncate_preabsent')
-        or snapshot.get('authenticated') is not True or snapshot.get('service') is not True):
-        raise RuntimeError('synthetic truncate baseline mismatch')
-
-
-def assert_unrelated_unchanged(before, after):
-    stable_keys = ('owner','rls','force','rows','policy','other_acl','other_effective',
-                   'columns','memberships','role_attributes','hierarchy','service')
-    if any(before[k] != after[k] for k in stable_keys):
-        raise RuntimeError('unrelated synthetic table state changed')
 HISTORY_GATE = r"""
 CREATE TABLE public.codex_execbatch_mode(mode text NOT NULL CHECK (mode IN ('normal','fail')));
 INSERT INTO public.codex_execbatch_mode VALUES ('normal');
@@ -888,6 +884,15 @@ FOR EACH ROW EXECUTE FUNCTION supabase_migrations.synthetic_history_gate();
 """
 HISTORY_FAILURE = "UPDATE public.codex_execbatch_mode SET mode='fail';"
 CHILD_FAILURE = 'CREATE TABLE public.synthetic_child () INHERITS (public.asset_pref_mirror);'
+INHERITED_TARGET = '''CREATE TABLE public.synthetic_parent
+ (user_id uuid, pref_key text, value jsonb, updated_at timestamptz);
+ ALTER TABLE public.asset_pref_mirror INHERIT public.synthetic_parent;'''
+PARTITION_TARGET = '''DROP TABLE public.asset_pref_mirror;
+ CREATE TABLE public.asset_pref_mirror
+ (user_id uuid NOT NULL, pref_key text NOT NULL, value jsonb, updated_at timestamptz)
+ PARTITION BY LIST (pref_key);
+ ALTER TABLE public.asset_pref_mirror ENABLE ROW LEVEL SECURITY;
+ GRANT ALL ON TABLE public.asset_pref_mirror TO anon, authenticated, service_role;'''
 
 SNAPSHOT = r"""SELECT jsonb_build_object(
  'owner',c.relowner,'rls',c.relrowsecurity,'force',c.relforcerowsecurity,'acl',c.relacl::text,
@@ -913,15 +918,12 @@ SNAPSHOT = r"""SELECT jsonb_build_object(
  FROM pg_catalog.pg_class c WHERE c.oid='public.asset_pref_mirror'::regclass;"""
 
 
-def run_case(service, mode, outcome, binary, migration, profile='baseline'):
-    if mode not in CANDIDATES or outcome not in ('success','history_failure','candidate_failure'):
+def run_case(service, mode, outcome, binary, migration):
+    extra = ('lock_conflict','inheritance_parent','inheritance_child','partition_parent')
+    if mode not in CANDIDATES or outcome not in ('success','history_failure','candidate_failure') + extra:
         raise RuntimeError('unapproved fixture case')
-    if profile not in PROFILE_SQL:
-        raise RuntimeError('unapproved synthetic privilege profile')
-    if profile != 'baseline' and mode != 'pr_do_no_boundaries':
-        raise RuntimeError('privilege profiles require the current PR comparison candidate')
-    if profile == 'oracle_negative' and outcome != 'success':
-        raise RuntimeError('invalid oracle-negative outcome')
+    if (outcome in extra and mode != 'locked_single_do') or (mode == 'locked_single_do' and outcome == 'candidate_failure'):
+        raise RuntimeError('case does not apply to this candidate')
     if mode in ('pr_head_06505ee4','pr_do_no_boundaries') and outcome == 'candidate_failure':
         raise RuntimeError('current PR has no inheritance guard; case is inapplicable')
     case_started = time.monotonic()
@@ -929,17 +931,21 @@ def run_case(service, mode, outcome, binary, migration, profile='baseline'):
     service.wait_final_postmaster()
     service.initialize()
     service.configure_synthetic_loopback()
-    service.psql(PROFILE_SQL[profile])
     if outcome == 'history_failure': service.psql(HISTORY_FAILURE)
     if outcome == 'candidate_failure': service.psql(CHILD_FAILURE)
+    if outcome == 'inheritance_parent': service.psql(CHILD_FAILURE)
+    if outcome == 'inheritance_child': service.psql(INHERITED_TARGET)
+    if outcome == 'partition_parent': service.psql(PARTITION_TARGET)
     before = json.loads(service.psql(SNAPSHOT))
-    validate_profile_baseline(before,profile)
     service.stage(binary, migration)
+    holder_pid = service.start_conflict_holder() if outcome == 'lock_conflict' else None
     cli_started = time.monotonic()
     cli = service.cli_push()
     cli_seconds = time.monotonic() - cli_started
     output = (cli.stdout + cli.stderr).decode('utf-8', errors='replace')
     server_logs = service.logs()
+    if holder_pid is not None and (service.holder.poll() is not None or service.conflict_holder_pid() != holder_pid):
+        raise RuntimeError('conflict holder absent or identity changed before evidence collection')
     control_summary = summarize_control_fatals(server_logs, service.verified_negative_fatals)
     if control_summary['verified_negative_control_fatals'] != 2 or control_summary['unexpected_fatal_count'] != 0:
         raise RuntimeError('unexpected FATAL or missing negative-control evidence')
@@ -947,6 +953,8 @@ def run_case(service, mode, outcome, binary, migration, profile='baseline'):
     cli_pids = set(re.findall(r'\[(\d+)\] LOG:\s+(?:[0-9A-Z]{5}:\s+)?connection authorized: user=postgres database=synthetic_execbatch application_name=codex_execbatch_cli(?:\s|$)', server_logs))
     if not cli_pids or not cli_pids <= local_pids:
         raise RuntimeError('CLI loopback route not proven from isolated server logs: ' + output)
+    if holder_pid is not None and holder_pid in cli_pids:
+        raise RuntimeError('conflict holder and CLI backend identities overlap')
     pid_sql = ','.join(sorted(cli_pids))  # digits extracted from verified loopback logs only
     remaining = None
     for attempt in range(5):
@@ -963,7 +971,7 @@ def run_case(service, mode, outcome, binary, migration, profile='baseline'):
                          or type(history_rows[0].get('statement_count')) is not int or history_rows[0]['statement_count'] <= 0):
         raise RuntimeError('unexpected synthetic history row: ' + repr(history_rows))
     history = str(len(history_rows))
-    print('SYNTHETIC_EXECBATCH_OBSERVATION ' + json.dumps({'mode':mode, 'outcome':outcome,'profile':profile,
+    print('SYNTHETIC_EXECBATCH_OBSERVATION ' + json.dumps({'mode':mode, 'outcome':outcome,
         'cli_exit':cli.returncode, 'history_count':history, 'history_rows':history_rows, 'before':before, 'after':after,
         'cli_loopback_pids':sorted(cli_pids), 'cli_backends_remaining':int(remaining),
         'cli_seconds':cli_seconds, 'candidate_stopped_sha':CANDIDATES[mode][1], 'cli_output':output}, sort_keys=True), flush=True)
@@ -971,18 +979,25 @@ def run_case(service, mode, outcome, binary, migration, profile='baseline'):
         if cli.returncode != 0 or history != '1' or after['anon'] or after['authenticated'] or not after['service']:
             raise RuntimeError('success control failed: ' + output)
     else:
-        marker = 'SYNTHETIC_HISTORY_FAILURE' if outcome == 'history_failure' else 'inheritance or partition relationship requires separate review'
-        errors = set(re.findall(r'\[(\d+)\] ERROR:\s+P0001:\s+' + re.escape(marker), server_logs))
-        if cli.returncode == 0 or history != '0' or marker not in output or 'P0001' not in output or not (errors & cli_pids):
+        marker = ('SYNTHETIC_HISTORY_FAILURE' if outcome == 'history_failure' else
+                  'could not obtain lock on relation "asset_pref_mirror"' if outcome == 'lock_conflict' else
+                  'ordinary target table required' if outcome == 'partition_parent' else
+                  'inheritance or partition relationship requires separate review')
+        state = '55P03' if outcome == 'lock_conflict' else 'P0001'
+        errors = set(re.findall(r'\[(\d+)\] ERROR:\s+' + state + r':\s+' + re.escape(marker), server_logs))
+        if cli.returncode == 0 or history != '0' or marker not in output or state not in output or not (errors & cli_pids):
             raise RuntimeError('expected SQLSTATE, same-PID server evidence, or failure absent: ' + output)
         if outcome == 'history_failure':
             insert_pids = set(re.findall(r'\[(\d+)\] STATEMENT:\s+INSERT INTO supabase_migrations\.schema_migrations', server_logs))
             if 'INSERT INTO supabase_migrations.schema_migrations' not in output or not (errors & cli_pids & insert_pids):
                 raise RuntimeError('history INSERT and failure did not share the CLI backend: ' + output)
-    assert_unrelated_unchanged(before,after)
-    if outcome == 'candidate_failure' and before != after:
+    stable_keys = ('owner','rls','force','rows','policy','other_acl','other_effective',
+                   'columns','memberships','role_attributes','hierarchy','service')
+    if any(before[k] != after[k] for k in stable_keys):
+        raise RuntimeError('unrelated synthetic table state changed')
+    if outcome in ('candidate_failure',) + extra and before != after:
         raise RuntimeError('candidate guard failure changed full synthetic snapshot')
-    if mode == 'pr_do_no_boundaries' and outcome == 'history_failure' and before != after:
+    if mode in ('pr_do_no_boundaries','locked_single_do') and outcome == 'history_failure' and before != after:
         raise RuntimeError('PR without boundaries did not roll back on history failure')
     history_effect = None
     if outcome == 'history_failure':
@@ -993,26 +1008,9 @@ def run_case(service, mode, outcome, binary, migration, profile='baseline'):
             history_effect = 'only_target_truncate_removed'
         else:
             raise RuntimeError('unexpected partial privilege change after history failure')
-    oracle_negative_detected = False
-    if profile == 'oracle_negative':
-        if outcome != 'success': raise RuntimeError('invalid oracle-negative outcome')
-        # Perturb only a local snapshot copy; never mutate the synthetic database.
-        tampered = json.loads(json.dumps(after))
-        matches = [e for e in tampered['other_effective'] if e[:2] == ['anon','SELECT']]
-        if len(matches) != 1 or type(matches[0][2]) is not bool:
-            raise RuntimeError('oracle-negative target invalid')
-        matches[0][2] = not matches[0][2]
-        try:
-            assert_unrelated_unchanged(before,tampered)
-        except RuntimeError as exc:
-            if str(exc) != 'unrelated synthetic table state changed': raise
-            oracle_negative_detected = True
-        else:
-            raise RuntimeError('oracle failed to detect unrelated privilege change')
-    return {'mode':mode,'outcome':outcome,'profile':profile,
-        'oracle_negative_detected':oracle_negative_detected,'candidate_stopped_sha':CANDIDATES[mode][1],
+    return {'mode':mode,'outcome':outcome,'candidate_stopped_sha':CANDIDATES[mode][1],
         'cli_exit':cli.returncode,'history_count':int(history),'history_rows':history_rows,'before':before,'after':after,
-        'history_failure_effect':history_effect,'cli_loopback_pids':sorted(cli_pids),
+        'history_failure_effect':history_effect,'cli_loopback_pids':sorted(cli_pids), 'conflict_holder_pid':holder_pid,
         'cli_backends_remaining':int(remaining),'cli_seconds':cli_seconds,
         'case_seconds':time.monotonic()-case_started,'cli_output':output,
         'scope':'official CLI 2.84.2 db push, synthetic PG17 network none; production unverified'}
@@ -1030,15 +1028,16 @@ def run_matrix():
         docker = ['/usr/bin/docker','--config',config,'--host','unix:///var/run/docker.sock']
         image = json.loads(subprocess.run(docker + ['image','inspect',IMAGE], env=env, capture_output=True,
             check=True, timeout=15).stdout)[0]
-        for mode in ('pr_do_no_boundaries',):
-            for profile, outcome in PROFILE_CASES:
+        for mode in ('locked_single_do',):
+            outcomes = ('success','history_failure','lock_conflict','inheritance_parent','inheritance_child','partition_parent')
+            for outcome in outcomes:
                 service = OwnedService(docker, env, image, run_id)
                 try:
-                    result = run_case(service,mode,outcome,binary,candidates[mode],profile)
+                    result = run_case(service,mode,outcome,binary,candidates[mode])
                     results.append(result)
                     print('SYNTHETIC_EXECBATCH_EVIDENCE ' + json.dumps(result,sort_keys=True),flush=True)
                 except BaseException as exc:
-                    evidence = {'mode':mode, 'outcome':outcome, 'profile':profile,'run_id':service.run_id,
+                    evidence = {'mode':mode, 'outcome':outcome, 'run_id':service.run_id,
                         'nonce':service.nonce, 'container_id':service.cid, 'error_type':type(exc).__name__,
                         'error_summary':classify_failure(exc)}
                     if isinstance(exc, FixturePsqlError):
@@ -1062,7 +1061,8 @@ def run_matrix():
                                 ('; original failure: ' + repr(original) if original else '')) from original
     return {'run_id':run_id, 'cases':results,'not_verified':['real DB','Auth','production','other PG versions',
         'concurrent role/GRANT','name replacement','deployment workflow environment',
-        'history statements exact bytes/order','default container capabilities retained','actual lock hold duration'],
+        'history statements exact bytes/order','default container capabilities retained','actual lock hold duration',
+        'CLI effective RR/serializable after RESET ALL','lock retention through history INSERT and commit'],
         'note':'history INSERT failure is deliberate and not a production change'}
 
 
