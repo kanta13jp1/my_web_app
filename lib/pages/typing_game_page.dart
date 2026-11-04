@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../models/typing_game.dart';
 
@@ -23,6 +24,9 @@ class _TypingGamePageState extends State<TypingGamePage> {
   int _bestChallenge = 0;
   TypingMode _selectedMode = TypingMode.challenge;
   bool _reviewPractice = false;
+  bool _english = false;
+
+  String _t(String japanese, String english) => _english ? english : japanese;
 
   void _start({List<TypingPrompt>? review}) {
     _timer?.cancel();
@@ -30,7 +34,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
       if (review != null) _selectedMode = TypingMode.practice;
       _reviewPractice = review != null;
       _game.start(mode: _selectedMode, practicePrompts: review);
-      _feedback = 'さあ、最初の一文字！';
+      _feedback = _t('さあ、最初の一文字！', 'Ready for your first letter!',);
       _input.clear();
     });
     _clock.reset();
@@ -62,13 +66,13 @@ class _TypingGamePageState extends State<TypingGamePage> {
     setState(_tick);
     if (!_game.running) return old;
     if (!next.composing.isCollapsed) {
-      setState(() => _feedback = 'IMEをオフにして、半角英字で入力してください');
+      setState(() => _feedback = _t('IMEをオフにして、半角英字で入力してください', 'Turn off IME and type Latin letters.',));
       return old;
     }
     final prefix = _game.prefix;
     if (next.text.length != prefix.length + 1 ||
         !next.text.startsWith(prefix)) {
-      setState(() => _feedback = '一文字ずつ入力。削除や貼り付けは使いません');
+      setState(() => _feedback = _t('一文字ずつ入力。削除や貼り付けは使いません', 'Type one letter at a time. Deleting and pasting are not supported.',));
       return TextEditingValue(
         text: prefix,
         selection: TextSelection.collapsed(offset: prefix.length),
@@ -77,15 +81,15 @@ class _TypingGamePageState extends State<TypingGamePage> {
     final letter = next.text.substring(prefix.length);
     setState(() {
       if (!RegExp(r'^[a-zA-Z]$').hasMatch(letter)) {
-        _feedback = '半角英字で入力してください（IMEオフ）';
+        _feedback = _t('半角英字で入力してください（IMEオフ）', 'Use Latin letters with IME turned off.',);
       } else {
         final words = _game.words;
         final accepted = _game.type(letter);
         _feedback = !accepted
-            ? '惜しい！次の文字を確認しよう'
+            ? _t('惜しい！次の文字を確認しよう', 'Almost! Check the next letter.',)
             : _game.words > words
-                ? 'クリア！次のことばへ'
-                : '${_game.combo}文字連続！';
+                ? _t('クリア！次のことばへ', 'Word complete! Try the next one.',)
+                : _t('${_game.combo}文字連続！', '${_game.combo} letters in a row!',);
       }
     });
     _settle();
@@ -114,25 +118,27 @@ class _TypingGamePageState extends State<TypingGamePage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '間違えたことばを振り返ろう',
+              _t('間違えたことばを振り返ろう', 'Words to practise',),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             for (final item in review.take(5))
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Text('${item.prompt.japanese}（${item.prompt.reading}）'
-                    ' / ミス ${item.count}回\n'
-                    '${item.prompt.spellings.join(' / ')}'),
+                child: Text(
+                  '${item.prompt.japanese}（${item.prompt.reading}）\n'
+                  '${_t('ミス ${item.count}回', 'Mistakes ${item.count}')}\n'
+                  '${item.prompt.spellings.join(' / ')}',
+                ),
               ),
             if (review.length > 5)
-              Text('ほか${review.length - 5}語。再練習は間違えたことばから10問出題します。'),
+              Text(_t('ほか${review.length - 5}語。再練習は間違えたことばから10問出題します。', '${review.length - 5} more words. Focused practice picks ten prompts from all your missed words.',)),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () =>
                   _start(review: review.map((item) => item.prompt).toList()),
               icon: const Icon(Icons.replay),
-              label: const Text('苦手なことばを練習'),
+              label: Text(_t('苦手なことばを練習', 'Practise missed words',)),
             ),
           ],
         ),
@@ -146,8 +152,17 @@ class _TypingGamePageState extends State<TypingGamePage> {
     final practice =
         (_game.running || _game.finished ? _game.mode : _selectedMode) ==
             TypingMode.practice;
-    return Scaffold(
-      appBar: AppBar(title: const Text('ことばのタイピング')),
+    final page = Scaffold(
+      appBar: AppBar(
+        title: Text(_t('ことばのタイピング', 'Kotoba Typing')),
+        actions: [
+          TextButton(
+            key: const Key('typing-language'),
+            onPressed: _game.running ? null : () => setState(() => _english = !_english),
+            child: Text(_english ? '日本語' : 'English'),
+          ),
+        ],
+      ),
       body: Shortcuts(
         shortcuts: const {
           SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
@@ -173,12 +188,12 @@ class _TypingGamePageState extends State<TypingGamePage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        practice ? '自分のペースで、10問。' : '60秒、ことばに集中。',
+                        practice ? _t('自分のペースで、10問。', 'Ten words, at your own pace.',) : _t('60秒、ことばに集中。', 'One minute. Find your rhythm.',),
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        '36種類のことばをローマ字で入力しよう。正解1文字10点、1問クリアで50点。間違えてもそのまま続けられます。',
+                      Text(
+                        _t('36種類のことばをローマ字で入力しよう。正解1文字10点、1問クリアで50点。間違えてもそのまま続けられます。', 'Practise 36 Japanese words in romaji. Each correct letter scores 10 points; each word adds 50. Keep going after a mistake.',),
                       ),
                       if (!_game.running) ...[
                         const SizedBox(height: 16),
@@ -190,8 +205,8 @@ class _TypingGamePageState extends State<TypingGamePage> {
                               ChoiceChip(
                                 label: Text(
                                   mode == TypingMode.challenge
-                                      ? '60秒チャレンジ'
-                                      : '10問じっくり練習',
+                                      ? _t('60秒チャレンジ', '60-second challenge',)
+                                      : _t('10問じっくり練習', '10-word practice',),
                                 ),
                                 selected: _selectedMode == mode,
                                 onSelected: (selected) {
@@ -205,8 +220,8 @@ class _TypingGamePageState extends State<TypingGamePage> {
                         const SizedBox(height: 8),
                         Text(
                           _selectedMode == TypingMode.practice
-                              ? '時間制限なし。10問クリアで終了。途中でも練習を終えられます。'
-                              : '60秒間のスコアに挑戦。ベストはチャレンジ同士で比べます。',
+                              ? _t('時間制限なし。10問クリアで終了。途中でも練習を終えられます。', 'No time limit. Finish ten words, or end practice whenever you like.',)
+                              : _t('60秒間のスコアに挑戦。ベストはチャレンジ同士で比べます。', 'Challenge yourself for 60 seconds. Only challenge scores count towards your best.',),
                         ),
                       ],
                       const SizedBox(height: 20),
@@ -216,13 +231,13 @@ class _TypingGamePageState extends State<TypingGamePage> {
                         children: [
                           Text(
                             practice
-                                ? '進み具合 ${_game.words} / 10問'
-                                : '残り ${(_game.remaining.inMilliseconds / 1000).ceil()}秒',
+                                ? _t('進み具合 ${_game.words} / 10問', 'Progress ${_game.words} / 10 words',)
+                                : _t('残り ${(_game.remaining.inMilliseconds / 1000).ceil()}秒', 'Time left ${(_game.remaining.inMilliseconds / 1000).ceil()}s',),
                           ),
-                          Text('スコア ${_game.score}'),
-                          Text('正確さ ${_game.accuracy.toStringAsFixed(1)}%'),
-                          Text('クリア ${_game.words}問'),
-                          Text('連続 ${_game.combo}文字'),
+                          Text(_t('スコア ${_game.score}', 'Score ${_game.score}',)),
+                          Text(_t('正確さ ${_game.accuracy.toStringAsFixed(1)}%', 'Accuracy ${_game.accuracy.toStringAsFixed(1)}%',)),
+                          Text(_t('クリア ${_game.words}問', 'Words ${_game.words}',)),
+                          Text(_t('連続 ${_game.combo}文字', 'Streak ${_game.combo} letters',)),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -231,16 +246,16 @@ class _TypingGamePageState extends State<TypingGamePage> {
                             ? _game.words / TypingGame.practiceTarget
                             : _game.remaining.inMilliseconds /
                                 TypingGame.duration.inMilliseconds,
-                        semanticsLabel: practice ? '練習の進み具合' : '残り時間',
+                        semanticsLabel: practice ? _t('練習の進み具合', 'Practice progress',) : _t('残り時間', 'Time left',),
                         semanticsValue: practice
-                            ? '${_game.words} / 10問'
-                            : '${(_game.remaining.inMilliseconds / 1000).ceil()}秒',
+                            ? _t('${_game.words} / 10問', '${_game.words} / 10 words',)
+                            : _t('${(_game.remaining.inMilliseconds / 1000).ceil()}秒', '${(_game.remaining.inMilliseconds / 1000).ceil()} seconds',),
                       ),
                       const SizedBox(height: 20),
                       if (_game.running) ...[
                         if (_reviewPractice)
-                          const Text(
-                            '苦手なことばを10問練習中',
+                          Text(
+                            _t('苦手なことばを10問練習中', 'Focused practice: ten prompts from your missed words',),
                             textAlign: TextAlign.center,
                           ),
                         Card(
@@ -282,7 +297,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  '使えるつづり: ${_game.prompt.spellings.join(' / ')}',
+                                  _t('使えるつづり: ${_game.prompt.spellings.join(' / ')}', 'Accepted spellings: ${_game.prompt.spellings.join(' / ')}',),
                                   textAlign: TextAlign.center,
                                 ),
                               ],
@@ -307,10 +322,10 @@ class _TypingGamePageState extends State<TypingGamePage> {
                           inputFormatters: [
                             TextInputFormatter.withFunction(_format),
                           ],
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'ローマ字入力',
-                            helperText: '英語キーボード・半角英字 / 入力欄をタップで再開',
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            labelText: _t('ローマ字入力', 'Romaji input',),
+                            helperText: _t('英語キーボード・半角英字 / 入力欄をタップで再開', 'Use an English keyboard and Latin letters. Tap the input to continue.',),
                             helperMaxLines: 3,
                           ),
                         ),
@@ -328,7 +343,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                 _settle();
                               });
                             },
-                            child: const Text('練習を終える'),
+                            child: Text(_t('練習を終える', 'End practice',)),
                           ),
                       ] else ...[
                         if (_game.finished)
@@ -343,24 +358,24 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                       practice &&
                                               _game.words ==
                                                   TypingGame.practiceTarget
-                                          ? '10問完走！ ${_game.score}点'
-                                          : 'おつかれさま！ ${_game.score}点',
+                                          ? _t('10問完走！ ${_game.score}点', 'Ten words complete! ${_game.score} points',)
+                                          : _t('おつかれさま！ ${_game.score}点', 'Well done! ${_game.score} points',),
                                       style: Theme.of(context)
                                           .textTheme
                                           .headlineSmall,
                                     ),
                                     Text(
-                                      '${_game.words}問クリア / 正確さ ${_game.accuracy.toStringAsFixed(1)}%',
+                                      _t('${_game.words}問クリア / 正確さ ${_game.accuracy.toStringAsFixed(1)}%', '${_game.words} words / Accuracy ${_game.accuracy.toStringAsFixed(1)}%',),
                                     ),
                                     Text(
-                                      '最大連続 ${_game.bestCombo}文字 / ミス ${_game.mistakes}回',
+                                      _t('最大連続 ${_game.bestCombo}文字 / ミス ${_game.mistakes}回', 'Best streak ${_game.bestCombo} letters / Mistakes ${_game.mistakes}',),
                                     ),
                                     Text(
-                                      '入力ペース ${_game.correctPerMinute.toStringAsFixed(1)}文字/分',
+                                      _t('入力ペース ${_game.correctPerMinute.toStringAsFixed(1)}文字/分', 'Pace ${_game.correctPerMinute.toStringAsFixed(1)} letters/min',),
                                     ),
-                                    const Text('正解したローマ字数 ÷ 実際のプレイ時間'),
+                                    Text(_t('正解したローマ字数 ÷ 実際のプレイ時間', 'Correct romaji letters divided by actual play time',)),
                                     if (!practice)
-                                      Text('この画面でのチャレンジベスト $_bestChallenge点'),
+                                      Text(_t('この画面でのチャレンジベスト $_bestChallenge点', 'Challenge best on this screen: $_bestChallenge points',)),
                                   ],
                                 ),
                               ),
@@ -374,13 +389,13 @@ class _TypingGamePageState extends State<TypingGamePage> {
                           onPressed: _start,
                           icon: const Icon(Icons.play_arrow),
                           label: Text(
-                            _game.finished ? 'もう一度挑戦（Enter）' : 'スタート（Enter）',
+                            _game.finished ? _t('もう一度挑戦（Enter）', 'Try again (Enter)',) : _t('スタート（Enter）', 'Start (Enter)',),
                           ),
                         ),
                       ],
                       const SizedBox(height: 24),
-                      const Text(
-                        '遊び方: IMEをオフにし、表示されたつづりを一文字ずつ入力します。shi / si などは「使えるつづり」にあるものに対応。削除・貼り付け・かな入力は対象外です。スマートフォンでは英語キーボードを選択してください。成績と振り返りはこの画面を閉じるまで。練習モードの成績はチャレンジのベストに含めません。',
+                      Text(
+                        _t('遊び方: IMEをオフにし、表示されたつづりを一文字ずつ入力します。shi / si などは「使えるつづり」にあるものに対応。削除・貼り付け・かな入力は対象外です。スマートフォンでは英語キーボードを選択してください。成績と振り返りはこの画面を閉じるまで。練習モードの成績はチャレンジのベストに含めません。', 'How to play: turn off IME and type one letter at a time. Only the listed spellings, such as shi / si, are accepted. Deleting, pasting and kana input are not supported. On a phone, select an English keyboard. Scores, review and language choice last until this screen closes. Practice scores do not count towards your challenge best.',),
                       ),
                     ],
                   ),
@@ -391,5 +406,17 @@ class _TypingGamePageState extends State<TypingGamePage> {
         ),
       ),
     );
+    return _english
+        ? Localizations.override(
+            context: context,
+            locale: const Locale('en'),
+            delegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            child: page,
+          )
+        : page;
   }
 }
