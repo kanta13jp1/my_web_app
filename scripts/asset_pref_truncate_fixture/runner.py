@@ -1,515 +1,466 @@
-"""Synthetic-only GitHub-hosted PR fixture; never connect to an existing DB.
-Identity variables and SQL marker alone are forgeable. Review the job boundary.
+"""REVIEW ONLY: two-session primitives. No CLI, connection discovery, or DB startup.
+
+A future separately reviewed harness must supply the exact already-initialized
+idempotent fixture Service. Merely importing this file does not run SQL.
 """
-import hashlib, copy, sys, unittest, json, os, re, subprocess, tempfile, uuid
+import hashlib
+import importlib.util
+import os
 from pathlib import Path
+import queue
+import re
+import subprocess
+import threading
+import time
+import uuid
+
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parents[1]
-IMAGE = 'postgres@sha256:e4cb93687b062cd25a0e8f672d85a7708235009d70d31f8a7698d9370092a9c4'
-
-DATABASE = 'debt_contract'
-
-PASSWORD = 'synthetic-debt-only'
-
+EXPECTED_RUNNER = HERE / 'fixture_runner.py'
+EXPECTED_SHA = 'fb995082e9fd685e1d058839e7c0d64ba3ff66f589d0c084ba96eae06d7b0f5f'
+DRAFT = HERE / 'candidate_single_table_lock_draft_review_stopped.sql.txt'
 STOP = b"\\set ON_ERROR_STOP on\ndo $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;\n"
-
-EMPTY = r"""\set ON_ERROR_STOP on
-select case when current_database()='debt_contract' and current_user='postgres'
- and current_setting('server_version_num')::int between 170000 and 179999
- and not exists (select 1 from pg_catalog.pg_roles where rolname in ('anon','authenticated','service_role'))
- and not exists (select 1 from pg_catalog.pg_namespace where nspname not in ('public','information_schema') and left(nspname,3)<>'pg_')
- and not exists (select 1 from pg_catalog.pg_class c join pg_catalog.pg_namespace n on n.oid=c.relnamespace
-                 where n.nspname='public' and c.relkind in ('r','p','v','m','f','S'))
- and not exists (select 1 from pg_catalog.pg_proc p join pg_catalog.pg_namespace n on n.oid=p.pronamespace where n.nspname='public')
- and not exists (select 1 from pg_catalog.pg_type t join pg_catalog.pg_namespace n on n.oid=t.typnamespace where n.nspname='public')
- and not exists (select 1 from pg_catalog.pg_extension where extname<>'plpgsql')
- then 'EMPTY_FIXTURE' else 'NOT_EMPTY' end;
-"""
-
-FIXED = {'fixture_setup.sql.txt': ('d0635f7b249e26e93b3f2c2775b249e332653681e00698780f72a742affbb92d', 'a21c5b5825108b9439751b56fe099a40365e50a8019349397df7d44ef1cdf1f5'), 'revoke_fixture_setup_v5_review_stopped.sql.txt': ('f2742dd2ec380e9dfba2133e9c9f63a5d6f9a596a181e7b747758221c8042679', '2c7adefbb565a6d1a99269839d3a93f89ec123a0d156cf8e19753ce7ccc0de00'), 'revoke_fixture_negative_v3_review_stopped.sql.txt': ('b0fb6feb4c3913091a6f705459bae129cd9b06923e85ff19fcf93614d75c75e3', 'd2b9d411824c7e5a7a48fc0f5525df8abe9d0073a19bd588ffee4e178575fc20'), 'revoke_fixture_positive_v3_review_stopped.sql.txt': ('cdce6814db69af24d04345673f0743a257d225e4681702495ae9539f1bd37465', 'e4b454098c4cd8b537ac850379d2f7b83f5f5dabfef240c469c1a8f659073343'), 'revoke_truncate_candidate_review_stopped.sql.txt': ('3372910f839d556a35d81dfd6ababe8c73438e52636d7fe8c491835528f1dfb6', '4907ee4aeead6af86ead8756c2841092c55b4436842ad4ad1629cc63478856d8')}
-MIGRATION_SHA = '4907ee4aeead6af86ead8756c2841092c55b4436842ad4ad1629cc63478856d8'
-
-def decode_stopped(data, expected_stopped, expected_original):
-    if hashlib.sha256(data).hexdigest() != expected_stopped:
-        raise RuntimeError('stopped fixture digest mismatch')
-    if not data.startswith(STOP) or data.count(STOP) != 1:
-        raise RuntimeError('fixture stop is absent, misplaced or repeated')
-    original = data[len(STOP):]
-    if hashlib.sha256(original).hexdigest() != expected_original:
-        raise RuntimeError('unwrapped fixture digest mismatch')
-    return original.decode('utf-8').replace('\r\n', '\n')
+STOPPED_SHA = 'a01b07f6d6dd8d31522b410bad3182b757adc90c84276212ce6fe86ea303026f'
+DRAFT_SHA = '616adfba5e2b424cccbbdef847b62b1f2edadec350ca2974dfe1ca10d5eab510'
 
 
-def env_map(items):
-    result = {}
-    for item in items or []:
-        if not isinstance(item, str) or '=' not in item:
-            raise ValueError('invalid image or container environment')
-        key, value = item.split('=', 1)
-        if not key or key in result:
-            raise ValueError('duplicate image or container environment')
-        result[key] = value
+def pinned_module():
+    if EXPECTED_RUNNER.is_symlink() or not EXPECTED_RUNNER.is_file() or EXPECTED_RUNNER.resolve().parent != HERE:
+        raise RuntimeError('invalid fixture runner path')
+    raw = EXPECTED_RUNNER.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != EXPECTED_SHA:
+        raise RuntimeError('fixture runner hash changed: review required')
+    spec = importlib.util.spec_from_file_location('isolated_fixture_runner', EXPECTED_RUNNER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def candidate_parts():
+    if DRAFT.is_symlink() or not DRAFT.is_file() or DRAFT.resolve().parent != HERE:
+        raise RuntimeError('invalid draft path')
+    stopped = DRAFT.read_bytes()
+    if hashlib.sha256(stopped).hexdigest() != STOPPED_SHA:
+        raise RuntimeError('stopped draft hash changed: review required')
+    if not stopped.startswith(STOP) or stopped.count(STOP) != 1:
+        raise RuntimeError('draft STOP is absent, misplaced or repeated')
+    raw = stopped[len(STOP):]
+    if hashlib.sha256(raw).hexdigest() != DRAFT_SHA:
+        raise RuntimeError('unwrapped draft hash changed: review required')
+    sql = raw.decode('utf-8').replace('\r\n', '\n')
+    match = re.search(r'\ndo \$\$\n.*?\nend \$\$;', sql, re.S | re.I)
+    if not match or len(re.findall(r'\ndo \$\$', sql, re.I)) != 1:
+        raise RuntimeError('unexpected draft shape')
+    return match.group(0).strip()
+
+
+class Session:
+    """Persistent psql owned by Service. All SQL has the fixture token guard.
+
+    No SQL can be supplied externally via CLI. The guard is not an isolation
+    boundary: job identity, image/container inspection and initialized token
+    are required too. Error recovery uses only literal ROLLBACK before guard.
+    """
+    def __init__(self, service, module):
+        if type(service) is not module.Service:
+            raise RuntimeError('not the pinned fixture Service')
+        module.job_identity(os.environ)
+        service.inspect()
+        if not re.fullmatch(r'[0-9a-f-]{36}', service.token):
+            raise RuntimeError('invalid fixture token')
+        self.service = service
+        self.lines = queue.Queue()
+        self.pending = False
+        self.partial = []
+        self.events = []
+        self.p = subprocess.Popen(service.argv(), env=service.env, stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8',
+            bufsize=1)
+        service.children.append(self.p)
+        def reader():
+            for line in self.p.stdout:
+                self.lines.put(line.rstrip('\r\n'))
+            self.lines.put(None)
+        self.reader = threading.Thread(target=reader, daemon=True)
+        self.reader.start()
+        self.send("\\set ON_ERROR_STOP off\n\\set VERBOSITY verbose\nSET statement_timeout='1200ms'; SET lock_timeout='900ms';")
+        self.finish()
+        pid = self.run('SELECT pg_backend_pid();').strip()
+        if not pid.isdecimal():
+            raise RuntimeError('fixture backend pid missing')
+        self.backend_pid = int(pid)
+
+    def send(self, sql, *, recover=False):
+        if self.pending or self.p.poll() is not None:
+            raise RuntimeError('session already busy or exited')
+        self.service.inspect()
+        if '\\' in sql and not sql.startswith('\\set ON_ERROR_STOP off'):
+            raise ValueError('psql metacommands forbidden in scenario SQL')
+        self.marker = 'SYNTHETIC_DONE_' + uuid.uuid4().hex
+        # A failed transaction rejects SELECT; ROLLBACK is the sole permitted
+        # command before rechecking the token in that specific recovery path.
+        before = 'ROLLBACK;\n' if recover else ''
+        guard = ("SELECT EXISTS (SELECT 1 FROM public.debt_cas_fixture_guard "
+                 "WHERE token=:'fixture_token'::uuid) AS fixture_ok \\gset\n"
+                 "\\if :fixture_ok\n")
+        body = before + guard + sql + "\n\\else\n\\echo SYNTHETIC_GUARD_FAILURE\n\\quit\n\\endif\n\\echo " + self.marker + '\n'
+        self.pending = True
+        self.started = time.monotonic()
+        self.partial = []
+        self.p.stdin.write(body)
+        self.p.stdin.flush()
+
+    def finish(self, timeout=4):
+        if not self.pending:
+            raise RuntimeError('no pending command')
+        end = time.monotonic() + timeout
+        lines = self.partial
+        while True:
+            remaining = end - time.monotonic()
+            if remaining <= 0:
+                self.events.append({'kind': 'timeout_probe', 'seconds': time.monotonic() - self.started})
+                raise TimeoutError('fixture command did not finish; teardown required')
+            try:
+                line = self.lines.get(timeout=remaining)
+            except queue.Empty:
+                self.events.append({'kind': 'timeout_probe', 'seconds': time.monotonic() - self.started})
+                raise TimeoutError('fixture command did not finish; teardown required') from None
+            if line is None:
+                raise RuntimeError('fixture session ended before marker')
+            if line == self.marker:
+                self.pending = False
+                if 'SYNTHETIC_GUARD_FAILURE' in lines:
+                    raise RuntimeError('fixture token guard failed')
+                output = '\n'.join(lines)
+                self.events.append({'kind': 'completed', 'seconds': time.monotonic() - self.started, 'output': output})
+                return output
+            lines.append(line)
+
+    def run(self, sql, **kwargs):
+        self.send(sql, **kwargs)
+        return self.finish()
+
+    def close(self):
+        if self.p.poll() is None:
+            self.p.terminate()
+            try:
+                self.p.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                self.p.kill()
+                self.p.wait(timeout=3)
+        self.reader.join(timeout=2)
+        if self.p.poll() is None or self.reader.is_alive():
+            raise RuntimeError('fixture session did not terminate')
+        self.events.append({'kind': 'process_terminated', 'backend_pid': self.backend_pid, 'returncode': self.p.returncode,
+                            'server_connection_absence': 'unverified; trusted harness must check pg_stat_activity'})
+
+
+def open_pair(service, module):
+    """A future trusted harness must call service.stop_owned() in finally."""
+    a = Session(service, module)
+    try:
+        return a, Session(service, module)
+    except BaseException:
+        a.close()
+        raise
+
+
+def assert_state(output, sqlstate):
+    if not re.search(r'ERROR:\s+' + re.escape(sqlstate) + r':', output):
+        raise AssertionError('expected SQLSTATE ' + sqlstate + ': ' + output)
+
+
+def assert_clean(output):
+    if re.search(r'^(ERROR|FATAL|PANIC):', output, re.M):
+        raise AssertionError('unexpected SQL error: ' + output)
+
+
+# Scenario bodies are fixed and intentionally contain no connection settings.
+# The caller must initialize a fresh verified service per case; no table/role
+# cleanup against an existing cluster is permitted.
+LOCK = 'LOCK TABLE ONLY public.asset_pref_mirror IN ACCESS EXCLUSIVE MODE NOWAIT;'
+BASELINE = """SELECT jsonb_build_object(
+ 'oid', c.oid, 'owner',c.relowner,'rls',c.relrowsecurity,'force',c.relforcerowsecurity,
+ 'acl',c.relacl::text,'rows',(SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY t.user_id,t.pref_key),'[]') FROM ONLY public.asset_pref_mirror t),
+ 'hierarchy',(SELECT coalesce(jsonb_agg(jsonb_build_array(i.inhparent,i.inhrelid,ch.relkind,ch.relowner,ch.relrowsecurity,ch.relacl::text) ORDER BY i.inhparent,i.inhrelid),'[]') FROM pg_catalog.pg_inherits i JOIN pg_catalog.pg_class ch ON ch.oid=i.inhrelid WHERE i.inhparent=c.oid OR i.inhrelid=c.oid),
+ 'memberships',(SELECT coalesce(jsonb_agg(to_jsonb(m) ORDER BY m.roleid,m.member,m.grantor),'[]') FROM pg_catalog.pg_auth_members m),
+ 'role_attributes',(SELECT coalesce(jsonb_agg(jsonb_build_array(r.oid,r.rolname,r.rolsuper,r.rolinherit,r.rolbypassrls) ORDER BY r.oid),'[]') FROM pg_catalog.pg_roles r WHERE r.rolname IN ('anon','authenticated','service_role')),
+ 'policies',(SELECT coalesce(jsonb_agg(to_jsonb(p) ORDER BY p.policyname),'[]') FROM pg_catalog.pg_policies p WHERE p.schemaname='public' AND p.tablename='asset_pref_mirror'),
+ 'columns',(SELECT coalesce(jsonb_agg(jsonb_build_array(a.attname,a.attacl::text) ORDER BY a.attnum),'[]') FROM pg_catalog.pg_attribute a WHERE a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped))
+FROM pg_catalog.pg_class c WHERE c.oid='public.asset_pref_mirror'::regclass;"""
+
+
+def nowait_rollback(a, b):
+    before = a.run(BASELINE); assert_clean(before)
+    assert_clean(a.run('BEGIN; LOCK TABLE ONLY public.asset_pref_mirror IN ACCESS SHARE MODE;'))
+    out = b.run('BEGIN; ' + LOCK)
+    assert_state(out, '55P03')
+    assert_clean(b.run('SELECT 1;', recover=True))
+    assert_clean(a.run('COMMIT;'))
+    after = a.run(BASELINE); assert_clean(after)
+    if before != after:
+        raise AssertionError('NOWAIT failure altered baseline')
+    return {'expected': '55P03 and baseline unchanged', 'observed': out}
+
+
+def blocked_then_release(a, b, statement):
+    """A holds lock, B waits; release A and require B to finish successfully.
+
+    The short pending probe demonstrates non-completion, not lock cause; a
+    future harness must additionally record pg_stat_activity wait_event=Lock.
+    """
+    pid = b.run('SELECT pg_backend_pid();').strip()
+    if not pid.isdecimal():
+        raise AssertionError('unexpected fixture backend pid: ' + pid)
+    assert_clean(a.run('BEGIN; ' + LOCK))
+    b.send('BEGIN; ' + statement)
+    try:
+        try:
+            out = b.finish(timeout=0.2)
+        except TimeoutError:
+            out = None
+        if out is not None:
+            raise AssertionError('operation finished before lock release: ' + out)
+        state = a.run("SELECT coalesce(wait_event_type,'') FROM pg_catalog.pg_stat_activity WHERE pid=" + pid + ';')
+        assert_clean(state)
+        if state.strip() != 'Lock':
+            raise AssertionError('pending operation did not report Lock wait: ' + state)
+        assert_clean(a.run('COMMIT;'))
+        out = b.finish(timeout=3); assert_clean(out)
+        assert_clean(b.run('ROLLBACK;'))
+        return {'expected': 'pending then success after release', 'observed': out,
+                'wait_event_type': state.strip()}
+    finally:
+        if a.p.poll() is None and not a.pending:
+            a.run('ROLLBACK;')
+
+
+def parent_child_guard(a, b, make_relation):
+    assert_clean(b.run(make_relation))
+    before = a.run(BASELINE); assert_clean(before)
+    assert_clean(a.run('BEGIN; ' + LOCK))
+    out = a.run(candidate_parts())
+    if classify_inheritance_or_serialization(out, allow_serialization=False) != 'P0001':
+        raise AssertionError('missing expected inheritance guard exception: ' + out)
+    assert_clean(a.run('SELECT 1;', recover=True))
+    after = a.run(BASELINE); assert_clean(after)
+    if before != after:
+        raise AssertionError('guard failure changed target baseline')
+    return {'expected': 'guard raises; target baseline unchanged', 'observed': out}
+
+
+# Design for additional tests: these are NOT executed by this module; a future
+# harness must implement/check the noted observation and cleanup explicitly.
+SCENARIOS = {
+ 'nowait': ('implemented', nowait_rollback),
+ 'read_while_locked': ('implemented', lambda a,b: blocked_then_release(a,b,'SELECT count(*) FROM public.asset_pref_mirror;')),
+ 'create_child_while_locked': ('implemented', lambda a,b: blocked_then_release(a,b,'CREATE TABLE public.synthetic_child () INHERITS (public.asset_pref_mirror);')),
+ 'existing_child_guard': ('implemented', lambda a,b: parent_child_guard(a,b,'CREATE TABLE public.synthetic_child () INHERITS (public.asset_pref_mirror);')),
+ 'target_is_child_guard': ('implemented', lambda a,b: parent_child_guard(a,b,'CREATE TABLE public.synthetic_parent (LIKE public.asset_pref_mirror); ALTER TABLE public.asset_pref_mirror INHERIT public.synthetic_parent;')),
+ 'alter_child_inherit': ('requires future harness setup', 'Create independent compatible child, then blocked_then_release with ALTER TABLE public.synthetic_child INHERIT public.asset_pref_mirror'),
+ 'old_repeatable_read_snapshot': ('observation, not a passing security assertion', 'A BEGIN REPEATABLE READ; establish snapshot; B creates and commits child; A locks and executes draft DO; record success/error and independently query current pg_inherits'),
+ 'membership_and_grant': ('observation, not a passing security assertion', 'A holds target lock; B attempts GRANT fixture role membership and GRANT TRUNCATE independently; record completion/SQLSTATE/wait_event; never infer universal locking'),
+ 'name_replacement_before_after_lock': ('requires future harness setup', 'Before lock, rename original and create same-name RLS table owned by postgres; record OIDs. After lock, attempt rename/drop from B and record wait. Existing draft has no immutable OID anchor.'),
+ 'partition_parent': ('requires future harness setup', 'Fresh fixture with partitioned parent and child; assert draft refuses and state preserved; fresh normal-table fixture separately'),
+ 'role_permissions': ('requires future harness setup', 'Repeat lock with minimally privileged fixture execution role; record denial and writer compatibility; fixture superuser success alone is not evidence'),
+ 'teardown_and_availability': ('requires future harness setup', 'Record duration, pending lock wait_event, bounded timeouts, session pids gone, service stopped; NOWAIT does not cap hold time'),
+}
+
+
+
+def repeatable_read_observation(a, b):
+    assert_clean(a.run('BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT count(*) FROM pg_catalog.pg_inherits;'))
+    assert_clean(b.run('CREATE TABLE public.synthetic_child () INHERITS (public.asset_pref_mirror);'))
+    lock_out = a.run(LOCK)
+    lock_error = classify_expected_lock_failure(lock_out, ('40001', '55P03', '57014'))
+    out = 'DO not executed because lock failed' if lock_error else a.run(candidate_parts())
+    candidate_error = None if lock_error else classify_inheritance_or_serialization(out, allow_serialization=True)
+    a.run('SELECT 1;', recover=True)
+    current = b.run("SELECT count(*) FROM pg_catalog.pg_inherits WHERE inhparent='public.asset_pref_mirror'::regclass;")
+    assert_clean(current)
+    if current.strip() != '1':
+        raise AssertionError('independent current hierarchy observation failed: ' + current)
+    accepted = not lock_error and not candidate_error
+    return {'classification': 'observation', 'child_committed': True, 'lock_output': lock_out, 'candidate_sqlstate': candidate_error,
+            'draft_accepted': accepted, 'risk': ('lock failed before guard; inspect SQLSTATE' if lock_error else ('guard accepted despite committed child' if accepted else 'draft raised; inspect exact cause')),
+            'output': out, 'current_hierarchy': current}
+
+
+def classify_expected_lock_failure(output, allowed=('55P03', '57014')):
+    failures = re.findall(r'^(?:ERROR|FATAL|PANIC):.*$', output, re.M)
+    if not failures:
+        return None
+    if len(failures) != 1:
+        raise AssertionError('multiple or ambiguous SQL failures: ' + output)
+    match = re.match(r'^ERROR:\s+([0-9A-Z]{5}):', failures[0])
+    if not match or match.group(1) not in allowed:
+        raise AssertionError('unexpected SQL failure: ' + output)
+    return match.group(1)
+
+
+def classify_inheritance_or_serialization(output, *, allow_serialization):
+    failures = re.findall(r'^(?:ERROR|FATAL|PANIC):.*$', output, re.M)
+    if not failures:
+        return None
+    if len(failures) != 1:
+        raise AssertionError('multiple or ambiguous candidate failures: ' + output)
+    match = re.match(r'^ERROR:\s+([0-9A-Z]{5}):\s*(.*)$', failures[0])
+    if not match:
+        raise AssertionError('unexpected candidate failure: ' + output)
+    state, message = match.groups()
+    if state == 'P0001' and 'inheritance or partition relationship requires separate review' in message:
+        return state
+    if state == '40001' and allow_serialization:
+        return state
+    raise AssertionError('unexpected candidate SQLSTATE: ' + output)
+
+
+def observe_concurrent(a, b, statement):
+    assert_clean(a.run('BEGIN; ' + LOCK))
+    b.send(statement)
+    try:
+        try:
+            out = b.finish(timeout=0.2)
+            sqlstate = classify_expected_lock_failure(out)
+            result = 'timeout while table locked' if sqlstate else 'completed while table locked'
+        except TimeoutError:
+            result = 'pending at 200ms; lock cause unverified'
+            assert_clean(a.run('COMMIT;'))
+            out = b.finish(timeout=3)
+            sqlstate = classify_expected_lock_failure(out)
+            return {'classification': 'observation', 'while_locked': result,
+                    'after_release': out, 'sqlstate': sqlstate}
+        assert_clean(a.run('COMMIT;'))
+        return {'classification': 'observation', 'while_locked': result,
+                'output': out, 'sqlstate': sqlstate}
+    finally:
+        if a.p.poll() is None and not a.pending:
+            a.run('ROLLBACK;')
+
+
+def membership_observation(a, b):
+    before = a.run(BASELINE); assert_clean(before)
+    assert_clean(b.run('CREATE ROLE synthetic_lock_member NOLOGIN;'))
+    result = observe_concurrent(a, b, 'GRANT synthetic_lock_member TO authenticated;')
+    check = b.run("SELECT pg_catalog.pg_has_role('authenticated','synthetic_lock_member','MEMBER');")
+    assert_clean(check)
+    result['member_after'] = check
+    assert_clean(b.run('REVOKE synthetic_lock_member FROM authenticated; DROP ROLE synthetic_lock_member;'))
+    after = b.run(BASELINE); assert_clean(after)
+    if before != after:
+        raise AssertionError('membership cleanup changed baseline')
+    result['baseline_restored'] = True
     return result
 
 
-def verify_stop_result(returncode, stdout, stderr):
-    errors = re.findall(r'^ERROR:\s*(.*)$', stderr, flags=re.MULTILINE)
-    if returncode != 3 or stdout.strip() or errors != ['REVIEW ONLY: execution prohibited']:
-        raise RuntimeError('stopped fixture did not fail as expected')
+def grant_observation(a, b):
+    before = a.run(BASELINE); assert_clean(before)
+    assert_clean(b.run('CREATE ROLE synthetic_lock_grantee NOLOGIN;'))
+    result = observe_concurrent(a, b, 'GRANT TRUNCATE ON public.asset_pref_mirror TO synthetic_lock_grantee;')
+    after = b.run(BASELINE); assert_clean(after)
+    result['target_baseline_before'] = before
+    result['target_baseline_after_grant'] = after
+    assert_clean(b.run('REVOKE TRUNCATE ON public.asset_pref_mirror FROM synthetic_lock_grantee; DROP ROLE synthetic_lock_grantee;'))
+    restored = b.run(BASELINE); assert_clean(restored)
+    if before != restored:
+        raise AssertionError('grant cleanup changed baseline')
+    result['baseline_restored'] = True
+    result['risk'] = 'concurrent or later GRANT requires independent control; result alone does not prove safety'
+    return result
 
 
-def valid_container(info, cid, image, label, lane, network, *, running=True):
-    if not all(key in info for key in ('Id','Image','Config','HostConfig','NetworkSettings','State','Mounts')):
-        return False
-    if not all(isinstance(info[key], dict) for key in ('Config','HostConfig','NetworkSettings','State')):
-        return False
-    if not isinstance(info['Mounts'], list) or not isinstance(image.get('Config'), dict):
-        return False
-    config, host, net = info['Config'], info['HostConfig'], info['NetworkSettings']
-    image_config = image['Config']
-    config_keys = ('Image','Env','Labels','Entrypoint','Cmd','User')
-    image_keys = ('Env','Entrypoint','Cmd')
-    host_keys = ('Privileged','Binds','PortBindings','PublishAllPorts','CapAdd','Devices',
-                 'DeviceRequests','ExtraHosts','Links','VolumesFrom','SecurityOpt','NetworkMode',
-                 'Tmpfs','PidMode','IpcMode','UsernsMode')
-    if (not all(key in config for key in config_keys) or not all(key in image_config for key in image_keys)
-        or not all(key in host for key in host_keys) or not all(key in net for key in ('Ports','Networks'))
-        or 'Running' not in info['State']):
-        return False
-    if not isinstance(config['Labels'], dict):
-        return False
-    labels, mounts = config['Labels'], info['Mounts']
-    try:
-        expected_env = env_map(image_config.get('Env'))
-        expected_env.update(POSTGRES_DB=DATABASE, POSTGRES_PASSWORD=PASSWORD, GITHUB_ACTIONS='true', CI='true')
-        actual_env = env_map(config.get('Env'))
-    except ValueError:
-        return False
-    ports = net['Ports']
-    networks = net['Networks']
-    if not isinstance(ports, dict) or not isinstance(networks, dict):
-        return False
-    tmpfs = host.get('Tmpfs') or {}
-    options = set((tmpfs.get('/var/lib/postgresql/data') or '').split(','))
-    return bool(
-        info.get('Id') == cid and info.get('Image') == image.get('Id')
-        and config.get('Image') == IMAGE and isinstance(info['State']['Running'], bool)
-        and (not running or info['State']['Running'] is True)
-        and labels.get('debt.cas.run') == label and labels.get('debt.cas.lane') == lane
-        and actual_env == expected_env and actual_env.get('PGDATA') == '/var/lib/postgresql/data'
-        and 'POSTGRES_INITDB_WALDIR' not in actual_env
-        and all(config.get(key) == image_config.get(key) for key in ('Entrypoint', 'Cmd'))
-        and type(config['User']) is str and config['User'] == ''
-        and ('User' not in image_config or (type(image_config['User']) is str and image_config['User'] == ''))
-        and host['Privileged'] is False and host['PublishAllPorts'] is False
-        and not any(host.get(key) for key in ('Binds','PortBindings',
-                    'CapAdd','Devices','DeviceRequests','ExtraHosts','Links','VolumesFrom','SecurityOpt'))
-        and host.get('NetworkMode') == network and set(networks) == {network}
-        and host['PidMode'] in ('', 'private') and host['IpcMode'] in ('', 'private')
-        and host['UsernsMode'] in ('', 'private')
-        and all(not binding for binding in ports.values())
-        and set(tmpfs) == {'/var/lib/postgresql/data'}
-        and {'rw','nosuid'} <= options and bool({'size=256m','size=268435456'} & options)
-        and all(m.get('Type') == 'tmpfs' and m.get('Destination') == '/var/lib/postgresql/data' for m in mounts)
-    )
+def replacement_before_lock(a, b):
+    before = b.run(BASELINE); assert_clean(before)
+    old = b.run("SELECT 'public.asset_pref_mirror'::regclass::oid;"); assert_clean(old)
+    assert_clean(b.run('ALTER TABLE public.asset_pref_mirror RENAME TO synthetic_original; '
+                       'CREATE TABLE public.asset_pref_mirror (LIKE public.synthetic_original INCLUDING ALL); '
+                       'ALTER TABLE public.asset_pref_mirror ENABLE ROW LEVEL SECURITY;'))
+    new = b.run("SELECT 'public.asset_pref_mirror'::regclass::oid;"); assert_clean(new)
+    if old.strip() == new.strip():
+        raise AssertionError('replacement did not create a distinct OID')
+    assert_clean(a.run('BEGIN; ' + LOCK))
+    out = a.run(candidate_parts())
+    assert_clean(out)
+    a.run('SELECT 1;', recover=True)
+    accepted = True
+    assert_clean(b.run('DROP TABLE public.asset_pref_mirror; ALTER TABLE public.synthetic_original RENAME TO asset_pref_mirror;'))
+    restored = b.run(BASELINE); assert_clean(restored)
+    if before != restored:
+        raise AssertionError('name replacement cleanup changed baseline')
+    return {'classification': 'observation', 'baseline_restored': True, 'original_oid': old, 'replacement_oid': new,
+            'draft_accepted': accepted, 'output': out,
+            'risk': 'draft has no pre-lock immutable OID anchor'}
 
 
-def inspect_shape_labels(info, image):
-    # The labels and inspected key names are literal, not derived from input.
-    if not isinstance(info, dict):
-        return ['SHAPE_INFO_TYPE']
-    if not isinstance(image, dict):
-        return ['SHAPE_IMAGE_TYPE']
-    labels = []
-    for key, label in (('Id', 'SHAPE_INFO_ID_MISSING'), ('Image', 'SHAPE_INFO_IMAGE_MISSING'),
-            ('Config', 'SHAPE_INFO_CONFIG_MISSING'), ('HostConfig', 'SHAPE_INFO_HOST_MISSING'),
-            ('NetworkSettings', 'SHAPE_INFO_NETWORK_MISSING'), ('State', 'SHAPE_INFO_STATE_MISSING'),
-            ('Mounts', 'SHAPE_INFO_MOUNTS_MISSING')):
-        if key not in info: labels.append(label)
-    if labels: return labels
-    for key, label in (('Config', 'SHAPE_INFO_CONFIG_TYPE'), ('HostConfig', 'SHAPE_INFO_HOST_TYPE'),
-            ('NetworkSettings', 'SHAPE_INFO_NETWORK_TYPE'), ('State', 'SHAPE_INFO_STATE_TYPE')):
-        if not isinstance(info[key], dict): labels.append(label)
-    if not isinstance(info['Mounts'], list): labels.append('SHAPE_INFO_MOUNTS_TYPE')
-    if 'Config' not in image: labels.append('SHAPE_IMAGE_CONFIG_MISSING')
-    elif not isinstance(image['Config'], dict): labels.append('SHAPE_IMAGE_CONFIG_TYPE')
-    if labels: return labels
-    config, host, network, state, img = info['Config'], info['HostConfig'], info['NetworkSettings'], info['State'], image['Config']
-    for obj, entries in (
-        (config, (('Image','SHAPE_CONFIG_IMAGE_MISSING'), ('Env','SHAPE_CONFIG_ENV_MISSING'),
-            ('Labels','SHAPE_CONFIG_LABELS_MISSING'), ('Entrypoint','SHAPE_CONFIG_ENTRYPOINT_MISSING'),
-            ('Cmd','SHAPE_CONFIG_CMD_MISSING'), ('User','SHAPE_CONFIG_USER_MISSING'))),
-        (img, (('Env','SHAPE_IMAGE_ENV_MISSING'), ('Entrypoint','SHAPE_IMAGE_ENTRYPOINT_MISSING'),
-            ('Cmd','SHAPE_IMAGE_CMD_MISSING'))),
-        (host, (('Privileged','SHAPE_HOST_PRIVILEGED_MISSING'), ('Binds','SHAPE_HOST_BINDS_MISSING'),
-            ('PortBindings','SHAPE_HOST_PORTBINDINGS_MISSING'), ('PublishAllPorts','SHAPE_HOST_PUBLISHALLPORTS_MISSING'),
-            ('CapAdd','SHAPE_HOST_CAPADD_MISSING'), ('Devices','SHAPE_HOST_DEVICES_MISSING'),
-            ('DeviceRequests','SHAPE_HOST_DEVICEREQUESTS_MISSING'), ('ExtraHosts','SHAPE_HOST_EXTRAHOSTS_MISSING'),
-            ('Links','SHAPE_HOST_LINKS_MISSING'), ('VolumesFrom','SHAPE_HOST_VOLUMESFROM_MISSING'),
-            ('SecurityOpt','SHAPE_HOST_SECURITYOPT_MISSING'), ('NetworkMode','SHAPE_HOST_NETWORKMODE_MISSING'),
-            ('Tmpfs','SHAPE_HOST_TMPFS_MISSING'), ('PidMode','SHAPE_HOST_PIDMODE_MISSING'),
-            ('IpcMode','SHAPE_HOST_IPCMODE_MISSING'), ('UsernsMode','SHAPE_HOST_USERNSMODE_MISSING'))),
-        (network, (('Ports','SHAPE_NETWORK_PORTS_MISSING'), ('Networks','SHAPE_NETWORK_NETWORKS_MISSING'))),
-        (state, (('Running','SHAPE_STATE_RUNNING_MISSING'),))):
-        for key, label in entries:
-            if key not in obj: labels.append(label)
-    if 'Labels' in config and not isinstance(config['Labels'], dict): labels.append('SHAPE_CONFIG_LABELS_TYPE')
-    return labels
+def replace_after_lock(a, b):
+    before = b.run(BASELINE); assert_clean(before)
+    result = observe_concurrent(a, b, 'ALTER TABLE public.asset_pref_mirror RENAME TO synthetic_renamed;')
+    if result.get('while_locked') == 'completed while table locked':
+        result['risk'] = 'rename completed during lock: investigate'
+    else:
+        result['risk'] = 'pending probe needs independent wait_event evidence'
+    # If rename completed, restore on the same disposable fixture only.
+    check = b.run("SELECT to_regclass('public.synthetic_renamed') IS NOT NULL;")
+    assert_clean(check)
+    if check.strip() == 't':
+        assert_clean(b.run('ALTER TABLE public.synthetic_renamed RENAME TO asset_pref_mirror;'))
+    restored = b.run(BASELINE); assert_clean(restored)
+    if before != restored:
+        raise AssertionError('rename cleanup changed baseline')
+    result['baseline_restored'] = True
+    return result
 
 
-def inspect_failure_categories(info, cid, image, label, lane, network, *, running=True):
-    # Diagnostics are fixed symbols only. This does not authorize the service;
-    # valid_container remains the sole decision. Never include values or reprs.
-    try:
-        shape = inspect_shape_labels(info, image)
-        if shape:
-            return shape
-        config, host, net, state = (info[k] for k in ('Config', 'HostConfig', 'NetworkSettings', 'State'))
-        img = image['Config']
-        out = []
-        if (info['Id'] != cid or info['Image'] != image.get('Id') or config['Image'] != IMAGE
-            or not isinstance(state['Running'], bool) or (running and state['Running'] is not True)
-            or config['Labels'].get('debt.cas.run') != label or config['Labels'].get('debt.cas.lane') != lane):
-            out.append('IDENTITY')
-        try:
-            expected = env_map(img.get('Env'))
-            expected.update(POSTGRES_DB=DATABASE, POSTGRES_PASSWORD=PASSWORD, GITHUB_ACTIONS='true', CI='true')
-            actual = env_map(config.get('Env'))
-            if actual != expected or actual.get('PGDATA') != '/var/lib/postgresql/data' or 'POSTGRES_INITDB_WALDIR' in actual:
-                out.append('ENVIRONMENT')
-        except (ValueError, TypeError):
-            out.append('ENVIRONMENT')
-        if (any(config.get(k) != img.get(k) for k in ('Entrypoint', 'Cmd'))
-            or type(config['User']) is not str or config['User'] != ''
-            or ('User' in img and (type(img['User']) is not str or img['User'] != ''))):
-            out.append('IMAGE_CONFIG')
-        if (host['Privileged'] is not False or host['PublishAllPorts'] is not False
-            or any(host.get(k) for k in ('Binds', 'PortBindings', 'CapAdd', 'Devices', 'DeviceRequests',
-                'ExtraHosts', 'Links', 'VolumesFrom', 'SecurityOpt'))
-            or any(host[k] not in ('', 'private') for k in ('PidMode', 'IpcMode', 'UsernsMode'))):
-            out.append('HOST_POLICY')
-        ports, networks = net['Ports'], net['Networks']
-        if (not isinstance(ports, dict) or not isinstance(networks, dict)
-            or host.get('NetworkMode') != network or (isinstance(networks, dict) and set(networks) != {network})
-            or (isinstance(ports, dict) and any(ports.values()))):
-            out.append('NETWORK')
-        tmpfs = host.get('Tmpfs') or {}
-        options = set((tmpfs.get('/var/lib/postgresql/data') or '').split(','))
-        if (set(tmpfs) != {'/var/lib/postgresql/data'} or not {'rw', 'nosuid'} <= options
-            or not ({'size=256m', 'size=268435456'} & options)
-            or any(m.get('Type') != 'tmpfs' or m.get('Destination') != '/var/lib/postgresql/data' for m in info['Mounts'])):
-            out.append('MOUNTS')
-        return out or ['UNCLASSIFIED']
-    except Exception:
-        return ['DIAGNOSTIC_UNAVAILABLE']
+def alter_existing_child(a, b):
+    assert_clean(b.run('CREATE TABLE public.synthetic_child (LIKE public.asset_pref_mirror);'))
+    return blocked_then_release(a, b, 'ALTER TABLE public.synthetic_child INHERIT public.asset_pref_mirror;')
 
 
-def verify_revoke_expected_failure(returncode, stdout, stderr):
-    errors = re.findall(r'^ERROR:\s*(.*)$', stderr, flags=re.MULTILINE)
-    if returncode != 3 or stdout.strip() != '1' or errors != ['remaining effective truncate privilege']:
-        raise RuntimeError('synthetic revoke did not fail for the expected fixed reason')
-
-
-class Service:
-    def __init__(self, cid, lane, label, docker, env, image, network):
-        self.cid, self.lane, self.label = cid, lane, label
-        self.docker, self.env, self.image, self.network = docker, env, image, network
-        self.token = str(uuid.uuid4())
-        self.children = []
-        self.inspect()
-
-    def command(self, *args, timeout=15):
-        return subprocess.run(self.docker + list(args), env=self.env, capture_output=True,
-                              text=True, check=True, timeout=timeout)
-
-    def inspect(self, *, running=True):
-        info = json.loads(self.command('inspect', self.cid).stdout)[0]
-        try:
-            valid = valid_container(info, self.cid, self.image, self.label, self.lane, self.network, running=running)
-        except Exception:
-            raise RuntimeError('service identity mismatch; teardown required: INSPECT_INVALID') from None
-        if not valid:
-            cats = inspect_failure_categories(info, self.cid, self.image, self.label, self.lane, self.network, running=running)
-            raise RuntimeError('service identity mismatch; teardown required: ' + ','.join(cats)) from None
-        return info
-
-    def argv(self):
-        self.inspect()
-        return self.docker + ['exec', '-i', '-u', 'postgres', self.cid,
-            '/usr/bin/env', '-i', 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
-            '/usr/local/bin/psql', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1',
-            '-v', 'fixture_token=' + self.token, '-h', '/var/run/postgresql', '-U', 'postgres', '-d', DATABASE]
-
-    @staticmethod
-    def guarded(source):
-        return ("\\set ON_ERROR_STOP on\nselect 1/((count(*)=1)::int) "
-                "from public.debt_cas_fixture_guard where token=:'fixture_token'::uuid;\n" + source)
-
-    def sql(self, source, *, guarded=True):
-        if guarded:
-            source = self.guarded(source)
-        return subprocess.run(self.argv(), input=source, env=self.env, capture_output=True,
-                              text=True, check=True, timeout=30).stdout
-
-    def expect_revoke_failure(self, source):
-        result = subprocess.run(self.argv(), input=self.guarded(source), env=self.env,
-            capture_output=True, text=True, check=False, timeout=30)
-        verify_revoke_expected_failure(result.returncode, result.stdout, result.stderr)
-
-    def initialize(self, sources, stopped_setup):
-        if self.sql(EMPTY, guarded=False).strip() != 'EMPTY_FIXTURE':
-            raise RuntimeError('service database is not empty')
-        guard_test = subprocess.run(self.argv(), input=stopped_setup, env=self.env,
-                                    capture_output=True, text=True, check=False, timeout=30)
-        verify_stop_result(guard_test.returncode, guard_test.stdout, guard_test.stderr)
-        if self.sql(EMPTY, guarded=False).strip() != 'EMPTY_FIXTURE':
-            raise RuntimeError('guard test changed the service database')
-        self.sql("\\set ON_ERROR_STOP on\ncreate table public.debt_cas_fixture_guard(token uuid primary key);\n"
-                 "insert into public.debt_cas_fixture_guard values (:'fixture_token'::uuid);\n", guarded=False)
-        self.sql("set codex.debt_cas_fixture='isolated-debt-cas-v2';\n" + sources['fixture_setup.sql.txt'])
-
-    def stop_owned(self):
-        for child in self.children:
-            if child.poll() is None:
-                child.terminate()
-                try:
-                    child.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    child.kill()
-                    child.wait(timeout=5)
-        info = self.inspect(running=False)
-        if info.get('State', {}).get('Running'):
-            self.command('stop', '--time', '5', self.cid, timeout=20)
-        if self.inspect(running=False).get('State', {}).get('Running'):
-            raise RuntimeError('service still running; teardown required')
+SCENARIOS.update({
+ 'alter_child_inherit': ('implemented', alter_existing_child),
+ 'old_repeatable_read_snapshot': ('implemented observation', repeatable_read_observation),
+ 'membership': ('implemented observation', membership_observation),
+ 'grant': ('implemented observation', grant_observation),
+ 'name_replacement_before_lock': ('implemented observation', replacement_before_lock),
+ 'name_replacement_after_lock': ('implemented observation', replace_after_lock),
+})
+SCENARIOS.pop('membership_and_grant', None)
+SCENARIOS.pop('name_replacement_before_after_lock', None)
 
 
 
-def revoke_checks(service, sources):
-    if 'SYNTHETIC_REVOKE_SETUP_READY' not in service.sql(sources['revoke_fixture_setup_v5_review_stopped.sql.txt']).splitlines():
-        raise RuntimeError('synthetic revoke setup verification absent')
-    candidate = sources['revoke_truncate_candidate_review_stopped.sql.txt']
-    service.expect_revoke_failure(candidate)
-    if 'SYNTHETIC_REVOKE_ROLLBACK_VERIFIED' not in service.sql(sources['revoke_fixture_negative_v3_review_stopped.sql.txt']).splitlines():
-        raise RuntimeError('synthetic revoke rollback verification absent')
-    if service.sql(candidate).strip() != '1':
-        raise RuntimeError('synthetic successful revoke output mismatch')
-    if 'SYNTHETIC_REVOKE_POSITIVE_VERIFIED' not in service.sql(sources['revoke_fixture_positive_v3_review_stopped.sql.txt']).splitlines():
-        raise RuntimeError('synthetic revoke positive verification absent')
+def partition_parent(a, b):
+    """Use only on disposable fixture; no CASCADE or broad cleanup."""
+    before = b.run(BASELINE); assert_clean(before)
+    assert_clean(b.run("ALTER TABLE public.asset_pref_mirror RENAME TO synthetic_original; "
+        "CREATE TABLE public.asset_pref_mirror (user_id uuid NOT NULL, pref_key text NOT NULL, "
+        "value jsonb NOT NULL, updated_at timestamptz NOT NULL) PARTITION BY HASH (user_id); "
+        "CREATE TABLE public.synthetic_partition PARTITION OF public.asset_pref_mirror "
+        "FOR VALUES WITH (MODULUS 1, REMAINDER 0); "
+        "ALTER TABLE public.asset_pref_mirror ENABLE ROW LEVEL SECURITY;"))
+    assert_clean(a.run('BEGIN;'))
+    lock_output = a.run(LOCK)
+    lock_state = classify_expected_lock_failure(lock_output, ('55P03', '57014', '40001'))
+    if lock_state:
+        # Only enumerated contention/serialization failures are observations.
+        outcome = 'lock failed; draft DO not executed'
+        out = lock_output
+    else:
+        out = a.run(candidate_parts())
+        if not re.search(r'ERROR:\s+P0002:', out):
+            raise AssertionError('partition guard did not fail with strict no-row error: ' + out)
+        outcome = 'draft rejected partition parent'
+    a.run('SELECT 1;', recover=True)
+    assert_clean(b.run('DROP TABLE public.synthetic_partition; DROP TABLE public.asset_pref_mirror; '
+                       'ALTER TABLE public.synthetic_original RENAME TO asset_pref_mirror;'))
+    restored = b.run(BASELINE); assert_clean(restored)
+    if before != restored:
+        raise AssertionError('partition cleanup changed original baseline')
+    return {'classification': 'observation' if outcome.startswith('lock failed') else 'assertion',
+            'outcome': outcome, 'output': out, 'lock_sqlstate': lock_state, 'baseline_restored': True}
 
 
-def load_sources():
-    result = {}
-    stopped_setup = None
-    for name, (outer, inner) in FIXED.items():
-        path = HERE / name
-        if path.is_symlink() or not path.is_file() or path.resolve().parent != HERE:
-            raise RuntimeError('invalid stopped fixture')
-        data = path.read_bytes()
-        result[name] = decode_stopped(data, outer, inner)
-        if name == 'fixture_setup.sql.txt': stopped_setup = data.decode('utf-8')
-    path = ROOT / 'supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql'
-    if path.is_symlink() or not path.is_file() or not path.resolve().is_relative_to(ROOT):
-        raise RuntimeError('invalid migration path')
-    migration = path.read_bytes()
-    candidate = (HERE / 'revoke_truncate_candidate_review_stopped.sql.txt').read_bytes()
-    # Recheck exactly the captured candidate bytes, then require full-byte equality.
-    outer, inner = FIXED['revoke_truncate_candidate_review_stopped.sql.txt']
-    decode_stopped(candidate, outer, inner)
-    if hashlib.sha256(migration).hexdigest() != MIGRATION_SHA or migration != candidate[len(STOP):]:
-        raise RuntimeError('migration differs from reviewed fixture')
-    if stopped_setup is None: raise RuntimeError('stopped setup missing')
-    return result, stopped_setup
-
-
-def job_identity(env):
-    run, attempt = env.get('GITHUB_RUN_ID', ''), env.get('GITHUB_RUN_ATTEMPT', '')
-    if (env.get('GITHUB_ACTIONS') != 'true' or env.get('RUNNER_ENVIRONMENT') != 'github-hosted'
-        or env.get('GITHUB_REPOSITORY') != 'kanta13jp1/my_web_app' or env.get('GITHUB_JOB') != 'debt-cas-isolated'
-        or env.get('GITHUB_EVENT_NAME') != 'pull_request'
-        or not re.fullmatch(r'[0-9]+', run) or not re.fullmatch(r'[0-9]+', attempt)):
-        raise RuntimeError('untrusted synthetic job identity')
-    return run + '-' + attempt
-
-
-def main():
-    sources, stopped_setup = load_sources()
-    label = job_identity(os.environ)
-    cid = os.environ.get('FIXTURE_SEQUENTIAL_ID', '')
-    network = os.environ.get('FIXTURE_NETWORK_NAME', '')
-    if not re.fullmatch(r'[0-9a-f]{64}', cid) or not re.fullmatch(r'github_network_[0-9a-f]{32}', network):
-        raise RuntimeError('invalid service identity')
-    env = {'PATH': '/usr/local/bin:/usr/bin:/bin', 'LANG': 'C'}
-    with tempfile.TemporaryDirectory(prefix='truncate-fixture-docker-') as config:
-        docker = ['/usr/bin/docker', '--config', config, '--host', 'unix:///var/run/docker.sock']
-        image = json.loads(subprocess.run(docker + ['image', 'inspect', IMAGE], env=env,
-            capture_output=True, text=True, check=True, timeout=15).stdout)[0]
-        if IMAGE not in (image.get('RepoDigests') or []): raise RuntimeError('pinned digest missing')
-        service = None
-        try:
-            service = Service(cid, 'sequential', label, docker, env, image, network)
-            service.initialize(sources, stopped_setup)
-            revoke_checks(service, sources)
-        finally:
-            if service is not None: service.stop_owned()
-        print('Synthetic revoke checks and service stop passed.')
-
-
-class UnitTests(unittest.TestCase):
-    def test_container_negative_cases(self):
-        cid, net = 'a' * 64, 'github_network_' + 'b' * 32
-        image = {'Id': 'sha256:test', 'Config': {'Env': ['PGDATA=/var/lib/postgresql/data'],
-                  'Entrypoint': ['docker-entrypoint.sh'], 'Cmd': ['postgres'], 'User': ''}}
-        config = {'Image': IMAGE, 'Env': ['PGDATA=/var/lib/postgresql/data',
-                  'POSTGRES_DB=' + DATABASE, 'POSTGRES_PASSWORD=' + PASSWORD,
-                  'GITHUB_ACTIONS=true', 'CI=true'],
-                  'Entrypoint': ['docker-entrypoint.sh'], 'Cmd': ['postgres'], 'User': '',
-                  'Labels': {'debt.cas.run': '1-1', 'debt.cas.lane': 'sequential'}}
-        info = {'Id': cid, 'Image': image['Id'], 'Config': config, 'State': {'Running': True},
-                'HostConfig': {'NetworkMode': net, 'Tmpfs': {'/var/lib/postgresql/data': 'rw,nosuid,size=256m'},
-                    'Privileged': False, 'Binds': None, 'PortBindings': None, 'PublishAllPorts': False,
-                    'CapAdd': None, 'Devices': None, 'DeviceRequests': None, 'ExtraHosts': None,
-                    'Links': None, 'VolumesFrom': None, 'SecurityOpt': None,
-                    'PidMode': '', 'IpcMode': 'private', 'UsernsMode': ''},
-                'NetworkSettings': {'Networks': {net: {}}, 'Ports': {'5432/tcp': None}}, 'Mounts': []}
-        def ok(obj): return valid_container(obj, cid, image, '1-1', 'sequential', net)
-        self.assertTrue(ok(info))
-        image_without_user = copy.deepcopy(image); del image_without_user['Config']['User']
-        self.assertTrue(valid_container(info, cid, image_without_user, '1-1', 'sequential', net))
-        for value in (None, 0, False, 'postgres', '0'):
-            modified_image = copy.deepcopy(image); modified_image['Config']['User'] = value
-            with self.subTest(image_user=value):
-                self.assertFalse(valid_container(info, cid, modified_image, '1-1', 'sequential', net))
-                self.assertIn('IMAGE_CONFIG', inspect_failure_categories(info, cid, modified_image, '1-1', 'sequential', net))
-            modified_container = copy.deepcopy(info); modified_container['Config']['User'] = value
-            with self.subTest(container_user=value):
-                self.assertFalse(ok(modified_container))
-                self.assertIn('IMAGE_CONFIG', inspect_failure_categories(modified_container, cid, image, '1-1', 'sequential', net))
-        modified_container = copy.deepcopy(info); del modified_container['Config']['User']
-        self.assertFalse(ok(modified_container))
-        self.assertIn('SHAPE_CONFIG_USER_MISSING', inspect_failure_categories(modified_container, cid, image, '1-1', 'sequential', net))
-        diagnostic_cases = [
-            ('ENVIRONMENT', 'Config', 'Env', ['sensitive=do-not-print']),
-            ('IDENTITY', 'Config', 'Image', 'sensitive=do-not-print'),
-            ('IMAGE_CONFIG', 'Config', 'Cmd', ['sensitive=do-not-print']),
-            ('HOST_POLICY', 'HostConfig', 'IpcMode', 'sensitive=do-not-print'),
-            ('NETWORK', 'HostConfig', 'NetworkMode', 'sensitive=do-not-print'),
-            ('MOUNTS', 'HostConfig', 'Tmpfs', {}),
-        ]
-        for expected_category, section, key, value in diagnostic_cases:
-            changed = copy.deepcopy(info); changed[section][key] = value
-            self.assertFalse(ok(changed))
-            cats = inspect_failure_categories(changed, cid, image, '1-1', 'sequential', net)
-            with self.subTest(category=expected_category):
-                self.assertIn(expected_category, cats)
-                self.assertNotIn('sensitive', ','.join(cats))
-        self.assertIn('SHAPE_INFO_ID_MISSING', inspect_failure_categories({}, cid, image, '1-1', 'sequential', net))
-        for section, key, label in (
-            ('Config', 'Image', 'SHAPE_CONFIG_IMAGE_MISSING'),
-            ('HostConfig', 'IpcMode', 'SHAPE_HOST_IPCMODE_MISSING'),
-            ('NetworkSettings', 'Ports', 'SHAPE_NETWORK_PORTS_MISSING'),
-            ('State', 'Running', 'SHAPE_STATE_RUNNING_MISSING'),
-        ):
-            changed = copy.deepcopy(info); del changed[section][key]
-            self.assertFalse(ok(changed))
-            self.assertIn(label, inspect_failure_categories(changed, cid, image, '1-1', 'sequential', net))
-        for section, label in (('Config', 'SHAPE_INFO_CONFIG_TYPE'), ('Mounts', 'SHAPE_INFO_MOUNTS_TYPE')):
-            changed = copy.deepcopy(info); changed[section] = 'sensitive=do-not-print'
-            self.assertFalse(ok(changed))
-            cats = inspect_failure_categories(changed, cid, image, '1-1', 'sequential', net)
-            self.assertIn(label, cats); self.assertNotIn('sensitive', ','.join(cats))
-        changed = copy.deepcopy(info); changed['Config']['Labels'] = 'sensitive=do-not-print'
-        self.assertFalse(ok(changed))
-        self.assertIn('SHAPE_CONFIG_LABELS_TYPE', inspect_failure_categories(changed, cid, image, '1-1', 'sequential', net))
-        for section, key, val in [('HostConfig','PublishAllPorts',True), ('HostConfig','CapAdd',['SYS_ADMIN']),
-                                  ('HostConfig','Devices',[{'PathOnHost':'/dev/x'}]), ('HostConfig','ExtraHosts',['x:1.2.3.4']),
-                                  ('HostConfig','Links',['x']), ('HostConfig','VolumesFrom',['x']),
-                                  ('HostConfig','PortBindings',{'5432/tcp':[{}]}), ('Config','Cmd',['other'])]:
-            changed = copy.deepcopy(info); changed[section][key] = val
-            with self.subTest(key=key): self.assertFalse(ok(changed))
-        for extra in ('PGDATA=/elsewhere', 'POSTGRES_INITDB_WALDIR=/elsewhere', 'LD_PRELOAD=/bad'):
-            changed = copy.deepcopy(info); changed['Config']['Env'].append(extra)
-            with self.subTest(extra=extra): self.assertFalse(ok(changed))
-        for name in ('GITHUB_ACTIONS', 'CI'):
-            changed = copy.deepcopy(info)
-            changed['Config']['Env'] = [x for x in changed['Config']['Env'] if not x.startswith(name + '=')]
-            with self.subTest(missing_env=name): self.assertFalse(ok(changed))
-            changed = copy.deepcopy(info)
-            changed['Config']['Env'] = [name + '=false' if x.startswith(name + '=') else x for x in changed['Config']['Env']]
-            with self.subTest(wrong_env=name): self.assertFalse(ok(changed))
-            changed = copy.deepcopy(info); changed['Config']['Env'].append(name + '=true')
-            with self.subTest(duplicate_env=name): self.assertFalse(ok(changed))
-        changed = copy.deepcopy(info); changed['NetworkSettings']['Ports']['5432/tcp'] = [{'HostPort':'5432'}]
-        self.assertFalse(ok(changed))
-        for section, key in [('HostConfig','PublishAllPorts'),('HostConfig','PidMode'),
-                             ('HostConfig','IpcMode'),('HostConfig','UsernsMode'),
-                             ('NetworkSettings','Ports'),('NetworkSettings','Networks'),
-                             ('Config','User')]:
-            changed = copy.deepcopy(info); del changed[section][key]
-            with self.subTest(missing=section+'.'+key): self.assertFalse(ok(changed))
-        for mode in ('PidMode','IpcMode','UsernsMode'):
-            changed = copy.deepcopy(info); changed['HostConfig'][mode] = 'host'
-            with self.subTest(mode=mode): self.assertFalse(ok(changed))
-        changed = copy.deepcopy(info); changed['NetworkSettings']['Ports'] = None
-        self.assertFalse(ok(changed))
-        for key in ('Privileged', 'PublishAllPorts'):
-            for value in (None, 0, 'false'):
-                changed = copy.deepcopy(info); changed['HostConfig'][key] = value
-                with self.subTest(bool_field=key, value=value): self.assertFalse(ok(changed))
-        for value in (None, 0, 1, 'true'):
-            changed = copy.deepcopy(info); changed['State']['Running'] = value
-            with self.subTest(running=value): self.assertFalse(ok(changed))
-        changed = copy.deepcopy(info); changed['State']['Running'] = False
-        self.assertFalse(ok(changed))
-        self.assertTrue(valid_container(changed, cid, image, '1-1', 'sequential', net, running=False))
-
-
-    def test_stop_result_requires_exact_error_and_exit(self):
-        valid = 'ERROR:  REVIEW ONLY: execution prohibited\nCONTEXT: synthetic\n'
-        verify_stop_result(3, '', valid)
-        for rc, stdout, stderr in ((0, '', valid), (3, 'unexpected', valid),
-                                   (3, '', 'ERROR: other\n'),
-                                   (3, '', valid + 'ERROR: another\n')):
-            with self.subTest(rc=rc, stdout=stdout), self.assertRaises(RuntimeError):
-                verify_stop_result(rc, stdout, stderr)
-
-
-    def test_captured_inputs_and_guard_negatives(self):
-        sources, stopped = load_sources()
-        self.assertEqual(set(sources), set(FIXED))
-        self.assertTrue(stopped.startswith(STOP.decode()))
-        for name,(outer,inner) in FIXED.items():
-            data=(HERE/name).read_bytes()
-            for invalid in (data+b'x', data[len(STOP):], STOP+data):
-                with self.subTest(name=name), self.assertRaises(RuntimeError):
-                    decode_stopped(invalid, outer, inner)
-
-    def test_fixed_failure(self):
-        expected='ERROR:  remaining effective truncate privilege\nCONTEXT: synthetic\n'
-        verify_revoke_expected_failure(3,'1\n',expected)
-        for code,out,err in ((0,'1',expected),(3,'',expected),(3,'1','ERROR: other\n')):
-            with self.assertRaises(RuntimeError): verify_revoke_expected_failure(code,out,err)
-
-    def test_sequential_failure_stops_following_steps(self):
-        class Fake:
-            def __init__(self, fail=None): self.calls,self.fail=[],fail
-            def sql(self,value):
-                self.calls.append(value)
-                if value == self.fail: raise RuntimeError('fake failure')
-                return {'setup':'SYNTHETIC_REVOKE_SETUP_READY','negative':'SYNTHETIC_REVOKE_ROLLBACK_VERIFIED','candidate':'1','positive':'SYNTHETIC_REVOKE_POSITIVE_VERIFIED'}.get(value,'')
-            def expect_revoke_failure(self,value):
-                self.calls.append('expected-'+value)
-                if self.fail == 'expected-candidate': raise RuntimeError('fake failure')
-        sources={'revoke_fixture_setup_v5_review_stopped.sql.txt':'setup', 'revoke_fixture_negative_v3_review_stopped.sql.txt':'negative', 'revoke_fixture_positive_v3_review_stopped.sql.txt':'positive', 'revoke_truncate_candidate_review_stopped.sql.txt':'candidate'}
-        expected=['setup','expected-candidate','negative','candidate','positive']
-        good=Fake(); revoke_checks(good,sources); self.assertEqual(good.calls,expected)
-        for fail in expected:
-            bad=Fake(fail)
-            with self.subTest(fail=fail), self.assertRaises(RuntimeError): revoke_checks(bad,sources)
-            self.assertEqual(bad.calls,expected[:expected.index(fail)+1])
+SCENARIOS['partition_parent'] = ('implemented', partition_parent)
 
 
 if __name__ == '__main__':
-    if sys.argv[1:] == ['--self-test']: unittest.main(argv=[sys.argv[0]])
-    elif len(sys.argv) == 1: main()
-    else: raise SystemExit('unsupported invocation')
+    raise SystemExit('REVIEW ONLY: import from a separately reviewed, trusted isolated fixture harness; direct execution disabled')

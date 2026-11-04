@@ -37,7 +37,7 @@ create table public.synthetic_revoke_acl_before as
  where c.oid='public.asset_pref_mirror'::pg_catalog.regclass;
 create table public.synthetic_revoke_rows_before as select user_id,pref_key,value,updated_at from public.asset_pref_mirror;
 create table public.synthetic_revoke_members_before as
- select roleid,member,grantor,admin_option,inherit_option,set_option from pg_catalog.pg_auth_members
+ select pg_catalog.to_jsonb(m) as snapshot from pg_catalog.pg_auth_members m
  where member='authenticated'::pg_catalog.regrole;
 create table public.synthetic_revoke_relation_before as
  select relowner,relrowsecurity,relforcerowsecurity from pg_catalog.pg_class where oid='public.asset_pref_mirror'::pg_catalog.regclass;
