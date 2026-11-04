@@ -56,7 +56,9 @@ def run():
             calls.append(('case',stage))
             return {'stage':stage,'cleanup_confirmed':not self.missing_cleanup,
               'grant_first_observation':'deadline' if self.unobserved else 'statement_done',
-              'grant':{'status':'sql_error' if self.issue else 'committed'},'cli':{'status':'committed'}}
+              'grant':{'status':'sql_error' if self.issue else 'committed',
+                       'message_diagnostic':{'class':'unknown','length':6,'sha256':'a'*64} if self.issue else None},
+              'cli':{'status':'committed'}}
     table=Table()
     def modules(name,filename,digest):return table if filename=='table_grant.py' else context
     def run_fake():
@@ -70,6 +72,9 @@ def run():
     assert [x[1] for x in calls if x[0]=='case']==['before_revoke','after_revoke']
     context.PARENT=m.CONTEXT_ORIGINAL_PARENT;table.issue=True
     result=run_fake();assert result['status']=='observation_issue'
+    assert all(x['grant']['message_diagnostic']['class']=='unknown' for x in result['cases'])
+    with mock.patch.object(m,'run_safely',return_value=result),contextlib.redirect_stdout(io.StringIO()):
+        assert m.run_and_exit_code()==2
     context.PARENT=m.CONTEXT_ORIGINAL_PARENT;table.issue=False;table.unobserved=True
     result=run_fake();assert result['status']=='observation_issue'
     table.unobserved=False

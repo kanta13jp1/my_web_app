@@ -1,5 +1,6 @@
 """Pure mocks; never starts PostgreSQL, Docker, CLI, network or subprocess."""
 import contextlib
+import hashlib
 import importlib.util
 import io
 import json
@@ -44,7 +45,18 @@ def run():
     rejects(lambda:m.verify_b_success(404,303,out.replace(m.COMMIT_DONE,''),'',logs,nonce))
     rejects(lambda:m.verify_b_success(404,303,out,'',logs.replace('statement: COMMIT;','statement: ROLLBACK;'),nonce))
     errorlog=logs+'[404] ERROR: 55P03: synthetic refusal\n[404] STATEMENT: '+m.GRANT_SQL+'\n'
-    assert m.verify_b_error(1,'1\nSYNTHETIC_B_READY:404:303\n','ERROR: 55P03: failed',errorlog,nonce,303,{101,202})['sqlstate']=='55P03'
+    diagnostic=m.verify_b_error(1,'1\nSYNTHETIC_B_READY:404:303\n','ERROR: 55P03: failed',errorlog,nonce,303,{101,202})
+    assert diagnostic['sqlstate']=='55P03' and diagnostic['message_diagnostic']['class']=='unknown'
+    assert 'synthetic refusal' not in str(diagnostic)
+    exact=logs+'[404] ERROR: XX000: tuple concurrently updated\n[404] STATEMENT: '+m.GRANT_SQL+'\n'
+    matched=m.verify_b_error(1,'1\nSYNTHETIC_B_READY:404:303\n','ERROR: XX000: failed',exact,nonce,303,{101,202})
+    assert matched['message_diagnostic']=={'class':'tuple_concurrently_updated','length':26,'sha256':hashlib.sha256(b'tuple concurrently updated').hexdigest()}
+    secret='SECRET_DO_NOT_DISPLAY'
+    redacted=m.classify_server_message(secret)
+    assert redacted['class']=='unknown' and redacted['length']==len(secret) and secret not in str(redacted)
+    assert m.classify_server_message('could not serialize access due to concurrent update')['class']=='serialization_concurrent_update'
+    rejects(lambda:m.classify_server_message('x'*4097))
+    rejects(lambda:m.verify_b_error(1,'1\nSYNTHETIC_B_READY:404:303\n','ERROR: XX000: failed',exact+exact,nonce,303,{101,202}))
     rejects(lambda:m.verify_b_error(1,'1\nSYNTHETIC_B_READY:404:303\n','ERROR: 42501: failed',errorlog,nonce,303,{101,202}))
     rejects(lambda:m.verify_b_error(1,'1\nSYNTHETIC_B_READY:404:303\n','ERROR: 55P03: failed',errorlog,nonce,303,{404}))
     setup_error=logs+'[404] ERROR: 42501: synthetic refusal\n[404] STATEMENT: SET log_statement=all;\n'

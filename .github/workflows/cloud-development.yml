@@ -1,4 +1,5 @@
-name: Isolated concurrent table GRANT observation
+name: Isolated synthetic table GRANT error diagnosis
+# Unknown message hashes can be guessable: only the fixed network-none synthetic DB is permitted.
 on:
   workflow_dispatch:
     inputs:
@@ -29,7 +30,7 @@ jobs:
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD 836e6dcc8dab204b955d8c5303cb78260435193f"
+          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD 946701ca3c224821d98c2f7ce984041c7d873c2b"
           git diff --no-renames --name-only HEAD^ HEAD | LC_ALL=C sort > "$RUNNER_TEMP/actual-files"
           LC_ALL=C sort > "$RUNNER_TEMP/expected-files" <<'FIXED_FILES'
           .github/workflows/cloud-development.yml
@@ -54,10 +55,10 @@ jobs:
           bd68a09dcf168db2245699763284a6075bdefe7c342e21990e6702b18edc08ae  scripts/asset_pref_truncate_fixture/cli_execbatch/event_preflight_entry.py
           343bc4c77bf752b70884df9e6f195806f977f9e7118a64a800aa376ff72dd303  scripts/asset_pref_truncate_fixture/cli_execbatch/test_event_preflight_offline.py
           05d6b17ae5129e805e565c5c5cd06a9530a8c54f0e3e289eb9cdefe7b5079104  scripts/asset_pref_truncate_fixture/cli_execbatch/test_event_entry_offline.py
-          3ebc7deac78a17f41ebd97e0c00d6cbbd0ac2b443802dd6817942ef6d0262505  scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant.py
-          43565436c98ef4cda9799e4a97cc9086719a0187b126b929ccef10271ce2a98f  scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant_entry.py
-          705478092931f16f4da95f3bde645daf343015135f09dadef5f601ab217ecbb2  scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_offline.py
-          cffdb5c745816a7a9eeb42a032b0ab5e675c9588f44342dfb574feea92c71e27  scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_entry_offline.py
+          9a4ee89d6c99514bbf51d2dfdee092a392bd08fcfa9ecb8432faf54ebc199546  scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant.py
+          be498110134a5d3229e9fc90ef08693888c398bd7ce7bc727d9952d17d479455  scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant_entry.py
+          98ecc3a84f21d4d27403f01ae3e65e3d5a6f9475d2ef60eaf211108255adad3b  scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_offline.py
+          b31f77716c29563fd69633d1b0fce0b2e517d32b43eb32b5cbf0099f49e361fc  scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_entry_offline.py
           24e38d3b06d1aeb5d5fd6bfea2bec64c303d4fdad9a45b51f0af980a48cf9db8  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
           1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
           FIXED_HASHES

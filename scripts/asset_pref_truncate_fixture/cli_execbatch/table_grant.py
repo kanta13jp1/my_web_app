@@ -20,6 +20,14 @@ GRANT_SQL='GRANT TRUNCATE ON TABLE public.asset_pref_mirror TO anon;'
 GRANT_DONE='SYNTHETIC_TABLE_GRANT_DONE'
 COMMIT_DONE='SYNTHETIC_TABLE_GRANT_COMMIT'
 OUTPUT_LIMIT=65536
+ERROR_CLASSES={
+ 'tuple concurrently updated':'tuple_concurrently_updated',
+ 'tuple concurrently deleted':'tuple_concurrently_deleted',
+ 'could not serialize access due to concurrent update':'serialization_concurrent_update',
+ 'could not serialize access due to concurrent delete':'serialization_concurrent_delete',
+ 'canceling statement due to statement timeout':'statement_timeout',
+ 'canceling statement due to lock timeout':'lock_timeout',
+}
 
 
 def load_fixed():
@@ -145,6 +153,13 @@ def verify_b_statement(pid,logs,nonce):
         raise RuntimeError('grant statement completion lacks same-PID evidence')
 
 
+def classify_server_message(message):
+    if not isinstance(message,str):raise RuntimeError('invalid server error message')
+    raw=message.encode('utf8',errors='strict')
+    if not raw or len(raw)>4096:raise RuntimeError('server error message absent or exceeds bound')
+    return {'class':ERROR_CLASSES.get(message,'unknown'),'length':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}
+
+
 def verify_b_error(code,out,err,logs,nonce,oid,other_pids):
     lines=out.splitlines()
     identity=re.fullmatch(r'SYNTHETIC_B_READY:([1-9][0-9]*):([1-9][0-9]*)',lines[1]) if len(lines)>=2 else None
@@ -154,8 +169,8 @@ def verify_b_error(code,out,err,logs,nonce,oid,other_pids):
     if pid in other_pids or int(identity.group(2))!=oid:raise RuntimeError('grant failure identity mismatch')
     states=set(re.findall(r'\b([0-9A-Z]{5}):',err))
     auth=r'\['+str(pid)+r'\] LOG:\s+(?:[0-9A-Z]{5}:\s+)?connection authorized: user=postgres database=synthetic_execbatch application_name=codex_grant_'+nonce+r'(?:\s|$)'
-    errors=set();lines=logs.splitlines()
-    error_pattern=re.compile(r'\['+str(pid)+r'\] ERROR:\s+([0-9A-Z]{5}):')
+    errors=[];lines=logs.splitlines()
+    error_pattern=re.compile(r'\['+str(pid)+r'\] ERROR:\s+([0-9A-Z]{5}):\s*(.*?)\s*$')
     same_pid=re.compile(r'\['+str(pid)+r'\] ')
     detail=re.compile(r'\['+str(pid)+r'\] (?:DETAIL|HINT|CONTEXT|LOCATION):')
     statement=re.compile(r'\['+str(pid)+r'\] STATEMENT:\s+'+re.escape(GRANT_SQL)+r'(?:\s|$)')
@@ -163,11 +178,12 @@ def verify_b_error(code,out,err,logs,nonce,oid,other_pids):
         match=error_pattern.search(line)
         if not match:continue
         for following in lines[i+1:i+9]:
-            if statement.search(following):errors.add(match.group(1));break
+            if statement.search(following):errors.append((match.group(1),match.group(2)));break
             if same_pid.search(following) and not detail.search(following):break
-    common=states & errors
-    if not re.search(auth,logs) or len(common)!=1:raise RuntimeError('grant failure SQLSTATE or PID unproven')
-    return {'pid':pid,'sqlstate':next(iter(common))}
+    if not re.search(auth,logs) or len(errors)!=1 or errors[0][0] not in states:
+        raise RuntimeError('grant failure SQLSTATE, PID or message pairing unproven')
+    state,message=errors[0]
+    return {'pid':pid,'sqlstate':state,'message_diagnostic':classify_server_message(message)}
 
 
 def verify_cli_auth(pid,logs):
