@@ -10,8 +10,9 @@ test('romaji input, scoring, deadline and retry in a browser', async ({ page }, 
   const input = page.getByRole('textbox', { name: /^ローマ字入力/ });
   await input.scrollIntoViewIfNeeded();
   await input.focus();
-  const guide = await page.getByText(/^使えるつづり:/).textContent();
-  const spelling = guide!.split(':')[1].trim().split(' / ')[0];
+  // Flutter Card merges its child text into one semantics node.
+  const guide = await page.getByText(/使えるつづり:/).textContent({ timeout: 7500 });
+  const spelling = guide!.match(/使えるつづり:\s*([a-z]+)/)![1];
   await input.pressSequentially(spelling);
   await expect(page.getByText('クリア 1問', { exact: true })).toBeVisible();
   await expect(page.getByText(`スコア ${spelling.length * 10 + 50}`, { exact: true })).toBeVisible();
