@@ -21,11 +21,13 @@ void main() {
     await tester.pump();
     expect(find.text('スコア 0'), findsOneWidget);
     // Exercise an uncommitted IME composition through Flutter's editing pipeline.
-    tester.testTextInput.updateEditingValue(const TextEditingValue(
-      text: 'k',
-      selection: TextSelection.collapsed(offset: 1),
-      composing: TextRange(start: 0, end: 1),
-    ));
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'k',
+        selection: TextSelection.collapsed(offset: 1),
+        composing: TextRange(start: 0, end: 1),
+      ),
+    );
     await tester.pump();
     expect(find.text('スコア 0'), findsOneWidget);
     expect(tester.widget<TextField>(field).controller!.text, isEmpty);
