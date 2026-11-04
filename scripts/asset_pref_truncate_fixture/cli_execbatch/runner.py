@@ -126,6 +126,34 @@ def candidate_pair():
     return decoded
 
 
+def parse_tmp_mountinfo(text):
+    matches = []
+    for line in text.splitlines():
+        if ' - ' not in line: continue
+        before, after = line.split(' - ', 1)
+        left, right = before.split(), after.split()
+        if len(left) >= 6 and len(right) >= 3 and left[4] == '/tmp':
+            matches.append((set(left[5].split(',')), right[0], set(right[2].split(','))))
+    if len(matches) != 1:
+        raise RuntimeError('actual /tmp mount not uniquely identified')
+    flags, fs_type, super_flags = matches[0]
+    if fs_type != 'tmpfs' or not {'rw','nosuid','nodev'} <= flags or 'noexec' in flags or 'noexec' in super_flags:
+        raise RuntimeError('actual /tmp mount is not executable nosuid/nodev tmpfs')
+    return {'filesystem': fs_type, 'mount_options': sorted(flags), 'super_options': sorted(super_flags)}
+
+
+def verify_removed(cid, inspect_code, inspect_stdout, inspect_stderr, ps_code, ps_stdout, ps_stderr):
+    if not re.fullmatch(r'[0-9a-f]{64}', cid): raise RuntimeError('invalid removed container ID')
+    exact = {f'error: no such object: {cid}', f'error: no such container: {cid}',
+             f'error response from daemon: no such object: {cid}',
+             f'error response from daemon: no such container: {cid}'}
+    if (inspect_code != 1 or inspect_stdout.strip() not in ('','[]')
+        or inspect_stderr.strip().casefold() not in exact
+        or ps_code != 0 or ps_stdout.strip() != '' or ps_stderr.strip() != ''):
+        raise RuntimeError('owned container removal unconfirmed; inspect/ps evidence ambiguous')
+    return True
+
+
 class OwnedService:
     """Only self-created, separately inspected, isolated Docker ID may be used."""
     def __init__(self, docker, env, image_info, run_id):
@@ -135,6 +163,7 @@ class OwnedService:
         self.token = str(uuid.uuid4())
         self.cid = None
         self.verified = False
+        self.cli_binary_sha = None
 
     def command(self, args, *, input=None, timeout=30, check=True):
         return subprocess.run(self.docker + args, env=self.env, input=input,
@@ -150,7 +179,7 @@ class OwnedService:
             '--label', 'codex.execbatch.run=' + self.run_id,
             '--label', 'codex.execbatch.scope=synthetic',
             '--tmpfs', '/var/lib/postgresql/data:rw,nosuid,size=256m',
-            '--tmpfs', '/tmp:rw,nosuid,size=192m,mode=1777',
+            '--tmpfs', '/tmp:rw,nosuid,nodev,exec,size=192m,mode=1777',
             '-e', 'POSTGRES_DB=' + DB, '-e', 'POSTGRES_PASSWORD=' + FIXTURE_PASSWORD, IMAGE] + SERVER_CMD
         result = self.command(cmd, timeout=30)
         cid = result.stdout.decode('ascii').strip()
@@ -203,7 +232,9 @@ class OwnedService:
             and set(tmpfs) == allowed_mounts
             and {'rw','nosuid'} <= options['/var/lib/postgresql/data']
             and bool({'size=256m','size=268435456'} & options['/var/lib/postgresql/data'])
-            and {'rw','nosuid'} <= options['/tmp'] and bool({'size=192m','size=201326592'} & options['/tmp'])
+            and {'rw','nosuid','nodev','exec'} <= options['/tmp']
+            and not ({'noexec','suid','dev'} & options['/tmp'])
+            and bool({'size=192m','size=201326592'} & options['/tmp'])
             and bool({'mode=1777','mode=1023'} & options['/tmp'])
             and all(m.get('Type') == 'tmpfs' and m.get('Destination') in allowed_mounts for m in mounts)
             and isinstance(state.get('Running'), bool)
@@ -257,6 +288,24 @@ class OwnedService:
             "pg_catalog.has_table_privilege('authenticated','public.asset_pref_mirror','TRUNCATE');")
         if result.strip() != '0|t|t': raise RuntimeError('fixture baseline mismatch: ' + result)
 
+    def verify_cli_binary(self):
+        if not self.cli_binary_sha or not re.fullmatch(r'[0-9a-f]{64}', self.cli_binary_sha):
+            raise RuntimeError('staged CLI hash unavailable')
+        mount = parse_tmp_mountinfo(self.exec(['/bin/cat','/proc/self/mountinfo']).stdout.decode('utf-8'))
+        uid = self.exec(['/usr/bin/id','-u']).stdout.decode('ascii').strip()
+        gid = self.exec(['/usr/bin/id','-g']).stdout.decode('ascii').strip()
+        details = self.exec(['/usr/bin/stat','-c','%u|%g|%a|%F|%h',
+            '/tmp/codex-cli/supabase-cli']).stdout.decode('ascii').strip()
+        if not uid.isdecimal() or not gid.isdecimal() or details != '|'.join((uid,gid,'700','regular file','1')):
+            raise RuntimeError('staged CLI owner, mode, type or link count mismatch: ' + details)
+        found = self.exec(['/usr/bin/sha256sum','/tmp/codex-cli/supabase-cli']).stdout.decode('ascii').split()[0]
+        if found != self.cli_binary_sha:
+            raise RuntimeError('staged CLI hash mismatch')
+        evidence = {'run_id':self.run_id, 'nonce':self.nonce, 'mount':mount, 'uid':uid, 'gid':gid,
+                    'mode':'700', 'type':'regular file', 'links':1, 'sha256':found}
+        print('SYNTHETIC_EXECBATCH_EXECUTABLE ' + json.dumps(evidence,sort_keys=True), flush=True)
+        return evidence
+
     def stage(self, binary, migration):
         self.psql('SELECT 1;')  # confirm database marker immediately before staging
         self.exec(['/bin/sh','-c','umask 077; mkdir -p /tmp/codex-cli/supabase/migrations; cat > /tmp/codex-cli/supabase/migrations/20991231000000_synthetic_acl.sql'], input=migration)
@@ -274,6 +323,8 @@ class OwnedService:
             if set(entries) != expected or len(entries) != len(expected):
                 raise RuntimeError('unexpected synthetic project content')
         check_project_tree()
+        self.cli_binary_sha = sha(binary)
+        self.verify_cli_binary()
         version = self.exec(['/tmp/codex-cli/supabase-cli','--version'], timeout=20, check=False, workdir='/tmp/codex-cli')
         if version.returncode != 0 or version.stdout.decode('utf-8').strip() != '2.84.2':
             raise RuntimeError('fixed CLI version not confirmed: ' + (version.stdout + version.stderr).decode('utf-8', errors='replace'))
@@ -281,6 +332,7 @@ class OwnedService:
 
     def cli_push(self):
         self.psql('SELECT 1;')
+        self.verify_cli_binary()
         # Socket-only URI and -i cleared environment; no linked ref or fallback.
         args = ['/tmp/codex-cli/supabase-cli','db','push','--db-url',DB_URL,
                 '--include-all','--yes','--workdir','/tmp/codex-cli']
@@ -301,11 +353,13 @@ class OwnedService:
         self.inspect(running=False)
         self.command(['rm',self.cid], timeout=20)
         missing = self.command(['inspect',self.cid], timeout=15, check=False)
-        error = missing.stderr.decode('utf-8', errors='replace')
-        if missing.returncode == 0 or not any(x in error for x in ('No such object','No such container')):
-            raise RuntimeError('owned container removal could not be confirmed: ' + error)
+        listed = self.command(['ps','--all','--no-trunc','--filter','id='+self.cid,'--format','{{.ID}}'], timeout=15, check=False)
+        verify_removed(self.cid, missing.returncode, missing.stdout.decode('utf-8',errors='replace'),
+            missing.stderr.decode('utf-8',errors='replace'), listed.returncode,
+            listed.stdout.decode('utf-8',errors='replace'), listed.stderr.decode('utf-8',errors='replace'))
         print('SYNTHETIC_EXECBATCH_TEARDOWN ' + json.dumps({'run_id':self.run_id,'nonce':self.nonce,
-            'container_id':self.cid,'stopped_removed':True,'seconds':time.monotonic()-started}, sort_keys=True), flush=True)
+            'container_id':self.cid,'stopped_removed':True,'inspect_absent':True,'ps_absent':True,
+            'seconds':time.monotonic()-started}, sort_keys=True), flush=True)
 
 
 FIXTURE_SQL = r"""

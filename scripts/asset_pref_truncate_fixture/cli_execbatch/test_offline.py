@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import runpy
+import subprocess
 import tarfile
 import types
 
@@ -62,7 +63,7 @@ def run():
         'Entrypoint':['entry'],'Cmd':m['SERVER_CMD'],'User':'','Tty':False,'OpenStdin':False},
       'HostConfig':{'NetworkMode':'none','IpcMode':'private','PidMode':'','UsernsMode':'',
         'PublishAllPorts':False,'Privileged':False,'Tmpfs':{'/var/lib/postgresql/data':'rw,nosuid,size=256m',
-        '/tmp':'rw,nosuid,size=192m,mode=1777'}},
+        '/tmp':'rw,nosuid,nodev,exec,size=192m,mode=1777'}},
       'NetworkSettings':{'Networks':{'none':{}},'Ports':{'5432/tcp':None}},'State':{'Running':True},'Mounts':[]}
     service.command = lambda args: types.SimpleNamespace(stdout=json.dumps([info]).encode())
     assert service.inspect(running=True)['Id'] == service.cid
@@ -79,6 +80,83 @@ def run():
         try: service.inspect(running=True)
         except RuntimeError: pass
         else: raise AssertionError('invalid container accepted: ' + repr(path))
+    good_mount = '33 1 0:55 / /tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,size=196608k,mode=1777\n'
+    assert m['parse_tmp_mountinfo'](good_mount)['filesystem'] == 'tmpfs'
+    for bad in (good_mount.replace('nodev,',''),good_mount.replace('nosuid,',''),
+                good_mount.replace('relatime','noexec'), good_mount.replace('tmpfs tmpfs','overlay overlay'),
+                good_mount.replace('tmpfs rw,size','tmpfs rw,noexec,size'),
+                good_mount + good_mount, '',good_mount.replace('rw,nosuid','ro,nosuid')):
+        try:m['parse_tmp_mountinfo'](bad)
+        except RuntimeError:pass
+        else:raise AssertionError('unsafe runtime mount accepted')
+    cid='d'*64
+    for message in ('error: no such object: '+cid,'Error: No Such Container: '+cid,
+                    'Error response from daemon: No such object: '+cid):
+        assert m['verify_removed'](cid,1,'[]\n',message+'\n',0,'','') is True
+    invalid = [(0,'','error: no such object: '+cid,0,'',''),
+               (1,'','error: no such object: '+'e'*64,0,'',''),
+               (1,'','daemon unavailable: no such object: '+cid,0,'',''),
+               (1,'unexpected','error: no such object: '+cid,0,'',''),
+               (1,'','error: no such object: '+cid,1,'','daemon failed'),
+               (1,'','error: no such object: '+cid,0,'f'*64,'')]
+    for args in invalid:
+        try:m['verify_removed'](cid,*args)
+        except RuntimeError:pass
+        else:raise AssertionError('ambiguous removal accepted: '+repr(args))
+    binary_service=m['OwnedService']([],{},image,'123-1');binary_service.cid='a'*64;binary_service.nonce='b'*32
+    binary_service.cli_binary_sha='1'*64
+    def fake_exec(args,**kwargs):
+        first=args[0]
+        if first=='/bin/cat':value=good_mount
+        elif args==['/usr/bin/id','-u']:value='999\n'
+        elif args==['/usr/bin/id','-g']:value='999\n'
+        elif first=='/usr/bin/stat':value='999|999|700|regular file|1\n'
+        elif first=='/usr/bin/sha256sum':value='1'*64+'  /tmp/codex-cli/supabase-cli\n'
+        else:raise AssertionError('unexpected pure fake command: '+repr(args))
+        return types.SimpleNamespace(stdout=value.encode())
+    binary_service.exec=fake_exec
+    import contextlib
+    with contextlib.redirect_stdout(io.StringIO()):assert binary_service.verify_cli_binary()['sha256']=='1'*64
+    def altered(field, replacement):
+        def call(args,**kwargs):
+            response=fake_exec(args,**kwargs)
+            if args[0]==field:return types.SimpleNamespace(stdout=replacement.encode())
+            return response
+        return call
+    for field,value in [('/bin/cat',good_mount.replace('relatime','noexec')),
+                        ('/usr/bin/stat','0|999|700|regular file|1\n'),
+                        ('/usr/bin/stat','999|999|755|regular file|1\n'),
+                        ('/usr/bin/stat','999|999|700|symbolic link|1\n'),
+                        ('/usr/bin/sha256sum','2'*64+'  /tmp/codex-cli/supabase-cli\n')]:
+        binary_service.exec=altered(field,value)
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):binary_service.verify_cli_binary()
+        except RuntimeError:pass
+        else:raise AssertionError('unsafe CLI binary evidence accepted: '+field)
+    cleanup=m['OwnedService']([],{},image,'123-1');cleanup.cid=cid;cleanup.nonce='b'*32;cleanup.verified=True
+    cleanup.inspect=lambda running=None: {'State':{'Running': running is not False}}
+    calls=[]
+    def fake_docker(args,**kwargs):
+        calls.append(args)
+        if args[0]=='inspect':return types.SimpleNamespace(returncode=1,stdout=b'[]\n',stderr=('error: no such object: '+cid+'\n').encode())
+        return types.SimpleNamespace(returncode=0,stdout=b'',stderr=b'')
+    cleanup.command=fake_docker
+    with contextlib.redirect_stdout(io.StringIO()):cleanup.stop_owned()
+    assert [args[0] for args in calls]==['stop','rm','inspect','ps']
+    assert calls[-1]==['ps','--all','--no-trunc','--filter','id='+cid,'--format','{{.ID}}']
+    calls.clear()
+    def failed_rm(args,**kwargs):
+        calls.append(args)
+        if args[0]=='rm':raise subprocess.CalledProcessError(1,args)
+        return types.SimpleNamespace(returncode=0,stdout=b'',stderr=b'')
+    cleanup.command=failed_rm
+    try:cleanup.stop_owned()
+    except subprocess.CalledProcessError:pass
+    else:raise AssertionError('failed rm accepted')
+    assert [args[0] for args in calls]==['stop','rm']
+    print('PASS: successful exact owned stop/rm/inspect/ps order and rm-failure short circuit')
+    print('PASS: runtime mount, executable ownership/mode/hash, and exact-CID dual absence checks')
+
     class SimulatedService:
         def __init__(self, mode, outcome, bad_route=False):
             self.mode, self.outcome, self.bad_route = mode, outcome, bad_route
