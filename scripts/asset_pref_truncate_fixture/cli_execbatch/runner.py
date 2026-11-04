@@ -154,6 +154,79 @@ def verify_removed(cid, inspect_code, inspect_stdout, inspect_stderr, ps_code, p
     return True
 
 
+STARTUP_MARKER = 'PostgreSQL init process complete; ready for start up.'
+READINESS_SQL = r"""SELECT current_database(), current_user,
+ current_setting('server_version_num')::int/10000, inet_client_addr() IS NULL,
+ inet_server_addr() IS NULL, NOT pg_is_in_recovery(), pg_postmaster_start_time(),
+ split_part(pg_catalog.pg_read_file('postmaster.pid',0,128), E'\n', 1);"""
+
+
+def classify_psql_stderr(raw):
+    if not isinstance(raw, bytes): raw = str(raw or '').encode('utf-8', errors='replace')
+    text = raw.decode('utf-8', errors='replace').lower()
+    patterns = (
+        ('authentication', ('authentication failed','no pg_hba.conf entry','password authentication')),
+        ('database_missing', ('database "synthetic_execbatch" does not exist',)),
+        ('role_missing', ('role "postgres" does not exist',)),
+        ('socket_unavailable', ('no such file or directory','connection refused','could not connect')),
+        ('server_starting', ('starting up','shutting down','not yet accepting connections')),
+        ('permission_denied', ('permission denied',)),
+    )
+    found = [label for label, terms in patterns if any(term in text for term in terms)]
+    return {'categories':found or ['unclassified'], 'bytes':len(raw), 'sha256':sha(raw)}
+
+
+def classify_failure(exc):
+    raw = str(exc).encode('utf-8', errors='replace')
+    text = raw.decode('utf-8', errors='replace').lower()
+    patterns = (
+        ('postmaster_changed', ('postmaster changed',)),
+        ('identity_mismatch', ('identity, socket, recovery or postmaster check failed',)),
+        ('startup_marker', ('initialization marker',)),
+        ('readiness_deadline', ('readiness deadline',)),
+        ('pg_isready_error', ('unexpected pg_isready',)),
+        ('startup_postgres_fatal', ('fatal postgres log observed',)),
+        ('psql_error', ('synthetic psql failed',)),
+        ('container_identity', ('container identity', 'service identity')),
+    )
+    found = [label for label,terms in patterns if any(term in text for term in terms)]
+    return {'categories':found or ['unclassified'], 'bytes':len(raw), 'sha256':sha(raw)}
+
+
+def summarize_server_logs(text):
+    encoded = text.encode('utf-8', errors='replace')
+    fatal = [line for line in text.splitlines() if re.search(r'\b(?:FATAL|PANIC):', line)]
+    categories = sorted({category for line in fatal
+        for category in classify_psql_stderr(line.encode('utf-8', errors='replace'))['categories']})
+    return {'startup_marker_count':text.count(STARTUP_MARKER),
+            'ready_log_count':text.count('database system is ready to accept connections'),
+            'shutdown_log_count':text.count('database system is shut down'),
+            'fatal_line_count':len(fatal), 'fatal_categories':categories,
+            'bytes':len(encoded), 'sha256':sha(encoded)}
+
+
+def require_clean_final_logs(text):
+    if summarize_server_logs(text)['fatal_line_count']:
+        raise RuntimeError('fatal postgres log observed during startup')
+    if text.count(STARTUP_MARKER) != 1:
+        raise RuntimeError('final image initialization marker no longer uniquely present')
+
+
+def validate_ready_state(output):
+    fields = output.strip().split('|')
+    if (len(fields) != 8 or fields[:6] != ['synthetic_execbatch','postgres','17','t','t','t']
+        or not fields[6] or not re.fullmatch(r'[1-9][0-9]*', fields[7])):
+        raise RuntimeError('synthetic database identity, socket, recovery or postmaster check failed')
+    return {'database':fields[0], 'user':fields[1], 'pg_major':17,
+            'unix_socket':True, 'not_in_recovery':True, 'postmaster_started':fields[6], 'postmaster_pid':fields[7]}
+
+
+class FixturePsqlError(RuntimeError):
+    def __init__(self, returncode, stderr):
+        self.evidence = {'returncode':returncode, 'stderr':classify_psql_stderr(stderr)}
+        super().__init__('synthetic psql failed: ' + json.dumps(self.evidence, sort_keys=True))
+
+
 class OwnedService:
     """Only self-created, separately inspected, isolated Docker ID may be used."""
     def __init__(self, docker, env, image_info, run_id):
@@ -262,12 +335,58 @@ class OwnedService:
                 "(SELECT 1 FROM public.codex_execbatch_guard WHERE token='" + self.token + "'::uuid))::int);\n" + sql)
         argv = ['/usr/lib/postgresql/17/bin/psql','-X','-qAt','-v','ON_ERROR_STOP=1',
                 '-h','/var/run/postgresql','-U','postgres','-d',DB]
-        output = self.exec(argv, input=sql.encode('utf-8'), timeout=20).stdout.decode('utf-8')
+        result = self.exec(argv, input=sql.encode('utf-8'), timeout=20, check=False)
+        if result.returncode != 0:
+            raise FixturePsqlError(result.returncode, result.stderr)
+        output = result.stdout.decode('utf-8')
         if guarded:
             lines = output.splitlines()
             if not lines or lines[0] != '1': raise RuntimeError('fixture guard not confirmed')
             return '\n'.join(lines[1:])
         return output.strip()
+
+    def wait_final_postmaster(self):
+        """Wait for the pinned image's final server; never retry psql errors."""
+        deadline = time.monotonic() + 40
+        while True:
+            logs = self.logs()  # inspect identity; logs never emitted raw
+            summary = summarize_server_logs(logs)
+            if summary['fatal_line_count']:
+                raise RuntimeError('fatal postgres log observed during startup')
+            marker_count = logs.count(STARTUP_MARKER)
+            if marker_count > 1:
+                raise RuntimeError('unexpected repeated image initialization marker')
+            if marker_count == 1:
+                break
+            if time.monotonic() >= deadline:
+                raise RuntimeError('final image initialization marker not observed before deadline')
+            time.sleep(0.5)
+        while True:
+            # Inspect fresh owned-container logs before every connection probe.
+            # Never continue polling after a classified fatal auth/identity issue.
+            require_clean_final_logs(self.logs())
+            probe = self.exec(['/usr/bin/pg_isready','-h','/var/run/postgresql','-U','postgres',
+                               '-d',DB,'-t','2'], timeout=5, check=False)
+            if probe.returncode == 0:
+                break
+            if probe.returncode not in (1,2):
+                raise RuntimeError('unexpected pg_isready failure: ' + str(probe.returncode))
+            if time.monotonic() >= deadline:
+                raise RuntimeError('final postgres readiness deadline exceeded')
+            time.sleep(0.5)
+        # A correct DB and role are not implied by pg_isready. Any psql or
+        # identity error aborts immediately; no retry is attempted.
+        require_clean_final_logs(self.logs())
+        first = validate_ready_state(self.psql(READINESS_SQL, guarded=False))
+        time.sleep(0.5)
+        require_clean_final_logs(self.logs())
+        second = validate_ready_state(self.psql(READINESS_SQL, guarded=False))
+        require_clean_final_logs(self.logs())
+        if first != second:
+            raise RuntimeError('postmaster changed during final readiness confirmation')
+        print('SYNTHETIC_EXECBATCH_READY ' + json.dumps({'run_id':self.run_id,'nonce':self.nonce,
+            'container_id':self.cid,'entrypoint_marker':True,'state':second},sort_keys=True),flush=True)
+        return second
 
     def initialize(self):
         empty = self.psql("SELECT current_database()='synthetic_execbatch' AND current_user='postgres' "
@@ -429,14 +548,7 @@ def run_case(service, mode, outcome, binary, migration):
         raise RuntimeError('current PR has no inheritance guard; case is inapplicable')
     case_started = time.monotonic()
     service.create()
-    # Official image may need startup time; each attempt is bounded and stops
-    # immediately on non-readiness unrelated to socket startup.
-    for attempt in range(30):
-        probe = service.exec(['/usr/bin/pg_isready','-h','/var/run/postgresql','-U','postgres','-d',DB], timeout=5, check=False)
-        if probe.returncode == 0: break
-        if probe.returncode not in (1, 2): raise RuntimeError('unexpected pg_isready failure')
-        time.sleep(0.5)
-    else: raise RuntimeError('owned PG17 fixture readiness timeout')
+    service.wait_final_postmaster()
     service.initialize()
     if outcome == 'history_failure': service.psql(HISTORY_FAILURE)
     if outcome == 'candidate_failure': service.psql(CHILD_FAILURE)
@@ -527,9 +639,18 @@ def run_matrix():
                     results.append(result)
                     print('SYNTHETIC_EXECBATCH_EVIDENCE ' + json.dumps(result,sort_keys=True),flush=True)
                 except BaseException as exc:
-                    print('SYNTHETIC_EXECBATCH_FAILURE ' + json.dumps({'mode':mode, 'outcome':outcome,
-                        'run_id':service.run_id,'nonce':service.nonce,'container_id':service.cid,
-                        'error_type':type(exc).__name__, 'error':str(exc)}, sort_keys=True), flush=True)
+                    evidence = {'mode':mode, 'outcome':outcome, 'run_id':service.run_id,
+                        'nonce':service.nonce, 'container_id':service.cid, 'error_type':type(exc).__name__,
+                        'error_summary':classify_failure(exc)}
+                    if isinstance(exc, FixturePsqlError):
+                        evidence['psql'] = exc.evidence
+                    if service.verified:
+                        try: evidence['server_logs'] = summarize_server_logs(service.logs())
+                        except Exception as log_error:
+                            evidence['server_logs_unavailable'] = type(log_error).__name__
+                    else:
+                        evidence['server_logs_unavailable'] = 'container identity not verified'
+                    print('SYNTHETIC_EXECBATCH_FAILURE ' + json.dumps(evidence, sort_keys=True), flush=True)
                     raise
                 finally:
                     original = sys.exc_info()[1]

@@ -157,6 +157,97 @@ def run():
     print('PASS: successful exact owned stop/rm/inspect/ps order and rm-failure short circuit')
     print('PASS: runtime mount, executable ownership/mode/hash, and exact-CID dual absence checks')
 
+    state='synthetic_execbatch|postgres|17|t|t|t|2026-11-04 00:00:00+00|123'
+    valid=m['validate_ready_state'](state)
+    assert valid['unix_socket'] and valid['not_in_recovery'] and valid['postmaster_pid']=='123'
+    for bad in (state.replace('synthetic_execbatch','postgres'),state.replace('|17|','|16|'),
+                state.replace('|t|t|t|','|t|f|t|'),state.replace('|t|t|t|','|t|t|f|'),
+                state.rsplit('|',1)[0]+'|abc',''):
+        try:m['validate_ready_state'](bad)
+        except RuntimeError:pass
+        else:raise AssertionError('invalid database readiness identity accepted')
+    assert m['classify_psql_stderr'](b'FATAL: password authentication failed for private-user')['categories']==['authentication']
+    assert 'private-user' not in str(m['FixturePsqlError'](2,b'FATAL: password authentication failed for private-user'))
+    assert m['classify_failure'](RuntimeError('postmaster changed during final readiness confirmation'))['categories']==['postmaster_changed']
+    tree=ast.parse((HERE/'runner.py').read_bytes())
+    case=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name=='run_case')
+    calls=[n.func.attr for n in ast.walk(case) if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute) and n.func.attr in ('wait_final_postmaster','initialize')]
+    assert calls.count('wait_final_postmaster')==1 and calls.count('initialize')==1
+    summary=m['summarize_server_logs']('FATAL: password authentication failed for private-user\n')
+    assert summary['fatal_line_count']==1 and 'private-user' not in repr(summary)
+    class ReadyFake:
+        def __init__(self, outputs, probes=(0,), logs=None):
+            self.outputs=list(outputs);self.probes=list(probes);self.psql_calls=0;self.exec_calls=0
+            self.log_lines=list(logs or [m['STARTUP_MARKER']]);self.run_id='123-1';self.nonce='b'*32;self.cid='a'*64
+        def logs(self):return self.log_lines.pop(0) if len(self.log_lines)>1 else self.log_lines[0]
+        def exec(self,args,**kwargs):
+            self.exec_calls+=1;return types.SimpleNamespace(returncode=self.probes.pop(0))
+        def psql(self,sql,**kwargs):
+            self.psql_calls+=1;out=self.outputs.pop(0)
+            if isinstance(out,Exception):raise out
+            return out
+    from unittest.mock import patch
+    import contextlib
+    ready=m['OwnedService'].wait_final_postmaster
+    with patch.object(m['time'],'sleep',lambda _:None), contextlib.redirect_stdout(io.StringIO()):
+        good=ReadyFake([state,state],probes=(1,2,0),logs=['initializing',m['STARTUP_MARKER']])
+        assert ready(good)['postmaster_pid']=='123' and good.psql_calls==2 and good.exec_calls==3
+        auth=ReadyFake([m['FixturePsqlError'](2,b'FATAL: password authentication failed')])
+        try:ready(auth)
+        except m['FixturePsqlError']:pass
+        else:raise AssertionError('authentication error accepted')
+        assert auth.psql_calls==1 and auth.exec_calls==1
+        wrong=ReadyFake([state.replace('synthetic_execbatch','postgres')])
+        try:ready(wrong)
+        except RuntimeError:pass
+        else:raise AssertionError('wrong database accepted')
+        assert wrong.psql_calls==1
+        changed=ReadyFake([state,state.rsplit('|',1)[0]+'|124'])
+        try:ready(changed)
+        except RuntimeError:pass
+        else:raise AssertionError('postmaster restart accepted')
+        duplicate=ReadyFake([],logs=[m['STARTUP_MARKER']*2])
+        try:ready(duplicate)
+        except RuntimeError:pass
+        else:raise AssertionError('repeated initialization marker accepted')
+        fatal_start=ReadyFake([],logs=['FATAL: password authentication failed for a synthetic role'])
+        try:ready(fatal_start)
+        except RuntimeError:pass
+        else:raise AssertionError('fatal startup authentication error accepted')
+        assert fatal_start.exec_calls==0 and fatal_start.psql_calls==0
+        fatal_after_marker=ReadyFake([],logs=[m['STARTUP_MARKER'],m['STARTUP_MARKER']+'\nFATAL: password authentication failed'])
+        try:ready(fatal_after_marker)
+        except RuntimeError:pass
+        else:raise AssertionError('fatal immediately after marker accepted')
+        assert fatal_after_marker.exec_calls==0 and fatal_after_marker.psql_calls==0
+        fatal_after_probe=ReadyFake([],probes=(1,),logs=[m['STARTUP_MARKER'],m['STARTUP_MARKER'],m['STARTUP_MARKER']+'\nFATAL: role "postgres" does not exist'])
+        try:ready(fatal_after_probe)
+        except RuntimeError:pass
+        else:raise AssertionError('fatal after transient readiness probe accepted')
+        assert fatal_after_probe.exec_calls==1 and fatal_after_probe.psql_calls==0
+        for fatal_line in ('FATAL: database \"synthetic_execbatch\" does not exist', 'FATAL: unidentified failure', 'PANIC: unidentified failure'):
+            for lines in ([fatal_line], [m['STARTUP_MARKER'],m['STARTUP_MARKER']+'\n'+fatal_line]):
+                fatal_any=ReadyFake([],logs=lines)
+                try:ready(fatal_any)
+                except RuntimeError:pass
+                else:raise AssertionError('unclassified FATAL/PANIC accepted')
+                assert fatal_any.exec_calls==0 and fatal_any.psql_calls==0
+        post_probe_fatal=ReadyFake([],probes=(0,),logs=[m['STARTUP_MARKER'],m['STARTUP_MARKER'],m['STARTUP_MARKER']+'\nFATAL: unidentified failure'])
+        try:ready(post_probe_fatal)
+        except RuntimeError:pass
+        else:raise AssertionError('fatal after successful readiness probe accepted')
+        assert post_probe_fatal.exec_calls==1 and post_probe_fatal.psql_calls==0
+        between_selects_fatal=ReadyFake([state],probes=(0,),logs=[m['STARTUP_MARKER'],m['STARTUP_MARKER'],m['STARTUP_MARKER'],m['STARTUP_MARKER']+'\nPANIC: unidentified failure'])
+        try:ready(between_selects_fatal)
+        except RuntimeError:pass
+        else:raise AssertionError('fatal between identity checks accepted')
+        assert between_selects_fatal.exec_calls==1 and between_selects_fatal.psql_calls==1
+        invalid_probe=ReadyFake([],probes=(3,))
+        try:ready(invalid_probe)
+        except RuntimeError:pass
+        else:raise AssertionError('unexpected pg_isready result accepted')
+    print('PASS: final-server marker, transient readiness, two stable identity probes and fail-fast auth/identity/restart')
+
     class SimulatedService:
         def __init__(self, mode, outcome, bad_route=False):
             self.mode, self.outcome, self.bad_route = mode, outcome, bad_route
@@ -168,6 +259,7 @@ def run():
             if outcome == 'success' or (outcome == 'history_failure' and mode == 'explicit'):
                 self.after.update(anon=False,authenticated=False,acl='revoked')
         def create(self): pass
+        def wait_final_postmaster(self): pass
         def exec(self, args, **kwargs): return types.SimpleNamespace(returncode=0)
         def initialize(self): pass
         def psql(self, sql):
