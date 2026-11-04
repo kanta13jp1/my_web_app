@@ -58,6 +58,43 @@ jobs:
           E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/typing_game.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
       - name: Build integrated app
         run: flutter build web --release --pwa-strategy=none --dart-define=ENVIRONMENT=visual-test --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+      - name: Preserve published Sea Shelter asset packaging
+        uses: ./.github/actions/prepare-sea-shelter-arena
+        with:
+          web-root: build/web
+      - name: Existing published game model regressions
+        run: node --test web/labs/sea-shelter/model.test.mjs web/labs/sea-shelter/farm.test.mjs web/labs/sea-shelter/storage.test.mjs web/labs/sea-shelter/arena/model.test.mjs
+      - name: Integrated new route and existing published game
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > test/e2e/typing_public_base_integration.spec.ts <<'TS'
+          import { expect, test } from '@playwright/test';
+          test('preserved public application opens and plays typing route', async ({page}, info) => {
+            const errors: string[]=[];
+            page.on('pageerror', e=>errors.push(e.message));
+            await page.goto('/typing-game');
+            await expect(page.getByRole('button',{name:/スタート/})).toBeVisible({timeout:60000});
+            await page.getByRole('button',{name:/スタート/}).click();
+            const input=page.getByRole('textbox',{name:/^ローマ字入力/});
+            await input.scrollIntoViewIfNeeded();
+            await input.focus();
+            const guide=await page.getByText(/使えるつづり:/).textContent({timeout:7500});
+            const spelling=guide!.match(/使えるつづり:\s*([a-z]+)/)![1];
+            await input.pressSequentially(spelling);
+            await expect(page.getByText('クリア 1問',{exact:true})).toBeVisible();
+            await page.screenshot({path:info.outputPath('public-base-integrated-typing.png'),fullPage:true});
+            expect(errors).toEqual([]);
+          });
+          TS
+          python3 scripts/serve_spa.py build/web --port 7359 > typing-integrated-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7359/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7359 PLAYWRIGHT_TEST_OUTPUT_DIR=typing-integrated-results PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/integrated-results.json npx playwright test test/e2e/typing_public_base_integration.spec.ts test/e2e/sea_shelter_route.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
       - name: Preserve evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -68,4 +105,6 @@ jobs:
             test-results/
             playwright-report/
             typing-server.log
+            typing-integrated-results/
+            typing-integrated-server.log
           retention-days: 7
