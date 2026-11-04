@@ -519,7 +519,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
                           controller: _input,
                           focusNode: _focus,
                           onTap: () {
-                            if (!_input.value.composing.isCollapsed) return;
+                            if (!_input.value.composing.isCollapsed || _composition.isComposing) return;
                             _input.selection = TextSelection.collapsed(
                               offset: _input.text.length,
                             );
