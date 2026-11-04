@@ -235,7 +235,7 @@ void main() {
     await tester.enterText(field, letter);
     await tester.pump();
     final composing = TextEditingValue(
-      text: '${letter}あ',
+      text: '$letterあ',
       selection: const TextSelection.collapsed(offset: 2),
       composing: const TextRange(start: 1, end: 2),
     );
@@ -252,7 +252,7 @@ void main() {
     tester.testTextInput.updateEditingValue(composing);
     await tester.pump();
     tester.testTextInput.updateEditingValue(TextEditingValue(
-      text: '${letter}あ',
+      text: '$letterあ',
       selection: const TextSelection.collapsed(offset: 2),
     ),);
     await tester.pump();
