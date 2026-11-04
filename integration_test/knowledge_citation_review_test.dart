@@ -144,7 +144,8 @@ void main() {
   }
 
   testWidgets('長い回答を引用ダイアログ内でスクロールできる', (tester) async {
-    final longAnswer = List.generate(30, (index) => '回答の行 $index').join('\n');
+    final longAnswer =
+        '[1] ${List.generate(30, (index) => '回答の行 $index').join('\n')}';
     await tester.pumpWidget(
       MaterialApp(
         home: KnowledgeGraphPage(
@@ -160,9 +161,9 @@ void main() {
     await tester.tap(find.byKey(const Key('knowledge-query-button')));
     await tester.pumpAndSettle();
     await tester.ensureVisible(
-      find.byKey(const Key('knowledge-citation-card-1')),
+      find.byKey(const Key('knowledge-citation-link-1')),
     );
-    await tester.tap(find.byKey(const Key('knowledge-citation-card-1')));
+    await tester.tap(find.byKey(const Key('knowledge-citation-link-1')));
     await tester.pumpAndSettle();
     expect(
       tester
@@ -200,9 +201,7 @@ class _SyntheticGateway implements KnowledgeGraphRagGateway {
       KnowledgeGraphRagAnswer(
         query: '数は？',
         answer: answerText ??
-            (excerpt == '青い箱は4個です。'
-                ? '青い箱は4個です [1]。'
-                : '青い箱は4個で、採用する。 [1]'),
+            (excerpt == '青い箱は4個です。' ? '青い箱は4個です [1]。' : '青い箱は4個で、採用する。 [1]'),
         status: 'ok',
         traceId: 'synthetic-only',
         citations: [

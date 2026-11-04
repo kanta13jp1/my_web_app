@@ -577,7 +577,8 @@ class _CitationDocumentDialogState extends State<_CitationDocumentDialog> {
                           ConstrainedBox(
                             constraints: const BoxConstraints(maxHeight: 96),
                             child: SingleChildScrollView(
-                              key: const Key('knowledge-citation-answer-scroll'),
+                              key:
+                                  const Key('knowledge-citation-answer-scroll'),
                               child: SelectionArea(
                                 child: Text(
                                   widget.answerText,
