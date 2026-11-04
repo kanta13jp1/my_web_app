@@ -1,10 +1,19 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+
+async function openGame(page: Page) {
+  const started = Date.now();
+  await page.goto('/');
+  // Accessible roles can exist behind the startup shell. Wait for the real handoff.
+  await expect(page.locator('#seo-shell')).toHaveCount(0, { timeout: 60_000 });
+  test.info().annotations.push({ type: 'synthetic-game-ready-ms', description: String(Date.now() - started) });
+}
 
 test('romaji input, scoring, deadline and retry in a browser', async ({ page }, info) => {
   test.setTimeout(100_000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/');
+  await openGame(page);
   await expect(page.getByRole('button', { name: /スタート/ })).toBeVisible({ timeout: 60_000 });
   await page.getByRole('button', { name: /スタート/ }).click();
   const input = page.getByRole('textbox', { name: /^ローマ字入力/ });
@@ -33,7 +42,7 @@ test('ten-word practice finishes and missed words can be practised again', async
   test.setTimeout(90_000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/');
+  await openGame(page);
   const practice = page.getByRole('checkbox', { name: '10問じっくり練習', exact: true });
   await expect(practice).toBeVisible({ timeout: 60_000 });
   await practice.click();
@@ -71,7 +80,7 @@ test('English guidance supports practice and switching back keeps the result', a
   test.setTimeout(90_000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/');
+  await openGame(page);
   const language = page.getByRole('button', { name: 'English', exact: true });
   await expect(language).toBeVisible({ timeout: 60_000 });
   await language.click();
@@ -101,7 +110,7 @@ test('Enter starts ready for typing and browser IME commits score once', async (
   test.setTimeout(90_000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/');
+  await openGame(page);
   await expect(page.getByRole('button', { name: /スタート/ })).toBeVisible({ timeout: 60_000 });
   await page.keyboard.press('Enter');
   const guide = await page.getByText(/使えるつづり:/).textContent({ timeout: 7500 });
