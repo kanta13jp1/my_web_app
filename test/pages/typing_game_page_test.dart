@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/typing_game.dart';
 import 'package:my_web_app/pages/typing_game_page.dart';
@@ -127,7 +128,24 @@ void main() {
   testWidgets(
       'English instructions preserve results and localize native controls',
       (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: TypingGamePage()));
+    await tester.pumpWidget(
+      const MaterialApp(
+        locale: Locale('ja'),
+        supportedLocales: [Locale('ja'), Locale('en')],
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: TypingGamePage(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      MaterialLocalizations.of(tester.element(find.byType(Scaffold)))
+          .backButtonTooltip,
+      '戻る',
+    );
     final language = find.byKey(const Key('typing-language'));
     await tester.tap(language);
     await tester.pumpAndSettle();
@@ -157,6 +175,11 @@ void main() {
     await tester.tap(language);
     await tester.pumpAndSettle();
     expect(find.text('ことばのタイピング'), findsOneWidget);
+    expect(
+      MaterialLocalizations.of(tester.element(find.byType(Scaffold)))
+          .backButtonTooltip,
+      '戻る',
+    );
     expect(find.text('間違えたことばを振り返ろう'), findsOneWidget);
     expect(find.text('スコア 0'), findsOneWidget);
     expect(tester.takeException(), isNull);
