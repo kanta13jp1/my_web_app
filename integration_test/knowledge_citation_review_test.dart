@@ -197,9 +197,11 @@ void main() {
       lessThanOrEqualTo(0.5),
     );
     final viewportRect = tester.getRect(answerScroll);
-    final answerBottom = tester.getBottomLeft(
-      find.byKey(const Key('knowledge-citation-answer')),
-    ).dy;
+    final answerBottom = tester
+        .getBottomLeft(
+          find.byKey(const Key('knowledge-citation-answer')),
+        )
+        .dy;
     expect(answerBottom, greaterThan(viewportRect.top));
     expect(answerBottom, lessThanOrEqualTo(viewportRect.bottom + 1));
     await binding.takeScreenshot(
