@@ -95,7 +95,8 @@ jobs:
       - name: Checkout shallow source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          fetch-depth: 1
+          fetch-depth: ${{ github.event_name == 'workflow_dispatch' && inputs.profile == 'test' && 2 || 1 }}
+          persist-credentials: ${{ github.event_name != 'workflow_dispatch' || inputs.profile != 'test' }}
 
       - name: Verify exact cloud handoff SHA
         if: env.EXPECTED_HEAD_SHA != ''
@@ -113,6 +114,35 @@ jobs:
           fi
           echo "Verified exact cloud handoff SHA: $actual_head_sha"
 
+      - name: Verify salary diagnostic tree and source hashes
+        if: github.event_name == 'workflow_dispatch' && env.CLOUD_PROFILE == 'test'
+        shell: bash
+        run: |
+          set -euo pipefail
+          parent=b2087377928d4cd2f0b703ea9e3684fc8499681b
+          [[ "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$(git rev-list --parents -n 1 HEAD)" == "$EXPECTED_HEAD_SHA $parent" ]]
+          changed_file="$RUNNER_TEMP/salary-5707-changed-names"
+          [[ ! -e "$changed_file" ]]
+          git diff --name-only -z --no-renames "$parent" HEAD > "$changed_file"
+          mapfile -d '' -t changed < "$changed_file"
+          expected=(
+            .github/workflows/cloud-development.yml
+            lib/pages/asset_management_page.dart
+            lib/services/asset_salary_deposit_detector.dart
+            test/services/asset_salary_deposit_detector_test.dart
+            test/widgets/asset_salary_confirmation_guard_test.dart
+          )
+          [[ "${#changed[@]}" -eq "${#expected[@]}" ]]
+          for i in "${!expected[@]}"; do [[ "${changed[$i]}" == "${expected[$i]}" ]]; done
+          for file in "${expected[@]}"; do [[ -f "$file" && ! -L "$file" ]]; done
+          sha256sum -c <<'SHA256'
+          d72eb6b4c500d4774f5aa26dbaecc4a3bebb180fd9ec98a11fa39fc31ac2f0b2  lib/pages/asset_management_page.dart
+          faa21e71a224ec0fb2caa752d9688ee301960e6ca4be68faafc96d89ccf3f3f8  lib/services/asset_salary_deposit_detector.dart
+          a8b947d9a28573a57e2fbd069f8fd18a5ffd005a220e63e561b40f6c71581d72  test/services/asset_salary_deposit_detector_test.dart
+          1fd318f2de080e0c809da3b6a234d0a1fc1f4c1061d0ed74c92e3814e99925d2  test/widgets/asset_salary_confirmation_guard_test.dart
+          SHA256
+
       - name: Validate cloud workspace descriptors
         shell: bash
         run: |
@@ -120,14 +150,65 @@ jobs:
           python -m json.tool .devcontainer/flutter-local/devcontainer.json > /dev/null
 
       - name: Set up repository-pinned Flutter SDK
-        if: env.CLOUD_PROFILE != 'workspace'
+        if: env.CLOUD_PROFILE != 'workspace' && !(github.event_name == 'workflow_dispatch' && env.CLOUD_PROFILE == 'test')
         uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x'
 
+      - name: Set up exact Flutter commit for salary diagnostic
+        if: github.event_name == 'workflow_dispatch' && env.CLOUD_PROFILE == 'test'
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter_root="$RUNNER_TEMP/salary-flutter-3.38.10"
+          [[ ! -e "$flutter_root" ]]
+          git clone --depth 1 --branch 3.38.10 https://github.com/flutter/flutter.git "$flutter_root"
+          [[ "$(git -C "$flutter_root" rev-parse HEAD)" == c6f67dede3d4aa1aa7a69dd56a3494a5cde6cc80 ]]
+          echo "$flutter_root/bin" >> "$GITHUB_PATH"
+          "$flutter_root/bin/flutter" config --no-analytics
+          "$flutter_root/bin/flutter" --version
+          "$flutter_root/bin/flutter" precache --linux
+
       - name: Resolve dependencies in cloud
-        if: env.CLOUD_PROFILE != 'workspace'
+        if: env.CLOUD_PROFILE != 'workspace' && !(github.event_name == 'workflow_dispatch' && env.CLOUD_PROFILE == 'test')
         run: flutter pub get
+
+      - name: Resolve and record salary diagnostic dependencies
+        id: salary_dependencies
+        if: github.event_name == 'workflow_dispatch' && env.CLOUD_PROFILE == 'test'
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact="$RUNNER_TEMP/salary-5707-dependencies"
+          [[ ! -e "$artifact" && -f pubspec.lock && ! -L pubspec.lock ]]
+          echo 'da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5  pubspec.lock' | sha256sum -c
+          mkdir -p "$artifact"
+          cp -- pubspec.lock "$artifact/pubspec.original.lock"
+          echo 'capture_started=true' >> "$GITHUB_OUTPUT"
+          flutter pub get
+          [[ -f pubspec.lock && ! -L pubspec.lock ]]
+          git diff --quiet -- . ':(exclude)pubspec.lock'
+          python3 - <<'PY'
+          import pathlib
+          data = pathlib.Path('pubspec.lock').read_text(encoding='utf8')
+          for line in data.splitlines():
+              line = line.strip()
+              if line.startswith('source:') and line not in ('source: hosted', 'source: sdk'):
+                  raise SystemExit('unexpected lockfile source')
+              if line.startswith('url:') and line != 'url: "https://pub.dev"':
+                  raise SystemExit('unexpected lockfile URL')
+          PY
+          cp -- pubspec.lock "$artifact/pubspec.resolved.lock"
+          git diff --binary -- pubspec.lock > "$artifact/pubspec.lock.patch"
+          sha256sum "$artifact/pubspec.original.lock" "$artifact/pubspec.resolved.lock" > "$artifact/lock-sha256.txt"
+          flutter --version --machine > "$artifact/flutter-version.json"
+          python3 - "$artifact/flutter-version.json" <<'PY'
+          import json, pathlib, sys
+          obj=json.loads(pathlib.Path(sys.argv[1]).read_text(encoding='utf8'))
+          if obj.get('frameworkRevision') != 'c6f67dede3d4aa1aa7a69dd56a3494a5cde6cc80':
+              raise SystemExit('unexpected Flutter revision')
+          PY
+          echo 'resolved=true' >> "$GITHUB_OUTPUT"
 
       - name: Format changed Dart files in cloud
         id: format
@@ -179,8 +260,86 @@ jobs:
         if: env.CLOUD_PROFILE == 'analyze' || env.CLOUD_PROFILE == 'full'
         run: flutter analyze
 
+      - name: Format and preserve salary diagnostic test source
+        id: salary_format
+        if: github.event_name == 'workflow_dispatch' && env.CLOUD_PROFILE == 'test'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test_file=test/widgets/asset_salary_confirmation_guard_test.dart
+          artifact="$RUNNER_TEMP/salary-5707-formatted"
+          [[ ! -e "$artifact" ]]
+          mkdir -p "$artifact"
+          echo '1fd318f2de080e0c809da3b6a234d0a1fc1f4c1061d0ed74c92e3814e99925d2  test/widgets/asset_salary_confirmation_guard_test.dart' | sha256sum -c
+          dart format "$test_file"
+          cp -- "$test_file" "$artifact/asset_salary_confirmation_guard_test.dart"
+          git diff --binary -- "$test_file" > "$artifact/format.patch"
+          sha256sum "$test_file" > "$artifact/test-sha256.txt"
+          git diff --quiet -- lib/pages/asset_management_page.dart lib/services/asset_salary_deposit_detector.dart test/services/asset_salary_deposit_detector_test.dart
+          echo 'prepared=true' >> "$GITHUB_OUTPUT"
+
+      - name: Run salary diagnostic with isolated networking
+        if: github.event_name == 'workflow_dispatch' && env.CLOUD_PROFILE == 'test'
+        shell: bash
+        run: |
+          set -euo pipefail
+          runner_user="$(id -un)"
+          [[ "$(id -u)" -ne 0 ]]
+          runner_home="$HOME"
+          [[ -d "$runner_home" ]]
+          host_net="$(readlink /proc/self/ns/net)"
+          [[ "$host_net" =~ ^net:\[[0-9]+\]$ ]]
+          pub_cache="${PUB_CACHE:-$HOME/.pub-cache}"
+          [[ -d "$pub_cache" ]]
+          resolved_lock="$RUNNER_TEMP/salary-5707-dependencies/pubspec.resolved.lock"
+          cmp -- pubspec.lock "$resolved_lock"
+          resolved_lock_sha="$(sha256sum pubspec.lock | cut -d ' ' -f 1)"
+          [[ "$resolved_lock_sha" =~ ^[0-9a-f]{64}$ ]]
+          cmp -- test/widgets/asset_salary_confirmation_guard_test.dart "$RUNNER_TEMP/salary-5707-formatted/asset_salary_confirmation_guard_test.dart"
+          sudo -n unshare --net --fork -- bash -euo pipefail -c '
+            isolated_net="$(readlink /proc/self/ns/net)"
+            [[ "$isolated_net" =~ ^net:\[[0-9]+\]$ && "$isolated_net" != "$5" ]]
+            ip link set lo up
+            ip -j link show | python3 -c '"'"'import json,sys; x=json.load(sys.stdin); assert len(x)==1 and x[0]["ifname"]=="lo"'"'"'
+            ipv4_routes="$(ip -4 route show)"
+            ipv6_routes="$(ip -6 route show)"
+            tcp_listeners="$(ss -lntH)"
+            [[ -z "$ipv4_routes" && -z "$ipv6_routes" && -z "$tcp_listeners" ]]
+            exec runuser -u "$1" -- env -i PATH="$2" HOME="$3" PUB_CACHE="$4" CI=true FLUTTER_SUPPRESS_ANALYTICS=true bash -euo pipefail -c '"'"'
+              [[ "$(id -u)" -ne 0 ]]
+              before="$(sha256sum pubspec.lock | cut -d " " -f 1)"
+              [[ "$before" == "$1" ]]
+              timeout 180s flutter pub get --offline --enforce-lockfile
+              after="$(sha256sum pubspec.lock | cut -d " " -f 1)"
+              [[ "$after" == "$1" ]]
+              timeout 600s flutter test --no-pub --concurrency=1 --timeout 90s --reporter expanded test/widgets/asset_salary_confirmation_guard_test.dart test/services/asset_salary_deposit_detector_test.dart
+              final="$(sha256sum pubspec.lock | cut -d " " -f 1)"
+              [[ "$final" == "$1" ]]
+            '"'"' _ "$6"
+          ' _ "$runner_user" "$PATH" "$runner_home" "$pub_cache" "$host_net" "$resolved_lock_sha"
+          cmp -- pubspec.lock "$resolved_lock"
+          cmp -- test/widgets/asset_salary_confirmation_guard_test.dart "$RUNNER_TEMP/salary-5707-formatted/asset_salary_confirmation_guard_test.dart"
+
+      - name: Preserve resolved dependency evidence
+        if: always() && steps.salary_dependencies.outputs.capture_started == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: salary-5707-dependencies-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/salary-5707-dependencies/
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Preserve formatted synthetic salary test and diff
+        if: always() && steps.salary_format.outputs.prepared == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: salary-5707-formatted-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/salary-5707-formatted/
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Test in cloud
-        if: env.CLOUD_PROFILE == 'test' || env.CLOUD_PROFILE == 'full'
+        if: env.CLOUD_PROFILE == 'full' || (env.CLOUD_PROFILE == 'test' && github.event_name != 'workflow_dispatch')
         run: flutter test --concurrency=2
 
       - name: Build Flutter Web in cloud

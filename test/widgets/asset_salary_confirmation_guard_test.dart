@@ -13,6 +13,8 @@ Future<void> pumpSalaryCandidate(
   WidgetTester tester, {
   required bool balanceJump,
   bool payslipOnly = false,
+  bool historyPeak = false,
+  bool noIncomeEvidence = false,
 }) async {
   SharedPreferences.setMockInitialValues(<String, Object>{
     AssetSalaryResetMarkerStore.prefsKey: '2026-04',
@@ -50,6 +52,8 @@ Future<void> pumpSalaryCandidate(
         debugNow: DateTime(2026, 6, 20),
         debugInitialAssetData: {
           '2026-05-24': const {'銀行A': 1000, '現金': 0},
+          if (historyPeak)
+            '2026-06-01': const {'銀行A': 201000, '現金': 0},
           '2026-06-20': {'銀行A': balanceJump ? 201000 : 1000, '現金': 0},
         },
         debugInitialPayslipSalaryIncomes: payslipOnly
@@ -57,7 +61,8 @@ Future<void> pumpSalaryCandidate(
                 {'pay_date': '2026-05-25', 'amount': 200000},
               ]
             : const [],
-        debugInitialRecentFlows: balanceJump || payslipOnly
+        debugInitialRecentFlows: balanceJump || payslipOnly || historyPeak ||
+                noIncomeEvidence
             ? const []
             : const [
                 {
@@ -122,6 +127,44 @@ void main() {
       await tester.pump();
     });
   }
+
+  testWidgets('no peak and no income evidence remains unconfirmed',
+      (tester) async {
+    await pumpSalaryCandidate(
+      tester,
+      balanceJump: false,
+      noIncomeEvidence: true,
+    );
+    expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+    expect(find.byKey(const Key('asset_salary_deposit_candidate')), findsNothing);
+    await expectUnconfirmedState();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('history peak after spending stays unconfirmed on cancellation',
+      (tester) async {
+    // The balance once increased, then returned to its pre-cycle level.
+    // No income-flow or payslip evidence is supplied by this fixture.
+    await pumpSalaryCandidate(tester, balanceJump: false, historyPeak: true);
+    expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+    expect(
+      find.byKey(const Key('asset_salary_deposit_candidate')),
+      findsOneWidget,
+    );
+    await expectUnconfirmedState();
+    final reset = find.text('給料を受け取った（リセット）');
+    await tester.ensureVisible(reset);
+    await tester.tap(reset);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(AlertDialog), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+    await expectUnconfirmedState();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
 
   testWidgets('only explicit local confirmation advances the salary cycle',
       (tester) async {
