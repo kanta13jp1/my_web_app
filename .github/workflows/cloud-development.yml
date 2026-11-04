@@ -27,11 +27,10 @@ jobs:
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD a9804d08dea20ec07c8dee246c4408cd9d197e55"
+          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD fe0e6613a15df45384a94c7f863d121638bebd71"
           git diff --no-renames --name-only HEAD^ HEAD | LC_ALL=C sort > "$RUNNER_TEMP/actual-files"
           LC_ALL=C sort > "$RUNNER_TEMP/expected-files" <<'FIXED_FILES'
           .github/workflows/cloud-development.yml
-          scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_pr_do_without_boundaries_review_stopped.sql.txt
           scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
           scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
           FIXED_FILES
@@ -41,8 +40,8 @@ jobs:
           0c6f44d00885dc939355e22bd4860339662a31eb7e51ca1f6ef981ab81e51621  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_lock_rc_guard_review_stopped.sql.txt
           3372910f839d556a35d81dfd6ababe8c73438e52636d7fe8c491835528f1dfb6  scripts/asset_pref_truncate_fixture/cli_execbatch/revoke_truncate_candidate_review_stopped.sql.txt
           1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_pr_do_without_boundaries_review_stopped.sql.txt
-          a0dd3141b2b96d14c79cb17d76abd8e5415e49a4d28d4879d892da2076ecd854  scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
-          71544a1d6934f73983603fa36c28370174b72259bac481ec2351f8997852b7b9  scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
+          90c3d8a5f2b509ac34801ba37cc8fec98d74c2dbd76f45799f44011161a2b6f5  scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
+          aa22a3fd49dd28e57ea471a0e6c5b6650ce4760a4fce61681edcb08777a45cca  scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
           FIXED_HASHES
           python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
       - name: Obtain verified public binaries

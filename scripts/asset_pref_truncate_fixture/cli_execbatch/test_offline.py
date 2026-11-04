@@ -175,7 +175,10 @@ def run():
     tree=ast.parse((HERE/'runner.py').read_bytes())
     matrix=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name=='run_matrix')
     mode_loops=[x for x in ast.walk(matrix) if isinstance(x,ast.For) and isinstance(x.target,ast.Name) and x.target.id=='mode']
-    assert len(mode_loops)==1 and ast.literal_eval(mode_loops[0].iter)==('explicit','pr_head_06505ee4','pr_do_no_boundaries','batch')
+    assert len(mode_loops)==1 and ast.literal_eval(mode_loops[0].iter)==('pr_do_no_boundaries',)
+    assert m['PROFILE_CASES']==(('anon_select_absent','success'),('authenticated_select_absent','success'),
+        ('both_select_absent','success'),('mixed_absent','success'),('truncate_preabsent','success'),
+        ('both_select_absent','history_failure'),('mixed_absent','history_failure'),('oracle_negative','success'))
     case=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name=='run_case')
     calls=[n.func.attr for n in ast.walk(case) if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute) and n.func.attr in ('wait_final_postmaster','initialize')]
     assert calls.count('wait_final_postmaster')==1 and calls.count('initialize')==1
@@ -555,8 +558,10 @@ def run():
             self.executed = False
             self.before = {'owner':'10','rls':True,'force':False,'rows':[], 'policy':[],
                            'hierarchy':[], 'service':True,'anon':True,'authenticated':True,'acl':'initial',
-                           'other_acl':[],'other_effective':[],'columns':[],'memberships':[],'role_attributes':[]}
-            self.after = dict(self.before)
+                           'other_acl':[],'other_effective':[[r,p,True] for r in ('anon','authenticated','service_role')
+                               for p in ('SELECT','INSERT','UPDATE','DELETE','REFERENCES','TRIGGER','MAINTAIN')],
+                           'columns':[],'memberships':[],'role_attributes':[]}
+            self.after = copy.deepcopy(self.before)
             if outcome == 'success' or (outcome == 'history_failure' and mode == 'explicit'):
                 self.after.update(anon=False,authenticated=False,acl='revoked')
         def create(self): pass
@@ -567,6 +572,14 @@ def run():
             self.verified_negative_fatals=[{'pid':'120','sqlstate':'28000','fatal_line':'[120] FATAL:  28000: expected database refusal'},
                                            {'pid':'121','sqlstate':'28P01','fatal_line':'[121] FATAL:  28P01: expected password refusal'}]
         def psql(self, sql):
+            matching=[k for k,v in m['PROFILE_SQL'].items() if sql==v]
+            if matching:
+                profile=matching[0]
+                for snapshot in (self.before,self.after):
+                    for e in snapshot['other_effective']:
+                        if (e[0],e[1]) in m['PROFILE_MISSING'][profile]:e[2]=False
+                if profile=='truncate_preabsent':self.before['anon']=False
+                return ''
             if sql == m['SNAPSHOT']: return json.dumps(self.after if self.executed else self.before)
             if 'FROM supabase_migrations.schema_migrations;' in sql:
                 return json.dumps([{'version':'20991231000000','name':'synthetic_acl','statement_count':2}]) if self.outcome == 'success' else '[]'
@@ -611,6 +624,21 @@ def run():
                 m['run_case'](service,mode,outcome,b'fake',pair[mode])
         except RuntimeError: return
         raise AssertionError('unsafe case accepted: ' + mode + '/' + outcome)
+    for profile,outcome in m['PROFILE_CASES']:
+        service=SimulatedService('pr_do_no_boundaries',outcome)
+        with contextlib.redirect_stdout(io.StringIO()):
+            observed=m['run_case'](service,'pr_do_no_boundaries',outcome,b'fake',pair['pr_do_no_boundaries'],profile)
+        assert observed['profile']==profile
+        assert observed['oracle_negative_detected'] is (profile=='oracle_negative')
+        if outcome=='history_failure':assert observed['history_failure_effect']=='complete_acl_unchanged'
+    bad_baseline=SimulatedService('pr_do_no_boundaries','success').before
+    try:m['validate_profile_baseline'](bad_baseline,'anon_select_absent')
+    except RuntimeError:pass
+    else:raise AssertionError('missing-privilege baseline was not actually verified')
+    try:m['validate_profile_baseline'](bad_baseline,'unknown_profile')
+    except RuntimeError:pass
+    else:raise AssertionError('unknown synthetic profile accepted')
+    print('PASS: selected profile baselines, history failure controls and perturbed snapshot oracle (mock only)')
     # A known 25P01 at batch/success must be retained as a failed control.
     known_failure=SimulatedService('batch','success')
     known_failure.after=dict(known_failure.before)

@@ -807,6 +807,63 @@ GRANT ALL PRIVILEGES ON public.asset_pref_mirror TO anon,authenticated,service_r
 CREATE SCHEMA supabase_migrations;
 CREATE TABLE supabase_migrations.schema_migrations (version text NOT NULL PRIMARY KEY, statements text[], name text);
 """
+PROFILE_SQL = {
+ 'baseline': 'SELECT 1;',
+ 'anon_select_absent': 'REVOKE SELECT ON public.asset_pref_mirror FROM anon;',
+ 'authenticated_select_absent': 'REVOKE SELECT ON public.asset_pref_mirror FROM authenticated;',
+ 'both_select_absent': 'REVOKE SELECT ON public.asset_pref_mirror FROM anon, authenticated;',
+ 'mixed_absent': ('REVOKE SELECT, INSERT ON public.asset_pref_mirror FROM anon; '
+                  'REVOKE UPDATE, DELETE ON public.asset_pref_mirror FROM authenticated;'),
+ 'truncate_preabsent': 'REVOKE TRUNCATE ON public.asset_pref_mirror FROM anon;',
+ 'oracle_negative': 'REVOKE SELECT ON public.asset_pref_mirror FROM anon;',
+}
+PROFILE_MISSING = {
+ 'baseline': frozenset(),
+ 'anon_select_absent': frozenset({('anon','SELECT')}),
+ 'authenticated_select_absent': frozenset({('authenticated','SELECT')}),
+ 'both_select_absent': frozenset({('anon','SELECT'),('authenticated','SELECT')}),
+ 'mixed_absent': frozenset({('anon','SELECT'),('anon','INSERT'),('authenticated','UPDATE'),('authenticated','DELETE')}),
+ 'truncate_preabsent': frozenset(),
+ 'oracle_negative': frozenset({('anon','SELECT')}),
+}
+PROFILE_CASES = (
+ ('anon_select_absent','success'), ('authenticated_select_absent','success'),
+ ('both_select_absent','success'), ('mixed_absent','success'),
+ ('truncate_preabsent','success'), ('both_select_absent','history_failure'),
+ ('mixed_absent','history_failure'), ('oracle_negative','success'),
+)
+
+
+def validate_profile_baseline(snapshot, profile):
+    if profile not in PROFILE_SQL or profile not in PROFILE_MISSING:
+        raise RuntimeError('unapproved synthetic privilege profile')
+    roles = ('anon','authenticated','service_role')
+    privileges = ('SELECT','INSERT','UPDATE','DELETE','REFERENCES','TRIGGER','MAINTAIN')
+    entries = snapshot.get('other_effective')
+    if not isinstance(entries,list) or len(entries) != len(roles)*len(privileges):
+        raise RuntimeError('synthetic privilege baseline incomplete')
+    observed = {}
+    for entry in entries:
+        if (not isinstance(entry,list) or len(entry)!=3 or entry[0] not in roles
+            or entry[1] not in privileges or type(entry[2]) is not bool):
+            raise RuntimeError('invalid synthetic privilege baseline')
+        key=(entry[0],entry[1])
+        if key in observed: raise RuntimeError('duplicate synthetic privilege baseline')
+        observed[key]=entry[2]
+    for role in roles:
+        for privilege in privileges:
+            if observed.get((role,privilege)) is not ((role,privilege) not in PROFILE_MISSING[profile]):
+                raise RuntimeError('synthetic privilege profile mismatch')
+    if (snapshot.get('anon') is not (profile!='truncate_preabsent')
+        or snapshot.get('authenticated') is not True or snapshot.get('service') is not True):
+        raise RuntimeError('synthetic truncate baseline mismatch')
+
+
+def assert_unrelated_unchanged(before, after):
+    stable_keys = ('owner','rls','force','rows','policy','other_acl','other_effective',
+                   'columns','memberships','role_attributes','hierarchy','service')
+    if any(before[k] != after[k] for k in stable_keys):
+        raise RuntimeError('unrelated synthetic table state changed')
 HISTORY_GATE = r"""
 CREATE TABLE public.codex_execbatch_mode(mode text NOT NULL CHECK (mode IN ('normal','fail')));
 INSERT INTO public.codex_execbatch_mode VALUES ('normal');
@@ -856,9 +913,15 @@ SNAPSHOT = r"""SELECT jsonb_build_object(
  FROM pg_catalog.pg_class c WHERE c.oid='public.asset_pref_mirror'::regclass;"""
 
 
-def run_case(service, mode, outcome, binary, migration):
+def run_case(service, mode, outcome, binary, migration, profile='baseline'):
     if mode not in CANDIDATES or outcome not in ('success','history_failure','candidate_failure'):
         raise RuntimeError('unapproved fixture case')
+    if profile not in PROFILE_SQL:
+        raise RuntimeError('unapproved synthetic privilege profile')
+    if profile != 'baseline' and mode != 'pr_do_no_boundaries':
+        raise RuntimeError('privilege profiles require the current PR comparison candidate')
+    if profile == 'oracle_negative' and outcome != 'success':
+        raise RuntimeError('invalid oracle-negative outcome')
     if mode in ('pr_head_06505ee4','pr_do_no_boundaries') and outcome == 'candidate_failure':
         raise RuntimeError('current PR has no inheritance guard; case is inapplicable')
     case_started = time.monotonic()
@@ -866,9 +929,11 @@ def run_case(service, mode, outcome, binary, migration):
     service.wait_final_postmaster()
     service.initialize()
     service.configure_synthetic_loopback()
+    service.psql(PROFILE_SQL[profile])
     if outcome == 'history_failure': service.psql(HISTORY_FAILURE)
     if outcome == 'candidate_failure': service.psql(CHILD_FAILURE)
     before = json.loads(service.psql(SNAPSHOT))
+    validate_profile_baseline(before,profile)
     service.stage(binary, migration)
     cli_started = time.monotonic()
     cli = service.cli_push()
@@ -898,7 +963,7 @@ def run_case(service, mode, outcome, binary, migration):
                          or type(history_rows[0].get('statement_count')) is not int or history_rows[0]['statement_count'] <= 0):
         raise RuntimeError('unexpected synthetic history row: ' + repr(history_rows))
     history = str(len(history_rows))
-    print('SYNTHETIC_EXECBATCH_OBSERVATION ' + json.dumps({'mode':mode, 'outcome':outcome,
+    print('SYNTHETIC_EXECBATCH_OBSERVATION ' + json.dumps({'mode':mode, 'outcome':outcome,'profile':profile,
         'cli_exit':cli.returncode, 'history_count':history, 'history_rows':history_rows, 'before':before, 'after':after,
         'cli_loopback_pids':sorted(cli_pids), 'cli_backends_remaining':int(remaining),
         'cli_seconds':cli_seconds, 'candidate_stopped_sha':CANDIDATES[mode][1], 'cli_output':output}, sort_keys=True), flush=True)
@@ -914,10 +979,7 @@ def run_case(service, mode, outcome, binary, migration):
             insert_pids = set(re.findall(r'\[(\d+)\] STATEMENT:\s+INSERT INTO supabase_migrations\.schema_migrations', server_logs))
             if 'INSERT INTO supabase_migrations.schema_migrations' not in output or not (errors & cli_pids & insert_pids):
                 raise RuntimeError('history INSERT and failure did not share the CLI backend: ' + output)
-    stable_keys = ('owner','rls','force','rows','policy','other_acl','other_effective',
-                   'columns','memberships','role_attributes','hierarchy','service')
-    if any(before[k] != after[k] for k in stable_keys):
-        raise RuntimeError('unrelated synthetic table state changed')
+    assert_unrelated_unchanged(before,after)
     if outcome == 'candidate_failure' and before != after:
         raise RuntimeError('candidate guard failure changed full synthetic snapshot')
     if mode == 'pr_do_no_boundaries' and outcome == 'history_failure' and before != after:
@@ -931,7 +993,24 @@ def run_case(service, mode, outcome, binary, migration):
             history_effect = 'only_target_truncate_removed'
         else:
             raise RuntimeError('unexpected partial privilege change after history failure')
-    return {'mode':mode,'outcome':outcome,'candidate_stopped_sha':CANDIDATES[mode][1],
+    oracle_negative_detected = False
+    if profile == 'oracle_negative':
+        if outcome != 'success': raise RuntimeError('invalid oracle-negative outcome')
+        # Perturb only a local snapshot copy; never mutate the synthetic database.
+        tampered = json.loads(json.dumps(after))
+        matches = [e for e in tampered['other_effective'] if e[:2] == ['anon','SELECT']]
+        if len(matches) != 1 or type(matches[0][2]) is not bool:
+            raise RuntimeError('oracle-negative target invalid')
+        matches[0][2] = not matches[0][2]
+        try:
+            assert_unrelated_unchanged(before,tampered)
+        except RuntimeError as exc:
+            if str(exc) != 'unrelated synthetic table state changed': raise
+            oracle_negative_detected = True
+        else:
+            raise RuntimeError('oracle failed to detect unrelated privilege change')
+    return {'mode':mode,'outcome':outcome,'profile':profile,
+        'oracle_negative_detected':oracle_negative_detected,'candidate_stopped_sha':CANDIDATES[mode][1],
         'cli_exit':cli.returncode,'history_count':int(history),'history_rows':history_rows,'before':before,'after':after,
         'history_failure_effect':history_effect,'cli_loopback_pids':sorted(cli_pids),
         'cli_backends_remaining':int(remaining),'cli_seconds':cli_seconds,
@@ -951,16 +1030,15 @@ def run_matrix():
         docker = ['/usr/bin/docker','--config',config,'--host','unix:///var/run/docker.sock']
         image = json.loads(subprocess.run(docker + ['image','inspect',IMAGE], env=env, capture_output=True,
             check=True, timeout=15).stdout)[0]
-        for mode in ('explicit','pr_head_06505ee4','pr_do_no_boundaries','batch'):
-            outcomes = ('success','history_failure') if mode in ('pr_head_06505ee4','pr_do_no_boundaries') else ('success','history_failure','candidate_failure')
-            for outcome in outcomes:
+        for mode in ('pr_do_no_boundaries',):
+            for profile, outcome in PROFILE_CASES:
                 service = OwnedService(docker, env, image, run_id)
                 try:
-                    result = run_case(service,mode,outcome,binary,candidates[mode])
+                    result = run_case(service,mode,outcome,binary,candidates[mode],profile)
                     results.append(result)
                     print('SYNTHETIC_EXECBATCH_EVIDENCE ' + json.dumps(result,sort_keys=True),flush=True)
                 except BaseException as exc:
-                    evidence = {'mode':mode, 'outcome':outcome, 'run_id':service.run_id,
+                    evidence = {'mode':mode, 'outcome':outcome, 'profile':profile,'run_id':service.run_id,
                         'nonce':service.nonce, 'container_id':service.cid, 'error_type':type(exc).__name__,
                         'error_summary':classify_failure(exc)}
                     if isinstance(exc, FixturePsqlError):
