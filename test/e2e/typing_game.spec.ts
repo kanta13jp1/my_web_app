@@ -52,7 +52,7 @@ test('ten-word practice finishes and missed words can be practised again', async
     await expect(page.getByText(`クリア ${word}問`, { exact: true })).toBeVisible();
   }
   await expect(page.getByText(/10問完走！/)).toBeVisible();
-  await expect(page.getByText(/間違えたことばを振り返ろう/)).toBeVisible();
+  await expect(page.getByRole('group', { name: /間違えたことばを振り返ろう/ })).toBeVisible();
   await page.screenshot({ path: info.outputPath('practice-review.png'), fullPage: true });
   await page.getByRole('button', { name: '苦手なことばを練習', exact: true }).click();
   await expect(page.getByText('苦手なことばを10問練習中', { exact: true })).toBeVisible();
