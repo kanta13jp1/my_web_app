@@ -113,8 +113,10 @@ class _TypingGamePageState extends State<TypingGamePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('間違えたことばを振り返ろう',
-                style: Theme.of(context).textTheme.titleMedium,),
+            Text(
+              '間違えたことばを振り返ろう',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             for (final item in review.take(5))
               Padding(
@@ -186,9 +188,11 @@ class _TypingGamePageState extends State<TypingGamePage> {
                           children: [
                             for (final mode in TypingMode.values)
                               ChoiceChip(
-                                label: Text(mode == TypingMode.challenge
-                                    ? '60秒チャレンジ'
-                                    : '10問じっくり練習',),
+                                label: Text(
+                                  mode == TypingMode.challenge
+                                      ? '60秒チャレンジ'
+                                      : '10問じっくり練習',
+                                ),
                                 selected: _selectedMode == mode,
                                 onSelected: (selected) {
                                   if (selected) {
@@ -199,9 +203,11 @@ class _TypingGamePageState extends State<TypingGamePage> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text(_selectedMode == TypingMode.practice
-                            ? '時間制限なし。10問クリアで終了。途中でも練習を終えられます。'
-                            : '60秒間のスコアに挑戦。ベストはチャレンジ同士で比べます。',),
+                        Text(
+                          _selectedMode == TypingMode.practice
+                              ? '時間制限なし。10問クリアで終了。途中でも練習を終えられます。'
+                              : '60秒間のスコアに挑戦。ベストはチャレンジ同士で比べます。',
+                        ),
                       ],
                       const SizedBox(height: 20),
                       Wrap(
@@ -233,8 +239,10 @@ class _TypingGamePageState extends State<TypingGamePage> {
                       const SizedBox(height: 20),
                       if (_game.running) ...[
                         if (_reviewPractice)
-                          const Text('苦手なことばを10問練習中',
-                              textAlign: TextAlign.center,),
+                          const Text(
+                            '苦手なことばを10問練習中',
+                            textAlign: TextAlign.center,
+                          ),
                         Card(
                           child: Padding(
                             padding: const EdgeInsets.all(24),
@@ -307,7 +315,10 @@ class _TypingGamePageState extends State<TypingGamePage> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Text(_feedback, textAlign: TextAlign.center,),
+                        Text(
+                          _feedback,
+                          textAlign: TextAlign.center,
+                        ),
                         if (practice)
                           TextButton(
                             onPressed: () {
@@ -345,7 +356,8 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                       '最大連続 ${_game.bestCombo}文字 / ミス ${_game.mistakes}回',
                                     ),
                                     Text(
-                                        '入力ペース ${_game.correctPerMinute.toStringAsFixed(1)}文字/分',),
+                                      '入力ペース ${_game.correctPerMinute.toStringAsFixed(1)}文字/分',
+                                    ),
                                     const Text('正解したローマ字数 ÷ 実際のプレイ時間'),
                                     if (!practice)
                                       Text('この画面でのチャレンジベスト $_bestChallenge点'),
