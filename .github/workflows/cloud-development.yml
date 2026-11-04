@@ -60,22 +60,23 @@ jobs:
           set -euo pipefail
           [[ "$SERVICE_ID" =~ ^[0-9a-f]{64}$ ]]
           test "$(docker inspect --format '{{.Config.Image}}' "$SERVICE_ID")" = 'postgres@sha256:3b0cda93be7c8dba2ed484d19393d93845dc3dafb88973e248ba8e6d99d784e1'
-          docker exec -u postgres "$SERVICE_ID" mkdir -p /tmp/salary-cli-lab/home /tmp/salary-cli-lab/files
-          docker cp "$RUNNER_TEMP/salary-cli/supabase" "$SERVICE_ID:/tmp/salary-cli-lab/supabase"
+          docker exec -u postgres "$SERVICE_ID" mkdir /tmp/salary-cli-lab
+          docker exec -u postgres "$SERVICE_ID" mkdir -p /tmp/salary-cli-lab/home /tmp/salary-cli-lab/files /tmp/salary-cli-lab/bin
+          docker cp "$RUNNER_TEMP/salary-cli/supabase" "$SERVICE_ID:/tmp/salary-cli-lab/bin/supabase"
           docker cp diagnostics/salary_cli/. "$SERVICE_ID:/tmp/salary-cli-lab/files/"
           source_hash="$(sha256sum "$RUNNER_TEMP/salary-cli/supabase" | cut -d ' ' -f1)"
-          copied_hash="$(docker exec -u postgres "$SERVICE_ID" sha256sum /tmp/salary-cli-lab/supabase | cut -d ' ' -f1)"
+          copied_hash="$(docker exec -u postgres "$SERVICE_ID" sha256sum /tmp/salary-cli-lab/bin/supabase | cut -d ' ' -f1)"
           test "$source_hash" = "$copied_hash"
           docker exec -u postgres "$SERVICE_ID" sh -c 'cd /tmp/salary-cli-lab/files && printf "%s\n" "027fa48beaead2981abb6e2dfadff268eb95851faaeba692b7c76281e6dff9ec  01_expand_identity_DRAFT.sql" "a30f9b2c16b64f960d188031dd61f897c4e6a7309d74ca850596663583ddf56f  04_fixture.sql" "2bb9875224dac72e1f590385c03ded4919c4e7e9209fb8ce33f85d1d9a6597b2  05_guard.sql" "2734d6ff2081d03a972f432da464423c8da2c26e8730b6eef02960415a94fe76  06_observe.sql" | sha256sum -c -'
-          docker exec -u postgres "$SERVICE_ID" /usr/bin/env -i HOME=/tmp/salary-cli-lab/home PATH=/usr/local/bin:/usr/bin:/bin /tmp/salary-cli-lab/supabase --version | grep -Fx '2.84.2'
-          docker exec -u postgres "$SERVICE_ID" /usr/bin/env -i HOME=/tmp/salary-cli-lab/home PATH=/usr/local/bin:/usr/bin:/bin /tmp/salary-cli-lab/supabase init --yes --workdir /tmp/salary-cli-lab
+          docker exec -u postgres "$SERVICE_ID" /usr/bin/env -i HOME=/tmp/salary-cli-lab/home PATH=/usr/local/bin:/usr/bin:/bin /tmp/salary-cli-lab/bin/supabase --version | grep -Fx '2.84.2'
+          docker exec -u postgres "$SERVICE_ID" /usr/bin/env -i HOME=/tmp/salary-cli-lab/home PATH=/usr/local/bin:/usr/bin:/bin /tmp/salary-cli-lab/bin/supabase init --yes --workdir /tmp/salary-cli-lab
           docker exec -u postgres "$SERVICE_ID" mkdir -p /tmp/salary-cli-lab/supabase/migrations
           docker exec -u postgres "$SERVICE_ID" cp /tmp/salary-cli-lab/files/01_expand_identity_DRAFT.sql /tmp/salary-cli-lab/supabase/migrations/20261104000001_identity.sql
           docker exec -u postgres "$SERVICE_ID" sh -c 'printf "%s\n" "027fa48beaead2981abb6e2dfadff268eb95851faaeba692b7c76281e6dff9ec  /tmp/salary-cli-lab/supabase/migrations/20261104000001_identity.sql" | sha256sum -c -'
           docker exec -u postgres -e PGOPTIONS='-c salary_test.isolated=disposable-pg17-only' "$SERVICE_ID" psql -X -v ON_ERROR_STOP=1 -h /var/run/postgresql -U postgres -d salary_identity_isolated -f /tmp/salary-cli-lab/files/04_fixture.sql
           docker exec -u postgres -e PGOPTIONS='-c salary_test.isolated=disposable-pg17-only' -e PGPASSWORD=test-only -e PGSSLMODE=disable "$SERVICE_ID" psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d salary_identity_isolated -f /tmp/salary-cli-lab/files/05_guard.sql
           set +e
-          docker exec -u postgres "$SERVICE_ID" /usr/bin/env -i HOME=/tmp/salary-cli-lab/home PATH=/usr/local/bin:/usr/bin:/bin PGSSLMODE=disable /tmp/salary-cli-lab/supabase db push --yes --workdir /tmp/salary-cli-lab --db-url 'postgresql://postgres:test-only@127.0.0.1:5432/salary_identity_isolated?sslmode=disable' > "$RUNNER_TEMP/salary-cli-result.log" 2>&1
+          docker exec -u postgres "$SERVICE_ID" /usr/bin/env -i HOME=/tmp/salary-cli-lab/home PATH=/usr/local/bin:/usr/bin:/bin PGSSLMODE=disable /tmp/salary-cli-lab/bin/supabase db push --yes --workdir /tmp/salary-cli-lab --db-url 'postgresql://postgres:test-only@127.0.0.1:5432/salary_identity_isolated?sslmode=disable' > "$RUNNER_TEMP/salary-cli-result.log" 2>&1
           cli_status=$?
           set -e
           cat "$RUNNER_TEMP/salary-cli-result.log"
