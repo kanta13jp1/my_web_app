@@ -16,6 +16,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
   final _game = TypingGame();
   final _input = TextEditingController();
   final _focus = FocusNode();
+  final _controlsFocus = FocusNode();
   final _clock = Stopwatch();
   Timer? _timer;
   String _feedback = '';
@@ -43,6 +44,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
       _timer?.cancel();
       _best = _game.score > _best ? _game.score : _best;
       _focus.unfocus();
+      _controlsFocus.requestFocus();
     }
   }
 
@@ -88,6 +90,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
     _clock.stop();
     _input.dispose();
     _focus.dispose();
+    _controlsFocus.dispose();
     super.dispose();
   }
 
@@ -110,6 +113,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
             ),
           },
           child: Focus(
+            focusNode: _controlsFocus,
             autofocus: true,
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
