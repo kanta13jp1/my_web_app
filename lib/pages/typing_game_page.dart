@@ -130,7 +130,11 @@ class _TypingGamePageState extends State<TypingGamePage> {
               spelling.length > longest ? spelling.length : longest,
         ) -
         prefix.length;
-    if (letters.length > limit) {
+    if (letters.length > limit ||
+        (compositionCommit &&
+            _game.prompt.spellings.any(
+              (spelling) => text.startsWith(spelling) && text.length > spelling.length,
+            ))) {
       setState(() => _inputFeedback(
             '一つのお題ずつローマ字を確定してください。',
             'Confirm one prompt at a time.',
@@ -152,6 +156,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
           accepted = false;
           break;
         }
+        if (_game.words > words) break;
       }
       _announceFeedback = !accepted;
       _feedback = !accepted
@@ -459,6 +464,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
                           controller: _input,
                           focusNode: _focus,
                           onTap: () {
+                            if (!_input.value.composing.isCollapsed) return;
                             _input.selection = TextSelection.collapsed(
                               offset: _input.text.length,
                             );
