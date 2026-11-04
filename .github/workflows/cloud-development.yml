@@ -1,4 +1,4 @@
-name: Isolated REVOKE event trigger preflight
+name: Isolated concurrent table GRANT observation
 on:
   workflow_dispatch:
     inputs:
@@ -29,14 +29,14 @@ jobs:
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD b885c5f8c2e76cbe820b0539ba032d18bcf888ab"
+          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD 836e6dcc8dab204b955d8c5303cb78260435193f"
           git diff --no-renames --name-only HEAD^ HEAD | LC_ALL=C sort > "$RUNNER_TEMP/actual-files"
           LC_ALL=C sort > "$RUNNER_TEMP/expected-files" <<'FIXED_FILES'
           .github/workflows/cloud-development.yml
-          scripts/asset_pref_truncate_fixture/cli_execbatch/event_preflight.py
-          scripts/asset_pref_truncate_fixture/cli_execbatch/event_preflight_entry.py
-          scripts/asset_pref_truncate_fixture/cli_execbatch/test_event_preflight_offline.py
-          scripts/asset_pref_truncate_fixture/cli_execbatch/test_event_entry_offline.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant_entry.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_offline.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_entry_offline.py
           FIXED_FILES
           diff -u "$RUNNER_TEMP/expected-files" "$RUNNER_TEMP/actual-files"
           sha256sum -c <<'FIXED_HASHES'
@@ -54,6 +54,10 @@ jobs:
           bd68a09dcf168db2245699763284a6075bdefe7c342e21990e6702b18edc08ae  scripts/asset_pref_truncate_fixture/cli_execbatch/event_preflight_entry.py
           343bc4c77bf752b70884df9e6f195806f977f9e7118a64a800aa376ff72dd303  scripts/asset_pref_truncate_fixture/cli_execbatch/test_event_preflight_offline.py
           05d6b17ae5129e805e565c5c5cd06a9530a8c54f0e3e289eb9cdefe7b5079104  scripts/asset_pref_truncate_fixture/cli_execbatch/test_event_entry_offline.py
+          3ebc7deac78a17f41ebd97e0c00d6cbbd0ac2b443802dd6817942ef6d0262505  scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant.py
+          43565436c98ef4cda9799e4a97cc9086719a0187b126b929ccef10271ce2a98f  scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant_entry.py
+          705478092931f16f4da95f3bde645daf343015135f09dadef5f601ab217ecbb2  scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_offline.py
+          cffdb5c745816a7a9eeb42a032b0ab5e675c9588f44342dfb574feea92c71e27  scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_entry_offline.py
           24e38d3b06d1aeb5d5fd6bfea2bec64c303d4fdad9a45b51f0af980a48cf9db8  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
           1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
           FIXED_HASHES
@@ -64,6 +68,8 @@ jobs:
           python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_phase2_offline.py
           python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_event_preflight_offline.py
           python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_event_entry_offline.py
+          python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_offline.py
+          python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_entry_offline.py
       - name: Obtain verified public binaries
         run: |
           set -euo pipefail
@@ -81,7 +87,7 @@ jobs:
           set -euo pipefail
           pr=$(gh api repos/kanta13jp1/my_web_app/pulls/5980 --jq '[.state,.head.sha,.base.sha,.head.repo.full_name] | @tsv' 2>/dev/null)
           test "$pr" = $'open\t85394a8e938a7c4bda08e32dd4cfff9ede623e57\tf420ca99541125452407e974958e7704f1d5b429\tkanta13jp1/my_web_app'
-          python3 -B -c 'import importlib.util,sys; p="scripts/asset_pref_truncate_fixture/cli_execbatch/event_preflight_entry.py"; s=importlib.util.spec_from_file_location("isolated_event_entry",p); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); sys.exit(m.run_and_exit_code())'
+          python3 -B -c 'import importlib.util,sys; p="scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant_entry.py"; s=importlib.util.spec_from_file_location("isolated_table_grant_entry",p); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); sys.exit(m.run_and_exit_code())'
       - name: Recheck PR after isolated evidence
         if: ${{ always() }}
         env:
