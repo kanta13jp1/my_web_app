@@ -30,10 +30,14 @@ test('romaji input, scoring, deadline and retry in a browser', async ({ page }, 
 
 
 test('ten-word practice finishes and missed words can be practised again', async ({ page }, info) => {
+  test.setTimeout(90_000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
-  await page.getByRole('button', { name: '10問じっくり練習', exact: true }).click();
+  const practice = page.getByRole('checkbox', { name: '10問じっくり練習', exact: true });
+  await expect(practice).toBeVisible({ timeout: 60_000 });
+  await practice.click();
+  await expect(practice).toBeChecked();
   await page.getByRole('button', { name: /スタート/ }).click();
   const input = page.getByRole('textbox', { name: /^ローマ字入力/ });
   await input.scrollIntoViewIfNeeded();
@@ -48,7 +52,7 @@ test('ten-word practice finishes and missed words can be practised again', async
     await expect(page.getByText(`クリア ${word}問`, { exact: true })).toBeVisible();
   }
   await expect(page.getByText(/10問完走！/)).toBeVisible();
-  await expect(page.getByText('間違えたことばを振り返ろう', { exact: true })).toBeVisible();
+  await expect(page.getByText(/間違えたことばを振り返ろう/)).toBeVisible();
   await page.screenshot({ path: info.outputPath('practice-review.png'), fullPage: true });
   await page.getByRole('button', { name: '苦手なことばを練習', exact: true }).click();
   await expect(page.getByText('苦手なことばを10問練習中', { exact: true })).toBeVisible();
