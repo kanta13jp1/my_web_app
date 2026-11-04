@@ -20,9 +20,9 @@
     "test/pages/echo_pump_restart_test.dart"
   ],
   "runtime_sha256": {
-    "lib/pages/echo_pump_game_page.dart": "d4ee17aaa5d33b156743b26cf06520b16f4d36d178326075b9e578adec5410de"
+    "lib/pages/echo_pump_game_page.dart": "07a6b692af574ed86707cf914ddd43f2f2e652d6564f35117d861ab4d3d740e9"
   },
-  "derived_runtime": "Merged PR5882 game page minus the four inherited audio suspend/resume lines absent from public2274. All remaining hunks implement only restart confirmation.",
+  "derived_runtime": "Merged PR5882 game page: restart confirmation plus exactly four prerequisite lines from merged PR5893 that settle pending effects before the existing door animation. No workshop background or collection changes are selected.",
   "preserved_asset_sha256": {
     "assets/echo_pump/pump_fault.png": "c7c228a7fcd97f482814b68665583db9711fe285406a643a72828e4d0b8e0426",
     "assets/echo_pump/pump_idle.png": "1e1b5e6173de449d3eeadfe6b66a645c5b3abe6c9cce1789411e27b641686fa4",
@@ -45,11 +45,17 @@
   "selected_blobs": {
     ".github/workflows/echo-pump-dart-mcp.yml": "725dded910e2d4024166bbf6f910ac2de9e201bd",
     ".github/workflows/echo-pump-prototype.yml": "5e110acb5169325ba9bd4a20e212639be007d13e",
-    "lib/pages/echo_pump_game_page.dart": "598ed8d2bddcb49dc30fe0ca6c482637420e6dff",
+    "lib/pages/echo_pump_game_page.dart": "b8c64f79c64438d77df12703613689d44ffaf118",
     "scripts/echo_pump_dart_mcp/probe.py": "6307609a470990834d0ba1c0e0ae4800ae999775",
     "scripts/echo_pump_dev_checks_test.py": "16c43f86e2994d1386fe14238538483859bbe2ee",
     "scripts/echo_pump_dev_commands.json": "1f2d47890ba1dba604e2fa319dcd813590e8fd8d",
     "test/e2e/echo_pump_restart.spec.ts": "b952d0f4ad027dae351c7f6e8b22cc0d509a2b38",
     "test/pages/echo_pump_restart_test.dart": "bb1d6b9eb89e89710961b2ff69637bc2dfdd35fd"
+  },
+  "dependency_pr": 5893,
+  "dependency_merge": "c408398a13442f0993a8e797333f0b5798b386d9",
+  "unchanged_audio_dependencies": {
+    "lib/services/echo_pump_audio.dart": "53d947418df2a351fe902fc4ce062367980a1792",
+    "lib/widgets/echo_pump_door_transition.dart": "8fdd40f4cfa5e6692f7e791307379c4c701efdfc"
   }
 }
