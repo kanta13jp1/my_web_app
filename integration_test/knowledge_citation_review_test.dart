@@ -184,6 +184,32 @@ void main() {
       tester.state<ScrollableState>(scrollable).position.pixels,
       greaterThan(0),
     );
+    for (var attempt = 0; attempt < 30; attempt++) {
+      final position = tester.state<ScrollableState>(scrollable).position;
+      if (position.extentAfter <= 0.5) {
+        break;
+      }
+      await tester.drag(answerScroll, const Offset(0, -80));
+      await tester.pumpAndSettle();
+    }
+    expect(
+      tester.state<ScrollableState>(scrollable).position.extentAfter,
+      lessThanOrEqualTo(0.5),
+    );
+    final viewportRect = tester.getRect(answerScroll);
+    final answerBottom = tester.getBottomLeft(
+      find.byKey(const Key('knowledge-citation-answer')),
+    ).dy;
+    expect(answerBottom, greaterThan(viewportRect.top));
+    expect(answerBottom, lessThanOrEqualTo(viewportRect.bottom + 1));
+    await binding.takeScreenshot(
+      '${mobile ? 'mobile' : 'desktop'}-citation-long-answer-bottom',
+      <String, Object?>{
+        'width': viewport.width,
+        'height': viewport.height,
+        'devicePixelRatio': mobile ? 2.75 : 1.0,
+      },
+    );
   });
 }
 
