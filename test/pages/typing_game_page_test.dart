@@ -186,13 +186,17 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('composition stays untouched and commits only once, with a separator',
+  testWidgets(
+      'composition stays untouched and commits only once, with a separator',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: TypingGamePage()));
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pump();
     final field = find.byKey(const Key('typing-input'));
-    expect(tester.widget<TextField>(field).focusNode!.hasFocus, isTrue,);
+    expect(
+      tester.widget<TextField>(field).focusNode!.hasFocus,
+      isTrue,
+    );
     final prompt = TypingGame.prompts
         .firstWhere((p) => find.text(p.japanese).evaluate().isNotEmpty);
     final spelling = prompt.spellings.first;
@@ -203,27 +207,54 @@ void main() {
     );
     tester.testTextInput.updateEditingValue(candidate);
     await tester.pump();
-    expect(tester.widget<TextField>(field).controller!.value, candidate,);
-    expect(find.text('スコア 0'), findsOneWidget,);
-    tester.testTextInput.updateEditingValue(TextEditingValue(
-      text: '$spelling ',
-      selection: TextSelection.collapsed(offset: spelling.length + 1),
-    ),);
+    expect(
+      tester.widget<TextField>(field).controller!.value,
+      candidate,
+    );
+    expect(
+      find.text('スコア 0'),
+      findsOneWidget,
+    );
+    tester.testTextInput.updateEditingValue(
+      TextEditingValue(
+        text: '$spelling ',
+        selection: TextSelection.collapsed(offset: spelling.length + 1),
+      ),
+    );
     await tester.pump();
-    expect(find.text('クリア 1問'), findsOneWidget,);
-    expect(find.text('スコア ${spelling.length * 10 + 50}'), findsOneWidget,);
-    expect(tester.widget<TextField>(field).controller!.text, isEmpty,);
+    expect(
+      find.text('クリア 1問'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('スコア ${spelling.length * 10 + 50}'),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<TextField>(field).controller!.text,
+      isEmpty,
+    );
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
-    expect(tester.widget<TextField>(field).focusNode!.hasFocus, isTrue,);
+    expect(
+      tester.widget<TextField>(field).focusNode!.hasFocus,
+      isTrue,
+    );
     await tester.enterText(field, spelling);
     await tester.pump();
-    expect(find.text('クリア 1問'), findsOneWidget,);
-    expect(tester.takeException(), isNull,);
+    expect(
+      find.text('クリア 1問'),
+      findsOneWidget,
+    );
+    expect(
+      tester.takeException(),
+      isNull,
+    );
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('cancelled or kana composition does not score or erase valid progress',
+  testWidgets(
+      'cancelled or kana composition does not score or erase valid progress',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: TypingGamePage()));
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
@@ -241,28 +272,52 @@ void main() {
     );
     tester.testTextInput.updateEditingValue(composing);
     await tester.pump();
-    expect(tester.widget<TextField>(field).controller!.value, composing,);
-    expect(find.text('スコア 10'), findsOneWidget,);
-    tester.testTextInput.updateEditingValue(TextEditingValue(
-      text: letter,
-      selection: const TextSelection.collapsed(offset: 1),
-    ),);
+    expect(
+      tester.widget<TextField>(field).controller!.value,
+      composing,
+    );
+    expect(
+      find.text('スコア 10'),
+      findsOneWidget,
+    );
+    tester.testTextInput.updateEditingValue(
+      TextEditingValue(
+        text: letter,
+        selection: const TextSelection.collapsed(offset: 1),
+      ),
+    );
     await tester.pump();
-    expect(tester.widget<TextField>(field).controller!.text, letter,);
+    expect(
+      tester.widget<TextField>(field).controller!.text,
+      letter,
+    );
     tester.testTextInput.updateEditingValue(composing);
     await tester.pump();
-    tester.testTextInput.updateEditingValue(TextEditingValue(
-      text: '$letterあ',
-      selection: const TextSelection.collapsed(offset: 2),
-    ),);
+    tester.testTextInput.updateEditingValue(
+      TextEditingValue(
+        text: '$letterあ',
+        selection: const TextSelection.collapsed(offset: 2),
+      ),
+    );
     await tester.pump();
-    expect(tester.widget<TextField>(field).controller!.text, letter,);
-    expect(find.text('スコア 10'), findsOneWidget,);
-    expect(find.text('正確さ 100.0%'), findsOneWidget,);
-    expect(tester.takeException(), isNull,);
+    expect(
+      tester.widget<TextField>(field).controller!.text,
+      letter,
+    );
+    expect(
+      find.text('スコア 10'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('正確さ 100.0%'),
+      findsOneWidget,
+    );
+    expect(
+      tester.takeException(),
+      isNull,
+    );
     await tester.pumpWidget(const SizedBox());
   });
-
 
   testWidgets('one confirmed candidate cannot span prompts', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: TypingGamePage()));
@@ -283,29 +338,50 @@ void main() {
       }
       words++;
       score += spelling.length * 10 + 50;
-      expect(words, lessThan(TypingGame.prompts.length),);
+      expect(
+        words,
+        lessThan(TypingGame.prompts.length),
+      );
       prompt = currentPrompt();
     }
     final variants = [...prompt.spellings]
       ..sort((a, b) => a.length.compareTo(b.length));
     final invalid = '${variants.first}q';
-    expect(invalid.length, lessThanOrEqualTo(variants.last.length),);
-    tester.testTextInput.updateEditingValue(TextEditingValue(
-      text: invalid,
-      selection: TextSelection.collapsed(offset: invalid.length),
-      composing: TextRange(start: 0, end: invalid.length),
-    ),);
+    expect(
+      invalid.length,
+      lessThanOrEqualTo(variants.last.length),
+    );
+    tester.testTextInput.updateEditingValue(
+      TextEditingValue(
+        text: invalid,
+        selection: TextSelection.collapsed(offset: invalid.length),
+        composing: TextRange(start: 0, end: invalid.length),
+      ),
+    );
     await tester.pump();
-    tester.testTextInput.updateEditingValue(TextEditingValue(
-      text: invalid,
-      selection: TextSelection.collapsed(offset: invalid.length),
-    ),);
+    tester.testTextInput.updateEditingValue(
+      TextEditingValue(
+        text: invalid,
+        selection: TextSelection.collapsed(offset: invalid.length),
+      ),
+    );
     await tester.pump();
-    expect(find.text('クリア $words問'), findsOneWidget,);
-    expect(find.text('スコア $score'), findsOneWidget,);
-    expect(tester.widget<TextField>(field).controller!.text, isEmpty,);
-    expect(tester.takeException(), isNull,);
+    expect(
+      find.text('クリア $words問'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('スコア $score'),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<TextField>(field).controller!.text,
+      isEmpty,
+    );
+    expect(
+      tester.takeException(),
+      isNull,
+    );
     await tester.pumpWidget(const SizedBox());
   });
-
 }

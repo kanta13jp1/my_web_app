@@ -106,21 +106,25 @@ class _TypingGamePageState extends State<TypingGamePage> {
     }
     if (text == prefix) {
       if (composed) {
-        setState(() => _inputFeedback(
-              '入力を続けられます。',
-              'Continue typing when ready.',
-              announce: false,
-            ),);
+        setState(
+          () => _inputFeedback(
+            '入力を続けられます。',
+            'Continue typing when ready.',
+            announce: false,
+          ),
+        );
       }
       return _canonicalInput();
     }
     if (!text.startsWith(prefix) ||
         text.length <= prefix.length ||
         (!compositionCommit && text.length != prefix.length + 1)) {
-      setState(() => _inputFeedback(
-            '一文字ずつ入力するか、変換中のローマ字を確定してください。削除や貼り付けは使いません。',
-            'Type one letter at a time, or confirm composed romaji. Deleting and pasting are not supported.',
-          ),);
+      setState(
+        () => _inputFeedback(
+          '一文字ずつ入力するか、変換中のローマ字を確定してください。削除や貼り付けは使いません。',
+          'Type one letter at a time, or confirm composed romaji. Deleting and pasting are not supported.',
+        ),
+      );
       return _canonicalInput();
     }
     final letters = text.substring(prefix.length);
@@ -133,19 +137,24 @@ class _TypingGamePageState extends State<TypingGamePage> {
     if (letters.length > limit ||
         (compositionCommit &&
             _game.prompt.spellings.any(
-              (spelling) => text.startsWith(spelling) && text.length > spelling.length,
+              (spelling) =>
+                  text.startsWith(spelling) && text.length > spelling.length,
             ))) {
-      setState(() => _inputFeedback(
-            '一つのお題ずつローマ字を確定してください。',
-            'Confirm one prompt at a time.',
-          ),);
+      setState(
+        () => _inputFeedback(
+          '一つのお題ずつローマ字を確定してください。',
+          'Confirm one prompt at a time.',
+        ),
+      );
       return _canonicalInput();
     }
     if (!RegExp(r'^[a-zA-Z]+$').hasMatch(letters)) {
-      setState(() => _inputFeedback(
-            'かな変換をオフにし、半角英字で入力してください。',
-            'Turn off kana conversion and use Latin letters.',
-          ),);
+      setState(
+        () => _inputFeedback(
+          'かな変換をオフにし、半角英字で入力してください。',
+          'Turn off kana conversion and use Latin letters.',
+        ),
+      );
       return _canonicalInput();
     }
     setState(() {
@@ -160,10 +169,19 @@ class _TypingGamePageState extends State<TypingGamePage> {
       }
       _announceFeedback = !accepted;
       _feedback = !accepted
-          ? _t('惜しい！次の文字を確認しよう', 'Almost! Check the next letter.',)
+          ? _t(
+              '惜しい！次の文字を確認しよう',
+              'Almost! Check the next letter.',
+            )
           : _game.words > words
-              ? _t('クリア！次のことばへ', 'Word complete! Try the next one.',)
-              : _t('${_game.combo}文字連続！', '${_game.combo} letters in a row!',);
+              ? _t(
+                  'クリア！次のことばへ',
+                  'Word complete! Try the next one.',
+                )
+              : _t(
+                  '${_game.combo}文字連続！',
+                  '${_game.combo} letters in a row!',
+                );
     });
     _settle();
     return _canonicalInput();
@@ -249,9 +267,11 @@ class _TypingGamePageState extends State<TypingGamePage> {
         ],
       ),
       body: Shortcuts(
-        shortcuts: const {
-          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
-        },
+        shortcuts: _game.running
+            ? const {}
+            : const {
+                SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+              },
         child: Actions(
           actions: {
             ActivateIntent: CallbackAction<ActivateIntent>(
