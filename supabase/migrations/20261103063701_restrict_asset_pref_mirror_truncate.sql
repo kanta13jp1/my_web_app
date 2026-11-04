@@ -1,6 +1,5 @@
 -- DRAFT ONLY. Not applied. Review runtime roles, all writers and rollback first.
 -- Checks owner/RLS, effective truncate, conservative role reachability and unrelated effective privileges.
-begin;
 do $$
 declare
  role_name text;
@@ -55,4 +54,3 @@ begin
  if pg_catalog.has_table_privilege('service_role',target_oid,'TRUNCATE') is distinct from service_before then
   raise exception 'service role changed'; end if;
 end $$;
-commit;
