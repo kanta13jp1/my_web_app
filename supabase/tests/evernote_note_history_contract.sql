@@ -100,8 +100,8 @@ begin
     from public.evernote_migration_items
     where batch_id = 101
       and source_item_key = 'id:note-101'
-  ) <> 'imported' then
-    raise exception 'History status did not advance to imported.';
+  ) <> 'importing' then
+    raise exception 'History status did not remain importing after the first of two revisions.';
   end if;
 end
 $$;
