@@ -466,7 +466,13 @@ class _TypingGamePageState extends State<TypingGamePage> {
                           autocorrect: false,
                           enableSuggestions: false,
                           enableInteractiveSelection: false,
-                          keyboardType: TextInputType.visiblePassword,
+                          keyboardType: TextInputType.text,
+                          textInputAction: TextInputAction.done,
+                          // Confirming a word must not dismiss the typing keyboard.
+                          onEditingComplete: () {},
+                          enableIMEPersonalizedLearning: false,
+                          smartDashesType: SmartDashesType.disabled,
+                          smartQuotesType: SmartQuotesType.disabled,
                           textCapitalization: TextCapitalization.none,
                           inputFormatters: [
                             TextInputFormatter.withFunction(_format),

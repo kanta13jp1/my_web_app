@@ -213,6 +213,9 @@ void main() {
     expect(find.text('クリア 1問'), findsOneWidget,);
     expect(find.text('スコア ${spelling.length * 10 + 50}'), findsOneWidget,);
     expect(tester.widget<TextField>(field).controller!.text, isEmpty,);
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    expect(tester.widget<TextField>(field).focusNode!.hasFocus, isTrue,);
     await tester.enterText(field, spelling);
     await tester.pump();
     expect(find.text('クリア 1問'), findsOneWidget,);
