@@ -56,6 +56,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    for (final english in [false, true]) {
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
@@ -66,6 +67,10 @@ void main() {
         home: const TypingGamePage(),
       ),
     );
+    if (english) {
+      await tester.tap(find.byKey(const Key('typing-language')));
+      await tester.pumpAndSettle();
+    }
     await tester.ensureVisible(find.byKey(const Key('typing-start')));
     await tester.tap(find.byKey(const Key('typing-start')));
     await tester.pump();
@@ -73,6 +78,7 @@ void main() {
     await tester.ensureVisible(find.byKey(const Key('typing-input')));
     expect(find.byType(SingleChildScrollView), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
+    }
   });
 
   testWidgets('practice results offer focused review without a challenge best',
@@ -117,4 +123,40 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('English instructions preserve results and localize native controls',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: TypingGamePage()));
+    final language = find.byKey(const Key('typing-language'));
+    await tester.tap(language);
+    await tester.pumpAndSettle();
+    expect(find.text('Kotoba Typing'), findsOneWidget);
+    expect(MaterialLocalizations.of(tester.element(find.byType(Scaffold)))
+        .backButtonTooltip, 'Back',);
+    await tester.tap(find.text('10-word practice'));
+    await tester.pump();
+    final start = find.byKey(const Key('typing-start'));
+    await tester.ensureVisible(start);
+    await tester.tap(start);
+    await tester.pump();
+    expect(tester.widget<TextButton>(language).onPressed, isNull);
+    final field = find.byKey(const Key('typing-input'));
+    await tester.enterText(field, 'q');
+    await tester.pump();
+    final end = find.text('End practice');
+    await tester.ensureVisible(end);
+    await tester.tap(end);
+    await tester.pump();
+    expect(find.text('Words to practise'), findsOneWidget);
+    expect(find.text('Score 0'), findsOneWidget);
+    expect(tester.widget<TextButton>(language).onPressed, isNotNull);
+    await tester.tap(language);
+    await tester.pumpAndSettle();
+    expect(find.text('ことばのタイピング'), findsOneWidget);
+    expect(find.text('間違えたことばを振り返ろう'), findsOneWidget);
+    expect(find.text('スコア 0'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
 }

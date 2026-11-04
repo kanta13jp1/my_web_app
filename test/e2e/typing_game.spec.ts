@@ -65,3 +65,33 @@ test('ten-word practice finishes and missed words can be practised again', async
   await expect(page.getByRole('button', { name: /もう一度挑戦/ })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+
+test('English guidance supports practice and switching back keeps the result', async ({ page }, info) => {
+  test.setTimeout(90_000);
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  const language = page.getByRole('button', { name: 'English', exact: true });
+  await expect(language).toBeVisible({ timeout: 60_000 });
+  await language.click();
+  await expect(page.getByRole('heading', { name: 'Kotoba Typing' })).toBeVisible();
+  await page.getByRole('checkbox', { name: '10-word practice', exact: true }).click();
+  await page.getByRole('button', { name: 'Start (Enter)', exact: true }).click();
+  await expect(page.getByRole('button', { name: '日本語', exact: true })).toBeDisabled();
+  const input = page.getByRole('textbox', { name: /^Romaji input/ });
+  await input.scrollIntoViewIfNeeded();
+  await input.focus();
+  const guide = await page.getByText(/Accepted spellings:/).textContent();
+  const spelling = guide!.match(/Accepted spellings:\s*([a-z]+)/)![1];
+  await input.pressSequentially('q');
+  await input.pressSequentially(spelling);
+  await expect(page.getByText('Words 1', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'End practice', exact: true }).click();
+  await expect(page.getByRole('group', { name: /Words to practise/ })).toBeVisible();
+  await page.screenshot({ path: info.outputPath('english-practice-result.png'), fullPage: true });
+  await page.getByRole('button', { name: '日本語', exact: true }).click();
+  await expect(page.getByText('クリア 1問', { exact: true })).toBeVisible();
+  await expect(page.getByRole('group', { name: /間違えたことばを振り返ろう/ })).toBeVisible();
+  expect(errors).toEqual([]);
+});
