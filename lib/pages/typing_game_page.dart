@@ -175,6 +175,10 @@ class _TypingGamePageState extends State<TypingGamePage> {
                           key: const Key('typing-input'),
                           controller: _input,
                           focusNode: _focus,
+                          onTap: () {
+                            _input.selection = TextSelection.collapsed(
+                                offset: _input.text.length);
+                          },
                           autocorrect: false,
                           enableSuggestions: false,
                           enableInteractiveSelection: false,
