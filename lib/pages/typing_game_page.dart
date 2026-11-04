@@ -21,6 +21,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
   final _clock = Stopwatch();
   Timer? _timer;
   String _feedback = '';
+  bool _announceFeedback = false;
   int _bestChallenge = 0;
   TypingMode _selectedMode = TypingMode.challenge;
   bool _reviewPractice = false;
@@ -33,6 +34,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
     setState(() {
       if (review != null) _selectedMode = TypingMode.practice;
       _reviewPractice = review != null;
+      _announceFeedback = false;
       _game.start(mode: _selectedMode, practicePrompts: review);
       _feedback = _t(
         'さあ、最初の一文字！',
@@ -65,63 +67,101 @@ class _TypingGamePageState extends State<TypingGamePage> {
     }
   }
 
+  TextEditingValue _canonicalInput() => TextEditingValue(
+        text: _game.prefix,
+        selection: TextSelection.collapsed(offset: _game.prefix.length),
+      );
+
+  void _inputFeedback(String japanese, String english, {bool announce = true}) {
+    _feedback = _t(japanese, english);
+    _announceFeedback = announce;
+  }
+
   TextEditingValue _format(TextEditingValue old, TextEditingValue next) {
     setState(_tick);
-    if (!_game.running) return old;
+    // Never rewrite a live IME candidate. The OS may restore it indefinitely.
     if (!next.composing.isCollapsed) {
-      setState(
-        () => _feedback = _t(
-          'IMEをオフにして、半角英字で入力してください',
-          'Turn off IME and type Latin letters.',
-        ),
-      );
-      return old;
-    }
-    final prefix = _game.prefix;
-    if (next.text.length != prefix.length + 1 ||
-        !next.text.startsWith(prefix)) {
-      setState(
-        () => _feedback = _t(
-          '一文字ずつ入力。削除や貼り付けは使いません',
-          'Type one letter at a time. Deleting and pasting are not supported.',
-        ),
-      );
-      return TextEditingValue(
-        text: prefix,
-        selection: TextSelection.collapsed(offset: prefix.length),
-      );
-    }
-    final letter = next.text.substring(prefix.length);
-    setState(() {
-      if (!RegExp(r'^[a-zA-Z]$').hasMatch(letter)) {
-        _feedback = _t(
-          '半角英字で入力してください（IMEオフ）',
-          'Use Latin letters with IME turned off.',
+      setState(() {
+        _inputFeedback(
+          '変換中です。英語キーボードでローマ字を確定してください。確定後に採点します。',
+          'Composing text. Confirm Latin letters with an English keyboard to score them.',
         );
-      } else {
-        final words = _game.words;
-        final accepted = _game.type(letter);
-        _feedback = !accepted
-            ? _t(
-                '惜しい！次の文字を確認しよう',
-                'Almost! Check the next letter.',
-              )
-            : _game.words > words
-                ? _t(
-                    'クリア！次のことばへ',
-                    'Word complete! Try the next one.',
-                  )
-                : _t(
-                    '${_game.combo}文字連続！',
-                    '${_game.combo} letters in a row!',
-                  );
+      });
+      return next;
+    }
+    if (!_game.running) return next;
+    final prefix = _game.prefix;
+    final composed = old.composing.isValid && !old.composing.isCollapsed;
+    var text = next.text;
+    var compositionCommit = false;
+    if (composed) {
+      // Some soft keyboards append one space when confirming a candidate.
+      final candidate = old.text.endsWith(' ')
+          ? old.text.substring(0, old.text.length - 1)
+          : old.text;
+      if (text == candidate || text == '$candidate ') {
+        text = candidate;
+        compositionCommit = true;
       }
+    }
+    if (text == prefix) {
+      if (composed) {
+        setState(() => _inputFeedback(
+              '入力を続けられます。',
+              'Continue typing when ready.',
+              announce: false,
+            ),);
+      }
+      return _canonicalInput();
+    }
+    if (!text.startsWith(prefix) ||
+        text.length <= prefix.length ||
+        (!compositionCommit && text.length != prefix.length + 1)) {
+      setState(() => _inputFeedback(
+            '一文字ずつ入力するか、変換中のローマ字を確定してください。削除や貼り付けは使いません。',
+            'Type one letter at a time, or confirm composed romaji. Deleting and pasting are not supported.',
+          ),);
+      return _canonicalInput();
+    }
+    final letters = text.substring(prefix.length);
+    final limit = _game.prompt.spellings.fold<int>(
+          0,
+          (longest, spelling) =>
+              spelling.length > longest ? spelling.length : longest,
+        ) -
+        prefix.length;
+    if (letters.length > limit) {
+      setState(() => _inputFeedback(
+            '一つのお題ずつローマ字を確定してください。',
+            'Confirm one prompt at a time.',
+          ),);
+      return _canonicalInput();
+    }
+    if (!RegExp(r'^[a-zA-Z]+$').hasMatch(letters)) {
+      setState(() => _inputFeedback(
+            'かな変換をオフにし、半角英字で入力してください。',
+            'Turn off kana conversion and use Latin letters.',
+          ),);
+      return _canonicalInput();
+    }
+    setState(() {
+      final words = _game.words;
+      var accepted = true;
+      for (final letter in letters.split('')) {
+        if (!_game.type(letter)) {
+          accepted = false;
+          break;
+        }
+      }
+      _announceFeedback = !accepted;
+      _feedback = !accepted
+          ? _t('惜しい！次の文字を確認しよう', 'Almost! Check the next letter.',)
+          : _game.words > words
+              ? _t('クリア！次のことばへ', 'Word complete! Try the next one.',)
+              : _t('${_game.combo}文字連続！', '${_game.combo} letters in a row!',);
     });
     _settle();
-    return TextEditingValue(
-      text: _game.prefix,
-      selection: TextSelection.collapsed(offset: _game.prefix.length),
-    );
+    return _canonicalInput();
   }
 
   @override
@@ -426,7 +466,13 @@ class _TypingGamePageState extends State<TypingGamePage> {
                           autocorrect: false,
                           enableSuggestions: false,
                           enableInteractiveSelection: false,
-                          keyboardType: TextInputType.visiblePassword,
+                          keyboardType: TextInputType.text,
+                          textInputAction: TextInputAction.done,
+                          // Confirming a word must not dismiss the typing keyboard.
+                          onEditingComplete: () {},
+                          enableIMEPersonalizedLearning: false,
+                          smartDashesType: SmartDashesType.disabled,
+                          smartQuotesType: SmartQuotesType.disabled,
                           textCapitalization: TextCapitalization.none,
                           inputFormatters: [
                             TextInputFormatter.withFunction(_format),
@@ -438,16 +484,19 @@ class _TypingGamePageState extends State<TypingGamePage> {
                               'Romaji input',
                             ),
                             helperText: _t(
-                              '英語キーボード・半角英字 / 入力欄をタップで再開',
-                              'Use an English keyboard and Latin letters. Tap the input to continue.',
+                              '英語キーボード・半角英字 / 変換中は確定後に採点 / 入力欄をタップで再開',
+                              'Use Latin letters. Composed text scores after confirmation. Tap the input to continue.',
                             ),
                             helperMaxLines: 3,
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          _feedback,
-                          textAlign: TextAlign.center,
+                        Semantics(
+                          liveRegion: _announceFeedback,
+                          child: Text(
+                            _feedback,
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                         if (practice)
                           TextButton(
@@ -549,8 +598,8 @@ class _TypingGamePageState extends State<TypingGamePage> {
                       const SizedBox(height: 24),
                       Text(
                         _t(
-                          '遊び方: IMEをオフにし、表示されたつづりを一文字ずつ入力します。shi / si などは「使えるつづり」にあるものに対応。削除・貼り付け・かな入力は対象外です。スマートフォンでは英語キーボードを選択してください。成績と振り返りはこの画面を閉じるまで。練習モードの成績はチャレンジのベストに含めません。',
-                          'How to play: turn off IME and type one letter at a time. Only the listed spellings, such as shi / si, are accepted. Deleting, pasting and kana input are not supported. On a phone, select an English keyboard. Scores, review and language choice last until this screen closes. Practice scores do not count towards your challenge best.',
+                          '遊び方: 英語キーボードで、表示されたつづりを入力します。変換中の文字は確定後に採点します。shi / si などは「使えるつづり」にあるものに対応。削除・貼り付け・かな入力は対象外です。スマートフォンでは英語キーボードを選択してください。成績と振り返りはこの画面を閉じるまで。練習モードの成績はチャレンジのベストに含めません。',
+                          'How to play: use an English keyboard. Type letters individually, or confirm composed Latin text to score it. Only the listed spellings, such as shi / si, are accepted. Deleting, pasting and kana input are not supported. On a phone, select an English keyboard. Scores, review and language choice last until this screen closes. Practice scores do not count towards your challenge best.',
                         ),
                       ),
                     ],

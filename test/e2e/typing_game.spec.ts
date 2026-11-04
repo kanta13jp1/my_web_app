@@ -95,3 +95,35 @@ test('English guidance supports practice and switching back keeps the result', a
   await expect(page.getByRole('group', { name: /間違えたことばを振り返ろう/ })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+
+test('Enter starts ready for typing and browser IME commits score once', async ({ page }, info) => {
+  test.setTimeout(90_000);
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: /スタート/ })).toBeVisible({ timeout: 60_000 });
+  await page.keyboard.press('Enter');
+  const guide = await page.getByText(/使えるつづり:/).textContent({ timeout: 7500 });
+  const spelling = guide!.match(/使えるつづり:\s*([a-z]+)/)![1];
+  // No explicit input click/focus: the first letter must work after Start.
+  await page.keyboard.type(spelling[0]);
+  await expect(page.getByText('スコア 10', { exact: true })).toBeVisible();
+  const cdp = await page.context().newCDPSession(page);
+  const suffix = spelling.slice(1);
+  await cdp.send('Input.imeSetComposition', {
+    text: suffix, selectionStart: suffix.length, selectionEnd: suffix.length,
+  });
+  await expect(page.getByText(/変換中です。英語キーボード/)).toBeVisible();
+  await expect(page.getByText('スコア 10', { exact: true })).toBeVisible();
+  await cdp.send('Input.insertText', { text: suffix });
+  await expect(page.getByText('クリア 1問', { exact: true })).toBeVisible();
+  await expect(page.getByText(`スコア ${spelling.length * 10 + 50}`, { exact: true })).toBeVisible();
+  await cdp.send('Input.imeSetComposition', { text: 'あ', selectionStart: 1, selectionEnd: 1 });
+  await cdp.send('Input.insertText', { text: 'あ' });
+  await expect(page.getByText('クリア 1問', { exact: true })).toBeVisible();
+  await expect(page.getByText(`スコア ${spelling.length * 10 + 50}`, { exact: true })).toBeVisible();
+  await page.screenshot({ path: info.outputPath('composed-input.png'), fullPage: true });
+  await cdp.detach();
+  expect(errors).toEqual([]);
+});
