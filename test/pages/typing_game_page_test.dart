@@ -66,6 +66,7 @@ void main() {
         home: const TypingGamePage(),
       ),
     );
+    await tester.ensureVisible(find.byKey(const Key('typing-start')));
     await tester.tap(find.byKey(const Key('typing-start')));
     await tester.pump();
     expect(tester.takeException(), isNull);
@@ -73,4 +74,48 @@ void main() {
     expect(find.byType(SingleChildScrollView), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('practice results offer focused review without a challenge best',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: TypingGamePage()));
+    await tester.tap(find.text('10問じっくり練習'));
+    await tester.pump();
+    final start = find.byKey(const Key('typing-start'));
+    await tester.ensureVisible(start);
+    await tester.tap(start);
+    await tester.pump();
+    expect(find.text('進み具合 0 / 10問'), findsOneWidget);
+    final field = find.byKey(const Key('typing-input'));
+    final prompt = TypingGame.prompts
+        .firstWhere((p) => find.text(p.japanese).evaluate().isNotEmpty);
+    await tester.enterText(field, 'q');
+    await tester.pump();
+    final end = find.text('練習を終える');
+    await tester.ensureVisible(end);
+    await tester.tap(end);
+    await tester.pump();
+    expect(find.text('間違えたことばを振り返ろう'), findsOneWidget);
+    expect(find.textContaining('ミス 1回'), findsWidgets);
+    expect(find.textContaining('入力ペース'), findsOneWidget);
+    expect(find.textContaining('この画面でのチャレンジベスト'), findsNothing);
+    final review = find.text('苦手なことばを練習');
+    await tester.ensureVisible(review);
+    await tester.tap(review);
+    await tester.pump();
+    expect(find.text('苦手なことばを10問練習中'), findsOneWidget);
+    for (var word = 0; word < 10; word++) {
+      expect(find.text(prompt.japanese), findsOneWidget);
+      final spelling = prompt.spellings.first;
+      for (var length = 1; length <= spelling.length; length++) {
+        await tester.enterText(field, spelling.substring(0, length));
+        await tester.pump();
+      }
+    }
+    expect(find.textContaining('10問完走！'), findsOneWidget);
+    expect(find.text('進み具合 10 / 10問'), findsOneWidget);
+    expect(find.text('苦手なことばを練習'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
 }

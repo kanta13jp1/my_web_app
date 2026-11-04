@@ -27,3 +27,37 @@ test('romaji input, scoring, deadline and retry in a browser', async ({ page }, 
   await expect(page.getByText('スコア 0', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+
+test('ten-word practice finishes and missed words can be practised again', async ({ page }, info) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await page.getByRole('button', { name: '10問じっくり練習', exact: true }).click();
+  await page.getByRole('button', { name: /スタート/ }).click();
+  const input = page.getByRole('textbox', { name: /^ローマ字入力/ });
+  await input.scrollIntoViewIfNeeded();
+  await input.focus();
+  const guide = await page.getByText(/使えるつづり:/).textContent();
+  const missed = guide!.match(/使えるつづり:\s*([a-z]+)/)![1];
+  await input.pressSequentially('q');
+  for (let word = 1; word <= 10; word++) {
+    const text = await page.getByText(/使えるつづり:/).textContent();
+    const spelling = text!.match(/使えるつづり:\s*([a-z]+)/)![1];
+    await input.pressSequentially(spelling);
+    await expect(page.getByText(`クリア ${word}問`, { exact: true })).toBeVisible();
+  }
+  await expect(page.getByText(/10問完走！/)).toBeVisible();
+  await expect(page.getByText('間違えたことばを振り返ろう', { exact: true })).toBeVisible();
+  await page.screenshot({ path: info.outputPath('practice-review.png'), fullPage: true });
+  await page.getByRole('button', { name: '苦手なことばを練習', exact: true }).click();
+  await expect(page.getByText('苦手なことばを10問練習中', { exact: true })).toBeVisible();
+  await expect(page.getByText(/使えるつづり:/)).toContainText(missed);
+  await input.scrollIntoViewIfNeeded();
+  await input.focus();
+  await input.pressSequentially(missed);
+  await expect(page.getByText('クリア 1問', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '練習を終える', exact: true }).click();
+  await expect(page.getByRole('button', { name: /もう一度挑戦/ })).toBeVisible();
+  expect(errors).toEqual([]);
+});
