@@ -10,6 +10,7 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import re
+import selectors
 import subprocess
 import sys
 import tarfile
@@ -142,6 +143,55 @@ def parse_tmp_mountinfo(text):
     return {'filesystem': fs_type, 'mount_options': sorted(flags), 'super_options': sorted(super_flags)}
 
 
+KNOWN_PROJECT_PATHS = frozenset({
+    'migrations', 'migrations/20991231000000_synthetic_acl.sql', 'config.toml',
+    '.temp', '.temp/cli-latest',
+})
+
+
+def append_bounded(buffer, chunk, limit):
+    if not isinstance(chunk, bytes) or len(buffer) + len(chunk) > limit:
+        raise RuntimeError('bounded synthetic metadata stream exceeded limit')
+    buffer.extend(chunk)
+
+
+def redacted_project_entry(entry, *, detailed):
+    path = entry['path']
+    result = {'type':entry['type']}
+    if path in KNOWN_PROJECT_PATHS:
+        result['path'] = path
+    else:
+        result['path_sha256'] = sha(path.encode('utf-8'))
+        result['path_bytes'] = len(path.encode('utf-8'))
+    if detailed:
+        result.update(mode=entry['mode'], length=entry['length'])
+    return result
+
+
+def parse_project_tree(raw):
+    """Parse bounded find -P metadata; never consume file contents."""
+    if not isinstance(raw, bytes) or len(raw) > 65536 or not raw.endswith(b'\0'):
+        raise RuntimeError('invalid or oversized synthetic tree metadata')
+    parts = raw[:-1].split(b'\0')
+    if len(parts) % 4 or len(parts) // 4 > 100:
+        raise RuntimeError('invalid synthetic tree metadata records')
+    base = '/tmp/codex-cli/supabase/'
+    entries = []
+    for i in range(0, len(parts), 4):
+        try: kind, mode, size, absolute = (x.decode('utf-8', errors='strict') for x in parts[i:i+4])
+        except UnicodeDecodeError: raise RuntimeError('invalid synthetic tree metadata encoding') from None
+        if (kind not in ('d','f','l','p','s','b','c','?') or not re.fullmatch(r'[0-7]{1,4}', mode)
+            or not size.isdecimal() or len(size) > 20 or not absolute.startswith(base)):
+            raise RuntimeError('invalid synthetic tree metadata field')
+        relative = absolute[len(base):]
+        if not relative or len(relative.encode('utf-8')) > 512 or any(x in ('','.','..') for x in relative.split('/')):
+            raise RuntimeError('invalid synthetic tree relative path')
+        entries.append({'path':relative,'type':kind,'mode':mode,'length':int(size)})
+    if len({x['path'] for x in entries}) != len(entries):
+        raise RuntimeError('duplicate synthetic tree path')
+    return sorted(entries, key=lambda x:x['path'])
+
+
 def verify_removed(cid, inspect_code, inspect_stdout, inspect_stderr, ps_code, ps_stdout, ps_stderr):
     if not re.fullmatch(r'[0-9a-f]{64}', cid): raise RuntimeError('invalid removed container ID')
     exact = {f'error: no such object: {cid}', f'error: no such container: {cid}',
@@ -188,6 +238,9 @@ def classify_failure(exc):
         ('startup_postgres_fatal', ('fatal postgres log observed',)),
         ('psql_error', ('synthetic psql failed',)),
         ('container_identity', ('container identity', 'service identity')),
+        ('project_tree_limit', ('bounded synthetic metadata stream exceeded limit', 'oversized synthetic tree metadata')),
+        ('project_tree_timeout', ('bounded synthetic tree enumeration timed out',)),
+        ('project_tree_unexpected', ('unexpected synthetic project content', 'unexpected non-regular synthetic project entry')),
     )
     found = [label for label,terms in patterns if any(term in text for term in terms)]
     return {'categories':found or ['unclassified'], 'bytes':len(raw), 'sha256':sha(raw)}
@@ -425,6 +478,81 @@ class OwnedService:
         print('SYNTHETIC_EXECBATCH_EXECUTABLE ' + json.dumps(evidence,sort_keys=True), flush=True)
         return evidence
 
+    def bounded_tree_find(self):
+        """Capture only bounded metadata from a fixed, no-follow find command."""
+        self.inspect(running=True)
+        argv = self.docker + ['exec','-i','-u','postgres',self.cid,'/usr/bin/env','-i',
+            'PATH=/usr/local/bin:/usr/bin:/bin','HOME=/tmp/codex-cli',
+            '/usr/bin/find','-P','/tmp/codex-cli/supabase','-xdev','-mindepth','1','-maxdepth','6',
+            '-printf',r'%y\0%m\0%s\0%p\0']
+        proc = subprocess.Popen(argv,env=self.env,stdin=subprocess.DEVNULL,
+                                stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        outputs = {'stdout':bytearray(),'stderr':bytearray()}
+        limits = {'stdout':65536,'stderr':4096}
+        deadline = time.monotonic()+20
+        selector = selectors.DefaultSelector()
+        try:
+            selector.register(proc.stdout,selectors.EVENT_READ,'stdout')
+            selector.register(proc.stderr,selectors.EVENT_READ,'stderr')
+            while selector.get_map():
+                remaining = deadline-time.monotonic()
+                if remaining <= 0: raise RuntimeError('bounded synthetic tree enumeration timed out')
+                for key, _ in selector.select(min(remaining,1.0)):
+                    chunk = os.read(key.fd,4096)
+                    if not chunk:
+                        selector.unregister(key.fileobj)
+                    else:
+                        append_bounded(outputs[key.data],chunk,limits[key.data])
+            status = proc.wait(timeout=2)
+            if status != 0:
+                err = bytes(outputs['stderr'])
+                raise RuntimeError('bounded synthetic tree enumeration failed: exit=' + str(status)
+                                   + ' stderr_bytes=' + str(len(err)) + ' stderr_sha256=' + sha(err))
+            return bytes(outputs['stdout'])
+        finally:
+            selector.close()
+            if proc.poll() is None:
+                proc.terminate()
+                try: proc.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    proc.kill(); proc.wait(timeout=3)
+            if proc.stdout: proc.stdout.close()
+            if proc.stderr: proc.stderr.close()
+
+    def project_tree_evidence(self, phase):
+        """Read bounded, redacted metadata only in the validated owned /tmp tree."""
+        if phase not in ('before_version','after_version'):
+            raise RuntimeError('unexpected project-tree phase')
+        self.inspect(running=True)
+        uid = self.exec(['/usr/bin/id','-u']).stdout.decode('ascii').strip()
+        if not uid.isdecimal(): raise RuntimeError('invalid synthetic container user')
+        for directory in ('/tmp/codex-cli','/tmp/codex-cli/supabase'):
+            info = self.exec(['/usr/bin/stat','-c','%F|%u|%a',directory]).stdout.decode('ascii').strip()
+            if info != '|'.join(('directory',uid,'700')):
+                raise RuntimeError('synthetic project root owner/mode/type mismatch')
+        entries = parse_project_tree(self.bounded_tree_find())
+        # Bound and JSON-escape the initial path/type-only evidence. No project
+        # file is opened or hashed for diagnostics, including symlinks.
+        evidence = {'run_id':self.run_id,'nonce':self.nonce,'phase':phase,'status':'paths',
+                    'entries':[redacted_project_entry(entry,detailed=False) for entry in entries]}
+        encoded = json.dumps(evidence,sort_keys=True,ensure_ascii=True)
+        if len(encoded.encode('ascii')) > 65536:
+            raise RuntimeError('synthetic project evidence exceeds size limit')
+        print('SYNTHETIC_EXECBATCH_PROJECT_TREE ' + encoded, flush=True)
+        details = {'run_id':self.run_id,'nonce':self.nonce,'phase':phase,'status':'metadata',
+                   'entries':[redacted_project_entry(entry,detailed=True) for entry in entries]}
+        encoded_details = json.dumps(details,sort_keys=True,ensure_ascii=True)
+        if len(encoded_details.encode('ascii')) > 65536:
+            raise RuntimeError('synthetic project metadata exceeds size limit')
+        print('SYNTHETIC_EXECBATCH_PROJECT_TREE ' + encoded_details, flush=True)
+        # find -P does not follow links. Never open non-regular entries.
+        if any(entry['type'] not in ('d','f') for entry in entries):
+            raise RuntimeError('unexpected non-regular synthetic project entry')
+        dirs = {entry['path'] for entry in entries if entry['type']=='d'}
+        if any('/' in entry['path'] and entry['path'].rsplit('/',1)[0] not in dirs for entry in entries):
+            raise RuntimeError('synthetic tree parent directory missing')
+        return entries
+
     def stage(self, binary, migration):
         self.psql('SELECT 1;')  # confirm database marker immediately before staging
         self.exec(['/bin/sh','-c','umask 077; mkdir -p /tmp/codex-cli/supabase/migrations; cat > /tmp/codex-cli/supabase/migrations/20991231000000_synthetic_acl.sql'], input=migration)
@@ -434,20 +562,22 @@ class OwnedService:
         for file, expected in ((MIGRATION, sha(migration)), ('/tmp/codex-cli/supabase-cli', sha(binary))):
             got = self.exec(['/usr/bin/sha256sum', file]).stdout.decode('ascii').split()[0]
             if got != expected: raise RuntimeError('container staged content hash mismatch')
-        # Explicitly reject symlinks or additional migration/config entries.
-        def check_project_tree():
-            entries = self.exec(['/usr/bin/find','/tmp/codex-cli/supabase','-mindepth','1','-printf','%y %p\n']).stdout.decode('utf-8').splitlines()
-            expected = {'d /tmp/codex-cli/supabase/migrations', 'f ' + MIGRATION,
-                        'f /tmp/codex-cli/supabase/config.toml'}
-            if set(entries) != expected or len(entries) != len(expected):
+        # Metadata collection may diagnose unexpected entries, but never permits them.
+        def check_project_tree(phase):
+            entries = self.project_tree_evidence(phase)
+            actual = {(entry['type'],entry['path']) for entry in entries}
+            expected = {('d','migrations'), ('f','migrations/20991231000000_synthetic_acl.sql'),
+                        ('f','config.toml')}
+            if actual != expected or len(entries) != len(expected):
                 raise RuntimeError('unexpected synthetic project content')
-        check_project_tree()
         self.cli_binary_sha = sha(binary)
         self.verify_cli_binary()
+        check_project_tree('before_version')
         version = self.exec(['/tmp/codex-cli/supabase-cli','--version'], timeout=20, check=False, workdir='/tmp/codex-cli')
         if version.returncode != 0 or version.stdout.decode('utf-8').strip() != '2.84.2':
             raise RuntimeError('fixed CLI version not confirmed: ' + (version.stdout + version.stderr).decode('utf-8', errors='replace'))
-        check_project_tree()
+        self.verify_cli_binary()
+        check_project_tree('after_version')
 
     def cli_push(self):
         self.psql('SELECT 1;')

@@ -1,6 +1,7 @@
 """Pure offline checks for the unexecuted diagnostic; never launches Docker."""
 import ast
 import copy
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -247,6 +248,168 @@ def run():
         except RuntimeError:pass
         else:raise AssertionError('unexpected pg_isready result accepted')
     print('PASS: final-server marker, transient readiness, two stable identity probes and fail-fast auth/identity/restart')
+
+    def encoded_records(items):
+        return b''.join((kind+'\0'+mode+'\0'+str(size)+'\0'+path+'\0').encode('utf-8') for kind,mode,size,path in items)
+    root='/tmp/codex-cli/supabase/'
+    good_records=[('d','700',40,root+'migrations'),('f','600',3,root+'config.toml'),
+                  ('f','600',4,root+'migrations/20991231000000_synthetic_acl.sql')]
+    parsed=m['parse_project_tree'](encoded_records(good_records))
+    assert {e['path'] for e in parsed}=={'migrations','config.toml','migrations/20991231000000_synthetic_acl.sql'}
+    for bad in (b'',b'f\0',encoded_records([('f','600',1,'/etc/passwd')]),
+                encoded_records([('f','600',1,root+'../secret')]),
+                encoded_records([('f','600',1,root+'config.toml')]*2),
+                encoded_records([('f','999',1,root+'x')]),encoded_records([('f','600',1,root+str(i)) for i in range(101)]),
+                encoded_records([('f','600',1,root+'x'*513)]),b'x'*65537):
+        try:m['parse_project_tree'](bad)
+        except RuntimeError:pass
+        else:raise AssertionError('unsafe project tree metadata accepted')
+    known={'path':'.temp/cli-latest','type':'f','mode':'644','length':0}
+    unknown={'path':'private\n::error::sensitive','type':'f','mode':'600','length':2}
+    assert m['redacted_project_entry'](known,detailed=False)=={'path':'.temp/cli-latest','type':'f'}
+    redacted=m['redacted_project_entry'](unknown,detailed=True)
+    assert 'path' not in redacted and redacted['path_sha256']==hashlib.sha256(unknown['path'].encode()).hexdigest()
+    assert unknown['path'] not in json.dumps(redacted,ensure_ascii=True)
+    buf=bytearray();m['append_bounded'](buf,b'x'*65536,65536)
+    try:m['append_bounded'](buf,b'x',65536)
+    except RuntimeError:pass
+    else:raise AssertionError('stream cap exceeded without error')
+    # Fake selector/Popen tests exercise streaming limits without starting a process.
+    class FakePipe:
+        def __init__(self,fd):self.fd=fd;self.closed=False
+        def fileno(self):return self.fd
+        def close(self):self.closed=True
+    class FakeProcess:
+        next_exit=0
+        def __init__(self,argv,*args,**kwargs):
+            assert argv[-10:-7]==['/usr/bin/find','-P','/tmp/codex-cli/supabase'] and '-xdev' in argv
+            assert kwargs['env']=={'PATH':'/usr/bin:/bin','LANG':'C'}
+            self.stdout=FakePipe(31);self.stderr=FakePipe(32);self.code=None;self.terminated=False
+        def poll(self):return self.code
+        def wait(self,timeout=None):
+            if self.code is None:self.code=self.next_exit
+            return self.code
+        def terminate(self):self.terminated=True;self.code=-15
+        def kill(self):self.terminated=True;self.code=-9
+    class FakeSelector:
+        def __init__(self):self.entries={}
+        def register(self,pipe,event,data):self.entries[pipe.fd]=types.SimpleNamespace(fd=pipe.fd,fileobj=pipe,data=data)
+        def get_map(self):return self.entries
+        def select(self,timeout):return [(v,1) for v in list(self.entries.values())]
+        def unregister(self,pipe):self.entries.pop(pipe.fd)
+        def close(self):pass
+    class StreamService:
+        def __init__(self):self.docker=['/usr/bin/docker','--config','/tmp/fake','--host','unix:///var/run/docker.sock'];self.cid='a'*64;self.env={'PATH':'/usr/bin:/bin','LANG':'C'};self.inspected=False
+        def inspect(self,**kwargs):self.inspected=True
+    from unittest.mock import patch
+    def run_stream(stdout_chunks,stderr_chunks):
+        sequences={31:list(stdout_chunks)+[b''],32:list(stderr_chunks)+[b'']};created=[]
+        def spawn(*args,**kwargs):
+            process=FakeProcess(*args,**kwargs);created.append(process);return process
+        def fake_read(fd,size):return sequences[fd].pop(0)
+        service=StreamService()
+        with patch.object(m['subprocess'],'Popen',spawn), patch.object(m['selectors'],'DefaultSelector',FakeSelector), patch.object(m['os'],'read',fake_read):
+            try:return m['OwnedService'].bounded_tree_find(service),created[0],service
+            except RuntimeError as exc:return exc,created[0],service
+    stream,proc,svc=run_stream([b'abc'],[])
+    assert stream==b'abc' and svc.inspected and proc.stdout.closed and proc.stderr.closed
+    stream,proc,svc=run_stream([b'x'*4096]*17,[])
+    assert isinstance(stream,RuntimeError) and proc.terminated and proc.stdout.closed
+    stream,proc,svc=run_stream([], [b'x'*4096,b'y'])
+    assert isinstance(stream,RuntimeError) and proc.terminated and proc.stderr.closed
+    FakeProcess.next_exit=1
+    stream,proc,svc=run_stream([], [b'private-daemon-detail'])
+    FakeProcess.next_exit=0
+    assert isinstance(stream,RuntimeError) and 'private-daemon-detail' not in str(stream) and 'stderr_sha256=' in str(stream)
+    assert m['classify_failure'](RuntimeError('bounded synthetic metadata stream exceeded limit'))['categories']==['project_tree_limit']
+    print('PASS: unknown-name redaction and mocked bounded streaming/overflow/daemon-error teardown')
+
+    class TreeFake:
+        def __init__(self,with_link=False):
+            self.run_id='123-1';self.nonce='b'*32;self.with_link=with_link;self.hash_paths=[]
+        def inspect(self,**kwargs):return {}
+        def bounded_tree_find(self):
+            items=good_records+([('l','777',5,root+'outside')] if self.with_link else [])
+            return encoded_records(items)
+        def exec(self,args,**kwargs):
+            if args==['/usr/bin/id','-u']:return types.SimpleNamespace(stdout=b'999\n',returncode=0,stderr=b'')
+            if args[0]=='/usr/bin/find':
+                items=good_records+([('l','777',5,root+'outside')] if self.with_link else [])
+                return types.SimpleNamespace(stdout=encoded_records(items),returncode=0,stderr=b'')
+            if args[0]=='/usr/bin/stat':
+                path=args[-1]
+                if path in ('/tmp/codex-cli','/tmp/codex-cli/supabase'):
+                    return types.SimpleNamespace(stdout=b'directory|999|700\n',returncode=0,stderr=b'')
+                size={root+'config.toml':3,root+'migrations/20991231000000_synthetic_acl.sql':4}[path]
+                return types.SimpleNamespace(stdout=f'regular file|999|600|{size}|1\n'.encode(),returncode=0,stderr=b'')
+            if args[0]=='/usr/bin/sha256sum':
+                self.hash_paths.append(args[-1]);return types.SimpleNamespace(stdout=(('1'*64)+'  '+args[-1]+'\n').encode(),returncode=0,stderr=b'')
+            raise AssertionError('unexpected pure fake command: '+repr(args))
+    import contextlib
+    fake=TreeFake()
+    with contextlib.redirect_stdout(io.StringIO()) as capture:
+        items=m['OwnedService'].project_tree_evidence(fake,'after_version')
+    assert len(items)==3 and fake.hash_paths==[] and all('sha256' not in e for e in items)
+    linked=TreeFake(with_link=True)
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):m['OwnedService'].project_tree_evidence(linked,'after_version')
+    except RuntimeError:pass
+    else:raise AssertionError('symlink entry accepted')
+    assert linked.hash_paths==[]
+    print('PASS: root-scoped tree metadata without file hashing or symlink traversal')
+    class StageFake:
+        def __init__(self):
+            self.run_id='123-1';self.nonce='b'*32;self.find_count=0;self.calls=[];self.cli_binary_sha=None
+            self.binary=b'fictional-binary';self.migration=b'fictional-sql'
+            self.files={root+'config.toml':b'project_id = "synthetic-execbatch"\n[db.migrations]\nenabled = true\n',
+                        root+'migrations/20991231000000_synthetic_acl.sql':self.migration,
+                        root+'.temp/cli-latest':b'', '/tmp/codex-cli/supabase-cli':self.binary}
+        def inspect(self,**kwargs):return {}
+        def psql(self,*args,**kwargs):return '1'
+        def verify_cli_binary(self):return {}
+        def project_tree_evidence(self,phase):return m['OwnedService'].project_tree_evidence(self,phase)
+        def bounded_tree_find(self):
+            self.find_count+=1
+            items=[('d','700',40,root+'migrations'),('f','600',len(self.files[root+'config.toml']),root+'config.toml'),
+                   ('f','600',len(self.migration),root+'migrations/20991231000000_synthetic_acl.sql')]
+            if self.find_count>1:items += [('d','755',40,root+'.temp'),('f','644',0,root+'.temp/cli-latest')]
+            return encoded_records(items)
+        def exec(self,args,**kwargs):
+            self.calls.append(args)
+            if args[0]=='/bin/sh':return types.SimpleNamespace(stdout=b'',stderr=b'',returncode=0)
+            if args[0]=='/usr/bin/id':return types.SimpleNamespace(stdout=b'999\n',stderr=b'',returncode=0)
+            if args[0]=='/usr/bin/find':
+                self.find_count+=1
+                items=[('d','700',40,root+'migrations'),('f','600',len(self.files[root+'config.toml']),root+'config.toml'),
+                       ('f','600',len(self.migration),root+'migrations/20991231000000_synthetic_acl.sql')]
+                if self.find_count>1:items += [('d','755',40,root+'.temp'),('f','644',0,root+'.temp/cli-latest')]
+                return types.SimpleNamespace(stdout=encoded_records(items),stderr=b'',returncode=0)
+            if args[0]=='/usr/bin/stat':
+                path=args[-1]
+                if path in ('/tmp/codex-cli','/tmp/codex-cli/supabase'):out='directory|999|700\n'
+                else:out='regular file|999|'+('644' if path.endswith('/cli-latest') else '600')+'|'+str(len(self.files[path]))+'|1\n'
+                return types.SimpleNamespace(stdout=out.encode(),stderr=b'',returncode=0)
+            if args[0]=='/usr/bin/sha256sum':
+                path=args[-1];digest=hashlib.sha256(self.files[path]).hexdigest()
+                return types.SimpleNamespace(stdout=(digest+'  '+path+'\n').encode(),stderr=b'',returncode=0)
+            if args[0]=='/tmp/codex-cli/supabase-cli':
+                assert args==['/tmp/codex-cli/supabase-cli','--version']
+                return types.SimpleNamespace(stdout=b'2.84.2\n',stderr=b'',returncode=0)
+            raise AssertionError('unexpected stage command '+repr(args))
+    stage_fake=StageFake()
+    try:
+        with contextlib.redirect_stdout(io.StringIO()) as captured:
+            m['OwnedService'].stage(stage_fake,stage_fake.binary,stage_fake.migration)
+    except RuntimeError as exc:
+        assert 'unexpected synthetic project content' in str(exc)
+    else:raise AssertionError('unexpected post-version file accepted')
+    records=[json.loads(line.split(' ',1)[1]) for line in captured.getvalue().splitlines() if line.startswith('SYNTHETIC_EXECBATCH_PROJECT_TREE ')]
+    assert [(r['phase'],r['status']) for r in records]==[('before_version','paths'),('before_version','metadata'),('after_version','paths'),('after_version','metadata')]
+    latest=next(e for e in records[-1]['entries'] if e['path']=='.temp/cli-latest')
+    assert latest['type']=='f' and latest['mode']=='644' and latest['length']==0 and 'sha256' not in latest
+    assert not any(args[0]=='/tmp/codex-cli/supabase-cli' and 'push' in args for args in stage_fake.calls)
+    print('PASS: extra version file metadata recorded and stage refuses before db push')
+
 
     class SimulatedService:
         def __init__(self, mode, outcome, bad_route=False):
