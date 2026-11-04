@@ -1,7 +1,9 @@
 """Only mocks. Never starts a container, database, CLI, network or subprocess."""
 import copy
 import base64
+import contextlib
 import importlib.util
+import io
 import json
 from pathlib import Path
 import subprocess
@@ -15,7 +17,8 @@ base=m.load_runner()
 
 
 def rejects(fn):
-    try: fn()
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):fn()
     except (RuntimeError,ValueError): return
     raise AssertionError('invalid case was accepted')
 
@@ -38,6 +41,24 @@ def run():
                         ('target_lock',False),('barrier_wait',False)]:
         bad=dict(good);bad[field]=value;rejects(lambda bad=bad:m.only_waiter([bad],101))
     rejects(lambda:m.only_waiter([good,good],101))
+    bad=dict(good,query_insert=False,wait='private-secret-token',blocked_by=[999])
+    with contextlib.redirect_stdout(io.StringIO()) as capture:
+        try:m.only_waiter([bad],101)
+        except RuntimeError:pass
+        else:raise AssertionError('invalid waiter accepted')
+    raw=capture.getvalue();assert 'private-secret-token' not in raw
+    prefix='SYNTHETIC_PHASE2_WAIT_DIAGNOSTIC '
+    assert raw.startswith(prefix)
+    evidence=json.loads(raw[len(prefix):])
+    assert evidence['coordinator_pid']==101 and evidence['row_count']==1
+    record=evidence['rows'][0]
+    assert record['cli_pid']==202 and record['target_oid']==303 and record['blocker_count']==1
+    assert not record['query_insert'] and not record['wait_advisory'] and not record['sole_blocker_is_coordinator']
+    assert record['loopback'] and record['target_lock'] and record['barrier_wait']
+    with contextlib.redirect_stdout(io.StringIO()) as capture:
+        m.emit_wait_diagnostic([{'pid':'secret','target_oid':4294967295,'blocked_by':'secret'}],101,'history_timeout')
+    assert 'secret' not in capture.getvalue()
+    assert json.loads(capture.getvalue()[len(prefix):])['rows'][0]['target_oid']==4294967295
     assert 'classid='+str(m.KEY_HIGH) in m.activity_sql('codex_coord_'+'a'*32)
     assert 'objid='+str(m.KEY_LOW) in m.waiting_sql()
     rejects(lambda:m.activity_sql('untrusted'))
@@ -110,6 +131,16 @@ def run():
         failed_cleanup=Service('success')
         failed_cleanup.stop_owned=lambda:(_ for _ in ()).throw(RuntimeError('fake cleanup failure'))
         rejects(lambda:m.run_case(failed_cleanup,base,b'',b'','success'))
+        changed=Service('success');previous=changed.psql
+        changed.psql=lambda sql:json.dumps([dict(good,target_oid=304)]) if sql==m.waiting_sql() else previous(sql)
+        with contextlib.redirect_stdout(io.StringIO()) as capture:
+            try:m.run_case(changed,base,b'',b'','success')
+            except RuntimeError:pass
+            else:raise AssertionError('changed target identity accepted')
+        assert '"stage": "before_probe"' in capture.getvalue()
+        assert '"stage": "after_probe"' in capture.getvalue()
+        assert '"target_oid": 303' in capture.getvalue() and '"target_oid": 304' in capture.getvalue()
+        assert changed.stopped
     closed=[]
     class TimeoutClients(Clients):
         def wait_barrier(self,coord):raise subprocess.TimeoutExpired('fake CLI',30)

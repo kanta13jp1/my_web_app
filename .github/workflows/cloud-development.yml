@@ -1,4 +1,4 @@
-name: Isolated single-DO lock phase 2 evidence
+name: Isolated single-DO lock phase 2 attribute diagnosis
 on:
   workflow_dispatch:
     inputs:
@@ -29,7 +29,7 @@ jobs:
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD 40a36ba2ae7021661e7e6c9d24a2902a153947c2"
+          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD ee428892f80b22580f554aacc8fc1e52a8b4cd25"
           git diff --no-renames --name-only HEAD^ HEAD | LC_ALL=C sort > "$RUNNER_TEMP/actual-files"
           LC_ALL=C sort > "$RUNNER_TEMP/expected-files" <<'FIXED_FILES'
           .github/workflows/cloud-development.yml
@@ -46,9 +46,9 @@ jobs:
           ee18141eb1390ce6446ffe3696f677495f809606e144ff9164faf62d03db5f19  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_single_do_lock_review_stopped.sql.txt
           e6608a9faecfb84fa4ced6a8185a89a5f56bff024f6180f561cb288eef52691d  scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
           edeefe8fe778a84b1df60a5ccf107ba2142360743148db3d4a8db65deb5e3f31  scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
-          e429a42b65934af49f4436969c6c049ed6638a1d57cd485d7039e3bbd3ea3e7e  scripts/asset_pref_truncate_fixture/cli_execbatch/phase2.py
-          e86efef3dd6cb657317e7eb384a4cc093bdbc07cf61c9be879d28aa64ee78608  scripts/asset_pref_truncate_fixture/cli_execbatch/phase2_entry.py
-          b4d4047ed9d1634bd4720a824124459876bbe451c988c2d24066a631660ee524  scripts/asset_pref_truncate_fixture/cli_execbatch/test_phase2_offline.py
+          8fa1a1c275ea169d39eab5b4bd8930e79575f60124965643ed0fdf79d4b2df32  scripts/asset_pref_truncate_fixture/cli_execbatch/phase2.py
+          014c587a6d88da49408819bd147518109024db7e5792d1fa708838eab716e374  scripts/asset_pref_truncate_fixture/cli_execbatch/phase2_entry.py
+          5fe8561aecbb8347b1c46476a15dd91b2ffcab6d78fecbe8a15de16ecaeeb215  scripts/asset_pref_truncate_fixture/cli_execbatch/test_phase2_offline.py
           24e38d3b06d1aeb5d5fd6bfea2bec64c303d4fdad9a45b51f0af980a48cf9db8  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
           1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
           FIXED_HASHES

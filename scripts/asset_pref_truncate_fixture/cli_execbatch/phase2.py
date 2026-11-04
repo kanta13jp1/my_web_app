@@ -73,16 +73,49 @@ def only_coordinator(rows):
     return rows[0]['pid']
 
 
-def only_waiter(rows, coord):
+def emit_wait_diagnostic(rows, coord, stage):
+    """Emit only bounded synthetic IDs, booleans and counts; never raw fields."""
+    if stage not in ('history_wait','before_probe','after_probe','history_timeout'):
+        raise RuntimeError('invalid diagnostic stage')
+    def safe_id(value, maximum=2147483647):
+        return value if type(value) is int and 0 < value <= maximum else None
+    safe_rows=[]
+    if isinstance(rows,list):
+        for row in rows[:4]:
+            if not isinstance(row,dict):
+                safe_rows.append({'row_is_object':False});continue
+            blockers=row.get('blocked_by')
+            valid_blockers=isinstance(blockers,list) and all(safe_id(x) is not None for x in blockers)
+            safe_rows.append({'row_is_object':True,'cli_pid':safe_id(row.get('pid')),
+              'target_oid':safe_id(row.get('target_oid'),4294967295),
+              'blockers_valid':valid_blockers,
+              'blocker_count':len(blockers) if valid_blockers else None,
+              'sole_blocker_is_coordinator':valid_blockers and blockers==[coord],
+              'query_insert':row.get('query_insert') is True,'loopback':row.get('loopback') is True,
+              'state_active':row.get('state')=='active','wait_type_lock':row.get('wait_type')=='Lock',
+              'wait_advisory':row.get('wait')=='advisory','target_lock':row.get('target_lock') is True,
+              'barrier_wait':row.get('barrier_wait') is True})
+    evidence={'stage':stage,'coordinator_pid':safe_id(coord),
+              'rows_are_list':isinstance(rows,list),'row_count':len(rows) if isinstance(rows,list) else None,
+              'rows':safe_rows}
+    print('SYNTHETIC_PHASE2_WAIT_DIAGNOSTIC '+json.dumps(evidence,sort_keys=True),flush=True)
+
+
+def only_waiter(rows, coord, stage='history_wait'):
     if not isinstance(rows,list) or len(rows)!=1:
+        emit_wait_diagnostic(rows,coord,stage)
         raise RuntimeError('CLI waiter is not unique')
     row=rows[0]
+    if not isinstance(row,dict):
+        emit_wait_diagnostic(rows,coord,stage)
+        raise RuntimeError('CLI waiter is not an object')
     if (type(row.get('pid')) is not int or row['pid']<=0 or row['pid']==coord
         or row.get('blocked_by') != [coord] or row.get('query_insert') is not True
         or row.get('loopback') is not True or row.get('state') != 'active'
         or row.get('wait_type') != 'Lock' or row.get('wait') != 'advisory'
         or type(row.get('target_oid')) is not int or row['target_oid']<=0
         or row.get('target_lock') is not True or row.get('barrier_wait') is not True):
+        emit_wait_diagnostic(rows,coord,stage)
         raise RuntimeError('CLI backend, target lock or advisory wait mismatch')
     return row
 
@@ -138,7 +171,7 @@ class OwnedClients:
         self.cli=self.spawn(argv,stdin=subprocess.DEVNULL)
 
     def wait_barrier(self, coord):
-        p,out,err=self.cli;end=time.monotonic()+30
+        p,out,err=self.cli;end=time.monotonic()+30;rows=[]
         while time.monotonic()<end:
             self.bounded((out,err))
             if p.poll() is not None: raise RuntimeError('CLI exited before history barrier')
@@ -149,6 +182,7 @@ class OwnedClients:
                     raise RuntimeError('coordinator identity changed')
                 return row
             time.sleep(0.1)
+        emit_wait_diagnostic(rows,coord,'history_timeout')
         raise RuntimeError('history barrier deadline exceeded')
 
     def release(self):
@@ -230,7 +264,10 @@ def run_case(service, base, binary, migration, outcome):
         if not re.search(auth,server) or not re.search(received,server):
             raise RuntimeError('waiting PID is not the authenticated loopback CLI backend')
         probe_pid=conflict_probe(service,base,waiter,coordinator)
-        if only_waiter(json.loads(service.psql(waiting_sql())),coordinator) != waiter:
+        after_probe=only_waiter(json.loads(service.psql(waiting_sql())),coordinator,'after_probe')
+        if after_probe != waiter:
+            emit_wait_diagnostic([waiter],coordinator,'before_probe')
+            emit_wait_diagnostic([after_probe],coordinator,'after_probe')
             raise RuntimeError('barrier state changed during probe')
         clients.release();code,output=clients.finish_cli()
         if service.psql("SELECT count(*) FROM pg_catalog.pg_stat_activity WHERE pid="+str(waiter['pid'])+";").strip() != '0':
