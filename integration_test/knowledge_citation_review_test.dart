@@ -134,28 +134,29 @@ class _SyntheticGateway implements KnowledgeGraphRagGateway {
     required String query,
     required Set<String> sources,
     required bool useLlm,
-  }) async => KnowledgeGraphRagAnswer(
-    query: '数は？',
-    answer: excerpt == '青い箱は4個です。' ? '青い箱は4個です [1]。' : '青い箱は4個で、採用する。 [1]',
-    status: 'ok',
-    traceId: 'synthetic-only',
-    citations: [
-      KnowledgeGraphRagCitation(
-        id: '1',
-        fileName: '合成資料.txt',
-        title: '合成資料',
-        sourceType: 'doc',
-        sourceUrl: 'synthetic.txt',
-        excerpt: excerpt,
-        previewText: excerpt,
-        highlightStart: 0,
-        highlightEnd: excerpt.length,
-        highlightText: excerpt,
-        position: const KnowledgeGraphCitationPosition(label: 'line 1'),
-        confidence: 1,
-        previewTruncatedBefore: false,
-        previewTruncatedAfter: false,
-      ),
-    ],
-  );
+  }) async =>
+      KnowledgeGraphRagAnswer(
+        query: '数は？',
+        answer: excerpt == '青い箱は4個です。' ? '青い箱は4個です [1]。' : '青い箱は4個で、採用する。 [1]',
+        status: 'ok',
+        traceId: 'synthetic-only',
+        citations: [
+          KnowledgeGraphRagCitation(
+            id: '1',
+            fileName: '合成資料.txt',
+            title: '合成資料',
+            sourceType: 'doc',
+            sourceUrl: 'synthetic.txt',
+            excerpt: excerpt,
+            previewText: excerpt,
+            highlightStart: 0,
+            highlightEnd: excerpt.length,
+            highlightText: excerpt,
+            position: const KnowledgeGraphCitationPosition(label: 'line 1'),
+            confidence: 1,
+            previewTruncatedBefore: false,
+            previewTruncatedAfter: false,
+          ),
+        ],
+      );
 }
