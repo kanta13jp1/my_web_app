@@ -70,6 +70,27 @@ class GuardTest(unittest.TestCase):
                                 'conclusion': 'success', 'output': {'summary': ''}}]
         guard.reviewed(self.pr, checks, self.head, self.base, extra)
 
+    def test_successful_wrapper_keeps_real_review_evidence(self):
+        checks = copy.deepcopy(self.checks)
+        for check in checks:
+            check['id'] = 1
+        checks.append({'id': 100, 'name': 'AI Review Gate', 'app': {'id': 15368},
+                       'conclusion': 'success', 'output': {'summary': ''}})
+        guard.reviewed(self.pr, checks, self.head, self.base)
+
+    def test_newer_rejected_evidence_cannot_reuse_old_approval(self):
+        checks = copy.deepcopy(self.checks)
+        for check in checks:
+            check['id'] = 1
+        checks += [
+            {'id': 100, 'name': 'AI Review Gate', 'app': {'id': 15368},
+             'conclusion': 'failure', 'output': {'summary': self.head + self.base + 'Result: **rejected**.'}},
+            {'id': 200, 'name': 'AI Review Gate', 'app': {'id': 15368},
+             'conclusion': 'success', 'output': {'summary': ''}},
+        ]
+        with self.assertRaises(ValueError):
+            guard.reviewed(self.pr, checks, self.head, self.base)
+
     def test_exact_selection_passes(self):
         all_blobs = {p: 'blob' for p in guard.GAME | guard.SUPPORT}
         guard.selection(all_blobs, all_blobs, all_blobs, all_blobs)
