@@ -1,6 +1,7 @@
 """Fail closed before a reviewed, typing-only release on the public lineage."""
 import argparse
 import json
+import os
 import re
 import subprocess
 import urllib.request
@@ -97,6 +98,13 @@ def blobs(ref, paths):
     return result
 
 
+def production_hold(value):
+    # Actions exposes repository variables through vars, not GITHUB_TOKEN REST.
+    # Missing/empty values must stop a release just like an explicit hold.
+    if value != 'false':
+        raise ValueError('Production hold is active or not explicitly disabled')
+
+
 def run(args):
     for value in [args.expected_head, args.public_base, args.source_head,
                   args.source_base, args.support_head, args.support_base,
@@ -112,8 +120,7 @@ def run(args):
         raise ValueError('Public base changed; rebuild and revalidate selection')
     if api('actions/workflows/deploy-prod.yml')['state'] != 'disabled_manually':
         raise ValueError('Normal deployment must remain disabled')
-    if api('actions/variables/PRODUCTION_DEPLOY_HOLD')['value'] != 'false':
-        raise ValueError('Production hold is active')
+    production_hold(os.environ.get('PRODUCTION_DEPLOY_HOLD'))
     for number, head, base in [(5989, args.source_head, args.source_base),
                                (args.support_pr, args.support_head, args.support_base)]:
         pr = api('pulls/' + str(number))
