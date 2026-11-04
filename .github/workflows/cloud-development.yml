@@ -39,7 +39,7 @@ jobs:
       - name: Typing model and widget tests
         run: flutter test test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/routes/route_url_sync_test.dart --concurrency=1
       - name: Build standalone game
-        run: flutter build web --release --pwa-strategy=none --target=test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart
+        run: flutter build web --release --pwa-strategy=none --target=test/fixtures/typing_game_app.dart
       - name: Install browser test dependencies
         run: |
           npm ci --ignore-scripts
