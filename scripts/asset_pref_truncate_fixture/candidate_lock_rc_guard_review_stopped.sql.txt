@@ -1,0 +1,66 @@
+\set ON_ERROR_STOP on
+do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
+-- DRAFT ONLY. Not applied. Review runtime roles, all writers and rollback first.
+-- Checks owner/RLS, effective truncate, conservative role reachability and unrelated effective privileges.
+begin;
+-- Draft: avoid waiting for a conflicting lock; review availability impact before any use.
+lock table only public.asset_pref_mirror in access exclusive mode nowait;
+do $$
+declare
+ role_name text;
+ privilege_name text;
+ privilege_names text[] := array['SELECT','INSERT','UPDATE','DELETE','REFERENCES','TRIGGER'];
+ target_oid oid := 'public.asset_pref_mirror'::regclass;
+ owner_name name;
+ service_before boolean;
+ privileges_before boolean[] := array[]::boolean[];
+ privilege_index integer := 0;
+begin
+ if pg_catalog.current_setting('transaction_isolation') is distinct from 'read committed' then
+  raise exception 'read committed transaction isolation required'; end if;
+ if pg_catalog.current_setting('server_version_num')::integer >= 170000 then
+  privilege_names := pg_catalog.array_append(privilege_names, 'MAINTAIN');
+ end if;
+ select pg_catalog.pg_get_userbyid(c.relowner) into strict owner_name
+ from pg_catalog.pg_class c join pg_catalog.pg_namespace n on n.oid=c.relnamespace
+ where c.oid=target_oid and n.nspname='public' and c.relname='asset_pref_mirror'
+   and c.relkind = 'r' and c.relrowsecurity;
+ if exists (select 1 from pg_catalog.pg_inherits where inhparent=target_oid or inhrelid=target_oid) then
+  raise exception 'inheritance or partition relationship requires separate review'; end if;
+ if owner_name is distinct from 'postgres' then raise exception 'unexpected owner'; end if;
+ foreach role_name in array array['anon','authenticated'] loop
+  if not pg_catalog.has_table_privilege(role_name,target_oid,'TRUNCATE') then
+   raise notice 'effective truncate already absent for role %', role_name; end if;
+  foreach privilege_name in array privilege_names loop
+   privileges_before := pg_catalog.array_append(privileges_before, pg_catalog.has_table_privilege(role_name,target_oid,privilege_name));
+  end loop;
+ end loop;
+ if pg_catalog.cardinality(privileges_before) <> pg_catalog.cardinality(privilege_names) * 2
+  or pg_catalog.array_position(privileges_before, null::boolean) is not null then
+  raise exception 'incomplete privilege baseline'; end if;
+ service_before:=pg_catalog.has_table_privilege('service_role',target_oid,'TRUNCATE');
+ if service_before is null then raise exception 'incomplete service privilege baseline'; end if;
+ execute 'revoke truncate on table public.asset_pref_mirror from anon, authenticated';
+ foreach role_name in array array['anon','authenticated'] loop
+  if pg_catalog.has_table_privilege(role_name,target_oid,'TRUNCATE') is distinct from false then
+   raise exception 'remaining effective truncate privilege'; end if;
+  if exists (
+   select 1 from pg_catalog.pg_roles as parent_role
+   where parent_role.rolname <> role_name
+    and pg_catalog.pg_has_role(role_name,parent_role.oid,'MEMBER')
+    and (parent_role.rolsuper
+      or parent_role.oid = (select relowner from pg_catalog.pg_class where oid=target_oid)
+      or pg_catalog.has_table_privilege(parent_role.oid,target_oid,'TRUNCATE'))
+  ) then raise exception 'truncate privilege reachable through role membership'; end if;
+  foreach privilege_name in array privilege_names loop
+   privilege_index := privilege_index + 1;
+   if pg_catalog.has_table_privilege(role_name,target_oid,privilege_name) is distinct from privileges_before[privilege_index] then
+    raise exception 'unrelated table privilege changed'; end if;
+  end loop;
+ end loop;
+ if privilege_index <> pg_catalog.cardinality(privileges_before) then
+  raise exception 'incomplete privilege comparison'; end if;
+ if pg_catalog.has_table_privilege('service_role',target_oid,'TRUNCATE') is distinct from service_before then
+  raise exception 'service role changed'; end if;
+end $$;
+commit;
