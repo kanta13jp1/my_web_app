@@ -479,6 +479,7 @@ declare
   v_version_id uuid;
   v_imported_count bigint;
   v_resource_count bigint;
+  v_verified_count bigint;
 begin
   if v_user_id is null then
     raise exception using
@@ -601,7 +602,8 @@ begin
     source_content_sha256 = excluded.source_content_sha256,
     source_enml = excluded.source_enml,
     source_tags = excluded.source_tags,
-    source_metadata = excluded.source_metadata
+    source_metadata = excluded.source_metadata,
+    source_verified_at = null
   returning id into v_version_id;
 
   insert into public.evernote_note_history_attachments (
@@ -660,8 +662,16 @@ begin
       message = 'Imported history exceeds the reviewed source inventory.';
   end if;
 
+  select count(*) into v_verified_count
+  from public.note_versions
+  where note_id = v_item.target_note_id
+    and user_id = v_user_id
+    and source_system = 'evernote'
+    and source_verified_at is not null;
+
   update public.evernote_migration_items
   set
+    verified_history_version_count = v_verified_count,
     imported_history_version_count = v_imported_count,
     history_status = case
       when v_imported_count = source_history_version_count

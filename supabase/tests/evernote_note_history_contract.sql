@@ -10,7 +10,7 @@ select set_config(
 select public.evernote_mark_note_history_reviewed(
   101,
   'id:note-101',
-  1
+  2
 );
 
 -- A caller-controlled status must not override an incomplete history inventory.
@@ -185,6 +185,24 @@ begin
 end
 $$;
 
+-- Import a second independent history revision.
+select public.evernote_commit_note_history_version(
+  101,
+  'id:note-101',
+  'history:20240103T030405Z',
+  'Historical title',
+  'Historical body',
+  '2024-01-02T03:04:05Z',
+  '<en-note>Historical body</en-note>',
+  array['history'],
+  jsonb_build_object('raw_note_xml_sha256', repeat('c', 64)),
+  '[]'::jsonb,
+  'evernote-migration-archives',
+  '00000000-0000-4000-8000-000000000101/evernote-history/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/source.enex',
+  repeat('a', 64),
+  repeat('d', 64)
+);
+
 select public.evernote_verify_note_history_version(
   101,
   'id:note-101',
@@ -198,6 +216,82 @@ select public.evernote_verify_note_history_version(
     'resource_sha256', true
   )
 );
+-- Reimport invalidates prior verification until the new contents are checked.
+select public.evernote_commit_note_history_version(
+  101,
+  'id:note-101',
+  'history:20240102T030405Z',
+  'Historical title',
+  'Historical body',
+  '2024-01-02T03:04:05Z',
+  '<en-note>Historical body</en-note>',
+  array['history'],
+  jsonb_build_object('raw_note_xml_sha256', repeat('c', 64)),
+  jsonb_build_array(
+    jsonb_build_object(
+      'file_name', 'fixture.txt',
+      'file_path',
+        '00000000-0000-4000-8000-000000000101/evernote-history/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/0000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb-fixture.txt',
+      'file_size', 18,
+      'mime_type', 'text/plain',
+      'content_sha256', repeat('b', 64),
+      'source_metadata', jsonb_build_object('resource_index', 0)
+    )
+  ),
+  'evernote-migration-archives',
+  '00000000-0000-4000-8000-000000000101/evernote-history/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/source.enex',
+  repeat('a', 64),
+  repeat('d', 64)
+);
+do $$
+begin
+  if exists (select 1 from public.note_versions where source_system = 'evernote' and source_verified_at is not null)
+     or (select verified_history_version_count from public.evernote_migration_items where batch_id = 101 and source_item_key = 'id:note-101') <> 0 then
+    raise exception 'Reimport retained stale verification evidence.';
+  end if;
+  begin
+    update public.evernote_migration_items set status = 'source_deleting'
+      where batch_id = 101 and source_item_key = 'id:note-101';
+    raise exception 'Reimport allowed deletion before reverification.';
+  exception when check_violation then null;
+  end;
+end
+$$;
+select public.evernote_verify_note_history_version(
+  101,
+  'id:note-101',
+  'history:20240103T030405Z',
+  repeat('a', 64),
+  jsonb_build_object(
+    'archive_sha256', true,
+    'content_sha256', true,
+    'timestamp', true,
+    'resource_count', true,
+    'resource_sha256', true
+  )
+);
+do $$
+begin
+  if (select verified_history_version_count from public.evernote_migration_items where batch_id = 101 and source_item_key = 'id:note-101') <> 1
+     or (select history_status from public.evernote_migration_items where batch_id = 101 and source_item_key = 'id:note-101') = 'verified' then
+    raise exception 'Verifying B incorrectly reused A verification.';
+  end if;
+end
+$$;
+select public.evernote_verify_note_history_version(
+  101,
+  'id:note-101',
+  'history:20240102T030405Z',
+  repeat('a', 64),
+  jsonb_build_object(
+    'archive_sha256', true,
+    'content_sha256', true,
+    'timestamp', true,
+    'resource_count', true,
+    'resource_sha256', true
+  )
+);
+
 
 do $$
 begin
@@ -214,6 +308,46 @@ begin
   set status = 'source_deleting'
   where batch_id = 101
     and source_item_key = 'id:note-101';
+end
+$$;
+
+-- A rejected reimport during deletion must roll back the upsert.
+do $$
+begin
+  begin
+    perform public.evernote_commit_note_history_version(
+  101,
+  'id:note-101',
+  'history:20240102T030405Z',
+  'Unexpected overwritten title',
+  'Historical body',
+  '2024-01-02T03:04:05Z',
+  '<en-note>Historical body</en-note>',
+  array['history'],
+  jsonb_build_object('raw_note_xml_sha256', repeat('c', 64)),
+  jsonb_build_array(
+    jsonb_build_object(
+      'file_name', 'fixture.txt',
+      'file_path',
+        '00000000-0000-4000-8000-000000000101/evernote-history/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/0000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb-fixture.txt',
+      'file_size', 18,
+      'mime_type', 'text/plain',
+      'content_sha256', repeat('b', 64),
+      'source_metadata', jsonb_build_object('resource_index', 0)
+    )
+  ),
+  'evernote-migration-archives',
+  '00000000-0000-4000-8000-000000000101/evernote-history/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/source.enex',
+  repeat('a', 64),
+  repeat('d', 64)
+);
+    raise exception 'Reimport was accepted during source deletion.';
+  exception when check_violation then null;
+  end;
+  if (select title from public.note_versions where source_item_key = 'history:20240102T030405Z') <> 'Historical title'
+     or (select verified_history_version_count from public.evernote_migration_items where batch_id = 101 and source_item_key = 'id:note-101') <> 2 then
+    raise exception 'Rejected reimport failed to roll back.';
+  end if;
 end
 $$;
 
@@ -380,7 +514,7 @@ begin
     null;
   end;
   if (select count(*) from public.note_versions
-      where source_system = 'evernote') <> 1
+      where source_system = 'evernote') <> 2
      or (select count(*) from public.evernote_note_history_attachments) <> 1 then
     raise exception 'Positive cleanup fixture rollback lost history evidence.';
   end if;
@@ -428,7 +562,7 @@ begin
   end;
   if not exists (select 1 from auth.users where id = v_user_id)
      or (select count(*) from public.note_versions
-         where user_id = v_user_id and source_system = 'evernote') <> 1
+         where user_id = v_user_id and source_system = 'evernote') <> 2
      or (select count(*) from public.evernote_note_history_attachments
          where user_id = v_user_id) <> 1 then
     raise exception 'Rejected account cascade lost its user or recovery evidence.';
