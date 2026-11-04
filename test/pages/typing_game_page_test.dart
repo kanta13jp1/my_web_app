@@ -57,27 +57,27 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     for (final english in [false, true]) {
-    await tester.pumpWidget(
-      MaterialApp(
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: const TextScaler.linear(1.5)),
-          child: child!,
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(1.5)),
+            child: child!,
+          ),
+          home: const TypingGamePage(),
         ),
-        home: const TypingGamePage(),
-      ),
-    );
-    if (english) {
-      await tester.tap(find.byKey(const Key('typing-language')));
-      await tester.pumpAndSettle();
-    }
-    await tester.ensureVisible(find.byKey(const Key('typing-start')));
-    await tester.tap(find.byKey(const Key('typing-start')));
-    await tester.pump();
-    expect(tester.takeException(), isNull);
-    await tester.ensureVisible(find.byKey(const Key('typing-input')));
-    expect(find.byType(SingleChildScrollView), findsOneWidget);
-    await tester.pumpWidget(const SizedBox());
+      );
+      if (english) {
+        await tester.tap(find.byKey(const Key('typing-language')));
+        await tester.pumpAndSettle();
+      }
+      await tester.ensureVisible(find.byKey(const Key('typing-start')));
+      await tester.tap(find.byKey(const Key('typing-start')));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      await tester.ensureVisible(find.byKey(const Key('typing-input')));
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
     }
   });
 
@@ -124,15 +124,19 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('English instructions preserve results and localize native controls',
+  testWidgets(
+      'English instructions preserve results and localize native controls',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: TypingGamePage()));
     final language = find.byKey(const Key('typing-language'));
     await tester.tap(language);
     await tester.pumpAndSettle();
     expect(find.text('Kotoba Typing'), findsOneWidget);
-    expect(MaterialLocalizations.of(tester.element(find.byType(Scaffold)))
-        .backButtonTooltip, 'Back',);
+    expect(
+      MaterialLocalizations.of(tester.element(find.byType(Scaffold)))
+          .backButtonTooltip,
+      'Back',
+    );
     await tester.tap(find.text('10-word practice'));
     await tester.pump();
     final start = find.byKey(const Key('typing-start'));
@@ -158,5 +162,4 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
-
 }
