@@ -12,13 +12,14 @@ import re
 import tempfile
 
 HERE=Path(__file__).resolve().parent
-MEMBER_SHA='6aecae88dcd7e58ace633201da947e4038aa44693ba62eafd07ab7599f614263'
+MEMBER_SHA='21c3d1f245e4bfa972f75884914f2578649e2f80cb72082f97a38a10546b49a7'
 CONTEXT_SHA='750a6e79bf5ec0ac2258b3929dbe37b6f8dab9507a37d3a7ae93c82b5018e7da'
 CONTEXT_ORIGINAL_PARENT='24b629750575eb64cc06abea060987dcc01e684b'
-PARENT='4f1593e0cf15d078753f7bf7a096424f46ac58ac'
+PARENT='d47601e6fbb116dc9cffa21bbfad39643df6afca'
 PRIOR_RUNS=((41778403633,'836e6dcc8dab204b955d8c5303cb78260435193f','success'),
             (41775837475,'b885c5f8c2e76cbe820b0539ba032d18bcf888ab','success'),
-            (41781365481,'4f1593e0cf15d078753f7bf7a096424f46ac58ac','failure'))
+            (41781365481,'4f1593e0cf15d078753f7bf7a096424f46ac58ac','failure'),
+            (41783344737,'d47601e6fbb116dc9cffa21bbfad39643df6afca','failure'))
 BRANCH='codex/asset-pref-cli-execbatch-diagnostic-20261104'
 
 

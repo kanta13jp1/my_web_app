@@ -198,6 +198,52 @@ def verify_error(table,code,out,err,logs,nonce,target_oid,parent_oid,other_pids)
     return {'pid':pid,'sqlstate':state,'message_diagnostic':table.classify_server_message(message)}
 
 
+# Exact candidate messages only; unknown messages remain hidden in this synthetic fixture.
+CANDIDATE_ERROR_CLASSES={
+ 'read committed transaction isolation required':'isolation_required',
+ 'target table missing':'target_missing',
+ 'ordinary target table required':'ordinary_table_required',
+ 'target identity changed before lock':'identity_changed',
+ 'inheritance or partition relationship requires separate review':'inheritance_or_partition',
+ 'unexpected owner':'unexpected_owner',
+ 'incomplete privilege baseline':'incomplete_privilege_baseline',
+ 'incomplete service privilege baseline':'incomplete_service_baseline',
+ 'remaining effective truncate privilege':'remaining_effective_truncate',
+ 'truncate privilege reachable through role membership':'membership_reachable',
+ 'unrelated table privilege changed':'unrelated_privilege_changed',
+ 'incomplete privilege comparison':'incomplete_comparison',
+ 'service role changed':'service_role_changed',
+}
+
+def verify_cli_candidate_error(pid,output,logs,candidate):
+    if type(pid) is not int or pid<=0 or not isinstance(candidate,bytes) or hashlib.sha256(candidate).hexdigest()!=BODY_SHA:
+        raise RuntimeError('candidate or CLI PID invalid')
+    fixed=candidate.decode('utf8',errors='strict').replace('\r\n','\n').rstrip()
+    if not fixed or len(fixed)>65536:raise RuntimeError('candidate statement size invalid')
+    states=set(re.findall(r'\b([0-9A-Z]{5})\b',output));lines=logs.replace('\r\n','\n').splitlines();found=[]
+    error=re.compile(r'\['+str(pid)+r'\] ERROR:\s+([0-9A-Z]{5}):\s*(.*?)\s*$')
+    any_entry=re.compile(r'\['+str(pid)+r'\] (?:ERROR|FATAL|PANIC|LOG|STATEMENT):')
+    statement=re.compile(r'\['+str(pid)+r'\] STATEMENT:[ \t]*')
+    same_pid_errors=sum(bool(error.search(line)) for line in lines)
+    for i,line in enumerate(lines):
+        hit=error.search(line)
+        if not hit:continue
+        for j in range(i+1,min(i+40,len(lines))):
+            match=statement.search(lines[j])
+            if match:
+                observed=lines[j][match.end():]+'\n'+'\n'.join(lines[j+1:])
+                tail=observed[len(fixed):] if observed.startswith(fixed) else None
+                if tail is not None and (not tail or re.match(r'\n+(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)? UTC )?\[[0-9]+\] (?:LOG|ERROR|FATAL|PANIC|STATEMENT|DETAIL|HINT|CONTEXT|LOCATION):|$)',tail)):
+                    found.append((hit.group(1),hit.group(2)))
+                break
+            if any_entry.search(lines[j]):break
+    if same_pid_errors!=1 or len(found)!=1 or found[0][0] not in states:
+        raise RuntimeError('CLI candidate statement, PID or SQLSTATE unproven')
+    state,message=found[0];raw=message.encode('utf8',errors='strict')
+    if not raw or len(raw)>4096:raise RuntimeError('CLI candidate error message absent or exceeds bound')
+    return {'status':'sql_error','sqlstate':state,'message_diagnostic':{
+      'class':CANDIDATE_ERROR_CLASSES.get(message,'unknown'),'length':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}}
+
 def verify_membership(snapshot,expected,target_oid,parent_oid,anon_oid):
     if (snapshot['target_oid']!=target_oid or snapshot['parent_oid']!=parent_oid or snapshot['anon_oid']!=anon_oid
         or snapshot['parent_truncate'] is not True or snapshot['parent_other'] is not False):
@@ -284,10 +330,7 @@ def run_before(service,table,event,phase2,base):
         else:
             if history!=[] or after['direct_anon'] is not True or after['direct_authenticated'] is not True:
                 raise RuntimeError('CLI membership-case rollback/history mismatch')
-            states=set(re.findall(r'\b([0-9A-Z]{5})\b',aoutput))
-            errors=set(re.findall(r'\['+str(cli_pid)+r'\] ERROR:\s+([0-9A-Z]{5}):',logs));common=states & errors
-            if len(common)!=1:raise RuntimeError('CLI membership-case SQLSTATE or PID unproven')
-            a={'status':'sql_error','sqlstate':next(iter(common))}
+            a=verify_cli_candidate_error(cli_pid,aoutput,logs,body)
         stable=('owner','rls','force','rows','policy','other_acl','other_effective','columns','role_attributes','hierarchy','service')
         if any(before_table[k]!=after_table[k] for k in stable):raise RuntimeError('unrelated table state changed')
         if (before['other_memberships']!=after['other_memberships'] or before['role_attributes']!=after['role_attributes']):

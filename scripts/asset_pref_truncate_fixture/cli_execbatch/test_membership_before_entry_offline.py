@@ -85,13 +85,16 @@ def run():
     except RuntimeError:pass
     else:raise AssertionError('wrong prior run accepted')
     class MislabelledFailure(Context):
+        target=None
         def command(self,args,env):
             data=json.loads(super().command(args,env))
-            if data['id']==41781365481:data['conclusion']='success'
+            if data['id']==self.target:data['conclusion']='success'
             return json.dumps(data).encode()
-    try:m.verify_prerequisites(MislabelledFailure(),{'GH_TOKEN':'synthetic'})
-    except RuntimeError:pass
-    else:raise AssertionError('prior failure relabelled as success')
+    for run_id in (41781365481,41783344737):
+        wrong=MislabelledFailure();wrong.target=run_id
+        try:m.verify_prerequisites(wrong,{'GH_TOKEN':'synthetic'})
+        except RuntimeError:pass
+        else:raise AssertionError('prior failure relabelled as success: '+str(run_id))
     context.PARENT='f'*40;member.missing_cleanup=False
     assert run_fake()['status']=='failure'
     print('PASS: prior runs, single before stage, cleanup, non-success statuses and redacted errors')
