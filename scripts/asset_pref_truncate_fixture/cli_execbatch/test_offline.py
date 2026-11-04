@@ -16,7 +16,9 @@ def run():
     ast.parse((HERE / 'runner.py').read_bytes())
     m = runpy.run_path(str(HERE / 'runner.py'), run_name='offline_review')
     pair = m['candidate_pair']()
-    assert set(pair) == {'explicit', 'batch', 'pr_head_06505ee4'}
+    assert set(pair) == {'explicit', 'batch', 'pr_head_06505ee4', 'pr_do_no_boundaries'}
+    pr=pair['pr_head_06505ee4'].replace(b'\r\n',b'\n')
+    assert pr.replace(b'\nbegin;\n',b'\n',1).removesuffix(b'\ncommit;') == pair['pr_do_no_boundaries'].replace(b'\r\n',b'\n')
     branch='refs/heads/codex/asset-pref-cli-execbatch-diagnostic-20261104'
     trusted={'GITHUB_ACTIONS':'true','RUNNER_ENVIRONMENT':'github-hosted','GITHUB_REPOSITORY':'kanta13jp1/my_web_app',
       'GITHUB_EVENT_NAME':'workflow_dispatch','GITHUB_JOB':'cli-execbatch-isolated','GITHUB_REF':branch,
@@ -173,7 +175,7 @@ def run():
     tree=ast.parse((HERE/'runner.py').read_bytes())
     matrix=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name=='run_matrix')
     mode_loops=[x for x in ast.walk(matrix) if isinstance(x,ast.For) and isinstance(x.target,ast.Name) and x.target.id=='mode']
-    assert len(mode_loops)==1 and ast.literal_eval(mode_loops[0].iter)==('explicit','pr_head_06505ee4','batch')
+    assert len(mode_loops)==1 and ast.literal_eval(mode_loops[0].iter)==('explicit','pr_head_06505ee4','pr_do_no_boundaries','batch')
     case=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name=='run_case')
     calls=[n.func.attr for n in ast.walk(case) if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute) and n.func.attr in ('wait_final_postmaster','initialize')]
     assert calls.count('wait_final_postmaster')==1 and calls.count('initialize')==1
@@ -588,8 +590,8 @@ def run():
                     '[140] LOG:  00000: connection authorized: user=postgres database=synthetic_execbatch '
                     'application_name=codex_execbatch_cli\n' + error + statement)
     import contextlib
-    for mode in ('explicit','batch','pr_head_06505ee4'):
-        outcomes = ('success','history_failure') if mode == 'pr_head_06505ee4' else ('success','history_failure','candidate_failure')
+    for mode in ('explicit','batch','pr_head_06505ee4','pr_do_no_boundaries'):
+        outcomes = ('success','history_failure') if mode in ('pr_head_06505ee4','pr_do_no_boundaries') else ('success','history_failure','candidate_failure')
         for outcome in outcomes:
             service=SimulatedService(mode,outcome)
             with contextlib.redirect_stdout(io.StringIO()):
@@ -626,6 +628,9 @@ def run():
         except RuntimeError as exc:assert 'success control failed' in str(exc)
         else:raise AssertionError('25P01 batch success control was accepted')
     assert 'SYNTHETIC_EXECBATCH_OBSERVATION ' in captured.getvalue() and '25P01' in captured.getvalue()
+    leaked=SimulatedService('pr_do_no_boundaries','history_failure')
+    leaked.after.update(anon=False,authenticated=False,acl='revoked')
+    assert_case_rejected(leaked,'pr_do_no_boundaries','history_failure')
     for attack in ('statement_only','wrong_error_pid','wrong_insert_pid'):
         service=SimulatedService('batch','history_failure')
         def forged_logs(attack=attack):
@@ -643,7 +648,7 @@ def run():
     assert_case_rejected(guard_changed,'batch','candidate_failure')
     print('PASS: same-PID ERROR/INSERT proof, unexpected partial ACL and guard-drift refusals')
     print('PASS: AST; fixed STOP candidate pair/diff; safe synthetic tar; ELF; seven archive, ten container and nine workflow identity rejections')
-    print('PASS: eight synthetic result-classification cases and wrong-route refusal')
+    print('PASS: ten synthetic result-classification cases and wrong-route refusal')
     print('No Docker, database, CLI, cloud job, or network was started.')
 
 if __name__ == '__main__': run()

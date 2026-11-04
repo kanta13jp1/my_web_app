@@ -33,6 +33,7 @@ CANDIDATES = {
  'explicit': ('candidate_lock_rc_guard_review_stopped.sql.txt', '0c6f44d00885dc939355e22bd4860339662a31eb7e51ca1f6ef981ab81e51621'),
  'batch': ('candidate_lock_rc_cli_batch_review_stopped.sql.txt', 'e522e693c83dbc517ba26345546fdd06f0c02bb032ead12c124444227bf60a79'),
  'pr_head_06505ee4': ('revoke_truncate_candidate_review_stopped.sql.txt', '3372910f839d556a35d81dfd6ababe8c73438e52636d7fe8c491835528f1dfb6'),
+ 'pr_do_no_boundaries': ('candidate_pr_do_without_boundaries_review_stopped.sql.txt', '1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f'),
 }
 VERSION = '20991231000000'
 MIGRATION = '/tmp/codex-cli/supabase/migrations/20991231000000_synthetic_acl.sql'
@@ -127,6 +128,12 @@ def candidate_pair():
     without_boundaries = explicit.replace(b'\nbegin;\n', b'\n', 1).removesuffix(b'\ncommit;') + b'\n'
     if without_boundaries != batch:
         raise RuntimeError('candidates differ beyond transaction boundaries')
+    pr = decoded['pr_head_06505ee4'].replace(b'\r\n', b'\n')
+    no_boundaries = decoded['pr_do_no_boundaries'].replace(b'\r\n', b'\n')
+    if (pr.count(b'\nbegin;\n') != 1 or pr.count(b'\ncommit;') != 1
+        or not pr.endswith(b'\ncommit;')
+        or pr.replace(b'\nbegin;\n', b'\n', 1).removesuffix(b'\ncommit;') != no_boundaries):
+        raise RuntimeError('PR comparison differs beyond transaction boundaries')
     return decoded
 
 
@@ -852,7 +859,7 @@ SNAPSHOT = r"""SELECT jsonb_build_object(
 def run_case(service, mode, outcome, binary, migration):
     if mode not in CANDIDATES or outcome not in ('success','history_failure','candidate_failure'):
         raise RuntimeError('unapproved fixture case')
-    if mode == 'pr_head_06505ee4' and outcome == 'candidate_failure':
+    if mode in ('pr_head_06505ee4','pr_do_no_boundaries') and outcome == 'candidate_failure':
         raise RuntimeError('current PR has no inheritance guard; case is inapplicable')
     case_started = time.monotonic()
     service.create()
@@ -913,6 +920,8 @@ def run_case(service, mode, outcome, binary, migration):
         raise RuntimeError('unrelated synthetic table state changed')
     if outcome == 'candidate_failure' and before != after:
         raise RuntimeError('candidate guard failure changed full synthetic snapshot')
+    if mode == 'pr_do_no_boundaries' and outcome == 'history_failure' and before != after:
+        raise RuntimeError('PR without boundaries did not roll back on history failure')
     history_effect = None
     if outcome == 'history_failure':
         if before == after:
@@ -942,8 +951,8 @@ def run_matrix():
         docker = ['/usr/bin/docker','--config',config,'--host','unix:///var/run/docker.sock']
         image = json.loads(subprocess.run(docker + ['image','inspect',IMAGE], env=env, capture_output=True,
             check=True, timeout=15).stdout)[0]
-        for mode in ('explicit','pr_head_06505ee4','batch'):
-            outcomes = ('success','history_failure') if mode == 'pr_head_06505ee4' else ('success','history_failure','candidate_failure')
+        for mode in ('explicit','pr_head_06505ee4','pr_do_no_boundaries','batch'):
+            outcomes = ('success','history_failure') if mode in ('pr_head_06505ee4','pr_do_no_boundaries') else ('success','history_failure','candidate_failure')
             for outcome in outcomes:
                 service = OwnedService(docker, env, image, run_id)
                 try:

@@ -27,10 +27,11 @@ jobs:
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD 5336210f50ee93e728816f34fe848f7a1e504497"
+          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD a9804d08dea20ec07c8dee246c4408cd9d197e55"
           git diff --no-renames --name-only HEAD^ HEAD | LC_ALL=C sort > "$RUNNER_TEMP/actual-files"
           LC_ALL=C sort > "$RUNNER_TEMP/expected-files" <<'FIXED_FILES'
           .github/workflows/cloud-development.yml
+          scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_pr_do_without_boundaries_review_stopped.sql.txt
           scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
           scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
           FIXED_FILES
@@ -39,8 +40,9 @@ jobs:
           e522e693c83dbc517ba26345546fdd06f0c02bb032ead12c124444227bf60a79  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_lock_rc_cli_batch_review_stopped.sql.txt
           0c6f44d00885dc939355e22bd4860339662a31eb7e51ca1f6ef981ab81e51621  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_lock_rc_guard_review_stopped.sql.txt
           3372910f839d556a35d81dfd6ababe8c73438e52636d7fe8c491835528f1dfb6  scripts/asset_pref_truncate_fixture/cli_execbatch/revoke_truncate_candidate_review_stopped.sql.txt
-          125c7e15bc7867ad8e6c442fa0880da12b64dca95ca86762dec5dd850dc3acc7  scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
-          c78eea271005b7d81cbee5a302aceed770710e725ba094f13cef2e3f5715dd8b  scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
+          1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_pr_do_without_boundaries_review_stopped.sql.txt
+          a0dd3141b2b96d14c79cb17d76abd8e5415e49a4d28d4879d892da2076ecd854  scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
+          71544a1d6934f73983603fa36c28370174b72259bac481ec2351f8997852b7b9  scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
           FIXED_HASHES
           python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
       - name: Obtain verified public binaries
