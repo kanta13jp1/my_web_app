@@ -45,14 +45,16 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(MaterialApp(
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: const TextScaler.linear(1.5)),
-        child: child!,
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(1.5)),
+          child: child!,
+        ),
+        home: const TypingGamePage(),
       ),
-      home: const TypingGamePage(),
-    ),);
+    );
     await tester.tap(find.byKey(const Key('typing-start')));
     await tester.pump();
     expect(tester.takeException(), isNull);
