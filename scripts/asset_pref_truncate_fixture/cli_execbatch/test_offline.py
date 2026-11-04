@@ -358,6 +358,69 @@ def run():
     else:raise AssertionError('symlink entry accepted')
     assert linked.hash_paths==[]
     print('PASS: root-scoped tree metadata without file hashing or symlink traversal')
+    class LoopbackFake:
+        def __init__(self, fault=None):
+            self.fault=fault; self.token='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'; self.calls=[]; self.load=0
+            self.run_id='synthetic-mock';self.nonce='synthetic-mock'
+            self.log='synthetic server start\n';self.probe_count=0
+        def logs(self):return self.log
+        def psql(self, sql):
+            self.calls.append(('psql',sql))
+            if "current_setting('listen_addresses')" in sql:
+                return '0.0.0.0|5432|/var/lib/postgresql/data/pg_hba.conf' if self.fault=='listener' else '127.0.0.1|5432|/var/lib/postgresql/data/pg_hba.conf'
+            if 'pg_conf_load_time' in sql:
+                self.load+=1; return str(self.load)
+            if 'pg_reload_conf' in sql:return 't'
+            if 'pg_hba_file_rules' in sql:return 'f' if self.fault=='rules' else 't'
+            if 'pg_catalog.pg_database' in sql:return 'f' if self.fault=='missing_db' else 't'
+            return '1'
+        def exec(self, args, **kwargs):
+            self.calls.append(('exec',args))
+            if args[0]=='/usr/bin/id':out=b'999\n'
+            elif args[0]=='/usr/bin/stat':out=b'a1ff|999|1\n' if self.fault=='hba_symlink' else b'8180|999|1\n'
+            elif args[0]=='/bin/sh':
+                assert kwargs['input']==b'local synthetic_execbatch postgres trust\nhost synthetic_execbatch postgres 127.0.0.1/32 scram-sha-256\n';out=b''
+            else:
+                assert args[0]=='/usr/bin/env' and args[2]=='PGSSLMODE=disable'
+                assert args[args.index('-h')+1]=='127.0.0.1'
+                database=args[args.index('-d')+1]
+                if 'VERBOSITY=verbose' in args:
+                    assert database in ('postgres','synthetic_execbatch')
+                    if self.fault=='negative_success':return types.SimpleNamespace(stdout=b'1\n',stderr=b'',returncode=0)
+                    if self.fault=='negative_wrong_error':return types.SimpleNamespace(stdout=b'',stderr=b'FATAL:  3D000: other\n',returncode=2)
+                    if database=='synthetic_execbatch' and self.fault=='wrong_password_success':
+                        return types.SimpleNamespace(stdout=b'1\n',stderr=b'',returncode=0)
+                    if database=='synthetic_execbatch' and self.fault=='wrong_password_other':
+                        return types.SimpleNamespace(stdout=b'',stderr=b'FATAL:  28000: other\n',returncode=2)
+                    if database=='postgres':
+                        assert args[1]=='PGPASSWORD='+m['FIXTURE_PASSWORD']
+                        state='28000';message='no pg_hba.conf entry for host "127.0.0.1", user "postgres", database "postgres", no encryption'
+                    else:
+                        assert args[1]=='PGPASSWORD=synthetic-deliberately-wrong-only'
+                        state='28P01';message='password authentication failed for user "postgres"'
+                    pid='140' if database=='postgres' or self.fault=='duplicate_pid' else '141'
+                    received_pid='142' if self.fault=='pid_mismatch' else pid
+                    if self.fault=='log_rewind':self.log='rewound\n'
+                    if self.fault!='missing_log':
+                        host='127.0.0.2' if self.fault=='wrong_control_route' else '127.0.0.1'
+                        self.log+='['+received_pid+'] LOG:  00000: connection received: host='+host+' port=48392\n'
+                        self.log+='['+pid+'] FATAL:  '+('3D000' if self.fault=='server_wrong_state' else state)+':  '+message+'\n'
+                    if self.fault=='unexpected_fatal':self.log+='[999] FATAL:  XX000: unexpected\n'
+                    error=('FATAL:  '+message+'\n').encode()
+                    return types.SimpleNamespace(stdout=b'',stderr=error,returncode=2)
+                assert args[1]=='PGPASSWORD='+m['FIXTURE_PASSWORD']
+                if self.fault=='late_fatal':self.log+='[999] FATAL:  XX000: unexpected\n'
+                out=b'f\n' if self.fault=='probe' else b't\n'
+            return types.SimpleNamespace(stdout=out,stderr=b'',returncode=0)
+    m['OwnedService'].configure_synthetic_loopback(LoopbackFake())
+    for fault in ('listener','hba_symlink','rules','missing_db','negative_success','negative_wrong_error',
+                  'wrong_password_success','wrong_password_other','probe','pid_mismatch','missing_log',
+                  'unexpected_fatal','server_wrong_state','log_rewind','late_fatal','duplicate_pid','wrong_control_route'):
+        try:m['OwnedService'].configure_synthetic_loopback(LoopbackFake(fault))
+        except RuntimeError:pass
+        else:raise AssertionError('unsafe loopback fixture accepted: '+fault)
+    print('PASS: mocked loopback listener, synthetic hba and guarded preflight refusals')
+
     class StageFake:
         def __init__(self):
             self.run_id='123-1';self.nonce='b'*32;self.find_count=0;self.calls=[];self.cli_binary_sha=None
@@ -418,8 +481,8 @@ def run():
             if args[0]=='/tmp/codex-cli/supabase-cli':
                 if args==['/tmp/codex-cli/supabase-cli','--version']:
                     return types.SimpleNamespace(stdout=b'2.84.2\n',stderr=b'',returncode=0)
-                if args[1:3]==['db','push']:
-                    return types.SimpleNamespace(stdout=b'synthetic push',stderr=b'',returncode=0)
+            if args[:5]==['/usr/bin/env','PGSSLMODE=disable','/tmp/codex-cli/supabase-cli','db','push']:
+                return types.SimpleNamespace(stdout=b'synthetic push',stderr=b'',returncode=0)
             raise AssertionError('unexpected stage command '+repr(args))
     stage_fake=StageFake()
     with contextlib.redirect_stdout(io.StringIO()) as captured:
@@ -436,7 +499,7 @@ def run():
     assert [(r['phase'],r['status']) for r in records]==[('before_version','paths'),('before_version','metadata'),('after_version','paths'),('after_version','metadata'),('before_push','paths'),('before_push','metadata')]
     latest=next(e for e in records[-1]['entries'] if e.get('path')=='.temp/cli-latest')
     assert latest['type']=='f' and latest['mode']=='644' and latest['length']==0 and 'sha256' not in latest
-    assert sum(args[0]=='/tmp/codex-cli/supabase-cli' and args[1:3]==['db','push'] for args in stage_fake.calls)==1
+    assert sum(args[:5]==['/usr/bin/env','PGSSLMODE=disable','/tmp/codex-cli/supabase-cli','db','push'] for args in stage_fake.calls)==1
     for fault in ('unknown','symlink','mode','nonempty','owner','group','hardlink','stat_type','special','stat_size'):
         bad=StageFake();bad.fault=fault
         try:
@@ -444,7 +507,7 @@ def run():
                 m['OwnedService'].stage(bad,bad.binary,bad.migration)
         except RuntimeError:pass
         else:raise AssertionError('unsafe project tree accepted: '+fault)
-        assert not any(args[0]=='/tmp/codex-cli/supabase-cli' and args[1:3]==['db','push'] for args in bad.calls)
+        assert not any(args[:5]==['/usr/bin/env','PGSSLMODE=disable','/tmp/codex-cli/supabase-cli','db','push'] for args in bad.calls)
         assert 'sensitive-unknown-name' not in capture.getvalue()
         assert 'SYNTHETIC_EXECBATCH_PROJECT_MISMATCH ' in capture.getvalue()
         expected_reason={'unknown':'unexpected','symlink':'type','mode':'mode','nonempty':'size',
@@ -462,7 +525,7 @@ def run():
             with contextlib.redirect_stdout(io.StringIO()):m['OwnedService'].cli_push(bad)
         except RuntimeError:pass
         else:raise AssertionError('changed fixed project file accepted')
-        assert not any(args[0]=='/tmp/codex-cli/supabase-cli' and args[1:3]==['db','push'] for args in bad.calls)
+        assert not any(args[:5]==['/usr/bin/env','PGSSLMODE=disable','/tmp/codex-cli/supabase-cli','db','push'] for args in bad.calls)
     print('PASS: exact observed five-entry tree, fixed hashes and fail-closed mutations before db push')
 
 
@@ -480,6 +543,9 @@ def run():
         def wait_final_postmaster(self): pass
         def exec(self, args, **kwargs): return types.SimpleNamespace(returncode=0)
         def initialize(self): pass
+        def configure_synthetic_loopback(self):
+            self.verified_negative_fatals=[{'pid':'120','sqlstate':'28000','fatal_line':'[120] FATAL:  28000: expected database refusal'},
+                                           {'pid':'121','sqlstate':'28P01','fatal_line':'[121] FATAL:  28P01: expected password refusal'}]
         def psql(self, sql):
             if sql == m['SNAPSHOT']: return json.dumps(self.after if self.executed else self.before)
             if 'FROM supabase_migrations.schema_migrations;' in sql:
@@ -494,12 +560,13 @@ def run():
             return types.SimpleNamespace(returncode=0 if self.outcome=='success' else 1,
                                          stdout=output.encode(),stderr=b'')
         def logs(self):
-            host = '127.0.0.1' if self.bad_route else '[local]'
+            host = '[local]' if self.bad_route else '127.0.0.1 port=48392'
             failure = {'success':'', 'history_failure':'SYNTHETIC_HISTORY_FAILURE',
                        'candidate_failure':'inheritance or partition relationship requires separate review'}[self.outcome]
             error = '' if not failure else '[140] ERROR:  P0001: ' + failure + '\n'
             statement = '[140] STATEMENT:  INSERT INTO supabase_migrations.schema_migrations\n' if self.outcome == 'history_failure' else ''
-            return ('[140] LOG:  00000: connection received: host=' + host + '\n'
+            return ('\n'.join(e['fatal_line'] for e in self.verified_negative_fatals)+'\n'
+                    '[140] LOG:  00000: connection received: host=' + host + '\n'
                     '[140] LOG:  00000: connection authorized: user=postgres database=synthetic_execbatch '
                     'application_name=codex_execbatch_cli\n' + error + statement)
     import contextlib
@@ -517,7 +584,7 @@ def run():
         with contextlib.redirect_stdout(io.StringIO()):
             m['run_case'](SimulatedService('batch','success',bad_route=True),'batch','success',b'fake',pair['batch'])
     except RuntimeError: pass
-    else: raise AssertionError('TCP route accepted instead of fixed Unix socket')
+    else: raise AssertionError('non-loopback route accepted')
     def assert_case_rejected(service, mode, outcome):
         try:
             with contextlib.redirect_stdout(io.StringIO()):

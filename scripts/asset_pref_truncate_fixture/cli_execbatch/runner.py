@@ -24,9 +24,10 @@ ARCHIVE = HERE / 'supabase_linux_amd64.tar.gz'
 ARCHIVE_SHA = '620a5f6ea7b60f9b4fe112a5d72464ea0e53d04022035641674a2e6d121e0eb5'
 IMAGE = 'postgres@sha256:0b81cec82228160abfa753aeaad0609b709eb26eeb950f2e404ad2326e1cc370'
 DB = 'synthetic_execbatch'
-DB_URL = ('postgresql://postgres@/synthetic_execbatch?host=%2Fvar%2Frun%2Fpostgresql'
-          '&sslmode=disable&application_name=codex_execbatch_cli')
-SERVER_CMD = ['postgres', '-c', 'log_connections=on', '-c', 'log_error_verbosity=verbose']
+DB_URL = ('postgresql://postgres:synthetic-isolated-only@127.0.0.1:5432/synthetic_execbatch'
+          '?sslmode=disable&application_name=codex_execbatch_cli')
+SERVER_CMD = ['postgres', '-c', 'listen_addresses=127.0.0.1', '-c', 'port=5432',
+              '-c', 'log_connections=on', '-c', 'log_error_verbosity=verbose']
 STOP = b"\\set ON_ERROR_STOP on\ndo $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;\n"
 CANDIDATES = {
  'explicit': ('candidate_lock_rc_guard_review_stopped.sql.txt', '0c6f44d00885dc939355e22bd4860339662a31eb7e51ca1f6ef981ab81e51621'),
@@ -265,6 +266,37 @@ def require_clean_final_logs(text):
         raise RuntimeError('fatal postgres log observed during startup')
     if text.count(STARTUP_MARKER) != 1:
         raise RuntimeError('final image initialization marker no longer uniquely present')
+
+
+def verify_negative_log_delta(before, after, sqlstate, message):
+    """Correlate one expected server FATAL to its newly received loopback PID."""
+    if sqlstate not in ('28000','28P01') or not after.startswith(before):
+        raise RuntimeError('negative-control server log boundary invalid')
+    lines = after[len(before):].splitlines()
+    fatal = [line for line in lines if re.search(r'\b(?:FATAL|PANIC):',line)]
+    if len(fatal) != 1:
+        raise RuntimeError('negative-control expected one FATAL and no additional FATAL/PANIC')
+    match = re.fullmatch(r'.*\[([0-9]+)\] FATAL:\s+' + sqlstate + r':\s+' + message, fatal[0])
+    if not match:
+        raise RuntimeError('negative-control server SQLSTATE or message mismatch')
+    pid = match.group(1)
+    received = [line for line in lines if re.search(r'\['+pid+r'\] LOG:\s+(?:[0-9A-Z]{5}:\s+)?connection received: host=127\.0\.0\.1 port=[0-9]+(?:\s|$)',line)]
+    if len(received) != 1:
+        raise RuntimeError('negative-control loopback PID not proven')
+    return {'pid':pid,'sqlstate':sqlstate,'fatal_line':fatal[0]}
+
+
+def summarize_control_fatals(logs, controls):
+    summary = summarize_server_logs(logs)
+    unmatched = [x for x in logs.splitlines() if re.search(r'\b(?:FATAL|PANIC):',x)]
+    confirmed = 0
+    for event in controls:
+        if event['fatal_line'] in unmatched:
+            unmatched.remove(event['fatal_line'])
+            confirmed += 1
+    summary['verified_negative_control_fatals'] = confirmed
+    summary['unexpected_fatal_count'] = len(unmatched)
+    return summary
 
 
 def validate_ready_state(output):
@@ -645,12 +677,89 @@ class OwnedService:
         self.verify_cli_binary()
         self.verify_project_tree('after_version')
 
+    def configure_synthetic_loopback(self):
+        """Narrow and verify the disposable service before permitting TCP."""
+        self.psql('SELECT 1;')
+        settings = self.psql("SELECT current_setting('listen_addresses'), current_setting('port'), current_setting('hba_file');")
+        if settings.strip() != '127.0.0.1|5432|/var/lib/postgresql/data/pg_hba.conf':
+            raise RuntimeError('synthetic loopback listener or hba path mismatch')
+        uid = self.exec(['/usr/bin/id','-u']).stdout.decode('ascii').strip()
+        metadata = self.exec(['/usr/bin/stat','-c','%f|%u|%h','--',
+                              '/var/lib/postgresql/data/pg_hba.conf']).stdout.decode('ascii').strip().split('|')
+        if (not uid.isdecimal() or len(metadata) != 3
+            or not re.fullmatch(r'[0-9a-fA-F]{1,8}',metadata[0])
+            or int(metadata[0],16) & 0o170000 != 0o100000
+            or metadata[1:] != [uid,'1']):
+            raise RuntimeError('synthetic hba file identity mismatch')
+        self.exec(['/bin/sh','-c',"umask 077; cat > /var/lib/postgresql/data/pg_hba.conf"],
+                  input=(b'local synthetic_execbatch postgres trust\n'
+                         b'host synthetic_execbatch postgres 127.0.0.1/32 scram-sha-256\n'))
+        baseline = self.psql('SELECT pg_conf_load_time()::text;')
+        if self.psql('SELECT pg_reload_conf();').strip() != 't':
+            raise RuntimeError('synthetic hba reload request failed')
+        for _ in range(20):
+            if self.psql('SELECT pg_conf_load_time()::text;').strip() != baseline:
+                break
+            time.sleep(0.1)
+        else:
+            raise RuntimeError('synthetic hba reload not observed')
+        rules = self.psql("SELECT count(*)=2 AND bool_and(error IS NULL AND "
+            "((line_number=1 AND type='local' AND database=ARRAY['synthetic_execbatch'] "
+            "AND user_name=ARRAY['postgres'] AND address IS NULL AND auth_method='trust') OR "
+            "(line_number=2 AND type='host' AND database=ARRAY['synthetic_execbatch'] "
+            "AND user_name=ARRAY['postgres'] AND address='127.0.0.1' "
+            "AND netmask='255.255.255.255' AND auth_method='scram-sha-256'))) "
+            "FROM pg_catalog.pg_hba_file_rules;")
+        if rules.strip() != 't': raise RuntimeError('synthetic hba rules mismatch')
+        if self.psql("SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname='postgres');").strip() != 't':
+            raise RuntimeError('synthetic negative-control database not confirmed')
+        self.verified_negative_fatals = []
+        def expect_denied(database, password, sqlstate, message):
+            args = ['/usr/bin/env','PGPASSWORD='+password,'PGSSLMODE=disable',
+                    '/usr/lib/postgresql/17/bin/psql','-X','-qAt','-v','ON_ERROR_STOP=1',
+                    '-v','VERBOSITY=verbose','-h','127.0.0.1','-p','5432','-U','postgres','-d',database]
+            before = self.logs()
+            result = self.exec(args, input=b'SELECT 1;', timeout=20, check=False)
+            after = self.logs()
+            if (result.returncode == 0 or result.stdout.strip()
+                or not re.search(r'FATAL:\s+(?:'+sqlstate+r':\s+)?'+message+r'(?:\r?\n|$)',
+                                 result.stderr.decode('utf-8', errors='replace'))):
+                raise RuntimeError('synthetic loopback negative control not confirmed')
+            event = verify_negative_log_delta(before, after, sqlstate, message)
+            if any(old['pid']==event['pid'] for old in self.verified_negative_fatals):
+                raise RuntimeError('negative-control PID unexpectedly reused')
+            self.verified_negative_fatals.append(event)
+        expect_denied('postgres', FIXTURE_PASSWORD, '28000',
+            r'no pg_hba\.conf entry for host "127\.0\.0\.1", user "postgres", database "postgres"(?:, no encryption)?')
+        expect_denied(DB, 'synthetic-deliberately-wrong-only', '28P01',
+            r'password authentication failed for user "postgres"')
+        if not re.fullmatch(r'[0-9a-f-]{36}', self.token): raise RuntimeError('invalid guard token')
+        sql = ("SELECT current_database()='synthetic_execbatch' AND current_user='postgres' "
+               "AND current_setting('server_version_num')::int/10000=17 "
+               "AND inet_client_addr()='127.0.0.1'::inet AND inet_server_addr()='127.0.0.1'::inet "
+               "AND inet_server_port()=5432 AND EXISTS (SELECT 1 FROM public.codex_execbatch_guard "
+               "WHERE token='" + self.token + "'::uuid);")
+        argv = ['/usr/bin/env','PGPASSWORD='+FIXTURE_PASSWORD,'PGSSLMODE=disable',
+                '/usr/lib/postgresql/17/bin/psql','-X','-qAt','-v','ON_ERROR_STOP=1',
+                '-h','127.0.0.1','-p','5432','-U','postgres','-d',DB]
+        probe = self.exec(argv, input=sql.encode('utf-8'), timeout=20, check=False)
+        if probe.returncode != 0 or probe.stdout.decode('utf-8').strip() != 't':
+            raise RuntimeError('synthetic loopback identity probe failed')
+        control_summary = summarize_control_fatals(self.logs(), self.verified_negative_fatals)
+        if control_summary['verified_negative_control_fatals'] != 2 or control_summary['unexpected_fatal_count'] != 0:
+            raise RuntimeError('unexpected FATAL or missing negative-control evidence')
+        print('SYNTHETIC_EXECBATCH_ROUTE_CONTROLS ' + json.dumps({
+            'run_id':self.run_id,'nonce':self.nonce,'negative_database_sqlstate':'28000',
+            'negative_password_sqlstate':'28P01','negative_control_pids':[e['pid'] for e in self.verified_negative_fatals],
+            'guarded_loopback_positive':True,
+            'scope':'two negative controls; not a proof against same-UID races'},sort_keys=True),flush=True)
+
     def cli_push(self):
         self.psql('SELECT 1;')
         self.verify_cli_binary()
         self.verify_project_tree('before_push')
-        # Socket-only URI and -i cleared environment; no linked ref or fallback.
-        args = ['/tmp/codex-cli/supabase-cli','db','push','--db-url',DB_URL,
+        # Fixed synthetic loopback URI and -i cleared environment; no linked ref.
+        args = ['/usr/bin/env','PGSSLMODE=disable','/tmp/codex-cli/supabase-cli','db','push','--db-url',DB_URL,
                 '--include-all','--yes','--workdir','/tmp/codex-cli']
         return self.exec(args, timeout=60, check=False, workdir='/tmp/codex-cli')
 
@@ -747,6 +856,7 @@ def run_case(service, mode, outcome, binary, migration):
     service.create()
     service.wait_final_postmaster()
     service.initialize()
+    service.configure_synthetic_loopback()
     if outcome == 'history_failure': service.psql(HISTORY_FAILURE)
     if outcome == 'candidate_failure': service.psql(CHILD_FAILURE)
     before = json.loads(service.psql(SNAPSHOT))
@@ -756,11 +866,14 @@ def run_case(service, mode, outcome, binary, migration):
     cli_seconds = time.monotonic() - cli_started
     output = (cli.stdout + cli.stderr).decode('utf-8', errors='replace')
     server_logs = service.logs()
-    local_pids = set(re.findall(r'\[(\d+)\] LOG:\s+(?:[0-9A-Z]{5}:\s+)?connection received: host=\[local\]', server_logs))
+    control_summary = summarize_control_fatals(server_logs, service.verified_negative_fatals)
+    if control_summary['verified_negative_control_fatals'] != 2 or control_summary['unexpected_fatal_count'] != 0:
+        raise RuntimeError('unexpected FATAL or missing negative-control evidence')
+    local_pids = set(re.findall(r'\[(\d+)\] LOG:\s+(?:[0-9A-Z]{5}:\s+)?connection received: host=127\.0\.0\.1 port=[0-9]+(?:\s|$)', server_logs))
     cli_pids = set(re.findall(r'\[(\d+)\] LOG:\s+(?:[0-9A-Z]{5}:\s+)?connection authorized: user=postgres database=synthetic_execbatch application_name=codex_execbatch_cli(?:\s|$)', server_logs))
     if not cli_pids or not cli_pids <= local_pids:
-        raise RuntimeError('CLI Unix-socket route not proven from isolated server logs: ' + output)
-    pid_sql = ','.join(sorted(cli_pids))  # digits extracted from verified local logs only
+        raise RuntimeError('CLI loopback route not proven from isolated server logs: ' + output)
+    pid_sql = ','.join(sorted(cli_pids))  # digits extracted from verified loopback logs only
     remaining = None
     for attempt in range(5):
         remaining = service.psql('SELECT count(*) FROM pg_catalog.pg_stat_activity WHERE pid IN (' + pid_sql + ');').strip()
@@ -778,7 +891,7 @@ def run_case(service, mode, outcome, binary, migration):
     history = str(len(history_rows))
     print('SYNTHETIC_EXECBATCH_OBSERVATION ' + json.dumps({'mode':mode, 'outcome':outcome,
         'cli_exit':cli.returncode, 'history_count':history, 'history_rows':history_rows, 'before':before, 'after':after,
-        'cli_socket_pids':sorted(cli_pids), 'cli_backends_remaining':int(remaining),
+        'cli_loopback_pids':sorted(cli_pids), 'cli_backends_remaining':int(remaining),
         'cli_seconds':cli_seconds, 'candidate_stopped_sha':CANDIDATES[mode][1], 'cli_output':output}, sort_keys=True), flush=True)
     if outcome == 'success':
         if cli.returncode != 0 or history != '1' or after['anon'] or after['authenticated'] or not after['service']:
@@ -809,7 +922,7 @@ def run_case(service, mode, outcome, binary, migration):
             raise RuntimeError('unexpected partial privilege change after history failure')
     return {'mode':mode,'outcome':outcome,'candidate_stopped_sha':CANDIDATES[mode][1],
         'cli_exit':cli.returncode,'history_count':int(history),'history_rows':history_rows,'before':before,'after':after,
-        'history_failure_effect':history_effect,'cli_socket_pids':sorted(cli_pids),
+        'history_failure_effect':history_effect,'cli_loopback_pids':sorted(cli_pids),
         'cli_backends_remaining':int(remaining),'cli_seconds':cli_seconds,
         'case_seconds':time.monotonic()-case_started,'cli_output':output,
         'scope':'official CLI 2.84.2 db push, synthetic PG17 network none; production unverified'}
@@ -842,7 +955,8 @@ def run_matrix():
                     if isinstance(exc, FixturePsqlError):
                         evidence['psql'] = exc.evidence
                     if service.verified:
-                        try: evidence['server_logs'] = summarize_server_logs(service.logs())
+                        try: evidence['server_logs'] = summarize_control_fatals(
+                            service.logs(), getattr(service,'verified_negative_fatals',[]))
                         except Exception as log_error:
                             evidence['server_logs_unavailable'] = type(log_error).__name__
                     else:
