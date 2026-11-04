@@ -35,6 +35,8 @@ CANDIDATES = {
 }
 VERSION = '20991231000000'
 MIGRATION = '/tmp/codex-cli/supabase/migrations/20991231000000_synthetic_acl.sql'
+CONFIG_PATH = '/tmp/codex-cli/supabase/config.toml'
+PROJECT_CONFIG = b'project_id = "synthetic-execbatch"\n[db.migrations]\nenabled = true\n'
 FIXTURE_PASSWORD = 'synthetic-isolated-only'
 MAX_BINARY = 150 * 1024 * 1024
 
@@ -290,6 +292,8 @@ class OwnedService:
         self.cid = None
         self.verified = False
         self.cli_binary_sha = None
+        self.expected_migration_sha = None
+        self.expected_migration_length = None
 
     def command(self, args, *, input=None, timeout=30, check=True):
         return subprocess.run(self.docker + args, env=self.env, input=input,
@@ -521,7 +525,7 @@ class OwnedService:
 
     def project_tree_evidence(self, phase):
         """Read bounded, redacted metadata only in the validated owned /tmp tree."""
-        if phase not in ('before_version','after_version'):
+        if phase not in ('before_version','after_version','before_push'):
             raise RuntimeError('unexpected project-tree phase')
         self.inspect(running=True)
         uid = self.exec(['/usr/bin/id','-u']).stdout.decode('ascii').strip()
@@ -553,35 +557,71 @@ class OwnedService:
             raise RuntimeError('synthetic tree parent directory missing')
         return entries
 
+    def verify_project_tree(self, phase):
+        """Validate only the exact fixed synthetic paths; never open unknown files."""
+        if phase not in ('before_version','after_version','before_push'):
+            raise RuntimeError('unexpected project verification phase')
+        if (not self.expected_migration_sha or not re.fullmatch(r'[0-9a-f]{64}', self.expected_migration_sha)
+            or type(self.expected_migration_length) is not int or self.expected_migration_length <= 0):
+            raise RuntimeError('expected synthetic migration identity unavailable')
+        entries = self.project_tree_evidence(phase)
+        expected = {
+            'migrations':('d','700',None),
+            'migrations/20991231000000_synthetic_acl.sql':('f','600',self.expected_migration_length),
+            'config.toml':('f','600',len(PROJECT_CONFIG)),
+        }
+        if phase != 'before_version':
+            expected.update({'.temp':('d','755',None), '.temp/cli-latest':('f','644',0)})
+        if len(entries) != len(expected) or {entry['path'] for entry in entries} != set(expected):
+            raise RuntimeError('unexpected synthetic project content')
+        uid = self.exec(['/usr/bin/id','-u']).stdout.decode('ascii').strip()
+        gid = self.exec(['/usr/bin/id','-g']).stdout.decode('ascii').strip()
+        if not uid.isdecimal() or not gid.isdecimal():
+            raise RuntimeError('invalid synthetic project owner identity')
+        for entry in entries:
+            kind, mode, length = expected[entry['path']]
+            if entry['type'] != kind or entry['mode'] != mode or (length is not None and entry['length'] != length):
+                raise RuntimeError('synthetic project type, mode or size mismatch')
+            path = '/tmp/codex-cli/supabase/' + entry['path']
+            fields = self.exec(['/usr/bin/stat','-c','%F|%u|%g|%a|%h|%s','--',path]).stdout.decode('ascii').strip().split('|')
+            expected_type = 'directory' if kind == 'd' else 'regular file'
+            if (len(fields) != 6 or fields[:4] != [expected_type,uid,gid,mode]
+                or not fields[4].isdecimal() or not fields[5].isdecimal()
+                or int(fields[5]) != entry['length'] or (kind == 'f' and fields[4] != '1')):
+                raise RuntimeError('synthetic project owner, type, link count, mode or size mismatch')
+        for path, digest in ((MIGRATION,self.expected_migration_sha),(CONFIG_PATH,sha(PROJECT_CONFIG))):
+            actual = self.exec(['/usr/bin/sha256sum','--',path]).stdout.decode('ascii').split()[0]
+            if actual != digest: raise RuntimeError('fixed synthetic project file hash mismatch')
+        evidence = {'run_id':self.run_id,'nonce':self.nonce,'phase':phase,'known_entries':len(entries),
+                    'candidate_sha256':self.expected_migration_sha,'config_sha256':sha(PROJECT_CONFIG),
+                    'limit':'find/stat/hash are not atomic against same-UID replacement; network-none synthetic container'}
+        print('SYNTHETIC_EXECBATCH_PROJECT_VERIFIED ' + json.dumps(evidence,sort_keys=True), flush=True)
+        return evidence
+
     def stage(self, binary, migration):
         self.psql('SELECT 1;')  # confirm database marker immediately before staging
         self.exec(['/bin/sh','-c','umask 077; mkdir -p /tmp/codex-cli/supabase/migrations; cat > /tmp/codex-cli/supabase/migrations/20991231000000_synthetic_acl.sql'], input=migration)
         self.exec(['/bin/sh','-c','umask 077; cat > /tmp/codex-cli/supabase/config.toml'],
-                  input=b'project_id = "synthetic-execbatch"\n[db.migrations]\nenabled = true\n')
+                  input=PROJECT_CONFIG)
         self.exec(['/bin/sh','-c','umask 077; cat > /tmp/codex-cli/supabase-cli; chmod 700 /tmp/codex-cli/supabase-cli'], input=binary, timeout=60)
-        for file, expected in ((MIGRATION, sha(migration)), ('/tmp/codex-cli/supabase-cli', sha(binary))):
+        self.expected_migration_sha = sha(migration)
+        self.expected_migration_length = len(migration)
+        for file, expected in ((MIGRATION, self.expected_migration_sha), (CONFIG_PATH, sha(PROJECT_CONFIG)), ('/tmp/codex-cli/supabase-cli', sha(binary))):
             got = self.exec(['/usr/bin/sha256sum', file]).stdout.decode('ascii').split()[0]
             if got != expected: raise RuntimeError('container staged content hash mismatch')
-        # Metadata collection may diagnose unexpected entries, but never permits them.
-        def check_project_tree(phase):
-            entries = self.project_tree_evidence(phase)
-            actual = {(entry['type'],entry['path']) for entry in entries}
-            expected = {('d','migrations'), ('f','migrations/20991231000000_synthetic_acl.sql'),
-                        ('f','config.toml')}
-            if actual != expected or len(entries) != len(expected):
-                raise RuntimeError('unexpected synthetic project content')
         self.cli_binary_sha = sha(binary)
         self.verify_cli_binary()
-        check_project_tree('before_version')
+        self.verify_project_tree('before_version')
         version = self.exec(['/tmp/codex-cli/supabase-cli','--version'], timeout=20, check=False, workdir='/tmp/codex-cli')
         if version.returncode != 0 or version.stdout.decode('utf-8').strip() != '2.84.2':
             raise RuntimeError('fixed CLI version not confirmed: ' + (version.stdout + version.stderr).decode('utf-8', errors='replace'))
         self.verify_cli_binary()
-        check_project_tree('after_version')
+        self.verify_project_tree('after_version')
 
     def cli_push(self):
         self.psql('SELECT 1;')
         self.verify_cli_binary()
+        self.verify_project_tree('before_push')
         # Socket-only URI and -i cleared environment; no linked ref or fallback.
         args = ['/tmp/codex-cli/supabase-cli','db','push','--db-url',DB_URL,
                 '--include-all','--yes','--workdir','/tmp/codex-cli']

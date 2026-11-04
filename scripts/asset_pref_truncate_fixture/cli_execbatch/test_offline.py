@@ -360,55 +360,81 @@ def run():
     class StageFake:
         def __init__(self):
             self.run_id='123-1';self.nonce='b'*32;self.find_count=0;self.calls=[];self.cli_binary_sha=None
-            self.binary=b'fictional-binary';self.migration=b'fictional-sql'
-            self.files={root+'config.toml':b'project_id = "synthetic-execbatch"\n[db.migrations]\nenabled = true\n',
+            self.expected_migration_sha=None;self.expected_migration_length=None
+            self.binary=b'fictional-binary';self.migration=b'fictional-sql';self.fault=None
+            self.files={root+'config.toml':m['PROJECT_CONFIG'],
                         root+'migrations/20991231000000_synthetic_acl.sql':self.migration,
                         root+'.temp/cli-latest':b'', '/tmp/codex-cli/supabase-cli':self.binary}
         def inspect(self,**kwargs):return {}
         def psql(self,*args,**kwargs):return '1'
         def verify_cli_binary(self):return {}
         def project_tree_evidence(self,phase):return m['OwnedService'].project_tree_evidence(self,phase)
+        def verify_project_tree(self,phase):return m['OwnedService'].verify_project_tree(self,phase)
         def bounded_tree_find(self):
             self.find_count+=1
+            latest_kind = 'l' if self.fault=='symlink' else 'f'
+            latest_mode = '600' if self.fault=='mode' else '644'
+            latest_size = 1 if self.fault=='nonempty' else 0
             items=[('d','700',40,root+'migrations'),('f','600',len(self.files[root+'config.toml']),root+'config.toml'),
                    ('f','600',len(self.migration),root+'migrations/20991231000000_synthetic_acl.sql')]
-            if self.find_count>1:items += [('d','755',40,root+'.temp'),('f','644',0,root+'.temp/cli-latest')]
+            if self.find_count>1:items += [('d','755',40,root+'.temp'),(latest_kind,latest_mode,latest_size,root+'.temp/cli-latest')]
+            if self.fault=='unknown':items.append(('f','600',1,root+'sensitive-unknown-name'))
             return encoded_records(items)
         def exec(self,args,**kwargs):
             self.calls.append(args)
             if args[0]=='/bin/sh':return types.SimpleNamespace(stdout=b'',stderr=b'',returncode=0)
             if args[0]=='/usr/bin/id':return types.SimpleNamespace(stdout=b'999\n',stderr=b'',returncode=0)
-            if args[0]=='/usr/bin/find':
-                self.find_count+=1
-                items=[('d','700',40,root+'migrations'),('f','600',len(self.files[root+'config.toml']),root+'config.toml'),
-                       ('f','600',len(self.migration),root+'migrations/20991231000000_synthetic_acl.sql')]
-                if self.find_count>1:items += [('d','755',40,root+'.temp'),('f','644',0,root+'.temp/cli-latest')]
-                return types.SimpleNamespace(stdout=encoded_records(items),stderr=b'',returncode=0)
             if args[0]=='/usr/bin/stat':
                 path=args[-1]
                 if path in ('/tmp/codex-cli','/tmp/codex-cli/supabase'):out='directory|999|700\n'
-                else:out='regular file|999|'+('644' if path.endswith('/cli-latest') else '600')+'|'+str(len(self.files[path]))+'|1\n'
+                else:
+                    info={root+'migrations':('directory','700','2',40),root+'.temp':('directory','755','2',40),
+                          root+'config.toml':('regular file','600','1',len(self.files[root+'config.toml'])),
+                          root+'migrations/20991231000000_synthetic_acl.sql':('regular file','600','1',len(self.migration)),
+                          root+'.temp/cli-latest':('regular file','644','1',0)}
+                    kind,mode,links,size=info[path]
+                    if self.fault=='owner' and path.endswith('/cli-latest'):user='0'
+                    else:user='999'
+                    if self.fault=='hardlink' and path.endswith('/cli-latest'):links='2'
+                    out='|'.join((kind,user,'999',mode,links,str(size)))+'\n'
                 return types.SimpleNamespace(stdout=out.encode(),stderr=b'',returncode=0)
             if args[0]=='/usr/bin/sha256sum':
                 path=args[-1];digest=hashlib.sha256(self.files[path]).hexdigest()
                 return types.SimpleNamespace(stdout=(digest+'  '+path+'\n').encode(),stderr=b'',returncode=0)
             if args[0]=='/tmp/codex-cli/supabase-cli':
-                assert args==['/tmp/codex-cli/supabase-cli','--version']
-                return types.SimpleNamespace(stdout=b'2.84.2\n',stderr=b'',returncode=0)
+                if args==['/tmp/codex-cli/supabase-cli','--version']:
+                    return types.SimpleNamespace(stdout=b'2.84.2\n',stderr=b'',returncode=0)
+                if args[1:3]==['db','push']:
+                    return types.SimpleNamespace(stdout=b'synthetic push',stderr=b'',returncode=0)
             raise AssertionError('unexpected stage command '+repr(args))
     stage_fake=StageFake()
-    try:
-        with contextlib.redirect_stdout(io.StringIO()) as captured:
-            m['OwnedService'].stage(stage_fake,stage_fake.binary,stage_fake.migration)
-    except RuntimeError as exc:
-        assert 'unexpected synthetic project content' in str(exc)
-    else:raise AssertionError('unexpected post-version file accepted')
+    with contextlib.redirect_stdout(io.StringIO()) as captured:
+        m['OwnedService'].stage(stage_fake,stage_fake.binary,stage_fake.migration)
+        m['OwnedService'].cli_push(stage_fake)
     records=[json.loads(line.split(' ',1)[1]) for line in captured.getvalue().splitlines() if line.startswith('SYNTHETIC_EXECBATCH_PROJECT_TREE ')]
-    assert [(r['phase'],r['status']) for r in records]==[('before_version','paths'),('before_version','metadata'),('after_version','paths'),('after_version','metadata')]
-    latest=next(e for e in records[-1]['entries'] if e['path']=='.temp/cli-latest')
+    assert [(r['phase'],r['status']) for r in records]==[('before_version','paths'),('before_version','metadata'),('after_version','paths'),('after_version','metadata'),('before_push','paths'),('before_push','metadata')]
+    latest=next(e for e in records[-1]['entries'] if e.get('path')=='.temp/cli-latest')
     assert latest['type']=='f' and latest['mode']=='644' and latest['length']==0 and 'sha256' not in latest
-    assert not any(args[0]=='/tmp/codex-cli/supabase-cli' and 'push' in args for args in stage_fake.calls)
-    print('PASS: extra version file metadata recorded and stage refuses before db push')
+    assert sum(args[0]=='/tmp/codex-cli/supabase-cli' and args[1:3]==['db','push'] for args in stage_fake.calls)==1
+    for fault in ('unknown','symlink','mode','nonempty','owner','hardlink'):
+        bad=StageFake();bad.fault=fault
+        try:
+            with contextlib.redirect_stdout(io.StringIO()) as capture:
+                m['OwnedService'].stage(bad,bad.binary,bad.migration)
+        except RuntimeError:pass
+        else:raise AssertionError('unsafe project tree accepted: '+fault)
+        assert not any(args[0]=='/tmp/codex-cli/supabase-cli' and args[1:3]==['db','push'] for args in bad.calls)
+        assert 'sensitive-unknown-name' not in capture.getvalue()
+    for fixed in (root+'config.toml',root+'migrations/20991231000000_synthetic_acl.sql'):
+        bad=StageFake()
+        with contextlib.redirect_stdout(io.StringIO()):m['OwnedService'].stage(bad,bad.binary,bad.migration)
+        data=bad.files[fixed];bad.files[fixed]=bytes([data[0]^1])+data[1:]
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):m['OwnedService'].cli_push(bad)
+        except RuntimeError:pass
+        else:raise AssertionError('changed fixed project file accepted')
+        assert not any(args[0]=='/tmp/codex-cli/supabase-cli' and args[1:3]==['db','push'] for args in bad.calls)
+    print('PASS: exact observed five-entry tree, fixed hashes and fail-closed mutations before db push')
 
 
     class SimulatedService:
