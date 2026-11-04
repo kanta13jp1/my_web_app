@@ -1,60 +1,118 @@
-name: Isolated CLI ExecBatch evidence
+name: Isolated PR privilege regression diagnostic
 on:
   workflow_dispatch:
     inputs:
       expected_head_sha:
-        description: Exact isolated diagnostic head
+        description: Exact isolated diagnostic commit
         required: true
         type: string
 permissions: {}
 jobs:
-  cli-execbatch-isolated:
+  preflight:
     if: ${{ github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/asset-pref-cli-execbatch-diagnostic-20261104' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     permissions:
       contents: read
+      pull-requests: read
+    outputs:
+      checked_sha: ${{ steps.verify.outputs.checked_sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.sha }}
           fetch-depth: 2
           persist-credentials: false
-      - name: Verify immutable diagnostic inputs
+      - id: verify
+        name: Verify exact diagnostic and PR inputs before service allocation
+        env:
+          EXPECTED_HEAD: ${{ inputs.expected_head_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD d3e9fb2257aa15c941a9b65c05206b2e91a1116f"
+          git diff --no-renames --name-only HEAD^ HEAD | LC_ALL=C sort > "$RUNNER_TEMP/actual-files"
+          LC_ALL=C sort > "$RUNNER_TEMP/expected-files" <<'FIXED_FILES'
+          .github/workflows/cloud-development.yml
+          scripts/asset_pref_truncate_fixture/diagnostic_dispatch.py
+          scripts/asset_pref_truncate_fixture/revoke_non_target_privilege_matrix_review_stopped.sql.txt
+          scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
+          scripts/asset_pref_truncate_fixture/runner.py
+          supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
+          FIXED_FILES
+          diff -u "$RUNNER_TEMP/expected-files" "$RUNNER_TEMP/actual-files"
+          sha256sum -c <<'FIXED_HASHES'
+          b954449d87942cd4327649a75db9960d19b769681fb1d35cd7492c2962d86082  scripts/asset_pref_truncate_fixture/diagnostic_dispatch.py
+          2a0ce9a1479ab45e0f153d557a117fc24189af64eab13b283fd19be0b4fba3ee  scripts/asset_pref_truncate_fixture/runner.py
+          19428281a309c45eb4d7ba92577f984d6ab7caf36842f3ea47792f94fbe8cbf3  scripts/asset_pref_truncate_fixture/revoke_non_target_privilege_matrix_review_stopped.sql.txt
+          1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
+          24e38d3b06d1aeb5d5fd6bfea2bec64c303d4fdad9a45b51f0af980a48cf9db8  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
+          d0635f7b249e26e93b3f2c2775b249e332653681e00698780f72a742affbb92d  scripts/asset_pref_truncate_fixture/fixture_setup.sql.txt
+          f2742dd2ec380e9dfba2133e9c9f63a5d6f9a596a181e7b747758221c8042679  scripts/asset_pref_truncate_fixture/revoke_fixture_setup_v5_review_stopped.sql.txt
+          b0fb6feb4c3913091a6f705459bae129cd9b06923e85ff19fcf93614d75c75e3  scripts/asset_pref_truncate_fixture/revoke_fixture_negative_v3_review_stopped.sql.txt
+          cdce6814db69af24d04345673f0743a257d225e4681702495ae9539f1bd37465  scripts/asset_pref_truncate_fixture/revoke_fixture_positive_v3_review_stopped.sql.txt
+          FIXED_HASHES
+          python3 -B scripts/asset_pref_truncate_fixture/runner.py --self-test
+          python3 -B scripts/asset_pref_truncate_fixture/diagnostic_dispatch.py --self-test
+          pr=$(gh api repos/kanta13jp1/my_web_app/pulls/5980 --jq '[.state,.head.sha,.base.sha,.head.repo.full_name] | @tsv' 2>/dev/null)
+          test "$pr" = $'open\te765b12e38a8b4ffdf185a940a763dc789946c4f\t44bb4105e0a1ceef2815461e95677972911839e8\tkanta13jp1/my_web_app'
+          printf 'checked_sha=%s\n' "$EXPECTED_HEAD" >> "$GITHUB_OUTPUT"
+  privilege_regression:
+    needs: preflight
+    if: ${{ needs.preflight.outputs.checked_sha == inputs.expected_head_sha && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/asset-pref-cli-execbatch-diagnostic-20261104' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      pull-requests: read
+    services:
+      sequential:
+        image: postgres@sha256:e4cb93687b062cd25a0e8f672d85a7708235009d70d31f8a7698d9370092a9c4
+        env:
+          POSTGRES_PASSWORD: synthetic-debt-only
+          POSTGRES_DB: debt_contract
+        options: >-
+          --label debt.cas.run=${{ github.run_id }}-${{ github.run_attempt }}
+          --label debt.cas.lane=sequential
+          --tmpfs /var/lib/postgresql/data:rw,nosuid,size=256m
+          --ipc private
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Recheck all fixed inputs in the service job
         env:
           EXPECTED_HEAD: ${{ inputs.expected_head_sha }}
         run: |
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD fe0e6613a15df45384a94c7f863d121638bebd71"
-          git diff --no-renames --name-only HEAD^ HEAD | LC_ALL=C sort > "$RUNNER_TEMP/actual-files"
-          LC_ALL=C sort > "$RUNNER_TEMP/expected-files" <<'FIXED_FILES'
-          .github/workflows/cloud-development.yml
-          scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
-          scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
-          FIXED_FILES
-          diff -u "$RUNNER_TEMP/expected-files" "$RUNNER_TEMP/actual-files"
+          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD d3e9fb2257aa15c941a9b65c05206b2e91a1116f"
           sha256sum -c <<'FIXED_HASHES'
-          e522e693c83dbc517ba26345546fdd06f0c02bb032ead12c124444227bf60a79  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_lock_rc_cli_batch_review_stopped.sql.txt
-          0c6f44d00885dc939355e22bd4860339662a31eb7e51ca1f6ef981ab81e51621  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_lock_rc_guard_review_stopped.sql.txt
-          3372910f839d556a35d81dfd6ababe8c73438e52636d7fe8c491835528f1dfb6  scripts/asset_pref_truncate_fixture/cli_execbatch/revoke_truncate_candidate_review_stopped.sql.txt
-          1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_pr_do_without_boundaries_review_stopped.sql.txt
-          90c3d8a5f2b509ac34801ba37cc8fec98d74c2dbd76f45799f44011161a2b6f5  scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
-          aa22a3fd49dd28e57ea471a0e6c5b6650ce4760a4fce61681edcb08777a45cca  scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
+          b954449d87942cd4327649a75db9960d19b769681fb1d35cd7492c2962d86082  scripts/asset_pref_truncate_fixture/diagnostic_dispatch.py
+          2a0ce9a1479ab45e0f153d557a117fc24189af64eab13b283fd19be0b4fba3ee  scripts/asset_pref_truncate_fixture/runner.py
+          19428281a309c45eb4d7ba92577f984d6ab7caf36842f3ea47792f94fbe8cbf3  scripts/asset_pref_truncate_fixture/revoke_non_target_privilege_matrix_review_stopped.sql.txt
+          1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
+          24e38d3b06d1aeb5d5fd6bfea2bec64c303d4fdad9a45b51f0af980a48cf9db8  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
+          d0635f7b249e26e93b3f2c2775b249e332653681e00698780f72a742affbb92d  scripts/asset_pref_truncate_fixture/fixture_setup.sql.txt
+          f2742dd2ec380e9dfba2133e9c9f63a5d6f9a596a181e7b747758221c8042679  scripts/asset_pref_truncate_fixture/revoke_fixture_setup_v5_review_stopped.sql.txt
+          b0fb6feb4c3913091a6f705459bae129cd9b06923e85ff19fcf93614d75c75e3  scripts/asset_pref_truncate_fixture/revoke_fixture_negative_v3_review_stopped.sql.txt
+          cdce6814db69af24d04345673f0743a257d225e4681702495ae9539f1bd37465  scripts/asset_pref_truncate_fixture/revoke_fixture_positive_v3_review_stopped.sql.txt
           FIXED_HASHES
-          python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
-      - name: Obtain verified public binaries
-        run: |
-          set -euo pipefail
-          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 180 \
-            'https://github.com/supabase/cli/releases/download/v2.84.2/supabase_linux_amd64.tar.gz' \
-            --output scripts/asset_pref_truncate_fixture/cli_execbatch/supabase_linux_amd64.tar.gz
-          printf '%s  %s\n' '620a5f6ea7b60f9b4fe112a5d72464ea0e53d04022035641674a2e6d121e0eb5' \
-            'scripts/asset_pref_truncate_fixture/cli_execbatch/supabase_linux_amd64.tar.gz' | sha256sum -c -
-          docker pull 'postgres@sha256:0b81cec82228160abfa753aeaad0609b709eb26eeb950f2e404ad2326e1cc370'
-      - name: Run only in owned network-none synthetic containers
+          python3 -B scripts/asset_pref_truncate_fixture/runner.py --self-test
+          python3 -B scripts/asset_pref_truncate_fixture/diagnostic_dispatch.py --self-test
+      - name: Run only the verified synthetic service fixture
         env:
-          SYNTHETIC_EXPECTED_HEAD: ${{ inputs.expected_head_sha }}
-        run: >-
-          python3 -B -c 'import importlib.util,json; p="scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py"; s=importlib.util.spec_from_file_location("isolated_execbatch",p); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); print(json.dumps(m.run_matrix(),sort_keys=True))'
+          EXPECTED_DIAGNOSTIC_HEAD: ${{ inputs.expected_head_sha }}
+          FIXTURE_SEQUENTIAL_ID: ${{ job.services.sequential.id }}
+          FIXTURE_NETWORK_NAME: ${{ job.services.sequential.network }}
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -B scripts/asset_pref_truncate_fixture/diagnostic_dispatch.py

@@ -1,7 +1,7 @@
 """Synthetic-only GitHub-hosted PR fixture; never connect to an existing DB.
 Identity variables and SQL marker alone are forgeable. Review the job boundary.
 """
-import hashlib, copy, sys, unittest, json, os, re, subprocess, tempfile, uuid
+import hashlib, copy, sys, unittest, json, os, re, subprocess, tempfile, uuid, contextlib, io
 from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -26,8 +26,11 @@ select case when current_database()='debt_contract' and current_user='postgres'
  then 'EMPTY_FIXTURE' else 'NOT_EMPTY' end;
 """
 
-FIXED = {'fixture_setup.sql.txt': ('d0635f7b249e26e93b3f2c2775b249e332653681e00698780f72a742affbb92d', 'a21c5b5825108b9439751b56fe099a40365e50a8019349397df7d44ef1cdf1f5'), 'revoke_fixture_setup_v5_review_stopped.sql.txt': ('f2742dd2ec380e9dfba2133e9c9f63a5d6f9a596a181e7b747758221c8042679', '2c7adefbb565a6d1a99269839d3a93f89ec123a0d156cf8e19753ce7ccc0de00'), 'revoke_fixture_negative_v3_review_stopped.sql.txt': ('b0fb6feb4c3913091a6f705459bae129cd9b06923e85ff19fcf93614d75c75e3', 'd2b9d411824c7e5a7a48fc0f5525df8abe9d0073a19bd588ffee4e178575fc20'), 'revoke_fixture_positive_v3_review_stopped.sql.txt': ('cdce6814db69af24d04345673f0743a257d225e4681702495ae9539f1bd37465', 'e4b454098c4cd8b537ac850379d2f7b83f5f5dabfef240c469c1a8f659073343'), 'revoke_truncate_candidate_review_stopped.sql.txt': ('3372910f839d556a35d81dfd6ababe8c73438e52636d7fe8c491835528f1dfb6', '4907ee4aeead6af86ead8756c2841092c55b4436842ad4ad1629cc63478856d8')}
-MIGRATION_SHA = '4907ee4aeead6af86ead8756c2841092c55b4436842ad4ad1629cc63478856d8'
+FIXED = {'fixture_setup.sql.txt': ('d0635f7b249e26e93b3f2c2775b249e332653681e00698780f72a742affbb92d', 'a21c5b5825108b9439751b56fe099a40365e50a8019349397df7d44ef1cdf1f5'), 'revoke_fixture_setup_v5_review_stopped.sql.txt': ('f2742dd2ec380e9dfba2133e9c9f63a5d6f9a596a181e7b747758221c8042679', '2c7adefbb565a6d1a99269839d3a93f89ec123a0d156cf8e19753ce7ccc0de00'), 'revoke_fixture_negative_v3_review_stopped.sql.txt': ('b0fb6feb4c3913091a6f705459bae129cd9b06923e85ff19fcf93614d75c75e3', 'd2b9d411824c7e5a7a48fc0f5525df8abe9d0073a19bd588ffee4e178575fc20'), 'revoke_fixture_positive_v3_review_stopped.sql.txt': ('cdce6814db69af24d04345673f0743a257d225e4681702495ae9539f1bd37465', 'e4b454098c4cd8b537ac850379d2f7b83f5f5dabfef240c469c1a8f659073343'), 'revoke_truncate_candidate_review_stopped.sql.txt': ('1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f', '24e38d3b06d1aeb5d5fd6bfea2bec64c303d4fdad9a45b51f0af980a48cf9db8')}
+MIGRATION_SHA = '24e38d3b06d1aeb5d5fd6bfea2bec64c303d4fdad9a45b51f0af980a48cf9db8'
+MATRIX_FILE = 'revoke_non_target_privilege_matrix_review_stopped.sql.txt'
+FIXED[MATRIX_FILE] = ('19428281a309c45eb4d7ba92577f984d6ab7caf36842f3ea47792f94fbe8cbf3',
+                      '79ef0658db6fecf9c3abe616954f185588f102fdfa1403a575709d91063d092e')
 
 def decode_stopped(data, expected_stopped, expected_original):
     if hashlib.sha256(data).hexdigest() != expected_stopped:
@@ -298,6 +301,62 @@ def revoke_checks(service, sources):
         raise RuntimeError('synthetic revoke positive verification absent')
 
 
+MATRIX_ORACLE_NEGATIVE = """savepoint codex_matrix_oracle;
+grant select on table public.asset_pref_mirror to anon;
+do $matrix_oracle$ begin
+ if pg_temp.codex_matrix_snapshot() is not distinct from (select snapshot from codex_matrix_before)
+ then raise exception 'matrix oracle failed to detect unrelated grant'; end if;
+end $matrix_oracle$;
+rollback to savepoint codex_matrix_oracle;
+do $matrix_oracle_restored$ begin
+ if pg_temp.codex_matrix_snapshot() is distinct from (select snapshot from codex_matrix_before)
+ then raise exception 'matrix oracle savepoint did not restore snapshot'; end if;
+end $matrix_oracle_restored$;"""
+MATRIX_PROFILES = {
+ 'anon_select_absent': ('revoke select on table public.asset_pref_mirror from anon;', "('anon','SELECT')", 'true', MATRIX_ORACLE_NEGATIVE),
+ 'authenticated_select_absent': ('revoke select on table public.asset_pref_mirror from authenticated;', "('authenticated','SELECT')", 'true', ''),
+ 'both_select_absent': ('revoke select on table public.asset_pref_mirror from anon, authenticated;', "('anon','SELECT'),('authenticated','SELECT')", 'true', ''),
+ 'mixed_absent': ('revoke select, insert on table public.asset_pref_mirror from anon; revoke update, delete on table public.asset_pref_mirror from authenticated;', "('anon','SELECT'),('anon','INSERT'),('authenticated','UPDATE'),('authenticated','DELETE')", 'true', ''),
+ 'truncate_preabsent': ('revoke truncate on table public.asset_pref_mirror from anon;', '(null,null)', 'false', ''),
+}
+
+
+def render_matrix(template, candidate, profile):
+    if profile not in MATRIX_PROFILES:
+        raise RuntimeError('unapproved synthetic matrix profile')
+    if hashlib.sha256(candidate.encode('utf-8')).hexdigest() != MIGRATION_SHA:
+        raise RuntimeError('matrix candidate does not match current migration')
+    setup, missing, expected_truncate, oracle = MATRIX_PROFILES[profile]
+    replacements = {
+      '-- MATRIX_PROFILE_SETUP': setup,
+      '-- MATRIX_EXPECTED_MISSING': missing,
+      '-- MATRIX_EXPECTED_ANON_TRUNCATE': expected_truncate,
+      '-- MATRIX_CURRENT_PR_MIGRATION': candidate,
+      '-- MATRIX_ORACLE_NEGATIVE': oracle,
+    }
+    for marker, value in replacements.items():
+        if template.count(marker) != 1 or marker in candidate:
+            raise RuntimeError('matrix placeholder missing, duplicated, or present in candidate')
+        template = template.replace(marker,value,1)
+    if '-- MATRIX_' in template or STOP.decode('utf-8') in template:
+        raise RuntimeError('unresolved matrix placeholder or STOP in executable copy')
+    return template
+
+
+def matrix_checks(service, sources):
+    template = sources[MATRIX_FILE]
+    candidate = sources['revoke_truncate_candidate_review_stopped.sql.txt']
+    for profile in MATRIX_PROFILES:
+        script = render_matrix(template,candidate,profile)
+        if service.sql(script).splitlines() != ['1','SYNTHETIC_NON_TARGET_MATRIX_VERIFIED']:
+            raise RuntimeError('matrix case result or rollback marker mismatch')
+        if 'SYNTHETIC_REVOKE_POSITIVE_VERIFIED' not in service.sql(sources['revoke_fixture_positive_v3_review_stopped.sql.txt']).splitlines():
+            raise RuntimeError('matrix case did not restore prior synthetic state')
+        print('SYNTHETIC_NON_TARGET_MATRIX_EVIDENCE '+json.dumps({'profile':profile,
+              'oracle_negative':profile=='anon_select_absent','route':'guarded psql',
+              'scope':'PG17 synthetic service; not Supabase CLI or production'},sort_keys=True),flush=True)
+
+
 def load_sources():
     result = {}
     stopped_setup = None
@@ -350,6 +409,7 @@ def main():
             service = Service(cid, 'sequential', label, docker, env, image, network)
             service.initialize(sources, stopped_setup)
             revoke_checks(service, sources)
+            matrix_checks(service, sources)
         finally:
             if service is not None: service.stop_owned()
         print('Synthetic revoke checks and service stop passed.')
@@ -489,6 +549,37 @@ class UnitTests(unittest.TestCase):
         verify_revoke_expected_failure(3,'1\n',expected)
         for code,out,err in ((0,'1',expected),(3,'',expected),(3,'1','ERROR: other\n')):
             with self.assertRaises(RuntimeError): verify_revoke_expected_failure(code,out,err)
+
+    def test_matrix_profiles_render_and_fail_closed(self):
+        sources,_ = load_sources()
+        template = sources[MATRIX_FILE]
+        candidate = sources['revoke_truncate_candidate_review_stopped.sql.txt']
+        self.assertEqual(tuple(MATRIX_PROFILES),('anon_select_absent','authenticated_select_absent',
+            'both_select_absent','mixed_absent','truncate_preabsent'))
+        for profile in MATRIX_PROFILES:
+            rendered = render_matrix(template,candidate,profile)
+            self.assertEqual(rendered.count(candidate),1)
+            self.assertNotIn('-- MATRIX_',rendered)
+            self.assertIn('begin;',rendered)
+            self.assertIn('rollback;',rendered)
+            self.assertEqual('savepoint codex_matrix_oracle;' in rendered,profile=='anon_select_absent')
+        with self.assertRaises(RuntimeError): render_matrix(template,candidate,'unknown')
+        with self.assertRaises(RuntimeError): render_matrix(template,candidate+' ', 'anon_select_absent')
+        with self.assertRaises(RuntimeError): render_matrix(template+'\n-- MATRIX_PROFILE_SETUP',candidate,'anon_select_absent')
+        class Fake:
+            def __init__(self, fail=None):self.calls=[];self.fail=fail
+            def sql(self,source):
+                self.calls.append(source)
+                if 'SYNTHETIC_NON_TARGET_MATRIX_VERIFIED' in source:
+                    return '1\n' if self.fail=='matrix_marker' else '1\nSYNTHETIC_NON_TARGET_MATRIX_VERIFIED\n'
+                return '1\n' if self.fail=='restore_marker' else '1\nSYNTHETIC_REVOKE_POSITIVE_VERIFIED\n'
+        good=Fake()
+        with contextlib.redirect_stdout(io.StringIO()): matrix_checks(good,sources)
+        self.assertEqual(len(good.calls),10)
+        for fault in ('matrix_marker','restore_marker'):
+            bad=Fake(fault)
+            with self.subTest(fault=fault),self.assertRaises(RuntimeError),contextlib.redirect_stdout(io.StringIO()):matrix_checks(bad,sources)
+            self.assertLessEqual(len(bad.calls),2)
 
     def test_sequential_failure_stops_following_steps(self):
         class Fake:
