@@ -1,516 +1,109 @@
-name: Cloud Development Checks
-
+# SYNTHETIC DIAGNOSTIC ONLY. Independent review required before dispatch.
+name: Salary CLI atomic batch fixture (diagnostic only)
 on:
-  pull_request:
-    paths:
-      - .agents/skills/site-trust-improvement-loop/**
-      - lib/models/savings_life_plan.dart
-      - lib/services/savings_life_plan_service.dart
-      - lib/services/savings_life_plan_store.dart
-      - lib/services/savings_plan_proposal_service.dart
-      - test/services/savings_plan_proposal_service_test.dart
-      - lib/widgets/savings_life_plan_card.dart
-      - test/services/savings_life_plan_service_test.dart
-      - test/services/savings_life_plan_store_test.dart
-      - test/widgets/savings_life_plan_card_test.dart
-      - test/fixtures/savings_life_plan_app.dart
-      - test/e2e/savings_life_plan.spec.ts
-      - lib/models/asset_balance_observation.dart
-      - lib/widgets/asset_balance_history_control.dart
-      - test/models/asset_balance_observation_test.dart
-      - test/widgets/asset_balance_history_control_test.dart
-      - test/fixtures/asset_balance_history_app.dart
-      - test/e2e/asset_balance_history.spec.ts
-      - .devcontainer/**
-      - .github/workflows/cloud-development.yml
-      - lib/widgets/slide_number_check_card.dart
-      - lib/services/slide_number_check.dart
-      - test/fixtures/slide_number_check_app.dart
-      - test/e2e/slide_number_check.spec.ts
-      - lib/pages/ai_search_page.dart
-      - test/pages/ai_search_page_test.dart
-      - test/fixtures/ai_search_app.dart
-      - test/e2e/ai_search_pending.spec.ts
-      - lib/models/platform_release_checklist.dart
-      - lib/pages/platform_release_checklist_page.dart
-      - test/e2e/platform_release_checklist.spec.ts
-      - scripts/cloud_ci_handoff.py
-      - scripts/cloud_ci_handoff_test.py
-      - scripts/cloud_first_route.py
-      - scripts/cloud_first_route_test.py
-      - scripts/serve_spa.py
-      - docs/CLOUD_FIRST_DEVELOPMENT.md
-      - docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md
-      - docs/CLAUDE_CODE_SETUP_RUNBOOK.md
-      - AGENTS.md
   workflow_dispatch:
     inputs:
       expected_head_sha:
-        description: Exact 40-character pushed HEAD that this run must validate
+        description: Exact diagnostic commit
         required: true
         type: string
       profile:
-        description: Cloud validation profile
+        description: Diagnostic profile
         required: true
-        default: full
         type: choice
-        options:
-          - workspace
-          - format
-          - analyze
-          - test
-          - web-build
-          - full
-  workflow_call:
-    inputs:
-      expected_head_sha:
-        description: Optional exact HEAD assertion for reusable callers
-        required: false
-        default: ''
-        type: string
-      profile:
-        description: Cloud validation profile
-        required: false
-        default: full
-        type: string
-
+        options: [test, analyze]
 permissions: {}
-
-concurrency:
-  group: cloud-development-${{ github.ref }}-${{ inputs.profile || 'full' }}
-  cancel-in-progress: true
-
 jobs:
-  validate:
-    name: ${{ inputs.profile || 'full' }} on GitHub runner
+  synthetic-cli:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 10
     permissions:
       contents: read
-    env:
-      CLOUD_PROFILE: ${{ inputs.profile || 'full' }}
-      EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha || '' }}
-
-    steps:
-      - name: Checkout shallow source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 1
-
-      - name: Verify exact cloud handoff SHA
-        if: env.EXPECTED_HEAD_SHA != ''
-        shell: bash
-        run: |
-          set -euo pipefail
-          actual_head_sha="$(git rev-parse HEAD)"
-          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "::error::expected_head_sha must be a lowercase 40-character Git SHA."
-            exit 1
-          fi
-          if [ "$actual_head_sha" != "$EXPECTED_HEAD_SHA" ]; then
-            echo "::error::Cloud handoff mismatch: expected $EXPECTED_HEAD_SHA, checked out $actual_head_sha."
-            exit 1
-          fi
-          echo "Verified exact cloud handoff SHA: $actual_head_sha"
-
-      - name: Validate cloud workspace descriptors
-        shell: bash
-        run: |
-          python -m json.tool .devcontainer/devcontainer.json > /dev/null
-          python -m json.tool .devcontainer/flutter-local/devcontainer.json > /dev/null
-
-      - name: Set up repository-pinned Flutter SDK
-        if: env.CLOUD_PROFILE != 'workspace'
-        uses: ./.github/actions/setup-flutter-sdk
-        with:
-          flutter-version: '3.38.x'
-
-      - name: Resolve dependencies in cloud
-        if: env.CLOUD_PROFILE != 'workspace'
-        run: flutter pub get
-
-      - name: Format changed Dart files in cloud
-        id: format
-        if: env.CLOUD_PROFILE == 'format'
-        shell: bash
+    services:
+      postgres:
+        image: postgres@sha256:3b0cda93be7c8dba2ed484d19393d93845dc3dafb88973e248ba8e6d99d784e1
         env:
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          POSTGRES_DB: salary_identity_isolated
+          POSTGRES_PASSWORD: test-only
+        options: >-
+          --health-cmd "pg_isready -h /var/run/postgresql -U postgres -d salary_identity_isolated"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Verify inputs and exact job-owned service
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_head_sha }}
+          ACTUAL_SHA: ${{ github.sha }}
+          SERVICE_ID: ${{ job.services.postgres.id }}
         run: |
-          git fetch --no-tags --depth=1 origin "${DEFAULT_BRANCH}"
-          mapfile -t files < <(
-            git diff --name-only --diff-filter=ACMR \
-              "origin/${DEFAULT_BRANCH}" HEAD -- '*.dart' \
-              | while IFS= read -r file; do
-                  [ -f "$file" ] && printf '%s\n' "$file"
-                done
-          )
-          if [ "${#files[@]}" -eq 0 ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No changed Dart files were found."
-            exit 0
+          set -euo pipefail
+          test "$ACTUAL_SHA" = "$EXPECTED_SHA"
+          [[ "$SERVICE_ID" =~ ^[0-9a-f]{64}$ ]]
+          image="$(docker inspect --format '{{.Config.Image}}' "$SERVICE_ID")"
+          test "$image" = 'postgres@sha256:3b0cda93be7c8dba2ed484d19393d93845dc3dafb88973e248ba8e6d99d784e1'
+          cd diagnostics/salary_cli
+          test "$(find . -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" = '7'
+          test "$(find . -mindepth 1 -maxdepth 1 -type f | wc -l | tr -d ' ')" = '7'
+          printf '%s\n' '0dd0d961b9426bfeb2e03876df8f601dd8f5758aede580909510e47c1f0b1272  08_candidate.sql' 'a30f9b2c16b64f960d188031dd61f897c4e6a7309d74ca850596663583ddf56f  04_fixture.sql' '2bb9875224dac72e1f590385c03ded4919c4e7e9209fb8ce33f85d1d9a6597b2  05_guard.sql' '2734d6ff2081d03a972f432da464423c8da2c26e8730b6eef02960415a94fe76  06_observe.sql' 'fe235a81a279e03833d309d41c660b6e7b0c9bf2bbf9c48c10bbdfc2ff88eda0  09_audit.sql' '7c1dbb949a0462b397eda91795f24fcfe6d62c7aac5bcf3d3b0923ce19eac212  10_control.sql' '69d21042db2d1ec6f92b12a6b4ee580fdb2984eaf3e48fa144d22fa0008a7826  11_audit_observe.sql' | sha256sum -c -
+      - name: Obtain and verify fixed official CLI
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 -fsSL 'https://github.com/supabase/cli/releases/download/v2.84.2/supabase_linux_amd64.tar.gz' -o "$RUNNER_TEMP/salary-cli.tar.gz"
+          printf '%s\n' '620a5f6ea7b60f9b4fe112a5d72464ea0e53d04022035641674a2e6d121e0eb5  '"$RUNNER_TEMP"'/salary-cli.tar.gz' | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/salary-cli"
+          tar -xzf "$RUNNER_TEMP/salary-cli.tar.gz" -C "$RUNNER_TEMP/salary-cli" supabase
+          test -f "$RUNNER_TEMP/salary-cli/supabase"
+      - name: Run isolated guarded failure injection and observe
+        env:
+          SERVICE_ID: ${{ job.services.postgres.id }}
+          CASE_PROFILE: ${{ inputs.profile }}
+        run: |
+          set -euo pipefail
+          [[ "$SERVICE_ID" =~ ^[0-9a-f]{64}$ ]]
+          case "$CASE_PROFILE" in test|analyze) ;; *) exit 1 ;; esac
+          test "$(docker inspect --format '{{.Config.Image}}' "$SERVICE_ID")" = 'postgres@sha256:3b0cda93be7c8dba2ed484d19393d93845dc3dafb88973e248ba8e6d99d784e1'
+          docker exec -u postgres "$SERVICE_ID" mkdir /tmp/salary-cli-lab
+          docker exec -u postgres "$SERVICE_ID" mkdir -p /tmp/salary-cli-lab/home /tmp/salary-cli-lab/files /tmp/salary-cli-lab/bin
+          docker cp "$RUNNER_TEMP/salary-cli/supabase" "$SERVICE_ID:/tmp/salary-cli-lab/bin/supabase"
+          docker cp diagnostics/salary_cli/. "$SERVICE_ID:/tmp/salary-cli-lab/files/"
+          source_hash="$(sha256sum "$RUNNER_TEMP/salary-cli/supabase" | cut -d ' ' -f1)"
+          copied_hash="$(docker exec -u postgres "$SERVICE_ID" sha256sum /tmp/salary-cli-lab/bin/supabase | cut -d ' ' -f1)"
+          test "$source_hash" = "$copied_hash"
+          docker exec -u postgres "$SERVICE_ID" sh -c 'cd /tmp/salary-cli-lab/files && printf "%s\n" "0dd0d961b9426bfeb2e03876df8f601dd8f5758aede580909510e47c1f0b1272  08_candidate.sql" "a30f9b2c16b64f960d188031dd61f897c4e6a7309d74ca850596663583ddf56f  04_fixture.sql" "2bb9875224dac72e1f590385c03ded4919c4e7e9209fb8ce33f85d1d9a6597b2  05_guard.sql" "2734d6ff2081d03a972f432da464423c8da2c26e8730b6eef02960415a94fe76  06_observe.sql" "fe235a81a279e03833d309d41c660b6e7b0c9bf2bbf9c48c10bbdfc2ff88eda0  09_audit.sql" "7c1dbb949a0462b397eda91795f24fcfe6d62c7aac5bcf3d3b0923ce19eac212  10_control.sql" "69d21042db2d1ec6f92b12a6b4ee580fdb2984eaf3e48fa144d22fa0008a7826  11_audit_observe.sql" | sha256sum -c -'
+          docker exec -u postgres "$SERVICE_ID" /usr/bin/env -i HOME=/tmp/salary-cli-lab/home PATH=/usr/local/bin:/usr/bin:/bin /tmp/salary-cli-lab/bin/supabase --version | grep -Fx '2.84.2'
+          docker exec -u postgres "$SERVICE_ID" /usr/bin/env -i HOME=/tmp/salary-cli-lab/home PATH=/usr/local/bin:/usr/bin:/bin /tmp/salary-cli-lab/bin/supabase init --yes --workdir /tmp/salary-cli-lab
+          docker exec -u postgres "$SERVICE_ID" mkdir -p /tmp/salary-cli-lab/supabase/migrations
+          docker exec -u postgres "$SERVICE_ID" cp /tmp/salary-cli-lab/files/08_candidate.sql /tmp/salary-cli-lab/supabase/migrations/20261104000001_identity.sql
+          docker exec -u postgres "$SERVICE_ID" sh -c 'printf "%s\n" "0dd0d961b9426bfeb2e03876df8f601dd8f5758aede580909510e47c1f0b1272  /tmp/salary-cli-lab/supabase/migrations/20261104000001_identity.sql" | sha256sum -c -'
+          docker exec -u postgres -e PGOPTIONS='-c salary_test.isolated=disposable-pg17-only' "$SERVICE_ID" psql -X -v ON_ERROR_STOP=1 -h /var/run/postgresql -U postgres -d salary_identity_isolated -f /tmp/salary-cli-lab/files/04_fixture.sql
+          docker exec -u postgres -e PGOPTIONS='-c salary_test.isolated=disposable-pg17-only' -e PGPASSWORD=test-only -e PGSSLMODE=disable "$SERVICE_ID" psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d salary_identity_isolated -f /tmp/salary-cli-lab/files/05_guard.sql
+          docker exec -u postgres -e PGPASSWORD=test-only -e PGSSLMODE=disable "$SERVICE_ID" psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d salary_identity_isolated -f /tmp/salary-cli-lab/files/09_audit.sql
+          if [ "$CASE_PROFILE" = analyze ]; then
+            docker exec -u postgres -e PGPASSWORD=test-only -e PGSSLMODE=disable "$SERVICE_ID" psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d salary_identity_isolated -f /tmp/salary-cli-lab/files/10_control.sql
           fi
-
-          dart format "${files[@]}"
-          if git diff --quiet -- "${files[@]}"; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "The changed Dart files already match the pinned formatter."
-            exit 0
+          query() { docker exec -u postgres -e PGPASSWORD=test-only -e PGSSLMODE=disable "$SERVICE_ID" psql -X -v ON_ERROR_STOP=1 -qAt -h 127.0.0.1 -U postgres -d salary_identity_isolated -c "$1"; }
+          baseline="$(query 'SELECT coalesce(max(sequence), 0) FROM supabase_migrations.fixture_ddl_audit')"
+          [[ "$baseline" =~ ^[0-9]+$ ]]
+          echo "synthetic audit baseline=$baseline profile=$CASE_PROFILE"
+          set +e
+          docker exec -u postgres "$SERVICE_ID" /usr/bin/env -i HOME=/tmp/salary-cli-lab/home PATH=/usr/local/bin:/usr/bin:/bin PGSSLMODE=disable /tmp/salary-cli-lab/bin/supabase db push --yes --workdir /tmp/salary-cli-lab --db-url 'postgresql://postgres:test-only@127.0.0.1:5432/salary_identity_isolated?sslmode=disable' > "$RUNNER_TEMP/salary-cli-result.log" 2>&1
+          cli_status=$?
+          set -e
+          cat "$RUNNER_TEMP/salary-cli-result.log"
+          docker exec -u postgres -e PGPASSWORD=test-only -e PGSSLMODE=disable "$SERVICE_ID" psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d salary_identity_isolated -f /tmp/salary-cli-lab/files/06_observe.sql
+          docker exec -u postgres -e PGPASSWORD=test-only -e PGSSLMODE=disable "$SERVICE_ID" psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d salary_identity_isolated -f /tmp/salary-cli-lab/files/11_audit_observe.sql
+          state="$(query "SELECT (to_regclass('public.asset_balance_accounts') IS NOT NULL)::int || ',' || (EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version='20261104000001'))::int")"
+          echo "synthetic table,history=$state"
+          if [ "$CASE_PROFILE" = test ]; then
+            test "$cli_status" -ne 0
+            grep -F 'synthetic_history_insert_rejected_20261104000001' "$RUNNER_TEMP/salary-cli-result.log"
+            test "$state" = '0,0'
+          else
+            test "$cli_status" -eq 0
+            test "$state" = '1,1'
+            audit="$(query "SELECT count(*) || ',' || count(*) FILTER (WHERE lock_timeout_value='3s' AND statement_timeout_value='30s') FROM supabase_migrations.fixture_ddl_audit WHERE sequence > $baseline AND command_tag='CREATE POLICY'")"
+            echo "synthetic candidate-policy events,total-and-expected-timeouts=$audit"
+            test "$audit" = '4,4'
           fi
-
-          mkdir -p cloud-format-output/files
-          git diff --binary -- "${files[@]}" > cloud-format-output/cloud-format.patch
-          printf '%s\n' "${files[@]}" > cloud-format-output/manifest.txt
-          for file in "${files[@]}"; do
-            mkdir -p "cloud-format-output/files/$(dirname "$file")"
-            cp "$file" "cloud-format-output/files/$file"
-          done
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-
-      - name: Preserve formatter output briefly
-        if: steps.format.outputs.changed == 'true'
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: cloud-format-${{ github.run_id }}
-          path: cloud-format-output
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Analyze in cloud
-        if: env.CLOUD_PROFILE == 'analyze' || env.CLOUD_PROFILE == 'full'
-        run: flutter analyze
-
-      - name: Test in cloud
-        if: env.CLOUD_PROFILE == 'test' || env.CLOUD_PROFILE == 'full'
-        run: flutter test --concurrency=2
-
-      - name: Build Flutter Web in cloud
-        id: web_build
-        if: env.CLOUD_PROFILE == 'web-build' || env.CLOUD_PROFILE == 'full'
-        run: flutter build web --release --pwa-strategy=none
-
-      - name: Package verified Sea Shelter 3D assets
-        if: env.CLOUD_PROFILE == 'web-build' || env.CLOUD_PROFILE == 'full'
-        uses: ./.github/actions/prepare-sea-shelter-arena
-        with:
-          web-root: build/web
-
-      - name: Preserve web build briefly
-        if: steps.web_build.outcome == 'success'
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: cloud-web-build-${{ github.run_id }}
-          path: build/web
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Cloud execution summary
-        if: always()
-        shell: bash
-        run: |
-          {
-            echo '## Cloud Development Checks'
-            echo ''
-            echo '| Item | Value |'
-            echo '| --- | --- |'
-            echo "| profile | \`${CLOUD_PROFILE}\` |"
-            echo "| ref | \`${GITHUB_REF}\` |"
-            echo "| commit | \`${GITHUB_SHA}\` |"
-            echo "| expected commit | \`${EXPECTED_HEAD_SHA:-event SHA}\` |"
-            echo '| local Flutter/Dart work | none |'
-            echo '| artifact retention | 1 day when a web build or formatter output runs |'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-  platform-release-checklist-e2e:
-    name: Platform release checklist E2E
-    if: github.event_name == 'pull_request' || inputs.profile == 'full'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Set up repository-pinned Flutter SDK
-        uses: ./.github/actions/setup-flutter-sdk
-        with:
-          flutter-version: '3.38.x'
-
-      - name: Resolve dependencies and build Flutter Web
-        run: |
-          flutter pub get
-          flutter build web --release --pwa-strategy=none \
-            --dart-define=ENVIRONMENT=visual-test \
-            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
-            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
-
-      - name: Set up Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: '22'
-          cache: npm
-
-      - name: Install Playwright Chromium
-        run: |
-          npm ci
-          npx playwright install --with-deps chromium
-
-      - name: Run platform release checklist E2E
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/serve_spa.py build/web --port 7358 > checklist-server.log 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" || true' EXIT
-          for _ in {1..20}; do
-            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
-            sleep 1
-          done
-          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/platform_release_checklist.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
-
-      - name: Upload checklist E2E report
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: platform-release-checklist-e2e-${{ github.run_id }}
-          path: |
-            playwright-report/
-            test-results/
-            checklist-server.log
-          if-no-files-found: ignore
-
-  ai-search-pending-e2e:
-    name: Note search pending E2E
-    if: github.event_name == 'pull_request' || inputs.profile == 'full'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Set up repository-pinned Flutter SDK
-        uses: ./.github/actions/setup-flutter-sdk
-        with:
-          flutter-version: '3.38.x'
-
-      - name: Resolve dependencies and build Flutter Web
-        run: |
-          flutter pub get
-          flutter build web --release --pwa-strategy=none --target=test/fixtures/ai_search_app.dart \
-            --dart-define=ENVIRONMENT=visual-test \
-            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
-            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
-
-      - name: Set up Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: '22'
-          cache: npm
-
-      - name: Install Playwright Chromium
-        run: |
-          npm ci
-          npx playwright install --with-deps chromium
-
-      - name: Run note search pending E2E
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/serve_spa.py build/web --port 7358 > search-server.log 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" || true' EXIT
-          for _ in {1..20}; do
-            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
-            sleep 1
-          done
-          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/ai_search_pending.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
-
-      - name: Upload note search E2E report
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: ai-search-pending-e2e-${{ github.run_id }}
-          path: |
-            playwright-report/
-            test-results/
-            search-server.log
-          if-no-files-found: ignore
-
-  slide-number-check-e2e:
-    name: Slide number check E2E
-    if: github.event_name == 'pull_request' || inputs.profile == 'full'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Set up repository-pinned Flutter SDK
-        uses: ./.github/actions/setup-flutter-sdk
-        with:
-          flutter-version: '3.38.x'
-
-      - name: Resolve dependencies and build Flutter Web
-        run: |
-          flutter pub get
-          flutter build web --release --pwa-strategy=none --target=test/fixtures/slide_number_check_app.dart \
-            --dart-define=ENVIRONMENT=visual-test \
-            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
-            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
-
-      - name: Set up Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: '22'
-          cache: npm
-
-      - name: Install Playwright Chromium
-        run: |
-          npm ci
-          npx playwright install --with-deps chromium
-
-      - name: Run note search pending E2E
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/serve_spa.py build/web --port 7358 > search-server.log 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" || true' EXIT
-          for _ in {1..20}; do
-            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
-            sleep 1
-          done
-          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/slide_number_check.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
-
-      - name: Upload note search E2E report
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: slide-number-check-e2e-${{ github.run_id }}
-          path: |
-            playwright-report/
-            test-results/
-            search-server.log
-          if-no-files-found: ignore
-
-  asset-balance-history-e2e:
-    name: Balance timestamp and history E2E
-    if: github.event_name == 'pull_request' || inputs.profile == 'full'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Set up repository-pinned Flutter SDK
-        uses: ./.github/actions/setup-flutter-sdk
-        with:
-          flutter-version: '3.38.x'
-
-      - name: Resolve dependencies and build Flutter Web
-        run: |
-          flutter pub get
-          flutter build web --release --pwa-strategy=none --target=test/fixtures/asset_balance_history_app.dart \
-            --dart-define=ENVIRONMENT=visual-test \
-            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
-            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
-
-      - name: Set up Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: '22'
-          cache: npm
-
-      - name: Install Playwright Chromium
-        run: |
-          npm ci
-          npx playwright install --with-deps chromium
-
-      - name: Run balance history pending E2E
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/serve_spa.py build/web --port 7358 > history-server.log 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" || true' EXIT
-          for _ in {1..20}; do
-            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
-            sleep 1
-          done
-          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/asset_balance_history.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
-
-      - name: Upload balance history E2E report
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: asset-balance-history-e2e-${{ github.run_id }}
-          path: |
-            playwright-report/
-            test-results/
-            history-server.log
-          if-no-files-found: ignore
-
-  savings-life-plan-e2e:
-    name: Savings and daily life plan E2E
-    if: github.event_name == 'pull_request' || inputs.profile == 'full'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Set up repository-pinned Flutter SDK
-        uses: ./.github/actions/setup-flutter-sdk
-        with:
-          flutter-version: '3.38.x'
-
-      - name: Resolve dependencies and build Flutter Web
-        run: |
-          flutter pub get
-          flutter build web --release --pwa-strategy=none --target=test/fixtures/savings_life_plan_app.dart \
-            --dart-define=ENVIRONMENT=visual-test \
-            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
-            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
-
-      - name: Set up Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: '22'
-          cache: npm
-
-      - name: Install Playwright Chromium
-        run: |
-          npm ci
-          npx playwright install --with-deps chromium
-
-      - name: Run savings life plan pending E2E
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/serve_spa.py build/web --port 7359 > savings-server.log 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" || true' EXIT
-          for _ in {1..20}; do
-            if curl --fail --silent http://127.0.0.1:7359/ > /dev/null; then break; fi
-            sleep 1
-          done
-          E2E_BASE_URL=http://127.0.0.1:7359 npx playwright test test/e2e/savings_life_plan.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
-
-      - name: Upload savings life plan E2E report
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: savings-life-plan-e2e-${{ github.run_id }}
-          path: |
-            playwright-report/
-            test-results/
-            savings-server.log
-          if-no-files-found: ignore
