@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../models/typing_game.dart';
+import '../services/typing_composition_bridge_stub.dart'
+    if (dart.library.js_interop) '../services/typing_composition_bridge_web.dart';
 
 class TypingGamePage extends StatefulWidget {
   const TypingGamePage({super.key});
@@ -26,12 +28,40 @@ class _TypingGamePageState extends State<TypingGamePage> {
   TypingMode _selectedMode = TypingMode.challenge;
   bool _reviewPractice = false;
   bool _english = false;
+  late final TypingCompositionBridge _composition;
 
   String _t(String japanese, String english) => _english ? english : japanese;
+
+  @override
+  void initState() {
+    super.initState();
+    _composition = TypingCompositionBridge(
+      ownsInput: () => mounted && _game.running && _focus.hasFocus,
+      onCommitted: _commitBrowserComposition,
+    );
+  }
+
+  void _commitBrowserComposition() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_game.running || _composition.isComposing) return;
+      final text = _composition.takePending();
+      if (text == null) return;
+      final next = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+      _input.value = _format(
+        next.copyWith(composing: TextRange(start: 0, end: text.length)),
+        next,
+      );
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
 
   void _start({List<TypingPrompt>? review}) {
     _timer?.cancel();
     setState(() {
+      _composition.reset();
       if (review != null) _selectedMode = TypingMode.practice;
       _reviewPractice = review != null;
       _announceFeedback = false;
@@ -57,6 +87,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
 
   void _settle() {
     if (_game.finished) {
+      _composition.reset();
       _clock.stop();
       _timer?.cancel();
       if (_game.mode == TypingMode.challenge && _game.score > _bestChallenge) {
@@ -80,7 +111,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
   TextEditingValue _format(TextEditingValue old, TextEditingValue next) {
     setState(_tick);
     // Never rewrite a live IME candidate. The OS may restore it indefinitely.
-    if (!next.composing.isCollapsed) {
+    if (!next.composing.isCollapsed || _composition.isComposing) {
       setState(() {
         _inputFeedback(
           '変換中です。英語キーボードでローマ字を確定してください。確定後に採点します。',
@@ -91,14 +122,17 @@ class _TypingGamePageState extends State<TypingGamePage> {
     }
     if (!_game.running) return next;
     final prefix = _game.prefix;
-    final composed = old.composing.isValid && !old.composing.isCollapsed;
+    final browserCandidate = _composition.consume(next.text);
+    final composed = browserCandidate != null ||
+        (old.composing.isValid && !old.composing.isCollapsed);
     var text = next.text;
     var compositionCommit = false;
     if (composed) {
       // Some soft keyboards append one space when confirming a candidate.
-      final candidate = old.text.endsWith(' ')
-          ? old.text.substring(0, old.text.length - 1)
-          : old.text;
+      final composingText = browserCandidate ?? old.text;
+      final candidate = composingText.endsWith(' ')
+          ? composingText.substring(0, composingText.length - 1)
+          : composingText;
       if (text == candidate || text == '$candidate ') {
         text = candidate;
         compositionCommit = true;
@@ -191,6 +225,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
   void dispose() {
     _timer?.cancel();
     _clock.stop();
+    _composition.dispose();
     _input.dispose();
     _focus.dispose();
     _controlsFocus.dispose();
@@ -484,7 +519,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
                           controller: _input,
                           focusNode: _focus,
                           onTap: () {
-                            if (!_input.value.composing.isCollapsed) return;
+                            if (!_input.value.composing.isCollapsed || _composition.isComposing) return;
                             _input.selection = TextSelection.collapsed(
                               offset: _input.text.length,
                             );
