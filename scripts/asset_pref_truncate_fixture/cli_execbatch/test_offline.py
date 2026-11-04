@@ -585,7 +585,7 @@ def run():
                       'inheritance_parent':'P0001 inheritance or partition relationship requires separate review',
                       'inheritance_child':'P0001 inheritance or partition relationship requires separate review',
                       'partition_parent':'P0001 ordinary target table required',
-                      'lock_conflict':'55P03 could not obtain lock on relation "asset_pref_mirror"'}[self.outcome]
+                      'lock_conflict':'55P03 could not obtain lock on relation "public.asset_pref_mirror"'}[self.outcome]
             return types.SimpleNamespace(returncode=0 if self.outcome=='success' else 1,
                                          stdout=output.encode(),stderr=b'')
         def logs(self):
@@ -595,7 +595,7 @@ def run():
                        'inheritance_parent':'inheritance or partition relationship requires separate review',
                        'inheritance_child':'inheritance or partition relationship requires separate review',
                        'partition_parent':'ordinary target table required',
-                       'lock_conflict':'could not obtain lock on relation "asset_pref_mirror"'}[self.outcome]
+                       'lock_conflict':'could not obtain lock on relation "public.asset_pref_mirror"'}[self.outcome]
             error = '' if not failure else '[140] ERROR:  ' + ('55P03' if self.outcome=='lock_conflict' else 'P0001') + ': ' + failure + '\n'
             statement = '[140] STATEMENT:  INSERT INTO supabase_migrations.schema_migrations\n' if self.outcome == 'history_failure' else ''
             return ('\n'.join(e['fatal_line'] for e in self.verified_negative_fatals)+'\n'
@@ -687,6 +687,20 @@ def run():
     orig_logs=wrong_error.logs
     wrong_error.logs=lambda:orig_logs().replace('[140] ERROR:  55P03:', '[141] ERROR:  55P03:')
     assert_case_rejected(wrong_error,'locked_single_do','lock_conflict')
+    for incorrect in ('asset_pref_mirror','private.asset_pref_mirror'):
+        for corrupted in ('cli','server'):
+            candidate=SimulatedService('locked_single_do','lock_conflict')
+            if corrupted == 'cli':
+                cli=candidate.cli_push
+                def broken_cli(cli=cli,incorrect=incorrect):
+                    result=cli()
+                    result.stdout=result.stdout.replace(b'public.asset_pref_mirror',incorrect.encode())
+                    return result
+                candidate.cli_push=broken_cli
+            else:
+                logs=candidate.logs
+                candidate.logs=lambda logs=logs,incorrect=incorrect:logs().replace('public.asset_pref_mirror',incorrect)
+            assert_case_rejected(candidate,'locked_single_do','lock_conflict')
     holder=m['OwnedService'](['/fake/docker'],{},image,'123-1')
     holder.cid='a'*64;holder.nonce='b'*32;holder.token='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
     holder.verified=True;holder.inspect=lambda **kwargs:None

@@ -980,7 +980,7 @@ def run_case(service, mode, outcome, binary, migration):
             raise RuntimeError('success control failed: ' + output)
     else:
         marker = ('SYNTHETIC_HISTORY_FAILURE' if outcome == 'history_failure' else
-                  'could not obtain lock on relation "asset_pref_mirror"' if outcome == 'lock_conflict' else
+                  'could not obtain lock on relation "public.asset_pref_mirror"' if outcome == 'lock_conflict' else
                   'ordinary target table required' if outcome == 'partition_parent' else
                   'inheritance or partition relationship requires separate review')
         state = '55P03' if outcome == 'lock_conflict' else 'P0001'

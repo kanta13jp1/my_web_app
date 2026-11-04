@@ -29,11 +29,10 @@ jobs:
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD 8e3b2bafd3f8dd56b76944756a45d5bd240274ec"
+          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD 34360c83dd8f35d193f6e59043e8b9b11ef6bb9c"
           git diff --no-renames --name-only HEAD^ HEAD | LC_ALL=C sort > "$RUNNER_TEMP/actual-files"
           LC_ALL=C sort > "$RUNNER_TEMP/expected-files" <<'FIXED_FILES'
           .github/workflows/cloud-development.yml
-          scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_single_do_lock_review_stopped.sql.txt
           scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
           scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
           FIXED_FILES
@@ -44,8 +43,8 @@ jobs:
           3372910f839d556a35d81dfd6ababe8c73438e52636d7fe8c491835528f1dfb6  scripts/asset_pref_truncate_fixture/cli_execbatch/revoke_truncate_candidate_review_stopped.sql.txt
           1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_pr_do_without_boundaries_review_stopped.sql.txt
           ee18141eb1390ce6446ffe3696f677495f809606e144ff9164faf62d03db5f19  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_single_do_lock_review_stopped.sql.txt
-          6536b919c5da884e47c920d1abed45b2908098b38e0ed19e8721cbde6750a676  scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
-          61563be333dc9e081ea6346cbcc46985a1fcf7cbcf5e0d24d1ca9b72408c2a02  scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
+          e6608a9faecfb84fa4ced6a8185a89a5f56bff024f6180f561cb288eef52691d  scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
+          edeefe8fe778a84b1df60a5ccf107ba2142360743148db3d4a8db65deb5e3f31  scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
           24e38d3b06d1aeb5d5fd6bfea2bec64c303d4fdad9a45b51f0af980a48cf9db8  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
           1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
           FIXED_HASHES
