@@ -46,6 +46,17 @@ class _TypingGamePageState extends State<TypingGamePage> {
       if (!mounted || !_game.running || _composition.isComposing) return;
       final text = _composition.takePending();
       if (text == null) return;
+      if (text == _game.prefix) {
+        setState(() {
+          _inputFeedback(
+            '入力を続けられます。',
+            'Continue typing when ready.',
+            announce: false,
+          );
+        });
+        _input.value = _canonicalInput();
+        return;
+      }
       final next = TextEditingValue(
         text: text,
         selection: TextSelection.collapsed(offset: text.length),

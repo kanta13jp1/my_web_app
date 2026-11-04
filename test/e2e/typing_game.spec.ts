@@ -119,6 +119,11 @@ test('Enter starts ready for typing and browser IME commits score once', async (
   await cdp.send('Input.insertText', { text: suffix });
   await expect(page.getByText('クリア 1問', { exact: true })).toBeVisible();
   await expect(page.getByText(`スコア ${spelling.length * 10 + 50}`, { exact: true })).toBeVisible();
+  await cdp.send('Input.imeSetComposition', { text: 'q', selectionStart: 1, selectionEnd: 1 });
+  await cdp.send('Input.imeSetComposition', { text: '', selectionStart: 0, selectionEnd: 0 });
+  await expect(page.getByRole('textbox', { name: /^ローマ字入力/ })).toHaveValue('');
+  await expect(page.getByText('正確さ 100.0%', { exact: true })).toBeVisible();
+  await expect(page.locator('flt-semantics').getByText(/変換中です。英語キーボード/)).not.toBeVisible();
   await cdp.send('Input.imeSetComposition', { text: 'あ', selectionStart: 1, selectionEnd: 1 });
   await cdp.send('Input.insertText', { text: 'あ' });
   await expect(page.getByText('クリア 1問', { exact: true })).toBeVisible();
