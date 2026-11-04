@@ -1,4 +1,4 @@
-name: Isolated synthetic table GRANT error diagnosis
+name: Isolated synthetic membership before REVOKE observation
 # Unknown message hashes can be guessable: only the fixed network-none synthetic DB is permitted.
 on:
   workflow_dispatch:
@@ -30,14 +30,14 @@ jobs:
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD 946701ca3c224821d98c2f7ce984041c7d873c2b"
+          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD 4f1593e0cf15d078753f7bf7a096424f46ac58ac"
           git diff --no-renames --name-only HEAD^ HEAD | LC_ALL=C sort > "$RUNNER_TEMP/actual-files"
           LC_ALL=C sort > "$RUNNER_TEMP/expected-files" <<'FIXED_FILES'
           .github/workflows/cloud-development.yml
-          scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant.py
-          scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant_entry.py
-          scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_offline.py
-          scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_entry_offline.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before_entry.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_offline.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_entry_offline.py
           FIXED_FILES
           diff -u "$RUNNER_TEMP/expected-files" "$RUNNER_TEMP/actual-files"
           sha256sum -c <<'FIXED_HASHES'
@@ -61,6 +61,10 @@ jobs:
           b31f77716c29563fd69633d1b0fce0b2e517d32b43eb32b5cbf0099f49e361fc  scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_entry_offline.py
           24e38d3b06d1aeb5d5fd6bfea2bec64c303d4fdad9a45b51f0af980a48cf9db8  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
           1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
+          6aecae88dcd7e58ace633201da947e4038aa44693ba62eafd07ab7599f614263  scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before.py
+          a6142a6fdee3580bd627f44ea9dd7ce86876f01b02e94eaa2add45616d2e17f7  scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before_entry.py
+          afa93de8b333d3ede05f5a95789fa137cdf15141244f16c647fc19df3fd3ab91  scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_offline.py
+          2a3d973e05059c6771a4c606e034a972ffa6d233814de072ec67f5f87132cf8d  scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_entry_offline.py
           FIXED_HASHES
           pr=$(gh api repos/kanta13jp1/my_web_app/pulls/5980 --jq '[.state,.head.sha,.base.sha,.head.repo.full_name] | @tsv' 2>/dev/null)
           test "$pr" = $'open\t85394a8e938a7c4bda08e32dd4cfff9ede623e57\tf420ca99541125452407e974958e7704f1d5b429\tkanta13jp1/my_web_app'
@@ -71,6 +75,8 @@ jobs:
           python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_event_entry_offline.py
           python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_offline.py
           python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_entry_offline.py
+          python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_offline.py
+          python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_entry_offline.py
       - name: Obtain verified public binaries
         run: |
           set -euo pipefail
@@ -88,7 +94,7 @@ jobs:
           set -euo pipefail
           pr=$(gh api repos/kanta13jp1/my_web_app/pulls/5980 --jq '[.state,.head.sha,.base.sha,.head.repo.full_name] | @tsv' 2>/dev/null)
           test "$pr" = $'open\t85394a8e938a7c4bda08e32dd4cfff9ede623e57\tf420ca99541125452407e974958e7704f1d5b429\tkanta13jp1/my_web_app'
-          python3 -B -c 'import importlib.util,sys; p="scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant_entry.py"; s=importlib.util.spec_from_file_location("isolated_table_grant_entry",p); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); sys.exit(m.run_and_exit_code())'
+          python3 -B -c 'import importlib.util,sys; p="scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before_entry.py"; s=importlib.util.spec_from_file_location("isolated_membership_before_entry",p); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); sys.exit(m.run_and_exit_code())'
       - name: Recheck PR after isolated evidence
         if: ${{ always() }}
         env:
