@@ -76,16 +76,16 @@ void main() {
     await capture(tester, 'reopened');
   });
 
-  for (final fixture in <(String, String)>[
-    ('一致', '青い箱は4個で、採用する。'),
-    ('対象違い', '赤い箱は4個で、採用する。'),
-    ('数量違い', '青い箱は5個で、採用する。'),
-    ('結論違い', '青い箱は4個で、保留する。'),
+  for (final fixture in <(String, String, String)>[
+    ('a', '一致', '青い箱は4個で、採用する。'),
+    ('b', '対象違い', '赤い箱は4個で、採用する。'),
+    ('c', '数量違い', '青い箱は5個で、採用する。'),
+    ('d', '結論違い', '青い箱は4個で、保留する。'),
   ]) {
-    testWidgets('引用の手動照合: ${fixture.$1}', (tester) async {
+    testWidgets('引用の手動照合: ${fixture.$2}', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: KnowledgeGraphPage(gateway: _SyntheticGateway(fixture.$2)),
+          home: KnowledgeGraphPage(gateway: _SyntheticGateway(fixture.$3)),
         ),
       );
       await tester.enterText(
@@ -109,8 +109,20 @@ void main() {
       final preview = tester.widget<Text>(
         find.byKey(const Key('knowledge-citation-preview-1')),
       );
-      expect(preview.textSpan!.toPlainText(), contains(fixture.$2));
+      expect(preview.textSpan!.toPlainText(), contains(fixture.$3));
       expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
+      await tester.ensureVisible(
+        find.byKey(const Key('knowledge-citation-preview-1')),
+      );
+      await tester.pump(const Duration(milliseconds: 500));
+      await binding.takeScreenshot(
+        '${mobile ? 'mobile' : 'desktop'}-citation-fixture-${fixture.$1}',
+        <String, Object?>{
+          'width': viewport.width,
+          'height': viewport.height,
+          'fixture': fixture.$2,
+        },
+      );
       final first = find.byKey(const Key('knowledge-citation-review-0'));
       await tester.ensureVisible(first);
       await tester.tap(first);
