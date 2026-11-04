@@ -69,7 +69,8 @@ jobs:
           assert len(starts)==2, 'Expected both targeted tests, not a build/setup failure'
           for test_id,name in starts.items():
               assert done[test_id]['result'] in {'error','failure'} and not done[test_id].get('skipped'), name
-              assert any(e.get('type')=='error' and e.get('testID')==test_id and 'TextEditingValue' in e.get('error','') for e in events), name
+              assert any(e.get('type')=='error' and e.get('testID')==test_id for e in events), name
+              assert any(e.get('type')=='print' and e.get('testID')==test_id and 'Expected: TextEditingValue' in e.get('message','') and 'Actual: TextEditingValue' in e.get('message','') for e in events), name
           print('Confirmed two expected composition-state assertion failures on the old implementation')
           PY
           git diff --exit-code -- lib/pages/typing_game_page.dart
