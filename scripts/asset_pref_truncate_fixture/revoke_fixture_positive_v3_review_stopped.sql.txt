@@ -1,15 +1,16 @@
 \set ON_ERROR_STOP on
 do $review_stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $review_stop$;
 -- SYNTHETIC ONLY: after candidate success, validate grants, RLS and fake rows.
-do $$ declare r text; p text; begin
+do $$ declare r text; p text; privilege_names text[] := array['SELECT','INSERT','UPDATE','DELETE','REFERENCES','TRIGGER']; begin
+ if pg_catalog.current_setting('server_version_num')::integer >= 170000 then privilege_names := pg_catalog.array_append(privilege_names, 'MAINTAIN'); end if;
  foreach r in array array['anon','authenticated'] loop
   if pg_catalog.has_table_privilege(r,'public.asset_pref_mirror','TRUNCATE') then raise exception 'effective truncate remained'; end if;
-  foreach p in array array['SELECT','INSERT','UPDATE','DELETE','REFERENCES','TRIGGER','MAINTAIN'] loop
+  foreach p in array privilege_names loop
    if not pg_catalog.has_table_privilege(r,'public.asset_pref_mirror',p) then raise exception 'other privilege lost'; end if;
   end loop;
  end loop;
  if not pg_catalog.has_table_privilege('service_role','public.asset_pref_mirror','TRUNCATE') then raise exception 'service privilege lost'; end if;
- foreach p in array array['SELECT','INSERT','UPDATE','DELETE','REFERENCES','TRIGGER','MAINTAIN'] loop
+ foreach p in array privilege_names loop
   if not pg_catalog.has_table_privilege('service_role','public.asset_pref_mirror',p) then raise exception 'service other privilege lost'; end if;
  end loop;
  if exists((select grantor,grantee,privilege_type,is_grantable from public.synthetic_revoke_acl_before
@@ -27,8 +28,8 @@ do $$ declare r text; p text; begin
  union all (select relowner,relrowsecurity,relforcerowsecurity from pg_catalog.pg_class where oid='public.asset_pref_mirror'::pg_catalog.regclass except all select * from public.synthetic_revoke_relation_before)) then raise exception 'relation security changed'; end if;
  if exists((select * from public.synthetic_revoke_policies_before except all select policyname,permissive,roles,cmd,qual,with_check from pg_catalog.pg_policies where schemaname='public' and tablename='asset_pref_mirror')
  union all (select policyname,permissive,roles,cmd,qual,with_check from pg_catalog.pg_policies where schemaname='public' and tablename='asset_pref_mirror' except all select * from public.synthetic_revoke_policies_before)) then raise exception 'policy metadata changed'; end if;
- if exists((select * from public.synthetic_revoke_members_before where roleid<>'synthetic_inherited_truncate'::pg_catalog.regrole except all select roleid,member,grantor,admin_option,inherit_option,set_option from pg_catalog.pg_auth_members where member='authenticated'::pg_catalog.regrole)
- union all (select roleid,member,grantor,admin_option,inherit_option,set_option from pg_catalog.pg_auth_members where member='authenticated'::pg_catalog.regrole except all select * from public.synthetic_revoke_members_before where roleid<>'synthetic_inherited_truncate'::pg_catalog.regrole)) then raise exception 'unexpected role membership changed'; end if;
+ if exists((select * from public.synthetic_revoke_members_before where (snapshot->>'roleid')::oid<>'synthetic_inherited_truncate'::pg_catalog.regrole except all select pg_catalog.to_jsonb(m) as snapshot from pg_catalog.pg_auth_members m where member='authenticated'::pg_catalog.regrole)
+ union all (select pg_catalog.to_jsonb(m) as snapshot from pg_catalog.pg_auth_members m where member='authenticated'::pg_catalog.regrole except all select * from public.synthetic_revoke_members_before where (snapshot->>'roleid')::oid<>'synthetic_inherited_truncate'::pg_catalog.regrole)) then raise exception 'unexpected role membership changed'; end if;
  if exists((select * from public.synthetic_revoke_rows_before except all select user_id,pref_key,value,updated_at from public.asset_pref_mirror)
  union all (select user_id,pref_key,value,updated_at from public.asset_pref_mirror except all select * from public.synthetic_revoke_rows_before)) then raise exception 'fake rows changed'; end if;
 end $$;
