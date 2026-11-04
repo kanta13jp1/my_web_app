@@ -104,7 +104,8 @@ void main() {
 
   test('practice can end early and pace uses only actual elapsed time', () {
     final game = TypingGame()
-      ..start(mode: TypingMode.practice, practicePrompts: [TypingGame.prompts[0]]);
+      ..start(
+          mode: TypingMode.practice, practicePrompts: [TypingGame.prompts[0]],);
     game.type('s');
     game.updateElapsed(const Duration(seconds: 2));
     game.updateElapsed(const Duration(seconds: 1));
@@ -141,11 +142,10 @@ void main() {
   test('focused prompts cannot alter the challenge or start an empty run', () {
     final game = TypingGame()..start();
     expect(() => game.start(practicePrompts: [TypingGame.prompts[0]]),
-        throwsArgumentError);
+        throwsArgumentError,);
     expect(() => game.start(mode: TypingMode.practice, practicePrompts: []),
-        throwsArgumentError);
+        throwsArgumentError,);
     expect(game.mode, TypingMode.challenge);
     expect(game.running, isTrue);
   });
-
 }

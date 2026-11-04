@@ -92,7 +92,9 @@ class TypingGame {
         .toList()
       ..sort((a, b) {
         final count = b.count.compareTo(a.count);
-        return count != 0 ? count : a.prompt.japanese.compareTo(b.prompt.japanese);
+        return count != 0
+            ? count
+            : a.prompt.japanese.compareTo(b.prompt.japanese);
       });
     return List.unmodifiable(result);
   }
@@ -120,7 +122,8 @@ class TypingGame {
 
   void updateElapsed(Duration value) {
     if (!running || value < elapsed) return;
-    elapsed = mode == TypingMode.challenge && value >= duration ? duration : value;
+    elapsed =
+        mode == TypingMode.challenge && value >= duration ? duration : value;
     if (mode == TypingMode.challenge) {
       remaining = duration - elapsed;
       if (remaining == Duration.zero) _finish();
