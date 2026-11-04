@@ -17,7 +17,7 @@ test('romaji input, scoring, deadline and retry in a browser', async ({ page }, 
   await expect(page.getByText('クリア 1問', { exact: true })).toBeVisible();
   await expect(page.getByText(`スコア ${spelling.length * 10 + 50}`, { exact: true })).toBeVisible();
   await input.pressSequentially('q');
-  await expect(page.getByText('惜しい！次の文字を確認しよう', { exact: true })).toBeVisible();
+  await expect(page.locator('flt-semantics').getByText('惜しい！次の文字を確認しよう', { exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath('typing-active.png'), fullPage: true });
   await expect(page.getByRole('button', { name: /もう一度挑戦/ })).toBeVisible({ timeout: 65_000 });
   await expect(page.getByText('残り 0秒', { exact: true })).toBeVisible();
@@ -114,7 +114,7 @@ test('Enter starts ready for typing and browser IME commits score once', async (
   await cdp.send('Input.imeSetComposition', {
     text: suffix, selectionStart: suffix.length, selectionEnd: suffix.length,
   });
-  await expect(page.getByText(/変換中です。英語キーボード/)).toBeVisible();
+  await expect(page.locator('flt-semantics').getByText(/変換中です。英語キーボード/)).toBeVisible();
   await expect(page.getByText('スコア 10', { exact: true })).toBeVisible();
   await cdp.send('Input.insertText', { text: suffix });
   await expect(page.getByText('クリア 1問', { exact: true })).toBeVisible();
