@@ -245,9 +245,13 @@ class _KnowledgeGraphPageState extends State<KnowledgeGraphPage> {
   }
 
   Future<void> _showCitation(KnowledgeGraphRagCitation citation) {
+    final answerText = _viewModel.answer?.answer ?? '';
     return showDialog<void>(
       context: context,
-      builder: (context) => _CitationDocumentDialog(citation: citation),
+      builder: (context) => _CitationDocumentDialog(
+        citation: citation,
+        answerText: answerText,
+      ),
     );
   }
 }
@@ -460,9 +464,13 @@ class _SourcesPanel extends StatelessWidget {
 }
 
 class _CitationDocumentDialog extends StatefulWidget {
-  const _CitationDocumentDialog({required this.citation});
+  const _CitationDocumentDialog({
+    required this.citation,
+    required this.answerText,
+  });
 
   final KnowledgeGraphRagCitation citation;
+  final String answerText;
 
   @override
   State<_CitationDocumentDialog> createState() =>
@@ -563,6 +571,24 @@ class _CitationDocumentDialogState extends State<_CitationDocumentDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (widget.answerText.isNotEmpty) ...[
+                          Text('回答', style: theme.textTheme.titleSmall),
+                          const SizedBox(height: 4),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 96),
+                            child: SingleChildScrollView(
+                              key: const Key('knowledge-citation-answer-scroll'),
+                              child: SelectionArea(
+                                child: Text(
+                                  widget.answerText,
+                                  key: const Key('knowledge-citation-answer'),
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const Divider(height: 24),
+                        ],
                         SelectionArea(
                           child: Text.rich(
                             key: Key(

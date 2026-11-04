@@ -109,6 +109,12 @@ void main() {
       final preview = tester.widget<Text>(
         find.byKey(const Key('knowledge-citation-preview-1')),
       );
+      expect(
+        tester
+            .widget<Text>(find.byKey(const Key('knowledge-citation-answer')))
+            .data,
+        '青い箱は4個で、採用する。 [1]',
+      );
       expect(preview.textSpan!.toPlainText(), contains(fixture.$3));
       expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
       await tester.ensureVisible(
@@ -136,12 +142,55 @@ void main() {
       expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
     });
   }
+
+  testWidgets('長い回答を引用ダイアログ内でスクロールできる', (tester) async {
+    final longAnswer = List.generate(30, (index) => '回答の行 $index').join('\n');
+    await tester.pumpWidget(
+      MaterialApp(
+        home: KnowledgeGraphPage(
+          gateway: _SyntheticGateway('青い箱は4個です。', longAnswer),
+        ),
+      ),
+    );
+    await tester.enterText(
+      find.byKey(const Key('knowledge-query-field')),
+      '長い回答',
+    );
+    await tester.ensureVisible(find.byKey(const Key('knowledge-query-button')));
+    await tester.tap(find.byKey(const Key('knowledge-query-button')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const Key('knowledge-citation-card-1')),
+    );
+    await tester.tap(find.byKey(const Key('knowledge-citation-card-1')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('knowledge-citation-answer')))
+          .data,
+      longAnswer,
+    );
+    final answerScroll =
+        find.byKey(const Key('knowledge-citation-answer-scroll'));
+    final scrollable = find.descendant(
+      of: answerScroll,
+      matching: find.byType(Scrollable),
+    );
+    expect(scrollable, findsOneWidget);
+    await tester.drag(answerScroll, const Offset(0, -70));
+    await tester.pumpAndSettle();
+    expect(
+      tester.state<ScrollableState>(scrollable).position.pixels,
+      greaterThan(0),
+    );
+  });
 }
 
 class _SyntheticGateway implements KnowledgeGraphRagGateway {
-  _SyntheticGateway([this.excerpt = '青い箱は4個です。']);
+  _SyntheticGateway([this.excerpt = '青い箱は4個です。', this.answerText]);
 
   final String excerpt;
+  final String? answerText;
   @override
   Future<KnowledgeGraphRagAnswer> query({
     required String query,
@@ -150,7 +199,10 @@ class _SyntheticGateway implements KnowledgeGraphRagGateway {
   }) async =>
       KnowledgeGraphRagAnswer(
         query: '数は？',
-        answer: excerpt == '青い箱は4個です。' ? '青い箱は4個です [1]。' : '青い箱は4個で、採用する。 [1]',
+        answer: answerText ??
+            (excerpt == '青い箱は4個です。'
+                ? '青い箱は4個です [1]。'
+                : '青い箱は4個で、採用する。 [1]'),
         status: 'ok',
         traceId: 'synthetic-only',
         citations: [
