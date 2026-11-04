@@ -24,7 +24,7 @@ on:
       source_head_sha:
         required: true
         type: string
-        default: fb004f64fe7712e63721c845cbba39686041b1ac
+        default: 164db7c3d187845d43c127a0c1e9a2ceaf93ee60
       source_base_sha:
         required: true
         type: string
@@ -42,11 +42,11 @@ on:
       validation_run:
         required: true
         type: number
-        default: 41804810469
+        default: 41816554760
       validation_head_sha:
         required: true
         type: string
-        default: 62a2ab06dde6d6d4f69f848d65b1ae66a45ee64c
+        default: 999cb37c4a8674e8b3006ce1ac54b4dc5962cc62
 
 permissions: {}
 concurrency:
