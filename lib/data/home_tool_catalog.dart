@@ -1954,6 +1954,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => Navigator.of(context).pushNamed('/sea-shelter'),
     ),
     HomeToolEntry(
+      id: 'typing-game',
+      sectionId: 'personal',
+      title: 'ことばのタイピング',
+      subtitle: '60秒のローマ字チャレンジで、入力の速さと正確さを練習',
+      icon: Icons.keyboard_outlined,
+      color: const Color(0xFF2563EB),
+      keywords: const <String>['ゲーム', 'タイピング', 'ローマ字', 'キーボード', 'typing'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/typing-game'),
+    ),
+    HomeToolEntry(
       id: 'focus-capture',
       sectionId: 'personal',
       title: 'フォーカス捕獲ゲーム',

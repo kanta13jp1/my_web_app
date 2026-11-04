@@ -1,3 +1,4 @@
+import 'package:my_web_app/pages/typing_game_page.dart';
 import 'package:my_web_app/pages/jev_mario_lab_page.dart';
 import 'package:my_web_app/pages/jwenv_lab_page.dart';
 import 'dart:async';
@@ -1624,6 +1625,11 @@ Route<dynamic> generateAppRoute(
     case '/sea-shelter':
       return MaterialPageRoute(
         builder: (_) => const SeaShelterPage(),
+        settings: settings,
+      );
+    case '/typing-game':
+      return MaterialPageRoute(
+        builder: (_) => const TypingGamePage(),
         settings: settings,
       );
     case '/focus-capture':
