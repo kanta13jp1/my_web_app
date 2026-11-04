@@ -36,8 +36,12 @@ def run():
     good={'pid':202,'blocked_by':[101],'query_insert':True,'loopback':True,'state':'active',
           'wait_type':'Lock','wait':'advisory','target_oid':303,'target_lock':True,'barrier_wait':True}
     assert m.only_waiter([good],101)==good
+    for oid in (1,4294967295):
+        boundary=dict(good,target_oid=oid)
+        assert m.only_waiter([boundary],101)==boundary
     for field,value in [('pid',101),('blocked_by',[999]),('query_insert',False),('loopback',False),
                         ('state','idle'),('wait_type','Client'),('wait','other'),('target_oid',0),
+                        ('target_oid',4294967296),('target_oid','303'),('target_oid',None),('target_oid',True),
                         ('target_lock',False),('barrier_wait',False)]:
         bad=dict(good);bad[field]=value;rejects(lambda bad=bad:m.only_waiter([bad],101))
     rejects(lambda:m.only_waiter([good,good],101))
@@ -52,15 +56,24 @@ def run():
     evidence=json.loads(raw[len(prefix):])
     assert evidence['coordinator_pid']==101 and evidence['row_count']==1
     record=evidence['rows'][0]
-    assert record['cli_pid']==202 and record['target_oid']==303 and record['blocker_count']==1
+    assert record['cli_pid']==202 and record['target_oid_type']=='integer' and record['target_oid_in_range'] and record['blocker_count']==1
+    assert 'target_oid' not in record
     assert not record['query_insert'] and not record['wait_advisory'] and not record['sole_blocker_is_coordinator']
     assert record['loopback'] and record['target_lock'] and record['barrier_wait']
     with contextlib.redirect_stdout(io.StringIO()) as capture:
         m.emit_wait_diagnostic([{'pid':'secret','target_oid':4294967295,'blocked_by':'secret'}],101,'history_timeout')
     assert 'secret' not in capture.getvalue()
-    assert json.loads(capture.getvalue()[len(prefix):])['rows'][0]['target_oid']==4294967295
+    boundary=json.loads(capture.getvalue()[len(prefix):])['rows'][0]
+    assert boundary['target_oid_type']=='integer' and boundary['target_oid_in_range']
+    for value,kind,in_range in [('303','string',False),(None,'null',False),(True,'other',False),(4294967296,'integer',False)]:
+        with contextlib.redirect_stdout(io.StringIO()) as capture:
+            m.emit_wait_diagnostic([{'target_oid':value}],101,'history_wait')
+        record=json.loads(capture.getvalue()[len(prefix):])['rows'][0]
+        assert record['target_oid_type']==kind and record['target_oid_in_range']==in_range
+        assert 'target_oid' not in record
     assert 'classid='+str(m.KEY_HIGH) in m.activity_sql('codex_coord_'+'a'*32)
     assert 'objid='+str(m.KEY_LOW) in m.waiting_sql()
+    assert m.waiting_sql().count("'target_oid','public.asset_pref_mirror'::regclass::oid::bigint,")==1
     rejects(lambda:m.activity_sql('untrusted'))
 
     class Probe:
@@ -139,7 +152,8 @@ def run():
             else:raise AssertionError('changed target identity accepted')
         assert '"stage": "before_probe"' in capture.getvalue()
         assert '"stage": "after_probe"' in capture.getvalue()
-        assert '"target_oid": 303' in capture.getvalue() and '"target_oid": 304' in capture.getvalue()
+        assert '"target_oid":' not in capture.getvalue()
+        assert capture.getvalue().count('"target_oid_type": "integer"')==2
         assert changed.stopped
     closed=[]
     class TimeoutClients(Clients):

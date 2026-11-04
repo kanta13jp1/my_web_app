@@ -55,7 +55,7 @@ def waiting_sql():
     return ("SELECT coalesce(json_agg(json_build_object('pid',a.pid,'blocked_by',pg_catalog.pg_blocking_pids(a.pid),"
       "'query_insert',position('INSERT INTO supabase_migrations.schema_migrations' in a.query)>0,"
       "'loopback',a.client_addr='127.0.0.1'::inet,'state',a.state,'wait_type',a.wait_event_type,'wait',a.wait_event,"
-      "'target_oid','public.asset_pref_mirror'::regclass::oid,"
+      "'target_oid','public.asset_pref_mirror'::regclass::oid::bigint,"
       "'target_lock',EXISTS(SELECT 1 FROM pg_catalog.pg_locks t WHERE t.pid=a.pid AND t.locktype='relation' "
       "AND t.database=(SELECT oid FROM pg_catalog.pg_database WHERE datname=current_database()) "
       "AND t.relation='public.asset_pref_mirror'::regclass AND t.mode='AccessExclusiveLock' AND t.granted),"
@@ -85,9 +85,12 @@ def emit_wait_diagnostic(rows, coord, stage):
             if not isinstance(row,dict):
                 safe_rows.append({'row_is_object':False});continue
             blockers=row.get('blocked_by')
+            oid=row.get('target_oid')
+            oid_type=('null' if oid is None else 'integer' if type(oid) is int else
+                      'string' if type(oid) is str else 'other')
             valid_blockers=isinstance(blockers,list) and all(safe_id(x) is not None for x in blockers)
             safe_rows.append({'row_is_object':True,'cli_pid':safe_id(row.get('pid')),
-              'target_oid':safe_id(row.get('target_oid'),4294967295),
+              'target_oid_type':oid_type,'target_oid_in_range':type(oid) is int and 1 <= oid <= 4294967295,
               'blockers_valid':valid_blockers,
               'blocker_count':len(blockers) if valid_blockers else None,
               'sole_blocker_is_coordinator':valid_blockers and blockers==[coord],
@@ -113,7 +116,7 @@ def only_waiter(rows, coord, stage='history_wait'):
         or row.get('blocked_by') != [coord] or row.get('query_insert') is not True
         or row.get('loopback') is not True or row.get('state') != 'active'
         or row.get('wait_type') != 'Lock' or row.get('wait') != 'advisory'
-        or type(row.get('target_oid')) is not int or row['target_oid']<=0
+        or type(row.get('target_oid')) is not int or not 1 <= row['target_oid'] <= 4294967295
         or row.get('target_lock') is not True or row.get('barrier_wait') is not True):
         emit_wait_diagnostic(rows,coord,stage)
         raise RuntimeError('CLI backend, target lock or advisory wait mismatch')

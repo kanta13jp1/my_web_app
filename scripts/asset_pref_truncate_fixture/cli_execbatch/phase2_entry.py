@@ -14,11 +14,11 @@ import subprocess
 import tempfile
 
 HERE=Path(__file__).resolve().parent
-PHASE2_SHA='8fa1a1c275ea169d39eab5b4bd8930e79575f60124965643ed0fdf79d4b2df32'
+PHASE2_SHA='4c36189f886c2cb4feb0941c32825e4a37debb62b79eb5c263d237b1287b7857'
 PR_HEAD='85394a8e938a7c4bda08e32dd4cfff9ede623e57'
 PR_BASE='f420ca99541125452407e974958e7704f1d5b429'
 MIGRATION='supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql'
-PARENT='ee428892f80b22580f554aacc8fc1e52a8b4cd25'
+PARENT='24b629750575eb64cc06abea060987dcc01e684b'
 
 
 def load_fixed():
