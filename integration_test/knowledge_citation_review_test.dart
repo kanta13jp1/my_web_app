@@ -120,6 +120,7 @@ void main() {
         <String, Object?>{
           'width': viewport.width,
           'height': viewport.height,
+          'devicePixelRatio': mobile ? 2.75 : 1.0,
           'fixture': fixture.$2,
         },
       );
