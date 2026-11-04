@@ -1,28 +1,113 @@
-name: English formatting probe only (isolated)
+name: Cloud Development Checks
 on:
   push:
     branches: [codex/typing-english-public-validation-20261104]
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        required: true
+        type: string
+      profile:
+        required: true
+        default: full
+        type: string
 permissions:
   contents: read
 jobs:
-  format:
+  typing:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Verify exact candidate
+        env:
+          EXPECTED: ${{ inputs.expected_head_sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED"
       - uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.10'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
       - run: flutter pub get
-      - name: Format task files and emit exact source for synchronization
+      - name: Format candidate and preserve patch
         run: |
-          dart format lib/pages/typing_game_page.dart test/pages/typing_game_page_test.dart
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          print("FORMATTED_PAGE_JSON="+json.dumps(Path("lib/pages/typing_game_page.dart").read_text()))
-          print("FORMATTED_TEST_JSON="+json.dumps(Path("test/pages/typing_game_page_test.dart").read_text()))
-          PY
+          dart format lib/models/typing_game.dart lib/pages/typing_game_page.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart
+          git diff > typing-format.patch
+          git diff --exit-code -- lib/models/typing_game.dart lib/pages/typing_game_page.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart
+      - name: Analyze typing implementation
+        run: flutter analyze lib/models/typing_game.dart lib/pages/typing_game_page.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart
+      - name: Typing model and widget tests
+        run: flutter test test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/routes/route_url_sync_test.dart --concurrency=1
+      - name: Build standalone game
+        run: flutter build web --release --pwa-strategy=none --target=test/fixtures/typing_game_app.dart
+      - name: Install browser test dependencies
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+      - name: Desktop and emulated mobile browser input
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/serve_spa.py build/web --port 7358 > typing-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/typing_game.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+      - name: Build integrated app
+        run: flutter build web --release --pwa-strategy=none --dart-define=ENVIRONMENT=visual-test --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+      - name: Preserve published Sea Shelter asset packaging
+        uses: ./.github/actions/prepare-sea-shelter-arena
+        with:
+          web-root: build/web
+      - name: Existing published game model regressions
+        run: node --test web/labs/sea-shelter/model.test.mjs web/labs/sea-shelter/farm.test.mjs web/labs/sea-shelter/storage.test.mjs web/labs/sea-shelter/arena/model.test.mjs
+      - name: Integrated new route and existing published game
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > test/e2e/typing_public_base_integration.spec.ts <<'TS'
+          import { expect, test } from '@playwright/test';
+          test('preserved public application opens and plays typing route', async ({page}, info) => {
+            const errors: string[]=[];
+            page.on('pageerror', e=>errors.push(e.message));
+            await page.goto('/typing-game');
+            await expect(page.getByRole('button',{name:/スタート/})).toBeVisible({timeout:60000});
+            await page.getByRole('button',{name:/スタート/}).click();
+            const input=page.getByRole('textbox',{name:/^ローマ字入力/});
+            await input.scrollIntoViewIfNeeded();
+            await input.focus();
+            const guide=await page.getByText(/使えるつづり:/).textContent({timeout:7500});
+            const spelling=guide!.match(/使えるつづり:\s*([a-z]+)/)![1];
+            await input.pressSequentially(spelling);
+            await expect(page.getByText('クリア 1問',{exact:true})).toBeVisible();
+            await page.screenshot({path:info.outputPath('public-base-integrated-typing.png'),fullPage:true});
+            expect(errors).toEqual([]);
+          });
+          TS
+          python3 scripts/serve_spa.py build/web --port 7359 > typing-integrated-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7359/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7359 PLAYWRIGHT_TEST_OUTPUT_DIR=typing-integrated-results PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/integrated-results.json npx playwright test test/e2e/typing_public_base_integration.spec.ts test/e2e/sea_shelter_route.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+      - name: Preserve evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: typing-validation
+          path: |
+            typing-format.patch
+            test-results/
+            playwright-report/
+            typing-server.log
+            typing-integrated-results/
+            typing-integrated-server.log
+          retention-days: 7

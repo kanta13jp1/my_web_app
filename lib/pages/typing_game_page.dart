@@ -69,19 +69,23 @@ class _TypingGamePageState extends State<TypingGamePage> {
     setState(_tick);
     if (!_game.running) return old;
     if (!next.composing.isCollapsed) {
-      setState(() => _feedback = _t(
-            'IMEをオフにして、半角英字で入力してください',
-            'Turn off IME and type Latin letters.',
-          ),);
+      setState(
+        () => _feedback = _t(
+          'IMEをオフにして、半角英字で入力してください',
+          'Turn off IME and type Latin letters.',
+        ),
+      );
       return old;
     }
     final prefix = _game.prefix;
     if (next.text.length != prefix.length + 1 ||
         !next.text.startsWith(prefix)) {
-      setState(() => _feedback = _t(
-            '一文字ずつ入力。削除や貼り付けは使いません',
-            'Type one letter at a time. Deleting and pasting are not supported.',
-          ),);
+      setState(
+        () => _feedback = _t(
+          '一文字ずつ入力。削除や貼り付けは使いません',
+          'Type one letter at a time. Deleting and pasting are not supported.',
+        ),
+      );
       return TextEditingValue(
         text: prefix,
         selection: TextSelection.collapsed(offset: prefix.length),
@@ -156,19 +160,23 @@ class _TypingGamePageState extends State<TypingGamePage> {
                 ),
               ),
             if (review.length > 5)
-              Text(_t(
-                'ほか${review.length - 5}語。再練習は間違えたことばから10問出題します。',
-                '${review.length - 5} more words. Focused practice picks ten prompts from all your missed words.',
-              ),),
+              Text(
+                _t(
+                  'ほか${review.length - 5}語。再練習は間違えたことばから10問出題します。',
+                  '${review.length - 5} more words. Focused practice picks ten prompts from all your missed words.',
+                ),
+              ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () =>
                   _start(review: review.map((item) => item.prompt).toList()),
               icon: const Icon(Icons.replay),
-              label: Text(_t(
-                '苦手なことばを練習',
-                'Practise missed words',
-              ),),
+              label: Text(
+                _t(
+                  '苦手なことばを練習',
+                  'Practise missed words',
+                ),
+              ),
             ),
           ],
         ),
@@ -295,22 +303,30 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                     'Time left ${(_game.remaining.inMilliseconds / 1000).ceil()}s',
                                   ),
                           ),
-                          Text(_t(
-                            'スコア ${_game.score}',
-                            'Score ${_game.score}',
-                          ),),
-                          Text(_t(
-                            '正確さ ${_game.accuracy.toStringAsFixed(1)}%',
-                            'Accuracy ${_game.accuracy.toStringAsFixed(1)}%',
-                          ),),
-                          Text(_t(
-                            'クリア ${_game.words}問',
-                            'Words ${_game.words}',
-                          ),),
-                          Text(_t(
-                            '連続 ${_game.combo}文字',
-                            'Streak ${_game.combo} letters',
-                          ),),
+                          Text(
+                            _t(
+                              'スコア ${_game.score}',
+                              'Score ${_game.score}',
+                            ),
+                          ),
+                          Text(
+                            _t(
+                              '正確さ ${_game.accuracy.toStringAsFixed(1)}%',
+                              'Accuracy ${_game.accuracy.toStringAsFixed(1)}%',
+                            ),
+                          ),
+                          Text(
+                            _t(
+                              'クリア ${_game.words}問',
+                              'Words ${_game.words}',
+                            ),
+                          ),
+                          Text(
+                            _t(
+                              '連続 ${_game.combo}文字',
+                              'Streak ${_game.combo} letters',
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -442,10 +458,12 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                 _settle();
                               });
                             },
-                            child: Text(_t(
-                              '練習を終える',
-                              'End practice',
-                            ),),
+                            child: Text(
+                              _t(
+                                '練習を終える',
+                                'End practice',
+                              ),
+                            ),
                           ),
                       ] else ...[
                         if (_game.finished)
@@ -490,15 +508,19 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                         'Pace ${_game.correctPerMinute.toStringAsFixed(1)} letters/min',
                                       ),
                                     ),
-                                    Text(_t(
-                                      '正解したローマ字数 ÷ 実際のプレイ時間',
-                                      'Correct romaji letters divided by actual play time',
-                                    ),),
+                                    Text(
+                                      _t(
+                                        '正解したローマ字数 ÷ 実際のプレイ時間',
+                                        'Correct romaji letters divided by actual play time',
+                                      ),
+                                    ),
                                     if (!practice)
-                                      Text(_t(
-                                        'この画面でのチャレンジベスト $_bestChallenge点',
-                                        'Challenge best on this screen: $_bestChallenge points',
-                                      ),),
+                                      Text(
+                                        _t(
+                                          'この画面でのチャレンジベスト $_bestChallenge点',
+                                          'Challenge best on this screen: $_bestChallenge points',
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),
