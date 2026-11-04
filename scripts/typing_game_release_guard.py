@@ -48,20 +48,23 @@ def reviewed(pr, checks, head, base, extra_required=()):
     approved = False
     successful = set()
     latest = {}
+    evidence = []
     for index, check in enumerate(checks):
         if check.get('app', {}).get('id') != 15368:
             continue
+        summary = check.get('output', {}).get('summary') or ''
+        if check['name'] == 'AI Review Gate' and head in summary and base in summary and 'Result:' in summary:
+            evidence.append((check.get('id', index), check))
         previous = latest.get(check['name'])
         if previous is None or check.get('id', index) > previous.get('id', -1):
             latest[check['name']] = check
     for check in latest.values():
         if check.get('conclusion') == 'success':
             successful.add(check['name'])
-        summary = check.get('output', {}).get('summary') or ''
-        if (check['name'] == 'AI Review Gate' and
-                check.get('conclusion') == 'success' and head in summary and
-                base in summary and 'Result: **approved**.' in summary):
-            approved = True
+    if evidence:
+        review = max(evidence, key=lambda pair: pair[0])[1]
+        approved = (review.get('conclusion') == 'success' and
+                    'Result: **approved**.' in (review.get('output', {}).get('summary') or ''))
     public = latest.get('Public E2E stability smoke')
     if public is None or public.get('conclusion') not in {'success', 'skipped'}:
         raise ValueError('Missing or failed required public smoke check')
