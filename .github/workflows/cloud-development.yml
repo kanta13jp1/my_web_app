@@ -27,7 +27,7 @@ jobs:
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD 9c44bee39c50f9f5fc295ef6a8045f4c8bb473ce"
+          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD 5336210f50ee93e728816f34fe848f7a1e504497"
           git diff --no-renames --name-only HEAD^ HEAD | LC_ALL=C sort > "$RUNNER_TEMP/actual-files"
           LC_ALL=C sort > "$RUNNER_TEMP/expected-files" <<'FIXED_FILES'
           .github/workflows/cloud-development.yml
@@ -39,8 +39,8 @@ jobs:
           e522e693c83dbc517ba26345546fdd06f0c02bb032ead12c124444227bf60a79  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_lock_rc_cli_batch_review_stopped.sql.txt
           0c6f44d00885dc939355e22bd4860339662a31eb7e51ca1f6ef981ab81e51621  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_lock_rc_guard_review_stopped.sql.txt
           3372910f839d556a35d81dfd6ababe8c73438e52636d7fe8c491835528f1dfb6  scripts/asset_pref_truncate_fixture/cli_execbatch/revoke_truncate_candidate_review_stopped.sql.txt
-          b8b176bb5e3f2bb6420f93f4a9e8f02f00f25108f9dca6ccaea7f55073232102  scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
-          2aa16312940b4acbe93ae603ed091ecf03b9423c72be8f6518ab3d7db38f79cc  scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
+          125c7e15bc7867ad8e6c442fa0880da12b64dca95ca86762dec5dd850dc3acc7  scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
+          c78eea271005b7d81cbee5a302aceed770710e725ba094f13cef2e3f5715dd8b  scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
           FIXED_HASHES
           python3 -B scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
       - name: Obtain verified public binaries

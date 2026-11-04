@@ -942,7 +942,7 @@ def run_matrix():
         docker = ['/usr/bin/docker','--config',config,'--host','unix:///var/run/docker.sock']
         image = json.loads(subprocess.run(docker + ['image','inspect',IMAGE], env=env, capture_output=True,
             check=True, timeout=15).stdout)[0]
-        for mode in ('explicit','batch','pr_head_06505ee4'):
+        for mode in ('explicit','pr_head_06505ee4','batch'):
             outcomes = ('success','history_failure') if mode == 'pr_head_06505ee4' else ('success','history_failure','candidate_failure')
             for outcome in outcomes:
                 service = OwnedService(docker, env, image, run_id)

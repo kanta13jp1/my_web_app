@@ -171,6 +171,9 @@ def run():
     assert 'private-user' not in str(m['FixturePsqlError'](2,b'FATAL: password authentication failed for private-user'))
     assert m['classify_failure'](RuntimeError('postmaster changed during final readiness confirmation'))['categories']==['postmaster_changed']
     tree=ast.parse((HERE/'runner.py').read_bytes())
+    matrix=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name=='run_matrix')
+    mode_loops=[x for x in ast.walk(matrix) if isinstance(x,ast.For) and isinstance(x.target,ast.Name) and x.target.id=='mode']
+    assert len(mode_loops)==1 and ast.literal_eval(mode_loops[0].iter)==('explicit','pr_head_06505ee4','batch')
     case=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name=='run_case')
     calls=[n.func.attr for n in ast.walk(case) if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute) and n.func.attr in ('wait_final_postmaster','initialize')]
     assert calls.count('wait_final_postmaster')==1 and calls.count('initialize')==1
@@ -606,6 +609,23 @@ def run():
                 m['run_case'](service,mode,outcome,b'fake',pair[mode])
         except RuntimeError: return
         raise AssertionError('unsafe case accepted: ' + mode + '/' + outcome)
+    # A known 25P01 at batch/success must be retained as a failed control.
+    known_failure=SimulatedService('batch','success')
+    known_failure.after=dict(known_failure.before)
+    original_psql=known_failure.psql
+    def no_history(sql):
+        if 'FROM supabase_migrations.schema_migrations;' in sql:return '[]'
+        return original_psql(sql)
+    known_failure.psql=no_history
+    def batch_without_transaction():
+        known_failure.executed=True
+        return types.SimpleNamespace(returncode=1,stdout=b'',stderr=b'ERROR: 25P01 LOCK TABLE outside transaction\n')
+    known_failure.cli_push=batch_without_transaction
+    with contextlib.redirect_stdout(io.StringIO()) as captured:
+        try:m['run_case'](known_failure,'batch','success',b'fake',pair['batch'])
+        except RuntimeError as exc:assert 'success control failed' in str(exc)
+        else:raise AssertionError('25P01 batch success control was accepted')
+    assert 'SYNTHETIC_EXECBATCH_OBSERVATION ' in captured.getvalue() and '25P01' in captured.getvalue()
     for attack in ('statement_only','wrong_error_pid','wrong_insert_pid'):
         service=SimulatedService('batch','history_failure')
         def forged_logs(attack=attack):
