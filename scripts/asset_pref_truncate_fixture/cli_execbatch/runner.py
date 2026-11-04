@@ -282,6 +282,16 @@ class FixturePsqlError(RuntimeError):
         super().__init__('synthetic psql failed: ' + json.dumps(self.evidence, sort_keys=True))
 
 
+
+def report_project_mismatch(phase, path, reason):
+    known = {'migrations','migrations/20991231000000_synthetic_acl.sql',
+             'config.toml','.temp','.temp/cli-latest'}
+    allowed = {'type','mode','size','stat_format','owner','group','link_count','hash','unexpected','missing'}
+    if phase not in ('before_version','after_version','before_push') or reason not in allowed:
+        raise RuntimeError('invalid project mismatch diagnostic')
+    evidence = {'phase':phase,'path':path if path in known else '<unknown>','reason':reason}
+    print('SYNTHETIC_EXECBATCH_PROJECT_MISMATCH ' + json.dumps(evidence,sort_keys=True), flush=True)
+
 class OwnedService:
     """Only self-created, separately inspected, isolated Docker ID may be used."""
     def __init__(self, docker, env, image_info, run_id):
@@ -531,8 +541,9 @@ class OwnedService:
         uid = self.exec(['/usr/bin/id','-u']).stdout.decode('ascii').strip()
         if not uid.isdecimal(): raise RuntimeError('invalid synthetic container user')
         for directory in ('/tmp/codex-cli','/tmp/codex-cli/supabase'):
-            info = self.exec(['/usr/bin/stat','-c','%F|%u|%a',directory]).stdout.decode('ascii').strip()
-            if info != '|'.join(('directory',uid,'700')):
+            info = self.exec(['/usr/bin/stat','-c','%f|%u',directory]).stdout.decode('ascii').strip().split('|')
+            if (len(info) != 2 or not re.fullmatch(r'[0-9a-fA-F]{1,8}',info[0])
+                or int(info[0],16) != (0o040000 | 0o700) or info[1] != uid):
                 raise RuntimeError('synthetic project root owner/mode/type mismatch')
         entries = parse_project_tree(self.bounded_tree_find())
         # Bound and JSON-escape the initial path/type-only evidence. No project
@@ -550,8 +561,10 @@ class OwnedService:
             raise RuntimeError('synthetic project metadata exceeds size limit')
         print('SYNTHETIC_EXECBATCH_PROJECT_TREE ' + encoded_details, flush=True)
         # find -P does not follow links. Never open non-regular entries.
-        if any(entry['type'] not in ('d','f') for entry in entries):
-            raise RuntimeError('unexpected non-regular synthetic project entry')
+        for entry in entries:
+            if entry['type'] not in ('d','f'):
+                report_project_mismatch(phase,entry['path'],'type')
+                raise RuntimeError('unexpected non-regular synthetic project entry')
         dirs = {entry['path'] for entry in entries if entry['type']=='d'}
         if any('/' in entry['path'] and entry['path'].rsplit('/',1)[0] not in dirs for entry in entries):
             raise RuntimeError('synthetic tree parent directory missing')
@@ -573,25 +586,39 @@ class OwnedService:
         if phase != 'before_version':
             expected.update({'.temp':('d','755',None), '.temp/cli-latest':('f','644',0)})
         if len(entries) != len(expected) or {entry['path'] for entry in entries} != set(expected):
+            for path in sorted({entry['path'] for entry in entries} - set(expected)):
+                report_project_mismatch(phase,path,'unexpected')
+            for path in sorted(set(expected) - {entry['path'] for entry in entries}):
+                report_project_mismatch(phase,path,'missing')
             raise RuntimeError('unexpected synthetic project content')
         uid = self.exec(['/usr/bin/id','-u']).stdout.decode('ascii').strip()
         gid = self.exec(['/usr/bin/id','-g']).stdout.decode('ascii').strip()
         if not uid.isdecimal() or not gid.isdecimal():
             raise RuntimeError('invalid synthetic project owner identity')
+        def reject(path, reason):
+            report_project_mismatch(phase,path,reason)
+            raise RuntimeError('synthetic project mismatch: ' + reason)
         for entry in entries:
-            kind, mode, length = expected[entry['path']]
-            if entry['type'] != kind or entry['mode'] != mode or (length is not None and entry['length'] != length):
-                raise RuntimeError('synthetic project type, mode or size mismatch')
-            path = '/tmp/codex-cli/supabase/' + entry['path']
-            fields = self.exec(['/usr/bin/stat','-c','%F|%u|%g|%a|%h|%s','--',path]).stdout.decode('ascii').strip().split('|')
-            expected_type = 'directory' if kind == 'd' else 'regular file'
-            if (len(fields) != 6 or fields[:4] != [expected_type,uid,gid,mode]
-                or not fields[4].isdecimal() or not fields[5].isdecimal()
-                or int(fields[5]) != entry['length'] or (kind == 'f' and fields[4] != '1')):
-                raise RuntimeError('synthetic project owner, type, link count, mode or size mismatch')
+            name = entry['path']
+            kind, mode, length = expected[name]
+            if entry['type'] != kind: reject(name,'type')
+            if entry['mode'] != mode: reject(name,'mode')
+            if length is not None and entry['length'] != length: reject(name,'size')
+            path = '/tmp/codex-cli/supabase/' + name
+            fields = self.exec(['/usr/bin/stat','-c','%f|%u|%g|%h|%s','--',path]).stdout.decode('ascii').strip().split('|')
+            if (len(fields) != 5 or not re.fullmatch(r'[0-9a-fA-F]{1,8}',fields[0])
+                or any(not field.isdecimal() for field in fields[1:])):
+                reject(name,'stat_format')
+            mode_bits = int(fields[0],16)
+            if mode_bits & 0o170000 != (0o040000 if kind == 'd' else 0o100000): reject(name,'type')
+            if mode_bits & 0o7777 != int(mode,8): reject(name,'mode')
+            if fields[1] != uid: reject(name,'owner')
+            if fields[2] != gid: reject(name,'group')
+            if kind == 'f' and fields[3] != '1': reject(name,'link_count')
+            if int(fields[4]) != entry['length']: reject(name,'size')
         for path, digest in ((MIGRATION,self.expected_migration_sha),(CONFIG_PATH,sha(PROJECT_CONFIG))):
             actual = self.exec(['/usr/bin/sha256sum','--',path]).stdout.decode('ascii').split()[0]
-            if actual != digest: raise RuntimeError('fixed synthetic project file hash mismatch')
+            if actual != digest: reject(path.removeprefix('/tmp/codex-cli/supabase/'),'hash')
         evidence = {'run_id':self.run_id,'nonce':self.nonce,'phase':phase,'known_entries':len(entries),
                     'candidate_sha256':self.expected_migration_sha,'config_sha256':sha(PROJECT_CONFIG),
                     'limit':'find/stat/hash are not atomic against same-UID replacement; network-none synthetic container'}

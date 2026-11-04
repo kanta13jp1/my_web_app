@@ -339,7 +339,8 @@ def run():
             if args[0]=='/usr/bin/stat':
                 path=args[-1]
                 if path in ('/tmp/codex-cli','/tmp/codex-cli/supabase'):
-                    return types.SimpleNamespace(stdout=b'directory|999|700\n',returncode=0,stderr=b'')
+                    assert args[2]=='%f|%u'
+                    return types.SimpleNamespace(stdout=b'41c0|999\n',returncode=0,stderr=b'')
                 size={root+'config.toml':3,root+'migrations/20991231000000_synthetic_acl.sql':4}[path]
                 return types.SimpleNamespace(stdout=f'regular file|999|600|{size}|1\n'.encode(),returncode=0,stderr=b'')
             if args[0]=='/usr/bin/sha256sum':
@@ -386,7 +387,8 @@ def run():
             if args[0]=='/usr/bin/id':return types.SimpleNamespace(stdout=b'999\n',stderr=b'',returncode=0)
             if args[0]=='/usr/bin/stat':
                 path=args[-1]
-                if path in ('/tmp/codex-cli','/tmp/codex-cli/supabase'):out='directory|999|700\n'
+                if path in ('/tmp/codex-cli','/tmp/codex-cli/supabase'):
+                    assert args[2]=='%f|%u';out='41c0|999\n'
                 else:
                     info={root+'migrations':('directory','700','2',40),root+'.temp':('directory','755','2',40),
                           root+'config.toml':('regular file','600','1',len(self.files[root+'config.toml'])),
@@ -396,7 +398,19 @@ def run():
                     if self.fault=='owner' and path.endswith('/cli-latest'):user='0'
                     else:user='999'
                     if self.fault=='hardlink' and path.endswith('/cli-latest'):links='2'
-                    out='|'.join((kind,user,'999',mode,links,str(size)))+'\n'
+                    group='0' if self.fault=='group' and path.endswith('/cli-latest') else '999'
+                    bits=(0o040000 if kind=='directory' else 0o100000) | int(mode,8)
+                    if self.fault=='stat_type' and path.endswith('/cli-latest'):bits=0o120777
+                    if self.fault=='special' and path.endswith('/cli-latest'):bits |= 0o4000
+                    if self.fault=='stat_size' and path.endswith('/cli-latest'):size=1
+                    # GNU stat %F calls an empty regular file 'regular empty file';
+                    # the production path must use only %f, whose bits are size independent.
+                    if args[2]=='%F|%u|%g|%a|%h|%s':
+                        kind='regular empty file' if kind=='regular file' and size==0 else kind
+                        out='|'.join((kind,user,group,mode,links,str(size)))+'\n'
+                    else:
+                        assert args[2]=='%f|%u|%g|%h|%s'
+                        out='|'.join((format(bits,'x'),user,group,links,str(size)))+'\n'
                 return types.SimpleNamespace(stdout=out.encode(),stderr=b'',returncode=0)
             if args[0]=='/usr/bin/sha256sum':
                 path=args[-1];digest=hashlib.sha256(self.files[path]).hexdigest()
@@ -411,12 +425,19 @@ def run():
     with contextlib.redirect_stdout(io.StringIO()) as captured:
         m['OwnedService'].stage(stage_fake,stage_fake.binary,stage_fake.migration)
         m['OwnedService'].cli_push(stage_fake)
+    # Reproduce GNU's empty-file wording, while proving the runner used numeric mode.
+    project_stats=[args for args in stage_fake.calls if args[0]=='/usr/bin/stat']
+    assert all('%F' not in args[2] for args in project_stats)
+    empty_path=root+'.temp/cli-latest'
+    textual=stage_fake.exec(['/usr/bin/stat','-c','%F|%u|%g|%a|%h|%s','--',empty_path]).stdout.decode()
+    numeric=stage_fake.exec(['/usr/bin/stat','-c','%f|%u|%g|%h|%s','--',empty_path]).stdout.decode()
+    assert textual.startswith('regular empty file|') and int(numeric.split('|')[0],16)==0o100644
     records=[json.loads(line.split(' ',1)[1]) for line in captured.getvalue().splitlines() if line.startswith('SYNTHETIC_EXECBATCH_PROJECT_TREE ')]
     assert [(r['phase'],r['status']) for r in records]==[('before_version','paths'),('before_version','metadata'),('after_version','paths'),('after_version','metadata'),('before_push','paths'),('before_push','metadata')]
     latest=next(e for e in records[-1]['entries'] if e.get('path')=='.temp/cli-latest')
     assert latest['type']=='f' and latest['mode']=='644' and latest['length']==0 and 'sha256' not in latest
     assert sum(args[0]=='/tmp/codex-cli/supabase-cli' and args[1:3]==['db','push'] for args in stage_fake.calls)==1
-    for fault in ('unknown','symlink','mode','nonempty','owner','hardlink'):
+    for fault in ('unknown','symlink','mode','nonempty','owner','group','hardlink','stat_type','special','stat_size'):
         bad=StageFake();bad.fault=fault
         try:
             with contextlib.redirect_stdout(io.StringIO()) as capture:
@@ -425,6 +446,14 @@ def run():
         else:raise AssertionError('unsafe project tree accepted: '+fault)
         assert not any(args[0]=='/tmp/codex-cli/supabase-cli' and args[1:3]==['db','push'] for args in bad.calls)
         assert 'sensitive-unknown-name' not in capture.getvalue()
+        assert 'SYNTHETIC_EXECBATCH_PROJECT_MISMATCH ' in capture.getvalue()
+        expected_reason={'unknown':'unexpected','symlink':'type','mode':'mode','nonempty':'size',
+                         'owner':'owner','group':'group','hardlink':'link_count',
+                         'stat_type':'type','special':'mode','stat_size':'size'}[fault]
+        mismatch=[json.loads(line.split(' ',1)[1]) for line in capture.getvalue().splitlines()
+                  if line.startswith('SYNTHETIC_EXECBATCH_PROJECT_MISMATCH ')]
+        assert mismatch[-1]['reason']==expected_reason
+        assert mismatch[-1]['path']==('<unknown>' if fault=='unknown' else '.temp/cli-latest')
     for fixed in (root+'config.toml',root+'migrations/20991231000000_synthetic_acl.sql'):
         bad=StageFake()
         with contextlib.redirect_stdout(io.StringIO()):m['OwnedService'].stage(bad,bad.binary,bad.migration)
