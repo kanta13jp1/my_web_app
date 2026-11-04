@@ -45,9 +45,8 @@ class TypingGame {
 
   TypingPrompt get prompt => _deck[_index];
   String get guide => prompt.spellings.firstWhere((s) => s.startsWith(prefix));
-  double get accuracy => correct + mistakes == 0
-      ? 100
-      : correct * 100 / (correct + mistakes);
+  double get accuracy =>
+      correct + mistakes == 0 ? 100 : correct * 100 / (correct + mistakes);
 
   void start() {
     _deck = [...prompts]..shuffle(_random);
