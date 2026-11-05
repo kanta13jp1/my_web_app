@@ -15,6 +15,7 @@ class FakeStore implements TypingScoreStore {
   final calls = <String>[];
   bool fail = false;
   bool published = false;
+  bool deleted = false;
   @override
   Future<void> save(TypingRunReport report) async {
     calls.add('save:${report.id}');
@@ -22,7 +23,7 @@ class FakeStore implements TypingScoreStore {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> mine() async => [
+  Future<List<Map<String, dynamic>>> mine() async => deleted ? [] : [
         {
           'id': 'run',
           'mode': 'challenge',
@@ -50,6 +51,7 @@ class FakeStore implements TypingScoreStore {
   @override
   Future<void> delete(String id) async {
     calls.add('delete');
+    deleted = true;
   }
 }
 
@@ -141,9 +143,55 @@ void main() {
     expect(store.calls, ['publish:TypingFan']);
     await tester.tap(find.text('Withdraw'));
     await tester.pumpAndSettle();
+    expect(store.calls, ['publish:TypingFan']);
+    await tester.tap(find.text('Confirm withdrawal'));
+    await tester.pumpAndSettle();
     expect(store.calls.last, 'withdraw');
     expect(find.text('Withdraw'), findsNothing);
   });
+
+  testWidgets(
+    'private deletion requires an explicit irreversible-action confirmation',
+    (tester) async {
+    final store = FakeStore();
+    addTearDown(store.auth.close);
+    await show(tester, store);
+    await tester.tap(find.text('Load my history'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete record'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('There is no undo here'), findsOneWidget);
+    expect(store.calls, isEmpty);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(store.calls, isEmpty);
+    await tester.tap(find.text('Delete record'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete permanently'));
+    await tester.pumpAndSettle();
+    expect(store.calls, ['delete']);
+    expect(find.text('Choose publication'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'changing account during deletion confirmation prevents the write',
+    (tester) async {
+    final store = FakeStore();
+    addTearDown(store.auth.close);
+    await show(tester, store);
+    await tester.tap(find.text('Load my history'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete record'));
+    await tester.pumpAndSettle();
+    store.accountId = 'other-owner';
+    store.auth.add(store.accountId);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete permanently'));
+    await tester.pumpAndSettle();
+    expect(store.calls, isEmpty);
+    },
+  );
 
   testWidgets('sign out immediately hides private history and blocks saving',
       (tester) async {

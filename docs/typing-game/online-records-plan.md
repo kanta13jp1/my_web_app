@@ -55,8 +55,8 @@ not authorize new external AI disclosure or applying new production DB grants.
   time-based expiry. At 100 retained records, new saves are rejected; no old
   private record is automatically pruned. Deliberate owner deletion removes the
   run and its publication. Account deletion cascades into this feature's tables.
-  Expired publications are filtered and removed on owner access or by the
-  proposed administrator maintenance job. Daily submission counters survive
+  Expired publications are hidden by a read filter, without deleting stored
+  entries on access or by a scheduled task. Daily submission counters survive
   private-record deletion and are not purged by maintenance.
 - Rate limits: 5 seconds between new saves, 100/day UTC, proposed not approved.
 - Anti-cheat: choose between a casual self-reported board and a separately
@@ -66,7 +66,7 @@ not authorize new external AI disclosure or applying new production DB grants.
 
 Production rollout is requested, subject to the following action-time approvals.
 Review the policy decisions and SQL, generate a migration through Supabase CLI,
-test on an isolated Supabase stack with real auth/RPC, configure expiry, and
+test on an isolated Supabase stack with real auth/RPC, verify non-destructive visibility expiry, and
 obtain explicit human DB/security review before applying it. Enable the client
 flag only after that reviewed rollout. The flag alone is not a security boundary;
 the server grants and owner checks are the authorization boundary.
@@ -89,69 +89,40 @@ technology testing remain outstanding from the preserved input work.
 The additional `test/integration/typing_records_supabase_test.dart` exercises
 real GoTrue sessions and PostgREST on a disposable localhost-only Supabase stack.
 It is explicitly skipped in ordinary tests lacking that stack. Its dedicated
-cloud job must execute it (not skip it). The draft maintenance function has no
-client grants and removes only expired publication entries, including for
-inactive accounts. It does not delete private runs or counters. Proposed
-scheduling is a daily privileged job; installation is still pending review.
-No real-user account, production key or production database is used by this test.
+cloud job must execute it (not skip it). Expiry changes visibility only. The test
+checks that private history AND the expired public entry remain stored after
+owner reads and ranking reads. There is no purge function or cron setup in this
+proposal. No real-user account, production key or production DB is used by tests.
 
-## Exact proposed DB privileges and maintenance (NOT APPLIED)
+## Exact proposed permissions and non-destructive expiry (NOT APPLIED)
 
 - Create only `typing_private.runs`, `typing_private.entries`, and
-  `typing_private.budgets`. All have RLS. Revoke direct table access from PUBLIC,
-  anon, authenticated and service_role. Existing application tables/policies
-  are not altered. The administrator owns the new objects.
+  `typing_private.budgets`. All have RLS. Revoke direct access from PUBLIC,
+  anon, authenticated and service_role. Existing tables/policies are unchanged.
+  The database administrator owns the new objects.
 - Grant authenticated schema USAGE and EXECUTE on the public invoker RPC and
-  its private definer implementation. Both entry points reject missing or
-  anonymous identities; ownership comes from `auth.uid()`, never a parameter.
-- No grant to anon. No client EXECUTE on maintenance. No client service-role
-  credential. Rankings return only deliberate aliases and four score fields.
-- Run the proposed maintenance job daily at **03:17 UTC (12:17 JST)** as the
-  database administrator, only after verifying cron's configured timezone is
-  UTC/GMT and that no job of this name exists. Do not change global timezone,
-  enable an extension, or replace an existing job automatically.
-- Command: `select typing_private.purge_expired_publications();` removes only
-  entries whose matching run was created at least 90 days ago. `runs` and
-  `budgets` survive. Rank reads already hide expired entries, so delayed cron
-  execution cannot extend visibility.
-- This physically removes public aliases/entry associations and has no undo
-  button. It does not erase private scores. The user may delete a private run
-  deliberately (irreversible here), which also removes its public entry.
-  Deleting the account removes all three feature-owned tables' rows via FK
-  cascades. No backup/PITR recovery guarantee is made.
-- To stop future maintenance, the administrator can unschedule this named job.
-  Unscheduling does not restore already removed publication entries.
-
-After explicit approval, and only if the above preflight passes:
-
-```sql
-do $preflight$
-begin
-  if current_user <> 'postgres' or current_database() <> 'postgres' then
-    raise exception 'Unexpected maintenance administrator or database';
-  end if;
-  if to_regclass('cron.job') is null then
-    raise exception 'pg_cron is not installed; do not enable it automatically';
-  end if;
-  if coalesce(current_setting('cron.timezone', true), '') not in ('GMT','UTC','Etc/UTC') then
-    raise exception 'Cron timezone is not verified UTC';
-  end if;
-  if exists(select 1 from cron.job where jobname='typing-expired-publications-v1') then
-    raise exception 'Job already exists; verify instead of replacing it';
-  end if;
-end $preflight$;
-select cron.schedule(
-  'typing-expired-publications-v1',
-  '17 3 * * *',
-  'select typing_private.purge_expired_publications();'
-);
-```
-
-This proposal supersedes the earlier draft that deleted private runs after 90
-days or pruned them on save. Neither older behavior was approved or applied.
+  private definer implementation. Both reject missing/anonymous identities.
+  Owner identity is derived from `auth.uid()`, never from client parameters.
+  The public-schema service_role default EXECUTE grant is explicitly revoked
+  on the new RPC. No service-role key goes to the app.
+- The 90-day rule is a query predicate on the original run timestamp. It hides
+  old entries from the ranking and prevents re-publication outside that window.
+  It does NOT delete the public entry, alias, private record or counters.
+- No cron job, purge function, scheduled DELETE, extension enablement or global
+  timezone change is included. Earlier proposed daily 03:17 UTC maintenance and
+  earlier private-history deletion drafts are withdrawn, not approved or applied.
+- Private history has no time-based expiry. At 100 records, new saves fail;
+  old records are never silently pruned. Exact retries of an existing run still
+  succeed, even when the history is full.
+- A player may deliberately withdraw one public entry while keeping private
+  history, or delete one private record and its associated entry. The UI asks
+  for action-time confirmation, describes scope and lack of undo/recovery
+  guarantee, and rechecks account identity after the dialog. The server enforces
+  ownership on every action. Deleting an account cascades into these three
+  feature-owned tables. No other account or record is affected.
+- A future permanent cleanup proposal, if desired, requires its own exact SQL,
+  affected-data description and fresh informed action-time approval.
 
 Read-only production preflight on 2026-11-05 confirmed PostgreSQL 17,
-`pg_cron` 1.6.4, cron timezone GMT, no `typing_private` schema and no matching
-job. Public-schema default function grants include service_role; the proposed
-RPC explicitly revokes that default on this new function before granting only
-authenticated execution. These reads changed no data, permissions or schedules.
+pg_cron 1.6.4, cron timezone GMT, no typing_private schema and no matching job.
+Those reads changed no rows, permissions or schedules. Cron is not used here.
