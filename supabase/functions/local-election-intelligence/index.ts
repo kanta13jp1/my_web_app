@@ -2728,14 +2728,6 @@ function addDays(value: Date, days: number): Date {
 function isPrefectureName(value: string): boolean {
   return PREFECTURES.includes(value as (typeof PREFECTURES)[number]);
 }
-function extractPrefectureLabel(value: string): string {
-  const normalized = normalizeWhitespace(value).trim();
-  for (const prefecture of PREFECTURES) {
-    if (normalized.includes(prefecture)) return prefecture;
-  }
-  return normalized;
-}
-
 function extractScheduleMunicipality(
   electionName: string,
   prefecture: string,

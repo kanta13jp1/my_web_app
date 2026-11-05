@@ -544,11 +544,11 @@ jobs:
         run: bash scripts/ci/install_deno_from_github.sh
       - name: Format scoped release files
         run: |
-          dart format lib/data/dpj_official_endorsements.dart lib/data/repositories/official_endorsement_repository.dart lib/services/local_election_reality_service.dart test/data/repositories/official_endorsement_repository_test.dart test/services/local_election_snapshot_quality_test.dart
+          dart format lib/data/dpj_official_endorsements.dart lib/data/repositories/official_endorsement_repository.dart lib/services/local_election_reality_service.dart test/data/repositories/official_endorsement_repository_test.dart test/services/local_election_snapshot_quality_test.dart test/ui/features/election_victory/view_models/official_endorsement_view_model_test.dart
           deno fmt supabase/functions/local-election-intelligence/index.ts supabase/functions/local-election-intelligence/official_site_parsers.ts supabase/functions/local-election-intelligence/official_site_parsers_test.ts supabase/functions/local-election-intelligence/candidate_observations.ts supabase/functions/local-election-intelligence/candidate_observations_test.ts supabase/functions/local-election-intelligence/snapshot_history_test.ts
-          if ! git diff --quiet; then
+          if ! git diff --quiet -- '*.dart' 'supabase/functions/local-election-intelligence/*.ts'; then
             mkdir -p /tmp/local-election-format
-            git diff --binary > /tmp/local-election-format/format.patch
+            git diff --binary -- '*.dart' 'supabase/functions/local-election-intelligence/*.ts' > /tmp/local-election-format/format.patch
             echo 'Formatting output must be applied and this exact-SHA check rerun.'
             exit 1
           fi

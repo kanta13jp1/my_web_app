@@ -25,7 +25,7 @@ void main() {
     viewModel.updateFromIntelligence(intelligence);
 
     expect(notificationCount, 1);
-    expect(viewModel.snapshot.sourceAsOf, '2026-08-11');
+    expect(viewModel.snapshot.sourceAsOf, _newerSourceDate);
     expect(viewModel.forPrefecture('東京都')?.incumbentCount, 1);
   });
 
@@ -46,9 +46,15 @@ void main() {
   });
 }
 
-const _liveSnapshot = OfficialEndorsementSnapshot(
+final _newerSourceDate = DateTime.parse(dpjOfficialEndorsementSourceAsOf)
+    .add(const Duration(days: 1))
+    .toIso8601String()
+    .split('T')
+    .first;
+
+final _liveSnapshot = OfficialEndorsementSnapshot(
   sourceUrl: 'https://example.com/live',
-  sourceAsOf: '2026-08-11',
+  sourceAsOf: _newerSourceDate,
   sourceDocumentSha256: 'live-sha',
   totalCount: 1,
   incumbentCount: 1,
@@ -56,7 +62,7 @@ const _liveSnapshot = OfficialEndorsementSnapshot(
   formerCount: 0,
   recommendationCount: 0,
   prefectureCount: 1,
-  prefectures: <OfficialEndorsementPrefecture>[
+  prefectures: const <OfficialEndorsementPrefecture>[
     OfficialEndorsementPrefecture(
       prefecture: '東京',
       totalCount: 1,
