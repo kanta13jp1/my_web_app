@@ -4,6 +4,56 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/typing_game.dart';
 
 void main() {
+  void completeWord(TypingGame game) {
+    for (final letter in game.guide.split('')) {
+      expect(game.type(letter), isTrue);
+    }
+  }
+
+  test('36 consecutive restarts expose each prompt before repeating', () {
+    final game = TypingGame(random: Random(12));
+    final seen = <TypingPrompt>{};
+    for (var i = 0; i < TypingGame.prompts.length; i++) {
+      game.start();
+      expect(seen.add(game.prompt), isTrue);
+    }
+    final previous = game.prompt;
+    game.start();
+    expect(game.prompt, isNot(previous));
+  });
+
+  test('three ten-word practices do not repeat across retries', () {
+    final game = TypingGame(random: Random(15));
+    final seen = <TypingPrompt>{};
+    for (var run = 0; run < 3; run++) {
+      game.start(mode: TypingMode.practice);
+      for (var i = 0; i < TypingGame.practiceTarget; i++) {
+        expect(seen.add(game.prompt), isTrue);
+        completeWord(game);
+      }
+      expect(game.finished, isTrue);
+    }
+    expect(seen.length, 30);
+  });
+
+  test('focused exposure is remembered on return to the full corpus', () {
+    final game = TypingGame(random: Random(19));
+    final focused = TypingGame.prompts.first;
+    game.start(mode: TypingMode.practice, practicePrompts: [focused]);
+    for (var i = 0; i < TypingGame.practiceTarget; i++) {
+      expect(game.prompt, focused);
+      completeWord(game);
+    }
+    final seen = <TypingPrompt>{};
+    for (var i = 0; i < TypingGame.prompts.length - 1; i++) {
+      game.start(mode: i.isEven ? TypingMode.practice : TypingMode.challenge);
+      expect(game.prompt, isNot(focused));
+      expect(seen.add(game.prompt), isTrue);
+    }
+    game.start();
+    expect(game.prompt, focused);
+  });
+
   test('all curated spellings complete their Japanese prompt', () {
     for (final target in TypingGame.prompts) {
       for (final spelling in target.spellings) {

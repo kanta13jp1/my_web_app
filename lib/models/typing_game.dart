@@ -64,6 +64,9 @@ class TypingGame {
 
   final Random _random;
   final Map<TypingPrompt, int> _misses = {};
+  // Keep exposure history across retries and mode changes in this session.
+  final Map<TypingPrompt, int> _lastShown = {};
+  int _sequence = 0;
   late List<TypingPrompt> _deck;
   int _index = 0;
   TypingMode mode = TypingMode.challenge;
@@ -110,7 +113,14 @@ class TypingGame {
     }
     this.mode = mode;
     _deck = deck..shuffle(_random);
+    // Shuffle first so unseen/equally recent prompts keep a random tie break.
+    final tieOrder = {for (var i = 0; i < deck.length; i++) deck[i]: i};
+    _deck.sort((a, b) {
+      final recent = (_lastShown[a] ?? -1).compareTo(_lastShown[b] ?? -1);
+      return recent != 0 ? recent : tieOrder[a]!.compareTo(tieOrder[b]!);
+    });
     _index = 0;
+    _markShown();
     running = true;
     finished = false;
     remaining = duration;
@@ -138,6 +148,8 @@ class TypingGame {
     running = false;
     finished = true;
   }
+
+  void _markShown() => _lastShown[prompt] = _sequence++;
 
   /// Accepts one physical or soft-keyboard letter. Edits/paste are handled by UI.
   bool type(String letter) {
@@ -171,6 +183,7 @@ class TypingGame {
             _deck[1] = first;
           }
         }
+        _markShown();
       }
     } else {
       prefix = next;

@@ -3,13 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/typing_game.dart';
+import '../services/typing_score_service.dart';
+import '../widgets/typing_records_panel.dart';
 import '../services/typing_composition_bridge_stub.dart'
     if (dart.library.js_interop) '../services/typing_composition_bridge_web.dart';
 
 class TypingGamePage extends StatefulWidget {
-  const TypingGamePage({super.key});
+  const TypingGamePage({super.key, this.scoreStore});
+
+  final TypingScoreStore? scoreStore;
 
   @override
   State<TypingGamePage> createState() => _TypingGamePageState();
@@ -29,12 +34,19 @@ class _TypingGamePageState extends State<TypingGamePage> {
   bool _reviewPractice = false;
   bool _english = false;
   late final TypingCompositionBridge _composition;
+  late final TypingScoreStore? _scoreStore;
+  TypingRunReport? _report;
 
   String _t(String japanese, String english) => _english ? english : japanese;
 
   @override
   void initState() {
     super.initState();
+    // Enable only after audience/retention review and an approved DB rollout.
+    _scoreStore = widget.scoreStore ??
+        (const bool.fromEnvironment('TYPING_ONLINE_RECORDS')
+            ? SupabaseTypingScoreStore(Supabase.instance.client)
+            : null);
     _composition = TypingCompositionBridge(
       ownsInput: () => mounted && _game.running && _focus.hasFocus,
       onCommitted: _commitBrowserComposition,
@@ -73,6 +85,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
     _timer?.cancel();
     setState(() {
       _composition.reset();
+      _report = null;
       if (review != null) _selectedMode = TypingMode.practice;
       _reviewPractice = review != null;
       _announceFeedback = false;
@@ -98,6 +111,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
 
   void _settle() {
     if (_game.finished) {
+      _report ??= TypingRunReport.fromGame(_game);
       _composition.reset();
       _clock.stop();
       _timer?.cancel();
@@ -671,6 +685,12 @@ class _TypingGamePageState extends State<TypingGamePage> {
                         ),
                       ],
                       const SizedBox(height: 24),
+                      if (!_game.running && _scoreStore != null)
+                        TypingRecordsPanel(
+                          store: _scoreStore!,
+                          report: _report,
+                          english: _english,
+                        ),
                       Text(
                         _t(
                           '遊び方: 英語キーボードで、表示されたつづりを入力します。変換中の文字は確定後に採点します。shi / si などは「使えるつづり」にあるものに対応。削除・貼り付け・かな入力は対象外です。スマートフォンでは英語キーボードを選択してください。成績と振り返りはこの画面を閉じるまで。練習モードの成績はチャレンジのベストに含めません。',
