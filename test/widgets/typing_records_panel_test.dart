@@ -23,15 +23,17 @@ class FakeStore implements TypingScoreStore {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> mine() async => deleted ? [] : [
-        {
-          'id': 'run',
-          'mode': 'challenge',
-          'can_publish': true,
-          'score': 60,
-          'alias': published ? 'TypingFan' : null,
-        },
-      ];
+  Future<List<Map<String, dynamic>>> mine() async => deleted
+      ? []
+      : [
+          {
+            'id': 'run',
+            'mode': 'challenge',
+            'can_publish': true,
+            'score': 60,
+            'alias': published ? 'TypingFan' : null,
+          },
+        ];
   @override
   Future<List<Map<String, dynamic>>> ranking() async => [
         {'alias': 'TypingFan', 'score': 60, 'accuracy': 100},
@@ -153,43 +155,43 @@ void main() {
   testWidgets(
     'private deletion requires an explicit irreversible-action confirmation',
     (tester) async {
-    final store = FakeStore();
-    addTearDown(store.auth.close);
-    await show(tester, store);
-    await tester.tap(find.text('Load my history'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete record'));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('There is no undo here'), findsOneWidget);
-    expect(store.calls, isEmpty);
-    await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
-    expect(store.calls, isEmpty);
-    await tester.tap(find.text('Delete record'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete permanently'));
-    await tester.pumpAndSettle();
-    expect(store.calls, ['delete']);
-    expect(find.text('Choose publication'), findsNothing);
+      final store = FakeStore();
+      addTearDown(store.auth.close);
+      await show(tester, store);
+      await tester.tap(find.text('Load my history'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete record'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('There is no undo here'), findsOneWidget);
+      expect(store.calls, isEmpty);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(store.calls, isEmpty);
+      await tester.tap(find.text('Delete record'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete permanently'));
+      await tester.pumpAndSettle();
+      expect(store.calls, ['delete']);
+      expect(find.text('Choose publication'), findsNothing);
     },
   );
 
   testWidgets(
     'changing account during deletion confirmation prevents the write',
     (tester) async {
-    final store = FakeStore();
-    addTearDown(store.auth.close);
-    await show(tester, store);
-    await tester.tap(find.text('Load my history'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete record'));
-    await tester.pumpAndSettle();
-    store.accountId = 'other-owner';
-    store.auth.add(store.accountId);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete permanently'));
-    await tester.pumpAndSettle();
-    expect(store.calls, isEmpty);
+      final store = FakeStore();
+      addTearDown(store.auth.close);
+      await show(tester, store);
+      await tester.tap(find.text('Load my history'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete record'));
+      await tester.pumpAndSettle();
+      store.accountId = 'other-owner';
+      store.auth.add(store.accountId);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete permanently'));
+      await tester.pumpAndSettle();
+      expect(store.calls, isEmpty);
     },
   );
 

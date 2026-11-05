@@ -166,7 +166,8 @@ class _TypingRecordsPanelState extends State<TypingRecordsPanel> {
     });
   }
 
-  Future<void> _remove(Map<String, dynamic> row, {required bool history}) async {
+  Future<void> _remove(Map<String, dynamic> row,
+      {required bool history,}) async {
     final owner = widget.store.accountId;
     if (owner == null) return;
     final confirmed = await showDialog<bool>(
@@ -187,14 +188,14 @@ class _TypingRecordsPanelState extends State<TypingRecordsPanel> {
               ),
               Text(
                 history
-                  ? _t(
-                      '選択した1件の非公開履歴と、それに対応する公開エントリーを完全に削除します。他の記録は削除しません。アプリ内で元に戻すことはできず、バックアップからの個別復元も保証できません。',
-                      'Permanently delete this one private record and its associated public entry. Other records stay. There is no undo here, and individual recovery from backups is not guaranteed.',
-                    )
-                  : _t(
-                      'この記録の公開エントリーだけを削除し、非公開履歴は残します。公開取消を元に戻す操作はありませんが、プレイから90日以内なら改めて公開できます。',
-                      'Remove only this public entry. Your private record stays. Withdrawal has no undo action, but an eligible run can be published again within 90 days of play.',
-                    ),
+                    ? _t(
+                        '選択した1件の非公開履歴と、それに対応する公開エントリーを完全に削除します。他の記録は削除しません。アプリ内で元に戻すことはできず、バックアップからの個別復元も保証できません。',
+                        'Permanently delete this one private record and its associated public entry. Other records stay. There is no undo here, and individual recovery from backups is not guaranteed.',
+                      )
+                    : _t(
+                        'この記録の公開エントリーだけを削除し、非公開履歴は残します。公開取消を元に戻す操作はありませんが、プレイから90日以内なら改めて公開できます。',
+                        'Remove only this public entry. Your private record stays. Withdrawal has no undo action, but an eligible run can be published again within 90 days of play.',
+                      ),
               ),
             ],
           ),
@@ -215,7 +216,9 @@ class _TypingRecordsPanelState extends State<TypingRecordsPanel> {
         ],
       ),
     );
-    if (!mounted || confirmed != true || widget.store.accountId != owner) return;
+    if (!mounted || confirmed != true || widget.store.accountId != owner) {
+      return;
+    }
     await _act(() async {
       final id = row['id'] as String;
       if (history) {
@@ -307,15 +310,12 @@ class _TypingRecordsPanelState extends State<TypingRecordsPanel> {
                     ),
                   if (row['alias'] != null)
                     TextButton(
-                      onPressed: _busy
-                          ? null
-                          : () => _remove(row, history: false),
+                      onPressed:
+                          _busy ? null : () => _remove(row, history: false),
                       child: Text(_t('公開取消', 'Withdraw')),
                     ),
                   TextButton(
-                    onPressed: _busy
-                        ? null
-                        : () => _remove(row, history: true),
+                    onPressed: _busy ? null : () => _remove(row, history: true),
                     child: Text(_t('記録を削除', 'Delete record')),
                   ),
                 ],
