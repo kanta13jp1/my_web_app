@@ -560,6 +560,16 @@ jobs:
           path: /tmp/local-election-format/format.patch
           if-no-files-found: ignore
           retention-days: 1
+      - name: Run repository pre-commit checks for committed release paths
+        run: |
+          python - <<'PY'
+          import subprocess, sys
+          sys.path.insert(0, 'scripts')
+          from pre_commit_quality_gate import commands_for_paths
+          paths = subprocess.check_output(['git', 'diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'], text=True).splitlines()
+          for command in commands_for_paths(paths):
+              subprocess.run(command, check=True)
+          PY
       - name: Python parser and audit regression tests
         run: |
           python -B -m unittest discover -s test/scripts -p '*kokumin*test.py' -v
