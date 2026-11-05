@@ -166,8 +166,10 @@ class _TypingRecordsPanelState extends State<TypingRecordsPanel> {
     });
   }
 
-  Future<void> _remove(Map<String, dynamic> row,
-      {required bool history,}) async {
+  Future<void> _remove(
+    Map<String, dynamic> row, {
+    required bool history,
+  }) async {
     final owner = widget.store.accountId;
     if (owner == null) return;
     final confirmed = await showDialog<bool>(
