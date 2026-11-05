@@ -17,7 +17,10 @@ void main() {
 
   test('older cached PDF cannot override the bundled source date', () {
     final old = OfficialEndorsementSnapshot.fromJson(
-      <String, dynamic>{..._liveSnapshot.toJson(), 'sourceAsOf': _olderSourceDate},
+      <String, dynamic>{
+        ..._liveSnapshot.toJson(),
+        'sourceAsOf': _olderSourceDate
+      },
     );
     expect(repository.resolve(_intelligenceWith(old)).sourceAsOf,
         dpjOfficialEndorsementSourceAsOf);
@@ -35,8 +38,10 @@ void main() {
 
   test('same source date can use the live snapshot', () {
     final live = OfficialEndorsementSnapshot.fromJson(
-      <String, dynamic>{..._liveSnapshot.toJson(),
-        'sourceAsOf': dpjOfficialEndorsementSourceAsOf},
+      <String, dynamic>{
+        ..._liveSnapshot.toJson(),
+        'sourceAsOf': dpjOfficialEndorsementSourceAsOf
+      },
     );
     expect(repository.resolve(_intelligenceWith(live)).sourceDocumentSha256,
         'live-sha');
@@ -75,9 +80,15 @@ void main() {
 }
 
 final _newerSourceDate = DateTime.parse(dpjOfficialEndorsementSourceAsOf)
-    .add(const Duration(days: 1)).toIso8601String().split('T').first;
+    .add(const Duration(days: 1))
+    .toIso8601String()
+    .split('T')
+    .first;
 final _olderSourceDate = DateTime.parse(dpjOfficialEndorsementSourceAsOf)
-    .subtract(const Duration(days: 1)).toIso8601String().split('T').first;
+    .subtract(const Duration(days: 1))
+    .toIso8601String()
+    .split('T')
+    .first;
 
 final _liveSnapshot = OfficialEndorsementSnapshot(
   sourceUrl: 'https://example.com/live',

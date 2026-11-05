@@ -1306,16 +1306,31 @@ function parsePrefectureMembers(
   html: string,
 ): LocalLegislatorProfile[] {
   const members: LocalLegislatorProfile[] = [];
-  for (const card of parseOfficialRosterCards(html, "members", prefecture, sourceUrl)) {
+  for (
+    const card of parseOfficialRosterCards(
+      html,
+      "members",
+      prefecture,
+      sourceUrl,
+    )
+  ) {
     const assemblyCategory = inferAssemblyCategory(card.assemblyLabel);
     if (assemblyCategory === "other") continue;
     members.push({
-      prefecture, sourceUrl, detailUrl: card.detailUrl,
-      name: card.name, kana: card.kana, constituency: card.constituency,
+      prefecture,
+      sourceUrl,
+      detailUrl: card.detailUrl,
+      name: card.name,
+      kana: card.kana,
+      constituency: card.constituency,
       municipality: extractMunicipality(prefecture, card.constituency),
-      assemblyLabel: card.assemblyLabel, assemblyCategory,
+      assemblyLabel: card.assemblyLabel,
+      assemblyCategory,
       electionCountLabel: card.electionCountLabel,
-      birthDate: "", age: null, gender: "", profile: "",
+      birthDate: "",
+      age: null,
+      gender: "",
+      profile: "",
     });
   }
 
@@ -1423,11 +1438,17 @@ function parseOfficialScheduledCandidates(
   sourceUrl: string,
   html: string,
 ): OfficialScheduledCandidate[] {
-  return parseOfficialRosterCards(html, "candidates", prefecture, sourceUrl).map((card) => ({
-    prefecture, sourceUrl, name: card.name, electionName: card.electionName,
-    voteDate: card.voteDate, statusLabel: card.statusLabel,
-    detailUrl: card.detailUrl, xHandle: "",
-  }));
+  return parseOfficialRosterCards(html, "candidates", prefecture, sourceUrl)
+    .map((card) => ({
+      prefecture,
+      sourceUrl,
+      name: card.name,
+      electionName: card.electionName,
+      voteDate: card.voteDate,
+      statusLabel: card.statusLabel,
+      detailUrl: card.detailUrl,
+      xHandle: "",
+    }));
 }
 
 async function fetchUpcomingLocalElectionSchedules(
@@ -2354,7 +2375,11 @@ function matchOfficialCandidatesForSchedule(
   officialCandidates: OfficialScheduledCandidate[],
 ): OfficialScheduledCandidate[] {
   return officialCandidates.filter((candidate) =>
-    candidateMatchesConfirmedElection(candidate, { prefecture, electionName, voteDate })
+    candidateMatchesConfirmedElection(candidate, {
+      prefecture,
+      electionName,
+      voteDate,
+    })
   );
 }
 

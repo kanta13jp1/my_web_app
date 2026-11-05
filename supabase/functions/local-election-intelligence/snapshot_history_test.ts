@@ -129,7 +129,9 @@ Deno.test("member-only payload must never be substituted for the legacy combined
   assertEquals(after.upcomingSchedules, []);
   const diff = computeLocalElectionDiff(before, after);
   assertEquals(diff.schedules.removed.length, 1);
-  assertEquals(diff.candidates.removed.map((candidate) => candidate.name), ["佐藤花子"]);
+  assertEquals(diff.candidates.removed.map((candidate) => candidate.name), [
+    "佐藤花子",
+  ]);
   assert(diff.significantKinds.includes("candidate_delta"));
 });
 
@@ -138,11 +140,15 @@ Deno.test("unknown candidate coverage must keep the existing persistence gate cl
   const partial = baseSnapshot();
   partial.upcomingSchedules = [];
   partial.collectionQuality = {
-    ...(partial.collectionQuality as JsonRecord), complete: false,
+    ...(partial.collectionQuality as JsonRecord),
+    complete: false,
     issues: ["official_candidate_vote_date_unverified:49"],
   };
-  await assertRejects(() => persistLocalElectionSnapshot(store, partial), Error,
-    "incomplete local-election snapshot cannot be persisted");
+  await assertRejects(
+    () => persistLocalElectionSnapshot(store, partial),
+    Error,
+    "incomplete local-election snapshot cannot be persisted",
+  );
   assertEquals(store.snapshots.length, 0);
   assertEquals(store.candidates.length, 0);
 });
