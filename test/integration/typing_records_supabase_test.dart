@@ -139,10 +139,11 @@ void main() {
         await sql('select count(*) from typing_private.entries where $where'),
         '1',
       );
-      await sql('select typing_private.purge_expired_publications()');
+      expect(await storeA.mine(), hasLength(1));
+      expect(await storeB.ranking(), isEmpty);
       expect(
         await sql('select count(*) from typing_private.entries where $where'),
-        '0',
+        '1',
       );
       expect(
         await sql('select count(*) from typing_private.runs where $where'),

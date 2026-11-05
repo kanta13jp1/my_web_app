@@ -85,7 +85,7 @@ select test_assert(public.typing_game_records('ranking') = '[]', 'expired scores
 select test_assert(jsonb_array_length(public.typing_game_records('mine')) = 1, 'private history survives publication expiry');
 select test_assert(public.typing_game_records('mine')->0->'can_publish' = 'false'::jsonb, 'expired run cannot be republished');
 reset role;
-select test_assert(not exists(select from typing_private.entries where owner_id = '00000000-0000-0000-0000-000000000001'), 'expiry removes only publication');
+select test_assert(exists(select from typing_private.entries where owner_id = '00000000-0000-0000-0000-000000000001'), 'expiry keeps stored publication unchanged');
 select test_assert((select bool_and(relrowsecurity) from pg_class where oid in ('typing_private.runs'::regclass, 'typing_private.entries'::regclass)), 'RLS enabled');
 select test_assert(not has_function_privilege('anon','public.typing_game_records(text,jsonb)','execute'), 'anon cannot call');
 select test_assert(not has_table_privilege('authenticated','typing_private.runs','insert'), 'direct writes revoked');
@@ -114,6 +114,6 @@ set role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', false);
 select test_denied($q$select public.typing_game_records('save', '{"id":"20000000-0000-0000-0000-000000000002","revision":"romaji36-v1","mode":"practice","correct":3,"mistakes":0,"words":1,"elapsed_ms":1000}')$q$, '54000');
 select test_assert(jsonb_array_length(public.typing_game_records('mine')) = 100, 'full private history is retained');
-select test_denied($q$select typing_private.purge_expired_publications()$q$, '42501');
 reset role;
+select test_assert(to_regprocedure('typing_private.purge_expired_publications()') is null, 'no automatic purge function exists');
 \echo TYPING_DATABASE_ASSERTIONS_PASSED

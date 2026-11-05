@@ -1,5 +1,6 @@
 -- REVIEW DRAFT ONLY. Not in migrations; never apply automatically.
--- Proposed policy: authenticated audience, dedicated alias, 90 days / 100 runs.
+-- Proposed: authenticated audience, alias, 90-day visibility, 100 retained runs.
+-- No automatic deletion, private-history pruning, purge function or cron.
 -- Requires owner decisions and reviewed migration before enabling the client.
 begin;
 create schema typing_private;
@@ -67,9 +68,8 @@ begin
   end if;
   -- Serialization covers dedupe, limits, delete and publication for this owner.
   perform pg_advisory_xact_lock(hashtextextended(uid::text, 64312));
-  -- Expiry removes publication only. Private history has no 90-day expiry.
-  delete from typing_private.entries where owner_id = uid and id in
-    (select id from typing_private.runs where owner_id = uid and created_at <= now() - interval '90 days');
+  -- Expiry is a read filter only; neither private nor published rows are
+  -- automatically deleted. Only explicit owner actions below can remove rows.
 
   if p_action = 'save' then
     if not (p_data ?& array['id','revision','mode','correct','mistakes','words','elapsed_ms']) or
@@ -182,12 +182,4 @@ grant execute on function public.typing_game_records(text,jsonb) to authenticate
 comment on function public.typing_game_records(text,jsonb) is
   'Private opt-in history and separately published self-reported romaji36 scores; not verified competitive results.';
 
--- Maintenance only. Scheduling requires separate production approval. Client
--- roles cannot invoke this function, including through the public RPC.
-create function typing_private.purge_expired_publications()
-returns void language sql security invoker set search_path = '' as $$
-  delete from typing_private.entries where (owner_id, id) in
-    (select owner_id, id from typing_private.runs where created_at <= now() - interval '90 days');
-$$;
-revoke all on function typing_private.purge_expired_publications() from public, anon, authenticated, service_role;
 commit;
