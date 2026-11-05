@@ -84,7 +84,7 @@ jobs:
           done
           E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/typing_game.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
       - name: Build integrated app
-        run: flutter build web --release --pwa-strategy=none --dart-define=ENVIRONMENT=visual-test --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture
+        run: flutter build web --release --pwa-strategy=none --dart-define=ENVIRONMENT=visual-test --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture --dart-define=TYPING_ONLINE_RECORDS=true
       - name: Preserve published Sea Shelter asset packaging
         uses: ./.github/actions/prepare-sea-shelter-arena
         with:
@@ -99,8 +99,13 @@ jobs:
           import { expect, test } from '@playwright/test';
           test('preserved public application opens and plays typing route', async ({page}, info) => {
             const errors: string[]=[];
+            const recordRequests: string[]=[];
             page.on('pageerror', e=>errors.push(e.message));
+            page.on('request', r=>{ if(r.url().includes('/rpc/typing_game_records')) recordRequests.push(r.url()); });
             await page.goto('/typing-game');
+            await page.getByRole('button',{name:'自分の履歴を読む',exact:true}).click({timeout:60000});
+            await expect(page.getByText('ログインしてから利用してください。',{exact:true})).toBeVisible();
+            expect(recordRequests).toEqual([]);
             await expect(page.getByRole('button',{name:/スタート/})).toBeVisible({timeout:60000});
             await page.getByRole('button',{name:/スタート/}).click();
             const input=page.getByRole('textbox',{name:/^ローマ字入力/});

@@ -36,7 +36,7 @@ REQUIRED = frozenset({'AI Review Gate', 'Lint, Format, and Test',
 
 
 
-VALIDATION_WORKFLOW_BLOB = 'bd93cc2443a20e8af07fe948659aa83913810449'
+VALIDATION_WORKFLOW_BLOB = '54f7da51525e2f32434b5e0b06c7ed0c1e81f966'
 VALIDATION_STEPS = {
     'database': {'Test draft in disposable PostgreSQL only'},
     'typing': {'Format candidate and preserve patch', 'Analyze typing implementation',
