@@ -1,0 +1,48 @@
+name: Issue 4744 isolated calendar validation
+on:
+  push:
+    branches: [codex/issue-4744-calendar-release-20261106]
+    paths: [.github/workflows/issue-4744-calendar-validation.yml]
+permissions: {}
+concurrency:
+  group: issue-4744-calendar-validation
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    env:
+      CI: 'true'
+      FLUTTER_SUPPRESS_ANALYTICS: 'true'
+      DART_SUPPRESS_ANALYTICS: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 62f7277329929917d793f8f2a6a8843515403281
+          persist-credentials: false
+      - name: Verify immutable candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 62f7277329929917d793f8f2a6a8843515403281
+          git diff --name-only c7b86ae2aeae5724304379365f566ca3668ab8d5 HEAD || true
+          echo 'Validated source: 62f7277329929917d793f8f2a6a8843515403281' >> "$GITHUB_STEP_SUMMARY"
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Check format, analyze and Home regressions
+        shell: bash
+        run: |
+          set +e
+          dart format --output=none --set-exit-if-changed lib/pages/home_page.dart lib/utils/home_calendar_visible_range.dart test/utils/home_calendar_visible_range_test.dart
+          format_result=$?
+          flutter analyze --no-pub lib/pages/home_page.dart lib/utils/home_calendar_visible_range.dart test/utils/home_calendar_visible_range_test.dart
+          analyze_result=$?
+          flutter test --no-pub --concurrency=2 test/utils/home_calendar_visible_range_test.dart test/pages/home_calendar_abstinence_batch_test.dart test/utils/home_feature_request_failure_test.dart test/services/home_funnel_analytics_test.dart test/services/home_tool_usage_service_test.dart test/data/home_tool_catalog_consolidation_test.dart test/widgets/home_billing_nudge_test.dart test/widgets/home_primary_action_card_test.dart test/widgets/home_tier_styles_test.dart test/widgets/home_visibility_policy_test.dart
+          test_result=$?
+          printf '| check | exit |\n|---|---|\n| format | %s |\n| analyze | %s |\n| tests (including 168 month oracle) | %s |\n' "$format_result" "$analyze_result" "$test_result" >> "$GITHUB_STEP_SUMMARY"
+          test "$format_result" = 0 && test "$analyze_result" = 0 && test "$test_result" = 0
