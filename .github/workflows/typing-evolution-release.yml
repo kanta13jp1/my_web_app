@@ -155,6 +155,7 @@ jobs:
           flutter build web --release --pwa-strategy=none --build-name="$VERSION" --build-number="$GITHUB_RUN_NUMBER" \
             --dart-define=ENVIRONMENT=production --dart-define=SUPABASE_URL="$SUPABASE_URL" \
             --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
+            --dart-define=TYPING_ONLINE_RECORDS=true \
             --dart-define=APP_VERSION="$VERSION" --dart-define=BUILD_NUMBER="$GITHUB_RUN_NUMBER" \
             --dart-define=AI_UNIVERSITY_PROVIDER_COUNT="$count" \
             --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true \
