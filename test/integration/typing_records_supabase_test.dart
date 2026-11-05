@@ -38,8 +38,16 @@ void main() {
       final a = client();
       final b = client();
       const password = 'Disposable-typing-test-847!';
-      await a.auth.signUp(email: 'typing-a@example.test', password: password);
-      await b.auth.signUp(email: 'typing-b@example.test', password: password);
+      const firstAccountFixtureEmailAddress = 'typing-a@example.test';
+      const secondAccountFixtureEmailAddress = 'typing-b@example.test';
+      await a.auth.signUp(
+        email: firstAccountFixtureEmailAddress,
+        password: password,
+      );
+      await b.auth.signUp(
+        email: secondAccountFixtureEmailAddress,
+        password: password,
+      );
       expect(a.auth.currentSession, isNotNull);
       expect(b.auth.currentSession, isNotNull);
       final storeA = SupabaseTypingScoreStore(a);
@@ -55,7 +63,7 @@ void main() {
       expect(await storeB.ranking(), isEmpty);
       final restored = client();
       await restored.auth.signInWithPassword(
-        email: 'typing-a@example.test',
+        email: firstAccountFixtureEmailAddress,
         password: password,
       );
       expect(
