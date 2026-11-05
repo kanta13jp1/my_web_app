@@ -99,7 +99,8 @@ No real-user account, production key or production database is used by this test
 
 - Create only `typing_private.runs`, `typing_private.entries`, and
   `typing_private.budgets`. All have RLS. Revoke direct table access from PUBLIC,
-  anon and authenticated. Existing application tables/policies are not altered.
+  anon, authenticated and service_role. Existing application tables/policies
+  are not altered. The administrator owns the new objects.
 - Grant authenticated schema USAGE and EXECUTE on the public invoker RPC and
   its private definer implementation. Both entry points reject missing or
   anonymous identities; ownership comes from `auth.uid()`, never a parameter.
@@ -124,6 +125,21 @@ No real-user account, production key or production database is used by this test
 After explicit approval, and only if the above preflight passes:
 
 ```sql
+do $preflight$
+begin
+  if current_user <> 'postgres' or current_database() <> 'postgres' then
+    raise exception 'Unexpected maintenance administrator or database';
+  end if;
+  if to_regclass('cron.job') is null then
+    raise exception 'pg_cron is not installed; do not enable it automatically';
+  end if;
+  if coalesce(current_setting('cron.timezone', true), '') not in ('GMT','UTC','Etc/UTC') then
+    raise exception 'Cron timezone is not verified UTC';
+  end if;
+  if exists(select 1 from cron.job where jobname='typing-expired-publications-v1') then
+    raise exception 'Job already exists; verify instead of replacing it';
+  end if;
+end $preflight$;
 select cron.schedule(
   'typing-expired-publications-v1',
   '17 3 * * *',
@@ -133,3 +149,9 @@ select cron.schedule(
 
 This proposal supersedes the earlier draft that deleted private runs after 90
 days or pruned them on save. Neither older behavior was approved or applied.
+
+Read-only production preflight on 2026-11-05 confirmed PostgreSQL 17,
+`pg_cron` 1.6.4, cron timezone GMT, no `typing_private` schema and no matching
+job. Public-schema default function grants include service_role; the proposed
+RPC explicitly revokes that default on this new function before granting only
+authenticated execution. These reads changed no data, permissions or schedules.

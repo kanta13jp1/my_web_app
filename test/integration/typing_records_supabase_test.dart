@@ -22,9 +22,9 @@ void main() {
           url,
           key,
           authOptions: const AuthClientOptions(
-          autoRefreshToken: false,
-          authFlowType: AuthFlowType.implicit,
-        ),
+            autoRefreshToken: false,
+            authFlowType: AuthFlowType.implicit,
+          ),
         );
         clients.add(value);
         return value;

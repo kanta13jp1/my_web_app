@@ -3,7 +3,7 @@
 -- Requires owner decisions and reviewed migration before enabling the client.
 begin;
 create schema typing_private;
-revoke all on schema typing_private from public, anon, authenticated;
+revoke all on schema typing_private from public, anon, authenticated, service_role;
 grant usage on schema typing_private to authenticated;
 
 create table typing_private.runs (
@@ -39,8 +39,8 @@ create table typing_private.budgets (
 alter table typing_private.runs enable row level security;
 alter table typing_private.entries enable row level security;
 alter table typing_private.budgets enable row level security;
-revoke all on typing_private.runs, typing_private.entries from public, anon, authenticated;
-revoke all on typing_private.budgets from public, anon, authenticated;
+revoke all on typing_private.runs, typing_private.entries from public, anon, authenticated, service_role;
+revoke all on typing_private.budgets from public, anon, authenticated, service_role;
 create policy own_run on typing_private.runs for select to authenticated using ((select auth.uid()) = owner_id);
 create policy own_entry on typing_private.entries for select to authenticated using ((select auth.uid()) = owner_id);
 create index typing_runs_recent on typing_private.runs(owner_id, created_at desc);
@@ -171,13 +171,13 @@ begin
     raise exception 'invalid_action' using errcode = '22023';
   end if;
 end $$;
-revoke all on function typing_private.records(text,jsonb) from public, anon, authenticated;
+revoke all on function typing_private.records(text,jsonb) from public, anon, authenticated, service_role;
 grant execute on function typing_private.records(text,jsonb) to authenticated;
 create function public.typing_game_records(p_action text, p_data jsonb default '{}'::jsonb)
 returns jsonb language sql security invoker set search_path = '' as $$
   select typing_private.records(p_action, p_data);
 $$;
-revoke all on function public.typing_game_records(text,jsonb) from public, anon, authenticated;
+revoke all on function public.typing_game_records(text,jsonb) from public, anon, authenticated, service_role;
 grant execute on function public.typing_game_records(text,jsonb) to authenticated;
 comment on function public.typing_game_records(text,jsonb) is
   'Private opt-in history and separately published self-reported romaji36 scores; not verified competitive results.';
@@ -189,5 +189,5 @@ returns void language sql security invoker set search_path = '' as $$
   delete from typing_private.entries where (owner_id, id) in
     (select owner_id, id from typing_private.runs where created_at <= now() - interval '90 days');
 $$;
-revoke all on function typing_private.purge_expired_publications() from public, anon, authenticated;
+revoke all on function typing_private.purge_expired_publications() from public, anon, authenticated, service_role;
 commit;
