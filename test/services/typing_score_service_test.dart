@@ -22,7 +22,8 @@ String session(String owner) => jsonEncode({
     });
 
 void main() {
-  http.Response response(String body, http.BaseRequest request) => http.Response(
+  http.Response response(String body, http.BaseRequest request) =>
+      http.Response(
         body,
         200,
         request: request,
