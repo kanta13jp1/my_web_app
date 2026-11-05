@@ -1,0 +1,31 @@
+{
+  "retrievedAt": "2026-11-05",
+  "sourcePdfUrl": "https://new-kokumin.jp/wp-content/uploads/2025/11/973363c436dd7887c84141ae5919a788.pdf",
+  "sourcePdfSha256": "45284c84fbbb3bd4ed5e5f2ca1f0d552ad9da202322b711f729eb3c9df652c91",
+  "fixtures": [
+    {
+      "file": "official-member-links.html",
+      "url": "https://new-kokumin.jp/member",
+      "sha256": "e51b4b4f1b8516b4d4d6186c1c6c68acf159bb8c978c41ff829391a06ec680fc",
+      "transformation": "Only matching official roster h2/ul sections or member_tag anchors retained; no invented content. Trailing line whitespace removed."
+    },
+    {
+      "file": "official-candidate-links.html",
+      "url": "https://new-kokumin.jp/election",
+      "sha256": "fb483902728a249e30c0664af6b0c0e9de074f9c6f752c4ef977805027e386d9",
+      "transformation": "Only matching official roster h2/ul sections or member_tag anchors retained; no invented content. Trailing line whitespace removed."
+    },
+    {
+      "file": "official-tokyo-members.html",
+      "url": "https://new-kokumin.jp/member_tag/tokyo",
+      "sha256": "dc4ce3b4ed1bd8adc799447a19998ea9b2848e7eb4c46ef7a3982e9bf0413930",
+      "transformation": "Only matching official roster h2/ul sections or member_tag anchors retained; no invented content. Trailing line whitespace removed."
+    },
+    {
+      "file": "official-tokyo-candidates.html",
+      "url": "https://new-kokumin.jp/member_tag/tokyo?mode=candidate",
+      "sha256": "fb13249eb1e476a5595036b584373769d67aec290a523cf9412831957544070a",
+      "transformation": "Only matching official roster h2/ul sections or member_tag anchors retained; no invented content. Trailing line whitespace removed."
+    }
+  ]
+}

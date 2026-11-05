@@ -1,3 +1,13 @@
+import {
+  candidateMatchesConfirmedElection,
+  parseOfficialPrefectureLinks,
+  parseOfficialRosterCards,
+  unverifiedCandidateDateIssues,
+} from "./official_site_parsers.ts";
+import {
+  separateCandidateObservations,
+  VERIFIED_CANDIDATE_ELECTIONS,
+} from "./candidate_observations.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
@@ -79,8 +89,6 @@ const AI_ANALYSIS_TIMEOUT_MS = 6000;
 // 最低保証日数 (これを下回る window は使わない)
 const SCHEDULE_MIN_WINDOW_DAYS = 30;
 
-const JP_LOCAL_ASSEMBLY_MEMBERS = "\u5730\u65b9\u81ea\u6cbb\u4f53\u8b70\u54e1";
-const JP_PLANNED_CANDIDATES = "\u5019\u88dc\u4e88\u5b9a\u8005";
 const JP_FIELD_CONSTITUENCY = "\u9078\u6319\u533a";
 const JP_FIELD_ELECTION_COUNT = "\u5f53\u9078\u56de\u6570";
 const JP_FIELD_BIRTH_DATE = "\u751f\u5e74\u6708\u65e5";
@@ -640,8 +648,12 @@ serve(async (req) => {
         },
       )
     ).flat();
-    const officialScheduledCandidates = mergeScheduledCandidates(
+    const candidateObservations = separateCandidateObservations(
       scrapedScheduledCandidates,
+      VERIFIED_CANDIDATE_ELECTIONS,
+    );
+    const officialScheduledCandidates = mergeScheduledCandidates(
+      candidateObservations.verifiedCandidates,
       buildManualScheduledCandidates(MANUAL_SCHEDULE_SUPPLEMENTS),
     );
     const scheduleResult = await fetchUpcomingLocalElectionSchedules(
@@ -653,6 +665,10 @@ serve(async (req) => {
       officialElectionPrefectureLinks.size;
     const collectionQualityIssues = [
       ...memberCollectionQualityIssues,
+      ...(scrapedScheduledCandidates.length === 0
+        ? ["official_scheduled_candidates_empty"]
+        : []),
+      ...unverifiedCandidateDateIssues(candidateObservations.pendingCandidates),
       ...(officialElectionPrefectureLinkCount <
           MINIMUM_EXPECTED_OFFICIAL_ELECTION_PREFECTURE_LINKS
         ? [
@@ -864,6 +880,16 @@ serve(async (req) => {
     return jsonResponse({
       success: true,
       snapshot,
+      // Read-only, explicitly separate observations. The combined persistence
+      // gate above remains in force until a member-only history contract exists.
+      memberObservation: {
+        persistenceEnabled: false,
+        qualityComplete: memberCollectionQualityIssues.length === 0,
+        issues: memberCollectionQualityIssues,
+        officialCurrentLocalMembers,
+        members,
+      },
+      candidateObservations,
       ...(persistence
         ? {
           persistence: {
@@ -1265,21 +1291,7 @@ function prefectureLookupKey(prefecture: string): string {
 function parsePrefectureDirectoryEntries(
   html: string,
 ): PrefectureDirectoryEntry[] {
-  const links = new Map<string, string>();
-  const linkRegex =
-    /<a[^>]+href="([^"]*\/member_tag\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/gsi;
-  for (const match of html.matchAll(linkRegex)) {
-    const rawLabel = normalizeWhitespace(decodeHtml(stripTags(match[2] ?? "")))
-      .trim();
-    const label = extractPrefectureLabel(rawLabel);
-    const rawHref = match[1]?.trim() ?? "";
-    if (!isPrefectureName(label) || rawHref === "") {
-      continue;
-    }
-    const sourceUrl = new URL(rawHref, OFFICIAL_MEMBER_PAGE_URL).toString();
-    links.set(label, sourceUrl);
-    links.set(prefectureLookupKey(label), sourceUrl);
-  }
+  const links = parseOfficialPrefectureLinks(html, "members", PREFECTURES);
   return PREFECTURES.map((prefecture) => ({
     prefecture,
     sourceUrl: links.get(prefecture) ??
@@ -1293,36 +1305,18 @@ function parsePrefectureMembers(
   sourceUrl: string,
   html: string,
 ): LocalLegislatorProfile[] {
-  const sections = matchMemberListSections(html).filter((section) =>
-    section.heading.includes(prefecture) &&
-    section.heading.includes(JP_LOCAL_ASSEMBLY_MEMBERS)
-  );
   const members: LocalLegislatorProfile[] = [];
-
-  for (const section of sections) {
-    for (const cardHtml of extractListItems(section.listHtml)) {
-      const card = parseMemberCard(cardHtml, sourceUrl);
-      const assemblyCategory = inferAssemblyCategory(card.assemblyLabel);
-      if (card.name === "" || assemblyCategory === "other") {
-        continue;
-      }
-      members.push({
-        prefecture,
-        sourceUrl,
-        detailUrl: card.detailUrl,
-        name: card.name,
-        kana: card.kana,
-        constituency: card.constituency,
-        municipality: extractMunicipality(prefecture, card.constituency),
-        assemblyLabel: card.assemblyLabel,
-        assemblyCategory,
-        electionCountLabel: card.electionCountLabel,
-        birthDate: "",
-        age: null,
-        gender: "",
-        profile: "",
-      });
-    }
+  for (const card of parseOfficialRosterCards(html, "members", prefecture, sourceUrl)) {
+    const assemblyCategory = inferAssemblyCategory(card.assemblyLabel);
+    if (assemblyCategory === "other") continue;
+    members.push({
+      prefecture, sourceUrl, detailUrl: card.detailUrl,
+      name: card.name, kana: card.kana, constituency: card.constituency,
+      municipality: extractMunicipality(prefecture, card.constituency),
+      assemblyLabel: card.assemblyLabel, assemblyCategory,
+      electionCountLabel: card.electionCountLabel,
+      birthDate: "", age: null, gender: "", profile: "",
+    });
   }
 
   const unique = new Map<string, LocalLegislatorProfile>();
@@ -1421,19 +1415,7 @@ async function fetchHistoricalResult(): Promise<HistoricalResult> {
 function parseOfficialElectionPrefectureLinks(
   html: string,
 ): Map<string, string> {
-  const links = new Map<string, string>();
-  const linkRegex =
-    /<a[^>]+href="([^"]*post_type=election[^"]*prefectures=[^"]+)"[^>]*>(.*?)<\/a>/gsi;
-  for (const match of html.matchAll(linkRegex)) {
-    const label = normalizeWhitespace(decodeHtml(stripTags(match[2] ?? "")))
-      .trim();
-    const rawHref = match[1]?.trim() ?? "";
-    if (!isPrefectureName(label) || rawHref === "") {
-      continue;
-    }
-    links.set(label, new URL(rawHref, OFFICIAL_ELECTION_PAGE_URL).toString());
-  }
-  return links;
+  return parseOfficialPrefectureLinks(html, "candidates", PREFECTURES);
 }
 
 function parseOfficialScheduledCandidates(
@@ -1441,39 +1423,11 @@ function parseOfficialScheduledCandidates(
   sourceUrl: string,
   html: string,
 ): OfficialScheduledCandidate[] {
-  const candidates: OfficialScheduledCandidate[] = [];
-  const sections = matchMemberListSections(html).filter((section) =>
-    section.heading.includes(prefecture) &&
-    section.heading.includes(JP_PLANNED_CANDIDATES)
-  );
-
-  for (const section of sections) {
-    for (const cardHtml of extractListItems(section.listHtml)) {
-      const card = parseMemberCard(cardHtml, sourceUrl);
-      const electionName = card.electionCountLabel;
-      const voteDate = normalizeOfficialVoteDate(
-        extractClassText(cardHtml, "m_category"),
-      );
-      const statusLabel = extractClassText(cardHtml, "wins");
-      if (
-        card.name === "" || electionName === "" || statusLabel === "" ||
-        !isLocalElectionName(electionName)
-      ) {
-        continue;
-      }
-      candidates.push({
-        prefecture,
-        electionName,
-        voteDate,
-        name: card.name,
-        statusLabel,
-        detailUrl: card.detailUrl,
-        sourceUrl,
-        xHandle: "",
-      });
-    }
-  }
-  return candidates;
+  return parseOfficialRosterCards(html, "candidates", prefecture, sourceUrl).map((card) => ({
+    prefecture, sourceUrl, name: card.name, electionName: card.electionName,
+    voteDate: card.voteDate, statusLabel: card.statusLabel,
+    detailUrl: card.detailUrl, xHandle: "",
+  }));
 }
 
 async function fetchUpcomingLocalElectionSchedules(
@@ -2399,31 +2353,9 @@ function matchOfficialCandidatesForSchedule(
   voteDate: string,
   officialCandidates: OfficialScheduledCandidate[],
 ): OfficialScheduledCandidate[] {
-  const targetKey = scheduleMatchKey(prefecture, electionName, voteDate);
-  const normalizedPrefecture = prefecture.trim();
-  const byPrefecture = officialCandidates.filter((item) =>
-    item.prefecture === normalizedPrefecture
+  return officialCandidates.filter((candidate) =>
+    candidateMatchesConfirmedElection(candidate, { prefecture, electionName, voteDate })
   );
-  const exact = byPrefecture.filter(
-    (item) =>
-      scheduleMatchKey(item.prefecture, item.electionName, item.voteDate) ===
-        targetKey,
-  );
-  if (exact.length > 0) {
-    return exact;
-  }
-  const normalizedElectionName = normalizeElectionNameForMatch(electionName);
-  const sameName = byPrefecture.filter((item) =>
-    normalizeElectionNameForMatch(item.electionName) === normalizedElectionName
-  );
-  if (sameName.length > 0) {
-    return sameName;
-  }
-  return byPrefecture.filter((item) => {
-    const candidateName = normalizeElectionNameForMatch(item.electionName);
-    return candidateName.includes(normalizedElectionName) ||
-      normalizedElectionName.includes(candidateName);
-  });
 }
 
 async function buildAiAnalysis(snapshot: {
@@ -2645,58 +2577,6 @@ function compareMembers(
   return left.name.localeCompare(right.name, "ja");
 }
 
-function matchMemberListSections(
-  html: string,
-): Array<{ heading: string; listHtml: string }> {
-  const sections: Array<{ heading: string; listHtml: string }> = [];
-  const sectionRegex =
-    /<h2[^>]*class="[^"]*\bmember_sec_ttl\b[^"]*"[^>]*>([\s\S]*?)<\/h2>\s*<ul[^>]*class="[^"]*\bmember_list\b[^"]*"[^>]*>([\s\S]*?)<\/ul>/gsi;
-  for (const match of html.matchAll(sectionRegex)) {
-    sections.push({
-      heading: normalizeWhitespace(decodeHtml(stripTags(match[1] ?? "")))
-        .trim(),
-      listHtml: match[2] ?? "",
-    });
-  }
-  return sections;
-}
-
-function extractListItems(listHtml: string): string[] {
-  const items: string[] = [];
-  const itemRegex = /<li\b[^>]*>([\s\S]*?)<\/li>/gsi;
-  for (const match of listHtml.matchAll(itemRegex)) {
-    items.push(match[1] ?? "");
-  }
-  return items;
-}
-
-function parseMemberCard(
-  cardHtml: string,
-  baseUrl: string,
-): {
-  name: string;
-  kana: string;
-  constituency: string;
-  assemblyLabel: string;
-  electionCountLabel: string;
-  detailUrl: string;
-} {
-  const nameLinkMatch = cardHtml.match(
-    /<dt[^>]*class="[^"]*\bname\b[^"]*"[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i,
-  );
-  return {
-    name: normalizeMemberName(decodeHtml(stripTags(nameLinkMatch?.[2] ?? ""))),
-    kana: extractClassText(cardHtml, "kana"),
-    constituency: extractClassText(cardHtml, "kind"),
-    assemblyLabel: extractClassText(cardHtml, "area") ||
-      extractClassText(cardHtml, "category"),
-    electionCountLabel: extractClassText(cardHtml, "times"),
-    detailUrl: nameLinkMatch?.[1]
-      ? new URL(nameLinkMatch[1], baseUrl).toString()
-      : "",
-  };
-}
-
 function extractClassText(html: string, className: string): string {
   const pattern = new RegExp(
     `<[^>]+class="[^"]*\\b${
@@ -2766,9 +2646,6 @@ function parseSimpleTable(html: string): Map<string, string> {
   return fields;
 }
 
-function normalizeOfficialVoteDate(value: string): string {
-  return extractIsoDate(value);
-}
 function normalizeJapaneseDate(value: string): string {
   return extractIsoDate(value);
 }

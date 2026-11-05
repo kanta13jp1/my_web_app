@@ -15,6 +15,32 @@ SPEC.loader.exec_module(updater)
 
 
 class KokuminLocalEndorsementUpdaterTest(unittest.TestCase):
+    def test_accepts_one_and_two_digit_months_and_days(self):
+        for value, expected in [
+            ("2026/11/4現在", "2026-11-04"),
+            ("2026/1/4 現在", "2026-01-04"),
+            ("2026/01/04現在", "2026-01-04"),
+            ("2026/1/14現在", "2026-01-14"),
+            ("2024/2/29現在", "2024-02-29"),
+        ]:
+            with self.subTest(value=value):
+                self.assertEqual(updater.parse_source_as_of([value]), expected)
+
+    def test_rejects_invalid_calendar_dates(self):
+        for value in ["2026/2/29現在", "2026/13/1現在", "2026/0/1現在",
+                      "2026/4/31現在", "2026/11/0現在", "0000/1/1現在"]:
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "invalid as-of date"):
+                updater.parse_source_as_of([value])
+
+    def test_rejects_malformed_or_missing_as_of_dates(self):
+        for value in ["2026/111/4現在", "12026/11/4現在", "2026/11/004現在",
+                      "2026/11/4", "(2027/05/01)", "２０２６/１１/４現在"]:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                updater.parse_source_as_of([value])
+
+    def test_finds_as_of_date_on_later_page(self):
+        self.assertEqual(updater.parse_source_as_of(["cover", "2026/11/4現在"]), "2026-11-04")
+
     def test_parses_endorsements_recommendations_and_career_breakdown(self):
         page = """
 2026/08/05現在

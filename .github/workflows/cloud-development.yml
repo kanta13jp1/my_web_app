@@ -56,6 +56,7 @@ on:
         type: choice
         options:
           - workspace
+          - local-election
           - format
           - analyze
           - test
@@ -82,6 +83,7 @@ concurrency:
 
 jobs:
   validate:
+    if: inputs.profile != 'local-election'
     name: ${{ inputs.profile || 'full' }} on GitHub runner
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -514,3 +516,61 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+  local-election:
+    name: Local election scoped checks
+    if: inputs.profile == 'local-election'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Verify exact source SHA
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+          [[ "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - run: flutter pub get
+      - name: Install repository-pinned Deno
+        env:
+          DENO_VERSION: v2.9.1
+        run: bash scripts/ci/install_deno_from_github.sh
+      - name: Format scoped release files
+        run: |
+          dart format lib/data/dpj_official_endorsements.dart lib/data/repositories/official_endorsement_repository.dart lib/services/local_election_reality_service.dart test/data/repositories/official_endorsement_repository_test.dart test/services/local_election_snapshot_quality_test.dart
+          deno fmt supabase/functions/local-election-intelligence/index.ts supabase/functions/local-election-intelligence/official_site_parsers.ts supabase/functions/local-election-intelligence/official_site_parsers_test.ts supabase/functions/local-election-intelligence/candidate_observations.ts supabase/functions/local-election-intelligence/candidate_observations_test.ts supabase/functions/local-election-intelligence/snapshot_history_test.ts
+          if ! git diff --quiet; then
+            mkdir -p /tmp/local-election-format
+            git diff --binary > /tmp/local-election-format/format.patch
+            echo 'Formatting output must be applied and this exact-SHA check rerun.'
+            exit 1
+          fi
+      - name: Preserve formatter patch
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: local-election-format-${{ github.run_id }}
+          path: /tmp/local-election-format/format.patch
+          if-no-files-found: ignore
+          retention-days: 1
+      - name: Python parser and audit regression tests
+        run: |
+          python -B -m unittest discover -s test/scripts -p '*kokumin*test.py' -v
+          python -B -m unittest discover -s tools/local_election_contract_lab -p '*_test.py' -v
+      - name: Deno lint
+        run: deno lint --config supabase/functions/deno.json supabase/functions/local-election-intelligence/
+      - name: Deno type checks
+        run: deno check --config supabase/functions/deno.json supabase/functions/local-election-intelligence/index.ts supabase/functions/local-election-intelligence/*_test.ts
+      - name: Deno isolated tests without runtime network access
+        run: deno test --no-prompt --allow-read --allow-env --config supabase/functions/deno.json supabase/functions/local-election-intelligence/
+      - name: Flutter scoped analysis
+        run: flutter analyze lib/data/dpj_official_endorsements.dart lib/data/repositories/official_endorsement_repository.dart lib/services/local_election_reality_service.dart test/data/repositories/official_endorsement_repository_test.dart test/services/local_election_snapshot_quality_test.dart
+      - name: Flutter election regression tests
+        run: flutter test --concurrency=2 test/data/dpj_official_endorsements_test.dart test/data/repositories/official_endorsement_repository_test.dart test/services/local_election_reality_service_test.dart test/services/local_election_share_service_test.dart test/services/local_election_share_payload_test.dart test/ui/features/election_victory/view_models/official_endorsement_view_model_test.dart test/services/local_election_snapshot_quality_test.dart

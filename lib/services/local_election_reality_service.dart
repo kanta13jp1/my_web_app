@@ -309,7 +309,24 @@ class LocalElectionRealityService {
       );
     }
 
-    return LocalElectionRealitySnapshot.fromJson(_toMap(data['snapshot']));
+    final rawSnapshot = _toMap(data['snapshot']);
+    validateRemoteSnapshotPayload(rawSnapshot);
+    return LocalElectionRealitySnapshot.fromJson(rawSnapshot);
+  }
+
+  /// Reject incomplete observations before model conversion discards quality
+  /// metadata and before the result reaches caches, alerts, plan sync or shares.
+  @visibleForTesting
+  static void validateRemoteSnapshotPayload(Map<String, dynamic> snapshot) {
+    final quality = snapshot['collectionQuality'];
+    if (quality is! Map ||
+        quality['complete'] != true ||
+        quality['issues'] is! List ||
+        (quality['issues'] as List).isNotEmpty) {
+      throw const FormatException(
+        'Incomplete local election observation cannot replace a full snapshot.',
+      );
+    }
   }
 
   bool _isSnapshotFresh(LocalElectionRealitySnapshot snapshot) {

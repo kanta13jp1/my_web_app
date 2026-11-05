@@ -9,6 +9,7 @@ outputs so a PDF/parser change cannot erase a previously valid snapshot.
 from __future__ import annotations
 
 import argparse
+from datetime import date
 import hashlib
 import io
 import json
@@ -31,7 +32,7 @@ MIN_OFFICIAL_ENDORSEMENTS = 30
 MIN_PREFECTURES = 10
 MAX_ALLOWED_DROP_RATIO = 0.25
 
-_AS_OF_RE = re.compile(r"(\d{4})/(\d{2})/(\d{2})\s*現在")
+_AS_OF_RE = re.compile(r"(?<![\d/])([0-9]{4})/([0-9]{1,2})/([0-9]{1,2})\s*現在")
 _ROW_RE = re.compile(r"^\s*(\d+)\s*([^\s\d]+)\s+")
 _CAREER_RE = re.compile(r"\s[男女]\s+\d+\s+(現|元|新)\s")
 # 選挙名の議会種別。「都道府県議会」= prefectural、「市区町村議会」= municipal。
@@ -102,7 +103,10 @@ def parse_source_as_of(page_texts: Iterable[str]) -> str:
     for page_text in page_texts:
         match = _AS_OF_RE.search(page_text)
         if match is not None:
-            return f"{match.group(1)}-{match.group(2)}-{match.group(3)}"
+            try:
+                return date(*(int(part) for part in match.groups())).isoformat()
+            except ValueError as error:
+                raise ValueError("The official PDF contained an invalid as-of date.") from error
     raise ValueError("The official PDF did not contain a YYYY/MM/DD現在 date.")
 
 
