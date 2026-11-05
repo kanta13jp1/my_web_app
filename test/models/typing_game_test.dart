@@ -4,6 +4,56 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/typing_game.dart';
 
 void main() {
+  void completeWord(TypingGame game) {
+    for (final letter in game.guide.split('')) {
+      expect(game.type(letter), isTrue);
+    }
+  }
+
+  test('36 consecutive restarts expose each prompt before repeating', () {
+    final game = TypingGame(random: Random(12));
+    final seen = <TypingPrompt>{};
+    for (var i = 0; i < TypingGame.prompts.length; i++) {
+      game.start();
+      expect(seen.add(game.prompt), isTrue);
+    }
+    final previous = game.prompt;
+    game.start();
+    expect(game.prompt, isNot(previous));
+  });
+
+  test('three ten-word practices do not repeat across retries', () {
+    final game = TypingGame(random: Random(15));
+    final seen = <TypingPrompt>{};
+    for (var run = 0; run < 3; run++) {
+      game.start(mode: TypingMode.practice);
+      for (var i = 0; i < TypingGame.practiceTarget; i++) {
+        expect(seen.add(game.prompt), isTrue);
+        completeWord(game);
+      }
+      expect(game.finished, isTrue);
+    }
+    expect(seen.length, 30);
+  });
+
+  test('focused exposure is remembered on return to the full corpus', () {
+    final game = TypingGame(random: Random(19));
+    final focused = TypingGame.prompts.first;
+    game.start(mode: TypingMode.practice, practicePrompts: [focused]);
+    for (var i = 0; i < TypingGame.practiceTarget; i++) {
+      expect(game.prompt, focused);
+      completeWord(game);
+    }
+    final seen = <TypingPrompt>{};
+    for (var i = 0; i < TypingGame.prompts.length - 1; i++) {
+      game.start(mode: i.isEven ? TypingMode.practice : TypingMode.challenge);
+      expect(game.prompt, isNot(focused));
+      expect(seen.add(game.prompt), isTrue);
+    }
+    game.start();
+    expect(game.prompt, focused);
+  });
+
   test('all curated spellings complete their Japanese prompt', () {
     for (final target in TypingGame.prompts) {
       for (final spelling in target.spellings) {
@@ -59,5 +109,99 @@ void main() {
     expect(game.mistakes, 0);
     expect(game.remaining, TypingGame.duration);
     expect(game.accuracy, 100);
+  });
+
+  test('practice has no deadline and finishes on exactly ten words', () {
+    final game = TypingGame(random: Random(9))
+      ..start(mode: TypingMode.practice);
+    game.updateElapsed(const Duration(minutes: 4));
+    expect(game.running, isTrue);
+    expect(game.elapsed, const Duration(minutes: 4));
+    for (var word = 0; word < TypingGame.practiceTarget; word++) {
+      for (final letter in game.guide.split('')) {
+        expect(game.type(letter), isTrue);
+      }
+    }
+    expect(game.words, 10);
+    expect(game.finished, isTrue);
+    expect(game.running, isFalse);
+    expect(game.type('a'), isFalse);
+    expect(game.correctPerMinute, closeTo(game.correct / 4, 0.001));
+  });
+
+  test('review includes unfinished words and can become focused practice', () {
+    final game = TypingGame(random: Random(4))..start();
+    final missed = game.prompt;
+    game.type('q');
+    game.type('q');
+    game.updateElapsed(TypingGame.duration);
+    expect(game.words, 0);
+    expect(game.review.single.prompt, missed);
+    expect(game.review.single.count, 2);
+    final targets = game.review.map((item) => item.prompt).toList();
+    game.start(mode: TypingMode.practice, practicePrompts: targets);
+    expect(game.review, isEmpty);
+    expect(game.mistakes, 0);
+    for (var i = 0; i < 10; i++) {
+      expect(game.prompt, missed);
+      for (final letter in game.guide.split('')) {
+        game.type(letter);
+      }
+    }
+    expect(game.finished, isTrue);
+    expect(game.words, 10);
+  });
+
+  test('practice can end early and pace uses only actual elapsed time', () {
+    final game = TypingGame()
+      ..start(
+        mode: TypingMode.practice,
+        practicePrompts: [TypingGame.prompts[0]],
+      );
+    game.type('s');
+    game.updateElapsed(const Duration(seconds: 2));
+    game.updateElapsed(const Duration(seconds: 1));
+    game.finishPractice();
+    expect(game.words, 0);
+    expect(game.elapsed, const Duration(seconds: 2));
+    expect(game.correctPerMinute, 30);
+    expect(game.finished, isTrue);
+    game.updateElapsed(const Duration(minutes: 10));
+    expect(game.correctPerMinute, 30);
+    game.start();
+    expect(game.correctPerMinute, 0);
+    expect(game.review, isEmpty);
+    game.finishPractice();
+    expect(game.running, isTrue);
+    game.updateElapsed(const Duration(seconds: 80));
+    expect(game.elapsed, TypingGame.duration);
+  });
+
+  test('deck has no repeated word within a round or at its boundary', () {
+    final game = TypingGame(random: Random(2))..start();
+    final seen = <TypingPrompt>{};
+    TypingPrompt? previous;
+    for (var i = 0; i < TypingGame.prompts.length; i++) {
+      expect(seen.add(game.prompt), isTrue);
+      previous = game.prompt;
+      for (final letter in game.guide.split('')) {
+        game.type(letter);
+      }
+    }
+    expect(game.prompt, isNot(previous));
+  });
+
+  test('focused prompts cannot alter the challenge or start an empty run', () {
+    final game = TypingGame()..start();
+    expect(
+      () => game.start(practicePrompts: [TypingGame.prompts[0]]),
+      throwsArgumentError,
+    );
+    expect(
+      () => game.start(mode: TypingMode.practice, practicePrompts: []),
+      throwsArgumentError,
+    );
+    expect(game.mode, TypingMode.challenge);
+    expect(game.running, isTrue);
   });
 }
