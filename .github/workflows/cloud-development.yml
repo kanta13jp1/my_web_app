@@ -104,7 +104,7 @@ jobs:
             page.on('request', r=>{ if(r.url().includes('/rpc/typing_game_records')) recordRequests.push(r.url()); });
             await page.goto('/typing-game');
             await page.getByRole('button',{name:'自分の履歴を読む',exact:true}).click({timeout:60000});
-            await expect(page.getByText('ログインしてから利用してください。',{exact:true})).toBeVisible();
+            await expect(page.getByRole('group',{name:/ログインしてから利用してください。/})).toBeVisible();
             expect(recordRequests).toEqual([]);
             await expect(page.getByRole('button',{name:/スタート/})).toBeVisible({timeout:60000});
             await page.getByRole('button',{name:/スタート/}).click();
