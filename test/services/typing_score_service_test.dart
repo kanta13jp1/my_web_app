@@ -22,6 +22,12 @@ String session(String owner) => jsonEncode({
     });
 
 void main() {
+  http.Response response(String body, http.BaseRequest request) => http.Response(
+        body,
+        200,
+        request: request,
+        headers: {'content-type': 'application/json'},
+      );
   TypingRunReport report() {
     final game = TypingGame()..start();
     game.type(game.guide[0]);
@@ -44,7 +50,9 @@ void main() {
     expect(saved.id, isNot(report().id));
   });
 
-  test('RPC saves privately, reloads through a fresh client and publishes separately', () async {
+  test(
+      'RPC saves privately, reloads through a fresh client and publishes separately',
+      () async {
     final calls = <Map<String, dynamic>>[];
     final records = <Map<String, dynamic>>[];
     final transport = MockClient((request) async {
@@ -53,18 +61,29 @@ void main() {
       calls.add(body);
       final data = Map<String, dynamic>.from(body['p_data'] as Map);
       if (body['p_action'] == 'save') {
-        records.add({...data, 'score': (data['correct'] as int) * 10, 'alias': null});
-        return http.Response('{"saved":true}', 200);
+        records.add(
+          {...data, 'score': (data['correct'] as int) * 10, 'alias': null},
+        );
+        return response('{"saved":true}', request);
       }
-      if (body['p_action'] == 'mine') return http.Response(jsonEncode(records), 200);
-      return http.Response('{}', 200);
+      if (body['p_action'] == 'mine') {
+        return response(jsonEncode(records), request);
+      }
+      return response('{}', request);
     });
     Future<SupabaseClient> client() async {
-      final client = SupabaseClient('https://example.invalid', 'fixture-key', httpClient: transport, authOptions: const AuthClientOptions(autoRefreshToken: false));
-      await client.auth.recoverSession(session('00000000-0000-0000-0000-000000000001'));
+      final client = SupabaseClient(
+        'https://example.invalid',
+        'fixture-key',
+        httpClient: transport,
+        authOptions: const AuthClientOptions(autoRefreshToken: false),
+      );
+      await client.auth
+          .recoverSession(session('00000000-0000-0000-0000-000000000001'));
       addTearDown(client.dispose);
       return client;
     }
+
     final store = SupabaseTypingScoreStore(await client());
     final run = report();
     await store.save(run);
@@ -75,22 +94,34 @@ void main() {
     await restored.publish(run.id, 'TypingFan');
     await restored.withdraw(run.id);
     await restored.delete(run.id);
-    expect(calls.map((c) => c['p_action']), ['save', 'mine', 'publish', 'withdraw', 'delete']);
+    expect(
+      calls.map((c) => c['p_action']),
+      ['save', 'mine', 'publish', 'withdraw', 'delete'],
+    );
   });
 
-  test('unauthenticated and changed accounts cannot receive another account result', () async {
+  test(
+      'unauthenticated and changed accounts cannot receive another account result',
+      () async {
     var requests = 0;
     late SupabaseClient client;
-    client = SupabaseClient('https://example.invalid', 'fixture-key', authOptions: const AuthClientOptions(autoRefreshToken: false), httpClient: MockClient((_) async {
-      requests++;
-      await client.auth.recoverSession(session('00000000-0000-0000-0000-000000000002'));
-      return http.Response('[]', 200);
-    }));
+    client = SupabaseClient(
+      'https://example.invalid',
+      'fixture-key',
+      authOptions: const AuthClientOptions(autoRefreshToken: false),
+      httpClient: MockClient((request) async {
+        requests++;
+        await client.auth
+            .recoverSession(session('00000000-0000-0000-0000-000000000002'));
+        return response('[]', request);
+      }),
+    );
     addTearDown(client.dispose);
     final store = SupabaseTypingScoreStore(client);
     await expectLater(store.mine(), throwsStateError);
     expect(requests, 0);
-    await client.auth.recoverSession(session('00000000-0000-0000-0000-000000000001'));
+    await client.auth
+        .recoverSession(session('00000000-0000-0000-0000-000000000001'));
     await expectLater(store.mine(), throwsStateError);
     expect(requests, 1);
   });

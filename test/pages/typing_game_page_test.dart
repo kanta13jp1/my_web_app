@@ -111,7 +111,10 @@ void main() {
     await tester.pump();
     expect(find.text('苦手なことばを10問練習中'), findsOneWidget);
     for (var word = 0; word < 10; word++) {
-      expect(find.text(prompt.japanese), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.byKey(const Key('typing-prompt'))).data,
+        prompt.japanese,
+      );
       final spelling = prompt.spellings.first;
       for (var length = 1; length <= spelling.length; length++) {
         await tester.enterText(field, spelling.substring(0, length));

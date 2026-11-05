@@ -52,7 +52,7 @@ returns jsonb language plpgsql security definer set search_path = '' as $$
 declare
   uid uuid := auth.uid();
   run_id uuid;
-  r typing_private.runs;
+  v_run typing_private.runs;
   result jsonb;
   v_correct integer;
   v_mistakes integer;
@@ -94,13 +94,13 @@ begin
     v_words := (p_data->>'words')::integer;
     v_elapsed := (p_data->>'elapsed_ms')::integer;
     if run_id is null then raise exception 'invalid_record' using errcode = '22023'; end if;
-    select * into r from typing_private.runs where owner_id = uid and id = run_id;
+    select * into v_run from typing_private.runs where owner_id = uid and id = run_id;
     if found then
-      if r.revision is distinct from p_data->>'revision' or r.mode is distinct from p_data->>'mode' or
-         r.correct <> v_correct or r.mistakes <> v_mistakes or r.words <> v_words or r.elapsed_ms <> v_elapsed then
+      if v_run.revision is distinct from p_data->>'revision' or v_run.mode is distinct from p_data->>'mode' or
+         v_run.correct <> v_correct or v_run.mistakes <> v_mistakes or v_run.words <> v_words or v_run.elapsed_ms <> v_elapsed then
         raise exception 'run_id_conflict' using errcode = '22023';
       end if;
-      return jsonb_build_object('saved', true, 'score', r.score);
+      return jsonb_build_object('saved', true, 'score', v_run.score);
     end if;
     if exists(select 1 from typing_private.budgets where owner_id = uid and last_saved > now() - interval '5 seconds') then
       raise exception 'rate_limit' using errcode = '54000';
@@ -110,7 +110,7 @@ begin
     end if;
     insert into typing_private.runs(owner_id, id, revision, mode, correct, mistakes, words, elapsed_ms)
       values(uid, run_id, p_data->>'revision', p_data->>'mode', v_correct, v_mistakes, v_words, v_elapsed)
-      returning * into r;
+      returning * into v_run;
     insert into typing_private.budgets(owner_id, day, saves, last_saved)
       values(uid, (now() at time zone 'UTC')::date, 1, now())
       on conflict (owner_id) do update set
@@ -119,17 +119,17 @@ begin
         last_saved = excluded.last_saved;
     delete from typing_private.runs where owner_id = uid and id in
       (select id from typing_private.runs where owner_id = uid order by created_at desc, id offset 100);
-    return jsonb_build_object('saved', true, 'score', r.score);
+    return jsonb_build_object('saved', true, 'score', v_run.score);
   elsif p_action in ('publish', 'withdraw', 'delete') then
     if not (p_data ? 'id') or jsonb_typeof(p_data->'id') <> 'string' or
        (p_data - case when p_action = 'publish' then array['id','alias'] else array['id'] end) <> '{}'::jsonb then
       raise exception 'invalid_record' using errcode = '22023';
     end if;
     run_id := (p_data->>'id')::uuid;
-    select * into r from typing_private.runs where owner_id = uid and id = run_id;
+    select * into v_run from typing_private.runs where owner_id = uid and id = run_id;
     if not found then raise exception 'record_not_found' using errcode = '42501'; end if;
     if p_action = 'publish' then
-      if r.mode <> 'challenge' or not (p_data ? 'alias') or jsonb_typeof(p_data->'alias') <> 'string' or
+      if v_run.mode <> 'challenge' or not (p_data ? 'alias') or jsonb_typeof(p_data->'alias') <> 'string' or
          not (p_data->>'alias') ~ '^[A-Za-z0-9][A-Za-z0-9 _-]{2,23}$' or
          p_data->>'alias' <> btrim(p_data->>'alias') then
         raise exception 'invalid_publication' using errcode = '22023';

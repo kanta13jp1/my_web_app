@@ -20,28 +20,89 @@ class FakeStore implements TypingScoreStore {
     calls.add('save:${report.id}');
     if (fail) throw StateError('offline');
   }
+
   @override
   Future<List<Map<String, dynamic>>> mine() async => [
-    {'id': 'run', 'mode': 'challenge', 'score': 60, 'alias': published ? 'TypingFan' : null},
-  ];
+        {
+          'id': 'run',
+          'mode': 'challenge',
+          'score': 60,
+          'alias': published ? 'TypingFan' : null,
+        },
+      ];
   @override
-  Future<List<Map<String, dynamic>>> ranking() async => [{'alias': 'TypingFan', 'score': 60, 'accuracy': 100}];
+  Future<List<Map<String, dynamic>>> ranking() async => [
+        {'alias': 'TypingFan', 'score': 60, 'accuracy': 100},
+      ];
   @override
-  Future<void> publish(String id, String alias) async { calls.add('publish:$alias'); published = true; }
+  Future<void> publish(String id, String alias) async {
+    calls.add('publish:$alias');
+    published = true;
+  }
+
   @override
-  Future<void> withdraw(String id) async { calls.add('withdraw'); published = false; }
+  Future<void> withdraw(String id) async {
+    calls.add('withdraw');
+    published = false;
+  }
+
   @override
-  Future<void> delete(String id) async { calls.add('delete'); }
+  Future<void> delete(String id) async {
+    calls.add('delete');
+  }
 }
 
 void main() {
+  testWidgets('records controls fit a narrow screen in both UI languages',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final store = FakeStore();
+    addTearDown(store.auth.close);
+    for (final english in [false, true]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: TypingRecordsPanel(
+                  store: store,
+                  report: null,
+                  english: english,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   Future<void> show(WidgetTester tester, FakeStore store) async {
     final game = TypingGame()..start();
     game.updateElapsed(TypingGame.duration);
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(child: TypingRecordsPanel(store: store, report: TypingRunReport.fromGame(game), english: true)))));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: TypingRecordsPanel(
+              store: store,
+              report: TypingRunReport.fromGame(game),
+              english: true,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
-  testWidgets('saving never publishes and a failed save retries the same ID', (tester) async {
+  testWidgets('saving never publishes and a failed save retries the same ID',
+      (tester) async {
     final store = FakeStore();
     addTearDown(store.auth.close);
     await show(tester, store);
@@ -59,7 +120,8 @@ void main() {
     expect(find.text('Choose publication'), findsOneWidget);
   });
 
-  testWidgets('publication requires a separate confirmation and alias', (tester) async {
+  testWidgets('publication requires a separate confirmation and alias',
+      (tester) async {
     final store = FakeStore();
     addTearDown(store.auth.close);
     await show(tester, store);
@@ -82,7 +144,8 @@ void main() {
     expect(find.text('Withdraw'), findsNothing);
   });
 
-  testWidgets('sign out immediately hides private history and blocks saving', (tester) async {
+  testWidgets('sign out immediately hides private history and blocks saving',
+      (tester) async {
     final store = FakeStore();
     addTearDown(store.auth.close);
     await show(tester, store);
