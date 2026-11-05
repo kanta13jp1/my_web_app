@@ -21,7 +21,10 @@ void main() {
         final value = SupabaseClient(
           url,
           key,
-          authOptions: const AuthClientOptions(autoRefreshToken: false),
+          authOptions: const AuthClientOptions(
+          autoRefreshToken: false,
+          authFlowType: AuthFlowType.implicit,
+        ),
         );
         clients.add(value);
         return value;
@@ -68,7 +71,8 @@ void main() {
           },
         ),
         throwsA(
-            isA<PostgrestException>().having((e) => e.code, 'code', '22023'),),
+          isA<PostgrestException>().having((e) => e.code, 'code', '22023'),
+        ),
       );
       for (final action in ['delete', 'withdraw', 'publish']) {
         await expectLater(
