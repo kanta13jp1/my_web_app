@@ -27,13 +27,13 @@ class FakeStore implements TypingScoreStore {
           'id': 'run',
           'mode': 'challenge',
           'score': 60,
-          'alias': published ? 'TypingFan' : null
-        ,},
+          'alias': published ? 'TypingFan' : null,
+        },
       ];
   @override
   Future<List<Map<String, dynamic>>> ranking() async => [
-        {'alias': 'TypingFan', 'score': 60, 'accuracy': 100}
-      ,];
+        {'alias': 'TypingFan', 'score': 60, 'accuracy': 100},
+      ];
   @override
   Future<void> publish(String id, String alias) async {
     calls.add('publish:$alias');
@@ -53,16 +53,52 @@ class FakeStore implements TypingScoreStore {
 }
 
 void main() {
+  testWidgets('records controls fit a narrow screen in both UI languages',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final store = FakeStore();
+    addTearDown(store.auth.close);
+    for (final english in [false, true]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: TypingRecordsPanel(
+                  store: store,
+                  report: null,
+                  english: english,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   Future<void> show(WidgetTester tester, FakeStore store) async {
     final game = TypingGame()..start();
     game.updateElapsed(TypingGame.duration);
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
         home: Scaffold(
-            body: SingleChildScrollView(
-                child: TypingRecordsPanel(
-                    store: store,
-                    report: TypingRunReport.fromGame(game),
-                    english: true,),),),),);
+          body: SingleChildScrollView(
+            child: TypingRecordsPanel(
+              store: store,
+              report: TypingRunReport.fromGame(game),
+              english: true,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   testWidgets('saving never publishes and a failed save retries the same ID',

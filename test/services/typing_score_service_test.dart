@@ -22,6 +22,11 @@ String session(String owner) => jsonEncode({
     });
 
 void main() {
+  http.Response response(String body) => http.Response(
+        body,
+        200,
+        headers: {'content-type': 'application/json'},
+      );
   TypingRunReport report() {
     final game = TypingGame()..start();
     game.type(game.guide[0]);
@@ -56,18 +61,22 @@ void main() {
       final data = Map<String, dynamic>.from(body['p_data'] as Map);
       if (body['p_action'] == 'save') {
         records.add(
-            {...data, 'score': (data['correct'] as int) * 10, 'alias': null},);
-        return http.Response('{"saved":true}', 200);
+          {...data, 'score': (data['correct'] as int) * 10, 'alias': null},
+        );
+        return response('{"saved":true}');
       }
       if (body['p_action'] == 'mine') {
-        return http.Response(jsonEncode(records), 200);
+        return response(jsonEncode(records));
       }
-      return http.Response('{}', 200);
+      return response('{}');
     });
     Future<SupabaseClient> client() async {
-      final client = SupabaseClient('https://example.invalid', 'fixture-key',
-          httpClient: transport,
-          authOptions: const AuthClientOptions(autoRefreshToken: false),);
+      final client = SupabaseClient(
+        'https://example.invalid',
+        'fixture-key',
+        httpClient: transport,
+        authOptions: const AuthClientOptions(autoRefreshToken: false),
+      );
       await client.auth
           .recoverSession(session('00000000-0000-0000-0000-000000000001'));
       addTearDown(client.dispose);
@@ -84,8 +93,10 @@ void main() {
     await restored.publish(run.id, 'TypingFan');
     await restored.withdraw(run.id);
     await restored.delete(run.id);
-    expect(calls.map((c) => c['p_action']),
-        ['save', 'mine', 'publish', 'withdraw', 'delete'],);
+    expect(
+      calls.map((c) => c['p_action']),
+      ['save', 'mine', 'publish', 'withdraw', 'delete'],
+    );
   });
 
   test(
@@ -93,14 +104,17 @@ void main() {
       () async {
     var requests = 0;
     late SupabaseClient client;
-    client = SupabaseClient('https://example.invalid', 'fixture-key',
-        authOptions: const AuthClientOptions(autoRefreshToken: false),
-        httpClient: MockClient((_) async {
-      requests++;
-      await client.auth
-          .recoverSession(session('00000000-0000-0000-0000-000000000002'));
-      return http.Response('[]', 200);
-    }),);
+    client = SupabaseClient(
+      'https://example.invalid',
+      'fixture-key',
+      authOptions: const AuthClientOptions(autoRefreshToken: false),
+      httpClient: MockClient((_) async {
+        requests++;
+        await client.auth
+            .recoverSession(session('00000000-0000-0000-0000-000000000002'));
+        return response('[]');
+      }),
+    );
     addTearDown(client.dispose);
     final store = SupabaseTypingScoreStore(client);
     await expectLater(store.mine(), throwsStateError);
