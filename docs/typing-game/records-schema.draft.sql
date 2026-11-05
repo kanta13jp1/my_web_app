@@ -67,8 +67,9 @@ begin
   end if;
   -- Serialization covers dedupe, limits, delete and publication for this owner.
   perform pg_advisory_xact_lock(hashtextextended(uid::text, 64312));
-  -- Retention is also applied on read, so expired rows are never returned.
-  delete from typing_private.runs where owner_id = uid and created_at <= now() - interval '90 days';
+  -- Expiry removes publication only. Private history has no 90-day expiry.
+  delete from typing_private.entries where owner_id = uid and id in
+    (select id from typing_private.runs where owner_id = uid and created_at <= now() - interval '90 days');
 
   if p_action = 'save' then
     if not (p_data ?& array['id','revision','mode','correct','mistakes','words','elapsed_ms']) or
@@ -108,6 +109,11 @@ begin
     if exists(select 1 from typing_private.budgets where owner_id = uid and day = (now() at time zone 'UTC')::date and saves >= 100) then
       raise exception 'daily_limit' using errcode = '54000';
     end if;
+    -- Reaching the history cap rejects a new save; it never deletes private
+    -- history. The owner must deliberately delete records to make room.
+    if (select count(*) from typing_private.runs where owner_id = uid) >= 100 then
+      raise exception 'history_limit' using errcode = '54000';
+    end if;
     insert into typing_private.runs(owner_id, id, revision, mode, correct, mistakes, words, elapsed_ms)
       values(uid, run_id, p_data->>'revision', p_data->>'mode', v_correct, v_mistakes, v_words, v_elapsed)
       returning * into v_run;
@@ -117,8 +123,6 @@ begin
         day = excluded.day,
         saves = case when typing_private.budgets.day = excluded.day then typing_private.budgets.saves + 1 else 1 end,
         last_saved = excluded.last_saved;
-    delete from typing_private.runs where owner_id = uid and id in
-      (select id from typing_private.runs where owner_id = uid order by created_at desc, id offset 100);
     return jsonb_build_object('saved', true, 'score', v_run.score);
   elsif p_action in ('publish', 'withdraw', 'delete') then
     if not (p_data ? 'id') or jsonb_typeof(p_data->'id') <> 'string' or
@@ -129,7 +133,8 @@ begin
     select * into v_run from typing_private.runs where owner_id = uid and id = run_id;
     if not found then raise exception 'record_not_found' using errcode = '42501'; end if;
     if p_action = 'publish' then
-      if v_run.mode <> 'challenge' or not (p_data ? 'alias') or jsonb_typeof(p_data->'alias') <> 'string' or
+      if v_run.mode <> 'challenge' or v_run.created_at <= now() - interval '90 days' or
+         not (p_data ? 'alias') or jsonb_typeof(p_data->'alias') <> 'string' or
          not (p_data->>'alias') ~ '^[A-Za-z0-9][A-Za-z0-9 _-]{2,23}$' or
          p_data->>'alias' <> btrim(p_data->>'alias') then
         raise exception 'invalid_publication' using errcode = '22023';
@@ -144,7 +149,8 @@ begin
     return jsonb_build_object('updated', true);
   elsif p_action = 'mine' and p_data = '{}'::jsonb then
     select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) into result from (
-      select r.id, r.mode, r.correct, r.mistakes, r.words, r.elapsed_ms, r.score, r.created_at, e.alias
+      select r.id, r.mode, r.correct, r.mistakes, r.words, r.elapsed_ms, r.score, r.created_at, e.alias,
+        (r.mode = 'challenge' and r.created_at > now() - interval '90 days') as can_publish
       from typing_private.runs r left join typing_private.entries e using(owner_id, id)
       where r.owner_id = uid order by r.created_at desc, r.id limit 100
     ) x;
@@ -178,10 +184,10 @@ comment on function public.typing_game_records(text,jsonb) is
 
 -- Maintenance only. Scheduling requires separate production approval. Client
 -- roles cannot invoke this function, including through the public RPC.
-create function typing_private.purge_expired()
+create function typing_private.purge_expired_publications()
 returns void language sql security invoker set search_path = '' as $$
-  delete from typing_private.runs where created_at <= now() - interval '90 days';
-  delete from typing_private.budgets where day < (now() at time zone 'UTC')::date - 2;
+  delete from typing_private.entries where (owner_id, id) in
+    (select owner_id, id from typing_private.runs where created_at <= now() - interval '90 days');
 $$;
-revoke all on function typing_private.purge_expired() from public, anon, authenticated;
+revoke all on function typing_private.purge_expired_publications() from public, anon, authenticated;
 commit;

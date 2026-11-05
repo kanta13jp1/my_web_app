@@ -81,9 +81,10 @@ reset role;
 update typing_private.runs set created_at = now() - interval '91 days' where owner_id = '00000000-0000-0000-0000-000000000001';
 set role authenticated;
 select test_assert(public.typing_game_records('ranking') = '[]', 'expired scores are invisible');
-select test_assert(public.typing_game_records('mine') = '[]', 'expired private history pruned');
+select test_assert(jsonb_array_length(public.typing_game_records('mine')) = 1, 'private history survives publication expiry');
+select test_assert(public.typing_game_records('mine')->0->'can_publish' = 'false'::jsonb, 'expired run cannot be republished');
 reset role;
-select test_assert(not exists(select from typing_private.entries where owner_id = '00000000-0000-0000-0000-000000000001'), 'expiry cascades');
+select test_assert(not exists(select from typing_private.entries where owner_id = '00000000-0000-0000-0000-000000000001'), 'expiry removes only publication');
 select test_assert((select bool_and(relrowsecurity) from pg_class where oid in ('typing_private.runs'::regclass, 'typing_private.entries'::regclass)), 'RLS enabled');
 select test_assert(not has_function_privilege('anon','public.typing_game_records(text,jsonb)','execute'), 'anon cannot call');
 select test_assert(not has_table_privilege('authenticated','typing_private.runs','insert'), 'direct writes revoked');
@@ -100,5 +101,18 @@ select public.typing_game_records('publish', '{"id":"10000000-0000-0000-0000-000
 select public.typing_game_records('delete', '{"id":"10000000-0000-0000-0000-000000000002"}');
 select test_assert(public.typing_game_records('ranking') = '[]', 'delete removes publication');
 select test_denied($q$select public.typing_game_records('save', '{"id":"10000000-0000-0000-0000-000000000003","revision":"romaji36-v1","mode":"challenge","correct":30,"mistakes":2,"words":5,"elapsed_ms":60000}')$q$, '54000');
+reset role;
+-- A full private history rejects a new record without pruning any old row.
+insert into typing_private.runs(owner_id,id,revision,mode,correct,mistakes,words,elapsed_ms,created_at)
+select '00000000-0000-0000-0000-000000000002', md5('cap-fixture-' || g)::uuid,
+  'romaji36-v1', 'practice', 3, 0, 1, 1000, now() - interval '1 day'
+from generate_series(1,99) g;
+update typing_private.budgets set day = (now() at time zone 'UTC')::date - 1,
+  last_saved = now() - interval '10 seconds' where owner_id = '00000000-0000-0000-0000-000000000002';
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', false);
+select test_denied($q$select public.typing_game_records('save', '{"id":"20000000-0000-0000-0000-000000000002","revision":"romaji36-v1","mode":"practice","correct":3,"mistakes":0,"words":1,"elapsed_ms":1000}')$q$, '54000');
+select test_assert(jsonb_array_length(public.typing_game_records('mine')) = 100, 'full private history is retained');
+select test_denied($q$select typing_private.purge_expired_publications()$q$, '42501');
 reset role;
 \echo TYPING_DATABASE_ASSERTIONS_PASSED

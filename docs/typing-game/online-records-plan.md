@@ -51,11 +51,13 @@ not authorize new external AI disclosure or applying new production DB grants.
   Anonymous public reading would require a separate review of RPC access and UI text.
 - Alias: dedicated 3–24 ASCII characters is a conservative draft. Decide whether
   to support Japanese/Unicode, uniqueness and moderation/reporting before release.
-- Retention: draft visibility is 90 days and private history is capped at 100
-  records/account. Deleted records are removed immediately including publication.
-  Expired records are filtered from rankings and cleaned on owner access;
-  physical expiry for inactive accounts still requires an approved scheduled
-  cleanup. A per-account daily submission budget survives history deletion.
+- Public visibility is 90 days from the run timestamp. Private history has no
+  time-based expiry. At 100 retained records, new saves are rejected; no old
+  private record is automatically pruned. Deliberate owner deletion removes the
+  run and its publication. Account deletion cascades into this feature's tables.
+  Expired publications are filtered and removed on owner access or by the
+  proposed administrator maintenance job. Daily submission counters survive
+  private-record deletion and are not purged by maintenance.
 - Rate limits: 5 seconds between new saves, 100/day UTC, proposed not approved.
 - Anti-cheat: choose between a casual self-reported board and a separately
   designed verified leaderboard. Current code implements only the former.
@@ -88,6 +90,46 @@ The additional `test/integration/typing_records_supabase_test.dart` exercises
 real GoTrue sessions and PostgREST on a disposable localhost-only Supabase stack.
 It is explicitly skipped in ordinary tests lacking that stack. Its dedicated
 cloud job must execute it (not skip it). The draft maintenance function has no
-client grants and can purge expired inactive-account data. Proposed scheduling
-is a daily privileged job; its production installation is still pending review.
+client grants and removes only expired publication entries, including for
+inactive accounts. It does not delete private runs or counters. Proposed
+scheduling is a daily privileged job; installation is still pending review.
 No real-user account, production key or production database is used by this test.
+
+## Exact proposed DB privileges and maintenance (NOT APPLIED)
+
+- Create only `typing_private.runs`, `typing_private.entries`, and
+  `typing_private.budgets`. All have RLS. Revoke direct table access from PUBLIC,
+  anon and authenticated. Existing application tables/policies are not altered.
+- Grant authenticated schema USAGE and EXECUTE on the public invoker RPC and
+  its private definer implementation. Both entry points reject missing or
+  anonymous identities; ownership comes from `auth.uid()`, never a parameter.
+- No grant to anon. No client EXECUTE on maintenance. No client service-role
+  credential. Rankings return only deliberate aliases and four score fields.
+- Run the proposed maintenance job daily at **03:17 UTC (12:17 JST)** as the
+  database administrator, only after verifying cron's configured timezone is
+  UTC/GMT and that no job of this name exists. Do not change global timezone,
+  enable an extension, or replace an existing job automatically.
+- Command: `select typing_private.purge_expired_publications();` removes only
+  entries whose matching run was created at least 90 days ago. `runs` and
+  `budgets` survive. Rank reads already hide expired entries, so delayed cron
+  execution cannot extend visibility.
+- This physically removes public aliases/entry associations and has no undo
+  button. It does not erase private scores. The user may delete a private run
+  deliberately (irreversible here), which also removes its public entry.
+  Deleting the account removes all three feature-owned tables' rows via FK
+  cascades. No backup/PITR recovery guarantee is made.
+- To stop future maintenance, the administrator can unschedule this named job.
+  Unscheduling does not restore already removed publication entries.
+
+After explicit approval, and only if the above preflight passes:
+
+```sql
+select cron.schedule(
+  'typing-expired-publications-v1',
+  '17 3 * * *',
+  'select typing_private.purge_expired_publications();'
+);
+```
+
+This proposal supersedes the earlier draft that deleted private runs after 90
+days or pruned them on save. Neither older behavior was approved or applied.

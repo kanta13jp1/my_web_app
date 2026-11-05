@@ -189,6 +189,12 @@ class _TypingRecordsPanelState extends State<TypingRecordsPanel> {
                 'Saving is private. Publication is a separate choice. Scores are self-reported, not verified competitive results.',
               ),
             ),
+            Text(
+              _t(
+                '公開はプレイから90日間。非公開履歴は自動削除せず最大100件まで保存し、満杯なら新しい保存を停止します。ご自身の削除操作やアカウント削除で消した記録は復元できません。',
+                'Publication lasts 90 days from the run. Private history is not automatically deleted. Up to 100 records are kept; saving stops when full. Records you delete, or remove by deleting your account, cannot be restored here.',
+              ),
+            ),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -231,7 +237,7 @@ class _TypingRecordsPanelState extends State<TypingRecordsPanel> {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text('${row['mode']} • ${row['score']} ${_t('点', 'points')}'),
-                  if (row['mode'] == 'challenge')
+                  if (row['can_publish'] == true)
                     TextButton(
                       onPressed:
                           _busy ? null : () => _publish(row['id'] as String),
