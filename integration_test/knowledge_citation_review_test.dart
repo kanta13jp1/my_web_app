@@ -116,6 +116,8 @@ void main() {
         '青い箱は4個で、採用する。 [1]',
       );
       expect(preview.textSpan!.toPlainText(), contains(fixture.$3));
+      expect(find.text('検索結果内の相対スコア 100%'), findsOneWidget);
+      expect(find.text('この値は回答の正確さを示しません。'), findsOneWidget);
       expect(find.text('回答と引用を確認 0/3'), findsOneWidget);
       await tester.ensureVisible(
         find.byKey(const Key('knowledge-citation-preview-1')),

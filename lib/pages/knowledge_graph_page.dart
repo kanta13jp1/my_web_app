@@ -546,10 +546,14 @@ class _CitationDocumentDialogState extends State<_CitationDocumentDialog> {
                   Chip(label: Text(citation.sourceType)),
                   Chip(
                     label: Text(
-                      'confidence ${(citation.confidence * 100).round()}%',
+                      '検索結果内の相対スコア ${(citation.confidence * 100).round()}%',
                     ),
                   ),
                 ],
+              ),
+              Text(
+                'この値は回答の正確さを示しません。',
+                style: theme.textTheme.bodySmall,
               ),
               const Divider(height: 24),
               Text(
