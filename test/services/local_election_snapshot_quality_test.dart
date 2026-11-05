@@ -9,7 +9,7 @@ void main() {
         <String, dynamic>{
           'collectionQuality': <String, dynamic>{
             'complete': true,
-            'issues': <String>[]
+            'issues': <String>[],
           },
         },
       ),
@@ -40,7 +40,7 @@ void main() {
       'complete',
       <String, dynamic>{},
       <String, dynamic>{'complete': true},
-      <String, dynamic>{'complete': true, 'issues': 'none'}
+      <String, dynamic>{'complete': true, 'issues': 'none'},
     ]) {
       expect(
         () => LocalElectionRealityService.validateRemoteSnapshotPayload(

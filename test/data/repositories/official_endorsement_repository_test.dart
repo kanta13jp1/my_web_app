@@ -19,11 +19,13 @@ void main() {
     final old = OfficialEndorsementSnapshot.fromJson(
       <String, dynamic>{
         ..._liveSnapshot.toJson(),
-        'sourceAsOf': _olderSourceDate
+        'sourceAsOf': _olderSourceDate,
       },
     );
-    expect(repository.resolve(_intelligenceWith(old)).sourceAsOf,
-        dpjOfficialEndorsementSourceAsOf);
+    expect(
+      repository.resolve(_intelligenceWith(old)).sourceAsOf,
+      dpjOfficialEndorsementSourceAsOf,
+    );
   });
 
   test('invalid and absent source dates use the bundled snapshot', () {
@@ -31,8 +33,10 @@ void main() {
       final live = OfficialEndorsementSnapshot.fromJson(
         <String, dynamic>{..._liveSnapshot.toJson(), 'sourceAsOf': date},
       );
-      expect(repository.resolve(_intelligenceWith(live)).sourceDocumentSha256,
-          dpjOfficialEndorsementSourceDocumentSha256);
+      expect(
+        repository.resolve(_intelligenceWith(live)).sourceDocumentSha256,
+        dpjOfficialEndorsementSourceDocumentSha256,
+      );
     }
   });
 
@@ -40,11 +44,13 @@ void main() {
     final live = OfficialEndorsementSnapshot.fromJson(
       <String, dynamic>{
         ..._liveSnapshot.toJson(),
-        'sourceAsOf': dpjOfficialEndorsementSourceAsOf
+        'sourceAsOf': dpjOfficialEndorsementSourceAsOf,
       },
     );
-    expect(repository.resolve(_intelligenceWith(live)).sourceDocumentSha256,
-        'live-sha');
+    expect(
+      repository.resolve(_intelligenceWith(live)).sourceDocumentSha256,
+      'live-sha',
+    );
   });
 
   test('complete live snapshot takes priority over the generated fallback', () {
@@ -100,7 +106,7 @@ final _liveSnapshot = OfficialEndorsementSnapshot(
   formerCount: 0,
   recommendationCount: 0,
   prefectureCount: 1,
-  prefectures: <OfficialEndorsementPrefecture>[
+  prefectures: const <OfficialEndorsementPrefecture>[
     OfficialEndorsementPrefecture(
       prefecture: '東京',
       totalCount: 1,
