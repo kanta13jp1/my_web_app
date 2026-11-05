@@ -22,9 +22,10 @@ String session(String owner) => jsonEncode({
     });
 
 void main() {
-  http.Response response(String body) => http.Response(
+  http.Response response(String body, http.BaseRequest request) => http.Response(
         body,
         200,
+        request: request,
         headers: {'content-type': 'application/json'},
       );
   TypingRunReport report() {
@@ -63,12 +64,12 @@ void main() {
         records.add(
           {...data, 'score': (data['correct'] as int) * 10, 'alias': null},
         );
-        return response('{"saved":true}');
+        return response('{"saved":true}', request);
       }
       if (body['p_action'] == 'mine') {
-        return response(jsonEncode(records));
+        return response(jsonEncode(records), request);
       }
-      return response('{}');
+      return response('{}', request);
     });
     Future<SupabaseClient> client() async {
       final client = SupabaseClient(
@@ -108,11 +109,11 @@ void main() {
       'https://example.invalid',
       'fixture-key',
       authOptions: const AuthClientOptions(autoRefreshToken: false),
-      httpClient: MockClient((_) async {
+      httpClient: MockClient((request) async {
         requests++;
         await client.auth
             .recoverSession(session('00000000-0000-0000-0000-000000000002'));
-        return response('[]');
+        return response('[]', request);
       }),
     );
     addTearDown(client.dispose);

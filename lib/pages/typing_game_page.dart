@@ -496,6 +496,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
                               children: [
                                 Text(
                                   _game.prompt.japanese,
+                                  key: const Key('typing-prompt'),
                                   style: Theme.of(context)
                                       .textTheme
                                       .headlineMedium,
