@@ -687,7 +687,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
                       const SizedBox(height: 24),
                       if (!_game.running && _scoreStore != null)
                         TypingRecordsPanel(
-                          store: _scoreStore!,
+                          store: _scoreStore,
                           report: _report,
                           english: _english,
                         ),
