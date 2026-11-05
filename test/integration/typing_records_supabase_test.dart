@@ -62,7 +62,7 @@ void main() {
       a.rpc('typing_game_records', params: {
         'p_action': 'save',
         'p_data': {...report.toJson(), 'correct': report.correct + 1},
-      }),
+      },),
       throwsA(isA<PostgrestException>().having((e) => e.code, 'code', '22023')),
     );
     for (final action in ['delete', 'withdraw', 'publish']) {
@@ -73,14 +73,16 @@ void main() {
             'id': report.id,
             if (action == 'publish') 'alias': 'NotMine',
           },
-        }),
-        throwsA(isA<PostgrestException>().having((e) => e.code, 'code', '42501')),
+        },),
+        throwsA(
+            isA<PostgrestException>().having((e) => e.code, 'code', '42501'),),
       );
     }
     await storeA.publish(report.id, 'TypingFan');
     final entry = (await storeB.ranking()).single;
     expect(entry['alias'], 'TypingFan');
-    expect(entry.keys, unorderedEquals(['alias', 'score', 'accuracy', 'words']));
+    expect(
+        entry.keys, unorderedEquals(['alias', 'score', 'accuracy', 'words']),);
     await storeA.withdraw(report.id);
     expect(await storeB.ranking(), isEmpty);
     expect(await storeA.mine(), hasLength(1));
@@ -110,15 +112,26 @@ void main() {
     }
 
     final where = "owner_id='$owner'::uuid and id='${report.id}'::uuid";
-    await sql("update typing_private.runs set created_at=now()-interval '91 days' where $where");
+    await sql(
+        "update typing_private.runs set created_at=now()-interval '91 days' where $where",);
     expect(await storeB.ranking(), isEmpty);
-    expect(await sql('select count(*) from typing_private.runs where $where'), '1');
-    await sql('select typing_private.purge_expired()');
-    expect(await sql('select count(*) from typing_private.runs where $where'), '0');
-    expect(await storeA.mine(), isEmpty);
+    expect(await sql('select count(*) from typing_private.runs where $where'),
+        '1',);
+    expect(
+      await sql('select count(*) from typing_private.entries where $where'),
+      '1',
+    );
+    await sql('select typing_private.purge_expired_publications()');
+    expect(
+      await sql('select count(*) from typing_private.entries where $where'),
+      '0',
+    );
+    expect(await sql('select count(*) from typing_private.runs where $where'),
+        '1',);
+    expect(await storeA.mine(), hasLength(1));
     await a.auth.signOut();
     await expectLater(storeA.mine(), throwsStateError);
   },
       timeout: const Timeout(Duration(minutes: 3)),
-      skip: Platform.environment['TYPING_TEST_URL'] == null);
+      skip: Platform.environment['TYPING_TEST_URL'] == null,);
 }

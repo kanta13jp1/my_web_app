@@ -50,7 +50,12 @@ jobs:
         run: test ! -s typing-auth-format.patch
       - name: Stop disposable stack
         if: always()
-        run: supabase stop --workdir /tmp/typing-records-supabase --no-backup
+        run: |
+          if test -f /tmp/typing-records-supabase/supabase/config.toml; then
+            supabase stop --workdir /tmp/typing-records-supabase --no-backup
+          else
+            echo 'No disposable stack was initialized; nothing to stop.'
+          fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:

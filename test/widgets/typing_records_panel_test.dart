@@ -26,6 +26,7 @@ class FakeStore implements TypingScoreStore {
         {
           'id': 'run',
           'mode': 'challenge',
+          'can_publish': true,
           'score': 60,
           'alias': published ? 'TypingFan' : null,
         },
