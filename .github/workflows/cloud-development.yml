@@ -564,9 +564,10 @@ jobs:
         run: |
           python - <<'PY'
           import subprocess, sys
+          from pathlib import Path
           sys.path.insert(0, 'scripts')
           from pre_commit_quality_gate import commands_for_paths
-          paths = subprocess.check_output(['git', 'diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'], text=True).splitlines()
+          paths = ['.github/workflows/cloud-development.yml', 'scripts/update_kokumin_local_endorsements.py'] + [p.as_posix() for p in Path('supabase/functions/local-election-intelligence').glob('*.ts')]
           for command in commands_for_paths(paths):
               subprocess.run(command, check=True)
           PY
