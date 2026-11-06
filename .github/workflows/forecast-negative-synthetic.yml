@@ -1,0 +1,143 @@
+name: Forecast negative synthetic isolation (draft)
+
+on:
+  push:
+    branches:
+      - codex/forecast-negative-synthetic-20261106-v4
+
+permissions: {}
+
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      FLUTTER_SUPPRESS_ANALYTICS: 'true'
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify immutable candidate and exact synthetic additions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = push
+          test "$GITHUB_REF" = refs/heads/codex/forecast-negative-synthetic-20261106-v4
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 77cbdd931388ad8eaeb54ef52efd9d97d0c94faf
+          test "$(git rev-list --parents -n 1 HEAD | wc -w)" = 2
+          python3 - <<'PY'
+          import subprocess
+          want = {
+              '.github/workflows/forecast-negative-synthetic.yml',
+              'test/services/asset_cashflow_negative_initial_proposal_test.dart',
+              'test/services/workbook_negative_balance_proposal_test.dart',
+          }
+          raw = subprocess.check_output(['git', 'diff-tree', '--no-commit-id', '--name-status', '-r', '-z', 'HEAD']).decode().split('\0')
+          entries = list(zip(raw[0:-1:2], raw[1:-1:2]))
+          assert len(entries) == 3 and all(status == 'A' for status, _ in entries), entries
+          assert {path for _, path in entries} == want, entries
+          PY
+          printf '%s\n' \
+            'ee5505680edfb9d82def60e3d2a185a3ce2e5a35c59ccdde8ede673cc83211f1  test/services/asset_cashflow_negative_initial_proposal_test.dart' \
+            '6c99fdb1d3b44630b860aa5f7b83aa034d0a48d9ef31bd71575047052e0f9b3d  test/services/workbook_negative_balance_proposal_test.dart' | sha256sum -c -
+      - name: Prepare pinned Flutter and dependencies without secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PUB_CACHE="$RUNNER_TEMP/forecast-pub-cache"
+          export XDG_CONFIG_HOME="$RUNNER_TEMP/forecast-config"
+          export XDG_CACHE_HOME="$RUNNER_TEMP/forecast-cache"
+          mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$PUB_CACHE"
+          git clone --depth 1 --branch 3.38.10 https://github.com/flutter/flutter.git "$RUNNER_TEMP/forecast-flutter"
+          test "$(git -C "$RUNNER_TEMP/forecast-flutter" rev-parse HEAD)" = c6f67dede3d4aa1aa7a69dd56a3494a5cde6cc80
+          export PATH="$RUNNER_TEMP/forecast-flutter/bin:$PATH"
+          flutter config --no-analytics
+          flutter precache --linux
+          echo 'Original committed lock SHA256:'
+          git show HEAD:pubspec.lock | sha256sum
+          flutter pub get
+          echo 'Runner-resolved lock SHA256:'
+          sha256sum pubspec.lock
+          echo 'Runner-only lock diff:'
+          git diff -- pubspec.lock
+          echo 'Runner-only staged lock diff:'
+          git diff --cached -- pubspec.lock
+          echo 'Runner-resolved package versions:'
+          flutter pub deps --style compact
+          python3 - <<'PY'
+          import subprocess
+          changed = set()
+          for flags in ([], ['--cached']):
+              changed.update(subprocess.check_output(['git', 'diff', *flags, '--name-only']).decode().splitlines())
+          assert changed <= {'pubspec.lock'}, f'unexpected tracked source changes: {changed}'
+          PY
+      - name: Run only synthetic tests inside a disconnected network namespace
+        shell: bash
+        run: |
+          set -euo pipefail
+          host_net="$(readlink /proc/self/ns/net)"
+          runner_uid="$(id -u)"
+          runner_gid="$(id -g)"
+          test "$runner_uid" -ne 0
+          sudo unshare --net -- env -i \
+            PATH="/usr/sbin:/usr/bin:/sbin:/bin" \
+            HOST_NET="$host_net" RUNNER_UID="$runner_uid" RUNNER_GID="$runner_gid" \
+            TEST_CONFIG="$RUNNER_TEMP/forecast-config" TEST_CACHE="$RUNNER_TEMP/forecast-cache" PUB_CACHE="$RUNNER_TEMP/forecast-pub-cache" \
+            TEST_WORKSPACE="$GITHUB_WORKSPACE" FLUTTER_ROOT="$RUNNER_TEMP/forecast-flutter" REPORT="$RUNNER_TEMP/forecast-negative-results.jsonl" \
+            bash -c '
+              set -euo pipefail
+              test "$(readlink /proc/self/ns/net)" != "$HOST_NET"
+              test -z "$(ip -o addr show scope global)"
+              test "$(ip -o link show | wc -l)" -eq 1
+              ! ip -o link show lo | grep -Eq "<[^>]*UP[,>]"
+              exec setpriv --reuid="$RUNNER_UID" --regid="$RUNNER_GID" --clear-groups --no-new-privs \
+                env -i XDG_CONFIG_HOME="$TEST_CONFIG" XDG_CACHE_HOME="$TEST_CACHE" PUB_CACHE="$PUB_CACHE" CI=true FLUTTER_SUPPRESS_ANALYTICS=true \
+                PATH="$FLUTTER_ROOT/bin:/usr/sbin:/usr/bin:/sbin:/bin" TEST_WORKSPACE="$TEST_WORKSPACE" REPORT="$REPORT" \
+                bash -c '\''
+                  set -euo pipefail
+                  test "$(id -u)" -ne 0
+                  test -z "$(ip -o addr show scope global)"
+                  cd "$TEST_WORKSPACE"
+                  flutter test --no-pub --reporter json \
+                    test/services/asset_cashflow_negative_initial_proposal_test.dart \
+                    test/services/workbook_negative_balance_proposal_test.dart | tee "$REPORT"
+                '\''
+            '
+      - name: Require the intended test results
+        shell: bash
+        env:
+          REPORT: ${{ runner.temp }}/forecast-negative-results.jsonl
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          expected = {
+              'characterizes negative opening balance followed by income': False,
+              'zero and positive openings with later income are not shortfalls': False,
+              'negative synthetic bank becomes liability, not forecast cash': False,
+              'policy proposal: a negative opening reports shortfall on the anchor day': True,
+          }
+          starts, done = {}, {}
+          stream_done = []
+          with open(os.environ['REPORT'], encoding='utf8') as handle:
+              for line in handle:
+                  event = json.loads(line)
+                  if event.get('type') == 'testStart':
+                      test = event['test']
+                      starts.setdefault(test['name'], []).append(test['id'])
+                  elif event.get('type') == 'testDone':
+                      done[event['testID']] = event
+                  elif event.get('type') == 'done':
+                      stream_done.append(event)
+          assert len(stream_done) == 1 and stream_done[0].get('success') is True, 'invalid or failed test run'
+          for name, skipped in expected.items():
+              assert len(starts.get(name, [])) == 1, f'missing or duplicate: {name}'
+              result = done.get(starts[name][0], {})
+              assert result.get('result') == 'success' and result.get('skipped') is skipped, (name, result)
+              print(f"{'SKIP' if skipped else 'PASS'}: {name}")
+          PY
