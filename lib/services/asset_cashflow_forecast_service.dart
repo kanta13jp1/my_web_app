@@ -78,7 +78,7 @@ class AssetCashflowForecastMonth {
   final double incomeTotal;
   final double outflowTotal;
 
-  /// 月内で最初に残高が 0 未満へ落ちる日。なければ null。
+  /// 月内の予測残高が最初に 0 未満となる日。月初から負なら月初、初月は基準日。
   final DateTime? firstShortfallDate;
 
   bool get isShortfall => worstBalance < 0;
@@ -107,7 +107,7 @@ class AssetCashflowForecast {
   /// 安全余裕(見込み残高がこれを下回ると注意。0 なら 0 円ライン)。
   final double safetyMargin;
 
-  /// 見込み残高が最初に 0 未満へ落ちる日。なければ null。
+  /// 予測残高が最初に 0 未満となる日。起点から負なら基準日、なければ null。
   final DateTime? firstShortfallDate;
 
   bool get isEmpty => months.isEmpty;
@@ -220,7 +220,8 @@ class AssetCashflowForecastService {
     final horizon = max(1, horizonMonths);
     var running = startingBalance;
     var worstBalance = startingBalance;
-    DateTime? firstShortfallDate;
+    // A negative supplied opening is recorded on the forecast anchor.
+    DateTime? firstShortfallDate = startingBalance < 0 ? anchor : null;
     final months = <AssetCashflowForecastMonth>[];
 
     for (var m = 0; m < horizon; m++) {
@@ -230,7 +231,9 @@ class AssetCashflowForecastService {
       var incomeTotal = 0.0;
       var outflowTotal = 0.0;
       var worstInMonth = running;
-      DateTime? monthShortfall;
+      // A deficit carried into a month exists at that month's opening.
+      DateTime? monthShortfall =
+          opening < 0 ? (m == 0 ? anchor : monthStart) : null;
 
       for (var day = 1; day <= lastDay; day++) {
         final date = DateTime(monthStart.year, monthStart.month, day);

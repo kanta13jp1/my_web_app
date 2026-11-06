@@ -189,13 +189,16 @@ class AssetAdvisoryBriefingService {
       if (forecast.hasShortfall) {
         final shortfall = forecast.shortfallRecoveryAmount;
         final date = forecast.firstShortfallDate!;
+        final timing = forecast.startingBalance < 0
+            ? '登録した起点残高は0円未満。'
+            : '${date.month}月${date.day}日に見込み残高がマイナスへ。';
         actions.add(
           AdvisoryAction(
             department: AdvisoryDepartment.cfo,
             severity: AdvisorySeverity.critical,
             signalKey: 'cashflow_shortfall',
             headline: '資金ショート見込み',
-            detail: '${date.month}月${date.day}日に見込み残高がマイナスへ。'
+            detail: '$timing'
                 '不足の最大幅は${formatAdvisoryYen(shortfall)}。'
                 '追加借入で埋める前に、固定費の即時見直しと入金前倒しで穴を塞ぐ。',
           ),
