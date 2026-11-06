@@ -550,34 +550,35 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                 if (_showRomaji) ...[
                                   const SizedBox(height: 20),
                                   Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: _game.prefix,
-                                        style: TextStyle(
-                                          color: colors.primary,
-                                          decoration: TextDecoration.underline,
+                                    TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: _game.prefix,
+                                          style: TextStyle(
+                                            color: colors.primary,
+                                            decoration:
+                                                TextDecoration.underline,
+                                          ),
                                         ),
-                                      ),
-                                      TextSpan(
-                                        text: _game.guide
-                                            .substring(_game.prefix.length),
-                                      ),
-                                    ],
-                                  ),
-                                  style: const TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 24,
-                                  ),
+                                        TextSpan(
+                                          text: _game.guide
+                                              .substring(_game.prefix.length),
+                                        ),
+                                      ],
+                                    ),
+                                    style: const TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 24,
+                                    ),
                                     key: const Key('typing-romaji-guide'),
                                     textAlign: TextAlign.center,
                                   ),
                                   const SizedBox(height: 12),
                                   Text(
-                                  _t(
-                                    '使えるつづり: ${_game.prompt.spellings.join(' / ')}',
-                                    'Accepted spellings: ${_game.prompt.spellings.join(' / ')}',
-                                  ),
+                                    _t(
+                                      '使えるつづり: ${_game.prompt.spellings.join(' / ')}',
+                                      'Accepted spellings: ${_game.prompt.spellings.join(' / ')}',
+                                    ),
                                     textAlign: TextAlign.center,
                                   ),
                                 ],
