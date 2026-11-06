@@ -1,5 +1,6 @@
 import 'asset_reflection_day_badge.dart';
 import '../services/asset_calendar_reflection_import_parser.dart';
+import '../services/asset_management_egress_policy.dart';
 import 'package:flutter/material.dart';
 import '../models/asset_calendar_reflection.dart';
 import '../services/asset_calendar_reflection_repository.dart';
@@ -291,8 +292,18 @@ class _AssetCalendarReflectionPanelState
               '${selected.month}/${selected.day} の振り返り',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
+          const Text(
+            '支出の候補は当月を含む'
+            '${AssetManagementEgressPolicy.recentFlowMonthWindow}か月分が対象です。'
+            '対象の収支記録が'
+            '${AssetManagementEgressPolicy.maxRecentFlowRows}件を超える場合や取得に失敗した場合、'
+            '候補は表示できません。店名は一部のみ対象です。',
+          ),
           if (candidates.isNotEmpty)
-            const Text('店名は一部のみ対象です。利用形態や記録の重複を確認してください。'),
+            const Text(
+              '利用形態や記録の重複を確認してください。'
+              '同じ日に同じ店名が複数ある場合、この画面では支出明細を個別に照合できません。',
+            ),
           for (final candidate in candidates)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),

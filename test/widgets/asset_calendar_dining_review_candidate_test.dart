@@ -184,6 +184,40 @@ void main() {
     await tester.pumpWidget(app(DateTime(2026, 9, 21), repository));
     await tester.pumpAndSettle();
     expect(find.textContaining('外食かは要確認'), findsNothing);
+    expect(find.textContaining('当月を含む24か月分'), findsOneWidget);
+  });
+
+  testWidgets('same-day store candidates disclose the matching limitation',
+      (tester) async {
+    final candidates = AssetDiningReviewCandidate.fromFlows([
+      flow('餃子の王将 ラーメンセット（食費）'),
+      flow('餃子の王将 定食（食費）', id: 101),
+    ]);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: AssetCalendarReflectionPanel(
+              repository: EmptyRepository(),
+              start: DateTime(2026, 9),
+              end: DateTime(2026, 10),
+              selectedDate: DateTime(2026, 9, 20),
+              onLoaded: (_) {},
+              diningReviewCandidates: candidates,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('支出の内容に「餃子の王将」'), findsNWidgets(2));
+    expect(find.textContaining('当月を含む24か月分'), findsOneWidget);
+    expect(find.textContaining('2000件を超える場合'), findsOneWidget);
+    expect(find.textContaining('この画面では支出明細を個別に照合できません'),
+        findsOneWidget);
+    expect(find.textContaining('ラーメンセット'), findsNothing);
+    expect(find.textContaining('定食'), findsNothing);
+    expect(find.text('外食 0日'), findsOneWidget);
   });
 
   testWidgets('confirmed linked dining suppresses the review candidate',
