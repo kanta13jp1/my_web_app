@@ -92,6 +92,18 @@ class SyntheticBackendTest(unittest.TestCase):
             self.assertEqual(errors, [400])
         self.assertEqual(fixture.COUNTS['rejected_writes'], 4)
 
+    @patch('builtins.print')
+    def test_rejection_diagnostic_uses_only_fixed_categories(self, output):
+        fixture.report_rejection('POST', '/rest/v1/asset_pref_mirror?private=value', 'denied_mutation')
+        event = json.loads(output.call_args.args[0].removeprefix('FIXTURE_REJECTED '))
+        self.assertEqual(event, {'method': 'POST', 'route': 'asset_pref_mirror',
+                                 'reason': 'denied_mutation'})
+        fixture.report_rejection('SECRET_METHOD', '/private/secret?token=secret', 'invalid_length')
+        message = output.call_args.args[0]
+        self.assertNotIn('secret', message.lower())
+        self.assertEqual(json.loads(message.removeprefix('FIXTURE_REJECTED ')),
+                         {'method': 'OTHER', 'route': 'other', 'reason': 'invalid_length'})
+
     @patch.object(fixture.subprocess, 'run')
     def test_namespace_guard_accepts_only_single_loopback(self, run):
         run.return_value.stdout = b'[{"ifname":"lo"}]'

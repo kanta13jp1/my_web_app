@@ -8,6 +8,10 @@ driver=$!
 cleanup() {
   status=$?
   trap - EXIT
+  if [ "$status" -ne 0 ]; then
+    echo "fixture rejection diagnostic (fixed categories only):" >&2
+    grep "^FIXTURE_REJECTED " /tmp/dining-page-fixture.log >&2 || true
+  fi
   kill "$driver" "$server" 2>/dev/null || true
   wait "$driver" 2>/dev/null || true
   wait "$server" 2>/dev/null || true

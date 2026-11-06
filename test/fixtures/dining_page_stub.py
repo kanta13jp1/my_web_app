@@ -33,6 +33,37 @@ def token(user_id):
     return signed.decode() + '.' + b64(hmac.new(KEY, signed, hashlib.sha256).digest())
 
 
+# Loopback-only diagnostic: emit no raw method, URL, query, headers, or body.
+# Unknown routes remain unknown; rejection and strict write assertions are unchanged.
+_DIAGNOSTIC_ROUTES = {
+    '/rest/v1/display_mode_events': 'display_mode_events',
+    '/rest/v1/wealth_struggles': 'wealth_struggles',
+    '/rest/v1/asset_calendar_reflections': 'asset_calendar_reflections',
+    '/rest/v1/asset_pref_mirror': 'asset_pref_mirror',
+    '/rest/v1/cfo_assets': 'cfo_assets',
+    '/rest/v1/must_tasks': 'must_tasks',
+    '/rest/v1/cfo_daily_closings': 'cfo_daily_closings',
+    '/rest/v1/subscriptions': 'subscriptions',
+    '/rest/v1/asset_expected_inflow_items': 'asset_expected_inflow_items',
+    '/rest/v1/asset_month_end_snapshot_settings': 'asset_month_end_snapshot_settings',
+    '/rest/v1/asset_payroll_accounts': 'asset_payroll_accounts',
+    '/rest/v1/rpc/asset_management_recent_cfo_assets': 'recent_cfo_assets_rpc',
+    '/auth/v1/token': 'auth_token',
+}
+_DIAGNOSTIC_METHODS = {'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'}
+
+
+def report_rejection(method, target, reason):
+    # urlsplit may reject malformed targets; never print the untrusted input.
+    try:
+        path = urlsplit(target).path
+    except ValueError:
+        path = ''
+    event = {'method': method if method in _DIAGNOSTIC_METHODS else 'OTHER',
+             'route': _DIAGNOSTIC_ROUTES.get(path, 'other'), 'reason': reason}
+    print('FIXTURE_REJECTED ' + json.dumps(event, sort_keys=True), flush=True)
+
+
 def dispatch(method, target, headers, body=b''):
     url = urlsplit(target)
     query = parse_qs(url.query)
@@ -80,6 +111,7 @@ def dispatch(method, target, headers, body=b''):
         return 200, []
     if method != 'GET':
         COUNTS['rejected_writes'] += 1
+        report_rejection(method, target, 'denied_mutation')
         if method == 'POST' and url.path == '/rest/v1/display_mode_events':
             COUNTS['rejected_telemetry'] += 1
             if any(headers.get('authorization') == 'Bearer ' + token(user_id)
@@ -113,12 +145,14 @@ class Handler(BaseHTTPRequestHandler):
                 not raw_length.isascii() or not raw_length.isdecimal()):
             if self.command not in {'GET', 'OPTIONS'}:
                 COUNTS['rejected_writes'] += 1
+                report_rejection(self.command, getattr(self, 'path', ''), 'invalid_length')
             self.send_error(400)
             return
         length = int(raw_length)
         if length > 1024:
             if self.command not in {'GET', 'OPTIONS'}:
                 COUNTS['rejected_writes'] += 1
+                report_rejection(self.command, getattr(self, 'path', ''), 'oversize_body')
             self.send_error(413)
             return
         body = self.rfile.read(length)
