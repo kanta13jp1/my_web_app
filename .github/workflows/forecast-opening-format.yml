@@ -1,0 +1,78 @@
+name: Forecast opening formatter evidence
+'on':
+  push:
+    branches:
+    - codex/forecast-opening-format-20261106-v2
+permissions: {}
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      FLUTTER_SUPPRESS_ANALYTICS: 'true'
+      CI: 'true'
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        fetch-depth: '2'
+        persist-credentials: 'false'
+    - name: Verify exact fix parent and test inputs
+      shell: bash
+      run: 'set -euo pipefail
+
+        test "$GITHUB_EVENT_NAME" = push
+
+        test "$GITHUB_REF" = refs/heads/codex/forecast-opening-format-20261106-v2
+
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+        test "$(git rev-parse HEAD^)" = 7ec11b59af36e49e264977e0b97abbaa8f40bcc4
+
+        test "$(git rev-list --parents -n 1 HEAD | wc -w)" = 2
+
+        test "$(git diff-tree --no-commit-id --name-status -r HEAD)" = $''A\t.github/workflows/forecast-opening-format.yml''
+
+        sha256sum -c <<''MANIFEST''
+
+        9d841f50b7fc56d530c64e7cf1f8e30f64d80bbe5facbaf37d48ddb0476a528f  lib/services/asset_cashflow_forecast_service.dart
+
+        MANIFEST
+
+        '
+    - name: Prepare pinned Flutter and CI-style dependencies without secrets
+      shell: bash
+      run: "set -euo pipefail\nexport PUB_CACHE=\"$RUNNER_TEMP/forecast-pub-cache\"\nexport XDG_CONFIG_HOME=\"$RUNNER_TEMP/forecast-config\"\nexport XDG_CACHE_HOME=\"$RUNNER_TEMP/forecast-cache\"\nmkdir\
+        \ -p \"$XDG_CONFIG_HOME\" \"$XDG_CACHE_HOME\" \"$PUB_CACHE\"\ngit clone --depth 1 --branch 3.38.10 https://github.com/flutter/flutter.git \"$RUNNER_TEMP/forecast-flutter\"\ntest \"$(git -C \"$RUNNER_TEMP/forecast-flutter\"\
+        \ rev-parse HEAD)\" = c6f67dede3d4aa1aa7a69dd56a3494a5cde6cc80\nexport PATH=\"$RUNNER_TEMP/forecast-flutter/bin:$PATH\"\nflutter config --no-analytics\nflutter precache --linux\necho 'Original committed\
+        \ lock SHA256:'\ngit show HEAD:pubspec.lock | sha256sum\nflutter pub get\necho 'Runner-resolved lock SHA256:'\nsha256sum pubspec.lock\necho 'Runner-only lock diff:'\ngit diff -- pubspec.lock\necho\
+        \ 'Runner-only staged lock diff:'\ngit diff --cached -- pubspec.lock\necho 'Runner-resolved package versions:'\nflutter pub deps --style compact\npython3 - <<'PY'\nimport subprocess\nchanged = set()\n\
+        for flags in ([], ['--cached']):\n    changed.update(subprocess.check_output(['git', 'diff', *flags, '--name-only']).decode().splitlines())\nassert changed <= {'pubspec.lock'}, f'unexpected tracked\
+        \ source changes: {changed}'\nPY\n"
+    - name: Format one proposal file in isolated network namespace
+      shell: bash
+      run: "set -euo pipefail\nhost_net=\"$(readlink /proc/self/ns/net)\"\nrunner_uid=\"$(id -u)\"\nrunner_gid=\"$(id -g)\"\ntest \"$runner_uid\" -ne 0\nsudo unshare --net -- env -i \\\n  PATH=\"/usr/sbin:/usr/bin:/sbin:/bin\"\
+        \ \\\n  HOST_NET=\"$host_net\" RUNNER_UID=\"$runner_uid\" RUNNER_GID=\"$runner_gid\" \\\n  TEST_CONFIG=\"$RUNNER_TEMP/forecast-config\" TEST_CACHE=\"$RUNNER_TEMP/forecast-cache\" PUB_CACHE=\"$RUNNER_TEMP/forecast-pub-cache\"\
+        \ \\\n  TEST_WORKSPACE=\"$GITHUB_WORKSPACE\" FLUTTER_ROOT=\"$RUNNER_TEMP/forecast-flutter\" REPORT=\"$RUNNER_TEMP/forecast-negative-results.jsonl\" \\\n  bash -c '\n    set -euo pipefail\n    test\
+        \ \"$(readlink /proc/self/ns/net)\" != \"$HOST_NET\"\n    test -z \"$(ip -o addr show scope global)\"\n    test \"$(ip -o link show | wc -l)\" -eq 1\n    ip link set dev lo up\n    ip -o link show\
+        \ lo | grep -Eq \"<[^>]*UP[,>]\"\n    test -z \"$(ip -4 route show table main)\"\n    test -z \"$(ip -6 route show table main)\"\n    exec setpriv --reuid=\"$RUNNER_UID\" --regid=\"$RUNNER_GID\"\
+        \ --clear-groups --no-new-privs \\\n      env -i XDG_CONFIG_HOME=\"$TEST_CONFIG\" XDG_CACHE_HOME=\"$TEST_CACHE\" PUB_CACHE=\"$PUB_CACHE\" CI=true FLUTTER_SUPPRESS_ANALYTICS=true \\\n      PATH=\"\
+        $FLUTTER_ROOT/bin:/usr/sbin:/usr/bin:/sbin:/bin\" TEST_WORKSPACE=\"$TEST_WORKSPACE\" REPORT=\"$REPORT\" \\\n      bash -c '\\''\n        set -euo pipefail\n        test \"$(id -u)\" -ne 0\n    \
+        \    test -z \"$(ip -o addr show scope global)\"\n        cd \"$TEST_WORKSPACE\"\n        dart format \\\n          lib/services/asset_cashflow_forecast_service.dart\n      '\\''\n  '\n"
+    - name: Collect one formatter output and dependency diff
+      shell: bash
+      run: "set -euo pipefail\npython3 - <<'PY'\nimport subprocess\ntarget = 'lib/services/asset_cashflow_forecast_service.dart'\nstaged = subprocess.check_output(['git','diff','--cached','--name-only']).decode().splitlines()\n\
+        changed = subprocess.check_output(['git','diff','--name-only']).decode().splitlines()\nassert not staged and target in changed and set(changed) <= {target, 'pubspec.lock'}, (staged, changed)\nPY\n\
+        git diff --check HEAD -- lib/services/asset_cashflow_forecast_service.dart\nout=\"$RUNNER_TEMP/forecast-format-output\"\nmkdir -p \"$out/files/lib/services\"\ngit diff --binary HEAD -- lib/services/asset_cashflow_forecast_service.dart\
+        \ > \"$out/formatter.patch\"\ngit diff --binary HEAD -- pubspec.lock > \"$out/dependency-lock.patch\"\ncp lib/services/asset_cashflow_forecast_service.dart \"$out/files/lib/services/asset_cashflow_forecast_service.dart\"\
+        \n{\n  echo 'Parent: 7ec11b59af36e49e264977e0b97abbaa8f40bcc4'\n  echo 'Original SHA256:'\n  git show HEAD:lib/services/asset_cashflow_forecast_service.dart | sha256sum\n  echo 'Formatted SHA256:'\n\
+        \  sha256sum lib/services/asset_cashflow_forecast_service.dart\n  echo 'Original project lock SHA256:'\n  git show HEAD:pubspec.lock | sha256sum\n  echo 'Runner-resolved project lock SHA256:'\n\
+        \  sha256sum pubspec.lock\n} > \"$out/manifest.txt\"\ncat \"$out/manifest.txt\"\n"
+    - name: Preserve formatter diff and outputs briefly
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: forecast-opening-format-v2-${{ github.run_id }}
+        path: ${{ runner.temp }}/forecast-format-output
+        if-no-files-found: error
+        retention-days: 1
