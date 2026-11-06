@@ -252,8 +252,8 @@ class CicdEfficiencyTest(unittest.TestCase):
 
 
 SHELL_SHA256 = {
-    'Deploy to Firebase Hosting (Production)': '48948c34093076cb86a5271e3d5b19b47be442885266e60a54f5920aef0eb08d',
-    'Verify deploy reflects current commit': '2f263bfa5a16f9cf174cb1b823f2a164b42ebe07fe659938cad0a0feee0103f9',
+    'Deploy to Firebase Hosting (Production)': '7299127b5594545503b7ce36c5f4ef2345b6e46e44403ac838a307f5325bf97a',
+    'Verify deploy reflects current commit': '19ef6a86698a377eb97373c36afa6c5fbc2906e516ac91d2a2fbfcdee3b8dbc4',
 }
 
 
@@ -299,14 +299,23 @@ class DeploymentGateTests(unittest.TestCase):
         self.assertIn("vars.PRODUCTION_DEPLOY_HOLD == 'false'", self.workflow)
         self.assertIn('cancel-in-progress: false', self.workflow)
 
+    def test_public_verification_has_network_timeouts(self):
+        s = step(self.workflow, 'Verify deploy reflects current commit')
+        self.assertIn('curl -sf --connect-timeout 5 --max-time 10 "$SITE"', s)
+
+    def test_firebase_cli_version_is_pinned(self):
+        s = step(self.workflow, 'Deploy to Firebase Hosting (Production)')
+        self.assertIn('firebase-tools@15.34.0', s)
+        self.assertNotIn('firebase-tools@latest', s)
+
     def test_approved_shell_fingerprints(self):
         for name in SHELL_SHA256:
             with self.subTest(name=name):
                 self.assertTrue(approved_script(self.workflow, name))
 
     def test_unknown_shell_never_runs(self):
-        self.workflow = self.workflow.replace('if RESPONSE=$(curl -sf "$SITE"); then',
-                                              'if RESPONSE=$(command curl -sf "$SITE"); then')
+        self.workflow = self.workflow.replace('if RESPONSE=$(curl -sf --connect-timeout 5 --max-time 10 "$SITE"); then',
+                                              'if RESPONSE=$(command curl -sf --connect-timeout 5 --max-time 10 "$SITE"); then')
         with patch.object(subprocess, 'run') as execute:
             with self.assertRaisesRegex(ValueError, 'Unreviewed workflow shell'):
                 self.run_verification('{"commit":"test-sha"}', 0)
@@ -351,7 +360,7 @@ class DeploymentGateTests(unittest.TestCase):
 
     @unittest.skipUnless(bash_executable(), 'Bash not available; shell execution not verified')
     def test_all_uncertain_states_fail(self):
-        cases = [('{"commit":"other-sha"}', 0), ('not-json', 0), ('', 22), ('{"commit":"test-sha"}', 22)]
+        cases = [('{"commit":"other-sha"}', 0), ('not-json', 0), ('', 22), ('{"commit":"test-sha"}', 22), ('', 28), ('{"commit":"test-sha"}', 28)]
         for response, status in cases:
             with self.subTest(response=response, status=status):
                 result = self.run_verification(response, status)

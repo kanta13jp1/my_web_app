@@ -844,7 +844,7 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
-          npx -y firebase-tools@latest deploy \
+          npx -y firebase-tools@15.34.0 deploy \
             --only hosting \
             --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
             --json > "$output_file"
@@ -868,7 +868,7 @@ jobs:
           SITE="https://my-web-app-b67f4.web.app/version.json"
           for i in 1 2 3 4; do
             sleep 15
-            if RESPONSE=$(curl -sf "$SITE"); then
+            if RESPONSE=$(curl -sf --connect-timeout 5 --max-time 10 "$SITE"); then
               DEPLOYED=$(printf '%s' "$RESPONSE" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("commit",""))' 2>/dev/null || echo "")
             else
               DEPLOYED=""
