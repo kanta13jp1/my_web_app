@@ -6,6 +6,61 @@ import 'package:my_web_app/models/typing_game.dart';
 import 'package:my_web_app/pages/typing_game_page.dart';
 
 void main() {
+  testWidgets('hint choices survive play, retry and mode changes',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: TypingGamePage()));
+    final reading = find.byKey(const Key('typing-reading-hint'));
+    final romaji = find.byKey(const Key('typing-romaji-hint'));
+    for (final hint in [reading, romaji]) {
+      expect(tester.widget<FilterChip>(hint).selected, isTrue);
+      await tester.ensureVisible(hint);
+      await tester.tap(hint);
+      await tester.pump();
+    }
+    await tester.tap(find.text('10問じっくり練習'));
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const Key('typing-start')));
+    await tester.tap(find.byKey(const Key('typing-start')));
+    await tester.pump();
+    expect(find.byKey(const Key('typing-reading')), findsNothing);
+    expect(find.byKey(const Key('typing-romaji-guide')), findsNothing);
+    expect(find.textContaining('使えるつづり:'), findsNothing);
+    final prompt = TypingGame.prompts.firstWhere(
+      (p) => find.text(p.japanese).evaluate().isNotEmpty,
+    );
+    final field = find.byKey(const Key('typing-input'));
+    await tester.enterText(field, prompt.spellings.first[0]);
+    await tester.pump();
+    expect(find.text('スコア 10'), findsOneWidget);
+    await tester.ensureVisible(romaji);
+    await tester.tap(romaji);
+    await tester.pump();
+    expect(find.byKey(const Key('typing-romaji-guide')), findsOneWidget);
+    expect(find.byKey(const Key('typing-reading')), findsNothing);
+    expect(tester.widget<TextField>(field).focusNode!.hasFocus, isTrue);
+    expect(tester.widget<TextField>(field).controller!.text,
+        prompt.spellings.first[0]);
+    expect(find.text('スコア 10'), findsOneWidget);
+    await tester.ensureVisible(find.text('練習を終える'));
+    await tester.tap(find.text('練習を終える'));
+    await tester.pump();
+    await tester.tap(find.text('60秒チャレンジ'));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('typing-language')));
+    await tester.pump();
+    expect(find.text('Show reading'), findsOneWidget);
+    expect(tester.widget<FilterChip>(reading).selected, isFalse);
+    expect(tester.widget<FilterChip>(romaji).selected, isTrue);
+    await tester.ensureVisible(find.byKey(const Key('typing-start')));
+    await tester.tap(find.byKey(const Key('typing-start')));
+    await tester.pump();
+    expect(find.byKey(const Key('typing-reading')), findsNothing);
+    expect(find.byKey(const Key('typing-romaji-guide')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Enter starts; paste and kana are rejected, letters are accepted',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: TypingGamePage()));

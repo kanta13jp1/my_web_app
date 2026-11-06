@@ -33,11 +33,40 @@ class _TypingGamePageState extends State<TypingGamePage> {
   TypingMode _selectedMode = TypingMode.challenge;
   bool _reviewPractice = false;
   bool _english = false;
+  bool _showReading = true;
+  bool _showRomaji = true;
   late final TypingCompositionBridge _composition;
   late final TypingScoreStore? _scoreStore;
   TypingRunReport? _report;
 
   String _t(String japanese, String english) => _english ? english : japanese;
+
+  void _setHint({bool? reading, bool? romaji}) {
+    setState(() {
+      if (reading != null) _showReading = reading;
+      if (romaji != null) _showRomaji = romaji;
+    });
+    if (_game.running) _focus.requestFocus();
+  }
+
+  Widget _hintControls() => Wrap(
+        spacing: 12,
+        runSpacing: 8,
+        children: [
+          FilterChip(
+            key: const Key('typing-reading-hint'),
+            label: Text(_t('読み仮名を表示', 'Show reading')),
+            selected: _showReading,
+            onSelected: (value) => _setHint(reading: value),
+          ),
+          FilterChip(
+            key: const Key('typing-romaji-hint'),
+            label: Text(_t('ローマ字ガイドを表示', 'Show romaji guide')),
+            selected: _showRomaji,
+            onSelected: (value) => _setHint(romaji: value),
+          ),
+        ],
+      );
 
   @override
   void initState() {
@@ -412,6 +441,15 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                 ),
                         ),
                       ],
+                      const SizedBox(height: 12),
+                      _hintControls(),
+                      const SizedBox(height: 8),
+                      Text(
+                        _t(
+                          'ヒントはいつでも切替できます。設定はこの画面を閉じるまで有効です。',
+                          'Change hints anytime. Settings last until this screen closes.',
+                        ),
+                      ),
                       const SizedBox(height: 20),
                       Wrap(
                         spacing: 20,
@@ -502,10 +540,16 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                       .headlineMedium,
                                   textAlign: TextAlign.center,
                                 ),
-                                const SizedBox(height: 8),
-                                Text(_game.prompt.reading),
-                                const SizedBox(height: 20),
-                                Text.rich(
+                                if (_showReading) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _game.prompt.reading,
+                                    key: const Key('typing-reading'),
+                                  ),
+                                ],
+                                if (_showRomaji) ...[
+                                  const SizedBox(height: 20),
+                                  Text.rich(
                                   TextSpan(
                                     children: [
                                       TextSpan(
@@ -525,16 +569,18 @@ class _TypingGamePageState extends State<TypingGamePage> {
                                     fontFamily: 'monospace',
                                     fontSize: 24,
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
+                                    key: const Key('typing-romaji-guide'),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
                                   _t(
                                     '使えるつづり: ${_game.prompt.spellings.join(' / ')}',
                                     'Accepted spellings: ${_game.prompt.spellings.join(' / ')}',
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
                               ],
                             ),
                           ),
