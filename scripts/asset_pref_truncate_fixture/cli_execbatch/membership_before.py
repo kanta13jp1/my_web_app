@@ -218,9 +218,16 @@ CANDIDATE_ERROR_CLASSES={
 def verify_cli_candidate_error(pid,output,logs,candidate):
     if type(pid) is not int or pid<=0 or not isinstance(candidate,bytes) or hashlib.sha256(candidate).hexdigest()!=BODY_SHA:
         raise RuntimeError('candidate or CLI PID invalid')
-    fixed=candidate.decode('utf8',errors='strict').replace('\r\n','\n').rstrip()
-    if not fixed or len(fixed)>65536:raise RuntimeError('candidate statement size invalid')
-    states=set(re.findall(r'\b([0-9A-Z]{5})\b',output));lines=logs.replace('\r\n','\n').splitlines();found=[]
+    # The sole SHA-pinned synthetic DO block has exactly one terminal delimiter.
+    # CLI v2.84.2 SplitAndTrim removes that delimiter before ExecParams.
+    # This is a fixed-fixture derivation, not a general PostgreSQL SQL parser.
+    source=candidate.decode('utf8',errors='strict').replace('\r\n','\n').strip()
+    if not source.isascii() or not source.endswith('$$;') or source.endswith('$$;;') or source.count('$$')!=2:
+        raise RuntimeError('fixed candidate token shape invalid')
+    fixed=source.removesuffix(';').strip()
+    if not fixed or len(fixed)>65536 or '(SQLSTATE ' in fixed:raise RuntimeError('candidate statement size invalid')
+    states=re.findall(r'\(SQLSTATE ([0-9A-Z]{5})\)',output)
+    lines=logs.replace('\r\n','\n').splitlines();found=[]
     error=re.compile(r'\['+str(pid)+r'\] ERROR:\s+([0-9A-Z]{5}):\s*(.*?)\s*$')
     any_entry=re.compile(r'\['+str(pid)+r'\] (?:ERROR|FATAL|PANIC|LOG|STATEMENT):')
     statement=re.compile(r'\['+str(pid)+r'\] STATEMENT:[ \t]*')
@@ -237,12 +244,13 @@ def verify_cli_candidate_error(pid,output,logs,candidate):
                     found.append((hit.group(1),hit.group(2)))
                 break
             if any_entry.search(lines[j]):break
-    if same_pid_errors!=1 or len(found)!=1 or found[0][0] not in states:
+    if same_pid_errors!=1 or len(found)!=1 or len(states)!=1 or found[0][0]!=states[0]:
         diagnostic={'single_same_pid_error':same_pid_errors==1,
           'same_pid_statement_seen':any(statement.search(line) is not None for line in lines),
           'candidate_bytes_present':fixed in logs.replace('\r\n','\n'),
           'unique_candidate_error_pair':len(found)==1,
-          'client_sqlstate_matches':len(found)==1 and found[0][0] in states}
+          'client_sqlstate_unique':len(states)==1,
+          'client_sqlstate_matches':len(found)==1 and len(states)==1 and found[0][0]==states[0]}
         print('SYNTHETIC_MEMBERSHIP_CANDIDATE_ERROR_DIAGNOSTIC '+json.dumps(diagnostic,sort_keys=True),flush=True)
         raise RuntimeError('CLI candidate statement, PID or SQLSTATE unproven')
     state,message=found[0];raw=message.encode('utf8',errors='strict')

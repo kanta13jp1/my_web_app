@@ -61,23 +61,30 @@ def run():
 
     candidate=base.candidate_pair()['locked_single_do']
     known='truncate privilege reachable through role membership'
-    marker='[202] ERROR: P0001: '+known+'\n[202] STATEMENT: '+candidate.decode('utf8')+'\n'
-    check=m.verify_cli_candidate_error(202,'P0001 failure',marker,candidate)
+    sent=candidate.decode('utf8').strip().removesuffix(';').strip()
+    marker='[202] ERROR: P0001: '+known+'\n[202] STATEMENT: '+sent+'\n'
+    client='synthetic refusal (SQLSTATE P0001)'
+    check=m.verify_cli_candidate_error(202,client,marker,candidate)
     assert check['message_diagnostic']['class']=='membership_reachable' and check['sqlstate']=='P0001'
     unknown='SYNTHETIC_PRIVATE_UNKNOWN'
-    x=m.verify_cli_candidate_error(202,'P0001 failure',marker.replace(known,unknown,1),candidate)
+    x=m.verify_cli_candidate_error(202,client,marker.replace(known,unknown,1),candidate)
     assert x['message_diagnostic']['class']=='unknown' and unknown not in str(x)
     for bad in (marker.replace('[202] STATEMENT:', '[203] STATEMENT:'), marker.replace('[202] ERROR:', '[203] ERROR:'), marker.replace('STATEMENT:','STATEMENT: SELECT 1;\n[202] LOG:'), marker+marker):
-        rejects(lambda bad=bad:m.verify_cli_candidate_error(202,'P0001 failure',bad,candidate))
-    rejects(lambda:m.verify_cli_candidate_error(202,'P0001 failure',marker+'SELECT 1;\n',candidate))
-    rejects(lambda:m.verify_cli_candidate_error(202,'P0001 failure',marker+'SELECT 1; [333] LOG: disguised\n',candidate))
-    rejects(lambda:m.verify_cli_candidate_error(202,'P0001 failure',marker+'[202] ERROR: P0001: other failure\n[202] STATEMENT: SELECT 1;\n',candidate))
-    rejects(lambda:m.verify_cli_candidate_error(202,'42501 failure',marker,candidate))
-    rejects(lambda:m.verify_cli_candidate_error(202,'P0001 failure',marker,candidate+b'bad'))
+        rejects(lambda bad=bad:m.verify_cli_candidate_error(202,client,bad,candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client,marker+'SELECT 1;\n',candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client,marker+'SELECT 1; [333] LOG: disguised\n',candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client,marker+'[202] ERROR: P0001: other failure\n[202] STATEMENT: SELECT 1;\n',candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,'synthetic (SQLSTATE 42501)',marker,candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,'P0001 failure',marker,candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,'P0001 in SQL text only (SQLSTATE 42501)',marker,candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client+' (SQLSTATE P0001)',marker,candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client,marker.replace(sent,sent+';',1),candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client,marker.replace(sent,sent+' SELECT 1',1),candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client,marker,candidate+b'bad'))
     secret='SYNTHETIC_TOKEN_PRIVATE_TEXT'
     diagnostic_out=io.StringIO()
     with contextlib.redirect_stdout(diagnostic_out):
-        try:m.verify_cli_candidate_error(202,'P0001 failure',marker.replace('[202] STATEMENT:','[203] STATEMENT:')+secret,candidate)
+        try:m.verify_cli_candidate_error(202,client,marker.replace('[202] STATEMENT:','[203] STATEMENT:')+secret,candidate)
         except RuntimeError:pass
         else:raise AssertionError('wrong-PID statement accepted')
     text=diagnostic_out.getvalue();assert secret not in text and candidate.decode('utf8') not in text
@@ -121,7 +128,7 @@ def run():
         def logs(self):
             cli=('[202] LOG: 00000: connection received: host=127.0.0.1 port=123\n'
                  '[202] LOG: 00000: connection authorized: user=postgres database=synthetic_execbatch application_name=codex_execbatch_cli\n')
-            extra=('[202] ERROR: P0001: synthetic failure\n[202] STATEMENT: '+candidate.decode('utf8')+'\n') if self.cli_fails else ''
+            extra=('[202] ERROR: P0001: synthetic failure\n[202] STATEMENT: '+sent+'\n') if self.cli_fails else ''
             if self.member_fails:extra+='[404] ERROR: 42501: synthetic refusal\n[404] STATEMENT: '+m.GRANT_SQL+'\n'
             return '\n'.join(x['fatal_line'] for x in self.verified_negative_fatals)+'\n'+cli+logs+extra
     waiter={'pid':202,'target_oid':303}
@@ -130,7 +137,7 @@ def run():
         def start_coordinator(self):return 101
         def start_cli(self):pass
         def release(self):self.s.released=True
-        def finish_cli(self):self.s.finished=True;return (1,'P0001 synthetic failure') if self.s.cli_fails else (0,'')
+        def finish_cli(self):self.s.finished=True;return (1,client) if self.s.cli_fails else (0,'')
         def close(self):pass
     class Member:
         def __init__(self,s,b):self.s=s
