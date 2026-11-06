@@ -1,0 +1,111 @@
+name: Forecast opening fix synthetic validation
+'on':
+  push:
+    branches:
+    - codex/forecast-opening-fix-test-20261106-v2
+permissions: {}
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      FLUTTER_SUPPRESS_ANALYTICS: 'true'
+      CI: 'true'
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        fetch-depth: '2'
+        persist-credentials: 'false'
+    - name: Verify exact fix parent and test inputs
+      shell: bash
+      run: 'set -euo pipefail
+
+        test "$GITHUB_EVENT_NAME" = push
+
+        test "$GITHUB_REF" = refs/heads/codex/forecast-opening-fix-test-20261106-v2
+
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+        test "$(git rev-parse HEAD^)" = 7ec11b59af36e49e264977e0b97abbaa8f40bcc4
+
+        test "$(git rev-list --parents -n 1 HEAD | wc -w)" = 2
+
+        test "$(git diff-tree --no-commit-id --name-status -r HEAD)" = $''A\t.github/workflows/forecast-opening-fix-test.yml''
+
+        sha256sum -c <<''MANIFEST''
+
+        d6566be000de52678725c181adbff483dcc48a92ea31abf390fe09b638373cfa  lib/services/advisory_briefing_share_service.dart
+
+        bf665cce243e2137b8666165505355e0602f6d24a4843b8be76bfde79b25e9cb  lib/services/asset_advisory_briefing_service.dart
+
+        9d841f50b7fc56d530c64e7cf1f8e30f64d80bbe5facbaf37d48ddb0476a528f  lib/services/asset_cashflow_forecast_service.dart
+
+        315ffc62bbae252bb27f876bbfd3d395de1332d88f669b26af79d5b739ca6b81  lib/widgets/asset_cashflow_forecast_card.dart
+
+        3bef54d0e169880af47bbd4c738d864dfbb5621e5de6db27adc2c78e92414599  test/services/advisory_briefing_share_service_test.dart
+
+        ae114947fff9ca59b5b0a01b4b4ec1fc60fca8de545c77212c48cdc4890c63d2  test/services/asset_advisory_briefing_service_test.dart
+
+        359a50cdd6ee9782434abddaaf81e5ce86ebd0073bf419bffe2f7b35d301898c  test/services/asset_cashflow_forecast_service_test.dart
+
+        2acf1a814b40365d0cb8c3fc4189ac5199c111df07c1c1660ba362edfea56365  test/services/asset_cashflow_negative_opening_advisory_test.dart
+
+        83f651d8a65291cc95797b4f2d5e1f6f1eadffa113b43346dc7ac3c29bc21dfd  test/services/asset_cashflow_negative_opening_regression_test.dart
+
+        1f097f39db15e6166592438fca59c20dda62bc5dcc8eee12d0bf142c37bff5ad  test/widgets/asset_cashflow_forecast_card_test.dart
+
+        837727e9f2202e88c8af6ec8122ec9f5cf83314adff826cba9569e632158f74c  test/widgets/asset_cashflow_negative_opening_card_test.dart
+
+        MANIFEST
+
+        '
+    - name: Prepare pinned Flutter and dependencies without secrets
+      shell: bash
+      run: "set -euo pipefail\nexport PUB_CACHE=\"$RUNNER_TEMP/forecast-pub-cache\"\nexport XDG_CONFIG_HOME=\"$RUNNER_TEMP/forecast-config\"\nexport XDG_CACHE_HOME=\"$RUNNER_TEMP/forecast-cache\"\nmkdir\
+        \ -p \"$XDG_CONFIG_HOME\" \"$XDG_CACHE_HOME\" \"$PUB_CACHE\"\ngit clone --depth 1 --branch 3.38.10 https://github.com/flutter/flutter.git \"$RUNNER_TEMP/forecast-flutter\"\ntest \"$(git -C \"$RUNNER_TEMP/forecast-flutter\"\
+        \ rev-parse HEAD)\" = c6f67dede3d4aa1aa7a69dd56a3494a5cde6cc80\nexport PATH=\"$RUNNER_TEMP/forecast-flutter/bin:$PATH\"\nflutter config --no-analytics\nflutter precache --linux\necho 'Original committed\
+        \ lock SHA256:'\ngit show HEAD:pubspec.lock | sha256sum\nflutter pub get\necho 'Runner-resolved lock SHA256:'\nsha256sum pubspec.lock\necho 'Runner-only lock diff:'\ngit diff -- pubspec.lock\necho\
+        \ 'Runner-only staged lock diff:'\ngit diff --cached -- pubspec.lock\necho 'Runner-resolved package versions:'\nflutter pub deps --style compact\npython3 - <<'PY'\nimport subprocess\nchanged = set()\n\
+        for flags in ([], ['--cached']):\n    changed.update(subprocess.check_output(['git', 'diff', *flags, '--name-only']).decode().splitlines())\nassert changed <= {'pubspec.lock'}, f'unexpected tracked\
+        \ source changes: {changed}'\nPY\n"
+    - name: Run seven scoped test files in isolated network namespace
+      shell: bash
+      run: "set -euo pipefail\nhost_net=\"$(readlink /proc/self/ns/net)\"\nrunner_uid=\"$(id -u)\"\nrunner_gid=\"$(id -g)\"\ntest \"$runner_uid\" -ne 0\nsudo unshare --net -- env -i \\\n  PATH=\"/usr/sbin:/usr/bin:/sbin:/bin\"\
+        \ \\\n  HOST_NET=\"$host_net\" RUNNER_UID=\"$runner_uid\" RUNNER_GID=\"$runner_gid\" \\\n  TEST_CONFIG=\"$RUNNER_TEMP/forecast-config\" TEST_CACHE=\"$RUNNER_TEMP/forecast-cache\" PUB_CACHE=\"$RUNNER_TEMP/forecast-pub-cache\"\
+        \ \\\n  TEST_WORKSPACE=\"$GITHUB_WORKSPACE\" FLUTTER_ROOT=\"$RUNNER_TEMP/forecast-flutter\" REPORT=\"$RUNNER_TEMP/forecast-negative-results.jsonl\" \\\n  bash -c '\n    set -euo pipefail\n    test\
+        \ \"$(readlink /proc/self/ns/net)\" != \"$HOST_NET\"\n    test -z \"$(ip -o addr show scope global)\"\n    test \"$(ip -o link show | wc -l)\" -eq 1\n    ip link set dev lo up\n    ip -o link show\
+        \ lo | grep -Eq \"<[^>]*UP[,>]\"\n    test -z \"$(ip -4 route show table main)\"\n    test -z \"$(ip -6 route show table main)\"\n    exec setpriv --reuid=\"$RUNNER_UID\" --regid=\"$RUNNER_GID\"\
+        \ --clear-groups --no-new-privs \\\n      env -i XDG_CONFIG_HOME=\"$TEST_CONFIG\" XDG_CACHE_HOME=\"$TEST_CACHE\" PUB_CACHE=\"$PUB_CACHE\" CI=true FLUTTER_SUPPRESS_ANALYTICS=true \\\n      PATH=\"\
+        $FLUTTER_ROOT/bin:/usr/sbin:/usr/bin:/sbin:/bin\" TEST_WORKSPACE=\"$TEST_WORKSPACE\" REPORT=\"$REPORT\" \\\n      bash -c '\\''\n        set -euo pipefail\n        test \"$(id -u)\" -ne 0\n    \
+        \    test -z \"$(ip -o addr show scope global)\"\n        cd \"$TEST_WORKSPACE\"\n        flutter test --no-pub --reporter json \\\n          test/services/asset_cashflow_forecast_service_test.dart\
+        \ \\\n          test/widgets/asset_cashflow_forecast_card_test.dart \\\n          test/services/asset_advisory_briefing_service_test.dart \\\n          test/services/advisory_briefing_share_service_test.dart\
+        \ \\\n          test/services/asset_cashflow_negative_opening_regression_test.dart \\\n          test/widgets/asset_cashflow_negative_opening_card_test.dart \\\n          test/services/asset_cashflow_negative_opening_advisory_test.dart\
+        \ | tee \"$REPORT\"\n      '\\''\n  '\n"
+    - name: Require the intended test results
+      shell: bash
+      env:
+        REPORT: ${{ runner.temp }}/forecast-negative-results.jsonl
+      run: "set -euo pipefail\npython3 - <<'PY'\nimport json, os\nexpected = ['negative opening is recorded on the anchor before later recovery', 'negative opening without events carries into the next month',\
+        \ 'negative monthly opening remains flagged if first-day income recovers', 'zero and positive opening controls remain without shortfall', 'same-day A/B both record negative opening and keep income\
+        \ split', 'negative starting balance is described as existing at start', 'both conditional cards disclose initial evaluation', 'advisory and share text do not predict onset for negative opening']\n\
+        starts, results, endings = {}, {}, []\nwith open(os.environ['REPORT'], encoding='utf8') as handle:\n    for line in handle:\n        event = json.loads(line)\n        if event.get('type') == 'testStart':\n\
+        \            test = event['test']\n            starts.setdefault(test['name'], []).append(test['id'])\n        elif event.get('type') == 'testDone':\n            results[event['testID']] = event\n\
+        \        elif event.get('type') == 'done':\n            endings.append(event)\nassert len(endings) == 1 and endings[0].get('success') is True, 'invalid or failed test run'\nfor name in expected:\n\
+        \    assert len(starts.get(name, [])) == 1, f'missing or duplicate: {name}'\n    result = results.get(starts[name][0], {})\n    assert result.get('result') == 'success' and result.get('skipped')\
+        \ is False, (name, result)\n    print(f'PASS: {name}')\nskipped = [event for event in results.values() if event.get('skipped') is True]\nprint(f'Runner test results: {len(results)} completed, {len(skipped)}\
+        \ skipped (including loader events)')\nPY\n"
+    - name: Check formatting of changed Dart files in isolated network namespace
+      shell: bash
+      run: "set -euo pipefail\nhost_net=\"$(readlink /proc/self/ns/net)\"\nrunner_uid=\"$(id -u)\"\nrunner_gid=\"$(id -g)\"\ntest \"$runner_uid\" -ne 0\nsudo unshare --net -- env -i \\\n  PATH=\"/usr/sbin:/usr/bin:/sbin:/bin\"\
+        \ \\\n  HOST_NET=\"$host_net\" RUNNER_UID=\"$runner_uid\" RUNNER_GID=\"$runner_gid\" \\\n  TEST_CONFIG=\"$RUNNER_TEMP/forecast-config\" TEST_CACHE=\"$RUNNER_TEMP/forecast-cache\" PUB_CACHE=\"$RUNNER_TEMP/forecast-pub-cache\"\
+        \ \\\n  TEST_WORKSPACE=\"$GITHUB_WORKSPACE\" FLUTTER_ROOT=\"$RUNNER_TEMP/forecast-flutter\" REPORT=\"$RUNNER_TEMP/forecast-negative-results.jsonl\" \\\n  bash -c '\n    set -euo pipefail\n    test\
+        \ \"$(readlink /proc/self/ns/net)\" != \"$HOST_NET\"\n    test -z \"$(ip -o addr show scope global)\"\n    test \"$(ip -o link show | wc -l)\" -eq 1\n    ip link set dev lo up\n    ip -o link show\
+        \ lo | grep -Eq \"<[^>]*UP[,>]\"\n    test -z \"$(ip -4 route show table main)\"\n    test -z \"$(ip -6 route show table main)\"\n    exec setpriv --reuid=\"$RUNNER_UID\" --regid=\"$RUNNER_GID\"\
+        \ --clear-groups --no-new-privs \\\n      env -i XDG_CONFIG_HOME=\"$TEST_CONFIG\" XDG_CACHE_HOME=\"$TEST_CACHE\" PUB_CACHE=\"$PUB_CACHE\" CI=true FLUTTER_SUPPRESS_ANALYTICS=true \\\n      PATH=\"\
+        $FLUTTER_ROOT/bin:/usr/sbin:/usr/bin:/sbin:/bin\" TEST_WORKSPACE=\"$TEST_WORKSPACE\" REPORT=\"$REPORT\" \\\n      bash -c '\\''\n        set -euo pipefail\n        test \"$(id -u)\" -ne 0\n    \
+        \    test -z \"$(ip -o addr show scope global)\"\n        cd \"$TEST_WORKSPACE\"\n        dart format --output=none --set-exit-if-changed \\\n          lib/services/asset_cashflow_forecast_service.dart\
+        \ \\\n          lib/widgets/asset_cashflow_forecast_card.dart \\\n          lib/services/asset_advisory_briefing_service.dart \\\n          lib/services/advisory_briefing_share_service.dart \\\n\
+        \          test/services/advisory_briefing_share_service_test.dart \\\n          test/services/asset_cashflow_negative_opening_regression_test.dart \\\n          test/widgets/asset_cashflow_negative_opening_card_test.dart\
+        \ \\\n          test/services/asset_cashflow_negative_opening_advisory_test.dart\n      '\\''\n  '\n"
