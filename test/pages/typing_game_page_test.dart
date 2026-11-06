@@ -38,12 +38,15 @@ void main() {
     expect(find.byKey(const Key('typing-romaji-guide')), findsOneWidget);
     expect(find.byKey(const Key('typing-reading')), findsNothing);
     expect(tester.widget<TextField>(field).focusNode!.hasFocus, isTrue);
-    expect(tester.widget<TextField>(field).controller!.text,
-        prompt.spellings.first[0]);
+    expect(
+      tester.widget<TextField>(field).controller!.text,
+      prompt.spellings.first[0],
+    );
     expect(find.text('スコア 10'), findsOneWidget);
     await tester.ensureVisible(find.text('練習を終える'));
     await tester.tap(find.text('練習を終える'));
     await tester.pump();
+    await tester.ensureVisible(find.text('60秒チャレンジ'));
     await tester.tap(find.text('60秒チャレンジ'));
     await tester.pump();
     await tester.tap(find.byKey(const Key('typing-language')));
