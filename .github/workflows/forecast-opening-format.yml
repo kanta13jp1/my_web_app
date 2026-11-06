@@ -1,0 +1,98 @@
+name: Forecast opening formatter evidence
+'on':
+  push:
+    branches:
+    - codex/forecast-opening-format-20261106
+permissions: {}
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      FLUTTER_SUPPRESS_ANALYTICS: 'true'
+      CI: 'true'
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        fetch-depth: '2'
+        persist-credentials: 'false'
+    - name: Verify exact fix parent and test inputs
+      shell: bash
+      run: 'set -euo pipefail
+
+        test "$GITHUB_EVENT_NAME" = push
+
+        test "$GITHUB_REF" = refs/heads/codex/forecast-opening-format-20261106
+
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+        test "$(git rev-parse HEAD^)" = 606dd0543c0b95c2e14a6017612b814807699b76
+
+        test "$(git rev-list --parents -n 1 HEAD | wc -w)" = 2
+
+        test "$(git diff-tree --no-commit-id --name-status -r HEAD)" = $''A\t.github/workflows/forecast-opening-format.yml''
+
+        sha256sum -c <<''MANIFEST''
+
+        f81124ad91c850e1f6dd4cacb6816cd4091954219c4cbd6dce0177118d36edd7  lib/services/asset_cashflow_forecast_service.dart
+
+        8dd5ae3105bf9ee20acf1e66b483b747d9eac9cc5890be4f859971133a70d285  test/services/asset_cashflow_negative_opening_advisory_test.dart
+
+        MANIFEST
+
+        '
+    - name: Prepare pinned Flutter SDK without project dependency resolution
+      shell: bash
+      run: 'set -euo pipefail
+
+        export PUB_CACHE="$RUNNER_TEMP/forecast-pub-cache"
+
+        export XDG_CONFIG_HOME="$RUNNER_TEMP/forecast-config"
+
+        export XDG_CACHE_HOME="$RUNNER_TEMP/forecast-cache"
+
+        mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$PUB_CACHE"
+
+        git clone --depth 1 --branch 3.38.10 https://github.com/flutter/flutter.git "$RUNNER_TEMP/forecast-flutter"
+
+        test "$(git -C "$RUNNER_TEMP/forecast-flutter" rev-parse HEAD)" = c6f67dede3d4aa1aa7a69dd56a3494a5cde6cc80
+
+        export PATH="$RUNNER_TEMP/forecast-flutter/bin:$PATH"
+
+        flutter --version
+
+        dart --version
+
+        git diff --quiet HEAD -- pubspec.lock
+
+        '
+    - name: Format two proposal files in isolated network namespace
+      shell: bash
+      run: "set -euo pipefail\nhost_net=\"$(readlink /proc/self/ns/net)\"\nrunner_uid=\"$(id -u)\"\nrunner_gid=\"$(id -g)\"\ntest \"$runner_uid\" -ne 0\nsudo unshare --net -- env -i \\\n  PATH=\"/usr/sbin:/usr/bin:/sbin:/bin\"\
+        \ \\\n  HOST_NET=\"$host_net\" RUNNER_UID=\"$runner_uid\" RUNNER_GID=\"$runner_gid\" \\\n  TEST_CONFIG=\"$RUNNER_TEMP/forecast-config\" TEST_CACHE=\"$RUNNER_TEMP/forecast-cache\" PUB_CACHE=\"$RUNNER_TEMP/forecast-pub-cache\"\
+        \ \\\n  TEST_WORKSPACE=\"$GITHUB_WORKSPACE\" FLUTTER_ROOT=\"$RUNNER_TEMP/forecast-flutter\" REPORT=\"$RUNNER_TEMP/forecast-negative-results.jsonl\" \\\n  bash -c '\n    set -euo pipefail\n    test\
+        \ \"$(readlink /proc/self/ns/net)\" != \"$HOST_NET\"\n    test -z \"$(ip -o addr show scope global)\"\n    test \"$(ip -o link show | wc -l)\" -eq 1\n    ip link set dev lo up\n    ip -o link show\
+        \ lo | grep -Eq \"<[^>]*UP[,>]\"\n    test -z \"$(ip -4 route show table main)\"\n    test -z \"$(ip -6 route show table main)\"\n    exec setpriv --reuid=\"$RUNNER_UID\" --regid=\"$RUNNER_GID\"\
+        \ --clear-groups --no-new-privs \\\n      env -i XDG_CONFIG_HOME=\"$TEST_CONFIG\" XDG_CACHE_HOME=\"$TEST_CACHE\" PUB_CACHE=\"$PUB_CACHE\" CI=true FLUTTER_SUPPRESS_ANALYTICS=true \\\n      PATH=\"\
+        $FLUTTER_ROOT/bin:/usr/sbin:/usr/bin:/sbin:/bin\" TEST_WORKSPACE=\"$TEST_WORKSPACE\" REPORT=\"$REPORT\" \\\n      bash -c '\\''\n        set -euo pipefail\n        test \"$(id -u)\" -ne 0\n    \
+        \    test -z \"$(ip -o addr show scope global)\"\n        cd \"$TEST_WORKSPACE\"\n        dart format \\\n          lib/services/asset_cashflow_forecast_service.dart \\\n          test/services/asset_cashflow_negative_opening_advisory_test.dart\n\
+        \      '\\''\n  '\n"
+    - name: Collect exactly two formatter outputs and diff
+      shell: bash
+      run: "set -euo pipefail\npython3 - <<'PY'\nimport subprocess\nexpected = {'test/services/asset_cashflow_negative_opening_advisory_test.dart', 'lib/services/asset_cashflow_forecast_service.dart'}\n\
+        staged = subprocess.check_output(['git','diff','--cached','--name-only']).decode().splitlines()\nchanged = subprocess.check_output(['git','diff','--name-only']).decode().splitlines()\nassert not\
+        \ staged and set(changed) == expected, (staged, changed)\nPY\ngit diff --check HEAD\nout=\"$RUNNER_TEMP/forecast-format-output\"\nmkdir -p \"$out/files/lib/services\" \"$out/files/test/services\"\
+        \ngit diff --binary HEAD -- lib/services/asset_cashflow_forecast_service.dart test/services/asset_cashflow_negative_opening_advisory_test.dart > \"$out/formatter.patch\"\ncp lib/services/asset_cashflow_forecast_service.dart\
+        \ \"$out/files/lib/services/asset_cashflow_forecast_service.dart\"\ncp test/services/asset_cashflow_negative_opening_advisory_test.dart \"$out/files/test/services/asset_cashflow_negative_opening_advisory_test.dart\"\
+        \n{\n  echo 'Parent: 606dd0543c0b95c2e14a6017612b814807699b76'\n  echo 'Original SHA256:'\n  git show HEAD:lib/services/asset_cashflow_forecast_service.dart | sha256sum\n  git show HEAD:test/services/asset_cashflow_negative_opening_advisory_test.dart\
+        \ | sha256sum\n  echo 'Formatted SHA256:'\n  sha256sum lib/services/asset_cashflow_forecast_service.dart test/services/asset_cashflow_negative_opening_advisory_test.dart\n  echo 'Project lock SHA256\
+        \ (unchanged):'\n  sha256sum pubspec.lock\n} > \"$out/manifest.txt\"\ncat \"$out/manifest.txt\"\n"
+    - name: Preserve formatter diff and outputs briefly
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: forecast-opening-format-${{ github.run_id }}
+        path: ${{ runner.temp }}/forecast-format-output
+        if-no-files-found: error
+        retention-days: 1
