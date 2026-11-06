@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 
 HERE=Path(__file__).resolve().parent
-EVENT_SHA='153f3ae82e3421fccd78ac92bf663b967e7c876ff95710a427449403c4797c77'
+EVENT_SHA='44b6f5d0e8fad7ce77e2fd1a7125ecb0fbd295bd3eb18c5080d3affd29380a10'
 BODY_SHA='75191bde9ec18b47cdb9b1b8170245fd150ed653834de585e91b24f256781d4f'
 GRANT_SQL='GRANT TRUNCATE ON TABLE public.asset_pref_mirror TO anon;'
 GRANT_DONE='SYNTHETIC_TABLE_GRANT_DONE'
@@ -77,7 +77,7 @@ class GrantClient:
             raise RuntimeError('invalid synthetic grant identity')
         out=tempfile.TemporaryFile();err=tempfile.TemporaryFile();self.files.extend((out,err))
         argv=self.s.docker+['exec','-i','-u','postgres',self.s.cid,'/usr/bin/env','-i',
-          'PATH=/usr/local/bin:/usr/bin:/bin','HOME=/tmp/codex-cli','PGAPPNAME=codex_grant_'+self.s.nonce,
+          'PATH=/usr/local/bin:/usr/bin:/bin','PGAPPNAME=codex_grant_'+self.s.nonce,
           '/usr/lib/postgresql/17/bin/psql','-X','-qAt','-v','ON_ERROR_STOP=1','-v','VERBOSITY=verbose',
           '-h','/var/run/postgresql','-U','postgres','-d',self.base.DB]
         self.proc=subprocess.Popen(argv,env=self.s.env,stdin=subprocess.PIPE,stdout=out,stderr=err)

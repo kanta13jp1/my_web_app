@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 
 HERE=Path(__file__).resolve().parent
-TABLE_SHA='9a4ee89d6c99514bbf51d2dfdee092a392bd08fcfa9ecb8432faf54ebc199546'
+TABLE_SHA='d94a40d01de858131cca42f17119bcf3c36a6b3ccf4811cc495aa750080922a6'
 BODY_SHA='75191bde9ec18b47cdb9b1b8170245fd150ed653834de585e91b24f256781d4f'
 ROLE='synthetic_acl_parent'
 GRANT_SQL='GRANT synthetic_acl_parent TO anon WITH INHERIT TRUE, SET FALSE, ADMIN FALSE;'
@@ -110,7 +110,7 @@ class MemberClient:
             raise RuntimeError('invalid synthetic membership identity')
         out=tempfile.TemporaryFile();err=tempfile.TemporaryFile();self.files.extend((out,err))
         argv=self.s.docker+['exec','-i','-u','postgres',self.s.cid,'/usr/bin/env','-i',
-          'PATH=/usr/local/bin:/usr/bin:/bin','HOME=/tmp/codex-cli','PGAPPNAME=codex_member_'+self.s.nonce,
+          'PATH=/usr/local/bin:/usr/bin:/bin','PGAPPNAME=codex_member_'+self.s.nonce,
           '/usr/lib/postgresql/17/bin/psql','-X','-qAt','-v','ON_ERROR_STOP=1','-v','VERBOSITY=verbose',
           '-h','/var/run/postgresql','-U','postgres','-d',self.base.DB]
         self.proc=subprocess.Popen(argv,env=self.s.env,stdin=subprocess.PIPE,stdout=out,stderr=err)
@@ -238,6 +238,12 @@ def verify_cli_candidate_error(pid,output,logs,candidate):
                 break
             if any_entry.search(lines[j]):break
     if same_pid_errors!=1 or len(found)!=1 or found[0][0] not in states:
+        diagnostic={'single_same_pid_error':same_pid_errors==1,
+          'same_pid_statement_seen':any(statement.search(line) is not None for line in lines),
+          'candidate_bytes_present':fixed in logs.replace('\r\n','\n'),
+          'unique_candidate_error_pair':len(found)==1,
+          'client_sqlstate_matches':len(found)==1 and found[0][0] in states}
+        print('SYNTHETIC_MEMBERSHIP_CANDIDATE_ERROR_DIAGNOSTIC '+json.dumps(diagnostic,sort_keys=True),flush=True)
         raise RuntimeError('CLI candidate statement, PID or SQLSTATE unproven')
     state,message=found[0];raw=message.encode('utf8',errors='strict')
     if not raw or len(raw)>4096:raise RuntimeError('CLI candidate error message absent or exceeds bound')
@@ -271,22 +277,27 @@ def run_before(service,table,event,phase2,base):
     candidates=base.candidate_pair();body=candidates['locked_single_do']
     if hashlib.sha256(body).hexdigest()!=BODY_SHA:raise RuntimeError('candidate body mismatch')
     binary=base.safe_cli_binary();clients=phase2.OwnedClients(service,base);member=MemberClient(service,base)
-    original=None;result=None
+    original=None;result=None;stage='initialization'
     try:
         service.create();service.wait_final_postmaster();service.initialize();service.configure_synthetic_loopback()
+        stage='role_setup'
         service.psql('CREATE ROLE synthetic_acl_parent NOLOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOREPLICATION NOBYPASSRLS; '
           'GRANT TRUNCATE ON TABLE public.asset_pref_mirror TO synthetic_acl_parent;')
+        stage='baseline'
         before_table=json.loads(service.psql(base.SNAPSHOT));before=membership_snapshot(service)
         oid,parent_oid,anon_oid=(before[k] for k in ('target_oid','parent_oid','anon_oid'))
         verify_membership(before,False,oid,parent_oid,anon_oid)
         if not all(before[k] for k in ('direct_anon','direct_authenticated','anon_truncate','authenticated_truncate')):
             raise RuntimeError('membership fixture baseline mismatch')
+        stage='gate_and_staging'
         service.psql(event.gate_sql(service.token,phase2.KEY));service.stage(binary,body)
+        stage='event_wait'
         coord=clients.start_coordinator();clients.start_cli();waiter=event.wait_for_event(service,clients,phase2,coord)
         if waiter is None:raise RuntimeError('required before-revoke event not observed')
         cli_pid=waiter['pid']
         if waiter['target_oid']!=oid:raise RuntimeError('event and role fixture target OID mismatch')
         table.verify_cli_auth(cli_pid,service.logs());event.prove_event_log(service.logs(),waiter)
+        stage='membership_observation'
         member.start();first=member.poll_until(time.monotonic()+3,oid,parent_oid,{coord,cli_pid})
         released=False
         if first['state']=='lock_wait':
@@ -297,6 +308,7 @@ def run_before(service,table,event,phase2,base):
             clients.release();released=True
             final=member.poll_until(time.monotonic()+12,oid,parent_oid,{coord,cli_pid})
         else:final=first
+        stage='membership_finalize'
         if final['state']=='statement_done':
             pid=final['pid'];verify_statement(pid,service.logs(),service.nonce)
             member.commit();code,out,err=member.finish()
@@ -307,6 +319,7 @@ def run_before(service,table,event,phase2,base):
             code,out,err=member.finish()
             b={'status':'sql_error',**verify_error(table,code,out,err,service.logs(),service.nonce,oid,parent_oid,{coord,cli_pid})}
         else:raise RuntimeError('membership completion deadline or state unresolved')
+        stage='before_release_snapshot'
         before_release=None
         if b['status']=='committed' and not released:
             before_release=membership_snapshot(service);verify_membership(before_release,True,oid,parent_oid,anon_oid)
@@ -314,12 +327,15 @@ def run_before(service,table,event,phase2,base):
                 or before_release['role_attributes']!=before['role_attributes']):
                 raise RuntimeError('unrelated role state changed before CLI release')
         if not released:clients.release()
+        stage='cli_finish'
         acode,aoutput=clients.finish_cli();logs=service.logs()
         if service.psql('SELECT count(*) FROM pg_catalog.pg_stat_activity WHERE pid IN ('+str(cli_pid)+','+str(b['pid'])+');').strip()!='0':
             raise RuntimeError('CLI or membership backend remains')
+        stage='post_release_snapshot'
         after_table=json.loads(service.psql(base.SNAPSHOT));after=membership_snapshot(service)
         verify_membership(after,b['status']=='committed',oid,parent_oid,anon_oid)
         history=json.loads(service.psql("SELECT coalesce(jsonb_agg(jsonb_build_object('version',version,'name',name,'statement_count',coalesce(array_length(statements,1),0)) ORDER BY version),'[]') FROM supabase_migrations.schema_migrations;"))
+        stage='cli_outcome_validation'
         if acode==0:
             if (len(history)!=1 or history[0].get('version')!=base.VERSION or history[0].get('name')!='synthetic_acl'
                 or type(history[0].get('statement_count')) is not int or history[0]['statement_count']<=0
@@ -330,17 +346,20 @@ def run_before(service,table,event,phase2,base):
         else:
             if history!=[] or after['direct_anon'] is not True or after['direct_authenticated'] is not True:
                 raise RuntimeError('CLI membership-case rollback/history mismatch')
+            stage='cli_failure_classification'
             a=verify_cli_candidate_error(cli_pid,aoutput,logs,body)
+        stage='other_invariant_checks'
         stable=('owner','rls','force','rows','policy','other_acl','other_effective','columns','role_attributes','hierarchy','service')
         if any(before_table[k]!=after_table[k] for k in stable):raise RuntimeError('unrelated table state changed')
         if (before['other_memberships']!=after['other_memberships'] or before['role_attributes']!=after['role_attributes']):
             raise RuntimeError('unrelated membership or role attributes changed')
         if acode!=0 and before_table['acl']!=after_table['acl']:
             raise RuntimeError('failed CLI did not roll back its table ACL')
+        stage='fatal_validation'
         summary=base.summarize_control_fatals(logs,service.verified_negative_fatals)
         if summary['verified_negative_control_fatals']!=2 or summary['unexpected_fatal_count']!=0:
             raise RuntimeError('unexpected FATAL or missing negative controls')
-        result={'stage':'before_revoke','target_oid':oid,'parent_oid':parent_oid,'anon_oid':anon_oid,
+        result={'stage':'before_revoke','run_id':service.run_id,'nonce':service.nonce,'container_id':service.cid,'target_oid':oid,'parent_oid':parent_oid,'anon_oid':anon_oid,
           'cli_pid':cli_pid,'coordinator_pid':coord,'member_pid':b['pid'],'first_observation':first['state'],
           'blocker_pids':first.get('blockers',[]),'membership_grant':b,'cli':a,'history_count':len(history),
           'membership_commit_before_cli_release':b['status']=='committed' and not released,
@@ -348,7 +367,12 @@ def run_before(service,table,event,phase2,base):
           'final_member':after['member'],'final_usage':after['usage'],'final_set':after['set'],
           'final_direct_anon_truncate':after['direct_anon'],'final_effective_anon_truncate':after['anon_truncate'],
           'scope':'synthetic PG17, INHERIT TRUE/SET FALSE only; no after-revoke or production claim'}
-    except BaseException as exc:original=exc
+    except BaseException as exc:
+        original=exc
+        try:
+            print('SYNTHETIC_MEMBERSHIP_FAILURE_STAGE '+json.dumps(
+              {'stage':stage,'runtime_error':isinstance(exc,RuntimeError)},sort_keys=True),flush=True)
+        except BaseException:pass
     finally:
         member_failed=False;clients_failed=False;container_unconfirmed=False
         try:member.close()

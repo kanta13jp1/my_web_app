@@ -48,7 +48,7 @@ def sha(data): return hashlib.sha256(data).hexdigest()
 
 
 def job_identity(env):
-    branch = 'refs/heads/codex/asset-pref-cli-execbatch-diagnostic-20261104'
+    branch = 'refs/heads/codex/asset-pref-cli-execbatch-terminal-20261106'
     workflow_ref = 'kanta13jp1/my_web_app/.github/workflows/cloud-development.yml@' + branch
     run, attempt = env.get('GITHUB_RUN_ID', ''), env.get('GITHUB_RUN_ATTEMPT', '')
     head, expected = env.get('GITHUB_SHA', ''), env.get('SYNTHETIC_EXPECTED_HEAD', '')
@@ -436,7 +436,7 @@ class OwnedService:
             if workdir != '/tmp/codex-cli': raise RuntimeError('unexpected container workdir')
             cmd += ['--workdir', workdir]
         cmd += [self.cid, '/usr/bin/env', '-i', 'PATH=/usr/local/bin:/usr/bin:/bin',
-                'HOME=/tmp/codex-cli'] + args
+                ] + args
         return self.command(cmd, input=input, timeout=timeout, check=check)
 
     def psql(self, sql, *, guarded=True):
@@ -542,7 +542,7 @@ class OwnedService:
         """Capture only bounded metadata from a fixed, no-follow find command."""
         self.inspect(running=True)
         argv = self.docker + ['exec','-i','-u','postgres',self.cid,'/usr/bin/env','-i',
-            'PATH=/usr/local/bin:/usr/bin:/bin','HOME=/tmp/codex-cli',
+            'PATH=/usr/local/bin:/usr/bin:/bin',
             '/usr/bin/find','-P','/tmp/codex-cli/supabase','-xdev','-mindepth','1','-maxdepth','6',
             '-printf',r'%y\0%m\0%s\0%p\0']
         proc = subprocess.Popen(argv,env=self.env,stdin=subprocess.DEVNULL,
@@ -789,7 +789,7 @@ class OwnedService:
         sql=("SELECT 1/((count(*)=1)::int) FROM public.codex_execbatch_guard WHERE token='"+self.token+"'::uuid; "
              "BEGIN; LOCK TABLE ONLY public.asset_pref_mirror IN ACCESS SHARE MODE; SELECT pg_sleep(30); ROLLBACK;")
         args=self.docker+['exec','-i','-u','postgres',self.cid,'/usr/bin/env','-i',
-            'PATH=/usr/local/bin:/usr/bin:/bin','HOME=/tmp/codex-cli','PGAPPNAME=codex_conflict_'+self.nonce,
+            'PATH=/usr/local/bin:/usr/bin:/bin','PGAPPNAME=codex_conflict_'+self.nonce,
             '/usr/lib/postgresql/17/bin/psql','-X','-qAt','-v','ON_ERROR_STOP=1',
             '-h','/var/run/postgresql','-U','postgres','-d',DB,'-c',sql]
         self.holder=subprocess.Popen(args,env=self.env,stdin=subprocess.DEVNULL,

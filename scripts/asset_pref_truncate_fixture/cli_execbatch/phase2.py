@@ -15,7 +15,7 @@ import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-RUNNER_SHA = 'e6608a9faecfb84fa4ced6a8185a89a5f56bff024f6180f561cb288eef52691d'
+RUNNER_SHA = '234ed22dcc5b753ed4c32bf769dcf0739dc321f8d8e153218d3797f8b8183251'
 KEY = 700000000017
 KEY_HIGH, KEY_LOW = KEY >> 32, KEY & 0xffffffff
 OUTPUT_LIMIT = 65536
@@ -146,7 +146,7 @@ class OwnedClients:
         if not re.fullmatch(r'[0-9a-f-]{36}',self.s.token): raise RuntimeError('invalid fixture token')
         app='codex_coord_'+self.s.nonce
         argv=self.s.docker+['exec','-i','-u','postgres',self.s.cid,'/usr/bin/env','-i',
-          'PATH=/usr/local/bin:/usr/bin:/bin','HOME=/tmp/codex-cli','PGAPPNAME='+app,
+          'PATH=/usr/local/bin:/usr/bin:/bin','PGAPPNAME='+app,
           '/usr/lib/postgresql/17/bin/psql','-X','-qAt','-v','ON_ERROR_STOP=1',
           '-h','/var/run/postgresql','-U','postgres','-d',self.base.DB]
         self.coord=self.spawn(argv,stdin=subprocess.PIPE)
@@ -168,7 +168,7 @@ class OwnedClients:
         if self.cli is not None or self.coord is None: raise RuntimeError('invalid asynchronous CLI state')
         self.s.psql('SELECT 1;');self.s.verify_cli_binary();self.s.verify_project_tree('before_push')
         argv=self.s.docker+['exec','-i','-u','postgres','--workdir','/tmp/codex-cli',self.s.cid,
-          '/usr/bin/env','-i','PATH=/usr/local/bin:/usr/bin:/bin','HOME=/tmp/codex-cli','PGSSLMODE=disable',
+          '/usr/bin/env','-i','PATH=/usr/local/bin:/usr/bin:/bin','PGSSLMODE=disable',
           '/tmp/codex-cli/supabase-cli','db','push','--db-url',self.base.DB_URL,
           '--include-all','--yes','--workdir','/tmp/codex-cli']
         self.cli=self.spawn(argv,stdin=subprocess.DEVNULL)

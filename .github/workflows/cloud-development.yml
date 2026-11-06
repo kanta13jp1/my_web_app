@@ -10,7 +10,7 @@ on:
 permissions: {}
 jobs:
   cli-execbatch-isolated:
-    if: ${{ github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/asset-pref-cli-execbatch-diagnostic-20261104' }}
+    if: ${{ github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/asset-pref-cli-execbatch-terminal-20261106' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -30,14 +30,22 @@ jobs:
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD d47601e6fbb116dc9cffa21bbfad39643df6afca"
+          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD e7b5ae9ec0f7ddb22619e4863cf4c9bed62f4316"
           git diff --no-renames --name-only HEAD^ HEAD | LC_ALL=C sort > "$RUNNER_TEMP/actual-files"
           LC_ALL=C sort > "$RUNNER_TEMP/expected-files" <<'FIXED_FILES'
           .github/workflows/cloud-development.yml
+          scripts/asset_pref_truncate_fixture/cli_execbatch/event_preflight.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/event_preflight_entry.py
           scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before.py
           scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before_entry.py
-          scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_offline.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/phase2.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/phase2_entry.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant_entry.py
           scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_entry_offline.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_offline.py
+          scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
           FIXED_FILES
           diff -u "$RUNNER_TEMP/expected-files" "$RUNNER_TEMP/actual-files"
           sha256sum -c <<'FIXED_HASHES'
@@ -46,25 +54,25 @@ jobs:
           3372910f839d556a35d81dfd6ababe8c73438e52636d7fe8c491835528f1dfb6  scripts/asset_pref_truncate_fixture/cli_execbatch/revoke_truncate_candidate_review_stopped.sql.txt
           1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_pr_do_without_boundaries_review_stopped.sql.txt
           ee18141eb1390ce6446ffe3696f677495f809606e144ff9164faf62d03db5f19  scripts/asset_pref_truncate_fixture/cli_execbatch/candidate_single_do_lock_review_stopped.sql.txt
-          e6608a9faecfb84fa4ced6a8185a89a5f56bff024f6180f561cb288eef52691d  scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
-          edeefe8fe778a84b1df60a5ccf107ba2142360743148db3d4a8db65deb5e3f31  scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
-          4c36189f886c2cb4feb0941c32825e4a37debb62b79eb5c263d237b1287b7857  scripts/asset_pref_truncate_fixture/cli_execbatch/phase2.py
-          750a6e79bf5ec0ac2258b3929dbe37b6f8dab9507a37d3a7ae93c82b5018e7da  scripts/asset_pref_truncate_fixture/cli_execbatch/phase2_entry.py
+          234ed22dcc5b753ed4c32bf769dcf0739dc321f8d8e153218d3797f8b8183251  scripts/asset_pref_truncate_fixture/cli_execbatch/runner.py
+          c76bd19a46f755604c172b5418fcb2727e485604aa02f1a3ade35ea8db0e52cf  scripts/asset_pref_truncate_fixture/cli_execbatch/test_offline.py
+          4d0d8487057ef223c888f706c7b09fad1be623c54e989466c95ab6f016842346  scripts/asset_pref_truncate_fixture/cli_execbatch/phase2.py
+          199c3301e01124b9e9eac5c291d07d7c44eccdc34fc0a498075a2da69640c8c7  scripts/asset_pref_truncate_fixture/cli_execbatch/phase2_entry.py
           863c173a62ea634f24db62f7eda50393a83dc29fad22149fe50020dc9b18f593  scripts/asset_pref_truncate_fixture/cli_execbatch/test_phase2_offline.py
-          153f3ae82e3421fccd78ac92bf663b967e7c876ff95710a427449403c4797c77  scripts/asset_pref_truncate_fixture/cli_execbatch/event_preflight.py
-          bd68a09dcf168db2245699763284a6075bdefe7c342e21990e6702b18edc08ae  scripts/asset_pref_truncate_fixture/cli_execbatch/event_preflight_entry.py
+          44b6f5d0e8fad7ce77e2fd1a7125ecb0fbd295bd3eb18c5080d3affd29380a10  scripts/asset_pref_truncate_fixture/cli_execbatch/event_preflight.py
+          1781b4d3565163aa784e7d8c27f13ef6ffd506116563504acedce7923ba380c4  scripts/asset_pref_truncate_fixture/cli_execbatch/event_preflight_entry.py
           343bc4c77bf752b70884df9e6f195806f977f9e7118a64a800aa376ff72dd303  scripts/asset_pref_truncate_fixture/cli_execbatch/test_event_preflight_offline.py
           05d6b17ae5129e805e565c5c5cd06a9530a8c54f0e3e289eb9cdefe7b5079104  scripts/asset_pref_truncate_fixture/cli_execbatch/test_event_entry_offline.py
-          9a4ee89d6c99514bbf51d2dfdee092a392bd08fcfa9ecb8432faf54ebc199546  scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant.py
-          be498110134a5d3229e9fc90ef08693888c398bd7ce7bc727d9952d17d479455  scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant_entry.py
+          d94a40d01de858131cca42f17119bcf3c36a6b3ccf4811cc495aa750080922a6  scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant.py
+          a3b213688743f9e4ff47c77cd1fd4f826bb6d886f791bb40059eef23861a0904  scripts/asset_pref_truncate_fixture/cli_execbatch/table_grant_entry.py
           98ecc3a84f21d4d27403f01ae3e65e3d5a6f9475d2ef60eaf211108255adad3b  scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_offline.py
           b31f77716c29563fd69633d1b0fce0b2e517d32b43eb32b5cbf0099f49e361fc  scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_entry_offline.py
           24e38d3b06d1aeb5d5fd6bfea2bec64c303d4fdad9a45b51f0af980a48cf9db8  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
           1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
-          21c3d1f245e4bfa972f75884914f2578649e2f80cb72082f97a38a10546b49a7  scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before.py
-          19cd381188928b66e9ecede184197c1ea8b30a4b74ef3e39087448c4774aed9f  scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before_entry.py
-          c17ea885a44a7120e55cecabab8970d7f29e92648097a5e996efbf40ea3a4b1a  scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_offline.py
-          31826a6fbbd8210c05800a657c34a2d36ad1757d10b31a259ef350403e198ba0  scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_entry_offline.py
+          e6c0f1e586ce3b693b5a27e1c26552c6ae086eaad2dba3dbf9d28d732c190d37  scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before.py
+          95e438ebb8d1e9691cf238c14912ab920fd24dc27212c3a69a9bb74324120545  scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before_entry.py
+          fe28d1e6339dc8cb3529d816adb81e7b2f8f31ce5cb3491ed50095eb4a752e64  scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_offline.py
+          554ac27b78f3f396b477e2d41f30c0ade8acea94c645feb120d2fe47a5574874  scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_entry_offline.py
           FIXED_HASHES
           pr=$(gh api repos/kanta13jp1/my_web_app/pulls/5980 --jq '[.state,.head.sha,.base.sha,.head.repo.full_name] | @tsv' 2>/dev/null)
           test "$pr" = $'open\t85394a8e938a7c4bda08e32dd4cfff9ede623e57\tf420ca99541125452407e974958e7704f1d5b429\tkanta13jp1/my_web_app'
@@ -87,6 +95,7 @@ jobs:
             'scripts/asset_pref_truncate_fixture/cli_execbatch/supabase_linux_amd64.tar.gz' | sha256sum -c -
           docker pull 'postgres@sha256:0b81cec82228160abfa753aeaad0609b709eb26eeb950f2e404ad2326e1cc370'
       - name: Run only in owned network-none synthetic containers
+        id: synthetic_observation
         env:
           SYNTHETIC_EXPECTED_HEAD: ${{ inputs.expected_head_sha }}
           GH_TOKEN: ${{ github.token }}
@@ -96,6 +105,7 @@ jobs:
           test "$pr" = $'open\t85394a8e938a7c4bda08e32dd4cfff9ede623e57\tf420ca99541125452407e974958e7704f1d5b429\tkanta13jp1/my_web_app'
           python3 -B -c 'import importlib.util,sys; p="scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before_entry.py"; s=importlib.util.spec_from_file_location("isolated_membership_before_entry",p); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); sys.exit(m.run_and_exit_code())'
       - name: Recheck PR after isolated evidence
+        id: pr_recheck
         if: ${{ always() }}
         env:
           GH_TOKEN: ${{ github.token }}
@@ -103,3 +113,14 @@ jobs:
           set -euo pipefail
           pr=$(gh api repos/kanta13jp1/my_web_app/pulls/5980 --jq '[.state,.head.sha,.base.sha,.head.repo.full_name] | @tsv' 2>/dev/null)
           test "$pr" = $'open\t85394a8e938a7c4bda08e32dd4cfff9ede623e57\tf420ca99541125452407e974958e7704f1d5b429\tkanta13jp1/my_web_app'
+      - name: Confirm synthetic evidence end
+        if: ${{ always() }}
+        env:
+          OBSERVATION_OUTCOME: ${{ steps.synthetic_observation.outcome }}
+          RECHECK_OUTCOME: ${{ steps.pr_recheck.outcome }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_RUN_ID" =~ ^[1-9][0-9]*$ && "$GITHUB_RUN_ATTEMPT" =~ ^[1-9][0-9]*$ && "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$OBSERVATION_OUTCOME" =~ ^(success|failure|cancelled|skipped)$ && "$RECHECK_OUTCOME" =~ ^(success|failure|cancelled|skipped)$ ]]
+          prefix='SYNTHETIC_EVIDENCE_'
+          printf '%s%s {"run_id":"%s-%s","head_sha":"%s","observation_outcome":"%s","recheck_outcome":"%s"}\n' "$prefix" 'END' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_SHA" "$OBSERVATION_OUTCOME" "$RECHECK_OUTCOME"

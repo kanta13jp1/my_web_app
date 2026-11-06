@@ -90,7 +90,7 @@ def run():
             data=json.loads(super().command(args,env))
             if data['id']==self.target:data['conclusion']='success'
             return json.dumps(data).encode()
-    for run_id in (41781365481,41783344737):
+    for run_id in (41781365481,41783344737,41784488437):
         wrong=MislabelledFailure();wrong.target=run_id
         try:m.verify_prerequisites(wrong,{'GH_TOKEN':'synthetic'})
         except RuntimeError:pass

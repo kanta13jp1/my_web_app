@@ -74,6 +74,18 @@ def run():
     rejects(lambda:m.verify_cli_candidate_error(202,'P0001 failure',marker+'[202] ERROR: P0001: other failure\n[202] STATEMENT: SELECT 1;\n',candidate))
     rejects(lambda:m.verify_cli_candidate_error(202,'42501 failure',marker,candidate))
     rejects(lambda:m.verify_cli_candidate_error(202,'P0001 failure',marker,candidate+b'bad'))
+    secret='SYNTHETIC_TOKEN_PRIVATE_TEXT'
+    diagnostic_out=io.StringIO()
+    with contextlib.redirect_stdout(diagnostic_out):
+        try:m.verify_cli_candidate_error(202,'P0001 failure',marker.replace('[202] STATEMENT:','[203] STATEMENT:')+secret,candidate)
+        except RuntimeError:pass
+        else:raise AssertionError('wrong-PID statement accepted')
+    text=diagnostic_out.getvalue();assert secret not in text and candidate.decode('utf8') not in text
+    prefix='SYNTHETIC_MEMBERSHIP_CANDIDATE_ERROR_DIAGNOSTIC '
+    assert text.startswith(prefix)
+    diag=json.loads(text[len(prefix):]);assert all(type(x) is bool for x in diag.values())
+    assert diag['single_same_pid_error'] and not diag['same_pid_statement_seen'] and not diag['unique_candidate_error_pair']
+
 
     base_table={'owner':1,'rls':True,'force':False,'rows':[],'policy':[],'other_acl':[],
       'other_effective':[],'columns':[],'memberships':[],'role_attributes':[],'hierarchy':[],
@@ -137,6 +149,7 @@ def run():
             assert result['final_member'] and result['final_effective_anon_truncate'] and service.stopped
             assert result['cli']['status']==('sql_error' if fails else 'committed')
             assert result['history_count']==(0 if fails else 1)
+            assert (result['run_id'],result['nonce'],result['container_id'])==(service.run_id,service.nonce,service.cid)
             assert result['final_direct_anon_truncate']==fails
         class WaitingMember(Member):
             def __init__(self,s,b):super().__init__(s,b);self.calls=0
@@ -156,9 +169,15 @@ def run():
             result=m.run_before(failed_service,table,event,phase2,base)
         assert result['membership_grant']['status']=='sql_error' and result['membership_grant']['sqlstate']=='42501'
         assert not result['final_member'] and not result['final_effective_anon_truncate'] and failed_service.stopped
-        missing=Service()
-        with mock.patch.object(event,'wait_for_event',return_value=None):rejects(lambda:m.run_before(missing,table,event,phase2,base))
-        assert missing.stopped
+        missing=Service();stage_output=io.StringIO()
+        with mock.patch.object(event,'wait_for_event',return_value=None),contextlib.redirect_stdout(stage_output):
+            try:m.run_before(missing,table,event,phase2,base)
+            except event.PreflightRunError:pass
+            else:raise AssertionError('missing event accepted')
+        stage_lines=[x for x in stage_output.getvalue().splitlines() if x.startswith('SYNTHETIC_MEMBERSHIP_FAILURE_STAGE ')]
+        assert len(stage_lines)==1
+        assert json.loads(stage_lines[0].split(' ',1)[1])=={'stage':'event_wait','runtime_error':True}
+        assert secret not in stage_output.getvalue() and missing.stopped
         class Deadline(Member):
             def poll_until(self,*args):return {'state':'deadline'}
         timed=Service()

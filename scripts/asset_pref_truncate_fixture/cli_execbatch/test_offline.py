@@ -20,13 +20,13 @@ def run():
     assert set(pair) == {'explicit', 'batch', 'pr_head_06505ee4', 'pr_do_no_boundaries', 'locked_single_do'}
     pr=pair['pr_head_06505ee4'].replace(b'\r\n',b'\n')
     assert pr.replace(b'\nbegin;\n',b'\n',1).removesuffix(b'\ncommit;') == pair['pr_do_no_boundaries'].replace(b'\r\n',b'\n')
-    branch='refs/heads/codex/asset-pref-cli-execbatch-diagnostic-20261104'
+    branch='refs/heads/codex/asset-pref-cli-execbatch-terminal-20261106'
     trusted={'GITHUB_ACTIONS':'true','RUNNER_ENVIRONMENT':'github-hosted','GITHUB_REPOSITORY':'kanta13jp1/my_web_app',
       'GITHUB_EVENT_NAME':'workflow_dispatch','GITHUB_JOB':'cli-execbatch-isolated','GITHUB_REF':branch,
       'GITHUB_WORKFLOW_REF':'kanta13jp1/my_web_app/.github/workflows/cloud-development.yml@'+branch,
       'GITHUB_RUN_ID':'123','GITHUB_RUN_ATTEMPT':'1','GITHUB_SHA':'a'*40,'SYNTHETIC_EXPECTED_HEAD':'a'*40}
     assert m['job_identity'](trusted)=='123-1'
-    for key,value in [('GITHUB_REPOSITORY','wrong/repo'),('RUNNER_ENVIRONMENT','self-hosted'),('GITHUB_REF','refs/heads/main'),
+    for key,value in [('GITHUB_REPOSITORY','wrong/repo'),('RUNNER_ENVIRONMENT','self-hosted'),('GITHUB_REF','refs/heads/main'),('GITHUB_REF','refs/heads/codex/asset-pref-cli-execbatch-diagnostic-20261104'),
                       ('GITHUB_JOB','wrong'),('GITHUB_EVENT_NAME','push'),('GITHUB_WORKFLOW_REF','wrong'),
                       ('GITHUB_RUN_ID','bad'),('GITHUB_SHA','b'*40),('SYNTHETIC_EXPECTED_HEAD','bad')]:
         bad=dict(trusted);bad[key]=value

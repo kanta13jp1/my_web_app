@@ -14,7 +14,7 @@ import subprocess
 import tempfile
 
 HERE=Path(__file__).resolve().parent
-PHASE2_SHA='4c36189f886c2cb4feb0941c32825e4a37debb62b79eb5c263d237b1287b7857'
+PHASE2_SHA='4d0d8487057ef223c888f706c7b09fad1be623c54e989466c95ab6f016842346'
 PR_HEAD='85394a8e938a7c4bda08e32dd4cfff9ede623e57'
 PR_BASE='f420ca99541125452407e974958e7704f1d5b429'
 MIGRATION='supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql'
