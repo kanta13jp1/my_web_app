@@ -224,13 +224,18 @@ def verify_cli_candidate_error(pid,output,logs,candidate):
     source=candidate.decode('utf8',errors='strict').replace('\r\n','\n').strip()
     if not source.isascii() or not source.endswith('$$;') or source.endswith('$$;;') or source.count('$$')!=2:
         raise RuntimeError('fixed candidate token shape invalid')
-    fixed=source.removesuffix(';').strip()
-    if not fixed or len(fixed)>65536 or '(SQLSTATE ' in fixed:raise RuntimeError('candidate statement size invalid')
+    sent=source.removesuffix(';').strip()
+    if not sent or len(sent)>65536 or '(SQLSTATE ' in sent:raise RuntimeError('candidate statement size invalid')
+    # PostgreSQL 17 stderr's append_with_tabs inserts exactly one tab after
+    # every embedded newline. Render the expected fixed text; never broadly
+    # strip tabs from untrusted log content.
+    fixed=sent.replace('\n','\n\t')
     states=re.findall(r'\(SQLSTATE ([0-9A-Z]{5})\)',output)
     lines=logs.replace('\r\n','\n').splitlines();found=[]
-    error=re.compile(r'\['+str(pid)+r'\] ERROR:\s+([0-9A-Z]{5}):\s*(.*?)\s*$')
-    any_entry=re.compile(r'\['+str(pid)+r'\] (?:ERROR|FATAL|PANIC|LOG|STATEMENT):')
-    statement=re.compile(r'\['+str(pid)+r'\] STATEMENT:[ \t]*')
+    prefix=r'^(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)? UTC )?\['+str(pid)+r'\] '
+    error=re.compile(prefix+r'ERROR:\s+([0-9A-Z]{5}):\s*(.*?)\s*$')
+    any_entry=re.compile(prefix+r'(?:ERROR|FATAL|PANIC|LOG|WARNING|NOTICE|STATEMENT):')
+    statement=re.compile(prefix+r'STATEMENT:[ \t]*')
     same_pid_errors=sum(bool(error.search(line)) for line in lines)
     for i,line in enumerate(lines):
         hit=error.search(line)

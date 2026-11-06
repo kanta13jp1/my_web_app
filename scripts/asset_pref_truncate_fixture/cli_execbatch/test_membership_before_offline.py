@@ -62,10 +62,14 @@ def run():
     candidate=base.candidate_pair()['locked_single_do']
     known='truncate privilege reachable through role membership'
     sent=candidate.decode('utf8').strip().removesuffix(';').strip()
-    marker='[202] ERROR: P0001: '+known+'\n[202] STATEMENT: '+sent+'\n'
+    logged=sent.replace('\n','\n\t')
+    marker='[202] ERROR: P0001: '+known+'\n[202] STATEMENT: '+logged+'\n'
     client='synthetic refusal (SQLSTATE P0001)'
     check=m.verify_cli_candidate_error(202,client,marker,candidate)
     assert check['message_diagnostic']['class']=='membership_reachable' and check['sqlstate']=='P0001'
+    timestamp='2026-11-06 12:34:56.123 UTC '
+    check=m.verify_cli_candidate_error(202,client,marker.replace('[202] ',timestamp+'[202] '),candidate)
+    assert check['sqlstate']=='P0001'
     unknown='SYNTHETIC_PRIVATE_UNKNOWN'
     x=m.verify_cli_candidate_error(202,client,marker.replace(known,unknown,1),candidate)
     assert x['message_diagnostic']['class']=='unknown' and unknown not in str(x)
@@ -78,8 +82,13 @@ def run():
     rejects(lambda:m.verify_cli_candidate_error(202,'P0001 failure',marker,candidate))
     rejects(lambda:m.verify_cli_candidate_error(202,'P0001 in SQL text only (SQLSTATE 42501)',marker,candidate))
     rejects(lambda:m.verify_cli_candidate_error(202,client+' (SQLSTATE P0001)',marker,candidate))
-    rejects(lambda:m.verify_cli_candidate_error(202,client,marker.replace(sent,sent+';',1),candidate))
-    rejects(lambda:m.verify_cli_candidate_error(202,client,marker.replace(sent,sent+' SELECT 1',1),candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client,marker.replace(logged,logged+';',1),candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client,marker.replace(logged,logged+' SELECT 1',1),candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client,marker.replace(logged,logged[:-1],1),candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client,marker.replace('\n\t','\n',1),candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client,marker.replace('\n\t','\n\t\t',1),candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client,marker.replace('[202] ERROR:','forged-prefix [202] ERROR:',1),candidate))
+    rejects(lambda:m.verify_cli_candidate_error(202,client,marker.replace('[202] STATEMENT:','forged-prefix [202] STATEMENT:',1),candidate))
     rejects(lambda:m.verify_cli_candidate_error(202,client,marker,candidate+b'bad'))
     secret='SYNTHETIC_TOKEN_PRIVATE_TEXT'
     diagnostic_out=io.StringIO()
@@ -128,7 +137,7 @@ def run():
         def logs(self):
             cli=('[202] LOG: 00000: connection received: host=127.0.0.1 port=123\n'
                  '[202] LOG: 00000: connection authorized: user=postgres database=synthetic_execbatch application_name=codex_execbatch_cli\n')
-            extra=('[202] ERROR: P0001: synthetic failure\n[202] STATEMENT: '+sent+'\n') if self.cli_fails else ''
+            extra=('[202] ERROR: P0001: synthetic failure\n[202] STATEMENT: '+logged+'\n') if self.cli_fails else ''
             if self.member_fails:extra+='[404] ERROR: 42501: synthetic refusal\n[404] STATEMENT: '+m.GRANT_SQL+'\n'
             return '\n'.join(x['fatal_line'] for x in self.verified_negative_fatals)+'\n'+cli+logs+extra
     waiter={'pid':202,'target_oid':303}

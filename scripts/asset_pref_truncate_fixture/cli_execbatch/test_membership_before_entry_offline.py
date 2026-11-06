@@ -46,8 +46,8 @@ def run():
             if args[0]=='/usr/bin/docker':return b'[{"Id":"synthetic"}]'
             run_id=int(args[-1].rsplit('/',1)[1]);item=next((x for x in m.PRIOR_RUNS if x[0]==run_id),None)
             if item is None:
-                assert run_id==m.PRIOR_TERMINAL_RUN[0]
-                _,head,conclusion,branch=m.PRIOR_TERMINAL_RUN
+                item=next(x for x in (m.PRIOR_TERMINAL_RUN,m.PRIOR_FORMAT_RUN) if x[0]==run_id)
+                _,head,conclusion,branch=item
                 return json.dumps({'id':run_id,'head_sha':head,'status':'completed','conclusion':conclusion,
                   'head_branch':branch,'event':'workflow_dispatch','run_attempt':1}).encode()
             head,conclusion=item[1:]
@@ -96,22 +96,23 @@ def run():
             data=json.loads(super().command(args,env))
             if data['id']==self.target:data['conclusion']='success'
             return json.dumps(data).encode()
-    for run_id in (41781365481,41783344737,41784488437,42231309612):
+    for run_id in (41781365481,41783344737,41784488437,42231309612,42233585809):
         wrong=MislabelledFailure();wrong.target=run_id
         try:m.verify_prerequisites(wrong,{'GH_TOKEN':'synthetic'})
         except RuntimeError:pass
         else:raise AssertionError('prior failure relabelled as success: '+str(run_id))
     class WrongTerminal(Context):
-        field=None;value=None
+        field=None;value=None;target=None
         def command(self,args,env):
             data=json.loads(super().command(args,env))
-            if data['id']==m.PRIOR_TERMINAL_RUN[0]:data[self.field]=self.value
+            if data['id']==self.target:data[self.field]=self.value
             return json.dumps(data).encode()
-    for field,value in (('head_sha','d'*40),('head_branch',m.BRANCH),('run_attempt',2),('status','in_progress')):
-        wrong=WrongTerminal();wrong.field=field;wrong.value=value
-        try:m.verify_prerequisites(wrong,{'GH_TOKEN':'synthetic'})
-        except RuntimeError:pass
-        else:raise AssertionError('wrong terminal context accepted')
+    for target in (42231309612,42233585809):
+        for field,value in (('head_sha','d'*40),('head_branch',m.BRANCH),('run_attempt',2),('status','in_progress')):
+            wrong=WrongTerminal();wrong.target=target;wrong.field=field;wrong.value=value
+            try:m.verify_prerequisites(wrong,{'GH_TOKEN':'synthetic'})
+            except RuntimeError:pass
+            else:raise AssertionError('wrong terminal context accepted')
     context.PARENT='f'*40;member.missing_cleanup=False
     assert run_fake()['status']=='failure'
     print('PASS: prior runs, single before stage, cleanup, non-success statuses and redacted errors')

@@ -12,10 +12,10 @@ import re
 import tempfile
 
 HERE=Path(__file__).resolve().parent
-MEMBER_SHA='eac606b07e1fd08ebccab88186ca72dc6c9a0ce59a520cec34c4ce7dcd85c294'
+MEMBER_SHA='c5af69adbd6728bfa1b16d7d45b6656860ab1bdec85b26e4ff7068bbc37612de'
 CONTEXT_SHA='199c3301e01124b9e9eac5c291d07d7c44eccdc34fc0a498075a2da69640c8c7'
 CONTEXT_ORIGINAL_PARENT='24b629750575eb64cc06abea060987dcc01e684b'
-PARENT='293f834c181489a309b9711bf92e2d60c7e9aa7e'
+PARENT='ef29550aa391f93fc59d72045f2aed0918dda2bf'
 PRIOR_RUNS=((41778403633,'836e6dcc8dab204b955d8c5303cb78260435193f','success'),
             (41775837475,'b885c5f8c2e76cbe820b0539ba032d18bcf888ab','success'),
             (41781365481,'4f1593e0cf15d078753f7bf7a096424f46ac58ac','failure'),
@@ -23,6 +23,7 @@ PRIOR_RUNS=((41778403633,'836e6dcc8dab204b955d8c5303cb78260435193f','success'),
             (41784488437,'e7b5ae9ec0f7ddb22619e4863cf4c9bed62f4316','failure'))
 BRANCH='codex/asset-pref-cli-execbatch-diagnostic-20261104'
 PRIOR_TERMINAL_RUN=(42231309612,'293f834c181489a309b9711bf92e2d60c7e9aa7e','failure','codex/asset-pref-cli-execbatch-terminal-20261106')
+PRIOR_FORMAT_RUN=(42233585809,'ef29550aa391f93fc59d72045f2aed0918dda2bf','failure','codex/asset-pref-cli-execbatch-terminal-20261106')
 
 
 def fixed_module(name,filename,digest):
@@ -45,13 +46,13 @@ def verify_prerequisites(context,env):
             or obj.get('conclusion')!=conclusion or obj.get('head_branch')!=BRANCH
             or obj.get('event')!='workflow_dispatch'):
             raise RuntimeError('prior synthetic success evidence mismatch')
-    run_id,head,conclusion,branch=PRIOR_TERMINAL_RUN
-    obj=json.loads(context.command(['/usr/bin/gh','api',
-      'repos/kanta13jp1/my_web_app/actions/runs/'+str(run_id)],read_env))
-    if (obj.get('id')!=run_id or obj.get('head_sha')!=head or obj.get('status')!='completed'
-        or obj.get('conclusion')!=conclusion or obj.get('head_branch')!=branch
-        or obj.get('event')!='workflow_dispatch' or obj.get('run_attempt')!=1):
-        raise RuntimeError('prior terminal synthetic failure mismatch')
+    for run_id,head,conclusion,branch in (PRIOR_TERMINAL_RUN,PRIOR_FORMAT_RUN):
+        obj=json.loads(context.command(['/usr/bin/gh','api',
+          'repos/kanta13jp1/my_web_app/actions/runs/'+str(run_id)],read_env))
+        if (obj.get('id')!=run_id or obj.get('head_sha')!=head or obj.get('status')!='completed'
+            or obj.get('conclusion')!=conclusion or obj.get('head_branch')!=branch
+            or obj.get('event')!='workflow_dispatch' or obj.get('run_attempt')!=1):
+            raise RuntimeError('prior terminal synthetic failure mismatch')
 
 
 class EntryPostCleanupError(RuntimeError):

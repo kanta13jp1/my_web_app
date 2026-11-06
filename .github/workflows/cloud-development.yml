@@ -30,7 +30,7 @@ jobs:
           set -euo pipefail
           [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD 293f834c181489a309b9711bf92e2d60c7e9aa7e"
+          test "$(git rev-list --parents -n 1 HEAD)" = "$EXPECTED_HEAD ef29550aa391f93fc59d72045f2aed0918dda2bf"
           git diff --no-renames --name-only HEAD^ HEAD | LC_ALL=C sort > "$RUNNER_TEMP/actual-files"
           LC_ALL=C sort > "$RUNNER_TEMP/expected-files" <<'FIXED_FILES'
           .github/workflows/cloud-development.yml
@@ -61,10 +61,10 @@ jobs:
           b31f77716c29563fd69633d1b0fce0b2e517d32b43eb32b5cbf0099f49e361fc  scripts/asset_pref_truncate_fixture/cli_execbatch/test_table_grant_entry_offline.py
           24e38d3b06d1aeb5d5fd6bfea2bec64c303d4fdad9a45b51f0af980a48cf9db8  supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql
           1baae5293834c0b7afd524947512013e8ac339aca5195b3f7528dae26ff9f36f  scripts/asset_pref_truncate_fixture/revoke_truncate_candidate_review_stopped.sql.txt
-          eac606b07e1fd08ebccab88186ca72dc6c9a0ce59a520cec34c4ce7dcd85c294  scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before.py
-          1216f622b301ee29a677bf4b304abbfb51d42f2b9b859a614dd18f90338773fd  scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before_entry.py
-          36225d81889eaecb543b9d93ec5287a1660487d412eca726dcf412dc6d2290b0  scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_offline.py
-          09b4c1676df2759c35b0e475f620fa71cff0b6caba1721bf64b4ea06066d2c7e  scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_entry_offline.py
+          c5af69adbd6728bfa1b16d7d45b6656860ab1bdec85b26e4ff7068bbc37612de  scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before.py
+          d8ddd36ea0c0ebea6b9c0dbc4a94376d9de61919b09cae10f52e54e09bebc88e  scripts/asset_pref_truncate_fixture/cli_execbatch/membership_before_entry.py
+          9e3c6c397a8d0b24338d19d972882f915b4673db685ff19c0f07fdde54ae567c  scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_offline.py
+          a39b08b2356d6856fc4abff377ed3408be7855c7cf74389e10683338799c3474  scripts/asset_pref_truncate_fixture/cli_execbatch/test_membership_before_entry_offline.py
           FIXED_HASHES
           pr=$(gh api repos/kanta13jp1/my_web_app/pulls/5980 --jq '[.state,.head.sha,.base.sha,.head.repo.full_name] | @tsv' 2>/dev/null)
           test "$pr" = $'open\t85394a8e938a7c4bda08e32dd4cfff9ede623e57\tf420ca99541125452407e974958e7704f1d5b429\tkanta13jp1/my_web_app'
