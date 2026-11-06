@@ -228,6 +228,7 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
     });
     try {
       final config = await _voiceSessionService.createSession();
+      if (!mounted) return;
       final voiceSessionId = const Uuid().v4();
       await _voiceClient.start(
         config: config,

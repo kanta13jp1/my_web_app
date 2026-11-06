@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
@@ -57,6 +59,13 @@ class _FakeCartesiaVoiceSessionService extends CartesiaVoiceSessionService {
     savedTranscript = List<CartesiaVoiceTranscriptEntry>.from(transcript);
     return 'ticket-1';
   }
+}
+
+class _DeferredVoiceSessionService extends _FakeCartesiaVoiceSessionService {
+  final pending = Completer<CartesiaVoiceSessionConfig>();
+
+  @override
+  Future<CartesiaVoiceSessionConfig> createSession() => pending.future;
 }
 
 class _FakeCartesiaVoiceClient implements CartesiaVoiceClient {
@@ -206,6 +215,46 @@ void main() {
 
     expect(service.lastQuestion, 'まずは何を使えばよいですか');
     expect(find.text('まずは今日の一手から始めましょう。'), findsOneWidget);
+  });
+
+  testWidgets('disposed page does not start voice after session creation', (
+    tester,
+  ) async {
+    final voiceSessionService = _DeferredVoiceSessionService();
+    final voiceClient = _FakeCartesiaVoiceClient();
+    final chatService = _FakeSiteGuideChatService(
+      SiteGuideChatAnswer(
+        text: 'test',
+        source: 'test',
+        answeredAt: DateTime(2026),
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SiteGuideChatPage(
+          service: chatService,
+          toolCatalog: const <SiteGuideActionEntry>[],
+          voiceSessionService: voiceSessionService,
+          voiceClient: voiceClient,
+          isAuthenticated: () => true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('site_guide_voice_toggle')));
+    await tester.pump();
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    voiceSessionService.pending.complete(const CartesiaVoiceSessionConfig(
+      accessToken: 'token',
+      websocketUrl: 'wss://api.cartesia.ai/tts/websocket',
+      apiVersion: '2026-03-01',
+      modelId: 'sonic-3-2026-01-12',
+      voiceId: 'voice-id',
+      maxSessionSeconds: 300,
+    ));
+    await tester.pumpAndSettle();
+    expect(voiceClient.startCalls, 0);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('voice call streams a reply and saves a support transcript', (
