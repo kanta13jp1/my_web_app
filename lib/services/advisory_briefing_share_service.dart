@@ -73,7 +73,7 @@ String shortfallPhaseLabel(AdvisoryBriefingSnapshot s) {
   if (!s.forecastAvailable) return '予測データ不足';
   switch (s.shortfallPhase) {
     case 'this_month':
-      return '今月内にショート見込み';
+      return '今月の残高不足に要注意';
     case 'within_3m':
       return '3ヶ月以内に要注意';
     case 'within_6m':
