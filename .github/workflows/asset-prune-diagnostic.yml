@@ -1,0 +1,81 @@
+name: Payment-day prune synthetic diagnostic (draft)
+on:
+  push:
+    branches: [codex/payment-day-prune-diagnostic-20261106]
+permissions: {}
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    env:
+      CI: 'true'
+      FLUTTER_SUPPRESS_ANALYTICS: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify candidate and diagnostic scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = push
+          test "$GITHUB_REF" = refs/heads/codex/payment-day-prune-diagnostic-20261106
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 90351ed7e9fb10cbe08d4924f9b41963c51348b6
+          test "$(git rev-list --parents -n 1 HEAD | wc -w)" = 2
+          python3 - <<'PY'
+          import subprocess
+          raw = subprocess.check_output(['git', 'diff-tree', '--no-commit-id', '--name-status', '-r', '-z', 'HEAD']).decode().split('\0')
+          pairs = list(zip(raw[0:-1:2], raw[1:-1:2]))
+          assert set(pairs) == {('A', '.github/workflows/asset-prune-diagnostic.yml'),
+                                ('A', 'scripts/diagnostics/asset-prune-isolated.sh')}, pairs
+          PY
+          printf '%s\n' \
+            'ecb91c565969314604642e02050198e23fcaa6ea20ffe5d56364649b1837986e  scripts/diagnostics/asset-prune-isolated.sh' | sha256sum -c -
+      - name: Prepare pinned Flutter and dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PUB_CACHE="$RUNNER_TEMP/prune-pub-cache"
+          export XDG_CONFIG_HOME="$RUNNER_TEMP/prune-config"
+          export XDG_CACHE_HOME="$RUNNER_TEMP/prune-cache"
+          mkdir -p "$PUB_CACHE" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME"
+          git clone --depth 1 --branch 3.38.10 https://github.com/flutter/flutter.git "$RUNNER_TEMP/prune-flutter"
+          test "$(git -C "$RUNNER_TEMP/prune-flutter" rev-parse HEAD)" = c6f67dede3d4aa1aa7a69dd56a3494a5cde6cc80
+          export PATH="$RUNNER_TEMP/prune-flutter/bin:$PATH"
+          flutter config --no-analytics
+          flutter precache --linux --web
+          echo 'Committed lock SHA256:'
+          git show HEAD:pubspec.lock | sha256sum
+          flutter pub get
+          echo 'Resolved lock SHA256:'
+          sha256sum pubspec.lock
+          git diff -- pubspec.lock
+          git diff --cached -- pubspec.lock
+          flutter pub deps --style compact
+          python3 - <<'PY'
+          import subprocess
+          changed = set()
+          for args in ([], ['--cached']):
+              changed.update(subprocess.check_output(['git', 'diff', *args, '--name-only']).decode().splitlines())
+          assert changed <= {'pubspec.lock'}, changed
+          PY
+          flutter analyze --no-pub integration_test/asset_payment_day_prune_test.dart
+          flutter analyze --no-pub test_driver/asset_payment_day_prune.dart
+          google-chrome --version
+          chromedriver --version
+      - name: Run synthetic widget and browser checks
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          host_net="$(readlink /proc/self/ns/net)"
+          test "$(id -u)" -ne 0
+          sudo unshare --net -- env -i PATH="/usr/sbin:/usr/bin:/sbin:/bin" \
+            HOST_NET="$host_net" RUNNER_USER="$(id -un)" \
+            RUNNER_UID="$(id -u)" RUNNER_GID="$(id -g)" \
+            WORKSPACE="$GITHUB_WORKSPACE" TEMP_ROOT="$RUNNER_TEMP" \
+            bash "$GITHUB_WORKSPACE/scripts/diagnostics/asset-prune-isolated.sh"
