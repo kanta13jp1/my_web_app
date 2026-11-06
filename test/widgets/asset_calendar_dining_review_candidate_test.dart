@@ -213,8 +213,7 @@ void main() {
     expect(find.textContaining('支出の内容に「餃子の王将」'), findsNWidgets(2));
     expect(find.textContaining('当月を含む24か月分'), findsOneWidget);
     expect(find.textContaining('2000件を超える場合'), findsOneWidget);
-    expect(find.textContaining('この画面では支出明細を個別に照合できません'),
-        findsOneWidget);
+    expect(find.textContaining('この画面では支出明細を個別に照合できません'), findsOneWidget);
     expect(find.textContaining('ラーメンセット'), findsNothing);
     expect(find.textContaining('定食'), findsNothing);
     expect(find.text('外食 0日'), findsOneWidget);
