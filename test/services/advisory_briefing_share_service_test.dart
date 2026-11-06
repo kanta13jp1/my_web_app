@@ -139,7 +139,7 @@ void main() {
       // データレポート型として必要な骨格 + 機能アンカー。
       expect(text, contains('AI参謀室ブリーフィング'));
       expect(text, contains('負債トレンド'));
-      expect(text, contains('今月内にショート見込み'));
+      expect(text, contains('今月の残高不足に要注意'));
     });
 
     test('payload is tagged for the growth-hub learning loop', () {

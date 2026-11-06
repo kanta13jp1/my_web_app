@@ -185,7 +185,9 @@ class AssetCashflowForecastCard extends StatelessWidget {
     }
     buffer.write('最小見込み残高は${_yen(forecast.worstBalance)}。');
     final shortfallDate = forecast.firstShortfallDate;
-    if (shortfallDate != null) {
+    if (shortfallDate != null && forecast.startingBalance < 0) {
+      buffer.write('登録した起点残高が0円未満です。');
+    } else if (shortfallDate != null) {
       buffer.write('${shortfallDate.month}月${shortfallDate.day}日頃に残高不足の見込み。');
     } else if (forecast.safetyShortfallAmount > 0) {
       buffer.write('安全余裕を割り込む時期があります。');
@@ -222,7 +224,15 @@ class AssetCashflowForecastCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (shortfallDate != null)
+        if (shortfallDate != null && forecast.startingBalance < 0)
+          _buildAlert(
+            alertKey: _scenarioKey('asset_cashflow_forecast_shortfall'),
+            color: _danger,
+            icon: Icons.warning_amber,
+            message: '$_scenarioPrefix登録した起点残高が 0 円未満です。'
+                '登録データに基づく不足額の試算は ${_yen(forecast.shortfallRecoveryAmount)} です。残高・支払済み状態・支払日を明細と照合してから判断してください。',
+          )
+        else if (shortfallDate != null)
           _buildAlert(
             alertKey: _scenarioKey('asset_cashflow_forecast_shortfall'),
             color: _danger,
@@ -511,6 +521,7 @@ class AssetCashflowForecastScenariosCard extends StatelessWidget {
           '一部だけ反映済みの可能性もあり、実際の上下限や確定額ではありません。'
           '予定が重複して計上される場合があります。未登録の入出金、古い・不足した口座残高、'
           '同日内の入出金順序は考慮できません。'
+          '起点残高を先に評価し、未反映の入金と支出はその後に計算します。'
           'この間、参謀室の資金繰り判定は保留します。',
           key: Key('asset_cashflow_forecast_conditional_notice'),
         ),
