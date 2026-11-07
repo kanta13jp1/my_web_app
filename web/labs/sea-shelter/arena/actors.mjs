@@ -1,5 +1,6 @@
 // Original procedural models. No image planes, purchased meshes or game assets.
 import * as T from "./vendor/three.module.js";
+import { INK_COLORS, INK_BANDS } from "./art-direction.mjs";
 
 // Bake static pieces by material within each articulated joint, keeping draw calls low.
 function batch(group) {
@@ -40,7 +41,7 @@ function batch(group) {
   }
   return group;
 }
-export function createPalette() {
+export function createPalette({ ink = false } = {}) {
   const colors = {
     skin: 0xd8a679,
     hair: 0x252e36,
@@ -55,12 +56,21 @@ export function createPalette() {
     pale: 0xd6caa3,
     sea: 0x25616e,
   };
+  // A shared 3-byte ramp adds no meshes, outline pass or external requests.
+  const ramp = ink ? new T.DataTexture(
+    new Uint8Array(INK_BANDS), INK_BANDS.length, 1, T.RedFormat,
+  ) : null;
+  if (ramp) {
+    ramp.minFilter = ramp.magFilter = T.NearestFilter;
+    ramp.generateMipmaps = false;
+    ramp.needsUpdate = true;
+  }
   return Object.fromEntries(
-    Object.entries(colors).map((
+    Object.entries(ink ? INK_COLORS : colors).map((
       [key, color],
     ) => [
       key,
-      new T.MeshStandardMaterial({
+      ink ? new T.MeshToonMaterial({ color, gradientMap: ramp }) : new T.MeshStandardMaterial({
         color,
         roughness: .86,
         metalness: key === "trim" ? .35 : .03,
