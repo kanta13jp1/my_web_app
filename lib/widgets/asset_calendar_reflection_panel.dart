@@ -1,5 +1,6 @@
 import 'asset_reflection_day_badge.dart';
 import '../services/asset_calendar_reflection_import_parser.dart';
+import '../services/asset_management_egress_policy.dart';
 import 'package:flutter/material.dart';
 import '../models/asset_calendar_reflection.dart';
 import '../services/asset_calendar_reflection_repository.dart';
@@ -13,8 +14,10 @@ class AssetCalendarReflectionPanel extends StatefulWidget {
     required this.selectedDate,
     required this.onLoaded,
     this.flowEvents = const [],
+    this.diningReviewCandidates = const [],
   });
   final List<AssetCalendarReflection> flowEvents;
+  final List<AssetDiningReviewCandidate> diningReviewCandidates;
   final AssetCalendarReflectionStore repository;
   final DateTime start;
   final DateTime end;
@@ -202,6 +205,26 @@ class _AssetCalendarReflectionPanelState
                   e.date.day == selected.day,
             )
             .toList();
+    final candidates = selected == null || _loading || _error != null
+        ? <AssetDiningReviewCandidate>[]
+        : widget.diningReviewCandidates
+            .where(
+              (candidate) =>
+                  candidate.date.year == selected.year &&
+                  candidate.date.month == selected.month &&
+                  candidate.date.day == selected.day &&
+                  !candidate.date.isBefore(widget.start) &&
+                  candidate.date.isBefore(widget.end) &&
+                  !events.any(
+                    (event) =>
+                        event.linkedFlowId == candidate.flowId &&
+                        event.date.year == candidate.date.year &&
+                        event.date.month == candidate.date.month &&
+                        event.date.day == candidate.date.day &&
+                        event.kinds.contains(AssetReflectionKind.dining),
+                  ),
+            )
+            .toList();
     return Container(
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -268,6 +291,26 @@ class _AssetCalendarReflectionPanelState
             Text(
               '${selected.month}/${selected.day} の振り返り',
               style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          const Text(
+            '支出の候補は当月を含む'
+            '${AssetManagementEgressPolicy.recentFlowMonthWindow}か月分が対象です。'
+            '対象の収支記録が'
+            '${AssetManagementEgressPolicy.maxRecentFlowRows}件を超える場合や取得に失敗した場合、'
+            '候補は表示できません。店名は一部のみ対象です。',
+          ),
+          if (candidates.isNotEmpty)
+            const Text(
+              '利用形態や記録の重複を確認してください。'
+              '同じ日に同じ店名が複数ある場合、この画面では支出明細を個別に照合できません。',
+            ),
+          for (final candidate in candidates)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                '支出の内容に「${candidate.title}」という文字があります（飲食店の利用・外食かは要確認）\n'
+                '出典: 記録済み支出。外食日数には含みません。',
+              ),
             ),
           for (final event in dayEvents)
             Padding(
