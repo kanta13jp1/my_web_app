@@ -55,8 +55,13 @@ void main() {
           await tester.enterText(field, spelling.substring(0, i));
           await tester.pump();
           if (showHint && i < spelling.length) {
-            final guide = tester.widget<Text>(find.byKey(const Key('typing-romaji-guide')));
-            expect(guide.textSpan!.toPlainText().startsWith(spelling.substring(0, i)), isTrue);
+            final guide = tester.widget<Text>(
+              find.byKey(const Key('typing-romaji-guide')),
+            );
+            expect(
+              guide.textSpan!.toPlainText().startsWith(spelling.substring(0, i)),
+              isTrue,
+            );
           } else if (!showHint) {
             expect(find.byKey(const Key('typing-romaji-guide')), findsNothing);
           }

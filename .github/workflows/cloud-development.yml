@@ -1,202 +1,202 @@
-name: Cloud Development Checks
-on:
-  push:
-    branches: [codex/typing-bicycle-validation-20261107]
-  workflow_dispatch:
-    inputs:
-      expected_head_sha:
-        required: true
-        type: string
-      profile:
-        required: true
-        default: full
-        type: string
-permissions:
-  contents: read
-jobs:
-  database:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_PASSWORD: typing-disposable-fixture
-          POSTGRES_DB: typing_test
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-      - name: Test draft in disposable PostgreSQL only
-        env:
-          PGPASSWORD: typing-disposable-fixture
-        run: psql -h 127.0.0.1 -U postgres -d typing_test -f test/sql/typing_records_test.sql
-  typing:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-      - name: Verify exact candidate
-        env:
-          EXPECTED: ${{ inputs.expected_head_sha || github.sha }}
-        run: test "$(git rev-parse HEAD)" = "$EXPECTED"
-      - uses: ./.github/actions/setup-flutter-sdk
-        with:
-          flutter-version: '3.38.10'
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
-        with:
-          node-version: '22'
-      - run: flutter pub get
-      - name: Format candidate and preserve patch
-        run: |
-          dart format lib/models/typing_game.dart lib/pages/typing_game_page.dart lib/services/typing_composition_bridge_stub.dart lib/services/typing_composition_bridge_web.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart
-          git diff -- lib/models/typing_game.dart lib/pages/typing_game_page.dart lib/services/typing_composition_bridge_stub.dart lib/services/typing_composition_bridge_web.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart > typing-format.patch
-          git diff -- lib/models/typing_game.dart lib/pages/typing_game_page.dart lib/services/typing_composition_bridge_stub.dart lib/services/typing_composition_bridge_web.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart
-      - name: Analyze typing implementation
-        run: flutter analyze lib/models/typing_game.dart lib/pages/typing_game_page.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart
-      - name: Typing model and widget tests
-        run: flutter test test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart test/routes/route_url_sync_test.dart --concurrency=1
-      - name: Build standalone game
-        run: flutter build web --release --pwa-strategy=none --target=test/fixtures/typing_game_app.dart
-      - name: Install browser test dependencies
-        run: |
-          npm ci --ignore-scripts
-          npx playwright install --with-deps chromium
-      - name: Desktop and emulated mobile browser input
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/serve_spa.py build/web --port 7358 > typing-server.log 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" || true' EXIT
-          for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
-            sleep 1
-          done
-          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/typing_game.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
-      - name: Build integrated app
-        run: flutter build web --release --pwa-strategy=none --dart-define=ENVIRONMENT=visual-test --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture --dart-define=TYPING_ONLINE_RECORDS=true
-      - name: Preserve published Sea Shelter asset packaging
-        uses: ./.github/actions/prepare-sea-shelter-arena
-        with:
-          web-root: build/web
-      - name: Existing published game model regressions
-        run: node --test web/labs/sea-shelter/model.test.mjs web/labs/sea-shelter/farm.test.mjs web/labs/sea-shelter/storage.test.mjs web/labs/sea-shelter/arena/model.test.mjs
-      - name: Integrated new route and existing published game
-        shell: bash
-        run: |
-          set -euo pipefail
-          cat > test/e2e/typing_public_base_integration.spec.ts <<'TS'
-          import { expect, test } from '@playwright/test';
-          test('preserved public application opens and plays typing route', async ({page}, info) => {
-            const errors: string[]=[];
-            const recordRequests: string[]=[];
-            page.on('pageerror', e=>errors.push(e.message));
-            page.on('request', r=>{ if(r.url().includes('/rpc/typing_game_records')) recordRequests.push(r.url()); });
-            await page.goto('/typing-game');
-            await page.getByRole('button',{name:'自分の履歴を読む',exact:true}).click({timeout:60000});
-            await expect(page.getByRole('group',{name:/ログインしてから利用してください。/})).toBeVisible();
-            expect(recordRequests).toEqual([]);
-            await expect(page.getByRole('button',{name:/スタート/})).toBeVisible({timeout:60000});
-            await page.getByRole('button',{name:/スタート/}).click();
-            const input=page.getByRole('textbox',{name:/^ローマ字入力/});
-            await input.scrollIntoViewIfNeeded();
-            await input.focus();
-            const guide=await page.getByText(/使えるつづり:/).textContent({timeout:7500});
-            const spelling=guide!.match(/使えるつづり:\s*([a-z]+)/)![1];
-            await input.pressSequentially(spelling);
-            await expect(page.getByText('クリア 1問',{exact:true})).toBeVisible();
-            await page.screenshot({path:info.outputPath('public-base-integrated-typing.png'),fullPage:true});
-            expect(errors).toEqual([]);
-          });
-          TS
-          python3 scripts/serve_spa.py build/web --port 7359 > typing-integrated-server.log 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" || true' EXIT
-          for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:7359/ > /dev/null; then break; fi
-            sleep 1
-          done
-          E2E_BASE_URL=http://127.0.0.1:7359 PLAYWRIGHT_TEST_OUTPUT_DIR=typing-integrated-results PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/integrated-results.json npx playwright test test/e2e/typing_public_base_integration.spec.ts test/e2e/sea_shelter_route.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
-      - name: Require clean formatting
-        run: test ! -s typing-format.patch
-      - name: Preserve evidence
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        with:
-          name: typing-validation
-          path: |
-            typing-format.patch
-            typing-input-baseline.jsonl
-            test-results/
-            playwright-report/
-            typing-server.log
-            typing-integrated-results/
-            typing-integrated-server.log
-          retention-days: 7
-  real-auth:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup-flutter-sdk
-        with:
-          flutter-version: '3.38.10'
-      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359
-        with:
-          version: 2.115.0
-      - run: flutter pub get
-      - name: Format and analyze the real auth test
-        run: |
-          dart format test/integration/typing_records_supabase_test.dart
-          git diff -- test/integration/typing_records_supabase_test.dart > typing-auth-format.patch
-          flutter analyze test/integration/typing_records_supabase_test.dart
-      - name: Start disposable local auth stack
-        shell: bash
-        run: |
-          set -euo pipefail
-          supabase init --workdir /tmp/typing-records-supabase
-          supabase start --workdir /tmp/typing-records-supabase --exclude realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
-          supabase status --workdir /tmp/typing-records-supabase --output json > "$RUNNER_TEMP/typing-stack.json"
-          python - <<'PY'
-          import json,os
-          from pathlib import Path
-          d=json.loads((Path(os.environ['RUNNER_TEMP'])/'typing-stack.json').read_text())
-          values={'TYPING_TEST_URL':d['API_URL'],'TYPING_TEST_ANON_KEY':d['ANON_KEY'],'TYPING_TEST_DB_URL':d['DB_URL']}
-          for value in values.values(): print('::add-mask::'+value)
-          with open(os.environ['GITHUB_ENV'],'a') as f:
-              for k,v in values.items(): f.write(k+'='+v+'\n')
-          PY
-      - name: Apply only typing draft to disposable database
-        run: |
-          psql "$TYPING_TEST_DB_URL" -v ON_ERROR_STOP=1 -f docs/typing-game/records-schema.draft.sql
-          psql "$TYPING_TEST_DB_URL" -v ON_ERROR_STOP=1 -c "notify pgrst, 'reload schema';"
-      - name: Real Auth and PostgREST integration
-        run: flutter test test/integration/typing_records_supabase_test.dart --concurrency=1 --reporter=expanded
-      - name: Require clean auth test formatting
-        run: test ! -s typing-auth-format.patch
-      - name: Stop disposable stack
-        if: always()
-        run: |
-          if test -f /tmp/typing-records-supabase/supabase/config.toml; then
-            supabase stop --workdir /tmp/typing-records-supabase --no-backup
-          else
-            echo 'No disposable stack was initialized; nothing to stop.'
-          fi
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        if: always()
-        with:
-          name: typing-auth-validation
-          path: typing-auth-format.patch
-          retention-days: 7
+name: Cloud Development Checks
+on:
+  push:
+    branches: [codex/typing-bicycle-validation-20261107]
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        required: true
+        type: string
+      profile:
+        required: true
+        default: full
+        type: string
+permissions:
+  contents: read
+jobs:
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: typing-disposable-fixture
+          POSTGRES_DB: typing_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Test draft in disposable PostgreSQL only
+        env:
+          PGPASSWORD: typing-disposable-fixture
+        run: psql -h 127.0.0.1 -U postgres -d typing_test -f test/sql/typing_records_test.sql
+  typing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify exact candidate
+        env:
+          EXPECTED: ${{ inputs.expected_head_sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED"
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.10'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - run: flutter pub get
+      - name: Format candidate and preserve patch
+        run: |
+          dart format lib/models/typing_game.dart lib/pages/typing_game_page.dart lib/services/typing_composition_bridge_stub.dart lib/services/typing_composition_bridge_web.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart
+          git diff -- lib/models/typing_game.dart lib/pages/typing_game_page.dart lib/services/typing_composition_bridge_stub.dart lib/services/typing_composition_bridge_web.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart > typing-format.patch
+          git diff -- lib/models/typing_game.dart lib/pages/typing_game_page.dart lib/services/typing_composition_bridge_stub.dart lib/services/typing_composition_bridge_web.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart
+      - name: Analyze typing implementation
+        run: flutter analyze lib/models/typing_game.dart lib/pages/typing_game_page.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart
+      - name: Typing model and widget tests
+        run: flutter test test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart test/routes/route_url_sync_test.dart --concurrency=1
+      - name: Build standalone game
+        run: flutter build web --release --pwa-strategy=none --target=test/fixtures/typing_game_app.dart
+      - name: Install browser test dependencies
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+      - name: Desktop and emulated mobile browser input
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/serve_spa.py build/web --port 7358 > typing-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/typing_game.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+      - name: Build integrated app
+        run: flutter build web --release --pwa-strategy=none --dart-define=ENVIRONMENT=visual-test --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture --dart-define=TYPING_ONLINE_RECORDS=true
+      - name: Preserve published Sea Shelter asset packaging
+        uses: ./.github/actions/prepare-sea-shelter-arena
+        with:
+          web-root: build/web
+      - name: Existing published game model regressions
+        run: node --test web/labs/sea-shelter/model.test.mjs web/labs/sea-shelter/farm.test.mjs web/labs/sea-shelter/storage.test.mjs web/labs/sea-shelter/arena/model.test.mjs
+      - name: Integrated new route and existing published game
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > test/e2e/typing_public_base_integration.spec.ts <<'TS'
+          import { expect, test } from '@playwright/test';
+          test('preserved public application opens and plays typing route', async ({page}, info) => {
+            const errors: string[]=[];
+            const recordRequests: string[]=[];
+            page.on('pageerror', e=>errors.push(e.message));
+            page.on('request', r=>{ if(r.url().includes('/rpc/typing_game_records')) recordRequests.push(r.url()); });
+            await page.goto('/typing-game');
+            await page.getByRole('button',{name:'自分の履歴を読む',exact:true}).click({timeout:60000});
+            await expect(page.getByRole('group',{name:/ログインしてから利用してください。/})).toBeVisible();
+            expect(recordRequests).toEqual([]);
+            await expect(page.getByRole('button',{name:/スタート/})).toBeVisible({timeout:60000});
+            await page.getByRole('button',{name:/スタート/}).click();
+            const input=page.getByRole('textbox',{name:/^ローマ字入力/});
+            await input.scrollIntoViewIfNeeded();
+            await input.focus();
+            const guide=await page.getByText(/使えるつづり:/).textContent({timeout:7500});
+            const spelling=guide!.match(/使えるつづり:\s*([a-z]+)/)![1];
+            await input.pressSequentially(spelling);
+            await expect(page.getByText('クリア 1問',{exact:true})).toBeVisible();
+            await page.screenshot({path:info.outputPath('public-base-integrated-typing.png'),fullPage:true});
+            expect(errors).toEqual([]);
+          });
+          TS
+          python3 scripts/serve_spa.py build/web --port 7359 > typing-integrated-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:7359/ > /dev/null; then break; fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:7359 PLAYWRIGHT_TEST_OUTPUT_DIR=typing-integrated-results PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/integrated-results.json npx playwright test test/e2e/typing_public_base_integration.spec.ts test/e2e/sea_shelter_route.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+      - name: Require clean formatting
+        run: test ! -s typing-format.patch
+      - name: Preserve evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: typing-validation
+          path: |
+            typing-format.patch
+            typing-input-baseline.jsonl
+            test-results/
+            playwright-report/
+            typing-server.log
+            typing-integrated-results/
+            typing-integrated-server.log
+          retention-days: 7
+  real-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.10'
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359
+        with:
+          version: 2.115.0
+      - run: flutter pub get
+      - name: Format and analyze the real auth test
+        run: |
+          dart format test/integration/typing_records_supabase_test.dart
+          git diff -- test/integration/typing_records_supabase_test.dart > typing-auth-format.patch
+          flutter analyze test/integration/typing_records_supabase_test.dart
+      - name: Start disposable local auth stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase init --workdir /tmp/typing-records-supabase
+          supabase start --workdir /tmp/typing-records-supabase --exclude realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+          supabase status --workdir /tmp/typing-records-supabase --output json > "$RUNNER_TEMP/typing-stack.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          d=json.loads((Path(os.environ['RUNNER_TEMP'])/'typing-stack.json').read_text())
+          values={'TYPING_TEST_URL':d['API_URL'],'TYPING_TEST_ANON_KEY':d['ANON_KEY'],'TYPING_TEST_DB_URL':d['DB_URL']}
+          for value in values.values(): print('::add-mask::'+value)
+          with open(os.environ['GITHUB_ENV'],'a') as f:
+              for k,v in values.items(): f.write(k+'='+v+'\n')
+          PY
+      - name: Apply only typing draft to disposable database
+        run: |
+          psql "$TYPING_TEST_DB_URL" -v ON_ERROR_STOP=1 -f docs/typing-game/records-schema.draft.sql
+          psql "$TYPING_TEST_DB_URL" -v ON_ERROR_STOP=1 -c "notify pgrst, 'reload schema';"
+      - name: Real Auth and PostgREST integration
+        run: flutter test test/integration/typing_records_supabase_test.dart --concurrency=1 --reporter=expanded
+      - name: Require clean auth test formatting
+        run: test ! -s typing-auth-format.patch
+      - name: Stop disposable stack
+        if: always()
+        run: |
+          if test -f /tmp/typing-records-supabase/supabase/config.toml; then
+            supabase stop --workdir /tmp/typing-records-supabase --no-backup
+          else
+            echo 'No disposable stack was initialized; nothing to stop.'
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: typing-auth-validation
+          path: typing-auth-format.patch
+          retention-days: 7
