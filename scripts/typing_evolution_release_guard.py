@@ -9,21 +9,11 @@ import urllib.request
 REPO = 'kanta13jp1/my_web_app'
 SITE = 'https://my-web-app-b67f4.web.app'
 GAME = frozenset({
-    'docs/typing-game/online-records-plan.md',
-    'docs/typing-game/records-schema.draft.sql',
     'lib/models/typing_game.dart',
     'lib/pages/typing_game_page.dart',
-    'lib/services/typing_composition_bridge_stub.dart',
-    'lib/services/typing_composition_bridge_web.dart',
-    'lib/services/typing_score_service.dart',
-    'lib/widgets/typing_records_panel.dart',
     'test/e2e/typing_game.spec.ts',
-    'test/integration/typing_records_supabase_test.dart',
     'test/models/typing_game_test.dart',
     'test/pages/typing_game_page_test.dart',
-    'test/services/typing_score_service_test.dart',
-    'test/sql/typing_records_test.sql',
-    'test/widgets/typing_records_panel_test.dart',
 })
 SUPPORT = frozenset({
     '.github/workflows/typing-evolution-release.yml',
@@ -36,7 +26,7 @@ REQUIRED = frozenset({'AI Review Gate', 'Lint, Format, and Test',
 
 
 
-VALIDATION_WORKFLOW_BLOB = 'a01e19b190e9933a7426eb2e982c4572d9909895'
+VALIDATION_WORKFLOW_BLOB = 'ef39f4bc7d6da0947ad7ad233b2b0858b0a0502c'
 VALIDATION_STEPS = {
     'database': {'Test draft in disposable PostgreSQL only'},
     'typing': {'Format candidate and preserve patch', 'Analyze typing implementation',

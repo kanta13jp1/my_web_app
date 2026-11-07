@@ -1,4 +1,4 @@
-name: Reviewed typing evolution public-base release
+name: Reviewed typing hints public-base release
 run-name: Typing-only release ${{ inputs.expected_head_sha }}
 
 on:
@@ -20,7 +20,7 @@ on:
       public_base_sha:
         required: true
         type: string
-        default: c7b86ae2aeae5724304379365f566ca3668ab8d5
+        default: a67c93e976d5b6d6517942054dc5709e662bd580
       source_pr:
         required: true
         type: number
