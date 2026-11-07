@@ -1,0 +1,323 @@
+# REVIEW CANDIDATE: widget-only, would execute if installed and pushed.
+# DO NOT PUSH: independent review, current main and event-chain checks remain outstanding.
+name: Asset prune KGI ink fix synthetic validation
+on:
+  push:
+    branches:
+      - codex/asset-prune-kgi-ink-matrix-synth-20261107
+permissions: {}
+jobs:
+  synthetic-widget-only:
+    if: ${{ github.event_name == 'push' && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/asset-prune-kgi-ink-matrix-synth-20261107' && github.event.created == true && github.event.deleted == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions: {}
+    steps:
+      - name: Allocate a private scratch directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${RUNNER_TEMP:?}" == /* && -d "$RUNNER_TEMP" && ! -L "$RUNNER_TEMP" ]]
+          base="$(realpath -e -- "$RUNNER_TEMP")"
+          [[ "$base" != / ]]
+          umask 077
+          root="$(mktemp -d -- "$base/prune-widget.XXXXXXXX")"
+          [[ "$(dirname -- "$root")" == "$base" && -d "$root" && ! -L "$root" ]]
+          [[ "$(realpath -e -- "$root")" == "$root" && "$(stat -c %u -- "$root")" == "$(id -u)" && "$(stat -c %a -- "$root")" == 700 ]]
+          mkdir "$root/home" "$root/pub-cache" "$root/tmp" "$root/sdk" "$root/source" "$root/candidate" "$root/config" "$root/cache"
+          printf 'WIDGET_ROOT=%s\n' "$root" >> "$GITHUB_ENV"
+      - name: Verify exact candidate commit and run policy checks
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          base=b6cbe6f9df510a5148761161f745efbb0721493b
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GITHUB_REF" == 'refs/heads/codex/asset-prune-kgi-ink-matrix-synth-20261107' ]]
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" TMPDIR="$WIDGET_ROOT/tmp" PYTHONDONTWRITEBYTECODE=1 GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" init --quiet
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" -c credential.helper= fetch --no-tags --depth=2 https://github.com/kanta13jp1/my_web_app.git "$GITHUB_SHA"
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" checkout --quiet --detach FETCH_HEAD
+          cd "$WIDGET_ROOT/candidate"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git show -s --format=%P HEAD)" = "$base"
+          actual_diff="$(git diff --no-renames --name-status "$base" HEAD)"
+          expected_diff="$(printf 'A\t.github/workflows/asset-prune-kgi-ink-synthetic.yml\nA\tscripts/isolated_checks/asset_5984/kgi_csf_kpi_material_ink_test.dart\nA\tscripts/isolated_checks/asset_5984/kgi_ink_fix_REVIEW_ONLY.diff')"
+          [[ "$actual_diff" == "$expected_diff" ]]
+          [[ -z "$(git status --porcelain --untracked-files=all)" ]]
+          echo "Candidate commit: $(git rev-parse HEAD)"
+          echo "Candidate tree: $(git rev-parse 'HEAD^{tree}')"
+          sha256sum .github/workflows/asset-prune-kgi-ink-synthetic.yml
+          printf '%s  %s\n' 72a2f3936445bbee254542f33a468da5baec80e525969f44d835b2a3a3019768 scripts/isolated_checks/asset_5984/kgi_ink_fix_REVIEW_ONLY.diff | sha256sum -c -
+          printf '%s  %s\n' 2044a4079d5961bee64899260fd30e84ebc1e854d2e5d716cf2ff64f1dddbfda scripts/isolated_checks/asset_5984/kgi_csf_kpi_material_ink_test.dart | sha256sum -c -
+          # Same eleven path-scoped policy commands as base pre-commit gate.
+          # This cloud run does not claim that local Git hooks ran.
+          for policy in \
+            scripts/classify_ci_changes_test.py \
+            scripts/cloud_ci_handoff_test.py \
+            scripts/cloud_first_route_test.py \
+            scripts/generate_infrastructure_map_test.py \
+            scripts/cicd_efficiency_test.py \
+            scripts/quality_gate_test.py \
+            scripts/pre_commit_quality_gate_test.py \
+            scripts/check_github_actions_node_runtime.py \
+            scripts/check_github_actions_python_inline.py \
+            scripts/check_github_actions_status_functions.py \
+            scripts/check_github_actions_powershell_splatting.py; do
+              echo "Running $policy"
+              "${clean_env[@]}" python3 "$policy"
+          done
+          [[ -z "$(git status --porcelain --untracked-files=all)" ]]
+          echo 'All eleven cloud policy checks passed for candidate tree.'
+      - name: Fetch fixed public merge commit without a stored token
+        shell: bash
+        run: |
+          set -euo pipefail
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" init --quiet
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" -c credential.helper= fetch --no-tags --depth=1 https://github.com/kanta13jp1/my_web_app.git a50bb70cf9e1f666653295118d780487255ed354
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" checkout --quiet --detach FETCH_HEAD
+          cd "$WIDGET_ROOT/source"
+          test "$(git rev-parse HEAD)" = a50bb70cf9e1f666653295118d780487255ed354
+          test "$(git rev-parse HEAD:.github/workflows/asset-payment-day-prune-browser.yml)" = 5145b4a88772343b43563f9919646bbdc9b97571
+          test "$(git rev-parse HEAD:integration_test/asset_payment_day_prune_test.dart)" = 722eaaf1759303d61978b5ee7ffb6e66c6890532
+          test "$(git rev-parse HEAD:lib/pages/asset_management_page.dart)" = beed24eb38de1300d2a3d956ee3817a668c27644
+          test "$(git rev-parse HEAD:test/widgets/asset_management_page_smoke_test.dart)" = 012316bb12003e8fb6e5760d5ec305f11d0c5219
+          test "$(git rev-parse HEAD:test_driver/asset_payment_day_prune.dart)" = a538f114e045e51838381f20da4d133a18aa6399
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          test "$(git rev-parse HEAD:lib/widgets/kgi_csf_kpi_panel.dart)" = 5f0c5623c6a04da1ab5b68fe2a5999e706e5b1e7
+          test "$(git rev-parse HEAD:test/widgets/kgi_csf_kpi_panel_test.dart)" = 38a200e3cc5717ac55397df38a5752fe20965d10
+          printf '%s  %s\n' 1a686a5b26b05173ffaa5d2a91b6fc8cb5dae5bede45b0d5bd29bd4d160e3843 lib/widgets/kgi_csf_kpi_panel.dart | sha256sum -c -
+          patch="$WIDGET_ROOT/candidate/scripts/isolated_checks/asset_5984/kgi_ink_fix_REVIEW_ONLY.diff"
+          [[ -f "$patch" && ! -L "$patch" ]]
+          printf '%s  %s\n' 72a2f3936445bbee254542f33a468da5baec80e525969f44d835b2a3a3019768 "$patch" | sha256sum -c -
+          git apply --check -- "$patch"
+          git apply -- "$patch"
+          printf '%s  %s\n' cdccc161738198b1eaf1e4b57c05aec02ebd67c90394d17af103923f7130b071 lib/widgets/kgi_csf_kpi_panel.dart | sha256sum -c -
+          test "$(git diff --name-only)" = lib/widgets/kgi_csf_kpi_panel.dart
+          matrix_source="$WIDGET_ROOT/candidate/scripts/isolated_checks/asset_5984/kgi_csf_kpi_material_ink_test.dart"
+          matrix_target=test/widgets/kgi_csf_kpi_material_ink_test.dart
+          [[ -f "$matrix_source" && ! -L "$matrix_source" && ! -e "$matrix_target" && ! -L "$matrix_target" ]]
+          test -z "$(git ls-files -- "$matrix_target")"
+          printf '%s  %s\n' 2044a4079d5961bee64899260fd30e84ebc1e854d2e5d716cf2ff64f1dddbfda "$matrix_source" | sha256sum -c -
+          install -m 0644 -- "$matrix_source" "$matrix_target"
+          printf '%s  %s\n' 2044a4079d5961bee64899260fd30e84ebc1e854d2e5d716cf2ff64f1dddbfda "$matrix_target" | sha256sum -c -
+          test "$(git status --porcelain --untracked-files=all | grep '^?? ')" = "?? $matrix_target"
+          echo 'Applied reviewed candidate only inside synthetic checkout.'
+      - name: Install exact-byte migration guard in private runner scratch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$WIDGET_ROOT/tmp/analysis_options_guard.py" <<'PYGUARD'
+          import hashlib, os, pathlib, subprocess, sys
+
+          if len(sys.argv) != 3:
+              raise SystemExit('expected private runner root and phase')
+          root = pathlib.Path(sys.argv[1])
+          phase = sys.argv[2]
+          if phase not in {'before_flutter', 'after_version', 'after_precache', 'after_pub_get', 'before_widget', 'after_focused_widget', 'after_manual_widget', 'after_boot_widget', 'final'}:
+              raise SystemExit('unknown phase')
+          if root.is_symlink() or not root.is_dir() or not root.name.startswith('prune-widget.'):
+              raise SystemExit('unsafe runner root')
+          root = root.resolve(strict=True)
+          source = root / 'source'
+          if source.is_symlink() or not source.is_dir() or source.resolve(strict=True).parent != root:
+              raise SystemExit('unsafe source')
+          path = source / 'analysis_options.yaml'
+          if path.is_symlink() or not path.is_file() or path.resolve(strict=True).parent != source:
+              raise SystemExit('unsafe analysis options path')
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
+          if head != 'a50bb70cf9e1f666653295118d780487255ed354':
+              raise SystemExit('unexpected source HEAD')
+          original = subprocess.check_output(['git', 'show', 'HEAD:analysis_options.yaml'], cwd=source)
+          base_hash = 'e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342'
+          expected_hash = '1900f9a58dfe11a5f9c9ce0988ffc9d7e64f8ec23f3a7d7757f2024a23d27083'
+          if hashlib.sha256(original).hexdigest() != base_hash:
+              raise SystemExit('baseline hash mismatch')
+          anchor = b'    - ".dart_tool/**"\n'
+          addition = b'    - android/**\n    - ios/**\n    - web/**\n    - windows/**\n    - macos/**\n    - linux/**\n'
+          if original.count(anchor) != 1:
+              raise SystemExit('baseline anchor mismatch')
+          expected = original.replace(anchor, anchor + addition, 1)
+          if hashlib.sha256(expected).hexdigest() != expected_hash:
+              raise SystemExit('expected migration hash mismatch')
+          actual = path.read_bytes()
+          actual_hash = hashlib.sha256(actual).hexdigest()
+          print(f'analysis_guard phase={phase} before_sha256={actual_hash}', flush=True)
+          if actual == original:
+              print('analysis_guard action=none baseline_confirmed', flush=True)
+          elif actual == expected:
+              print('analysis_guard action=restore exact_six_line_flutter_migration', flush=True)
+              # This path is inside a private ephemeral Actions checkout, never the user workspace.
+              path.write_bytes(original)
+              if path.read_bytes() != original:
+                  raise SystemExit('restore verification failed')
+          else:
+              raise SystemExit('unexpected analysis options bytes; no restoration performed')
+          print(f'analysis_guard phase={phase} after_sha256={hashlib.sha256(path.read_bytes()).hexdigest()}', flush=True)
+          PYGUARD
+          chmod 0400 "$WIDGET_ROOT/tmp/analysis_options_guard.py"
+          sha256sum "$WIDGET_ROOT/tmp/analysis_options_guard.py"
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" before_flutter
+      - name: Verify official SDK and locked dependencies before isolation
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" \
+            curl --fail --location --connect-timeout 15 --max-time 240 --retry 0 \
+              --output "$WIDGET_ROOT/sdk/flutter.tar.xz" \
+              https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.9-stable.tar.xz
+          printf '%s  %s\n' 25ed8c3c29d51a7353f2a944310b478af8214920639524b19c50a19e6c044c5a "$WIDGET_ROOT/sdk/flutter.tar.xz" | sha256sum -c -
+          tar -xJf "$WIDGET_ROOT/sdk/flutter.tar.xz" -C "$WIDGET_ROOT/sdk"
+          cd "$WIDGET_ROOT/source"
+          clean_env=(env -i PATH="$WIDGET_ROOT/sdk/flutter/bin:/usr/bin:/bin" HOME="$WIDGET_ROOT/home" PUB_CACHE="$WIDGET_ROOT/pub-cache" TMPDIR="$WIDGET_ROOT/tmp" XDG_CONFIG_HOME="$WIDGET_ROOT/config" XDG_CACHE_HOME="$WIDGET_ROOT/cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0)
+          "${clean_env[@]}" flutter --version --machine > "$WIDGET_ROOT/flutter-version.json"
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" after_version
+          python3 - "$WIDGET_ROOT/flutter-version.json" <<'PY'
+          import json,sys
+          with open(sys.argv[1],encoding='utf-8') as f: info=json.load(f)
+          if info.get('frameworkVersion') != '3.47.9': raise SystemExit('unexpected Flutter version')
+          PY
+          "${clean_env[@]}" dart --version 2>&1 | grep -Eq '^Dart SDK version: 3[.]13[.]7([[:space:]]|$)'
+          "${clean_env[@]}" flutter precache --linux
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" after_precache
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          "${clean_env[@]}" flutter pub get --enforce-lockfile
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" after_pub_get
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          git diff --exit-code -- pubspec.lock pubspec.yaml analysis_options.yaml
+      - name: Run four KGI ink matrix widget conditions in isolated network namespace
+        shell: bash
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          user="$(id -un)"
+          [[ "$(id -u "$user")" -gt 0 ]]
+          original_net="$(readlink /proc/self/ns/net)"
+          sudo -n true
+          env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME="$WIDGET_ROOT/home" \
+            sudo -n unshare --net -- /bin/bash -euc '
+              ip link set lo up
+              net="$(readlink /proc/self/ns/net)"
+              [[ "$net" != "$5" ]]
+              links="$(ip -o link show)"
+              [[ "$(printf "%s\n" "$links" | wc -l)" -eq 1 ]]
+              [[ "$(printf "%s\n" "$links" | cut -d: -f2 | tr -d "[:space:]")" == lo ]]
+              routes4="$(ip -4 route show default)"
+              routes6="$(ip -6 route show default)"
+              [[ -z "$routes4" && -z "$routes6" ]]
+              runuser -u "$1" -- env -i PATH="$2/sdk/flutter/bin:/usr/bin:/bin" HOME="$2/home" PUB_CACHE="$2/pub-cache" TMPDIR="$2/tmp" XDG_CONFIG_HOME="$2/config" XDG_CACHE_HOME="$2/cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 /bin/bash -euc '\''
+                cd "$1/source"
+                set -o pipefail
+                printf "%s  %s\n" da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+                python3 "$1/tmp/analysis_options_guard.py" "$1" before_widget
+                printf "%s  %s\n" 2044a4079d5961bee64899260fd30e84ebc1e854d2e5d716cf2ff64f1dddbfda test/widgets/kgi_csf_kpi_material_ink_test.dart | sha256sum -c -
+                flutter --no-color --no-version-check test --no-pub --reporter expanded test/widgets/kgi_csf_kpi_material_ink_test.dart | tee "$1/tmp/widget-matrix.log"
+                python3 "$1/tmp/analysis_options_guard.py" "$1" after_focused_widget
+                for dense in false true; do
+                  for dark in false true; do
+                    grep -Fq "panel material and interaction: dense=$dense dark=$dark" "$1/tmp/widget-matrix.log"
+                  done
+                done
+                grep -Fq "All tests passed!" "$1/tmp/widget-matrix.log"
+                printf "%s  %s\n" 2044a4079d5961bee64899260fd30e84ebc1e854d2e5d716cf2ff64f1dddbfda test/widgets/kgi_csf_kpi_material_ink_test.dart | sha256sum -c -
+                printf "%s  %s\n" cdccc161738198b1eaf1e4b57c05aec02ebd67c90394d17af103923f7130b071 lib/widgets/kgi_csf_kpi_panel.dart | sha256sum -c -
+                printf "%s  %s\n" da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+                git diff --exit-code -- pubspec.lock pubspec.yaml analysis_options.yaml
+              '\'' widget "$2"
+            ' isolated "$user" "$WIDGET_ROOT" unused unused "$original_net"
+      - name: Independently verify test, lock and configuration after failure
+        if: ${{ always() && env.WIDGET_ROOT != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          failures=0
+          source_dir="$WIDGET_ROOT/source"
+          matrix_rel=test/widgets/kgi_csf_kpi_material_ink_test.dart
+          matrix_target="$source_dir/$matrix_rel"
+          check() {
+            local label="$1"
+            shift
+            if "$@"; then
+              printf 'PASS: %s\n' "$label"
+            else
+              printf 'FAIL: %s\n' "$label" >&2
+              failures=$((failures + 1))
+            fi
+          }
+          safe_directory() {
+            [[ -d "$1" && ! -L "$1" && "$(realpath -e -- "$1")" == "$1" ]]
+          }
+          safe_source() {
+            safe_directory "$WIDGET_ROOT" && safe_directory "$source_dir"
+          }
+          check_hash() {
+            printf '%s  %s\n' "$1" "$2" | sha256sum -c -
+          }
+          check_matrix() {
+            safe_source || return 1
+            safe_directory "$source_dir/test" || return 1
+            safe_directory "$source_dir/test/widgets" || return 1
+            [[ -f "$matrix_target" && ! -L "$matrix_target" ]] || return 1
+            check_hash 2044a4079d5961bee64899260fd30e84ebc1e854d2e5d716cf2ff64f1dddbfda "$matrix_target"
+          }
+          run_migration_guard() {
+            local guard="$WIDGET_ROOT/tmp/analysis_options_guard.py"
+            if ! safe_directory "$WIDGET_ROOT" || ! safe_directory "$WIDGET_ROOT/tmp" || [[ ! -f "$guard" || -L "$guard" ]]; then
+              echo 'Migration guard unavailable or unsafe; verification/restoration were not performed.' >&2
+              return 1
+            fi
+            python3 "$guard" "$WIDGET_ROOT" final
+          }
+          check_source_head() {
+            local head
+            safe_source || return 1
+            head="$(git -C "$source_dir" rev-parse HEAD)" || return 1
+            [[ "$head" == a50bb70cf9e1f666653295118d780487255ed354 ]]
+          }
+          check_widget_hash() {
+            safe_source || return 1
+            safe_directory "$source_dir/lib" || return 1
+            safe_directory "$source_dir/lib/widgets" || return 1
+            [[ -f "$source_dir/lib/widgets/kgi_csf_kpi_panel.dart" && ! -L "$source_dir/lib/widgets/kgi_csf_kpi_panel.dart" ]] || return 1
+            check_hash cdccc161738198b1eaf1e4b57c05aec02ebd67c90394d17af103923f7130b071 "$source_dir/lib/widgets/kgi_csf_kpi_panel.dart"
+          }
+          check_lock_hash() {
+            safe_source || return 1
+            [[ -f "$source_dir/pubspec.lock" && ! -L "$source_dir/pubspec.lock" ]] || return 1
+            check_hash da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 "$source_dir/pubspec.lock"
+          }
+          check_config_diff() {
+            safe_source || return 1
+            git -C "$source_dir" diff --exit-code -- pubspec.lock pubspec.yaml analysis_options.yaml
+          }
+          check_index_clean() {
+            safe_source || return 1
+            git -C "$source_dir" diff --cached --exit-code --
+          }
+          check_tracked_changes() {
+            local paths
+            safe_source || return 1
+            paths="$(git -C "$source_dir" diff --name-only)" || return 1
+            [[ "$paths" == lib/widgets/kgi_csf_kpi_panel.dart ]]
+          }
+          check_untracked_changes() {
+            local paths
+            safe_source || return 1
+            paths="$(git -C "$source_dir" ls-files --others --exclude-standard)" || return 1
+            [[ "$paths" == "$matrix_rel" ]]
+          }
+          check 'matrix is present, safe and exact bytes; preserved' check_matrix
+          check 'migration guard available and final verification' run_migration_guard
+          check 'source checkout and fixed HEAD' check_source_head
+          check 'candidate widget exact bytes' check_widget_hash
+          check 'lock exact bytes' check_lock_hash
+          check 'lock, pubspec and analysis configuration unchanged' check_config_diff
+          check 'no staged tracked changes' check_index_clean
+          check 'only candidate widget has tracked changes' check_tracked_changes
+          check 'exactly expected test is ordinary untracked file' check_untracked_changes
+          if (( failures != 0 )); then
+            printf 'Final verification failed: %s check(s).\n' "$failures" >&2
+            exit 1
+          fi
