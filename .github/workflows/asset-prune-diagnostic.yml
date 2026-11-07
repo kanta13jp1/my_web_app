@@ -1,0 +1,111 @@
+name: Payment-day prune synthetic diagnostic (draft)
+on:
+  push:
+    branches: [codex/payment-day-prune-locked-20261107]
+permissions: {}
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    env:
+      CI: 'true'
+      FLUTTER_SUPPRESS_ANALYTICS: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify candidate and diagnostic scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = push
+          test "$GITHUB_REF" = refs/heads/codex/payment-day-prune-locked-20261107
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 90351ed7e9fb10cbe08d4924f9b41963c51348b6
+          test "$(git rev-list --parents -n 1 HEAD | wc -w)" = 2
+          python3 - <<'PY'
+          import subprocess
+          raw = subprocess.check_output(['git', 'diff-tree', '--no-commit-id', '--name-status', '-r', '-z', 'HEAD']).decode().split('\0')
+          pairs = list(zip(raw[0:-1:2], raw[1:-1:2]))
+          assert set(pairs) == {('A', '.github/workflows/asset-prune-diagnostic.yml'),
+                                ('A', 'scripts/diagnostics/asset-prune-isolated.sh')}, pairs
+          PY
+          printf '%s\n' \
+            'ecb91c565969314604642e02050198e23fcaa6ea20ffe5d56364649b1837986e  scripts/diagnostics/asset-prune-isolated.sh' | sha256sum -c -
+      - name: Prepare pinned Flutter and dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A new private root is mandatory: never reuse an existing pub cache.
+          [[ "${RUNNER_TEMP:?}" == /* && -d "$RUNNER_TEMP" && ! -L "$RUNNER_TEMP" ]]
+          runner_root="$(realpath -e -- "$RUNNER_TEMP")"
+          [[ "$runner_root" != / && -d "$runner_root" ]]
+          [[ "${GITHUB_WORKSPACE:?}" == /* && -d "$GITHUB_WORKSPACE" && ! -L "$GITHUB_WORKSPACE" ]]
+          workspace_root="$(realpath -e -- "$GITHUB_WORKSPACE")"
+          [[ "$runner_root" != "$workspace_root" && "$runner_root" != "$workspace_root/"* && "$workspace_root" != "$runner_root/"* ]]
+          umask 077
+          job_root="$(mktemp -d -- "$runner_root/prune-lock.XXXXXXXX")"
+          [[ "$(dirname -- "$job_root")" == "$runner_root" ]]
+          [[ "$(basename -- "$job_root")" == prune-lock.* ]]
+          [[ -d "$job_root" && ! -L "$job_root" && "$(realpath -e -- "$job_root")" == "$job_root" ]]
+          [[ "$(stat -c %u -- "$job_root")" == "$(id -u)" && "$(stat -c %a -- "$job_root")" == 700 ]]
+          export PUB_CACHE="$job_root/pub-cache"
+          export XDG_CONFIG_HOME="$job_root/config"
+          export XDG_CACHE_HOME="$job_root/cache"
+          export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0
+          mkdir -- "$PUB_CACHE" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME"
+          for fresh_dir in "$PUB_CACHE" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME"; do
+            [[ -d "$fresh_dir" && ! -L "$fresh_dir" && "$(realpath -e -- "$fresh_dir")" == "$fresh_dir" ]]
+          done
+          [[ ! -e "$job_root/flutter" && ! -L "$job_root/flutter" ]]
+          git clone --depth 1 --branch 3.47.9 https://github.com/flutter/flutter.git "$job_root/flutter"
+          test "$(git -C "$job_root/flutter" rev-parse HEAD)" = c197ca5199e9ee5661e865596c9c07294dfab51c
+          export PATH="$job_root/flutter/bin:$PATH"
+          flutter config --no-analytics
+          flutter precache --linux --web
+          echo 'Committed lock SHA256:'
+          git show HEAD:pubspec.lock | sha256sum
+          # Fail rather than silently re-resolving candidate dependencies.
+          test "$(sha256sum pubspec.lock | cut -d' ' -f1)" = b34f26c836c03930487a7d3601b2914425e985691cc47dbd4313f6e23fb2340e
+          flutter --version --machine > "$job_root/sdk-version.json"
+          python3 - "$job_root/sdk-version.json" <<'PY'
+          import json,sys
+          v=json.load(open(sys.argv[1],encoding='utf-8'))
+          assert v['frameworkRevision']=='c197ca5199e9ee5661e865596c9c07294dfab51c', 'framework mismatch'
+          assert v['dartSdkVersion']=='3.13.7', 'Dart SDK mismatch'
+          PY
+          flutter pub get --enforce-lockfile
+          test "$(sha256sum pubspec.lock | cut -d' ' -f1)" = b34f26c836c03930487a7d3601b2914425e985691cc47dbd4313f6e23fb2340e
+          git diff --exit-code -- pubspec.lock
+          git diff --cached --exit-code -- pubspec.lock
+          echo 'Resolved lock SHA256:'
+          sha256sum pubspec.lock
+          git diff -- pubspec.lock
+          git diff --cached -- pubspec.lock
+          flutter pub deps --style compact
+          python3 - <<'PY'
+          import subprocess
+          changed = set()
+          for args in ([], ['--cached']):
+              changed.update(subprocess.check_output(['git', 'diff', *args, '--name-only']).decode().splitlines())
+          assert changed <= {'pubspec.lock'}, changed
+          PY
+          flutter analyze --no-pub integration_test/asset_payment_day_prune_test.dart
+          flutter analyze --no-pub test_driver/asset_payment_day_prune.dart
+          google-chrome --version
+          chromedriver --version
+      # Deliberately do not run browser/fixture until isolation and cleanup are reviewed.
+      - name: Report lock-only scope
+        run: echo 'Lock-only validation. Widget, browser, live authentication, DB and release were NOT tested.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify final lock invariants
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f pubspec.lock && test ! -L pubspec.lock
+          test "$(sha256sum pubspec.lock | cut -d' ' -f1)" = b34f26c836c03930487a7d3601b2914425e985691cc47dbd4313f6e23fb2340e
+          git diff --exit-code -- pubspec.lock
+          git diff --cached --exit-code -- pubspec.lock
