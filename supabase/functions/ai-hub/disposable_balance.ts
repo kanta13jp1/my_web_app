@@ -248,8 +248,10 @@ export async function handleDisposableBalanceAction(options: {
     let provider: string | null = null;
     let model: string | null = null;
 
-    const aiEnabled = options.body.enable_ai_actions === true ||
-      Deno.env.get("DISPOSABLE_BALANCE_AI_ENABLED") === "true";
+    const aiEnabled = options.body.enable_ai_actions === false
+      ? false
+      : options.body.enable_ai_actions === true ||
+        Deno.env.get("DISPOSABLE_BALANCE_AI_ENABLED") === "true";
     if (aiEnabled && options.invokeProvider) {
       const providerResult = await options.invokeProvider({
         provider: "google",

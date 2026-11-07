@@ -8606,7 +8606,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         body: <String, dynamic>{
           'action': 'payslip.parse',
           'storage_path': storagePath,
-          'enable_ai_fallback': true,
           'trace_id': 'asset-payslip-upload',
         },
       );

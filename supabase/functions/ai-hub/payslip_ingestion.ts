@@ -270,8 +270,7 @@ export async function handleParsePayslipAction(options: {
   const maskedText = maskPayslipPii(rawText);
   const warnings: string[] = [];
   let parsed = parsePayslipText(maskedText);
-  const aiFallbackEnabled = options.body.enable_ai_fallback === true ||
-    Deno.env.get("PAYSLIP_AI_PARSE_ENABLED") === "true";
+  const aiFallbackEnabled = false;
   if (
     aiFallbackEnabled && parsed.confidence < 0.72 && options.invokeProvider
   ) {
