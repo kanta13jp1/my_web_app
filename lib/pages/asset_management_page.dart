@@ -1,4 +1,6 @@
+import 'package:my_web_app/services/asset_debt_payment_day_override.dart';
 import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
+import 'package:my_web_app/widgets/asset_debt_owner_warning.dart';
 import '../widgets/asset_recorded_change_details.dart';
 import '../models/asset_income_source_evidence.dart';
 import '../widgets/asset_income_reconciliation_section.dart';
@@ -31214,9 +31216,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildDebtPaymentDayInput(AssetLiabilityDebtRow row) {
+    final legacyNameRetained = !row.isRevolving &&
+        hasAssetDebtLegacyNameOverride(
+          overrides: _debtPaymentDayOverrides,
+          accountId: row.id,
+          accountName: row.name,
+        );
     final hasOverride = row.isRevolving
         ? _confirmedPaymentDays.containsKey(row.id)
-        : _debtPaymentDayOverrides.containsKey(row.id);
+        : resolveAssetDebtPaymentDayOverride(
+              overrides: _debtPaymentDayOverrides,
+              accountId: row.id,
+              accountName: row.name,
+            ) !=
+            null;
     final statusLabel = hasOverride
         ? (row.isRevolving ? '今回のみ' : '手動設定')
         : row.paymentDay == null
@@ -31234,18 +31247,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildTextStatusChip(label: statusLabel, color: statusColor),
+          if ((hasOverride || legacyNameRetained) && !row.isRevolving)
+            AssetDebtOwnerWarning(legacyNameRetained: legacyNameRetained),
           const SizedBox(height: 4),
           DropdownButton<int?>(
             value: row.paymentDay,
             isExpanded: true,
             isDense: true,
             items: [
-              const DropdownMenuItem<int?>(value: null, child: Text('未設定')),
+              DropdownMenuItem<int?>(
+                value: null,
+                enabled: !legacyNameRetained,
+                child: const Text('未設定'),
+              ),
               for (var day = 1; day <= 31; day++)
                 DropdownMenuItem<int?>(value: day, child: Text('$day日')),
             ],
             onChanged: (value) {
               if (!row.isRevolving) {
+                if (value == null &&
+                    hasAssetDebtLegacyNameOverride(
+                      overrides: _debtPaymentDayOverrides,
+                      accountId: row.id,
+                      accountName: row.name,
+                    )) {
+                  return;
+                }
                 _setDebtPaymentDayOverride(row, value);
                 return;
               }

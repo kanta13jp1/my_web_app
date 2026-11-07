@@ -3,11 +3,15 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart' as foundation;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/testing.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
+import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
+import 'package:my_web_app/widgets/asset_debt_owner_warning.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -30,6 +34,168 @@ const _oldDebt =
 String _expired(String id) => jsonEncode(<Map<String, String>>[
       <String, String>{'id': id, 'at': '2020-01-01T00:00:00.000Z'},
     ]);
+
+class _SyntheticDebtRepository
+    extends SharedPreferencesAssetLiabilityRepository {
+  _SyntheticDebtRepository(Map<String, int> seed) : values = Map.of(seed);
+  Map<String, int> values;
+  Map<String, int>? lastSaved;
+  int saveCalls = 0;
+
+  @override
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async =>
+      const AssetLiabilityMonthlyState();
+
+  @override
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() async =>
+      Map.of(values);
+
+  @override
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) async {
+    saveCalls++;
+    values = Map.of(overrides);
+    lastSaved = Map.of(overrides);
+  }
+}
+
+Future<Finder> _openDebtPage(
+  WidgetTester tester,
+  _SyntheticDebtRepository repo,
+) async {
+  AssetSyncDirtyKeysStore.resetWriteLockForTest();
+  AssetRecurringTombstoneSyncService.resetSharedForTest();
+  final now = DateTime.now().toUtc().toIso8601String();
+  SharedPreferences.setMockInitialValues(<String, Object>{
+    'fx_rate_usd_jpy_v1': jsonEncode(<String, Object>{
+      'jpyPerUnit': 150.0,
+      'fetchedAt': now,
+      'asOf': now,
+    }),
+  });
+  const mobile = bool.fromEnvironment('PRUNE_MOBILE');
+  await tester.binding
+      .setSurfaceSize(mobile ? const Size(390, 851) : const Size(1440, 1000));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: AssetManagementPage(
+        assetLiabilityRepository: repo,
+        debugNow: DateTime(2026, 10, 20),
+        debugInitialAssetData: const <String, Map<String, double>>{
+          '2026-10-20': <String, double>{'Synthetic mobit': -100000},
+        },
+      ),
+    ),
+  );
+  final card = find.byWidgetPredicate(
+    (widget) =>
+        widget is Container &&
+        widget.key is GlobalKey &&
+        widget.key.toString().contains('debt_master_card_mobit'),
+  );
+  final warning =
+      find.descendant(of: card, matching: find.byType(AssetDebtOwnerWarning));
+  for (var attempt = 0; attempt < 30; attempt++) {
+    await tester.pump(const Duration(milliseconds: 100));
+    if (card.evaluate().length == 1 && warning.evaluate().length == 1) break;
+  }
+  expect(card, findsOneWidget);
+  expect(warning, findsOneWidget);
+  final control = find
+      .ancestor(
+        of: warning,
+        matching: find.byWidgetPredicate(
+          (widget) => widget is SizedBox && widget.width == 140,
+        ),
+      )
+      .first;
+  final dropdown = find.descendant(
+    of: control,
+    matching: find.byWidgetPredicate(
+      (widget) => widget is DropdownButton<int?>,
+    ),
+  );
+  expect(dropdown, findsOneWidget);
+  return dropdown;
+}
+
+Future<Finder> _openDebtChoice(
+  WidgetTester tester,
+  Finder dropdown,
+  int? day,
+) async {
+  final selectedDay = tester.widget<DropdownButton<int?>>(dropdown).value;
+  await tester.ensureVisible(dropdown);
+  await tester.pump();
+  final previousScrollables = find.byType(Scrollable).evaluate().toSet();
+  await tester.tap(dropdown);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 350));
+  expect(selectedDay, isNotNull);
+  // Identify the route's newly created scrollable without requiring a
+  // DropdownMenuItem's render object to participate in hit-testing.
+  final addedScrollables = find
+      .byType(Scrollable)
+      .evaluate()
+      .where(
+        (element) => !previousScrollables.contains(element),
+      )
+      .toList();
+  expect(addedScrollables.length, 1);
+  final menuElement = addedScrollables.single;
+  final menuRoute = ModalRoute.of(menuElement);
+  expect(menuRoute, isA<PopupRoute<dynamic>>());
+  expect(menuRoute!.isCurrent, isTrue);
+  final menuScroll = find.byElementPredicate(
+    (element) => identical(element, menuElement),
+  );
+  expect(menuScroll, findsOneWidget);
+  final selectedMenuItem = find.descendant(
+    of: menuScroll,
+    matching: find.byWidgetPredicate(
+      (widget) =>
+          widget is DropdownMenuItem<int?> && widget.value == selectedDay,
+    ),
+  );
+  expect(selectedMenuItem, findsOneWidget);
+  debugPrint(
+    'SYNTHETIC_MENU_GEOMETRY: selected='
+    '${tester.getRect(selectedMenuItem)} viewport=${tester.getRect(menuScroll)}',
+  );
+  expect(
+    tester.getRect(menuScroll).contains(tester.getCenter(selectedMenuItem)),
+    isTrue,
+  );
+  final matches = find.descendant(
+    of: menuScroll,
+    matching: find.byWidgetPredicate(
+      (widget) => widget is DropdownMenuItem<int?> && widget.value == day,
+    ),
+  );
+  // The selected day may open the lazy menu away from the requested item.
+  expect(
+    find.descendant(
+      of: menuScroll,
+      matching: find.byWidgetPredicate(
+        (widget) => widget is DropdownMenuItem<int?>,
+      ),
+    ),
+    findsWidgets,
+  );
+  final direction = day == null || day < selectedDay! ? 120.0 : -120.0;
+  for (var attempt = 0; attempt < 40 && matches.evaluate().isEmpty; attempt++) {
+    await tester.drag(menuScroll, Offset(0, direction));
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+  expect(matches, findsOneWidget);
+  final item = matches;
+  await tester.ensureVisible(item);
+  await tester.pump();
+  expect(tester.getRect(item).overlaps(tester.getRect(menuScroll)), isTrue);
+  expect(tester.getRect(menuScroll).contains(tester.getCenter(item)), isTrue);
+  expect(item, findsOneWidget);
+  return item;
+}
 
 Future<SharedPreferences> _openPage(WidgetTester tester) async {
   debugPrint('SYNTHETIC_PRUNE_PHASE: open_page_start');
@@ -105,6 +271,11 @@ Future<void> _close(WidgetTester tester) async {
 
 void main() {
   final binding = _DiagnosticBinding();
+  var unexpectedSupabaseRequests = 0;
+  final fakeSupabaseClient = MockClient((_) async {
+    unexpectedSupabaseRequests++;
+    throw StateError('Synthetic Supabase request prohibited');
+  });
   void completedCase() {
     final data = binding.reportData ??= <String, dynamic>{};
     data['pruneCasesCompleted'] =
@@ -118,7 +289,13 @@ void main() {
       url: 'http://127.0.0.1:9999',
       publishableKey: 'test-publishable-key',
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
+      httpClient: fakeSupabaseClient,
     );
+    expect(unexpectedSupabaseRequests, 0);
+  });
+
+  tearDown(() {
+    expect(unexpectedSupabaseRequests, 0);
   });
 
   testWidgets('boot and manual cleanup preserve synthetic payment-day raw', (
@@ -154,5 +331,67 @@ void main() {
     debugPrint('SYNTHETIC_PRUNE_PHASE: manual_zero_passed');
     await _close(tester);
     debugPrint('SYNTHETIC_PRUNE_PHASE: unmounted');
+  });
+
+  testWidgets('legacy name prevents clearing on actual debt page',
+      (tester) async {
+    const name = 'Synthetic mobit';
+    final repo = _SyntheticDebtRepository(<String, int>{name: 14});
+    final dropdown = await _openDebtPage(tester, repo);
+    expect(tester.widget<DropdownButton<int?>>(dropdown).value, 14);
+    final before = Map<String, int>.of(repo.values);
+    final count = repo.saveCalls;
+    final item = await _openDebtChoice(tester, dropdown, null);
+    expect(tester.widget<DropdownMenuItem<int?>>(item).enabled, isFalse);
+    await tester.ensureVisible(item);
+    await tester.tapAt(tester.getCenter(item));
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(repo.values, before);
+    expect(repo.saveCalls, count);
+    expect(find.textContaining('この欄では解除できません'), findsWidgets);
+    await _close(tester);
+    expect(tester.takeException(), isNull);
+    final data = binding.reportData ??= <String, dynamic>{};
+    data['debtCasesCompleted'] = (data['debtCasesCompleted'] as int? ?? 0) + 1;
+  });
+
+  testWidgets('ID-only override permits clearing on actual debt page',
+      (tester) async {
+    final repo = _SyntheticDebtRepository(<String, int>{'mobit': 12});
+    final dropdown = await _openDebtPage(tester, repo);
+    expect(tester.widget<DropdownButton<int?>>(dropdown).value, 12);
+    final item = await _openDebtChoice(tester, dropdown, null);
+    expect(tester.widget<DropdownMenuItem<int?>>(item).enabled, isTrue);
+    expect(repo.lastSaved, isNull);
+    await tester.ensureVisible(item);
+    await tester.tapAt(tester.getCenter(item));
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(repo.lastSaved, isNotNull);
+    expect(repo.lastSaved!.containsKey('mobit'), isFalse);
+    await _close(tester);
+    expect(tester.takeException(), isNull);
+    final data = binding.reportData ??= <String, dynamic>{};
+    data['debtCasesCompleted'] = (data['debtCasesCompleted'] as int? ?? 0) + 1;
+  });
+
+  testWidgets('different ID day keeps legacy name on actual debt page',
+      (tester) async {
+    const name = 'Synthetic mobit';
+    final repo = _SyntheticDebtRepository(<String, int>{name: 14});
+    final dropdown = await _openDebtPage(tester, repo);
+    expect(tester.widget<DropdownButton<int?>>(dropdown).value, 14);
+    final item = await _openDebtChoice(tester, dropdown, 15);
+    expect(tester.widget<DropdownMenuItem<int?>>(item).enabled, isTrue);
+    expect(repo.lastSaved, isNull);
+    await tester.ensureVisible(item);
+    await tester.tapAt(tester.getCenter(item));
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(repo.lastSaved, isNotNull);
+    expect(repo.lastSaved![name], 14);
+    expect(repo.lastSaved!['mobit'], 15);
+    await _close(tester);
+    expect(tester.takeException(), isNull);
+    final data = binding.reportData ??= <String, dynamic>{};
+    data['debtCasesCompleted'] = (data['debtCasesCompleted'] as int? ?? 0) + 1;
   });
 }
