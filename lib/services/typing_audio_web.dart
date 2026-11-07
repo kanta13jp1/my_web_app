@@ -117,12 +117,12 @@ class _SynthAudio implements TypingAudioBackend {
       gain.connect(context.destination);
       _voices.add(oscillator);
       oscillator.addEventListener(
-          'ended',
-          ((web.Event event) {
-            _voices.remove(oscillator);
-            oscillator.disconnect();
-            gain.disconnect();
-          }).toJS,
+        'ended',
+        ((web.Event event) {
+          _voices.remove(oscillator);
+          oscillator.disconnect();
+          gain.disconnect();
+        }).toJS,
       );
       oscillator.start(now);
       oscillator.stop(now + duration);
@@ -163,9 +163,9 @@ class _SynthAudio implements TypingAudioBackend {
     final context = _context;
     if (context != null && context.state == 'running') {
       context.suspend().toDart.then<void>(
-        (_) {},
-        onError: (Object _, StackTrace __) {},
-      );
+            (_) {},
+            onError: (Object _, StackTrace __) {},
+          );
     }
   }
 
@@ -177,9 +177,9 @@ class _SynthAudio implements TypingAudioBackend {
     suspend();
     web.document.removeEventListener('visibilitychange', _visibility);
     _context?.close().toDart.then<void>(
-      (_) {},
-      onError: (Object _, StackTrace __) {},
-    );
+          (_) {},
+          onError: (Object _, StackTrace __) {},
+        );
     _context = null;
   }
 }

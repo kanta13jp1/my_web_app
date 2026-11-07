@@ -34,12 +34,14 @@ test('synthesis is opt-in, bounded and stopped when hidden or leaving', async ({
   await page.getByText('Sound settings', { exact: true }).click();
   expect(await page.evaluate(() => (window as any).__typingAudio.contexts.length)).toBe(0);
   await page.getByRole('button', { name: 'Enable sound', exact: true }).click();
+  await expect(page.getByRole('slider', { name: 'Music volume', exact: true })).toBeVisible();
+  await expect(page.getByRole('slider', { name: 'Effects volume', exact: true })).toBeVisible();
   expect(await page.evaluate(() => (window as any).__typingAudio.contexts.length)).toBe(1);
   expect(await page.evaluate(() => (window as any).__typingAudio.starts)).toBe(0);
   await page.getByRole('checkbox', { name: '10-word practice', exact: true }).click();
   await page.getByRole('button', { name: 'Start (Enter)', exact: true }).click();
   await expect.poll(() => page.evaluate(() => (window as any).__typingAudio.starts)).toBeGreaterThan(0);
-  const mute = page.getByRole('checkbox', { name: 'Mute', exact: true });
+  const mute = page.getByRole('switch', { name: 'Mute', exact: true });
   await mute.click();
   await expect.poll(() => page.evaluate(() => (window as any).__typingAudio.contexts[0].state)).toBe('suspended');
   await mute.click();

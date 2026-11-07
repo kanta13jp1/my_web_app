@@ -71,7 +71,7 @@ void main() {
     final context = tester.element(find.byType(TypingGamePage));
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-      builder: (_) => const Scaffold(body: Text('Covered')),
+        builder: (_) => const Scaffold(body: Text('Covered')),
       ),
     );
     await tester.pumpAndSettle();
