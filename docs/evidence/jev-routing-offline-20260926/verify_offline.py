@@ -9,8 +9,8 @@ frozen = json.loads((root / 'frozen.json').read_text(encoding='utf-8'))
 for name in ('cases.py', 'PROTOCOL.md'):
     assert hashlib.sha256((root / name).read_bytes()).hexdigest() == frozen['sha256'][name], name
 cases = {case['id']: case for case in frozen['cases']}
-routes = [json.loads(line) for line in (root / 'routes.jsonl').read_text(encoding='utf-8').splitlines()]
-records = [json.loads(line) for line in (root / 'responses.jsonl').read_text(encoding='utf-8').splitlines()]
+routes = [json.loads(line) for line in (root / 'routes.jsonl.txt').read_text(encoding='utf-8').splitlines()]
+records = [json.loads(line) for line in (root / 'responses.jsonl.txt').read_text(encoding='utf-8').splitlines()]
 saved = json.loads((root / 'summary.json').read_text(encoding='utf-8'))
 assert len(cases) == len(routes) == 12 and len(records) == 24
 assert len({r['case_id'] for r in routes}) == 12
