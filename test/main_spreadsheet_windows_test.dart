@@ -50,6 +50,16 @@ class _DisabledSpreadsheetFileGateway implements SpreadsheetFileGateway {
   Future<SpreadsheetPickedCsv?> pickCsv() async => null;
 
   @override
+  Future<SpreadsheetPickedCsv?> pickXlsx() async => null;
+
+  @override
+  Future<bool> saveXlsx({
+    required String suggestedName,
+    required Uint8List bytes,
+  }) async =>
+      false;
+
+  @override
   Future<bool> saveCsv({
     required String suggestedName,
     required Uint8List bytes,

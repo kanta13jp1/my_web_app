@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/data/repositories/spreadsheet_repository.dart';
 import 'package:my_web_app/data/services/spreadsheet_file_gateway.dart';
+import 'package:my_web_app/domain/use_cases/spreadsheet_xlsx_codec.dart';
 import 'package:my_web_app/domain/models/spreadsheet_document.dart';
 import 'package:my_web_app/ui/features/spreadsheet/spreadsheet_feature.dart';
 
@@ -117,6 +118,55 @@ void main() {
     );
   });
 
+  testWidgets('XLSX toolbar warns before import and exports all sheets',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final source = SpreadsheetDocument.blank().copyWith(
+      sheets: [
+        SpreadsheetSheet.blank(id: 'import', name: '売上')
+            .copyWith(cells: {'0:0': '商品'}),
+      ],
+    );
+    final gateway = _MemorySpreadsheetFileGateway(
+      picked: SpreadsheetPickedCsv(
+        name: '売上.xlsx',
+        bytes: const SpreadsheetXlsxCodec().encode(source),
+      ),
+    );
+    await tester.pumpWidget(_app(fileGateway: gateway));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('spreadsheet-import-xlsx')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('書式・結合'), findsOneWidget);
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+    expect(find.text('商品'), findsNothing);
+    await tester.tap(find.byKey(const Key('spreadsheet-import-xlsx')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('spreadsheet-xlsx-confirm')));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('spreadsheet-cell-A1')),
+        matching: find.text('商品'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('spreadsheet-export-xlsx')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('spreadsheet-xlsx-confirm')));
+    await tester.pumpAndSettle();
+    expect(gateway.savedName, endsWith('-export.xlsx'));
+    expect(
+      const SpreadsheetXlsxCodec().decode(gateway.savedBytes!),
+      hasLength(2),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('imports and exports CSV through toolbar actions', (
     tester,
   ) async {
@@ -188,6 +238,16 @@ class _MemorySpreadsheetFileGateway implements SpreadsheetFileGateway {
 
   @override
   Future<SpreadsheetPickedCsv?> pickCsv() async => picked;
+
+  @override
+  Future<SpreadsheetPickedCsv?> pickXlsx() async => picked;
+
+  @override
+  Future<bool> saveXlsx({
+    required String suggestedName,
+    required Uint8List bytes,
+  }) =>
+      saveCsv(suggestedName: suggestedName, bytes: bytes);
 
   @override
   Future<bool> saveCsv({
