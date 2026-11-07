@@ -1,7 +1,7 @@
 from pathlib import Path
 import json,hashlib
 r=Path(__file__).parent
-assert hashlib.sha256((r/'protocol.json').read_bytes()).hexdigest()==(r/'protocol.sha256').read_text()
+assert hashlib.sha256((r/'protocol.json').read_bytes()).hexdigest()==(r/'protocol.sha256.txt').read_text()
 p=json.loads((r/'protocol.json').read_text(encoding='utf-8'));a=json.loads((r/'responses.json').read_text(encoding='utf-8'));saved=json.loads((r/'scores.json').read_text(encoding='utf-8'))
 assert len(a)==5
 for n in ['full','shard3','reset']:
