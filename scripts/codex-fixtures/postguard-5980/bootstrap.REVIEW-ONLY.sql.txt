@@ -1,0 +1,38 @@
+\set ON_ERROR_STOP on
+-- SAFETY: This file is design evidence, not an executable setup script.
+DO $$ BEGIN RAISE EXCEPTION 'STOP: review-only fixture'; END $$;
+
+-- All statements below are blocked by the guard above. They are a proposal
+-- for a unique, owned, network-isolated throwaway PG17 instance only.
+CREATE ROLE anon NOLOGIN;
+CREATE ROLE authenticated NOLOGIN;
+CREATE ROLE service_role NOLOGIN;
+CREATE ROLE fixture_trunc_parent NOLOGIN;
+
+CREATE TABLE public.asset_pref_mirror (
+  user_id uuid NOT NULL,
+  pref_key text NOT NULL,
+  pref_value text,
+  PRIMARY KEY (user_id, pref_key)
+);
+ALTER TABLE public.asset_pref_mirror OWNER TO postgres;
+ALTER TABLE public.asset_pref_mirror ENABLE ROW LEVEL SECURITY;
+-- This is deliberately a synthetic policy, not a copy of production policy.
+CREATE POLICY fixture_authenticated ON public.asset_pref_mirror
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
+  ON public.asset_pref_mirror TO anon, authenticated, service_role;
+GRANT TRUNCATE ON public.asset_pref_mirror TO fixture_trunc_parent;
+
+CREATE SCHEMA fixture_history;
+CREATE TABLE fixture_history.migrations (version text PRIMARY KEY);
+CREATE FUNCTION fixture_history.wait_for_release()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  -- A takes this xact lock only after exact fixed migration text succeeds.
+  -- C must already hold the corresponding session-level advisory lock.
+  PERFORM pg_advisory_xact_lock(73580, 1);
+  RETURN NEW;
+END $$;
+CREATE TRIGGER history_barrier BEFORE INSERT ON fixture_history.migrations
+  FOR EACH ROW EXECUTE FUNCTION fixture_history.wait_for_release();

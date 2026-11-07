@@ -1,0 +1,88 @@
+name: Synthetic postguard membership 5980
+on:
+  push:
+    branches:
+      - codex/asset-pref-postguard-5980
+permissions:
+  contents: read
+jobs:
+  synthetic:
+    if: ${{ github.repository == 'kanta13jp1/my_web_app' && github.event_name == 'push' && github.ref == 'refs/heads/codex/asset-pref-postguard-5980' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact run head without persistent credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Check parent, exact paths, modes and fixed input hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git show -s --format=%P HEAD)" = f8e39bcaa6c347a177d4cb102ef939cd08d096ef
+          python3 - <<'PY'
+          import hashlib, os, pathlib, subprocess
+          base='scripts/codex-fixtures/postguard-5980/'
+          hashes={
+            'protocol.py':'015afa3cb2b039b6de1cc5fe9914c26ebda234bbbb2eeeb0ab82cf96b8128a3c2',
+            'hosted_adapter.py':'2126cda9caa20451ad073554b32479b8fa901a651d62de42eafd0db15ad142a9',
+            'run_hosted.py':'3fe7bd1cd53b2d99ef8e43398780abbf3d34479af991ad125e2e4322e8ab002e',
+            'fixed-migration-DO-NOT-EXECUTE.bin':'24e38d3b06d1aeb5d5fd6bfea2bec64c303d4fdad9a45b51f0af980a48cf9db8',
+            'bootstrap.REVIEW-ONLY.sql.txt':'8ecedb30425f354fd5b9d5fada49481be7f57cad1147f186690b2babe4a88e6f',
+          }
+          workflow='.github/workflows/codex-postguard-5980.yml'
+          paths={base+n for n in hashes}|{workflow}
+          output=subprocess.check_output(['git','diff-tree','--no-commit-id','--name-status','-r','-z',
+                                         'f8e39bcaa6c347a177d4cb102ef939cd08d096ef',os.environ['GITHUB_SHA']]).split(b'\0')
+          if output[-1:] != [b'']: raise SystemExit('invalid diff stream')
+          records=output[:-1]
+          if len(records)!=2*len(paths): raise SystemExit('unexpected changed paths')
+          changes={(records[i].decode(),records[i+1].decode()) for i in range(0,len(records),2)}
+          if changes != {('A',p) for p in paths}: raise SystemExit('unexpected diff')
+          for path in paths:
+              tree=subprocess.check_output(['git','ls-tree',os.environ['GITHUB_SHA'],'--',path]).decode().rstrip('\n')
+              parts=tree.split('\t')
+              if len(parts)!=2 or parts[1]!=path or not parts[0].startswith('100644 blob '):
+                  raise SystemExit('unexpected tree mode')
+          for name,digest in hashes.items():
+              path=pathlib.Path(base+name)
+              if path.is_symlink() or not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=digest:
+                  raise SystemExit('input hash mismatch')
+          print('fixed input hashes, paths, modes, parent and checkout head verified')
+          PY
+      - name: Pull and check immutable synthetic Postgres image
+        shell: bash
+        run: |
+          set -euo pipefail
+          image=postgres@sha256:0b81cec82228160abfa753aeaad0609b709eb26eeb950f2e404ad2326e1cc370
+          test -S /var/run/docker.sock
+          docker_config="$(mktemp -d "${RUNNER_TEMP:?}/codex-image-config.XXXXXXXX")"
+          trap 'rmdir -- "$docker_config" || exit 1' EXIT
+          timeout --signal=TERM --kill-after=10s 120s env -i PATH=/usr/bin:/bin /usr/bin/docker --config "$docker_config" --host unix:///var/run/docker.sock pull --platform linux/amd64 "$image"
+          env -i PATH=/usr/bin:/bin /usr/bin/docker --config "$docker_config" --host unix:///var/run/docker.sock image inspect "$image" |
+            python3 -c 'import json,sys; x=json.load(sys.stdin); ok=len(x)==1 and "postgres@sha256:0b81cec82228160abfa753aeaad0609b709eb26eeb950f2e404ad2326e1cc370" in (x[0].get("RepoDigests") or []) and x[0].get("Os")=="linux" and x[0].get("Architecture")=="amd64"; sys.exit(0 if ok else 1)'
+      - name: Run isolated synthetic race
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          # Runtime changes to reviewed inputs fail before any container operation.
+          cd scripts/codex-fixtures/postguard-5980
+          sha256sum -c <<'HASHES'
+          015afa3cb2b039b6de1cc5fe9914c26ebda234bbbb2eeeb0ab82cf96b8128a3c2  protocol.py
+          2126cda9caa20451ad073554b32479b8fa901a651d62de42eafd0db15ad142a9  hosted_adapter.py
+          3fe7bd1cd53b2d99ef8e43398780abbf3d34479af991ad125e2e4322e8ab002e  run_hosted.py
+          24e38d3b06d1aeb5d5fd6bfea2bec64c303d4fdad9a45b51f0af980a48cf9db8  fixed-migration-DO-NOT-EXECUTE.bin
+          8ecedb30425f354fd5b9d5fada49481be7f57cad1147f186690b2babe4a88e6f  bootstrap.REVIEW-ONLY.sql.txt
+          HASHES
+          set +e
+          timeout --signal=INT --kill-after=30s 480s python3 -B run_hosted.py --hosted-execute
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            printf 'Synthetic run failed or observed a race (exit %s); inspect logs. Timeout means cleanup is unconfirmed.\n' "$rc"
+            exit 1
+          fi
