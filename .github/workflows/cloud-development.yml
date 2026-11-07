@@ -160,7 +160,7 @@ jobs:
       - name: Format and analyze the real auth test
         run: |
           dart format test/integration/typing_records_supabase_test.dart lib/services/typing_audio.dart lib/services/typing_audio_stub.dart lib/services/typing_audio_web.dart test/services/typing_audio_test.dart test/pages/typing_audio_page_test.dart
-          git diff -- test/integration/typing_records_supabase_test.dart > typing-auth-format.patch lib/services/typing_audio.dart lib/services/typing_audio_stub.dart lib/services/typing_audio_web.dart test/services/typing_audio_test.dart test/pages/typing_audio_page_test.dart
+          git diff -- test/integration/typing_records_supabase_test.dart > typing-auth-format.patch
           flutter analyze test/integration/typing_records_supabase_test.dart
       - name: Start disposable local auth stack
         shell: bash
