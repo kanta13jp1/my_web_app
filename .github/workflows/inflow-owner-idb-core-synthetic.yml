@@ -1,0 +1,133 @@
+# REVIEW ONLY. This is outside .github/workflows and has not been installed.
+# Do not push or run until independent workflow-chain and permission review.
+name: Inflow IDB core synthetic review only
+on:
+  push:
+    branches:
+      - codex/inflow-idb-core-fixture-5973
+permissions:
+  contents: read
+jobs:
+  synthetic:
+    if: github.event_name == 'push' && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/inflow-idb-core-fixture-5973' && github.event.created == true && github.event.deleted == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Create new owned temporary workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "$RUNNER_TEMP" && "$RUNNER_TEMP" == /* && -d "$RUNNER_TEMP" && ! -L "$RUNNER_TEMP" ]]
+          task_root="$(realpath -e -- "$RUNNER_TEMP")"
+          [[ "$task_root" != / && "$task_root" == /* ]]
+          umask 077
+          task_dir="$(mktemp -d -- "$task_root/inflow-core.XXXXXXXX")"
+          [[ -d "$task_dir" && ! -L "$task_dir" && "$(dirname -- "$task_dir")" == "$task_root" && "$(realpath -e -- "$task_dir")" == "$task_dir" && "$(stat -c %u -- "$task_dir")" == "$(id -u)" && "$(stat -c %a -- "$task_dir")" == 700 ]]
+          mkdir -- "$task_dir/result" "$task_dir/sdk" "$task_dir/probe" "$task_dir/config" "$task_dir/cache" "$task_dir/pub-cache"
+          for part in result sdk probe config cache pub-cache; do
+            [[ -d "$task_dir/$part" && ! -L "$task_dir/$part" && "$(realpath -e -- "$task_dir/$part")" == "$task_dir/$part" && "$(stat -c %u -- "$task_dir/$part")" == "$(id -u)" && "$(stat -c %a -- "$task_dir/$part")" == 700 ]]
+          done
+          python3 - "$task_dir/probe" <<'PY'
+          import pathlib, sys
+          work = pathlib.Path(sys.argv[1]).resolve(strict=True)
+          for parent in (work, *work.parents):
+              pubspec = parent / 'pubspec.yaml'
+              dart_tool = parent / '.dart_tool'
+              config = dart_tool / 'package_config.json'
+              if pubspec.exists() or pubspec.is_symlink() or dart_tool.is_symlink() or config.exists() or config.is_symlink():
+                  raise SystemExit('Dart package configuration in probe ancestry')
+          PY
+          case "$task_dir" in *$'\n'*|*$'\r'*) exit 1 ;; esac
+          printf 'INFLOW_TASK_DIR=%s\n' "$task_dir" >> "$GITHUB_ENV"
+      - name: Checkout the new reviewed branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify fixed parent, exact additions, file modes, and inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_parent='f8e39bcaa6c347a177d4cb102ef939cd08d096ef'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git show -s --format=%P "$GITHUB_SHA")" = "$expected_parent"
+          python3 - "$expected_parent" "$GITHUB_SHA" <<'PY'
+          import subprocess, sys
+          old, new = sys.argv[1:]
+          expected_paths = [
+              b'.github/workflows/inflow-owner-idb-core-synthetic.yml',
+              b'scripts/isolated_checks/inflow_idb_core/inflow_atomic_core_NONPRODUCTION.dart',
+              b'scripts/isolated_checks/inflow_idb_core/inflow_fake_transaction_NONPRODUCTION_test.dart',
+              b'scripts/isolated_checks/inflow_idb_core/synthetic_negative_probe_REVIEW_ONLY.dart',
+          ]
+          raw = subprocess.check_output(
+              ['git', 'diff', '--no-renames', '--name-status', '-z', old, new]
+          ).split(b'\x00')
+          expected = []
+          for path in expected_paths:
+              expected.extend([b'A', path])
+          expected.append(b'')
+          if raw != expected:
+              raise SystemExit('unexpected diff scope or status')
+          tree = subprocess.check_output(
+              ['git', 'ls-tree', '-z', new, *(x.decode('ascii') for x in expected_paths)]
+          )
+          records = [r.split(b'\t', 1) for r in tree.split(b'\x00') if r]
+          modes = {path: metadata.split(b' ', 1)[0] for metadata, path in records}
+          if modes != {path: b'100644' for path in expected_paths}:
+              raise SystemExit('unexpected added path or mode')
+          PY
+          files='scripts/isolated_checks/inflow_idb_core'
+          printf '%s  %s\n' 'a8547bd9fad67dc0a1cc3b0fcff5875b5c7a2c948f6ab71987bb7b2e4fb90490' "$files/inflow_atomic_core_NONPRODUCTION.dart" | sha256sum -c -
+          printf '%s  %s\n' '62b5c4bbe1246dafd0830242cfd6ff834c98256b428e8f2c9deee9cbe937587e' "$files/inflow_fake_transaction_NONPRODUCTION_test.dart" | sha256sum -c -
+          printf '%s  %s\n' '01382d187fb9de1f5a0b26eb9a65c5204fc87bf0cf3d1659ca8384c3bed272ea' "$files/synthetic_negative_probe_REVIEW_ONLY.dart" | sha256sum -c -
+          sha256sum .github/workflows/inflow-owner-idb-core-synthetic.yml "$files/inflow_atomic_core_NONPRODUCTION.dart" "$files/inflow_fake_transaction_NONPRODUCTION_test.dart" "$files/synthetic_negative_probe_REVIEW_ONLY.dart" > "$INFLOW_TASK_DIR/result/checked-hashes.txt"
+          printf '%s\n' "$GITHUB_SHA" > "$INFLOW_TASK_DIR/result/commit.txt"
+      - name: Obtain and verify fixed Flutter archive with Dart
+        shell: bash
+        run: |
+          set -euo pipefail
+          trap 'code=$?; printf "%s\n" "$code" > "$INFLOW_TASK_DIR/result/sdk-setup.exit"' EXIT
+          curl --fail --location --connect-timeout 15 --max-time 240 --retry 0 --output "$INFLOW_TASK_DIR/sdk/flutter.tar.xz" 'https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.9-stable.tar.xz'
+          printf '%s  %s\n' '25ed8c3c29d51a7353f2a944310b478af8214920639524b19c50a19e6c044c5a' "$INFLOW_TASK_DIR/sdk/flutter.tar.xz" | sha256sum -c -
+          sha256sum "$INFLOW_TASK_DIR/sdk/flutter.tar.xz" > "$INFLOW_TASK_DIR/result/sdk-archive-sha256.txt"
+          tar -xJf "$INFLOW_TASK_DIR/sdk/flutter.tar.xz" -C "$INFLOW_TASK_DIR/sdk"
+          dart_bin="$INFLOW_TASK_DIR/sdk/flutter/bin/cache/dart-sdk/bin/dart"
+          test -x "$dart_bin"
+          "$dart_bin" --version 2>&1 | tee "$INFLOW_TASK_DIR/result/dart-version.txt"
+          grep -Eq '^Dart SDK version: 3[.]13[.]7([[:space:]]|$)' "$INFLOW_TASK_DIR/result/dart-version.txt"
+          files='scripts/isolated_checks/inflow_idb_core'
+          install -m 0400 -- "$files/inflow_atomic_core_NONPRODUCTION.dart" "$INFLOW_TASK_DIR/probe/inflow_atomic_core_NONPRODUCTION.dart"
+          install -m 0400 -- "$files/inflow_fake_transaction_NONPRODUCTION_test.dart" "$INFLOW_TASK_DIR/probe/inflow_fake_transaction_NONPRODUCTION_test.dart"
+          install -m 0400 -- "$files/synthetic_negative_probe_REVIEW_ONLY.dart" "$INFLOW_TASK_DIR/probe/synthetic_negative_probe_REVIEW_ONLY.dart"
+          printf '%s  %s\n' 'a8547bd9fad67dc0a1cc3b0fcff5875b5c7a2c948f6ab71987bb7b2e4fb90490' "$INFLOW_TASK_DIR/probe/inflow_atomic_core_NONPRODUCTION.dart" | sha256sum -c -
+          printf '%s  %s\n' '62b5c4bbe1246dafd0830242cfd6ff834c98256b428e8f2c9deee9cbe937587e' "$INFLOW_TASK_DIR/probe/inflow_fake_transaction_NONPRODUCTION_test.dart" | sha256sum -c -
+          printf '%s  %s\n' '01382d187fb9de1f5a0b26eb9a65c5204fc87bf0cf3d1659ca8384c3bed272ea' "$INFLOW_TASK_DIR/probe/synthetic_negative_probe_REVIEW_ONLY.dart" | sha256sum -c -
+      - name: Run synthetic negative and positive probes
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart_bin="$INFLOW_TASK_DIR/sdk/flutter/bin/cache/dart-sdk/bin/dart"
+          cd "$INFLOW_TASK_DIR/probe"
+          set +e
+          env -i PATH=/usr/bin:/bin XDG_CONFIG_HOME="$INFLOW_TASK_DIR/config" XDG_CACHE_HOME="$INFLOW_TASK_DIR/cache" PUB_CACHE="$INFLOW_TASK_DIR/pub-cache" CI=true DART_SUPPRESS_ANALYTICS=true "$dart_bin" run synthetic_negative_probe_REVIEW_ONLY.dart > "$INFLOW_TASK_DIR/result/negative.log" 2>&1
+          negative_code=$?
+          set -e
+          printf '%s\n' "$negative_code" > "$INFLOW_TASK_DIR/result/negative.exit"
+          test "$negative_code" = 72
+          grep -Fxq 'SYNTHETIC_EXPECTED_FAILURE' "$INFLOW_TASK_DIR/result/negative.log"
+          set +e
+          env -i PATH=/usr/bin:/bin XDG_CONFIG_HOME="$INFLOW_TASK_DIR/config" XDG_CACHE_HOME="$INFLOW_TASK_DIR/cache" PUB_CACHE="$INFLOW_TASK_DIR/pub-cache" CI=true DART_SUPPRESS_ANALYTICS=true "$dart_bin" run inflow_fake_transaction_NONPRODUCTION_test.dart > "$INFLOW_TASK_DIR/result/positive.log" 2>&1
+          positive_code=$?
+          set -e
+          printf '%s\n' "$positive_code" > "$INFLOW_TASK_DIR/result/positive.exit"
+          test "$positive_code" = 0
+          grep -Fxq 'synthetic transaction model checks passed' "$INFLOW_TASK_DIR/result/positive.log"
+      - name: Save only synthetic result
+        if: always() && env.INFLOW_TASK_DIR != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: inflow-idb-core-synthetic
+          path: ${{ env.INFLOW_TASK_DIR }}/result/
+          if-no-files-found: error
+          retention-days: 3
