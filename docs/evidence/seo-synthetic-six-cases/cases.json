@@ -1,0 +1,1026 @@
+[
+  {
+    "id": "equal",
+    "before": {
+      "start": "2026-01-01",
+      "days": 14,
+      "rows": [
+        {
+          "date": "2026-01-01",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-02",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-03",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-04",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-05",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-06",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-07",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-08",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-09",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-10",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-11",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-12",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-13",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-14",
+          "clicks": 10,
+          "conversions": 1
+        }
+      ]
+    },
+    "after": {
+      "start": "2026-02-01",
+      "days": 14,
+      "rows": [
+        {
+          "date": "2026-02-01",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-02",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-03",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-04",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-05",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-06",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-07",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-08",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-09",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-10",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-11",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-12",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-13",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-14",
+          "clicks": 30,
+          "conversions": 1
+        }
+      ]
+    },
+    "expected": {
+      "status": "ok",
+      "click_ratio": 3.0,
+      "conversion_ratio": 1.0
+    }
+  },
+  {
+    "id": "unequal",
+    "before": {
+      "start": "2026-01-01",
+      "days": 14,
+      "rows": [
+        {
+          "date": "2026-01-01",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-02",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-03",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-04",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-05",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-06",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-07",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-08",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-09",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-10",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-11",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-12",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-13",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-14",
+          "clicks": 10,
+          "conversions": 1
+        }
+      ]
+    },
+    "after": {
+      "start": "2026-02-01",
+      "days": 28,
+      "rows": [
+        {
+          "date": "2026-02-01",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-02",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-03",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-04",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-05",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-06",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-07",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-08",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-09",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-10",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-11",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-12",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-13",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-14",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-15",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-16",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-17",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-18",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-19",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-20",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-21",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-22",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-23",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-24",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-25",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-26",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-27",
+          "clicks": 15,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-28",
+          "clicks": 15,
+          "conversions": 1
+        }
+      ]
+    },
+    "expected": {
+      "status": "ok",
+      "click_ratio": 1.5,
+      "conversion_ratio": 1.0
+    }
+  },
+  {
+    "id": "zero",
+    "before": {
+      "start": "2026-01-01",
+      "days": 14,
+      "rows": [
+        {
+          "date": "2026-01-01",
+          "clicks": 0,
+          "conversions": 0
+        },
+        {
+          "date": "2026-01-02",
+          "clicks": 0,
+          "conversions": 0
+        },
+        {
+          "date": "2026-01-03",
+          "clicks": 0,
+          "conversions": 0
+        },
+        {
+          "date": "2026-01-04",
+          "clicks": 0,
+          "conversions": 0
+        },
+        {
+          "date": "2026-01-05",
+          "clicks": 0,
+          "conversions": 0
+        },
+        {
+          "date": "2026-01-06",
+          "clicks": 0,
+          "conversions": 0
+        },
+        {
+          "date": "2026-01-07",
+          "clicks": 0,
+          "conversions": 0
+        },
+        {
+          "date": "2026-01-08",
+          "clicks": 0,
+          "conversions": 0
+        },
+        {
+          "date": "2026-01-09",
+          "clicks": 0,
+          "conversions": 0
+        },
+        {
+          "date": "2026-01-10",
+          "clicks": 0,
+          "conversions": 0
+        },
+        {
+          "date": "2026-01-11",
+          "clicks": 0,
+          "conversions": 0
+        },
+        {
+          "date": "2026-01-12",
+          "clicks": 0,
+          "conversions": 0
+        },
+        {
+          "date": "2026-01-13",
+          "clicks": 0,
+          "conversions": 0
+        },
+        {
+          "date": "2026-01-14",
+          "clicks": 0,
+          "conversions": 0
+        }
+      ]
+    },
+    "after": {
+      "start": "2026-02-01",
+      "days": 14,
+      "rows": [
+        {
+          "date": "2026-02-01",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-02",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-03",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-04",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-05",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-06",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-07",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-08",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-09",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-10",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-11",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-12",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-13",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-14",
+          "clicks": 30,
+          "conversions": 1
+        }
+      ]
+    },
+    "expected": {
+      "status": "undefined_baseline"
+    }
+  },
+  {
+    "id": "missing",
+    "before": {
+      "start": "2026-01-01",
+      "days": 14,
+      "rows": [
+        {
+          "date": "2026-01-01",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-02",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-03",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-04",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-05",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-06",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-07",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-08",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-09",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-10",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-11",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-12",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-13",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-14",
+          "clicks": 10,
+          "conversions": 1
+        }
+      ]
+    },
+    "after": {
+      "start": "2026-02-01",
+      "days": 14,
+      "rows": [
+        {
+          "date": "2026-02-01",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-02",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-03",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-04",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-05",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-06",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-07",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-08",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-09",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-10",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-11",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-12",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-13",
+          "clicks": 30,
+          "conversions": 1
+        }
+      ]
+    },
+    "expected": {
+      "status": "missing_days"
+    }
+  },
+  {
+    "id": "duplicate",
+    "before": {
+      "start": "2026-01-01",
+      "days": 14,
+      "rows": [
+        {
+          "date": "2026-01-01",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-02",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-03",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-04",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-05",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-06",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-07",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-08",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-09",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-10",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-11",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-12",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-13",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-14",
+          "clicks": 10,
+          "conversions": 1
+        }
+      ]
+    },
+    "after": {
+      "start": "2026-02-01",
+      "days": 14,
+      "rows": [
+        {
+          "date": "2026-02-01",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-02",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-03",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-04",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-05",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-06",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-07",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-08",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-09",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-10",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-11",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-12",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-13",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-14",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-01",
+          "clicks": 30,
+          "conversions": 1
+        }
+      ]
+    },
+    "expected": {
+      "status": "duplicate_day"
+    }
+  },
+  {
+    "id": "cv_distinction",
+    "before": {
+      "start": "2026-01-01",
+      "days": 14,
+      "rows": [
+        {
+          "date": "2026-01-01",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-02",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-03",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-04",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-05",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-06",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-07",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-08",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-09",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-10",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-11",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-12",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-13",
+          "clicks": 10,
+          "conversions": 1
+        },
+        {
+          "date": "2026-01-14",
+          "clicks": 10,
+          "conversions": 1
+        }
+      ]
+    },
+    "after": {
+      "start": "2026-02-01",
+      "days": 14,
+      "rows": [
+        {
+          "date": "2026-02-01",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-02",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-03",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-04",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-05",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-06",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-07",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-08",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-09",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-10",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-11",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-12",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-13",
+          "clicks": 30,
+          "conversions": 1
+        },
+        {
+          "date": "2026-02-14",
+          "clicks": 30,
+          "conversions": 1
+        }
+      ]
+    },
+    "expected": {
+      "status": "ok",
+      "click_ratio": 3.0,
+      "conversion_ratio": 1.0
+    }
+  }
+]
