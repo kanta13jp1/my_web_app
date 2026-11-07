@@ -5,6 +5,22 @@ import typing_evolution_release_guard as guard
 
 
 class GuardTest(unittest.TestCase):
+    def test_only_approved_hint_and_romaji_product_files_are_selected(self):
+        self.assertEqual(guard.GAME, {
+            'lib/models/typing_game.dart',
+            'lib/pages/typing_game_page.dart',
+            'test/models/typing_game_test.dart',
+            'test/pages/typing_game_page_test.dart',
+            'test/e2e/typing_game.spec.ts',
+        })
+        selected = guard.GAME | guard.SUPPORT
+        values = {path: 'blob' for path in selected}
+        for extra in ['docs/typing-game/records-schema.draft.sql',
+                      'lib/services/typing_audio_web.dart',
+                      'web/labs/sea-shelter/index.html']:
+            with self.assertRaises(ValueError):
+                guard.selection(selected | {extra}, values, values, values)
+
     def setUp(self):
         self.head = 'a' * 40
         self.base = 'b' * 40

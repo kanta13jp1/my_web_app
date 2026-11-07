@@ -9,6 +9,42 @@ async function openGame(page: Page) {
   test.info().annotations.push({ type: 'synthetic-game-ready-ms', description: String(Date.now() - started) });
 }
 
+test('hint controls hide answers and preserve active input', async ({ page }, info) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await openGame(page);
+  await page.getByRole('button', { name: 'English', exact: true }).click();
+  await page.getByRole('checkbox', { name: '10-word practice', exact: true }).click();
+  const reading = page.getByRole('checkbox', { name: 'Show reading', exact: true });
+  const romaji = page.getByRole('checkbox', { name: 'Show romaji guide', exact: true });
+  await expect(reading).toBeChecked();
+  await expect(romaji).toBeChecked();
+  await page.getByRole('button', { name: 'Start (Enter)', exact: true }).click();
+  const input = page.getByRole('textbox', { name: 'Romaji input', exact: true });
+  const guide = await page.getByText(/Accepted spellings:/).textContent();
+  const spelling = guide!.match(/Accepted spellings:\s*([a-z]+)/)![1];
+  await input.scrollIntoViewIfNeeded();
+  await input.pressSequentially(spelling[0]);
+  await reading.click();
+  await romaji.click();
+  await expect(page.getByText(/Accepted spellings:/)).toHaveCount(0);
+  await expect(reading).not.toBeChecked();
+  await expect(romaji).not.toBeChecked();
+  await expect(input).toHaveValue(spelling[0]);
+  await expect(page.getByText('Score 10', { exact: true })).toBeVisible();
+  await input.pressSequentially(spelling.slice(1));
+  await expect(page.getByText('Words 1', { exact: true })).toBeVisible();
+  await romaji.click();
+  await expect(page.getByText(/Accepted spellings:/)).toBeVisible();
+  await expect(reading).not.toBeChecked();
+  await page.getByRole('button', { name: 'End practice', exact: true }).click();
+  await page.getByRole('button', { name: 'Try again (Enter)', exact: true }).click();
+  await expect(reading).not.toBeChecked();
+  await expect(romaji).toBeChecked();
+  await page.screenshot({ path: info.outputPath('hint-controls.png'), fullPage: true });
+  expect(errors).toEqual([]);
+});
+
 test('romaji input, scoring, deadline and retry in a browser', async ({ page }, info) => {
   test.setTimeout(100_000);
   const errors: string[] = [];
