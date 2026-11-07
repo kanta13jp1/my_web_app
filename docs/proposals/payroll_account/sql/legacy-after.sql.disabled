@@ -1,0 +1,31 @@
+-- REVIEW ONLY. Synthetic disposable fixture only.
+\set ON_ERROR_STOP on
+do $stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $stop$;
+select 1 / ((count(*) = 1)::int) from public.payroll_transport_fixture_guard
+  where token = :'fixture_token'::uuid;
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','cccccccc-0000-4000-8000-000000000003',true);
+do $test$ declare n integer; begin
+  begin
+    insert into public.asset_payroll_accounts(user_id,id,display_label) values
+      ('cccccccc-0000-4000-8000-000000000003','cccccccc-9999-4999-8999-999999999999','synthetic rejected');
+    raise exception 'legacy insert unexpectedly succeeded';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.asset_payroll_accounts set archived=true;
+    raise exception 'archive update unexpectedly succeeded';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update public.asset_payroll_accounts set display_label='synthetic rejected';
+    raise exception 'label update unexpectedly succeeded';
+  exception when insufficient_privilege then null;
+  end;
+  update public.asset_payroll_accounts set target_increase_yen=10
+    where id='cccccccc-1111-4111-8111-111111111111';
+  get diagnostics n=row_count;
+  if n <> 1 then raise exception 'target positive control failed'; end if;
+end $test$;
+rollback;

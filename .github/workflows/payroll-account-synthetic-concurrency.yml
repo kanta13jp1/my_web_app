@@ -1,0 +1,45 @@
+name: Payroll account synthetic concurrency
+on:
+  pull_request:
+    paths:
+      - docs/proposals/payroll_account/**
+      - supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
+      - .github/workflows/payroll-account-synthetic-concurrency.yml
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: payroll-account-synthetic-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  synthetic-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres@sha256:e4cb93687b062cd25a0e8f672d85a7708235009d70d31f8a7698d9370092a9c4
+        env:
+          POSTGRES_PASSWORD: synthetic-account-only
+          POSTGRES_DB: payroll_contract
+        options: >-
+          --label payroll.synthetic.run=${{ github.run_id }}-${{ github.run_attempt }}
+          --tmpfs /var/lib/postgresql/data:rw,nosuid,size=256m
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Check fixed migration matches
+        run: cmp docs/proposals/payroll_account/sql/migration.sql supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
+      - name: Run offline safety tests
+        working-directory: docs/proposals/payroll_account
+        run: python3 -B -m unittest -v test_ci_runner.py
+      - name: Run synthetic two-session PostgreSQL test
+        working-directory: docs/proposals/payroll_account
+        env:
+          FIXTURE_CONTAINER_ID: ${{ job.services.postgres.id }}
+        run: python3 -B ci_runner.py
