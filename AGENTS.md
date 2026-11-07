@@ -119,21 +119,19 @@ python scripts/cloud_ci_handoff.py --profile full --execute --watch
 ## Codex Defaults
 
 - Work from a scoped branch and keep unrelated user changes intact.
-- Prefer deterministic checks over agent claims. Under the cloud-first policy,
-  use GitHub Actions status and artifacts for `flutter analyze`, `flutter test`,
-  `deno lint`, migrations, and builds instead of repeating them locally.
+- Prefer deterministic checks and GitHub Actions evidence over agent claims;
+  follow the Cloud-first Resource Policy above.
 - For WBS pressure, prioritize tasks that reduce repeated manual work:
   CI repair, deploy stability, merge backlog, issue sync, scheduled reports,
   and tool-change monitoring.
 - When an official Claude Code or Codex changelog mentions hooks, schedules,
   models, in-app browser, worktrees, MCP, or cost controls, connect it to the
   nearest existing issue before creating a new one.
-- Codex #1 should take broad but bounded work from the WBS top list:
+- Codex #1 should take broad but bounded work from the WBS top list, including
+  historical extra-Codex work:
   migrations, data import/export, UI verification, stale automation audits, and
-  clean fix PRs from a sparse task worktree.
-- Codex #1 should also absorb historical extra-Codex work: red CI, deploy
-  unblockers, workflow drift, Edge Function failures, and GitHub/Notion/Slack
-  synchronization issues.
+  clean fix PRs, red CI, deploy unblockers, workflow drift, Edge Function
+  failures, and GitHub/Notion/Slack synchronization issues.
 - When using subagents, record their role, scope, result summary, validation
   impact, and cleanup impact in the PR, Issue comment, or wrap-up. Subagents do
   not replace deterministic checks or WBS due-date order.
@@ -148,6 +146,25 @@ python scripts/cloud_ci_handoff.py --profile full --execute --watch
 - If a task needs product judgment, cross-instance arbitration, or NotebookLM
   synthesis before code can be safely changed, route it back to Claude Code and
   leave a short handoff note.
+
+## Continue authorized work
+
+- Carry forward actual user approvals within the same purpose, scope, data,
+  and recipients. Do not ask again for ordinary fixes, retests, or rereviews
+  already covered; assistant statements and inferred consent are not approval.
+- Continue through implementation, applicable checks, and review. Investigate
+  failures, fix within scope, then retest and rereview; report concrete blockers
+  while continuing independent authorized work. Parallelize independent checks
+  within the resource policy; do not weaken quality gates to save time.
+- Ask only when authority is missing, applicable safety rules require it, or
+  the action, scope, data, destination, cost, or risk materially changes. Bundle
+  related questions and explain the specific decision or rule requiring them.
+- Push, merge, deployment, external publishing or data transfer, and paid
+  services need applicable authorization; this workflow grants none. When
+  production actions are separately authorized, complete production verification
+  and report the observed result. Preserve the human review requirements below.
+- Keep progress updates concise: new findings, the next step, or a blocker.
+  Report completed work and verification evidence without repeated promises.
 
 ## AI-generated code responsibility
 
