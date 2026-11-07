@@ -6,21 +6,24 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/typing_game.dart';
+import '../services/typing_audio.dart';
 import '../services/typing_score_service.dart';
 import '../widgets/typing_records_panel.dart';
 import '../services/typing_composition_bridge_stub.dart'
     if (dart.library.js_interop) '../services/typing_composition_bridge_web.dart';
 
 class TypingGamePage extends StatefulWidget {
-  const TypingGamePage({super.key, this.scoreStore});
+  const TypingGamePage({super.key, this.scoreStore, this.audio});
 
   final TypingScoreStore? scoreStore;
+  final TypingAudio? audio;
 
   @override
   State<TypingGamePage> createState() => _TypingGamePageState();
 }
 
-class _TypingGamePageState extends State<TypingGamePage> {
+class _TypingGamePageState extends State<TypingGamePage>
+    with WidgetsBindingObserver {
   final _game = TypingGame();
   final _input = TextEditingController();
   final _focus = FocusNode();
@@ -38,6 +41,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
   late final TypingCompositionBridge _composition;
   late final TypingScoreStore? _scoreStore;
   TypingRunReport? _report;
+  late final TypingAudio _audio;
 
   String _t(String japanese, String english) => _english ? english : japanese;
 
@@ -71,6 +75,8 @@ class _TypingGamePageState extends State<TypingGamePage> {
   @override
   void initState() {
     super.initState();
+    _audio = widget.audio ?? TypingAudio();
+    WidgetsBinding.instance.addObserver(this);
     // Enable only after audience/retention review and an approved DB rollout.
     _scoreStore = widget.scoreStore ??
         (const bool.fromEnvironment('TYPING_ONLINE_RECORDS')
@@ -81,6 +87,63 @@ class _TypingGamePageState extends State<TypingGamePage> {
       onCommitted: _commitBrowserComposition,
     );
   }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      setState(_audio.hide);
+    }
+  }
+
+  Widget _soundControls() => ExpansionTile(
+        title: Text(_t('サウンド設定', 'Sound settings')),
+        leading: const Icon(Icons.volume_up),
+        children: [
+          Text(_t(
+            '初期状態は無音です。有効にするとプレイ中だけ合成音が鳴ります。画面を離れた後は再度有効にしてください。',
+            'Sound is off by default. Enable synthesized music and effects during play. Enable again after leaving the screen.',
+          )),
+          if (!_audio.enabled)
+            OutlinedButton(
+              key: const Key('typing-audio-enable'),
+              onPressed: () async {
+                await _audio.enable();
+                if (mounted) setState(() {});
+              },
+              child: Text(_t('音を有効にする', 'Enable sound')),
+            ),
+          if (_audio.unavailable)
+            Text(_t(
+              'この環境では音声を開始できません。無音でそのまま遊べます。',
+              'Audio could not start here. You can continue playing silently.',
+            )),
+          SwitchListTile(
+            title: Text(_t('ミュート', 'Mute')),
+            value: _audio.muted,
+            onChanged: _audio.enabled
+                ? (value) => setState(() => _audio.setMuted(value))
+                : null,
+          ),
+          Text(_t('BGMの音量', 'Music volume')),
+          Slider(
+            key: const Key('typing-music-volume'),
+            value: _audio.musicVolume,
+            label: '${(_audio.musicVolume * 100).round()}%',
+            semanticFormatterCallback: (value) =>
+                '${_t('BGMの音量', 'Music volume')} ${(value * 100).round()}%',
+            onChanged: (value) => setState(() => _audio.setVolumes(music: value)),
+          ),
+          Text(_t('効果音の音量', 'Effects volume')),
+          Slider(
+            key: const Key('typing-effects-volume'),
+            value: _audio.effectsVolume,
+            label: '${(_audio.effectsVolume * 100).round()}%',
+            semanticFormatterCallback: (value) =>
+                '${_t('効果音の音量', 'Effects volume')} ${(value * 100).round()}%',
+            onChanged: (value) => setState(() => _audio.setVolumes(effects: value)),
+          ),
+        ],
+      );
 
   void _commitBrowserComposition() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -119,6 +182,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
       _reviewPractice = review != null;
       _announceFeedback = false;
       _game.start(mode: _selectedMode, practicePrompts: review);
+      _audio.setPlaying(true);
       _feedback = _t(
         'さあ、最初の一文字！',
         'Ready for your first letter!',
@@ -140,6 +204,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
 
   void _settle() {
     if (_game.finished) {
+      _audio.setPlaying(false);
       _report ??= TypingRunReport.fromGame(_game);
       _composition.reset();
       _clock.stop();
@@ -270,6 +335,11 @@ class _TypingGamePageState extends State<TypingGamePage> {
                   '${_game.combo}文字連続！',
                   '${_game.combo} letters in a row!',
                 );
+      _audio.effect(!accepted
+          ? TypingSound.mistake
+          : _game.words > words
+              ? TypingSound.word
+              : TypingSound.letter);
     });
     _settle();
     return _canonicalInput();
@@ -277,6 +347,8 @@ class _TypingGamePageState extends State<TypingGamePage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _audio.dispose();
     _timer?.cancel();
     _clock.stop();
     _composition.dispose();
@@ -338,6 +410,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!(ModalRoute.isCurrentOf(context) ?? true)) _audio.hide();
     final colors = Theme.of(context).colorScheme;
     final practice =
         (_game.running || _game.finished ? _game.mode : _selectedMode) ==
@@ -733,6 +806,7 @@ class _TypingGamePageState extends State<TypingGamePage> {
                         ),
                       ],
                       const SizedBox(height: 24),
+                      _soundControls(),
                       if (!_game.running && _scoreStore != null)
                         TypingRecordsPanel(
                           store: _scoreStore,

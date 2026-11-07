@@ -1,7 +1,7 @@
 name: Cloud Development Checks
 on:
   push:
-    branches: [codex/typing-bicycle-validation-20261107]
+    branches: [codex/typing-audio-validation-20261107]
   workflow_dispatch:
     inputs:
       expected_head_sha:
@@ -58,13 +58,13 @@ jobs:
       - run: flutter pub get
       - name: Format candidate and preserve patch
         run: |
-          dart format lib/models/typing_game.dart lib/pages/typing_game_page.dart lib/services/typing_composition_bridge_stub.dart lib/services/typing_composition_bridge_web.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart
-          git diff -- lib/models/typing_game.dart lib/pages/typing_game_page.dart lib/services/typing_composition_bridge_stub.dart lib/services/typing_composition_bridge_web.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart > typing-format.patch
-          git diff -- lib/models/typing_game.dart lib/pages/typing_game_page.dart lib/services/typing_composition_bridge_stub.dart lib/services/typing_composition_bridge_web.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart
+          dart format lib/models/typing_game.dart lib/pages/typing_game_page.dart lib/services/typing_composition_bridge_stub.dart lib/services/typing_composition_bridge_web.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart lib/services/typing_audio.dart lib/services/typing_audio_stub.dart lib/services/typing_audio_web.dart test/services/typing_audio_test.dart test/pages/typing_audio_page_test.dart
+          git diff -- lib/models/typing_game.dart lib/pages/typing_game_page.dart lib/services/typing_composition_bridge_stub.dart lib/services/typing_composition_bridge_web.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart lib/services/typing_audio.dart lib/services/typing_audio_stub.dart lib/services/typing_audio_web.dart test/services/typing_audio_test.dart test/pages/typing_audio_page_test.dart > typing-format.patch
+          git diff -- lib/models/typing_game.dart lib/pages/typing_game_page.dart lib/services/typing_composition_bridge_stub.dart lib/services/typing_composition_bridge_web.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart lib/services/typing_audio.dart lib/services/typing_audio_stub.dart lib/services/typing_audio_web.dart test/services/typing_audio_test.dart test/pages/typing_audio_page_test.dart
       - name: Analyze typing implementation
-        run: flutter analyze lib/models/typing_game.dart lib/pages/typing_game_page.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart
+        run: flutter analyze lib/models/typing_game.dart lib/pages/typing_game_page.dart test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/fixtures/typing_game_app.dart test/routes/app_route_names.dart test/routes/route_url_sync_test.dart lib/services/typing_score_service.dart lib/widgets/typing_records_panel.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart lib/services/typing_audio.dart lib/services/typing_audio_stub.dart lib/services/typing_audio_web.dart test/services/typing_audio_test.dart test/pages/typing_audio_page_test.dart
       - name: Typing model and widget tests
-        run: flutter test test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart test/routes/route_url_sync_test.dart --concurrency=1
+        run: flutter test test/models/typing_game_test.dart test/pages/typing_game_page_test.dart test/services/typing_score_service_test.dart test/widgets/typing_records_panel_test.dart test/routes/route_url_sync_test.dart test/services/typing_audio_test.dart test/pages/typing_audio_page_test.dart --concurrency=1
       - name: Build standalone game
         run: flutter build web --release --pwa-strategy=none --target=test/fixtures/typing_game_app.dart
       - name: Install browser test dependencies
@@ -82,7 +82,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:7358/ > /dev/null; then break; fi
             sleep 1
           done
-          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/typing_game.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+          E2E_BASE_URL=http://127.0.0.1:7358 npx playwright test test/e2e/typing_game.spec.ts test/e2e/typing_audio.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
       - name: Build integrated app
         run: flutter build web --release --pwa-strategy=none --dart-define=ENVIRONMENT=visual-test --dart-define=SUPABASE_URL=http://127.0.0.1:54321 --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_visual_regression_fixture --dart-define=TYPING_ONLINE_RECORDS=true
       - name: Preserve published Sea Shelter asset packaging
@@ -159,8 +159,8 @@ jobs:
       - run: flutter pub get
       - name: Format and analyze the real auth test
         run: |
-          dart format test/integration/typing_records_supabase_test.dart
-          git diff -- test/integration/typing_records_supabase_test.dart > typing-auth-format.patch
+          dart format test/integration/typing_records_supabase_test.dart lib/services/typing_audio.dart lib/services/typing_audio_stub.dart lib/services/typing_audio_web.dart test/services/typing_audio_test.dart test/pages/typing_audio_page_test.dart
+          git diff -- test/integration/typing_records_supabase_test.dart > typing-auth-format.patch lib/services/typing_audio.dart lib/services/typing_audio_stub.dart lib/services/typing_audio_web.dart test/services/typing_audio_test.dart test/pages/typing_audio_page_test.dart
           flutter analyze test/integration/typing_records_supabase_test.dart
       - name: Start disposable local auth stack
         shell: bash
