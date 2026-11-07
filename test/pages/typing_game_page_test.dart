@@ -6,6 +6,77 @@ import 'package:my_web_app/models/typing_game.dart';
 import 'package:my_web_app/pages/typing_game_page.dart';
 
 void main() {
+  testWidgets('mixed bicycle spellings work with hints off and on',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: TypingGamePage()));
+    await tester.tap(find.text('10問じっくり練習'));
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const Key('typing-start')));
+    await tester.tap(find.byKey(const Key('typing-start')));
+    await tester.pump();
+    final field = find.byKey(const Key('typing-input'));
+    // Collect bicycle in the page's focused review, without injected prompt state.
+    var found = false;
+    for (var i = 0; i < 36; i++) {
+      final prompt = TypingGame.prompts.firstWhere(
+        (p) => find.text(p.japanese).evaluate().isNotEmpty,
+      );
+      if (prompt.japanese == '自転車') {
+        found = true;
+        break;
+      }
+      await tester.ensureVisible(find.text('練習を終える'));
+      await tester.tap(find.text('練習を終える'));
+      await tester.pump();
+      await tester.ensureVisible(find.byKey(const Key('typing-start')));
+      await tester.tap(find.byKey(const Key('typing-start')));
+      await tester.pump();
+    }
+    expect(found, isTrue);
+    await tester.enterText(field, 'q');
+    await tester.pump();
+    await tester.ensureVisible(find.text('練習を終える'));
+    await tester.tap(find.text('練習を終える'));
+    await tester.pump();
+    await tester.ensureVisible(find.text('苦手なことばを練習'));
+    await tester.tap(find.text('苦手なことばを練習'));
+    await tester.pump();
+    final hint = find.byKey(const Key('typing-romaji-hint'));
+    for (final showHint in [false, true]) {
+      if (tester.widget<FilterChip>(hint).selected != showHint) {
+        await tester.ensureVisible(hint);
+        await tester.tap(hint);
+        await tester.pump();
+      }
+      for (final spelling in ['jitensha', 'zitensya', 'jitensya', 'zitensha']) {
+        final before = tester.widget<TextField>(field).controller!.text;
+        expect(before, isEmpty);
+        for (var i = 1; i <= spelling.length; i++) {
+          await tester.enterText(field, spelling.substring(0, i));
+          await tester.pump();
+          if (showHint && i < spelling.length) {
+            final guide = tester.widget<Text>(
+              find.byKey(const Key('typing-romaji-guide')),
+            );
+            expect(
+              guide.textSpan!
+                  .toPlainText()
+                  .startsWith(spelling.substring(0, i)),
+              isTrue,
+            );
+          } else if (!showHint) {
+            expect(find.byKey(const Key('typing-romaji-guide')), findsNothing);
+          }
+        }
+      }
+    }
+    expect(find.text('クリア 8問'), findsOneWidget);
+    expect(find.text('スコア 1040'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('hint choices survive play, retry and mode changes',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: TypingGamePage()));
