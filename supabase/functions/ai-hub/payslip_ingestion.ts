@@ -114,7 +114,10 @@ export function normalizePayslipStoragePath(value: unknown): {
   path: string;
   fullPath: string;
 } {
-  const raw = typeof value === "string" ? value.trim() : "";
+  const raw = typeof value === "string" ? value : "";
+  if (raw !== raw.trim()) {
+    throw new PayslipIngestionError("Invalid payslip storage path", 400);
+  }
   if (!raw) {
     throw new PayslipIngestionError("storage_path is required", 400);
   }
@@ -242,15 +245,31 @@ export function inferPayslipPayDateFromPath(path: string): string | null {
   return null;
 }
 
-// The current UI uploads to the private bucket as ownerId / sanitized filename.
-// Reject ambiguous encodings and path segments before any privileged download.
+// Validate the already-normalized key without changing the string passed
+// to the storage SDK. Encoded separators are deliberately unsupported.
 function requireOwnedPayslipPath(path: string, userId: string): void {
-  const ownerIsSafe = /^[A-Za-z0-9_-]+$/.test(userId);
   const segments = path.split("/");
-  const name = segments[1];
-  if (!ownerIsSafe || segments.length !== 2 || segments[0] !== userId ||
-      !name || name === "." || name === ".." ||
-      !/^[A-Za-z0-9._-]+$/.test(name)) {
+  const isSafeSegment = (segment: string): boolean => {
+    if (!segment || segment !== segment.trim() || segment === "." || segment === "..") {
+      return false;
+    }
+    // Refuse percent-encoding, backslashes, controls, bidi controls, and
+    // separator lookalikes. Spaces and Unicode inside a segment remain valid.
+    if (/[\\%?#\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\u2060-\u206F\uFEFF\u2044\u2215\u29F8\uFF0F\uFF3C\uFE68]/u.test(segment)) {
+      return false;
+    }
+    for (const character of segment) {
+      const code = character.codePointAt(0)!;
+      if (code >= 0xD800 && code <= 0xDFFF) return false;
+    }
+    // Check compatibility forms only for dangerous aliases. Do not replace
+    // the original segment with the normalized form.
+    const compatibility = segment.normalize("NFKC");
+    return compatibility === compatibility.trim() && compatibility !== "." &&
+      compatibility !== ".." && !/[\/\\%?#]/u.test(compatibility);
+  };
+  if (!/^[A-Za-z0-9_-]+$/.test(userId) || segments.length < 2 ||
+      segments[0] !== userId || !segments.slice(1).every(isSafeSegment)) {
     throw new PayslipIngestionError("Invalid payslip storage path", 403);
   }
 }
@@ -265,9 +284,10 @@ export async function handleParsePayslipAction(options: {
   const storagePath = normalizePayslipStoragePath(
     options.body.storage_path ?? options.body.source_pdf_path,
   );
-  requireOwnedPayslipPath(storagePath.path, options.userId);
+  const objectPath = storagePath.path;
+  requireOwnedPayslipPath(objectPath, options.userId);
   const download = await options.storage.from(storagePath.bucket).download(
-    storagePath.path,
+    objectPath,
   );
   if (download.error) {
     throw new PayslipIngestionError(

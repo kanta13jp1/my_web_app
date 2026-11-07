@@ -299,6 +299,137 @@ Deno.test("payslip owner boundary accepts normalized current UI paths", async ()
   }
 });
 
+Deno.test("payslip path guard preserves safe Unicode nested keys", async () => {
+  const samples = [
+    { raw: "synthetic-owner/年次 保管/給与 明細.pdf", key: "synthetic-owner/年次 保管/給与 明細.pdf" },
+    { raw: "payslips/synthetic-owner/2026年/給与 明細.pdf", key: "synthetic-owner/2026年/給与 明細.pdf" },
+    { raw: "///synthetic-owner/新しい 明細.pdf", key: "synthetic-owner/新しい 明細.pdf" },
+  ];
+  for (const sample of samples) {
+    let bucketSeen = "";
+    let pathSeen = "";
+    const db = new FakeDb();
+    const storage: PayslipStorage = {
+      from: (bucket) => {
+        bucketSeen = bucket;
+        return { download: (path) => {
+          pathSeen = path;
+          return Promise.resolve({ data: null, error: { message: "synthetic stop" } });
+        } };
+      },
+    };
+    let caught: unknown;
+    try {
+      await handleParsePayslipAction({
+        userId: "synthetic-owner", body: { storage_path: sample.raw, dry_run: true },
+        db, storage,
+      });
+    } catch (error) {
+      caught = error;
+    }
+    assertEquals(caught instanceof PayslipIngestionError, true);
+    assertEquals(bucketSeen, "payslips");
+    assertEquals(pathSeen, sample.key);
+    assertEquals(db.upserts.length, 0);
+  }
+});
+
+Deno.test("payslip path guard rejects ambiguous Unicode and encodings", async () => {
+  const invalid = [
+    "synthetic-owner/sub/../file.pdf",
+    "synthetic-owner/sub//file.pdf",
+    "synthetic-owner/sub/%20name.pdf",
+    "synthetic-owner/sub/%252e%252e/file.pdf",
+    "synthetic-owner/sub/ leading.pdf",
+    "synthetic-owner/．．/file.pdf",
+    "synthetic-owner/sub／other/file.pdf",
+    "synthetic-owner/sub\\other/file.pdf",
+    "synthetic-owner/sub/file?other.pdf",
+    "synthetic-owner/sub/\u202Efile.pdf",
+    "synthetic-owner/sub/\uD800file.pdf",
+  ];
+  for (const path of invalid) {
+    let storageCalls = 0;
+    const db = new FakeDb();
+    const storage: PayslipStorage = {
+      from: () => {
+        storageCalls++;
+        return { download: () => Promise.resolve({ data: null, error: null }) };
+      },
+    };
+    let caught: unknown;
+    try {
+      await handleParsePayslipAction({
+        userId: "synthetic-owner", body: { storage_path: path, dry_run: true },
+        db, storage,
+      });
+    } catch (error) {
+      caught = error;
+    }
+    assertEquals(caught instanceof PayslipIngestionError, true);
+    assertEquals((caught as PayslipIngestionError).status, 403);
+    assertEquals(storageCalls, 0);
+    assertEquals(db.upserts.length, 0);
+  }
+});
+
+Deno.test("payslip path rejects input-edge whitespace before storage access", async () => {
+  const paths = [
+    " synthetic-owner/folder/file.pdf",
+    "synthetic-owner/folder/file.pdf ",
+    "payslips/synthetic-owner/file.pdf\u00A0",
+    "\tsynthetic-owner/file.pdf",
+    " ",
+  ];
+  for (const path of paths) {
+    let storageCalls = 0;
+    const db = new FakeDb();
+    const storage: PayslipStorage = {
+      from: () => {
+        storageCalls++;
+        return { download: () => Promise.resolve({ data: null, error: null }) };
+      },
+    };
+    let caught: unknown;
+    try {
+      await handleParsePayslipAction({
+        userId: "synthetic-owner", body: { storage_path: path, dry_run: true },
+        db, storage,
+      });
+    } catch (error) {
+      caught = error;
+    }
+    assertEquals(caught instanceof PayslipIngestionError, true);
+    assertEquals((caught as PayslipIngestionError).status, 400);
+    assertEquals(storageCalls, 0);
+    assertEquals(db.upserts.length, 0);
+  }
+});
+
+Deno.test("payslip path preserves internal whitespace through the SDK call", async () => {
+  const key = "synthetic-owner/保管 場所/給与 明細.pdf";
+  let keySeen = "";
+  const db = new FakeDb();
+  const storage: PayslipStorage = {
+    from: () => ({ download: (path) => {
+      keySeen = path;
+      return Promise.resolve({ data: null, error: { message: "synthetic stop" } });
+    } }),
+  };
+  let caught: unknown;
+  try {
+    await handleParsePayslipAction({
+      userId: "synthetic-owner", body: { storage_path: key, dry_run: true },
+      db, storage,
+    });
+  } catch (error) {
+    caught = error;
+  }
+  assertEquals(caught instanceof PayslipIngestionError, true);
+  assertEquals(keySeen, key);
+  assertEquals(db.upserts.length, 0);
+});
+
 function assertEquals(actual: unknown, expected: unknown) {
   if (JSON.stringify(actual) !== JSON.stringify(expected)) {
     throw new Error(
