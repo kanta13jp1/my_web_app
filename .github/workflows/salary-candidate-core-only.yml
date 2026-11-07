@@ -1,0 +1,124 @@
+# REVIEW-ONLY: would execute on matching push; do not install or push.
+name: Salary candidate core only
+on:
+  push:
+    branches:
+      - codex/salary-candidate-core-check-5707
+permissions:
+  contents: read
+jobs:
+  synthetic:
+    if: github.event_name == 'push' && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/salary-candidate-core-check-5707' && github.event.deleted == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+
+      - name: Make new owned temporary workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${RUNNER_TEMP:?}" == /* && -d "$RUNNER_TEMP" && ! -L "$RUNNER_TEMP" ]]
+          runner_root="$(realpath -e -- "$RUNNER_TEMP")"
+          [[ "$runner_root" != / && "$runner_root" == /* ]]
+          umask 077
+          task_dir="$(mktemp -d -- "$runner_root/salary-core.XXXXXXXX")"
+          [[ -d "$task_dir" && ! -L "$task_dir" && "$(dirname -- "$task_dir")" == "$runner_root" && "$(realpath -e -- "$task_dir")" == "$task_dir" && "$(stat -c %u -- "$task_dir")" == "$(id -u)" && "$(stat -c %a -- "$task_dir")" == 700 ]]
+          mkdir -- "$task_dir/result" "$task_dir/sdk" "$task_dir/sandbox" "$task_dir/home" "$task_dir/pub-cache"
+          for sub in result sdk sandbox home pub-cache; do
+            [[ -d "$task_dir/$sub" && ! -L "$task_dir/$sub" && "$(realpath -e -- "$task_dir/$sub")" == "$task_dir/$sub" && "$(stat -c %u -- "$task_dir/$sub")" == "$(id -u)" && "$(stat -c %a -- "$task_dir/$sub")" == 700 ]]
+          done
+          python3 - "$task_dir/sandbox" <<'PY'
+          import pathlib, sys
+          work = pathlib.Path(sys.argv[1]).resolve(strict=True)
+          for parent in (work, *work.parents):
+              pubspec = parent / 'pubspec.yaml'
+              dot = parent / '.dart_tool'
+              config = dot / 'package_config.json'
+              if pubspec.exists() or pubspec.is_symlink() or dot.is_symlink() or config.exists() or config.is_symlink():
+                  raise SystemExit('pubspec or Dart package configuration in sandbox ancestry')
+          PY
+          [[ "$task_dir" != *$'\n'* && "$task_dir" != *$'\r'* ]]
+          printf 'SALARY_TASK_DIR=%s\n' "$task_dir" >> "$GITHUB_ENV"
+      - name: Checkout reviewed branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify checkout, parent, exact additions and modes
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_parent='f8e39bcaa6c347a177d4cb102ef939cd08d096ef'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git show -s --format=%P "$GITHUB_SHA")" = "$expected_parent"
+          python3 - "$expected_parent" "$GITHUB_SHA" <<'PY'
+          import subprocess, sys
+          old, new = sys.argv[1:]
+          expected_paths = [b'.github/workflows/salary-candidate-core-only.yml', b'scripts/isolated_checks/salary_candidate_core_check.dart']
+          raw = subprocess.check_output(['git', 'diff', '--no-renames', '--name-status', '-z', old, new]).split(b'\x00')
+          if raw != [b'A', expected_paths[0], b'A', expected_paths[1], b'']:
+              raise SystemExit('unexpected diff scope or status')
+          tree = subprocess.check_output(['git', 'ls-tree', '-z', new, *(x.decode('ascii') for x in expected_paths)])
+          records = [record.split(b'\t', 1) for record in tree.split(b'\x00') if record]
+          modes = {path: metadata.split(b' ', 1)[0] for metadata, path in records}
+          if modes != {path: b'100644' for path in expected_paths}:
+              raise SystemExit('unexpected added path or mode')
+          PY
+          printf '%s  %s\n' '9a0679a9c4794aa8be928783dcc524f34af068d195dd04a22251b2293b422ce1' 'scripts/isolated_checks/salary_candidate_core_check.dart' | sha256sum -c -
+          sha256sum .github/workflows/salary-candidate-core-only.yml scripts/isolated_checks/salary_candidate_core_check.dart > "$SALARY_TASK_DIR/result/checked-hashes.txt"
+          printf '%s\n' "$GITHUB_SHA" > "$SALARY_TASK_DIR/result/commit.txt"
+      - name: Obtain and verify fixed SDK archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          trap 'code=$?; printf "%s\n" "$code" > "$SALARY_TASK_DIR/result/sdk-setup.exit"' EXIT
+          curl --fail --location --connect-timeout 15 --max-time 240 --retry 0 --output "$SALARY_TASK_DIR/sdk/flutter.tar.xz" 'https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.9-stable.tar.xz'
+          printf '%s  %s\n' '25ed8c3c29d51a7353f2a944310b478af8214920639524b19c50a19e6c044c5a' "$SALARY_TASK_DIR/sdk/flutter.tar.xz" | sha256sum -c -
+          sha256sum "$SALARY_TASK_DIR/sdk/flutter.tar.xz" > "$SALARY_TASK_DIR/result/sdk-archive-sha256.txt"
+          timeout --signal=TERM --kill-after=5s 120s tar -xJf "$SALARY_TASK_DIR/sdk/flutter.tar.xz" -C "$SALARY_TASK_DIR/sdk"
+          dart_bin="$SALARY_TASK_DIR/sdk/flutter/bin/cache/dart-sdk/bin/dart"
+          test -x "$dart_bin"
+          "$dart_bin" --version 2>&1 | tee "$SALARY_TASK_DIR/result/dart-version.txt"
+          grep -Eq '^Dart SDK version: 3[.]13[.]7([[:space:]]|$)' "$SALARY_TASK_DIR/result/dart-version.txt"
+          cp scripts/isolated_checks/salary_candidate_core_check.dart "$SALARY_TASK_DIR/sandbox/check.dart"
+          printf '%s  %s\n' '9a0679a9c4794aa8be928783dcc524f34af068d195dd04a22251b2293b422ce1' "$SALARY_TASK_DIR/sandbox/check.dart" | sha256sum -c -
+      - name: Run synthetic probes with deterministic sentinel exits
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          dart_bin="$SALARY_TASK_DIR/sdk/flutter/bin/cache/dart-sdk/bin/dart"
+          cd "$SALARY_TASK_DIR/sandbox"
+          run_probe() {
+            local label="$1"; shift
+            local code
+            set +e
+            env -i PATH=/usr/bin:/bin HOME="$SALARY_TASK_DIR/home" PUB_CACHE="$SALARY_TASK_DIR/pub-cache" CI=true \
+              timeout --signal=TERM --kill-after=5s 60s "$dart_bin" run "$@" check.dart > "$SALARY_TASK_DIR/result/$label.log" 2>&1
+            code=$?
+            set -e
+            printf '%s\n' "$code" > "$SALARY_TASK_DIR/result/$label.exit"
+          }
+          run_probe no_asserts
+          test "$(cat "$SALARY_TASK_DIR/result/no_asserts.exit")" = 71
+          grep -Fxq 'PROBE_ASSERT_DISABLED' "$SALARY_TASK_DIR/result/no_asserts.log"
+          set +e
+          env -i PATH=/usr/bin:/bin HOME="$SALARY_TASK_DIR/home" PUB_CACHE="$SALARY_TASK_DIR/pub-cache" CI=true \
+            timeout --signal=TERM --kill-after=5s 60s "$dart_bin" run --enable-asserts check.dart --probe-failure > "$SALARY_TASK_DIR/result/forced-failure.log" 2>&1
+          forced=$?
+          set -e
+          printf '%s\n' "$forced" > "$SALARY_TASK_DIR/result/forced-failure.exit"
+          test "$forced" = 72
+          grep -Fxq 'PROBE_EXPECTED_FAILURE' "$SALARY_TASK_DIR/result/forced-failure.log"
+          run_probe positive --enable-asserts
+          test "$(cat "$SALARY_TASK_DIR/result/positive.exit")" = 0
+          test "$(grep -c '^PASS:' "$SALARY_TASK_DIR/result/positive.log")" = 37
+          grep -Fxq 'ALL CORE CHECKS PASSED: 37' "$SALARY_TASK_DIR/result/positive.log"
+      - name: Save synthetic result
+        if: always() && env.SALARY_TASK_DIR != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: salary-candidate-core-synthetic
+          path: ${{ env.SALARY_TASK_DIR }}/result/
+          if-no-files-found: error
+          retention-days: 3
