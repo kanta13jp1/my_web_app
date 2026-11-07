@@ -1,5 +1,6 @@
 import {
   handleParsePayslipAction,
+  PayslipIngestionError,
   inferPayslipPayDateFromPath,
   maskPayslipPii,
   parsePayslipText,
@@ -216,6 +217,85 @@ Deno.test("合成: 必須値不足の既存エラーと provider なし", async 
   } finally {
     if (old == null) Deno.env.delete("PAYSLIP_AI_PARSE_ENABLED");
     else Deno.env.set("PAYSLIP_AI_PARSE_ENABLED", old);
+  }
+});
+
+Deno.test("payslip owner boundary denies ambiguous paths before storage access", async () => {
+  const invalid = [
+    { userId: "", path: "synthetic-owner/file.pdf", status: 403 },
+    { userId: "synthetic-owner", path: "", status: 400 },
+    { userId: "synthetic-owner", path: "other-owner/file.pdf", status: 403 },
+    { userId: "synthetic-owner", path: "synthetic-owner-extra/file.pdf", status: 403 },
+    { userId: "synthetic-owner", path: "synthetic-owner/../other/file.pdf", status: 403 },
+    { userId: "synthetic-owner", path: "synthetic-owner//file.pdf", status: 403 },
+    { userId: "synthetic-owner", path: "synthetic-owner/%2e%2e%2ffile.pdf", status: 403 },
+    { userId: "synthetic-owner", path: "synthetic-owner/file%2fpdf", status: 403 },
+    { userId: "synthetic-owner", path: "synthetic-owner/..", status: 403 },
+    { userId: "synthetic-owner", path: "synthetic-owner/", status: 403 },
+    { userId: "synthetic-owner/extra", path: "synthetic-owner/extra/file.pdf", status: 403 },
+    { userId: "synthetic-owner", path: "synthetic-owner/other\\file.pdf", status: 403 },
+  ];
+  for (const sample of invalid) {
+    let storageCalls = 0;
+    const db = new FakeDb();
+    const storage: PayslipStorage = {
+      from: () => {
+        storageCalls++;
+        return { download: () => Promise.resolve({ data: null, error: null }) };
+      },
+    };
+    let caught: unknown;
+    try {
+      await handleParsePayslipAction({
+        userId: sample.userId,
+        body: { storage_path: sample.path, dry_run: true },
+        db,
+        storage,
+      });
+    } catch (error) {
+      caught = error;
+    }
+    assertEquals(caught instanceof PayslipIngestionError, true);
+    assertEquals((caught as PayslipIngestionError).status, sample.status);
+    assertEquals(storageCalls, 0);
+    assertEquals(db.upserts.length, 0);
+  }
+});
+
+Deno.test("payslip owner boundary accepts normalized current UI paths", async () => {
+  const paths = [
+    "synthetic-owner/20261108_010203-sample.pdf",
+    "payslips/synthetic-owner/20261108_010203-sample.pdf",
+    "///synthetic-owner/20261108_010203-sample.pdf",
+  ];
+  for (const path of paths) {
+    let bucketSeen = "";
+    let pathSeen = "";
+    const db = new FakeDb();
+    const storage: PayslipStorage = {
+      from: (bucket) => {
+        bucketSeen = bucket;
+        return { download: (value) => {
+          pathSeen = value;
+          return Promise.resolve({ data: null, error: { message: "synthetic stop" } });
+        } };
+      },
+    };
+    let caught: unknown;
+    try {
+      await handleParsePayslipAction({
+        userId: "synthetic-owner",
+        body: { storage_path: path, dry_run: true },
+        db,
+        storage,
+      });
+    } catch (error) {
+      caught = error;
+    }
+    assertEquals(caught instanceof PayslipIngestionError, true);
+    assertEquals(bucketSeen, "payslips");
+    assertEquals(pathSeen, "synthetic-owner/20261108_010203-sample.pdf");
+    assertEquals(db.upserts.length, 0);
   }
 });
 

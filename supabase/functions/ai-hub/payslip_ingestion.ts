@@ -242,6 +242,19 @@ export function inferPayslipPayDateFromPath(path: string): string | null {
   return null;
 }
 
+// The current UI uploads to the private bucket as ownerId / sanitized filename.
+// Reject ambiguous encodings and path segments before any privileged download.
+function requireOwnedPayslipPath(path: string, userId: string): void {
+  const ownerIsSafe = /^[A-Za-z0-9_-]+$/.test(userId);
+  const segments = path.split("/");
+  const name = segments[1];
+  if (!ownerIsSafe || segments.length !== 2 || segments[0] !== userId ||
+      !name || name === "." || name === ".." ||
+      !/^[A-Za-z0-9._-]+$/.test(name)) {
+    throw new PayslipIngestionError("Invalid payslip storage path", 403);
+  }
+}
+
 export async function handleParsePayslipAction(options: {
   db: PayslipDb;
   storage: PayslipStorage;
@@ -252,6 +265,7 @@ export async function handleParsePayslipAction(options: {
   const storagePath = normalizePayslipStoragePath(
     options.body.storage_path ?? options.body.source_pdf_path,
   );
+  requireOwnedPayslipPath(storagePath.path, options.userId);
   const download = await options.storage.from(storagePath.bucket).download(
     storagePath.path,
   );
