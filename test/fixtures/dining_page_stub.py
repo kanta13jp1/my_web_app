@@ -13,6 +13,8 @@ USERS = {
     'fixture-b@example.invalid': '22222222-2222-4222-8222-222222222222',
 }
 PASSWORD = 'fixture-password-only'
+PHASE = 'unknown'
+PHASES = frozenset({'unauthenticated_page', 'auth_a', 'page_a', 'auth_b', 'page_b', 'audit'})
 KEY = b'public-synthetic-test-key-not-a-real-secret'
 COUNTS = {'auth': 0, 'flows_a': 0, 'flows_b': 0, 'reflection_a': 0, 'reflection_b': 0,
           'read_rpc_a': 0, 'read_rpc_b': 0, 'rejected_telemetry': 0,
@@ -53,20 +55,59 @@ _DIAGNOSTIC_ROUTES = {
 _DIAGNOSTIC_METHODS = {'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'}
 
 
-def report_rejection(method, target, reason):
+def route_category(path):
+    exact = _DIAGNOSTIC_ROUTES.get(path)
+    if exact is not None:
+        return exact
+    for prefix, category in (('/auth/v1/', 'auth_other'),
+                             ('/rest/v1/rpc/', 'rest_rpc_other'),
+                             ('/rest/v1/', 'rest_table_other'),
+                             ('/functions/v1/', 'functions_other'),
+                             ('/storage/v1/', 'storage_other'),
+                             ('/realtime/', 'realtime_other')):
+        if path.startswith(prefix):
+            return category
+    return 'other'
+
+
+def length_bucket(length):
+    if not isinstance(length, int) or isinstance(length, bool) or length < 0:
+        return 'unknown'
+    if length <= 1024:
+        return 'at_most_1024'
+    if length <= 4096:
+        return '1025_to_4096'
+    if length <= 16384:
+        return '4097_to_16384'
+    return 'above_16384'
+
+
+def report_rejection(method, target, reason, length=None):
     # urlsplit may reject malformed targets; never print the untrusted input.
     try:
         path = urlsplit(target).path
     except ValueError:
         path = ''
     event = {'method': method if method in _DIAGNOSTIC_METHODS else 'OTHER',
-             'route': _DIAGNOSTIC_ROUTES.get(path, 'other'), 'reason': reason}
+             'route': route_category(path),
+             'reason': reason if reason in {'denied_mutation', 'invalid_length', 'oversize_body'} else 'unknown',
+             'phase': PHASE if PHASE in PHASES else 'unknown',
+             'length_bucket': length_bucket(length)}
     print('FIXTURE_REJECTED ' + json.dumps(event, sort_keys=True), flush=True)
 
 
 def dispatch(method, target, headers, body=b''):
+    global PHASE
     url = urlsplit(target)
     query = parse_qs(url.query)
+    if method == 'GET' and url.path == '/__fixture_phase':
+        phase_query = parse_qs(url.query, keep_blank_values=True)
+        requested = phase_query.get('phase') if set(phase_query) == {'phase'} else None
+        if not isinstance(requested, list) or len(requested) != 1 or requested[0] not in PHASES:
+            PHASE = 'unknown'
+            return 400, {'phase': 'unknown'}
+        PHASE = requested[0]
+        return 200, {'phase': PHASE}
     if method == 'OPTIONS':
         return 204, None
     if method == 'GET' and url.path == '/__fixture_status':
@@ -152,7 +193,7 @@ class Handler(BaseHTTPRequestHandler):
         if length > 1024:
             if self.command not in {'GET', 'OPTIONS'}:
                 COUNTS['rejected_writes'] += 1
-                report_rejection(self.command, getattr(self, 'path', ''), 'oversize_body')
+                report_rejection(self.command, getattr(self, 'path', ''), 'oversize_body', length)
             self.send_error(413)
             return
         body = self.rfile.read(length)

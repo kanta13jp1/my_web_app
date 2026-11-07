@@ -8,6 +8,7 @@ import dining_page_stub as fixture
 
 class SyntheticBackendTest(unittest.TestCase):
     def setUp(self):
+        fixture.PHASE = 'unknown'
         for key in fixture.COUNTS:
             fixture.COUNTS[key] = 0
 
@@ -97,12 +98,14 @@ class SyntheticBackendTest(unittest.TestCase):
         fixture.report_rejection('POST', '/rest/v1/asset_pref_mirror?private=value', 'denied_mutation')
         event = json.loads(output.call_args.args[0].removeprefix('FIXTURE_REJECTED '))
         self.assertEqual(event, {'method': 'POST', 'route': 'asset_pref_mirror',
-                                 'reason': 'denied_mutation'})
+                                 'reason': 'denied_mutation', 'phase': 'unknown',
+                                 'length_bucket': 'unknown'})
         fixture.report_rejection('SECRET_METHOD', '/private/secret?token=secret', 'invalid_length')
         message = output.call_args.args[0]
         self.assertNotIn('secret', message.lower())
         self.assertEqual(json.loads(message.removeprefix('FIXTURE_REJECTED ')),
-                         {'method': 'OTHER', 'route': 'other', 'reason': 'invalid_length'})
+                         {'method': 'OTHER', 'route': 'other', 'reason': 'invalid_length',
+                          'phase': 'unknown', 'length_bucket': 'unknown'})
 
     @patch.object(fixture.subprocess, 'run')
     def test_namespace_guard_accepts_only_single_loopback(self, run):
@@ -118,6 +121,74 @@ class SyntheticBackendTest(unittest.TestCase):
                       subprocess.CalledProcessError(1, 'ip')]:
             run.side_effect = error
             self.assertFalse(fixture.namespace_only_loopback())
+
+
+    def test_phase_rejects_missing_blank_duplicates_and_extra_keys(self):
+        for phase in fixture.PHASES:
+            self.assertEqual(fixture.dispatch('GET', '/__fixture_phase?phase=' + phase, {}),
+                             (200, {'phase': phase}))
+        for target in ('/__fixture_phase', '/__fixture_phase?phase=',
+                       '/__fixture_phase?phase=page_a&phase=',
+                       '/__fixture_phase?phase=page_a&token=',
+                       '/__fixture_phase?phase=page_a&token=synthetic_secret',
+                       '/__fixture_phase?phase=page_a&phase=page_b'):
+            fixture.PHASE = 'page_a'
+            response = fixture.dispatch('GET', target, {})
+            self.assertEqual(response, (400, {'phase': 'unknown'}))
+            self.assertEqual(fixture.PHASE, 'unknown')
+            self.assertNotIn('synthetic_secret', str(response))
+        with patch('builtins.print'):
+            self.assertEqual(fixture.dispatch('POST', '/__fixture_phase?phase=page_a', {})[0], 403)
+
+    @patch('builtins.print')
+    def test_fixed_prefix_classification_never_prints_untrusted_input(self, output):
+        pairs = {'/auth/v1/synthetic_secret?token=synthetic_secret': 'auth_other',
+                 '/rest/v1/rpc/synthetic_secret?token=synthetic_secret': 'rest_rpc_other',
+                 '/rest/v1/synthetic_secret?token=synthetic_secret': 'rest_table_other',
+                 '/functions/v1/synthetic_secret?token=synthetic_secret': 'functions_other',
+                 '/storage/v1/synthetic_secret?token=synthetic_secret': 'storage_other',
+                 '/realtime/synthetic_secret?token=synthetic_secret': 'realtime_other',
+                 '/private/synthetic_secret?token=synthetic_secret': 'other'}
+        for target, expected in pairs.items():
+            fixture.report_rejection('POST', target, 'oversize_body', 1025)
+            message = output.call_args.args[0]
+            self.assertNotIn('synthetic_secret', message)
+            event = json.loads(message.removeprefix('FIXTURE_REJECTED '))
+            self.assertEqual((event['route'], event['phase'], event['length_bucket']),
+                             (expected, 'unknown', '1025_to_4096'))
+        fixture.report_rejection('SECRET_METHOD', '/private/synthetic_secret',
+                                 'synthetic_secret_reason', None)
+        message = output.call_args.args[0]
+        self.assertNotIn('secret', message.lower())
+        event = json.loads(message.removeprefix('FIXTURE_REJECTED '))
+        self.assertEqual((event['method'], event['reason']), ('OTHER', 'unknown'))
+
+    def test_length_bucket_boundaries(self):
+        for value, expected in ((None, 'unknown'), (-1, 'unknown'), (True, 'unknown'),
+                                (1024, 'at_most_1024'), (1025, '1025_to_4096'),
+                                (4096, '1025_to_4096'), (4097, '4097_to_16384'),
+                                (16384, '4097_to_16384'), (16385, 'above_16384')):
+            self.assertEqual(fixture.length_bucket(value), expected)
+
+    @patch('builtins.print')
+    def test_oversize_rejected_without_reading_or_logging_sensitive_data(self, output):
+        class Unreadable:
+            def read(self, *_):
+                raise AssertionError('oversized body was read')
+        handler = object.__new__(fixture.Handler)
+        handler.headers = {'content-length': '1025', 'authorization': 'synthetic_secret'}
+        handler.path = '/functions/v1/synthetic_secret?token=synthetic_secret'
+        handler.command = 'POST'
+        handler.rfile = Unreadable()
+        errors = []
+        handler.send_error = errors.append
+        handler._handle()
+        self.assertEqual(errors, [413])
+        self.assertEqual(fixture.COUNTS['rejected_writes'], 1)
+        message = output.call_args.args[0]
+        self.assertNotIn('synthetic_secret', message)
+        self.assertEqual(json.loads(message.removeprefix('FIXTURE_REJECTED '))['route'],
+                         'functions_other')
 
 
 if __name__ == '__main__':

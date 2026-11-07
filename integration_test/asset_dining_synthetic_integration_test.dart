@@ -21,6 +21,15 @@ Future<void> settleSyntheticPage(WidgetTester tester) async {
   }
 }
 
+Future<void> markFixturePhase(WidgetTester tester, String phase) async {
+  await tester.runAsync(() async {
+    final response = await http.get(
+      Uri.parse('$fixtureBase/__fixture_phase?phase=$phase'),
+    );
+    expect(response.statusCode, 200);
+  });
+}
+
 Future<void> showPage(WidgetTester tester, DateTime today) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -63,6 +72,7 @@ void main() {
     final candidate = find.textContaining('飲食店の利用・外食かは要確認');
 
     // No authenticated user: no private candidate is displayed.
+    await markFixturePhase(tester, 'unauthenticated_page');
     await showPage(tester, now);
     expect(day, findsOneWidget);
     await tester.ensureVisible(day);
@@ -72,12 +82,14 @@ void main() {
     expect(find.text('外食・飲酒・たばこ購入・読書の振り返り'), findsNothing);
     await discardPage(tester);
 
+    await markFixturePhase(tester, 'auth_a');
     await tester.runAsync(
       () => Supabase.instance.client.auth.signInWithPassword(
         email: 'fixture-a@example.invalid',
         password: fixturePassword,
       ),
     );
+    await markFixturePhase(tester, 'page_a');
     await showPage(tester, now);
     expect(day, findsOneWidget);
     await tester.ensureVisible(day);
@@ -96,12 +108,14 @@ void main() {
     await discardPage(tester);
 
     // A different synthetic owner receives no flow and cannot see A's candidate.
+    await markFixturePhase(tester, 'auth_b');
     await tester.runAsync(
       () => Supabase.instance.client.auth.signInWithPassword(
         email: 'fixture-b@example.invalid',
         password: fixturePassword,
       ),
     );
+    await markFixturePhase(tester, 'page_b');
     await showPage(tester, now);
     expect(day, findsOneWidget);
     await tester.ensureVisible(day);
@@ -113,6 +127,7 @@ void main() {
     expect(candidate, findsNothing);
     await discardPage(tester);
 
+    await markFixturePhase(tester, 'audit');
     final status = await tester.runAsync(() async {
       final response =
           await http.get(Uri.parse('$fixtureBase/__fixture_status'));
