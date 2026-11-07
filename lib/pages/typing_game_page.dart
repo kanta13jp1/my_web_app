@@ -101,8 +101,8 @@ class _TypingGamePageState extends State<TypingGamePage>
         children: [
           Text(
             _t(
-            '初期状態は無音です。有効にするとプレイ中だけ合成音が鳴ります。画面を離れた後は再度有効にしてください。',
-            'Sound is off by default. Enable synthesized music and effects during play. Enable again after leaving the screen.',
+              '初期状態は無音です。有効にするとプレイ中だけ合成音が鳴ります。画面を離れた後は再度有効にしてください。',
+              'Sound is off by default. Enable synthesized music and effects during play. Enable again after leaving the screen.',
             ),
           ),
           if (!_audio.enabled)
@@ -117,8 +117,8 @@ class _TypingGamePageState extends State<TypingGamePage>
           if (_audio.unavailable)
             Text(
               _t(
-              'この環境では音声を開始できません。無音でそのまま遊べます。',
-              'Audio could not start here. You can continue playing silently.',
+                'この環境では音声を開始できません。無音でそのまま遊べます。',
+                'Audio could not start here. You can continue playing silently.',
               ),
             ),
           SwitchListTile(
@@ -129,24 +129,34 @@ class _TypingGamePageState extends State<TypingGamePage>
                 : null,
           ),
           Text(_t('BGMの音量', 'Music volume')),
-          Slider(
-            key: const Key('typing-music-volume'),
-            value: _audio.musicVolume,
-            label: '${(_audio.musicVolume * 100).round()}%',
-            semanticFormatterCallback: (value) =>
-                '${_t('BGMの音量', 'Music volume')} ${(value * 100).round()}%',
-            onChanged: (value) =>
-                setState(() => _audio.setVolumes(music: value)),
+          MergeSemantics(
+            child: Semantics(
+              label: _t('BGMの音量', 'Music volume'),
+              child: Slider(
+                key: const Key('typing-music-volume'),
+                value: _audio.musicVolume,
+                label: '${(_audio.musicVolume * 100).round()}%',
+                semanticFormatterCallback: (value) =>
+                    '${(value * 100).round()}%',
+                onChanged: (value) =>
+                    setState(() => _audio.setVolumes(music: value)),
+              ),
+            ),
           ),
           Text(_t('効果音の音量', 'Effects volume')),
-          Slider(
-            key: const Key('typing-effects-volume'),
-            value: _audio.effectsVolume,
-            label: '${(_audio.effectsVolume * 100).round()}%',
-            semanticFormatterCallback: (value) =>
-                '${_t('効果音の音量', 'Effects volume')} ${(value * 100).round()}%',
-            onChanged: (value) =>
-                setState(() => _audio.setVolumes(effects: value)),
+          MergeSemantics(
+            child: Semantics(
+              label: _t('効果音の音量', 'Effects volume'),
+              child: Slider(
+                key: const Key('typing-effects-volume'),
+                value: _audio.effectsVolume,
+                label: '${(_audio.effectsVolume * 100).round()}%',
+                semanticFormatterCallback: (value) =>
+                    '${(value * 100).round()}%',
+                onChanged: (value) =>
+                    setState(() => _audio.setVolumes(effects: value)),
+              ),
+            ),
           ),
         ],
       );
@@ -343,10 +353,10 @@ class _TypingGamePageState extends State<TypingGamePage>
                 );
       _audio.effect(
         !accepted
-          ? TypingSound.mistake
-          : _game.words > words
-              ? TypingSound.word
-              : TypingSound.letter,
+            ? TypingSound.mistake
+            : _game.words > words
+                ? TypingSound.word
+                : TypingSound.letter,
       );
     });
     _settle();
