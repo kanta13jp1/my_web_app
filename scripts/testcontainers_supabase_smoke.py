@@ -792,6 +792,7 @@ def check_issue_1233_ai_quota_concurrency(
 
 
 TEST_USER = '00000000-0000-4000-8000-000000002913'
+TEST_OTHER_USER = '00000000-0000-4000-8000-000000002915'
 
 
 def check_voice_quota_race(connect, connection_url):
@@ -831,7 +832,31 @@ def check_voice_quota_race(connect, connection_url):
     if (count, accepted_quantity) != (2, 6):
         raise AssertionError(f'unexpected persisted ledger: {count}, {accepted_quantity}')
 
-    return {"accepted": 1, "blocked": 1, "quantity": 6}
+    with connect(connection_url, connect_timeout=10) as conn:
+        with conn.cursor() as cur:
+            signature = (
+                'public.record_voice_ai_usage(uuid,text,text,text,numeric,'
+                'numeric,boolean,boolean,jsonb,numeric,numeric)'
+            )
+            cur.execute(
+                "select has_function_privilege('authenticated', %s, 'execute'), "
+                "has_function_privilege('service_role', %s, 'execute')",
+                (signature, signature),
+            )
+            if cur.fetchone() != (False, True):
+                raise AssertionError('voice usage RPC role grants are incorrect')
+            cur.execute('set local role service_role')
+            cur.execute(
+                'select public.record_voice_ai_usage('
+                '%s::uuid, %s, %s, %s, %s, %s, %s, %s, '
+                '%s::jsonb, %s, %s)',
+                (TEST_OTHER_USER, 'cartesia', 'race-test', 'tts_chars', 6,
+                 0, False, True, '{}', 10, 10),
+            )
+            other = cur.fetchone()
+            if other is None or other[0]['blocked']:
+                raise AssertionError('another user must have an independent quota')
+    return {"accepted": 1, "blocked": 1, "quantity": 6, "other_user": "allowed", "acl": "passed"}
 
 
 def seed_ai_university_legacy_fixture(conn: Any) -> None:
@@ -3298,6 +3323,10 @@ def run_smoke(args: argparse.Namespace) -> int:
                 cur.execute(
                     "insert into auth.users (id) values (%s::uuid) on conflict do nothing",
                     (TEST_USER,),
+                )
+                cur.execute(
+                    "insert into auth.users (id) values (%s::uuid) on conflict do nothing",
+                    (TEST_OTHER_USER,),
                 )
             conn.commit()
             apply_sql_fixture(
