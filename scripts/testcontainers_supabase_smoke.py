@@ -791,6 +791,49 @@ def check_issue_1233_ai_quota_concurrency(
     }
 
 
+TEST_USER = '00000000-0000-4000-8000-000000002913'
+
+
+def check_voice_quota_race(connect, connection_url):
+    barrier = threading.Barrier(2)
+
+    def reserve():
+        with connect(connection_url, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute('set local role service_role')
+                barrier.wait(timeout=10)
+                cur.execute(
+                    'select public.record_voice_ai_usage('
+                    '%s::uuid, %s, %s, %s, %s, %s, %s, %s, '
+                    '%s::jsonb, %s, %s)',
+                    (TEST_USER, 'cartesia', 'race-test', 'tts_chars', 6,
+                     0, False, True, '{}', 10, 10),
+                )
+                row = cur.fetchone()
+                if row is None:
+                    raise AssertionError('quota RPC returned no row')
+                return row[0]
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(reserve) for _ in range(2)]
+        results = [f.result(timeout=30) for f in futures]
+    if sorted(r['blocked'] for r in results) != [False, True]:
+        raise AssertionError(f'expected one accepted and one blocked: {results}')
+    with connect(connection_url, connect_timeout=10) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                'select count(*), coalesce(sum(quantity) filter '
+                '(where not blocked), 0) from public.voice_ai_usage_events '
+                'where user_id = %s::uuid and provider = %s and metric_type = %s',
+                (TEST_USER, 'cartesia', 'tts_chars'),
+            )
+            count, accepted_quantity = cur.fetchone()
+    if (count, accepted_quantity) != (2, 6):
+        raise AssertionError(f'unexpected persisted ledger: {count}, {accepted_quantity}')
+
+    return {"accepted": 1, "blocked": 1, "quantity": 6}
+
+
 def seed_ai_university_legacy_fixture(conn: Any) -> None:
     with conn.cursor() as cur:
         # The compact Testcontainers fixture predates the production course
@@ -3243,6 +3286,27 @@ def run_smoke(args: argparse.Namespace) -> int:
             apply_sql_fixture(conn, VOICE_DUBBING_MIGRATION, artifacts_dir)
             apply_sql_fixture(conn, VOICE_DUBBING_MIGRATION, artifacts_dir)
             apply_sql_fixture(conn, VOICE_DUBBING_CONTRACT, artifacts_dir)
+            # Synthetic bootstrap only; no production Supabase credentials.
+            with conn.cursor() as cur:
+                cur.execute("""
+                    do $$ begin
+                      if to_regprocedure('public.is_user_admin(uuid)') is null then
+                        execute $fn$create function public.is_user_admin(uuid) returns boolean language sql stable as 'select false'$fn$;
+                      end if;
+                    end $$
+                """)
+                cur.execute(
+                    "insert into auth.users (id) values (%s::uuid) on conflict do nothing",
+                    (TEST_USER,),
+                )
+            conn.commit()
+            apply_sql_fixture(
+                conn,
+                ROOT / "supabase" / "migrations" / "20260610133000_voice_ai_usage_governance.sql",
+                artifacts_dir,
+            )
+            conn.commit()
+            voice_ai_quota_race = check_voice_quota_race(psycopg.connect, connection_url)
             apply_sql_fixture(
                 conn,
                 ISSUE_1233_RESOURCE_OPTIMIZER_SQL_FILES[0],
@@ -3346,6 +3410,7 @@ def run_smoke(args: argparse.Namespace) -> int:
             "ai_university": ai_university,
             "agentless_course": agentless_course,
             "voice_dubbing_quota_contract": "passed",
+            "voice_ai_quota_race": voice_ai_quota_race,
             "issue_1233_resource_optimizer_contract": "passed",
             "issue_1233_ai_quota_concurrency": issue_1233_quota_concurrency,
             "issue_4956_wbs_admin_review_contract": "passed",
