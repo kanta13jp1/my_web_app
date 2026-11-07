@@ -91,7 +91,7 @@ void main() {
       TypingGame.prompts.singleWhere((p) => p.japanese == '一緒に').spellings,
       ['isshoni', 'issyoni'],
     );
-    for (final example in {'こんにちは': 'koni', '一緒に': 'isho'}.entries) {
+    for (final example in {'こんにちは': 'koni', '一緒に': 'iso'}.entries) {
       final target = TypingGame.prompts.singleWhere(
         (p) => p.japanese == example.key,
       );
