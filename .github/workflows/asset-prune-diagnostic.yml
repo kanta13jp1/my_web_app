@@ -1,0 +1,728 @@
+name: Payment-day prune synthetic diagnostic (draft)
+on:
+  push:
+    branches: [codex/payment-day-prune-migration-review-20261107]
+permissions: {}
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    env:
+      CI: 'true'
+      FLUTTER_SUPPRESS_ANALYTICS: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify candidate and diagnostic scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = push
+          test "$GITHUB_REF" = refs/heads/codex/payment-day-prune-migration-review-20261107
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 90351ed7e9fb10cbe08d4924f9b41963c51348b6
+          test "$(git rev-list --parents -n 1 HEAD | wc -w)" = 2
+          python3 - <<'PY'
+          import subprocess
+          raw = subprocess.check_output(['git', 'diff-tree', '--no-commit-id', '--name-status', '-r', '-z', 'HEAD']).decode().split('\0')
+          pairs = list(zip(raw[0:-1:2], raw[1:-1:2]))
+          assert set(pairs) == {('A', '.github/workflows/asset-prune-diagnostic.yml'),
+                                ('A', 'scripts/diagnostics/asset-prune-isolated.sh')}, pairs
+          PY
+          printf '%s\n' \
+            'ecb91c565969314604642e02050198e23fcaa6ea20ffe5d56364649b1837986e  scripts/diagnostics/asset-prune-isolated.sh' | sha256sum -c -
+      - name: Prepare pinned Flutter and dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A new private root is mandatory: never reuse an existing pub cache.
+          [[ "${RUNNER_TEMP:?}" == /* && -d "$RUNNER_TEMP" && ! -L "$RUNNER_TEMP" ]]
+          runner_root="$(realpath -e -- "$RUNNER_TEMP")"
+          [[ "$runner_root" != / && -d "$runner_root" ]]
+          [[ "${GITHUB_WORKSPACE:?}" == /* && -d "$GITHUB_WORKSPACE" && ! -L "$GITHUB_WORKSPACE" ]]
+          workspace_root="$(realpath -e -- "$GITHUB_WORKSPACE")"
+          [[ "$runner_root" != "$workspace_root" && "$runner_root" != "$workspace_root/"* && "$workspace_root" != "$runner_root/"* ]]
+          umask 077
+          job_root="$(mktemp -d -- "$runner_root/prune-lock.XXXXXXXX")"
+          [[ "$(dirname -- "$job_root")" == "$runner_root" ]]
+          [[ "$(basename -- "$job_root")" == prune-lock.* ]]
+          [[ -d "$job_root" && ! -L "$job_root" && "$(realpath -e -- "$job_root")" == "$job_root" ]]
+          [[ "$(stat -c %u -- "$job_root")" == "$(id -u)" && "$(stat -c %a -- "$job_root")" == 700 ]]
+          export PUB_CACHE="$job_root/pub-cache"
+          export XDG_CONFIG_HOME="$job_root/config"
+          export XDG_CACHE_HOME="$job_root/cache"
+          export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0
+          mkdir -- "$PUB_CACHE" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME"
+          for fresh_dir in "$PUB_CACHE" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME"; do
+            [[ -d "$fresh_dir" && ! -L "$fresh_dir" && "$(realpath -e -- "$fresh_dir")" == "$fresh_dir" ]]
+          done
+          [[ ! -e "$job_root/flutter" && ! -L "$job_root/flutter" ]]
+          git clone --depth 1 --branch 3.47.9 https://github.com/flutter/flutter.git "$job_root/flutter"
+          test "$(git -C "$job_root/flutter" rev-parse HEAD)" = c197ca5199e9ee5661e865596c9c07294dfab51c
+          export PATH="$job_root/flutter/bin:$PATH"
+          flutter config --no-analytics
+          flutter precache --linux --web
+          echo 'Committed lock SHA256:'
+          git show HEAD:pubspec.lock | sha256sum
+          # Fail rather than silently re-resolving candidate dependencies.
+          test "$(sha256sum pubspec.lock | cut -d' ' -f1)" = b34f26c836c03930487a7d3601b2914425e985691cc47dbd4313f6e23fb2340e
+          flutter --version --machine > "$job_root/sdk-version.json"
+          python3 - "$job_root/sdk-version.json" <<'PY'
+          import json,sys
+          v=json.load(open(sys.argv[1],encoding='utf-8'))
+          assert v['frameworkRevision']=='c197ca5199e9ee5661e865596c9c07294dfab51c', 'framework mismatch'
+          assert v['dartSdkVersion']=='3.13.7', 'Dart SDK mismatch'
+          PY
+          python3 - clean <<'PY'
+          """Review-only guard; embedded in the diagnostic workflow, never dispatches it."""
+          import difflib
+          import hashlib
+          import os
+          from pathlib import Path
+          import re
+          import stat
+          import subprocess
+          import sys
+          
+          EXPECTED = 'e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342'
+          LOCK = 'b34f26c836c03930487a7d3601b2914425e985691cc47dbd4313f6e23fb2340e'
+          OPTIONS = 'analysis_options.yaml'
+          ALLOWED = {'android', 'ios', 'web', 'windows', 'macos', 'linux'}
+          
+          def git(*args):
+              return subprocess.check_output(['git', *args], stderr=subprocess.PIPE)
+          
+          def assert_clean():
+              if git('diff', '--no-ext-diff', '--name-only', '-z') or git('diff', '--cached', '--no-ext-diff', '--name-only', '-z'):
+                  raise ValueError('tracked files are not clean')
+          
+          def options_bytes():
+              p = Path(OPTIONS)
+              if not stat.S_ISREG(p.lstat().st_mode) or p.is_symlink() or p.stat().st_mode & 0o111:
+                  raise ValueError('options file is not a non-executable regular file')
+              return p.read_bytes()
+          
+          def original():
+              data = git('show', 'HEAD:' + OPTIONS)
+              if hashlib.sha256(data).hexdigest() != EXPECTED:
+                  raise ValueError('unexpected committed options')
+              if git('ls-files', '-s', '--', OPTIONS).split(b' ', 1)[0] != b'100644':
+                  raise ValueError('unexpected options index mode')
+              return data
+          
+          def lock_check():
+              p = Path('pubspec.lock')
+              if not stat.S_ISREG(p.lstat().st_mode) or p.is_symlink() or hashlib.sha256(p.read_bytes()).hexdigest() != LOCK:
+                  raise ValueError('lock file changed')
+          
+          def evidence(before, after):
+              """Log only sizes, hashes and bounded edit structure, never file lines."""
+              print('options evidence:', 'old_bytes=', len(before), 'new_bytes=', len(after),
+                    'old_lines=', len(before.splitlines()), 'new_lines=', len(after.splitlines()),
+                    'old_sha256=', hashlib.sha256(before).hexdigest(),
+                    'new_sha256=', hashlib.sha256(after).hexdigest(), flush=True)
+              if max(len(before), len(after)) > 1_000_000:
+                  print('options edit structure omitted: input exceeds safe limit', flush=True)
+                  return
+              old, new = before.splitlines(keepends=True), after.splitlines(keepends=True)
+              if max(len(old), len(new)) > 10000:
+                  print('options edit structure omitted: too many lines', flush=True)
+                  return
+              edits = [v for v in difflib.SequenceMatcher(a=old, b=new, autojunk=False).get_opcodes() if v[0] != 'equal']
+              print('options edit groups:', len(edits), flush=True)
+              for tag, i1, i2, j1, j2 in edits[:30]:
+                  print('edit', tag, 'old_lines', i2-i1, 'new_lines', j2-j1,
+                        'old_chunk_sha256', hashlib.sha256(b''.join(old[i1:i2])).hexdigest(),
+                        'new_chunk_sha256', hashlib.sha256(b''.join(new[j1:j2])).hexdigest(), flush=True)
+              if len(edits) > 30:
+                  print('additional edit groups omitted:', len(edits)-30, flush=True)
+          
+          def validate_additions(before, after):
+              old = before.decode('utf-8').splitlines(keepends=True)
+              new = after.decode('utf-8').splitlines(keepends=True)
+              analyzer = old.index('analyzer:\n')
+              exclude = old.index('  exclude:\n', analyzer)
+              end = next(i for i in range(exclude + 1, len(old)) if old[i].startswith('linter:'))
+              added = []
+              for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(a=old, b=new, autojunk=False).get_opcodes():
+                  if tag == 'equal':
+                      continue
+                  if tag != 'insert' or not exclude < i1 <= end:
+                      raise ValueError('options change is not an insertion in analyzer.exclude')
+                  for line in new[j1:j2]:
+                      match = re.fullmatch(r"    - (?P<q>['\"]?)(?P<name>android|ios|web|windows|macos|linux)/\*\*(?P=q)\n", line)
+                      if not match or match.group('name') in added:
+                          raise ValueError('unrecognized options change')
+                      added.append(match.group('name'))
+              return added
+          
+          def after_get():
+              before = original()
+              after = options_bytes()
+              evidence(before, after)
+              if len(after) > 1_000_000 or len(after.splitlines()) > 10000:
+                  raise ValueError('options content exceeds safe validation limit')
+              lock_check()
+              if git('diff', '--cached', '--no-ext-diff', '--name-only', '-z'):
+                  raise ValueError('staged files changed')
+              changed = set(filter(None, git('diff', '--no-ext-diff', '--name-only', '-z').decode('utf-8').split('\0')))
+              if not changed <= {OPTIONS} or git('diff', '--no-ext-diff', '--summary'):
+                  raise ValueError('unexpected tracked change or mode change')
+              additions = validate_additions(before, after)
+              # Only validated fixed-pattern additions are printed; arbitrary file content is never logged.
+              print('analysis_options.yaml validated diff:')
+              for item in additions:
+                  print('+    - ' + item + '/**')
+              if not additions:
+                  print('(no changes)')
+              if after != before:
+                  git('restore', '--source=HEAD', '--worktree', '--', OPTIONS)
+              if options_bytes() != before:
+                  raise ValueError('options restoration failed')
+              lock_check()
+              assert_clean()
+          
+          def clean_guard():
+              before, after = original(), options_bytes()
+              if after != before:
+                  evidence(before, after)
+                  raise ValueError('options differ from HEAD')
+              lock_check()
+              assert_clean()
+          
+          if __name__ == '__main__':
+              try:
+                  {'after-get': after_get, 'clean': clean_guard}[sys.argv[1]]()
+              except Exception as exc:
+                  print('Diagnostic invariant failed:', str(exc), file=sys.stderr)
+                  sys.exit(1)
+          PY
+          if flutter pub get --enforce-lockfile; then command_status=0; else command_status=$?; fi
+          guard_status=0
+          python3 - after-get <<'PY' || guard_status=$?
+          """Review-only guard; embedded in the diagnostic workflow, never dispatches it."""
+          import difflib
+          import hashlib
+          import os
+          from pathlib import Path
+          import re
+          import stat
+          import subprocess
+          import sys
+          
+          EXPECTED = 'e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342'
+          LOCK = 'b34f26c836c03930487a7d3601b2914425e985691cc47dbd4313f6e23fb2340e'
+          OPTIONS = 'analysis_options.yaml'
+          ALLOWED = {'android', 'ios', 'web', 'windows', 'macos', 'linux'}
+          
+          def git(*args):
+              return subprocess.check_output(['git', *args], stderr=subprocess.PIPE)
+          
+          def assert_clean():
+              if git('diff', '--no-ext-diff', '--name-only', '-z') or git('diff', '--cached', '--no-ext-diff', '--name-only', '-z'):
+                  raise ValueError('tracked files are not clean')
+          
+          def options_bytes():
+              p = Path(OPTIONS)
+              if not stat.S_ISREG(p.lstat().st_mode) or p.is_symlink() or p.stat().st_mode & 0o111:
+                  raise ValueError('options file is not a non-executable regular file')
+              return p.read_bytes()
+          
+          def original():
+              data = git('show', 'HEAD:' + OPTIONS)
+              if hashlib.sha256(data).hexdigest() != EXPECTED:
+                  raise ValueError('unexpected committed options')
+              if git('ls-files', '-s', '--', OPTIONS).split(b' ', 1)[0] != b'100644':
+                  raise ValueError('unexpected options index mode')
+              return data
+          
+          def lock_check():
+              p = Path('pubspec.lock')
+              if not stat.S_ISREG(p.lstat().st_mode) or p.is_symlink() or hashlib.sha256(p.read_bytes()).hexdigest() != LOCK:
+                  raise ValueError('lock file changed')
+          
+          def evidence(before, after):
+              """Log only sizes, hashes and bounded edit structure, never file lines."""
+              print('options evidence:', 'old_bytes=', len(before), 'new_bytes=', len(after),
+                    'old_lines=', len(before.splitlines()), 'new_lines=', len(after.splitlines()),
+                    'old_sha256=', hashlib.sha256(before).hexdigest(),
+                    'new_sha256=', hashlib.sha256(after).hexdigest(), flush=True)
+              if max(len(before), len(after)) > 1_000_000:
+                  print('options edit structure omitted: input exceeds safe limit', flush=True)
+                  return
+              old, new = before.splitlines(keepends=True), after.splitlines(keepends=True)
+              if max(len(old), len(new)) > 10000:
+                  print('options edit structure omitted: too many lines', flush=True)
+                  return
+              edits = [v for v in difflib.SequenceMatcher(a=old, b=new, autojunk=False).get_opcodes() if v[0] != 'equal']
+              print('options edit groups:', len(edits), flush=True)
+              for tag, i1, i2, j1, j2 in edits[:30]:
+                  print('edit', tag, 'old_lines', i2-i1, 'new_lines', j2-j1,
+                        'old_chunk_sha256', hashlib.sha256(b''.join(old[i1:i2])).hexdigest(),
+                        'new_chunk_sha256', hashlib.sha256(b''.join(new[j1:j2])).hexdigest(), flush=True)
+              if len(edits) > 30:
+                  print('additional edit groups omitted:', len(edits)-30, flush=True)
+          
+          def validate_additions(before, after):
+              old = before.decode('utf-8').splitlines(keepends=True)
+              new = after.decode('utf-8').splitlines(keepends=True)
+              analyzer = old.index('analyzer:\n')
+              exclude = old.index('  exclude:\n', analyzer)
+              end = next(i for i in range(exclude + 1, len(old)) if old[i].startswith('linter:'))
+              added = []
+              for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(a=old, b=new, autojunk=False).get_opcodes():
+                  if tag == 'equal':
+                      continue
+                  if tag != 'insert' or not exclude < i1 <= end:
+                      raise ValueError('options change is not an insertion in analyzer.exclude')
+                  for line in new[j1:j2]:
+                      match = re.fullmatch(r"    - (?P<q>['\"]?)(?P<name>android|ios|web|windows|macos|linux)/\*\*(?P=q)\n", line)
+                      if not match or match.group('name') in added:
+                          raise ValueError('unrecognized options change')
+                      added.append(match.group('name'))
+              return added
+          
+          def after_get():
+              before = original()
+              after = options_bytes()
+              evidence(before, after)
+              if len(after) > 1_000_000 or len(after.splitlines()) > 10000:
+                  raise ValueError('options content exceeds safe validation limit')
+              lock_check()
+              if git('diff', '--cached', '--no-ext-diff', '--name-only', '-z'):
+                  raise ValueError('staged files changed')
+              changed = set(filter(None, git('diff', '--no-ext-diff', '--name-only', '-z').decode('utf-8').split('\0')))
+              if not changed <= {OPTIONS} or git('diff', '--no-ext-diff', '--summary'):
+                  raise ValueError('unexpected tracked change or mode change')
+              additions = validate_additions(before, after)
+              # Only validated fixed-pattern additions are printed; arbitrary file content is never logged.
+              print('analysis_options.yaml validated diff:')
+              for item in additions:
+                  print('+    - ' + item + '/**')
+              if not additions:
+                  print('(no changes)')
+              if after != before:
+                  git('restore', '--source=HEAD', '--worktree', '--', OPTIONS)
+              if options_bytes() != before:
+                  raise ValueError('options restoration failed')
+              lock_check()
+              assert_clean()
+          
+          def clean_guard():
+              before, after = original(), options_bytes()
+              if after != before:
+                  evidence(before, after)
+                  raise ValueError('options differ from HEAD')
+              lock_check()
+              assert_clean()
+          
+          if __name__ == '__main__':
+              try:
+                  {'after-get': after_get, 'clean': clean_guard}[sys.argv[1]]()
+              except Exception as exc:
+                  print('Diagnostic invariant failed:', str(exc), file=sys.stderr)
+                  sys.exit(1)
+          PY
+          echo "pub get exit=$command_status guard=$guard_status"
+          if [ "$command_status" -ne 0 ]; then exit "$command_status"; fi
+          test "$guard_status" -eq 0
+          if flutter analyze --no-pub integration_test/asset_payment_day_prune_test.dart; then command_status=0; else command_status=$?; fi
+          guard_status=0
+          python3 - clean <<'PY' || guard_status=$?
+          """Review-only guard; embedded in the diagnostic workflow, never dispatches it."""
+          import difflib
+          import hashlib
+          import os
+          from pathlib import Path
+          import re
+          import stat
+          import subprocess
+          import sys
+          
+          EXPECTED = 'e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342'
+          LOCK = 'b34f26c836c03930487a7d3601b2914425e985691cc47dbd4313f6e23fb2340e'
+          OPTIONS = 'analysis_options.yaml'
+          ALLOWED = {'android', 'ios', 'web', 'windows', 'macos', 'linux'}
+          
+          def git(*args):
+              return subprocess.check_output(['git', *args], stderr=subprocess.PIPE)
+          
+          def assert_clean():
+              if git('diff', '--no-ext-diff', '--name-only', '-z') or git('diff', '--cached', '--no-ext-diff', '--name-only', '-z'):
+                  raise ValueError('tracked files are not clean')
+          
+          def options_bytes():
+              p = Path(OPTIONS)
+              if not stat.S_ISREG(p.lstat().st_mode) or p.is_symlink() or p.stat().st_mode & 0o111:
+                  raise ValueError('options file is not a non-executable regular file')
+              return p.read_bytes()
+          
+          def original():
+              data = git('show', 'HEAD:' + OPTIONS)
+              if hashlib.sha256(data).hexdigest() != EXPECTED:
+                  raise ValueError('unexpected committed options')
+              if git('ls-files', '-s', '--', OPTIONS).split(b' ', 1)[0] != b'100644':
+                  raise ValueError('unexpected options index mode')
+              return data
+          
+          def lock_check():
+              p = Path('pubspec.lock')
+              if not stat.S_ISREG(p.lstat().st_mode) or p.is_symlink() or hashlib.sha256(p.read_bytes()).hexdigest() != LOCK:
+                  raise ValueError('lock file changed')
+          
+          def evidence(before, after):
+              """Log only sizes, hashes and bounded edit structure, never file lines."""
+              print('options evidence:', 'old_bytes=', len(before), 'new_bytes=', len(after),
+                    'old_lines=', len(before.splitlines()), 'new_lines=', len(after.splitlines()),
+                    'old_sha256=', hashlib.sha256(before).hexdigest(),
+                    'new_sha256=', hashlib.sha256(after).hexdigest(), flush=True)
+              if max(len(before), len(after)) > 1_000_000:
+                  print('options edit structure omitted: input exceeds safe limit', flush=True)
+                  return
+              old, new = before.splitlines(keepends=True), after.splitlines(keepends=True)
+              if max(len(old), len(new)) > 10000:
+                  print('options edit structure omitted: too many lines', flush=True)
+                  return
+              edits = [v for v in difflib.SequenceMatcher(a=old, b=new, autojunk=False).get_opcodes() if v[0] != 'equal']
+              print('options edit groups:', len(edits), flush=True)
+              for tag, i1, i2, j1, j2 in edits[:30]:
+                  print('edit', tag, 'old_lines', i2-i1, 'new_lines', j2-j1,
+                        'old_chunk_sha256', hashlib.sha256(b''.join(old[i1:i2])).hexdigest(),
+                        'new_chunk_sha256', hashlib.sha256(b''.join(new[j1:j2])).hexdigest(), flush=True)
+              if len(edits) > 30:
+                  print('additional edit groups omitted:', len(edits)-30, flush=True)
+          
+          def validate_additions(before, after):
+              old = before.decode('utf-8').splitlines(keepends=True)
+              new = after.decode('utf-8').splitlines(keepends=True)
+              analyzer = old.index('analyzer:\n')
+              exclude = old.index('  exclude:\n', analyzer)
+              end = next(i for i in range(exclude + 1, len(old)) if old[i].startswith('linter:'))
+              added = []
+              for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(a=old, b=new, autojunk=False).get_opcodes():
+                  if tag == 'equal':
+                      continue
+                  if tag != 'insert' or not exclude < i1 <= end:
+                      raise ValueError('options change is not an insertion in analyzer.exclude')
+                  for line in new[j1:j2]:
+                      match = re.fullmatch(r"    - (?P<q>['\"]?)(?P<name>android|ios|web|windows|macos|linux)/\*\*(?P=q)\n", line)
+                      if not match or match.group('name') in added:
+                          raise ValueError('unrecognized options change')
+                      added.append(match.group('name'))
+              return added
+          
+          def after_get():
+              before = original()
+              after = options_bytes()
+              evidence(before, after)
+              if len(after) > 1_000_000 or len(after.splitlines()) > 10000:
+                  raise ValueError('options content exceeds safe validation limit')
+              lock_check()
+              if git('diff', '--cached', '--no-ext-diff', '--name-only', '-z'):
+                  raise ValueError('staged files changed')
+              changed = set(filter(None, git('diff', '--no-ext-diff', '--name-only', '-z').decode('utf-8').split('\0')))
+              if not changed <= {OPTIONS} or git('diff', '--no-ext-diff', '--summary'):
+                  raise ValueError('unexpected tracked change or mode change')
+              additions = validate_additions(before, after)
+              # Only validated fixed-pattern additions are printed; arbitrary file content is never logged.
+              print('analysis_options.yaml validated diff:')
+              for item in additions:
+                  print('+    - ' + item + '/**')
+              if not additions:
+                  print('(no changes)')
+              if after != before:
+                  git('restore', '--source=HEAD', '--worktree', '--', OPTIONS)
+              if options_bytes() != before:
+                  raise ValueError('options restoration failed')
+              lock_check()
+              assert_clean()
+          
+          def clean_guard():
+              before, after = original(), options_bytes()
+              if after != before:
+                  evidence(before, after)
+                  raise ValueError('options differ from HEAD')
+              lock_check()
+              assert_clean()
+          
+          if __name__ == '__main__':
+              try:
+                  {'after-get': after_get, 'clean': clean_guard}[sys.argv[1]]()
+              except Exception as exc:
+                  print('Diagnostic invariant failed:', str(exc), file=sys.stderr)
+                  sys.exit(1)
+          PY
+          echo "analyze exit=$command_status guard=$guard_status"
+          if [ "$command_status" -ne 0 ]; then exit "$command_status"; fi
+          test "$guard_status" -eq 0
+          if flutter analyze --no-pub test_driver/asset_payment_day_prune.dart; then command_status=0; else command_status=$?; fi
+          guard_status=0
+          python3 - clean <<'PY' || guard_status=$?
+          """Review-only guard; embedded in the diagnostic workflow, never dispatches it."""
+          import difflib
+          import hashlib
+          import os
+          from pathlib import Path
+          import re
+          import stat
+          import subprocess
+          import sys
+          
+          EXPECTED = 'e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342'
+          LOCK = 'b34f26c836c03930487a7d3601b2914425e985691cc47dbd4313f6e23fb2340e'
+          OPTIONS = 'analysis_options.yaml'
+          ALLOWED = {'android', 'ios', 'web', 'windows', 'macos', 'linux'}
+          
+          def git(*args):
+              return subprocess.check_output(['git', *args], stderr=subprocess.PIPE)
+          
+          def assert_clean():
+              if git('diff', '--no-ext-diff', '--name-only', '-z') or git('diff', '--cached', '--no-ext-diff', '--name-only', '-z'):
+                  raise ValueError('tracked files are not clean')
+          
+          def options_bytes():
+              p = Path(OPTIONS)
+              if not stat.S_ISREG(p.lstat().st_mode) or p.is_symlink() or p.stat().st_mode & 0o111:
+                  raise ValueError('options file is not a non-executable regular file')
+              return p.read_bytes()
+          
+          def original():
+              data = git('show', 'HEAD:' + OPTIONS)
+              if hashlib.sha256(data).hexdigest() != EXPECTED:
+                  raise ValueError('unexpected committed options')
+              if git('ls-files', '-s', '--', OPTIONS).split(b' ', 1)[0] != b'100644':
+                  raise ValueError('unexpected options index mode')
+              return data
+          
+          def lock_check():
+              p = Path('pubspec.lock')
+              if not stat.S_ISREG(p.lstat().st_mode) or p.is_symlink() or hashlib.sha256(p.read_bytes()).hexdigest() != LOCK:
+                  raise ValueError('lock file changed')
+          
+          def evidence(before, after):
+              """Log only sizes, hashes and bounded edit structure, never file lines."""
+              print('options evidence:', 'old_bytes=', len(before), 'new_bytes=', len(after),
+                    'old_lines=', len(before.splitlines()), 'new_lines=', len(after.splitlines()),
+                    'old_sha256=', hashlib.sha256(before).hexdigest(),
+                    'new_sha256=', hashlib.sha256(after).hexdigest(), flush=True)
+              if max(len(before), len(after)) > 1_000_000:
+                  print('options edit structure omitted: input exceeds safe limit', flush=True)
+                  return
+              old, new = before.splitlines(keepends=True), after.splitlines(keepends=True)
+              if max(len(old), len(new)) > 10000:
+                  print('options edit structure omitted: too many lines', flush=True)
+                  return
+              edits = [v for v in difflib.SequenceMatcher(a=old, b=new, autojunk=False).get_opcodes() if v[0] != 'equal']
+              print('options edit groups:', len(edits), flush=True)
+              for tag, i1, i2, j1, j2 in edits[:30]:
+                  print('edit', tag, 'old_lines', i2-i1, 'new_lines', j2-j1,
+                        'old_chunk_sha256', hashlib.sha256(b''.join(old[i1:i2])).hexdigest(),
+                        'new_chunk_sha256', hashlib.sha256(b''.join(new[j1:j2])).hexdigest(), flush=True)
+              if len(edits) > 30:
+                  print('additional edit groups omitted:', len(edits)-30, flush=True)
+          
+          def validate_additions(before, after):
+              old = before.decode('utf-8').splitlines(keepends=True)
+              new = after.decode('utf-8').splitlines(keepends=True)
+              analyzer = old.index('analyzer:\n')
+              exclude = old.index('  exclude:\n', analyzer)
+              end = next(i for i in range(exclude + 1, len(old)) if old[i].startswith('linter:'))
+              added = []
+              for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(a=old, b=new, autojunk=False).get_opcodes():
+                  if tag == 'equal':
+                      continue
+                  if tag != 'insert' or not exclude < i1 <= end:
+                      raise ValueError('options change is not an insertion in analyzer.exclude')
+                  for line in new[j1:j2]:
+                      match = re.fullmatch(r"    - (?P<q>['\"]?)(?P<name>android|ios|web|windows|macos|linux)/\*\*(?P=q)\n", line)
+                      if not match or match.group('name') in added:
+                          raise ValueError('unrecognized options change')
+                      added.append(match.group('name'))
+              return added
+          
+          def after_get():
+              before = original()
+              after = options_bytes()
+              evidence(before, after)
+              if len(after) > 1_000_000 or len(after.splitlines()) > 10000:
+                  raise ValueError('options content exceeds safe validation limit')
+              lock_check()
+              if git('diff', '--cached', '--no-ext-diff', '--name-only', '-z'):
+                  raise ValueError('staged files changed')
+              changed = set(filter(None, git('diff', '--no-ext-diff', '--name-only', '-z').decode('utf-8').split('\0')))
+              if not changed <= {OPTIONS} or git('diff', '--no-ext-diff', '--summary'):
+                  raise ValueError('unexpected tracked change or mode change')
+              additions = validate_additions(before, after)
+              # Only validated fixed-pattern additions are printed; arbitrary file content is never logged.
+              print('analysis_options.yaml validated diff:')
+              for item in additions:
+                  print('+    - ' + item + '/**')
+              if not additions:
+                  print('(no changes)')
+              if after != before:
+                  git('restore', '--source=HEAD', '--worktree', '--', OPTIONS)
+              if options_bytes() != before:
+                  raise ValueError('options restoration failed')
+              lock_check()
+              assert_clean()
+          
+          def clean_guard():
+              before, after = original(), options_bytes()
+              if after != before:
+                  evidence(before, after)
+                  raise ValueError('options differ from HEAD')
+              lock_check()
+              assert_clean()
+          
+          if __name__ == '__main__':
+              try:
+                  {'after-get': after_get, 'clean': clean_guard}[sys.argv[1]]()
+              except Exception as exc:
+                  print('Diagnostic invariant failed:', str(exc), file=sys.stderr)
+                  sys.exit(1)
+          PY
+          echo "analyze exit=$command_status guard=$guard_status"
+          if [ "$command_status" -ne 0 ]; then exit "$command_status"; fi
+          test "$guard_status" -eq 0
+          google-chrome --version
+          chromedriver --version
+      # Deliberately do not run browser/fixture until isolation and cleanup are reviewed.
+      - name: Report lock-only scope
+        run: echo 'Lock-only validation. Widget, browser, live authentication, DB and release were NOT tested.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify final lock invariants
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f pubspec.lock && test ! -L pubspec.lock
+          test "$(sha256sum pubspec.lock | cut -d' ' -f1)" = b34f26c836c03930487a7d3601b2914425e985691cc47dbd4313f6e23fb2340e
+          git diff --exit-code -- pubspec.lock
+          git diff --cached --exit-code -- pubspec.lock
+          python3 - clean <<'PY'
+          """Review-only guard; embedded in the diagnostic workflow, never dispatches it."""
+          import difflib
+          import hashlib
+          import os
+          from pathlib import Path
+          import re
+          import stat
+          import subprocess
+          import sys
+          
+          EXPECTED = 'e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342'
+          LOCK = 'b34f26c836c03930487a7d3601b2914425e985691cc47dbd4313f6e23fb2340e'
+          OPTIONS = 'analysis_options.yaml'
+          ALLOWED = {'android', 'ios', 'web', 'windows', 'macos', 'linux'}
+          
+          def git(*args):
+              return subprocess.check_output(['git', *args], stderr=subprocess.PIPE)
+          
+          def assert_clean():
+              if git('diff', '--no-ext-diff', '--name-only', '-z') or git('diff', '--cached', '--no-ext-diff', '--name-only', '-z'):
+                  raise ValueError('tracked files are not clean')
+          
+          def options_bytes():
+              p = Path(OPTIONS)
+              if not stat.S_ISREG(p.lstat().st_mode) or p.is_symlink() or p.stat().st_mode & 0o111:
+                  raise ValueError('options file is not a non-executable regular file')
+              return p.read_bytes()
+          
+          def original():
+              data = git('show', 'HEAD:' + OPTIONS)
+              if hashlib.sha256(data).hexdigest() != EXPECTED:
+                  raise ValueError('unexpected committed options')
+              if git('ls-files', '-s', '--', OPTIONS).split(b' ', 1)[0] != b'100644':
+                  raise ValueError('unexpected options index mode')
+              return data
+          
+          def lock_check():
+              p = Path('pubspec.lock')
+              if not stat.S_ISREG(p.lstat().st_mode) or p.is_symlink() or hashlib.sha256(p.read_bytes()).hexdigest() != LOCK:
+                  raise ValueError('lock file changed')
+          
+          def evidence(before, after):
+              """Log only sizes, hashes and bounded edit structure, never file lines."""
+              print('options evidence:', 'old_bytes=', len(before), 'new_bytes=', len(after),
+                    'old_lines=', len(before.splitlines()), 'new_lines=', len(after.splitlines()),
+                    'old_sha256=', hashlib.sha256(before).hexdigest(),
+                    'new_sha256=', hashlib.sha256(after).hexdigest(), flush=True)
+              if max(len(before), len(after)) > 1_000_000:
+                  print('options edit structure omitted: input exceeds safe limit', flush=True)
+                  return
+              old, new = before.splitlines(keepends=True), after.splitlines(keepends=True)
+              if max(len(old), len(new)) > 10000:
+                  print('options edit structure omitted: too many lines', flush=True)
+                  return
+              edits = [v for v in difflib.SequenceMatcher(a=old, b=new, autojunk=False).get_opcodes() if v[0] != 'equal']
+              print('options edit groups:', len(edits), flush=True)
+              for tag, i1, i2, j1, j2 in edits[:30]:
+                  print('edit', tag, 'old_lines', i2-i1, 'new_lines', j2-j1,
+                        'old_chunk_sha256', hashlib.sha256(b''.join(old[i1:i2])).hexdigest(),
+                        'new_chunk_sha256', hashlib.sha256(b''.join(new[j1:j2])).hexdigest(), flush=True)
+              if len(edits) > 30:
+                  print('additional edit groups omitted:', len(edits)-30, flush=True)
+          
+          def validate_additions(before, after):
+              old = before.decode('utf-8').splitlines(keepends=True)
+              new = after.decode('utf-8').splitlines(keepends=True)
+              analyzer = old.index('analyzer:\n')
+              exclude = old.index('  exclude:\n', analyzer)
+              end = next(i for i in range(exclude + 1, len(old)) if old[i].startswith('linter:'))
+              added = []
+              for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(a=old, b=new, autojunk=False).get_opcodes():
+                  if tag == 'equal':
+                      continue
+                  if tag != 'insert' or not exclude < i1 <= end:
+                      raise ValueError('options change is not an insertion in analyzer.exclude')
+                  for line in new[j1:j2]:
+                      match = re.fullmatch(r"    - (?P<q>['\"]?)(?P<name>android|ios|web|windows|macos|linux)/\*\*(?P=q)\n", line)
+                      if not match or match.group('name') in added:
+                          raise ValueError('unrecognized options change')
+                      added.append(match.group('name'))
+              return added
+          
+          def after_get():
+              before = original()
+              after = options_bytes()
+              evidence(before, after)
+              if len(after) > 1_000_000 or len(after.splitlines()) > 10000:
+                  raise ValueError('options content exceeds safe validation limit')
+              lock_check()
+              if git('diff', '--cached', '--no-ext-diff', '--name-only', '-z'):
+                  raise ValueError('staged files changed')
+              changed = set(filter(None, git('diff', '--no-ext-diff', '--name-only', '-z').decode('utf-8').split('\0')))
+              if not changed <= {OPTIONS} or git('diff', '--no-ext-diff', '--summary'):
+                  raise ValueError('unexpected tracked change or mode change')
+              additions = validate_additions(before, after)
+              # Only validated fixed-pattern additions are printed; arbitrary file content is never logged.
+              print('analysis_options.yaml validated diff:')
+              for item in additions:
+                  print('+    - ' + item + '/**')
+              if not additions:
+                  print('(no changes)')
+              if after != before:
+                  git('restore', '--source=HEAD', '--worktree', '--', OPTIONS)
+              if options_bytes() != before:
+                  raise ValueError('options restoration failed')
+              lock_check()
+              assert_clean()
+          
+          def clean_guard():
+              before, after = original(), options_bytes()
+              if after != before:
+                  evidence(before, after)
+                  raise ValueError('options differ from HEAD')
+              lock_check()
+              assert_clean()
+          
+          if __name__ == '__main__':
+              try:
+                  {'after-get': after_get, 'clean': clean_guard}[sys.argv[1]]()
+              except Exception as exc:
+                  print('Diagnostic invariant failed:', str(exc), file=sys.stderr)
+                  sys.exit(1)
+          PY
