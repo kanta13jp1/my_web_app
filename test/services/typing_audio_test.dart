@@ -18,23 +18,33 @@ class FakeAudio implements TypingAudioBackend {
     unlocks++;
     return pending == null ? supported : pending!.future;
   }
+
   @override
   void levels(double music, double effects) {
     this.music = music;
     this.effects = effects;
   }
+
   @override
   void playing(bool value) => active = value;
   @override
   void effect(TypingSound sound) => sounds.add(sound);
   @override
-  void suspend() { suspends++; active = false; }
+  void suspend() {
+    suspends++;
+    active = false;
+  }
+
   @override
-  void dispose() { disposals++; active = false; }
+  void dispose() {
+    disposals++;
+    active = false;
+  }
 }
 
 void main() {
-  test('no sound before opt-in; mute, end and retry preserve separate levels', () async {
+  test('no sound before opt-in; mute, end and retry preserve separate levels',
+      () async {
     final backend = FakeAudio();
     final audio = TypingAudio(backend: backend);
     audio.setPlaying(true);
@@ -89,7 +99,8 @@ void main() {
     expect(backend.unlocks, 3);
   });
 
-  test('unsupported audio remains playable and disposal rejects pending enable', () async {
+  test('unsupported audio remains playable and disposal rejects pending enable',
+      () async {
     final backend = FakeAudio()..supported = false;
     final audio = TypingAudio(backend: backend)..setPlaying(true);
     await audio.enable();

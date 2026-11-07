@@ -8,7 +8,11 @@ class PageAudio implements TypingAudioBackend {
   int unlocks = 0;
   int disposed = 0;
   @override
-  Future<bool> unlock() async { unlocks++; return true; }
+  Future<bool> unlock() async {
+    unlocks++;
+    return true;
+  }
+
   @override
   void levels(double music, double effects) {}
   @override
@@ -18,11 +22,15 @@ class PageAudio implements TypingAudioBackend {
   @override
   void suspend() => active = false;
   @override
-  void dispose() { disposed++; active = false; }
+  void dispose() {
+    disposed++;
+    active = false;
+  }
 }
 
 void main() {
-  testWidgets('sound controls are opt-in, separate, muted and route-safe', (tester) async {
+  testWidgets('sound controls are opt-in, separate, muted and route-safe',
+      (tester) async {
     final backend = PageAudio();
     final audio = TypingAudio(backend: backend);
     await tester.pumpWidget(MaterialApp(home: TypingGamePage(audio: audio)));
@@ -37,8 +45,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(backend.unlocks, 1);
     expect(backend.active, isFalse);
-    tester.widget<Slider>(find.byKey(const Key('typing-music-volume'))).onChanged!(0);
-    tester.widget<Slider>(find.byKey(const Key('typing-effects-volume'))).onChanged!(0.6);
+    tester
+        .widget<Slider>(find.byKey(const Key('typing-music-volume')))
+        .onChanged!(0);
+    tester
+        .widget<Slider>(find.byKey(const Key('typing-effects-volume')))
+        .onChanged!(0.6);
     await tester.pump();
     expect(audio.musicVolume, 0);
     expect(audio.effectsVolume, 0.6);
@@ -57,9 +69,11 @@ void main() {
     await tester.pump();
     expect(backend.active, isTrue);
     final context = tester.element(find.byType(TypingGamePage));
-    Navigator.of(context).push(MaterialPageRoute<void>(
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
       builder: (_) => const Scaffold(body: Text('Covered')),
-    ));
+      ),
+    );
     await tester.pumpAndSettle();
     expect(backend.active, isFalse);
     Navigator.of(context).pop();

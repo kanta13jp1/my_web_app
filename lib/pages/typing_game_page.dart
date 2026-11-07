@@ -99,10 +99,12 @@ class _TypingGamePageState extends State<TypingGamePage>
         title: Text(_t('サウンド設定', 'Sound settings')),
         leading: const Icon(Icons.volume_up),
         children: [
-          Text(_t(
+          Text(
+            _t(
             '初期状態は無音です。有効にするとプレイ中だけ合成音が鳴ります。画面を離れた後は再度有効にしてください。',
             'Sound is off by default. Enable synthesized music and effects during play. Enable again after leaving the screen.',
-          )),
+            ),
+          ),
           if (!_audio.enabled)
             OutlinedButton(
               key: const Key('typing-audio-enable'),
@@ -113,10 +115,12 @@ class _TypingGamePageState extends State<TypingGamePage>
               child: Text(_t('音を有効にする', 'Enable sound')),
             ),
           if (_audio.unavailable)
-            Text(_t(
+            Text(
+              _t(
               'この環境では音声を開始できません。無音でそのまま遊べます。',
               'Audio could not start here. You can continue playing silently.',
-            )),
+              ),
+            ),
           SwitchListTile(
             title: Text(_t('ミュート', 'Mute')),
             value: _audio.muted,
@@ -131,7 +135,8 @@ class _TypingGamePageState extends State<TypingGamePage>
             label: '${(_audio.musicVolume * 100).round()}%',
             semanticFormatterCallback: (value) =>
                 '${_t('BGMの音量', 'Music volume')} ${(value * 100).round()}%',
-            onChanged: (value) => setState(() => _audio.setVolumes(music: value)),
+            onChanged: (value) =>
+                setState(() => _audio.setVolumes(music: value)),
           ),
           Text(_t('効果音の音量', 'Effects volume')),
           Slider(
@@ -140,7 +145,8 @@ class _TypingGamePageState extends State<TypingGamePage>
             label: '${(_audio.effectsVolume * 100).round()}%',
             semanticFormatterCallback: (value) =>
                 '${_t('効果音の音量', 'Effects volume')} ${(value * 100).round()}%',
-            onChanged: (value) => setState(() => _audio.setVolumes(effects: value)),
+            onChanged: (value) =>
+                setState(() => _audio.setVolumes(effects: value)),
           ),
         ],
       );
@@ -335,11 +341,13 @@ class _TypingGamePageState extends State<TypingGamePage>
                   '${_game.combo}文字連続！',
                   '${_game.combo} letters in a row!',
                 );
-      _audio.effect(!accepted
+      _audio.effect(
+        !accepted
           ? TypingSound.mistake
           : _game.words > words
               ? TypingSound.word
-              : TypingSound.letter);
+              : TypingSound.letter,
+      );
     });
     _settle();
     return _canonicalInput();
