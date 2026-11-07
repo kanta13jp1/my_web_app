@@ -77,7 +77,16 @@ class _SynthAudio implements TypingAudioBackend {
   void _startMusic() {
     if (_music != null || _disposed) return;
     // Original, simple synthesized arpeggio; no downloaded/recorded music.
-    const notes = [261.63, 329.63, 392.0, 329.63, 293.66, 349.23, 440.0, 349.23];
+    const notes = [
+      261.63,
+      329.63,
+      392.0,
+      329.63,
+      293.66,
+      349.23,
+      440.0,
+      349.23,
+    ];
     _music = Timer.periodic(const Duration(milliseconds: 400), (_) {
       if (!_wanted || !_authorized || web.document.hidden) return;
       _tone(notes[_note++ % notes.length], 0.24, _musicLevel * 0.12);
@@ -86,8 +95,13 @@ class _SynthAudio implements TypingAudioBackend {
 
   void _tone(double frequency, double duration, double volume) {
     final context = _context;
-    if (context == null || context.state != 'running' || volume <= 0 ||
-        _voices.length >= 2 || _disposed || !_authorized || web.document.hidden) {
+    if (context == null ||
+        context.state != 'running' ||
+        volume <= 0 ||
+        _voices.length >= 2 ||
+        _disposed ||
+        !_authorized ||
+        web.document.hidden) {
       return;
     }
     try {
@@ -102,11 +116,14 @@ class _SynthAudio implements TypingAudioBackend {
       oscillator.connect(gain);
       gain.connect(context.destination);
       _voices.add(oscillator);
-      oscillator.addEventListener('ended', ((web.Event event) {
-        _voices.remove(oscillator);
-        oscillator.disconnect();
-        gain.disconnect();
-      }).toJS);
+      oscillator.addEventListener(
+          'ended',
+          ((web.Event event) {
+            _voices.remove(oscillator);
+            oscillator.disconnect();
+            gain.disconnect();
+          }).toJS,
+      );
       oscillator.start(now);
       oscillator.stop(now + duration);
     } catch (_) {
@@ -130,7 +147,9 @@ class _SynthAudio implements TypingAudioBackend {
 
   void _stopVoices() {
     for (final voice in _voices.toList()) {
-      try { voice.stop(); } catch (_) { /* Already ended. */ }
+      try {
+        voice.stop();
+      } catch (_) {/* Already ended. */}
       voice.disconnect();
     }
     _voices.clear();
@@ -143,7 +162,10 @@ class _SynthAudio implements TypingAudioBackend {
     _stopVoices();
     final context = _context;
     if (context != null && context.state == 'running') {
-      context.suspend().toDart.catchError((Object _) {});
+      context.suspend().toDart.then<void>(
+        (_) {},
+        onError: (Object _, StackTrace __) {},
+      );
     }
   }
 
@@ -154,7 +176,10 @@ class _SynthAudio implements TypingAudioBackend {
     _authorized = false;
     suspend();
     web.document.removeEventListener('visibilitychange', _visibility);
-    _context?.close().toDart.catchError((Object _) {});
+    _context?.close().toDart.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    );
     _context = null;
   }
 }

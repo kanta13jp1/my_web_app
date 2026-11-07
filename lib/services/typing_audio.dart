@@ -53,7 +53,9 @@ class TypingAudio {
   void setVolumes({double? music, double? effects}) {
     if (_disposed) return;
     if (music != null && music.isFinite) musicVolume = music.clamp(0, 1);
-    if (effects != null && effects.isFinite) effectsVolume = effects.clamp(0, 1);
+    if (effects != null && effects.isFinite) {
+      effectsVolume = effects.clamp(0, 1);
+    }
     _apply();
   }
 

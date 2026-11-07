@@ -16,8 +16,12 @@ test('synthesis is opt-in, bounded and stopped when hidden or leaving', async ({
         context.createOscillator = () => {
           const voice = create();
           const start = voice.start.bind(voice);
-          voice.start = (when) => { starts++; active++; maximum = Math.max(maximum, active); start(when); };
-          voice.addEventListener('ended', () => active--);
+          const stop = voice.stop.bind(voice);
+          let counted = false;
+          const release = () => { if (counted) { active--; counted = false; } };
+          voice.start = (when) => { starts++; active++; counted = true; maximum = Math.max(maximum, active); start(when); };
+          voice.stop = (when) => { if (when === undefined) release(); stop(when); };
+          voice.addEventListener('ended', release);
           return voice;
         };
         return context;
@@ -56,4 +60,18 @@ test('synthesis is opt-in, bounded and stopped when hidden or leaving', async ({
   expect(await page.evaluate(() => (window as any).__typingAudio.contexts.length)).toBe(1);
   expect(await page.evaluate(() => (window as any).__typingAudio.maximum)).toBeLessThanOrEqual(2);
   await page.goto('about:blank');
+});
+
+test('missing Web Audio support keeps typing usable', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'AudioContext', { configurable: true, value: undefined });
+  });
+  await page.goto('/');
+  await expect(page.locator('#seo-shell')).toHaveCount(0, { timeout: 60_000 });
+  await page.getByRole('button', { name: 'English', exact: true }).click();
+  await page.getByText('Sound settings', { exact: true }).click();
+  await page.getByRole('button', { name: 'Enable sound', exact: true }).click();
+  await expect(page.getByText(/Audio could not start here/)).toBeVisible();
+  await page.getByRole('button', { name: 'Start (Enter)', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Romaji input', exact: true })).toBeVisible();
 });
