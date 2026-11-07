@@ -1,0 +1,671 @@
+"""Synthetic Auth + Envoy + PostgREST fixture. Never use production credentials.
+
+GitHub-hosted disposable service only; no host ports, binds, or real user data.
+The Envoy routes are test-only, not the production gateway configuration.
+"""
+import base64
+import hashlib
+import json
+import os
+from pathlib import Path
+import queue
+import re
+import secrets
+import subprocess
+import tempfile
+import threading
+import time
+import uuid
+
+import stack_guard as guard
+
+HERE = Path(__file__).resolve().parent
+MIGRATION_SHA = '23641f86ff7534a209a2089adc5a0b47fdc70e031af72f6301cffd9ce92586ba'
+FIXED = {'migration.sql': MIGRATION_SHA,
+         'envoy-fixture.yaml': 'd88fa8007c405b34e37531ae708af964586bc4d6c1c1e1ffb0d83c7462b30977',
+         'synthetic_client.py': '6b2cf1689c7bf6ca64d69c0e49866550a182ce540e89ec4c7ed7c959bfd4fe74',
+         'auth_gateway_client.py': '7c783263ae830851ccdca67aaf71d749b60093b68f28d82405b9f7bdb63da009'}
+DB = 'payroll_auth_fixture'
+PATH_INSIDE = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+
+
+class OwnerClientExited(RuntimeError):
+    def __init__(self, code):
+        self.exit_code = code if isinstance(code, int) else None
+        super().__init__('Synthetic owner client ended before marker')
+
+
+class FixtureSqlError(RuntimeError):
+    def __init__(self, code):
+        self.sqlstate = code if isinstance(code, str) and re.fullmatch(r'[0-9A-Z]{5}', code) else None
+        super().__init__('Synthetic SQL failed')
+
+
+class OwnerClientFailure(RuntimeError):
+    def __init__(self, category, status, operation, response_code):
+        self.category, self.status = category, status
+        self.operation, self.response_code = operation, response_code
+        super().__init__('Synthetic owner client check failed')
+
+
+SAFE_CLIENT_ERRORS = frozenset({
+    'signup_failed', 'login_failed', 'jwt_claims', 'jwt_signature', 'account_insert',
+    'confirm_rpc', 'target_update', 'table_read', 'owner_rows', 'foreign_visible',
+    'anon_denial', 'cross_update', 'cross_rpc', 'recovery_a', 'recovery_b',
+    'write_inconclusive', 'other_check', 'unexpected',
+})
+SAFE_CLIENT_OPERATIONS = frozenset({'signup', 'login', 'account_create', 'target_patch',
+                                    'confirm_rpc', 'table_read', 'other'})
+SAFE_RESPONSE_CODES = frozenset({'42501', '23502', '23503', '23505', '42P01',
+    'PGRST301', 'PGRST302', 'PGRST303', 'unexpected_failure',
+    'validation_failed', 'email_provider_disabled', 'invalid_credentials', 'unavailable'})
+AUTH_LOG_PATTERNS = {
+    'db_permission': ('permission denied', 'sqlstate 42501'),
+    'db_missing_relation': ('undefined table', 'sqlstate 42p01', 'relation does not exist'),
+    'db_missing_column': ('undefined column', 'sqlstate 42703'),
+    'db_missing_function': ('undefined function', 'sqlstate 42883'),
+    'db_connection': ('failed to connect', 'connection refused', 'connection reset'),
+    'db_constraint': ('duplicate key', 'violates not-null constraint', 'foreign key constraint',
+                      'check constraint', 'sqlstate 23505', 'sqlstate 23502', 'sqlstate 23503'),
+    'email_delivery': ('error sending confirmation email', 'failed to send mail', 'smtp connection failed'),
+    'jwt_configuration': ('error generating jwt', 'failed to sign jwt', 'invalid jwt secret'),
+}
+
+
+def classify_auth_log(text):
+    """Return fixed labels only; do not expose raw synthetic Auth logs."""
+    lowered = text.lower()
+    return sorted(label for label, patterns in AUTH_LOG_PATTERNS.items()
+                  if any(pattern in lowered for pattern in patterns))
+
+
+EMPTY_CHECK = """\\set ON_ERROR_STOP on
+select case when current_database()='payroll_auth_fixture' and current_user='postgres'
+ and current_setting('server_version_num')::int between 170000 and 179999
+ and not exists (select 1 from pg_catalog.pg_roles where rolname in ('anon','authenticated','authenticator'))
+ and not exists (select 1 from pg_catalog.pg_namespace where nspname not in ('public','information_schema') and pg_catalog.left(nspname,3) <> 'pg_')
+ and not exists (select 1 from pg_catalog.pg_class c join pg_catalog.pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind in ('r','p','v','m','f','S'))
+ and not exists (select 1 from pg_catalog.pg_proc p join pg_catalog.pg_namespace n on n.oid=p.pronamespace where n.nspname='public')
+ and not exists (select 1 from pg_catalog.pg_type t join pg_catalog.pg_namespace n on n.oid=t.typnamespace where n.nspname='public')
+ and not exists (select 1 from pg_catalog.pg_extension where extname <> 'plpgsql')
+ then 'EMPTY_FIXTURE' else 'NOT_EMPTY' end;
+"""
+
+
+class Fixture:
+    def __init__(self, env):
+        self.db_id, self.run_label = guard.job_identity(env)
+        self.token = str(uuid.uuid4())
+        self.password = secrets.token_hex(20)
+        self.jwt_secret = secrets.token_hex(32)
+        self.name = 'payroll-auth-' + uuid.uuid4().hex
+        self.network_id = None
+        self.created = {}
+        self.clients = []
+        self.barrier = None
+        self.tmp = tempfile.TemporaryDirectory(prefix='synthetic-auth-')
+        self.env = {'PATH': '/usr/local/bin:/usr/bin:/bin', 'LANG': 'C'}
+        self.docker = ['/usr/bin/docker', '--config', self.tmp.name,
+                       '--host', 'unix:///var/run/docker.sock']
+        self.stage = 'initial inspection'
+        self.images = {}
+
+    def cmd(self, *args, data=None, timeout=30):
+        return subprocess.run(self.docker + list(args), input=data, capture_output=True,
+                              text=True, env=self.env, timeout=timeout, check=True)
+
+    def info(self, cid):
+        return json.loads(self.cmd('inspect', cid).stdout)[0]
+
+    def check_db(self, *, isolated):
+        info = self.info(self.db_id)
+        if not guard.container_ok(info, self.db_id, self.images['db'], guard.POSTGRES,
+                                  self.run_label, db=True):
+            raise RuntimeError('Job database container identity mismatch')
+        if isolated and not guard.member_of_only(info, self.name, self.network_id):
+            raise RuntimeError('Database is not exclusively on fixture network')
+        return info
+
+    def check_network(self):
+        data = json.loads(self.cmd('network', 'inspect', self.network_id).stdout)[0]
+        if not guard.network_ok(data, self.network_id, self.run_label):
+            raise RuntimeError('Fixture network identity mismatch')
+
+    def check_component(self, kind):
+        cid = self.created[kind]
+        info = self.info(cid)
+        if not guard.container_ok(info, cid, self.images[kind], guard.IMAGES[kind], self.run_label):
+            raise RuntimeError('Fixture component identity mismatch')
+        if not guard.member_of_only(info, self.name, self.network_id):
+            raise RuntimeError('Fixture component network mismatch')
+        aliases = info['NetworkSettings']['Networks'][self.name].get('Aliases') or []
+        if 'synthetic-' + kind not in aliases:
+            raise RuntimeError('Fixture component alias mismatch')
+        self.check_network()
+        return cid
+
+    def check_peers(self):
+        self.check_network()
+        info = json.loads(self.cmd('network', 'inspect', self.network_id).stdout)[0]
+        if set((info.get('Containers') or {}).keys()) != {self.db_id, *self.created.values()}:
+            raise RuntimeError('Unexpected fixture network peers')
+        db = self.check_db(isolated=True)
+        aliases = db['NetworkSettings']['Networks'][self.name].get('Aliases') or []
+        if 'synthetic-db' not in aliases:
+            raise RuntimeError('Fixture database alias mismatch')
+        for kind in self.created:
+            self.check_component(kind)
+
+    def db_sql(self, sql, *, marker=True):
+        self.check_db(isolated=True)
+        self.check_network()
+        if marker:
+            sql = ("\\set ON_ERROR_STOP on\nselect 1 / ((count(*) = 1)::int) "
+                   "from public.payroll_auth_fixture_guard where token=:'fixture_token'::uuid;\n" + sql)
+        try:
+            result = self.cmd('exec', '-i', '-u', 'postgres', self.db_id,
+                '/usr/bin/env', '-i', 'PATH=' + PATH_INSIDE, '/usr/local/bin/psql',
+                '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-v', 'VERBOSITY=sqlstate',
+                '-v', 'fixture_token=' + self.token,
+                '-h', '/var/run/postgresql', '-U', 'postgres', '-d', DB, data=sql)
+        except subprocess.CalledProcessError as error:
+            # Only expose a syntactically valid SQLSTATE, never the raw SQL or rows.
+            match = re.search(r'(?:ERROR|FATAL):\s*([0-9A-Z]{5})\b', error.stderr or '')
+            raise FixtureSqlError(match.group(1) if match else None) from None
+        return result.stdout
+
+    def pull_images(self):
+        # Images are obtained before the synthetic network and any test code.
+        self.images['db'] = json.loads(self.cmd('image', 'inspect', guard.POSTGRES).stdout)[0]['Id']
+        self.check_db(isolated=False)
+        for kind, image in guard.IMAGES.items():
+            self.cmd('pull', image, timeout=180)
+            info = json.loads(self.cmd('image', 'inspect', image).stdout)[0]
+            if not any(item.endswith('@' + image.split('@', 1)[1]) for item in info.get('RepoDigests', [])):
+                raise RuntimeError('Pinned image digest mismatch')
+            self.images[kind] = info['Id']
+
+    def isolate_db(self):
+        before = self.check_db(isolated=False)
+        networks = (before.get('NetworkSettings') or {}).get('Networks') or {}
+        if len(networks) != 1:
+            raise RuntimeError('Unexpected initial service network')
+        initial = next(iter(networks))
+        if not re.fullmatch(r'github_network_[0-9a-f]+', initial):
+            raise RuntimeError('Unrecognized GitHub service network')
+        self.network_id = self.cmd('network', 'create', '--internal', '--label',
+            'payroll.auth.run=' + self.run_label, self.name).stdout.strip()
+        if not re.fullmatch(r'[0-9a-f]{64}', self.network_id):
+            raise RuntimeError('Unexpected fixture network identifier')
+        self.check_network()
+        self.cmd('network', 'connect', '--alias', 'synthetic-db', self.network_id, self.db_id)
+        self.cmd('network', 'disconnect', initial, self.db_id)
+        self.check_db(isolated=True)
+
+    def create_component(self, kind, *, env=None, extra=None, command=None):
+        args = ['create', '--pull=never', '--network', self.name,
+                '--network-alias', 'synthetic-' + kind,
+                '--label', 'payroll.auth.run=' + self.run_label]
+        for key, value in (env or {}).items():
+            args.extend(['--env', key + '=' + value])
+        args.extend(extra or [])
+        args.append(guard.IMAGES[kind])
+        args.extend(command or [])
+        cid = self.cmd(*args).stdout.strip()
+        if not re.fullmatch(r'[0-9a-f]{64}', cid):
+            raise RuntimeError('Unexpected fixture component identifier')
+        self.created[kind] = cid
+        return cid
+
+    def start_component(self, kind):
+        self.cmd('start', self.created[kind])
+        self.check_component(kind)
+
+    def client_python(self, code, *, env=None, timeout=30):
+        cid = self.check_component('client')
+        args = ['exec', '-i']
+        for key, value in (env or {}).items():
+            args.extend(['--env', key + '=' + value])
+        args += [cid, '/usr/local/bin/python', '-B', '-']
+        return self.cmd(*args, data=code, timeout=timeout).stdout
+
+    def start_owner_client(self, source):
+        cid = self.check_component('client')
+        self.cmd('exec', '-i', cid, '/bin/sh', '-c', 'cat > /tmp/synthetic_client.py', data=source)
+        self.check_component('client')
+        args = self.docker + ['exec', '-i', '--env', 'FIXTURE_JWT_SECRET=' + self.jwt_secret,
+                              cid, '/usr/local/bin/python', '-B', '/tmp/synthetic_client.py']
+        proc = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, text=True, env=self.env, bufsize=1)
+        self.clients.append(proc)
+        output = queue.Queue()
+        def collect():
+            for line in proc.stdout:
+                output.put(line.rstrip())
+            output.put(None)
+        threading.Thread(target=collect, daemon=True).start()
+        return proc, output
+
+    @staticmethod
+    def wait_marker(proc, output, expected, timeout=120):
+        end = time.monotonic() + timeout
+        while True:
+            remaining = end - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError('Synthetic owner client marker missing')
+            try:
+                line = output.get(timeout=remaining)
+                if line is None:
+                    code = proc.poll()
+                    if code is None:
+                        try:
+                            code = proc.wait(timeout=1)
+                        except subprocess.TimeoutExpired:
+                            pass
+                    raise OwnerClientExited(code)
+                match = re.fullmatch(r'SYNTHETIC_CLIENT_ERROR:([a-z_]+):([a-z_]+):([0-9]{3}):([A-Za-z0-9_]+)', line)
+                if (match and match.group(1) in SAFE_CLIENT_ERRORS
+                    and match.group(2) in SAFE_CLIENT_OPERATIONS
+                    and match.group(4) in SAFE_RESPONSE_CODES):
+                    status = int(match.group(3))
+                    if status == 0 or 100 <= status <= 599:
+                        raise OwnerClientFailure(match.group(1), status, match.group(2), match.group(4))
+                if line == expected:
+                    return
+            except queue.Empty as error:
+                raise TimeoutError('Synthetic owner client marker missing') from error
+
+    def wait_http(self, url):
+        # Internal service-name URLs are fixed in caller; no arbitrary host input.
+        if url not in ('http://synthetic-auth:9999/health', 'http://synthetic-gateway:8000/auth/v1/health'):
+            raise RuntimeError('Unexpected readiness URL')
+        program = "import urllib.request\nwith urllib.request.urlopen(" + repr(url) + ",timeout=2) as r:\n print(r.status)\n"
+        end = time.monotonic() + 60
+        while time.monotonic() < end:
+            try:
+                if self.client_python(program).strip() == '200': return
+            except subprocess.CalledProcessError:
+                pass
+            time.sleep(.5)
+        raise TimeoutError('Synthetic service readiness failed')
+
+    def check_egress(self):
+        # Negative probes use reserved TEST-NET and link-local metadata only.
+        # They do not prove the absence of every host/DNS forwarding path.
+        program = """import socket
+for ip,port in [('192.0.2.1',443),('2001:db8::1',443),('169.254.169.254',80)]:
+    try:
+        conn=socket.create_connection((ip,port),timeout=1)
+    except OSError:
+        continue
+    conn.close()
+    raise SystemExit('unexpected external connection')
+print('BLOCKED')
+"""
+        if self.client_python(program).strip() != 'BLOCKED':
+            raise RuntimeError('Synthetic client egress check failed')
+
+    def snapshot(self):
+        # Only synthetic rows exist in this isolated database; never print them.
+        query = """select jsonb_build_object(
+          'accounts',(select jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text) from public.asset_payroll_accounts t),
+          'observations',(select jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text) from public.asset_payroll_balance_observations t),
+          'selections',(select jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text) from public.asset_payroll_balance_selections t),
+          'history',(select jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text) from public.asset_payroll_balance_selection_history t)
+        )::text;"""
+        value = json.loads(self.db_sql(query).strip().splitlines()[-1])
+        if not all(isinstance(value.get(key), list) and len(value[key]) == 2
+                   for key in ('accounts', 'observations', 'selections', 'history')):
+            raise RuntimeError('Synthetic owner positive rows missing')
+        return value
+
+    def rest_outage_check(self):
+        before = self.snapshot()
+        rest = self.check_component('rest')
+        self.cmd('stop', '--time', '5', rest)
+        probe = """import http.client
+c=http.client.HTTPConnection('synthetic-gateway',8000,timeout=5)
+c.request('GET','/rest/v1/asset_payroll_accounts')
+r=c.getresponse()
+if r.status != 503: raise SystemExit('unexpected outage status')
+r.read()
+print('OUTAGE_OBSERVED')
+"""
+        if self.client_python(probe).strip() != 'OUTAGE_OBSERVED':
+            raise RuntimeError('Gateway did not expose expected backend outage')
+        self.start_component('rest')
+        ready = """import http.client, json
+c=http.client.HTTPConnection('synthetic-gateway',8000,timeout=5)
+c.request('GET','/rest/v1/asset_payroll_accounts')
+r=c.getresponse(); value=json.loads(r.read())
+if r.status not in (401,403) or value.get('code') != '42501':
+ raise SystemExit('unexpected restored anonymous response')
+print('RESTORED')
+"""
+        end = time.monotonic() + 40
+        while time.monotonic() < end:
+            try:
+                if self.client_python(ready).strip() == 'RESTORED':
+                    break
+            except subprocess.CalledProcessError:
+                pass
+            time.sleep(.5)
+        else:
+            raise TimeoutError('Synthetic PostgREST did not recover')
+        if self.snapshot() != before:
+            raise RuntimeError('Synthetic rows changed during read-only outage')
+
+    def auth_failure_diagnostic(self):
+        auth = self.check_component('auth')
+        captured = self.cmd('logs', '--tail', '120', auth)
+        labels = classify_auth_log((captured.stdout or '') + '\n' + (captured.stderr or ''))
+        # This read concerns only the fixed synthetic address, and is not a retry.
+        result = self.db_sql("select case when count(*)=0 then 'ZERO' else 'PRESENT' end "
+                             "from auth.users where email='fixture-a@example.invalid';")
+        observed = result.strip().splitlines()[-1]
+        if observed not in ('ZERO', 'PRESENT'):
+            raise RuntimeError('Unexpected synthetic user observation')
+        print('Synthetic Auth diagnostic categories:', ','.join(labels) if labels else 'other',
+              'synthetic user row:', observed)
+        # This is a separate postgres session, not the Auth connection itself.
+        # Restrict metadata probes and output to this fixed list of schema names.
+        metadata = self.db_sql("select concat_ws(',', "
+            "case when to_regclass('auth.users') is null then 'AU0' else 'AU1' end, "
+            "case when to_regclass('public.users') is null then 'PU0' else 'PU1' end, "
+            "case when to_regclass('auth.identities') is null then 'AI0' else 'AI1' end, "
+            "case when to_regclass('auth.audit_log_entries') is null then 'AL0' else 'AL1' end, "
+            "case when to_regclass('users') is null then 'U0' "
+            "when to_regclass('users') = to_regclass('auth.users') then 'UA' "
+            "when to_regclass('users') = to_regclass('public.users') then 'UP' else 'UX' end);")
+        state = metadata.strip().splitlines()[-1]
+        if not re.fullmatch(r'AU[01],PU[01],AI[01],AL[01],(?:U0|UA|UP|UX)', state):
+            raise RuntimeError('Unexpected synthetic metadata observation')
+        print('Synthetic fixed metadata, separate postgres session:', state)
+
+    def verify_postgres_user_resolution(self):
+        # The Auth connection may still override its session setting; this probe
+        # confirms only the default in a fresh connection of the same role.
+        state = self.db_sql("select case when to_regclass('users') is not null and "
+                            "to_regclass('users') = to_regclass('auth.users') "
+                            "then 'AUTH_USERS_RESOLVED' else 'AUTH_USERS_UNRESOLVED' end;")
+        if state.strip().splitlines()[-1] != 'AUTH_USERS_RESOLVED':
+            raise RuntimeError('Synthetic postgres role cannot resolve auth.users')
+
+    def start_write_barrier(self):
+        # Fixed fixture-only trigger, scoped to the test request.  The marker,
+        # image, container identity and isolated network are checked by db_sql.
+        self.db_sql("""create function payroll_snapshot_private.fixture_delay()
+        returns trigger language plpgsql set search_path = '' as $$
+        begin
+          if new.request_id = 'cb7e027a-d89f-4a09-a720-bc7a8fd60b25'::uuid then
+            perform pg_catalog.pg_advisory_xact_lock(12299,654321);
+          end if;
+          return new;
+        end $$;
+        create trigger fixture_delay before insert on public.asset_payroll_balance_observations
+          for each row execute function payroll_snapshot_private.fixture_delay();""")
+        self.check_db(isolated=True)
+        self.check_network()
+        args = self.docker + ['exec', '-i', '-u', 'postgres', self.db_id,
+            '/usr/bin/env', '-i', 'PATH=' + PATH_INSIDE, '/usr/local/bin/psql',
+            '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-v', 'fixture_token=' + self.token,
+            '-h', '/var/run/postgresql', '-U', 'postgres', '-d', DB]
+        proc = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, text=True, env=self.env, bufsize=1)
+        self.clients.append(proc)
+        output = queue.Queue()
+        def collect():
+            for line in proc.stdout: output.put(line.rstrip())
+            output.put(None)
+        threading.Thread(target=collect, daemon=True).start()
+        self.barrier = (proc, output)
+        proc.stdin.write("select 1 / ((count(*) = 1)::int) from public.payroll_auth_fixture_guard "
+                         "where token=:'fixture_token'::uuid;\n"
+                         "set application_name='fixture_write_blocker';\n"
+                         "select pg_advisory_lock(12299,654321);\n"
+                         "select 'SYNTHETIC_LOCK_HELD';\n")
+        proc.stdin.flush()
+        self.wait_marker(proc, output, 'SYNTHETIC_LOCK_HELD', timeout=20)
+        return proc, output
+
+    def release_write_barrier(self):
+        if self.barrier is None: return
+        proc, output = self.barrier
+        if proc.poll() is not None:
+            raise RuntimeError('Fixture barrier ended without confirmed unlock')
+        proc.stdin.write("select case when pg_advisory_unlock(12299,654321) "
+                         "then 'SYNTHETIC_LOCK_RELEASED' else 'SYNTHETIC_UNLOCK_FAILED' end;\n")
+        proc.stdin.flush()
+        self.wait_marker(proc, output, 'SYNTHETIC_LOCK_RELEASED', timeout=5)
+        proc.stdin.close()
+        if proc.wait(timeout=5) != 0:
+            raise RuntimeError('Synthetic barrier process failed')
+        query = """select case when not exists (
+          select 1 from pg_catalog.pg_locks l join pg_catalog.pg_stat_activity a on a.pid=l.pid
+          where a.application_name='fixture_write_blocker' and l.locktype='advisory'
+          and l.classid=12299 and l.objid=654321 and l.objsubid=2 and l.granted)
+          then 'HOLDER_UNLOCKED' else 'HOLDER_STILL_LOCKED' end;"""
+        if self.db_sql(query).strip().splitlines()[-1] != 'HOLDER_UNLOCKED':
+            raise RuntimeError('Synthetic barrier still held')
+        self.barrier = None
+
+    def wait_write_blocked(self):
+        # Exactly one waiter on the fixed key, blocked by this fixture's holder.
+        query = """select case when count(*) = 1 and not exists (
+          select 1 from public.asset_payroll_balance_observations
+          where request_id='cb7e027a-d89f-4a09-a720-bc7a8fd60b25'::uuid)
+          then 'TARGET_BLOCKED' else 'NOT_BLOCKED' end
+        from pg_catalog.pg_locks w join pg_catalog.pg_locks h
+          on h.locktype=w.locktype and h.database=w.database and h.classid=w.classid
+          and h.objid=w.objid and h.objsubid=w.objsubid and h.granted
+        join pg_catalog.pg_stat_activity a on a.pid=h.pid
+        where w.locktype='advisory' and not w.granted and w.classid=12299
+          and w.objid=654321 and w.objsubid=2
+          and a.application_name='fixture_write_blocker'
+          and h.pid = any(pg_catalog.pg_blocking_pids(w.pid));"""
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            if self.db_sql(query).strip().splitlines()[-1] == 'TARGET_BLOCKED': return
+            time.sleep(.1)
+        raise TimeoutError('Synthetic request did not reach its DB barrier')
+
+    def wait_write_committed(self):
+        query = """select case when count(*)=1 then 'ONE_COMMITTED' else 'NOT_ONE' end
+        from public.asset_payroll_balance_observations
+        where request_id='cb7e027a-d89f-4a09-a720-bc7a8fd60b25'::uuid;"""
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            if self.db_sql(query).strip().splitlines()[-1] == 'ONE_COMMITTED': return
+            time.sleep(.1)
+        raise TimeoutError('Synthetic write did not commit exactly once')
+
+    def verify_replay_count(self):
+        query = """select case when
+          (select count(*) from public.asset_payroll_balance_observations o
+           where o.request_id='cb7e027a-d89f-4a09-a720-bc7a8fd60b25'::uuid)=1 and
+          (select count(*) from public.asset_payroll_balance_selection_history h
+           join public.asset_payroll_balance_observations o on o.id=h.new_observation_id
+           where o.request_id='cb7e027a-d89f-4a09-a720-bc7a8fd60b25'::uuid)=1 and
+          (select count(*) from public.asset_payroll_balance_selections s
+           join public.asset_payroll_balance_observations o on o.id=s.observation_id
+           where o.request_id='cb7e027a-d89f-4a09-a720-bc7a8fd60b25'::uuid)=1
+          then 'ONE_REPLAYED' else 'REPLAY_MISMATCH' end;"""
+        if self.db_sql(query).strip().splitlines()[-1] != 'ONE_REPLAYED':
+            raise RuntimeError('Synthetic replay created inconsistent records')
+
+    def execute(self, migration, client_source, client_module, gateway_config):
+        self.stage = 'pull pinned fixture images'
+        self.pull_images()
+        self.stage = 'isolate service database'
+        self.isolate_db()
+        if self.db_sql(EMPTY_CHECK, marker=False).strip() != 'EMPTY_FIXTURE':
+            raise RuntimeError('Expected empty synthetic database')
+        self.db_sql("\\set ON_ERROR_STOP on\ncreate table public.payroll_auth_fixture_guard(token uuid primary key);\n"
+                    "insert into public.payroll_auth_fixture_guard values (:'fixture_token'::uuid);\n", marker=False)
+        self.db_sql("create role anon nologin; create role authenticated nologin; "
+                    "create role authenticator noinherit login password '" + self.password + "'; "
+                    "grant anon, authenticated to authenticator; create schema auth; "
+                    "alter role postgres set search_path to auth, public;\n")
+        self.stage = 'start synthetic client and Auth'
+        self.create_component('client', command=['python', '-c', 'import time; time.sleep(600)'])
+        self.start_component('client')
+        self.check_egress()
+        self.create_component('auth', env={
+            'GOTRUE_API_HOST': '0.0.0.0', 'GOTRUE_API_PORT': '9999',
+            'API_EXTERNAL_URL': 'http://synthetic-gateway:8000/auth/v1',
+            'GOTRUE_DB_DRIVER': 'postgres',
+            'GOTRUE_DB_DATABASE_URL': 'postgres://postgres:synthetic-only@synthetic-db:5432/' + DB,
+            'GOTRUE_SITE_URL': 'http://synthetic-gateway:8000',
+            'GOTRUE_DISABLE_SIGNUP': 'false', 'GOTRUE_JWT_ADMIN_ROLES': 'service_role',
+            'GOTRUE_JWT_AUD': 'authenticated', 'GOTRUE_JWT_DEFAULT_GROUP_NAME': 'authenticated',
+            'GOTRUE_JWT_EXP': '3600', 'GOTRUE_JWT_SECRET': self.jwt_secret,
+            'GOTRUE_JWT_ISSUER': 'http://synthetic-gateway:8000/auth/v1',
+            'GOTRUE_EXTERNAL_EMAIL_ENABLED': 'true', 'GOTRUE_MAILER_AUTOCONFIRM': 'true',
+            'GOTRUE_EXTERNAL_PHONE_ENABLED': 'false', 'GOTRUE_SMTP_HOST': '127.0.0.1',
+        })
+        self.start_component('auth')
+        self.wait_http('http://synthetic-auth:9999/health')
+        self.stage = 'verify synthetic postgres role search path'
+        self.verify_postgres_user_resolution()
+        self.stage = 'verify Auth-provided uid function'
+        status = self.db_sql("select case when to_regprocedure('auth.uid()') is not null "
+                             "then 'UID_PRESENT' else 'UID_MISSING' end;").strip().splitlines()[-1]
+        if status != 'UID_PRESENT':
+            raise RuntimeError('Auth-provided uid function missing')
+        self.db_sql("grant usage on schema auth to anon,authenticated; "
+                    "grant execute on function auth.uid() to anon,authenticated;\n")
+        self.stage = 'apply fixed synthetic migration'
+        self.db_sql(migration)
+        self.stage = 'start synthetic PostgREST and Envoy'
+        self.create_component('rest', env={
+            'PGRST_DB_URI': 'postgres://authenticator:' + self.password + '@synthetic-db:5432/' + DB,
+            'PGRST_DB_SCHEMAS': 'public', 'PGRST_DB_ANON_ROLE': 'anon',
+            'PGRST_JWT_SECRET': self.jwt_secret, 'PGRST_DB_USE_LEGACY_GUCS': 'false',
+        })
+        self.start_component('rest')
+        encoded = base64.b64encode(gateway_config.encode('utf-8')).decode('ascii')
+        self.create_component('gateway', env={'SYNTHETIC_ENVOY_CONFIG_B64': encoded},
+            extra=['--entrypoint', '/bin/sh'], command=['-c',
+              'printf %s "$SYNTHETIC_ENVOY_CONFIG_B64" | base64 -d > /tmp/fixture.yaml && '
+              'exec /usr/local/bin/envoy -c /tmp/fixture.yaml --log-level error'])
+        self.start_component('gateway')
+        self.wait_http('http://synthetic-gateway:8000/auth/v1/health')
+        self.stage = 'synthetic isolated client checks'
+        self.check_peers()
+        # Client receives only a test secret and fixed service-name endpoint.
+        client = self.check_component('client')
+        self.cmd('exec', '-i', client, '/bin/sh', '-c', 'cat > /tmp/auth_gateway_client.py',
+                 data=client_module)
+        owner_client, output = self.start_owner_client(client_source)
+        self.wait_marker(owner_client, output, 'SYNTHETIC_INITIAL_READY')
+        self.stage = 'synthetic gateway upstream outage'
+        self.rest_outage_check()
+        self.stage = 'authenticated owner checks after recovery'
+        self.check_peers()
+        owner_client.stdin.write('SYNTHETIC_RESTORED\n')
+        owner_client.stdin.flush()
+        self.wait_marker(owner_client, output, 'SYNTHETIC_RECOVERY_VERIFIED')
+        self.stage = 'synthetic committed write after response loss'
+        holder, holder_output = self.start_write_barrier()
+        owner_client.stdin.write('SYNTHETIC_START_WRITE\n')
+        owner_client.stdin.flush()
+        self.wait_marker(owner_client, output, 'SYNTHETIC_WRITE_FORWARDED', timeout=20)
+        self.wait_write_blocked()
+        owner_client.stdin.write('SYNTHETIC_DROP_RESPONSE\n')
+        owner_client.stdin.flush()
+        self.wait_marker(owner_client, output, 'SYNTHETIC_WRITE_UNKNOWN', timeout=20)
+        self.release_write_barrier()
+        self.wait_write_committed()
+        owner_client.stdin.write('SYNTHETIC_DB_COMMITTED\n')
+        owner_client.stdin.flush()
+        self.wait_marker(owner_client, output, 'SYNTHETIC_REPLAY_VERIFIED', timeout=20)
+        self.verify_replay_count()
+        owner_client.stdin.close()
+        if owner_client.wait(timeout=10) != 0:
+            raise RuntimeError('Synthetic owner client did not exit cleanly')
+
+    def close(self):
+        # Only IDs returned by our own create calls are candidates for removal.
+        errors = []
+        try:
+            self.release_write_barrier()
+        except Exception:
+            # Terminating the host docker CLI alone does not prove the psql
+            # session ended. The job's service teardown must still complete.
+            errors.append('fixture DB barrier; service teardown required')
+        for proc in self.clients:
+            if proc.poll() is None:
+                try:
+                    proc.terminate()
+                    proc.wait(timeout=5)
+                except Exception:
+                    errors.append('client process')
+        for kind in reversed(list(self.created)):
+            try:
+                info = self.info(self.created[kind])
+                if not guard.container_ok(info, self.created[kind], self.images[kind],
+                                          guard.IMAGES[kind], self.run_label, require_running=False):
+                    raise RuntimeError('Cleanup component identity mismatch')
+                networks = (info.get('NetworkSettings') or {}).get('Networks') or {}
+                if networks and (set(networks) != {self.name}
+                    or networks[self.name].get('NetworkID') != self.network_id):
+                    raise RuntimeError('Cleanup component network mismatch')
+                self.cmd('rm', '-f', self.created[kind])
+            except Exception:
+                errors.append(kind)
+        if self.network_id:
+            try:
+                self.check_network()
+                info = self.check_db(isolated=False)
+                networks = (info.get('NetworkSettings') or {}).get('Networks') or {}
+                if self.name in networks:
+                    if networks[self.name].get('NetworkID') != self.network_id:
+                        raise RuntimeError('Cleanup database network mismatch')
+                    self.cmd('network', 'disconnect', self.network_id, self.db_id)
+                self.cmd('network', 'rm', self.network_id)
+            except Exception:
+                errors.append('network')
+        self.tmp.cleanup()
+        if errors:
+            raise RuntimeError('Fixture cleanup incomplete: ' + ', '.join(errors))
+
+
+def main():
+    fixed = {}
+    for name, expected in FIXED.items():
+        raw = (HERE / name).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != expected:
+            raise RuntimeError('Fixed fixture hash mismatch: ' + name)
+        fixed[name] = raw.decode('utf-8')
+    fixture = Fixture(os.environ)
+    try:
+        fixture.execute(fixed['migration.sql'], fixed['synthetic_client.py'],
+                        fixed['auth_gateway_client.py'], fixed['envoy-fixture.yaml'])
+        print('Synthetic real Auth + test Envoy + PostgREST checks passed.')
+    except OwnerClientFailure as error:
+        print('Synthetic fixture failed at stage:', fixture.stage,
+              'check:', error.category, 'operation:', error.operation,
+              'HTTP status:', error.status or 'unavailable', 'response code:', error.response_code)
+        if error.operation == 'signup' and error.status == 500:
+            try:
+                fixture.auth_failure_diagnostic()
+            except Exception:
+                print('Synthetic Auth diagnostic unavailable')
+        raise SystemExit(1) from None
+    except FixtureSqlError as error:
+        print('Synthetic fixture failed at stage:', fixture.stage,
+              'SQLSTATE:', error.sqlstate or 'unavailable')
+        raise SystemExit(1) from None
+    except OwnerClientExited as error:
+        print('Synthetic fixture failed at stage:', fixture.stage,
+              'owner client exited before marker; exit code:', error.exit_code)
+        raise SystemExit(1) from None
+    except Exception as error:
+        print('Synthetic fixture failed at stage:', fixture.stage, type(error).__name__)
+        raise SystemExit(1) from None
+    finally:
+        fixture.close()
+
+
+if __name__ == '__main__':
+    main()
