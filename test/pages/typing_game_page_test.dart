@@ -6,8 +6,8 @@ import 'package:my_web_app/models/typing_game.dart';
 import 'package:my_web_app/pages/typing_game_page.dart';
 
 void main() {
-
-  testWidgets('mixed bicycle spellings work with hints off and on', (tester) async {
+  testWidgets('mixed bicycle spellings work with hints off and on',
+      (tester) async {
     await tester.pumpWidget(const MaterialApp(home: TypingGamePage()));
     await tester.tap(find.text('10問じっくり練習'));
     await tester.pump();
@@ -59,7 +59,9 @@ void main() {
               find.byKey(const Key('typing-romaji-guide')),
             );
             expect(
-              guide.textSpan!.toPlainText().startsWith(spelling.substring(0, i)),
+              guide.textSpan!
+                  .toPlainText()
+                  .startsWith(spelling.substring(0, i)),
               isTrue,
             );
           } else if (!showHint) {
