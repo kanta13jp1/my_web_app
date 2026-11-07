@@ -237,6 +237,7 @@ import 'package:my_web_app/pages/viral_ad_generator_page.dart';
 import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
 import 'package:my_web_app/ui/features/palm_reading/palm_reading_feature.dart';
+import 'package:my_web_app/ui/features/chat_highlights/chat_highlights_feature.dart';
 import 'package:my_web_app/ui/features/video_studio/video_studio_feature.dart';
 import 'package:my_web_app/ui/features/notion_migration/notion_migration_feature.dart';
 import 'package:my_web_app/ui/features/procrastination_reset/procrastination_reset_feature.dart';
@@ -1453,6 +1454,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const AeroLabPage(),
         settings: settings,
+      );
+    case '/chat-highlights':
+      return MaterialPageRoute(
+        builder: (_) => const ChatHighlightsFeature(),
+        settings: RouteSettings(name: settings.name),
       );
     case '/video-studio':
       return MaterialPageRoute(
