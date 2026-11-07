@@ -1,0 +1,152 @@
+# REVIEW CANDIDATE: widget-only, would execute if installed and pushed.
+# DO NOT PUSH: independent review, current main and event-chain checks remain outstanding.
+name: Payment-day prune locked synthetic QA
+on:
+  push:
+    branches:
+      - codex/payment-day-prune-locked-qa-20261107
+permissions: {}
+jobs:
+  synthetic-widget-only:
+    if: ${{ github.event_name == 'push' && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/payment-day-prune-locked-qa-20261107' && github.event.created == true && github.event.deleted == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions: {}
+    steps:
+      - name: Allocate a private scratch directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${RUNNER_TEMP:?}" == /* && -d "$RUNNER_TEMP" && ! -L "$RUNNER_TEMP" ]]
+          base="$(realpath -e -- "$RUNNER_TEMP")"
+          [[ "$base" != / ]]
+          umask 077
+          root="$(mktemp -d -- "$base/prune-widget.XXXXXXXX")"
+          [[ "$(dirname -- "$root")" == "$base" && -d "$root" && ! -L "$root" ]]
+          [[ "$(realpath -e -- "$root")" == "$root" && "$(stat -c %u -- "$root")" == "$(id -u)" && "$(stat -c %a -- "$root")" == 700 ]]
+          mkdir "$root/home" "$root/pub-cache" "$root/tmp" "$root/sdk" "$root/source" "$root/candidate" "$root/config" "$root/cache"
+          printf 'WIDGET_ROOT=%s\n' "$root" >> "$GITHUB_ENV"
+      - name: Verify exact candidate commit and run policy checks
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          base=b6cbe6f9df510a5148761161f745efbb0721493b
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GITHUB_REF" == 'refs/heads/codex/payment-day-prune-locked-qa-20261107' ]]
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" TMPDIR="$WIDGET_ROOT/tmp" PYTHONDONTWRITEBYTECODE=1 GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" init --quiet
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" -c credential.helper= fetch --no-tags --depth=2 https://github.com/kanta13jp1/my_web_app.git "$GITHUB_SHA"
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" checkout --quiet --detach FETCH_HEAD
+          cd "$WIDGET_ROOT/candidate"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git show -s --format=%P HEAD)" = "$base"
+          actual_diff="$(git diff --no-renames --name-status "$base" HEAD)"
+          expected_diff="$(printf 'A\t.github/workflows/payment-day-prune-locked-qa.yml')"
+          [[ "$actual_diff" == "$expected_diff" ]]
+          [[ -z "$(git status --porcelain --untracked-files=all)" ]]
+          echo "Candidate commit: $(git rev-parse HEAD)"
+          echo "Candidate tree: $(git rev-parse 'HEAD^{tree}')"
+          sha256sum .github/workflows/payment-day-prune-locked-qa.yml
+          # Same eleven path-scoped policy commands as base pre-commit gate.
+          # This cloud run does not claim that local Git hooks ran.
+          for policy in \
+            scripts/classify_ci_changes_test.py \
+            scripts/cloud_ci_handoff_test.py \
+            scripts/cloud_first_route_test.py \
+            scripts/generate_infrastructure_map_test.py \
+            scripts/cicd_efficiency_test.py \
+            scripts/quality_gate_test.py \
+            scripts/pre_commit_quality_gate_test.py \
+            scripts/check_github_actions_node_runtime.py \
+            scripts/check_github_actions_python_inline.py \
+            scripts/check_github_actions_status_functions.py \
+            scripts/check_github_actions_powershell_splatting.py; do
+              echo "Running $policy"
+              "${clean_env[@]}" python3 "$policy"
+          done
+          [[ -z "$(git status --porcelain --untracked-files=all)" ]]
+          echo 'All eleven cloud policy checks passed for candidate tree.'
+      - name: Fetch fixed public merge commit without a stored token
+        shell: bash
+        run: |
+          set -euo pipefail
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" init --quiet
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" -c credential.helper= fetch --no-tags --depth=1 https://github.com/kanta13jp1/my_web_app.git a50bb70cf9e1f666653295118d780487255ed354
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" checkout --quiet --detach FETCH_HEAD
+          cd "$WIDGET_ROOT/source"
+          test "$(git rev-parse HEAD)" = a50bb70cf9e1f666653295118d780487255ed354
+          test "$(git rev-parse HEAD:.github/workflows/asset-payment-day-prune-browser.yml)" = 5145b4a88772343b43563f9919646bbdc9b97571
+          test "$(git rev-parse HEAD:integration_test/asset_payment_day_prune_test.dart)" = 722eaaf1759303d61978b5ee7ffb6e66c6890532
+          test "$(git rev-parse HEAD:lib/pages/asset_management_page.dart)" = beed24eb38de1300d2a3d956ee3817a668c27644
+          test "$(git rev-parse HEAD:test/widgets/asset_management_page_smoke_test.dart)" = 012316bb12003e8fb6e5760d5ec305f11d0c5219
+          test "$(git rev-parse HEAD:test_driver/asset_payment_day_prune.dart)" = a538f114e045e51838381f20da4d133a18aa6399
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+      - name: Verify official SDK and locked dependencies before isolation
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" \
+            curl --fail --location --connect-timeout 15 --max-time 240 --retry 0 \
+              --output "$WIDGET_ROOT/sdk/flutter.tar.xz" \
+              https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.9-stable.tar.xz
+          printf '%s  %s\n' 25ed8c3c29d51a7353f2a944310b478af8214920639524b19c50a19e6c044c5a "$WIDGET_ROOT/sdk/flutter.tar.xz" | sha256sum -c -
+          tar -xJf "$WIDGET_ROOT/sdk/flutter.tar.xz" -C "$WIDGET_ROOT/sdk"
+          cd "$WIDGET_ROOT/source"
+          clean_env=(env -i PATH="$WIDGET_ROOT/sdk/flutter/bin:/usr/bin:/bin" HOME="$WIDGET_ROOT/home" PUB_CACHE="$WIDGET_ROOT/pub-cache" TMPDIR="$WIDGET_ROOT/tmp" XDG_CONFIG_HOME="$WIDGET_ROOT/config" XDG_CACHE_HOME="$WIDGET_ROOT/cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0)
+          "${clean_env[@]}" flutter --version --machine > "$WIDGET_ROOT/flutter-version.json"
+          python3 - "$WIDGET_ROOT/flutter-version.json" <<'PY'
+          import json,sys
+          with open(sys.argv[1],encoding='utf-8') as f: info=json.load(f)
+          if info.get('frameworkVersion') != '3.47.9': raise SystemExit('unexpected Flutter version')
+          PY
+          "${clean_env[@]}" dart --version 2>&1 | grep -Eq '^Dart SDK version: 3[.]13[.]7([[:space:]]|$)'
+          "${clean_env[@]}" flutter precache --linux
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          "${clean_env[@]}" flutter pub get --enforce-lockfile
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          git diff --exit-code -- pubspec.lock pubspec.yaml analysis_options.yaml
+      - name: Run only two synthetic VM widget tests in isolated network namespace
+        shell: bash
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          user="$(id -un)"
+          [[ "$(id -u "$user")" -gt 0 ]]
+          original_net="$(readlink /proc/self/ns/net)"
+          sudo -n true
+          env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME="$WIDGET_ROOT/home" \
+            sudo -n unshare --net -- /bin/bash -euc '
+              ip link set lo up
+              net="$(readlink /proc/self/ns/net)"
+              [[ "$net" != "$5" ]]
+              links="$(ip -o link show)"
+              [[ "$(printf "%s\n" "$links" | wc -l)" -eq 1 ]]
+              [[ "$(printf "%s\n" "$links" | cut -d: -f2 | tr -d "[:space:]")" == lo ]]
+              routes4="$(ip -4 route show default)"
+              routes6="$(ip -6 route show default)"
+              [[ -z "$routes4" && -z "$routes6" ]]
+              runuser -u "$1" -- env -i PATH="$2/sdk/flutter/bin:/usr/bin:/bin" HOME="$2/home" PUB_CACHE="$2/pub-cache" TMPDIR="$2/tmp" XDG_CONFIG_HOME="$2/config" XDG_CACHE_HOME="$2/cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 /bin/bash -euc '\''
+                cd "$1/source"
+                set -o pipefail
+                printf "%s  %s\n" da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+                flutter --no-color --no-version-check test --no-pub --reporter expanded --plain-name "manual prune button cleans expired tombstones" test/widgets/asset_management_page_smoke_test.dart | tee "$1/tmp/widget-manual.log"
+                grep -Fq "manual prune button cleans expired tombstones" "$1/tmp/widget-manual.log"
+                grep -Fq "All tests passed!" "$1/tmp/widget-manual.log"
+                flutter --no-color --no-version-check test --no-pub --reporter expanded --plain-name "boot auto-prune physically drops expired tombstones" test/widgets/asset_management_page_smoke_test.dart | tee "$1/tmp/widget-boot.log"
+                grep -Fq "boot auto-prune physically drops expired tombstones" "$1/tmp/widget-boot.log"
+                grep -Fq "All tests passed!" "$1/tmp/widget-boot.log"
+                printf "%s  %s\n" da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+                git diff --exit-code -- pubspec.lock pubspec.yaml analysis_options.yaml
+              '\'' widget "$2"
+            ' isolated "$user" "$WIDGET_ROOT" unused unused "$original_net"
+      - name: Verify lock and configuration even after failure
+        if: ${{ always() && env.WIDGET_ROOT != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$WIDGET_ROOT/source"
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          git diff --exit-code -- pubspec.lock pubspec.yaml analysis_options.yaml
