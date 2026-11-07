@@ -17,6 +17,47 @@ class DeltaTest(unittest.TestCase):
     def test_fixed_findings_do_not_block(self):
         self.assertEqual(new_findings([], [{'reason': 'missing_local_target'}]), [])
 
+    def test_competitor_brand_rows_are_narrowly_excluded(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            file = root / 'docs/competitor-reports/2026-10-27.md'
+            file.parent.mkdir(parents=True)
+            file.write_text(
+                '| Progate | https://prog-8.com | HTTP 200 |\n'
+                '| freee 人事労務 | https://www.freee.co.jp/hr/ | HTTP 200 |\n'
+                '| Ameba (サイバーエージェント) | https://ameba.jp | HTTP 200 |\n'
+                'This is teh documentation.\n', encoding='utf-8')
+            findings = collect(root, [file.relative_to(root).as_posix()])
+            spelling = [item['detail'] for item in findings if item['kind'] == 'spelling']
+            self.assertEqual(spelling, ['teh ==> the'])
+
+    def test_brand_word_in_prose_or_wrong_domain_is_still_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            file = root / 'docs/competitor-reports/2026-10-27.md'
+            file.parent.mkdir(parents=True)
+            file.write_text('Progate is in prose.\n| freee 人事労務 | https://example.com/hr/ |\n', encoding='utf-8')
+            findings = collect(root, [file.relative_to(root).as_posix()])
+            spelling = [item['detail'] for item in findings if item['kind'] == 'spelling']
+            self.assertIn('Progate ==> Propagate', spelling)
+            self.assertIn('freee ==> free', spelling)
+
+    def test_same_brand_word_in_later_column_is_not_suppressed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            file = root / 'docs/competitor-reports/2026-10-27.md'
+            file.parent.mkdir(parents=True)
+            file.write_text(
+                '| Progate | https://prog-8.com | Progate is in prose |\n'
+                '| freee 人事労務 | https://www.freee.co.jp/hr/ | freee in prose |\n'
+                '| Ameba (サイバーエージェント) | https://ameba.jp | Ameba in prose |\n',
+                encoding='utf-8')
+            findings = collect(root, [file.relative_to(root).as_posix()])
+            spelling = [item['detail'] for item in findings if item['kind'] == 'spelling']
+            self.assertIn('Progate ==> Propagate', spelling)
+            self.assertIn('freee ==> free', spelling)
+            self.assertTrue(any(item.startswith('Ameba ==>') for item in spelling))
+
     def test_actual_spelling_and_link_detectors(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
