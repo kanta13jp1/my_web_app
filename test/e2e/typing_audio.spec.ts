@@ -7,7 +7,8 @@ test('synthesis is opt-in, bounded and stopped when hidden or leaving', async ({
     let starts = 0;
     let active = 0;
     let maximum = 0;
-    (window as any).__typingAudio = { contexts, get starts() { return starts; }, get maximum() { return maximum; } };
+    const frequencies: number[] = [];
+    (window as any).__typingAudio = { contexts, frequencies, get starts() { return starts; }, get maximum() { return maximum; } };
     window.AudioContext = new Proxy(Original, {
       construct(target, args) {
         const context = Reflect.construct(target, args) as AudioContext;
@@ -19,7 +20,7 @@ test('synthesis is opt-in, bounded and stopped when hidden or leaving', async ({
           const stop = voice.stop.bind(voice);
           let counted = false;
           const release = () => { if (counted) { active--; counted = false; } };
-          voice.start = (when) => { starts++; active++; counted = true; maximum = Math.max(maximum, active); start(when); };
+          voice.start = (when) => { starts++; active++; counted = true; frequencies.push(voice.frequency.value); maximum = Math.max(maximum, active); start(when); };
           voice.stop = (when) => { if (when === undefined) release(); stop(when); };
           voice.addEventListener('ended', release);
           return voice;
@@ -41,6 +42,8 @@ test('synthesis is opt-in, bounded and stopped when hidden or leaving', async ({
   await page.getByRole('checkbox', { name: '10-word practice', exact: true }).click();
   await page.getByRole('button', { name: 'Start (Enter)', exact: true }).click();
   await expect.poll(() => page.evaluate(() => (window as any).__typingAudio.starts)).toBeGreaterThan(0);
+  await page.getByRole('textbox', { name: 'Romaji input', exact: true }).pressSequentially('qqqqqqqqqqqq');
+  await expect.poll(() => page.evaluate(() => (window as any).__typingAudio.frequencies.includes(220))).toBe(true);
   const mute = page.getByRole('switch', { name: 'Mute', exact: true });
   await mute.click();
   await expect.poll(() => page.evaluate(() => (window as any).__typingAudio.contexts[0].state)).toBe('suspended');
