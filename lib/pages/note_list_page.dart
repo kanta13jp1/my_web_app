@@ -6,8 +6,11 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/evernote_search_feature_service.dart';
+import '../services/evernote_search_query_service.dart';
 import '../services/inbox_capture_service.dart';
 import '../services/note_semantic_search_service.dart';
+import '../services/note_tag_hierarchy_service.dart';
 import '../services/note_tag_service.dart';
 import '../services/public_memo_service.dart';
 import 'note_editor_page.dart';
@@ -21,6 +24,16 @@ enum _NoteCardAction {
 }
 
 enum _NoteListView { all, favorites, inbox }
+
+class _NoteCollectionSearchContext {
+  const _NoteCollectionSearchContext({
+    required this.notebookName,
+    this.stackName,
+  });
+
+  final String notebookName;
+  final String? stackName;
+}
 
 class _LocalDraftEntry {
   final String storageKey;
@@ -46,12 +59,22 @@ class NoteListPage extends StatefulWidget {
   final bool prioritizeShareCandidates;
   final SupabaseClient? supabaseClient;
   final NoteSemanticSearchDataSource? semanticSearchService;
+  final String? initialSearchQuery;
+  final String? initialTag;
+  final int? initialTagId;
+  final bool includeNestedTags;
+  final int? initialCollectionId;
 
   const NoteListPage({
     super.key,
     this.prioritizeShareCandidates = false,
     this.supabaseClient,
     this.semanticSearchService,
+    this.initialSearchQuery,
+    this.initialTag,
+    this.initialTagId,
+    this.includeNestedTags = false,
+    this.initialCollectionId,
   });
 
   @override
@@ -74,7 +97,16 @@ class _NoteListPageState extends State<NoteListPage> {
   // Win版#108: メモ検索 (title + content 部分一致・case insensitive)
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  EvernoteSearchQuery _evernoteSearchQuery =
+      EvernoteSearchQueryService.parse('');
   String? _selectedTag;
+  int? _selectedTagId;
+  Set<int>? _tagScopedNoteIds;
+  Set<int>? _allowedNotebookIds;
+  Map<int, _NoteCollectionSearchContext> _collectionSearchContexts =
+      const <int, _NoteCollectionSearchContext>{};
+  Map<int, EvernoteSearchFeatures> _searchFeaturesByNoteId =
+      const <int, EvernoteSearchFeatures>{};
   Timer? _searchDebounce;
   List<NoteSearchResult> _semanticSearchResults = const <NoteSearchResult>[];
   String _semanticSearchMode = 'text_fallback';
@@ -90,6 +122,12 @@ class _NoteListPageState extends State<NoteListPage> {
     _publicMemoService = PublicMemoService(_supabase);
     _semanticSearchService =
         widget.semanticSearchService ?? NoteSemanticSearchService(_supabase);
+    _searchQuery = widget.initialSearchQuery?.trim() ?? '';
+    _evernoteSearchQuery = EvernoteSearchQueryService.parse(_searchQuery);
+    _searchController.text = _searchQuery;
+    final initialTag = widget.initialTag?.trim();
+    _selectedTag = initialTag == null || initialTag.isEmpty ? null : initialTag;
+    _selectedTagId = widget.initialTagId;
     inboxCaptureRevision.addListener(_handleInboxCapture);
     _fetchNotes();
   }
@@ -106,9 +144,39 @@ class _NoteListPageState extends State<NoteListPage> {
     _fetchNotes();
   }
 
-  /// 検索クエリで note を絞り込み (title + content + tags 部分一致)。
+  /// Evernote高度検索は決定的に評価し、通常入力だけ意味検索へ渡す。
   bool _matchesSearch(Map<String, dynamic> note) {
     if (_searchQuery.isEmpty) return true;
+    if (_evernoteSearchQuery.isAdvanced) {
+      final notebookId = int.tryParse(
+        note['notebook_collection_id']?.toString() ?? '',
+      );
+      final collection =
+          notebookId == null ? null : _collectionSearchContexts[notebookId];
+      final noteId = _noteNumericId(note);
+      final features = noteId == null
+          ? const EvernoteSearchFeatures()
+          : (_searchFeaturesByNoteId[noteId] ?? const EvernoteSearchFeatures());
+      return _evernoteSearchQuery.matches(
+        EvernoteSearchDocument(
+          title: note['title']?.toString() ?? '',
+          content: note['content']?.toString() ?? '',
+          tags: NoteTagService.normalize(note['tags']),
+          notebookName: collection?.notebookName,
+          stackName: collection?.stackName,
+          createdAt: _parseNoteDate(note['created_at']),
+          updatedAt: _parseNoteDate(note['updated_at']),
+          reminderTime: _parseNoteDate(note['reminder_date']),
+          resourceMimeTypes: features.resourceMimeTypes,
+          source: features.source,
+          hasEncryptedText: features.hasEncryptedText,
+          hasCheckedTodo: features.hasCheckedTodo,
+          hasUncheckedTodo: features.hasUncheckedTodo,
+          containsTypes: features.containsTypes,
+        ),
+      );
+    }
+
     final q = _searchQuery.toLowerCase();
     final title = (note['title'] as String? ?? '').toLowerCase();
     final content = (note['content'] as String? ?? '').toLowerCase();
@@ -117,19 +185,33 @@ class _NoteListPageState extends State<NoteListPage> {
         NoteTagService.containsSearch(note['tags'], q);
   }
 
+  DateTime? _parseNoteDate(dynamic value) {
+    final raw = value?.toString();
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw)?.toLocal();
+  }
+
   void _handleSearchChanged(String value) {
     final query = value.trim();
+    final evernoteQuery = EvernoteSearchQueryService.parse(query);
     _searchDebounce?.cancel();
     final requestId = ++_semanticSearchRequestId;
     setState(() {
       _searchQuery = query;
+      _evernoteSearchQuery = evernoteQuery;
       _semanticSearchResults = const <NoteSearchResult>[];
       _semanticSearchMode = 'text_fallback';
       _semanticSearchError = null;
       _semanticSearchCompleted = false;
-      _isSemanticSearching = query.isNotEmpty;
+      _isSemanticSearching = query.isNotEmpty && !evernoteQuery.isAdvanced;
     });
     if (query.isEmpty) return;
+    if (evernoteQuery.isAdvanced) {
+      if (evernoteQuery.requiresStoredFeatures) {
+        unawaited(_refreshSearchFeatures());
+      }
+      return;
+    }
 
     _searchDebounce = Timer(
       const Duration(milliseconds: 350),
@@ -144,15 +226,23 @@ class _NoteListPageState extends State<NoteListPage> {
       _handleSearchChanged('');
       return;
     }
+    final evernoteQuery = EvernoteSearchQueryService.parse(query);
     final requestId = ++_semanticSearchRequestId;
     setState(() {
       _searchQuery = query;
+      _evernoteSearchQuery = evernoteQuery;
       _semanticSearchResults = const <NoteSearchResult>[];
       _semanticSearchMode = 'text_fallback';
       _semanticSearchError = null;
       _semanticSearchCompleted = false;
-      _isSemanticSearching = true;
+      _isSemanticSearching = !evernoteQuery.isAdvanced;
     });
+    if (evernoteQuery.isAdvanced) {
+      if (evernoteQuery.requiresStoredFeatures) {
+        unawaited(_refreshSearchFeatures());
+      }
+      return;
+    }
     unawaited(_runSemanticSearch(query, requestId));
   }
 
@@ -187,18 +277,28 @@ class _NoteListPageState extends State<NoteListPage> {
   List<Map<String, dynamic>> _visibleNotesForSearch(
     List<Map<String, dynamic>> notes,
   ) {
+    final allowedNotebookIds = _allowedNotebookIds;
+    final collectionFiltered = allowedNotebookIds == null
+        ? notes
+        : notes
+            .where(
+              (note) => allowedNotebookIds.contains(
+                int.tryParse(
+                  note['notebook_collection_id']?.toString() ?? '',
+                ),
+              ),
+            )
+            .toList(growable: false);
     final viewFiltered = _showInboxOnly
-        ? notes.where(_isInbox).toList(growable: false)
+        ? collectionFiltered.where(_isInbox).toList(growable: false)
         : (_showFavoritesOnly
-            ? notes.where(_isFavorite).toList(growable: false)
-            : notes);
+            ? collectionFiltered.where(_isFavorite).toList(growable: false)
+            : collectionFiltered);
     final selectedTag = _selectedTag;
     final locallyFiltered = selectedTag == null
         ? viewFiltered
         : viewFiltered
-            .where(
-              (note) => NoteTagService.containsTag(note['tags'], selectedTag),
-            )
+            .where((note) => _matchesSelectedTag(note, selectedTag))
             .toList(growable: false);
     if (_searchQuery.isEmpty) return locallyFiltered;
     if (!_semanticSearchCompleted || _semanticSearchError != null) {
@@ -217,9 +317,15 @@ class _NoteListPageState extends State<NoteListPage> {
         final matchesView = _showInboxOnly
             ? _isInbox(note)
             : (!_showFavoritesOnly || _isFavorite(note));
+        final matchesCollection = allowedNotebookIds == null ||
+            allowedNotebookIds.contains(
+              int.tryParse(
+                note['notebook_collection_id']?.toString() ?? '',
+              ),
+            );
         return matchesView &&
-            (selectedTag == null ||
-                NoteTagService.containsTag(note['tags'], selectedTag));
+            matchesCollection &&
+            (selectedTag == null || _matchesSelectedTag(note, selectedTag));
       },
     ).toList(growable: false);
     final semanticIds = semanticMatches.map(_noteId).toSet();
@@ -233,6 +339,17 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   String _searchStatusText(int resultCount) {
+    if (_evernoteSearchQuery.isAdvanced) {
+      if (_evernoteSearchQuery.errors.isNotEmpty) {
+        return 'Evernote検索構文エラー（絞り込み未適用）: '
+            '${_evernoteSearchQuery.errors.first}';
+      }
+      if (_evernoteSearchQuery.unsupportedOperators.isNotEmpty) {
+        return '未対応のEvernote演算子（絞り込み未適用）: '
+            '${_evernoteSearchQuery.unsupportedOperators.join(', ')}';
+      }
+      return '$resultCount件 / Evernote高度検索';
+    }
     if (_isSemanticSearching) return '意味検索中...';
     if (_semanticSearchError != null) {
       return 'オンライン検索を利用できないため端末内の一致を表示';
@@ -260,19 +377,35 @@ class _NoteListPageState extends State<NoteListPage> {
         return;
       }
 
+      final collectionRows = await _fetchNoteCollections();
+      _allowedNotebookIds = _resolveNotebookIds(collectionRows);
+      _collectionSearchContexts =
+          _buildCollectionSearchContexts(collectionRows);
       final notes = await _fetchAllNotes(userId);
       final results = await Future.wait<dynamic>([
         _loadDraftEntries(notes),
         _loadPublishedNoteIds(userId),
+        _evernoteSearchQuery.requiresStoredFeatures
+            ? _loadSearchFeatures(userId, notes: notes)
+            : Future<Map<int, EvernoteSearchFeatures>>.value(
+                const <int, EvernoteSearchFeatures>{},
+              ),
+        widget.initialTagId == null
+            ? Future<Set<int>?>.value(null)
+            : _loadTagScope(),
       ]);
       final drafts = results[0] as List<_LocalDraftEntry>;
       final publishedNoteIds = results[1] as Set<String>;
+      final searchFeatures = results[2] as Map<int, EvernoteSearchFeatures>;
+      final tagScope = results[3] as Set<int>?;
 
       if (!mounted) return;
       setState(() {
         _notes = notes;
         _draftEntries = drafts;
         _publishedNoteIds = publishedNoteIds;
+        _searchFeaturesByNoteId = searchFeatures;
+        _tagScopedNoteIds = tagScope;
         _isLoading = false;
       });
     } catch (e) {
@@ -288,14 +421,190 @@ class _NoteListPageState extends State<NoteListPage> {
     }
   }
 
+  bool _matchesSelectedTag(
+    Map<String, dynamic> note,
+    String selectedTag,
+  ) {
+    final tagId = _selectedTagId;
+    final scopedNoteIds = _tagScopedNoteIds;
+    if (tagId != null && scopedNoteIds != null) {
+      final noteId = _noteNumericId(note);
+      return noteId != null && scopedNoteIds.contains(noteId);
+    }
+    return NoteTagService.containsTag(note['tags'], selectedTag);
+  }
+
+  Future<Set<int>?> _loadTagScope() async {
+    final tagId = widget.initialTagId;
+    if (tagId == null) return null;
+    final snapshot = await SupabaseNoteTagHierarchyDataSource(_supabase).load();
+    return snapshot.noteIdsForTag(
+      tagId,
+      includeDescendants: widget.includeNestedTags,
+    );
+  }
+
+  Future<void> _refreshSearchFeatures() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      final features = await _loadSearchFeatures(userId);
+      if (!mounted) return;
+      setState(() {
+        _searchFeaturesByNoteId = features;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Evernote検索情報の取得に失敗しました: $error')),
+      );
+    }
+  }
+
+  Future<Map<int, EvernoteSearchFeatures>> _loadSearchFeatures(
+    String userId, {
+    List<Map<String, dynamic>>? notes,
+  }) async {
+    final results = await Future.wait<List<Map<String, dynamic>>>([
+      _fetchPagedSearchRows(
+        userId: userId,
+        table: 'attachments',
+        columns: 'note_id,mime_type',
+      ),
+      _fetchPagedSearchRows(
+        userId: userId,
+        table: 'note_tasks',
+        columns: 'note_id,status',
+      ),
+      _fetchPagedSearchRows(
+        userId: userId,
+        table: 'evernote_migration_items',
+        columns: 'target_note_id,source_metadata',
+      ),
+    ]);
+    final mimeTypes = <int, List<String>>{};
+    for (final row in results[0]) {
+      final noteId = int.tryParse(row['note_id']?.toString() ?? '');
+      final mime = row['mime_type']?.toString();
+      if (noteId != null && mime != null && mime.trim().isNotEmpty) {
+        mimeTypes.putIfAbsent(noteId, () => <String>[]).add(mime);
+      }
+    }
+    final taskStatuses = <int, List<String>>{};
+    for (final row in results[1]) {
+      final noteId = int.tryParse(row['note_id']?.toString() ?? '');
+      final status = row['status']?.toString();
+      if (noteId != null && status != null && status.trim().isNotEmpty) {
+        taskStatuses.putIfAbsent(noteId, () => <String>[]).add(status);
+      }
+    }
+    final metadata = <int, Map<String, dynamic>>{};
+    for (final row in results[2]) {
+      final noteId = int.tryParse(row['target_note_id']?.toString() ?? '');
+      final raw = row['source_metadata'];
+      if (noteId != null && raw is Map) {
+        metadata[noteId] = Map<String, dynamic>.from(raw);
+      }
+    }
+
+    final features = <int, EvernoteSearchFeatures>{};
+    for (final note in notes ?? _notes) {
+      final noteId = _noteNumericId(note);
+      if (noteId == null) continue;
+      features[noteId] = EvernoteSearchFeatureService.infer(
+        content: note['content']?.toString() ?? '',
+        attachmentMimeTypes: mimeTypes[noteId] ?? const <String>[],
+        taskStatuses: taskStatuses[noteId] ?? const <String>[],
+        sourceMetadata: metadata[noteId] ?? const <String, dynamic>{},
+      );
+    }
+    return Map<int, EvernoteSearchFeatures>.unmodifiable(features);
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchPagedSearchRows({
+    required String userId,
+    required String table,
+    required String columns,
+  }) async {
+    final rows = <Map<String, dynamic>>[];
+    for (var from = 0;; from += _notesPageSize) {
+      final response = await _supabase
+          .from(table)
+          .select(columns)
+          .eq('user_id', userId)
+          .range(from, from + _notesPageSize - 1);
+      final page = List<Map<String, dynamic>>.from(response);
+      rows.addAll(page);
+      if (page.length < _notesPageSize) break;
+    }
+    return rows;
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchNoteCollections() async {
+    final rows = await _supabase
+        .from('note_collections')
+        .select('id,parent_id,collection_type,name');
+    return List<Map<String, dynamic>>.from(rows);
+  }
+
+  Set<int>? _resolveNotebookIds(List<Map<String, dynamic>> rows) {
+    final collectionId = widget.initialCollectionId;
+    if (collectionId == null) return null;
+    final included = <int>{collectionId};
+    var changed = true;
+    while (changed) {
+      changed = false;
+      for (final row in rows) {
+        final id = int.tryParse(row['id']?.toString() ?? '');
+        final parentId = int.tryParse(row['parent_id']?.toString() ?? '');
+        if (id != null && parentId != null && included.contains(parentId)) {
+          changed = included.add(id) || changed;
+        }
+      }
+    }
+    return rows
+        .where((row) => row['collection_type'] == 'notebook')
+        .map((row) => int.tryParse(row['id']?.toString() ?? ''))
+        .whereType<int>()
+        .where(included.contains)
+        .toSet();
+  }
+
+  Map<int, _NoteCollectionSearchContext> _buildCollectionSearchContexts(
+    List<Map<String, dynamic>> rows,
+  ) {
+    final byId = <int, Map<String, dynamic>>{};
+    for (final row in rows) {
+      final id = int.tryParse(row['id']?.toString() ?? '');
+      if (id != null) byId[id] = row;
+    }
+    final contexts = <int, _NoteCollectionSearchContext>{};
+    for (final row in rows) {
+      if (row['collection_type'] != 'notebook') continue;
+      final id = int.tryParse(row['id']?.toString() ?? '');
+      if (id == null) continue;
+      final parentId = int.tryParse(row['parent_id']?.toString() ?? '');
+      final parent = parentId == null ? null : byId[parentId];
+      final stackName = parent != null && parent['collection_type'] == 'stack'
+          ? parent['name']?.toString()
+          : null;
+      contexts[id] = _NoteCollectionSearchContext(
+        notebookName: row['name']?.toString() ?? '',
+        stackName: stackName,
+      );
+    }
+    return Map<int, _NoteCollectionSearchContext>.unmodifiable(contexts);
+  }
+
   Future<List<Map<String, dynamic>>> _fetchAllNotes(String userId) async {
     final notes = <Map<String, dynamic>>[];
     for (var from = 0;; from += _notesPageSize) {
       final data = await _supabase
           .from('notes')
           .select(
-            'id, title, content, created_at, is_pinned, is_favorite, '
-            'reminder_date, tags, capture_status, capture_source, inbox_saved_at',
+            'id, title, content, created_at, updated_at, is_pinned, is_favorite, '
+            'reminder_date, tags, capture_status, capture_source, inbox_saved_at, '
+            'notebook_collection_id',
           )
           .eq('user_id', userId)
           .eq('is_archived', false)
@@ -1220,6 +1529,8 @@ class _NoteListPageState extends State<NoteListPage> {
                         onPressed: () {
                           setState(() {
                             _selectedTag = tag;
+                            _selectedTagId = null;
+                            _tagScopedNoteIds = null;
                           });
                         },
                         visualDensity: VisualDensity.compact,
@@ -1416,6 +1727,19 @@ class _NoteListPageState extends State<NoteListPage> {
             onPressed: _fetchNotes,
           ),
           IconButton(
+            key: const Key('note_list_page_navigation_button'),
+            icon: const Icon(Icons.bookmarks_outlined),
+            tooltip: '保存済み検索・ショートカット',
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/note-navigation'),
+          ),
+          IconButton(
+            key: const Key('note_list_page_tasks_button'),
+            icon: const Icon(Icons.task_alt_outlined),
+            tooltip: 'ノートタスク',
+            onPressed: () => Navigator.of(context).pushNamed('/note-tasks'),
+          ),
+          IconButton(
             icon: const Icon(Icons.public),
             tooltip: '公開メモ一覧',
             onPressed: () => Navigator.of(context).pushNamed('/public-memos'),
@@ -1443,7 +1767,7 @@ class _NoteListPageState extends State<NoteListPage> {
                 height: 1.5,
               ),
               decoration: InputDecoration(
-                hintText: '自然な言葉でメモを検索...',
+                hintText: '自然な言葉または Evernote 検索構文で検索...',
                 hintStyle: const TextStyle(
                   color: Color(0xFF94A3B8),
                   height: 1.5,
@@ -1564,6 +1888,8 @@ class _NoteListPageState extends State<NoteListPage> {
                       onChanged: (tag) {
                         setState(() {
                           _selectedTag = tag;
+                          _selectedTagId = null;
+                          _tagScopedNoteIds = null;
                         });
                       },
                     ),
@@ -1574,6 +1900,8 @@ class _NoteListPageState extends State<NoteListPage> {
                       onPressed: () {
                         setState(() {
                           _selectedTag = null;
+                          _selectedTagId = null;
+                          _tagScopedNoteIds = null;
                         });
                       },
                       icon: const Icon(Icons.clear, size: 18),
@@ -1644,6 +1972,8 @@ class _NoteListPageState extends State<NoteListPage> {
                                 onPressed: () {
                                   setState(() {
                                     _selectedTag = null;
+                                    _selectedTagId = null;
+                                    _tagScopedNoteIds = null;
                                   });
                                 },
                                 icon: const Icon(Icons.clear),
