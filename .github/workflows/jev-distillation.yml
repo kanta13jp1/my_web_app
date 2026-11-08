@@ -59,7 +59,11 @@ jobs:
           python -m pip install lightgbm==4.6.0 numpy==2.2.6 scipy==1.15.3
           mkdir -p "$OUT" && node --version && lscpu > "$OUT/cpu.txt"
           node scripts/jev_search_student/dagger.mjs
-          node scripts/jev_search_student/parity.mjs "$OUT"
+          if [[ "$ROUNDS" == eval || "$ROUNDS" == teacher* ]]; then
+            node scripts/jev_search_student/parity.mjs "$OUT"
+          else
+            node scripts/jev_search_student/parity.mjs "$OUT" --require
+          fi
           rm -f "$OUT/X.f64"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()

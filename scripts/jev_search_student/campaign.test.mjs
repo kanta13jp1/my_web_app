@@ -47,12 +47,14 @@ test('parity CLI rejects empty, malformed, and mismatched evidence',async()=>{
  const {fileURLToPath}=await import('node:url');
  const dir=mkdtempSync(join(tmpdir(),'jev-parity-'));
  const script=new URL('./parity.mjs',import.meta.url);
- const run=()=>spawnSync(process.execPath,[fileURLToPath(script),dir],{encoding:'utf8'});
+ const run=(...args)=>spawnSync(process.execPath,[fileURLToPath(script),dir,...args],{encoding:'utf8'});
  const write=(name,value)=>writeFileSync(join(dir,name),JSON.stringify(value));
  try {
   // Evaluation-only runs intentionally have no parity export.
   assert.equal(run().status,0);
+  assert.notEqual(run('--require').status,0);
   write('model.json',{features:1,classes:['a','b'],trees:[{n:[],l:[1]},{n:[],l:[2]}]});
+  assert.notEqual(run('--require').status,0);
   for(const bad of [
    {rows:[],scores:[]},
    {rows:[[0]],scores:[]},
@@ -64,7 +66,7 @@ test('parity CLI rejects empty, malformed, and mismatched evidence',async()=>{
    assert.equal(existsSync(join(dir,'parity-result.json')),false);
   }
   write('parity.json',{rows:[[0]],scores:[[1,2]]});
-  const valid=run();
+  const valid=run('--require');
   assert.equal(valid.status,0,valid.stderr);
   assert.equal(existsSync(join(dir,'parity-result.json')),true);
  } finally { rmSync(dir,{recursive:true,force:true}); }

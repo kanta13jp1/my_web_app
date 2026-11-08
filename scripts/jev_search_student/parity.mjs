@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import {predict2} from '../../web/labs/jev-mario/student2-predict.mjs';
 const dir=process.argv[2]??'out/search_student';
-if(!fs.existsSync(`${dir}/model.json`)||!fs.existsSync(`${dir}/parity.json`)){console.log('no trained model with parity data in this run (evaluation-only mode)');process.exit(0);}
+if(!fs.existsSync(`${dir}/model.json`)||!fs.existsSync(`${dir}/parity.json`)){if(process.argv.includes('--require'))throw Error('required parity evidence is missing');console.log('no trained model with parity data in this run (evaluation-only mode)');process.exit(0);}
 const model=JSON.parse(fs.readFileSync(`${dir}/model.json`,'utf8')),{rows,scores}=JSON.parse(fs.readFileSync(`${dir}/parity.json`,'utf8'));
 if(!Array.isArray(model.classes)||model.classes.length===0||!Number.isInteger(model.features)||model.features<=0||
    !Array.isArray(rows)||rows.length===0||!Array.isArray(scores)||scores.length!==rows.length){
