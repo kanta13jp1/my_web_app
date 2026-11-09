@@ -111,13 +111,16 @@ void main() {
       await tester.pumpAndSettle();
       final list = find.byType(ListView).hitTestable();
       expect(list, findsOneWidget);
-      final vertical = find.descendant(
-        of: list,
-        matching: find.byWidgetPredicate(
-          (widget) =>
-              widget is Scrollable && widget.axisDirection == AxisDirection.down,
-        ),
-      ).first;
+      final vertical = find
+          .descendant(
+            of: list,
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is Scrollable &&
+                  widget.axisDirection == AxisDirection.down,
+            ),
+          )
+          .first;
       await tester.scrollUntilVisible(article, 250, scrollable: vertical);
       await tester.pumpAndSettle();
       expect(article, findsOneWidget);
