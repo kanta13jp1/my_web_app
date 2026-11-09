@@ -11,7 +11,7 @@ export async function verifyArena(webRoot) {
     await readFile(resolve(root, "engine-build.json"), "utf8"),
   );
   if (
-    manifest.version !== "0.186.0" || manifest.minifier !== "0.28.2" ||
+    manifest.version !== "0.187.0" || manifest.minifier !== "0.28.2" ||
     JSON.stringify(Object.keys(manifest.files ?? {}).sort()) !==
       JSON.stringify([...engineFiles].sort())
   ) {
