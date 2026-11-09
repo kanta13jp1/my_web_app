@@ -10,6 +10,7 @@ import '../data/diet_debate_notes.dart';
 import '../services/diet_debate_search.dart';
 import '../services/diet_reader_preferences.dart';
 import '../widgets/diet_debate_article.dart';
+import '../widgets/diet_support_bill_memo.dart';
 
 class DietDebatesPage extends StatefulWidget {
   const DietDebatesPage({
@@ -378,6 +379,8 @@ class _DietReaderState extends State<_DietReader> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        DietSupportBillMemo(fontSize: _fontSize, source: _source),
+        const SizedBox(height: 12),
         _body('収録した2つの質疑を、質問と答弁に分けて読めます。'),
         _groupControl(includesRespondents: false),
         for (final entry in groups.entries) ...[
