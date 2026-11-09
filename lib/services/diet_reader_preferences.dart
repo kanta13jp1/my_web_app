@@ -90,7 +90,10 @@ class DietReaderPreferences {
       });
 
   static Future<bool> _writePreference(
-      SharedPreferences prefs, String key, Object? value,) {
+    SharedPreferences prefs,
+    String key,
+    Object? value,
+  ) {
     if (value == null) return prefs.remove(key);
     if (value is bool) return prefs.setBool(key, value);
     return prefs.setDouble(key, value as double);

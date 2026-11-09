@@ -3,8 +3,16 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class DietSpeech {
-  const DietSpeech(this.id, this.speaker, this.date, this.house, this.meeting,
-      this.url, this.group, this.topics,);
+  const DietSpeech(
+    this.id,
+    this.speaker,
+    this.date,
+    this.house,
+    this.meeting,
+    this.url,
+    this.group,
+    this.topics,
+  );
 
   final String id;
   final String speaker;
@@ -45,20 +53,26 @@ class DietSpeech {
           if (topic.value.any((word) => speechText.contains(word))) topic.key,
     ];
     return DietSpeech(
-        id,
-        row['speaker'] as String,
-        row['date'] as String,
-        row['nameOfHouse'] as String,
-        row['nameOfMeeting'] as String,
-        url,
-        row['speakerGroup'] as String?,
-        List.unmodifiable(topics),);
+      id,
+      row['speaker'] as String,
+      row['date'] as String,
+      row['nameOfHouse'] as String,
+      row['nameOfMeeting'] as String,
+      url,
+      row['speakerGroup'] as String?,
+      List.unmodifiable(topics),
+    );
   }
 }
 
 class DietSearchPage {
   const DietSearchPage(
-      this.items, this.total, this.next, this.skipped, this.fetchedAt,);
+    this.items,
+    this.total,
+    this.next,
+    this.skipped,
+    this.fetchedAt,
+  );
   final List<DietSpeech> items;
   final int total;
   final int? next;
@@ -72,9 +86,10 @@ class DietSearchError implements Exception {
 }
 
 class DietDebateSearch {
-  DietDebateSearch(
-      {http.Client Function()? createClient, DateTime Function()? now,})
-      : _createClient = createClient ?? http.Client.new,
+  DietDebateSearch({
+    http.Client Function()? createClient,
+    DateTime Function()? now,
+  })  : _createClient = createClient ?? http.Client.new,
         _now = now ?? DateTime.now;
 
   static final shared = DietDebateSearch();
@@ -153,11 +168,12 @@ class DietDebateSearch {
       final next = data['nextRecordPosition'];
       final fetchedAt = _now();
       final page = DietSearchPage(
-          List.unmodifiable(items),
-          total,
-          next is int && next > start && next <= total ? next : null,
-          skipped,
-          fetchedAt,);
+        List.unmodifiable(items),
+        total,
+        next is int && next > start && next <= total ? next : null,
+        skipped,
+        fetchedAt,
+      );
       if (_cache.length >= 12) _cache.remove(_cache.keys.first);
       _cache[uri] =
           (expires: fetchedAt.add(const Duration(minutes: 10)), page: page);

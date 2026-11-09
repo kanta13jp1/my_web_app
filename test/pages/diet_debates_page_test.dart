@@ -13,19 +13,25 @@ import 'package:my_web_app/services/diet_reader_preferences.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  Future<void> open(WidgetTester tester,
-      {DietDebateSearch? service,
-      ValueNotifier<String?>? account,
-      DietReaderPreferences? preferences,}) async {
+  Future<void> open(
+    WidgetTester tester, {
+    DietDebateSearch? service,
+    ValueNotifier<String?>? account,
+    DietReaderPreferences? preferences,
+  }) async {
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(
+      MaterialApp(
         home: DietDebatesPage(
-            searchService: service,
-            preferences: preferences,
-            account: account ?? ValueNotifier<String?>('reader-a'),),),);
+          searchService: service,
+          preferences: preferences,
+          account: account ?? ValueNotifier<String?>('reader-a'),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -47,8 +53,9 @@ void main() {
 
     final prefs = await SharedPreferences.getInstance();
     expect(
-        prefs.getKeys().where((key) => key.startsWith('diet_debates.v1.read.')),
-        isEmpty,);
+      prefs.getKeys().where((key) => key.startsWith('diet_debates.v1.read.')),
+      isEmpty,
+    );
     await tester.tap(find.text('要約を既読にする').first);
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('本文の文字サイズ'));
@@ -58,8 +65,11 @@ void main() {
     expect(prefs.getDouble('diet_debates.font_size'), 24.0);
 
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpWidget(MaterialApp(
-        home: DietDebatesPage(account: ValueNotifier<String?>('reader-a')),),);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DietDebatesPage(account: ValueNotifier<String?>('reader-a')),
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('要約・法案メモ'));
     await tester.pumpAndSettle();
@@ -70,8 +80,9 @@ void main() {
     await tester.tap(find.text('要約は既読・未読に戻す'));
     await tester.pumpAndSettle();
     expect(
-        prefs.getKeys().where((key) => key.startsWith('diet_debates.v1.read.')),
-        isEmpty,);
+      prefs.getKeys().where((key) => key.startsWith('diet_debates.v1.read.')),
+      isEmpty,
+    );
   });
 
   testWidgets('保存中に利用者が変わっても既読は前の利用者に限り、ゲストでは保存しない', (tester) async {
@@ -80,8 +91,9 @@ void main() {
     await tester.tap(find.text('要約・法案メモ'));
     await tester.pumpAndSettle();
     final mark = find.ancestor(
-        of: find.text('要約を既読にする').first,
-        matching: find.byWidgetPredicate((widget) => widget is TextButton),);
+      of: find.text('要約を既読にする').first,
+      matching: find.byWidgetPredicate((widget) => widget is TextButton),
+    );
     tester.widget<TextButton>(mark).onPressed!();
     account.value = 'reader-b';
     await tester.pumpAndSettle();
@@ -90,15 +102,17 @@ void main() {
     expect(find.text('要約は既読・未読に戻す'), findsNothing);
     final prefs = await SharedPreferences.getInstance();
     expect(
-        prefs
-            .getKeys()
-            .where((key) => key.startsWith('diet_debates.v1.read.reader-a.')),
-        hasLength(1),);
+      prefs
+          .getKeys()
+          .where((key) => key.startsWith('diet_debates.v1.read.reader-a.')),
+      hasLength(1),
+    );
     expect(
-        prefs
-            .getKeys()
-            .where((key) => key.startsWith('diet_debates.v1.read.reader-b.')),
-        isEmpty,);
+      prefs
+          .getKeys()
+          .where((key) => key.startsWith('diet_debates.v1.read.reader-b.')),
+      isEmpty,
+    );
     account.value = null;
     await tester.pumpAndSettle();
     await tester.tap(find.text('要約・法案メモ'));
@@ -116,11 +130,13 @@ void main() {
     final account = ValueNotifier<String?>('reader-a');
     final release = Completer<void>();
     var enteredWrite = false;
-    final preferences = DietReaderPreferences(write: (prefs, key, value) async {
-      enteredWrite = true;
-      await release.future;
-      return prefs.setBool(key, value as bool);
-    },);
+    final preferences = DietReaderPreferences(
+      write: (prefs, key, value) async {
+        enteredWrite = true;
+        await release.future;
+        return prefs.setBool(key, value as bool);
+      },
+    );
     await open(tester, account: account, preferences: preferences);
 
     Future<void> viewNotes() async {
@@ -135,8 +151,9 @@ void main() {
     expect(find.textContaining('端末への保存中です'), findsOneWidget);
     final prefs = await SharedPreferences.getInstance();
     expect(
-        prefs.getKeys().where((key) => key.startsWith('diet_debates.v1.read.')),
-        isEmpty,);
+      prefs.getKeys().where((key) => key.startsWith('diet_debates.v1.read.')),
+      isEmpty,
+    );
     account.value = 'reader-b';
     await tester.pumpAndSettle();
     await viewNotes();
@@ -163,12 +180,14 @@ void main() {
     final account = ValueNotifier<String?>('reader-a');
     final release = Completer<void>();
     final writes = <double>[];
-    final preferences = DietReaderPreferences(write: (prefs, key, value) async {
-      final size = value as double;
-      writes.add(size);
-      if (size == 24.0) await release.future;
-      return prefs.setDouble(key, size);
-    },);
+    final preferences = DietReaderPreferences(
+      write: (prefs, key, value) async {
+        final size = value as double;
+        writes.add(size);
+        if (size == 24.0) await release.future;
+        return prefs.setDouble(key, size);
+      },
+    );
     await open(tester, account: account, preferences: preferences);
     PopupMenuButton<double> menu() => tester
         .widget<PopupMenuButton<double>>(find.byType(PopupMenuButton<double>));
@@ -200,12 +219,14 @@ void main() {
   testWidgets('保存結果不明は画面を開き直しても明示し、未読の手動設定で解除する', (tester) async {
     final account = ValueNotifier<String?>('reader-a');
     var loseReply = true;
-    final preferences = DietReaderPreferences(write: (prefs, key, value) async {
-      if (value == null) return prefs.remove(key);
-      final saved = await prefs.setBool(key, value as bool);
-      if (loseReply) throw StateError('response lost');
-      return saved;
-    },);
+    final preferences = DietReaderPreferences(
+      write: (prefs, key, value) async {
+        if (value == null) return prefs.remove(key);
+        final saved = await prefs.setBool(key, value as bool);
+        if (loseReply) throw StateError('response lost');
+        return saved;
+      },
+    );
     await open(tester, account: account, preferences: preferences);
     await tester.tap(find.text('要約・法案メモ'));
     await tester.pumpAndSettle();
@@ -213,8 +234,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('要約の既読保存状態は不明です。'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpWidget(MaterialApp(
-        home: DietDebatesPage(account: account, preferences: preferences),),);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DietDebatesPage(account: account, preferences: preferences),
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('要約・法案メモ'));
     await tester.pumpAndSettle();
@@ -264,38 +288,43 @@ void main() {
     expect(written, [24.0]);
     expect(menu().initialValue, 24.0);
     expect(
-        (await SharedPreferences.getInstance())
-            .getDouble('diet_debates.font_size'),
-        24.0,);
+      (await SharedPreferences.getInstance())
+          .getDouble('diet_debates.font_size'),
+      24.0,
+    );
   });
 
   testWidgets('現在ページだけを発言者別・テーマ別に分類し検索する', (tester) async {
     var calls = 0;
     const issue = '121115104X01220230516';
     final service = DietDebateSearch(
-        createClient: () => MockClient((_) async {
-              calls++;
-              return http.Response.bytes(
-                  utf8.encode(jsonEncode({
-                    'numberOfRecords': 14,
-                    'nextRecordPosition': 11,
-                    'speechRecord': [
-                      {'speechID': 'invalid'},
-                      {
-                        'issueID': issue,
-                        'speechOrder': 999,
-                        'speechID': '${issue}_999',
-                        'speechURL': 'https://kokkai.ndl.go.jp/txt/$issue/999',
-                        'speaker': '発言者甲',
-                        'date': '2023-05-16',
-                        'nameOfHouse': '参議院',
-                        'nameOfMeeting': '委員会',
-                        'speakerGroup': '会派甲',
-                      },
-                    ],
-                  }),),
-                  200,);
-            }),);
+      createClient: () => MockClient((_) async {
+        calls++;
+        return http.Response.bytes(
+          utf8.encode(
+            jsonEncode({
+              'numberOfRecords': 14,
+              'nextRecordPosition': 11,
+              'speechRecord': [
+                {'speechID': 'invalid'},
+                {
+                  'issueID': issue,
+                  'speechOrder': 999,
+                  'speechID': '${issue}_999',
+                  'speechURL': 'https://kokkai.ndl.go.jp/txt/$issue/999',
+                  'speaker': '発言者甲',
+                  'date': '2023-05-16',
+                  'nameOfHouse': '参議院',
+                  'nameOfMeeting': '委員会',
+                  'speakerGroup': '会派甲',
+                },
+              ],
+            }),
+          ),
+          200,
+        );
+      }),
+    );
     await open(tester, service: service);
     await tester.tap(find.text('子育て'));
     await tester.tap(find.byIcon(Icons.search));
