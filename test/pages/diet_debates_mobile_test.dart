@@ -54,13 +54,16 @@ Future<void> _openMobile(
 Finder _verticalList() {
   final list = find.byType(ListView).hitTestable();
   expect(list, findsOneWidget);
-  return find.descendant(
-    of: list,
-    matching: find.byWidgetPredicate(
-      (widget) =>
-          widget is Scrollable && widget.axisDirection == AxisDirection.down,
-    ),
-  ).first;
+  return find
+      .descendant(
+        of: list,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        ),
+      )
+      .first;
 }
 
 Future<void> _reveal(
@@ -185,7 +188,8 @@ void main() {
     expect(tester.widget<TextButton>(answer).onPressed, isNotNull);
     final question = inArticle(
       find.byWidgetPredicate(
-        (widget) => widget is Text && widget.textSpan?.toPlainText() == note.question,
+        (widget) =>
+            widget is Text && widget.textSpan?.toPlainText() == note.question,
       ),
     );
     expect(tester.widget<Text>(question).style?.fontSize, 24.0);
