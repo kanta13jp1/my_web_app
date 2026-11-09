@@ -652,12 +652,14 @@ class _DietReaderState extends State<_DietReader> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 4),
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
                       child: _storageStatus(),
                     ),
                     Expanded(
-                        child:
-                            TabBarView(children: [_searchView(), _reader()])),
+                      child: TabBarView(children: [_searchView(), _reader()]),
+                    ),
                   ],
                 ),
               ),
