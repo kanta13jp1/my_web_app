@@ -514,3 +514,50 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+  diet-debates-browser:
+    name: Diet debates browser checks
+    if: inputs.profile == 'full'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up repository-pinned Flutter SDK
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+
+      - name: Build the synthetic Diet fixture with local web resources
+        run: |
+          flutter pub get
+          flutter build web --release --no-web-resources-cdn --pwa-strategy=none --target=test/fixtures/diet_debates_app.dart
+          cp test/fixtures/diet_debates_index.html build/web/index.html
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install browser test dependencies
+        run: |
+          npm ci --ignore-scripts
+          npx --no-install playwright install --with-deps chromium
+
+      - name: Check desktop and mobile on loopback
+        run: npx --no-install playwright test --config=playwright.diet-debates.config.ts
+
+      - name: Preserve Diet fixture screenshots and failure diagnostics
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: diet-debates-browser-${{ github.run_id }}
+          path: diet-browser-results/
+          retention-days: 1
+          if-no-files-found: warn
