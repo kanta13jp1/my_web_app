@@ -11,7 +11,9 @@ void main() {
     const existing = 'diet_debates.v1.read.reader-a.note:existing';
     const size = 'diet_debates.font_size';
     SharedPreferences.setMockInitialValues({
-      existing: true, size: 16.0, 'unrelated.setting': 'preserved',
+      existing: true,
+      size: 16.0,
+      'unrelated.setting': 'preserved',
     });
     final entered = Completer<void>();
     final release = Completer<void>();
@@ -32,9 +34,11 @@ void main() {
       if (value is bool) return prefs.setBool(key, value);
       return prefs.setDouble(key, value as double);
     });
-    final failedRemove = expectLater(settings.setRead('reader-a', 'note:existing', false),
+    final failedRemove = expectLater(
+        settings.setRead('reader-a', 'note:existing', false),
         throwsA(isA<StateError>()));
-    final failedSize = expectLater(settings.setFontSize(24.0), throwsA(isA<StateError>()));
+    final failedSize =
+        expectLater(settings.setFontSize(24.0), throwsA(isA<StateError>()));
     final afterErrors = settings.load('reader-a');
     final nextWrite = settings.setRead('reader-a', 'note:next', true);
     await entered.future;
@@ -67,12 +71,14 @@ void main() {
       return result;
     });
     for (final id in ['note:before', 'note:after']) {
-      await expectLater(settings.setRead('A', id, true), throwsA(isA<StateError>()));
+      await expectLater(
+          settings.setRead('A', id, true), throwsA(isA<StateError>()));
     }
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('diet_debates.v1.read.A.note:before'), isNull);
     expect(prefs.getBool('diet_debates.v1.read.A.note:after'), isTrue);
-    expect((await settings.load('A')).uncertainReadIds, {'note:before', 'note:after'});
+    expect((await settings.load('A')).uncertainReadIds,
+        {'note:before', 'note:after'});
     expect((await settings.load('B')).uncertainReadIds, isEmpty);
     fail = false;
     await settings.setRead('A', 'note:before', true);

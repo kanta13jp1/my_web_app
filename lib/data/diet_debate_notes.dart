@@ -22,13 +22,16 @@ class DietDebateNote {
   final String answer;
   final int questionOrder;
   final int answerOrder;
-  String get articleId => "${meetingId}_${questionOrder.toString().padLeft(3, '0')}";
+  String get articleId =>
+      "${meetingId}_${questionOrder.toString().padLeft(3, '0')}";
 
-  Uri source(int order) => Uri.https('kokkai.ndl.go.jp', '/txt/$meetingId/$order');
+  Uri source(int order) =>
+      Uri.https('kokkai.ndl.go.jp', '/txt/$meetingId/$order');
 
   static DietDebateNote? forSpeech(String id) {
     for (final note in entries) {
-      if (id == "${meetingId}_${note.questionOrder.toString().padLeft(3, '0')}" ||
+      if (id ==
+              "${meetingId}_${note.questionOrder.toString().padLeft(3, '0')}" ||
           id == "${meetingId}_${note.answerOrder.toString().padLeft(3, '0')}") {
         return note;
       }

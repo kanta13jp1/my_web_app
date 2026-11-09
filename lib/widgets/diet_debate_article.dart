@@ -27,16 +27,25 @@ class _DietDebateArticleState extends State<DietDebateArticle> {
   Widget build(BuildContext context) {
     final note = widget.note;
     final needle = _query.trim();
-    final pattern = needle.isEmpty ? null : RegExp(RegExp.escape(needle), caseSensitive: false);
+    final pattern = needle.isEmpty
+        ? null
+        : RegExp(RegExp.escape(needle), caseSensitive: false);
     final fields = [
-      note.topic, '質問　${note.questioner}', note.question,
-      '答弁　${note.answerer}', note.answer,
+      note.topic,
+      '質問　${note.questioner}',
+      note.question,
+      '答弁　${note.answerer}',
+      note.answer,
     ];
-    final count = pattern == null ? 0 :
-        fields.fold<int>(0, (total, field) => total + pattern.allMatches(field).length);
+    final count = pattern == null
+        ? 0
+        : fields.fold<int>(
+            0, (total, field) => total + pattern.allMatches(field).length);
     final theme = Theme.of(context);
-    final mark = TextStyle(backgroundColor: theme.colorScheme.tertiaryContainer,
-        color: theme.colorScheme.onTertiaryContainer, fontWeight: FontWeight.bold);
+    final mark = TextStyle(
+        backgroundColor: theme.colorScheme.tertiaryContainer,
+        color: theme.colorScheme.onTertiaryContainer,
+        fontWeight: FontWeight.bold);
 
     Widget highlighted(String value, {bool title = false}) {
       final spans = <TextSpan>[];
@@ -44,17 +53,21 @@ class _DietDebateArticleState extends State<DietDebateArticle> {
       if (pattern != null) {
         for (final match in pattern.allMatches(value)) {
           spans.add(TextSpan(text: value.substring(offset, match.start)));
-          spans.add(TextSpan(text: value.substring(match.start, match.end), style: mark));
+          spans.add(TextSpan(
+              text: value.substring(match.start, match.end), style: mark));
           offset = match.end;
         }
       }
       spans.add(TextSpan(text: value.substring(offset)));
-      final style = (title ? theme.textTheme.titleMedium : theme.textTheme.bodyMedium)
+      final style = (title
+              ? theme.textTheme.titleMedium
+              : theme.textTheme.bodyMedium)
           ?.copyWith(fontSize: widget.fontSize + (title ? 2 : 0), height: 1.6);
       return Text.rich(TextSpan(children: spans), style: style);
     }
 
-    return Card(child: Padding(
+    return Card(
+        child: Padding(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         highlighted(fields[0], title: true),
