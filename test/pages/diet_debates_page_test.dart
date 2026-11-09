@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_web_app/data/diet_debate_notes.dart';
 import 'package:my_web_app/pages/diet_debates_page.dart';
 import 'package:my_web_app/services/diet_debate_search.dart';
 import 'package:my_web_app/services/diet_reader_preferences.dart';
@@ -27,7 +28,7 @@ void main() {
       MaterialApp(
         home: DietDebatesPage(
           searchService: service,
-          preferences: preferences,
+          preferences: preferences ?? DietReaderPreferences(),
           account: account ?? ValueNotifier<String?>('reader-a'),
         ),
       ),
@@ -36,7 +37,8 @@ void main() {
   }
 
   testWidgets('記事内検索と既読・文字サイズの端末保存', (tester) async {
-    await open(tester);
+    final preferences = DietReaderPreferences();
+    await open(tester, preferences: preferences);
     await tester.tap(find.text('要約・法案メモ'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('質問した議員別'));
@@ -67,7 +69,10 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpWidget(
       MaterialApp(
-        home: DietDebatesPage(account: ValueNotifier<String?>('reader-a')),
+        home: DietDebatesPage(
+          account: ValueNotifier<String?>('reader-a'),
+          preferences: preferences,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -87,43 +92,77 @@ void main() {
 
   testWidgets('保存中に利用者が変わっても既読は前の利用者に限り、ゲストでは保存しない', (tester) async {
     final account = ValueNotifier<String?>('reader-a');
-    await open(tester, account: account);
-    await tester.tap(find.text('要約・法案メモ'));
-    await tester.pumpAndSettle();
-    final mark = find.ancestor(
-      of: find.text('要約を既読にする').first,
-      matching: find.byWidgetPredicate((widget) => widget is TextButton),
+    final started = Completer<void>();
+    final release = Completer<void>();
+    final store = DietReaderPreferences(
+      write: (prefs, key, value) async {
+        started.complete();
+        await release.future;
+        return prefs.setBool(key, value as bool);
+      },
     );
-    tester.widget<TextButton>(mark).onPressed!();
+    final articleId = DietDebateNote.entries.first.articleId;
+    final article = find.byKey(ValueKey(articleId));
+    Finder withinArticle(String label) =>
+        find.descendant(of: article, matching: find.text(label));
+
+    Future<void> showArticle() async {
+      await tester.tap(find.text('要約・法案メモ'));
+      await tester.pumpAndSettle();
+      final list = find.byType(ListView).hitTestable();
+      expect(list, findsOneWidget);
+      final vertical = find.descendant(
+        of: list,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable && widget.axisDirection == AxisDirection.down,
+        ),
+      ).first;
+      await tester.scrollUntilVisible(article, 250, scrollable: vertical);
+      await tester.pumpAndSettle();
+      expect(article, findsOneWidget);
+    }
+
+    await open(tester, account: account, preferences: store);
+    await showArticle();
+    final unread = withinArticle('要約を既読にする');
+    final read = withinArticle('要約は既読・未読に戻す');
+    expect(unread, findsOneWidget, reason: 'Aの初期設定を読み終え、対象記事が未読である');
+    await tester.ensureVisible(unread);
+    expect(unread.hitTestable(), findsOneWidget);
+    await tester.tap(unread);
+    await tester.pump();
+    expect(started.isCompleted, isTrue);
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'diet_debates.v1.read.reader-a.note:$articleId';
+    expect(prefs.getBool(key), isNull);
+
     account.value = 'reader-b';
     await tester.pumpAndSettle();
-    await tester.tap(find.text('要約・法案メモ'));
+    await showArticle();
+    expect(withinArticle('既読状態を読み込み中'), findsOneWidget);
+    expect(read, findsNothing);
+
+    release.complete();
     await tester.pumpAndSettle();
-    expect(find.text('要約は既読・未読に戻す'), findsNothing);
-    final prefs = await SharedPreferences.getInstance();
-    expect(
-      prefs
-          .getKeys()
-          .where((key) => key.startsWith('diet_debates.v1.read.reader-a.')),
-      hasLength(1),
-    );
-    expect(
-      prefs
-          .getKeys()
-          .where((key) => key.startsWith('diet_debates.v1.read.reader-b.')),
-      isEmpty,
-    );
+    expect(unread, findsOneWidget, reason: '先行するAの保存完了後もBの記事は未読');
+    expect(read, findsNothing);
+    expect(prefs.getBool(key), isTrue);
+    final bKeys = prefs.getKeys().where(
+          (key) => key.startsWith('diet_debates.v1.read.reader-b.'),
+        );
+    expect(bKeys, isEmpty);
+
     account.value = null;
     await tester.pumpAndSettle();
-    await tester.tap(find.text('要約・法案メモ'));
-    await tester.pumpAndSettle();
-    expect(find.text('要約を既読にする'), findsNothing);
-    expect(find.text('要約の既読保存はログイン後に利用できます'), findsWidgets);
+    await showArticle();
+    expect(unread, findsNothing);
+    expect(read, findsNothing);
+    expect(withinArticle('要約の既読保存はログイン後に利用できます'), findsOneWidget);
     account.value = 'reader-a';
     await tester.pumpAndSettle();
-    await tester.tap(find.text('要約・法案メモ'));
-    await tester.pumpAndSettle();
-    expect(find.text('要約は既読・未読に戻す'), findsOneWidget);
+    await showArticle();
+    expect(read, findsOneWidget);
   });
 
   testWidgets('Aの保存完了を待ってA→B→Aの既読を復元する', (tester) async {
