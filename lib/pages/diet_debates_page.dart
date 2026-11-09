@@ -13,7 +13,7 @@ import '../widgets/diet_debate_article.dart';
 
 class DietDebatesPage extends StatefulWidget {
   const DietDebatesPage(
-      {super.key, this.searchService, this.account, this.preferences});
+      {super.key, this.searchService, this.account, this.preferences,});
   final DietDebateSearch? searchService;
   @visibleForTesting
   final ValueListenable<String?>? account;
@@ -99,7 +99,7 @@ class _DietReader extends StatefulWidget {
       required this.owner,
       required this.ownsReadState,
       required this.searchService,
-      required this.preferences});
+      required this.preferences,});
   final String? owner;
   final bool Function() ownsReadState;
   final DietDebateSearch? searchService;
@@ -167,11 +167,13 @@ class _DietReaderState extends State<_DietReader> {
     if (owner == null ||
         !_preferencesReady ||
         !widget.ownsReadState() ||
-        _saving.contains(id)) return;
+        _saving.contains(id)) {
+      return;
+    }
     setState(() => _saving.add(id));
     try {
       await widget.preferences.setRead(owner, id, mark);
-      if (mounted && widget.ownsReadState())
+      if (mounted && widget.ownsReadState()) {
         setState(() {
           _uncertainRead.remove(id);
           if (mark) {
@@ -180,6 +182,7 @@ class _DietReaderState extends State<_DietReader> {
             _read.remove(id);
           }
         });
+      }
     } catch (_) {
       if (mounted && widget.ownsReadState()) {
         setState(() => _uncertainRead.add(id));
@@ -193,27 +196,27 @@ class _DietReaderState extends State<_DietReader> {
   }
 
   Widget _readButton(String id, String kind) {
-    if (!widget.ownsReadState()) return Text('${kind}の既読保存はログイン後に利用できます');
+    if (!widget.ownsReadState()) return Text('$kindの既読保存はログイン後に利用できます');
     final read = _read.contains(id);
     if (!_preferencesReady) {
       return Text(_readUnavailable ? '既読状態を利用できません' : '既読状態を読み込み中');
     }
     if (_uncertainRead.contains(id)) {
       return Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
-        Text('${kind}の既読保存状態は不明です。'),
+        Text('$kindの既読保存状態は不明です。'),
         TextButton(
             onPressed: _saving.contains(id) ? null : () => _setRead(id, true),
-            child: const Text('既読に設定')),
+            child: const Text('既読に設定'),),
         TextButton(
             onPressed: _saving.contains(id) ? null : () => _setRead(id, false),
-            child: const Text('未読に設定')),
-      ]);
+            child: const Text('未読に設定'),),
+      ],);
     }
     return TextButton.icon(
       onPressed: _saving.contains(id) ? null : () => _setRead(id, !read),
       icon: Icon(read ? Icons.check_circle : Icons.radio_button_unchecked,
-          size: 18),
-      label: Text(read ? '${kind}は既読・未読に戻す' : '${kind}を既読にする'),
+          size: 18,),
+      label: Text(read ? '$kindは既読・未読に戻す' : '$kindを既読にする'),
     );
   }
 
@@ -344,11 +347,11 @@ class _DietReaderState extends State<_DietReader> {
           ChoiceChip(
               label: const Text('テーマ別'),
               selected: !_bySpeaker,
-              onSelected: (_) => setState(() => _bySpeaker = false)),
+              onSelected: (_) => setState(() => _bySpeaker = false),),
           ChoiceChip(
               label: Text(includesRespondents ? '議員・答弁者別' : '質問した議員別'),
               selected: _bySpeaker,
-              onSelected: (_) => setState(() => _bySpeaker = true)),
+              onSelected: (_) => setState(() => _bySpeaker = true),),
         ],
       );
 
@@ -373,7 +376,7 @@ class _DietReaderState extends State<_DietReader> {
         _body('2023年5月16日に参議院文教科学委員会が可決し、翌17日に参議院本会議が可決。5月26日に公布された。'),
         Align(
             alignment: Alignment.centerLeft,
-            child: _source('参議院の議案審議情報', DietDebateNote.billUrl)),
+            child: _source('参議院の議案審議情報', DietDebateNote.billUrl),),
       ],
     );
   }
@@ -393,15 +396,15 @@ class _DietReaderState extends State<_DietReader> {
                 labelText: 'テーマ・キーワード',
                 hintText: '例　子育て',
                 counterText: '',
-                border: OutlineInputBorder()),
-            onSubmitted: (_) => _search()),
+                border: OutlineInputBorder(),),
+            onSubmitted: (_) => _search(),),
         const SizedBox(height: 8),
         Wrap(spacing: 8, children: [
           for (final term in DietSpeech.topicWords.keys)
             ActionChip(
                 label: Text(term),
-                onPressed: _loading ? null : () => _term.text = term),
-        ]),
+                onPressed: _loading ? null : () => _term.text = term,),
+        ],),
         const SizedBox(height: 12),
         TextField(
             controller: _speaker,
@@ -410,8 +413,8 @@ class _DietReaderState extends State<_DietReader> {
             decoration: const InputDecoration(
                 labelText: '議員・答弁者の名前',
                 counterText: '',
-                border: OutlineInputBorder()),
-            onSubmitted: (_) => _search()),
+                border: OutlineInputBorder(),),
+            onSubmitted: (_) => _search(),),
         const SizedBox(height: 12),
         TextField(
             controller: _group,
@@ -420,13 +423,13 @@ class _DietReaderState extends State<_DietReader> {
             decoration: const InputDecoration(
                 labelText: '会議当時の会派名（部分一致）',
                 counterText: '',
-                border: OutlineInputBorder()),
-            onSubmitted: (_) => _search()),
+                border: OutlineInputBorder(),),
+            onSubmitted: (_) => _search(),),
         Align(
             alignment: Alignment.centerLeft,
             child: ActionChip(
                 label: const Text('「国民民主党」を含む会派'),
-                onPressed: _loading ? null : () => _group.text = '国民民主党')),
+                onPressed: _loading ? null : () => _group.text = '国民民主党',),),
         const Text('会派は複数の政党や無所属の議員で構成されることがあります。'),
         const SizedBox(height: 8),
         Wrap(
@@ -436,17 +439,17 @@ class _DietReaderState extends State<_DietReader> {
               OutlinedButton.icon(
                   onPressed: _loading ? null : _pickDate,
                   icon: const Icon(Icons.calendar_today_outlined),
-                  label: Text(_date == null ? '開催日を選ぶ' : _iso(_date!))),
+                  label: Text(_date == null ? '開催日を選ぶ' : _iso(_date!)),),
               if (_date != null)
                 TextButton(
                     onPressed:
                         _loading ? null : () => setState(() => _date = null),
-                    child: const Text('日付を外す')),
+                    child: const Text('日付を外す'),),
               FilledButton.icon(
                   onPressed: _loading ? null : () => _search(),
                   icon: const Icon(Icons.search),
-                  label: const Text('会議録を検索')),
-            ]),
+                  label: const Text('会議録を検索'),),
+            ],),
         const SizedBox(height: 8),
         const Text('検索条件は国立国会図書館に送信されます。'),
         if (_loading) const LinearProgressIndicator(semanticsLabel: '会議録を検索中'),
@@ -455,16 +458,16 @@ class _DietReaderState extends State<_DietReader> {
           const Divider(),
           Semantics(
               liveRegion: true,
-              child: _body('「${_searched}」の会議録API検索結果　${page.total}件')),
+              child: _body('「$_searched」の会議録API検索結果　${page.total}件'),),
           Text(
-              '会議録取得　${DateFormat('yyyy-MM-dd HH:mm:ss').format(page.fetchedAt.toLocal())}（端末時刻）'),
+              '会議録取得　${DateFormat('yyyy-MM-dd HH:mm:ss').format(page.fetchedAt.toLocal())}（端末時刻）',),
           if (page.skipped > 0) _body('出典を確認できないデータを${page.skipped}件省略しました。'),
           if (page.total > 0)
             Text(
-                'API取得開始位置　${_start}件目／このページで出典を確認できた記録　${page.items.length}件'),
+                'API取得開始位置　$_start件目／このページで出典を確認できた記録　${page.items.length}件',),
           if (page.total == 0)
             _body(
-                '検索条件に一致する公開済みの会議録は見つかりませんでした。未収録の発言は検索結果に含まれません。開催日を外すか、検索語を変えてお試しください。')
+                '検索条件に一致する公開済みの会議録は見つかりませんでした。未収録の発言は検索結果に含まれません。開催日を外すか、検索語を変えてお試しください。',)
           else if (page.items.isNotEmpty) ...[
             const Text('以下の分類と絞り込みは、取得済みのこのページ内のみが対象です。'),
             _groupControl(includesRespondents: true),
@@ -476,7 +479,7 @@ class _DietReaderState extends State<_DietReader> {
                 decoration: const InputDecoration(
                     labelText: 'このページの表示項目を検索',
                     hintText: '発言者・会派・会議名・収録した要約',
-                    border: OutlineInputBorder())),
+                    border: OutlineInputBorder(),),),
             ..._groupedResults(page.items),
           ],
           Wrap(spacing: 12, children: [
@@ -485,14 +488,14 @@ class _DietReaderState extends State<_DietReader> {
                   onPressed: _loading
                       ? null
                       : () => _search(start: _start - 10, paging: true),
-                  child: const Text('前の10件')),
+                  child: const Text('前の10件'),),
             if (page.next != null)
               OutlinedButton(
                   onPressed: _loading
                       ? null
                       : () => _search(start: page.next!, paging: true),
-                  child: const Text('次の10件')),
-          ]),
+                  child: const Text('次の10件'),),
+          ],),
         ],
       ],
     );
@@ -515,11 +518,12 @@ class _DietReaderState extends State<_DietReader> {
           note.questioner,
           note.answerer,
           note.question,
-          note.answer
+          note.answer,
         ],
       ];
-      if (!searchable.any((value) => value.toLowerCase().contains(filter)))
+      if (!searchable.any((value) => value.toLowerCase().contains(filter))) {
         continue;
+      }
       final labels = speech.isMeetingInformation
           ? ['会議情報']
           : _bySpeaker
@@ -535,7 +539,7 @@ class _DietReaderState extends State<_DietReader> {
     return [
       for (final entry in groups.entries) ...[
         Text('${entry.key}（${entry.value.length}件）',
-            style: Theme.of(context).textTheme.titleMedium),
+            style: Theme.of(context).textTheme.titleMedium,),
         for (final speech in entry.value) _speech(speech, entry.key),
       ],
     ];
@@ -554,16 +558,16 @@ class _DietReaderState extends State<_DietReader> {
             if (speech.group?.isNotEmpty ?? false)
               Text('会議当時の会派　${speech.group}'),
             _source(
-                speech.isMeetingInformation ? '会議情報の原文' : '発言の原文', speech.url),
+                speech.isMeetingInformation ? '会議情報の原文' : '発言の原文', speech.url,),
             _readButton('speech:${speech.id}',
-                speech.isMeetingInformation ? '会議情報' : '発言'),
+                speech.isMeetingInformation ? '会議情報' : '発言',),
             if (note != null)
               ExpansionTile(
                   title: Text(note.topic),
                   subtitle: const Text('質疑の要約を読む'),
-                  children: [_note(note)]),
-          ]),
-        ));
+                  children: [_note(note)],),
+          ],),
+        ),);
   }
 
   @override
@@ -597,10 +601,10 @@ class _DietReaderState extends State<_DietReader> {
               Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: _storageStatus()),
+                  child: _storageStatus(),),
               Expanded(child: TabBarView(children: [_searchView(), _reader()])),
-            ]),
-          ))),
+            ],),
+          ),),),
         ),
       );
 
@@ -609,17 +613,18 @@ class _DietReaderState extends State<_DietReader> {
       return Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
         const Text('端末設定を読み込めませんでした。文字サイズと既読の変更には再読み込みが必要です。'),
         TextButton(onPressed: _retrySettings, child: const Text('設定を読み直す')),
-      ]);
+      ],);
     }
     if (!_preferencesReady || _saving.isNotEmpty || _savingSize) {
       return Semantics(
           liveRegion: true,
           child: Text(_preferencesReady
               ? '端末への保存中です。応答を待つ間も会議録を閲覧できます。'
-              : '端末設定の読み込み待ちです。先に開始した保存があれば、その応答を待ちます。'));
+              : '端末設定の読み込み待ちです。先に開始した保存があれば、その応答を待ちます。',),);
     }
-    if (_fontSizeUncertain)
+    if (_fontSizeUncertain) {
       return const Text('文字サイズの保存状態は不明です。上の文字サイズメニューで選び直せます。');
+    }
     return const Text('既読はログイン利用者別、文字サイズは端末共通です。別タブへの即時反映はありません。');
   }
 }

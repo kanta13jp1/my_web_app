@@ -33,10 +33,10 @@ void main() {
       if (value == null) return prefs.remove(key);
       if (value is bool) return prefs.setBool(key, value);
       return prefs.setDouble(key, value as double);
-    });
+    },);
     final failedRemove = expectLater(
         settings.setRead('reader-a', 'note:existing', false),
-        throwsA(isA<StateError>()));
+        throwsA(isA<StateError>()),);
     final failedSize =
         expectLater(settings.setFontSize(24.0), throwsA(isA<StateError>()));
     final afterErrors = settings.load('reader-a');
@@ -69,16 +69,16 @@ void main() {
       final result = await prefs.setBool(key, value as bool);
       if (fail) throw StateError('after write');
       return result;
-    });
+    },);
     for (final id in ['note:before', 'note:after']) {
       await expectLater(
-          settings.setRead('A', id, true), throwsA(isA<StateError>()));
+          settings.setRead('A', id, true), throwsA(isA<StateError>()),);
     }
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('diet_debates.v1.read.A.note:before'), isNull);
     expect(prefs.getBool('diet_debates.v1.read.A.note:after'), isTrue);
     expect((await settings.load('A')).uncertainReadIds,
-        {'note:before', 'note:after'});
+        {'note:before', 'note:after'},);
     expect((await settings.load('B')).uncertainReadIds, isEmpty);
     fail = false;
     await settings.setRead('A', 'note:before', true);

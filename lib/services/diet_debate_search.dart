@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 class DietSpeech {
   const DietSpeech(this.id, this.speaker, this.date, this.house, this.meeting,
-      this.url, this.group, this.topics);
+      this.url, this.group, this.topics,);
 
   final String id;
   final String speaker;
@@ -52,13 +52,13 @@ class DietSpeech {
         row['nameOfMeeting'] as String,
         url,
         row['speakerGroup'] as String?,
-        List.unmodifiable(topics));
+        List.unmodifiable(topics),);
   }
 }
 
 class DietSearchPage {
   const DietSearchPage(
-      this.items, this.total, this.next, this.skipped, this.fetchedAt);
+      this.items, this.total, this.next, this.skipped, this.fetchedAt,);
   final List<DietSpeech> items;
   final int total;
   final int? next;
@@ -73,7 +73,7 @@ class DietSearchError implements Exception {
 
 class DietDebateSearch {
   DietDebateSearch(
-      {http.Client Function()? createClient, DateTime Function()? now})
+      {http.Client Function()? createClient, DateTime Function()? now,})
       : _createClient = createClient ?? http.Client.new,
         _now = now ?? DateTime.now;
 
@@ -157,7 +157,7 @@ class DietDebateSearch {
           total,
           next is int && next > start && next <= total ? next : null,
           skipped,
-          fetchedAt);
+          fetchedAt,);
       if (_cache.length >= 12) _cache.remove(_cache.keys.first);
       _cache[uri] =
           (expires: fetchedAt.add(const Duration(minutes: 10)), page: page);

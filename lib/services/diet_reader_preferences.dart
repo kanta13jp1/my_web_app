@@ -50,8 +50,9 @@ class DietReaderPreferences {
             ..._beforeFailedWrite.keys.where((key) => key.startsWith(prefix)),
           };
           for (final key in ownedKeys) {
-            if (_beforeFailedWrite.containsKey(key))
+            if (_beforeFailedWrite.containsKey(key)) {
               uncertainIds.add(key.substring(prefix.length));
+            }
             if (_displayValue(prefs, key) == true) {
               ids.add(key.substring(prefix.length));
             }
@@ -77,8 +78,9 @@ class DietReaderPreferences {
   Future<void> _save(String key, Object? value) => _ordered((prefs) async {
         final previous = _displayValue(prefs, key);
         try {
-          if (!await _write(prefs, key, value))
+          if (!await _write(prefs, key, value)) {
             throw StateError('Preference not saved');
+          }
           _beforeFailedWrite.remove(key);
         } catch (_) {
           // The previous UI value is a fallback. The durable outcome is unknown.
@@ -88,7 +90,7 @@ class DietReaderPreferences {
       });
 
   static Future<bool> _writePreference(
-      SharedPreferences prefs, String key, Object? value) {
+      SharedPreferences prefs, String key, Object? value,) {
     if (value == null) return prefs.remove(key);
     if (value is bool) return prefs.setBool(key, value);
     return prefs.setDouble(key, value as double);

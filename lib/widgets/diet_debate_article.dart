@@ -40,12 +40,12 @@ class _DietDebateArticleState extends State<DietDebateArticle> {
     final count = pattern == null
         ? 0
         : fields.fold<int>(
-            0, (total, field) => total + pattern.allMatches(field).length);
+            0, (total, field) => total + pattern.allMatches(field).length,);
     final theme = Theme.of(context);
     final mark = TextStyle(
         backgroundColor: theme.colorScheme.tertiaryContainer,
         color: theme.colorScheme.onTertiaryContainer,
-        fontWeight: FontWeight.bold);
+        fontWeight: FontWeight.bold,);
 
     Widget highlighted(String value, {bool title = false}) {
       final spans = <TextSpan>[];
@@ -54,7 +54,7 @@ class _DietDebateArticleState extends State<DietDebateArticle> {
         for (final match in pattern.allMatches(value)) {
           spans.add(TextSpan(text: value.substring(offset, match.start)));
           spans.add(TextSpan(
-              text: value.substring(match.start, match.end), style: mark));
+              text: value.substring(match.start, match.end), style: mark,),);
           offset = match.end;
         }
       }
@@ -85,7 +85,7 @@ class _DietDebateArticleState extends State<DietDebateArticle> {
           onChanged: (value) => setState(() => _query = value),
         ),
         if (pattern != null)
-          Semantics(liveRegion: true, child: Text('この記事内の一致　${count}件')),
+          Semantics(liveRegion: true, child: Text('この記事内の一致　$count件')),
         const Divider(),
         highlighted(fields[1]),
         highlighted(fields[2]),
@@ -93,7 +93,7 @@ class _DietDebateArticleState extends State<DietDebateArticle> {
         highlighted(fields[3]),
         highlighted(fields[4]),
         widget.source('答弁の原文', note.source(note.answerOrder)),
-      ]),
-    ));
+      ],),
+    ),);
   }
 }

@@ -54,22 +54,22 @@ void main() {
                       {
                         ...row(139, '139'),
                         'speakerGroup': '会派',
-                        'speech': '育児の負担と物価の関係'
+                        'speech': '育児の負担と物価の関係',
                       },
                       {
                         ...row(140, '140'),
-                        'speechURL': 'https://example.org/invalid'
+                        'speechURL': 'https://example.org/invalid',
                       },
                     ],
-                  })),
-                  200);
-            }));
+                  }),),
+                  200,);
+            }),);
     final result = await search.search(
         term: ' 教育 ',
         speaker: '発言者',
         group: '会派',
         date: '2023-05-16',
-        start: 11);
+        start: 11,);
     expect(result.items.single.id, '${issue}_139');
     expect(result.items.single.group, '会派');
     expect(result.items.single.topics, ['子育て', '物価']);
@@ -88,10 +88,10 @@ void main() {
               count++;
               if (count == 1) return first.future;
               return http.Response('{"numberOfRecords":0}', 200);
-            }));
+            }),);
     final pending = search.search(term: '教育');
     await expectLater(
-        search.search(term: '物価'), throwsA(isA<DietSearchError>()));
+        search.search(term: '物価'), throwsA(isA<DietSearchError>()),);
     first.complete(http.Response('{"numberOfRecords":0}', 200));
     final firstPage = await pending;
     expect(firstPage.items, isEmpty);
@@ -100,7 +100,7 @@ void main() {
     expect((await search.search(term: '教育')).fetchedAt, firstPage.fetchedAt);
     expect((await search.search(term: '教育')).total, 0);
     await expectLater(
-        search.search(term: '物価'), throwsA(isA<DietSearchError>()));
+        search.search(term: '物価'), throwsA(isA<DietSearchError>()),);
     now = now.add(const Duration(seconds: 5));
     expect((await search.search(term: '物価')).total, 0);
     expect(count, 2);
@@ -112,11 +112,11 @@ void main() {
         createClient: () => MockClient((_) async {
               count++;
               return http.Response('{"message":[{"error":"19007"}]}', 200);
-            }));
+            }),);
     await expectLater(search.search(), throwsA(isA<DietSearchError>()));
     expect(count, 0);
     await expectLater(
-        search.search(speaker: '発言者'), throwsA(isA<DietSearchError>()));
+        search.search(speaker: '発言者'), throwsA(isA<DietSearchError>()),);
     expect(count, 1);
   });
 }
