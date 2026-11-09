@@ -52,7 +52,12 @@ Future<void> _openMobile(
 }
 
 Finder _verticalList() {
-  final list = find.byType(ListView).hitTestable();
+  final list = find
+      .byWidgetPredicate(
+        (widget) =>
+            widget is ScrollView && widget.scrollDirection == Axis.vertical,
+      )
+      .hitTestable();
   expect(list, findsOneWidget);
   return find
       .descendant(
@@ -101,11 +106,11 @@ void main() {
         expect(query['any'], '子育て');
         final start = int.parse(query['startRecord']!);
         starts.add(start);
-        final end = start == 1 ? 10 : 11;
+        final end = start + 9;
         return http.Response.bytes(
           utf8.encode(
             jsonEncode({
-              'numberOfRecords': 11,
+              'numberOfRecords': 20,
               if (start == 1) 'nextRecordPosition': 11,
               'speechRecord': [
                 for (var i = start; i <= end; i++)
@@ -127,6 +132,17 @@ void main() {
         );
       }),
     );
+    void expectPageStart(int start) {
+      final heading = find.text('「子育て」の会議録API検索結果　20件');
+      final position = find.text(
+        'API取得開始位置　$start件目／このページで出典を確認できた記録　10件',
+      );
+      expect(heading.hitTestable(), findsOneWidget);
+      expect(position.hitTestable(), findsOneWidget);
+      final top = tester.getTopLeft(find.byType(CustomScrollView)).dy;
+      expect(tester.getTopLeft(heading).dy, closeTo(top, 1));
+    }
+
     await _openMobile(tester, service: service);
     final theme = find.text('子育て');
     await _reveal(tester, theme);
@@ -136,6 +152,7 @@ void main() {
     await tester.tap(search);
     await tester.pumpAndSettle();
     expect(starts, [1]);
+    expectPageStart(1);
     final next = find.text('次の10件');
     expect(next.hitTestable(), findsNothing);
     await _reveal(tester, next);
@@ -147,16 +164,12 @@ void main() {
     await tester.tap(next);
     await tester.pumpAndSettle();
     expect(starts, [1, 11]);
-    await _reveal(tester, find.text('架空の発言者11'), delta: -240);
+    expectPageStart(11);
     final back = find.text('前の10件');
     await _reveal(tester, back);
     await tester.tap(back);
     await tester.pumpAndSettle();
-    await _reveal(
-      tester,
-      find.textContaining('このページで出典を確認できた記録　10件'),
-      delta: -240,
-    );
+    expectPageStart(1);
     expect(starts, [1, 11]); // The first page is served from cache.
   });
 

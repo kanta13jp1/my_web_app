@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 
 class DietSpeech {
@@ -117,7 +118,9 @@ class DietDebateSearch {
       throw const DietSearchError('テーマ、発言者、会派、開催日のいずれかを指定してください。');
     }
     if (start < 1 ||
-        [term, speaker, group].any((value) => value.trim().length > 100)) {
+        [term, speaker, group].any(
+          (value) => value.trim().characters.length > 100,
+        )) {
       throw const DietSearchError('検索条件を確認してください。');
     }
     final uri = Uri.https('kokkai.ndl.go.jp', '/api/speech', {

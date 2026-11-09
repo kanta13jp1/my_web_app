@@ -120,6 +120,7 @@ class _DietReaderState extends State<_DietReader> {
   final _speaker = TextEditingController();
   final _group = TextEditingController();
   final _withinPage = TextEditingController();
+  final _resultHeading = GlobalKey();
   bool _preferencesReady = false;
   final _read = <String>{};
   final _uncertainRead = <String>{};
@@ -313,6 +314,16 @@ class _DietReaderState extends State<_DietReader> {
             .where((value) => value.isNotEmpty)
             .join(' / ');
       });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !identical(_result, page)) {
+          return;
+        }
+        final heading = _resultHeading.currentContext;
+        final target = heading?.findRenderObject();
+        if (heading != null && target != null && target.attached) {
+          unawaited(Scrollable.of(heading).position.ensureVisible(target));
+        }
+      });
     } on DietSearchError catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
@@ -401,9 +412,38 @@ class _DietReaderState extends State<_DietReader> {
 
   Widget _searchView() {
     final page = _result;
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: _searchForm(),
+            ),
+          ),
+        ),
+        if (page != null) ...[
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverToBoxAdapter(
+              child: Semantics(
+                key: _resultHeading,
+                liveRegion: true,
+                child: _body('「$_searched」の会議録API検索結果　${page.total}件'),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            sliver: SliverList.list(children: _resultDetails(page)),
+          ),
+        ],
+      ],
+    );
+  }
+
+  List<Widget> _searchForm() => [
         _body('すべての会派を対象に、国立国会図書館の国会会議録から発言と会議情報を探します。開催から公開まで日数がかかります。'),
         const SizedBox(height: 14),
         TextField(
@@ -487,63 +527,58 @@ class _DietReaderState extends State<_DietReader> {
         const Text('検索条件は国立国会図書館に送信されます。'),
         if (_loading) const LinearProgressIndicator(semanticsLabel: '会議録を検索中'),
         if (_error != null) Semantics(liveRegion: true, child: _body(_error!)),
-        if (page != null) ...[
-          const Divider(),
-          Semantics(
-            liveRegion: true,
-            child: _body('「$_searched」の会議録API検索結果　${page.total}件'),
-          ),
+        if (_result != null) const Divider(),
+      ];
+
+  List<Widget> _resultDetails(DietSearchPage page) => [
+        Text(
+          '会議録取得　${DateFormat('yyyy-MM-dd HH:mm:ss').format(page.fetchedAt.toLocal())}（端末時刻）',
+        ),
+        if (page.skipped > 0) _body('出典を確認できないデータを${page.skipped}件省略しました。'),
+        if (page.total > 0)
           Text(
-            '会議録取得　${DateFormat('yyyy-MM-dd HH:mm:ss').format(page.fetchedAt.toLocal())}（端末時刻）',
+            'API取得開始位置　$_start件目／このページで出典を確認できた記録　${page.items.length}件',
           ),
-          if (page.skipped > 0) _body('出典を確認できないデータを${page.skipped}件省略しました。'),
-          if (page.total > 0)
-            Text(
-              'API取得開始位置　$_start件目／このページで出典を確認できた記録　${page.items.length}件',
+        if (page.total == 0)
+          _body(
+            '検索条件に一致する公開済みの会議録は見つかりませんでした。未収録の発言は検索結果に含まれません。開催日を外すか、検索語を変えてお試しください。',
+          )
+        else if (page.items.isNotEmpty) ...[
+          const Text('以下の分類と絞り込みは、取得済みのこのページ内のみが対象です。'),
+          _groupControl(includesRespondents: true),
+          if (!_bySpeaker)
+            const Text('テーマは発言中の語句で分類します。同じ記録が複数のテーマに入ることがあります。'),
+          TextField(
+            controller: _withinPage,
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(
+              labelText: 'このページの表示項目を検索',
+              hintText: '発言者・会派・会議名・収録した要約',
+              border: OutlineInputBorder(),
             ),
-          if (page.total == 0)
-            _body(
-              '検索条件に一致する公開済みの会議録は見つかりませんでした。未収録の発言は検索結果に含まれません。開催日を外すか、検索語を変えてお試しください。',
-            )
-          else if (page.items.isNotEmpty) ...[
-            const Text('以下の分類と絞り込みは、取得済みのこのページ内のみが対象です。'),
-            _groupControl(includesRespondents: true),
-            if (!_bySpeaker)
-              const Text('テーマは発言中の語句で分類します。同じ記録が複数のテーマに入ることがあります。'),
-            TextField(
-              controller: _withinPage,
-              onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
-                labelText: 'このページの表示項目を検索',
-                hintText: '発言者・会派・会議名・収録した要約',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            ..._groupedResults(page.items),
-          ],
-          Wrap(
-            spacing: 12,
-            children: [
-              if (_start > 1)
-                OutlinedButton(
-                  onPressed: _loading
-                      ? null
-                      : () => _search(start: _start - 10, paging: true),
-                  child: const Text('前の10件'),
-                ),
-              if (page.next != null)
-                OutlinedButton(
-                  onPressed: _loading
-                      ? null
-                      : () => _search(start: page.next!, paging: true),
-                  child: const Text('次の10件'),
-                ),
-            ],
           ),
+          ..._groupedResults(page.items),
         ],
-      ],
-    );
-  }
+        Wrap(
+          spacing: 12,
+          children: [
+            if (_start > 1)
+              OutlinedButton(
+                onPressed: _loading
+                    ? null
+                    : () => _search(start: _start - 10, paging: true),
+                child: const Text('前の10件'),
+              ),
+            if (page.next != null)
+              OutlinedButton(
+                onPressed: _loading
+                    ? null
+                    : () => _search(start: page.next!, paging: true),
+                child: const Text('次の10件'),
+              ),
+          ],
+        ),
+      ];
 
   List<Widget> _groupedResults(List<DietSpeech> items) {
     final filter = _withinPage.text.trim().toLowerCase();

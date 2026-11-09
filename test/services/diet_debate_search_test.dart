@@ -83,6 +83,37 @@ void main() {
     expect(result.total, 23);
   });
 
+  test('検索欄と同じ書記素数で各条件の100文字までを受け付ける', () async {
+    final requests = <Uri>[];
+    final search = DietDebateSearch(
+      createClient: () => MockClient((request) async {
+        requests.add(request.url);
+        return http.Response('{"numberOfRecords":0}', 200);
+      }),
+    );
+    final prefix = List.filled(99, 'あ').join();
+    final term = '$prefix𠮷';
+    final speaker = '$prefixは\u3099';
+    final group = '$prefix会';
+    final invalidLength = throwsA(
+      isA<DietSearchError>().having(
+        (error) => error.message,
+        'message',
+        '検索条件を確認してください。',
+      ),
+    );
+    await expectLater(search.search(term: '${term}A'), invalidLength);
+    await expectLater(search.search(speaker: '${speaker}A'), invalidLength);
+    await expectLater(search.search(group: '${group}A'), invalidLength);
+    expect(requests, isEmpty);
+
+    await search.search(term: term, speaker: speaker, group: group);
+    final query = requests.single.queryParameters;
+    expect(query['any'], term);
+    expect(query['speaker'], speaker);
+    expect(query['speakerGroup'], group);
+  });
+
   test('並行リクエスト・終了後5秒以内の新規検索を抑え、同一条件をキャッシュ', () async {
     var now = DateTime.utc(2026, 1, 1);
     var count = 0;
@@ -125,6 +156,10 @@ void main() {
       }),
     );
     await expectLater(search.search(), throwsA(isA<DietSearchError>()));
+    await expectLater(
+      search.search(term: ' ', speaker: '\t', group: '　'),
+      throwsA(isA<DietSearchError>()),
+    );
     expect(count, 0);
     await expectLater(
       search.search(speaker: '発言者'),
