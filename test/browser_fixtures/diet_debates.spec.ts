@@ -80,22 +80,60 @@ function label(page: Page, name: RegExp): Locator {
   return page.getByLabel(name).or(page.getByText(name)).first();
 }
 
-// Flutter builds scrolling children lazily. Scroll the real viewport to mount them.
+type Exposure = {
+  rect: { x: number; y: number; width: number; height: number };
+  intersection: { x: number; y: number; width: number; height: number };
+  ratio: number;
+};
+
+async function exposure(item: Locator): Promise<Exposure> {
+  return item.evaluate(element => new Promise<Exposure>(resolve => {
+    const observer = new IntersectionObserver(([entry]) => {
+      observer.disconnect();
+      const box = (rect: DOMRectReadOnly) => ({
+        x: rect.x, y: rect.y, width: rect.width, height: rect.height,
+      });
+      resolve({
+        rect: box(entry.boundingClientRect),
+        intersection: box(entry.intersectionRect),
+        ratio: entry.intersectionRatio,
+      });
+    });
+    observer.observe(element);
+  }));
+}
+
+// Flutter semantics can have a window-space box while clipped by its ListView.
+// Scroll the real canvas until the target's center is inside its actual visible area.
 async function reveal(page: Page, item: Locator, direction = 1): Promise<void> {
   const viewport = page.viewportSize()!;
+  let lastExposure: Exposure | null = null;
   await page.mouse.move(viewport.width / 2, viewport.height * 0.7);
   for (let i = 0; i < 65; i++) {
-    const rect = await item.count() ? await item.boundingBox() : null;
-    if (rect && rect.y + rect.height / 2 > 110 &&
-        rect.y + rect.height / 2 < viewport.height - 8) {
-      await expect(item).toBeInViewport();
-      return;
+    lastExposure = await item.count() ? await exposure(item) : null;
+    if (lastExposure) {
+      const { rect, intersection, ratio } = lastExposure;
+      const centerY = rect.y + rect.height / 2;
+      const horizontal = rect.width > 0 && rect.x >= 0 &&
+        rect.x + rect.width <= viewport.width &&
+        intersection.x <= rect.x &&
+        intersection.x + intersection.width >= rect.x + rect.width;
+      if (rect.height > 0 && horizontal && ratio > 0 &&
+          centerY > intersection.y &&
+          centerY < intersection.y + intersection.height) {
+        await expect(item).toBeInViewport();
+        return;
+      }
     }
-    await page.mouse.wheel(0, direction * Math.min(300, viewport.height / 3));
+    const scrollDirection = lastExposure
+      ? (lastExposure.rect.y + lastExposure.rect.height / 2 < viewport.height / 2 ? -1 : 1)
+      : direction;
+    await page.mouse.wheel(0, scrollDirection * Math.min(300, viewport.height / 3));
     await page.evaluate(() => new Promise<void>(resolve =>
       requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
   }
-  throw new Error('Could not reveal ' + item.toString());
+  throw new Error('Could not reveal ' + item.toString() +
+    '; last exposure=' + JSON.stringify({ viewport, lastExposure }));
 }
 
 async function checkSource(page: Page, name: string, url: string): Promise<void> {
