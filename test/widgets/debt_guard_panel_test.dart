@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/data/repositories/debt_guard_repository.dart';
+import 'package:my_web_app/domain/models/debt_guard_emotion.dart';
 import 'package:my_web_app/domain/models/debt_guard_rule.dart';
 import 'package:my_web_app/view_models/debt_guard_view_model.dart';
 import 'package:my_web_app/widgets/debt_guard_panel.dart';
@@ -22,10 +23,7 @@ void main() {
     expect(find.text('毎日の生活基盤チェック'), findsOneWidget);
     expect(find.text('その後の一歩（必須でない拡大）'), findsOneWidget);
     expect(find.text('脳内の虫（バグ）を弱らせる'), findsOneWidget);
-    expect(
-      find.byKey(const Key('debt-guard-rule-gambling')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('debt-guard-rule-gambling')), findsOneWidget);
     expect(find.text('必要な用事や生活ケアを放置したまま寝る'), findsOneWidget);
 
     await tester.tap(find.byTooltip('追加の借金を記録'));
@@ -87,6 +85,116 @@ void main() {
 
     expect(find.text('バグを弱めた 1'), findsOneWidget);
     expect(repository.events.single.type, DebtGuardEventType.urgeResisted);
+  });
+
+  testWidgets('labels the feeling behind an urge and saves it', (tester) async {
+    final repository = _PanelRepository();
+    final viewModel = _viewModel(repository);
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+    await _pump(tester, viewModel, width: 430);
+
+    expect(find.textContaining('「いまの気持ち」を選ぶと'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('debt-guard-urge-help')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('debt-guard-emotion-signal')), findsNothing);
+    for (final emotion in DebtGuardEmotion.values) {
+      expect(
+        find.byKey(Key('debt-guard-emotion-${emotion.wireName}')),
+        findsOneWidget,
+      );
+    }
+
+    await tester.tap(find.byKey(const Key('debt-guard-emotion-boredom')));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining(DebtGuardEmotion.boredom.minimumAction),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('バグを弱めた'));
+    await tester.pumpAndSettle();
+
+    expect(repository.events.single.emotion, DebtGuardEmotion.boredom);
+    expect(find.text('気持ち: 退屈'), findsOneWidget);
+  });
+
+  testWidgets('skipping the feeling still records the urge', (tester) async {
+    final repository = _PanelRepository();
+    final viewModel = _viewModel(repository);
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+    await _pump(tester, viewModel, width: 430);
+
+    await tester.tap(find.byKey(const Key('debt-guard-urge-help')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('debt-guard-emotion-anxiety')));
+    await tester.pumpAndSettle();
+    // Tapping the selected chip again clears the choice.
+    await tester.tap(find.byKey(const Key('debt-guard-emotion-anxiety')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('バグを弱めた'));
+    await tester.pumpAndSettle();
+
+    expect(repository.events.single.emotion, isNull);
+    expect(repository.events.single.type, DebtGuardEventType.urgeResisted);
+  });
+
+  testWidgets('shows which feeling precedes violations from history', (
+    tester,
+  ) async {
+    final repository = _PanelRepository();
+    var id = 500;
+    DebtGuardEvent past(DebtGuardEventType type, DebtGuardEmotion emotion) {
+      return DebtGuardEvent(
+        id: id++,
+        ruleId: 'eating_out',
+        type: type,
+        eventDate: DateTime(2026, 8, 15),
+        createdAt: DateTime(2026, 8, 15, 20, 0, id),
+        emotion: emotion,
+      );
+    }
+
+    repository.labelledHistory.addAll([
+      past(DebtGuardEventType.violation, DebtGuardEmotion.loneliness),
+      past(DebtGuardEventType.violation, DebtGuardEmotion.loneliness),
+      past(DebtGuardEventType.urgeResisted, DebtGuardEmotion.irritation),
+      past(DebtGuardEventType.urgeResisted, DebtGuardEmotion.irritation),
+    ]);
+    final viewModel = _viewModel(repository);
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+    await _pump(tester, viewModel, width: 430);
+
+    final riskiest = tester.widget<Text>(
+      find.byKey(const Key('debt-guard-emotion-riskiest')),
+    );
+    expect(riskiest.data, contains('寂しさ'));
+    expect(riskiest.data, contains('違反2回のうち2回'));
+    final steadiest = tester.widget<Text>(
+      find.byKey(const Key('debt-guard-emotion-steadiest')),
+    );
+    expect(steadiest.data, contains('イライラ'));
+    expect(
+      find.textContaining(DebtGuardEmotion.loneliness.minimumAction),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('debt-guard-emotion-tally-loneliness')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('says so when the history could not be read', (tester) async {
+    final repository = _PanelRepository()..failLabelled = true;
+    final viewModel = _viewModel(repository);
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+    await _pump(tester, viewModel, width: 430);
+
+    expect(find.textContaining('気持ちの傾向を読み込めませんでした'), findsOneWidget);
+    expect(find.textContaining('偏った違反はありません'), findsNothing);
   });
 
   testWidgets('starts a minimum foundation action in one tap', (tester) async {
@@ -241,6 +349,24 @@ class _PanelRepository implements DebtGuardRepository {
     return List.of(events);
   }
 
+  bool failLabelled = false;
+  final labelledHistory = <DebtGuardEvent>[];
+  DateTime? lastLabelledSince;
+
+  @override
+  Future<List<DebtGuardEvent>> loadLabelledEvents({
+    required String userId,
+    required DateTime since,
+  }) async {
+    if (failLabelled) throw StateError('offline');
+    lastLabelledSince = since;
+    return [
+      ...labelledHistory,
+      for (final event in events)
+        if (event.emotion != null) event,
+    ];
+  }
+
   @override
   Future<List<DebtGuardEvent>> appendEvents({
     required String userId,
@@ -256,6 +382,7 @@ class _PanelRepository implements DebtGuardRepository {
           eventDate: DateTime(date.year, date.month, date.day),
           createdAt: date.add(Duration(microseconds: _nextId)),
           note: draft.note,
+          emotion: draft.emotion,
         ),
     ];
     this.events.addAll(inserted);
