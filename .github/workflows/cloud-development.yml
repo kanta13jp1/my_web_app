@@ -514,3 +514,47 @@ jobs:
             test-results/
             savings-server.log
           if-no-files-found: ignore
+
+  election-mode-deno:
+    name: Election mode Deno contract
+    if: (inputs.profile || 'full') == 'full'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha || '' }}
+    steps:
+      - name: Checkout immutable source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify exact cloud handoff SHA
+        if: env.EXPECTED_HEAD_SHA != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_head_sha="$(git rev-parse HEAD)"
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_head_sha must be a lowercase 40-character Git SHA."
+            exit 1
+          fi
+          if [ "$actual_head_sha" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Cloud handoff mismatch: expected $EXPECTED_HEAD_SHA, checked out $actual_head_sha."
+            exit 1
+          fi
+          echo "Verified exact cloud handoff SHA: $actual_head_sha"
+
+      - name: Set up pinned Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.9.1
+
+      - name: Run election mode contract without runtime permissions
+        run: >-
+          deno test --config supabase/functions/deno.json
+          --lock supabase/functions/deno.lock --frozen
+          supabase/functions/local-election-intelligence/election_mode_test.ts
