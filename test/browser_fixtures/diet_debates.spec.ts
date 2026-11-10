@@ -107,6 +107,8 @@ async function exposure(item: Locator): Promise<Exposure> {
 // Scroll the real canvas until the target's center is inside its actual visible area.
 async function reveal(page: Page, item: Locator, direction = 1): Promise<void> {
   const viewport = page.viewportSize()!;
+  // Tolerate only subpixel rounding of the observed intersection edges.
+  const intersectionRoundingTolerance = 0.001;
   let lastExposure: Exposure | null = null;
   await page.mouse.move(viewport.width / 2, viewport.height * 0.7);
   for (let i = 0; i < 65; i++) {
@@ -116,8 +118,8 @@ async function reveal(page: Page, item: Locator, direction = 1): Promise<void> {
       const centerY = rect.y + rect.height / 2;
       const horizontal = rect.width > 0 && rect.x >= 0 &&
         rect.x + rect.width <= viewport.width &&
-        intersection.x <= rect.x &&
-        intersection.x + intersection.width >= rect.x + rect.width;
+        intersection.x <= rect.x + intersectionRoundingTolerance &&
+        intersection.x + intersection.width + intersectionRoundingTolerance >= rect.x + rect.width;
       if (rect.height > 0 && horizontal && ratio > 0 &&
           centerY > intersection.y &&
           centerY < intersection.y + intersection.height) {
