@@ -844,10 +844,16 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
+          deploy_status=0
           npx -y firebase-tools@latest deploy \
             --only hosting \
             --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
-            --json > "$output_file"
+            --json > "$output_file" || deploy_status=$?
+          if [ "$deploy_status" -ne 0 ]; then
+            echo "::error::Firebase Hosting deployment failed (exit $deploy_status)."
+            python3 -c 'import json,sys; from scripts.security_review_input import redact_secrets_with_count; payload=json.load(open(sys.argv[1], encoding="utf-8")); detail=payload.get("error") or payload.get("message") or "No error message returned"; message=detail.get("message", "No error message returned") if isinstance(detail,dict) else str(detail); print(redact_secrets_with_count(str(message))[0][:2000], file=sys.stderr)' "$output_file" || echo "::error::Firebase returned no readable JSON diagnostic."
+            exit "$deploy_status"
+          fi
 
           cat "$output_file"
 
