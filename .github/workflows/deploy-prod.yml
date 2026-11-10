@@ -830,7 +830,6 @@ jobs:
       - name: Deploy to Firebase Hosting (Production)
         if: steps.changes.outputs.web == 'true'
         id: firebase_cli_deploy
-        continue-on-error: true  # 509 Bandwidth Exceeded 発生中 (2026-04-18) — 復旧後に削除
         shell: bash
         run: |
           set -euo pipefail
