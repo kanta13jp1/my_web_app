@@ -46,7 +46,7 @@ jobs:
           print('Identity metadata prepared; no private key or access token was exported.')
           PY
       - name: Upload identity metadata
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6; Node.js 24 required by repository policy
         with:
           name: firebase-identity-${{ github.run_id }}
           path: ${{ runner.temp }}/firebase-identity.json
