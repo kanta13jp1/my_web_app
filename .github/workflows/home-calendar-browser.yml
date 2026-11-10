@@ -6,13 +6,14 @@ on:
       - lib/widgets/home_calendar_month_header.dart
       - test/widgets/home_calendar_month_header_test.dart
   workflow_dispatch:
-permissions:
-  contents: read
+permissions: {}
 concurrency:
   group: home-calendar-browser-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
   calendar:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
