@@ -5,9 +5,14 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: production-firebase-identity-audit
+  cancel-in-progress: false
+
 jobs:
   identity:
     if: github.ref == 'refs/heads/main'
+    permissions: {}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     environment:
@@ -41,7 +46,7 @@ jobs:
           print('Identity metadata prepared; no private key or access token was exported.')
           PY
       - name: Upload identity metadata
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2; official actions/upload-artifact tag v7 resolves to this SHA
         with:
           name: firebase-identity-${{ github.run_id }}
           path: ${{ runner.temp }}/firebase-identity.json
