@@ -138,7 +138,9 @@ test('合成解析の表示と訂正、閉鎖・再表示で入力を破棄す�
   await top(page);
   await reveal(page, field);
   await field.click();
-  await page.keyboard.insertText('41');
+  await expect(field).toBeFocused();
+  await field.fill('41');
+  await expect(field).toHaveValue('41');
   await clickButton(page, '訂正候補を見直す');
   await reveal(page, net, -1);
   await reveal(page, draft);
