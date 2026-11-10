@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:my_web_app/pages/note_list_page.dart';
 import 'package:my_web_app/services/abstinence_guard_store.dart';
 import 'package:provider/provider.dart';
@@ -25,9 +27,17 @@ void main() {
     await Supabase.initialize(
       url: 'https://dummy.supabase.co',
       publishableKey: 'dummy',
+      httpClient: MockClient((_) async => http.Response('[]', 200)),
+      authOptions: const FlutterAuthClientOptions(
+        autoRefreshToken: false,
+        detectSessionInUri: false,
+        localStorage: EmptyLocalStorage(),
+      ),
       debug: false,
-    );
+    ).timeout(const Duration(seconds: 10));
   });
+
+  tearDownAll(() async => Supabase.instance.dispose());
 
   setUp(() {
     // 各テストの前に設定をリセット
