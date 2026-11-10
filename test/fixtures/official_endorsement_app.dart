@@ -6,6 +6,7 @@ import 'package:my_web_app/models/election_intelligence.dart';
 import 'package:my_web_app/services/local_election_reality_service.dart';
 import 'package:my_web_app/ui/features/election_victory/view_models/official_endorsement_view_model.dart';
 import 'package:my_web_app/ui/features/election_victory/widgets/official_endorsement_summary_card.dart';
+import 'package:my_web_app/ui/features/election_victory/widgets/kokumin_representative_announcement_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // This is a synthetic, loopback-only cache. Never run the normal app entrypoint.
@@ -101,7 +102,8 @@ class _Fixture extends StatefulWidget {
 class _FixtureState extends State<_Fixture> {
   var _cacheReads = 1;
   var _input = '旧キャッシュ（合成412件・検証情報なし）';
-  var _openedSource = '';
+  var _openedCandidateSource = '';
+  var _openedAnnouncementSource = '';
 
   Future<void> _reloadCache() async {
     final cached = await _service.loadCachedSnapshot(prefs: widget.prefs);
@@ -116,7 +118,7 @@ class _FixtureState extends State<_Fixture> {
     setState(() {
       _cacheReads += 1;
       _input = '旧キャッシュ（合成412件・検証情報なし）';
-      _openedSource = '';
+      _openedCandidateSource = '';
     });
   }
 
@@ -126,7 +128,7 @@ class _FixtureState extends State<_Fixture> {
     );
     setState(() {
       _input = '旧Edge（合成412件・検証済み・2026-10-21）';
-      _openedSource = '';
+      _openedCandidateSource = '';
     });
   }
 
@@ -134,6 +136,7 @@ class _FixtureState extends State<_Fixture> {
     final newer = {
       ..._oldEndorsements(verified: true),
       'sourceAsOf': '2026-11-05',
+      'sourceUrl': 'https://example.invalid/official-endorsements-newer',
       'sourceDocumentSha256': List.filled(64, 'b').join(),
       'totalCount': 431,
       'incumbentCount': 177,
@@ -156,7 +159,7 @@ class _FixtureState extends State<_Fixture> {
     widget.model.updateFromIntelligence(_intelligence(newer));
     setState(() {
       _input = '新Edge（合成431件・検証済み・2026-11-05）';
-      _openedSource = '';
+      _openedCandidateSource = '';
     });
   }
 
@@ -203,17 +206,25 @@ class _FixtureState extends State<_Fixture> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      KokuminRepresentativeAnnouncementCard(
+                        onOpenSource: (url) {
+                          setState(() => _openedAnnouncementSource = url);
+                        },
+                      ),
+                      if (_openedAnnouncementSource.isNotEmpty)
+                        Text('捕捉した発表出典URL: $_openedAnnouncementSource'),
+                      const SizedBox(height: 12),
                       ListenableBuilder(
                         listenable: widget.model,
                         builder: (context, _) => OfficialEndorsementSummaryCard(
                           snapshot: widget.model.snapshot,
                           onOpenSource: (url) {
-                            setState(() => _openedSource = url);
+                            setState(() => _openedCandidateSource = url);
                           },
                         ),
                       ),
-                      if (_openedSource.isNotEmpty)
-                        Text('捕捉した出典URL: $_openedSource'),
+                      if (_openedCandidateSource.isNotEmpty)
+                        Text('捕捉した公認出典URL: $_openedCandidateSource'),
                       const SizedBox(height: 24),
                     ],
                   ),

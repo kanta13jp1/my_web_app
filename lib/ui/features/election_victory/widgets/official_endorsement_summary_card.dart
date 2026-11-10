@@ -125,7 +125,7 @@ class OfficialEndorsementSummaryCard extends StatelessWidget {
               childrenPadding: const EdgeInsets.only(bottom: 8),
               dense: true,
               title: const Text('都道府県別の公認掲載件数'),
-              subtitle: Text('$snapshot.prefectureCount都道府県'),
+              subtitle: Text('${snapshot.prefectureCount}都道府県'),
               children: [
                 Align(
                   alignment: Alignment.centerLeft,

@@ -2,6 +2,9 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 const origin = 'http://127.0.0.1:7361';
 const sourceUrl = 'https://new-kokumin.jp/local-election-list';
+const newerSourceUrl = 'https://example.invalid/official-endorsements-newer';
+const originalAnnouncementUrl = 'https://x.com/tamakiyuichiro/status/2119639251365294529';
+const officialAnnouncementSite = 'https://tamakinet.jp/';
 const cacheKey = 'election_intelligence_snapshot_v6_local';
 
 type Diagnostics = {
@@ -84,7 +87,8 @@ async function clickButton(page: Page, name: string, direction = 1): Promise<voi
 }
 
 async function baselineCard(page: Page): Promise<void> {
-  await reveal(page, label(page, /^公認掲載 430件$/), -1);
+  await reveal(page, label(page, /^合成データ専用・localhost画面試験$/), -1);
+  await reveal(page, label(page, /^公認掲載 430件$/));
   for (const text of [
     /^掲載内の現職 177件$/,
     /^掲載内の新人 242件$/,
@@ -97,10 +101,43 @@ async function baselineCard(page: Page): Promise<void> {
     await reveal(page, label(page, text));
   }
   await expect(label(page, /^公認掲載 412件$/)).toHaveCount(0);
+  await reveal(page, page.getByRole('button', {
+    name: /都道府県別の公認掲載件数[\s\S]*\D42都道府県(?:\D|$)/,
+  }));
   const source = page.getByRole('button', {
     name: '党公式の公認予定候補一覧を開く(2026/11/04現在)', exact: true,
   });
   await reveal(page, source);
+}
+
+function exactText(page: Page, text: string): Locator {
+  return page.getByLabel(text, { exact: true }).or(page.getByText(text, { exact: true })).first();
+}
+
+async function announcementCard(page: Page): Promise<void> {
+  await reveal(page, label(page, /^合成データ専用・localhost画面試験$/), -1);
+  for (const text of [
+    /^党代表発表（2026\/11\/09）$/,
+    /^現職 420人$/,
+    /^新人擁立数 243人$/,
+    /^全国自治体議員 700人目標$/,
+    /公認予定候補の掲載件数や議員名簿の集計、アプリの計画値とは別の指標です。/,
+    /^発表時点の固定値です。最新の状況は出典をご確認ください。$/,
+  ]) {
+    await reveal(page, label(page, text));
+  }
+}
+
+async function captureAnnouncement(page: Page, button: string, url: string): Promise<void> {
+  await clickButton(page, button);
+  await reveal(page, exactText(page, '捕捉した発表出典URL: ' + url));
+  expect(new URL(page.url()).origin).toBe(origin);
+}
+
+async function captureCandidate(page: Page, date: string, url: string): Promise<void> {
+  await clickButton(page, '党公式の公認予定候補一覧を開く(' + date + '現在)');
+  await reveal(page, exactText(page, '捕捉した公認出典URL: ' + url));
+  expect(new URL(page.url()).origin).toBe(origin);
 }
 
 async function legacyStorage(page: Page): Promise<{ key: string; raw: string }> {
@@ -115,6 +152,11 @@ async function legacyStorage(page: Page): Promise<{ key: string; raw: string }> 
 
 test('旧412件キャッシュを読み、実カードの430件・出典・地域を再読込後も維持する', async ({ page }, info) => {
   const stored = await legacyStorage(page);
+  await announcementCard(page);
+  await captureAnnouncement(page, '党代表の元投稿を開く', originalAnnouncementUrl);
+  await announcementCard(page);
+  await captureAnnouncement(page, '党代表公式サイトの掲載を開く', officialAnnouncementSite);
+  await page.screenshot({ path: info.outputPath('representative-announcement.png') });
   await baselineCard(page);
   await reveal(page, label(page, /^公認掲載 430件$/), -1);
   await page.screenshot({ path: info.outputPath('legacy-cache-summary.png') });
@@ -134,10 +176,7 @@ test('旧412件キャッシュを読み、実カードの430件・出典・地�
   await reveal(page, regions, -1);
   await regions.click();
 
-  await clickButton(page, '党公式の公認予定候補一覧を開く(2026/11/04現在)');
-  await reveal(page, label(page, /^捕捉した出典URL: https:\/\/new-kokumin\.jp\/local-election-list$/));
-  expect(new URL(page.url()).origin).toBe(origin);
-  await expect(label(page, new RegExp('捕捉した出典URL: ' + sourceUrl))).toBeVisible();
+  await captureCandidate(page, '2026/11/04', sourceUrl);
   await page.screenshot({ path: info.outputPath('captured-source.png') });
 
   await clickButton(page, 'キャッシュを再読込', -1);
@@ -148,6 +187,8 @@ test('旧412件キャッシュを読み、実カードの430件・出典・地�
   await expect(label(page, /^キャッシュ読取: 1回（合成412件）$/)).toBeVisible();
   await baselineCard(page);
   expect(await legacyStorage(page)).toEqual(stored);
+  await announcementCard(page);
+  await baselineCard(page);
   await reveal(page, label(page, /^公認掲載 430件$/), -1);
   await page.screenshot({ path: info.outputPath('reloaded-legacy-cache.png') });
 });
@@ -159,6 +200,7 @@ test('検証済みでも古いEdgeは退け、新しい完全な合成Edgeへカ
   await reveal(page, label(page, /^公認掲載 430件$/), -1);
   await page.screenshot({ path: info.outputPath('verified-stale-edge.png') });
 
+  await announcementCard(page);
   await clickButton(page, '新しい合成Edgeを反映', -1);
   await expect(label(page, /^入力: 新Edge（合成431件・検証済み・2026-11-05）$/)).toBeVisible();
   for (const text of [
@@ -174,13 +216,17 @@ test('検証済みでも古いEdgeは退け、新しい完全な合成Edgeへカ
     await reveal(page, label(page, text));
   }
   await reveal(page, page.getByRole('button', {
-    name: '党公式の公認予定候補一覧を開く(2026/11/05現在)', exact: true,
+    name: /都道府県別の公認掲載件数[\s\S]*\D1都道府県(?:\D|$)/,
   }));
+  await captureCandidate(page, '2026/11/05', newerSourceUrl);
   await reveal(page, label(page, /^公認掲載 431件$/), -1);
   await page.screenshot({ path: info.outputPath('newer-complete-synthetic-edge.png') });
 
+  await announcementCard(page);
   await clickButton(page, 'キャッシュを再読込', -1);
   await expect(label(page, /^キャッシュ読取: 2回（合成412件）$/)).toBeVisible();
   await baselineCard(page);
+  await captureCandidate(page, '2026/11/04', sourceUrl);
+  await announcementCard(page);
   await legacyStorage(page);
 });

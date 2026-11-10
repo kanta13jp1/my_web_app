@@ -24,6 +24,7 @@ import '../services/local_election_share_service.dart';
 import '../services/public_memo_service.dart';
 import '../ui/features/election_victory/view_models/official_endorsement_view_model.dart';
 import '../ui/features/election_victory/widgets/official_endorsement_summary_card.dart';
+import '../ui/features/election_victory/widgets/kokumin_representative_announcement_card.dart';
 import 'landing_page.dart';
 import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
@@ -5024,6 +5025,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               color: const Color(0xFFB45309),
               icon: Icons.warning_amber_rounded,
             ),
+            const SizedBox(height: 12),
+            KokuminRepresentativeAnnouncementCard(onOpenSource: _openUrl),
             if (dpjOfficialEndorsementPrefectureCount > 0) ...[
               const SizedBox(height: 12),
               _buildOfficialEndorsementSummary(),
@@ -5635,7 +5638,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           color: const Color(0xFF1D4ED8),
         ),
         _buildSummaryCard(
-          title: '新人擁立',
+          title: '新人擁立目標',
           value: _formatInt(plan.totalNewCandidateTarget),
           subtitle: '全国合計',
           color: const Color(0xFF7C3AED),
@@ -5792,7 +5795,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               DataColumn(label: Text('月')),
               DataColumn(label: Text('現職維持累計')),
               DataColumn(label: Text('重点自治体累計')),
-              DataColumn(label: Text('新人擁立累計')),
+              DataColumn(label: Text('新人擁立目標累計')),
               DataColumn(label: Text('内定期限到来')),
               DataColumn(label: Text('内定期限累計')),
               DataColumn(label: Text('接戦区支援累計')),
@@ -6069,7 +6072,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   '重点自治体',
                   _formatInt(plan.focusMunicipalityCount),
                 ),
-                _buildMetricChip('新人擁立', _formatInt(plan.newCandidateTarget)),
+                _buildMetricChip('新人擁立目標', _formatInt(plan.newCandidateTarget)),
                 _buildMetricChip('現状当選率', plan.currentCandidateWinRateLabel),
                 _buildMetricChip(
                   '公認内定期限',
