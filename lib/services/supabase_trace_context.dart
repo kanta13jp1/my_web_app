@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:http/http.dart' as http;
@@ -7,6 +8,30 @@ typedef TraceIdGenerator = String Function(int byteLength);
 typedef ActiveSentryTraceProvider = ActiveSentryTrace? Function();
 typedef TraceCorrelationCallback = Future<void> Function(String traceId);
 typedef SupabaseTraceContextProvider = Future<SupabaseTraceContext> Function();
+
+typedef SupabaseRequestSendValidator = bool Function(http.BaseRequest request);
+
+enum _SupabaseRequestScopeKey { validator }
+
+/// Applies a local synchronous validator to this async request chain only.
+/// Store only the validator here; never put a session, bearer or body in a Zone.
+T runWithSupabaseRequestSendValidator<T>(
+  SupabaseRequestSendValidator validator,
+  T Function() action,
+) =>
+    runZoned(
+      action,
+      zoneValues: <Object, Object>{
+        _SupabaseRequestScopeKey.validator: validator,
+      },
+    );
+
+class SupabaseRequestSendRejected implements Exception {
+  const SupabaseRequestSendRejected();
+
+  @override
+  String toString() => 'login_required';
+}
 
 class SupabaseTraceContext {
   const SupabaseTraceContext({
@@ -59,6 +84,13 @@ class SupabaseTracingHttpClient extends http.BaseClient {
     _setIfAbsent(request, 'tracestate', context.tracestate);
     _setIfAbsent(request, 'baggage', context.baggage);
     _setIfAbsent(request, 'sentry-trace', context.sentryTrace);
+    final validator = Zone.current[_SupabaseRequestScopeKey.validator]
+        as SupabaseRequestSendValidator?;
+    if (validator != null && !validator(request)) {
+      throw const SupabaseRequestSendRejected();
+    }
+    // Keep validation synchronous with handoff. Cancellation after this call,
+    // including BrowserClient body finalization, is outside this guard.
     return _inner.send(request);
   }
 
