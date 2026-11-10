@@ -8587,7 +8587,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final epoch = ++_payslipPreviewEpoch;
     bool isCurrent() =>
-        mounted && _payslipPreviewEpoch == epoch &&
+        mounted &&
+        _payslipPreviewEpoch == epoch &&
         _supabase.auth.currentUser?.id == userId;
 
     void discardIfCurrent() {
@@ -8673,16 +8674,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _payslipPreview = preview;
         _payslipPreviewOwner = preview == null ? null : userId;
-        _payslipIngestionMessage = preview == null
-            ? '解析結果と登録状態を確認できません。PDFは保管済みの場合があります。'
-            : null;
+        _payslipIngestionMessage =
+            preview == null ? '解析結果と登録状態を確認できません。PDFは保管済みの場合があります。' : null;
       });
     } catch (_) {
       if (!isCurrent()) {
         return;
       }
-      const message =
-          '解析後の保存状態を確認できません。給与明細と収入を確認してください。PDFは保管済みの場合があります。';
+      const message = '解析後の保存状態を確認できません。給与明細と収入を確認してください。PDFは保管済みの場合があります。';
       setState(() {
         _payslipIngestionMessage = message;
       });

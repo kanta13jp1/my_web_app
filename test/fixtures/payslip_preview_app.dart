@@ -40,7 +40,8 @@ PayslipPreview? _decode(_Case sample) => PayslipPreview.fromResponse(
         if (sample != _Case.legacy) 'persisted': false,
         'payslip': {
           'user_id': sample == _Case.wrongOwner ? 'synthetic-other' : _owner,
-          'source_pdf_path': sample == _Case.wrongPath ? 'synthetic-owner/other.pdf' : _path,
+          'source_pdf_path':
+              sample == _Case.wrongPath ? 'synthetic-owner/other.pdf' : _path,
           'review_status': 'needs_review',
         },
         'parsed': {

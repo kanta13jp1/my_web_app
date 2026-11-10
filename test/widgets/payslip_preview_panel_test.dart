@@ -38,11 +38,26 @@ void main() {
       {...good, 'status': 'parsed'},
       {...good, 'persisted': true},
       {...good, 'success': false},
-      {...good, 'payslip': {...row, 'user_id': 'previous-owner'}},
-      {...good, 'payslip': {...row, 'source_pdf_path': 'fixture-owner/other.pdf'}},
-      {...good, 'parsed': {...parsed, 'pay_date': '2032-02-31'}},
-      {...good, 'parsed': {...parsed, 'net_amount': 0}},
-      {...good, 'parsed': {...parsed, 'net_amount': '37'}},
+      {
+        ...good,
+        'payslip': {...row, 'user_id': 'previous-owner'}
+      },
+      {
+        ...good,
+        'payslip': {...row, 'source_pdf_path': 'fixture-owner/other.pdf'}
+      },
+      {
+        ...good,
+        'parsed': {...parsed, 'pay_date': '2032-02-31'}
+      },
+      {
+        ...good,
+        'parsed': {...parsed, 'net_amount': 0}
+      },
+      {
+        ...good,
+        'parsed': {...parsed, 'net_amount': '37'}
+      },
     ]) {
       expect(_decode(response), isNull);
     }
@@ -121,7 +136,8 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
-            child: PayslipPreviewPanel(preview: _decode(_response())!, onDismiss: () {}),
+            child: PayslipPreviewPanel(
+                preview: _decode(_response())!, onDismiss: () {}),
           ),
         ),
       ),
