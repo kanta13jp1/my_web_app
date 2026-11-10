@@ -21,8 +21,11 @@ void main() {
     addTearDown(semantics.dispose);
     await tester.pumpWidget(app('2026年11月', () {}, () {}));
     expect(find.text('継続カレンダー 2026年11月'), findsOneWidget);
-    expect(find.bySemanticsLabel('前月'), findsOneWidget);
-    expect(find.bySemanticsLabel('翌月'), findsOneWidget);
+    // Tooltip text is a semantics tooltip, not a semantics label.
+    final previous = tester.getSemantics(find.byTooltip('前月'));
+    final next = tester.getSemantics(find.byTooltip('翌月'));
+    expect(previous.getSemanticsData().tooltip, '前月');
+    expect(next.getSemanticsData().tooltip, '翌月');
   });
 
   testWidgets('dispatches each month callback once without owning selection',
