@@ -212,9 +212,13 @@ void main() {
         'municipalCount': 220,
         'prefectures': <Map<String, dynamic>>[
           {
-            'prefecture': '東京', 'totalCount': 220,
-            'incumbentCount': 103, 'newcomerCount': 108, 'formerCount': 9,
-            'prefecturalCount': 0, 'municipalCount': 220,
+            'prefecture': '東京',
+            'totalCount': 220,
+            'incumbentCount': 103,
+            'newcomerCount': 108,
+            'formerCount': 9,
+            'prefecturalCount': 0,
+            'municipalCount': 220,
           },
         ],
       },
@@ -626,7 +630,13 @@ void main() {
     expect(endorsements['totalCount'], dpjOfficialEndorsementTotal);
     expect(endorsements['sourceAsOf'], dpjOfficialEndorsementSourceAsOf);
     expect(draft.metadata['fetchedAt'], snapshot.fetchedAt.toIso8601String());
-    expect(draft.metadata['snapshotDate'], snapshot.fetchedAt.toLocal().toIso8601String().substring(0, 10).replaceAll('-', '/'));
+    expect(
+        draft.metadata['snapshotDate'],
+        snapshot.fetchedAt
+            .toLocal()
+            .toIso8601String()
+            .substring(0, 10)
+            .replaceAll('-', '/'));
   });
 
   test('衆院選と参院選のmetadataは空・非空の生値を維持する', () {
@@ -656,10 +666,12 @@ void main() {
           snapshot.electionIntelligence.officialEndorsements.toJson(),
         );
         expect(
-          (draft.metadata['officialEndorsements'] as Map<String, dynamic>)['totalCount'],
+          (draft.metadata['officialEndorsements']
+              as Map<String, dynamic>)['totalCount'],
           hasRawData ? 220 : 0,
         );
-        expect(draft.metadata['fetchedAt'], snapshot.fetchedAt.toIso8601String());
+        expect(
+            draft.metadata['fetchedAt'], snapshot.fetchedAt.toIso8601String());
       }
     }
   });
@@ -667,16 +679,21 @@ void main() {
   test('古いEdgeに対して共有本文と全件metadataは同一の公式PDFを採用する', () {
     final snapshot = buildSnapshotWithLiveIntelligence(asOf: '2026-10-21');
     final plan = buildPlan();
-    final memo = service.buildDraft(snapshot: snapshot, members: snapshot.members);
+    final memo =
+        service.buildDraft(snapshot: snapshot, members: snapshot.members);
     final planMemo = service.buildPlanDashboardDraft(
-      plan: plan, snapshot: snapshot, publicDashboardUrl: 'https://example.org/plan',
+      plan: plan,
+      snapshot: snapshot,
+      publicDashboardUrl: 'https://example.org/plan',
     );
-    final expected = const OfficialEndorsementRepository().fallbackSnapshot.toJson();
+    final expected =
+        const OfficialEndorsementRepository().fallbackSnapshot.toJson();
     expect(memo.metadata['officialEndorsements'], expected);
     expect(planMemo.metadata['officialEndorsements'], expected);
     expect(planMemo.metadata['firstEndorsementTotal'], expected['totalCount']);
     expect(memo.content, contains('公認予定候補: ${expected['totalCount']}件'));
-    final share = service.buildPlanDashboardXShareBody(plan: plan, snapshot: snapshot);
+    final share =
+        service.buildPlanDashboardXShareBody(plan: plan, snapshot: snapshot);
     expect(share, contains('公認予定候補 ${expected['totalCount']}件'));
   });
 
@@ -716,7 +733,8 @@ void main() {
     expect(draft.content, contains('公認予定候補: 220件'));
     expect(draft.content, contains('1/47都道府県に掲載'));
     expect(draft.metadata['officialEndorsementTotal'], 220);
-    expect(draft.metadata['officialEndorsementAsOf'], dpjOfficialEndorsementSourceAsOf);
+    expect(draft.metadata['officialEndorsementAsOf'],
+        dpjOfficialEndorsementSourceAsOf);
     expect(snapshotDraft.content, contains('公認予定候補: 220件'));
     final share = service.buildPlanDashboardXShareBody(
       plan: buildPlan(),

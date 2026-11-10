@@ -341,16 +341,25 @@ class OfficialEndorsementSnapshot {
 
   factory OfficialEndorsementSnapshot.fromJson(Map<String, dynamic> json) {
     const regionalKeys = [
-      'totalCount', 'incumbentCount', 'newcomerCount', 'formerCount',
-      'prefecturalCount', 'municipalCount',
+      'totalCount',
+      'incumbentCount',
+      'newcomerCount',
+      'formerCount',
+      'prefecturalCount',
+      'municipalCount',
     ];
-    const nationalKeys = [...regionalKeys, 'recommendationCount', 'prefectureCount'];
+    const nationalKeys = [
+      ...regionalKeys,
+      'recommendationCount',
+      'prefectureCount'
+    ];
     bool validCounts(Map<Object?, Object?> row, List<String> keys) {
       return keys.every((key) {
         final value = row[key];
         return value is int && value >= 0;
       });
     }
+
     final rawRows = json['prefectures'];
     // Older Edge responses and cached snapshots can already contain fabricated
     // zero defaults. Only the source validator can attest those were explicit.
@@ -358,7 +367,8 @@ class OfficialEndorsementSnapshot {
         validCounts(json, nationalKeys) &&
         rawRows is List &&
         rawRows.every(
-          (row) => row is Map<Object?, Object?> && validCounts(row, regionalKeys),
+          (row) =>
+              row is Map<Object?, Object?> && validCounts(row, regionalKeys),
         );
     return OfficialEndorsementSnapshot(
       sourceCountsComplete: complete,

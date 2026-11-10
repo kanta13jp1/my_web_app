@@ -25,7 +25,8 @@ void main() {
     expect(resolved.prefectures.single.prefecture, '東京');
   });
 
-  test('retains the complete bundled snapshot until live prefecture rows arrive',
+  test(
+      'retains the complete bundled snapshot until live prefecture rows arrive',
       () {
     const incomplete = OfficialEndorsementSnapshot(
       sourceUrl: 'https://example.com/incomplete',
@@ -58,20 +59,26 @@ void main() {
     }
   });
 
-  test('an explicit zero stays usable; missing or invalid counts survive cache as incomplete', () {
+  test(
+      'an explicit zero stays usable; missing or invalid counts survive cache as incomplete',
+      () {
     final wire = _liveSnapshot.toJson();
     final known = OfficialEndorsementSnapshot.fromJson(wire);
     expect(known.recommendationCount, 0);
     expect(repository.resolve(_intelligenceWith(known)), same(known));
     final regional = _liveSnapshot.prefectures.single.toJson();
-    final missingRegional = Map<String, dynamic>.of(regional)..remove('formerCount');
+    final missingRegional = Map<String, dynamic>.of(regional)
+      ..remove('formerCount');
     final cases = [
       Map<String, dynamic>.of(wire)..remove('sourceCountsComplete'),
       Map<String, dynamic>.of(wire)..remove('recommendationCount'),
       Map<String, dynamic>.of(wire)..remove('formerCount'),
       for (final bad in [null, '0', -1, 0.5, double.infinity])
         {...wire, 'recommendationCount': bad},
-      {...wire, 'prefectures': [missingRegional]},
+      {
+        ...wire,
+        'prefectures': [missingRegional]
+      },
     ];
     for (final candidate in cases) {
       final live = OfficialEndorsementSnapshot.fromJson(candidate);

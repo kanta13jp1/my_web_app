@@ -730,10 +730,12 @@ class LocalElectionShareService {
   }) {
     final endorsementTotals = _officialEndorsements(snapshot);
     final dpjOfficialEndorsementTotal = endorsementTotals.totalCount;
-    final dpjOfficialEndorsementIncumbentTotal = endorsementTotals.incumbentCount;
+    final dpjOfficialEndorsementIncumbentTotal =
+        endorsementTotals.incumbentCount;
     final dpjOfficialEndorsementNewcomerTotal = endorsementTotals.newcomerCount;
     final dpjOfficialEndorsementFormerTotal = endorsementTotals.formerCount;
-    final dpjOfficialEndorsementPrefectureCount = endorsementTotals.prefectureCount;
+    final dpjOfficialEndorsementPrefectureCount =
+        endorsementTotals.prefectureCount;
     final cdpByPrefecture = _cdpByPrefecture(plan);
     final missing =
         prefectures.where((item) => item.currentMembers == 0).toList();
@@ -949,10 +951,12 @@ class LocalElectionShareService {
   }) {
     final endorsementTotals = _officialEndorsements(snapshot);
     final dpjOfficialEndorsementTotal = endorsementTotals.totalCount;
-    final dpjOfficialEndorsementIncumbentTotal = endorsementTotals.incumbentCount;
+    final dpjOfficialEndorsementIncumbentTotal =
+        endorsementTotals.incumbentCount;
     final dpjOfficialEndorsementNewcomerTotal = endorsementTotals.newcomerCount;
     final dpjOfficialEndorsementFormerTotal = endorsementTotals.formerCount;
-    final dpjOfficialEndorsementPrefectureCount = endorsementTotals.prefectureCount;
+    final dpjOfficialEndorsementPrefectureCount =
+        endorsementTotals.prefectureCount;
     final fetchedAt = snapshot?.fetchedAt.toLocal();
     final realityByPrefecture = <String, LocalElectionPrefectureReality>{
       if (snapshot != null)
@@ -1033,10 +1037,12 @@ class LocalElectionShareService {
   }) {
     final endorsementTotals = _officialEndorsements(snapshot);
     final dpjOfficialEndorsementTotal = endorsementTotals.totalCount;
-    final dpjOfficialEndorsementIncumbentTotal = endorsementTotals.incumbentCount;
+    final dpjOfficialEndorsementIncumbentTotal =
+        endorsementTotals.incumbentCount;
     final dpjOfficialEndorsementNewcomerTotal = endorsementTotals.newcomerCount;
     final dpjOfficialEndorsementFormerTotal = endorsementTotals.formerCount;
-    final dpjOfficialEndorsementPrefectureCount = endorsementTotals.prefectureCount;
+    final dpjOfficialEndorsementPrefectureCount =
+        endorsementTotals.prefectureCount;
     final dpjLocalElectionOfficialListAsOf = endorsementTotals.sourceAsOf;
     return <String, dynamic>{
       'type': planDashboardMetadataType,
