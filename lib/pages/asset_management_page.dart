@@ -145,6 +145,8 @@ import 'package:my_web_app/services/asset_flow_kind.dart';
 import 'package:my_web_app/services/asset_salary_spending_entries.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
+import 'package:my_web_app/services/supabase_runtime_config.dart';
+import 'package:my_web_app/services/supabase_trace_context.dart';
 import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
@@ -1094,8 +1096,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final DebtLockdownService _debtLockdownService = const DebtLockdownService();
   final DebtRepaymentPlannerService _debtRepaymentPlanner =
       const DebtRepaymentPlannerService();
-  final AssetWasteTrainingAiService _wasteTrainingAiService =
-      AssetWasteTrainingAiService();
   bool _isGeneratingDebtPlan = false;
   String? _debtPlanMarkdown;
   DateTime? _debtPlanGeneratedAt;
@@ -1232,7 +1232,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
-  String? _wasteTrainingAiReviewKey;
+  (String?, String)? _wasteTrainingAiReviewKey;
   bool _isGeneratingAssetManagementAiSummary = false;
   AssetManagementAiSummaryResult? _assetManagementAiSummaryResult;
   String? _assetManagementAiSummaryRequestKey;
@@ -2059,7 +2059,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return double.tryParse(value.toString().replaceAll(',', '').trim()) ?? 0;
   }
 
-  AssetWasteTrainingSnapshot _buildWasteTrainingSnapshot() {
+  AssetWasteTrainingSnapshot _buildWasteTrainingSnapshot(String? ownerId) {
     final lockdown = _debtLockdownSnapshot;
     final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
       _now,
@@ -2071,7 +2071,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       salaryDay: _salaryDay,
     );
     return AssetWasteTrainingSnapshotInputs.build(
-      monthFlows: _flowsForCycle(_now),
+      monthFlows: _recentFlowsOwnerId == ownerId ? _flowsForCycle(_now) : const [],
       now: _now,
       cycleStart: cycleStart,
       cycleEndExclusive: cycleEndExclusive,
@@ -2136,13 +2136,41 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<AssetWasteTrainingAiReview> _wasteTrainingReviewFor(
     AssetWasteTrainingSnapshot snapshot,
+    String? ownerId,
   ) {
-    final key = snapshot.cacheKey;
+    final key = (ownerId, snapshot.cacheKey);
     final current = _wasteTrainingAiReviewFuture;
     if (current == null || _wasteTrainingAiReviewKey != key) {
       _wasteTrainingAiReviewKey = key;
-      _wasteTrainingAiReviewFuture = _wasteTrainingAiService.generateReview(
+      final service = AssetWasteTrainingAiService(
+        invoker: (body) async {
+          if (ownerId == null ||
+              _supabase.auth.currentSession?.user.id != ownerId) {
+            throw const SupabaseRequestSendRejected();
+          }
+          final guard = AssetWasteTrainingOwnerSendGuard(
+            expectedOwnerId: ownerId,
+            supabaseOrigin: Uri.parse(
+              SupabaseRuntimeConfig.fromCompileTimeEnvironment().url,
+            ),
+            readCurrentSession: () => _supabase.auth.currentSession,
+          );
+          return runWithSupabaseRequestSendValidator(
+            guard.allows,
+            () async {
+              final response =
+                  await _supabase.functions.invoke('ai-hub', body: body);
+              final data = response.data;
+              if (data is Map<String, dynamic>) return data;
+              if (data is Map) return Map<String, dynamic>.from(data);
+              return <String, dynamic>{'success': false};
+            },
+          );
+        },
+      );
+      _wasteTrainingAiReviewFuture = service.generateReview(
         snapshot,
+        isAuthenticated: ownerId != null,
       );
     }
     return _wasteTrainingAiReviewFuture!;
@@ -10843,7 +10871,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
               if (_isSectionShown(AssetManagementSectionId.wasteAi)) ...[
                 _sectionAnchor(AssetManagementSectionId.wasteAi),
-                _buildWasteTrainingAiCard(),
+                StreamBuilder<AuthState>(
+                  stream: _supabase.auth.onAuthStateChange,
+                  builder: (context, _) =>
+                      _buildWasteTrainingAiCard(_supabase.auth.currentUser?.id),
+                ),
                 const SizedBox(height: 24),
               ],
               if (_isSectionShown(AssetManagementSectionId.deadlines)) ...[
@@ -20151,10 +20183,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildWasteTrainingAiCard() {
-    final training = _buildWasteTrainingSnapshot();
+  Widget _buildWasteTrainingAiCard(String? ownerId) {
+    final training = _buildWasteTrainingSnapshot(ownerId);
     final plan = _buildWasteTrainingPlan(training);
-    final reviewFuture = _wasteTrainingReviewFor(training);
+    final reviewFuture = _wasteTrainingReviewFor(training, ownerId);
     final wasteRatioLabel = '${(training.wasteRatio * 100).round()}%';
 
     return Card(
@@ -20255,6 +20287,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 14),
             FutureBuilder<AssetWasteTrainingAiReview>(
+              key: ValueKey(ownerId),
               future: reviewFuture,
               builder: (context, snapshot) {
                 final review = snapshot.data;
@@ -26522,25 +26555,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
         ),
         const SizedBox(height: 6),
-        SwitchListTile.adaptive(
-          key: const Key('asset_living_expense_priority_toggle'),
-          value: _livingExpensePriorityMode,
-          contentPadding: EdgeInsets.zero,
-          visualDensity: VisualDensity.compact,
-          secondary: const Icon(Icons.health_and_safety_outlined),
-          title: const Text(
-            '生活費優先モード',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        Material(
+          type: MaterialType.transparency,
+          child: SwitchListTile.adaptive(
+            key: const Key('asset_living_expense_priority_toggle'),
+            value: _livingExpensePriorityMode,
+            contentPadding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+            secondary: const Icon(Icons.health_and_safety_outlined),
+            title: const Text(
+              '生活費優先モード',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+            subtitle: const Text(
+              '食費・住居・公共料金 → 支払先への連絡 → 高金利ローンの順に並べ替えます。',
+              style: TextStyle(fontSize: 11, height: 1.4),
+            ),
+            onChanged: (enabled) {
+              setState(() {
+                _livingExpensePriorityMode = enabled;
+              });
+            },
           ),
-          subtitle: const Text(
-            '食費・住居・公共料金 → 支払先への連絡 → 高金利ローンの順に並べ替えます。',
-            style: TextStyle(fontSize: 11, height: 1.4),
-          ),
-          onChanged: (enabled) {
-            setState(() {
-              _livingExpensePriorityMode = enabled;
-            });
-          },
         ),
         const SizedBox(height: 6),
         if (actionItems.isEmpty)

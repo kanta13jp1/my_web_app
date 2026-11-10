@@ -1,6 +1,37 @@
+import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'ai_hub_chat_service.dart';
 
 typedef AssetWasteTrainingAiInvoker = AiHubChatInvoker;
+
+/// Validates only the scoped waste-review function at the transport handoff.
+/// The session and its bearer are read synchronously and never stored in a Zone.
+class AssetWasteTrainingOwnerSendGuard {
+  AssetWasteTrainingOwnerSendGuard({
+    required this.expectedOwnerId,
+    required this.supabaseOrigin,
+    required Session? Function() readCurrentSession,
+  }) : _readCurrentSession = readCurrentSession;
+
+  final String? expectedOwnerId;
+  final Uri supabaseOrigin;
+  final Session? Function() _readCurrentSession;
+
+  bool allows(http.BaseRequest request) {
+    if (request.url.path != '/functions/v1/ai-hub') return true;
+    if (request.method != 'POST' ||
+        request.url.origin != supabaseOrigin.origin) {
+      return false;
+    }
+    final session = _readCurrentSession();
+    return expectedOwnerId != null &&
+        session != null &&
+        session.user.id == expectedOwnerId &&
+        session.accessToken.isNotEmpty &&
+        request.headers['Authorization'] == 'Bearer ${session.accessToken}';
+  }
+}
 
 class AssetWasteTrainingSnapshot {
   final DateTime month;
@@ -135,14 +166,22 @@ class AssetWasteTrainingAiService {
         _now = now ?? DateTime.now;
 
   Future<AssetWasteTrainingAiReview> generateReview(
-    AssetWasteTrainingSnapshot snapshot,
-  ) async {
+    AssetWasteTrainingSnapshot snapshot, {
+    required bool isAuthenticated,
+  }) async {
     if (snapshot.recordedExpenseDays == 0) {
       return AssetWasteTrainingAiReview(
         summary: '支出記録がないため採点・浪費の有無の判定はできません。未記録日は不明です。',
         source: 'local-observation-check',
         generatedAt: _now(),
         isFallback: true,
+      );
+    }
+    if (!isAuthenticated) {
+      return AssetWasteTrainingAiReview.fallback(
+        snapshot: snapshot,
+        generatedAt: _now(),
+        reason: 'AIレビューを利用するにはログインしてください',
       );
     }
     try {
