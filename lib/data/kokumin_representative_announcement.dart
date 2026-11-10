@@ -20,10 +20,10 @@ class KokuminRepresentativeAnnouncement {
 
 const kokuminRepresentativeAnnouncement20261109 =
     KokuminRepresentativeAnnouncement(
-      publishedOn: '2026-11-09',
-      incumbentCount: 420,
-      newcomerNominationCount: 243,
-      nationwideMemberTarget: 700,
-      originalPostUrl: 'https://x.com/tamakiyuichiro/status/2119639251365294529',
-      officialSiteUrl: 'https://tamakinet.jp/',
-    );
+  publishedOn: '2026-11-09',
+  incumbentCount: 420,
+  newcomerNominationCount: 243,
+  nationwideMemberTarget: 700,
+  originalPostUrl: 'https://x.com/tamakiyuichiro/status/2119639251365294529',
+  officialSiteUrl: 'https://tamakinet.jp/',
+);
