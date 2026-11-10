@@ -135,18 +135,22 @@ class _PayslipPreviewPanelState extends State<PayslipPreviewPanel> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('給与明細の解析プレビュー',
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                '給与明細の解析プレビュー',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const Text('PDFは保管済みです。今回の解析結果・訂正候補は未登録です。'),
               const Text(
-                  'このプレビューから給与明細を登録し、給与収入へ反映する操作は未提供です。閉じると画面内の訂正候補は消え、保管済みのPDFは残ります。'),
+                'このプレビューから給与明細を登録し、給与収入へ反映する操作は未提供です。閉じると画面内の訂正候補は消え、保管済みのPDFは残ります。',
+              ),
               const Text('主要6項目をPDFと照合してください。支給日はファイル名から補完される場合があります。'),
               if (widget.preview.hasWarnings)
                 const Text('解析時に注意事項があります。各項目を原本で確認してください。'),
               for (final field in PayslipPreviewField.values) ...[
                 const SizedBox(height: 8),
                 Text(
-                    '${field.label}　解析値　${widget.preview.values[field] ?? '未読取・要確認'}'),
+                  '${field.label}　解析値　${widget.preview.values[field] ?? '未読取・要確認'}',
+                ),
                 if (_editing)
                   TextFormField(
                     key: ValueKey(field),
@@ -177,8 +181,9 @@ class _PayslipPreviewPanelState extends State<PayslipPreviewPanel> {
                     child: Text(_editing ? '訂正候補を見直す' : '訂正候補を入力'),
                   ),
                   TextButton(
-                      onPressed: widget.onDismiss,
-                      child: const Text('入力を破棄して閉じる')),
+                    onPressed: widget.onDismiss,
+                    child: const Text('入力を破棄して閉じる'),
+                  ),
                 ],
               ),
             ],

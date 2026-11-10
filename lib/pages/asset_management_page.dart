@@ -8678,7 +8678,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             preview == null ? '解析結果と登録状態を確認できません。PDFは保管済みの場合があります。' : null;
       });
     } catch (_) {
-      if (!isCurrent()) {
+      if (!mounted || !isCurrent()) {
         return;
       }
       const message = '解析後の保存状態を確認できません。給与明細と収入を確認してください。PDFは保管済みの場合があります。';
