@@ -37,6 +37,41 @@ void main() {
       }
     });
 
+    test('every emotion names a need and offers distinct trigger wording', () {
+      final allTriggers = <String>[];
+      for (final emotion in DebtGuardEmotion.values) {
+        expect(emotion.signal, contains(emotion.label));
+        expect(emotion.signal, contains('という知らせです'));
+        expect(emotion.triggers, hasLength(3));
+        for (final phrase in emotion.triggers) {
+          expect(phrase.trim(), isNotEmpty);
+          // The joiner must not appear inside a phrase, or a note built from
+          // taps could not be told apart from one phrase.
+          expect(phrase, isNot(contains('、')));
+        }
+        allTriggers.addAll(emotion.triggers);
+      }
+      expect(allTriggers.toSet(), hasLength(allTriggers.length));
+    });
+
+    test('appending a trigger phrase never duplicates or overflows', () {
+      expect(appendDebtGuardNotePhrase('', '食事を抜いた'), '食事を抜いた');
+      expect(
+        appendDebtGuardNotePhrase('  散歩に出た ', '食事を抜いた'),
+        '散歩に出た、食事を抜いた',
+      );
+      expect(
+        appendDebtGuardNotePhrase('食事を抜いた、散歩に出た', '食事を抜いた'),
+        '食事を抜いた、散歩に出た',
+      );
+      final nearlyFull = 'あ' * 498;
+      expect(appendDebtGuardNotePhrase(nearlyFull, '食事を抜いた'), nearlyFull);
+      expect(
+        appendDebtGuardNotePhrase('あ' * 493, '食事を抜いた'),
+        hasLength(500),
+      );
+    });
+
     test('unknown or missing wire names become null instead of throwing', () {
       expect(DebtGuardEmotionCopy.tryFromWireName(null), isNull);
       expect(DebtGuardEmotionCopy.tryFromWireName('rage_from_future'), isNull);

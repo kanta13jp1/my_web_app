@@ -39,16 +39,73 @@ extension DebtGuardEmotionCopy on DebtGuardEmotion {
         DebtGuardEmotion.elation => '浮かれ',
       };
 
-  /// What this feeling is usually telling the person.
+  /// What this feeling is reporting: the unmet need behind the urge.
+  ///
+  /// Phrased as a message from the feeling rather than as a fault, so naming
+  /// it points at something the person can act on instead of something to
+  /// be ashamed of.
   String get signal => switch (this) {
-        DebtGuardEmotion.irritation => '思いどおりにならないことがあり、発散先を探しています。',
-        DebtGuardEmotion.anxiety => '先の見通しが立たず、いますぐ安心できるものを探しています。',
-        DebtGuardEmotion.boredom => '刺激が足りず、手近な刺激で埋めようとしています。',
-        DebtGuardEmotion.loneliness => '人とのつながりが足りず、代わりになるものを探しています。',
-        DebtGuardEmotion.fatigue => '休息が足りず、楽に済ませる方法を探しています。',
-        DebtGuardEmotion.sadness => '気持ちが沈み、自分を慰めるものを探しています。',
-        DebtGuardEmotion.hunger => '体のエネルギーが足りず、判断が雑になりやすい状態です。',
-        DebtGuardEmotion.elation => '気が大きくなり、「今日くらいは」と財布がゆるみやすい状態です。',
+        DebtGuardEmotion.irritation => 'イライラは「大事にしているものが脅かされた」という知らせです。'
+            '何が引っかかったのかを先に確かめます。',
+        DebtGuardEmotion.anxiety => '不安は「備えが足りていない」という知らせです。'
+            '安心を買うより、分からない点を1つ減らすほうが効きます。',
+        DebtGuardEmotion.boredom => '退屈は「手応えのあることをしたい」という知らせです。'
+            '刺激を買わなくても、小さな達成で満たせます。',
+        DebtGuardEmotion.loneliness => '寂しさは「人とのつながりがほしい」という知らせです。'
+            '物や店では埋まらないので、人に向かいます。',
+        DebtGuardEmotion.fatigue => '疲れは「休みが必要」という知らせです。'
+            '楽を買う前に、まず休みます。',
+        DebtGuardEmotion.sadness => '落ち込みは「大切にしていたものがあった」という知らせです。'
+            '慰めを買う前に、何が大切だったのかを確かめます。',
+        DebtGuardEmotion.hunger => '空腹は「体のエネルギーが切れた」という知らせです。'
+            'この状態の判断は雑になりやすいので、先に食べます。',
+        DebtGuardEmotion.elation => '浮かれは「うまくいって気が大きくなっている」という知らせです。'
+            '喜びは本物ですが、支払いをするのは明日の自分です。',
+      };
+
+  /// Common situations behind this feeling, offered as one-tap wording so the
+  /// user can say what happened without composing a sentence.
+  List<String> get triggers => switch (this) {
+        DebtGuardEmotion.irritation => const [
+            '仕事や人間関係で嫌なことがあった',
+            '思いどおりに進まなかった',
+            '待たされた・邪魔された',
+          ],
+        DebtGuardEmotion.anxiety => const [
+            'お金の先行きが見えない',
+            '支払いや期限が迫っている',
+            '結果を待っている',
+          ],
+        DebtGuardEmotion.boredom => const [
+            'することがなくて手持ちぶさた',
+            'スマホを眺めていた',
+            '同じ毎日に飽きた',
+          ],
+        DebtGuardEmotion.loneliness => const [
+            '誰とも話していない',
+            '連絡が来なかった',
+            '周りが楽しそうに見えた',
+          ],
+        DebtGuardEmotion.fatigue => const [
+            '仕事が長引いた',
+            '寝不足が続いている',
+            '家事をする気力がない',
+          ],
+        DebtGuardEmotion.sadness => const [
+            '失敗して自分を責めた',
+            '返済が進まず情けなくなった',
+            '嫌なことを思い出した',
+          ],
+        DebtGuardEmotion.hunger => const [
+            '食事を抜いた',
+            '帰り道でお腹がすいた',
+            '家に食べる物がない',
+          ],
+        DebtGuardEmotion.elation => const [
+            '給料や臨時収入が入った',
+            'いいことがあった',
+            '頑張った自分へのご褒美がほしい',
+          ],
       };
 
   /// One minimum action that answers the need without spending money.
@@ -72,6 +129,22 @@ extension DebtGuardEmotionCopy on DebtGuardEmotion {
     }
     return null;
   }
+}
+
+/// Adds [phrase] to a free-text [note] for one-tap wording.
+///
+/// Returns [note] unchanged when the phrase is already there or when adding
+/// it would exceed [maxLength], so a tap can never truncate what the user
+/// typed or push the note past the database limit.
+String appendDebtGuardNotePhrase(
+  String note,
+  String phrase, {
+  int maxLength = 500,
+}) {
+  final current = note.trim();
+  if (current.contains(phrase)) return note;
+  final next = current.isEmpty ? phrase : '$current、$phrase';
+  return next.length > maxLength ? note : next;
 }
 
 /// Outcome counts for one emotion inside the insight window.

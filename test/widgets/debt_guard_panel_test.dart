@@ -119,6 +119,45 @@ void main() {
     expect(find.text('気持ち: 退屈'), findsOneWidget);
   });
 
+  testWidgets('one-tap trigger wording fills the note that gets saved', (
+    tester,
+  ) async {
+    final repository = _PanelRepository();
+    final viewModel = _viewModel(repository);
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+    await _pump(tester, viewModel, width: 430);
+
+    await tester.tap(find.byKey(const Key('debt-guard-urge-help')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('debt-guard-emotion-trigger-anxiety-0')),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const Key('debt-guard-emotion-anxiety')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('「備えが足りていない」という知らせ'), findsOneWidget);
+    final first = DebtGuardEmotion.anxiety.triggers[0];
+    final second = DebtGuardEmotion.anxiety.triggers[1];
+    await tester.tap(
+      find.byKey(const Key('debt-guard-emotion-trigger-anxiety-0')),
+    );
+    await tester.tap(
+      find.byKey(const Key('debt-guard-emotion-trigger-anxiety-1')),
+    );
+    // A second tap on the same phrase must not duplicate it.
+    await tester.tap(
+      find.byKey(const Key('debt-guard-emotion-trigger-anxiety-0')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('バグを弱めた'));
+    await tester.pumpAndSettle();
+
+    expect(repository.events.single.emotion, DebtGuardEmotion.anxiety);
+    expect(repository.events.single.note, '$first、$second');
+  });
+
   testWidgets('skipping the feeling still records the urge', (tester) async {
     final repository = _PanelRepository();
     final viewModel = _viewModel(repository);

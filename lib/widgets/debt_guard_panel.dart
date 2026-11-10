@@ -885,6 +885,32 @@ class DebtGuardPanel extends StatelessWidget {
                           key: const Key('debt-guard-emotion-signal'),
                           style: const TextStyle(height: 1.5),
                         ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'きっかけに近いものがあれば（押すとメモに入ります）',
+                          style: TextStyle(fontSize: 12, height: 1.45),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final (index, phrase)
+                                in emotion!.triggers.indexed)
+                              ActionChip(
+                                key: Key(
+                                  'debt-guard-emotion-trigger-'
+                                  '${emotion!.wireName}-$index',
+                                ),
+                                label: Text(phrase),
+                                onPressed: () => noteController.text =
+                                    appendDebtGuardNotePhrase(
+                                  noteController.text,
+                                  phrase,
+                                ),
+                              ),
+                          ],
+                        ),
                       ],
                       const SizedBox(height: 14),
                       TextField(
