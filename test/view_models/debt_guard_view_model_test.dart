@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/data/repositories/debt_guard_repository.dart';
 import 'package:my_web_app/domain/models/debt_guard_emotion.dart';
 import 'package:my_web_app/domain/models/debt_guard_rule.dart';
+import 'package:my_web_app/domain/models/debt_guard_stall_thought.dart';
 import 'package:my_web_app/view_models/debt_guard_view_model.dart';
 
 void main() {
@@ -139,6 +140,85 @@ void main() {
       },
     );
 
+    test('saves the stalling thought and feeds it into its insight', () async {
+      await viewModel.load();
+      expect(
+        viewModel.stallThoughtInsight.status,
+        DebtGuardEmotionInsightStatus.insufficient,
+      );
+
+      for (var i = 0; i < 2; i++) {
+        await viewModel.record(
+          ruleId: 'dishes_left_unwashed',
+          type: DebtGuardEventType.violation,
+          stallThought: DebtGuardStallThought.pointless,
+        );
+      }
+      await viewModel.record(
+        ruleId: 'dishes_left_unwashed',
+        type: DebtGuardEventType.requiredActionStarted,
+        stallThought: DebtGuardStallThought.pointless,
+      );
+
+      expect(
+        repository.lastDrafts.single.stallThought,
+        DebtGuardStallThought.pointless,
+      );
+      final insight = viewModel.stallThoughtInsight;
+      expect(insight.status, DebtGuardEmotionInsightStatus.ready);
+      expect(insight.stickiest!.thought, DebtGuardStallThought.pointless);
+      expect(insight.stickiest!.notStartedCount, 2);
+      // A stall-only record must not leak into the emotion trend.
+      expect(viewModel.emotionInsight.labelledCount, 0);
+    });
+
+    test('drops a stalling thought from events that are not start attempts',
+        () async {
+      await viewModel.load();
+
+      // Resisting a prohibited action is not an attempt to start something.
+      await viewModel.record(
+        ruleId: 'dishes_left_unwashed',
+        type: DebtGuardEventType.urgeResisted,
+        stallThought: DebtGuardStallThought.futile,
+      );
+      expect(repository.lastDrafts.single.stallThought, isNull);
+
+      await viewModel.record(
+        ruleId: 'dishes_left_unwashed',
+        type: DebtGuardEventType.checkIn,
+        stallThought: DebtGuardStallThought.futile,
+      );
+      expect(repository.lastDrafts.single.stallThought, isNull);
+
+      // A violation of a rule with nothing to start (e.g. gambling) is a
+      // lapse, not a failure to start.
+      await viewModel.record(
+        ruleId: 'gambling',
+        type: DebtGuardEventType.violation,
+        stallThought: DebtGuardStallThought.futile,
+      );
+      expect(repository.lastDrafts.single.stallThought, isNull);
+      expect(viewModel.stallThoughtInsight.labelledCount, 0);
+    });
+
+    test('the stall insight is unavailable when the history read fails',
+        () async {
+      repository.failLabelled = true;
+      await viewModel.load();
+
+      await viewModel.record(
+        ruleId: 'dishes_left_unwashed',
+        type: DebtGuardEventType.violation,
+        stallThought: DebtGuardStallThought.later,
+      );
+
+      expect(
+        viewModel.stallThoughtInsight.status,
+        DebtGuardEmotionInsightStatus.unavailable,
+      );
+    });
+
     test('records starting a required action as weakening the bug', () async {
       await viewModel.load();
 
@@ -202,7 +282,7 @@ class _MemoryDebtGuardRepository implements DebtGuardRepository {
     return [
       ...labelledHistory,
       for (final event in events)
-        if (event.emotion != null) event,
+        if (event.emotion != null || event.stallThought != null) event,
     ];
   }
 
@@ -224,6 +304,7 @@ class _MemoryDebtGuardRepository implements DebtGuardRepository {
           createdAt: date.add(Duration(microseconds: _nextId)),
           note: draft.note,
           emotion: draft.emotion,
+          stallThought: draft.stallThought,
         ),
     ];
     this.events.addAll(inserted);

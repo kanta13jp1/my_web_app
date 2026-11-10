@@ -6,8 +6,8 @@ class DebtGuardEventService {
 
   final SupabaseClient _client;
 
-  static const _columns =
-      'id, rule_id, event_type, note, emotion, event_date, created_at';
+  static const _columns = 'id, rule_id, event_type, note, emotion, '
+      'stall_thought, event_date, created_at';
 
   /// Upper bound for one labelled-history read. Labelling is optional and
   /// manual, so a four-week window stays far below this; the newest rows win
@@ -27,7 +27,8 @@ class DebtGuardEventService {
     return List<Map<String, dynamic>>.from(rows);
   }
 
-  /// Events that carry an emotion label on or after [sinceDate] (yyyy-MM-dd).
+  /// Events that carry an emotion or stall-thought label on or after
+  /// [sinceDate] (yyyy-MM-dd).
   Future<List<Map<String, dynamic>>> loadLabelledEvents({
     required String userId,
     required String sinceDate,
@@ -37,7 +38,7 @@ class DebtGuardEventService {
         .select(_columns)
         .eq('user_id', userId)
         .gte('event_date', sinceDate)
-        .not('emotion', 'is', null)
+        .or('emotion.not.is.null,stall_thought.not.is.null')
         .order('event_date', ascending: false)
         .order('id', ascending: false)
         .limit(labelledEventLimit);

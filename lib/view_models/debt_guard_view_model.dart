@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../data/repositories/debt_guard_repository.dart';
 import '../domain/models/debt_guard_emotion.dart';
 import '../domain/models/debt_guard_rule.dart';
+import '../domain/models/debt_guard_stall_thought.dart';
 import '../domain/use_cases/build_debt_guard_daily_snapshot_use_case.dart';
 
 typedef DebtGuardClock = DateTime Function();
@@ -40,13 +41,22 @@ class DebtGuardViewModel extends ChangeNotifier {
   bool get isSaving => _isSaving;
   String? get errorMessage => _errorMessage;
 
+  /// True only after a read of the labelled history was attempted and failed.
+  bool get emotionInsightFailed => _labelledEventsFailed;
+
+  /// Which thoughts end in not starting a required action, over the same
+  /// window and with the same "unavailable until actually read" rule.
+  DebtGuardStallThoughtInsight get stallThoughtInsight => _labelledEventsLoaded
+      ? DebtGuardStallThoughtInsight.fromEvents(
+          events: _labelledEvents,
+          now: _clock(),
+        )
+      : const DebtGuardStallThoughtInsight.unavailable();
+
   /// Which feelings precede violations over the last four weeks.
   ///
   /// Stays `unavailable` until the labelled history has actually been read,
   /// so "could not look" is never shown as "no pattern".
-  /// True only after a read of the labelled history was attempted and failed.
-  bool get emotionInsightFailed => _labelledEventsFailed;
-
   DebtGuardEmotionInsight get emotionInsight => _labelledEventsLoaded
       ? DebtGuardEmotionInsight.fromEvents(
           events: _labelledEvents,
@@ -97,8 +107,17 @@ class DebtGuardViewModel extends ChangeNotifier {
     required DebtGuardEventType type,
     String? note,
     DebtGuardEmotion? emotion,
+    DebtGuardStallThought? stallThought,
   }) async {
     if (_userId == null || _isSaving || !_isKnownRule(ruleId)) return false;
+    // A stalling thought only describes an attempt to start a required
+    // action: it started, or it did not.
+    final isStartAttempt = type == DebtGuardEventType.requiredActionStarted ||
+        (type == DebtGuardEventType.violation &&
+            debtGuardRules
+                    .firstWhere((rule) => rule.id == ruleId)
+                    .requiredAction !=
+                null);
     return _append([
       DebtGuardEventDraft(
         ruleId: ruleId,
@@ -106,6 +125,7 @@ class DebtGuardViewModel extends ChangeNotifier {
         note: note,
         // A routine check-in is not an urge and never carries a feeling.
         emotion: type == DebtGuardEventType.checkIn ? null : emotion,
+        stallThought: isStartAttempt ? stallThought : null,
       ),
     ]);
   }
@@ -141,7 +161,7 @@ class DebtGuardViewModel extends ChangeNotifier {
         _labelledEvents = <DebtGuardEvent>[
           ..._labelledEvents,
           for (final event in inserted)
-            if (event.emotion != null) event,
+            if (event.emotion != null || event.stallThought != null) event,
         ];
       }
       return true;
