@@ -69,7 +69,8 @@ export type ParsedPayslip = {
 };
 
 export type PayslipIngestionResult = {
-  status: "parsed" | "needs_review";
+  status: "preview_only";
+  persisted: false;
   payslip: UnknownRecord;
   parsed: ParsedPayslip;
   masked_text_preview: string;
@@ -286,6 +287,10 @@ export async function handleParsePayslipAction(options: {
   );
   const objectPath = storagePath.path;
   requireOwnedPayslipPath(objectPath, options.userId);
+  // Legacy callers that expect immediate persistence must fail explicitly.
+  if (options.body.preview_only !== true) {
+    throw new PayslipIngestionError("preview_only must be explicitly true", 409);
+  }
   const download = await options.storage.from(storagePath.bucket).download(
     objectPath,
   );
@@ -342,7 +347,6 @@ export async function handleParsePayslipAction(options: {
 
   parsed = applyStoragePathFallback(parsed, storagePath.fullPath, warnings);
   validateParsedPayslip(parsed);
-  const reviewStatus = parsed.confidence >= 0.72 ? "auto" : "needs_review";
   const rawTextSha256 = await sha256Hex(maskedText);
   const payslipRow = {
     user_id: options.userId,
@@ -359,41 +363,15 @@ export async function handleParsePayslipAction(options: {
     parsed_by: parsed.parsed_by,
     confidence: parsed.confidence,
     raw_text_sha256: rawTextSha256,
-    review_status: reviewStatus,
+    review_status: "needs_review",
   };
 
-  let persistedPayslip: UnknownRecord = payslipRow;
-  if (options.body.dry_run !== true) {
-    const { data, error } = await options.db.from("payslips")
-      .upsert(payslipRow, { onConflict: "user_id,pay_date,company_name" })
-      .select(
-        "id,user_id,pay_date,company_name,gross_amount,net_amount,confidence,review_status,source_pdf_path",
-      )
-      .single();
-    if (error) {
-      throw new PayslipIngestionError(
-        `payslips upsert failed: ${error.message ?? "unknown"}`,
-        500,
-      );
-    }
-    persistedPayslip = asRecord(data) ?? payslipRow;
-    await options.db.from("salary_incomes")
-      .upsert({
-        user_id: options.userId,
-        pay_date: parsed.pay_date,
-        amount: parsed.net_amount,
-        description: `Payslip: ${parsed.company_name || "salary"}`,
-        source: "payslip_auto",
-        payslip_id: persistedPayslip.id ?? null,
-        confidence: parsed.confidence,
-      }, { onConflict: "user_id,pay_date,source" })
-      .select("id")
-      .single();
-  }
-
+  // Preview only: never write to payslips or salary_incomes before confirmation.
+  // The PDF itself may already have been stored by the caller.
   return {
-    status: reviewStatus === "auto" ? "parsed" : "needs_review",
-    payslip: persistedPayslip,
+    status: "preview_only",
+    persisted: false,
+    payslip: payslipRow,
     parsed,
     masked_text_preview: maskedText.slice(0, 1200),
     warnings,

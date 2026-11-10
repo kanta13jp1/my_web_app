@@ -1,5 +1,6 @@
 import {
   handleParsePayslipAction,
+  isPayslipIngestionAction,
   PayslipIngestionError,
   inferPayslipPayDateFromPath,
   maskPayslipPii,
@@ -58,116 +59,64 @@ Deno.test("parsePayslipText extracts core money fields", () => {
   assertEquals(parsed.confidence >= 0.72, true);
 });
 
-Deno.test("handleParsePayslipAction upserts payslip and salary income", async () => {
-  const db = new FakeDb();
-  const storage = new FakeStorage(`
-    株式会社サンプル
-    支給日 2026/05/25
-    総支給額 520,000
-    差引支給額 465,108
-  `);
-
-  const result = await handleParsePayslipAction({
-    db,
-    storage,
-    userId: "user-1",
-    body: { storage_path: "user-1/20260525.pdf" },
-  });
-
-  assertEquals(result.status, "parsed");
-  assertEquals(db.upserts[0].table, "payslips");
-  assertEquals(db.upserts[0].value.net_amount, 465108);
-  assertEquals(db.upserts[1].table, "salary_incomes");
-  assertEquals(db.upserts[1].value.source, "payslip_auto");
-});
-
-Deno.test("合成: 低信頼でも給与 provider を呼ばず保存契約を維持", async () => {
-  // Process-local fake flag only; restore after the test. No PDF is used.
+Deno.test("合成: 確認前の解析は給与テーブルを書き込まない", async () => {
+  const fixtures = [
+    {
+      text: `支給日: 2026-05-25\n差引支給額: 120000`,
+      lowConfidence: true,
+    },
+    {
+      text: `会社名: 株式会社架空商事\n支給日: 2026-05-25\n総支給額: 150000\n差引支給額: 120000`,
+      lowConfidence: false,
+    },
+  ];
   const old = Deno.env.get("PAYSLIP_AI_PARSE_ENABLED");
   try {
     for (const envEnabled of [false, true]) {
       Deno.env.set("PAYSLIP_AI_PARSE_ENABLED", String(envEnabled));
       for (const action of ["payslip.parse", "parse-payslip"]) {
+        assertEquals(isPayslipIngestionAction(action), true);
         for (const clientEnabled of [false, true]) {
-          const db = new FakeDb();
-          const storage = new FakeStorage(`支給日: 2026-05-25\n差引支給額: 120000`);
-          let providerCalls = 0;
-          const result = await handleParsePayslipAction({
-            db,
-            storage,
-            userId: "synthetic-owner",
-            body: {
-              action,
-              storage_path: "synthetic-owner/fixture.txt",
-              enable_ai_fallback: clientEnabled,
-            },
-            invokeProvider: () => {
-              providerCalls++;
-              return Promise.resolve({ ok: false, error: "synthetic spy" });
-            },
-          });
-          assertEquals(result.status, "needs_review");
-        assertEquals(result.parsed.pay_date, "2026-05-25");
-        assertEquals(result.parsed.net_amount, 120000);
-        assertEquals(result.parsed.confidence < 0.72, true);
-        assertEquals(db.upserts[0].table, "payslips");
-        assertEquals(db.upserts[1].table, "salary_incomes");
-        assertEquals(db.upserts[0].value.review_status, "needs_review");
-        assertEquals(db.upserts[0].value.pay_date, "2026-05-25");
-        assertEquals(db.upserts[0].value.net_amount, 120000);
-        assertEquals(db.upserts[1].value.pay_date, "2026-05-25");
-        assertEquals(db.upserts[1].value.amount, 120000);
-        assertEquals(Object.prototype.hasOwnProperty.call(db.upserts[1].value, "review_status"), false);
-        assertEquals(providerCalls, 0);
-          assertEquals(db.upserts.length, 2);
-        }
-      }
-    }
-  } finally {
-    if (old == null) Deno.env.delete("PAYSLIP_AI_PARSE_ENABLED");
-    else Deno.env.set("PAYSLIP_AI_PARSE_ENABLED", old);
-  }
-});
-
-Deno.test("合成: 高信頼でも給与 provider を呼ばず保存契約を維持", async () => {
-  // Process-local fake flag only; restore after the test. No PDF is used.
-  const old = Deno.env.get("PAYSLIP_AI_PARSE_ENABLED");
-  try {
-    for (const envEnabled of [false, true]) {
-      Deno.env.set("PAYSLIP_AI_PARSE_ENABLED", String(envEnabled));
-      for (const action of ["payslip.parse", "parse-payslip"]) {
-        for (const clientEnabled of [false, true]) {
-          const db = new FakeDb();
-          const storage = new FakeStorage(`会社名: 株式会社架空商事\n支給日: 2026-05-25\n総支給額: 150000\n差引支給額: 120000`);
-          let providerCalls = 0;
-          const result = await handleParsePayslipAction({
-            db,
-            storage,
-            userId: "synthetic-owner",
-            body: {
-              action,
-              storage_path: "synthetic-owner/fixture.txt",
-              enable_ai_fallback: clientEnabled,
-            },
-            invokeProvider: () => {
-              providerCalls++;
-              return Promise.resolve({ ok: false, error: "synthetic spy" });
-            },
-          });
-          assertEquals(result.status, "parsed");
-        assertEquals(result.parsed.pay_date, "2026-05-25");
-        assertEquals(result.parsed.net_amount, 120000);
-        assertEquals(result.parsed.confidence < 0.72, false);
-        assertEquals(db.upserts[0].table, "payslips");
-        assertEquals(db.upserts[1].table, "salary_incomes");
-        assertEquals(db.upserts[0].value.review_status, "auto");
-        assertEquals(db.upserts[0].value.pay_date, "2026-05-25");
-        assertEquals(db.upserts[0].value.net_amount, 120000);
-        assertEquals(db.upserts[1].value.pay_date, "2026-05-25");
-        assertEquals(db.upserts[1].value.amount, 120000);
-        assertEquals(Object.prototype.hasOwnProperty.call(db.upserts[1].value, "review_status"), false);
-        assertEquals(providerCalls, 0);
-          assertEquals(db.upserts.length, 2);
+          for (const flags of [
+            {},
+            { dry_run: false },
+            { dry_run: true },
+            { confirmed: true },
+          ]) {
+            for (const fixture of fixtures) {
+              const db = new FakeDb();
+              const storage = new FakeStorage(fixture.text);
+              let providerCalls = 0;
+              const result = await handleParsePayslipAction({
+                db,
+                storage,
+                userId: "synthetic-owner",
+                body: {
+                  action,
+                  storage_path: "synthetic-owner/fixture.txt",
+                  enable_ai_fallback: clientEnabled,
+                  preview_only: true,
+                  ...flags,
+                },
+                invokeProvider: () => {
+                  providerCalls++;
+                  return Promise.resolve({ ok: false, error: "synthetic spy" });
+                },
+              });
+              assertEquals(result.status, "preview_only");
+              assertEquals(result.persisted, false);
+              assertEquals(result.parsed.pay_date, "2026-05-25");
+              assertEquals(result.parsed.net_amount, 120000);
+              assertEquals(result.parsed.confidence < 0.72, fixture.lowConfidence);
+              assertEquals(result.payslip.review_status, "needs_review");
+              assertEquals(
+                Object.prototype.hasOwnProperty.call(result.payslip, "id"),
+                false,
+              );
+              assertEquals(db.upserts.length, 0);
+              assertEquals(providerCalls, 0);
+            }
+          }
         }
       }
     }
@@ -198,6 +147,7 @@ Deno.test("合成: 必須値不足の既存エラーと provider なし", async 
               action,
               storage_path: "synthetic-owner/fixture.txt",
               enable_ai_fallback: clientEnabled,
+                  preview_only: true,
             },
             invokeProvider: () => {
               providerCalls++;
@@ -248,7 +198,7 @@ Deno.test("payslip owner boundary denies ambiguous paths before storage access",
     try {
       await handleParsePayslipAction({
         userId: sample.userId,
-        body: { storage_path: sample.path, dry_run: true },
+        body: { storage_path: sample.path, dry_run: true, preview_only: true },
         db,
         storage,
       });
@@ -285,7 +235,7 @@ Deno.test("payslip owner boundary accepts normalized current UI paths", async ()
     try {
       await handleParsePayslipAction({
         userId: "synthetic-owner",
-        body: { storage_path: path, dry_run: true },
+        body: { storage_path: path, dry_run: true, preview_only: true },
         db,
         storage,
       });
@@ -321,7 +271,7 @@ Deno.test("payslip path guard preserves safe Unicode nested keys", async () => {
     let caught: unknown;
     try {
       await handleParsePayslipAction({
-        userId: "synthetic-owner", body: { storage_path: sample.raw, dry_run: true },
+        userId: "synthetic-owner", body: { storage_path: sample.raw, dry_run: true, preview_only: true },
         db, storage,
       });
     } catch (error) {
@@ -360,7 +310,7 @@ Deno.test("payslip path guard rejects ambiguous Unicode and encodings", async ()
     let caught: unknown;
     try {
       await handleParsePayslipAction({
-        userId: "synthetic-owner", body: { storage_path: path, dry_run: true },
+        userId: "synthetic-owner", body: { storage_path: path, dry_run: true, preview_only: true },
         db, storage,
       });
     } catch (error) {
@@ -393,7 +343,7 @@ Deno.test("payslip path rejects input-edge whitespace before storage access", as
     let caught: unknown;
     try {
       await handleParsePayslipAction({
-        userId: "synthetic-owner", body: { storage_path: path, dry_run: true },
+        userId: "synthetic-owner", body: { storage_path: path, dry_run: true, preview_only: true },
         db, storage,
       });
     } catch (error) {
@@ -419,7 +369,7 @@ Deno.test("payslip path preserves internal whitespace through the SDK call", asy
   let caught: unknown;
   try {
     await handleParsePayslipAction({
-      userId: "synthetic-owner", body: { storage_path: key, dry_run: true },
+      userId: "synthetic-owner", body: { storage_path: key, dry_run: true, preview_only: true },
       db, storage,
     });
   } catch (error) {
@@ -428,6 +378,44 @@ Deno.test("payslip path preserves internal whitespace through the SDK call", asy
   assertEquals(caught instanceof PayslipIngestionError, true);
   assertEquals(keySeen, key);
   assertEquals(db.upserts.length, 0);
+});
+
+
+Deno.test("legacy or malformed callers fail before storage and provider", async () => {
+  for (const action of ["payslip.parse", "parse-payslip"]) {
+    for (const preview of [undefined, false, null, "true", 1]) {
+      const db = new FakeDb();
+      let storageCalls = 0;
+      let providerCalls = 0;
+      const storage: PayslipStorage = {
+        from: () => {
+          storageCalls++;
+          return { download: () => Promise.resolve({ data: null, error: null }) };
+        },
+      };
+      let caught: unknown;
+      try {
+        await handleParsePayslipAction({
+          db, storage, userId: "synthetic-owner",
+          body: {
+            action, storage_path: "synthetic-owner/fixture.txt",
+            ...(preview === undefined ? {} : { preview_only: preview }),
+          },
+          invokeProvider: () => {
+            providerCalls++;
+            return Promise.resolve({ ok: false, error: "synthetic spy" });
+          },
+        });
+      } catch (error) {
+        caught = error;
+      }
+      assertEquals(caught instanceof PayslipIngestionError, true);
+      assertEquals((caught as PayslipIngestionError).status, 409);
+      assertEquals(storageCalls, 0);
+      assertEquals(db.upserts.length, 0);
+      assertEquals(providerCalls, 0);
+    }
+  }
 });
 
 function assertEquals(actual: unknown, expected: unknown) {

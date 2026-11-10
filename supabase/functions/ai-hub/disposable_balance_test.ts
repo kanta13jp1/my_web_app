@@ -55,6 +55,27 @@ Deno.test("buildDisposableBalance subtracts fixed costs and debt payments", () =
   );
 });
 
+Deno.test("previous income is not the impact of checking payslip registration", () => {
+  const result = buildDisposableBalance({
+    asOfDate: "2026-05-26",
+    salaryDay: 25,
+    payslips: [{
+      pay_date: "2026-04-25",
+      net_amount: 12345,
+      company_name: "fixture",
+      confidence: 0.9,
+    }],
+    recurringExpenses: [],
+    debts: [],
+  });
+  const notice = result.required_actions.find((action) =>
+    action.action_key === "upload_current_payslip"
+  );
+  assertEquals(result.income, 12345);
+  assertEquals(notice?.amount_impact, 0);
+  assertEquals(notice?.estimated_seconds, null);
+});
+
 Deno.test("handleDisposableBalanceAction loads tables and persists run", async () => {
   const db = new FakeDb({
     payslips: [
