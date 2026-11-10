@@ -1,0 +1,52 @@
+{
+  "kind": "saved_response_policy_replay_not_independent_routed_execution",
+  "routes_ok": 12,
+  "fast_routes": 9,
+  "jev_input_tokens": 6402,
+  "jev_estimated_usd": 0.000268884,
+  "policies": {
+    "all_fast": {
+      "correct": 3,
+      "cases": 12,
+      "cli_reported_usd": 0.071186,
+      "generator_elapsed_ms_sum": 68898.706,
+      "failures": [
+        "copy",
+        "sum",
+        "extract",
+        "ledger",
+        "weighted",
+        "intervals",
+        "latest",
+        "schedule",
+        "knapsack"
+      ]
+    },
+    "all_strong": {
+      "correct": 12,
+      "cases": 12,
+      "cli_reported_usd": 0.09220055,
+      "generator_elapsed_ms_sum": 43332.316,
+      "failures": []
+    },
+    "routed": {
+      "correct": 6,
+      "cases": 12,
+      "cli_reported_usd": 0.07433245,
+      "generator_elapsed_ms_sum": 54287.826,
+      "failures": [
+        "copy",
+        "sum",
+        "extract",
+        "ledger",
+        "weighted",
+        "latest"
+      ]
+    }
+  },
+  "measurement_total_cli_reported_usd": 0.16338655,
+  "actual_models": [
+    "claude-haiku-4-5-20251001",
+    "claude-sonnet-5"
+  ]
+}
