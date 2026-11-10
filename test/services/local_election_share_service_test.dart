@@ -1,11 +1,14 @@
 // ignore_for_file: require_trailing_commas
 
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/data/dpj_official_endorsements.dart';
+import 'package:my_web_app/data/repositories/official_endorsement_repository.dart';
 import 'package:my_web_app/models/local_election_plan.dart';
 import 'package:my_web_app/models/local_election_reality.dart';
 import 'package:my_web_app/services/local_election_share_service.dart';
+import 'package:my_web_app/ui/features/election_victory/widgets/official_endorsement_scope_note.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
@@ -158,7 +161,10 @@ void main() {
     });
   }
 
-  LocalElectionRealitySnapshot buildSnapshotWithLiveIntelligence() {
+  LocalElectionRealitySnapshot buildSnapshotWithLiveIntelligence({
+    String asOf = dpjOfficialEndorsementSourceAsOf,
+    int recommendationCount = 9,
+  }) {
     final json = buildSnapshot().toJson();
     json['electionIntelligence'] = <String, dynamic>{
       'schemaVersion': 1,
@@ -193,15 +199,24 @@ void main() {
       ],
       'officialEndorsements': <String, dynamic>{
         'sourceUrl': 'https://new-kokumin.jp/local-election-list',
-        'sourceAsOf': '2026-08-06',
+        'sourceAsOf': asOf,
+        'sourceCountsComplete': true,
         'sourceDocumentSha256': List<String>.filled(64, 'b').join(),
         'totalCount': 220,
         'incumbentCount': 103,
         'newcomerCount': 108,
         'formerCount': 9,
-        'recommendationCount': 9,
-        'prefectureCount': 33,
-        'prefectures': <Map<String, dynamic>>[],
+        'recommendationCount': recommendationCount,
+        'prefectureCount': 1,
+        'prefecturalCount': 0,
+        'municipalCount': 220,
+        'prefectures': <Map<String, dynamic>>[
+          {
+            'prefecture': '東京', 'totalCount': 220,
+            'incumbentCount': 103, 'newcomerCount': 108, 'formerCount': 9,
+            'prefecturalCount': 0, 'municipalCount': 220,
+          },
+        ],
       },
     };
     return LocalElectionRealitySnapshot.fromJson(json);
@@ -596,8 +611,90 @@ void main() {
     expect(tokyo['ldpMemberGap'], 319);
   });
 
-  test('共有ノートは静的値より最新の選挙インテリジェンスを優先する', () {
-    final snapshot = buildSnapshotWithLiveIntelligence();
+  test('地方選の共有本文とmetadataは空のEdgeで同じfallbackを使う', () {
+    final snapshot = buildSnapshot();
+    final draft = service.buildDraft(
+      snapshot: snapshot,
+      members: snapshot.members,
+    );
+    final endorsements =
+        draft.metadata['officialEndorsements'] as Map<String, dynamic>;
+
+    expect(snapshot.electionIntelligence.selectedMode.wireName, 'local');
+    expect(snapshot.electionIntelligence.officialEndorsements.hasData, isFalse);
+    expect(draft.content, contains('公認予定候補: ${dpjOfficialEndorsementTotal}件'));
+    expect(endorsements['totalCount'], dpjOfficialEndorsementTotal);
+    expect(endorsements['sourceAsOf'], dpjOfficialEndorsementSourceAsOf);
+    expect(draft.metadata['fetchedAt'], snapshot.fetchedAt.toIso8601String());
+    expect(draft.metadata['snapshotDate'], snapshot.fetchedAt.toLocal().toIso8601String().substring(0, 10).replaceAll('-', '/'));
+  });
+
+  test('衆院選と参院選のmetadataは空・非空の生値を維持する', () {
+    for (final mode in <String>[
+      'house_of_representatives',
+      'house_of_councillors',
+    ]) {
+      for (final hasRawData in <bool>[false, true]) {
+        final json = buildSnapshotWithLiveIntelligence().toJson();
+        final intelligence = Map<String, dynamic>.from(
+          json['electionIntelligence'] as Map<String, dynamic>,
+        );
+        intelligence['selectedMode'] = mode;
+        if (!hasRawData) {
+          intelligence['officialEndorsements'] = <String, dynamic>{};
+        }
+        json['electionIntelligence'] = intelligence;
+        final snapshot = LocalElectionRealitySnapshot.fromJson(json);
+        final draft = service.buildDraft(
+          snapshot: snapshot,
+          members: snapshot.members,
+        );
+
+        expect(draft.metadata['electionMode'], mode);
+        expect(
+          draft.metadata['officialEndorsements'],
+          snapshot.electionIntelligence.officialEndorsements.toJson(),
+        );
+        expect(
+          (draft.metadata['officialEndorsements'] as Map<String, dynamic>)['totalCount'],
+          hasRawData ? 220 : 0,
+        );
+        expect(draft.metadata['fetchedAt'], snapshot.fetchedAt.toIso8601String());
+      }
+    }
+  });
+
+  test('古いEdgeに対して共有本文と全件metadataは同一の公式PDFを採用する', () {
+    final snapshot = buildSnapshotWithLiveIntelligence(asOf: '2026-10-21');
+    final plan = buildPlan();
+    final memo = service.buildDraft(snapshot: snapshot, members: snapshot.members);
+    final planMemo = service.buildPlanDashboardDraft(
+      plan: plan, snapshot: snapshot, publicDashboardUrl: 'https://example.org/plan',
+    );
+    final expected = const OfficialEndorsementRepository().fallbackSnapshot.toJson();
+    expect(memo.metadata['officialEndorsements'], expected);
+    expect(planMemo.metadata['officialEndorsements'], expected);
+    expect(planMemo.metadata['firstEndorsementTotal'], expected['totalCount']);
+    expect(memo.content, contains('公認予定候補: ${expected['totalCount']}件'));
+    final share = service.buildPlanDashboardXShareBody(plan: plan, snapshot: snapshot);
+    expect(share, contains('公認予定候補 ${expected['totalCount']}件'));
+  });
+
+  testWidgets('同梱値と異なる推薦数を画面の脚注・共有本文・メタデータに反映する', (tester) async {
+    const liveRecommendations = dpjOfficialRecommendationEntryCount + 1;
+    final snapshot = buildSnapshotWithLiveIntelligence(
+      recommendationCount: liveRecommendations,
+    );
+    final selected = const OfficialEndorsementRepository().resolve(
+      snapshot.electionIntelligence,
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: OfficialEndorsementScopeNote(snapshot: selected)),
+    );
+    expect(
+      find.textContaining('推薦$liveRecommendations件は公認の集計から除いて'),
+      findsOneWidget,
+    );
     final draft = service.buildPlanDashboardDraft(
       plan: buildPlan(),
       snapshot: snapshot,
@@ -609,10 +706,24 @@ void main() {
       plan: buildPlan(),
     );
 
+    for (final memo in [draft, snapshotDraft]) {
+      expect(memo.content, contains('推薦$liveRecommendations件を除く'));
+      final endorsements =
+          memo.metadata['officialEndorsements'] as Map<String, dynamic>;
+      expect(endorsements['recommendationCount'], liveRecommendations);
+    }
+
     expect(draft.content, contains('公認予定候補: 220件'));
-    expect(draft.content, contains('33/47都道府県に掲載'));
+    expect(draft.content, contains('1/47都道府県に掲載'));
     expect(draft.metadata['officialEndorsementTotal'], 220);
-    expect(draft.metadata['officialEndorsementAsOf'], '2026-08-06');
+    expect(draft.metadata['officialEndorsementAsOf'], dpjOfficialEndorsementSourceAsOf);
+    expect(snapshotDraft.content, contains('公認予定候補: 220件'));
+    final share = service.buildPlanDashboardXShareBody(
+      plan: buildPlan(),
+      snapshot: snapshot,
+    );
+    expect(share, contains('公認予定候補 220件'));
+    expect(share, contains('推薦$liveRecommendations件を除く'));
     expect(snapshotDraft.metadata['electionMode'], 'local');
     expect(snapshotDraft.metadata['partyGoals'], hasLength(1));
     expect(

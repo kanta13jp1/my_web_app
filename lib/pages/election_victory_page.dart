@@ -23,6 +23,7 @@ import '../services/growth_acquisition_service.dart';
 import '../services/local_election_share_service.dart';
 import '../services/public_memo_service.dart';
 import '../ui/features/election_victory/view_models/official_endorsement_view_model.dart';
+import '../ui/features/election_victory/widgets/official_endorsement_scope_note.dart';
 import 'landing_page.dart';
 import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
@@ -213,8 +214,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       _officialEndorsements.prefecturalCount;
   int get dpjOfficialEndorsementMunicipalTotal =>
       _officialEndorsements.municipalCount;
-  int get dpjOfficialRecommendationEntryCount =>
-      _officialEndorsements.recommendationCount;
   String get dpjLocalElectionOfficialListAsOf =>
       _officialEndorsements.sourceAsOf;
   String get dpjLocalElectionOfficialListUrl => _officialEndorsements.sourceUrl;
@@ -1018,12 +1017,14 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         : PublicMemoService.buildPublicMemoUrl(memo.id);
     final uri = _shareService.buildPlanDashboardXShareIntentUri(
       plan: plan,
+      snapshot: _realitySnapshot,
       publicUrl: publicUrl,
     );
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched) {
       final text = _shareService.buildPlanDashboardXShareText(
         plan: plan,
+        snapshot: _realitySnapshot,
         publicUrl: publicUrl,
       );
       await Clipboard.setData(ClipboardData(text: text));
@@ -5123,21 +5124,21 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
               if (incumbent > 0)
                 _buildMiniStatChip(
-                  '現職',
+                  '掲載内の現職',
                   incumbent,
                   color: const Color(0xFF0F766E),
                   suffix: '件',
                 ),
               if (newcomer > 0)
                 _buildMiniStatChip(
-                  '新人',
+                  '掲載内の新人',
                   newcomer,
                   color: const Color(0xFF7C3AED),
                   suffix: '件',
                 ),
               if (former > 0)
                 _buildMiniStatChip(
-                  '元職',
+                  '掲載内の元職',
                   former,
                   color: const Color(0xFFB45309),
                   suffix: '件',
@@ -5174,12 +5175,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ),
           ],
           const SizedBox(height: 8),
-          Text(
-            '党公式一覧で「公認」と明記された掲載行を集計しています(擁立目標とは別)。'
-            '推薦$dpjOfficialRecommendationEntryCount件は含めず、公式表の表記を独自補正していません。'
-            '${prefectural + municipal > 0 ? '都道府県議/市区町村議の内訳は選挙名から判定できた掲載行のみを集計しています。' : ''}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          OfficialEndorsementScopeNote(snapshot: _officialEndorsements),
           const SizedBox(height: 8),
           Theme(
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),

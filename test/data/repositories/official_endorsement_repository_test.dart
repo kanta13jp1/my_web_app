@@ -15,21 +15,21 @@ void main() {
     expect(snapshot.forPrefecture('佐賀県')?.newcomerCount, 1);
   });
 
-  test('complete live snapshot takes priority over the generated fallback', () {
+  test('complete live snapshot with the same source date takes priority', () {
     final resolved = repository.resolve(
       _intelligenceWith(_liveSnapshot),
     );
 
-    expect(resolved.sourceAsOf, '2026-08-11');
+    expect(resolved.sourceAsOf, dpjOfficialEndorsementSourceAsOf);
     expect(resolved.totalCount, 1);
     expect(resolved.prefectures.single.prefecture, '東京');
   });
 
-  test('non-empty live summary takes priority before prefecture rows arrive',
+  test('retains the complete bundled snapshot until live prefecture rows arrive',
       () {
     const incomplete = OfficialEndorsementSnapshot(
       sourceUrl: 'https://example.com/incomplete',
-      sourceAsOf: '2026-08-11',
+      sourceAsOf: dpjOfficialEndorsementSourceAsOf,
       sourceDocumentSha256: 'incomplete',
       totalCount: 1,
       incumbentCount: 1,
@@ -41,15 +41,82 @@ void main() {
 
     final resolved = repository.resolve(_intelligenceWith(incomplete));
 
-    expect(resolved.sourceAsOf, '2026-08-11');
-    expect(resolved.totalCount, 1);
-    expect(resolved.prefectures, isEmpty);
+    expect(resolved.sourceAsOf, dpjOfficialEndorsementSourceAsOf);
+    expect(resolved, same(repository.fallbackSnapshot));
+  });
+
+  test('rejects stale or invalid public source dates', () {
+    for (final value in ['2026-10-21', '', '2026-11-31', '2026/11/4']) {
+      final candidate = OfficialEndorsementSnapshot.fromJson({
+        ..._liveSnapshot.toJson(),
+        'sourceAsOf': value,
+      });
+      expect(
+        repository.resolve(_intelligenceWith(candidate)),
+        same(repository.fallbackSnapshot),
+      );
+    }
+  });
+
+  test('an explicit zero stays usable; missing or invalid counts survive cache as incomplete', () {
+    final wire = _liveSnapshot.toJson();
+    final known = OfficialEndorsementSnapshot.fromJson(wire);
+    expect(known.recommendationCount, 0);
+    expect(repository.resolve(_intelligenceWith(known)), same(known));
+    final regional = _liveSnapshot.prefectures.single.toJson();
+    final missingRegional = Map<String, dynamic>.of(regional)..remove('formerCount');
+    final cases = [
+      Map<String, dynamic>.of(wire)..remove('sourceCountsComplete'),
+      Map<String, dynamic>.of(wire)..remove('recommendationCount'),
+      Map<String, dynamic>.of(wire)..remove('formerCount'),
+      for (final bad in [null, '0', -1, 0.5, double.infinity])
+        {...wire, 'recommendationCount': bad},
+      {...wire, 'prefectures': [missingRegional]},
+    ];
+    for (final candidate in cases) {
+      final live = OfficialEndorsementSnapshot.fromJson(candidate);
+      final cached = OfficialEndorsementSnapshot.fromJson(live.toJson());
+      for (final snapshot in [live, cached]) {
+        expect(snapshot.sourceCountsComplete, isFalse);
+        expect(
+          repository.resolve(_intelligenceWith(snapshot)),
+          same(repository.fallbackSnapshot),
+        );
+      }
+    }
+  });
+
+  test('newer complete data replaces every field together', () {
+    final nextDay = DateTime.parse(dpjOfficialEndorsementSourceAsOf)
+        .add(const Duration(days: 1))
+        .toIso8601String()
+        .split('T')
+        .first;
+    final candidate = OfficialEndorsementSnapshot.fromJson({
+      ..._liveSnapshot.toJson(),
+      'sourceAsOf': nextDay,
+    });
+    expect(repository.resolve(_intelligenceWith(candidate)), same(candidate));
+    for (final change in [
+      {'prefectures': <Map<String, dynamic>>[]},
+      {'municipalCount': 2},
+      {'sourceDocumentSha256': ''},
+    ]) {
+      final partial = OfficialEndorsementSnapshot.fromJson({
+        ...candidate.toJson(),
+        ...change,
+      });
+      expect(
+        repository.resolve(_intelligenceWith(partial)),
+        same(repository.fallbackSnapshot),
+      );
+    }
   });
 }
 
 const _liveSnapshot = OfficialEndorsementSnapshot(
   sourceUrl: 'https://example.com/live',
-  sourceAsOf: '2026-08-11',
+  sourceAsOf: dpjOfficialEndorsementSourceAsOf,
   sourceDocumentSha256: 'live-sha',
   totalCount: 1,
   incumbentCount: 1,
@@ -57,6 +124,7 @@ const _liveSnapshot = OfficialEndorsementSnapshot(
   formerCount: 0,
   recommendationCount: 0,
   prefectureCount: 1,
+  municipalCount: 1,
   prefectures: <OfficialEndorsementPrefecture>[
     OfficialEndorsementPrefecture(
       prefecture: '東京',
@@ -64,6 +132,7 @@ const _liveSnapshot = OfficialEndorsementSnapshot(
       incumbentCount: 1,
       newcomerCount: 0,
       formerCount: 0,
+      municipalCount: 1,
     ),
   ],
 );

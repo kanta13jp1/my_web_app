@@ -6,10 +6,10 @@ import '../models/election_intelligence.dart';
 
 const String dpjOfficialEndorsementSourceUrl =
     'https://new-kokumin.jp/local-election-list';
-const String dpjOfficialEndorsementSourceAsOf = '2026-10-28';
+const String dpjOfficialEndorsementSourceAsOf = '2026-11-04';
 const String dpjOfficialEndorsementSourceDocumentSha256 =
-    '09feecb87d2cdf31b28efe7d9f3091416a922208e05e3e91583c30f4f9586d99';
-const int dpjOfficialRecommendationEntryCount = 14;
+    'edfa042bc76e2aca8863c47951eb43de701653f8d996dd6c1f4362f057025ebe';
+const int dpjOfficialRecommendationEntryCount = 15;
 
 const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     <OfficialEndorsementPrefecture>[
@@ -96,12 +96,12 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '東京',
-    totalCount: 44,
-    incumbentCount: 30,
-    newcomerCount: 12,
+    totalCount: 49,
+    incumbentCount: 31,
+    newcomerCount: 16,
     formerCount: 2,
     prefecturalCount: 0,
-    municipalCount: 44,
+    municipalCount: 49,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '神奈川',
@@ -222,21 +222,21 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '大阪',
-    totalCount: 19,
+    totalCount: 20,
     incumbentCount: 9,
-    newcomerCount: 10,
+    newcomerCount: 11,
     formerCount: 0,
     prefecturalCount: 0,
-    municipalCount: 19,
+    municipalCount: 20,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '兵庫',
-    totalCount: 13,
+    totalCount: 16,
     incumbentCount: 1,
-    newcomerCount: 10,
+    newcomerCount: 13,
     formerCount: 2,
-    prefecturalCount: 1,
-    municipalCount: 12,
+    prefecturalCount: 2,
+    municipalCount: 14,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '奈良',
@@ -264,6 +264,15 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     formerCount: 0,
     prefecturalCount: 0,
     municipalCount: 1,
+  ),
+  OfficialEndorsementPrefecture(
+    prefecture: '島根',
+    totalCount: 1,
+    incumbentCount: 1,
+    newcomerCount: 0,
+    formerCount: 0,
+    prefecturalCount: 1,
+    municipalCount: 0,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '岡山',
@@ -294,12 +303,12 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '香川',
-    totalCount: 26,
+    totalCount: 28,
     incumbentCount: 14,
-    newcomerCount: 12,
+    newcomerCount: 14,
     formerCount: 0,
-    prefecturalCount: 8,
-    municipalCount: 18,
+    prefecturalCount: 9,
+    municipalCount: 19,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '愛媛',
@@ -321,12 +330,12 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '福岡',
-    totalCount: 21,
+    totalCount: 23,
     incumbentCount: 2,
-    newcomerCount: 19,
+    newcomerCount: 21,
     formerCount: 0,
-    prefecturalCount: 8,
-    municipalCount: 13,
+    prefecturalCount: 9,
+    municipalCount: 14,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '佐賀',
@@ -384,13 +393,13 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
 ];
 
-const int dpjOfficialEndorsementTotal = 416;
-const int dpjOfficialEndorsementIncumbentTotal = 175;
-const int dpjOfficialEndorsementNewcomerTotal = 230;
+const int dpjOfficialEndorsementTotal = 430;
+const int dpjOfficialEndorsementIncumbentTotal = 177;
+const int dpjOfficialEndorsementNewcomerTotal = 242;
 const int dpjOfficialEndorsementFormerTotal = 11;
-const int dpjOfficialEndorsementPrefectureCount = 41;
-const int dpjOfficialEndorsementPrefecturalTotal = 113;
-const int dpjOfficialEndorsementMunicipalTotal = 303;
+const int dpjOfficialEndorsementPrefectureCount = 42;
+const int dpjOfficialEndorsementPrefecturalTotal = 117;
+const int dpjOfficialEndorsementMunicipalTotal = 313;
 
 OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(
   String prefecture,

@@ -1,6 +1,7 @@
 import importlib.util
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 MODULE_PATH = (
@@ -31,6 +32,56 @@ class KokuminLocalEndorsementUpdaterTest(unittest.TestCase):
         self.assertEqual(rows[2]["decision"], "recommendation")
         self.assertEqual(updater.parse_source_as_of([page]), "2026-08-05")
 
+    def test_reads_decision_column_and_separates_mayoral_rows(self):
+        text = """2026/11/4現在
+1 北海道 札幌市議会議員選挙 7 公認 名前 女 35 新 有 推薦 (2027/5/1)
+2 北海道 札幌市議会議員選挙 7 推薦 名前 男 44 現 1 有 公認 (2027/5/1)
+1 東京都 架空市長選挙 1 候補 A 女 50 新 無 推薦 (2027/5/1)
+2 東京都 架空町長選挙 1 候補 B 男 51 新 有 公認 (2027/5/1)"""
+        with patch.object(updater, "MIN_OFFICIAL_ENDORSEMENTS", 1), patch.object(updater, "MIN_PREFECTURES", 1):
+            snapshot = updater.build_snapshot(b"fixture", [text], "https://example.org/list")
+        self.assertEqual(snapshot["candidateRowCount"], 4)
+        self.assertEqual(snapshot["officialEndorsements"]["totalCount"], 1)
+        self.assertEqual(snapshot["officialEndorsements"]["incumbentCount"], 1)
+        self.assertEqual(snapshot["recommendations"], {"totalCount": 2, "mayoralCount": 1})
+        self.assertEqual(snapshot["mayoralEndorsementCount"], 1)
+
+    def test_rejects_unknown_elections_and_malformed_decisions(self):
+        for name, decision in (
+            ("衆議院議員選挙", "公認"), ("新形式選挙", "推薦"),
+            ("架空市議会議員選挙", "未定"), ("架空市議会議員選挙", "公認予定"),
+        ):
+            with self.subTest(name=name, decision=decision), self.assertRaises(ValueError):
+                updater.parse_candidate_rows([
+                    f"1 北海道 {name} 7 候補 公認 男 35 新 有 {decision} (2027/5/1)"
+                ])
+
+    def test_rejects_extra_decisions_and_invalid_date_columns(self):
+        row = "1 北海道 架空市議会議員選挙 7 公認 名前 男 35 新 有 "
+        for tail in (
+            "公認 推薦 (2027/5/1)", "推薦 公認 2027/4/25 2027/5/1",
+            "公認 (2027/5/1) 推薦", "公認 (2027/2/30)", "公認",
+        ):
+            with self.subTest(tail=tail), self.assertRaises(ValueError):
+                updater.parse_candidate_rows([row + tail])
+        for tail in ("推薦 (2027/5/1)", "推薦 （2027/5/1）", "推薦 2027/4/25 2027/5/1"):
+            with self.subTest(tail=tail):
+                self.assertEqual(updater.parse_candidate_rows([row + tail])[0]["decision"], "recommendation")
+
+    def test_source_date_accepts_one_or_two_digit_month_and_day(self):
+        for source, expected in (
+            ("2026/11/4現在", "2026-11-04"),
+            ("2026/1/4現在", "2026-01-04"),
+            ("2026/01/04現在", "2026-01-04"),
+            ("2026/1/14現在", "2026-01-14"),
+        ):
+            with self.subTest(source=source):
+                self.assertEqual(updater.parse_source_as_of([source]), expected)
+
+    def test_source_date_rejects_invalid_calendar_dates(self):
+        with self.assertRaises(ValueError):
+            updater.parse_source_as_of(["2026/2/30現在"])
+
     def test_classifies_assembly_category_from_the_election_name(self):
         page = """
 2026/08/05現在
@@ -44,7 +95,7 @@ class KokuminLocalEndorsementUpdaterTest(unittest.TestCase):
 
         self.assertEqual(
             [row["assemblyCategory"] for row in rows],
-            ["prefectural", "prefectural", "municipal", "municipal", ""],
+            ["prefectural", "prefectural", "municipal", "municipal", "mayoral"],
         )
 
     def test_build_snapshot_aggregates_prefectural_and_municipal_counts(self):
@@ -86,7 +137,7 @@ class KokuminLocalEndorsementUpdaterTest(unittest.TestCase):
                 "formerCount": 10,
                 "prefectureCount": 10,
                 "prefecturalCount": 0,
-                "municipalCount": 0,
+                "municipalCount": 60,
             },
             "prefectures": [
                 {
@@ -113,7 +164,7 @@ class KokuminLocalEndorsementUpdaterTest(unittest.TestCase):
             ],
         }
 
-        with self.assertRaisesRegex(ValueError, "Assembly breakdown exceeds total"):
+        with self.assertRaisesRegex(ValueError, "Assembly breakdown does not equal total for"):
             updater.validate_snapshot(current)
 
     def test_rejects_large_drop_from_previous_snapshot(self):
@@ -124,6 +175,7 @@ class KokuminLocalEndorsementUpdaterTest(unittest.TestCase):
                 "newcomerCount": 30,
                 "formerCount": 10,
                 "prefectureCount": 10,
+                "municipalCount": 60,
             },
             "prefectures": [
                 {
@@ -132,6 +184,7 @@ class KokuminLocalEndorsementUpdaterTest(unittest.TestCase):
                     "incumbentCount": 2,
                     "newcomerCount": 3,
                     "formerCount": 1,
+                    "municipalCount": 6,
                 }
                 for index in range(10)
             ],
