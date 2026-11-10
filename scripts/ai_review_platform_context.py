@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Read-only public platform facts for review; never approval or executable input."""
 import base64
-import datetime
 import json
 import re
 
@@ -40,7 +39,14 @@ def collect(diff, request, headers, baseline_workflow):
                         if t.get('commit', {}).get('sha') == sha
                         and isinstance(t.get('name'), str)
                         and re.fullmatch(r'v[0-9][0-9A-Za-z.+-]{0,39}', t['name'])})
-        action = request(root+'/contents/action.yml?ref='+sha, headers)
+        try:
+            action = request(root+'/contents/action.yml?ref='+sha, headers)
+        except RuntimeError as exc:
+            # Only a genuinely missing filename permits the alternate manifest.
+            # Authentication, rate limits and server failures must still fail closed.
+            if str(exc) != 'API HTTP 404':
+                raise
+            action = request(root+'/contents/action.yaml?ref='+sha, headers)
         if action.get('encoding') != 'base64' or action.get('type') != 'file':
             raise ValueError('Invalid official action manifest')
         if len(action.get('content', '')) > 200_000:
@@ -51,8 +57,7 @@ def collect(diff, request, headers, baseline_workflow):
         facts.append({'repository': repo, 'commit': sha, 'matching_tags_first_100': names,
                       'runtime': runtime.group(1) if runtime else None,
                       'source': 'https://github.com/'+repo+'/commit/'+sha})
-    return {'observed_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
-            'official_actions': facts,
+    return {'official_actions': facts,
             'baseline_review_workflow_uses_environment_deployment_false': bool(re.search(
                 r'^    environment:\n      name: [^\n]+\n      deployment: false$', baseline_workflow, re.M)),
             'limits': 'First 100 current tags only; baseline syntax is an observation, not schema validation. Metadata never proves safety or approval.'}

@@ -377,6 +377,29 @@ class PlatformContextTests(unittest.TestCase):
             gate.platform_context.collect(many, api, {}, '')
         api.assert_not_called()
 
+    def test_yaml_fallback_only_for_missing_yml(self):
+        calls = []
+        def alternate(url, headers):
+            calls.append(url)
+            if '/contents/action.yml?' in url:
+                raise RuntimeError('API HTTP 404')
+            return self.lookup(url, headers)
+        first = gate.platform_context.collect(self.diff, alternate, {}, '')
+        self.assertTrue(any('/contents/action.yaml?' in url for url in calls))
+        self.assertEqual(first['official_actions'][0]['runtime'], 'node24')
+        second = gate.platform_context.collect(self.diff, alternate, {}, '')
+        self.assertEqual(gate.platform_context.canonical(first), gate.platform_context.canonical(second))
+        for code in (401, 403, 429, 500):
+            calls.clear()
+            def failed(url, headers):
+                calls.append(url)
+                if '/contents/action.yml?' in url:
+                    raise RuntimeError('API HTTP '+str(code))
+                return self.lookup(url, headers)
+            with self.subTest(code=code), self.assertRaises(RuntimeError):
+                gate.platform_context.collect(self.diff, failed, {}, '')
+            self.assertFalse(any('/contents/action.yaml?' in url for url in calls))
+
     def test_tampered_context_rejected_before_provider(self):
         context = gate.platform_context.collect(self.diff, self.lookup, {}, '')
         state = {'platform_context': context}
