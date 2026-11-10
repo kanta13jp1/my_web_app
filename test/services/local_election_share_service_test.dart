@@ -626,7 +626,7 @@ void main() {
 
     expect(snapshot.electionIntelligence.selectedMode.wireName, 'local');
     expect(snapshot.electionIntelligence.officialEndorsements.hasData, isFalse);
-    expect(draft.content, contains('公認予定候補: ${dpjOfficialEndorsementTotal}件'));
+    expect(draft.content, contains('公認予定候補: $dpjOfficialEndorsementTotal件'));
     expect(endorsements['totalCount'], dpjOfficialEndorsementTotal);
     expect(endorsements['sourceAsOf'], dpjOfficialEndorsementSourceAsOf);
     expect(draft.metadata['fetchedAt'], snapshot.fetchedAt.toIso8601String());

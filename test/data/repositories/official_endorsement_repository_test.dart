@@ -77,7 +77,7 @@ void main() {
         {...wire, 'recommendationCount': bad},
       {
         ...wire,
-        'prefectures': [missingRegional]
+        'prefectures': [missingRegional],
       },
     ];
     for (final candidate in cases) {

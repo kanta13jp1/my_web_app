@@ -351,7 +351,7 @@ class OfficialEndorsementSnapshot {
     const nationalKeys = [
       ...regionalKeys,
       'recommendationCount',
-      'prefectureCount'
+      'prefectureCount',
     ];
     bool validCounts(Map<Object?, Object?> row, List<String> keys) {
       return keys.every((key) {
