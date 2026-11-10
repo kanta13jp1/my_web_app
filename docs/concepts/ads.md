@@ -6,8 +6,8 @@
 
 ## 統計
 
-- 総出現 source 数: **211**
-- レイヤー別: competitor: 211
+- 総出現 source 数: **213**
+- レイヤー別: competitor: 213
 
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 
@@ -16,11 +16,11 @@
 - [docs/competitor-reports/2026-11-01.md](../competitor-reports/2026-11-01.md)
 - [docs/competitor-reports/2026-08-28-patterns.md](../competitor-reports/2026-08-28-patterns.md)
 - [docs/competitor-reports/2026-10-21.md](../competitor-reports/2026-10-21.md)
+- [docs/competitor-reports/2026-11-10.md](../competitor-reports/2026-11-10.md)
 - [docs/competitor-reports/2026-08-30.md](../competitor-reports/2026-08-30.md)
 - [docs/competitor-reports/2026-10-22-patterns.md](../competitor-reports/2026-10-22-patterns.md)
 - [docs/competitor-reports/2026-10-01-patterns.md](../competitor-reports/2026-10-01-patterns.md)
 - [docs/competitor-reports/2026-09-06.md](../competitor-reports/2026-09-06.md)
-- [docs/competitor-reports/2026-10-30.md](../competitor-reports/2026-10-30.md)
 
 ## 関連
 
