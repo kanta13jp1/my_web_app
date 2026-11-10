@@ -1,0 +1,33 @@
+name: Home calendar browser regression
+on:
+  pull_request:
+    paths:
+      - .github/workflows/home-calendar-browser.yml
+      - lib/widgets/home_calendar_month_header.dart
+      - test/widgets/home_calendar_month_header_test.dart
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: home-calendar-browser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  calendar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout the reviewed head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ env.EXPECTED_HEAD_SHA }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.x'
+      - name: Verify head and run the Home month-navigation journey
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+          flutter pub get
+          xvfb-run -a flutter test --platform chrome --concurrency=1 --plain-name 'Feature: HomePage calendar can move between months' test/readme_features_test.dart
