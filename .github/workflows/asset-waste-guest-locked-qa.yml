@@ -1,0 +1,424 @@
+# Single-use synthetic ATM calendar QA with a fixed synthetic source.
+# Bound candidate; not executed locally. Root review precedes commit or push.
+name: Asset waste guest guard QA 20261111
+on:
+  push:
+    branches:
+      - codex/asset-waste-guest-guard-qa-20261111
+permissions: {}
+jobs:
+  synthetic-widget-only:
+    if: ${{ github.event_name == 'push' && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/asset-waste-guest-guard-qa-20261111' && github.event.created == true && github.event.deleted == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions: {}
+    steps:
+      - name: Allocate a private scratch directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${RUNNER_TEMP:?}" == /* && -d "$RUNNER_TEMP" && ! -L "$RUNNER_TEMP" ]]
+          base="$(realpath -e -- "$RUNNER_TEMP")"
+          [[ "$base" != / ]]
+          umask 077
+          root="$(mktemp -d -- "$base/prune-widget.XXXXXXXX")"
+          [[ "$(dirname -- "$root")" == "$base" && -d "$root" && ! -L "$root" ]]
+          [[ "$(realpath -e -- "$root")" == "$root" && "$(stat -c %u -- "$root")" == "$(id -u)" && "$(stat -c %a -- "$root")" == 700 ]]
+          mkdir "$root/home" "$root/pub-cache" "$root/tmp" "$root/sdk" "$root/source" "$root/candidate" "$root/config" "$root/cache"
+          printf 'WIDGET_ROOT=%s\n' "$root" >> "$GITHUB_ENV"
+      - name: Verify exact candidate commit and run policy checks
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          base=856d641e92eb35650556ad25d69aefdf92ce3ff2
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GITHUB_REF" == 'refs/heads/codex/asset-waste-guest-guard-qa-20261111' ]]
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" TMPDIR="$WIDGET_ROOT/tmp" PYTHONDONTWRITEBYTECODE=1 GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" init --quiet
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" -c credential.helper= fetch --no-tags --depth=2 https://github.com/kanta13jp1/my_web_app.git "$GITHUB_SHA"
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" checkout --quiet --detach FETCH_HEAD
+          cd "$WIDGET_ROOT/candidate"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git show -s --format=%P HEAD)" = "$base"
+          actual_diff="$(git diff --no-renames --name-status "$base" HEAD)"
+          expected_diff="$(printf 'A\t.github/workflows/asset-waste-guest-locked-qa.yml')"
+          [[ "$actual_diff" == "$expected_diff" ]]
+          candidate_status_before_policy="$(git status --porcelain --untracked-files=all)"
+          [[ -z "$candidate_status_before_policy" ]]
+          echo "Candidate commit: $(git rev-parse HEAD)"
+          echo "Candidate tree: $(git rev-parse 'HEAD^{tree}')"
+          sha256sum .github/workflows/asset-waste-guest-locked-qa.yml
+          # Same eleven path-scoped policy commands as base pre-commit gate.
+          # This cloud run does not claim that local Git hooks ran.
+          for policy in \
+            scripts/classify_ci_changes_test.py \
+            scripts/cloud_ci_handoff_test.py \
+            scripts/cloud_first_route_test.py \
+            scripts/generate_infrastructure_map_test.py \
+            scripts/cicd_efficiency_test.py \
+            scripts/quality_gate_test.py \
+            scripts/pre_commit_quality_gate_test.py \
+            scripts/check_github_actions_node_runtime.py \
+            scripts/check_github_actions_python_inline.py \
+            scripts/check_github_actions_status_functions.py \
+            scripts/check_github_actions_powershell_splatting.py; do
+              echo "Running $policy"
+              "${clean_env[@]}" python3 "$policy"
+          done
+          candidate_status_after_policy="$(git status --porcelain --untracked-files=all)"
+          [[ -z "$candidate_status_after_policy" ]]
+          echo 'All eleven cloud policy checks passed for candidate tree.'
+      - name: Fetch fixed public ATM test candidate without a stored token
+        shell: bash
+        run: |
+          set -euo pipefail
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" init --quiet
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" -c credential.helper= fetch --no-tags --depth=2 https://github.com/kanta13jp1/my_web_app.git 856d641e92eb35650556ad25d69aefdf92ce3ff2
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" checkout --quiet --detach FETCH_HEAD
+          cd "$WIDGET_ROOT/source"
+          test "$(git rev-parse HEAD)" = 856d641e92eb35650556ad25d69aefdf92ce3ff2
+          test "$(git rev-parse 'HEAD^{tree}')" = 8101f6c143665c68d1d1481530f0b0f9ff15a828
+          test "$(git show -s --format=%P HEAD)" = 83a8d0a34e30896ce203dcf294b7f6672d75bbc3
+          test "$(git diff --no-renames --name-status 83a8d0a34e30896ce203dcf294b7f6672d75bbc3 HEAD)" = "$(printf 'M\tlib/pages/asset_management_page.dart\nM\tlib/services/asset_waste_training_ai_service.dart\nM\tlib/services/supabase_trace_context.dart\nM\ttest/services/asset_waste_training_ai_service_test.dart\nM\ttest/services/supabase_trace_context_test.dart\nA\ttest/widgets/asset_calendar_atm_narrow_test.dart')"
+          source_status_after_checkout="$(git status --porcelain --untracked-files=all)"
+          [[ -z "$source_status_after_checkout" ]]
+          test "$(git ls-tree HEAD -- test/widgets/asset_calendar_atm_narrow_test.dart)" = "$(printf '100644 blob 4febd335473605c624a155dbe1971024628f2dc7\ttest/widgets/asset_calendar_atm_narrow_test.dart')"
+          printf '%s  %s\n' 9dff608d070a1ba843aad9ee346029255d3e0cca398eb5b5102ed47ba61a55b4 test/widgets/asset_calendar_atm_narrow_test.dart | sha256sum -c -
+          test "$(git rev-parse HEAD:lib/pages/asset_management_page.dart)" = a2b414d6729308b058bc848d0b896bb65a4e3e65
+          test "$(git rev-parse HEAD:lib/services/asset_waste_training_ai_service.dart)" = 002277bf834489a09fa57088b11c077858262b09
+          printf '%s  %s\n' 309899d80ba09b9a28a1932c49a58f23328d9db4d3dab9655b35d0cb94eefc70 lib/services/asset_waste_training_ai_service.dart | sha256sum -c -
+          test "$(git rev-parse HEAD:lib/services/supabase_trace_context.dart)" = 4d55130d45db4b2883f8465e04907e0b9cfdc1b9
+          printf '%s  %s\n' 63ac4996d7af0fe677bf6c81ff9055d4ddfecc9f9c28376f912cc3633a790d14 lib/services/supabase_trace_context.dart | sha256sum -c -
+          test "$(git rev-parse HEAD:test/services/asset_waste_training_ai_service_test.dart)" = 15702b5e9ddd331e83063e4feff4463dc0749092
+          printf '%s  %s\n' 752e32d93255fc6a7bfb1e8d301ac6d08587e6b71e4796a3d7a7dd952a81cce7 test/services/asset_waste_training_ai_service_test.dart | sha256sum -c -
+          test "$(git rev-parse HEAD:test/services/supabase_trace_context_test.dart)" = 7588c0d51ecf78d72c854ec11369060c318190b8
+          printf '%s  %s\n' c43ef64b2bfa56146243eb9ef196a4a1dba4a99d00a31f60eb02fd62bc6a0e2b test/services/supabase_trace_context_test.dart | sha256sum -c -
+          test "$(git rev-parse HEAD:lib/widgets/kgi_csf_kpi_panel.dart)" = ca7e4c59156b08b550c112145a507819d9aaae61
+          test "$(git rev-parse HEAD:web/assets/fonts/NotoSansJP-Regular.ttf)" = bca472de0abc4c845395b9bea6f1d5eaddbc3bb3
+          test "$(git rev-parse HEAD:pubspec.yaml)" = d4af874ac1845ff9fc61366b0fa5f783e6ee4975
+          test "$(git rev-parse HEAD:pubspec.lock)" = 8b12da8539a17ba14d389789c7b453ac693a910d
+          test "$(git rev-parse HEAD:analysis_options.yaml)" = 8d30beed4897a1e1909640f03a8cb2cd9f61636f
+          printf '%s  %s\n' 6e60ad1ccbb6ce0726bbb3dfd89092692bc1e83af073dd602a323da1e9b25760 web/assets/fonts/NotoSansJP-Regular.ttf | sha256sum -c -
+          printf '%s  %s\n' 219e1bd8160fb2c8dbb7648670f377e75e464d99a2b9b8b1a5f73f1b6e801800 pubspec.yaml | sha256sum -c -
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+      - name: Install exact-byte migration guard in private runner scratch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$WIDGET_ROOT/tmp/analysis_options_guard.py" <<'PYGUARD'
+          import hashlib, os, pathlib, subprocess, sys
+
+          if len(sys.argv) != 3:
+              raise SystemExit('expected private runner root and phase')
+          root = pathlib.Path(sys.argv[1])
+          phase = sys.argv[2]
+          if phase not in {'before_flutter', 'after_version', 'after_precache', 'after_pub_get', 'before_widget', 'before_service', 'after_service', 'after_atm_widget', 'final'}:
+              raise SystemExit('unknown phase')
+          if root.is_symlink() or not root.is_dir() or not root.name.startswith('prune-widget.'):
+              raise SystemExit('unsafe runner root')
+          root = root.resolve(strict=True)
+          source = root / 'source'
+          if source.is_symlink() or not source.is_dir() or source.resolve(strict=True).parent != root:
+              raise SystemExit('unsafe source')
+          path = source / 'analysis_options.yaml'
+          if path.is_symlink() or not path.is_file() or path.resolve(strict=True).parent != source:
+              raise SystemExit('unsafe analysis options path')
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
+          if head != '856d641e92eb35650556ad25d69aefdf92ce3ff2':
+              raise SystemExit('unexpected source HEAD')
+          original = subprocess.check_output(['git', 'show', 'HEAD:analysis_options.yaml'], cwd=source)
+          base_hash = 'e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342'
+          expected_hash = '1900f9a58dfe11a5f9c9ce0988ffc9d7e64f8ec23f3a7d7757f2024a23d27083'
+          if hashlib.sha256(original).hexdigest() != base_hash:
+              raise SystemExit('baseline hash mismatch')
+          anchor = b'    - ".dart_tool/**"\n'
+          addition = b'    - android/**\n    - ios/**\n    - web/**\n    - windows/**\n    - macos/**\n    - linux/**\n'
+          if original.count(anchor) != 1:
+              raise SystemExit('baseline anchor mismatch')
+          expected = original.replace(anchor, anchor + addition, 1)
+          if hashlib.sha256(expected).hexdigest() != expected_hash:
+              raise SystemExit('expected migration hash mismatch')
+          actual = path.read_bytes()
+          actual_hash = hashlib.sha256(actual).hexdigest()
+          print(f'analysis_guard phase={phase} before_sha256={actual_hash}', flush=True)
+          if actual == original:
+              print('analysis_guard action=none baseline_confirmed', flush=True)
+          elif actual == expected:
+              print('analysis_guard action=restore exact_six_line_flutter_migration', flush=True)
+              # This path is inside a private ephemeral Actions checkout, never the user workspace.
+              path.write_bytes(original)
+              if path.read_bytes() != original:
+                  raise SystemExit('restore verification failed')
+          else:
+              raise SystemExit('unexpected analysis options bytes; no restoration performed')
+          print(f'analysis_guard phase={phase} after_sha256={hashlib.sha256(path.read_bytes()).hexdigest()}', flush=True)
+          PYGUARD
+          chmod 0400 "$WIDGET_ROOT/tmp/analysis_options_guard.py"
+          printf '%s  %s\n' f1c67e37ebf9c92ac369561b9188d50f2daa1a04f82bf8ce10a6f5894cdab251 "$WIDGET_ROOT/tmp/analysis_options_guard.py" | sha256sum -c -
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" before_flutter
+      - name: Verify official SDK and locked dependencies before isolation
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" \
+            curl --fail --location --connect-timeout 15 --max-time 240 --retry 0 \
+              --output "$WIDGET_ROOT/sdk/flutter.tar.xz" \
+              https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.9-stable.tar.xz
+          printf '%s  %s\n' 25ed8c3c29d51a7353f2a944310b478af8214920639524b19c50a19e6c044c5a "$WIDGET_ROOT/sdk/flutter.tar.xz" | sha256sum -c -
+          tar -xJf "$WIDGET_ROOT/sdk/flutter.tar.xz" -C "$WIDGET_ROOT/sdk"
+          cd "$WIDGET_ROOT/source"
+          clean_env=(env -i PATH="$WIDGET_ROOT/sdk/flutter/bin:/usr/bin:/bin" HOME="$WIDGET_ROOT/home" PUB_CACHE="$WIDGET_ROOT/pub-cache" TMPDIR="$WIDGET_ROOT/tmp" XDG_CONFIG_HOME="$WIDGET_ROOT/config" XDG_CACHE_HOME="$WIDGET_ROOT/cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0)
+          "${clean_env[@]}" flutter --version --machine > "$WIDGET_ROOT/flutter-version.json"
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" after_version
+          python3 - "$WIDGET_ROOT/flutter-version.json" <<'PY'
+          import json,sys
+          with open(sys.argv[1],encoding='utf-8') as f: info=json.load(f)
+          if info.get('frameworkVersion') != '3.47.9': raise SystemExit('unexpected Flutter version')
+          PY
+          "${clean_env[@]}" dart --version 2>&1 | grep -Eq '^Dart SDK version: 3[.]13[.]7([[:space:]]|$)'
+          "${clean_env[@]}" flutter precache --linux
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" after_precache
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          "${clean_env[@]}" flutter pub get --enforce-lockfile
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" after_pub_get
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          git diff --exit-code HEAD --
+      - name: Prepare the ATM-only private validation script
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -- "$WIDGET_ROOT/tmp/atm-evidence-input"
+          [[ ! -L "$WIDGET_ROOT/tmp/atm-evidence-input" && "$(realpath -e "$WIDGET_ROOT/tmp/atm-evidence-input")" == "$WIDGET_ROOT/tmp/atm-evidence-input" && "$(stat -c %u "$WIDGET_ROOT/tmp/atm-evidence-input")" == "$(id -u)" && "$(stat -c %a "$WIDGET_ROOT/tmp/atm-evidence-input")" == 700 ]]
+          cat > "$WIDGET_ROOT/tmp/isolate-atm.sh" <<'ATM_ISOLATE'
+          set -euo pipefail
+          root=$1
+          [[ "$(id -u)" -gt 0 ]]
+          cd "$root/source"
+          python3 "$root/tmp/analysis_options_guard.py" "$root" before_widget
+          dart format --output=none --set-exit-if-changed lib/pages/asset_management_page.dart lib/widgets/kgi_csf_kpi_panel.dart lib/services/asset_waste_training_ai_service.dart lib/services/supabase_trace_context.dart test/services/asset_waste_training_ai_service_test.dart test/services/supabase_trace_context_test.dart test/widgets/asset_calendar_atm_narrow_test.dart
+          dart analyze --fatal-infos lib/pages/asset_management_page.dart
+          dart analyze --fatal-infos lib/widgets/kgi_csf_kpi_panel.dart
+          dart analyze --fatal-infos lib/services/asset_waste_training_ai_service.dart
+          dart analyze --fatal-infos lib/services/supabase_trace_context.dart
+          dart analyze --fatal-infos test/services/asset_waste_training_ai_service_test.dart
+          dart analyze --fatal-infos test/services/supabase_trace_context_test.dart
+          dart analyze --fatal-infos test/widgets/asset_calendar_atm_narrow_test.dart
+          require_one_widget() {
+            local log=$1 skip_status=0
+            tail -n 1 "$log" | grep -Eq '^[0-9]{2}:[0-9]{2} \+1: All tests passed!$'
+            grep -Eq '^[0-9]{2}:[0-9]{2} .*~[1-9][0-9]*([ :]|$)' "$log" || skip_status=$?
+            [[ "$skip_status" -eq 1 ]]
+          }
+          printf "%s  %s\n" da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          printf "%s  %s\n" 6e60ad1ccbb6ce0726bbb3dfd89092692bc1e83af073dd602a323da1e9b25760 web/assets/fonts/NotoSansJP-Regular.ttf | sha256sum -c -
+          require_unit_suite() {
+            local log=$1 skip_status=0
+            tail -n 1 "$log" | grep -Eq '^[0-9]{2}:[0-9]{2} \+36: All tests passed!$'
+            grep -Eq '^[0-9]{2}:[0-9]{2} .*~[1-9][0-9]*([ :]|$)' "$log" || skip_status=$?
+            [[ "$skip_status" -eq 1 ]]
+          }
+          python3 "$root/tmp/analysis_options_guard.py" "$root" before_service
+          unit_rc=0
+          flutter --no-color --no-version-check test --no-pub --reporter expanded test/services/asset_waste_training_ai_service_test.dart test/services/supabase_trace_context_test.dart | tee "$root/tmp/guest-service-suite.log" || unit_rc=$?
+          python3 "$root/tmp/analysis_options_guard.py" "$root" after_service || unit_rc=1
+          printf "%s  %s\n" da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c - || unit_rc=1
+          git diff --exit-code HEAD -- || unit_rc=1
+          if [[ "$unit_rc" -ne 0 ]]; then exit "$unit_rc"; fi
+          require_unit_suite "$root/tmp/guest-service-suite.log"
+          python3 "$root/tmp/analysis_options_guard.py" "$root" before_widget
+          rc=0
+          flutter --no-color --no-version-check test --no-pub --reporter expanded --plain-name "ATM transfer and fee remain readable in the 390px calendar" test/widgets/asset_calendar_atm_narrow_test.dart | tee "$root/tmp/widget-atm-narrow.log" || rc=$?
+          # Execute post-test guards even after the test or its stdout pipeline fails.
+          python3 "$root/tmp/analysis_options_guard.py" "$root" after_atm_widget || rc=1
+          printf "%s  %s\n" da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c - || rc=1
+          git diff --exit-code HEAD -- || rc=1
+          grep -Fq "ATM transfer and fee remain readable in the 390px calendar" "$root/tmp/widget-atm-narrow.log" || rc=1
+          if [[ "$rc" -ne 0 ]]; then exit "$rc"; fi
+          # Call the unchanged strict checker outside an OR-list, so errexit
+          # remains active inside the function and +0/+2 cannot fall through.
+          require_one_widget "$root/tmp/widget-atm-narrow.log"
+          ATM_ISOLATE
+          chmod 0400 "$WIDGET_ROOT/tmp/isolate-atm.sh"
+          cat > "$WIDGET_ROOT/tmp/validate_atm_evidence.py" <<'ATM_EVIDENCE'
+          """ATM-only evidence gate. Design candidate; not executed locally."""
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import stat
+          import struct
+          import sys
+          import zlib
+
+          LIMIT = 4 * 1024 * 1024
+          EXPECTED = ("atm-390-transfer.png", "atm-390-fee.png")
+          TITLE = "ATM transfer and fee remain readable in the 390px calendar"
+          FONT_SHA256 = "6e60ad1ccbb6ce0726bbb3dfd89092692bc1e83af073dd602a323da1e9b25760"
+
+          def require(condition, message):
+              if not condition:
+                  raise ValueError(message)
+
+          def clean_png(data, project):
+              require(8 <= len(data) <= LIMIT and data.startswith(b"\x89PNG\r\n\x1a\n"), "invalid PNG")
+              out = bytearray(data[:8])
+              offset = 8
+              kinds = []
+              compressed = bytearray()
+              while offset < len(data):
+                  require(offset + 12 <= len(data), "truncated PNG")
+                  length, kind = struct.unpack_from(">I4s", data, offset)
+                  end = offset + 12 + length
+                  require(end <= len(data), "invalid PNG chunk length")
+                  body = data[offset + 8:end - 4]
+                  require(zlib.crc32(kind + body) == int.from_bytes(data[end - 4:end], "big"), "PNG CRC")
+                  if kind == b"IHDR":
+                      require(not kinds and length == 13, "invalid PNG header")
+                      w, h, depth, color, compress, filt, interlace = struct.unpack(">IIBBBBB", body)
+                      require(w == 390 and 14 <= h <= 128
+                              and depth == 8 and color in (2, 6) and (compress, filt, interlace) == (0, 0, 0),
+                              "invalid ATM row screenshot dimensions or format")
+                  if kind == b"IDAT":
+                      require(kinds and kinds[-1] in (b"IHDR", b"IDAT") or b"IDAT" not in kinds, "fragmented PNG data")
+                      compressed.extend(body)
+                  if kind in (b"IHDR", b"IDAT", b"IEND"):
+                      out.extend(data[offset:end])
+                  else:
+                      require(kind[0] & 32, "unknown critical PNG chunk")
+                  kinds.append(kind)
+                  offset = end
+              require(kinds and kinds[0] == b"IHDR" and kinds[-1] == b"IEND"
+                      and kinds.count(b"IEND") == 1 and b"IDAT" in kinds and length == 0, "incomplete PNG")
+              stride = 1 + w * (3 if color == 2 else 4)
+              expected = stride * h
+              stream = zlib.decompressobj()
+              pixels = stream.decompress(bytes(compressed), expected + 1)
+              require(stream.eof and not stream.unused_data and not stream.unconsumed_tail
+                      and len(pixels) == expected and all(f <= 4 for f in pixels[::stride]),
+                      "invalid PNG image data")
+              return bytes(out)
+
+
+          def main():
+              require(len(sys.argv) == 4, "expected root and widget/final outcomes")
+              root = Path(sys.argv[1])
+              widget, final = sys.argv[2:4]
+              require(widget in ("success", "failure") and final in ("success", "failure", "cancelled", "skipped"), "invalid outcomes")
+              require(root.is_absolute() and not root.is_symlink() and root.is_dir()
+                      and root.resolve(strict=True) == root and root.name.startswith("prune-widget."), "unsafe private root")
+              inputs = root/"tmp/atm-evidence-input"
+              require(not inputs.is_symlink() and inputs.is_dir() and inputs.resolve(strict=True) == inputs
+                      and inputs.stat().st_uid == os.getuid(), "unsafe input directory")
+              members = list(inputs.iterdir())
+              require(len(members) == 2 and {p.name for p in members} == set(EXPECTED), "missing or extra ATM PNG")
+              images, captures = {}, []
+              for name in EXPECTED:
+                  path = inputs/name
+                  info = path.lstat()
+                  require(stat.S_ISREG(info.st_mode) and not path.is_symlink() and info.st_nlink == 1
+                          and info.st_uid == os.getuid() and path.resolve(strict=True) == path
+                          and 0 < info.st_size <= LIMIT, "unsafe or oversized ATM PNG")
+                  raw = path.read_bytes()
+                  require(len(raw) == info.st_size, "ATM PNG length changed")
+                  cleaned = clean_png(raw, "atm-390")
+                  require(cleaned == clean_png(cleaned, "atm-390"), "PNG sanitizer is not byte-stable")
+                  width, height = struct.unpack_from(">II", cleaned, 16)
+                  images[name] = cleaned
+                  captures.append({"name": name, "width": width, "height": height,
+                                   "sha256": hashlib.sha256(cleaned).hexdigest()})
+              log = root/"tmp/widget-atm-narrow.log"
+              require(not log.is_symlink() and log.is_file() and log.resolve(strict=True) == log
+                      and log.stat().st_size <= 1024*1024, "unsafe or missing widget log")
+              text = log.read_bytes().decode("utf-8")
+              lines = text.splitlines()
+              one_pass = bool(lines and re.fullmatch(r"[0-9]{2}:[0-9]{2} \+1: All tests passed!", lines[-1]))
+              no_skip = not re.search(r"(?m)^[0-9]{2}:[0-9]{2} .*~[1-9][0-9]*([ :]|$)", text)
+              test_passed = bool(one_pass and no_skip and TITLE in text)
+              require(widget != "success" or test_passed, "successful widget lacks exact one-case acceptance")
+              payload = {"machine_complete": bool(test_passed and widget == final == "success"),
+                         "readability_review": "pending_root_and_independent",
+                         "case": TITLE, "test_passed": test_passed, "widget": widget, "final": final,
+                         "viewport": [390, 844], "dpr": 1, "font_sha256": FONT_SHA256, "captures": captures}
+              stage = root/"evidence"
+              stage.mkdir(mode=0o700)
+              for name, image in images.items():
+                  with (stage/name).open("xb") as stream:
+                      stream.write(image)
+              with (stage/"results.json").open("x", encoding="utf-8", newline="\n") as stream:
+                  stream.write(json.dumps(payload, indent=2)+"\n")
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as stream:
+                  stream.write("validated=true\n")
+
+          if __name__ == "__main__":
+              main()
+          ATM_EVIDENCE
+          chmod 0400 "$WIDGET_ROOT/tmp/validate_atm_evidence.py"
+      - name: Run the guest guard service suite and one ATM widget in isolated namespaces
+        id: atm_widget
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          user="$(id -un)"
+          [[ "$(id -u "$user")" -gt 0 ]]
+          original_net="$(readlink /proc/self/ns/net)"
+          sudo -n true
+          env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME="$WIDGET_ROOT/home" \
+            sudo -n unshare --net --pid --fork --kill-child --mount-proc -- /bin/bash -euc '
+              ip link set lo up
+              net="$(readlink /proc/self/ns/net)"
+              [[ "$net" != "$5" ]]
+              links="$(ip -o link show)"
+              [[ "$(printf "%s\n" "$links" | wc -l)" -eq 1 ]]
+              [[ "$(printf "%s\n" "$links" | cut -d: -f2 | tr -d "[:space:]")" == lo ]]
+              routes4="$(ip -4 route show default)"
+              routes6="$(ip -6 route show default)"
+              [[ -z "$routes4" && -z "$routes6" ]]
+              runuser -u "$1" -- env -i PATH="$2/sdk/flutter/bin:/usr/bin:/bin" ATM_NARROW_EVIDENCE_DIR="$2/tmp/atm-evidence-input" HOME="$2/home" PUB_CACHE="$2/pub-cache" TMPDIR="$2/tmp" XDG_CONFIG_HOME="$2/config" XDG_CACHE_HOME="$2/cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 /bin/bash "$2/tmp/isolate-atm.sh" "$2"
+            ' isolated "$user" "$WIDGET_ROOT" unused unused "$original_net"
+      - name: Verify lock and configuration even after failure
+        id: final_guard
+        if: ${{ always() && env.WIDGET_ROOT != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$WIDGET_ROOT/source"
+          final_check_status=0
+          if ! python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" final; then
+            final_check_status=1
+          fi
+          if ! printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -; then
+            final_check_status=1
+          fi
+          if ! git diff --exit-code HEAD --; then
+            final_check_status=1
+          fi
+          if ! test "$(git rev-parse HEAD)" = 856d641e92eb35650556ad25d69aefdf92ce3ff2; then
+            final_check_status=1
+          fi
+          exit "$final_check_status"
+      - name: Validate two required synthetic ATM row PNGs
+        id: evidence
+        if: ${{ always() && (steps.atm_widget.outcome == 'success' || steps.atm_widget.outcome == 'failure') }}
+        env:
+          WIDGET_OUTCOME: ${{ steps.atm_widget.outcome }}
+          FINAL_OUTCOME: ${{ steps.final_guard.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 "$WIDGET_ROOT/tmp/validate_atm_evidence.py" "$WIDGET_ROOT" "$WIDGET_OUTCOME" "$FINAL_OUTCOME"
+      - name: Preserve verified synthetic ATM row evidence
+        if: ${{ always() && steps.evidence.outputs.validated == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: asset-atm-narrow-${{ github.run_id }}
+          path: ${{ env.WIDGET_ROOT }}/evidence/
+          include-hidden-files: false
+          if-no-files-found: error
+          retention-days: 1
