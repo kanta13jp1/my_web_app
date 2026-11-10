@@ -1,0 +1,576 @@
+# Single-use synthetic asset panel browser QA.
+name: Asset panel locked browser QA 20261111
+on:
+  push:
+    branches:
+      - codex/asset-panel-locked-browser-qa-20261111
+permissions: {}
+jobs:
+  synthetic-browser-only:
+    if: ${{ github.event_name == 'push' && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/asset-panel-locked-browser-qa-20261111' && github.event.created == true && github.event.deleted == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions: {}
+    steps:
+      - name: Allocate a private scratch directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${RUNNER_TEMP:?}" == /* && -d "$RUNNER_TEMP" && ! -L "$RUNNER_TEMP" ]]
+          base="$(realpath -e -- "$RUNNER_TEMP")"
+          [[ "$base" != / ]]
+          umask 077
+          root="$(mktemp -d -- "$base/prune-widget.XXXXXXXX")"
+          [[ "$(dirname -- "$root")" == "$base" && -d "$root" && ! -L "$root" ]]
+          [[ "$(realpath -e -- "$root")" == "$root" && "$(stat -c %u -- "$root")" == "$(id -u)" && "$(stat -c %a -- "$root")" == 700 ]]
+          mkdir "$root/home" "$root/pub-cache" "$root/tmp" "$root/sdk" "$root/source" "$root/candidate" "$root/config" "$root/cache"
+          printf 'WIDGET_ROOT=%s\n' "$root" >> "$GITHUB_ENV"
+      - name: Verify exact candidate commit and run policy checks
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          base=17ad2cac19b9a55f91a212646257b78088080974
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GITHUB_REF" == 'refs/heads/codex/asset-panel-locked-browser-qa-20261111' ]]
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" TMPDIR="$WIDGET_ROOT/tmp" PYTHONDONTWRITEBYTECODE=1 GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" init --quiet
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" -c credential.helper= fetch --no-tags --depth=2 https://github.com/kanta13jp1/my_web_app.git "$GITHUB_SHA"
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" checkout --quiet --detach FETCH_HEAD
+          cd "$WIDGET_ROOT/candidate"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git show -s --format=%P HEAD)" = "$base"
+          actual_diff="$(git diff --no-renames --name-status "$base" HEAD)"
+          expected_diff="$(printf 'A\t.github/workflows/asset-panel-locked-browser-qa.yml')"
+          [[ "$actual_diff" == "$expected_diff" ]]
+          [[ "$(git ls-tree HEAD -- .github/workflows/asset-panel-locked-browser-qa.yml | cut -d" " -f1)" == 100644 ]]
+          candidate_status_before_policy="$(git status --porcelain --untracked-files=all)"
+          [[ -z "$candidate_status_before_policy" ]]
+          echo "Candidate commit: $(git rev-parse HEAD)"
+          echo "Candidate tree: $(git rev-parse 'HEAD^{tree}')"
+          sha256sum .github/workflows/asset-panel-locked-browser-qa.yml
+          # Same eleven path-scoped policy commands as base pre-commit gate.
+          # This cloud run does not claim that local Git hooks ran.
+          for policy in \
+            scripts/classify_ci_changes_test.py \
+            scripts/cloud_ci_handoff_test.py \
+            scripts/cloud_first_route_test.py \
+            scripts/generate_infrastructure_map_test.py \
+            scripts/cicd_efficiency_test.py \
+            scripts/quality_gate_test.py \
+            scripts/pre_commit_quality_gate_test.py \
+            scripts/check_github_actions_node_runtime.py \
+            scripts/check_github_actions_python_inline.py \
+            scripts/check_github_actions_status_functions.py \
+            scripts/check_github_actions_powershell_splatting.py; do
+              echo "Running $policy"
+              "${clean_env[@]}" python3 "$policy"
+          done
+          candidate_status_after_policy="$(git status --porcelain --untracked-files=all)"
+          [[ -z "$candidate_status_after_policy" ]]
+          echo 'All eleven cloud policy checks passed for candidate tree.'
+      - name: Fetch fixed public fixture candidate without a stored token
+        shell: bash
+        run: |
+          set -euo pipefail
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" init --quiet
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" -c credential.helper= fetch --no-tags --depth=3 https://github.com/kanta13jp1/my_web_app.git 17ad2cac19b9a55f91a212646257b78088080974
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" checkout --quiet --detach FETCH_HEAD
+          cd "$WIDGET_ROOT/source"
+          test "$(git rev-parse HEAD)" = 17ad2cac19b9a55f91a212646257b78088080974
+          test "$(git rev-parse 'HEAD^{tree}')" = 9dbd52422ac8ab96f63c3aa1efbfcc53dac0a104
+          test "$(git show -s --format=%P HEAD)" = e53b22f51789fc1cddfee4f2a59b2a230e9dfcb4
+          test "$(git show -s --format=%P HEAD^)" = 2e6e5930024859743c8d828d90ff7842b9e31e16
+          test "$(git rev-parse 'e53b22f51789fc1cddfee4f2a59b2a230e9dfcb4^{tree}')" = 696199c0c2bf673cf590879bd81f5e6463ab9257
+          git diff --no-renames --name-status HEAD^ HEAD > "$WIDGET_ROOT/tmp/fixture.diff"
+          cat > "$WIDGET_ROOT/tmp/expected.diff" <<'EXPECTED'
+          A	playwright.asset-panel.config.ts
+          A	test/browser_fixtures/asset_panel.spec.ts
+          A	test/fixtures/asset_panel_app.dart
+          A	test/fixtures/asset_panel_index.html
+          A	test/fixtures/register_asset_panel_font.py
+          EXPECTED
+          cmp "$WIDGET_ROOT/tmp/expected.diff" "$WIDGET_ROOT/tmp/fixture.diff"
+          product_delta="$(git diff --no-renames --name-status HEAD^^ HEAD^)"
+          [[ "$product_delta" == "$(printf 'M\tlib/widgets/kgi_csf_kpi_panel.dart')" ]]
+          test "$(git ls-tree HEAD -- playwright.asset-panel.config.ts)" = "$(printf '100644 blob 3b553216bc70b81815f938064616949a3616f567\tplaywright.asset-panel.config.ts')"
+          printf '%s  %s\n' cc297ad9b6f71f7bd101a79455a1b6c8ca37767252dda5360f612ddd57ff76b1 playwright.asset-panel.config.ts | sha256sum -c -
+          test "$(git ls-tree HEAD -- test/browser_fixtures/asset_panel.spec.ts)" = "$(printf '100644 blob 84534b889def329e008c728985fc879ee27bd9d7\ttest/browser_fixtures/asset_panel.spec.ts')"
+          printf '%s  %s\n' 7d0805bd9c23dcaf8fd30a23301619c956fd9ebfb4f1559177782e18bf58c3df test/browser_fixtures/asset_panel.spec.ts | sha256sum -c -
+          test "$(git ls-tree HEAD -- test/fixtures/asset_panel_app.dart)" = "$(printf '100644 blob 8719129f6b9912110279392b55460764dd2b0b60\ttest/fixtures/asset_panel_app.dart')"
+          printf '%s  %s\n' 66944d43e2902c8ccd3e717d27b30dd3d3031eeb93aea25b1b0fba887ba3b525 test/fixtures/asset_panel_app.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- test/fixtures/asset_panel_index.html)" = "$(printf '100644 blob f7be06192c07f4a48c73eaf41f842d49758b355e\ttest/fixtures/asset_panel_index.html')"
+          printf '%s  %s\n' 92f058e273c9a12f078c10d8cf384915da054959ed6d950aa0a55f89b6a7813a test/fixtures/asset_panel_index.html | sha256sum -c -
+          test "$(git ls-tree HEAD -- test/fixtures/register_asset_panel_font.py)" = "$(printf '100644 blob 656c3e7baed2f0362eee90ea26c0d153967f8808\ttest/fixtures/register_asset_panel_font.py')"
+          printf '%s  %s\n' ddec7b054e8d0bec8d6efba264b64a4d2690b6d80da05ee4ee80558d44c5da4c test/fixtures/register_asset_panel_font.py | sha256sum -c -
+          test "$(git rev-parse HEAD:lib/widgets/kgi_csf_kpi_panel.dart)" = ea55ac8c688998197427f65c31c0b55b258bc46d
+          test "$(git rev-parse HEAD:lib/models/kgi_csf_kpi.dart)" = 4222e43be42eb0088d8b73ec306510ad6d91f6e6
+          test "$(git rev-parse HEAD:lib/pages/asset_management_page.dart)" = beed24eb38de1300d2a3d956ee3817a668c27644
+          test "$(git rev-parse HEAD:pubspec.yaml)" = d4af874ac1845ff9fc61366b0fa5f783e6ee4975
+          test "$(git rev-parse HEAD:pubspec.lock)" = 8b12da8539a17ba14d389789c7b453ac693a910d
+          test "$(git rev-parse HEAD:package.json)" = 6b8022f766f1bd8d601439611d608577e5cca389
+          test "$(git rev-parse HEAD:package-lock.json)" = 7157da7b681e4c441386c182a62fc018dc37e00d
+          test "$(git rev-parse HEAD:scripts/serve_spa.py)" = b7dd3d16a0bc3b6e9a4d6470b28581dcf4b5dbe2
+          test "$(git rev-parse HEAD:web/assets/fonts/NotoSans-Regular.ttf)" = d55220958aa51eeeb85048d746eabe43d2cd9f14
+          test "$(git rev-parse HEAD:web/assets/fonts/NotoSans-OFL.txt)" = c41e63c5c590e12f9b557120ad76818481c24907
+          test "$(git rev-parse HEAD:web/assets/fonts/NotoSansJP-Regular.ttf)" = bca472de0abc4c845395b9bea6f1d5eaddbc3bb3
+          source_status_after_checkout="$(git status --porcelain --untracked-files=all)"
+          [[ -z "$source_status_after_checkout" ]]
+          test "$(git rev-parse HEAD:.github/workflows/asset-payment-day-prune-browser.yml)" = 5145b4a88772343b43563f9919646bbdc9b97571
+          test "$(git rev-parse HEAD:integration_test/asset_payment_day_prune_test.dart)" = 722eaaf1759303d61978b5ee7ffb6e66c6890532
+          test "$(git rev-parse HEAD:lib/pages/asset_management_page.dart)" = beed24eb38de1300d2a3d956ee3817a668c27644
+          test "$(git rev-parse HEAD:test/widgets/asset_management_page_smoke_test.dart)" = 012316bb12003e8fb6e5760d5ec305f11d0c5219
+          test "$(git rev-parse HEAD:test_driver/asset_payment_day_prune.dart)" = a538f114e045e51838381f20da4d133a18aa6399
+          test "$(git rev-parse HEAD:lib/widgets/kgi_csf_kpi_panel.dart)" = ea55ac8c688998197427f65c31c0b55b258bc46d
+          test "$(git rev-parse HEAD:test/widgets/kgi_csf_kpi_panel_test.dart)" = 38a200e3cc5717ac55397df38a5752fe20965d10
+          test "$(git rev-parse HEAD:pubspec.yaml)" = d4af874ac1845ff9fc61366b0fa5f783e6ee4975
+          test "$(git rev-parse HEAD:pubspec.lock)" = 8b12da8539a17ba14d389789c7b453ac693a910d
+          test "$(git rev-parse HEAD:analysis_options.yaml)" = 8d30beed4897a1e1909640f03a8cb2cd9f61636f
+          printf '%s  %s\n' 219e1bd8160fb2c8dbb7648670f377e75e464d99a2b9b8b1a5f73f1b6e801800 pubspec.yaml | sha256sum -c -
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          test "$(git rev-parse HEAD:package.json)" = 6b8022f766f1bd8d601439611d608577e5cca389
+          printf '%s  %s\n' 1a1b756478c3e2dc173eccc939ad4d5b0b6835933db10e443ce124fa781b52b2 package.json | sha256sum -c -
+          test "$(git rev-parse HEAD:package-lock.json)" = 7157da7b681e4c441386c182a62fc018dc37e00d
+          printf '%s  %s\n' 5f0e66e2e1c75260278c0a17b5149f910983813e8a9f1ff02c6037c95cf81cee package-lock.json | sha256sum -c -
+          test "$(git rev-parse HEAD:web/assets/fonts/NotoSans-Regular.ttf)" = d55220958aa51eeeb85048d746eabe43d2cd9f14
+          test "$(git rev-parse HEAD:web/assets/fonts/NotoSans-OFL.txt)" = c41e63c5c590e12f9b557120ad76818481c24907
+      - name: Install exact-byte migration guard in private runner scratch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$WIDGET_ROOT/tmp/analysis_options_guard.py" <<'PYGUARD'
+          import hashlib, os, pathlib, subprocess, sys
+
+          if len(sys.argv) != 3:
+              raise SystemExit('expected private runner root and phase')
+          root = pathlib.Path(sys.argv[1])
+          phase = sys.argv[2]
+          if phase not in {'before_flutter', 'after_version', 'after_precache', 'after_pub_get', 'before_widget', 'after_manual_widget', 'after_boot_widget', 'after_panel_widget', 'final'}:
+              raise SystemExit('unknown phase')
+          if root.is_symlink() or not root.is_dir() or not root.name.startswith('prune-widget.'):
+              raise SystemExit('unsafe runner root')
+          root = root.resolve(strict=True)
+          source = root / 'source'
+          if source.is_symlink() or not source.is_dir() or source.resolve(strict=True).parent != root:
+              raise SystemExit('unsafe source')
+          path = source / 'analysis_options.yaml'
+          if path.is_symlink() or not path.is_file() or path.resolve(strict=True).parent != source:
+              raise SystemExit('unsafe analysis options path')
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
+          if head != 'e53b22f51789fc1cddfee4f2a59b2a230e9dfcb4':
+              raise SystemExit('unexpected source HEAD')
+          original = subprocess.check_output(['git', 'show', 'HEAD:analysis_options.yaml'], cwd=source)
+          base_hash = 'e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342'
+          expected_hash = '1900f9a58dfe11a5f9c9ce0988ffc9d7e64f8ec23f3a7d7757f2024a23d27083'
+          if hashlib.sha256(original).hexdigest() != base_hash:
+              raise SystemExit('baseline hash mismatch')
+          anchor = b'    - ".dart_tool/**"\n'
+          addition = b'    - android/**\n    - ios/**\n    - web/**\n    - windows/**\n    - macos/**\n    - linux/**\n'
+          if original.count(anchor) != 1:
+              raise SystemExit('baseline anchor mismatch')
+          expected = original.replace(anchor, anchor + addition, 1)
+          if hashlib.sha256(expected).hexdigest() != expected_hash:
+              raise SystemExit('expected migration hash mismatch')
+          actual = path.read_bytes()
+          actual_hash = hashlib.sha256(actual).hexdigest()
+          print(f'analysis_guard phase={phase} before_sha256={actual_hash}', flush=True)
+          if actual == original:
+              print('analysis_guard action=none baseline_confirmed', flush=True)
+          elif actual == expected:
+              print('analysis_guard action=restore exact_six_line_flutter_migration', flush=True)
+              # This path is inside a private ephemeral Actions checkout, never the user workspace.
+              path.write_bytes(original)
+              if path.read_bytes() != original:
+                  raise SystemExit('restore verification failed')
+          else:
+              raise SystemExit('unexpected analysis options bytes; no restoration performed')
+          print(f'analysis_guard phase={phase} after_sha256={hashlib.sha256(path.read_bytes()).hexdigest()}', flush=True)
+          PYGUARD
+          chmod 0400 "$WIDGET_ROOT/tmp/analysis_options_guard.py"
+          printf '%s  %s\n' 4f397e6836548920b5ec2c7209d981781d8db74e8fc0e15c18db61ec637a1795 "$WIDGET_ROOT/tmp/analysis_options_guard.py" | sha256sum -c -
+          # Verify the P2-bound guard and derive the F2 guard by exact replacements.
+          python3 - "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT/tmp/browser_guard.py" <<'PYBIND'
+          from pathlib import Path
+          import sys
+          guard = Path(sys.argv[1]).read_bytes()
+          for old, new in (
+              (b"e53b22f51789fc1cddfee4f2a59b2a230e9dfcb4", b"17ad2cac19b9a55f91a212646257b78088080974"),
+              (b"'after_panel_widget', 'final'", b"'after_panel_widget', 'before_build', 'after_build', 'after_browser', 'final'"),
+          ):
+              if guard.count(old) != 1:
+                  raise SystemExit('unexpected guard source')
+              guard = guard.replace(old, new)
+          with Path(sys.argv[2]).open('xb') as target:
+              target.write(guard)
+          PYBIND
+          chmod 0400 "$WIDGET_ROOT/tmp/browser_guard.py"
+          printf '%s  %s\n' 655f91843170bf3fb5e939f7d40d36a570bf9f0c8f34119a75a5998543fc489c "$WIDGET_ROOT/tmp/browser_guard.py" | sha256sum -c -
+          python3 "$WIDGET_ROOT/tmp/browser_guard.py" "$WIDGET_ROOT" before_flutter
+      - name: Verify official SDK and locked dependencies before isolation
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" \
+            curl --fail --location --connect-timeout 15 --max-time 240 --retry 0 \
+              --output "$WIDGET_ROOT/sdk/flutter.tar.xz" \
+              https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.9-stable.tar.xz
+          printf '%s  %s\n' 25ed8c3c29d51a7353f2a944310b478af8214920639524b19c50a19e6c044c5a "$WIDGET_ROOT/sdk/flutter.tar.xz" | sha256sum -c -
+          tar -xJf "$WIDGET_ROOT/sdk/flutter.tar.xz" -C "$WIDGET_ROOT/sdk"
+          cd "$WIDGET_ROOT/source"
+          clean_env=(env -i PATH="$WIDGET_ROOT/sdk/flutter/bin:/usr/bin:/bin" HOME="$WIDGET_ROOT/home" PUB_CACHE="$WIDGET_ROOT/pub-cache" TMPDIR="$WIDGET_ROOT/tmp" XDG_CONFIG_HOME="$WIDGET_ROOT/config" XDG_CACHE_HOME="$WIDGET_ROOT/cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0)
+          "${clean_env[@]}" flutter --version --machine > "$WIDGET_ROOT/flutter-version.json"
+          python3 "$WIDGET_ROOT/tmp/browser_guard.py" "$WIDGET_ROOT" after_version
+          python3 - "$WIDGET_ROOT/flutter-version.json" <<'PY'
+          import json,sys
+          with open(sys.argv[1],encoding='utf-8') as f: info=json.load(f)
+          if info.get('frameworkVersion') != '3.47.9': raise SystemExit('unexpected Flutter version')
+          PY
+          "${clean_env[@]}" dart --version 2>&1 | grep -Eq '^Dart SDK version: 3[.]13[.]7([[:space:]]|$)'
+          "${clean_env[@]}" flutter precache --web
+          python3 "$WIDGET_ROOT/tmp/browser_guard.py" "$WIDGET_ROOT" after_precache
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          "${clean_env[@]}" flutter pub get --enforce-lockfile
+          python3 "$WIDGET_ROOT/tmp/browser_guard.py" "$WIDGET_ROOT" after_pub_get
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          git diff --exit-code HEAD --
+      - name: Provision pinned browser dependencies in private scratch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$WIDGET_ROOT/source"
+          # Bind verified Node archive and npm version; root/node/bin contains only reviewed runtime.
+          mkdir "$WIDGET_ROOT/node"
+          archive="$WIDGET_ROOT/tmp/node-v22.23.4-linux-x64.tar.xz"
+          env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" curl --fail --location --connect-timeout 15 --max-time 180 --retry 0 --output "$archive" https://nodejs.org/dist/v22.23.4/node-v22.23.4-linux-x64.tar.xz
+          printf '%s  %s\n' 1805bcd35e6815559bd2eb97db438d3fdb0eb3a5e6a977b7c1badca76337e9ce "$archive" | sha256sum -c -
+          tar --extract --xz --file="$archive" --directory="$WIDGET_ROOT/node" --strip-components=1 --no-same-owner
+          clean_env=(env -i PATH="$WIDGET_ROOT/node/bin:/usr/bin:/bin" HOME="$WIDGET_ROOT/home" TMPDIR="$WIDGET_ROOT/tmp" npm_config_cache="$WIDGET_ROOT/cache/npm" PLAYWRIGHT_BROWSERS_PATH="$WIDGET_ROOT/cache/browsers" CI=true)
+          test "$("${clean_env[@]}" node --version)" = v22.23.4
+          test "$("${clean_env[@]}" npm --version)" = 10.9.9
+          python3 - <<'LOCK'
+          import json, re
+          from pathlib import Path
+          from urllib.parse import urlsplit
+          pkgs = json.loads(Path("package-lock.json").read_bytes())["packages"]
+          for path, package in pkgs.items():
+              if not path:
+                  continue
+              url = urlsplit(package["resolved"])
+              if (url.scheme, url.netloc) != ("https", "registry.npmjs.org") or not re.fullmatch(r"sha512-[A-Za-z0-9+/]{86}==", package["integrity"]):
+                  raise SystemExit("Unexpected npm registry or integrity")
+          for name in ("@playwright/test", "playwright", "playwright-core"):
+              if pkgs["node_modules/" + name]["version"] != "1.64.1":
+                  raise SystemExit("Unexpected locked Playwright version")
+          LOCK
+          "${clean_env[@]}" npm ci --ignore-scripts --no-audit --no-fund
+          test "$("${clean_env[@]}" ./node_modules/.bin/playwright --version)" = 'Version 1.64.1'
+          printf '%s  %s\n' 2cfd419f71ac6475d81e1301fa86c34cf2a2a6bae2a0da4b5a2b18310216b6bf node_modules/playwright-core/browsers.json | sha256sum -c -
+          python3 - <<'CHROME'
+          import json
+          from pathlib import Path
+          entries = json.loads(Path("node_modules/playwright-core/browsers.json").read_bytes())["browsers"]
+          for name in ("chromium", "chromium-headless-shell"):
+              rows = [(b["revision"], b["browserVersion"]) for b in entries if b["name"] == name]
+              if rows != [("1248", "156.0.8078.4")]:
+                  raise SystemExit("Unexpected Chromium revision")
+          CHROME
+          "${clean_env[@]}" ./node_modules/.bin/playwright install chromium
+          git diff --exit-code HEAD --
+      - name: Prepare private validation scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$WIDGET_ROOT/tmp/check_cases.py" <<'CASES'
+          from collections import Counter
+          from pathlib import Path
+          import re
+          import sys
+
+          titles = (
+              "light expanded panel paints its text and responds to keyboard focus",
+              "dark dense panel paints held ink and expands on release",
+          )
+          expected = Counter((project, title) for project in ("desktop", "mobile-390") for title in titles)
+          text = Path(sys.argv[1]).read_text(encoding="utf-8")
+          cases = []
+          for line in text.splitlines():
+              if line.strip() in ("Listing tests:", "Total: 4 tests in 1 file") or not line.strip():
+                  continue
+              match = re.fullmatch(r"  \[([^\]]+)\] › (?:[^›]+/)?asset_panel\.spec\.ts:\d+:\d+ › (.+)", line)
+              if not match:
+                  raise ValueError("Unexpected Playwright collection output")
+              cases.append(match.groups())
+          if Counter(cases) != expected or text.count("Total: 4 tests in 1 file") != 1:
+              raise ValueError("Collection must contain all four unique cases")
+          CASES
+          chmod 0400 "$WIDGET_ROOT/tmp/check_cases.py"
+          cat > "$WIDGET_ROOT/tmp/isolate.sh" <<'ISOLATE'
+          set -euo pipefail
+          root=$1
+          [[ "$(id -u)" -gt 0 ]]
+          cd "$root/source"
+          python3 "$root/tmp/browser_guard.py" "$root" before_build
+          dart format --output=none --set-exit-if-changed test/fixtures/asset_panel_app.dart
+          dart analyze --fatal-infos test/fixtures/asset_panel_app.dart
+          flutter build web --no-pub --no-web-resources-cdn --release --pwa-strategy=none --target=test/fixtures/asset_panel_app.dart --dart-define=ASSET_PANEL_FIXTURE=true
+          python3 "$root/tmp/browser_guard.py" "$root" after_build
+          [[ "$(realpath -e build/web)" == "$PWD/build/web" ]]
+          links="$(find build/web -type l -print -quit)"
+          [[ -z "$links" ]]
+          install -m 0644 -- test/fixtures/asset_panel_index.html build/web/index.html
+          cmp test/fixtures/asset_panel_index.html build/web/index.html
+          python3 test/fixtures/register_asset_panel_font.py build/web
+          playwright=(./node_modules/.bin/playwright test --config=playwright.asset-panel.config.ts)
+          "${playwright[@]}" --list --reporter=list > "$root/tmp/cases.list"
+          cat "$root/tmp/cases.list"
+          python3 "$root/tmp/check_cases.py" "$root/tmp/cases.list"
+          rc=0
+          "${playwright[@]}" || rc=$?
+          # Playwright owns the webServer process and awaits its teardown before returning.
+          # The enclosing PID namespace also tears down children on shell exit, including cancellation.
+          python3 "$root/tmp/check_server_exit.py" || rc=1
+          python3 "$root/tmp/browser_guard.py" "$root" after_browser || rc=1
+          git diff --exit-code HEAD -- || rc=1
+          exit "$rc"
+          ISOLATE
+          chmod 0400 "$WIDGET_ROOT/tmp/isolate.sh"
+          cat > "$WIDGET_ROOT/tmp/check_server_exit.py" <<'SERVER'
+          from pathlib import Path
+          import socket
+
+          for process in Path("/proc").glob("[0-9]*"):
+              try:
+                  argv = (process / "cmdline").read_bytes().split(b"\x00")
+              except FileNotFoundError:
+                  continue
+              if b"scripts/serve_spa.py" in argv:
+                  raise SystemExit("Fixture server process still present after Playwright teardown")
+          with socket.socket() as sock:
+              sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+              sock.bind(("127.0.0.1", 7362))
+          SERVER
+          chmod 0400 "$WIDGET_ROOT/tmp/check_server_exit.py"
+          cat > "$WIDGET_ROOT/tmp/export_evidence.py" <<'EVIDENCE'
+          """Validate only the selected Playwright cases and export their named PNGs and status."""
+          import base64
+          import json
+          import os
+          from pathlib import Path
+          import struct
+          import sys
+          import zlib
+
+          PROJECTS = ("desktop", "mobile-390")
+          CASES = {
+              "light expanded panel paints its text and responds to keyboard focus":
+                  ("light-expanded", "light-focused"),
+              "dark dense panel paints held ink and expands on release":
+                  ("dark-dense-rest", "dark-dense-held", "dark-dense-expanded"),
+          }
+          LIMIT = 4 * 1024 * 1024
+
+
+          def require(condition, message):
+              if not condition:
+                  raise ValueError(message)
+
+
+          def safe_read(path, root, limit):
+              require(path.is_absolute() and path.is_relative_to(root)
+                      and path.resolve(strict=True) == path and path.is_file()
+                      and path.stat().st_size <= limit, "unsafe or oversized input")
+              return path.read_bytes()
+
+
+          def clean_png(data, project):
+              require(8 <= len(data) <= LIMIT and data.startswith(b"\x89PNG\r\n\x1a\n"), "invalid PNG")
+              out = bytearray(data[:8])
+              offset = 8
+              kinds = []
+              compressed = bytearray()
+              while offset < len(data):
+                  require(offset + 12 <= len(data), "truncated PNG")
+                  length, kind = struct.unpack_from(">I4s", data, offset)
+                  end = offset + 12 + length
+                  require(end <= len(data), "invalid PNG chunk length")
+                  body = data[offset + 8:end - 4]
+                  require(zlib.crc32(kind + body) == int.from_bytes(data[end - 4:end], "big"), "PNG CRC")
+                  if kind == b"IHDR":
+                      require(not kinds and length == 13, "invalid PNG header")
+                      w, h, depth, color, compress, filt, interlace = struct.unpack(">IIBBBBB", body)
+                      require(180 <= w <= (390 if project == "mobile-390" else 1440) and 35 <= h <= 1800
+                              and depth == 8 and color in (2, 6) and (compress, filt, interlace) == (0, 0, 0),
+                              "invalid panel screenshot dimensions or format")
+                  if kind == b"IDAT":
+                      require(kinds and kinds[-1] in (b"IHDR", b"IDAT") or b"IDAT" not in kinds, "fragmented PNG data")
+                      compressed.extend(body)
+                  if kind in (b"IHDR", b"IDAT", b"IEND"):
+                      out.extend(data[offset:end])
+                  else:
+                      require(kind[0] & 32, "unknown critical PNG chunk")
+                  kinds.append(kind)
+                  offset = end
+              require(kinds and kinds[0] == b"IHDR" and kinds[-1] == b"IEND"
+                      and kinds.count(b"IEND") == 1 and b"IDAT" in kinds and length == 0, "incomplete PNG")
+              stride = 1 + w * (3 if color == 2 else 4)
+              expected = stride * h
+              stream = zlib.decompressobj()
+              pixels = stream.decompress(bytes(compressed), expected + 1)
+              require(stream.eof and not stream.unused_data and not stream.unconsumed_tail
+                      and len(pixels) == expected and all(f <= 4 for f in pixels[::stride]),
+                      "invalid PNG image data")
+              return bytes(out)
+
+
+          def specs(suite):
+              yield from suite.get("specs", [])
+              for child in suite.get("suites", []):
+                  yield from specs(child)
+
+
+          def main():
+              root = Path(sys.argv[1])
+              report_dir = root / "source/asset-panel-browser-results"
+              report = json.loads(safe_read(report_dir / "results.json", report_dir, 64 * 1024 * 1024))
+              browser, final = sys.argv[2:4]
+              require(browser in ("success", "failure") and final in ("success", "failure", "cancelled", "skipped"),
+                      "invalid workflow step outcomes")
+              require(report["config"]["rootDir"] == (root / "source/test/browser_fixtures").as_posix(),
+                      "unexpected reporter rootDir")
+              require(type(report["errors"]) is list and type(report["suites"]) is list, "invalid report")
+              stage = root / "evidence"
+              stage.mkdir(mode=0o700)
+              found = {}
+              complete = True
+              for suite in report["suites"]:
+                  for spec in specs(suite):
+                      title = spec["title"]
+                      require(title in CASES and spec["file"] == "asset_panel.spec.ts", "unknown case")
+                      for test in spec["tests"]:
+                          project = test["projectName"]
+                          key = project, title
+                          require(project in PROJECTS and key not in found and test["expectedStatus"] == "passed",
+                                  "unknown, repeated or non-passing case expectation")
+                          results = test["results"]
+                          require(type(results) is list and len(results) <= 1, "unexpected attempts")
+                          require(test["status"] in ("expected", "skipped", "unexpected", "flaky"), "invalid outcome")
+                          status = "unreported"
+                          names = []
+                          errors = []
+                          attachments = []
+                          if results:
+                              attempt = results[0]
+                              status = attempt["status"]
+                              require(status in ("passed", "failed", "timedOut", "interrupted", "skipped"),
+                                      "invalid attempt status")
+                              require(type(attempt["retry"]) is int and attempt["retry"] == 0, "unexpected retry")
+                              errors = attempt["errors"]
+                              attachments = attempt["attachments"]
+                              require(type(errors) is list and type(attachments) is list, "invalid attempt arrays")
+                          for attachment in attachments:
+                              name = attachment["name"]
+                              if name not in CASES[title]:
+                                  continue
+                              require(attachment["contentType"] == "image/png" and name not in names, "invalid attachment")
+                              if "body" in attachment:
+                                  require(len(attachment["body"]) <= LIMIT * 2, "oversized encoded PNG")
+                                  data = base64.b64decode(attachment["body"], validate=True)
+                              else:
+                                  path = Path(attachment["path"])
+                                  if not path.is_absolute():
+                                      path = root / "source" / path
+                                  data = safe_read(path, report_dir, LIMIT)
+                              filename = project + "-" + name + ".png"
+                              (stage / filename).write_bytes(clean_png(data, project))
+                              names.append(name)
+                          passed = (status == "passed" and test["status"] == "expected" and not errors
+                                    and set(names) == set(CASES[title]))
+                          complete = complete and passed
+                          found[key] = {"status": status, "captures": names, "verified": passed}
+              rows = []
+              for project in PROJECTS:
+                  for title in CASES:
+                      rows.append({"project": project, "case": title,
+                                   **found.get((project, title), {"status": "unreported", "captures": [], "verified": False})})
+              tests_complete = bool(complete and len(found) == 4 and not report["errors"])
+              complete = tests_complete and browser == "success" and final == "success"
+              payload = {"complete": complete, "tests_complete": tests_complete, "browser": browser,
+                         "final": final, "cases": rows}
+              (stage / "results.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+              # validated permits upload of inspected output, including partial diagnostics.
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+                  out.write("validated=true\n")
+              if browser == "success" and not tests_complete:
+                  raise SystemExit("successful browser step lacks four passing unique cases and ten attachments")
+
+
+          if __name__ == "__main__":
+              main()
+          EVIDENCE
+          chmod 0400 "$WIDGET_ROOT/tmp/export_evidence.py"
+      - name: Build and exercise the fixture in a loopback-only namespace
+        id: browser
+        shell: bash
+        timeout-minutes: 18
+        run: |
+          set -euo pipefail
+          user="$(id -un)"
+          [[ "$(id -u "$user")" -gt 0 ]]
+          original_net="$(readlink /proc/self/ns/net)"
+          sudo -n true
+          env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME="$WIDGET_ROOT/home" \
+            sudo -n unshare --net --pid --fork --kill-child --mount-proc -- /bin/bash -euc '
+              ip link set lo up
+              net="$(readlink /proc/self/ns/net)"
+              [[ "$net" != "$5" ]]
+              links="$(ip -o link show)"
+              [[ "$(printf "%s\n" "$links" | wc -l)" -eq 1 ]]
+              [[ "$(printf "%s\n" "$links" | cut -d: -f2 | tr -d "[:space:]")" == lo ]]
+              routes4="$(ip -4 route show default)"
+              routes6="$(ip -6 route show default)"
+              [[ -z "$routes4" && -z "$routes6" ]]
+              runuser -u "$1" -- env -i PATH="$2/node/bin:$2/sdk/flutter/bin:/usr/bin:/bin" PLAYWRIGHT_BROWSERS_PATH="$2/cache/browsers" npm_config_cache="$2/cache/npm" HOME="$2/home" PUB_CACHE="$2/pub-cache" TMPDIR="$2/tmp" XDG_CONFIG_HOME="$2/config" XDG_CACHE_HOME="$2/cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 /bin/bash "$2/tmp/isolate.sh" "$2"
+            ' isolated "$user" "$WIDGET_ROOT" unused unused "$original_net"
+      - name: Verify lock and configuration even after failure
+        id: final_guard
+        if: ${{ always() && env.WIDGET_ROOT != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$WIDGET_ROOT/source"
+          final_check_status=0
+          if ! python3 "$WIDGET_ROOT/tmp/browser_guard.py" "$WIDGET_ROOT" final; then
+            final_check_status=1
+          fi
+          if ! printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -; then
+            final_check_status=1
+          fi
+          if ! git diff --exit-code HEAD --; then
+            final_check_status=1
+          fi
+          if ! test "$(git rev-parse HEAD)" = 17ad2cac19b9a55f91a212646257b78088080974; then
+            final_check_status=1
+          fi
+          exit "$final_check_status"
+      - name: Validate and stage the synthetic evidence allowlist
+        id: evidence
+        if: ${{ always() && (steps.browser.outcome == 'success' || steps.browser.outcome == 'failure') }}
+        env:
+          BROWSER_OUTCOME: ${{ steps.browser.outcome }}
+          FINAL_OUTCOME: ${{ steps.final_guard.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 "$WIDGET_ROOT/tmp/export_evidence.py" "$WIDGET_ROOT" "$BROWSER_OUTCOME" "$FINAL_OUTCOME"
+      - name: Preserve verified synthetic screenshots and results
+        if: ${{ always() && steps.evidence.outputs.validated == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: asset-panel-browser-${{ github.run_id }}
+          path: ${{ env.WIDGET_ROOT }}/evidence/
+          include-hidden-files: false
+          if-no-files-found: error
+          retention-days: 1
