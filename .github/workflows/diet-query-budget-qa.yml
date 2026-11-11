@@ -1,0 +1,269 @@
+# Single-use two-file Diet query-budget QA. Template only; root binds source before execution.
+name: Diet query budget QA 20261111
+on:
+  push:
+    branches:
+      - codex/diet-query-budget-qa-20261111
+permissions: {}
+jobs:
+  query-budget-only:
+    if: ${{ github.event_name == 'push' && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/diet-query-budget-qa-20261111' && github.event.created == true && github.event.deleted == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions: {}
+    steps:
+      - name: Allocate a private scratch directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${RUNNER_TEMP:?}" == /* && -d "$RUNNER_TEMP" && ! -L "$RUNNER_TEMP" ]]
+          base="$(realpath -e -- "$RUNNER_TEMP")"
+          [[ "$base" != / ]]
+          umask 077
+          root="$(mktemp -d -- "$base/prune-widget.XXXXXXXX")"
+          [[ "$(dirname -- "$root")" == "$base" && -d "$root" && ! -L "$root" ]]
+          [[ "$(realpath -e -- "$root")" == "$root" && "$(stat -c %u -- "$root")" == "$(id -u)" && "$(stat -c %a -- "$root")" == 700 ]]
+          mkdir "$root/home" "$root/pub-cache" "$root/tmp" "$root/sdk" "$root/source" "$root/candidate" "$root/config" "$root/cache"
+          printf 'WIDGET_ROOT=%s\n' "$root" >> "$GITHUB_ENV"
+      - name: Verify the one-workflow child of the fixed two-file source
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GITHUB_REF" == 'refs/heads/codex/diet-query-budget-qa-20261111' ]]
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" TMPDIR="$WIDGET_ROOT/tmp" PYTHONDONTWRITEBYTECODE=1 GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" init --quiet
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" -c credential.helper= fetch --no-tags --depth=2 https://github.com/kanta13jp1/my_web_app.git "$GITHUB_SHA"
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" checkout --quiet --detach FETCH_HEAD
+          cd "$WIDGET_ROOT/candidate"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git show -s --format=%P HEAD)" = c3f5f43560df1d28c939315dc904b647658298bc
+          test "$(git diff --no-renames --name-status c3f5f43560df1d28c939315dc904b647658298bc HEAD)" = "$(printf 'A\t.github/workflows/diet-query-budget-qa.yml')"
+          test -z "$(git status --porcelain --untracked-files=all)"
+      - name: Fetch only the fixed public two-file source without a token
+        shell: bash
+        run: |
+          set -euo pipefail
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" init --quiet
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" -c credential.helper= fetch --no-tags --depth=2 https://github.com/kanta13jp1/my_web_app.git c3f5f43560df1d28c939315dc904b647658298bc
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" checkout --quiet --detach FETCH_HEAD
+          cd "$WIDGET_ROOT/source"
+          test "$(git rev-parse HEAD)" = c3f5f43560df1d28c939315dc904b647658298bc
+          test "$(git rev-parse 'HEAD^1^{tree}')" = c61c53ee0ba17d3e43138005510e0fe3c81531d0
+          test "$(git rev-parse 'HEAD^{tree}')" = 9a5bb3c1bfc2bdb6a72c81a1be7f8e513bbfd494
+          test "$(git show -s --format=%P HEAD)" = 1d11fcacbffad9ea8dd098f6258661a6a23f7701
+          test "$(git diff --no-renames --name-status 1d11fcacbffad9ea8dd098f6258661a6a23f7701 HEAD)" = "$(printf 'M\tlib/services/diet_debate_search.dart\nM\ttest/services/diet_debate_search_test.dart')"
+          test "$(git ls-tree HEAD -- lib/services/diet_debate_search.dart)" = "$(printf '100644 blob 7e841670f83a8b9cb3f7ae7a6aeff2d5310f33ab\tlib/services/diet_debate_search.dart')"
+          printf '%s  %s\n' 4cccdd613c3a4c9c80c39dc063e5cb972ba1158dff5173be284f9d8b82b15663 lib/services/diet_debate_search.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- test/services/diet_debate_search_test.dart)" = "$(printf '100644 blob 86d714f6abc9fc81cae5d2b43e529757c64bd808\ttest/services/diet_debate_search_test.dart')"
+          printf '%s  %s\n' 4a3ba4ffd4fe7074d5b00ef05aabebd0d765f5c586ac61eb0fe444872df90212 test/services/diet_debate_search_test.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- .github/workflows/cloud-development.yml)" = "$(printf '100644 blob ea57767303b308736dedd76f5a34aa770bec3d7e\t.github/workflows/cloud-development.yml')"
+          printf '%s  %s\n' 15866c92153f06f5a989d3a9640b619e85d082778a76710806e05df743529ce3 .github/workflows/cloud-development.yml | sha256sum -c -
+          test "$(git ls-tree HEAD -- lib/data/diet_debate_notes.dart)" = "$(printf '100644 blob 65553d8d3c2ec5cf2f0594ed98e5fc7aac319d70\tlib/data/diet_debate_notes.dart')"
+          printf '%s  %s\n' c08aee3ee3f62712ad2b4cfe0f0c89f3116f8e80d6bcf365041d93657991b6d5 lib/data/diet_debate_notes.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- lib/data/home_tool_catalog.dart)" = "$(printf '100644 blob 5263c5102cec91e9a3b43744141856ac057555d4\tlib/data/home_tool_catalog.dart')"
+          printf '%s  %s\n' a4c11bd16980f664490de8ff3a0371e6faf32de866d43e602a38c166022ae28a lib/data/home_tool_catalog.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- lib/main.dart)" = "$(printf '100644 blob b225ebae2c840dd1a200ba4315c22dcc67982e23\tlib/main.dart')"
+          printf '%s  %s\n' ea4287f7fa8c9438b4b5bcc026275a16d1eab802e1d1e4f99c2f3717ca16e991 lib/main.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- lib/pages/diet_debates_page.dart)" = "$(printf '100644 blob 356074cebb570eedaf345c5f26a014d8ac2f3284\tlib/pages/diet_debates_page.dart')"
+          printf '%s  %s\n' 084ef40f47b0c00b20f02590a46ef66e422cf5afc6497d75dec7b5b88b01bf2c lib/pages/diet_debates_page.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- lib/services/diet_reader_preferences.dart)" = "$(printf '100644 blob cbd5b5703e2ee6657958651d519f053401cdf593\tlib/services/diet_reader_preferences.dart')"
+          printf '%s  %s\n' b5402d3ab9033eacde6bf8710b0d143b18e617f8a5fd2549c452d7029a655684 lib/services/diet_reader_preferences.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- lib/widgets/diet_debate_article.dart)" = "$(printf '100644 blob 881b80fd804eab5d479df01a61528c67725a8217\tlib/widgets/diet_debate_article.dart')"
+          printf '%s  %s\n' 27c7bf768ea952ddd42a60a6ccb8444846f2dd2d86c0dc87cd93dc69954729d2 lib/widgets/diet_debate_article.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- lib/widgets/diet_support_bill_memo.dart)" = "$(printf '100644 blob 880a1aab1b2b2c1f509d2cae3fa741a827f55365\tlib/widgets/diet_support_bill_memo.dart')"
+          printf '%s  %s\n' 1d55c8ffbcc82f0160082b7b55a135e265fc395d975519f2ffa3aa2c6565c0ab lib/widgets/diet_support_bill_memo.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- playwright.diet-debates.config.ts)" = "$(printf '100644 blob 2ccc33c889cfcd5b506b63d52b4ed56496b4b2cd\tplaywright.diet-debates.config.ts')"
+          printf '%s  %s\n' b94c4159fb5579dfe756d38ed2c1df53f3e491018b678fa445a81fbb9814cc50 playwright.diet-debates.config.ts | sha256sum -c -
+          test "$(git ls-tree HEAD -- test/browser_fixtures/diet_debates.spec.ts)" = "$(printf '100644 blob c2cebdc77f16bca9006ca895f7f1e59bf7cd5358\ttest/browser_fixtures/diet_debates.spec.ts')"
+          printf '%s  %s\n' 0e2f67bb790bada77319efbb9032ca3902bc6645887b2c7269d5122a65188358 test/browser_fixtures/diet_debates.spec.ts | sha256sum -c -
+          test "$(git ls-tree HEAD -- test/fixtures/diet_debates_app.dart)" = "$(printf '100644 blob 552208ffb48ca15d88747344fe77fdebc9a52e62\ttest/fixtures/diet_debates_app.dart')"
+          printf '%s  %s\n' 1b8fdf2495c4320edf4489207f0b2067ae47d335af1dcb8e5b775dd542a09aca test/fixtures/diet_debates_app.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- test/fixtures/diet_debates_index.html)" = "$(printf '100644 blob 3c21ba5cbf7d5453e5b346cadf795f8b9cf54a89\ttest/fixtures/diet_debates_index.html')"
+          printf '%s  %s\n' b6f99197268396ac67ffc0ce93b05fb92e4b64164a0191436bbb97d1e314fded test/fixtures/diet_debates_index.html | sha256sum -c -
+          test "$(git ls-tree HEAD -- test/pages/diet_debates_mobile_test.dart)" = "$(printf '100644 blob daf8ffcfb10964d5700099c9d98290ad363c8d71\ttest/pages/diet_debates_mobile_test.dart')"
+          printf '%s  %s\n' f10faebbb4113aece8f565a841d04be1746a20dead4e6d55cd12298ca9a2e55d test/pages/diet_debates_mobile_test.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- test/pages/diet_debates_page_test.dart)" = "$(printf '100644 blob aa099b6b73aa72e5a7247d967c9d609ce347f305\ttest/pages/diet_debates_page_test.dart')"
+          printf '%s  %s\n' 45b987a9b24bb4fc1abc62a9d95ef6a900f54914c3c4f7a7bf5f5d24109ead5b test/pages/diet_debates_page_test.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- test/routes/app_route_names.dart)" = "$(printf '100644 blob 7622ec621a543ee1ba7d707168209cc509e86a6b\ttest/routes/app_route_names.dart')"
+          printf '%s  %s\n' 46da27c8d07309e56d61978c22eaa55f4803c33b605c5bf9851f98bd6a35224b test/routes/app_route_names.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- test/services/diet_reader_preferences_test.dart)" = "$(printf '100644 blob 3f6b131c69ff1b5ed523a0063f17ab64db02e606\ttest/services/diet_reader_preferences_test.dart')"
+          printf '%s  %s\n' 2f48ecad34aa244d5e6e5bb9893c1346658ffb0f51ed4e013a0082f3b5cff209 test/services/diet_reader_preferences_test.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- test/widgets/diet_support_bill_memo_test.dart)" = "$(printf '100644 blob 6dd11c89a7730e5757df6c8977dcba6546af52c0\ttest/widgets/diet_support_bill_memo_test.dart')"
+          printf '%s  %s\n' fa73646a0b7f4b6adec76b7aed92741a0fd0d66b6479f9065e0b970087f2a743 test/widgets/diet_support_bill_memo_test.dart | sha256sum -c -
+          test "$(git ls-tree HEAD -- pubspec.yaml)" = "$(printf '100644 blob d4af874ac1845ff9fc61366b0fa5f783e6ee4975\tpubspec.yaml')"
+          printf '%s  %s\n' 219e1bd8160fb2c8dbb7648670f377e75e464d99a2b9b8b1a5f73f1b6e801800 pubspec.yaml | sha256sum -c -
+          test "$(git ls-tree HEAD -- pubspec.lock)" = "$(printf '100644 blob 8b12da8539a17ba14d389789c7b453ac693a910d\tpubspec.lock')"
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          test "$(git ls-tree HEAD -- analysis_options.yaml)" = "$(printf '100644 blob 8d30beed4897a1e1909640f03a8cb2cd9f61636f\tanalysis_options.yaml')"
+          printf '%s  %s\n' e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342 analysis_options.yaml | sha256sum -c -
+          test -z "$(git status --porcelain --untracked-files=all)"
+      - name: Install exact-byte migration guard in private runner scratch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$WIDGET_ROOT/tmp/analysis_options_guard.py" <<'PYGUARD'
+          import hashlib, os, pathlib, subprocess, sys
+
+          if len(sys.argv) != 3:
+              raise SystemExit('expected private runner root and phase')
+          root = pathlib.Path(sys.argv[1])
+          phase = sys.argv[2]
+          if phase not in {'before_flutter', 'after_version', 'after_precache', 'after_pub_get', 'before_unit', 'after_unit', 'final'}:
+              raise SystemExit('unknown phase')
+          if root.is_symlink() or not root.is_dir() or not root.name.startswith('prune-widget.'):
+              raise SystemExit('unsafe runner root')
+          root = root.resolve(strict=True)
+          source = root / 'source'
+          if source.is_symlink() or not source.is_dir() or source.resolve(strict=True).parent != root:
+              raise SystemExit('unsafe source')
+          path = source / 'analysis_options.yaml'
+          if path.is_symlink() or not path.is_file() or path.resolve(strict=True).parent != source:
+              raise SystemExit('unsafe analysis options path')
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
+          if head != 'c3f5f43560df1d28c939315dc904b647658298bc':
+              raise SystemExit('unexpected source HEAD')
+          original = subprocess.check_output(['git', 'show', 'HEAD:analysis_options.yaml'], cwd=source)
+          base_hash = 'e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342'
+          expected_hash = '1900f9a58dfe11a5f9c9ce0988ffc9d7e64f8ec23f3a7d7757f2024a23d27083'
+          if hashlib.sha256(original).hexdigest() != base_hash:
+              raise SystemExit('baseline hash mismatch')
+          anchor = b'    - ".dart_tool/**"\n'
+          addition = b'    - android/**\n    - ios/**\n    - web/**\n    - windows/**\n    - macos/**\n    - linux/**\n'
+          if original.count(anchor) != 1:
+              raise SystemExit('baseline anchor mismatch')
+          expected = original.replace(anchor, anchor + addition, 1)
+          if hashlib.sha256(expected).hexdigest() != expected_hash:
+              raise SystemExit('expected migration hash mismatch')
+          actual = path.read_bytes()
+          actual_hash = hashlib.sha256(actual).hexdigest()
+          print(f'analysis_guard phase={phase} before_sha256={actual_hash}', flush=True)
+          if actual == original:
+              print('analysis_guard action=none baseline_confirmed', flush=True)
+          elif actual == expected:
+              print('analysis_guard action=restore exact_six_line_flutter_migration', flush=True)
+              # This path is inside a private ephemeral Actions checkout, never the user workspace.
+              path.write_bytes(original)
+              if path.read_bytes() != original:
+                  raise SystemExit('restore verification failed')
+          else:
+              raise SystemExit('unexpected analysis options bytes; no restoration performed')
+          print(f'analysis_guard phase={phase} after_sha256={hashlib.sha256(path.read_bytes()).hexdigest()}', flush=True)
+          PYGUARD
+          chmod 0400 "$WIDGET_ROOT/tmp/analysis_options_guard.py"
+          printf '%s  %s\n' ce8631fd0f5f66b5a7be81a03db0a48941a3126f473fa0de7baf4839b0d1b289 "$WIDGET_ROOT/tmp/analysis_options_guard.py" | sha256sum -c -
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" before_flutter
+      - name: Verify official SDK and locked dependencies before isolation
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" \
+            curl --fail --location --connect-timeout 15 --max-time 240 --retry 0 \
+              --output "$WIDGET_ROOT/sdk/flutter.tar.xz" \
+              https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.9-stable.tar.xz
+          printf '%s  %s\n' 25ed8c3c29d51a7353f2a944310b478af8214920639524b19c50a19e6c044c5a "$WIDGET_ROOT/sdk/flutter.tar.xz" | sha256sum -c -
+          tar -xJf "$WIDGET_ROOT/sdk/flutter.tar.xz" -C "$WIDGET_ROOT/sdk"
+          cd "$WIDGET_ROOT/source"
+          clean_env=(env -i PATH="$WIDGET_ROOT/sdk/flutter/bin:/usr/bin:/bin" HOME="$WIDGET_ROOT/home" PUB_CACHE="$WIDGET_ROOT/pub-cache" TMPDIR="$WIDGET_ROOT/tmp" XDG_CONFIG_HOME="$WIDGET_ROOT/config" XDG_CACHE_HOME="$WIDGET_ROOT/cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0)
+          "${clean_env[@]}" flutter --version --machine > "$WIDGET_ROOT/flutter-version.json"
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" after_version
+          python3 - "$WIDGET_ROOT/flutter-version.json" <<'PY'
+          import json,sys
+          with open(sys.argv[1],encoding='utf-8') as f: info=json.load(f)
+          if info.get('frameworkVersion') != '3.47.9': raise SystemExit('unexpected Flutter version')
+          PY
+          "${clean_env[@]}" dart --version 2>&1 | grep -Eq '^Dart SDK version: 3[.]13[.]7([[:space:]]|$)'
+          "${clean_env[@]}" flutter precache --linux
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" after_precache
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          "${clean_env[@]}" flutter pub get --enforce-lockfile
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" after_pub_get
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          git diff --exit-code HEAD --
+      - name: Prepare the private service-only validation script
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          cat > "$WIDGET_ROOT/tmp/isolate-unit.sh" <<'UNIT_ISOLATE'
+          set -euo pipefail
+          umask 077
+          root=$1
+          [[ "$(id -u)" -gt 0 ]]
+          cd "$root/source"
+          python3 "$root/tmp/analysis_options_guard.py" "$root" before_unit
+          git diff --exit-code HEAD --
+          dart format --output=none --set-exit-if-changed lib/services/diet_debate_search.dart test/services/diet_debate_search_test.dart
+          for path in lib/services/diet_debate_search.dart test/services/diet_debate_search_test.dart; do
+            dart analyze --fatal-infos "$path"
+          done
+          require_seven_cases() {
+            local log=$1 skip_status=0
+            tail -n 1 "$log" | grep -Eq '^[0-9]{2}:[0-9]{2} \+7: All tests passed!$'
+            grep -Eq '^[0-9]{2}:[0-9]{2} .*~[1-9][0-9]*([ :]|$)' "$log" || skip_status=$?
+            [[ "$skip_status" -eq 1 ]]
+            grep -Fq 'NDLのID表記、会議情報、確認済み要約との対応' "$log"
+            grep -Fq '検索条件・ページ位置を送り、本文を表示せず不正な出典だけを省略する' "$log"
+            grep -Fq '検索欄と同じ書記素数で各条件の100文字までを受け付ける' "$log"
+            grep -Fq '総バイト超過はクライアントと検索状態を開始せず、次の通常検索を許可する' "$log"
+            grep -Fq '実入力のquery2000バイトは送信し2001バイトは状態更新前に拒否する' "$log"
+            grep -Fq '並行リクエスト・終了後5秒以内の新規検索を抑え、同一条件をキャッシュ' "$log"
+            grep -Fq '条件なしとAPIのエラー応答を0件と混同しない' "$log"
+          }
+          rc=0
+          flutter --no-color --no-version-check test --no-pub --reporter expanded test/services/diet_debate_search_test.dart | tee "$root/tmp/query-budget.log" || rc=$?
+          python3 "$root/tmp/analysis_options_guard.py" "$root" after_unit || rc=1
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c - || rc=1
+          git diff --exit-code HEAD -- || rc=1
+          if [[ "$rc" -ne 0 ]]; then exit "$rc"; fi
+          require_seven_cases "$root/tmp/query-budget.log"
+          UNIT_ISOLATE
+          chmod 0400 "$WIDGET_ROOT/tmp/isolate-unit.sh"
+      - name: Run exactly seven query-budget service cases in isolated namespaces
+        id: unit_test
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          user="$(id -un)"
+          [[ "$(id -u "$user")" -gt 0 ]]
+          original_net="$(readlink /proc/self/ns/net)"
+          sudo -n true
+          rc=0
+          env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME="$WIDGET_ROOT/home" \
+            sudo -n unshare --net --pid --fork --kill-child --mount-proc -- /bin/bash -euc '
+              ip link set lo up
+              net="$(readlink /proc/self/ns/net)"
+              [[ "$net" != "$5" ]]
+              links="$(ip -o link show)"
+              [[ "$(printf "%s\n" "$links" | wc -l)" -eq 1 ]]
+              [[ "$(printf "%s\n" "$links" | cut -d: -f2 | tr -d "[:space:]")" == lo ]]
+              routes4="$(ip -4 route show default)"
+              routes6="$(ip -6 route show default)"
+              [[ -z "$routes4" && -z "$routes6" ]]
+              runuser -u "$1" -- env -i PATH="$2/sdk/flutter/bin:/usr/bin:/bin" HOME="$2/home" PUB_CACHE="$2/pub-cache" TMPDIR="$2/tmp" XDG_CONFIG_HOME="$2/config" XDG_CACHE_HOME="$2/cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 /bin/bash "$2/tmp/isolate-unit.sh" "$2"
+            ' isolated "$user" "$WIDGET_ROOT" unused unused "$original_net" || rc=$?
+          exit "$rc"
+      - name: Verify lock and configuration even after failure
+        id: final_guard
+        if: ${{ always() && env.WIDGET_ROOT != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$WIDGET_ROOT/source"
+          final_check_status=0
+          if ! python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" final; then
+            final_check_status=1
+          fi
+          if ! printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -; then
+            final_check_status=1
+          fi
+          if ! git diff --exit-code HEAD --; then
+            final_check_status=1
+          fi
+          if ! test "$(git rev-parse HEAD)" = c3f5f43560df1d28c939315dc904b647658298bc; then
+            final_check_status=1
+          fi
+          exit "$final_check_status"
