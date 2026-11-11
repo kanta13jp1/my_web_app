@@ -25182,14 +25182,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   type: MaterialType.transparency,
                   textStyle: DefaultTextStyle.of(violationInkContext).style,
                   child: CheckboxListTile(
-                    key: Key('violation_one_shot_toggle_${violation.accountId}'),
+                    key:
+                        Key('violation_one_shot_toggle_${violation.accountId}'),
                     dense: true,
                     contentPadding: EdgeInsets.zero,
                     visualDensity: VisualDensity.compact,
                     controlAffinity: ListTileControlAffinity.leading,
-                    value:
-                        _cardUsagePolicies[violation.accountId]?.enforceOneShot ==
-                            true,
+                    value: _cardUsagePolicies[violation.accountId]
+                            ?.enforceOneShot ==
+                        true,
                     title: const Text(
                       'カード会社での変更完了を記録する（借入・支払結果の確認とは別）',
                       style: TextStyle(
@@ -25270,7 +25271,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             type: MaterialType.transparency,
             textStyle: DefaultTextStyle.of(usageInkContext).style,
             child: Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              data:
+                  Theme.of(context).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
                 key: Key('discipline_usage_breakdown_${violation.accountId}'),
                 tilePadding:
@@ -25340,8 +25342,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
                                 color: item.status ==
-                                        AssetLiabilityRevolvingUsageStatus.covered
-                                    ? const Color(0xFF0D9488).withValues(alpha: 0.3)
+                                        AssetLiabilityRevolvingUsageStatus
+                                            .covered
+                                    ? const Color(0xFF0D9488)
+                                        .withValues(alpha: 0.3)
                                     : const Color(0xFFB91C1C)
                                         .withValues(alpha: 0.3),
                               ),
@@ -25352,7 +25356,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 color: item.status ==
-                                        AssetLiabilityRevolvingUsageStatus.covered
+                                        AssetLiabilityRevolvingUsageStatus
+                                            .covered
                                     ? const Color(0xFF0D9488)
                                     : const Color(0xFFB91C1C),
                               ),
