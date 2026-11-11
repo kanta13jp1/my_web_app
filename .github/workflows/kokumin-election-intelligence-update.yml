@@ -5,8 +5,7 @@ name: Kokumin Election Intelligence Update
 # that asset, validates official goal sources, and records meaningful diffs.
 on:
   schedule:
-    # Every six hours at :17. The source is one small PDF and unchanged runs do
-    # not commit, so new endorsements can reach the dashboard without churn.
+    # Check every six hours at :17 and hand off changed aggregates for PR review.
     - cron: "17 */6 * * *"
   workflow_dispatch:
     inputs:
@@ -25,14 +24,14 @@ permissions: {}
 jobs:
   refresh-official-endorsements:
     permissions:
-      contents: write
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          token: ${{ secrets.GH_PAT || secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -59,19 +58,41 @@ jobs:
           fi
           python scripts/update_kokumin_local_endorsements.py "${args[@]}"
 
-      - name: Commit and push meaningful changes
+      - name: Prepare official aggregates for review
+        id: review
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            assets/data/kokumin_local_endorsements.json \
+          files=(
+            assets/data/kokumin_local_endorsements.json
             lib/data/dpj_official_endorsements.dart
-          if git diff --staged --quiet; then
-            echo "No official endorsement change."
+          )
+          review_dir="$RUNNER_TEMP/kokumin-official-review"
+          mkdir -p "$review_dir"
+          git diff --no-ext-diff --no-textconv --binary --full-index HEAD -- "${files[@]}" > "$review_dir/official-aggregates.patch"
+          if [[ ! -s "$review_dir/official-aggregates.patch" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "公式集計に差分はありません。" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          as_of="$(jq -r '.sourceAsOf' assets/data/kokumin_local_endorsements.json)"
-          git commit -m "chore: update Kokumin local endorsements (${as_of})"
-          git push origin HEAD:main
+          cp --parents -- "${files[@]}" "$review_dir/"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upload official aggregates and review patch
+        if: steps.review.outputs.changed == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: kokumin-official-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/kokumin-official-review/assets/data/kokumin_local_endorsements.json
+            ${{ runner.temp }}/kokumin-official-review/lib/data/dpj_official_endorsements.dart
+            ${{ runner.temp }}/kokumin-official-review/official-aggregates.patch
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Summarize protected review handoff
+        if: steps.review.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "公式集計の差分をartifactに保存しました。基点は $GITHUB_SHA です。反映には通常のプルリクエストで差分をレビューし、mainの必須チェックを通してください。" >> "$GITHUB_STEP_SUMMARY"

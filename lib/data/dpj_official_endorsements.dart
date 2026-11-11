@@ -9,18 +9,18 @@ const String dpjOfficialEndorsementSourceUrl =
 const String dpjOfficialEndorsementSourceAsOf = '2026-11-11';
 const String dpjOfficialEndorsementSourceDocumentSha256 =
     '8132d6c24659aa340c846d12b97114e092e32d5ecde295f2236b9b44f93ead25';
-const int dpjOfficialRecommendationEntryCount = 15;
+const int dpjOfficialRecommendationEntryCount = 18;
 
 const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
     <OfficialEndorsementPrefecture>[
   OfficialEndorsementPrefecture(
     prefecture: '北海道',
-    totalCount: 7,
+    totalCount: 11,
     incumbentCount: 2,
-    newcomerCount: 5,
-    formerCount: 0,
-    prefecturalCount: 0,
-    municipalCount: 7,
+    newcomerCount: 8,
+    formerCount: 1,
+    prefecturalCount: 1,
+    municipalCount: 10,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '青森',
@@ -87,12 +87,12 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '千葉',
-    totalCount: 26,
+    totalCount: 27,
     incumbentCount: 2,
-    newcomerCount: 22,
+    newcomerCount: 23,
     formerCount: 2,
     prefecturalCount: 6,
-    municipalCount: 20,
+    municipalCount: 21,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '東京',
@@ -141,12 +141,12 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '福井',
-    totalCount: 6,
+    totalCount: 7,
     incumbentCount: 4,
-    newcomerCount: 2,
+    newcomerCount: 3,
     formerCount: 0,
     prefecturalCount: 1,
-    municipalCount: 5,
+    municipalCount: 6,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '山梨',
@@ -168,12 +168,12 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
   OfficialEndorsementPrefecture(
     prefecture: '岐阜',
-    totalCount: 13,
+    totalCount: 15,
     incumbentCount: 3,
-    newcomerCount: 10,
-    formerCount: 0,
+    newcomerCount: 11,
+    formerCount: 1,
     prefecturalCount: 6,
-    municipalCount: 7,
+    municipalCount: 9,
   ),
   OfficialEndorsementPrefecture(
     prefecture: '静岡',
@@ -393,13 +393,13 @@ const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =
   ),
 ];
 
-const int dpjOfficialEndorsementTotal = 427;
+const int dpjOfficialEndorsementTotal = 435;
 const int dpjOfficialEndorsementIncumbentTotal = 176;
-const int dpjOfficialEndorsementNewcomerTotal = 240;
-const int dpjOfficialEndorsementFormerTotal = 11;
+const int dpjOfficialEndorsementNewcomerTotal = 246;
+const int dpjOfficialEndorsementFormerTotal = 13;
 const int dpjOfficialEndorsementPrefectureCount = 42;
-const int dpjOfficialEndorsementPrefecturalTotal = 117;
-const int dpjOfficialEndorsementMunicipalTotal = 310;
+const int dpjOfficialEndorsementPrefecturalTotal = 118;
+const int dpjOfficialEndorsementMunicipalTotal = 317;
 
 OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(
   String prefecture,

@@ -15,6 +15,7 @@ import json
 import re
 import sys
 from collections import OrderedDict
+from datetime import date
 from pathlib import Path
 from typing import Iterable
 from urllib.request import Request, urlopen
@@ -31,12 +32,20 @@ MIN_OFFICIAL_ENDORSEMENTS = 30
 MIN_PREFECTURES = 10
 MAX_ALLOWED_DROP_RATIO = 0.25
 
-_AS_OF_RE = re.compile(r"(\d{4})/(\d{2})/(\d{2})\s*現在")
+_AS_OF_RE = re.compile(r"(\d{4})/(\d{1,2})/(\d{1,2})\s*現在")
 _ROW_RE = re.compile(r"^\s*(\d+)\s*([^\s\d]+)\s+")
+_UNNUMBERED_ROW_RE = re.compile(r"^\s*()(北海道|青森県|岩手県|宮城県|秋田県|山形県|福島県|茨城県|栃木県|群馬県|埼玉県|千葉県|東京都|神奈川県|新潟県|富山県|石川県|福井県|山梨県|長野県|岐阜県|静岡県|愛知県|三重県|滋賀県|京都府|大阪府|兵庫県|奈良県|和歌山県|鳥取県|島根県|岡山県|広島県|山口県|徳島県|香川県|愛媛県|高知県|福岡県|佐賀県|長崎県|熊本県|大分県|宮崎県|鹿児島県|沖縄県)\s+")
 _CAREER_RE = re.compile(r"\s[男女]\s+\d+\s+(現|元|新)\s")
 # 選挙名の議会種別。「都道府県議会」= prefectural、「市区町村議会」= municipal。
 # lib/models/local_election_reality.dart の isLocalAssemblyElection と同じ判定基準。
-_ASSEMBLY_RE = re.compile(r"(都|道|府|県|市|区|町|村)議会議員(?:補欠|再)?選挙")
+_ASSEMBLY_RE = re.compile(r"(都|道|府|県|市|区|町|村)議会議員(?:補欠|再)?選挙$")
+_MAYOR_RE = re.compile(r"(?:知事|[市区町村]長)(?:再)?選挙$")
+_DATE_TOKEN = r"\d{4}/\d{1,2}/\d{1,2}"
+_DECISION_RE = re.compile(
+    r"(?:\d+\s+)?(?:有|無)\s+(公認|推薦)\s+"
+    rf"(?:\(({_DATE_TOKEN})\)|({_DATE_TOKEN})\s+({_DATE_TOKEN}))"
+)
+_DATE_PARENS = str.maketrans("（）", "()")
 _PREFECTURAL_ASSEMBLY_CHARS = {"都", "道", "府", "県"}
 
 
@@ -50,19 +59,13 @@ def _short_prefecture_name(value: str) -> str:
     return re.sub(r"[都府県]$", "", value)
 
 
-def _assembly_category(line: str) -> str:
-    """Classify a candidate row's assembly level from its election name.
-
-    Returns "prefectural" (都道府県議会), "municipal" (市区町村議会), or ""
-    when the row's election name does not match either pattern (e.g. a
-    format change upstream). An empty result is excluded from the assembly
-    breakdown but still counted in totalCount.
-    """
-
-    match = _ASSEMBLY_RE.search(line)
-    if match is None:
-        return ""
-    return "prefectural" if match.group(1) in _PREFECTURAL_ASSEMBLY_CHARS else "municipal"
+def _election_category(election_name: str) -> str:
+    match = _ASSEMBLY_RE.search(election_name)
+    if match:
+        return "prefectural" if match.group(1) in _PREFECTURAL_ASSEMBLY_CHARS else "municipal"
+    if _MAYOR_RE.search(election_name):
+        return "mayoral"
+    raise ValueError(f"Unrecognized local election name: {election_name}")
 
 
 def parse_candidate_rows(page_texts: Iterable[str]) -> list[dict[str, str]]:
@@ -73,20 +76,29 @@ def parse_candidate_rows(page_texts: Iterable[str]) -> list[dict[str, str]]:
         for line in page_text.splitlines():
             match = _ROW_RE.match(line)
             if match is None:
-                continue
-            if "公認" not in line and "推薦" not in line:
-                continue
+                if _CAREER_RE.search(line) is None:
+                    continue
+                match = _UNNUMBERED_ROW_RE.match(line)
+                if match is None:
+                    raise ValueError("Candidate row is missing its ordinal or prefecture.")
             career = _CAREER_RE.search(line)
             if career is None:
                 raise ValueError(
                     "Candidate row did not contain a parseable 現/元/新 value: "
                     f"{_normalize_line(line)}"
                 )
+            decision = _DECISION_RE.fullmatch(line[career.end():].strip().translate(_DATE_PARENS))
+            if decision is None:
+                raise ValueError(f"Invalid endorsement column in candidate row {match[1]}.")
+            for token in decision.groups()[1:]:
+                if token is not None:
+                    date(*(int(part) for part in token.split("/")))
+            election_name = line[match.end():].split(maxsplit=1)[0]
             rows.append(
                 {
                     "prefecture": _short_prefecture_name(match.group(2)),
-                    "decision": "endorsement" if "公認" in line else "recommendation",
-                    "assemblyCategory": _assembly_category(line),
+                    "decision": "endorsement" if decision[1] == "公認" else "recommendation",
+                    "assemblyCategory": _election_category(election_name),
                     "career": {
                         "現": "incumbent",
                         "元": "former",
@@ -102,13 +114,16 @@ def parse_source_as_of(page_texts: Iterable[str]) -> str:
     for page_text in page_texts:
         match = _AS_OF_RE.search(page_text)
         if match is not None:
-            return f"{match.group(1)}-{match.group(2)}-{match.group(3)}"
+            return date(*(int(value) for value in match.groups())).isoformat()
     raise ValueError("The official PDF did not contain a YYYY/MM/DD現在 date.")
 
 
 def build_snapshot(pdf_bytes: bytes, page_texts: list[str], source_url: str) -> dict:
     rows = parse_candidate_rows(page_texts)
-    endorsements = [row for row in rows if row["decision"] == "endorsement"]
+    endorsements = [
+        row for row in rows
+        if row["decision"] == "endorsement" and row["assemblyCategory"] != "mayoral"
+    ]
     recommendations = [row for row in rows if row["decision"] == "recommendation"]
     by_prefecture: OrderedDict[str, dict[str, int | str]] = OrderedDict()
     for row in endorsements:
@@ -128,9 +143,8 @@ def build_snapshot(pdf_bytes: bytes, page_texts: list[str], source_url: str) -> 
         entry["totalCount"] = int(entry["totalCount"]) + 1
         count_key = f"{row['career']}Count"
         entry[count_key] = int(entry[count_key]) + 1
-        if row["assemblyCategory"]:
-            assembly_key = f"{row['assemblyCategory']}Count"
-            entry[assembly_key] = int(entry[assembly_key]) + 1
+        assembly_key = f"{row['assemblyCategory']}Count"
+        entry[assembly_key] = int(entry[assembly_key]) + 1
 
     career_counts = {
         career: sum(1 for row in endorsements if row["career"] == career)
@@ -156,7 +170,14 @@ def build_snapshot(pdf_bytes: bytes, page_texts: list[str], source_url: str) -> 
             "prefecturalCount": assembly_counts["prefectural"],
             "municipalCount": assembly_counts["municipal"],
         },
-        "recommendations": {"totalCount": len(recommendations)},
+        "recommendations": {
+            "totalCount": len(recommendations),
+            "mayoralCount": sum(row["assemblyCategory"] == "mayoral" for row in recommendations),
+        },
+        "mayoralEndorsementCount": sum(
+            row["decision"] == "endorsement" and row["assemblyCategory"] == "mayoral"
+            for row in rows
+        ),
         "prefectures": list(by_prefecture.values()),
     }
     validate_snapshot(snapshot)
@@ -190,9 +211,9 @@ def validate_snapshot(snapshot: dict, previous: dict | None = None) -> None:
     assembly_total = int(summary.get("prefecturalCount", 0)) + int(
         summary.get("municipalCount", 0)
     )
-    if assembly_total > total:
+    if assembly_total != total:
         raise ValueError(
-            f"Assembly breakdown {assembly_total} exceeds total {total}."
+            f"Assembly breakdown {assembly_total} does not equal total {total}."
         )
     for row in prefectures:
         row_total = sum(
@@ -206,9 +227,9 @@ def validate_snapshot(snapshot: dict, previous: dict | None = None) -> None:
         row_assembly_total = int(row.get("prefecturalCount", 0)) + int(
             row.get("municipalCount", 0)
         )
-        if row_assembly_total > row_total:
+        if row_assembly_total != row_total:
             raise ValueError(
-                f"Assembly breakdown exceeds total for {row.get('prefecture', '')}."
+                f"Assembly breakdown does not equal total for {row.get('prefecture', '')}."
             )
 
     if previous is not None:
