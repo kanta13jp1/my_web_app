@@ -56,6 +56,7 @@ import '../widgets/feature_strategy_monitor_panel.dart';
 import '../widgets/grow_together_share_card.dart';
 import '../widgets/home_billing_nudge.dart';
 import '../widgets/home_primary_action_card.dart';
+import '../widgets/home_calendar_month_header.dart';
 import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
@@ -2938,36 +2939,10 @@ abstinence_slip_details: $slipDetailsText
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.calendar_month, color: Color(0xFFB0B0B0)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '継続カレンダー $currentMonthLabel',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                key: const Key('home_calendar_month_prev'),
-                tooltip: '前月',
-                visualDensity: VisualDensity.compact,
-                onPressed: _showPreviousCalendarMonth,
-                icon: const Icon(Icons.chevron_left),
-              ),
-              IconButton(
-                key: const Key('home_calendar_month_next'),
-                tooltip: '翌月',
-                visualDensity: VisualDensity.compact,
-                onPressed: _showNextCalendarMonth,
-                icon: const Icon(Icons.chevron_right),
-              ),
-            ],
+          HomeCalendarMonthHeader(
+            currentMonthLabel: currentMonthLabel,
+            onPreviousMonth: _showPreviousCalendarMonth,
+            onNextMonth: _showNextCalendarMonth,
           ),
           const SizedBox(height: 8),
           Wrap(
