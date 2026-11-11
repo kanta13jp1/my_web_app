@@ -1,0 +1,200 @@
+# Single-use reconciliation QA. Unbound placeholders MUST STOP before any fetch.
+name: Production protection reconcile QA 20261111
+on:
+  push:
+    branches:
+      - codex/prod-protection-reconcile-qa-20261111
+permissions: {}
+jobs:
+  synthetic-reconcile-only:
+    if: ${{ github.event_name == 'push' && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/prod-protection-reconcile-qa-20261111' && github.event.created == true && github.event.deleted == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions: {}
+    steps:
+      - name: Require exact bindings and allocate private scratch
+        shell: bash
+        run: |
+          set -euo pipefail
+          for value in e763b2108fe48dd10c91caefab12428efa06dc17 4cb4eed741cd99ebd8be4d2253fae57c7f2e4f89 715f501470b8b31d50da483532481428a6469290 648039ca3b15d679f25772cc1d6877a727f3f47a b15f788ee13e07e9cdf41ba145f3686613c26491; do
+            [[ "$value" =~ ^[0-9a-f]{40}$ ]] || { echo 'STOP: unbound source, tree, or parents'; exit 1; }
+          done
+          [[ 'ae0605f016397f97e39e788b198c5e570df92f128cc0fb7233a0f173c85ad9e8' =~ ^[0-9a-f]{64}$ ]] || { echo 'STOP: unbound runner'; exit 1; }
+          [[ "${RUNNER_TEMP:?}" == /* && -d "$RUNNER_TEMP" && ! -L "$RUNNER_TEMP" ]]
+          base="$(realpath -e -- "$RUNNER_TEMP")"
+          [[ "$base" != / ]]
+          umask 077
+          root="$(mktemp -d -- "$base/prod-protection-qa.XXXXXXXX")"
+          [[ "$(dirname -- "$root")" == "$base" && -d "$root" && ! -L "$root" ]]
+          [[ "$(realpath -e -- "$root")" == "$root" && "$(stat -c %u -- "$root")" == "$(id -u)" && "$(stat -c %a -- "$root")" == 700 ]]
+          mkdir "$root/home" "$root/tmp" "$root/source" "$root/candidate" "$root/config" "$root/cache"
+          printf 'RECONCILE_ROOT=%s\n' "$root" >> "$GITHUB_ENV"
+      - name: Verify event W is source S plus one QA workflow only
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GITHUB_REF" == 'refs/heads/codex/prod-protection-reconcile-qa-20261111' ]]
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$RECONCILE_ROOT/home" TMPDIR="$RECONCILE_ROOT/tmp" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$RECONCILE_ROOT/candidate" init --quiet
+          "${clean_env[@]}" git -C "$RECONCILE_ROOT/candidate" -c credential.helper= fetch --no-tags --depth=2 https://github.com/kanta13jp1/my_web_app.git "$GITHUB_SHA"
+          "${clean_env[@]}" git -C "$RECONCILE_ROOT/candidate" checkout --quiet --detach FETCH_HEAD
+          cd "$RECONCILE_ROOT/candidate"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git show -s --format=%P HEAD)" = e763b2108fe48dd10c91caefab12428efa06dc17
+          test "$(git diff --no-renames --name-status e763b2108fe48dd10c91caefab12428efa06dc17 HEAD)" = "$(printf 'A\t.github/workflows/prod-protection-reconcile-qa.yml')"
+          test -z "$(git status --porcelain --untracked-files=all)"
+      - name: Fetch exact public merge source and verify three reviewed modifications
+        shell: bash
+        run: |
+          set -euo pipefail
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$RECONCILE_ROOT/home" TMPDIR="$RECONCILE_ROOT/tmp" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$RECONCILE_ROOT/source" init --quiet
+          "${clean_env[@]}" git -C "$RECONCILE_ROOT/source" -c credential.helper= fetch --no-tags --depth=2 https://github.com/kanta13jp1/my_web_app.git e763b2108fe48dd10c91caefab12428efa06dc17
+          "${clean_env[@]}" git -C "$RECONCILE_ROOT/source" checkout --quiet --detach FETCH_HEAD
+          cd "$RECONCILE_ROOT/source"
+          test "$(git rev-parse HEAD)" = e763b2108fe48dd10c91caefab12428efa06dc17
+          test "$(git rev-parse 'HEAD^{tree}')" = 4cb4eed741cd99ebd8be4d2253fae57c7f2e4f89
+          test "$(git show -s --format=%P HEAD)" = '715f501470b8b31d50da483532481428a6469290 648039ca3b15d679f25772cc1d6877a727f3f47a'
+          test "$(git rev-parse 'HEAD^2^{tree}')" = b15f788ee13e07e9cdf41ba145f3686613c26491
+          test "$(git diff --no-renames --name-status 648039ca3b15d679f25772cc1d6877a727f3f47a HEAD)" = "$(printf 'M\t.github/workflows/deploy-prod.yml\nM\tscripts/cicd_efficiency_test.py\nM\tscripts/production_deploy_hold_test.py')"
+          test "$(git ls-tree HEAD -- .github/workflows/deploy-prod.yml)" = "$(printf '100644 blob d10ca54b3a58028661fc0102153ceee1a48ac64f\t.github/workflows/deploy-prod.yml')"
+          printf '%s  %s\n' da873d0c0b4121472cc178151e13ecf95d485055629e8e3d68e225c6a921965d .github/workflows/deploy-prod.yml | sha256sum -c -
+          test "$(git ls-tree HEAD -- scripts/cicd_efficiency_test.py)" = "$(printf '100644 blob 36fb1653078b498f91816b06f6cb2080dd9470e6\tscripts/cicd_efficiency_test.py')"
+          printf '%s  %s\n' b5ba9c9e5865627a54ae538f97c2decaff4feeb919747bae7bd0ab15a39877c2 scripts/cicd_efficiency_test.py | sha256sum -c -
+          test "$(git ls-tree HEAD -- scripts/production_deploy_hold_test.py)" = "$(printf '100644 blob 5988355188384e4f39fac6984d58ed4886682da9\tscripts/production_deploy_hold_test.py')"
+          printf '%s  %s\n' 6c769539c5e3af15a30e15157f2c7ba472d8d3c8527b8fb97470ec7b02d71722 scripts/production_deploy_hold_test.py | sha256sum -c -
+          test -z "$(git status --porcelain --untracked-files=all)"
+      - name: Install only the sealed stdlib runner in private scratch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RECONCILE_ROOT/tmp/runner.py" <<'PYRUNNER'
+          #!/usr/bin/env python3
+          # Template: stdlib-only exact 31-case runner. Do not execute while unbound.
+          import hashlib
+          import importlib.util
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+          import sys
+          import unittest
+
+          sys.stdout.reconfigure(encoding='utf-8')
+          sys.stderr.reconfigure(encoding='utf-8')
+
+          EXPECTED_SOURCE = 'e763b2108fe48dd10c91caefab12428efa06dc17'
+          EXPECTED_TREE = '4cb4eed741cd99ebd8be4d2253fae57c7f2e4f89'
+          EXPECTED_FILES = {'.github/workflows/deploy-prod.yml': {'sha256': 'da873d0c0b4121472cc178151e13ecf95d485055629e8e3d68e225c6a921965d', 'blob': 'd10ca54b3a58028661fc0102153ceee1a48ac64f'}, 'scripts/cicd_efficiency_test.py': {'sha256': 'b5ba9c9e5865627a54ae538f97c2decaff4feeb919747bae7bd0ab15a39877c2', 'blob': '36fb1653078b498f91816b06f6cb2080dd9470e6'}, 'scripts/production_deploy_hold_test.py': {'sha256': '6c769539c5e3af15a30e15157f2c7ba472d8d3c8527b8fb97470ec7b02d71722', 'blob': '5988355188384e4f39fac6984d58ed4886682da9'}}
+          EXPECTED_IDS = ['qa_cicd_efficiency_test.CicdEfficiencyTest.test_auto_fix_is_operator_initiated', 'qa_cicd_efficiency_test.CicdEfficiencyTest.test_ci_expensive_steps_are_path_scoped', 'qa_cicd_efficiency_test.CicdEfficiencyTest.test_cloud_first_manual_gate_is_available', 'qa_cicd_efficiency_test.CicdEfficiencyTest.test_deploy_checkout_survives_branch_advance', 'qa_cicd_efficiency_test.CicdEfficiencyTest.test_deploy_checkout_uses_event_sha_not_moving_branch', 'qa_cicd_efficiency_test.CicdEfficiencyTest.test_deploy_reuses_protected_pr_ci_result', 'qa_cicd_efficiency_test.CicdEfficiencyTest.test_deploy_uses_global_semver_and_rejects_tag_mismatch', 'qa_cicd_efficiency_test.CicdEfficiencyTest.test_ga_gate_does_not_run_for_every_test_file', 'qa_cicd_efficiency_test.CicdEfficiencyTest.test_manual_web_only_deploy_skips_database_and_edge_scope', 'qa_cicd_efficiency_test.CicdEfficiencyTest.test_minimal_gate_does_not_poll_ci', 'qa_cicd_efficiency_test.CicdEfficiencyTest.test_non_app_prs_skip_minimal_e2e_declaration', 'qa_cicd_efficiency_test.CicdEfficiencyTest.test_push_does_not_repeat_full_local_gate', 'qa_cicd_efficiency_test.CicdEfficiencyTest.test_required_ci_checks_are_emitted_for_docs_only_prs', 'qa_cicd_efficiency_test.DeploymentGateTests.test_approved_shell_fingerprints', 'qa_cicd_efficiency_test.DeploymentGateTests.test_each_destination_retries_independently', 'qa_cicd_efficiency_test.DeploymentGateTests.test_each_destination_uncertain_states_fail', 'qa_cicd_efficiency_test.DeploymentGateTests.test_firebase_cli_failure_propagates_even_if_diagnostics_fail', 'qa_cicd_efficiency_test.DeploymentGateTests.test_firebase_cli_version_is_pinned_and_deploy_status_preserved', 'qa_cicd_efficiency_test.DeploymentGateTests.test_invalid_deployment_url_never_calls_curl', 'qa_cicd_efficiency_test.DeploymentGateTests.test_public_verification_has_network_timeouts_and_both_destinations', 'qa_cicd_efficiency_test.DeploymentGateTests.test_unknown_shell_never_runs', 'qa_cicd_efficiency_test.DeploymentGateTests.test_untrusted_startup_environment_is_not_inherited', 'qa_cicd_efficiency_test.DeploymentGateTests.test_verified_sha_at_both_destinations_succeeds', 'qa_cicd_efficiency_test.DeploymentGateTests.test_web_scope_and_failure_are_enforced', 'qa_production_deploy_hold_test.ProductionHoldTests.test_all_production_jobs_require_explicit_release', 'qa_production_deploy_hold_test.ProductionHoldTests.test_deploy_condition_event_ci_hold_and_cancel_matrix', 'qa_production_deploy_hold_test.ProductionHoldTests.test_deployment_status_has_no_environment_or_external_actions', 'qa_production_deploy_hold_test.ProductionHoldTests.test_hold_value_comparison_is_case_insensitive', 'qa_production_deploy_hold_test.ProductionHoldTests.test_no_dispatch_override_and_visible_hold', 'qa_production_deploy_hold_test.ProductionHoldTests.test_status_summary_script_synthetic_states', 'qa_production_deploy_hold_test.ProductionHoldTests.test_unknown_summary_shell_never_runs']
+
+          def stop(message):
+              raise SystemExit(message)
+
+          if not re.fullmatch(r'[0-9a-f]{40}', EXPECTED_SOURCE):
+              stop('STOP: unbound source')
+          if len(sys.argv) != 2:
+              stop('expected fixed source directory')
+          root = Path(sys.argv[1]).resolve(strict=True)
+          if root.is_symlink() or not root.is_dir() or os.geteuid() == 0:
+              stop('expected existing nonroot source')
+          if os.getcwd() != str(root):
+              stop('unexpected working directory')
+
+          def git(*args):
+              return subprocess.check_output(['/usr/bin/git', '-C', str(root), *args],
+                                             encoding='utf-8', timeout=20).strip()
+
+          def guard():
+              if git('rev-parse', 'HEAD') != EXPECTED_SOURCE or git('rev-parse', 'HEAD^{tree}') != EXPECTED_TREE:
+                  stop('source identity changed')
+              if git('status', '--porcelain', '--untracked-files=all'):
+                  stop('source working tree is not clean')
+              for relative, expected in EXPECTED_FILES.items():
+                  path = root / relative
+                  if path.is_symlink() or not path.is_file():
+                      stop('unsafe source input')
+                  if hashlib.sha256(path.read_bytes()).hexdigest() != expected['sha256']:
+                      stop('source bytes changed')
+
+          guard()
+          modules = []
+          for relative in ('scripts/cicd_efficiency_test.py', 'scripts/production_deploy_hold_test.py'):
+              path = root / relative
+              spec = importlib.util.spec_from_file_location('qa_' + path.stem, path)
+              if spec is None or spec.loader is None:
+                  stop('cannot load exact test module')
+              module = importlib.util.module_from_spec(spec)
+              sys.modules[spec.name] = module
+              spec.loader.exec_module(module)
+              modules.append(module)
+          loader = unittest.TestLoader()
+          suite = unittest.TestSuite(loader.loadTestsFromModule(module) for module in modules)
+          def flatten(items):
+              for item in items:
+                  if isinstance(item, unittest.TestSuite):
+                      yield from flatten(item)
+                  else:
+                      yield item
+          actual = [item.id() for item in flatten(suite)]
+          if len(actual) != 31 or sorted(actual) != sorted(EXPECTED_IDS):
+              stop('STOP: expected exactly the sealed 31 named cases')
+
+          class ExactResult(unittest.TextTestResult):
+              def __init__(self, *args, **kwargs):
+                  super().__init__(*args, **kwargs)
+                  self.seen = []
+              def startTest(self, test):
+                  self.seen.append(test.id())
+                  super().startTest(test)
+
+          try:
+              result = unittest.TextTestRunner(verbosity=2, resultclass=ExactResult).run(suite)
+              passed = (result.wasSuccessful() and result.testsRun == 31 and not result.skipped
+                        and len(result.seen) == 31 and sorted(result.seen) == sorted(EXPECTED_IDS))
+          finally:
+              guard()
+          if not passed:
+              stop('STOP: 31 cases must execute successfully with skip 0')
+          print('EXACT_CASES=31 EXECUTED=31 SKIPPED=0')
+          PYRUNNER
+          printf '%s  %s\n' ae0605f016397f97e39e788b198c5e570df92f128cc0fb7233a0f173c85ad9e8 "$RECONCILE_ROOT/tmp/runner.py" | sha256sum -c -
+          chmod 0400 "$RECONCILE_ROOT/tmp/runner.py"
+      - name: Run exactly 31 synthetic tests with no external network or SDK
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          user="$(id -un)"
+          [[ "$(id -u "$user")" -gt 0 ]]
+          original_net="$(readlink /proc/self/ns/net)"
+          original_pid="$(readlink /proc/self/ns/pid)"
+          sudo -n true
+          env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME="$RECONCILE_ROOT/home" \
+            sudo -n unshare --net --pid --fork --kill-child --mount-proc -- /bin/bash -euc '
+              ip link set lo up
+              [[ "$(readlink /proc/self/ns/net)" != "$3" ]]
+              [[ "$(readlink /proc/self/ns/pid)" != "$4" ]]
+              links="$(ip -o link show)"
+              [[ "$(printf "%s\n" "$links" | wc -l)" -eq 1 ]]
+              [[ "$(printf "%s\n" "$links" | cut -d: -f2 | tr -d "[:space:]")" == lo ]]
+              [[ -z "$(ip -4 route show default)" && -z "$(ip -6 route show default)" ]]
+              cd "$2/source"
+              runuser -u "$1" -- env -i PATH=/usr/bin:/bin HOME="$2/home" TMPDIR="$2/tmp" XDG_CONFIG_HOME="$2/config" XDG_CACHE_HOME="$2/cache" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1 PYTHONIOENCODING=utf-8 /usr/bin/python3 -I -B "$2/tmp/runner.py" "$2/source"
+            ' isolated "$user" "$RECONCILE_ROOT" "$original_net" "$original_pid"
+      - name: Always verify the source identity and clean working tree
+        if: ${{ always() && env.RECONCILE_ROOT != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RECONCILE_ROOT/source"
+          status=0
+          test "$(git rev-parse HEAD)" = e763b2108fe48dd10c91caefab12428efa06dc17 || status=1
+          test "$(git rev-parse 'HEAD^{tree}')" = 4cb4eed741cd99ebd8be4d2253fae57c7f2e4f89 || status=1
+          git diff --exit-code HEAD -- || status=1
+          test -z "$(git status --porcelain --untracked-files=all)" || status=1
+          printf '%s  %s\n' da873d0c0b4121472cc178151e13ecf95d485055629e8e3d68e225c6a921965d .github/workflows/deploy-prod.yml | sha256sum -c - || status=1
+          printf '%s  %s\n' b5ba9c9e5865627a54ae538f97c2decaff4feeb919747bae7bd0ab15a39877c2 scripts/cicd_efficiency_test.py | sha256sum -c - || status=1
+          printf '%s  %s\n' 6c769539c5e3af15a30e15157f2c7ba472d8d3c8527b8fb97470ec7b02d71722 scripts/production_deploy_hold_test.py | sha256sum -c - || status=1
+          exit "$status"
