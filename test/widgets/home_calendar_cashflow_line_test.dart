@@ -42,7 +42,8 @@ void main() {
     }
   });
 
-  testWidgets('cashflow fits a narrow day cell with large text', (tester) async {
+  testWidgets('cashflow fits a narrow day cell with large text',
+      (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: MediaQuery(

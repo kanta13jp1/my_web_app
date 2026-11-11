@@ -49,5 +49,4 @@ class HomeCalendarCashflowLine extends StatelessWidget {
     }
     return NumberFormat('#,##0', 'ja_JP').format(absValue);
   }
-
 }
