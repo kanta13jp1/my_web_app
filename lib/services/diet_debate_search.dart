@@ -129,6 +129,9 @@ class DietDebateSearch {
       'startRecord': '$start',
       'recordPacking': 'json',
     });
+    if (utf8.encode(uri.query).length > 2000) {
+      throw const DietSearchError('検索条件が長すぎます。検索語・発言者・会派を短くしてください。');
+    }
     final now = _now();
     _cache.removeWhere((_, entry) => !now.isBefore(entry.expires));
     final cached = _cache[uri];
