@@ -397,6 +397,15 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      for (final key in [
+        'home_section_site_guide_ai',
+        'home_legacy_site_guide_ai',
+        'home_section_feature_request',
+        'home_legacy_feature_request',
+      ]) {
+        expect(find.byKey(Key(key)), findsOneWidget);
+      }
 
       Text monthLabel = tester.widget(
         find.byKey(const Key('home_calendar_month_label')),
