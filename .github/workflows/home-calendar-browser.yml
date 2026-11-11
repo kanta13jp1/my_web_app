@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/home-calendar-browser.yml
+      - lib/pages/home_page.dart
       - lib/widgets/home_calendar_month_header.dart
       - test/widgets/home_calendar_month_header_test.dart
       - test/readme_features_test.dart
