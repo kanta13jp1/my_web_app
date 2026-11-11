@@ -57,6 +57,7 @@ import '../widgets/grow_together_share_card.dart';
 import '../widgets/home_billing_nudge.dart';
 import '../widgets/home_primary_action_card.dart';
 import '../widgets/home_calendar_month_header.dart';
+import '../widgets/home_calendar_summary_pill.dart';
 import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
@@ -3814,51 +3815,18 @@ abstinence_slip_details: $slipDetailsText
   }) {
     final isSelected = _calendarHighlightFilter == filter;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.14),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          key: Key('home_calendar_summary_${filter.name}'),
-          borderRadius: BorderRadius.circular(999),
-          onTap: () {
-            setState(() {
-              _calendarHighlightFilter =
-                  isSelected ? _CalendarHighlightFilter.all : filter;
-            });
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: isSelected ? 0.24 : 0.12),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: color.withValues(alpha: isSelected ? 0.38 : 0.18),
-              ),
-            ),
-            child: Text(
-              '$label $value',
-              style: TextStyle(
-                fontSize: 11,
-                color: color,
-                fontWeight: FontWeight.w700,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ),
-      ),
+    return HomeCalendarSummaryPill(
+      label: label,
+      value: value,
+      color: color,
+      isSelected: isSelected,
+      interactionKey: 'home_calendar_summary_${filter.name}',
+      onTap: () {
+        setState(() {
+          _calendarHighlightFilter =
+              isSelected ? _CalendarHighlightFilter.all : filter;
+        });
+      },
     );
   }
 
