@@ -6,21 +6,21 @@
 
 ## 統計
 
-- 総出現 source 数: **400**
-- レイヤー別: competitor: 146, cs-notes: 60, daily-report: 191, incident: 3
+- 総出現 source 数: **402**
+- レイヤー別: competitor: 147, cs-notes: 60, daily-report: 192, incident: 3
 
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 
 - [docs/competitor-reports/2026-11-06.md](../competitor-reports/2026-11-06.md)
 - [docs/competitor-reports/2026-11-01.md](../competitor-reports/2026-11-01.md)
 - [docs/competitor-reports/2026-10-21.md](../competitor-reports/2026-10-21.md)
+- [docs/competitor-reports/2026-11-10.md](../competitor-reports/2026-11-10.md)
 - [docs/competitor-reports/2026-08-30.md](../competitor-reports/2026-08-30.md)
 - [docs/competitor-reports/2026-06-11.md](../competitor-reports/2026-06-11.md)
 - [docs/competitor-reports/2026-09-06.md](../competitor-reports/2026-09-06.md)
 - [docs/competitor-reports/2026-10-30.md](../competitor-reports/2026-10-30.md)
 - [docs/competitor-reports/2026-08-02.md](../competitor-reports/2026-08-02.md)
 - [docs/competitor-reports/2026-11-08.md](../competitor-reports/2026-11-08.md)
-- [docs/competitor-reports/2026-06-13.md](../competitor-reports/2026-06-13.md)
 
 ## 関連
 

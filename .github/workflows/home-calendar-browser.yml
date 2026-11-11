@@ -3,8 +3,10 @@ on:
   pull_request:
     paths:
       - .github/workflows/home-calendar-browser.yml
+      - lib/pages/home_page.dart
       - lib/widgets/home_calendar_month_header.dart
       - test/widgets/home_calendar_month_header_test.dart
+      - test/readme_features_test.dart
   workflow_dispatch:
 permissions: {}
 concurrency:
@@ -30,5 +32,8 @@ jobs:
       - name: Verify head and run the Home month-navigation journey
         run: |
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+          echo 'Site-guide key references across all tracked files:'
+          git grep -n -F -e home_section_site_guide_ai -e home_legacy_site_guide_ai -- .
           flutter pub get
           xvfb-run -a flutter test --platform chrome --concurrency=1 --plain-name 'Feature: HomePage calendar can move between months' test/readme_features_test.dart
+          xvfb-run -a flutter test --platform chrome --concurrency=1 --plain-name 'Feature: HomePage default uses curated navigation sections' test/readme_features_test.dart

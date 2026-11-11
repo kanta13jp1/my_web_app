@@ -6,8 +6,8 @@
 
 ## 統計
 
-- 総出現 source 数: **442**
-- レイヤー別: competitor: 267, cs-notes: 3, daily-report: 169, memory: 3
+- 総出現 source 数: **444**
+- レイヤー別: competitor: 269, cs-notes: 3, daily-report: 169, memory: 3
 
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 
@@ -19,8 +19,8 @@
 - [docs/competitor-reports/2026-11-01.md](../competitor-reports/2026-11-01.md)
 - [docs/competitor-reports/2026-08-28-patterns.md](../competitor-reports/2026-08-28-patterns.md)
 - [docs/competitor-reports/2026-10-21.md](../competitor-reports/2026-10-21.md)
+- [docs/competitor-reports/2026-11-10.md](../competitor-reports/2026-11-10.md)
 - [docs/competitor-reports/2026-08-30.md](../competitor-reports/2026-08-30.md)
-- [docs/competitor-reports/2026-10-22-patterns.md](../competitor-reports/2026-10-22-patterns.md)
 
 ## 関連
 
