@@ -37,3 +37,4 @@ jobs:
           flutter pub get
           xvfb-run -a flutter test --platform chrome --concurrency=1 --plain-name 'Feature: HomePage calendar can move between months' test/readme_features_test.dart
           xvfb-run -a flutter test --platform chrome --concurrency=1 --plain-name 'Feature: HomePage default uses curated navigation sections' test/readme_features_test.dart
+          xvfb-run -a flutter test --platform chrome --concurrency=1 --plain-name 'Feature: HomePage calendar summary pills filter highlights' test/readme_features_test.dart
