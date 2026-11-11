@@ -1,0 +1,469 @@
+# Single-use synthetic page owner UI QA with a fixed test-only source.
+# Bound candidate; not executed locally. Root review precedes commit or push.
+name: Asset waste owner UI auth settle QA 20261111
+on:
+  push:
+    branches:
+      - codex/asset-waste-owner-ui-auth-settle-qa-20261111
+permissions: {}
+jobs:
+  synthetic-widget-only:
+    if: ${{ github.event_name == 'push' && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/asset-waste-owner-ui-auth-settle-qa-20261111' && github.event.created == true && github.event.deleted == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions: {}
+    steps:
+      - name: Allocate a private scratch directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${RUNNER_TEMP:?}" == /* && -d "$RUNNER_TEMP" && ! -L "$RUNNER_TEMP" ]]
+          base="$(realpath -e -- "$RUNNER_TEMP")"
+          [[ "$base" != / ]]
+          umask 077
+          root="$(mktemp -d -- "$base/prune-widget.XXXXXXXX")"
+          [[ "$(dirname -- "$root")" == "$base" && -d "$root" && ! -L "$root" ]]
+          [[ "$(realpath -e -- "$root")" == "$root" && "$(stat -c %u -- "$root")" == "$(id -u)" && "$(stat -c %a -- "$root")" == 700 ]]
+          mkdir "$root/home" "$root/pub-cache" "$root/tmp" "$root/sdk" "$root/source" "$root/candidate" "$root/config" "$root/cache"
+          printf 'WIDGET_ROOT=%s\n' "$root" >> "$GITHUB_ENV"
+      - name: Verify exact candidate commit and run policy checks
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          base=169bea4d2817289860a9a186d699d0a9831d65a2
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GITHUB_REF" == 'refs/heads/codex/asset-waste-owner-ui-auth-settle-qa-20261111' ]]
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" TMPDIR="$WIDGET_ROOT/tmp" PYTHONDONTWRITEBYTECODE=1 GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" init --quiet
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" -c credential.helper= fetch --no-tags --depth=2 https://github.com/kanta13jp1/my_web_app.git "$GITHUB_SHA"
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/candidate" checkout --quiet --detach FETCH_HEAD
+          cd "$WIDGET_ROOT/candidate"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git show -s --format=%P HEAD)" = "$base"
+          actual_diff="$(git diff --no-renames --name-status "$base" HEAD)"
+          expected_diff="$(printf 'A\t.github/workflows/asset-waste-owner-ui-auth-settle-qa.yml')"
+          [[ "$actual_diff" == "$expected_diff" ]]
+          candidate_status_before_policy="$(git status --porcelain --untracked-files=all)"
+          [[ -z "$candidate_status_before_policy" ]]
+          echo "Candidate commit: $(git rev-parse HEAD)"
+          echo "Candidate tree: $(git rev-parse 'HEAD^{tree}')"
+          sha256sum .github/workflows/asset-waste-owner-ui-auth-settle-qa.yml
+          # Same eleven path-scoped policy commands as base pre-commit gate.
+          # This cloud run does not claim that local Git hooks ran.
+          for policy in \
+            scripts/classify_ci_changes_test.py \
+            scripts/cloud_ci_handoff_test.py \
+            scripts/cloud_first_route_test.py \
+            scripts/generate_infrastructure_map_test.py \
+            scripts/cicd_efficiency_test.py \
+            scripts/quality_gate_test.py \
+            scripts/pre_commit_quality_gate_test.py \
+            scripts/check_github_actions_node_runtime.py \
+            scripts/check_github_actions_python_inline.py \
+            scripts/check_github_actions_status_functions.py \
+            scripts/check_github_actions_powershell_splatting.py; do
+              echo "Running $policy"
+              "${clean_env[@]}" python3 "$policy"
+          done
+          candidate_status_after_policy="$(git status --porcelain --untracked-files=all)"
+          [[ -z "$candidate_status_after_policy" ]]
+          echo 'All eleven cloud policy checks passed for candidate tree.'
+      - name: Fetch fixed public UI test candidate without a stored token
+        shell: bash
+        run: |
+          set -euo pipefail
+          clean_env=(env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" init --quiet
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" -c credential.helper= fetch --no-tags --depth=2 https://github.com/kanta13jp1/my_web_app.git 169bea4d2817289860a9a186d699d0a9831d65a2
+          "${clean_env[@]}" git -C "$WIDGET_ROOT/source" checkout --quiet --detach FETCH_HEAD
+          cd "$WIDGET_ROOT/source"
+          test "$(git rev-parse HEAD)" = 169bea4d2817289860a9a186d699d0a9831d65a2
+          test "$(git rev-parse 'HEAD^{tree}')" = a02df0ee20ae4b5b37bd795ca84cf98c6b14dead
+          test "$(git show -s --format=%P HEAD)" = 7257e01ada3c30af2a89cb2bf382dfc5e57f4d3e
+          test "$(git rev-parse 'HEAD^1^{tree}')" = bfceddddce357fd4e595d9857fb70c56d61c6582
+          test "$(git diff --no-renames --name-status 7257e01ada3c30af2a89cb2bf382dfc5e57f4d3e HEAD)" = "$(printf 'A\ttest/widgets/asset_waste_page_owner_test.dart')"
+          test "$(git ls-tree HEAD -- test/widgets/asset_waste_page_owner_test.dart)" = "$(printf '100644 blob f5a2cdd2b2875a519170cfd87d98c6a1de5b15ad\ttest/widgets/asset_waste_page_owner_test.dart')"
+          printf '%s  %s\n' 0d8efe36392cb48710d6b4bcca573f1203b37b9886de835906fcf493fb3d84e9 test/widgets/asset_waste_page_owner_test.dart | sha256sum -c -
+          source_status_after_checkout="$(git status --porcelain --untracked-files=all)"
+          [[ -z "$source_status_after_checkout" ]]
+          test "$(git ls-tree HEAD -- test/widgets/asset_calendar_atm_narrow_test.dart)" = "$(printf '100644 blob 4febd335473605c624a155dbe1971024628f2dc7\ttest/widgets/asset_calendar_atm_narrow_test.dart')"
+          printf '%s  %s\n' 9dff608d070a1ba843aad9ee346029255d3e0cca398eb5b5102ed47ba61a55b4 test/widgets/asset_calendar_atm_narrow_test.dart | sha256sum -c -
+          test "$(git rev-parse HEAD:lib/pages/asset_management_page.dart)" = a2b414d6729308b058bc848d0b896bb65a4e3e65
+          test "$(git rev-parse HEAD:lib/services/asset_waste_training_ai_service.dart)" = 002277bf834489a09fa57088b11c077858262b09
+          printf '%s  %s\n' 309899d80ba09b9a28a1932c49a58f23328d9db4d3dab9655b35d0cb94eefc70 lib/services/asset_waste_training_ai_service.dart | sha256sum -c -
+          test "$(git rev-parse HEAD:lib/services/supabase_trace_context.dart)" = 4d55130d45db4b2883f8465e04907e0b9cfdc1b9
+          printf '%s  %s\n' 63ac4996d7af0fe677bf6c81ff9055d4ddfecc9f9c28376f912cc3633a790d14 lib/services/supabase_trace_context.dart | sha256sum -c -
+          test "$(git rev-parse HEAD:test/services/asset_waste_training_ai_service_test.dart)" = 15702b5e9ddd331e83063e4feff4463dc0749092
+          printf '%s  %s\n' 752e32d93255fc6a7bfb1e8d301ac6d08587e6b71e4796a3d7a7dd952a81cce7 test/services/asset_waste_training_ai_service_test.dart | sha256sum -c -
+          test "$(git rev-parse HEAD:test/services/supabase_trace_context_test.dart)" = b2bea4a12d9c836ea169b7a401274c86deb33a44
+          printf '%s  %s\n' f37cdb49c8fed32b6720563373882019de2f3627084a32de82a9a0d3ed9c6c97 test/services/supabase_trace_context_test.dart | sha256sum -c -
+          test "$(git rev-parse HEAD:lib/widgets/kgi_csf_kpi_panel.dart)" = ca7e4c59156b08b550c112145a507819d9aaae61
+          test "$(git rev-parse HEAD:web/assets/fonts/NotoSansJP-Regular.ttf)" = bca472de0abc4c845395b9bea6f1d5eaddbc3bb3
+          test "$(git rev-parse HEAD:pubspec.yaml)" = d4af874ac1845ff9fc61366b0fa5f783e6ee4975
+          test "$(git rev-parse HEAD:pubspec.lock)" = 8b12da8539a17ba14d389789c7b453ac693a910d
+          test "$(git rev-parse HEAD:analysis_options.yaml)" = 8d30beed4897a1e1909640f03a8cb2cd9f61636f
+          printf '%s  %s\n' 6e60ad1ccbb6ce0726bbb3dfd89092692bc1e83af073dd602a323da1e9b25760 web/assets/fonts/NotoSansJP-Regular.ttf | sha256sum -c -
+          printf '%s  %s\n' 219e1bd8160fb2c8dbb7648670f377e75e464d99a2b9b8b1a5f73f1b6e801800 pubspec.yaml | sha256sum -c -
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+      - name: Install exact-byte migration guard in private runner scratch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$WIDGET_ROOT/tmp/analysis_options_guard.py" <<'PYGUARD'
+          import hashlib, os, pathlib, subprocess, sys
+
+          if len(sys.argv) != 3:
+              raise SystemExit('expected private runner root and phase')
+          root = pathlib.Path(sys.argv[1])
+          phase = sys.argv[2]
+          if phase not in {'before_flutter', 'after_version', 'after_precache', 'after_pub_get', 'before_ui', 'after_ui', 'final'}:
+              raise SystemExit('unknown phase')
+          if root.is_symlink() or not root.is_dir() or not root.name.startswith('prune-widget.'):
+              raise SystemExit('unsafe runner root')
+          root = root.resolve(strict=True)
+          source = root / 'source'
+          if source.is_symlink() or not source.is_dir() or source.resolve(strict=True).parent != root:
+              raise SystemExit('unsafe source')
+          path = source / 'analysis_options.yaml'
+          if path.is_symlink() or not path.is_file() or path.resolve(strict=True).parent != source:
+              raise SystemExit('unsafe analysis options path')
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
+          if head != '169bea4d2817289860a9a186d699d0a9831d65a2':
+              raise SystemExit('unexpected source HEAD')
+          original = subprocess.check_output(['git', 'show', 'HEAD:analysis_options.yaml'], cwd=source)
+          base_hash = 'e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342'
+          expected_hash = '1900f9a58dfe11a5f9c9ce0988ffc9d7e64f8ec23f3a7d7757f2024a23d27083'
+          if hashlib.sha256(original).hexdigest() != base_hash:
+              raise SystemExit('baseline hash mismatch')
+          anchor = b'    - ".dart_tool/**"\n'
+          addition = b'    - android/**\n    - ios/**\n    - web/**\n    - windows/**\n    - macos/**\n    - linux/**\n'
+          if original.count(anchor) != 1:
+              raise SystemExit('baseline anchor mismatch')
+          expected = original.replace(anchor, anchor + addition, 1)
+          if hashlib.sha256(expected).hexdigest() != expected_hash:
+              raise SystemExit('expected migration hash mismatch')
+          actual = path.read_bytes()
+          actual_hash = hashlib.sha256(actual).hexdigest()
+          print(f'analysis_guard phase={phase} before_sha256={actual_hash}', flush=True)
+          if actual == original:
+              print('analysis_guard action=none baseline_confirmed', flush=True)
+          elif actual == expected:
+              print('analysis_guard action=restore exact_six_line_flutter_migration', flush=True)
+              # This path is inside a private ephemeral Actions checkout, never the user workspace.
+              path.write_bytes(original)
+              if path.read_bytes() != original:
+                  raise SystemExit('restore verification failed')
+          else:
+              raise SystemExit('unexpected analysis options bytes; no restoration performed')
+          print(f'analysis_guard phase={phase} after_sha256={hashlib.sha256(path.read_bytes()).hexdigest()}', flush=True)
+          PYGUARD
+          chmod 0400 "$WIDGET_ROOT/tmp/analysis_options_guard.py"
+          printf '%s  %s\n' 686b9db716798430043b09a1754f5c047220e43f55dd4f471c0e0024d910427e "$WIDGET_ROOT/tmp/analysis_options_guard.py" | sha256sum -c -
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" before_flutter
+      - name: Verify official SDK and locked dependencies before isolation
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          env -i PATH=/usr/bin:/bin HOME="$WIDGET_ROOT/home" \
+            curl --fail --location --connect-timeout 15 --max-time 240 --retry 0 \
+              --output "$WIDGET_ROOT/sdk/flutter.tar.xz" \
+              https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.9-stable.tar.xz
+          printf '%s  %s\n' 25ed8c3c29d51a7353f2a944310b478af8214920639524b19c50a19e6c044c5a "$WIDGET_ROOT/sdk/flutter.tar.xz" | sha256sum -c -
+          tar -xJf "$WIDGET_ROOT/sdk/flutter.tar.xz" -C "$WIDGET_ROOT/sdk"
+          cd "$WIDGET_ROOT/source"
+          clean_env=(env -i PATH="$WIDGET_ROOT/sdk/flutter/bin:/usr/bin:/bin" HOME="$WIDGET_ROOT/home" PUB_CACHE="$WIDGET_ROOT/pub-cache" TMPDIR="$WIDGET_ROOT/tmp" XDG_CONFIG_HOME="$WIDGET_ROOT/config" XDG_CACHE_HOME="$WIDGET_ROOT/cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0)
+          "${clean_env[@]}" flutter --version --machine > "$WIDGET_ROOT/flutter-version.json"
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" after_version
+          python3 - "$WIDGET_ROOT/flutter-version.json" <<'PY'
+          import json,sys
+          with open(sys.argv[1],encoding='utf-8') as f: info=json.load(f)
+          if info.get('frameworkVersion') != '3.47.9': raise SystemExit('unexpected Flutter version')
+          PY
+          "${clean_env[@]}" dart --version 2>&1 | grep -Eq '^Dart SDK version: 3[.]13[.]7([[:space:]]|$)'
+          "${clean_env[@]}" flutter precache --linux
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" after_precache
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          "${clean_env[@]}" flutter pub get --enforce-lockfile
+          python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" after_pub_get
+          printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          git diff --exit-code HEAD --
+      - name: Prepare the UI-only private validation script
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          cat > "$WIDGET_ROOT/tmp/ui_format_gate.py" <<'UI_FORMAT_GATE'
+          """Private UI-test-only formatter proposal gate; never adopts formatted source."""
+          import difflib
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import stat
+          import subprocess
+          import sys
+
+          SOURCE = "169bea4d2817289860a9a186d699d0a9831d65a2"
+          TEST = "test/widgets/asset_waste_page_owner_test.dart"
+          ORIGINAL_SHA = "0d8efe36392cb48710d6b4bcca573f1203b37b9886de835906fcf493fb3d84e9"
+          NAMES = {"asset_waste_page_owner_test.dart", "format.patch", "manifest.json"}
+          LIMITS = {"asset_waste_page_owner_test.dart": 65536, "format.patch": 65536,
+                    "manifest.json": 4096}
+
+
+          def require(ok, message):
+              if not ok:
+                  raise ValueError(message)
+
+
+          def sha(raw):
+              return hashlib.sha256(raw).hexdigest()
+
+
+          def git(source, *args):
+              return subprocess.check_output(
+                  ["git", "-c", "gc.auto=0", "-c", "maintenance.auto=false", "-C", str(source), *args]
+              )
+
+
+          def text(raw):
+              value = raw.decode("utf-8", "strict")
+              require(raw.endswith(b"\n") and b"\r" not in raw and b"\0" not in raw,
+                      "formatter candidate must be UTF8 LF text")
+              return value
+
+
+          def context(root):
+              require(root.is_absolute() and root.resolve(strict=True) == root
+                      and not root.is_symlink() and root.name.startswith("prune-widget.")
+                      and root.stat().st_uid == os.getuid(), "unsafe private runner root")
+              source = root / "source"
+              path = source / TEST
+              require(source.resolve(strict=True) == source and not source.is_symlink(),
+                      "unsafe private SOURCE")
+              info = path.lstat()
+              require(path.resolve(strict=True) == path and not path.is_symlink()
+                      and stat.S_ISREG(info.st_mode) and info.st_nlink == 1,
+                      "unsafe fixed UI source path")
+              require(git(source, "rev-parse", "HEAD").decode().strip() == SOURCE,
+                      "unexpected private source HEAD")
+              original = git(source, "show", "HEAD:" + TEST)
+              require(sha(original) == ORIGINAL_SHA, "Git original UI SHA differs")
+              text(original)
+              return source, path, original
+
+
+          def changed(source):
+              raw = git(source, "diff", "--name-only", "--no-renames", "-z", "HEAD", "--")
+              paths = [part.decode("utf-8", "strict") for part in raw.split(b"\0") if part]
+              require(not git(source, "ls-files", "--others", "--exclude-standard", "-z"),
+                      "unexpected untracked private SOURCE file")
+              return paths
+
+
+          def patch(original, formatted):
+              return "".join(difflib.unified_diff(
+                  text(original).splitlines(True), text(formatted).splitlines(True),
+                  fromfile="a/" + TEST, tofile="b/" + TEST,
+              )).encode("utf-8")
+
+
+          def validate(root):
+              source, path, original = context(root)
+              require(path.read_bytes() == original and changed(source) == [],
+                      "private source was not restored exactly")
+              stage = root / "format-candidate"
+              require(stage.is_dir() and not stage.is_symlink()
+                      and stage.resolve(strict=True) == stage
+                      and stage.stat().st_uid == os.getuid(), "unsafe formatter stage")
+              members = list(stage.iterdir())
+              require({p.name for p in members} == NAMES and len(members) == len(NAMES),
+                      "formatter artifact must contain exactly three safe files")
+              values = {}
+              for member in members:
+                  info = member.lstat()
+                  require(stat.S_ISREG(info.st_mode) and not member.is_symlink()
+                          and member.resolve(strict=True) == member and info.st_nlink == 1
+                          and info.st_uid == os.getuid()
+                          and 0 < info.st_size <= LIMITS[member.name], "unsafe formatter member")
+                  raw = member.read_bytes()
+                  require(len(raw) == info.st_size, "formatter member size changed")
+                  values[member.name] = raw
+              formatted = values["asset_waste_page_owner_test.dart"]
+              require(formatted != original, "empty formatter candidate")
+              require(values["format.patch"] == patch(original, formatted),
+                      "formatter patch does not exactly reconstruct the two texts")
+              manifest = json.loads(values["manifest.json"].decode("utf-8", "strict"))
+              require(manifest == {
+                  "source": SOURCE, "path": TEST, "original_sha256": ORIGINAL_SHA,
+                  "formatted_sha256": sha(formatted), "patch_sha256": sha(values["format.patch"]),
+                  "formatter": "Flutter3.47.9/Dart3.13.7", "cases": 3,
+                  "runtime_executed": False,
+              }, "formatter manifest differs")
+
+
+          def capture(root, result):
+              source, path, original = context(root)
+              paths = changed(source)
+              if result == 0:
+                  require(paths == [] and path.read_bytes() == original,
+                          "formatter exit0 changed SOURCE")
+                  require(not (root / "format-candidate").exists(), "unexpected format stage")
+                  return
+              require(result == 1 and paths == [TEST],
+                      "STOP: formatter failed or changed something other than the new UI test")
+              raw_delta = git(source, "diff", "--raw", "--no-renames", "-z", "HEAD", "--")
+              pieces = raw_delta.split(b"\0")
+              require(len(pieces) == 3 and pieces[1] == TEST.encode()
+                      and pieces[0].split()[:2] == [b":100644", b"100644"]
+                      and pieces[0].split()[-1] == b"M", "formatter changed mode/type")
+              formatted = path.read_bytes()
+              require(0 < len(formatted) <= LIMITS["asset_waste_page_owner_test.dart"]
+                      and formatted != original, "invalid formatted UI bytes")
+              diff = patch(original, formatted)
+              require(0 < len(diff) <= LIMITS["format.patch"], "formatter patch too large")
+              manifest = {
+                  "source": SOURCE, "path": TEST, "original_sha256": ORIGINAL_SHA,
+                  "formatted_sha256": sha(formatted), "patch_sha256": sha(diff),
+                  "formatter": "Flutter3.47.9/Dart3.13.7", "cases": 3,
+                  "runtime_executed": False,
+              }
+              body = (json.dumps(manifest, indent=2) + "\n").encode()
+              require(len(body) <= LIMITS["manifest.json"], "formatter manifest too large")
+              stage = root / "format-candidate"
+              require(not stage.exists() and not stage.is_symlink(), "formatter stage already exists")
+              try:
+                  stage.mkdir(mode=0o700)
+                  for name, data in [("asset_waste_page_owner_test.dart", formatted),
+                                     ("format.patch", diff), ("manifest.json", body)]:
+                      with (stage / name).open("xb") as stream:
+                          stream.write(data)
+              finally:
+                  # This is the only restore write, to the already checked private fixed file.
+                  path.write_bytes(original)
+              require(path.read_bytes() == original and changed(source) == [],
+                      "formatter restore did not return SOURCE to Git original")
+              validate(root)
+              print("UI format candidate captured; SOURCE restored; runtime not executed")
+              raise SystemExit(66)
+
+
+          def main():
+              require(len(sys.argv) in (3, 4), "expected private root and formatter phase")
+              root = Path(sys.argv[1])
+              if sys.argv[2] == "capture":
+                  require(len(sys.argv) == 4 and sys.argv[3].isdigit(), "invalid formatter exit code")
+                  capture(root, int(sys.argv[3]))
+              else:
+                  require(len(sys.argv) == 3 and sys.argv[2] == "validate", "invalid formatter mode")
+                  validate(root)
+                  with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as stream:
+                      stream.write("validated=true\n")
+
+
+          if __name__ == "__main__":
+              main()
+          UI_FORMAT_GATE
+          chmod 0400 "$WIDGET_ROOT/tmp/ui_format_gate.py"
+          printf '%s  %s\n' f4d2d2261abc40de1b6a5ee87bf1b3518c3f42a8db67ce6bd68be2022ab83117 "$WIDGET_ROOT/tmp/ui_format_gate.py" | sha256sum -c -
+          cat > "$WIDGET_ROOT/tmp/isolate-ui.sh" <<'UI_ISOLATE'
+          set -euo pipefail
+          umask 077
+          root=$1
+          [[ "$(id -u)" -gt 0 ]]
+          cd "$root/source"
+          python3 "$root/tmp/analysis_options_guard.py" "$root" before_ui
+          git diff --exit-code HEAD --
+          format_rc=0
+          dart format --output=write --set-exit-if-changed test/widgets/asset_waste_page_owner_test.dart | tee "$root/tmp/ui-format.log" || format_rc=$?
+          python3 "$root/tmp/ui_format_gate.py" "$root" capture "$format_rc"
+          # A formatting candidate exits66 above after exact restore, so no analysis/runtime follows.
+          dart analyze --fatal-infos test/widgets/asset_waste_page_owner_test.dart
+          require_three_cases() {
+            local log=$1 skip_status=0
+            tail -n 1 "$log" | grep -Eq '^[0-9]{2}:[0-9]{2} \+3: All tests passed!$'
+            grep -Eq '^[0-9]{2}:[0-9]{2} .*~[1-9][0-9]*([ :]|$)' "$log" || skip_status=$?
+            [[ "$skip_status" -eq 1 ]]
+            for label in sameOwner ownerB logout; do
+              grep -Fq "waste page owner result: $label" "$log"
+            done
+          }
+          printf "%s  %s\n" da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+          printf "%s  %s\n" 6e60ad1ccbb6ce0726bbb3dfd89092692bc1e83af073dd602a323da1e9b25760 web/assets/fonts/NotoSansJP-Regular.ttf | sha256sum -c -
+          rc=0
+          flutter --no-color --no-version-check test --no-pub --reporter expanded --dart-define=ENVIRONMENT=test --dart-define=SUPABASE_URL=http://127.0.0.1:9999 --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_fixture_owner_ui test/widgets/asset_waste_page_owner_test.dart | tee "$root/tmp/owner-ui.log" || rc=$?
+          python3 "$root/tmp/analysis_options_guard.py" "$root" after_ui || rc=1
+          printf "%s  %s\n" da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c - || rc=1
+          git diff --exit-code HEAD -- || rc=1
+          if [[ "$rc" -ne 0 ]]; then exit "$rc"; fi
+          require_three_cases "$root/tmp/owner-ui.log"
+          UI_ISOLATE
+          chmod 0400 "$WIDGET_ROOT/tmp/isolate-ui.sh"
+      - name: Run exactly three owner UI cases in isolated namespaces
+        id: ui_test
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          user="$(id -un)"
+          [[ "$(id -u "$user")" -gt 0 ]]
+          original_net="$(readlink /proc/self/ns/net)"
+          sudo -n true
+          rc=0
+          env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME="$WIDGET_ROOT/home" \
+            sudo -n unshare --net --pid --fork --kill-child --mount-proc -- /bin/bash -euc '
+              ip link set lo up
+              net="$(readlink /proc/self/ns/net)"
+              [[ "$net" != "$5" ]]
+              links="$(ip -o link show)"
+              [[ "$(printf "%s\n" "$links" | wc -l)" -eq 1 ]]
+              [[ "$(printf "%s\n" "$links" | cut -d: -f2 | tr -d "[:space:]")" == lo ]]
+              routes4="$(ip -4 route show default)"
+              routes6="$(ip -6 route show default)"
+              [[ -z "$routes4" && -z "$routes6" ]]
+              runuser -u "$1" -- env -i PATH="$2/sdk/flutter/bin:/usr/bin:/bin" HOME="$2/home" PUB_CACHE="$2/pub-cache" TMPDIR="$2/tmp" XDG_CONFIG_HOME="$2/config" XDG_CACHE_HOME="$2/cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 /bin/bash "$2/tmp/isolate-ui.sh" "$2"
+            ' isolated "$user" "$WIDGET_ROOT" unused unused "$original_net" || rc=$?
+          if [[ "$rc" -eq 66 ]]; then printf 'format_candidate=true\n' >> "$GITHUB_OUTPUT"; fi
+          exit "$rc"
+      - name: Verify lock and configuration even after failure
+        id: final_guard
+        if: ${{ always() && env.WIDGET_ROOT != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$WIDGET_ROOT/source"
+          final_check_status=0
+          if ! python3 "$WIDGET_ROOT/tmp/analysis_options_guard.py" "$WIDGET_ROOT" final; then
+            final_check_status=1
+          fi
+          if ! printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -; then
+            final_check_status=1
+          fi
+          if ! git diff --exit-code HEAD --; then
+            final_check_status=1
+          fi
+          if ! test "$(git rev-parse HEAD)" = 169bea4d2817289860a9a186d699d0a9831d65a2; then
+            final_check_status=1
+          fi
+          exit "$final_check_status"
+      - name: Validate an optional UI formatter proposal
+        id: format_evidence
+        if: ${{ always() && steps.ui_test.outcome == 'failure' && steps.ui_test.outputs.format_candidate == 'true' && steps.final_guard.outcome == 'success' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "$WIDGET_ROOT/tmp/ui_format_gate.py" "$WIDGET_ROOT" validate
+      - name: Preserve only the optional three-file formatter proposal
+        if: ${{ always() && steps.format_evidence.outputs.validated == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: asset-waste-owner-ui-format-${{ github.run_id }}
+          path: ${{ env.WIDGET_ROOT }}/format-candidate/
+          include-hidden-files: false
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 6
+          overwrite: false
+          archive: true
