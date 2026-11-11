@@ -31,5 +31,7 @@ jobs:
       - name: Verify head and run the Home month-navigation journey
         run: |
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+          echo 'Site-guide key references across all tracked files:'
+          git grep -n -F -e home_section_site_guide_ai -e home_legacy_site_guide_ai -- .
           flutter pub get
           xvfb-run -a flutter test --platform chrome --concurrency=1 --plain-name 'Feature: HomePage calendar can move between months' test/readme_features_test.dart
