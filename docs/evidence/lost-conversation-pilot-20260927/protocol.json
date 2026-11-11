@@ -1,0 +1,22 @@
+{
+  "model": "claude-haiku-4-5-20251001",
+  "repeats": 1,
+  "task": "synthetic order filtering",
+  "conditions": [
+    "FULL",
+    "SHARDED",
+    "RESET"
+  ],
+  "shards": [
+    "注文データ [{\"id\":\"A\",\"paid\":true,\"amount\":2000,\"cancelled\":false},{\"id\":\"B\",\"paid\":true,\"amount\":1200,\"cancelled\":false},{\"id\":\"C\",\"paid\":false,\"amount\":3000,\"cancelled\":false},{\"id\":\"D\",\"paid\":true,\"amount\":2500,\"cancelled\":true},{\"id\":\"E\",\"paid\":true,\"amount\":1500,\"cancelled\":false}] からpaid=trueのidを選んでください。JSON配列だけで回答してください。",
+    "さらにamountが1500以上の注文だけに絞ってください。JSON配列だけで回答してください。",
+    "さらにcancelled=trueを除外し、idを昇順にしてください。JSON配列だけで回答してください。"
+  ],
+  "expected": [
+    "A",
+    "E"
+  ],
+  "criterion": "Final response must parse as JSON exactly equal to expected. All intermediate responses saved; no repair.",
+  "limit": "5 responses total, at most 90 seconds and 0.10 USD CLI cap per response; existing subscription only, no top-up. Infrastructure failure stops.",
+  "caveat": "Pilot only, one task once; RESET is fresh concatenated user constraints without assistant answers, equivalent to another FULL sample. Not causal recovery proof, not 39% replication."
+}

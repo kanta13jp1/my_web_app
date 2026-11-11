@@ -1,4 +1,6 @@
 import ast
+import hashlib
+from unittest.mock import patch
 import pathlib
 import re
 import unittest
@@ -28,6 +30,20 @@ def model_deploy_condition(condition, *, event, result, hold, cancelled):
     if not all(isinstance(node, allowed) for node in ast.walk(tree)):
         raise ValueError("unsupported expression")
     return eval(compile(tree, "<workflow-condition>", "eval"), {"__builtins__": {}}, {})
+
+
+SUMMARY_SHA256 = 'bb08001e071bf7183ff2af4c748b6fc9350f4694bb49bc176f9071a300d2b6e3'
+
+
+def approved_summary(text):
+    section = text.split("\n  deployment-status:\n", 1)[1].split("\n  # -----------------------------------------------------------------", 1)[0]
+    raw = section.split("        run: |\n", 1)[1]
+    if hashlib.sha256(raw.encode("utf-8")).hexdigest() != SUMMARY_SHA256:
+        raise ValueError("Unreviewed summary shell: refusing execution")
+    lines = raw.splitlines()
+    if not lines or not all(not line or line.startswith("          ") for line in lines):
+        raise ValueError("Invalid summary indentation")
+    return "\n".join(line[10:] for line in lines) + "\n"
 
 
 class ProductionHoldTests(unittest.TestCase):
@@ -81,14 +97,11 @@ class ProductionHoldTests(unittest.TestCase):
         import tempfile
 
         text = (ROOT / ".github/workflows/deploy-prod.yml").read_text(encoding="utf-8")
-        section = text.split("\n  deployment-status:\n", 1)[1].split("\n  # -----------------------------------------------------------------", 1)[0]
-        body = section.split("        run: |\n", 1)[1]
-        lines = body.splitlines()
-        self.assertTrue(lines and all(not line or line.startswith("          ") for line in lines))
-        script = "\n".join(line[10:] for line in lines) + "\n"
+        script = approved_summary(text)
         git_bash = pathlib.Path("C:/Program Files/Git/bin/bash.exe")
         bash = str(git_bash) if git_bash.is_file() else shutil.which("bash")
         self.assertIsNotNone(bash, "bash is required for the synthetic summary test")
+        bash = str(pathlib.Path(bash).resolve())
         cases = [
             ("skipped", "skipped", "push", "true", "配信保留が解除されていません。"),
             ("skipped", "failure", "workflow_dispatch", "false", "手動配信に必要な CI が成功していません。"),
@@ -104,17 +117,28 @@ class ProductionHoldTests(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as temp:
                     summary = pathlib.Path(temp) / "summary.txt"
                     env = {"DEPLOY_RESULT": deploy, "CI_RESULT": ci, "EVENT_NAME": event,
-                           "HOLD_VALUE": hold, "GITHUB_STEP_SUMMARY": summary.as_posix()}
+                           "HOLD_VALUE": hold, "GITHUB_STEP_SUMMARY": summary.as_posix(),
+                           "PATH": ""}
                     if os.name == "nt":
                         env["SYSTEMROOT"] = os.environ.get("SYSTEMROOT", "C:/Windows")
                     subprocess.run([bash, "--noprofile", "--norc", "-c", script], env=env,
-                                   check=True, capture_output=True, timeout=10)
+                                   check=True, capture_output=True, text=True, encoding="utf-8", timeout=10)
                     result = summary.read_text(encoding="utf-8")
                     self.assertIn(expected, result)
                     if deploy in ("success", "failure"):
                         self.assertEqual(result, "")
                     if deploy == "cancelled":
                         self.assertNotIn("未実行", result)
+
+    def test_unknown_summary_shell_never_runs(self):
+        import subprocess
+        text = (ROOT / ".github/workflows/deploy-prod.yml").read_text(encoding="utf-8")
+        mutated = text.replace("echo '## この実行の配信ジョブは未実行'", "echo 'unknown summary'", 1)
+        self.assertNotEqual(mutated, text)
+        with patch.object(subprocess, "run") as execute:
+            with self.assertRaisesRegex(ValueError, "Unreviewed summary shell"):
+                approved_summary(mutated)
+            execute.assert_not_called()
 
     def test_no_dispatch_override_and_visible_hold(self):
         text = (ROOT / ".github/workflows/deploy-prod.yml").read_text(encoding="utf-8")
