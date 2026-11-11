@@ -6,8 +6,8 @@
 
 ## 統計
 
-- 総出現 source 数: **179**
-- レイヤー別: competitor: 3, daily-report: 176
+- 総出現 source 数: **180**
+- レイヤー別: competitor: 3, daily-report: 177
 
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 
@@ -18,9 +18,9 @@
 - [docs/daily-reports/2026-07-18.md](../daily-reports/2026-07-18.md)
 - [docs/daily-reports/2026-11-01.md](../daily-reports/2026-11-01.md)
 - [docs/daily-reports/2026-10-21.md](../daily-reports/2026-10-21.md)
+- [docs/daily-reports/2026-11-10.md](../daily-reports/2026-11-10.md)
 - [docs/daily-reports/2026-08-30.md](../daily-reports/2026-08-30.md)
 - [docs/daily-reports/2026-06-11.md](../daily-reports/2026-06-11.md)
-- [docs/daily-reports/2026-09-06.md](../daily-reports/2026-09-06.md)
 
 ## 関連
 

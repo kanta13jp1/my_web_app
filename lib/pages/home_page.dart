@@ -5738,7 +5738,7 @@ abstinence_slip_details: $slipDetailsText
                                 'SITE GUIDE AI',
                                 Icons.support_agent_outlined,
                                 const Color(0xFF4F46E5),
-                                key: const Key('home_section_site_guide_ai'),
+                                key: const Key('home_legacy_site_guide_ai'),
                               ),
                               _buildSiteGuideAiCard(isDark, isCompact),
                               const SizedBox(height: 24),
