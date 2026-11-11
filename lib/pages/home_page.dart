@@ -5400,7 +5400,7 @@ abstinence_slip_details: $slipDetailsText
                                 '改善を送る',
                                 Icons.add_task_outlined,
                                 const Color(0xFF0F766E),
-                                key: const Key('home_legacy_feature_request'),
+                                key: const Key('home_section_feature_request'),
                               ),
                               _buildHomeFeatureRequestForm(isDark, isCompact),
                             ],
