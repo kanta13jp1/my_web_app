@@ -107,7 +107,8 @@ class KgiCsfKpiPanel extends StatelessWidget {
                   dense: dense,
                   dark: dark,
                 ),
-                if (metric != plan.metrics.last) SizedBox(height: dense ? 8 : 10),
+                if (metric != plan.metrics.last)
+                  SizedBox(height: dense ? 8 : 10),
               ],
             ],
           ),
