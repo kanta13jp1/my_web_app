@@ -830,7 +830,6 @@ jobs:
       - name: Deploy to Firebase Hosting (Production)
         if: steps.changes.outputs.web == 'true'
         id: firebase_cli_deploy
-        continue-on-error: true  # 509 Bandwidth Exceeded 発生中 (2026-04-18) — 復旧後に削除
         shell: bash
         run: |
           set -euo pipefail
@@ -845,10 +844,30 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
+          deploy_status=0
           npx -y firebase-tools@latest deploy \
             --only hosting \
             --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
-            --json > "$output_file"
+            --json > "$output_file" || deploy_status=$?
+          if [ "$deploy_status" -ne 0 ]; then
+            echo "::error::Firebase Hosting deployment failed (exit $deploy_status)."
+            diagnostic_status=0
+            python3 - "$output_file" <<'PY' || diagnostic_status=$?
+          import json
+          import sys
+          from scripts.security_review_input import redact_secrets_with_count
+
+          with open(sys.argv[1], encoding="utf-8") as stream:
+              document = json.load(stream)
+          detail = document.get("error") or document.get("message") or "No error message returned"
+          message = detail.get("message", "No error message returned") if isinstance(detail, dict) else str(detail)
+          sys.stderr.write(redact_secrets_with_count(str(message))[0][:2000] + "\n")
+          PY
+            if [ "$diagnostic_status" -ne 0 ]; then
+              echo "::error::Firebase returned no readable JSON diagnostic."
+            fi
+            exit "$deploy_status"
+          fi
 
           cat "$output_file"
 
@@ -864,20 +883,34 @@ jobs:
 
       - name: Verify deploy reflects current commit
         if: steps.changes.outputs.web == 'true'
-        continue-on-error: true
+        env:
+          DEPLOY_URL: ${{ steps.firebase_cli_deploy.outputs.details_url }}
+          EXPECTED: ${{ github.sha }}
+          PUBLIC_MANIFEST: https://my-web-app-b67f4.web.app/version.json
         run: |
-          EXPECTED="${{ github.sha }}"
-          SITE="https://my-web-app-b67f4.web.app/version.json"
-          for i in 1 2 3 4; do
-            sleep 15
-            DEPLOYED=$(curl -sf "$SITE" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("commit",""))' 2>/dev/null || echo "")
-            if [ "$DEPLOYED" = "$EXPECTED" ]; then
-              echo "Deploy verified: $EXPECTED is live"
-              exit 0
+          if [[ ! "$DEPLOY_URL" =~ ^https://[a-z0-9-]+\.web\.app/?$ ]]; then
+            echo "::error::Missing or invalid Firebase Hosting deployment URL."
+            exit 1
+          fi
+          # Require both the actual Hosting destination and the Issue's public
+          # entry point. A different project must never count as public proof.
+          for SITE in "${DEPLOY_URL%/}/version.json" "$PUBLIC_MANIFEST"; do
+            VERIFIED=false
+            for i in 1 2 3 4; do
+              sleep 15
+              DEPLOYED=$(curl -fsS -H "Cache-Control: no-cache" "${SITE}?expected=${EXPECTED}&attempt=${i}" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("commit",""))' 2>/dev/null || echo "")
+              if [ "$DEPLOYED" = "$EXPECTED" ]; then
+                VERIFIED=true
+                break
+              fi
+              echo "  attempt $i: deployed=$DEPLOYED expected=$EXPECTED"
+            done
+            if [ "$VERIFIED" != true ]; then
+              echo "::error::Deploy verification failed: a required public manifest does not match $EXPECTED."
+              exit 1
             fi
-            echo "  attempt $i: deployed=$DEPLOYED expected=$EXPECTED"
           done
-          echo "::warning::Deploy verification: production shows $DEPLOYED, expected $EXPECTED. A later queued run may have superseded this one."
+          echo "Deploy verified: $EXPECTED is live at both required endpoints."
 
       - name: Push Release Tag
         if: steps.changes.outputs.web == 'true'
