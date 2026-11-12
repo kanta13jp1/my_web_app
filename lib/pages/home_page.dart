@@ -59,6 +59,7 @@ import '../widgets/home_primary_action_card.dart';
 import '../widgets/home_calendar_month_header.dart';
 import '../widgets/home_calendar_summary_pill.dart';
 import '../widgets/home_calendar_cashflow_line.dart';
+import '../widgets/home_calendar_day_number.dart';
 import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
@@ -3126,25 +3127,13 @@ abstinence_slip_details: $slipDetailsText
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '${day.date.day}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: day.isCurrentMonth
-                                  ? matchesFilter
-                                      ? (status.label == '未設定'
-                                          ? (isDark
-                                              ? Colors.white.withValues(
-                                                  alpha: 0.7,
-                                                )
-                                              : const Color(0xDE000000))
-                                          : accentColor)
-                                      : isDark
-                                          ? const Color(0xFF666666)
-                                          : const Color(0xFFB0B0B0)
-                                  : const Color(0xFFB0B0B0),
-                              height: 1.5,
-                            ),
+                          HomeCalendarDayNumber(
+                            day: day.date.day,
+                            isCurrentMonth: day.isCurrentMonth,
+                            matchesFilter: matchesFilter,
+                            isUnset: status.label == '未設定',
+                            isDark: isDark,
+                            accentColor: accentColor,
                           ),
                           if (day.isCurrentMonth && day.hasCashflow) ...[
                             const SizedBox(height: 4),
