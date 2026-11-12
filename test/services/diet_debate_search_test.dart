@@ -23,8 +23,13 @@ void main() {
 
   test('NDLのID表記、会議情報、確認済み要約との対応', () {
     expect(DietSpeech.fromJson(row(0, '000')).isMeetingInformation, isTrue);
-    for (final pair in [(10, '010'), (11, '011'), (139, '139'), (140, '140')]) {
-      final speech = DietSpeech.fromJson(row(pair.$1, pair.$2));
+    for (final (order, suffix) in [
+      (10, '010'),
+      (11, '011'),
+      (139, '139'),
+      (140, '140'),
+    ]) {
+      final speech = DietSpeech.fromJson(row(order, suffix));
       expect(speech.isMeetingInformation, isFalse);
       expect(DietDebateNote.forSpeech(speech.id), isNotNull);
     }
