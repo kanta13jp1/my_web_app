@@ -58,6 +58,7 @@ import '../widgets/home_billing_nudge.dart';
 import '../widgets/home_primary_action_card.dart';
 import '../widgets/home_calendar_month_header.dart';
 import '../widgets/home_calendar_summary_pill.dart';
+import '../widgets/home_calendar_cashflow_line.dart';
 import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
@@ -3148,8 +3149,8 @@ abstinence_slip_details: $slipDetailsText
                           if (day.isCurrentMonth && day.hasCashflow) ...[
                             const SizedBox(height: 4),
                             if (day.cashflow.incomeCount > 0)
-                              _buildCalendarCashflowLine(
-                                key: Key(
+                              HomeCalendarCashflowLine(
+                                textKey: Key(
                                   'calendar_day_income_${DateFormat('yyyy-MM-dd').format(day.date)}',
                                 ),
                                 label: '収',
@@ -3159,8 +3160,8 @@ abstinence_slip_details: $slipDetailsText
                                 isEmphasized: matchesFilter,
                               ),
                             if (day.cashflow.expenseCount > 0)
-                              _buildCalendarCashflowLine(
-                                key: Key(
+                              HomeCalendarCashflowLine(
+                                textKey: Key(
                                   'calendar_day_expense_${DateFormat('yyyy-MM-dd').format(day.date)}',
                                 ),
                                 label: '支',
@@ -3778,33 +3779,6 @@ abstinence_slip_details: $slipDetailsText
   Color _calendarDotDisplayColor(Color color, {required bool isEmphasized}) {
     if (isEmphasized) return color;
     return color.withValues(alpha: 0.22);
-  }
-
-  Widget _buildCalendarCashflowLine({
-    required Key key,
-    required String label,
-    required int amount,
-    required Color color,
-    required String sign,
-    required bool isEmphasized,
-  }) {
-    final textColor = isEmphasized ? color : color.withValues(alpha: 0.74);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 1),
-      child: Text(
-        '$label $sign${_formatCalendarCashflowAmount(amount)}',
-        key: key,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: textColor,
-          height: 1.6,
-        ),
-      ),
-    );
   }
 
   Widget _buildCalendarSummaryPill({
@@ -9044,16 +9018,6 @@ abstinence_slip_details: $slipDetailsText
       return '${man.toStringAsFixed(digits)}万';
     }
     return '${NumberFormat('#,##0', 'ja_JP').format(value.round())}円';
-  }
-
-  String _formatCalendarCashflowAmount(int value) {
-    final absValue = value.abs();
-    if (absValue >= 10000) {
-      final man = absValue / 10000;
-      final digits = man >= 100 ? 0 : 1;
-      return '${man.toStringAsFixed(digits)}万';
-    }
-    return NumberFormat('#,##0', 'ja_JP').format(absValue);
   }
 
   String _formatPercentRatio(double part, double total) {
