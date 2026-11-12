@@ -232,11 +232,23 @@ class BuildOnlyGuardTest(unittest.TestCase):
             self.assertEqual(calls, [])  # Guard catches exceptions, so raising alone proves nothing.
             self.assertEqual(output.getvalue(), 'build_only_guard:verify:stopped\n')
 
+    def test_cli_system_interrupts_propagate_without_output(self):
+        globals_ = self.module['main'].__globals__
+        for interrupt in (KeyboardInterrupt, SystemExit):
+            with self.subTest(interrupt=interrupt.__name__):
+                output = io.StringIO()
+                with patch.dict(globals_, {'_runtime': lambda: (_ for _ in ()).throw(interrupt())}), \
+                        patch.object(sys, 'argv', ['guard', 'verify', '--control', '.', '--product', '.']), \
+                        contextlib.redirect_stdout(output), self.assertRaises(interrupt):
+                    self.module['main']()
+                self.assertEqual(output.getvalue(), '')
+
     def test_workflow_manual_readonly_gate_and_public_hidden_upload(self):
         text = WORKFLOW.read_text(encoding='utf-8')
         self.assertRegex(text, r'(?m)^on:\n  workflow_dispatch:\n')
         self.assertNotRegex(text, r'(?m)^  (?:push|pull_request|schedule):')
-        self.assertIn('permissions:\n  contents: read\n  actions: read\n', text)
+        self.assertIn('permissions: {}\n', text)
+        self.assertIn('    permissions:\n      contents: read\n      actions: read\n', text)
         self.assertIn('cancel-in-progress: false', text)
         self.assertIn('timeout-minutes: 45', text)
         steps = re.split(r'(?m)^      - name: ', text)[1:]

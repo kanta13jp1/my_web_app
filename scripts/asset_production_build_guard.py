@@ -225,7 +225,7 @@ def main():
             (product / 'build/asset-build-evidence.json').write_bytes(canonical(receipt))
         print('build_only_guard:' + phase + ':passed_not_publish_approved')
         return 0
-    except BaseException:
+    except Exception:
         print('build_only_guard:' + phase + ':stopped')
         return 2
 

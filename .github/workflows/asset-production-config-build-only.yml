@@ -17,14 +17,15 @@ on:
       build_number:
         required: true
         type: string
-permissions:
-  contents: read
-  actions: read
+permissions: {}
 concurrency:
   group: asset-production-configuration-build-only
   cancel-in-progress: false
 jobs:
   build-only:
+    permissions:
+      contents: read
+      actions: read
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
