@@ -6,8 +6,7 @@ void main() {
   const sourceDate = '2026-11-11';
   const digest =
       '8132d6c24659aa340c846d12b97114e092e32d5ecde295f2236b9b44f93ead25';
-  const post =
-      'https://x.com/tamakiyuichiro/status/2119639251365294529';
+  const post = 'https://x.com/tamakiyuichiro/status/2119639251365294529';
 
   test('PDF確認日は原本基準日と異なる固定日で全sourceキーに束縛する', () {
     expect(

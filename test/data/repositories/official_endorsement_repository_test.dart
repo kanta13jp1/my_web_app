@@ -93,7 +93,9 @@ void main() {
     }
   });
 
-  test('the same immutable source keeps the reviewed bundled tally after cache roundtrip', () {
+  test(
+      'the same immutable source keeps the reviewed bundled tally after cache roundtrip',
+      () {
     final olderTally = OfficialEndorsementSnapshot.fromJson({
       ..._liveSnapshot.toJson(),
       'sourceUrl': dpjOfficialEndorsementSourceUrl,
@@ -103,12 +105,16 @@ void main() {
     final cached = OfficialEndorsementSnapshot.fromJson(olderTally.toJson());
     for (final value in [olderTally, cached]) {
       expect(value.sourceCountsComplete, isTrue);
-      expect(repository.resolve(_intelligenceWith(value)), same(repository.fallbackSnapshot));
-      expect(repository.resolve(_intelligenceWith(value)).totalCount, dpjOfficialEndorsementTotal);
+      expect(repository.resolve(_intelligenceWith(value)),
+          same(repository.fallbackSnapshot));
+      expect(repository.resolve(_intelligenceWith(value)).totalCount,
+          dpjOfficialEndorsementTotal);
     }
   });
 
-  test('a different source document is not frozen just because its date matches', () {
+  test(
+      'a different source document is not frozen just because its date matches',
+      () {
     final changed = OfficialEndorsementSnapshot.fromJson({
       ..._liveSnapshot.toJson(),
       'sourceUrl': dpjOfficialEndorsementSourceUrl,

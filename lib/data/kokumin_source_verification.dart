@@ -15,8 +15,7 @@ String? kokuminSourceVerifiedOn({
   }
   // Original post identity and facts read in the official-site embedded feed.
   // Source review date: 2026-11-12 JST; no direct X-post read is claimed.
-  if (sourceUrl ==
-          'https://x.com/tamakiyuichiro/status/2119639251365294529' &&
+  if (sourceUrl == 'https://x.com/tamakiyuichiro/status/2119639251365294529' &&
       sourceDate == '2026-11-09' &&
       sourceDocumentSha256.isEmpty) {
     return '2026-11-12';
