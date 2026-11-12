@@ -16023,40 +16023,46 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: SwitchListTile.adaptive(
-                      key: const Key('asset_chat_money_range_toggle'),
-                      value: _assetChatMaskMoneyAmounts,
-                      secondary: const Icon(Icons.privacy_tip_outlined),
-                      title: const Text(
-                        'AIチャットの金額をレンジ化',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                    child: Builder(
+                      builder: (privacyInkContext) => Material(
+                        type: MaterialType.transparency,
+                        textStyle: DefaultTextStyle.of(privacyInkContext).style,
+                        child: SwitchListTile.adaptive(
+                          key: const Key('asset_chat_money_range_toggle'),
+                          value: _assetChatMaskMoneyAmounts,
+                          secondary: const Icon(Icons.privacy_tip_outlined),
+                          title: const Text(
+                            'AIチャットの金額をレンジ化',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            'ONではAIへ送る直前に金額を「¥100k-500k」などへ変換します。'
+                            '入力原文はチャット履歴に残ります（既定OFF）。',
+                            style: TextStyle(fontSize: 11, height: 1.4),
+                          ),
+                          onChanged: (enabled) async {
+                            try {
+                              await _setAssetChatMaskMoneyAmounts(enabled);
+                              if (!dialogContext.mounted) {
+                                return;
+                              }
+                              setDialogState(() {});
+                            } catch (_) {
+                              if (!dialogContext.mounted) {
+                                return;
+                              }
+                              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                const SnackBar(
+                                  content: Text('AIチャットのプライバシー設定を保存できませんでした'),
+                                ),
+                              );
+                            }
+                          },
                         ),
                       ),
-                      subtitle: const Text(
-                        'ONではAIへ送る直前に金額を「¥100k-500k」などへ変換します。'
-                        '入力原文はチャット履歴に残ります（既定OFF）。',
-                        style: TextStyle(fontSize: 11, height: 1.4),
-                      ),
-                      onChanged: (enabled) async {
-                        try {
-                          await _setAssetChatMaskMoneyAmounts(enabled);
-                          if (!dialogContext.mounted) {
-                            return;
-                          }
-                          setDialogState(() {});
-                        } catch (_) {
-                          if (!dialogContext.mounted) {
-                            return;
-                          }
-                          ScaffoldMessenger.of(dialogContext).showSnackBar(
-                            const SnackBar(
-                              content: Text('AIチャットのプライバシー設定を保存できませんでした'),
-                            ),
-                          );
-                        }
-                      },
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -21591,27 +21597,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 6),
           ...rules.map((rule) {
             final checked = completedRuleIds.contains(rule.id);
-            return CheckboxListTile(
-              key: Key('debt_lockdown_rule_${rule.id}'),
-              dense: true,
-              value: checked,
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              title: Text(
-                rule.label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  height: 1.5,
+            return Builder(
+              builder: (lockdownInkContext) => Material(
+                type: MaterialType.transparency,
+                textStyle: DefaultTextStyle.of(lockdownInkContext).style,
+                child: CheckboxListTile(
+                  key: Key('debt_lockdown_rule_${rule.id}'),
+                  dense: true,
+                  value: checked,
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text(
+                    rule.label,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      height: 1.5,
+                    ),
+                  ),
+                  subtitle: Text(rule.description),
+                  onChanged: isEnabled
+                      ? (value) => _toggleDebtLockdownRule(
+                            rule.id,
+                            value ?? false,
+                            remainingDebt,
+                          )
+                      : null,
                 ),
               ),
-              subtitle: Text(rule.description),
-              onChanged: isEnabled
-                  ? (value) => _toggleDebtLockdownRule(
-                        rule.id,
-                        value ?? false,
-                        remainingDebt,
-                      )
-                  : null,
             );
           }),
           const SizedBox(height: 8),
@@ -25096,29 +25108,36 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: const Color(0xFFCBD5E1)),
               ),
-              child: CheckboxListTile(
-                key: Key('violation_one_shot_toggle_${violation.accountId}'),
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
-                controlAffinity: ListTileControlAffinity.leading,
-                value:
-                    _cardUsagePolicies[violation.accountId]?.enforceOneShot ==
+              child: Builder(
+                builder: (violationInkContext) => Material(
+                  type: MaterialType.transparency,
+                  textStyle: DefaultTextStyle.of(violationInkContext).style,
+                  child: CheckboxListTile(
+                    key:
+                        Key('violation_one_shot_toggle_${violation.accountId}'),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    value: _cardUsagePolicies[violation.accountId]
+                            ?.enforceOneShot ==
                         true,
-                title: const Text(
-                  'カード会社での変更完了を記録する（借入・支払結果の確認とは別）',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
+                    title: const Text(
+                      'カード会社での変更完了を記録する（借入・支払結果の確認とは別）',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    onChanged: (val) {
+                      _toggleCardOneShotCompleted(
+                        violation.accountId,
+                        val ?? false,
+                      );
+                    },
                   ),
                 ),
-                onChanged: (val) {
-                  _toggleCardOneShotCompleted(
-                    violation.accountId,
-                    val ?? false,
-                  );
-                },
               ),
             ),
             const SizedBox(height: 8),
@@ -25178,99 +25197,109 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           borderRadius: BorderRadius.circular(6),
           border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
-        child: Theme(
-          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            key: Key('discipline_usage_breakdown_${violation.accountId}'),
-            tilePadding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-            childrenPadding:
-                const EdgeInsets.only(left: 10, right: 10, bottom: 8),
-            title: Row(
-              children: [
-                const Icon(
-                  Icons.receipt_long_outlined,
-                  size: 16,
-                  color: Color(0xFF475569),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    '判定根拠: 新規利用明細 (${violation.usageItems.length}件 / 合計 ${_formatManagementYen(violation.newUsageAmount ?? 0)})',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1E293B),
+        child: Builder(
+          builder: (usageInkContext) => Material(
+            type: MaterialType.transparency,
+            textStyle: DefaultTextStyle.of(usageInkContext).style,
+            child: Theme(
+              data:
+                  Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                key: Key('discipline_usage_breakdown_${violation.accountId}'),
+                tilePadding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                childrenPadding:
+                    const EdgeInsets.only(left: 10, right: 10, bottom: 8),
+                title: Row(
+                  children: [
+                    const Icon(
+                      Icons.receipt_long_outlined,
+                      size: 16,
+                      color: Color(0xFF475569),
                     ),
-                  ),
-                ),
-              ],
-            ),
-            children: [
-              for (final item in violation.usageItems)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 3),
-                  child: Row(
-                    children: [
-                      if (item.postedAt != null)
-                        Text(
-                          '${item.postedAt!.month}/${item.postedAt!.day} ',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                      Expanded(
-                        child: Text(
-                          item.description,
-                          style: const TextStyle(fontSize: 12),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _formatManagementYen(item.amount),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '判定根拠: 新規利用明細 (${violation.usageItems.length}件 / 合計 ${_formatManagementYen(violation.newUsageAmount ?? 0)})',
                         style: const TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1E293B),
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: item.status ==
-                                  AssetLiabilityRevolvingUsageStatus.covered
-                              ? const Color(0xFFECFDF5)
-                              : const Color(0xFFFFF1F2),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: item.status ==
-                                    AssetLiabilityRevolvingUsageStatus.covered
-                                ? const Color(0xFF0D9488).withValues(alpha: 0.3)
-                                : const Color(0xFFB91C1C)
-                                    .withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Text(
-                          item.statusLabel,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: item.status ==
-                                    AssetLiabilityRevolvingUsageStatus.covered
-                                ? const Color(0xFF0D9488)
-                                : const Color(0xFFB91C1C),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-            ],
+                children: [
+                  for (final item in violation.usageItems)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(
+                        children: [
+                          if (item.postedAt != null)
+                            Text(
+                              '${item.postedAt!.month}/${item.postedAt!.day} ',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          Expanded(
+                            child: Text(
+                              item.description,
+                              style: const TextStyle(fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatManagementYen(item.amount),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: item.status ==
+                                      AssetLiabilityRevolvingUsageStatus.covered
+                                  ? const Color(0xFFECFDF5)
+                                  : const Color(0xFFFFF1F2),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: item.status ==
+                                        AssetLiabilityRevolvingUsageStatus
+                                            .covered
+                                    ? const Color(0xFF0D9488)
+                                        .withValues(alpha: 0.3)
+                                    : const Color(0xFFB91C1C)
+                                        .withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Text(
+                              item.statusLabel,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: item.status ==
+                                        AssetLiabilityRevolvingUsageStatus
+                                            .covered
+                                    ? const Color(0xFF0D9488)
+                                    : const Color(0xFFB91C1C),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       );
@@ -26522,25 +26551,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
         ),
         const SizedBox(height: 6),
-        SwitchListTile.adaptive(
-          key: const Key('asset_living_expense_priority_toggle'),
-          value: _livingExpensePriorityMode,
-          contentPadding: EdgeInsets.zero,
-          visualDensity: VisualDensity.compact,
-          secondary: const Icon(Icons.health_and_safety_outlined),
-          title: const Text(
-            '生活費優先モード',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        Builder(
+          builder: (livingInkContext) => Material(
+            type: MaterialType.transparency,
+            textStyle: DefaultTextStyle.of(livingInkContext).style,
+            child: SwitchListTile.adaptive(
+              key: const Key('asset_living_expense_priority_toggle'),
+              value: _livingExpensePriorityMode,
+              contentPadding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              secondary: const Icon(Icons.health_and_safety_outlined),
+              title: const Text(
+                '生活費優先モード',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+              subtitle: const Text(
+                '食費・住居・公共料金 → 支払先への連絡 → 高金利ローンの順に並べ替えます。',
+                style: TextStyle(fontSize: 11, height: 1.4),
+              ),
+              onChanged: (enabled) {
+                setState(() {
+                  _livingExpensePriorityMode = enabled;
+                });
+              },
+            ),
           ),
-          subtitle: const Text(
-            '食費・住居・公共料金 → 支払先への連絡 → 高金利ローンの順に並べ替えます。',
-            style: TextStyle(fontSize: 11, height: 1.4),
-          ),
-          onChanged: (enabled) {
-            setState(() {
-              _livingExpensePriorityMode = enabled;
-            });
-          },
         ),
         const SizedBox(height: 6),
         if (actionItems.isEmpty)
@@ -31915,18 +31950,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CheckboxListTile(
-          key: ValueKey('asset_card_one_shot_completed_${row.id}'),
-          contentPadding: EdgeInsets.zero,
-          dense: true,
-          controlAffinity: ListTileControlAffinity.leading,
-          value: completed,
-          title: const Text(
-            '完了（今後の新規利用は1回払い）',
-            style: TextStyle(fontSize: 12, height: 1.3),
+        Builder(
+          builder: (policyInkContext) => Material(
+            type: MaterialType.transparency,
+            textStyle: DefaultTextStyle.of(policyInkContext).style,
+            child: CheckboxListTile(
+              key: ValueKey('asset_card_one_shot_completed_${row.id}'),
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              controlAffinity: ListTileControlAffinity.leading,
+              value: completed,
+              title: const Text(
+                '完了（今後の新規利用は1回払い）',
+                style: TextStyle(fontSize: 12, height: 1.3),
+              ),
+              onChanged: (value) =>
+                  _toggleCardOneShotCompleted(row.id, value ?? false),
+            ),
           ),
-          onChanged: (value) =>
-              _toggleCardOneShotCompleted(row.id, value ?? false),
         ),
         if (completed) ...[
           if (policy?.changedAt != null)
