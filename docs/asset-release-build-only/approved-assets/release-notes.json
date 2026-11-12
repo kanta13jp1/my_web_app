@@ -1,0 +1,463 @@
+{
+  "current": {
+    "build": "5836",
+    "category": "release",
+    "date": "2026-11-11",
+    "links": [
+      {
+        "title": "GitHub Release v1.0.2278",
+        "type": "release",
+        "url": "https://github.com/kanta13jp1/my_web_app/releases/tag/v1.0.2278"
+      },
+      {
+        "title": "399586d0eeda",
+        "type": "commit",
+        "url": "https://github.com/kanta13jp1/my_web_app/commit/399586d0eeda65f157819e21a5b2e47409b7e2ba"
+      },
+      {
+        "title": "Production deploy",
+        "type": "deploy",
+        "url": "https://my-web-app-b67f4.web.app"
+      }
+    ],
+    "summary": "Release 1.0.2278",
+    "version": "1.0.2278"
+  },
+  "generatedAt": "2026-11-11T00:00:00Z",
+  "schemaVersion": 1,
+  "source": {
+    "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
+    "pubspec": "pubspec.yaml",
+    "repo": "kanta13jp1/my_web_app"
+  },
+  "versions": [
+    {
+      "build": "5836",
+      "category": "release",
+      "changeCategories": [
+        "docs",
+        "feature",
+        "fix"
+      ],
+      "changes": [
+        {
+          "category": "feature",
+          "id": "pr-6018",
+          "links": [
+            {
+              "title": "PR #6018",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6018"
+            }
+          ],
+          "mergedAt": "2026-11-11T21:42:26Z",
+          "summary": "#6018 refactor(home): extract calendar cashflow amount presentation"
+        },
+        {
+          "category": "feature",
+          "id": "pr-6017",
+          "links": [
+            {
+              "title": "PR #6017",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6017"
+            }
+          ],
+          "mergedAt": "2026-11-11T05:11:17Z",
+          "summary": "#6017 refactor(home): extract calendar summary pill presentation"
+        },
+        {
+          "category": "feature",
+          "id": "pr-6015",
+          "links": [
+            {
+              "title": "PR #6015",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6015"
+            }
+          ],
+          "mergedAt": "2026-11-11T04:24:21Z",
+          "summary": "#6015 refactor(home): extract calendar month header presentation"
+        },
+        {
+          "category": "fix",
+          "id": "pr-6016",
+          "links": [
+            {
+              "title": "PR #6016",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6016"
+            }
+          ],
+          "mergedAt": "2026-11-11T04:09:20Z",
+          "summary": "#6016 fix(home): restore legacy calendar browser regression"
+        },
+        {
+          "category": "fix",
+          "id": "pr-6014",
+          "links": [
+            {
+              "title": "PR #6014",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6014"
+            }
+          ],
+          "mergedAt": "2026-11-10T19:25:35Z",
+          "summary": "#6014 fix: restore missing open remediation evidence for parent issue"
+        },
+        {
+          "category": "feature",
+          "id": "pr-6011",
+          "links": [
+            {
+              "title": "PR #6011",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6011"
+            }
+          ],
+          "mergedAt": "2026-11-10T18:33:49Z",
+          "summary": "#6011 ops(firebase): identify production deploy principal before IAM repair"
+        },
+        {
+          "category": "fix",
+          "id": "pr-6013",
+          "links": [
+            {
+              "title": "PR #6013",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6013"
+            }
+          ],
+          "mergedAt": "2026-11-10T18:24:32Z",
+          "summary": "#6013 fix: ground AI review in current official action metadata"
+        },
+        {
+          "category": "fix",
+          "id": "pr-6009",
+          "links": [
+            {
+              "title": "PR #6009",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6009"
+            }
+          ],
+          "mergedAt": "2026-11-10T16:48:41Z",
+          "summary": "#6009 fix(deploy): retain a redacted Firebase failure reason"
+        },
+        {
+          "category": "fix",
+          "id": "pr-6008",
+          "links": [
+            {
+              "title": "PR #6008",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6008"
+            }
+          ],
+          "mergedAt": "2026-11-10T16:07:37Z",
+          "summary": "#6008 fix(deploy): fail when the public production commit is unverified"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5999",
+          "links": [
+            {
+              "title": "PR #5999",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5999"
+            }
+          ],
+          "mergedAt": "2026-11-07T13:42:10Z",
+          "summary": "#5999 モデル振り分けの合成試験をオフラインで再採点できるようにする"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5998",
+          "links": [
+            {
+              "title": "PR #5998",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5998"
+            }
+          ],
+          "mergedAt": "2026-11-07T10:35:27Z",
+          "summary": "#5998 Add selectable typing hints and mixed bicycle romaji"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5997",
+          "links": [
+            {
+              "title": "PR #5997",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5997"
+            }
+          ],
+          "mergedAt": "2026-11-07T08:07:46Z",
+          "summary": "#5997 会話分割パイロットの合成証拠を公開する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5996",
+          "links": [
+            {
+              "title": "PR #5996",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5996"
+            }
+          ],
+          "mergedAt": "2026-11-06T23:59:10Z",
+          "summary": "#5996 SEO記事の合成6例を再現できる資料を追加"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5993",
+          "links": [
+            {
+              "title": "PR #5993",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5993"
+            }
+          ],
+          "mergedAt": "2026-11-05T17:47:29Z",
+          "summary": "#5993 Improve typing continuity and add opt-in online records"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5991",
+          "links": [
+            {
+              "title": "PR #5991",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5991"
+            }
+          ],
+          "mergedAt": "2026-11-04T11:34:25Z",
+          "summary": "#5991 fix: read typing release hold through Actions vars"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5990",
+          "links": [
+            {
+              "title": "PR #5990",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5990"
+            }
+          ],
+          "mergedAt": "2026-11-04T11:07:50Z",
+          "summary": "#5990 公開版を保持してタイピングだけを配信するガードを追加"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5989",
+          "links": [
+            {
+              "title": "PR #5989",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5989"
+            }
+          ],
+          "mergedAt": "2026-11-04T10:55:15Z",
+          "summary": "#5989 日本語ローマ字の60秒タイピングゲームを追加"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5962",
+          "links": [
+            {
+              "title": "PR #5962",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5962"
+            }
+          ],
+          "mergedAt": "2026-11-03T17:12:15Z",
+          "summary": "#5962 fix: #5893 の承認済み画像をAIレビューに限定対応"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5984",
+          "links": [
+            {
+              "title": "PR #5984",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5984"
+            }
+          ],
+          "mergedAt": "2026-11-03T14:47:09Z",
+          "summary": "#5984 支払日削除記録の一括掃除を保留"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5983",
+          "links": [
+            {
+              "title": "PR #5983",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5983"
+            }
+          ],
+          "mergedAt": "2026-11-03T11:14:30Z",
+          "summary": "#5983 当日入金の反映が不明な資金繰りを条件別に表示する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5982",
+          "links": [
+            {
+              "title": "PR #5982",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5982"
+            }
+          ],
+          "mergedAt": "2026-11-03T07:33:23Z",
+          "summary": "#5982 test: 写真解析結果から実マニュアルへの遷移を確認"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5979",
+          "links": [
+            {
+              "title": "PR #5979",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5979"
+            }
+          ],
+          "mergedAt": "2026-11-03T05:11:36Z",
+          "summary": "#5979 test: タスク確認ダイアログのアクセシビリティを検証"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5972",
+          "links": [
+            {
+              "title": "PR #5972",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5972"
+            }
+          ],
+          "mergedAt": "2026-11-03T04:57:20Z",
+          "summary": "#5972 給与確認を所有者画面に結び付ける"
+        },
+        {
+          "category": "docs",
+          "id": "pr-5978",
+          "links": [
+            {
+              "title": "PR #5978",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5978"
+            }
+          ],
+          "mergedAt": "2026-11-03T04:33:56Z",
+          "summary": "#5978 docs: Edge 未完成時の UI テストと引き継ぎを標準化"
+        },
+        {
+          "category": "docs",
+          "id": "pr-5977",
+          "links": [
+            {
+              "title": "PR #5977",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5977"
+            }
+          ],
+          "mergedAt": "2026-11-03T04:04:54Z",
+          "summary": "#5977 docs: Windows 開発ツールの導入手順を整理"
+        },
+        {
+          "category": "fix",
+          "id": "pr-5974",
+          "links": [
+            {
+              "title": "PR #5974",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5974"
+            }
+          ],
+          "mergedAt": "2026-11-03T01:56:58Z",
+          "summary": "#5974 fix: CI自動修正の手動実行案内を現行仕様に合わせる"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5965",
+          "links": [
+            {
+              "title": "PR #5965",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5965"
+            }
+          ],
+          "mergedAt": "2026-11-03T01:27:39Z",
+          "summary": "#5965 引用と回答の対応を手動で確認できるようにする"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5961",
+          "links": [
+            {
+              "title": "PR #5961",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5961"
+            }
+          ],
+          "mergedAt": "2026-11-02T20:42:34Z",
+          "summary": "#5961 給与残高の保存結果が不明な場合に注意を表示する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5959",
+          "links": [
+            {
+              "title": "PR #5959",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5959"
+            }
+          ],
+          "mergedAt": "2026-11-02T18:55:16Z",
+          "summary": "#5959 給与残高の通信切断時の再照合を検証する"
+        },
+        {
+          "category": "feature",
+          "id": "pr-5956",
+          "links": [
+            {
+              "title": "PR #5956",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/5956"
+            }
+          ],
+          "mergedAt": "2026-11-02T17:59:04Z",
+          "summary": "#5956 給与残高の同時登録と遅延確定を検証する"
+        }
+      ],
+      "date": "2026-11-11",
+      "extensions": {
+        "aiToolWatch": {
+          "changedSourceCount": 5,
+          "signalCount": 0,
+          "source": "docs/ai-tool-watch/latest-report.json"
+        }
+      },
+      "links": [
+        {
+          "title": "GitHub Release v1.0.2278",
+          "type": "release",
+          "url": "https://github.com/kanta13jp1/my_web_app/releases/tag/v1.0.2278"
+        },
+        {
+          "title": "399586d0eeda",
+          "type": "commit",
+          "url": "https://github.com/kanta13jp1/my_web_app/commit/399586d0eeda65f157819e21a5b2e47409b7e2ba"
+        },
+        {
+          "title": "Production deploy",
+          "type": "deploy",
+          "url": "https://my-web-app-b67f4.web.app"
+        }
+      ],
+      "summary": "Release 1.0.2278",
+      "version": "1.0.2278"
+    }
+  ]
+}

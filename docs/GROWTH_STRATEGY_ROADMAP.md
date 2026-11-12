@@ -67466,3 +67466,10 @@ Persist capped device-local failure clusters and extend search/collision foresig
 - 修正ソースbc9c2098はクラウド43153799122で整形5ファイル変更0、解析5ファイル問題0、既存24件成功・skip/error0をraw識別子まで照合。全体検査・本番画面の完了とは区別する。
 - 最新main64fff3712の全変更を保持した製品候補e2b4d25bは5UIファイルだけ変更。full43154911745をexacthead指定で実行し、結果とPR必須検査を別に記録する。
 - 有料Claudeレビューは本人判断で省略。独立差分レビューはP1/P2なし。通常CI・ブランチ保護・適用される具体的本人確認は維持し、統合後の本番画面確認まで継続する。
+
+## 2026-11-12 資産UI修正の本番構成ビルド専用ガード
+
+- 公開前の本番構成ビルドを別工程として用意する候補。固定製品source fa36e621ea0e445cdfb3b8d145c85184e874685a・非本番full43176832528を参照し、source/controller/CIとビルド限定の本人確認記録、公開基点、生成物を照合する。
+- 新workflowは手動・read権限のみ。Hosting公開・DB/RLS/Auth変更・サービスアカウント認証・通知を含めず、登録と具体的本人確認前は実行しない。owner記録のhashだけを人間承認の証明としない。
+- 固定公開catalog/release-notesを保持し、既存arenaのNode22を維持。実CI成果物約141.3MiBを根拠に合計192MiB・単一32MiB・2000fileを上限とし、公開bundleのhidden filesを保存対象へ含める。
+- 実配置の標準unittest11件と独立静的レビュー、全tree検算を実施。既存CIのPython policyへunit呼出し1行を追加。新headの通常CI・本番構成build・配信と画面確認は未完了。有料Claudeレビューの本人免除で、必須CIや具体本人確認を省略しない。

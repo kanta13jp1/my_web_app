@@ -148,6 +148,7 @@ jobs:
           python scripts/cloud_first_route_test.py
           python scripts/claude_remote_control_server_plan_test.py
           python -m unittest scripts/kg_index_common_test.py scripts/kg_index_workflow_test.py
+          python -m unittest scripts/asset_production_build_guard_test.py
           python scripts/generate_infrastructure_map_test.py
           python scripts/cicd_efficiency_test.py
           python scripts/ci_parallel_test.py

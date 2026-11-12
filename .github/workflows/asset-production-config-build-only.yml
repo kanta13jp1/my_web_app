@@ -1,0 +1,138 @@
+name: Asset production configuration BUILD ONLY DRAFT
+on:
+  workflow_dispatch:
+    inputs:
+      expected_controller_sha:
+        required: true
+        type: string
+      owner_record_json:
+        required: true
+        type: string
+      owner_record_sha256:
+        required: true
+        type: string
+      app_version:
+        required: true
+        type: string
+      build_number:
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: asset-production-configuration-build-only
+  cancel-in-progress: false
+jobs:
+  build-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+        working-directory: .
+    env:
+      CONTROLLER_WORKFLOW_SHA: ${{ github.workflow_sha }}
+      EXPECTED_CONTROLLER_SHA: ${{ inputs.expected_controller_sha }}
+      OWNER_RECORD_JSON: ${{ inputs.owner_record_json }}
+      OWNER_RECORD_SHA256: ${{ inputs.owner_record_sha256 }}
+      APP_VERSION: ${{ inputs.app_version }}
+      BUILD_NUMBER: ${{ inputs.build_number }}
+    steps:
+      - name: Fixed controller and product checkout; inputs only through env
+        working-directory: .
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_CONTROLLER_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$CONTROLLER_WORKFLOW_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$EXPECTED_CONTROLLER_SHA" = "$CONTROLLER_WORKFLOW_SHA"
+          test "$GITHUB_REPOSITORY" = kanta13jp1/my_web_app
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          git init .
+          git remote add origin https://github.com/kanta13jp1/my_web_app.git
+          git fetch --no-tags --depth=1 origin fa36e621ea0e445cdfb3b8d145c85184e874685a
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = fa36e621ea0e445cdfb3b8d145c85184e874685a
+          test "$(git rev-parse 'HEAD^{tree}')" = 81d247963dd8e1fd6df0543e3adc2e5acf0caca3
+          test -z "$(git ls-tree -r --name-only HEAD -- control)"
+          mkdir control
+          git -C control init
+          git -C control remote add origin https://github.com/kanta13jp1/my_web_app.git
+          git -C control fetch --no-tags --depth=1 origin "$EXPECTED_CONTROLLER_SHA"
+          git -C control checkout --detach FETCH_HEAD
+          test "$(git -C control rev-parse HEAD)" = "$EXPECTED_CONTROLLER_SHA"
+      - name: Verify owner BUILD ONLY binding and exact CI before production secret steps
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 -B control/scripts/asset_production_build_guard.py verify --control control --product .
+      - name: Set up fixed Flutter SDK using unchanged product action
+        uses: ./.github/actions/setup-flutter-sdk
+        with:
+          flutter-version: '3.38.10'
+      - name: Resolve dependencies; refuse lockfile drift
+        run: |
+          set -euo pipefail
+          flutter pub get
+          git diff --exit-code -- pubspec.lock
+      - name: Validate and build with existing production PUBLIC-client configuration
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
+          POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
+          POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://us.i.posthog.com' }}
+        run: |
+          set -euo pipefail
+          python3 scripts/validate_flutter_supabase_env.py
+          flutter build web --release --pwa-strategy=none \
+            --build-name="$APP_VERSION" --build-number="$BUILD_NUMBER" \
+            --dart-define=ENVIRONMENT=production \
+            --dart-define="SUPABASE_URL=$SUPABASE_URL" \
+            --dart-define="SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY" \
+            --dart-define="APP_VERSION=$APP_VERSION" --dart-define="BUILD_NUMBER=$BUILD_NUMBER" \
+            --dart-define=AI_UNIVERSITY_PROVIDER_COUNT=368 \
+            --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true \
+            --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true \
+            --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true \
+            --dart-define=ASSET_MANAGEMENT_AI_PROVIDER_ROUTING_ENABLED=true \
+            --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true \
+            --dart-define="POSTHOG_PROJECT_TOKEN=$POSTHOG_PROJECT_TOKEN" \
+            --dart-define="POSTHOG_HOST=$POSTHOG_HOST"
+          python3 scripts/render_web_supabase_config.py
+      - name: Version, frozen generated JSON, OGP and SEO
+        run: |
+          set -euo pipefail
+          python3 -B control/scripts/asset_production_build_guard.py prepare --control control --product .
+          python3 scripts/prerender_seo_routes.py \
+            --template build/web/index.html --outdir build/web \
+            --routes web/seo/comparison-routes.json --public-routes web/seo/public-routes.json \
+            --ai-university-catalog control/docs/asset-release-build-only/approved-assets/catalog.json
+          python3 scripts/generate_sitemap.py --out build/web/sitemap.xml
+          python3 scripts/production_journey_probe.py --root-dir build/web --public-routes web/seo/public-routes.json
+      - name: Preserve unchanged arena action and its Node22 recipe
+        uses: ./.github/actions/prepare-sea-shelter-arena
+        with:
+          web-root: build/web
+      - name: Seal regular-file bundle and configuration digest without raw config values
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
+          POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
+          POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://us.i.posthog.com' }}
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- pubspec.lock package-lock.json
+          python3 -B control/scripts/asset_production_build_guard.py seal --control control --product .
+      - name: Preserve BUILD ONLY artifact briefly; no publication
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: asset-production-config-build-only-${{ github.run_id }}
+          path: |
+            build/web
+            build/asset-build-evidence.json
+            BUILD_ONLY_VERIFIED.json
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: true
