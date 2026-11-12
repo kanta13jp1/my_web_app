@@ -1,0 +1,919 @@
+# PREPARED ONLY: independent body review, root acceptance and fresh all-event audit required before one push.
+name: Main Material focused QA 20261112
+'on':
+  push:
+    branches:
+    - codex/main-material-focused-qa-20261112
+permissions: {}
+concurrency:
+  group: main-material-focused-qa-20261112
+  cancel-in-progress: false
+jobs:
+  same-lock-only:
+    if: ${{ github.event_name == 'push' && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/main-material-focused-qa-20261112'
+      && github.event.created == true && github.event.deleted == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions: {}
+    steps:
+    - name: Require unbound inputs to STOP and allocate private scratch
+      shell: bash
+      run: |
+        set -euo pipefail
+        # Unbound design MUST stop before scratch allocation, Git, downloads, or SDK bootstrap.
+        for bound_value in 'bc9c20980220b4de5be1478ea2a3ecf4dc038df9' '2c54531ea6f196049fbdeefce8284ca57013ce08' 'e2502d35779c5a38acd036075d9bc3be58fd6e03' 'db372edfeb9023ea5b822dc9a9a49d1652b254f1' 'b302e160dbf18faefc5e79c42d949e3250b7dcec' 'a8dca53e5d9d403b376f38ea3e375c5e60b15412' '3de60c8b064090f7bd8512a5b895de9a99405c94' '4d4dd7681d06dd4f27837f354f732ffb6917c935' '8d30beed4897a1e1909640f03a8cb2cd9f61636f' '61fb911df00b34be1e1f69eb853fd6d0647834f8' '6b8022f766f1bd8d601439611d608577e5cca389' '7157da7b681e4c441386c182a62fc018dc37e00d' 'd4af874ac1845ff9fc61366b0fa5f783e6ee4975' '8b12da8539a17ba14d389789c7b453ac693a910d'; do
+         [[ "$bound_value" =~ ^[0-9a-f]{40}$ ]] || { echo 'STOP: unbound source/tree/parent/blob'; exit 1; }
+        done
+        for bound_value in 'b571d57d830c7c407187fe9c1eadb91b22931cab3e60f45fe9f7abe20c8fb50f' '4bca4d20e03317dfaa6253e84416c2c1c2fb4cf5b6c045d2a2c502e50d8b2469' '2fdf4ffb89a920eeeb6fd216b09059e303f77891d2be1f32bfd82c78a6983205' '25384b33cfbcbb4e7671d864841fa0248c6af3cc1c0746f35917ad2336ba46f3' '1bad7ae9b66c7d9a58fc9e3e0ed5f20ae937114f10a4d72f8a07c2a991368ba0' 'e7982acba31ce5dc6771ae48ac7bdef2a37f88a48192f0fb4a5ee8cb754d4933' 'e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342' '5c7e69cf2b742d88b328c56ebed48772400b71264a2a00a27dc5487898ac9064' '1a1b756478c3e2dc173eccc939ad4d5b0b6835933db10e443ce124fa781b52b2' '5f0e66e2e1c75260278c0a17b5149f910983813e8a9f1ff02c6037c95cf81cee' '219e1bd8160fb2c8dbb7648670f377e75e464d99a2b9b8b1a5f73f1b6e801800' 'da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5'; do
+         [[ "$bound_value" =~ ^[0-9a-f]{64}$ ]] || { echo 'STOP: unbound contract/pin sha256'; exit 1; }
+        done
+        for bound_value in '1340904' '6142' '10153' '69590' '6289' '3887' '18840' '1199' '8183' '4057' '55136'; do
+         [[ "$bound_value" =~ ^[1-9][0-9]*$ ]] || { echo 'STOP: unbound pin bytes'; exit 1; }
+        done
+        allocation_phase=entry
+        trap 'rc=$?; printf "SCRATCH_ALLOCATION_ERROR phase=%s line=%s rc=%s\n" "$allocation_phase" "$LINENO" "$rc" >&2; exit "$rc"' ERR
+        allocation_mark() { allocation_phase=$1; printf 'SCRATCH_ALLOCATION_PHASE=%s\n' "$allocation_phase"; }
+        allocation_base() { allocation_mark "$1"; printf 'SCRATCH_BASE uid=%s gid=%s mode=%s\n' "$base_uid" "$base_gid" "$base_mode"; }
+        allocation_mark node_version_pin
+        [[ 'v22.21.1' =~ ^v22[.][0-9]+[.][0-9]+$ ]] || { echo 'STOP: bind official Node22 patch'; exit 1; }
+        allocation_mark node_archive_pin
+        [[ '680d3f30b24a7ff24b98db5e96f294c0070f8f9078df658da1bce1b9c9873c88' =~ ^[0-9a-f]{64}$ ]] || { echo 'STOP: bind official Node archive hash'; exit 1; }
+        base=/
+        allocation_mark read_base_metadata
+        base_uid="$(stat -c %u -- "$base")"
+        base_gid="$(stat -c %g -- "$base")"
+        base_mode="$(stat -c %a -- "$base")"
+        allocation_base base_physical
+        [[ -d "$base" && ! -L "$base" && "$(realpath -e -- "$base")" == "$base" ]]
+        allocation_base base_root_owner
+        [[ "$base_uid" == 0 ]]
+        allocation_base base_mode_numeric
+        [[ "$base_mode" =~ ^[0-7]{3,4}$ ]]
+        allocation_base base_mode_access
+        (( (8#$base_mode & 07022) == 0 && (8#$base_mode & 0001) == 1 ))
+        umask 077
+        allocation_mark create_root_direct_leaf
+        root="$(sudo -n mktemp -d -- "${base%/}/payslip-same-lock.XXXXXXXX")"
+        allocation_base verify_created_leaf
+        [[ "$(dirname -- "$root")" == "$base" && ! -L "$root" && "$(stat -c %u -- "$root")" == 0 && "$(stat -c %a -- "$root")" == 700 ]]
+        allocation_mark handoff_leaf_to_runner
+        sudo -n chown "$(id -u):$(id -g)" "$root"
+        allocation_base verify_runner_leaf
+        [[ "$(stat -c %u -- "$root")" == "$(id -u)" && "$(stat -c %a -- "$root")" == 700 ]]
+        allocation_mark create_scratch_directories
+        mkdir "$root/home" "$root/tmp" "$root/sdk" "$root/node" "$root/source" "$root/candidate" "$root/config" "$root/cache" "$root/pub-cache" "$root/npm-cache" "$root/browsers" "$root/results" "$root/guards" "$root/control"
+        allocation_mark publish_scratch_env
+        printf 'PAYSLIP_ROOT=%s\n' "$root" >> "$GITHUB_ENV"
+    - name: Fetch and verify exact source and one-workflow W child
+      shell: bash
+      run: |
+        set -euo pipefail
+        [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ && "$GITHUB_REF" == refs/heads/codex/main-material-focused-qa-20261112 ]]
+        clean_env=(env -i PATH=/usr/bin:/bin HOME="$PAYSLIP_ROOT/home" TMPDIR="$PAYSLIP_ROOT/tmp" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+        for pair in "candidate:$GITHUB_SHA" "source:bc9c20980220b4de5be1478ea2a3ecf4dc038df9"; do
+         dir=${pair%%:*}; ref=${pair#*:}
+         "${clean_env[@]}" git -C "$PAYSLIP_ROOT/$dir" init --quiet
+         depth=2; [[ "$dir" != source ]] || depth=3
+        "${clean_env[@]}" git -C "$PAYSLIP_ROOT/$dir" -c credential.helper= fetch --no-tags --depth="$depth" https://github.com/kanta13jp1/my_web_app.git "$ref"
+         "${clean_env[@]}" git -C "$PAYSLIP_ROOT/$dir" checkout --quiet --detach FETCH_HEAD
+        done
+        cd "$PAYSLIP_ROOT/candidate"
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        test "$(git show -s --format=%P HEAD)" = bc9c20980220b4de5be1478ea2a3ecf4dc038df9
+        test "$(git diff --no-renames --name-status bc9c20980220b4de5be1478ea2a3ecf4dc038df9 HEAD)" = "$(printf 'A\t.github/workflows/main-material-focused-qa.yml')"
+        test -z "$(git status --porcelain --untracked-files=all)"
+        cd "$PAYSLIP_ROOT/source"
+        test "$(git rev-parse HEAD)" = bc9c20980220b4de5be1478ea2a3ecf4dc038df9
+        test "$(git rev-parse 'HEAD^{tree}')" = 2c54531ea6f196049fbdeefce8284ca57013ce08
+        test "$(git show -s --format=%P HEAD)" = 8dae94dd20c8f1ba9316f0078a52c890c29a3c4c
+        # Reviewed exception: S8 sole parent S7, S7->S8 page/Kgi2M and aggregate pinned main->S8 UI5M.
+        test "$(git show -s --format=%P 8dae94dd20c8f1ba9316f0078a52c890c29a3c4c)" = e2502d35779c5a38acd036075d9bc3be58fd6e03
+        test "$(git diff-tree --no-renames --no-commit-id -r --name-status 8dae94dd20c8f1ba9316f0078a52c890c29a3c4c HEAD)" = "$(printf 'M\tlib/pages/asset_management_page.dart\nM\tlib/widgets/kgi_csf_kpi_panel.dart\n')"
+        test "$(git diff-tree --no-renames --no-commit-id -r --name-status e2502d35779c5a38acd036075d9bc3be58fd6e03 HEAD)" = "$(printf 'M\tlib/pages/asset_management_page.dart\nM\tlib/widgets/asset_calendar_shortfall_details.dart\nM\tlib/widgets/expense_classification_review.dart\nM\tlib/widgets/feature_strategy_monitor_panel.dart\nM\tlib/widgets/kgi_csf_kpi_panel.dart\n')"
+        test "$(git ls-tree HEAD -- lib/pages/asset_management_page.dart)" = "$(printf '100644 blob db372edfeb9023ea5b822dc9a9a49d1652b254f1\tlib/pages/asset_management_page.dart')"
+        printf '%s  %s\n' 4bca4d20e03317dfaa6253e84416c2c1c2fb4cf5b6c045d2a2c502e50d8b2469 lib/pages/asset_management_page.dart | sha256sum -c -
+        test "$(git ls-tree HEAD -- lib/widgets/asset_calendar_shortfall_details.dart)" = "$(printf '100644 blob b302e160dbf18faefc5e79c42d949e3250b7dcec\tlib/widgets/asset_calendar_shortfall_details.dart')"
+        printf '%s  %s\n' 2fdf4ffb89a920eeeb6fd216b09059e303f77891d2be1f32bfd82c78a6983205 lib/widgets/asset_calendar_shortfall_details.dart | sha256sum -c -
+        test "$(git ls-tree HEAD -- lib/widgets/expense_classification_review.dart)" = "$(printf '100644 blob a8dca53e5d9d403b376f38ea3e375c5e60b15412\tlib/widgets/expense_classification_review.dart')"
+        printf '%s  %s\n' 25384b33cfbcbb4e7671d864841fa0248c6af3cc1c0746f35917ad2336ba46f3 lib/widgets/expense_classification_review.dart | sha256sum -c -
+        test "$(git ls-tree HEAD -- lib/widgets/feature_strategy_monitor_panel.dart)" = "$(printf '100644 blob 3de60c8b064090f7bd8512a5b895de9a99405c94\tlib/widgets/feature_strategy_monitor_panel.dart')"
+        printf '%s  %s\n' 1bad7ae9b66c7d9a58fc9e3e0ed5f20ae937114f10a4d72f8a07c2a991368ba0 lib/widgets/feature_strategy_monitor_panel.dart | sha256sum -c -
+        test "$(git ls-tree HEAD -- lib/widgets/kgi_csf_kpi_panel.dart)" = "$(printf '100644 blob 4d4dd7681d06dd4f27837f354f732ffb6917c935\tlib/widgets/kgi_csf_kpi_panel.dart')"
+        printf '%s  %s\n' e7982acba31ce5dc6771ae48ac7bdef2a37f88a48192f0fb4a5ee8cb754d4933 lib/widgets/kgi_csf_kpi_panel.dart | sha256sum -c -
+        test "$(git ls-tree HEAD -- analysis_options.yaml)" = "$(printf '100644 blob 8d30beed4897a1e1909640f03a8cb2cd9f61636f\tanalysis_options.yaml')"
+        printf '%s  %s\n' e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342 analysis_options.yaml | sha256sum -c -
+        test "$(git ls-tree HEAD -- .github/workflows/cloud-development.yml)" = "$(printf '100644 blob 61fb911df00b34be1e1f69eb853fd6d0647834f8\t.github/workflows/cloud-development.yml')"
+        printf '%s  %s\n' 5c7e69cf2b742d88b328c56ebed48772400b71264a2a00a27dc5487898ac9064 .github/workflows/cloud-development.yml | sha256sum -c -
+        test "$(git ls-tree HEAD -- package.json)" = "$(printf '100644 blob 6b8022f766f1bd8d601439611d608577e5cca389\tpackage.json')"
+        printf '%s  %s\n' 1a1b756478c3e2dc173eccc939ad4d5b0b6835933db10e443ce124fa781b52b2 package.json | sha256sum -c -
+        test "$(git ls-tree HEAD -- package-lock.json)" = "$(printf '100644 blob 7157da7b681e4c441386c182a62fc018dc37e00d\tpackage-lock.json')"
+        printf '%s  %s\n' 5f0e66e2e1c75260278c0a17b5149f910983813e8a9f1ff02c6037c95cf81cee package-lock.json | sha256sum -c -
+        test "$(git ls-tree HEAD -- pubspec.yaml)" = "$(printf '100644 blob d4af874ac1845ff9fc61366b0fa5f783e6ee4975\tpubspec.yaml')"
+        printf '%s  %s\n' 219e1bd8160fb2c8dbb7648670f377e75e464d99a2b9b8b1a5f73f1b6e801800 pubspec.yaml | sha256sum -c -
+        test "$(git ls-tree HEAD -- pubspec.lock)" = "$(printf '100644 blob 8b12da8539a17ba14d389789c7b453ac693a910d\tpubspec.lock')"
+        printf '%s  %s\n' da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5 pubspec.lock | sha256sum -c -
+    - name: Install hashed source report and fixture guards in scratch only
+      shell: bash
+      run: |
+        set -euo pipefail
+        umask 077
+        cat > "$PAYSLIP_ROOT/guards/source_guard.py" <<'PAYSLIP_SOURCE_GUARD_PY'
+        import hashlib, os, pathlib, subprocess, sys
+        if len(sys.argv)!=3:raise SystemExit('expected root phase')
+        root=pathlib.Path(sys.argv[1]); phase=sys.argv[2]
+        allowed={'before_bootstrap','after_version','after_precache','after_pub_get','after_npm','before_salary','after_salary','before_full','after_full','before_app_build','after_app_build','before_fixture','after_fixture','before_browser','after_browser','final'}
+        if phase not in allowed:raise SystemExit('unknown phase')
+        if root.is_symlink() or not root.is_dir() or not root.name.startswith('payslip-same-lock.'):raise SystemExit('unsafe private root')
+        root=root.resolve(strict=True); source=root/'source'
+        if source.is_symlink() or source.resolve(strict=True).parent!=root:raise SystemExit('unsafe source')
+        def git(*args):return subprocess.check_output(['/usr/bin/git',*args],cwd=source,timeout=20)
+        if git('rev-parse','HEAD').decode().strip()!='bc9c20980220b4de5be1478ea2a3ecf4dc038df9':raise SystemExit('wrong source HEAD')
+        if git('rev-parse','HEAD^{tree}').decode().strip()!='2c54531ea6f196049fbdeefce8284ca57013ce08':raise SystemExit('wrong source tree')
+        original=git('show','HEAD:analysis_options.yaml')
+        if hashlib.sha256(original).hexdigest()!='e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342':raise SystemExit('wrong baseline config')
+        anchor=b'    - ".dart_tool/**"\n'
+        addition=b'    - android/**\n    - ios/**\n    - web/**\n    - windows/**\n    - macos/**\n    - linux/**\n'
+        if original.count(anchor)!=1:raise SystemExit('wrong migration anchor')
+        expected=original.replace(anchor,anchor+addition,1)
+        if hashlib.sha256(expected).hexdigest()!='1900f9a58dfe11a5f9c9ce0988ffc9d7e64f8ec23f3a7d7757f2024a23d27083':raise SystemExit('wrong migration proof')
+        p=source/'analysis_options.yaml'
+        if p.is_symlink():raise SystemExit('unsafe config')
+        actual=p.read_bytes()
+        if actual==expected:
+         print('guard exact_six_line_migration_restore phase='+phase,flush=True);p.write_bytes(original)
+        elif actual!=original:raise SystemExit('unexpected config bytes; no restore')
+        PINS={'lib/pages/asset_management_page.dart': {'blob': 'db372edfeb9023ea5b822dc9a9a49d1652b254f1', 'sha256': '4bca4d20e03317dfaa6253e84416c2c1c2fb4cf5b6c045d2a2c502e50d8b2469', 'bytes': 1340904}, 'lib/widgets/asset_calendar_shortfall_details.dart': {'blob': 'b302e160dbf18faefc5e79c42d949e3250b7dcec', 'sha256': '2fdf4ffb89a920eeeb6fd216b09059e303f77891d2be1f32bfd82c78a6983205', 'bytes': 6142}, 'lib/widgets/expense_classification_review.dart': {'blob': 'a8dca53e5d9d403b376f38ea3e375c5e60b15412', 'sha256': '25384b33cfbcbb4e7671d864841fa0248c6af3cc1c0746f35917ad2336ba46f3', 'bytes': 10153}, 'lib/widgets/feature_strategy_monitor_panel.dart': {'blob': '3de60c8b064090f7bd8512a5b895de9a99405c94', 'sha256': '1bad7ae9b66c7d9a58fc9e3e0ed5f20ae937114f10a4d72f8a07c2a991368ba0', 'bytes': 69590}, 'lib/widgets/kgi_csf_kpi_panel.dart': {'blob': '4d4dd7681d06dd4f27837f354f732ffb6917c935', 'sha256': 'e7982acba31ce5dc6771ae48ac7bdef2a37f88a48192f0fb4a5ee8cb754d4933', 'bytes': 6289}, 'analysis_options.yaml': {'sha256': 'e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342', 'blob': '8d30beed4897a1e1909640f03a8cb2cd9f61636f', 'bytes': 3887}, '.github/workflows/cloud-development.yml': {'sha256': '5c7e69cf2b742d88b328c56ebed48772400b71264a2a00a27dc5487898ac9064', 'blob': '61fb911df00b34be1e1f69eb853fd6d0647834f8', 'bytes': 18840}, 'package.json': {'sha256': '1a1b756478c3e2dc173eccc939ad4d5b0b6835933db10e443ce124fa781b52b2', 'blob': '6b8022f766f1bd8d601439611d608577e5cca389', 'bytes': 1199}, 'package-lock.json': {'sha256': '5f0e66e2e1c75260278c0a17b5149f910983813e8a9f1ff02c6037c95cf81cee', 'blob': '7157da7b681e4c441386c182a62fc018dc37e00d', 'bytes': 8183}, 'pubspec.yaml': {'sha256': '219e1bd8160fb2c8dbb7648670f377e75e464d99a2b9b8b1a5f73f1b6e801800', 'blob': 'd4af874ac1845ff9fc61366b0fa5f783e6ee4975', 'bytes': 4057}, 'pubspec.lock': {'sha256': 'da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5', 'blob': '8b12da8539a17ba14d389789c7b453ac693a910d', 'bytes': 55136}}
+        if len(PINS)!=11:raise SystemExit('expected11 protected pins')
+        for relative,item in PINS.items():
+         p=source/relative
+         if p.is_symlink() or not p.is_file() or hashlib.sha256(p.read_bytes()).hexdigest()!=item['sha256']:raise SystemExit('protected source bytes changed: '+relative)
+        if git('status','--porcelain','--untracked-files=all').strip():raise SystemExit('source index/worktree/untracked diff')
+        print('guard_ok phase='+phase+' source=bc9c20980220b4de5be1478ea2a3ecf4dc038df9 lock=da19d974',flush=True)
+        PAYSLIP_SOURCE_GUARD_PY
+        chmod 0400 "$PAYSLIP_ROOT/guards/source_guard.py"
+        printf '%s  %s\n' cf289c27b2f584d7db71bbdd0e53152da5ccda69d424e95acd3f5b5a6c5b62fb "$PAYSLIP_ROOT/guards/source_guard.py" | sha256sum -c -
+        cat > "$PAYSLIP_ROOT/guards/report.py" <<'PAYSLIP_REPORT_PY'
+        import json,pathlib,sys
+        root=pathlib.Path(sys.argv[1]).resolve(strict=True); mode=sys.argv[2]; path=pathlib.Path(sys.argv[3])
+        if mode=='asset-format-diagnostic':
+         """Five fixed formatting diagnostics; data validation only, never evaluate formatted code."""
+         import hashlib
+         import json
+
+         FORMAT_CASES = [
+             {'id': 'asset-management', 'path': 'lib/pages/asset_management_page.dart', 'sha256': '4bca4d20e03317dfaa6253e84416c2c1c2fb4cf5b6c045d2a2c502e50d8b2469', 'source_max': 2097152},
+             {'id': 'calendar-shortfall', 'path': 'lib/widgets/asset_calendar_shortfall_details.dart', 'sha256': '2fdf4ffb89a920eeeb6fd216b09059e303f77891d2be1f32bfd82c78a6983205', 'source_max': 131072},
+             {'id': 'expense-review', 'path': 'lib/widgets/expense_classification_review.dart', 'sha256': '25384b33cfbcbb4e7671d864841fa0248c6af3cc1c0746f35917ad2336ba46f3', 'source_max': 131072},
+             {'id': 'feature-strategy', 'path': 'lib/widgets/feature_strategy_monitor_panel.dart', 'sha256': '1bad7ae9b66c7d9a58fc9e3e0ed5f20ae937114f10a4d72f8a07c2a991368ba0', 'source_max': 131072},
+             {'id': 'kgi-csf-kpi', 'path': 'lib/widgets/kgi_csf_kpi_panel.dart', 'sha256': 'e7982acba31ce5dc6771ae48ac7bdef2a37f88a48192f0fb4a5ee8cb754d4933', 'source_max': 131072},
+         ]
+         FORMAT_INDEX = 'asset-format-index.json'
+         FORMAT_STDOUT_MAX = 8 * 1024 * 1024
+         FORMAT_STDERR_MAX = 16 * 1024
+         FORMAT_SECONDS_MAX = 30
+         FORMAT_ENVELOPE_MAX = 2 * FORMAT_STDOUT_MAX + 128 * 1024
+
+
+         def format_require(value, code):
+             if not value:
+                 raise SystemExit('asset format diagnostic rejected: ' + code)
+
+
+         def format_sha(raw):
+             return hashlib.sha256(raw).hexdigest()
+
+
+         def format_pairs(items):
+             result = {}
+             for key, value in items:
+                 format_require(key not in result, 'duplicate JSON key')
+                 result[key] = value
+             return result
+
+
+         def format_arguments(case):
+             return ['format', '--output=json', '--summary=none', '--show=none', '--set-exit-if-changed', case['path']]
+
+
+         def format_native(stdout, case):
+             format_require(0 < len(stdout) <= FORMAT_STDOUT_MAX, 'stdout size')
+             native = json.loads(stdout.decode('utf-8'), object_pairs_hook=format_pairs)
+             format_require(type(native) is dict and set(native) == {'path', 'source', 'selection'}, 'native schema')
+             format_require(native['path'] == case['path'], 'native path')
+             format_require(type(native['source']) is str and 0 < len(native['source'].encode('utf-8')) <= case['source_max'], 'formatted source size/type')
+             selection = native['selection']
+             format_require(type(selection) is dict and set(selection) == {'offset', 'length'} and
+                            all(type(selection[key]) is int and selection[key] == -1 for key in selection), 'native selection')
+             return native
+
+
+         def format_validate(raw, case):
+             format_require(0 < len(raw) <= FORMAT_ENVELOPE_MAX, 'artifact size')
+             record = json.loads(raw.decode('utf-8'), object_pairs_hook=format_pairs)
+             keys = {'schema_version', 'kind', 'source_path', 'source_sha256_before', 'source_sha256_after',
+                     'source_mode_before', 'source_mode_readonly', 'source_mode_after', 'runtime_uid',
+                     'formatted_source_sha256', 'formatter_arguments', 'formatter_exit_code', 'original_format_exit_code',
+                     'formatter_stdout', 'formatter_stdout_sha256', 'formatter_stderr', 'formatter_stderr_sha256', 'candidate_applied'}
+             format_require(type(record) is dict and set(record) == keys, 'envelope schema')
+             format_require(type(record['schema_version']) is int and record['schema_version'] == 2 and
+                            record['kind'] == 'dart-format-asset-diagnostic' and record['source_path'] == case['path'], 'envelope identity')
+             format_require(record['source_sha256_before'] == record['source_sha256_after'] == case['sha256'], 'input hashes')
+             format_require(record['formatter_arguments'] == format_arguments(case) and record['candidate_applied'] is False, 'command/application state')
+             format_require(all(type(record[k]) is int and record[k] in (0, 1) for k in ('formatter_exit_code', 'original_format_exit_code')), 'exit codes')
+             format_require(type(record['runtime_uid']) is int and record['runtime_uid'] > 0, 'runtime uid')
+             format_require(all(type(record[k]) is int for k in ('source_mode_before', 'source_mode_readonly', 'source_mode_after')) and
+                            record['source_mode_before'] == record['source_mode_after'] and
+                            record['source_mode_readonly'] == (record['source_mode_before'] & ~0o222), 'readonly mode restoration')
+             format_require(type(record['formatter_stdout']) is str and type(record['formatter_stderr']) is str, 'capture text type')
+             stdout, stderr = record['formatter_stdout'].encode('utf-8'), record['formatter_stderr'].encode('utf-8')
+             format_require(len(stderr) <= FORMAT_STDERR_MAX, 'stderr size')
+             format_require(format_sha(stdout) == record['formatter_stdout_sha256'] and format_sha(stderr) == record['formatter_stderr_sha256'], 'capture hashes')
+             native = format_native(stdout, case)
+             formatted_sha = format_sha(native['source'].encode('utf-8'))
+             format_require(formatted_sha == record['formatted_source_sha256'], 'formatted source hash')
+             format_require(record['formatter_exit_code'] == (0 if formatted_sha == case['sha256'] else 1), 'native delta versus return code')
+             return record, native
+
+         """Embedded in report.py diagnostic mode only; prepared text, not executed locally."""
+         import os
+         import re
+         import selectors
+         import stat
+         import subprocess
+         import time
+
+         format_require(len(sys.argv) == 5 and sys.argv[4] in ('0', '1'), 'original strict format status')
+         format_require(path == root / 'results' / FORMAT_INDEX and not path.exists() and not path.is_symlink(), 'index destination')
+         format_require(os.getuid() > 0 and os.getuid() == os.geteuid(), 'dedicated unprivileged runtime uid')
+         format_require(all(re.fullmatch('[0-9a-f]{64}', case['sha256']) for case in FORMAT_CASES), 'bind source hashes')
+         format_deadline = time.monotonic() + FORMAT_SECONDS_MAX
+         format_totals = {'stdout': 0, 'stderr': 0}
+         format_rows = []
+
+
+         def format_capture(arguments):
+             # No uid/gid switch, shell, environment widening, or network use: inherit sealed runtime identity/environment.
+             process = subprocess.Popen(arguments, cwd=root / 'source', stdin=subprocess.DEVNULL,
+                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+             streams = {'stdout': bytearray(), 'stderr': bytearray()}
+             try:
+                 with selectors.DefaultSelector() as selected:
+                     selected.register(process.stdout, selectors.EVENT_READ, 'stdout')
+                     selected.register(process.stderr, selectors.EVENT_READ, 'stderr')
+                     while selected.get_map():
+                         remaining = format_deadline - time.monotonic()
+                         format_require(remaining > 0, 'total 30 second deadline')
+                         for ready, _ in selected.select(remaining):
+                             kind = ready.data
+                             limit = FORMAT_STDOUT_MAX if kind == 'stdout' else FORMAT_STDERR_MAX
+                             chunk = os.read(ready.fileobj.fileno(), min(65536, limit - format_totals[kind] + 1))
+                             if not chunk:
+                                 selected.unregister(ready.fileobj)
+                                 continue
+                             format_totals[kind] += len(chunk)
+                             format_require(format_totals[kind] <= limit, 'aggregate ' + kind + ' budget')
+                             streams[kind].extend(chunk)
+                     remaining = format_deadline - time.monotonic()
+                     format_require(remaining > 0, 'total 30 second deadline')
+                     rc = process.wait(timeout=remaining)
+                 return rc, bytes(streams['stdout']), bytes(streams['stderr'])
+             finally:
+                 if process.poll() is None:
+                     process.kill()
+                 process.wait(timeout=2)
+                 process.stdout.close()
+                 process.stderr.close()
+
+
+         for format_case in FORMAT_CASES:
+             format_target = root / 'source' / format_case['path']
+             format_require(format_target.is_file() and not format_target.is_symlink() and
+                            format_target.resolve(strict=True) == format_target, 'input path')
+             format_stat = format_target.stat()
+             format_require(stat.S_ISREG(format_stat.st_mode) and format_stat.st_uid == os.getuid(), 'source owner/type')
+             format_before = format_target.read_bytes()
+             format_require(0 < len(format_before) <= format_case['source_max'] and format_sha(format_before) == format_case['sha256'], 'input before hash/cap')
+             format_mode = stat.S_IMODE(format_stat.st_mode)
+             format_readonly = format_mode & ~0o222
+             format_target.chmod(format_readonly)
+             try:
+                 format_require(stat.S_IMODE(format_target.stat().st_mode) == format_readonly, 'source readonly mode')
+                 format_rc, format_stdout, format_stderr = format_capture([str(root / 'sdk/flutter/bin/dart'), *format_arguments(format_case)])
+                 format_require(format_rc in (0, 1), 'diagnostic return code')
+                 format_require(format_target.is_file() and not format_target.is_symlink() and
+                                format_target.resolve(strict=True) == format_target and
+                                stat.S_IMODE(format_target.stat().st_mode) == format_readonly, 'input after identity/mode')
+                 format_after = format_target.read_bytes()
+                 format_require(format_after == format_before and format_sha(format_after) == format_case['sha256'], 'input changed')
+             finally:
+                 format_target.chmod(format_mode)
+             format_require(stat.S_IMODE(format_target.stat().st_mode) == format_mode, 'source original mode')
+             format_json = format_native(format_stdout, format_case)
+             format_record = {'schema_version': 2, 'kind': 'dart-format-asset-diagnostic', 'source_path': format_case['path'],
+                              'source_sha256_before': format_sha(format_before), 'source_sha256_after': format_sha(format_after),
+                              'source_mode_before': format_mode, 'source_mode_readonly': format_readonly, 'source_mode_after': stat.S_IMODE(format_target.stat().st_mode),
+                              'runtime_uid': os.getuid(), 'formatted_source_sha256': format_sha(format_json['source'].encode('utf-8')),
+                              'formatter_arguments': format_arguments(format_case), 'formatter_exit_code': format_rc,
+                              'original_format_exit_code': int(sys.argv[4]), 'formatter_stdout': format_stdout.decode('utf-8'),
+                              'formatter_stdout_sha256': format_sha(format_stdout), 'formatter_stderr': format_stderr.decode('utf-8'),
+                              'formatter_stderr_sha256': format_sha(format_stderr), 'candidate_applied': False}
+             format_data = (json.dumps(format_record, ensure_ascii=False, indent=2) + '\n').encode('utf-8')
+             format_validate(format_data, format_case)
+             format_filename = 'dart-format-' + format_case['id'] + '.json'
+             with (root / 'results' / format_filename).open('xb') as format_file:
+                 format_file.write(format_data)
+             format_rows.append({'artifact': format_filename, 'sha256': format_sha(format_data), 'source_path': format_case['path'],
+                                 'formatter_exit_code': format_rc, 'stdout_bytes': len(format_stdout), 'stderr_bytes': len(format_stderr)})
+         format_require(time.monotonic() <= format_deadline, 'total 30 second deadline')
+         format_index = {'schema_version': 2, 'kind': 'asset-format-diagnostic-index', 'source': 'bc9c20980220b4de5be1478ea2a3ecf4dc038df9',
+                         'source_tree': '2c54531ea6f196049fbdeefce8284ca57013ce08', 'source_parent': '8dae94dd20c8f1ba9316f0078a52c890c29a3c4c', 'source_base_main': 'e2502d35779c5a38acd036075d9bc3be58fd6e03',
+                         'strict_format_file_count': 5, 'original_format_exit_code': int(sys.argv[4]), 'files': format_rows,
+                         'aggregate_stdout_bytes': format_totals['stdout'], 'aggregate_stderr_bytes': format_totals['stderr'],
+                         'deadline_seconds': FORMAT_SECONDS_MAX, 'candidate_applied': False, 'salary_full_build_browser_executed': False}
+         with path.open('x', encoding='utf-8') as format_file:
+             json.dump(format_index, format_file, ensure_ascii=False, indent=2)
+             format_file.write('\n')
+         print('ASSET_FORMAT_DIAGNOSTICS_SAVED files=5 candidate_applied=false')
+         raise SystemExit(0)
+        import collections
+        import hashlib
+        import os
+        import re
+        import selectors
+        import subprocess
+        import time
+
+        # Exact suite/full-name data from fixed packet; no salary/full/browser expectations.
+        EXPECTED_FOCUSED = {'small-four-suites': [('test/widgets/asset_calendar_shortfall_details_test.dart', '390px evidence reveals source and estimate without financial action'), ('test/widgets/asset_calendar_shortfall_details_test.dart', 'date-only balances do not claim a midnight observation'), ('test/widgets/asset_calendar_shortfall_details_test.dart', 'distinguishes first deficit from maximum deficit and unknown time'), ('test/widgets/asset_calendar_shortfall_details_test.dart', 'planned income is visibly unconfirmed'), ('test/widgets/asset_calendar_shortfall_details_test.dart', 'unresolved legacy payment lowers forecast certainty'), ('test/widgets/expense_classification_review_test.dart', 'A certain wrong candidate stays read-only with an explanation'), ('test/widgets/expense_classification_review_test.dart', 'AI is explicit, failure keeps rules, retry remains a suggestion'), ('test/widgets/expense_classification_review_test.dart', 'An unknown category is rejected and a retry recovers'), ('test/widgets/expense_classification_review_test.dart', 'Cloud candidates require explicit action and recover after quota failure'), ('test/widgets/expense_classification_review_test.dart', 'Confidence help is available before any AI request'), ('test/widgets/expense_classification_review_test.dart', 'Edited memo rejects stale AI results and dispose is safe'), ('test/widgets/expense_classification_review_test.dart', 'Rule candidates are read-only and never claim accuracy'), ('test/widgets/expense_classification_review_test.dart', 'Unconfigured AI is hidden and narrow enlarged text wraps'), ('test/widgets/expense_classification_review_test.dart', 'Uniform AI response does not promote the first category'), ('test/widgets/feature_strategy_monitor_panel_test.dart', 'FeatureStrategyMonitorPanel opens roadmap feature'), ('test/widgets/feature_strategy_monitor_panel_test.dart', 'FeatureStrategyMonitorPanel renders portfolio and roadmap'), ('test/widgets/kgi_csf_kpi_panel_test.dart', 'KgiCsfKpiPanel renders KGI, CSF and numeric KPI')], 'smoke-five-cases': [('test/widgets/asset_management_page_smoke_test.dart', 'AssetManagementPage smoke an existing revolving balance complies when the payday rule is scheduled'), ('test/widgets/asset_management_page_smoke_test.dart', 'AssetManagementPage smoke asset chat money range protection defaults off and persists'), ('test/widgets/asset_management_page_smoke_test.dart', 'AssetManagementPage smoke completed one-shot policy restores its memo and suppresses setup advice'), ('test/widgets/asset_management_page_smoke_test.dart', 'AssetManagementPage smoke living expense priority toggle immediately reorders actions'), ('test/widgets/asset_management_page_smoke_test.dart', 'AssetManagementPage smoke repayment shortfall shows a discipline violation')], 'main-fixed-two-cases': [('test/widgets/asset_management_fixed_cost_action_regression_test.dart', 'fallback payslip does not hide the current payslip action'), ('test/widgets/asset_management_fixed_cost_action_regression_test.dart', 'recurring costs feed summaries without completing the full cost review')]}
+        FOCUSED_GROUPS = [{'id': 'small-four-suites', 'suites': ['test/widgets/kgi_csf_kpi_panel_test.dart', 'test/widgets/asset_calendar_shortfall_details_test.dart', 'test/widgets/expense_classification_review_test.dart', 'test/widgets/feature_strategy_monitor_panel_test.dart'], 'names': []}, {'id': 'smoke-five-cases', 'suites': ['test/widgets/asset_management_page_smoke_test.dart'], 'names': ['AssetManagementPage smoke asset chat money range protection defaults off and persists', 'AssetManagementPage smoke living expense priority toggle immediately reorders actions', 'AssetManagementPage smoke completed one-shot policy restores its memo and suppresses setup advice', 'AssetManagementPage smoke repayment shortfall shows a discipline violation', 'AssetManagementPage smoke an existing revolving balance complies when the payday rule is scheduled']}, {'id': 'main-fixed-two-cases', 'suites': ['test/widgets/asset_management_fixed_cost_action_regression_test.dart'], 'names': ['fallback payslip does not hide the current payslip action', 'recurring costs feed summaries without completing the full cost review']}]
+        EXPECTED_PACKET_SHA256 = 'cfa93c7443a37137f085b29ae892086057d7fc55847186c9a14d6103b0ce6aca'
+
+        def focused_require(value, message):
+         if not value: raise ValueError(message)
+
+        def focused_unique_object(pairs):
+         result={}
+         for key,value in pairs:
+          focused_require(key not in result, 'duplicate machine JSON key')
+          result[key]=value
+         return result
+
+        def validate_focused_machine(raw, expected, source_root):
+         """Pure typed-stream validator; identity is suite path + complete name, never numeric test ID."""
+         focused_require(type(raw) is bytes and 0<len(raw)<=8*1024*1024, 'machine raw size/type')
+         suites={}; groups=set(); starts={}; ends={}; done_count=0; success=False; notices=0
+         for line in raw.decode('utf-8').splitlines():
+          if not line.strip(): continue
+          focused_require(not done_count, 'event after terminal done')
+          event=json.loads(line, object_pairs_hook=focused_unique_object)
+          if type(event) is list:
+           focused_require(event==[{'event':'test.startedProcess','params':{'vmServiceUri':None}}], 'unsupported Flutter tool notification')
+           notices+=1
+           continue
+          focused_require(type(event) is dict, 'machine event must be object')
+          kind=event.get('type')
+          focused_require(kind!='error', 'machine error including hidden/late error')
+          if kind=='suite':
+           suite=event['suite']; ident=suite['id']
+           focused_require(type(ident) is int and ident not in suites, 'duplicate/invalid suite ID')
+           suites[ident]=suite
+          if kind=='group':
+           ident=event['group']['id']
+           focused_require(type(ident) is int and ident not in groups, 'duplicate/invalid group ID')
+           groups.add(ident)
+          if kind=='testStart':
+           test=event['test']; ident=test['id']
+           focused_require(type(ident) is int and ident not in starts, 'duplicate/invalid testStart ID')
+           starts[ident]=test
+          if kind=='testDone':
+           ident=event['testID']
+           focused_require(type(ident) is int and ident in starts and ident not in ends, 'unmatched/duplicate testDone ID')
+           focused_require(event.get('result')=='success', 'failed testDone including hidden test')
+           focused_require('retried' not in event or type(event['retried']) is bool, 'invalid retry flag')
+           focused_require(event.get('retried') is not True, 'retried test')
+           focused_require(type(event.get('hidden')) is bool and type(event.get('skipped')) is bool, 'invalid hidden/skipped flags')
+           focused_require(not event['skipped'], 'skipped test including hidden test')
+           ends[ident]=event
+          if kind=='done':
+           done_count+=1; success=event.get('success') is True
+         focused_require(done_count==1 and success, 'exactly one successful terminal done required')
+         focused_require(set(starts)==set(ends), 'missing testDone')
+         rows=[]
+         for ident,test in starts.items():
+          if ends[ident]['hidden']: continue # Successful hidden loaders are not selected visible cases.
+          suite=suites.get(test['suiteID'])
+          focused_require(suite is not None and type(suite.get('path')) is str and type(test.get('name')) is str, 'missing suite/name')
+          prefix=source_root.rstrip('/')+'/'
+          suite_path=suite['path']
+          focused_require(suite_path.startswith(prefix), 'suite outside fixed source')
+          relative=suite_path[len(prefix):]
+          focused_require(relative and all(part not in ('','.','..') for part in relative.split('/')), 'noncanonical suite path')
+          rows.append((relative,test['name']))
+         actual=collections.Counter(rows); wanted=collections.Counter(tuple(item) for item in expected)
+         focused_require(actual==wanted and len(rows)==len(expected), 'exact suite/full-name multiplicity mismatch')
+         return {'passed':len(rows),'skipped':0,'errors':0,'neutral_startedProcess_notifications':notices,
+                 'identities':[{'suite':suite,'name':name,'multiplicity':count} for (suite,name),count in sorted(actual.items())]}
+
+        def focused_capture(arguments, label):
+         """Capture bounded original stdout/stderr, retaining partial failures as data."""
+         stdout_path=root/'results'/(label+'.jsonl'); stderr_path=root/'results'/(label+'.stderr')
+         captured={'stdout':bytearray(),'stderr':bytearray()}; caps={'stdout':8*1024*1024,'stderr':16*1024}
+         failure=None; rc=None; process=None
+         with stdout_path.open('xb') as stdout_file, stderr_path.open('xb') as stderr_file:
+          output_files={'stdout':stdout_file,'stderr':stderr_file}
+          try:
+           process=subprocess.Popen(arguments,cwd=root/'source',stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.PIPE,close_fds=True)
+           with selectors.DefaultSelector() as selected:
+            selected.register(process.stdout,selectors.EVENT_READ,'stdout'); selected.register(process.stderr,selectors.EVENT_READ,'stderr')
+            while selected.get_map():
+             for ready,_ in selected.select(1):
+              kind=ready.data; remaining=caps[kind]-len(captured[kind])
+              chunk=os.read(ready.fileobj.fileno(),min(65536,remaining+1))
+              if not chunk: selected.unregister(ready.fileobj); continue
+              retained=chunk[:remaining]
+              output_files[kind].write(retained); output_files[kind].flush()
+              captured[kind].extend(retained)
+              if len(chunk)>remaining: raise ValueError('focused '+kind+' capture cap')
+            rc=process.wait()
+          except BaseException as exc:
+           failure=type(exc).__name__+': '+str(exc)
+          finally:
+           if process is not None:
+            if process.poll() is None: process.kill()
+            process.wait(); process.stdout.close(); process.stderr.close()
+         return rc,bytes(captured['stdout']),failure,{'stdout_file':stdout_path.name,'stdout_sha256':hashlib.sha256(captured['stdout']).hexdigest(),
+                 'stdout_bytes':len(captured['stdout']),'stderr_file':stderr_path.name,'stderr_sha256':hashlib.sha256(captured['stderr']).hexdigest(),'stderr_bytes':len(captured['stderr'])}
+
+        if mode!='focused-run': raise SystemExit('unknown focused report mode')
+        focused_require(path==root/'results'/'FOCUSED_QA_RESULT.json', 'focused result path')
+        result={'schema_version':1,'scope':'main-material-focused-only','source':'bc9c20980220b4de5be1478ea2a3ecf4dc038df9',
+                'expected_packet_sha256':EXPECTED_PACKET_SHA256,'proposed_slots':24,'main_observed_selected_count':None,
+                'groups':[],'all_selected_groups_verified':False,'salary_full_build_browser_executed':False}
+        overall=0
+        try:
+         for group in FOCUSED_GROUPS:
+          arguments=[str(root/'sdk/flutter/bin/flutter'),'test','--no-pub','--machine',*group['suites']]
+          if group['names']:
+           arguments+=['--name','^(?:'+'|'.join(re.escape(name) for name in group['names'])+')$']
+          row={'id':group['id'],'arguments':arguments,'machine_exit_code':None,'validator_exit_code':None,'capture_error':None,'validation_error':None}
+          result['groups'].append(row)
+          rc,raw,capture_error,captures=focused_capture(arguments,group['id'])
+          row.update(captures); row['machine_exit_code']=rc; row['capture_error']=capture_error
+          if capture_error is not None or rc!=0:
+           overall=rc if type(rc) is int and rc>0 else 1; break
+          try:
+           row['verified']=validate_focused_machine(raw,EXPECTED_FOCUSED[group['id']],str(root/'source'))
+           row['validator_exit_code']=0
+          except Exception as exc:
+           row['validator_exit_code']=1; row['validation_error']=type(exc).__name__+': '+str(exc); overall=1; break
+         result['all_selected_groups_verified']=overall==0 and len(result['groups'])==3
+         if result['all_selected_groups_verified']: result['main_observed_selected_count']=sum(row['verified']['passed'] for row in result['groups'])
+        except Exception as exc:
+         overall=1; result['execution_error']=type(exc).__name__+': '+str(exc)
+        finally:
+         result['overall_exit_code']=overall
+         with path.open('x',encoding='utf-8') as output:
+          json.dump(result,output,ensure_ascii=False,indent=2); output.write('\n')
+        raise SystemExit(overall)
+        PAYSLIP_REPORT_PY
+        chmod 0400 "$PAYSLIP_ROOT/guards/report.py"
+        printf '%s  %s\n' 20c1014f669c9397ed4f7e1ea10c0b88815504ead476297f28d2f3841c4b4b24 "$PAYSLIP_ROOT/guards/report.py" | sha256sum -c -
+        cat > "$PAYSLIP_ROOT/guards/font_guard.py" <<'PAYSLIP_FONT_GUARD_PY'
+        import hashlib,json,sys
+        from pathlib import Path
+        source=Path(sys.argv[1]).resolve(strict=True); root=source/'build/web'
+        if root.is_symlink() or root.resolve(strict=True)!=source/'build/web':raise SystemExit('unsafe fixture output')
+        index=root/'index.html'; expected_index=source/'test/fixtures/payslip_preview_index.html'
+        if index.is_symlink() or index.read_bytes()!=expected_index.read_bytes():raise SystemExit('wrong fixture index')
+        p=root/'assets/FontManifest.json'
+        if p.is_symlink() or not p.is_file():raise SystemExit('newSDK manifest absent/unsafe; review format instead of bypass')
+        manifest=json.loads(p.read_text(encoding='utf-8'))
+        if not isinstance(manifest,list) or not all(isinstance(x,dict) for x in manifest):raise SystemExit('unexpected newSDK manifest shape')
+        names=[x.get('family') for x in manifest]
+        if 'Roboto' in names or names.count('NotoSans')!=1:raise SystemExit('newSDK font assumptions changed; STOP for independent review')
+        font='web/assets/fonts/NotoSans-Regular.ttf';license='web/assets/fonts/NotoSans-OFL.txt'
+        if next(x for x in manifest if x.get('family')=='NotoSans').get('fonts')!=[{'asset':font}]:raise SystemExit('unexpected NotoSans asset')
+        for asset,sha in [(font,'b85c38ecea8a7cfb39c24e395a4007474fa5a4fc864f6ee33309eb4948d232d5'),(license,'138b7f6e5d8ab96671ef7604f936d3d077beed67911acfb1b0adb71359dc44bc')]:
+         q=root/'assets'/asset
+         if q.is_symlink() or not q.is_file() or hashlib.sha256(q.read_bytes()).hexdigest()!=sha:raise SystemExit('font/license byte proof failed')
+        p.write_text(json.dumps([*manifest,{'family':'Roboto','fonts':[{'asset':font}]}])+'\n',encoding='utf-8')
+        print('fixture_only_font_contract_verified')
+        PAYSLIP_FONT_GUARD_PY
+        chmod 0400 "$PAYSLIP_ROOT/guards/font_guard.py"
+        printf '%s  %s\n' 3c644cd90872d2348a5afbf8ad022d9d66e6c15975d247ee0acc17723c3d0099 "$PAYSLIP_ROOT/guards/font_guard.py" | sha256sum -c -
+        cat > "$PAYSLIP_ROOT/guards/runtime.sh" <<'PAYSLIP_RUNTIME_SH'
+        set -euo pipefail
+        root=$1
+        phase=$2
+        [[ "$3" -gt 0 && "$4" -gt 0 ]]
+        awk -v uid="$3" -v gid="$4" '
+         /^Uid:/ {u=NF==5 && $2==uid && $3==uid && $4==uid && $5==uid}
+         /^Gid:/ {g=NF==5 && $2==gid && $3==gid && $4==gid && $5==gid}
+         /^Groups:/ {groups=NF==1}
+         /^Cap(Inh|Prm|Eff|Bnd|Amb):/ {if(NF==2 && $2 ~ /^0+$/)caps++}
+         /^NoNewPrivs:/ {nnp=NF==2 && $2==1}
+         END {exit !(u && g && groups && caps==5 && nnp)}' /proc/self/status
+        if [[ "$phase" == final ]]; then
+         /usr/bin/python3 -I "$root/guards/source_guard.py" "$root" final
+         exit 0
+        fi
+        cd "$root/source"
+        /usr/bin/python3 -I "$root/guards/source_guard.py" "$root" "before_$phase"
+        case "$phase" in
+         salary)
+          original_format_rc=0
+          dart format --output=none --set-exit-if-changed lib/pages/asset_management_page.dart lib/widgets/asset_calendar_shortfall_details.dart lib/widgets/expense_classification_review.dart lib/widgets/feature_strategy_monitor_panel.dart lib/widgets/kgi_csf_kpi_panel.dart > "$root/results/format.stdout" 2> "$root/results/format.stderr" || original_format_rc=$?
+          printf '{"schema_version":1,"scope":"main-material-focused-only","source":"bc9c20980220b4de5be1478ea2a3ecf4dc038df9","strict_format_files":5,"original_format_exit_code":%s,"candidate_applied":false}\n' "$original_format_rc" > "$root/results/STRICT_FORMAT_RESULT.json"
+          if [[ "$original_format_rc" -ne 0 ]]; then
+           collector_rc=0
+           if [[ "$original_format_rc" -eq 1 ]]; then
+            /usr/bin/python3 -I "$root/guards/report.py" "$root" asset-format-diagnostic "$root/results/asset-format-index.json" "$original_format_rc" || collector_rc=$?
+           fi
+           printf '{"format_exit_code":%s,"collector_exit_code":%s,"analyze_exit_code":null,"focused_exit_code":null,"overall_exit_code":%s}\n' "$original_format_rc" "$collector_rc" "$original_format_rc" > "$root/results/RUNTIME_RESULT.json"
+           /usr/bin/python3 -I "$root/guards/source_guard.py" "$root" after_salary
+           exit "$original_format_rc"
+          fi
+          analyze_rc=0
+          dart analyze lib/pages/asset_management_page.dart lib/widgets/asset_calendar_shortfall_details.dart lib/widgets/expense_classification_review.dart lib/widgets/feature_strategy_monitor_panel.dart lib/widgets/kgi_csf_kpi_panel.dart > "$root/results/analyze.stdout" 2> "$root/results/analyze.stderr" || analyze_rc=$?
+          focused_rc=0
+          if [[ "$analyze_rc" -eq 0 ]]; then
+           /usr/bin/python3 -I "$root/guards/report.py" "$root" focused-run "$root/results/FOCUSED_QA_RESULT.json" || focused_rc=$?
+           printf '{"format_exit_code":0,"collector_exit_code":null,"analyze_exit_code":0,"focused_exit_code":%s,"overall_exit_code":%s}\n' "$focused_rc" "$focused_rc" > "$root/results/RUNTIME_RESULT.json"
+          else
+           printf '{"format_exit_code":0,"collector_exit_code":null,"analyze_exit_code":%s,"focused_exit_code":null,"overall_exit_code":%s}\n' "$analyze_rc" "$analyze_rc" > "$root/results/RUNTIME_RESULT.json"
+          fi
+          /usr/bin/python3 -I "$root/guards/source_guard.py" "$root" after_salary
+          if [[ "$analyze_rc" -ne 0 ]]; then exit "$analyze_rc"; fi
+          exit "$focused_rc"
+          ;;
+         *) echo 'STOP: focused-only runtime rejects unknown phases'; exit 1 ;;
+        esac
+        PAYSLIP_RUNTIME_SH
+        chmod 0400 "$PAYSLIP_ROOT/guards/runtime.sh"
+        printf '%s  %s\n' d82adab12884d72c71a74f0c70a7d2d273a2b45577e20658c65e8e8fff813a45 "$PAYSLIP_ROOT/guards/runtime.sh" | sha256sum -c -
+        cat > "$PAYSLIP_ROOT/guards/offline.sh" <<'PAYSLIP_OFFLINE_SH'
+        set -euo pipefail
+        root=$1; uid=$2; gid=$3; phase=$4; seconds=$5
+        [[ "$(id -u)" == 0 && "$uid" =~ ^[0-9]+$ && "$gid" =~ ^[0-9]+$ && "$uid" -gt 0 && "$gid" -gt 0 ]]
+        case "$phase:$seconds" in salary:600|full:1200|app_build:900|fixture:900|browser:600|final:120) ;; *) exit 1;; esac
+        [[ "$(stat -c %u "$root")" == 0 && "$(stat -c %u "$root/control")" == 0 && ! -L "$root/control" ]]
+        # Atomic host-only lease: abnormal termination leaves it in place and blocks publication.
+        mkdir -m 0700 "$root/control/lease"
+        if pgrep -u "$uid" >/dev/null || pgrep -U "$uid" >/dev/null; then exit 1; fi
+        net="$(readlink /proc/self/ns/net)"; pid="$(readlink /proc/self/ns/pid)"
+        set +e
+        timeout --signal=TERM --kill-after=15s "$seconds" \
+         unshare --net --pid --fork --kill-child --mount-proc -- /bin/bash --noprofile --norc -euc '
+          ip link set lo up
+          [[ "$(readlink /proc/self/ns/net)" != "$5" && "$(readlink /proc/self/ns/pid)" != "$6" ]]
+          links="$(ip -o link show)"
+          [[ "$(printf "%s\n" "$links" | wc -l)" -eq 1 && "$(printf "%s\n" "$links" | cut -d: -f2 | tr -d "[:space:]")" == lo ]]
+          [[ -z "$(ip -4 route show default)" && -z "$(ip -6 route show default)" ]]
+          exec /usr/bin/setpriv --reuid="$2" --regid="$3" --clear-groups --no-new-privs --bounding-set=-all --inh-caps=-all --ambient-caps=-all \
+           env -i PATH="$1/sdk/flutter/bin:$1/node/bin:/usr/bin:/bin" HOME="$1/home" PUB_CACHE="$1/pub-cache" TMPDIR="$1/tmp" XDG_CONFIG_HOME="$1/config" XDG_CACHE_HOME="$1/cache" PLAYWRIGHT_BROWSERS_PATH="$1/browsers" npm_config_cache="$1/npm-cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1 \
+           /bin/bash --noprofile --norc "$1/guards/runtime.sh" "$1" "$4" "$2" "$3"
+         ' payslip-namespace "$root" "$uid" "$gid" "$phase" "$net" "$pid"
+        rc=$?
+        set -e
+        # The foreground timeout/unshare wait has returned. Wait for remaining UID teardown.
+        stopped=false
+        for attempt in {1..50}; do
+         if ! pgrep -u "$uid" >/dev/null && ! pgrep -U "$uid" >/dev/null; then stopped=true; break; fi
+         sleep 0.1
+        done
+        [[ "$stopped" == true ]]
+        if [[ "$phase" == final ]]; then
+         (set -o noclobber; printf 'stopped rc=%s\n' "$rc" > "$root/control/final-stopped")
+         chmod 0600 "$root/control/final-stopped"
+        fi
+        rmdir "$root/control/lease"
+        exit "$rc"
+        PAYSLIP_OFFLINE_SH
+        chmod 0400 "$PAYSLIP_ROOT/guards/offline.sh"
+        printf '%s  %s\n' d0d31511536b264fac51bd329b712156edd3993512f30257f6cbcfda954ad718 "$PAYSLIP_ROOT/guards/offline.sh" | sha256sum -c -
+        cat > "$PAYSLIP_ROOT/guards/publish.py" <<'PAYSLIP_PUBLISH_PY'
+        """Fixed Linux host publisher: stopped-runtime, descriptor-relative, bounded byte copy."""
+        import os
+        import stat
+        import sys
+
+        MAX_FILES = 512
+        MAX_DIRS = 512
+        MAX_DEPTH = 12
+        MAX_FILE_BYTES = 64 * 1024 * 1024
+        MAX_TOTAL_BYTES = 256 * 1024 * 1024
+
+
+        def require(condition, message):
+            if not condition:
+                raise SystemExit(message)
+
+
+        def safe_name(name):
+            require(isinstance(name, str) and name not in {'', '.', '..'} and
+                    '/' not in name and '\\' not in name and name.isprintable() and
+                    len(name.encode('utf-8')) <= 255, 'unsafe entry name')
+
+
+        def root_parts(path):
+            require(isinstance(path, str) and path.startswith('/') and not path.endswith('/'), 'absolute physical root required')
+            parts = path.split('/')[1:]
+            for part in parts:
+                safe_name(part)
+            require(parts[-1].startswith('payslip-same-lock.'), 'wrong scratch root name')
+            return parts
+
+
+        def checked(st, owner, group=None, directory=False):
+            require((stat.S_ISDIR(st.st_mode) if directory else stat.S_ISREG(st.st_mode)), 'nonregular entry or wrong directory type')
+            require(st.st_uid in owner and (group is None or st.st_gid == group), 'unexpected owner/group')
+            require(not st.st_mode & 0o7022, 'unsafe write/setid/sticky permissions')
+            if not directory:
+                require(st.st_nlink == 1, 'regular file link count must be one')
+                require(0 <= st.st_size <= MAX_FILE_BYTES, 'per-file byte limit')
+            return st
+
+
+        def identity(st):
+            return (st.st_dev, st.st_ino, st.st_mode, st.st_uid, st.st_gid,
+                    st.st_nlink, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+
+
+        class Budget:
+            def __init__(self):
+                self.files = self.dirs = self.bytes = 0
+
+            def add(self, st, depth):
+                require(1 <= depth <= MAX_DEPTH, 'depth limit')
+                if stat.S_ISDIR(st.st_mode):
+                    self.dirs += 1
+                    require(self.dirs <= MAX_DIRS, 'directory count limit')
+                else:
+                    self.files += 1
+                    self.bytes += st.st_size
+                    require(self.files <= MAX_FILES, 'file count limit')
+                    require(self.bytes <= MAX_TOTAL_BYTES, 'total byte limit')
+
+
+        DIR_FLAGS = getattr(os, 'O_RDONLY', 0) | getattr(os, 'O_DIRECTORY', 0) | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_CLOEXEC', 0)
+        FILE_FLAGS = getattr(os, 'O_RDONLY', 0) | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_CLOEXEC', 0)
+
+
+        def child_dir(parent, name, owner, group=None):
+            safe_name(name)
+            before = checked(os.stat(name, dir_fd=parent, follow_symlinks=False), owner, group, True)
+            fd = os.open(name, DIR_FLAGS, dir_fd=parent)
+            try:
+                require(identity(checked(os.fstat(fd), owner, group, True)) == identity(before), 'directory identity changed')
+            except BaseException:
+                os.close(fd)
+                raise
+            return fd
+
+
+        def runtime_absent(uid):
+            for entry in os.scandir('/proc'):
+                if not entry.name.isdigit():
+                    continue
+                try:
+                    with open('/proc/' + entry.name + '/status', encoding='ascii') as stream:
+                        for line in stream:
+                            if line.startswith('Uid:'):
+                                require(uid not in [int(value) for value in line.split()[1:]], 'runtime process still exists')
+                                break
+                        else:
+                            raise SystemExit('process UID unavailable')
+                except (FileNotFoundError, ProcessLookupError):
+                    pass
+
+
+        def scan(fd, uid, gid, budget, depth=0):
+            items = []
+            with os.scandir(fd) as entries:
+                for entry in entries:
+                    name = entry.name
+                    safe_name(name)
+                    st = os.stat(name, dir_fd=fd, follow_symlinks=False)
+                    directory = stat.S_ISDIR(st.st_mode)
+                    checked(st, {uid}, gid, directory)
+                    budget.add(st, depth + 1)
+                    children = None
+                    if directory:
+                        child = child_dir(fd, name, {uid}, gid)
+                        try:
+                            children = scan(child, uid, gid, budget, depth + 1)
+                        finally:
+                            os.close(child)
+                    items.append((name, identity(st), children))
+            return items
+
+
+        def copy_tree(source, target, items, uid, gid, copied):
+            for name, expected, children in items:
+                st = os.stat(name, dir_fd=source, follow_symlinks=False)
+                checked(st, {uid}, gid, children is not None)
+                require(identity(st) == expected, 'scanned entry changed')
+                if children is not None:
+                    source_child = child_dir(source, name, {uid}, gid)
+                    os.mkdir(name, 0o755, dir_fd=target)
+                    target_child = child_dir(target, name, {0}, 0)
+                    try:
+                        copy_tree(source_child, target_child, children, uid, gid, copied)
+                    finally:
+                        os.close(source_child)
+                        os.close(target_child)
+                    continue
+                incoming = os.open(name, FILE_FLAGS, dir_fd=source)
+                outgoing = None
+                try:
+                    require(identity(checked(os.fstat(incoming), {uid}, gid)) == expected, 'opened file changed')
+                    outgoing = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=target)
+                    read_bytes = 0
+                    while True:
+                        chunk = os.read(incoming, min(1024 * 1024, expected[6] - read_bytes + 1))
+                        if not chunk:
+                            break
+                        read_bytes += len(chunk)
+                        copied[0] += len(chunk)
+                        require(read_bytes <= expected[6] and read_bytes <= MAX_FILE_BYTES and copied[0] <= MAX_TOTAL_BYTES,
+                                'copy byte limit or extra bytes')
+                        view = memoryview(chunk)
+                        while view:
+                            written = os.write(outgoing, view)
+                            require(written > 0, 'short output write')
+                            view = view[written:]
+                    require(read_bytes == expected[6], 'short input read')
+                    require(identity(checked(os.fstat(incoming), {uid}, gid)) == expected, 'file changed during copy')
+                    os.fchmod(outgoing, 0o444)
+                    checked(os.fstat(outgoing), {0}, 0)
+                finally:
+                    os.close(incoming)
+                    if outgoing is not None:
+                        os.close(outgoing)
+
+
+        def main(args):
+            require(len(args) == 5 and os.geteuid() == 0, 'root host publisher arguments required')
+            root, uid, gid, host_uid = args[1], int(args[2]), int(args[3]), int(args[4])
+            require(uid > 0 and gid > 0 and host_uid > 0 and uid != host_uid, 'dedicated identity required')
+            require(all(hasattr(os, name) and getattr(os, name) for name in ['O_NOFOLLOW', 'O_DIRECTORY', 'O_NONBLOCK']),
+                    'Linux no-follow descriptor support required')
+            os.umask(0o022)
+            root_fd = os.open('/', DIR_FLAGS)
+            try:
+                checked(os.fstat(root_fd), {0}, directory=True)
+                parts = root_parts(root)
+                for index, part in enumerate(parts):
+                    next_fd = child_dir(root_fd, part, {0} if index == len(parts) - 1 else {0, host_uid})
+                    os.close(root_fd)
+                    root_fd = next_fd
+                control = child_dir(root_fd, 'control', {0}, 0)
+                try:
+                    stopped = os.stat('final-stopped', dir_fd=control, follow_symlinks=False)
+                    checked(stopped, {0}, 0)
+                    require(stopped.st_size <= 128, 'invalid final-stopped marker')
+                    # This shared, root-only atomic lease excludes every future namespace launcher.
+                    # An interrupted launcher leaves its lease and blocks publication.
+                    os.mkdir('lease', 0o700, dir_fd=control)
+                    runtime_absent(uid)
+                    source = child_dir(root_fd, 'results', {uid}, gid)
+                    try:
+                        budget = Budget()
+                        items = scan(source, uid, gid, budget)
+                        require(budget.files > 0, 'empty report snapshot')
+                        os.mkdir('publish', 0o755, dir_fd=root_fd)
+                        target = child_dir(root_fd, 'publish', {0}, 0)
+                        try:
+                            copied = [0]
+                            copy_tree(source, target, items, uid, gid, copied)
+                            require(copied[0] == budget.bytes, 'snapshot byte mismatch')
+                            runtime_absent(uid)
+                        finally:
+                            os.close(target)
+                    finally:
+                        os.close(source)
+                finally:
+                    os.close(control)
+            finally:
+                os.close(root_fd)
+            print('PUBLISH_VALIDATED files=' + str(budget.files) + ' bytes=' + str(budget.bytes))
+
+
+        if __name__ == '__main__':
+            main(sys.argv)
+        PAYSLIP_PUBLISH_PY
+        chmod 0400 "$PAYSLIP_ROOT/guards/publish.py"
+        printf '%s  %s\n' d9e320db366d82f79f630bcefaab2213aed1f4e87ac8f84ae68bb955dba8cc2d "$PAYSLIP_ROOT/guards/publish.py" | sha256sum -c -
+        python3 "$PAYSLIP_ROOT/guards/source_guard.py" "$PAYSLIP_ROOT" before_bootstrap
+    - name: Bootstrap fixed tools and enforce the exact existing lock
+      shell: bash
+      timeout-minutes: 20
+      run: |
+        set -euo pipefail
+        printf '%s\n' '{"scope":"main-material-focused-only","source":"bc9c20980220b4de5be1478ea2a3ecf4dc038df9","source_tree":"2c54531ea6f196049fbdeefce8284ca57013ce08","source_parent":"8dae94dd20c8f1ba9316f0078a52c890c29a3c4c","source_base_main":"e2502d35779c5a38acd036075d9bc3be58fd6e03","strict_format_files":5,"analyze_files":5,"selected_suite_files":6,"proposed_selected_slots":24,"main_observed_selected_count":null,"expected_packet_sha256":"cfa93c7443a37137f085b29ae892086057d7fc55847186c9a14d6103b0ce6aca","machine_groups":["small-four-suites","smoke-five-cases","main-fixed-two-cases"],"collector_files_only_on_format_rc1":5,"internal_launcher_alias":"salary:600 compatibility only; salary cases0","salary_cases_executed":0,"full_tests_executed":0,"app_build_executed":false,"browser_cases_executed":0,"production_ui_verified":false,"candidate_applied":false,"actual_individual_exit_codes":"STRICT_FORMAT_RESULT.json / RUNTIME_RESULT.json / FOCUSED_QA_RESULT.json; absent means not completed"}' > "$PAYSLIP_ROOT/results/QA_SCOPE.json"
+        env -i PATH=/usr/bin:/bin HOME="$PAYSLIP_ROOT/home" curl --fail --location --connect-timeout 15 --max-time 240 --retry 0 --output "$PAYSLIP_ROOT/sdk/flutter.tar.xz" https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.9-stable.tar.xz
+        printf '%s  %s\n' 25ed8c3c29d51a7353f2a944310b478af8214920639524b19c50a19e6c044c5a "$PAYSLIP_ROOT/sdk/flutter.tar.xz" | sha256sum -c -
+        tar -xJf "$PAYSLIP_ROOT/sdk/flutter.tar.xz" -C "$PAYSLIP_ROOT/sdk"
+        env -i PATH=/usr/bin:/bin HOME="$PAYSLIP_ROOT/home" curl --fail --location --connect-timeout 15 --max-time 240 --retry 0 --output "$PAYSLIP_ROOT/node/node.tar.xz" https://nodejs.org/dist/v22.21.1/node-v22.21.1-linux-x64.tar.xz
+        printf '%s  %s\n' 680d3f30b24a7ff24b98db5e96f294c0070f8f9078df658da1bce1b9c9873c88 "$PAYSLIP_ROOT/node/node.tar.xz" | sha256sum -c -
+        tar -xJf "$PAYSLIP_ROOT/node/node.tar.xz" --strip-components=1 -C "$PAYSLIP_ROOT/node"
+        cd "$PAYSLIP_ROOT/source"
+        clean_env=(env -i PATH="$PAYSLIP_ROOT/sdk/flutter/bin:$PAYSLIP_ROOT/node/bin:/usr/bin:/bin" HOME="$PAYSLIP_ROOT/home" PUB_CACHE="$PAYSLIP_ROOT/pub-cache" TMPDIR="$PAYSLIP_ROOT/tmp" XDG_CONFIG_HOME="$PAYSLIP_ROOT/config" XDG_CACHE_HOME="$PAYSLIP_ROOT/cache" PLAYWRIGHT_BROWSERS_PATH="$PAYSLIP_ROOT/browsers" npm_config_cache="$PAYSLIP_ROOT/npm-cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
+        "${clean_env[@]}" flutter --version --machine > "$PAYSLIP_ROOT/results/flutter-version.json"
+        python3 "$PAYSLIP_ROOT/guards/source_guard.py" "$PAYSLIP_ROOT" after_version
+        python3 - "$PAYSLIP_ROOT/results/flutter-version.json" <<'VERSION'
+        import json,sys
+        x=json.load(open(sys.argv[1],encoding='utf-8'))
+        if x.get('frameworkVersion')!='3.47.9' or not x.get('dartSdkVersion','').startswith('3.13.7'):raise SystemExit('wrong SDK')
+        VERSION
+        "${clean_env[@]}" dart --version 2>&1 | grep -Eq '^Dart SDK version: 3[.]13[.]7([[:space:]]|$)'
+        "${clean_env[@]}" node --version | grep -Fx 'v22.21.1'
+        "${clean_env[@]}" flutter precache --web --linux
+        python3 "$PAYSLIP_ROOT/guards/source_guard.py" "$PAYSLIP_ROOT" after_precache
+        "${clean_env[@]}" flutter pub get --enforce-lockfile
+        python3 "$PAYSLIP_ROOT/guards/source_guard.py" "$PAYSLIP_ROOT" after_pub_get
+        "${clean_env[@]}" npm ci --ignore-scripts --no-audit --no-fund
+        "${clean_env[@]}" node -e 'if(require("./node_modules/@playwright/test/package.json").version!=="1.64.1")process.exit(1)'
+        python3 "$PAYSLIP_ROOT/guards/source_guard.py" "$PAYSLIP_ROOT" after_npm
+    - name: Create a dedicated runtime identity and seal host helpers
+      shell: bash
+      run: |
+        set -euo pipefail
+        identity_phase=create_identity
+        trap 'rc=$?; printf "IDENTITY_SEAL_ERROR phase=%s line=%s rc=%s\n" "$identity_phase" "$LINENO" "$rc" >&2; exit "$rc"' ERR
+        identity_mark() { identity_phase=$1; printf 'IDENTITY_SEAL_PHASE=%s\n' "$identity_phase"; }
+        identity_mark create_identity
+        [[ "$GITHUB_RUN_ID" =~ ^[0-9]+$ && "$GITHUB_RUN_ATTEMPT" =~ ^[0-9]+$ ]]
+        runtime_user="psqa_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+        [[ "${#runtime_user}" -le 32 && "$(id -u)" -gt 0 ]]
+        ! getent passwd "$runtime_user" >/dev/null
+        ! getent group "$runtime_user" >/dev/null
+        sudo -n /usr/sbin/groupadd --system "$runtime_user"
+        sudo -n /usr/sbin/useradd --system --no-create-home --no-user-group --gid "$runtime_user" --home-dir "$PAYSLIP_ROOT/home" --shell /usr/sbin/nologin "$runtime_user"
+        sudo -n /usr/sbin/usermod --lock "$runtime_user"
+        uid="$(id -u "$runtime_user")"; gid="$(id -g "$runtime_user")"
+        [[ "$uid" -gt 0 && "$gid" -gt 0 && "$uid" != "$(id -u)" && "$(id -G "$runtime_user")" == "$gid" ]]
+        identity_mark "deny_runtime_sudo"
+        if sudo -n -u "$runtime_user" -- /usr/bin/sudo -n true; then echo 'STOP: runtime has passwordless sudo'; exit 1; fi
+        identity_mark "handoff_runtime_paths"
+        sudo -n install -d -o "$uid" -g "$gid" -m 0700 "$PAYSLIP_ROOT/app-web"
+        sudo -n chown -hR "$uid:$gid" "$PAYSLIP_ROOT/source" "$PAYSLIP_ROOT/sdk/flutter" "$PAYSLIP_ROOT/home" "$PAYSLIP_ROOT/tmp" "$PAYSLIP_ROOT/config" "$PAYSLIP_ROOT/cache" "$PAYSLIP_ROOT/pub-cache" "$PAYSLIP_ROOT/npm-cache" "$PAYSLIP_ROOT/browsers" "$PAYSLIP_ROOT/results" "$PAYSLIP_ROOT/app-web"
+        sudo -n chmod -R u+rwX,go-rwx "$PAYSLIP_ROOT/source" "$PAYSLIP_ROOT/sdk/flutter" "$PAYSLIP_ROOT/home" "$PAYSLIP_ROOT/tmp" "$PAYSLIP_ROOT/config" "$PAYSLIP_ROOT/cache" "$PAYSLIP_ROOT/pub-cache" "$PAYSLIP_ROOT/npm-cache" "$PAYSLIP_ROOT/browsers" "$PAYSLIP_ROOT/results" "$PAYSLIP_ROOT/app-web"
+        identity_mark "seal_host_paths"
+        sudo -n chown -hR 0:0 "$PAYSLIP_ROOT/guards" "$PAYSLIP_ROOT/node" "$PAYSLIP_ROOT/candidate"
+        sudo -n chmod -R go-w "$PAYSLIP_ROOT/node" "$PAYSLIP_ROOT/candidate"
+        sudo -n chown 0:0 "$PAYSLIP_ROOT" "$PAYSLIP_ROOT/sdk" "$PAYSLIP_ROOT/control"
+        sudo -n chmod 0755 "$PAYSLIP_ROOT" "$PAYSLIP_ROOT/sdk" "$PAYSLIP_ROOT/node"
+        sudo -n chmod 0700 "$PAYSLIP_ROOT/control" "$PAYSLIP_ROOT/candidate"
+        sudo -n chmod 0555 "$PAYSLIP_ROOT/guards"
+        for file in source_guard.py report.py font_guard.py runtime.sh offline.sh publish.py; do
+         identity_mark "verify_helper_$file"
+         [[ -f "$PAYSLIP_ROOT/guards/$file" && ! -L "$PAYSLIP_ROOT/guards/$file" ]]
+         sudo -n chmod 0444 "$PAYSLIP_ROOT/guards/$file"
+         [[ "$(stat -c %u "$PAYSLIP_ROOT/guards/$file")" == 0 && "$(stat -c %h "$PAYSLIP_ROOT/guards/$file")" == 1 ]]
+         if sudo -n -u "$runtime_user" -- /usr/bin/test -w "$PAYSLIP_ROOT/guards/$file"; then exit 1; fi
+        done
+        identity_mark "verify_helper_ancestors"
+        ancestor="$PAYSLIP_ROOT/guards"
+        while :; do
+         if sudo -n -u "$runtime_user" -- /usr/bin/test -w "$ancestor"; then echo 'STOP: writable helper ancestor'; exit 1; fi
+         [[ "$ancestor" == / ]] && break
+         ancestor="$(dirname -- "$ancestor")"
+        done
+        identity_mark "runtime_source_search"
+        sudo -n -u "$runtime_user" -- /usr/bin/test -x "$PAYSLIP_ROOT/source"
+        identity_mark "runtime_guard_read"
+        sudo -n -u "$runtime_user" -- /usr/bin/test -r "$PAYSLIP_ROOT/guards/runtime.sh"
+        identity_mark "publish_boundary_env"
+        printf 'PAYSLIP_RUNTIME_UID=%s\nPAYSLIP_RUNTIME_GID=%s\nPAYSLIP_BOUNDARY_READY=true\n' "$uid" "$gid" >> "$GITHUB_ENV"
+    - name: Strict format5 analyze5 and exact focused 17 plus5 plus2 existing cases
+      shell: bash
+      timeout-minutes: 11
+      run: |
+        set -euo pipefail
+        [[ "$PAYSLIP_BOUNDARY_READY" == true ]]
+        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" salary 600
+    - name: Always restore and verify source under the same offline runtime identity
+      if: ${{ always() && env.PAYSLIP_BOUNDARY_READY == 'true' }}
+      shell: bash
+      timeout-minutes: 3
+      run: |
+        set -euo pipefail
+        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" final 120
+    - name: Publish a bounded no-follow snapshot only after every namespace has stopped
+      id: publish
+      if: ${{ always() && env.PAYSLIP_BOUNDARY_READY == 'true' }}
+      shell: bash
+      timeout-minutes: 3
+      run: |
+        set -euo pipefail
+        sudo -n env -i PATH=/usr/bin:/bin HOME=/ /usr/bin/python3 -I "$PAYSLIP_ROOT/guards/publish.py" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" "$(id -u)"
+        printf 'validated=true\n' >> "$GITHUB_OUTPUT"
+    - name: Preserve the whole validated focused QA snapshot including raw failures
+      if: ${{ always() && steps.publish.outputs.validated == 'true' }}
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: main-material-focused-${{ github.run_id }}-${{ github.run_attempt }}
+        path: ${{ env.PAYSLIP_ROOT }}/publish/
+        retention-days: 1
+        if-no-files-found: error
