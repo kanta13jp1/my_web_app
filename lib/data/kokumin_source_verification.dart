@@ -6,11 +6,15 @@ String? kokuminSourceVerifiedOn({
   required String sourceDate,
   String sourceDocumentSha256 = '',
 }) {
-  // Public PDF review on 2026-11-12 JST; original document dated 2026-11-11.
+  // Public PDF reviews on 2026-11-12 JST; documents dated 2026-11-11.
+  // The newer digest was fetched and matched against main independently.
+  const reviewedPdfDigests = <String>{
+    '8132d6c24659aa340c846d12b97114e092e32d5ecde295f2236b9b44f93ead25',
+    '25e432b06b4f1ba860db772dae5de4d647a82a20a7eaae4050460526d00f3af5',
+  };
   if (sourceUrl == 'https://new-kokumin.jp/local-election-list' &&
       sourceDate == '2026-11-11' &&
-      sourceDocumentSha256 ==
-          '8132d6c24659aa340c846d12b97114e092e32d5ecde295f2236b9b44f93ead25') {
+      reviewedPdfDigests.contains(sourceDocumentSha256)) {
     return '2026-11-12';
   }
   // Original post identity and facts read in the official-site embedded feed.

@@ -8,7 +8,7 @@ const String dpjOfficialEndorsementSourceUrl =
     'https://new-kokumin.jp/local-election-list';
 const String dpjOfficialEndorsementSourceAsOf = '2026-11-11';
 const String dpjOfficialEndorsementSourceDocumentSha256 =
-    '8132d6c24659aa340c846d12b97114e092e32d5ecde295f2236b9b44f93ead25';
+    '25e432b06b4f1ba860db772dae5de4d647a82a20a7eaae4050460526d00f3af5';
 const int dpjOfficialRecommendationEntryCount = 18;
 
 const List<OfficialEndorsementPrefecture> dpjOfficialEndorsements =

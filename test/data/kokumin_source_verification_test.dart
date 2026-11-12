@@ -27,6 +27,33 @@ void main() {
     );
   });
 
+  test('最新mainと照合した別PDFも正確な出典キーで確認日を表示する', () {
+    const currentDigest =
+        '25e432b06b4f1ba860db772dae5de4d647a82a20a7eaae4050460526d00f3af5';
+    expect(
+      kokuminSourceVerificationLabel(
+        sourceUrl: url,
+        sourceDate: sourceDate,
+        sourceDocumentSha256: currentDigest,
+      ),
+      '出典確認日: 2026/11/12',
+    );
+    for (final key in [
+      ('https://example.com/other', sourceDate, currentDigest),
+      (url, '2026-11-12', currentDigest),
+      (url, sourceDate, '${currentDigest}0'),
+    ]) {
+      expect(
+        kokuminSourceVerificationLabel(
+          sourceUrl: key.$1,
+          sourceDate: key.$2,
+          sourceDocumentSha256: key.$3,
+        ),
+        '出典確認日: 未記録',
+      );
+    }
+  });
+
   test('PDFのURL・基準日・hashの一つでも異なれば未記録', () {
     for (final key in [
       ('https://example.com/other', sourceDate, digest),
