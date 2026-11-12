@@ -3,7 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/widgets/home_calendar_day_number.dart';
 
 void main() {
-  testWidgets('day number preserves month and highlight colors', (tester) async {
+  testWidgets('day number preserves month and highlight colors',
+      (tester) async {
     final cases = [
       (false, true, false, false, const Color(0xFFB0B0B0)),
       (true, false, false, false, const Color(0xFFB0B0B0)),
