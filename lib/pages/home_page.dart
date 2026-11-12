@@ -59,6 +59,7 @@ import '../widgets/home_primary_action_card.dart';
 import '../widgets/home_calendar_month_header.dart';
 import '../widgets/home_calendar_summary_pill.dart';
 import '../widgets/home_calendar_cashflow_line.dart';
+import '../widgets/home_calendar_day_indicators.dart';
 import '../widgets/home_calendar_day_number.dart';
 import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
@@ -3161,47 +3162,17 @@ abstinence_slip_details: $slipDetailsText
                               ),
                           ],
                           const Spacer(),
-                          Wrap(
-                            spacing: 3,
-                            runSpacing: 3,
-                            children: [
-                              if (day.morningDone)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFFFC107),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
-                              if (day.balanceDone)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFF4CAF50),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                          HomeCalendarDayIndicators(
+                            colors: [
+                              if (day.morningDone) const Color(0xFFFFC107),
+                              if (day.balanceDone) const Color(0xFF4CAF50),
                               if (day.hasAbstinenceProtection &&
                                   !day.hasAbstinenceSlip)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFE53935),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
-                              if (day.hasAbstinenceSlip)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFFF6B35),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
-                              if (day.isSaturday)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFF009688),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                                const Color(0xFFE53935),
+                              if (day.hasAbstinenceSlip) const Color(0xFFFF6B35),
+                              if (day.isSaturday) const Color(0xFF009688),
                             ],
+                            isEmphasized: matchesFilter,
                           ),
                         ],
                       ),
@@ -3755,19 +3726,6 @@ abstinence_slip_details: $slipDetailsText
         task.secondaryLabel == null ? '' : ' ${task.secondaryLabel}';
     final important = task.isImportant ? ' [重要]' : '';
     return '[$sourceLabel/$stateLabel]$secondary$important ${task.title}';
-  }
-
-  Widget _buildCalendarDot(Color color) {
-    return Container(
-      width: 7,
-      height: 7,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
-
-  Color _calendarDotDisplayColor(Color color, {required bool isEmphasized}) {
-    if (isEmphasized) return color;
-    return color.withValues(alpha: 0.22);
   }
 
   Widget _buildCalendarSummaryPill({
