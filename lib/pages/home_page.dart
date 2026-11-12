@@ -3169,7 +3169,8 @@ abstinence_slip_details: $slipDetailsText
                               if (day.hasAbstinenceProtection &&
                                   !day.hasAbstinenceSlip)
                                 const Color(0xFFE53935),
-                              if (day.hasAbstinenceSlip) const Color(0xFFFF6B35),
+                              if (day.hasAbstinenceSlip)
+                                const Color(0xFFFF6B35),
                               if (day.isSaturday) const Color(0xFF009688),
                             ],
                             isEmphasized: matchesFilter,
