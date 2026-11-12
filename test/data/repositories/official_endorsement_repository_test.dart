@@ -105,10 +105,14 @@ void main() {
     final cached = OfficialEndorsementSnapshot.fromJson(olderTally.toJson());
     for (final value in [olderTally, cached]) {
       expect(value.sourceCountsComplete, isTrue);
-      expect(repository.resolve(_intelligenceWith(value)),
-          same(repository.fallbackSnapshot));
-      expect(repository.resolve(_intelligenceWith(value)).totalCount,
-          dpjOfficialEndorsementTotal);
+      expect(
+        repository.resolve(_intelligenceWith(value)),
+        same(repository.fallbackSnapshot),
+      );
+      expect(
+        repository.resolve(_intelligenceWith(value)).totalCount,
+        dpjOfficialEndorsementTotal,
+      );
     }
   });
 
