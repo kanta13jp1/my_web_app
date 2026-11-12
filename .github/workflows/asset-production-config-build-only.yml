@@ -126,7 +126,7 @@ jobs:
           git diff --exit-code -- pubspec.lock package-lock.json
           python3 -B control/scripts/asset_production_build_guard.py seal --control control --product .
       - name: Preserve BUILD ONLY artifact briefly; no publication
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: asset-production-config-build-only-${{ github.run_id }}
           path: |
