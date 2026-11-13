@@ -563,6 +563,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyDailyTodo = GlobalKey();
   // 将来CF予測カードの「支払日を見直す」からマネーカレンダーへスクロールする。
   final _keyCalendar = GlobalKey();
+  final _keyCashflowForecastCard = GlobalKey();
   // 将来CF予測の安全余裕(見込み残高がこれを下回る時期に注意表示)。
   static const double _assetForecastSafetyMargin = 10000;
   int _forecastHorizonMonths = 6;
@@ -6410,6 +6411,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     }
 
+    if (_isSectionShown(AssetManagementSectionId.calendar) &&
+        _keyCashflowForecastCard.currentContext != null &&
+        matches('将来残高予測 将来残高 予測 残高見込み キャッシュフロー')) {
+      entries.add(
+        _AssetSectionSearchEntry(
+          label: '将来残高予測',
+          sublabel: 'マネーカレンダー → 将来残高予測へ移動',
+          icon: Icons.show_chart,
+          onTap: () => _scrollTo(_keyCashflowForecastCard),
+        ),
+      );
+    }
+
     if (_isSectionShown(AssetManagementSectionId.workbookBoard) &&
         _keyRecurringIncomeEditorButton.currentContext != null &&
         matches('定期収入 収入予定 毎月の収入 給料 給与 入金予定')) {
@@ -10766,7 +10780,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   child: _buildAssetCalendarCard(assetLiabilityWorkbook),
                 ),
                 const SizedBox(height: 16),
-                _buildCashflowForecastCard(assetLiabilityWorkbook),
+                KeyedSubtree(
+                  key: _keyCashflowForecastCard,
+                  child: _buildCashflowForecastCard(assetLiabilityWorkbook),
+                ),
               ],
               if (_isSectionShown(
                   AssetManagementSectionId.monthlyDashboard)) ...[
