@@ -25,7 +25,7 @@ void main() {
     viewModel.updateFromIntelligence(intelligence);
 
     expect(notificationCount, 1);
-    expect(viewModel.snapshot.sourceAsOf, '2026-08-11');
+    expect(viewModel.snapshot.sourceAsOf, dpjOfficialEndorsementSourceAsOf);
     expect(viewModel.forPrefecture('東京都')?.incumbentCount, 1);
   });
 
@@ -48,7 +48,7 @@ void main() {
 
 const _liveSnapshot = OfficialEndorsementSnapshot(
   sourceUrl: 'https://example.com/live',
-  sourceAsOf: '2026-08-11',
+  sourceAsOf: dpjOfficialEndorsementSourceAsOf,
   sourceDocumentSha256: 'live-sha',
   totalCount: 1,
   incumbentCount: 1,
@@ -56,6 +56,7 @@ const _liveSnapshot = OfficialEndorsementSnapshot(
   formerCount: 0,
   recommendationCount: 0,
   prefectureCount: 1,
+  municipalCount: 1,
   prefectures: <OfficialEndorsementPrefecture>[
     OfficialEndorsementPrefecture(
       prefecture: '東京',
@@ -63,6 +64,7 @@ const _liveSnapshot = OfficialEndorsementSnapshot(
       incumbentCount: 1,
       newcomerCount: 0,
       formerCount: 0,
+      municipalCount: 1,
     ),
   ],
 );
