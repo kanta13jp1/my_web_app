@@ -1,4 +1,4 @@
-name: Asset upper guard browser probe
+name: Savings card browser probe
 
 on:
   pull_request:
@@ -44,14 +44,12 @@ jobs:
             sleep 1
           done
           curl --fail --silent http://localhost:4444/status > /dev/null
-          cp test/widgets/asset_auto_debit_bulk_guard_test.dart integration_test/asset_bulk_guard_scenarios.dart
-          cp test/widgets/asset_salary_confirmation_guard_test.dart integration_test/asset_salary_guard_scenarios.dart
-          cmp test/widgets/asset_auto_debit_bulk_guard_test.dart integration_test/asset_bulk_guard_scenarios.dart
-          cmp test/widgets/asset_salary_confirmation_guard_test.dart integration_test/asset_salary_guard_scenarios.dart
-          for suite in bulk salary; do
+          cp test/widgets/savings_life_plan_card_test.dart integration_test/asset_savings_scenarios.dart
+          cmp test/widgets/savings_life_plan_card_test.dart integration_test/asset_savings_scenarios.dart
+          for width in 1200 390; do
           flutter drive \
             --driver=test_driver/asset_ai_integration.dart \
             --target=integration_test/asset_upper_guard_probe_test.dart \
-            --dart-define=SUITE=$suite \
+            --dart-define=WIDTH=$width \
             -d web-server --browser-name=chrome --headless
           done
