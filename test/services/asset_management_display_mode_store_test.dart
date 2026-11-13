@@ -8,6 +8,42 @@ void main() {
       SharedPreferences.setMockInitialValues(<String, Object>{});
     });
 
+    test('rejected mode write fails before recording a switch', () async {
+      final prefs = _RejectedModePreferences();
+      final store = AssetManagementDisplayModeStore();
+
+      await expectLater(
+        store.save(AssetManagementDisplayMode.minimum, prefs: prefs),
+        throwsStateError,
+      );
+      expect(prefs.writeCount, 1);
+    });
+
+    test('rejected restored mode write also reports failure', () async {
+      final prefs = _RejectedModePreferences();
+      final store = AssetManagementDisplayModeStore();
+
+      await expectLater(
+        store.save(
+          AssetManagementDisplayMode.standard,
+          prefs: prefs,
+          recordEvent: false,
+        ),
+        throwsStateError,
+      );
+    });
+
+    test('mode write exception remains a failed save', () async {
+      final prefs = _RejectedModePreferences(throwOnWrite: true);
+      final store = AssetManagementDisplayModeStore();
+
+      await expectLater(
+        store.save(AssetManagementDisplayMode.full, prefs: prefs),
+        throwsStateError,
+      );
+      expect(prefs.writeCount, 1);
+    });
+
     test('minimum mode shows only essential sections', () {
       expect(
         AssetManagementDisplayModeStore.isTierVisible(
@@ -616,4 +652,20 @@ void main() {
       );
     });
   });
+}
+
+class _RejectedModePreferences extends Fake implements SharedPreferences {
+  _RejectedModePreferences({this.throwOnWrite = false});
+
+  final bool throwOnWrite;
+  int writeCount = 0;
+
+  @override
+  Future<bool> setString(String key, String value) async {
+    writeCount += 1;
+    if (throwOnWrite) {
+      throw StateError('storage unavailable');
+    }
+    return false;
+  }
 }
