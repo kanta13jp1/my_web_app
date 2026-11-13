@@ -1,4 +1,4 @@
-name: Savings card browser probe
+name: Fixed cost save browser probe
 
 on:
   pull_request:
@@ -44,8 +44,8 @@ jobs:
             sleep 1
           done
           curl --fail --silent http://localhost:4444/status > /dev/null
-          cp test/widgets/savings_life_plan_card_test.dart integration_test/asset_savings_scenarios.dart
-          cmp test/widgets/savings_life_plan_card_test.dart integration_test/asset_savings_scenarios.dart
+          cp test/widgets/recurring_fixed_cost_save_test.dart integration_test/asset_fixed_cost_scenarios.dart
+          cmp test/widgets/recurring_fixed_cost_save_test.dart integration_test/asset_fixed_cost_scenarios.dart
           for width in 1200 390; do
           flutter drive \
             --driver=test_driver/asset_ai_integration.dart \

@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'asset_savings_scenarios.dart' as savings;
+import 'asset_fixed_cost_scenarios.dart' as savings;
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
