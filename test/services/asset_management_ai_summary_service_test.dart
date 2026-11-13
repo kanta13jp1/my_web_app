@@ -213,6 +213,34 @@ void main() {
       expect(section, isNot(contains('au:')));
     });
 
+    test('fallback excludes card-funded fixed costs from direct unpaid items', () {
+      final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'paypay_card': 20000,
+        },
+        paymentSourceAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+      );
+      final row = workbook.cashflowRows.firstWhere(
+        (row) => row.accountId == AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+      expect(row.paymentSourceAccountId, 'paypay_card');
+      expect(row.isDirectCashflowTarget, isTrue);
+      expect(row.cashAfterPayment, row.cashBeforePayment);
+      final report = const AssetManagementInsightService().buildReport(workbook: workbook);
+      final text = AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      final section = text.split('## 4. 未払い項目').last.split('## 5.').first;
+      expect(section, isNot(contains('KDDI:')));
+    });
+
     test('fallback does not list a zero scheduled amount as unpaid', () {
       final workbook = const AssetLiabilityPlanningService().buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
