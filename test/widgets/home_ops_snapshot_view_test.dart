@@ -20,12 +20,12 @@ void main() {
     await tester.pumpWidget(view(pending.future));
     expect(find.text('days: 0'), findsOneWidget);
     pending.complete([]);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('days: 0'), findsOneWidget);
     final loaded = Completer<List<int>>();
     await tester.pumpWidget(view(loaded.future));
     loaded.complete([1, 2, 3]);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('days: 3'), findsOneWidget);
   });
 
@@ -33,14 +33,14 @@ void main() {
     final first = Completer<List<int>>();
     await tester.pumpWidget(view(first.future));
     first.complete([1, 2]);
-    await tester.pump();
+    await tester.pumpAndSettle();
     final next = Completer<List<int>>();
     await tester.pumpWidget(view(next.future));
     expect(find.text('days: 2'), findsOneWidget);
     await tester.pumpWidget(view(next.future));
     expect(find.text('days: 2'), findsOneWidget);
     next.complete([4]);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('days: 1'), findsOneWidget);
   });
 
@@ -50,10 +50,10 @@ void main() {
     await tester.pumpWidget(view(old.future));
     await tester.pumpWidget(view(current.future));
     old.complete([1]);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('days: 0'), findsOneWidget);
     current.complete([1, 2]);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('days: 2'), findsOneWidget);
   });
 
@@ -61,12 +61,12 @@ void main() {
     final first = Completer<List<int>>();
     await tester.pumpWidget(view(first.future));
     first.complete([1]);
-    await tester.pump();
+    await tester.pumpAndSettle();
     final failed = Completer<List<int>>();
     await tester.pumpWidget(view(failed.future));
     expect(find.text('days: 1'), findsOneWidget);
     failed.completeError(StateError('private diagnostic'));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('days: 0'), findsOneWidget);
     expect(find.textContaining('private diagnostic'), findsNothing);
     expect(tester.takeException(), isNull);
