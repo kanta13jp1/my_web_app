@@ -10780,10 +10780,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   child: _buildAssetCalendarCard(assetLiabilityWorkbook),
                 ),
                 const SizedBox(height: 16),
-                KeyedSubtree(
-                  key: _keyCashflowForecastCard,
-                  child: _buildCashflowForecastCard(assetLiabilityWorkbook),
-                ),
+                _buildCashflowForecastCard(assetLiabilityWorkbook),
               ],
               if (_isSectionShown(
                   AssetManagementSectionId.monthlyDashboard)) ...[
@@ -17437,6 +17434,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
 
     return Padding(
+      key: _keyCashflowForecastCard,
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
