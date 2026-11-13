@@ -2365,6 +2365,94 @@ void main() {
       await _unmount(tester);
     });
 
+    for (final width in <double>[1200, 390]) {
+      testWidgets('forecast search reaches its visible card at $width',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.standard.storageId,
+        });
+        await tester.binding.setSurfaceSize(Size(width, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+              debugInitialAssetData: const {
+                '2026-06-20': {'synthetic cash': 10000.0},
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(
+          find.byKey(const Key('asset_section_search_appbar_button')),
+        );
+        await tester.pump(const Duration(milliseconds: 400));
+        final search = find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField &&
+              widget.decoration?.hintText?.startsWith('カード名・項目名') == true,
+        );
+        await tester.enterText(search, '将来');
+        await tester.pump(const Duration(milliseconds: 100));
+        final result = find.text('将来残高予測');
+        expect(result, findsOneWidget);
+        await tester.tap(result);
+        await tester.pump();
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pump();
+        expect(search, findsNothing);
+        final title = find.textContaining('将来残高予測(今後');
+        expect(title, findsOneWidget);
+        final rect = tester.getRect(title);
+        expect(rect.bottom, greaterThan(0));
+        expect(rect.top, lessThan(844));
+        expect(tester.takeException(), isNull);
+        await _unmount(tester);
+      });
+    }
+
+    testWidgets('forecast search omits the card when there is no data',
+        (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1':
+            AssetManagementDisplayMode.standard.storageId,
+      });
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 6, 20),
+            debugCalendarNow: DateTime(2026, 6, 20),
+            debugInitialAssetData: const {},
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.textContaining('将来残高予測(今後'), findsNothing);
+      await tester.tap(
+        find.byKey(const Key('asset_section_search_appbar_button')),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      final search = find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField &&
+            widget.decoration?.hintText?.startsWith('カード名・項目名') == true,
+      );
+      await tester.enterText(search, '将来');
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('将来残高予測'), findsNothing);
+      expect(find.textContaining('一致するカード・項目がありません'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await _unmount(tester);
+    });
+
     testWidgets('shortfall warning appears and clears via expected inflow', (
       tester,
     ) async {
