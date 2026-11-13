@@ -72,6 +72,7 @@ import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_egress_policy.dart';
 import 'package:my_web_app/services/asset_management_fixed_cost_summary_service.dart';
+import 'package:my_web_app/widgets/asset_legacy_fixed_cost_read_boundary.dart';
 import 'package:my_web_app/services/asset_account_balance_history_store.dart';
 import 'package:my_web_app/services/asset_pref_mirror_prefetch.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
@@ -563,6 +564,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyDailyTodo = GlobalKey();
   // 将来CF予測カードの「支払日を見直す」からマネーカレンダーへスクロールする。
   final _keyCalendar = GlobalKey();
+  final _keyCashflowForecastCard = GlobalKey();
   // 将来CF予測の安全余裕(見込み残高がこれを下回る時期に注意表示)。
   static const double _assetForecastSafetyMargin = 10000;
   int _forecastHorizonMonths = 6;
@@ -1021,6 +1023,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<Map<String, dynamic>> _subscriptions = [];
   List<Map<String, dynamic>> _subscriptionsThreeMonths = [];
   bool _isLoadingSubscriptions = false;
+  bool _subscriptionsLoadFailed = false;
+
+  bool get _legacyFixedCostReadIncomplete =>
+      _isLoadingSubscriptions || _subscriptionsLoadFailed;
 
   // --- 必須タスク用変数 ---
   List<Map<String, dynamic>> _mustTasks = [];
@@ -6410,6 +6416,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     }
 
+    if (_isSectionShown(AssetManagementSectionId.calendar) &&
+        _keyCashflowForecastCard.currentContext != null &&
+        matches('将来残高予測 将来残高 予測 残高見込み キャッシュフロー')) {
+      entries.add(
+        _AssetSectionSearchEntry(
+          label: '将来残高予測',
+          sublabel: 'マネーカレンダー → 将来残高予測へ移動',
+          icon: Icons.show_chart,
+          onTap: () => _scrollTo(_keyCashflowForecastCard),
+        ),
+      );
+    }
+
     if (_isSectionShown(AssetManagementSectionId.workbookBoard) &&
         _keyRecurringIncomeEditorButton.currentContext != null &&
         matches('定期収入 収入予定 毎月の収入 給料 給与 入金予定')) {
@@ -6718,7 +6737,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     buf.writeln('');
 
     buf.writeln('### ③ 固定費（$monthLabel）');
-    buf.writeln('- 月額合計: ¥${NumberFormat('#,###').format(totalFixed)}');
+    buf.writeln(
+      _legacyFixedCostReadIncomplete
+          ? '- 月額合計: 未取得（旧固定費の読込未完了）'
+          : '- 月額合計: ¥${NumberFormat('#,###').format(totalFixed)}',
+    );
     if (fixedCostSummary.isNotEmpty) {
       for (final entry in fixedCostSummary.entries) {
         buf.writeln(
@@ -8116,7 +8139,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 3. 固定費の記録（サブスク）
   // ==========================================
   Future<void> _fetchSubscriptions() async {
-    setState(() => _isLoadingSubscriptions = true);
+    setState(() {
+      _isLoadingSubscriptions = true;
+      _subscriptionsLoadFailed = false;
+    });
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) {
@@ -8162,6 +8188,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _subscriptions = [];
         _subscriptionsThreeMonths = [];
         _isLoadingSubscriptions = false;
+        _subscriptionsLoadFailed = true;
       });
     }
   }
@@ -10763,10 +10790,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _sectionAnchor(AssetManagementSectionId.calendar),
                 KeyedSubtree(
                   key: _keyCalendar,
-                  child: _buildAssetCalendarCard(assetLiabilityWorkbook),
+                  child: _withLegacyFixedCostReadStatus(
+                    _buildAssetCalendarCard(assetLiabilityWorkbook),
+                  ),
                 ),
                 const SizedBox(height: 16),
-                _buildCashflowForecastCard(assetLiabilityWorkbook),
+                _withLegacyFixedCostReadStatus(
+                  _buildCashflowForecastCard(assetLiabilityWorkbook),
+                ),
               ],
               if (_isSectionShown(
                   AssetManagementSectionId.monthlyDashboard)) ...[
@@ -10825,7 +10856,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
               if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
                 _sectionAnchor(AssetManagementSectionId.disposable),
-                _buildDisposableBalanceCard(),
+                _withLegacyFixedCostReadStatus(_buildDisposableBalanceCard()),
                 if (_supabase.auth.currentUser != null)
                   AssetInterestHistoryCard(
                     key: ValueKey('interest:${_supabase.auth.currentUser!.id}'),
@@ -10853,7 +10884,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
               if (_isSectionShown(AssetManagementSectionId.threeMonth)) ...[
                 _sectionAnchor(AssetManagementSectionId.threeMonth),
-                _buildThreeMonthOverviewCard(), // 3ヶ月俯瞰
+                _withLegacyFixedCostReadStatus(
+                  _buildThreeMonthOverviewCard(),
+                ), // 3ヶ月俯瞰
                 const SizedBox(height: 16),
               ],
               if (_isSectionShown(AssetManagementSectionId.debtPlanner)) ...[
@@ -10882,7 +10915,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               if (_isSectionShown(AssetManagementSectionId.subscriptions)) ...[
                 _sectionAnchor(AssetManagementSectionId.subscriptions),
                 Container(
-                    key: _keySubs, child: _buildSubscriptionCard()), // ③固定費
+                  key: _keySubs,
+                  child:
+                      _withLegacyFixedCostReadStatus(_buildSubscriptionCard()),
+                ), // ③固定費
                 const SizedBox(height: 24),
               ],
               if (_isSectionShown(AssetManagementSectionId.mustTasks)) ...[
@@ -15570,15 +15606,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// GC 設定 (上限/期限) の編集ダイアログ。保存でローカル+ミラーへ反映する。
   /// 手動 GC: 期限切れ・上限超過の削除記録を今すぐ掃除し、件数を SnackBar 表示。
   Future<void> _pruneTombstonesNow() async {
-    // 入金予定 + 表示設定 override + 支払日上書きの全トゥームストーンを一括掃除
-    // (#part292/296)。
+    // 所有者を確認できない支払日上書きの削除記録は一括掃除から外す。
     final removed = await _pruneAllTombstones();
     if (!mounted) {
       return;
     }
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('古い削除記録を${removed.total}件 掃除しました')));
+    ).showSnackBar(
+      SnackBar(
+        content: Text(
+          '古い削除記録を${removed.total}件 掃除しました。'
+          '支払日設定の削除記録は、今回の一括掃除では対象外です。',
+        ),
+      ),
+    );
   }
 
   /// 各ドメインのトゥームストーンを掃除し、ドメイン別の削除件数を返す。
@@ -15594,7 +15636,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final store = await SharedPreferences.getInstance();
     final inflow = await _expectedInflowStore.pruneDeletedIds();
     final override = await _displayModeStore.pruneDeletedSectionIds();
-    final debt = await _debtOverrideTombstones.prune(store);
+    // 未帰属の支払日削除記録をこの一括掃除で物理削除しない。
+    // 他の読取・編集・同期経路の保護は別途必要。
+    const debt = 0;
     final revolving = await _revolvingConfigTombstones.prune(store);
     final watchlist = await _watchlistTombstones.prune(store);
     return (
@@ -15617,7 +15661,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         debugPrint(
           'boot tombstone prune: removed ${removed.total} '
           '(inflow=${removed.inflow} override=${removed.override} '
-          'debt=${removed.debt} revolving=${removed.revolving} '
+          'debt=保留 revolving=${removed.revolving} '
           'watchlist=${removed.watchlist})',
         );
       }
@@ -16015,40 +16059,46 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: SwitchListTile.adaptive(
-                      key: const Key('asset_chat_money_range_toggle'),
-                      value: _assetChatMaskMoneyAmounts,
-                      secondary: const Icon(Icons.privacy_tip_outlined),
-                      title: const Text(
-                        'AIチャットの金額をレンジ化',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                    child: Builder(
+                      builder: (privacyInkContext) => Material(
+                        type: MaterialType.transparency,
+                        textStyle: DefaultTextStyle.of(privacyInkContext).style,
+                        child: SwitchListTile.adaptive(
+                          key: const Key('asset_chat_money_range_toggle'),
+                          value: _assetChatMaskMoneyAmounts,
+                          secondary: const Icon(Icons.privacy_tip_outlined),
+                          title: const Text(
+                            'AIチャットの金額をレンジ化',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            'ONではAIへ送る直前に金額を「¥100k-500k」などへ変換します。'
+                            '入力原文はチャット履歴に残ります（既定OFF）。',
+                            style: TextStyle(fontSize: 11, height: 1.4),
+                          ),
+                          onChanged: (enabled) async {
+                            try {
+                              await _setAssetChatMaskMoneyAmounts(enabled);
+                              if (!dialogContext.mounted) {
+                                return;
+                              }
+                              setDialogState(() {});
+                            } catch (_) {
+                              if (!dialogContext.mounted) {
+                                return;
+                              }
+                              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                const SnackBar(
+                                  content: Text('AIチャットのプライバシー設定を保存できませんでした'),
+                                ),
+                              );
+                            }
+                          },
                         ),
                       ),
-                      subtitle: const Text(
-                        'ONではAIへ送る直前に金額を「¥100k-500k」などへ変換します。'
-                        '入力原文はチャット履歴に残ります（既定OFF）。',
-                        style: TextStyle(fontSize: 11, height: 1.4),
-                      ),
-                      onChanged: (enabled) async {
-                        try {
-                          await _setAssetChatMaskMoneyAmounts(enabled);
-                          if (!dialogContext.mounted) {
-                            return;
-                          }
-                          setDialogState(() {});
-                        } catch (_) {
-                          if (!dialogContext.mounted) {
-                            return;
-                          }
-                          ScaffoldMessenger.of(dialogContext).showSnackBar(
-                            const SnackBar(
-                              content: Text('AIチャットのプライバシー設定を保存できませんでした'),
-                            ),
-                          );
-                        }
-                      },
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -17395,8 +17445,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return const SizedBox.shrink();
     }
 
-    final forecast = AssetCashflowForecastService.project(
-      asOf: DateTime.now(),
+    final scenarios = AssetCashflowForecastService.projectScenarios(
+      asOf: _now,
       startingBalance: inputs.startingBalance,
       horizonMonths: _forecastHorizonMonths,
       recurringIncome: inputs.recurringIncome,
@@ -17406,6 +17456,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
 
     return Padding(
+      key: _keyCashflowForecastCard,
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -17416,8 +17467,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               '確定した不足ではありません。対象: ${inputs.unverifiedPaymentLabels.join('、')}',
               key: const Key('asset_forecast_unverified_payments'),
             ),
-          AssetCashflowForecastCard(
-            forecast: forecast,
+          AssetCashflowForecastScenariosCard(
+            scenarios: scenarios,
             currencyFormatter: _formatYen,
             currentHorizon: _forecastHorizonMonths,
             onHorizonChanged: (months) =>
@@ -20737,7 +20788,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             style: const TextStyle(fontSize: 12, height: 1.5),
           ),
           Text(
-            '固定費: ${_formatYen(fixedCost)}',
+            _legacyFixedCostReadIncomplete
+                ? '固定費: 未取得'
+                : '固定費: ${_formatYen(fixedCost)}',
             style: const TextStyle(fontSize: 12, height: 1.5),
           ),
           Text(
@@ -20874,7 +20927,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 _buildOverviewStatChip(
                   label: '固定費 先月比',
-                  value: _formatSignedYen(fixedDiff),
+                  value: _legacyFixedCostReadIncomplete
+                      ? '未取得'
+                      : _formatSignedYen(fixedDiff),
                   color: fixedDiffColor,
                 ),
                 _buildOverviewStatChip(
@@ -21583,27 +21638,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 6),
           ...rules.map((rule) {
             final checked = completedRuleIds.contains(rule.id);
-            return CheckboxListTile(
-              key: Key('debt_lockdown_rule_${rule.id}'),
-              dense: true,
-              value: checked,
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              title: Text(
-                rule.label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  height: 1.5,
+            return Builder(
+              builder: (lockdownInkContext) => Material(
+                type: MaterialType.transparency,
+                textStyle: DefaultTextStyle.of(lockdownInkContext).style,
+                child: CheckboxListTile(
+                  key: Key('debt_lockdown_rule_${rule.id}'),
+                  dense: true,
+                  value: checked,
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text(
+                    rule.label,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      height: 1.5,
+                    ),
+                  ),
+                  subtitle: Text(rule.description),
+                  onChanged: isEnabled
+                      ? (value) => _toggleDebtLockdownRule(
+                            rule.id,
+                            value ?? false,
+                            remainingDebt,
+                          )
+                      : null,
                 ),
               ),
-              subtitle: Text(rule.description),
-              onChanged: isEnabled
-                  ? (value) => _toggleDebtLockdownRule(
-                        rule.id,
-                        value ?? false,
-                        remainingDebt,
-                      )
-                  : null,
             );
           }),
           const SizedBox(height: 8),
@@ -25088,29 +25149,36 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: const Color(0xFFCBD5E1)),
               ),
-              child: CheckboxListTile(
-                key: Key('violation_one_shot_toggle_${violation.accountId}'),
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
-                controlAffinity: ListTileControlAffinity.leading,
-                value:
-                    _cardUsagePolicies[violation.accountId]?.enforceOneShot ==
+              child: Builder(
+                builder: (violationInkContext) => Material(
+                  type: MaterialType.transparency,
+                  textStyle: DefaultTextStyle.of(violationInkContext).style,
+                  child: CheckboxListTile(
+                    key:
+                        Key('violation_one_shot_toggle_${violation.accountId}'),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    value: _cardUsagePolicies[violation.accountId]
+                            ?.enforceOneShot ==
                         true,
-                title: const Text(
-                  'カード会社での変更完了を記録する（借入・支払結果の確認とは別）',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
+                    title: const Text(
+                      'カード会社での変更完了を記録する（借入・支払結果の確認とは別）',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    onChanged: (val) {
+                      _toggleCardOneShotCompleted(
+                        violation.accountId,
+                        val ?? false,
+                      );
+                    },
                   ),
                 ),
-                onChanged: (val) {
-                  _toggleCardOneShotCompleted(
-                    violation.accountId,
-                    val ?? false,
-                  );
-                },
               ),
             ),
             const SizedBox(height: 8),
@@ -25170,99 +25238,109 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           borderRadius: BorderRadius.circular(6),
           border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
-        child: Theme(
-          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            key: Key('discipline_usage_breakdown_${violation.accountId}'),
-            tilePadding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-            childrenPadding:
-                const EdgeInsets.only(left: 10, right: 10, bottom: 8),
-            title: Row(
-              children: [
-                const Icon(
-                  Icons.receipt_long_outlined,
-                  size: 16,
-                  color: Color(0xFF475569),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    '判定根拠: 新規利用明細 (${violation.usageItems.length}件 / 合計 ${_formatManagementYen(violation.newUsageAmount ?? 0)})',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1E293B),
+        child: Builder(
+          builder: (usageInkContext) => Material(
+            type: MaterialType.transparency,
+            textStyle: DefaultTextStyle.of(usageInkContext).style,
+            child: Theme(
+              data:
+                  Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                key: Key('discipline_usage_breakdown_${violation.accountId}'),
+                tilePadding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                childrenPadding:
+                    const EdgeInsets.only(left: 10, right: 10, bottom: 8),
+                title: Row(
+                  children: [
+                    const Icon(
+                      Icons.receipt_long_outlined,
+                      size: 16,
+                      color: Color(0xFF475569),
                     ),
-                  ),
-                ),
-              ],
-            ),
-            children: [
-              for (final item in violation.usageItems)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 3),
-                  child: Row(
-                    children: [
-                      if (item.postedAt != null)
-                        Text(
-                          '${item.postedAt!.month}/${item.postedAt!.day} ',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                      Expanded(
-                        child: Text(
-                          item.description,
-                          style: const TextStyle(fontSize: 12),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _formatManagementYen(item.amount),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '判定根拠: 新規利用明細 (${violation.usageItems.length}件 / 合計 ${_formatManagementYen(violation.newUsageAmount ?? 0)})',
                         style: const TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1E293B),
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: item.status ==
-                                  AssetLiabilityRevolvingUsageStatus.covered
-                              ? const Color(0xFFECFDF5)
-                              : const Color(0xFFFFF1F2),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: item.status ==
-                                    AssetLiabilityRevolvingUsageStatus.covered
-                                ? const Color(0xFF0D9488).withValues(alpha: 0.3)
-                                : const Color(0xFFB91C1C)
-                                    .withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Text(
-                          item.statusLabel,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: item.status ==
-                                    AssetLiabilityRevolvingUsageStatus.covered
-                                ? const Color(0xFF0D9488)
-                                : const Color(0xFFB91C1C),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-            ],
+                children: [
+                  for (final item in violation.usageItems)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(
+                        children: [
+                          if (item.postedAt != null)
+                            Text(
+                              '${item.postedAt!.month}/${item.postedAt!.day} ',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          Expanded(
+                            child: Text(
+                              item.description,
+                              style: const TextStyle(fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatManagementYen(item.amount),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: item.status ==
+                                      AssetLiabilityRevolvingUsageStatus.covered
+                                  ? const Color(0xFFECFDF5)
+                                  : const Color(0xFFFFF1F2),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: item.status ==
+                                        AssetLiabilityRevolvingUsageStatus
+                                            .covered
+                                    ? const Color(0xFF0D9488)
+                                        .withValues(alpha: 0.3)
+                                    : const Color(0xFFB91C1C)
+                                        .withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Text(
+                              item.statusLabel,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: item.status ==
+                                        AssetLiabilityRevolvingUsageStatus
+                                            .covered
+                                    ? const Color(0xFF0D9488)
+                                    : const Color(0xFFB91C1C),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       );
@@ -25370,7 +25448,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 参謀室ブリーフィング用の前方キャッシュフロー予測を組み立てる
   /// (_buildCashflowForecastCard と同じ入力導出。純サービスに委譲)。
-  AssetCashflowForecast? _advisoryCashflowForecast(
+  AssetCashflowForecastScenarios? _advisoryCashflowForecast(
     AssetLiabilityWorkbook? workbook,
   ) {
     if (workbook == null) return null;
@@ -25387,8 +25465,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       paidPeriodEndExclusive: paidPeriod?.endExclusive,
     );
     if (!inputs.hasData) return null;
-    return AssetCashflowForecastService.project(
-      asOf: DateTime.now(),
+    final scenarios = AssetCashflowForecastService.projectScenarios(
+      asOf: _now,
       startingBalance: inputs.startingBalance,
       horizonMonths: _forecastHorizonMonths,
       recurringIncome: inputs.recurringIncome,
@@ -25396,6 +25474,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       oneTimeIncome: inputs.oneTimeIncome,
       safetyMargin: _assetForecastSafetyMargin,
     );
+    return scenarios;
   }
 
   Color _advisorySeverityColor(AdvisorySeverity severity) {
@@ -25414,14 +25493,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetManagementAdvisoryBriefingCard(
     AssetManagementInsightReport report,
   ) {
-    final forecast = _advisoryCashflowForecast(report.workbook);
+    final scenarios = _advisoryCashflowForecast(report.workbook);
+    final forecastUncertain = scenarios?.hasAnchorDayIncome ?? false;
+    final forecast = scenarios?.advisoryForecast;
     final briefing = const AssetAdvisoryBriefingService().build(
-      now: DateTime.now(),
+      now: _now,
       forecast: forecast,
       debtInsights: report.debtTrendInsights,
       disciplineReport: report.disciplineReport,
     );
-    if (briefing.isEmpty) return const SizedBox.shrink();
+    if (briefing.isEmpty && !forecastUncertain) return const SizedBox.shrink();
+    if (briefing.isEmpty) {
+      return const Text(
+        '当日入金の残高反映が未確認のため、参謀室の資金繰り判定は保留中です。',
+        key: Key('asset_advisory_forecast_conditional_notice'),
+      );
+    }
     final headerColor = _advisorySeverityColor(briefing.topSeverity);
     return Container(
       key: const Key('asset_advisory_briefing_card'),
@@ -25469,6 +25556,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
             ],
           ),
+          if (forecastUncertain)
+            const Text(
+              '当日入金の残高反映が未確認のため、資金繰り判定は保留中です。',
+              key: Key('asset_advisory_forecast_conditional_notice'),
+            ),
           const SizedBox(height: 6),
           Text(
             briefing.headline,
@@ -26500,25 +26592,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
         ),
         const SizedBox(height: 6),
-        SwitchListTile.adaptive(
-          key: const Key('asset_living_expense_priority_toggle'),
-          value: _livingExpensePriorityMode,
-          contentPadding: EdgeInsets.zero,
-          visualDensity: VisualDensity.compact,
-          secondary: const Icon(Icons.health_and_safety_outlined),
-          title: const Text(
-            '生活費優先モード',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        Builder(
+          builder: (livingInkContext) => Material(
+            type: MaterialType.transparency,
+            textStyle: DefaultTextStyle.of(livingInkContext).style,
+            child: SwitchListTile.adaptive(
+              key: const Key('asset_living_expense_priority_toggle'),
+              value: _livingExpensePriorityMode,
+              contentPadding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              secondary: const Icon(Icons.health_and_safety_outlined),
+              title: const Text(
+                '生活費優先モード',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+              subtitle: const Text(
+                '食費・住居・公共料金 → 支払先への連絡 → 高金利ローンの順に並べ替えます。',
+                style: TextStyle(fontSize: 11, height: 1.4),
+              ),
+              onChanged: (enabled) {
+                setState(() {
+                  _livingExpensePriorityMode = enabled;
+                });
+              },
+            ),
           ),
-          subtitle: const Text(
-            '食費・住居・公共料金 → 支払先への連絡 → 高金利ローンの順に並べ替えます。',
-            style: TextStyle(fontSize: 11, height: 1.4),
-          ),
-          onChanged: (enabled) {
-            setState(() {
-              _livingExpensePriorityMode = enabled;
-            });
-          },
         ),
         const SizedBox(height: 6),
         if (actionItems.isEmpty)
@@ -31893,18 +31991,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CheckboxListTile(
-          key: ValueKey('asset_card_one_shot_completed_${row.id}'),
-          contentPadding: EdgeInsets.zero,
-          dense: true,
-          controlAffinity: ListTileControlAffinity.leading,
-          value: completed,
-          title: const Text(
-            '完了（今後の新規利用は1回払い）',
-            style: TextStyle(fontSize: 12, height: 1.3),
+        Builder(
+          builder: (policyInkContext) => Material(
+            type: MaterialType.transparency,
+            textStyle: DefaultTextStyle.of(policyInkContext).style,
+            child: CheckboxListTile(
+              key: ValueKey('asset_card_one_shot_completed_${row.id}'),
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              controlAffinity: ListTileControlAffinity.leading,
+              value: completed,
+              title: const Text(
+                '完了（今後の新規利用は1回払い）',
+                style: TextStyle(fontSize: 12, height: 1.3),
+              ),
+              onChanged: (value) =>
+                  _toggleCardOneShotCompleted(row.id, value ?? false),
+            ),
           ),
-          onChanged: (value) =>
-              _toggleCardOneShotCompleted(row.id, value ?? false),
         ),
         if (completed) ...[
           if (policy?.changedAt != null)
@@ -34505,6 +34609,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Widget _withLegacyFixedCostReadStatus(Widget child) {
+    return AssetLegacyFixedCostReadBoundary(
+      isLoading: _isLoadingSubscriptions,
+      hasError: _subscriptionsLoadFailed,
+      onRetry: _fetchSubscriptions,
+      child: child,
+    );
+  }
+
   Widget _buildSubscriptionCard() {
     final visibleSubscriptions = _subscriptionsForMonth(
       _selectedSubscriptionHistoryMonth,
@@ -34583,7 +34696,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '¥${NumberFormat('#,###').format(totalCost)}',
+                        _legacyFixedCostReadIncomplete
+                            ? '未取得'
+                            : '¥${NumberFormat('#,###').format(totalCost)}',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -34593,7 +34708,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '$unpaidLabel: ¥${NumberFormat('#,###').format(unpaidCost)}',
+                        _legacyFixedCostReadIncomplete
+                            ? '$unpaidLabel: 未取得'
+                            : '$unpaidLabel: ¥${NumberFormat('#,###').format(unpaidCost)}',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -34669,7 +34786,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             ),
                           ),
                           Text(
-                            '¥${NumberFormat('#,###').format(totalCost)}',
+                            _legacyFixedCostReadIncomplete
+                                ? '未取得'
+                                : '¥${NumberFormat('#,###').format(totalCost)}',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -34679,7 +34798,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '$unpaidLabel: ¥${NumberFormat('#,###').format(unpaidCost)}',
+                            _legacyFixedCostReadIncomplete
+                                ? '$unpaidLabel: 未取得'
+                                : '$unpaidLabel: ¥${NumberFormat('#,###').format(unpaidCost)}',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -34773,7 +34894,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           else if (fixedCostSummary.isEmpty)
             Padding(
               padding: const EdgeInsets.all(32),
-              child: Center(child: Text('$visibleMonthLabel の固定費はありません')),
+              child: Center(
+                child: Text(
+                  _legacyFixedCostReadIncomplete
+                      ? '$visibleMonthLabel の旧固定費は未取得です'
+                      : '$visibleMonthLabel の固定費はありません',
+                ),
+              ),
             )
           else if (visibleSubscriptions.isNotEmpty)
             ListView.builder(

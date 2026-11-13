@@ -1819,7 +1819,10 @@ void main() {
     testWidgets('manual prune button cleans expired tombstones', (
       tester,
     ) async {
+      const debtRaw =
+          '[{"id":"unknown-owner","at":"2020-01-01T00:00:00.000Z"}]';
       SharedPreferences.setMockInitialValues(<String, Object>{
+        'debt_payment_day_override_deleted_v1': debtRaw,
         'asset_expected_inflow_rules_v1': jsonEncode(<Map<String, dynamic>>[
           <String, dynamic>{
             'id': 'seeded_rule',
@@ -1862,13 +1865,41 @@ void main() {
       await tester.tap(find.byKey(const Key('asset_tombstone_gc_edit')));
       await tester.pump(const Duration(milliseconds: 100));
 
+      final preferences = await SharedPreferences.getInstance();
+      // 起動時の一括掃除は、帰属未確認の元データを変更しない。
+      expect(
+        preferences.getString('debt_payment_day_override_deleted_v1'),
+        debtRaw,
+      );
+      final inflowAfterBoot =
+          preferences.getString('asset_expected_inflow_deleted_ids_v1');
+      expect(inflowAfterBoot, isNotNull);
+      expect(inflowAfterBoot, isNot(contains('old1')));
+      // 起動後に別ドメインの古い記録を追加し、手動掃除を個別に確認する。
+      await preferences.setString(
+        'asset_expected_inflow_deleted_ids_v1',
+        jsonEncode(<Map<String, String>>[
+          <String, String>{
+            'id': 'manual-old',
+            'at': '2020-01-01T00:00:00.000Z',
+          },
+        ]),
+      );
       await tester.tap(find.byKey(const Key('asset_tombstone_gc_prune')));
       await tester.pump(const Duration(milliseconds: 200));
       await tester.pump(const Duration(milliseconds: 200));
+      expect(
+        preferences.getString('debt_payment_day_override_deleted_v1'),
+        debtRaw,
+      );
+      final inflowAfterManual =
+          preferences.getString('asset_expected_inflow_deleted_ids_v1');
+      expect(inflowAfterManual, isNotNull);
+      expect(inflowAfterManual, isNot(contains('manual-old')));
+      expect(find.textContaining('古い削除記録を1件 掃除しました'), findsOneWidget);
+      expect(find.textContaining('今回の一括掃除では対象外'), findsOneWidget);
 
-      // ボタン→prune→SnackBar の配線を検証 (件数は boot 自動 prune が先に
-      // 期限切れを掃除するため非依存にする / #part296)。実際の物理削除は
-      // 「boot auto-prune」テストと store 単体テストで担保。
+      // 操作案内の既存文言も維持する。上で追加した1件は手動で掃除済み。
       expect(find.textContaining('件 掃除しました'), findsOneWidget);
 
       await _unmount(tester);
@@ -2331,6 +2362,94 @@ void main() {
       );
       expect(reviewBadgeText.style?.color, const Color(0xFF64748B));
 
+      await _unmount(tester);
+    });
+
+    for (final width in <double>[1200, 390]) {
+      testWidgets('forecast search reaches its visible card at $width',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.standard.storageId,
+        });
+        await tester.binding.setSurfaceSize(Size(width, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+              debugInitialAssetData: const {
+                '2026-06-20': {'synthetic cash': 10000.0},
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(
+          find.byKey(const Key('asset_section_search_appbar_button')),
+        );
+        await tester.pump(const Duration(milliseconds: 400));
+        final search = find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField &&
+              widget.decoration?.hintText?.startsWith('カード名・項目名') == true,
+        );
+        await tester.enterText(search, '将来');
+        await tester.pump(const Duration(milliseconds: 100));
+        final result = find.text('将来残高予測');
+        expect(result, findsOneWidget);
+        await tester.tap(result);
+        await tester.pump();
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pump();
+        expect(search, findsNothing);
+        final title = find.textContaining('将来残高予測(今後');
+        expect(title, findsOneWidget);
+        final rect = tester.getRect(title);
+        expect(rect.bottom, greaterThan(0));
+        expect(rect.top, lessThan(844));
+        expect(tester.takeException(), isNull);
+        await _unmount(tester);
+      });
+    }
+
+    testWidgets('forecast search omits the card when there is no data',
+        (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1':
+            AssetManagementDisplayMode.standard.storageId,
+      });
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 6, 20),
+            debugCalendarNow: DateTime(2026, 6, 20),
+            debugInitialAssetData: const {},
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.textContaining('将来残高予測(今後'), findsNothing);
+      await tester.tap(
+        find.byKey(const Key('asset_section_search_appbar_button')),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      final search = find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField &&
+            widget.decoration?.hintText?.startsWith('カード名・項目名') == true,
+      );
+      await tester.enterText(search, '将来');
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('将来残高予測'), findsNothing);
+      expect(find.textContaining('一致するカード・項目がありません'), findsOneWidget);
+      expect(tester.takeException(), isNull);
       await _unmount(tester);
     });
 

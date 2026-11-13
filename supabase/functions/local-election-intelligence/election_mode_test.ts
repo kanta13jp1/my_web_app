@@ -170,3 +170,30 @@ Deno.test("generated endorsement asset passes the shared validator", () => {
     snapshot.incumbentCount + snapshot.newcomerCount + snapshot.formerCount,
   );
 });
+
+
+Deno.test("official source distinguishes missing or malformed counts from zero", () => {
+  const normalizeRecommendations = (recommendations: unknown) =>
+    normalizeOfficialEndorsementSnapshot({ ...endorsementAsset, recommendations });
+
+  const explicitZero = normalizeRecommendations({ totalCount: 0 });
+  assertEquals(explicitZero.sourceCountsComplete, true);
+  assertEquals(explicitZero.recommendationCount, 0);
+  for (const value of [undefined, null, "0", -1, 0.5]) {
+    assertThrows(() => normalizeRecommendations({ totalCount: value }));
+  }
+  assertThrows(() =>
+    normalizeOfficialEndorsementSnapshot({
+      ...endorsementAsset,
+      officialEndorsements: { ...endorsementAsset.officialEndorsements, formerCount: undefined },
+    })
+  );
+  assertThrows(() =>
+    normalizeOfficialEndorsementSnapshot({
+      ...endorsementAsset,
+      prefectures: endorsementAsset.prefectures.map((row, i) =>
+        i === 0 ? { ...row, municipalCount: null } : row
+      ),
+    })
+  );
+});
