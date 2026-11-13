@@ -15,8 +15,10 @@
     "municipalCount": 317
   },
   "recommendations": {
-    "totalCount": 18
+    "totalCount": 18,
+    "mayoralCount": 2
   },
+  "mayoralEndorsementCount": 0,
   "prefectures": [
     {
       "prefecture": "北海道",

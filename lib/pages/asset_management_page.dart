@@ -563,6 +563,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyDailyTodo = GlobalKey();
   // 将来CF予測カードの「支払日を見直す」からマネーカレンダーへスクロールする。
   final _keyCalendar = GlobalKey();
+  final _keyCashflowForecastCard = GlobalKey();
   // 将来CF予測の安全余裕(見込み残高がこれを下回る時期に注意表示)。
   static const double _assetForecastSafetyMargin = 10000;
   int _forecastHorizonMonths = 6;
@@ -6406,6 +6407,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           sublabel: 'セクション',
           icon: Icons.view_agenda_outlined,
           onTap: () => _scrollTo(_sectionAnchorKey(id)),
+        ),
+      );
+    }
+
+    if (_isSectionShown(AssetManagementSectionId.calendar) &&
+        _keyCashflowForecastCard.currentContext != null &&
+        matches('将来残高予測 将来残高 予測 残高見込み キャッシュフロー')) {
+      entries.add(
+        _AssetSectionSearchEntry(
+          label: '将来残高予測',
+          sublabel: 'マネーカレンダー → 将来残高予測へ移動',
+          icon: Icons.show_chart,
+          onTap: () => _scrollTo(_keyCashflowForecastCard),
         ),
       );
     }
@@ -17420,6 +17434,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
 
     return Padding(
+      key: _keyCashflowForecastCard,
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

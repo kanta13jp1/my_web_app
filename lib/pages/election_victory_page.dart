@@ -23,6 +23,8 @@ import '../services/growth_acquisition_service.dart';
 import '../services/local_election_share_service.dart';
 import '../services/public_memo_service.dart';
 import '../ui/features/election_victory/view_models/official_endorsement_view_model.dart';
+import '../ui/features/election_victory/widgets/official_endorsement_summary_card.dart';
+import '../ui/features/election_victory/widgets/kokumin_representative_announcement_card.dart';
 import 'landing_page.dart';
 import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
@@ -213,8 +215,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       _officialEndorsements.prefecturalCount;
   int get dpjOfficialEndorsementMunicipalTotal =>
       _officialEndorsements.municipalCount;
-  int get dpjOfficialRecommendationEntryCount =>
-      _officialEndorsements.recommendationCount;
   String get dpjLocalElectionOfficialListAsOf =>
       _officialEndorsements.sourceAsOf;
   String get dpjLocalElectionOfficialListUrl => _officialEndorsements.sourceUrl;
@@ -1018,12 +1018,14 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         : PublicMemoService.buildPublicMemoUrl(memo.id);
     final uri = _shareService.buildPlanDashboardXShareIntentUri(
       plan: plan,
+      snapshot: _realitySnapshot,
       publicUrl: publicUrl,
     );
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched) {
       final text = _shareService.buildPlanDashboardXShareText(
         plan: plan,
+        snapshot: _realitySnapshot,
         publicUrl: publicUrl,
       );
       await Clipboard.setData(ClipboardData(text: text));
@@ -5023,6 +5025,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               color: const Color(0xFFB45309),
               icon: Icons.warning_amber_rounded,
             ),
+            const SizedBox(height: 12),
+            KokuminRepresentativeAnnouncementCard(onOpenSource: _openUrl),
             if (dpjOfficialEndorsementPrefectureCount > 0) ...[
               const SizedBox(height: 12),
               _buildOfficialEndorsementSummary(),
@@ -5073,178 +5077,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   Widget _buildOfficialEndorsementSummary() {
     return ListenableBuilder(
       listenable: _officialEndorsementViewModel,
-      builder: (context, _) => _buildOfficialEndorsementSummaryContent(),
-    );
-  }
-
-  Widget _buildOfficialEndorsementSummaryContent() {
-    const accent = Color(0xFF2563EB);
-    final incumbent = dpjOfficialEndorsementIncumbentTotal;
-    final newcomer = dpjOfficialEndorsementNewcomerTotal;
-    final former = dpjOfficialEndorsementFormerTotal;
-    final prefectural = dpjOfficialEndorsementPrefecturalTotal;
-    final municipal = dpjOfficialEndorsementMunicipalTotal;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accent.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.how_to_reg_outlined, size: 18, color: accent),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '公認予定候補の掲載状況',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: accent,
-                      ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildMiniStatChip(
-                '公認掲載',
-                dpjOfficialEndorsementTotal,
-                color: accent,
-                suffix: '件',
-              ),
-              if (incumbent > 0)
-                _buildMiniStatChip(
-                  '現職',
-                  incumbent,
-                  color: const Color(0xFF0F766E),
-                  suffix: '件',
-                ),
-              if (newcomer > 0)
-                _buildMiniStatChip(
-                  '新人',
-                  newcomer,
-                  color: const Color(0xFF7C3AED),
-                  suffix: '件',
-                ),
-              if (former > 0)
-                _buildMiniStatChip(
-                  '元職',
-                  former,
-                  color: const Color(0xFFB45309),
-                  suffix: '件',
-                ),
-              _buildMiniStatChip(
-                '掲載地域',
-                dpjOfficialEndorsementPrefectureCount,
-                suffix: '/47都道府県',
-                color: const Color(0xFF64748B),
-              ),
-            ],
-          ),
-          if (prefectural + municipal > 0) ...[
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (prefectural > 0)
-                  _buildMiniStatChip(
-                    '都道府県議',
-                    prefectural,
-                    color: const Color(0xFF0EA5E9),
-                    suffix: '件',
-                  ),
-                if (municipal > 0)
-                  _buildMiniStatChip(
-                    '市区町村議',
-                    municipal,
-                    color: const Color(0xFF16A34A),
-                    suffix: '件',
-                  ),
-              ],
-            ),
-          ],
-          const SizedBox(height: 8),
-          Text(
-            '党公式一覧で「公認」と明記された掲載行を集計しています(擁立目標とは別)。'
-            '推薦$dpjOfficialRecommendationEntryCount件は含めず、公式表の表記を独自補正していません。'
-            '${prefectural + municipal > 0 ? '都道府県議/市区町村議の内訳は選挙名から判定できた掲載行のみを集計しています。' : ''}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 8),
-          Theme(
-            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-            child: ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              childrenPadding: const EdgeInsets.only(bottom: 8),
-              dense: true,
-              title: const Text('都道府県別の公認掲載件数'),
-              subtitle: Text('$dpjOfficialEndorsementPrefectureCount都道府県'),
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final item in dpjOfficialEndorsements)
-                        _buildOfficialEndorsementPrefectureChip(item),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: () => _openUrl(dpjLocalElectionOfficialListUrl),
-              icon: const Icon(Icons.open_in_new, size: 16),
-              label: Text(
-                '党公式の公認予定候補一覧を開く'
-                '(${_formatAsOfDate(dpjLocalElectionOfficialListAsOf)}現在)',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOfficialEndorsementPrefectureChip(
-    OfficialEndorsementPrefecture endorsement,
-  ) {
-    const color = Color(0xFF1D4ED8);
-    final breakdown =
-        endorsement.hasBreakdown ? ' (${endorsement.breakdownLabel})' : '';
-    final assemblyBreakdown = endorsement.hasAssemblyBreakdown
-        ? ' [${endorsement.assemblyBreakdownLabel}]'
-        : '';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
-      ),
-      child: Text(
-        '${endorsement.prefecture} ${_formatInt(endorsement.totalCount)}件'
-        '$breakdown$assemblyBreakdown',
-        style: const TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          height: 1.3,
-        ),
+      builder: (context, _) => OfficialEndorsementSummaryCard(
+        snapshot: _officialEndorsements,
+        onOpenSource: _openUrl,
       ),
     );
   }
@@ -5803,7 +5638,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           color: const Color(0xFF1D4ED8),
         ),
         _buildSummaryCard(
-          title: '新人擁立',
+          title: '新人擁立目標',
           value: _formatInt(plan.totalNewCandidateTarget),
           subtitle: '全国合計',
           color: const Color(0xFF7C3AED),
@@ -5960,7 +5795,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               DataColumn(label: Text('月')),
               DataColumn(label: Text('現職維持累計')),
               DataColumn(label: Text('重点自治体累計')),
-              DataColumn(label: Text('新人擁立累計')),
+              DataColumn(label: Text('新人擁立目標累計')),
               DataColumn(label: Text('内定期限到来')),
               DataColumn(label: Text('内定期限累計')),
               DataColumn(label: Text('接戦区支援累計')),
@@ -6237,7 +6072,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   '重点自治体',
                   _formatInt(plan.focusMunicipalityCount),
                 ),
-                _buildMetricChip('新人擁立', _formatInt(plan.newCandidateTarget)),
+                _buildMetricChip('新人擁立目標', _formatInt(plan.newCandidateTarget)),
                 _buildMetricChip('現状当選率', plan.currentCandidateWinRateLabel),
                 _buildMetricChip(
                   '公認内定期限',
