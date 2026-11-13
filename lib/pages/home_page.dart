@@ -62,6 +62,7 @@ import '../widgets/home_calendar_cashflow_line.dart';
 import '../widgets/home_calendar_day_indicators.dart';
 import '../widgets/home_calendar_day_surface.dart';
 import '../widgets/home_ops_snapshot_view.dart';
+import '../models/home_daily_cashflow_summary.dart';
 import '../widgets/home_calendar_day_number.dart';
 import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
@@ -746,13 +747,13 @@ class _HomePageState extends State<HomePage> with RouteAware {
     }
   }
 
-  Future<Map<String, _HomeDailyCashflowSummary>> _loadCalendarCashflowMap({
+  Future<Map<String, HomeDailyCashflowSummary>> _loadCalendarCashflowMap({
     required DateTime startDate,
     required DateTime endDate,
   }) async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) {
-      return <String, _HomeDailyCashflowSummary>{};
+      return <String, HomeDailyCashflowSummary>{};
     }
 
     final normalizedStart = _startOfDay(startDate);
@@ -770,7 +771,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
           .lt('occurred_at', normalizedEndExclusive.toUtc().toIso8601String())
           .order('occurred_at', ascending: true);
       final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
-      final result = <String, _HomeDailyCashflowSummary>{};
+      final result = <String, HomeDailyCashflowSummary>{};
 
       for (final row in rows.whereType<Map<String, dynamic>>()) {
         final occurredAt = DateTime.tryParse(
@@ -779,7 +780,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
         if (occurredAt == null) continue;
 
         final dateKey = _statusDateKey(occurredAt);
-        final current = result[dateKey] ?? const _HomeDailyCashflowSummary();
+        final current = result[dateKey] ?? const HomeDailyCashflowSummary();
         final actionType = row['action_type']?.toString() ?? '';
         final amount = _toIntValue(row['amount']);
 
@@ -803,7 +804,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
       return result;
     } catch (e) {
       debugPrint('Error loading calendar cashflow map: $e');
-      return <String, _HomeDailyCashflowSummary>{};
+      return <String, HomeDailyCashflowSummary>{};
     }
   }
 
@@ -1495,7 +1496,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
         tasksByDate[dateKey] ?? const <_HomeCalendarTask>[],
       );
       final cashflow =
-          cashflowByDate[dateKey] ?? const _HomeDailyCashflowSummary();
+          cashflowByDate[dateKey] ?? const HomeDailyCashflowSummary();
       final hasProtection = abstinence.enabledCount > 0;
       final hasSlip = abstinence.totalSlipCount > 0;
       final isFuture = day.isAfter(DateTime(now.year, now.month, now.day));
@@ -9565,7 +9566,7 @@ class _HomeCalendarDay {
   final List<String> slipDetails;
   final List<String> missingItems;
   final String relapsePreventionAction;
-  final _HomeDailyCashflowSummary cashflow;
+  final HomeDailyCashflowSummary cashflow;
   final List<_HomeCalendarTask> tasks;
 
   const _HomeCalendarDay({
@@ -9583,7 +9584,7 @@ class _HomeCalendarDay {
     required this.slipDetails,
     required this.missingItems,
     required this.relapsePreventionAction,
-    this.cashflow = const _HomeDailyCashflowSummary(),
+    this.cashflow = const HomeDailyCashflowSummary(),
     this.tasks = const <_HomeCalendarTask>[],
   });
 
@@ -9592,50 +9593,6 @@ class _HomeCalendarDay {
   int get totalTaskCount => tasks.length;
 
   int get completedTaskCount => tasks.where((task) => task.isCompleted).length;
-}
-
-class _HomeDailyCashflowSummary {
-  final int incomeTotal;
-  final int expenseTotal;
-  final int transferTotal;
-  final int incomeCount;
-  final int expenseCount;
-  final int transferCount;
-
-  const _HomeDailyCashflowSummary({
-    this.incomeTotal = 0,
-    this.expenseTotal = 0,
-    this.transferTotal = 0,
-    this.incomeCount = 0,
-    this.expenseCount = 0,
-    this.transferCount = 0,
-  });
-
-  _HomeDailyCashflowSummary copyWith({
-    int? incomeTotal,
-    int? expenseTotal,
-    int? transferTotal,
-    int? incomeCount,
-    int? expenseCount,
-    int? transferCount,
-  }) {
-    return _HomeDailyCashflowSummary(
-      incomeTotal: incomeTotal ?? this.incomeTotal,
-      expenseTotal: expenseTotal ?? this.expenseTotal,
-      transferTotal: transferTotal ?? this.transferTotal,
-      incomeCount: incomeCount ?? this.incomeCount,
-      expenseCount: expenseCount ?? this.expenseCount,
-      transferCount: transferCount ?? this.transferCount,
-    );
-  }
-
-  int get recordCount => incomeCount + expenseCount;
-
-  int get netTotal => incomeTotal - expenseTotal;
-
-  bool get hasCashflow => recordCount > 0;
-
-  bool get hasAnyEntry => hasCashflow || transferCount > 0;
 }
 
 enum _HomeCalendarTaskSource { dailyTodo, mindless }
