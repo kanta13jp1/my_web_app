@@ -1,0 +1,45 @@
+# Test-only Envoy routes. This is not the production Supabase gateway config.
+static_resources:
+  listeners:
+    - name: synthetic_listener
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 8000 }
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: synthetic
+                route_config:
+                  name: synthetic_routes
+                  virtual_hosts:
+                    - name: synthetic_only
+                      domains: ["*"]
+                      routes:
+                        - match: { prefix: /auth/v1/ }
+                          route: { cluster: auth, prefix_rewrite: / }
+                        - match: { prefix: /rest/v1/ }
+                          route: { cluster: rest, prefix_rewrite: / }
+                http_filters:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  clusters:
+    - name: auth
+      type: STRICT_DNS
+      connect_timeout: 2s
+      load_assignment:
+        cluster_name: auth
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address: { socket_address: { address: synthetic-auth, port_value: 9999 } }
+    - name: rest
+      type: STRICT_DNS
+      connect_timeout: 2s
+      load_assignment:
+        cluster_name: rest
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address: { socket_address: { address: synthetic-rest, port_value: 3000 } }
