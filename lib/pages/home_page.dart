@@ -59,6 +59,10 @@ import '../widgets/home_primary_action_card.dart';
 import '../widgets/home_calendar_month_header.dart';
 import '../widgets/home_calendar_summary_pill.dart';
 import '../widgets/home_calendar_cashflow_line.dart';
+import '../widgets/home_calendar_day_indicators.dart';
+import '../widgets/home_calendar_day_surface.dart';
+import '../widgets/home_ops_snapshot_view.dart';
+import '../widgets/home_calendar_day_number.dart';
 import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
@@ -3077,19 +3081,6 @@ abstinence_slip_details: $slipDetailsText
               final matchesFilter = _matchesCalendarHighlightFilter(day);
               final accentColor =
                   day.isCurrentMonth ? status.color : const Color(0xFFB0B0B0);
-              final backgroundColor = day.isCurrentMonth
-                  ? matchesFilter
-                      ? accentColor.withValues(
-                          alpha: day.hasAbstinenceSlip
-                              ? 0.18
-                              : status.label == '無傷'
-                                  ? 0.14
-                                  : status.label == '未設定'
-                                      ? 0.08
-                                      : 0.1,
-                        )
-                      : const Color(0xFFB0B0B0).withValues(alpha: 0.035)
-                  : const Color(0xFFB0B0B0).withValues(alpha: 0.05);
 
               return Material(
                 color: Colors.transparent,
@@ -3104,47 +3095,26 @@ abstinence_slip_details: $slipDetailsText
                     });
                     await _showCalendarDayDetails(context, day);
                   },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: backgroundColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: day.isToday
-                            ? const Color(0xFF6366F1)
-                            : day.isCurrentMonth
-                                ? matchesFilter
-                                    ? accentColor.withValues(alpha: 0.22)
-                                    : const Color(
-                                        0xFFB0B0B0,
-                                      ).withValues(alpha: 0.08)
-                                : Colors.transparent,
-                        width: day.isToday ? 1.6 : 1,
-                      ),
-                    ),
+                  child: HomeCalendarDaySurface(
+                    accentColor: accentColor,
+                    isToday: day.isToday,
+                    isCurrentMonth: day.isCurrentMonth,
+                    matchesFilter: matchesFilter,
+                    hasSlip: day.hasAbstinenceSlip,
+                    isClean: status.label == '無傷',
+                    isUnset: status.label == '未設定',
                     child: Padding(
                       padding: const EdgeInsets.all(6),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '${day.date.day}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: day.isCurrentMonth
-                                  ? matchesFilter
-                                      ? (status.label == '未設定'
-                                          ? (isDark
-                                              ? Colors.white.withValues(
-                                                  alpha: 0.7,
-                                                )
-                                              : const Color(0xDE000000))
-                                          : accentColor)
-                                      : isDark
-                                          ? const Color(0xFF666666)
-                                          : const Color(0xFFB0B0B0)
-                                  : const Color(0xFFB0B0B0),
-                              height: 1.5,
-                            ),
+                          HomeCalendarDayNumber(
+                            day: day.date.day,
+                            isCurrentMonth: day.isCurrentMonth,
+                            matchesFilter: matchesFilter,
+                            isUnset: status.label == '未設定',
+                            isDark: isDark,
+                            accentColor: accentColor,
                           ),
                           if (day.isCurrentMonth && day.hasCashflow) ...[
                             const SizedBox(height: 4),
@@ -3172,47 +3142,18 @@ abstinence_slip_details: $slipDetailsText
                               ),
                           ],
                           const Spacer(),
-                          Wrap(
-                            spacing: 3,
-                            runSpacing: 3,
-                            children: [
-                              if (day.morningDone)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFFFC107),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
-                              if (day.balanceDone)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFF4CAF50),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                          HomeCalendarDayIndicators(
+                            colors: [
+                              if (day.morningDone) const Color(0xFFFFC107),
+                              if (day.balanceDone) const Color(0xFF4CAF50),
                               if (day.hasAbstinenceProtection &&
                                   !day.hasAbstinenceSlip)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFE53935),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                                const Color(0xFFE53935),
                               if (day.hasAbstinenceSlip)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFFF6B35),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
-                              if (day.isSaturday)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFF009688),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                                const Color(0xFFFF6B35),
+                              if (day.isSaturday) const Color(0xFF009688),
                             ],
+                            isEmphasized: matchesFilter,
                           ),
                         ],
                       ),
@@ -3766,19 +3707,6 @@ abstinence_slip_details: $slipDetailsText
         task.secondaryLabel == null ? '' : ' ${task.secondaryLabel}';
     final important = task.isImportant ? ' [重要]' : '';
     return '[$sourceLabel/$stateLabel]$secondary$important ${task.title}';
-  }
-
-  Widget _buildCalendarDot(Color color) {
-    return Container(
-      width: 7,
-      height: 7,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
-
-  Color _calendarDotDisplayColor(Color color, {required bool isEmphasized}) {
-    if (isEmphasized) return color;
-    return color.withValues(alpha: 0.22);
   }
 
   Widget _buildCalendarSummaryPill({
@@ -5209,10 +5137,10 @@ abstinence_slip_details: $slipDetailsText
         ),
         child: RefreshIndicator(
           onRefresh: _refreshKpis,
-          child: FutureBuilder<_HomeOpsSnapshot>(
+          child: HomeOpsSnapshotView<_HomeOpsSnapshot>(
             future: _opsSnapshotFuture,
-            builder: (context, snapshot) {
-              final opsSnapshot = snapshot.data ?? const _HomeOpsSnapshot();
+            emptyValue: const _HomeOpsSnapshot(),
+            builder: (context, opsSnapshot) {
               final nextAction = _resolveNextAction(opsSnapshot);
               final highlightMonthlyFlow =
                   nextAction.type == _HomeActionType.monthlyFlowReview;
