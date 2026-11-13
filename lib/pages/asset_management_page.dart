@@ -35097,12 +35097,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           final deadline = DateTime.parse(
                             task['deadline'],
                           ).toLocal();
-                          final isOverdue =
-                              isAssetMustTaskOverdue(
-                                deadline: deadline,
-                                now: DateTime.now(),
-                                isCompleted: isCompleted,
-                              );
+                          final isOverdue = isAssetMustTaskOverdue(
+                            deadline: deadline,
+                            now: DateTime.now(),
+                            isCompleted: isCompleted,
+                          );
 
                           return CheckboxListTile(
                             value: isCompleted,

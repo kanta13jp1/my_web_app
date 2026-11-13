@@ -15,7 +15,8 @@ void main() {
     }
   });
 
-  test('overdue starts on the next day, including month and year boundaries', () {
+  test('overdue starts on the next day, including month and year boundaries',
+      () {
     for (final deadline in [DateTime(2026, 11, 30), DateTime(2026, 12, 31)]) {
       final nextDay = DateTime(deadline.year, deadline.month, deadline.day + 1);
       expect(
@@ -48,7 +49,8 @@ void main() {
     );
   });
 
-  test('picked midnight and unchanged initial date have the same semantics', () {
+  test('picked midnight and unchanged initial date have the same semantics',
+      () {
     final initial = assetMustTaskDate(DateTime(2026, 11, 13, 18, 45));
     expect(initial, DateTime(2026, 11, 13));
     for (final deadline in [initial, DateTime(2026, 11, 13)]) {
@@ -63,7 +65,8 @@ void main() {
     }
   });
 
-  test('UTC serialized deadlines use the same calendar date as their display', () {
+  test('UTC serialized deadlines use the same calendar date as their display',
+      () {
     for (final utc in [
       DateTime.utc(2026, 11, 30, 23, 30),
       DateTime.utc(2026, 12, 31, 1, 30),
