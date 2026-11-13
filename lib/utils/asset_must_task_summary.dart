@@ -22,7 +22,8 @@ String formatAssetMustTaskSummary({
     return deadline.year == month.year && deadline.month == month.month;
   }).toList()
     ..sort(
-        (a, b) => (a['deadline'] as String).compareTo(b['deadline'] as String));
+      (a, b) => (a['deadline'] as String).compareTo(b['deadline'] as String),
+    );
   if (current.isEmpty) {
     output.writeln('- （未登録）');
   } else {

@@ -69,8 +69,10 @@ void main() {
     );
     expect(result, contains('✅ Synthetic completed task（締切 11/10）'));
     expect(result, contains('⬜️ Synthetic cached task（締切 11/20）'));
-    expect(result.indexOf('Synthetic completed'),
-        lessThan(result.indexOf('Synthetic cached')));
+    expect(
+      result.indexOf('Synthetic completed'),
+      lessThan(result.indexOf('Synthetic cached')),
+    );
     expect(result, isNot(contains('Synthetic other month')));
     expect(result, isNot(contains('未取得')));
   });
