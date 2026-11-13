@@ -33,8 +33,8 @@ MIN_PREFECTURES = 10
 MAX_ALLOWED_DROP_RATIO = 0.25
 
 _AS_OF_RE = re.compile(r"(\d{4})/(\d{1,2})/(\d{1,2})\s*現在")
-_ROW_RE = re.compile(r"^\s*(\d+)\s*([^\s\d]+)\s+")
-_UNNUMBERED_ROW_RE = re.compile(r"^\s*()(北海道|青森県|岩手県|宮城県|秋田県|山形県|福島県|茨城県|栃木県|群馬県|埼玉県|千葉県|東京都|神奈川県|新潟県|富山県|石川県|福井県|山梨県|長野県|岐阜県|静岡県|愛知県|三重県|滋賀県|京都府|大阪府|兵庫県|奈良県|和歌山県|鳥取県|島根県|岡山県|広島県|山口県|徳島県|香川県|愛媛県|高知県|福岡県|佐賀県|長崎県|熊本県|大分県|宮崎県|鹿児島県|沖縄県)\s+")
+_ROW_RE = re.compile(r"^\s*(?P<ordinal>\d+)\s*(?P<prefecture>[^\s\d]+)\s+")
+_UNNUMBERED_ROW_RE = re.compile(r"^\s*(?P<prefecture>北海道|青森県|岩手県|宮城県|秋田県|山形県|福島県|茨城県|栃木県|群馬県|埼玉県|千葉県|東京都|神奈川県|新潟県|富山県|石川県|福井県|山梨県|長野県|岐阜県|静岡県|愛知県|三重県|滋賀県|京都府|大阪府|兵庫県|奈良県|和歌山県|鳥取県|島根県|岡山県|広島県|山口県|徳島県|香川県|愛媛県|高知県|福岡県|佐賀県|長崎県|熊本県|大分県|宮崎県|鹿児島県|沖縄県)\s+")
 _CAREER_RE = re.compile(r"\s[男女]\s+\d+\s+(現|元|新)\s")
 # 選挙名の議会種別。「都道府県議会」= prefectural、「市区町村議会」= municipal。
 # lib/models/local_election_reality.dart の isLocalAssemblyElection と同じ判定基準。
@@ -89,14 +89,14 @@ def parse_candidate_rows(page_texts: Iterable[str]) -> list[dict[str, str]]:
                 )
             decision = _DECISION_RE.fullmatch(line[career.end():].strip().translate(_DATE_PARENS))
             if decision is None:
-                raise ValueError(f"Invalid endorsement column in candidate row {match[1]}.")
+                raise ValueError(f"Invalid endorsement column in candidate row {match.groupdict().get('ordinal') or 'unnumbered'}.")
             for token in decision.groups()[1:]:
                 if token is not None:
                     date(*(int(part) for part in token.split("/")))
             election_name = line[match.end():].split(maxsplit=1)[0]
             rows.append(
                 {
-                    "prefecture": _short_prefecture_name(match.group(2)),
+                    "prefecture": _short_prefecture_name(match.group("prefecture")),
                     "decision": "endorsement" if decision[1] == "公認" else "recommendation",
                     "assemblyCategory": _election_category(election_name),
                     "career": {

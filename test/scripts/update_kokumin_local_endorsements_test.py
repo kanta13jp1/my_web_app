@@ -92,6 +92,28 @@ class KokuminLocalEndorsementUpdaterTest(unittest.TestCase):
             with self.subTest(row=row), self.assertRaises(ValueError):
                 updater.parse_candidate_rows([row])
 
+    def test_numbered_and_unnumbered_rows_preserve_prefecture_and_election_category(self):
+        for prefecture, election, category in (
+            ("北海道", "北海道議会議員選挙", "prefectural"),
+            ("東京都", "架空区議会議員選挙", "municipal"),
+            ("山形県", "架空市長選挙", "mayoral"),
+        ):
+            for prefix in ("", " 12 "):
+                with self.subTest(prefecture=prefecture, prefix=prefix):
+                    row = updater.parse_candidate_rows([
+                        f"{prefix}{prefecture} {election} 3 合成候補 男 38 新 有 公認 (2027/5/1)"
+                    ])[0]
+                    self.assertEqual(row["prefecture"], prefecture if prefecture == "北海道" else prefecture[:-1])
+                    self.assertEqual(row["assemblyCategory"], category)
+                    self.assertEqual(row["decision"], "endorsement")
+
+    def test_invalid_decision_diagnostic_identifies_numbered_and_unnumbered_rows(self):
+        for prefix, label in (("", "unnumbered"), ("12 ", "12")):
+            with self.subTest(prefix=prefix), self.assertRaisesRegex(ValueError, f"candidate row {label}"):
+                updater.parse_candidate_rows([
+                    f"{prefix}北海道 北海道議会議員選挙 3 合成候補 男 38 新 有 未定 (2027/5/1)"
+                ])
+
     def test_source_date_accepts_one_or_two_digit_month_and_day(self):
         for source, expected in (
             ("2026/11/4現在", "2026-11-04"),
