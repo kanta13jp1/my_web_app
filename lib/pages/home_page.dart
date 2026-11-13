@@ -60,6 +60,7 @@ import '../widgets/home_calendar_month_header.dart';
 import '../widgets/home_calendar_summary_pill.dart';
 import '../widgets/home_calendar_cashflow_line.dart';
 import '../widgets/home_calendar_day_indicators.dart';
+import '../widgets/home_calendar_day_surface.dart';
 import '../widgets/home_calendar_day_number.dart';
 import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
@@ -3079,19 +3080,6 @@ abstinence_slip_details: $slipDetailsText
               final matchesFilter = _matchesCalendarHighlightFilter(day);
               final accentColor =
                   day.isCurrentMonth ? status.color : const Color(0xFFB0B0B0);
-              final backgroundColor = day.isCurrentMonth
-                  ? matchesFilter
-                      ? accentColor.withValues(
-                          alpha: day.hasAbstinenceSlip
-                              ? 0.18
-                              : status.label == '無傷'
-                                  ? 0.14
-                                  : status.label == '未設定'
-                                      ? 0.08
-                                      : 0.1,
-                        )
-                      : const Color(0xFFB0B0B0).withValues(alpha: 0.035)
-                  : const Color(0xFFB0B0B0).withValues(alpha: 0.05);
 
               return Material(
                 color: Colors.transparent,
@@ -3106,23 +3094,14 @@ abstinence_slip_details: $slipDetailsText
                     });
                     await _showCalendarDayDetails(context, day);
                   },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: backgroundColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: day.isToday
-                            ? const Color(0xFF6366F1)
-                            : day.isCurrentMonth
-                                ? matchesFilter
-                                    ? accentColor.withValues(alpha: 0.22)
-                                    : const Color(
-                                        0xFFB0B0B0,
-                                      ).withValues(alpha: 0.08)
-                                : Colors.transparent,
-                        width: day.isToday ? 1.6 : 1,
-                      ),
-                    ),
+                  child: HomeCalendarDaySurface(
+                    accentColor: accentColor,
+                    isToday: day.isToday,
+                    isCurrentMonth: day.isCurrentMonth,
+                    matchesFilter: matchesFilter,
+                    hasSlip: day.hasAbstinenceSlip,
+                    isClean: status.label == '無傷',
+                    isUnset: status.label == '未設定',
                     child: Padding(
                       padding: const EdgeInsets.all(6),
                       child: Column(
