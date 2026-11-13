@@ -2392,7 +2392,8 @@ void main() {
         );
         await tester.pump(const Duration(milliseconds: 400));
         final search = find.byWidgetPredicate(
-          (widget) => widget is TextField &&
+          (widget) =>
+              widget is TextField &&
               widget.decoration?.hintText?.startsWith('カード名・項目名') == true,
         );
         await tester.enterText(search, '将来');
