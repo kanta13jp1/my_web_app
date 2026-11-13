@@ -31,7 +31,11 @@ void main() {
       1,
       'invalid',
       <String, dynamic>{},
-      [null, 1, {'occurred_at': 'invalid'}],
+      [
+        null,
+        1,
+        {'occurred_at': 'invalid'}
+      ],
     ]) {
       expect(_aggregate(input), isEmpty);
     }
