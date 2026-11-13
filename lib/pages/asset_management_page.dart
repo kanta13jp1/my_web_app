@@ -6697,7 +6697,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final monthLabel = '${now.year}/${now.month.toString().padLeft(2, '0')}';
     final flowCycleLabel = _salaryCycleRangeLabel(now);
 
-
     final done = [
       _assetsDone,
       _liabilitiesDone,
