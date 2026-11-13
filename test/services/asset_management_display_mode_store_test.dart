@@ -10,7 +10,7 @@ void main() {
 
     test('rejected mode write fails before recording a switch', () async {
       final prefs = _RejectedModePreferences();
-      final store = AssetManagementDisplayModeStore();
+      const store = AssetManagementDisplayModeStore();
 
       await expectLater(
         store.save(AssetManagementDisplayMode.minimum, prefs: prefs),
@@ -21,7 +21,7 @@ void main() {
 
     test('rejected restored mode write also reports failure', () async {
       final prefs = _RejectedModePreferences();
-      final store = AssetManagementDisplayModeStore();
+      const store = AssetManagementDisplayModeStore();
 
       await expectLater(
         store.save(
@@ -35,7 +35,7 @@ void main() {
 
     test('mode write exception remains a failed save', () async {
       final prefs = _RejectedModePreferences(throwOnWrite: true);
-      final store = AssetManagementDisplayModeStore();
+      const store = AssetManagementDisplayModeStore();
 
       await expectLater(
         store.save(AssetManagementDisplayMode.full, prefs: prefs),
