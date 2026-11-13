@@ -213,7 +213,8 @@ void main() {
       expect(section, isNot(contains('au:')));
     });
 
-    test('fallback excludes card-funded fixed costs from direct unpaid items', () {
+    test('fallback excludes card-funded fixed costs from direct unpaid items',
+        () {
       final workbook = const AssetLiabilityPlanningService().buildWorkbook(
         latestSnapshot: const <String, double>{
           'cash': 50000,
@@ -231,7 +232,8 @@ void main() {
       );
       final row = workbook.cashflowRows.firstWhere(
         (row) =>
-            row.accountId == AssetLiabilityPlanningService.kddiProviderAccountId,
+            row.accountId ==
+            AssetLiabilityPlanningService.kddiProviderAccountId,
       );
       expect(row.paymentSourceAccountId, 'paypay_card');
       expect(row.isDirectCashflowTarget, isTrue);
