@@ -20,7 +20,8 @@ async function markWeb(page: Page) {
   const note = page.getByRole('textbox', { name: /^Web の確認メモ(?: |$)/ });
   await note.focus();
   await expect(note).toBeFocused();
-  await note.fill('Chrome で確認');
+  // Send normal keystrokes after focus rather than replacing the semantic input value.
+  await note.pressSequentially('Chrome で確認');
   await expect(note).toHaveValue('Chrome で確認');
   // Observe durability before navigating away, rather than guessing a delay.
   // This is read-only: the post-reload UI assertions remain the acceptance test.
