@@ -34,7 +34,7 @@ void main() {
       [
         null,
         1,
-        {'occurred_at': 'invalid'}
+        {'occurred_at': 'invalid'},
       ],
     ]) {
       expect(_aggregate(input), isEmpty);
