@@ -2402,7 +2402,8 @@ void main() {
         expect(result, findsOneWidget);
         await tester.tap(result);
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
         await tester.pump();
         expect(search, findsNothing);
         final title = find.textContaining('将来残高予測(今後');
