@@ -117,6 +117,35 @@ void main() {
       find.descendant(of: dropdown, matching: find.text('借入受取')),
       findsOneWidget,
     );
+    // Select the fixture month explicitly when history starts in another month.
+    final flowCard = find
+        .ancestor(
+          of: find.text('④収支の記録'),
+          matching: find.byType(Card),
+        )
+        .first;
+    final previousMonth = find.descendant(
+      of: flowCard,
+      matching: find.byTooltip('前月'),
+    );
+    expect(previousMonth, findsOneWidget);
+    final now = DateTime.now();
+    final monthSteps = (now.year - _date.year) * 12 + now.month - _date.month;
+    expect(monthSteps, greaterThanOrEqualTo(0));
+    for (var step = 0; step < monthSteps; step++) {
+      await tester.ensureVisible(previousMonth);
+      await tester.tap(previousMonth);
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    expect(
+      find.descendant(
+        of: flowCard,
+        matching: find.text(
+          '${_date.year}/${_date.month.toString().padLeft(2, '0')}',
+        ),
+      ),
+      findsWidgets,
+    );
     final title = find.text('合成借入受取検査');
     expect(
       title,
