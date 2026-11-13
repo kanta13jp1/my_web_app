@@ -35,6 +35,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../widgets/asset_payment_reminder_gate.dart';
 import 'package:my_web_app/services/asset_must_task_repository.dart';
+import 'package:my_web_app/utils/asset_must_task_deadline.dart';
 import 'package:my_web_app/services/closing_record_checks.dart';
 import 'package:my_web_app/widgets/debounced_commit_text_field.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -10095,7 +10096,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _addMustTask() async {
     final titleController = TextEditingController();
-    DateTime selectedDeadline = DateTime.now();
+    DateTime selectedDeadline = assetMustTaskDate(DateTime.now());
     bool saving = false;
     String? saveError;
 
@@ -35050,7 +35051,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '⑤今月の必須タスク',
+                    '⑤必須タスク',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -35096,8 +35097,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           final deadline = DateTime.parse(
                             task['deadline'],
                           ).toLocal();
-                          final isOverdue =
-                              !isCompleted && deadline.isBefore(DateTime.now());
+                          final isOverdue = isAssetMustTaskOverdue(
+                            deadline: deadline,
+                            now: DateTime.now(),
+                            isCompleted: isCompleted,
+                          );
 
                           return CheckboxListTile(
                             value: isCompleted,
