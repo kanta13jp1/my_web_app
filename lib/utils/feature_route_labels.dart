@@ -58,6 +58,7 @@ const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/asset-management': '資産・家計管理',
   '/autonomous-ops-console': '自律オペレーションコンソール',
   '/custom-task-list': 'AI カスタムタスクリスト',
+  '/chat-highlights': 'チャットハイライト',
   '/focus-timer': '集中タイマー',
   '/life-goals': '人生目標管理',
   '/local-election-700': '2027 統一地方選 700必達管理室',
