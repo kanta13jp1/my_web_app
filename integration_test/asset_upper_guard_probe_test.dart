@@ -1,6 +1,6 @@
 import 'package:integration_test/integration_test.dart';
-import '../test/widgets/asset_auto_debit_bulk_guard_test.dart' as bulk;
-import '../test/widgets/asset_salary_confirmation_guard_test.dart' as salary;
+import 'asset_bulk_guard_scenarios.dart' as bulk;
+import 'asset_salary_guard_scenarios.dart' as salary;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
