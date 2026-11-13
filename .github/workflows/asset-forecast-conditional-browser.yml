@@ -1,4 +1,4 @@
-name: Asset forecast conditional browser
+name: Asset upper guard browser probe
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ on:
 permissions: {}
 
 concurrency:
-  group: asset-forecast-conditional-${{ github.ref }}
+  group: asset-upper-guard-probe-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -29,7 +29,9 @@ jobs:
         with:
           flutter-version: '3.38.x'
       - run: flutter pub get
-      - name: Run synthetic conditional display in Chrome
+      - name: Check Dart formatting
+        run: dart format --output=none --set-exit-if-changed integration_test/asset_upper_guard_probe_test.dart
+      - name: Run existing synthetic upper guards in Chrome
         shell: bash
         run: |
           chromedriver --port=4444 > /tmp/asset-forecast-chromedriver.log 2>&1 &
@@ -42,7 +44,10 @@ jobs:
             sleep 1
           done
           curl --fail --silent http://localhost:4444/status > /dev/null
+          for suite in bulk salary; do
           flutter drive \
             --driver=test_driver/asset_ai_integration.dart \
-            --target=integration_test/asset_cashflow_forecast_conditional_test.dart \
+            --target=integration_test/asset_upper_guard_probe_test.dart \
+            --dart-define=ASSET_GUARD_SUITE=$suite \
             -d web-server --browser-name=chrome --headless
+          done
