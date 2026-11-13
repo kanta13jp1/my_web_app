@@ -10916,7 +10916,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _sectionAnchor(AssetManagementSectionId.subscriptions),
                 Container(
                   key: _keySubs,
-                  child: _withLegacyFixedCostReadStatus(_buildSubscriptionCard()),
+                  child:
+                      _withLegacyFixedCostReadStatus(_buildSubscriptionCard()),
                 ), // ③固定費
                 const SizedBox(height: 24),
               ],

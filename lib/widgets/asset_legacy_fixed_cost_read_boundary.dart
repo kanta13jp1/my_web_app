@@ -20,15 +20,15 @@ class AssetLegacyFixedCostReadBoundary extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final failed = hasError && !isLoading;
-    final textColor = failed ? colors.onErrorContainer : colors.onSurfaceVariant;
+    final textColor =
+        failed ? colors.onErrorContainer : colors.onSurfaceVariant;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (isLoading || hasError)
           Card(
-            color: failed
-                ? colors.errorContainer
-                : colors.surfaceContainerHighest,
+            color:
+                failed ? colors.errorContainer : colors.surfaceContainerHighest,
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
