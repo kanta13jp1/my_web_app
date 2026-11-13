@@ -1,4 +1,5 @@
 import * as T from "./vendor/three.module.js";
+import { artDirection } from "./art-direction.mjs";
 import {
   createDeck,
   createDummy,
@@ -7,7 +8,7 @@ import {
 } from "./actors.mjs";
 
 export function createTrainingScene(
-  { host, onFailure, low = false, reducedMotion = false },
+  { host, onFailure, low = false, reducedMotion = false, ink = false },
 ) {
   let renderer, observer;
   try {
@@ -24,7 +25,8 @@ export function createTrainingScene(
     renderer.setPixelRatio(Math.min(devicePixelRatio || 1, low ? 1 : 1.5));
     renderer.outputColorSpace = T.SRGBColorSpace;
     renderer.toneMapping = T.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.3;
+    const art = artDirection(ink);
+    renderer.toneMappingExposure = art.exposure;
     renderer.debug.onShaderError = () =>
       queueMicrotask(() => {
         if (!disposed) {
@@ -35,15 +37,16 @@ export function createTrainingScene(
       });
     const context = renderer.getContext();
     const scene = new T.Scene();
-    scene.fog = new T.Fog(0x183e50, 11, 35);
+    if (art.background !== null) scene.background = new T.Color(art.background);
+    scene.fog = new T.Fog(art.background ?? 0x183e50, art.fogNear, art.fogFar);
     const camera = new T.PerspectiveCamera(37, 1, .1, 65);
     camera.position.set(6.4, 4.2, 8.3);
-    const palette = createPalette();
-    scene.add(new T.HemisphereLight(0xc2efff, 0x4b4b3a, 2.5));
-    const sun = new T.DirectionalLight(0xffd3a1, 3.4);
+    const palette = createPalette({ ink });
+    scene.add(new T.HemisphereLight(art.sky, art.ground, art.ambient));
+    const sun = new T.DirectionalLight(art.sun, art.sunPower);
     sun.position.set(-3, 7, 4);
     scene.add(sun);
-    const rim = new T.DirectionalLight(0x77dcd4, 2.0);
+    const rim = new T.DirectionalLight(art.rim, art.rimPower);
     rim.position.set(4, 3, -4);
     scene.add(rim);
     const hero = createHero(palette), dummy = createDummy(palette);
@@ -57,7 +60,7 @@ export function createTrainingScene(
     const water = new T.Mesh(
       waterGeometry,
       new T.MeshStandardMaterial({
-        color: 0x185568,
+        color: art.water,
         roughness: .68,
         metalness: .2,
         flatShading: true,
