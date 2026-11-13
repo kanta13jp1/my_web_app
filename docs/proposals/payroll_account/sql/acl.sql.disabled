@@ -1,0 +1,77 @@
+-- REVIEW ONLY. NEVER EXECUTE OR APPLY THIS CANDIDATE.
+-- It is NOT compatible with old clients that directly INSERT account rows.
+-- It does not govern privileged roles, service-role functions, triggers,
+-- unreviewed inherited roles, or any writer outside this grant boundary.
+begin;
+do $stop$ begin
+  raise exception 'REVIEW ONLY: ACL candidate execution is prohibited';
+end $stop$;
+
+-- Proposed only after separately reviewed RPCs and a compatible client exist.
+-- Table-level REVOKE also removes corresponding column grants. Other grants
+-- inherited through membership or other roles must be independently checked.
+revoke insert on table public.asset_payroll_accounts
+  from public, anon, authenticated;
+revoke update (display_label, archived) on table public.asset_payroll_accounts
+  from public, anon, authenticated;
+
+-- Fail the transaction if effective authenticated privileges differ from this
+-- narrow contract. This is not a replacement for real Auth/RLS tests.
+do $verify$
+declare
+  v_columns text[];
+  v_column text;
+begin
+  select pg_catalog.array_agg(a.attname::text order by a.attnum)
+    into v_columns
+    from pg_catalog.pg_attribute a
+    where a.attrelid = 'public.asset_payroll_accounts'::regclass
+      and a.attnum > 0 and not a.attisdropped;
+  if v_columns is distinct from array[
+      'user_id', 'id', 'display_label', 'target_increase_yen', 'archived'
+    ]::text[] then
+    raise exception 'Live column names/order differ from fixed migration';
+  end if;
+  if not pg_catalog.has_table_privilege('authenticated', 'public.asset_payroll_accounts', 'SELECT')
+    or not pg_catalog.has_column_privilege('authenticated', 'public.asset_payroll_accounts', 'target_increase_yen', 'UPDATE')
+    or pg_catalog.has_any_column_privilege('authenticated', 'public.asset_payroll_accounts', 'INSERT')
+    or pg_catalog.has_any_column_privilege('authenticated', 'public.asset_payroll_accounts', 'REFERENCES')
+    or pg_catalog.has_table_privilege('authenticated', 'public.asset_payroll_accounts', 'UPDATE')
+    or pg_catalog.has_table_privilege('authenticated', 'public.asset_payroll_accounts', 'DELETE')
+    or pg_catalog.has_table_privilege('authenticated', 'public.asset_payroll_accounts', 'TRUNCATE')
+    or pg_catalog.has_table_privilege('authenticated', 'public.asset_payroll_accounts', 'TRIGGER')
+    or pg_catalog.has_column_privilege('authenticated', 'public.asset_payroll_accounts', 'user_id', 'INSERT')
+    or pg_catalog.has_column_privilege('authenticated', 'public.asset_payroll_accounts', 'id', 'INSERT')
+    or pg_catalog.has_column_privilege('authenticated', 'public.asset_payroll_accounts', 'display_label', 'INSERT')
+    or pg_catalog.has_column_privilege('authenticated', 'public.asset_payroll_accounts', 'target_increase_yen', 'INSERT')
+    or pg_catalog.has_column_privilege('authenticated', 'public.asset_payroll_accounts', 'archived', 'INSERT')
+    or pg_catalog.has_column_privilege('authenticated', 'public.asset_payroll_accounts', 'user_id', 'UPDATE')
+    or pg_catalog.has_column_privilege('authenticated', 'public.asset_payroll_accounts', 'id', 'UPDATE')
+    or pg_catalog.has_column_privilege('authenticated', 'public.asset_payroll_accounts', 'display_label', 'UPDATE')
+    or pg_catalog.has_column_privilege('authenticated', 'public.asset_payroll_accounts', 'archived', 'UPDATE')
+    or pg_catalog.has_any_column_privilege('anon', 'public.asset_payroll_accounts', 'SELECT')
+    or pg_catalog.has_any_column_privilege('anon', 'public.asset_payroll_accounts', 'INSERT')
+    or pg_catalog.has_any_column_privilege('anon', 'public.asset_payroll_accounts', 'UPDATE')
+    or pg_catalog.has_any_column_privilege('anon', 'public.asset_payroll_accounts', 'REFERENCES')
+    or pg_catalog.has_table_privilege('anon', 'public.asset_payroll_accounts', 'DELETE')
+    or pg_catalog.has_table_privilege('anon', 'public.asset_payroll_accounts', 'TRUNCATE')
+    or pg_catalog.has_table_privilege('anon', 'public.asset_payroll_accounts', 'TRIGGER') then
+    raise exception 'Effective account ACL differs from reviewed contract';
+  end if;
+  foreach v_column in array v_columns loop
+    if v_column <> 'target_increase_yen'
+      and pg_catalog.has_column_privilege('authenticated',
+        'public.asset_payroll_accounts', v_column, 'UPDATE') then
+      raise exception 'Unexpected effective column UPDATE privilege';
+    end if;
+  end loop;
+  -- MAINTAIN was added in PostgreSQL 17. Avoid unsupported privilege names
+  -- on earlier versions; the actual server version still requires review.
+  if pg_catalog.current_setting('server_version_num')::integer >= 170000 then
+    if pg_catalog.has_table_privilege('authenticated', 'public.asset_payroll_accounts', 'MAINTAIN')
+      or pg_catalog.has_table_privilege('anon', 'public.asset_payroll_accounts', 'MAINTAIN') then
+      raise exception 'Unexpected effective MAINTAIN privilege';
+    end if;
+  end if;
+end $verify$;
+commit;
