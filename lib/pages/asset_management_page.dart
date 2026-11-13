@@ -72,6 +72,7 @@ import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_egress_policy.dart';
 import 'package:my_web_app/services/asset_management_fixed_cost_summary_service.dart';
+import 'package:my_web_app/widgets/asset_legacy_fixed_cost_read_boundary.dart';
 import 'package:my_web_app/services/asset_account_balance_history_store.dart';
 import 'package:my_web_app/services/asset_pref_mirror_prefetch.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
@@ -1022,6 +1023,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<Map<String, dynamic>> _subscriptions = [];
   List<Map<String, dynamic>> _subscriptionsThreeMonths = [];
   bool _isLoadingSubscriptions = false;
+  bool _subscriptionsLoadFailed = false;
+
+  bool get _legacyFixedCostReadIncomplete =>
+      _isLoadingSubscriptions || _subscriptionsLoadFailed;
 
   // --- 必須タスク用変数 ---
   List<Map<String, dynamic>> _mustTasks = [];
@@ -6732,7 +6737,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     buf.writeln('');
 
     buf.writeln('### ③ 固定費（$monthLabel）');
-    buf.writeln('- 月額合計: ¥${NumberFormat('#,###').format(totalFixed)}');
+    buf.writeln(
+      _legacyFixedCostReadIncomplete
+          ? '- 月額合計: 未取得（旧固定費の読込未完了）'
+          : '- 月額合計: ¥${NumberFormat('#,###').format(totalFixed)}',
+    );
     if (fixedCostSummary.isNotEmpty) {
       for (final entry in fixedCostSummary.entries) {
         buf.writeln(
@@ -8130,7 +8139,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 3. 固定費の記録（サブスク）
   // ==========================================
   Future<void> _fetchSubscriptions() async {
-    setState(() => _isLoadingSubscriptions = true);
+    setState(() {
+      _isLoadingSubscriptions = true;
+      _subscriptionsLoadFailed = false;
+    });
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) {
@@ -8176,6 +8188,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _subscriptions = [];
         _subscriptionsThreeMonths = [];
         _isLoadingSubscriptions = false;
+        _subscriptionsLoadFailed = true;
       });
     }
   }
@@ -10777,10 +10790,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _sectionAnchor(AssetManagementSectionId.calendar),
                 KeyedSubtree(
                   key: _keyCalendar,
-                  child: _buildAssetCalendarCard(assetLiabilityWorkbook),
+                  child: _withLegacyFixedCostReadStatus(
+                    _buildAssetCalendarCard(assetLiabilityWorkbook),
+                  ),
                 ),
                 const SizedBox(height: 16),
-                _buildCashflowForecastCard(assetLiabilityWorkbook),
+                _withLegacyFixedCostReadStatus(
+                  _buildCashflowForecastCard(assetLiabilityWorkbook),
+                ),
               ],
               if (_isSectionShown(
                   AssetManagementSectionId.monthlyDashboard)) ...[
@@ -10839,7 +10856,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
               if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
                 _sectionAnchor(AssetManagementSectionId.disposable),
-                _buildDisposableBalanceCard(),
+                _withLegacyFixedCostReadStatus(_buildDisposableBalanceCard()),
                 if (_supabase.auth.currentUser != null)
                   AssetInterestHistoryCard(
                     key: ValueKey('interest:${_supabase.auth.currentUser!.id}'),
@@ -10867,7 +10884,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
               if (_isSectionShown(AssetManagementSectionId.threeMonth)) ...[
                 _sectionAnchor(AssetManagementSectionId.threeMonth),
-                _buildThreeMonthOverviewCard(), // 3ヶ月俯瞰
+                _withLegacyFixedCostReadStatus(
+                  _buildThreeMonthOverviewCard(),
+                ), // 3ヶ月俯瞰
                 const SizedBox(height: 16),
               ],
               if (_isSectionShown(AssetManagementSectionId.debtPlanner)) ...[
@@ -10896,7 +10915,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               if (_isSectionShown(AssetManagementSectionId.subscriptions)) ...[
                 _sectionAnchor(AssetManagementSectionId.subscriptions),
                 Container(
-                    key: _keySubs, child: _buildSubscriptionCard()), // ③固定費
+                  key: _keySubs,
+                  child: _withLegacyFixedCostReadStatus(_buildSubscriptionCard()),
+                ), // ③固定費
                 const SizedBox(height: 24),
               ],
               if (_isSectionShown(AssetManagementSectionId.mustTasks)) ...[
@@ -20766,7 +20787,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             style: const TextStyle(fontSize: 12, height: 1.5),
           ),
           Text(
-            '固定費: ${_formatYen(fixedCost)}',
+            _legacyFixedCostReadIncomplete
+                ? '固定費: 未取得'
+                : '固定費: ${_formatYen(fixedCost)}',
             style: const TextStyle(fontSize: 12, height: 1.5),
           ),
           Text(
@@ -20903,7 +20926,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 _buildOverviewStatChip(
                   label: '固定費 先月比',
-                  value: _formatSignedYen(fixedDiff),
+                  value: _legacyFixedCostReadIncomplete
+                      ? '未取得'
+                      : _formatSignedYen(fixedDiff),
                   color: fixedDiffColor,
                 ),
                 _buildOverviewStatChip(
@@ -34583,6 +34608,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Widget _withLegacyFixedCostReadStatus(Widget child) {
+    return AssetLegacyFixedCostReadBoundary(
+      isLoading: _isLoadingSubscriptions,
+      hasError: _subscriptionsLoadFailed,
+      onRetry: _fetchSubscriptions,
+      child: child,
+    );
+  }
+
   Widget _buildSubscriptionCard() {
     final visibleSubscriptions = _subscriptionsForMonth(
       _selectedSubscriptionHistoryMonth,
@@ -34661,7 +34695,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '¥${NumberFormat('#,###').format(totalCost)}',
+                        _legacyFixedCostReadIncomplete
+                            ? '未取得'
+                            : '¥${NumberFormat('#,###').format(totalCost)}',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -34671,7 +34707,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '$unpaidLabel: ¥${NumberFormat('#,###').format(unpaidCost)}',
+                        _legacyFixedCostReadIncomplete
+                            ? '$unpaidLabel: 未取得'
+                            : '$unpaidLabel: ¥${NumberFormat('#,###').format(unpaidCost)}',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -34747,7 +34785,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             ),
                           ),
                           Text(
-                            '¥${NumberFormat('#,###').format(totalCost)}',
+                            _legacyFixedCostReadIncomplete
+                                ? '未取得'
+                                : '¥${NumberFormat('#,###').format(totalCost)}',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -34757,7 +34797,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '$unpaidLabel: ¥${NumberFormat('#,###').format(unpaidCost)}',
+                            _legacyFixedCostReadIncomplete
+                                ? '$unpaidLabel: 未取得'
+                                : '$unpaidLabel: ¥${NumberFormat('#,###').format(unpaidCost)}',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -34851,7 +34893,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           else if (fixedCostSummary.isEmpty)
             Padding(
               padding: const EdgeInsets.all(32),
-              child: Center(child: Text('$visibleMonthLabel の固定費はありません')),
+              child: Center(
+                child: Text(
+                  _legacyFixedCostReadIncomplete
+                      ? '$visibleMonthLabel の旧固定費は未取得です'
+                      : '$visibleMonthLabel の固定費はありません',
+                ),
+              ),
             )
           else if (visibleSubscriptions.isNotEmpty)
             ListView.builder(
