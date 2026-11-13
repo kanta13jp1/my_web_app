@@ -274,6 +274,94 @@ Deno.test("provider failures do not create a new thread or persist messages", as
   assertEquals(store.touches.length, 0);
 });
 
+function failure(error: string, isRetriable: boolean) {
+  return { ok: false, error, isRetriable };
+}
+
+Deno.test("falls back to nebius when the primary provider is out of balance", async () => {
+  const store = new FakeStore({ snapshots: [snapshot("2026-08", 10, 1)] });
+  const calls: AssetChatProviderRequest[] = [];
+  const result = await handleAssetChatAction({
+    store,
+    userId: "user-1",
+    body: { message: "質問", model: "gemini-3.1-pro" },
+    cache: new AssetChatContextCache(),
+    invokeProvider: (request) => {
+      calls.push(request);
+      return Promise.resolve(
+        request.provider === "nebius"
+          ? {
+            ok: true,
+            text: "回答",
+            modelUsed: "meta-llama/Llama-3.3-70B-Instruct",
+          }
+          : failure(
+            "paidPlanRequired: google: credit balance is too low",
+            true,
+          ),
+      );
+    },
+  });
+  assertEquals(calls.map((c) => c.provider), ["google", "nebius"]);
+  assertEquals(calls.map((c) => c.isFallback ?? false), [false, true]);
+  // 明示モデルは主プロバイダ専用。フォールバック先へは持ち越さない。
+  assertEquals(calls[0].model, "gemini-3.1-pro");
+  assertEquals(calls[1].model, undefined);
+  assertEquals(result.provider, "nebius");
+  assertEquals(store.exchanges.length, 1);
+});
+
+Deno.test("does not fall back on non-retriable failures (auth / bad input)", async () => {
+  for (
+    const error of [
+      "HTTP 401: invalid key",
+      "HTTP 400: bad request",
+      "apiKeyRequired",
+    ]
+  ) {
+    const calls: string[] = [];
+    const err = await captureError(() =>
+      handleAssetChatAction({
+        store: new FakeStore(),
+        userId: "user-1",
+        body: { message: "質問" },
+        cache: new AssetChatContextCache(),
+        invokeProvider: (request) => {
+          calls.push(request.provider);
+          return Promise.resolve(failure(error, false));
+        },
+      })
+    );
+    assertEquals(calls, ["google"]);
+    assert(
+      err instanceof AssetChatActionError,
+      "expected AssetChatActionError",
+    );
+  }
+});
+
+Deno.test("reports every provider when all retriable candidates fail", async () => {
+  const store = new FakeStore();
+  const err = await captureError(() =>
+    handleAssetChatAction({
+      store,
+      userId: "user-1",
+      body: { message: "質問", provider: "nebius" },
+      cache: new AssetChatContextCache(),
+      fallbackProviders: ["openai", "nebius"],
+      invokeProvider: (request) =>
+        Promise.resolve(failure(`HTTP 429: ${request.provider} limited`, true)),
+    })
+  );
+  assert(err instanceof AssetChatActionError, "expected AssetChatActionError");
+  assertEquals((err as AssetChatActionError).code, "providerFailed");
+  // nebius は重複排除され、openai→nebius の順に 2 社だけ試す。
+  const message = (err as AssetChatActionError).message;
+  assert(message.startsWith("all providers failed: nebius: HTTP 429"), message);
+  assert(message.includes("openai: HTTP 429"), message);
+  assertEquals(store.exchanges.length, 0);
+});
+
 Deno.test("validates bounded request fields", async () => {
   const store = new FakeStore();
   const invalidThread = await captureError(() =>
