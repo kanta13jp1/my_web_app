@@ -48,6 +48,6 @@ jobs:
           flutter drive \
             --driver=test_driver/asset_ai_integration.dart \
             --target=integration_test/asset_upper_guard_probe_test.dart \
-            --dart-define=ASSET_GUARD_SUITE=$suite \
+            --dart-define=SUITE=$suite \
             -d web-server --browser-name=chrome --headless
           done

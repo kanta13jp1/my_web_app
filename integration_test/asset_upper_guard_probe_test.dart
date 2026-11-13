@@ -4,7 +4,7 @@ import '../test/widgets/asset_salary_confirmation_guard_test.dart' as salary;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-  const suite = String.fromEnvironment('ASSET_GUARD_SUITE', defaultValue: 'bulk');
+  const suite = String.fromEnvironment('SUITE', defaultValue: 'bulk');
   if (suite == 'salary') {
     salary.main();
   } else {
