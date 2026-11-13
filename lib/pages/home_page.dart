@@ -61,6 +61,7 @@ import '../widgets/home_calendar_summary_pill.dart';
 import '../widgets/home_calendar_cashflow_line.dart';
 import '../widgets/home_calendar_day_indicators.dart';
 import '../widgets/home_calendar_day_surface.dart';
+import '../widgets/home_ops_snapshot_view.dart';
 import '../widgets/home_calendar_day_number.dart';
 import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
@@ -5136,10 +5137,10 @@ abstinence_slip_details: $slipDetailsText
         ),
         child: RefreshIndicator(
           onRefresh: _refreshKpis,
-          child: FutureBuilder<_HomeOpsSnapshot>(
+          child: HomeOpsSnapshotView<_HomeOpsSnapshot>(
             future: _opsSnapshotFuture,
-            builder: (context, snapshot) {
-              final opsSnapshot = snapshot.data ?? const _HomeOpsSnapshot();
+            emptyValue: const _HomeOpsSnapshot(),
+            builder: (context, opsSnapshot) {
               final nextAction = _resolveNextAction(opsSnapshot);
               final highlightMonthlyFlow =
                   nextAction.type == _HomeActionType.monthlyFlowReview;
