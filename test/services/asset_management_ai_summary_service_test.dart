@@ -230,13 +230,17 @@ void main() {
         },
       );
       final row = workbook.cashflowRows.firstWhere(
-        (row) => row.accountId == AssetLiabilityPlanningService.kddiProviderAccountId,
+        (row) =>
+            row.accountId == AssetLiabilityPlanningService.kddiProviderAccountId,
       );
       expect(row.paymentSourceAccountId, 'paypay_card');
       expect(row.isDirectCashflowTarget, isTrue);
       expect(row.cashAfterPayment, row.cashBeforePayment);
-      final report = const AssetManagementInsightService().buildReport(workbook: workbook);
-      final text = AssetManagementAiSummaryService().buildDeterministicSummary(report);
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+      );
+      final text =
+          AssetManagementAiSummaryService().buildDeterministicSummary(report);
       final section = text.split('## 4. 未払い項目').last.split('## 5.').first;
       expect(section, isNot(contains('KDDI:')));
     });

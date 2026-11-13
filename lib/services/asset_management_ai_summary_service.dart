@@ -8,6 +8,7 @@ import '../models/user_profile.dart';
 import 'ai_hub_chat_service.dart';
 import 'asset_management_ai_provider_router.dart';
 import 'asset_management_insight_service.dart';
+import 'asset_payment_calendar_service.dart';
 import 'asset_payment_status_summary.dart';
 
 class AssetManagementAiSummaryFeatureFlag {
@@ -499,11 +500,23 @@ class AssetManagementAiSummaryService {
     // Use the same precomputed priority order and direct-payment predicate as
     // the detailed payload. Never label paid or card-included rows as unpaid.
     final debts = report.workbook.repaymentPriorityRows.take(5).toList();
+    final sourceKinds = {
+      for (final account in report.workbook.accounts) account.id: account.kind,
+    };
+    final cardFundedFixedCostIds = {
+      for (final row in report.workbook.debtMasterRows)
+        if (AssetCalendarDebtInput.fromDebtRow(
+          row,
+          sourceAccountKindsById: sourceKinds,
+        ).isCardFundedFixedCost)
+          row.id,
+    };
     final unpaid = report.workbook.cashflowRows
         .where(
           (row) =>
               row.isPayment &&
               row.isDirectCashflowTarget &&
+              !cardFundedFixedCostIds.contains(row.accountId) &&
               !row.paid &&
               row.paymentAmount > 0,
         )
