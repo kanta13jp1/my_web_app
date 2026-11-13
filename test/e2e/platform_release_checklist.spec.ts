@@ -18,11 +18,15 @@ async function markWeb(page: Page) {
   await page.getByRole('menuitem', { name: '確認済み', exact: true }).click();
   await expect(status(page, 'Web', '確認済み')).toBeVisible();
   const note = page.getByRole('textbox', { name: /^Web の確認メモ(?: |$)/ });
-  await note.focus();
-  await expect(note).toBeFocused();
-  // Send normal keystrokes after focus rather than replacing the semantic input value.
-  await note.pressSequentially('Chrome で確認');
-  await expect(note).toHaveValue('Chrome で確認');
+  // Flutter may replace its semantic input while native focus is being attached.
+  // Retry only UI entry; durability and post-reload assertions remain outside this block.
+  await expect(async () => {
+    await note.focus();
+    await expect(note).toBeFocused();
+    await note.press('ControlOrMeta+A');
+    await note.pressSequentially('Chrome で確認');
+    await expect(note).toHaveValue('Chrome で確認');
+  }).toPass({ timeout: 15_000 });
   // Observe durability before navigating away, rather than guessing a delay.
   // This is read-only: the post-reload UI assertions remain the acceptance test.
   await expect.poll(() => page.evaluate(() => {
