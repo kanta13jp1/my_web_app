@@ -1123,6 +1123,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   double? _konbiniUdonLoadedForDebt;
   final AssetManagementDisplayModeStore _displayModeStore =
       const AssetManagementDisplayModeStore();
+  bool _displayModeSavePending = false;
   AssetManagementDisplayMode _displayMode =
       AssetManagementDisplayModeStore.defaultMode;
   bool _assetChatMaskMoneyAmounts = false;
@@ -15012,13 +15013,30 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _setDisplayMode(AssetManagementDisplayMode mode) async {
-    if (mode == _displayMode) {
+    if (_displayModeSavePending || mode == _displayMode) {
+      return;
+    }
+    _displayModeSavePending = true;
+    try {
+      await _displayModeStore.save(mode);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('表示設定の保存を確認できません。再読込して保存状態を確認してください。'),
+          ),
+        );
+      }
+      return;
+    } finally {
+      _displayModeSavePending = false;
+    }
+    if (!mounted) {
       return;
     }
     setState(() {
       _displayMode = mode;
     });
-    await _displayModeStore.save(mode);
     unawaited(_sendDisplayModeEvent(eventType: 'switch', mode: mode));
     unawaited(_mirrorDisplayPrefs());
     await _refreshDisplayModeStats();
