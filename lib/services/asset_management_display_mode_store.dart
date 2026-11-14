@@ -589,7 +589,9 @@ class AssetManagementDisplayModeStore {
     bool recordEvent = true,
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
-    await store.setString(_modeKey, mode.storageId);
+    if (!await store.setString(_modeKey, mode.storageId)) {
+      throw StateError('表示設定の保存を確認できませんでした。');
+    }
     if (!recordEvent) {
       return;
     }

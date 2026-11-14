@@ -116,6 +116,7 @@ const List<String> kAllAppRoutes = <String>[
   '/deployment-monitoring',
   '/dev/claude-design-importer',
   '/development-achievements',
+  '/diet-debates',
   '/digest-queue',
   '/digital-danshari',
   '/digital-wallet',

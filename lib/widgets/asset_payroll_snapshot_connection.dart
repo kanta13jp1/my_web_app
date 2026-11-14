@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/asset_payroll_snapshot_store.dart';
+import '../services/asset_payroll_snapshot_history.dart';
 import 'asset_payroll_snapshot_section.dart';
 
 /// Resolve authentication before creating any owner-bound store or Future.
@@ -26,9 +27,13 @@ class AssetPayrollSnapshotConnection extends StatelessWidget {
         ),
       );
     }
+    final store = createStore(owner);
     return AssetPayrollSnapshotSection(
       key: ValueKey('payroll-confirmed-snapshot-$owner'),
-      store: createStore(owner),
+      store: store,
+      historyReader: store is SupabasePayrollSnapshotStore
+          ? SupabasePayrollSnapshotHistoryReader(store.client, owner)
+          : null,
       initialMonth: initialMonth,
     );
   }

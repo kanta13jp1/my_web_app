@@ -94,6 +94,7 @@ export interface OfficialEndorsementPrefectureSnapshot {
 }
 
 export interface OfficialEndorsementSnapshot {
+  sourceCountsComplete?: boolean;
   sourceUrl: string;
   sourceAsOf: string;
   sourceDocumentSha256: string;
@@ -293,6 +294,13 @@ export async function verifyElectionGoalSources(
   };
 }
 
+function requireEndorsementCount(value: unknown): number {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
+    throw new Error("official endorsement snapshot has a missing or invalid count");
+  }
+  return value;
+}
+
 export function normalizeOfficialEndorsementSnapshot(
   value: unknown,
 ): OfficialEndorsementSnapshot {
@@ -304,29 +312,30 @@ export function normalizeOfficialEndorsementSnapshot(
       const row = asRecord(item);
       return {
         prefecture: asString(row.prefecture),
-        totalCount: asNumber(row.totalCount),
-        incumbentCount: asNumber(row.incumbentCount),
-        newcomerCount: asNumber(row.newcomerCount),
-        formerCount: asNumber(row.formerCount),
-        prefecturalCount: asNumber(row.prefecturalCount),
-        municipalCount: asNumber(row.municipalCount),
+        totalCount: requireEndorsementCount(row.totalCount),
+        incumbentCount: requireEndorsementCount(row.incumbentCount),
+        newcomerCount: requireEndorsementCount(row.newcomerCount),
+        formerCount: requireEndorsementCount(row.formerCount),
+        prefecturalCount: requireEndorsementCount(row.prefecturalCount),
+        municipalCount: requireEndorsementCount(row.municipalCount),
       };
     }).filter((row) => row.prefecture !== "")
     .sort((left, right) =>
       left.prefecture.localeCompare(right.prefecture, "ja")
     );
   const snapshot: OfficialEndorsementSnapshot = {
+    sourceCountsComplete: true,
     sourceUrl: asUrl(raw.sourceUrl),
     sourceAsOf: asString(raw.sourceAsOf),
     sourceDocumentSha256: asString(raw.sourceDocumentSha256),
-    totalCount: asNumber(summary.totalCount),
-    incumbentCount: asNumber(summary.incumbentCount),
-    newcomerCount: asNumber(summary.newcomerCount),
-    formerCount: asNumber(summary.formerCount),
-    recommendationCount: asNumber(recommendations.totalCount),
-    prefectureCount: asNumber(summary.prefectureCount),
-    prefecturalCount: asNumber(summary.prefecturalCount),
-    municipalCount: asNumber(summary.municipalCount),
+    totalCount: requireEndorsementCount(summary.totalCount),
+    incumbentCount: requireEndorsementCount(summary.incumbentCount),
+    newcomerCount: requireEndorsementCount(summary.newcomerCount),
+    formerCount: requireEndorsementCount(summary.formerCount),
+    recommendationCount: requireEndorsementCount(recommendations.totalCount),
+    prefectureCount: requireEndorsementCount(summary.prefectureCount),
+    prefecturalCount: requireEndorsementCount(summary.prefecturalCount),
+    municipalCount: requireEndorsementCount(summary.municipalCount),
     prefectures,
   };
   const breakdown = snapshot.incumbentCount + snapshot.newcomerCount +

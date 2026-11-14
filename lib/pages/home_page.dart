@@ -58,6 +58,12 @@ import '../widgets/home_billing_nudge.dart';
 import '../widgets/home_primary_action_card.dart';
 import '../widgets/home_calendar_month_header.dart';
 import '../widgets/home_calendar_summary_pill.dart';
+import '../widgets/home_calendar_cashflow_line.dart';
+import '../widgets/home_calendar_day_indicators.dart';
+import '../widgets/home_calendar_day_surface.dart';
+import '../widgets/home_ops_snapshot_view.dart';
+import '../models/home_daily_cashflow_summary.dart';
+import '../widgets/home_calendar_day_number.dart';
 import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
@@ -741,13 +747,13 @@ class _HomePageState extends State<HomePage> with RouteAware {
     }
   }
 
-  Future<Map<String, _HomeDailyCashflowSummary>> _loadCalendarCashflowMap({
+  Future<Map<String, HomeDailyCashflowSummary>> _loadCalendarCashflowMap({
     required DateTime startDate,
     required DateTime endDate,
   }) async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) {
-      return <String, _HomeDailyCashflowSummary>{};
+      return <String, HomeDailyCashflowSummary>{};
     }
 
     final normalizedStart = _startOfDay(startDate);
@@ -765,7 +771,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
           .lt('occurred_at', normalizedEndExclusive.toUtc().toIso8601String())
           .order('occurred_at', ascending: true);
       final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
-      final result = <String, _HomeDailyCashflowSummary>{};
+      final result = <String, HomeDailyCashflowSummary>{};
 
       for (final row in rows.whereType<Map<String, dynamic>>()) {
         final occurredAt = DateTime.tryParse(
@@ -774,7 +780,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
         if (occurredAt == null) continue;
 
         final dateKey = _statusDateKey(occurredAt);
-        final current = result[dateKey] ?? const _HomeDailyCashflowSummary();
+        final current = result[dateKey] ?? const HomeDailyCashflowSummary();
         final actionType = row['action_type']?.toString() ?? '';
         final amount = _toIntValue(row['amount']);
 
@@ -798,7 +804,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
       return result;
     } catch (e) {
       debugPrint('Error loading calendar cashflow map: $e');
-      return <String, _HomeDailyCashflowSummary>{};
+      return <String, HomeDailyCashflowSummary>{};
     }
   }
 
@@ -1490,7 +1496,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
         tasksByDate[dateKey] ?? const <_HomeCalendarTask>[],
       );
       final cashflow =
-          cashflowByDate[dateKey] ?? const _HomeDailyCashflowSummary();
+          cashflowByDate[dateKey] ?? const HomeDailyCashflowSummary();
       final hasProtection = abstinence.enabledCount > 0;
       final hasSlip = abstinence.totalSlipCount > 0;
       final isFuture = day.isAfter(DateTime(now.year, now.month, now.day));
@@ -3076,19 +3082,6 @@ abstinence_slip_details: $slipDetailsText
               final matchesFilter = _matchesCalendarHighlightFilter(day);
               final accentColor =
                   day.isCurrentMonth ? status.color : const Color(0xFFB0B0B0);
-              final backgroundColor = day.isCurrentMonth
-                  ? matchesFilter
-                      ? accentColor.withValues(
-                          alpha: day.hasAbstinenceSlip
-                              ? 0.18
-                              : status.label == '無傷'
-                                  ? 0.14
-                                  : status.label == '未設定'
-                                      ? 0.08
-                                      : 0.1,
-                        )
-                      : const Color(0xFFB0B0B0).withValues(alpha: 0.035)
-                  : const Color(0xFFB0B0B0).withValues(alpha: 0.05);
 
               return Material(
                 color: Colors.transparent,
@@ -3103,53 +3096,32 @@ abstinence_slip_details: $slipDetailsText
                     });
                     await _showCalendarDayDetails(context, day);
                   },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: backgroundColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: day.isToday
-                            ? const Color(0xFF6366F1)
-                            : day.isCurrentMonth
-                                ? matchesFilter
-                                    ? accentColor.withValues(alpha: 0.22)
-                                    : const Color(
-                                        0xFFB0B0B0,
-                                      ).withValues(alpha: 0.08)
-                                : Colors.transparent,
-                        width: day.isToday ? 1.6 : 1,
-                      ),
-                    ),
+                  child: HomeCalendarDaySurface(
+                    accentColor: accentColor,
+                    isToday: day.isToday,
+                    isCurrentMonth: day.isCurrentMonth,
+                    matchesFilter: matchesFilter,
+                    hasSlip: day.hasAbstinenceSlip,
+                    isClean: status.label == '無傷',
+                    isUnset: status.label == '未設定',
                     child: Padding(
                       padding: const EdgeInsets.all(6),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '${day.date.day}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: day.isCurrentMonth
-                                  ? matchesFilter
-                                      ? (status.label == '未設定'
-                                          ? (isDark
-                                              ? Colors.white.withValues(
-                                                  alpha: 0.7,
-                                                )
-                                              : const Color(0xDE000000))
-                                          : accentColor)
-                                      : isDark
-                                          ? const Color(0xFF666666)
-                                          : const Color(0xFFB0B0B0)
-                                  : const Color(0xFFB0B0B0),
-                              height: 1.5,
-                            ),
+                          HomeCalendarDayNumber(
+                            day: day.date.day,
+                            isCurrentMonth: day.isCurrentMonth,
+                            matchesFilter: matchesFilter,
+                            isUnset: status.label == '未設定',
+                            isDark: isDark,
+                            accentColor: accentColor,
                           ),
                           if (day.isCurrentMonth && day.hasCashflow) ...[
                             const SizedBox(height: 4),
                             if (day.cashflow.incomeCount > 0)
-                              _buildCalendarCashflowLine(
-                                key: Key(
+                              HomeCalendarCashflowLine(
+                                textKey: Key(
                                   'calendar_day_income_${DateFormat('yyyy-MM-dd').format(day.date)}',
                                 ),
                                 label: '収',
@@ -3159,8 +3131,8 @@ abstinence_slip_details: $slipDetailsText
                                 isEmphasized: matchesFilter,
                               ),
                             if (day.cashflow.expenseCount > 0)
-                              _buildCalendarCashflowLine(
-                                key: Key(
+                              HomeCalendarCashflowLine(
+                                textKey: Key(
                                   'calendar_day_expense_${DateFormat('yyyy-MM-dd').format(day.date)}',
                                 ),
                                 label: '支',
@@ -3171,47 +3143,18 @@ abstinence_slip_details: $slipDetailsText
                               ),
                           ],
                           const Spacer(),
-                          Wrap(
-                            spacing: 3,
-                            runSpacing: 3,
-                            children: [
-                              if (day.morningDone)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFFFC107),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
-                              if (day.balanceDone)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFF4CAF50),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                          HomeCalendarDayIndicators(
+                            colors: [
+                              if (day.morningDone) const Color(0xFFFFC107),
+                              if (day.balanceDone) const Color(0xFF4CAF50),
                               if (day.hasAbstinenceProtection &&
                                   !day.hasAbstinenceSlip)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFE53935),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                                const Color(0xFFE53935),
                               if (day.hasAbstinenceSlip)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFFF6B35),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
-                              if (day.isSaturday)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFF009688),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                                const Color(0xFFFF6B35),
+                              if (day.isSaturday) const Color(0xFF009688),
                             ],
+                            isEmphasized: matchesFilter,
                           ),
                         ],
                       ),
@@ -3765,46 +3708,6 @@ abstinence_slip_details: $slipDetailsText
         task.secondaryLabel == null ? '' : ' ${task.secondaryLabel}';
     final important = task.isImportant ? ' [重要]' : '';
     return '[$sourceLabel/$stateLabel]$secondary$important ${task.title}';
-  }
-
-  Widget _buildCalendarDot(Color color) {
-    return Container(
-      width: 7,
-      height: 7,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
-
-  Color _calendarDotDisplayColor(Color color, {required bool isEmphasized}) {
-    if (isEmphasized) return color;
-    return color.withValues(alpha: 0.22);
-  }
-
-  Widget _buildCalendarCashflowLine({
-    required Key key,
-    required String label,
-    required int amount,
-    required Color color,
-    required String sign,
-    required bool isEmphasized,
-  }) {
-    final textColor = isEmphasized ? color : color.withValues(alpha: 0.74);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 1),
-      child: Text(
-        '$label $sign${_formatCalendarCashflowAmount(amount)}',
-        key: key,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: textColor,
-          height: 1.6,
-        ),
-      ),
-    );
   }
 
   Widget _buildCalendarSummaryPill({
@@ -5235,10 +5138,10 @@ abstinence_slip_details: $slipDetailsText
         ),
         child: RefreshIndicator(
           onRefresh: _refreshKpis,
-          child: FutureBuilder<_HomeOpsSnapshot>(
+          child: HomeOpsSnapshotView<_HomeOpsSnapshot>(
             future: _opsSnapshotFuture,
-            builder: (context, snapshot) {
-              final opsSnapshot = snapshot.data ?? const _HomeOpsSnapshot();
+            emptyValue: const _HomeOpsSnapshot(),
+            builder: (context, opsSnapshot) {
               final nextAction = _resolveNextAction(opsSnapshot);
               final highlightMonthlyFlow =
                   nextAction.type == _HomeActionType.monthlyFlowReview;
@@ -9046,16 +8949,6 @@ abstinence_slip_details: $slipDetailsText
     return '${NumberFormat('#,##0', 'ja_JP').format(value.round())}円';
   }
 
-  String _formatCalendarCashflowAmount(int value) {
-    final absValue = value.abs();
-    if (absValue >= 10000) {
-      final man = absValue / 10000;
-      final digits = man >= 100 ? 0 : 1;
-      return '${man.toStringAsFixed(digits)}万';
-    }
-    return NumberFormat('#,##0', 'ja_JP').format(absValue);
-  }
-
   String _formatPercentRatio(double part, double total) {
     if (total == 0) return '--';
     return '${(part / total * 100).toStringAsFixed(2)}%';
@@ -9673,7 +9566,7 @@ class _HomeCalendarDay {
   final List<String> slipDetails;
   final List<String> missingItems;
   final String relapsePreventionAction;
-  final _HomeDailyCashflowSummary cashflow;
+  final HomeDailyCashflowSummary cashflow;
   final List<_HomeCalendarTask> tasks;
 
   const _HomeCalendarDay({
@@ -9691,7 +9584,7 @@ class _HomeCalendarDay {
     required this.slipDetails,
     required this.missingItems,
     required this.relapsePreventionAction,
-    this.cashflow = const _HomeDailyCashflowSummary(),
+    this.cashflow = const HomeDailyCashflowSummary(),
     this.tasks = const <_HomeCalendarTask>[],
   });
 
@@ -9700,50 +9593,6 @@ class _HomeCalendarDay {
   int get totalTaskCount => tasks.length;
 
   int get completedTaskCount => tasks.where((task) => task.isCompleted).length;
-}
-
-class _HomeDailyCashflowSummary {
-  final int incomeTotal;
-  final int expenseTotal;
-  final int transferTotal;
-  final int incomeCount;
-  final int expenseCount;
-  final int transferCount;
-
-  const _HomeDailyCashflowSummary({
-    this.incomeTotal = 0,
-    this.expenseTotal = 0,
-    this.transferTotal = 0,
-    this.incomeCount = 0,
-    this.expenseCount = 0,
-    this.transferCount = 0,
-  });
-
-  _HomeDailyCashflowSummary copyWith({
-    int? incomeTotal,
-    int? expenseTotal,
-    int? transferTotal,
-    int? incomeCount,
-    int? expenseCount,
-    int? transferCount,
-  }) {
-    return _HomeDailyCashflowSummary(
-      incomeTotal: incomeTotal ?? this.incomeTotal,
-      expenseTotal: expenseTotal ?? this.expenseTotal,
-      transferTotal: transferTotal ?? this.transferTotal,
-      incomeCount: incomeCount ?? this.incomeCount,
-      expenseCount: expenseCount ?? this.expenseCount,
-      transferCount: transferCount ?? this.transferCount,
-    );
-  }
-
-  int get recordCount => incomeCount + expenseCount;
-
-  int get netTotal => incomeTotal - expenseTotal;
-
-  bool get hasCashflow => recordCount > 0;
-
-  bool get hasAnyEntry => hasCashflow || transferCount > 0;
 }
 
 enum _HomeCalendarTaskSource { dailyTodo, mindless }
