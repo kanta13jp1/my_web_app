@@ -83,4 +83,37 @@ void main() {
       '20',
     );
   });
+  const observedLabels = {
+    PayslipItemGroup.earning: {'travel_expenses': '交通費'},
+    PayslipItemGroup.attendance: {
+      'overtime_hours_legal': '残業時間（法定内）',
+      'late_night_work_hours': '深夜勤務時間',
+      'overtime_hours_non_legal': '残業時間（法定外）',
+      'actual_working_hours_legal': '実働時間（法定内）',
+      'statutory_holiday_work_hours': '法定休日出勤時間',
+      'non_statutory_holiday_work_hours': '法定外休日出勤時間',
+      'scheduled_working_days_current_month': '所定労働日数（当月）',
+    },
+  };
+  for (final group in observedLabels.entries) {
+    for (final entry in group.value.entries) {
+      test('labels observed payroll alias ${entry.key}', () {
+        expect(PayslipItemLabel.label(group.key, entry.key), entry.value);
+        expect(PayslipItemLabel.value(group.key, entry.key, 0), '0');
+        expect(PayslipItemLabel.value(group.key, entry.key, -1.5), '-1.5');
+        expect(PayslipItemLabel.value(group.key, entry.key, '19?'), '19?');
+        expect(PayslipItemLabel.value(group.key, entry.key, null), '未取得');
+      });
+    }
+  }
+  test('observed aliases remain scoped to their item group', () {
+    expect(
+      PayslipItemLabel.label(PayslipItemGroup.attendance, 'travel_expenses'),
+      'その他（travel_expenses）',
+    );
+    expect(
+      PayslipItemLabel.label(PayslipItemGroup.earning, 'overtime_hours_legal'),
+      'その他（overtime_hours_legal）',
+    );
+  });
 }
