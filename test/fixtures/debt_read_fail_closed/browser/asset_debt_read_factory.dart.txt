@@ -1,0 +1,123 @@
+// This file is copied only to a disposable, network-isolated scratch checkout.
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
+import 'package:my_web_app/services/asset_liability_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'asset_debt_read_contract.dart';
+
+const _owner = 'synthetic-owner';
+const _token = 'synthetic-token';
+const _debtName = 'Synthetic Loan';
+final _date = DateTime(2026, 10, 14);
+const _snapshot = <String, double>{_debtName: -10000};
+
+class _LocalRepository extends SharedPreferencesAssetLiabilityRepository {
+  _LocalRepository(this.initial);
+  final Map<String, int> initial;
+  final saves = <Map<String, int>>[];
+  @override
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() async => Map.of(initial);
+  @override
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> value) async {
+    saves.add(Map<String, int>.of(value));
+  }
+}
+
+class _Transport {
+  _Transport(this.scenario, this.id);
+  final DebtReadScenario scenario;
+  final String id;
+  final owners = <String>[];
+  final writes = <Map<String, int>>[];
+  final started = Completer<void>();
+  final release = Completer<void>();
+  int errorsEmitted = 0;
+  Future<List<Map<String, dynamic>>> read(String owner) async {
+    owners.add(owner);
+    if (!started.isCompleted) started.complete();
+    await release.future;
+    if (scenario == DebtReadScenario.failed) {
+      errorsEmitted++;
+      throw StateError('synthetic read failure');
+    } else if (scenario == DebtReadScenario.missing) {
+      return <Map<String, dynamic>>[];
+    } else {
+      return <Map<String, dynamic>>[
+      <String, dynamic>{
+        'user_id': _owner,
+        'pref_key': 'debt_payment_day_overrides',
+        'value': <String, int>{id: 17},
+        'updated_at': null,
+      },
+      ];
+    }
+  }
+  void respond() => release.complete();
+  Future<void> write(Map<String, int> value) async {
+    writes.add(Map<String, int>.of(value));
+  }
+}
+
+Session _session() => Session(
+  accessToken: _token,
+  tokenType: 'bearer',
+  user: User(id: _owner, appMetadata: const {}, userMetadata: const {},
+      aud: 'authenticated', createdAt: '2026-01-01T00:00:00Z'),
+);
+
+
+DebtReadHarness makeDebtReadHarness(DebtReadScenario scenario) => _Harness(scenario);
+
+class _Harness implements DebtReadHarness {
+  _Harness(this.scenario) {
+    final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+      latestSnapshot: _snapshot, baseDate: _date,
+    );
+    id = workbook.debtMasterRows.singleWhere((r) => r.name == _debtName).id;
+    transport = _Transport(scenario, id);
+    repository = _LocalRepository(scenario == DebtReadScenario.existing
+      ? <String, int>{} : <String, int>{id: 10});
+  }
+  final DebtReadScenario scenario;
+  @override
+  late final String id;
+  late final _Transport transport;
+  late final _LocalRepository repository;
+  final key = GlobalKey();
+  dynamic get _state {
+    final value = key.currentState;
+    if (value == null) throw StateError('page not mounted');
+    return value;
+  }
+  @override
+  Widget root() => MaterialApp(home: AssetManagementPage(
+    key: key, debugNow: _date, debugCalendarNow: _date,
+    debugInitialAssetData: <String, Map<String, double>>{'2026-10-14': _snapshot},
+    assetLiabilityRepository: repository, debugMirrorReadsAuthoritative: true,
+    debugDebtRead: transport.read, debugDebtWrite: transport.write,
+    debugDebtOwner: () => _owner, debugDebtToken: () => _token,
+    debugDebtAuthEvents: Stream<AuthState>.value(AuthState(AuthChangeEvent.signedIn, _session())),
+  ));
+  @override
+  Future<void> get readStarted => transport.started.future;
+  @override
+  void respond() => transport.respond();
+  @override
+  Future<void> waitRestore() => _state.debugWaitDebtAutoRestoreForTest() as Future<void>;
+  @override
+  Future<void> waitBackfills() => _state.debugWaitDebtBackfillsForTest() as Future<void>;
+  @override
+  Future<void> waitSaves() => _state.debugWaitDebtSavesForTest() as Future<void>;
+  @override
+  Future<void> waitWrites() => _state.debugWaitDebtWritesForTest() as Future<void>;
+  @override
+  List<String> get owners => transport.owners;
+  @override
+  List<Map<String, int>> get writes => transport.writes;
+  @override
+  List<Map<String, int>> get saves => repository.saves;
+  @override
+  int get errorsEmitted => transport.errorsEmitted;
+}
