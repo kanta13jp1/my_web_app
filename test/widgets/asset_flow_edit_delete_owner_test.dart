@@ -87,7 +87,8 @@ void main() {
             return http.Response(
               failResponse
                   ? jsonEncode(
-                      {'code': 'XX000', 'message': 'synthetic failure'})
+                      {'code': 'XX000', 'message': 'synthetic failure'},
+                    )
                   : '',
               failResponse ? 400 : 204,
               headers: headers,
@@ -190,9 +191,13 @@ void main() {
             expect(writes, shouldWrite ? 1 : 0);
             if (shouldWrite) {
               expect(
-                  mutation!.method, operation == 'edit' ? 'PATCH' : 'DELETE');
+                mutation!.method,
+                operation == 'edit' ? 'PATCH' : 'DELETE',
+              );
               expect(
-                  mutation!.url.queryParameters['id'], 'eq.synthetic-flow-id');
+                mutation!.url.queryParameters['id'],
+                'eq.synthetic-flow-id',
+              );
               if (phase != 'dialog') await switchSession();
               await tester.runAsync(() async {
                 writeGate.complete();
@@ -209,13 +214,15 @@ void main() {
             if (mode != 'same') {
               expect(
                 find.textContaining(
-                    operation == 'edit' ? '収支記録の更新に失敗しました' : '収支記録の削除に失敗しました'),
+                  operation == 'edit' ? '収支記録の更新に失敗しました' : '収支記録の削除に失敗しました',
+                ),
                 findsNothing,
               );
             } else if (failResponse) {
               expect(
                 find.textContaining(
-                    operation == 'edit' ? '収支記録の更新に失敗しました' : '収支記録の削除に失敗しました'),
+                  operation == 'edit' ? '収支記録の更新に失敗しました' : '収支記録の削除に失敗しました',
+                ),
                 findsOneWidget,
               );
             }
