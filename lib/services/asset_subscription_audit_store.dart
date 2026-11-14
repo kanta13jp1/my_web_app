@@ -70,10 +70,17 @@ class AssetSubscriptionAuditStore {
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     if (state.isEmpty) {
-      await store.remove(key);
+      final removed = await store.remove(key);
+      if (!removed) {
+        throw StateError('Subscription audit preferences were not removed');
+      }
       return;
     }
-    await store.setString(key, jsonEncode(encodeMirrorValue(state)));
+    final saved =
+        await store.setString(key, jsonEncode(encodeMirrorValue(state)));
+    if (!saved) {
+      throw StateError('Subscription audit preferences were not saved');
+    }
   }
 
   /// `{sourceId: iso8601(UTC)}` へ変換する (ローカル保存とサーバミラー共通形)。
