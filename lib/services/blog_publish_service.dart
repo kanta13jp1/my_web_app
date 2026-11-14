@@ -73,7 +73,7 @@ class BlogPublishService {
     final data = await _supabase
         .from('blog_posts')
         .select(
-          'id, title, content, excerpt, status, posted_at, published_at, url, created_by, created_at, target_platforms, tags',
+          'id, title, content, excerpt:content_preview, status, posted_at, published_at:posted_at, url, created_by, created_at, target_platforms, tags',
         )
         .eq('status', 'posted')
         .order('posted_at', ascending: false)
@@ -86,7 +86,7 @@ class BlogPublishService {
     final data = await _supabase
         .from('blog_posts')
         .select(
-          'id, title, content, excerpt, status, posted_at, published_at, url, notes, created_by, created_at, target_platforms, tags',
+          'id, title, content, excerpt:content_preview, status, posted_at, published_at:posted_at, url, notes, created_by, created_at, target_platforms, tags',
         )
         .eq('id', id)
         .maybeSingle();
