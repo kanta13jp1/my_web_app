@@ -757,7 +757,9 @@ class _AssetPayrollSnapshotSectionState
                   Text(
                     '前月との差：${comparison?.deltaYen == null ? '比較対象未取得' : '${comparison!.deltaYen}円'}',
                   ),
-                  if (widget.historyReader != null && !_loading)
+                  if (widget.historyReader != null &&
+                      !_loading &&
+                      _account != null)
                     AssetPayrollSnapshotHistory(
                       key: ValueKey('history-${widget.store.ownerId}-$_account-'
                           '${_month.year}-${_month.month}'),

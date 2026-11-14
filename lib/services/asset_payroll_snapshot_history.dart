@@ -96,20 +96,20 @@ class SupabasePayrollSnapshotHistoryReader
       }
       entries.add(
         PayrollSnapshotHistoryEntry(
-        id: (row['id'] as num).toInt(),
-        previousId: row['old_observation_id'] as String?,
-        reason: row['reason'] as String,
-        changedAt: DateTime.parse(row['changed_at'] as String),
-        record: PayrollSnapshotRecord(
-          id: observation['id'] as String,
-          ownerId: ownerId,
-          accountId: accountId,
-          month: DateTime(month.year, month.month),
-          balanceYen: amount.toInt(),
-          depositDate: DateTime.parse(observation['deposit_date'] as String),
-          note: observation['source_note'] as String,
+          id: (row['id'] as num).toInt(),
+          previousId: row['old_observation_id'] as String?,
+          reason: row['reason'] as String,
+          changedAt: DateTime.parse(row['changed_at'] as String),
+          record: PayrollSnapshotRecord(
+            id: observation['id'] as String,
+            ownerId: ownerId,
+            accountId: accountId,
+            month: DateTime(month.year, month.month),
+            balanceYen: amount.toInt(),
+            depositDate: DateTime.parse(observation['deposit_date'] as String),
+            note: observation['source_note'] as String,
+          ),
         ),
-      ),
       );
     }
     return PayrollSnapshotHistoryPage(

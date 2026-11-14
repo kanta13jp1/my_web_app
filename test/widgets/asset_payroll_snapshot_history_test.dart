@@ -19,25 +19,26 @@ class _Reader implements PayrollSnapshotHistoryReader {
 }
 
 PayrollSnapshotHistoryPage _page({String owner = 'owner-a'}) =>
-    PayrollSnapshotHistoryPage([
-      PayrollSnapshotHistoryEntry(
-        id: 2,
-        previousId: 'old-observation',
-        reason: '本人から入金直後の額を訂正',
-        changedAt: DateTime.utc(2026, 10, 25, 1),
-        record: PayrollSnapshotRecord(
-          id: 'new-observation',
-          balanceYen: 12345,
-          ownerId: owner,
-          accountId: 'account-a',
-          month: DateTime(2026, 10),
-          depositDate: DateTime(2026, 10, 23),
-          note: '本人確認メモ',
+    PayrollSnapshotHistoryPage(
+      [
+        PayrollSnapshotHistoryEntry(
+          id: 2,
+          previousId: 'old-observation',
+          reason: '本人から入金直後の額を訂正',
+          changedAt: DateTime.utc(2026, 10, 25, 1),
+          record: PayrollSnapshotRecord(
+            id: 'new-observation',
+            balanceYen: 12345,
+            ownerId: owner,
+            accountId: 'account-a',
+            month: DateTime(2026, 10),
+            depositDate: DateTime(2026, 10, 23),
+            note: '本人確認メモ',
+          ),
         ),
-      ),
-    ],
-    hasMore: true,
-  );
+      ],
+      hasMore: true,
+    );
 
 Widget _app(_Reader reader, {int month = 10}) => MaterialApp(
       home: Scaffold(

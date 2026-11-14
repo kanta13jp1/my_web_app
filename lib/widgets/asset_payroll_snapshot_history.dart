@@ -52,10 +52,10 @@ class _AssetPayrollSnapshotHistoryState
       if (!mounted || epoch != _epoch || owner != widget.reader.ownerId) return;
       if (page.entries.any(
         (entry) =>
-          entry.record.ownerId != owner ||
-          entry.record.accountId != widget.accountId ||
-          entry.record.month.year != widget.month.year ||
-          entry.record.month.month != widget.month.month,
+            entry.record.ownerId != owner ||
+            entry.record.accountId != widget.accountId ||
+            entry.record.month.year != widget.month.year ||
+            entry.record.month.month != widget.month.month,
       )) {
         throw StateError('履歴の対象が一致しません。');
       }
