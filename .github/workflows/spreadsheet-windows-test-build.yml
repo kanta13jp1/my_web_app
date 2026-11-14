@@ -1,0 +1,43 @@
+name: Spreadsheet Windows Test Build
+# Rebuild after main synchronization; retain unsigned bundle for local test signing.
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/spreadsheet-xlsx-20261001]
+    paths: [.github/workflows/spreadsheet-windows-test-build.yml]
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.38.x'
+          channel: stable
+          cache: true
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Build spreadsheet only
+        run: flutter build windows --release --no-tree-shake-icons --target lib/main_spreadsheet_windows.dart --build-name 1.0.1 --build-number 2
+      - name: Preserve complete unsigned distribution
+        shell: pwsh
+        run: |
+          $distribution = Join-Path $PWD 'build/windows/x64/runner/Release'
+          if (-not (Test-Path "$distribution/JibunSpreadsheet.exe")) { throw 'Spreadsheet EXE missing' }
+          if (-not (Test-Path "$distribution/data")) { throw 'Flutter data missing' }
+          if (-not (Test-Path "$distribution/audioplayers_windows_plugin.dll")) { throw 'Audio plugin missing' }
+          New-Item -ItemType Directory -Path dist | Out-Null
+          Compress-Archive -Path "$distribution/*" -DestinationPath dist/JibunSpreadsheet-v1.0.1-test-unsigned.zip
+          Get-FileHash dist/JibunSpreadsheet-v1.0.1-test-unsigned.zip -Algorithm SHA256
+          git rev-parse HEAD
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: spreadsheet-windows-test-unsigned
+          path: dist/JibunSpreadsheet-v1.0.1-test-unsigned.zip
+          if-no-files-found: error
+          retention-days: 30

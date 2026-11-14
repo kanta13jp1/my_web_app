@@ -23,7 +23,8 @@ class EvaluateSpreadsheetFormulaUseCase {
     if (input.isEmpty) {
       return const SpreadsheetFormulaResult(displayValue: '');
     }
-    if (!input.startsWith('=')) {
+    if (!input.startsWith('=') ||
+        document.activeSheet.textCells.contains(address.key)) {
       return SpreadsheetFormulaResult(
         displayValue: input,
         numericValue: double.tryParse(input),
@@ -31,7 +32,8 @@ class EvaluateSpreadsheetFormulaUseCase {
     }
 
     try {
-      final value = _evaluateNumeric(document, address, <CellAddress>{});
+      final value =
+          _evaluateNumeric(document, address, <CellAddress>{}, <int>[0]);
       return SpreadsheetFormulaResult(
         displayValue: _formatNumber(value),
         numericValue: value,
@@ -48,7 +50,10 @@ class EvaluateSpreadsheetFormulaUseCase {
     SpreadsheetDocument document,
     CellAddress address,
     Set<CellAddress> visiting,
+    List<int> work,
   ) {
+    if (++work[0] > 10000) throw const _FormulaException('#NUM!');
+    if (visiting.length >= 100) throw const _FormulaException('#NUM!');
     if (!visiting.add(address)) {
       throw const _FormulaException('#CYCLE!');
     }
@@ -56,6 +61,10 @@ class EvaluateSpreadsheetFormulaUseCase {
     try {
       final input = document.inputAt(address).trim();
       if (input.isEmpty) return 0;
+      if (input.startsWith('=') &&
+          document.activeSheet.textCells.contains(address.key)) {
+        throw const _FormulaException('#VALUE!');
+      }
       if (!input.startsWith('=')) {
         final value = double.tryParse(input);
         if (value == null) throw const _FormulaException('#VALUE!');
@@ -65,7 +74,7 @@ class EvaluateSpreadsheetFormulaUseCase {
       final parser = _FormulaParser(
         input.substring(1),
         resolveCell: (referencedAddress) =>
-            _evaluateNumeric(document, referencedAddress, visiting),
+            _evaluateNumeric(document, referencedAddress, visiting, work),
         resolveRange: (start, end) {
           final values = <double>[];
           final firstRow = start.row < end.row ? start.row : end.row;
@@ -74,9 +83,14 @@ class EvaluateSpreadsheetFormulaUseCase {
               start.column < end.column ? start.column : end.column;
           final lastColumn =
               start.column > end.column ? start.column : end.column;
+          if ((lastRow - firstRow + 1) * (lastColumn - firstColumn + 1) >
+              20000) {
+            throw const _FormulaException('#NUM!');
+          }
           for (var row = firstRow; row <= lastRow; row++) {
             for (var column = firstColumn; column <= lastColumn; column++) {
               final cell = CellAddress(row: row, column: column);
+              if (document.activeSheet.textCells.contains(cell.key)) continue;
               final raw = document.inputAt(cell).trim();
               if (raw.isEmpty) continue;
               if (!raw.startsWith('=')) {
@@ -84,7 +98,7 @@ class EvaluateSpreadsheetFormulaUseCase {
                 if (value != null) values.add(value);
                 continue;
               }
-              values.add(_evaluateNumeric(document, cell, visiting));
+              values.add(_evaluateNumeric(document, cell, visiting, work));
             }
           }
           return values;
