@@ -326,22 +326,30 @@ class AssetLiabilityMonthlyStateStore {
   Future<void> saveMonth({
     required DateTime month,
     required AssetLiabilityMonthlyState state,
+    SharedPreferences? prefs,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
+    final resolvedPrefs = prefs ?? await SharedPreferences.getInstance();
+
+    Future<void> saveStoredValue(String key, String value) async {
+      final saved = await resolvedPrefs.setString(key, value);
+      if (!saved) {
+        throw StateError('Monthly state persistence was rejected');
+      }
+    }
     final monthKey = formatMonthKey(month);
 
     final allDays = decodePaymentOverrides(
-      _safeGetString(prefs, confirmedPaymentDaysPrefsKey),
+      _safeGetString(resolvedPrefs, confirmedPaymentDaysPrefsKey),
     );
     if (state.confirmedPaymentDays.isEmpty) {
       allDays.remove(monthKey);
     } else {
       allDays[monthKey] = Map<String, double>.from(state.confirmedPaymentDays);
     }
-    await prefs.setString(confirmedPaymentDaysPrefsKey, jsonEncode(allDays));
+    await saveStoredValue(confirmedPaymentDaysPrefsKey, jsonEncode(allDays));
 
     final allPayments = decodePaymentOverrides(
-      _safeGetString(prefs, paymentPrefsKey),
+      _safeGetString(resolvedPrefs, paymentPrefsKey),
     );
     if (state.paymentOverrides.isEmpty) {
       allPayments.remove(monthKey);
@@ -350,7 +358,7 @@ class AssetLiabilityMonthlyStateStore {
     }
 
     final allActualPayments = decodePaymentOverrides(
-      _safeGetString(prefs, actualPaymentPrefsKey),
+      _safeGetString(resolvedPrefs, actualPaymentPrefsKey),
     );
     if (state.actualPaymentAmounts.isEmpty) {
       allActualPayments.remove(monthKey);
@@ -361,7 +369,7 @@ class AssetLiabilityMonthlyStateStore {
     }
 
     final allPaymentDifferenceReasons = decodePaymentDifferenceReasons(
-      _safeGetString(prefs, paymentDifferenceReasonPrefsKey),
+      _safeGetString(resolvedPrefs, paymentDifferenceReasonPrefsKey),
     );
     if (state.paymentDifferenceReasons.isEmpty) {
       allPaymentDifferenceReasons.remove(monthKey);
@@ -372,7 +380,7 @@ class AssetLiabilityMonthlyStateStore {
     }
 
     final allPaidAccounts = decodePaidAccounts(
-      _safeGetString(prefs, paidPrefsKey),
+      _safeGetString(resolvedPrefs, paidPrefsKey),
     );
     if (state.paidAccountNames.isEmpty) {
       allPaidAccounts.remove(monthKey);
@@ -380,15 +388,15 @@ class AssetLiabilityMonthlyStateStore {
       allPaidAccounts[monthKey] = Set<String>.from(state.paidAccountNames);
     }
 
-    await prefs.setString(paymentPrefsKey, jsonEncode(allPayments));
-    await prefs.setString(actualPaymentPrefsKey, jsonEncode(allActualPayments));
-    await prefs.setString(
+    await saveStoredValue(paymentPrefsKey, jsonEncode(allPayments));
+    await saveStoredValue(actualPaymentPrefsKey, jsonEncode(allActualPayments));
+    await saveStoredValue(
       paymentDifferenceReasonPrefsKey,
       jsonEncode(allPaymentDifferenceReasons),
     );
 
     final allAnnualRates = decodePaymentOverrides(
-      _safeGetString(prefs, annualRatePrefsKey),
+      _safeGetString(resolvedPrefs, annualRatePrefsKey),
     );
     if (state.annualRateOverrides.isEmpty) {
       allAnnualRates.remove(monthKey);
@@ -399,7 +407,7 @@ class AssetLiabilityMonthlyStateStore {
     }
 
     final allAnnualRateEvidences = decodeAnnualRateEvidences(
-      _safeGetString(prefs, annualRateEvidencePrefsKey),
+      _safeGetString(resolvedPrefs, annualRateEvidencePrefsKey),
     );
     if (state.annualRateEvidences.isEmpty) {
       allAnnualRateEvidences.remove(monthKey);
@@ -410,14 +418,14 @@ class AssetLiabilityMonthlyStateStore {
       );
     }
 
-    await prefs.setString(annualRatePrefsKey, jsonEncode(allAnnualRates));
-    await prefs.setString(
+    await saveStoredValue(annualRatePrefsKey, jsonEncode(allAnnualRates));
+    await saveStoredValue(
       annualRateEvidencePrefsKey,
       jsonEncode(_encodeAnnualRateEvidences(allAnnualRateEvidences)),
     );
 
     final allBillingConfirmed = decodePaidAccounts(
-      _safeGetString(prefs, billingConfirmedPrefsKey),
+      _safeGetString(resolvedPrefs, billingConfirmedPrefsKey),
     );
     if (state.billingConfirmedAccountIds.isEmpty) {
       allBillingConfirmed.remove(monthKey);
@@ -426,13 +434,13 @@ class AssetLiabilityMonthlyStateStore {
         state.billingConfirmedAccountIds,
       );
     }
-    await prefs.setString(
+    await saveStoredValue(
       billingConfirmedPrefsKey,
       jsonEncode(allBillingConfirmed.map((k, v) => MapEntry(k, v.toList()))),
     );
 
     final allSources = decodePaymentSourceAccounts(
-      _safeGetString(prefs, paymentSourcePrefsKey),
+      _safeGetString(resolvedPrefs, paymentSourcePrefsKey),
     );
     if (state.paymentSourceAccountIds.isEmpty) {
       allSources.remove(monthKey);
@@ -441,10 +449,10 @@ class AssetLiabilityMonthlyStateStore {
         state.paymentSourceAccountIds,
       );
     }
-    await prefs.setString(paymentSourcePrefsKey, jsonEncode(allSources));
+    await saveStoredValue(paymentSourcePrefsKey, jsonEncode(allSources));
 
     final allCardBilling = decodeCardBillingAccounts(
-      _safeGetString(prefs, cardBillingPrefsKey),
+      _safeGetString(resolvedPrefs, cardBillingPrefsKey),
     );
     if (state.cardBillingAccountIds.isEmpty) {
       allCardBilling.remove(monthKey);
@@ -453,10 +461,10 @@ class AssetLiabilityMonthlyStateStore {
         state.cardBillingAccountIds,
       );
     }
-    await prefs.setString(cardBillingPrefsKey, jsonEncode(allCardBilling));
+    await saveStoredValue(cardBillingPrefsKey, jsonEncode(allCardBilling));
 
     final allCardStatements = decodeCardStatementLines(
-      _safeGetString(prefs, cardStatementPrefsKey),
+      _safeGetString(resolvedPrefs, cardStatementPrefsKey),
     );
     if (state.cardStatementLines.isEmpty) {
       allCardStatements.remove(monthKey);
@@ -465,13 +473,13 @@ class AssetLiabilityMonthlyStateStore {
         state.cardStatementLines,
       );
     }
-    await prefs.setString(
+    await saveStoredValue(
       cardStatementPrefsKey,
       jsonEncode(_encodeCardStatementLines(allCardStatements)),
     );
 
     final allIncomePlans = decodeIncomePlans(
-      _safeGetString(prefs, incomePrefsKey),
+      _safeGetString(resolvedPrefs, incomePrefsKey),
     );
     if (state.incomePlans.isEmpty) {
       allIncomePlans.remove(monthKey);
@@ -480,13 +488,13 @@ class AssetLiabilityMonthlyStateStore {
         state.incomePlans,
       );
     }
-    await prefs.setString(
+    await saveStoredValue(
       incomePrefsKey,
       jsonEncode(_encodeIncomePlans(allIncomePlans)),
     );
 
     final allTransferTasks = decodeTransferTasks(
-      _safeGetString(prefs, transferTaskPrefsKey),
+      _safeGetString(resolvedPrefs, transferTaskPrefsKey),
     );
     if (state.transferTasks.isEmpty) {
       allTransferTasks.remove(monthKey);
@@ -495,13 +503,13 @@ class AssetLiabilityMonthlyStateStore {
         state.transferTasks,
       );
     }
-    await prefs.setString(
+    await saveStoredValue(
       transferTaskPrefsKey,
       jsonEncode(_encodeTransferTasks(allTransferTasks)),
     );
 
     final updatedAtMap = _decodeUpdatedAtMap(
-      _safeGetString(prefs, stateUpdatedAtPrefsKey),
+      _safeGetString(resolvedPrefs, stateUpdatedAtPrefsKey),
     );
     if (state.updatedAt != null) {
       updatedAtMap[monthKey] = state.updatedAt!.toUtc().toIso8601String();
@@ -509,11 +517,11 @@ class AssetLiabilityMonthlyStateStore {
       updatedAtMap.remove(monthKey);
     }
 
-    await prefs.setString(
+    await saveStoredValue(
       paidPrefsKey,
       jsonEncode(_encodePaid(allPaidAccounts)),
     );
-    await prefs.setString(stateUpdatedAtPrefsKey, jsonEncode(updatedAtMap));
+    await saveStoredValue(stateUpdatedAtPrefsKey, jsonEncode(updatedAtMap));
   }
 
   Future<Map<String, String>> loadDefaultPaymentSources() async {
