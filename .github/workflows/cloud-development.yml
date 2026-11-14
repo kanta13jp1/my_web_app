@@ -969,6 +969,7 @@ jobs:
   # One-shot QA only, not a reusable CI lane or proposed main-branch merge.
   # Exact source/ref/hash guards intentionally restrict the already reviewed target.
   payslip-current-fixed-lock:
+    name: One-shot evidence for the reviewed source with its unchanged lock
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.profile == 'payslip-fixed-lock' && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/payslip-current-fixed-lock-qa-20261114' }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
@@ -999,8 +1000,8 @@ jobs:
         done
         allocation_phase=entry
         trap 'rc=$?; printf "SCRATCH_ALLOCATION_ERROR phase=%s line=%s rc=%s\n" "$allocation_phase" "$LINENO" "$rc" >&2; exit "$rc"' ERR
-        allocation_mark() { allocation_phase=$1; printf 'SCRATCH_ALLOCATION_PHASE=%s\n' "$allocation_phase"; }
-        allocation_base() { allocation_mark "$1"; printf 'SCRATCH_BASE uid=%s gid=%s mode=%s\n' "$base_uid" "$base_gid" "$base_mode"; }
+        allocation_mark() { allocation_phase=${1}; printf 'SCRATCH_ALLOCATION_PHASE=%s\n' "$allocation_phase"; }
+        allocation_base() { allocation_mark "${1}"; printf 'SCRATCH_BASE uid=%s gid=%s mode=%s\n' "$base_uid" "$base_gid" "$base_mode"; }
         allocation_mark node_version_pin
         [[ 'v22.21.1' =~ ^v22[.][0-9]+[.][0-9]+$ ]] || { echo 'STOP: bind official Node22 patch'; exit 1; }
         allocation_mark node_archive_pin
@@ -1250,15 +1251,15 @@ jobs:
         printf '%s  %s\n' 3c644cd90872d2348a5afbf8ad022d9d66e6c15975d247ee0acc17723c3d0099 "$PAYSLIP_ROOT/guards/font_guard.py" | sha256sum -c -
         cat > "$PAYSLIP_ROOT/guards/runtime.sh" <<'PAYSLIP_RUNTIME_SH'
         set -euo pipefail
-        root=$1
-        phase=$2
-        [[ "$3" -gt 0 && "$4" -gt 0 ]]
-        awk -v uid="$3" -v gid="$4" '
-         /^Uid:/ {u=NF==5 && $2==uid && $3==uid && $4==uid && $5==uid}
-         /^Gid:/ {g=NF==5 && $2==gid && $3==gid && $4==gid && $5==gid}
+        root=${1}
+        phase=${2}
+        [[ "${3}" -gt 0 && "${4}" -gt 0 ]]
+        awk -v uid="${3}" -v gid="${4}" '
+         /^Uid:/ {u=NF==5 && $(2)==uid && $(3)==uid && $(4)==uid && $(5)==uid}
+         /^Gid:/ {g=NF==5 && $(2)==gid && $(3)==gid && $(4)==gid && $(5)==gid}
          /^Groups:/ {groups=NF==1}
-         /^Cap(Inh|Prm|Eff|Bnd|Amb):/ {if(NF==2 && $2 ~ /^0+$/)caps++}
-         /^NoNewPrivs:/ {nnp=NF==2 && $2==1}
+         /^Cap(Inh|Prm|Eff|Bnd|Amb):/ {if(NF==2 && $(2) ~ /^0+$/)caps++}
+         /^NoNewPrivs:/ {nnp=NF==2 && $(2)==1}
          END {exit !(u && g && groups && caps==5 && nnp)}' /proc/self/status
         if [[ "$phase" == final ]]; then
          /usr/bin/python3 -I "$root/guards/source_guard.py" "$root" final
@@ -1295,10 +1296,10 @@ jobs:
         /usr/bin/python3 -I "$root/guards/source_guard.py" "$root" "after_$phase"
         PAYSLIP_RUNTIME_SH
         chmod 0400 "$PAYSLIP_ROOT/guards/runtime.sh"
-        printf '%s  %s\n' f9cf53ac5b140f3fbb793f617bbfae905401fbf63b8d223fc653c4cffddd6b57 "$PAYSLIP_ROOT/guards/runtime.sh" | sha256sum -c -
+        printf '%s  %s\n' 0861e624eb44e25aac138c2ac81ff2a5f20e54e6d6c9d9e3822c6435de6ce263 "$PAYSLIP_ROOT/guards/runtime.sh" | sha256sum -c -
         cat > "$PAYSLIP_ROOT/guards/offline.sh" <<'PAYSLIP_OFFLINE_SH'
         set -euo pipefail
-        root=$1; uid=$2; gid=$3; phase=$4; seconds=$5
+        root=${1}; uid=${2}; gid=${3}; phase=${4}; seconds=${5}
         [[ "$(id -u)" == 0 && "$uid" =~ ^[0-9]+$ && "$gid" =~ ^[0-9]+$ && "$uid" -gt 0 && "$gid" -gt 0 ]]
         case "$phase:$seconds" in salary:600|full:1200|app_build:900|fixture:900|browser:600|final:120) ;; *) exit 1;; esac
         [[ "$(stat -c %u "$root")" == 0 && "$(stat -c %u "$root/control")" == 0 && ! -L "$root/control" ]]
@@ -1310,13 +1311,13 @@ jobs:
         timeout --signal=TERM --kill-after=15s "$seconds" \
          unshare --net --pid --fork --kill-child --mount-proc -- /bin/bash --noprofile --norc -euc '
           ip link set lo up
-          [[ "$(readlink /proc/self/ns/net)" != "$5" && "$(readlink /proc/self/ns/pid)" != "$6" ]]
+          [[ "$(readlink /proc/self/ns/net)" != "${5}" && "$(readlink /proc/self/ns/pid)" != "${6}" ]]
           links="$(ip -o link show)"
           [[ "$(printf "%s\n" "$links" | wc -l)" -eq 1 && "$(printf "%s\n" "$links" | cut -d: -f2 | tr -d "[:space:]")" == lo ]]
           [[ -z "$(ip -4 route show default)" && -z "$(ip -6 route show default)" ]]
-          exec /usr/bin/setpriv --reuid="$2" --regid="$3" --clear-groups --no-new-privs --bounding-set=-all --inh-caps=-all --ambient-caps=-all \
-           env -i PATH="$1/sdk/flutter/bin:$1/node/bin:/usr/bin:/bin" HOME="$1/home" PUB_CACHE="$1/pub-cache" TMPDIR="$1/tmp" XDG_CONFIG_HOME="$1/config" XDG_CACHE_HOME="$1/cache" PLAYWRIGHT_BROWSERS_PATH="$1/browsers" npm_config_cache="$1/npm-cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1 \
-           /bin/bash --noprofile --norc "$1/guards/runtime.sh" "$1" "$4" "$2" "$3"
+          exec /usr/bin/setpriv --reuid="${2}" --regid="${3}" --clear-groups --no-new-privs --bounding-set=-all --inh-caps=-all --ambient-caps=-all \
+           env -i PATH="${1}/sdk/flutter/bin:${1}/node/bin:/usr/bin:/bin" HOME="${1}/home" PUB_CACHE="${1}/pub-cache" TMPDIR="${1}/tmp" XDG_CONFIG_HOME="${1}/config" XDG_CACHE_HOME="${1}/cache" PLAYWRIGHT_BROWSERS_PATH="${1}/browsers" npm_config_cache="${1}/npm-cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1 \
+           /bin/bash --noprofile --norc "${1}/guards/runtime.sh" "${1}" "${4}" "${2}" "${3}"
          ' payslip-namespace "$root" "$uid" "$gid" "$phase" "$net" "$pid"
         rc=$?
         set -e
@@ -1335,7 +1336,7 @@ jobs:
         exit "$rc"
         PAYSLIP_OFFLINE_SH
         chmod 0400 "$PAYSLIP_ROOT/guards/offline.sh"
-        printf '%s  %s\n' d0d31511536b264fac51bd329b712156edd3993512f30257f6cbcfda954ad718 "$PAYSLIP_ROOT/guards/offline.sh" | sha256sum -c -
+        printf '%s  %s\n' 35dfd702b7949d66028a950724edd76192e4832471a490a3f41612ac2099b2bd "$PAYSLIP_ROOT/guards/offline.sh" | sha256sum -c -
         cat > "$PAYSLIP_ROOT/guards/publish.py" <<'PAYSLIP_PUBLISH_PY'
         """Fixed Linux host publisher: stopped-runtime, descriptor-relative, bounded byte copy."""
         import os
@@ -1587,7 +1588,7 @@ jobs:
         set -euo pipefail
         identity_phase=create_identity
         trap 'rc=$?; printf "IDENTITY_SEAL_ERROR phase=%s line=%s rc=%s\n" "$identity_phase" "$LINENO" "$rc" >&2; exit "$rc"' ERR
-        identity_mark() { identity_phase=$1; printf 'IDENTITY_SEAL_PHASE=%s\n' "$identity_phase"; }
+        identity_mark() { identity_phase=${1}; printf 'IDENTITY_SEAL_PHASE=%s\n' "$identity_phase"; }
         identity_mark create_identity
         [[ "$GITHUB_RUN_ID" =~ ^[0-9]+$ && "$GITHUB_RUN_ATTEMPT" =~ ^[0-9]+$ ]]
         runtime_user="psqa_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
