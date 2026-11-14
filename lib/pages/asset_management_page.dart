@@ -9628,18 +9628,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
 
-      await AssetFlowRequest.table(_supabase).update({
-        'action_type': _flowLabelToActionType(selectedType),
-        'amount': amount,
-        'description': _composeFlowDescription(
-          flowType: selectedType,
-          source: selectedSource,
-          destination: isTransfer ? selectedDestination : null,
-          memo: memo,
-          wasteCategory: selectedType == '支出' ? selectedWasteCategory : null,
-        ),
-        'occurred_at': selectedDate.toUtc().toIso8601String(),
-      }).eq('id', flowId).eq('user_id', userId);
+      await AssetFlowRequest.table(_supabase)
+          .update({
+            'action_type': _flowLabelToActionType(selectedType),
+            'amount': amount,
+            'description': _composeFlowDescription(
+              flowType: selectedType,
+              source: selectedSource,
+              destination: isTransfer ? selectedDestination : null,
+              memo: memo,
+              wasteCategory:
+                  selectedType == '支出' ? selectedWasteCategory : null,
+            ),
+            'occurred_at': selectedDate.toUtc().toIso8601String(),
+          })
+          .eq('id', flowId)
+          .eq('user_id', userId);
       if (!mounted || !canApplyResult()) return;
 
       if (mounted) {
