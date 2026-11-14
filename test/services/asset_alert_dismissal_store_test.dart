@@ -98,9 +98,13 @@ void main() {
     expect(await store.dismiss('old', prefs: prefs), <String>{'old', 'keep'});
     expect(await store.dismiss(' ', prefs: prefs), <String>{'old', 'keep'});
     expect(
-        await store.restore('absent', prefs: prefs), <String>{'old', 'keep'});
-    expect(await store.prune(<String>{'old', 'keep'}, prefs: prefs),
-        <String>{'old', 'keep'});
+      await store.restore('absent', prefs: prefs),
+      <String>{'old', 'keep'},
+    );
+    expect(
+      await store.prune(<String>{'old', 'keep'}, prefs: prefs),
+      <String>{'old', 'keep'},
+    );
     expect(prefs.attempts, 0);
   });
 }
@@ -108,7 +112,7 @@ void main() {
 class _AlertPreferences extends Fake implements SharedPreferences {
   List<String>? ids = <String>['old', 'keep'];
   bool reject = false;
-  Object? failure;
+  Error? failure;
   int attempts = 0;
   String? lastKey;
 

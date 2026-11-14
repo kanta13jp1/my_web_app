@@ -65,7 +65,7 @@ void main() {
           alertDismissalStore: probe,
           debugCalendarNow: now,
           debugInitialAssetData: <String, Map<String, double>>{
-            DateFormat('yyyy-MM-dd').format(now): <String, double>{
+            DateFormat('yyyy-MM-dd').format(now): const <String, double>{
               'PayPayカード': -1000,
             },
           },
