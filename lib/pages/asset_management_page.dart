@@ -2785,7 +2785,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('Error applying asset CSV restore: $e');
       if (!mounted) return;
       setState(() {
-        _assetCsvRestoreMessage = 'CSV restore failed: $e';
+        _assetCsvRestorePreview = null;
+        _assetCsvRestorePreviewText = null;
+        _assetCsvRestoreMessage =
+            'CSV復元に失敗しました。一部が保存済みの可能性があります。'
+            '保存状況を確認し、再プレビューしてください。詳細: $e';
       });
     } finally {
       if (mounted) {
