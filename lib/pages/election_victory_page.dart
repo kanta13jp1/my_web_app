@@ -25,6 +25,7 @@ import '../services/public_memo_service.dart';
 import '../ui/features/election_victory/view_models/official_endorsement_view_model.dart';
 import '../ui/features/election_victory/widgets/official_endorsement_summary_card.dart';
 import '../ui/features/election_victory/widgets/kokumin_representative_announcement_card.dart';
+import '../ui/features/election_victory/widgets/kokumin_member_directory_observation_card.dart';
 import 'landing_page.dart';
 import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
@@ -1469,6 +1470,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            KokuminMemberDirectoryObservationCard(onOpenSource: _openUrl),
+            const SizedBox(height: 12),
             Text(
               '2027年春の統一地方選に向けた管理型ダッシュボード',
               style: theme.textTheme.titleLarge?.copyWith(
@@ -1587,9 +1590,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   Widget _buildPublicTrackerCtaCard() {
     return PublicTrackerCtaCard(
-      headline: 'この集計は「自分株式会社」が毎日自動更新しています',
-      description: '公式ページを定期取得して、現職数・目標との差分・残り日数を自動で計算しています。'
-          '同じ仕組みを、家計や資産、仕事ログ、AIツールの定点観測にも使えるように作っている個人向けのダッシュボードです。',
+      headline: '公式の掲載人数と、名簿の取得時点を分けて表示しています',
+      description: '数字ごとの出典・確認日・取得日時をご確認ください。'
+          '名簿や県別内訳、計画KPIが最新の掲載人数に同期済みという意味ではありません。',
       onActionPressed: _openLandingPageFromPublicTracker,
     );
   }
@@ -1639,7 +1642,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           const SizedBox(height: 8),
           Text(
             'この公開ビューは未ログインでも閲覧できます。'
-            '県連別配分・月次KPI・現職名簿・最新の公式実データを確認できますが、'
+            '県連別配分・月次KPI・現職名簿・取得時点の公式データを確認できますが、'
             '計画の編集やテンプレート再適用は管理用ルートからのみ行えます。',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
