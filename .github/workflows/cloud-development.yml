@@ -1362,34 +1362,36 @@ jobs:
         import os
         import stat
         import sys
-
+        
         MAX_FILES = 512
         MAX_DIRS = 512
         MAX_DEPTH = 12
         MAX_FILE_BYTES = 64 * 1024 * 1024
         MAX_TOTAL_BYTES = 256 * 1024 * 1024
-
-
+        
+        
         def require(condition, message):
             if not condition:
                 raise SystemExit(message)
-
-
+        
+        
         def safe_name(name):
             require(isinstance(name, str) and name not in {'', '.', '..'} and
                     '/' not in name and '\\' not in name and name.isprintable() and
                     len(name.encode('utf-8')) <= 255, 'unsafe entry name')
-
-
+        
+        
         def root_parts(path):
             require(isinstance(path, str) and path.startswith('/') and not path.endswith('/'), 'absolute physical root required')
             parts = path.split('/')[1:]
+            # Allocation is a direct root-owned leaf under /, never a host-user ancestor.
+            require(len(parts) == 1, 'scratch must be a direct child of root')
             for part in parts:
                 safe_name(part)
             require(parts[-1].startswith('payslip-same-lock.'), 'wrong scratch root name')
             return parts
-
-
+        
+        
         def checked(st, owner, group=None, directory=False):
             require((stat.S_ISDIR(st.st_mode) if directory else stat.S_ISREG(st.st_mode)), 'nonregular entry or wrong directory type')
             require(st.st_uid in owner and (group is None or st.st_gid == group), 'unexpected owner/group')
@@ -1398,17 +1400,17 @@ jobs:
                 require(st.st_nlink == 1, 'regular file link count must be one')
                 require(0 <= st.st_size <= MAX_FILE_BYTES, 'per-file byte limit')
             return st
-
-
+        
+        
         def identity(st):
             return (st.st_dev, st.st_ino, st.st_mode, st.st_uid, st.st_gid,
                     st.st_nlink, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
-
-
+        
+        
         class Budget:
             def __init__(self):
                 self.files = self.dirs = self.bytes = 0
-
+        
             def add(self, st, depth):
                 require(1 <= depth <= MAX_DEPTH, 'depth limit')
                 if stat.S_ISDIR(st.st_mode):
@@ -1419,12 +1421,12 @@ jobs:
                     self.bytes += st.st_size
                     require(self.files <= MAX_FILES, 'file count limit')
                     require(self.bytes <= MAX_TOTAL_BYTES, 'total byte limit')
-
-
+        
+        
         DIR_FLAGS = getattr(os, 'O_RDONLY', 0) | getattr(os, 'O_DIRECTORY', 0) | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_CLOEXEC', 0)
         FILE_FLAGS = getattr(os, 'O_RDONLY', 0) | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_CLOEXEC', 0)
-
-
+        
+        
         def child_dir(parent, name, owner, group=None):
             safe_name(name)
             before = checked(os.stat(name, dir_fd=parent, follow_symlinks=False), owner, group, True)
@@ -1435,8 +1437,8 @@ jobs:
                 os.close(fd)
                 raise
             return fd
-
-
+        
+        
         def runtime_absent(uid):
             for entry in os.scandir('/proc'):
                 if not entry.name.isdigit():
@@ -1451,8 +1453,8 @@ jobs:
                             raise SystemExit('process UID unavailable')
                 except (FileNotFoundError, ProcessLookupError):
                     pass
-
-
+        
+        
         def scan(fd, uid, gid, budget, depth=0):
             items = []
             with os.scandir(fd) as entries:
@@ -1472,8 +1474,8 @@ jobs:
                             os.close(child)
                     items.append((name, identity(st), children))
             return items
-
-
+        
+        
         def copy_tree(source, target, items, uid, gid, copied):
             for name, expected, children in items:
                 st = os.stat(name, dir_fd=source, follow_symlinks=False)
@@ -1516,8 +1518,33 @@ jobs:
                     os.close(incoming)
                     if outgoing is not None:
                         os.close(outgoing)
-
-
+        
+        
+        def verify_owner_contract():
+            from types import SimpleNamespace
+            def entry(uid, gid, mode=0o755):
+                return SimpleNamespace(st_mode=stat.S_IFDIR | mode, st_uid=uid, st_gid=gid)
+            checked(entry(0, 0), {0}, 0, True)
+            checked(entry(1002, 1003, 0o700), {1002}, 1003, True)
+            failures = [
+                lambda: checked(entry(1001, 0), {0}, 0, True),
+                lambda: checked(entry(1002, 1003), {0}, 0, True),
+                lambda: checked(entry(0, 1003), {0}, 0, True),
+                lambda: checked(entry(0, 0, 0o775), {0}, 0, True),
+                lambda: checked(entry(0, 0), {1002}, 1003, True),
+                lambda: root_parts('/host/payslip-same-lock.synthetic'),
+            ]
+            for reject in failures:
+                try:
+                    reject()
+                except SystemExit:
+                    continue
+                raise SystemExit('owner contract accepted an invalid fixture')
+            require(root_parts('/payslip-same-lock.synthetic') == ['payslip-same-lock.synthetic'],
+                    'valid direct scratch root rejected')
+            print('OWNER_CONTRACT_VERIFIED positive=3 negative=6 filesystem_mutations=0')
+        
+        
         def main(args):
             require(len(args) == 5 and os.geteuid() == 0, 'root host publisher arguments required')
             root, uid, gid, host_uid = args[1], int(args[2]), int(args[3]), int(args[4])
@@ -1530,7 +1557,8 @@ jobs:
                 checked(os.fstat(root_fd), {0}, directory=True)
                 parts = root_parts(root)
                 for index, part in enumerate(parts):
-                    next_fd = child_dir(root_fd, part, {0} if index == len(parts) - 1 else {0, host_uid})
+                    # Matches seal_host_paths: chown 0:0 for the scratch root itself.
+                    next_fd = child_dir(root_fd, part, {0}, 0)
                     os.close(root_fd)
                     root_fd = next_fd
                 control = child_dir(root_fd, 'control', {0}, 0)
@@ -1563,13 +1591,17 @@ jobs:
             finally:
                 os.close(root_fd)
             print('PUBLISH_VALIDATED files=' + str(budget.files) + ' bytes=' + str(budget.bytes))
-
-
+        
+        
         if __name__ == '__main__':
-            main(sys.argv)
+            if sys.argv[1:] == ['--verify-owner-contract']:
+                verify_owner_contract()
+            else:
+                main(sys.argv)
         PAYSLIP_PUBLISH_PY
         chmod 0400 "$PAYSLIP_ROOT/guards/publish.py"
-        printf '%s  %s\n' d9e320db366d82f79f630bcefaab2213aed1f4e87ac8f84ae68bb955dba8cc2d "$PAYSLIP_ROOT/guards/publish.py" | sha256sum -c -
+        printf '%s  %s\n' c428f5d4006e3b1103d559094abac944d2a86328ee5eac8e5a304f0edebe8a1d "$PAYSLIP_ROOT/guards/publish.py" | sha256sum -c -
+        python3 -I "$PAYSLIP_ROOT/guards/publish.py" --verify-owner-contract
         python3 "$PAYSLIP_ROOT/guards/source_guard.py" "$PAYSLIP_ROOT" before_bootstrap
     - name: Bootstrap fixed tools and enforce the exact existing lock
       shell: bash
