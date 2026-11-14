@@ -496,7 +496,7 @@ class _ControlledFixedCostPreferences extends Fake
     implements SharedPreferences {
   _ControlledFixedCostPreferences({this.failure});
 
-  final Object? failure;
+  final Error? failure;
   bool accept = false;
   int writeCount = 0;
   int removeCount = 0;
