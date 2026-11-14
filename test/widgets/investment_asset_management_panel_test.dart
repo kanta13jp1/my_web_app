@@ -44,7 +44,8 @@ void main() {
       } else if (pricedAt == null) {
         expect(label.data, '価格取得時点: 未確認');
       } else {
-        final localTime = DateFormat('yyyy/MM/dd HH:mm').format(pricedAt.toLocal());
+        final localTime =
+            DateFormat('yyyy/MM/dd HH:mm').format(pricedAt.toLocal());
         expect(label.data, '価格取得時点: $localTime（端末時刻）');
       }
       expect(repository.fetchCalls, 1);
