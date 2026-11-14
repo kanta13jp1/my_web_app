@@ -71,7 +71,7 @@ class DisposableBalanceActionRecommendation {
   final int priority;
   final String title;
   final String instruction;
-  final int estimatedSeconds;
+  final int? estimatedSeconds;
   final double amountImpact;
   final String category;
 }
@@ -172,6 +172,8 @@ class DisposableBalanceService {
   const DisposableBalanceService();
 
   static const int defaultSalaryDay = 25;
+  static const payslipStatusTitle = '今月の給与明細';
+  static const payslipStatusInstruction = '給与明細と給与収入の登録状況を確認してください。';
 
   DisposableBalanceResult build({
     required DateTime asOfDate,
@@ -235,7 +237,6 @@ class DisposableBalanceService {
     final actions = _buildActions(
       asOfDate: normalizedAsOf,
       currentPayslip: currentPayslip,
-      fallbackPayslip: fallbackPayslip,
       recurringExpenses: activeRecurring,
       debts: activeDebts,
     );
@@ -342,7 +343,6 @@ class DisposableBalanceService {
   List<DisposableBalanceActionRecommendation> _buildActions({
     required DateTime asOfDate,
     required DisposableBalancePayslip? currentPayslip,
-    required DisposableBalancePayslip? fallbackPayslip,
     required List<DisposableBalanceRecurringExpense> recurringExpenses,
     required List<DisposableBalanceDebt> debts,
   }) {
@@ -352,10 +352,10 @@ class DisposableBalanceService {
         DisposableBalanceActionRecommendation(
           actionKey: 'upload_current_payslip',
           priority: actions.length + 1,
-          title: '今月の給与明細が未登録です',
-          instruction: '最新の給与明細PDFをアップロードして、収入を明細データで計算してください（約10秒）。',
-          estimatedSeconds: 10,
-          amountImpact: fallbackPayslip?.netAmount ?? 0,
+          title: payslipStatusTitle,
+          instruction: payslipStatusInstruction,
+          estimatedSeconds: null,
+          amountImpact: 0,
           category: 'data_gap',
         ),
       );
