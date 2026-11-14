@@ -40,7 +40,7 @@ void main() {
   for (final scenario in [
     'scoped read',
     'owner changes',
-    'foreign observation'
+    'foreign observation',
   ]) {
     test('payroll history transport: $scenario', () async {
       var owner = 'owner-a';
@@ -85,7 +85,9 @@ void main() {
         expect(requests, hasLength(2));
         expect(requests.first.url.queryParameters['limit'], '51');
         expect(
-            requests.last.url.queryParameters['id'], contains('observation-a'));
+          requests.last.url.queryParameters['id'],
+          contains('observation-a'),
+        );
       } else {
         await expectLater(
           reader.read('account-a', DateTime(2026, 10)),
