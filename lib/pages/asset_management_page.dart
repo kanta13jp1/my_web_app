@@ -33,6 +33,7 @@ import 'dart:math'; // ← ★この1行を追加してください！
 
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import '../widgets/asset_payment_reminder_gate.dart';
 import 'package:my_web_app/services/asset_must_task_repository.dart';
@@ -1184,6 +1185,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   );
   static const String _recurringIncomeIgnoredMirrorKey =
       'recurring_income_suggestion_ignored';
+  bool _isSavingDuplicateIgnore = false;
   final AssetRecurringSuggestionIgnoreStore _duplicateIgnoreStore =
       const AssetRecurringSuggestionIgnoreStore(
     prefsKey: 'asset_subscription_duplicate_ignored_v1',
@@ -13103,19 +13105,41 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 提供元グループを「重複ではない」として今後の提示から除外する(永続化 + ミラー)。
-  void _ignoreDuplicateGroup(SubscriptionDuplicateGroup group) {
+  Future<void> _ignoreDuplicateGroup(SubscriptionDuplicateGroup group) async {
     final key = group.providerKey;
-    if (key.isEmpty || _ignoredDuplicateProviders.contains(key)) {
+    if (key.isEmpty ||
+        _ignoredDuplicateProviders.contains(key) ||
+        _isSavingDuplicateIgnore) {
       return;
     }
-    setState(() {
-      _ignoredDuplicateProviders = <String>{..._ignoredDuplicateProviders, key};
-    });
-    _persistInBackground(
-      _duplicateIgnoreStore.save(_ignoredDuplicateProviders),
-      'duplicate ignored save',
-    );
-    unawaited(_mirrorDuplicateIgnored());
+    final ownerId = _supabase.auth.currentUser?.id;
+    final previous = Set<String>.of(_ignoredDuplicateProviders);
+    final next = <String>{...previous, key};
+    setState(() => _isSavingDuplicateIgnore = true);
+    try {
+      await _duplicateIgnoreStore.save(next);
+      if (!mounted || _supabase.auth.currentUser?.id != ownerId) {
+        return;
+      }
+      if (!setEquals(_ignoredDuplicateProviders, previous)) {
+        throw StateError('Ignore preferences changed while saving');
+      }
+      setState(() => _ignoredDuplicateProviders = next);
+      unawaited(_mirrorDuplicateIgnored());
+    } catch (e) {
+      debugPrint('duplicate ignored save failed: $e');
+      if (mounted && _supabase.auth.currentUser?.id == ownerId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('非表示設定の保存を確認できませんでした。再読込して確認してください。'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingDuplicateIgnore = false);
+      }
+    }
   }
 
   /// 登録済みサブスクから「同じ提供元の複数契約 = 重複の可能性」を検出する。

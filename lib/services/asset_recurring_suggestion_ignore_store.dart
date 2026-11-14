@@ -34,10 +34,16 @@ class AssetRecurringSuggestionIgnoreStore {
     final store = prefs ?? await SharedPreferences.getInstance();
     final encoded = encodeMirrorValue(labels);
     if (encoded.isEmpty) {
-      await store.remove(prefsKey);
+      final removed = await store.remove(prefsKey);
+      if (!removed) {
+        throw StateError('Ignore preferences were not removed');
+      }
       return;
     }
-    await store.setString(prefsKey, jsonEncode(encoded));
+    final saved = await store.setString(prefsKey, jsonEncode(encoded));
+    if (!saved) {
+      throw StateError('Ignore preferences were not saved');
+    }
   }
 
   /// 集合を `asset_pref_mirror.value` (jsonb) 用の安定ソート済み配列へ変換する。
