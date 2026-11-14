@@ -92,17 +92,22 @@ async function openScenario(page: Page, cache: 'legacy' | 'empty'): Promise<void
 }
 
 async function observation(page: Page, direction = 1): Promise<void> {
-  await reveal(page, label(page, /^党公式名簿の掲載人数: 416人$/), direction);
-  await reveal(page, label(page, /^確認日: 2026\/11\/14（原本の基準日は記載なし）$/));
-  await reveal(page, label(page, /県別内訳・計画KPIは更新していません/));
+  // Flutter Card merges its text into one accessible group, not separate labels.
+  const card = page.getByRole('group', { name: /^党公式名簿の掲載人数: 416人\s+/ });
+  await reveal(page, card, direction);
+  await expect(card).toHaveAccessibleName(/^党公式名簿の掲載人数: 416人\s+確認日: 2026\/11\/14（原本の基準日は記載なし）\s+/);
+  await expect(card).toHaveAccessibleName(/県別内訳・計画KPIは更新していません/);
+  await expect(card).toHaveAccessibleName(/全国現職420人（11\/9党代表発表）とは一致していません。差の理由は未確認です。/);
   await expect(label(page, /党公式名簿の掲載人数: 394人/)).toHaveCount(0);
   await expect(label(page, /議員名簿の取得時点では 416人/)).toHaveCount(0);
 }
 
 async function oldSnapshot(page: Page): Promise<void> {
-  await reveal(page, label(page, /議員名簿の取得時点では 394人。700人まで残り 306人/));
-  await reveal(page, label(page, /名簿の取得日時 2026\/10\/11 00:00（現在の人数は未確認）/));
-  await reveal(page, label(page, /^名簿取得値$/));
+  const hero = page.getByRole('group', { name: /^2027年春の統一地方選に向けた管理型ダッシュボード\s+/ });
+  await expect(hero).toBeVisible();
+  await expect(hero).toHaveAccessibleName(/議員名簿の取得時点では 394人。700人まで残り 306人/);
+  await expect(hero).toHaveAccessibleName(/名簿の取得日時 2026\/10\/11 00:00（現在の人数は未確認）/);
+  await expect(hero).toHaveAccessibleName(/\s+名簿取得値\s+394\s+目標\s+700\s+残り必要純増\s+306\s+/);
   const raw = await stored(page, cacheKey);
   expect(raw).toContain('394');
   expect(raw).toContain('2026-10-11');
@@ -124,8 +129,10 @@ test('legacy394 + HTTP503 keeps observed416 separate from old roster and KPI', a
 test('empty cache + HTTP503 retains dated observation and labels plan baseline', async ({ page }, info) => {
   await openScenario(page, 'empty');
   expect(await stored(page, cacheKey)).toBeNull();
-  await reveal(page, label(page, /計画の起点 340人から 700人へ/));
-  await reveal(page, label(page, /^計画の起点$/));
+  const hero = page.getByRole('group', { name: /^2027年春の統一地方選に向けた管理型ダッシュボード\s+/ });
+  await expect(hero).toBeVisible();
+  await expect(hero).toHaveAccessibleName(/計画の起点 340人から 700人へ/);
+  await expect(hero).toHaveAccessibleName(/\s+計画の起点\s+340\s+目標\s+700\s+/);
   await expect(label(page, /議員名簿の取得時点では 394人/)).toHaveCount(0);
   await observation(page, -1);
   await page.screenshot({ path: info.outputPath('observed416-with-empty-cache.png') });
