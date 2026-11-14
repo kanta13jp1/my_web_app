@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 import '../services/asset_payroll_snapshot_store.dart';
 import '../services/asset_payroll_snapshot_goal.dart';
+import '../services/asset_payroll_snapshot_history.dart';
+import 'asset_payroll_snapshot_history.dart';
 
 /// Records explicit owner confirmation; never infers a deposit from a date.
 class AssetPayrollSnapshotSection extends StatefulWidget {
@@ -10,9 +12,11 @@ class AssetPayrollSnapshotSection extends StatefulWidget {
     super.key,
     required this.store,
     required this.initialMonth,
+    this.historyReader,
   });
   final PayrollSnapshotStore store;
   final DateTime initialMonth;
+  final PayrollSnapshotHistoryReader? historyReader;
 
   @override
   State<AssetPayrollSnapshotSection> createState() =>
@@ -753,6 +757,16 @@ class _AssetPayrollSnapshotSectionState
                   Text(
                     '前月との差：${comparison?.deltaYen == null ? '比較対象未取得' : '${comparison!.deltaYen}円'}',
                   ),
+                  if (widget.historyReader != null &&
+                      !_loading &&
+                      _account != null)
+                    AssetPayrollSnapshotHistory(
+                      key: ValueKey('history-${widget.store.ownerId}-$_account-'
+                          '${_month.year}-${_month.month}'),
+                      reader: widget.historyReader!,
+                      accountId: _account!,
+                      month: _month,
+                    ),
                   Text('前月比の増加目標：${target == null ? '未設定' : '$target円'}'),
                   Text(
                     target == null
