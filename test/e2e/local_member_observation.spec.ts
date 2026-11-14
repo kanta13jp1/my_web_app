@@ -88,6 +88,9 @@ async function openScenario(page: Page, cache: 'legacy' | 'empty'): Promise<void
     Number(await stored(page, 'local_member_fixture_edge_failures'))).toBeGreaterThan(0);
   // This is the real page, not a separately reconstructed card.
   await expect(label(page, /^統一地方選700 公開ダッシュボード$/)).toBeVisible();
+  await expect(label(page, /毎日自動更新しています/)).toHaveCount(0);
+  await expect(label(page, /最新の公式実データを確認できます/)).toHaveCount(0);
+  await expect(label(page, /公式の掲載人数と、名簿の取得時点を分けて表示しています/)).toBeVisible();
   await observation(page);
 }
 
