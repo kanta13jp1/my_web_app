@@ -22,6 +22,8 @@ class InvestmentAssetManagementPanel extends StatefulWidget {
     super.key,
     required this.repository,
     required this.userId,
+    this.currentOwnerId,
+    this.ownerChanges,
     this.valuationService = const InvestmentValuationService(),
     this.historyService = const InvestmentPortfolioHistoryService(),
     this.currencyFormatter,
@@ -33,6 +35,8 @@ class InvestmentAssetManagementPanel extends StatefulWidget {
 
   final InvestmentAssetRepository repository;
   final String? userId;
+  final String? Function()? currentOwnerId;
+  final Stream<String?>? ownerChanges;
   final InvestmentValuationService valuationService;
   final InvestmentPortfolioHistoryService historyService;
   final String Function(double value)? currencyFormatter;
@@ -70,17 +74,81 @@ class _InvestmentAssetManagementPanelState
   bool _saving = false;
   bool _importingCsv = false;
   int _loadSequence = 0;
+  int _ownerEpoch = 0;
+  int _ownerBindingEpoch = 0;
+  String? _ownerId;
+  bool _ownerStreamFailed = false;
+  StreamSubscription<String?>? _ownerSubscription;
   int _historyLoadSequence = 0;
   InvestmentHistoryPeriod _historyPeriod = InvestmentHistoryPeriod.oneYear;
 
-  String? get _normalizedUserId {
-    final value = widget.userId?.trim();
+  String? get _readOwnerId {
+    final reader = widget.currentOwnerId;
+    final value = (reader == null ? widget.userId : reader())?.trim();
     return value == null || value.isEmpty ? null : value;
+  }
+
+  String? get _normalizedUserId {
+    final value = _readOwnerId;
+    return !_ownerStreamFailed && value == _ownerId ? value : null;
+  }
+
+  bool _isCurrentOwner(
+    String userId,
+    InvestmentAssetRepository repository,
+    int epoch,
+  ) =>
+      mounted &&
+      !_ownerStreamFailed &&
+      epoch == _ownerEpoch &&
+      _normalizedUserId == userId &&
+      identical(repository, widget.repository);
+
+  void _invalidateOwner(String? owner, {bool failed = false}) {
+    _ownerEpoch++;
+    _loadSequence++;
+    _historyLoadSequence++;
+    if (!mounted) return;
+    setState(() {
+      _ownerId = owner;
+      _ownerStreamFailed = failed;
+      _assets = const <InvestmentAsset>[];
+      _history = const <InvestmentPortfolioHistoryPoint>[];
+      _loadError = null;
+      _historyLoadError = null;
+      _loading = false;
+      _historyLoading = false;
+      _saving = false;
+      _importingCsv = false;
+    });
+  }
+
+  void _bindOwnerChanges() {
+    final binding = ++_ownerBindingEpoch;
+    unawaited(_ownerSubscription?.cancel());
+    void failClosed() {
+      if (!mounted || binding != _ownerBindingEpoch) return;
+      _invalidateOwner(_readOwnerId, failed: true);
+    }
+    _ownerSubscription = widget.ownerChanges?.listen(
+      (owner) {
+        if (!mounted || binding != _ownerBindingEpoch) return;
+        final normalized = owner?.trim();
+        final next = normalized == null || normalized.isEmpty ? null : normalized;
+        if (next == _ownerId && !_ownerStreamFailed) return;
+        _invalidateOwner(next);
+        if (_normalizedUserId != null) unawaited(_load());
+      },
+      onError: (Object _) => failClosed(),
+      onDone: failClosed,
+    );
   }
 
   @override
   void initState() {
     super.initState();
+    _ownerId = _readOwnerId;
+    _bindOwnerChanges();
     _loading = _normalizedUserId != null;
     _historyLoading = _normalizedUserId != null;
     unawaited(_load(showLoading: false));
@@ -89,10 +157,23 @@ class _InvestmentAssetManagementPanelState
   @override
   void didUpdateWidget(covariant InvestmentAssetManagementPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.ownerChanges, widget.ownerChanges)) {
+      _bindOwnerChanges();
+    }
     if (oldWidget.userId?.trim() != widget.userId?.trim() ||
+        _readOwnerId != _ownerId ||
         !identical(oldWidget.repository, widget.repository)) {
+      _invalidateOwner(_readOwnerId);
       unawaited(_load());
     }
+  }
+
+  @override
+  void dispose() {
+    _ownerBindingEpoch++;
+    _ownerEpoch++;
+    unawaited(_ownerSubscription?.cancel());
+    super.dispose();
   }
 
   Future<void> _load({bool showLoading = true}) async {
@@ -120,9 +201,12 @@ class _InvestmentAssetManagementPanelState
         _historyLoadError = null;
       });
     }
+    final repository = widget.repository;
+    final ownerEpoch = _ownerEpoch;
     try {
-      final assets = await widget.repository.fetchByUser(userId: userId);
-      if (!mounted || sequence != _loadSequence) return;
+      final assets = await repository.fetchByUser(userId: userId);
+      if (!mounted || sequence != _loadSequence ||
+          !_isCurrentOwner(userId, repository, ownerEpoch)) return;
       setState(() {
         _assets = _sorted(assets);
         _loadError = null;
@@ -130,7 +214,8 @@ class _InvestmentAssetManagementPanelState
       });
       await _loadHistory(userId, parentSequence: sequence);
     } catch (error) {
-      if (!mounted || sequence != _loadSequence) return;
+      if (!mounted || sequence != _loadSequence ||
+          !_isCurrentOwner(userId, repository, ownerEpoch)) return;
       setState(() {
         _loadError = error;
         _loading = false;
@@ -140,6 +225,9 @@ class _InvestmentAssetManagementPanelState
   }
 
   Future<void> _loadHistory(String userId, {int? parentSequence}) async {
+    final repository = widget.repository;
+    final ownerEpoch = _ownerEpoch;
+    if (!_isCurrentOwner(userId, repository, ownerEpoch)) return;
     final sequence = ++_historyLoadSequence;
     if (mounted) {
       setState(() {
@@ -148,10 +236,11 @@ class _InvestmentAssetManagementPanelState
       });
     }
     try {
-      final history = await widget.repository.fetchPortfolioHistory(
+      final history = await repository.fetchPortfolioHistory(
         userId: userId,
       );
       if (!mounted ||
+          !_isCurrentOwner(userId, repository, ownerEpoch) ||
           sequence != _historyLoadSequence ||
           (parentSequence != null && parentSequence != _loadSequence)) {
         return;
@@ -162,7 +251,8 @@ class _InvestmentAssetManagementPanelState
         _historyLoading = false;
       });
     } catch (error) {
-      if (!mounted || sequence != _historyLoadSequence) return;
+      if (!mounted || sequence != _historyLoadSequence ||
+          !_isCurrentOwner(userId, repository, ownerEpoch)) return;
       setState(() {
         _historyLoadError = error;
         _historyLoading = false;
@@ -185,11 +275,14 @@ class _InvestmentAssetManagementPanelState
   Future<void> _openCsvImport() async {
     final userId = _normalizedUserId;
     if (userId == null || _saving || _importingCsv) return;
+    final repository = widget.repository;
+    final ownerEpoch = _ownerEpoch;
+    bool isCurrent() => _isCurrentOwner(userId, repository, ownerEpoch);
 
     setState(() => _importingCsv = true);
     try {
       final bytes = await _pickCsvBytes();
-      if (bytes == null || bytes.isEmpty || !mounted) return;
+      if (bytes == null || bytes.isEmpty || !mounted || !isCurrent()) return;
       final text = widget.csvBytesDecoder.decode(
         bytes,
         looksValid: InvestmentCsvImportService.looksLikeCsv,
@@ -204,7 +297,7 @@ class _InvestmentAssetManagementPanelState
           importService: widget.csvImportService,
         ),
       );
-      if (policy == null || !mounted || _normalizedUserId != userId) return;
+      if (policy == null || !mounted || !isCurrent()) return;
 
       final plan = widget.csvImportService.buildPlan(
         parsed: parsed,
@@ -219,8 +312,9 @@ class _InvestmentAssetManagementPanelState
       setState(() => _saving = true);
       final saved = <InvestmentAsset>[];
       for (final update in plan.updates) {
+        if (!isCurrent()) return;
         saved.add(
-          await widget.repository.update(
+          await repository.update(
             userId: userId,
             assetId: update.asset.id,
             draft: update.draft,
@@ -228,9 +322,10 @@ class _InvestmentAssetManagementPanelState
         );
       }
       for (final draft in plan.creates) {
-        saved.add(await widget.repository.create(userId: userId, draft: draft));
+        if (!isCurrent()) return;
+        saved.add(await repository.create(userId: userId, draft: draft));
       }
-      if (!mounted) return;
+      if (!mounted || !isCurrent()) return;
       final updatedIds = plan.updates.map((item) => item.asset.id).toSet();
       setState(() {
         _assets = _sorted(<InvestmentAsset>[
@@ -245,16 +340,16 @@ class _InvestmentAssetManagementPanelState
         '${plan.skippedDuplicates}件スキップしました。',
       );
     } catch (error, stackTrace) {
+      if (!mounted || !isCurrent()) return;
       debugPrint('Investment CSV import failed: $error');
       debugPrintStack(stackTrace: stackTrace);
-      if (!mounted) return;
       final detail = error is FormatException ? error.message : null;
       _showMessage(
         detail == null ? '投資資産CSVを取り込めませんでした。' : '投資資産CSVを取り込めませんでした: $detail',
       );
       unawaited(_load(showLoading: false));
     } finally {
-      if (mounted) {
+      if (mounted && isCurrent()) {
         setState(() {
           _saving = false;
           _importingCsv = false;
@@ -266,23 +361,26 @@ class _InvestmentAssetManagementPanelState
   Future<void> _openEditor([InvestmentAsset? asset]) async {
     final userId = _normalizedUserId;
     if (userId == null || _saving) return;
+    final repository = widget.repository;
+    final ownerEpoch = _ownerEpoch;
+    bool isCurrent() => _isCurrentOwner(userId, repository, ownerEpoch);
 
     final draft = await showDialog<InvestmentAssetDraft>(
       context: context,
       builder: (context) => InvestmentAssetEditorDialog(asset: asset),
     );
-    if (draft == null || !mounted) return;
+    if (draft == null || !mounted || !isCurrent()) return;
 
     setState(() => _saving = true);
     try {
       final saved = asset == null
-          ? await widget.repository.create(userId: userId, draft: draft)
-          : await widget.repository.update(
+          ? await repository.create(userId: userId, draft: draft)
+          : await repository.update(
               userId: userId,
               assetId: asset.id,
               draft: draft,
             );
-      if (!mounted) return;
+      if (!mounted || !isCurrent()) return;
       setState(() {
         final next = <InvestmentAsset>[
           for (final current in _assets)
@@ -298,18 +396,21 @@ class _InvestmentAssetManagementPanelState
             : '${saved.displayLabel}を更新しました。',
       );
     } catch (error, stackTrace) {
+      if (!mounted || !isCurrent()) return;
       debugPrint('Investment asset save failed: $error');
       debugPrintStack(stackTrace: stackTrace);
-      if (!mounted) return;
       _showMessage('投資資産を保存できませんでした。時間をおいて再試行してください。');
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted && isCurrent()) setState(() => _saving = false);
     }
   }
 
   Future<void> _confirmDelete(InvestmentAsset asset) async {
     final userId = _normalizedUserId;
     if (userId == null || _saving) return;
+    final repository = widget.repository;
+    final ownerEpoch = _ownerEpoch;
+    bool isCurrent() => _isCurrentOwner(userId, repository, ownerEpoch);
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -331,12 +432,12 @@ class _InvestmentAssetManagementPanelState
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true || !mounted || !isCurrent()) return;
 
     setState(() => _saving = true);
     try {
-      await widget.repository.delete(userId: userId, assetId: asset.id);
-      if (!mounted) return;
+      await repository.delete(userId: userId, assetId: asset.id);
+      if (!mounted || !isCurrent()) return;
       setState(() {
         _assets = <InvestmentAsset>[
           for (final current in _assets)
@@ -346,12 +447,12 @@ class _InvestmentAssetManagementPanelState
       unawaited(_loadHistory(userId));
       _showMessage('${asset.displayLabel}を削除しました。');
     } catch (error, stackTrace) {
+      if (!mounted || !isCurrent()) return;
       debugPrint('Investment asset delete failed: $error');
       debugPrintStack(stackTrace: stackTrace);
-      if (!mounted) return;
       _showMessage('投資資産を削除できませんでした。時間をおいて再試行してください。');
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted && isCurrent()) setState(() => _saving = false);
     }
   }
 
@@ -439,6 +540,12 @@ class _InvestmentAssetManagementPanelState
   }
 
   Widget _buildBody(ThemeData theme) {
+    if (_ownerStreamFailed || _readOwnerId != _ownerId) {
+      return const Text(
+        '利用者の確認ができません。再読込して確認してください。',
+        key: Key('investment_asset_owner_unconfirmed'),
+      );
+    }
     if (_normalizedUserId == null) {
       return Text(
         'ログインすると投資資産を登録できます。',
