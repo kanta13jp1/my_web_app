@@ -492,7 +492,8 @@ Map<String, dynamic> _validJson() {
   };
 }
 
-class _ControlledFixedCostPreferences extends Fake implements SharedPreferences {
+class _ControlledFixedCostPreferences extends Fake
+    implements SharedPreferences {
   _ControlledFixedCostPreferences({this.failure});
 
   final Object? failure;
