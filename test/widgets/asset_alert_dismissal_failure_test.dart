@@ -97,8 +97,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(probe.dismissAttempts, 1);
     expect(card(tester).center.alerts.map((a) => a.id), before);
-    expect(find.text('非表示の保存結果を確認できませんでした。再読込して状態を確認してください。'),
-        findsOneWidget);
+    expect(find.text('非表示の保存結果を確認できませんでした。再読込して状態を確認してください。'), findsOneWidget);
     expect(find.textContaining('private payload'), findsNothing);
     expect(tester.takeException(), isNull);
     await unmount(tester);
@@ -119,8 +118,7 @@ void main() {
     expect(probe.restoreAttempts, 1);
     expect(card(tester).center.dismissedCount, 1);
     expect(card(tester).center.alerts.any((a) => a.id == id), isFalse);
-    expect(find.text('再表示の保存結果を確認できませんでした。再読込して状態を確認してください。'),
-        findsOneWidget);
+    expect(find.text('再表示の保存結果を確認できませんでした。再読込して状態を確認してください。'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await unmount(tester);
   });

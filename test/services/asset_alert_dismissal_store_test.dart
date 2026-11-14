@@ -58,7 +58,8 @@ void main() {
     },
   };
   for (final entry in operations.entries) {
-    test('alert ${entry.key} rejects an unconfirmed write without retry', () async {
+    test('alert ${entry.key} rejects an unconfirmed write without retry',
+        () async {
       final prefs = _AlertPreferences()..reject = true;
       await expectLater(entry.value(prefs), throwsA(isA<StateError>()));
       expect(prefs.attempts, 1);
@@ -66,7 +67,8 @@ void main() {
       // The fake mutates its cache before rejecting, like SharedPreferences.
       // Failure does not imply rollback or a known persisted state.
     });
-    test('alert ${entry.key} preserves the original storage exception', () async {
+    test('alert ${entry.key} preserves the original storage exception',
+        () async {
       final failure = StateError('synthetic storage failure');
       final prefs = _AlertPreferences()..failure = failure;
       await expectLater(entry.value(prefs), throwsA(same(failure)));
@@ -95,7 +97,8 @@ void main() {
     final prefs = _AlertPreferences()..reject = true;
     expect(await store.dismiss('old', prefs: prefs), <String>{'old', 'keep'});
     expect(await store.dismiss(' ', prefs: prefs), <String>{'old', 'keep'});
-    expect(await store.restore('absent', prefs: prefs), <String>{'old', 'keep'});
+    expect(
+        await store.restore('absent', prefs: prefs), <String>{'old', 'keep'});
     expect(await store.prune(<String>{'old', 'keep'}, prefs: prefs),
         <String>{'old', 'keep'});
     expect(prefs.attempts, 0);
