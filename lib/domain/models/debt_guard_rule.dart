@@ -1,3 +1,5 @@
+import 'debt_guard_emotion.dart';
+
 enum DebtGuardCategory {
   debt,
   food,
@@ -401,6 +403,7 @@ class DebtGuardEvent {
     required this.eventDate,
     required this.createdAt,
     this.note,
+    this.emotion,
   });
 
   final int id;
@@ -409,6 +412,9 @@ class DebtGuardEvent {
   final DateTime eventDate;
   final DateTime createdAt;
   final String? note;
+
+  /// The feeling the user named behind this urge or violation, if any.
+  final DebtGuardEmotion? emotion;
 }
 
 enum DebtGuardRuleStatus { unrecorded, kept, violated }
@@ -464,9 +470,7 @@ class DebtGuardDailySnapshot {
       .length;
 
   int get requiredActionStartedCount => events
-      .where(
-        (event) => event.type == DebtGuardEventType.requiredActionStarted,
-      )
+      .where((event) => event.type == DebtGuardEventType.requiredActionStarted)
       .length;
 
   int get bugWeakenedCount => resistedUrgeCount + requiredActionStartedCount;
