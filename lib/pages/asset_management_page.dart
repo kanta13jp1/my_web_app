@@ -2787,8 +2787,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _assetCsvRestorePreview = null;
         _assetCsvRestorePreviewText = null;
-        _assetCsvRestoreMessage =
-            'CSV復元に失敗しました。一部が保存済みの可能性があります。'
+        _assetCsvRestoreMessage = 'CSV復元に失敗しました。一部が保存済みの可能性があります。'
             '保存状況を確認し、再プレビューしてください。詳細: $e';
       });
     } finally {
