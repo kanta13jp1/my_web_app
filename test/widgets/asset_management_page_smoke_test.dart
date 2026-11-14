@@ -166,6 +166,8 @@ class _CsvRestoreProbeRepository
   final snapshots = <AssetLiabilityMonthlySnapshot>[];
   Completer<void>? pending;
   int attempts = 0;
+  bool failBeforePersist = false;
+  bool failAfterPersist = false;
 
   @override
   Future<List<AssetLiabilityMonthlySnapshot>> loadMonthlySnapshots() async {
@@ -177,8 +179,14 @@ class _CsvRestoreProbeRepository
     AssetLiabilityMonthlySnapshot snapshot,
   ) async {
     attempts++;
+    if (failBeforePersist) {
+      throw StateError('synthetic restore failure before persistence');
+    }
     await pending?.future;
     snapshots.add(snapshot);
+    if (failAfterPersist) {
+      throw StateError('synthetic restore failure after persistence');
+    }
   }
 }
 
@@ -318,6 +326,40 @@ void main() {
     expect(tester.widget<OutlinedButton>(preview).onPressed, isNotNull);
     await _unmount(tester);
   });
+
+  for (final persistedBeforeFailure in <bool>[false, true]) {
+    testWidgets(
+      'CSV failure after persistence=$persistedBeforeFailure requires new preview',
+      (tester) async {
+        final repository = _CsvRestoreProbeRepository()
+          ..failBeforePersist = !persistedBeforeFailure
+          ..failAfterPersist = persistedBeforeFailure;
+        await _pumpCsvRestorePage(tester, repository);
+        await _previewSyntheticRestore(tester, '2026-05');
+        final inputBefore =
+            tester.widget<TextField>(_csvRestoreInput()).controller!.text;
+        final apply = _csvRestoreButton('Apply append-only', true);
+        await tester.ensureVisible(apply);
+        await tester.tap(apply);
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(repository.attempts, 1);
+        expect(repository.snapshots, hasLength(persistedBeforeFailure ? 1 : 0));
+        expect(tester.widget<FilledButton>(apply).onPressed, isNull);
+        expect(tester.widget<TextField>(_csvRestoreInput()).enabled, isTrue);
+        expect(
+          tester.widget<TextField>(_csvRestoreInput()).controller!.text,
+          inputBefore,
+        );
+        expect(find.textContaining('一部が保存済みの可能性'), findsOneWidget);
+        expect(find.textContaining('再プレビューしてください'), findsOneWidget);
+        final preview = _csvRestoreButton('Preview', false);
+        expect(tester.widget<OutlinedButton>(preview).onPressed, isNotNull);
+        expect(tester.takeException(), isNull);
+        await _unmount(tester);
+      },
+    );
+  }
 
   for (final width in <double>[1200, 390]) {
     testWidgets('balance change explains recorded-date difference at $width', (
