@@ -966,6 +966,8 @@ jobs:
           retention-days: 1
           if-no-files-found: warn
 
+  # One-shot QA only, not a reusable CI lane or proposed main-branch merge.
+  # Exact source/ref/hash guards intentionally restrict the already reviewed target.
   payslip-current-fixed-lock:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.profile == 'payslip-fixed-lock' && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/payslip-current-fixed-lock-qa-20261114' }}
     runs-on: ubuntu-latest
@@ -1553,7 +1555,7 @@ jobs:
       timeout-minutes: 20
       run: |
         set -euo pipefail
-        printf '%s\n' '{"scope":"flutter-only","browser_cases_executed":0,"production_ui_verified":false}' > "$PAYSLIP_ROOT/results/QA_SCOPE.json"
+        printf '%s\n' '{"scope":"fixed-lock-flutter-and-browser","browser_execution":"planned_not_yet_run","production_ui_verified":false}' > "$PAYSLIP_ROOT/results/QA_SCOPE.json"
         env -i PATH=/usr/bin:/bin HOME="$PAYSLIP_ROOT/home" curl --fail --location --connect-timeout 15 --max-time 240 --retry 0 --output "$PAYSLIP_ROOT/sdk/flutter.tar.xz" https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.9-stable.tar.xz
         printf '%s  %s\n' 25ed8c3c29d51a7353f2a944310b478af8214920639524b19c50a19e6c044c5a "$PAYSLIP_ROOT/sdk/flutter.tar.xz" | sha256sum -c -
         tar -xJf "$PAYSLIP_ROOT/sdk/flutter.tar.xz" -C "$PAYSLIP_ROOT/sdk"
@@ -1577,6 +1579,7 @@ jobs:
         python3 "$PAYSLIP_ROOT/guards/source_guard.py" "$PAYSLIP_ROOT" after_pub_get
         "${clean_env[@]}" npm ci --ignore-scripts --no-audit --no-fund
         "${clean_env[@]}" node -e 'if(require("./node_modules/@playwright/test/package.json").version!=="1.64.1")process.exit(1)'
+        "${clean_env[@]}" node node_modules/@playwright/test/cli.js install --with-deps chromium
         python3 "$PAYSLIP_ROOT/guards/source_guard.py" "$PAYSLIP_ROOT" after_npm
     - name: Create a dedicated runtime identity and seal host helpers
       shell: bash
@@ -1657,6 +1660,13 @@ jobs:
         set -euo pipefail
         [[ "$PAYSLIP_BOUNDARY_READY" == true ]]
         sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" fixture 900
+    - name: Run the exact four synthetic browser cases with the same lock
+      shell: bash
+      timeout-minutes: 11
+      run: |
+        set -euo pipefail
+        [[ "$PAYSLIP_BOUNDARY_READY" == true ]]
+        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" browser 600
     - name: Always restore and verify source under the same offline runtime identity
       if: ${{ always() && env.PAYSLIP_BOUNDARY_READY == 'true' }}
       shell: bash
@@ -1675,7 +1685,7 @@ jobs:
         printf 'validated=true\n' >> "$GITHUB_OUTPUT"
     - name: Preserve only the host-owned validated synthetic snapshot
       if: ${{ always() && steps.publish.outputs.validated == 'true' }}
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
       with:
         name: payslip-flutter-only-same-lock-${{ github.run_id }}-${{ github.run_attempt }}
         path: ${{ env.PAYSLIP_ROOT }}/publish/
