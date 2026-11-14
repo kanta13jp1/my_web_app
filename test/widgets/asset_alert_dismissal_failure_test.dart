@@ -110,6 +110,9 @@ void main() {
     final id = card(tester).center.alerts.first.id;
     card(tester).onDismiss!(id);
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(probe.dismissAttempts, 1);
+    expect(probe.ids, contains(id));
     expect(card(tester).center.dismissedCount, 1);
     probe.failingOperation = 'restoreAll';
     card(tester).onRestoreDismissed!();
@@ -129,9 +132,13 @@ void main() {
     final id = card(tester).center.alerts.first.id;
     card(tester).onDismiss!(id);
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(probe.dismissAttempts, 1);
+    expect(probe.ids, contains(id));
     expect(card(tester).center.dismissedCount, 1);
     card(tester).onRestoreDismissed!();
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(probe.dismissAttempts, 1);
     expect(probe.restoreAttempts, 1);
     expect(card(tester).center.dismissedCount, 0);
