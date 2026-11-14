@@ -9640,7 +9640,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         'occurred_at': selectedDate.toUtc().toIso8601String(),
       }).eq('id', flowId);
-      if (!canApplyResult()) return;
+      if (!mounted || !canApplyResult()) return;
 
       if (mounted) {
         setState(() {
@@ -9649,10 +9649,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
 
       await _fetchRecentFlows();
-      if (!canApplyResult()) return;
+      if (!mounted || !canApplyResult()) return;
       await _fetchTodayClosing();
 
-      if (!canApplyResult()) return;
+      if (!mounted || !canApplyResult()) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(isTransfer ? '振替記録を更新しました' : '収支記録を更新しました'),
@@ -9661,7 +9661,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     } catch (e) {
       debugPrint('Error editing flow: $e');
-      if (!canApplyResult()) return;
+      if (!mounted || !canApplyResult()) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('収支記録の更新に失敗しました: $e')));
@@ -9740,13 +9740,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .delete()
           .eq('id', flowId)
           .eq('user_id', userId);
-      if (!canApplyResult()) return;
+      if (!mounted || !canApplyResult()) return;
 
       await _fetchRecentFlows();
-      if (!canApplyResult()) return;
+      if (!mounted || !canApplyResult()) return;
       await _fetchTodayClosing();
 
-      if (!canApplyResult()) return;
+      if (!mounted || !canApplyResult()) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('収支記録を削除しました'),
@@ -9755,7 +9755,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     } catch (e) {
       debugPrint('Error deleting flow: $e');
-      if (!canApplyResult()) return;
+      if (!mounted || !canApplyResult()) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('収支記録の削除に失敗しました: $e')));
