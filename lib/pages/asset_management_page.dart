@@ -9639,7 +9639,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           wasteCategory: selectedType == '支出' ? selectedWasteCategory : null,
         ),
         'occurred_at': selectedDate.toUtc().toIso8601String(),
-      }).eq('id', flowId);
+      }).eq('id', flowId).eq('user_id', userId);
       if (!mounted || !canApplyResult()) return;
 
       if (mounted) {

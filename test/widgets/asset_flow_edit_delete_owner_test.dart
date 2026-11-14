@@ -198,6 +198,10 @@ void main() {
                 mutation!.url.queryParameters['id'],
                 'eq.synthetic-flow-id',
               );
+              expect(
+                mutation!.url.queryParameters['user_id'],
+                'eq.$ownerA',
+              );
               if (phase != 'dialog') await switchSession();
               await tester.runAsync(() async {
                 writeGate.complete();
