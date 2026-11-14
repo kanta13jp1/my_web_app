@@ -4,7 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/asset_subscription_audit_mutation_queue.dart';
 
 void main() {
-  test('restore reads the committed decision after delayed persistence', () async {
+  test('restore reads the committed decision after delayed persistence',
+      () async {
     final queue = AssetSubscriptionAuditMutationQueue();
     final persistence = Completer<void>();
     final started = Completer<void>();
