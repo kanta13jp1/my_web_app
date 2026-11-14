@@ -5,7 +5,7 @@ import '../services/asset_net_worth_panel_service.dart';
 /// 純資産パネル (Issue #2473)。
 ///
 /// 純サービス [AssetNetWorthPanelService] の結果 ([AssetNetWorthPanel]) を受け取り、
-/// 「純資産」「前月比 ±¥ / ±%」「直近6月のミニスパークライン」を描画する
+/// 「純資産」「前月比 ±¥ / ±%」「保存済み最大6件のミニスパークライン」を描画する
 /// 自己完結ウィジェット。ページ状態へ依存しないため単体検証できる。
 class AssetNetWorthPanelCard extends StatelessWidget {
   const AssetNetWorthPanelCard({
@@ -189,7 +189,7 @@ class AssetNetWorthPanelCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '直近${panel.sparkline.length}か月の推移',
+          '保存済み${panel.sparkline.length}件の推移',
           style: theme.textTheme.labelSmall?.copyWith(color: _muted),
         ),
         const SizedBox(height: 6),
