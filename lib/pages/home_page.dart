@@ -63,6 +63,7 @@ import '../widgets/home_calendar_day_indicators.dart';
 import '../widgets/home_calendar_day_surface.dart';
 import '../widgets/home_ops_snapshot_view.dart';
 import '../models/home_daily_cashflow_summary.dart';
+import '../utils/home_calendar_cashflow_aggregation.dart';
 import '../widgets/home_calendar_day_number.dart';
 import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
@@ -770,38 +771,11 @@ class _HomePageState extends State<HomePage> with RouteAware {
           .gte('occurred_at', normalizedStart.toUtc().toIso8601String())
           .lt('occurred_at', normalizedEndExclusive.toUtc().toIso8601String())
           .order('occurred_at', ascending: true);
-      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
-      final result = <String, HomeDailyCashflowSummary>{};
-
-      for (final row in rows.whereType<Map<String, dynamic>>()) {
-        final occurredAt = DateTime.tryParse(
-          row['occurred_at']?.toString() ?? '',
-        )?.toLocal();
-        if (occurredAt == null) continue;
-
-        final dateKey = _statusDateKey(occurredAt);
-        final current = result[dateKey] ?? const HomeDailyCashflowSummary();
-        final actionType = row['action_type']?.toString() ?? '';
-        final amount = _toIntValue(row['amount']);
-
-        result[dateKey] = switch (actionType) {
-          'conquer' => current.copyWith(
-              incomeTotal: current.incomeTotal + amount,
-              incomeCount: current.incomeCount + 1,
-            ),
-          'expense' => current.copyWith(
-              expenseTotal: current.expenseTotal + amount,
-              expenseCount: current.expenseCount + 1,
-            ),
-          'transfer' => current.copyWith(
-              transferTotal: current.transferTotal + amount,
-              transferCount: current.transferCount + 1,
-            ),
-          _ => current,
-        };
-      }
-
-      return result;
+      return aggregateHomeCalendarCashflow(
+        rowsRaw,
+        dateKeyFor: _statusDateKey,
+        amountFor: _toIntValue,
+      );
     } catch (e) {
       debugPrint('Error loading calendar cashflow map: $e');
       return <String, HomeDailyCashflowSummary>{};
