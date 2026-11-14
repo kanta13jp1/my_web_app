@@ -21,6 +21,32 @@ def new_findings(current, previous):
     return added
 
 
+def known_competitor_brand_row(root, name, line_number, detail):
+    # Restrict exceptions to generated daily comparison rows with their actual
+    # vendor URL. Prose, other reports, and typos remain checked.
+    if not re.fullmatch(r'docs/competitor-reports/\d{4}-\d{2}-\d{2}\.md', name):
+        return False
+    brand = detail.split(' ==> ', 1)[0].casefold()
+    patterns = {
+        'progate': r'^\|\s*Progate\s*\|\s*https://prog-8\.com(?:/[^\s|]*)?\s*\|',
+        'freee': r'^\|\s*freee 人事労務\s*\|\s*https://www\.freee\.co\.jp/hr/(?:[^\s|]*)?\s*\|',
+        'ameba': r'^\|\s*Ameba \(サイバーエージェント\)\s*\|\s*https://ameba\.jp(?:/[^\s|]*)?\s*\|',
+    }
+    pattern = patterns.get(brand)
+    if not pattern:
+        return False
+    lines = (root / name).read_text(encoding='utf-8').splitlines()
+    if not 0 < line_number <= len(lines):
+        return False
+    row = lines[line_number - 1]
+    prefix = re.match(pattern, row)
+    if not prefix:
+        return False
+    # codespell reports a line, not a column. Keep the finding if the same
+    # word also occurs outside the verified brand-and-URL prefix.
+    return not re.search(r'\b' + re.escape(brand) + r'\b', row[prefix.end():], re.IGNORECASE)
+
+
 def collect(root, paths):
     findings = []
     for name in paths:
@@ -35,10 +61,13 @@ def collect(root, paths):
         if result.returncode not in (0, 65):
             raise RuntimeError('codespell infrastructure failure')
         for line in result.stdout.splitlines():
-            match = re.match(r'^(.*?):\d+: (.*)$', line)
+            match = re.match(r'^(.*?):(\d+): (.*)$', line)
             if not match:
                 raise RuntimeError('unrecognized codespell result')
-            findings.append({'kind': 'spelling', 'file': match[1], 'detail': match[2]})
+            name, number, detail = match[1], int(match[2]), match[3]
+            if known_competitor_brand_row(root, name, number, detail):
+                continue
+            findings.append({'kind': 'spelling', 'file': name, 'detail': detail})
     return findings
 
 
