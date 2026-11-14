@@ -18105,6 +18105,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     'reflection_${_supabase.auth.currentUser!.id}_$_calendarReflectionRevision'),
                 repository: AssetCalendarReflectionRepository(_supabase),
                 flowEvents: _calendarFlowReflections,
+                diningReviewCandidates:
+                    AssetDiningReviewCandidate.fromOwnedFlows(
+                  currentOwner: _supabase.auth.currentUser?.id,
+                  flowsOwner: _recentFlowsOwnerId,
+                  reading: _incomeFlowLoading,
+                  failed: _incomeFlowFailed,
+                  flows: _recentFlows,
+                ),
                 start: cycleStart,
                 end: cycleEndExclusive,
                 selectedDate: _calendarSelectedDate,

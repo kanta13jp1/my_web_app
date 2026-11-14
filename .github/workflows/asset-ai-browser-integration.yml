@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - lib/pages/asset_management_page.dart
+      - lib/models/asset_calendar_reflection.dart
+      - lib/widgets/asset_calendar_reflection_panel.dart
+      - lib/services/asset_calendar_reflection_repository.dart
+      - lib/services/asset_calendar_reflection_import_parser.dart
       - lib/services/asset_management_ai_*.dart
       - lib/services/asset_management_insight_service.dart
       - test/widgets/asset_management_ai_current_input_test.dart
@@ -14,6 +18,10 @@ on:
       - integration_test/asset_management_ai_current_input_test.dart
       - integration_test/asset_ai_current_input_scenarios.dart
       - test_driver/asset_ai_integration.dart
+      - integration_test/asset_dining_synthetic_integration_test.dart
+      - test/fixtures/dining_page_stub.py
+      - test/fixtures/test_dining_page_stub.py
+      - test/fixtures/run_dining_integration.sh
       - test_driver/asset_triage_visual.dart
       - .github/workflows/asset-ai-browser-integration.yml
 
@@ -128,6 +136,21 @@ jobs:
               -d web-server --browser-name=chrome --headless \
               2>&1 | tee ".ci-logs/asset-ai-borrowing-$viewport-browser.log"
           done
+      - name: Check synthetic dining fixture
+        run: python3 -B -m unittest discover -s test/fixtures -p 'test_dining_page_stub.py' -v
+      - name: Prepare offline web resources
+        run: flutter precache --web
+      - name: Inspect synthetic dining candidate without saving
+        timeout-minutes: 6
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo unshare --net -- bash -c '
+            set -euo pipefail
+            ip link set lo up
+            test "$(ip -o link show | wc -l)" -eq 1
+            exec runuser -u "${1}" -- env -i PATH="${2}" HOME="${3}" CI=true TZ=UTC bash test/fixtures/run_dining_integration.sh
+          ' _ "$(id -un)" "$PATH" "$HOME"
       - name: Preserve browser evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
