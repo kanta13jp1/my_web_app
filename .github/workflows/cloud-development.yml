@@ -59,6 +59,15 @@ on:
         required: false
         default: ''
         type: string
+      qa_scope:
+        description: Diagnostic scope only; partial runs never prove the full test suite
+        required: false
+        default: all
+        type: choice
+        options:
+          - all
+          - web-build-only
+          - browser-only
       profile:
         description: Cloud validation profile
         required: true
@@ -985,6 +994,7 @@ jobs:
     timeout-minutes: 90
     permissions: {}
     env:
+      QA_SCOPE: ${{ inputs.qa_scope || 'all' }}
       QA_EXPECTED_REF: ${{ inputs.expected_qa_ref }}
       QA_SOURCE_SHA: ${{ inputs.qa_source_sha }}
       QA_REPOSITORY: ${{ github.repository }}
@@ -1004,6 +1014,7 @@ jobs:
         [[ "$QA_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
         [[ "$QA_REPOSITORY" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]
         test "$QA_REPOSITORY" = "$GITHUB_REPOSITORY"
+        case "$QA_SCOPE" in all|web-build-only|browser-only) ;; *) echo "STOP: invalid diagnostic scope"; exit 1;; esac
     - name: Require unbound inputs to STOP and allocate private scratch
       shell: bash
       run: |
@@ -1608,7 +1619,7 @@ jobs:
       timeout-minutes: 20
       run: |
         set -euo pipefail
-        printf '%s\n' '{"scope":"fixed-lock-flutter-and-browser","browser_execution":"planned_not_yet_run","production_ui_verified":false}' > "$PAYSLIP_ROOT/results/QA_SCOPE.json"
+        printf '{"scope":"%s","execution":"planned_not_yet_run","full_suite_acceptance":false,"production_ui_verified":false}\n' "$QA_SCOPE" > "$PAYSLIP_ROOT/results/QA_SCOPE.json"
         env -i PATH=/usr/bin:/bin HOME="$PAYSLIP_ROOT/home" curl --fail --location --connect-timeout 15 --max-time 240 --retry 0 --output "$PAYSLIP_ROOT/sdk/flutter.tar.xz" https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.9-stable.tar.xz
         printf '%s  %s\n' 25ed8c3c29d51a7353f2a944310b478af8214920639524b19c50a19e6c044c5a "$PAYSLIP_ROOT/sdk/flutter.tar.xz" | sha256sum -c -
         tar -xJf "$PAYSLIP_ROOT/sdk/flutter.tar.xz" -C "$PAYSLIP_ROOT/sdk"
@@ -1686,6 +1697,7 @@ jobs:
         identity_mark "publish_boundary_env"
         printf 'PAYSLIP_RUNTIME_UID=%s\nPAYSLIP_RUNTIME_GID=%s\nPAYSLIP_BOUNDARY_READY=true\n' "$uid" "$gid" >> "$GITHUB_ENV"
     - name: Format analyze and run the exact 13 salary cases
+      if: ${{ env.QA_SCOPE == 'all' }}
       shell: bash
       timeout-minutes: 11
       run: |
@@ -1693,6 +1705,7 @@ jobs:
         [[ "$PAYSLIP_BOUNDARY_READY" == true ]]
         sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" salary 600 "$QA_SOURCE_SHA"
     - name: Run all Flutter tests and preserve the exact known skip
+      if: ${{ env.QA_SCOPE == 'all' }}
       shell: bash
       timeout-minutes: 21
       run: |
@@ -1700,6 +1713,7 @@ jobs:
         [[ "$PAYSLIP_BOUNDARY_READY" == true ]]
         sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" full 1200 "$QA_SOURCE_SHA"
     - name: Build the complete release web app with the same lock
+      if: ${{ env.QA_SCOPE == 'all' || env.QA_SCOPE == 'web-build-only' }}
       shell: bash
       timeout-minutes: 16
       run: |
@@ -1707,6 +1721,7 @@ jobs:
         [[ "$PAYSLIP_BOUNDARY_READY" == true ]]
         sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" app_build 900 "$QA_SOURCE_SHA"
     - name: Build and validate only the synthetic preview resources
+      if: ${{ env.QA_SCOPE == 'all' || env.QA_SCOPE == 'browser-only' }}
       shell: bash
       timeout-minutes: 16
       run: |
@@ -1714,6 +1729,7 @@ jobs:
         [[ "$PAYSLIP_BOUNDARY_READY" == true ]]
         sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" fixture 900 "$QA_SOURCE_SHA"
     - name: Run the exact four synthetic browser cases with the same lock
+      if: ${{ env.QA_SCOPE == 'all' || env.QA_SCOPE == 'browser-only' }}
       shell: bash
       timeout-minutes: 11
       run: |
