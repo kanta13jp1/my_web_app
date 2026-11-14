@@ -55,7 +55,7 @@ Future<void> main() async {
   // No real host or credentials. All Supabase HTTP stays in memory.
   await Supabase.initialize(
     url: 'http://127.0.0.1:7362/synthetic-supabase',
-    anonKey: 'synthetic-fixture-key-not-a-credential',
+    publishableKey: 'synthetic-fixture-key-not-a-credential',
     httpClient: MockClient((request) async {
       if (request.url.path.contains('/functions/')) {
         final count = prefs.getInt('local_member_fixture_edge_failures') ?? 0;
