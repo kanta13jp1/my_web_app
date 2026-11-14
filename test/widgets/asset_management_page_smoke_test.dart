@@ -174,7 +174,8 @@ class _CsvRestoreProbeRepository
 
   @override
   Future<void> saveMonthlySnapshot(
-      AssetLiabilityMonthlySnapshot snapshot) async {
+    AssetLiabilityMonthlySnapshot snapshot,
+  ) async {
     attempts++;
     await pending?.future;
     snapshots.add(snapshot);
