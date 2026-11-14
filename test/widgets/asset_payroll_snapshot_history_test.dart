@@ -35,7 +35,9 @@ PayrollSnapshotHistoryPage _page({String owner = 'owner-a'}) =>
           note: '本人確認メモ',
         ),
       ),
-    ], hasMore: true);
+    ],
+    hasMore: true,
+  );
 
 Widget _app(_Reader reader, {int month = 10}) => MaterialApp(
       home: Scaffold(
@@ -113,9 +115,11 @@ void main() {
       (tester) async {
     final reader = _Reader()
       ..responses.add(Future.value(_page(owner: 'owner-b')))
-      ..responses.add(Future.value(
-        const PayrollSnapshotHistoryPage([], hasMore: false),
-      ));
+      ..responses.add(
+        Future.value(
+          const PayrollSnapshotHistoryPage([], hasMore: false),
+        ),
+      );
     await tester.pumpWidget(_app(reader));
     await tester.tap(find.text('訂正履歴を読み込む'));
     await tester.pumpAndSettle();

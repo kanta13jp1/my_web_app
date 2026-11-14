@@ -94,7 +94,8 @@ class SupabasePayrollSnapshotHistoryReader
           amount != amount.roundToDouble()) {
         throw const FormatException('Unsupported payroll history balance');
       }
-      entries.add(PayrollSnapshotHistoryEntry(
+      entries.add(
+        PayrollSnapshotHistoryEntry(
         id: (row['id'] as num).toInt(),
         previousId: row['old_observation_id'] as String?,
         reason: row['reason'] as String,
@@ -108,7 +109,8 @@ class SupabasePayrollSnapshotHistoryReader
           depositDate: DateTime.parse(observation['deposit_date'] as String),
           note: observation['source_note'] as String,
         ),
-      ));
+      ),
+      );
     }
     return PayrollSnapshotHistoryPage(
       List.unmodifiable(entries),
