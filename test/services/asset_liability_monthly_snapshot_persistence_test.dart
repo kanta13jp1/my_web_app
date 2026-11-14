@@ -11,6 +11,12 @@ void main() {
     final prefs = _SnapshotPreferences();
     await store.saveMonthlySnapshot(_snapshot('2026-04', 50), prefs: prefs);
     await store.saveMonthlySnapshot(_snapshot('2026-05', 100), prefs: prefs);
+    expect(
+      AssetLiabilityMonthlyStateStore.decodeMonthlySnapshots(
+        prefs.values[AssetLiabilityMonthlyStateStore.monthlySnapshotPrefsKey],
+      ),
+      hasLength(2),
+    );
     prefs.values['unrelated'] = 'keep';
     final before = Map<String, String>.from(prefs.values);
     prefs.accept = false;
@@ -81,7 +87,7 @@ class _SnapshotPreferences extends Fake implements SharedPreferences {
   String? lastKey;
 
   @override
-  String? getString(String key) => values[key];
+  Object? get(String key) => values[key];
 
   @override
   Future<bool> setString(String key, String value) async {
