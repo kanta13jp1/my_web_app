@@ -37,7 +37,11 @@ Map<String, dynamic> _observation() => {
     };
 
 void main() {
-  for (final scenario in ['scoped read', 'owner changes', 'foreign observation']) {
+  for (final scenario in [
+    'scoped read',
+    'owner changes',
+    'foreign observation'
+  ]) {
     test('payroll history transport: $scenario', () async {
       var owner = 'owner-a';
       final requests = <http.Request>[];
@@ -80,7 +84,8 @@ void main() {
         expect(page.hasMore, isFalse);
         expect(requests, hasLength(2));
         expect(requests.first.url.queryParameters['limit'], '51');
-        expect(requests.last.url.queryParameters['id'], contains('observation-a'));
+        expect(
+            requests.last.url.queryParameters['id'], contains('observation-a'));
       } else {
         await expectLater(
           reader.read('account-a', DateTime(2026, 10)),
