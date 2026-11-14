@@ -173,7 +173,8 @@ class _CsvRestoreProbeRepository
   }
 
   @override
-  Future<void> saveMonthlySnapshot(AssetLiabilityMonthlySnapshot snapshot) async {
+  Future<void> saveMonthlySnapshot(
+      AssetLiabilityMonthlySnapshot snapshot) async {
     attempts++;
     await pending?.future;
     snapshots.add(snapshot);
@@ -252,7 +253,8 @@ void main() {
     AssetRecurringTombstoneSyncService.resetSharedForTest();
   });
 
-  testWidgets('CSV edits require a fresh preview before applying', (tester) async {
+  testWidgets('CSV edits require a fresh preview before applying',
+      (tester) async {
     final repository = _CsvRestoreProbeRepository();
     await _pumpCsvRestorePage(tester, repository);
     await _previewSyntheticRestore(tester, '2026-04');

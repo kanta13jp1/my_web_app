@@ -2676,8 +2676,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       return;
     }
-    if (_assetCsvRestorePreviewText !=
-        _assetCsvRestoreController.text.trim()) {
+    if (_assetCsvRestorePreviewText != _assetCsvRestoreController.text.trim()) {
       setState(() {
         _assetCsvRestorePreview = null;
         _assetCsvRestorePreviewText = null;
