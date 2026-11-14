@@ -560,6 +560,14 @@ class _InvestmentAssetManagementPanelState
         : gainLoss >= 0
             ? _positive
             : _negative;
+    final pricedAt = asset.lastPricedAt;
+    final priceTimestamp = asset.currentPriceJpy == null
+        ? '価格取得時点: 価格未取得'
+        : pricedAt == null
+            ? '価格取得時点: 未確認'
+            : '価格取得時点: '
+                '${DateFormat('yyyy/MM/dd HH:mm').format(pricedAt.toLocal())}'
+                '（端末時刻）';
     final date = asset.buyDate;
     final purchaseDate = date == null
         ? '取得日未入力'
@@ -610,6 +618,11 @@ class _InvestmentAssetManagementPanelState
         Text(
           '${_quantityFormat.format(asset.quantity)} × '
           '${_yen(asset.buyPriceJpy)} / $purchaseDate',
+          style: theme.textTheme.bodySmall?.copyWith(color: _muted),
+        ),
+        Text(
+          priceTimestamp,
+          key: ValueKey<String>('investment_asset_price_timestamp_${asset.id}'),
           style: theme.textTheme.bodySmall?.copyWith(color: _muted),
         ),
         const SizedBox(height: 8),
