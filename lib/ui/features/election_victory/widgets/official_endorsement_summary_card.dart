@@ -130,25 +130,31 @@ class OfficialEndorsementSummaryCard extends StatelessWidget {
           const SizedBox(height: 8),
           Theme(
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-            child: ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              childrenPadding: const EdgeInsets.only(bottom: 8),
-              dense: true,
-              title: const Text('都道府県別の公認掲載件数'),
-              subtitle: Text('${snapshot.prefectureCount}都道府県'),
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final item in snapshot.prefectures)
-                        _buildOfficialEndorsementPrefectureChip(item),
-                    ],
-                  ),
+            child: Builder(
+              builder: (tileContext) => Material(
+                type: MaterialType.transparency,
+                textStyle: DefaultTextStyle.of(tileContext).style,
+                child: ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  childrenPadding: const EdgeInsets.only(bottom: 8),
+                  dense: true,
+                  title: const Text('都道府県別の公認掲載件数'),
+                  subtitle: Text('${snapshot.prefectureCount}都道府県'),
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final item in snapshot.prefectures)
+                            _buildOfficialEndorsementPrefectureChip(item),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
           Align(
