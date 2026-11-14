@@ -63,7 +63,8 @@ class SupabasePayrollSnapshotHistoryReader
     if (visible.isEmpty) {
       return const PayrollSnapshotHistoryPage([], hasMore: false);
     }
-    final ids = visible.map((row) => row['new_observation_id'] as String).toSet();
+    final ids =
+        visible.map((row) => row['new_observation_id'] as String).toSet();
     final observations = await client
         .from('asset_payroll_balance_observations')
         .select('id,user_id,account_id,payroll_month,balance_yen,'
