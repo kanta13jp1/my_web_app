@@ -25,6 +25,7 @@ import '../services/public_memo_service.dart';
 import '../ui/features/election_victory/view_models/official_endorsement_view_model.dart';
 import '../ui/features/election_victory/widgets/official_endorsement_summary_card.dart';
 import '../ui/features/election_victory/widgets/kokumin_representative_announcement_card.dart';
+import '../ui/features/election_victory/widgets/kokumin_member_directory_observation_card.dart';
 import 'landing_page.dart';
 import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
@@ -1469,6 +1470,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            KokuminMemberDirectoryObservationCard(onOpenSource: _openUrl),
+            const SizedBox(height: 12),
             Text(
               '2027年春の統一地方選に向けた管理型ダッシュボード',
               style: theme.textTheme.titleLarge?.copyWith(
