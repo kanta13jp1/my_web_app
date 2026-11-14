@@ -28,6 +28,7 @@ class _JibunApiPageState extends State<JibunApiPage> {
   static const _amber = Color(0xFFFFC107);
 
   static const List<({String id, String label})> _scopeCatalog = [
+    (id: 'integrations.read', label: 'Integration registry'),
     (id: 'notes.read', label: 'ノート閲覧'),
     (id: 'notes.write', label: 'ノート作成'),
     (id: 'tasks.read', label: 'タスク閲覧'),

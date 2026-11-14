@@ -194,6 +194,7 @@ const List<String> kAllAppRoutes = <String>[
   '/horse-racing/tickets',
   '/horse-racing/today',
   '/import',
+  '/integration-registry',
   '/inventory-barcode',
   '/invoice-generator',
   '/iq-test',
