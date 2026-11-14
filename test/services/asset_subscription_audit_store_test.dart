@@ -6,8 +6,10 @@ void main() {
   test('checked save reports rejected persistence', () async {
     const store = AssetSubscriptionAuditStore();
     await expectLater(
-      store.save(<String, DateTime>{'apple': DateTime.utc(2026, 11, 14)},
-          prefs: _RejectedAuditPreferences()),
+      store.save(
+        <String, DateTime>{'apple': DateTime.utc(2026, 11, 14)},
+        prefs: _RejectedAuditPreferences(),
+      ),
       throwsStateError,
     );
   });
@@ -34,8 +36,10 @@ void main() {
   test('empty unconfirmed save reports rejected removal', () async {
     const store = AssetSubscriptionAuditStore();
     await expectLater(
-      store.saveUnconfirmed(<String, DateTime>{},
-          prefs: _RejectedAuditPreferences()),
+      store.saveUnconfirmed(
+        <String, DateTime>{},
+        prefs: _RejectedAuditPreferences(),
+      ),
       throwsStateError,
     );
   });
@@ -43,8 +47,10 @@ void main() {
   test('audit write exception is propagated', () async {
     const store = AssetSubscriptionAuditStore();
     await expectLater(
-      store.save(<String, DateTime>{'apple': DateTime.utc(2026, 11, 14)},
-          prefs: _RejectedAuditPreferences(throwOnWrite: true)),
+      store.save(
+        <String, DateTime>{'apple': DateTime.utc(2026, 11, 14)},
+        prefs: _RejectedAuditPreferences(throwOnWrite: true),
+      ),
       throwsA(isA<Exception>()),
     );
   });
