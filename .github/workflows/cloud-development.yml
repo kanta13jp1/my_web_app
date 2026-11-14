@@ -49,6 +49,16 @@ on:
         description: Exact 40-character pushed HEAD that this run must validate
         required: true
         type: string
+      expected_qa_ref:
+        description: Exact QA branch ref; required only for payslip-fixed-lock
+        required: false
+        default: ''
+        type: string
+      qa_source_sha:
+        description: Exact reviewed source SHA; fixed source tree and file pins are also enforced
+        required: false
+        default: ''
+        type: string
       profile:
         description: Cloud validation profile
         required: true
@@ -970,26 +980,36 @@ jobs:
   # Exact source/ref/hash guards intentionally restrict the already reviewed target.
   payslip-current-fixed-lock:
     name: One-shot evidence for the reviewed source with its unchanged lock
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.profile == 'payslip-fixed-lock' && github.repository == 'kanta13jp1/my_web_app' && github.ref == 'refs/heads/codex/payslip-current-fixed-lock-qa-20261114' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.profile == 'payslip-fixed-lock' && github.repository == 'kanta13jp1/my_web_app' }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions: {}
+    env:
+      QA_EXPECTED_REF: ${{ inputs.expected_qa_ref }}
+      QA_SOURCE_SHA: ${{ inputs.qa_source_sha }}
+      QA_REPOSITORY: ${{ github.repository }}
     steps:
     - name: Verify immutable QA workflow handoff
       shell: bash
       env:
         EXPECTED_QA_HEAD: ${{ inputs.expected_head_sha }}
         ACTUAL_QA_HEAD: ${{ github.sha }}
+        ACTUAL_QA_REF: ${{ github.ref }}
       run: |
         set -euo pipefail
         [[ "$EXPECTED_QA_HEAD" =~ ^[0-9a-f]{40}$ ]]
         test "$EXPECTED_QA_HEAD" = "$ACTUAL_QA_HEAD"
+        [[ "$QA_EXPECTED_REF" == refs/heads/codex/payslip-* ]]
+        test "$QA_EXPECTED_REF" = "$ACTUAL_QA_REF"
+        [[ "$QA_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+        [[ "$QA_REPOSITORY" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]
+        test "$QA_REPOSITORY" = "$GITHUB_REPOSITORY"
     - name: Require unbound inputs to STOP and allocate private scratch
       shell: bash
       run: |
         set -euo pipefail
         # Entirely UNBOUND: stop before scratch allocation, Git, downloads, or SDK bootstrap.
-        for bound_value in '1043207eb32d1fc7c3ea0552a72bdc313d3dc4e7' '9dfb7836735ba6586ee94acc373ec5c29cd0a3bb' 'ae18c0d23c0ee9a344ca561e72f77e26ccb442a8' 'dee802c8b8c77e7e387477383c8d9e4165153c44' '8d30beed4897a1e1909640f03a8cb2cd9f61636f' '81a561cc29ba87a02fe9c2e9ccd68696c48ad39f' '1ce2fe36a7d0fe0e3f6c6dab39dbd3cac6ece82a' '4d4dd7681d06dd4f27837f354f732ffb6917c935' '77da5b88d31ffdab9f3c2cd3e1ea2a5a4ac265a5' '7157da7b681e4c441386c182a62fc018dc37e00d' '6b8022f766f1bd8d601439611d608577e5cca389' '7b6b741c37f278d49aa660c3909099a08ed69ed7' '8b12da8539a17ba14d389789c7b453ac693a910d' 'd4af874ac1845ff9fc61366b0fa5f783e6ee4975' '678e6b77f3a18b631e9f576bc6a946c99bbc21bc' '7bc76e6bd18481dbc0d46e6c1b30bc321a6a5020' '6e597cf95f09de9c209b2fe6370f2e52c92e5fbe' 'e67ee072528b2f709b2be62e83896cf0966f8b77' '075e0686a2712277bf47f100dfd793dbdec5ba63' '2e4f966fdee1195a454a75874d64aedb4ae0f0c0' 'b3cb1a7cca6c1c0db7043285093478b6780e6172' '34aab64794f0f438a23bf0708507ce4a245811b9' 'bf992a9006515e4d6b557634a41aa4b7f309c005' 'fe968f87b85041114fc24915bbb33a5444873ed1' 'b302e160dbf18faefc5e79c42d949e3250b7dcec' 'a8dca53e5d9d403b376f38ea3e375c5e60b15412' '3de60c8b064090f7bd8512a5b895de9a99405c94'; do
+        for bound_value in '9dfb7836735ba6586ee94acc373ec5c29cd0a3bb' 'dee802c8b8c77e7e387477383c8d9e4165153c44' '8d30beed4897a1e1909640f03a8cb2cd9f61636f' '81a561cc29ba87a02fe9c2e9ccd68696c48ad39f' '1ce2fe36a7d0fe0e3f6c6dab39dbd3cac6ece82a' '4d4dd7681d06dd4f27837f354f732ffb6917c935' '77da5b88d31ffdab9f3c2cd3e1ea2a5a4ac265a5' '7157da7b681e4c441386c182a62fc018dc37e00d' '6b8022f766f1bd8d601439611d608577e5cca389' '7b6b741c37f278d49aa660c3909099a08ed69ed7' '8b12da8539a17ba14d389789c7b453ac693a910d' 'd4af874ac1845ff9fc61366b0fa5f783e6ee4975' '678e6b77f3a18b631e9f576bc6a946c99bbc21bc' '7bc76e6bd18481dbc0d46e6c1b30bc321a6a5020' '6e597cf95f09de9c209b2fe6370f2e52c92e5fbe' 'e67ee072528b2f709b2be62e83896cf0966f8b77' '075e0686a2712277bf47f100dfd793dbdec5ba63' '2e4f966fdee1195a454a75874d64aedb4ae0f0c0' 'b3cb1a7cca6c1c0db7043285093478b6780e6172' '34aab64794f0f438a23bf0708507ce4a245811b9' 'bf992a9006515e4d6b557634a41aa4b7f309c005' 'fe968f87b85041114fc24915bbb33a5444873ed1' 'b302e160dbf18faefc5e79c42d949e3250b7dcec' 'a8dca53e5d9d403b376f38ea3e375c5e60b15412' '3de60c8b064090f7bd8512a5b895de9a99405c94'; do
          [[ "$bound_value" =~ ^[0-9a-f]{40}$ ]] || { echo 'STOP: unbound source/tree/parent/blob'; exit 1; }
         done
         for bound_value in '357f5018fb53e2cd10aba97ea0a38c0510bdb0bb208eb5ccab6536f193b91241' '2d7e6fea5352ee5a22eb2225dcac15765affe0e19bfdbb5f37fec46c5d37f318' 'e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342' '756320aec2d19406db0392448d32292fd9817089a9ed6ba5b5ba0b8e4595cec7' 'a45df3357b7b5fea3a7f01185cc286ffaddec28c66344598547cec1c56c06be2' 'e7982acba31ce5dc6771ae48ac7bdef2a37f88a48192f0fb4a5ee8cb754d4933' 'e243168056b9c73a5f5a3f02c6eba573050fbbf432e09565e9ad72ff6f2a3f26' '5f0e66e2e1c75260278c0a17b5149f910983813e8a9f1ff02c6037c95cf81cee' '1a1b756478c3e2dc173eccc939ad4d5b0b6835933db10e443ce124fa781b52b2' '7ccab6ed42e84919d00df0a88e9d626d4d5ec03440359ae4ee86d78750e9f579' 'da19d974be0d4d49bcf7f8280d92429dd646c8a71009d33b90a15e8d050be5e5' '219e1bd8160fb2c8dbb7648670f377e75e464d99a2b9b8b1a5f73f1b6e801800' 'eb8eb2b267a2f6aa9b15bd4a38d27f05a77c14b7b3c79e415cc6110256e86145' '012771357a7b62c3a1cab96330f2be633ceabd033251b1f620b4e080761b7074' '7a85f5a5f985edcc8b368eeb653d6cdfe9b0ffbb35fcedaa098ad2ce2ed52937' '314947c7a327c4a919fd7f974e9efb8411a2d6b7fb7241a32cb5a60fe951840d' '49faa8d575393283358f55f88f59710c09602b8d49020997ebe799721f5a4037' 'f3d3d2509bf442e241de7cd4fe5e89a31a89c9c42b40b80cca2390711c00de72' 'd8cda070c5165a1825cbbe30012fd7c7418c6c38faee814bb5218df4cf1be470' 'd0e48d1a8530ac0c74cfc25d8ed0ce982cea972c91c764040a40f4e38c327b5b' 'ca89a0b2e46d756a9880ba572593cbbcf54b8d8319f58cf6b8cc6008748bdf16' 'd45112f2635c299899bc91380db3a25150967cd3e6e800dae1e54bae41675ea8' '2fdf4ffb89a920eeeb6fd216b09059e303f77891d2be1f32bfd82c78a6983205' '25384b33cfbcbb4e7671d864841fa0248c6af3cc1c0746f35917ad2336ba46f3' '1bad7ae9b66c7d9a58fc9e3e0ed5f20ae937114f10a4d72f8a07c2a991368ba0'; do
@@ -1036,23 +1056,22 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ && "$GITHUB_REF" == refs/heads/codex/payslip-current-fixed-lock-qa-20261114 ]]
+        [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ && "$GITHUB_REF" == "$QA_EXPECTED_REF" ]]
         clean_env=(env -i PATH=/usr/bin:/bin HOME="$PAYSLIP_ROOT/home" TMPDIR="$PAYSLIP_ROOT/tmp" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1)
-        for pair in "candidate:$GITHUB_SHA" "source:1043207eb32d1fc7c3ea0552a72bdc313d3dc4e7"; do
+        for pair in "candidate:$GITHUB_SHA" "source:$QA_SOURCE_SHA"; do
          dir=${pair%%:*}; ref=${pair#*:}
          "${clean_env[@]}" git -C "$PAYSLIP_ROOT/$dir" init --quiet
-         "${clean_env[@]}" git -C "$PAYSLIP_ROOT/$dir" -c credential.helper= fetch --no-tags --depth=2 https://github.com/kanta13jp1/my_web_app.git "$ref"
+         "${clean_env[@]}" git -C "$PAYSLIP_ROOT/$dir" -c credential.helper= fetch --no-tags --depth=2 "https://github.com/${QA_REPOSITORY}.git" "$ref"
          "${clean_env[@]}" git -C "$PAYSLIP_ROOT/$dir" checkout --quiet --detach FETCH_HEAD
         done
+        "${clean_env[@]}" git -C "$PAYSLIP_ROOT/candidate" -c credential.helper= fetch --no-tags --depth=1 "https://github.com/${QA_REPOSITORY}.git" "$QA_SOURCE_SHA"
         cd "$PAYSLIP_ROOT/candidate"
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git show -s --format=%P HEAD)" = 1043207eb32d1fc7c3ea0552a72bdc313d3dc4e7
-        test "$(git diff --no-renames --name-status 1043207eb32d1fc7c3ea0552a72bdc313d3dc4e7 HEAD)" = "$(printf 'A\t.github/workflows/payslip-same-lock-qa.yml')"
+        test "$(git diff --no-renames --name-status "$QA_SOURCE_SHA" HEAD)" = "$(printf 'M\t.github/workflows/cloud-development.yml')"
         test -z "$(git status --porcelain --untracked-files=all)"
         cd "$PAYSLIP_ROOT/source"
-        test "$(git rev-parse HEAD)" = 1043207eb32d1fc7c3ea0552a72bdc313d3dc4e7
+        test "$(git rev-parse HEAD)" = "$QA_SOURCE_SHA"
         test "$(git rev-parse 'HEAD^{tree}')" = 9dfb7836735ba6586ee94acc373ec5c29cd0a3bb
-        test "$(git show -s --format=%P HEAD)" = ae18c0d23c0ee9a344ca561e72f77e26ccb442a8
         test "$(git ls-tree HEAD -- .github/workflows/cloud-development.yml)" = "$(printf '100644 blob dee802c8b8c77e7e387477383c8d9e4165153c44\t.github/workflows/cloud-development.yml')"
         printf '%s  %s\n' 2d7e6fea5352ee5a22eb2225dcac15765affe0e19bfdbb5f37fec46c5d37f318 .github/workflows/cloud-development.yml | sha256sum -c -
         test "$(git ls-tree HEAD -- analysis_options.yaml)" = "$(printf '100644 blob 8d30beed4897a1e1909640f03a8cb2cd9f61636f\tanalysis_options.yaml')"
@@ -1116,7 +1135,7 @@ jobs:
         root=root.resolve(strict=True); source=root/'source'
         if source.is_symlink() or source.resolve(strict=True).parent!=root:raise SystemExit('unsafe source')
         def git(*args):return subprocess.check_output(['/usr/bin/git',*args],cwd=source,timeout=20)
-        if git('rev-parse','HEAD').decode().strip()!='1043207eb32d1fc7c3ea0552a72bdc313d3dc4e7':raise SystemExit('wrong source HEAD')
+        if git('rev-parse','HEAD').decode().strip()!=os.environ.get('QA_SOURCE_SHA',''):raise SystemExit('wrong source HEAD')
         if git('rev-parse','HEAD^{tree}').decode().strip()!='9dfb7836735ba6586ee94acc373ec5c29cd0a3bb':raise SystemExit('wrong source tree')
         original=git('show','HEAD:analysis_options.yaml')
         if hashlib.sha256(original).hexdigest()!='e0397953863fd25e9eb4938ece5a358dfe9369bdd2240a6a1ad37a2e2a79f342':raise SystemExit('wrong baseline config')
@@ -1137,10 +1156,10 @@ jobs:
          p=source/relative
          if p.is_symlink() or not p.is_file() or hashlib.sha256(p.read_bytes()).hexdigest()!=item['sha256']:raise SystemExit('protected source bytes changed: '+relative)
         if git('status','--porcelain','--untracked-files=all').strip():raise SystemExit('source index/worktree/untracked diff')
-        print('guard_ok phase='+phase+' source=1043207eb32d1fc7c3ea0552a72bdc313d3dc4e7 lock=da19d974',flush=True)
+        print('guard_ok phase='+phase+' source='+git('rev-parse','HEAD').decode().strip()+' lock=da19d974',flush=True)
         PAYSLIP_SOURCE_GUARD_PY
         chmod 0400 "$PAYSLIP_ROOT/guards/source_guard.py"
-        printf '%s  %s\n' 82d655042e76aaa5ed51996db673dc7bbcd580bbd3cc4f3b7e02afcf61047dc4 "$PAYSLIP_ROOT/guards/source_guard.py" | sha256sum -c -
+        printf '%s  %s\n' 2dfb2c5c7ecf066acf5f21f2c8946ef016056377992efc4cc5785a749398be0f "$PAYSLIP_ROOT/guards/source_guard.py" | sha256sum -c -
         cat > "$PAYSLIP_ROOT/guards/report.py" <<'PAYSLIP_REPORT_PY'
         import json,pathlib,sys
         root=pathlib.Path(sys.argv[1]).resolve(strict=True); mode=sys.argv[2]; path=pathlib.Path(sys.argv[3])
@@ -1299,7 +1318,8 @@ jobs:
         printf '%s  %s\n' 0861e624eb44e25aac138c2ac81ff2a5f20e54e6d6c9d9e3822c6435de6ce263 "$PAYSLIP_ROOT/guards/runtime.sh" | sha256sum -c -
         cat > "$PAYSLIP_ROOT/guards/offline.sh" <<'PAYSLIP_OFFLINE_SH'
         set -euo pipefail
-        root=${1}; uid=${2}; gid=${3}; phase=${4}; seconds=${5}
+        root=${1}; uid=${2}; gid=${3}; phase=${4}; seconds=${5}; source_sha=${6}
+        [[ "$source_sha" =~ ^[0-9a-f]{40}$ ]]
         [[ "$(id -u)" == 0 && "$uid" =~ ^[0-9]+$ && "$gid" =~ ^[0-9]+$ && "$uid" -gt 0 && "$gid" -gt 0 ]]
         case "$phase:$seconds" in salary:600|full:1200|app_build:900|fixture:900|browser:600|final:120) ;; *) exit 1;; esac
         [[ "$(stat -c %u "$root")" == 0 && "$(stat -c %u "$root/control")" == 0 && ! -L "$root/control" ]]
@@ -1316,9 +1336,9 @@ jobs:
           [[ "$(printf "%s\n" "$links" | wc -l)" -eq 1 && "$(printf "%s\n" "$links" | cut -d: -f2 | tr -d "[:space:]")" == lo ]]
           [[ -z "$(ip -4 route show default)" && -z "$(ip -6 route show default)" ]]
           exec /usr/bin/setpriv --reuid="${2}" --regid="${3}" --clear-groups --no-new-privs --bounding-set=-all --inh-caps=-all --ambient-caps=-all \
-           env -i PATH="${1}/sdk/flutter/bin:${1}/node/bin:/usr/bin:/bin" HOME="${1}/home" PUB_CACHE="${1}/pub-cache" TMPDIR="${1}/tmp" XDG_CONFIG_HOME="${1}/config" XDG_CACHE_HOME="${1}/cache" PLAYWRIGHT_BROWSERS_PATH="${1}/browsers" npm_config_cache="${1}/npm-cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1 \
+           env -i QA_SOURCE_SHA="${7}" PATH="${1}/sdk/flutter/bin:${1}/node/bin:/usr/bin:/bin" HOME="${1}/home" PUB_CACHE="${1}/pub-cache" TMPDIR="${1}/tmp" XDG_CONFIG_HOME="${1}/config" XDG_CACHE_HOME="${1}/cache" PLAYWRIGHT_BROWSERS_PATH="${1}/browsers" npm_config_cache="${1}/npm-cache" CI=true FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1 \
            /bin/bash --noprofile --norc "${1}/guards/runtime.sh" "${1}" "${4}" "${2}" "${3}"
-         ' payslip-namespace "$root" "$uid" "$gid" "$phase" "$net" "$pid"
+         ' payslip-namespace "$root" "$uid" "$gid" "$phase" "$net" "$pid" "$source_sha"
         rc=$?
         set -e
         # The foreground timeout/unshare wait has returned. Wait for remaining UID teardown.
@@ -1336,7 +1356,7 @@ jobs:
         exit "$rc"
         PAYSLIP_OFFLINE_SH
         chmod 0400 "$PAYSLIP_ROOT/guards/offline.sh"
-        printf '%s  %s\n' 35dfd702b7949d66028a950724edd76192e4832471a490a3f41612ac2099b2bd "$PAYSLIP_ROOT/guards/offline.sh" | sha256sum -c -
+        printf '%s  %s\n' 57e5b35c96314a4ad41fd80eb62519f04fd5f8b1f51bfdce94f96060d4aa18a7 "$PAYSLIP_ROOT/guards/offline.sh" | sha256sum -c -
         cat > "$PAYSLIP_ROOT/guards/publish.py" <<'PAYSLIP_PUBLISH_PY'
         """Fixed Linux host publisher: stopped-runtime, descriptor-relative, bounded byte copy."""
         import os
@@ -1639,42 +1659,42 @@ jobs:
       run: |
         set -euo pipefail
         [[ "$PAYSLIP_BOUNDARY_READY" == true ]]
-        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" salary 600
+        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" salary 600 "$QA_SOURCE_SHA"
     - name: Run all Flutter tests and preserve the exact known skip
       shell: bash
       timeout-minutes: 21
       run: |
         set -euo pipefail
         [[ "$PAYSLIP_BOUNDARY_READY" == true ]]
-        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" full 1200
+        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" full 1200 "$QA_SOURCE_SHA"
     - name: Build the complete release web app with the same lock
       shell: bash
       timeout-minutes: 16
       run: |
         set -euo pipefail
         [[ "$PAYSLIP_BOUNDARY_READY" == true ]]
-        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" app_build 900
+        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" app_build 900 "$QA_SOURCE_SHA"
     - name: Build and validate only the synthetic preview resources
       shell: bash
       timeout-minutes: 16
       run: |
         set -euo pipefail
         [[ "$PAYSLIP_BOUNDARY_READY" == true ]]
-        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" fixture 900
+        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" fixture 900 "$QA_SOURCE_SHA"
     - name: Run the exact four synthetic browser cases with the same lock
       shell: bash
       timeout-minutes: 11
       run: |
         set -euo pipefail
         [[ "$PAYSLIP_BOUNDARY_READY" == true ]]
-        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" browser 600
+        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" browser 600 "$QA_SOURCE_SHA"
     - name: Always restore and verify source under the same offline runtime identity
       if: ${{ always() && env.PAYSLIP_BOUNDARY_READY == 'true' }}
       shell: bash
       timeout-minutes: 3
       run: |
         set -euo pipefail
-        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" final 120
+        sudo -n env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/ /bin/bash --noprofile --norc "$PAYSLIP_ROOT/guards/offline.sh" "$PAYSLIP_ROOT" "$PAYSLIP_RUNTIME_UID" "$PAYSLIP_RUNTIME_GID" final 120 "$QA_SOURCE_SHA"
     - name: Publish a bounded no-follow snapshot only after every namespace has stopped
       id: publish
       if: ${{ always() && env.PAYSLIP_BOUNDARY_READY == 'true' }}
