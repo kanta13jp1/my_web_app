@@ -279,6 +279,7 @@ class _InvestmentAssetManagementPanelState
     final ownerEpoch = _ownerEpoch;
     bool isCurrent() => _isCurrentOwner(userId, repository, ownerEpoch);
 
+    var writeStarted = false;
     setState(() => _importingCsv = true);
     try {
       final bytes = await _pickCsvBytes();
@@ -313,6 +314,7 @@ class _InvestmentAssetManagementPanelState
       final saved = <InvestmentAsset>[];
       for (final update in plan.updates) {
         if (!isCurrent()) return;
+        writeStarted = true;
         saved.add(
           await repository.update(
             userId: userId,
@@ -323,6 +325,7 @@ class _InvestmentAssetManagementPanelState
       }
       for (final draft in plan.creates) {
         if (!isCurrent()) return;
+        writeStarted = true;
         saved.add(await repository.create(userId: userId, draft: draft));
       }
       if (!mounted || !isCurrent()) return;
@@ -345,7 +348,11 @@ class _InvestmentAssetManagementPanelState
       debugPrintStack(stackTrace: stackTrace);
       final detail = error is FormatException ? error.message : null;
       _showMessage(
-        detail == null ? '投資資産CSVを取り込めませんでした。' : '投資資産CSVを取り込めませんでした: $detail',
+        writeStarted
+            ? 'CSVの保存結果を確認できませんでした。一部が保存済みの可能性があります。再読込して確認してください。'
+            : detail == null
+                ? '投資資産CSVを取り込めませんでした。'
+                : '投資資産CSVを取り込めませんでした: $detail',
       );
       unawaited(_load(showLoading: false));
     } finally {
