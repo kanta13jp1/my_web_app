@@ -336,6 +336,7 @@ class AssetLiabilityMonthlyStateStore {
         throw StateError('Monthly state persistence was rejected');
       }
     }
+
     final monthKey = formatMonthKey(month);
 
     final allDays = decodePaymentOverrides(
