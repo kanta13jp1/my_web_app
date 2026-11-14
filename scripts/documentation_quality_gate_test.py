@@ -17,6 +17,26 @@ class DeltaTest(unittest.TestCase):
     def test_fixed_findings_do_not_block(self):
         self.assertEqual(new_findings([], [{'reason': 'missing_local_target'}]), [])
 
+    def test_product_names_are_not_rewritten_as_dictionary_words(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            file = root / 'fixture.md'
+            file.write_text('Ameba https://ameba.jp freee Progate\n', encoding='utf-8')
+            self.assertEqual(collect(root, ['fixture.md']), [])
+            file.write_text(
+                'Ameba https://ameba.jp freee Progate teh [missing](missing.md)\n',
+                encoding='utf-8',
+            )
+            findings = collect(root, ['fixture.md'])
+            self.assertEqual(
+                {item['kind'] for item in findings},
+                {'spelling', 'local_link'},
+            )
+            self.assertEqual(
+                [item['detail'] for item in findings if item['kind'] == 'spelling'],
+                ['teh ==> the'],
+            )
+
     def test_actual_spelling_and_link_detectors(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
