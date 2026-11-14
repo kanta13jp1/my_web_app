@@ -251,10 +251,10 @@ Deno.test("explicit false wins over server flag without changing deterministic r
         db,
         userId: "synthetic-owner",
         body,
-        invokeProvider: async () => {
+        invokeProvider: () => {
           providerCalls++;
           // Success with no actions keeps the response comparable and local.
-          return {ok: true, text: '{"actions":[]}'};
+          return Promise.resolve({ok: true, text: '{"actions":[]}'});
         },
       });
       assertEquals(providerCalls, scenario.calls);

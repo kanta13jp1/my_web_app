@@ -256,11 +256,12 @@ function requireOwnedPayslipPath(path: string, userId: string): void {
     }
     // Refuse percent-encoding, backslashes, controls, bidi controls, and
     // separator lookalikes. Spaces and Unicode inside a segment remain valid.
-    if (/[\\%?#\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\u2060-\u206F\uFEFF\u2044\u2215\u29F8\uFF0F\uFF3C\uFE68]/u.test(segment)) {
+    if (/[\\%?#\u200B-\u200F\u2028-\u202E\u2060-\u206F\uFEFF\u2044\u2215\u29F8\uFF0F\uFF3C\uFE68]/u.test(segment)) {
       return false;
     }
     for (const character of segment) {
       const code = character.codePointAt(0)!;
+      if (code <= 0x1F || (code >= 0x7F && code <= 0x9F)) return false;
       if (code >= 0xD800 && code <= 0xDFFF) return false;
     }
     // Check compatibility forms only for dangerous aliases. Do not replace
