@@ -9366,6 +9366,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _editFlow(Map<String, dynamic> flow) async {
     final flowId = flow['id']?.toString();
     if (flowId == null || flowId.isEmpty) return;
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
 
     final currentActionType = flow['action_type']?.toString() ?? 'expense';
     final parsed = _parseFlowDescription(
@@ -9399,6 +9401,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     var selectedDate =
         DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal() ??
             DateTime.now();
+
+    var ownerChanged = false;
+    final ownerSubscription = _supabase.auth.onAuthStateChange.listen(
+      (event) {
+        if (event.session?.user.id != userId) ownerChanged = true;
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        ownerChanged = true;
+      },
+    );
+    bool canApplyResult() =>
+        mounted && !ownerChanged && _supabase.auth.currentUser?.id == userId;
 
     try {
       final shouldSave = await showDialog<bool>(
@@ -9590,7 +9604,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       );
 
-      if (shouldSave != true) return;
+      if (shouldSave != true || !canApplyResult()) return;
 
       final memo = memoController.text.trim();
       final amount = int.tryParse(amountController.text.replaceAll(',', ''));
@@ -9614,18 +9628,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
 
-      await AssetFlowRequest.table(_supabase).update({
-        'action_type': _flowLabelToActionType(selectedType),
-        'amount': amount,
-        'description': _composeFlowDescription(
-          flowType: selectedType,
-          source: selectedSource,
-          destination: isTransfer ? selectedDestination : null,
-          memo: memo,
-          wasteCategory: selectedType == '支出' ? selectedWasteCategory : null,
-        ),
-        'occurred_at': selectedDate.toUtc().toIso8601String(),
-      }).eq('id', flowId);
+      await AssetFlowRequest.table(_supabase)
+          .update({
+            'action_type': _flowLabelToActionType(selectedType),
+            'amount': amount,
+            'description': _composeFlowDescription(
+              flowType: selectedType,
+              source: selectedSource,
+              destination: isTransfer ? selectedDestination : null,
+              memo: memo,
+              wasteCategory:
+                  selectedType == '支出' ? selectedWasteCategory : null,
+            ),
+            'occurred_at': selectedDate.toUtc().toIso8601String(),
+          })
+          .eq('id', flowId)
+          .eq('user_id', userId);
+      if (!mounted || !canApplyResult()) return;
 
       if (mounted) {
         setState(() {
@@ -9634,9 +9653,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
 
       await _fetchRecentFlows();
+      if (!mounted || !canApplyResult()) return;
       await _fetchTodayClosing();
 
-      if (!mounted) return;
+      if (!mounted || !canApplyResult()) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(isTransfer ? '振替記録を更新しました' : '収支記録を更新しました'),
@@ -9645,11 +9665,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     } catch (e) {
       debugPrint('Error editing flow: $e');
-      if (!mounted) return;
+      if (!mounted || !canApplyResult()) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('収支記録の更新に失敗しました: $e')));
     } finally {
+      await ownerSubscription.cancel();
       memoController.dispose();
       amountController.dispose();
     }
@@ -9704,19 +9725,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final flowId = flow['id']?.toString();
     if (userId == null || flowId == null || flowId.isEmpty) return;
 
-    final shouldDelete = await _confirmDeleteFlow(flow);
-    if (!shouldDelete) return;
+    var ownerChanged = false;
+    final ownerSubscription = _supabase.auth.onAuthStateChange.listen(
+      (event) {
+        if (event.session?.user.id != userId) ownerChanged = true;
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        ownerChanged = true;
+      },
+    );
+    bool canApplyResult() =>
+        mounted && !ownerChanged && _supabase.auth.currentUser?.id == userId;
 
     try {
+      final shouldDelete = await _confirmDeleteFlow(flow);
+      if (!shouldDelete || !canApplyResult()) return;
       await AssetFlowRequest.table(_supabase)
           .delete()
           .eq('id', flowId)
           .eq('user_id', userId);
+      if (!mounted || !canApplyResult()) return;
 
       await _fetchRecentFlows();
+      if (!mounted || !canApplyResult()) return;
       await _fetchTodayClosing();
 
-      if (!mounted) return;
+      if (!mounted || !canApplyResult()) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('収支記録を削除しました'),
@@ -9725,10 +9759,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     } catch (e) {
       debugPrint('Error deleting flow: $e');
-      if (!mounted) return;
+      if (!mounted || !canApplyResult()) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('収支記録の削除に失敗しました: $e')));
+    } finally {
+      await ownerSubscription.cancel();
     }
   }
 
