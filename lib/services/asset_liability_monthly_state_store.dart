@@ -591,21 +591,25 @@ class AssetLiabilityMonthlyStateStore {
   }
 
   Future<void> saveMonthlySnapshot(
-    AssetLiabilityMonthlySnapshot snapshot,
-  ) async {
-    final prefs = await SharedPreferences.getInstance();
+    AssetLiabilityMonthlySnapshot snapshot, {
+    SharedPreferences? prefs,
+  }) async {
+    final resolvedPrefs = prefs ?? await SharedPreferences.getInstance();
     final snapshots = decodeMonthlySnapshots(
-      _safeGetString(prefs, monthlySnapshotPrefsKey),
+      _safeGetString(resolvedPrefs, monthlySnapshotPrefsKey),
     );
     final nextSnapshots = <AssetLiabilityMonthlySnapshot>[
       for (final current in snapshots)
         if (current.monthKey != snapshot.monthKey) current,
       snapshot,
     ]..sort((a, b) => a.monthKey.compareTo(b.monthKey));
-    await prefs.setString(
+    final saved = await resolvedPrefs.setString(
       monthlySnapshotPrefsKey,
       jsonEncode(_encodeMonthlySnapshots(nextSnapshots)),
     );
+    if (!saved) {
+      throw StateError('Monthly snapshot persistence was rejected');
+    }
   }
 
   Future<List<AssetLiabilitySyncAuditLog>> loadSyncAuditLogs({
