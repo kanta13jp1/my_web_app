@@ -21,7 +21,10 @@ void main() {
     );
     expect(prefs.writes, 3);
     expect(prefs.values, before);
-    expect(prefs.lastKey, AssetLiabilityMonthlyStateStore.monthlySnapshotPrefsKey);
+    expect(
+      prefs.lastKey,
+      AssetLiabilityMonthlyStateStore.monthlySnapshotPrefsKey,
+    );
 
     prefs.accept = true;
     await store.saveMonthlySnapshot(_snapshot('2026-05', 200), prefs: prefs);
@@ -31,7 +34,10 @@ void main() {
     );
     expect(saved, hasLength(2));
     expect(saved.singleWhere((s) => s.monthKey == '2026-04').cashLikeTotal, 50);
-    expect(saved.singleWhere((s) => s.monthKey == '2026-05').cashLikeTotal, 200);
+    expect(
+      saved.singleWhere((s) => s.monthKey == '2026-05').cashLikeTotal,
+      200,
+    );
     expect(prefs.values['unrelated'], 'keep');
   });
 
