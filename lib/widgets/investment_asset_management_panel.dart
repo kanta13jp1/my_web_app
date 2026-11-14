@@ -130,11 +130,13 @@ class _InvestmentAssetManagementPanelState
       if (!mounted || binding != _ownerBindingEpoch) return;
       _invalidateOwner(_readOwnerId, failed: true);
     }
+
     _ownerSubscription = widget.ownerChanges?.listen(
       (owner) {
         if (!mounted || binding != _ownerBindingEpoch) return;
         final normalized = owner?.trim();
-        final next = normalized == null || normalized.isEmpty ? null : normalized;
+        final next =
+            normalized == null || normalized.isEmpty ? null : normalized;
         if (next == _ownerId && !_ownerStreamFailed) return;
         _invalidateOwner(next);
         if (_normalizedUserId != null) unawaited(_load());
@@ -205,7 +207,8 @@ class _InvestmentAssetManagementPanelState
     final ownerEpoch = _ownerEpoch;
     try {
       final assets = await repository.fetchByUser(userId: userId);
-      if (!mounted || sequence != _loadSequence ||
+      if (!mounted ||
+          sequence != _loadSequence ||
           !_isCurrentOwner(userId, repository, ownerEpoch)) return;
       setState(() {
         _assets = _sorted(assets);
@@ -214,7 +217,8 @@ class _InvestmentAssetManagementPanelState
       });
       await _loadHistory(userId, parentSequence: sequence);
     } catch (error) {
-      if (!mounted || sequence != _loadSequence ||
+      if (!mounted ||
+          sequence != _loadSequence ||
           !_isCurrentOwner(userId, repository, ownerEpoch)) return;
       setState(() {
         _loadError = error;
@@ -251,7 +255,8 @@ class _InvestmentAssetManagementPanelState
         _historyLoading = false;
       });
     } catch (error) {
-      if (!mounted || sequence != _historyLoadSequence ||
+      if (!mounted ||
+          sequence != _historyLoadSequence ||
           !_isCurrentOwner(userId, repository, ownerEpoch)) return;
       setState(() {
         _historyLoadError = error;

@@ -44,14 +44,17 @@ void main() {
             expect(h.repository.historyCalls, historyBefore);
             expect(find.textContaining('changed-a'), findsNothing);
             expect(find.textContaining('created-a'), findsNothing);
-            expect(find.text(mode == 'other' ? 'BETA' : 'ALPHA'), findsOneWidget);
+            expect(
+                find.text(mode == 'other' ? 'BETA' : 'ALPHA'), findsOneWidget);
           } else if (phase != 'writeError') {
             if (operation == 'delete') {
               expect(find.text('ALPHA'), findsNothing);
             } else {
-              expect(find.textContaining(operation == 'add' ? 'created-a' : 'changed-a'),
-                  findsWidgets,
-      );
+              expect(
+                find.textContaining(
+                    operation == 'add' ? 'created-a' : 'changed-a'),
+                findsWidgets,
+              );
             }
           }
           expect(tester.takeException(), isNull);
@@ -79,14 +82,17 @@ void main() {
         picker.complete(_csv());
         await _frames(tester);
         if (phase == 'picker' && mode != 'same') {
-          expect(find.byKey(const Key('investment_csv_preview_dialog')), findsNothing);
+          expect(find.byKey(const Key('investment_csv_preview_dialog')),
+              findsNothing);
           expect(h.repository.writes, isEmpty);
           await h.finish(tester);
           return;
         }
-        expect(find.byKey(const Key('investment_csv_preview_dialog')), findsOneWidget);
+        expect(find.byKey(const Key('investment_csv_preview_dialog')),
+            findsOneWidget);
         if (phase == 'preview') await h.switchOwner(tester, mode);
-        await tester.tap(find.byKey(const Key('investment_csv_import_confirm')));
+        await tester
+            .tap(find.byKey(const Key('investment_csv_import_confirm')));
         await _frames(tester);
         if (phase == 'row' || phase == 'rowError') {
           expect(h.repository.writes.length, 1);
@@ -117,7 +123,8 @@ void main() {
   }
 
   for (final fault in ['error', 'done']) {
-    testWidgets('investment owner stream fails closed on $fault', (tester) async {
+    testWidgets('investment owner stream fails closed on $fault',
+        (tester) async {
       final h = _Harness();
       await h.mount(tester);
       if (fault == 'error') {
@@ -126,10 +133,14 @@ void main() {
         await h.events.close();
       }
       await _frames(tester);
-      expect(find.byKey(const Key('investment_asset_owner_unconfirmed')), findsOneWidget);
+      expect(find.byKey(const Key('investment_asset_owner_unconfirmed')),
+          findsOneWidget);
       expect(find.text('ALPHA'), findsNothing);
-      expect(tester.widget<IconButton>(find.byKey(const Key('investment_asset_add'))).onPressed,
-          isNull,
+      expect(
+        tester
+            .widget<IconButton>(find.byKey(const Key('investment_asset_add')))
+            .onPressed,
+        isNull,
       );
       expect(h.repository.writes, isEmpty);
       expect(tester.takeException(), isNull);
@@ -137,7 +148,8 @@ void main() {
     });
   }
 
-  testWidgets('investment owner old finally does not unlock new-owner save', (tester) async {
+  testWidgets('investment owner old finally does not unlock new-owner save',
+      (tester) async {
     final h = _Harness();
     h.repository.gates[1] = Completer<void>();
     h.repository.gates[2] = Completer<void>();
@@ -150,20 +162,27 @@ void main() {
     expect(h.repository.writes.length, 2);
     h.repository.gates[1]!.complete();
     await _frames(tester);
-    expect(tester.widget<IconButton>(find.byKey(const Key('investment_asset_add'))).onPressed,
-        isNull,
-      );
+    expect(
+      tester
+          .widget<IconButton>(find.byKey(const Key('investment_asset_add')))
+          .onPressed,
+      isNull,
+    );
     h.repository.gates[2]!.complete();
     await _frames(tester);
-    expect(tester.widget<IconButton>(find.byKey(const Key('investment_asset_add'))).onPressed,
-        isNotNull,
-      );
+    expect(
+      tester
+          .widget<IconButton>(find.byKey(const Key('investment_asset_add')))
+          .onPressed,
+      isNotNull,
+    );
     expect(h.repository.writes.map((w) => w.owner), ['a', 'b']);
     expect(tester.takeException(), isNull);
     await h.finish(tester);
   });
 
-  testWidgets('investment owner repository replacement discards old completion', (tester) async {
+  testWidgets('investment owner repository replacement discards old completion',
+      (tester) async {
     final h = _Harness();
     final old = h.repository;
     old.gates[1] = Completer<void>();
@@ -244,12 +263,27 @@ class _Harness {
     await tester.tap(find.byKey(ValueKey<String>(key)));
     await _frames(tester);
     if (operation == 'add') {
-      await tester.enterText(find.byKey(const Key('investment_asset_ticker_field')), 'NEW',);
-      await tester.enterText(find.byKey(const Key('investment_asset_quantity_field')), '1',);
-      await tester.enterText(find.byKey(const Key('investment_asset_buy_price_field')), '1000',);
-      await tester.enterText(find.byKey(const Key('investment_asset_name_field')), 'created-${owner!}',);
+      await tester.enterText(
+        find.byKey(const Key('investment_asset_ticker_field')),
+        'NEW',
+      );
+      await tester.enterText(
+        find.byKey(const Key('investment_asset_quantity_field')),
+        '1',
+      );
+      await tester.enterText(
+        find.byKey(const Key('investment_asset_buy_price_field')),
+        '1000',
+      );
+      await tester.enterText(
+        find.byKey(const Key('investment_asset_name_field')),
+        'created-${owner!}',
+      );
     } else if (operation == 'edit') {
-      await tester.enterText(find.byKey(const Key('investment_asset_name_field')), 'changed-${owner!}',);
+      await tester.enterText(
+        find.byKey(const Key('investment_asset_name_field')),
+        'changed-${owner!}',
+      );
     }
   }
 
@@ -295,8 +329,11 @@ class _Repository implements InvestmentAssetRepository {
     return const <InvestmentPortfolioHistoryPoint>[];
   }
 
-  Future<InvestmentAsset> _write(String operation, String userId,
-      String id, InvestmentAssetDraft? draft,
+  Future<InvestmentAsset> _write(
+    String operation,
+    String userId,
+    String id,
+    InvestmentAssetDraft? draft,
   ) async {
     writes.add(_Write(userId, operation));
     final position = writes.length;
@@ -328,7 +365,10 @@ class _Repository implements InvestmentAssetRepository {
   }
 
   @override
-  Future<InvestmentAsset> create({required String userId, required InvestmentAssetDraft draft,}) =>
+  Future<InvestmentAsset> create({
+    required String userId,
+    required InvestmentAssetDraft draft,
+  }) =>
       _write('add', userId, 'created-$userId', draft);
 
   @override
@@ -340,7 +380,10 @@ class _Repository implements InvestmentAssetRepository {
       _write('edit', userId, assetId, draft);
 
   @override
-  Future<void> delete({required String userId, required String assetId,}) async {
+  Future<void> delete({
+    required String userId,
+    required String assetId,
+  }) async {
     await _write('delete', userId, assetId, null);
   }
 }
