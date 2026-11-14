@@ -1,0 +1,151 @@
+name: Local Member Observation E2E
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/data/kokumin_member_directory_observation.dart'
+      - 'lib/ui/features/election_victory/widgets/kokumin_member_directory_observation_card.dart'
+      - 'lib/pages/election_victory_page.dart'
+      - 'test/fixtures/local_member_observation_*'
+      - 'test/e2e/local_member_observation.spec.ts'
+      - 'playwright.local-member-observation.config.ts'
+      - '.github/workflows/local-member-observation-e2e.yml'
+  workflow_dispatch:
+    inputs:
+      expected_head_sha:
+        description: Exact committed head to verify
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: local-member-observation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  local-member-observation-browser:
+    name: Local member observation browser checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    env:
+      EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha || '' }}
+    steps:
+      - name: Checkout immutable source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify exact cloud handoff SHA
+        if: env.EXPECTED_HEAD_SHA != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_head_sha="$(git rev-parse HEAD)"
+          if [[ ! "$EXPECTED_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_head_sha must be a lowercase 40-character Git SHA."
+            exit 1
+          fi
+          if [ "$actual_head_sha" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "::error::Cloud handoff mismatch: expected $EXPECTED_HEAD_SHA, checked out $actual_head_sha."
+            exit 1
+          fi
+          echo "Verified exact cloud handoff SHA: $actual_head_sha"
+
+      - name: Set up repository-pinned Flutter SDK
+        uses: ./.github/actions/setup-flutter-sdk
+
+      - name: Build the isolated actual election page with local web resources
+        run: |
+          flutter pub get
+          flutter build web --release --no-web-resources-cdn --pwa-strategy=none --dart-define=LOCAL_MEMBER_OBSERVATION_FIXTURE=true --target=test/fixtures/local_member_observation_app.dart
+          cp test/fixtures/local_member_observation_index.html build/web/index.html
+
+      # Alias the already bundled Noto Sans bytes, not a downloaded Roboto font.
+      # This fixture-only manifest entry prevents the engine's initial CDN fetch.
+      - name: Register bundled member observation fixture engine fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - build/web <<'PY'
+          import hashlib
+          import json
+          import sys
+          from pathlib import Path
+
+          FONT_ASSET = "web/assets/fonts/NotoSans-Regular.ttf"
+          FONT_SHA256 = "b85c38ecea8a7cfb39c24e395a4007474fa5a4fc864f6ee33309eb4948d232d5"
+          LICENSE_ASSET = "web/assets/fonts/NotoSans-OFL.txt"
+          LICENSE_SHA256 = "138b7f6e5d8ab96671ef7604f936d3d077beed67911acfb1b0adb71359dc44bc"
+
+
+          def register_fixture_font(root):
+              manifest_path = root / "assets" / "FontManifest.json"
+              manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+              if not isinstance(manifest, list) or not all(
+                  isinstance(family, dict) for family in manifest
+              ):
+                  raise ValueError("Unexpected fixture font manifest")
+              families = [family.get("family") for family in manifest]
+              if "Roboto" in families or families.count("NotoSans") != 1:
+                  raise ValueError("Expected one NotoSans family and no Roboto family")
+              noto = next(family for family in manifest if family.get("family") == "NotoSans")
+              if noto.get("fonts") != [{"asset": FONT_ASSET}]:
+                  raise ValueError("Unexpected NotoSans asset registration")
+              for asset, expected in (
+                  (FONT_ASSET, FONT_SHA256),
+                  (LICENSE_ASSET, LICENSE_SHA256),
+              ):
+                  path = root / "assets" / asset
+                  if not path.is_file() or path.is_symlink():
+                      raise ValueError("Missing or unsafe fixture font/license asset")
+                  if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+                      raise ValueError("Fixture font/license provenance mismatch")
+              # Alias existing bytes only. Do not copy, rewrite, or rename the font.
+              result = [*manifest, {"family": "Roboto", "fonts": [{"asset": FONT_ASSET}]}]
+              manifest_path.write_text(json.dumps(result) + "\n", encoding="utf-8")
+
+
+          if __name__ == "__main__":
+              fixture_root = Path(sys.argv[1])
+              expected_root = Path.cwd().resolve() / "build" / "web"
+              if fixture_root.resolve() != expected_root:
+                  raise ValueError("Only the member observation browser fixture build may be changed")
+              index = fixture_root / "index.html"
+              fixture_index = Path("test/fixtures/local_member_observation_index.html")
+              if index.is_symlink() or index.read_bytes() != fixture_index.read_bytes():
+                  raise ValueError("Expected the dedicated member observation browser fixture index")
+              manifest = fixture_root / "assets" / "FontManifest.json"
+              if manifest.is_symlink() or manifest.resolve() != expected_root / "assets" / "FontManifest.json":
+                  raise ValueError("Unsafe fixture manifest path")
+              register_fixture_font(fixture_root)
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install browser test dependencies
+        run: |
+          npm ci --ignore-scripts
+          npx --no-install playwright install --with-deps chromium
+
+      - name: Check the real card on desktop and 390px loopback
+        run: npx --no-install playwright test --config=playwright.local-member-observation.config.ts
+
+      - name: Preserve isolated page screenshots and failure diagnostics
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: local-member-observation-browser-${{ github.run_id }}
+          path: local-member-observation-browser-results/
+          retention-days: 1
+          if-no-files-found: warn
