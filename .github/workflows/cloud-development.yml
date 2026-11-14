@@ -793,7 +793,7 @@ jobs:
 
   payslip-preview-deno:
     name: Payslip preview Deno contracts
-    if: inputs.profile == 'full'
+    if: (inputs.profile || 'full') == 'full'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -841,7 +841,7 @@ jobs:
 
   payslip-preview-browser:
     name: Payslip preview browser checks
-    if: inputs.profile == 'full'
+    if: (inputs.profile || 'full') == 'full'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
