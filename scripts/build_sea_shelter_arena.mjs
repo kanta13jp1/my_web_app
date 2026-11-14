@@ -12,7 +12,7 @@ const root = resolve(import.meta.dirname, "..");
 const pkg = JSON.parse(
   await readFile(resolve(root, "node_modules/three/package.json"), "utf8"),
 );
-if (pkg.version !== "0.186.0" || pkg.license !== "MIT") {
+if (pkg.version !== "0.187.0" || pkg.license !== "MIT") {
   throw Error("Unexpected Three.js package");
 }
 const webRoot = resolve(root, process.argv[2] ?? "build/sea-shelter-preview");
