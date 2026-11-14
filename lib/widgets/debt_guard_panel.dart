@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../domain/models/debt_guard_emotion.dart';
 import '../domain/models/debt_guard_rule.dart';
+import '../domain/models/debt_guard_stall_thought.dart';
 import '../view_models/debt_guard_view_model.dart';
 
 class DebtGuardPanel extends StatelessWidget {
@@ -55,6 +57,18 @@ class DebtGuardPanel extends StatelessWidget {
                     _buildActions(context),
                     const SizedBox(height: 16),
                     _buildCategoryGrid(context, snapshot),
+                    if (viewModel.isAuthenticated &&
+                        (viewModel.emotionInsightFailed ||
+                            viewModel.emotionInsight.status !=
+                                DebtGuardEmotionInsightStatus.unavailable)) ...[
+                      const SizedBox(height: 18),
+                      _buildEmotionInsight(context),
+                    ],
+                    if (viewModel.isAuthenticated &&
+                        viewModel.stallThoughtInsight.labelledCount > 0) ...[
+                      const SizedBox(height: 12),
+                      _buildStallThoughtInsight(context),
+                    ],
                     if (viewModel.events.isNotEmpty) ...[
                       const SizedBox(height: 18),
                       _buildRecentEvents(context),
@@ -157,8 +171,9 @@ class DebtGuardPanel extends StatelessWidget {
 
   Widget _buildFoundationMindset(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final essentialActions =
-        DebtGuardFoundationPolicy.essentialActions.join('・');
+    final essentialActions = DebtGuardFoundationPolicy.essentialActions.join(
+      '・',
+    );
     return DecoratedBox(
       key: const Key('debt-guard-foundation-mindset'),
       decoration: BoxDecoration(
@@ -200,8 +215,10 @@ class DebtGuardPanel extends StatelessWidget {
             for (final cadence in DebtGuardFoundationCadence.values) ...[
               Text(
                 cadence.label,
-                style:
-                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
@@ -477,6 +494,224 @@ class DebtGuardPanel extends StatelessWidget {
     );
   }
 
+  Widget _buildEmotionInsight(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final insight = viewModel.emotionInsight;
+    final riskiest = insight.riskiest;
+    final steadiest = insight.steadiest;
+    return DecoratedBox(
+      key: const Key('debt-guard-emotion-insight'),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.insights_outlined, size: 20, color: colors.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '気持ちと衝動の傾向（直近${insight.windowDays}日）',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            switch (insight.status) {
+              DebtGuardEmotionInsightStatus.unavailable => const Text(
+                  '気持ちの傾向を読み込めませんでした。'
+                  '今日の記録は通常どおり行えます。',
+                  style: TextStyle(height: 1.5),
+                ),
+              DebtGuardEmotionInsightStatus.insufficient => Text(
+                  '衝動や違反を記録するときに「いまの気持ち」を選ぶと、'
+                  'どの気持ちのときに崩れやすいかがここに出ます。'
+                  '（いま${insight.labelledCount}件 / '
+                  '${DebtGuardEmotionInsight.minimumLabelledCount}件から表示）',
+                  style: const TextStyle(height: 1.5),
+                ),
+              DebtGuardEmotionInsightStatus.ready => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (riskiest != null) ...[
+                      Text(
+                        '違反の前に多い気持ち: ${riskiest.emotion.label}'
+                        '（気持ちを記録した違反${insight.violationCount}回のうち'
+                        '${riskiest.violationCount}回）',
+                        key: const Key('debt-guard-emotion-riskiest'),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${riskiest.emotion.signal}\n'
+                        '次に「${riskiest.emotion.label}」に気づいたら: '
+                        '${riskiest.emotion.minimumAction}',
+                        style: const TextStyle(height: 1.5),
+                      ),
+                    ] else
+                      const Text(
+                        'いまのところ、特定の気持ちに偏った違反はありません。',
+                        key: Key('debt-guard-emotion-no-pattern'),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          height: 1.5,
+                        ),
+                      ),
+                    if (steadiest != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        '乗り切れている気持ち: ${steadiest.emotion.label}'
+                        '（${steadiest.totalCount}回のうち'
+                        '${steadiest.overcomeCount}回）',
+                        key: const Key('debt-guard-emotion-steadiest'),
+                        style: const TextStyle(height: 1.5),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final tally in insight.tallies)
+                          _SummaryChip(
+                            key: Key(
+                              'debt-guard-emotion-tally-'
+                              '${tally.emotion.wireName}',
+                            ),
+                            icon: _emotionIcon(tally.emotion),
+                            label: '${tally.emotion.label} '
+                                '乗り切り${tally.overcomeCount}・'
+                                '違反${tally.violationCount}',
+                            color: tally.violationCount > tally.overcomeCount
+                                ? colors.error
+                                : colors.primary,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+            },
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStallThoughtInsight(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final insight = viewModel.stallThoughtInsight;
+    final stickiest = insight.stickiest;
+    final loosest = insight.loosest;
+    return DecoratedBox(
+      key: const Key('debt-guard-stall-insight'),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.record_voice_over_outlined,
+                  size: 20,
+                  color: colors.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '着手を止める一言の傾向（直近${insight.windowDays}日）',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (insight.status == DebtGuardEmotionInsightStatus.insufficient)
+              Text(
+                '「すべきことをできない」ときに頭の中の一言を選ぶと、'
+                'どの一言で止まりやすいかがここに出ます。'
+                '（いま${insight.labelledCount}件 / '
+                '${DebtGuardEmotionInsight.minimumLabelledCount}件から表示）',
+                style: const TextStyle(height: 1.5),
+              )
+            else ...[
+              if (stickiest != null) ...[
+                Text(
+                  '止まりやすい一言: 「${stickiest.thought.label}」'
+                  '（着手できなかった${insight.notStartedCount}回のうち'
+                  '${stickiest.notStartedCount}回）',
+                  key: const Key('debt-guard-stall-stickiest'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '次にこの一言が浮かんだら: ${stickiest.thought.counter}',
+                  style: const TextStyle(height: 1.5),
+                ),
+              ] else
+                const Text(
+                  'いまのところ、特定の一言に偏って止まってはいません。',
+                  key: Key('debt-guard-stall-no-pattern'),
+                  style: TextStyle(fontWeight: FontWeight.w800, height: 1.5),
+                ),
+              if (loosest != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '浮かんでも始められている一言: 「${loosest.thought.label}」'
+                  '（${loosest.totalCount}回のうち${loosest.startedCount}回）',
+                  key: const Key('debt-guard-stall-loosest'),
+                  style: const TextStyle(height: 1.5),
+                ),
+              ],
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final tally in insight.tallies)
+                    _SummaryChip(
+                      key: Key(
+                        'debt-guard-stall-tally-${tally.thought.wireName}',
+                      ),
+                      icon: Icons.chat_bubble_outline,
+                      label: '「${tally.thought.label}」 '
+                          '着手${tally.startedCount}・'
+                          '未着手${tally.notStartedCount}',
+                      color: tally.notStartedCount > tally.startedCount
+                          ? colors.error
+                          : colors.primary,
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildRecentEvents(BuildContext context) {
     final recent = viewModel.events.reversed.take(5);
     return Column(
@@ -496,7 +731,7 @@ class DebtGuardPanel extends StatelessWidget {
               '${_ruleTitle(event.ruleId)} — ${event.type.label}',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-            subtitle: event.note?.isNotEmpty == true ? Text(event.note!) : null,
+            subtitle: _eventSubtitle(event),
             trailing: Text(
               TimeOfDay.fromDateTime(event.createdAt.toLocal()).format(context),
             ),
@@ -547,6 +782,8 @@ class DebtGuardPanel extends StatelessWidget {
       ruleId: result.ruleId,
       type: result.type,
       note: result.note,
+      emotion: result.emotion,
+      stallThought: result.stallThought,
     );
   }
 
@@ -565,6 +802,8 @@ class DebtGuardPanel extends StatelessWidget {
       ruleId: result.ruleId,
       type: result.type,
       note: result.note,
+      emotion: result.emotion,
+      stallThought: result.stallThought,
     );
   }
 
@@ -582,6 +821,8 @@ class DebtGuardPanel extends StatelessWidget {
         ? fixedRule!.id
         : requiredActionRules.first.id;
     var bugMode = initialBugMode;
+    DebtGuardEmotion? emotion;
+    DebtGuardStallThought? stallThought;
     final noteController = TextEditingController();
     try {
       return await showDialog<_DebtGuardActionResult>(
@@ -718,7 +959,108 @@ class DebtGuardPanel extends StatelessWidget {
                             '休息・医療・支援を優先してください。',
                             style: TextStyle(fontSize: 12, height: 1.45),
                           ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            '着手を止めている頭の中の一言（任意）',
+                            style: TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'やる前に下した評価は、まだ何も試していない時点の予想です。'
+                            '言い返さず、2分だけ判定を保留します。',
+                            style: TextStyle(fontSize: 12, height: 1.45),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final option in DebtGuardStallThought.values)
+                                ChoiceChip(
+                                  key: Key(
+                                    'debt-guard-stall-${option.wireName}',
+                                  ),
+                                  selected: stallThought == option,
+                                  label: Text('「${option.label}」'),
+                                  onSelected: (selected) => setDialogState(
+                                    () =>
+                                        stallThought = selected ? option : null,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if (stallThought != null) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              stallThought!.counter,
+                              key: const Key('debt-guard-stall-counter'),
+                              style: const TextStyle(height: 1.5),
+                            ),
+                          ],
                         ],
+                      ],
+                      const SizedBox(height: 14),
+                      const Text(
+                        'いまの気持ちに一番近いもの（任意）',
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '気持ちは邪魔者ではなく、何が足りていないかの手がかりです。'
+                        '名前をつけると、衝動と少し距離が取れます。',
+                        style: TextStyle(fontSize: 12, height: 1.45),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final option in DebtGuardEmotion.values)
+                            ChoiceChip(
+                              key: Key('debt-guard-emotion-${option.wireName}'),
+                              selected: emotion == option,
+                              avatar: Icon(_emotionIcon(option), size: 16),
+                              label: Text(option.label),
+                              onSelected: (selected) => setDialogState(
+                                () => emotion = selected ? option : null,
+                              ),
+                            ),
+                        ],
+                      ),
+                      if (emotion != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          '${emotion!.signal}\n'
+                          'お金を使わない最小の一歩: ${emotion!.minimumAction}',
+                          key: const Key('debt-guard-emotion-signal'),
+                          style: const TextStyle(height: 1.5),
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'きっかけに近いものがあれば（押すとメモに入ります）',
+                          style: TextStyle(fontSize: 12, height: 1.45),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final (index, phrase)
+                                in emotion!.triggers.indexed)
+                              ActionChip(
+                                key: Key(
+                                  'debt-guard-emotion-trigger-'
+                                  '${emotion!.wireName}-$index',
+                                ),
+                                label: Text(phrase),
+                                onPressed: () => noteController.text =
+                                    appendDebtGuardNotePhrase(
+                                  noteController.text,
+                                  phrase,
+                                ),
+                              ),
+                          ],
+                        ),
                       ],
                       const SizedBox(height: 14),
                       TextField(
@@ -750,11 +1092,13 @@ class DebtGuardPanel extends StatelessWidget {
                         ruleId: activeRuleId,
                         type: DebtGuardEventType.violation,
                         note: noteController.text,
+                        emotion: emotion,
+                        // Chosen in the other mode, it no longer applies.
+                        stallThought:
+                            isRequiredActionMode ? stallThought : null,
                       ),
                     ),
-                    child: Text(
-                      isRequiredActionMode ? '今日はできなかった' : '違反を記録',
-                    ),
+                    child: Text(isRequiredActionMode ? '今日はできなかった' : '違反を記録'),
                   ),
                 FilledButton(
                   onPressed: () => Navigator.pop(
@@ -765,6 +1109,8 @@ class DebtGuardPanel extends StatelessWidget {
                           ? successType
                           : DebtGuardEventType.violation,
                       note: noteController.text,
+                      emotion: emotion,
+                      stallThought: isRequiredActionMode ? stallThought : null,
                     ),
                   ),
                   child: Text(showPausePlan ? 'バグを弱めた' : '記録する'),
@@ -784,11 +1130,15 @@ class DebtGuardPanel extends StatelessWidget {
     required String ruleId,
     required DebtGuardEventType type,
     String? note,
+    DebtGuardEmotion? emotion,
+    DebtGuardStallThought? stallThought,
   }) async {
     final success = await viewModel.record(
       ruleId: ruleId,
       type: type,
       note: note,
+      emotion: emotion,
+      stallThought: stallThought,
     );
     if (!context.mounted) return;
     _showResult(context, success, success ? type.label : null);
@@ -823,6 +1173,26 @@ class DebtGuardPanel extends StatelessWidget {
         DebtGuardEventType.requiredActionStarted => Icons.play_arrow_rounded,
         DebtGuardEventType.violation => Icons.warning_amber_rounded,
       };
+
+  static IconData _emotionIcon(DebtGuardEmotion emotion) => switch (emotion) {
+        DebtGuardEmotion.irritation => Icons.local_fire_department_outlined,
+        DebtGuardEmotion.anxiety => Icons.cloud_outlined,
+        DebtGuardEmotion.boredom => Icons.hourglass_empty,
+        DebtGuardEmotion.loneliness => Icons.person_outline,
+        DebtGuardEmotion.fatigue => Icons.battery_1_bar,
+        DebtGuardEmotion.sadness => Icons.water_drop_outlined,
+        DebtGuardEmotion.hunger => Icons.restaurant_outlined,
+        DebtGuardEmotion.elation => Icons.celebration_outlined,
+      };
+
+  static Widget? _eventSubtitle(DebtGuardEvent event) {
+    final parts = <String>[
+      if (event.emotion != null) '気持ち: ${event.emotion!.label}',
+      if (event.stallThought != null) '頭の中の一言: 「${event.stallThought!.label}」',
+      if (event.note?.isNotEmpty == true) event.note!,
+    ];
+    return parts.isEmpty ? null : Text(parts.join(' / '));
+  }
 
   static DebtGuardRule _ruleFor(String ruleId) {
     return debtGuardRules.firstWhere((rule) => rule.id == ruleId);
@@ -882,9 +1252,13 @@ class _DebtGuardActionResult {
     required this.ruleId,
     required this.type,
     required this.note,
+    required this.emotion,
+    required this.stallThought,
   });
 
   final String ruleId;
   final DebtGuardEventType type;
   final String note;
+  final DebtGuardEmotion? emotion;
+  final DebtGuardStallThought? stallThought;
 }

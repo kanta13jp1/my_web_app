@@ -1,10 +1,19 @@
+import '../../domain/models/debt_guard_emotion.dart';
 import '../../domain/models/debt_guard_rule.dart';
+import '../../domain/models/debt_guard_stall_thought.dart';
 import '../services/debt_guard_event_service.dart';
 
 abstract interface class DebtGuardRepository {
   Future<List<DebtGuardEvent>> loadDailyEvents({
     required String userId,
     required DateTime date,
+  });
+
+  /// Events carrying an emotion or stall-thought label from [since] (local
+  /// day) onwards.
+  Future<List<DebtGuardEvent>> loadLabelledEvents({
+    required String userId,
+    required DateTime since,
   });
 
   Future<List<DebtGuardEvent>> appendEvents({
@@ -19,11 +28,15 @@ class DebtGuardEventDraft {
     required this.ruleId,
     required this.type,
     this.note,
+    this.emotion,
+    this.stallThought,
   });
 
   final String ruleId;
   final DebtGuardEventType type;
   final String? note;
+  final DebtGuardEmotion? emotion;
+  final DebtGuardStallThought? stallThought;
 }
 
 class SupabaseDebtGuardRepository implements DebtGuardRepository {
@@ -45,6 +58,18 @@ class SupabaseDebtGuardRepository implements DebtGuardRepository {
   }
 
   @override
+  Future<List<DebtGuardEvent>> loadLabelledEvents({
+    required String userId,
+    required DateTime since,
+  }) async {
+    final rows = await _service.loadLabelledEvents(
+      userId: userId,
+      sinceDate: _dateKey(since),
+    );
+    return _parseAndSort(rows);
+  }
+
+  @override
   Future<List<DebtGuardEvent>> appendEvents({
     required String userId,
     required DateTime date,
@@ -59,6 +84,9 @@ class SupabaseDebtGuardRepository implements DebtGuardRepository {
           'event_type': event.type.wireName,
           'event_date': eventDate,
           if (event.note?.trim().isNotEmpty == true) 'note': event.note!.trim(),
+          if (event.emotion != null) 'emotion': event.emotion!.wireName,
+          if (event.stallThought != null)
+            'stall_thought': event.stallThought!.wireName,
         },
     ]);
     return _parseAndSort(rows);
@@ -78,6 +106,10 @@ class SupabaseDebtGuardRepository implements DebtGuardRepository {
       eventDate: DateTime.parse(row['event_date'] as String),
       createdAt: DateTime.parse(row['created_at'] as String),
       note: row['note'] as String?,
+      emotion: DebtGuardEmotionCopy.tryFromWireName(row['emotion'] as String?),
+      stallThought: DebtGuardStallThoughtCopy.tryFromWireName(
+        row['stall_thought'] as String?,
+      ),
     );
   }
 
