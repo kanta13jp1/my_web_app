@@ -8,6 +8,7 @@ import '../models/user_profile.dart';
 import 'ai_hub_chat_service.dart';
 import 'asset_management_ai_provider_router.dart';
 import 'asset_management_insight_service.dart';
+import 'asset_payment_calendar_service.dart';
 import 'asset_payment_status_summary.dart';
 
 class AssetManagementAiSummaryFeatureFlag {
@@ -493,35 +494,78 @@ class AssetManagementAiSummaryService {
 
   String buildDeterministicSummary(AssetManagementInsightReport report) {
     final critical = report.criticalActions.length;
-    final actionCount = report.actionItems.length;
     final today = _formatYen(report.todayAvailable.availableAmount);
     final week = _formatYen(report.weekAvailable.availableAmount);
     final month = _formatYen(report.monthAvailable.availableAmount);
-    final movement = report.movementSuggestions.isEmpty
-        ? '現時点で口座移動・出金提案はありません。'
-        : '口座移動・出金提案を${report.movementSuggestions.length}件確認してください。';
+    // Use the same precomputed priority order and direct-payment predicate as
+    // the detailed payload. Never label paid or card-included rows as unpaid.
+    final debts = report.workbook.repaymentPriorityRows.take(5).toList();
+    final sourceKinds = {
+      for (final account in report.workbook.accounts) account.id: account.kind,
+    };
+    final cardFundedFixedCostIds = {
+      for (final row in report.workbook.debtMasterRows)
+        if (AssetCalendarDebtInput.fromDebtRow(
+          row,
+          sourceAccountKindsById: sourceKinds,
+        ).isCardFundedFixedCost)
+          row.id,
+    };
+    final unpaid = report.workbook.cashflowRows
+        .where(
+          (row) =>
+              row.isPayment &&
+              row.isDirectCashflowTarget &&
+              !cardFundedFixedCostIds.contains(row.accountId) &&
+              !row.paid &&
+              row.paymentAmount > 0,
+        )
+        .toList();
+    String safeName(String name) => name.replaceAll(RegExp(r'[\r\n]+'), ' ');
+    final status = critical > 0 ? '緊急の資金繰り項目があります。' : '緊急度の高い資金繰り項目は検出されていません。';
     final emergency = report.emergencyAdvices.isEmpty
         ? '生活費防衛の追加提案は生成されていません。要確認項目の解消を意味するものではありません。'
         : report.emergencyAdvices
             .take(3)
             .map(
-              (advice) => '${advice.title}: ${advice.description} '
-                  '${advice.suggestedAction}',
+              (advice) =>
+                  '${advice.title}: ${advice.description} ${advice.suggestedAction}',
             )
             .join(' ');
-    final status = critical > 0 ? '緊急の資金繰り項目があります。' : '緊急度の高い資金繰り項目は検出されていません。';
     return [
-      status,
-      '要対応: $actionCount件、緊急: $critical件。',
-      '使用可能額: 本日 $today、今週 $week、今月 $month。',
+      '## 1. 現状',
+      '- **$status** 要対応: ${report.actionItems.length}件、緊急: $critical件。',
+      '## 2. 使用可能額',
+      '- 使用可能額: 本日 $today、今週 $week、今月 $month。',
+      '## 3. 負債の確認（優先順上位5件）',
+      if (debts.isEmpty) '- 対象となる負債はありません。',
+      for (final row in debts)
+        '- ${safeName(row.name)}: 残高 ${_formatYen(row.balance.abs())}（支払状況は別途確認）。',
+      '## 4. 未払い項目',
+      if (unpaid.isEmpty) '- 直接支払う未払い項目はありません。',
+      for (final row in unpaid)
+        '- ${safeName(row.accountName)}: ${_formatYen(row.paymentAmount)}（${row.paymentDate.month}月${row.paymentDate.day}日予定${row.paymentAmountEstimated ? "・推定" : ""}）。',
+      if (report.workbook.billingConfirmationPendingRows.isNotEmpty)
+        '- **請求額の確認待ち**: ${report.workbook.billingConfirmationPendingRows.length}件。',
+      '## 5. 優先確認',
       if (critical > 0)
-        '優先確認: ${report.criticalActions.take(3).map((item) => item.title).join('、')}。',
-      if (critical > 3) 'ほか${critical - 3}件は下の要対応項目を確認してください。',
-      emergency,
-      movement,
-      assetPaymentStatusPrompt(report.workbook),
-      '金額はDartルールで計算済みです。AIは要約のみを行います。',
-    ].join(' ');
+        '- 優先確認: ${report.criticalActions.take(3).map((item) => safeName(item.title)).join('、')}。'
+      else
+        '- 緊急の要対応項目は検出されていません。',
+      if (critical > 3) '- ほか${critical - 3}件は下の要対応項目を確認してください。',
+      '## 6. 生活費の確保',
+      '- $emergency',
+      '## 7. 資金移動',
+      report.movementSuggestions.isEmpty
+          ? '- 現時点で口座移動・出金提案はありません。'
+          : '- 口座移動・出金提案を${report.movementSuggestions.length}件確認してください。',
+      '## 8. まとめ',
+      assetPaymentStatusPrompt(report.workbook).replaceFirst(
+        '## 支払い状態別の確定内訳',
+        '**支払い状態別の確定内訳**',
+      ),
+      '- 金額はDartルールで計算済みです。AIは要約のみを行います。',
+    ].join('\n');
   }
 
   String _buildPrompt({
