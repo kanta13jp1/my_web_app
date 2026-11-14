@@ -80,7 +80,7 @@ jobs:
           deno check --config supabase/functions/deno.json --lock supabase/functions/deno.lock --frozen supabase/functions/core-hub/index.ts supabase/functions/core-hub/blog_view_test.ts supabase/functions/core-hub/index_test.ts
           deno test --allow-all --config supabase/functions/deno.json --lock supabase/functions/deno.lock --frozen supabase/functions/core-hub/blog_view_test.ts supabase/functions/core-hub/index_test.ts
       - name: Setup Python for DB and Edge smoke
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12.14"
       - name: Install DB and Edge smoke dependencies
@@ -101,7 +101,7 @@ jobs:
           if-no-files-found: ignore
           include-hidden-files: true
       - name: Setup pinned Supabase CLI
-        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3
         with:
           version: 2.84.2
       - name: Verify supported deploy flags

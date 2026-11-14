@@ -234,7 +234,7 @@ jobs:
 
       - name: Setup Python for DB and Edge smoke
         if: steps.db_edge_smoke.outputs.required == 'true'
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12.14"
 
@@ -269,7 +269,7 @@ jobs:
 
       - name: Setup Supabase CLI
         if: steps.changes.outputs.migration == 'true' || steps.changes.outputs.edge == 'true'
-        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3
         with:
           version: 2.84.2
 
@@ -947,7 +947,7 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.changes.outputs.web == 'true'
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
