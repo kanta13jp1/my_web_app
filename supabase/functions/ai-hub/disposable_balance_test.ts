@@ -55,6 +55,27 @@ Deno.test("buildDisposableBalance subtracts fixed costs and debt payments", () =
   );
 });
 
+Deno.test("previous income is not the impact of checking payslip registration", () => {
+  const result = buildDisposableBalance({
+    asOfDate: "2026-05-26",
+    salaryDay: 25,
+    payslips: [{
+      pay_date: "2026-04-25",
+      net_amount: 12345,
+      company_name: "fixture",
+      confidence: 0.9,
+    }],
+    recurringExpenses: [],
+    debts: [],
+  });
+  const notice = result.required_actions.find((action) =>
+    action.action_key === "upload_current_payslip"
+  );
+  assertEquals(result.income, 12345);
+  assertEquals(notice?.amount_impact, 0);
+  assertEquals(notice?.estimated_seconds, null);
+});
+
 Deno.test("handleDisposableBalanceAction loads tables and persists run", async () => {
   const db = new FakeDb({
     payslips: [
@@ -199,3 +220,54 @@ class FakeQuery implements DisposableBalanceDbQuery {
     return Promise.resolve({ data: null, error: null });
   }
 }
+
+// REVIEW ONLY: fake database, fake provider and dry_run; no network.
+Deno.test("explicit false wins over server flag without changing deterministic response", async () => {
+  const envKey = "DISPOSABLE_BALANCE_AI_ENABLED";
+  const previous = Deno.env.get(envKey);
+  const scenarios: Array<{environment: boolean; option: boolean | null; calls: number}> = [
+    {environment: false, option: false, calls: 0},
+    {environment: false, option: true, calls: 1},
+    {environment: false, option: null, calls: 0},
+    {environment: true, option: false, calls: 0},
+    {environment: true, option: true, calls: 1},
+    {environment: true, option: null, calls: 1},
+  ];
+  try {
+    let baseline: unknown;
+    for (const scenario of scenarios) {
+      Deno.env.set(envKey, String(scenario.environment));
+      const db = new FakeDb({payslips: [], recurring_expenses: [], debts: []});
+      const body: Record<string, unknown> = {
+        as_of_date: "2026-01-10",
+        salary_day: 25,
+        trace_id: "synthetic-flag-test",
+        dry_run: true,
+      };
+      // null here means omit the field; it is not sent as JSON null.
+      if (scenario.option !== null) body.enable_ai_actions = scenario.option;
+      let providerCalls = 0;
+      const result = await handleDisposableBalanceAction({
+        db,
+        userId: "synthetic-owner",
+        body,
+        invokeProvider: () => {
+          providerCalls++;
+          // Success with no actions keeps the response comparable and local.
+          return Promise.resolve({ok: true, text: '{"actions":[]}'});
+        },
+      });
+      assertEquals(providerCalls, scenario.calls);
+      assertEquals(db.upserts.length, 0);
+      assertEquals(db.inserts.length, 0);
+      assertEquals(result.status, "deterministic");
+      assertEquals(result.provider, null);
+      assertEquals(result.model, null);
+      if (baseline === undefined) baseline = result;
+      else assertEquals(result, baseline);
+    }
+  } finally {
+    if (previous === undefined) Deno.env.delete(envKey);
+    else Deno.env.set(envKey, previous);
+  }
+});
