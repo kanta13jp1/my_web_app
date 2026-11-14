@@ -86,7 +86,8 @@ void main() {
             responseSent.complete();
             return http.Response(
               failResponse
-                  ? jsonEncode({'code': 'XX000', 'message': 'synthetic failure'})
+                  ? jsonEncode(
+                      {'code': 'XX000', 'message': 'synthetic failure'})
                   : '',
               failResponse ? 400 : 204,
               headers: headers,
@@ -188,8 +189,10 @@ void main() {
             final shouldWrite = phase != 'dialog' || mode == 'same';
             expect(writes, shouldWrite ? 1 : 0);
             if (shouldWrite) {
-              expect(mutation!.method, operation == 'edit' ? 'PATCH' : 'DELETE');
-              expect(mutation!.url.queryParameters['id'], 'eq.synthetic-flow-id');
+              expect(
+                  mutation!.method, operation == 'edit' ? 'PATCH' : 'DELETE');
+              expect(
+                  mutation!.url.queryParameters['id'], 'eq.synthetic-flow-id');
               if (phase != 'dialog') await switchSession();
               await tester.runAsync(() async {
                 writeGate.complete();
@@ -198,25 +201,21 @@ void main() {
               });
             }
             await settleFrame(tester);
-            final success = operation == 'edit'
-                ? '収支記録を更新しました'
-                : '収支記録を削除しました';
+            final success = operation == 'edit' ? '収支記録を更新しました' : '収支記録を削除しました';
             expect(
               find.text(success),
               mode == 'same' && !failResponse ? findsOneWidget : findsNothing,
             );
             if (mode != 'same') {
               expect(
-                find.textContaining(operation == 'edit'
-                    ? '収支記録の更新に失敗しました'
-                    : '収支記録の削除に失敗しました'),
+                find.textContaining(
+                    operation == 'edit' ? '収支記録の更新に失敗しました' : '収支記録の削除に失敗しました'),
                 findsNothing,
               );
             } else if (failResponse) {
               expect(
-                find.textContaining(operation == 'edit'
-                    ? '収支記録の更新に失敗しました'
-                    : '収支記録の削除に失敗しました'),
+                find.textContaining(
+                    operation == 'edit' ? '収支記録の更新に失敗しました' : '収支記録の削除に失敗しました'),
                 findsOneWidget,
               );
             }
