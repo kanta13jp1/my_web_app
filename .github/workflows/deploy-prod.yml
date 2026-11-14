@@ -76,7 +76,7 @@ jobs:
     name: Deploy to Production Environment
     runs-on: ubuntu-latest
     needs: ci
-    if: always() && vars.PRODUCTION_DEPLOY_HOLD == 'false' && (needs.ci.result == 'success' || needs.ci.result == 'skipped')
+    if: ${{ !cancelled() && vars.PRODUCTION_DEPLOY_HOLD == 'false' && ((github.event_name == 'push' && needs.ci.result == 'skipped') || (github.event_name == 'workflow_dispatch' && needs.ci.result == 'success')) }}
     timeout-minutes: 45
     environment:
       name: production
@@ -845,7 +845,7 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
 
           deploy_status=0
-          npx -y firebase-tools@latest deploy \
+          npx -y firebase-tools@15.34.0 deploy \
             --only hosting \
             --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
             --json > "$output_file" || deploy_status=$?
@@ -898,7 +898,11 @@ jobs:
             VERIFIED=false
             for i in 1 2 3 4; do
               sleep 15
-              DEPLOYED=$(curl -fsS -H "Cache-Control: no-cache" "${SITE}?expected=${EXPECTED}&attempt=${i}" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("commit",""))' 2>/dev/null || echo "")
+              if RESPONSE=$(curl -fsS --connect-timeout 5 --max-time 10 -H "Cache-Control: no-cache" "${SITE}?expected=${EXPECTED}&attempt=${i}"); then
+                DEPLOYED=$(printf '%s' "$RESPONSE" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("commit",""))' 2>/dev/null || echo "")
+              else
+                DEPLOYED=""
+              fi
               if [ "$DEPLOYED" = "$EXPECTED" ]; then
                 VERIFIED=true
                 break
@@ -1022,6 +1026,40 @@ jobs:
             echo "| Actor | ${{ github.actor }} |"
             echo "| 本番URL | https://my-web-app-b67f4.web.app/ |"
           } >> $GITHUB_STEP_SUMMARY
+
+  # Status only: no production environment, secrets, or external calls.
+  deployment-status:
+    name: Explain skipped or cancelled deployment
+    needs: [ci, deploy]
+    if: always() && (needs.deploy.result == 'skipped' || needs.deploy.result == 'cancelled')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Summarize deployment state
+        shell: bash
+        env:
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          CI_RESULT: ${{ needs.ci.result }}
+          EVENT_NAME: ${{ github.event_name }}
+          HOLD_VALUE: ${{ vars.PRODUCTION_DEPLOY_HOLD }}
+        run: |
+          set -euo pipefail
+          {
+            if [[ "$DEPLOY_RESULT" == "skipped" ]]; then
+              echo '## この実行の配信ジョブは未実行'
+              if [[ "${HOLD_VALUE,,}" != "false" ]]; then
+                echo '配信保留が解除されていません。'
+              elif [[ "$EVENT_NAME" == "workflow_dispatch" && "$CI_RESULT" != "success" ]]; then
+                echo '手動配信に必要な CI が成功していません。'
+              else
+                echo '配信条件または実行状態を確認してください。'
+              fi
+            elif [[ "$DEPLOY_RESULT" == "cancelled" ]]; then
+              echo '## 配信ジョブは中断されました'
+              echo '中断前に一部が反映された可能性があり、配信先の状態は未確定です。公開版と実行履歴を確認し、結果不明の操作を再送しないでください。'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # -----------------------------------------------------------------
   # 通知ジョブ
