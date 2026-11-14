@@ -985,6 +985,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _selectedCardStatementBillingAccountId;
   String? _cardStatementImportMessage;
   AssetLiabilityCsvRestorePreview? _assetCsvRestorePreview;
+  String? _assetCsvRestorePreviewText;
   String? _assetCsvRestoreMessage;
   bool _isApplyingAssetCsvRestore = false;
 
@@ -2648,10 +2649,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   void _previewAssetLiabilityCsvRestore() {
+    if (_isApplyingAssetCsvRestore) return;
     final rawText = _assetCsvRestoreController.text.trim();
     if (rawText.isEmpty) {
       setState(() {
         _assetCsvRestorePreview = null;
+        _assetCsvRestorePreviewText = null;
         _assetCsvRestoreMessage = 'Paste an exported CSV before preview.';
       });
       return;
@@ -2659,15 +2662,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final preview = _assetLiabilityCsvRestoreService.previewCsvText(rawText);
     setState(() {
       _assetCsvRestorePreview = preview;
+      _assetCsvRestorePreviewText = rawText;
       _assetCsvRestoreMessage = _assetCsvRestorePreviewMessage(preview);
     });
   }
 
   Future<void> _applyAssetLiabilityCsvRestore() async {
+    if (_isApplyingAssetCsvRestore) return;
     final preview = _assetCsvRestorePreview;
     if (preview == null || !preview.hasRestorableRows) {
       setState(() {
         _assetCsvRestoreMessage = 'Preview a restorable CSV before apply.';
+      });
+      return;
+    }
+    if (_assetCsvRestorePreviewText != _assetCsvRestoreController.text.trim()) {
+      setState(() {
+        _assetCsvRestorePreview = null;
+        _assetCsvRestorePreviewText = null;
+        _assetCsvRestoreMessage =
+            'CSV input changed. Preview again before applying.';
       });
       return;
     }
@@ -30326,6 +30340,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         const SizedBox(height: 8),
         TextField(
           controller: _assetCsvRestoreController,
+          enabled: !_isApplyingAssetCsvRestore,
+          onChanged: (_) {
+            setState(() {
+              _assetCsvRestorePreview = null;
+              _assetCsvRestorePreviewText = null;
+              _assetCsvRestoreMessage =
+                  'CSV input changed. Preview again before applying.';
+            });
+          },
           minLines: 3,
           maxLines: 6,
           decoration: const InputDecoration(
@@ -30342,7 +30365,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             OutlinedButton.icon(
-              onPressed: _previewAssetLiabilityCsvRestore,
+              onPressed: _isApplyingAssetCsvRestore
+                  ? null
+                  : _previewAssetLiabilityCsvRestore,
               icon: const Icon(Icons.visibility_outlined),
               label: const Text('Preview'),
             ),
