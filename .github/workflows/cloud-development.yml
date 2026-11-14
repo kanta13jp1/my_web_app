@@ -1009,7 +1009,7 @@ jobs:
         set -euo pipefail
         [[ "$EXPECTED_QA_HEAD" =~ ^[0-9a-f]{40}$ ]]
         test "$EXPECTED_QA_HEAD" = "$ACTUAL_QA_HEAD"
-        [[ "$QA_EXPECTED_REF" == refs/heads/codex/payslip-* ]]
+        [[ "$QA_EXPECTED_REF" =~ ^refs/heads/codex/payslip-[A-Za-z0-9_-]+$ ]]
         test "$QA_EXPECTED_REF" = "$ACTUAL_QA_REF"
         [[ "$QA_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
         [[ "$QA_REPOSITORY" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]
@@ -1524,7 +1524,7 @@ jobs:
                     outgoing = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=target)
                     read_bytes = 0
                     while True:
-                        chunk = os.read(incoming, min(1024 * 1024, expected[6] - read_bytes + 1))
+                        chunk = os.read(incoming, copy_read_limit(expected[6], read_bytes))
                         if not chunk:
                             break
                         read_bytes += len(chunk)
@@ -1569,6 +1569,33 @@ jobs:
             require(root_parts('/payslip-same-lock.synthetic') == ['payslip-same-lock.synthetic'],
                     'valid direct scratch root rejected')
             print('OWNER_CONTRACT_VERIFIED positive=3 negative=6 filesystem_mutations=0')
+        
+        
+        def copy_read_limit(expected_size, consumed):
+            require(type(expected_size) is int and type(consumed) is int, 'invalid copy counters')
+            require(expected_size >= 0 and consumed >= 0, 'negative copy counter')
+            remaining = expected_size - consumed
+            require(remaining >= 0, 'copy budget exhausted')
+            return min(1024 * 1024, remaining + 1)
+        
+        
+        def verify_copy_read_limit():
+            positive = [(0, 0, 1), (1, 0, 2), (1, 1, 1),
+                        (1024 * 1024, 0, 1024 * 1024),
+                        (1024 * 1024 + 1, 0, 1024 * 1024),
+                        (1024 * 1024 + 1, 1024 * 1024, 2)]
+            for expected, consumed, wanted in positive:
+                require(copy_read_limit(expected, consumed) == wanted, 'copy boundary mismatch')
+            negative = [(-1, 0), (0, -1), (0, 1), (1, 2),
+                        (True, 0), (1, False), ('1', 0), (1, None)]
+            for expected, consumed in negative:
+                try:
+                    copy_read_limit(expected, consumed)
+                except SystemExit:
+                    pass
+                else:
+                    raise SystemExit('invalid copy counters accepted')
+            print('COPY_READ_BOUNDARY_VERIFIED positive=6 negative=8')
         
         
         def main(args):
@@ -1622,12 +1649,15 @@ jobs:
         if __name__ == '__main__':
             if sys.argv[1:] == ['--verify-owner-contract']:
                 verify_owner_contract()
+            elif sys.argv[1:] == ['--verify-copy-boundary']:
+                verify_copy_read_limit()
             else:
                 main(sys.argv)
         PAYSLIP_PUBLISH_PY
         chmod 0400 "$PAYSLIP_ROOT/guards/publish.py"
-        printf '%s  %s\n' c428f5d4006e3b1103d559094abac944d2a86328ee5eac8e5a304f0edebe8a1d "$PAYSLIP_ROOT/guards/publish.py" | sha256sum -c -
+        printf '%s  %s\n' be1d185d363726170d4919ebe13444a905332822af3fb95d0b20e1781d914e38 "$PAYSLIP_ROOT/guards/publish.py" | sha256sum -c -
         python3 -I "$PAYSLIP_ROOT/guards/publish.py" --verify-owner-contract
+        python3 -I "$PAYSLIP_ROOT/guards/publish.py" --verify-copy-boundary
         python3 "$PAYSLIP_ROOT/guards/source_guard.py" "$PAYSLIP_ROOT" before_bootstrap
     - name: Bootstrap fixed tools and enforce the exact existing lock
       shell: bash
