@@ -69,7 +69,8 @@ export type ParsedPayslip = {
 };
 
 export type PayslipIngestionResult = {
-  status: "parsed" | "needs_review";
+  status: "preview_only";
+  persisted: false;
   payslip: UnknownRecord;
   parsed: ParsedPayslip;
   masked_text_preview: string;
@@ -114,7 +115,10 @@ export function normalizePayslipStoragePath(value: unknown): {
   path: string;
   fullPath: string;
 } {
-  const raw = typeof value === "string" ? value.trim() : "";
+  const raw = typeof value === "string" ? value : "";
+  if (raw !== raw.trim()) {
+    throw new PayslipIngestionError("Invalid payslip storage path", 400);
+  }
   if (!raw) {
     throw new PayslipIngestionError("storage_path is required", 400);
   }
@@ -242,6 +246,35 @@ export function inferPayslipPayDateFromPath(path: string): string | null {
   return null;
 }
 
+// Validate the already-normalized key without changing the string passed
+// to the storage SDK. Encoded separators are deliberately unsupported.
+function requireOwnedPayslipPath(path: string, userId: string): void {
+  const segments = path.split("/");
+  const isSafeSegment = (segment: string): boolean => {
+    if (!segment || segment !== segment.trim() || segment === "." || segment === "..") {
+      return false;
+    }
+    // Refuse percent-encoding, backslashes, controls, bidi controls, and
+    // separator lookalikes. Spaces and Unicode inside a segment remain valid.
+    if (/[\\%?#\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\u2060-\u206F\uFEFF\u2044\u2215\u29F8\uFF0F\uFF3C\uFE68]/u.test(segment)) {
+      return false;
+    }
+    for (const character of segment) {
+      const code = character.codePointAt(0)!;
+      if (code >= 0xD800 && code <= 0xDFFF) return false;
+    }
+    // Check compatibility forms only for dangerous aliases. Do not replace
+    // the original segment with the normalized form.
+    const compatibility = segment.normalize("NFKC");
+    return compatibility === compatibility.trim() && compatibility !== "." &&
+      compatibility !== ".." && !/[\/\\%?#]/u.test(compatibility);
+  };
+  if (!/^[A-Za-z0-9_-]+$/.test(userId) || segments.length < 2 ||
+      segments[0] !== userId || !segments.slice(1).every(isSafeSegment)) {
+    throw new PayslipIngestionError("Invalid payslip storage path", 403);
+  }
+}
+
 export async function handleParsePayslipAction(options: {
   db: PayslipDb;
   storage: PayslipStorage;
@@ -252,8 +285,14 @@ export async function handleParsePayslipAction(options: {
   const storagePath = normalizePayslipStoragePath(
     options.body.storage_path ?? options.body.source_pdf_path,
   );
+  const objectPath = storagePath.path;
+  requireOwnedPayslipPath(objectPath, options.userId);
+  // Legacy callers that expect immediate persistence must fail explicitly.
+  if (options.body.preview_only !== true) {
+    throw new PayslipIngestionError("preview_only must be explicitly true", 409);
+  }
   const download = await options.storage.from(storagePath.bucket).download(
-    storagePath.path,
+    objectPath,
   );
   if (download.error) {
     throw new PayslipIngestionError(
@@ -270,8 +309,7 @@ export async function handleParsePayslipAction(options: {
   const maskedText = maskPayslipPii(rawText);
   const warnings: string[] = [];
   let parsed = parsePayslipText(maskedText);
-  const aiFallbackEnabled = options.body.enable_ai_fallback === true ||
-    Deno.env.get("PAYSLIP_AI_PARSE_ENABLED") === "true";
+  const aiFallbackEnabled = false;
   if (
     aiFallbackEnabled && parsed.confidence < 0.72 && options.invokeProvider
   ) {
@@ -309,7 +347,6 @@ export async function handleParsePayslipAction(options: {
 
   parsed = applyStoragePathFallback(parsed, storagePath.fullPath, warnings);
   validateParsedPayslip(parsed);
-  const reviewStatus = parsed.confidence >= 0.72 ? "auto" : "needs_review";
   const rawTextSha256 = await sha256Hex(maskedText);
   const payslipRow = {
     user_id: options.userId,
@@ -326,41 +363,15 @@ export async function handleParsePayslipAction(options: {
     parsed_by: parsed.parsed_by,
     confidence: parsed.confidence,
     raw_text_sha256: rawTextSha256,
-    review_status: reviewStatus,
+    review_status: "needs_review",
   };
 
-  let persistedPayslip: UnknownRecord = payslipRow;
-  if (options.body.dry_run !== true) {
-    const { data, error } = await options.db.from("payslips")
-      .upsert(payslipRow, { onConflict: "user_id,pay_date,company_name" })
-      .select(
-        "id,user_id,pay_date,company_name,gross_amount,net_amount,confidence,review_status,source_pdf_path",
-      )
-      .single();
-    if (error) {
-      throw new PayslipIngestionError(
-        `payslips upsert failed: ${error.message ?? "unknown"}`,
-        500,
-      );
-    }
-    persistedPayslip = asRecord(data) ?? payslipRow;
-    await options.db.from("salary_incomes")
-      .upsert({
-        user_id: options.userId,
-        pay_date: parsed.pay_date,
-        amount: parsed.net_amount,
-        description: `Payslip: ${parsed.company_name || "salary"}`,
-        source: "payslip_auto",
-        payslip_id: persistedPayslip.id ?? null,
-        confidence: parsed.confidence,
-      }, { onConflict: "user_id,pay_date,source" })
-      .select("id")
-      .single();
-  }
-
+  // Preview only: never write to payslips or salary_incomes before confirmation.
+  // The PDF itself may already have been stored by the caller.
   return {
-    status: reviewStatus === "auto" ? "parsed" : "needs_review",
-    payslip: persistedPayslip,
+    status: "preview_only",
+    persisted: false,
+    payslip: payslipRow,
     parsed,
     masked_text_preview: maskedText.slice(0, 1200),
     warnings,
