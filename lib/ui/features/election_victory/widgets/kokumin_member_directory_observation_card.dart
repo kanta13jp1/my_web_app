@@ -31,7 +31,8 @@ class KokuminMemberDirectoryObservationCard extends StatelessWidget {
             const SizedBox(height: 8),
             const Text(
               '党公式サイト「地方自治体議員」の掲載人数です。'
-              '全国現職420人（11/9党代表発表）とは別の集計です。'
+              '全国現職420人（11/9党代表発表）とは一致していません。'
+              '差の理由は未確認です。'
               '下記の過去の名簿取得値・県別内訳・計画KPIは更新していません。'
               '予定候補者の公認・推薦件数は含めていません。',
             ),
