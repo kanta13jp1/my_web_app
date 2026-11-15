@@ -21,7 +21,11 @@ void main() {
           await h.mount(tester);
           await h.open(tester, operation);
           if (phase == 'dialog') await h.switchOwner(tester, mode);
-          await h.confirm(tester, operation);
+          if (phase == 'dialog' && mode != 'same') {
+            await h.closeInvalidDialog(tester);
+          } else {
+            await h.confirm(tester, operation);
+          }
           if (phase != 'dialog') {
             expect(h.repository.writes.length, 1);
             await h.switchOwner(tester, mode);
@@ -98,9 +102,13 @@ void main() {
           findsOneWidget,
         );
         if (phase == 'preview') await h.switchOwner(tester, mode);
-        await tester
-            .tap(find.byKey(const Key('investment_csv_import_confirm')));
-        await _frames(tester);
+        if (phase == 'preview' && mode != 'same') {
+          await h.closeInvalidDialog(tester);
+        } else {
+          await tester
+              .tap(find.byKey(const Key('investment_csv_import_confirm')));
+          await _frames(tester);
+        }
         if (phase == 'row' || phase == 'rowError') {
           expect(h.repository.writes.length, 1);
           await h.switchOwner(tester, mode);
@@ -151,6 +159,31 @@ void main() {
             .onPressed,
         isNull,
       );
+      expect(h.repository.writes, isEmpty);
+      expect(tester.takeException(), isNull);
+      await h.finish(tester);
+    });
+  }
+
+  for (final fault in ['error', 'done', 'repository']) {
+    testWidgets('investment owner open editor redacts on $fault',
+        (tester) async {
+      final h = _Harness();
+      final original = h.repository;
+      await h.mount(tester);
+      await h.open(tester, 'edit');
+      expect(find.text('changed-a'), findsOneWidget);
+      if (fault == 'error') {
+        h.events.addError(StateError('synthetic owner-stream failure'));
+      } else if (fault == 'done') {
+        await h.events.close();
+      } else {
+        h.repository = _Repository();
+        await tester.pumpWidget(h.widget());
+      }
+      await _frames(tester);
+      await h.closeInvalidDialog(tester);
+      expect(original.writes, isEmpty);
       expect(h.repository.writes, isEmpty);
       expect(tester.takeException(), isNull);
       await h.finish(tester);
@@ -296,6 +329,23 @@ class _Harness {
         'changed-${owner!}',
       );
     }
+  }
+
+  Future<void> closeInvalidDialog(WidgetTester tester) async {
+    expect(
+      find.byKey(const Key('investment_owner_dialog_invalid')),
+      findsOneWidget,
+    );
+    for (final key in [
+      'investment_asset_name_field',
+      'investment_asset_delete_confirm',
+      'investment_csv_preview_dialog',
+    ]) {
+      expect(find.byKey(Key(key)), findsNothing);
+    }
+    expect(find.text('changed-a'), findsNothing);
+    await tester.tap(find.byKey(const Key('investment_owner_dialog_close')));
+    await _frames(tester);
   }
 
   Future<void> confirm(WidgetTester tester, String operation) async {

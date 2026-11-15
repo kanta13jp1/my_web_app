@@ -79,6 +79,7 @@ class _InvestmentAssetManagementPanelState
   String? _ownerId;
   bool _ownerStreamFailed = false;
   StreamSubscription<String?>? _ownerSubscription;
+  final _ownerInvalidations = StreamController<int>.broadcast();
   int _historyLoadSequence = 0;
   InvestmentHistoryPeriod _historyPeriod = InvestmentHistoryPeriod.oneYear;
 
@@ -121,7 +122,41 @@ class _InvestmentAssetManagementPanelState
       _saving = false;
       _importingCsv = false;
     });
+    _ownerInvalidations.add(_ownerEpoch);
   }
+
+  Future<T?> _showOwnerDialog<T>({
+    required String userId,
+    required InvestmentAssetRepository repository,
+    required int epoch,
+    required WidgetBuilder builder,
+  }) =>
+      showDialog<T>(
+        context: context,
+        builder: (dialogContext) => StreamBuilder<int>(
+          stream: _ownerInvalidations.stream,
+          initialData: epoch,
+          builder: (context, snapshot) {
+            if (!_isCurrentOwner(userId, repository, epoch)) {
+              return AlertDialog(
+                key: const Key('investment_owner_dialog_invalid'),
+                title: const Text('開き直してください'),
+                content: const Text(
+                  '利用者または保存先の確認が必要です。閉じて開き直してください。',
+                ),
+                actions: [
+                  TextButton(
+                    key: const Key('investment_owner_dialog_close'),
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('閉じる'),
+                  ),
+                ],
+              );
+            }
+            return builder(context);
+          },
+        ),
+      );
 
   void _bindOwnerChanges() {
     final binding = ++_ownerBindingEpoch;
@@ -174,6 +209,8 @@ class _InvestmentAssetManagementPanelState
   void dispose() {
     _ownerBindingEpoch++;
     _ownerEpoch++;
+    _ownerInvalidations.add(_ownerEpoch);
+    unawaited(_ownerInvalidations.close());
     unawaited(_ownerSubscription?.cancel());
     super.dispose();
   }
@@ -301,8 +338,10 @@ class _InvestmentAssetManagementPanelState
         formatName: '投資資産CSV',
       );
       final parsed = widget.csvImportService.parse(text);
-      final policy = await showDialog<InvestmentCsvDuplicatePolicy>(
-        context: context,
+      final policy = await _showOwnerDialog<InvestmentCsvDuplicatePolicy>(
+        userId: userId,
+        repository: repository,
+        epoch: ownerEpoch,
         builder: (context) => InvestmentCsvImportPreviewDialog(
           parsed: parsed,
           existingAssets: _assets,
@@ -383,8 +422,10 @@ class _InvestmentAssetManagementPanelState
     final ownerEpoch = _ownerEpoch;
     bool isCurrent() => _isCurrentOwner(userId, repository, ownerEpoch);
 
-    final draft = await showDialog<InvestmentAssetDraft>(
-      context: context,
+    final draft = await _showOwnerDialog<InvestmentAssetDraft>(
+      userId: userId,
+      repository: repository,
+      epoch: ownerEpoch,
       builder: (context) => InvestmentAssetEditorDialog(asset: asset),
     );
     if (draft == null || !mounted || !isCurrent()) return;
@@ -430,8 +471,10 @@ class _InvestmentAssetManagementPanelState
     final ownerEpoch = _ownerEpoch;
     bool isCurrent() => _isCurrentOwner(userId, repository, ownerEpoch);
 
-    final confirmed = await showDialog<bool>(
-      context: context,
+    final confirmed = await _showOwnerDialog<bool>(
+      userId: userId,
+      repository: repository,
+      epoch: ownerEpoch,
       builder: (context) => AlertDialog(
         title: const Text('投資資産を削除'),
         content: Text('${asset.displayLabel}を一覧から削除しますか？'),
