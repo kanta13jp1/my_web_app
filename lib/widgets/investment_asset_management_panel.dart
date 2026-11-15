@@ -150,28 +150,28 @@ class _InvestmentAssetManagementPanelState
     required WidgetBuilder builder,
   }) =>
       StreamBuilder<int>(
-          stream: _ownerInvalidations.stream,
-          initialData: epoch,
-          builder: (context, snapshot) {
-            if (!_isCurrentOwner(userId, repository, epoch)) {
-              return AlertDialog(
-                key: const Key('investment_owner_dialog_invalid'),
-                title: const Text('開き直してください'),
-                content: const Text(
-                  '利用者または保存先の確認が必要です。閉じて開き直してください。',
+        stream: _ownerInvalidations.stream,
+        initialData: epoch,
+        builder: (context, snapshot) {
+          if (!_isCurrentOwner(userId, repository, epoch)) {
+            return AlertDialog(
+              key: const Key('investment_owner_dialog_invalid'),
+              title: const Text('開き直してください'),
+              content: const Text(
+                '利用者または保存先の確認が必要です。閉じて開き直してください。',
+              ),
+              actions: [
+                TextButton(
+                  key: const Key('investment_owner_dialog_close'),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('閉じる'),
                 ),
-                actions: [
-                  TextButton(
-                    key: const Key('investment_owner_dialog_close'),
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    child: const Text('閉じる'),
-                  ),
-                ],
-              );
-            }
-            return builder(context);
-          },
-        );
+              ],
+            );
+          }
+          return builder(context);
+        },
+      );
 
   void _bindOwnerChanges() {
     final binding = ++_ownerBindingEpoch;
