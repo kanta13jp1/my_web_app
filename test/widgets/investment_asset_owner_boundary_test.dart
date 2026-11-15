@@ -386,7 +386,12 @@ class _Repository implements InvestmentAssetRepository {
     required String userId,
     required InvestmentAssetDraft draft,
   }) =>
-      _write('add', userId, 'created-$userId', draft);
+      _write(
+        'add',
+        userId,
+        'created-$userId-${writes.length + 1}',
+        draft,
+      );
 
   @override
   Future<InvestmentAsset> update({
