@@ -382,9 +382,8 @@ class _Harness {
       expect(find.byKey(Key(key)), findsNothing);
     }
     expect(find.text('changed-a'), findsNothing);
-    final closeButton = find
-        .byKey(const Key('investment_owner_dialog_close'))
-        .hitTestable();
+    final closeButton =
+        find.byKey(const Key('investment_owner_dialog_close')).hitTestable();
     expect(closeButton, findsOneWidget);
     await tester.tap(closeButton);
     await _frames(tester);
