@@ -190,6 +190,41 @@ void main() {
     });
   }
 
+  for (final mode in ['other', 'aba', 'error', 'done', 'repository']) {
+    testWidgets('investment owner nested date picker redacts on $mode',
+        (tester) async {
+      final h = _Harness();
+      final original = h.repository;
+      await h.mount(tester);
+      await h.open(tester, 'edit');
+      final dateField = find.byKey(
+        const Key('investment_asset_buy_date_field'),
+      );
+      await tester.ensureVisible(dateField);
+      await tester.tap(dateField);
+      await _frames(tester);
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+      if (mode == 'error') {
+        h.events.addError(StateError('synthetic owner-stream failure'));
+      } else if (mode == 'done') {
+        await h.events.close();
+      } else if (mode == 'repository') {
+        h.repository = _Repository();
+        await tester.pumpWidget(h.widget());
+      } else {
+        await h.switchOwner(tester, mode);
+      }
+      await _frames(tester);
+      expect(find.byType(DatePickerDialog), findsNothing);
+      await h.closeInvalidDialog(tester);
+      await h.closeInvalidDialog(tester);
+      expect(original.writes, isEmpty);
+      expect(h.repository.writes, isEmpty);
+      expect(tester.takeException(), isNull);
+      await h.finish(tester);
+    });
+  }
+
   testWidgets('investment owner old finally does not unlock new-owner save',
       (tester) async {
     final h = _Harness();

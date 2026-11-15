@@ -133,7 +133,23 @@ class _InvestmentAssetManagementPanelState
   }) =>
       showDialog<T>(
         context: context,
-        builder: (dialogContext) => StreamBuilder<int>(
+        builder: (dialogContext) => _ownerDialogContent(
+          dialogContext,
+          userId: userId,
+          repository: repository,
+          epoch: epoch,
+          builder: builder,
+        ),
+      );
+
+  Widget _ownerDialogContent(
+    BuildContext dialogContext, {
+    required String userId,
+    required InvestmentAssetRepository repository,
+    required int epoch,
+    required WidgetBuilder builder,
+  }) =>
+      StreamBuilder<int>(
           stream: _ownerInvalidations.stream,
           initialData: epoch,
           builder: (context, snapshot) {
@@ -155,8 +171,7 @@ class _InvestmentAssetManagementPanelState
             }
             return builder(context);
           },
-        ),
-      );
+        );
 
   void _bindOwnerChanges() {
     final binding = ++_ownerBindingEpoch;
@@ -426,7 +441,16 @@ class _InvestmentAssetManagementPanelState
       userId: userId,
       repository: repository,
       epoch: ownerEpoch,
-      builder: (context) => InvestmentAssetEditorDialog(asset: asset),
+      builder: (context) => InvestmentAssetEditorDialog(
+        asset: asset,
+        nestedDialogBuilder: (context, child) => _ownerDialogContent(
+          context,
+          userId: userId,
+          repository: repository,
+          epoch: ownerEpoch,
+          builder: (_) => child ?? const SizedBox.shrink(),
+        ),
+      ),
     );
     if (draft == null || !mounted || !isCurrent()) return;
 
@@ -977,9 +1001,14 @@ class _Metric extends StatelessWidget {
 }
 
 class InvestmentAssetEditorDialog extends StatefulWidget {
-  const InvestmentAssetEditorDialog({super.key, this.asset});
+  const InvestmentAssetEditorDialog({
+    super.key,
+    this.asset,
+    this.nestedDialogBuilder,
+  });
 
   final InvestmentAsset? asset;
+  final TransitionBuilder? nestedDialogBuilder;
 
   @override
   State<InvestmentAssetEditorDialog> createState() =>
@@ -1031,6 +1060,7 @@ class _InvestmentAssetEditorDialogState
       initialDate: _buyDate ?? now,
       firstDate: DateTime(1900),
       lastDate: now,
+      builder: widget.nestedDialogBuilder,
     );
     if (selected != null && mounted) {
       setState(() {
