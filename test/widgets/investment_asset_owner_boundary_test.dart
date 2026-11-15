@@ -216,7 +216,7 @@ void main() {
       }
       await _frames(tester);
       expect(find.byType(DatePickerDialog), findsNothing);
-      await h.closeInvalidDialog(tester);
+      await h.closeInvalidDialog(tester, expectedDialogs: 2);
       await h.closeInvalidDialog(tester);
       expect(original.writes, isEmpty);
       expect(h.repository.writes, isEmpty);
@@ -366,10 +366,13 @@ class _Harness {
     }
   }
 
-  Future<void> closeInvalidDialog(WidgetTester tester) async {
+  Future<void> closeInvalidDialog(
+    WidgetTester tester, {
+    int expectedDialogs = 1,
+  }) async {
     expect(
       find.byKey(const Key('investment_owner_dialog_invalid')),
-      findsOneWidget,
+      findsNWidgets(expectedDialogs),
     );
     for (final key in [
       'investment_asset_name_field',
@@ -379,8 +382,16 @@ class _Harness {
       expect(find.byKey(Key(key)), findsNothing);
     }
     expect(find.text('changed-a'), findsNothing);
-    await tester.tap(find.byKey(const Key('investment_owner_dialog_close')));
+    final closeButton = find
+        .byKey(const Key('investment_owner_dialog_close'))
+        .hitTestable();
+    expect(closeButton, findsOneWidget);
+    await tester.tap(closeButton);
     await _frames(tester);
+    expect(
+      find.byKey(const Key('investment_owner_dialog_invalid')),
+      findsNWidgets(expectedDialogs - 1),
+    );
   }
 
   Future<void> confirm(WidgetTester tester, String operation) async {
