@@ -45,14 +45,17 @@ void main() {
             expect(find.textContaining('changed-a'), findsNothing);
             expect(find.textContaining('created-a'), findsNothing);
             expect(
-                find.text(mode == 'other' ? 'BETA' : 'ALPHA'), findsOneWidget);
+              find.text(mode == 'other' ? 'BETA' : 'ALPHA'),
+              findsOneWidget,
+            );
           } else if (phase != 'writeError') {
             if (operation == 'delete') {
               expect(find.text('ALPHA'), findsNothing);
             } else {
               expect(
                 find.textContaining(
-                    operation == 'add' ? 'created-a' : 'changed-a'),
+                  operation == 'add' ? 'created-a' : 'changed-a',
+                ),
                 findsWidgets,
               );
             }
@@ -82,14 +85,18 @@ void main() {
         picker.complete(_csv());
         await _frames(tester);
         if (phase == 'picker' && mode != 'same') {
-          expect(find.byKey(const Key('investment_csv_preview_dialog')),
-              findsNothing);
+          expect(
+            find.byKey(const Key('investment_csv_preview_dialog')),
+            findsNothing,
+          );
           expect(h.repository.writes, isEmpty);
           await h.finish(tester);
           return;
         }
-        expect(find.byKey(const Key('investment_csv_preview_dialog')),
-            findsOneWidget);
+        expect(
+          find.byKey(const Key('investment_csv_preview_dialog')),
+          findsOneWidget,
+        );
         if (phase == 'preview') await h.switchOwner(tester, mode);
         await tester
             .tap(find.byKey(const Key('investment_csv_import_confirm')));
@@ -133,8 +140,10 @@ void main() {
         await h.events.close();
       }
       await _frames(tester);
-      expect(find.byKey(const Key('investment_asset_owner_unconfirmed')),
-          findsOneWidget);
+      expect(
+        find.byKey(const Key('investment_asset_owner_unconfirmed')),
+        findsOneWidget,
+      );
       expect(find.text('ALPHA'), findsNothing);
       expect(
         tester
@@ -208,9 +217,11 @@ Future<void> _frames(WidgetTester tester) async {
   }
 }
 
-Uint8List _csv() => Uint8List.fromList(utf8.encode(
-      '銘柄,数量,取得単価,現在値\nNEW1 Sample,1,1000,1200\nNEW2 Sample,1,1000,1200\n',
-    ));
+Uint8List _csv() => Uint8List.fromList(
+      utf8.encode(
+        '銘柄,数量,取得単価,現在値\nNEW1 Sample,1,1000,1200\nNEW2 Sample,1,1000,1200\n',
+      ),
+    );
 
 class _Harness {
   String? owner = 'a';
@@ -288,9 +299,15 @@ class _Harness {
   }
 
   Future<void> confirm(WidgetTester tester, String operation) async {
-    await tester.tap(find.byKey(Key(operation == 'delete'
-        ? 'investment_asset_delete_confirm'
-        : 'investment_asset_save')));
+    await tester.tap(
+      find.byKey(
+        Key(
+          operation == 'delete'
+              ? 'investment_asset_delete_confirm'
+              : 'investment_asset_save',
+        ),
+      ),
+    );
     await _frames(tester);
   }
 

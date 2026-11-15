@@ -209,7 +209,9 @@ class _InvestmentAssetManagementPanelState
       final assets = await repository.fetchByUser(userId: userId);
       if (!mounted ||
           sequence != _loadSequence ||
-          !_isCurrentOwner(userId, repository, ownerEpoch)) return;
+          !_isCurrentOwner(userId, repository, ownerEpoch)) {
+        return;
+      }
       setState(() {
         _assets = _sorted(assets);
         _loadError = null;
@@ -219,7 +221,9 @@ class _InvestmentAssetManagementPanelState
     } catch (error) {
       if (!mounted ||
           sequence != _loadSequence ||
-          !_isCurrentOwner(userId, repository, ownerEpoch)) return;
+          !_isCurrentOwner(userId, repository, ownerEpoch)) {
+        return;
+      }
       setState(() {
         _loadError = error;
         _loading = false;
@@ -257,7 +261,9 @@ class _InvestmentAssetManagementPanelState
     } catch (error) {
       if (!mounted ||
           sequence != _historyLoadSequence ||
-          !_isCurrentOwner(userId, repository, ownerEpoch)) return;
+          !_isCurrentOwner(userId, repository, ownerEpoch)) {
+        return;
+      }
       setState(() {
         _historyLoadError = error;
         _historyLoading = false;
