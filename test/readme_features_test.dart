@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:my_web_app/pages/note_list_page.dart';
 import 'package:my_web_app/services/abstinence_guard_store.dart';
 import 'package:provider/provider.dart';
@@ -25,9 +27,17 @@ void main() {
     await Supabase.initialize(
       url: 'https://dummy.supabase.co',
       publishableKey: 'dummy',
+      httpClient: MockClient((_) async => http.Response('[]', 200)),
+      authOptions: const FlutterAuthClientOptions(
+        autoRefreshToken: false,
+        detectSessionInUri: false,
+        localStorage: EmptyLocalStorage(),
+      ),
       debug: false,
-    );
+    ).timeout(const Duration(seconds: 10));
   });
+
+  tearDownAll(() async => Supabase.instance.dispose());
 
   setUp(() {
     // 各テストの前に設定をリセット
@@ -387,6 +397,14 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      for (final key in [
+        'home_section_site_guide_ai',
+        'home_legacy_site_guide_ai',
+        'home_section_feature_request',
+      ]) {
+        expect(find.byKey(Key(key)), findsOneWidget);
+      }
 
       Text monthLabel = tester.widget(
         find.byKey(const Key('home_calendar_month_label')),

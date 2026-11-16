@@ -182,204 +182,208 @@ class _FeatureStrategyMonitorPanelState
                 ),
               ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              const Icon(Icons.auto_graph, color: accent),
-              Text(
-                '全機能AI戦略モニタリング',
-                style: TextStyle(
-                  color: titleColor,
-                  fontSize: isCompact ? 16 : 18,
-                  fontWeight: FontWeight.w800,
-                  height: 1.35,
+      child: Material(
+        type: MaterialType.transparency,
+        textStyle: DefaultTextStyle.of(context).style,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Icon(Icons.auto_graph, color: accent),
+                Text(
+                  '全機能AI戦略モニタリング',
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: isCompact ? 16 : 18,
+                    fontWeight: FontWeight.w800,
+                    height: 1.35,
+                  ),
                 ),
-              ),
-              _StatusPill(
-                label: '更新 $monitoredAt',
-                color: accent,
-                dark: isDark,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'ホームの全機能を対象に、AI分析、KGI、CSF、KPI、改善アクションを自動生成して横断監視します。時間・お金・健康・体力・知能・集中力の浪費を減らす軸で整理し、類似機能は統合候補として抽象化します。',
-            style: TextStyle(
-              color: mutedColor,
-              fontSize: isCompact ? 12 : 13,
-              fontWeight: FontWeight.w600,
-              height: 1.55,
-            ),
-          ),
-          const SizedBox(height: 14),
-          KgiCsfKpiPanel(
-            plan: report.portfolioPlan,
-            accentColor: accent,
-            dense: isCompact,
-            dark: isDark,
-          ),
-          if (aiReview != null) ...[
-            const SizedBox(height: 12),
-            _AiReviewBox(review: aiReview, accent: accent, dark: isDark),
-          ],
-          if (widget.monitoringSummary != null) ...[
-            const SizedBox(height: 12),
-            _MonitoringHistoryBox(
-              summary: widget.monitoringSummary!,
-              accent: accent,
-              dark: isDark,
-              compact: isCompact,
-            ),
-          ],
-          const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = isCompact || constraints.maxWidth < 720 ? 2 : 3;
-              final gap = isCompact ? 8.0 : 10.0;
-              final width =
-                  (constraints.maxWidth - gap * (columns - 1)) / columns;
-              return Wrap(
-                spacing: gap,
-                runSpacing: gap,
-                children: [
-                  _SummaryTile(
-                    label: '対象機能',
-                    value: '${report.totalFeatures}',
-                    color: accent,
-                    width: width,
-                    dark: isDark,
-                  ),
-                  _SummaryTile(
-                    label: 'AI監視率',
-                    value: '${(report.aiCoverageRatio * 100).round()}%',
-                    color: const Color(0xFF0891B2),
-                    width: width,
-                    dark: isDark,
-                  ),
-                  _SummaryTile(
-                    label: '生命資本',
-                    value:
-                        '${(report.lifeCapitalCoverageRatio * 100).round()}%',
-                    color: const Color(0xFF059669),
-                    width: width,
-                    dark: isDark,
-                  ),
-                  _SummaryTile(
-                    label: '代表導線',
-                    value:
-                        '${report.lifeCapitalLaneCount}/${FeatureLifeCapitalResource.values.length}',
-                    color: const Color(0xFF0D9488),
-                    width: width,
-                    dark: isDark,
-                  ),
-                  _SummaryTile(
-                    label: '浪費削減',
-                    value: '${report.highWasteReductionCount}',
-                    color: const Color(0xFFF97316),
-                    width: width,
-                    dark: isDark,
-                  ),
-                  _SummaryTile(
-                    label: '要観察',
-                    value: '${report.watchCount}',
-                    color: const Color(0xFFF59E0B),
-                    width: width,
-                    dark: isDark,
-                  ),
-                  _SummaryTile(
-                    label: 'レビュー期限',
-                    value: '${report.reviewDueCount}',
-                    color: report.reviewOverdueCount > 0
-                        ? const Color(0xFFDC2626)
-                        : const Color(0xFF0EA5E9),
-                    width: width,
-                    dark: isDark,
-                  ),
-                  _SummaryTile(
-                    label: '統合候補',
-                    value: '${report.consolidationCount}',
-                    color: const Color(0xFF2563EB),
-                    width: width,
-                    dark: isDark,
-                  ),
-                  _SummaryTile(
-                    label: '統合削減',
-                    value: '${report.consolidationWasteMinutesSaved}分',
-                    color: const Color(0xFF9333EA),
-                    width: width,
-                    dark: isDark,
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          if (report.focusRecommendation != null) ...[
-            _FocusRecommendationCard(
-              recommendation: report.focusRecommendation!,
-              queuedRecommendation: report.queuedFocusRecommendation,
-              dark: isDark,
-              compact: isCompact,
-              actionState: _focusActionState,
-              actionLoading: _focusActionLoading,
-              actionError: _focusActionError,
-              onComplete: _markFocusActionCompleted,
-              onDefer: _deferFocusAction,
+                _StatusPill(
+                  label: '更新 $monitoredAt',
+                  color: accent,
+                  dark: isDark,
+                ),
+              ],
             ),
             const SizedBox(height: 8),
+            Text(
+              'ホームの全機能を対象に、AI分析、KGI、CSF、KPI、改善アクションを自動生成して横断監視します。時間・お金・健康・体力・知能・集中力の浪費を減らす軸で整理し、類似機能は統合候補として抽象化します。',
+              style: TextStyle(
+                color: mutedColor,
+                fontSize: isCompact ? 12 : 13,
+                fontWeight: FontWeight.w600,
+                height: 1.55,
+              ),
+            ),
+            const SizedBox(height: 14),
+            KgiCsfKpiPanel(
+              plan: report.portfolioPlan,
+              accentColor: accent,
+              dense: isCompact,
+              dark: isDark,
+            ),
+            if (aiReview != null) ...[
+              const SizedBox(height: 12),
+              _AiReviewBox(review: aiReview, accent: accent, dark: isDark),
+            ],
+            if (widget.monitoringSummary != null) ...[
+              const SizedBox(height: 12),
+              _MonitoringHistoryBox(
+                summary: widget.monitoringSummary!,
+                accent: accent,
+                dark: isDark,
+                compact: isCompact,
+              ),
+            ],
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = isCompact || constraints.maxWidth < 720 ? 2 : 3;
+                final gap = isCompact ? 8.0 : 10.0;
+                final width =
+                    (constraints.maxWidth - gap * (columns - 1)) / columns;
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: [
+                    _SummaryTile(
+                      label: '対象機能',
+                      value: '${report.totalFeatures}',
+                      color: accent,
+                      width: width,
+                      dark: isDark,
+                    ),
+                    _SummaryTile(
+                      label: 'AI監視率',
+                      value: '${(report.aiCoverageRatio * 100).round()}%',
+                      color: const Color(0xFF0891B2),
+                      width: width,
+                      dark: isDark,
+                    ),
+                    _SummaryTile(
+                      label: '生命資本',
+                      value:
+                          '${(report.lifeCapitalCoverageRatio * 100).round()}%',
+                      color: const Color(0xFF059669),
+                      width: width,
+                      dark: isDark,
+                    ),
+                    _SummaryTile(
+                      label: '代表導線',
+                      value:
+                          '${report.lifeCapitalLaneCount}/${FeatureLifeCapitalResource.values.length}',
+                      color: const Color(0xFF0D9488),
+                      width: width,
+                      dark: isDark,
+                    ),
+                    _SummaryTile(
+                      label: '浪費削減',
+                      value: '${report.highWasteReductionCount}',
+                      color: const Color(0xFFF97316),
+                      width: width,
+                      dark: isDark,
+                    ),
+                    _SummaryTile(
+                      label: '要観察',
+                      value: '${report.watchCount}',
+                      color: const Color(0xFFF59E0B),
+                      width: width,
+                      dark: isDark,
+                    ),
+                    _SummaryTile(
+                      label: 'レビュー期限',
+                      value: '${report.reviewDueCount}',
+                      color: report.reviewOverdueCount > 0
+                          ? const Color(0xFFDC2626)
+                          : const Color(0xFF0EA5E9),
+                      width: width,
+                      dark: isDark,
+                    ),
+                    _SummaryTile(
+                      label: '統合候補',
+                      value: '${report.consolidationCount}',
+                      color: const Color(0xFF2563EB),
+                      width: width,
+                      dark: isDark,
+                    ),
+                    _SummaryTile(
+                      label: '統合削減',
+                      value: '${report.consolidationWasteMinutesSaved}分',
+                      color: const Color(0xFF9333EA),
+                      width: width,
+                      dark: isDark,
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            if (report.focusRecommendation != null) ...[
+              _FocusRecommendationCard(
+                recommendation: report.focusRecommendation!,
+                queuedRecommendation: report.queuedFocusRecommendation,
+                dark: isDark,
+                compact: isCompact,
+                actionState: _focusActionState,
+                actionLoading: _focusActionLoading,
+                actionError: _focusActionError,
+                onComplete: _markFocusActionCompleted,
+                onDefer: _deferFocusAction,
+              ),
+              const SizedBox(height: 8),
+            ],
+            _RecoveryRoadmapAccordion(
+              steps: report.recoveryRoadmap,
+              dark: isDark,
+              compact: isCompact,
+              onOpenFeature: widget.onOpenFeature,
+            ),
+            const SizedBox(height: 8),
+            _LifeCapitalAccordion(
+              summaries: report.lifeCapitalSummaries,
+              dark: isDark,
+              compact: isCompact,
+            ),
+            const SizedBox(height: 8),
+            _LifeCapitalLaneAccordion(
+              lanes: report.lifeCapitalConsolidationLanes,
+              dark: isDark,
+              compact: isCompact,
+              onOpenFeature: widget.onOpenFeature,
+            ),
+            const SizedBox(height: 8),
+            _SignalAccordion(
+              title: 'AI改善キュー',
+              subtitle: priorities.isEmpty
+                  ? '改善優先の機能はありません'
+                  : '${priorities.length}機能を優先確認',
+              signals: priorities,
+              initiallyExpanded: priorities.isNotEmpty,
+              dark: isDark,
+              compact: isCompact,
+            ),
+            const SizedBox(height: 8),
+            _ConsolidationAccordion(
+              candidates: report.consolidationCandidates,
+              dark: isDark,
+              compact: isCompact,
+            ),
+            const SizedBox(height: 8),
+            _SignalAccordion(
+              title: '全機能AI監視リスト',
+              subtitle: '${report.totalFeatures}機能をKGI/CSF/KPIで管理',
+              signals: report.signals,
+              initiallyExpanded: false,
+              dark: isDark,
+              compact: isCompact,
+            ),
           ],
-          _RecoveryRoadmapAccordion(
-            steps: report.recoveryRoadmap,
-            dark: isDark,
-            compact: isCompact,
-            onOpenFeature: widget.onOpenFeature,
-          ),
-          const SizedBox(height: 8),
-          _LifeCapitalAccordion(
-            summaries: report.lifeCapitalSummaries,
-            dark: isDark,
-            compact: isCompact,
-          ),
-          const SizedBox(height: 8),
-          _LifeCapitalLaneAccordion(
-            lanes: report.lifeCapitalConsolidationLanes,
-            dark: isDark,
-            compact: isCompact,
-            onOpenFeature: widget.onOpenFeature,
-          ),
-          const SizedBox(height: 8),
-          _SignalAccordion(
-            title: 'AI改善キュー',
-            subtitle: priorities.isEmpty
-                ? '改善優先の機能はありません'
-                : '${priorities.length}機能を優先確認',
-            signals: priorities,
-            initiallyExpanded: priorities.isNotEmpty,
-            dark: isDark,
-            compact: isCompact,
-          ),
-          const SizedBox(height: 8),
-          _ConsolidationAccordion(
-            candidates: report.consolidationCandidates,
-            dark: isDark,
-            compact: isCompact,
-          ),
-          const SizedBox(height: 8),
-          _SignalAccordion(
-            title: '全機能AI監視リスト',
-            subtitle: '${report.totalFeatures}機能をKGI/CSF/KPIで管理',
-            signals: report.signals,
-            initiallyExpanded: false,
-            dark: isDark,
-            compact: isCompact,
-          ),
-        ],
+        ),
       ),
     );
   }
