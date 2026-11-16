@@ -23613,6 +23613,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _buildAssetManagementAssistantActionList(
             report.actionItems,
             report.workbook.debtMasterRows.map((row) => row.id).toSet(),
+            workbook: report.workbook,
           ),
           if (report.movementSuggestions.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -26788,8 +26789,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildAssetManagementAssistantActionList(
     List<AssetManagementInsightActionItem> actionItems,
-    Set<String> debtMasterCardIds,
-  ) {
+    Set<String> debtMasterCardIds, {
+    AssetLiabilityWorkbook? workbook,
+  }) {
     return Column(
       key: const Key('asset_management_action_list'),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -26849,6 +26851,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               child: _buildAssetManagementAssistantActionTile(
                 item,
                 debtMasterCardIds,
+                workbook: workbook,
               ),
             ),
         ],
@@ -26866,8 +26869,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildAssetManagementAssistantActionTile(
     AssetManagementInsightActionItem item,
-    Set<String> debtMasterCardIds,
-  ) {
+    Set<String> debtMasterCardIds, {
+    AssetLiabilityWorkbook? workbook,
+  }) {
     final color = _assetManagementInsightSeverityColor(item.severity);
     final dueLabel = item.dueDate == null
         ? (item.paymentDay == null ? null : '${item.paymentDay}日')
@@ -26878,6 +26882,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final canJump = jumpLabel != null &&
         item.relatedAccountId != null &&
         debtMasterCardIds.contains(item.relatedAccountId);
+    final canChangePaymentSource = workbook != null &&
+        item.relatedAccountId != null &&
+        debtMasterCardIds.contains(item.relatedAccountId) &&
+        (item.type == AssetManagementInsightActionType.upcomingPayment ||
+            item.type == AssetManagementInsightActionType.overduePayment ||
+            item.type == AssetManagementInsightActionType.missingPaymentSource);
 
     return Container(
       width: double.infinity,
@@ -26942,26 +26952,204 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   item.suggestedAction,
                   style: const TextStyle(fontSize: 12, height: 1.5),
                 ),
-                if (canJump)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      style: TextButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        foregroundColor: color,
-                      ),
-                      onPressed: () =>
-                          _jumpToDebtMasterCard(item.relatedAccountId!),
-                      icon: const Icon(Icons.arrow_downward, size: 16),
-                      label: Text(jumpLabel),
-                    ),
+                if (canJump || canChangePaymentSource)
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: [
+                      if (canJump)
+                        TextButton.icon(
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            foregroundColor: color,
+                          ),
+                          onPressed: () =>
+                              _jumpToDebtMasterCard(item.relatedAccountId!),
+                          icon: const Icon(Icons.arrow_downward, size: 16),
+                          label: Text(jumpLabel),
+                        ),
+                      if (canChangePaymentSource)
+                        TextButton.icon(
+                          key: Key(
+                            'asset_action_change_source_${item.relatedAccountId}',
+                          ),
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            foregroundColor: color,
+                          ),
+                          onPressed: () => _openQuickPaymentSourceChangeDialog(
+                            item.relatedAccountId!,
+                            workbook,
+                          ),
+                          icon: const Icon(
+                            Icons.account_balance_outlined,
+                            size: 16,
+                          ),
+                          label: const Text('原資口座を変更'),
+                        ),
+                    ],
                   ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _openQuickPaymentSourceChangeDialog(
+    String liabilityId,
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    AssetLiabilityDebtRow? targetRow;
+    for (final row in workbook.debtMasterRows) {
+      if (row.id == liabilityId) {
+        targetRow = row;
+        break;
+      }
+    }
+    if (targetRow == null) return;
+    final candidates = _paymentSourceCandidatesForRow(targetRow, workbook);
+    final currentSourceId = _paymentSourceAccountIds[targetRow.id] ??
+        _defaultPaymentSourceAccountIds[targetRow.id] ??
+        targetRow.paymentSourceAccountId;
+    final currentSourceName = targetRow.paymentSourceAccountName ??
+        (currentSourceId == null || currentSourceId.isEmpty
+            ? '未設定'
+            : currentSourceId);
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('${targetRow!.name}の原資口座を変更'),
+          content: SizedBox(
+            width: 360,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '現在の原資: $currentSourceName / '
+                    '支払予定: ${_formatManagementYen(targetRow.scheduledPaymentAmount)}',
+                    style: const TextStyle(fontSize: 12, height: 1.4),
+                  ),
+                  const SizedBox(height: 12),
+                  if (candidates.isEmpty)
+                    const Text(
+                      '利用可能な現金・預金口座が見つかりません。先に資産一覧から口座残高を登録してください。',
+                      style: TextStyle(fontSize: 12, height: 1.4),
+                    )
+                  else
+                    for (final candidate in candidates) ...[
+                      Builder(
+                        builder: (context) {
+                          final riskLevel = _paymentSourceRiskLevel(
+                            candidate.projectedAfterPayment,
+                          );
+                          final riskColor = _cashRiskColor(riskLevel);
+                          final isSelected =
+                              currentSourceId == candidate.account.id;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? const Color(0xFFECFDF5)
+                                  : Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFF0D9488)
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .outlineVariant,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        candidate.account.name,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                    _buildTextStatusChip(
+                                      label: _cashRiskLabel(riskLevel),
+                                      color: riskColor,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '現在 ${_formatManagementYen(candidate.currentBalance)} / '
+                                  '支払後見込み ${_formatManagementYen(candidate.projectedAfterPayment)}',
+                                  style: TextStyle(
+                                    color: riskColor,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 4,
+                                  children: [
+                                    OutlinedButton(
+                                      onPressed: () {
+                                        _savePaymentSourceReviewChoice(
+                                          liabilityId: targetRow!.id,
+                                          sourceAccountId: candidate.account.id,
+                                          scope: _PaymentSourceSaveScope
+                                              .monthlyOverride,
+                                        );
+                                        Navigator.of(dialogContext).pop();
+                                      },
+                                      child: const Text('今月のみ変更'),
+                                    ),
+                                    FilledButton.tonal(
+                                      onPressed: () {
+                                        _savePaymentSourceReviewChoice(
+                                          liabilityId: targetRow!.id,
+                                          sourceAccountId: candidate.account.id,
+                                          scope: _PaymentSourceSaveScope
+                                              .defaultSetting,
+                                        );
+                                        Navigator.of(dialogContext).pop();
+                                      },
+                                      child: const Text('既定に設定'),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('閉じる'),
+            ),
+          ],
+        );
+      },
     );
   }
 
