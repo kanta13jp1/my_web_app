@@ -331,6 +331,7 @@ class AssetManagementPage extends StatefulWidget {
   final AssetWatchlistService watchlistService;
   final AssetLiabilityRepository? assetLiabilityRepository;
   final AssetCategoryBudgetStore? categoryBudgetStore;
+  final AssetAlertDismissalStore? alertDismissalStore;
   @visibleForTesting
   final String? debugCategoryBudgetOwnerId;
   final InvestmentAssetRepository? investmentAssetRepository;
@@ -469,6 +470,7 @@ class AssetManagementPage extends StatefulWidget {
     this.watchlistService = const AssetWatchlistService(),
     this.assetLiabilityRepository,
     this.categoryBudgetStore,
+    this.alertDismissalStore,
     this.debugCategoryBudgetOwnerId,
     this.investmentAssetRepository,
     this.anomalyDetectionRepository,
@@ -985,6 +987,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _selectedCardStatementBillingAccountId;
   String? _cardStatementImportMessage;
   AssetLiabilityCsvRestorePreview? _assetCsvRestorePreview;
+  String? _assetCsvRestorePreviewText;
   String? _assetCsvRestoreMessage;
   bool _isApplyingAssetCsvRestore = false;
 
@@ -1054,8 +1057,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetLiabilityPaymentReminderService();
   final AssetAlertCenterService _assetAlertCenterService =
       const AssetAlertCenterService();
-  final AssetAlertDismissalStore _assetAlertDismissalStore =
-      const AssetAlertDismissalStore();
+  late final AssetAlertDismissalStore _assetAlertDismissalStore =
+      widget.alertDismissalStore ?? const AssetAlertDismissalStore();
   Set<String> _assetAlertDismissedIds = <String>{};
   List<AssetAnomalyDetection> _activeAssetAnomalies = <AssetAnomalyDetection>[];
   final Set<String> _dismissingAssetAnomalyIds = <String>{};
@@ -2648,10 +2651,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   void _previewAssetLiabilityCsvRestore() {
+    if (_isApplyingAssetCsvRestore) return;
     final rawText = _assetCsvRestoreController.text.trim();
     if (rawText.isEmpty) {
       setState(() {
         _assetCsvRestorePreview = null;
+        _assetCsvRestorePreviewText = null;
         _assetCsvRestoreMessage = 'Paste an exported CSV before preview.';
       });
       return;
@@ -2659,15 +2664,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final preview = _assetLiabilityCsvRestoreService.previewCsvText(rawText);
     setState(() {
       _assetCsvRestorePreview = preview;
+      _assetCsvRestorePreviewText = rawText;
       _assetCsvRestoreMessage = _assetCsvRestorePreviewMessage(preview);
     });
   }
 
   Future<void> _applyAssetLiabilityCsvRestore() async {
+    if (_isApplyingAssetCsvRestore) return;
     final preview = _assetCsvRestorePreview;
     if (preview == null || !preview.hasRestorableRows) {
       setState(() {
         _assetCsvRestoreMessage = 'Preview a restorable CSV before apply.';
+      });
+      return;
+    }
+    if (_assetCsvRestorePreviewText != _assetCsvRestoreController.text.trim()) {
+      setState(() {
+        _assetCsvRestorePreview = null;
+        _assetCsvRestorePreviewText = null;
+        _assetCsvRestoreMessage =
+            'CSV input changed. Preview again before applying.';
       });
       return;
     }
@@ -2771,7 +2787,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('Error applying asset CSV restore: $e');
       if (!mounted) return;
       setState(() {
-        _assetCsvRestoreMessage = 'CSV restore failed: $e';
+        _assetCsvRestorePreview = null;
+        _assetCsvRestorePreviewText = null;
+        _assetCsvRestoreMessage = 'CSV復元に失敗しました。一部が保存済みの可能性があります。'
+            '保存状況を確認し、再プレビューしてください。詳細: $e';
       });
     } finally {
       if (mounted) {
@@ -17800,11 +17819,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _dismissAssetAnomaly(id);
       return;
     }
-    final next = await _assetAlertDismissalStore.dismiss(id);
-    if (!mounted) {
-      return;
+    try {
+      final next = await _assetAlertDismissalStore.dismiss(id);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _assetAlertDismissedIds = next);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('非表示の保存結果を確認できませんでした。再読込して状態を確認してください。'),
+        ),
+      );
     }
-    setState(() => _assetAlertDismissedIds = next);
   }
 
   Future<void> _dismissAssetAnomaly(String alertId) async {
@@ -17843,12 +17873,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _restoreDismissedAssetAlerts() async {
-    final store = await SharedPreferences.getInstance();
-    await store.remove(AssetAlertDismissalStore.prefsKey);
-    if (!mounted) {
-      return;
+    try {
+      await _assetAlertDismissalStore.restoreAll();
+      if (!mounted) {
+        return;
+      }
+      setState(() => _assetAlertDismissedIds = <String>{});
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('再表示の保存結果を確認できませんでした。再読込して状態を確認してください。'),
+        ),
+      );
     }
-    setState(() => _assetAlertDismissedIds = <String>{});
   }
 
   /// 統合アラートパネル (Issue #2475)。延滞・口座ショート・支払リマインダー(#2453)・
@@ -30326,6 +30366,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         const SizedBox(height: 8),
         TextField(
           controller: _assetCsvRestoreController,
+          enabled: !_isApplyingAssetCsvRestore,
+          onChanged: (_) {
+            setState(() {
+              _assetCsvRestorePreview = null;
+              _assetCsvRestorePreviewText = null;
+              _assetCsvRestoreMessage =
+                  'CSV input changed. Preview again before applying.';
+            });
+          },
           minLines: 3,
           maxLines: 6,
           decoration: const InputDecoration(
@@ -30342,7 +30391,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             OutlinedButton.icon(
-              onPressed: _previewAssetLiabilityCsvRestore,
+              onPressed: _isApplyingAssetCsvRestore
+                  ? null
+                  : _previewAssetLiabilityCsvRestore,
               icon: const Icon(Icons.visibility_outlined),
               label: const Text('Preview'),
             ),
