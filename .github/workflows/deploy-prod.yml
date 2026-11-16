@@ -47,7 +47,7 @@ on:
           - web_only
 
 concurrency:
-  group: deploy-prod
+  group: deploy-production
   # Running deployments are never cancelled; GitHub may replace one pending run.
   # Release operators must inspect exact SHA and deployment state before retrying.
   cancel-in-progress: false
