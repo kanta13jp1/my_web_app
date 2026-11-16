@@ -1,0 +1,17 @@
+{
+  "full": {
+    "actual": [
+      "A",
+      "E"
+    ],
+    "passed": true
+  },
+  "shard3": {
+    "actual": "```json\n[\"A\", \"E\"]\n```",
+    "passed": false
+  },
+  "reset": {
+    "actual": "```json\n[\"A\", \"E\"]\n```",
+    "passed": false
+  }
+}
