@@ -110,25 +110,29 @@ class AssetCalendarShortfallDetails extends StatelessWidget {
         const Text(
           '登録情報からの試算です。口座別の引落可否は、支払元と最新残高を照合してください。',
         ),
-        ExpansionTile(
-          key: const Key('asset_calendar_shortfall_payment_evidence'),
-          tilePadding: EdgeInsets.zero,
-          title: Text('対象の支払い ${lines.length}件と確認事項'),
-          children: [
-            for (final (date, event) in lines)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '${DateFormat('M/d').format(date)} ${event.label} ${yen(event.amount!)}\n'
-                    '支払元: ${event.paymentSourceAccountName ?? '未設定・未確認'} / '
-                    '${event.billingConfirmed && !event.paymentAmountEstimated ? '確定請求額' : '予定額（未照合）'}',
-                    style: textStyle,
+        Material(
+          type: MaterialType.transparency,
+          textStyle: DefaultTextStyle.of(context).style,
+          child: ExpansionTile(
+            key: const Key('asset_calendar_shortfall_payment_evidence'),
+            tilePadding: EdgeInsets.zero,
+            title: Text('対象の支払い ${lines.length}件と確認事項'),
+            children: [
+              for (final (date, event) in lines)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '${DateFormat('M/d').format(date)} ${event.label} ${yen(event.amount!)}\n'
+                      '支払元: ${event.paymentSourceAccountName ?? '未設定・未確認'} / '
+                      '${event.billingConfirmed && !event.paymentAmountEstimated ? '確定請求額' : '予定額（未照合）'}',
+                      style: textStyle,
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
         const Text(
           '明細で支払方式・引落日・請求額を確認し、支払元口座の最新残高を照合してください。',
