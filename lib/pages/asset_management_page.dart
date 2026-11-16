@@ -4373,8 +4373,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         billingAccountId: targetAccount.id,
         billingAccountName: targetAccount.name,
       );
-      _cardStatementImportMessage =
-          '未照合明細を「${targetAccount.name}」へ紐付けました。';
+      _cardStatementImportMessage = '未照合明細を「${targetAccount.name}」へ紐付けました。';
     });
     unawaited(_saveAssetLiabilityMonthlyState());
   }
