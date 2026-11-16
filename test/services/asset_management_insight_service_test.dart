@@ -1101,6 +1101,66 @@ void main() {
         false,
       );
     });
+
+    test(
+        'predicts source account shortfall before due date and suggests alternative',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 1000,
+          '三井住友銀行大塚支店': 300000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+      );
+
+      final upcoming = report.actionItems.firstWhere(
+        (item) =>
+            item.type == AssetManagementInsightActionType.upcomingPayment &&
+            item.relatedAccountId == 'mobit',
+      );
+      expect(upcoming.severity, AssetManagementInsightSeverity.critical);
+      expect(upcoming.title, contains('残高不足が予測されます'));
+      expect(upcoming.description, contains('不足します'));
+      expect(upcoming.suggestedAction, contains('三井住友銀行大塚支店'));
+    });
+
+    test(
+        'flags missing source balance before due date and suggests alternative',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 300000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        paymentSourceAccountIds: const <String, String>{
+          'mobit': 'paypay_card_missing',
+        },
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+      );
+
+      final upcoming = report.actionItems.firstWhere(
+        (item) =>
+            item.type == AssetManagementInsightActionType.upcomingPayment &&
+            item.relatedAccountId == 'mobit',
+      );
+      expect(upcoming.severity, AssetManagementInsightSeverity.critical);
+      expect(upcoming.title, contains('原資口座を確認してください'));
+      expect(upcoming.suggestedAction, contains('三井住友銀行大塚支店'));
+    });
   });
 }
 
