@@ -281,12 +281,14 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  '都道府県連別 目標配分 (現職維持 + 新人擁立)',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    height: 1.5,
+                const Expanded(
+                  child: Text(
+                    '都道府県連別 目標配分 (現職維持 + 新人擁立)',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -410,14 +412,16 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                     size: 16,
                                   ),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    '必達目標(${widget.targetLocalMembers}名)まで '
-                                    'あと ${widget.targetLocalMembers - totalTarget}名 不足しています',
-                                    style: TextStyle(
-                                      color: Colors.red.shade700,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      height: 1.5,
+                                  Flexible(
+                                    child: Text(
+                                      '必達目標(${widget.targetLocalMembers}名)まで '
+                                      'あと ${widget.targetLocalMembers - totalTarget}名 不足しています',
+                                      style: TextStyle(
+                                        color: Colors.red.shade700,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        height: 1.5,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -614,13 +618,13 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                     const SizedBox(
                       height: 16,
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 16,
+                      runSpacing: 8,
                       children: [
                         _buildLegend(const Color(0xFF64B5F6), '現職維持目標'),
-                        const SizedBox(width: 16),
                         _buildLegend(const Color(0xFFFF9800), '新人擁立目標 (未達)'),
-                        const SizedBox(width: 16),
                         _buildLegend(Colors.green.shade400, '新人擁立目標 (達成)'),
                       ],
                     ),
@@ -667,6 +671,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
 
   Widget _buildLegend(Color color, String text) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(width: 12, height: 12, color: color),
         const SizedBox(width: 4),
@@ -785,12 +790,21 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: DataTable(
-          showCheckboxColumn: false,
-          sortColumnIndex: _sortColumnIndex,
-          sortAscending: _sortAscending,
-          headingRowColor: WidgetStateProperty.all(const Color(0xFFECEFF1)),
-          columns: [
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: DataTable(
+                  showCheckboxColumn: false,
+                  columnSpacing: 20,
+                  horizontalMargin: 14,
+                  sortColumnIndex: _sortColumnIndex,
+                  sortAscending: _sortAscending,
+                  headingRowColor:
+                      WidgetStateProperty.all(const Color(0xFFECEFF1)),
+                  columns: [
             DataColumn(label: const Text('公認内定期限'), onSort: _onSort),
             DataColumn(
               label: const Text('対象県連数'),
@@ -863,6 +877,10 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
               ],
             );
           }).toList(),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
