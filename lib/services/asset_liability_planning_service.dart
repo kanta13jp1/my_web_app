@@ -494,6 +494,13 @@ class AssetLiabilityPlanningService {
 
     return AssetLiabilityWorkbook(
       baseDate: baseDate,
+      recurringFixedCosts:
+          List<AssetRecurringFixedCost>.unmodifiable(recurringFixedCosts),
+      recurringBillingDates: <String, DateTime>{
+        for (final cost in recurringFixedCosts)
+          cost.id:
+              _resolveCyclePaymentDate(baseDate, salaryDay, cost.paymentDay),
+      },
       accounts: accounts,
       debtMasterRows: debtMasterRows,
       repaymentPriorityRows: repaymentPriorityRows,
@@ -2212,8 +2219,8 @@ class AssetLiabilityPlanningService {
     })>[];
     for (final cost in recurringFixedCosts) {
       if (cost.amount <= 0 ||
-          !cost.appliesToMonth(
-            _cycleTargetMonth(baseDate, salaryDay, cost.paymentDay),
+          !cost.appliesToPaymentDate(
+            _resolveCyclePaymentDate(baseDate, salaryDay, cost.paymentDay),
           )) {
         continue;
       }

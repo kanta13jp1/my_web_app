@@ -8,6 +8,7 @@ import zlib
 from pathlib import Path
 
 RECEIPT = Path(__file__).resolve().parents[1] / 'config/ai-review-public-assets.json'
+RECEIPT_5893 = RECEIPT.with_name('ai-review-public-assets-5893.json')
 MAX_BYTES = 3_000_000
 MAX_DECODED = 8_388_608
 ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/'
@@ -38,8 +39,8 @@ def png_info(data):
             require(pos == 8 and header is None and size == 13, 'Invalid PNG header order')
             header = struct.unpack('>IIBBBBB', body)
             width, height, depth, color, compression, filtering, interlace = header
-            require(width > 0 and height > 0 and (depth, color, compression, filtering, interlace) == (8, 6, 0, 0, 0), 'Only noninterlaced RGBA8 PNG is supported')
-            require((width * 4 + 1) * height <= MAX_DECODED, 'PNG decoded size exceeds limit')
+            require(width > 0 and height > 0 and depth == 8 and color in (2, 6) and (compression, filtering, interlace) == (0, 0, 0), 'Only noninterlaced RGB8 or RGBA8 PNG is supported')
+            require((width * (3 if color == 2 else 4) + 1) * height <= MAX_DECODED, 'PNG decoded size exceeds limit')
         else:
             require(header is not None, 'PNG header missing')
             if kind == b'IDAT':
@@ -56,16 +57,18 @@ def png_info(data):
             idat_closed = True
         pos += size + 12
     require(ended and header is not None, 'Incomplete PNG')
-    expected = (header[0] * 4 + 1) * header[1]
+    stride = header[0] * (3 if header[3] == 2 else 4) + 1
+    expected = stride * header[1]
     decoder = zlib.decompressobj()
     decoded = decoder.decompress(bytes(compressed), expected + 1)
     require(len(decoded) == expected and decoder.eof and not decoder.unconsumed_tail and not decoder.unused_data, 'Invalid or oversized PNG image stream')
-    require(all(decoded[i] <= 4 for i in range(0, expected, header[0]*4+1)), 'Invalid PNG row filter')
-    return {'width': header[0], 'height': header[1], 'bit_depth': 8, 'color_type': 6}
+    require(all(decoded[i] <= 4 for i in range(0, expected, stride)), 'Invalid PNG row filter')
+    return {'width': header[0], 'height': header[1], 'bit_depth': 8, 'color_type': header[3]}
 
 
-def load_receipt():
-    receipt = json.loads(RECEIPT.read_text(encoding='utf-8'))
+def load_receipt(pr):
+    path = RECEIPT_5893 if pr == 5893 else RECEIPT
+    receipt = json.loads(path.read_text(encoding='utf-8'))
     require(receipt.get('schema_version') == 1 and receipt.get('provider') == 'google-gemini' and receipt.get('endpoint') == ENDPOINT and receipt.get('method') == 'generateContent', 'Unsupported public asset consent')
     require(len(receipt.get('assets', [])) == 1, 'Exactly one approved PNG is supported')
     return receipt
@@ -82,7 +85,7 @@ def verify_bytes(data, asset):
 def prepare_assets(state, paths, git, directory):
     if not any(Path(path).suffix.lower() == '.png' for path in paths):
         return []
-    receipt = load_receipt()
+    receipt = load_receipt(state['pr'])
     require(state['repository'] == receipt['repository'] and state['pr'] == receipt['pull_request'], 'PNG consent repository/PR mismatch')
     require(sorted(paths) == sorted(receipt['related_paths']), 'PNG consent does not cover this code scope')
     assets = []
@@ -114,7 +117,7 @@ def read_assets(state, directory):
     assets = state.get('assets', [])
     if not assets:
         return []
-    receipt = load_receipt()
+    receipt = load_receipt(state['pr'])
     require(state['repository'] == receipt['repository'] and state['pr'] == receipt['pull_request'] and sorted(state['files']) == sorted(receipt['related_paths']), 'Image consent scope changed')
     expected = [dict(a, receipt_sha256=hashlib.sha256(canonical(receipt).encode()).hexdigest()) for a in receipt['assets']]
     require(assets == expected, 'Image receipt binding changed')
