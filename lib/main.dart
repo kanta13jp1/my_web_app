@@ -187,6 +187,7 @@ import 'package:my_web_app/pages/knowledge_graph_page.dart';
 import 'package:my_web_app/pages/user_knowledge_graph_page.dart';
 import 'package:my_web_app/pages/market_intelligence_page.dart';
 import 'package:my_web_app/pages/meeting_manager_page.dart';
+import 'package:my_web_app/pages/diet_debates_page.dart';
 import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
 import 'package:my_web_app/pages/mcp_file_search_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
@@ -1280,6 +1281,11 @@ Route<dynamic> generateAppRoute(
     case '/meeting-manager':
       return MaterialPageRoute(
         builder: (_) => const MeetingManagerPage(),
+      );
+    case '/diet-debates':
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => const DietDebatesPage(),
       );
     case '/news-rss':
       return MaterialPageRoute(
