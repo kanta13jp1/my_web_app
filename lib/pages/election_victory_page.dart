@@ -1478,11 +1478,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             const SizedBox(height: 8),
             Text(
               hasSnapshot
-                  ? '公式議員ページの最新集計は ${_formatInt(officialCount)}人。'
+                  ? '議員名簿の取得時点では ${_formatInt(officialCount)}人。'
                       '${_formatInt(plan.targetLocalMembers)}人まで残り '
                       '${_formatInt(gapToTarget)}人を、'
                       '${_isPublicView ? '県連別配分と月次KPIの公開ビューで確認できます。' : '県連別配分と月次KPIで管理します。'}'
-                  : '現在 ${_formatInt(plan.currentLocalMembers)}人から '
+                  : '計画の起点 ${_formatInt(plan.currentLocalMembers)}人から '
                       '${_formatInt(plan.targetLocalMembers)}人へ。'
                       '必要純増 ${_formatInt(plan.requiredNetIncrease)}人を、'
                       '${_isPublicView ? '県連別配分と月次KPIの公開ビューで確認できます。' : '県連別配分と月次KPIで管理します。'}',
@@ -1491,7 +1491,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             if (hasSnapshot) ...[
               const SizedBox(height: 8),
               Text(
-                '最新取得 ${_dateTimeFormat.format(snapshot!.fetchedAt.toLocal())}',
+                '名簿の取得日時 ${_dateTimeFormat.format(snapshot!.fetchedAt.toLocal())}（現在の人数は未確認）',
                 style: theme.textTheme.bodySmall,
               ),
             ],
@@ -1501,7 +1501,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               runSpacing: 12,
               children: [
                 _buildHeroMetric(
-                  label: '公式現在',
+                  label: hasSnapshot ? '名簿取得値' : '計画の起点',
                   value: _formatInt(officialCount),
                   color: const Color(0xFF0891B2),
                 ),
@@ -5565,7 +5565,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           shortfall: shortfall,
           target: plan.targetLocalMembers,
           caption: snapshot?.hasData == true
-              ? '公式議員ページの最新集計を反映'
+              ? '議員名簿の取得時点の値を反映（取得日時は上部に表示）'
               : '最新実データ未取得時は計画値を表示',
         );
         final regionalChart = ElectionRegionalKpiChart(
@@ -5757,7 +5757,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    '公式現在 ${_formatInt(reality.currentMembers)}人 '
+                    '名簿取得値 ${_formatInt(reality.currentMembers)}人 '
                     '(都道府県議 ${_formatInt(reality.prefecturalAssemblyMembers)} / '
                     '市区町村議 ${_formatInt(reality.municipalAssemblyMembers)})',
                     style: Theme.of(context).textTheme.bodySmall,
