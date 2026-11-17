@@ -172,6 +172,7 @@ import '../pages/subscription_billing_page.dart';
 import '../pages/digital_product_store_pages.dart';
 import '../pages/viral_ad_generator_page.dart';
 import '../ui/features/palm_reading/palm_reading_feature.dart';
+import '../ui/features/chat_highlights/chat_highlights_feature.dart';
 import '../ui/features/video_studio/video_studio_feature.dart';
 import '../ui/features/notion_migration/notion_migration_feature.dart';
 import '../pages/youtube_stats_page.dart';
@@ -2500,6 +2501,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF00838F),
       keywords: const <String>['3D', 'AERO LAB', 'エンジン', '実験', 'Astra'],
       onOpen: (context) => _pushPage(context, const AeroLabPage()),
+    ),
+    HomeToolEntry(
+      id: 'chat-highlights',
+      sectionId: 'growth',
+      title: 'チャットハイライト',
+      subtitle: 'コメントの熱量から動画編集候補の時間帯を自動抽出',
+      icon: Icons.auto_awesome_motion_outlined,
+      color: const Color(0xFF7E57C2),
+      keywords: const <String>[
+        'チャット',
+        'ライブ配信',
+        'ハイライト',
+        'コメント',
+        '動画編集',
+        'chat highlight',
+      ],
+      onOpen: (context) => _pushPage(context, const ChatHighlightsFeature()),
     ),
     HomeToolEntry(
       id: 'video-studio',

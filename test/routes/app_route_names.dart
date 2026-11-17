@@ -87,6 +87,7 @@ const List<String> kAllAppRoutes = <String>[
   '/business-card-manager',
   '/calendar-events',
   '/carbon-footprint',
+  '/chat-highlights',
   '/career-monthly-kpi',
   '/categories',
   '/cfo-cost-ledger',
