@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 
@@ -89,6 +90,44 @@ void main() {
         ),
         isNull,
       );
+    });
+  });
+
+  group('reassignCardStatementLine', () {
+    test('指定した未照合明細のみ請求先カードIDと名称を更新し他行を保持する', () {
+      final lines = <AssetLiabilityCardStatementLine>[
+        AssetLiabilityCardStatementLine(
+          id: 'line-1',
+          billingAccountId: 'unknown_card',
+          billingAccountName: '未登録カード',
+          postedAt: DateTime(2026, 10, 10),
+          description: 'スーパーマーケット',
+          amount: 3200,
+        ),
+        AssetLiabilityCardStatementLine(
+          id: 'line-2',
+          billingAccountId: 'famipay',
+          billingAccountName: 'ファミペイ',
+          postedAt: DateTime(2026, 10, 11),
+          description: 'コンビニ',
+          amount: 850,
+        ),
+      ];
+
+      final updated = reassignCardStatementLine(
+        lines,
+        lineId: 'line-1',
+        billingAccountId: 'aupay_card',
+        billingAccountName: 'auPAYカード',
+      );
+
+      expect(updated.length, 2);
+      expect(updated[0].billingAccountId, 'aupay_card');
+      expect(updated[0].billingAccountName, 'auPAYカード');
+      expect(updated[0].description, 'スーパーマーケット');
+      expect(updated[0].amount, 3200);
+      expect(updated[1].billingAccountId, 'famipay');
+      expect(updated[1].billingAccountName, 'ファミペイ');
     });
   });
 }
