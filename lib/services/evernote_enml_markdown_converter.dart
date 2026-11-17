@@ -191,7 +191,7 @@ class EvernoteEnmlMarkdownConverter {
       return 0;
     }
 
-    final wrappers = switch (name) {
+    final (prefix, suffix) = switch (name) {
       'b' || 'strong' => ('**', '**'),
       'i' || 'em' => ('*', '*'),
       's' || 'strike' || 'del' => ('~~', '~~'),
@@ -199,7 +199,7 @@ class EvernoteEnmlMarkdownConverter {
       'u' => ('<u>', '</u>'),
       _ => ('', ''),
     };
-    if (wrappers.$1.isNotEmpty) buffer.write(wrappers.$1);
+    if (prefix.isNotEmpty) buffer.write(prefix);
 
     final headingLevel = _headingLevel(name);
     if (headingLevel != null) {
@@ -234,7 +234,7 @@ class EvernoteEnmlMarkdownConverter {
         listDepth: listDepth,
       );
     }
-    if (wrappers.$2.isNotEmpty) buffer.write(wrappers.$2);
+    if (suffix.isNotEmpty) buffer.write(suffix);
 
     if (headingLevel != null || name == 'p' || name == 'div') {
       _blankLine(buffer);

@@ -227,12 +227,9 @@ void main() {
       expect(maximumActiveCallbacks, 1);
       expect(progress.first, 0);
       expect(progress.last, bytes.length);
-      expect(
-        progress.indexed.skip(1).every(
-              (entry) => entry.$2 >= progress[entry.$1 - 1],
-            ),
-        isTrue,
-      );
+      for (var i = 1; i < progress.length; i++) {
+        expect(progress[i], greaterThanOrEqualTo(progress[i - 1]));
+      }
     });
 
     test('rejects a stream whose declared size is incomplete', () async {
