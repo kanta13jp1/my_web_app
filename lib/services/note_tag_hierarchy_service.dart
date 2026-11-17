@@ -197,11 +197,7 @@ class SupabaseNoteTagHierarchyDataSource implements NoteTagHierarchyDataSource {
   @override
   Future<void> deleteTag(int id) async {
     final userId = _requireUserId();
-    await _client
-        .from('note_tags')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId);
+    await _client.from('note_tags').delete().eq('id', id).eq('user_id', userId);
   }
 
   String _requireUserId() {
