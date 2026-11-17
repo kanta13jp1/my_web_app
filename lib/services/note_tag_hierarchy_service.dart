@@ -167,10 +167,15 @@ class SupabaseNoteTagHierarchyDataSource implements NoteTagHierarchyDataSource {
 
   @override
   Future<void> renameTag({required int id, required String name}) async {
-    await _client.from('note_tags').update(<String, dynamic>{
-      'name': _validName(name),
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', id);
+    final userId = _requireUserId();
+    await _client
+        .from('note_tags')
+        .update(<String, dynamic>{
+          'name': _validName(name),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', id)
+        .eq('user_id', userId);
   }
 
   @override
@@ -178,15 +183,25 @@ class SupabaseNoteTagHierarchyDataSource implements NoteTagHierarchyDataSource {
     if (id == parentId) {
       throw ArgumentError('A tag cannot be its own parent.');
     }
-    await _client.from('note_tags').update(<String, dynamic>{
-      'parent_id': parentId,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', id);
+    final userId = _requireUserId();
+    await _client
+        .from('note_tags')
+        .update(<String, dynamic>{
+          'parent_id': parentId,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', id)
+        .eq('user_id', userId);
   }
 
   @override
   Future<void> deleteTag(int id) async {
-    await _client.from('note_tags').delete().eq('id', id);
+    final userId = _requireUserId();
+    await _client
+        .from('note_tags')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', userId);
   }
 
   String _requireUserId() {

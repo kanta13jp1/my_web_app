@@ -500,6 +500,7 @@ class SupabaseNoteTaskRepository
     required NoteTask task,
     required NoteTaskDraft draft,
   }) async {
+    final user = _requireUser();
     final title = _validatedTitle(draft.title);
     await _client
         .from('note_tasks')
@@ -513,7 +514,8 @@ class SupabaseNoteTaskRepository
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         })
         .eq('id', task.id)
-        .eq('note_id', task.noteId);
+        .eq('note_id', task.noteId)
+        .eq('user_id', user.id);
   }
 
   @override
@@ -553,6 +555,7 @@ class SupabaseNoteTaskRepository
 
   @override
   Future<void> deleteTask(NoteTask task) async {
+    final user = _requireUser();
     if (task.isImported) {
       throw StateError(
         'Imported Evernote Tasks remain protected until source deletion '
@@ -563,7 +566,8 @@ class SupabaseNoteTaskRepository
         .from('note_tasks')
         .delete()
         .eq('id', task.id)
-        .eq('note_id', task.noteId);
+        .eq('note_id', task.noteId)
+        .eq('user_id', user.id);
   }
 
   @override
@@ -593,6 +597,7 @@ class SupabaseNoteTaskRepository
 
   @override
   Future<void> deleteReminder(NoteTaskReminder reminder) async {
+    final user = _requireUser();
     if (reminder.isImported) {
       throw StateError(
         'Imported Evernote reminders remain protected until source deletion '
@@ -603,7 +608,8 @@ class SupabaseNoteTaskRepository
         .from('note_task_reminders')
         .delete()
         .eq('id', reminder.id)
-        .eq('note_id', reminder.noteId);
+        .eq('note_id', reminder.noteId)
+        .eq('user_id', user.id);
   }
 
   User _requireUser() {
