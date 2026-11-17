@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 
 /// アクションアイテムの「対処できる場所」へのジャンプリンク文言マッピングを検証する。
@@ -128,6 +129,63 @@ void main() {
       expect(updated[0].amount, 3200);
       expect(updated[1].billingAccountId, 'famipay');
       expect(updated[1].billingAccountName, 'ファミペイ');
+    });
+  });
+
+  group('unreconciledBalanceDiffBreakdown', () {
+    test('newBorrowing かつ正の金額の候補のみを抽出して合計内訳として返す', () {
+      final report = AssetDebtDisciplineReport(
+        windowDays: 28,
+        zeroNewBorrowingAchieved: false,
+        newUsageRepaymentAchieved: false,
+        hasPriorMonthData: true,
+        totalNewBorrowing: 67013,
+        totalNewUsageRepaymentShortfall: 10000,
+        newBorrowingViolations: const <AssetDebtDisciplineViolation>[
+          AssetDebtDisciplineViolation(
+            type: AssetDebtDisciplineViolationType.newBorrowing,
+            severity: AssetDebtTrendSeverity.critical,
+            accountId: 'mobit',
+            accountName: 'モビット',
+            kind: AssetLiabilityAccountKind.cardLoan,
+            amount: 40000,
+            currentBalance: 140000,
+            problem: 'problem',
+            action: 'action',
+          ),
+          AssetDebtDisciplineViolation(
+            type: AssetDebtDisciplineViolationType.newBorrowing,
+            severity: AssetDebtTrendSeverity.critical,
+            accountId: 'acom',
+            accountName: 'アコムカードローン',
+            kind: AssetLiabilityAccountKind.cardLoan,
+            amount: 27013,
+            currentBalance: 127013,
+            problem: 'problem',
+            action: 'action',
+          ),
+        ],
+        revolvingViolations: const <AssetDebtDisciplineViolation>[
+          AssetDebtDisciplineViolation(
+            type: AssetDebtDisciplineViolationType.revolvingCard,
+            severity: AssetDebtTrendSeverity.warning,
+            accountId: 'aupay',
+            accountName: 'auPAYカード',
+            kind: AssetLiabilityAccountKind.creditCard,
+            amount: 10000,
+            currentBalance: 50000,
+            problem: 'problem',
+            action: 'action',
+          ),
+        ],
+      );
+
+      final breakdown = unreconciledBalanceDiffBreakdown(report);
+      expect(breakdown.length, 2);
+      expect(breakdown[0].accountName, 'モビット');
+      expect(breakdown[0].amount, 40000);
+      expect(breakdown[1].accountName, 'アコムカードローン');
+      expect(breakdown[1].amount, 27013);
     });
   });
 }
