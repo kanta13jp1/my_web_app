@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-test.use({ launchOptions: { args: ["--enable-unsafe-swiftshader"] } });
+test.use({ launchOptions: {
+  args: ["--enable-unsafe-swiftshader"],
+  ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH
+    ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH }
+    : {}),
+} });
 test.setTimeout(240000);
 const key = "my_web_app.sea_shelter.v1";
 const arena = "/labs/sea-shelter/arena/index.html";
@@ -12,6 +17,40 @@ async function ready(page: Page) {
 async function snapshot(page: Page) {
   return await page.evaluate(() => JSON.stringify({ ...localStorage }));
 }
+test("ink direction starts on demand, preserves saves and recovers after context loss", async ({ page }, info) => {
+  await page.goto(arena);
+  const saved = await snapshot(page);
+  await page.locator("summary").click();
+  await expect(page.locator("#ink")).not.toBeChecked();
+  await page.locator("#ink").check();
+  await page.locator("#low").check();
+  await page.locator("summary").click();
+  await ready(page);
+  await page.locator("#pause").click();
+  for (const size of [{ width: 960, height: 720 }, { width: 375, height: 667 }, { width: 320, height: 568 }]) {
+    await page.setViewportSize(size);
+    await expect(page.locator("#pause")).toBeVisible();
+    await expect(page.locator("#return")).toBeVisible();
+    const box = await page.locator("#attack").boundingBox();
+    expect(box!.width).toBeGreaterThanOrEqual(44);
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(size.width + 1);
+    await page.screenshot({ path: info.outputPath(`ink-${size.width}.png`) });
+  }
+  await page.locator("#pause").click();
+  await page.locator("#attack").click();
+  await expect(page.locator("#enemy-hp")).not.toHaveText("60 / 60");
+  await page.evaluate(() => {
+    const gl = document.querySelector("canvas")!.getContext("webgl2")!;
+    gl.getExtension("WEBGL_lose_context")!.loseContext();
+  });
+  await expect(page.locator("#scene canvas")).toHaveCount(0);
+  await expect(page.locator("#cue")).toContainText("接続が切れました");
+  await page.locator("#retry").click();
+  await expect(page.locator("#scene canvas")).toHaveCount(1);
+  await expect(page.locator("#attack")).toBeEnabled();
+  expect(await snapshot(page)).toBe(saved);
+});
 test(
   "old village enters lazy 3D, guards and special win without changing saved assets",
   async ({ page }, info) => {

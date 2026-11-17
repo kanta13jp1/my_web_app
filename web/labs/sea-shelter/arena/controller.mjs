@@ -198,6 +198,7 @@ async function start() {
       host: $("scene"),
       onFailure: failure,
       low: $("low").checked,
+      ink: $("ink").checked,
       reducedMotion: $("quiet").checked,
     });
     $("intro").hidden = true;
