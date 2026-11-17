@@ -27015,6 +27015,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         (item.type == AssetManagementInsightActionType.upcomingPayment ||
             item.type == AssetManagementInsightActionType.overduePayment ||
             item.type == AssetManagementInsightActionType.missingPaymentSource);
+    // 期限超過の未着金収入は、着金を確認したらその場で受取済みにできる。
+    final incomeId = item.relatedIncomeId;
+    final canMarkReceived =
+        item.type == AssetManagementInsightActionType.overdueIncome &&
+            incomeId != null &&
+            _monthlyIncomePlans.any(
+              (plan) => plan.id == incomeId && !plan.received,
+            );
 
     return Container(
       width: double.infinity,
@@ -27079,11 +27087,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   item.suggestedAction,
                   style: const TextStyle(fontSize: 12, height: 1.5),
                 ),
-                if (canJump || canChangePaymentSource)
+                if (canJump || canChangePaymentSource || canMarkReceived)
                   Wrap(
                     spacing: 4,
                     runSpacing: 4,
                     children: [
+                      if (canMarkReceived)
+                        TextButton.icon(
+                          key: Key('asset_action_mark_received_$incomeId'),
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            foregroundColor: color,
+                          ),
+                          onPressed: () =>
+                              _toggleIncomeReceived(incomeId, true),
+                          icon:
+                              const Icon(Icons.check_circle_outline, size: 16),
+                          label: const Text('着金を確認した（受取済みにする）'),
+                        ),
                       if (canJump)
                         TextButton.icon(
                           style: TextButton.styleFrom(

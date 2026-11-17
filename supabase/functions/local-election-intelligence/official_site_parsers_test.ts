@@ -122,6 +122,32 @@ Deno.test("parseOfficialElectionPrefectureLinks supports candidate-mode member_t
   );
 });
 
+Deno.test("parseOfficialElectionPrefectureLinks extracts escaped URLs from embedded JSON", () => {
+  const html = `
+    <script>
+      window.__PREF_LINKS__ = {
+        "東京都": "https:\\/\\/new-kokumin.jp\\/member_tag\\/tokyo?mode=candidate",
+        "比例区": "https:\\/\\/new-kokumin.jp\\/member_tag\\/hirei?mode=candidate",
+        "神奈川県": "https:\\/\\/new-kokumin.jp\\/member_tag\\/kanagawa?mode=candidate"
+      };
+    </script>
+  `;
+
+  const links = parseOfficialElectionPrefectureLinks(
+    html,
+    "https://new-kokumin.jp/election-local",
+  );
+  assertEquals(links.size, 2);
+  assertEquals(
+    links.get("東京都"),
+    "https://new-kokumin.jp/member_tag/tokyo?mode=candidate",
+  );
+  assertEquals(
+    links.get("神奈川県"),
+    "https://new-kokumin.jp/member_tag/kanagawa?mode=candidate",
+  );
+});
+
 Deno.test("parseOfficialScheduledCandidates parses current election-grouped HTML and excludes national elections", () => {
   const html = `
     <h2 class="member_sec_ttl">衆議院議員選挙<span class="member_sec_count">（1名）</span></h2>
@@ -134,6 +160,7 @@ Deno.test("parseOfficialScheduledCandidates parses current election-grouped HTML
       </li>
     </ul>
     <h2 class="member_sec_ttl">千代田区議会議員選挙<span class="member_sec_count">（1名）</span></h2>
+    <p class="member_sec_schedule_wrap"><span class="member_sec_schedule">任期満了日 2027.04.30／投開票日未定</span></p>
     <ul class="member_list">
       <li>
         <dl class="profile">

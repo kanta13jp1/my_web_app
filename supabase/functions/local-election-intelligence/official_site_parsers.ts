@@ -1,5 +1,9 @@
 export const OFFICIAL_MEMBER_PAGE_URL = "https://new-kokumin.jp/member";
+export const OFFICIAL_LOCAL_MEMBER_PAGE_URL =
+  "https://new-kokumin.jp/member-local";
 export const OFFICIAL_ELECTION_PAGE_URL = "https://new-kokumin.jp/election";
+export const OFFICIAL_LOCAL_ELECTION_PAGE_URL =
+  "https://new-kokumin.jp/election-local";
 
 export const JP_LOCAL_ASSEMBLY_MEMBERS = "\u5730\u65b9\u81ea\u6cbb\u4f53\u8b70\u54e1";
 export const JP_PLANNED_CANDIDATES = "\u5019\u88dc\u4e88\u5b9a\u8005";
@@ -187,7 +191,7 @@ export function matchMemberListSections(
 ): Array<{ heading: string; listHtml: string }> {
   const sections: Array<{ heading: string; listHtml: string }> = [];
   const sectionRegex =
-    /<h2[^>]*class="[^"]*\bmember_sec_ttl\b[^"]*"[^>]*>([\s\S]*?)<\/h2>\s*<ul[^>]*class="[^"]*\bmember_list\b[^"]*"[^>]*>([\s\S]*?)<\/ul>/gsi;
+    /<h2[^>]*class="[^"]*\bmember_sec_ttl\b[^"]*"[^>]*>([\s\S]*?)<\/h2>(?:(?!<h2\b|<ul[^>]*class="[^"]*\bmember_list\b)[\s\S])*?<ul[^>]*class="[^"]*\bmember_list\b[^"]*"[^>]*>([\s\S]*?)<\/ul>/gsi;
   for (const match of html.matchAll(sectionRegex)) {
     sections.push({
       heading: normalizeWhitespace(decodeHtml(stripTags(match[1] ?? "")))
@@ -387,6 +391,19 @@ export function parseOfficialElectionPrefectureLinks(
       if (!links.has(label)) {
         links.set(label, new URL(rawHref, baseUrl).toString());
       }
+    }
+  }
+  const embeddedJsonPattern =
+    /"([^"]+)"\s*:\s*"(https?:\\?\/\\?\/[^"]*?member_tag\\?\/[^"]*?\?mode=candidate[^"]*)"/g;
+  for (const match of html.matchAll(embeddedJsonPattern)) {
+    const rawLabel = normalizeWhitespace(match[1] ?? "").trim();
+    const label = extractPrefectureLabel(rawLabel);
+    const rawHref = (match[2] ?? "").replace(/\\\//g, "/").trim();
+    if (!isPrefectureName(label) || rawHref === "") {
+      continue;
+    }
+    if (!links.has(label)) {
+      links.set(label, new URL(rawHref, baseUrl).toString());
     }
   }
   return links;
