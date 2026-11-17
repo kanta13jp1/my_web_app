@@ -242,6 +242,26 @@ String? assetManagementActionJumpLabel(AssetManagementInsightActionItem item) {
   };
 }
 
+/// 未照合のカード明細行を指定した請求先カードへ手動紐付けした新しい一覧を返す。
+@visibleForTesting
+List<AssetLiabilityCardStatementLine> reassignCardStatementLine(
+  List<AssetLiabilityCardStatementLine> lines, {
+  required String lineId,
+  required String billingAccountId,
+  required String billingAccountName,
+}) {
+  return lines
+      .map(
+        (line) => line.id == lineId
+            ? line.copyWith(
+                billingAccountId: billingAccountId,
+                billingAccountName: billingAccountName,
+              )
+            : line,
+      )
+      .toList(growable: false);
+}
+
 /// 収入予定・定期収入の「入金先」候補口座を返す純関数。
 /// 入金先は資産口座 (現金/預金) であればよく、支払原資 (_paymentSourceAccountOptions)
 /// と違い残高が 0 以下でも選べる。給料日前に残高が尽きた口座や、当座マイナスの口座
@@ -4338,6 +4358,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .where((line) => line.billingAccountId != billingAccountId)
           .toList(growable: false);
       _cardStatementImportMessage = 'Cleared imported lines for this card.';
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _reassignCardStatementLine(
+    String lineId,
+    AssetLiabilityAccount targetAccount,
+  ) {
+    setState(() {
+      _cardStatementLines = reassignCardStatementLine(
+        _cardStatementLines,
+        lineId: lineId,
+        billingAccountId: targetAccount.id,
+        billingAccountName: targetAccount.name,
+      );
+      _cardStatementImportMessage = '未照合明細を「${targetAccount.name}」へ紐付けました。';
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _removeCardStatementLine(String lineId) {
+    setState(() {
+      _cardStatementLines = _cardStatementLines
+          .where((line) => line.id != lineId)
+          .toList(growable: false);
+      _cardStatementImportMessage = '未照合明細を 1 件削除しました。';
     });
     unawaited(_saveAssetLiabilityMonthlyState());
   }
@@ -23613,6 +23659,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _buildAssetManagementAssistantActionList(
             report.actionItems,
             report.workbook.debtMasterRows.map((row) => row.id).toSet(),
+            workbook: report.workbook,
           ),
           if (report.movementSuggestions.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -26788,8 +26835,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildAssetManagementAssistantActionList(
     List<AssetManagementInsightActionItem> actionItems,
-    Set<String> debtMasterCardIds,
-  ) {
+    Set<String> debtMasterCardIds, {
+    AssetLiabilityWorkbook? workbook,
+  }) {
     return Column(
       key: const Key('asset_management_action_list'),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -26849,6 +26897,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               child: _buildAssetManagementAssistantActionTile(
                 item,
                 debtMasterCardIds,
+                workbook: workbook,
               ),
             ),
         ],
@@ -26866,8 +26915,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildAssetManagementAssistantActionTile(
     AssetManagementInsightActionItem item,
-    Set<String> debtMasterCardIds,
-  ) {
+    Set<String> debtMasterCardIds, {
+    AssetLiabilityWorkbook? workbook,
+  }) {
     final color = _assetManagementInsightSeverityColor(item.severity);
     final dueLabel = item.dueDate == null
         ? (item.paymentDay == null ? null : '${item.paymentDay}日')
@@ -26878,6 +26928,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final canJump = jumpLabel != null &&
         item.relatedAccountId != null &&
         debtMasterCardIds.contains(item.relatedAccountId);
+    final canChangePaymentSource = workbook != null &&
+        item.relatedAccountId != null &&
+        debtMasterCardIds.contains(item.relatedAccountId) &&
+        (item.type == AssetManagementInsightActionType.upcomingPayment ||
+            item.type == AssetManagementInsightActionType.overduePayment ||
+            item.type == AssetManagementInsightActionType.missingPaymentSource);
 
     return Container(
       width: double.infinity,
@@ -26942,26 +26998,204 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   item.suggestedAction,
                   style: const TextStyle(fontSize: 12, height: 1.5),
                 ),
-                if (canJump)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      style: TextButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        foregroundColor: color,
-                      ),
-                      onPressed: () =>
-                          _jumpToDebtMasterCard(item.relatedAccountId!),
-                      icon: const Icon(Icons.arrow_downward, size: 16),
-                      label: Text(jumpLabel),
-                    ),
+                if (canJump || canChangePaymentSource)
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: [
+                      if (canJump)
+                        TextButton.icon(
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            foregroundColor: color,
+                          ),
+                          onPressed: () =>
+                              _jumpToDebtMasterCard(item.relatedAccountId!),
+                          icon: const Icon(Icons.arrow_downward, size: 16),
+                          label: Text(jumpLabel),
+                        ),
+                      if (canChangePaymentSource)
+                        TextButton.icon(
+                          key: Key(
+                            'asset_action_change_source_${item.relatedAccountId}',
+                          ),
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            foregroundColor: color,
+                          ),
+                          onPressed: () => _openQuickPaymentSourceChangeDialog(
+                            item.relatedAccountId!,
+                            workbook,
+                          ),
+                          icon: const Icon(
+                            Icons.account_balance_outlined,
+                            size: 16,
+                          ),
+                          label: const Text('原資口座を変更'),
+                        ),
+                    ],
                   ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _openQuickPaymentSourceChangeDialog(
+    String liabilityId,
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    AssetLiabilityDebtRow? targetRow;
+    for (final row in workbook.debtMasterRows) {
+      if (row.id == liabilityId) {
+        targetRow = row;
+        break;
+      }
+    }
+    if (targetRow == null) return;
+    final candidates = _paymentSourceCandidatesForRow(targetRow, workbook);
+    final currentSourceId = _paymentSourceAccountIds[targetRow.id] ??
+        _defaultPaymentSourceAccountIds[targetRow.id] ??
+        targetRow.paymentSourceAccountId;
+    final currentSourceName = targetRow.paymentSourceAccountName ??
+        (currentSourceId == null || currentSourceId.isEmpty
+            ? '未設定'
+            : currentSourceId);
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('${targetRow!.name}の原資口座を変更'),
+          content: SizedBox(
+            width: 360,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '現在の原資: $currentSourceName / '
+                    '支払予定: ${_formatManagementYen(targetRow.scheduledPaymentAmount)}',
+                    style: const TextStyle(fontSize: 12, height: 1.4),
+                  ),
+                  const SizedBox(height: 12),
+                  if (candidates.isEmpty)
+                    const Text(
+                      '利用可能な現金・預金口座が見つかりません。先に資産一覧から口座残高を登録してください。',
+                      style: TextStyle(fontSize: 12, height: 1.4),
+                    )
+                  else
+                    for (final candidate in candidates) ...[
+                      Builder(
+                        builder: (context) {
+                          final riskLevel = _paymentSourceRiskLevel(
+                            candidate.projectedAfterPayment,
+                          );
+                          final riskColor = _cashRiskColor(riskLevel);
+                          final isSelected =
+                              currentSourceId == candidate.account.id;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? const Color(0xFFECFDF5)
+                                  : Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFF0D9488)
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .outlineVariant,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        candidate.account.name,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                    _buildTextStatusChip(
+                                      label: _cashRiskLabel(riskLevel),
+                                      color: riskColor,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '現在 ${_formatManagementYen(candidate.currentBalance)} / '
+                                  '支払後見込み ${_formatManagementYen(candidate.projectedAfterPayment)}',
+                                  style: TextStyle(
+                                    color: riskColor,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 4,
+                                  children: [
+                                    OutlinedButton(
+                                      onPressed: () {
+                                        _savePaymentSourceReviewChoice(
+                                          liabilityId: targetRow!.id,
+                                          sourceAccountId: candidate.account.id,
+                                          scope: _PaymentSourceSaveScope
+                                              .monthlyOverride,
+                                        );
+                                        Navigator.of(dialogContext).pop();
+                                      },
+                                      child: const Text('今月のみ変更'),
+                                    ),
+                                    FilledButton.tonal(
+                                      onPressed: () {
+                                        _savePaymentSourceReviewChoice(
+                                          liabilityId: targetRow!.id,
+                                          sourceAccountId: candidate.account.id,
+                                          scope: _PaymentSourceSaveScope
+                                              .defaultSetting,
+                                        );
+                                        Navigator.of(dialogContext).pop();
+                                      },
+                                      child: const Text('既定に設定'),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('閉じる'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -27310,6 +27544,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         Icons.account_balance_wallet_outlined,
       AssetManagementInsightActionType.debtSpiralWarning =>
         Icons.trending_up_rounded,
+      AssetManagementInsightActionType.overdueIncome =>
+        Icons.schedule_send_outlined,
     };
   }
 
@@ -28157,8 +28393,148 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 10),
           _buildCardStatementReconciliationTable(reconciliation),
           _buildCardStatementFixActionList(reconciliation, cardOptions),
+          _buildUnmatchedCardStatementSection(reconciliation, cardOptions),
         ],
       ),
+    );
+  }
+
+  Widget _buildUnmatchedCardStatementSection(
+    AssetLiabilityCardStatementReconciliationData reconciliation,
+    List<AssetLiabilityAccount> cardOptions,
+  ) {
+    final lines = reconciliation.unmatchedStatementLines;
+    if (lines.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final cardById = <String, AssetLiabilityAccount>{
+      for (final account in cardOptions) account.id: account,
+    };
+    return Column(
+      key: const Key('asset_unmatched_card_statement_section'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            const Icon(
+              Icons.link_off_outlined,
+              size: 18,
+              color: Color(0xFFD97706),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '未照合のカード明細 (${lines.length}件)',
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '請求先カードに一致しなかった明細です。紐付けるカードを選択すると照合結果に即時反映されます。',
+          style: TextStyle(
+            fontSize: 11,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        for (final line in lines)
+          Container(
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFFD97706).withValues(alpha: 0.3),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        line.description,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      _formatManagementYen(line.amount),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${line.postedAt == null ? '日付不明' : DateFormat('M/d').format(line.postedAt!)} / '
+                  '元ID: ${line.billingAccountName ?? line.billingAccountId}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (cardOptions.isNotEmpty)
+                      SizedBox(
+                        width: 220,
+                        child: DropdownButton<String>(
+                          key: Key('asset_unmatched_line_assign_${line.id}'),
+                          value: null,
+                          isExpanded: true,
+                          isDense: true,
+                          hint: const Text(
+                            '請求先カードへ紐付け',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          items: [
+                            for (final account in cardOptions)
+                              DropdownMenuItem<String>(
+                                value: account.id,
+                                child: Text(
+                                  account.name,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                          ],
+                          onChanged: (selectedId) {
+                            if (selectedId == null) return;
+                            final target = cardById[selectedId];
+                            if (target == null) return;
+                            _reassignCardStatementLine(line.id, target);
+                          },
+                        ),
+                      ),
+                    TextButton.icon(
+                      key: Key('asset_unmatched_line_remove_${line.id}'),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        foregroundColor: const Color(0xFFDC2626),
+                      ),
+                      onPressed: () => _removeCardStatementLine(line.id),
+                      icon: const Icon(Icons.delete_outline, size: 16),
+                      label: const Text('削除', style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
