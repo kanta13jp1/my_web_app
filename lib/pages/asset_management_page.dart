@@ -262,6 +262,20 @@ List<AssetLiabilityCardStatementLine> reassignCardStatementLine(
       .toList(growable: false);
 }
 
+/// 借金しない宣言モニターの「未照合の残高差分推定合計」を構成する候補内訳を返す。
+@visibleForTesting
+List<AssetDebtDisciplineViolation> unreconciledBalanceDiffBreakdown(
+  AssetDebtDisciplineReport report,
+) {
+  return report.allViolations
+      .where(
+        (violation) =>
+            violation.type == AssetDebtDisciplineViolationType.newBorrowing &&
+            violation.amount > 0,
+      )
+      .toList(growable: false);
+}
+
 /// 収入予定・定期収入の「入金先」候補口座を返す純関数。
 /// 入金先は資産口座 (現金/預金) であればよく、支払原資 (_paymentSourceAccountOptions)
 /// と違い残高が 0 以下でも選べる。給料日前に残高が尽きた口座や、当座マイナスの口座
@@ -25188,7 +25202,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 6),
               _buildDisciplineAchievedRevolvingEvidence(report),
             ],
-          ] else
+          ] else ...[
+            if (report.totalNewBorrowing > 0) ...[
+              _buildUnreconciledBalanceDiffSummaryRow(report),
+              const SizedBox(height: 8),
+            ],
             for (final violation in report.allViolations.take(
               violationDisplayLimit,
             ))
@@ -25196,6 +25214,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: _buildAssetDisciplineViolationTile(violation),
               ),
+          ],
           if (!compliant && hiddenViolationCount > 0)
             Text(
               'ほか $hiddenViolationCount件',
@@ -25205,6 +25224,68 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 fontSize: 12,
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUnreconciledBalanceDiffSummaryRow(
+    AssetDebtDisciplineReport report,
+  ) {
+    final breakdown = unreconciledBalanceDiffBreakdown(report);
+    return Container(
+      key: const Key('asset_unreconciled_balance_diff_summary'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFB91C1C).withValues(alpha: 0.25),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '未照合の残高差分推定合計',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF991B1B),
+                  ),
+                ),
+              ),
+              Text(
+                _formatManagementYen(report.totalNewBorrowing),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF991B1B),
+                ),
+              ),
+            ],
+          ),
+          if (breakdown.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final item in breakdown)
+                  Text(
+                    '${item.accountName}: ${_formatManagementYen(item.amount)}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
