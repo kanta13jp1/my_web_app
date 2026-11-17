@@ -19,15 +19,31 @@ import '../services/import_service.dart';
 import '../utils/web_image_downloader.dart';
 import '../widgets/evernote_cloud_migration_controls.dart';
 import '../widgets/evernote_history_review_panel.dart';
+import '../widgets/evernote_owner_scope.dart';
 
-class ImportPage extends StatefulWidget {
+class ImportPage extends StatelessWidget {
   const ImportPage({super.key});
 
   @override
-  State<ImportPage> createState() => _ImportPageState();
+  Widget build(BuildContext context) {
+    final auth = Supabase.instance.client.auth;
+    return EvernoteOwnerScope(
+      initialOwnerId: auth.currentUser?.id,
+      ownerChanges:
+          auth.onAuthStateChange.map((state) => state.session?.user.id),
+      builder: (_) => const _ImportOwnerPage(),
+    );
+  }
 }
 
-class _ImportPageState extends State<ImportPage> {
+class _ImportOwnerPage extends StatefulWidget {
+  const _ImportOwnerPage();
+
+  @override
+  State<_ImportOwnerPage> createState() => _ImportPageState();
+}
+
+class _ImportPageState extends State<_ImportOwnerPage> {
   bool _isLoading = false;
   bool _isImporting = false;
   final GrowthAcquisitionService _acquisitionService =
@@ -38,6 +54,7 @@ class _ImportPageState extends State<ImportPage> {
   late EvernoteNoteHistoryMigrationService _evernoteNoteHistoryMigrationService;
   late EvernoteCloudStageService _evernoteCloudStageService;
   bool _migrationLedgerInitialized = false;
+  final _ledgerRefreshGeneration = EvernoteLedgerRefreshGeneration();
   bool _isMigrationLedgerLoading = false;
   String? _migrationLedgerError;
   List<EvernoteMigrationBatch> _evernoteMigrationBatches =
@@ -115,8 +132,16 @@ class _ImportPageState extends State<ImportPage> {
   }
 
   Future<void> _loadEvernoteMigrationLedger() async {
+    if (!mounted) return;
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
+    final generation = _ledgerRefreshGeneration.begin(user.id);
+    bool isCurrent() =>
+        mounted &&
+        _ledgerRefreshGeneration.isCurrent(
+          generation,
+          Supabase.instance.client.auth.currentUser?.id,
+        );
     if (mounted) {
       setState(() {
         _isMigrationLedgerLoading = true;
@@ -124,24 +149,19 @@ class _ImportPageState extends State<ImportPage> {
       });
     }
     try {
-      final batchesFuture = _evernoteMigrationLedgerService.loadBatches(
+      final snapshot = await _evernoteMigrationLedgerService.loadSnapshot(
         userId: user.id,
       );
-      final itemsFuture = _evernoteMigrationLedgerService.loadItems(
-        userId: user.id,
-      );
-      final batches = await batchesFuture;
-      final items = await itemsFuture;
-      if (!mounted) return;
+      if (!isCurrent()) return;
       setState(() {
-        _evernoteMigrationBatches = batches;
-        _evernoteMigrationItems = items;
+        _evernoteMigrationBatches = snapshot.batches;
+        _evernoteMigrationItems = snapshot.items;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!isCurrent()) return;
       setState(() => _migrationLedgerError = error.toString());
     } finally {
-      if (mounted) setState(() => _isMigrationLedgerLoading = false);
+      if (isCurrent()) setState(() => _isMigrationLedgerLoading = false);
     }
   }
 
@@ -221,6 +241,13 @@ class _ImportPageState extends State<ImportPage> {
         type: FileType.custom,
         allowedExtensions: const <String>['enex', 'xml'],
       );
+      if (!isEvernoteOwnerActive(
+        mounted: mounted,
+        currentOwnerId: Supabase.instance.client.auth.currentUser?.id,
+        expectedOwnerId: user.id,
+      )) {
+        return;
+      }
       if (selection == null || selection.files.isEmpty) return;
       final file = selection.files.single;
       final source = file.readStream;
@@ -242,6 +269,13 @@ class _ImportPageState extends State<ImportPage> {
       final archiveHash = staged.preview.sourceExportSha256;
       if (archiveHash == null) {
         throw StateError('履歴ENEXのSHA-256を確認できませんでした。');
+      }
+      if (!isEvernoteOwnerActive(
+        mounted: mounted,
+        currentOwnerId: Supabase.instance.client.auth.currentUser?.id,
+        expectedOwnerId: user.id,
+      )) {
+        return;
       }
       await _evernoteNoteHistoryMigrationService.migrateFromArchive(
         userId: user.id,
@@ -1472,9 +1506,9 @@ class _ImportPageState extends State<ImportPage> {
       _evernoteMigrationBatches,
     );
     final hasPreview = progress.sourceNoteCount > 0;
-    final hasImported = progress.importedNoteCount > 0;
-    final hasVerified = progress.verifiedNoteCount > 0;
-    final hasSourceDeleted = progress.sourceDeletedNoteCount > 0;
+    final hasImported = progress.importCompleted;
+    final hasVerified = progress.verificationCompleted;
+    final hasSourceDeleted = progress.sourceDeletionCompleted;
 
     return Card(
       key: const Key('evernote-migration-progress-panel'),

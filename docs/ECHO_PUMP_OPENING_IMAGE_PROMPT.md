@@ -1,0 +1,6 @@
+# Original opening artwork prompt
+
+Tool: image_gen. No reference images. Opaque background.
+Artifact: 20261017-012952-artifact. Commercial/privacy review: pending.
+
+Create one original cinematic game title-screen background illustration, wide landscape composition. A deserted small Japanese coastal stormwater pumping station at night during heavy rain, seen from the maintenance walkway: huge dark industrial pump cylinders and pipes occupy the RIGHT third, cold teal safety lights, one distant warm amber maintenance lamp, wet concrete floor reflecting faint light, a rain streaked window looking out onto dark water. The LEFT half is a clean dark blue-black negative space with subtle haze for a game title and start button to be overlaid by real UI later. Atmospheric grounded industrial survival-horror mood, painterly realistic concept art, restrained grain, readable silhouettes, premium PC game key art composition, no people, no creatures, no weapons, no logos, no lettering, no symbols or watermarks. Fully original environment; do not copy any Resident Evil characters, logos, buildings, or screenshots. Make the visual focal point a dimly glowing control box near the right pump. Keep the center-left quiet and dark. Opaque background.

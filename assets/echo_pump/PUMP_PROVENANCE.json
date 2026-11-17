@@ -1,0 +1,31 @@
+{
+  "origin": "Original primitive geometry created through MCP execute_blender_code in Blender",
+  "generator": "mcp-for-blender 2.1.9 via Python SDK on GitHub Actions",
+  "run": "https://github.com/kanta13jp1/my_web_app/actions/runs/39126766575",
+  "native_desktop_tool_discovery": false,
+  "external_assets": false,
+  "telemetry_consent": false,
+  "source": "scripts/echo_pump_mcp_pump/model.py",
+  "files": {
+    "pump.blend": {
+      "bytes": 1320372,
+      "sha256": "c8c61676c6ae58a9bb15e43cb429f30e0a33aef0614f074fba2cc9b69817b389"
+    },
+    "pump.glb": {
+      "bytes": 163612,
+      "sha256": "774362b7c27574ff0a1dfcbce99bf7c1d2527d2b16f48b6dbab6f1bda20f9393"
+    },
+    "pump_fault.png": {
+      "bytes": 173791,
+      "sha256": "c7c228a7fcd97f482814b68665583db9711fe285406a643a72828e4d0b8e0426"
+    },
+    "pump_idle.png": {
+      "bytes": 173606,
+      "sha256": "1e1b5e6173de449d3eeadfe6b66a645c5b3abe6c9cce1789411e27b641686fa4"
+    },
+    "pump_live.png": {
+      "bytes": 173711,
+      "sha256": "8f4486307823743c5605f7160346f7e82389364f57074867f8974b6d86eb3a8b"
+    }
+  }
+}

@@ -125,6 +125,8 @@ Deno.test("local snapshot resolves goal progress and official achievements", () 
       formerCount: 9,
       recommendationCount: 9,
       prefectureCount: 0,
+      prefecturalCount: 0,
+      municipalCount: 0,
       prefectures: [],
     },
     officialCurrentLocalMembers: 360,
@@ -166,5 +168,32 @@ Deno.test("generated endorsement asset passes the shared validator", () => {
   assertEquals(
     snapshot.totalCount,
     snapshot.incumbentCount + snapshot.newcomerCount + snapshot.formerCount,
+  );
+});
+
+
+Deno.test("official source distinguishes missing or malformed counts from zero", () => {
+  const normalizeRecommendations = (recommendations: unknown) =>
+    normalizeOfficialEndorsementSnapshot({ ...endorsementAsset, recommendations });
+
+  const explicitZero = normalizeRecommendations({ totalCount: 0 });
+  assertEquals(explicitZero.sourceCountsComplete, true);
+  assertEquals(explicitZero.recommendationCount, 0);
+  for (const value of [undefined, null, "0", -1, 0.5]) {
+    assertThrows(() => normalizeRecommendations({ totalCount: value }));
+  }
+  assertThrows(() =>
+    normalizeOfficialEndorsementSnapshot({
+      ...endorsementAsset,
+      officialEndorsements: { ...endorsementAsset.officialEndorsements, formerCount: undefined },
+    })
+  );
+  assertThrows(() =>
+    normalizeOfficialEndorsementSnapshot({
+      ...endorsementAsset,
+      prefectures: endorsementAsset.prefectures.map((row, i) =>
+        i === 0 ? { ...row, municipalCount: null } : row
+      ),
+    })
   );
 });

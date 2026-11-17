@@ -17,6 +17,7 @@ import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
 import '../services/ai_university_agentless_lab_analytics.dart';
 import '../services/ai_university_agentverse_lab_analytics.dart';
+import '../services/ai_university_catalog.dart';
 import '../services/ai_university_content_analytics.dart';
 import '../services/ai_university_fuyu_lab_analytics.dart';
 import '../services/ai_university_learning_outcome_analytics.dart';
@@ -6327,9 +6328,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
       final Map<String, List<Map<String, dynamic>>> grouped = {};
       for (final row in rows) {
-        final provider =
-            (row['provider'] as String?) ?? (row['provider_id'] as String?);
-        if (provider == null) continue;
+        final provider = normalizeAiUniversityProviderId(
+          row['provider'] ?? row['provider_id'],
+        );
+        if (provider.isEmpty) continue;
         (grouped[provider] ??= []).add(row);
       }
 
@@ -6367,6 +6369,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           _tabController = tc;
         });
         rebindTabUrlSync();
+        _contentAnalytics
+            .record(AiUniversityContentEvent.contentOpened)
+            .ignore();
       }
       if (isRetry) {
         _contentAnalytics
@@ -6408,6 +6413,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final controller = _tabController;
     final index = _providers.indexOf(providerId);
     if (controller == null || index < 0) return;
+    _contentAnalytics
+        .record(AiUniversityContentEvent.providerSelected)
+        .ignore();
+    _contentAnalytics.record(AiUniversityContentEvent.contentOpened).ignore();
     controller.animateTo(index);
     _loadFsrsDue(providerId);
   }
@@ -6464,8 +6473,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color:
-                              const Color(0xFFFF6B35).withValues(alpha: 0.16),
+                          color: const Color(
+                            0xFFFF6B35,
+                          ).withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         alignment: Alignment.center,
@@ -6537,8 +6547,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                         foregroundColor: const Color(0xFFFFA07A),
                         minimumSize: const Size(0, 44),
                         side: BorderSide(
-                          color:
-                              const Color(0xFFFF6B35).withValues(alpha: 0.46),
+                          color: const Color(
+                            0xFFFF6B35,
+                          ).withValues(alpha: 0.46),
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -6571,8 +6582,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     );
   }
 
-  // 351 タブの到達性改善: 検索 + カテゴリ別一覧から選択したタブへジャンプする。
+  // 大規模タブ一覧の到達性改善: 検索 + カテゴリ別一覧から選択したタブへジャンプする。
   void _showProviderSearch() {
+    _contentAnalytics.record(AiUniversityContentEvent.providerSearch).ignore();
     final order = <String>[..._providerCategoryRules.map((e) => e.key), 'その他'];
     showModalBottomSheet<void>(
       context: context,
@@ -6728,8 +6740,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   Future<void> _awardQuizPoints(String providerId) async {
     if (_answeredQuizzes.contains(providerId)) return;
+    final isReview = _fsrsDue[providerId]?.isNotEmpty ?? false;
     setState(() => _answeredQuizzes.add(providerId));
     _saveAnsweredQuizzes();
+    _contentAnalytics.record(AiUniversityContentEvent.quizCompleted).ignore();
     context.read<GamificationService>().awardPoints(
           50,
           reason: 'AI大学クイズ正解: ${_meta(providerId).name}',
@@ -6779,6 +6793,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       questionId: providerId,
       grade: 3,
     );
+    if (isReview) {
+      _contentAnalytics
+          .record(AiUniversityContentEvent.reviewReturned)
+          .ignore();
+    }
     if (mounted) {
       setState(() => _fsrsNextDue[providerId] = result.nextDue);
     }
@@ -6952,11 +6971,14 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       );
     }
 
+    final providerCount = aiUniversityProviderCountForDisplay(
+      liveProviderCount: _error == null ? _content.length : 0,
+    );
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'AI 大学',
-          style: TextStyle(
+        title: Text(
+          providerCount > 0 ? 'AI 大学（$providerCount社）' : 'AI 大学',
+          style: const TextStyle(
             color: Color(0xFFE5E7EB),
             fontWeight: FontWeight.w700,
           ),
@@ -7345,26 +7367,31 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
     _loadFsrsStats(providerId);
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildProviderHeader(providerId, m, rows),
-        const SizedBox(height: 12),
-        _buildRlhfCard(providerId, m),
-        const SizedBox(height: 12),
-        if (rows != null && rows.isNotEmpty)
-          ...rows.map((row) => _buildContentCard(row, isDark, surface))
-        else
-          _buildFallbackCard(providerId, surface),
-        const SizedBox(height: 16),
-        _buildQuizCard(providerId, m),
-        if (_fsrsStats.containsKey(providerId) &&
-            _fsrsStats[providerId]!.totalReviews > 0) ...[
+    return LayoutBuilder(
+      builder: (context, viewport) => ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildProviderHeader(providerId, m, rows),
           const SizedBox(height: 12),
-          _buildFsrsStatsCard(providerId, m),
+          _buildRlhfCard(providerId, m),
+          const SizedBox(height: 12),
+          if (rows != null && rows.isNotEmpty)
+            ...rows.map(
+              (row) =>
+                  _buildContentCard(row, isDark, surface, viewport.maxHeight),
+            )
+          else
+            _buildFallbackCard(providerId, surface),
+          const SizedBox(height: 16),
+          _buildQuizCard(providerId, m),
+          if (_fsrsStats.containsKey(providerId) &&
+              _fsrsStats[providerId]!.totalReviews > 0) ...[
+            const SizedBox(height: 12),
+            _buildFsrsStatsCard(providerId, m),
+          ],
+          const SizedBox(height: 32),
         ],
-        const SizedBox(height: 32),
-      ],
+      ),
     );
   }
 
@@ -7931,6 +7958,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     Map<String, dynamic> row,
     bool isDark,
     Color surface,
+    double videoViewportHeight,
   ) {
     final category = row['category'] as String? ?? '';
     final provider = row['provider'] as String? ?? '';
@@ -8153,6 +8181,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   AiUniversityYoutubeEmbed(
                     videoId: youtubeVideoId,
                     title: title,
+                    maxPlayerHeight:
+                        (videoViewportHeight - 96).clamp(0.0, 720.0),
                     onOpen: () => _launchUrl(sourceUrl ?? ''),
                   ),
                 ],
@@ -8304,6 +8334,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                               questionId: providerId,
                               grade: 1,
                             );
+                            if (dueCards.isNotEmpty) {
+                              _contentAnalytics
+                                  .record(
+                                    AiUniversityContentEvent.reviewReturned,
+                                  )
+                                  .ignore();
+                            }
                             if (mounted) {
                               setState(() {
                                 _fsrsNextDue[providerId] = result.nextDue;

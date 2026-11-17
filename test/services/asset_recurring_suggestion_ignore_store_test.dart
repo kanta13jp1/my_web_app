@@ -34,6 +34,27 @@ void main() {
     expect(await incomeStore.load(prefs: prefs), <String>{'給料'});
   });
 
+  test('rejected write is reported without claiming persistence', () async {
+    final prefs = _RejectedIgnorePreferences();
+    await expectLater(
+      store.save(<String>{'google'}, prefs: prefs),
+      throwsStateError,
+    );
+  });
+
+  test('rejected removal is reported without claiming persistence', () async {
+    final prefs = _RejectedIgnorePreferences();
+    await expectLater(store.save(<String>{}, prefs: prefs), throwsStateError);
+  });
+
+  test('write exception is propagated to the caller', () async {
+    final prefs = _RejectedIgnorePreferences(throwOnWrite: true);
+    await expectLater(
+      store.save(<String>{'google'}, prefs: prefs),
+      throwsA(isA<Exception>()),
+    );
+  });
+
   test('encodeMirrorValue sorts and drops blank labels', () {
     expect(
       AssetRecurringSuggestionIgnoreStore.encodeMirrorValue(<String>{
@@ -60,4 +81,21 @@ void main() {
       <String>{'a', 'b'},
     );
   });
+}
+
+class _RejectedIgnorePreferences extends Fake implements SharedPreferences {
+  _RejectedIgnorePreferences({this.throwOnWrite = false});
+
+  final bool throwOnWrite;
+
+  @override
+  Future<bool> setString(String key, String value) async {
+    if (throwOnWrite) {
+      throw Exception('test write rejected');
+    }
+    return false;
+  }
+
+  @override
+  Future<bool> remove(String key) async => false;
 }

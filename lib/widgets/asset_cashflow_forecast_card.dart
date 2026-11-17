@@ -13,6 +13,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
   const AssetCashflowForecastCard({
     super.key,
     required this.forecast,
+    this.scenarioLabel = '',
     this.currencyFormatter,
     this.currentHorizon,
     this.availableHorizons = const [3, 6, 12],
@@ -21,6 +22,10 @@ class AssetCashflowForecastCard extends StatelessWidget {
   });
 
   final AssetCashflowForecast forecast;
+  final String scenarioLabel;
+  String get _scenarioPrefix => scenarioLabel.isEmpty ? '' : '$scenarioLabel。';
+  Key _scenarioKey(String value) =>
+      Key(scenarioLabel.isEmpty ? value : '${value}_$scenarioLabel');
 
   /// 金額整形(ページの `_formatYen` を渡す)。null なら簡易整形。
   final String Function(double value)? currencyFormatter;
@@ -56,7 +61,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final months = forecast.months;
     return Card(
-      key: const Key('asset_cashflow_forecast_card'),
+      key: _scenarioKey('asset_cashflow_forecast_card'),
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -99,10 +104,10 @@ class AssetCashflowForecastCard extends StatelessWidget {
                 child: Semantics(
                   container: true,
                   image: true,
-                  label: '将来残高予測グラフ。${_chartA11yValue()}',
+                  label: '$_scenarioPrefix将来残高予測グラフ。${_chartA11yValue()}',
                   child: ExcludeSemantics(
                     child: CustomPaint(
-                      key: const Key('asset_cashflow_forecast_chart'),
+                      key: _scenarioKey('asset_cashflow_forecast_chart'),
                       painter: _ForecastChartPainter(forecast: forecast),
                     ),
                   ),
@@ -117,41 +122,51 @@ class AssetCashflowForecastCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('現在', style: TextStyle(fontSize: 11)),
-                  Text(
-                    '${months.first.month.year}/${months.first.month.month}〜'
-                    '${months.last.month.year}/${months.last.month.month}',
-                    style: const TextStyle(fontSize: 11),
-                  ),
-                ],
+              SizedBox(
+                width: double.infinity,
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    const Text('現在', style: TextStyle(fontSize: 11)),
+                    Text(
+                      '${months.first.month.year}/${months.first.month.month}〜'
+                      '${months.last.month.year}/${months.last.month.month}',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
               _buildSummary(context),
-              ExpansionTile(
-                key: const Key('asset_cashflow_forecast_month_details'),
-                tilePadding: EdgeInsets.zero,
-                title: const Text('月別内訳（月末・月内最低）'),
-                children: [
-                  for (final month in months)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          '${month.month.year}/${month.month.month} '
-                          '月末 ${_yen(month.closingBalance)} / '
-                          '月内最低 ${_yen(month.worstBalance)}',
-                          style: TextStyle(
-                            color: month.isShortfall ? _danger : null,
-                            fontSize: 12,
+              Semantics(
+                container: true,
+                explicitChildNodes: true,
+                child: ExpansionTile(
+                  key: _scenarioKey('asset_cashflow_forecast_month_details'),
+                  internalAddSemanticForOnTap: true,
+                  tilePadding: EdgeInsets.zero,
+                  title: const Text('月別内訳（月末・月内最低）'),
+                  children: [
+                    for (final month in months)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '${month.month.year}/${month.month.month} '
+                            '月末 ${_yen(month.closingBalance)} / '
+                            '月内最低 ${_yen(month.worstBalance)}',
+                            style: TextStyle(
+                              color: month.isShortfall ? _danger : null,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ],
           ],
@@ -189,8 +204,8 @@ class AssetCashflowForecastCard extends StatelessWidget {
         children: [
           for (final months in availableHorizons)
             ChoiceChip(
-              key: Key('asset_cashflow_forecast_horizon_$months'),
-              label: Text('$monthsヶ月'),
+              key: _scenarioKey('asset_cashflow_forecast_horizon_$months'),
+              label: Text('$monthsヶ月', key: ValueKey<bool>(selected == months)),
               selected: selected == months,
               onSelected: (_) => onHorizonChanged?.call(months),
             ),
@@ -209,19 +224,20 @@ class AssetCashflowForecastCard extends StatelessWidget {
       children: [
         if (shortfallDate != null)
           _buildAlert(
-            alertKey: const Key('asset_cashflow_forecast_shortfall'),
+            alertKey: _scenarioKey('asset_cashflow_forecast_shortfall'),
             color: _danger,
             icon: Icons.warning_amber,
             message:
-                '${shortfallDate.month}/${shortfallDate.day} 頃に残高が不足する見込みです。'
+                '$_scenarioPrefix${shortfallDate.month}/${shortfallDate.day} 頃に残高が不足する見込みです。'
                 '登録データに基づく不足額の試算は ${_yen(forecast.shortfallRecoveryAmount)} です。残高・支払済み状態・支払日を明細と照合してから判断してください。',
           )
         else if (hasSafetyBreach)
           _buildAlert(
-            alertKey: const Key('asset_cashflow_forecast_safety_breach'),
+            alertKey: _scenarioKey('asset_cashflow_forecast_safety_breach'),
             color: _warn,
             icon: Icons.info_outline,
-            message: '残高不足は回避できる見込みですが、安全余裕 ${_yen(forecast.safetyMargin)} を'
+            message:
+                '$_scenarioPrefix残高不足は回避できる見込みですが、安全余裕 ${_yen(forecast.safetyMargin)} を'
                 '割り込む時期があります(最小見込み残高 ${_yen(forecast.worstBalance)})。',
           )
         else
@@ -231,7 +247,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '今後${forecast.months.length}ヶ月は残高不足の見込みはありません'
+                  '$_scenarioPrefix今後${forecast.months.length}ヶ月は残高不足の見込みはありません'
                   '(最小見込み残高 ${_yen(forecast.worstBalance)})。',
                   style: const TextStyle(fontSize: 12, height: 1.5),
                 ),
@@ -243,7 +259,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
-              key: const Key('asset_cashflow_forecast_review_payment_days'),
+              key: _scenarioKey('asset_cashflow_forecast_review_payment_days'),
               onPressed: onReviewPaymentDays,
               icon: const Icon(Icons.event_repeat, size: 16),
               label: const Text('支払日を見直す(マネーカレンダー)'),
@@ -262,7 +278,9 @@ class AssetCashflowForecastCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           '現金・預金 ${_yen(forecast.startingBalance)} を起点に、繰り返し収入・固定費・返済予定を'
-          '毎月積み上げた見込みです。未登録の入出金は含まれません。',
+          '毎月積み上げた見込みです。未登録の入出金は含まれません。'
+          '支払済みの設定は対象の給与サイクル内だけ反映します。'
+          '支払結果を反映した残高が起点という前提です。',
           style: TextStyle(
             fontSize: 11,
             height: 1.5,
@@ -441,4 +459,78 @@ class _ForecastChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ForecastChartPainter oldDelegate) =>
       oldDelegate.forecast != forecast;
+}
+
+/// Displays scenarios without identifying either as the actual outcome.
+class AssetCashflowForecastScenariosCard extends StatelessWidget {
+  const AssetCashflowForecastScenariosCard({
+    super.key,
+    required this.scenarios,
+    this.currencyFormatter,
+    this.currentHorizon,
+    this.onHorizonChanged,
+    this.onReviewPaymentDays,
+  });
+
+  final AssetCashflowForecastScenarios scenarios;
+  final String Function(double value)? currencyFormatter;
+  final int? currentHorizon;
+  final ValueChanged<int>? onHorizonChanged;
+  final VoidCallback? onReviewPaymentDays;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget card(
+      AssetCashflowForecast forecast, {
+      bool allowHorizon = true,
+      String scenarioLabel = '',
+    }) =>
+        AssetCashflowForecastCard(
+          key: scenarioLabel.isEmpty ? null : ValueKey(scenarioLabel),
+          forecast: forecast,
+          scenarioLabel: scenarioLabel,
+          currencyFormatter: currencyFormatter,
+          currentHorizon: allowHorizon ? currentHorizon : null,
+          onHorizonChanged: allowHorizon ? onHorizonChanged : null,
+          onReviewPaymentDays: onReviewPaymentDays,
+        );
+    if (!scenarios.hasAnchorDayIncome) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('予定が重複して計上される場合があります。'),
+          card(scenarios.notYetReflected),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          '当日予定入金の残高反映は未確認のため、2つの条件で比較します。'
+          '一部だけ反映済みの可能性もあり、実際の上下限や確定額ではありません。'
+          '予定が重複して計上される場合があります。未登録の入出金、古い・不足した口座残高、'
+          '同日内の入出金順序は考慮できません。'
+          'この間、参謀室の資金繰り判定は保留します。',
+          key: Key('asset_cashflow_forecast_conditional_notice'),
+        ),
+        const Text('条件A：当日予定入金がすべて起点残高に反映済み'),
+        Semantics(
+          container: true,
+          label: '条件A：当日予定入金がすべて起点残高に反映済み',
+          child: card(scenarios.alreadyReflected, scenarioLabel: '条件A'),
+        ),
+        const Text('条件B：当日予定入金がすべて起点残高に未反映'),
+        Semantics(
+          container: true,
+          label: '条件B：当日予定入金がすべて起点残高に未反映',
+          child: card(
+            scenarios.notYetReflected,
+            allowHorizon: false,
+            scenarioLabel: '条件B',
+          ),
+        ),
+      ],
+    );
+  }
 }

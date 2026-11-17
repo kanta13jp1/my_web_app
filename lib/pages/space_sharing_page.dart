@@ -25,6 +25,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
   Object? _error;
   bool _loading = true;
   bool _saving = false;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -35,6 +36,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
   }
 
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
     if (mounted) {
       setState(() {
         _loading = true;
@@ -43,13 +45,13 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
     }
     try {
       final snapshot = await _dataSource.load();
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _snapshot = snapshot;
         _loading = false;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _error = error;
         _loading = false;
@@ -61,7 +63,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
     Future<void> Function() operation,
     String success,
   ) async {
-    if (_saving) return;
+    if (!mounted || _saving) return;
     setState(() => _saving = true);
     try {
       await operation();
@@ -198,6 +200,16 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
         key: const Key('space_sharing_list'),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         children: [
+          if (_error != null)
+            const Card(
+              key: Key('space_sharing_stale_warning'),
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  '再読み込みに失敗しました。表示中の共有情報は最新でない可能性があります。',
+                ),
+              ),
+            ),
           if (snapshot.incomingInvitations.isNotEmpty) ...[
             Text(
               'あなたへの招待',
@@ -474,7 +486,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
   }
 
   Future<void> _showInviteDialog(SpaceAccessRecord space) async {
-    final emailController = TextEditingController();
+    var email = '';
     var permission = SpacePermission.edit;
     final accepted = await showDialog<bool>(
       context: context,
@@ -488,7 +500,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
               children: [
                 TextField(
                   key: const Key('space_invite_email'),
-                  controller: emailController,
+                  onChanged: (value) => email = value,
                   autofocus: true,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
@@ -535,11 +547,11 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
         ),
       ),
     );
-    if (accepted != true) return;
+    if (!mounted || accepted != true) return;
     await _mutate(
       () => _dataSource.invite(
         spaceId: space.id,
-        email: emailController.text,
+        email: email,
         permission: permission,
       ),
       '招待を送信しました。',
@@ -624,7 +636,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
         ),
       ),
     );
-    if (accepted != true) return;
+    if (!mounted || accepted != true) return;
     await _mutate(
       () => _dataSource.moveNote(
         noteId: note.id,
@@ -661,7 +673,7 @@ class _SpaceSharingPageState extends State<SpaceSharingPage> {
         ],
       ),
     );
-    if (accepted != true) return;
+    if (!mounted || accepted != true) return;
     await _mutate(
       () => _dataSource.removeMember(
         spaceId: space.id,
