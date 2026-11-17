@@ -1,0 +1,1634 @@
+{
+  "source": "d224c892c1f16895f24978358717717f96bad657",
+  "runtime": "v22.23.2",
+  "timing": "Node CPU synchronous features + exported-tree evaluation; not browser benchmark",
+  "max_frames": 7200,
+  "action_hold_frames": 6,
+  "parity_max_error": 0,
+  "episodes": [
+    {
+      "controller": "always_right",
+      "seed": 0,
+      "condition": "canonical",
+      "phase": "dead",
+      "clear": false,
+      "frames": 178,
+      "x": 299.4300000000011,
+      "max_x": 299.4300000000011,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.069999999998913
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 1,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.061644202171692
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 2,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.064744621588716
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 3,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.06784504100574
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 4,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.070945460422763
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 5,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.074045879839787
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 6,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.07714629925681
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 7,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.080246718673834
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 8,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.083347138090858
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 9,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.086447557507881
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 10,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.089547976924905
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 11,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.092648396341929
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 12,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.095748815758952
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 13,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.098849235175976
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 14,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.101949654593
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 15,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.105050074010023
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 16,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.108150493427047
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 17,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.11125091284407
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 18,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.114351332261094
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 19,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.117451751678118
+      }
+    },
+    {
+      "controller": "always_right",
+      "seed": 20,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 176,
+      "x": 296.33000000000106,
+      "max_x": 296.33000000000106,
+      "decisions": 30,
+      "last_action": "right",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.120552171095142
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 0,
+      "condition": "canonical",
+      "phase": "dead",
+      "clear": false,
+      "frames": 295,
+      "x": 683.1000000000005,
+      "max_x": 683.1000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.899999999999523
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 1,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 295,
+      "x": 683.1000000000005,
+      "max_x": 683.1000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.899999999999523
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 2,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 295,
+      "x": 683.1000000000005,
+      "max_x": 683.1000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.899999999999523
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 3,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 295,
+      "x": 683.1000000000005,
+      "max_x": 683.1000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.899999999999523
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 4,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 295,
+      "x": 683.1000000000005,
+      "max_x": 683.1000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.899999999999523
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 5,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 294,
+      "x": 680.5000000000005,
+      "max_x": 680.5000000000005,
+      "decisions": 49,
+      "last_action": "right_run_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.999999999999545
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 6,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 294,
+      "x": 680.5000000000005,
+      "max_x": 680.5000000000005,
+      "decisions": 49,
+      "last_action": "right_run_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.999999999999545
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 7,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 294,
+      "x": 680.5000000000005,
+      "max_x": 680.5000000000005,
+      "decisions": 49,
+      "last_action": "right_run_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.499999999999545
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 8,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 296,
+      "x": 685.7000000000005,
+      "max_x": 685.7000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.2999999999995
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 9,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 296,
+      "x": 685.7000000000005,
+      "max_x": 685.7000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.2999999999995
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 10,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 296,
+      "x": 685.7000000000005,
+      "max_x": 685.7000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.2999999999995
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 11,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 296,
+      "x": 685.7000000000005,
+      "max_x": 685.7000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.2999999999995
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 12,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 295,
+      "x": 683.1000000000005,
+      "max_x": 683.1000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.899999999999523
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 13,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 295,
+      "x": 683.1000000000005,
+      "max_x": 683.1000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.899999999999523
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 14,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 295,
+      "x": 683.1000000000005,
+      "max_x": 683.1000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.899999999999523
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 15,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 295,
+      "x": 683.1000000000005,
+      "max_x": 683.1000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.899999999999523
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 16,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 294,
+      "x": 680.5000000000005,
+      "max_x": 680.5000000000005,
+      "decisions": 49,
+      "last_action": "right_run_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.999999999999545
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 17,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 294,
+      "x": 680.5000000000005,
+      "max_x": 680.5000000000005,
+      "decisions": 49,
+      "last_action": "right_run_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.999999999999545
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 18,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 294,
+      "x": 680.5000000000005,
+      "max_x": 680.5000000000005,
+      "decisions": 49,
+      "last_action": "right_run_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.499999999999545
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 19,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 296,
+      "x": 685.7000000000005,
+      "max_x": 685.7000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.2999999999995
+      }
+    },
+    {
+      "controller": "local_rule",
+      "seed": 20,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 296,
+      "x": 685.7000000000005,
+      "max_x": 685.7000000000005,
+      "decisions": 50,
+      "last_action": "right_run",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.2999999999995
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 0,
+      "condition": "canonical",
+      "phase": "dead",
+      "clear": false,
+      "frames": 190,
+      "x": 295.33000000000067,
+      "max_x": 295.33000000000067,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 11.669999999999334
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 1,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.611644202172101
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 2,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.614744621589125
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 3,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.617845041006149
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 4,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.620945460423172
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 5,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.624045879840196
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 6,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.62714629925722
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 7,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.630246718674243
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 8,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.633347138091267
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 9,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.63644755750829
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 10,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.639547976925314
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 11,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.642648396342338
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 12,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.645748815759362
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 13,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.648849235176385
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 14,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.651949654593409
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 15,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.655050074010433
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 16,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.658150493427456
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 17,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.66125091284448
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 18,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.664351332261504
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 19,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.667451751678527
+      }
+    },
+    {
+      "controller": "jev_student",
+      "seed": 20,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "dead",
+      "clear": false,
+      "frames": 189,
+      "x": 293.78000000000065,
+      "max_x": 293.78000000000065,
+      "decisions": 32,
+      "last_action": "right_jump",
+      "death_context": {
+        "y": 192,
+        "nearest_enemy_dx": 10.67055217109555
+      }
+    },
+    {
+      "controller": "rule_student",
+      "seed": 0,
+      "condition": "canonical",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 1,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 2,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 3,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 4,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 5,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 6,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 7,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 8,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 9,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 10,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 11,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 12,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 13,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 14,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 15,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 16,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 17,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 18,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 19,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    },
+    {
+      "controller": "rule_student",
+      "seed": 20,
+      "condition": "enemy positions perturbed +/-4px; robustness only",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "x": 436,
+      "max_x": 436,
+      "decisions": 1200,
+      "last_action": "right_run",
+      "death_context": null
+    }
+  ],
+  "timings": {
+    "always_right": {
+      "n": 630,
+      "median": 0.0001200000000025625,
+      "p95": 0.0002349999999964325
+    },
+    "local_rule": {
+      "n": 1044,
+      "median": 0.0018180000000000973,
+      "p95": 0.00610799999999756
+    },
+    "jev_student": {
+      "n": 672,
+      "median": 0.035139999999998395,
+      "p95": 0.06761899999999343
+    },
+    "rule_student": {
+      "n": 25200,
+      "median": 0.011317000000019561,
+      "p95": 0.020741999999984273
+    }
+  },
+  "summary": {
+    "always_right": {
+      "canonical": {
+        "controller": "always_right",
+        "seed": 0,
+        "condition": "canonical",
+        "phase": "dead",
+        "clear": false,
+        "frames": 178,
+        "x": 299.4300000000011,
+        "max_x": 299.4300000000011,
+        "decisions": 30,
+        "last_action": "right",
+        "death_context": {
+          "y": 192,
+          "nearest_enemy_dx": 10.069999999998913
+        }
+      },
+      "robustness_clears": 0,
+      "robustness_n": 20,
+      "robustness_max_x_median": 296.33000000000106
+    },
+    "local_rule": {
+      "canonical": {
+        "controller": "local_rule",
+        "seed": 0,
+        "condition": "canonical",
+        "phase": "dead",
+        "clear": false,
+        "frames": 295,
+        "x": 683.1000000000005,
+        "max_x": 683.1000000000005,
+        "decisions": 50,
+        "last_action": "right_run",
+        "death_context": {
+          "y": 192,
+          "nearest_enemy_dx": 11.899999999999523
+        }
+      },
+      "robustness_clears": 0,
+      "robustness_n": 20,
+      "robustness_max_x_median": 683.1000000000005
+    },
+    "jev_student": {
+      "canonical": {
+        "controller": "jev_student",
+        "seed": 0,
+        "condition": "canonical",
+        "phase": "dead",
+        "clear": false,
+        "frames": 190,
+        "x": 295.33000000000067,
+        "max_x": 295.33000000000067,
+        "decisions": 32,
+        "last_action": "right_jump",
+        "death_context": {
+          "y": 192,
+          "nearest_enemy_dx": 11.669999999999334
+        }
+      },
+      "robustness_clears": 0,
+      "robustness_n": 20,
+      "robustness_max_x_median": 293.78000000000065
+    },
+    "rule_student": {
+      "canonical": {
+        "controller": "rule_student",
+        "seed": 0,
+        "condition": "canonical",
+        "phase": "playing",
+        "clear": false,
+        "frames": 7200,
+        "x": 436,
+        "max_x": 436,
+        "decisions": 1200,
+        "last_action": "right_run",
+        "death_context": null
+      },
+      "robustness_clears": 0,
+      "robustness_n": 20,
+      "robustness_max_x_median": 436
+    }
+  },
+  "every_frame_sensitivity": [
+    {
+      "controller": "local_rule",
+      "action_hold_frames": 1,
+      "phase": "dead",
+      "clear": false,
+      "frames": 776,
+      "max_x": 1944.0999999999713
+    },
+    {
+      "controller": "jev_student",
+      "action_hold_frames": 1,
+      "phase": "dead",
+      "clear": false,
+      "frames": 191,
+      "max_x": 297.5600000000007
+    },
+    {
+      "controller": "rule_student",
+      "action_hold_frames": 1,
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "max_x": 436
+    }
+  ],
+  "jump_edge_ablation": [
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 0,
+      "condition": "canonical",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1090,
+      "max_x": 1494.7300000000002,
+      "releases": 16
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 1,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1085,
+      "max_x": 1499.8899999999828,
+      "releases": 16
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 2,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1219,
+      "max_x": 1650.8799999999978,
+      "releases": 19
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 3,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1091,
+      "max_x": 1495.6400000000003,
+      "releases": 16
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 4,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "playing",
+      "clear": false,
+      "frames": 7200,
+      "max_x": 2356,
+      "releases": 27
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 5,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1096,
+      "max_x": 1494.7300000000002,
+      "releases": 16
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 6,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1479,
+      "max_x": 2022.4299999999946,
+      "releases": 25
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 7,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1083,
+      "max_x": 1496.789999999983,
+      "releases": 15
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 8,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1104,
+      "max_x": 1496.6800000000003,
+      "releases": 17
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 9,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1094,
+      "max_x": 1493.3000000000002,
+      "releases": 16
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 10,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1091,
+      "max_x": 1499.8899999999828,
+      "releases": 17
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 11,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1115,
+      "max_x": 1512.98,
+      "releases": 16
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 12,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1096,
+      "max_x": 1494.7300000000002,
+      "releases": 16
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 13,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1086,
+      "max_x": 1501.4399999999828,
+      "releases": 16
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 14,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1095,
+      "max_x": 1493.9500000000003,
+      "releases": 15
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 15,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1098,
+      "max_x": 1496.6800000000003,
+      "releases": 16
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 16,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1088,
+      "max_x": 1493.3000000000002,
+      "releases": 15
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 17,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1097,
+      "max_x": 1495.6400000000003,
+      "releases": 16
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 18,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1111,
+      "max_x": 1504.3700000000003,
+      "releases": 16
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 19,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1090,
+      "max_x": 1498.3399999999829,
+      "releases": 17
+    },
+    {
+      "controller": "jev_student_plus_jump_edge_release",
+      "seed": 20,
+      "condition": "enemy positions perturbed +/-4px",
+      "phase": "dead",
+      "clear": false,
+      "frames": 1105,
+      "max_x": 1497.8500000000004,
+      "releases": 17
+    }
+  ]
+}

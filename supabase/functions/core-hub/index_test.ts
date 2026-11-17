@@ -3,6 +3,7 @@ import {
   assertFalse,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { CORE_HUB_ACTION_REGISTRY } from "./action_registry.ts";
+import type { BlogPostRow } from "./blog_view.ts";
 import { handleCoreHubRequest } from "./index.ts";
 
 function post(action: string): Request {
@@ -11,6 +12,117 @@ function post(action: string): Request {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ action, memo_id: 42, reaction: "👍" }),
   });
+}
+
+// Mirrors the real blog_posts schema, rather than the old invented
+// excerpt/published_at fixture. Selecting either missing column reproduces
+// PostgREST 42703 and therefore the public route's sanitized HTTP 500.
+const publicBlogRow: BlogPostRow = {
+  id: "public-post",
+  title: "Published post",
+  content: "Published body",
+  content_preview: "Published preview",
+  posted_at: "2026-10-03T00:00:00Z",
+  url: null,
+  tags: ["regression"],
+};
+
+function schemaCheckedBlogClient() {
+  const calls: unknown[][] = [];
+  let selected: string[] = [];
+  const filters = new Map<string, unknown>();
+  const query = {
+    select(columns: string) {
+      selected = columns.split(",").map((column) => column.trim());
+      return query;
+    },
+    eq(column: string, value: unknown) {
+      filters.set(column, value);
+      calls.push(["eq", column, value]);
+      return query;
+    },
+    order(column: string, options: unknown) {
+      calls.push(["order", column, options]);
+      return query;
+    },
+    limit(value: number) {
+      calls.push(["limit", value]);
+      return Promise.resolve(result(false));
+    },
+    maybeSingle() {
+      return Promise.resolve(result(true));
+    },
+  };
+  function result(single: boolean) {
+    const missing = selected.find((column) => !(column in publicBlogRow));
+    if (missing) {
+      return {
+        data: null,
+        error: {
+          code: "42703",
+          message: `column blog_posts.${missing} does not exist`,
+        },
+      };
+    }
+    assertEquals(filters.get("status"), "posted");
+    if (single) assertEquals(filters.get("id"), publicBlogRow.id);
+    return { data: single ? publicBlogRow : [publicBlogRow], error: null };
+  }
+  return {
+    calls,
+    client: {
+      from(table: string) {
+        assertEquals(table, "blog_posts");
+        return query;
+      },
+    },
+  };
+}
+
+for (const action of ["blog.public.list", "blog.public.view"]) {
+  for (const format of ["json", "html", "md", "txt"]) {
+    Deno.test(`${action} anonymous GET ${format} uses real blog columns`, async () => {
+      const { client, calls } = schemaCheckedBlogClient();
+      let authenticateCalled = false;
+      const response = await handleCoreHubRequest(
+        new Request(
+          `https://example.test/functions/v1/core-hub?action=${action}&limit=3&format=${format}&id=${publicBlogRow.id}`,
+        ),
+        {
+          createAdminClient: () => client as never,
+          authenticateUser: () => {
+            authenticateCalled = true;
+            return Promise.resolve(null);
+          },
+          reportError: () => {},
+        },
+      );
+      assertEquals(response.status, 200);
+      assertFalse(authenticateCalled);
+      if (action === "blog.public.list") {
+        assertEquals(calls, [
+          ["eq", "status", "posted"],
+          ["order", "posted_at", { ascending: false }],
+          ["limit", 3],
+        ]);
+      }
+      if (format === "json") {
+        const payload = await response.json();
+        assertEquals(payload.success, true);
+        const row = action === "blog.public.list"
+          ? payload.posts[0]
+          : payload.post;
+        assertEquals(row.id, publicBlogRow.id);
+        assertEquals(row.excerpt, publicBlogRow.content_preview);
+        assertEquals(row.publishedAt, publicBlogRow.posted_at);
+      } else {
+        assertEquals(
+          (await response.text()).includes(publicBlogRow.title ?? ""),
+          true,
+        );
+      }
+    });
+  }
 }
 
 function serviceRolePost(

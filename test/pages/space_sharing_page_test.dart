@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/space_sharing_page.dart';
@@ -86,6 +88,158 @@ void main() {
     expect(find.byKey(const Key('space_note_move_91')), findsNothing);
     expect(find.byKey(const Key('space_leave_7')), findsOneWidget);
     expect(find.byKey(const Key('space_note_open_91')), findsOneWidget);
+  });
+  testWidgets('failed refresh warns while retaining visible sharing data',
+      (tester) async {
+    final source = _FakeSpaceSharingDataSource(_ownerSnapshot());
+    await tester.pumpWidget(
+      MaterialApp(home: SpaceSharingPage(dataSource: source)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('space_sharing_list')), findsOneWidget);
+
+    source.loadError = StateError('synthetic refresh failure');
+    await tester.tap(find.byKey(const Key('space_sharing_reload')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('space_sharing_stale_warning')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('space_sharing_list')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    source.loadError = null;
+    await tester.tap(find.byKey(const Key('space_sharing_reload')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('space_sharing_stale_warning')), findsNothing);
+  });
+  for (final olderFails in [false, true]) {
+    testWidgets('latest sharing refresh wins when olderFails=$olderFails',
+        (tester) async {
+      final source = _FakeSpaceSharingDataSource(_ownerSnapshot());
+      await tester.pumpWidget(
+        MaterialApp(home: SpaceSharingPage(dataSource: source)),
+      );
+      await tester.pumpAndSettle();
+
+      final older = Completer<SpaceSharingSnapshot>();
+      final newer = Completer<SpaceSharingSnapshot>();
+      var calls = 0;
+      source.loadOverride = () => calls++ == 0 ? older.future : newer.future;
+      final refresh = tester.widget<RefreshIndicator>(
+        find.byType(RefreshIndicator),
+      );
+      final olderRefresh = refresh.onRefresh();
+      final newerRefresh = refresh.onRefresh();
+      newer.complete(_viewerSnapshot());
+      await newerRefresh;
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('space_invite_7')), findsNothing);
+
+      if (olderFails) {
+        older.completeError(StateError('synthetic older failure'));
+      } else {
+        older.complete(_ownerSnapshot());
+      }
+      await olderRefresh;
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('space_invite_7')), findsNothing);
+      expect(
+        find.byKey(const Key('space_sharing_stale_warning')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
+  for (final action in ['invite', 'move', 'remove']) {
+    testWidgets('disposed sharing page ignores $action dialog confirmation',
+        (tester) async {
+      final source = _FakeSpaceSharingDataSource(_ownerSnapshot());
+      final visible = ValueNotifier<bool>(true);
+      addTearDown(visible.dispose);
+      await tester.binding.setSurfaceSize(const Size(800, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ValueListenableBuilder<bool>(
+            valueListenable: visible,
+            builder: (context, show, child) => show
+                ? SpaceSharingPage(dataSource: source, initialSpaceId: 7)
+                : const Scaffold(body: Text('Replacement')),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final openKey = switch (action) {
+        'invite' => 'space_invite_7',
+        'move' => 'space_note_move_91',
+        _ => 'space_member_remove_member',
+      };
+      final open = find.byKey(Key(openKey));
+      await tester.scrollUntilVisible(
+        open,
+        200,
+        scrollable: find.descendant(
+          of: find.byKey(const Key('space_sharing_list')),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.tap(open);
+      await tester.pumpAndSettle();
+      if (action == 'invite') {
+        await tester.enterText(
+          find.byKey(const Key('space_invite_email')),
+          'fixture@example.invalid',
+        );
+      }
+      visible.value = false;
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('space_sharing_page')), findsNothing);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      final confirmKey = switch (action) {
+        'invite' => 'space_invite_submit',
+        'move' => 'space_note_move_submit',
+        _ => 'space_member_remove_confirm',
+      };
+      await tester.tap(find.byKey(Key(confirmKey)));
+      await tester.pumpAndSettle();
+      expect(source.mutationCalls, 0);
+      expect(tester.takeException(), isNull);
+    });
+  }
+  testWidgets('cancelled invitation resets email when reopened',
+      (tester) async {
+    final source = _FakeSpaceSharingDataSource(_ownerSnapshot());
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SpaceSharingPage(dataSource: source, initialSpaceId: 7),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('space_invite_7')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('space_invite_email')),
+      'cancelled@example.invalid',
+    );
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+    expect(source.mutationCalls, 0);
+    await tester.tap(find.byKey(const Key('space_invite_7')));
+    await tester.pumpAndSettle();
+    final input = tester.widget<EditableText>(
+      find.descendant(
+        of: find.byKey(const Key('space_invite_email')),
+        matching: find.byType(EditableText),
+      ),
+    );
+    expect(input.controller.text, isEmpty);
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+    expect(source.mutationCalls, 0);
+    expect(tester.takeException(), isNull);
   });
 }
 
@@ -177,12 +331,19 @@ class _FakeSpaceSharingDataSource implements SpaceSharingDataSource {
   _FakeSpaceSharingDataSource(this.snapshot);
 
   final SpaceSharingSnapshot snapshot;
+  int mutationCalls = 0;
+  StateError? loadError;
+  Future<SpaceSharingSnapshot> Function()? loadOverride;
   String? acceptedInvitationId;
   String? invitedEmail;
   SpacePermission? invitedPermission;
 
   @override
-  Future<SpaceSharingSnapshot> load() async => snapshot;
+  Future<SpaceSharingSnapshot> load() async {
+    if (loadOverride != null) return loadOverride!();
+    if (loadError != null) throw loadError!;
+    return snapshot;
+  }
 
   @override
   Future<void> acceptInvitation(String invitationId) async {
@@ -201,6 +362,7 @@ class _FakeSpaceSharingDataSource implements SpaceSharingDataSource {
     required String email,
     required SpacePermission permission,
   }) async {
+    mutationCalls += 1;
     invitedEmail = email;
     invitedPermission = permission;
   }
@@ -216,7 +378,9 @@ class _FakeSpaceSharingDataSource implements SpaceSharingDataSource {
   Future<void> removeMember({
     required int spaceId,
     required String memberUserId,
-  }) async {}
+  }) async {
+    mutationCalls += 1;
+  }
 
   @override
   Future<int> createDirectNote({
@@ -230,5 +394,7 @@ class _FakeSpaceSharingDataSource implements SpaceSharingDataSource {
   Future<void> moveNote({
     required int noteId,
     int? destinationNotebookId,
-  }) async {}
+  }) async {
+    mutationCalls += 1;
+  }
 }

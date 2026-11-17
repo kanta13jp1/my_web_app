@@ -1,0 +1,77 @@
+name: Documentation Quality Failure Notification
+
+on:
+  workflow_run:
+    workflows: [Documentation Quality Gate]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Completed failed Documentation Quality Gate run to reconcile
+        required: true
+        type: string
+
+permissions: {}
+concurrency:
+  group: documentation-quality-notification-2625
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      issues: write
+    steps:
+      - name: Reconcile one failed run with Issue 2625
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const issueNumber = 2625;
+            const { owner, repo } = context.repo;
+            const rawId = context.eventName === 'workflow_dispatch'
+              ? context.payload.inputs?.run_id
+              : context.payload.workflow_run?.id;
+            if (!/^[1-9][0-9]{0,15}$/.test(String(rawId))) throw new Error('invalid_run_id');
+            const runId = Number(rawId);
+            if (!Number.isSafeInteger(runId)) throw new Error('invalid_run_id');
+            const { data: run } = await github.rest.actions.getWorkflowRun({ owner, repo, run_id: runId });
+            if (run.id !== runId || run.name !== 'Documentation Quality Gate'
+                || run.path?.split('@')[0] !== '.github/workflows/documentation-quality.yml'
+                || run.repository?.full_name !== `${owner}/${repo}`
+                || run.head_repository?.full_name !== `${owner}/${repo}`
+                || !['pull_request', 'schedule', 'workflow_dispatch'].includes(run.event)) {
+              throw new Error('untrusted_or_unrelated_run');
+            }
+            if (run.status !== 'completed' || run.conclusion !== 'failure') {
+              core.info('No completed failure to notify.');
+              return;
+            }
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun,
+              { owner, repo, run_id: runId, filter: 'latest', per_page: 100 });
+            const failures = jobs.filter(job => ['failure', 'timed_out'].includes(job.conclusion));
+            if (!failures.length) throw new Error('missing_failed_job_evidence');
+            const marker = `<!-- documentation-quality-failure:run=${runId} -->`;
+            const comments = await github.paginate(github.rest.issues.listComments,
+              { owner, repo, issue_number: issueNumber, per_page: 100 });
+            if (comments.some(comment => comment.user?.type === 'Bot' && comment.body?.includes(marker))) {
+              core.info('This run already has a notification.');
+              return;
+            }
+            const knownSteps = new Map([
+              ['Verify positive and negative fixtures', '検出器の正負テスト'],
+              ['Validate Markdown and preserve all findings', 'Markdown指摘または検出器エラー'],
+              ['Install pinned Markdown validators', '検査依存関係の準備'],
+            ]);
+            const base = `https://github.com/${owner}/${repo}/actions/runs/${runId}`;
+            const details = failures.slice(0, 10).map(job => {
+              if (!Number.isSafeInteger(job.id) || job.id <= 0) throw new Error('invalid_job_id');
+              const step = job.steps?.find(item => ['failure', 'timed_out'].includes(item.conclusion));
+              const classification = knownSteps.get(step?.name) || '準備・検査処理（ログで原因確認）';
+              return `- ${classification}: ${job.conclusion} / ${base}/job/${job.id}`;
+            }).join('\n');
+            const body = `${marker}\n文書品質検査の失敗を確認しました。\n\nRun: ${base}\n${details}\n\n修復手順: job summaryとdocumentation-quality-evidence artifactのfindings.jsonを確認してください。内部リンク・見出し・HTML IDの参照先を修正または復旧し、スペル候補は文脈を確認して修正してください。指摘ではなく準備・検出器エラーの場合は依存関係と解析ログを確認します。過去指摘も残し、新規指摘だけをPR差分で判定します。\n\nこれは失敗通知であり、文書の自動修正・Issue Close・CI再実行は行いません。文書本文・ログ・秘密情報をコメントへ複製しません。`;
+            await github.rest.issues.createComment({ owner, repo, issue_number: issueNumber, body });
+            core.info(`Recorded failure run ${runId} in Issue ${issueNumber}.`);

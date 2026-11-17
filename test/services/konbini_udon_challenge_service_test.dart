@@ -8,6 +8,26 @@ void main() {
       SharedPreferences.setMockInitialValues(<String, Object>{});
     });
 
+    test('unverified zero preserves enabled and history on read', () async {
+      const service = KonbiniUdonChallengeService();
+      final prefs = await SharedPreferences.getInstance();
+      await service.setEnabled(true, remainingDebt: 1000, prefs: prefs);
+      final before = {for (final key in prefs.getKeys()) key: prefs.get(key)};
+      final snapshot =
+          await service.loadSnapshot(remainingDebt: 0, prefs: prefs);
+      expect(snapshot.isReleased, isFalse);
+      expect(snapshot.isEnabled, isTrue);
+      expect({for (final key in prefs.getKeys()) key: prefs.get(key)}, before);
+      final verified = await service.loadSnapshot(
+        remainingDebt: 0,
+        debtFullyVerified: true,
+        prefs: prefs,
+      );
+      expect(verified.isReleased, isTrue);
+      expect(prefs.getBool('konbini_udon_challenge_enabled_v1'), isTrue);
+      expect({for (final key in prefs.getKeys()) key: prefs.get(key)}, before);
+    });
+
     test('can enable the challenge and complete all three meals', () async {
       final now = DateTime(2026, 6, 11, 8, 0);
       final service = KonbiniUdonChallengeService(nowProvider: () => now);
@@ -65,14 +85,17 @@ void main() {
       expect(snapshot.recentViolations.first.note, '牛丼を食べてしまった');
     });
 
-    test('releases the challenge automatically when debt reaches zero',
+    test('verified zero reports released without changing stored preference',
         () async {
       final service = KonbiniUdonChallengeService(
         nowProvider: () => DateTime(2026, 6, 11, 9, 0),
       );
 
       await service.setEnabled(true, remainingDebt: 120000);
-      final snapshot = await service.loadSnapshot(remainingDebt: 0);
+      final snapshot = await service.loadSnapshot(
+        remainingDebt: 0,
+        debtFullyVerified: true,
+      );
 
       expect(snapshot.isReleased, isTrue);
       expect(snapshot.isEnabled, isFalse);

@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Backlog Worktree Drain"
+  short_description: "Safely finish and resume GitHub backlog lanes"
+  default_prompt: "Use $github-backlog-worktree-drain to resume a GitHub backlog lane, verify its PR, merge proven work, and clean up only safe worktrees."

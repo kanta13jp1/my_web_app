@@ -228,12 +228,17 @@ class ElectionAchievement {
       };
 }
 
+int _readOfficialCount(Object? value) =>
+    value is num && !value.isFinite ? 0 : _readInt(value);
+
 class OfficialEndorsementPrefecture {
   final String prefecture;
   final int totalCount;
   final int incumbentCount;
   final int newcomerCount;
   final int formerCount;
+  final int prefecturalCount;
+  final int municipalCount;
 
   const OfficialEndorsementPrefecture({
     required this.prefecture,
@@ -241,15 +246,19 @@ class OfficialEndorsementPrefecture {
     required this.incumbentCount,
     required this.newcomerCount,
     required this.formerCount,
+    this.prefecturalCount = 0,
+    this.municipalCount = 0,
   });
 
   factory OfficialEndorsementPrefecture.fromJson(Map<String, dynamic> json) {
     return OfficialEndorsementPrefecture(
       prefecture: _readString(json['prefecture']),
-      totalCount: _readInt(json['totalCount']),
-      incumbentCount: _readInt(json['incumbentCount']),
-      newcomerCount: _readInt(json['newcomerCount']),
-      formerCount: _readInt(json['formerCount']),
+      totalCount: _readOfficialCount(json['totalCount']),
+      incumbentCount: _readOfficialCount(json['incumbentCount']),
+      newcomerCount: _readOfficialCount(json['newcomerCount']),
+      formerCount: _readOfficialCount(json['formerCount']),
+      prefecturalCount: _readOfficialCount(json['prefecturalCount']),
+      municipalCount: _readOfficialCount(json['municipalCount']),
     );
   }
 
@@ -259,6 +268,8 @@ class OfficialEndorsementPrefecture {
         'incumbentCount': incumbentCount,
         'newcomerCount': newcomerCount,
         'formerCount': formerCount,
+        'prefecturalCount': prefecturalCount,
+        'municipalCount': municipalCount,
       };
 
   bool get hasBreakdown =>
@@ -269,9 +280,21 @@ class OfficialEndorsementPrefecture {
         if (newcomerCount > 0) '新人$newcomerCount',
         if (formerCount > 0) '元職$formerCount',
       ].join(' / ');
+
+  /// 都道府県議会 (prefecturalCount) と 市区町村議会 (municipalCount) の内訳。
+  /// 党公式一覧の選挙名から議会種別を判定できた行のみを集計しているため、
+  /// 合計が [totalCount] を下回ることがある (未分類行は除外)。
+  bool get hasAssemblyBreakdown => prefecturalCount > 0 || municipalCount > 0;
+
+  String get assemblyBreakdownLabel => <String>[
+        if (prefecturalCount > 0) '都道府県議$prefecturalCount',
+        if (municipalCount > 0) '市区町村議$municipalCount',
+      ].join(' / ');
 }
 
 class OfficialEndorsementSnapshot {
+  // Preserve missing/malformed wire counts across cache serialization.
+  final bool sourceCountsComplete;
   final String sourceUrl;
   final String sourceAsOf;
   final String sourceDocumentSha256;
@@ -281,9 +304,12 @@ class OfficialEndorsementSnapshot {
   final int formerCount;
   final int recommendationCount;
   final int prefectureCount;
+  final int prefecturalCount;
+  final int municipalCount;
   final List<OfficialEndorsementPrefecture> prefectures;
 
   const OfficialEndorsementSnapshot({
+    this.sourceCountsComplete = true,
     required this.sourceUrl,
     required this.sourceAsOf,
     required this.sourceDocumentSha256,
@@ -293,11 +319,14 @@ class OfficialEndorsementSnapshot {
     required this.formerCount,
     required this.recommendationCount,
     required this.prefectureCount,
+    this.prefecturalCount = 0,
+    this.municipalCount = 0,
     this.prefectures = const <OfficialEndorsementPrefecture>[],
   });
 
   const OfficialEndorsementSnapshot.empty()
-      : sourceUrl = '',
+      : sourceCountsComplete = false,
+        sourceUrl = '',
         sourceAsOf = '',
         sourceDocumentSha256 = '',
         totalCount = 0,
@@ -306,19 +335,54 @@ class OfficialEndorsementSnapshot {
         formerCount = 0,
         recommendationCount = 0,
         prefectureCount = 0,
+        prefecturalCount = 0,
+        municipalCount = 0,
         prefectures = const <OfficialEndorsementPrefecture>[];
 
   factory OfficialEndorsementSnapshot.fromJson(Map<String, dynamic> json) {
+    const regionalKeys = [
+      'totalCount',
+      'incumbentCount',
+      'newcomerCount',
+      'formerCount',
+      'prefecturalCount',
+      'municipalCount',
+    ];
+    const nationalKeys = [
+      ...regionalKeys,
+      'recommendationCount',
+      'prefectureCount',
+    ];
+    bool validCounts(Map<Object?, Object?> row, List<String> keys) {
+      return keys.every((key) {
+        final value = row[key];
+        return value is int && value >= 0;
+      });
+    }
+
+    final rawRows = json['prefectures'];
+    // Older Edge responses and cached snapshots can already contain fabricated
+    // zero defaults. Only the source validator can attest those were explicit.
+    final complete = json['sourceCountsComplete'] == true &&
+        validCounts(json, nationalKeys) &&
+        rawRows is List &&
+        rawRows.every(
+          (row) =>
+              row is Map<Object?, Object?> && validCounts(row, regionalKeys),
+        );
     return OfficialEndorsementSnapshot(
+      sourceCountsComplete: complete,
       sourceUrl: _readString(json['sourceUrl']),
       sourceAsOf: _readString(json['sourceAsOf']),
       sourceDocumentSha256: _readString(json['sourceDocumentSha256']),
-      totalCount: _readInt(json['totalCount']),
-      incumbentCount: _readInt(json['incumbentCount']),
-      newcomerCount: _readInt(json['newcomerCount']),
-      formerCount: _readInt(json['formerCount']),
-      recommendationCount: _readInt(json['recommendationCount']),
-      prefectureCount: _readInt(json['prefectureCount']),
+      totalCount: _readOfficialCount(json['totalCount']),
+      incumbentCount: _readOfficialCount(json['incumbentCount']),
+      newcomerCount: _readOfficialCount(json['newcomerCount']),
+      formerCount: _readOfficialCount(json['formerCount']),
+      recommendationCount: _readOfficialCount(json['recommendationCount']),
+      prefectureCount: _readOfficialCount(json['prefectureCount']),
+      prefecturalCount: _readOfficialCount(json['prefecturalCount']),
+      municipalCount: _readOfficialCount(json['municipalCount']),
       prefectures: _readMapList(json['prefectures'])
           .map(OfficialEndorsementPrefecture.fromJson)
           .toList(growable: false),
@@ -326,6 +390,7 @@ class OfficialEndorsementSnapshot {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
+        'sourceCountsComplete': sourceCountsComplete,
         'sourceUrl': sourceUrl,
         'sourceAsOf': sourceAsOf,
         'sourceDocumentSha256': sourceDocumentSha256,
@@ -335,6 +400,8 @@ class OfficialEndorsementSnapshot {
         'formerCount': formerCount,
         'recommendationCount': recommendationCount,
         'prefectureCount': prefectureCount,
+        'prefecturalCount': prefecturalCount,
+        'municipalCount': municipalCount,
         'prefectures': prefectures.map((item) => item.toJson()).toList(),
       };
 

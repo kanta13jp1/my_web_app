@@ -399,7 +399,6 @@ def fetch_issue(repo: str, number: int) -> dict[str, Any]:
             str(number),
             "--repo",
             repo,
-            "--comments",
             "--json",
             "number,title,body,labels,url,state,comments,updatedAt",
         ]

@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/note_tasks_page.dart';
 import 'package:my_web_app/services/note_task_service.dart';
+import 'package:my_web_app/services/notification_service.dart';
 
 void main() {
   testWidgets(
@@ -319,6 +322,182 @@ void main() {
       findsNothing,
     );
   });
+  for (final notificationsFailFirst in [false, true]) {
+    testWidgets(
+        'handles early parallel load failure notifications=$notificationsFailFirst',
+        (tester) async {
+      final tasks = Completer<List<NoteTask>>();
+      final notifications = Completer<List<NoteFeatureNotification>>();
+      final repository = _FakeNoteTaskRepository(const <NoteTask>[]);
+      repository.tasksOverride = () => tasks.future;
+      repository.notificationsOverride = () => notifications.future;
+      await tester.pumpWidget(
+        MaterialApp(home: NoteTasksPage(repository: repository)),
+      );
+      if (notificationsFailFirst) {
+        notifications.completeError(StateError('synthetic early failure'));
+      } else {
+        tasks.completeError(StateError('synthetic early failure'));
+      }
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+
+      if (notificationsFailFirst) {
+        tasks.complete(<NoteTask>[]);
+      } else {
+        notifications.complete(<NoteFeatureNotification>[]);
+      }
+      await tester.pumpAndSettle();
+      expect(find.textContaining('synthetic early failure'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+  for (final olderFails in [false, true]) {
+    testWidgets('newest task reload wins olderFails=$olderFails',
+        (tester) async {
+      final repository = _FakeNoteTaskRepository(const <NoteTask>[]);
+      await tester.pumpWidget(
+        MaterialApp(home: NoteTasksPage(repository: repository)),
+      );
+      await tester.pumpAndSettle();
+      final older = Completer<List<NoteTask>>();
+      final newer = Completer<List<NoteTask>>();
+      var calls = 0;
+      repository.tasksOverride =
+          () => calls++ == 0 ? older.future : newer.future;
+      final refresh = tester
+          .widget<IconButton>(
+            find.byKey(const Key('note_tasks_page_refresh')),
+          )
+          .onPressed!;
+      refresh();
+      refresh();
+      newer.complete([
+        _task(
+          id: 'newest',
+          title: 'Latest task',
+          noteId: 1,
+          noteTitle: 'Latest',
+        ),
+      ]);
+      await tester.pumpAndSettle();
+      expect(find.text('Latest task'), findsOneWidget);
+
+      if (olderFails) {
+        older.completeError(StateError('obsolete failure'));
+      } else {
+        older.complete(<NoteTask>[]);
+      }
+      await tester.pumpAndSettle();
+      expect(find.text('Latest task'), findsOneWidget);
+      expect(find.textContaining('obsolete failure'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
+  testWidgets('background reload clears overlapping foreground spinner',
+      (tester) async {
+    final repository = _FakeNoteTaskRepository([
+      _task(
+        id: 'overlap',
+        title: 'Initial task',
+        noteId: 1,
+        noteTitle: 'Initial',
+      ),
+    ]);
+    await tester.pumpWidget(
+      MaterialApp(home: NoteTasksPage(repository: repository)),
+    );
+    await tester.pumpAndSettle();
+    final complete = tester
+        .widget<Checkbox>(
+          find.byKey(const ValueKey('note_tasks_page_checkbox_overlap')),
+        )
+        .onChanged!;
+    final older = Completer<List<NoteTask>>();
+    var calls = 0;
+    repository.tasksOverride = () => calls++ == 0
+        ? older.future
+        : Future<List<NoteTask>>.value(<NoteTask>[]);
+    await tester.tap(find.byKey(const Key('note_tasks_page_refresh')));
+    complete(true);
+    await tester.pumpAndSettle();
+
+    expect(repository.completedChanges, <(String, bool)>[('overlap', true)]);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('未完了のタスクはありません。'), findsOneWidget);
+    older.complete(<NoteTask>[]);
+    await tester.pumpAndSettle();
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('disposed task page stops remaining reminder scheduling',
+      (tester) async {
+    final service = _DelayedReminderService();
+    final repository = _FakeNoteTaskRepository(
+      const <NoteTask>[],
+      notifications: [
+        for (final id in ['first', 'second'])
+          _notification(
+            id: id,
+            kind: NoteFeatureNotificationKind.taskReminder,
+            title: id,
+            message: 'Synthetic reminder',
+            noteId: 1,
+            notifyAt: DateTime.now().add(const Duration(days: 1)),
+          ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NoteTasksPage(
+          repository: repository,
+          notificationService: service,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(service.scheduledKeys.length, 1);
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    service.pending.complete();
+    await tester.pumpAndSettle();
+    expect(service.scheduledKeys.length, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('new reload stops obsolete reminder scheduling', (tester) async {
+    final service = _DelayedReminderService();
+    final repository = _FakeNoteTaskRepository(
+      const <NoteTask>[],
+      notifications: [
+        for (final id in ['first', 'second'])
+          _notification(
+            id: id,
+            kind: NoteFeatureNotificationKind.taskReminder,
+            title: id,
+            message: 'Synthetic reminder',
+            noteId: 1,
+            notifyAt: DateTime.now().add(const Duration(days: 1)),
+          ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NoteTasksPage(
+          repository: repository,
+          notificationService: service,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(service.scheduledKeys.length, 1);
+    repository.notificationsOverride = () async => <NoteFeatureNotification>[];
+    await tester.tap(find.byKey(const Key('note_tasks_page_refresh')));
+    await tester.pumpAndSettle();
+    service.pending.complete();
+    await tester.pumpAndSettle();
+    expect(service.scheduledKeys.length, 1);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _FakeNoteTaskRepository
@@ -330,6 +509,8 @@ class _FakeNoteTaskRepository
   })  : _tasks = List<NoteTask>.from(tasks),
         _notifications = List<NoteFeatureNotification>.from(notifications);
 
+  Future<List<NoteTask>> Function()? tasksOverride;
+  Future<List<NoteFeatureNotification>> Function()? notificationsOverride;
   List<NoteTask> _tasks;
   List<NoteFeatureNotification> _notifications;
   final List<(String, bool)> completedChanges = <(String, bool)>[];
@@ -337,7 +518,10 @@ class _FakeNoteTaskRepository
   final List<String> dismissedIds = <String>[];
 
   @override
-  Future<List<NoteTask>> loadAllTasks() async => List<NoteTask>.from(_tasks);
+  Future<List<NoteTask>> loadAllTasks() async {
+    if (tasksOverride != null) return tasksOverride!();
+    return List<NoteTask>.from(_tasks);
+  }
 
   @override
   Future<List<NoteTask>> loadTasks({required int noteId}) async {
@@ -348,6 +532,7 @@ class _FakeNoteTaskRepository
 
   @override
   Future<List<NoteFeatureNotification>> loadNotifications() async {
+    if (notificationsOverride != null) return notificationsOverride!();
     return List<NoteFeatureNotification>.from(_notifications);
   }
 
@@ -519,4 +704,20 @@ NoteTask _task({
     assigneeEmail: assigneeEmail,
     assigneeDisplayName: assigneeDisplayName,
   );
+}
+
+class _DelayedReminderService extends NotificationService {
+  final pending = Completer<void>();
+  final scheduledKeys = <String>[];
+
+  @override
+  Future<void> scheduleNoteFeatureReminder({
+    required String sourceKey,
+    required String title,
+    required String body,
+    required DateTime notifyAt,
+  }) async {
+    scheduledKeys.add(sourceKey);
+    await pending.future;
+  }
 }

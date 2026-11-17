@@ -517,4 +517,48 @@ begin
 end
 $$;
 
+-- Native note reminders must become active again after completion and rescheduling.
+do $$
+declare
+  v_note_id bigint;
+  v_reminder_id uuid;
+  v_notification_id uuid;
+  v_next_due timestamptz := clock_timestamp() + interval '2 days';
+begin
+  insert into public.notes (user_id, title, content)
+  values (auth.uid(), 'Native reminder reactivation fixture', 'Synthetic fixture')
+  returning id into v_note_id;
+
+  insert into public.note_reminders (user_id, note_id, remind_at)
+  values (auth.uid(), v_note_id, clock_timestamp() + interval '1 day')
+  returning id into v_reminder_id;
+
+  select id into strict v_notification_id
+  from public.note_feature_notifications
+  where note_reminder_id = v_reminder_id and cancelled_at is null;
+
+  update public.note_reminders set completed_at = clock_timestamp()
+  where id = v_reminder_id;
+  if not exists (
+    select 1 from public.note_feature_notifications
+    where id = v_notification_id and cancelled_at is not null
+  ) then
+    raise exception 'Completed note reminder notification was not cancelled.';
+  end if;
+
+  update public.note_reminders
+  set completed_at = null, remind_at = v_next_due
+  where id = v_reminder_id;
+  if not exists (
+    select 1 from public.note_feature_notifications
+    where id = v_notification_id and cancelled_at is null
+      and dismissed_at is null and notify_at = v_next_due
+  ) then
+    raise exception 'Rescheduled note reminder notification remained cancelled.';
+  end if;
+
+  delete from public.notes where id = v_note_id;
+end
+$$;
+
 reset role;
