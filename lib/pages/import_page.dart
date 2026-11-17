@@ -306,6 +306,9 @@ class _ImportPageState extends State<ImportPage> {
           userId: user.id,
           exportBytes: bytes,
           preview: preview,
+          sourceContext: EvernoteMigrationSourceContext(
+            notebookName: preview.fileName,
+          ),
         );
         result = ImportExecutionResult(
           insertedCount: evernoteResult.importedNoteCount,
