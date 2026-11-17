@@ -27498,6 +27498,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         Icons.account_balance_wallet_outlined,
       AssetManagementInsightActionType.debtSpiralWarning =>
         Icons.trending_up_rounded,
+      AssetManagementInsightActionType.overdueIncome =>
+        Icons.schedule_send_outlined,
     };
   }
 
