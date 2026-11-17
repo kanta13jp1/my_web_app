@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
+import 'package:my_web_app/services/asset_debt_trend_analyzer.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 
 /// アクションアイテムの「対処できる場所」へのジャンプリンク文言マッピングを検証する。
@@ -134,14 +135,12 @@ void main() {
 
   group('unreconciledBalanceDiffBreakdown', () {
     test('newBorrowing かつ正の金額の候補のみを抽出して合計内訳として返す', () {
-      final report = AssetDebtDisciplineReport(
-        windowDays: 28,
-        zeroNewBorrowingAchieved: false,
-        newUsageRepaymentAchieved: false,
+      const report = AssetDebtDisciplineReport(
         hasPriorMonthData: true,
         totalNewBorrowing: 67013,
-        totalNewUsageRepaymentShortfall: 10000,
-        newBorrowingViolations: const <AssetDebtDisciplineViolation>[
+        totalCarriedOver: 10000,
+        monitoredAccountCount: 3,
+        newBorrowingViolations: <AssetDebtDisciplineViolation>[
           AssetDebtDisciplineViolation(
             type: AssetDebtDisciplineViolationType.newBorrowing,
             severity: AssetDebtTrendSeverity.critical,
@@ -165,7 +164,7 @@ void main() {
             action: 'action',
           ),
         ],
-        revolvingViolations: const <AssetDebtDisciplineViolation>[
+        revolvingCardViolations: <AssetDebtDisciplineViolation>[
           AssetDebtDisciplineViolation(
             type: AssetDebtDisciplineViolationType.revolvingCard,
             severity: AssetDebtTrendSeverity.warning,
