@@ -27021,7 +27021,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           ),
                           onPressed: () =>
                               _toggleIncomeReceived(incomeId, true),
-                          icon: const Icon(Icons.check_circle_outline, size: 16),
+                          icon:
+                              const Icon(Icons.check_circle_outline, size: 16),
                           label: const Text('着金を確認した（受取済みにする）'),
                         ),
                       if (canJump)
