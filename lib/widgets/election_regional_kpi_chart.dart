@@ -805,78 +805,79 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                   headingRowColor:
                       WidgetStateProperty.all(const Color(0xFFECEFF1)),
                   columns: [
-            DataColumn(label: const Text('公認内定期限'), onSort: _onSort),
-            DataColumn(
-              label: const Text('対象県連数'),
-              numeric: true,
-              onSort: _onSort,
-            ),
-            DataColumn(
-              label: const Text('確定済み'),
-              numeric: true,
-              onSort: _onSort,
-            ),
-            DataColumn(
-              label: const Text('未確定'),
-              numeric: true,
-              onSort: _onSort,
-            ),
-            DataColumn(
-              label: const Text('進捗率'),
-              numeric: true,
-              onSort: _onSort,
-            ),
-          ],
-          rows: sortedMonths.map((month) {
-            final s = stats[month]!;
-            final total = s['total']!;
-            final confirmed = s['confirmed']!;
-            final unconfirmed = total - confirmed;
-            final progress = total > 0
-                ? (confirmed / total * 100).toStringAsFixed(1)
-                : '0.0';
+                    DataColumn(label: const Text('公認内定期限'), onSort: _onSort),
+                    DataColumn(
+                      label: const Text('対象県連数'),
+                      numeric: true,
+                      onSort: _onSort,
+                    ),
+                    DataColumn(
+                      label: const Text('確定済み'),
+                      numeric: true,
+                      onSort: _onSort,
+                    ),
+                    DataColumn(
+                      label: const Text('未確定'),
+                      numeric: true,
+                      onSort: _onSort,
+                    ),
+                    DataColumn(
+                      label: const Text('進捗率'),
+                      numeric: true,
+                      onSort: _onSort,
+                    ),
+                  ],
+                  rows: sortedMonths.map((month) {
+                    final s = stats[month]!;
+                    final total = s['total']!;
+                    final confirmed = s['confirmed']!;
+                    final unconfirmed = total - confirmed;
+                    final progress = total > 0
+                        ? (confirmed / total * 100).toStringAsFixed(1)
+                        : '0.0';
 
-            return DataRow(
-              onSelectChanged: (_) => _showMonthlyDetailsDialog(context, month),
-              color: unconfirmed > 0
-                  ? WidgetStateProperty.all(const Color(0xFFFFF8E1))
-                  : (total > 0 && unconfirmed == 0)
-                      ? WidgetStateProperty.all(Colors.green.shade50)
-                      : null,
-              cells: [
-                DataCell(
-                  Text(
-                    month,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-                DataCell(Text(total.toString())),
-                DataCell(
-                  Text(
-                    confirmed.toString(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    unconfirmed.toString(),
-                    style: TextStyle(
-                      color: unconfirmed > 0 ? Colors.red : null,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-                DataCell(Text('$progress%')),
-              ],
-            );
-          }).toList(),
+                    return DataRow(
+                      onSelectChanged: (_) =>
+                          _showMonthlyDetailsDialog(context, month),
+                      color: unconfirmed > 0
+                          ? WidgetStateProperty.all(const Color(0xFFFFF8E1))
+                          : (total > 0 && unconfirmed == 0)
+                              ? WidgetStateProperty.all(Colors.green.shade50)
+                              : null,
+                      cells: [
+                        DataCell(
+                          Text(
+                            month,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                        DataCell(Text(total.toString())),
+                        DataCell(
+                          Text(
+                            confirmed.toString(),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            unconfirmed.toString(),
+                            style: TextStyle(
+                              color: unconfirmed > 0 ? Colors.red : null,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                        DataCell(Text('$progress%')),
+                      ],
+                    );
+                  }).toList(),
                 ),
               ),
             );
