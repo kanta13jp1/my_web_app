@@ -63,6 +63,7 @@ class _NoteTasksPanelState extends State<NoteTasksPanel> {
     required String successMessage,
   }) async {
     if (_isMutating) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
     setState(() {
       _isMutating = true;
       _error = null;
@@ -74,7 +75,7 @@ class _NoteTasksPanelState extends State<NoteTasksPanel> {
       setState(() {
         _tasks = tasks;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger?.showSnackBar(
         SnackBar(content: Text(successMessage)),
       );
     } catch (error) {
