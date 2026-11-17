@@ -321,16 +321,26 @@ class SupabaseNoteNavigationRepository implements NoteNavigationRepository {
     required String name,
     required String query,
   }) async {
-    await _client.from('note_saved_searches').update(<String, dynamic>{
-      'name': _validatedText(name, field: '名前', maximum: 200),
-      'query': _validatedText(query, field: '検索条件', maximum: 4096),
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', savedSearch.id);
+    final userId = _requireUserId();
+    await _client
+        .from('note_saved_searches')
+        .update(<String, dynamic>{
+          'name': _validatedText(name, field: '名前', maximum: 200),
+          'query': _validatedText(query, field: '検索条件', maximum: 4096),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', savedSearch.id)
+        .eq('user_id', userId);
   }
 
   @override
   Future<void> deleteSavedSearch(NoteSavedSearch savedSearch) async {
-    await _client.from('note_saved_searches').delete().eq('id', savedSearch.id);
+    final userId = _requireUserId();
+    await _client
+        .from('note_saved_searches')
+        .delete()
+        .eq('id', savedSearch.id)
+        .eq('user_id', userId);
   }
 
   @override
