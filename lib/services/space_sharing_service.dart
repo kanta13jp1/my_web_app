@@ -469,7 +469,8 @@ class SupabaseSpaceSharingDataSource implements SpaceSharingDataSource {
       final response = await ordered.range(from, from + _pageSize - 1);
       final page = List<Map<String, dynamic>>.from(response);
       result.addAll(page);
-      if (page.isEmpty || page.length < _pageSize) break;
+      if (page.isEmpty) break;
+      // PostgREST can return fewer rows than requested without reaching EOF.
       from += page.length;
     }
     return result;

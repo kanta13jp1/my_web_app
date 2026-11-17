@@ -293,8 +293,9 @@ class SupabaseNoteNavigationRepository implements NoteNavigationRepository {
             .order('id')
             .range(offset, offset + pageSize - 1),
       );
+      if (page.isEmpty) break;
       rows.addAll(page);
-      if (page.isEmpty || page.length < pageSize) break;
+      // PostgREST can return fewer rows than requested without reaching EOF.
       offset += page.length;
     }
     return rows;
