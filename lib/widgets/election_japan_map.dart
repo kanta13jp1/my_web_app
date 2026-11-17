@@ -908,6 +908,31 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     return '$dateKey|${electionName.trim()}';
   }
 
+  Widget _buildScrollableBreakdownList({
+    required BuildContext context,
+    required int itemCount,
+    required double maxHeight,
+    required IndexedWidgetBuilder itemBuilder,
+  }) {
+    final theme = Theme.of(context);
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: Scrollbar(
+        child: ListView.separated(
+          shrinkWrap: true,
+          primary: false,
+          padding: const EdgeInsets.only(right: 8),
+          itemCount: itemCount,
+          separatorBuilder: (_, __) => Divider(
+            height: 14,
+            color: theme.colorScheme.outlineVariant,
+          ),
+          itemBuilder: itemBuilder,
+        ),
+      ),
+    );
+  }
+
   Widget _buildScheduleBreakdown(
     BuildContext context,
     List<LocalElectionScheduleEntry> schedules,
@@ -916,22 +941,34 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '予定選挙内訳',
-          style: theme.textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            height: 1.4,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '予定選挙内訳',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            Text(
+              '${schedules.length}件',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
-        for (var index = 0; index < schedules.length; index++) ...[
-          if (index > 0)
-            Divider(
-              height: 14,
-              color: theme.colorScheme.outlineVariant,
-            ),
-          _ScheduleBreakdownRow(schedule: schedules[index]),
-        ],
+        _buildScrollableBreakdownList(
+          context: context,
+          itemCount: schedules.length,
+          maxHeight: 340,
+          itemBuilder: (_, index) =>
+              _ScheduleBreakdownRow(schedule: schedules[index]),
+        ),
       ],
     );
   }
@@ -977,14 +1014,13 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
           ],
         ),
         const SizedBox(height: 8),
-        for (var index = 0; index < entries.length; index++) ...[
-          if (index > 0)
-            Divider(
-              height: 14,
-              color: theme.colorScheme.outlineVariant,
-            ),
-          _PostConventionBreakdownRow(entry: entries[index]),
-        ],
+        _buildScrollableBreakdownList(
+          context: context,
+          itemCount: entries.length,
+          maxHeight: 280,
+          itemBuilder: (_, index) =>
+              _PostConventionBreakdownRow(entry: entries[index]),
+        ),
       ],
     );
   }
