@@ -134,6 +134,7 @@ class _RecurringFixedCostEditorDialogState
   late final TextEditingController _nameController;
   late final TextEditingController _amountController;
   late final TextEditingController _dayController;
+  late final TextEditingController _lastBillingController;
   late AssetRecurringFixedCostCadence _cadence;
   late AssetRecurringFixedCostCategory _category;
   late AssetSubscriptionBillingGateway _gateway;
@@ -163,6 +164,11 @@ class _RecurringFixedCostEditorDialogState
     _dayController = TextEditingController(
       text: initial == null ? '' : initial.paymentDay.toString(),
     );
+    _lastBillingController = TextEditingController(
+      text: initial?.lastBillingDate == null
+          ? ''
+          : AssetRecurringFixedCost.billingDateLabel(initial!.lastBillingDate!),
+    );
     _cadence = initial?.cadence ?? AssetRecurringFixedCostCadence.monthly;
     // 渡された候補に無い振替元IDは保持しない (古い参照を残さない)。
     final ids = widget.sourceAccounts.map((option) => option.id).toSet();
@@ -185,6 +191,7 @@ class _RecurringFixedCostEditorDialogState
     _nameController.dispose();
     _amountController.dispose();
     _dayController.dispose();
+    _lastBillingController.dispose();
     super.dispose();
   }
 
@@ -215,6 +222,9 @@ class _RecurringFixedCostEditorDialogState
       name: _nameController.text.trim(),
       amount: amountJpy,
       paymentDay: int.parse(_dayController.text.trim()),
+      lastBillingDate: AssetRecurringFixedCost.parseBillingDate(
+        _lastBillingController.text.trim(),
+      ),
       cadence: _cadence,
       sourceAccountId: _sourceAccountId,
       category: _category,
@@ -448,6 +458,25 @@ class _RecurringFixedCostEditorDialogState
                       final day = int.tryParse((value ?? '').trim());
                       if (day == null || day < 1 || day > 31) {
                         return '1〜31 の日付を入力してください';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    key: const Key('recurring_last_billing_date'),
+                    controller: _lastBillingController,
+                    decoration: const InputDecoration(
+                      labelText: '最終請求日 (任意・YYYY-MM-DD)',
+                      helperText: '当日分を含み、以後の予定のみ停止。過去の未払いは保持します。',
+                    ),
+                    keyboardType: TextInputType.datetime,
+                    validator: (value) {
+                      final text = (value ?? '').trim();
+                      if (text.isNotEmpty &&
+                          AssetRecurringFixedCost.parseBillingDate(text) ==
+                              null) {
+                        return '実在する日付をYYYY-MM-DD形式で入力してください';
                       }
                       return null;
                     },

@@ -494,6 +494,13 @@ class AssetLiabilityPlanningService {
 
     return AssetLiabilityWorkbook(
       baseDate: baseDate,
+      recurringFixedCosts:
+          List<AssetRecurringFixedCost>.unmodifiable(recurringFixedCosts),
+      recurringBillingDates: <String, DateTime>{
+        for (final cost in recurringFixedCosts)
+          cost.id:
+              _resolveCyclePaymentDate(baseDate, salaryDay, cost.paymentDay),
+      },
       accounts: accounts,
       debtMasterRows: debtMasterRows,
       repaymentPriorityRows: repaymentPriorityRows,
@@ -1969,6 +1976,7 @@ class AssetLiabilityPlanningService {
       ..sort((a, b) => a.projectedBalance.compareTo(b.projectedBalance));
 
     final suggestions = <AssetLiabilityTransferSuggestion>[];
+    final allocatedByDonor = <String, double>{};
     for (final shortage in shortages) {
       // 移動元は「見込み残高に余裕がある」だけでは不十分で、**今この口座に
       // 実際にいくらあるか**で上限を掛ける必要がある。projectedBalance は
@@ -1983,12 +1991,14 @@ class AssetLiabilityPlanningService {
         if (candidate.accountId == shortage.accountId) {
           continue;
         }
-        final donorSurplus = candidate.projectedBalance - _transferDonorReserve;
+        final allocated = allocatedByDonor[candidate.accountId] ?? 0;
+        final donorSurplus =
+            candidate.projectedBalance - _transferDonorReserve - allocated;
         if (donorSurplus <= 0) {
           continue;
         }
         final movableNow =
-            candidate.currentBalance - candidate.pendingTransferOut;
+            candidate.currentBalance - candidate.pendingTransferOut - allocated;
         if (movableNow <= 0) {
           continue;
         }
@@ -2003,6 +2013,8 @@ class AssetLiabilityPlanningService {
       if (donor == null || amount <= 0) {
         continue;
       }
+      allocatedByDonor[donor.accountId] =
+          (allocatedByDonor[donor.accountId] ?? 0) + amount;
       suggestions.add(
         AssetLiabilityTransferSuggestion(
           fromAccountId: donor.accountId,
@@ -2207,8 +2219,8 @@ class AssetLiabilityPlanningService {
     })>[];
     for (final cost in recurringFixedCosts) {
       if (cost.amount <= 0 ||
-          !cost.appliesToMonth(
-            _cycleTargetMonth(baseDate, salaryDay, cost.paymentDay),
+          !cost.appliesToPaymentDate(
+            _resolveCyclePaymentDate(baseDate, salaryDay, cost.paymentDay),
           )) {
         continue;
       }

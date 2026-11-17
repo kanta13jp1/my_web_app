@@ -30,13 +30,8 @@ class EchoPumpScene extends StatelessWidget {
         child: Stack(
           children: [
             Positioned.fill(
-              child: Image.asset(
-                'assets/echo_pump/opening_background.png',
-                fit: BoxFit.cover,
-                alignment: Alignment.centerRight,
-                excludeFromSemantics: true,
-                errorBuilder: (context, error, stackTrace) => const SizedBox(),
-              ),
+              child:
+                  EchoPumpRoomBackdrop(room: game.room, drained: game.drained),
             ),
             const Positioned.fill(
               child: DecoratedBox(
@@ -376,4 +371,179 @@ class _PassagesPainter extends CustomPainter {
       oldDelegate.bounds != bounds ||
       oldDelegate.current != current ||
       oldDelegate.sealed != sealed;
+}
+
+/// Original vector scenery remains available without downloading room images.
+class EchoPumpRoomBackdrop extends StatelessWidget {
+  const EchoPumpRoomBackdrop({
+    super.key,
+    required this.room,
+    this.drained = false,
+  });
+  final PumpRoom room;
+  final bool drained;
+
+  static const features = <PumpRoom, String>{
+    PumpRoom.control: '配電盤と計器の管理室',
+    PumpRoom.hall: '奥へ続く扉と配管の中央廊下',
+    PumpRoom.loading: '木箱と搬入口の搬入区画',
+    PumpRoom.workshop: '工具壁と作業台の工具庫',
+    PumpRoom.pump: '大型配管と排水機のポンプ室',
+    PumpRoom.inspection: '水路と格子床の点検槽',
+    PumpRoom.exit: '雨と外光が差す出口',
+  };
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        image: true,
+        label: '部屋の背景：${features[room]}',
+        child: ExcludeSemantics(
+          child: CustomPaint(painter: _RoomBackdropPainter(room, drained)),
+        ),
+      );
+}
+
+class _RoomBackdropPainter extends CustomPainter {
+  const _RoomBackdropPainter(this.room, this.drained);
+  final PumpRoom room;
+  final bool drained;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(size.width / 320, size.height / 180);
+    const bounds = Rect.fromLTWH(0, 0, 320, 180);
+    final tint = switch (room) {
+      PumpRoom.control => const Color(0xFF365B57),
+      PumpRoom.hall => const Color(0xFF253F55),
+      PumpRoom.loading => const Color(0xFF65533B),
+      PumpRoom.workshop => const Color(0xFF4C5554),
+      PumpRoom.pump => const Color(0xFF20536A),
+      PumpRoom.inspection => const Color(0xFF284A3E),
+      PumpRoom.exit => const Color(0xFF746746),
+    };
+    canvas.drawRect(
+      bounds,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [tint, const Color(0xFF071116)],
+        ).createShader(bounds),
+    );
+    final metal = Paint()..color = const Color(0xFF567578);
+    final dark = Paint()..color = const Color(0xFF101F25);
+    final light = Paint()..color = const Color(0xFF91C7B5);
+    final line = Paint()
+      ..color = const Color(0xFF65848A)
+      ..strokeWidth = 1;
+    for (var x = -160.0; x < 600; x += 55) {
+      canvas.drawLine(const Offset(160, 85), Offset(x, 180), line);
+    }
+    for (final y in [114.0, 137.0, 165.0]) {
+      canvas.drawLine(Offset(0, y), Offset(320, y), line);
+    }
+    switch (room) {
+      case PumpRoom.control:
+        for (var x = 158.0; x < 310; x += 45) {
+          canvas.drawRect(Rect.fromLTWH(x, 16, 38, 101), metal);
+          canvas.drawRect(Rect.fromLTWH(x + 4, 22, 30, 22), dark);
+          for (var y = 53.0; y < 108; y += 15) {
+            canvas.drawCircle(Offset(x + 10, y), 3, light);
+            canvas.drawLine(Offset(x + 19, y), Offset(x + 30, y), line);
+          }
+        }
+      case PumpRoom.hall:
+        for (var i = 0; i < 5; i++) {
+          final inset = i * 22.0;
+          canvas.drawRect(
+            Rect.fromLTRB(inset, inset * .45, 320 - inset, 150 - inset * .3),
+            Paint()
+              ..color = const Color(0xFF567578)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 3,
+          );
+        }
+        canvas.drawRect(const Rect.fromLTWH(143, 49, 35, 61), dark);
+        canvas.drawCircle(const Offset(172, 83), 2, light);
+      case PumpRoom.loading:
+        for (final (x, y, w, h) in [
+          (170.0, 62.0, 55.0, 52.0),
+          (226.0, 81.0, 62.0, 48.0),
+          (184.0, 25.0, 42.0, 37.0),
+        ]) {
+          final box = Rect.fromLTWH(x, y, w, h);
+          canvas.drawRect(box, Paint()..color = const Color(0xFF927A52));
+          canvas.drawRect(
+            box.deflate(4),
+            Paint()
+              ..color = const Color(0xFF493D2E)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 3,
+          );
+          canvas.drawLine(box.topLeft, box.bottomRight, line);
+          canvas.drawLine(box.topRight, box.bottomLeft, line);
+        }
+      case PumpRoom.workshop:
+        canvas.drawRect(const Rect.fromLTWH(155, 18, 150, 73), metal);
+        for (var x = 165.0; x < 300; x += 22) {
+          canvas.drawLine(
+            Offset(x, 33),
+            Offset(x, 77),
+            Paint()
+              ..color = const Color(0xFFD0C5A0)
+              ..strokeWidth = 4,
+          );
+          canvas.drawCircle(Offset(x, 32), 6, dark);
+        }
+        canvas.drawRect(const Rect.fromLTWH(149, 95, 160, 8), metal);
+        canvas.drawRect(const Rect.fromLTWH(158, 103, 7, 34), metal);
+        canvas.drawRect(const Rect.fromLTWH(291, 103, 7, 34), metal);
+      case PumpRoom.pump:
+        for (var x = 166.0; x < 310; x += 64) {
+          canvas.drawRRect(
+            RRect.fromRectAndRadius(
+              Rect.fromLTWH(x, 0, 35, 139),
+              const Radius.circular(12),
+            ),
+            metal,
+          );
+          for (var y = 18.0; y < 140; y += 32) {
+            canvas.drawRect(Rect.fromLTWH(x - 6, y, 47, 7), dark);
+          }
+        }
+        canvas.drawOval(const Rect.fromLTWH(201, 103, 77, 40), dark);
+      case PumpRoom.inspection:
+        canvas.drawRect(const Rect.fromLTWH(160, 30, 137, 129), dark);
+        canvas.drawRect(
+          Rect.fromLTWH(164, drained ? 137 : 81, 129, drained ? 17 : 77),
+          Paint()..color = const Color(0xFF34666B),
+        );
+        for (var y = 35.0; y < 160; y += 14) {
+          canvas.drawLine(Offset(156, y), Offset(300, y), line);
+        }
+        for (var x = 165.0; x < 300; x += 18) {
+          canvas.drawLine(Offset(x, 29), Offset(x, 160), line);
+        }
+      case PumpRoom.exit:
+        canvas.drawRect(const Rect.fromLTWH(158, 18, 123, 132), metal);
+        canvas.drawRect(
+          const Rect.fromLTWH(164, 24, 111, 126),
+          Paint()
+            ..shader = const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFBDD8DB), Color(0xFFB9A36D)],
+            ).createShader(bounds),
+        );
+        for (var x = 170.0; x < 275; x += 12) {
+          canvas.drawLine(Offset(x, 27), Offset(x - 7, 110), line);
+        }
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _RoomBackdropPainter oldDelegate) =>
+      oldDelegate.room != room || oldDelegate.drained != drained;
 }

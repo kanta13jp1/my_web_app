@@ -64,6 +64,7 @@ class BehaviorReviewService {
         WasteTrackingService.extractWasteCategory(rawDescription);
 
     final title = switch (actionType) {
+      'borrowing' => '借入受取 ${_formatYen(amount)}',
       'conquer' => '収入 ${_formatYen(amount)}',
       'transfer' => '振替 ${_formatYen(amount)}',
       _ when wasteCategory != null => '浪費・$wasteCategory ${_formatYen(amount)}',

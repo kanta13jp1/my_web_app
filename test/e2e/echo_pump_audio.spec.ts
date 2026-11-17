@@ -36,6 +36,7 @@ test.afterEach(async ({ page }, info) => {
   await info.attach('uncaught-page-errors', {
     body: JSON.stringify(errors), contentType: 'application/json',
   });
+  await info.attach('audio-observation', {body: JSON.stringify(await page.evaluate(() => ({plays:(window as any).__echoAudioAudit.plays,media:(window as any).__echoAudioAudit.media.map((m: HTMLMediaElement) => ({src:m.currentSrc||m.src,paused:m.paused,ended:m.ended,loop:m.loop,time:m.currentTime}))}))), contentType:'application/json'});
   expect(errors).toEqual([]);
 });
 
@@ -174,4 +175,23 @@ test('inventory waits for delayed in-flight footsteps, stays quiet, then resumes
     await expect.poll(() => page.evaluate(() => (window as any).__echoAudioAudit.plays.filter((src: string) => src.includes('/step.wav')).length)).toBeGreaterThan(beforeMove);
   }
 
+});
+
+test('door sounds play during movement and mute suppresses later transitions', async ({ page }, info) => {
+  const button = (name: string) => page.getByRole('button', {name, exact: true});
+  await button('音をON').click();
+  await expect.poll(() => hasPlayed(page, 'bgm')).toBe(true);
+  await enterGame(page);
+  await button('中央廊下へ').click();
+  await expect.poll(() => hasPlayed(page, 'doorOpen')).toBe(true);
+  await expect.poll(() => hasPlayed(page, 'doorClose')).toBe(true);
+  await expect(button('演出をスキップ')).toHaveCount(0);
+  await page.screenshot({path: info.outputPath('door-audio-arrived.png')});
+  await button('音をOFF').click();
+  await expect.poll(() => page.evaluate(() => (window as any).__echoAudioAudit.media.every((m: HTMLMediaElement) => m.paused || m.ended || !m.getAttribute('src')))).toBe(true);
+  const before = await page.evaluate(() => (window as any).__echoAudioAudit.plays.length);
+  await button('管理室へ').click();
+  await expect(button('演出をスキップ')).toHaveCount(0);
+  await page.waitForTimeout(400);
+  expect(await page.evaluate(() => (window as any).__echoAudioAudit.plays.length)).toBe(before);
 });

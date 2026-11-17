@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:my_web_app/domain/models/photo_action_advice.dart';
 import 'package:my_web_app/pages/real_world_danshari_page.dart';
+import 'package:my_web_app/pages/user_manual_page.dart';
 import 'package:my_web_app/services/photo_action_advisor_service.dart';
 import 'package:my_web_app/services/theme_service.dart';
 import 'package:my_web_app/view_models/photo_action_advisor_view_model.dart';
@@ -52,16 +53,19 @@ void main() {
     when(themeService.isDarkMode).thenReturn(false);
   });
 
-  Widget buildPage(PhotoActionAdvisorViewModel viewModel) {
+  Widget buildPage(
+    PhotoActionAdvisorViewModel viewModel, {
+    bool realManual = false,
+  }) {
     addTearDown(viewModel.dispose);
     return ChangeNotifierProvider<ThemeService>.value(
       value: themeService,
       child: MaterialApp(
         home: RealWorldDanshariPage(viewModel: viewModel),
         routes: {
-          '/user-manual': (_) => const Scaffold(
-                body: Text('リアル断捨離マニュアル'),
-              ),
+          '/user-manual': (_) => realManual
+              ? const UserManualPage()
+              : const Scaffold(body: Text('リアル断捨離マニュアル')),
         },
       ),
     );
@@ -133,6 +137,29 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('リアル断捨離マニュアル'), findsOneWidget);
+  });
+
+  testWidgets('result help opens the actual user manual', (tester) async {
+    await tester.pumpWidget(
+      buildPage(
+        PhotoActionAdvisorViewModel(
+          imagePicker: _FakePicker(image: _image),
+          analyzer: _QueueAnalyzer([_advice]),
+        ),
+        realManual: true,
+      ),
+    );
+    await tester.ensureVisible(find.text('写真をアップロード'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('写真をアップロード'));
+    await tester.pumpAndSettle();
+    final helpLink = find.byKey(const Key('photo-action-help-link'));
+    await tester.ensureVisible(helpLink);
+    await tester.pumpAndSettle();
+    await tester.tap(helpLink);
+    await tester.pumpAndSettle();
+    expect(find.byType(UserManualPage), findsOneWidget);
+    expect(find.text('自分株式会社 ユーザーマニュアル'), findsOneWidget);
   });
 
   testWidgets('keeps the image and retries after an analysis failure',

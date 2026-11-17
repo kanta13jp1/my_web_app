@@ -11,6 +11,51 @@ from unittest.mock import patch
 from ci_job_summary import CHECKS, main, render_summary
 
 
+def workflow_step_ids(workflow):
+    # Style-scoped block scanner, not a general YAML parser: jobs at column 0,
+    # job keys at 2 spaces, steps at 4, list items at 6, step fields at 8.
+    # Track every level so a job env/output key cannot impersonate a step ID.
+    # Flow mappings, aliases, and escaped scalars need a real YAML parser.
+    # PyYAML is installed by a different workflow, not this early CI step.
+    id_pattern = re.compile(
+        r"^(?: {8}| {6}- )id:[ \t]+(?P<quote>['\"]?)"
+        r"(?P<id>[A-Za-z_][A-Za-z0-9_-]*)(?P=quote)(?:[ \t]+#.*)?[ \t]*$"
+    )
+    ids = []
+    in_jobs = in_job = in_steps = in_step = False
+    for line in workflow.splitlines():
+        if not line.strip() or line.lstrip().startswith('#'):
+            continue
+        indent = len(line) - len(line.lstrip(' '))
+        if indent == 0:
+            in_jobs = bool(re.fullmatch(r"jobs:[ \t]*(?:#.*)?", line))
+            in_job = in_steps = in_step = False
+            continue
+        if not in_jobs:
+            continue
+        if indent == 2:
+            in_job = bool(re.fullmatch(
+                r"  [A-Za-z_][A-Za-z0-9_-]*:[ \t]*(?:#.*)?", line,
+            ))
+            in_steps = in_step = False
+            continue
+        if not in_job:
+            continue
+        if indent == 4:
+            in_steps = bool(re.fullmatch(r"    steps:[ \t]*(?:#.*)?", line))
+            in_step = False
+            continue
+        if not in_steps:
+            continue
+        if indent <= 6:
+            in_step = line.startswith('      - ')
+        if in_step:
+            match = id_pattern.fullmatch(line)
+            if match:
+                ids.append(match.group('id'))
+    return ids
+
+
 class CiJobSummaryTest(unittest.TestCase):
     def test_dependency_failure_never_claims_downstream_success(self):
         steps = {"changes": {"outputs": {"flutter": "true"}},
@@ -61,6 +106,17 @@ class CiJobSummaryTest(unittest.TestCase):
         self.assertIn("| Production web build | true | — skipped |", summary)
         self.assertIn("workflow_call", summary)
 
+    def test_business_e2e_success_does_not_imply_lock_test_success(self):
+        summary = render_summary({
+            "changes": {"outputs": {"web": "false", "business_execution": "true"}},
+            "flutter_web_test": {"outcome": "skipped"},
+            "business_execution_locks": {"outcome": "failure"},
+            "business_execution_e2e": {"outcome": "success"},
+        })
+        self.assertIn("| Web import smoke tests | false | — skipped |", summary)
+        self.assertIn("| Business execution browser locks | true | ❌ failure |", summary)
+        self.assertIn("| Business execution browser E2E | true | ✅ success |", summary)
+
     def test_main_appends_utf8_summary(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "summary.md"
@@ -88,10 +144,72 @@ class CiJobSummaryTest(unittest.TestCase):
         self.assertNotIn("needs.lint-and-test.result", download)
         self.assertIn("continue-on-error: true", download)
 
+    def test_step_id_discovery_includes_digits_and_hyphens(self):
+        values = [
+            'flutter_web_test', 'business_execution_e2e',
+            'Browser-E2E-2', '_internal_2', '2invalid', 'invalid.dot',
+        ]
+        workflow = '\n'.join([
+            'jobs:', '  check:', '    steps:',
+            *[f'      - id: {value}' for value in values],
+        ])
+        self.assertEqual(workflow_step_ids(workflow), values[:4])
+
+    def test_step_id_style_supports_quotes_comments_and_first_key(self):
+        workflow = "\n".join([
+            'jobs:', '  check:', '    steps:',
+            '      - name: single quoted',
+            "        id: 'business_execution_e2e'",
+            '      - name: double quoted',
+            '        id: "business_execution_e2e" # browser gate',
+            '      - name: plain',
+            "        id: business_execution_e2e # browser gate",
+            "      - id: 'business_execution_e2e' # first step key",
+            '      - id: "Browser-E2E-2"',
+            "      - id: plain_first_key",
+            "          id: shell_body_is_not_a_step",
+            "      - id: 'mismatched_quote\"",
+            "    id: job_level_is_not_a_step",
+        ])
+        self.assertEqual(workflow_step_ids(workflow), [
+            'business_execution_e2e', 'business_execution_e2e',
+            'business_execution_e2e', 'business_execution_e2e',
+            'Browser-E2E-2', 'plain_first_key',
+        ])
+
+    def test_non_step_ids_before_after_and_between_jobs_are_ignored(self):
+        workflow = '\n'.join([
+            'env:', '        id: global_env',
+            'jobs:', '  first:',
+            '    env:', '        id: before_steps',
+            '    steps:', '      - id: first_real_step',
+            '        env:', '          id: nested_step_env',
+            '    outputs:', '        id: after_steps',
+            '  second:', '    env:', '        id: next_job_env',
+            '    steps: # another job', '      - id: second_real_step',
+        ])
+        self.assertEqual(workflow_step_ids(workflow), [
+            'first_real_step', 'second_real_step',
+        ])
+
+    def test_env_id_cannot_replace_a_missing_real_e2e_step(self):
+        workflow = (Path(__file__).resolve().parents[1] /
+                    '.github/workflows/ci.yml').read_text(encoding='utf-8')
+        real_id = '        id: business_execution_e2e\n'
+        self.assertEqual(workflow.count(real_id), 1)
+        without_step_id = workflow.replace(real_id, '', 1)
+        forged = without_step_id.replace(
+            '    steps:\n',
+            '    env:\n        id: business_execution_e2e\n    steps:\n',
+            1,
+        )
+        self.assertEqual(workflow_step_ids(workflow).count('business_execution_e2e'), 1)
+        self.assertNotIn('business_execution_e2e', workflow_step_ids(forged))
+
     def test_actual_workflow_wires_every_reported_step_and_regression_suite(self):
         workflow = (Path(__file__).resolve().parents[1] /
                     ".github/workflows/ci.yml").read_text(encoding="utf-8")
-        ids = re.findall(r"^        id: ([a-z_]+)$", workflow, re.M)
+        ids = workflow_step_ids(workflow)
         for _, _, step in CHECKS:
             self.assertEqual(ids.count(step), 2 if step == 'flutter_dependencies' else 1, step)
         summary = workflow.split("      - name: Job Summary\n", 1)[1].split(
@@ -101,6 +219,139 @@ class CiJobSummaryTest(unittest.TestCase):
         self.assertIn("run: python scripts/ci_job_summary.py", summary)
         self.assertIn("python scripts/ci_job_summary_test.py", workflow)
 
+
+
+class FixtureFontAliasTest(unittest.TestCase):
+    """Execute the actual workflow program against a tiny in-memory build."""
+
+    class BuildPath:
+        def __init__(self, files, name="", writes=None, symlinks=None):
+            self.files = files
+            self.name = name
+            self.writes = writes if writes is not None else []
+            self.symlinks = symlinks if symlinks is not None else set()
+
+        def __truediv__(self, name):
+            return FixtureFontAliasTest.BuildPath(
+                self.files, f"{self.name}/{name}".lstrip("/"),
+                self.writes, self.symlinks,
+            )
+
+        def is_file(self):
+            return self.name in self.files
+
+        def is_symlink(self):
+            return self.name in self.symlinks
+
+        def read_bytes(self):
+            return self.files[self.name]
+
+        def read_text(self, encoding):
+            return self.read_bytes().decode(encoding)
+
+        def write_text(self, value, encoding):
+            self.writes.append(self.name)
+            self.files[self.name] = value.encode(encoding)
+
+    def setUp(self):
+        import hashlib
+        import textwrap
+
+        workflow = (Path(__file__).resolve().parents[1] /
+                    ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        step = workflow.split(
+            "- name: Register local Noto Sans fixture fallback\n", 1,
+        )[1].split("\n      - name:", 1)[0]
+        program = textwrap.dedent(
+            step.split("<<'PY'\n", 1)[1].split("\n          PY", 1)[0],
+        )
+        self.namespace = {"__name__": "fixture_font_test"}
+        exec(compile(program, "ci.yml:fixture-font", "exec"), self.namespace)
+        self.register = self.namespace["register_fixture_font"]
+        self.manifest_path = "assets/FontManifest.json"
+        self.font_path = "assets/" + self.namespace["FONT_ASSET"]
+        self.license_path = "assets/" + self.namespace["LICENSE_ASSET"]
+        self.manifest = [
+            {"family": "NotoSans", "fonts": [
+                {"asset": self.namespace["FONT_ASSET"]},
+            ]},
+            {"family": "NotoSansJP", "fonts": [{"asset": "other.ttf"}]},
+        ]
+        # Synthetic bytes keep unit tests independent of real font binaries.
+        self.files = {
+            self.manifest_path: json.dumps(self.manifest).encode("utf-8"),
+            self.font_path: b"synthetic font bytes",
+            self.license_path: b"synthetic license bytes",
+        }
+        self.namespace["FONT_SHA256"] = hashlib.sha256(
+            self.files[self.font_path],
+        ).hexdigest()
+        self.namespace["LICENSE_SHA256"] = hashlib.sha256(
+            self.files[self.license_path],
+        ).hexdigest()
+        self.root = self.BuildPath(self.files)
+
+    def assert_rejected_without_mutation(self):
+        before = dict(self.files)
+        with self.assertRaises(ValueError):
+            self.register(self.root)
+        self.assertEqual(self.files, before)
+        self.assertEqual(self.root.writes, [])
+
+    def test_registers_alias_without_copying_or_modifying_font_and_license(self):
+        before = dict(self.files)
+        self.register(self.root)
+        result = json.loads(self.files[self.manifest_path])
+        self.assertEqual(result[:-1], self.manifest)
+        self.assertEqual(result[-1], {
+            "family": "Roboto",
+            "fonts": [{"asset": self.namespace["FONT_ASSET"]}],
+        })
+        self.assertEqual(self.files.keys(), before.keys())
+        self.assertEqual(self.files[self.font_path], before[self.font_path])
+        self.assertEqual(self.files[self.license_path], before[self.license_path])
+        self.assertEqual(self.root.writes, [self.manifest_path])
+
+    def test_rejects_missing_duplicate_or_preexisting_family(self):
+        for manifest in (
+            self.manifest[1:],
+            [*self.manifest, self.manifest[0]],
+            [*self.manifest, {"family": "Roboto", "fonts": []}],
+        ):
+            with self.subTest(manifest=manifest):
+                self.files[self.manifest_path] = json.dumps(manifest).encode()
+                self.assert_rejected_without_mutation()
+
+    def test_rejects_invalid_manifest_or_unexpected_asset(self):
+        for manifest in (
+            {},
+            ["invalid family"],
+            [{"family": "NotoSans", "fonts": [
+                {"asset": "../outside.ttf"},
+            ]}],
+            [{"family": "NotoSans", "fonts": [
+                {"asset": "https://fonts.example/font.ttf"},
+            ]}],
+        ):
+            with self.subTest(manifest=manifest):
+                self.files[self.manifest_path] = json.dumps(manifest).encode()
+                self.assert_rejected_without_mutation()
+
+    def test_rejects_missing_empty_or_changed_font_and_license(self):
+        for path in (self.font_path, self.license_path):
+            for invalid in (None, b"", b"unexpected bytes"):
+                with self.subTest(path=path, invalid=invalid):
+                    original = self.files.pop(path)
+                    if invalid is not None:
+                        self.files[path] = invalid
+                    self.assert_rejected_without_mutation()
+                    self.files[path] = original
+
+    def test_rejects_symlink_font_or_license(self):
+        for path in (self.font_path, self.license_path):
+            with self.subTest(path=path):
+                self.root.symlinks = {path}
+                self.assert_rejected_without_mutation()
 
 if __name__ == "__main__":
     unittest.main()

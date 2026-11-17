@@ -1,3 +1,4 @@
+import 'package:my_web_app/pages/typing_game_page.dart';
 import 'package:my_web_app/pages/jev_mario_lab_page.dart';
 import 'package:my_web_app/pages/jwenv_lab_page.dart';
 import 'dart:async';
@@ -192,6 +193,7 @@ import 'package:my_web_app/pages/knowledge_graph_page.dart';
 import 'package:my_web_app/pages/user_knowledge_graph_page.dart';
 import 'package:my_web_app/pages/market_intelligence_page.dart';
 import 'package:my_web_app/pages/meeting_manager_page.dart';
+import 'package:my_web_app/pages/diet_debates_page.dart';
 import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
 import 'package:my_web_app/pages/mcp_file_search_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
@@ -274,6 +276,7 @@ import 'package:my_web_app/pages/meal_log_page.dart';
 import 'package:my_web_app/pages/life_goals_kpi_page.dart';
 import 'package:my_web_app/pages/language_learning_page.dart';
 import 'package:my_web_app/pages/focus_capture_game_page.dart';
+import 'package:my_web_app/pages/sea_shelter_page.dart';
 import 'package:my_web_app/pages/echo_pump_game_page.dart';
 import 'package:my_web_app/pages/code_playground_page.dart';
 import 'package:my_web_app/pages/real_estate_tracker_page.dart';
@@ -1324,6 +1327,11 @@ Route<dynamic> generateAppRoute(
       return MaterialPageRoute(
         builder: (_) => const MeetingManagerPage(),
       );
+    case '/diet-debates':
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => const DietDebatesPage(),
+      );
     case '/news-rss':
       return MaterialPageRoute(
         builder: (_) => const NewsRssAggregatorPage(),
@@ -1664,6 +1672,16 @@ Route<dynamic> generateAppRoute(
     case '/echo-pump':
       return MaterialPageRoute(
         builder: (_) => const EchoPumpGamePage(),
+      );
+    case '/sea-shelter':
+      return MaterialPageRoute(
+        builder: (_) => const SeaShelterPage(),
+        settings: settings,
+      );
+    case '/typing-game':
+      return MaterialPageRoute(
+        builder: (_) => const TypingGamePage(),
+        settings: settings,
       );
     case '/focus-capture':
       return MaterialPageRoute(
