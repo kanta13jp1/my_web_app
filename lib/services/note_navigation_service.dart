@@ -293,9 +293,8 @@ class SupabaseNoteNavigationRepository implements NoteNavigationRepository {
             .order('id')
             .range(offset, offset + pageSize - 1),
       );
-      if (page.isEmpty) break;
       rows.addAll(page);
-      // PostgREST can return fewer rows than requested without reaching EOF.
+      if (page.isEmpty || page.length < pageSize) break;
       offset += page.length;
     }
     return rows;
@@ -382,7 +381,12 @@ class SupabaseNoteNavigationRepository implements NoteNavigationRepository {
 
   @override
   Future<void> deleteShortcut(NoteShortcut shortcut) async {
-    await _client.from('note_shortcuts').delete().eq('id', shortcut.id);
+    final userId = _requireUserId();
+    await _client
+        .from('note_shortcuts')
+        .delete()
+        .eq('id', shortcut.id)
+        .eq('user_id', userId);
   }
 
   @override

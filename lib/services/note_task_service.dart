@@ -424,7 +424,7 @@ class SupabaseNoteTaskRepository
             .range(offset, offset + pageSize - 1),
       );
       rows.addAll(page);
-      if (page.length < pageSize) break;
+      if (page.isEmpty || page.length < pageSize) break;
     }
 
     final noteTitles = await _loadNoteTitles(
