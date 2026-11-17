@@ -228,5 +228,62 @@ void main() {
         AssetSubscriptionReviewDecision.cancelCandidate,
       );
     });
+
+    testWidgets('shows savings suggestions for cancelCandidate, hold, and high unreviewed',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SubscriptionFixedCostCard(
+              costs: const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'sub_chatgpt',
+                  name: 'ChatGPT Pro',
+                  amount: 30000,
+                  paymentDay: 1,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                  subscriptionReviewDecision:
+                      AssetSubscriptionReviewDecision.unreviewed,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_cursor',
+                  name: 'Cursor',
+                  amount: 3000,
+                  paymentDay: 5,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                  subscriptionReviewDecision:
+                      AssetSubscriptionReviewDecision.hold,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_unused',
+                  name: 'Unused Tool',
+                  amount: 2000,
+                  paymentDay: 10,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                  subscriptionReviewDecision:
+                      AssetSubscriptionReviewDecision.cancelCandidate,
+                ),
+              ],
+              sourceAccountNames: const <String, String>{},
+              presets: presets,
+              onAddPreset: (_) {},
+              onAddCustom: () {},
+              onScanStatement: () {},
+              onEdit: (_) {},
+              onDelete: (_) {},
+              onReviewDecisionChanged: (_, __) {},
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.byKey(const Key('subscription_savings_suggestions')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('月 ¥2,000（年 ¥24,000）を削減できます'), findsOneWidget);
+      expect(find.textContaining('一時停止または下位プランへの変更を検討'), findsOneWidget);
+      expect(find.textContaining('月額 ¥3,000 以上の未判定サブスク'), findsOneWidget);
+    });
   });
 }
