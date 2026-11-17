@@ -142,7 +142,8 @@ class _EvernoteHistoryReviewPanelState
             const Text(
               'Evernoteで各ノートの履歴を確認し、履歴数を登録してください。'
               '履歴がある場合は、各版を1件ずつENEXで書き出して取り込みます。'
-              '確認が完了するまでEvernote側の削除はデータベースが拒否します。',
+              '確認が完了するまで、この移行機能の削除済み記録の更新はデータベースが拒否します。'
+              'Evernote上での手動削除は防げません。',
               style: TextStyle(height: 1.5),
             ),
             if (widget.stageProgress != null) ...[

@@ -1,0 +1,77 @@
+{
+  "ran_at": "2026-09-27T18:07:18.327252+09:00",
+  "results": [
+    {
+      "id": "equal",
+      "expected": {
+        "status": "ok",
+        "click_ratio": 3.0,
+        "conversion_ratio": 1.0
+      },
+      "actual": {
+        "status": "ok",
+        "click_ratio": 3.0,
+        "conversion_ratio": 1.0
+      },
+      "pass": true
+    },
+    {
+      "id": "unequal",
+      "expected": {
+        "status": "ok",
+        "click_ratio": 1.5,
+        "conversion_ratio": 1.0
+      },
+      "actual": {
+        "status": "ok",
+        "click_ratio": 1.5,
+        "conversion_ratio": 1.0
+      },
+      "pass": true
+    },
+    {
+      "id": "zero",
+      "expected": {
+        "status": "undefined_baseline"
+      },
+      "actual": {
+        "status": "undefined_baseline"
+      },
+      "pass": true
+    },
+    {
+      "id": "missing",
+      "expected": {
+        "status": "missing_days"
+      },
+      "actual": {
+        "status": "missing_days"
+      },
+      "pass": true
+    },
+    {
+      "id": "duplicate",
+      "expected": {
+        "status": "duplicate_day"
+      },
+      "actual": {
+        "status": "duplicate_day"
+      },
+      "pass": true
+    },
+    {
+      "id": "cv_distinction",
+      "expected": {
+        "status": "ok",
+        "click_ratio": 3.0,
+        "conversion_ratio": 1.0
+      },
+      "actual": {
+        "status": "ok",
+        "click_ratio": 3.0,
+        "conversion_ratio": 1.0
+      },
+      "pass": true
+    }
+  ]
+}

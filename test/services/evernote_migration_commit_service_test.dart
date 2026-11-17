@@ -14,6 +14,21 @@ const _sourceContext = EvernoteMigrationSourceContext(
 );
 
 void main() {
+  test('reads exact OCR XML from persisted attachment metadata', () {
+    for (final raw in <String>['<recoIndex/>', '<malformed OCR']) {
+      final snapshot = EvernoteCommittedAttachmentSnapshot.fromJson(
+        <String, dynamic>{
+          'file_name': 'synthetic.txt',
+          'file_path': 'owner/synthetic.txt',
+          'file_size': 1,
+          'mime_type': 'text/plain',
+          'content_sha256': 'synthetic',
+          'source_metadata': <String, dynamic>{'recognition_xml': raw},
+        },
+      );
+      expect(snapshot.recognitionXml, raw);
+    }
+  });
   group('EvernoteMigrationCommitService', () {
     for (final streamed in <bool>[false, true]) {
       final route = streamed ? 'streamed' : 'buffered';
@@ -143,8 +158,50 @@ void main() {
           );
         });
       });
+      for (final missing in <bool>[false, true]) {
+        test('blocks OCR metadata loss: streamed=$streamed missing=$missing',
+            () async {
+          final fixture = _fixture();
+          final storage = _FakeStorageGateway();
+          final database = _FakeDatabaseGateway(
+            loseRecognition: missing,
+            tamperRecognition: !missing,
+          );
+          final service = EvernoteMigrationCommitService(
+            ledger: _FakeLedgerGateway(),
+            storage: storage,
+            database: database,
+          );
+          storage.objects[
+                  '$evernoteArchiveBucket/$_userId/evernote/${fixture.export.exportSha256}/source.enex'] =
+              fixture.bytes;
+          final operation = streamed
+              ? service.commitFromArchive(
+                  userId: _userId,
+                  archiveBytes: fixture.bytes.length,
+                  preview: fixture.preview,
+                  sourceContext: _sourceContext,
+                )
+              : service.commit(
+                  userId: _userId,
+                  exportBytes: fixture.bytes,
+                  preview: fixture.preview,
+                  sourceContext: _sourceContext,
+                );
+          await expectLater(
+            operation,
+            throwsA(
+              isA<StateError>().having(
+                (error) => error.message,
+                'failed check',
+                contains('resource_sha256'),
+              ),
+            ),
+          );
+          expect(database.verifyCalls, isEmpty);
+        });
+      }
     }
-
     test('archives, atomically commits, and hash-verifies a batch', () async {
       final fixture = _fixture();
       final storage = _FakeStorageGateway();
@@ -542,6 +599,7 @@ _Fixture _fixture() {
     <resource>
       <data encoding="base64" hash="fixturehash">$encodedResource</data>
       <mime>text/plain</mime>
+      <recognition><![CDATA[<recoIndex><item x="0" y="0" w="1" h="1"><t w="1">Synthetic OCR</t></item></recoIndex>]]></recognition>
       <resource-attributes><file-name>fixture.txt</file-name></resource-attributes>
     </resource>
   </note>
@@ -899,10 +957,14 @@ class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
   _FakeDatabaseGateway({
     this.notebookCollectionId = 9901,
     this.corruptTaskHashes = false,
+    this.loseRecognition = false,
+    this.tamperRecognition = false,
   });
 
   final int? notebookCollectionId;
   final bool corruptTaskHashes;
+  final bool loseRecognition;
+  final bool tamperRecognition;
   final List<String> commitCalls = <String>[];
   final List<String> committedContents = <String>[];
   final List<Map<String, dynamic>> committedMetadata = <Map<String, dynamic>>[];
@@ -968,6 +1030,11 @@ class _FakeDatabaseGateway implements EvernoteMigrationDatabaseGateway {
               fileSize: resource.fileSize,
               mimeType: resource.mimeType,
               contentSha256: resource.contentSha256,
+              recognitionXml: loseRecognition
+                  ? null
+                  : tamperRecognition
+                      ? '<recoIndex/>'
+                      : resource.sourceMetadata['recognition_xml'] as String?,
             ),
           )
           .toList(growable: false),

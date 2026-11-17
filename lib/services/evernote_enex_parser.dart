@@ -524,7 +524,7 @@ class EvernoteEnexParser {
       if (conversion.unresolvedResourceHashes.isNotEmpty) {
         warnings.add(
           '${conversion.unresolvedResourceHashes.length} ENML attachment '
-          'reference(s) could not be matched to an ENEX resource.',
+          'reference(s) could not be safely represented or matched to an ENEX resource.',
         );
       }
       if (conversion.encryptedSectionCount > 0) {

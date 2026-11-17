@@ -232,6 +232,49 @@ grant all on sequence
   public.evernote_note_history_attachments_id_seq
   to service_role;
 
+-- Preserve imported recovery evidence until every associated source is deleted.
+create or replace function
+  evernote_migration_private.protect_imported_history_evidence()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not exists (
+    select 1 from public.evernote_migration_items
+    where user_id = old.user_id and target_note_id = old.note_id
+      and status = 'source_deleted'
+  ) or exists (
+    select 1 from public.evernote_migration_items
+    where user_id = old.user_id and target_note_id = old.note_id
+      and status <> 'source_deleted'
+  ) then
+    raise exception using
+      errcode = '23514',
+      message = 'Imported Evernote history evidence cannot be deleted before the source.';
+  end if;
+  return old;
+end
+$$;
+
+revoke all on function
+  evernote_migration_private.protect_imported_history_evidence()
+  from public, anon, authenticated, service_role;
+
+create trigger protect_imported_note_history_version
+  before delete on public.note_versions
+  for each row
+  when (old.source_system = 'evernote')
+  execute function
+    evernote_migration_private.protect_imported_history_evidence();
+
+create trigger protect_imported_note_history_attachment
+  before delete on public.evernote_note_history_attachments
+  for each row
+  execute function
+    evernote_migration_private.protect_imported_history_evidence();
+
 alter table public.evernote_migration_items
   add column if not exists history_status text not null default 'pending',
   add column if not exists source_history_version_count bigint not null default 0,
@@ -301,6 +344,15 @@ begin
       message =
         'Evernote note history must be verified or explicitly reviewed as empty before source deletion.';
   end if;
+  if new.status in ('source_deleting', 'source_deleted')
+     and (
+       new.imported_history_version_count <> new.source_history_version_count
+       or new.verified_history_version_count <> new.source_history_version_count
+     ) then
+    raise exception using
+      errcode = '23514',
+      message = 'Evernote note history counts must match before source deletion.';
+  end if;
   return new;
 end
 $$;
@@ -312,7 +364,9 @@ revoke all on function
 drop trigger if exists enforce_evernote_history_before_source_deletion
   on public.evernote_migration_items;
 create trigger enforce_evernote_history_before_source_deletion
-  before insert or update of status, history_status
+  before insert or update of status, history_status,
+    source_history_version_count, imported_history_version_count,
+    verified_history_version_count
   on public.evernote_migration_items
   for each row
   execute function
@@ -425,6 +479,7 @@ declare
   v_version_id uuid;
   v_imported_count bigint;
   v_resource_count bigint;
+  v_verified_count bigint;
 begin
   if v_user_id is null then
     raise exception using
@@ -547,7 +602,8 @@ begin
     source_content_sha256 = excluded.source_content_sha256,
     source_enml = excluded.source_enml,
     source_tags = excluded.source_tags,
-    source_metadata = excluded.source_metadata
+    source_metadata = excluded.source_metadata,
+    source_verified_at = null
   returning id into v_version_id;
 
   insert into public.evernote_note_history_attachments (
@@ -606,8 +662,16 @@ begin
       message = 'Imported history exceeds the reviewed source inventory.';
   end if;
 
+  select count(*) into v_verified_count
+  from public.note_versions
+  where note_id = v_item.target_note_id
+    and user_id = v_user_id
+    and source_system = 'evernote'
+    and source_verified_at is not null;
+
   update public.evernote_migration_items
   set
+    verified_history_version_count = v_verified_count,
     imported_history_version_count = v_imported_count,
     history_status = case
       when v_imported_count = source_history_version_count

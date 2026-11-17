@@ -206,7 +206,10 @@ class AssetLiabilityAccount {
   bool get isLiability => balance < 0;
   double get liabilityBalance => isLiability ? balance.abs() : 0;
 
-  AssetLiabilityAccount copyWith({int? paymentDay}) {
+  AssetLiabilityAccount copyWith({
+    int? paymentDay,
+    double? annualRate,
+  }) {
     return AssetLiabilityAccount(
       id: id,
       name: name,
@@ -220,7 +223,7 @@ class AssetLiabilityAccount {
       billingAccountId: billingAccountId,
       billingAccountName: billingAccountName,
       includedInBillingAccount: includedInBillingAccount,
-      annualRate: annualRate,
+      annualRate: annualRate ?? this.annualRate,
       minimumPaymentRate: minimumPaymentRate,
       minimumPaymentFloor: minimumPaymentFloor,
       fullPaymentEstimate: fullPaymentEstimate,
@@ -407,6 +410,10 @@ class AssetRecurringFixedCost {
   /// 振替日 (1-31)。
   final int paymentDay;
 
+  /// 最後に支払対象となる請求日（当日を含む）。未設定は従来どおり。
+  /// 解約希望とは独立し、過去の確定請求や実負債を削除しない。
+  final DateTime? lastBillingDate;
+
   /// 発生周期 (毎月 / 隔月偶数月 / 隔月奇数月)。
   final AssetRecurringFixedCostCadence cadence;
 
@@ -437,6 +444,7 @@ class AssetRecurringFixedCost {
     required this.name,
     required this.amount,
     required this.paymentDay,
+    this.lastBillingDate,
     this.cadence = AssetRecurringFixedCostCadence.monthly,
     this.sourceAccountId,
     this.category = AssetRecurringFixedCostCategory.utility,
@@ -472,11 +480,44 @@ class AssetRecurringFixedCost {
     }
   }
 
+  /// 実際の請求日で周期と最終請求日を判定する（時刻は比較しない）。
+  bool appliesToPaymentDate(DateTime paymentDate) {
+    if (!appliesToMonth(paymentDate.month)) return false;
+    final last = lastBillingDate;
+    if (last == null) return true;
+    return !DateTime(paymentDate.year, paymentDate.month, paymentDate.day)
+        .isAfter(DateTime(last.year, last.month, last.day));
+  }
+
+  /// 月末を超える振替日はその月の最終日に丸める。
+  bool appliesToBillingMonth(DateTime month) {
+    final lastDay = DateTime(month.year, month.month + 1, 0).day;
+    return appliesToPaymentDate(
+      DateTime(month.year, month.month, paymentDay.clamp(1, lastDay).toInt()),
+    );
+  }
+
+  static DateTime? parseBillingDate(String? value) {
+    if (value == null || !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) {
+      return null;
+    }
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null || billingDateLabel(parsed) != value) return null;
+    return DateTime(parsed.year, parsed.month, parsed.day);
+  }
+
+  static String billingDateLabel(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+
   AssetRecurringFixedCost copyWith({
     String? id,
     String? name,
     double? amount,
     int? paymentDay,
+    DateTime? lastBillingDate,
+    bool clearLastBillingDate = false,
     AssetRecurringFixedCostCadence? cadence,
     String? sourceAccountId,
     bool clearSourceAccountId = false,
@@ -492,6 +533,9 @@ class AssetRecurringFixedCost {
       name: name ?? this.name,
       amount: amount ?? this.amount,
       paymentDay: paymentDay ?? this.paymentDay,
+      lastBillingDate: clearLastBillingDate
+          ? null
+          : (lastBillingDate ?? this.lastBillingDate),
       cadence: cadence ?? this.cadence,
       sourceAccountId: clearSourceAccountId
           ? null
@@ -512,6 +556,8 @@ class AssetRecurringFixedCost {
       'name': name,
       'amount': amount,
       'paymentDay': paymentDay,
+      if (lastBillingDate != null)
+        'lastBillingDate': billingDateLabel(lastBillingDate!),
       'cadence': cadence.name,
       if (sourceAccountId != null && sourceAccountId!.isNotEmpty)
         'sourceAccountId': sourceAccountId,
@@ -588,6 +634,7 @@ class AssetRecurringFixedCost {
       name: name,
       amount: amount,
       paymentDay: paymentDay,
+      lastBillingDate: parseBillingDate(json['lastBillingDate']?.toString()),
       cadence: cadence,
       sourceAccountId:
           rawSource == null || rawSource.isEmpty ? null : rawSource,
@@ -598,6 +645,37 @@ class AssetRecurringFixedCost {
       usdAmount: usdAmount != null && usdAmount > 0 ? usdAmount : null,
     );
   }
+}
+
+/// リボ払いカードの新規利用明細行と返済カバー状況ステータス。
+enum AssetLiabilityRevolvingUsageStatus {
+  /// リボ残高に組み入れられ、今月の返済額でカバーされる
+  covered,
+
+  /// リボ残高に組み入れられ、今月の返済額でカバーされず翌月へ繰り越される（返済不足分）
+  uncoveredShortfall,
+
+  /// リボ残高に組み入れ（返済状況未定、または基本ステータス）
+  revolvingIncorporated,
+}
+
+/// リボ払いカードの当月新規利用明細項目。
+class AssetLiabilityRevolvingUsageItem {
+  final String id;
+  final String description;
+  final double amount;
+  final DateTime? postedAt;
+  final AssetLiabilityRevolvingUsageStatus status;
+  final String statusLabel;
+
+  const AssetLiabilityRevolvingUsageItem({
+    required this.id,
+    required this.description,
+    required this.amount,
+    this.postedAt,
+    required this.status,
+    required this.statusLabel,
+  });
 }
 
 /// リボ残高に対して算出した今月の請求内訳。
@@ -626,6 +704,12 @@ class AssetLiabilityRevolvingCreditBilling {
   /// 今月返済予定額 = [monthlyAmount] + [newUsageAmount]。
   final double billedAmount;
 
+  /// 当月の新規利用明細一覧（取り込み明細または内訳）。
+  final List<AssetLiabilityRevolvingUsageItem> usageItems;
+
+  /// カード明細データが取り込まれているか。
+  final bool hasImportedStatement;
+
   const AssetLiabilityRevolvingCreditBilling({
     required this.balance,
     required this.creditLimit,
@@ -635,6 +719,8 @@ class AssetLiabilityRevolvingCreditBilling {
     required this.paymentDay,
     required this.overLimitAmount,
     required this.billedAmount,
+    this.usageItems = const <AssetLiabilityRevolvingUsageItem>[],
+    this.hasImportedStatement = false,
   });
 
   /// 旧限度額超過ルールが有効か。現行ルールでは常に false。
@@ -643,6 +729,9 @@ class AssetLiabilityRevolvingCreditBilling {
 
 class AssetLiabilityDebtRow {
   final String id;
+
+  /// Original recurring-cost identity; never inferred from a legacy subscription.
+  final String? recurringFixedCostId;
   final String name;
   final AssetLiabilityAccountKind kind;
   final double balance;
@@ -684,6 +773,7 @@ class AssetLiabilityDebtRow {
 
   const AssetLiabilityDebtRow({
     required this.id,
+    this.recurringFixedCostId,
     required this.name,
     required this.kind,
     required this.balance,
@@ -1393,6 +1483,10 @@ class AssetLiabilityCsvExportBundle {
 
 class AssetLiabilityWorkbook {
   final DateTime baseDate;
+
+  /// 終了済みを含む契約情報。現在負債とは区別してAIへ渡す。
+  final List<AssetRecurringFixedCost> recurringFixedCosts;
+  final Map<String, DateTime> recurringBillingDates;
   final List<AssetLiabilityAccount> accounts;
   final List<AssetLiabilityDebtRow> debtMasterRows;
   final List<AssetLiabilityDebtRow> repaymentPriorityRows;
@@ -1443,6 +1537,8 @@ class AssetLiabilityWorkbook {
 
   const AssetLiabilityWorkbook({
     required this.baseDate,
+    this.recurringFixedCosts = const <AssetRecurringFixedCost>[],
+    this.recurringBillingDates = const <String, DateTime>{},
     required this.accounts,
     required this.debtMasterRows,
     required this.repaymentPriorityRows,
@@ -1647,5 +1743,94 @@ class AssetLiabilityWorkbook {
                   .clamp(0, row.scheduledPaymentAmount)
                   .toDouble(),
         );
+  }
+
+  AssetLiabilityWorkbook copyWith({
+    DateTime? baseDate,
+    List<AssetRecurringFixedCost>? recurringFixedCosts,
+    Map<String, DateTime>? recurringBillingDates,
+    List<AssetLiabilityAccount>? accounts,
+    List<AssetLiabilityDebtRow>? debtMasterRows,
+    List<AssetLiabilityDebtRow>? repaymentPriorityRows,
+    List<AssetLiabilityPaymentDayRisk>? paymentDayRisks,
+    List<AssetLiabilityCashflowRow>? cashflowRows,
+    List<AssetLiabilityIncomePlan>? incomePlans,
+    List<AssetLiabilityTransferTask>? transferTasks,
+    List<AssetLiabilityAccountCashflowSummary>? accountCashflowSummaries,
+    List<AssetLiabilityTransferSuggestion>? transferSuggestions,
+    AssetLiabilityCardBillingReviewData? cardBillingReview,
+    AssetLiabilityCardStatementReconciliationData? cardStatementReconciliation,
+    double? cashLikeTotal,
+    double? securitiesTotal,
+    double? positiveAssetTotal,
+    double? liabilityTotal,
+    double? netWorth,
+    double? monthlyMinimumPaymentEstimateTotal,
+    double? monthlyScheduledPaymentTotal,
+    double? monthlyActualPaymentTotal,
+    double? monthlyPaymentDifferenceTotal,
+    double? monthlyUnpaidPaymentTotal,
+    double? monthlyUnreceivedIncomeTotal,
+    double? cashAfterMinimumPayments,
+    double? cashAfterScheduledPayments,
+    double? debtToAssetRatio,
+    double? topFourDebtShare,
+    int? manualPaymentCount,
+    int? estimatedPaymentCount,
+    Set<String>? scheduledExpenseAccountIds,
+    Set<String>? subscriptionFixedCostAccountIds,
+    Map<String, AssetCardUsagePolicy>? cardUsagePolicies,
+  }) {
+    return AssetLiabilityWorkbook(
+      baseDate: baseDate ?? this.baseDate,
+      recurringFixedCosts: recurringFixedCosts ?? this.recurringFixedCosts,
+      recurringBillingDates:
+          recurringBillingDates ?? this.recurringBillingDates,
+      accounts: accounts ?? this.accounts,
+      debtMasterRows: debtMasterRows ?? this.debtMasterRows,
+      repaymentPriorityRows:
+          repaymentPriorityRows ?? this.repaymentPriorityRows,
+      paymentDayRisks: paymentDayRisks ?? this.paymentDayRisks,
+      cashflowRows: cashflowRows ?? this.cashflowRows,
+      incomePlans: incomePlans ?? this.incomePlans,
+      transferTasks: transferTasks ?? this.transferTasks,
+      accountCashflowSummaries:
+          accountCashflowSummaries ?? this.accountCashflowSummaries,
+      transferSuggestions: transferSuggestions ?? this.transferSuggestions,
+      cardBillingReview: cardBillingReview ?? this.cardBillingReview,
+      cardStatementReconciliation:
+          cardStatementReconciliation ?? this.cardStatementReconciliation,
+      cashLikeTotal: cashLikeTotal ?? this.cashLikeTotal,
+      securitiesTotal: securitiesTotal ?? this.securitiesTotal,
+      positiveAssetTotal: positiveAssetTotal ?? this.positiveAssetTotal,
+      liabilityTotal: liabilityTotal ?? this.liabilityTotal,
+      netWorth: netWorth ?? this.netWorth,
+      monthlyMinimumPaymentEstimateTotal: monthlyMinimumPaymentEstimateTotal ??
+          this.monthlyMinimumPaymentEstimateTotal,
+      monthlyScheduledPaymentTotal:
+          monthlyScheduledPaymentTotal ?? this.monthlyScheduledPaymentTotal,
+      monthlyActualPaymentTotal:
+          monthlyActualPaymentTotal ?? this.monthlyActualPaymentTotal,
+      monthlyPaymentDifferenceTotal:
+          monthlyPaymentDifferenceTotal ?? this.monthlyPaymentDifferenceTotal,
+      monthlyUnpaidPaymentTotal:
+          monthlyUnpaidPaymentTotal ?? this.monthlyUnpaidPaymentTotal,
+      monthlyUnreceivedIncomeTotal:
+          monthlyUnreceivedIncomeTotal ?? this.monthlyUnreceivedIncomeTotal,
+      cashAfterMinimumPayments:
+          cashAfterMinimumPayments ?? this.cashAfterMinimumPayments,
+      cashAfterScheduledPayments:
+          cashAfterScheduledPayments ?? this.cashAfterScheduledPayments,
+      debtToAssetRatio: debtToAssetRatio ?? this.debtToAssetRatio,
+      topFourDebtShare: topFourDebtShare ?? this.topFourDebtShare,
+      manualPaymentCount: manualPaymentCount ?? this.manualPaymentCount,
+      estimatedPaymentCount:
+          estimatedPaymentCount ?? this.estimatedPaymentCount,
+      scheduledExpenseAccountIds:
+          scheduledExpenseAccountIds ?? this.scheduledExpenseAccountIds,
+      subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds ??
+          this.subscriptionFixedCostAccountIds,
+      cardUsagePolicies: cardUsagePolicies ?? this.cardUsagePolicies,
+    );
   }
 }

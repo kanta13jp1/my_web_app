@@ -3,6 +3,10 @@
 Master Brain のローカル索引。各ファイルは `memory/` 配下に置き、日付 + スコープで命名。
 NotebookLM Master Brain (jibun-master-brain ノートブック) にも同内容を蓄積する。
 
+## 2026-09-21 — Skill curation
+
+- [Agent skill curation completion](vault/decision_20260921_skill_curation_completion.md) — canonical adoption decisions, upstream integration, offline validation, and review handoff.
+
 ## 2026-07-11 (WEB版 — SEO 監査 H7 完了 + 監査 doc 化)
 
 - `feedback_success_20260711_web_seo_h7.md` — 既存 SSR 再利用 / 高リスク path の独立ヘルパー抽出 test 化 / 実測 honest pushback (H8 Skip) / 会話監査の doc 正本化。

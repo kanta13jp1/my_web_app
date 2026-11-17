@@ -1,0 +1,438 @@
+{
+  "observed_at": "2026-09-27",
+  "app_commit": "83cd7dcab30b689dfba14c487e6f55d3a84ca636",
+  "daily": [
+    {
+      "day": "2026-08-30",
+      "daily_row_present": true,
+      "landing": 84,
+      "public_memo": 1,
+      "signup_submit": 0,
+      "receipt_landing": 84,
+      "receipt_public_memo": 1,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-08-31",
+      "daily_row_present": true,
+      "landing": 46,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 46,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-01",
+      "daily_row_present": true,
+      "landing": 14,
+      "public_memo": 1,
+      "signup_submit": 1,
+      "receipt_landing": 14,
+      "receipt_public_memo": 1,
+      "receipt_signup_submit": 1
+    },
+    {
+      "day": "2026-09-02",
+      "daily_row_present": true,
+      "landing": 41,
+      "public_memo": 0,
+      "signup_submit": 1,
+      "receipt_landing": 41,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 1
+    },
+    {
+      "day": "2026-09-03",
+      "daily_row_present": true,
+      "landing": 33,
+      "public_memo": 2,
+      "signup_submit": 0,
+      "receipt_landing": 33,
+      "receipt_public_memo": 2,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-04",
+      "daily_row_present": false,
+      "landing": 0,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 0,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-05",
+      "daily_row_present": true,
+      "landing": 12,
+      "public_memo": 1,
+      "signup_submit": 0,
+      "receipt_landing": 12,
+      "receipt_public_memo": 1,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-06",
+      "daily_row_present": true,
+      "landing": 10,
+      "public_memo": 1,
+      "signup_submit": 0,
+      "receipt_landing": 10,
+      "receipt_public_memo": 1,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-07",
+      "daily_row_present": true,
+      "landing": 40,
+      "public_memo": 0,
+      "signup_submit": 1,
+      "receipt_landing": 40,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 1
+    },
+    {
+      "day": "2026-09-08",
+      "daily_row_present": true,
+      "landing": 6,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 6,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-09",
+      "daily_row_present": true,
+      "landing": 13,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 13,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-10",
+      "daily_row_present": true,
+      "landing": 5,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 5,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-11",
+      "daily_row_present": true,
+      "landing": 5,
+      "public_memo": 1,
+      "signup_submit": 0,
+      "receipt_landing": 5,
+      "receipt_public_memo": 1,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-12",
+      "daily_row_present": true,
+      "landing": 4,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 4,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-13",
+      "daily_row_present": true,
+      "landing": 7,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 7,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-14",
+      "daily_row_present": true,
+      "landing": 10,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 10,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-15",
+      "daily_row_present": true,
+      "landing": 7,
+      "public_memo": 0,
+      "signup_submit": 1,
+      "receipt_landing": 7,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 1
+    },
+    {
+      "day": "2026-09-16",
+      "daily_row_present": true,
+      "landing": 2,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 2,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-17",
+      "daily_row_present": true,
+      "landing": 7,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 7,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-18",
+      "daily_row_present": true,
+      "landing": 3,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 3,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-19",
+      "daily_row_present": true,
+      "landing": 3,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 3,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-20",
+      "daily_row_present": true,
+      "landing": 8,
+      "public_memo": 0,
+      "signup_submit": 1,
+      "receipt_landing": 8,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 1
+    },
+    {
+      "day": "2026-09-21",
+      "daily_row_present": true,
+      "landing": 28,
+      "public_memo": 0,
+      "signup_submit": 1,
+      "receipt_landing": 28,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 1
+    },
+    {
+      "day": "2026-09-22",
+      "daily_row_present": true,
+      "landing": 17,
+      "public_memo": 0,
+      "signup_submit": 1,
+      "receipt_landing": 17,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 1
+    },
+    {
+      "day": "2026-09-23",
+      "daily_row_present": true,
+      "landing": 2,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 2,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-24",
+      "daily_row_present": true,
+      "landing": 8,
+      "public_memo": 0,
+      "signup_submit": 0,
+      "receipt_landing": 8,
+      "receipt_public_memo": 0,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-25",
+      "daily_row_present": true,
+      "landing": 5,
+      "public_memo": 1,
+      "signup_submit": 0,
+      "receipt_landing": 5,
+      "receipt_public_memo": 1,
+      "receipt_signup_submit": 0
+    },
+    {
+      "day": "2026-09-26",
+      "daily_row_present": true,
+      "landing": 5,
+      "public_memo": 1,
+      "signup_submit": 0,
+      "receipt_landing": 5,
+      "receipt_public_memo": 1,
+      "receipt_signup_submit": 0
+    }
+  ],
+  "timezone_cohort": [
+    {
+      "event_date": "2026-09-13",
+      "utc_date": "2026-09-12",
+      "japan_date": "2026-09-13",
+      "count": 1
+    },
+    {
+      "event_date": "2026-09-13",
+      "utc_date": "2026-09-13",
+      "japan_date": "2026-09-13",
+      "count": 6
+    },
+    {
+      "event_date": "2026-09-14",
+      "utc_date": "2026-09-13",
+      "japan_date": "2026-09-14",
+      "count": 2
+    },
+    {
+      "event_date": "2026-09-14",
+      "utc_date": "2026-09-14",
+      "japan_date": "2026-09-14",
+      "count": 8
+    },
+    {
+      "event_date": "2026-09-15",
+      "utc_date": "2026-09-14",
+      "japan_date": "2026-09-15",
+      "count": 3
+    },
+    {
+      "event_date": "2026-09-15",
+      "utc_date": "2026-09-15",
+      "japan_date": "2026-09-15",
+      "count": 4
+    },
+    {
+      "event_date": "2026-09-16",
+      "utc_date": "2026-09-16",
+      "japan_date": "2026-09-16",
+      "count": 2
+    },
+    {
+      "event_date": "2026-09-17",
+      "utc_date": "2026-09-16",
+      "japan_date": "2026-09-17",
+      "count": 5
+    },
+    {
+      "event_date": "2026-09-17",
+      "utc_date": "2026-09-17",
+      "japan_date": "2026-09-17",
+      "count": 2
+    },
+    {
+      "event_date": "2026-09-18",
+      "utc_date": "2026-09-17",
+      "japan_date": "2026-09-18",
+      "count": 1
+    },
+    {
+      "event_date": "2026-09-18",
+      "utc_date": "2026-09-18",
+      "japan_date": "2026-09-18",
+      "count": 2
+    },
+    {
+      "event_date": "2026-09-19",
+      "utc_date": "2026-09-18",
+      "japan_date": "2026-09-19",
+      "count": 3
+    },
+    {
+      "event_date": "2026-09-20",
+      "utc_date": "2026-09-19",
+      "japan_date": "2026-09-20",
+      "count": 1
+    },
+    {
+      "event_date": "2026-09-20",
+      "utc_date": "2026-09-20",
+      "japan_date": "2026-09-20",
+      "count": 7
+    },
+    {
+      "event_date": "2026-09-21",
+      "utc_date": "2026-09-20",
+      "japan_date": "2026-09-21",
+      "count": 12
+    },
+    {
+      "event_date": "2026-09-21",
+      "utc_date": "2026-09-21",
+      "japan_date": "2026-09-21",
+      "count": 16
+    },
+    {
+      "event_date": "2026-09-22",
+      "utc_date": "2026-09-21",
+      "japan_date": "2026-09-22",
+      "count": 8
+    },
+    {
+      "event_date": "2026-09-22",
+      "utc_date": "2026-09-22",
+      "japan_date": "2026-09-22",
+      "count": 9
+    },
+    {
+      "event_date": "2026-09-23",
+      "utc_date": "2026-09-22",
+      "japan_date": "2026-09-23",
+      "count": 1
+    },
+    {
+      "event_date": "2026-09-23",
+      "utc_date": "2026-09-23",
+      "japan_date": "2026-09-23",
+      "count": 1
+    },
+    {
+      "event_date": "2026-09-24",
+      "utc_date": "2026-09-23",
+      "japan_date": "2026-09-24",
+      "count": 2
+    },
+    {
+      "event_date": "2026-09-24",
+      "utc_date": "2026-09-24",
+      "japan_date": "2026-09-24",
+      "count": 6
+    },
+    {
+      "event_date": "2026-09-25",
+      "utc_date": "2026-09-24",
+      "japan_date": "2026-09-25",
+      "count": 2
+    },
+    {
+      "event_date": "2026-09-25",
+      "utc_date": "2026-09-25",
+      "japan_date": "2026-09-25",
+      "count": 3
+    },
+    {
+      "event_date": "2026-09-26",
+      "utc_date": "2026-09-26",
+      "japan_date": "2026-09-26",
+      "count": 5
+    }
+  ]
+}

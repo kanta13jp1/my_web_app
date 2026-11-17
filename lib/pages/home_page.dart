@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/services/asset_flow_request.dart';
 import 'package:intl/intl.dart';
 
 // Services
@@ -55,6 +56,16 @@ import '../widgets/feature_strategy_monitor_panel.dart';
 import '../widgets/grow_together_share_card.dart';
 import '../widgets/home_billing_nudge.dart';
 import '../widgets/home_primary_action_card.dart';
+import '../widgets/home_calendar_month_header.dart';
+import '../widgets/home_calendar_summary_pill.dart';
+import '../widgets/home_calendar_cashflow_line.dart';
+import '../widgets/home_calendar_day_indicators.dart';
+import '../widgets/home_calendar_day_surface.dart';
+import '../widgets/home_ops_snapshot_view.dart';
+import '../models/home_daily_cashflow_summary.dart';
+import '../utils/home_calendar_cashflow_aggregation.dart';
+import '../widgets/home_calendar_day_number.dart';
+import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 import '../widgets/life_waste_elimination_panel.dart';
@@ -72,6 +83,7 @@ import '../widgets/home_tier/ai_recommended_features_list.dart';
 import '../widgets/home_tier/popular_features_list.dart';
 import '../utils/feature_tap_logger.dart';
 import '../utils/home_feature_request_failure.dart';
+import '../utils/home_calendar_visible_range.dart';
 import '../services/route_visibility_observer.dart';
 
 class HomePage extends StatefulWidget {
@@ -682,8 +694,9 @@ class _HomePageState extends State<HomePage> with RouteAware {
     }
 
     try {
-      final dynamic rowsRaw = await Supabase.instance.client
-          .from('wealth_struggles')
+      final dynamic rowsRaw = await AssetFlowRequest.table(
+        Supabase.instance.client,
+      )
           .select('action_type,amount,occurred_at')
           .eq('user_id', userId)
           .gte('occurred_at', monthStart.toUtc().toIso8601String())
@@ -735,13 +748,13 @@ class _HomePageState extends State<HomePage> with RouteAware {
     }
   }
 
-  Future<Map<String, _HomeDailyCashflowSummary>> _loadCalendarCashflowMap({
+  Future<Map<String, HomeDailyCashflowSummary>> _loadCalendarCashflowMap({
     required DateTime startDate,
     required DateTime endDate,
   }) async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) {
-      return <String, _HomeDailyCashflowSummary>{};
+      return <String, HomeDailyCashflowSummary>{};
     }
 
     final normalizedStart = _startOfDay(startDate);
@@ -750,48 +763,22 @@ class _HomePageState extends State<HomePage> with RouteAware {
     ).add(const Duration(days: 1));
 
     try {
-      final dynamic rowsRaw = await Supabase.instance.client
-          .from('wealth_struggles')
+      final dynamic rowsRaw = await AssetFlowRequest.table(
+        Supabase.instance.client,
+      )
           .select('action_type,amount,occurred_at')
           .eq('user_id', userId)
           .gte('occurred_at', normalizedStart.toUtc().toIso8601String())
           .lt('occurred_at', normalizedEndExclusive.toUtc().toIso8601String())
           .order('occurred_at', ascending: true);
-      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
-      final result = <String, _HomeDailyCashflowSummary>{};
-
-      for (final row in rows.whereType<Map<String, dynamic>>()) {
-        final occurredAt = DateTime.tryParse(
-          row['occurred_at']?.toString() ?? '',
-        )?.toLocal();
-        if (occurredAt == null) continue;
-
-        final dateKey = _statusDateKey(occurredAt);
-        final current = result[dateKey] ?? const _HomeDailyCashflowSummary();
-        final actionType = row['action_type']?.toString() ?? '';
-        final amount = _toIntValue(row['amount']);
-
-        result[dateKey] = switch (actionType) {
-          'conquer' => current.copyWith(
-              incomeTotal: current.incomeTotal + amount,
-              incomeCount: current.incomeCount + 1,
-            ),
-          'expense' => current.copyWith(
-              expenseTotal: current.expenseTotal + amount,
-              expenseCount: current.expenseCount + 1,
-            ),
-          'transfer' => current.copyWith(
-              transferTotal: current.transferTotal + amount,
-              transferCount: current.transferCount + 1,
-            ),
-          _ => current,
-        };
-      }
-
-      return result;
+      return aggregateHomeCalendarCashflow(
+        rowsRaw,
+        dateKeyFor: _statusDateKey,
+        amountFor: _toIntValue,
+      );
     } catch (e) {
       debugPrint('Error loading calendar cashflow map: $e');
-      return <String, _HomeDailyCashflowSummary>{};
+      return <String, HomeDailyCashflowSummary>{};
     }
   }
 
@@ -994,8 +981,9 @@ class _HomePageState extends State<HomePage> with RouteAware {
             .select('title,amount,created_at')
             .eq('user_id', userId)
             .order('created_at', ascending: true),
-        Supabase.instance.client
-            .from('wealth_struggles')
+        AssetFlowRequest.table(
+          Supabase.instance.client,
+        )
             .select('amount,description,occurred_at,action_type')
             .eq('user_id', userId)
             .order('occurred_at', ascending: true),
@@ -1426,25 +1414,12 @@ class _HomePageState extends State<HomePage> with RouteAware {
     );
   }
 
-  _HomeCalendarVisibleRange _calendarVisibleRange() {
-    final monthAnchor = _calendarAnchorMonth();
-    final firstDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month, 1);
-    final lastDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month + 1, 0);
-    final startOffset = firstDayOfMonth.weekday % 7;
-    final startDay = firstDayOfMonth.subtract(Duration(days: startOffset));
-    final endOffset = 6 - (lastDayOfMonth.weekday % 7);
-    final endDay = lastDayOfMonth.add(Duration(days: endOffset));
-
-    return _HomeCalendarVisibleRange(
-      monthAnchor: monthAnchor,
-      startDay: startDay,
-      endDay: endDay,
-    );
-  }
+  HomeCalendarVisibleRange _calendarVisibleRange() =>
+      HomeCalendarVisibleRange.forMonth(_calendarAnchorMonth());
 
   Future<List<_HomeCalendarDay>> _loadCalendarDays({
     required SharedPreferences prefs,
-    _HomeCalendarVisibleRange? calendarRange,
+    HomeCalendarVisibleRange? calendarRange,
     Map<String, AbstinenceGuardSnapshot>? abstinenceSnapshotsByDate,
   }) async {
     final now = _now();
@@ -1495,7 +1470,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
         tasksByDate[dateKey] ?? const <_HomeCalendarTask>[],
       );
       final cashflow =
-          cashflowByDate[dateKey] ?? const _HomeDailyCashflowSummary();
+          cashflowByDate[dateKey] ?? const HomeDailyCashflowSummary();
       final hasProtection = abstinence.enabledCount > 0;
       final hasSlip = abstinence.totalSlipCount > 0;
       final isFuture = day.isAfter(DateTime(now.year, now.month, now.day));
@@ -2945,36 +2920,10 @@ abstinence_slip_details: $slipDetailsText
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.calendar_month, color: Color(0xFFB0B0B0)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '継続カレンダー $currentMonthLabel',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                key: const Key('home_calendar_month_prev'),
-                tooltip: '前月',
-                visualDensity: VisualDensity.compact,
-                onPressed: _showPreviousCalendarMonth,
-                icon: const Icon(Icons.chevron_left),
-              ),
-              IconButton(
-                key: const Key('home_calendar_month_next'),
-                tooltip: '翌月',
-                visualDensity: VisualDensity.compact,
-                onPressed: _showNextCalendarMonth,
-                icon: const Icon(Icons.chevron_right),
-              ),
-            ],
+          HomeCalendarMonthHeader(
+            currentMonthLabel: currentMonthLabel,
+            onPreviousMonth: _showPreviousCalendarMonth,
+            onNextMonth: _showNextCalendarMonth,
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -3107,19 +3056,6 @@ abstinence_slip_details: $slipDetailsText
               final matchesFilter = _matchesCalendarHighlightFilter(day);
               final accentColor =
                   day.isCurrentMonth ? status.color : const Color(0xFFB0B0B0);
-              final backgroundColor = day.isCurrentMonth
-                  ? matchesFilter
-                      ? accentColor.withValues(
-                          alpha: day.hasAbstinenceSlip
-                              ? 0.18
-                              : status.label == '無傷'
-                                  ? 0.14
-                                  : status.label == '未設定'
-                                      ? 0.08
-                                      : 0.1,
-                        )
-                      : const Color(0xFFB0B0B0).withValues(alpha: 0.035)
-                  : const Color(0xFFB0B0B0).withValues(alpha: 0.05);
 
               return Material(
                 color: Colors.transparent,
@@ -3134,53 +3070,32 @@ abstinence_slip_details: $slipDetailsText
                     });
                     await _showCalendarDayDetails(context, day);
                   },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: backgroundColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: day.isToday
-                            ? const Color(0xFF6366F1)
-                            : day.isCurrentMonth
-                                ? matchesFilter
-                                    ? accentColor.withValues(alpha: 0.22)
-                                    : const Color(
-                                        0xFFB0B0B0,
-                                      ).withValues(alpha: 0.08)
-                                : Colors.transparent,
-                        width: day.isToday ? 1.6 : 1,
-                      ),
-                    ),
+                  child: HomeCalendarDaySurface(
+                    accentColor: accentColor,
+                    isToday: day.isToday,
+                    isCurrentMonth: day.isCurrentMonth,
+                    matchesFilter: matchesFilter,
+                    hasSlip: day.hasAbstinenceSlip,
+                    isClean: status.label == '無傷',
+                    isUnset: status.label == '未設定',
                     child: Padding(
                       padding: const EdgeInsets.all(6),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '${day.date.day}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: day.isCurrentMonth
-                                  ? matchesFilter
-                                      ? (status.label == '未設定'
-                                          ? (isDark
-                                              ? Colors.white.withValues(
-                                                  alpha: 0.7,
-                                                )
-                                              : const Color(0xDE000000))
-                                          : accentColor)
-                                      : isDark
-                                          ? const Color(0xFF666666)
-                                          : const Color(0xFFB0B0B0)
-                                  : const Color(0xFFB0B0B0),
-                              height: 1.5,
-                            ),
+                          HomeCalendarDayNumber(
+                            day: day.date.day,
+                            isCurrentMonth: day.isCurrentMonth,
+                            matchesFilter: matchesFilter,
+                            isUnset: status.label == '未設定',
+                            isDark: isDark,
+                            accentColor: accentColor,
                           ),
                           if (day.isCurrentMonth && day.hasCashflow) ...[
                             const SizedBox(height: 4),
                             if (day.cashflow.incomeCount > 0)
-                              _buildCalendarCashflowLine(
-                                key: Key(
+                              HomeCalendarCashflowLine(
+                                textKey: Key(
                                   'calendar_day_income_${DateFormat('yyyy-MM-dd').format(day.date)}',
                                 ),
                                 label: '収',
@@ -3190,8 +3105,8 @@ abstinence_slip_details: $slipDetailsText
                                 isEmphasized: matchesFilter,
                               ),
                             if (day.cashflow.expenseCount > 0)
-                              _buildCalendarCashflowLine(
-                                key: Key(
+                              HomeCalendarCashflowLine(
+                                textKey: Key(
                                   'calendar_day_expense_${DateFormat('yyyy-MM-dd').format(day.date)}',
                                 ),
                                 label: '支',
@@ -3202,47 +3117,18 @@ abstinence_slip_details: $slipDetailsText
                               ),
                           ],
                           const Spacer(),
-                          Wrap(
-                            spacing: 3,
-                            runSpacing: 3,
-                            children: [
-                              if (day.morningDone)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFFFC107),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
-                              if (day.balanceDone)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFF4CAF50),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                          HomeCalendarDayIndicators(
+                            colors: [
+                              if (day.morningDone) const Color(0xFFFFC107),
+                              if (day.balanceDone) const Color(0xFF4CAF50),
                               if (day.hasAbstinenceProtection &&
                                   !day.hasAbstinenceSlip)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFE53935),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                                const Color(0xFFE53935),
                               if (day.hasAbstinenceSlip)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFFF6B35),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
-                              if (day.isSaturday)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFF009688),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                                const Color(0xFFFF6B35),
+                              if (day.isSaturday) const Color(0xFF009688),
                             ],
+                            isEmphasized: matchesFilter,
                           ),
                         ],
                       ),
@@ -3798,46 +3684,6 @@ abstinence_slip_details: $slipDetailsText
     return '[$sourceLabel/$stateLabel]$secondary$important ${task.title}';
   }
 
-  Widget _buildCalendarDot(Color color) {
-    return Container(
-      width: 7,
-      height: 7,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
-
-  Color _calendarDotDisplayColor(Color color, {required bool isEmphasized}) {
-    if (isEmphasized) return color;
-    return color.withValues(alpha: 0.22);
-  }
-
-  Widget _buildCalendarCashflowLine({
-    required Key key,
-    required String label,
-    required int amount,
-    required Color color,
-    required String sign,
-    required bool isEmphasized,
-  }) {
-    final textColor = isEmphasized ? color : color.withValues(alpha: 0.74);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 1),
-      child: Text(
-        '$label $sign${_formatCalendarCashflowAmount(amount)}',
-        key: key,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: textColor,
-          height: 1.6,
-        ),
-      ),
-    );
-  }
-
   Widget _buildCalendarSummaryPill({
     required String label,
     required String value,
@@ -3846,51 +3692,18 @@ abstinence_slip_details: $slipDetailsText
   }) {
     final isSelected = _calendarHighlightFilter == filter;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.14),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          key: Key('home_calendar_summary_${filter.name}'),
-          borderRadius: BorderRadius.circular(999),
-          onTap: () {
-            setState(() {
-              _calendarHighlightFilter =
-                  isSelected ? _CalendarHighlightFilter.all : filter;
-            });
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: isSelected ? 0.24 : 0.12),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: color.withValues(alpha: isSelected ? 0.38 : 0.18),
-              ),
-            ),
-            child: Text(
-              '$label $value',
-              style: TextStyle(
-                fontSize: 11,
-                color: color,
-                fontWeight: FontWeight.w700,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ),
-      ),
+    return HomeCalendarSummaryPill(
+      label: label,
+      value: value,
+      color: color,
+      isSelected: isSelected,
+      interactionKey: 'home_calendar_summary_${filter.name}',
+      onTap: () {
+        setState(() {
+          _calendarHighlightFilter =
+              isSelected ? _CalendarHighlightFilter.all : filter;
+        });
+      },
     );
   }
 
@@ -5299,10 +5112,10 @@ abstinence_slip_details: $slipDetailsText
         ),
         child: RefreshIndicator(
           onRefresh: _refreshKpis,
-          child: FutureBuilder<_HomeOpsSnapshot>(
+          child: HomeOpsSnapshotView<_HomeOpsSnapshot>(
             future: _opsSnapshotFuture,
-            builder: (context, snapshot) {
-              final opsSnapshot = snapshot.data ?? const _HomeOpsSnapshot();
+            emptyValue: const _HomeOpsSnapshot(),
+            builder: (context, opsSnapshot) {
               final nextAction = _resolveNextAction(opsSnapshot);
               final highlightMonthlyFlow =
                   nextAction.type == _HomeActionType.monthlyFlowReview;
@@ -5365,6 +5178,7 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const HomeTodayPriorityGoal(),
                             if (!showInternalOperations) ...[
                               _buildSectionHeader(
                                 '今日の1件',
@@ -5744,7 +5558,7 @@ abstinence_slip_details: $slipDetailsText
                                 'SITE GUIDE AI',
                                 Icons.support_agent_outlined,
                                 const Color(0xFF4F46E5),
-                                key: const Key('home_section_site_guide_ai'),
+                                key: const Key('home_legacy_site_guide_ai'),
                               ),
                               _buildSiteGuideAiCard(isDark, isCompact),
                               const SizedBox(height: 24),
@@ -6027,64 +5841,64 @@ abstinence_slip_details: $slipDetailsText
         const GaReadinessGatePanel(),
       ],
       const SizedBox(height: 16),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_recent'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_recent'),
         storageKey: 'home_tier_recent',
         title: '最近使った機能',
         icon: Icons.history,
-        iconColor: Color(0xFFFF6B35),
-        initiallyExpanded: true,
-        child: RecentFeaturesList(),
+        iconColor: const Color(0xFFFF6B35),
+        initiallyExpanded: !isCompact,
+        child: const RecentFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_popular'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_popular'),
         storageKey: 'home_tier_popular',
         title: 'よく使われる機能（ユーザー全体）',
         icon: Icons.trending_up,
-        iconColor: Color(0xFF0D9488),
-        initiallyExpanded: true,
-        child: PopularFeaturesList(),
+        iconColor: const Color(0xFF0D9488),
+        initiallyExpanded: !isCompact,
+        child: const PopularFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_system'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_system'),
         storageKey: 'home_tier_system',
         title: 'システム固定機能',
         icon: Icons.lock_outline,
-        iconColor: Color(0xFF6366F1),
-        initiallyExpanded: true,
-        child: SystemFixedFeaturesList(),
+        iconColor: const Color(0xFF6366F1),
+        initiallyExpanded: !isCompact,
+        child: const SystemFixedFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_pinned'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_pinned'),
         storageKey: 'home_tier_pinned',
         title: 'お気に入り（ピン止め）',
         icon: Icons.push_pin_outlined,
-        iconColor: Color(0xFF6366F1),
-        initiallyExpanded: true,
-        child: UserPinnedFeaturesList(),
+        iconColor: const Color(0xFF6366F1),
+        initiallyExpanded: !isCompact,
+        child: const UserPinnedFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_new'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_new'),
         storageKey: 'home_tier_new',
         title: '最近追加された機能',
         icon: Icons.new_releases_outlined,
-        iconColor: Color(0xFFFF6B35),
-        initiallyExpanded: true,
-        child: NewFeaturesList(),
+        iconColor: const Color(0xFFFF6B35),
+        initiallyExpanded: !isCompact,
+        child: const NewFeaturesList(),
       ),
       const SizedBox(height: 4),
-      const CollapsibleHomeSection(
-        key: Key('home_tier_recommend'),
+      CollapsibleHomeSection(
+        key: const Key('home_tier_recommend'),
         storageKey: 'home_tier_recommend',
         title: 'AIおすすめ機能',
         icon: Icons.auto_awesome,
-        iconColor: Color(0xFF6366F1),
-        initiallyExpanded: true,
-        child: AiRecommendedFeaturesList(),
+        iconColor: const Color(0xFF6366F1),
+        initiallyExpanded: !isCompact,
+        child: const AiRecommendedFeaturesList(),
       ),
     ];
   }
@@ -6994,6 +6808,75 @@ abstinence_slip_details: $slipDetailsText
     final outlineColor =
         isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFFDDE8E4);
     const quickQuestions = <String>['まず何から使えばいい？', '資産管理はどこ？', 'AI大学の始め方は？'];
+
+    if (isCompact) {
+      return Card(
+        key: const Key('home_mobile_site_guide_compact'),
+        elevation: 0,
+        color: cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: outlineColor),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4F46E5).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.support_agent_outlined,
+                  color: Color(0xFF4F46E5),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '使い方をAIに聞く',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: titleColor,
+                        height: 1.35,
+                      ),
+                    ),
+                    Text(
+                      '迷った場所から案内します',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: bodyColor,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: () => _runTrackedAction(
+                  'site-guide-ai',
+                  () => _openSiteGuideAi(),
+                ),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(64, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                ),
+                child: const Text('聞く'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Card(
       elevation: 0,
@@ -9040,16 +8923,6 @@ abstinence_slip_details: $slipDetailsText
     return '${NumberFormat('#,##0', 'ja_JP').format(value.round())}円';
   }
 
-  String _formatCalendarCashflowAmount(int value) {
-    final absValue = value.abs();
-    if (absValue >= 10000) {
-      final man = absValue / 10000;
-      final digits = man >= 100 ? 0 : 1;
-      return '${man.toStringAsFixed(digits)}万';
-    }
-    return NumberFormat('#,##0', 'ja_JP').format(absValue);
-  }
-
   String _formatPercentRatio(double part, double total) {
     if (total == 0) return '--';
     return '${(part / total * 100).toStringAsFixed(2)}%';
@@ -9244,18 +9117,6 @@ class _HomeDailyStatusRecord {
   const _HomeDailyStatusRecord({
     this.morningBriefingDone = false,
     this.balanceCheckDone = false,
-  });
-}
-
-class _HomeCalendarVisibleRange {
-  final DateTime monthAnchor;
-  final DateTime startDay;
-  final DateTime endDay;
-
-  const _HomeCalendarVisibleRange({
-    required this.monthAnchor,
-    required this.startDay,
-    required this.endDay,
   });
 }
 
@@ -9679,7 +9540,7 @@ class _HomeCalendarDay {
   final List<String> slipDetails;
   final List<String> missingItems;
   final String relapsePreventionAction;
-  final _HomeDailyCashflowSummary cashflow;
+  final HomeDailyCashflowSummary cashflow;
   final List<_HomeCalendarTask> tasks;
 
   const _HomeCalendarDay({
@@ -9697,7 +9558,7 @@ class _HomeCalendarDay {
     required this.slipDetails,
     required this.missingItems,
     required this.relapsePreventionAction,
-    this.cashflow = const _HomeDailyCashflowSummary(),
+    this.cashflow = const HomeDailyCashflowSummary(),
     this.tasks = const <_HomeCalendarTask>[],
   });
 
@@ -9706,50 +9567,6 @@ class _HomeCalendarDay {
   int get totalTaskCount => tasks.length;
 
   int get completedTaskCount => tasks.where((task) => task.isCompleted).length;
-}
-
-class _HomeDailyCashflowSummary {
-  final int incomeTotal;
-  final int expenseTotal;
-  final int transferTotal;
-  final int incomeCount;
-  final int expenseCount;
-  final int transferCount;
-
-  const _HomeDailyCashflowSummary({
-    this.incomeTotal = 0,
-    this.expenseTotal = 0,
-    this.transferTotal = 0,
-    this.incomeCount = 0,
-    this.expenseCount = 0,
-    this.transferCount = 0,
-  });
-
-  _HomeDailyCashflowSummary copyWith({
-    int? incomeTotal,
-    int? expenseTotal,
-    int? transferTotal,
-    int? incomeCount,
-    int? expenseCount,
-    int? transferCount,
-  }) {
-    return _HomeDailyCashflowSummary(
-      incomeTotal: incomeTotal ?? this.incomeTotal,
-      expenseTotal: expenseTotal ?? this.expenseTotal,
-      transferTotal: transferTotal ?? this.transferTotal,
-      incomeCount: incomeCount ?? this.incomeCount,
-      expenseCount: expenseCount ?? this.expenseCount,
-      transferCount: transferCount ?? this.transferCount,
-    );
-  }
-
-  int get recordCount => incomeCount + expenseCount;
-
-  int get netTotal => incomeTotal - expenseTotal;
-
-  bool get hasCashflow => recordCount > 0;
-
-  bool get hasAnyEntry => hasCashflow || transferCount > 0;
 }
 
 enum _HomeCalendarTaskSource { dailyTodo, mindless }

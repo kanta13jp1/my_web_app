@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/note_navigation_page.dart';
@@ -5,6 +7,61 @@ import 'package:my_web_app/services/note_navigation_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  for (final staleError in <bool>[false, true]) {
+    testWidgets('ignores obsolete reload error=$staleError', (tester) async {
+      await _setSurface(tester, const Size(1100, 800));
+      final repository = _FakeNoteNavigationRepository.empty();
+      await tester.pumpWidget(
+        MaterialApp(home: NoteNavigationPage(repository: repository)),
+      );
+      await tester.pumpAndSettle();
+
+      final older = Completer<NoteNavigationSnapshot>();
+      final newer = Completer<NoteNavigationSnapshot>();
+      repository.pendingLoads.addAll(<Future<NoteNavigationSnapshot>>[
+        older.future,
+        newer.future,
+      ]);
+      final refresh = find.byKey(const Key('note_navigation_refresh'));
+      await tester.tap(refresh);
+      await tester.pump();
+      await tester.tap(refresh);
+      await tester.pump();
+
+      newer.complete(
+        const NoteNavigationSnapshot(
+          savedSearches: <NoteSavedSearch>[
+            NoteSavedSearch(
+              id: 'new',
+              name: 'Latest search',
+              query: 'tag:new',
+              sourceSystem: 'native',
+            ),
+          ],
+          shortcuts: <NoteShortcut>[],
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Latest search'), findsOneWidget);
+
+      if (staleError) {
+        older.completeError(StateError('obsolete request failed'));
+      } else {
+        older.complete(
+          const NoteNavigationSnapshot(
+            savedSearches: <NoteSavedSearch>[],
+            shortcuts: <NoteShortcut>[],
+          ),
+        );
+      }
+      await tester.pumpAndSettle();
+
+      expect(find.text('Latest search'), findsOneWidget);
+      expect(find.textContaining('obsolete request failed'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('renders owner navigation state on a narrow layout',
       (tester) async {
@@ -200,9 +257,11 @@ class _FakeNoteNavigationRepository implements NoteNavigationRepository {
   final List<(String, String)> createdSavedSearches = [];
   String? importedManifest;
   int verifyCalls = 0;
+  final pendingLoads = <Future<NoteNavigationSnapshot>>[];
 
   @override
   Future<NoteNavigationSnapshot> load() async {
+    if (pendingLoads.isNotEmpty) return pendingLoads.removeAt(0);
     return NoteNavigationSnapshot(
       savedSearches: List.unmodifiable(savedSearches),
       shortcuts: List.unmodifiable(shortcuts),

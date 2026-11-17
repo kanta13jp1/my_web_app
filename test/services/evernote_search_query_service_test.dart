@@ -136,6 +136,51 @@ void main() {
       );
     });
 
+    test('loads stored features through negation and Boolean branches', () {
+      const empty = EvernoteSearchDocument(
+        title: 'Quarterly Project Plan',
+        content: '',
+        tags: <String>[],
+      );
+      for (final atom in <String>[
+        'resource:application/pdf',
+        'SOURCE:mobile.android',
+        'todo:true',
+        'encryption:',
+        'contains:filePdf',
+      ]) {
+        for (final prefix in <String>['', '-', 'NOT ']) {
+          final query = EvernoteSearchQueryService.parse('$prefix$atom');
+          expect(query.isFullySupported, isTrue);
+          expect(query.requiresStoredFeatures, isTrue);
+          expect(query.matches(base), prefix.isEmpty);
+          expect(query.matches(empty), prefix.isNotEmpty);
+        }
+        for (final raw in <String>[
+          'project OR (-$atom)',
+          '(-$atom) AND project',
+          'NOT (project OR $atom)',
+        ]) {
+          final query = EvernoteSearchQueryService.parse(raw);
+          expect(query.isFullySupported, isTrue);
+          expect(query.requiresStoredFeatures, isTrue);
+        }
+      }
+    });
+
+    test('does not load stored features for literal text or tags', () {
+      for (final raw in <String>[
+        '',
+        'project -tag:missing',
+        '"resource:application/pdf"',
+        '"text source:mobile.android"',
+      ]) {
+        final query = EvernoteSearchQueryService.parse(raw);
+        expect(query.isFullySupported, isTrue);
+        expect(query.requiresStoredFeatures, isFalse);
+      }
+    });
+
     test('validates todo and contains values', () {
       expect(
         EvernoteSearchQueryService.parse('todo:done').errors,

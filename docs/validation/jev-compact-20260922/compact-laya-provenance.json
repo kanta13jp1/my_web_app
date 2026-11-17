@@ -1,0 +1,11 @@
+{
+  "model": "convaiinnovations/laya",
+  "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982",
+  "source": "573e5b62696ba441230cd6be71d593331b5d23af",
+  "weights_sha256": "891102d372688fc2a094dac56a384bc537b87c63f21f9f3dac0be2b7cbc8d86c",
+  "torch": "2.6.0+cpu",
+  "device": "cpu",
+  "threads": 2,
+  "python": "3.12.3",
+  "warmup": "one empty-state control query; loading excluded"
+}

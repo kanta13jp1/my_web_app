@@ -1,0 +1,54 @@
+name: Production Firebase identity audit
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: production-firebase-identity-audit
+  cancel-in-progress: false
+
+jobs:
+  identity:
+    if: github.ref == 'refs/heads/main'
+    permissions: {}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    environment:
+      name: production
+      deployment: false
+    steps:
+      - name: Preserve identity metadata only
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
+          TARGET_PROJECT: ${{ secrets.FIREBASE_PROJECT_ID }}
+          METADATA_PATH: ${{ runner.temp }}/firebase-identity.json
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          credential = json.loads(os.environ['SA_JSON'])
+          principal = credential['client_email']
+          assert credential['type'] == 'service_account'
+          assert re.fullmatch(r'[a-zA-Z0-9_.@-]+\.gserviceaccount\.com', principal)
+          metadata = {
+              'principal': principal,
+              'credential_project': credential['project_id'],
+              'target_project': os.environ['TARGET_PROJECT'],
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'workflow_commit': os.environ['GITHUB_SHA'],
+          }
+          Path(os.environ['METADATA_PATH']).write_text(json.dumps(metadata), encoding='utf-8')
+          print('Identity metadata prepared; no private key or access token was exported.')
+          PY
+      - name: Upload identity metadata
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6; Node.js 24 required by repository policy
+        with:
+          name: firebase-identity-${{ github.run_id }}
+          path: ${{ runner.temp }}/firebase-identity.json
+          if-no-files-found: error
+          retention-days: 1

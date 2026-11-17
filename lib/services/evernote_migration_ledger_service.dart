@@ -114,7 +114,11 @@ class EvernoteMigrationItem {
       taskStatus == 'verified' || taskStatus == 'verified_no_features';
 
   bool get sourceDeletionGatePassed =>
-      historyDeletionGatePassed && taskDeletionGatePassed;
+      targetNoteId != null &&
+      <String>{'verified', 'source_deleting', 'source_deleted'}
+          .contains(status) &&
+      historyDeletionGatePassed &&
+      taskDeletionGatePassed;
 
   String get displayTitle {
     final title = noteTitle?.trim();
@@ -204,6 +208,15 @@ class EvernoteMigrationProgress {
     );
   }
 
+  bool get importCompleted =>
+      sourceNoteCount > 0 && importedNoteCount == sourceNoteCount;
+
+  bool get verificationCompleted =>
+      importCompleted && verifiedNoteCount == sourceNoteCount;
+
+  bool get sourceDeletionCompleted =>
+      verificationCompleted && sourceDeletedNoteCount == sourceNoteCount;
+
   double get overallFraction {
     if (sourceNoteCount == 0) return 0;
     final denominator = sourceNoteCount * 4;
@@ -215,6 +228,19 @@ class EvernoteMigrationProgress {
   }
 
   int get overallPercent => (overallFraction * 100).round();
+}
+
+class EvernoteLedgerRefreshGeneration {
+  int _generation = 0;
+  String? _ownerId;
+
+  int begin(String ownerId) {
+    _ownerId = ownerId;
+    return ++_generation;
+  }
+
+  bool isCurrent(int generation, String? ownerId) =>
+      generation == _generation && ownerId != null && ownerId == _ownerId;
 }
 
 class EvernoteMigrationLedgerService {
@@ -283,18 +309,33 @@ class EvernoteMigrationLedgerService {
     return batch;
   }
 
+  Future<
+      ({
+        List<EvernoteMigrationBatch> batches,
+        List<EvernoteMigrationItem> items,
+      })> loadSnapshot({required String userId}) async {
+    final results = await Future.wait<Object>([
+      loadBatches(userId: userId),
+      loadItems(userId: userId),
+    ]);
+    return (
+      batches: results[0] as List<EvernoteMigrationBatch>,
+      items: results[1] as List<EvernoteMigrationItem>,
+    );
+  }
+
   Future<List<EvernoteMigrationBatch>> loadBatches({
     required String userId,
-    int limit = 20,
+    int? limit,
   }) async {
     final ownerId = userId.trim();
     if (ownerId.isEmpty) return const <EvernoteMigrationBatch>[];
-    final rows = await _client
-        .from('evernote_migration_batches')
-        .select()
-        .eq('user_id', ownerId)
-        .order('updated_at', ascending: false)
-        .limit(limit.clamp(1, 100));
+    final rows = await _loadLedgerRows(
+      table: 'evernote_migration_batches',
+      columns: '*',
+      ownerId: ownerId,
+      limit: limit?.clamp(1, 100),
+    );
     return rows
         .map(
           (row) => EvernoteMigrationBatch.fromJson(
@@ -306,14 +347,14 @@ class EvernoteMigrationLedgerService {
 
   Future<List<EvernoteMigrationItem>> loadItems({
     required String userId,
-    int limit = 200,
+    int? limit,
   }) async {
     final ownerId = userId.trim();
     if (ownerId.isEmpty) return const <EvernoteMigrationItem>[];
-    final rows = await _client
-        .from('evernote_migration_items')
-        .select(
-          'id,batch_id,source_item_key,source_note_id,target_note_id,status,'
+    final rows = await _loadLedgerRows(
+      table: 'evernote_migration_items',
+      columns:
+          'updated_at,id,batch_id,source_item_key,source_note_id,target_note_id,status,'
           'history_status,source_history_version_count,'
           'imported_history_version_count,verified_history_version_count,'
           'task_status,source_task_count,imported_task_count,'
@@ -321,10 +362,9 @@ class EvernoteMigrationLedgerService {
           'imported_task_reminder_count,verified_task_reminder_count,'
           'source_note_reminder_present,note_reminder_verified,'
           'notes!evernote_migration_items_target_note_fkey(title)',
-        )
-        .eq('user_id', ownerId)
-        .order('updated_at', ascending: false)
-        .limit(limit.clamp(1, 1000));
+      ownerId: ownerId,
+      limit: limit?.clamp(1, 1000),
+    );
     return rows
         .map(
           (row) => EvernoteMigrationItem.fromJson(
@@ -332,6 +372,47 @@ class EvernoteMigrationLedgerService {
           ),
         )
         .toList(growable: false);
+  }
+
+  Future<List<Map<String, dynamic>>> _loadLedgerRows({
+    required String table,
+    required String columns,
+    required String ownerId,
+    int? limit,
+  }) async {
+    if (limit != null) {
+      return await _client
+          .from(table)
+          .select(columns)
+          .eq('user_id', ownerId)
+          .order('updated_at', ascending: false)
+          .order('id', ascending: false)
+          .limit(limit);
+    }
+    const pageSize = 100;
+    final rows = <Map<String, dynamic>>[];
+    int? afterId;
+    while (true) {
+      var query = _client.from(table).select(columns).eq('user_id', ownerId);
+      if (afterId != null) query = query.gt('id', afterId);
+      final page = await query.order('id', ascending: true).limit(pageSize);
+      if (page.isEmpty) break;
+      rows.addAll(page);
+      final nextId = _asIntValue(page.last['id']);
+      if (nextId <= (afterId ?? 0)) {
+        throw StateError('The migration ledger cursor did not advance.');
+      }
+      afterId = nextId;
+      // A server cap can shorten a page; only an empty page ends the scan.
+    }
+    rows.sort((left, right) {
+      final dateOrder = (right['updated_at']?.toString() ?? '')
+          .compareTo(left['updated_at']?.toString() ?? '');
+      return dateOrder != 0
+          ? dateOrder
+          : _asIntValue(right['id']).compareTo(_asIntValue(left['id']));
+    });
+    return rows;
   }
 
   static String _sourceItemKey(ImportedNoteDraft note, int index) {

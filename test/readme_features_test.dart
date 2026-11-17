@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:my_web_app/pages/note_list_page.dart';
 import 'package:my_web_app/services/abstinence_guard_store.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +12,7 @@ import 'package:my_web_app/services/theme_service.dart';
 import 'package:my_web_app/pages/home_page.dart';
 import 'package:my_web_app/pages/emergency_meeting_page.dart';
 import 'package:my_web_app/widgets/global_header_clock_bar.dart';
+import 'package:my_web_app/widgets/collapsible_home_section.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
@@ -24,9 +27,17 @@ void main() {
     await Supabase.initialize(
       url: 'https://dummy.supabase.co',
       publishableKey: 'dummy',
+      httpClient: MockClient((_) async => http.Response('[]', 200)),
+      authOptions: const FlutterAuthClientOptions(
+        autoRefreshToken: false,
+        detectSessionInUri: false,
+        localStorage: EmptyLocalStorage(),
+      ),
       debug: false,
-    );
+    ).timeout(const Duration(seconds: 10));
   });
+
+  tearDownAll(() async => Supabase.instance.dispose());
 
   setUp(() {
     // 各テストの前に設定をリセット
@@ -68,6 +79,29 @@ void main() {
         findsOneWidget,
       );
       expect(find.byKey(const Key('home_section_ceo_office')), findsNothing);
+    });
+
+    testWidgets('Feature: HomePage keeps mobile guidance compact', (
+      WidgetTester tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(createTestWidget(const HomePage()));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('home_mobile_site_guide_compact')),
+        findsOneWidget,
+      );
+      expect(find.text('まず何から使えばいい？'), findsNothing);
+      final recentSection = tester.widget<CollapsibleHomeSection>(
+        find.byKey(const Key('home_tier_recent')),
+      );
+      expect(recentSection.initiallyExpanded, isFalse);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('Feature: HomePage (Cockpit) renders correctly',
@@ -363,6 +397,14 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      for (final key in [
+        'home_section_site_guide_ai',
+        'home_legacy_site_guide_ai',
+        'home_section_feature_request',
+      ]) {
+        expect(find.byKey(Key(key)), findsOneWidget);
+      }
 
       Text monthLabel = tester.widget(
         find.byKey(const Key('home_calendar_month_label')),

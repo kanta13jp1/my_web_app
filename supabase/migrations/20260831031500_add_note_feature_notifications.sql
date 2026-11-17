@@ -304,6 +304,7 @@ begin
     message = excluded.message,
     notify_at = excluded.notify_at,
     dismissed_at = null,
+    cancelled_at = null,
     updated_at = clock_timestamp();
 end
 $$;

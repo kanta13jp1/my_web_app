@@ -69,6 +69,10 @@ class AssetLiabilityRepaymentSimulationPlan {
     required this.warnings,
   });
 
+  /// A zero budget exits before any interest calculation takes place.
+  bool get hasInterestEstimate =>
+      startingBalanceTotal <= 0.01 || monthlyPaymentBudget > 0.01;
+
   String? get firstFocusDebtName =>
       priorityRows.isEmpty ? null : priorityRows.first.name;
 }
@@ -115,13 +119,38 @@ class AssetLiabilityRepaymentSimulationService {
   static const double _epsilon = 0.01;
   static const int _defaultMaxMonths = 360;
 
+  /// The panel models current unpaid principal, not future recurring bills.
+  /// Keep buildComparison unchanged for repayment-report callers.
+  AssetLiabilityRepaymentSimulationResult buildPanelComparison({
+    required AssetLiabilityWorkbook workbook,
+    double extraMonthlyPayment = 0,
+  }) {
+    return buildComparison(
+      workbook: workbook,
+      extraMonthlyPayment: extraMonthlyPayment,
+      eligibleAccountIds: workbook.debtMasterRows
+          .where((row) => !workbook.scheduledExpenseAccountIds.contains(row.id))
+          .map((row) => row.id)
+          .toSet(),
+    );
+  }
+
   AssetLiabilityRepaymentSimulationResult buildComparison({
     required AssetLiabilityWorkbook workbook,
     double extraMonthlyPayment = 0,
+    bool includePaidPrincipal = false,
+    Set<String>? eligibleAccountIds,
     int maxMonths = _defaultMaxMonths,
   }) {
     final sourceDebts = workbook.debtMasterRows
-        .where(_isEligibleDebt)
+        .where(
+          (row) =>
+              _isEligibleDebt(
+                row,
+                includePaidPrincipal: includePaidPrincipal,
+              ) &&
+              (eligibleAccountIds?.contains(row.id) ?? true),
+        )
         .map(_SimulationDebt.fromRow)
         .toList(growable: false);
     final baseMonthlyPayment = sourceDebts.fold<double>(
@@ -161,9 +190,12 @@ class AssetLiabilityRepaymentSimulationService {
     );
   }
 
-  bool _isEligibleDebt(AssetLiabilityDebtRow row) {
+  bool _isEligibleDebt(
+    AssetLiabilityDebtRow row, {
+    bool includePaidPrincipal = false,
+  }) {
     return row.balance < -_epsilon &&
-        !row.paid &&
+        (includePaidPrincipal || !row.paid) &&
         row.isDirectCashflowTarget &&
         !row.includedInBillingAccount;
   }

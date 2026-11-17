@@ -92,13 +92,21 @@ class _NoteTasksPanelState extends State<NoteTasksPanel> {
   }
 
   Future<DateTime?> _pickDateTime(DateTime? current) async {
-    final initial = current?.toLocal() ??
-        DateTime.now().toLocal().add(const Duration(days: 1));
+    final now = DateTime.now().toLocal();
+    final firstDate = DateUtils.dateOnly(now.subtract(const Duration(days: 1)));
+    final lastDate = DateUtils.dateOnly(now.add(const Duration(days: 3650)));
+    final initial = current?.toLocal() ?? now.add(const Duration(days: 1));
+    final initialDay = DateUtils.dateOnly(initial);
+    final displayedDay = initialDay.isBefore(firstDate)
+        ? firstDate
+        : initialDay.isAfter(lastDate)
+            ? lastDate
+            : initialDay;
     final date = await showDatePicker(
       context: context,
-      initialDate: initial,
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-      lastDate: DateTime.now().add(const Duration(days: 3650)),
+      initialDate: displayedDay,
+      firstDate: firstDate,
+      lastDate: lastDate,
     );
     if (!mounted || date == null) return null;
     final time = await showTimePicker(

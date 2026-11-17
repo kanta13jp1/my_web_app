@@ -8,6 +8,97 @@ import 'package:my_web_app/services/import_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
+  for (final items in <bool>[false, true]) {
+    test('loads all owner ledger pages, items=$items', () async {
+      final cursors = <int>[];
+      final service = _service((request) async {
+        expect(request.url.queryParameters['user_id'], 'eq.user-a');
+        expect(request.url.queryParameters['order'], 'id.asc.nullslast');
+        final cursor = int.parse(
+          (request.url.queryParameters['id'] ?? 'gt.0').substring(3),
+        );
+        cursors.add(cursor);
+        final rows = List<Map<String, dynamic>>.generate(205, (index) {
+          return <String, dynamic>{
+            ...(items ? _itemJson() : _batchJson()),
+            'id': index + 1,
+          };
+        }).where((row) => (row['id'] as int) > cursor).take(50).toList();
+        return http.Response(
+          jsonEncode(rows),
+          200,
+          headers: const {'content-type': 'application/json'},
+          request: request,
+        );
+      });
+      final ids = items
+          ? (await service.loadItems(userId: 'user-a')).map((row) => row.id)
+          : (await service.loadBatches(userId: 'user-a')).map((row) => row.id);
+      expect(ids.toSet(), hasLength(205));
+      expect(ids.first, 205);
+      expect(cursors, <int>[0, 50, 100, 150, 200, 205]);
+    });
+  }
+  test('retry after a partial manifest write reuses keys and preserves status',
+      () async {
+    var itemCalls = 0;
+    final payloads = <List<Map<String, dynamic>>>[];
+    final service = _service((request) async {
+      if (request.url.path.endsWith('/evernote_migration_batches')) {
+        return http.Response(
+          jsonEncode(_batchJson()),
+          201,
+          headers: const {'content-type': 'application/json'},
+          request: request,
+        );
+      }
+      itemCalls += 1;
+      payloads.add(
+        (jsonDecode(request.body) as List<dynamic>)
+            .map((value) => Map<String, dynamic>.from(value as Map))
+            .toList(),
+      );
+      return http.Response(
+        itemCalls == 2 ? '{"message":"synthetic transient failure"}' : '',
+        itemCalls == 2 ? 500 : 201,
+        headers: const {'content-type': 'application/json'},
+        request: request,
+      );
+    });
+    final preview = ImportPreviewResult(
+      sourceType: 'evernote',
+      sourceLabel: 'Evernote',
+      fileName: 'retry.enex',
+      sourceExportSha256: _hash('a'),
+      notes: List<ImportedNoteDraft>.generate(101, (index) {
+        return ImportedNoteDraft(
+          title: 'Synthetic note',
+          content: 'Synthetic body',
+          source: 'evernote',
+          sourceId: 'note-$index',
+          sourceContentSha256: _hash('b'),
+        );
+      }),
+    );
+    await expectLater(
+      service.recordPreview(userId: 'user-a', preview: preview),
+      throwsA(isA<PostgrestException>()),
+    );
+    await service.recordPreview(userId: 'user-a', preview: preview);
+    expect(payloads.map((rows) => rows.length).toList(), <int>[100, 1, 100, 1]);
+    for (var page = 0; page < 2; page += 1) {
+      expect(
+        payloads[page].map((row) => row['source_item_key']).toList(),
+        payloads[page + 2].map((row) => row['source_item_key']).toList(),
+      );
+    }
+    for (final row in payloads.expand((rows) => rows)) {
+      expect(row.containsKey('status'), isFalse);
+      expect(row.containsKey('history_status'), isFalse);
+      expect(row.containsKey('task_status'), isFalse);
+      expect(row.containsKey('target_note_id'), isFalse);
+    }
+  });
   group('EvernoteMigrationProgress', () {
     test('reports transparent four-stage progress', () {
       final progress =
@@ -97,6 +188,14 @@ void main() {
         () async {
       late http.Request captured;
       final service = _service((request) async {
+        if (request.url.queryParameters.containsKey('id')) {
+          return http.Response(
+            '[]',
+            200,
+            headers: const {'content-type': 'application/json'},
+            request: request,
+          );
+        }
         captured = request;
         return http.Response(
           jsonEncode(<Map<String, dynamic>>[_batchJson()]),
@@ -113,7 +212,7 @@ void main() {
       expect(captured.url.queryParameters['user_id'], 'eq.user-a');
       expect(
         captured.url.queryParameters['order'],
-        'updated_at.desc.nullslast',
+        'id.asc.nullslast',
       );
       expect(captured.headers['authorization'], 'Bearer user-a-jwt');
     });
@@ -122,6 +221,14 @@ void main() {
         () async {
       late http.Request captured;
       final service = _service((request) async {
+        if (request.url.queryParameters.containsKey('id')) {
+          return http.Response(
+            '[]',
+            200,
+            headers: const {'content-type': 'application/json'},
+            request: request,
+          );
+        }
         captured = request;
         return http.Response(
           jsonEncode(<Map<String, dynamic>>[_itemJson()]),

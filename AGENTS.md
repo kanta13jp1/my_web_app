@@ -6,8 +6,9 @@ actionable; detailed product memory stays in docs, issues, and NotebookLM.
 ## Session Start
 
 1. Check the working tree before editing.
-2. If a local checkout is required, prefer a sparse worktree from `origin/main`
-   when the root tree is dirty. Include only the paths needed by the task.
+2. Prefer GitHub/API inspection and remote task execution when the work does not
+   require a local checkout. If a checkout is required, use a sparse worktree
+   from `origin/main` and include only the task's read/write paths.
 3. Route from a cheap disk/RAM snapshot before starting toolchains:
 
 ```powershell
@@ -58,17 +59,26 @@ same notebook.
 
 - GitHub Actions is the default authority for Flutter/Dart analysis, tests,
   Deno checks, production builds, coverage, and generated artifacts.
-- Prefer the GitHub connector, Git Data API, or GitHub web editor for bounded
-  source changes. Do not create a local worktree merely to make a remote-safe
-  edit; preserve work in a scoped remote branch and draft pull request.
+- This cloud preference applies even when the local machine is healthy. A
+  healthy resource snapshot permits targeted lightweight checks; it does not
+  make local dependency hydration, broad tests, or builds the default.
+- Prefer remote-only GitHub/API edits for small changes and the default
+  GitHub Codespaces control-plane configuration for interactive multi-file
+  editing. Check the payer and quota before creating a codespace; never create
+  one automatically.
+- Keep `.devcontainer/devcontainer.json` lightweight. Flutter setup belongs in
+  GitHub Actions; `.devcontainer/flutter-local/devcontainer.json` is an
+  explicit resource-heavy fallback and must never be selected automatically.
 - Cloud execution is mandatory when free disk is below 30 GiB, free physical
   memory is below 4 GiB, or memory use is at least 85%. In that state, do not
   run `flutter pub get`, `flutter analyze`, `flutter test`, `flutter build`,
   broad `dart analyze`, `deno test`, Docker builds, package installs, local
   dev servers, or local child workers.
-- Under pressure, keep local work to sparse editing, `git diff --check`, and
-  lightweight Python/YAML policy tests. Push the exact branch and either open a
-  draft PR or dispatch `.github/workflows/ci.yml`; record the checked head SHA.
+- Under pressure, do not create another local worktree. Preserve edits remotely
+  through GitHub/Codespaces. If a task checkout already exists, limit it to
+  sparse editing, `git diff --check`, and lightweight Python/YAML policy tests.
+  Push the exact branch and either open a draft PR or dispatch the cloud gate;
+  record the checked head SHA.
 - A manual cloud gate can be started after the committed branch exists on
   GitHub. The helper rejects dirty, protected, missing, or unpushed branch
   state, passes the exact 40-character HEAD to Actions, and finds only the new
@@ -76,13 +86,16 @@ same notebook.
 
 ```powershell
 git push -u origin HEAD
-python scripts/cloud_ci_handoff.py --execute --watch
+python scripts/cloud_ci_handoff.py --profile full --execute --watch
 ```
 
-- Manual dispatch must include the exact lowercase 40-character branch HEAD;
-  the workflow rejects a stale or malformed handoff. PR CI remains required
-  because it validates GitHub's immutable event revision. See
-  `docs/CLOUD_FIRST_DEVELOPMENT.md`.
+- Use `workspace` for dev-container-only changes, `analyze`, `test`, or
+  `web-build` while iterating, and `full` before PR handoff. The helper defaults
+  to `cloud-development.yml`, validates the exact pushed branch head, and
+  avoids creating Flutter/Deno/build output locally.
+- PR CI remains required because it validates the GitHub merge ref. Use
+  `--workflow ci.yml` only when the full branch CI gate is specifically needed.
+  See `docs/CLOUD_FIRST_DEVELOPMENT.md`.
 - Do not remove unrelated worktrees or caches to manufacture headroom. Clean
   only outputs created by the current task and preserve every dirty worktree.
 
@@ -117,7 +130,7 @@ python scripts/cloud_ci_handoff.py --execute --watch
   nearest existing issue before creating a new one.
 - Codex #1 should take broad but bounded work from the WBS top list:
   migrations, data import/export, UI verification, stale automation audits, and
-  clean fix PRs from a fresh worktree.
+  clean fix PRs from a sparse task worktree.
 - Codex #1 should also absorb historical extra-Codex work: red CI, deploy
   unblockers, workflow drift, Edge Function failures, and GitHub/Notion/Slack
   synchronization issues.
@@ -146,15 +159,3 @@ python scripts/cloud_ci_handoff.py --execute --watch
 - PostToolUse anti-pattern warnings are review prompts, not proof of safety.
   Resolve each warning or record a narrow exception, then run the applicable
   formatter, analyzer, tests, security checks, and PR quality gates.
-## Cloud-first Execution
-
-- Prefer remote-only GitHub API edits for small changes and the default GitHub Codespaces control-plane configuration for interactive multi-file editing.
-- The default `.devcontainer/devcontainer.json` must stay lightweight: do not add Flutter installation, `flutter pub get`, builds, browser automation, or media processing to its startup path.
-- Default heavy work to `.github/workflows/cloud-development.yml`; see `docs/CLOUD_FIRST_DEVELOPMENT_WORKFLOW.md`.
-- For manual runs, dispatch the scoped branch with both `profile` and
-  `expected_head_sha`. Never validate only a mutable branch name.
-- Keep local work to scoped inspection, emergency-safe edits, branch/PR operations, workflow dispatch, log inspection, and short HTTP/revision smoke checks.
-- Run Flutter dependency resolution, analysis, tests, release web builds, and deployment gates on GitHub-hosted runners whenever the workflow can cover the task.
-- Do not create a local worktree or start local Flutter/Dart builds, analysis, tests, browser automation, or media processing when RAM usage is at least 85% or free physical memory is below 2 GB. Preserve edits remotely and dispatch the cloud workflow instead.
-- The `.devcontainer/flutter-local/devcontainer.json` configuration is an explicit resource-heavy fallback only; never select it automatically.
-- Use `workspace` for configuration-only validation, `analyze`, `test`, or `web-build` while iterating, and `full` before merge. Do not download cloud build artifacts merely to redeploy them locally.

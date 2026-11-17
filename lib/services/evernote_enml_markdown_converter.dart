@@ -51,10 +51,21 @@ class EvernoteEnmlMarkdownConverter {
           resource.hash.trim().toLowerCase(): resource,
     };
     final unresolved = <String>{};
-    var encryptedSectionCount = 0;
+    // These renderers flatten their descendants. Never silently commit a note
+    // whose embedded media cannot be represented, even when its bytes exist.
+    for (final element in document.descendants.whereType<XmlElement>()) {
+      if (element.localName.toLowerCase() != 'en-media') continue;
+      if (element.ancestors.whereType<XmlElement>().any(
+            (ancestor) => <String>{'pre', 'a'}.contains(
+              ancestor.localName.toLowerCase(),
+            ),
+          )) {
+        unresolved.add('<unsupported-media-context>');
+      }
+    }
     final buffer = StringBuffer();
     for (final child in document.rootElement.children) {
-      encryptedSectionCount += _writeNode(
+      _writeNode(
         child,
         buffer,
         resourcesByHash,
@@ -66,7 +77,12 @@ class EvernoteEnmlMarkdownConverter {
     return EvernoteEnmlMarkdownResult(
       markdown: _normalize(buffer.toString()),
       unresolvedResourceHashes: unresolved.toList(growable: false)..sort(),
-      encryptedSectionCount: encryptedSectionCount,
+      // Inventory encryption independently of rendering branches that flatten
+      // descendants (for example code blocks and link labels).
+      encryptedSectionCount: document.descendants
+          .whereType<XmlElement>()
+          .where((element) => element.localName.toLowerCase() == 'en-crypt')
+          .length,
     );
   }
 
@@ -134,8 +150,7 @@ class EvernoteEnmlMarkdownConverter {
       return 1;
     }
     if (name == 'table') {
-      _writeTable(node, buffer);
-      return 0;
+      return _writeTable(node, buffer, resourcesByHash, unresolved, listDepth);
     }
     if (name == 'ul' || name == 'ol') {
       return _writeList(
@@ -192,13 +207,21 @@ class EvernoteEnmlMarkdownConverter {
       buffer.write('${List<String>.filled(headingLevel, '#').join()} ');
     } else if (name == 'blockquote') {
       _blankLine(buffer);
-      final lines = node.innerText
-          .replaceAll('\r\n', '\n')
-          .replaceAll('\r', '\n')
-          .split('\n');
-      buffer.write(lines.map((line) => '> ${line.trim()}').join('\n'));
+      final quoted = StringBuffer();
+      var encrypted = 0;
+      for (final child in node.children) {
+        encrypted += _writeNode(
+          child,
+          quoted,
+          resourcesByHash,
+          unresolved,
+          listDepth: listDepth,
+        );
+      }
+      final lines = _normalize(quoted.toString()).split('\n');
+      buffer.write(lines.map((line) => '> $line').join('\n'));
       _blankLine(buffer);
-      return 0;
+      return encrypted;
     }
 
     var encrypted = 0;
@@ -273,28 +296,54 @@ class EvernoteEnmlMarkdownConverter {
     }
   }
 
-  void _writeTable(XmlElement table, StringBuffer buffer) {
+  int _writeTable(
+    XmlElement table,
+    StringBuffer buffer,
+    Map<String, EvernoteEnmlResourceReference> resourcesByHash,
+    Set<String> unresolved,
+    int listDepth,
+  ) {
+    var encrypted = 0;
     final rows = table.descendants
         .whereType<XmlElement>()
         .where((element) => element.localName.toLowerCase() == 'tr')
+        .where(
+          (row) =>
+              row.ancestors.whereType<XmlElement>().firstWhere(
+                    (parent) => parent.localName.toLowerCase() == 'table',
+                  ) ==
+              table,
+        )
         .map(
           (row) => row.childElements
               .where(
-                (cell) => <String>{'th', 'td'}.contains(
-                  cell.localName.toLowerCase(),
-                ),
-              )
+            (cell) => <String>{'th', 'td'}.contains(
+              cell.localName.toLowerCase(),
+            ),
+          )
               .map(
-                (cell) => cell.innerText
-                    .replaceAll('|', r'\|')
-                    .replaceAll(RegExp(r'\s+'), ' ')
-                    .trim(),
-              )
-              .toList(growable: false),
+            (cell) {
+              final content = StringBuffer();
+              for (final child in cell.children) {
+                encrypted += _writeNode(
+                  child,
+                  content,
+                  resourcesByHash,
+                  unresolved,
+                  listDepth: listDepth,
+                );
+              }
+              return content
+                  .toString()
+                  .replaceAll('|', r'\|')
+                  .replaceAll(RegExp(r'\s+'), ' ')
+                  .trim();
+            },
+          ).toList(growable: false),
         )
         .where((row) => row.isNotEmpty)
         .toList(growable: false);
-    if (rows.isEmpty) return;
+    if (rows.isEmpty) return encrypted;
 
     final columnCount =
         rows.map((row) => row.length).fold(0, (a, b) => a > b ? a : b);
@@ -314,6 +363,7 @@ class EvernoteEnmlMarkdownConverter {
       buffer.writeln(renderRow(row));
     }
     _blankLine(buffer);
+    return encrypted;
   }
 
   int? _headingLevel(String name) {
