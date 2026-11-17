@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/data/repositories/debt_guard_repository.dart';
+import 'package:my_web_app/data/repositories/savored_moment_repository.dart';
 import 'package:my_web_app/data/services/debt_guard_event_service.dart';
+import 'package:my_web_app/data/services/savored_moment_service.dart';
 import 'package:my_web_app/view_models/debt_guard_view_model.dart';
+import 'package:my_web_app/view_models/savored_moment_view_model.dart';
 import 'package:my_web_app/widgets/debt_guard_panel.dart';
+import 'package:my_web_app/widgets/savored_moments_panel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// 刑務所モード — 借金完済まで生活を律する
@@ -20,6 +24,7 @@ class PrisonModePage extends StatefulWidget {
 class _PrisonModePageState extends State<PrisonModePage> {
   final _supabase = Supabase.instance.client;
   late final DebtGuardViewModel _debtGuardViewModel;
+  late final SavoredMomentViewModel _savoredMomentViewModel;
   bool _loading = true;
   Map<String, dynamic>? _prisonData;
   List<Map<String, dynamic>> _debts = [];
@@ -58,12 +63,20 @@ class _PrisonModePageState extends State<PrisonModePage> {
       userId: _supabase.auth.currentUser?.id,
     );
     _debtGuardViewModel.load();
+    _savoredMomentViewModel = SavoredMomentViewModel(
+      repository: SupabaseSavoredMomentRepository(
+        service: SavoredMomentService(client: _supabase),
+      ),
+      userId: _supabase.auth.currentUser?.id,
+    );
+    _savoredMomentViewModel.load();
     _load();
   }
 
   @override
   void dispose() {
     _debtGuardViewModel.dispose();
+    _savoredMomentViewModel.dispose();
     super.dispose();
   }
 
@@ -389,6 +402,8 @@ class _PrisonModePageState extends State<PrisonModePage> {
                   isLocked: isActive && !paidOff && _debts.isNotEmpty,
                   isPaidOff: paidOff,
                 ),
+                const SizedBox(height: 16),
+                SavoredMomentsPanel(viewModel: _savoredMomentViewModel),
                 const SizedBox(height: 24),
 
                 // 日課スケジュール
