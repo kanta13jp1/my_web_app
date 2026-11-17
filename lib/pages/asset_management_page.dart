@@ -242,6 +242,26 @@ String? assetManagementActionJumpLabel(AssetManagementInsightActionItem item) {
   };
 }
 
+/// 未照合のカード明細行を指定した請求先カードへ手動紐付けした新しい一覧を返す。
+@visibleForTesting
+List<AssetLiabilityCardStatementLine> reassignCardStatementLine(
+  List<AssetLiabilityCardStatementLine> lines, {
+  required String lineId,
+  required String billingAccountId,
+  required String billingAccountName,
+}) {
+  return lines
+      .map(
+        (line) => line.id == lineId
+            ? line.copyWith(
+                billingAccountId: billingAccountId,
+                billingAccountName: billingAccountName,
+              )
+            : line,
+      )
+      .toList(growable: false);
+}
+
 /// 収入予定・定期収入の「入金先」候補口座を返す純関数。
 /// 入金先は資産口座 (現金/預金) であればよく、支払原資 (_paymentSourceAccountOptions)
 /// と違い残高が 0 以下でも選べる。給料日前に残高が尽きた口座や、当座マイナスの口座
@@ -4338,6 +4358,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .where((line) => line.billingAccountId != billingAccountId)
           .toList(growable: false);
       _cardStatementImportMessage = 'Cleared imported lines for this card.';
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _reassignCardStatementLine(
+    String lineId,
+    AssetLiabilityAccount targetAccount,
+  ) {
+    setState(() {
+      _cardStatementLines = reassignCardStatementLine(
+        _cardStatementLines,
+        lineId: lineId,
+        billingAccountId: targetAccount.id,
+        billingAccountName: targetAccount.name,
+      );
+      _cardStatementImportMessage = '未照合明細を「${targetAccount.name}」へ紐付けました。';
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _removeCardStatementLine(String lineId) {
+    setState(() {
+      _cardStatementLines = _cardStatementLines
+          .where((line) => line.id != lineId)
+          .toList(growable: false);
+      _cardStatementImportMessage = '未照合明細を 1 件削除しました。';
     });
     unawaited(_saveAssetLiabilityMonthlyState());
   }
@@ -28347,8 +28393,148 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 10),
           _buildCardStatementReconciliationTable(reconciliation),
           _buildCardStatementFixActionList(reconciliation, cardOptions),
+          _buildUnmatchedCardStatementSection(reconciliation, cardOptions),
         ],
       ),
+    );
+  }
+
+  Widget _buildUnmatchedCardStatementSection(
+    AssetLiabilityCardStatementReconciliationData reconciliation,
+    List<AssetLiabilityAccount> cardOptions,
+  ) {
+    final lines = reconciliation.unmatchedStatementLines;
+    if (lines.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final cardById = <String, AssetLiabilityAccount>{
+      for (final account in cardOptions) account.id: account,
+    };
+    return Column(
+      key: const Key('asset_unmatched_card_statement_section'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            const Icon(
+              Icons.link_off_outlined,
+              size: 18,
+              color: Color(0xFFD97706),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '未照合のカード明細 (${lines.length}件)',
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '請求先カードに一致しなかった明細です。紐付けるカードを選択すると照合結果に即時反映されます。',
+          style: TextStyle(
+            fontSize: 11,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        for (final line in lines)
+          Container(
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFFD97706).withValues(alpha: 0.3),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        line.description,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      _formatManagementYen(line.amount),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${line.postedAt == null ? '日付不明' : DateFormat('M/d').format(line.postedAt!)} / '
+                  '元ID: ${line.billingAccountName ?? line.billingAccountId}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (cardOptions.isNotEmpty)
+                      SizedBox(
+                        width: 220,
+                        child: DropdownButton<String>(
+                          key: Key('asset_unmatched_line_assign_${line.id}'),
+                          value: null,
+                          isExpanded: true,
+                          isDense: true,
+                          hint: const Text(
+                            '請求先カードへ紐付け',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          items: [
+                            for (final account in cardOptions)
+                              DropdownMenuItem<String>(
+                                value: account.id,
+                                child: Text(
+                                  account.name,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                          ],
+                          onChanged: (selectedId) {
+                            if (selectedId == null) return;
+                            final target = cardById[selectedId];
+                            if (target == null) return;
+                            _reassignCardStatementLine(line.id, target);
+                          },
+                        ),
+                      ),
+                    TextButton.icon(
+                      key: Key('asset_unmatched_line_remove_${line.id}'),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        foregroundColor: const Color(0xFFDC2626),
+                      ),
+                      onPressed: () => _removeCardStatementLine(line.id),
+                      icon: const Icon(Icons.delete_outline, size: 16),
+                      label: const Text('削除', style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
