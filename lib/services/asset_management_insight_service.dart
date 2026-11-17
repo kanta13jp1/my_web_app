@@ -37,6 +37,7 @@ enum AssetManagementInsightActionType {
   doubleCountingRisk,
   accountShortfallRisk,
   debtSpiralWarning,
+  overdueIncome,
 }
 
 enum AssetManagementInsightSeverity { info, warning, critical }
@@ -780,6 +781,35 @@ class AssetManagementInsightService {
           ),
         );
       }
+    }
+
+    for (final plan in workbook.incomePlans) {
+      if (plan.received || plan.amount <= 0) continue;
+      final planDate = _dateOnly(plan.date);
+      if (!planDate.isBefore(today)) continue;
+      final overdueDays = today.difference(planDate).inDays;
+      final destinationName = plan.destinationAccountName ?? '未設定';
+      final isLongOverdue = overdueDays >= 3;
+      actions.add(
+        AssetManagementInsightActionItem(
+          type: AssetManagementInsightActionType.overdueIncome,
+          severity: isLongOverdue
+              ? AssetManagementInsightSeverity.critical
+              : AssetManagementInsightSeverity.warning,
+          title: '${plan.name}の入金予定日を$overdueDays日過ぎています',
+          description:
+              '${planDate.month}月${planDate.day}日予定の${_formatYen(plan.amount)}が'
+              '未着金のまま$overdueDays日経過しています（入金先: $destinationName）。',
+          relatedAccountId: null,
+          dueDate: planDate,
+          paymentDay: planDate.day,
+          suggestedAction: isLongOverdue
+              ? '未着金の状態が$overdueDays日続いています。入金元へ振込日・振込先口座を問い合わせるか、'
+                  '着金見込みが立たない場合は見込み残高から除外して資金繰りを再確認してください。'
+              : '口座の入出金明細を確認し、入金済みなら「入金済み」にチェックを入れてください。'
+                  '未着金の場合は入金元へ振込状況を確認してください。',
+        ),
+      );
     }
 
     if (todayInsight.availableAmount < 0) {
@@ -2339,6 +2369,7 @@ class AssetManagementInsightPromptBuilder {
       AssetManagementInsightActionType.doubleCountingRisk => '二重計上リスク',
       AssetManagementInsightActionType.accountShortfallRisk => '口座別見込み残高の不足',
       AssetManagementInsightActionType.debtSpiralWarning => '利息スパイラル警告',
+      AssetManagementInsightActionType.overdueIncome => '期限超過の未着金収入',
     };
   }
 
