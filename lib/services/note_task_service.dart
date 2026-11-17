@@ -352,7 +352,8 @@ class SupabaseNoteTaskRepository
             .range(offset, offset + pageSize - 1),
       );
       rows.addAll(page);
-      if (page.isEmpty || page.length < pageSize) break;
+      if (page.isEmpty) break;
+      // PostgREST can return fewer rows than requested without reaching EOF.
       offset += page.length;
     }
     return rows;
@@ -412,7 +413,7 @@ class SupabaseNoteTaskRepository
   Future<List<NoteFeatureNotification>> loadNotifications() async {
     const pageSize = 500;
     final rows = <Map<String, dynamic>>[];
-    for (var offset = 0;; offset += pageSize) {
+    for (var offset = 0;;) {
       final page = List<Map<String, dynamic>>.from(
         await _client
             .from('note_feature_notifications')
@@ -423,8 +424,10 @@ class SupabaseNoteTaskRepository
             .order('id')
             .range(offset, offset + pageSize - 1),
       );
+      if (page.isEmpty) break;
       rows.addAll(page);
-      if (page.isEmpty || page.length < pageSize) break;
+      // PostgREST can return fewer rows than requested without reaching EOF.
+      offset += page.length;
     }
 
     final noteTitles = await _loadNoteTitles(
