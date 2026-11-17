@@ -54,6 +54,9 @@ class AssetManagementInsightActionItem {
   final int? paymentDay;
   final String suggestedAction;
 
+  /// overdueIncome の対象収入予定 ID。画面からその場で受取済みにするために使う。
+  final String? relatedIncomeId;
+
   const AssetManagementInsightActionItem({
     required this.type,
     required this.severity,
@@ -63,6 +66,7 @@ class AssetManagementInsightActionItem {
     required this.dueDate,
     required this.paymentDay,
     required this.suggestedAction,
+    this.relatedIncomeId,
   });
 }
 
@@ -801,6 +805,7 @@ class AssetManagementInsightService {
               '${planDate.month}月${planDate.day}日予定の${_formatYen(plan.amount)}が'
               '未着金のまま$overdueDays日経過しています（入金先: $destinationName）。',
           relatedAccountId: null,
+          relatedIncomeId: plan.id,
           dueDate: planDate,
           paymentDay: planDate.day,
           suggestedAction: isLongOverdue

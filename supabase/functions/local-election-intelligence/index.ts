@@ -43,6 +43,8 @@ import {
   normalizeMemberName,
   normalizeWhitespace,
   OFFICIAL_ELECTION_PAGE_URL,
+  OFFICIAL_LOCAL_ELECTION_PAGE_URL,
+  OFFICIAL_LOCAL_MEMBER_PAGE_URL,
   OFFICIAL_MEMBER_PAGE_URL,
   type OfficialScheduledCandidate,
   parseOfficialElectionPrefectureLinks,
@@ -504,13 +506,29 @@ serve(async (req) => {
       );
     }
 
-    const memberPageHtml = await fetchText(OFFICIAL_MEMBER_PAGE_URL);
-    const officialElectionHtml = await fetchText(OFFICIAL_ELECTION_PAGE_URL);
+    const memberDirectoryFetch = await fetchWithFallbackUrl(
+      OFFICIAL_LOCAL_MEMBER_PAGE_URL,
+      OFFICIAL_MEMBER_PAGE_URL,
+      (html) =>
+        parsePrefectureDirectoryEntries(html).filter((item) =>
+          item.sourceUrl !== ""
+        ).length >= 10,
+    );
+    const officialElectionFetch = await fetchWithFallbackUrl(
+      OFFICIAL_LOCAL_ELECTION_PAGE_URL,
+      OFFICIAL_ELECTION_PAGE_URL,
+      (html) =>
+        parseOfficialElectionPrefectureLinks(html).size >=
+          MINIMUM_EXPECTED_OFFICIAL_ELECTION_PREFECTURE_LINKS,
+    );
     const prefectureDirectoryEntries = parsePrefectureDirectoryEntries(
-      memberPageHtml,
+      memberDirectoryFetch.html,
     );
     const officialElectionPrefectureLinks =
-      parseOfficialElectionPrefectureLinks(officialElectionHtml);
+      parseOfficialElectionPrefectureLinks(
+        officialElectionFetch.html,
+        officialElectionFetch.url,
+      );
 
     const prefectureResults = await mapWithConcurrency(
       prefectureDirectoryEntries,
@@ -1090,6 +1108,23 @@ async function fetchText(url: string): Promise<string> {
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+async function fetchWithFallbackUrl(
+  primaryUrl: string,
+  fallbackUrl: string,
+  isHealthyHtml: (html: string) => boolean,
+): Promise<{ url: string; html: string }> {
+  try {
+    const primaryHtml = await fetchText(primaryUrl);
+    if (isHealthyHtml(primaryHtml)) {
+      return { url: primaryUrl, html: primaryHtml };
+    }
+  } catch {
+    // Fall back to legacy URL when primary URL is unreachable.
+  }
+  const fallbackHtml = await fetchText(fallbackUrl);
+  return { url: fallbackUrl, html: fallbackHtml };
 }
 
 async function loadElectionModeRegistry(): Promise<{

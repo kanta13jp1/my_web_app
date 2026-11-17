@@ -1164,6 +1164,9 @@ void main() {
       expect(overdueIncomes[1].title, contains('副業入金'));
       expect(overdueIncomes[1].title, contains('2日過ぎています'));
       expect(overdueIncomes[1].suggestedAction, contains('入金済み'));
+      // 画面からその場で受取済みにできるよう、対象の収入予定 ID を持つ。
+      expect(overdueIncomes[0].relatedIncomeId, 'salary_long_overdue');
+      expect(overdueIncomes[1].relatedIncomeId, 'salary_short_overdue');
     });
 
     test(
