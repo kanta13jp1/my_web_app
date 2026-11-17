@@ -378,7 +378,7 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
     bool activeNotesOnly = false,
   }) async {
     final result = <Map<String, dynamic>>[];
-    for (var from = 0;; from += _pageSize) {
+    for (var from = 0;;) {
       final List<Map<String, dynamic>> page;
       if (activeNotesOnly) {
         final response = await _client
@@ -397,7 +397,8 @@ class SupabaseNoteCollectionDataSource implements NoteCollectionDataSource {
         page = List<Map<String, dynamic>>.from(response);
       }
       result.addAll(page);
-      if (page.length < _pageSize) break;
+      if (page.isEmpty) break;
+      from += page.length;
     }
     return result;
   }

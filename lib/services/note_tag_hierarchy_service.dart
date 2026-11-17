@@ -222,7 +222,7 @@ class SupabaseNoteTagHierarchyDataSource implements NoteTagHierarchyDataSource {
     required String userId,
   }) async {
     final result = <Map<String, dynamic>>[];
-    for (var from = 0;; from += _pageSize) {
+    for (var from = 0;;) {
       final response = await _client
           .from(table)
           .select(columns)
@@ -230,7 +230,8 @@ class SupabaseNoteTagHierarchyDataSource implements NoteTagHierarchyDataSource {
           .range(from, from + _pageSize - 1);
       final page = List<Map<String, dynamic>>.from(response);
       result.addAll(page);
-      if (page.length < _pageSize) break;
+      if (page.isEmpty) break;
+      from += page.length;
     }
     return result;
   }

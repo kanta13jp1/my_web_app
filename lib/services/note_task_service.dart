@@ -342,7 +342,7 @@ class SupabaseNoteTaskRepository
   }) async {
     const pageSize = 500;
     final rows = <Map<String, dynamic>>[];
-    for (var offset = 0;; offset += pageSize) {
+    for (var offset = 0;;) {
       final page = List<Map<String, dynamic>>.from(
         await _client
             .from(table)
@@ -352,7 +352,8 @@ class SupabaseNoteTaskRepository
             .range(offset, offset + pageSize - 1),
       );
       rows.addAll(page);
-      if (page.length < pageSize) break;
+      if (page.isEmpty) break;
+      offset += page.length;
     }
     return rows;
   }
