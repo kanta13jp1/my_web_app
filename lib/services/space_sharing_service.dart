@@ -469,7 +469,7 @@ class SupabaseSpaceSharingDataSource implements SpaceSharingDataSource {
       final response = await ordered.range(from, from + _pageSize - 1);
       final page = List<Map<String, dynamic>>.from(response);
       result.addAll(page);
-      if (page.length < _pageSize) break;
+      if (page.isEmpty || page.length < _pageSize) break;
       from += page.length;
     }
     return result;
