@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/data/repositories/debt_guard_repository.dart';
 import 'package:my_web_app/domain/models/debt_guard_emotion.dart';
@@ -67,6 +69,26 @@ void main() {
         DebtGuardRuleStatus.kept,
       );
       expect(viewModel.events.single.note, 'アプリを閉じて散歩した');
+    });
+
+    test('history loaded during a save retains the saved label', () async {
+      repository.historyStarted = Completer<void>();
+      repository.historyRelease = Completer<void>();
+      final loading = viewModel.load();
+      await repository.historyStarted!.future;
+      for (var i = 0; i < 3; i++) {
+        expect(
+          await viewModel.record(
+            ruleId: 'eating_out',
+            type: DebtGuardEventType.violation,
+            emotion: DebtGuardEmotion.boredom,
+          ),
+          isTrue,
+        );
+      }
+      repository.historyRelease!.complete();
+      await loading;
+      expect(viewModel.emotionInsight.labelledCount, 3);
     });
 
     test('saves the emotion label and feeds it into the insight', () async {
@@ -188,6 +210,9 @@ class _MemoryDebtGuardRepository implements DebtGuardRepository {
     return List.of(events);
   }
 
+  Completer<void>? historyStarted;
+  Completer<void>? historyRelease;
+
   bool failLabelled = false;
   final labelledHistory = <DebtGuardEvent>[];
   DateTime? lastLabelledSince;
@@ -199,11 +224,14 @@ class _MemoryDebtGuardRepository implements DebtGuardRepository {
   }) async {
     if (failLabelled) throw StateError('offline');
     lastLabelledSince = since;
-    return [
+    final snapshot = <DebtGuardEvent>[
       ...labelledHistory,
       for (final event in events)
         if (event.emotion != null) event,
     ];
+    historyStarted?.complete();
+    await historyRelease?.future;
+    return snapshot;
   }
 
   @override
