@@ -191,9 +191,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   LocalElectionRealitySnapshot? _derivedCacheSnapshot;
   List<LocalElectionScheduleEntry>? _sortedSchedulesAscCache;
 
-  ElectionIntelligenceSnapshot get _electionIntelligence =>
-      _realitySnapshot?.electionIntelligence ??
-      const ElectionIntelligenceSnapshot.localFallback();
+  ElectionIntelligenceSnapshot get _electionIntelligence {
+    final snapshot = _realitySnapshot;
+    if (snapshot != null && snapshot.hasData) {
+      return snapshot.electionIntelligence;
+    }
+    return const ElectionIntelligenceSnapshot.localFallback();
+  }
 
   OfficialEndorsementSnapshot get _officialEndorsements =>
       _officialEndorsementViewModel.snapshot;

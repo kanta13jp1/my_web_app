@@ -1408,6 +1408,7 @@ class AssetManagementAiSummaryService {
       AssetManagementInsightActionType.doubleCountingRisk => '二重計上リスク',
       AssetManagementInsightActionType.accountShortfallRisk => '口座別見込み残高の不足',
       AssetManagementInsightActionType.debtSpiralWarning => '利息スパイラル警告',
+      AssetManagementInsightActionType.overdueIncome => '期限超過の未着金収入',
     };
   }
 

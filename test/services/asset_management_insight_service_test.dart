@@ -1101,6 +1101,133 @@ void main() {
         false,
       );
     });
+
+    test('emits overdueIncome reminder for unreceived past-due income plans',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 50000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        incomePlans: <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'salary_short_overdue',
+            date: DateTime(2026, 5, 8),
+            name: '副業入金',
+            amount: 50000,
+            destinationAccountId: 'smbc_otsuka_branch',
+            destinationAccountName: '三井住友銀行大塚支店',
+            received: false,
+          ),
+          AssetLiabilityIncomePlan(
+            id: 'salary_long_overdue',
+            date: DateTime(2026, 5, 5),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: 'smbc_otsuka_branch',
+            destinationAccountName: '三井住友銀行大塚支店',
+            received: false,
+          ),
+          AssetLiabilityIncomePlan(
+            id: 'salary_received',
+            date: DateTime(2026, 5, 1),
+            name: '入金済み賞与',
+            amount: 100000,
+            destinationAccountId: 'smbc_otsuka_branch',
+            destinationAccountName: '三井住友銀行大塚支店',
+            received: true,
+          ),
+        ],
+      );
+
+      final report = service.buildReport(workbook: workbook);
+      final overdueIncomes = report.actionItems
+          .where(
+            (item) =>
+                item.type == AssetManagementInsightActionType.overdueIncome,
+          )
+          .toList();
+
+      expect(overdueIncomes.length, 2);
+      expect(
+        overdueIncomes[0].severity,
+        AssetManagementInsightSeverity.critical,
+      );
+      expect(overdueIncomes[0].title, contains('給料'));
+      expect(overdueIncomes[0].title, contains('5日過ぎています'));
+      expect(overdueIncomes[0].suggestedAction, contains('問い合わせ'));
+
+      expect(
+        overdueIncomes[1].severity,
+        AssetManagementInsightSeverity.warning,
+      );
+      expect(overdueIncomes[1].title, contains('副業入金'));
+      expect(overdueIncomes[1].title, contains('2日過ぎています'));
+      expect(overdueIncomes[1].suggestedAction, contains('入金済み'));
+      // 画面からその場で受取済みにできるよう、対象の収入予定 ID を持つ。
+      expect(overdueIncomes[0].relatedIncomeId, 'salary_long_overdue');
+      expect(overdueIncomes[1].relatedIncomeId, 'salary_short_overdue');
+    });
+
+    test(
+        'predicts source account shortfall before due date and suggests alternative',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 1000,
+          '三井住友銀行大塚支店': 300000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+      );
+
+      final upcoming = report.actionItems.firstWhere(
+        (item) =>
+            item.type == AssetManagementInsightActionType.upcomingPayment &&
+            item.relatedAccountId == 'mobit',
+      );
+      expect(upcoming.severity, AssetManagementInsightSeverity.critical);
+      expect(upcoming.title, contains('残高不足が予測されます'));
+      expect(upcoming.description, contains('不足します'));
+      expect(upcoming.suggestedAction, contains('三井住友銀行大塚支店'));
+    });
+
+    test(
+        'flags missing source balance before due date and suggests alternative',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 300000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        paymentSourceAccountIds: const <String, String>{
+          'mobit': 'paypay_card_missing',
+        },
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+      );
+
+      final upcoming = report.actionItems.firstWhere(
+        (item) =>
+            item.type == AssetManagementInsightActionType.upcomingPayment &&
+            item.relatedAccountId == 'mobit',
+      );
+      expect(upcoming.severity, AssetManagementInsightSeverity.critical);
+      expect(upcoming.title, contains('原資口座を確認してください'));
+      expect(upcoming.suggestedAction, contains('三井住友銀行大塚支店'));
+    });
   });
 }
 
