@@ -230,7 +230,7 @@ class SupabaseNoteTagHierarchyDataSource implements NoteTagHierarchyDataSource {
           .range(from, from + _pageSize - 1);
       final page = List<Map<String, dynamic>>.from(response);
       result.addAll(page);
-      if (page.isEmpty) break;
+      if (page.isEmpty || page.length < _pageSize) break;
       from += page.length;
     }
     return result;

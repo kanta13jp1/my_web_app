@@ -352,7 +352,7 @@ class SupabaseNoteTaskRepository
             .range(offset, offset + pageSize - 1),
       );
       rows.addAll(page);
-      if (page.isEmpty) break;
+      if (page.isEmpty || page.length < pageSize) break;
       offset += page.length;
     }
     return rows;
