@@ -6499,7 +6499,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     for (final id in AssetManagementSectionId.values) {
       if (!_isSectionShown(id)) continue;
       if ((id == AssetManagementSectionId.savingsPlan ||
-            id == AssetManagementSectionId.workbookBoard) &&
+              id == AssetManagementSectionId.workbookBoard) &&
           _sectionAnchorKey(id).currentContext == null) {
         continue;
       }
