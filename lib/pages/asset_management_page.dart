@@ -276,6 +276,16 @@ List<AssetDebtDisciplineViolation> unreconciledBalanceDiffBreakdown(
       .toList(growable: false);
 }
 
+/// リボ払い設定を持つカード照合グループのみを抽出する。
+@visibleForTesting
+List<AssetLiabilityCardStatementReconciliationGroup> revolvingStatementGroups(
+  AssetLiabilityCardStatementReconciliationData reconciliation,
+) {
+  return reconciliation.groups
+      .where((group) => group.revolvingBilling != null)
+      .toList(growable: false);
+}
+
 /// 収入予定・定期収入の「入金先」候補口座を返す純関数。
 /// 入金先は資産口座 (現金/預金) であればよく、支払原資 (_paymentSourceAccountOptions)
 /// と違い残高が 0 以下でも選べる。給料日前に残高が尽きた口座や、当座マイナスの口座
@@ -623,6 +633,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // (Flutter Web は CanvasKit 描画で DOM にテキストが無く、ブラウザ検索が効かない)。
   final Map<AssetManagementSectionId, GlobalKey> _sectionAnchorKeys =
       <AssetManagementSectionId, GlobalKey>{};
+  bool _salaryDepositNudgeDetailsExpanded = false;
 
   Timer? _deadlineTimer;
   DateTime _now = DateTime.now();
@@ -6497,7 +6508,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 1) セクション (表示中のみ)。
     for (final id in AssetManagementSectionId.values) {
       if (!_isSectionShown(id)) continue;
-      if (id == AssetManagementSectionId.savingsPlan &&
+      if ((id == AssetManagementSectionId.savingsPlan ||
+              id == AssetManagementSectionId.workbookBoard) &&
           _sectionAnchorKey(id).currentContext == null) {
         continue;
       }
@@ -10869,7 +10881,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         compact: isCompact,
         child: SingleChildScrollView(
           controller: _scrollController,
-          padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
+          padding: EdgeInsets.fromLTRB(
+            isCompact ? 12.0 : 16.0,
+            isCompact ? 12.0 : 16.0,
+            isCompact ? 12.0 : 16.0,
+            88.0,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -10880,6 +10897,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
               WeeklyHabitCard(
                 userId: _supabase.auth.currentUser?.id,
+                collapsible: true,
+                initiallyExpanded: false,
               ),
               const SizedBox(height: 12),
               _buildSyncStatusBanner(),
@@ -10889,7 +10908,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
               _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
               const SizedBox(height: 12),
-              _buildDisplayModeSwitcher(),
+              _buildDisplayModeSwitcher(
+                hasWorkbook: assetLiabilityWorkbook != null,
+              ),
               if (_isSectionShown(AssetManagementSectionId.savingsPlan) &&
                   assetLiabilityWorkbook != null &&
                   _supabase.auth.currentUser != null) ...[
@@ -11030,7 +11051,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildDebtPlannerCard(assetLiabilityWorkbook), // 借金返済プラン
                 const SizedBox(height: 16),
               ],
-              if (_isSectionShown(AssetManagementSectionId.workbookBoard)) ...[
+              if (_isSectionShown(AssetManagementSectionId.workbookBoard) &&
+                  assetLiabilityWorkbook != null) ...[
                 _sectionAnchor(AssetManagementSectionId.workbookBoard),
                 _buildAssetLiabilityWorkbookBoard(assetLiabilityWorkbook),
                 const SizedBox(height: 16),
@@ -16431,7 +16453,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildDisplayModeSwitcher() {
+  Widget _buildDisplayModeSwitcher({required bool hasWorkbook}) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -16520,10 +16542,68 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
               ],
             ),
+            ..._buildQuickJumpChips(context, hasWorkbook: hasWorkbook),
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> _buildQuickJumpChips(
+    BuildContext context, {
+    required bool hasWorkbook,
+  }) {
+    const quickTargets = <({AssetManagementSectionId id, String label})>[
+      (id: AssetManagementSectionId.monthlyFlow, label: '収支概観'),
+      (id: AssetManagementSectionId.calendar, label: 'カレンダー'),
+      (id: AssetManagementSectionId.monthlyDashboard, label: '月次ダッシュボード'),
+      (id: AssetManagementSectionId.debtPlanner, label: '借金返済'),
+      (id: AssetManagementSectionId.workbookBoard, label: 'ワークブック'),
+      (id: AssetManagementSectionId.assetLiability, label: '資産・負債'),
+      (id: AssetManagementSectionId.flow, label: '収支'),
+      (id: AssetManagementSectionId.subscriptions, label: '固定費'),
+      (id: AssetManagementSectionId.chart, label: 'グラフ'),
+    ];
+    final visibleTargets = quickTargets
+        .where(
+          (entry) =>
+              _isSectionShown(entry.id) &&
+              (entry.id != AssetManagementSectionId.workbookBoard ||
+                  hasWorkbook),
+        )
+        .toList(growable: false);
+    if (visibleTargets.isEmpty) {
+      return const [];
+    }
+    return [
+      const Divider(height: 20),
+      Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            '移動:',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          for (final target in visibleTargets)
+            ActionChip(
+              key: Key('asset_quick_jump_${target.id.name}'),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              label: Text(
+                target.label,
+                style: const TextStyle(fontSize: 12),
+              ),
+              onPressed: () => _scrollTo(_sectionAnchorKey(target.id)),
+            ),
+        ],
+      ),
+    ];
   }
 
   /// マネーカレンダーの「今日」。サイクル決定・予定系(返済/固定費/入金予定)の
@@ -16603,19 +16683,54 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                '給与明細から収入に計上された金額と、口座への入金確認は別です。'
-                '現在、メイン口座への給与着金は未確認です。'
-                '支払済みチェックは前サイクルのまま保持しています。'
-                '口座の入出金明細を確認し、残高を更新してください。'
-                '金額の一致や残高の増加だけでは新しいサイクルへ切り替えません。'
-                '入金後の支出などで検知できない場合は、入金を確認したうえで'
-                '「給料を受け取った（リセット）」を選んでください。',
+                'メイン口座への給与着金が未確認のため、支払済みチェックは前サイクルのまま保持しています。'
+                '口座明細を確認して残高を更新するか、確認後にリセットしてください。',
                 style: TextStyle(
                   fontSize: 12,
                   height: 1.5,
                   color: scheme.onTertiaryContainer,
                 ),
               ),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  key: const Key('asset_salary_deposit_nudge_details_toggle'),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    foregroundColor: scheme.onTertiaryContainer,
+                  ),
+                  onPressed: () => setState(
+                    () => _salaryDepositNudgeDetailsExpanded =
+                        !_salaryDepositNudgeDetailsExpanded,
+                  ),
+                  icon: Icon(
+                    _salaryDepositNudgeDetailsExpanded
+                        ? Icons.expand_less
+                        : Icons.expand_more,
+                    size: 16,
+                  ),
+                  label: Text(
+                    _salaryDepositNudgeDetailsExpanded ? '詳細を閉じる' : '詳しく見る',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+              ),
+              if (_salaryDepositNudgeDetailsExpanded) ...[
+                const SizedBox(height: 4),
+                Text(
+                  '給与明細から収入に計上された金額と、口座への入金確認は別です。'
+                  '金額の一致や残高の増加だけでは新しいサイクルへ切り替えません。'
+                  '入金後の支出などで検知できない場合は、入金を確認したうえで'
+                  '「給料を受け取った（リセット）」を選んでください。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: scheme.onTertiaryContainer,
+                  ),
+                ),
+              ],
               const SizedBox(height: 8),
               if (_salaryDepositCandidate.detected) ...[
                 Text(
@@ -28497,8 +28612,176 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _buildCardStatementReconciliationTable(reconciliation),
           _buildCardStatementFixActionList(reconciliation, cardOptions),
           _buildUnmatchedCardStatementSection(reconciliation, cardOptions),
+          _buildRevolvingStatementBreakdownSection(reconciliation),
         ],
       ),
+    );
+  }
+
+  Widget _buildRevolvingStatementBreakdownSection(
+    AssetLiabilityCardStatementReconciliationData reconciliation,
+  ) {
+    final groups = revolvingStatementGroups(reconciliation);
+    if (groups.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      key: const Key('asset_revolving_statement_breakdown_section'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        const Row(
+          children: [
+            Icon(
+              Icons.credit_card_outlined,
+              size: 18,
+              color: Color(0xFF0F766E),
+            ),
+            SizedBox(width: 6),
+            Text(
+              'リボ払いカード 内訳・個別明細',
+              style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '既存残高への最低返済分と、今月全額返済する新規利用分を分けて表示しています。',
+          style: TextStyle(
+            fontSize: 11,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        for (final group in groups)
+          Builder(
+            builder: (context) {
+              final billing = group.revolvingBilling!;
+              final usageItems = billing.usageItems;
+              return Container(
+                key: Key(
+                  'asset_revolving_breakdown_card_${group.billingAccountId}',
+                ),
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDFA),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFF0D9488).withValues(alpha: 0.28),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            group.billingAccountName,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '今月返済予定 ${_formatManagementYen(billing.billedAmount)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F766E),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        _buildTextStatusChip(
+                          label:
+                              '既存残高への最低返済 ${_formatManagementYen(billing.monthlyAmount)}',
+                          color: const Color(0xFF475569),
+                        ),
+                        _buildTextStatusChip(
+                          label:
+                              '新規利用分の全額返済 ${_formatManagementYen(billing.newUsageAmount)}',
+                          color: const Color(0xFF0F766E),
+                        ),
+                        _buildTextStatusChip(
+                          label:
+                              '既存残高 ${_formatManagementYen(billing.existingBalanceAmount)}',
+                          color: const Color(0xFF64748B),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    if (usageItems.isNotEmpty) ...[
+                      for (final item in usageItems)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 3),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${item.postedAt == null ? '日付不明' : DateFormat('M/d').format(item.postedAt!)} / '
+                                  '${item.description} (${item.statusLabel})',
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              ),
+                              Text(
+                                _formatManagementYen(item.amount),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ] else if (group.statementLines.isNotEmpty) ...[
+                      for (final line in group.statementLines)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 3),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${line.postedAt == null ? '日付不明' : DateFormat('M/d').format(line.postedAt!)} / '
+                                  '${line.description}',
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              ),
+                              Text(
+                                _formatManagementYen(line.amount),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ] else ...[
+                      Text(
+                        billing.hasImportedStatement
+                            ? '当月の新規利用明細はありません。'
+                            : 'カード明細が未取込のため、新規利用分は手入力・推定値で計算しています。',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            },
+          ),
+      ],
     );
   }
 
@@ -35734,6 +36017,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // ⑤ 必須タスク
   Widget _buildMustTasksCard() {
+    if (_supabase.auth.currentUser == null &&
+        widget.debugMustTaskRepository == null) {
+      return const Card(
+        elevation: 2,
+        child: ListTile(
+          leading: Icon(Icons.assignment_late, color: Color(0xFFFF6B35)),
+          title: Text('⑤必須タスク'),
+          subtitle: Text('必須タスクを表示・管理するにはログインしてください。'),
+        ),
+      );
+    }
     return Card(
       elevation: 2,
       child: Padding(

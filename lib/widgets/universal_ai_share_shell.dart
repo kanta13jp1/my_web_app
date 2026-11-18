@@ -136,6 +136,13 @@ double resolveAiShareFabBottomOffset({
   final isMusubi = routePath == '/musubi' || routePath == '/social-feed';
   if (isMusubi) return kAiShareFabMusubiBottomOffset;
 
+  // デスクトップ幅の /asset-management では右下に「資産AIに相談」FABが常駐するため、
+  // 上方向へ退避して重なりを防ぐ。
+  if (routePath == '/asset-management' &&
+      screenWidth >= kAiShareFabMinScreenWidth) {
+    return kAiShareFabMusubiBottomOffset;
+  }
+
   final isLandingMobile = routePath == '/' && screenWidth < 720;
   return isLandingMobile
       ? kAiShareFabLandingBottomOffset
