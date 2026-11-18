@@ -226,7 +226,8 @@ void main() {
       expect(changedDecision, AssetSubscriptionReviewDecision.cancelCandidate);
     });
 
-    testWidgets('shows savings suggestions for cancelCandidate, hold, '
+    testWidgets(
+        'shows savings suggestions for cancelCandidate, hold, '
         'and high unreviewed', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
