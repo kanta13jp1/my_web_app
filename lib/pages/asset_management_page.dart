@@ -623,6 +623,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // (Flutter Web は CanvasKit 描画で DOM にテキストが無く、ブラウザ検索が効かない)。
   final Map<AssetManagementSectionId, GlobalKey> _sectionAnchorKeys =
       <AssetManagementSectionId, GlobalKey>{};
+  bool _salaryDepositNudgeDetailsExpanded = false;
 
   Timer? _deadlineTimer;
   DateTime _now = DateTime.now();
@@ -6497,7 +6498,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 1) セクション (表示中のみ)。
     for (final id in AssetManagementSectionId.values) {
       if (!_isSectionShown(id)) continue;
-      if (id == AssetManagementSectionId.savingsPlan &&
+      if ((id == AssetManagementSectionId.savingsPlan ||
+              id == AssetManagementSectionId.workbookBoard) &&
           _sectionAnchorKey(id).currentContext == null) {
         continue;
       }
@@ -10869,7 +10871,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         compact: isCompact,
         child: SingleChildScrollView(
           controller: _scrollController,
-          padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
+          padding: EdgeInsets.fromLTRB(
+            isCompact ? 12.0 : 16.0,
+            isCompact ? 12.0 : 16.0,
+            isCompact ? 12.0 : 16.0,
+            88.0,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -10880,6 +10887,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
               WeeklyHabitCard(
                 userId: _supabase.auth.currentUser?.id,
+                collapsible: true,
+                initiallyExpanded: false,
               ),
               const SizedBox(height: 12),
               _buildSyncStatusBanner(),
@@ -10889,7 +10898,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
               _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
               const SizedBox(height: 12),
-              _buildDisplayModeSwitcher(),
+              _buildDisplayModeSwitcher(
+                hasWorkbook: assetLiabilityWorkbook != null,
+              ),
               if (_isSectionShown(AssetManagementSectionId.savingsPlan) &&
                   assetLiabilityWorkbook != null &&
                   _supabase.auth.currentUser != null) ...[
@@ -11030,7 +11041,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildDebtPlannerCard(assetLiabilityWorkbook), // 借金返済プラン
                 const SizedBox(height: 16),
               ],
-              if (_isSectionShown(AssetManagementSectionId.workbookBoard)) ...[
+              if (_isSectionShown(AssetManagementSectionId.workbookBoard) &&
+                  assetLiabilityWorkbook != null) ...[
                 _sectionAnchor(AssetManagementSectionId.workbookBoard),
                 _buildAssetLiabilityWorkbookBoard(assetLiabilityWorkbook),
                 const SizedBox(height: 16),
@@ -16431,7 +16443,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildDisplayModeSwitcher() {
+  Widget _buildDisplayModeSwitcher({required bool hasWorkbook}) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -16520,10 +16532,68 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
               ],
             ),
+            ..._buildQuickJumpChips(context, hasWorkbook: hasWorkbook),
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> _buildQuickJumpChips(
+    BuildContext context, {
+    required bool hasWorkbook,
+  }) {
+    const quickTargets = <({AssetManagementSectionId id, String label})>[
+      (id: AssetManagementSectionId.monthlyFlow, label: '収支概観'),
+      (id: AssetManagementSectionId.calendar, label: 'カレンダー'),
+      (id: AssetManagementSectionId.monthlyDashboard, label: '月次ダッシュボード'),
+      (id: AssetManagementSectionId.debtPlanner, label: '借金返済'),
+      (id: AssetManagementSectionId.workbookBoard, label: 'ワークブック'),
+      (id: AssetManagementSectionId.assetLiability, label: '資産・負債'),
+      (id: AssetManagementSectionId.flow, label: '収支'),
+      (id: AssetManagementSectionId.subscriptions, label: '固定費'),
+      (id: AssetManagementSectionId.chart, label: 'グラフ'),
+    ];
+    final visibleTargets = quickTargets
+        .where(
+          (entry) =>
+              _isSectionShown(entry.id) &&
+              (entry.id != AssetManagementSectionId.workbookBoard ||
+                  hasWorkbook),
+        )
+        .toList(growable: false);
+    if (visibleTargets.isEmpty) {
+      return const [];
+    }
+    return [
+      const Divider(height: 20),
+      Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            '移動:',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          for (final target in visibleTargets)
+            ActionChip(
+              key: Key('asset_quick_jump_${target.id.name}'),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              label: Text(
+                target.label,
+                style: const TextStyle(fontSize: 12),
+              ),
+              onPressed: () => _scrollTo(_sectionAnchorKey(target.id)),
+            ),
+        ],
+      ),
+    ];
   }
 
   /// マネーカレンダーの「今日」。サイクル決定・予定系(返済/固定費/入金予定)の
@@ -16603,19 +16673,54 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                '給与明細から収入に計上された金額と、口座への入金確認は別です。'
-                '現在、メイン口座への給与着金は未確認です。'
-                '支払済みチェックは前サイクルのまま保持しています。'
-                '口座の入出金明細を確認し、残高を更新してください。'
-                '金額の一致や残高の増加だけでは新しいサイクルへ切り替えません。'
-                '入金後の支出などで検知できない場合は、入金を確認したうえで'
-                '「給料を受け取った（リセット）」を選んでください。',
+                'メイン口座への給与着金が未確認のため、支払済みチェックは前サイクルのまま保持しています。'
+                '口座明細を確認して残高を更新するか、確認後にリセットしてください。',
                 style: TextStyle(
                   fontSize: 12,
                   height: 1.5,
                   color: scheme.onTertiaryContainer,
                 ),
               ),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  key: const Key('asset_salary_deposit_nudge_details_toggle'),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    foregroundColor: scheme.onTertiaryContainer,
+                  ),
+                  onPressed: () => setState(
+                    () => _salaryDepositNudgeDetailsExpanded =
+                        !_salaryDepositNudgeDetailsExpanded,
+                  ),
+                  icon: Icon(
+                    _salaryDepositNudgeDetailsExpanded
+                        ? Icons.expand_less
+                        : Icons.expand_more,
+                    size: 16,
+                  ),
+                  label: Text(
+                    _salaryDepositNudgeDetailsExpanded ? '詳細を閉じる' : '詳しく見る',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+              ),
+              if (_salaryDepositNudgeDetailsExpanded) ...[
+                const SizedBox(height: 4),
+                Text(
+                  '給与明細から収入に計上された金額と、口座への入金確認は別です。'
+                  '金額の一致や残高の増加だけでは新しいサイクルへ切り替えません。'
+                  '入金後の支出などで検知できない場合は、入金を確認したうえで'
+                  '「給料を受け取った（リセット）」を選んでください。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: scheme.onTertiaryContainer,
+                  ),
+                ),
+              ],
               const SizedBox(height: 8),
               if (_salaryDepositCandidate.detected) ...[
                 Text(
@@ -35734,6 +35839,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // ⑤ 必須タスク
   Widget _buildMustTasksCard() {
+    if (_supabase.auth.currentUser == null &&
+        widget.debugMustTaskRepository == null) {
+      return const Card(
+        elevation: 2,
+        child: ListTile(
+          leading: Icon(Icons.assignment_late, color: Color(0xFFFF6B35)),
+          title: Text('⑤必須タスク'),
+          subtitle: Text('必須タスクを表示・管理するにはログインしてください。'),
+        ),
+      );
+    }
     return Card(
       elevation: 2,
       child: Padding(

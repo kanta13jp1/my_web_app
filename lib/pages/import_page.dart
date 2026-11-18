@@ -46,6 +46,7 @@ class _ImportOwnerPage extends StatefulWidget {
 class _ImportPageState extends State<_ImportOwnerPage> {
   bool _isLoading = false;
   bool _isImporting = false;
+  bool _allowEvernoteWarningCommit = false;
   final GrowthAcquisitionService _acquisitionService =
       const GrowthAcquisitionService();
   late ImportService _importService;
@@ -318,6 +319,7 @@ class _ImportPageState extends State<_ImportOwnerPage> {
       _evernoteCloudStageResult = null;
       _evernoteCloudStageProgress = null;
       _evernoteTransferProgress = null;
+      _allowEvernoteWarningCommit = false;
     });
 
     try {
@@ -523,6 +525,7 @@ class _ImportPageState extends State<_ImportOwnerPage> {
             if (!mounted) return;
             setState(() => _evernoteTransferProgress = progress);
           },
+          allowBlockedWarnings: _allowEvernoteWarningCommit,
         );
         result = ImportExecutionResult(
           insertedCount: evernoteResult.importedNoteCount,
@@ -925,6 +928,26 @@ class _ImportPageState extends State<_ImportOwnerPage> {
                           height: 1.5,
                         ),
                       ),
+                      if (preview.sourceType == 'evernote') ...[
+                        const SizedBox(height: 8),
+                        CheckboxListTile(
+                          key: const Key('import-allow-warning-commit'),
+                          contentPadding: EdgeInsets.zero,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          value: _allowEvernoteWarningCommit,
+                          onChanged: _isImporting
+                              ? null
+                              : (checked) {
+                                  setState(() {
+                                    _allowEvernoteWarningCommit =
+                                        checked ?? false;
+                                  });
+                                },
+                          title: const Text(
+                            '未解決の<en-media>等の警告を確認済み（原本ENEX/ENMLを保持して取り込む）',
+                          ),
+                        ),
+                      ],
                     ] else if (currentUser == null) ...[
                       const SizedBox(height: 12),
                       const Text(
@@ -972,7 +995,9 @@ class _ImportPageState extends State<_ImportOwnerPage> {
                     FilledButton.icon(
                       onPressed: _isImporting ||
                               preview.notes.isEmpty ||
-                              !preview.canCommit ||
+                              (!preview.canCommit &&
+                                  !(preview.sourceType == 'evernote' &&
+                                      _allowEvernoteWarningCommit)) ||
                               (preview.sourceType == 'evernote' &&
                                   (_evernoteCloudStageResult == null ||
                                       _evernoteNotebookNameController.text
@@ -988,7 +1013,9 @@ class _ImportPageState extends State<_ImportOwnerPage> {
                       label: Text(
                         _isImporting
                             ? 'Importing...'
-                            : !preview.canCommit
+                            : (!preview.canCommit &&
+                                    !(preview.sourceType == 'evernote' &&
+                                        _allowEvernoteWarningCommit))
                                 ? 'Migration safety gate active'
                                 : currentUser == null
                                     ? 'Open sign-up to import'

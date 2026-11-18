@@ -700,6 +700,7 @@ class EvernoteMigrationCommitService {
     required ImportPreviewResult preview,
     required EvernoteMigrationSourceContext sourceContext,
     EvernoteMigrationTransferProgressCallback? onTransferProgress,
+    bool allowBlockedWarnings = false,
   }) async {
     final ownerId = userId.trim();
     if (ownerId.isEmpty || ownerId.contains('/') || ownerId.contains(r'\')) {
@@ -736,7 +737,7 @@ class EvernoteMigrationCommitService {
       }
     }
 
-    if (preview.commitBlockedReason != null) {
+    if (!allowBlockedWarnings && preview.commitBlockedReason != null) {
       throw StateError(preview.commitBlockedReason!);
     }
     final expectedBySourceId = _previewNotesBySourceId(preview);
@@ -746,7 +747,7 @@ class EvernoteMigrationCommitService {
         preview.resourceCount != export.resourceCount) {
       throw StateError('The selected ENEX no longer matches its preview.');
     }
-    if (export.warnings.isNotEmpty) {
+    if (!allowBlockedWarnings && export.warnings.isNotEmpty) {
       throw StateError(
         'The ENEX parser reported warnings. Commit remains blocked.',
       );
@@ -1030,6 +1031,7 @@ class EvernoteMigrationCommitService {
     required ImportPreviewResult preview,
     required EvernoteMigrationSourceContext sourceContext,
     EvernoteMigrationTransferProgressCallback? onTransferProgress,
+    bool allowBlockedWarnings = false,
   }) async {
     final ownerId = userId.trim();
     if (ownerId.isEmpty || ownerId.contains('/') || ownerId.contains(r'\')) {
@@ -1044,7 +1046,7 @@ class EvernoteMigrationCommitService {
     if (preview.sourceType != 'evernote') {
       throw ArgumentError('An Evernote preview is required.');
     }
-    if (preview.commitBlockedReason != null) {
+    if (!allowBlockedWarnings && preview.commitBlockedReason != null) {
       throw StateError(preview.commitBlockedReason!);
     }
     final exportSha256 = preview.sourceExportSha256?.trim().toLowerCase();
@@ -1107,7 +1109,7 @@ class EvernoteMigrationCommitService {
     if (audit.exportSha256 != exportSha256 ||
         audit.noteCount != preview.notes.length ||
         audit.resourceCount != preview.resourceCount ||
-        audit.warnings.isNotEmpty ||
+        (!allowBlockedWarnings && audit.warnings.isNotEmpty) ||
         auditedSourceIds.length != expectedBySourceId.length) {
       throw StateError('The cloud ENEX archive audit did not match preview.');
     }
