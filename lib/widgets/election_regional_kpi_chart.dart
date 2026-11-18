@@ -315,8 +315,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
               plan: KgiCsfKpiPlan(
                 domain: '都道府県連別配分',
                 kgi: '現職維持と新人擁立を県連別に数値配分する',
-                actualLabel: '$totalTarget人',
-                targetLabel: '${widget.targetLocalMembers}人',
+                actualLabel: '擁立計 $totalTarget人',
+                targetLabel: '議席目標 ${widget.targetLocalMembers}人',
                 progress: widget.targetLocalMembers > 0
                     ? totalTarget / widget.targetLocalMembers
                     : 0,
@@ -383,7 +383,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                 const Color(0xFFFF9800),
                               ),
                               _buildSummaryItem(
-                                '総合計',
+                                '擁立総合計',
                                 totalTarget.toString(),
                                 const Color(0xFF303F9F),
                               ),
