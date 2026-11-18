@@ -37,6 +37,7 @@ enum AssetManagementInsightActionType {
   doubleCountingRisk,
   accountShortfallRisk,
   debtSpiralWarning,
+  overdueIncome,
 }
 
 enum AssetManagementInsightSeverity { info, warning, critical }
@@ -53,6 +54,9 @@ class AssetManagementInsightActionItem {
   final int? paymentDay;
   final String suggestedAction;
 
+  /// overdueIncome の対象収入予定 ID。画面からその場で受取済みにするために使う。
+  final String? relatedIncomeId;
+
   const AssetManagementInsightActionItem({
     required this.type,
     required this.severity,
@@ -62,6 +66,7 @@ class AssetManagementInsightActionItem {
     required this.dueDate,
     required this.paymentDay,
     required this.suggestedAction,
+    this.relatedIncomeId,
   });
 }
 
@@ -470,6 +475,21 @@ class AssetManagementInsightService {
         .toList()
       ..sort((a, b) => b.projectedBalance.compareTo(a.projectedBalance));
 
+    AssetLiabilityAccountCashflowSummary? findAlternativeSourceCandidate({
+      required String liabilityAccountId,
+      required String excludedAccountId,
+      required double paymentAmount,
+    }) {
+      for (final summary in paymentSourceCandidateSummaries) {
+        if (summary.accountId != liabilityAccountId &&
+            summary.accountId != excludedAccountId &&
+            summary.projectedBalance >= paymentAmount) {
+          return summary;
+        }
+      }
+      return null;
+    }
+
     for (final row in workbook.debtMasterRows) {
       if (row.paymentAmountEstimated && row.isDirectCashflowTarget) {
         actions.add(
@@ -687,16 +707,67 @@ class AssetManagementInsightService {
         );
       } else if (!row.paymentDate.isBefore(today) &&
           !row.paymentDate.isAfter(upcomingLimit)) {
+        final sourceAccountId = row.paymentSourceAccountId?.trim() ?? '';
+        final sourceSummary = sourceAccountId.isEmpty
+            ? null
+            : summariesByAccountId[sourceAccountId];
+        final alternative = findAlternativeSourceCandidate(
+          liabilityAccountId: row.accountId,
+          excludedAccountId: sourceAccountId,
+          paymentAmount: row.paymentAmount,
+        );
+        final alternativeHint = alternative == null
+            ? '残高のある口座へ原資口座を変更してください。'
+            : '見込み残高に余裕のある「${alternative.accountName}」'
+                '（見込み残高 ${_formatYen(alternative.projectedBalance)}）へ原資口座を変更してください。';
+        final AssetManagementInsightSeverity severity;
+        final String title;
+        final String description;
+        final String suggestedAction;
+        if (sourceAccountId.isEmpty) {
+          severity = AssetManagementInsightSeverity.warning;
+          title = '${row.accountName}の支払日が近づいています';
+          description = '${_formatYen(row.paymentAmount)}の支払いが近づいています。';
+          suggestedAction = alternative == null
+              ? '支払原資口座が未設定です。支払前に原資口座を設定してください。'
+              : '支払原資口座が未設定です。候補: ${alternative.accountName}'
+                  '（見込み残高 ${_formatYen(alternative.projectedBalance)}）へ原資設定してください。';
+        } else if (sourceSummary == null) {
+          final sourceName = row.paymentSourceAccountName ?? sourceAccountId;
+          severity = AssetManagementInsightSeverity.critical;
+          title = '${row.accountName}の支払前に原資口座を確認してください';
+          description = '${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
+              '${_formatYen(row.paymentAmount)}に対し、原資口座「$sourceName」の残高を'
+              '今の資産一覧で確認できません（残高0か口座名変更の可能性）。';
+          suggestedAction = '残高を入力し直すか、$alternativeHint';
+        } else if (sourceSummary.projectedBalance < 0) {
+          final shortage = sourceSummary.shortfall;
+          severity = AssetManagementInsightSeverity.critical;
+          title = '${row.accountName}の支払前に原資口座の残高不足が予測されます';
+          description = '${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
+              '${_formatYen(row.paymentAmount)}に対し、原資口座'
+              '「${sourceSummary.accountName}」の見込み残高が'
+              '${_formatYen(shortage)}不足します。';
+          suggestedAction = '他口座から${_formatYen(shortage)}以上を'
+              '${sourceSummary.accountName}へ移動するか、$alternativeHint';
+        } else {
+          severity = AssetManagementInsightSeverity.warning;
+          title = '${row.accountName}の支払日が近づいています';
+          description = '${_formatYen(row.paymentAmount)}の支払いが近づいています。';
+          suggestedAction =
+              '${sourceSummary.accountName}の残高${_formatYen(sourceSummary.currentBalance)}で'
+              '支払可能です。引落予定（${row.paymentDate.month}月${row.paymentDate.day}日）を確認してください。';
+        }
         actions.add(
           AssetManagementInsightActionItem(
             type: AssetManagementInsightActionType.upcomingPayment,
-            severity: AssetManagementInsightSeverity.warning,
-            title: '${row.accountName}の支払日が近づいています',
-            description: '${_formatYen(row.paymentAmount)}の支払いが近づいています。',
+            severity: severity,
+            title: title,
+            description: description,
             relatedAccountId: row.accountId,
             dueDate: row.paymentDate,
             paymentDay: row.paymentDay,
-            suggestedAction: '支払原資口座の残高を確認してください。',
+            suggestedAction: suggestedAction,
           ),
         );
       }
@@ -714,6 +785,36 @@ class AssetManagementInsightService {
           ),
         );
       }
+    }
+
+    for (final plan in workbook.incomePlans) {
+      if (plan.received || plan.amount <= 0) continue;
+      final planDate = _dateOnly(plan.date);
+      if (!planDate.isBefore(today)) continue;
+      final overdueDays = today.difference(planDate).inDays;
+      final destinationName = plan.destinationAccountName ?? '未設定';
+      final isLongOverdue = overdueDays >= 3;
+      actions.add(
+        AssetManagementInsightActionItem(
+          type: AssetManagementInsightActionType.overdueIncome,
+          severity: isLongOverdue
+              ? AssetManagementInsightSeverity.critical
+              : AssetManagementInsightSeverity.warning,
+          title: '${plan.name}の入金予定日を$overdueDays日過ぎています',
+          description:
+              '${planDate.month}月${planDate.day}日予定の${_formatYen(plan.amount)}が'
+              '未着金のまま$overdueDays日経過しています（入金先: $destinationName）。',
+          relatedAccountId: null,
+          relatedIncomeId: plan.id,
+          dueDate: planDate,
+          paymentDay: planDate.day,
+          suggestedAction: isLongOverdue
+              ? '未着金の状態が$overdueDays日続いています。入金元へ振込日・振込先口座を問い合わせるか、'
+                  '着金見込みが立たない場合は見込み残高から除外して資金繰りを再確認してください。'
+              : '口座の入出金明細を確認し、入金済みなら「入金済み」にチェックを入れてください。'
+                  '未着金の場合は入金元へ振込状況を確認してください。',
+        ),
+      );
     }
 
     if (todayInsight.availableAmount < 0) {
@@ -2273,6 +2374,7 @@ class AssetManagementInsightPromptBuilder {
       AssetManagementInsightActionType.doubleCountingRisk => '二重計上リスク',
       AssetManagementInsightActionType.accountShortfallRisk => '口座別見込み残高の不足',
       AssetManagementInsightActionType.debtSpiralWarning => '利息スパイラル警告',
+      AssetManagementInsightActionType.overdueIncome => '期限超過の未着金収入',
     };
   }
 

@@ -369,7 +369,11 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                   Positioned(
                     left: horizontalPadding + label.col * cell,
                     top: headerHeight + label.row * cell,
-                    child: _RegionMapLabel(label: label.label),
+                    child: IgnorePointer(
+                      child: ExcludeSemantics(
+                        child: _RegionMapLabel(label: label.label),
+                      ),
+                    ),
                   ),
                 Positioned(
                   left: horizontalPadding,
@@ -908,6 +912,31 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     return '$dateKey|${electionName.trim()}';
   }
 
+  Widget _buildScrollableBreakdownList({
+    required BuildContext context,
+    required int itemCount,
+    required double maxHeight,
+    required IndexedWidgetBuilder itemBuilder,
+  }) {
+    final theme = Theme.of(context);
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: Scrollbar(
+        child: ListView.separated(
+          shrinkWrap: true,
+          primary: false,
+          padding: const EdgeInsets.only(right: 8),
+          itemCount: itemCount,
+          separatorBuilder: (_, __) => Divider(
+            height: 14,
+            color: theme.colorScheme.outlineVariant,
+          ),
+          itemBuilder: itemBuilder,
+        ),
+      ),
+    );
+  }
+
   Widget _buildScheduleBreakdown(
     BuildContext context,
     List<LocalElectionScheduleEntry> schedules,
@@ -916,22 +945,34 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '予定選挙内訳',
-          style: theme.textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            height: 1.4,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '予定選挙内訳',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            Text(
+              '${schedules.length}件',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
-        for (var index = 0; index < schedules.length; index++) ...[
-          if (index > 0)
-            Divider(
-              height: 14,
-              color: theme.colorScheme.outlineVariant,
-            ),
-          _ScheduleBreakdownRow(schedule: schedules[index]),
-        ],
+        _buildScrollableBreakdownList(
+          context: context,
+          itemCount: schedules.length,
+          maxHeight: 340,
+          itemBuilder: (_, index) =>
+              _ScheduleBreakdownRow(schedule: schedules[index]),
+        ),
       ],
     );
   }
@@ -977,14 +1018,13 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
           ],
         ),
         const SizedBox(height: 8),
-        for (var index = 0; index < entries.length; index++) ...[
-          if (index > 0)
-            Divider(
-              height: 14,
-              color: theme.colorScheme.outlineVariant,
-            ),
-          _PostConventionBreakdownRow(entry: entries[index]),
-        ],
+        _buildScrollableBreakdownList(
+          context: context,
+          itemCount: entries.length,
+          maxHeight: 280,
+          itemBuilder: (_, index) =>
+              _PostConventionBreakdownRow(entry: entries[index]),
+        ),
       ],
     );
   }
@@ -1727,14 +1767,14 @@ const int _mapColumns = 10;
 const int _mapRows = 15;
 
 const List<_RegionLabel> _regionLabels = <_RegionLabel>[
-  _RegionLabel('北海道', 1.15, 7.05),
-  _RegionLabel('東北', 2.65, 7.10),
-  _RegionLabel('関東', 6.75, 6.85),
-  _RegionLabel('中部', 5.25, 4.80),
-  _RegionLabel('近畿', 7.00, 2.85),
-  _RegionLabel('中国', 6.55, 0.20),
-  _RegionLabel('四国', 9.70, 1.35),
-  _RegionLabel('九州', 11.55, 2.15),
+  _RegionLabel('北海道', 1.15, 8.05),
+  _RegionLabel('東北', 2.15, 7.05),
+  _RegionLabel('関東', 5.15, 9.05),
+  _RegionLabel('中部', 5.15, 5.55),
+  _RegionLabel('近畿', 7.15, 3.15),
+  _RegionLabel('中国', 6.15, 0.10),
+  _RegionLabel('四国', 9.15, 1.35),
+  _RegionLabel('九州', 12.15, 2.15),
 ];
 
 const List<_JapanTile> _japanTiles = <_JapanTile>[
