@@ -408,7 +408,10 @@ class _WeeklyHabitCardState extends State<WeeklyHabitCard>
                   onChanged: canWrite
                       ? (value) => _save(
                             _data.withCompleted(
-                                _selected, habit, value ?? false),
+                              _selected,
+                              habit,
+                              value ?? false,
+                            ),
                           )
                       : null,
                   controlAffinity: ListTileControlAffinity.leading,
