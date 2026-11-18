@@ -16536,19 +16536,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   List<Widget> _buildQuickJumpChips(BuildContext context) {
-    const quickTargets = <(AssetManagementSectionId, String)>[
-      (AssetManagementSectionId.monthlyFlow, '収支概観'),
-      (AssetManagementSectionId.calendar, 'カレンダー'),
-      (AssetManagementSectionId.monthlyDashboard, '月次ダッシュボード'),
-      (AssetManagementSectionId.debtPlanner, '借金返済'),
-      (AssetManagementSectionId.workbookBoard, 'ワークブック'),
-      (AssetManagementSectionId.assetLiability, '資産・負債'),
-      (AssetManagementSectionId.flow, '収支'),
-      (AssetManagementSectionId.subscriptions, '固定費'),
-      (AssetManagementSectionId.chart, 'グラフ'),
+    const quickTargets = <({AssetManagementSectionId id, String label})>[
+      (id: AssetManagementSectionId.monthlyFlow, label: '収支概観'),
+      (id: AssetManagementSectionId.calendar, label: 'カレンダー'),
+      (id: AssetManagementSectionId.monthlyDashboard, label: '月次ダッシュボード'),
+      (id: AssetManagementSectionId.debtPlanner, label: '借金返済'),
+      (id: AssetManagementSectionId.workbookBoard, label: 'ワークブック'),
+      (id: AssetManagementSectionId.assetLiability, label: '資産・負債'),
+      (id: AssetManagementSectionId.flow, label: '収支'),
+      (id: AssetManagementSectionId.subscriptions, label: '固定費'),
+      (id: AssetManagementSectionId.chart, label: 'グラフ'),
     ];
     final visibleTargets = quickTargets
-        .where((entry) => _isSectionShown(entry.$1))
+        .where((entry) => _isSectionShown(entry.id))
         .toList(growable: false);
     if (visibleTargets.isEmpty) {
       return const [];
@@ -16570,14 +16570,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           for (final target in visibleTargets)
             ActionChip(
-              key: Key('asset_quick_jump_${target.$1.name}'),
+              key: Key('asset_quick_jump_${target.id.name}'),
               visualDensity: VisualDensity.compact,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               label: Text(
-                target.$2,
+                target.label,
                 style: const TextStyle(fontSize: 12),
               ),
-              onPressed: () => _scrollTo(_sectionAnchorKey(target.$1)),
+              onPressed: () => _scrollTo(_sectionAnchorKey(target.id)),
             ),
         ],
       ),
