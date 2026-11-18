@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/offline_secure_mode_settings_service.dart';
+import '../widgets/synthetic_auth_boundary_guide.dart';
 
 class OfflineSecureModeSettingsPage extends StatefulWidget {
   final OfflineSecureModeSettingsService settingsService;
@@ -198,6 +199,8 @@ class _OfflineSecureModeSettingsPageState
                       : const Icon(Icons.save_outlined),
                   label: const Text('保存'),
                 ),
+                const SizedBox(height: 24),
+                const SyntheticAuthBoundaryGuide(),
               ],
             ),
     );
