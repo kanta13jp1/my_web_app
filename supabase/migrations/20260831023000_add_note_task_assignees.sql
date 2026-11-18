@@ -221,7 +221,6 @@ begin
   return jsonb_build_object(
     'task_id', v_task_id,
     'assigned', v_email is not null,
-    'linked_account', v_assignee_user_id is not null,
     'assignee_email', v_email,
     'assignee_display_name', case
       when v_email is null then null
