@@ -63,7 +63,6 @@ import '../widgets/home_calendar_day_indicators.dart';
 import '../widgets/home_calendar_day_surface.dart';
 import '../widgets/home_ops_snapshot_view.dart';
 import '../models/home_daily_cashflow_summary.dart';
-import '../utils/home_calendar_cashflow_aggregation.dart';
 import '../widgets/home_calendar_day_number.dart';
 import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
@@ -644,7 +643,8 @@ class _HomePageState extends State<HomePage> with RouteAware {
     final calStartKey = _statusDateKey(calendarStart);
     final calEndKey = _statusDateKey(calendarEnd);
 
-    Future<dynamic> safeQuery(Future<dynamic> Function() fn, String label) async {
+    Future<dynamic> safeQuery(
+        Future<dynamic> Function() fn, String label) async {
       try {
         return await fn();
       } catch (e) {
@@ -689,7 +689,8 @@ class _HomePageState extends State<HomePage> with RouteAware {
       ),
     ]);
 
-    final todoRows = results[0] is List ? results[0] as List : const <dynamic>[];
+    final todoRows =
+        results[0] is List ? results[0] as List : const <dynamic>[];
     final completedTodoRows =
         results[1] is List ? results[1] as List : const <dynamic>[];
     final mindlessRows =
