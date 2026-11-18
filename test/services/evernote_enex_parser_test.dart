@@ -175,6 +175,35 @@ void main() {
       );
     });
 
+    test('computes MD5 fallback when resource data omits hash attribute', () {
+      const enexWithoutDataHash = '''
+<?xml version="1.0" encoding="UTF-8"?>
+<en-export export-date="20260913T090000Z" application="Evernote" version="11">
+  <note>
+    <title>Audio Note</title>
+    <content><![CDATA[<en-note><en-media type="audio/x-m4a" hash="5d41402abc4b2a76b9719d911017c592"/></en-note>]]></content>
+    <resource>
+      <data encoding="base64">aGVsbG8=</data>
+      <mime>audio/x-m4a</mime>
+      <resource-attributes>
+        <file-name>clip.m4a</file-name>
+      </resource-attributes>
+    </resource>
+  </note>
+</en-export>
+''';
+      final export = parser.parseBytes(
+        Uint8List.fromList(utf8.encode(enexWithoutDataHash)),
+      );
+      final note = export.notes.single;
+
+      expect(note.resources.single.evernoteHash,
+          '5d41402abc4b2a76b9719d911017c592');
+      expect(note.unresolvedResourceHashes, isEmpty);
+      expect(note.markdownText,
+          contains('evernote-resource:5d41402abc4b2a76b9719d911017c592'));
+    });
+
     test('streams one note subtree at a time across byte boundaries', () async {
       final bytes = Uint8List.fromList(utf8.encode(_streamingEnex));
       final notes = <EvernoteEnexNote>[];
