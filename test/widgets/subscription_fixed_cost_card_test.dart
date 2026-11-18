@@ -53,8 +53,9 @@ void main() {
       expect(addedPreset?.id, 'notion');
     });
 
-    testWidgets('hides presets already registered (dedup by name)',
-        (tester) async {
+    testWidgets('hides presets already registered (dedup by name)', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -90,8 +91,9 @@ void main() {
       );
     });
 
-    testWidgets('renders registered entries and fires edit/delete/custom-add',
-        (tester) async {
+    testWidgets('renders registered entries and fires edit/delete/custom-add', (
+      tester,
+    ) async {
       AssetRecurringFixedCost? edited;
       AssetRecurringFixedCost? deleted;
       var customPressed = false;
@@ -109,9 +111,7 @@ void main() {
                   sourceAccountId: 'smbc',
                 ),
               ],
-              sourceAccountNames: const <String, String>{
-                'smbc': '三井住友銀行',
-              },
+              sourceAccountNames: const <String, String>{'smbc': '三井住友銀行'},
               presets: presets,
               onAddPreset: (_) {},
               onAddCustom: () => customPressed = true,
@@ -125,10 +125,7 @@ void main() {
       );
 
       expect(find.text('Anthropic (Claude)'), findsWidgets);
-      expect(
-        find.text('毎月1日 / ¥3,000 / 振替元: 三井住友銀行'),
-        findsOneWidget,
-      );
+      expect(find.text('毎月1日 / ¥3,000 / 振替元: 三井住友銀行'), findsOneWidget);
 
       // 行ごとに 名称+内訳 を 1 つの semantics ラベルへまとめる。
       final rowSemantics = find.byWidgetPredicate(
@@ -148,8 +145,9 @@ void main() {
       expect(deleted?.id, 'sub_claude');
     });
 
-    testWidgets('shows the billing gateway suffix for Apple-billed subs',
-        (tester) async {
+    testWidgets('shows the billing gateway suffix for Apple-billed subs', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -180,8 +178,9 @@ void main() {
       expect(find.textContaining('Apple経由'), findsOneWidget);
     });
 
-    testWidgets('opens statement scan and updates inventory decision',
-        (tester) async {
+    testWidgets('opens statement scan and updates inventory decision', (
+      tester,
+    ) async {
       var scanPressed = false;
       AssetSubscriptionReviewDecision? changedDecision;
       await tester.pumpWidget(
@@ -216,62 +215,62 @@ void main() {
       expect(find.text('年間合計 ¥24,000'), findsOneWidget);
       expect(find.text('未判定 1件'), findsOneWidget);
 
-      await tester
-          .tap(find.byKey(const Key('subscription_statement_scan_open')));
+      await tester.tap(
+        find.byKey(const Key('subscription_statement_scan_open')),
+      );
       expect(scanPressed, isTrue);
 
       await tester.tap(find.byKey(const Key('subscription_review_sub_notion')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('解約候補').last);
-      expect(
-        changedDecision,
-        AssetSubscriptionReviewDecision.cancelCandidate,
-      );
+      expect(changedDecision, AssetSubscriptionReviewDecision.cancelCandidate);
     });
 
-    testWidgets('shows savings suggestions for cancelCandidate, hold, and high unreviewed',
-        (tester) async {
+    testWidgets('shows savings suggestions for cancelCandidate, hold, '
+        'and high unreviewed', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SubscriptionFixedCostCard(
-              costs: const <AssetRecurringFixedCost>[
-                AssetRecurringFixedCost(
-                  id: 'sub_chatgpt',
-                  name: 'ChatGPT Pro',
-                  amount: 30000,
-                  paymentDay: 1,
-                  category: AssetRecurringFixedCostCategory.subscription,
-                  subscriptionReviewDecision:
-                      AssetSubscriptionReviewDecision.unreviewed,
-                ),
-                AssetRecurringFixedCost(
-                  id: 'sub_cursor',
-                  name: 'Cursor',
-                  amount: 3000,
-                  paymentDay: 5,
-                  category: AssetRecurringFixedCostCategory.subscription,
-                  subscriptionReviewDecision:
-                      AssetSubscriptionReviewDecision.hold,
-                ),
-                AssetRecurringFixedCost(
-                  id: 'sub_unused',
-                  name: 'Unused Tool',
-                  amount: 2000,
-                  paymentDay: 10,
-                  category: AssetRecurringFixedCostCategory.subscription,
-                  subscriptionReviewDecision:
-                      AssetSubscriptionReviewDecision.cancelCandidate,
-                ),
-              ],
-              sourceAccountNames: const <String, String>{},
-              presets: presets,
-              onAddPreset: (_) {},
-              onAddCustom: () {},
-              onScanStatement: () {},
-              onEdit: (_) {},
-              onDelete: (_) {},
-              onReviewDecisionChanged: (_, __) {},
+            body: SingleChildScrollView(
+              child: SubscriptionFixedCostCard(
+                costs: const <AssetRecurringFixedCost>[
+                  AssetRecurringFixedCost(
+                    id: 'sub_chatgpt',
+                    name: 'ChatGPT Pro',
+                    amount: 30000,
+                    paymentDay: 1,
+                    category: AssetRecurringFixedCostCategory.subscription,
+                    subscriptionReviewDecision:
+                        AssetSubscriptionReviewDecision.unreviewed,
+                  ),
+                  AssetRecurringFixedCost(
+                    id: 'sub_cursor',
+                    name: 'Cursor',
+                    amount: 3000,
+                    paymentDay: 5,
+                    category: AssetRecurringFixedCostCategory.subscription,
+                    subscriptionReviewDecision:
+                        AssetSubscriptionReviewDecision.hold,
+                  ),
+                  AssetRecurringFixedCost(
+                    id: 'sub_unused',
+                    name: 'Unused Tool',
+                    amount: 2000,
+                    paymentDay: 10,
+                    category: AssetRecurringFixedCostCategory.subscription,
+                    subscriptionReviewDecision:
+                        AssetSubscriptionReviewDecision.cancelCandidate,
+                  ),
+                ],
+                sourceAccountNames: const <String, String>{},
+                presets: presets,
+                onAddPreset: (_) {},
+                onAddCustom: () {},
+                onScanStatement: () {},
+                onEdit: (_) {},
+                onDelete: (_) {},
+                onReviewDecisionChanged: (_, __) {},
+              ),
             ),
           ),
         ),
