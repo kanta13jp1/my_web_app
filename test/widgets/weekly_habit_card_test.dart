@@ -193,4 +193,32 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+  testWidgets(
+    'collapsible card starts collapsed and expands on tap',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: WeeklyHabitCard(
+                userId: 'alice',
+                now: () => DateTime.utc(2026, 10, 21),
+                collapsible: true,
+                initiallyExpanded: false,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('寝る前の曜日習慣'), findsOneWidget);
+      expect(find.text('開く'), findsOneWidget);
+      expect(find.byType(Checkbox), findsNothing);
+      await tester.tap(find.byKey(const Key('weekly_habit_toggle_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('閉じる'), findsOneWidget);
+      expect(find.byType(Checkbox), findsNWidgets(2));
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 }

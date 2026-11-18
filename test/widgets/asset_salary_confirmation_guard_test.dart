@@ -6,6 +6,7 @@ import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_salary_amount_store.dart';
 import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_salary_reconciliation_service.dart';
+import 'package:my_web_app/widgets/weekly_habit_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -163,6 +164,49 @@ void main() {
     );
     expect(accounting.single.received, isTrue);
     expect(accounting.single.amount, 200000);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets(
+      'first view keeps weekly habit collapsed, toggles salary details, and renders quick jumps',
+      (tester) async {
+    await pumpSalaryCandidate(tester, balanceJump: false);
+    // 寝る前の曜日習慣は初期状態で折りたたまれている。
+    expect(find.byKey(const Key('weekly_habit_toggle_button')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(WeeklyHabitCard),
+        matching: find.byType(Checkbox),
+      ),
+      findsNothing,
+    );
+    // 給与入金未確認カードの詳細トグルで補足文言を開閉できる。
+    expect(find.text('詳しく見る'), findsOneWidget);
+    expect(
+      find.textContaining('金額の一致や残高の増加だけでは新しいサイクルへ切り替えません'),
+      findsNothing,
+    );
+    final toggle = find.byKey(
+      const Key('asset_salary_deposit_nudge_details_toggle'),
+    );
+    await tester.ensureVisible(toggle);
+    await tester.tap(toggle);
+    await tester.pump();
+    expect(find.text('詳細を閉じる'), findsOneWidget);
+    expect(
+      find.textContaining('金額の一致や残高の増加だけでは新しいサイクルへ切り替えません'),
+      findsOneWidget,
+    );
+    // 主要セクションへのクイックジャンプチップが表示されている。
+    expect(
+      find.byKey(const Key('asset_quick_jump_monthlyFlow')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('asset_quick_jump_calendar')),
+      findsOneWidget,
+    );
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });

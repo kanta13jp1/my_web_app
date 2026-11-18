@@ -104,6 +104,8 @@ void main() {
     );
     expect(find.text('現職維持目標'), findsOneWidget);
     expect(find.textContaining('新人擁立目標'), findsWidgets);
+    expect(find.textContaining('擁立計 50人'), findsOneWidget);
+    expect(find.textContaining('議席目標 700人'), findsOneWidget);
     expect(find.text('東京'), findsOneWidget);
     expect(find.text('愛知'), findsOneWidget);
     // 合計・不足警告は棒グラフの部分集合ではなく全県連が母数になる。
@@ -185,6 +187,86 @@ void main() {
 
     expect(find.text('党大会後成績内訳'), findsOneWidget);
     expect(find.textContaining('明細未取得（敗戦1件）'), findsOneWidget);
+  });
+
+  testWidgets(
+      'ElectionRegionalKpiChart monthly table scrolls horizontally on narrow width without overflow',
+      (tester) async {
+    const tokyo = LocalElectionPrefecturePlan(
+      prefecture: '東京',
+      region: '関東',
+      additionalSeatTarget: 12,
+      incumbentRetentionTarget: 9,
+      focusMunicipalityCount: 14,
+      newCandidateTarget: 15,
+      endorsementDeadlineMonth: '2026-09',
+      closeRaceSupportRounds: 18,
+    );
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 340,
+            child: SingleChildScrollView(
+              child: ElectionRegionalKpiChart(
+                prefectures: [tokyo],
+                allPrefectures: [tokyo],
+                targetLocalMembers: 700,
+                requiredNetIncrease: 318,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('進捗率'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'ElectionJapanMap caps schedule breakdown height when many schedules exist',
+      (tester) async {
+    final manySchedules = List<LocalElectionScheduleEntry>.generate(
+      20,
+      (index) => LocalElectionScheduleEntry(
+        electionName: 'テスト区議会議員選挙$index',
+        prefecture: '東京都',
+        municipality: 'テスト区$index',
+        electionCategory: '区議会議員選挙',
+        voteDate: '2027-04-11',
+        announcementDate: '2027-04-04',
+        detailUrl: 'https://example.com/$index',
+        officialCandidateSourceUrl: 'https://example.com/official',
+        seatCount: 20,
+        totalCandidateCount: 25,
+        kokuminCandidateCount: 1,
+        kokuminCandidateNames: <String>['候補$index'],
+        kokuminCandidateStatuses: const <String>['公認'],
+        kokuminCandidateVotes: const <int>[0],
+        kokuminCandidateXHandles: const <String>[''],
+        isPast: false,
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ElectionJapanMap(
+              prefectures: _samplePrefecturePlans(),
+              schedules: manySchedules,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('予定選挙内訳'), findsOneWidget);
+    expect(find.text('20件'), findsWidgets);
+    final listFinder = find.byType(ListView);
+    expect(listFinder, findsWidgets);
+    expect(tester.getSize(listFinder.first).height, lessThanOrEqualTo(340));
   });
 }
 
