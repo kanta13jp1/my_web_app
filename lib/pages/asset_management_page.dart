@@ -6498,7 +6498,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 1) セクション (表示中のみ)。
     for (final id in AssetManagementSectionId.values) {
       if (!_isSectionShown(id)) continue;
-      if (id == AssetManagementSectionId.savingsPlan &&
+      if ((id == AssetManagementSectionId.savingsPlan ||
+              id == AssetManagementSectionId.workbookBoard) &&
           _sectionAnchorKey(id).currentContext == null) {
         continue;
       }
@@ -10897,7 +10898,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
               _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
               const SizedBox(height: 12),
-              _buildDisplayModeSwitcher(),
+              _buildDisplayModeSwitcher(
+                hasWorkbook: assetLiabilityWorkbook != null,
+              ),
               if (_isSectionShown(AssetManagementSectionId.savingsPlan) &&
                   assetLiabilityWorkbook != null &&
                   _supabase.auth.currentUser != null) ...[
@@ -11038,7 +11041,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildDebtPlannerCard(assetLiabilityWorkbook), // 借金返済プラン
                 const SizedBox(height: 16),
               ],
-              if (_isSectionShown(AssetManagementSectionId.workbookBoard)) ...[
+              if (_isSectionShown(AssetManagementSectionId.workbookBoard) &&
+                  assetLiabilityWorkbook != null) ...[
                 _sectionAnchor(AssetManagementSectionId.workbookBoard),
                 _buildAssetLiabilityWorkbookBoard(assetLiabilityWorkbook),
                 const SizedBox(height: 16),
@@ -16439,7 +16443,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildDisplayModeSwitcher() {
+  Widget _buildDisplayModeSwitcher({required bool hasWorkbook}) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -16528,14 +16532,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
               ],
             ),
-            ..._buildQuickJumpChips(context),
+            ..._buildQuickJumpChips(context, hasWorkbook: hasWorkbook),
           ],
         ),
       ),
     );
   }
 
-  List<Widget> _buildQuickJumpChips(BuildContext context) {
+  List<Widget> _buildQuickJumpChips(
+    BuildContext context, {
+    required bool hasWorkbook,
+  }) {
     const quickTargets = <({AssetManagementSectionId id, String label})>[
       (id: AssetManagementSectionId.monthlyFlow, label: '収支概観'),
       (id: AssetManagementSectionId.calendar, label: 'カレンダー'),
@@ -16548,7 +16555,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       (id: AssetManagementSectionId.chart, label: 'グラフ'),
     ];
     final visibleTargets = quickTargets
-        .where((entry) => _isSectionShown(entry.id))
+        .where(
+          (entry) =>
+              _isSectionShown(entry.id) &&
+              (entry.id != AssetManagementSectionId.workbookBoard ||
+                  hasWorkbook),
+        )
         .toList(growable: false);
     if (visibleTargets.isEmpty) {
       return const [];
