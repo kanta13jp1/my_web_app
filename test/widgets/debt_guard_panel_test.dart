@@ -179,7 +179,7 @@ void main() {
     expect(repository.events.single.type, DebtGuardEventType.urgeResisted);
   });
 
-  testWidgets('shows which feeling precedes violations from history', (
+  testWidgets('shows feelings recorded with violations from history', (
     tester,
   ) async {
     final repository = _PanelRepository();

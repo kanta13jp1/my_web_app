@@ -311,7 +311,7 @@ class DebtGuardEmotionInsight {
   final int labelledCount;
   final int violationCount;
 
-  /// The emotion that most often precedes a violation, if any repeats.
+  /// The emotion most often recorded with a violation, if any repeats.
   final DebtGuardEmotionTally? riskiest;
 
   /// The emotion the user most reliably gets through, if any repeats.

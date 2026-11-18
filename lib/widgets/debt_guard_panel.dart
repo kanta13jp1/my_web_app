@@ -538,7 +538,7 @@ class DebtGuardPanel extends StatelessWidget {
                   children: [
                     if (riskiest != null) ...[
                       Text(
-                        '違反の前に多い気持ち: ${riskiest.emotion.label}'
+                        '違反時に記録された気持ち: ${riskiest.emotion.label}'
                         '（気持ちを記録した違反${insight.violationCount}回のうち'
                         '${riskiest.violationCount}回）',
                         key: const Key('debt-guard-emotion-riskiest'),
