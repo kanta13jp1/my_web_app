@@ -197,11 +197,15 @@ void main() {
       );
       final note = export.notes.single;
 
-      expect(note.resources.single.evernoteHash,
-          '5d41402abc4b2a76b9719d911017c592');
-      expect(note.unresolvedResourceHashes, isEmpty);
-      expect(note.markdownText,
-          contains('evernote-resource:5d41402abc4b2a76b9719d911017c592'));
+      expect(
+        note.resources.single.evernoteHash,
+        '5d41402abc4b2a76b9719d911017c592',
+      );
+      expect(export.warnings, isEmpty);
+      expect(
+        note.markdownText,
+        contains('evernote-resource:5d41402abc4b2a76b9719d911017c592'),
+      );
     });
 
     test('streams one note subtree at a time across byte boundaries', () async {
