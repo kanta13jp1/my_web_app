@@ -756,7 +756,7 @@ void main() {
 
   testWidgets('選択済み公認の出典確認日をcardと共有3経路で揃える', (tester) async {
     for (final entry in [
-      (buildSnapshot(), '出典確認日: 2026/11/12'),
+      (buildSnapshot(), '出典確認日: 2026/11/18'),
       (buildSnapshotWithLiveIntelligence(), '出典確認日: 未記録'),
     ]) {
       final snapshot = entry.$1;
@@ -792,7 +792,7 @@ void main() {
       for (final content in [memo.content, planMemo.content, xBody]) {
         expect(content, contains(entry.$2));
         if (entry.$2.endsWith('未記録')) {
-          expect(content, isNot(contains('出典確認日: 2026/11/12')));
+          expect(content, isNot(contains('出典確認日: 2026/11/18')));
         }
       }
       // Keep the selected source and unrelated page-fetch date unchanged.
