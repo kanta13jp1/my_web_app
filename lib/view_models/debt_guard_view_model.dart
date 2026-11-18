@@ -78,10 +78,15 @@ class DebtGuardViewModel extends ChangeNotifier {
   /// record keeping, so it has its own error boundary and no error banner.
   Future<void> _loadLabelledEvents() async {
     try {
-      _labelledEvents = await _repository.loadLabelledEvents(
+      final history = await _repository.loadLabelledEvents(
         userId: _userId!,
         since: DebtGuardEmotionInsight.windowStart(_clock()),
       );
+      // Keep records saved while the history request was in flight.
+      _labelledEvents = <int, DebtGuardEvent>{
+        for (final event in history) event.id: event,
+        for (final event in _labelledEvents) event.id: event,
+      }.values.toList();
       _labelledEventsLoaded = true;
       _labelledEventsFailed = false;
     } catch (_) {
@@ -137,13 +142,11 @@ class DebtGuardViewModel extends ChangeNotifier {
       final events = <DebtGuardEvent>[..._snapshot.events, ...inserted]
         ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
       _snapshot = _buildSnapshot(rules: debtGuardRules, events: events);
-      if (_labelledEventsLoaded) {
-        _labelledEvents = <DebtGuardEvent>[
-          ..._labelledEvents,
-          for (final event in inserted)
-            if (event.emotion != null) event,
-        ];
-      }
+      _labelledEvents = <DebtGuardEvent>[
+        ..._labelledEvents,
+        for (final event in inserted)
+          if (event.emotion != null) event,
+      ];
       return true;
     } catch (_) {
       _errorMessage = '記録を保存できませんでした。通信状態を確認して再度お試しください。';
