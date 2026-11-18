@@ -6,8 +6,8 @@
 
 ## 統計
 
-- 総出現 source 数: **202**
-- レイヤー別: competitor: 19, daily-report: 183
+- 総出現 source 数: **203**
+- レイヤー別: competitor: 19, daily-report: 184
 
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 

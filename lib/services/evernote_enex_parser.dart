@@ -832,7 +832,8 @@ class EvernoteEnexParser {
       mimeType: _childText(resource, 'mime').trim(),
       data: bytes,
       dataSha256: sha256.convert(bytes).toString(),
-      evernoteHash: _nonEmpty(dataElement?.getAttribute('hash')),
+      evernoteHash: _nonEmpty(dataElement?.getAttribute('hash')) ??
+          md5.convert(bytes).toString(),
       fileName: _stringAttribute(attributes, 'file-name'),
       width: int.tryParse(_childText(resource, 'width').trim()),
       height: int.tryParse(_childText(resource, 'height').trim()),

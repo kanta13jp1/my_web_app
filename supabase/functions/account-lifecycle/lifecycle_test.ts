@@ -1,11 +1,15 @@
 import {
   assertEquals,
   assertFalse,
+  assertThrows,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   ACCOUNT_DELETION_CONFIRMATION,
   ACCOUNT_DELETION_TOKEN_DRAIN_SECONDS,
   blockingDependencyCount,
+  importedHistoryBlockerCount,
+  storageInventoryExhausted,
+  validatedStorageInventory,
   canCancelDeletionRequest,
   deletionScheduledFor,
   isServiceRoleRequest,
@@ -145,4 +149,71 @@ Deno.test("staged worker accepts only positive safe request identifiers", () => 
   assertEquals(positiveRequestId("1.5"), null);
   assertEquals(positiveRequestId(Number.MAX_SAFE_INTEGER + 1), null);
   assertEquals(positiveRequestId(null), null);
+});
+
+
+Deno.test("imported history remains an account cleanup blocker", () => {
+  assertEquals(importedHistoryBlockerCount(0), 0);
+  assertEquals(importedHistoryBlockerCount(2), 2);
+});
+
+Deno.test("missing or invalid history counts fail closed before cleanup", () => {
+  for (const value of [null, undefined, "0", -1, 0.5, NaN, Infinity]) {
+    assertThrows(
+      () => importedHistoryBlockerCount(value),
+      Error,
+      "imported_history_count_unavailable",
+    );
+  }
+});
+
+
+Deno.test("Storage cleanup requires an empty page, not a short server-capped page", () => {
+  assertFalse(storageInventoryExhausted(50));
+  assertFalse(storageInventoryExhausted(1000));
+  assertEquals(storageInventoryExhausted(0), true);
+  let remaining = 205;
+  let removed = 0;
+  let requests = 0;
+  while (requests < 10) {
+    const pageSize = Math.min(50, remaining);
+    requests += 1;
+    if (storageInventoryExhausted(pageSize)) break;
+    removed += pageSize;
+    remaining -= pageSize;
+  }
+  assertEquals(removed, 205);
+  assertEquals(remaining, 0);
+  assertEquals(requests, 6);
+});
+
+
+Deno.test("Storage inventory accepts only an explicit valid array", () => {
+  assertEquals(validatedStorageInventory([]), []);
+  const rows = [{ bucket_id: "notes", object_name: "owner/a b.txt" }];
+  assertEquals(validatedStorageInventory(rows), rows);
+});
+
+Deno.test("malformed Storage inventory cannot masquerade as completed cleanup", () => {
+  for (
+    const value of [
+      null, undefined, {}, "[]", [null], [{}],
+      [{ bucket_id: "notes", object_name: 123 }],
+      [{ bucket_id: " ", object_name: "file" }],
+      [{ bucket_id: "notes", object_name: "" }],
+      [{ bucket_id: "notes", object_name: "valid" }, {}],
+    ]
+  ) {
+    assertThrows(
+      () => validatedStorageInventory(value),
+      Error,
+      "storage_inventory_invalid",
+    );
+  }
+});
+
+Deno.test("Storage inventory preserves whitespace-distinct object keys", () => {
+  const keys = ["file.txt", " file.txt", "file.txt "];
+  const rows = keys.map((object_name) => ({ bucket_id: "notes", object_name }));
+  assertEquals(validatedStorageInventory(rows).map((row) => row.object_name), keys);
 });
