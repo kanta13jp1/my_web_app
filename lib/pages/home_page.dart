@@ -644,7 +644,9 @@ class _HomePageState extends State<HomePage> with RouteAware {
     final calEndKey = _statusDateKey(calendarEnd);
 
     Future<dynamic> safeQuery(
-        Future<dynamic> Function() fn, String label) async {
+      Future<dynamic> Function() fn,
+      String label,
+    ) async {
       try {
         return await fn();
       } catch (e) {
