@@ -508,16 +508,17 @@ class _NoteNavigationPageState extends State<NoteNavigationPage> {
       ),
     );
     if (result == null) return;
+    final (searchName, searchQuery) = result;
     await _runMutation(
       () => savedSearch == null
           ? _repository.createSavedSearch(
-              name: result.$1,
-              query: result.$2,
+              name: searchName,
+              query: searchQuery,
             )
           : _repository.updateSavedSearch(
               savedSearch: savedSearch,
-              name: result.$1,
-              query: result.$2,
+              name: searchName,
+              query: searchQuery,
             ),
       successMessage: '保存済み検索を保存しました。',
     );
