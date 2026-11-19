@@ -52,6 +52,7 @@ const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/lumen-path': '光の道 · LUMEN PATH',
   '/sound-bloom': '音と光の庭 · SOUND BLOOM',
   '/aero-lab': '3D実験室 · AERO LAB',
+  '/neon-showcase': 'Gemini 4 作品館 · NEON SHOWCASE',
   '/ai-writing-assistant': 'AI文章・要約アシスタント',
   '/ai-university-toeic': 'AI大学 TOEIC対策',
   '/art-museums': '全国の美術館',

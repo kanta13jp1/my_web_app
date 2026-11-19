@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #050811; }
+  canvas { display: block; width: 1280px; height: 720px; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1280" height="720"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 1280, H = 720;
+
+// Deterministic PRNG (Mulberry32)
+function mulberry32(a) {
+  return function() {
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const COLS = 45;
+const ROWS = 19;
+const CELL = 12;
+const SEED = 4096;
+const rng = mulberry32(SEED);
+
+// 1 = wall, 0 = passage
+const maze = Array.from({ length: ROWS }, () => new Uint8Array(COLS).fill(1));
+const carveOrder = [];
+
+// Generate maze using Randomized DFS
+function generateMaze() {
+  const stack = [[1, 1]];
+  maze[1][1] = 0;
+  carveOrder.push([1, 1]);
+
+  const dirs = [[2, 0], [-2, 0], [0, 2], [0, -2]];
+  while (stack.length > 0) {
+    const [cx, cy] = stack[stack.length - 1];
+    const neighbors = [];
+    for (const [dx, dy] of dirs) {
+      const nx = cx + dx, ny = cy + dy;
+      if (nx > 0 && nx < COLS - 1 && ny > 0 && ny < ROWS - 1 && maze[ny][nx] === 1) {
+        neighbors.push([nx, ny, cx + dx / 2, cy + dy / 2]);
+      }
+    }
+    if (neighbors.length > 0) {
+      const [nx, ny, wx, wy] = neighbors[Math.floor(rng() * neighbors.length)];
+      maze[wy][wx] = 0;
+      maze[ny][nx] = 0;
+      carveOrder.push([wx, wy], [nx, ny]);
+      stack.push([nx, ny]);
+    } else {
+      stack.pop();
+    }
+  }
+
+  // Braid maze: remove ~14% of internal walls that separate two passages to create multiple competing paths
+  const candidates = [];
+  for (let y = 1; y < ROWS - 1; y++) {
+    for (let x = 1; x < COLS - 1; x++) {
+      if (maze[y][x] === 1) {
+        const horiz = maze[y][x - 1] === 0 && maze[y][x + 1] === 0 && maze[y - 1][x] === 1 && maze[y + 1][x] === 1;
+        const vert  = maze[y - 1][x] === 0 && maze[y + 1][x] === 0 && maze[y][x - 1] === 1 && maze[y][x + 1] === 1;
+        if (horiz || vert) candidates.push([x, y]);
+      }
+    }
+  }
+  for (const [x, y] of candidates) {
+    if (rng() < 0.14) {
+      maze[y][x] = 0;
+      carveOrder.push([x, y]);
+    }
+  }
+}
+
+generateMaze();
+
+const START = [1, 1];
+const GOAL = [COLS - 2, ROWS - 2];
+
+function key(x, y) { return y * COLS + x; }
+function getNeighbors(x, y) {
+  const res = [];
+  // Order: Right, Down, Left, Up (gives realistic exploration bias)
+  const dirs = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+  for (const [dx, dy] of dirs) {
+    const nx = x + dx, ny = y + dy;
+    if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS && maze[ny][nx] === 0) {
+      res.push([nx, ny]);
+    }
+  }
+  return res;
+}
+
+class Solver {
+  constructor(name, subtitle, color, glow, mode) {
+    this.name = name;
+    this.subtitle = subtitle;
+    this.color = color;
+    this.glow = glow;
+    this.mode = mode; // 'dfs' | 'bfs' | 'dijkstra' | 'astar'
+    this.visited = new Set();
+    this.visitTime = new Map();
+    this.parent = new Map();
+    this.dist = new Map();
+    this.frontier = [];
+    this.frontierSet = new Set();
+    this.done = false;
+    this.finishTime = null;
+    this.rank = null;
+    this.path = [];
+    this.current = null;
+
+    const sk = key(START[0], START[1]);
+    this.dist.set(sk, 0);
+    this.frontier.push({ x: START[0], y: START[1], g: 0, f: Math.abs(GOAL[0] - START[0]) + Math.abs(GOAL[1] - START[1]) });
+    this.frontierSet.add(sk);
+  }
+
+  step(simTime) {
+    if (this.done || this.frontier.length === 0) return false;
+
+    let node;
+    if (this.mode === 'dfs') {
+      node = this.frontier.pop();
+    } else if (this.mode === 'bfs') {
+      node = this.frontier.shift();
+    } else if (this.mode === 'dijkstra') {
+      let bestIdx = 0;
+      for (let i = 1; i < this.frontier.length; i++) {
+        if (this.frontier[i].g < this.frontier[bestIdx].g) bestIdx = i;
+      }
+      node = this.frontier.splice(bestIdx, 1)[0];
+    } else { // astar
+      let bestIdx = 0;
+      for (let i = 1; i < this.frontier.length; i++) {
+        if (this.frontier[i].f < this.frontier[bestIdx].f) bestIdx = i;
+      }
+      node = this.frontier.splice(bestIdx, 1)[0];
+    }
+
+    const nk = key(node.x, node.y);
+    this.frontierSet.delete(nk);
+    if (this.visited.has(nk)) return true;
+
+    this.visited.add(nk);
+    this.visitTime.set(nk, simTime);
+    this.current = [node.x, node.y];
+
+    if (node.x === GOAL[0] && node.y === GOAL[1]) {
+      this.done = true;
+      this.finishTime = simTime;
+      this.reconstructPath();
+      return true;
+    }
+
+    for (const [nx, ny] of getNeighbors(node.x, node.y)) {
+      const nbk = key(nx, ny);
+      if (this.visited.has(nbk)) continue;
+      const ng = node.g + 1;
+      if (this.mode === 'dfs') {
+        if (!this.parent.has(nbk)) this.parent.set(nbk, nk);
+        this.frontier.push({ x: nx, y: ny, g: ng, f: ng });
+        this.frontierSet.add(nbk);
+      } else if (this.mode === 'bfs') {
+        if (!this.frontierSet.has(nbk)) {
+          this.parent.set(nbk, nk);
+          this.dist.set(nbk, ng);
+          this.frontier.push({ x: nx, y: ny, g: ng, f: ng });
+          this.frontierSet.add(nbk);
+        }
+      } else {
+        const oldG = this.dist.get(nbk);
+        if (oldG === undefined || ng < oldG) {
+          this.dist.set(nbk, ng);
+          this.parent.set(nbk, nk);
+          const h = Math.abs(GOAL[0] - nx) + Math.abs(GOAL[1] - ny);
+          this.frontier.push({ x: nx, y: ny, g: ng, f: this.mode === 'astar' ? ng + h * 1.001 : ng });
+          this.frontierSet.add(nbk);
+        }
+      }
+    }
+    return true;
+  }
+
+  reconstructPath() {
+    let cur = key(GOAL[0], GOAL[1]);
+    const sk = key(START[0], START[1]);
+    const pts = [];
+    while (cur !== undefined) {
+      pts.push([cur % COLS, Math.floor(cur / COLS)]);
+      if (cur === sk) break;
+      cur = this.parent.get(cur);
+    }
+    pts.reverse();
+    this.path = pts;
+  }
+}
+
+const solvers = [
+  new Solver('01 / DFS', 'Depth-First Search', '#FF3B9A', 'rgba(255, 59, 154, 0.55)', 'dfs'),
+  new Solver('02 / BFS', 'Breadth-First Search', '#00E5FF', 'rgba(0, 229, 255, 0.55)', 'bfs'),
+  new Solver('03 / DIJKSTRA', 'Shortest Cost First', '#FFB800', 'rgba(255, 184, 0, 0.55)', 'dijkstra'),
+  new Solver('04 / A* (A-STAR)', 'Manhattan Heuristic', '#00FF9D', 'rgba(0, 255, 157, 0.55)', 'astar'),
+];
+
+let finishedCount = 0;
+let simT = 0;
+const BUILD_END = 3.2;
+const RACE_START = 3.6;
+const TOTAL_T = 24.0;
+const STEPS_PER_SEC = 34; // ~34 nodes/sec -> A* ~3.5-5s, BFS/Dijkstra ~10-12s, DFS ~13-15s
+let stepAccumulator = 0;
+
+function hexToRgba(hex, a) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function drawPanel(solver, px, py, pw, ph) {
+  // Panel container
+  ctx.save();
+  ctx.fillStyle = '#090F1E';
+  ctx.strokeStyle = solver.done ? solver.color : 'rgba(148, 163, 184, 0.22)';
+  ctx.lineWidth = solver.done ? 1.8 : 1.0;
+  ctx.beginPath();
+  ctx.roundRect(px, py, pw, ph, 10);
+  ctx.fill();
+  ctx.stroke();
+
+  // Top Header Bar
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  ctx.beginPath();
+  ctx.roundRect(px + 1, py + 1, pw - 2, 34, [9, 9, 0, 0]);
+  ctx.fill();
+
+  ctx.fillStyle = solver.color;
+  ctx.font = '700 14px "Consolas", monospace';
+  ctx.fillText(solver.name, px + 14, py + 23);
+
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '400 12px "Consolas", monospace';
+  ctx.fillText(`// ${solver.subtitle}`, px + 170, py + 23);
+
+  // Status / Rank Badge
+  let badgeText = simT < RACE_START ? 'GENERATING MAZE' : 'SEARCHING...';
+  let badgeBg = 'rgba(148, 163, 184, 0.14)';
+  let badgeFg = '#CBD5E1';
+  if (solver.done) {
+    const ranks = ['1ST', '2ND', '3RD', '4TH'];
+    badgeText = `${ranks[solver.rank - 1]}  (${(solver.finishTime - RACE_START).toFixed(2)}s)`;
+    badgeBg = hexToRgba(solver.color, 0.18);
+    badgeFg = solver.color;
+  }
+  ctx.font = '700 12px "Consolas", monospace';
+  const bw = ctx.measureText(badgeText).width + 18;
+  ctx.fillStyle = badgeBg;
+  ctx.beginPath();
+  ctx.roundRect(px + pw - bw - 12, py + 7, bw, 22, 6);
+  ctx.fill();
+  ctx.fillStyle = badgeFg;
+  ctx.fillText(badgeText, px + pw - bw - 3, py + 22);
+
+  // Maze Grid Origin
+  const mx = px + Math.floor((pw - COLS * CELL) / 2);
+  const my = py + 41;
+
+  // How many cells are carved so far?
+  const carveProgress = Math.min(1, simT / BUILD_END);
+  const carvedLimit = Math.floor(carveProgress * carveOrder.length);
+  const carvedSet = new Set();
+  for (let i = 0; i < carvedLimit; i++) {
+    carvedSet.add(key(carveOrder[i][0], carveOrder[i][1]));
+  }
+
+  // Draw Maze background & cells
+  ctx.fillStyle = '#131C31'; // Wall color
+  ctx.fillRect(mx, my, COLS * CELL, ROWS * CELL);
+
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const k = key(x, y);
+      if (maze[y][x] === 0 && (carveProgress >= 1 || carvedSet.has(k))) {
+        ctx.fillStyle = '#050811';
+        ctx.fillRect(mx + x * CELL, my + y * CELL, CELL, CELL);
+      }
+    }
+  }
+
+  // Draw Frontier
+  for (const fk of solver.frontierSet) {
+    const fx = fk % COLS, fy = Math.floor(fk / COLS);
+    ctx.fillStyle = hexToRgba(solver.color, 0.25);
+    ctx.fillRect(mx + fx * CELL + 1, my + fy * CELL + 1, CELL - 2, CELL - 2);
+  }
+
+  // Draw Visited cells with age glow
+  for (const vk of solver.visited) {
+    const vx = vk % COLS, vy = Math.floor(vk / COLS);
+    const vt = solver.visitTime.get(vk) || 0;
+    const age = Math.max(0, simT - vt);
+    const flash = Math.max(0, 1 - age * 1.4);
+    const alpha = solver.done ? 0.24 : (0.28 + 0.55 * flash);
+    ctx.fillStyle = hexToRgba(solver.color, alpha);
+    ctx.fillRect(mx + vx * CELL + 1.5, my + vy * CELL + 1.5, CELL - 3, CELL - 3);
+  }
+
+  // Draw Final Path when done
+  if (solver.done && solver.path.length > 1) {
+    const animProg = Math.min(1, (simT - solver.finishTime) / 0.65);
+    const maxIdx = Math.max(1, Math.floor(animProg * (solver.path.length - 1)));
+    ctx.save();
+    ctx.strokeStyle = solver.color;
+    ctx.shadowColor = solver.color;
+    ctx.shadowBlur = 12;
+    ctx.lineWidth = 4.2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let i = 0; i <= maxIdx; i++) {
+      const [px0, py0] = solver.path[i];
+      const cx = mx + px0 * CELL + CELL / 2;
+      const cy = my + py0 * CELL + CELL / 2;
+      if (i === 0) ctx.moveTo(cx, cy);
+      else ctx.lineTo(cx, cy);
+    }
+    ctx.stroke();
+
+    // Inner white-hot core
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Current head indicator while searching
+  if (!solver.done && solver.current && simT >= RACE_START) {
+    const [hx, hy] = solver.current;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(mx + hx * CELL + 2, my + hy * CELL + 2, CELL - 4, CELL - 4);
+  }
+
+  // Start & Goal markers
+  if (carveProgress > 0.05) {
+    const pulse = 0.65 + 0.35 * Math.sin(simT * 6);
+    // Start
+    ctx.fillStyle = '#38BDF8';
+    ctx.beginPath();
+    ctx.arc(mx + START[0] * CELL + CELL / 2, my + START[1] * CELL + CELL / 2, 4.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Goal
+    ctx.fillStyle = `rgba(250, 204, 21, ${pulse})`;
+    ctx.beginPath();
+    ctx.arc(mx + GOAL[0] * CELL + CELL / 2, my + GOAL[1] * CELL + CELL / 2, 4.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Bottom Telemetry Bar
+  const by = py + ph - 10;
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '600 12px "Consolas", monospace';
+  const visitedCount = solver.visited.size;
+  const pathLen = solver.done ? solver.path.length : '--';
+  ctx.fillText(`VISITED: ${String(visitedCount).padStart(3, '0')} nodes`, px + 16, by);
+  ctx.fillText(`PATH LENGTH: ${pathLen}`, px + 215, by);
+
+  if (solver.done) {
+    const optimal = solvers[1].done ? solvers[1].path.length : solver.path.length;
+    const isOptimal = solver.mode !== 'dfs' || solver.path.length <= optimal;
+    ctx.fillStyle = isOptimal ? '#00FF9D' : '#FB7185';
+    ctx.fillText(isOptimal ? 'OPTIMAL ROUTE' : `DETOUR (+${solver.path.length - optimal})`, px + pw - 132, by);
+  }
+
+  ctx.restore();
+}
+
+function renderFrame() {
+  ctx.fillStyle = '#050811';
+  ctx.fillRect(0, 0, W, H);
+
+  // Top Header
+  ctx.fillStyle = '#0B1222';
+  ctx.fillRect(0, 0, W, 58);
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, 58); ctx.lineTo(W, 58); ctx.stroke();
+
+  ctx.fillStyle = '#00E5FF';
+  ctx.font = '700 16px "Consolas", monospace';
+  ctx.fillText('PATHFINDING ALGORITHM RACE  |  45x19 BRAIDED MAZE  |  ASSETS: 0', 22, 26);
+
+  const phaseLabel = simT < BUILD_END ? 'PHASE 01: PROCEDURAL MAZE GENERATION'
+    : simT < RACE_START ? 'READY: START & GOAL LOCKED'
+    : finishedCount < 4 ? 'PHASE 02: REAL-TIME SEARCH RACE'
+    : 'PHASE 03: OPTIMALITY & EFFICIENCY COMPARISON';
+  ctx.fillStyle = '#E2E8F0';
+  ctx.font = '500 13px "Consolas", monospace';
+  ctx.fillText(phaseLabel, 22, 46);
+
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '700 15px "Consolas", monospace';
+  ctx.fillText(`SEED: #${SEED}  |  ${simT.toFixed(2)}s / ${TOTAL_T.toFixed(2)}s`, W - 290, 35);
+
+  // 2x2 Panels
+  const pw = 612, ph = 310;
+  drawPanel(solvers[0], 20, 72, pw, ph);
+  drawPanel(solvers[1], 648, 72, pw, ph);
+  drawPanel(solvers[2], 20, 398, pw, ph);
+  drawPanel(solvers[3], 648, 398, pw, ph);
+}
+
+window.stepRace = (dt) => {
+  simT += dt;
+  if (simT >= RACE_START && finishedCount < 4) {
+    stepAccumulator += dt * STEPS_PER_SEC;
+    while (stepAccumulator >= 1) {
+      stepAccumulator -= 1;
+      for (const s of solvers) {
+        if (!s.done) {
+          s.step(simT);
+          if (s.done) {
+            finishedCount++;
+            s.rank = finishedCount;
+          }
+        }
+      }
+    }
+  }
+  renderFrame();
+};
+
+window.getRaceEvents = () => ({
+  seed: SEED,
+  buildEnd: BUILD_END,
+  raceStart: RACE_START,
+  results: solvers.map(s => ({
+    name: s.name,
+    rank: s.rank,
+    finishTime: s.finishTime,
+    visited: s.visited.size,
+    pathLen: s.path.length
+  }))
+});
+
+// Initial render
+renderFrame();
+
+// Auto-play if opened interactively in browser
+if (!window.__RECORDING__) {
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (simT < TOTAL_T) {
+      window.stepRace(dt);
+      requestAnimationFrame(loop);
+    }
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
