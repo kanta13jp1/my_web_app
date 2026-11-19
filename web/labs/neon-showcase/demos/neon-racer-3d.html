@@ -382,8 +382,9 @@ function drawScene() {
   hctx.font = '700 13px "Consolas", monospace';
   hctx.fillText('NEON HOVER RACER 3D  |  PURE WEBGL2  |  ASSETS: 0', 38, 42);
   hctx.fillStyle = '#F8FAFC';
-  const modeStr = player.boostT > 0 ? 'HYPER BOOST ACTIVE!' : 'WASD / SPACE TO PLAY';
-  hctx.fillText(`STATUS: ${modeStr}  |  ${simT.toFixed(2)}s / 24.00s`, 38, 63);
+  const modeStr = player.boostT > 0 ? 'HYPER BOOST ACTIVE!' : 'A/D OR TAP TO STEER · SPACE BOOST';
+  const lapNum = Math.floor(player.s / TRACK_N) + 1;
+  hctx.fillText(`STATUS: ${modeStr}  |  ${autoPilot ? 'AUTO' : 'LIVE'} · LAP ${lapNum}`, 38, 63);
 
   // Top-Right Rank Card
   hctx.fillStyle = 'rgba(4, 8, 18, 0.65)';
@@ -456,12 +457,28 @@ drawScene();
 if (!window.__RECORDING__) {
   window.addEventListener('DOMContentLoaded', () => {
     if (!window.NeonShell) return;
-    window.NeonShell.setHint('手動プレイ中: A/D または ←/→ でステア · W/↑/Space でブースト');
+    window.NeonShell.setHint('手動プレイ中: 画面左/右押し・A/D・←/→でステア · 中央押し・Spaceでブースト');
     const autoBtn = window.NeonShell.addControl('🤖 オートデモ', (btn) => {
       autoPilot = !autoPilot;
       btn.classList.toggle('active', autoPilot);
-      window.NeonShell.setHint(autoPilot ? 'オートデモ再生中（キーまたは下ボタンで手動操縦）' : '手動プレイ中: A/D または ←/→ でステア · W/↑/Space でブースト');
+      window.NeonShell.setHint(autoPilot ? 'オートデモ再生中（画面タッチ/キー/下ボタンで手動操縦）' : '手動プレイ中: 画面左/右押し・A/D・←/→でステア · 中央押し・Spaceでブースト');
     });
+    let ptrCode = null;
+    glCanvas.addEventListener('pointerdown', (e) => {
+      if (window.__RECORDING__) return;
+      const rect = glCanvas.getBoundingClientRect();
+      const rx = (e.clientX - rect.left) / Math.max(1, rect.width);
+      autoPilot = false;
+      autoBtn.classList.remove('active');
+      if (ptrCode) keys[ptrCode] = false;
+      ptrCode = rx < 0.35 ? 'ArrowLeft' : rx > 0.65 ? 'ArrowRight' : 'Space';
+      keys[ptrCode] = true;
+    });
+    const clearPtr = () => {
+      if (ptrCode) { keys[ptrCode] = false; ptrCode = null; }
+    };
+    window.addEventListener('pointerup', clearPtr);
+    window.addEventListener('pointercancel', clearPtr);
     window.NeonShell.addControl('↻ リスタート', () => window.location.reload());
     window.NeonShell.addPads([
       { label: '◀ 左ステア', onDown: () => { autoPilot = false; autoBtn.classList.remove('active'); keys['ArrowLeft'] = true; }, onUp: () => { keys['ArrowLeft'] = false; } },
@@ -471,7 +488,7 @@ if (!window.__RECORDING__) {
   });
   let last = performance.now();
   function loop(now) {
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
     window.stepRacer(dt);
     requestAnimationFrame(loop);
@@ -479,6 +496,6 @@ if (!window.__RECORDING__) {
   requestAnimationFrame(loop);
 }
 </script>
-<script src="../demo-shell.js?v=20261120-32"></script>
+<script src="../demo-shell.js?v=20261120-33"></script>
 </body>
 </html>

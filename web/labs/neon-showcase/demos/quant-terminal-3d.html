@@ -2656,7 +2656,7 @@
     });
     let lastTs = performance.now();
     function loop(now) {
-      const dt = Math.min(0.05, (now - lastTs) / 1000);
+      const dt = Math.max(0, Math.min(0.05, (now - lastTs) / 1000));
       lastTs = now;
       if (autoTour && simTime >= TOTAL_DEMO_SEC) {
         // Loop seamlessly when auto tour is enabled
@@ -2670,6 +2670,6 @@
   }
 })();
 </script>
-<script src="../demo-shell.js?v=20261120-32"></script>
+<script src="../demo-shell.js?v=20261120-33"></script>
 </body>
 </html>

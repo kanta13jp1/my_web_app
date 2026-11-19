@@ -266,12 +266,13 @@ function stepFluid(dt) {
   const beatFrac = (simT / 0.5) % 1.0;
   const beatPulse = Math.exp(-beatFrac * 5.0);
 
-  if (simT < 8.0) {
+  const phaseT = simT % 24.0;
+  if (phaseT < 8.0) {
     // Phase 1: Opposing Neon Jets Colliding in Center (Cyan vs Magenta)
     const yOff = Math.sin(simT * 1.4) * 0.14;
     splat(0.18, 0.5 + yOff, 32.0 + 18.0 * beatPulse, Math.cos(simT * 2.1) * 6.0, [0.0, 0.85, 1.0].map(c => c * 0.28), 0.0028);
     splat(0.82, 0.5 - yOff, -32.0 - 18.0 * beatPulse, -Math.cos(simT * 2.1) * 6.0, [1.0, 0.12, 0.55].map(c => c * 0.28), 0.0028);
-  } else if (simT < 16.0) {
+  } else if (phaseT < 16.0) {
     // Phase 2: 3-Emitter Orbital Vortex (Cyan, Amber Gold, Violet)
     const cols = [[0.0, 0.9, 1.0], [1.0, 0.65, 0.08], [0.65, 0.22, 1.0]];
     for (let k = 0; k < 3; k++) {
@@ -373,12 +374,12 @@ function stepFluid(dt) {
   hctx.lineWidth = 1.2;
   hctx.beginPath(); hctx.roundRect(24, 22, 465, 56, 10); hctx.fill(); hctx.stroke();
 
-  const phase = simT < 8.0 ? '01 OPPOSING JETS' : simT < 16.0 ? '02 ORBITAL VORTEX' : '03 HARMONIC SWIRL';
+  const phase = phaseT < 8.0 ? '01 OPPOSING JETS' : phaseT < 16.0 ? '02 ORBITAL VORTEX' : '03 HARMONIC SWIRL';
   hctx.fillStyle = '#00E5FF';
   hctx.font = '700 13px "Consolas", monospace';
   hctx.fillText('NAVIER-STOKES FLUID SOLVER  |  20 JACOBI  |  ASSETS: 0', 40, 44);
   hctx.fillStyle = '#F8FAFC';
-  hctx.fillText(`MODE: ${phase}  |  ${simT.toFixed(2)}s / 24.00s`, 40, 65);
+  hctx.fillText(`MODE: ${phase}  |  LIVE FLUID · DRAG TO STIR`, 40, 65);
   hctx.restore();
 }
 
@@ -418,6 +419,9 @@ if (!window.__RECORDING__) {
   window.addEventListener('DOMContentLoaded', () => {
     if (!window.NeonShell) return;
     window.NeonShell.setHint('マウスを動かす／ドラッグして発光流体をかき混ぜられます（クリックで色変更）');
+    window.NeonShell.addControl('01 対向ジェット', () => { simT = 0.5; });
+    window.NeonShell.addControl('02 軌道渦', () => { simT = 9.0; });
+    window.NeonShell.addControl('03 リサージュ', () => { simT = 17.0; });
     window.NeonShell.addControl('⏸ 一時停止', (btn) => {
       paused = !paused;
       btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
@@ -427,7 +431,7 @@ if (!window.__RECORDING__) {
   });
   let last = performance.now();
   function loop(now) {
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
     if (!paused) window.stepFluid(dt);
     requestAnimationFrame(loop);
@@ -436,6 +440,6 @@ if (!window.__RECORDING__) {
   requestAnimationFrame(loop);
 }
 </script>
-<script src="../demo-shell.js?v=20261120-32"></script>
+<script src="../demo-shell.js?v=20261120-33"></script>
 </body>
 </html>

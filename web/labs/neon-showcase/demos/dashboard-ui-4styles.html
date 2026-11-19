@@ -429,7 +429,7 @@ if (!window.__RECORDING__) {
   });
   let last = performance.now();
   function loop(now) {
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
     window.stepDashboards(dt);
     requestAnimationFrame(loop);
@@ -437,6 +437,6 @@ if (!window.__RECORDING__) {
   requestAnimationFrame(loop);
 }
 </script>
-<script src="../demo-shell.js?v=20261120-32"></script>
+<script src="../demo-shell.js?v=20261120-33"></script>
 </body>
 </html>

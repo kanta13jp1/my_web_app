@@ -341,10 +341,18 @@ spawnWave(-155, 2);
 state.nextWaveZ = -205;
 state.waveIdx = 3;
 
-// Keyboard input for interactive play
+// Keyboard & Pointer input for interactive play
 const keys = {};
+let pointerFire = false;
 window.addEventListener('keydown', e => { keys[e.code] = true; });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
+glCanvas.addEventListener('pointerdown', () => {
+  if (window.__RECORDING__) return;
+  autoPilot = false;
+  pointerFire = true;
+});
+window.addEventListener('pointerup', () => { pointerFire = false; });
+window.addEventListener('pointercancel', () => { pointerFire = false; });
 
 // Real-time WebAudio SFX for live browser play
 let actx = null;
@@ -375,7 +383,7 @@ function stepGame(dt, autopilot=true) {
     if (keys['KeyD'] || keys['ArrowRight']) tx += 9;
     if (keys['KeyW'] || keys['ArrowUp']) ty += 4;
     if (keys['KeyS'] || keys['ArrowDown']) ty -= 3;
-    wantFire = !!(keys['Space'] || keys['KeyJ']);
+    wantFire = !!(keys['Space'] || keys['KeyJ'] || pointerFire);
   } else {
     // Find nearest upcoming enemy or ring
     let targetEnemy = null;
@@ -691,7 +699,7 @@ window.addEventListener('DOMContentLoaded', () => {
 let last = performance.now();
 function loop(now) {
   if (window.__RECORDING__) return;
-  const dt = Math.min(0.05, (now - last) / 1000);
+  const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
   last = now;
   stepGame(dt, autoPilot);
   renderScene();
@@ -699,6 +707,6 @@ function loop(now) {
 }
 requestAnimationFrame(loop);
 </script>
-<script src="../demo-shell.js?v=20261120-32"></script>
+<script src="../demo-shell.js?v=20261120-33"></script>
 </body>
 </html>
