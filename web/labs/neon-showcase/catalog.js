@@ -88,6 +88,62 @@ export const LIVE_DEMOS = [
       '世界観の異なる4種類のモダンLPデザインをシームレスに切り替えて比較できる単一HTMLショーケース。',
     tags: ['歴代2位 208 Views', '4種デザイン切替'],
   },
+  {
+    slug: 'sentinel-earth-3d',
+    title: 'SENTINEL EARTH // 3Dデジタルツイン地球儀 & サイバー防衛',
+    enTitle: 'Procedural 2K Globe + 72 LEO Satellites + DDoS Shield + Aurora',
+    category: 'workstation',
+    categoryLabel: '3Dワークステーション',
+    model: 'Gemini 4 Neon',
+    episode: '第4弾',
+    sizeKb: 70,
+    metrics: '122 Views / 1 Like (Neon 1位タイ)',
+    featured: true,
+    summary:
+      '地図画像もMapboxもゼロ。プロシージャル2K地球儀、36本の大圏通信アーク、72基LEO衛星レーザー網、DDoS迎撃シールド展開、太陽フレアX2.4オーロラ表現を搭載。',
+    tags: ['Neon 1位タイ', '72基LEO衛星', 'DDoS迎撃', '3Dオーロラ'],
+  },
+  {
+    slug: 'aeroflow-cfd-3d',
+    title: 'AEROFLOW // 3D風洞 & 空力CFDスタジオ',
+    enTitle: 'F1 Ground-Effect Cp Heatmap + Mach 2.4 Shock + Starship Re-entry',
+    category: 'workstation',
+    categoryLabel: '3Dワークステーション',
+    model: 'Gemini 4 Neon',
+    episode: '第6弾',
+    sizeKb: 68,
+    metrics: '53 Views / 1 Reply',
+    summary:
+      'F1ハイパーカーの136本3D流線・翼端渦・表面圧力Cpヒートマップ・2D PIV渦度スキャナから、マッハ2.4衝撃波コーン・スターシップ大気圏再突入プラズマまで1クリック切替。',
+    tags: ['136本3D流線', 'Cp圧力分布', '衝撃波コーン', '2D PIV'],
+  },
+  {
+    slug: 'neocity-fpv-3d',
+    title: 'NEOCITY // 3Dサイバーパンク都市建設 & FPVドローン',
+    enTitle: '284 Procedural Skyscrapers + WASD Playable FPV Flight',
+    category: 'cinema',
+    categoryLabel: '3Dシネマ',
+    model: 'Gemini 4 Neon',
+    episode: '第7弾',
+    sizeKb: 44,
+    metrics: '39 Views',
+    summary:
+      '284棟の摩天楼タイムラプス建設、260条の空中交通ライトトレイル、濡れた路面の2パスHDRネオンブルーム、ブレードランナー風ゴールデンヘイズ切替＆WASD操縦対応。',
+    tags: ['284棟自動生成', '2パスHDRブルーム', 'WASD飛行'],
+  },
+  {
+    slug: 'neon-racer-3d',
+    title: 'NEON HOVER RACER 3D // 3Dホバーレーサー',
+    enTitle: 'Playable 3D Synthwave Hover Racer',
+    category: 'game',
+    categoryLabel: 'ゲーム',
+    model: 'Interactive Lab',
+    episode: 'Game Lab',
+    sizeKb: 18,
+    summary:
+      'ネオンコースを高速滑走する単一HTMLの3Dホバーレースゲーム。',
+    tags: ['プレイアブル', '3Dレース'],
+  },
 ];
 
 export const BLENDER_WORKS = [
