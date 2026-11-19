@@ -33,7 +33,6 @@ const modalOpenTab = document.getElementById('modal-open-tab');
 const modalFullscreen = document.getElementById('modal-fullscreen');
 const modalClose = document.getElementById('modal-close');
 const modalStageWrap = document.getElementById('modal-stage-wrap');
-const modalScaler = document.getElementById('modal-scaler');
 const modalIframe = document.getElementById('modal-iframe');
 
 function esc(str) {
@@ -76,12 +75,10 @@ function matchesQuery(fields) {
   return fields.some((f) => String(f ?? '').toLowerCase().includes(q));
 }
 
-function updateModalScale() {
-  if (modal.hidden) return;
-  const w = modalStageWrap.clientWidth || 1280;
-  const h = modalStageWrap.clientHeight || (w * 720) / 1280;
-  const scale = Math.min(w / 1280, h / 720);
-  modalScaler.style.transform = `translate(-50%, -50%) scale(${scale})`;
+function syncModalFullscreenLabel() {
+  if (!modalFullscreen) return;
+  const active = Boolean(document.fullscreenElement);
+  modalFullscreen.textContent = active ? '⛶ フル画面解除' : '⛶ フル画面';
 }
 
 function openDemoModal(slug) {
@@ -92,7 +89,7 @@ function openDemoModal(slug) {
   modalSub.textContent = `${demo.model} · ${demo.categoryLabel} · ${demo.sizeKb} KB · 外部ライブラリ 0`;
   modalOpenTab.href = url;
   modal.hidden = false;
-  updateModalScale();
+  syncModalFullscreenLabel();
   modalIframe.src = url;
   modalClose.focus();
 }
@@ -434,14 +431,13 @@ modalIframe.addEventListener('load', () => {
     } catch (_) {}
   }
 });
-document.addEventListener('fullscreenchange', updateModalScale);
+document.addEventListener('fullscreenchange', syncModalFullscreenLabel);
 modal.addEventListener('click', (e) => {
   if (e.target === modal) closeDemoModal();
 });
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !document.fullscreenElement) closeDemoModal();
 });
-window.addEventListener('resize', updateModalScale);
 
 // Support deep-link query ?tab=benchmarks or ?demo=sea-train-3d
 const params = new URLSearchParams(window.location.search);

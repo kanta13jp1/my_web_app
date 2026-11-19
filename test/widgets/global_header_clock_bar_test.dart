@@ -104,4 +104,45 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+
+  testWidgets(
+    'clock bar texts have a Material ancestor without yellow fallback '
+    'underline when mounted via MaterialApp.builder',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: const Scaffold(body: Text('HOME')),
+          builder: (context, child) {
+            return Column(
+              children: [
+                const GlobalHeaderClockBar(),
+                Expanded(child: child ?? const SizedBox.shrink()),
+              ],
+            );
+          },
+        ),
+      );
+      await tester.pump();
+
+      final labelFinder = find.text('今日の日付と時刻');
+      final clockFinder = find.byKey(const Key('global_header_clock_text'));
+      expect(labelFinder, findsOneWidget);
+      expect(clockFinder, findsOneWidget);
+
+      expect(
+        find.ancestor(of: labelFinder, matching: find.byType(Material)),
+        findsAtLeastNWidgets(1),
+      );
+      expect(
+        find.ancestor(of: clockFinder, matching: find.byType(Material)),
+        findsAtLeastNWidgets(1),
+      );
+
+      final labelContext = tester.element(labelFinder);
+      final defaultStyle = DefaultTextStyle.of(labelContext).style;
+      expect(defaultStyle.decoration, isNot(TextDecoration.underline));
+
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 }

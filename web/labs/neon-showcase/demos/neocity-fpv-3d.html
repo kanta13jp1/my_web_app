@@ -132,7 +132,7 @@
   </div>
 
   <div class="hud-br">
-    <div class="br-top" id="clockLbl">GEMINI 4 NEON · 00.0s / 24.0s</div>
+    <div class="br-top" id="clockLbl">GEMINI 4 NEON · LIVE FPV</div>
     <div class="br-sub">PURE WEBGL2 · NO THREE.JS · DRAG / WASD TO FLY</div>
   </div>
 
@@ -974,7 +974,7 @@
     document.getElementById('kTraffic').textContent = `${Math.round(NUM_CARS * clamp(buildProgress * 1.15, 0.3, 1.0))} UNITS`;
     document.getElementById('kAlt').textContent = `${Math.round(camPos[1] * 3.1)} m`;
     document.getElementById('kSpd').textContent = `${Math.round(droneKmh)} km/h`;
-    document.getElementById('clockLbl').textContent = `GEMINI 4 NEON · ${simTime.toFixed(1).padStart(4, '0')}s / 24.0s`;
+    document.getElementById('clockLbl').textContent = autoTour ? `AUTO TOUR · ${simTime.toFixed(1).padStart(4, '0')}s / 24.0s` : `GEMINI 4 NEON · LIVE FPV ${simTime.toFixed(1).padStart(4, '0')}s`;
 
     document.getElementById('btnBuild').className = activeMode === 0 ? 'cbtn act-cyan' : 'cbtn';
     document.getElementById('btnFpv').className   = activeMode === 1 ? 'cbtn act-pink' : 'cbtn';
@@ -1042,7 +1042,7 @@
     });
     let last = performance.now();
     function loop(now) {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
       last = now;
       if (autoTour && !manualMode && simTime >= 24.0) { simTime = 0; targetHaze = 0; for (const k in trig) trig[k] = false; }
       window.stepCity(dt, true);
