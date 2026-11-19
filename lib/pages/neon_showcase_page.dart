@@ -8,6 +8,8 @@ class NeonShowcasePage extends StatelessWidget {
   const NeonShowcasePage({super.key});
 
   static const assetPath = '/labs/neon-showcase/index.html';
+  static const assetVersion = '20261120-32';
+  static const assetUrl = '$assetPath?v=$assetVersion';
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +22,7 @@ class NeonShowcasePage extends StatelessWidget {
             icon: const Icon(Icons.open_in_new),
             onPressed: () async {
               final opened = await launchUrl(
-                Uri.base.resolve(assetPath),
+                Uri.base.resolve(assetUrl),
                 webOnlyWindowName: '_blank',
               );
               if (!opened && context.mounted) {
