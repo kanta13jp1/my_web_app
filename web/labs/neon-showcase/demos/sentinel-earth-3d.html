@@ -468,7 +468,7 @@
   }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="workstation">
 <div class="app" id="appRoot">
   <header class="topbar">
     <div class="brand">
@@ -1166,10 +1166,12 @@
     pushLog('[GEO]  X2.4 SOLAR FLARE · KP 7.4 AURORA', 'violet');
   }
 
+  let autoTour = isRecording;
   function runChoreography(t, dt) {
     pressedId = null;
     cPulse = Math.max(0, cPulse - dt * 2.8);
 
+    if (autoTour) {
     const pDdos = btnCenter('btnDdos');
     const pMesh = btnCenter('btnMesh');
     const pAur  = btnCenter('btnAurora');
@@ -1214,6 +1216,7 @@
         pushLog('[PASS] PACIFIC ORBIT LOCK · TYO ↔ SFO 10ms', 'green');
       }
     }
+    } else { curOp = 0; }
 
     // Majestic Cinematic Camera Flight across Real Earth Continents (full sphere + LEO constellation cleanly framed!)
     if (!dragging) {
@@ -1357,7 +1360,7 @@
       }
       // 2 racing luminous packets per corridor!
       for (let pk = 0; pk < 2; pk++) {
-        const u = (rt.phase + simTime * rt.speed + pk * 0.5) % 1.0;
+        const u = (((rt.phase + simTime * rt.speed + pk * 0.5) % 1.0) + 1.0) % 1.0;
         const fi = u * (pts.length - 1);
         const i0 = Math.floor(fi), i1 = Math.min(pts.length - 1, i0 + 1), f = fi - i0;
         const pos = [lerp(pts[i0][0], pts[i1][0], f), lerp(pts[i0][1], pts[i1][1], f), lerp(pts[i0][2], pts[i1][2], f)];
@@ -1369,7 +1372,7 @@
     if (ddosLevel > 0.03) {
       for (const atk of ddosArcs) {
         const pts = atk.pts;
-        const headU = (atk.phase + simTime * atk.speed) % 1.0;
+        const headU = (((atk.phase + simTime * atk.speed) % 1.0) + 1.0) % 1.0;
         for (let i = 0; i < pts.length - 1; i++) {
           const t0 = i / (pts.length - 1);
           const pulse = Math.exp(-Math.pow((t0 - headU) * 4.5, 2.0));
@@ -1799,11 +1802,19 @@
   };
 
   if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.addControl('▶ 自動ツアー', (btn) => {
+        autoTour = !autoTour;
+        btn.classList.toggle('active', autoTour);
+        if (autoTour) { simTime = 0; for (const k in trig) trig[k] = false; }
+      });
+    });
     let last = performance.now();
     function loop(now) {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
       last = now;
-      if (simTime >= 24.0) { simTime = 0; for (const k in trig) trig[k] = false; }
+      if (autoTour && simTime >= 24.0) { simTime = 0; for (const k in trig) trig[k] = false; }
       window.stepSentinel(dt);
       requestAnimationFrame(loop);
     }
@@ -1811,5 +1822,6 @@
   }
 })();
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>

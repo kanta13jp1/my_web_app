@@ -9,7 +9,7 @@
   #hud { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; pointer-events: none; }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="cinema">
 <canvas id="gl" width="1280" height="720"></canvas>
 <canvas id="hud" width="1280" height="720"></canvas>
 <script>
@@ -388,16 +388,54 @@ window.stepFluid = (dt) => {
   _stepFluid(dt * 0.5);
 };
 
-// Interactive mouse splat when opened directly
+// Interactive pointer splat + continuous simulation loop when opened in browser
 let lastX = null, lastY = null;
-glCanvas.addEventListener('mousemove', e => {
+let colorIdx = 0;
+const PALETTE = [
+  [0.0, 0.92, 1.0],
+  [1.0, 0.25, 0.65],
+  [0.98, 0.78, 0.15],
+  [0.32, 1.0, 0.62],
+];
+function handlePointer(e) {
   if (window.__RECORDING__) return;
-  const x = e.clientX / W, y = 1.0 - e.clientY / H;
+  const r = glCanvas.getBoundingClientRect();
+  const x = (e.clientX - r.left) / Math.max(1, r.width);
+  const y = 1.0 - (e.clientY - r.top) / Math.max(1, r.height);
   if (lastX !== null) {
-    splat(x, y, (x - lastX) * 600, (y - lastY) * 600, [0.0, 0.9, 1.0], 0.003);
+    const dx = (x - lastX) * 750;
+    const dy = (y - lastY) * 750;
+    splat(x, y, dx, dy, PALETTE[colorIdx % PALETTE.length], 0.0038);
   }
   lastX = x; lastY = y;
-});
+}
+glCanvas.addEventListener('pointerdown', (e) => { colorIdx += 1; lastX = null; lastY = null; handlePointer(e); });
+glCanvas.addEventListener('pointermove', handlePointer);
+glCanvas.addEventListener('pointerleave', () => { lastX = null; lastY = null; });
+
+if (!window.__RECORDING__) {
+  let paused = false;
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.setHint('マウスを動かす／ドラッグして発光流体をかき混ぜられます（クリックで色変更）');
+    window.NeonShell.addControl('⏸ 一時停止', (btn) => {
+      paused = !paused;
+      btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+      btn.classList.toggle('active', paused);
+    });
+    window.NeonShell.addControl('↻ リセット', () => window.location.reload());
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!paused) window.stepFluid(dt);
+    requestAnimationFrame(loop);
+  }
+  window.stepFluid(0.016);
+  requestAnimationFrame(loop);
+}
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>

@@ -9,7 +9,7 @@
   #hud { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; pointer-events: none; }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="cinema">
 <canvas id="gl" width="1280" height="720"></canvas>
 <canvas id="hud" width="1280" height="720"></canvas>
 <script>
@@ -251,6 +251,35 @@ window.renderFrame = (t, kick, arp, energy) => {
   }
   hctx.restore();
 };
+
+if (!window.__RECORDING__) {
+  let simT = 0;
+  let paused = false;
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.addControl('⏸ 一時停止', (btn) => {
+      paused = !paused;
+      btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+      btn.classList.toggle('active', paused);
+    });
+    window.NeonShell.addControl('↻ 最初から', () => { simT = 0; });
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!paused) simT = (simT + dt) % 32.0;
+    const beat = (simT * 2.0) % 1.0;
+    const kick = Math.pow(1.0 - beat, 4.0);
+    const arp = 0.5 + 0.5 * Math.sin(simT * 8.0);
+    const energy = simT >= 16 && simT < 24 ? 1.0 : simT >= 8 && simT < 16 ? 0.65 : 0.35;
+    window.renderFrame(simT, kick, arp, energy);
+    requestAnimationFrame(loop);
+  }
+  window.renderFrame(0, 0.5, 0.5, 0.5);
+  requestAnimationFrame(loop);
+}
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>

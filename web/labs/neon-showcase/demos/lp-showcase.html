@@ -8,7 +8,7 @@
   #c { display: block; width: 1280px; height: 720px; }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="algo">
 <canvas id="c" width="1280" height="720"></canvas>
 <script>
 const canvas = document.getElementById('c');
@@ -419,6 +419,63 @@ window.renderShowcase = (t) => {
 
   drawOverlayBar(t);
 };
+
+if (!window.__RECORDING__) {
+  let manualIdx = 0;
+  let autoCycle = false;
+  let localT = 0.35;
+  let totalT = 0.35;
+  const styleBtns = [];
+  const syncBtns = () => {
+    styleBtns.forEach((b, i) => b.classList.toggle('active', !autoCycle && i === manualIdx));
+  };
+  const selectStyle = (idx) => {
+    autoCycle = false;
+    manualIdx = idx;
+    localT = 0.35;
+    autoBtn?.classList.remove('active');
+    syncBtns();
+  };
+  let autoBtn = null;
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    ['01 Apple風LP', '02 AI SaaS', '03 バイオAI', '04 CyberAgent'].forEach((lbl, i) => {
+      styleBtns.push(window.NeonShell.addControl(lbl, () => selectStyle(i), { active: i === 0 }));
+    });
+    autoBtn = window.NeonShell.addControl('▶ 自動切替', () => {
+      autoCycle = !autoCycle;
+      autoBtn.classList.toggle('active', autoCycle);
+      if (autoCycle) totalT = manualIdx * 7.0 + 0.35;
+      syncBtns();
+    });
+  });
+  c.addEventListener('click', (e) => {
+    const rect = c.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * W;
+    const y = ((e.clientY - rect.top) / rect.height) * H;
+    if (y >= H - 52) {
+      const idx = Math.max(0, Math.min(3, Math.floor((x - 48) / 300)));
+      selectStyle(idx);
+      window.NeonAudio?.sfx('click');
+    }
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (autoCycle) {
+      totalT = (totalT + dt) % 28.0;
+      window.renderShowcase(totalT);
+    } else {
+      localT = 0.35 + ((localT - 0.35 + dt) % 6.1);
+      window.renderShowcase(manualIdx * 7.0 + localT);
+    }
+    requestAnimationFrame(loop);
+  }
+  window.renderShowcase(0.35);
+  requestAnimationFrame(loop);
+}
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@
   canvas { display: block; width: 1920px; height: 1080px; }
 </style>
 </head>
-<body>
+<body data-stage="1920x1080" data-sound="algo">
 <canvas id="c" width="1920" height="1080"></canvas>
 <script>
 const canvas = document.getElementById('c');
@@ -17,7 +17,17 @@ const W = 1920, H = 1080;
 const FONT = '"Meiryo", "Yu Gothic UI", "Hiragino Kaku Gothic ProN", sans-serif';
 const MONO = '"Consolas", "Courier New", monospace';
 
-let TIMELINE = null;
+let TIMELINE = {
+  total: 48,
+  scenes: [
+    { id: 'hook', index: 0, title: '次に来る言葉をあてるゲーム', subtitle: 'LLMの本質は「文脈から最も自然な次のトークンを予測する」こと。', start: 0, end: 8 },
+    { id: 'tokenize', index: 1, title: '01 / 文章をトークンとベクトルに変換', subtitle: '入力テキストを細かい単位に分割し、意味を表す数値ベクトルへ変換します。', start: 8, end: 16 },
+    { id: 'attention', index: 2, title: '02 / Self-Attention で文脈を関連付け', subtitle: '文章内のすべての単語同士の関連度を同時に計算し、重要な語に注目します。', start: 16, end: 24 },
+    { id: 'layers', index: 3, title: '03 / 多層Transformerブロックで深い理解', subtitle: '何十層ものAttentionとFFNを通過するほど、論理・意図・知識が統合されます。', start: 24, end: 32 },
+    { id: 'predict', index: 4, title: '04 / 候補トークンの確率分布を出力', subtitle: '全語彙に対する確率を計算し、最も確からしい次の1語を選択・生成します。', start: 32, end: 40 },
+    { id: 'summary', index: 5, title: 'まとめ：1語ずつの連鎖が高度な知能を生む', subtitle: 'この予測サイクルを超高速で繰り返すことで、自然な対話やコード生成が実現します。', start: 40, end: 48 },
+  ],
+};
 window.setTimeline = (tl) => { TIMELINE = tl; };
 
 const clamp = (x, a=0, b=1) => Math.max(a, Math.min(b, x));
@@ -693,6 +703,42 @@ window.renderAtTime = (t) => {
 
   drawSubtitle(curScene, t);
 };
+
+if (!window.__RECORDING__) {
+  let simT = 0;
+  let paused = false;
+  const chBtns = [];
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    const labels = ['01 導入', '02 分割', '03 Attention', '04 多層', '05 予測', '06 まとめ'];
+    labels.forEach((lbl, idx) => {
+      chBtns.push(window.NeonShell.addControl(lbl, () => {
+        simT = TIMELINE.scenes[idx].start + 0.1;
+        paused = false;
+        pauseBtn?.classList.remove('active');
+        window.renderAtTime(simT);
+      }));
+    });
+    const pauseBtn = window.NeonShell.addControl('⏸ 一時停止', (btn) => {
+      paused = !paused;
+      btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+      btn.classList.toggle('active', paused);
+    });
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!paused) simT = (simT + dt) % (TIMELINE.total || 48);
+    window.renderAtTime(simT);
+    const activeIdx = Math.min(chBtns.length - 1, Math.floor(simT / 8));
+    chBtns.forEach((b, i) => b.classList.toggle('active', i === activeIdx));
+    requestAnimationFrame(loop);
+  }
+  window.renderAtTime(0);
+  requestAnimationFrame(loop);
+}
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>

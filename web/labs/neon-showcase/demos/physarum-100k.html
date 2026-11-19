@@ -9,7 +9,7 @@
   #hud { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; pointer-events: none; }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="cinema">
 <canvas id="gl" width="1280" height="720"></canvas>
 <canvas id="hud" width="1280" height="720"></canvas>
 <script>
@@ -342,12 +342,23 @@ window.stepPhysarum = (dt) => {
 
 drawScreen();
 if (!window.__RECORDING__) {
+  let paused = false;
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.addControl('⏸ 一時停止', (btn) => {
+      paused = !paused;
+      btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+      btn.classList.toggle('active', paused);
+    });
+    window.NeonShell.addControl('↻ 初期配置へ', () => window.location.reload());
+  });
   function loop() {
-    window.stepPhysarum(1 / 30);
+    if (!paused) window.stepPhysarum(1 / 30);
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
 }
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>
