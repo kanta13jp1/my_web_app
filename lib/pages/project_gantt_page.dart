@@ -1259,31 +1259,14 @@ class _WbsTab extends StatelessWidget {
           onToggleHideCompleted: onToggleHideCompleted,
         ),
         const SizedBox(height: 8),
-        // Win版#131 part 12 / PS#2 S17 VSCode handoff: WBS タブにも未完了 filter
-        Row(
-          children: [
-            Checkbox(
-              value: hideCompleted,
-              onChanged: onToggleHideCompleted,
-              side: const BorderSide(color: Color(0xFF707070)),
-              activeColor: const Color(0xFFFF6B35),
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            Text(
-              '未完了のみ',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF9CA3AF)),
-            ),
-            const SizedBox(width: 16),
-            Text(
-              '表示: ${_filtered.length} / ${tasks.length} 件',
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: const Color(0xFF707070)),
-            ),
-          ],
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            '表示: ${_filtered.length} / ${tasks.length} 件',
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: const Color(0xFF9CA3AF)),
+          ),
         ),
         const SizedBox(height: 12),
 
@@ -2094,7 +2077,7 @@ class _FilterRow extends StatelessWidget {
                 style: TextStyle(
                   color: hideCompleted
                       ? const Color(0xFFFF6B35)
-                      : const Color(0xFF707070),
+                      : const Color(0xFFD1D5DB),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   height: 1.5,
@@ -2113,7 +2096,7 @@ class _FilterRow extends StatelessWidget {
             null,
             filterMilestone,
             onFilterMilestone,
-            const Color(0xFF707070),
+            const Color(0xFFD1D5DB),
           ),
           ...milestones.map((m) {
             return Padding(
@@ -2160,7 +2143,7 @@ class _FilterRow extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? color : const Color(0xFF707070),
+            color: selected ? color : const Color(0xFFD1D5DB),
             fontSize: 12,
             fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
             height: 1.5,
