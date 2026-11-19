@@ -17,6 +17,7 @@ test('catalog tabs, live 3D modal playback, and 20 X benchmarks render cleanly',
   const demoTotal = Number((await page.locator('#stat-demos').textContent())?.trim() || '0');
   expect(demoTotal).toBeGreaterThanOrEqual(2);
   await expect(page.locator('#result-count')).toHaveText(`${demoTotal} / ${demoTotal} 作品`);
+  await expect(page.locator('[data-demo-slug="sentinel-earth-3d"]')).toBeVisible();
   await expect(page.locator('[data-demo-slug="quant-terminal-3d"]')).toBeVisible();
 
   // Filter live demos by category and launch a standalone interactive 3D demo modal

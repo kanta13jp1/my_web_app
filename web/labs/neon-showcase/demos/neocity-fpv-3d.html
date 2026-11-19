@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>NEOCITY // Procedural 3D Cyberpunk Metropolis & Live FPV Drone (Single HTML · Pure WebGL2)</title>
+<style>
+  :root {
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --cyan: #38bdf8;
+    --pink: #ff2e88;
+    --gold: #fbbf24;
+    --emerald: #00f5a0;
+    --text0: #f2f8ff;
+    --text1: #9cb4d4;
+    --text2: #627a9c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 1280px; height: 720px; overflow: hidden;
+    background: #02040a; color: var(--text0); font-family: var(--mono);
+    -webkit-font-smoothing: antialiased;
+  }
+  .stage { position: relative; width: 1280px; height: 720px; overflow: hidden; }
+  #glCanvas { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; cursor: grab; }
+  #glCanvas:active { cursor: grabbing; }
+
+  .hud-tl {
+    position: absolute; top: 15px; left: 16px;
+    background: rgba(5, 9, 20, 0.74);
+    border: 1px solid rgba(56, 189, 248, 0.36);
+    border-radius: 7px; padding: 8px 13px;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.48);
+  }
+  .t-row { display: flex; align-items: center; gap: 8px; }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--pink);
+    box-shadow: 0 0 10px var(--pink), 0 0 18px rgba(255,46,136,0.7);
+  }
+  .t-main { font-size: 13px; font-weight: 800; letter-spacing: 1.4px; color: #f8fafc; }
+  .t-main span { color: var(--cyan); }
+  .t-sub { margin-top: 3px; font-size: 9px; color: var(--cyan); letter-spacing: 0.55px; }
+
+  .hud-tr {
+    position: absolute; top: 15px; right: 16px;
+    background: rgba(5, 9, 20, 0.76);
+    border: 1px solid rgba(255, 46, 136, 0.34);
+    border-radius: 7px; padding: 8px 12px;
+    display: grid; grid-template-columns: repeat(4, auto); gap: 14px;
+    backdrop-filter: blur(5px); font-variant-numeric: tabular-nums;
+  }
+  .kpi { display: flex; flex-direction: column; line-height: 1.2; }
+  .kpi .k { font-size: 7.8px; color: var(--text2); letter-spacing: 0.7px; }
+  .kpi .v { font-size: 12px; font-weight: 800; color: var(--text0); }
+  .kpi .v.cyan { color: var(--cyan); }
+  .kpi .v.pink { color: #ff5ca8; }
+  .kpi .v.gold { color: var(--gold); }
+  .kpi .v.em { color: var(--emerald); }
+
+  .hud-banner {
+    position: absolute; top: 76px; left: 50%; transform: translateX(-50%);
+    background: rgba(6, 10, 22, 0.88);
+    border: 1.5px solid var(--cyan); border-radius: 6px;
+    padding: 6px 16px; font-size: 11px; font-weight: 800; letter-spacing: 0.9px;
+    white-space: nowrap; opacity: 0; pointer-events: none;
+  }
+  .hud-banner.b-cyan { opacity: 1; color: #e0f2fe; border-color: #38bdf8; box-shadow: 0 0 26px rgba(56,189,248,0.48); }
+  .hud-banner.b-pink { opacity: 1; color: #fce7f3; border-color: #ff2e88; box-shadow: 0 0 26px rgba(255,46,136,0.52); }
+  .hud-banner.b-gold { opacity: 1; color: #fef3c7; border-color: #fbbf24; box-shadow: 0 0 26px rgba(251,191,36,0.50); }
+
+  .hud-bl {
+    position: absolute; bottom: 16px; left: 16px;
+    display: flex; gap: 6px;
+    background: rgba(5, 9, 20, 0.78);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 7px; padding: 6px 8px;
+    backdrop-filter: blur(5px);
+  }
+  .cbtn {
+    font-family: var(--mono); font-size: 9.5px; font-weight: 800; letter-spacing: 0.4px;
+    color: var(--text1); background: rgba(15, 23, 42, 0.86);
+    border: 1px solid rgba(148, 163, 184, 0.24); border-radius: 5px;
+    padding: 6px 10px; cursor: pointer; white-space: nowrap;
+  }
+  .cbtn.act-cyan { color: #02121f; background: linear-gradient(90deg,#38bdf8,#00f5a0); border-color: #7dd3fc; box-shadow: 0 0 15px rgba(56,189,248,0.5); }
+  .cbtn.act-pink { color: #fff; background: linear-gradient(90deg,#db2777,#ff2e88); border-color: #f9a8d4; box-shadow: 0 0 16px rgba(255,46,136,0.55); }
+  .cbtn.act-gold { color: #1a0d02; background: linear-gradient(90deg,#f59e0b,#fde047); border-color: #fef08a; box-shadow: 0 0 16px rgba(251,191,36,0.52); }
+  .cbtn.pressed { transform: scale(0.95); filter: brightness(1.35); }
+
+  .hud-br {
+    position: absolute; bottom: 16px; right: 16px;
+    background: rgba(5, 9, 20, 0.76);
+    border: 1px solid rgba(56, 189, 248, 0.30);
+    border-radius: 7px; padding: 7px 12px; text-align: right;
+    backdrop-filter: blur(5px); font-variant-numeric: tabular-nums;
+  }
+  .br-top { font-size: 10.5px; font-weight: 800; color: var(--cyan); letter-spacing: 0.6px; }
+  .br-sub { font-size: 8.5px; color: var(--text1); margin-top: 2px; }
+
+  .vcursor { position: absolute; width: 18px; height: 18px; pointer-events: none; z-index: 50; transform: translate(-2px,-2px); opacity: 0; }
+  .cring { position: absolute; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #ff2e88; pointer-events: none; z-index: 49; opacity: 0; }
+</style>
+</head>
+<body>
+<div class="stage" id="stageRoot">
+  <canvas id="glCanvas" width="1280" height="720"></canvas>
+
+  <div class="hud-tl">
+    <div class="t-row">
+      <div class="dot"></div>
+      <div class="t-main">NEOCITY <span>// 3D METROPOLIS + FPV</span></div>
+    </div>
+    <div class="t-sub" id="tlSub">SINGLE HTML · 0 LIBS · 0 3D MODELS · 312 TOWERS · 2-PASS HDR BLOOM</div>
+  </div>
+
+  <div class="hud-tr">
+    <div class="kpi"><span class="k">CONSTRUCTED</span><span class="v cyan" id="kBuild">132 / 312</span></div>
+    <div class="kpi"><span class="k">AIR TRAFFIC</span><span class="v pink" id="kTraffic">280 UNITS</span></div>
+    <div class="kpi"><span class="k">ALTITUDE</span><span class="v gold" id="kAlt">68 m</span></div>
+    <div class="kpi"><span class="k">DRONE SPEED</span><span class="v em" id="kSpd">112 km/h</span></div>
+  </div>
+
+  <div class="hud-banner" id="hudBanner">◈ FPV DRONE CANYON DIVE · 285 KM/H HIGH-SPEED FLYTHROUGH</div>
+
+  <div class="hud-bl">
+    <button class="cbtn act-cyan" id="btnBuild">01 TIMELAPSE BUILD</button>
+    <button class="cbtn" id="btnFpv">02 FPV CANYON DIVE</button>
+    <button class="cbtn" id="btnHaze">03 BLADE RUNNER HAZE</button>
+    <button class="cbtn" id="btnSeed">04 REGEN CITY</button>
+  </div>
+
+  <div class="hud-br">
+    <div class="br-top" id="clockLbl">GEMINI 4 NEON · 00.0s / 24.0s</div>
+    <div class="br-sub">PURE WEBGL2 · NO THREE.JS · DRAG / WASD TO FLY</div>
+  </div>
+
+  <div class="cring" id="cRing"></div>
+  <svg class="vcursor" id="vCursor" viewBox="0 0 24 24" fill="none">
+    <path d="M4 3L19 11.5L12.2 13.4L9.8 20L4 3Z" fill="#f8fafc" stroke="#020617" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const W = 1280, H = 720;
+  const clamp = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const ease = (u) => { const t = clamp(u, 0, 1); return t * t * (3 - 2 * t); };
+
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const glCanvas = document.getElementById('glCanvas');
+  const gl = glCanvas.getContext('webgl2', { antialias: false, alpha: false, preserveDrawingBuffer: true });
+  if (!gl) { console.error('WebGL2 unavailable'); return; }
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error('Shader:', gl.getShaderInfoLog(s));
+    return s;
+  }
+  function link(vs, fs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) console.error('Link:', gl.getProgramInfoLog(p));
+    return p;
+  }
+
+  function mat4Persp(fovy, asp, near, far) {
+    const f = 1 / Math.tan(fovy * 0.5), nf = 1 / (near - far);
+    return new Float32Array([f/asp,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,2*far*near*nf,0]);
+  }
+  function mat4Look(eye, ctr, up) {
+    let zx=eye[0]-ctr[0], zy=eye[1]-ctr[1], zz=eye[2]-ctr[2];
+    let l=Math.hypot(zx,zy,zz)||1; zx/=l; zy/=l; zz/=l;
+    let xx=up[1]*zz-up[2]*zy, xy=up[2]*zx-up[0]*zz, xz=up[0]*zy-up[1]*zx;
+    l=Math.hypot(xx,xy,xz)||1; xx/=l; xy/=l; xz/=l;
+    const yx=zy*xz-zz*xy, yy=zz*xx-zx*xz, yz=zx*xy-zy*xx;
+    return new Float32Array([
+      xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+      -(xx*eye[0]+xy*eye[1]+xz*eye[2]),
+      -(yx*eye[0]+yy*eye[1]+yz*eye[2]),
+      -(zx*eye[0]+zy*eye[1]+zz*eye[2]), 1
+    ]);
+  }
+  function mat4Mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c=0;c<4;c++) for (let r=0;r<4;r++)
+      o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
+    return o;
+  }
+
+  // ===== SHADERS =====
+  // 1) Cyberpunk Atmospheric Sky Dome (Neon Dusk <-> Blade Runner Amber Haze)
+  const FULL_VS = `#version 300 es
+    const vec2 P[3] = vec2[3](vec2(-1,-1), vec2(3,-1), vec2(-1,3));
+    out vec2 vUv;
+    void main() { vUv = P[gl_VertexID]*0.5+0.5; gl_Position = vec4(P[gl_VertexID],0.999,1.0); }
+  `;
+
+  const skyFS = `#version 300 es
+    precision highp float;
+    in vec2 vUv;
+    uniform float uTime;
+    uniform float uHaze;   // 0 = Cyber Neon Midnight/Cyan-Pink, 1 = Blade Runner 2049 Golden Haze!
+    out vec4 fragColor;
+    void main() {
+      float y = clamp(vUv.y, 0.0, 1.0);
+      vec3 topNeon = vec3(0.015, 0.024, 0.065);
+      vec3 midNeon = vec3(0.055, 0.042, 0.145);
+      vec3 horNeon = vec3(0.18, 0.07, 0.24);
+
+      vec3 topHaze = vec3(0.04, 0.025, 0.035);
+      vec3 midHaze = vec3(0.24, 0.09, 0.04);
+      vec3 horHaze = vec3(0.62, 0.25, 0.08);
+
+      vec3 topC = mix(topNeon, topHaze, uHaze);
+      vec3 midC = mix(midNeon, midHaze, uHaze);
+      vec3 horC = mix(horNeon, horHaze, uHaze);
+
+      vec3 col = mix(horC, midC, smoothstep(0.0, 0.42, y));
+      col = mix(col, topC, smoothstep(0.32, 0.92, y));
+
+      // Distant skyline volumetric neon glow band near horizon
+      float glow = exp(-pow((y - 0.16) * 5.2, 2.0));
+      col += mix(vec3(0.08, 0.34, 0.56), vec3(0.75, 0.32, 0.08), uHaze) * glow * 0.65;
+
+      vec3 enc = col / (1.0 + col * 0.32);
+      fragColor = vec4(enc, 1.0);
+    }
+  `;
+
+  // 2) Procedural Cyberpunk Architecture Shader (Extrusion Timelapse + Procedural Window Grid + Neon Trim + Holograms!)
+  // Vertex attributes: aPos(3), aNorm(3), aCol(3), aMeta(4: x=startTime, y=maxY, z=matType[0=bldg,1=neonSign,2=trim/bridge], w=seed)
+  const cityProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec3 aNorm;
+    layout(location=2) in vec3 aCol;
+    layout(location=3) in vec4 aMeta;
+
+    uniform mat4 uVP;
+    uniform float uBuildProg; // 0..1 global construction timelapse progress
+
+    out vec3 vWorldPos;
+    out vec3 vNorm;
+    out vec3 vCol;
+    out vec4 vMeta;
+    out float vGrow;
+    out float vScanGlow;
+
+    void main() {
+      float tStart = aMeta.x;
+      float local = clamp((uBuildProg - tStart) / 0.22, 0.0, 1.0);
+      // Smooth elastic ease-out rise from ground!
+      float grow = 1.0 - pow(1.0 - local, 3.0);
+
+      vec3 p = aPos;
+      if (aMeta.z < 1.5) {
+        // Buildings & billboards extrude cleanly from y = 0!
+        p.y *= max(0.001, grow);
+      } else {
+        // Sky-bridges & rings scale smoothly into place once anchor towers rise
+        float bridgeGrow = smoothstep(0.35, 1.0, grow);
+        p.y = mix(-2.0, aPos.y, bridgeGrow);
+      }
+
+      // Crisp razor-thin cyan/gold construction scanline ring at the rising roofline!
+      float curRoof = aMeta.y * grow;
+      float activeBuild = smoothstep(0.02, 0.14, local) * (1.0 - smoothstep(0.84, 1.0, local));
+      vScanGlow = activeBuild * exp(-abs(p.y - curRoof) * 5.2);
+
+      vWorldPos = p;
+      vNorm = aNorm;
+      vCol = aCol;
+      vMeta = aMeta;
+      vGrow = grow;
+      gl_Position = uVP * vec4(p, 1.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec3 vWorldPos;
+    in vec3 vNorm;
+    in vec3 vCol;
+    in vec4 vMeta;
+    in float vGrow;
+    in float vScanGlow;
+
+    uniform vec3 uCamPos;
+    uniform float uTime;
+    uniform float uHaze;
+    out vec4 fragColor;
+
+    float hash21(vec2 p) {
+      p = fract(p * vec2(234.34, 435.345));
+      p += dot(p, p + 34.23);
+      return fract(p.x * p.y);
+    }
+
+    void main() {
+      if (vGrow < 0.01) discard;
+
+      vec3 N = normalize(vNorm);
+      vec3 V = normalize(uCamPos - vWorldPos);
+      vec3 L1 = normalize(vec3(0.45, 0.85, 0.35));
+      float diff = max(dot(N, L1), 0.0);
+      float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+
+      vec3 col = vec3(0.0);
+
+      if (vMeta.z < 0.5) {
+        // === SKYSCRAPER ARCHITECTURE WITH PROCEDURAL LIT WINDOWS ===
+        vec3 baseMat = vCol * (0.24 + diff * 0.45);
+        // Side wall procedural glowing office windows (no textures!)
+        float isWall = 1.0 - abs(N.y);
+        if (isWall > 0.5) {
+          float faceU = abs(N.x) > 0.5 ? vWorldPos.z : vWorldPos.x;
+          vec2 winUV = vec2(faceU * 1.65, vWorldPos.y * 1.35);
+          vec2 cell = floor(winUV);
+          vec2 f = fract(winUV);
+          float frame = step(0.18, f.x) * step(f.x, 0.82) * step(0.24, f.y) * step(f.y, 0.76);
+          float litHash = hash21(cell + vec2(vMeta.w * 17.3, floor(vMeta.w * 7.1)));
+          float bandLit = step(0.38, litHash) * step(0.55, vWorldPos.y);
+
+          // Window color palette: warm amber, cool cyan, neon pink accent!
+          vec3 wWarm = vec3(1.0, 0.72, 0.30);
+          vec3 wCyan = vec3(0.18, 0.88, 1.0);
+          vec3 wPink = vec3(1.0, 0.22, 0.62);
+          vec3 wCol = litHash > 0.88 ? wPink : (litHash > 0.62 ? wCyan : wWarm);
+          wCol = mix(wCol, vec3(1.0, 0.64, 0.22), uHaze * 0.45);
+
+          float intensity = (0.55 + 0.65 * fract(litHash * 19.7));
+          baseMat += wCol * frame * bandLit * intensity * 1.35;
+        } else {
+          // Rooftop metallic sheen + subtle glowing perimeter ring
+          baseMat += vec3(0.16, 0.42, 0.68) * 0.22;
+        }
+        // Subtle neon reflection rim on building edges
+        vec3 rimC = mix(vec3(0.18, 0.74, 1.0), vec3(1.0, 0.48, 0.16), uHaze);
+        col = baseMat + rimC * fres * 0.55;
+      } else if (vMeta.z < 1.5) {
+        // === GLOWING HOLOGRAPHIC NEON BILLBOARDS WITH CYBER GLYPH MATRIX ===
+        float faceU = abs(N.x) > 0.5 ? vWorldPos.z : vWorldPos.x;
+        vec2 gUV = vec2(faceU * 2.4, vWorldPos.y * 2.4);
+        vec2 gCell = floor(gUV);
+        vec2 gf = fract(gUV);
+        float glyph = step(0.18, gf.x) * step(gf.x, 0.82) * step(0.22, gf.y) * step(gf.y, 0.78)
+                    * step(0.42, hash21(gCell + vec2(floor(uTime * 1.5) * 0.01, vMeta.w * 13.0)));
+        float scan = 0.80 + 0.20 * sin(vWorldPos.y * 22.0 - uTime * 9.0);
+        col = vCol * (0.38 + glyph * 1.35) * scan;
+      } else {
+        // === GLOWING NEON ARCHITECTURAL TRIMS, SKY-BRIDGES & ROOFTOP BEACONS ===
+        float pulse = 0.84 + 0.16 * sin(uTime * 4.5 + vMeta.w * 12.0);
+        col = vCol * 1.45 * pulse;
+      }
+
+      // Add crisp laser scanline ring while extruding (zero white-out!)
+      col += mix(vec3(0.18, 0.92, 1.0), vec3(1.0, 0.78, 0.22), 0.45) * vScanGlow * 0.95;
+
+      // Exponential Atmospheric Distance Fog (Cyber Indigo <-> Blade Runner Amber Haze)
+      float dist = length(uCamPos - vWorldPos);
+      float fogF = 1.0 - exp(-dist * dist * (0.00018 + uHaze * 0.00016));
+      vec3 fogCol = mix(vec3(0.08, 0.055, 0.165), vec3(0.45, 0.17, 0.06), uHaze);
+      col = mix(col, fogCol, clamp(fogF, 0.0, 0.94));
+
+      // Encode soft HDR for Pass 2 Cinematic Bloom
+      vec3 enc = col / (1.0 + col * 0.32);
+      fragColor = vec4(clamp(enc, 0.0, 1.0), 1.0);
+    }
+  `);
+
+  // 3) Wet Rain-Mirror Cyber-Avenue Ground Shader (Analytical Neon Street Reflections + Cyber Grid!)
+  const groundProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    uniform mat4 uVP;
+    out vec3 vPos;
+    void main() { vPos = aPos; gl_Position = uVP * vec4(aPos, 1.0); }
+  `, `#version 300 es
+    precision highp float;
+    in vec3 vPos;
+    uniform vec3 uCamPos;
+    uniform float uTime;
+    uniform float uHaze;
+    out vec4 fragColor;
+
+    float hash21(vec2 p) {
+      p = fract(p * vec2(127.1, 311.7));
+      p += dot(p, p + 34.5);
+      return fract(p.x * p.y);
+    }
+    float noise2(vec2 p) {
+      vec2 i = floor(p), f = fract(p);
+      f = f*f*(3.0-2.0*f);
+      return mix(mix(hash21(i), hash21(i+vec2(1,0)), f.x),
+                 mix(hash21(i+vec2(0,1)), hash21(i+vec2(1,1)), f.x), f.y);
+    }
+
+    void main() {
+      vec2 p = vPos.xz;
+      float dist = length(uCamPos - vPos);
+
+      // Dark wet asphalt base + subtle puddle gloss noise
+      float puddle = noise2(p * 0.28 + vec2(0.0, uTime * 0.02));
+      vec3 col = vec3(0.015, 0.022, 0.042);
+
+      // Major central boulevard avenue markings along X = 0 and Z = 0!
+      float onMainZ = step(abs(p.x), 5.6);
+      float onMainX = step(abs(p.y), 5.6);
+      float edgeZ = exp(-abs(abs(p.x) - 5.2) * 5.0);
+      float edgeX = exp(-abs(abs(p.y) - 5.2) * 5.0);
+      float centerDashZ = exp(-abs(p.x) * 8.0) * step(0.45, fract(p.y * 0.22 - uTime * 0.4));
+      float centerDashX = exp(-abs(p.y) * 8.0) * step(0.45, fract(p.x * 0.22 - uTime * 0.4));
+
+      // Glowing cyber blueprint construction grid across the entire ground plane
+      float gx = smoothstep(0.955, 0.995, abs(sin(p.x * 0.7854)));
+      float gz = smoothstep(0.955, 0.995, abs(sin(p.y * 0.7854)));
+      col += vec3(0.08, 0.45, 0.78) * max(gx, gz) * 0.34;
+
+      // Glowing neon avenue curbs & dashed lane lines
+      col += vec3(0.12, 0.85, 1.0) * (edgeZ + edgeX) * 0.95;
+      col += vec3(1.0, 0.78, 0.24) * (centerDashZ * onMainZ + centerDashX * onMainX) * 0.92;
+
+      // Wet rain-mirror neon reflections shimmering along the avenues!
+      float ripple = noise2(p * 1.4 + vec2(uTime * 0.6, -uTime * 0.4));
+      vec3 reflCyan = vec3(0.08, 0.78, 1.0) * smoothstep(0.35, 0.85, sin(p.y * 0.35 + ripple * 2.5) * 0.5 + 0.5);
+      vec3 reflPink = vec3(1.0, 0.16, 0.58) * smoothstep(0.42, 0.90, cos(p.y * 0.27 - ripple * 2.2) * 0.5 + 0.5);
+      vec3 reflAmb  = vec3(1.0, 0.55, 0.14) * smoothstep(0.40, 0.88, sin(p.x * 0.32 + p.y * 0.2) * 0.5 + 0.5);
+      vec3 wetRefl = mix(reflCyan * 0.45 + reflPink * 0.48, reflAmb * 0.75 + reflCyan * 0.25, uHaze);
+      col += wetRefl * (0.28 + puddle * 0.55) * (0.45 + 0.55 * max(onMainZ, onMainX));
+
+      // Exponential distance fog matching city shader
+      float fogF = 1.0 - exp(-dist * dist * (0.00018 + uHaze * 0.00016));
+      vec3 fogCol = mix(vec3(0.08, 0.055, 0.165), vec3(0.45, 0.17, 0.06), uHaze);
+      col = mix(col, fogCol, clamp(fogF, 0.0, 0.94));
+
+      vec3 enc = col / (1.0 + col * 0.32);
+      fragColor = vec4(clamp(enc, 0.0, 1.0), 1.0);
+    }
+  `);
+
+  // 4) Flying Spinner Traffic Light-Trails & Cyber-Rain Streaks Shader
+  const lineProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec4 aCol;
+    uniform mat4 uVP;
+    out vec4 vCol;
+    void main() { vCol = aCol; gl_Position = uVP * vec4(aPos, 1.0); }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vCol;
+    out vec4 fragColor;
+    void main() {
+      vec3 c = vCol.rgb / (1.0 + vCol.rgb * 0.32);
+      fragColor = vec4(c, vCol.a);
+    }
+  `);
+
+  // 5) Pass 2: 2-Pass HDR Cinematic Neon Bloom + Anamorphic Flares + ACES Filmic Tone Mapping!
+  const postProg = link(FULL_VS, `#version 300 es
+    precision highp float;
+    in vec2 vUv;
+    uniform sampler2D uScene;
+    uniform vec2 uRes;
+    uniform float uSpeedWarp;
+    out vec4 fragColor;
+
+    vec3 decodeHDR(vec3 c) {
+      return c / max(vec3(0.08), vec3(1.0) - c * 0.32);
+    }
+    vec3 aces(vec3 x) {
+      return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14), 0.0, 1.0);
+    }
+    void main() {
+      vec2 texel = 1.0 / uRes;
+      // Subtle FPV chromatic aberration near frame edges during high-speed dive!
+      vec2 dir = vUv - 0.5;
+      float ca = uSpeedWarp * 0.0045 * dot(dir, dir);
+      vec3 base;
+      base.r = decodeHDR(texture(uScene, clamp(vUv + dir * ca, 0.001, 0.999)).rgb).r;
+      base.g = decodeHDR(texture(uScene, vUv).rgb).g;
+      base.b = decodeHDR(texture(uScene, clamp(vUv - dir * ca, 0.001, 0.999)).rgb).b;
+
+      // Multi-ring radial cinematic neon bloom
+      vec3 bloom = vec3(0.0);
+      float wSum = 0.0;
+      for (int r = 1; r <= 3; r++) {
+        float rad = float(r) * float(r) * 2.4;
+        float w = exp(-float(r) * 0.58);
+        for (int a = 0; a < 10; a++) {
+          float th = (float(a) / 10.0) * 6.2831853 + float(r) * 0.35;
+          vec3 s = decodeHDR(texture(uScene, clamp(vUv + vec2(cos(th), sin(th)) * rad * texel, 0.001, 0.999)).rgb);
+          bloom += max(s - vec3(0.68), vec3(0.0)) * w;
+          wSum += w;
+        }
+      }
+      bloom /= max(1.0, wSum);
+
+      // Subtle Blade Runner horizontal anamorphic neon lens streak!
+      vec3 anam = vec3(0.0);
+      for (int k = -6; k <= 6; k++) {
+        if (k == 0) continue;
+        float fk = float(k);
+        vec3 s = decodeHDR(texture(uScene, clamp(vUv + vec2(fk * 5.0 * texel.x, 0.0), 0.001, 0.999)).rgb);
+        anam += max(s - vec3(1.05), vec3(0.0)) * exp(-abs(fk) * 0.32) * 0.045;
+      }
+
+      vec3 col = base + bloom * 0.82 + anam * vec3(0.85, 0.92, 1.12);
+      col = aces(col * 0.95);
+      col = pow(col, vec3(1.0 / 2.12));
+
+      // Cinematic vignette
+      col *= clamp(1.06 - dot(dir * 1.15, dir * 1.15) * 0.36, 0.72, 1.02);
+      fragColor = vec4(col, 1.0);
+    }
+  `);
+
+  // ===== PROCEDURAL 312-TOWER CYBERPUNK METROPOLIS BUILDER =====
+  let cityVao = null, cityVbo = null, cityVertCount = 0;
+  let totalTowers = 0;
+  let citySeed = 202611197;
+
+  function buildCity(seed) {
+    const rng = mulberry32(seed);
+    const verts = []; // 13 floats per vertex: pos3, norm3, col3, meta4
+
+    function addBoxMeta(cx, cy, cz, sx, sy, sz, c, tStart, maxY, matType, bSeed) {
+      const x0=cx-sx, x1=cx+sx, y0=cy-sy, y1=cy+sy, z0=cz-sz, z1=cz+sz;
+      const faces = [
+        { n:[ 0, 0, 1], q:[[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]] },
+        { n:[ 0, 0,-1], q:[[x1,y0,z0],[x0,y0,z0],[x0,y1,z0],[x1,y1,z0]] },
+        { n:[ 0, 1, 0], q:[[x0,y1,z1],[x1,y1,z1],[x1,y1,z0],[x0,y1,z0]] },
+        { n:[ 0,-1, 0], q:[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]] },
+        { n:[ 1, 0, 0], q:[[x1,y0,z1],[x1,y0,z0],[x1,y1,z0],[x1,y1,z1]] },
+        { n:[-1, 0, 0], q:[[x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]] },
+      ];
+      for (const f of faces) {
+        const idx = [0,1,2, 0,2,3];
+        for (const k of idx) {
+          const v = f.q[k];
+          verts.push(v[0],v[1],v[2], f.n[0],f.n[1],f.n[2], c[0],c[1],c[2], tStart, maxY, matType, bSeed);
+        }
+      }
+    }
+
+    const neonPalette = [
+      [0.08, 0.90, 1.00], // electric cyan
+      [1.00, 0.16, 0.56], // neon magenta
+      [1.00, 0.76, 0.18], // cyber gold
+      [0.04, 0.96, 0.64], // emerald neon
+      [0.64, 0.34, 1.00], // ultraviolet
+    ];
+
+    totalTowers = 0;
+
+    // 1) Structured Manhattan/Neo-Tokyo City Blocks with clear wide FPV Canyon along X = 0 (-5.8..+5.8) and Z = 0 (-5.8..+5.8)!
+    for (let gx = -10; gx <= 10; gx++) {
+      for (let gz = -14; gz <= 14; gz++) {
+        // Leave wide grand central neon canyons completely clear for the FPV Drone!
+        if (Math.abs(gx) <= 1 || Math.abs(gz) <= 1) continue;
+        // Leave secondary cross streets every 4 blocks
+        if (gx % 4 === 0 || gz % 5 === 0) continue;
+
+        const wx = gx * 4.4 + (rng() - 0.5) * 0.6;
+        const wz = gz * 4.4 + (rng() - 0.5) * 0.6;
+        const distCenter = Math.hypot(wx, wz);
+        if (distCenter > 68) continue;
+
+        totalTowers++;
+        // Inner downtown towers are dramatically taller & rise first in the timelapse!
+        const downtown = Math.exp(-distCenter * distCenter / 980.0);
+        const isHeroCorridor = Math.abs(gx) === 2;
+        const hBase = (5.0 + rng() * 14.0) + downtown * (14.0 + rng() * 18.0) + (isHeroCorridor ? 4.5 : 0);
+        const wX = 1.15 + rng() * 0.85;
+        const wZ = 1.15 + rng() * 0.85;
+
+        // Rippling outward construction wave from downtown core!
+        const tStart = clamp((distCenter / 72.0) * 0.68 + rng() * 0.10, 0.0, 0.76);
+        const bSeed = rng();
+        const darkTone = 0.11 + rng() * 0.10;
+        const bCol = [darkTone * 0.85, darkTone * 0.96, darkTone * 1.28];
+
+        // Main tower volume
+        addBoxMeta(wx, hBase * 0.5, wz, wX, hBase * 0.5, wZ, bCol, tStart, hBase, 0.0, bSeed);
+
+        // Stepped Ziggurat Crown on 65% of towers!
+        let topH = hBase;
+        if (rng() < 0.68) {
+          const h2 = hBase * (0.22 + rng() * 0.25);
+          addBoxMeta(wx, hBase + h2 * 0.5, wz, wX * 0.68, h2 * 0.5, wZ * 0.68, [bCol[0]*1.15, bCol[1]*1.15, bCol[2]*1.25], tStart + 0.03, hBase + h2, 0.0, bSeed + 0.3);
+          topH = hBase + h2;
+        }
+
+        // Glowing Neon Rooftop Trim Ring & Antenna Spire!
+        const nCol = neonPalette[Math.floor(rng() * neonPalette.length)];
+        addBoxMeta(wx, topH + 0.12, wz, wX * 0.72, 0.14, wZ * 0.72, nCol, tStart + 0.05, topH + 0.25, 2.0, bSeed);
+        if (topH > 16.0 && rng() < 0.55) {
+          const spireH = 2.5 + rng() * 5.0;
+          addBoxMeta(wx, topH + spireH * 0.5, wz, 0.09, spireH * 0.5, 0.09, [0.45, 0.55, 0.7], tStart + 0.06, topH + spireH, 0.0, bSeed);
+          addBoxMeta(wx, topH + spireH + 0.18, wz, 0.22, 0.22, 0.22, [1.0, 0.18, 0.42], tStart + 0.07, topH + spireH + 0.4, 2.0, bSeed);
+        }
+
+        // Giant Glowing Holographic Neon Billboards facing the Central FPV Canyon (|gx| === 2)!
+        if (isHeroCorridor && rng() < 0.82) {
+          const sideSign = wx > 0 ? -1 : 1;
+          const signY = 4.2 + rng() * Math.min(12.0, hBase - 5.0);
+          const signH = 1.6 + rng() * 2.6;
+          const signW = 0.9 + rng() * 0.7;
+          const sCol = neonPalette[Math.floor(rng() * neonPalette.length)];
+          addBoxMeta(wx + sideSign * (wX + 0.16), signY, wz, 0.10, signH, signW, sCol, tStart + 0.04, signY + signH, 1.0, bSeed * 2.1);
+        }
+      }
+    }
+
+    // 2) Iconic Elevated Neon Sky-Bridges spanning cleanly OVER the Central FPV Boulevard!
+    const bridgeZs = [-34, -18, -2, 14, 30];
+    for (let i = 0; i < bridgeZs.length; i++) {
+      const bz = bridgeZs[i];
+      const by = (i % 2 === 0) ? 12.2 : 16.8; // High enough for clean high-speed FPV underpass + overpass!
+      const bCol = i % 2 === 0 ? [0.10, 0.90, 1.0] : [1.0, 0.18, 0.60];
+      addBoxMeta(0, by, bz, 7.6, 0.34, 0.85, [0.14, 0.18, 0.28], 0.28 + i * 0.05, by + 0.5, 2.0, i * 0.2);
+      addBoxMeta(0, by + 0.42, bz, 7.6, 0.14, 0.92, bCol, 0.30 + i * 0.05, by + 0.6, 2.0, i * 0.2 + 0.1);
+      addBoxMeta(0, by - 0.42, bz, 7.6, 0.12, 0.92, bCol, 0.30 + i * 0.05, by + 0.6, 2.0, i * 0.2 + 0.2);
+    }
+
+    // 3) Monumental Central Twin Neo-Tokyo Arch Gate Towers framing Z = -46!
+    addBoxMeta(-9.5, 24.0, -46, 2.4, 24.0, 2.4, [0.12, 0.15, 0.24], 0.08, 48.0, 0.0, 0.91);
+    addBoxMeta( 9.5, 24.0, -46, 2.4, 24.0, 2.4, [0.12, 0.15, 0.24], 0.08, 48.0, 0.0, 0.92);
+    addBoxMeta( 0.0, 44.5, -46, 11.8, 1.4, 2.2, [0.14, 0.92, 1.0], 0.18, 46.0, 2.0, 0.93);
+    addBoxMeta( 0.0, 42.2, -46, 11.2, 0.5, 2.4, [1.0, 0.18, 0.60], 0.20, 46.0, 2.0, 0.94);
+
+    if (!cityVao) {
+      cityVao = gl.createVertexArray();
+      cityVbo = gl.createBuffer();
+    }
+    gl.bindVertexArray(cityVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, cityVbo);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+    const ST = 13 * 4;
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, ST, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, ST, 12);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, ST, 24);
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.FLOAT, false, ST, 36);
+    gl.bindVertexArray(null);
+    cityVertCount = verts.length / 13;
+
+    document.getElementById('tlSub').textContent = `SINGLE HTML · 0 LIBS · 0 3D MODELS · ${totalTowers} TOWERS · 2-PASS HDR BLOOM`;
+  }
+
+  // Ground Plane VAO
+  const G = 120;
+  const gVao = gl.createVertexArray(), gVbo = gl.createBuffer();
+  gl.bindVertexArray(gVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-G,0,-G, G,0,-G, G,0,G, -G,0,-G, G,0,G, -G,0,G]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 12, 0);
+  gl.bindVertexArray(null);
+
+  // Flying Spinner Traffic + Rain Streaks Buffer
+  const NUM_CARS = 260;
+  const cars = [];
+  {
+    const crng = mulberry32(7772026);
+    for (let i = 0; i < NUM_CARS; i++) {
+      const axis = i < 170 ? 'z' : 'x';
+      const dir = (i % 2 === 0) ? 1 : -1;
+      const laneOffset = dir * (1.2 + (i % 3) * 1.3);
+      const alt = 1.6 + (i % 5) * 2.9 + crng() * 0.8;
+      cars.push({
+        axis, dir, laneOffset, alt,
+        pos: (crng() - 0.5) * 140,
+        spd: 14.0 + crng() * 22.0,
+        len: 2.6 + crng() * 3.8
+      });
+    }
+  }
+  const MAX_LINES = 2400;
+  const lineBuf = new Float32Array(MAX_LINES * 7);
+  const lineVao = gl.createVertexArray(), lineVbo = gl.createBuffer();
+  gl.bindVertexArray(lineVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, lineBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 28, 12);
+  gl.bindVertexArray(null);
+
+  // 2-Pass HDR FBO + Depth Renderbuffer!
+  const sceneTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, sceneTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  const depthRb = gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER, depthRb);
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, W, H);
+
+  const fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, sceneTex, 0);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthRb);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+  const emptyVao = gl.createVertexArray();
+
+  // ===== SIMULATION & 24s CINEMATIC CHOREOGRAPHY =====
+  let simTime = 0.0;
+  const isRecording = Boolean(window.__RECORDING__);
+
+  let buildProgress = 0.54; // Mid-rise downtown skyline so Frame 0 thumbnail is immediately iconic!
+  let hazeMix = 0.0, targetHaze = 0.0;
+  let activeMode = 0; // 0=Timelapse, 1=FPV Dive, 2=BladeRunner Haze
+  let speedWarp = 0.0;
+  let camPos = [0.0, 29.0, 52.0];
+  let camLook = [0.0, 12.0, -18.0];
+  let camRoll = 0.0;
+  let camFov = 0.78;
+  let droneKmh = 110;
+
+  let manualMode = false;
+  let manYaw = 0, manPitch = -0.25;
+  const keys = {};
+  let dragging = false, lastMX = 0, lastMY = 0;
+
+  let banner = { text: '', cls: '', ttl: 0 };
+  let curX = 640, curY = 360, curOp = 0, cPulse = 0, pressedId = null;
+  const trig = { fpv: false, haze: false, climb: false };
+
+  function btnCenter(id) {
+    const r = document.getElementById(id).getBoundingClientRect();
+    const sr = document.getElementById('stageRoot').getBoundingClientRect();
+    return { x: r.left - sr.left + r.width * 0.5, y: r.top - sr.top + r.height * 0.5 };
+  }
+
+  function runChoreography(t, dt) {
+    pressedId = null;
+    cPulse = Math.max(0, cPulse - dt * 2.8);
+
+    const pFpv  = btnCenter('btnFpv');
+    const pHaze = btnCenter('btnHaze');
+
+    // Phase 1 (0 - 6.2s): Procedural Construction Timelapse from 54% -> 100%!
+    if (t < 6.2) {
+      buildProgress = lerp(0.54, 1.0, ease(t / 5.5));
+      activeMode = 0;
+      curOp = t < 4.7 ? 0 : ease((t - 4.7) / 0.55);
+      if (t >= 4.7) {
+        const u = ease((t - 4.7) / 1.4);
+        curX = lerp(640, pFpv.x, u);
+        curY = lerp(460, pFpv.y, u);
+      }
+    } else if (t < 6.7) {
+      buildProgress = 1.0;
+      curOp = 1; curX = pFpv.x; curY = pFpv.y;
+      pressedId = 'btnFpv';
+      if (!trig.fpv) {
+        trig.fpv = true; cPulse = 1.0; activeMode = 1;
+        banner = { text: '◈ FPV DRONE CANYON DIVE · 285 KM/H HIGH-SPEED FLYTHROUGH', cls: 'b-pink', ttl: 4.4 };
+      }
+    } else if (t < 13.6) {
+      buildProgress = 1.0;
+      curOp = Math.max(0, curOp - dt * 1.4);
+    } else if (t < 15.0) {
+      curOp = ease((t - 13.6) / 0.5);
+      const u = ease((t - 13.6) / 1.3);
+      curX = lerp(pFpv.x, pHaze.x, u);
+      curY = lerp(pFpv.y, pHaze.y, u);
+    } else if (t < 15.5) {
+      curOp = 1; curX = pHaze.x; curY = pHaze.y;
+      pressedId = 'btnHaze';
+      if (!trig.haze) {
+        trig.haze = true; cPulse = 1.0; activeMode = 2; targetHaze = 1.0;
+        banner = { text: '◈ BLADE RUNNER GOLDEN HAZE · ATMOSPHERIC LIGHTING SHIFT', cls: 'b-gold', ttl: 4.0 };
+      }
+    } else {
+      curOp = Math.max(0, curOp - dt * 1.4);
+      if (t >= 19.6 && !trig.climb) {
+        trig.climb = true;
+        targetHaze = 0.25;
+        banner = { text: `◈ NEO-TOKYO SKYLINE ASCENT · ${totalTowers} PROCEDURAL TOWERS ONLINE`, cls: 'b-cyan', ttl: 4.2 };
+      }
+    }
+
+    // Cinematic Camera Rig: Unobstructed Grand Canyon Aerial Timelapse -> High-Speed FPV Dive -> Skyline Ascent!
+    if (!manualMode) {
+      if (t < 6.2) {
+        // High unobstructed panoramic overlook right above the wide grand boulevard!
+        const u = ease(t / 6.2);
+        camPos = [Math.sin(u * Math.PI) * 3.8, lerp(31.0, 22.0, u), lerp(56.0, 42.0, u)];
+        camLook = [0.0, lerp(11.0, 11.5, u), lerp(-18.0, -24.0, u)];
+        camRoll = Math.sin(u * Math.PI) * 0.04;
+        camFov = lerp(0.76, 0.80, u);
+        speedWarp = 0.0;
+        droneKmh = lerp(95, 130, u);
+      } else if (t < 9.0) {
+        // Exhilarating Dive from Aerial Overlook straight down into the Grand Neon Boulevard!
+        const u = ease((t - 6.2) / 2.8);
+        camPos = [0.0, lerp(22.0, 6.2, u), lerp(42.0, 34.0, u)];
+        camLook = [Math.sin(u * Math.PI) * 1.4, lerp(11.5, 6.8, u), lerp(-24.0, -28.0, u)];
+        camRoll = -Math.sin(u * Math.PI) * 0.28;
+        camFov = lerp(0.80, 0.96, u);
+        speedWarp = u * 0.7;
+        droneKmh = lerp(130, 275, u);
+      } else if (t < 18.8) {
+        // HIGH-SPEED FPV DRONE CANYON RUN straight down the glowing boulevard under sky-bridges!
+        const u = (t - 9.0) / 9.8;
+        const z = lerp(34.0, -34.0, u);
+        const weaveX = Math.sin(u * Math.PI * 3.0) * 2.55;
+        const weaveY = 5.8 + Math.sin(u * Math.PI * 4.0) * 2.1 + u * 2.2;
+        camPos = [weaveX, weaveY, z];
+        camLook = [Math.sin((u + 0.06) * Math.PI * 3.0) * 2.2, weaveY + 0.7 + u * 2.8, z - 24.0];
+        camRoll = -Math.cos(u * Math.PI * 3.0) * 0.32;
+        camFov = 0.96 + Math.sin(u * Math.PI) * 0.08;
+        speedWarp = 0.85 + Math.sin(u * Math.PI) * 0.25;
+        droneKmh = 282 + Math.sin(t * 3.2) * 18;
+      } else {
+        // Vertical Spire Climb through the Twin Neon Arch -> Monumental Skyline Panorama Reveal!
+        const u = ease((t - 18.8) / 5.2);
+        const ang = lerp(0.0, -0.58, u);
+        camPos = [lerp(0.0, -26.0, u) + Math.sin(ang) * 8.0, lerp(8.5, 36.0, u), lerp(-34.0, -76.0, u)];
+        camLook = [0.0, lerp(18.0, 14.0, u), lerp(-54.0, -18.0, u)];
+        camRoll = Math.sin(u * Math.PI) * 0.16;
+        camFov = lerp(0.96, 0.76, u);
+        speedWarp = (1.0 - u) * 0.6;
+        droneKmh = lerp(290, 145, u);
+      }
+    } else {
+      // Interactive WASD Free-Flight FPV Mode!
+      const spd = 24.0 * dt;
+      const fx = Math.sin(manYaw) * Math.cos(manPitch), fy = Math.sin(manPitch), fz = -Math.cos(manYaw) * Math.cos(manPitch);
+      const rx = Math.cos(manYaw), rz = Math.sin(manYaw);
+      if (keys['KeyW'] || keys['ArrowUp'])    { camPos[0]+=fx*spd; camPos[1]+=fy*spd; camPos[2]+=fz*spd; }
+      if (keys['KeyS'] || keys['ArrowDown'])  { camPos[0]-=fx*spd; camPos[1]-=fy*spd; camPos[2]-=fz*spd; }
+      if (keys['KeyD'] || keys['ArrowRight']) { camPos[0]+=rx*spd; camPos[2]+=rz*spd; }
+      if (keys['KeyA'] || keys['ArrowLeft'])  { camPos[0]-=rx*spd; camPos[2]-=rz*spd; }
+      camPos[1] = Math.max(1.8, camPos[1]);
+      camLook = [camPos[0]+fx*20, camPos[1]+fy*20, camPos[2]+fz*20];
+      camRoll *= 0.9;
+    }
+  }
+
+  function stepSim(dt) {
+    simTime += dt;
+    runChoreography(simTime, dt);
+    hazeMix += (targetHaze - hazeMix) * Math.min(1, dt * 2.2);
+    if (banner.ttl > 0) banner.ttl = Math.max(0, banner.ttl - dt);
+
+    for (const c of cars) {
+      c.pos += c.dir * c.spd * dt;
+      if (c.pos > 72) c.pos = -72;
+      if (c.pos < -72) c.pos = 72;
+    }
+  }
+
+  function renderWebGL() {
+    // Pass 1: Render 3D Metropolis + Wet Reflections + Traffic Light-Trails into HDR FBO
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.viewport(0, 0, W, H);
+    gl.clearColor(0.01, 0.015, 0.035, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    const up = [Math.sin(camRoll), Math.cos(camRoll), 0];
+    const proj = mat4Persp(camFov, W / H, 0.3, 220.0);
+    const view = mat4Look(camPos, camLook, up);
+    const vp = mat4Mul(proj, view);
+
+    // 1. Sky Backdrop
+    gl.disable(gl.DEPTH_TEST);
+    gl.useProgram(skyProg);
+    gl.uniform1f(gl.getUniformLocation(skyProg, 'uTime'), simTime);
+    gl.uniform1f(gl.getUniformLocation(skyProg, 'uHaze'), hazeMix);
+    gl.bindVertexArray(emptyVao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    gl.enable(gl.DEPTH_TEST);
+    gl.disable(gl.BLEND);
+
+    // 2. Wet Rain-Mirror Ground Boulevard
+    gl.useProgram(groundProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(groundProg, 'uVP'), false, vp);
+    gl.uniform3fv(gl.getUniformLocation(groundProg, 'uCamPos'), camPos);
+    gl.uniform1f(gl.getUniformLocation(groundProg, 'uTime'), simTime);
+    gl.uniform1f(gl.getUniformLocation(groundProg, 'uHaze'), hazeMix);
+    gl.bindVertexArray(gVao);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    // 3. 312 Procedural Cyberpunk Skyscrapers + Billboards + Sky-Bridges
+    gl.useProgram(cityProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(cityProg, 'uVP'), false, vp);
+    gl.uniform3fv(gl.getUniformLocation(cityProg, 'uCamPos'), camPos);
+    gl.uniform1f(gl.getUniformLocation(cityProg, 'uBuildProg'), buildProgress);
+    gl.uniform1f(gl.getUniformLocation(cityProg, 'uTime'), simTime);
+    gl.uniform1f(gl.getUniformLocation(cityProg, 'uHaze'), hazeMix);
+    gl.bindVertexArray(cityVao);
+    gl.drawArrays(gl.TRIANGLES, 0, cityVertCount);
+
+    // 4. Additive Flying Spinner Traffic Light-Trails (Cyan Headlights & Crimson Taillights!)
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+    gl.depthMask(false);
+
+    let lv = 0;
+    const visFrac = clamp(buildProgress * 1.2, 0.25, 1.0);
+    const activeCars = Math.floor(cars.length * visFrac);
+    for (let i = 0; i < activeCars; i++) {
+      const c = cars[i];
+      const isCyan = c.dir > 0;
+      const col = isCyan ? [0.18, 0.94, 1.0] : [1.0, 0.22, 0.36];
+      const x0 = c.axis === 'z' ? c.laneOffset : c.pos;
+      const z0 = c.axis === 'z' ? c.pos : c.laneOffset;
+      const x1 = c.axis === 'z' ? c.laneOffset : c.pos - c.dir * c.len;
+      const z1 = c.axis === 'z' ? c.pos - c.dir * c.len : c.laneOffset;
+
+      // Double-stacked glowing trail for crisp neon punch
+      for (const dy of [0.0, 0.14]) {
+        if (lv + 2 >= MAX_LINES) break;
+        let o = lv * 7;
+        lineBuf[o++]=x0; lineBuf[o++]=c.alt+dy; lineBuf[o++]=z0; lineBuf[o++]=col[0]*1.8; lineBuf[o++]=col[1]*1.8; lineBuf[o++]=col[2]*1.8; lineBuf[o++]=0.95;
+        lineBuf[o++]=x1; lineBuf[o++]=c.alt+dy; lineBuf[o++]=z1; lineBuf[o++]=col[0]*0.4; lineBuf[o++]=col[1]*0.4; lineBuf[o++]=col[2]*0.4; lineBuf[o++]=0.05;
+        lv += 2;
+      }
+    }
+
+    if (lv > 0) {
+      gl.useProgram(lineProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(lineProg, 'uVP'), false, vp);
+      gl.bindVertexArray(lineVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, lineBuf.subarray(0, lv * 7));
+      gl.drawArrays(gl.LINES, 0, lv);
+    }
+
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+
+    // Pass 2: 2-Pass HDR Cinematic Neon Bloom + Anamorphic Flares + ACES Filmic Tone Mapping!
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, W, H);
+    gl.disable(gl.DEPTH_TEST);
+    gl.useProgram(postProg);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, sceneTex);
+    gl.uniform1i(gl.getUniformLocation(postProg, 'uScene'), 0);
+    gl.uniform2f(gl.getUniformLocation(postProg, 'uRes'), W, H);
+    gl.uniform1f(gl.getUniformLocation(postProg, 'uSpeedWarp'), speedWarp);
+    gl.bindVertexArray(emptyVao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  function renderDOM() {
+    const built = Math.min(totalTowers, Math.round(totalTowers * buildProgress));
+    document.getElementById('kBuild').textContent = `${built} / ${totalTowers}`;
+    document.getElementById('kTraffic').textContent = `${Math.round(NUM_CARS * clamp(buildProgress * 1.15, 0.3, 1.0))} UNITS`;
+    document.getElementById('kAlt').textContent = `${Math.round(camPos[1] * 3.1)} m`;
+    document.getElementById('kSpd').textContent = `${Math.round(droneKmh)} km/h`;
+    document.getElementById('clockLbl').textContent = `GEMINI 4 NEON · ${simTime.toFixed(1).padStart(4, '0')}s / 24.0s`;
+
+    document.getElementById('btnBuild').className = activeMode === 0 ? 'cbtn act-cyan' : 'cbtn';
+    document.getElementById('btnFpv').className   = activeMode === 1 ? 'cbtn act-pink' : 'cbtn';
+    document.getElementById('btnHaze').className  = activeMode === 2 ? 'cbtn act-gold' : 'cbtn';
+    for (const id of ['btnFpv','btnHaze']) {
+      document.getElementById(id).classList.toggle('pressed', pressedId === id);
+    }
+
+    const elB = document.getElementById('hudBanner');
+    if (banner.ttl > 0) { elB.textContent = banner.text; elB.className = `hud-banner ${banner.cls}`; }
+    else elB.className = 'hud-banner';
+
+    const vc = document.getElementById('vCursor'), cr = document.getElementById('cRing');
+    vc.style.left = `${curX.toFixed(1)}px`; vc.style.top = `${curY.toFixed(1)}px`; vc.style.opacity = curOp.toFixed(2);
+    if (cPulse > 0.02) {
+      cr.style.left = `${curX.toFixed(1)}px`; cr.style.top = `${curY.toFixed(1)}px`;
+      cr.style.opacity = (cPulse * 0.9).toFixed(2);
+      cr.style.transform = `translate(-50%,-50%) scale(${(0.6 + (1-cPulse)*1.1).toFixed(2)})`;
+    } else cr.style.opacity = '0';
+  }
+
+  // Interactive Controls
+  document.getElementById('btnBuild').addEventListener('click', () => { manualMode=false; simTime=0; buildProgress=0.1; targetHaze=0; activeMode=0; for(const k in trig) trig[k]=false; });
+  document.getElementById('btnFpv').addEventListener('click', () => { manualMode=false; simTime=6.3; buildProgress=1.0; activeMode=1; });
+  document.getElementById('btnHaze').addEventListener('click', () => { targetHaze = targetHaze > 0.5 ? 0.0 : 1.0; activeMode = targetHaze > 0.5 ? 2 : 1; });
+  document.getElementById('btnSeed').addEventListener('click', () => { citySeed += 97; buildCity(citySeed); buildProgress = 0.05; simTime = 0; });
+
+  window.addEventListener('keydown', (e) => {
+    keys[e.code] = true;
+    if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) manualMode = true;
+  });
+  window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+  glCanvas.addEventListener('mousedown', (e) => { dragging = true; manualMode = true; lastMX = e.clientX; lastMY = e.clientY; });
+  window.addEventListener('mouseup', () => { dragging = false; });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    manYaw += (e.clientX - lastMX) * 0.005;
+    manPitch = clamp(manPitch - (e.clientY - lastMY) * 0.004, -1.2, 1.2);
+    lastMX = e.clientX; lastMY = e.clientY;
+  });
+
+  // ===== INIT & LOOP =====
+  const skyProg = link(FULL_VS, skyFS);
+  buildCity(citySeed);
+  renderDOM();
+  renderWebGL();
+
+  window.stepCity = function(dt, drawGL = true) {
+    stepSim(dt);
+    if (drawGL) {
+      renderDOM();
+      renderWebGL();
+    }
+  };
+
+  if (!isRecording) {
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (!manualMode && simTime >= 24.0) { simTime = 0; targetHaze = 0; for (const k in trig) trig[k] = false; }
+      window.stepCity(dt, true);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+</body>
+</html>

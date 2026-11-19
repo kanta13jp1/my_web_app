@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>SENTINEL EARTH // Live 3D Global Digital Twin (Single HTML · Pure WebGL2)</title>
+<style>
+  :root {
+    --bg: #040812;
+    --panel: rgba(8, 15, 30, 0.90);
+    --border: rgba(56, 189, 248, 0.20);
+    --text-0: #eef7ff;
+    --text-1: #9ab2d0;
+    --text-2: #577092;
+    --cyan: #38bdf8;
+    --emerald: #00f5a0;
+    --crimson: #ff3366;
+    --gold: #fbbf24;
+    --violet: #a855f7;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", "Inter", -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 48%, #0a1630 0%, #03060e 72%);
+    color: var(--text-0);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  .app {
+    width: 1280px;
+    height: 720px;
+    display: grid;
+    grid-template-rows: 42px 1fr 28px;
+    padding: 6px;
+    gap: 6px;
+    position: relative;
+  }
+
+  /* ===== TOP BAR ===== */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(90deg, rgba(8,16,32,0.96), rgba(11,21,42,0.96));
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0 12px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .pulse-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan), 0 0 18px rgba(56,189,248,0.6);
+  }
+  .brand-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+  }
+  .brand-name span { color: var(--cyan); }
+  .pill-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--cyan);
+    background: rgba(56,189,248,0.12);
+    border: 1px solid rgba(56,189,248,0.3);
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .kpi-strip {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi { display: flex; flex-direction: column; line-height: 1.15; }
+  .kpi .k { font-size: 8px; color: var(--text-2); letter-spacing: 0.6px; }
+  .kpi .v { font-size: 11.5px; font-weight: 800; color: var(--text-0); }
+  .kpi .v.cyan { color: var(--cyan); }
+  .kpi .v.green { color: var(--emerald); }
+  .kpi .v.red { color: var(--crimson); }
+  .kpi .v.gold { color: var(--gold); }
+
+  .top-modes {
+    display: flex;
+    gap: 5px;
+  }
+  .tbtn {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--text-1);
+    background: rgba(14, 24, 46, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 5px;
+    padding: 4px 8px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tbtn.on-cyan {
+    color: #03111f;
+    background: linear-gradient(90deg, #38bdf8, #00f5a0);
+    border-color: #7dd3fc;
+    box-shadow: 0 0 12px rgba(56,189,248,0.45);
+  }
+  .tbtn.on-red {
+    color: #fff;
+    background: linear-gradient(90deg, #e11d48, #ff3366);
+    border-color: #fda4af;
+    box-shadow: 0 0 14px rgba(255,51,102,0.55);
+  }
+  .tbtn.on-violet {
+    color: #fff;
+    background: linear-gradient(90deg, #7c3aed, #06b6d4);
+    border-color: #c4b5fd;
+    box-shadow: 0 0 14px rgba(168,85,247,0.52);
+  }
+
+  /* ===== MAIN GRID ===== */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 274px 708px 274px;
+    gap: 6px;
+    min-height: 0;
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.42);
+  }
+  .phdr {
+    height: 26px;
+    min-height: 26px;
+    padding: 0 9px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(56,189,248,0.12);
+    background: rgba(6, 12, 26, 0.78);
+    font-family: var(--mono);
+  }
+  .ptitle {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    color: #cde4ff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ptitle .d {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--cyan); box-shadow: 0 0 7px var(--cyan);
+  }
+  .pmeta {
+    font-size: 9px;
+    color: var(--text-1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Left: Hub Matrix */
+  .hub-panel { flex: 1.45; min-height: 0; }
+  .hub-list {
+    padding: 5px 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 4.5px;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .hub-row {
+    background: rgba(14, 24, 46, 0.76);
+    border: 1px solid rgba(56,189,248,0.13);
+    border-radius: 5px;
+    padding: 4.5px 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .hub-row.under-attack {
+    border-color: rgba(255,51,102,0.82);
+    background: rgba(255,51,102,0.14);
+  }
+  .hub-row.shielded {
+    border-color: rgba(0,245,160,0.72);
+    background: rgba(0,245,160,0.10);
+  }
+  .hub-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9.5px;
+  }
+  .hub-name { font-weight: 800; color: #e8f3ff; }
+  .hub-code { color: var(--cyan); font-weight: 800; margin-right: 4px; }
+  .hub-lat { color: var(--emerald); font-weight: 700; }
+  .hub-bar-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(30, 41, 59, 0.85);
+    overflow: hidden;
+  }
+  .hub-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #38bdf8, #00f5a0);
+    width: 65%;
+  }
+
+  /* Left: Traffic Spectrum */
+  .spec-panel { flex: 0.95; min-height: 0; }
+  .cwrap { flex: 1; position: relative; min-height: 0; }
+  canvas.fill { width: 100%; height: 100%; display: block; }
+
+  /* Center: 3D Globe Hero */
+  .globe-panel {
+    flex: 1;
+    border-color: rgba(56,189,248,0.34);
+    box-shadow: 0 0 32px rgba(14,165,233,0.14);
+  }
+  #globeHudCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .g-top-hud {
+    position: absolute;
+    top: 33px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 4;
+  }
+  .g-card {
+    background: rgba(5, 11, 24, 0.82);
+    border: 1px solid rgba(56,189,248,0.28);
+    border-radius: 6px;
+    padding: 5px 9px;
+    font-family: var(--mono);
+  }
+  .g-card .t { font-size: 10.5px; font-weight: 800; color: #f0f9ff; letter-spacing: 0.6px; }
+  .g-card .s { font-size: 8.5px; color: var(--cyan); margin-top: 2px; }
+  .g-legend {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    background: rgba(5, 11, 24, 0.82);
+    border: 1px solid rgba(148,163,184,0.22);
+    border-radius: 6px;
+    padding: 5px 9px;
+    font-family: var(--mono);
+    font-size: 8.5px;
+    color: var(--text-1);
+    height: fit-content;
+  }
+  .litem { display: flex; align-items: center; gap: 4px; }
+  .lsw { width: 7px; height: 7px; border-radius: 2px; }
+
+  .g-banner {
+    position: absolute;
+    top: 82px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.7px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .g-banner.b-red {
+    opacity: 1; color: #fff1f2;
+    background: rgba(24, 7, 16, 0.92);
+    border: 1.5px solid #ff3366;
+    box-shadow: 0 0 24px rgba(255,51,102,0.52);
+  }
+  .g-banner.b-cyan {
+    opacity: 1; color: #ecfeff;
+    background: rgba(6, 18, 30, 0.92);
+    border: 1.5px solid #00f5a0;
+    box-shadow: 0 0 24px rgba(0,245,160,0.45);
+  }
+  .g-banner.b-violet {
+    opacity: 1; color: #f5f3ff;
+    background: rgba(16, 10, 32, 0.92);
+    border: 1.5px solid #c084fc;
+    box-shadow: 0 0 24px rgba(168,85,247,0.48);
+  }
+  .g-banner.b-gold {
+    opacity: 1; color: #fffbeb;
+    background: rgba(20, 14, 8, 0.92);
+    border: 1.5px solid #fbbf24;
+    box-shadow: 0 0 24px rgba(251,191,36,0.45);
+  }
+
+  .g-bot-hud {
+    position: absolute;
+    bottom: 9px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 4;
+  }
+  .g-pills { display: flex; gap: 6px; }
+  .gpill {
+    background: rgba(5, 11, 24, 0.85);
+    border: 1px solid rgba(56,189,248,0.24);
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-family: var(--mono);
+  }
+  .gpill .k { font-size: 7.5px; color: var(--text-2); display: block; }
+  .gpill .v { font-size: 10.5px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  /* Right Column */
+  .orbit-panel { flex: 1.05; min-height: 0; }
+  .log-panel { flex: 1.05; min-height: 0; }
+  .log-list {
+    padding: 5px 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 3.5px;
+    font-family: var(--mono);
+    font-size: 8.8px;
+    overflow: hidden;
+  }
+  .log-row {
+    padding: 3px 5px;
+    border-radius: 3px;
+    background: rgba(14, 24, 46, 0.65);
+    border-left: 2px solid var(--cyan);
+    color: #dbeafe;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .log-row.red { border-left-color: var(--crimson); background: rgba(255,51,102,0.14); color: #ffe4e6; }
+  .log-row.green { border-left-color: var(--emerald); background: rgba(0,245,160,0.12); color: #d1fae5; }
+  .log-row.violet { border-left-color: var(--violet); background: rgba(168,85,247,0.14); color: #f3e8ff; }
+
+  .ctrl-panel { height: 92px; min-height: 92px; }
+  .ctrl-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 5px;
+    padding: 6px 8px;
+  }
+  .cbtn {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 800;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cbtn.c1 { background: rgba(56,189,248,0.14); border-color: rgba(56,189,248,0.48); color: #7dd3fc; }
+  .cbtn.c2 { background: rgba(255,51,102,0.15); border-color: rgba(255,51,102,0.52); color: #ff6b90; }
+  .cbtn.c3 { background: rgba(0,245,160,0.14); border-color: rgba(0,245,160,0.48); color: #00f5a0; }
+  .cbtn.c4 { background: rgba(168,85,247,0.16); border-color: rgba(168,85,247,0.55); color: #d8b4fe; }
+  .cbtn.pressed { transform: scale(0.95); filter: brightness(1.5); box-shadow: 0 0 18px currentColor; }
+
+  /* ===== BOTTOM TIMELINE ===== */
+  .bottombar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) 156px;
+    gap: 6px;
+    align-items: center;
+  }
+  .ppill {
+    height: 26px;
+    background: rgba(8, 15, 30, 0.92);
+    border: 1px solid rgba(148,163,184,0.16);
+    border-radius: 5px;
+    padding: 0 9px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-2);
+    position: relative;
+    overflow: hidden;
+  }
+  .ppill .prog { position: absolute; left:0; top:0; bottom:0; width:0%; background: rgba(56,189,248,0.16); z-index:0; }
+  .ppill span { position: relative; z-index: 1; }
+  .ppill.act-cyan { border-color: rgba(56,189,248,0.72); color: #f0f9ff; font-weight: 700; }
+  .ppill.act-red { border-color: rgba(255,51,102,0.82); color: #ffe4e6; font-weight: 700; }
+  .ppill.act-red .prog { background: rgba(255,51,102,0.22); }
+  .ppill.act-violet { border-color: rgba(192,132,252,0.82); color: #f3e8ff; font-weight: 700; }
+  .ppill.act-violet .prog { background: rgba(168,85,247,0.22); }
+  .ppill.act-gold { border-color: rgba(251,191,36,0.82); color: #fef3c7; font-weight: 700; }
+  .ppill.act-gold .prog { background: rgba(251,191,36,0.20); }
+
+  .clock {
+    height: 26px;
+    background: rgba(8, 15, 30, 0.92);
+    border: 1px solid rgba(56,189,248,0.28);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 800;
+    color: var(--cyan);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .vcursor {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    z-index: 50;
+    transform: translate(-2px, -2px);
+    opacity: 0;
+  }
+  .cring {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px solid #38bdf8;
+    pointer-events: none;
+    z-index: 49;
+    opacity: 0;
+  }
+</style>
+</head>
+<body>
+<div class="app" id="appRoot">
+  <header class="topbar">
+    <div class="brand">
+      <div class="pulse-dot" id="topDot"></div>
+      <div class="brand-name">SENTINEL <span>// EARTH 3D</span></div>
+      <div class="pill-tag">SINGLE HTML · 0 LIBS · NO THREE.JS / CESIUM / MAPBOX</div>
+    </div>
+    <div class="kpi-strip">
+      <div class="kpi"><span class="k">ACTIVE ROUTES</span><span class="v cyan" id="kRoutes">14,820</span></div>
+      <div class="kpi"><span class="k">LEO MESH</span><span class="v green" id="kSats">72 SATS</span></div>
+      <div class="kpi"><span class="k">GLOBAL LATENCY</span><span class="v" id="kLat">18.4 ms</span></div>
+      <div class="kpi"><span class="k">CYBER STATUS</span><span class="v green" id="kStatus">NOMINAL</span></div>
+    </div>
+    <div class="top-modes">
+      <button class="tbtn on-cyan" id="tbRoutes">ROUTES</button>
+      <button class="tbtn" id="tbDdos">DDoS SHIELD</button>
+      <button class="tbtn" id="tbMesh">LEO + AURORA</button>
+    </div>
+  </header>
+
+  <main class="main-grid">
+    <!-- LEFT COLUMN -->
+    <section class="col">
+      <div class="panel hub-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d"></span>GLOBAL NODE TELEMETRY</div>
+          <div class="pmeta" id="hubMeta">8 CORE HUBS</div>
+        </div>
+        <div class="hub-list" id="hubList"></div>
+      </div>
+      <div class="panel spec-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--emerald);box-shadow:0 0 7px var(--emerald)"></span>GLOBAL THROUGHPUT &amp; THREAT</div>
+          <div class="pmeta" id="specMeta">84.2 Tbps</div>
+        </div>
+        <div class="cwrap"><canvas id="specCanvas" class="fill"></canvas></div>
+      </div>
+    </section>
+
+    <!-- CENTER 3D EARTH HERO -->
+    <section class="col">
+      <div class="panel globe-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--gold);box-shadow:0 0 7px var(--gold)"></span><span id="glHdrTitle">PURE WEBGL2 3D DIGITAL TWIN EARTH // PROCEDURAL 2K MAP</span></div>
+          <div class="pmeta" id="glHdrMeta">72 LEO SATS · 36 3D ARCS</div>
+        </div>
+        <div class="cwrap" id="globeWrap">
+          <canvas id="glCanvas" class="fill"></canvas>
+          <canvas id="globeHudCanvas"></canvas>
+
+          <div class="g-top-hud">
+            <div class="g-card">
+              <div class="t" id="gTitle">GLOBAL ORBITAL &amp; FIBER CORRIDORS</div>
+              <div class="s" id="gSub">DRAG TO SPIN 3D GLOBE · SCROLL TO ZOOM · 100% PROCEDURAL</div>
+            </div>
+            <div class="g-legend">
+              <div class="litem"><span class="lsw" style="background:#38bdf8;box-shadow:0 0 6px #38bdf8"></span>ROUTES</div>
+              <div class="litem"><span class="lsw" style="background:#fbbf24;box-shadow:0 0 6px #fbbf24"></span>LEO MESH</div>
+              <div class="litem"><span class="lsw" style="background:#ff3366;box-shadow:0 0 6px #ff3366"></span>THREAT</div>
+              <div class="litem"><span class="lsw" style="background:#00f5a0;box-shadow:0 0 6px #00f5a0"></span>SHIELD</div>
+            </div>
+          </div>
+
+          <div class="g-banner" id="gBanner">⚡ VOLUMETRIC DDoS DETECTED · 4.82 Tbps TARGETING FRANKFURT &amp; NYC</div>
+
+          <div class="g-bot-hud">
+            <div class="g-pills">
+              <div class="gpill"><span class="k">FOCUS SECTOR</span><span class="v" id="gSector" style="color:#38bdf8">ASIA-PACIFIC</span></div>
+              <div class="gpill"><span class="k">ORBIT ALTITUDE</span><span class="v" id="gAlt" style="color:#eef7ff">11,420 KM</span></div>
+              <div class="gpill"><span class="k">MITIGATION / KP</span><span class="v" id="gShield" style="color:#00f5a0">99.98% OK</span></div>
+            </div>
+            <div class="gpill"><span class="k">CAMERA</span><span class="v" id="gCam" style="color:#9ab2d0">LON 139°E · LAT 24°N</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN -->
+    <section class="col">
+      <div class="panel orbit-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--violet);box-shadow:0 0 7px var(--violet)"></span>POLAR CONSTELLATION &amp; SPACE WX</div>
+          <div class="pmeta" id="kpMeta">KP 2.1</div>
+        </div>
+        <div class="cwrap"><canvas id="orbitCanvas" class="fill"></canvas></div>
+      </div>
+
+      <div class="panel log-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--crimson);box-shadow:0 0 7px var(--crimson)"></span>LIVE INTERCEPT &amp; TELEMETRY</div>
+          <div class="pmeta">STREAM</div>
+        </div>
+        <div class="log-list" id="logList"></div>
+      </div>
+
+      <div class="panel ctrl-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--gold)"></span>COMMAND SIMULATION DECK</div>
+          <div class="pmeta">INTERACTIVE</div>
+        </div>
+        <div class="ctrl-grid">
+          <button class="cbtn c1" id="btnGlobal">🌐 GLOBAL FLOW</button>
+          <button class="cbtn c2" id="btnDdos">⚡ DDoS TEST</button>
+          <button class="cbtn c3" id="btnMesh">🛰 LASER MESH</button>
+          <button class="cbtn c4" id="btnAurora">☀ SOLAR FLARE</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bottombar">
+    <div class="ppill act-cyan" id="ph0"><div class="prog" id="pr0"></div><span>01 GLOBAL ROUTES</span><span>0–5.5s</span></div>
+    <div class="ppill" id="ph1"><div class="prog" id="pr1"></div><span>02 DDoS &amp; AI SHIELD</span><span>5.5–12s</span></div>
+    <div class="ppill" id="ph2"><div class="prog" id="pr2"></div><span>03 LEO MESH &amp; AURORA</span><span>12–18s</span></div>
+    <div class="ppill" id="ph3"><div class="prog" id="pr3"></div><span>04 PACIFIC ORBIT PASS</span><span>18–24s</span></div>
+    <div class="clock" id="clockEl">GEMINI 4 NEON · 00.0s</div>
+  </footer>
+
+  <div class="cring" id="cRing"></div>
+  <svg class="vcursor" id="vCursor" viewBox="0 0 24 24" fill="none">
+    <path d="M4 3L19 11.5L12.2 13.4L9.8 20L4 3Z" fill="#f8fafc" stroke="#020617" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ===== DETERMINISTIC PRNG =====
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(202611194);
+  const clamp = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const ease = (u) => { const t = clamp(u, 0, 1); return t * t * (3 - 2 * t); };
+
+  // ===== REAL WORLD CONTINENT POLYGONS (EMBEDDED COMPACT LAT/LON, ZERO EXTERNAL DATA!) =====
+  // [lon, lat] arrays for crisp recognizable Earth landmasses
+  const CONTINENTS = [
+    // North America
+    [[-168,66],[-162,55],[-140,60],[-130,54],[-124,48],[-124,40],[-117,32],[-110,24],[-105,20],[-92,15],[-83,9],[-78,8],[-82,15],[-88,21],[-97,22],[-97,28],[-90,29],[-82,25],[-80,32],[-75,35],[-70,42],[-64,45],[-54,48],[-62,53],[-75,62],[-85,68],[-105,70],[-128,70],[-156,71]],
+    // Greenland
+    [[-52,60],[-43,60],[-34,68],[-20,76],[-25,82],[-55,82],[-70,77],[-58,68]],
+    // South America
+    [[-79,9],[-70,12],[-60,8],[-50,0],[-35,-6],[-38,-14],[-42,-23],[-53,-34],[-65,-43],[-68,-54],[-75,-51],[-73,-37],[-71,-18],[-81,-5]],
+    // Europe + UK + Scandinavia
+    [[-10,37],[-9,43],[-2,43],[-5,48],[2,51],[8,54],[10,58],[5,61],[14,68],[28,71],[42,67],[58,69],[60,55],[46,46],[38,45],[29,41],[24,37],[18,40],[14,45],[9,44],[3,42],[-5,36]],
+    // UK & Ireland
+    [[-6,50],[1,51],[1,53],[-2,56],[-6,58],[-6,53]],
+    // Africa
+    [[-17,15],[-12,28],[-6,36],[10,37],[12,33],[25,32],[33,31],[43,12],[51,11],[41,-2],[40,-15],[33,-26],[20,-35],[15,-26],[12,-12],[9,4],[0,5],[-8,4],[-16,11]],
+    // Madagascar
+    [[44,-25],[47,-25],[50,-13],[47,-15],[44,-20]],
+    // Asia + Middle East + India + SE Asia
+    [[35,36],[42,42],[54,40],[60,55],[62,69],[82,73],[105,77],[138,72],[170,66],[162,56],[142,54],[136,44],[129,35],[122,40],[121,31],[118,24],[109,20],[108,12],[103,1],[99,14],[92,22],[87,21],[80,8],[72,20],[66,25],[56,26],[59,22],[44,13],[35,29]],
+    // Japan (Honshu, Hokkaido, Kyushu!)
+    [[130,31],[133,34],[137,35],[141,36],[141,41],[145,44],[141,45],[139,40],[136,37],[131,34]],
+    // Taiwan & Philippines
+    [[120,22],[122,25],[121,25],[120,23]],
+    [[120,18],[123,14],[126,7],[122,7],[120,14]],
+    // Indonesia (Sumatra, Java, Borneo)
+    [[95,5],[105,-6],[115,-8],[113,-6],[103,0]],
+    [[109,1],[118,5],[118,-3],[111,-3]],
+    // Australia + NZ
+    [[114,-22],[122,-17],[131,-12],[136,-12],[142,-11],[149,-21],[153,-28],[150,-37],[141,-38],[135,-34],[124,-34],[115,-34],[113,-26]],
+    [[167,-46],[172,-43],[178,-37],[174,-36],[170,-42]]
+  ];
+
+  // 14 Strategic Global Hubs
+  const HUBS = [
+    { code: 'TYO', name: 'Tokyo',         lon:  139.69, lat:  35.68, baseLat: 11.2, load: 0.86, major: true },
+    { code: 'SFO', name: 'San Francisco', lon: -122.42, lat:  37.77, baseLat: 14.8, load: 0.82, major: true },
+    { code: 'NYC', name: 'New York',      lon:  -74.00, lat:  40.71, baseLat: 13.4, load: 0.91, major: true },
+    { code: 'LON', name: 'London',        lon:   -0.12, lat:  51.50, baseLat: 15.1, load: 0.84, major: true },
+    { code: 'FRA', name: 'Frankfurt',     lon:    8.68, lat:  50.11, baseLat: 12.6, load: 0.88, major: true },
+    { code: 'SIN', name: 'Singapore',     lon:  103.82, lat:   1.35, baseLat: 16.5, load: 0.79, major: true },
+    { code: 'DXB', name: 'Dubai',         lon:   55.27, lat:  25.20, baseLat: 21.3, load: 0.72, major: true },
+    { code: 'SYD', name: 'Sydney',        lon:  151.21, lat: -33.86, baseLat: 24.0, load: 0.68, major: true },
+    // Secondary cities for richer global routes & distributed threat sources
+    { code: 'SEL', name: 'Seoul',         lon:  126.98, lat:  37.57, baseLat: 12.0, load: 0.75, major: false },
+    { code: 'BOM', name: 'Mumbai',        lon:   72.87, lat:  19.08, baseLat: 23.0, load: 0.70, major: false },
+    { code: 'SAO', name: 'Sao Paulo',     lon:  -46.63, lat: -23.55, baseLat: 29.0, load: 0.66, major: false },
+    { code: 'TLV', name: 'Tel Aviv',      lon:   34.78, lat:  32.08, baseLat: 19.0, load: 0.74, major: false },
+    { code: 'IEV', name: 'Kyiv',          lon:   30.52, lat:  50.45, baseLat: 18.5, load: 0.71, major: false },
+    { code: 'LAX', name: 'Los Angeles',   lon: -118.24, lat:  34.05, baseLat: 15.2, load: 0.78, major: false },
+  ];
+
+  // Convert (lon deg, lat deg, radius) -> 3D Cartesian (Y up, prime meridian +Z)
+  function llToVec3(lonDeg, latDeg, r = 1.0) {
+    const lon = (lonDeg * Math.PI) / 180;
+    const lat = (latDeg * Math.PI) / 180;
+    const cl = Math.cos(lat);
+    return [cl * Math.sin(lon) * r, Math.sin(lat) * r, cl * Math.cos(lon) * r];
+  }
+
+  // ===== GENERATE 2048x1024 PROCEDURAL REAL-CONTINENT EARTH TEXTURE IN MEMORY =====
+  function buildEarthTextureCanvas() {
+    const c = document.createElement('canvas');
+    c.width = 2048; c.height = 1024;
+    const g = c.getContext('2d');
+
+    // Deep bathymetric obsidian-navy ocean
+    const og = g.createLinearGradient(0, 0, 0, c.height);
+    og.addColorStop(0.0, '#071730');
+    og.addColorStop(0.25, '#050d20');
+    og.addColorStop(0.5, '#040a1a');
+    og.addColorStop(0.75, '#050d20');
+    og.addColorStop(1.0, '#071730');
+    g.fillStyle = og;
+    g.fillRect(0, 0, c.width, c.height);
+
+    // Subtle ocean holographic lat/lon grid lines
+    g.strokeStyle = 'rgba(56, 189, 248, 0.14)';
+    g.lineWidth = 1.2;
+    for (let lon = -180; lon <= 180; lon += 15) {
+      const x = ((lon + 180) / 360) * c.width;
+      g.beginPath(); g.moveTo(x, 0); g.lineTo(x, c.height); g.stroke();
+    }
+    for (let lat = -75; lat <= 75; lat += 15) {
+      const y = ((90 - lat) / 180) * c.height;
+      g.beginPath(); g.moveTo(0, y); g.lineTo(c.width, y); g.stroke();
+    }
+
+    const toXY = (lon, lat) => [((lon + 180) / 360) * c.width, ((90 - lat) / 180) * c.height];
+
+    // Draw crisp dark-teal cyber continents with luminous cyan coastline glow!
+    g.save();
+    g.lineJoin = 'round';
+    for (const poly of CONTINENTS) {
+      g.beginPath();
+      poly.forEach(([lon, lat], idx) => {
+        const [x, y] = toXY(lon, lat);
+        if (idx === 0) g.moveTo(x, y); else g.lineTo(x, y);
+      });
+      g.closePath();
+      g.fillStyle = '#0f2948';
+      g.fill();
+      g.strokeStyle = 'rgba(56, 189, 248, 0.92)';
+      g.lineWidth = 3.2;
+      g.stroke();
+      g.strokeStyle = 'rgba(0, 245, 160, 0.40)';
+      g.lineWidth = 7.5;
+      g.stroke();
+    }
+    g.restore();
+
+    // Fine dot-matrix overlay inside continents + golden megacity clusters
+    for (const h of HUBS) {
+      const [cx, cy] = toXY(h.lon, h.lat);
+      const rad = h.major ? 30 : 18;
+      const rg = g.createRadialGradient(cx, cy, 1, cx, cy, rad);
+      rg.addColorStop(0.0, 'rgba(255, 232, 130, 0.98)');
+      rg.addColorStop(0.35, 'rgba(251, 191, 36, 0.55)');
+      rg.addColorStop(1.0, 'rgba(251, 191, 36, 0.0)');
+      g.fillStyle = rg;
+      g.beginPath(); g.arc(cx, cy, rad, 0, Math.PI * 2); g.fill();
+
+      // Secondary urban sprawl light specks around each hub
+      for (let k = 0; k < 18; k++) {
+        const sx = cx + (rng() - 0.5) * 44;
+        const sy = cy + (rng() - 0.5) * 28;
+        g.fillStyle = `rgba(255, 220, 115, ${(0.25 + rng() * 0.65).toFixed(2)})`;
+        g.fillRect(sx, sy, 2.2, 2.2);
+      }
+    }
+    return c;
+  }
+
+  // ===== PURE WEBGL2 3D GLOBE ENGINE =====
+  const glCanvas = document.getElementById('glCanvas');
+  const gl = glCanvas.getContext('webgl2', { antialias: true, alpha: false, preserveDrawingBuffer: true });
+  const hud2d = document.getElementById('globeHudCanvas');
+  const hctx = hud2d.getContext('2d');
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  function link(vs, fs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) console.error(gl.getProgramInfoLog(p));
+    return p;
+  }
+
+  function mat4Persp(fovy, asp, near, far) {
+    const f = 1 / Math.tan(fovy * 0.5), nf = 1 / (near - far);
+    return new Float32Array([f/asp,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,2*far*near*nf,0]);
+  }
+  function mat4Look(eye, ctr, up) {
+    let zx=eye[0]-ctr[0], zy=eye[1]-ctr[1], zz=eye[2]-ctr[2];
+    let l=Math.hypot(zx,zy,zz)||1; zx/=l; zy/=l; zz/=l;
+    let xx=up[1]*zz-up[2]*zy, xy=up[2]*zx-up[0]*zz, xz=up[0]*zy-up[1]*zx;
+    l=Math.hypot(xx,xy,xz)||1; xx/=l; xy/=l; xz/=l;
+    const yx=zy*xz-zz*xy, yy=zz*xx-zx*xz, yz=zx*xy-zy*xx;
+    return new Float32Array([
+      xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+      -(xx*eye[0]+xy*eye[1]+xz*eye[2]),
+      -(yx*eye[0]+yy*eye[1]+yz*eye[2]),
+      -(zx*eye[0]+zy*eye[1]+zz*eye[2]), 1
+    ]);
+  }
+  function mat4Mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c=0;c<4;c++) for (let r=0;r<4;r++)
+      o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
+    return o;
+  }
+
+  // 1) Deep Space Starfield Background
+  const bgProg = link(`#version 300 es
+    const vec2 P[3] = vec2[3](vec2(-1,-1), vec2(3,-1), vec2(-1,3));
+    out vec2 vUv;
+    void main() { vUv = P[gl_VertexID]*0.5+0.5; gl_Position = vec4(P[gl_VertexID],0.999,1.0); }
+  `, `#version 300 es
+    precision highp float;
+    in vec2 vUv;
+    uniform float uTime;
+    uniform float uAurora;
+    out vec4 fragColor;
+    float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+    void main() {
+      vec2 p = (vUv - 0.5) * vec2(1.1, 1.0);
+      float r = length(p);
+      vec3 col = mix(vec3(0.025, 0.055, 0.125), vec3(0.008, 0.014, 0.032), clamp(r * 1.65, 0.0, 1.0));
+      // Subtle atmospheric aura glow behind globe
+      col += vec3(0.08, 0.42, 0.78) * exp(-abs(r - 0.36) * 9.0) * 0.25;
+      col += vec3(0.18, 0.78, 0.62) * exp(-abs(r - 0.38) * 7.0) * uAurora * 0.26;
+      // Crisp distant stars
+      vec2 cell = floor(vUv * 150.0);
+      float h = hash(cell);
+      if (h > 0.992) {
+        vec2 f = fract(vUv * 150.0) - 0.5;
+        float tw = 0.6 + 0.4 * sin(uTime * 3.5 + h * 100.0);
+        col += vec3(0.72, 0.88, 1.0) * exp(-dot(f,f) * 52.0) * tw * 0.85;
+      }
+      fragColor = vec4(col, 1.0);
+    }
+  `);
+
+  // 2) 3D Earth Sphere Shader (Procedural 2K Texture + Specular Ocean + Fresnel Corona + Polar Aurora!)
+  const earthProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec2 aUv;
+    uniform mat4 uVP;
+    out vec3 vPos;
+    out vec2 vUv;
+    void main() {
+      vPos = aPos;
+      vUv = aUv;
+      gl_Position = uVP * vec4(aPos, 1.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec3 vPos;
+    in vec2 vUv;
+    uniform sampler2D uTex;
+    uniform vec3 uCamPos;
+    uniform float uTime;
+    uniform float uAurora;
+    uniform float uAlert;
+    out vec4 fragColor;
+
+    void main() {
+      vec3 N = normalize(vPos);
+      vec3 V = normalize(uCamPos - vPos);
+      vec3 L = normalize(vec3(1.6, 1.1, 1.8));
+      vec3 H = normalize(L + V);
+
+      vec3 tex = texture(uTex, vUv).rgb;
+      float diff = max(dot(N, L), 0.0);
+      float spec = pow(max(dot(N, H), 0.0), 48.0) * 0.35;
+      float fresnel = pow(1.0 - max(dot(N, V), 0.0), 2.8);
+
+      // Keep crisp night-cyber readability across the entire hemisphere
+      vec3 base = tex * (0.68 + diff * 0.62) + vec3(0.18, 0.65, 1.0) * spec;
+
+      // Subtle holographic scan-sweep pulse from south to north
+      float scan = exp(-pow(fract(vUv.y + uTime * 0.12) * 24.0, 2.0)) * 0.14;
+      base += vec3(0.22, 0.82, 1.0) * scan;
+
+      // Polar Aurora Borealis / Australis silky geomagnetic curtain shimmer!
+      float absLat = abs(N.y);
+      float aurBand = exp(-pow((absLat - 0.86) * 15.0, 2.0));
+      float wave = 0.5 + 0.5 * sin(atan(N.x, N.z) * 7.0 + uTime * 3.8 + sin(uTime * 1.9 + N.x * 5.0) * 2.0);
+      vec3 aurCol = mix(vec3(0.0, 0.96, 0.64), vec3(0.66, 0.28, 1.0), wave);
+      base += aurCol * aurBand * (0.40 + wave * 0.72) * uAurora * 1.08;
+
+      // Atmospheric blue-cyan Fresnel rim glow (shifts subtle crimson tint during DDoS peak!)
+      vec3 rimCol = mix(vec3(0.14, 0.72, 1.0), vec3(1.0, 0.25, 0.45), uAlert * 0.35);
+      base += rimCol * fresnel * 1.35;
+
+      fragColor = vec4(base, 1.0);
+    }
+  `);
+
+  // 3) Outer Volumetric Atmosphere Shell
+  const atmoProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    uniform mat4 uVP;
+    out vec3 vPos;
+    void main() {
+      vPos = aPos;
+      gl_Position = uVP * vec4(aPos * 1.065, 1.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec3 vPos;
+    uniform vec3 uCamPos;
+    uniform float uAurora;
+    out vec4 fragColor;
+    void main() {
+      vec3 N = normalize(vPos);
+      vec3 V = normalize(uCamPos - vPos * 1.065);
+      float rim = pow(clamp(1.0 - max(dot(N, V), 0.0), 0.0, 1.0), 3.2);
+      vec3 col = mix(vec3(0.16, 0.74, 1.0), vec3(0.15, 0.96, 0.75), uAurora * 0.45);
+      fragColor = vec4(col, rim * 0.68);
+    }
+  `);
+
+  // 4) 3D Additive Lines Shader (Geodesic Arcs, LEO Orbital Rings, Inter-Sat Laser Mesh, Shockwave Rings)
+  const lineProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec4 aCol;
+    uniform mat4 uVP;
+    out vec4 vCol;
+    void main() { vCol = aCol; gl_Position = uVP * vec4(aPos, 1.0); }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vCol;
+    out vec4 fragColor;
+    void main() { fragColor = vCol; }
+  `);
+
+  // 5) 3D Additive Glowing Nodes Shader (Hub Beacons, Flying Route Packets, LEO Satellites, Shield Sparks)
+  const ptProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec4 aCol;
+    layout(location=2) in float aSize;
+    uniform mat4 uVP;
+    out vec4 vCol;
+    void main() {
+      vCol = aCol;
+      gl_Position = uVP * vec4(aPos, 1.0);
+      gl_PointSize = clamp(aSize * (3.2 / max(0.8, gl_Position.w)), 2.0, 48.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vCol;
+    out vec4 fragColor;
+    void main() {
+      vec2 d = gl_PointCoord - 0.5;
+      float r2 = dot(d, d);
+      if (r2 > 0.25) discard;
+      float core = exp(-r2 * 24.0);
+      float halo = exp(-r2 * 7.5);
+      fragColor = vec4(vCol.rgb * (0.9 + halo) + vec3(core * 0.85), vCol.a * clamp(halo * 1.2, 0.0, 1.0));
+    }
+  `);
+
+  // Build 64x48 High-Res UV Sphere Geometry matching equirectangular llToVec3!
+  const LON_SEG = 64, LAT_SEG = 48;
+  const sVerts = [], sIdx = [];
+  for (let j = 0; j <= LAT_SEG; j++) {
+    const v = j / LAT_SEG; // 0 = North Pole (+90), 1 = South Pole (-90)
+    const lat = 90 - v * 180;
+    for (let i = 0; i <= LON_SEG; i++) {
+      const u = i / LON_SEG; // 0 = -180, 1 = +180
+      const lon = -180 + u * 360;
+      const [x, y, z] = llToVec3(lon, lat, 1.0);
+      sVerts.push(x, y, z, u, v);
+    }
+  }
+  for (let j = 0; j < LAT_SEG; j++) {
+    for (let i = 0; i < LON_SEG; i++) {
+      const a = j * (LON_SEG + 1) + i;
+      const b = a + 1, c = a + LON_SEG + 1, d = c + 1;
+      sIdx.push(a, c, b, b, c, d);
+    }
+  }
+  const sphereVao = gl.createVertexArray();
+  const sphereVbo = gl.createBuffer();
+  const sphereIbo = gl.createBuffer();
+  gl.bindVertexArray(sphereVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, sphereVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sVerts), gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereIbo);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(sIdx), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+  gl.bindVertexArray(null);
+
+  // Upload Procedural 2048x1024 Earth Texture
+  const earthTexCanvas = buildEarthTextureCanvas();
+  const earthTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, earthTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, earthTexCanvas);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  const bgVao = gl.createVertexArray();
+
+  // Dynamic Line & Point Buffers
+  const MAX_LINES = 16000;
+  const lineBuf = new Float32Array(MAX_LINES * 7);
+  const lineVao = gl.createVertexArray();
+  const lineVbo = gl.createBuffer();
+  gl.bindVertexArray(lineVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, lineBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 28, 12);
+  gl.bindVertexArray(null);
+
+  const MAX_PTS = 1200;
+  const ptBuf = new Float32Array(MAX_PTS * 8);
+  const ptVao = gl.createVertexArray();
+  const ptVbo = gl.createBuffer();
+  gl.bindVertexArray(ptVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, ptVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, ptBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 32, 12);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 32, 28);
+  gl.bindVertexArray(null);
+
+  // ===== PRECOMPUTE 3D GREAT-CIRCLE ROUTES & 72 LEO SATELLITES =====
+  function buildGeodesicPoints(pA, pB, segs = 28, lift = 0.24) {
+    const pts = [];
+    for (let i = 0; i <= segs; i++) {
+      const t = i / segs;
+      let x = lerp(pA[0], pB[0], t);
+      let y = lerp(pA[1], pB[1], t);
+      let z = lerp(pA[2], pB[2], t);
+      const l = Math.hypot(x, y, z) || 1;
+      const h = 1.008 + Math.sin(t * Math.PI) * lift;
+      pts.push([(x/l)*h, (y/l)*h, (z/l)*h]);
+    }
+    return pts;
+  }
+
+  // Normal Global Routes (28 rich global corridors)
+  const ROUTE_PAIRS = [
+    [0,1],[0,5],[0,7],[0,8],[0,4],[0,6],[0,13],
+    [1,2],[1,13],[1,3],[1,7],
+    [2,3],[2,4],[2,10],[2,11],[2,12],
+    [3,4],[3,6],[3,11],[3,12],
+    [4,5],[4,6],[4,9],[4,12],
+    [5,7],[5,9],[5,6],[6,9]
+  ];
+  const routes = ROUTE_PAIRS.map(([a, b], idx) => {
+    const pA = llToVec3(HUBS[a].lon, HUBS[a].lat, 1.0);
+    const pB = llToVec3(HUBS[b].lon, HUBS[b].lat, 1.0);
+    const chord = Math.hypot(pA[0]-pB[0], pA[1]-pB[1], pA[2]-pB[2]);
+    return {
+      a, b,
+      pts: buildGeodesicPoints(pA, pB, 28, 0.08 + chord * 0.14),
+      phase: (idx * 0.17) % 1.0,
+      speed: 0.22 + (idx % 5) * 0.055,
+      gold: idx % 3 === 0
+    };
+  });
+
+  // DDoS Volumetric Attack Arcs targeting Frankfurt (4) & New York (2)
+  const ddosSources = [0, 1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 3];
+  const ddosArcs = [];
+  for (let i = 0; i < ddosSources.length; i++) {
+    const src = ddosSources[i];
+    const dst = (i % 2 === 0) ? 4 : 2;
+    if (src === dst) continue;
+    const pA = llToVec3(HUBS[src].lon, HUBS[src].lat, 1.0);
+    const pB = llToVec3(HUBS[dst].lon, HUBS[dst].lat, 1.0);
+    const chord = Math.hypot(pA[0]-pB[0], pA[1]-pB[1], pA[2]-pB[2]);
+    ddosArcs.push({
+      src, dst,
+      pts: buildGeodesicPoints(pA, pB, 28, 0.12 + chord * 0.18),
+      phase: (i * 0.13) % 1.0,
+      speed: 0.55 + (i % 4) * 0.14
+    });
+  }
+
+  // 72 Orbiting LEO Satellites across 6 Inclined Planes
+  const sats = [];
+  const PLANES = 6, PER_PLANE = 12;
+  for (let p = 0; p < PLANES; p++) {
+    const raan = (p / PLANES) * Math.PI * 2;
+    const inc = 0.96 + (p % 2) * 0.14; // ~55-63 deg Starlink inclination
+    for (let s = 0; s < PER_PLANE; s++) {
+      sats.push({
+        plane: p,
+        raan, inc,
+        u0: (s / PER_PLANE) * Math.PI * 2 + p * 0.22,
+        alt: 1.155 + (p % 2) * 0.032,
+        spd: 0.28 + (p % 2) * 0.04,
+        pos: [0,0,0]
+      });
+    }
+  }
+
+  function evalSatPos(sat, t) {
+    const u = sat.u0 + t * sat.spd;
+    const cx = Math.cos(u) * sat.alt;
+    const cy = Math.sin(u) * sat.alt;
+    // Rotate by inclination around X, then RAAN around Y
+    const y1 = cy * Math.sin(sat.inc);
+    const z1 = cy * Math.cos(sat.inc);
+    const cR = Math.cos(sat.raan), sR = Math.sin(sat.raan);
+    return [cx * cR + z1 * sR, y1, -cx * sR + z1 * cR];
+  }
+
+  // ===== SIMULATION & CHOREOGRAPHY STATE =====
+  let simTime = 0.0;
+  const isRecording = Boolean(window.__RECORDING__);
+
+  // Camera spherical coordinates (lonDeg, latDeg, dist — full sphere + atmosphere + LEO rings cleanly framed!)
+  let camLon = 126.0;
+  let camLat = 24.0;
+  let camDist = 3.24;
+  let dragging = false, lastMX = 0, lastMY = 0;
+
+  let ddosLevel = 0.0, targetDdos = 0.0;
+  let shieldLevel = 0.0, targetShield = 0.0;
+  let meshLevel = 0.25, targetMesh = 0.25;
+  let auroraLevel = 0.0, targetAurora = 0.0;
+
+  const logs = [];
+  function pushLog(text, cls = '') {
+    logs.unshift({ text, cls });
+    if (logs.length > 8) logs.pop();
+  }
+
+  // Bandwidth Spectrum History (60 samples)
+  const trafficHist = [];
+  const threatHist = [];
+  for (let i = 0; i < 64; i++) {
+    trafficHist.push(78 + Math.sin(i * 0.25) * 6 + rng() * 4);
+    threatHist.push(2 + rng() * 2.5);
+  }
+
+  // Pre-seed crisp initial telemetry logs
+  pushLog('[SYNC] 72 LEO SATELLITES LOCKED · 6 PLANES', 'green');
+  pushLog('[LINK] TYO ↔ SFO SUBSEA 14.2 Tbps · 11ms', '');
+  pushLog('[LINK] LON ↔ NYC TRANSATLANTIC 18.6 Tbps', '');
+  pushLog('[CORE] PROCEDURAL 2K DIGITAL TWIN ONLINE', 'green');
+  pushLog('[MESH] LASER CROSS-LINKS STANDBY', 'violet');
+  pushLog('[GEO]  SOLAR FLUX NOMINAL · KP 2.1', '');
+
+  let activeBanner = { text: '', cls: '', ttl: 0 };
+  let curX = 640, curY = 360, curOp = 0, cPulse = 0, pressedId = null;
+
+  const trig = { ddos: false, shield: false, mesh: false, aurora: false, pacific: false };
+
+  function btnCenter(id) {
+    const r = document.getElementById(id).getBoundingClientRect();
+    const rr = document.getElementById('appRoot').getBoundingClientRect();
+    return { x: r.left - rr.left + r.width * 0.5, y: r.top - rr.top + r.height * 0.5 };
+  }
+
+  function triggerDdosMode() {
+    targetDdos = 1.0; targetShield = 0.0;
+    activeBanner = { text: '⚡ VOLUMETRIC DDoS WAVE · 4.82 Tbps TARGETING FRANKFURT & NYC', cls: 'b-red', ttl: 3.1 };
+    pushLog('[WARN] DDoS SPIKE 4.82 Tbps -> FRA / NYC', 'red');
+    pushLog('[WARN] 12 GLOBAL BOTNET VECTORS DETECTED', 'red');
+  }
+  function triggerShieldMode() {
+    targetShield = 1.0; targetDdos = 0.22;
+    activeBanner = { text: '🛡 AI EDGE SHIELD ENGAGED · 99.94% ATTACK TRAFFIC NEUTRALIZED', cls: 'b-cyan', ttl: 3.2 };
+    pushLog('[SHLD] AI SCRUBBER ACTIVE · FRA & NYC SAFE', 'green');
+    pushLog('[MITIG] 4.81 Tbps DROPPED · 0.0ms IMPACT', 'green');
+  }
+  function triggerMeshAurora() {
+    targetDdos = 0.0; targetShield = 0.0;
+    targetMesh = 1.0; targetAurora = 1.0;
+    activeBanner = { text: '◈ LEO LASER MESH LOCKED · X2.4 SOLAR FLARE AURORA BOREALIS', cls: 'b-violet', ttl: 4.5 };
+    pushLog('[MESH] 72 LEO INTER-SATELLITE LASERS LIVE', 'violet');
+    pushLog('[GEO]  X2.4 SOLAR FLARE · KP 7.4 AURORA', 'violet');
+  }
+
+  function runChoreography(t, dt) {
+    pressedId = null;
+    cPulse = Math.max(0, cPulse - dt * 2.8);
+
+    const pDdos = btnCenter('btnDdos');
+    const pMesh = btnCenter('btnMesh');
+    const pAur  = btnCenter('btnAurora');
+
+    if (t < 4.1) {
+      curOp = ease((t - 0.8) / 0.8) * 0.7;
+      curX = 520 + ease(t / 4.1) * 180;
+      curY = 340 - Math.sin(t * 0.7) * 45;
+    } else if (t < 5.45) {
+      curOp = 1;
+      const u = ease((t - 4.1) / 1.3);
+      curX = lerp(700, pDdos.x, u);
+      curY = lerp(320, pDdos.y, u);
+    } else if (t < 5.95) {
+      curOp = 1; curX = pDdos.x; curY = pDdos.y;
+      pressedId = 'btnDdos';
+      if (!trig.ddos) { trig.ddos = true; cPulse = 1.0; triggerDdosMode(); }
+    } else if (t < 10.6) {
+      if (t >= 8.55 && !trig.shield) { trig.shield = true; triggerShieldMode(); }
+      curOp = Math.max(0.15, curOp - dt * 1.2);
+    } else if (t < 11.95) {
+      curOp = 1;
+      const u = ease((t - 10.6) / 1.3);
+      curX = lerp(pDdos.x, pMesh.x, u);
+      curY = lerp(pDdos.y, pMesh.y, u);
+    } else if (t < 12.45) {
+      curOp = 1; curX = pMesh.x; curY = pMesh.y;
+      pressedId = 'btnMesh';
+      if (!trig.mesh) { trig.mesh = true; cPulse = 1.0; triggerMeshAurora(); }
+    } else if (t < 13.0) {
+      const u = ease((t - 12.45) / 0.45);
+      curX = lerp(pMesh.x, pAur.x, u);
+      curY = lerp(pMesh.y, pAur.y, u);
+      if (t >= 12.8 && !trig.aurora) { trig.aurora = true; cPulse = 1.0; pressedId = 'btnAurora'; }
+    } else {
+      curOp = Math.max(0, curOp - dt * 1.4);
+      if (t >= 18.2 && !trig.pacific) {
+        trig.pacific = true;
+        targetAurora = 0.45;
+        targetMesh = 0.85;
+        activeBanner = { text: '🌐 TRANS-PACIFIC HYPERSONIC & LEO CORRIDOR · TYO ↔ SFO', cls: 'b-gold', ttl: 4.5 };
+        pushLog('[PASS] PACIFIC ORBIT LOCK · TYO ↔ SFO 10ms', 'green');
+      }
+    }
+
+    // Majestic Cinematic Camera Flight across Real Earth Continents (full sphere + LEO constellation cleanly framed!)
+    if (!dragging) {
+      if (t < 5.5) {
+        // Asia-Pacific -> sweeping smoothly toward Europe
+        const u = ease(t / 5.5);
+        camLon = lerp(128.0, 26.0, u);
+        camLat = lerp(22.0, 36.0, u);
+        camDist = lerp(3.26, 3.16, u);
+      } else if (t < 12.0) {
+        // Dramatic focus over Europe & Trans-Atlantic (Frankfurt / London / NYC all in view!)
+        const u = ease((t - 5.5) / 6.5);
+        camLon = lerp(26.0, -34.0, u);
+        camLat = lerp(36.0, 44.0, u);
+        camDist = lerp(3.16, 3.04, Math.sin(u * Math.PI));
+      } else if (t < 18.0) {
+        // Tilt up toward Northern Polar Crown to showcase 3D Aurora + LEO Laser Mesh!
+        const u = ease((t - 12.0) / 6.0);
+        camLon = lerp(-34.0, -118.0, u);
+        camLat = lerp(44.0, 62.0, Math.sin(u * Math.PI * 0.85));
+        camDist = lerp(3.14, 3.36, Math.sin(u * Math.PI));
+      } else {
+        // Heroic Trans-Pacific Orbit Pass: San Francisco -> Japan -> Wide Hero Globe!
+        const u = ease((t - 18.0) / 6.0);
+        camLon = lerp(-118.0, -225.0, u);
+        camLat = lerp(52.0, 24.0, u);
+        camDist = lerp(3.18, 3.28, u);
+      }
+    }
+  }
+
+  let specAccum = 0;
+  function stepSim(dt) {
+    simTime += dt;
+    runChoreography(simTime, dt);
+
+    ddosLevel   += (targetDdos   - ddosLevel)   * Math.min(1, dt * 3.8);
+    shieldLevel += (targetShield - shieldLevel) * Math.min(1, dt * 3.8);
+    meshLevel   += (targetMesh   - meshLevel)   * Math.min(1, dt * 3.2);
+    auroraLevel += (targetAurora - auroraLevel) * Math.min(1, dt * 2.8);
+    if (activeBanner.ttl > 0) activeBanner.ttl = Math.max(0, activeBanner.ttl - dt);
+
+    // Update 72 satellite positions
+    for (const s of sats) s.pos = evalSatPos(s, simTime);
+
+    // Update live bandwidth spectrum
+    specAccum += dt;
+    if (specAccum >= 0.14) {
+      specAccum -= 0.14;
+      const baseT = 82 + Math.sin(simTime * 1.4) * 7 + meshLevel * 18 + rng() * 4;
+      const thrT  = 2.5 + ddosLevel * 54 + shieldLevel * 8 + rng() * 3.5;
+      trafficHist.push(baseT); if (trafficHist.length > 64) trafficHist.shift();
+      threatHist.push(thrT);   if (threatHist.length > 64) threatHist.shift();
+    }
+  }
+
+  // ===== RENDER 3D GLOBE + ARCS + LEO LASER MESH + 3D HUB CALLOUTS =====
+  let lastVP = new Float32Array(16);
+  let lastCamPos = [0, 0, 3];
+
+  function renderWebGL() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.floor(glCanvas.clientWidth * dpr);
+    const h = Math.floor(glCanvas.clientHeight * dpr);
+    if (glCanvas.width !== w || glCanvas.height !== h) {
+      glCanvas.width = w; glCanvas.height = h;
+      hud2d.width = w; hud2d.height = h;
+    }
+
+    gl.viewport(0, 0, w, h);
+    gl.clearColor(0.01, 0.02, 0.05, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    const camPos = llToVec3(camLon, camLat, camDist);
+    lastCamPos = camPos;
+    const proj = mat4Persp(0.68, w / Math.max(1, h), 0.1, 40.0);
+    const view = mat4Look(camPos, [0, 0, 0], [0, 1, 0]);
+    const vp = mat4Mul(proj, view);
+    lastVP = vp;
+
+    // 1. Background Starfield & Corona Glow
+    gl.disable(gl.DEPTH_TEST);
+    gl.useProgram(bgProg);
+    gl.uniform1f(gl.getUniformLocation(bgProg, 'uTime'), simTime);
+    gl.uniform1f(gl.getUniformLocation(bgProg, 'uAurora'), auroraLevel);
+    gl.bindVertexArray(bgVao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // 2. Solid 3D Earth Sphere
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.useProgram(earthProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(earthProg, 'uVP'), false, vp);
+    gl.uniform3fv(gl.getUniformLocation(earthProg, 'uCamPos'), camPos);
+    gl.uniform1f(gl.getUniformLocation(earthProg, 'uTime'), simTime);
+    gl.uniform1f(gl.getUniformLocation(earthProg, 'uAurora'), auroraLevel);
+    gl.uniform1f(gl.getUniformLocation(earthProg, 'uAlert'), ddosLevel);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, earthTex);
+    gl.uniform1i(gl.getUniformLocation(earthProg, 'uTex'), 0);
+    gl.bindVertexArray(sphereVao);
+    gl.drawElements(gl.TRIANGLES, sIdx.length, gl.UNSIGNED_SHORT, 0);
+
+    // 3. Outer Atmospheric Fresnel Shell
+    gl.depthMask(false);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+    gl.useProgram(atmoProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(atmoProg, 'uVP'), false, vp);
+    gl.uniform3fv(gl.getUniformLocation(atmoProg, 'uCamPos'), camPos);
+    gl.uniform1f(gl.getUniformLocation(atmoProg, 'uAurora'), auroraLevel);
+    gl.bindVertexArray(sphereVao);
+    gl.drawElements(gl.TRIANGLES, sIdx.length, gl.UNSIGNED_SHORT, 0);
+
+    // 4. Build Dynamic 3D Lines (Routes, DDoS Arcs, LEO Orbital Rings, Inter-Sat Laser Mesh, Surface Pulse Rings!)
+    let lv = 0, pv = 0;
+    function pushSeg(a, b, r0,g0,b0,a0, r1,g1,b1,a1) {
+      if (lv + 2 >= MAX_LINES) return;
+      let o = lv * 7;
+      lineBuf[o++]=a[0]; lineBuf[o++]=a[1]; lineBuf[o++]=a[2]; lineBuf[o++]=r0; lineBuf[o++]=g0; lineBuf[o++]=b0; lineBuf[o++]=a0;
+      lineBuf[o++]=b[0]; lineBuf[o++]=b[1]; lineBuf[o++]=b[2]; lineBuf[o++]=r1; lineBuf[o++]=g1; lineBuf[o++]=b1; lineBuf[o++]=a1;
+      lv += 2;
+    }
+    function pushPt(p, r,g,b,a, sz) {
+      if (pv >= MAX_PTS) return;
+      let o = pv * 8;
+      ptBuf[o++]=p[0]; ptBuf[o++]=p[1]; ptBuf[o++]=p[2];
+      ptBuf[o++]=r; ptBuf[o++]=g; ptBuf[o++]=b; ptBuf[o++]=a; ptBuf[o++]=sz * dpr;
+      pv++;
+    }
+
+    // 4a) Normal Global Great-Circle Routes + Racing Packets
+    const routeDim = 1.0 - ddosLevel * 0.45;
+    for (const rt of routes) {
+      const col = rt.gold ? [0.98, 0.78, 0.22] : [0.18, 0.78, 1.0];
+      const pts = rt.pts;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const edgeFade = Math.sin((i + 0.5) / pts.length * Math.PI);
+        const al = (0.14 + edgeFade * 0.34) * routeDim;
+        pushSeg(pts[i], pts[i+1], col[0],col[1],col[2],al, col[0],col[1],col[2],al);
+      }
+      // 2 racing luminous packets per corridor!
+      for (let pk = 0; pk < 2; pk++) {
+        const u = (rt.phase + simTime * rt.speed + pk * 0.5) % 1.0;
+        const fi = u * (pts.length - 1);
+        const i0 = Math.floor(fi), i1 = Math.min(pts.length - 1, i0 + 1), f = fi - i0;
+        const pos = [lerp(pts[i0][0], pts[i1][0], f), lerp(pts[i0][1], pts[i1][1], f), lerp(pts[i0][2], pts[i1][2], f)];
+        pushPt(pos, col[0], col[1], col[2], 0.95 * routeDim, rt.gold ? 8.5 : 7.0);
+      }
+    }
+
+    // 4b) DDoS Volumetric Attack Arcs (Triple-glow Crimson -> Neutralized Cyan during Shield!)
+    if (ddosLevel > 0.03) {
+      for (const atk of ddosArcs) {
+        const pts = atk.pts;
+        const headU = (atk.phase + simTime * atk.speed) % 1.0;
+        for (let i = 0; i < pts.length - 1; i++) {
+          const t0 = i / (pts.length - 1);
+          const pulse = Math.exp(-Math.pow((t0 - headU) * 4.5, 2.0));
+          const rC = lerp(1.0, 0.08, shieldLevel * 0.85);
+          const gC = lerp(0.16, 0.98, shieldLevel * 0.85);
+          const bC = lerp(0.38, 0.78, shieldLevel * 0.85);
+          const al = clamp((0.42 + pulse * 0.85) * ddosLevel, 0, 1);
+          pushSeg(pts[i], pts[i+1], rC,gC,bC,al, rC,gC,bC,al);
+          // Slight radial double-stroke for bold laser-arc visibility
+          const p0b = [pts[i][0]*1.006, pts[i][1]*1.006, pts[i][2]*1.006];
+          const p1b = [pts[i+1][0]*1.006, pts[i+1][1]*1.006, pts[i+1][2]*1.006];
+          pushSeg(p0b, p1b, rC,gC,bC,al*0.75, rC,gC,bC,al*0.75);
+        }
+        const hi = Math.floor(headU * (pts.length - 1));
+        const pH = pts[hi];
+        pushPt(pH, lerp(1.0, 0.0, shieldLevel), lerp(0.22, 0.98, shieldLevel), lerp(0.42, 0.72, shieldLevel), ddosLevel, 17.0);
+      }
+    }
+
+    // 4c) 3D Surface Shockwave / Shield Dome Rings hugging Earth's curvature!
+    function drawSurfaceRing(lon, lat, radDeg, col, alpha) {
+      const c = llToVec3(lon, lat, 1.012);
+      // Orthonormal tangent basis on sphere
+      const up = Math.abs(c[1]) > 0.9 ? [1,0,0] : [0,1,0];
+      let tx = up[1]*c[2]-up[2]*c[1], ty = up[2]*c[0]-up[0]*c[2], tz = up[0]*c[1]-up[1]*c[0];
+      let tl = Math.hypot(tx,ty,tz)||1; tx/=tl; ty/=tl; tz/=tl;
+      const bx = c[1]*tz-c[2]*ty, by = c[2]*tx-c[0]*tz, bz = c[0]*ty-c[1]*tx;
+      const rad = (radDeg * Math.PI) / 180;
+      const segs = 28;
+      let prev = null;
+      for (let i = 0; i <= segs; i++) {
+        const a = (i / segs) * Math.PI * 2;
+        const ca = Math.cos(a) * rad, sa = Math.sin(a) * rad;
+        let px = c[0] + tx*ca + bx*sa;
+        let py = c[1] + ty*ca + by*sa;
+        let pz = c[2] + tz*ca + bz*sa;
+        const l = Math.hypot(px,py,pz)||1;
+        const cur = [(px/l)*1.016, (py/l)*1.016, (pz/l)*1.016];
+        if (prev) pushSeg(prev, cur, col[0],col[1],col[2],alpha, col[0],col[1],col[2],alpha);
+        prev = cur;
+      }
+    }
+
+    // Expanding Attack / Shield Rings at Frankfurt (4) & New York (2)
+    for (const hIdx of [4, 2]) {
+      const hb = HUBS[hIdx];
+      if (ddosLevel > 0.05) {
+        for (let r = 0; r < 2; r++) {
+          const u = (simTime * 0.95 + r * 0.5) % 1.0;
+          drawSurfaceRing(hb.lon, hb.lat, 2.5 + u * 16.0, [1.0, 0.20, 0.42], (1.0 - u) * 0.92 * ddosLevel);
+        }
+      }
+      if (shieldLevel > 0.05) {
+        for (let r = 0; r < 2; r++) {
+          const u = (simTime * 0.72 + r * 0.5) % 1.0;
+          drawSurfaceRing(hb.lon, hb.lat, 3.0 + u * 20.0, [0.0, 0.96, 0.68], (1.0 - u) * 0.95 * shieldLevel);
+        }
+      }
+    }
+
+    // 4d) 6 Orbital Plane Rings + 72 LEO Satellites + Glowing Inter-Satellite Laser Cross-Links!
+    for (let p = 0; p < PLANES; p++) {
+      const s0 = sats[p * PER_PLANE];
+      const ringA = 0.07 + meshLevel * 0.16;
+      let prev = null;
+      for (let k = 0; k <= 48; k++) {
+        const fakeSat = { raan: s0.raan, inc: s0.inc, u0: (k / 48) * Math.PI * 2, alt: s0.alt, spd: 0 };
+        const cur = evalSatPos(fakeSat, 0);
+        if (prev) pushSeg(prev, cur, 0.22, 0.72, 1.0, ringA, 0.22, 0.72, 1.0, ringA);
+        prev = cur;
+      }
+    }
+    for (let i = 0; i < sats.length; i++) {
+      const s = sats[i];
+      pushPt(s.pos, 0.98, 0.85, 0.35, 0.55 + meshLevel * 0.45, 5.5 + meshLevel * 4.0);
+      // Inter-satellite laser mesh links (intra-plane + cross-plane!)
+      if (meshLevel > 0.12) {
+        const nextInPlane = sats[s.plane * PER_PLANE + ((i + 1) % PER_PLANE)];
+        pushSeg(s.pos, nextInPlane.pos, 0.98, 0.78, 0.24, meshLevel * 0.48, 0.22, 0.92, 1.0, meshLevel * 0.48);
+        const crossPlane = sats[((s.plane + 1) % PLANES) * PER_PLANE + (i % PER_PLANE)];
+        const dCross = Math.hypot(s.pos[0]-crossPlane.pos[0], s.pos[1]-crossPlane.pos[1], s.pos[2]-crossPlane.pos[2]);
+        if (dCross < 0.88) {
+          pushSeg(s.pos, crossPlane.pos, 0.15, 0.95, 0.82, meshLevel * 0.38, 0.65, 0.42, 1.0, meshLevel * 0.38);
+        }
+      }
+    }
+
+    // 4e) Glowing Hub Beacons on Earth's Surface
+    for (let i = 0; i < HUBS.length; i++) {
+      const h = HUBS[i];
+      const pos = llToVec3(h.lon, h.lat, 1.012);
+      const isTarget = (i === 4 || i === 2);
+      let c = h.major ? [0.0, 0.96, 0.68] : [0.35, 0.78, 1.0];
+      let sz = h.major ? 11.5 : 7.5;
+      if (isTarget && ddosLevel > 0.4) { c = [1.0, 0.22, 0.44]; sz = 16.5; }
+      else if (isTarget && shieldLevel > 0.4) { c = [0.0, 0.98, 0.78]; sz = 15.5; }
+      pushPt(pos, c[0], c[1], c[2], 0.98, sz);
+    }
+
+    // Draw Lines
+    if (lv > 0) {
+      gl.useProgram(lineProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(lineProg, 'uVP'), false, vp);
+      gl.bindVertexArray(lineVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, lineBuf.subarray(0, lv * 7));
+      gl.drawArrays(gl.LINES, 0, lv);
+    }
+    // Draw Glowing Points
+    if (pv > 0) {
+      gl.useProgram(ptProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(ptProg, 'uVP'), false, vp);
+      gl.bindVertexArray(ptVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, ptVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, ptBuf.subarray(0, pv * 8));
+      gl.drawArrays(gl.POINTS, 0, pv);
+    }
+
+    gl.depthMask(true);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.bindVertexArray(null);
+
+    // 5. Crisp 2D Projected Hub Callout Tags on Front Hemisphere of 3D Globe!
+    hctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const W2 = hud2d.clientWidth, H2 = hud2d.clientHeight;
+    hctx.clearRect(0, 0, W2, H2);
+
+    const camNorm = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1;
+    const cx = camPos[0]/camNorm, cy = camPos[1]/camNorm, cz = camPos[2]/camNorm;
+
+    for (let i = 0; i < 8; i++) {
+      const hb = HUBS[i];
+      const p = llToVec3(hb.lon, hb.lat, 1.02);
+      // Front-hemisphere visibility check (dot with camera direction)
+      const facing = p[0]*cx + p[1]*cy + p[2]*cz;
+      if (facing < 0.24) continue;
+
+      const x = vp[0]*p[0]+vp[4]*p[1]+vp[8]*p[2]+vp[12];
+      const y = vp[1]*p[0]+vp[5]*p[1]+vp[9]*p[2]+vp[13];
+      const ww = vp[3]*p[0]+vp[7]*p[1]+vp[11]*p[2]+vp[15];
+      if (ww <= 0.1) continue;
+      const sx = (x / ww * 0.5 + 0.5) * W2;
+      const sy = (0.5 - y / ww * 0.5) * H2;
+      if (sx < 30 || sx > W2 - 90 || sy < 95 || sy > H2 - 58) continue;
+
+      const isTgt = (i === 4 || i === 2);
+      const tagCol = (isTgt && ddosLevel > 0.4) ? '#ff3366' : ((isTgt && shieldLevel > 0.4) ? '#00f5a0' : '#38bdf8');
+      const alpha = clamp((facing - 0.24) * 3.0, 0, 1);
+
+      hctx.save();
+      hctx.globalAlpha = alpha;
+      hctx.strokeStyle = tagCol;
+      hctx.lineWidth = 1.1;
+      hctx.beginPath(); hctx.moveTo(sx, sy); hctx.lineTo(sx + 10, sy - 10); hctx.lineTo(sx + 18, sy - 10); hctx.stroke();
+
+      const lbl = (isTgt && ddosLevel > 0.4) ? `${hb.code} · DDoS!`
+                : ((isTgt && shieldLevel > 0.4) ? `${hb.code} · SHIELD` : hb.code);
+      hctx.font = 'bold 9.5px "Cascadia Code", Consolas, monospace';
+      const tw = hctx.measureText(lbl).width + 10;
+      hctx.fillStyle = 'rgba(4, 10, 22, 0.84)';
+      hctx.fillRect(sx + 18, sy - 18, tw, 15);
+      hctx.strokeRect(sx + 18, sy - 18, tw, 15);
+      hctx.fillStyle = tagCol;
+      hctx.fillText(lbl, sx + 23, sy - 7.5);
+      hctx.restore();
+    }
+  }
+
+  // ===== 2D CANVASES: BANDWIDTH SPECTRUM & POLAR CONSTELLATION RADAR =====
+  const specCanvas = document.getElementById('specCanvas');
+  const sctx = specCanvas.getContext('2d');
+  const orbitCanvas = document.getElementById('orbitCanvas');
+  const octx = orbitCanvas.getContext('2d');
+
+  function renderSpectrum() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = specCanvas.clientWidth, H = specCanvas.clientHeight;
+    if (specCanvas.width !== Math.floor(W*dpr) || specCanvas.height !== Math.floor(H*dpr)) {
+      specCanvas.width = Math.floor(W*dpr); specCanvas.height = Math.floor(H*dpr);
+    }
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    sctx.clearRect(0, 0, W, H);
+
+    const padL = 8, padR = 8, padT = 14, padB = 18;
+    const cw = W - padL - padR, ch = H - padT - padB;
+    const xOf = (i) => padL + (i / (trafficHist.length - 1)) * cw;
+    const yOf = (v) => padT + (1 - clamp(v / 130, 0, 1)) * ch;
+
+    sctx.strokeStyle = 'rgba(56,189,248,0.09)';
+    sctx.lineWidth = 1;
+    for (let i = 0; i <= 3; i++) {
+      const y = padT + (ch * i) / 3;
+      sctx.beginPath(); sctx.moveTo(padL, y); sctx.lineTo(W - padR, y); sctx.stroke();
+    }
+
+    // Global Throughput Area (Cyan-Emerald)
+    const g1 = sctx.createLinearGradient(0, padT, 0, padT + ch);
+    g1.addColorStop(0, 'rgba(0,245,160,0.34)');
+    g1.addColorStop(1, 'rgba(0,245,160,0.02)');
+    sctx.beginPath();
+    trafficHist.forEach((v, i) => { if (i===0) sctx.moveTo(xOf(i), yOf(v)); else sctx.lineTo(xOf(i), yOf(v)); });
+    sctx.lineTo(xOf(trafficHist.length-1), padT+ch); sctx.lineTo(xOf(0), padT+ch); sctx.closePath();
+    sctx.fillStyle = g1; sctx.fill();
+    sctx.beginPath();
+    trafficHist.forEach((v, i) => { if (i===0) sctx.moveTo(xOf(i), yOf(v)); else sctx.lineTo(xOf(i), yOf(v)); });
+    sctx.strokeStyle = '#00f5a0'; sctx.lineWidth = 1.6; sctx.stroke();
+
+    // Threat / Blocked Traffic Area (Crimson)
+    const g2 = sctx.createLinearGradient(0, padT, 0, padT + ch);
+    g2.addColorStop(0, 'rgba(255,51,102,0.52)');
+    g2.addColorStop(1, 'rgba(255,51,102,0.04)');
+    sctx.beginPath();
+    threatHist.forEach((v, i) => { if (i===0) sctx.moveTo(xOf(i), yOf(v)); else sctx.lineTo(xOf(i), yOf(v)); });
+    sctx.lineTo(xOf(threatHist.length-1), padT+ch); sctx.lineTo(xOf(0), padT+ch); sctx.closePath();
+    sctx.fillStyle = g2; sctx.fill();
+    sctx.beginPath();
+    threatHist.forEach((v, i) => { if (i===0) sctx.moveTo(xOf(i), yOf(v)); else sctx.lineTo(xOf(i), yOf(v)); });
+    sctx.strokeStyle = '#ff3366'; sctx.lineWidth = 1.5; sctx.stroke();
+
+    sctx.font = '8.5px "Cascadia Code", Consolas, monospace';
+    sctx.fillStyle = '#00f5a0'; sctx.fillText('● FIBER Tbps', 10, H - 5);
+    sctx.fillStyle = '#ff5c85'; sctx.fillText('● BLOCKED DDoS', 98, H - 5);
+  }
+
+  function renderPolarRadar() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = orbitCanvas.clientWidth, H = orbitCanvas.clientHeight;
+    if (orbitCanvas.width !== Math.floor(W*dpr) || orbitCanvas.height !== Math.floor(H*dpr)) {
+      orbitCanvas.width = Math.floor(W*dpr); orbitCanvas.height = Math.floor(H*dpr);
+    }
+    octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    octx.clearRect(0, 0, W, H);
+
+    const cx = 84, cy = H * 0.52, R = Math.min(62, H * 0.40);
+    // Concentric orbital shells
+    octx.strokeStyle = 'rgba(56,189,248,0.22)';
+    octx.lineWidth = 1;
+    for (const f of [0.38, 0.68, 1.0]) {
+      octx.beginPath(); octx.arc(cx, cy, R * f, 0, Math.PI * 2); octx.stroke();
+    }
+    // Rotating sweep cone
+    const sa = simTime * 1.9;
+    octx.strokeStyle = auroraLevel > 0.3 ? 'rgba(192,132,252,0.75)' : 'rgba(0,245,160,0.65)';
+    octx.beginPath(); octx.moveTo(cx, cy); octx.lineTo(cx + Math.cos(sa)*R, cy + Math.sin(sa)*R); octx.stroke();
+
+    // Aurora glow ring inside polar scope
+    if (auroraLevel > 0.05) {
+      octx.strokeStyle = `rgba(0, 245, 160, ${(auroraLevel * 0.72).toFixed(2)})`;
+      octx.lineWidth = 3.5;
+      octx.beginPath(); octx.arc(cx, cy, R * 0.44, 0, Math.PI * 2); octx.stroke();
+    }
+
+    // Project live 72 LEO satellites onto polar projection (X, Z)
+    for (let i = 0; i < sats.length; i++) {
+      const p = sats[i].pos;
+      const sx = cx + (p[0] / 1.24) * R;
+      const sy = cy + (p[2] / 1.24) * R;
+      octx.fillStyle = meshLevel > 0.5 ? '#fbbf24' : '#38bdf8';
+      octx.fillRect(sx - 1.2, sy - 1.2, 2.4, 2.4);
+    }
+
+    // Right-side Space Weather & Constellation Readouts
+    const rx = 160;
+    octx.font = 'bold 8.5px "Cascadia Code", Consolas, monospace';
+    const items = [
+      { k: 'SHELLS',   v: '6 INCLINED', c: '#38bdf8' },
+      { k: 'LASER',    v: meshLevel > 0.5 ? 'LOCKED 420G' : 'STANDBY', c: meshLevel > 0.5 ? '#fbbf24' : '#9ab2d0' },
+      { k: 'SOLAR',    v: auroraLevel > 0.35 ? 'X2.4 FLARE' : 'CLASS C1.2', c: auroraLevel > 0.35 ? '#d8b4fe' : '#00f5a0' },
+      { k: 'AURORA',   v: auroraLevel > 0.35 ? 'ACTIVE 68°N' : 'LOW LAT', c: auroraLevel > 0.35 ? '#00f5a0' : '#9ab2d0' },
+    ];
+    items.forEach((it, idx) => {
+      const y = 26 + idx * 36;
+      octx.fillStyle = '#577092'; octx.fillText(it.k, rx, y);
+      octx.fillStyle = it.c; octx.font = 'bold 10px "Cascadia Code", Consolas, monospace';
+      octx.fillText(it.v, rx, y + 13);
+      octx.font = 'bold 8.5px "Cascadia Code", Consolas, monospace';
+    });
+  }
+
+  // ===== DOM SYNC =====
+  const elHubList = document.getElementById('hubList');
+  const elLogList = document.getElementById('logList');
+  const hubNodes = [], logNodes = [];
+  for (let i = 0; i < 8; i++) {
+    const h = HUBS[i];
+    const d = document.createElement('div');
+    d.className = 'hub-row';
+    d.innerHTML = `<div class="hub-top"><span><span class="hub-code">${h.code}</span><span class="hub-name">${h.name}</span></span><span class="hub-lat"></span></div><div class="hub-bar-track"><div class="hub-bar-fill"></div></div>`;
+    elHubList.appendChild(d);
+    hubNodes.push(d);
+  }
+  for (let i = 0; i < 7; i++) {
+    const d = document.createElement('div');
+    d.className = 'log-row';
+    elLogList.appendChild(d);
+    logNodes.push(d);
+  }
+
+  function renderDOM() {
+    document.getElementById('kRoutes').textContent = (14820 + Math.round(Math.sin(simTime * 2.1) * 85)).toLocaleString();
+    document.getElementById('kLat').textContent = `${(18.4 - meshLevel * 4.2 + ddosLevel * 6.8).toFixed(1)} ms`;
+    const kSt = document.getElementById('kStatus');
+    if (ddosLevel > 0.45) { kSt.textContent = 'DDoS ALERT'; kSt.className = 'v red'; }
+    else if (shieldLevel > 0.45) { kSt.textContent = 'SHIELD 99.9%'; kSt.className = 'v cyan'; }
+    else if (auroraLevel > 0.45) { kSt.textContent = 'SOLAR X2.4'; kSt.className = 'v gold'; }
+    else { kSt.textContent = 'NOMINAL'; kSt.className = 'v green'; }
+
+    document.getElementById('tbRoutes').className = (ddosLevel < 0.3 && auroraLevel < 0.3) ? 'tbtn on-cyan' : 'tbtn';
+    document.getElementById('tbDdos').className = (ddosLevel > 0.3 || shieldLevel > 0.3) ? 'tbtn on-red' : 'tbtn';
+    document.getElementById('tbMesh').className = (auroraLevel > 0.3 || meshLevel > 0.7) ? 'tbtn on-violet' : 'tbtn';
+
+    document.getElementById('specMeta').textContent = `${trafficHist[trafficHist.length-1].toFixed(1)} Tbps`;
+    document.getElementById('kpMeta').textContent = `KP ${(2.1 + auroraLevel * 5.3).toFixed(1)}`;
+    document.getElementById('clockEl').textContent = `GEMINI 4 NEON · ${simTime.toFixed(1).padStart(4, '0')}s`;
+
+    // Normalized Lon label
+    let normLon = ((camLon + 180) % 360 + 360) % 360 - 180;
+    document.getElementById('gCam').textContent = `LON ${Math.abs(Math.round(normLon))}°${normLon >= 0 ? 'E' : 'W'} · LAT ${Math.round(camLat)}°N`;
+    document.getElementById('gAlt').textContent = `${Math.round(camDist * 4200).toLocaleString()} KM`;
+    document.getElementById('gSector').textContent = simTime < 5.5 ? 'ASIA-PACIFIC'
+      : (simTime < 12.0 ? 'EUROPE / ATLANTIC' : (simTime < 18.0 ? 'ARCTIC LEO CROWN' : 'TRANS-PACIFIC'));
+    const gSh = document.getElementById('gShield');
+    if (ddosLevel > 0.45) { gSh.textContent = '4.82 Tbps DDoS'; gSh.style.color = '#ff5c85'; }
+    else if (shieldLevel > 0.45) { gSh.textContent = '99.94% MITIGATED'; gSh.style.color = '#00f5a0'; }
+    else if (auroraLevel > 0.45) { gSh.textContent = 'KP 7.4 AURORA'; gSh.style.color = '#d8b4fe'; }
+    else { gSh.textContent = '99.98% NOMINAL'; gSh.style.color = '#00f5a0'; }
+
+    // Event Banner
+    const elB = document.getElementById('gBanner');
+    if (activeBanner.ttl > 0) {
+      elB.textContent = activeBanner.text;
+      elB.className = `g-banner ${activeBanner.cls}`;
+    } else {
+      elB.className = 'g-banner';
+    }
+
+    // 8 Core Hubs
+    for (let i = 0; i < 8; i++) {
+      const h = HUBS[i];
+      const n = hubNodes[i];
+      const isTgt = (i === 4 || i === 2);
+      const atk = isTgt && ddosLevel > 0.45;
+      const shd = isTgt && shieldLevel > 0.45;
+      n.className = atk ? 'hub-row under-attack' : (shd ? 'hub-row shielded' : 'hub-row');
+      const latVal = h.baseLat + Math.sin(simTime * 2.2 + i) * 0.8 + (atk ? 32.0 : 0) - meshLevel * 2.1;
+      const latEl = n.querySelector('.hub-lat');
+      latEl.textContent = atk ? `${latVal.toFixed(0)} ms ⚠` : `${latVal.toFixed(1)} ms`;
+      latEl.style.color = atk ? '#ff5c85' : '#00f5a0';
+      const fill = n.querySelector('.hub-bar-fill');
+      const pct = clamp((h.load + (atk ? 0.14 : 0) + Math.sin(simTime * 1.9 + i) * 0.05) * 100, 15, 100);
+      fill.style.width = `${pct.toFixed(0)}%`;
+      fill.style.background = atk ? 'linear-gradient(90deg,#e11d48,#ff3366)' : 'linear-gradient(90deg,#38bdf8,#00f5a0)';
+    }
+
+    // Logs
+    for (let i = 0; i < 7; i++) {
+      const row = logs[i];
+      if (!row) continue;
+      logNodes[i].className = `log-row ${row.cls}`;
+      logNodes[i].textContent = row.text;
+    }
+
+    // Button press visuals
+    for (const id of ['btnGlobal','btnDdos','btnMesh','btnAurora']) {
+      document.getElementById(id).classList.toggle('pressed', pressedId === id);
+    }
+
+    // Phase Timeline
+    const phs = [
+      { id:'ph0', pr:'pr0', s:0,    e:5.5,  c:'act-cyan' },
+      { id:'ph1', pr:'pr1', s:5.5,  e:12.0, c:'act-red' },
+      { id:'ph2', pr:'pr2', s:12.0, e:18.0, c:'act-violet' },
+      { id:'ph3', pr:'pr3', s:18.0, e:24.0, c:'act-gold' },
+    ];
+    for (const p of phs) {
+      const el = document.getElementById(p.id), pr = document.getElementById(p.pr);
+      const act = simTime >= p.s && simTime < p.e;
+      const pct = simTime < p.s ? 0 : (simTime >= p.e ? 100 : ((simTime - p.s)/(p.e - p.s))*100);
+      el.className = act ? `ppill ${p.c}` : 'ppill';
+      pr.style.width = `${pct.toFixed(1)}%`;
+    }
+
+    // Virtual Cursor
+    const vc = document.getElementById('vCursor'), cr = document.getElementById('cRing');
+    vc.style.left = `${curX.toFixed(1)}px`; vc.style.top = `${curY.toFixed(1)}px`; vc.style.opacity = curOp.toFixed(2);
+    if (cPulse > 0.02) {
+      cr.style.left = `${curX.toFixed(1)}px`; cr.style.top = `${curY.toFixed(1)}px`;
+      cr.style.opacity = (cPulse * 0.9).toFixed(2);
+      cr.style.transform = `translate(-50%,-50%) scale(${(0.6 + (1-cPulse)*1.1).toFixed(2)})`;
+    } else cr.style.opacity = '0';
+  }
+
+  // ===== INTERACTIVE CONTROLS (100% PLAYABLE IN BROWSER!) =====
+  document.getElementById('btnGlobal').addEventListener('click', () => { targetDdos=0; targetShield=0; targetAurora=0; targetMesh=0.25; });
+  document.getElementById('btnDdos').addEventListener('click', () => triggerDdosMode());
+  document.getElementById('btnMesh').addEventListener('click', () => { targetMesh = targetMesh > 0.5 ? 0.2 : 1.0; });
+  document.getElementById('btnAurora').addEventListener('click', () => { targetAurora = targetAurora > 0.5 ? 0.0 : 1.0; });
+  document.getElementById('tbRoutes').addEventListener('click', () => { targetDdos=0; targetShield=0; targetAurora=0; });
+  document.getElementById('tbDdos').addEventListener('click', () => triggerDdosMode());
+  document.getElementById('tbMesh').addEventListener('click', () => triggerMeshAurora());
+
+  glCanvas.addEventListener('mousedown', (e) => { dragging = true; lastMX = e.clientX; lastMY = e.clientY; });
+  window.addEventListener('mouseup', () => { dragging = false; });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    camLon -= (e.clientX - lastMX) * 0.35;
+    camLat = clamp(camLat + (e.clientY - lastMY) * 0.25, -65, 75);
+    lastMX = e.clientX; lastMY = e.clientY;
+  });
+  glCanvas.addEventListener('wheel', (e) => {
+    camDist = clamp(camDist + e.deltaY * 0.0015, 1.85, 4.2);
+  }, { passive: true });
+
+  // ===== INIT & LOOP =====
+  for (const s of sats) s.pos = evalSatPos(s, 0);
+  renderDOM();
+  renderSpectrum();
+  renderPolarRadar();
+  renderWebGL();
+
+  window.stepSentinel = function(dt) {
+    stepSim(dt);
+    renderDOM();
+    renderSpectrum();
+    renderPolarRadar();
+    renderWebGL();
+  };
+
+  if (!isRecording) {
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (simTime >= 24.0) { simTime = 0; for (const k in trig) trig[k] = false; }
+      window.stepSentinel(dt);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+</body>
+</html>
