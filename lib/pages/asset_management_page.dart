@@ -3818,8 +3818,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _safetyEnvelopeCeiling,
         );
         _safetyEnvelopeAmount = normalizedEnvelope;
-        _safetyEnvelopeAmountController.text =
-            normalizedEnvelope.round().toString();
+        _safetyEnvelopeAmountController.text = normalizedEnvelope
+            .round()
+            .toString();
       }
     });
   }
@@ -3836,14 +3837,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final normalized = rawValue.replaceAll(',', '').trim();
     final parsed = double.tryParse(normalized);
     if (parsed == null) {
-      _safetyEnvelopeAmountController.text =
-          _safetyEnvelopeAmount.round().toString();
+      _safetyEnvelopeAmountController.text = _safetyEnvelopeAmount
+          .round()
+          .toString();
       return;
     }
-    final clamped = parsed.clamp(
-      _safetyEnvelopeFloor,
-      _safetyEnvelopeCeiling,
-    );
+    final clamped = parsed.clamp(_safetyEnvelopeFloor, _safetyEnvelopeCeiling);
     setState(() {
       _safetyEnvelopeAmount = clamped;
       _safetyEnvelopeAmountController.text = clamped.round().toString();
@@ -23901,9 +23900,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: sealed
-            ? const Color(0xFFECFDF5)
-            : const Color(0xFFFFFBEB),
+        color: sealed ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: sealed
@@ -23919,9 +23916,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           Icon(
             sealed ? Icons.lock_outline : Icons.shield_outlined,
             size: 18,
-            color: sealed
-                ? const Color(0xFF0F766E)
-                : const Color(0xFFB45309),
+            color: sealed ? const Color(0xFF0F766E) : const Color(0xFFB45309),
           ),
           Text(
             sealed
@@ -23930,9 +23925,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: sealed
-                  ? const Color(0xFF0F766E)
-                  : const Color(0xFF92400E),
+              color: sealed ? const Color(0xFF0F766E) : const Color(0xFF92400E),
             ),
           ),
           SizedBox(
