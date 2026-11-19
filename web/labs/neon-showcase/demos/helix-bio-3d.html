@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>HELIX LAB // 3D Molecular Docking & Protein Folding Studio (Single HTML · Pure WebGL2)</title>
+<style>
+  :root {
+    --bg: #040812;
+    --panel: rgba(9, 15, 30, 0.92);
+    --border: rgba(56, 189, 248, 0.20);
+    --text0: #f0f8ff;
+    --text1: #9ab3d2;
+    --text2: #5b7496;
+    --cyan: #38bdf8;
+    --emerald: #00f5a0;
+    --gold: #fbbf24;
+    --crimson: #ff3366;
+    --violet: #a855f7;
+    --blue: #3b82f6;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", "Inter", -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 1280px; height: 720px; overflow: hidden;
+    background: radial-gradient(circle at 52% 46%, #0b1933 0%, #03060e 74%);
+    color: var(--text0); font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  .app {
+    width: 1280px; height: 720px;
+    display: grid; grid-template-rows: 42px 1fr 28px;
+    padding: 6px; gap: 6px; position: relative;
+  }
+
+  /* ===== TOP BAR ===== */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(90deg, rgba(8,15,31,0.97), rgba(11,22,44,0.97));
+    border: 1px solid var(--border); border-radius: 7px; padding: 0 12px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+  }
+  .brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .dot-live {
+    width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+    background: var(--emerald);
+    box-shadow: 0 0 10px var(--emerald), 0 0 18px rgba(0,245,160,0.65);
+  }
+  .brand-txt { font-family: var(--mono); font-size: 12.5px; font-weight: 800; letter-spacing: 1.0px; white-space: nowrap; }
+  .brand-txt span { color: var(--emerald); }
+  .tag {
+    font-family: var(--mono); font-size: 8.5px; color: var(--cyan);
+    background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.3);
+    padding: 2px 7px; border-radius: 4px; white-space: nowrap;
+  }
+  .kpis {
+    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    font-family: var(--mono); font-variant-numeric: tabular-nums;
+  }
+  .kpi { display: flex; flex-direction: column; line-height: 1.15; white-space: nowrap; }
+  .kpi .k { font-size: 7.5px; color: var(--text2); letter-spacing: 0.5px; white-space: nowrap; }
+  .kpi .v { font-size: 11px; font-weight: 800; white-space: nowrap; }
+  .kpi .v.em { color: var(--emerald); }
+  .kpi .v.cyan { color: var(--cyan); }
+  .kpi .v.gold { color: var(--gold); }
+  .kpi .v.blue { color: #60a5fa; }
+
+  .top-tabs { display: flex; gap: 4px; }
+  .tbtn {
+    font-family: var(--mono); font-size: 9px; font-weight: 800;
+    color: var(--text1); background: rgba(14,24,46,0.88);
+    border: 1px solid rgba(148,163,184,0.22); border-radius: 5px;
+    padding: 4px 8px; cursor: pointer; white-space: nowrap;
+  }
+  .tbtn.act-cyan { color: #03111f; background: linear-gradient(90deg,#38bdf8,#00f5a0); border-color: #7dd3fc; box-shadow: 0 0 12px rgba(56,189,248,0.48); }
+  .tbtn.act-em   { color: #021a10; background: linear-gradient(90deg,#00f5a0,#34d399); border-color: #6ee7b7; box-shadow: 0 0 14px rgba(0,245,160,0.52); }
+  .tbtn.act-vio  { color: #fff; background: linear-gradient(90deg,#7c3aed,#ec4899); border-color: #d8b4fe; box-shadow: 0 0 14px rgba(168,85,247,0.55); }
+  .tbtn.act-blue { color: #fff; background: linear-gradient(90deg,#2563eb,#06b6d4); border-color: #93c5fd; box-shadow: 0 0 14px rgba(59,130,246,0.55); }
+  .tbtn.pressed  { transform: scale(0.95); filter: brightness(1.3); }
+
+  /* ===== MAIN GRID ===== */
+  .main-grid {
+    display: grid; grid-template-columns: 266px 724px 266px;
+    gap: 6px; min-height: 0;
+  }
+  .col { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 7px;
+    display: flex; flex-direction: column; overflow: hidden; position: relative;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.42);
+  }
+  .phdr {
+    height: 26px; min-height: 26px; padding: 0 9px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(56,189,248,0.12);
+    background: rgba(6,12,26,0.78); font-family: var(--mono);
+  }
+  .ptitle {
+    font-size: 9.2px; font-weight: 800; letter-spacing: 0.7px; color: #cde4ff;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .ptitle .d { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald); box-shadow: 0 0 7px var(--emerald); }
+  .pmeta { font-size: 8.8px; color: var(--text1); font-variant-numeric: tabular-nums; }
+  .cwrap { flex: 1; position: relative; min-height: 0; }
+  canvas.fill { width: 100%; height: 100%; display: block; }
+
+  /* Left Column */
+  .bio-cards {
+    padding: 7px 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    font-family: var(--mono); font-variant-numeric: tabular-nums;
+  }
+  .bcard {
+    background: rgba(14,24,46,0.82); border: 1px solid rgba(56,189,248,0.16);
+    border-radius: 5px; padding: 6px 8px;
+  }
+  .bcard .k { font-size: 7.8px; color: var(--text2); display: block; }
+  .bcard .v { font-size: 13px; font-weight: 800; margin-top: 2px; display: block; }
+  .bcard .s { font-size: 7.8px; color: var(--emerald); margin-top: 1px; display: block; }
+
+  .rama-panel { flex: 1.08; min-height: 0; }
+  .conv-panel { flex: 0.96; min-height: 0; }
+
+  /* Center 3D Molecular Hero */
+  .hero-panel {
+    flex: 1; border-color: rgba(0,245,160,0.32);
+    box-shadow: 0 0 32px rgba(0,245,160,0.10);
+  }
+  .gl-top {
+    position: absolute; top: 33px; left: 10px; right: 10px;
+    display: flex; justify-content: space-between;
+    pointer-events: none; z-index: 4;
+  }
+  .gl-card {
+    background: rgba(5,11,24,0.82); border: 1px solid rgba(56,189,248,0.28);
+    border-radius: 6px; padding: 5px 10px; font-family: var(--mono);
+  }
+  .gl-card .t { font-size: 10.5px; font-weight: 800; color: #f0f9ff; letter-spacing: 0.6px; }
+  .gl-card .s { font-size: 8.5px; color: var(--emerald); margin-top: 2px; }
+  .gl-leg {
+    display: flex; gap: 8px; align-items: center; height: fit-content;
+    background: rgba(5,11,24,0.84); border: 1px solid rgba(148,163,184,0.24);
+    border-radius: 6px; padding: 5px 9px; font-family: var(--mono); font-size: 8.5px; color: var(--text1);
+  }
+  .litem { display: flex; align-items: center; gap: 4px; }
+  .ldot { width: 7px; height: 7px; border-radius: 50%; }
+
+  .gl-banner {
+    position: absolute; top: 82px; left: 50%; transform: translateX(-50%);
+    z-index: 6; font-family: var(--mono); font-size: 11px; font-weight: 800;
+    letter-spacing: 0.7px; padding: 6px 14px; border-radius: 6px; white-space: nowrap;
+    opacity: 0; pointer-events: none;
+  }
+  .gl-banner.b-em { opacity:1; color:#ecfdf5; background:rgba(4,18,16,0.92); border:1.5px solid #00f5a0; box-shadow:0 0 24px rgba(0,245,160,0.48); }
+  .gl-banner.b-vio { opacity:1; color:#faf5ff; background:rgba(16,8,28,0.92); border:1.5px solid #c084fc; box-shadow:0 0 24px rgba(168,85,247,0.5); }
+  .gl-banner.b-blue { opacity:1; color:#eff6ff; background:rgba(6,14,32,0.92); border:1.5px solid #60a5fa; box-shadow:0 0 24px rgba(59,130,246,0.52); }
+
+  .gl-bot {
+    position: absolute; bottom: 9px; left: 10px; right: 10px;
+    display: flex; justify-content: space-between;
+    pointer-events: none; z-index: 4;
+  }
+  .gpills { display: flex; gap: 6px; }
+  .gpill {
+    background: rgba(5,11,24,0.85); border: 1px solid rgba(56,189,248,0.24);
+    border-radius: 5px; padding: 4px 8px; font-family: var(--mono);
+  }
+  .gpill .k { font-size: 7.5px; color: var(--text2); display: block; }
+  .gpill .v { font-size: 10.5px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  /* Right Column */
+  .pocket-panel { flex: 1.15; min-height: 0; }
+  .seq-panel { flex: 0.72; min-height: 0; }
+  .seq-body {
+    flex: 1; padding: 7px 8px; display: flex; flex-direction: column; justify-content: space-between; gap: 5px; font-family: var(--mono);
+  }
+  .seq-strip {
+    display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px;
+  }
+  .res-pill {
+    font-size: 8px; font-weight: 800; text-align: center; padding: 3.5px 0; border-radius: 3px;
+    color: #fff; background: #1e3a8a;
+  }
+  .seq-bar-wrap {
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .seq-bar-lbl { display: flex; justify-content: space-between; font-size: 7.8px; color: var(--text2); }
+  .seq-bar {
+    height: 7px; width: 100%; border-radius: 4px; overflow: hidden;
+    background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(56,189,248,0.2); display: flex;
+  }
+  .seq-bar-hi { height: 100%; background: linear-gradient(90deg, #2563eb, #38bdf8); }
+  .seq-bar-mid { height: 100%; background: #facc15; }
+  .seq-bar-lo { height: 100%; background: #f97316; }
+  .seq-note { font-size: 8px; color: var(--text1); display: flex; justify-content: space-between; }
+
+  .deck-panel { height: 94px; min-height: 94px; }
+  .deck-grid {
+    flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+    gap: 5px; padding: 6px 8px;
+  }
+  .dbtn {
+    font-family: var(--mono); font-size: 8.8px; font-weight: 800;
+    border-radius: 5px; border: 1px solid transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dbtn.d1 { background: rgba(56,189,248,0.14); border-color: rgba(56,189,248,0.48); color: #7dd3fc; }
+  .dbtn.d2 { background: rgba(0,245,160,0.14); border-color: rgba(0,245,160,0.48); color: #00f5a0; }
+  .dbtn.d3 { background: rgba(168,85,247,0.16); border-color: rgba(168,85,247,0.55); color: #d8b4fe; }
+  .dbtn.d4 { background: rgba(59,130,246,0.18); border-color: rgba(96,165,250,0.58); color: #93c5fd; }
+  .dbtn.pressed { transform: scale(0.95); filter: brightness(1.45); box-shadow: 0 0 18px currentColor; }
+
+  /* Bottom Bar */
+  .bottombar {
+    display: grid; grid-template-columns: repeat(4, 1fr) 156px;
+    gap: 6px; align-items: center;
+  }
+  .ppill {
+    height: 26px; background: rgba(8,15,30,0.92); border: 1px solid rgba(148,163,184,0.16);
+    border-radius: 5px; padding: 0 9px; display: flex; align-items: center; justify-content: space-between;
+    font-family: var(--mono); font-size: 9px; color: var(--text2); position: relative; overflow: hidden;
+  }
+  .ppill .prog { position: absolute; left:0; top:0; bottom:0; width:0%; background: rgba(56,189,248,0.16); z-index:0; }
+  .ppill span { position: relative; z-index: 1; }
+  .ppill.act-cyan { border-color: rgba(56,189,248,0.75); color: #f0f9ff; font-weight: 700; }
+  .ppill.act-em { border-color: rgba(0,245,160,0.82); color: #d1fae5; font-weight: 700; }
+  .ppill.act-em .prog { background: rgba(0,245,160,0.20); }
+  .ppill.act-vio { border-color: rgba(192,132,252,0.85); color: #f3e8ff; font-weight: 700; }
+  .ppill.act-vio .prog { background: rgba(168,85,247,0.24); }
+  .ppill.act-blue { border-color: rgba(96,165,250,0.85); color: #dbeafe; font-weight: 700; }
+  .ppill.act-blue .prog { background: rgba(59,130,246,0.24); }
+
+  .clock {
+    height: 26px; background: rgba(8,15,30,0.92); border: 1px solid rgba(0,245,160,0.32);
+    border-radius: 5px; display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 9.5px; font-weight: 800; color: var(--emerald);
+    font-variant-numeric: tabular-nums;
+  }
+  .vcursor { position: absolute; width: 18px; height: 18px; pointer-events: none; z-index: 50; transform: translate(-2px,-2px); opacity: 0; }
+  .cring { position: absolute; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #00f5a0; pointer-events: none; z-index: 49; opacity: 0; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="workstation">
+<div class="app" id="appRoot">
+  <header class="topbar">
+    <div class="brand">
+      <div class="dot-live"></div>
+      <div class="brand-txt">HELIX LAB <span>// 3D BIO-AI</span></div>
+      <div class="tag">SINGLE HTML · 0 LIBS · NO THREE.JS / MOL* / PDB</div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span class="k">BINDING ΔG</span><span class="v em" id="kDg">-11.4 kcal/mol</span></div>
+      <div class="kpi"><span class="k">pLDDT CONF</span><span class="v blue" id="kPlddt">96.4%</span></div>
+      <div class="kpi"><span class="k">BACKBONE RMSD</span><span class="v cyan" id="kRmsd">0.42 Å</span></div>
+      <div class="kpi"><span class="k">H-BONDS</span><span class="v gold" id="kHbonds">22 BP</span></div>
+    </div>
+    <div class="top-tabs">
+      <button class="tbtn act-cyan" id="tabDna">01 DNA HELIX</button>
+      <button class="tbtn" id="tabDock">02 AI DOCKING</button>
+      <button class="tbtn" id="tabEsp">03 ESP CLOUD</button>
+      <button class="tbtn" id="tabFold">04 LIVE FOLD</button>
+    </div>
+  </header>
+
+  <main class="main-grid">
+    <!-- LEFT COLUMN -->
+    <section class="col">
+      <div class="panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d"></span>STRUCTURAL &amp; AFFINITY METRICS</div>
+          <div class="pmeta">AMBER-99</div>
+        </div>
+        <div class="bio-cards">
+          <div class="bcard"><span class="k">AFFINITY ΔG</span><span class="v" id="mDg" style="color:#00f5a0">-11.4</span><span class="s" id="mDgSub">kcal/mol (Ki 4nM)</span></div>
+          <div class="bcard"><span class="k">ALPHAFOLD pLDDT</span><span class="v" id="mConf" style="color:#60a5fa">96.4%</span><span class="s" id="mConfSub">VERY HIGH CONF</span></div>
+          <div class="bcard"><span class="k">RMSD DEVIATION</span><span class="v" id="mRmsd" style="color:#38bdf8">0.42 Å</span><span class="s" style="color:#9ab3d2">ATOMIC RES</span></div>
+          <div class="bcard"><span class="k">INSTANCED ATOMS</span><span class="v" id="mAtoms" style="color:#fbbf24">248</span><span class="s" id="mBondsSub">292 BONDS</span></div>
+        </div>
+      </div>
+
+      <div class="panel rama-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--cyan);box-shadow:0 0 7px var(--cyan)"></span>RAMACHANDRAN φ/ψ STERIC PLOT</div>
+          <div class="pmeta">α-HELIX / β-SHEET</div>
+        </div>
+        <div class="cwrap"><canvas id="ramaCanvas" class="fill"></canvas></div>
+      </div>
+
+      <div class="panel conv-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--gold);box-shadow:0 0 7px var(--gold)"></span>ΔG &amp; FOLDING CONVERGENCE</div>
+          <div class="pmeta">LIVE SOLVER</div>
+        </div>
+        <div class="cwrap"><canvas id="convCanvas" class="fill"></canvas></div>
+      </div>
+    </section>
+
+    <!-- CENTER 3D MOLECULAR HERO -->
+    <section class="col">
+      <div class="panel hero-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d"></span><span id="glHdr">PURE WEBGL2 INSTANCED PBR 3D MOLECULAR ENGINE</span></div>
+          <div class="pmeta" id="glMeta">SMOOTH CPK SPHERES · COVALENT BONDS · ESP SHELL</div>
+        </div>
+        <div class="cwrap">
+          <canvas id="glCanvas" class="fill"></canvas>
+
+          <div class="gl-top">
+            <div class="gl-card">
+              <div class="t" id="glTitle">B-DNA DOUBLE HELIX // ATOMIC BASE-PAIRING</div>
+              <div class="s" id="glSub">DRAG TO ORBIT 360° · SCROLL TO ZOOM · 100% PROCEDURAL GEOMETRY</div>
+            </div>
+            <div class="gl-leg" id="glLeg">
+              <div class="litem"><span class="ldot" style="background:#fbbf24"></span>P</div>
+              <div class="litem"><span class="ldot" style="background:#38bdf8"></span>N</div>
+              <div class="litem"><span class="ldot" style="background:#ff3366"></span>O</div>
+              <div class="litem"><span class="ldot" style="background:#00f5a0"></span>H-BOND</div>
+            </div>
+          </div>
+
+          <div class="gl-banner" id="glBanner">◈ AI LIGAND DOCKING · NEON-409 LOCKED AT -11.8 kcal/mol</div>
+
+          <div class="gl-bot">
+            <div class="gpills">
+              <div class="gpill"><span class="k">COMPLEX</span><span class="v" id="gComplex" style="color:#00f5a0">B-DNA 22-BP</span></div>
+              <div class="gpill"><span class="k">SOLVER STATE</span><span class="v" id="gState" style="color:#38bdf8">EQUILIBRIUM</span></div>
+              <div class="gpill"><span class="k">SURFACE MODE</span><span class="v" id="gSurf" style="color:#d8b4fe">CPK + BONDS</span></div>
+            </div>
+            <div class="gpill"><span class="k">CAMERA ORBIT</span><span class="v" id="gCam" style="color:#9ab3d2">AZ 24° · EL 16°</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN -->
+    <section class="col">
+      <div class="panel pocket-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--violet);box-shadow:0 0 7px var(--violet)"></span>2D LIGAND-POCKET INTERACTION MAP</div>
+          <div class="pmeta" id="pocketMeta">6 H-BONDS</div>
+        </div>
+        <div class="cwrap"><canvas id="pocketCanvas" class="fill"></canvas></div>
+      </div>
+
+      <div class="panel seq-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--blue);box-shadow:0 0 7px var(--blue)"></span>RESIDUE pLDDT CONFIDENCE TRACK</div>
+          <div class="pmeta" id="seqConf">96.4%</div>
+        </div>
+        <div class="seq-body">
+          <div class="seq-strip" id="seqStrip"></div>
+          <div class="seq-bar-wrap">
+            <div class="seq-bar-lbl"><span id="seqSec">α-HELIX 82% · LOOP 18%</span><span id="seqHiPct" style="color:#60a5fa">VERY HIGH: 96%</span></div>
+            <div class="seq-bar">
+              <div class="seq-bar-hi" id="barHi" style="width:94%"></div>
+              <div class="seq-bar-mid" id="barMid" style="width:4%"></div>
+              <div class="seq-bar-lo" id="barLo" style="width:2%"></div>
+            </div>
+          </div>
+          <div class="seq-note"><span>CHAIN A: 75-AA DOMAIN</span><span id="seqBadge" style="color:#60a5fa">CONVERGED</span></div>
+        </div>
+      </div>
+
+      <div class="panel deck-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--gold)"></span>BIO-AI SIMULATION DECK</div>
+          <div class="pmeta">INTERACTIVE</div>
+        </div>
+        <div class="deck-grid">
+          <button class="dbtn d1" id="btnDna">🧬 DNA HELIX</button>
+          <button class="dbtn d2" id="btnDock">⚡ AI DOCKING</button>
+          <button class="dbtn d3" id="btnEsp">◈ ESP SURFACE</button>
+          <button class="dbtn d4" id="btnFold">🌀 LIVE FOLDING</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bottombar">
+    <div class="ppill act-cyan" id="ph0"><div class="prog" id="pr0"></div><span>01 3D DNA DOUBLE HELIX</span><span>0–6s</span></div>
+    <div class="ppill" id="ph1"><div class="prog" id="pr1"></div><span>02 AI LIGAND DOCKING</span><span>6–12s</span></div>
+    <div class="ppill" id="ph2"><div class="prog" id="pr2"></div><span>03 ELECTROSTATIC CLOUD</span><span>12–18s</span></div>
+    <div class="ppill" id="ph3"><div class="prog" id="pr3"></div><span>04 ALPHAFOLD LIVE FOLD</span><span>18–24s</span></div>
+    <div class="clock" id="clockEl">GEMINI 4 NEON · 00.0s</div>
+  </footer>
+
+  <div class="cring" id="cRing"></div>
+  <svg class="vcursor" id="vCursor" viewBox="0 0 24 24" fill="none">
+    <path d="M4 3L19 11.5L12.2 13.4L9.8 20L4 3Z" fill="#f8fafc" stroke="#020617" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(202611198);
+  const clamp = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const ease = (u) => { const t = clamp(u, 0, 1); return t * t * (3 - 2 * t); };
+
+  // ===== WEBGL2 SETUP =====
+  const glCanvas = document.getElementById('glCanvas');
+  const gl = glCanvas.getContext('webgl2', { antialias: true, alpha: false, preserveDrawingBuffer: true });
+  if (!gl) { console.error('WebGL2 unavailable'); return; }
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error('Shader:', gl.getShaderInfoLog(s));
+    return s;
+  }
+  function link(vs, fs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) console.error('Link:', gl.getProgramInfoLog(p));
+    return p;
+  }
+
+  function mat4Persp(fovy, asp, near, far) {
+    const f = 1 / Math.tan(fovy * 0.5), nf = 1 / (near - far);
+    return new Float32Array([f/asp,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,2*far*near*nf,0]);
+  }
+  function mat4Look(eye, ctr, up) {
+    let zx=eye[0]-ctr[0], zy=eye[1]-ctr[1], zz=eye[2]-ctr[2];
+    let l=Math.hypot(zx,zy,zz)||1; zx/=l; zy/=l; zz/=l;
+    let xx=up[1]*zz-up[2]*zy, xy=up[2]*zx-up[0]*zz, xz=up[0]*zy-up[1]*zx;
+    l=Math.hypot(xx,xy,xz)||1; xx/=l; xy/=l; xz/=l;
+    const yx=zy*xz-zz*xy, yy=zz*xx-zx*xz, yz=zx*xy-zy*xx;
+    return new Float32Array([
+      xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+      -(xx*eye[0]+xy*eye[1]+xz*eye[2]),
+      -(yx*eye[0]+yy*eye[1]+yz*eye[2]),
+      -(zx*eye[0]+zy*eye[1]+zz*eye[2]), 1
+    ]);
+  }
+  function mat4Mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c=0;c<4;c++) for (let r=0;r<4;r++)
+      o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
+    return o;
+  }
+
+  // ===== SHADERS =====
+  // 1) Hardware-Instanced Glossy PBR Atom Sphere Shader (ChimeraX / PyMOL Studio Lighting!)
+  const atomProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aUnitPos;  // unit sphere vertex & normal!
+    layout(location=1) in vec4 aInstPosR; // xyz = center, w = radius
+    layout(location=2) in vec4 aInstColG; // rgb = CPK/pLDDT color, w = emissive glow
+
+    uniform mat4 uVP;
+    out vec3 vWorldPos;
+    out vec3 vNorm;
+    out vec3 vCol;
+    out float vGlow;
+
+    void main() {
+      vec3 wp = aInstPosR.xyz + aUnitPos * aInstPosR.w;
+      vWorldPos = wp;
+      vNorm = normalize(aUnitPos);
+      vCol = aInstColG.rgb;
+      vGlow = aInstColG.w;
+      gl_Position = uVP * vec4(wp, 1.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec3 vWorldPos;
+    in vec3 vNorm;
+    in vec3 vCol;
+    in float vGlow;
+    uniform vec3 uCamPos;
+    uniform float uAlpha;
+    out vec4 fragColor;
+
+    void main() {
+      vec3 N = normalize(vNorm);
+      vec3 V = normalize(uCamPos - vWorldPos);
+      vec3 L1 = normalize(vec3(1.2, 1.8, 1.5));
+      vec3 L2 = normalize(vec3(-1.5, -0.6, -1.0));
+
+      float d1 = max(dot(N, L1), 0.0);
+      float d2 = max(dot(N, L2), 0.0);
+      vec3 H = normalize(L1 + V);
+      float spec = pow(max(dot(N, H), 0.0), 68.0);
+      float fres = pow(1.0 - max(dot(N, V), 0.0), 2.8);
+
+      if (uAlpha < 0.95) {
+        // Jewel-like Fresnel Electrostatic Potential (ESP) translucent glass shell (zero white blowout!)
+        float rim = pow(1.0 - max(dot(N, V), 0.0), 2.15);
+        float specE = pow(max(dot(N, H), 0.0), 54.0);
+        vec3 espCol = vCol * (0.48 + d1 * 0.45)
+                    + mix(vCol, vec3(0.85, 0.96, 1.0), 0.42) * rim * 1.12
+                    + vec3(0.92, 0.98, 1.0) * specE * 0.45;
+        float espA = clamp(uAlpha * (0.14 + rim * 0.68 + specE * 0.22), 0.0, 0.56);
+        fragColor = vec4(espCol, espA);
+        return;
+      }
+
+      // Subtle bio-subsurface & glossy ceramic PBR feel!
+      vec3 lit = vCol * (0.24 + d1 * 0.88)
+               + vCol * vec3(0.32, 0.72, 1.0) * d2 * 0.42
+               + vec3(0.95, 0.98, 1.0) * spec * 0.88
+               + mix(vCol, vec3(0.55, 0.92, 1.0), 0.5) * fres * 0.72
+               + vCol * vGlow * 0.85;
+
+      fragColor = vec4(lit, 1.0);
+    }
+  `);
+
+  // 2) Hardware-Instanced Smooth Covalent Bond Cylinder Shader!
+  const bondProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aCylPos; // unit cylinder x,z in [-1,1], y in [0,1]
+    layout(location=1) in vec3 aCylNorm;
+    layout(location=2) in vec3 aP0;
+    layout(location=3) in vec3 aP1;
+    layout(location=4) in vec4 aColR;   // rgb = color, w = radius
+
+    uniform mat4 uVP;
+    out vec3 vWorldPos;
+    out vec3 vNorm;
+    out vec3 vCol;
+
+    void main() {
+      vec3 axis = aP1 - aP0;
+      float len = max(0.001, length(axis));
+      vec3 up = axis / len;
+      vec3 ref = abs(up.y) > 0.92 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
+      vec3 right = normalize(cross(ref, up));
+      vec3 fwd = cross(up, right);
+
+      float rad = aColR.w;
+      vec3 wp = aP0 + up * (aCylPos.y * len) + right * (aCylPos.x * rad) + fwd * (aCylPos.z * rad);
+      vec3 wn = normalize(right * aCylNorm.x + fwd * aCylNorm.z);
+
+      vWorldPos = wp;
+      vNorm = wn;
+      vCol = aColR.rgb;
+      gl_Position = uVP * vec4(wp, 1.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec3 vWorldPos;
+    in vec3 vNorm;
+    in vec3 vCol;
+    uniform vec3 uCamPos;
+    out vec4 fragColor;
+
+    void main() {
+      vec3 N = normalize(vNorm);
+      vec3 V = normalize(uCamPos - vWorldPos);
+      vec3 L1 = normalize(vec3(1.2, 1.8, 1.5));
+      float d1 = max(dot(N, L1), 0.0);
+      vec3 H = normalize(L1 + V);
+      float spec = pow(max(dot(N, H), 0.0), 42.0);
+      float fres = pow(1.0 - max(dot(N, V), 0.0), 2.5);
+      vec3 col = vCol * (0.34 + d1 * 0.78) + vec3(0.85, 0.95, 1.0) * spec * 0.55 + vCol * fres * 0.55;
+      fragColor = vec4(col, 1.0);
+    }
+  `);
+
+  // 3) Subtle Biotech Background Grid & Hydrogen-Bond Glowing Energy Beams
+  const lineProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec4 aCol;
+    uniform mat4 uVP;
+    out vec4 vCol;
+    void main() { vCol = aCol; gl_Position = uVP * vec4(aPos, 1.0); }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vCol;
+    out vec4 fragColor;
+    void main() { fragColor = vCol; }
+  `);
+
+  // ===== BUILD UNIT SPHERE & UNIT CYLINDER INSTANCED VAOs =====
+  // High-res Smooth UV Sphere (22 x 14)
+  const spVerts = [], spIdx = [];
+  const SR_LON = 22, SR_LAT = 14;
+  for (let j = 0; j <= SR_LAT; j++) {
+    const phi = (j / SR_LAT) * Math.PI;
+    for (let i = 0; i <= SR_LON; i++) {
+      const th = (i / SR_LON) * Math.PI * 2;
+      spVerts.push(Math.sin(phi)*Math.cos(th), Math.cos(phi), Math.sin(phi)*Math.sin(th));
+    }
+  }
+  for (let j = 0; j < SR_LAT; j++) {
+    for (let i = 0; i < SR_LON; i++) {
+      const a = j*(SR_LON+1)+i, b = a+1, c = a+SR_LON+1, d = c+1;
+      spIdx.push(a, c, b, b, c, d);
+    }
+  }
+
+  const MAX_ATOMS = 520;
+  const atomInstBuf = new Float32Array(MAX_ATOMS * 8); // pos3, r1, col3, glow1
+  const atomVao = gl.createVertexArray();
+  const spVbo = gl.createBuffer(), spIbo = gl.createBuffer(), atomInstVbo = gl.createBuffer();
+  gl.bindVertexArray(atomVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, spVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(spVerts), gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, spIbo);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(spIdx), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 12, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, atomInstVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, atomInstBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 32, 0); gl.vertexAttribDivisor(1, 1);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 32, 16); gl.vertexAttribDivisor(2, 1);
+  gl.bindVertexArray(null);
+
+  // Smooth Unit Cylinder (12 segments)
+  const cyVerts = [], cyIdx = [];
+  const CSEG = 12;
+  for (let i = 0; i <= CSEG; i++) {
+    const a = (i / CSEG) * Math.PI * 2;
+    const cx = Math.cos(a), cz = Math.sin(a);
+    cyVerts.push(cx, 0, cz, cx, 0, cz);
+    cyVerts.push(cx, 1, cz, cx, 0, cz);
+  }
+  for (let i = 0; i < CSEG; i++) {
+    const a = i*2, b = a+1, c = a+2, d = a+3;
+    cyIdx.push(a, b, c, c, b, d);
+  }
+
+  const MAX_BONDS = 640;
+  const bondInstBuf = new Float32Array(MAX_BONDS * 10); // p0(3), p1(3), col(3), r(1)
+  const bondVao = gl.createVertexArray();
+  const cyVbo = gl.createBuffer(), cyIbo = gl.createBuffer(), bondInstVbo = gl.createBuffer();
+  gl.bindVertexArray(bondVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, cyVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cyVerts), gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cyIbo);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cyIdx), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
+  gl.bindBuffer(gl.ARRAY_BUFFER, bondInstVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, bondInstBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 40, 0); gl.vertexAttribDivisor(2, 1);
+  gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 3, gl.FLOAT, false, 40, 12); gl.vertexAttribDivisor(3, 1);
+  gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 4, gl.FLOAT, false, 40, 24); gl.vertexAttribDivisor(4, 1);
+  gl.bindVertexArray(null);
+
+  // Subtle Reference Floor & H-Bond Energy Beams Buffer
+  const MAX_LINES = 1200;
+  const lineBuf = new Float32Array(MAX_LINES * 7);
+  const lineVao = gl.createVertexArray(), lineVbo = gl.createBuffer();
+  gl.bindVertexArray(lineVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, lineBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 28, 12);
+  gl.bindVertexArray(null);
+
+  // ===== SCIENTIFIC MOLECULAR SCENE GENERATORS =====
+  // AlphaFold Official pLDDT Confidence Palette (Orange <50 -> Yellow 70 -> Cyan 85 -> Royal Blue >90!)
+  function plddtColor(score) {
+    if (score < 0.45) return [0.98, 0.48, 0.14];
+    if (score < 0.70) {
+      const k = (score - 0.45) / 0.25;
+      return [lerp(0.98, 0.98, k), lerp(0.48, 0.84, k), lerp(0.14, 0.20, k)];
+    }
+    if (score < 0.86) {
+      const k = (score - 0.70) / 0.16;
+      return [lerp(0.98, 0.16, k), lerp(0.84, 0.82, k), lerp(0.20, 0.98, k)];
+    }
+    const k = clamp((score - 0.86) / 0.14, 0, 1);
+    return [lerp(0.16, 0.12, k), lerp(0.82, 0.42, k), lerp(0.98, 1.00, k)];
+  }
+
+  // Precompute Unfolded Random-Coil Polypeptide vs Folded Triple-Helix Bundle Coordinates (75 residues = exact 3x25 helices + smooth hairpin turns!)
+  const N_FOLD = 75;
+  const foldUnfolded = [];
+  const foldTarget = [];
+  const foldSide = [];
+  {
+    const fr = mulberry32(8882026);
+    for (let i = 0; i < N_FOLD; i++) {
+      const t = i / (N_FOLD - 1);
+      // Sweeping unfolded 3D random coil sized to frame cleanly inside viewport
+      const ux = lerp(-2.35, 2.35, t) + Math.sin(t * 7.2) * 0.68;
+      const uy = Math.cos(t * 6.0) * 1.15 + Math.sin(t * 13.0) * 0.24;
+      const uz = Math.sin(t * 5.2) * 1.15 + Math.cos(t * 10.5) * 0.22;
+      foldUnfolded.push([ux, uy, uz]);
+
+      // Folded 3-Helix Coiled-Coil Alpha-Helix Domain with smooth curved hairpin loops (zero rogue jump bonds!)
+      let fx, fy, fz;
+      if (i < 23) {
+        const u = i / 22;
+        const a = u * Math.PI * 2 * 4.8;
+        fx = -0.82 + Math.cos(a) * 0.40;
+        fy = lerp(-1.55, 1.48, u);
+        fz = 0.50 + Math.sin(a) * 0.40;
+      } else if (i < 26) {
+        // Smooth top hairpin loop connecting Helix 1 -> Helix 2
+        const u = (i - 22) / 4;
+        const ang = u * Math.PI;
+        fx = lerp(-0.42, 0.42, u);
+        fy = 1.54 + Math.sin(ang) * 0.34;
+        fz = 0.50 + Math.sin(ang) * 0.18;
+      } else if (i < 49) {
+        const u = (i - 26) / 22;
+        const a = -u * Math.PI * 2 * 4.8;
+        fx = 0.82 + Math.cos(a) * 0.40;
+        fy = lerp(1.48, -1.55, u);
+        fz = 0.50 + Math.sin(a) * 0.40;
+      } else if (i < 52) {
+        // Smooth bottom hairpin loop connecting Helix 2 -> Helix 3
+        const u = (i - 48) / 4;
+        const ang = u * Math.PI;
+        fx = lerp(0.55, 0.05, u);
+        fy = -1.58 - Math.sin(ang) * 0.30;
+        fz = lerp(0.42, -0.78, u);
+      } else {
+        const u = (i - 52) / 22;
+        const a = u * Math.PI * 2 * 4.8 + 1.1;
+        fx = 0.0 + Math.cos(a) * 0.40;
+        fy = lerp(-1.52, 1.52, u);
+        fz = -0.86 + Math.sin(a) * 0.40;
+      }
+      foldTarget.push([fx, fy, fz]);
+      foldSide.push({
+        dx: (fr() - 0.5) * 0.50,
+        dy: (fr() - 0.5) * 0.30,
+        dz: (fr() - 0.5) * 0.50,
+        isPolar: fr() > 0.52,
+        isAcid: fr() > 0.72
+      });
+    }
+  }
+
+  // ===== SIMULATION & 24s CHOREOGRAPHY STATE =====
+  let simTime = 0.0;
+  const isRecording = Boolean(window.__RECORDING__);
+
+  let mode = 0;          // 0=DNA Double Helix, 1=AI Drug Docking, 2=ESP Cloud, 3=AlphaFold Live Folding
+  let dockProg = 0.0;    // 0 (approaching) -> 1 (locked in pocket!)
+  let espAlpha = 0.0, targetEsp = 0.0;
+  let foldProg = 0.0;    // 0 (random coil) -> 1 (folded 3-helix bundle!)
+
+  let camAz = 0.42, camEl = 0.24, camDist = 7.85;
+  let dragging = false, lastMX = 0, lastMY = 0;
+
+  let curX = 640, curY = 360, curOp = 0, cPulse = 0, pressedId = null;
+  let banner = { text: '', cls: '', ttl: 0 };
+  const trig = { dock: false, esp: false, fold: false };
+
+  let lastAtomCount = 0, lastBondCount = 0;
+
+  // Convergence History
+  const dgHist = [];
+  const plddtHist = [];
+  for (let i = 0; i < 60; i++) {
+    dgHist.push(-11.2 + Math.sin(i * 0.2) * 0.3);
+    plddtHist.push(95.8 + Math.cos(i * 0.25) * 0.5);
+  }
+
+  function btnCenter(id) {
+    const r = document.getElementById(id).getBoundingClientRect();
+    const rr = document.getElementById('appRoot').getBoundingClientRect();
+    return { x: r.left - rr.left + r.width * 0.5, y: r.top - rr.top + r.height * 0.5 };
+  }
+
+  function setMode(m) {
+    mode = m;
+    if (m === 0) { targetEsp = 0.0; }
+    else if (m === 1) {
+      dockProg = 0.0; targetEsp = 0.0;
+      banner = { text: '⚡ AI LIGAND DOCKING · NEON-409 BINDING INTO ACTIVE POCKET', cls: 'b-em', ttl: 4.5 };
+    } else if (m === 2) {
+      dockProg = 1.0; targetEsp = 1.0;
+      banner = { text: '◈ 3D ELECTROSTATIC POTENTIAL (ESP) SURFACE · CHARGE COMPLEMENTARITY', cls: 'b-vio', ttl: 4.5 };
+    } else if (m === 3) {
+      foldProg = 0.0; targetEsp = 0.0;
+      banner = { text: '◈ ALPHAFOLD-STYLE LIVE 3D FOLDING · RMSD 14.2 Å → 0.41 Å (pLDDT 96.8%)', cls: 'b-blue', ttl: 5.0 };
+    }
+  }
+
+  let autoTour = isRecording;
+  function runChoreography(t, dt) {
+    pressedId = null;
+    cPulse = Math.max(0, cPulse - dt * 2.8);
+
+    if (autoTour) {
+    const pDock = btnCenter('btnDock');
+    const pEsp  = btnCenter('btnEsp');
+    const pFold = btnCenter('btnFold');
+
+    if (t < 4.6) {
+      curOp = 0;
+    } else if (t < 5.95) {
+      curOp = ease((t - 4.6) / 0.5);
+      const u = ease((t - 4.6) / 1.3);
+      curX = lerp(740, pDock.x, u); curY = lerp(420, pDock.y, u);
+    } else if (t < 6.45) {
+      curOp = 1; curX = pDock.x; curY = pDock.y; pressedId = 'btnDock';
+      if (!trig.dock) { trig.dock = true; cPulse = 1.0; setMode(1); }
+    } else if (t < 10.6) {
+      curOp = Math.max(0, curOp - dt * 1.4);
+    } else if (t < 11.95) {
+      curOp = ease((t - 10.6) / 0.5);
+      const u = ease((t - 10.6) / 1.3);
+      curX = lerp(pDock.x, pEsp.x, u); curY = lerp(pDock.y, pEsp.y, u);
+    } else if (t < 12.45) {
+      curOp = 1; curX = pEsp.x; curY = pEsp.y; pressedId = 'btnEsp';
+      if (!trig.esp) { trig.esp = true; cPulse = 1.0; setMode(2); }
+    } else if (t < 16.6) {
+      curOp = Math.max(0, curOp - dt * 1.4);
+    } else if (t < 17.95) {
+      curOp = ease((t - 16.6) / 0.5);
+      const u = ease((t - 16.6) / 1.3);
+      curX = lerp(pEsp.x, pFold.x, u); curY = lerp(pEsp.y, pFold.y, u);
+    } else if (t < 18.45) {
+      curOp = 1; curX = pFold.x; curY = pFold.y; pressedId = 'btnFold';
+      if (!trig.fold) { trig.fold = true; cPulse = 1.0; setMode(3); }
+    } else {
+      curOp = Math.max(0, curOp - dt * 1.4);
+    }
+    } else { curOp = 0; }
+
+    // Smooth Mode-Specific Animations
+    if (mode === 1) dockProg = Math.min(1.0, dockProg + dt * 0.28);
+    if (mode === 3) foldProg = Math.min(1.0, foldProg + dt * 0.24);
+
+    // Graceful Scientific 3D Orbit Camera (keeps docking cleft open toward viewer in Modes 1 & 2!)
+    if (!dragging) {
+      if (mode === 1 || mode === 2) {
+        const targetAz = Math.sin((t - 6.0) * 0.52) * 0.62;
+        camAz += (targetAz - camAz) * Math.min(1, dt * 4.5);
+        camEl = 0.22 + Math.sin(t * 0.48) * 0.11;
+        camDist = mode === 1 ? lerp(7.6, 6.4, ease(dockProg)) : 6.75;
+      } else {
+        camAz += dt * (mode === 3 ? 0.52 : 0.42);
+        camEl = 0.22 + Math.sin(t * 0.42) * 0.12;
+        camDist = mode === 0 ? 7.85 : lerp(8.5, 7.15, ease(foldProg));
+      }
+    }
+  }
+
+  let histAcc = 0;
+  function stepSim(dt) {
+    simTime += dt;
+    runChoreography(simTime, dt);
+    espAlpha += (targetEsp - espAlpha) * Math.min(1, dt * 3.0);
+    if (banner.ttl > 0) banner.ttl = Math.max(0, banner.ttl - dt);
+
+    histAcc += dt;
+    if (histAcc >= 0.14) {
+      histAcc -= 0.14;
+      const dg = mode === 1 ? lerp(-2.1, -11.8, ease(dockProg)) : (mode === 2 ? -11.8 : -11.2);
+      const cf = mode === 3 ? lerp(41.5, 96.8, ease(foldProg)) : 96.4;
+      dgHist.push(dg + Math.sin(simTime * 3) * 0.18); if (dgHist.length > 60) dgHist.shift();
+      plddtHist.push(cf + Math.cos(simTime * 2) * 0.25); if (plddtHist.length > 60) plddtHist.shift();
+    }
+  }
+
+  // ===== BUILD LIVE ATOM & BOND INSTANCES FOR ACTIVE MODE =====
+  const espSpheres = []; // { x,y,z, r, cr,cg,cb }
+
+  function populateSceneInstances() {
+    let aCnt = 0, bCnt = 0, lCnt = 0;
+    espSpheres.length = 0;
+
+    function addAtom(x, y, z, r, c, glow = 0.0) {
+      if (aCnt >= MAX_ATOMS) return -1;
+      let o = aCnt * 8;
+      atomInstBuf[o++]=x; atomInstBuf[o++]=y; atomInstBuf[o++]=z; atomInstBuf[o++]=r;
+      atomInstBuf[o++]=c[0]; atomInstBuf[o++]=c[1]; atomInstBuf[o++]=c[2]; atomInstBuf[o++]=glow;
+      return aCnt++;
+    }
+    function addBond(p0, p1, c, r = 0.068) {
+      if (bCnt >= MAX_BONDS) return;
+      let o = bCnt * 10;
+      bondInstBuf[o++]=p0[0]; bondInstBuf[o++]=p0[1]; bondInstBuf[o++]=p0[2];
+      bondInstBuf[o++]=p1[0]; bondInstBuf[o++]=p1[1]; bondInstBuf[o++]=p1[2];
+      bondInstBuf[o++]=c[0];  bondInstBuf[o++]=c[1];  bondInstBuf[o++]=c[2]; bondInstBuf[o++]=r;
+      bCnt++;
+    }
+    function addLine(p0, p1, c, a) {
+      if (lCnt + 2 >= MAX_LINES) return;
+      let o = lCnt * 7;
+      lineBuf[o++]=p0[0]; lineBuf[o++]=p0[1]; lineBuf[o++]=p0[2]; lineBuf[o++]=c[0]; lineBuf[o++]=c[1]; lineBuf[o++]=c[2]; lineBuf[o++]=a;
+      lineBuf[o++]=p1[0]; lineBuf[o++]=p1[1]; lineBuf[o++]=p1[2]; lineBuf[o++]=c[0]; lineBuf[o++]=c[1]; lineBuf[o++]=c[2]; lineBuf[o++]=a;
+      lCnt += 2;
+    }
+
+    // Subtle scientific floor coordinate grid at y = -2.45
+    for (let i = -6; i <= 6; i++) {
+      const v = i * 0.65;
+      addLine([v,-2.45,-3.9], [v,-2.45,3.9], [0.22,0.58,0.92], i === 0 ? 0.28 : 0.12);
+      addLine([-3.9,-2.45,v], [3.9,-2.45,v], [0.22,0.58,0.92], i === 0 ? 0.28 : 0.12);
+    }
+
+    const colP = [0.98, 0.74, 0.16]; // Gold Phosphorus
+    const colC = [0.45, 0.56, 0.72]; // Metallic Slate Carbon
+    const colN = [0.12, 0.84, 1.00]; // Electric Cyan Nitrogen
+    const colO = [1.00, 0.22, 0.42]; // Ruby Crimson Oxygen
+    const colEm = [0.02, 0.96, 0.64]; // Emerald Drug/H-Bond
+
+    if (mode === 0) {
+      // === MODE 0: STUNNING 22-BP 3D B-DNA DOUBLE HELIX ===
+      const N_BP = 22;
+      let prevA = null, prevB = null;
+      for (let i = 0; i < N_BP; i++) {
+        const u = (i / (N_BP - 1)) - 0.5;
+        const y = u * 4.05;
+        const ang = i * 0.56 + simTime * 0.35;
+        const R = 1.18;
+        const pA = [Math.cos(ang) * R, y, Math.sin(ang) * R];
+        const pB = [Math.cos(ang + 2.38) * R, y, Math.sin(ang + 2.38) * R]; // Real 136° B-DNA minor/major groove asymmetry!
+
+        addAtom(pA[0], pA[1], pA[2], 0.175, colP, 0.28);
+        addAtom(pB[0], pB[1], pB[2], 0.175, colP, 0.28);
+
+        // Sugar-ring linker atoms
+        const sA = [pA[0]*0.76, y + 0.04, pA[2]*0.76];
+        const sB = [pB[0]*0.76, y - 0.04, pB[2]*0.76];
+        addAtom(sA[0], sA[1], sA[2], 0.12, colC, 0.05);
+        addAtom(sB[0], sB[1], sB[2], 0.12, colC, 0.05);
+        addBond(pA, sA, colC, 0.052);
+        addBond(pB, sB, colC, 0.052);
+
+        // Nucleobase pair colors (A-T cyan/pink, G-C emerald/gold)
+        const isAT = (i % 2 === 0);
+        const bCol1 = isAT ? colN : colEm;
+        const bCol2 = isAT ? colO : colP;
+        const mA = [lerp(sA[0], sB[0], 0.34), y, lerp(sA[2], sB[2], 0.34)];
+        const mB = [lerp(sA[0], sB[0], 0.66), y, lerp(sA[2], sB[2], 0.66)];
+        addAtom(mA[0], mA[1], mA[2], 0.135, bCol1, 0.35);
+        addAtom(mB[0], mB[1], mB[2], 0.135, bCol2, 0.35);
+        addBond(sA, mA, bCol1, 0.058);
+        addBond(sB, mB, bCol2, 0.058);
+        // Glowing central hydrogen-bond bridge!
+        addBond(mA, mB, colEm, 0.036);
+
+        if (prevA) {
+          addBond(prevA, pA, [0.75, 0.84, 0.96], 0.068);
+          addBond(prevB, pB, [0.75, 0.84, 0.96], 0.068);
+        }
+        prevA = pA; prevB = pB;
+      }
+    } else if (mode === 1 || mode === 2) {
+      // === MODE 1 & 2: OPEN-CLEFT PROTEIN RECEPTOR POCKET + AI LIGAND DOCKING + JEWEL ESP CLOUD ===
+      const N_REC = 64;
+      const anchorIndices = new Set([6, 16, 26, 36, 46, 56]);
+      const anchors = [];
+      let prevR = null;
+      for (let i = 0; i < N_REC; i++) {
+        const u = i / (N_REC - 1);
+        // Sculpted C-shaped Receptor Active Binding Cleft OPENING CLEARLY TOWARD +Z CAMERA!
+        const arc = lerp(0.84 * Math.PI, 2.16 * Math.PI, u);
+        const coil = u * Math.PI * 2 * 6.5;
+        const majorR = 1.92 + Math.sin(u * Math.PI * 3) * 0.16;
+        const px = Math.cos(arc) * majorR + Math.cos(coil) * 0.28;
+        const py = Math.sin(coil) * 0.34 + (u - 0.5) * 1.38;
+        const pz = Math.sin(arc) * majorR + Math.sin(coil) * 0.24 - 0.10;
+        const p = [px, py, pz];
+
+        const cRes = plddtColor(0.78 + 0.20 * Math.sin(u * Math.PI));
+        addAtom(px, py, pz, 0.145, cRes, 0.14);
+        if (prevR) addBond(prevR, p, [0.56, 0.72, 0.92], 0.064);
+        prevR = p;
+
+        // Side-chain catalytic atoms pointing inward toward active binding pocket
+        if (i % 4 === 0 || anchorIndices.has(i)) {
+          const toC = [-px * 0.28, -py * 0.24, -pz * 0.28];
+          const sp = [px + toC[0], py + toC[1], pz + toC[2]];
+          const isNeg = (i % 8 === 0);
+          addAtom(sp[0], sp[1], sp[2], 0.135, isNeg ? colO : colN, 0.28);
+          addBond(p, sp, isNeg ? colO : colN, 0.050);
+          if (anchorIndices.has(i)) anchors.push(sp);
+          // Populate translucent ESP electrostatic surface spheres (balanced radii, zero white blowout!)
+          if (espAlpha > 0.03 && i % 8 === 0) {
+            espSpheres.push({
+              x: sp[0], y: sp[1], z: sp[2],
+              r: 0.46,
+              c: isNeg ? [1.0, 0.18, 0.46] : [0.14, 0.60, 1.0]
+            });
+          }
+        }
+      }
+
+      // Glowing Small-Molecule Drug Candidate ("NEON-409": Planar Aromatic Hex Ring + Functional Tails)
+      const dU = ease(dockProg);
+      const lx = lerp(0.55, 0.0, dU);
+      const ly = lerp(1.15, 0.0, dU) + Math.sin(simTime * 3.0) * 0.035 * (1 - dU * 0.75);
+      const lz = lerp(2.85, 0.15, dU);
+      const spin = lerp(1.4, 0.0, dU) + simTime * 0.28;
+      const ligPts = [];
+      for (let k = 0; k < 6; k++) {
+        const a = (k / 6) * Math.PI * 2 + spin;
+        const rx = lx + Math.cos(a) * 0.50;
+        const ry = ly + Math.sin(a) * 0.34;
+        const rz = lz + Math.sin(a * 1.0) * 0.24;
+        ligPts.push([rx, ry, rz]);
+        const lCol = (k % 2 === 0) ? colEm : colP;
+        addAtom(rx, ry, rz, 0.165, lCol, 0.65);
+      }
+      for (let k = 0; k < 6; k++) addBond(ligPts[k], ligPts[(k + 1) % 6], colEm, 0.068);
+      // Central pharmacophore core + catalytic donor/acceptor tails
+      addAtom(lx, ly, lz, 0.14, colEm, 0.75);
+      const topTail = [lx, ly + 0.68, lz + 0.10];
+      const botTail = [lx, ly - 0.68, lz + 0.10];
+      addAtom(topTail[0], topTail[1], topTail[2], 0.175, colO, 0.65);
+      addAtom(botTail[0], botTail[1], botTail[2], 0.175, colN, 0.65);
+      addBond(ligPts[0], topTail, colP, 0.058);
+      addBond(ligPts[3], botTail, colN, 0.058);
+
+      if (espAlpha > 0.03) {
+        espSpheres.push({ x: lx, y: ly, z: lz, r: 0.76, c: [0.04, 0.96, 0.66] });
+        espSpheres.push({ x: topTail[0], y: topTail[1], z: topTail[2], r: 0.44, c: [0.76, 0.34, 1.0] });
+        espSpheres.push({ x: botTail[0], y: botTail[1], z: botTail[2], r: 0.44, c: [0.16, 0.78, 1.0] });
+      }
+
+      // Snap 6 Blazing 3D Dashed Emerald Hydrogen-Bond Lock Cylinders sequentially as Ligand docks!
+      for (let k = 0; k < anchors.length; k++) {
+        const thresh = 0.40 + k * 0.085;
+        const lockK = clamp((dU - thresh) / 0.16, 0.0, 1.0);
+        if (lockK > 0.02) {
+          const aP = anchors[k];
+          const lP = ligPts[k % 6];
+          for (let seg = 0; seg < 5; seg++) {
+            const t0 = (seg + 0.12) / 5, t1 = (seg + 0.56) / 5;
+            const q0 = [lerp(aP[0],lP[0],t0), lerp(aP[1],lP[1],t0), lerp(aP[2],lP[2],t0)];
+            const q1 = [lerp(aP[0],lP[0],t1), lerp(aP[1],lP[1],t1), lerp(aP[2],lP[2],t1)];
+            addBond(q0, q1, colEm, 0.036 * lockK);
+          }
+        }
+      }
+    } else {
+      // === MODE 3: ALPHAFOLD-STYLE REAL-TIME 3D PROTEIN FOLDING CONVERGENCE! ===
+      const fU = ease(foldProg);
+      let prevF = null;
+      for (let i = 0; i < N_FOLD; i++) {
+        // Wave folding slightly sequentially from N-terminus to C-terminus!
+        const localU = ease(clamp(foldProg * 1.25 - (i / N_FOLD) * 0.25, 0, 1));
+        const uP = foldUnfolded[i];
+        const tP = foldTarget[i];
+        const px = lerp(uP[0], tP[0], localU);
+        const py = lerp(uP[1], tP[1], localU);
+        const pz = lerp(uP[2], tP[2], localU);
+        const p = [px, py, pz];
+
+        // Live AlphaFold pLDDT confidence color shifts orange -> yellow -> cyan -> deep royal blue as each helix locks!
+        const conf = lerp(0.38, 0.97, localU);
+        const c = plddtColor(conf);
+        addAtom(px, py, pz, 0.175, c, 0.16 + localU * 0.15);
+        if (prevF) addBond(prevF, p, c, 0.088);
+        prevF = p;
+
+        // Side-chain functional atoms folding inward
+        if (i % 2 === 0) {
+          const sd = foldSide[i];
+          const sp = [px + sd.dx * (0.65 + localU * 0.35), py + sd.dy, pz + sd.dz * (0.65 + localU * 0.35)];
+          const sc = sd.isAcid ? colO : (sd.isPolar ? colN : colC);
+          addAtom(sp[0], sp[1], sp[2], 0.115, sc, 0.18);
+          addBond(p, sp, sc, 0.045);
+        }
+      }
+    }
+
+    lastAtomCount = aCnt;
+    lastBondCount = bCnt;
+    return { aCnt, bCnt, lCnt };
+  }
+
+  function renderWebGL() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.floor(glCanvas.clientWidth * dpr);
+    const h = Math.floor(glCanvas.clientHeight * dpr);
+    if (glCanvas.width !== w || glCanvas.height !== h) { glCanvas.width = w; glCanvas.height = h; }
+
+    gl.viewport(0, 0, w, h);
+    gl.clearColor(0.016, 0.028, 0.062, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    const eye = [
+      Math.sin(camAz) * Math.cos(camEl) * camDist,
+      Math.sin(camEl) * camDist + 0.15,
+      Math.cos(camAz) * Math.cos(camEl) * camDist
+    ];
+    const proj = mat4Persp(0.68, w / Math.max(1, h), 0.1, 40.0);
+    const view = mat4Look(eye, [0, 0, 0], [0, 1, 0]);
+    const vp = mat4Mul(proj, view);
+
+    const { aCnt, bCnt, lCnt } = populateSceneInstances();
+
+    // 1. Background Grid & H-Bond Energy Beams
+    if (lCnt > 0) {
+      gl.useProgram(lineProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(lineProg, 'uVP'), false, vp);
+      gl.bindVertexArray(lineVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, lineBuf.subarray(0, lCnt * 7));
+      gl.drawArrays(gl.LINES, 0, lCnt);
+    }
+
+    // 2. Smooth Instanced Covalent Bonds
+    if (bCnt > 0) {
+      gl.useProgram(bondProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(bondProg, 'uVP'), false, vp);
+      gl.uniform3fv(gl.getUniformLocation(bondProg, 'uCamPos'), eye);
+      gl.bindVertexArray(bondVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, bondInstVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, bondInstBuf.subarray(0, bCnt * 10));
+      gl.drawElementsInstanced(gl.TRIANGLES, cyIdx.length, gl.UNSIGNED_SHORT, 0, bCnt);
+    }
+
+    // 3. Smooth Instanced Glossy PBR Atoms
+    if (aCnt > 0) {
+      gl.useProgram(atomProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(atomProg, 'uVP'), false, vp);
+      gl.uniform3fv(gl.getUniformLocation(atomProg, 'uCamPos'), eye);
+      gl.uniform1f(gl.getUniformLocation(atomProg, 'uAlpha'), 1.0);
+      gl.bindVertexArray(atomVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, atomInstVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, atomInstBuf.subarray(0, aCnt * 8));
+      gl.drawElementsInstanced(gl.TRIANGLES, spIdx.length, gl.UNSIGNED_SHORT, 0, aCnt);
+    }
+
+    // 4. Translucent Glassy Electrostatic Potential (ESP) Surface Cloud (back-to-front sorted, standard alpha!)
+    if (espAlpha > 0.03 && espSpheres.length > 0) {
+      espSpheres.sort((a, b) => {
+        const da = (a.x-eye[0])**2 + (a.y-eye[1])**2 + (a.z-eye[2])**2;
+        const db = (b.x-eye[0])**2 + (b.y-eye[1])**2 + (b.z-eye[2])**2;
+        return db - da;
+      });
+      gl.depthMask(false);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      let ec = 0;
+      for (const s of espSpheres) {
+        if (ec >= MAX_ATOMS) break;
+        let o = ec * 8;
+        atomInstBuf[o++]=s.x; atomInstBuf[o++]=s.y; atomInstBuf[o++]=s.z; atomInstBuf[o++]=s.r * (0.86 + espAlpha * 0.22);
+        atomInstBuf[o++]=s.c[0]; atomInstBuf[o++]=s.c[1]; atomInstBuf[o++]=s.c[2]; atomInstBuf[o++]=0.25;
+        ec++;
+      }
+      gl.useProgram(atomProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(atomProg, 'uVP'), false, vp);
+      gl.uniform3fv(gl.getUniformLocation(atomProg, 'uCamPos'), eye);
+      gl.uniform1f(gl.getUniformLocation(atomProg, 'uAlpha'), espAlpha * 0.72);
+      gl.bindVertexArray(atomVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, atomInstVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, atomInstBuf.subarray(0, ec * 8));
+      gl.drawElementsInstanced(gl.TRIANGLES, spIdx.length, gl.UNSIGNED_SHORT, 0, ec);
+      gl.depthMask(true);
+    }
+
+    gl.bindVertexArray(null);
+  }
+
+  // ===== 2D CANVASES: RAMACHANDRAN PLOT, CONVERGENCE CURVE, & 2D LIGAND POCKET MAP =====
+  const ramaCanvas = document.getElementById('ramaCanvas');
+  const rctx = ramaCanvas.getContext('2d');
+  const convCanvas = document.getElementById('convCanvas');
+  const cctx = convCanvas.getContext('2d');
+  const pockCanvas = document.getElementById('pocketCanvas');
+  const pctx = pockCanvas.getContext('2d');
+
+  // Pre-seed 38 Ramachandran points converging into the optimal Alpha-Helix zone (-60°, -45°)
+  const ramaPts = [];
+  for (let i = 0; i < 38; i++) {
+    ramaPts.push({
+      rx: (rng() - 0.5) * 2.0, ry: (rng() - 0.5) * 2.0,
+      tx: -0.34 + (rng() - 0.5) * 0.24, ty: -0.25 + (rng() - 0.5) * 0.22
+    });
+  }
+
+  function renderRama() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = ramaCanvas.clientWidth, H = ramaCanvas.clientHeight;
+    if (ramaCanvas.width !== Math.floor(W*dpr) || ramaCanvas.height !== Math.floor(H*dpr)) {
+      ramaCanvas.width = Math.floor(W*dpr); ramaCanvas.height = Math.floor(H*dpr);
+    }
+    rctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    rctx.clearRect(0, 0, W, H);
+
+    const cx = W * 0.5, cy = H * 0.5;
+    rctx.strokeStyle = 'rgba(56,189,248,0.16)'; rctx.lineWidth = 1;
+    rctx.beginPath(); rctx.moveTo(10, cy); rctx.lineTo(W-10, cy); rctx.moveTo(cx, 8); rctx.lineTo(cx, H-8); rctx.stroke();
+
+    // Favored Beta-Sheet (top-left) & Right-Handed Alpha-Helix (mid-left) Steric Islands
+    rctx.fillStyle = 'rgba(56,189,248,0.18)';
+    rctx.beginPath(); rctx.ellipse(cx - 50, cy - 36, 36, 20, -0.2, 0, Math.PI * 2); rctx.fill();
+    rctx.fillStyle = 'rgba(0,245,160,0.22)';
+    rctx.beginPath(); rctx.ellipse(cx - 42, cy + 20, 28, 16, 0.15, 0, Math.PI * 2); rctx.fill();
+
+    // Plot residues (converging dramatically into Alpha-Helix island during Live Folding!)
+    const conv = mode === 3 ? ease(foldProg) : 0.94;
+    for (const pt of ramaPts) {
+      const px = cx + lerp(pt.rx * 95, pt.tx * 120, conv) + Math.sin(simTime * 2 + pt.rx * 10) * 1.5;
+      const py = cy - lerp(pt.ry * 60, pt.ty * 85, conv);
+      rctx.fillStyle = conv > 0.72 ? '#00f5a0' : '#fbbf24';
+      rctx.beginPath(); rctx.arc(px, py, 2.3, 0, Math.PI * 2); rctx.fill();
+    }
+
+    rctx.font = '8px "Cascadia Code", Consolas, monospace';
+    rctx.fillStyle = '#7dd3fc'; rctx.fillText('β-SHEET', cx - 80, cy - 42);
+    rctx.fillStyle = '#00f5a0'; rctx.fillText('α-HELIX', cx - 72, cy + 44);
+    rctx.fillStyle = '#5b7496'; rctx.fillText('φ (-180..+180)', W - 78, H - 5);
+  }
+
+  function renderConv() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = convCanvas.clientWidth, H = convCanvas.clientHeight;
+    if (convCanvas.width !== Math.floor(W*dpr) || convCanvas.height !== Math.floor(H*dpr)) {
+      convCanvas.width = Math.floor(W*dpr); convCanvas.height = Math.floor(H*dpr);
+    }
+    cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cctx.clearRect(0, 0, W, H);
+
+    const padL = 8, padR = 8, padT = 12, padB = 18;
+    const cw = W - padL - padR, ch = H - padT - padB;
+    const xOf = (i) => padL + (i / (dgHist.length - 1)) * cw;
+
+    // pLDDT confidence curve (Royal Blue / Cyan)
+    cctx.beginPath();
+    plddtHist.forEach((v, i) => {
+      const y = padT + (1 - clamp((v - 30) / 72, 0, 1)) * ch;
+      if (i === 0) cctx.moveTo(xOf(i), y); else cctx.lineTo(xOf(i), y);
+    });
+    cctx.strokeStyle = '#60a5fa'; cctx.lineWidth = 1.7; cctx.stroke();
+
+    // Binding Affinity |-ΔG| curve (Emerald)
+    cctx.beginPath();
+    dgHist.forEach((v, i) => {
+      const y = padT + (1 - clamp((-v) / 13.5, 0, 1)) * ch;
+      if (i === 0) cctx.moveTo(xOf(i), y); else cctx.lineTo(xOf(i), y);
+    });
+    cctx.strokeStyle = '#00f5a0'; cctx.lineWidth = 1.7; cctx.stroke();
+
+    cctx.font = '8px "Cascadia Code", Consolas, monospace';
+    cctx.fillStyle = '#00f5a0'; cctx.fillText('● -ΔG AFFINITY', 10, H - 5);
+    cctx.fillStyle = '#60a5fa'; cctx.fillText('● pLDDT %', 112, H - 5);
+  }
+
+  function renderPocketMap() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = pockCanvas.clientWidth, H = pockCanvas.clientHeight;
+    if (pockCanvas.width !== Math.floor(W*dpr) || pockCanvas.height !== Math.floor(H*dpr)) {
+      pockCanvas.width = Math.floor(W*dpr); pockCanvas.height = Math.floor(H*dpr);
+    }
+    pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    pctx.clearRect(0, 0, W, H);
+
+    const cx = W * 0.5, cy = H * 0.52;
+    const residues = [
+      { name: 'ASP-142', ang: -2.4, d: '2.7Å', col: '#ff5c85' },
+      { name: 'HIS-188', ang: -1.1, d: '2.9Å', col: '#38bdf8' },
+      { name: 'TYR-204', ang: -0.1, d: '3.1Å', col: '#fbbf24' },
+      { name: 'ARG-219', ang:  1.0, d: '2.6Å', col: '#38bdf8' },
+      { name: 'LYS-261', ang:  2.2, d: '2.8Å', col: '#00f5a0' },
+      { name: 'PHE-308', ang:  3.0, d: '3.4Å', col: '#c084fc' },
+    ];
+    const locked = (mode === 1 && dockProg > 0.55) || mode === 2 || mode === 0;
+
+    // Dashed H-bond interaction lines (sequentially lighting up during AI Docking!)
+    const dU = ease(dockProg);
+    residues.forEach((r, idx) => {
+      const rx = cx + Math.cos(r.ang + Math.sin(simTime * 0.7) * 0.04) * 86;
+      const ry = cy + Math.sin(r.ang + Math.sin(simTime * 0.7) * 0.04) * 68;
+      const isLit = mode === 2 || mode === 0 || (mode === 1 && dU > (0.40 + idx * 0.085));
+      pctx.save();
+      pctx.strokeStyle = isLit ? 'rgba(0,245,160,0.82)' : 'rgba(148,163,184,0.22)';
+      pctx.setLineDash([4, 3]); pctx.lineWidth = isLit ? 1.6 : 1.1;
+      pctx.beginPath(); pctx.moveTo(cx, cy); pctx.lineTo(rx, ry); pctx.stroke();
+      pctx.restore();
+
+      // Residue node pill
+      pctx.fillStyle = 'rgba(8,16,32,0.96)';
+      pctx.strokeStyle = r.col; pctx.lineWidth = 1.3;
+      pctx.beginPath(); pctx.roundRect(rx - 26, ry - 11, 52, 22, 5); pctx.fill(); pctx.stroke();
+      pctx.font = 'bold 8.5px "Cascadia Code", Consolas, monospace';
+      pctx.textAlign = 'center'; pctx.fillStyle = r.col;
+      pctx.fillText(r.name, rx, ry - 1);
+      pctx.fillStyle = '#cbd5e1'; pctx.font = '7.5px "Cascadia Code", Consolas, monospace';
+      pctx.fillText(r.d, rx, ry + 8);
+    });
+
+    // Center Ligand Hexagonal Benzene Core ("NEON-409") with opaque dark backing so dashed lines stay cleanly behind!
+    pctx.beginPath();
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * Math.PI * 2 + simTime * 0.4;
+      const x = cx + Math.cos(a) * 27, y = cy + Math.sin(a) * 27;
+      if (k === 0) pctx.moveTo(x, y); else pctx.lineTo(x, y);
+    }
+    pctx.closePath();
+    pctx.fillStyle = '#071424'; pctx.fill();
+    pctx.fillStyle = 'rgba(0,245,160,0.18)'; pctx.fill();
+    pctx.strokeStyle = '#00f5a0'; pctx.lineWidth = 2.0; pctx.stroke();
+    pctx.textAlign = 'center'; pctx.fillStyle = '#ecfdf5';
+    pctx.font = 'bold 8.5px "Cascadia Code", Consolas, monospace';
+    pctx.fillText('NEON-409', cx, cy + 3);
+  }
+
+  // Build 24-Residue (2 rows x 12) AlphaFold pLDDT Confidence Track Pills
+  const seqStrip = document.getElementById('seqStrip');
+  const aaNames = ['M','A','G','K','D','H','Y','R','F','L','V','E','Q','N','S','T','W','I','P','C','A','L','K','G'];
+  const seqPills = [];
+  for (let i = 0; i < 24; i++) {
+    const d = document.createElement('div');
+    d.className = 'res-pill';
+    d.textContent = aaNames[i];
+    seqStrip.appendChild(d);
+    seqPills.push(d);
+  }
+
+  function renderDOM() {
+    const dg = dgHist[dgHist.length - 1];
+    const conf = plddtHist[plddtHist.length - 1];
+    const rmsd = mode === 3 ? lerp(14.2, 0.41, ease(foldProg)) : 0.42;
+
+    document.getElementById('kDg').textContent = `${dg.toFixed(1)} kcal/mol`;
+    document.getElementById('kPlddt').textContent = `${conf.toFixed(1)}%`;
+    document.getElementById('kRmsd').textContent = `${rmsd.toFixed(2)} Å`;
+    document.getElementById('kHbonds').textContent = mode === 0 ? '22 BP' : (mode === 3 ? '3-HELIX' : `${Math.round(ease(dockProg) * 6)} LOCKED`);
+
+    document.getElementById('mDg').textContent = dg.toFixed(1);
+    document.getElementById('mConf').textContent = `${conf.toFixed(1)}%`;
+    document.getElementById('mConfSub').textContent = conf > 88 ? 'VERY HIGH CONF' : (conf > 68 ? 'CONVERGING...' : 'UNFOLDED COIL');
+    document.getElementById('mRmsd').textContent = `${rmsd.toFixed(2)} Å`;
+    document.getElementById('mAtoms').textContent = String(lastAtomCount);
+    document.getElementById('mBondsSub').textContent = `${lastBondCount} BONDS`;
+    document.getElementById('seqConf').textContent = `${conf.toFixed(1)}%`;
+    document.getElementById('seqBadge').textContent = mode === 3 && foldProg < 0.8 ? 'FOLDING LIVE' : 'CONVERGED';
+    document.getElementById('clockEl').textContent = `GEMINI 4 NEON · ${simTime.toFixed(1).padStart(4, '0')}s`;
+    document.getElementById('gCam').textContent = `AZ ${Math.round((camAz*180/Math.PI)%360)}° · EL ${Math.round(camEl*180/Math.PI)}°`;
+
+    // Update 24 residue pill colors & stacked pLDDT distribution bar
+    let hiCnt = 0, midCnt = 0, loCnt = 0;
+    for (let i = 0; i < 24; i++) {
+      const sc = mode === 3 ? clamp(foldProg * 1.25 - (i / 24) * 0.25, 0.35, 0.98) : 0.94;
+      if (sc > 0.80) hiCnt++; else if (sc > 0.60) midCnt++; else loCnt++;
+      const [r, g, b] = plddtColor(sc);
+      seqPills[i].style.background = `rgb(${Math.round(r*210)},${Math.round(g*210)},${Math.round(b*220)})`;
+    }
+    const hiPct = Math.round((hiCnt / 24) * 100);
+    const midPct = Math.round((midCnt / 24) * 100);
+    const loPct = Math.max(0, 100 - hiPct - midPct);
+    document.getElementById('barHi').style.width = `${hiPct}%`;
+    document.getElementById('barMid').style.width = `${midPct}%`;
+    document.getElementById('barLo').style.width = `${loPct}%`;
+    document.getElementById('seqHiPct').textContent = `HIGH CONF: ${hiPct}%`;
+    const helPct = mode === 3 ? Math.round(lerp(14, 84, ease(foldProg))) : 84;
+    document.getElementById('seqSec').textContent = `α-HELIX ${helPct}% · LOOP ${100 - helPct}%`;
+    document.getElementById('gComplex').textContent = ['B-DNA 22-BP','RECEPTOR + NEON-409','ESP QUANTUM SHELL','75-AA COIL → HELIX'][mode];
+
+    document.getElementById('tabDna').className  = mode === 0 ? 'tbtn act-cyan' : 'tbtn';
+    document.getElementById('tabDock').className = mode === 1 ? 'tbtn act-em'   : 'tbtn';
+    document.getElementById('tabEsp').className  = mode === 2 ? 'tbtn act-vio'  : 'tbtn';
+    document.getElementById('tabFold').className = mode === 3 ? 'tbtn act-blue' : 'tbtn';
+
+    const titles = [
+      'B-DNA DOUBLE HELIX // ATOMIC BASE-PAIRING',
+      'AI SMALL-MOLECULE DOCKING // NEON-409 → ACTIVE CLEFT',
+      '3D ELECTROSTATIC POTENTIAL (ESP) // CHARGE COMPLEMENTARITY',
+      'ALPHAFOLD-STYLE LIVE 3D FOLDING // TRIPLE-HELIX BUNDLE'
+    ];
+    document.getElementById('glTitle').textContent = titles[mode];
+    document.getElementById('gComplex').textContent = ['B-DNA 22-BP','RECEPTOR + NEON-409','ESP QUANTUM SHELL','75-AA COIL → HELIX'][mode];
+    document.getElementById('gState').textContent = mode === 1 ? (dockProg > 0.8 ? 'POCKET LOCKED' : 'MINIMIZING ΔG')
+      : (mode === 3 ? (foldProg > 0.85 ? 'NATIVE FOLD' : 'FOLDING LIVE') : 'EQUILIBRIUM');
+    document.getElementById('gSurf').textContent = mode === 2 ? 'ESP CLOUD + CPK' : (mode === 3 ? 'pLDDT HEATMAP' : 'CPK + H-BONDS');
+
+    document.getElementById('glLeg').innerHTML = mode === 3
+      ? '<div class="litem"><span class="ldot" style="background:#f97316"></span>&lt;50</div><div class="litem"><span class="ldot" style="background:#facc15"></span>70</div><div class="litem"><span class="ldot" style="background:#38bdf8"></span>85</div><div class="litem"><span class="ldot" style="background:#2563eb"></span>&gt;90 pLDDT</div>'
+      : '<div class="litem"><span class="ldot" style="background:#fbbf24"></span>P</div><div class="litem"><span class="ldot" style="background:#38bdf8"></span>N</div><div class="litem"><span class="ldot" style="background:#ff3366"></span>O</div><div class="litem"><span class="ldot" style="background:#00f5a0"></span>H-BOND</div>';
+
+    for (const id of ['btnDna','btnDock','btnEsp','btnFold']) {
+      document.getElementById(id).classList.toggle('pressed', pressedId === id);
+    }
+
+    const elB = document.getElementById('glBanner');
+    if (banner.ttl > 0) { elB.textContent = banner.text; elB.className = `gl-banner ${banner.cls}`; }
+    else elB.className = 'gl-banner';
+
+    const phs = [
+      { id:'ph0', pr:'pr0', s:0,  e:6,  c:'act-cyan' },
+      { id:'ph1', pr:'pr1', s:6,  e:12, c:'act-em' },
+      { id:'ph2', pr:'pr2', s:12, e:18, c:'act-vio' },
+      { id:'ph3', pr:'pr3', s:18, e:24, c:'act-blue' },
+    ];
+    for (const p of phs) {
+      const el = document.getElementById(p.id), pr = document.getElementById(p.pr);
+      const act = simTime >= p.s && simTime < p.e;
+      const pct = simTime < p.s ? 0 : (simTime >= p.e ? 100 : ((simTime - p.s)/(p.e - p.s))*100);
+      el.className = act ? `ppill ${p.c}` : 'ppill';
+      pr.style.width = `${pct.toFixed(1)}%`;
+    }
+
+    const vc = document.getElementById('vCursor'), cr = document.getElementById('cRing');
+    vc.style.left = `${curX.toFixed(1)}px`; vc.style.top = `${curY.toFixed(1)}px`; vc.style.opacity = curOp.toFixed(2);
+    if (cPulse > 0.02) {
+      cr.style.left = `${curX.toFixed(1)}px`; cr.style.top = `${curY.toFixed(1)}px`;
+      cr.style.opacity = (cPulse * 0.9).toFixed(2);
+      cr.style.transform = `translate(-50%,-50%) scale(${(0.6 + (1-cPulse)*1.1).toFixed(2)})`;
+    } else cr.style.opacity = '0';
+  }
+
+  // Interactive Controls
+  document.getElementById('tabDna').addEventListener('click',  () => setMode(0));
+  document.getElementById('tabDock').addEventListener('click', () => setMode(1));
+  document.getElementById('tabEsp').addEventListener('click',  () => setMode(2));
+  document.getElementById('tabFold').addEventListener('click', () => setMode(3));
+  document.getElementById('btnDna').addEventListener('click',  () => setMode(0));
+  document.getElementById('btnDock').addEventListener('click', () => setMode(1));
+  document.getElementById('btnEsp').addEventListener('click',  () => setMode(2));
+  document.getElementById('btnFold').addEventListener('click', () => setMode(3));
+
+  glCanvas.addEventListener('mousedown', (e) => { dragging = true; lastMX = e.clientX; lastMY = e.clientY; });
+  window.addEventListener('mouseup', () => { dragging = false; });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    camAz -= (e.clientX - lastMX) * 0.008;
+    camEl = clamp(camEl + (e.clientY - lastMY) * 0.006, -1.1, 1.1);
+    lastMX = e.clientX; lastMY = e.clientY;
+  });
+  glCanvas.addEventListener('wheel', (e) => {
+    camDist = clamp(camDist + e.deltaY * 0.003, 3.6, 11.0);
+  }, { passive: true });
+
+  // Init & Loop
+  renderWebGL();
+  renderDOM();
+  renderRama();
+  renderConv();
+  renderPocketMap();
+
+  window.stepHelix = function(dt, drawAll = true) {
+    stepSim(dt);
+    if (drawAll) {
+      renderWebGL();
+      renderDOM();
+      renderRama();
+      renderConv();
+      renderPocketMap();
+    }
+  };
+
+  if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.addControl('▶ 自動ツアー', (btn) => {
+        autoTour = !autoTour;
+        btn.classList.toggle('active', autoTour);
+        if (autoTour) { simTime = 0; for (const k in trig) trig[k] = false; setMode(0); }
+      });
+    });
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+      last = now;
+      if (autoTour && simTime >= 24.0) { simTime = 0; for (const k in trig) trig[k] = false; setMode(0); }
+      window.stepHelix(dt, true);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+<script src="../demo-shell.js?v=20261120-32"></script>
+</body>
+</html>
