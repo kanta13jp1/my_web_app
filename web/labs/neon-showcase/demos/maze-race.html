@@ -459,27 +459,53 @@ renderFrame();
 // Auto-play if opened interactively in browser
 if (!window.__RECORDING__) {
   let paused = false;
+  let speedMult = 1;
+  let doneHold = 0;
+  function resetRace() {
+    simT = 0;
+    finishedCount = 0;
+    stepAccumulator = 0;
+    doneHold = 0;
+    const specs = [
+      ['01 / DFS', 'Depth-First Search', '#FF3B9A', 'rgba(255, 59, 154, 0.5)', 'dfs'],
+      ['02 / BFS', 'Breadth-First Search', '#00E5FF', 'rgba(0, 229, 255, 0.5)', 'bfs'],
+      ['03 / DIJKSTRA', 'Shortest Cost First', '#FFB800', 'rgba(255, 184, 0, 0.5)', 'dijkstra'],
+      ['04 / A* (A-STAR)', 'Manhattan Heuristic', '#00FF9D', 'rgba(0, 255, 157, 0.55)', 'astar'],
+    ];
+    for (let i = 0; i < specs.length; i++) solvers[i] = new Solver(...specs[i]);
+    renderFrame();
+  }
   window.addEventListener('DOMContentLoaded', () => {
     if (!window.NeonShell) return;
+    window.NeonShell.setHint('4種の経路探索（DFS/BFS/Dijkstra/A*）を同時対決 · 完了後自動ループ');
+    window.NeonShell.addControl('⚡ 2x速', (btn) => {
+      speedMult = speedMult === 1 ? 2.2 : 1;
+      btn.classList.toggle('active', speedMult > 1);
+    });
     window.NeonShell.addControl('⏸ 一時停止', (btn) => {
       paused = !paused;
       btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
       btn.classList.toggle('active', paused);
     });
-    window.NeonShell.addControl('↻ もう一度対決', () => window.location.reload());
+    window.NeonShell.addControl('↻ もう一度対決', resetRace);
   });
   let last = performance.now();
   function loop(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (!paused && simT < TOTAL_T) {
-      window.stepRace(dt);
+    if (!paused) {
+      if (finishedCount >= 4 || simT >= TOTAL_T) {
+        doneHold += dt;
+        if (doneHold >= 3.2) resetRace();
+      } else {
+        window.stepRace(dt * speedMult);
+      }
     }
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
 }
 </script>
-<script src="../demo-shell.js"></script>
+<script src="../demo-shell.js?v=20261120-32"></script>
 </body>
 </html>

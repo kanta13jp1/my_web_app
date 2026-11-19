@@ -58,6 +58,14 @@ class GrowTogetherShareCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final titleColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final bodyColor = isDark ? Colors.white70 : const Color(0xFF475569);
+    const darkMsgColor = Color(0xFFE2E8F0);
+    const lightMsgColor = Color(0xFF1E293B);
+    final messageColor = isDark ? darkMsgColor : lightMsgColor;
+    final copyButtonForeground = isDark ? Colors.white : lightMsgColor;
+    final darkBorder = Colors.white.withValues(alpha: 0.24);
+    final copyButtonBorder = isDark ? darkBorder : const Color(0xFFCBD5E1);
 
     return Card(
       key: const Key('grow_together_share_card'),
@@ -105,6 +113,7 @@ class GrowTogetherShareCard extends StatelessWidget {
                       Text(
                         'みんなでアプリを育てる',
                         style: theme.textTheme.titleMedium?.copyWith(
+                          color: titleColor,
                           fontWeight: FontWeight.w800,
                           height: 1.4,
                         ),
@@ -113,7 +122,10 @@ class GrowTogetherShareCard extends StatelessWidget {
                       Text(
                         '要望・不具合を送るとAIが自動で対応に着手します。'
                         'この仕組みをXで広めて、一緒に育てる仲間を増やしましょう。',
-                        style: theme.textTheme.bodySmall?.copyWith(height: 1.5),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: bodyColor,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -137,7 +149,10 @@ class GrowTogetherShareCard extends StatelessWidget {
               ),
               child: Text(
                 GrowTogetherShare.fullShareMessage,
-                style: theme.textTheme.bodySmall?.copyWith(height: 1.6),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: messageColor,
+                  height: 1.6,
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -168,6 +183,10 @@ class GrowTogetherShareCard extends StatelessWidget {
                 OutlinedButton.icon(
                   key: const Key('grow_together_copy_button'),
                   onPressed: () => _handleCopy(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: copyButtonForeground,
+                    side: BorderSide(color: copyButtonBorder),
+                  ),
                   icon: const Icon(Icons.copy_outlined, size: 16),
                   label: const Text('本文をコピー'),
                 ),

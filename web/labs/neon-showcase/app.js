@@ -1,12 +1,13 @@
-import { renderBlenderArtwork, renderDemoArtwork } from './artworks.js';
+import { renderBlenderArtwork, renderDemoArtwork } from './artworks.js?v=20261120-32';
 import {
   BLENDER_WORKS,
   CONCEPT_PLANS,
   LIVE_DEMOS,
   VIRAL_LAWS,
   X_BENCHMARKS,
-} from './catalog.js';
+} from './catalog.js?v=20261120-32';
 
+const ASSET_VER = '20261120-32';
 const SAFE_SLUG = /^[a-z0-9-]+$/;
 const SAFE_X_URL = /^https:\/\/x\.com\/[A-Za-z0-9_]+\/status\/[0-9]+(?:\/[A-Za-z0-9_/-]*)?$/;
 
@@ -33,7 +34,6 @@ const modalOpenTab = document.getElementById('modal-open-tab');
 const modalFullscreen = document.getElementById('modal-fullscreen');
 const modalClose = document.getElementById('modal-close');
 const modalStageWrap = document.getElementById('modal-stage-wrap');
-const modalScaler = document.getElementById('modal-scaler');
 const modalIframe = document.getElementById('modal-iframe');
 
 function esc(str) {
@@ -76,23 +76,21 @@ function matchesQuery(fields) {
   return fields.some((f) => String(f ?? '').toLowerCase().includes(q));
 }
 
-function updateModalScale() {
-  if (modal.hidden) return;
-  const w = modalStageWrap.clientWidth || 1280;
-  const h = modalStageWrap.clientHeight || (w * 720) / 1280;
-  const scale = Math.min(w / 1280, h / 720);
-  modalScaler.style.transform = `translate(-50%, -50%) scale(${scale})`;
+function syncModalFullscreenLabel() {
+  if (!modalFullscreen) return;
+  const active = Boolean(document.fullscreenElement);
+  modalFullscreen.textContent = active ? '⛶ フル画面解除' : '⛶ フル画面';
 }
 
 function openDemoModal(slug) {
   const demo = LIVE_DEMOS.find((d) => d.slug === slug);
   if (!demo || !SAFE_SLUG.test(demo.slug)) return;
-  const url = `./demos/${demo.slug}.html`;
+  const url = `./demos/${demo.slug}.html?v=${ASSET_VER}`;
   modalTitle.textContent = demo.title;
   modalSub.textContent = `${demo.model} · ${demo.categoryLabel} · ${demo.sizeKb} KB · 外部ライブラリ 0`;
   modalOpenTab.href = url;
   modal.hidden = false;
-  updateModalScale();
+  syncModalFullscreenLabel();
   modalIframe.src = url;
   modalClose.focus();
 }
@@ -164,7 +162,7 @@ function renderDemos() {
             <div class="tag-list">${(d.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
             <div class="card-actions">
               <button type="button" class="btn btn-primary" data-launch-demo="${esc(safeSlug)}">今すぐ体験</button>
-              <a class="btn btn-ghost" href="./demos/${esc(safeSlug)}.html" target="_blank" rel="noopener noreferrer">別タブ</a>
+              <a class="btn btn-ghost" href="./demos/${esc(safeSlug)}.html?v=${ASSET_VER}" target="_blank" rel="noopener noreferrer">別タブ</a>
             </div>
           </div>
         </article>
@@ -217,6 +215,14 @@ function renderBlender() {
             <p class="card-desc">${esc(b.summary)}</p>
             <ul class="bullet-list">${(b.highlights || []).map((h) => `<li>${esc(h)}</li>`).join('')}</ul>
             <div class="card-meta"><span>仕様: ${esc(b.specs)}</span></div>
+            ${
+              b.demoSlug && SAFE_SLUG.test(b.demoSlug)
+                ? `<div class="card-actions">
+                     <button type="button" class="btn btn-primary" data-launch-demo="${esc(b.demoSlug)}">今すぐライブ体験（WebGL2）</button>
+                     <a class="btn btn-ghost" href="./demos/${esc(b.demoSlug)}.html?v=${ASSET_VER}" target="_blank" rel="noopener noreferrer">別タブ</a>
+                   </div>`
+                : ''
+            }
           </div>
         </article>
       `;
@@ -266,8 +272,8 @@ function renderPlans() {
       const toneCls =
         p.statusTone === 'done' ? 'status-done' : p.statusTone === 'live' ? 'status-live' : 'status-next';
       let actionHtml = '';
-      if (p.demoSlug) {
-        actionHtml = `<div class="card-actions"><button type="button" class="btn btn-primary" data-launch-demo="${esc(p.demoSlug)}">${esc(p.actionLabel)}</button></div>`;
+      if (p.demoSlug && SAFE_SLUG.test(p.demoSlug)) {
+        actionHtml = `<div class="card-actions"><button type="button" class="btn btn-primary" data-launch-demo="${esc(p.demoSlug)}">${esc(p.actionLabel || '今すぐライブ体験')}</button><a class="btn btn-ghost" href="./demos/${esc(p.demoSlug)}.html?v=${ASSET_VER}" target="_blank" rel="noopener noreferrer">別タブ</a></div>`;
       } else if (p.actionTab) {
         actionHtml = `<div class="card-actions"><button type="button" class="btn btn-ghost" data-jump-tab="${esc(p.actionTab)}">${esc(p.actionLabel)}</button></div>`;
       }
@@ -434,14 +440,13 @@ modalIframe.addEventListener('load', () => {
     } catch (_) {}
   }
 });
-document.addEventListener('fullscreenchange', updateModalScale);
+document.addEventListener('fullscreenchange', syncModalFullscreenLabel);
 modal.addEventListener('click', (e) => {
   if (e.target === modal) closeDemoModal();
 });
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !document.fullscreenElement) closeDemoModal();
 });
-window.addEventListener('resize', updateModalScale);
 
 // Support deep-link query ?tab=benchmarks or ?demo=sea-train-3d
 const params = new URLSearchParams(window.location.search);
