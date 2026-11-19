@@ -872,7 +872,7 @@
   }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="workstation">
 <div class="app" id="appRoot">
   <!-- TOP HEADER -->
   <header class="topbar">
@@ -1431,10 +1431,12 @@
   let cursorX = 320, cursorY = 230, cursorOpacity = 0, clickPulse = 0;
   let pressedBtnId = null;
 
+  let autoTour = isRecording;
   function runChoreography(t, dt) {
     pressedBtnId = null;
     clickPulse = Math.max(0, clickPulse - dt * 2.8);
 
+    if (autoTour) {
     // Waypoints for smooth institutional cursor demo
     const whalePos = getButtonCenter(document.getElementById('btnWhale'));
     const ivPos = getButtonCenter(document.getElementById('btnModeIV'));
@@ -1528,6 +1530,7 @@
       }
       cursorOpacity = Math.max(0, cursorOpacity - dt * 1.4);
     }
+    } else { cursorOpacity = 0; }
 
     // Cinematic orbital camera choreography (wide framing so entire 3D terrain & IV smile fit cleanly!)
     if (!userDragging) {
@@ -2643,12 +2646,20 @@
   };
 
   if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.addControl('▶ 自動ツアー', (btn) => {
+        autoTour = !autoTour;
+        btn.classList.toggle('active', autoTour);
+        if (autoTour) { simTime = 0; for (const k in triggers) triggers[k] = false; }
+      });
+    });
     let lastTs = performance.now();
     function loop(now) {
       const dt = Math.min(0.05, (now - lastTs) / 1000);
       lastTs = now;
-      if (simTime >= TOTAL_DEMO_SEC) {
-        // Loop seamlessly for live interactive viewing
+      if (autoTour && simTime >= TOTAL_DEMO_SEC) {
+        // Loop seamlessly when auto tour is enabled
         simTime = 0;
         for (const k in triggers) triggers[k] = false;
       }
@@ -2659,5 +2670,6 @@
   }
 })();
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>

@@ -89,7 +89,8 @@
           <div class="modal-sub" id="modal-sub"></div>
         </div>
         <div class="modal-actions">
-          <a id="modal-open-tab" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer">別タブでフル画面</a>
+          <button type="button" id="modal-fullscreen" class="btn btn-ghost">⛶ フル画面</button>
+          <a id="modal-open-tab" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer">別タブで開く</a>
           <button type="button" id="modal-close" class="btn btn-primary">閉じる</button>
         </div>
       </div>
@@ -99,6 +100,8 @@
             id="modal-iframe"
             title="インタラクティブ3Dデモプレイヤー"
             referrerpolicy="no-referrer"
+            allow="fullscreen"
+            allowfullscreen
             sandbox="allow-scripts"
           ></iframe>
         </div>

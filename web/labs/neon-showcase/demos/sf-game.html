@@ -10,7 +10,7 @@
   #hud { pointer-events: none; }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="shooter">
 <canvas id="gl" width="1280" height="720"></canvas>
 <canvas id="hud" width="1280" height="720"></canvas>
 <script>
@@ -350,36 +350,12 @@ window.addEventListener('keyup', e => { keys[e.code] = false; });
 let actx = null;
 function playLiveSfx(kind) {
   if (window.__RECORDING__) return;
-  try {
-    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
-    if (actx.state === 'suspended') actx.resume();
-    const now = actx.currentTime;
-    const osc = actx.createOscillator();
-    const g = actx.createGain();
-    osc.connect(g); g.connect(actx.destination);
-    if (kind === 'fire') {
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.exponentialRampToValueAtTime(180, now + 0.11);
-      g.gain.setValueAtTime(0.08, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-      osc.start(now); osc.stop(now + 0.12);
-    } else if (kind === 'explode') {
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(160, now);
-      osc.frequency.exponentialRampToValueAtTime(35, now + 0.25);
-      g.gain.setValueAtTime(0.18, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
-      osc.start(now); osc.stop(now + 0.26);
-    } else if (kind === 'ring') {
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587, now);
-      osc.frequency.setValueAtTime(880, now + 0.06);
-      g.gain.setValueAtTime(0.12, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-      osc.start(now); osc.stop(now + 0.22);
-    }
-  } catch (e) {}
+  if (window.NeonAudio) {
+    if (kind === 'fire') window.NeonAudio.sfx('laser');
+    else if (kind === 'explode') window.NeonAudio.sfx('explosion');
+    else if (kind === 'ring') window.NeonAudio.sfx('ring');
+    return;
+  }
 }
 
 function recordEvent(kind) {
@@ -685,17 +661,44 @@ window.stepDemo = (dt) => {
 window.getEvents = () => state.events;
 
 // Interactive loop when opened directly in browser
+let autoPilot = Boolean(window.__RECORDING__);
+window.addEventListener('keydown', (e) => {
+  if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyJ'].includes(e.code)) {
+    autoPilot = false;
+  }
+});
+window.addEventListener('DOMContentLoaded', () => {
+  if (!window.NeonShell) return;
+  window.NeonShell.setHint('手動プレイ中: WASD/矢印で操縦 · Space/クリックでレーザー発射');
+  const autoBtn = window.NeonShell.addControl('🤖 オートデモ', (btn) => {
+    autoPilot = !autoPilot;
+    btn.classList.toggle('active', autoPilot);
+    window.NeonShell.setHint(autoPilot ? 'オートデモ再生中（キーまたは下ボタンで手動操縦）' : '手動プレイ中: WASD/矢印で操縦 · Space/クリックでレーザー発射');
+  });
+  window.NeonShell.addControl('↻ リスタート', () => window.location.reload());
+  const setKey = (code, val) => {
+    if (val) { autoPilot = false; autoBtn.classList.remove('active'); }
+    keys[code] = val;
+  };
+  window.NeonShell.addPads([
+    { label: '◀ 左', onDown: () => setKey('ArrowLeft', true), onUp: () => setKey('ArrowLeft', false) },
+    { label: '▲ 上', onDown: () => setKey('ArrowUp', true), onUp: () => setKey('ArrowUp', false) },
+    { label: '▼ 下', onDown: () => setKey('ArrowDown', true), onUp: () => setKey('ArrowDown', false) },
+    { label: '▶ 右', onDown: () => setKey('ArrowRight', true), onUp: () => setKey('ArrowRight', false) },
+    { label: '🔥 射撃', onDown: () => setKey('Space', true), onUp: () => setKey('Space', false) },
+  ]);
+});
 let last = performance.now();
 function loop(now) {
   if (window.__RECORDING__) return;
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
-  const manual = Object.values(keys).some(Boolean);
-  stepGame(dt, !manual);
+  stepGame(dt, autoPilot);
   renderScene();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>

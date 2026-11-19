@@ -103,7 +103,7 @@
   .cring { position: absolute; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #ff2e88; pointer-events: none; z-index: 49; opacity: 0; }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="cinema">
 <div class="stage" id="stageRoot">
   <canvas id="glCanvas" width="1280" height="720"></canvas>
 
@@ -750,10 +750,12 @@
     return { x: r.left - sr.left + r.width * 0.5, y: r.top - sr.top + r.height * 0.5 };
   }
 
+  let autoTour = isRecording;
   function runChoreography(t, dt) {
     pressedId = null;
     cPulse = Math.max(0, cPulse - dt * 2.8);
 
+    if (autoTour) {
     const pFpv  = btnCenter('btnFpv');
     const pHaze = btnCenter('btnHaze');
 
@@ -798,6 +800,7 @@
         banner = { text: `◈ NEO-TOKYO SKYLINE ASCENT · ${totalTowers} PROCEDURAL TOWERS ONLINE`, cls: 'b-cyan', ttl: 4.2 };
       }
     }
+    } else { curOp = 0; }
 
     // Cinematic Camera Rig: Unobstructed Grand Canyon Aerial Timelapse -> High-Speed FPV Dive -> Skyline Ascent!
     if (!manualMode) {
@@ -1028,11 +1031,20 @@
   };
 
   if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.setHint('WASD/矢印: FPV飛行 · ドラッグ: 視点操作 · 下ボタンでモード切替');
+      window.NeonShell.addControl('▶ 自動ツアー', (btn) => {
+        autoTour = !autoTour;
+        btn.classList.toggle('active', autoTour);
+        if (autoTour) { manualMode = false; simTime = 0; targetHaze = 0; for (const k in trig) trig[k] = false; }
+      });
+    });
     let last = performance.now();
     function loop(now) {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      if (!manualMode && simTime >= 24.0) { simTime = 0; targetHaze = 0; for (const k in trig) trig[k] = false; }
+      if (autoTour && !manualMode && simTime >= 24.0) { simTime = 0; targetHaze = 0; for (const k in trig) trig[k] = false; }
       window.stepCity(dt, true);
       requestAnimationFrame(loop);
     }
@@ -1040,5 +1052,6 @@
   }
 })();
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>
