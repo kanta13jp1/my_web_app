@@ -282,7 +282,7 @@
   </div>
 
   <div class="hud-br">
-    <div class="br-top" id="clockLbl">GEMINI 4 NEON · 00.0s / 24.0s</div>
+    <div class="br-top" id="clockLbl">GEMINI 4 NEON · LIVE INTERACTIVE</div>
     <div class="br-sub">DRAG TO ORBIT · SCROLL TO ZOOM · 164 GEODESIC STEPS/PX</div>
   </div>
 
@@ -829,7 +829,7 @@
     document.getElementById('tDil').textContent = `${dilation.toFixed(3)}x`;
     document.getElementById('tDop').textContent = `+${dopPct}%`;
     document.getElementById('wellDefl').textContent = `Δφ ${defl}°`;
-    document.getElementById('clockLbl').textContent = `GEMINI 4 NEON · ${simTime.toFixed(1).padStart(4, '0')}s / 24.0s`;
+    document.getElementById('clockLbl').textContent = autoTour ? `AUTO TOUR · ${simTime.toFixed(1).padStart(4, '0')}s / 24.0s` : `GEMINI 4 NEON · LIVE ${simTime.toFixed(1).padStart(4, '0')}s`;
 
     document.getElementById('btnOrbit').className = activeMode === 0 ? 'cbtn act-gold' : 'cbtn';
     document.getElementById('btnKerr').className  = activeMode === 1 ? 'cbtn act-cyan' : 'cbtn';
@@ -938,7 +938,7 @@
     });
     let last = performance.now();
     function loop(now) {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
       last = now;
       if (autoTour && simTime >= 24.0) { simTime = 0; for (const k in trig) trig[k] = false; setMode(0); }
       window.stepBlackHole(dt);

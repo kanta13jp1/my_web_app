@@ -1,5 +1,5 @@
-// Shared responsive stage scaler, native fullscreen control, interactive toolbar,
-// and procedural Pure Web Audio synthesizer for NEON SHOWCASE standalone demos.
+// Shared responsive stage scaler, zero-overlap flex toolbar & game-pad dock,
+// native fullscreen control, and Pure Web Audio synthesizer for NEON SHOWCASE demos.
 // Zero external dependencies; safe DOM APIs only.
 (() => {
   if (window.__RECORDING__ || window.__NEON_SHELL_LOADED__) return;
@@ -11,7 +11,7 @@
   const baseH = Math.max(240, Number(stageAttr[1]) || 720);
   const soundProfile = body?.dataset?.sound || 'cinema';
 
-  // ---- 1. Responsive Full-Viewport Stage Fit ----
+  // ---- 1. Zero-Overlap Fixed-Chrome Viewport Layout (Header + Centered Stage + Optional Pads) ----
   const styleEl = document.createElement('style');
   styleEl.textContent = `
     html {
@@ -21,130 +21,144 @@
       padding: 0 !important;
       overflow: hidden !important;
       background: #020611 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-    }
-    body {
-      width: ${baseW}px !important;
-      height: ${baseH}px !important;
-      margin: 0 !important;
-      flex: 0 0 auto !important;
-      transform-origin: center center !important;
       position: relative !important;
-      overflow: hidden !important;
-      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.72);
     }
     #neon-shell-bar {
       position: fixed;
-      right: 10px;
-      top: 10px;
+      top: 0;
+      left: 0;
+      right: 0;
+      min-height: 36px;
+      box-sizing: border-box;
+      padding: 4px 10px;
+      background: rgba(5, 9, 20, 0.96);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.22);
       z-index: 2147483647;
       display: flex;
       flex-wrap: wrap;
-      justify-content: flex-end;
       align-items: center;
+      justify-content: space-between;
       gap: 6px;
-      max-width: calc(100vw - 20px);
       font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
       pointer-events: auto;
+    }
+    #neon-shell-bar .ns-left,
+    #neon-shell-bar .ns-right {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+    }
+    #neon-shell-bar .ns-left {
+      flex: 1 1 200px;
+    }
+    #neon-shell-bar .ns-right {
+      justify-content: flex-end;
+    }
+    #neon-shell-hint {
+      color: #cbd5e1;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.015em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: min(56vw, 680px);
+      padding: 2px 6px;
+    }
+    body {
+      position: fixed !important;
+      left: 50% !important;
+      top: 50% !important;
+      width: ${baseW}px !important;
+      height: ${baseH}px !important;
+      margin: 0 !important;
+      transform-origin: center center !important;
+      overflow: hidden !important;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.72);
     }
     #neon-shell-bar .ns-btn {
       appearance: none;
       border: 1px solid rgba(148, 163, 184, 0.34);
-      background: rgba(6, 11, 24, 0.84);
+      background: rgba(12, 20, 38, 0.92);
       color: #e2e8f0;
       border-radius: 999px;
-      padding: 5px 11px;
-      font-size: 12px;
+      padding: 4px 10px;
+      font-size: 11.5px;
       font-weight: 700;
       line-height: 1.25;
       cursor: pointer;
       text-decoration: none;
-      backdrop-filter: blur(8px);
       transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
       white-space: nowrap;
     }
     #neon-shell-bar .ns-btn:hover {
-      background: rgba(15, 23, 42, 0.96);
-      border-color: rgba(56, 189, 248, 0.8);
+      background: rgba(24, 36, 64, 0.98);
+      border-color: rgba(56, 189, 248, 0.85);
       color: #ffffff;
     }
     #neon-shell-bar .ns-btn.active {
-      background: rgba(245, 158, 11, 0.92);
+      background: rgba(245, 158, 11, 0.94);
       border-color: #fde68a;
       color: #0b1020;
     }
-    #neon-shell-hint {
-      position: fixed;
-      left: 50%;
-      bottom: 10px;
-      transform: translateX(-50%);
-      z-index: 2147483646;
-      background: rgba(6, 11, 24, 0.82);
-      border: 1px solid rgba(56, 189, 248, 0.32);
-      color: #cbd5e1;
-      border-radius: 999px;
-      padding: 5px 13px;
-      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-      font-size: 11.5px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      backdrop-filter: blur(8px);
-      pointer-events: none;
-      max-width: calc(100vw - 24px);
-      text-align: center;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
     #neon-shell-pads {
       position: fixed;
-      left: 50%;
-      bottom: 42px;
-      transform: translateX(-50%);
+      bottom: 0;
+      left: 0;
+      right: 0;
+      box-sizing: border-box;
+      padding: 5px 10px 6px;
+      background: rgba(5, 9, 20, 0.96);
+      border-top: 1px solid rgba(56, 189, 248, 0.24);
       z-index: 2147483646;
       display: flex;
-      gap: 8px;
+      gap: 7px;
       flex-wrap: wrap;
       justify-content: center;
-      max-width: calc(100vw - 20px);
+      align-items: center;
       font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
     }
     #neon-shell-pads .ns-pad {
       appearance: none;
-      border: 1px solid rgba(56, 189, 248, 0.52);
-      background: rgba(7, 14, 30, 0.84);
+      border: 1px solid rgba(56, 189, 248, 0.55);
+      background: rgba(11, 20, 42, 0.94);
       color: #f8fafc;
-      border-radius: 10px;
-      padding: 8px 14px;
-      font-size: 13px;
+      border-radius: 8px;
+      padding: 6px 13px;
+      font-size: 12.5px;
       font-weight: 800;
       cursor: pointer;
       user-select: none;
       touch-action: manipulation;
-      backdrop-filter: blur(8px);
     }
     #neon-shell-pads .ns-pad:active,
     #neon-shell-pads .ns-pad.pressed {
-      background: rgba(56, 189, 248, 0.9);
+      background: rgba(56, 189, 248, 0.92);
       color: #020617;
     }
   `;
   document.head.appendChild(styleEl);
 
   let currentScale = 1;
+  let barEl = null;
+  let padsEl = null;
+
   function fitStage() {
     const vw = window.innerWidth || baseW;
     const vh = window.innerHeight || baseH;
-    currentScale = Math.min(vw / baseW, vh / baseH);
-    body.style.transform = `scale(${currentScale.toFixed(5)})`;
+    const barH = barEl ? barEl.getBoundingClientRect().height : 0;
+    const padsH = padsEl ? padsEl.getBoundingClientRect().height : 0;
+    const availW = Math.max(160, vw);
+    const availH = Math.max(120, vh - barH - padsH);
+    currentScale = Math.min(availW / baseW, availH / baseH);
+    const centerY = barH + availH * 0.5;
+    body.style.setProperty('top', `${centerY.toFixed(2)}px`, 'important');
+    body.style.setProperty('transform', `translate(-50%, -50%) scale(${currentScale.toFixed(5)})`, 'important');
   }
-  fitStage();
-  window.addEventListener('resize', fitStage);
-  document.addEventListener('fullscreenchange', fitStage);
 
-  // ---- 2. Procedural Pure Web Audio API Engine ----
+  // ---- 2. Procedural Pure Web Audio API Engine (Gesture-Safe) ----
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   let ctx = null;
   let master = null;
@@ -169,7 +183,7 @@
   }
 
   function playTone(freq, dur, type = 'sine', vol = 0.14, delay = 0, endFreq = null) {
-    if (!ctx || !master || !audioOn) return;
+    if (!ctx || !master || !audioOn || ctx.state !== 'running') return;
     const now = ctx.currentTime + delay;
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
@@ -188,7 +202,7 @@
   }
 
   function playNoiseBurst(dur, freq = 800, vol = 0.12, q = 1.2) {
-    if (!ctx || !master || !audioOn) return;
+    if (!ctx || !master || !audioOn || ctx.state !== 'running') return;
     const now = ctx.currentTime;
     const src = ctx.createBufferSource();
     src.buffer = createNoiseBuffer(ctx, Math.max(0.25, dur + 0.05));
@@ -207,17 +221,23 @@
     src.stop(now + dur + 0.03);
   }
 
-  function startAmbientLoop() {
-    if (loopTimer) clearInterval(loopTimer);
+  function stopAmbientLoop() {
+    if (loopTimer) {
+      clearInterval(loopTimer);
+      loopTimer = null;
+    }
     if (engineOsc) {
       try { engineOsc.stop(); } catch (_) {}
       engineOsc = null;
       engineGain = null;
     }
-    if (!ctx || !master || !audioOn) return;
+  }
+
+  function startAmbientLoop() {
+    stopAmbientLoop();
+    if (!ctx || !master || !audioOn || ctx.state !== 'running') return;
 
     if (soundProfile === 'sea-train') {
-      // Gentle ocean surf + rhythmic steam locomotive chug + nostalgic pentatonic chimes
       const surf = ctx.createBufferSource();
       surf.buffer = createNoiseBuffer(ctx, 3);
       surf.loop = true;
@@ -244,8 +264,82 @@
         }
         stepIdx += 1;
       }, 290);
+    } else if (soundProfile === 'watch') {
+      // Swiss 28,800 vph (8 beats/sec = 125ms) escapement tick-tock + warm mechanical resonance
+      loopTimer = setInterval(() => {
+        if (!audioOn) return;
+        const isTick = stepIdx % 2 === 0;
+        playTone(isTick ? 4200 : 3550, 0.018, 'triangle', isTick ? 0.11 : 0.085, 0, isTick ? 1800 : 1400);
+        playNoiseBurst(0.014, isTick ? 5400 : 4400, 0.08, 3.2);
+        if (stepIdx % 16 === 0) {
+          playTone(220, 0.9, 'sine', 0.045);
+        }
+        stepIdx += 1;
+      }, 125);
+    } else if (soundProfile === 'koto') {
+      // Japanese pentatonic Hirajoshi scale (D, E, F, A, Bb) + soft mountain breeze
+      const breeze = ctx.createBufferSource();
+      breeze.buffer = createNoiseBuffer(ctx, 3);
+      breeze.loop = true;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 360;
+      bp.Q.value = 0.7;
+      const g = ctx.createGain();
+      g.gain.value = 0.09;
+      breeze.connect(bp);
+      bp.connect(g);
+      g.connect(master);
+      breeze.start();
+      engineOsc = breeze;
+      engineGain = g;
+
+      const scale = [293.66, 329.63, 349.23, 440.0, 466.16, 587.33, 659.25, 880.0];
+      const pat = [0, 3, 5, 4, 3, 1, 2, 5, 6, 5, 3, 0];
+      loopTimer = setInterval(() => {
+        if (!audioOn) return;
+        const f = scale[pat[stepIdx % pat.length]];
+        playTone(f, 1.6, 'triangle', 0.11, 0, f * 0.996);
+        playTone(f * 2, 0.55, 'sine', 0.04);
+        if (stepIdx % 4 === 0) playTone(146.83, 2.4, 'sine', 0.07);
+        stepIdx += 1;
+      }, 640);
+    } else if (soundProfile === 'solarpunk') {
+      // Warm sunlit harp arpeggio + soft river water
+      const river = ctx.createBufferSource();
+      river.buffer = createNoiseBuffer(ctx, 3);
+      river.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 420;
+      const g = ctx.createGain();
+      g.gain.value = 0.09;
+      river.connect(lp);
+      lp.connect(g);
+      g.connect(master);
+      river.start();
+      engineOsc = river;
+      engineGain = g;
+
+      const arp = [261.63, 329.63, 392.0, 493.88, 523.25, 659.25, 523.25, 392.0];
+      loopTimer = setInterval(() => {
+        if (!audioOn) return;
+        const f = arp[stepIdx % arp.length];
+        playTone(f, 1.15, 'triangle', 0.09);
+        if (stepIdx % 4 === 0) playTone(f * 0.5, 1.8, 'sine', 0.06);
+        stepIdx += 1;
+      }, 420);
+    } else if (soundProfile === 'crystal') {
+      // Shimmering crystalline marimba / harmonic bell loop
+      const bells = [523.25, 659.25, 783.99, 1046.5, 880.0, 783.99, 659.25, 587.33];
+      loopTimer = setInterval(() => {
+        if (!audioOn) return;
+        const f = bells[stepIdx % bells.length];
+        playTone(f, 0.85, 'sine', 0.085);
+        playTone(f * 1.5, 0.45, 'triangle', 0.035);
+        stepIdx += 1;
+      }, 333);
     } else if (soundProfile === 'blackhole') {
-      // Deep Interstellar-inspired organ fifths + relativistic tick pulse
       const organ = ctx.createOscillator();
       organ.type = 'sawtooth';
       organ.frequency.value = 73.42;
@@ -272,7 +366,6 @@
         stepIdx += 1;
       }, 950);
     } else if (soundProfile === 'rhythm') {
-      // True 128 BPM synthwave beat (16th-note step = 117.1875 ms)
       const bass = [110, 110, 130.81, 146.83, 98, 98, 123.47, 130.81];
       loopTimer = setInterval(() => {
         if (!audioOn) return;
@@ -357,7 +450,6 @@
         stepIdx += 1;
       }, 240);
     } else {
-      // Ethereal synthwave pad (cinema / shaders)
       const prog = [
         [220, 261.63, 329.63],
         [174.61, 220, 261.63],
@@ -373,60 +465,75 @@
     }
   }
 
+  function finishEnable() {
+    if (userMuted) return;
+    if (!ctx || ctx.state !== 'running') return;
+    if (!audioOn) {
+      audioOn = true;
+      startAmbientLoop();
+      updateSoundBtn();
+    }
+  }
+
   function enableAudio() {
     if (!AudioCtx) return;
+    userMuted = false;
     if (!ctx) {
       ctx = new AudioCtx();
       master = ctx.createGain();
-      master.gain.value = 0.22;
+      master.gain.value = 0.24;
       master.connect(ctx.destination);
     }
-    if (ctx.state === 'suspended') ctx.resume();
-    if (!audioOn) {
-      audioOn = true;
-      userMuted = false;
-      startAmbientLoop();
-      updateSoundBtn();
+    if (ctx.state === 'running') {
+      finishEnable();
+    } else {
+      const p = ctx.resume?.();
+      if (p && typeof p.then === 'function') {
+        p.then(() => finishEnable()).catch(() => {});
+      }
     }
   }
 
   function disableAudio() {
     audioOn = false;
     userMuted = true;
-    if (loopTimer) {
-      clearInterval(loopTimer);
-      loopTimer = null;
-    }
-    if (engineOsc) {
-      try { engineOsc.stop(); } catch (_) {}
-      engineOsc = null;
-      engineGain = null;
-    }
+    stopAmbientLoop();
     updateSoundBtn();
   }
 
   const NeonAudio = {
     enable: enableAudio,
     disable: disableAudio,
-    isEnabled: () => audioOn,
+    isEnabled: () => audioOn && Boolean(ctx) && ctx.state === 'running',
+    playTone,
+    playNoiseBurst,
     setPitch(mult) {
       if (engineOsc && engineOsc.frequency && ctx) {
         engineOsc.frequency.setTargetAtTime(Math.max(45, 92 * mult), ctx.currentTime, 0.08);
       }
     },
-    sfx(kind = 'click') {
-      if (!audioOn && !userMuted) enableAudio();
-      if (!audioOn) return;
+    sfx(kind = 'click', pitch = 1.0) {
+      // Never auto-enable AudioContext from background simulation timers before user gesture!
+      if (!audioOn || !ctx || ctx.state !== 'running') return;
       if (kind === 'laser') {
-        playTone(920, 0.09, 'sawtooth', 0.14, 0, 240);
+        playTone(920 * pitch, 0.09, 'sawtooth', 0.14, 0, 240);
       } else if (kind === 'missile') {
-        playTone(540, 0.16, 'triangle', 0.14, 0, 1180);
+        playTone(540 * pitch, 0.16, 'triangle', 0.14, 0, 1180);
       } else if (kind === 'explosion') {
         playNoiseBurst(0.28, 220, 0.28, 0.7);
         playTone(110, 0.24, 'sawtooth', 0.18, 0, 36);
+      } else if (kind === 'shatter') {
+        playNoiseBurst(0.18, 2400 * pitch, 0.16, 1.6);
+        playTone(1320 * pitch, 0.12, 'triangle', 0.11, 0, 620);
+      } else if (kind === 'clack') {
+        playTone(720 * pitch, 0.045, 'triangle', 0.16, 0, 320);
+        playNoiseBurst(0.03, 1800 * pitch, 0.11, 2.2);
+      } else if (kind === 'chime') {
+        playTone(587.33 * pitch, 0.42, 'sine', 0.13);
+        playTone(880.0 * pitch, 0.36, 'triangle', 0.08, 0.03);
       } else if (kind === 'hit' || kind === 'ring') {
-        playTone(587.33, 0.12, 'triangle', 0.18);
-        playTone(880.0, 0.16, 'sine', 0.15, 0.04);
+        playTone(587.33 * pitch, 0.12, 'triangle', 0.18);
+        playTone(880.0 * pitch, 0.16, 'sine', 0.15, 0.04);
       } else if (kind === 'miss') {
         playTone(150, 0.14, 'sawtooth', 0.12, 0, 95);
       } else if (kind === 'boost' || kind === 'roll') {
@@ -436,34 +543,56 @@
         playTone(587.33, 0.36, 'triangle', 0.11);
         playTone(739.99, 0.36, 'sine', 0.09, 0.02);
       } else {
-        playTone(660, 0.07, 'triangle', 0.11, 0, 880);
+        playTone(660 * pitch, 0.07, 'triangle', 0.11, 0, 880 * pitch);
       }
     },
   };
   window.NeonAudio = NeonAudio;
 
-  // ---- 3. Floating Control Toolbar (outside scaled body on <html>) ----
+  // ---- 3. Dedicated Top Header Bar (Zero Overlap with Demo Stage) ----
   const bar = document.createElement('div');
   bar.id = 'neon-shell-bar';
+  barEl = bar;
+
+  const leftGroup = document.createElement('div');
+  leftGroup.className = 'ns-left';
+
+  const rightGroup = document.createElement('div');
+  rightGroup.className = 'ns-right';
+
+  if (window.self === window.top) {
+    const backLink = document.createElement('a');
+    backLink.className = 'ns-btn';
+    backLink.href = '../index.html';
+    backLink.textContent = '← 作品館';
+    leftGroup.appendChild(backLink);
+  }
+
+  const hintEl = document.createElement('div');
+  hintEl.id = 'neon-shell-hint';
+  hintEl.textContent = 'クリック / キー操作でサウンドON · ドラッグ＆ボタンで操作可能';
+  leftGroup.appendChild(hintEl);
 
   const soundBtn = document.createElement('button');
   soundBtn.type = 'button';
   soundBtn.className = 'ns-btn';
   soundBtn.id = 'neon-sound-btn';
   function updateSoundBtn() {
-    soundBtn.textContent = audioOn ? '🔊 音ON' : '🔇 音OFF';
-    soundBtn.classList.toggle('active', audioOn);
+    const active = NeonAudio.isEnabled();
+    soundBtn.textContent = active ? '🔊 音ON' : '🔇 音OFF';
+    soundBtn.classList.toggle('active', active);
   }
   updateSoundBtn();
   soundBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (audioOn) disableAudio();
-    else {
+    if (NeonAudio.isEnabled()) {
+      disableAudio();
+    } else {
       enableAudio();
-      NeonAudio.sfx(soundProfile === 'sea-train' ? 'whistle' : 'click');
+      setTimeout(() => NeonAudio.sfx(soundProfile === 'sea-train' ? 'whistle' : 'click'), 30);
     }
   });
-  bar.appendChild(soundBtn);
+  rightGroup.appendChild(soundBtn);
 
   const fsBtn = document.createElement('button');
   fsBtn.type = 'button';
@@ -483,28 +612,31 @@
       document.documentElement.requestFullscreen?.().catch(() => {});
     }
   });
-  document.addEventListener('fullscreenchange', updateFsBtn);
-  bar.appendChild(fsBtn);
+  document.addEventListener('fullscreenchange', () => {
+    updateFsBtn();
+    fitStage();
+  });
+  rightGroup.appendChild(fsBtn);
 
-  if (window.self === window.top) {
-    const backLink = document.createElement('a');
-    backLink.className = 'ns-btn';
-    backLink.href = '../index.html';
-    backLink.textContent = '← 作品館';
-    bar.appendChild(backLink);
+  bar.appendChild(leftGroup);
+  bar.appendChild(rightGroup);
+  document.documentElement.insertBefore(bar, body);
+
+  fitStage();
+  window.addEventListener('resize', fitStage);
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(fitStage);
+    ro.observe(bar);
   }
 
-  document.documentElement.appendChild(bar);
-
-  // Auto-unlock audio smoothly on first user interaction inside the demo (unless muted)
+  // Unlock audio cleanly on genuine user gesture (unless user explicitly muted)
   function firstGestureUnlock(e) {
     if (bar.contains(e.target)) return;
-    if (!audioOn && !userMuted) enableAudio();
+    if (!NeonAudio.isEnabled() && !userMuted) enableAudio();
   }
   window.addEventListener('pointerdown', firstGestureUnlock, { passive: true });
   window.addEventListener('keydown', firstGestureUnlock, { passive: true });
 
-  // Subtle click SFX for interactive demo buttons
   body.addEventListener('click', (e) => {
     if (e.target.closest('button')) {
       NeonAudio.sfx(soundProfile === 'sea-train' ? 'whistle' : 'click');
@@ -512,10 +644,9 @@
   });
 
   // ---- 4. Public Helper API for Individual Demos ----
-  let hintEl = null;
-  let padsEl = null;
   window.NeonShell = {
     getScale: () => currentScale,
+    refit: fitStage,
     addControl(label, onClick, opts = {}) {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -524,19 +655,15 @@
       btn.textContent = label;
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (!audioOn && !userMuted) enableAudio();
-        NeonAudio.sfx('click');
+        if (!NeonAudio.isEnabled() && !userMuted) enableAudio();
+        setTimeout(() => NeonAudio.sfx('click'), 20);
         onClick(btn);
       });
-      bar.insertBefore(btn, soundBtn);
+      rightGroup.insertBefore(btn, soundBtn);
+      fitStage();
       return btn;
     },
     setHint(text) {
-      if (!hintEl) {
-        hintEl = document.createElement('div');
-        hintEl.id = 'neon-shell-hint';
-        document.documentElement.appendChild(hintEl);
-      }
       hintEl.textContent = text;
     },
     addPads(specs) {
@@ -544,6 +671,10 @@
         padsEl = document.createElement('div');
         padsEl.id = 'neon-shell-pads';
         document.documentElement.appendChild(padsEl);
+        if (typeof ResizeObserver !== 'undefined') {
+          const ro = new ResizeObserver(fitStage);
+          ro.observe(padsEl);
+        }
       }
       padsEl.textContent = '';
       for (const spec of specs) {
@@ -554,7 +685,7 @@
         const press = (e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (!audioOn && !userMuted) enableAudio();
+          if (!NeonAudio.isEnabled() && !userMuted) enableAudio();
           pad.classList.add('pressed');
           spec.onDown?.();
         };
@@ -568,6 +699,7 @@
         pad.addEventListener('pointercancel', release);
         padsEl.appendChild(pad);
       }
+      fitStage();
     },
   };
 })();

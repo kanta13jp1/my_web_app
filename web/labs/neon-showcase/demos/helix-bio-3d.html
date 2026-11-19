@@ -1463,7 +1463,7 @@
     });
     let last = performance.now();
     function loop(now) {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
       last = now;
       if (autoTour && simTime >= 24.0) { simTime = 0; for (const k in trig) trig[k] = false; setMode(0); }
       window.stepHelix(dt, true);

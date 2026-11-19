@@ -369,6 +369,10 @@ window.stepSort = (dt) => {
           // Record sparse audio events (avoid overwhelming audio buffer)
           if (ev.event === 'finish' || (ev.event === 'verify' && s.verifyIdx % 4 === 0) || Math.floor(opAccum * 10) % 2 === 0) {
             audioEvents.push({ t: Number(simT.toFixed(4)), lane: i, type: ev.event, val: ev.val });
+            if (!window.__RECORDING__ && window.NeonAudio?.isEnabled?.()) {
+              const freq = 220 + ((ev.val || 1) / N) * 840;
+              window.NeonAudio.playTone(freq, ev.event === 'finish' ? 0.14 : 0.045, 'triangle', ev.event === 'finish' ? 0.09 : 0.032);
+            }
           }
         }
       }
@@ -395,21 +399,49 @@ render();
 
 if (!window.__RECORDING__) {
   let paused = false;
+  let speedMult = 1;
+  let doneHold = 0;
+  function resetSorters() {
+    simT = 0;
+    opAccum = 0;
+    finishedCount = 0;
+    doneHold = 0;
+    const specs = [
+      ['01 / RADIX SORT', 'O(nk)', '#00E5FF', radixSortGen],
+      ['02 / QUICK SORT', 'O(n log n)', '#00FF9D', quickSortGen],
+      ['03 / MERGE SORT', 'O(n log n)', '#A855F7', mergeSortGen],
+      ['04 / HEAP SORT', 'O(n log n)', '#FFB800', heapSortGen],
+      ['05 / SHELL SORT', 'O(n log² n)', '#38BDF8', shellSortGen],
+      ['06 / INSERTION SORT', 'O(n²)', '#FF3B9A', insertionSortGen],
+    ];
+    for (let i = 0; i < specs.length; i++) sorters[i] = new Sorter(...specs[i]);
+    render();
+  }
   window.addEventListener('DOMContentLoaded', () => {
     if (!window.NeonShell) return;
+    window.NeonShell.setHint('6種のソートを同時比較 · 完了後は自動ループ（音ONで配列値ピッチ再生）');
+    window.NeonShell.addControl('⚡ 2x速', (btn) => {
+      speedMult = speedMult === 1 ? 2.2 : 1;
+      btn.classList.toggle('active', speedMult > 1);
+    });
     window.NeonShell.addControl('⏸ 一時停止', (btn) => {
       paused = !paused;
       btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
       btn.classList.toggle('active', paused);
     });
-    window.NeonShell.addControl('↻ もう一度整列', () => window.location.reload());
+    window.NeonShell.addControl('↻ もう一度整列', resetSorters);
   });
   let last = performance.now();
   function loop(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (!paused && simT < TOTAL_T) {
-      window.stepSort(dt);
+    if (!paused) {
+      if (finishedCount >= sorters.length || simT >= TOTAL_T) {
+        doneHold += dt;
+        if (doneHold >= 3.2) resetSorters();
+      } else {
+        window.stepSort(dt * speedMult);
+      }
     }
     requestAnimationFrame(loop);
   }
