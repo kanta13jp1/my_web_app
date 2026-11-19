@@ -276,6 +276,16 @@ List<AssetDebtDisciplineViolation> unreconciledBalanceDiffBreakdown(
       .toList(growable: false);
 }
 
+/// リボ払い設定を持つカード照合グループのみを抽出する。
+@visibleForTesting
+List<AssetLiabilityCardStatementReconciliationGroup> revolvingStatementGroups(
+  AssetLiabilityCardStatementReconciliationData reconciliation,
+) {
+  return reconciliation.groups
+      .where((group) => group.revolvingBilling != null)
+      .toList(growable: false);
+}
+
 /// 収入予定・定期収入の「入金先」候補口座を返す純関数。
 /// 入金先は資産口座 (現金/預金) であればよく、支払原資 (_paymentSourceAccountOptions)
 /// と違い残高が 0 以下でも選べる。給料日前に残高が尽きた口座や、当座マイナスの口座
@@ -28602,8 +28612,176 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _buildCardStatementReconciliationTable(reconciliation),
           _buildCardStatementFixActionList(reconciliation, cardOptions),
           _buildUnmatchedCardStatementSection(reconciliation, cardOptions),
+          _buildRevolvingStatementBreakdownSection(reconciliation),
         ],
       ),
+    );
+  }
+
+  Widget _buildRevolvingStatementBreakdownSection(
+    AssetLiabilityCardStatementReconciliationData reconciliation,
+  ) {
+    final groups = revolvingStatementGroups(reconciliation);
+    if (groups.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      key: const Key('asset_revolving_statement_breakdown_section'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        const Row(
+          children: [
+            Icon(
+              Icons.credit_card_outlined,
+              size: 18,
+              color: Color(0xFF0F766E),
+            ),
+            SizedBox(width: 6),
+            Text(
+              'リボ払いカード 内訳・個別明細',
+              style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '既存残高への最低返済分と、今月全額返済する新規利用分を分けて表示しています。',
+          style: TextStyle(
+            fontSize: 11,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        for (final group in groups)
+          Builder(
+            builder: (context) {
+              final billing = group.revolvingBilling!;
+              final usageItems = billing.usageItems;
+              return Container(
+                key: Key(
+                  'asset_revolving_breakdown_card_${group.billingAccountId}',
+                ),
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDFA),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFF0D9488).withValues(alpha: 0.28),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            group.billingAccountName,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '今月返済予定 ${_formatManagementYen(billing.billedAmount)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F766E),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        _buildTextStatusChip(
+                          label:
+                              '既存残高への最低返済 ${_formatManagementYen(billing.monthlyAmount)}',
+                          color: const Color(0xFF475569),
+                        ),
+                        _buildTextStatusChip(
+                          label:
+                              '新規利用分の全額返済 ${_formatManagementYen(billing.newUsageAmount)}',
+                          color: const Color(0xFF0F766E),
+                        ),
+                        _buildTextStatusChip(
+                          label:
+                              '既存残高 ${_formatManagementYen(billing.existingBalanceAmount)}',
+                          color: const Color(0xFF64748B),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    if (usageItems.isNotEmpty) ...[
+                      for (final item in usageItems)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 3),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${item.postedAt == null ? '日付不明' : DateFormat('M/d').format(item.postedAt!)} / '
+                                  '${item.description} (${item.statusLabel})',
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              ),
+                              Text(
+                                _formatManagementYen(item.amount),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ] else if (group.statementLines.isNotEmpty) ...[
+                      for (final line in group.statementLines)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 3),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${line.postedAt == null ? '日付不明' : DateFormat('M/d').format(line.postedAt!)} / '
+                                  '${line.description}',
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              ),
+                              Text(
+                                _formatManagementYen(line.amount),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ] else ...[
+                      Text(
+                        billing.hasImportedStatement
+                            ? '当月の新規利用明細はありません。'
+                            : 'カード明細が未取込のため、新規利用分は手入力・推定値で計算しています。',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            },
+          ),
+      ],
     );
   }
 
