@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #05070B; font-family: "Meiryo", "Yu Gothic UI", system-ui, sans-serif; }
+  #c { display: block; width: 1280px; height: 720px; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="algo">
+<canvas id="c" width="1280" height="720"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 1280, H = 720;
+const SANS = '"Yu Gothic UI", "Meiryo", system-ui, sans-serif';
+const MONO = '"Consolas", monospace';
+
+const clamp = (x, a=0, b=1) => Math.max(a, Math.min(b, x));
+const easeOut = t => 1 - Math.pow(1 - clamp(t), 3);
+const easeInOut = t => { t = clamp(t); return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; };
+
+function rrect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+}
+
+// ---------------------------------------------------------------------------
+// LP 1: Apple-style Hardware x AI (Light Titanium & Glass)
+// ---------------------------------------------------------------------------
+function drawLP1(lt) {
+  const scroll = easeInOut((lt - 1.2) / 4.5) * 320;
+  // Clean off-white background
+  ctx.fillStyle = '#F5F5F7';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.translate(0, -scroll);
+
+  // Navbar
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.fillRect(0, scroll, W, 56);
+  ctx.fillStyle = '#1D1D1F';
+  ctx.font = `800 18px ${SANS}`;
+  ctx.textAlign = 'left';
+  ctx.fillText('AETHER', 80, scroll + 34);
+  ctx.font = `600 13px ${SANS}`;
+  ctx.fillStyle = '#6E6E73';
+  ['Overview', 'Neural Chip', 'Acoustics', 'Tech Specs'].forEach((m, i) => {
+    ctx.fillText(m, 480 + i * 110, scroll + 33);
+  });
+  rrect(W - 165, scroll + 14, 90, 28, 14);
+  ctx.fillStyle = '#0071E3'; ctx.fill();
+  ctx.fillStyle = '#FFF'; ctx.font = `700 12px ${SANS}`; ctx.textAlign = 'center';
+  ctx.fillText('Pre-order', W - 120, scroll + 32);
+
+  // Hero text
+  const hEnter = easeOut(lt / 0.8);
+  ctx.save();
+  ctx.globalAlpha = hEnter;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#6E6E73';
+  ctx.font = `700 16px ${SANS}`;
+  ctx.fillText('AETHER ONE // TITANIUM EDITION', W/2, 118);
+  ctx.fillStyle = '#1D1D1F';
+  ctx.font = `900 58px ${SANS}`;
+  ctx.fillText('静寂を、知性でデザインする。', W/2, 182);
+  ctx.fillStyle = '#424245';
+  ctx.font = `500 20px ${SANS}`;
+  ctx.fillText('次世代NPU内蔵・空間オーディオヘッドセット', W/2, 224);
+
+  // Procedural 3D-shaded Hardware Ring/Orb visual
+  const cx = W/2, cy = 390;
+  const grad = ctx.createRadialGradient(cx - 35, cy - 35, 15, cx, cy, 130);
+  grad.addColorStop(0, '#FFFFFF');
+  grad.addColorStop(0.45, '#D2D6DC');
+  grad.addColorStop(0.85, '#868B94');
+  grad.addColorStop(1, '#3A3D45');
+  ctx.beginPath(); ctx.arc(cx, cy, 115, 0, Math.PI*2);
+  ctx.fillStyle = grad; ctx.fill();
+
+  // Inner glowing ring
+  ctx.strokeStyle = '#0071E3';
+  ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.arc(cx, cy, 78 + Math.sin(lt*3)*3, 0, Math.PI*2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, cy, 56, lt*1.2, lt*1.2 + Math.PI*1.4); ctx.stroke();
+  ctx.restore();
+
+  // Bento Spec Cards (visible during scroll)
+  const cards = [
+    { t: '48 TOPS NPU', d: 'リアルタイム環境音分離を\n0.4msの超低遅延で処理' },
+    { t: 'Aerospace Titanium', d: 'わずか218gの軽量設計と\n航空宇宙グレードの剛性' },
+    { t: '60h Battery', d: '1回の充電で最大60時間の\n空間オーディオ連続再生' },
+  ];
+  cards.forEach((c, i) => {
+    const x = 110 + i * 365, y = 555;
+    rrect(x, y, 330, 195, 24);
+    ctx.fillStyle = '#FFFFFF'; ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#0071E3'; ctx.font = `800 22px ${SANS}`;
+    ctx.fillText(c.t, x + 28, y + 52);
+    ctx.fillStyle = '#424245'; ctx.font = `500 16px ${SANS}`;
+    c.d.split('\n').forEach((ln, li) => ctx.fillText(ln, x + 28, y + 98 + li * 28));
+  });
+
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------------------
+// LP 2: Minimalist Dark AI SaaS (Linear / Vercel style)
+// ---------------------------------------------------------------------------
+function drawLP2(lt) {
+  const scroll = easeInOut((lt - 1.2) / 4.5) * 260;
+  ctx.fillStyle = '#09090B';
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle top purple radial glow
+  const rg = ctx.createRadialGradient(W/2, 80 - scroll*0.4, 20, W/2, 120, 620);
+  rg.addColorStop(0, 'rgba(139, 92, 246, 0.28)');
+  rg.addColorStop(1, 'rgba(9, 9, 11, 0)');
+  ctx.fillStyle = rg;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.translate(0, -scroll);
+
+  // Pill tag
+  rrect(W/2 - 150, 74, 300, 30, 15);
+  ctx.fillStyle = 'rgba(139, 92, 246, 0.14)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(167, 139, 250, 0.4)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = '#C4B5FD'; ctx.font = `700 12px ${MONO}`; ctx.textAlign = 'center';
+  ctx.fillText('✦ LINEARITY ENGINE v4.2 RELEASED', W/2, 93);
+
+  // Hero Headline
+  ctx.fillStyle = '#FAFAFA'; ctx.font = `900 54px ${SANS}`;
+  ctx.fillText('開発パイプラインを、自律化せよ。', W/2, 166);
+  ctx.fillStyle = '#A1A1AA'; ctx.font = `500 19px ${SANS}`;
+  ctx.fillText('PRレビュー・テスト・本番デプロイまでAIエージェントが24時間自動実行', W/2, 208);
+
+  // CTA Buttons
+  rrect(W/2 - 190, 238, 175, 44, 10);
+  ctx.fillStyle = '#FAFAFA'; ctx.fill();
+  ctx.fillStyle = '#09090B'; ctx.font = `800 14px ${SANS}`;
+  ctx.fillText('無料で始める →', W/2 - 102.5, 265);
+
+  rrect(W/2 + 15, 238, 175, 44, 10);
+  ctx.fillStyle = '#18181B'; ctx.fill();
+  ctx.strokeStyle = '#27272A'; ctx.stroke();
+  ctx.fillStyle = '#E4E4E7'; ctx.font = `700 14px ${SANS}`;
+  ctx.fillText('ドキュメントを見る', W/2 + 102.5, 265);
+
+  // Live SaaS Dashboard Mockup
+  const dx = 140, dy = 320, dw = 1000, dh = 460;
+  rrect(dx, dy, dw, dh, 16);
+  ctx.fillStyle = '#111115'; ctx.fill();
+  ctx.strokeStyle = '#27272A'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // Dashboard Header
+  ctx.fillStyle = '#18181B';
+  rrect(dx + 1, dy + 1, dw - 2, 42, [15, 15, 0, 0]); ctx.fill();
+  ['#EF4444', '#F59E0B', '#10B981'].forEach((c, i) => {
+    ctx.fillStyle = c; ctx.beginPath(); ctx.arc(dx + 24 + i*18, dy + 22, 5, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.fillStyle = '#71717A'; ctx.font = `600 12px ${MONO}`; ctx.textAlign = 'left';
+  ctx.fillText('app.linearity.dev/deployments/prod-tokyo', dx + 95, dy + 26);
+
+  // Metrics Row inside dashboard
+  const metrics = [
+    { k: 'DEPLOY VELOCITY', v: '4.8x', col: '#34D399' },
+    { k: 'BUILD PASS RATE', v: '99.94%', col: '#A78BFA' },
+    { k: 'AVG LATENCY', v: '18ms', col: '#38BDF8' },
+  ];
+  metrics.forEach((m, i) => {
+    const mx = dx + 32 + i * 318, my = dy + 68;
+    rrect(mx, my, 296, 106, 12);
+    ctx.fillStyle = '#18181B'; ctx.fill();
+    ctx.strokeStyle = '#27272A'; ctx.stroke();
+    ctx.fillStyle = '#71717A'; ctx.font = `700 12px ${MONO}`;
+    ctx.fillText(m.k, mx + 20, my + 32);
+    ctx.fillStyle = m.col; ctx.font = `800 34px ${MONO}`;
+    ctx.fillText(m.v, mx + 20, my + 78);
+  });
+
+  // Live animated bar chart inside dashboard
+  rrect(dx + 32, dy + 196, 936, 230, 12);
+  ctx.fillStyle = '#141418'; ctx.fill();
+  ctx.strokeStyle = '#27272A'; ctx.stroke();
+  for (let b = 0; b < 24; b++) {
+    const bh = 40 + 110 * (0.5 + 0.5 * Math.sin(b * 0.55 + lt * 2.5));
+    const bx = dx + 60 + b * 37;
+    const by = dy + 400 - bh;
+    ctx.fillStyle = b > 18 ? '#8B5CF6' : '#2E2E38';
+    rrect(bx, by, 24, bh, 4); ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------------------
+// LP 3: Organic Bio-AI LP (Cream + Emerald + Coral Aurora)
+// ---------------------------------------------------------------------------
+function drawLP3(lt) {
+  const scroll = easeInOut((lt - 1.2) / 4.5) * 240;
+  ctx.fillStyle = '#FAF8F5';
+  ctx.fillRect(0, 0, W, H);
+
+  // Soft organic aurora blobs
+  const b1 = ctx.createRadialGradient(920, 260 - scroll*0.3, 20, 920, 260, 380);
+  b1.addColorStop(0, 'rgba(16, 185, 129, 0.24)');
+  b1.addColorStop(1, 'rgba(250, 248, 245, 0)');
+  ctx.fillStyle = b1; ctx.fillRect(0, 0, W, H);
+
+  const b2 = ctx.createRadialGradient(340, 480 - scroll*0.3, 20, 340, 480, 340);
+  b2.addColorStop(0, 'rgba(249, 115, 22, 0.16)');
+  b2.addColorStop(1, 'rgba(250, 248, 245, 0)');
+  ctx.fillStyle = b2; ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.translate(0, -scroll);
+
+  // Left Editorial Text
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#059669'; ctx.font = `700 14px ${MONO}`;
+  ctx.fillText('CELLULA BIOSCIENCE // GENERATIVE PROTEIN AI', 80, 125);
+
+  ctx.fillStyle = '#1C1917'; ctx.font = `900 52px ${SANS}`;
+  ctx.fillText('生命の設計図を、', 80, 200);
+  ctx.fillText('数分で描く。', 80, 268);
+
+  ctx.fillStyle = '#57534E'; ctx.font = `500 19px ${SANS}`;
+  ctx.fillText('分子動力学と生成AIの融合により、', 80, 324);
+  ctx.fillText('新薬候補タンパク質の立体構造をリアルタイム予測。', 80, 356);
+
+  rrect(80, 396, 220, 50, 25);
+  ctx.fillStyle = '#065F46'; ctx.fill();
+  ctx.fillStyle = '#FFFFFF'; ctx.font = `700 15px ${SANS}`; ctx.textAlign = 'center';
+  ctx.fillText('シミュレーション開始 →', 190, 426);
+
+  // Right: Organic Animated Molecular / Protein Network
+  const cx = 920, cy = 320;
+  const pts = [];
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2 + lt * 0.45;
+    const rad = 110 + 45 * Math.sin(i * 1.7 + lt * 1.8);
+    pts.push({ x: cx + Math.cos(a) * rad, y: cy + Math.sin(a) * rad });
+  }
+  ctx.strokeStyle = 'rgba(5, 150, 105, 0.35)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < pts.length; i++) {
+    for (let j = i + 1; j < pts.length; j++) {
+      const d = Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y);
+      if (d < 155) {
+        ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke();
+      }
+    }
+  }
+  pts.forEach((pt, i) => {
+    ctx.fillStyle = i % 3 === 0 ? '#F97316' : '#10B981';
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, 9 + (i%3)*3, 0, Math.PI*2); ctx.fill();
+  });
+
+  // Lower feature strip
+  rrect(80, 520, 1120, 160, 24);
+  ctx.fillStyle = 'rgba(255,255,255,0.82)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(5,150,105,0.18)'; ctx.lineWidth = 1.5; ctx.stroke();
+  const stats = [
+    ['100,000x', '候補分子の探索速度'],
+    ['98.4%', '結合親和性の予測精度'],
+    ['Zero', 'ウェット実験の初期コスト'],
+  ];
+  stats.forEach((s, i) => {
+    const sx = 140 + i * 370;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#065F46'; ctx.font = `900 38px ${SANS}`;
+    ctx.fillText(s[0], sx, 592);
+    ctx.fillStyle = '#57534E'; ctx.font = `600 16px ${SANS}`;
+    ctx.fillText(s[1], sx, 628);
+  });
+
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------------------
+// LP 4: Neon Cyberpunk Autonomous Agent OS
+// ---------------------------------------------------------------------------
+function drawLP4(lt) {
+  const scroll = easeInOut((lt - 1.2) / 4.5) * 270;
+  ctx.fillStyle = '#04060E';
+  ctx.fillRect(0, 0, W, H);
+
+  // Perspective cyber grid
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.08)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= W; x += 64) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y <= H; y += 64) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  ctx.save();
+  ctx.translate(0, -scroll);
+
+  // Cyber Header
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#FF2E93'; ctx.font = `800 14px ${MONO}`;
+  ctx.fillText('[ SYSTEM_STATUS: ONLINE // SWARM_OS v9.0 ]', 80, 105);
+
+  ctx.fillStyle = '#FFFFFF'; ctx.font = `900 56px ${SANS}`;
+  ctx.fillText('自律エージェント群が、', 80, 178);
+  ctx.fillStyle = '#00E5FF';
+  ctx.fillText('ビジネスを24時間稼働させる。', 80, 248);
+
+  // Terminal / Swarm Node panel
+  rrect(80, 295, 540, 320, 14);
+  ctx.fillStyle = 'rgba(10, 16, 32, 0.92)'; ctx.fill();
+  ctx.strokeStyle = '#00E5FF'; ctx.lineWidth = 2; ctx.stroke();
+
+  const logs = [
+    '> initializing neural_swarm_core...',
+    '> spawned 12 autonomous_workers [OK]',
+    '> analyzing market_signals... 1.4ms',
+    '> executing strategy_pipeline #402',
+    '> revenue_optimization: +34.8%',
+  ];
+  ctx.font = `700 15px ${MONO}`;
+  logs.forEach((ln, i) => {
+    if (lt > i * 0.4) {
+      ctx.fillStyle = i === 4 ? '#34D399' : i === 1 ? '#00E5FF' : '#CBD5E1';
+      ctx.fillText(ln, 108, 352 + i * 44);
+    }
+  });
+
+  // Right: Live Swarm Graph
+  rrect(660, 295, 540, 320, 14);
+  ctx.fillStyle = 'rgba(12, 10, 28, 0.92)'; ctx.fill();
+  ctx.strokeStyle = '#FF2E93'; ctx.lineWidth = 2; ctx.stroke();
+
+  const gcx = 930, gcy = 455;
+  const nodes = [];
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 + lt * 0.8;
+    nodes.push({ x: gcx + Math.cos(a) * 105, y: gcy + Math.sin(a) * 95 });
+  }
+  ctx.strokeStyle = 'rgba(255, 46, 147, 0.45)';
+  ctx.lineWidth = 2;
+  nodes.forEach(n => {
+    ctx.beginPath(); ctx.moveTo(gcx, gcy); ctx.lineTo(n.x, n.y); ctx.stroke();
+  });
+  ctx.fillStyle = '#00E5FF';
+  ctx.beginPath(); ctx.arc(gcx, gcy, 18, 0, Math.PI*2); ctx.fill();
+  nodes.forEach((n, i) => {
+    ctx.fillStyle = i % 2 === 0 ? '#FF2E93' : '#FBBF24';
+    ctx.beginPath(); ctx.arc(n.x, n.y, 10, 0, Math.PI*2); ctx.fill();
+  });
+
+  // Bottom CTA bar
+  rrect(80, 645, 1120, 82, 14);
+  ctx.fillStyle = 'rgba(0, 229, 255, 0.12)'; ctx.fill();
+  ctx.strokeStyle = '#00E5FF'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = '#FFFFFF'; ctx.font = `800 22px ${SANS}`;
+  ctx.fillText('DEPLOY YOUR AUTONOMOUS SWARM TODAY', 115, 694);
+
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------------------
+// Top Showcase Overlay Bar (keeps context crystal clear)
+// ---------------------------------------------------------------------------
+function drawOverlayBar(t) {
+  const idx = Math.min(3, Math.floor(t / 7.0));
+  const labels = [
+    '01 Apple風ハードウェアLP',
+    '02 ミニマルAI SaaS',
+    '03 バイオAI有機グラデ',
+    '04 サイバーパンクAgent'
+  ];
+
+  ctx.save();
+  rrect(36, H - 46, W - 72, 34, 17);
+  ctx.fillStyle = 'rgba(8, 12, 22, 0.88)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  labels.forEach((lb, i) => {
+    const x = 48 + i * 300;
+    const act = i === idx;
+    rrect(x, H - 41, 282, 24, 12);
+    ctx.fillStyle = act ? '#00E5FF' : 'rgba(255,255,255,0.06)';
+    ctx.fill();
+    ctx.fillStyle = act ? '#04060E' : '#94A3B8';
+    ctx.font = `800 12px ${SANS}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(lb, x + 141, H - 29);
+  });
+  ctx.restore();
+}
+
+window.renderShowcase = (t) => {
+  const idx = Math.min(3, Math.floor(t / 7.0));
+  const lt = t - idx * 7.0;
+
+  if (idx === 0) drawLP1(lt);
+  else if (idx === 1) drawLP2(lt);
+  else if (idx === 2) drawLP3(lt);
+  else drawLP4(lt);
+
+  // Smooth fade-in/out at 7s boundaries
+  if (lt < 0.25) {
+    ctx.fillStyle = `rgba(4, 6, 14, ${1 - lt / 0.25})`;
+    ctx.fillRect(0, 0, W, H);
+  } else if (lt > 6.75) {
+    ctx.fillStyle = `rgba(4, 6, 14, ${(lt - 6.75) / 0.25})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  drawOverlayBar(t);
+};
+
+if (!window.__RECORDING__) {
+  let manualIdx = 0;
+  let autoCycle = false;
+  let localT = 0.35;
+  let totalT = 0.35;
+  const styleBtns = [];
+  const syncBtns = () => {
+    styleBtns.forEach((b, i) => b.classList.toggle('active', !autoCycle && i === manualIdx));
+  };
+  const selectStyle = (idx) => {
+    autoCycle = false;
+    manualIdx = idx;
+    localT = 0.35;
+    autoBtn?.classList.remove('active');
+    syncBtns();
+  };
+  let autoBtn = null;
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    ['01 Apple風LP', '02 AI SaaS', '03 バイオAI', '04 CyberAgent'].forEach((lbl, i) => {
+      styleBtns.push(window.NeonShell.addControl(lbl, () => selectStyle(i), { active: i === 0 }));
+    });
+    autoBtn = window.NeonShell.addControl('▶ 自動切替', () => {
+      autoCycle = !autoCycle;
+      autoBtn.classList.toggle('active', autoCycle);
+      if (autoCycle) totalT = manualIdx * 7.0 + 0.35;
+      syncBtns();
+    });
+  });
+  c.addEventListener('click', (e) => {
+    const rect = c.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * W;
+    const y = ((e.clientY - rect.top) / rect.height) * H;
+    if (y >= H - 52) {
+      const idx = Math.max(0, Math.min(3, Math.floor((x - 48) / 300)));
+      selectStyle(idx);
+      window.NeonAudio?.sfx('click');
+    }
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (autoCycle) {
+      totalT = (totalT + dt) % 28.0;
+      window.renderShowcase(totalT);
+    } else {
+      localT = 0.35 + ((localT - 0.35 + dt) % 6.1);
+      window.renderShowcase(manualIdx * 7.0 + localT);
+    }
+    requestAnimationFrame(loop);
+  }
+  window.renderShowcase(0.35);
+  requestAnimationFrame(loop);
+}
+</script>
+<script src="../demo-shell.js"></script>
+</body>
+</html>

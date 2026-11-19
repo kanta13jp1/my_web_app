@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>GARGANTUA // Real-Time General Relativity Black Hole (Single HTML · 0 Polygons · Pure GLSL)</title>
+<style>
+  :root {
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --gold: #fbbf24;
+    --cyan: #38bdf8;
+    --emerald: #00f5a0;
+    --text0: #f1f7ff;
+    --text1: #9bb3d0;
+    --text2: #607898;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+    background: #010206;
+    color: var(--text0);
+    font-family: var(--mono);
+    -webkit-font-smoothing: antialiased;
+  }
+  .stage {
+    position: relative;
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+  }
+  #glCanvas {
+    position: absolute;
+    inset: 0;
+    width: 1280px;
+    height: 720px;
+    display: block;
+    cursor: grab;
+  }
+  #glCanvas:active { cursor: grabbing; }
+
+  /* Minimalist NASA / Interstellar Glass HUD — leaves >85% pure cinema! */
+  .hud-tl {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: rgba(4, 8, 18, 0.72);
+    border: 1px solid rgba(251, 191, 36, 0.34);
+    border-radius: 7px;
+    padding: 8px 13px;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.48);
+  }
+  .title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 10px var(--gold), 0 0 18px rgba(251,191,36,0.65);
+  }
+  .main-title {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+    color: #fffbeb;
+  }
+  .main-title span { color: var(--gold); }
+  .sub-specs {
+    margin-top: 3px;
+    font-size: 9.5px;
+    color: var(--cyan);
+    letter-spacing: 0.6px;
+  }
+
+  .hud-tr {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(4, 8, 18, 0.74);
+    border: 1px solid rgba(56, 189, 248, 0.30);
+    border-radius: 7px;
+    padding: 8px 12px;
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 14px;
+    backdrop-filter: blur(5px);
+    font-variant-numeric: tabular-nums;
+  }
+  .tele { display: flex; flex-direction: column; line-height: 1.2; }
+  .tele .k { font-size: 8px; color: var(--text2); letter-spacing: 0.7px; }
+  .tele .v { font-size: 12px; font-weight: 800; color: var(--text0); }
+  .tele .v.gold { color: var(--gold); }
+  .tele .v.cyan { color: var(--cyan); }
+  .tele .v.em { color: var(--emerald); }
+
+  .hud-banner {
+    position: absolute;
+    top: 78px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(5, 9, 20, 0.86);
+    border: 1.5px solid rgba(251, 191, 36, 0.85);
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.9px;
+    color: #fef3c7;
+    white-space: nowrap;
+    box-shadow: 0 0 26px rgba(251, 191, 36, 0.38);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .hud-banner.show-gold {
+    opacity: 1;
+    border-color: rgba(251, 191, 36, 0.9);
+    color: #fef3c7;
+    box-shadow: 0 0 26px rgba(251, 191, 36, 0.42);
+  }
+  .hud-banner.show-cyan {
+    opacity: 1;
+    border-color: rgba(56, 189, 248, 0.9);
+    color: #e0f2fe;
+    box-shadow: 0 0 26px rgba(56, 189, 248, 0.45);
+  }
+  .hud-banner.show-red {
+    opacity: 1;
+    border-color: rgba(251, 146, 60, 0.95);
+    color: #ffedd5;
+    box-shadow: 0 0 26px rgba(249, 115, 22, 0.48);
+  }
+
+  .hud-bl {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+  }
+  .well-card {
+    background: rgba(4, 8, 18, 0.74);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    border-radius: 7px;
+    padding: 6px 9px;
+    width: 196px;
+    backdrop-filter: blur(5px);
+  }
+  .well-hdr {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8px;
+    color: var(--text1);
+    margin-bottom: 3px;
+  }
+  #wellCanvas {
+    width: 176px;
+    height: 44px;
+    display: block;
+  }
+  .ctrl-bar {
+    display: flex;
+    gap: 6px;
+    background: rgba(4, 8, 18, 0.76);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 7px;
+    padding: 6px 8px;
+    backdrop-filter: blur(5px);
+  }
+  .cbtn {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    color: var(--text1);
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 5px;
+    padding: 6px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .cbtn.act-gold {
+    color: #160c02;
+    background: linear-gradient(90deg, #f59e0b, #fde047);
+    border-color: #fef08a;
+    box-shadow: 0 0 16px rgba(251, 191, 36, 0.52);
+  }
+  .cbtn.act-cyan {
+    color: #02131f;
+    background: linear-gradient(90deg, #38bdf8, #00f5a0);
+    border-color: #7dd3fc;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.52);
+  }
+  .cbtn.act-orange {
+    color: #fff;
+    background: linear-gradient(90deg, #ea580c, #f43f5e);
+    border-color: #fdba74;
+    box-shadow: 0 0 16px rgba(249, 115, 22, 0.55);
+  }
+  .cbtn.pressed { transform: scale(0.95); filter: brightness(1.3); }
+
+  .hud-br {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    background: rgba(4, 8, 18, 0.74);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    border-radius: 7px;
+    padding: 7px 12px;
+    text-align: right;
+    backdrop-filter: blur(5px);
+    font-variant-numeric: tabular-nums;
+  }
+  .br-top {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: var(--gold);
+    letter-spacing: 0.6px;
+  }
+  .br-sub {
+    font-size: 8.5px;
+    color: var(--text1);
+    margin-top: 2px;
+  }
+
+  .vcursor {
+    position: absolute;
+    width: 18px; height: 18px;
+    pointer-events: none;
+    z-index: 50;
+    transform: translate(-2px, -2px);
+    opacity: 0;
+  }
+  .cring {
+    position: absolute;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    pointer-events: none;
+    z-index: 49;
+    opacity: 0;
+  }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="blackhole">
+<div class="stage" id="stageRoot">
+  <canvas id="glCanvas" width="1280" height="720"></canvas>
+
+  <div class="hud-tl">
+    <div class="title-row">
+      <div class="live-dot"></div>
+      <div class="main-title">GARGANTUA <span>// GR RAYTRACER</span></div>
+    </div>
+    <div class="sub-specs">POLYGONS: 0 · TEXTURES: 0 · LIBS: 0 · SCHWARZSCHILD/KERR GEODESIC GLSL</div>
+  </div>
+
+  <div class="hud-tr">
+    <div class="tele"><span class="k">KERR SPIN a*</span><span class="v gold" id="tSpin">0.62</span></div>
+    <div class="tele"><span class="k">DISTANCE r/r_s</span><span class="v cyan" id="tDist">11.40</span></div>
+    <div class="tele"><span class="k">TIME DILATION</span><span class="v em" id="tDil">0.955x</span></div>
+    <div class="tele"><span class="k">DOPPLER SHIFT</span><span class="v" id="tDop">+24%</span></div>
+  </div>
+
+  <div class="hud-banner" id="hudBanner">◈ KERR SPIN OVERDRIVE (a* = 0.99) · DOPPLER BEAMING &amp; RELATIVISTIC JETS</div>
+
+  <div class="hud-bl">
+    <div class="well-card">
+      <div class="well-hdr"><span>SPACETIME CURVATURE</span><span id="wellDefl" style="color:#fbbf24">Δφ 142°</span></div>
+      <canvas id="wellCanvas" width="352" height="88"></canvas>
+    </div>
+    <div class="ctrl-bar">
+      <button class="cbtn act-gold" id="btnOrbit">01 ORBIT</button>
+      <button class="cbtn" id="btnKerr">02 KERR MAX SPIN</button>
+      <button class="cbtn" id="btnRing">03 PHOTON RING</button>
+      <button class="cbtn" id="btnDive">04 HORIZON DIVE</button>
+    </div>
+  </div>
+
+  <div class="hud-br">
+    <div class="br-top" id="clockLbl">GEMINI 4 NEON · 00.0s / 24.0s</div>
+    <div class="br-sub">DRAG TO ORBIT · SCROLL TO ZOOM · 164 GEODESIC STEPS/PX</div>
+  </div>
+
+  <div class="cring" id="cRing"></div>
+  <svg class="vcursor" id="vCursor" viewBox="0 0 24 24" fill="none">
+    <path d="M4 3L19 11.5L12.2 13.4L9.8 20L4 3Z" fill="#f8fafc" stroke="#020617" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const W = 1280, H = 720;
+  const clamp = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const ease = (u) => { const t = clamp(u, 0, 1); return t * t * (3 - 2 * t); };
+
+  const glCanvas = document.getElementById('glCanvas');
+  const gl = glCanvas.getContext('webgl2', {
+    antialias: false,
+    alpha: false,
+    preserveDrawingBuffer: true
+  });
+  if (!gl) { console.error('WebGL2 unavailable'); return; }
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      console.error('Shader error:', gl.getShaderInfoLog(s));
+    }
+    return s;
+  }
+  function link(vs, fs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+      console.error('Link error:', gl.getProgramInfoLog(p));
+    }
+    return p;
+  }
+
+  const FULLSCREEN_VS = `#version 300 es
+    const vec2 P[3] = vec2[3](vec2(-1.0, -1.0), vec2(3.0, -1.0), vec2(-1.0, 3.0));
+    out vec2 vUv;
+    void main() {
+      vUv = P[gl_VertexID] * 0.5 + 0.5;
+      gl_Position = vec4(P[gl_VertexID], 0.0, 1.0);
+    }
+  `;
+
+  // ===== PASS 1: EXACT RELATIVISTIC GEODESIC BLACK HOLE RAYTRACER (0 POLYGONS, 0 TEXTURES!) =====
+  const grFS = `#version 300 es
+    precision highp float;
+    in vec2 vUv;
+    uniform vec2 uRes;
+    uniform float uTime;
+    uniform vec3 uCamPos;
+    uniform vec3 uCamTarget;
+    uniform float uSpin;      // Kerr spin a* in 0.0 .. 0.99
+    uniform float uJetPower;  // Relativistic polar plasma jet intensity 0..1
+    uniform float uRoll;      // Subtle cinematic camera banking roll
+    out vec4 fragColor;
+
+    // Fast high-quality 3D hash & gradient value noise (Zero External Textures!)
+    float hash31(vec3 p) {
+      p = fract(p * vec3(443.8975, 397.2973, 491.1871));
+      p += dot(p, p.yzx + 19.19);
+      return fract((p.x + p.y) * p.z);
+    }
+
+    float noise3(vec3 p) {
+      vec3 i = floor(p);
+      vec3 f = fract(p);
+      f = f * f * (3.0 - 2.0 * f);
+      float n000 = hash31(i + vec3(0,0,0));
+      float n100 = hash31(i + vec3(1,0,0));
+      float n010 = hash31(i + vec3(0,1,0));
+      float n110 = hash31(i + vec3(1,1,0));
+      float n001 = hash31(i + vec3(0,0,1));
+      float n101 = hash31(i + vec3(1,0,1));
+      float n011 = hash31(i + vec3(0,1,1));
+      float n111 = hash31(i + vec3(1,1,1));
+      return mix(
+        mix(mix(n000, n100, f.x), mix(n010, n110, f.x), f.y),
+        mix(mix(n001, n101, f.x), mix(n011, n111, f.x), f.y),
+        f.z
+      );
+    }
+
+    float fbm3(vec3 p) {
+      float v = 0.0, a = 0.5;
+      for (int i = 0; i < 4; i++) {
+        v += a * noise3(p);
+        p = p * 2.07 + vec3(11.3, 7.1, 5.7);
+        a *= 0.5;
+      }
+      return v;
+    }
+
+    // Procedural Deep Space Milky Way Nebula & Sharp Starfield (Gravitationally Lensed!)
+    vec3 sampleSky(vec3 dir) {
+      vec3 d = normalize(dir);
+      // Tilted galactic band
+      float galY = dot(d, normalize(vec3(0.28, 0.88, -0.38)));
+      float band = exp(-galY * galY * 14.0);
+      float neb1 = fbm3(d * 3.8 + vec3(1.2, 0.4, 2.7));
+      float neb2 = fbm3(d * 7.2 - vec3(2.4, 1.1, 0.8));
+
+      vec3 col = vec3(0.004, 0.007, 0.016);
+      col += vec3(0.055, 0.125, 0.26) * band * smoothstep(0.32, 0.82, neb1) * 0.95;
+      col += vec3(0.28, 0.14, 0.07) * band * smoothstep(0.46, 0.88, neb2) * 0.52;
+      col += vec3(0.14, 0.06, 0.24) * smoothstep(0.55, 0.90, neb2) * 0.24;
+
+      // Two octaves of razor-sharp gravitationally-lensed stars
+      for (int layer = 0; layer < 2; layer++) {
+        float scale = layer == 0 ? 115.0 : 210.0;
+        vec3 p = d * scale;
+        vec3 cell = floor(p);
+        vec3 f = fract(p) - 0.5;
+        float h = hash31(cell + float(layer) * 37.0);
+        if (h > (layer == 0 ? 0.986 : 0.991)) {
+          vec3 jitter = vec3(hash31(cell+1.1), hash31(cell+2.3), hash31(cell+3.7)) - 0.5;
+          float dist = length(f - jitter * 0.55);
+          float star = exp(-dist * dist * (layer == 0 ? 68.0 : 92.0));
+          // Realistic stellar temperature colors (O/B blue-white -> G gold -> K amber)
+          vec3 sCol = mix(vec3(0.65, 0.82, 1.0), vec3(1.0, 0.84, 0.58), fract(h * 117.0));
+          col += sCol * star * (layer == 0 ? 2.4 : 1.5);
+        }
+      }
+      return col;
+    }
+
+    // Blackbody + Relativistic Doppler Color Palette (Deep Fiery Crimson -> Volcanic Orange -> Gargantua Gold -> White-Hot -> Doppler Blue!)
+    vec3 plasmaColor(float temp) {
+      float t = clamp(temp, 0.0, 2.2);
+      vec3 c0 = vec3(0.42, 0.04, 0.01); // Deep redshifted outer dust
+      vec3 c1 = vec3(0.95, 0.24, 0.03); // Fiery volcanic orange
+      vec3 c2 = vec3(1.00, 0.62, 0.14); // Rich Interstellar molten gold
+      vec3 c3 = vec3(1.00, 0.92, 0.72); // Incandescent inner ISCO
+      vec3 c4 = vec3(0.38, 0.80, 1.00); // Electric blue-shifted Doppler crescent!
+      if (t < 0.35) return mix(c0, c1, t / 0.35);
+      if (t < 0.82) return mix(c1, c2, (t - 0.35) / 0.47);
+      if (t < 1.38) return mix(c2, c3, (t - 0.82) / 0.56);
+      return mix(c3, c4, clamp((t - 1.38) / 0.82, 0.0, 1.0));
+    }
+
+    void main() {
+      vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
+
+      // Camera Basis with subtle cinematic roll
+      vec3 fwd = normalize(uCamTarget - uCamPos);
+      vec3 worldUp = vec3(sin(uRoll), cos(uRoll), 0.0);
+      vec3 right = normalize(cross(fwd, worldUp));
+      vec3 up = cross(right, fwd);
+      vec3 rd = normalize(fwd * 1.42 + right * uv.x + up * uv.y);
+
+      // Exact Schwarzschild Null Geodesic Integration!
+      // Event horizon radius r_s = 1.0, Photon sphere at r = 1.5, ISCO at r ~ 2.05
+      vec3 pos = uCamPos;
+      vec3 vel = rd;
+      vec3 Lvec = cross(pos, vel);
+      float h2 = dot(Lvec, Lvec);
+
+      vec3 accum = vec3(0.0);
+      float trans = 1.0;
+      bool absorbed = false;
+      float minR = 1e6;
+
+      const float R_S = 1.0;
+      const float DISK_IN = 2.05;
+      const float DISK_OUT = 7.6;
+
+      for (int i = 0; i < 164; i++) {
+        float r = length(pos);
+        minR = min(minR, r);
+
+        if (r < R_S * 1.015) {
+          absorbed = true;
+          break;
+        }
+        if (r > 48.0 && dot(pos, vel) > 0.0) {
+          break;
+        }
+
+        float distPlane = abs(pos.y);
+        float stepBase = clamp(r * 0.068, 0.036, 0.82);
+        float stepPlane = (r > DISK_IN * 0.85 && r < DISK_OUT * 1.15) ? max(0.024, distPlane * 0.24) : stepBase;
+        float dt = min(stepBase, stepPlane);
+
+        // Exact General Relativity photon acceleration: a = -1.5 * r_s * h^2 / r^5 * r_vec
+        float r2 = r * r;
+        float invR5 = 1.0 / (r2 * r2 * r);
+        vec3 acc = -1.5 * R_S * h2 * invR5 * pos;
+
+        // Subtle Kerr frame-dragging azimuthal twist near horizon
+        vec3 spinDrag = vec3(-pos.z, 0.0, pos.x) * (uSpin * 0.18 / (r2 * r + 0.25));
+
+        vec3 velMid = normalize(vel + (acc + spinDrag) * (dt * 0.5));
+        vec3 nextPos = pos + velMid * dt;
+        vec3 nextVel = normalize(vel + (acc + spinDrag) * dt);
+
+        // 1) Volumetric Keplerian Accretion Disk Sampling with High-Contrast Plasma Filaments!
+        if (r > DISK_IN * 0.92 && r < DISK_OUT && distPlane < 0.58) {
+          float diskThick = 0.055 + 0.036 * smoothstep(DISK_IN, DISK_OUT, r);
+          float vertProfile = exp(-(pos.y * pos.y) / (diskThick * diskThick));
+
+          if (vertProfile > 0.012) {
+            float radNorm = clamp((r - DISK_IN) / (DISK_OUT - DISK_IN), 0.0, 1.0);
+            float radialEnv = smoothstep(0.0, 0.09, radNorm) * pow(1.0 - radNorm, 1.75);
+
+            // Differential Keplerian orbital shear
+            float ang = atan(pos.z, pos.x);
+            float omega = (1.55 + uSpin * 1.40) / pow(r, 1.15);
+            float swirlAng = ang - uTime * omega + 4.2 / sqrt(r);
+
+            // Sharp turbulent spiral plasma strands + glowing concentric shock rings
+            vec3 sampleCoord = vec3(cos(swirlAng) * r * 1.05, pos.y * 5.0, sin(swirlAng) * r * 1.05);
+            float turb1 = fbm3(sampleCoord * 1.35 + vec3(uTime * 0.15, 0.0, -uTime * 0.12));
+            float rings = 0.52 + 0.48 * sin(r * 7.2 - uTime * 1.8 + turb1 * 5.0);
+            float filaments = pow(clamp(smoothstep(0.18, 0.92, turb1 * 0.72 + rings * 0.42), 0.0, 1.0), 1.55);
+
+            // Relativistic Doppler Beaming (Approaching side bright blue-gold, receding side deep volcanic crimson!)
+            vec3 tangent = normalize(vec3(-pos.z, 0.0, pos.x));
+            float beta = clamp(sqrt(0.48 / max(1.1, r)) * (0.42 + uSpin * 0.58), 0.0, 0.72);
+            float cosTheta = dot(tangent, -vel);
+            float gamma = 1.0 / sqrt(max(0.15, 1.0 - beta * beta));
+            float doppler = 1.0 / (gamma * (1.0 - beta * cosTheta));
+            float beamBoost = pow(clamp(doppler, 0.26, 2.30), 2.25);
+
+            float gravRedshift = sqrt(max(0.12, 1.0 - R_S / max(1.05, r)));
+            float temp = ((1.22 - radNorm * 0.92) * (0.55 + filaments * 0.80)) * doppler * (0.62 + 0.38 * gravRedshift);
+            vec3 emit = plasmaColor(temp) * (0.28 + filaments * 1.75) * radialEnv * vertProfile * beamBoost;
+
+            // Incandescent razor-sharp inner ISCO hot ring
+            float iscoRing = exp(-pow((r - DISK_IN * 1.05) * 6.0, 2.0)) * vertProfile * 1.35;
+            emit += plasmaColor(1.42 * doppler) * iscoRing * beamBoost;
+
+            float density = (0.32 + filaments * 1.25) * radialEnv * vertProfile * dt * 2.1;
+            accum += trans * emit * dt * 1.38;
+            trans *= exp(-density * 0.85);
+            if (trans < 0.015) break;
+          }
+        }
+
+        // 2) Seamless Collimated Relativistic Polar Plasma Jets (ZERO atan seam!)
+        if (uJetPower > 0.01 && abs(pos.y) > 1.25 && abs(pos.y) < 18.0) {
+          float axialR = length(pos.xz);
+          float coneR = 0.14 + abs(pos.y) * 0.068;
+          if (axialR < coneR * 2.4) {
+            float jetEnv = exp(-(axialR * axialR) / (coneR * coneR)) * smoothstep(1.25, 2.6, abs(pos.y)) * exp(-abs(pos.y) * 0.11);
+            float flow = fbm3(vec3(pos.x * 2.2, abs(pos.y) * 0.85 - uTime * 4.2, pos.z * 2.2));
+            float coreBeam = exp(-(axialR * axialR) / (coneR * coneR * 0.22));
+            vec3 jetCol = mix(vec3(0.18, 0.72, 1.0), vec3(0.68, 0.38, 1.0), clamp(abs(pos.y) * 0.07, 0.0, 1.0));
+            jetCol += vec3(0.45, 0.85, 1.0) * coreBeam * 0.65;
+            accum += trans * jetCol * jetEnv * (0.45 + flow * 0.95) * uJetPower * dt * 1.15;
+          }
+        }
+
+        pos = nextPos;
+        vel = nextVel;
+      }
+
+      // 3) Razor-Sharp Luminous Photon Sphere Ring Glow!
+      float photonGlow = exp(-abs(minR - 1.50) * 18.0) * (absorbed ? 0.55 : 1.0);
+      accum += vec3(1.0, 0.78, 0.42) * photonGlow * 0.78 * trans;
+
+      // 4) Gravitationally-Lensed Background Universe (Milky Way + Einstein Ring Stars!)
+      if (!absorbed) {
+        accum += trans * sampleSky(vel);
+      }
+
+      vec3 encoded = accum / (1.0 + accum * 0.35);
+      fragColor = vec4(clamp(encoded, 0.0, 1.0), 1.0);
+    }
+  `;
+
+  // ===== PASS 2: CINEMATIC IMAX BLOOM + ANAMORPHIC FLARE + ACES FILMIC TONE MAPPING =====
+  const postFS = `#version 300 es
+    precision highp float;
+    in vec2 vUv;
+    uniform sampler2D uScene;
+    uniform vec2 uRes;
+    uniform float uSpin;
+    out vec4 fragColor;
+
+    vec3 decodeHDR(vec3 c) {
+      return c / max(vec3(0.08), vec3(1.0) - c * 0.35);
+    }
+
+    vec3 acesFilm(vec3 x) {
+      float a = 2.51, b = 0.03, c = 2.43, d = 0.59, e = 0.14;
+      return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+    }
+
+    void main() {
+      vec2 texel = 1.0 / uRes;
+      vec3 base = decodeHDR(texture(uScene, vUv).rgb);
+
+      // Multi-ring radial cinematic bloom around bright accretion plasma!
+      vec3 bloom = vec3(0.0);
+      float wSum = 0.0;
+      const int RINGS = 3;
+      const int ANG = 12;
+      for (int r = 1; r <= RINGS; r++) {
+        float rad = float(r) * float(r) * 2.8;
+        float w = exp(-float(r) * 0.55);
+        for (int a = 0; a < ANG; a++) {
+          float th = (float(a) / float(ANG)) * 6.2831853 + float(r) * 0.4;
+          vec2 off = vec2(cos(th), sin(th)) * rad * texel;
+          vec3 s = decodeHDR(texture(uScene, clamp(vUv + off, 0.001, 0.999)).rgb);
+          vec3 bright = max(s - vec3(0.75), vec3(0.0));
+          bloom += bright * w;
+          wSum += w;
+        }
+      }
+      bloom /= max(1.0, wSum);
+
+      // Subtle Interstellar-style horizontal anamorphic lens streak!
+      vec3 anam = vec3(0.0);
+      for (int k = -8; k <= 8; k++) {
+        if (k == 0) continue;
+        float fk = float(k);
+        vec2 off = vec2(fk * 5.5 * texel.x, 0.0);
+        vec3 s = decodeHDR(texture(uScene, clamp(vUv + off, 0.001, 0.999)).rgb);
+        float lum = dot(s, vec3(0.299, 0.587, 0.114));
+        float w = exp(-abs(fk) * 0.28);
+        anam += max(s - vec3(1.15), vec3(0.0)) * w * (0.045 + uSpin * 0.025) * clamp(lum * 0.35, 0.0, 1.5);
+      }
+
+      vec3 col = base + bloom * 0.55 + anam * vec3(0.78, 0.88, 1.05);
+
+      // ACES Filmic Tone Mapping + Rich Cinematic Contrast
+      col = acesFilm(col * 0.88);
+      col = pow(col, vec3(1.0 / 2.08));
+
+      // Subtle deep-space vignette
+      vec2 vp = (vUv - 0.5) * 1.15;
+      col *= clamp(1.05 - dot(vp, vp) * 0.32, 0.72, 1.02);
+
+      fragColor = vec4(col, 1.0);
+    }
+  `;
+
+  const grProg = link(FULLSCREEN_VS, grFS);
+  const postProg = link(FULLSCREEN_VS, postFS);
+  const emptyVao = gl.createVertexArray();
+
+  // Create FBO for Pass 1 -> Pass 2 Cinematic Bloom
+  const sceneTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, sceneTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  const fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, sceneTex, 0);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+  // ===== SIMULATION & 24s CINEMATIC CHOREOGRAPHY =====
+  let simTime = 0.0;
+  const isRecording = Boolean(window.__RECORDING__);
+
+  // Camera spherical coordinates around Gargantua (in r_s units — iconic full-disk IMAX framing!)
+  let camAz = 0.35;
+  let camEl = 0.21;     // ~12 deg classic Interstellar Gargantua tilt!
+  let camDist = 22.8;
+  let camRoll = 0.14;
+  let kerrSpin = 0.62;
+  let targetSpin = 0.62;
+  let jetPower = 0.05;
+  let targetJet = 0.05;
+  let activeMode = 0;   // 0=Orbit, 1=KerrMax, 2=PhotonRing, 3=HorizonDive
+
+  let dragging = false, lastMX = 0, lastMY = 0;
+  let banner = { text: '', cls: '', ttl: 0 };
+  let curX = 640, curY = 360, curOp = 0, cPulse = 0, pressedId = null;
+  const trig = { kerr: false, ring: false, dive: false };
+
+  function btnCenter(id) {
+    const r = document.getElementById(id).getBoundingClientRect();
+    const sr = document.getElementById('stageRoot').getBoundingClientRect();
+    return { x: r.left - sr.left + r.width * 0.5, y: r.top - sr.top + r.height * 0.5 };
+  }
+
+  function setMode(m) {
+    activeMode = m;
+    if (m === 0) { targetSpin = 0.62; targetJet = 0.05; }
+    else if (m === 1) {
+      targetSpin = 0.99; targetJet = 0.95;
+      banner = { text: '◈ KERR SPIN OVERDRIVE (a* = 0.99) · DOPPLER BEAMING & RELATIVISTIC JETS', cls: 'show-cyan', ttl: 4.2 };
+    } else if (m === 2) {
+      targetSpin = 0.94; targetJet = 0.72;
+      banner = { text: '◈ PHOTON SPHERE GRAZING PASS · 360° EINSTEIN RING GRAVITATIONAL LENSING', cls: 'show-gold', ttl: 4.2 };
+    } else if (m === 3) {
+      targetSpin = 0.98; targetJet = 0.85;
+      banner = { text: '⚠ APPROACHING EVENT HORIZON · EXTREME GRAVITATIONAL TIME DILATION', cls: 'show-red', ttl: 4.2 };
+    }
+  }
+
+  let autoTour = isRecording;
+  function runChoreography(t, dt) {
+    pressedId = null;
+    cPulse = Math.max(0, cPulse - dt * 2.8);
+
+    if (autoTour) {
+      const pKerr = btnCenter('btnKerr');
+      const pRing = btnCenter('btnRing');
+      const pDive = btnCenter('btnDive');
+
+      if (t < 4.5) {
+        curOp = 0;
+      } else if (t < 5.95) {
+        curOp = ease((t - 4.5) / 0.6);
+        const u = ease((t - 4.5) / 1.4);
+        curX = lerp(640, pKerr.x, u);
+        curY = lerp(520, pKerr.y, u);
+      } else if (t < 6.45) {
+        curOp = 1; curX = pKerr.x; curY = pKerr.y;
+        pressedId = 'btnKerr';
+        if (!trig.kerr) { trig.kerr = true; cPulse = 1.0; setMode(1); }
+      } else if (t < 10.6) {
+        curOp = Math.max(0, curOp - dt * 1.4);
+      } else if (t < 11.95) {
+        curOp = ease((t - 10.6) / 0.5);
+        const u = ease((t - 10.6) / 1.3);
+        curX = lerp(pKerr.x, pRing.x, u);
+        curY = lerp(pKerr.y, pRing.y, u);
+      } else if (t < 12.45) {
+        curOp = 1; curX = pRing.x; curY = pRing.y;
+        pressedId = 'btnRing';
+        if (!trig.ring) { trig.ring = true; cPulse = 1.0; setMode(2); }
+      } else if (t < 16.6) {
+        curOp = Math.max(0, curOp - dt * 1.4);
+      } else if (t < 17.95) {
+        curOp = ease((t - 16.6) / 0.5);
+        const u = ease((t - 16.6) / 1.3);
+        curX = lerp(pRing.x, pDive.x, u);
+        curY = lerp(pRing.y, pDive.y, u);
+      } else if (t < 18.45) {
+        curOp = 1; curX = pDive.x; curY = pDive.y;
+        pressedId = 'btnDive';
+        if (!trig.dive) { trig.dive = true; cPulse = 1.0; setMode(3); }
+      } else {
+        curOp = Math.max(0, curOp - dt * 1.4);
+      }
+    } else {
+      curOp = 0;
+    }
+
+    // Majestic IMAX Camera Trajectory framing FULL Accretion Disk, Relativistic Polar Jets & Einstein Rings!
+    if (!dragging) {
+      if (t < 6.0) {
+        const u = t / 6.0;
+        camAz = 0.35 + u * 0.72;
+        camEl = 0.21 + Math.sin(u * Math.PI) * 0.06;
+        camDist = lerp(22.8, 21.4, ease(u));
+        camRoll = lerp(0.14, 0.08, u);
+      } else if (t < 12.0) {
+        // Pull majestically wide to frame BOTH North & South glowing polar plasma jets + blue-gold Doppler disk!
+        const u = (t - 6.0) / 6.0;
+        camAz = 1.07 + u * 0.95;
+        camEl = lerp(0.21, 0.28, Math.sin(u * Math.PI * 0.85));
+        camDist = lerp(21.4, 25.4, Math.sin(u * Math.PI * 0.75));
+        camRoll = lerp(0.08, -0.14, ease(u));
+      } else if (t < 18.0) {
+        // Grazing equatorial sweep through the photon sphere!
+        const u = (t - 12.0) / 6.0;
+        camAz = 2.02 + u * 1.15;
+        camEl = lerp(0.26, -0.18, ease(u));
+        camDist = lerp(22.4, 16.2, Math.sin(u * Math.PI));
+        camRoll = lerp(-0.14, 0.16, ease(u));
+      } else {
+        // Dramatic Event Horizon Close-Up Dive (11.6 r_s — towering shadow & razor photon ring!) -> Hero Pullback Finale!
+        const u = (t - 18.0) / 6.0;
+        camAz = 3.17 + u * 0.92;
+        camEl = lerp(-0.18, 0.20, ease(u));
+        camDist = u < 0.48
+          ? lerp(19.6, 11.6, ease(u / 0.48))
+          : lerp(11.6, 22.6, ease((u - 0.48) / 0.52));
+        camRoll = lerp(0.16, 0.10, ease(u));
+      }
+    }
+  }
+
+  // ===== 2D MINI SPACETIME CURVATURE WELL VISUALIZER =====
+  const wellCanvas = document.getElementById('wellCanvas');
+  const wctx = wellCanvas.getContext('2d');
+
+  function renderWell() {
+    const W2 = wellCanvas.width, H2 = wellCanvas.height;
+    wctx.clearRect(0, 0, W2, H2);
+
+    // Draw Flamm's paraboloid gravitational potential funnel
+    const cx = W2 * 0.5, topY = 14;
+    wctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+    wctx.lineWidth = 1.6;
+    for (let ring = 0; ring < 4; ring++) {
+      const f = (ring + 1) / 4;
+      const rx = 18 + f * 145;
+      const ry = 4 + f * 14;
+      const cy = H2 - 8 - f * 58;
+      wctx.beginPath();
+      wctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+      wctx.stroke();
+    }
+    // Funnel curve silhouette
+    wctx.strokeStyle = '#fbbf24';
+    wctx.lineWidth = 2.0;
+    for (const s of [-1, 1]) {
+      wctx.beginPath();
+      for (let i = 0; i <= 24; i++) {
+        const u = i / 24;
+        const x = cx + s * (16 + u * 154);
+        const y = topY + (H2 - 20) * Math.exp(-u * 4.4);
+        if (i === 0) wctx.moveTo(x, y); else wctx.lineTo(x, y);
+      }
+      wctx.stroke();
+    }
+    // Live animated photon geodesic bending across the potential well!
+    const phase = (simTime * 0.65) % 1.0;
+    const px = lerp(16, W2 - 16, phase);
+    const distC = Math.abs(px - cx) / 160;
+    const py = topY + 12 + (1.0 - Math.min(1, distC)) * 32 * (0.65 + kerrSpin * 0.4);
+    wctx.fillStyle = '#00f5a0';
+    wctx.beginPath(); wctx.arc(px, py, 4.5, 0, Math.PI * 2); wctx.fill();
+  }
+
+  function renderDOM() {
+    const effR = Math.max(1.25, camDist * 0.22);
+    const dilation = Math.sqrt(Math.max(0.05, 1.0 - 1.0 / effR));
+    const dopPct = Math.round(14 + kerrSpin * 46 + (24.0 - camDist) * 1.4);
+    const defl = Math.round(110 + (26.0 - camDist) * 9 + kerrSpin * 45);
+
+    document.getElementById('tSpin').textContent = kerrSpin.toFixed(2);
+    document.getElementById('tDist').textContent = camDist.toFixed(2);
+    document.getElementById('tDil').textContent = `${dilation.toFixed(3)}x`;
+    document.getElementById('tDop').textContent = `+${dopPct}%`;
+    document.getElementById('wellDefl').textContent = `Δφ ${defl}°`;
+    document.getElementById('clockLbl').textContent = `GEMINI 4 NEON · ${simTime.toFixed(1).padStart(4, '0')}s / 24.0s`;
+
+    document.getElementById('btnOrbit').className = activeMode === 0 ? 'cbtn act-gold' : 'cbtn';
+    document.getElementById('btnKerr').className  = activeMode === 1 ? 'cbtn act-cyan' : 'cbtn';
+    document.getElementById('btnRing').className  = activeMode === 2 ? 'cbtn act-gold' : 'cbtn';
+    document.getElementById('btnDive').className  = activeMode === 3 ? 'cbtn act-orange' : 'cbtn';
+
+    for (const id of ['btnOrbit','btnKerr','btnRing','btnDive']) {
+      document.getElementById(id).classList.toggle('pressed', pressedId === id);
+    }
+
+    const elB = document.getElementById('hudBanner');
+    if (banner.ttl > 0) {
+      elB.textContent = banner.text;
+      elB.className = `hud-banner ${banner.cls}`;
+    } else {
+      elB.className = 'hud-banner';
+    }
+
+    const vc = document.getElementById('vCursor'), cr = document.getElementById('cRing');
+    vc.style.left = `${curX.toFixed(1)}px`; vc.style.top = `${curY.toFixed(1)}px`; vc.style.opacity = curOp.toFixed(2);
+    if (cPulse > 0.02) {
+      cr.style.left = `${curX.toFixed(1)}px`; cr.style.top = `${curY.toFixed(1)}px`;
+      cr.style.opacity = (cPulse * 0.9).toFixed(2);
+      cr.style.transform = `translate(-50%,-50%) scale(${(0.6 + (1-cPulse)*1.1).toFixed(2)})`;
+    } else cr.style.opacity = '0';
+  }
+
+  function renderWebGL() {
+    const camPos = [
+      Math.sin(camAz) * Math.cos(camEl) * camDist,
+      Math.sin(camEl) * camDist,
+      Math.cos(camAz) * Math.cos(camEl) * camDist
+    ];
+
+    // Pass 1: Geodesic Raytracing into FBO
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.viewport(0, 0, W, H);
+    gl.useProgram(grProg);
+    gl.uniform2f(gl.getUniformLocation(grProg, 'uRes'), W, H);
+    gl.uniform1f(gl.getUniformLocation(grProg, 'uTime'), simTime);
+    gl.uniform3fv(gl.getUniformLocation(grProg, 'uCamPos'), camPos);
+    gl.uniform3f(gl.getUniformLocation(grProg, 'uCamTarget'), 0.0, 0.0, 0.0);
+    gl.uniform1f(gl.getUniformLocation(grProg, 'uSpin'), kerrSpin);
+    gl.uniform1f(gl.getUniformLocation(grProg, 'uJetPower'), jetPower);
+    gl.uniform1f(gl.getUniformLocation(grProg, 'uRoll'), camRoll);
+    gl.bindVertexArray(emptyVao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // Pass 2: Cinematic Bloom + Anamorphic Lens Flare + ACES Tone Mapping to Screen
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, W, H);
+    gl.useProgram(postProg);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, sceneTex);
+    gl.uniform1i(gl.getUniformLocation(postProg, 'uScene'), 0);
+    gl.uniform2f(gl.getUniformLocation(postProg, 'uRes'), W, H);
+    gl.uniform1f(gl.getUniformLocation(postProg, 'uSpin'), kerrSpin);
+    gl.bindVertexArray(emptyVao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  // Interactive Controls
+  document.getElementById('btnOrbit').addEventListener('click', () => setMode(0));
+  document.getElementById('btnKerr').addEventListener('click',  () => setMode(1));
+  document.getElementById('btnRing').addEventListener('click',  () => setMode(2));
+  document.getElementById('btnDive').addEventListener('click',  () => setMode(3));
+
+  glCanvas.addEventListener('mousedown', (e) => { dragging = true; lastMX = e.clientX; lastMY = e.clientY; });
+  window.addEventListener('mouseup', () => { dragging = false; });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    camAz -= (e.clientX - lastMX) * 0.008;
+    camEl = clamp(camEl + (e.clientY - lastMY) * 0.006, -1.2, 1.2);
+    lastMX = e.clientX; lastMY = e.clientY;
+  });
+  glCanvas.addEventListener('wheel', (e) => {
+    camDist = clamp(camDist + e.deltaY * 0.012, 9.5, 34.0);
+  }, { passive: true });
+
+  // Init & Loop
+  renderDOM();
+  renderWell();
+  renderWebGL();
+
+  window.stepBlackHole = function(dt, drawGL = true) {
+    simTime += dt;
+    runChoreography(simTime, dt);
+    kerrSpin += (targetSpin - kerrSpin) * Math.min(1, dt * 2.2);
+    jetPower += (targetJet - jetPower) * Math.min(1, dt * 2.0);
+    if (banner.ttl > 0) banner.ttl = Math.max(0, banner.ttl - dt);
+    if (drawGL) {
+      renderDOM();
+      renderWell();
+      renderWebGL();
+    }
+  };
+
+  if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.addControl('▶ 自動ツアー', (btn) => {
+        autoTour = !autoTour;
+        btn.classList.toggle('active', autoTour);
+        if (autoTour) { simTime = 0; for (const k in trig) trig[k] = false; setMode(0); }
+      });
+    });
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (autoTour && simTime >= 24.0) { simTime = 0; for (const k in trig) trig[k] = false; setMode(0); }
+      window.stepBlackHole(dt);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+<script src="../demo-shell.js"></script>
+</body>
+</html>

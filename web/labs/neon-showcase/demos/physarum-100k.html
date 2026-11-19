@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #03050C; }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; }
+  #hud { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; pointer-events: none; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="cinema">
+<canvas id="gl" width="1280" height="720"></canvas>
+<canvas id="hud" width="1280" height="720"></canvas>
+<script>
+const glCanvas = document.getElementById('gl');
+const gl = glCanvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
+const hudCanvas = document.getElementById('hud');
+const hctx = hudCanvas.getContext('2d');
+
+gl.getExtension('EXT_color_buffer_float');
+gl.getExtension('OES_texture_float_linear');
+
+const W = 1280, H = 720;
+const AG_W = 400, AG_H = 250; // 400 * 250 = 100,000 agents!
+const NUM_AGENTS = AG_W * AG_H;
+
+const quadVS = `#version 300 es
+in vec2 aPos;
+out vec2 vUv;
+void main() {
+  vUv = aPos * 0.5 + 0.5;
+  gl_Position = vec4(aPos, 0.0, 1.0);
+}`;
+
+const agentUpdateFS = `#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uAgents;
+uniform sampler2D uTrail;
+uniform vec2 uRes;
+uniform float uTime;
+uniform float uSensorAngle;
+uniform float uSensorDist;
+uniform float uTurnSpeed;
+uniform float uMoveSpeed;
+out vec4 fragColor;
+
+float hash(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+
+float sense(vec2 pos, float angle) {
+  vec2 dir = vec2(cos(angle), sin(angle));
+  vec2 sp = (pos + dir * uSensorDist) / uRes;
+  sp = fract(sp);
+  return texture(uTrail, sp).r;
+}
+
+void main() {
+  vec4 ag = texture(uAgents, vUv);
+  vec2 pos = ag.xy;
+  float angle = ag.z;
+  float species = ag.w;
+
+  float wFwd   = sense(pos, angle);
+  float wLeft  = sense(pos, angle + uSensorAngle);
+  float wRight = sense(pos, angle - uSensorAngle);
+
+  float rnd = hash(vUv * 100.0 + fract(uTime));
+
+  if (wFwd > wLeft && wFwd > wRight) {
+    // keep straight with slight organic noise
+  } else if (wFwd < wLeft && wFwd < wRight) {
+    angle += (rnd - 0.5) * 2.0 * uTurnSpeed;
+  } else if (wLeft > wRight) {
+    angle += uTurnSpeed;
+  } else if (wRight > wLeft) {
+    angle -= uTurnSpeed;
+  }
+  angle += (rnd - 0.5) * 0.14;
+
+  pos += vec2(cos(angle), sin(angle)) * uMoveSpeed;
+
+  // Wrap around screen edges cleanly
+  pos = mod(pos + uRes, uRes);
+
+  fragColor = vec4(pos, angle, species);
+}`;
+
+const depositVS = `#version 300 es
+uniform sampler2D uAgents;
+uniform ivec2 uAgentTexSize;
+uniform vec2 uRes;
+void main() {
+  int id = gl_VertexID;
+  ivec2 coord = ivec2(id % uAgentTexSize.x, id / uAgentTexSize.x);
+  vec4 ag = texelFetch(uAgents, coord, 0);
+  vec2 ndc = (ag.xy / uRes) * 2.0 - 1.0;
+  gl_Position = vec4(ndc, 0.0, 1.0);
+  gl_PointSize = 1.0;
+}`;
+
+const depositFS = `#version 300 es
+precision highp float;
+uniform float uDeposit;
+out vec4 fragColor;
+void main() {
+  fragColor = vec4(uDeposit, 0.0, 0.0, 1.0);
+}`;
+
+const diffuseFS = `#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uTrail;
+uniform vec2 uTexel;
+uniform float uDecay;
+out vec4 fragColor;
+void main() {
+  float sum = 0.0;
+  for (int dy = -1; dy <= 1; dy++) {
+    for (int dx = -1; dx <= 1; dx++) {
+      sum += texture(uTrail, fract(vUv + vec2(float(dx), float(dy)) * uTexel)).r;
+    }
+  }
+  float blurred = sum / 9.0;
+  float orig = texture(uTrail, vUv).r;
+  float val = mix(orig, blurred, 0.72) * uDecay;
+  fragColor = vec4(val, 0.0, 0.0, 1.0);
+}`;
+
+const displayFS = `#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uTrail;
+uniform float uTime;
+out vec4 fragColor;
+void main() {
+  float d = texture(uTrail, vUv).r;
+  float v = clamp(pow(d * 1.15, 0.68), 0.0, 1.4);
+
+  // Smooth palette evolution across 3 phases
+  float p2 = smoothstep(7.5, 10.5, uTime);
+  float p3 = smoothstep(15.5, 18.5, uTime);
+
+  vec3 cBg = vec3(0.012, 0.018, 0.040);
+  vec3 cLow1 = vec3(0.02, 0.28, 0.55), cHi1 = vec3(0.05, 0.95, 0.88); // Cyan / Emerald
+  vec3 cLow2 = vec3(0.32, 0.10, 0.62), cHi2 = vec3(0.98, 0.35, 0.85); // Violet / Magenta
+  vec3 cLow3 = vec3(0.06, 0.36, 0.52), cHi3 = vec3(1.00, 0.82, 0.25); // Teal / Gold
+
+  vec3 cLow = mix(mix(cLow1, cLow2, p2), cLow3, p3);
+  vec3 cHi  = mix(mix(cHi1, cHi2, p2), cHi3, p3);
+
+  vec3 col = mix(cBg, cLow, smoothstep(0.01, 0.32, v));
+  col = mix(col, cHi, smoothstep(0.25, 0.85, v));
+  col += vec3(0.95, 0.98, 1.0) * smoothstep(0.82, 1.35, v) * 0.75;
+
+  fragColor = vec4(col, 1.0);
+}`;
+
+function compile(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+function link(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
+  gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  return p;
+}
+
+const pAgent = link(quadVS, agentUpdateFS);
+const pDeposit = link(depositVS, depositFS);
+const pDiffuse = link(quadVS, diffuseFS);
+const pDisplay = link(quadVS, displayFS);
+
+const quadBuf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+
+function bindQuad(prog) {
+  const loc = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+}
+
+function makeFBO(w, h, internalFmt, filter, initData) {
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, internalFmt, w, h, 0, gl.RGBA, gl.FLOAT, initData || null);
+  const fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+  return { tex, fbo, w, h };
+}
+
+// Deterministic PRNG for initial ring/circle spawn
+let seed = 133742;
+function rand() {
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return seed / 4294967296;
+}
+
+const initAgents = new Float32Array(NUM_AGENTS * 4);
+for (let i = 0; i < NUM_AGENTS; i++) {
+  const a = rand() * Math.PI * 2;
+  const r = Math.sqrt(rand()) * 420;
+  const x = W * 0.5 + Math.cos(a) * r * 1.35;
+  const y = H * 0.5 + Math.sin(a) * r * 0.85;
+  const ang = rand() * Math.PI * 2;
+  initAgents[i * 4 + 0] = x;
+  initAgents[i * 4 + 1] = y;
+  initAgents[i * 4 + 2] = ang;
+  initAgents[i * 4 + 3] = 1.0;
+}
+
+const agents = [
+  makeFBO(AG_W, AG_H, gl.RGBA32F, gl.NEAREST, initAgents),
+  makeFBO(AG_W, AG_H, gl.RGBA32F, gl.NEAREST, null),
+];
+const trails = [
+  makeFBO(W, H, gl.RGBA16F, gl.LINEAR, null),
+  makeFBO(W, H, gl.RGBA16F, gl.LINEAR, null),
+];
+
+let agIdx = 0, trIdx = 0;
+let simT = 0;
+
+function stepOnce(dt) {
+  simT += dt;
+  const agRead = agents[agIdx], agWrite = agents[1 - agIdx];
+  const trRead = trails[trIdx], trWrite = trails[1 - trIdx];
+
+  // Dynamic Physarum parameters across 3 phases
+  const p2 = Math.min(1, Math.max(0, (simT - 8.0) / 3.0));
+  const p3 = Math.min(1, Math.max(0, (simT - 16.0) / 3.0));
+  const sensorAngle = 0.48 + p2 * 0.25 - p3 * 0.18; // radians
+  const sensorDist  = 9.0 + p2 * 8.0 + p3 * 5.0;   // px
+  const turnSpeed   = 0.30 + p2 * 0.12;
+  const moveSpeed   = 1.45 + p3 * 0.35;
+
+  // 1. Update 100,000 Agents
+  gl.bindFramebuffer(gl.FRAMEBUFFER, agWrite.fbo);
+  gl.viewport(0, 0, AG_W, AG_H);
+  gl.useProgram(pAgent);
+  bindQuad(pAgent);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, agRead.tex);
+  gl.uniform1i(gl.getUniformLocation(pAgent, 'uAgents'), 0);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, trRead.tex);
+  gl.uniform1i(gl.getUniformLocation(pAgent, 'uTrail'), 1);
+  gl.uniform2f(gl.getUniformLocation(pAgent, 'uRes'), W, H);
+  gl.uniform1f(gl.getUniformLocation(pAgent, 'uTime'), simT);
+  gl.uniform1f(gl.getUniformLocation(pAgent, 'uSensorAngle'), sensorAngle);
+  gl.uniform1f(gl.getUniformLocation(pAgent, 'uSensorDist'), sensorDist);
+  gl.uniform1f(gl.getUniformLocation(pAgent, 'uTurnSpeed'), turnSpeed);
+  gl.uniform1f(gl.getUniformLocation(pAgent, 'uMoveSpeed'), moveSpeed);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  agIdx = 1 - agIdx;
+
+  // 2. Deposit 100,000 points into trRead with additive blending
+  gl.bindFramebuffer(gl.FRAMEBUFFER, trRead.fbo);
+  gl.viewport(0, 0, W, H);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.ONE, gl.ONE);
+  gl.useProgram(pDeposit);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, agents[agIdx].tex);
+  gl.uniform1i(gl.getUniformLocation(pDeposit, 'uAgents'), 0);
+  gl.uniform2i(gl.getUniformLocation(pDeposit, 'uAgentTexSize'), AG_W, AG_H);
+  gl.uniform2f(gl.getUniformLocation(pDeposit, 'uRes'), W, H);
+  gl.uniform1f(gl.getUniformLocation(pDeposit, 'uDeposit'), 0.065);
+  gl.drawArrays(gl.POINTS, 0, NUM_AGENTS);
+  gl.disable(gl.BLEND);
+
+  // 3. Diffuse & Decay Trail
+  gl.bindFramebuffer(gl.FRAMEBUFFER, trWrite.fbo);
+  gl.viewport(0, 0, W, H);
+  gl.useProgram(pDiffuse);
+  bindQuad(pDiffuse);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, trRead.tex);
+  gl.uniform1i(gl.getUniformLocation(pDiffuse, 'uTrail'), 0);
+  gl.uniform2f(gl.getUniformLocation(pDiffuse, 'uTexel'), 1 / W, 1 / H);
+  gl.uniform1f(gl.getUniformLocation(pDiffuse, 'uDecay'), 0.905);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  trIdx = 1 - trIdx;
+}
+
+function drawScreen() {
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, W, H);
+  gl.useProgram(pDisplay);
+  bindQuad(pDisplay);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, trails[trIdx].tex);
+  gl.uniform1i(gl.getUniformLocation(pDisplay, 'uTrail'), 0);
+  gl.uniform1f(gl.getUniformLocation(pDisplay, 'uTime'), simT);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+  // HUD
+  hctx.clearRect(0, 0, W, H);
+  hctx.save();
+  hctx.fillStyle = 'rgba(4, 8, 18, 0.62)';
+  hctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
+  hctx.lineWidth = 1.2;
+  hctx.beginPath(); hctx.roundRect(22, 20, 520, 56, 10); hctx.fill(); hctx.stroke();
+
+  const phase = simT < 8.0 ? '01 RADIAL EMERGENCE'
+    : simT < 16.0 ? '02 SYNAPTIC FILAMENTS'
+    : '03 GOLDEN MYCELIUM';
+  hctx.fillStyle = '#00E5FF';
+  hctx.font = '700 13px "Consolas", monospace';
+  hctx.fillText('PHYSARUM SLIME MOLD  |  100,000 GPU AGENTS  |  ASSETS: 0', 38, 42);
+  hctx.fillStyle = '#F8FAFC';
+  hctx.fillText(`PHASE: ${phase}  |  ${simT.toFixed(2)}s / 24.00s`, 38, 63);
+  hctx.restore();
+}
+
+const compCanvas = document.createElement('canvas');
+compCanvas.width = W; compCanvas.height = H;
+const compCtx = compCanvas.getContext('2d');
+window.getCompositeFrame = () => {
+  compCtx.drawImage(glCanvas, 0, 0);
+  compCtx.drawImage(hudCanvas, 0, 0);
+  return compCanvas.toDataURL('image/png');
+};
+
+window.stepPhysarum = (dt) => {
+  // 2 simulation substeps per 30fps frame for rich network evolution
+  stepOnce(dt * 0.5);
+  stepOnce(dt * 0.5);
+  drawScreen();
+};
+
+drawScreen();
+if (!window.__RECORDING__) {
+  let paused = false;
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.addControl('⏸ 一時停止', (btn) => {
+      paused = !paused;
+      btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+      btn.classList.toggle('active', paused);
+    });
+    window.NeonShell.addControl('↻ 初期配置へ', () => window.location.reload());
+  });
+  function loop() {
+    if (!paused) window.stepPhysarum(1 / 30);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+<script src="../demo-shell.js"></script>
+</body>
+</html>

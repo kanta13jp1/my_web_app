@@ -51,14 +51,12 @@ class EvernoteEnmlMarkdownConverter {
           resource.hash.trim().toLowerCase(): resource,
     };
     final unresolved = <String>{};
-    // These renderers flatten their descendants. Never silently commit a note
-    // whose embedded media cannot be represented, even when its bytes exist.
+    // <pre> flattens its descendants. Never silently commit a note whose
+    // embedded media cannot be represented, even when its bytes exist.
     for (final element in document.descendants.whereType<XmlElement>()) {
       if (element.localName.toLowerCase() != 'en-media') continue;
       if (element.ancestors.whereType<XmlElement>().any(
-            (ancestor) => <String>{'pre', 'a'}.contains(
-              ancestor.localName.toLowerCase(),
-            ),
+            (ancestor) => ancestor.localName.toLowerCase() == 'pre',
           )) {
         unresolved.add('<unsupported-media-context>');
       }
@@ -173,6 +171,40 @@ class EvernoteEnmlMarkdownConverter {
     }
     if (name == 'a') {
       final href = node.getAttribute('href')?.trim() ?? '';
+      final hasMedia = node.descendants.whereType<XmlElement>().any(
+            (element) => element.localName.toLowerCase() == 'en-media',
+          );
+      if (hasMedia) {
+        final childBuffer = StringBuffer();
+        var encrypted = 0;
+        for (final child in node.children) {
+          encrypted += _writeNode(
+            child,
+            childBuffer,
+            resourcesByHash,
+            unresolved,
+            listDepth: listDepth,
+          );
+        }
+        final childMarkdown = _normalize(childBuffer.toString());
+        if (childMarkdown.isNotEmpty) {
+          buffer.write(childMarkdown);
+        }
+        if (href.isNotEmpty) {
+          final sourceId = _sourceIdFromEvernoteHref(href);
+          final target = sourceId == null
+              ? href
+              : '$evernoteNoteScheme:${Uri.encodeComponent(sourceId)}';
+          if (childMarkdown.isNotEmpty) {
+            buffer.write(' ');
+          }
+          buffer
+            ..write('([link](')
+            ..write(target.replaceAll(')', '%29'))
+            ..write('))');
+        }
+        return encrypted;
+      }
       final label = _inlineText(node).trim();
       if (href.isEmpty) {
         buffer.write(_escapeText(label));

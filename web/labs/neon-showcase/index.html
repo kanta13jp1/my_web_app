@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini 4 作品館 · NEON SHOWCASE | my_web_app</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow">GEMINI 4 NEON &amp; HYDROGEN · ZERO-LIBRARY ARCHIVE</div>
+          <h1>Gemini 4 作品館 · <span>NEON SHOWCASE</span></h1>
+          <p class="hero-desc">
+            外部ライブラリ・3Dモデル素材ゼロの単一HTMLインタラクティブ作品、Blender 5.3 プロシージャル3D作品（5本）、
+            次回作の企画案・勝ちパターン分析、および参照したXのバズ投稿20選ベンチマークを1ページに統合しました。
+          </p>
+        </div>
+        <div class="hero-stats" aria-label="アーカイブ統計">
+          <div class="stat-box">
+            <div class="stat-num" id="stat-demos">2</div>
+            <div class="stat-lbl">ライブ体験HTML</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" id="stat-blender">5</div>
+            <div class="stat-lbl">Blender 5.3作品</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" id="stat-plans">6</div>
+            <div class="stat-lbl">企画・ロードマップ</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" id="stat-bench">20</div>
+            <div class="stat-lbl">参照バズX投稿</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <nav class="toolbar" aria-label="セクション切替と検索">
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab-btn" role="tab" id="tab-demos" data-tab="demos" aria-selected="true">
+          ライブ体験 <span class="tab-count" id="tab-count-demos">2</span>
+        </button>
+        <button type="button" class="tab-btn" role="tab" id="tab-blender" data-tab="blender" aria-selected="false">
+          Blender 3D作品 <span class="tab-count" id="tab-count-blender">5</span>
+        </button>
+        <button type="button" class="tab-btn" role="tab" id="tab-plans" data-tab="plans" aria-selected="false">
+          企画案・分析 <span class="tab-count" id="tab-count-plans">6</span>
+        </button>
+        <button type="button" class="tab-btn" role="tab" id="tab-benchmarks" data-tab="benchmarks" aria-selected="false">
+          参照X投稿20選 <span class="tab-count" id="tab-count-benchmarks">20</span>
+        </button>
+      </div>
+
+      <div class="search-wrap">
+        <input
+          type="search"
+          id="search-input"
+          class="search-input"
+          placeholder="作品名・技術・投稿者で検索..."
+          aria-label="作品や参照投稿を検索"
+        />
+        <button type="button" id="reset-filter" class="clear-btn">リセット</button>
+      </div>
+    </nav>
+
+    <div class="subbar" id="subbar">
+      <div class="chips" id="filter-chips" aria-label="絞り込み条件"></div>
+      <div class="result-count" id="result-count" aria-live="polite"></div>
+    </div>
+
+    <main id="content-root" aria-live="polite"></main>
+
+    <footer class="footer-note">
+      <span>掲載インタラクティブHTMLは外部CDN不要・ブラウザ内完結で動作します（WebGL2 / Canvas 2D）。</span>
+      <span>Xベンチマーク数値は 2026-11-19 JST 時点の観測記録です。</span>
+    </footer>
+  </div>
+
+  <!-- Responsive Scaled Live 3D Demo Modal -->
+  <div class="modal-backdrop" id="demo-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
+    <div class="modal-panel">
+      <div class="modal-hdr">
+        <div>
+          <div class="modal-title" id="modal-title"></div>
+          <div class="modal-sub" id="modal-sub"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="modal-fullscreen" class="btn btn-ghost">⛶ フル画面</button>
+          <a id="modal-open-tab" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer">別タブで開く</a>
+          <button type="button" id="modal-close" class="btn btn-primary">閉じる</button>
+        </div>
+      </div>
+      <div class="stage-wrap" id="modal-stage-wrap">
+        <div class="stage-scaler" id="modal-scaler">
+          <iframe
+            id="modal-iframe"
+            title="インタラクティブ3Dデモプレイヤー"
+            referrerpolicy="no-referrer"
+            allow="fullscreen"
+            allowfullscreen
+            sandbox="allow-scripts"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

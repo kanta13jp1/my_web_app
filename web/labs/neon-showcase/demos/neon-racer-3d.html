@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #03050C; }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; }
+  #hud { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; pointer-events: none; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="racer">
+<canvas id="gl" width="1280" height="720"></canvas>
+<canvas id="hud" width="1280" height="720"></canvas>
+<script>
+const glCanvas = document.getElementById('gl');
+const gl = glCanvas.getContext('webgl2', { antialias: true, preserveDrawingBuffer: true });
+const hudCanvas = document.getElementById('hud');
+const hctx = hudCanvas.getContext('2d');
+const W = 1280, H = 720;
+
+// --- 3D Math Helpers ---
+function mat4Perspective(fov, aspect, near, far) {
+  const f = 1.0 / Math.tan(fov / 2);
+  const nf = 1 / (near - far);
+  return new Float32Array([
+    f / aspect, 0, 0, 0,
+    0, f, 0, 0,
+    0, 0, (far + near) * nf, -1,
+    0, 0, (2 * far * near) * nf, 0
+  ]);
+}
+function mat4LookAt(eye, center, up) {
+  let zx = eye[0] - center[0], zy = eye[1] - center[1], zz = eye[2] - center[2];
+  let len = Math.hypot(zx, zy, zz) || 1;
+  zx /= len; zy /= len; zz /= len;
+  let xx = up[1] * zz - up[2] * zy, xy = up[2] * zx - up[0] * zz, xz = up[0] * zy - up[1] * zx;
+  len = Math.hypot(xx, xy, xz) || 1;
+  xx /= len; xy /= len; xz /= len;
+  let yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+  return new Float32Array([
+    xx, yx, zx, 0,
+    xy, yy, zy, 0,
+    xz, yz, zz, 0,
+    -(xx * eye[0] + xy * eye[1] + xz * eye[2]),
+    -(yx * eye[0] + yy * eye[1] + yz * eye[2]),
+    -(zx * eye[0] + zy * eye[1] + zz * eye[2]),
+    1
+  ]);
+}
+function mat4Mul(a, b) {
+  const out = new Float32Array(16);
+  for (let c = 0; c < 4; c++) {
+    for (let r = 0; r < 4; r++) {
+      out[c * 4 + r] = a[r] * b[c * 4] + a[r + 4] * b[c * 4 + 1] + a[r + 8] * b[c * 4 + 2] + a[r + 12] * b[c * 4 + 3];
+    }
+  }
+  return out;
+}
+
+// --- WebGL2 Shaders ---
+const vsSrc = `#version 300 es
+in vec3 aPos;
+in vec3 aCol;
+uniform mat4 uMVP;
+out vec3 vCol;
+out float vDepth;
+void main() {
+  gl_Position = uMVP * vec4(aPos, 1.0);
+  vCol = aCol;
+  vDepth = gl_Position.w;
+}`;
+
+const fsSrc = `#version 300 es
+precision highp float;
+in vec3 vCol;
+in float vDepth;
+out vec4 fragColor;
+void main() {
+  float fog = exp(-0.0022 * max(0.0, vDepth - 18.0));
+  vec3 sky = vec3(0.014, 0.020, 0.048);
+  vec3 col = mix(sky, vCol, clamp(fog, 0.0, 1.0));
+  fragColor = vec4(col, 1.0);
+}`;
+
+function compile(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSrc));
+gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSrc));
+gl.linkProgram(prog);
+
+// --- Procedural 3D Closed Hover Circuit ---
+const TRACK_N = 360;
+const TRACK_W = 9.5;
+const trackPts = [];
+const trackNormals = [];
+const trackRights = [];
+
+for (let i = 0; i < TRACK_N; i++) {
+  const a = (i / TRACK_N) * Math.PI * 2;
+  const x = Math.cos(a) * 140 + Math.sin(a * 2) * 22;
+  const z = Math.sin(a) * 115 + Math.cos(a * 2) * 16;
+  const y = Math.sin(a * 3) * 7 + Math.cos(a * 2) * 4;
+  trackPts.push([x, y, z]);
+}
+for (let i = 0; i < TRACK_N; i++) {
+  const p0 = trackPts[(i - 1 + TRACK_N) % TRACK_N];
+  const p1 = trackPts[(i + 1) % TRACK_N];
+  const fx = p1[0] - p0[0], fy = p1[1] - p0[1], fz = p1[2] - p0[2];
+  const fl = Math.hypot(fx, fy, fz) || 1;
+  const tx = fx / fl, ty = fy / fl, tz = fz / fl;
+  // Right = cross(forward, up(0,1,0))
+  let rx = -tz, ry = 0, rz = tx;
+  const rl = Math.hypot(rx, rz) || 1;
+  rx /= rl; rz /= rl;
+  // Up = cross(right, forward)
+  const ux = ry * tz - rz * ty, uy = rz * tx - rx * tz, uz = rx * ty - ry * tx;
+  trackRights.push([rx, ry, rz]);
+  trackNormals.push([ux, uy, uz]);
+}
+
+function sampleTrack(s) {
+  const idxF = ((s % TRACK_N) + TRACK_N) % TRACK_N;
+  const i0 = Math.floor(idxF);
+  const i1 = (i0 + 1) % TRACK_N;
+  const f = idxF - i0;
+  const lerp3 = (a, b) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  const pos = lerp3(trackPts[i0], trackPts[i1]);
+  const right = lerp3(trackRights[i0], trackRights[i1]);
+  const up = lerp3(trackNormals[i0], trackNormals[i1]);
+  const nxt = trackPts[(i0 + 2) % TRACK_N];
+  const fw = [nxt[0] - trackPts[i0][0], nxt[1] - trackPts[i0][1], nxt[2] - trackPts[i0][2]];
+  const fl = Math.hypot(fw[0], fw[1], fw[2]) || 1;
+  return { pos, right, up, fw: [fw[0] / fl, fw[1] / fl, fw[2] / fl] };
+}
+
+// Boost pads along track
+const boostPadIdx = new Set([28, 72, 118, 168, 224, 275, 322]);
+
+// Build Static Track Mesh + Neon Arches + Cyberpunk Pillars + Starfield
+const staticVerts = [];
+function pushTri(a, b, c, col) {
+  staticVerts.push(
+    a[0], a[1], a[2], col[0], col[1], col[2],
+    b[0], b[1], b[2], col[0], col[1], col[2],
+    c[0], c[1], c[2], col[0], col[1], col[2]
+  );
+}
+function pushQuad(a, b, c, d, col) {
+  pushTri(a, b, c, col);
+  pushTri(a, c, d, col);
+}
+function addVec(a, b, s = 1) { return [a[0] + b[0] * s, a[1] + b[1] * s, a[2] + b[2] * s]; }
+
+for (let i = 0; i < TRACK_N; i++) {
+  const j = (i + 1) % TRACK_N;
+  const p0 = trackPts[i], p1 = trackPts[j];
+  const r0 = trackRights[i], r1 = trackRights[j];
+  const u0 = trackNormals[i], u1 = trackNormals[j];
+
+  const l0 = addVec(p0, r0, -TRACK_W), rgt0 = addVec(p0, r0, TRACK_W);
+  const l1 = addVec(p1, r1, -TRACK_W), rgt1 = addVec(p1, r1, TRACK_W);
+
+  // Road surface (checker/grid subtle variation)
+  const isBoost = boostPadIdx.has(i) || boostPadIdx.has(i - 1);
+  const isStart = i < 3;
+  const roadCol = isStart ? [0.95, 0.85, 0.25] : isBoost ? [0.0, 0.95, 0.65] : (i % 4 < 2 ? [0.04, 0.06, 0.12] : [0.055, 0.08, 0.16]);
+  pushQuad(l0, rgt0, rgt1, l1, roadCol);
+
+  // Center dashed neon line
+  if (i % 4 < 2 && !isStart && !isBoost) {
+    const cL0 = addVec(p0, r0, -0.22), cR0 = addVec(p0, r0, 0.22);
+    const cL1 = addVec(p1, r1, -0.22), cR1 = addVec(p1, r1, 0.22);
+    pushQuad(addVec(cL0, u0, 0.04), addVec(cR0, u0, 0.04), addVec(cR1, u1, 0.04), addVec(cL1, u1, 0.04), [0.1, 0.75, 0.95]);
+  }
+
+  // Left (Magenta) & Right (Cyan) Glowing Guardrails
+  const railH = 0.85;
+  const lTop0 = addVec(l0, u0, railH), lTop1 = addVec(l1, u1, railH);
+  const rTop0 = addVec(rgt0, u0, railH), rTop1 = addVec(rgt1, u1, railH);
+  pushQuad(l0, l1, lTop1, lTop0, [0.95, 0.15, 0.62]);
+  pushQuad(rgt0, rTop0, rTop1, rgt1, [0.05, 0.88, 1.0]);
+
+  // Neon Arches every 30 segments
+  if (i % 30 === 0) {
+    const aH = 8.5;
+    const archCol = (i % 60 === 0) ? [0.0, 0.92, 1.0] : [1.0, 0.2, 0.68];
+    const pL0 = addVec(l0, u0, 0), pL1 = addVec(l0, u0, aH);
+    const pR0 = addVec(rgt0, u0, 0), pR1 = addVec(rgt0, u0, aH);
+    const pL0b = addVec(l1, u1, 0), pL1b = addVec(l1, u1, aH);
+    const pR0b = addVec(rgt1, u1, 0), pR1b = addVec(rgt1, u1, aH);
+    pushQuad(pL0, pL0b, pL1b, pL1, archCol);
+    pushQuad(pR0, pR1, pR1b, pR0b, archCol);
+    pushQuad(pL1, pR1, pR1b, pL1b, archCol);
+  }
+}
+
+// Surrounding Cyberpunk City Pillars
+let seed = 4242;
+function rand() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+for (let k = 0; k < 70; k++) {
+  const idx = Math.floor(rand() * TRACK_N);
+  const side = rand() < 0.5 ? -1 : 1;
+  const dist = 22 + rand() * 38;
+  const base = addVec(trackPts[idx], trackRights[idx], side * dist);
+  const w = 4 + rand() * 6, h = 25 + rand() * 65;
+  const yBot = base[1] - 40, yTop = yBot + h;
+  const col = rand() < 0.5 ? [0.03, 0.16, 0.30] : [0.18, 0.04, 0.26];
+  const topCol = rand() < 0.5 ? [0.0, 0.9, 1.0] : [1.0, 0.2, 0.65];
+  const bx = base[0], bz = base[2];
+  const p0 = [bx - w, yBot, bz - w], p1 = [bx + w, yBot, bz - w], p2 = [bx + w, yBot, bz + w], p3 = [bx - w, yBot, bz + w];
+  const q0 = [bx - w, yTop, bz - w], q1 = [bx + w, yTop, bz - w], q2 = [bx + w, yTop, bz + w], q3 = [bx - w, yTop, bz + w];
+  pushQuad(p0, p1, q1, q0, col);
+  pushQuad(p1, p2, q2, q1, col);
+  pushQuad(p2, p3, q3, q2, col);
+  pushQuad(p3, p0, q0, q3, col);
+  pushQuad(q0, q1, q2, q3, topCol);
+}
+
+const staticVBO = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, staticVBO);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(staticVerts), gl.STATIC_DRAW);
+const staticCount = staticVerts.length / 6;
+
+const dynVBO = gl.createBuffer();
+
+// --- Hover Craft Mesh Helper (sleek delta-wing craft) ---
+function appendCraft(verts, pos, fw, right, up, col, glowCol) {
+  const nose = addVec(pos, fw, 2.3);
+  const tailL = addVec(addVec(pos, fw, -1.6), right, -1.35);
+  const tailR = addVec(addVec(pos, fw, -1.6), right, 1.35);
+  const top = addVec(addVec(pos, fw, -0.3), up, 0.58);
+  const bot = addVec(addVec(pos, fw, -0.2), up, -0.25);
+  const push = (a, b, c, cl) => verts.push(a[0],a[1],a[2],cl[0],cl[1],cl[2], b[0],b[1],b[2],cl[0],cl[1],cl[2], c[0],c[1],c[2],cl[0],cl[1],cl[2]);
+  push(nose, tailR, top, col);
+  push(nose, top, tailL, col);
+  push(nose, tailL, bot, col);
+  push(nose, bot, tailR, col);
+  push(tailL, tailR, top, glowCol);
+  push(tailL, bot, tailR, glowCol);
+}
+
+// --- Racers State (Player + 5 AI Rivals) ---
+const racers = [
+  { name: 'YOU', isPlayer: true, s: 2, lane: 0.0, targetLane: 0.0, speed: 40, boostT: 0, bank: 0, col: [0.05, 0.95, 1.0], glow: [1.0, 0.95, 0.4] },
+  { name: 'AI-01', isPlayer: false, s: 12, lane: -3.5, speed: 35.5, boostT: 0, bank: 0, col: [1.0, 0.22, 0.65], glow: [1.0, 0.6, 0.9] },
+  { name: 'AI-02', isPlayer: false, s: 18, lane: 3.5,  speed: 36.2, boostT: 0, bank: 0, col: [1.0, 0.72, 0.1], glow: [1.0, 0.9, 0.4] },
+  { name: 'AI-03', isPlayer: false, s: 24, lane: -1.5, speed: 36.8, boostT: 0, bank: 0, col: [0.65, 0.3, 1.0], glow: [0.85, 0.6, 1.0] },
+  { name: 'AI-04', isPlayer: false, s: 30, lane: 2.2,  speed: 37.4, boostT: 0, bank: 0, col: [0.2, 1.0, 0.55], glow: [0.7, 1.0, 0.8] },
+  { name: 'AI-05', isPlayer: false, s: 36, lane: -2.8, speed: 38.0, boostT: 0, bank: 0, col: [1.0, 0.35, 0.25], glow: [1.0, 0.7, 0.4] },
+];
+
+// Interactive Keyboard controls when opened in browser
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.code] = true; });
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+let simT = 0;
+let autoPilot = Boolean(window.__RECORDING__);
+window.addEventListener('keydown', (e) => {
+  if (!window.__RECORDING__ && ['ArrowLeft','ArrowRight','ArrowUp','KeyA','KeyD','KeyW','Space'].includes(e.code)) {
+    autoPilot = false;
+  }
+});
+
+function updateSimulation(dt) {
+  simT += dt;
+  for (const r of racers) {
+    if (r.isPlayer) {
+      if (autoPilot) {
+        // Smart autopilot: weave smoothly, hit boost pads, overtake rivals to claim 1st place!
+        const nextPad = Math.floor(r.s) % TRACK_N;
+        const boostSoon = boostPadIdx.has(nextPad) || boostPadIdx.has((nextPad + 1) % TRACK_N);
+        r.targetLane = Math.sin(simT * 0.85) * 3.8;
+        if (boostSoon || (simT > 6.0 && simT < 10.0) || (simT > 16.0 && simT < 21.0)) {
+          r.boostT = Math.max(r.boostT, 0.6);
+        }
+      } else {
+        let steer = 0;
+        if (keys['ArrowLeft'] || keys['KeyA']) steer -= 1;
+        if (keys['ArrowRight'] || keys['KeyD']) steer += 1;
+        r.targetLane = Math.max(-TRACK_W + 1.8, Math.min(TRACK_W - 1.8, r.lane + steer * 10 * dt));
+        if (keys['Space'] || keys['ArrowUp'] || keys['KeyW']) {
+          if (r.boostT <= 0.05) window.NeonAudio?.sfx('boost');
+          r.boostT = Math.max(r.boostT, 0.35);
+        }
+      }
+      const laneDiff = r.targetLane - r.lane;
+      r.lane += laneDiff * Math.min(1, dt * 4.5);
+      r.bank = Math.max(-0.45, Math.min(0.45, -laneDiff * 0.14));
+      const targetSpd = r.boostT > 0 ? 52.5 : 41.5;
+      r.speed += (targetSpd - r.speed) * Math.min(1, dt * 4.0);
+      window.NeonAudio?.setPitch(0.85 + (r.speed - 38) / 22);
+    } else {
+      r.lane += Math.sin(simT * 0.7 + r.s * 0.05) * 1.2 * dt;
+      r.lane = Math.max(-TRACK_W + 2, Math.min(TRACK_W - 2, r.lane));
+    }
+
+    if (boostPadIdx.has(Math.floor(r.s) % TRACK_N)) {
+      r.boostT = Math.max(r.boostT, 0.85);
+    }
+    r.boostT = Math.max(0, r.boostT - dt);
+    r.s += (r.speed * dt) / 2.4;
+  }
+}
+
+function drawScene() {
+  gl.viewport(0, 0, W, H);
+  gl.clearColor(0.014, 0.020, 0.048, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST);
+
+  const player = racers[0];
+  const tr = sampleTrack(player.s);
+  const pPos = addVec(addVec(tr.pos, tr.right, player.lane), tr.up, 1.15);
+
+  // Chase camera behind & slightly above player craft, widening FOV during boost!
+  const boostFactor = Math.min(1, player.boostT * 1.5);
+  const fov = (64 + boostFactor * 14) * Math.PI / 180;
+  const proj = mat4Perspective(fov, W / H, 0.5, 420.0);
+
+  const camTr = sampleTrack(player.s - 3.2);
+  const camEye = addVec(addVec(camTr.pos, camTr.right, player.lane * 0.75), camTr.up, 4.3);
+  const lookTr = sampleTrack(player.s + 3.8);
+  const camTarget = addVec(addVec(lookTr.pos, lookTr.right, player.lane * 0.55), lookTr.up, 1.4);
+  const view = mat4LookAt(camEye, camTarget, camTr.up);
+  const mvp = mat4Mul(proj, view);
+
+  gl.useProgram(prog);
+  gl.uniformMatrix4fv(gl.getUniformLocation(prog, 'uMVP'), false, mvp);
+
+  const posLoc = gl.getAttribLocation(prog, 'aPos');
+  const colLoc = gl.getAttribLocation(prog, 'aCol');
+
+  // Draw Static Circuit & City
+  gl.bindBuffer(gl.ARRAY_BUFFER, staticVBO);
+  gl.enableVertexAttribArray(posLoc);
+  gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 24, 0);
+  gl.enableVertexAttribArray(colLoc);
+  gl.vertexAttribPointer(colLoc, 3, gl.FLOAT, false, 24, 12);
+  gl.drawArrays(gl.TRIANGLES, 0, staticCount);
+
+  // Draw Dynamic Crafts
+  const dynVerts = [];
+  for (const r of racers) {
+    const rt = sampleTrack(r.s);
+    const pos = addVec(addVec(rt.pos, rt.right, r.lane), rt.up, 1.05 + Math.sin(simT * 6 + r.s) * 0.12);
+    // Apply slight bank roll
+    const cb = Math.cos(r.bank), sb = Math.sin(r.bank);
+    const bRight = [rt.right[0] * cb + rt.up[0] * sb, rt.right[1] * cb + rt.up[1] * sb, rt.right[2] * cb + rt.up[2] * sb];
+    const bUp = [-rt.right[0] * sb + rt.up[0] * cb, -rt.right[1] * sb + rt.up[1] * cb, -rt.right[2] * sb + rt.up[2] * cb];
+    appendCraft(dynVerts, pos, rt.fw, bRight, bUp, r.col, r.glow);
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER, dynVBO);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(dynVerts), gl.DYNAMIC_DRAW);
+  gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 24, 0);
+  gl.vertexAttribPointer(colLoc, 3, gl.FLOAT, false, 24, 12);
+  gl.drawArrays(gl.TRIANGLES, 0, dynVerts.length / 6);
+
+  // --- Draw Crisp 2D Cyber HUD ---
+  hctx.clearRect(0, 0, W, H);
+  hctx.save();
+
+  // Compute rank
+  const sorted = [...racers].sort((a, b) => b.s - a.s);
+  const rank = sorted.indexOf(player) + 1;
+  const kmh = Math.round(player.speed * 14.5);
+
+  // Top-Left Telemetry Card
+  hctx.fillStyle = 'rgba(4, 8, 18, 0.65)';
+  hctx.strokeStyle = 'rgba(0, 229, 255, 0.38)';
+  hctx.lineWidth = 1.2;
+  hctx.beginPath(); hctx.roundRect(22, 20, 470, 56, 10); hctx.fill(); hctx.stroke();
+
+  hctx.fillStyle = '#00E5FF';
+  hctx.font = '700 13px "Consolas", monospace';
+  hctx.fillText('NEON HOVER RACER 3D  |  PURE WEBGL2  |  ASSETS: 0', 38, 42);
+  hctx.fillStyle = '#F8FAFC';
+  const modeStr = player.boostT > 0 ? 'HYPER BOOST ACTIVE!' : 'WASD / SPACE TO PLAY';
+  hctx.fillText(`STATUS: ${modeStr}  |  ${simT.toFixed(2)}s / 24.00s`, 38, 63);
+
+  // Top-Right Rank Card
+  hctx.fillStyle = 'rgba(4, 8, 18, 0.65)';
+  hctx.strokeStyle = rank === 1 ? 'rgba(0, 255, 157, 0.65)' : 'rgba(0, 229, 255, 0.38)';
+  hctx.beginPath(); hctx.roundRect(W - 180, 20, 158, 66, 10); hctx.fill(); hctx.stroke();
+  hctx.fillStyle = '#94A3B8';
+  hctx.font = '700 11px "Consolas", monospace';
+  hctx.fillText('POSITION', W - 162, 40);
+  hctx.fillStyle = rank === 1 ? '#00FF9D' : '#F8FAFC';
+  hctx.font = '700 32px "Consolas", monospace';
+  hctx.fillText(`${rank} / 6`, W - 162, 74);
+
+  // Bottom-Right Speedometer
+  hctx.fillStyle = 'rgba(4, 8, 18, 0.68)';
+  hctx.strokeStyle = player.boostT > 0 ? '#00FF9D' : 'rgba(0, 229, 255, 0.4)';
+  hctx.beginPath(); hctx.roundRect(W - 230, H - 96, 208, 74, 10); hctx.fill(); hctx.stroke();
+  hctx.fillStyle = player.boostT > 0 ? '#00FF9D' : '#00E5FF';
+  hctx.font = '700 36px "Consolas", monospace';
+  hctx.fillText(`${kmh}`, W - 210, H - 48);
+  hctx.fillStyle = '#94A3B8';
+  hctx.font = '700 14px "Consolas", monospace';
+  hctx.fillText('KM/H', W - 115, H - 48);
+  // Speed bar
+  hctx.fillStyle = '#1E293B';
+  hctx.beginPath(); hctx.roundRect(W - 210, H - 36, 168, 7, 3); hctx.fill();
+  hctx.fillStyle = player.boostT > 0 ? '#00FF9D' : '#00E5FF';
+  hctx.beginPath(); hctx.roundRect(W - 210, H - 36, Math.min(168, (kmh / 800) * 168), 7, 3); hctx.fill();
+
+  // Bottom-Left Mini-Map
+  const mx = 22, my = H - 146, mw = 155, mh = 124;
+  hctx.fillStyle = 'rgba(4, 8, 18, 0.65)';
+  hctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
+  hctx.beginPath(); hctx.roundRect(mx, my, mw, mh, 10); hctx.fill(); hctx.stroke();
+
+  const mapPt = p => [mx + mw / 2 + p[0] * 0.35, my + mh / 2 + p[2] * 0.35];
+  hctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+  hctx.lineWidth = 2.2;
+  hctx.beginPath();
+  trackPts.forEach((p, idx) => {
+    const [px, py] = mapPt(p);
+    idx === 0 ? hctx.moveTo(px, py) : hctx.lineTo(px, py);
+  });
+  hctx.closePath();
+  hctx.stroke();
+
+  for (const r of racers) {
+    const [px, py] = mapPt(sampleTrack(r.s).pos);
+    hctx.fillStyle = r.isPlayer ? '#00FF9D' : '#FF3B9A';
+    hctx.beginPath(); hctx.arc(px, py, r.isPlayer ? 4.2 : 2.8, 0, Math.PI * 2); hctx.fill();
+  }
+
+  hctx.restore();
+}
+
+const compCanvas = document.createElement('canvas');
+compCanvas.width = W; compCanvas.height = H;
+const compCtx = compCanvas.getContext('2d');
+window.getCompositeFrame = () => {
+  compCtx.drawImage(glCanvas, 0, 0);
+  compCtx.drawImage(hudCanvas, 0, 0);
+  return compCanvas.toDataURL('image/png');
+};
+
+window.stepRacer = (dt) => {
+  updateSimulation(dt);
+  drawScene();
+};
+
+drawScene();
+if (!window.__RECORDING__) {
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.setHint('手動プレイ中: A/D または ←/→ でステア · W/↑/Space でブースト');
+    const autoBtn = window.NeonShell.addControl('🤖 オートデモ', (btn) => {
+      autoPilot = !autoPilot;
+      btn.classList.toggle('active', autoPilot);
+      window.NeonShell.setHint(autoPilot ? 'オートデモ再生中（キーまたは下ボタンで手動操縦）' : '手動プレイ中: A/D または ←/→ でステア · W/↑/Space でブースト');
+    });
+    window.NeonShell.addControl('↻ リスタート', () => window.location.reload());
+    window.NeonShell.addPads([
+      { label: '◀ 左ステア', onDown: () => { autoPilot = false; autoBtn.classList.remove('active'); keys['ArrowLeft'] = true; }, onUp: () => { keys['ArrowLeft'] = false; } },
+      { label: '⚡ ブースト', onDown: () => { autoPilot = false; autoBtn.classList.remove('active'); keys['Space'] = true; }, onUp: () => { keys['Space'] = false; } },
+      { label: '▶ 右ステア', onDown: () => { autoPilot = false; autoBtn.classList.remove('active'); keys['ArrowRight'] = true; }, onUp: () => { keys['ArrowRight'] = false; } },
+    ]);
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    window.stepRacer(dt);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+<script src="../demo-shell.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../pages/aero_lab_page.dart';
+import '../pages/neon_showcase_page.dart';
 import '../pages/sound_bloom_page.dart';
 import '../pages/lumen_path_page.dart';
 import '../pages/kinetic_forge_page.dart';
@@ -2500,6 +2501,24 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF00838F),
       keywords: const <String>['3D', 'AERO LAB', 'エンジン', '実験', 'Astra'],
       onOpen: (context) => _pushPage(context, const AeroLabPage()),
+    ),
+    HomeToolEntry(
+      id: 'neon-showcase',
+      sectionId: 'growth',
+      title: 'Gemini 4 作品館 · NEON SHOWCASE',
+      subtitle: '単一HTML 24作品・Blender 3D・企画案・参照バズ投稿20選',
+      icon: Icons.auto_awesome_outlined,
+      color: const Color(0xFFD97706),
+      keywords: const <String>[
+        'Gemini 4',
+        'Neon',
+        'NEON SHOWCASE',
+        '作品館',
+        'WebGL',
+        'Blender',
+        'ベンチマーク',
+      ],
+      onOpen: (context) => _pushPage(context, const NeonShowcasePage()),
     ),
     HomeToolEntry(
       id: 'video-studio',

@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>SHIOKAZE EXPRESS // 3D Sea Railway (Single HTML · Pure WebGL2)</title>
+<style>
+  :root {
+    --glass: rgba(9, 14, 26, 0.52);
+    --glass-hi: rgba(15, 24, 44, 0.72);
+    --border: rgba(255, 224, 178, 0.24);
+    --gold: #fcd34d;
+    --amber: #f59e0b;
+    --cream: #fff7ed;
+    --muted: rgba(241, 245, 249, 0.72);
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: "Segoe UI", "Inter", -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 1280px; height: 720px; overflow: hidden;
+    background: #080c18; color: var(--cream); font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  #stage { width: 1280px; height: 720px; position: relative; overflow: hidden; }
+  #glCanvas { width: 1280px; height: 720px; display: block; cursor: grab; }
+  #glCanvas:active { cursor: grabbing; }
+
+  /* Whisper-quiet minimal cinematic overlays (~96% full-screen 3D viewport!) */
+  .top-left {
+    position: absolute; top: 14px; left: 16px; pointer-events: none; z-index: 5;
+    background: var(--glass); border: 1px solid var(--border);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-radius: 10px; padding: 7px 13px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.32);
+  }
+  .title-main {
+    font-family: var(--serif); font-size: 15px; font-weight: 700;
+    letter-spacing: 1.4px; color: #fff8ec; line-height: 1.15;
+    text-shadow: 0 1px 10px rgba(251, 191, 36, 0.35);
+  }
+  .title-sub {
+    font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.9px;
+    color: rgba(253, 224, 155, 0.84); margin-top: 2px; white-space: nowrap;
+  }
+
+  .top-right {
+    position: absolute; top: 14px; right: 16px; pointer-events: none; z-index: 5;
+    display: flex; align-items: center; gap: 11px;
+    background: var(--glass); border: 1px solid var(--border);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-radius: 10px; padding: 7px 13px;
+    font-family: var(--mono); font-variant-numeric: tabular-nums;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.32);
+  }
+  .stat { display: flex; flex-direction: column; line-height: 1.15; white-space: nowrap; }
+  .stat .k { font-size: 7.4px; color: rgba(226, 232, 240, 0.62); letter-spacing: 0.7px; }
+  .stat .v { font-size: 11px; font-weight: 700; color: #fff7ed; }
+  .stat .v.warm { color: #fde68a; }
+  .stat .v.moon { color: #93c5fd; }
+  .div-v { width: 1px; height: 22px; background: rgba(255, 255, 255, 0.16); }
+
+  /* Subtle floating bottom camera bar (AnikaCodes / HMS Meridian style) */
+  .bot-bar {
+    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    z-index: 6; display: flex; align-items: center; gap: 5px;
+    background: rgba(8, 12, 24, 0.56); border: 1px solid rgba(255, 230, 185, 0.22);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-radius: 999px; padding: 5px 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.42);
+  }
+  .cbtn {
+    font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
+    color: rgba(241, 245, 249, 0.78); background: transparent;
+    border: 1px solid transparent; border-radius: 999px;
+    padding: 5px 10px; cursor: pointer; white-space: nowrap;
+  }
+  .cbtn:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+  .cbtn.active {
+    color: #1c1004;
+    background: linear-gradient(90deg, #fde68a, #f59e0b);
+    border-color: rgba(255, 247, 237, 0.7);
+    box-shadow: 0 0 14px rgba(251, 191, 36, 0.52);
+  }
+  .cbtn.active.night-act {
+    color: #041024;
+    background: linear-gradient(90deg, #bae6fd, #fde68a);
+    border-color: rgba(224, 242, 254, 0.8);
+    box-shadow: 0 0 16px rgba(147, 197, 253, 0.55);
+  }
+  .cbtn.pressed { transform: scale(0.94); filter: brightness(1.25); }
+  .bar-sep { width: 1px; height: 16px; background: rgba(255, 255, 255, 0.18); margin: 0 2px; }
+  .t-pill {
+    font-family: var(--mono); font-size: 9px; font-weight: 700;
+    color: #fde68a; background: rgba(251, 191, 36, 0.14);
+    border: 1px solid rgba(251, 191, 36, 0.36); border-radius: 999px;
+    padding: 5px 10px; cursor: pointer; white-space: nowrap;
+  }
+  .t-pill.night {
+    color: #bfdbfe; background: rgba(59, 130, 246, 0.18);
+    border-color: rgba(147, 197, 253, 0.45);
+  }
+  .t-pill.pressed { transform: scale(0.94); filter: brightness(1.3); }
+
+  /* Virtual subtle cursor for choreography clicks */
+  .vcursor { position: absolute; width: 17px; height: 17px; pointer-events: none; z-index: 40; transform: translate(-2px,-2px); opacity: 0; }
+  .cring { position: absolute; width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fde68a; pointer-events: none; z-index: 39; opacity: 0; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="sea-train">
+<div id="stage">
+  <canvas id="glCanvas"></canvas>
+
+  <div class="top-left">
+    <div class="title-main">SHIOKAZE EXPRESS</div>
+    <div class="title-sub">3D SEA RAILWAY · SINGLE HTML · PURE WEBGL2</div>
+  </div>
+
+  <div class="top-right">
+    <div class="stat"><span class="k">LOCAL TIME</span><span class="v warm" id="sTime">17:42 SUNSET</span></div>
+    <div class="div-v"></div>
+    <div class="stat"><span class="k">SPEED</span><span class="v" id="sSpeed">68 km/h</span></div>
+    <div class="div-v"></div>
+    <div class="stat"><span class="k">VIEW</span><span class="v" id="sCam">01 PARALLEL</span></div>
+  </div>
+
+  <div class="bot-bar">
+    <button class="cbtn active" id="cam0">1 PARALLEL</button>
+    <button class="cbtn" id="cam1">2 WATER SKIM</button>
+    <button class="cbtn" id="cam2">3 SEA STATION</button>
+    <button class="cbtn" id="cam3">4 HEADLAMP</button>
+    <button class="cbtn" id="cam4">5 MOON ORBIT</button>
+    <div class="bar-sep"></div>
+    <button class="t-pill" id="btnSky">☀ SUNSET → ☾ NIGHT</button>
+  </div>
+
+  <div class="cring" id="cRing"></div>
+  <svg class="vcursor" id="vCursor" viewBox="0 0 24 24" fill="none">
+    <path d="M4 3L19 11.5L12.2 13.4L9.8 20L4 3Z" fill="#fffbeb" stroke="#090d1a" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(202611199);
+  const clamp = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smoothstep = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
+
+  // ===== WEBGL2 INIT =====
+  const canvas = document.getElementById('glCanvas');
+  const gl = canvas.getContext('webgl2', { antialias: true, alpha: false, preserveDrawingBuffer: true });
+  if (!gl) { console.error('WebGL2 unavailable'); return; }
+  const hasFloatFBO = Boolean(gl.getExtension('EXT_color_buffer_float'));
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error('Shader:', gl.getShaderInfoLog(s));
+    return s;
+  }
+  function link(vs, fs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) console.error('Link:', gl.getProgramInfoLog(p));
+    return p;
+  }
+
+  function mat4Persp(fovy, asp, near, far) {
+    const f = 1 / Math.tan(fovy * 0.5), nf = 1 / (near - far);
+    return new Float32Array([f/asp,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,2*far*near*nf,0]);
+  }
+  function mat4Look(eye, ctr, up) {
+    let zx=eye[0]-ctr[0], zy=eye[1]-ctr[1], zz=eye[2]-ctr[2];
+    let l=Math.hypot(zx,zy,zz)||1; zx/=l; zy/=l; zz/=l;
+    let xx=up[1]*zz-up[2]*zy, xy=up[2]*zx-up[0]*zz, xz=up[0]*zy-up[1]*zx;
+    l=Math.hypot(xx,xy,xz)||1; xx/=l; xy/=l; xz/=l;
+    const yx=zy*xz-zz*xy, yy=zz*xx-zx*xz, yz=zx*xy-zy*xx;
+    return new Float32Array([
+      xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+      -(xx*eye[0]+xy*eye[1]+xz*eye[2]),
+      -(yx*eye[0]+yy*eye[1]+yz*eye[2]),
+      -(zx*eye[0]+zy*eye[1]+zz*eye[2]), 1
+    ]);
+  }
+  function mat4Mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c=0;c<4;c++) for (let r=0;r<4;r++)
+      o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
+    return o;
+  }
+  function mat4Inv(m) {
+    // General 4x4 inverse for ray-reconstructing sky dome!
+    const inv = new Float32Array(16);
+    const a00=m[0],a01=m[1],a02=m[2],a03=m[3],a10=m[4],a11=m[5],a12=m[6],a13=m[7],
+          a20=m[8],a21=m[9],a22=m[10],a23=m[11],a30=m[12],a31=m[13],a32=m[14],a33=m[15];
+    const b00=a00*a11-a01*a10, b01=a00*a12-a02*a10, b02=a00*a13-a03*a10,
+          b03=a01*a12-a02*a11, b04=a01*a13-a03*a11, b05=a02*a13-a03*a12,
+          b06=a20*a31-a21*a30, b07=a20*a32-a22*a30, b08=a20*a33-a23*a30,
+          b09=a21*a32-a22*a31, b10=a21*a33-a23*a31, b11=a22*a33-a23*a32;
+    let det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+    if (!det) return inv;
+    det = 1.0 / det;
+    inv[0]=(a11*b11-a12*b10+a13*b09)*det; inv[1]=(a02*b10-a01*b11-a03*b09)*det;
+    inv[2]=(a31*b05-a32*b04+a33*b03)*det; inv[3]=(a22*b04-a21*b05-a23*b03)*det;
+    inv[4]=(a12*b08-a10*b11-a13*b07)*det; inv[5]=(a00*b11-a02*b08+a03*b07)*det;
+    inv[6]=(a32*b02-a30*b05-a33*b01)*det; inv[7]=(a20*b05-a22*b02+a23*b01)*det;
+    inv[8]=(a10*b10-a11*b08+a13*b06)*det; inv[9]=(a01*b08-a00*b10-a03*b06)*det;
+    inv[10]=(a30*b04-a31*b02+a33*b00)*det; inv[11]=(a21*b02-a20*b04-a23*b00)*det;
+    inv[12]=(a11*b07-a10*b09-a12*b06)*det; inv[13]=(a00*b09-a01*b07+a02*b06)*det;
+    inv[14]=(a31*b01-a30*b03-a32*b00)*det; inv[15]=(a20*b03-a21*b01+a22*b00)*det;
+    return inv;
+  }
+
+  // ===== SHADERS =====
+  const FULL_VS = `#version 300 es
+    precision highp float;
+    const vec2 P[3] = vec2[3](vec2(-1.0,-1.0), vec2(3.0,-1.0), vec2(-1.0,3.0));
+    out vec2 vUv;
+    void main() {
+      vec2 p = P[gl_VertexID];
+      vUv = p * 0.5 + 0.5;
+      gl_Position = vec4(p, 0.9999, 1.0);
+    }
+  `;
+
+  // 1) Procedural Ghibli / Shinkai Sky Dome + Volumetric Clouds + Setting Sun + Rising Full Moon + Stars!
+  const skyProg = link(FULL_VS, `#version 300 es
+    precision highp float;
+    in vec2 vUv;
+    uniform mat4 uInvVP;
+    uniform vec3 uCamPos;
+    uniform vec3 uSunDir;
+    uniform vec3 uMoonDir;
+    uniform float uNight;   // 0 = Golden Sunset, 0.5 = Violet Twilight, 1.0 = Moonlit Night
+    uniform float uTime;
+    out vec4 fragColor;
+
+    float hash(vec2 p) {
+      p = fract(p * vec2(123.34, 456.21));
+      p += dot(p, p + 45.32);
+      return fract(p.x * p.y);
+    }
+    float noise(vec2 p) {
+      vec2 i = floor(p), f = fract(p);
+      f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+                 mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+    }
+    float fbm(vec2 p) {
+      float v = 0.0, a = 0.5;
+      for (int i = 0; i < 5; i++) {
+        v += a * noise(p);
+        p = p * 2.04 + vec2(17.1, 31.7);
+        a *= 0.5;
+      }
+      return v;
+    }
+
+    void main() {
+      vec4 ndc = vec4(vUv * 2.0 - 1.0, 1.0, 1.0);
+      vec4 wp = uInvVP * ndc;
+      vec3 rd = normalize(wp.xyz / wp.w - uCamPos);
+      float h = clamp(rd.y, 0.0, 1.0);
+
+      // Three-stage linear-HDR Makoto Shinkai / Studio Ghibli sky palette: Deep Sunset -> Rich Rose-Violet Twilight -> Velvet Starry Midnight!
+      vec3 sunTop = vec3(0.025, 0.075, 0.28);
+      vec3 sunMid = vec3(0.68, 0.20, 0.18);
+      vec3 sunHor = vec3(1.55, 0.58, 0.16);
+
+      vec3 twiTop = vec3(0.012, 0.022, 0.11);
+      vec3 twiMid = vec3(0.28, 0.065, 0.26);
+      vec3 twiHor = vec3(0.92, 0.24, 0.22);
+
+      vec3 nitTop = vec3(0.003, 0.007, 0.026);
+      vec3 nitMid = vec3(0.009, 0.022, 0.068);
+      vec3 nitHor = vec3(0.025, 0.052, 0.125);
+
+      float t1 = smoothstep(0.0, 0.52, uNight);
+      float t2 = smoothstep(0.45, 1.0, uNight);
+      vec3 topC = mix(mix(sunTop, twiTop, t1), nitTop, t2);
+      vec3 midC = mix(mix(sunMid, twiMid, t1), nitMid, t2);
+      vec3 horC = mix(mix(sunHor, twiHor, t1), nitHor, t2);
+
+      vec3 col = mix(horC, midC, smoothstep(0.0, 0.24, h));
+      col = mix(col, topC, smoothstep(0.16, 0.68, h));
+
+      // Radiant Setting Golden Sun + Blazing Warm Mie Halo + Crepuscular God-Rays
+      float sunDot = max(dot(rd, normalize(uSunDir)), 0.0);
+      float sunVis = (1.0 - smoothstep(0.55, 0.85, uNight)) * smoothstep(-0.04, 0.015, rd.y);
+      col += vec3(1.45, 0.45, 0.12) * pow(sunDot, 5.5) * 0.72 * sunVis;
+      col += vec3(2.10, 1.05, 0.36) * pow(sunDot, 32.0) * 1.15 * sunVis;
+      float sunDisc = smoothstep(0.9968, 0.9982, sunDot);
+      col += vec3(3.6, 2.5, 1.25) * sunDisc * sunVis;
+      // Volumetric crepuscular sun god-ray shafts fanning into the clouds!
+      float rayAng = atan(rd.y - uSunDir.y, rd.x - uSunDir.x);
+      float rays = pow(0.5 + 0.5 * sin(rayAng * 12.0 + uTime * 0.14), 3.0) * pow(sunDot, 4.5) * sunVis;
+      col += vec3(1.35, 0.68, 0.28) * rays * 0.32;
+
+      // Giant Luminous Silvery-Gold Full Moon with crisp lunar maria detail (framed cleanly inside sky!)
+      float moonVis = smoothstep(0.28, 0.72, uNight) * smoothstep(-0.02, 0.025, rd.y);
+      float moonDot = max(dot(rd, normalize(uMoonDir)), 0.0);
+      col += vec3(0.14, 0.30, 0.68) * pow(moonDot, 8.0) * 0.52 * moonVis;
+      col += vec3(0.55, 0.72, 1.12) * pow(moonDot, 72.0) * 0.72 * moonVis;
+      float moonDisc = smoothstep(0.9974, 0.9983, moonDot);
+      float maria = 0.72 + 0.28 * fbm(rd.xy * 42.0 + 3.0);
+      col = mix(col, vec3(1.55, 1.62, 1.85) * maria, moonDisc * moonVis);
+
+      // Crisp Twinkling Starfield & Subtle Milky Way Shimmer at Night!
+      if (uNight > 0.22 && rd.y > 0.02) {
+        vec2 suv = rd.xz / (rd.y + 0.30);
+        vec2 grid = floor(suv * 64.0);
+        vec2 f = fract(suv * 64.0) - 0.5;
+        float hStar = hash(grid);
+        if (hStar > 0.962) {
+          float d = length(f);
+          float tw = 0.60 + 0.40 * sin(uTime * (2.6 + fract(hStar * 91.3) * 4.5) + hStar * 80.0);
+          float s = smoothstep(0.22, 0.02, d) * tw;
+          vec3 sCol = mix(vec3(0.75, 0.88, 1.0), vec3(1.0, 0.90, 0.68), fract(hStar * 37.1));
+          col += sCol * s * 1.95 * smoothstep(0.25, 0.80, uNight) * smoothstep(0.03, 0.25, rd.y);
+        }
+      }
+
+      // Dramatic Shinkai Painted Volumetric Clouds (deep plum shadows + blazing coral-gold rims!)
+      if (rd.y > 0.015) {
+        vec2 cuv = rd.xz / (rd.y + 0.16) * 0.52 + vec2(uTime * 0.008, -uTime * 0.004);
+        float c1 = fbm(cuv * 2.1);
+        float c2 = fbm(cuv * 4.4 + vec2(3.4, 1.8));
+        float cloud = smoothstep(0.45, 0.78, c1 * 0.70 + c2 * 0.36);
+        float cFade = smoothstep(0.015, 0.14, rd.y) * (1.0 - smoothstep(0.55, 0.92, rd.y));
+        float cloudMask = cloud * cFade * 0.88;
+
+        vec3 cDarkDay = vec3(0.14, 0.06, 0.18);
+        vec3 cLitDay  = vec3(1.65, 0.68, 0.28);
+        vec3 cDarkNit = vec3(0.012, 0.022, 0.065);
+        vec3 cLitNit  = vec3(0.20, 0.36, 0.68);
+
+        float edgeLit = clamp(pow(sunDot, 2.6) * (1.0 - t2) * 1.2 + pow(moonDot, 3.5) * moonVis * 1.1 + (1.0 - c1) * 0.42, 0.0, 1.0);
+        vec3 cDark = mix(cDarkDay, cDarkNit, smoothstep(0.15, 0.88, uNight));
+        vec3 cLit  = mix(cLitDay,  cLitNit,  smoothstep(0.15, 0.88, uNight));
+        vec3 cCol = mix(cDark, cLit, edgeLit);
+        col = mix(col, cCol, cloudMask);
+      }
+
+      // Warm golden / cool midnight horizon glow
+      float haze = exp(-abs(rd.y) * 15.0);
+      col += mix(vec3(0.42, 0.15, 0.05), vec3(0.015, 0.035, 0.085), uNight) * haze * 0.55;
+
+      fragColor = vec4(col, 1.0);
+    }
+  `);
+
+  // 2) Hardware-Instanced Glossy PBR Scene Shader (for BOTH Boxes AND Smooth Cylinders/Wheels/Boiler!)
+  const meshProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec3 aNorm;
+    layout(location=2) in vec4 aCenterYaw; // xyz = world center, w = yaw
+    layout(location=3) in vec4 aScaleE;    // xyz = scale, w = emissive intensity
+    layout(location=4) in vec4 aColR;      // rgb = albedo, w = glossiness (0..1)
+
+    uniform mat4 uVP;
+    out vec3 vWorldPos;
+    out vec3 vNorm;
+    out vec3 vCol;
+    out float vEmissive;
+    out float vGloss;
+
+    void main() {
+      float cy = cos(aCenterYaw.w), sy = sin(aCenterYaw.w);
+      vec3 lp = aPos * aScaleE.xyz;
+      vec3 rp = vec3(lp.x * cy + lp.z * sy, lp.y, -lp.x * sy + lp.z * cy);
+      vec3 rn = vec3(aNorm.x * cy + aNorm.z * sy, aNorm.y, -aNorm.x * sy + aNorm.z * cy);
+      vec3 wp = aCenterYaw.xyz + rp;
+      vWorldPos = wp;
+      vNorm = normalize(rn);
+      vCol = aColR.rgb;
+      vEmissive = aScaleE.w;
+      vGloss = aColR.w;
+      gl_Position = uVP * vec4(wp, 1.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec3 vWorldPos;
+    in vec3 vNorm;
+    in vec3 vCol;
+    in float vEmissive;
+    in float vGloss;
+
+    uniform vec3 uCamPos;
+    uniform vec3 uKeyDir;
+    uniform vec3 uKeyCol;
+    uniform vec3 uAmbSky;
+    uniform vec3 uAmbSea;
+    uniform vec3 uFogCol;
+    uniform float uNight;
+    uniform float uClipSign; // +1 for reflection pass (discard y < -0.02), 0 for main pass
+    out vec4 fragColor;
+
+    void main() {
+      if (uClipSign > 0.5 && vWorldPos.y < -0.02) discard;
+
+      // True sRGB->Linear albedo conversion so dark lacquer, brass, & crimson have rich cinema HDR contrast!
+      vec3 albedo = pow(max(vec3(0.0), vCol), vec3(2.2));
+      vec3 N = normalize(vNorm);
+      vec3 V = normalize(uCamPos - vWorldPos);
+      vec3 L = normalize(uKeyDir);
+
+      float ndl = max(dot(N, L), 0.0);
+      vec3 H = normalize(L + V);
+      float shin = mix(16.0, 96.0, vGloss);
+      float spec = pow(max(dot(N, H), 0.0), shin) * (0.14 + vGloss * 1.15);
+      float fres = pow(1.0 - max(dot(N, V), 0.0), 3.2);
+
+      // Hemisphere ambient: sky above + warm/cool ocean bounce light from below!
+      vec3 amb = mix(uAmbSea, uAmbSky, N.y * 0.5 + 0.5);
+
+      // Warm lantern bounce glow on train flanks at night!
+      float trainGlow = exp(-length(vWorldPos.xz - vec2(0.0, 2.0)) * 0.09) * uNight * 0.22;
+
+      vec3 lit = albedo * (amb + uKeyCol * ndl * 1.25)
+               + uKeyCol * spec
+               + mix(uKeyCol, uAmbSky, 0.45) * fres * (0.12 + vGloss * 0.36)
+               + albedo * vec3(1.0, 0.65, 0.26) * trainGlow
+               + albedo * vEmissive * 2.85;
+
+      // Atmospheric perspective depth fog blending seamlessly into sunset / moonlit horizon!
+      float dist = length(uCamPos - vWorldPos);
+      float fog = clamp(1.0 - exp(-max(0.0, dist - 28.0) * 0.011), 0.0, 0.85);
+      lit = mix(lit, uFogCol, fog * (1.0 - clamp(vEmissive * 0.65, 0.0, 0.88)));
+
+      fragColor = vec4(lit, 1.0);
+    }
+  `);
+
+  // 3) REAL-TIME PLANAR REFLECTION + GERSTNER RIPPLING OCEAN SHADER!!
+  const waterProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec2 aPosXZ;
+    uniform mat4 uVP;
+    out vec3 vWorldPos;
+    out vec4 vClipPos;
+    void main() {
+      vec3 wp = vec3(aPosXZ.x, 0.0, aPosXZ.y);
+      vWorldPos = wp;
+      vClipPos = uVP * vec4(wp, 1.0);
+      gl_Position = vClipPos;
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec3 vWorldPos;
+    in vec4 vClipPos;
+
+    uniform sampler2D uReflTex;
+    uniform vec3 uCamPos;
+    uniform vec3 uSunDir;
+    uniform vec3 uMoonDir;
+    uniform vec3 uFogCol;
+    uniform float uTime;
+    uniform float uScroll;
+    uniform float uNight;
+    out vec4 fragColor;
+
+    // Analytical multi-wave Gerstner-style ocean normal perturbation (zero tiling artifacts!)
+    vec3 oceanNormal(vec2 p, float t) {
+      float ddx = 0.0, ddz = 0.0;
+      float w1 = sin(p.x * 0.42 + p.y * 0.26 + t * 1.45);
+      ddx += cos(p.x * 0.42 + p.y * 0.26 + t * 1.45) * 0.042;
+      ddz += cos(p.x * 0.42 + p.y * 0.26 + t * 1.45) * 0.026;
+
+      float ph2 = p.x * -0.78 + p.y * 0.54 + t * 2.15;
+      ddx += cos(ph2) * -0.046;
+      ddz += cos(ph2) *  0.032;
+
+      float ph3 = p.x * 1.65 + p.y * 1.25 - t * 2.95;
+      ddx += cos(ph3) * 0.030;
+      ddz += cos(ph3) * 0.024;
+
+      float ph4 = p.x * -2.90 + p.y * 2.40 + t * 3.80;
+      ddx += cos(ph4) * -0.022;
+      ddz += cos(ph4) *  0.018;
+
+      // Subtle wake ripples radiating outward from the shallow submerged railway causeway (x ~ 0)!
+      float wakeDist = abs(p.x);
+      float wakeEnv = exp(-wakeDist * 0.26) * smoothstep(0.8, 2.2, wakeDist);
+      float wakePh = wakeDist * 3.6 - t * 6.5 + sin(p.y * 0.35) * 1.2;
+      ddx += sign(p.x) * cos(wakePh) * 0.065 * wakeEnv;
+
+      return normalize(vec3(-ddx, 1.0, -ddz));
+    }
+
+    void main() {
+      vec2 wp = vWorldPos.xz;
+      vec2 wavePos = vec2(wp.x, wp.y - uScroll);
+      vec3 N = oceanNormal(wavePos, uTime);
+      vec3 V = normalize(uCamPos - vWorldPos);
+      float dist = length(uCamPos - vWorldPos);
+
+      // Planar Reflection UV lookup distorted by smooth water ripples!
+      vec2 ndc = (vClipPos.xy / vClipPos.w) * 0.5 + 0.5;
+      float distScale = clamp(1.0 - dist / 95.0, 0.25, 1.0);
+      vec2 reflUv = vec2(ndc.x, 1.0 - ndc.y) + N.xz * vec2(0.055, 0.095) * distScale;
+      reflUv = clamp(reflUv, vec2(0.004), vec2(0.996));
+      vec3 reflCol = texture(uReflTex, reflUv).rgb;
+
+      // Deep ocean water vs shallow emerald-glass water along the submerged sea railway (linear HDR!)
+      float shallow = exp(-abs(wp.x) * 0.24);
+      vec3 deepDay = vec3(0.012, 0.055, 0.145);
+      vec3 shalDay = vec3(0.025, 0.18, 0.24);
+      vec3 deepNit = vec3(0.003, 0.008, 0.024);
+      vec3 shalNit = vec3(0.008, 0.042, 0.082);
+      vec3 waterBase = mix(mix(deepDay, shalDay, shallow), mix(deepNit, shalNit, shallow), uNight);
+
+      // Fresnel grazing reflection blend (crisp ocean ripples + rich train/sky mirror!)
+      float fres = clamp(0.18 + 0.80 * pow(1.0 - max(dot(N, V), 0.0), 2.8), 0.0, 0.96);
+      vec3 col = mix(waterBase, reflCol * mix(0.95, 1.12, uNight), fres);
+
+      // Blazing Sun & Silvery Full-Moon Glitter Path Dancing Across Ripples!
+      vec3 Ls = normalize(uSunDir);
+      vec3 Hs = normalize(Ls + V);
+      float sunGlint = (pow(max(dot(N, Hs), 0.0), 170.0) * 3.8 + pow(max(dot(N, Hs), 0.0), 22.0) * 0.55)
+                     * (1.0 - smoothstep(0.55, 0.85, uNight));
+      col += vec3(1.85, 0.78, 0.26) * sunGlint;
+
+      vec3 Lm = normalize(uMoonDir);
+      vec3 Hm = normalize(Lm + V);
+      float moonGlint = (pow(max(dot(N, Hm), 0.0), 180.0) * 2.8 + pow(max(dot(N, Hm), 0.0), 26.0) * 0.45)
+                      * smoothstep(0.28, 0.76, uNight);
+      col += vec3(0.68, 0.86, 1.35) * moonGlint;
+
+      // Delicate White Foam & Nighttime Bioluminescent Aqua Shimmer kissing the flooded rail-bed!
+      float railEdge = exp(-pow(abs(wp.x) - 1.50, 2.0) * 3.2);
+      float foamPat = smoothstep(0.22, 0.84, sin(wavePos.y * 2.6 + N.x * 16.0 + uTime * 2.0) * 0.5 + 0.5);
+      float trainNear = exp(-pow((wp.y - 2.0) * 0.085, 2.0));
+      vec3 foamCol = mix(vec3(0.95, 0.72, 0.52), vec3(0.10, 0.82, 1.05), smoothstep(0.42, 0.88, uNight));
+      col += foamCol * railEdge * (0.14 + foamPat * 0.42) * (0.45 + trainNear * 0.90);
+
+      // Organic Golden Window Shimmer on Rippling Water Beside the Train (driven by wave normals, zero zebra stripes!)
+      float winSpill = exp(-pow(abs(wp.x) - 2.5, 2.0) * 0.14) * exp(-pow((wp.y - 4.0) * 0.075, 2.0));
+      float waveSpark = pow(clamp(0.5 + 0.5 * (N.x * 10.0 + N.z * 8.0), 0.0, 1.0), 2.4);
+      col += vec3(1.15, 0.55, 0.14) * winSpill * (0.18 + waveSpark * 0.75) * smoothstep(0.30, 0.85, uNight);
+
+      // Seamless horizon fog melt
+      float fog = clamp(1.0 - exp(-max(0.0, dist - 30.0) * 0.012), 0.0, 0.94);
+      col = mix(col, uFogCol, fog);
+
+      fragColor = vec4(col, 1.0);
+    }
+  `);
+
+  // 4) Soft Volumetric Particles Shader (Billowing Steam Clouds, Sea Spray, Fireflies, Lantern Halos!)
+  const partProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec4 aPosSize;
+    layout(location=1) in vec4 aColA;
+    uniform mat4 uVP;
+    uniform float uClipSign;
+    out vec4 vColA;
+    out float vY;
+    void main() {
+      vec4 clip = uVP * vec4(aPosSize.xyz, 1.0);
+      gl_Position = clip;
+      gl_PointSize = clamp(aPosSize.w * 320.0 / max(1.2, clip.w), 2.0, 210.0);
+      vColA = aColA;
+      vY = aPosSize.y;
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vColA;
+    in float vY;
+    uniform float uClipSign;
+    out vec4 fragColor;
+    void main() {
+      if (uClipSign > 0.5 && vY < -0.02) discard;
+      vec2 d = gl_PointCoord - vec2(0.5);
+      float r2 = dot(d, d);
+      if (r2 > 0.25) discard;
+      float soft = pow(clamp(1.0 - r2 * 4.0, 0.0, 1.0), 1.85);
+      fragColor = vec4(vColA.rgb, vColA.a * soft);
+    }
+  `);
+
+  // 5) Translucent Volumetric Headlamp / Lighthouse Beam Cone Shader
+  const beamProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec4 aCol;
+    uniform mat4 uVP;
+    out vec4 vCol;
+    out vec3 vWp;
+    void main() { vCol = aCol; vWp = aPos; gl_Position = uVP * vec4(aPos, 1.0); }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vCol;
+    in vec3 vWp;
+    uniform float uClipSign;
+    out vec4 fragColor;
+    void main() {
+      if (uClipSign > 0.5 && vWp.y < -0.02) discard;
+      fragColor = vCol;
+    }
+  `);
+
+  // 6) Post-Processing: Bright-Pass Bloom Extract, Separable Gaussian Blur, ACES Filmic Tone Mapping!
+  const bloomExtractProg = link(FULL_VS, `#version 300 es
+    precision highp float;
+    in vec2 vUv;
+    uniform sampler2D uTex;
+    out vec4 fragColor;
+    void main() {
+      vec3 c = texture(uTex, vUv).rgb;
+      float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
+      float k = smoothstep(0.88, 1.65, lum);
+      fragColor = vec4(c * k, 1.0);
+    }
+  `);
+
+  const blurProg = link(FULL_VS, `#version 300 es
+    precision highp float;
+    in vec2 vUv;
+    uniform sampler2D uTex;
+    uniform vec2 uDir;
+    out vec4 fragColor;
+    void main() {
+      vec3 s = texture(uTex, vUv).rgb * 0.227027;
+      s += (texture(uTex, vUv + uDir * 1.3846).rgb + texture(uTex, vUv - uDir * 1.3846).rgb) * 0.316216;
+      s += (texture(uTex, vUv + uDir * 3.2308).rgb + texture(uTex, vUv - uDir * 3.2308).rgb) * 0.070270;
+      fragColor = vec4(s, 1.0);
+    }
+  `);
+
+  const composeProg = link(FULL_VS, `#version 300 es
+    precision highp float;
+    in vec2 vUv;
+    uniform sampler2D uScene;
+    uniform sampler2D uBloom;
+    uniform float uNight;
+    out vec4 fragColor;
+    vec3 aces(vec3 x) {
+      return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
+    }
+    void main() {
+      vec3 c = texture(uScene, vUv).rgb + texture(uBloom, vUv).rgb * mix(0.42, 0.62, uNight);
+      // Warm filmic cinema exposure & ACES tone mapping
+      c *= mix(1.04, 1.12, uNight);
+      c = aces(c);
+      // Subtle cinema vignette
+      vec2 q = vUv - 0.5;
+      c *= 1.0 - dot(q, q) * 0.28;
+      // Clean sRGB gamma
+      c = pow(max(vec3(0.0), c), vec3(1.0 / 2.2));
+      fragColor = vec4(c, 1.0);
+    }
+  `);
+
+  // ===== BUILD FBOs (Main HDR, Reflection Planar Mirror, Half-Res Bloom Ping-Pong) =====
+  function makeFBO(w, h, withDepth) {
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    const iFmt = hasFloatFBO ? gl.RGBA16F : gl.RGBA8;
+    const type = hasFloatFBO ? gl.HALF_FLOAT : gl.UNSIGNED_BYTE;
+    gl.texImage2D(gl.TEXTURE_2D, 0, iFmt, w, h, 0, gl.RGBA, type, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    let rb = null;
+    if (withDepth) {
+      rb = gl.createRenderbuffer();
+      gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
+      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, w, h);
+      gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb);
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return { fbo, tex, w, h };
+  }
+
+  const W = 1280, H = 720;
+  canvas.width = W; canvas.height = H;
+  const mainFBO = makeFBO(W, H, true);
+  const reflFBO = makeFBO(640, 360, true);
+  const bloomA  = makeFBO(640, 360, false);
+  const bloomB  = makeFBO(640, 360, false);
+  const emptyVao = gl.createVertexArray();
+
+  // ===== MESH VAOs: 1) UNIT BOX, 2) SMOOTH Z-CYLINDER (BOILER!), 3) SMOOTH Y-CYLINDER (STACK/PIERS!), 4) SMOOTH X-CYLINDER (WHEELS!) =====
+  const cubeVerts = new Float32Array([
+    -0.5,-0.5, 0.5, 0,0,1,  0.5,-0.5, 0.5, 0,0,1,  0.5, 0.5, 0.5, 0,0,1, -0.5,-0.5, 0.5, 0,0,1,  0.5, 0.5, 0.5, 0,0,1, -0.5, 0.5, 0.5, 0,0,1,
+     0.5,-0.5,-0.5, 0,0,-1,-0.5,-0.5,-0.5, 0,0,-1,-0.5, 0.5,-0.5, 0,0,-1, 0.5,-0.5,-0.5, 0,0,-1,-0.5, 0.5,-0.5, 0,0,-1,  0.5, 0.5,-0.5, 0,0,-1,
+     0.5,-0.5, 0.5, 1,0,0,  0.5,-0.5,-0.5, 1,0,0,  0.5, 0.5,-0.5, 1,0,0,  0.5,-0.5, 0.5, 1,0,0,  0.5, 0.5,-0.5, 1,0,0,  0.5, 0.5, 0.5, 1,0,0,
+    -0.5,-0.5,-0.5,-1,0,0, -0.5,-0.5, 0.5,-1,0,0, -0.5, 0.5, 0.5,-1,0,0, -0.5,-0.5,-0.5,-1,0,0, -0.5, 0.5, 0.5,-1,0,0, -0.5, 0.5,-0.5,-1,0,0,
+    -0.5, 0.5, 0.5, 0,1,0,  0.5, 0.5, 0.5, 0,1,0,  0.5, 0.5,-0.5, 0,1,0, -0.5, 0.5, 0.5, 0,1,0,  0.5, 0.5,-0.5, 0,1,0, -0.5, 0.5,-0.5, 0,1,0,
+    -0.5,-0.5,-0.5, 0,-1,0, 0.5,-0.5,-0.5, 0,-1,0, 0.5,-0.5, 0.5, 0,-1,0,-0.5,-0.5,-0.5, 0,-1,0, 0.5,-0.5, 0.5, 0,-1,0, -0.5,-0.5, 0.5, 0,-1,0,
+  ]);
+
+  function buildCylVerts(axis, segs = 22) {
+    const out = [];
+    const rot = (x, y, z) => axis === 'z' ? [x, y, z] : (axis === 'y' ? [x, z, -y] : [z, y, -x]);
+    const push = (p, n) => { const rp = rot(p[0],p[1],p[2]), rn = rot(n[0],n[1],n[2]); out.push(rp[0],rp[1],rp[2],rn[0],rn[1],rn[2]); };
+    for (let i = 0; i < segs; i++) {
+      const a0 = (i / segs) * Math.PI * 2, a1 = ((i + 1) / segs) * Math.PI * 2;
+      const c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1);
+      // Side quad (radius 0.5, length 1.0 along axis)
+      push([c0*0.5, s0*0.5, -0.5], [c0, s0, 0]);
+      push([c1*0.5, s1*0.5, -0.5], [c1, s1, 0]);
+      push([c1*0.5, s1*0.5,  0.5], [c1, s1, 0]);
+      push([c0*0.5, s0*0.5, -0.5], [c0, s0, 0]);
+      push([c1*0.5, s1*0.5,  0.5], [c1, s1, 0]);
+      push([c0*0.5, s0*0.5,  0.5], [c0, s0, 0]);
+      // Front cap (+0.5)
+      push([0, 0, 0.5], [0, 0, 1]);
+      push([c0*0.5, s0*0.5, 0.5], [0, 0, 1]);
+      push([c1*0.5, s1*0.5, 0.5], [0, 0, 1]);
+      // Back cap (-0.5)
+      push([0, 0, -0.5], [0, 0, -1]);
+      push([c1*0.5, s1*0.5, -0.5], [0, 0, -1]);
+      push([c0*0.5, s0*0.5, -0.5], [0, 0, -1]);
+    }
+    return new Float32Array(out);
+  }
+
+  function makeInstancedMesh(verts, maxInst) {
+    const buf = new Float32Array(maxInst * 12);
+    const vao = gl.createVertexArray();
+    const vbo = gl.createBuffer(), ivbo = gl.createBuffer();
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
+    gl.bindBuffer(gl.ARRAY_BUFFER, ivbo);
+    gl.bufferData(gl.ARRAY_BUFFER, buf.byteLength, gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 48, 0);  gl.vertexAttribDivisor(2, 1);
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.FLOAT, false, 48, 16); gl.vertexAttribDivisor(3, 1);
+    gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 4, gl.FLOAT, false, 48, 32); gl.vertexAttribDivisor(4, 1);
+    gl.bindVertexArray(null);
+    return { vao, ivbo, buf, vCount: verts.length / 6, count: 0, maxInst };
+  }
+
+  const boxMesh  = makeInstancedMesh(cubeVerts, 1400);
+  const cylZMesh = makeInstancedMesh(buildCylVerts('z', 24), 120); // Locomotive Boiler & Domes!
+  const cylYMesh = makeInstancedMesh(buildCylVerts('y', 18), 320); // Smokestack, Torii Pillars, Lighthouse, Lanterns!
+  const cylXMesh = makeInstancedMesh(buildCylVerts('x', 18), 260); // Wheels & Axles!
+
+  // Ocean Plane Mesh (large seamless expanse out to horizon!)
+  const waterVerts = new Float32Array([
+    -260, -260,   260, -260,   260, 260,
+    -260, -260,   260,  260,  -260, 260,
+  ]);
+  const waterVao = gl.createVertexArray(), waterVbo = gl.createBuffer();
+  gl.bindVertexArray(waterVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, waterVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, waterVerts, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+  gl.bindVertexArray(null);
+
+  // Volumetric Particles (Steam, Sea Spray, Fireflies, Lantern Glow)
+  const MAX_PARTS = 900;
+  const partBuf = new Float32Array(MAX_PARTS * 8);
+  const partVao = gl.createVertexArray(), partVbo = gl.createBuffer();
+  gl.bindVertexArray(partVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, partVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, partBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 32, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 32, 16);
+  gl.bindVertexArray(null);
+
+  // Volumetric Headlamp & Lighthouse Light Cones (smooth feathered per-vertex alpha -> zero hard edges!)
+  const MAX_BEAM = 900;
+  const beamBuf = new Float32Array(MAX_BEAM * 7);
+  const beamVao = gl.createVertexArray(), beamVbo = gl.createBuffer();
+  gl.bindVertexArray(beamVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, beamVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, beamBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 28, 12);
+  gl.bindVertexArray(null);
+
+  // ===== DYNAMIC PARTICLES & FLOATING SEA LANTERNS =====
+  const steamPuffs = [];
+  for (let i = 0; i < 150; i++) {
+    steamPuffs.push({ age: (i / 150) * 3.6, x: 0, y: 3.85, z: -5.85, driftX: (rng() - 0.5) * 0.35, driftY: 0.65 + rng() * 0.38 });
+  }
+  const fireflies = [];
+  for (let i = 0; i < 110; i++) {
+    fireflies.push({
+      x: (rng() > 0.5 ? 1 : -1) * (3.2 + rng() * 14.5),
+      y: 0.5 + rng() * 4.8,
+      z: (rng() - 0.5) * 44.0,
+      ph: rng() * Math.PI * 2,
+      sp: 0.6 + rng() * 1.4
+    });
+  }
+  const seaLanterns = [];
+  for (let i = 0; i < 34; i++) {
+    const side = (i % 2 === 0) ? -1 : 1;
+    seaLanterns.push({
+      x: side * (4.4 + rng() * 14.5),
+      z: -48 + (i / 34) * 86 + (rng() - 0.5) * 2.0,
+      ph: rng() * Math.PI * 2,
+      warmth: rng()
+    });
+  }
+
+  // ===== 30-SECOND CINEMATIC CHOREOGRAPHY & 5-CAMERA STATE =====
+  let simTime = 0.0;
+  let railScroll = 0.0;
+  const isRecording = Boolean(window.__RECORDING__);
+
+  let camMode = 0; // 0=Parallel, 1=Water Skim, 2=Sea Station (0:15 Climax!), 3=Headlamp Hero, 4=Moonlit Orbit
+  let nightMix = 0.0;
+  let manualNight = isRecording ? null : 0.0;
+  let autoTour = isRecording;
+
+  let curEye = [12.8, 3.8, -11.5];
+  let curCtr = [0.0, 1.85, 1.2];
+  let userOrbit = false, userAz = 0.55, userEl = 0.22, userDist = 17.5;
+  let dragging = false, lastMX = 0, lastMY = 0;
+
+  let curX = 640, curY = 660, curOp = 0, cPulse = 0, pressedId = null;
+  const trig = { c1: false, c2: false, sky: false, c3: false, c4: false };
+
+  function btnCenter(id) {
+    const r = document.getElementById(id).getBoundingClientRect();
+    const sr = document.getElementById('stage').getBoundingClientRect();
+    return { x: r.left - sr.left + r.width * 0.5, y: r.top - sr.top + r.height * 0.5 };
+  }
+
+  function setCamMode(m) { camMode = m; userOrbit = false; }
+
+  function targetCamFor(m, t) {
+    if (m === 0) {
+      // 1 PARALLEL: Hero Golden-Hour 3/4 tracking shot framing Train + Setting Sun + Vermilion Torii + Mirror Waves!
+      const u = clamp(t / 6.0, 0, 1);
+      return {
+        eye: [lerp(13.8, 12.2, u), lerp(3.3, 2.7, u), lerp(-12.4, -8.0, u)],
+        ctr: [0.0, 2.05, lerp(1.0, 2.8, u)]
+      };
+    } else if (m === 1) {
+      // 2 WATER SKIM: Dramatic low ocean-skimming hero angle showcasing crisp inverted reflection & pumping steel rods!
+      const u = clamp((t - 6.0) / 5.5, 0, 1);
+      return {
+        eye: [lerp(10.2, 8.8, u), lerp(0.95, 1.25, u), lerp(-11.2, -3.8, u)],
+        ctr: [0.0, 1.55, lerp(-1.2, 3.4, u)]
+      };
+    } else if (m === 2) {
+      // 3 SEA STATION (11.5s - 17.5s — THE "DO NOT MISS 0:15" SUNSET -> FULL MOON & LANTERN IGNITION!)
+      const u = clamp((t - 11.5) / 6.0, 0, 1);
+      return {
+        eye: [lerp(16.8, 15.6, u), lerp(3.4, 4.2, u), lerp(-8.8, -2.5, u)],
+        ctr: [0.0, 2.15, lerp(2.2, 4.4, u)]
+      };
+    } else if (m === 3) {
+      // 4 HEADLAMP HERO: Dramatic front-right 3/4 bow shot showing silky golden headlamp cone & glowing coaches!
+      const u = clamp((t - 17.5) / 5.5, 0, 1);
+      return {
+        eye: [lerp(8.2, 4.6, u), lerp(2.4, 2.9, u), lerp(-16.2, -14.8, u)],
+        ctr: [0.0, 1.95, lerp(-0.5, 2.2, u)]
+      };
+    } else {
+      // 5 MOONLIT ORBIT: Sweeping aerial postcard orbit framing the glowing full moon, train & lighthouse!
+      const u = clamp((t - 23.0) / 7.0, 0, 1);
+      const ang = lerp(0.35, 1.25, u);
+      const rad = lerp(17.8, 22.0, u);
+      return {
+        eye: [Math.sin(ang) * rad, lerp(3.8, 6.2, u), -Math.cos(ang) * rad + 2.5],
+        ctr: [0.0, 2.1, 3.0]
+      };
+    }
+  }
+
+  function runChoreography(t, dt) {
+    pressedId = null;
+    cPulse = Math.max(0, cPulse - dt * 3.0);
+
+    if (autoTour) {
+      // Subtle bottom-bar button click beats for camera & twilight transition
+      const clickEvents = [
+        { t0: 5.2, tc: 5.95, id: 'cam1', key: 'c1', fn: () => setCamMode(1) },
+        { t0: 10.7, tc: 11.45, id: 'cam2', key: 'c2', fn: () => setCamMode(2) },
+        { t0: 13.0, tc: 13.75, id: 'btnSky', key: 'sky', fn: () => { manualNight = null; } },
+        { t0: 16.8, tc: 17.45, id: 'cam3', key: 'c3', fn: () => setCamMode(3) },
+        { t0: 22.3, tc: 22.95, id: 'cam4', key: 'c4', fn: () => setCamMode(4) },
+      ];
+      let activeEv = null;
+      for (const ev of clickEvents) {
+        if (t >= ev.t0 && t < ev.tc + 0.35) { activeEv = ev; break; }
+      }
+      if (activeEv) {
+        const p = btnCenter(activeEv.id);
+        if (t < activeEv.tc) {
+          curOp = smoothstep(activeEv.t0, activeEv.t0 + 0.35, t);
+          const u = smoothstep(activeEv.t0, activeEv.tc, t);
+          curX = lerp(p.x - 42, p.x, u);
+          curY = lerp(p.y - 36, p.y, u);
+        } else {
+          curOp = 1.0; curX = p.x; curY = p.y; pressedId = activeEv.id;
+          if (!trig[activeEv.key]) { trig[activeEv.key] = true; cPulse = 1.0; activeEv.fn(); }
+        }
+      } else {
+        curOp = Math.max(0, curOp - dt * 2.4);
+      }
+    } else {
+      curOp = 0;
+    }
+
+    // Automatic breathtaking Sunset -> Twilight -> Moonlit Night transformation peaking right at 0:15!
+    if (manualNight !== null) {
+      nightMix += (manualNight - nightMix) * Math.min(1, dt * 2.2);
+    } else {
+      // Smoothly holds golden hour 0-12.5s, sweeps dramatically across 12.8s-16.2s (peak magic at 15.0s!), holds lush moonlit night 16.2-30s!
+      nightMix = smoothstep(12.6, 16.4, t);
+    }
+
+    // Smooth camera interpolation (snap gently on camera cuts for crisp cinematography)
+    if (!userOrbit) {
+      const tgt = targetCamFor(camMode, t);
+      const speed = (t < 0.05) ? 1.0 : Math.min(1.0, dt * 5.2);
+      for (let i = 0; i < 3; i++) {
+        curEye[i] = lerp(curEye[i], tgt.eye[i], speed);
+        curCtr[i] = lerp(curCtr[i], tgt.ctr[i], speed);
+      }
+    } else {
+      curEye = [
+        Math.sin(userAz) * Math.cos(userEl) * userDist,
+        Math.max(0.65, Math.sin(userEl) * userDist + 1.8),
+        Math.cos(userAz) * Math.cos(userEl) * userDist + 2.0
+      ];
+      curCtr = [0.0, 1.9, 2.0];
+    }
+  }
+
+  function stepSim(dt) {
+    simTime += dt;
+    railScroll += 18.8 * dt; // 68 km/h = 18.8 m/s!
+    runChoreography(simTime, dt);
+
+    // Update billowing steam puffs from locomotive smokestack (-z is forward!)
+    for (const s of steamPuffs) {
+      s.age += dt;
+      if (s.age > 3.6) {
+        s.age -= 3.6;
+        s.x = (rng() - 0.5) * 0.14;
+        s.y = 3.85;
+        s.z = -5.85;
+      }
+    }
+  }
+
+  // ===== SCENE POPULATION =====
+  function addInst(mesh, cx, cy, cz, yaw, sx, sy, sz, col, gloss = 0.35, em = 0.0) {
+    if (mesh.count >= mesh.maxInst) return;
+    let o = mesh.count * 12;
+    const b = mesh.buf;
+    b[o++]=cx; b[o++]=cy; b[o++]=cz; b[o++]=yaw;
+    b[o++]=sx; b[o++]=sy; b[o++]=sz; b[o++]=em;
+    b[o++]=col[0]; b[o++]=col[1]; b[o++]=col[2]; b[o++]=gloss;
+    mesh.count++;
+  }
+
+  function populateScene() {
+    boxMesh.count = 0; cylZMesh.count = 0; cylYMesh.count = 0; cylXMesh.count = 0;
+    let pCnt = 0, bCnt = 0;
+
+    function addPart(x, y, z, sz, c, a) {
+      if (pCnt >= MAX_PARTS) return;
+      let o = pCnt * 8;
+      partBuf[o++]=x; partBuf[o++]=y; partBuf[o++]=z; partBuf[o++]=sz;
+      partBuf[o++]=c[0]; partBuf[o++]=c[1]; partBuf[o++]=c[2]; partBuf[o++]=a;
+      pCnt++;
+    }
+    function addBeamTri3(p0, a0, p1, a1, p2, a2, c) {
+      if (bCnt + 3 >= MAX_BEAM) return;
+      const pts = [[p0, a0], [p1, a1], [p2, a2]];
+      for (const [p, a] of pts) {
+        let o = bCnt * 7;
+        beamBuf[o++]=p[0]; beamBuf[o++]=p[1]; beamBuf[o++]=p[2];
+        beamBuf[o++]=c[0]; beamBuf[o++]=c[1]; beamBuf[o++]=c[2]; beamBuf[o++]=a;
+        bCnt++;
+      }
+    }
+
+    // Lantern & cabin window ignition curve — dramatic warm bloom right at 0:15!
+    const lampGlow = smoothstep(0.35, 0.72, nightMix);
+    const winEm = lerp(0.18, 1.28, lampGlow);
+    const winCol = [lerp(0.86, 1.0, lampGlow), lerp(0.76, 0.78, lampGlow), lerp(0.55, 0.36, lampGlow)];
+    const wheelAng = railScroll * 1.42;
+
+    // 1. SHALLOW SUBMERGED SEA-RAILWAY CAUSEWAY, SLEEPERS, STEEL RAILS & TRACKSIDE LANTERN POLES
+    // Submerged weathered stone causeway rising gently above the water (y = 0.0 -> 0.24)
+    addInst(boxMesh, 0, 0.05, 0, 0, 2.55, 0.34, 150.0, [0.22, 0.24, 0.27], 0.22, 0.0);
+    // Gleaming twin steel rails catching golden sunset & silver moonlight!
+    addInst(boxMesh, -0.78, 0.28, 0, 0, 0.09, 0.12, 150.0, [0.68, 0.72, 0.78], 0.92, 0.04);
+    addInst(boxMesh,  0.78, 0.28, 0, 0, 0.09, 0.12, 150.0, [0.68, 0.72, 0.78], 0.92, 0.04);
+
+    // Scrolling wooden sleepers (ties) & shallow stone bridge piers!
+    const sleeperStep = 1.05;
+    const sOff = railScroll % sleeperStep;
+    for (let i = -38; i <= 46; i++) {
+      const sz = i * sleeperStep + sOff;
+      addInst(boxMesh, 0, 0.22, sz, 0, 2.24, 0.08, 0.24, [0.26, 0.19, 0.14], 0.12, 0.0);
+    }
+
+    // Vintage wooden utility & hanging-lantern poles rushing smoothly along the far side of the track!
+    const poleStep = 18.0;
+    const pOff = railScroll % poleStep;
+    for (let i = -4; i <= 4; i++) {
+      const pz = i * poleStep + pOff;
+      addInst(cylYMesh, -2.55, 2.65, pz, 0, 0.16, 5.5, 0.16, [0.26, 0.18, 0.13], 0.12, 0.0);
+      addInst(boxMesh,  -2.05, 5.05, pz, 0, 1.35, 0.11, 0.11, [0.28, 0.20, 0.15], 0.12, 0.0);
+      // Warm glowing vintage railway lamp hanging from crossarm
+      const lpEm = lerp(0.25, 1.45, lampGlow);
+      addInst(boxMesh, -1.52, 4.78, pz, 0, 0.22, 0.28, 0.22, [1.0, 0.80, 0.40], 0.4, lpEm);
+      if (lampGlow > 0.08) {
+        addPart(-1.52, 4.76, pz, 0.52, [1.0, 0.76, 0.32], lampGlow * 0.55);
+      }
+    }
+
+    // 2. HERO STEAM LOCOMOTIVE ("SHIOKAZE NO. 4" — Facing -Z!)
+    const locoZ = -3.8;
+    const bodyBlk  = [0.11, 0.13, 0.17];
+    const bodyRed  = [0.76, 0.15, 0.14];
+    const brass    = [0.92, 0.72, 0.30];
+    const steel    = [0.56, 0.62, 0.70];
+    const cream    = [0.95, 0.90, 0.78];
+
+    // Heavy iron underframe & crimson side running boards
+    addInst(boxMesh, 0, 0.92, locoZ + 0.1, 0, 2.04, 0.34, 6.2, bodyBlk, 0.42, 0.0);
+    addInst(boxMesh, 0, 1.14, locoZ + 0.1, 0, 2.22, 0.12, 6.3, bodyRed, 0.55, 0.0);
+    // Angled iron cowcatcher plow at front (-z)
+    addInst(boxMesh, 0, 0.66, locoZ - 3.25, 0, 1.88, 0.50, 0.62, bodyBlk, 0.45, 0.0);
+    addInst(boxMesh, 0, 0.86, locoZ - 3.12, 0, 2.10, 0.14, 0.22, bodyRed, 0.55, 0.0);
+
+    // Smooth cylindrical horizontal boiler + gleaming brass bands + rounded smokebox nose!
+    addInst(cylZMesh, 0, 2.10, locoZ - 0.55, 0, 1.56, 1.56, 4.45, bodyBlk, 0.68, 0.0);
+    for (const bz of [-2.2, -1.2, -0.2, 0.8]) {
+      addInst(cylZMesh, 0, 2.10, locoZ + bz, 0, 1.62, 1.62, 0.09, brass, 0.92, 0.06);
+    }
+    addInst(cylZMesh, 0, 2.10, locoZ - 2.82, 0, 1.24, 1.24, 0.24, [0.18, 0.20, 0.25], 0.72, 0.0);
+    // Iconic tapered smokestack & twin brass steam domes
+    addInst(cylYMesh, 0, 3.22, locoZ - 2.05, 0, 0.44, 1.18, 0.44, bodyBlk, 0.55, 0.0);
+    addInst(cylYMesh, 0, 3.74, locoZ - 2.05, 0, 0.58, 0.18, 0.58, brass, 0.90, 0.05);
+    addInst(cylYMesh, 0, 3.04, locoZ - 0.65, 0, 0.62, 0.58, 0.62, brass, 0.88, 0.04);
+    addInst(cylYMesh, 0, 2.98, locoZ + 0.55, 0, 0.52, 0.44, 0.52, bodyBlk, 0.65, 0.0);
+
+    // Blazing Warm Brass Headlamp + 100% Silky Volumetric Mist Light Cone (28 overlapping soft Gaussian halos -> ZERO polygon edges!)
+    const hlEm = lerp(0.55, 1.85, lampGlow);
+    addInst(cylZMesh, 0, 2.96, locoZ - 2.75, 0, 0.44, 0.44, 0.42, brass, 0.88, 0.05);
+    addInst(cylZMesh, 0, 2.96, locoZ - 2.98, 0, 0.36, 0.36, 0.06, [1.0, 0.92, 0.66], 0.5, hlEm);
+    addPart(0, 2.96, locoZ - 3.05, lerp(0.35, 0.92, lampGlow), [1.0, 0.86, 0.48], lerp(0.32, 0.88, lampGlow));
+    if (lampGlow > 0.05) {
+      for (let k = 0; k < 28; k++) {
+        const u = k / 27;
+        const bz = locoZ - 3.35 - u * 16.5;
+        const by = lerp(2.92, 1.65, u);
+        const rad = lerp(0.52, 3.25, u);
+        const alpha = lampGlow * (1.0 - u) * (1.0 - u) * 0.135;
+        addPart(0, by, bz, rad, [1.0, 0.84, 0.46], alpha);
+      }
+    }
+
+    // Engineer's Cab (crimson lower, dark roof, warm glowing interior firebox window!)
+    addInst(boxMesh, 0, 2.22, locoZ + 2.25, 0, 2.18, 2.15, 2.05, bodyRed, 0.52, 0.0);
+    addInst(boxMesh, 0, 3.36, locoZ + 2.25, 0, 2.42, 0.18, 2.38, bodyBlk, 0.45, 0.0);
+    addInst(boxMesh, 0, 2.48, locoZ + 2.25, 0, 2.24, 0.84, 1.32, winCol, 0.6, winEm * 1.15);
+
+    // 3 Pairs of Giant Red-Spoked Driving Wheels + Pumping Steel Connecting Rods!
+    for (const wz of [-1.75, -0.35, 1.05]) {
+      addInst(cylXMesh, -0.96, 0.78, locoZ + wz, 0, 0.16, 0.96, 0.96, bodyRed, 0.65, 0.0);
+      addInst(cylXMesh,  0.96, 0.78, locoZ + wz, 0, 0.16, 0.96, 0.96, bodyRed, 0.65, 0.0);
+      addInst(cylXMesh, -1.03, 0.78, locoZ + wz, 0, 0.06, 1.02, 1.02, steel, 0.92, 0.0);
+      addInst(cylXMesh,  1.03, 0.78, locoZ + wz, 0, 0.06, 1.02, 1.02, steel, 0.92, 0.0);
+    }
+    const rodDy = Math.sin(wheelAng) * 0.24, rodDz = Math.cos(wheelAng) * 0.24;
+    addInst(boxMesh, -1.10, 0.78 + rodDy, locoZ - 0.35 + rodDz, 0, 0.08, 0.12, 3.15, steel, 0.92, 0.04);
+    addInst(boxMesh,  1.10, 0.78 - rodDy, locoZ - 0.35 - rodDz, 0, 0.08, 0.12, 3.15, steel, 0.92, 0.04);
+
+    // Coal Tender behind Locomotive
+    const tendZ = locoZ + 5.1;
+    addInst(boxMesh, 0, 1.62, tendZ, 0, 2.08, 1.48, 3.25, bodyBlk, 0.45, 0.0);
+    addInst(boxMesh, 0, 1.32, tendZ, 0, 2.14, 0.28, 3.32, bodyRed, 0.55, 0.0);
+    addInst(boxMesh, 0, 2.46, tendZ, 0, 1.72, 0.38, 2.60, [0.06, 0.07, 0.09], 0.22, 0.0);
+    for (const wz of [-0.95, 0.95]) {
+      addInst(cylXMesh, -0.94, 0.64, tendZ + wz, 0, 0.14, 0.68, 0.68, steel, 0.8, 0.0);
+      addInst(cylXMesh,  0.94, 0.64, tendZ + wz, 0, 0.14, 0.68, 0.68, steel, 0.8, 0.0);
+    }
+
+    // 3. THREE ICONIC RETRO CRIMSON & CREAM PASSENGER COACHES (Glowing Warm Amber Windows!)
+    for (let c = 0; c < 3; c++) {
+      const cz = tendZ + 5.95 + c * 8.15;
+      // Underframe & bogies
+      addInst(boxMesh, 0, 0.86, cz, 0, 2.10, 0.28, 7.55, bodyBlk, 0.35, 0.0);
+      // Iconic Crimson lower body + vintage warm Cream window band + crimson upper trim!
+      addInst(boxMesh, 0, 1.46, cz, 0, 2.26, 0.96, 7.62, bodyRed, 0.52, 0.0);
+      addInst(boxMesh, 0, 2.38, cz, 0, 2.24, 0.92, 7.60, cream,   0.40, 0.0);
+      addInst(boxMesh, 0, 2.94, cz, 0, 2.28, 0.22, 7.65, bodyRed, 0.52, 0.0);
+      // Curved clerestory charcoal roof + roof vents
+      addInst(boxMesh, 0, 3.16, cz, 0, 2.38, 0.24, 7.82, [0.16, 0.18, 0.22], 0.42, 0.0);
+      addInst(boxMesh, 0, 3.36, cz, 0, 1.38, 0.20, 7.10, [0.14, 0.16, 0.20], 0.48, 0.0);
+      // Inter-car flexible connector bellows
+      addInst(boxMesh, 0, 2.02, cz - 4.08, 0, 1.42, 1.85, 0.62, [0.10, 0.11, 0.14], 0.2, 0.0);
+      // 7 Glowing Warm Amber Passenger Windows per coach!
+      for (let w = 0; w < 7; w++) {
+        const wz = cz - 2.85 + w * 0.95;
+        addInst(boxMesh, 0, 2.36, wz, 0, 2.30, 0.68, 0.62, winCol, 0.82, winEm);
+      }
+      // 4 Bogie Wheel Pairs
+      for (const wz of [-2.85, -1.95, 1.95, 2.85]) {
+        addInst(cylXMesh, -0.94, 0.62, cz + wz, 0, 0.14, 0.66, 0.66, steel, 0.82, 0.0);
+        addInst(cylXMesh,  0.94, 0.62, cz + wz, 0, 0.14, 0.66, 0.66, steel, 0.82, 0.0);
+      }
+      // Rear Coach Glowing Ruby Tail Lamps
+      if (c === 2) {
+        addInst(boxMesh, -0.68, 1.35, cz + 3.84, 0, 0.20, 0.20, 0.08, [1.0, 0.18, 0.24], 0.5, 1.35);
+        addInst(boxMesh,  0.68, 1.35, cz + 3.84, 0, 0.20, 0.20, 0.08, [1.0, 0.18, 0.24], 0.5, 1.35);
+      }
+    }
+
+    // 4. ICONIC SEA LANDMARKS: FLOATING VERMILION TORII GATE, TINY WOODEN SEA-STATION & COASTAL LIGHTHOUSE ISLAND!
+    // 4a. Vermilion Floating Sea Torii Gate (scrolls gracefully on a long 90m loop, visible right on Frame 0 & Finale!)
+    const toriiZ = ((railScroll * 0.42 + 78.0) % 95.0) - 58.0;
+    const toriiX = -15.5;
+    const toriiRed = [0.84, 0.18, 0.14];
+    addInst(cylYMesh, toriiX - 2.3, 3.0, toriiZ, 0, 0.58, 6.4, 0.58, toriiRed, 0.35, 0.02);
+    addInst(cylYMesh, toriiX + 2.3, 3.0, toriiZ, 0, 0.58, 6.4, 0.58, toriiRed, 0.35, 0.02);
+    addInst(boxMesh,  toriiX,       5.95, toriiZ, 0, 7.6, 0.52, 0.72, toriiRed, 0.38, 0.02);
+    addInst(boxMesh,  toriiX,       6.32, toriiZ, 0, 8.2, 0.26, 0.84, [0.12, 0.13, 0.16], 0.45, 0.0);
+    addInst(boxMesh,  toriiX,       4.72, toriiZ, 0, 6.0, 0.34, 0.44, toriiRed, 0.35, 0.02);
+    addInst(boxMesh,  toriiX,       5.32, toriiZ, 0, 0.65, 0.95, 0.25, [0.12, 0.13, 0.16], 0.5, 0.0);
+
+    // 4b. Ghibli Tiny Wooden Sea-Station Platform passing gracefully right around 0:13 - 0:17!
+    const staZ = (simTime - 14.8) * 14.5 + 1.5;
+    if (staZ > -55 && staZ < 45) {
+      const sx = -4.25;
+      addInst(boxMesh, sx, 0.62, staZ, 0, 3.2, 0.36, 12.0, [0.34, 0.24, 0.17], 0.18, 0.0);
+      for (const pz of [-4.8, -1.6, 1.6, 4.8]) {
+        addInst(cylYMesh, sx - 1.1, 0.1, staZ + pz, 0, 0.24, 1.2, 0.24, [0.22, 0.20, 0.18], 0.1, 0.0);
+        addInst(cylYMesh, sx + 1.1, 0.1, staZ + pz, 0, 0.24, 1.2, 0.24, [0.22, 0.20, 0.18], 0.1, 0.0);
+      }
+      // Tiny wooden waiting shelter + pitched roof + glowing amber station lantern!
+      addInst(boxMesh, sx - 0.5, 1.95, staZ, 0, 1.75, 2.30, 4.4, [0.36, 0.25, 0.18], 0.15, 0.0);
+      addInst(boxMesh, sx - 0.3, 3.28, staZ, 0, 2.65, 0.28, 5.2, [0.16, 0.20, 0.26], 0.35, 0.0);
+      addInst(boxMesh, sx + 0.52, 2.55, staZ, 0, 0.42, 0.56, 0.42, [1.0, 0.82, 0.42], 0.5, lerp(0.5, 1.7, lampGlow));
+      addPart(sx + 0.52, 2.55, staZ, 0.85, [1.0, 0.76, 0.32], 0.45 + lampGlow * 0.55);
+      // Warm backlit station nameboard
+      addInst(boxMesh, sx + 0.85, 2.05, staZ - 3.6, 0, 0.12, 0.72, 1.65, [1.0, 0.94, 0.78], 0.4, lerp(0.25, 1.1, lampGlow));
+    }
+
+    // 4c. Distant Volcanic Island Silhouette + Rotating Coastal Lighthouse Beacon!
+    const islX = -42.0, islZ = -34.0;
+    addInst(cylYMesh, islX,      1.6, islZ,      0, 22.0, 4.2, 22.0, [0.10, 0.12, 0.18], 0.12, 0.0);
+    addInst(cylYMesh, islX - 5,  4.8, islZ - 3,  0, 13.0, 6.2, 13.0, [0.09, 0.11, 0.17], 0.12, 0.0);
+    addInst(cylYMesh, islX + 7,  3.2, islZ + 4,  0, 10.0, 4.0, 10.0, [0.10, 0.12, 0.18], 0.12, 0.0);
+    // White & crimson lighthouse tower
+    const lhX = islX + 5.5, lhZ = islZ + 5.0;
+    addInst(cylYMesh, lhX, 6.8, lhZ, 0, 1.85, 7.6, 1.85, [0.92, 0.92, 0.90], 0.35, 0.02);
+    addInst(cylYMesh, lhX, 8.2, lhZ, 0, 1.92, 1.4, 1.92, toriiRed, 0.38, 0.02);
+    addInst(cylYMesh, lhX, 11.1, lhZ, 0, 1.55, 1.25, 1.55, [1.0, 0.92, 0.62], 0.5, lerp(0.6, 2.0, lampGlow));
+    addPart(lhX, 11.2, lhZ, 1.3, [1.0, 0.88, 0.52], 0.55 + lampGlow * 0.45);
+    // Rotating golden lighthouse feathered volumetric beam at dusk/night!
+    if (lampGlow > 0.10) {
+      const la = simTime * 0.85;
+      const dx = Math.cos(la) * 34.0, dz = Math.sin(la) * 34.0;
+      const px = -Math.sin(la) * 3.6, pz = Math.cos(la) * 3.6;
+      const lOrg = [lhX, 11.1, lhZ];
+      addBeamTri3(lOrg, lampGlow * 0.26, [lhX + dx + px, 10.2, lhZ + dz + pz], 0.0, [lhX + dx - px, 10.2, lhZ + dz - pz], 0.0, [1.0, 0.88, 0.52]);
+    }
+
+    // 5. DELICATE FLOATING PAPER SEA LANTERNS ("TORO NAGASHI") IGNITING AT TWILIGHT!
+    for (const ln of seaLanterns) {
+      const lz = ((ln.z + railScroll * 0.55 + 48.0) % 92.0) - 48.0;
+      const bob = Math.sin(simTime * 2.1 + ln.ph) * 0.035;
+      const lx = ln.x + Math.sin(simTime * 0.6 + ln.ph) * 0.22;
+      const colL = [1.0, lerp(0.56, 0.82, ln.warmth), lerp(0.18, 0.36, ln.warmth)];
+      addInst(boxMesh, lx, 0.05 + bob, lz, ln.ph, 0.38, 0.06, 0.38, [0.24, 0.14, 0.09], 0.15, 0.0);
+      addInst(boxMesh, lx, 0.24 + bob, lz, ln.ph, 0.25, 0.34, 0.25, colL, 0.35, lerp(0.10, 1.55, lampGlow));
+      if (lampGlow > 0.08) {
+        addPart(lx, 0.30 + bob, lz, 0.62, colL, lampGlow * 0.58);
+      }
+    }
+
+    // 6. LUSH BILLOWING STUDIO-GHIBLI STEAM CLOUDS, SEA SPRAY & MAGICAL GOLDEN FIREFLIES!
+    for (const s of steamPuffs) {
+      const u = s.age / 3.6;
+      const sx = s.x + s.driftX * u * 4.5 + Math.sin(u * 4.2 + simTime * 1.4) * 0.24;
+      const sy = s.y + s.driftY * u * 3.4;
+      const sz = s.z + u * 24.0;
+      const size = lerp(0.58, 3.45, Math.pow(u, 0.68));
+      const alpha = Math.sin(clamp(u, 0, 1) * Math.PI) * lerp(0.32, 0.20, nightMix);
+      const sColDay = [1.35, 0.78, 0.52];
+      const sColNit = u < 0.20 ? [0.92, 0.56, 0.28] : [0.22, 0.34, 0.62];
+      const sc = [
+        lerp(sColDay[0], sColNit[0], nightMix),
+        lerp(sColDay[1], sColNit[1], nightMix),
+        lerp(sColDay[2], sColNit[2], nightMix),
+      ];
+      addPart(sx, sy, sz, size, sc, alpha);
+    }
+
+    // Glittering wheel sea-spray droplets along the flooded track
+    for (let i = 0; i < 42; i++) {
+      const side = (i % 2 === 0) ? -1.18 : 1.18;
+      const u = ((i / 42) + simTime * 1.1) % 1.0;
+      const px = side + side * u * 1.15;
+      const py = 0.16 + Math.sin(u * Math.PI) * 0.62;
+      const pz = -6.2 + (i % 21) * 1.55 + u * 2.4;
+      const spCol = [lerp(1.05, 0.24, nightMix), lerp(0.92, 0.95, nightMix), lerp(0.76, 1.15, nightMix)];
+      addPart(px, py, pz, 0.18 + u * 0.22, spCol, (1.0 - u) * lerp(0.38, 0.55, nightMix));
+    }
+
+    // Magical Golden Fireflies drifting over the ocean after twilight ignites!
+    if (lampGlow > 0.05) {
+      for (const ff of fireflies) {
+        const fz = ((ff.z + railScroll * 0.35 + 22.0) % 44.0) - 22.0;
+        const fx = ff.x + Math.sin(simTime * ff.sp + ff.ph) * 0.9;
+        const fy = ff.y + Math.cos(simTime * ff.sp * 1.2 + ff.ph) * 0.45;
+        const tw = 0.4 + 0.6 * Math.pow(0.5 + 0.5 * Math.sin(simTime * 3.8 + ff.ph), 2.0);
+        addPart(fx, fy, fz, 0.16 + tw * 0.14, [1.0, 0.86, 0.42], lampGlow * tw * 0.92);
+      }
+    }
+
+    return { pCnt, bCnt };
+  }
+
+  function getLighting() {
+    // Low blazing golden sun framed RIGHT behind the train & Torii gate (-X, +Z), dipping into the sea at 0:13-0:16!
+    const sunElev = lerp(0.115, -0.095, smoothstep(0.0, 0.78, nightMix));
+    const sunDir = [-0.82, sunElev, 0.48];
+    // Giant luminous silvery-gold full moon framed cleanly inside upper sky behind the sea railway!
+    const moonElev = lerp(-0.04, 0.165, smoothstep(0.22, 0.96, nightMix));
+    const moonDir = [-0.78, moonElev, 0.56];
+
+    // Linear-space high-contrast key & hemisphere lighting!
+    const keyDir = nightMix < 0.55 ? sunDir : moonDir;
+    const keyCol = [
+      lerp(2.15, 0.34, smoothstep(0.22, 0.85, nightMix)),
+      lerp(0.95, 0.52, smoothstep(0.22, 0.85, nightMix)),
+      lerp(0.36, 0.98, smoothstep(0.22, 0.85, nightMix)),
+    ];
+    const ambSky = [
+      lerp(0.26, 0.035, nightMix),
+      lerp(0.18, 0.065, nightMix),
+      lerp(0.34, 0.185, nightMix),
+    ];
+    const ambSea = [
+      lerp(0.32, 0.022, nightMix),
+      lerp(0.15, 0.042, nightMix),
+      lerp(0.10, 0.095, nightMix),
+    ];
+    const fogCol = [
+      lerp(0.98, 0.020, smoothstep(0.08, 0.90, nightMix)),
+      lerp(0.42, 0.045, smoothstep(0.08, 0.90, nightMix)),
+      lerp(0.18, 0.110, smoothstep(0.08, 0.90, nightMix)),
+    ];
+    return { sunDir, moonDir, keyDir, keyCol, ambSky, ambSea, fogCol };
+  }
+
+  function drawWorldPass(vp, invVP, eye, light, pCnt, bCnt, clipSign) {
+    // 1. Atmospheric Sky Dome (depth write off!)
+    gl.depthMask(false);
+    gl.disable(gl.DEPTH_TEST);
+    gl.useProgram(skyProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(skyProg, 'uInvVP'), false, invVP);
+    gl.uniform3fv(gl.getUniformLocation(skyProg, 'uCamPos'), eye);
+    gl.uniform3fv(gl.getUniformLocation(skyProg, 'uSunDir'), light.sunDir);
+    gl.uniform3fv(gl.getUniformLocation(skyProg, 'uMoonDir'), light.moonDir);
+    gl.uniform1f(gl.getUniformLocation(skyProg, 'uNight'), nightMix);
+    gl.uniform1f(gl.getUniformLocation(skyProg, 'uTime'), simTime);
+    gl.bindVertexArray(emptyVao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // 2. Solid PBR Instanced Geometry (Train, Boiler, Wheels, Torii, Station, Lighthouse, Lanterns)
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.useProgram(meshProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(meshProg, 'uVP'), false, vp);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uCamPos'), eye);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uKeyDir'), light.keyDir);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uKeyCol'), light.keyCol);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uAmbSky'), light.ambSky);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uAmbSea'), light.ambSea);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uFogCol'), light.fogCol);
+    gl.uniform1f(gl.getUniformLocation(meshProg, 'uNight'), nightMix);
+    gl.uniform1f(gl.getUniformLocation(meshProg, 'uClipSign'), clipSign);
+
+    for (const m of [boxMesh, cylZMesh, cylYMesh, cylXMesh]) {
+      if (m.count === 0) continue;
+      gl.bindVertexArray(m.vao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, m.ivbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, m.buf.subarray(0, m.count * 12));
+      gl.drawArraysInstanced(gl.TRIANGLES, 0, m.vCount, m.count);
+    }
+
+    // 3. Volumetric Headlamp & Lighthouse Beams (Additive!)
+    if (bCnt > 0) {
+      gl.enable(gl.BLEND);
+      gl.depthMask(false);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+      gl.useProgram(beamProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(beamProg, 'uVP'), false, vp);
+      gl.uniform1f(gl.getUniformLocation(beamProg, 'uClipSign'), clipSign);
+      gl.bindVertexArray(beamVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, beamVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, beamBuf.subarray(0, bCnt * 7));
+      gl.drawArrays(gl.TRIANGLES, 0, bCnt);
+      gl.depthMask(true);
+    }
+
+    // 4. Soft Volumetric Steam Clouds, Sea Spray & Fireflies!
+    if (pCnt > 0) {
+      gl.enable(gl.BLEND);
+      gl.depthMask(false);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.useProgram(partProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(partProg, 'uVP'), false, vp);
+      gl.uniform1f(gl.getUniformLocation(partProg, 'uClipSign'), clipSign);
+      gl.bindVertexArray(partVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, partVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, partBuf.subarray(0, pCnt * 8));
+      gl.drawArrays(gl.POINTS, 0, pCnt);
+      gl.depthMask(true);
+    }
+  }
+
+  function renderWebGL() {
+    const light = getLighting();
+    const { pCnt, bCnt } = populateScene();
+    const proj = mat4Persp(0.76, W / H, 0.2, 320.0);
+
+    // === PASS 1: TRUE PLANAR WATER REFLECTION FBO (Mirrored Camera eye.y -> -eye.y!) ===
+    const reflEye = [curEye[0], -curEye[1], curEye[2]];
+    const reflCtr = [curCtr[0], -curCtr[1], curCtr[2]];
+    const reflView = mat4Look(reflEye, reflCtr, [0, 1, 0]);
+    const reflVP = mat4Mul(proj, reflView);
+    const reflInvVP = mat4Inv(reflVP);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, reflFBO.fbo);
+    gl.viewport(0, 0, reflFBO.w, reflFBO.h);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    drawWorldPass(reflVP, reflInvVP, reflEye, light, pCnt, bCnt, 1.0);
+
+    // === PASS 2: MAIN HDR 3D SCENE FBO (Sky + Train + Landmarks + True Rippling Reflective Ocean!) ===
+    const view = mat4Look(curEye, curCtr, [0, 1, 0]);
+    const vp = mat4Mul(proj, view);
+    const invVP = mat4Inv(vp);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, mainFBO.fbo);
+    gl.viewport(0, 0, W, H);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // Draw sky + solid world first
+    gl.depthMask(false);
+    gl.disable(gl.DEPTH_TEST);
+    gl.useProgram(skyProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(skyProg, 'uInvVP'), false, invVP);
+    gl.uniform3fv(gl.getUniformLocation(skyProg, 'uCamPos'), curEye);
+    gl.uniform3fv(gl.getUniformLocation(skyProg, 'uSunDir'), light.sunDir);
+    gl.uniform3fv(gl.getUniformLocation(skyProg, 'uMoonDir'), light.moonDir);
+    gl.uniform1f(gl.getUniformLocation(skyProg, 'uNight'), nightMix);
+    gl.uniform1f(gl.getUniformLocation(skyProg, 'uTime'), simTime);
+    gl.bindVertexArray(emptyVao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // Draw Rippling Reflective Ocean Plane at y = 0.0 (depth-tested cleanly against piers & causeway!)
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.useProgram(waterProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(waterProg, 'uVP'), false, vp);
+    gl.uniform3fv(gl.getUniformLocation(waterProg, 'uCamPos'), curEye);
+    gl.uniform3fv(gl.getUniformLocation(waterProg, 'uSunDir'), light.sunDir);
+    gl.uniform3fv(gl.getUniformLocation(waterProg, 'uMoonDir'), light.moonDir);
+    gl.uniform3fv(gl.getUniformLocation(waterProg, 'uFogCol'), light.fogCol);
+    gl.uniform1f(gl.getUniformLocation(waterProg, 'uTime'), simTime);
+    gl.uniform1f(gl.getUniformLocation(waterProg, 'uScroll'), railScroll);
+    gl.uniform1f(gl.getUniformLocation(waterProg, 'uNight'), nightMix);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, reflFBO.tex);
+    gl.uniform1i(gl.getUniformLocation(waterProg, 'uReflTex'), 0);
+    gl.bindVertexArray(waterVao);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    // Draw Solid Train, Causeway, Piers, Landmarks, Volumetric Beams & Steam Clouds above the Ocean!
+    gl.useProgram(meshProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(meshProg, 'uVP'), false, vp);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uCamPos'), curEye);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uKeyDir'), light.keyDir);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uKeyCol'), light.keyCol);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uAmbSky'), light.ambSky);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uAmbSea'), light.ambSea);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uFogCol'), light.fogCol);
+    gl.uniform1f(gl.getUniformLocation(meshProg, 'uNight'), nightMix);
+    gl.uniform1f(gl.getUniformLocation(meshProg, 'uClipSign'), 0.0);
+    for (const m of [boxMesh, cylZMesh, cylYMesh, cylXMesh]) {
+      if (m.count === 0) continue;
+      gl.bindVertexArray(m.vao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, m.ivbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, m.buf.subarray(0, m.count * 12));
+      gl.drawArraysInstanced(gl.TRIANGLES, 0, m.vCount, m.count);
+    }
+    if (bCnt > 0) {
+      gl.enable(gl.BLEND);
+      gl.depthMask(false);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+      gl.useProgram(beamProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(beamProg, 'uVP'), false, vp);
+      gl.uniform1f(gl.getUniformLocation(beamProg, 'uClipSign'), 0.0);
+      gl.bindVertexArray(beamVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, beamVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, beamBuf.subarray(0, bCnt * 7));
+      gl.drawArrays(gl.TRIANGLES, 0, bCnt);
+      gl.depthMask(true);
+    }
+    if (pCnt > 0) {
+      gl.enable(gl.BLEND);
+      gl.depthMask(false);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.useProgram(partProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(partProg, 'uVP'), false, vp);
+      gl.uniform1f(gl.getUniformLocation(partProg, 'uClipSign'), 0.0);
+      gl.bindVertexArray(partVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, partVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, partBuf.subarray(0, pCnt * 8));
+      gl.drawArrays(gl.POINTS, 0, pCnt);
+      gl.depthMask(true);
+    }
+
+    // === PASS 3: 2-PASS SEPARABLE HDR GAUSSIAN BLOOM + ACES FILMIC TONE MAPPING ===
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.BLEND);
+    gl.bindVertexArray(emptyVao);
+
+    // Extract bright HDR glow (sun, moon, glowing amber windows, sea lanterns, headlamp)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, bloomA.fbo);
+    gl.viewport(0, 0, bloomA.w, bloomA.h);
+    gl.useProgram(bloomExtractProg);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, mainFBO.tex);
+    gl.uniform1i(gl.getUniformLocation(bloomExtractProg, 'uTex'), 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // Horizontal & Vertical Gaussian Blur passes (2 iterations for plush cinema halation!)
+    gl.useProgram(blurProg);
+    gl.uniform1i(gl.getUniformLocation(blurProg, 'uTex'), 0);
+    for (let it = 0; it < 2; it++) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, bloomB.fbo);
+      gl.bindTexture(gl.TEXTURE_2D, bloomA.tex);
+      gl.uniform2f(gl.getUniformLocation(blurProg, 'uDir'), (1.4 + it * 1.2) / bloomA.w, 0.0);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+      gl.bindFramebuffer(gl.FRAMEBUFFER, bloomA.fbo);
+      gl.bindTexture(gl.TEXTURE_2D, bloomB.tex);
+      gl.uniform2f(gl.getUniformLocation(blurProg, 'uDir'), 0.0, (1.4 + it * 1.2) / bloomA.h);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+
+    // Final Screen Composite + ACES Filmic Grading!
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, W, H);
+    gl.useProgram(composeProg);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, mainFBO.tex);
+    gl.uniform1i(gl.getUniformLocation(composeProg, 'uScene'), 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, bloomA.tex);
+    gl.uniform1i(gl.getUniformLocation(composeProg, 'uBloom'), 1);
+    gl.uniform1f(gl.getUniformLocation(composeProg, 'uNight'), nightMix);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindVertexArray(null);
+  }
+
+  function renderDOM() {
+    const mins = Math.round(lerp(17 * 60 + 42, 21 * 60 + 18, nightMix));
+    const hh = String(Math.floor(mins / 60)).padStart(2, '0');
+    const mm = String(mins % 60).padStart(2, '0');
+    const lbl = nightMix < 0.28 ? 'SUNSET' : (nightMix < 0.72 ? 'TWILIGHT' : 'MOONLIT');
+    const st = document.getElementById('sTime');
+    st.textContent = `${hh}:${mm} ${lbl}`;
+    st.className = nightMix > 0.65 ? 'v moon' : 'v warm';
+
+    const camNames = ['01 PARALLEL', '02 WATER SKIM', '03 SEA STATION', '04 HEADLAMP', '05 MOON ORBIT'];
+    document.getElementById('sCam').textContent = camNames[camMode];
+
+    const isNight = nightMix > 0.55;
+    for (let i = 0; i < 5; i++) {
+      const el = document.getElementById(`cam${i}`);
+      const act = i === camMode;
+      el.className = act ? (isNight ? 'cbtn active night-act' : 'cbtn active') : 'cbtn';
+      el.classList.toggle('pressed', pressedId === `cam${i}`);
+    }
+    const skyBtn = document.getElementById('btnSky');
+    skyBtn.className = isNight ? 't-pill night' : 't-pill';
+    skyBtn.textContent = isNight ? '☾ MOONLIT NIGHT' : '☀ GOLDEN SUNSET';
+    skyBtn.classList.toggle('pressed', pressedId === 'btnSky');
+
+    const vc = document.getElementById('vCursor'), cr = document.getElementById('cRing');
+    vc.style.left = `${curX.toFixed(1)}px`; vc.style.top = `${curY.toFixed(1)}px`; vc.style.opacity = curOp.toFixed(2);
+    if (cPulse > 0.02) {
+      cr.style.left = `${curX.toFixed(1)}px`; cr.style.top = `${curY.toFixed(1)}px`;
+      cr.style.opacity = (cPulse * 0.9).toFixed(2);
+      cr.style.transform = `translate(-50%,-50%) scale(${(0.55 + (1 - cPulse) * 1.15).toFixed(2)})`;
+    } else cr.style.opacity = '0';
+  }
+
+  // Interactive Controls
+  for (let i = 0; i < 5; i++) {
+    document.getElementById(`cam${i}`).addEventListener('click', () => setCamMode(i));
+  }
+  document.getElementById('btnSky').addEventListener('click', () => {
+    manualNight = nightMix > 0.5 ? 0.0 : 1.0;
+  });
+  canvas.addEventListener('mousedown', (e) => { dragging = true; userOrbit = true; lastMX = e.clientX; lastMY = e.clientY; });
+  window.addEventListener('mouseup', () => { dragging = false; });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    userAz -= (e.clientX - lastMX) * 0.008;
+    userEl = clamp(userEl + (e.clientY - lastMY) * 0.006, 0.05, 0.95);
+    lastMX = e.clientX; lastMY = e.clientY;
+  });
+  canvas.addEventListener('wheel', (e) => {
+    userOrbit = true;
+    userDist = clamp(userDist + e.deltaY * 0.01, 7.5, 34.0);
+  }, { passive: true });
+
+  // Initial Draw
+  const initCam = targetCamFor(0, 0);
+  curEye = initCam.eye.slice();
+  curCtr = initCam.ctr.slice();
+  renderWebGL();
+  renderDOM();
+
+  window.stepSeaTrain = function(dt, drawAll = true) {
+    stepSim(dt);
+    if (drawAll) {
+      renderWebGL();
+      renderDOM();
+    }
+  };
+
+  if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.addControl('▶ 自動ツアー', (btn) => {
+        autoTour = !autoTour;
+        btn.classList.toggle('active', autoTour);
+        if (autoTour) {
+          simTime = 0;
+          manualNight = null;
+          userOrbit = false;
+          for (const k in trig) trig[k] = false;
+          setCamMode(0);
+        } else {
+          manualNight = nightMix > 0.5 ? 1.0 : 0.0;
+        }
+      });
+    });
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (autoTour && simTime >= 30.0) { simTime = 0; for (const k in trig) trig[k] = false; manualNight = null; setCamMode(0); }
+      window.stepSeaTrain(dt, true);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+<script src="../demo-shell.js"></script>
+</body>
+</html>

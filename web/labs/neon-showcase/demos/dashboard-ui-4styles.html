@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 1280px; height: 720px; overflow: hidden;
+    background: #06080F;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  #stage { position: relative; width: 1280px; height: 720px; }
+  .screen {
+    position: absolute; inset: 0; padding: 24px 28px 82px 28px;
+    opacity: 0; pointer-events: none; z-index: 1;
+  }
+  .screen.active { opacity: 1; pointer-events: auto; z-index: 10; }
+
+  /* Floating Bottom Switcher Dock */
+  #dock {
+    position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+    display: flex; gap: 8px; padding: 6px;
+    background: rgba(10, 15, 28, 0.85); backdrop-filter: blur(12px);
+    border: 1px solid rgba(148, 163, 184, 0.25); border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.45); z-index: 100;
+  }
+  .tab {
+    position: relative; padding: 8px 16px; border-radius: 9px;
+    font-size: 12px; font-weight: 700; color: #94A3B8; cursor: pointer;
+    overflow: hidden; background: transparent; border: none;
+    font-family: 'Consolas', 'Segoe UI', sans-serif;
+  }
+  .tab.active { color: #F8FAFC; background: rgba(56, 189, 248, 0.16); }
+  .tab .bar {
+    position: absolute; left: 0; bottom: 0; height: 3px; width: 0%;
+    background: linear-gradient(90deg, #00E5FF, #00FF9D);
+  }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="workstation">
+<div id="stage">
+  <!-- 01: AI AGENT CONTROL ROOM -->
+  <div id="s0" class="screen active" style="background: radial-gradient(circle at 80% 10%, #0F172A, #050811);">
+    <canvas id="c0" width="1224" height="614"></canvas>
+  </div>
+  <!-- 02: QUANT TRADING TERMINAL -->
+  <div id="s1" class="screen" style="background: #070B12;">
+    <canvas id="c1" width="1224" height="614"></canvas>
+  </div>
+  <!-- 03: EV / SPATIAL COCKPIT OS -->
+  <div id="s2" class="screen" style="background: radial-gradient(circle at 50% 20%, #111827, #030712);">
+    <canvas id="c2" width="1224" height="614"></canvas>
+  </div>
+  <!-- 04: SAAS REVENUE ANALYTICS (CLEAN LIGHT MODE) -->
+  <div id="s3" class="screen" style="background: #F1F5F9;">
+    <canvas id="c3" width="1224" height="614"></canvas>
+  </div>
+
+  <div id="dock">
+    <button class="tab active" onclick="selectTab(0)">01 AI AGENT CONTROL<div class="bar" id="bar0"></div></button>
+    <button class="tab" onclick="selectTab(1)">02 QUANT TERMINAL<div class="bar" id="bar1"></div></button>
+    <button class="tab" onclick="selectTab(2)">03 EV COCKPIT OS<div class="bar" id="bar2"></div></button>
+    <button class="tab" onclick="selectTab(3)">04 SAAS ANALYTICS<div class="bar" id="bar3"></div></button>
+  </div>
+</div>
+
+<script>
+const screens = [0,1,2,3].map(i => document.getElementById('s' + i));
+const tabs = Array.from(document.querySelectorAll('.tab'));
+const bars = [0,1,2,3].map(i => document.getElementById('bar' + i));
+const ctxs = [0,1,2,3].map(i => document.getElementById('c' + i).getContext('2d'));
+const CW = 1224, CH = 614;
+
+let simT = 0;
+let manualTab = null;
+function selectTab(idx) {
+  manualTab = idx;
+  updateActiveUI(idx, 100);
+}
+
+function updateActiveUI(activeIdx, pct) {
+  for (let i = 0; i < 4; i++) {
+    screens[i].classList.toggle('active', i === activeIdx);
+    tabs[i].classList.toggle('active', i === activeIdx);
+    bars[i].style.width = i === activeIdx ? `${pct}%` : '0%';
+  }
+}
+
+function card(ctx, x, y, w, h, bg, border, r = 12) {
+  ctx.fillStyle = bg;
+  ctx.strokeStyle = border;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.fill(); ctx.stroke();
+}
+
+// --- 01: AI AGENT CONTROL ROOM ---
+function drawAgentControl(ctx, t) {
+  ctx.clearRect(0, 0, CW, CH);
+  // Header
+  card(ctx, 0, 0, CW, 58, 'rgba(15, 23, 42, 0.85)', 'rgba(56, 189, 248, 0.25)');
+  ctx.fillStyle = '#38BDF8'; ctx.font = '700 16px "Segoe UI", sans-serif';
+  ctx.fillText('NEXUS // AI AGENT ORCHESTRATOR', 20, 35);
+  ctx.fillStyle = '#00FF9D'; ctx.font = '700 12px "Consolas", monospace';
+  ctx.fillText('● 4 AGENTS ACTIVE   |   99.98% UPTIME   |   142ms p95', 360, 34);
+  ctx.fillStyle = '#94A3B8';
+  ctx.fillText('CLUSTER: US-EAST-GPU-04', CW - 210, 34);
+
+  // Left: Live Node Pipeline
+  card(ctx, 0, 74, 720, 310, 'rgba(15, 23, 42, 0.78)', 'rgba(56, 189, 248, 0.22)');
+  ctx.fillStyle = '#E2E8F0'; ctx.font = '700 14px "Segoe UI", sans-serif';
+  ctx.fillText('LIVE EXECUTION GRAPH', 20, 104);
+
+  const nodes = [
+    { x: 100, y: 215, label: 'PLANNER', sub: 'Gemini 4', col: '#38BDF8' },
+    { x: 280, y: 155, label: 'RESEARCHER', sub: 'RAG + Web', col: '#A855F7' },
+    { x: 280, y: 285, label: 'CODER', sub: 'TypeScript', col: '#00FF9D' },
+    { x: 470, y: 215, label: 'VERIFIER', sub: 'Unit Tests', col: '#FFB800' },
+    { x: 635, y: 215, label: 'DEPLOY', sub: 'Prod Edge', col: '#00E5FF' },
+  ];
+  const edges = [[0,1],[0,2],[1,3],[2,3],[3,4]];
+  for (let e = 0; e < edges.length; e++) {
+    const a = nodes[edges[e][0]], b = nodes[edges[e][1]];
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.28)'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    // Moving glowing packet
+    const p = (t * 0.9 + e * 0.23) % 1;
+    const px = a.x + (b.x - a.x) * p, py = a.y + (b.y - a.y) * p;
+    ctx.fillStyle = '#00E5FF'; ctx.shadowColor = '#00E5FF'; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(px, py, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  for (const n of nodes) {
+    card(ctx, n.x - 58, n.y - 28, 116, 56, '#0B1220', n.col, 10);
+    ctx.fillStyle = n.col; ctx.font = '700 11px "Consolas", monospace';
+    ctx.fillText(n.label, n.x - 42, n.y - 4);
+    ctx.fillStyle = '#94A3B8'; ctx.font = '500 11px "Segoe UI", sans-serif';
+    ctx.fillText(n.sub, n.x - 42, n.y + 15);
+  }
+
+  // Right: Throughput Waveform
+  card(ctx, 738, 74, 486, 310, 'rgba(15, 23, 42, 0.78)', 'rgba(56, 189, 248, 0.22)');
+  ctx.fillStyle = '#E2E8F0'; ctx.font = '700 14px "Segoe UI", sans-serif';
+  ctx.fillText('TOKEN THROUGHPUT (TOK/SEC)', 758, 104);
+  const tps = Math.round(1840 + Math.sin(t * 2.5) * 210);
+  ctx.fillStyle = '#00FF9D'; ctx.font = '700 28px "Consolas", monospace';
+  ctx.fillText(`${tps} tok/s`, 758, 142);
+
+  const gx = 760, gy = 175, gw = 442, gh = 180;
+  ctx.beginPath();
+  for (let i = 0; i <= 40; i++) {
+    const u = i / 40;
+    const val = 0.45 + 0.25 * Math.sin(u * 8 - t * 3.2) + 0.14 * Math.cos(u * 15 - t * 2.1);
+    const px = gx + u * gw, py = gy + gh - val * gh;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.strokeStyle = '#00E5FF'; ctx.lineWidth = 2.8; ctx.stroke();
+  ctx.lineTo(gx + gw, gy + gh); ctx.lineTo(gx, gy + gh); ctx.closePath();
+  ctx.fillStyle = 'rgba(0, 229, 255, 0.14)'; ctx.fill();
+
+  // Bottom: Live Streaming Logs
+  card(ctx, 0, 400, CW, 214, 'rgba(10, 15, 28, 0.88)', 'rgba(56, 189, 248, 0.22)');
+  ctx.fillStyle = '#E2E8F0'; ctx.font = '700 13px "Segoe UI", sans-serif';
+  ctx.fillText('STREAMING AGENT TELEMETRY', 20, 428);
+  const logs = [
+    ['INFO', 'Planner decomposed task into 4 parallel execution branches (18ms)', '#38BDF8'],
+    ['PASS', 'Coder synthesized WebGL2 shader module + TypeScript bindings', '#00FF9D'],
+    ['EVAL', 'Verifier ran 48/48 unit & visual regression assertions', '#FFB800'],
+    ['SYNC', 'Edge deployment bundle verified (SHA-256: 9f4e..a21c)', '#00E5FF'],
+    ['INFO', 'Memory pool compacted: 112 MB -> 64 MB (-42.8%)', '#A855F7'],
+  ];
+  const activeRow = Math.floor(t * 2) % logs.length;
+  logs.forEach((lg, idx) => {
+    const ly = 458 + idx * 30;
+    if (idx === activeRow) {
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.12)';
+      ctx.fillRect(16, ly - 17, CW - 32, 24);
+    }
+    ctx.fillStyle = lg[2]; ctx.font = '700 12px "Consolas", monospace';
+    ctx.fillText(`[${lg[0]}]`, 24, ly);
+    ctx.fillStyle = '#CBD5E1'; ctx.font = '400 12px "Consolas", monospace';
+    ctx.fillText(lg[1], 95, ly);
+  });
+}
+
+// --- 02: QUANT TRADING TERMINAL ---
+function drawQuantTerminal(ctx, t) {
+  ctx.clearRect(0, 0, CW, CH);
+  card(ctx, 0, 0, CW, 58, '#0D131F', 'rgba(16, 185, 129, 0.28)');
+  const price = (98420 + Math.sin(t * 2.1) * 185).toFixed(2);
+  ctx.fillStyle = '#F8FAFC'; ctx.font = '700 18px "Consolas", monospace';
+  ctx.fillText('BTC / USD  PERPETUAL', 20, 36);
+  ctx.fillStyle = '#10B981'; ctx.font = '700 20px "Consolas", monospace';
+  ctx.fillText(`$${price}  (+4.82%)`, 280, 36);
+  ctx.fillStyle = '#94A3B8'; ctx.font = '600 12px "Consolas", monospace';
+  ctx.fillText('24H VOL: $42.8B   |   LATENCY: 0.4ms', CW - 310, 35);
+
+  // Main Candlestick Chart
+  card(ctx, 0, 74, 830, 540, '#0B101B', 'rgba(148, 163, 184, 0.2)');
+  ctx.fillStyle = '#94A3B8'; ctx.font = '700 12px "Consolas", monospace';
+  ctx.fillText('1M CANDLESTICK + EMA(12) + VOLUME', 20, 102);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.08)'; ctx.lineWidth = 1;
+  for (let g = 0; g < 5; g++) {
+    const gy = 140 + g * 88;
+    ctx.beginPath(); ctx.moveTo(20, gy); ctx.lineTo(810, gy); ctx.stroke();
+  }
+
+  const nCandles = 38;
+  const cw = 770 / nCandles;
+  let val = 0.5;
+  const emaPts = [];
+  for (let i = 0; i < nCandles; i++) {
+    const phase = i * 0.45 + Math.floor(t * 1.5) * 0.15;
+    const open = val;
+    const delta = Math.sin(phase) * 0.09 + Math.cos(phase * 1.7) * 0.05;
+    const close = Math.max(0.15, Math.min(0.88, open + delta));
+    val = close;
+    const high = Math.min(0.95, Math.max(open, close) + 0.05);
+    const low  = Math.max(0.08, Math.min(open, close) - 0.05);
+
+    const cx = 32 + i * cw + cw * 0.4;
+    const yOpen = 510 - open * 360, yClose = 510 - close * 360;
+    const yHigh = 510 - high * 360, yLow = 510 - low * 360;
+    const up = close >= open;
+    const col = up ? '#10B981' : '#EF4444';
+
+    ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.moveTo(cx, yHigh); ctx.lineTo(cx, yLow); ctx.stroke();
+    ctx.fillStyle = col;
+    ctx.fillRect(cx - cw * 0.28, Math.min(yOpen, yClose), cw * 0.56, Math.max(3, Math.abs(yClose - yOpen)));
+    emaPts.push([cx, (yOpen + yClose) * 0.5 - 12]);
+  }
+  ctx.strokeStyle = '#F59E0B'; ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  emaPts.forEach((p, idx) => idx === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+  ctx.stroke();
+
+  // Right: Order Book
+  card(ctx, 848, 74, 376, 540, '#0B101B', 'rgba(148, 163, 184, 0.2)');
+  ctx.fillStyle = '#E2E8F0'; ctx.font = '700 13px "Consolas", monospace';
+  ctx.fillText('LIVE ORDER BOOK (DEPTH)', 868, 104);
+  for (let i = 0; i < 9; i++) {
+    const y = 132 + i * 24;
+    const sz = 0.25 + 0.65 * Math.abs(Math.sin(t * 2.2 + i * 0.9));
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.18)';
+    ctx.fillRect(1204 - sz * 330, y - 14, sz * 330, 18);
+    ctx.fillStyle = '#F87171'; ctx.font = '600 12px "Consolas", monospace';
+    ctx.fillText((98510 - i * 8).toFixed(1), 870, y);
+    ctx.fillStyle = '#CBD5E1';
+    ctx.fillText((sz * 12.4).toFixed(3), 1130, y);
+  }
+  ctx.fillStyle = '#10B981'; ctx.font = '700 15px "Consolas", monospace';
+  ctx.fillText(`SPREAD: $1.50  |  MARK: $${price}`, 870, 368);
+  for (let i = 0; i < 9; i++) {
+    const y = 398 + i * 24;
+    const sz = 0.25 + 0.65 * Math.abs(Math.cos(t * 2.4 + i * 0.8));
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.18)';
+    ctx.fillRect(1204 - sz * 330, y - 14, sz * 330, 18);
+    ctx.fillStyle = '#34D399'; ctx.font = '600 12px "Consolas", monospace';
+    ctx.fillText((98418 - i * 8).toFixed(1), 870, y);
+    ctx.fillStyle = '#CBD5E1';
+    ctx.fillText((sz * 14.1).toFixed(3), 1130, y);
+  }
+}
+
+// --- 03: EV / SPATIAL COCKPIT OS ---
+function drawCockpitOS(ctx, t) {
+  ctx.clearRect(0, 0, CW, CH);
+  card(ctx, 0, 0, CW, 56, 'rgba(15, 23, 42, 0.85)', 'rgba(56, 189, 248, 0.22)');
+  ctx.fillStyle = '#F8FAFC'; ctx.font = '700 16px "Segoe UI", sans-serif';
+  ctx.fillText('AETHER OS // AUTONOMOUS EV COCKPIT', 22, 34);
+  ctx.fillStyle = '#00E5FF'; ctx.font = '700 13px "Consolas", monospace';
+  ctx.fillText('DRIVE MODE: SPORT+   |   RANGE: 462 KM   |   84% SOC', CW - 440, 34);
+
+  // Left: Speed Arc Gauge
+  card(ctx, 0, 74, 380, 540, 'rgba(15, 23, 42, 0.72)', 'rgba(56, 189, 248, 0.2)');
+  const spd = Math.round(92 + Math.sin(t * 1.4) * 28);
+  const cx = 190, cy = 280, rad = 128;
+  ctx.strokeStyle = '#1E293B'; ctx.lineWidth = 16; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(cx, cy, rad, 0.75 * Math.PI, 2.25 * Math.PI); ctx.stroke();
+  const frac = Math.min(1, spd / 160);
+  ctx.strokeStyle = '#00E5FF';
+  ctx.beginPath(); ctx.arc(cx, cy, rad, 0.75 * Math.PI, (0.75 + 1.5 * frac) * Math.PI); ctx.stroke();
+
+  ctx.fillStyle = '#F8FAFC'; ctx.font = '700 68px "Consolas", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${spd}`, cx, cy + 16);
+  ctx.fillStyle = '#94A3B8'; ctx.font = '700 15px "Consolas", monospace';
+  ctx.fillText('KM / H', cx, cy + 48);
+  ctx.textAlign = 'left';
+
+  ctx.fillStyle = '#00FF9D'; ctx.font = '700 14px "Consolas", monospace';
+  ctx.fillText(`POWER OUTPUT: ${Math.round(spd * 2.1)} kW`, 80, 500);
+  ctx.fillStyle = '#94A3B8';
+  ctx.fillText('REGEN BRAKING: ACTIVE', 80, 535);
+
+  // Center: ADAS 3D Lane Perception
+  card(ctx, 398, 74, 440, 540, 'rgba(10, 15, 28, 0.85)', 'rgba(0, 229, 255, 0.28)');
+  ctx.fillStyle = '#00E5FF'; ctx.font = '700 13px "Consolas", monospace';
+  ctx.fillText('FSD SPATIAL PERCEPTION', 420, 106);
+  const rx = 618;
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.55)'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(rx - 150, 580); ctx.lineTo(rx - 38, 170); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(rx + 150, 580); ctx.lineTo(rx + 38, 170); ctx.stroke();
+  // Animated dashed center path
+  for (let d = 0; d < 6; d++) {
+    const p = (d / 6 + (t * 0.8) % (1 / 6));
+    const y0 = 180 + p * 380, y1 = y0 + 26;
+    ctx.strokeStyle = 'rgba(0, 255, 157, 0.7)'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(rx, y0); ctx.lineTo(rx, Math.min(580, y1)); ctx.stroke();
+  }
+  // Ego vehicle
+  card(ctx, rx - 32, 460, 64, 96, '#0F172A', '#00FF9D', 12);
+  ctx.fillStyle = '#00FF9D'; ctx.font = '700 11px "Consolas", monospace';
+  ctx.fillText('EGO', rx - 11, 514);
+
+  // Right: Climate & Battery
+  card(ctx, 856, 74, 368, 260, 'rgba(15, 23, 42, 0.72)', 'rgba(56, 189, 248, 0.2)');
+  ctx.fillStyle = '#94A3B8'; ctx.font = '700 13px "Consolas", monospace';
+  ctx.fillText('BATTERY THERMAL & SOC', 878, 106);
+  ctx.fillStyle = '#00FF9D'; ctx.font = '700 44px "Consolas", monospace';
+  ctx.fillText('84%', 878, 168);
+  ctx.fillStyle = '#CBD5E1'; ctx.font = '600 15px "Segoe UI", sans-serif';
+  ctx.fillText('462 km estimated range', 878, 204);
+  ctx.fillText('Pack Temp: 28.4°C (Optimal)', 878, 234);
+
+  card(ctx, 856, 354, 368, 260, 'rgba(15, 23, 42, 0.72)', 'rgba(56, 189, 248, 0.2)');
+  ctx.fillStyle = '#94A3B8'; ctx.font = '700 13px "Consolas", monospace';
+  ctx.fillText('CLIMATE & ACOUSTICS', 878, 386);
+  ctx.fillStyle = '#F8FAFC'; ctx.font = '700 36px "Consolas", monospace';
+  ctx.fillText('21.5°C  |  AUTO', 878, 444);
+  for (let b = 0; b < 18; b++) {
+    const bh = 14 + Math.abs(Math.sin(t * 5 + b * 0.6)) * 42;
+    ctx.fillStyle = '#38BDF8';
+    ctx.fillRect(880 + b * 17, 570 - bh, 10, bh);
+  }
+}
+
+// --- 04: SAAS REVENUE ANALYTICS (CLEAN LIGHT MODE) ---
+function drawSaaSAnalytics(ctx, t) {
+  ctx.clearRect(0, 0, CW, CH);
+  const lt = Math.max(0, t - 18.0);
+  const ease = Math.min(1, lt / 1.4);
+
+  // Header
+  card(ctx, 0, 0, CW, 58, '#FFFFFF', '#E2E8F0');
+  ctx.fillStyle = '#0F172A'; ctx.font = '700 17px "Segoe UI", sans-serif';
+  ctx.fillText('STRIPE-STYLE SAAS REVENUE & COHORTS', 22, 35);
+  ctx.fillStyle = '#4F46E5'; ctx.font = '700 13px "Consolas", monospace';
+  ctx.fillText('Q4 LIVE REPORT   |   NET RETENTION: 128%', CW - 340, 34);
+
+  // 4 KPI Cards
+  const kpis = [
+    ['MONTHLY RECURRING REV', `$${Math.round(482910 * (0.85 + 0.15 * ease)).toLocaleString()}`, '+18.4%', '#4F46E5'],
+    ['ACTIVE ENTERPRISE', `${Math.round(3842 * (0.85 + 0.15 * ease)).toLocaleString()}`, '+12.1%', '#0EA5E9'],
+    ['NET DOLLAR RETENTION', '128.4%', '+4.2%', '#10B981'],
+    ['GROSS CHURN RATE', '0.88%', '-0.3%', '#10B981'],
+  ];
+  kpis.forEach((k, i) => {
+    const kx = i * 310;
+    card(ctx, kx, 74, 294, 118, '#FFFFFF', '#E2E8F0');
+    ctx.fillStyle = '#64748B'; ctx.font = '700 11px "Consolas", monospace';
+    ctx.fillText(k[0], kx + 18, 102);
+    ctx.fillStyle = '#0F172A'; ctx.font = '700 28px "Consolas", monospace';
+    ctx.fillText(k[1], kx + 18, 144);
+    ctx.fillStyle = k[3]; ctx.font = '700 12px "Consolas", monospace';
+    ctx.fillText(k[2] + ' vs last month', kx + 18, 172);
+  });
+
+  // Left: ARR Area Chart
+  card(ctx, 0, 210, 700, 404, '#FFFFFF', '#E2E8F0');
+  ctx.fillStyle = '#0F172A'; ctx.font = '700 14px "Segoe UI", sans-serif';
+  ctx.fillText('ANNUALIZED RUN RATE (ARR GROWTH)', 22, 242);
+  const gx = 32, gy = 270, gw = 636, gh = 300;
+  ctx.beginPath();
+  for (let i = 0; i <= 24; i++) {
+    const u = i / 24;
+    const val = (0.18 + 0.72 * Math.pow(u, 1.35) + 0.04 * Math.sin(u * 10 + t)) * ease;
+    const px = gx + u * gw, py = gy + gh - val * gh;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.strokeStyle = '#4F46E5'; ctx.lineWidth = 3.5; ctx.stroke();
+  ctx.lineTo(gx + gw, gy + gh); ctx.lineTo(gx, gy + gh); ctx.closePath();
+  ctx.fillStyle = 'rgba(79, 70, 229, 0.12)'; ctx.fill();
+
+  // Right: Cohort Retention Heatmap
+  card(ctx, 718, 210, 506, 404, '#FFFFFF', '#E2E8F0');
+  ctx.fillStyle = '#0F172A'; ctx.font = '700 14px "Segoe UI", sans-serif';
+  ctx.fillText('COHORT RETENTION HEATMAP', 740, 242);
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8 - r; c++) {
+      const wave = Math.max(0, Math.min(1, ease * 2.2 - (r + c) * 0.08));
+      const ret = Math.max(0.55, 1.0 - c * 0.055);
+      ctx.fillStyle = `rgba(79, 70, 229, ${(ret * 0.85 * wave).toFixed(2)})`;
+      ctx.beginPath();
+      ctx.roundRect(746 + c * 56, 276 + r * 38, 48, 30, 5);
+      ctx.fill();
+    }
+  }
+}
+
+window.stepDashboards = (dt) => {
+  simT += dt;
+  const activeIdx = manualTab !== null ? manualTab : Math.floor((simT % 24.0) / 6.0);
+  const phasePct = manualTab !== null ? 100 : ((simT % 6.0) / 6.0) * 100;
+  updateActiveUI(activeIdx, phasePct);
+
+  if (activeIdx === 0) drawAgentControl(ctxs[0], simT);
+  else if (activeIdx === 1) drawQuantTerminal(ctxs[1], simT);
+  else if (activeIdx === 2) drawCockpitOS(ctxs[2], simT);
+  else drawSaaSAnalytics(ctxs[3], simT);
+};
+
+drawAgentControl(ctxs[0], 0);
+if (!window.__RECORDING__) {
+  manualTab = 0;
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.addControl('▶ 自動切替', (btn) => {
+      if (manualTab === null) {
+        manualTab = Math.floor((simT % 24.0) / 6.0);
+        btn.classList.remove('active');
+      } else {
+        manualTab = null;
+        btn.classList.add('active');
+      }
+    });
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    window.stepDashboards(dt);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+<script src="../demo-shell.js"></script>
+</body>
+</html>

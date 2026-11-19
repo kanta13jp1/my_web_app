@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #070B14; }
+  canvas { display: block; width: 1920px; height: 1080px; }
+</style>
+</head>
+<body data-stage="1920x1080" data-sound="algo">
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 1920, H = 1080;
+const FONT = '"Meiryo", "Yu Gothic UI", "Hiragino Kaku Gothic ProN", sans-serif';
+const MONO = '"Consolas", "Courier New", monospace';
+
+let TIMELINE = {
+  total: 48,
+  scenes: [
+    { id: 'hook', index: 0, title: '次に来る言葉をあてるゲーム', subtitle: 'LLMの本質は「文脈から最も自然な次のトークンを予測する」こと。', start: 0, end: 8 },
+    { id: 'tokenize', index: 1, title: '01 / 文章をトークンとベクトルに変換', subtitle: '入力テキストを細かい単位に分割し、意味を表す数値ベクトルへ変換します。', start: 8, end: 16 },
+    { id: 'attention', index: 2, title: '02 / Self-Attention で文脈を関連付け', subtitle: '文章内のすべての単語同士の関連度を同時に計算し、重要な語に注目します。', start: 16, end: 24 },
+    { id: 'layers', index: 3, title: '03 / 多層Transformerブロックで深い理解', subtitle: '何十層ものAttentionとFFNを通過するほど、論理・意図・知識が統合されます。', start: 24, end: 32 },
+    { id: 'predict', index: 4, title: '04 / 候補トークンの確率分布を出力', subtitle: '全語彙に対する確率を計算し、最も確からしい次の1語を選択・生成します。', start: 32, end: 40 },
+    { id: 'summary', index: 5, title: 'まとめ：1語ずつの連鎖が高度な知能を生む', subtitle: 'この予測サイクルを超高速で繰り返すことで、自然な対話やコード生成が実現します。', start: 40, end: 48 },
+  ],
+};
+window.setTimeline = (tl) => { TIMELINE = tl; };
+
+const clamp = (x, a=0, b=1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = (t) => 1 - Math.pow(1 - clamp(t), 3);
+const easeInOut = (t) => {
+  t = clamp(t);
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+};
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawGlassCard(x, y, w, h, r=20, borderCol='rgba(100,210,255,0.28)', bgCol='rgba(15,24,44,0.78)') {
+  ctx.save();
+  roundRect(x, y, w, h, r);
+  ctx.fillStyle = bgCol;
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = borderCol;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawBackground(t) {
+  const grad = ctx.createRadialGradient(W*0.5, H*0.42, 80, W*0.5, H*0.5, 1150);
+  grad.addColorStop(0, '#0F1B33');
+  grad.addColorStop(0.55, '#091020');
+  grad.addColorStop(1, '#050810');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle tech grid
+  ctx.save();
+  ctx.strokeStyle = 'rgba(80, 160, 255, 0.055)';
+  ctx.lineWidth = 1;
+  const step = 60;
+  const off = (t * 8) % step;
+  for (let x = 0; x <= W; x += step) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = off; y <= H; y += step) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Floating ambient particles
+  ctx.save();
+  for (let i = 0; i < 28; i++) {
+    const px = ((i * 173.7 + t * (12 + (i % 5) * 4)) % (W + 100)) - 50;
+    const py = ((i * 97.3 + Math.sin(t * 0.7 + i) * 35) % H);
+    const r = 1.5 + (i % 3) * 1.3;
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(0, 229, 255, 0.22)' : 'rgba(167, 139, 250, 0.20)';
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawHeader(scene, idx, t) {
+  // Top badge
+  drawGlassCard(64, 42, 330, 48, 24, 'rgba(0,229,255,0.45)', 'rgba(0,229,255,0.10)');
+  ctx.fillStyle = '#00E5FF';
+  ctx.font = `700 22px ${FONT}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('1分でわかる AI の仕組み', 64 + 165, 66);
+
+  // Step pills on top right
+  const steps = ['01 トークン', '02 Attention', '03 多層推論', '04 確率予測'];
+  const activeStep = idx === 0 ? -1 : idx <= 4 ? idx - 1 : 4;
+  let sx = W - 64 - steps.length * 188;
+  steps.forEach((label, sIdx) => {
+    const isAct = sIdx === activeStep;
+    const isDone = sIdx < activeStep;
+    const bg = isAct ? 'rgba(0,229,255,0.22)' : isDone ? 'rgba(52,211,153,0.15)' : 'rgba(255,255,255,0.04)';
+    const bd = isAct ? '#00E5FF' : isDone ? 'rgba(52,211,153,0.6)' : 'rgba(255,255,255,0.12)';
+    drawGlassCard(sx, 44, 174, 44, 22, bd, bg);
+    ctx.fillStyle = isAct ? '#FFFFFF' : isDone ? '#6EE7B7' : '#64748B';
+    ctx.font = `700 18px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, sx + 87, 66);
+    sx += 188;
+  });
+
+  // Scene Title
+  ctx.save();
+  ctx.fillStyle = '#F8FAFC';
+  ctx.font = `800 44px ${FONT}`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(scene.title, 68, 118);
+  ctx.restore();
+}
+
+function drawSubtitle(scene, t) {
+  const localT = t - scene.start;
+  const alpha = clamp(localT / 0.25);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  const boxW = 1480, boxH = 74;
+  const bx = (W - boxW) / 2, by = H - 112;
+  drawGlassCard(bx, by, boxW, boxH, 37, 'rgba(255,255,255,0.20)', 'rgba(6, 10, 20, 0.88)');
+  ctx.fillStyle = '#F8FAFC';
+  ctx.font = `700 30px ${FONT}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(scene.subtitle, W / 2, by + boxH / 2 + 1);
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------------------
+// Scene 0: Hook - Next Token Prediction Game
+// ---------------------------------------------------------------------------
+function drawSceneHook(lt, dur) {
+  const p = clamp(lt / dur);
+  const words = ['日本の', '首都', 'は'];
+  const startX = 210, cy = 460;
+
+  // Input prompt label
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = `700 26px ${FONT}`;
+  ctx.textAlign = 'left';
+  ctx.fillText('入力プロンプト', startX, cy - 110);
+
+  words.forEach((w, i) => {
+    const enter = easeOut((lt - i * 0.25) / 0.45);
+    const x = startX + i * 215;
+    const y = cy - 45 + (1 - enter) * 28;
+    ctx.save();
+    ctx.globalAlpha = enter;
+    drawGlassCard(x, y, 195, 96, 18, 'rgba(0,229,255,0.55)', 'rgba(14,32,62,0.88)');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `800 40px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(w, x + 97.5, y + 48);
+    ctx.restore();
+  });
+
+  // Arrow
+  const arrAlpha = easeOut((lt - 1.1) / 0.5);
+  ctx.save();
+  ctx.globalAlpha = arrAlpha;
+  ctx.strokeStyle = '#00E5FF';
+  ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(860, cy + 3); ctx.lineTo(960, cy + 3); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(942, cy - 12); ctx.lineTo(964, cy + 3); ctx.lineTo(942, cy + 18); ctx.stroke();
+  ctx.restore();
+
+  // Prediction Box "?" -> candidates cycling
+  const boxEnter = easeOut((lt - 1.4) / 0.5);
+  ctx.save();
+  ctx.globalAlpha = boxEnter;
+  const qx = 990, qy = cy - 55, qw = 260, qh = 116;
+  const glow = 0.5 + 0.5 * Math.sin(lt * 5);
+  drawGlassCard(qx, qy, qw, qh, 22, `rgba(250, 204, 21, ${0.55 + 0.45*glow})`, 'rgba(40, 32, 12, 0.82)');
+
+  const cands = ['東京', '京都', '大阪', '名古屋', '札幌'];
+  const cIdx = lt > 6.0 ? 0 : Math.floor(lt * 3.5) % cands.length;
+  const wordShown = lt < 2.6 ? '？' : cands[cIdx];
+  ctx.fillStyle = lt > 6.0 ? '#FDE047' : '#FBBF24';
+  ctx.font = `900 48px ${FONT}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(wordShown, qx + qw/2, qy + qh/2);
+  ctx.restore();
+
+  // Right side: Live probability bars
+  const barAlpha = easeOut((lt - 2.6) / 0.6);
+  ctx.save();
+  ctx.globalAlpha = barAlpha;
+  drawGlassCard(1320, 270, 480, 410, 24, 'rgba(148,163,184,0.28)', 'rgba(12,20,38,0.85)');
+  ctx.fillStyle = '#CBD5E1';
+  ctx.font = `700 24px ${FONT}`;
+  ctx.textAlign = 'left';
+  ctx.fillText('AIの予測確率（次の1語）', 1355, 315);
+
+  const items = [
+    { label: '東京', p: 0.89, col: '#00E5FF' },
+    { label: '京都', p: 0.06, col: '#818CF8' },
+    { label: '大阪', p: 0.03, col: '#A78BFA' },
+    { label: 'その他', p: 0.02, col: '#475569' },
+  ];
+  items.forEach((it, k) => {
+    const yy = 375 + k * 72;
+    const fillProg = easeOut((lt - 3.0 - k * 0.25) / 0.8);
+    ctx.fillStyle = '#F8FAFC';
+    ctx.font = `700 24px ${FONT}`;
+    ctx.textAlign = 'left';
+    ctx.fillText(it.label, 1355, yy + 16);
+
+    ctx.save();
+    roundRect(1450, yy, 240, 28, 14);
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fill();
+    ctx.clip();
+    ctx.fillStyle = it.col;
+    ctx.fillRect(1450, yy, 240 * it.p * fillProg, 28);
+    ctx.restore();
+
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = `700 22px ${MONO}`;
+    ctx.textAlign = 'right';
+    ctx.fillText(`${Math.round(it.p * 100 * fillProg)}%`, 1765, yy + 21);
+  });
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------------------
+// Scene 1: Tokenization & Embedding Space
+// ---------------------------------------------------------------------------
+function drawSceneTokenize(lt, dur) {
+  // Left: Token split
+  drawGlassCard(70, 230, 740, 620, 24, 'rgba(0,229,255,0.25)', 'rgba(12,20,38,0.82)');
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = `700 26px ${FONT}`;
+  ctx.textAlign = 'left';
+  ctx.fillText('① 文章をトークンIDに分解', 110, 280);
+
+  const tokens = [
+    { text: '日本の', id: '2418', col: '#00E5FF', vec: '[ 0.82, -0.31,  0.45 ]' },
+    { text: '首都',   id: '8902', col: '#FBBF24', vec: '[ 0.91,  0.64, -0.12 ]' },
+    { text: 'は',     id: '0014', col: '#A78BFA', vec: '[-0.15,  0.08,  0.77 ]' },
+  ];
+
+  tokens.forEach((tk, i) => {
+    const enter = easeOut((lt - 0.5 - i * 0.45) / 0.5);
+    const y = 345 + i * 155;
+    ctx.save();
+    ctx.globalAlpha = enter;
+    drawGlassCard(110, y, 220, 108, 16, tk.col, 'rgba(20,32,58,0.9)');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `800 34px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(tk.text, 220, y + 40);
+    ctx.fillStyle = tk.col;
+    ctx.font = `700 18px ${MONO}`;
+    ctx.fillText(`ID: ${tk.id}`, 220, y + 82);
+
+    // Arrow to vector
+    const vEnter = easeOut((lt - 2.2 - i * 0.4) / 0.5);
+    ctx.globalAlpha = vEnter;
+    ctx.strokeStyle = tk.col;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(345, y + 54); ctx.lineTo(415, y + 54); ctx.stroke();
+
+    drawGlassCard(430, y + 12, 340, 84, 14, 'rgba(255,255,255,0.18)', 'rgba(8,14,28,0.92)');
+    ctx.fillStyle = '#E2E8F0';
+    ctx.font = `700 22px ${MONO}`;
+    ctx.textAlign = 'center';
+    ctx.fillText(tk.vec, 600, y + 54);
+    ctx.restore();
+  });
+
+  // Right: Semantic 2D Embedding Map
+  const mapEnter = easeOut((lt - 2.8) / 0.8);
+  ctx.save();
+  ctx.globalAlpha = mapEnter;
+  const mx = 860, my = 230, mw = 980, mh = 620;
+  drawGlassCard(mx, my, mw, mh, 24, 'rgba(167,139,250,0.35)', 'rgba(10,16,32,0.88)');
+  ctx.fillStyle = '#CBD5E1';
+  ctx.font = `700 26px ${FONT}`;
+  ctx.textAlign = 'left';
+  ctx.fillText('② 意味が近い言葉が近くに集まる「意味の空間」', mx + 40, my + 48);
+
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(mx + 60, my + mh/2 + 20); ctx.lineTo(mx + mw - 60, my + mh/2 + 20); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mx + mw/2, my + 100); ctx.lineTo(mx + mw/2, my + mh - 50); ctx.stroke();
+
+  // Semantic clusters
+  const pts = [
+    { x: 0.72, y: 0.34, label: '東京', col: '#00E5FF', r: 13 },
+    { x: 0.78, y: 0.42, label: '大阪', col: '#38BDF8', r: 10 },
+    { x: 0.65, y: 0.28, label: '首都', col: '#FBBF24', r: 14 },
+    { x: 0.82, y: 0.26, label: 'パリ', col: '#38BDF8', r: 10 },
+    { x: 0.25, y: 0.35, label: '王様', col: '#F472B6', r: 12 },
+    { x: 0.32, y: 0.43, label: '女王', col: '#F472B6', r: 12 },
+    { x: 0.36, y: 0.74, label: 'りんご', col: '#34D399', r: 11 },
+    { x: 0.44, y: 0.78, label: 'みかん', col: '#34D399', r: 10 },
+  ];
+
+  // Cluster dashed circles
+  ctx.setLineDash([8, 6]);
+  ctx.strokeStyle = 'rgba(0,229,255,0.35)';
+  ctx.beginPath(); ctx.arc(mx + mw*0.74, my + mh*0.34, 130, 0, Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  pts.forEach((pt, idx) => {
+    const pAnim = easeOut((lt - 3.3 - idx * 0.2) / 0.5);
+    const px = mx + mw * pt.x;
+    const py = my + mh * pt.y;
+    ctx.save();
+    ctx.globalAlpha = mapEnter * pAnim;
+    ctx.fillStyle = pt.col;
+    ctx.shadowColor = pt.col;
+    ctx.shadowBlur = 18;
+    ctx.beginPath(); ctx.arc(px, py, pt.r, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#F8FAFC';
+    ctx.font = `700 24px ${FONT}`;
+    ctx.textAlign = 'left';
+    ctx.fillText(pt.label, px + 18, py + 7);
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------------------
+// Scene 2: Attention Mechanism
+// ---------------------------------------------------------------------------
+function drawSceneAttention(lt, dur) {
+  const words = [
+    { text: '赤い',   w: 0.14 },
+    { text: 'りんご', w: 0.86 },
+    { text: 'が',     w: 0.04 },
+    { text: '机の',   w: 0.08 },
+    { text: '上に',   w: 0.06 },
+    { text: 'あり、', w: 0.03 },
+    { text: 'それ',   w: 1.00, isQuery: true },
+    { text: 'を',     w: 0.05 },
+    { text: '食べた', w: 0.22 },
+  ];
+
+  const startX = 115, gap = 192, baseY = 640;
+
+  // Draw Attention Curves first (behind chips)
+  const qx = startX + 6 * gap + 78;
+  const qy = baseY;
+
+  const attProg = easeOut((lt - 2.2) / 1.8);
+  words.forEach((wd, i) => {
+    if (wd.isQuery) return;
+    const tx = startX + i * gap + 78;
+    const ty = baseY;
+    const dist = Math.abs(6 - i);
+    const ctrlY = baseY - 110 - dist * 48;
+
+    ctx.save();
+    ctx.globalAlpha = attProg;
+    const isStrong = wd.w > 0.5;
+    ctx.strokeStyle = isStrong ? '#00E5FF' : `rgba(148, 163, 184, ${0.18 + wd.w * 0.8})`;
+    ctx.lineWidth = isStrong ? 10 : Math.max(1.5, wd.w * 12);
+    if (isStrong) {
+      ctx.shadowColor = '#00E5FF';
+      ctx.shadowBlur = 24;
+    }
+    ctx.beginPath();
+    ctx.moveTo(qx, qy);
+    ctx.quadraticCurveTo((qx + tx) / 2, ctrlY, tx, ty);
+    ctx.stroke();
+
+    // Weight pill on strong links
+    if (wd.w >= 0.14 && attProg > 0.5) {
+      const mx = (qx + tx) / 2;
+      const my = 0.25 * qy + 0.5 * ctrlY + 0.25 * ty;
+      const bw = isStrong ? 120 : 86;
+      drawGlassCard(mx - bw/2, my - 22, bw, 44, 22, isStrong ? '#00E5FF' : 'rgba(148,163,184,0.4)', '#0A1224');
+      ctx.fillStyle = isStrong ? '#00E5FF' : '#CBD5E1';
+      ctx.font = `800 ${isStrong ? 24 : 18}px ${MONO}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(wd.w.toFixed(2), mx, my);
+    }
+    ctx.restore();
+  });
+
+  // Draw Word Chips
+  words.forEach((wd, i) => {
+    const enter = easeOut((lt - i * 0.12) / 0.4);
+    const x = startX + i * gap;
+    const y = baseY - 45 + (1 - enter) * 20;
+    const isStrong = wd.w > 0.5 && lt > 2.4;
+    const bd = wd.isQuery ? '#FBBF24' : isStrong ? '#00E5FF' : 'rgba(255,255,255,0.22)';
+    const bg = wd.isQuery ? 'rgba(60,42,10,0.92)' : isStrong ? 'rgba(6,52,74,0.94)' : 'rgba(15,24,44,0.88)';
+
+    ctx.save();
+    ctx.globalAlpha = enter;
+    drawGlassCard(x, y, 156, 90, 16, bd, bg);
+    ctx.fillStyle = wd.isQuery ? '#FDE047' : isStrong ? '#FFFFFF' : '#CBD5E1';
+    ctx.font = `800 30px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(wd.text, x + 78, y + 45);
+    ctx.restore();
+  });
+
+  // Callout Banner
+  if (lt > 4.2) {
+    const cAlpha = easeOut((lt - 4.2) / 0.6);
+    ctx.save();
+    ctx.globalAlpha = cAlpha;
+    drawGlassCard(540, 775, 840, 74, 18, 'rgba(0,229,255,0.55)', 'rgba(6,34,54,0.85)');
+    ctx.fillStyle = '#E0F2FE';
+    ctx.font = `700 28px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('「それ」＝「りんご」を文脈から自動特定（重み 0.86）', W/2, 812);
+    ctx.restore();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Scene 3: Multi-Layer Transformer Network
+// ---------------------------------------------------------------------------
+function drawSceneLayers(lt, dur) {
+  const layers = 5;
+  const nodesPerLayer = 6;
+  const lxStart = 280, lxStep = 335;
+  const lyStart = 270, lyStep = 112;
+
+  const pulseX = lxStart + ((lt * 0.45) % 1.25) * (layers - 1) * lxStep;
+
+  // Connections
+  for (let l = 0; l < layers - 1; l++) {
+    const x1 = lxStart + l * lxStep;
+    const x2 = lxStart + (l + 1) * lxStep;
+    const layerReveal = easeOut((lt - l * 0.35) / 0.5);
+    for (let i = 0; i < nodesPerLayer; i++) {
+      const y1 = lyStart + i * lyStep;
+      for (let j = 0; j < nodesPerLayer; j++) {
+        const y2 = lyStart + j * lyStep;
+        const distPulse = Math.abs((x1 + x2) * 0.5 - pulseX);
+        const boost = Math.exp(-Math.pow(distPulse / 180, 2));
+        ctx.save();
+        ctx.globalAlpha = layerReveal;
+        ctx.strokeStyle = `rgba(0, 229, 255, ${0.08 + boost * 0.52})`;
+        ctx.lineWidth = 1.5 + boost * 3.0;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+
+  // Nodes & Layer labels
+  for (let l = 0; l < layers; l++) {
+    const x = lxStart + l * lxStep;
+    const enter = easeOut((lt - l * 0.3) / 0.45);
+    const distPulse = Math.abs(x - pulseX);
+    const boost = Math.exp(-Math.pow(distPulse / 140, 2));
+
+    ctx.save();
+    ctx.globalAlpha = enter;
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = `700 22px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.fillText(l === 0 ? '入力層' : l === layers - 1 ? '出力表現' : `Layer ${l * 12}`, x, 215);
+
+    for (let i = 0; i < nodesPerLayer; i++) {
+      const y = lyStart + i * lyStep;
+      ctx.fillStyle = boost > 0.4 ? '#00E5FF' : '#1E3A5F';
+      ctx.strokeStyle = l === layers - 1 ? '#FBBF24' : '#38BDF8';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = '#00E5FF';
+      ctx.shadowBlur = boost * 24;
+      ctx.beginPath(); ctx.arc(x, y, 22 + boost * 5, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+    ctx.restore();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Scene 4: Probability Prediction & Autoregressive Loop
+// ---------------------------------------------------------------------------
+function drawScenePredict(lt, dur) {
+  // Left: Probability Bar Chart
+  drawGlassCard(80, 225, 860, 620, 24, 'rgba(0,229,255,0.35)', 'rgba(12,20,38,0.85)');
+  ctx.fillStyle = '#CBD5E1';
+  ctx.font = `700 28px ${FONT}`;
+  ctx.textAlign = 'left';
+  ctx.fillText('次の1語の確率分布（Softmax出力）', 125, 280);
+
+  const cands = [
+    { w: '東京', p: 0.894, col: '#00E5FF' },
+    { w: '京都', p: 0.061, col: '#818CF8' },
+    { w: '大阪', p: 0.028, col: '#A78BFA' },
+    { w: '横浜', p: 0.017, col: '#475569' },
+  ];
+
+  cands.forEach((c, idx) => {
+    const yy = 355 + idx * 112;
+    const prog = easeOut((lt - 0.5 - idx * 0.2) / 0.9);
+    const isTop = idx === 0;
+    ctx.fillStyle = isTop ? '#FFFFFF' : '#CBD5E1';
+    ctx.font = `800 32px ${FONT}`;
+    ctx.textAlign = 'left';
+    ctx.fillText(c.w, 125, yy + 32);
+
+    ctx.save();
+    roundRect(245, yy + 6, 480, 40, 20);
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fill();
+    ctx.clip();
+    ctx.fillStyle = c.col;
+    if (isTop) { ctx.shadowColor = '#00E5FF'; ctx.shadowBlur = 16; }
+    ctx.fillRect(245, yy + 6, 480 * c.p * prog, 40);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    ctx.fillStyle = isTop ? '#00E5FF' : '#94A3B8';
+    ctx.font = `800 26px ${MONO}`;
+    ctx.textAlign = 'right';
+    ctx.fillText(`${(c.p * 100 * prog).toFixed(1)}%`, 875, yy + 35);
+  });
+
+  // Right: Output Assembly & Autoregressive Loop
+  const rEnter = easeOut((lt - 2.2) / 0.7);
+  ctx.save();
+  ctx.globalAlpha = rEnter;
+  drawGlassCard(1000, 225, 840, 620, 24, 'rgba(250,204,21,0.35)', 'rgba(12,20,38,0.85)');
+  ctx.fillStyle = '#CBD5E1';
+  ctx.font = `700 28px ${FONT}`;
+  ctx.textAlign = 'left';
+  ctx.fillText('出力文に繋げて、次の予測へループ', 1045, 280);
+
+  // Generated text stream
+  const showTokyo = lt > 3.2;
+  const showDesu = lt > 5.8;
+  drawGlassCard(1050, 380, 740, 110, 18, 'rgba(255,255,255,0.2)', 'rgba(8,14,28,0.92)');
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.font = `800 40px ${FONT}`;
+  ctx.fillStyle = '#E2E8F0';
+  ctx.fillText('日本の首都は', 1090, 435);
+
+  if (showTokyo) {
+    const tPop = easeOut((lt - 3.2) / 0.4);
+    ctx.save();
+    ctx.globalAlpha = tPop;
+    ctx.fillStyle = '#00E5FF';
+    ctx.fillText(' 東京', 1355, 435);
+    ctx.restore();
+  }
+  if (showDesu) {
+    const dPop = easeOut((lt - 5.8) / 0.4);
+    ctx.save();
+    ctx.globalAlpha = dPop;
+    ctx.fillStyle = '#FDE047';
+    ctx.fillText(' です。', 1475, 435);
+    ctx.restore();
+  }
+
+  // Loop arrow animation
+  const loopProg = clamp((lt - 3.8) / 1.6);
+  if (loopProg > 0) {
+    const startA = -Math.PI * 0.15;
+    const endA = startA + Math.PI * 1.35 * loopProg;
+    const cx = 1420, cy = 620, rad = 88;
+    ctx.strokeStyle = '#FBBF24';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, rad, startA, endA);
+    ctx.stroke();
+
+    // Arrowhead at endA
+    const ax = cx + rad * Math.cos(endA);
+    const ay = cy + rad * Math.sin(endA);
+    const tang = endA + Math.PI * 0.5;
+    ctx.fillStyle = '#FBBF24';
+    ctx.beginPath();
+    ctx.moveTo(ax + 14 * Math.cos(tang), ay + 14 * Math.sin(tang));
+    ctx.lineTo(ax + 10 * Math.cos(tang + 2.3), ay + 10 * Math.sin(tang + 2.3));
+    ctx.lineTo(ax + 10 * Math.cos(tang - 2.3), ay + 10 * Math.sin(tang - 2.3));
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#FDE047';
+    ctx.font = `700 24px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.fillText('自己回帰ループ（1語ずつ連鎖）', 1420, 755);
+  }
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------------------
+// Scene 5: Summary Card (Bookmark-worthy)
+// ---------------------------------------------------------------------------
+function drawSceneSummary(lt, dur) {
+  const cards = [
+    { num: '01', title: 'トークン化', desc: '文章を細かく分割し\n意味の座標へ変換', col: '#00E5FF' },
+    { num: '02', title: 'Attention', desc: '文脈の中で重要な\n単語同士を強く接続', col: '#38BDF8' },
+    { num: '03', title: '多層推論', desc: '何十層もの計算で\n文脈と意図を統合', col: '#A78BFA' },
+    { num: '04', title: '確率予測', desc: '次の1語を確率で選び\n連鎖的に文章を生成', col: '#FBBF24' },
+  ];
+
+  const cw = 390, ch = 460, gap = 46;
+  const startX = (W - (4 * cw + 3 * gap)) / 2;
+  const cy = 265;
+
+  cards.forEach((c, i) => {
+    const enter = easeOut((lt - i * 0.45) / 0.55);
+    const x = startX + i * (cw + gap);
+    const y = cy + (1 - enter) * 35;
+
+    ctx.save();
+    ctx.globalAlpha = enter;
+    drawGlassCard(x, y, cw, ch, 26, c.col, 'rgba(13,22,42,0.90)');
+
+    // Number pill
+    drawGlassCard(x + 34, y + 36, 86, 46, 23, c.col, 'rgba(255,255,255,0.06)');
+    ctx.fillStyle = c.col;
+    ctx.font = `800 24px ${MONO}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(c.num, x + 77, y + 59);
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `800 38px ${FONT}`;
+    ctx.textAlign = 'left';
+    ctx.fillText(c.title, x + 34, y + 145);
+
+    ctx.fillStyle = '#CBD5E1';
+    ctx.font = `600 27px ${FONT}`;
+    const lines = c.desc.split('\n');
+    lines.forEach((ln, li) => {
+      ctx.fillText(ln, x + 34, y + 235 + li * 48);
+    });
+
+    // Connector arrow to next card
+    if (i < 3) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = 4;
+      const ax1 = x + cw + 8, ax2 = x + cw + gap - 8, ay = y + ch / 2;
+      ctx.beginPath(); ctx.moveTo(ax1, ay); ctx.lineTo(ax2, ay); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ax2 - 12, ay - 10); ctx.lineTo(ax2, ay); ctx.lineTo(ax2 - 12, ay + 10); ctx.stroke();
+    }
+    ctx.restore();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Main Render Entry
+// ---------------------------------------------------------------------------
+window.renderAtTime = (t) => {
+  if (!TIMELINE) return;
+  drawBackground(t);
+
+  let curScene = TIMELINE.scenes[TIMELINE.scenes.length - 1];
+  for (const sc of TIMELINE.scenes) {
+    if (t >= sc.start && t <= sc.end) {
+      curScene = sc;
+      break;
+    }
+  }
+
+  const lt = Math.max(0, t - curScene.start);
+  const dur = Math.max(0.1, curScene.end - curScene.start);
+
+  drawHeader(curScene, curScene.index, t);
+
+  if (curScene.id === 'hook') drawSceneHook(lt, dur);
+  else if (curScene.id === 'tokenize') drawSceneTokenize(lt, dur);
+  else if (curScene.id === 'attention') drawSceneAttention(lt, dur);
+  else if (curScene.id === 'layers') drawSceneLayers(lt, dur);
+  else if (curScene.id === 'predict') drawScenePredict(lt, dur);
+  else if (curScene.id === 'summary') drawSceneSummary(lt, dur);
+
+  drawSubtitle(curScene, t);
+};
+
+if (!window.__RECORDING__) {
+  let simT = 0;
+  let paused = false;
+  const chBtns = [];
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    const labels = ['01 導入', '02 分割', '03 Attention', '04 多層', '05 予測', '06 まとめ'];
+    labels.forEach((lbl, idx) => {
+      chBtns.push(window.NeonShell.addControl(lbl, () => {
+        simT = TIMELINE.scenes[idx].start + 0.1;
+        paused = false;
+        pauseBtn?.classList.remove('active');
+        window.renderAtTime(simT);
+      }));
+    });
+    const pauseBtn = window.NeonShell.addControl('⏸ 一時停止', (btn) => {
+      paused = !paused;
+      btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+      btn.classList.toggle('active', paused);
+    });
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!paused) simT = (simT + dt) % (TIMELINE.total || 48);
+    window.renderAtTime(simT);
+    const activeIdx = Math.min(chBtns.length - 1, Math.floor(simT / 8));
+    chBtns.forEach((b, i) => b.classList.toggle('active', i === activeIdx));
+    requestAnimationFrame(loop);
+  }
+  window.renderAtTime(0);
+  requestAnimationFrame(loop);
+}
+</script>
+<script src="../demo-shell.js"></script>
+</body>
+</html>

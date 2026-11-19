@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>AEGIS ZERO // Playable 3D Orbital Boss Raid (Single HTML · Pure WebGL2)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+    background: #02050d;
+    font-family: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  }
+  .stage {
+    position: relative;
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+  }
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 1280px;
+    height: 720px;
+    display: block;
+  }
+  #hudCanvas {
+    pointer-events: none;
+  }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="shooter">
+<div class="stage">
+  <canvas id="glCanvas" width="1280" height="720"></canvas>
+  <canvas id="hudCanvas" width="1280" height="720"></canvas>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ===== DETERMINISTIC PRNG =====
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function() {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(420261119);
+
+  // ===== CANVAS & WEBGL2 INIT =====
+  const W = 1280, H = 720;
+  const glCanvas = document.getElementById('glCanvas');
+  const hudCanvas = document.getElementById('hudCanvas');
+  const ctx = hudCanvas.getContext('2d');
+  const gl = glCanvas.getContext('webgl2', {
+    antialias: true,
+    alpha: false,
+    preserveDrawingBuffer: true
+  });
+  if (!gl) {
+    console.error('WebGL2 unavailable');
+    return;
+  }
+
+  // ===== PURE MATH UTILITIES (ZERO LIBRARIES) =====
+  const clamp = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smoothstep = (e0, e1, x) => {
+    const t = clamp((x - e0) / (e1 - e0), 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+
+  function mat4Identity() {
+    return new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+  }
+  function mat4Perspective(fovy, aspect, near, far) {
+    const f = 1.0 / Math.tan(fovy * 0.5);
+    const nf = 1.0 / (near - far);
+    return new Float32Array([
+      f / aspect, 0, 0, 0,
+      0, f, 0, 0,
+      0, 0, (far + near) * nf, -1,
+      0, 0, 2 * far * near * nf, 0
+    ]);
+  }
+  function mat4LookAt(eye, center, up) {
+    let zx = eye[0] - center[0], zy = eye[1] - center[1], zz = eye[2] - center[2];
+    let len = Math.hypot(zx, zy, zz) || 1; zx /= len; zy /= len; zz /= len;
+    let xx = up[1]*zz - up[2]*zy, xy = up[2]*zx - up[0]*zz, xz = up[0]*zy - up[1]*zx;
+    len = Math.hypot(xx, xy, xz) || 1; xx /= len; xy /= len; xz /= len;
+    const yx = zy*xz - zz*xy, yy = zz*xx - zx*xz, yz = zx*xy - zy*xx;
+    return new Float32Array([
+      xx, yx, zx, 0,
+      xy, yy, zy, 0,
+      xz, yz, zz, 0,
+      -(xx*eye[0] + xy*eye[1] + xz*eye[2]),
+      -(yx*eye[0] + yy*eye[1] + yz*eye[2]),
+      -(zx*eye[0] + zy*eye[1] + zz*eye[2]),
+      1
+    ]);
+  }
+  function mat4Mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c = 0; c < 4; c++) {
+      for (let r = 0; r < 4; r++) {
+        o[c*4+r] = a[r]*b[c*4] + a[4+r]*b[c*4+1] + a[8+r]*b[c*4+2] + a[12+r]*b[c*4+3];
+      }
+    }
+    return o;
+  }
+  function mat4TRS(tx, ty, tz, rx, ry, rz, sx, sy, sz) {
+    const cx = Math.cos(rx), sxr = Math.sin(rx);
+    const cy = Math.cos(ry), syr = Math.sin(ry);
+    const cz = Math.cos(rz), szr = Math.sin(rz);
+    // R = Ry * Rx * Rz
+    const m00 = (cy*cz + syr*sxr*szr) * sx;
+    const m01 = (cx*szr) * sx;
+    const m02 = (-syr*cz + cy*sxr*szr) * sx;
+    const m10 = (-cy*szr + syr*sxr*cz) * sy;
+    const m11 = (cx*cz) * sy;
+    const m12 = (syr*szr + cy*sxr*cz) * sy;
+    const m20 = (syr*cx) * sz;
+    const m21 = (-sxr) * sz;
+    const m22 = (cy*cx) * sz;
+    return new Float32Array([
+      m00, m01, m02, 0,
+      m10, m11, m12, 0,
+      m20, m21, m22, 0,
+      tx,  ty,  tz,  1
+    ]);
+  }
+  function projectToScreen(vp, x, y, z) {
+    const cx = vp[0]*x + vp[4]*y + vp[8]*z + vp[12];
+    const cy = vp[1]*x + vp[5]*y + vp[9]*z + vp[13];
+    const cw = vp[3]*x + vp[7]*y + vp[11]*z + vp[15];
+    if (cw <= 0.05) return null;
+    return {
+      x: (cx / cw * 0.5 + 0.5) * W,
+      y: (0.5 - cy / cw * 0.5) * H,
+      depth: cw
+    };
+  }
+
+  // ===== SHADERS =====
+  function compileShader(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      console.error('Shader error:', gl.getShaderInfoLog(s));
+    }
+    return s;
+  }
+  function createProgram(vs, fs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compileShader(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, compileShader(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+      console.error('Link error:', gl.getProgramInfoLog(p));
+    }
+    return p;
+  }
+
+  // 1) Deep Space Nebula + Atmospheric Cyber-Planet Horizon Background Shader
+  const bgProg = createProgram(`#version 300 es
+    precision highp float;
+    const vec2 P[3] = vec2[3](vec2(-1.0,-1.0), vec2(3.0,-1.0), vec2(-1.0,3.0));
+    out vec2 vUv;
+    void main() {
+      vUv = P[gl_VertexID] * 0.5 + 0.5;
+      gl_Position = vec4(P[gl_VertexID], 0.999, 1.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec2 vUv;
+    uniform float uTime;
+    uniform float uFlash;
+    uniform vec2 uCamTilt;
+    out vec4 fragColor;
+
+    float hash(vec2 p) {
+      return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+    }
+    float noise(vec2 p) {
+      vec2 i = floor(p), f = fract(p);
+      f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(hash(i), hash(i + vec2(1,0)), f.x),
+                 mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), f.x), f.y);
+    }
+    float fbm(vec2 p) {
+      float v = 0.0, a = 0.5;
+      for (int i = 0; i < 4; i++) {
+        v += a * noise(p);
+        p = p * 2.05 + vec2(13.1, 7.7);
+        a *= 0.5;
+      }
+      return v;
+    }
+
+    void main() {
+      vec2 uv = vUv;
+      vec2 p = (uv - 0.5) * vec2(16.0/9.0, 1.0) + uCamTilt * 0.06;
+
+      // Deep midnight space gradient + faint cosmic nebula
+      vec3 col = mix(vec3(0.015, 0.028, 0.075), vec3(0.008, 0.014, 0.036), uv.y);
+      float neb1 = fbm(p * 1.9 + vec2(uTime * 0.018, -uTime * 0.012));
+      float neb2 = fbm(p * 3.1 - vec2(uTime * 0.025, 2.4));
+      col += vec3(0.04, 0.22, 0.42) * smoothstep(0.38, 0.85, neb1) * 0.52;
+      col += vec3(0.35, 0.05, 0.28) * smoothstep(0.45, 0.88, neb2) * 0.34;
+
+      // Curved glowing orbital planet along the lower horizon (photorealistic sci-fi atmosphere + orbital tech grid)
+      vec2 planetCenter = vec2(0.06 - uCamTilt.x * 0.08, -1.66 - uCamTilt.y * 0.06);
+      float planetR = 1.40;
+      float d = length(p - planetCenter) - planetR;
+      if (d < 0.0) {
+        vec2 rel = (p - planetCenter) / planetR;
+        // Spherical projection coordinates for silky cloud bands & thin orbital grid
+        float lat = asin(clamp(rel.y, -0.99, 0.99));
+        float lon = atan(rel.x, sqrt(max(0.01, 1.0 - dot(rel, rel)))) + uTime * 0.035;
+        vec2 sph = vec2(lon * 5.0, lat * 6.0);
+        float swirl = fbm(sph * 1.4 + vec2(fbm(sph * 2.2) * 0.8, 0.0));
+        float fineClouds = smoothstep(0.42, 0.82, swirl);
+        // Subtle crisp glowing orbital wireframe lines across dark hemisphere
+        float gLon = smoothstep(0.965, 0.995, abs(sin(lon * 28.0)));
+        float gLat = smoothstep(0.965, 0.995, abs(sin(lat * 24.0)));
+        float orbGrid = max(gLon, gLat) * smoothstep(-0.32, -0.02, d) * 0.34;
+        // Pinpoint glowing megacity clusters
+        float cityDots = smoothstep(0.84, 0.96, hash(floor(sph * 26.0))) * smoothstep(0.45, 0.75, swirl) * smoothstep(-0.24, -0.02, d);
+
+        vec3 pCol = vec3(0.012, 0.030, 0.082) + vec3(0.035, 0.11, 0.24) * fineClouds;
+        pCol += vec3(0.14, 0.72, 1.0) * orbGrid;
+        pCol += vec3(1.0, 0.76, 0.32) * cityDots * 0.95;
+        // Fresnel atmospheric limb glow inside edge
+        float limb = exp(d * 20.0);
+        pCol += vec3(0.16, 0.76, 1.0) * limb * 1.35;
+        col = pCol;
+      } else {
+        // Outer blue-cyan atmospheric corona halo
+        float halo = exp(-d * 14.5);
+        col += vec3(0.10, 0.65, 1.0) * halo * 0.88;
+        col += vec3(0.45, 0.90, 1.0) * exp(-d * 46.0) * 0.68;
+      }
+
+      // Subtle distant starlight dust
+      vec2 starCell = floor(p * 115.0);
+      float sh = hash(starCell);
+      if (sh > 0.992) {
+        vec2 f = fract(p * 115.0) - 0.5;
+        float tw = 0.65 + 0.35 * sin(uTime * 4.0 + sh * 100.0);
+        col += vec3(0.75, 0.90, 1.0) * exp(-dot(f, f) * 48.0) * tw * 0.85;
+      }
+
+      // Supernova explosion white-gold screen flash
+      col += vec3(1.0, 0.82, 0.45) * uFlash * 0.85;
+
+      // Cinematic subtle vignette
+      float vig = 1.0 - dot((uv - 0.5) * 1.15, (uv - 0.5) * 1.15);
+      col *= clamp(vig, 0.55, 1.05);
+
+      fragColor = vec4(col, 1.0);
+    }
+  `);
+
+  // 2) 3D Metallic/Fresnel PBR-Style Lit Mesh Shader (Starfighter, Boss Dreadnought, Pylons, Armor Plates)
+  const meshProg = createProgram(`#version 300 es
+    precision highp float;
+    layout(location = 0) in vec3 aPos;
+    layout(location = 1) in vec3 aNorm;
+    layout(location = 2) in vec3 aCol;
+
+    uniform mat4 uModel;
+    uniform mat4 uVP;
+    out vec3 vWorldPos;
+    out vec3 vNorm;
+    out vec3 vCol;
+
+    void main() {
+      vec4 wp = uModel * vec4(aPos, 1.0);
+      vWorldPos = wp.xyz;
+      vNorm = normalize(mat3(uModel) * aNorm);
+      vCol = aCol;
+      gl_Position = uVP * wp;
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec3 vWorldPos;
+    in vec3 vNorm;
+    in vec3 vCol;
+
+    uniform vec3 uCamPos;
+    uniform vec3 uEmissive;
+    uniform float uEmissiveStrength;
+    uniform float uHitFlash;
+    uniform vec3 uRimColor;
+    uniform float uAlpha;
+
+    out vec4 fragColor;
+
+    void main() {
+      vec3 N = normalize(vNorm);
+      vec3 V = normalize(uCamPos - vWorldPos);
+      vec3 L1 = normalize(vec3(0.65, 0.85, 0.55));
+      vec3 L2 = normalize(vec3(-0.7, -0.4, -0.6)); // planetary blue bounce light!
+
+      float diff1 = max(dot(N, L1), 0.0);
+      float diff2 = max(dot(N, L2), 0.0);
+      vec3 H = normalize(L1 + V);
+      float spec = pow(max(dot(N, H), 0.0), 42.0);
+      float fresnel = pow(1.0 - max(dot(N, V), 0.0), 2.8);
+
+      // Subtle panel-seam tech sheen
+      vec3 lit = vCol * (0.24 + diff1 * 0.88)
+               + vCol * vec3(0.28, 0.65, 1.0) * diff2 * 0.48
+               + vec3(0.85, 0.95, 1.0) * spec * 0.72
+               + uRimColor * fresnel * 0.88;
+
+      vec3 col = lit + uEmissive * uEmissiveStrength;
+      col = mix(col, vec3(1.0, 0.95, 0.85), clamp(uHitFlash, 0.0, 0.92));
+
+      fragColor = vec4(col, uAlpha);
+    }
+  `);
+
+  // 3) Additive Glowing Particle & Laser/Trail Shader
+  const partProg = createProgram(`#version 300 es
+    precision highp float;
+    layout(location = 0) in vec3 aPos;
+    layout(location = 1) in vec4 aCol;
+    layout(location = 2) in float aSize;
+    uniform mat4 uVP;
+    out vec4 vCol;
+    void main() {
+      vCol = aCol;
+      gl_Position = uVP * vec4(aPos, 1.0);
+      gl_PointSize = clamp(aSize * (28.0 / max(1.0, gl_Position.w)), 1.5, 96.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vCol;
+    out vec4 fragColor;
+    void main() {
+      vec2 d = gl_PointCoord - 0.5;
+      float r2 = dot(d, d);
+      if (r2 > 0.25) discard;
+      float core = exp(-r2 * 26.0);
+      float halo = exp(-r2 * 7.5);
+      vec3 c = vCol.rgb * (0.9 + halo * 1.1) + vec3(core * 0.95);
+      fragColor = vec4(c, vCol.a * clamp(halo * 1.25, 0.0, 1.0));
+    }
+  `);
+
+  // 4) Dynamic Additive Volumetric Ribbon / Beam / Star-Streak Lines Shader
+  const ribbonProg = createProgram(`#version 300 es
+    precision highp float;
+    layout(location = 0) in vec3 aPos;
+    layout(location = 1) in vec4 aCol;
+    uniform mat4 uVP;
+    out vec4 vCol;
+    void main() {
+      vCol = aCol;
+      gl_Position = uVP * vec4(aPos, 1.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vCol;
+    out vec4 fragColor;
+    void main() {
+      fragColor = vCol;
+    }
+  `);
+
+  // ===== PROCEDURAL 3D MESH BUILDER (ZERO EXTERNAL 3D MODELS!) =====
+  function createMeshFromTris(tris) {
+    // tris: array of { v0, v1, v2, c }
+    const data = new Float32Array(tris.length * 3 * 9);
+    let o = 0;
+    for (const t of tris) {
+      const e1x = t.v1[0]-t.v0[0], e1y = t.v1[1]-t.v0[1], e1z = t.v1[2]-t.v0[2];
+      const e2x = t.v2[0]-t.v0[0], e2y = t.v2[1]-t.v0[1], e2z = t.v2[2]-t.v0[2];
+      let nx = e1y*e2z - e1z*e2y, ny = e1z*e2x - e1x*e2z, nz = e1x*e2y - e1y*e2x;
+      const len = Math.hypot(nx, ny, nz) || 1;
+      nx /= len; ny /= len; nz /= len;
+      for (const v of [t.v0, t.v1, t.v2]) {
+        data[o++] = v[0]; data[o++] = v[1]; data[o++] = v[2];
+        data[o++] = nx;   data[o++] = ny;   data[o++] = nz;
+        data[o++] = t.c[0]; data[o++] = t.c[1]; data[o++] = t.c[2];
+      }
+    }
+    const vao = gl.createVertexArray();
+    const vbo = gl.createBuffer();
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 36, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 36, 12);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 36, 24);
+    gl.bindVertexArray(null);
+    return { vao, count: tris.length * 3 };
+  }
+
+  function addBox(tris, cx, cy, cz, sx, sy, sz, c) {
+    const x0 = cx-sx, x1 = cx+sx, y0 = cy-sy, y1 = cy+sy, z0 = cz-sz, z1 = cz+sz;
+    const f = [
+      [[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]],
+      [[x1,y0,z0],[x0,y0,z0],[x0,y1,z0],[x1,y1,z0]],
+      [[x0,y1,z1],[x1,y1,z1],[x1,y1,z0],[x0,y1,z0]],
+      [[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]],
+      [[x1,y0,z1],[x1,y0,z0],[x1,y1,z0],[x1,y1,z1]],
+      [[x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]],
+    ];
+    for (const q of f) {
+      tris.push({ v0: q[0], v1: q[1], v2: q[2], c });
+      tris.push({ v0: q[0], v1: q[2], v2: q[3], c });
+    }
+  }
+
+  function addOcta(tris, cx, cy, cz, rx, ry, rz, c) {
+    const T = [cx, cy+ry, cz], B = [cx, cy-ry, cz];
+    const R = [cx+rx, cy, cz], L = [cx-rx, cy, cz];
+    const F = [cx, cy, cz+rz], K = [cx, cy, cz-rz];
+    const faces = [
+      [T,F,R],[T,R,K],[T,K,L],[T,L,F],
+      [B,R,F],[B,K,R],[B,L,K],[B,F,L]
+    ];
+    for (const [v0,v1,v2] of faces) tris.push({ v0, v1, v2, c });
+  }
+
+  // Build Sleek Swept-Wing Starfighter ("AEGIS-01") — High-Contrast Metallic 3D Interceptor!
+  function buildStarfighterMesh() {
+    const tris = [];
+    const hullWhite = [0.58, 0.68, 0.82];
+    const hullSlate = [0.16, 0.22, 0.34];
+    const wingCyan  = [0.06, 0.78, 0.98];
+    const canopyGold = [0.98, 0.68, 0.14];
+    const engineHot = [0.18, 0.88, 1.0];
+
+    // Forward pointed nose cone (pointing -Z)
+    const nose = [0, 0.0, -2.25];
+    const midT = [0, 0.36, -0.35], midB = [0, -0.22, -0.35];
+    const midL = [-0.52, 0.0, -0.25], midR = [0.52, 0.0, -0.25];
+    const tailT = [0, 0.28, 1.25], tailB = [0, -0.22, 1.25];
+    const tailL = [-0.62, 0.0, 1.18], tailR = [0.62, 0.0, 1.18];
+
+    // Nose pyramid
+    tris.push({ v0: nose, v1: midL, v2: midT, c: hullWhite });
+    tris.push({ v0: nose, v1: midT, v2: midR, c: hullWhite });
+    tris.push({ v0: nose, v1: midR, v2: midB, c: hullSlate });
+    tris.push({ v0: nose, v1: midB, v2: midL, c: hullSlate });
+    // Center fuselage
+    tris.push({ v0: midT, v1: midL, v2: tailL, c: hullWhite });
+    tris.push({ v0: midT, v1: tailL, v2: tailT, c: hullWhite });
+    tris.push({ v0: midT, v1: tailT, v2: tailR, c: hullWhite });
+    tris.push({ v0: midT, v1: tailR, v2: midR, c: hullWhite });
+    tris.push({ v0: midB, v1: tailR, v2: tailB, c: hullSlate });
+    tris.push({ v0: midB, v1: midR, v2: tailR, c: hullSlate });
+    tris.push({ v0: midB, v1: tailB, v2: tailL, c: hullSlate });
+    tris.push({ v0: midB, v1: tailL, v2: midL, c: hullSlate });
+    // Rear engine plate
+    tris.push({ v0: tailT, v1: tailL, v2: tailB, c: hullSlate });
+    tris.push({ v0: tailT, v1: tailB, v2: tailR, c: hullSlate });
+
+    // Glowing cockpit canopy
+    addOcta(tris, 0, 0.34, -0.38, 0.24, 0.16, 0.62, canopyGold);
+
+    // Swept Delta Wings (Left & Right) + Wingtip Laser Cannons + Vertical Twin Stabilizers
+    for (const s of [-1, 1]) {
+      const rootF = [s*0.42, -0.02, -0.52];
+      const rootB = [s*0.58, -0.02, 0.96];
+      const tipF  = [s*2.25, -0.18, 0.72];
+      const tipB  = [s*2.10, -0.18, 1.38];
+      const rootTop = [s*0.46, 0.11, 0.25];
+      if (s > 0) {
+        tris.push({ v0: rootF, v1: rootTop, v2: tipF, c: hullWhite });
+        tris.push({ v0: rootTop, v1: rootB, v2: tipB, c: hullWhite });
+        tris.push({ v0: rootTop, v1: tipB, v2: tipF, c: wingCyan });
+        tris.push({ v0: rootF, v1: tipF, v2: tipB, c: hullSlate });
+        tris.push({ v0: rootF, v1: tipB, v2: rootB, c: hullSlate });
+      } else {
+        tris.push({ v0: rootF, v1: tipF, v2: rootTop, c: hullWhite });
+        tris.push({ v0: rootTop, v1: tipB, v2: rootB, c: hullWhite });
+        tris.push({ v0: rootTop, v1: tipF, v2: tipB, c: wingCyan });
+        tris.push({ v0: rootF, v1: tipB, v2: tipF, c: hullSlate });
+        tris.push({ v0: rootF, v1: rootB, v2: tipB, c: hullSlate });
+      }
+      // Twin canted vertical tail fins
+      addBox(tris, s*0.66, 0.42, 0.85, 0.05, 0.38, 0.44, hullSlate);
+      // Wingtip plasma cannon pods
+      addBox(tris, s*2.12, -0.14, 0.55, 0.08, 0.08, 0.75, wingCyan);
+      // Twin ion thruster nacelles
+      addBox(tris, s*0.36, -0.02, 1.24, 0.16, 0.14, 0.24, engineHot);
+    }
+    return createMeshFromTris(tris);
+  }
+
+  // Build Colossal Boss Dreadnought Core Hull ("LEVIATHAN-IX")
+  function buildBossHullMesh() {
+    const tris = [];
+    const armorDark = [0.16, 0.20, 0.30];
+    const armorMid  = [0.28, 0.34, 0.46];
+    const trimRed   = [0.95, 0.18, 0.36];
+    const trimGold  = [0.98, 0.72, 0.16];
+
+    // Massive central octagonal dreadnought spine & armored bulkheads
+    addBox(tris, 0, 0, 0, 2.2, 1.35, 2.5, armorDark);
+    addBox(tris, 0, 1.55, -0.2, 1.55, 0.45, 1.8, armorMid);
+    addBox(tris, 0, -1.55, -0.2, 1.55, 0.45, 1.8, armorMid);
+    // Lateral heavy dreadnought wings / sensor arrays
+    for (const s of [-1, 1]) {
+      addBox(tris, s*3.4, 0.1, 0.2, 1.55, 0.52, 1.65, armorMid);
+      addBox(tris, s*5.1, -0.15, 0.4, 0.75, 0.32, 1.15, armorDark);
+      addBox(tris, s*3.8, 0.68, 0.1, 1.1, 0.12, 0.9, trimRed);
+      addBox(tris, s*2.1, 0.0, 2.55, 0.42, 0.42, 0.42, trimGold);
+    }
+    // Forward jaw prongs flanking the reactor core cavity!
+    for (const sx of [-1, 1]) {
+      for (const sy of [-1, 1]) {
+        addBox(tris, sx*1.95, sy*1.15, 2.85, 0.42, 0.28, 1.35, armorMid);
+        addBox(tris, sx*1.95, sy*1.15, 4.10, 0.24, 0.16, 0.45, trimRed);
+      }
+    }
+    return createMeshFromTris(tris);
+  }
+
+  // Build Boss Shield Pylon / Turret Unit (4 orbiting independent targets!)
+  function buildPylonMesh() {
+    const tris = [];
+    const armor = [0.24, 0.30, 0.44];
+    const glow  = [1.0, 0.24, 0.44];
+    const gold  = [1.0, 0.76, 0.20];
+    addOcta(tris, 0, 0, 0, 0.95, 1.35, 0.95, armor);
+    addBox(tris, 0, 0, 0, 1.15, 0.24, 1.15, gold);
+    addOcta(tris, 0, 0, 0.72, 0.46, 0.46, 0.46, glow);
+    return createMeshFromTris(tris);
+  }
+
+  // Build Glowing Boss Reactor Core (Icosa/Octa crystalline energy heart!)
+  function buildCoreMesh() {
+    const tris = [];
+    addOcta(tris, 0, 0, 0, 1.45, 1.45, 1.45, [1.0, 0.62, 0.14]);
+    addBox(tris, 0, 0, 0, 0.95, 0.95, 0.95, [1.0, 0.25, 0.35]);
+    return createMeshFromTris(tris);
+  }
+
+  // Build Ring Segment / Shockwave Torus Ring
+  function buildRingMesh(innerR, outerR, segs, col) {
+    const tris = [];
+    const h = 0.16;
+    for (let i = 0; i < segs; i++) {
+      const a0 = (i / segs) * Math.PI * 2;
+      const a1 = ((i + 1) / segs) * Math.PI * 2;
+      const c0 = Math.cos(a0), s0 = Math.sin(a0);
+      const c1 = Math.cos(a1), s1 = Math.sin(a1);
+      const i0 = [c0*innerR, s0*innerR, 0], o0 = [c0*outerR, s0*outerR, 0];
+      const i1 = [c1*innerR, s1*innerR, 0], o1 = [c1*outerR, s1*outerR, 0];
+      const o0f = [c0*outerR, s0*outerR, h], o1f = [c1*outerR, s1*outerR, h];
+      tris.push({ v0: i0, v1: o0, v2: o1, c: col });
+      tris.push({ v0: i0, v1: o1, v2: i1, c: col });
+      tris.push({ v0: o0, v1: o0f, v2: o1f, c: col });
+      tris.push({ v0: o0, v1: o1f, v2: o1, c: col });
+    }
+    return createMeshFromTris(tris);
+  }
+
+  // Build Unit Cube for Laser Bolts, Debris Shards & Beams
+  function buildUnitBoxMesh(col) {
+    const tris = [];
+    addBox(tris, 0, 0, 0, 0.5, 0.5, 0.5, col);
+    return createMeshFromTris(tris);
+  }
+
+  const fighterMesh = buildStarfighterMesh();
+  const bossHullMesh = buildBossHullMesh();
+  const pylonMesh = buildPylonMesh();
+  const coreMesh = buildCoreMesh();
+  const bossRingMesh = buildRingMesh(4.4, 4.9, 32, [0.22, 0.72, 1.0]);
+  const shockRingMesh = buildRingMesh(0.82, 1.0, 36, [1.0, 0.78, 0.25]);
+  const boltMesh = buildUnitBoxMesh([0.2, 0.98, 1.0]);
+  const beamMesh = buildUnitBoxMesh([1.0, 0.16, 0.36]);
+  const debrisMesh = buildUnitBoxMesh([0.95, 0.52, 0.22]);
+
+  // Empty VAO for full-screen background triangle
+  const bgVao = gl.createVertexArray();
+
+  // Dynamic Particles Buffer
+  const MAX_PARTS = 900;
+  const parts = [];
+  for (let i = 0; i < MAX_PARTS; i++) {
+    parts.push({ x:0,y:0,z:0, vx:0,vy:0,vz:0, r:1,g:1,b:1, life:0, maxLife:1, size:8 });
+  }
+  let partIdx = 0;
+  const partBuf = new Float32Array(MAX_PARTS * 8);
+  const partVao = gl.createVertexArray();
+  const partVbo = gl.createBuffer();
+  gl.bindVertexArray(partVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, partVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, partBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 32, 12);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 32, 28);
+  gl.bindVertexArray(null);
+
+  // Dynamic Ribbon / Star Streak / Missile Trail Line Buffer
+  const MAX_LINE_VERTS = 4800;
+  const lineBuf = new Float32Array(MAX_LINE_VERTS * 7);
+  const lineVao = gl.createVertexArray();
+  const lineVbo = gl.createBuffer();
+  gl.bindVertexArray(lineVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, lineBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 28, 12);
+  gl.bindVertexArray(null);
+
+  function spawnExplosion(x, y, z, count, scale = 1.0, palette = 'fire') {
+    for (let i = 0; i < count; i++) {
+      const p = parts[partIdx];
+      partIdx = (partIdx + 1) % MAX_PARTS;
+      const th = rng() * Math.PI * 2;
+      const ph = Math.acos(2 * rng() - 1);
+      const spd = (3.5 + rng() * 14.0) * scale;
+      p.x = x + (rng() - 0.5) * 0.6 * scale;
+      p.y = y + (rng() - 0.5) * 0.6 * scale;
+      p.z = z + (rng() - 0.5) * 0.6 * scale;
+      p.vx = Math.sin(ph) * Math.cos(th) * spd;
+      p.vy = Math.cos(ph) * spd;
+      p.vz = Math.sin(ph) * Math.sin(th) * spd;
+      p.maxLife = (0.45 + rng() * 0.85) * Math.sqrt(scale);
+      p.life = p.maxLife;
+      p.size = (10 + rng() * 18) * scale;
+      if (palette === 'fire') {
+        const pick = rng();
+        if (pick < 0.35) { p.r = 1.0; p.g = 0.88; p.b = 0.30; }
+        else if (pick < 0.72) { p.r = 1.0; p.g = 0.38; p.b = 0.12; }
+        else { p.r = 1.0; p.g = 0.16; p.b = 0.42; }
+      } else if (palette === 'cyan') {
+        p.r = 0.15; p.g = 0.92; p.b = 1.0;
+      } else {
+        const pick = rng();
+        if (pick < 0.4) { p.r = 1.0; p.g = 0.95; p.b = 0.65; }
+        else if (pick < 0.75) { p.r = 1.0; p.g = 0.48; p.b = 0.12; }
+        else { p.r = 0.25; p.g = 0.92; p.b = 1.0; }
+      }
+    }
+  }
+
+  // ===== GAMEPLAY & COMBAT ENTITIES =====
+  const TOTAL_DEMO = 24.0;
+  let simTime = 0.0;
+  const isRecording = Boolean(window.__RECORDING__);
+
+  // Warp Starfield (3D rushing space dust streaks)
+  const stars = [];
+  for (let i = 0; i < 240; i++) {
+    stars.push({
+      x: (rng() - 0.5) * 95,
+      y: (rng() - 0.5) * 58,
+      z: -10 - rng() * 130,
+      spd: 28 + rng() * 34
+    });
+  }
+
+  // Player Starfighter State
+  const player = {
+    x: -3.2, y: -1.4, z: 0.0,
+    vx: 0, vy: 0,
+    roll: -0.35, pitch: 0.06,
+    barrelTimer: 0.0,
+    barrelDir: 1,
+    fireCooldown: 0.0,
+    hull: 100, shield: 100,
+    overdrive: 24,
+    score: 4850,
+    combo: 6,
+    trailL: [], trailR: []
+  };
+
+  // Interactive Keyboard Controls (Playable immediately in browser!)
+  const keys = {};
+  let manualControl = !isRecording;
+  window.addEventListener('keydown', (e) => {
+    keys[e.code] = true;
+    if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight','KeyQ','KeyE'].includes(e.code)) {
+      manualControl = true;
+    }
+    if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !isRecording) {
+      fireHomingSalvo(4);
+    }
+    if ((e.code === 'KeyQ' || e.code === 'KeyE') && player.barrelTimer <= 0) {
+      player.barrelTimer = 0.72;
+      player.barrelDir = e.code === 'KeyQ' ? 1 : -1;
+      window.NeonAudio?.sfx('roll');
+    }
+  });
+  window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+  // Boss Dreadnought ("LEVIATHAN-IX") State
+  const boss = {
+    x: 0.0, y: 1.4, z: -36.0,
+    rotY: 0.0,
+    ringAngle: 0.0,
+    hp: 1000, maxHp: 1000,
+    displayHp: 1000,
+    phase: 1, // 1: Shield Pylons, 2: Reactor Exposed, 3: Destroyed
+    coreOpen: 0.0,
+    hitFlash: 0.0,
+    alive: true,
+    pylons: [
+      { id: 0, angleOff: 0.35,             rad: 6.2, hp: 230, maxHp: 230, alive: true, flash: 0, wx:0, wy:0, wz:0 },
+      { id: 1, angleOff: Math.PI*0.5+0.35, rad: 6.2, hp: 230, maxHp: 230, alive: true, flash: 0, wx:0, wy:0, wz:0 },
+      { id: 2, angleOff: Math.PI+0.35,     rad: 6.2, hp: 250, maxHp: 250, alive: true, flash: 0, wx:0, wy:0, wz:0 },
+      { id: 3, angleOff: Math.PI*1.5+0.35, rad: 6.2, hp: 250, maxHp: 250, alive: true, flash: 0, wx:0, wy:0, wz:0 },
+    ],
+    beamCharge: 0.0, // 0..1 telegraph
+    beamActive: 0.0, // 0..1 roaring laser
+    beamSweep: 0.0,
+    dualBeam: false
+  };
+
+  const bolts = [];      // Player twin plasma bolts
+  const missiles = [];   // Curving Macross homing missiles
+  const enemyOrbs = [];  // Boss plasma orb shots
+  const shockwaves = []; // Expanding 3D blast rings
+  const debris = [];     // Tumbling 3D destroyed hull fragments
+  const popups = [];     // Floating 3D->2D score & combat callouts
+
+  let camShake = 0.0;
+  let screenFlash = 0.0;
+  let hitstop = 0.0;
+  let banner = { text: '', sub: '', color: '#38bdf8', ttl: 0 };
+
+  function addPopup(wx, wy, wz, text, color = '#fbbf24') {
+    if (popups.length >= 4) popups.shift();
+    popups.push({
+      wx: wx + (rng() - 0.5) * 4.2,
+      wy: wy + (rng() - 0.5) * 2.2,
+      wz, text, color, life: 1.05, maxLife: 1.05
+    });
+  }
+
+  function updatePylonWorldPositions() {
+    for (const py of boss.pylons) {
+      const a = boss.ringAngle + py.angleOff;
+      py.wx = boss.x + Math.cos(a) * py.rad;
+      py.wy = boss.y + Math.sin(a) * (py.rad * 0.72);
+      py.wz = boss.z + 2.2 + Math.sin(a * 2.0) * 1.1;
+    }
+  }
+
+  function firePlayerTwinLaser() {
+    // Target nearest alive pylon or exposed core with mild smart aim-assist
+    let tx = boss.x, ty = boss.y, tz = boss.z + 1.5;
+    if (boss.phase === 1) {
+      const aliveP = boss.pylons.filter(p => p.alive);
+      if (aliveP.length > 0) {
+        const tgt = aliveP[Math.floor(simTime * 0.7) % aliveP.length];
+        tx = tgt.wx; ty = tgt.wy; tz = tgt.wz;
+      }
+    }
+    for (const side of [-1, 1]) {
+      const sx = player.x + side * 2.05 * Math.cos(player.roll);
+      const sy = player.y - 0.15 + side * 2.05 * Math.sin(player.roll);
+      const sz = player.z - 0.6;
+      let dx = tx - sx, dy = ty - sy, dz = tz - sz;
+      const len = Math.hypot(dx, dy, dz) || 1;
+      const spd = 82.0;
+      bolts.push({
+        x: sx, y: sy, z: sz,
+        vx: (dx / len) * spd, vy: (dy / len) * spd, vz: (dz / len) * spd,
+        life: 0.9
+      });
+    }
+    window.NeonAudio?.sfx('laser');
+  }
+
+  function fireHomingSalvo(count, overdrive = false, targetSubset = null) {
+    window.NeonAudio?.sfx('missile');
+    const aliveP = targetSubset
+      ? targetSubset.filter(p => p.alive)
+      : boss.pylons.filter(p => p.alive);
+    for (let i = 0; i < count; i++) {
+      const ang = ((i / count) - 0.5) * Math.PI * 1.45 + (i % 2 === 0 ? -0.35 : 0.35);
+      const tgt = (boss.phase === 1 && aliveP.length > 0) ? aliveP[i % aliveP.length] : null;
+      const outSpd = overdrive ? 26.0 : 21.0;
+      missiles.push({
+        x: player.x + (i % 2 === 0 ? -1.4 : 1.4),
+        y: player.y + 0.1,
+        z: player.z - 0.4,
+        vx: Math.cos(ang) * outSpd,
+        vy: Math.sin(ang) * outSpd * 0.8 + (overdrive ? 4.5 : 2.5),
+        vz: -14.0 - rng() * 6.0,
+        targetPylon: tgt,
+        overdrive,
+        age: 0.0,
+        life: 2.6,
+        trail: []
+      });
+    }
+  }
+
+  function destroyPylon(py) {
+    if (!py.alive) return;
+    py.alive = false;
+    py.hp = 0;
+    boss.hp = Math.max(540, boss.hp - 115);
+    player.score += 2500;
+    player.combo += 4;
+    player.overdrive = Math.min(100, player.overdrive + 15);
+    camShake = 0.58;
+    screenFlash = 0.35;
+    spawnExplosion(py.wx, py.wy, py.wz, 95, 1.35, 'fire');
+    window.NeonAudio?.sfx('explosion');
+    shockwaves.push({ x: py.wx, y: py.wy, z: py.wz, r: 0.6, maxR: 7.5, life: 0.55, maxLife: 0.55, col: [1.0, 0.72, 0.2] });
+    for (let d = 0; d < 12; d++) {
+      debris.push({
+        x: py.wx, y: py.wy, z: py.wz,
+        vx: (rng()-0.5)*16, vy: (rng()-0.5)*14, vz: (rng()-0.3)*14,
+        rx: rng()*6, ry: rng()*6, rz: rng()*6,
+        vrx: (rng()-0.5)*9, vry: (rng()-0.5)*9,
+        scale: 0.28 + rng()*0.42, life: 2.4
+      });
+    }
+    addPopup(py.wx, py.wy + 1.2, py.wz, 'PYLON SHATTERED +2,500', '#fbbf24');
+
+    if (boss.pylons.every(p => !p.alive)) {
+      boss.phase = 2;
+      banner = {
+        text: 'ALL SHIELD PYLONS DESTROYED',
+        sub: 'PHASE 2 // REACTOR CORE EXPOSED — ENGAGE FULL ASSAULT',
+        color: '#fbbf24',
+        ttl: 3.2
+      };
+    }
+  }
+
+  function detonateBoss() {
+    if (!boss.alive) return;
+    boss.alive = false;
+    boss.hp = 0;
+    boss.phase = 3;
+    boss.beamActive = 0;
+    boss.beamCharge = 0;
+    hitstop = 0.14;
+    camShake = 1.45;
+    screenFlash = 1.0;
+    player.score += 25000;
+    player.combo += 12;
+    spawnExplosion(boss.x, boss.y, boss.z, 380, 2.8, 'supernova');
+    shockwaves.push({ x: boss.x, y: boss.y, z: boss.z, r: 1.5, maxR: 34.0, life: 1.55, maxLife: 1.55, col: [1.0, 0.85, 0.35] });
+    shockwaves.push({ x: boss.x, y: boss.y, z: boss.z, r: 0.8, maxR: 22.0, life: 1.15, maxLife: 1.15, col: [0.22, 0.92, 1.0] });
+    for (let d = 0; d < 56; d++) {
+      debris.push({
+        x: boss.x + (rng()-0.5)*5, y: boss.y + (rng()-0.5)*3, z: boss.z + (rng()-0.5)*4,
+        vx: (rng()-0.5)*26, vy: (rng()-0.5)*20, vz: (rng()-0.25)*28,
+        rx: rng()*6, ry: rng()*6, rz: rng()*6,
+        vrx: (rng()-0.5)*10, vry: (rng()-0.5)*10,
+        scale: 0.45 + rng()*1.05, life: 4.5
+      });
+    }
+    banner = {
+      text: 'LEVIATHAN-IX DESTROYED // MISSION CLEAR',
+      sub: 'RANK S · ZERO DAMAGE BONUS +25,000 · SINGLE HTML WEBGL2',
+      color: '#00f5a0',
+      ttl: 5.0
+    };
+  }
+
+  // ===== SCRIPTED 24-SECOND CINEMATIC COMBAT CHOREOGRAPHY =====
+  const ev = {
+    salvo1: false,
+    barrel1: false,
+    salvo2: false,
+    overdriveSalvo: false,
+    bossBoom: false,
+    victoryRoll: false
+  };
+
+  function prewarmAction() {
+    // Make Frame 0 IMMEDIATELY iconic mid-combat (bolts flying, engine trails glowing, lock-ons active!)
+    updatePylonWorldPositions();
+    for (let k = 0; k < 14; k++) {
+      const z = -1.2 - k * 0.65;
+      player.trailL.push([player.x - 0.35, player.y, z + 1.2]);
+      player.trailR.push([player.x + 0.35, player.y, z + 1.2]);
+    }
+    // Pre-place 3 pairs of live cyan plasma bolts streaking toward boss on Frame 0!
+    for (let b = 0; b < 3; b++) {
+      const frac = 0.22 + b * 0.24;
+      for (const s of [-1, 1]) {
+        bolts.push({
+          x: lerp(player.x + s * 1.9, boss.pylons[0].wx, frac),
+          y: lerp(player.y - 0.1, boss.pylons[0].wy, frac),
+          z: lerp(player.z - 0.8, boss.pylons[0].wz, frac),
+          vx: 4.0, vy: 2.0, vz: -78.0,
+          life: 0.8
+        });
+      }
+    }
+    // Pre-spawn subtle spark impact on Pylon 0 so Frame 0 already looks mid-battle!
+    spawnExplosion(boss.pylons[0].wx, boss.pylons[0].wy, boss.pylons[0].wz, 28, 0.75, 'cyan');
+  }
+
+  function stepGame(dt) {
+    simTime += dt;
+    if (hitstop > 0) {
+      hitstop = Math.max(0, hitstop - dt);
+      dt *= 0.14; // Brief dramatic impact slow-motion!
+    }
+
+    camShake *= Math.pow(0.025, dt);
+    screenFlash *= Math.pow(0.04, dt);
+    if (banner.ttl > 0) banner.ttl = Math.max(0, banner.ttl - dt);
+
+    // Boss movement & rotation
+    boss.ringAngle += dt * (boss.phase === 1 ? 0.85 : 1.55);
+    boss.rotY = Math.sin(simTime * 0.55) * 0.22;
+    boss.x = Math.sin(simTime * 0.48) * 3.2;
+    boss.y = 1.35 + Math.cos(simTime * 0.65) * 0.95;
+    boss.z = -35.5 + Math.sin(simTime * 0.32) * 2.2;
+    boss.hitFlash = Math.max(0, boss.hitFlash - dt * 4.5);
+    boss.coreOpen += ((boss.phase >= 2 ? 1.0 : 0.0) - boss.coreOpen) * Math.min(1, dt * 3.0);
+    boss.displayHp += (boss.hp - boss.displayHp) * Math.min(1, dt * 6.0);
+    updatePylonWorldPositions();
+
+    // Boss Attack Choreography (Sweeping Death Beams & Plasma Orbs)
+    if (boss.alive) {
+      if (simTime >= 5.7 && simTime < 6.6) {
+        boss.beamCharge = (simTime - 5.7) / 0.9;
+        boss.beamActive = 0;
+        boss.dualBeam = false;
+      } else if (simTime >= 6.6 && simTime < 8.8) {
+        boss.beamCharge = 1.0;
+        boss.beamActive = smoothstep(6.6, 6.8, simTime) * (1.0 - smoothstep(8.5, 8.8, simTime));
+        boss.beamSweep = lerp(-12.5, 12.5, (simTime - 6.6) / 2.2);
+      } else if (simTime >= 12.6 && simTime < 13.4) {
+        boss.beamCharge = (simTime - 12.6) / 0.8;
+        boss.beamActive = 0;
+        boss.dualBeam = true;
+      } else if (simTime >= 13.4 && simTime < 16.2) {
+        boss.beamCharge = 1.0;
+        boss.beamActive = smoothstep(13.4, 13.6, simTime) * (1.0 - smoothstep(15.9, 16.2, simTime));
+        boss.beamSweep = Math.sin((simTime - 13.4) * 1.9) * 10.5;
+      } else {
+        boss.beamCharge = Math.max(0, boss.beamCharge - dt * 3.0);
+        boss.beamActive = 0;
+      }
+
+      // Boss fires glowing crimson plasma orbs periodically
+      if (simTime < 19.5 && rng() < dt * 2.2) {
+        enemyOrbs.push({
+          x: boss.x + (rng() - 0.5) * 6.0,
+          y: boss.y + (rng() - 0.5) * 3.0,
+          z: boss.z + 3.0,
+          vx: (player.x - boss.x + (rng() - 0.5) * 9.0) * 0.55,
+          vy: (player.y - boss.y + (rng() - 0.5) * 6.0) * 0.55,
+          vz: 24.0 + rng() * 8.0,
+          life: 2.2
+        });
+      }
+    }
+
+    // Player Movement (Manual interactive OR scripted heroic ace pilot!)
+    if (manualControl && !isRecording) {
+      let ix = 0, iy = 0;
+      if (keys['KeyA'] || keys['ArrowLeft']) ix -= 1;
+      if (keys['KeyD'] || keys['ArrowRight']) ix += 1;
+      if (keys['KeyW'] || keys['ArrowUp']) iy += 1;
+      if (keys['KeyS'] || keys['ArrowDown']) iy -= 1;
+      player.vx = lerp(player.vx, ix * 12.0, dt * 7);
+      player.vy = lerp(player.vy, iy * 9.5, dt * 7);
+      player.x = clamp(player.x + player.vx * dt, -8.5, 8.5);
+      player.y = clamp(player.y + player.vy * dt, -4.2, 4.8);
+      if (keys['Space'] && player.fireCooldown <= 0 && boss.alive) {
+        firePlayerTwinLaser();
+        player.fireCooldown = 0.13;
+      }
+    } else {
+      // Scripted Ace Pilot Flight Path!
+      let tx, ty;
+      if (simTime < 5.5) {
+        tx = -3.4 + Math.sin(simTime * 0.95) * 4.4;
+        ty = -1.35 + Math.cos(simTime * 1.15) * 1.65;
+      } else if (simTime < 9.2) {
+        // Dramatic evasive swoop across sweeping laser beam
+        tx = lerp(-5.2, 5.4, smoothstep(5.8, 8.6, simTime));
+        ty = -2.2 + Math.sin((simTime - 5.5) * 1.8) * 1.9;
+      } else if (simTime < 19.6) {
+        // High-speed figure-8 weaving assault on exposed reactor core
+        tx = Math.sin((simTime - 9.2) * 1.15) * 5.8;
+        ty = -0.8 + Math.sin((simTime - 9.2) * 2.3) * 1.95;
+      } else {
+        // Center heroic pull-up & victory climb through debris!
+        const u = smoothstep(19.6, 23.8, simTime);
+        tx = lerp(player.x, 0.0, dt * 2.5);
+        ty = lerp(-1.2, 1.8, u);
+      }
+      const prevX = player.x, prevY = player.y;
+      player.x += (tx - player.x) * Math.min(1, dt * 4.2);
+      player.y += (ty - player.y) * Math.min(1, dt * 4.2);
+      player.vx = (player.x - prevX) / Math.max(0.001, dt);
+      player.vy = (player.y - prevY) / Math.max(0.001, dt);
+
+      // Scripted Action Milestones (perfectly synchronized to 24.0s soundtrack!)
+      if (simTime >= 2.35 && !ev.salvo1) {
+        ev.salvo1 = true;
+        // Focus Salvo #1 on Pylons 0 & 1 so Pylons 2 & 3 stay active through Boss Death Beam!
+        fireHomingSalvo(4, false, [boss.pylons[0], boss.pylons[1]]);
+        banner = { text: 'MULTI-LOCK HOMING SALVO [4/4]', sub: 'TARGETING ORBITAL SHIELD PYLONS', color: '#38bdf8', ttl: 2.1 };
+      }
+      if (simTime >= 7.05 && !ev.barrel1) {
+        ev.barrel1 = true;
+        player.barrelTimer = 0.72;
+        player.barrelDir = 1;
+        addPopup(player.x, player.y + 1.4, player.z - 2.0, 'BARREL ROLL EVADE +1,000', '#38bdf8');
+        player.score += 1000;
+      }
+      if (simTime >= 9.15 && !ev.salvo2) {
+        ev.salvo2 = true;
+        fireHomingSalvo(4, false, [boss.pylons[2], boss.pylons[3]]);
+      }
+      if (simTime >= 19.55 && !ev.overdriveSalvo) {
+        ev.overdriveSalvo = true;
+        player.overdrive = 0;
+        fireHomingSalvo(8, true);
+        banner = { text: '⚡ OVERDRIVE SALVO // 8x PLASMA TORPEDOES', sub: 'CONVERGING ON EXPOSED REACTOR CORE', color: '#fbbf24', ttl: 1.6 };
+      }
+      if (simTime >= 21.05 && !ev.bossBoom) {
+        ev.bossBoom = true;
+        detonateBoss();
+      }
+      if (simTime >= 22.1 && !ev.victoryRoll) {
+        ev.victoryRoll = true;
+        player.barrelTimer = 0.78;
+        player.barrelDir = -1;
+      }
+
+      // Rapid rhythmic plasma fire whenever boss is alive
+      if (boss.alive && player.fireCooldown <= 0 && simTime < 20.8) {
+        firePlayerTwinLaser();
+        player.fireCooldown = (boss.phase === 2) ? 0.14 : 0.18;
+      }
+    }
+
+    player.fireCooldown = Math.max(0, player.fireCooldown - dt);
+    if (boss.alive && simTime < 19.5) {
+      player.overdrive = Math.min(100, player.overdrive + dt * 2.15);
+    }
+
+    // Smooth starfighter banking + 360° barrel roll
+    let targetRoll = clamp(-player.vx * 0.068, -0.78, 0.78);
+    if (player.barrelTimer > 0) {
+      player.barrelTimer = Math.max(0, player.barrelTimer - dt);
+      const u = 1.0 - player.barrelTimer / 0.72;
+      player.roll = targetRoll + player.barrelDir * u * Math.PI * 2.0;
+    } else {
+      player.roll = lerp(player.roll, targetRoll, Math.min(1, dt * 8.0));
+    }
+    player.pitch = lerp(player.pitch, clamp(player.vy * 0.032, -0.28, 0.28), Math.min(1, dt * 8.0));
+
+    // Update glowing twin engine trails
+    const cr = Math.cos(player.roll), sr = Math.sin(player.roll);
+    const lPos = [player.x - 0.36*cr, player.y - 0.36*sr, player.z + 1.32];
+    const rPos = [player.x + 0.36*cr, player.y + 0.36*sr, player.z + 1.32];
+    player.trailL.unshift(lPos);
+    player.trailR.unshift(rPos);
+    for (let i = 1; i < player.trailL.length; i++) {
+      player.trailL[i][2] += dt * 28.0;
+      player.trailR[i][2] += dt * 28.0;
+    }
+    if (player.trailL.length > 18) { player.trailL.pop(); player.trailR.pop(); }
+
+    // Update Starfield
+    for (const s of stars) {
+      s.z += s.spd * dt * (boss.alive ? 1.0 : 1.5);
+      if (s.z > 12) {
+        s.z = -125 - rng() * 20;
+        s.x = (rng() - 0.5) * 95;
+        s.y = (rng() - 0.5) * 58;
+      }
+    }
+
+    // Update Player Laser Bolts + Balanced Hit Detection across Full 24s Boss Fight!
+    for (let i = bolts.length - 1; i >= 0; i--) {
+      const b = bolts[i];
+      b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt;
+      b.life -= dt;
+      let hit = false;
+      if (boss.alive) {
+        if (boss.phase === 1) {
+          for (const py of boss.pylons) {
+            if (!py.alive) continue;
+            if (Math.hypot(b.x - py.wx, b.y - py.wy, b.z - py.wz) < 2.2) {
+              // Keep Pylons 2 & 3 alive until Salvo #2 (~9.6s) for tight music-synced destruction!
+              const floorHp = (py.id >= 2 && simTime < 9.5) ? 45 : 0;
+              py.hp = Math.max(floorHp, py.hp - 6.5);
+              py.flash = 1.0;
+              player.score += 120;
+              spawnExplosion(b.x, b.y, b.z, 10, 0.55, 'cyan');
+              if (py.hp <= 0) destroyPylon(py);
+              hit = true; break;
+            }
+          }
+        } else if (boss.phase === 2) {
+          if (Math.hypot(b.x - boss.x, b.y - boss.y, b.z - (boss.z + 1.2)) < 3.4) {
+            // Smooth continuous Phase 2 HP drain from 540 -> 140 leading into 19.55s Overdrive finisher!
+            const phase2Floor = simTime < 19.5 ? Math.max(150, 540 - (simTime - 10.6) * 42) : 20;
+            boss.hp = Math.max(phase2Floor, boss.hp - 5.2);
+            boss.hitFlash = 0.72;
+            player.score += 250;
+            player.combo = Math.min(48, player.combo + 1);
+            spawnExplosion(b.x, b.y, b.z, 14, 0.65, 'fire');
+            if (rng() < 0.16) addPopup(b.x, b.y + 0.8, b.z, '+450 CRIT', '#fbbf24');
+            hit = true;
+          }
+        }
+      }
+      if (hit || b.life <= 0) bolts.splice(i, 1);
+    }
+
+    // Update Curving Homing Missiles!
+    for (let i = missiles.length - 1; i >= 0; i--) {
+      const m = missiles[i];
+      m.age += dt;
+      m.life -= dt;
+
+      let tx = boss.x, ty = boss.y, tz = boss.z + 1.0;
+      if (m.targetPylon && m.targetPylon.alive) {
+        tx = m.targetPylon.wx; ty = m.targetPylon.wy; tz = m.targetPylon.wz;
+      } else if (boss.phase === 1) {
+        const alt = boss.pylons.find(p => p.alive);
+        if (alt) { m.targetPylon = alt; tx = alt.wx; ty = alt.wy; tz = alt.wz; }
+      }
+
+      // Dramatic Macross outward bloom for first 0.26s, then laser-sharp homing turn!
+      const steer = m.age < 0.24 ? 1.8 : (m.overdrive ? 15.0 : 12.0);
+      const dx = tx - m.x, dy = ty - m.y, dz = tz - m.z;
+      const dist = Math.hypot(dx, dy, dz) || 1;
+      const desiredSpd = m.overdrive ? 52.0 : 44.0;
+      m.vx = lerp(m.vx, (dx / dist) * desiredSpd, Math.min(1, dt * steer));
+      m.vy = lerp(m.vy, (dy / dist) * desiredSpd, Math.min(1, dt * steer));
+      m.vz = lerp(m.vz, (dz / dist) * desiredSpd, Math.min(1, dt * steer));
+
+      m.x += m.vx * dt; m.y += m.vy * dt; m.z += m.vz * dt;
+      m.trail.unshift([m.x, m.y, m.z]);
+      if (m.trail.length > 22) m.trail.pop();
+
+      if (dist < 2.6 && boss.alive) {
+        if (m.targetPylon && m.targetPylon.alive) {
+          m.targetPylon.hp -= 125;
+          m.targetPylon.flash = 1.0;
+          spawnExplosion(m.x, m.y, m.z, 36, 0.95, 'fire');
+          if (m.targetPylon.hp <= 0) destroyPylon(m.targetPylon);
+        } else {
+          boss.hp = Math.max(m.overdrive ? 8 : 140, boss.hp - (m.overdrive ? 26 : 24));
+          boss.hitFlash = 1.0;
+          camShake = Math.max(camShake, 0.35);
+          spawnExplosion(m.x, m.y, m.z, 45, 1.1, 'fire');
+          player.score += 1250;
+          if (rng() < 0.45) addPopup(m.x, m.y + 1.0, m.z, m.overdrive ? 'OVERDRIVE +1,250' : '+800 HIT', '#fbbf24');
+        }
+        missiles.splice(i, 1);
+      } else if (m.life <= 0) {
+        missiles.splice(i, 1);
+      }
+    }
+
+    // Update Enemy Plasma Orbs
+    for (let i = enemyOrbs.length - 1; i >= 0; i--) {
+      const o = enemyOrbs[i];
+      o.x += o.vx * dt; o.y += o.vy * dt; o.z += o.vz * dt;
+      o.life -= dt;
+      if (o.life <= 0 || o.z > 14) enemyOrbs.splice(i, 1);
+    }
+
+    // Update Pylon flashes
+    for (const py of boss.pylons) py.flash = Math.max(0, py.flash - dt * 4.5);
+
+    // Update Shockwaves & Debris & Particles & Popups
+    for (let i = shockwaves.length - 1; i >= 0; i--) {
+      const sw = shockwaves[i];
+      sw.life -= dt;
+      sw.r = lerp(sw.maxR, 0.6, Math.pow(Math.max(0, sw.life / sw.maxLife), 1.6));
+      if (sw.life <= 0) shockwaves.splice(i, 1);
+    }
+    for (let i = debris.length - 1; i >= 0; i--) {
+      const d = debris[i];
+      d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt;
+      d.rx += d.vrx * dt; d.ry += d.vry * dt;
+      d.life -= dt;
+      if (d.life <= 0) debris.splice(i, 1);
+    }
+    for (let i = 0; i < MAX_PARTS; i++) {
+      const p = parts[i];
+      if (p.life > 0) {
+        p.life -= dt;
+        p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+        p.vx *= Math.pow(0.45, dt);
+        p.vy *= Math.pow(0.45, dt);
+        p.vz *= Math.pow(0.45, dt);
+      }
+    }
+    for (let i = popups.length - 1; i >= 0; i--) {
+      popups[i].life -= dt;
+      popups[i].wy += dt * 1.6;
+      if (popups[i].life <= 0) popups.splice(i, 1);
+    }
+  }
+
+  // ===== RENDER 3D SCENE (PURE WEBGL2) =====
+  let lastVP = mat4Identity();
+
+  function drawMesh(mesh, model, vp, camPos, emissive, emStr, hitFlash, rimCol, alpha = 1.0) {
+    gl.useProgram(meshProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(meshProg, 'uModel'), false, model);
+    gl.uniformMatrix4fv(gl.getUniformLocation(meshProg, 'uVP'), false, vp);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uCamPos'), camPos);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uEmissive'), emissive);
+    gl.uniform1f(gl.getUniformLocation(meshProg, 'uEmissiveStrength'), emStr);
+    gl.uniform1f(gl.getUniformLocation(meshProg, 'uHitFlash'), hitFlash);
+    gl.uniform3fv(gl.getUniformLocation(meshProg, 'uRimColor'), rimCol);
+    gl.uniform1f(gl.getUniformLocation(meshProg, 'uAlpha'), alpha);
+    gl.bindVertexArray(mesh.vao);
+    gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+  }
+
+  function render3D() {
+    gl.viewport(0, 0, W, H);
+    gl.clearColor(0.01, 0.02, 0.05, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // Dynamic cinematic chase camera
+    const shakeX = (rng() - 0.5) * camShake;
+    const shakeY = (rng() - 0.5) * camShake;
+    const camPos = [
+      player.x * 0.42 + Math.sin(simTime * 0.4) * 0.65 + shakeX,
+      player.y * 0.35 + 2.35 + shakeY,
+      10.6 - smoothstep(11.5, 18.5, simTime) * 1.4
+    ];
+    const lookTarget = [
+      lerp(player.x * 0.32, boss.x * 0.65, 0.58),
+      lerp(player.y * 0.25, boss.y * 0.65, 0.58),
+      -26.0
+    ];
+    const proj = mat4Perspective(0.82, W / H, 0.2, 220.0);
+    const view = mat4LookAt(camPos, lookTarget, [0, 1, 0]);
+    const vp = mat4Mul(proj, view);
+    lastVP = vp;
+
+    // 1. Background Deep Space + Glowing Orbital Cyber-Planet
+    gl.disable(gl.DEPTH_TEST);
+    gl.useProgram(bgProg);
+    gl.uniform1f(gl.getUniformLocation(bgProg, 'uTime'), simTime);
+    gl.uniform1f(gl.getUniformLocation(bgProg, 'uFlash'), screenFlash);
+    gl.uniform2f(gl.getUniformLocation(bgProg, 'uCamTilt'), player.x * 0.06, player.y * 0.06);
+    gl.bindVertexArray(bgVao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    // 2. Render Boss Dreadnought ("LEVIATHAN-IX") + Rotating Shield Ring + Pylons + Core
+    if (boss.alive) {
+      const hullM = mat4TRS(boss.x, boss.y, boss.z, Math.sin(simTime*0.7)*0.08, boss.rotY, Math.sin(simTime*0.45)*0.07, 1.38, 1.38, 1.38);
+      drawMesh(bossHullMesh, hullM, vp, camPos, [0.9, 0.12, 0.28], 0.12, boss.hitFlash, [1.0, 0.25, 0.45]);
+
+      // Rotating glowing outer containment ring
+      const ringM = mat4TRS(boss.x, boss.y, boss.z + 1.8, 0.18, boss.rotY * 0.5, boss.ringAngle, 1.32, 0.96, 1.32);
+      const ringCol = boss.phase === 1 ? [0.16, 0.85, 1.0] : [1.0, 0.35, 0.18];
+      drawMesh(bossRingMesh, ringM, vp, camPos, ringCol, 0.85, boss.hitFlash, ringCol);
+
+      // Blazing Reactor Core (pulses brightly when exposed in Phase 2!)
+      const coreScale = 0.82 + boss.coreOpen * 0.82 + Math.sin(simTime * 9.0) * 0.08;
+      const coreM = mat4TRS(boss.x, boss.y, boss.z + 2.6 + boss.coreOpen * 1.1, simTime*1.8, simTime*2.4, 0, coreScale, coreScale, coreScale);
+      const coreEm = boss.phase === 2 ? [1.0, 0.65, 0.18] : [0.95, 0.22, 0.36];
+      drawMesh(coreMesh, coreM, vp, camPos, coreEm, boss.phase === 2 ? 1.45 : 0.75, boss.hitFlash, [1.0, 0.88, 0.35]);
+
+      // 4 Independent Orbiting Shield Pylons
+      for (const py of boss.pylons) {
+        if (!py.alive) continue;
+        const pm = mat4TRS(py.wx, py.wy, py.wz, simTime * 1.4, -simTime * 1.9, py.angleOff, 1.05, 1.05, 1.05);
+        drawMesh(pylonMesh, pm, vp, camPos, [1.0, 0.22, 0.42], 0.55, py.flash, [0.35, 0.92, 1.0]);
+      }
+    }
+
+    // 3. Render Player Starfighter ("AEGIS-01") with crisp metallic facet shading
+    const pModel = mat4TRS(player.x, player.y, player.z, player.pitch, -player.vx * 0.015, player.roll, 1.05, 1.05, 1.05);
+    drawMesh(fighterMesh, pModel, vp, camPos, [0.06, 0.45, 0.72], 0.14, 0.0, [0.28, 0.92, 1.0]);
+
+    // 4. Render Tumbling Destroyed Hull Debris
+    for (const d of debris) {
+      const dm = mat4TRS(d.x, d.y, d.z, d.rx, d.ry, d.rz, d.scale, d.scale * 0.6, d.scale * 1.4);
+      drawMesh(debrisMesh, dm, vp, camPos, [1.0, 0.42, 0.12], 0.72, 0, [1.0, 0.75, 0.25]);
+    }
+
+    // 5. Additive Layer: Laser Bolts, Boss Death Beams, Shockwave Rings, Star Streaks, Engine & Missile Trails, Particles!
+    gl.depthMask(false);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
+    // Player Twin Plasma Bolts
+    for (const b of bolts) {
+      const bm = mat4TRS(b.x, b.y, b.z, 0, 0, 0, 0.16, 0.16, 2.8);
+      drawMesh(boltMesh, bm, vp, camPos, [0.18, 0.96, 1.0], 1.85, 0.4, [0.6, 1.0, 1.0], 0.95);
+    }
+
+    // Boss Sweeping Death Beams!
+    if (boss.alive && boss.beamActive > 0.01) {
+      const beamOffsets = boss.dualBeam ? [-3.4, 3.4] : [0.0];
+      for (const bxOff of beamOffsets) {
+        const sx = boss.x + bxOff, sy = boss.y, sz = boss.z + 3.0;
+        const tx = boss.beamSweep + bxOff * 0.4, ty = player.y - 0.5, tz = 10.0;
+        const mx = (sx + tx) * 0.5, my = (sy + ty) * 0.5, mz = (sz + tz) * 0.5;
+        const dx = tx - sx, dy = ty - sy, dz = tz - sz;
+        const len = Math.hypot(dx, dy, dz);
+        const yaw = Math.atan2(dx, dz);
+        const pitch = -Math.atan2(dy, Math.hypot(dx, dz));
+        const wBeam = (0.58 + Math.sin(simTime * 42.0) * 0.12) * boss.beamActive;
+        // Outer crimson plasma beam
+        const mOuter = mat4TRS(mx, my, mz, pitch, yaw, 0, wBeam * 2.1, wBeam * 2.1, len);
+        drawMesh(beamMesh, mOuter, vp, camPos, [1.0, 0.12, 0.34], 1.6, 0.0, [1.0, 0.3, 0.5], 0.42);
+        // Inner white-hot laser core
+        const mInner = mat4TRS(mx, my, mz, pitch, yaw, 0, wBeam * 0.72, wBeam * 0.72, len);
+        drawMesh(beamMesh, mInner, vp, camPos, [1.0, 0.88, 0.78], 2.2, 0.8, [1.0, 1.0, 1.0], 0.95);
+      }
+    }
+
+    // Expanding 3D Shockwave Rings
+    for (const sw of shockwaves) {
+      const a = Math.max(0, sw.life / sw.maxLife);
+      const sm = mat4TRS(sw.x, sw.y, sw.z, 0.35, simTime * 1.2, 0, sw.r, sw.r, sw.r);
+      drawMesh(shockRingMesh, sm, vp, camPos, sw.col, 1.8 * a, 0.25, sw.col, a * 0.9);
+    }
+
+    // Dynamic Lines: Warp Star Streaks + Fighter Twin Engine Ribbon Trails + Macross Homing Missile Trails!
+    let lv = 0;
+    function pushSeg(x0,y0,z0, r0,g0,b0,a0, x1,y1,z1, r1,g1,b1,a1) {
+      if (lv + 2 >= MAX_LINE_VERTS) return;
+      let o = lv * 7;
+      lineBuf[o++]=x0; lineBuf[o++]=y0; lineBuf[o++]=z0; lineBuf[o++]=r0; lineBuf[o++]=g0; lineBuf[o++]=b0; lineBuf[o++]=a0;
+      lineBuf[o++]=x1; lineBuf[o++]=y1; lineBuf[o++]=z1; lineBuf[o++]=r1; lineBuf[o++]=g1; lineBuf[o++]=b1; lineBuf[o++]=a1;
+      lv += 2;
+    }
+
+    // Warp Star Streaks
+    for (const s of stars) {
+      pushSeg(s.x, s.y, s.z, 0.45, 0.80, 1.0, 0.12, s.x, s.y, s.z + 3.2, 0.85, 0.95, 1.0, 0.65);
+    }
+    // Starfighter Twin Ion Ribbon Trails (triple-thick lines for luminous plasma glow)
+    for (const tr of [player.trailL, player.trailR]) {
+      for (let i = 0; i < tr.length - 1; i++) {
+        const a0 = (1.0 - i / tr.length) * 0.95;
+        const a1 = (1.0 - (i + 1) / tr.length) * 0.95;
+        for (const off of [-0.05, 0.0, 0.05]) {
+          pushSeg(tr[i][0]+off, tr[i][1], tr[i][2], 0.25, 0.95, 1.0, a0,
+                  tr[i+1][0]+off, tr[i+1][1], tr[i+1][2], 0.05, 0.55, 1.0, a1);
+        }
+      }
+    }
+    // Curving Macross Homing Missile Trails!
+    for (const m of missiles) {
+      const cH = m.overdrive ? [1.0, 0.86, 0.22] : [0.22, 0.98, 1.0];
+      const cT = m.overdrive ? [1.0, 0.28, 0.18] : [0.45, 0.42, 1.0];
+      for (let i = 0; i < m.trail.length - 1; i++) {
+        const a0 = (1.0 - i / m.trail.length) * 0.95;
+        const a1 = (1.0 - (i + 1) / m.trail.length) * 0.95;
+        for (const off of [-0.06, 0.0, 0.06]) {
+          pushSeg(m.trail[i][0]+off, m.trail[i][1], m.trail[i][2], cH[0], cH[1], cH[2], a0,
+                  m.trail[i+1][0]+off, m.trail[i+1][1], m.trail[i+1][2], cT[0], cT[1], cT[2], a1);
+        }
+      }
+    }
+
+    if (lv > 0) {
+      gl.useProgram(ribbonProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(ribbonProg, 'uVP'), false, vp);
+      gl.bindVertexArray(lineVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, lineBuf.subarray(0, lv * 7));
+      gl.drawArrays(gl.LINES, 0, lv);
+    }
+
+    // Additive Glowing Particles (Explosions + Thruster Cores + Enemy Orbs + Boss Charge Core + Missile Heads!)
+    let pCount = 0;
+    function pushPart(x, y, z, r, g, b, a, size) {
+      if (pCount >= MAX_PARTS) return;
+      let o = pCount * 8;
+      partBuf[o++]=x; partBuf[o++]=y; partBuf[o++]=z;
+      partBuf[o++]=r; partBuf[o++]=g; partBuf[o++]=b; partBuf[o++]=a; partBuf[o++]=size;
+      pCount++;
+    }
+    // Fighter twin thruster blooms
+    const cr = Math.cos(player.roll), sr = Math.sin(player.roll);
+    pushPart(player.x - 0.36*cr, player.y - 0.36*sr, player.z + 1.38, 0.2, 0.95, 1.0, 0.95, 18);
+    pushPart(player.x + 0.36*cr, player.y + 0.36*sr, player.z + 1.38, 0.2, 0.95, 1.0, 0.95, 18);
+    // Missile bright warhead blooms
+    for (const m of missiles) {
+      pushPart(m.x, m.y, m.z, m.overdrive ? 1.0 : 0.4, m.overdrive ? 0.9 : 1.0, m.overdrive ? 0.35 : 1.0, 1.0, m.overdrive ? 26 : 20);
+    }
+    // Enemy glowing plasma orbs
+    for (const o of enemyOrbs) {
+      pushPart(o.x, o.y, o.z, 1.0, 0.2, 0.45, 0.95, 24);
+    }
+    // Boss laser charge glow
+    if (boss.alive && boss.beamCharge > 0.05) {
+      pushPart(boss.x, boss.y, boss.z + 3.4, 1.0, 0.22, 0.42, boss.beamCharge, 48 + boss.beamCharge * 55);
+    }
+    // All active explosion sparks
+    for (let i = 0; i < MAX_PARTS; i++) {
+      const p = parts[i];
+      if (p.life > 0) {
+        const a = clamp(p.life / p.maxLife, 0, 1);
+        pushPart(p.x, p.y, p.z, p.r, p.g, p.b, a, p.size * (0.45 + 0.55 * a));
+      }
+    }
+
+    if (pCount > 0) {
+      gl.useProgram(partProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(partProg, 'uVP'), false, vp);
+      gl.bindVertexArray(partVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, partVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, partBuf.subarray(0, pCount * 8));
+      gl.drawArrays(gl.POINTS, 0, pCount);
+    }
+
+    gl.depthMask(true);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.bindVertexArray(null);
+  }
+
+  // ===== CRISP TACTICAL COCKPIT HUD (2D CANVAS OVERLAY) =====
+  function drawCornerBracket(x, y, size, color, lw = 2.0) {
+    const s = size, c = size * 0.36;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lw;
+    ctx.beginPath();
+    ctx.moveTo(x - s, y - s + c); ctx.lineTo(x - s, y - s); ctx.lineTo(x - s + c, y - s);
+    ctx.moveTo(x + s - c, y - s); ctx.lineTo(x + s, y - s); ctx.lineTo(x + s, y - s + c);
+    ctx.moveTo(x - s, y + s - c); ctx.lineTo(x - s, y + s); ctx.lineTo(x - s + c, y + s);
+    ctx.moveTo(x + s - c, y + s); ctx.lineTo(x + s, y + s); ctx.lineTo(x + s, y + s - c);
+    ctx.stroke();
+  }
+
+  function renderHUD() {
+    ctx.clearRect(0, 0, W, H);
+
+    // 1. Live 3D-Projected Lock-On Targeting Reticles on Shield Pylons & Exposed Core!
+    if (boss.alive) {
+      if (boss.phase === 1) {
+        for (const py of boss.pylons) {
+          if (!py.alive) continue;
+          const sp = projectToScreen(lastVP, py.wx, py.wy, py.wz);
+          if (!sp) continue;
+          const pulse = 1.0 + Math.sin(simTime * 11.0 + py.id) * 0.08;
+          const rad = 22 * pulse;
+          drawCornerBracket(sp.x, sp.y, rad, '#fbbf24', 1.8);
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(sp.x - rad - 5, sp.y); ctx.lineTo(sp.x - rad + 4, sp.y);
+          ctx.moveTo(sp.x + rad - 4, sp.y); ctx.lineTo(sp.x + rad + 5, sp.y);
+          ctx.stroke();
+          ctx.fillStyle = '#fbbf24';
+          ctx.font = 'bold 9.5px "Cascadia Code", Consolas, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(`LOCK P${py.id+1} · ${Math.round((py.hp / py.maxHp) * 100)}%`, sp.x, sp.y - rad - 5);
+        }
+      } else if (boss.phase === 2) {
+        const sp = projectToScreen(lastVP, boss.x, boss.y, boss.z + 3.2);
+        if (sp) {
+          const rad = 36 + Math.sin(simTime * 14.0) * 4;
+          drawCornerBracket(sp.x, sp.y, rad, '#ff3366', 2.4);
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.8)';
+          ctx.lineWidth = 1.4;
+          ctx.beginPath(); ctx.arc(sp.x, sp.y, rad * 0.65, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = '#ff5c85';
+          ctx.font = 'bold 11px "Cascadia Code", Consolas, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('REACTOR CORE EXPOSED // CRIT x2.5', sp.x, sp.y - rad - 8);
+        }
+      }
+    }
+
+    // 2. Floating 3D-Projected Combat Popups
+    for (const pop of popups) {
+      const sp = projectToScreen(lastVP, pop.wx, pop.wy, pop.wz);
+      if (!sp) continue;
+      const a = clamp(pop.life / pop.maxLife, 0, 1);
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.font = 'bold 12px "Cascadia Code", Consolas, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#020617';
+      ctx.fillText(pop.text, sp.x + 1, sp.y + 1);
+      ctx.fillStyle = pop.color;
+      ctx.fillText(pop.text, sp.x, sp.y);
+      ctx.restore();
+    }
+
+    // 3. Top-Center BOSS HEALTH BAR (LEVIATHAN-IX)
+    const bw = 510, bx = (W - bw) * 0.5, by = 14;
+    ctx.fillStyle = 'rgba(5, 11, 24, 0.80)';
+    ctx.strokeStyle = boss.phase === 2 ? 'rgba(255, 51, 102, 0.75)' : 'rgba(56, 189, 248, 0.45)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, 46, 6); ctx.fill(); ctx.stroke();
+
+    ctx.font = 'bold 11px "Cascadia Code", Consolas, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillText('LEVIATHAN-IX // ORBITAL DREADNOUGHT', bx + 12, by + 17);
+
+    const phaseTxt = boss.phase === 1 ? 'PHASE 1: SHIELD PYLONS'
+                   : (boss.phase === 2 ? 'PHASE 2: REACTOR EXPOSED' : 'DESTROYED // MISSION CLEAR');
+    ctx.textAlign = 'right';
+    ctx.fillStyle = boss.phase === 1 ? '#38bdf8' : (boss.phase === 2 ? '#ff5c85' : '#00f5a0');
+    ctx.fillText(phaseTxt, bx + bw - 12, by + 17);
+
+    const barX = bx + 12, barY = by + 25, barW = bw - 24, barH = 11;
+    ctx.fillStyle = 'rgba(30, 41, 59, 0.9)';
+    ctx.fillRect(barX, barY, barW, barH);
+    // White trailing drain bar
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+    ctx.fillRect(barX, barY, barW * clamp(boss.displayHp / boss.maxHp, 0, 1), barH);
+    // Active HP gradient bar
+    const hpFrac = clamp(boss.hp / boss.maxHp, 0, 1);
+    const hpGrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+    hpGrad.addColorStop(0, '#ff2e63');
+    hpGrad.addColorStop(0.55, '#fb923c');
+    hpGrad.addColorStop(1, '#fbbf24');
+    ctx.fillStyle = hpGrad;
+    ctx.fillRect(barX, barY, barW * hpFrac, barH);
+    // Segmented tick dividers
+    ctx.fillStyle = 'rgba(5, 11, 24, 0.75)';
+    for (let s = 1; s < 10; s++) ctx.fillRect(barX + (barW * s) / 10, barY, 1.5, barH);
+
+    // 4. Top-Left Game Telemetry Card
+    ctx.fillStyle = 'rgba(5, 11, 24, 0.78)';
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+    ctx.beginPath(); ctx.roundRect(14, 14, 332, 46, 6); ctx.fill(); ctx.stroke();
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 11px "Cascadia Code", Consolas, monospace';
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillText('AEGIS ZERO // PLAYABLE SINGLE HTML', 24, 31);
+    ctx.font = '10px "Cascadia Code", Consolas, monospace';
+    ctx.fillStyle = '#9cb3d1';
+    ctx.fillText('PURE WEBGL2 · 0 LIBS · WASD/SPACE/SHIFT/Q-E', 24, 48);
+
+    // 5. Top-Right Score, Combo & Overdrive Gauge
+    ctx.fillStyle = 'rgba(5, 11, 24, 0.78)';
+    ctx.strokeStyle = player.overdrive >= 99 ? 'rgba(251, 191, 36, 0.85)' : 'rgba(56, 189, 248, 0.35)';
+    ctx.beginPath(); ctx.roundRect(W - 244, 14, 230, 56, 6); ctx.fill(); ctx.stroke();
+    ctx.textAlign = 'right';
+    ctx.font = 'bold 18px "Cascadia Code", Consolas, monospace';
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillText(String(Math.round(player.score)).padStart(6, '0'), W - 24, 36);
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 10px "Cascadia Code", Consolas, monospace';
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillText(`COMBO x${player.combo}`, W - 232, 34);
+
+    // Overdrive meter
+    const odX = W - 232, odY = 46, odW = 208, odH = 8;
+    ctx.fillStyle = 'rgba(30, 41, 59, 0.9)';
+    ctx.fillRect(odX, odY, odW, odH);
+    ctx.fillStyle = player.overdrive >= 99 ? '#fbbf24' : '#38bdf8';
+    ctx.fillRect(odX, odY, odW * (player.overdrive / 100), odH);
+    ctx.font = 'bold 8.5px "Cascadia Code", Consolas, monospace';
+    ctx.fillStyle = player.overdrive >= 99 ? '#fef08a' : '#94a3b8';
+    ctx.fillText(player.overdrive >= 99 ? 'OVERDRIVE 100% READY ⚡' : `OVERDRIVE ${Math.round(player.overdrive)}%`, odX, 64);
+
+    // 6. Bottom-Left Tactical Radar & Shield/Hull Bars
+    ctx.fillStyle = 'rgba(5, 11, 24, 0.78)';
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.32)';
+    ctx.beginPath(); ctx.roundRect(14, H - 88, 234, 74, 6); ctx.fill(); ctx.stroke();
+
+    // Mini Circular Radar
+    const rx = 50, ry = H - 51, rr = 26;
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(rx, ry, rr, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(rx, ry, rr * 0.5, 0, Math.PI * 2); ctx.stroke();
+    // Radar sweep line
+    const swAng = simTime * 2.8;
+    ctx.strokeStyle = 'rgba(0, 245, 160, 0.6)';
+    ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx + Math.cos(swAng)*rr, ry + Math.sin(swAng)*rr); ctx.stroke();
+    // Player dot (center-bottom) & Boss blip (top)
+    ctx.fillStyle = '#00f5a0';
+    ctx.beginPath(); ctx.arc(rx + player.x * 1.1, ry + 11, 2.5, 0, Math.PI * 2); ctx.fill();
+    if (boss.alive) {
+      ctx.fillStyle = '#ff3366';
+      ctx.beginPath(); ctx.arc(rx + boss.x * 1.1, ry - 12, 3.6, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Shield & Hull Bars
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 9.5px "Cascadia Code", Consolas, monospace';
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillText('SHIELD  100%', 88, H - 64);
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.25)'; ctx.fillRect(88, H - 59, 146, 7);
+    ctx.fillStyle = '#38bdf8'; ctx.fillRect(88, H - 59, 146, 7);
+
+    ctx.fillStyle = '#00f5a0';
+    ctx.fillText('HULL    100%', 88, H - 38);
+    ctx.fillStyle = 'rgba(0, 245, 160, 0.22)'; ctx.fillRect(88, H - 33, 146, 7);
+    ctx.fillStyle = '#00f5a0'; ctx.fillRect(88, H - 33, 146, 7);
+
+    // 7. Bottom-Right Speed & Gemini 4 Neon Badge
+    ctx.fillStyle = 'rgba(5, 11, 24, 0.78)';
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+    ctx.beginPath(); ctx.roundRect(W - 236, H - 58, 222, 44, 6); ctx.fill(); ctx.stroke();
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 10.5px "Cascadia Code", Consolas, monospace';
+    ctx.fillStyle = '#00f5a0';
+    ctx.fillText(`MACH ${(4.2 + Math.sin(simTime * 2.1) * 0.35).toFixed(1)} · 60 FPS`, W - 224, H - 39);
+    ctx.fillStyle = '#9cb3d1';
+    ctx.font = '9.5px "Cascadia Code", Consolas, monospace';
+    ctx.fillText(`GEMINI 4 NEON · ${simTime.toFixed(1).padStart(4, '0')}s / 24.0s`, W - 224, H - 23);
+
+    // 8. Center Cinematic Event Banner
+    if (banner.ttl > 0) {
+      const a = Math.min(1.0, banner.ttl * 1.8);
+      ctx.save();
+      ctx.globalAlpha = a;
+      const bw2 = 540, bx2 = (W - bw2) * 0.5, by2 = 74;
+      ctx.fillStyle = 'rgba(5, 10, 24, 0.88)';
+      ctx.strokeStyle = banner.color;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.roundRect(bx2, by2, bw2, 46, 6); ctx.fill(); ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 13.5px "Cascadia Code", Consolas, monospace';
+      ctx.fillStyle = banner.color;
+      ctx.fillText(banner.text, W * 0.5, by2 + 20);
+      ctx.font = '10px "Cascadia Code", Consolas, monospace';
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillText(banner.sub, W * 0.5, by2 + 37);
+      ctx.restore();
+    }
+  }
+
+  // ===== INITIALIZE & LOOP =====
+  prewarmAction();
+  render3D();
+  renderHUD();
+
+  window.stepAegis = function(dt) {
+    stepGame(dt);
+    render3D();
+    renderHUD();
+  };
+
+  if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.setHint('手動プレイ中: WASD/矢印:移動 · Space:レーザー · Shift:誘導ミサイル · Q/E:バレルロール');
+      const autoBtn = window.NeonShell.addControl('🤖 オートデモ', (btn) => {
+        manualControl = !manualControl;
+        btn.classList.toggle('active', !manualControl);
+        window.NeonShell.setHint(manualControl ? '手動プレイ中: WASD/矢印:移動 · Space:レーザー · Shift:誘導ミサイル · Q/E:ロール' : 'オートデモ再生中（キーまたは下ボタンで手動操縦）');
+      });
+      window.NeonShell.addControl('↻ リスタート', () => window.location.reload());
+      const setK = (code, val) => {
+        if (val) { manualControl = true; autoBtn.classList.remove('active'); }
+        keys[code] = val;
+      };
+      window.NeonShell.addPads([
+        { label: '◀ 左', onDown: () => setK('ArrowLeft', true), onUp: () => setK('ArrowLeft', false) },
+        { label: '▲ 上', onDown: () => setK('ArrowUp', true), onUp: () => setK('ArrowUp', false) },
+        { label: '▼ 下', onDown: () => setK('ArrowDown', true), onUp: () => setK('ArrowDown', false) },
+        { label: '▶ 右', onDown: () => setK('ArrowRight', true), onUp: () => setK('ArrowRight', false) },
+        { label: '🔥 レーザー', onDown: () => setK('Space', true), onUp: () => setK('Space', false) },
+        { label: '🚀 ミサイル', onDown: () => { manualControl = true; autoBtn.classList.remove('active'); fireHomingSalvo(4); } },
+        { label: '🌀 ロール', onDown: () => { manualControl = true; autoBtn.classList.remove('active'); if (player.barrelTimer <= 0) { player.barrelTimer = 0.72; player.barrelDir = 1; window.NeonAudio?.sfx('roll'); } } },
+      ]);
+    });
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (!manualControl && simTime >= TOTAL_DEMO) {
+        location.reload();
+        return;
+      }
+      window.stepAegis(dt);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+<script src="../demo-shell.js"></script>
+</body>
+</html>

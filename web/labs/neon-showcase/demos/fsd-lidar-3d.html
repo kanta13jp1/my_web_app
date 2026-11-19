@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>DRIVE AI // 3D FSD & LiDAR Perception Studio (Single HTML · Pure WebGL2)</title>
+<style>
+  :root {
+    --bg: #030712;
+    --panel: rgba(8, 14, 28, 0.93);
+    --border: rgba(56, 189, 248, 0.22);
+    --text0: #f1f7ff;
+    --text1: #9cb4d4;
+    --text2: #5b7496;
+    --cyan: #38bdf8;
+    --emerald: #00f5a0;
+    --gold: #fbbf24;
+    --crimson: #ff3366;
+    --violet: #a855f7;
+    --orange: #fb923c;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: "Segoe UI", "Inter", -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 1280px; height: 720px; overflow: hidden;
+    background: radial-gradient(circle at 50% 45%, #09162e 0%, #02050c 78%);
+    color: var(--text0); font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  .app {
+    width: 1280px; height: 720px;
+    display: grid; grid-template-rows: 42px 1fr 28px;
+    padding: 6px; gap: 6px; position: relative;
+  }
+
+  /* ===== TOP BAR (STRICT SINGLE-LINE) ===== */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(90deg, rgba(7,13,27,0.98), rgba(10,20,40,0.98));
+    border: 1px solid var(--border); border-radius: 7px; padding: 0 11px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.48);
+  }
+  .brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .dot-live {
+    width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+    background: var(--emerald);
+    box-shadow: 0 0 10px var(--emerald), 0 0 18px rgba(0,245,160,0.65);
+  }
+  .dot-live.warn { background: var(--crimson); box-shadow: 0 0 12px var(--crimson), 0 0 22px rgba(255,51,102,0.8); }
+  .brand-txt { font-family: var(--mono); font-size: 12.5px; font-weight: 800; letter-spacing: 0.9px; white-space: nowrap; }
+  .brand-txt span { color: var(--cyan); }
+  .tag {
+    font-family: var(--mono); font-size: 8.4px; color: var(--cyan);
+    background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.32);
+    padding: 2px 7px; border-radius: 4px; white-space: nowrap;
+  }
+  .kpis {
+    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    font-family: var(--mono); font-variant-numeric: tabular-nums;
+  }
+  .kpi { display: flex; flex-direction: column; line-height: 1.15; white-space: nowrap; }
+  .kpi .k { font-size: 7.4px; color: var(--text2); letter-spacing: 0.5px; white-space: nowrap; }
+  .kpi .v { font-size: 11px; font-weight: 800; white-space: nowrap; }
+  .kpi .v.em { color: var(--emerald); }
+  .kpi .v.cyan { color: var(--cyan); }
+  .kpi .v.gold { color: var(--gold); }
+  .kpi .v.red { color: var(--crimson); }
+
+  .top-tabs { display: flex; gap: 4px; flex-shrink: 0; }
+  .tbtn {
+    font-family: var(--mono); font-size: 8.8px; font-weight: 800;
+    color: var(--text1); background: rgba(13,22,42,0.9);
+    border: 1px solid rgba(148,163,184,0.22); border-radius: 5px;
+    padding: 4px 7.5px; cursor: pointer; white-space: nowrap;
+  }
+  .tbtn.act-cyan { color: #02111f; background: linear-gradient(90deg,#38bdf8,#00f5a0); border-color: #7dd3fc; box-shadow: 0 0 12px rgba(56,189,248,0.5); }
+  .tbtn.act-vio  { color: #fff; background: linear-gradient(90deg,#7c3aed,#ec4899); border-color: #d8b4fe; box-shadow: 0 0 14px rgba(168,85,247,0.55); }
+  .tbtn.act-red  { color: #fff; background: linear-gradient(90deg,#e11d48,#f97316); border-color: #fda4af; box-shadow: 0 0 15px rgba(255,51,102,0.62); }
+  .tbtn.act-em   { color: #021a10; background: linear-gradient(90deg,#00f5a0,#38bdf8); border-color: #6ee7b7; box-shadow: 0 0 14px rgba(0,245,160,0.55); }
+
+  /* ===== MAIN 3-COLUMN GRID ===== */
+  .main-grid {
+    display: grid; grid-template-columns: 266px 724px 266px;
+    gap: 6px; min-height: 0;
+  }
+  .col { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 7px;
+    display: flex; flex-direction: column; overflow: hidden; position: relative;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+  }
+  .phdr {
+    height: 25px; min-height: 25px; padding: 0 9px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(56,189,248,0.12);
+    background: rgba(5,10,22,0.82); font-family: var(--mono);
+  }
+  .ptitle {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.6px; color: #cde4ff;
+    display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .ptitle .d { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 7px var(--cyan); flex-shrink: 0; }
+  .pmeta { font-size: 8.4px; color: var(--text1); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .cwrap { flex: 1; position: relative; min-height: 0; }
+  canvas.fill { width: 100%; height: 100%; display: block; }
+
+  /* Left Column */
+  .dyn-cards {
+    padding: 7px 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
+    font-family: var(--mono); font-variant-numeric: tabular-nums;
+  }
+  .dcard {
+    background: rgba(13,23,44,0.86); border: 1px solid rgba(56,189,248,0.16);
+    border-radius: 5px; padding: 5px 8px;
+  }
+  .dcard .k { font-size: 7.5px; color: var(--text2); display: block; }
+  .dcard .v { font-size: 13px; font-weight: 800; margin-top: 2px; display: block; }
+  .dcard .s { font-size: 7.5px; color: var(--emerald); margin-top: 1px; display: block; }
+
+  .bev-panel { flex: 1.24; min-height: 0; }
+  .tel-panel { flex: 0.84; min-height: 0; }
+
+  /* Center Hero 3D Viewport */
+  .hero-panel {
+    flex: 1; border-color: rgba(56,189,248,0.34);
+    box-shadow: 0 0 34px rgba(56,189,248,0.10);
+  }
+  .hero-panel.warn-border {
+    border-color: rgba(255,51,102,0.72);
+    box-shadow: 0 0 34px rgba(255,51,102,0.22);
+  }
+  .gl-top {
+    position: absolute; top: 32px; left: 10px; right: 10px;
+    display: flex; justify-content: space-between;
+    pointer-events: none; z-index: 4;
+  }
+  .gl-card {
+    background: rgba(4,10,22,0.84); border: 1px solid rgba(56,189,248,0.3);
+    border-radius: 6px; padding: 5px 10px; font-family: var(--mono);
+  }
+  .gl-card .t { font-size: 10.2px; font-weight: 800; color: #f0f9ff; letter-spacing: 0.5px; }
+  .gl-card .s { font-size: 8.2px; color: var(--emerald); margin-top: 2px; }
+  .gl-leg {
+    display: flex; gap: 8px; align-items: center; height: fit-content;
+    background: rgba(4,10,22,0.86); border: 1px solid rgba(148,163,184,0.24);
+    border-radius: 6px; padding: 5px 9px; font-family: var(--mono); font-size: 8.2px; color: var(--text1);
+  }
+  .litem { display: flex; align-items: center; gap: 4px; }
+  .ldot { width: 7px; height: 7px; border-radius: 50%; }
+
+  .gl-banner {
+    position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
+    z-index: 6; font-family: var(--mono); font-size: 10.8px; font-weight: 800;
+    letter-spacing: 0.6px; padding: 5.5px 13px; border-radius: 6px; white-space: nowrap;
+    opacity: 0; pointer-events: none;
+  }
+  .gl-banner.b-vio { opacity:1; color:#faf5ff; background:rgba(16,8,30,0.94); border:1.5px solid #c084fc; box-shadow:0 0 24px rgba(168,85,247,0.55); }
+  .gl-banner.b-red { opacity:1; color:#fff1f2; background:rgba(36,6,16,0.95); border:1.5px solid #ff3366; box-shadow:0 0 28px rgba(255,51,102,0.68); }
+  .gl-banner.b-em  { opacity:1; color:#ecfdf5; background:rgba(4,20,16,0.94); border:1.5px solid #00f5a0; box-shadow:0 0 24px rgba(0,245,160,0.52); }
+
+  .gl-bot {
+    position: absolute; bottom: 9px; left: 10px; right: 10px;
+    display: flex; justify-content: space-between;
+    pointer-events: none; z-index: 4;
+  }
+  .gpills { display: flex; gap: 6px; }
+  .gpill {
+    background: rgba(4,10,22,0.88); border: 1px solid rgba(56,189,248,0.24);
+    border-radius: 5px; padding: 4px 8px; font-family: var(--mono);
+  }
+  .gpill .k { font-size: 7.2px; color: var(--text2); display: block; }
+  .gpill .v { font-size: 10.2px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  /* Right Column */
+  .sensor-panel { flex: 0.96; min-height: 0; }
+  .track-panel { flex: 1.04; min-height: 0; }
+  .track-list {
+    flex: 1; padding: 6px 8px; display: flex; flex-direction: column; justify-content: space-between;
+    font-family: var(--mono); font-variant-numeric: tabular-nums;
+  }
+  .trow {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4.5px 7px; border-radius: 4px;
+    background: rgba(13,23,44,0.82); border: 1px solid rgba(56,189,248,0.14);
+    font-size: 8.4px;
+  }
+  .trow.hazard {
+    background: rgba(56,10,24,0.90); border-color: rgba(255,51,102,0.68);
+    box-shadow: 0 0 12px rgba(255,51,102,0.28);
+  }
+  .tbadge {
+    font-size: 7.4px; font-weight: 800; padding: 1.5px 5px; border-radius: 3px;
+    min-width: 48px; text-align: center;
+  }
+  .tb-car { background: rgba(56,189,248,0.20); color: #7dd3fc; }
+  .tb-trk { background: rgba(251,191,36,0.20); color: #fde68a; }
+  .tb-haz { background: rgba(255,51,102,0.32); color: #fda4af; }
+  .tcls { color: var(--text0); font-weight: 700; }
+  .tdist { color: var(--text1); }
+  .tconf { color: var(--emerald); font-weight: 800; }
+  .trow.hazard .tconf { color: #ff5c85; }
+
+  .deck-panel { height: 94px; min-height: 94px; }
+  .deck-grid {
+    flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+    gap: 5px; padding: 6px 8px;
+  }
+  .dbtn {
+    font-family: var(--mono); font-size: 8.6px; font-weight: 800;
+    border-radius: 5px; border: 1px solid transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dbtn.d1 { background: rgba(56,189,248,0.14); border-color: rgba(56,189,248,0.48); color: #7dd3fc; }
+  .dbtn.d2 { background: rgba(168,85,247,0.16); border-color: rgba(168,85,247,0.55); color: #d8b4fe; }
+  .dbtn.d3 { background: rgba(255,51,102,0.16); border-color: rgba(255,51,102,0.58); color: #fda4af; }
+  .dbtn.d4 { background: rgba(0,245,160,0.14); border-color: rgba(0,245,160,0.48); color: #00f5a0; }
+  .dbtn.pressed { transform: scale(0.95); filter: brightness(1.45); box-shadow: 0 0 18px currentColor; }
+
+  /* Bottom Bar */
+  .bottombar {
+    display: grid; grid-template-columns: repeat(4, 1fr) 156px;
+    gap: 6px; align-items: center;
+  }
+  .ppill {
+    height: 26px; background: rgba(8,14,28,0.94); border: 1px solid rgba(148,163,184,0.16);
+    border-radius: 5px; padding: 0 9px; display: flex; align-items: center; justify-content: space-between;
+    font-family: var(--mono); font-size: 8.8px; color: var(--text2); position: relative; overflow: hidden;
+  }
+  .ppill .prog { position: absolute; left:0; top:0; bottom:0; width:0%; background: rgba(56,189,248,0.18); z-index:0; }
+  .ppill span { position: relative; z-index: 1; }
+  .ppill.act-cyan { border-color: rgba(56,189,248,0.78); color: #f0f9ff; font-weight: 700; }
+  .ppill.act-vio  { border-color: rgba(192,132,252,0.85); color: #f3e8ff; font-weight: 700; }
+  .ppill.act-vio .prog { background: rgba(168,85,247,0.26); }
+  .ppill.act-red  { border-color: rgba(255,51,102,0.88); color: #ffe4e6; font-weight: 700; }
+  .ppill.act-red .prog { background: rgba(255,51,102,0.28); }
+  .ppill.act-em   { border-color: rgba(0,245,160,0.85); color: #d1fae5; font-weight: 700; }
+  .ppill.act-em .prog { background: rgba(0,245,160,0.22); }
+
+  .clock {
+    height: 26px; background: rgba(8,14,28,0.94); border: 1px solid rgba(0,245,160,0.34);
+    border-radius: 5px; display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 9.4px; font-weight: 800; color: var(--emerald);
+    font-variant-numeric: tabular-nums;
+  }
+  .vcursor { position: absolute; width: 18px; height: 18px; pointer-events: none; z-index: 50; transform: translate(-2px,-2px); opacity: 0; }
+  .cring { position: absolute; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #00f5a0; pointer-events: none; z-index: 49; opacity: 0; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="workstation">
+<div class="app" id="appRoot">
+  <header class="topbar">
+    <div class="brand">
+      <div class="dot-live" id="liveDot"></div>
+      <div class="brand-txt">DRIVE AI <span>// 3D FSD STUDIO</span></div>
+      <div class="tag">SINGLE HTML · 0 LIBS · NO THREE.JS / ROS / CARLA</div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span class="k">EGO SPEED</span><span class="v em" id="kSpeed">108 km/h</span></div>
+      <div class="kpi"><span class="k">LiDAR PTS</span><span class="v cyan" id="kPts">3,640/f</span></div>
+      <div class="kpi"><span class="k">SAFETY TTC</span><span class="v gold" id="kTtc">SAFE 6.4s</span></div>
+      <div class="kpi"><span class="k">NEURAL CONF</span><span class="v em" id="kConf">99.4%</span></div>
+    </div>
+    <div class="top-tabs">
+      <button class="tbtn act-cyan" id="tabLidar">01 LiDAR 64</button>
+      <button class="tbtn" id="tabOcc">02 OCCUPANCY</button>
+      <button class="tbtn" id="tabCut">03 CUT-IN</button>
+      <button class="tbtn" id="tabFuse">04 FUSION</button>
+    </div>
+  </header>
+
+  <main class="main-grid">
+    <!-- LEFT COLUMN -->
+    <section class="col">
+      <div class="panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--emerald);box-shadow:0 0 7px var(--emerald)"></span>EGO DYNAMICS &amp; MPC SOLVER</div>
+          <div class="pmeta">100 Hz</div>
+        </div>
+        <div class="dyn-cards">
+          <div class="dcard"><span class="k">CRUISE VELOCITY</span><span class="v" id="mSpd" style="color:#00f5a0">108 km/h</span><span class="s" id="mSpdSub">AUTOPILOT ACTIVE</span></div>
+          <div class="dcard"><span class="k">STEER ANGLE</span><span class="v" id="mSteer" style="color:#38bdf8">+0.2°</span><span class="s" id="mSteerSub">LANE CENTERED</span></div>
+          <div class="dcard"><span class="k">LATERAL G-FORCE</span><span class="v" id="mLatG" style="color:#fbbf24">0.02 g</span><span class="s" id="mLatSub">SMOOTH RIDE</span></div>
+          <div class="dcard"><span class="k">OCCUPANCY VOXELS</span><span class="v" id="mVox" style="color:#c084fc">0</span><span class="s" id="mVoxSub">PLANNER 4.1 ms</span></div>
+        </div>
+      </div>
+
+      <div class="panel bev-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d"></span>2D BEV RADAR &amp; MPC TRAJECTORY</div>
+          <div class="pmeta" id="bevMeta">5 PATHS</div>
+        </div>
+        <div class="cwrap"><canvas id="bevCanvas" class="fill"></canvas></div>
+      </div>
+
+      <div class="panel tel-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--gold);box-shadow:0 0 7px var(--gold)"></span>STEER &amp; SAFETY MARGIN STREAM</div>
+          <div class="pmeta">LIVE MPC</div>
+        </div>
+        <div class="cwrap"><canvas id="telCanvas" class="fill"></canvas></div>
+      </div>
+    </section>
+
+    <!-- CENTER 3D PERCEPTION HERO -->
+    <section class="col">
+      <div class="panel hero-panel" id="heroPanel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--emerald);box-shadow:0 0 7px var(--emerald)"></span>PURE WEBGL2 3D NEURAL PERCEPTION &amp; LiDAR ENGINE</div>
+          <div class="pmeta" id="glMeta">64-CH POINT CLOUD · 3D BBOX · OCCUPANCY VOXELS · MPC</div>
+        </div>
+        <div class="cwrap">
+          <canvas id="glCanvas" class="fill"></canvas>
+
+          <div class="gl-top">
+            <div class="gl-card">
+              <div class="t" id="glTitle">64-CHANNEL 3D LiDAR SWEEP // NEURAL BOUNDING BOXES</div>
+              <div class="s" id="glSub">DRAG TO ORBIT 360° · SCROLL TO ZOOM · 100% PROCEDURAL WEBGL2</div>
+            </div>
+            <div class="gl-leg" id="glLeg">
+              <div class="litem"><span class="ldot" style="background:#00f5a0"></span>MPC PATH</div>
+              <div class="litem"><span class="ldot" style="background:#38bdf8"></span>LiDAR</div>
+              <div class="litem"><span class="ldot" style="background:#fbbf24"></span>TRAFFIC</div>
+              <div class="litem"><span class="ldot" style="background:#ff3366"></span>HAZARD</div>
+            </div>
+          </div>
+
+          <div class="gl-banner" id="glBanner">⚠ EMERGENCY CUT-IN DETECTED · MPC EVASIVE MANEUVER ACTIVE</div>
+
+          <div class="gl-bot">
+            <div class="gpills">
+              <div class="gpill"><span class="k">PERCEPTION STACK</span><span class="v" id="gStack" style="color:#38bdf8">64-CH LiDAR + BBOX</span></div>
+              <div class="gpill"><span class="k">MPC PLANNER</span><span class="v" id="gPlan" style="color:#00f5a0">CRUISE LOCK</span></div>
+              <div class="gpill"><span class="k">ACTIVE LANE</span><span class="v" id="gLane" style="color:#fbbf24">CENTER (L2)</span></div>
+            </div>
+            <div class="gpill"><span class="k">CAMERA ORBIT</span><span class="v" id="gCam" style="color:#9cb4d4">AZ 14° · EL 24°</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN -->
+    <section class="col">
+      <div class="panel sensor-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--violet);box-shadow:0 0 7px var(--violet)"></span>6-CAM SURROUND &amp; G-FORCE METER</div>
+          <div class="pmeta" id="camMeta">6/6 ONLINE</div>
+        </div>
+        <div class="cwrap"><canvas id="sensorCanvas" class="fill"></canvas></div>
+      </div>
+
+      <div class="panel track-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--emerald);box-shadow:0 0 7px var(--emerald)"></span>NEURAL 3D OBJECT TRACKER</div>
+          <div class="pmeta" id="trkMeta">6 TRACKED</div>
+        </div>
+        <div class="track-list" id="trackList"></div>
+      </div>
+
+      <div class="panel deck-panel">
+        <div class="phdr">
+          <div class="ptitle"><span class="d" style="background:var(--gold)"></span>FSD SIMULATION DECK</div>
+          <div class="pmeta">INTERACTIVE</div>
+        </div>
+        <div class="deck-grid">
+          <button class="dbtn d1" id="btnLidar">📡 64-CH LiDAR</button>
+          <button class="dbtn d2" id="btnOcc">🧊 OCCUPANCY 3D</button>
+          <button class="dbtn d3" id="btnCut">⚠ CUT-IN TEST</button>
+          <button class="dbtn d4" id="btnFuse">◈ SENSOR FUSION</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bottombar">
+    <div class="ppill act-cyan" id="ph0"><div class="prog" id="pr0"></div><span>01 64-CH LiDAR &amp; BBOX</span><span>0–6s</span></div>
+    <div class="ppill" id="ph1"><div class="prog" id="pr1"></div><span>02 3D OCCUPANCY VOXELS</span><span>6–12s</span></div>
+    <div class="ppill" id="ph2"><div class="prog" id="pr2"></div><span>03 CUT-IN MPC AVOIDANCE</span><span>12–18s</span></div>
+    <div class="ppill" id="ph3"><div class="prog" id="pr3"></div><span>04 FULL SENSOR FUSION</span><span>18–24s</span></div>
+    <div class="clock" id="clockEl">GEMINI 4 NEON · 00.0s</div>
+  </footer>
+
+  <div class="cring" id="cRing"></div>
+  <svg class="vcursor" id="vCursor" viewBox="0 0 24 24" fill="none">
+    <path d="M4 3L19 11.5L12.2 13.4L9.8 20L4 3Z" fill="#f8fafc" stroke="#020617" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const clamp = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const ease = (u) => { const t = clamp(u, 0, 1); return t * t * (3 - 2 * t); };
+
+  // ===== WEBGL2 INIT =====
+  const glCanvas = document.getElementById('glCanvas');
+  const gl = glCanvas.getContext('webgl2', { antialias: true, alpha: false, preserveDrawingBuffer: true });
+  if (!gl) { console.error('WebGL2 unavailable'); return; }
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error('Shader:', gl.getShaderInfoLog(s));
+    return s;
+  }
+  function link(vs, fs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) console.error('Link:', gl.getProgramInfoLog(p));
+    return p;
+  }
+
+  function mat4Persp(fovy, asp, near, far) {
+    const f = 1 / Math.tan(fovy * 0.5), nf = 1 / (near - far);
+    return new Float32Array([f/asp,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,2*far*near*nf,0]);
+  }
+  function mat4Look(eye, ctr, up) {
+    let zx=eye[0]-ctr[0], zy=eye[1]-ctr[1], zz=eye[2]-ctr[2];
+    let l=Math.hypot(zx,zy,zz)||1; zx/=l; zy/=l; zz/=l;
+    let xx=up[1]*zz-up[2]*zy, xy=up[2]*zx-up[0]*zz, xz=up[0]*zy-up[1]*zx;
+    l=Math.hypot(xx,xy,xz)||1; xx/=l; xy/=l; xz/=l;
+    const yx=zy*xz-zz*xy, yy=zz*xx-zx*xz, yz=zx*xy-zy*xx;
+    return new Float32Array([
+      xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+      -(xx*eye[0]+xy*eye[1]+xz*eye[2]),
+      -(yx*eye[0]+yy*eye[1]+yz*eye[2]),
+      -(zx*eye[0]+zy*eye[1]+zz*eye[2]), 1
+    ]);
+  }
+  function mat4Mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c=0;c<4;c++) for (let r=0;r<4;r++)
+      o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
+    return o;
+  }
+
+  // ===== SHADERS =====
+  // 1) Hardware-Instanced Glossy 3D Box Shader (Ego EV, Traffic, Gantries, Semantic Occupancy Voxels!)
+  const boxProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec3 aNorm;
+    layout(location=2) in vec4 aCenterYaw; // xyz = world center, w = yaw radians
+    layout(location=3) in vec4 aScaleE;    // xyz = full size, w = emissive glow
+    layout(location=4) in vec4 aColA;      // rgb = color, a = alpha
+
+    uniform mat4 uVP;
+    out vec3 vWorldPos;
+    out vec3 vNorm;
+    out vec4 vColA;
+    out float vEmissive;
+
+    void main() {
+      float cy = cos(aCenterYaw.w), sy = sin(aCenterYaw.w);
+      vec3 local = aPos * aScaleE.xyz;
+      vec3 rotP = vec3(local.x * cy + local.z * sy, local.y, -local.x * sy + local.z * cy);
+      vec3 rotN = vec3(aNorm.x * cy + aNorm.z * sy, aNorm.y, -aNorm.x * sy + aNorm.z * cy);
+      vec3 wp = aCenterYaw.xyz + rotP;
+      vWorldPos = wp;
+      vNorm = normalize(rotN);
+      vColA = aColA;
+      vEmissive = aScaleE.w;
+      gl_Position = uVP * vec4(wp, 1.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec3 vWorldPos;
+    in vec3 vNorm;
+    in vec4 vColA;
+    in float vEmissive;
+    uniform vec3 uCamPos;
+    out vec4 fragColor;
+
+    void main() {
+      vec3 N = normalize(vNorm);
+      vec3 V = normalize(uCamPos - vWorldPos);
+      vec3 L1 = normalize(vec3(0.7, 1.8, 0.9));
+      vec3 L2 = normalize(vec3(-1.1, 0.6, -1.2));
+      float d1 = max(dot(N, L1), 0.0);
+      float d2 = max(dot(N, L2), 0.0);
+      vec3 H = normalize(L1 + V);
+      float spec = pow(max(dot(N, H), 0.0), 44.0);
+      float fres = pow(1.0 - max(dot(N, V), 0.0), 2.4);
+
+      vec3 lit = vColA.rgb * (0.30 + d1 * 0.72 + d2 * 0.25)
+               + vec3(0.85, 0.94, 1.0) * spec * 0.48
+               + mix(vColA.rgb, vec3(0.4, 0.9, 1.0), 0.45) * fres * 0.45
+               + vColA.rgb * vEmissive * 1.15;
+
+      // Subtle distance depth fog into midnight obsidian sky
+      float dist = length(uCamPos - vWorldPos);
+      float fog = clamp((dist - 22.0) / 36.0, 0.0, 0.85);
+      lit = mix(lit, vec3(0.014, 0.026, 0.058), fog);
+      fragColor = vec4(lit, vColA.a);
+    }
+  `);
+
+  // 2) Hardware-Instanced Glowing 3D LiDAR Point Cloud Shader!
+  const ptsProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec4 aPosSize; // xyz = world pos, w = size
+    layout(location=1) in vec4 aColA;    // rgb = laser color, a = alpha
+    uniform mat4 uVP;
+    out vec4 vColA;
+    void main() {
+      vec4 clip = uVP * vec4(aPosSize.xyz, 1.0);
+      gl_Position = clip;
+      gl_PointSize = clamp(aPosSize.w * 28.0 / max(1.5, clip.w), 1.8, 9.5);
+      vColA = aColA;
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vColA;
+    out vec4 fragColor;
+    void main() {
+      vec2 d = gl_PointCoord - vec2(0.5);
+      float r2 = dot(d, d);
+      if (r2 > 0.25) discard;
+      float glow = exp(-r2 * 10.5);
+      fragColor = vec4(vColA.rgb * (0.75 + glow * 0.9), vColA.a * glow);
+    }
+  `);
+
+  // 3) 3D Lines & Translucent Ribbons/Frustums Shader
+  const lineProg = link(`#version 300 es
+    precision highp float;
+    layout(location=0) in vec3 aPos;
+    layout(location=1) in vec4 aCol;
+    uniform mat4 uVP;
+    out vec4 vCol;
+    void main() { vCol = aCol; gl_Position = uVP * vec4(aPos, 1.0); }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vCol;
+    out vec4 fragColor;
+    void main() { fragColor = vCol; }
+  `);
+
+  // ===== GEOMETRY BUFFERS =====
+  // Unit Cube (-0.5..0.5) with crisp per-face normals
+  const cubeVerts = new Float32Array([
+    // +Z
+    -0.5,-0.5, 0.5, 0,0,1,  0.5,-0.5, 0.5, 0,0,1,  0.5, 0.5, 0.5, 0,0,1,
+    -0.5,-0.5, 0.5, 0,0,1,  0.5, 0.5, 0.5, 0,0,1, -0.5, 0.5, 0.5, 0,0,1,
+    // -Z
+     0.5,-0.5,-0.5, 0,0,-1, -0.5,-0.5,-0.5, 0,0,-1, -0.5, 0.5,-0.5, 0,0,-1,
+     0.5,-0.5,-0.5, 0,0,-1, -0.5, 0.5,-0.5, 0,0,-1,  0.5, 0.5,-0.5, 0,0,-1,
+    // +X
+     0.5,-0.5, 0.5, 1,0,0,  0.5,-0.5,-0.5, 1,0,0,  0.5, 0.5,-0.5, 1,0,0,
+     0.5,-0.5, 0.5, 1,0,0,  0.5, 0.5,-0.5, 1,0,0,  0.5, 0.5, 0.5, 1,0,0,
+    // -X
+    -0.5,-0.5,-0.5,-1,0,0, -0.5,-0.5, 0.5,-1,0,0, -0.5, 0.5, 0.5,-1,0,0,
+    -0.5,-0.5,-0.5,-1,0,0, -0.5, 0.5, 0.5,-1,0,0, -0.5, 0.5,-0.5,-1,0,0,
+    // +Y
+    -0.5, 0.5, 0.5, 0,1,0,  0.5, 0.5, 0.5, 0,1,0,  0.5, 0.5,-0.5, 0,1,0,
+    -0.5, 0.5, 0.5, 0,1,0,  0.5, 0.5,-0.5, 0,1,0, -0.5, 0.5,-0.5, 0,1,0,
+    // -Y
+    -0.5,-0.5,-0.5, 0,-1,0,  0.5,-0.5,-0.5, 0,-1,0,  0.5,-0.5, 0.5, 0,-1,0,
+    -0.5,-0.5,-0.5, 0,-1,0,  0.5,-0.5, 0.5, 0,-1,0, -0.5,-0.5, 0.5, 0,-1,0,
+  ]);
+
+  const MAX_BOXES = 1800;
+  const solidBoxBuf = new Float32Array(MAX_BOXES * 12); // centerYaw(4), scaleE(4), colA(4)
+  const transBoxBuf = new Float32Array(MAX_BOXES * 12);
+
+  const boxVao = gl.createVertexArray();
+  const cubeVbo = gl.createBuffer(), boxInstVbo = gl.createBuffer();
+  gl.bindVertexArray(boxVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, cubeVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, cubeVerts, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
+  gl.bindBuffer(gl.ARRAY_BUFFER, boxInstVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, solidBoxBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 48, 0);  gl.vertexAttribDivisor(2, 1);
+  gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.FLOAT, false, 48, 16); gl.vertexAttribDivisor(3, 1);
+  gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 4, gl.FLOAT, false, 48, 32); gl.vertexAttribDivisor(4, 1);
+  gl.bindVertexArray(null);
+
+  const MAX_PTS = 4800;
+  const ptsBuf = new Float32Array(MAX_PTS * 8);
+  const ptsVao = gl.createVertexArray(), ptsVbo = gl.createBuffer();
+  gl.bindVertexArray(ptsVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, ptsVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, ptsBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 32, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 32, 16);
+  gl.bindVertexArray(null);
+
+  const MAX_LINES = 6000;
+  const lineBuf = new Float32Array(MAX_LINES * 7);
+  const lineVao = gl.createVertexArray(), lineVbo = gl.createBuffer();
+  gl.bindVertexArray(lineVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, lineBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 28, 12);
+  gl.bindVertexArray(null);
+
+  const MAX_TRIS = 4000;
+  const triBuf = new Float32Array(MAX_TRIS * 7);
+  const triVao = gl.createVertexArray(), triVbo = gl.createBuffer();
+  gl.bindVertexArray(triVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, triVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, triBuf.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 28, 12);
+  gl.bindVertexArray(null);
+
+  // ===== TRAFFIC & AUTONOMOUS DRIVING PHYSICS STATE =====
+  let simTime = 0.0;
+  let roadScroll = 0.0;
+  const isRecording = Boolean(window.__RECORDING__);
+
+  let mode = 0; // 0=LiDAR 64-CH, 1=Occupancy Voxels, 2=Cut-In Emergency Avoidance, 3=Full Sensor Fusion
+  let occAlpha = 0.0, targetOcc = 0.0;
+  let frustAlpha = 0.0, targetFrust = 0.0;
+
+  // Ego vehicle state (lanes: Left=-3.2, Center=0.0, Right=+3.2; forward is -Z!)
+  let egoX = 0.0, egoTargetX = 0.0, egoYaw = 0.0, egoSpeed = 108.0, egoSteerDeg = 0.0, egoLatG = 0.0;
+  let cutInTimer = -1.0; // >=0 while cut-in event is active (duration 5.6s)
+  let hazardActive = false;
+  let currentTtc = 6.4;
+
+  // Camera state (hero 3/4 chase showing FULL Ego EV cleanly above bottom HUD + 3 lanes ahead!)
+  let camAz = 0.24, camEl = 0.34, camDist = 19.2;
+  let dragging = false, lastMX = 0, lastMY = 0;
+
+  let curX = 640, curY = 360, curOp = 0, cPulse = 0, pressedId = null;
+  let banner = { text: '', cls: '', ttl: 0 };
+  const trig = { occ: false, cut: false, fuse: false };
+
+  let lastLidarPts = 0, lastVoxCount = 0;
+
+  // Surrounding vehicles (z < 0 is ahead of Ego, z > 0 is behind Ego)
+  const vehicles = [
+    { id: 'HAZ-01', type: 'COUPE', isTruck: false, x:  3.2, z: -13.5, baseZ: -13.5, relV: -0.3, w: 1.92, h: 1.38, len: 4.45, yaw: 0, col: [0.95, 0.26, 0.38], isHazard: false, conf: 99.6 },
+    { id: 'TRK-02', type: 'TRUCK', isTruck: true,  x:  3.2, z: -27.0, baseZ: -27.0, relV: -0.9, w: 2.32, h: 2.85, len: 7.40, yaw: 0, col: [0.85, 0.62, 0.20], isHazard: false, conf: 99.1 },
+    { id: 'VEH-03', type: 'SEDAN', isTruck: false, x: -3.2, z: -22.5, baseZ: -22.5, relV:  1.4, w: 1.88, h: 1.44, len: 4.50, yaw: 0, col: [0.22, 0.66, 0.94], isHazard: false, conf: 98.9 },
+    { id: 'VEH-04', type: 'SUV',   isTruck: false, x:  0.0, z: -31.5, baseZ: -31.5, relV: -0.5, w: 2.02, h: 1.74, len: 4.85, yaw: 0, col: [0.34, 0.78, 0.92], isHazard: false, conf: 98.4 },
+    { id: 'VEH-05', type: 'SEDAN', isTruck: false, x: -3.2, z:   8.5, baseZ:   8.5, relV: -1.1, w: 1.86, h: 1.42, len: 4.40, yaw: 0, col: [0.28, 0.60, 0.88], isHazard: false, conf: 97.8 },
+    { id: 'VEH-06', type: 'VAN',   isTruck: false, x:  3.2, z:   7.0, baseZ:   7.0, relV:  0.8, w: 2.04, h: 2.02, len: 5.20, yaw: 0, col: [0.64, 0.48, 0.92], isHazard: false, conf: 98.2 },
+  ];
+
+  // Telemetry histories
+  const steerHist = [];
+  const marginHist = [];
+  for (let i = 0; i < 64; i++) { steerHist.push(0.0); marginHist.push(88.0); }
+
+  function btnCenter(id) {
+    const r = document.getElementById(id).getBoundingClientRect();
+    const rr = document.getElementById('appRoot').getBoundingClientRect();
+    return { x: r.left - rr.left + r.width * 0.5, y: r.top - rr.top + r.height * 0.5 };
+  }
+
+  function setMode(m) {
+    mode = m;
+    if (m === 0) {
+      targetOcc = 0.0; targetFrust = 0.0; cutInTimer = -1.0; hazardActive = false;
+      egoTargetX = 0.0;
+    } else if (m === 1) {
+      targetOcc = 1.0; targetFrust = 0.0; cutInTimer = -1.0; hazardActive = false;
+      banner = { text: '◈ 3D SEMANTIC OCCUPANCY NETWORK · REAL-TIME VOXEL FREE-SPACE SOLVER', cls: 'b-vio', ttl: 4.4 };
+    } else if (m === 2) {
+      targetOcc = 0.85; targetFrust = 0.0; cutInTimer = 0.0; hazardActive = true;
+      // Place rogue vehicle HAZ-01 right in adjacent right lane ready to cut sharply into center lane!
+      vehicles[0].x = 3.2; vehicles[0].z = -12.5; vehicles[0].yaw = 0; vehicles[0].isHazard = true;
+      // Guarantee Left Escape Lane (L1) is 100% clear ahead and behind for realistic safe autonomous evasion!
+      vehicles[2].x = -3.2; vehicles[2].z = -31.0;
+      vehicles[4].x = -3.2; vehicles[4].z =  11.5;
+      vehicles[3].x =  0.0; vehicles[3].z = -33.0;
+      banner = { text: '⚠ HAZARD CUT-IN DETECTED (TTC 1.1s) · MPC AUTONOMOUS EVASIVE LANE-CHANGE', cls: 'b-red', ttl: 4.6 };
+    } else if (m === 3) {
+      targetOcc = 1.0; targetFrust = 1.0; cutInTimer = -1.0; hazardActive = false;
+      vehicles[0].isHazard = false;
+      egoTargetX = 0.0;
+      banner = { text: '◈ FULL 360° SENSOR FUSION · 64-CH LiDAR + OCCUPANCY + 6-CAM FRUSTUMS', cls: 'b-em', ttl: 4.8 };
+    }
+  }
+
+  let autoTour = isRecording;
+  function runChoreography(t, dt) {
+    pressedId = null;
+    cPulse = Math.max(0, cPulse - dt * 2.8);
+
+    if (autoTour) {
+    const pOcc  = btnCenter('btnOcc');
+    const pCut  = btnCenter('btnCut');
+    const pFuse = btnCenter('btnFuse');
+
+    if (t < 4.6) {
+      curOp = 0;
+    } else if (t < 5.95) {
+      curOp = ease((t - 4.6) / 0.5);
+      const u = ease((t - 4.6) / 1.3);
+      curX = lerp(740, pOcc.x, u); curY = lerp(420, pOcc.y, u);
+    } else if (t < 6.45) {
+      curOp = 1; curX = pOcc.x; curY = pOcc.y; pressedId = 'btnOcc';
+      if (!trig.occ) { trig.occ = true; cPulse = 1.0; setMode(1); }
+    } else if (t < 10.6) {
+      curOp = Math.max(0, curOp - dt * 1.4);
+    } else if (t < 11.95) {
+      curOp = ease((t - 10.6) / 0.5);
+      const u = ease((t - 10.6) / 1.3);
+      curX = lerp(pOcc.x, pCut.x, u); curY = lerp(pOcc.y, pCut.y, u);
+    } else if (t < 12.45) {
+      curOp = 1; curX = pCut.x; curY = pCut.y; pressedId = 'btnCut';
+      if (!trig.cut) { trig.cut = true; cPulse = 1.0; setMode(2); }
+    } else if (t < 16.6) {
+      curOp = Math.max(0, curOp - dt * 1.4);
+    } else if (t < 17.95) {
+      curOp = ease((t - 16.6) / 0.5);
+      const u = ease((t - 16.6) / 1.3);
+      curX = lerp(pCut.x, pFuse.x, u); curY = lerp(pCut.y, pFuse.y, u);
+    } else if (t < 18.45) {
+      curOp = 1; curX = pFuse.x; curY = pFuse.y; pressedId = 'btnFuse';
+      if (!trig.fuse) { trig.fuse = true; cPulse = 1.0; setMode(3); }
+    } else {
+      curOp = Math.max(0, curOp - dt * 1.4);
+    }
+    } else { curOp = 0; }
+
+    // Dynamic Chase & Cinematic 360° Fusion Orbit Camera (keeps entire Ego EV framed above bottom pills!)
+    if (!dragging) {
+      if (mode === 0) {
+        camAz = 0.26 + Math.sin(t * 0.52) * 0.22;
+        camEl = 0.34 + Math.sin(t * 0.35) * 0.04;
+        camDist = 19.2;
+      } else if (mode === 1) {
+        camAz = -0.30 + Math.sin((t - 6.0) * 0.50) * 0.30;
+        camEl = 0.40 + Math.cos((t - 6.0) * 0.4) * 0.05;
+        camDist = 20.0;
+      } else if (mode === 2) {
+        // Crisp tactical chase angle framing Ego EV, curving MPC lane-change corridor, and red cut-in hazard!
+        const targetAz = lerp(0.18, -0.22, ease(clamp((t - 12.0) / 3.8, 0, 1)));
+        camAz += (targetAz - camAz) * Math.min(1, dt * 3.5);
+        camEl += (0.37 - camEl) * Math.min(1, dt * 3.5);
+        camDist += (19.4 - camDist) * Math.min(1, dt * 3.5);
+      } else {
+        // Phase 4 Hero Sensor Fusion Orbit!
+        camAz += dt * 0.65;
+        camEl += (0.42 - camEl) * Math.min(1, dt * 2.5);
+        camDist += (20.8 - camDist) * Math.min(1, dt * 2.5);
+      }
+    }
+  }
+
+  let histAcc = 0;
+  function stepSim(dt) {
+    simTime += dt;
+    runChoreography(simTime, dt);
+    occAlpha += (targetOcc - occAlpha) * Math.min(1, dt * 3.6);
+    frustAlpha += (targetFrust - frustAlpha) * Math.min(1, dt * 3.2);
+    if (banner.ttl > 0) banner.ttl = Math.max(0, banner.ttl - dt);
+
+    // Ego speed & road scrolling (m/s)
+    let targetSpd = mode === 3 ? 124.0 : 108.0;
+
+    // Handle Dramatic Emergency Cut-In Physics (Mode 2)
+    if (cutInTimer >= 0) {
+      cutInTimer += dt;
+      const haz = vehicles[0];
+      if (cutInTimer < 1.55) {
+        // Rogue coupe aggressively swerves from right lane (+3.2) straight into center lane (0.0) while braking!
+        const u = ease(cutInTimer / 1.45);
+        const prevX = haz.x;
+        haz.x = lerp(3.2, 0.05, u);
+        haz.z = lerp(-12.0, -7.8, u);
+        haz.yaw = clamp(-(haz.x - prevX) / Math.max(0.001, dt) * 0.14, -0.35, 0.35);
+        haz.isHazard = true;
+        hazardActive = true;
+        // Ego MPC detects cut-in at t=0.30s -> commands crisp evasive lane-change to left lane (-3.2)!
+        if (cutInTimer > 0.25) {
+          egoTargetX = -3.2;
+          targetSpd = 94.0;
+        }
+        currentTtc = lerp(3.2, 1.05, u);
+      } else if (cutInTimer < 3.7) {
+        // Ego cleanly passes rogue hazard in left passing lane!
+        const u = ease((cutInTimer - 1.55) / 2.15);
+        haz.x = 0.05;
+        haz.yaw *= Math.max(0, 1 - dt * 5);
+        haz.z = lerp(-7.8, 8.5, u); // Ego smoothly passes it!
+        haz.isHazard = cutInTimer < 2.9;
+        hazardActive = cutInTimer < 2.6;
+        egoTargetX = -3.2;
+        targetSpd = 116.0;
+        currentTtc = lerp(1.15, 5.8, u);
+        if (cutInTimer > 2.8 && banner.cls === 'b-red') {
+          banner = { text: '✓ EVASIVE PASS COMPLETE · ZERO DISENGAGEMENTS · MERGING BACK TO L2', cls: 'b-em', ttl: 2.6 };
+        }
+      } else {
+        // Smoothly merge back to Center Lane (0.0)
+        haz.isHazard = false;
+        hazardActive = false;
+        haz.z += dt * 4.0;
+        if (haz.z > 16) { haz.z = -24; haz.x = 3.2; }
+        egoTargetX = 0.0;
+        targetSpd = 114.0;
+        currentTtc = 6.5;
+      }
+    } else {
+      // Normal Highway Traffic Cruise
+      vehicles[0].isHazard = false;
+      vehicles[0].yaw *= Math.max(0, 1 - dt * 5);
+      vehicles[0].x += (3.2 - vehicles[0].x) * Math.min(1, dt * 2.0);
+      vehicles[0].z += vehicles[0].relV * dt;
+      if (vehicles[0].z < -36) vehicles[0].z = 12;
+      if (vehicles[0].z > 15) vehicles[0].z = -34;
+      currentTtc += (6.4 - currentTtc) * Math.min(1, dt * 2.5);
+    }
+
+    // Update other ambient traffic vehicles cleanly (keep L1 escape lane safe during cut-in!)
+    for (let i = 1; i < vehicles.length; i++) {
+      const v = vehicles[i];
+      if (cutInTimer >= 0 && cutInTimer < 4.5 && (i === 2 || i === 4)) {
+        v.z += (i === 2 ? -0.4 : 0.4) * dt;
+      } else {
+        v.z += v.relV * dt;
+      }
+      if (v.z < -38) v.z = 14;
+      if (v.z > 16) v.z = -36;
+    }
+
+    // Smooth Ego lateral dynamics (spring-damper steering + lateral G-force!)
+    const prevEgoX = egoX;
+    const dx = egoTargetX - egoX;
+    const latVel = clamp(dx * 2.6, -4.6, 4.6);
+    egoX += latVel * dt;
+    const actualLatVel = (egoX - prevEgoX) / Math.max(0.001, dt);
+    const targetYaw = clamp(actualLatVel * 0.068, -0.26, 0.26);
+    egoYaw += (targetYaw - egoYaw) * Math.min(1, dt * 7.5);
+    egoSteerDeg += (actualLatVel * -6.2 - egoSteerDeg) * Math.min(1, dt * 8.0);
+    egoLatG += (Math.abs(actualLatVel) * 0.145 - egoLatG) * Math.min(1, dt * 6.5);
+    egoSpeed += (targetSpd - egoSpeed) * Math.min(1, dt * 3.2);
+    roadScroll = (roadScroll + (egoSpeed / 3.6) * dt) % 24.0;
+
+    histAcc += dt;
+    if (histAcc >= 0.12) {
+      histAcc -= 0.12;
+      steerHist.push(egoSteerDeg); if (steerHist.length > 64) steerHist.shift();
+      const margin = clamp((currentTtc / 6.8) * 100, 12, 98);
+      marginHist.push(margin); if (marginHist.length > 64) marginHist.shift();
+    }
+  }
+
+  // ===== BUILD LIVE 3D FSD SCENE GEOMETRY =====
+  function populateScene() {
+    let sBox = 0, tBox = 0, pCnt = 0, lCnt = 0, triCnt = 0;
+
+    function addSolidBox(cx, cy, cz, yaw, sx, sy, sz, c, emissive = 0.0) {
+      if (sBox >= MAX_BOXES) return;
+      let o = sBox * 12;
+      solidBoxBuf[o++]=cx; solidBoxBuf[o++]=cy; solidBoxBuf[o++]=cz; solidBoxBuf[o++]=yaw;
+      solidBoxBuf[o++]=sx; solidBoxBuf[o++]=sy; solidBoxBuf[o++]=sz; solidBoxBuf[o++]=emissive;
+      solidBoxBuf[o++]=c[0]; solidBoxBuf[o++]=c[1]; solidBoxBuf[o++]=c[2]; solidBoxBuf[o++]=1.0;
+      sBox++;
+    }
+    function addTransBox(cx, cy, cz, yaw, sx, sy, sz, c, a, emissive = 0.35) {
+      if (tBox >= MAX_BOXES) return;
+      let o = tBox * 12;
+      transBoxBuf[o++]=cx; transBoxBuf[o++]=cy; transBoxBuf[o++]=cz; transBoxBuf[o++]=yaw;
+      transBoxBuf[o++]=sx; transBoxBuf[o++]=sy; transBoxBuf[o++]=sz; transBoxBuf[o++]=emissive;
+      transBoxBuf[o++]=c[0]; transBoxBuf[o++]=c[1]; transBoxBuf[o++]=c[2]; transBoxBuf[o++]=a;
+      tBox++;
+    }
+    function addPt(x, y, z, sz, c, a) {
+      if (pCnt >= MAX_PTS) return;
+      let o = pCnt * 8;
+      ptsBuf[o++]=x; ptsBuf[o++]=y; ptsBuf[o++]=z; ptsBuf[o++]=sz;
+      ptsBuf[o++]=c[0]; ptsBuf[o++]=c[1]; ptsBuf[o++]=c[2]; ptsBuf[o++]=a;
+      pCnt++;
+    }
+    function addLine(p0, p1, c, a) {
+      if (lCnt + 2 >= MAX_LINES) return;
+      let o = lCnt * 7;
+      lineBuf[o++]=p0[0]; lineBuf[o++]=p0[1]; lineBuf[o++]=p0[2]; lineBuf[o++]=c[0]; lineBuf[o++]=c[1]; lineBuf[o++]=c[2]; lineBuf[o++]=a;
+      lineBuf[o++]=p1[0]; lineBuf[o++]=p1[1]; lineBuf[o++]=p1[2]; lineBuf[o++]=c[0]; lineBuf[o++]=c[1]; lineBuf[o++]=c[2]; lineBuf[o++]=a;
+      lCnt += 2;
+    }
+    function addTri(p0, p1, p2, c, a) {
+      if (triCnt + 3 >= MAX_TRIS) return;
+      for (const p of [p0, p1, p2]) {
+        let o = triCnt * 7;
+        triBuf[o++]=p[0]; triBuf[o++]=p[1]; triBuf[o++]=p[2]; triBuf[o++]=c[0]; triBuf[o++]=c[1]; triBuf[o++]=c[2]; triBuf[o++]=a;
+        triCnt++;
+      }
+    }
+    function addQuad(p0, p1, p2, p3, c, a) { addTri(p0, p1, p2, c, a); addTri(p0, p2, p3, c, a); }
+
+    // Wireframe 3D Oriented Bounding Box Helper
+    function addBBox(cx, cy, cz, w, h, l, yaw, col, alpha) {
+      const cyw = Math.cos(yaw), syw = Math.sin(yaw);
+      const hw = w * 0.5, hh = h * 0.5, hl = l * 0.5;
+      const pt = (lx, ly, lz) => [cx + lx*cyw + lz*syw, cy + ly, cz - lx*syw + lz*cyw];
+      const b0 = pt(-hw,-hh,-hl), b1 = pt(hw,-hh,-hl), b2 = pt(hw,-hh,hl), b3 = pt(-hw,-hh,hl);
+      const t0 = pt(-hw, hh,-hl), t1 = pt(hw, hh,-hl), t2 = pt(hw, hh,hl), t3 = pt(-hw, hh,hl);
+      addLine(b0,b1,col,alpha); addLine(b1,b2,col,alpha); addLine(b2,b3,col,alpha); addLine(b3,b0,col,alpha);
+      addLine(t0,t1,col,alpha); addLine(t1,t2,col,alpha); addLine(t2,t3,col,alpha); addLine(t3,t0,col,alpha);
+      addLine(b0,t0,col,alpha); addLine(b1,t1,col,alpha); addLine(b2,t2,col,alpha); addLine(b3,t3,col,alpha);
+      // Forward heading vector arrow on road plane!
+      const f0 = pt(0, -hh + 0.06, -hl);
+      const f1 = pt(0, -hh + 0.06, -hl - 2.3);
+      addLine(f0, f1, col, alpha);
+    }
+
+    // 1. HIGHWAY ASPHALT DECK, DASHED LANE DIVIDERS, GUARDRAILS & OVERHEAD GANTRIES
+    addSolidBox(0, -0.10, -10.0, 0, 12.6, 0.18, 86.0, [0.055, 0.085, 0.145], 0.0);
+    // Glowing outer highway boundary lines
+    addLine([-5.3, 0.02, 24], [-5.3, 0.02, -48], [0.22, 0.72, 1.0], 0.62);
+    addLine([ 5.3, 0.02, 24], [ 5.3, 0.02, -48], [0.22, 0.72, 1.0], 0.62);
+    // Dashed lane dividers scrolling backward at ego speed!
+    for (let k = -4; k <= 14; k++) {
+      const z0 = -48 + k * 6.0 + (roadScroll % 6.0);
+      addQuad([-1.66, 0.015, z0], [-1.54, 0.015, z0], [-1.54, 0.015, z0 - 2.5], [-1.66, 0.015, z0 - 2.5], [0.35, 0.78, 1.0], 0.52);
+      addQuad([ 1.54, 0.015, z0], [ 1.66, 0.015, z0], [ 1.66, 0.015, z0 - 2.5], [ 1.54, 0.015, z0 - 2.5], [0.35, 0.78, 1.0], 0.52);
+    }
+    // Side Guardrails & Sleek Roadside Cyber-Highway Light Pylons (zero overhead camera occlusion!)
+    addSolidBox(-6.1, 0.48, -10.0, 0, 0.24, 0.72, 86.0, [0.12, 0.22, 0.38], 0.08);
+    addSolidBox( 6.1, 0.48, -10.0, 0, 0.24, 0.72, 86.0, [0.12, 0.22, 0.38], 0.08);
+    for (let g = 0; g < 6; g++) {
+      const gz = -48 + g * 12.0 + (roadScroll % 12.0);
+      if (gz > -46 && gz < 18) {
+        addSolidBox(-6.8, 2.25, gz, 0, 0.22, 4.5, 0.22, [0.14, 0.28, 0.48], 0.14);
+        addSolidBox( 6.8, 2.25, gz, 0, 0.22, 4.5, 0.22, [0.14, 0.28, 0.48], 0.14);
+        addSolidBox(-6.5, 4.35, gz, 0, 0.85, 0.14, 0.18, [0.06, 0.92, 1.00], 0.95);
+        addSolidBox( 6.5, 4.35, gz, 0, 0.85, 0.14, 0.18, [0.06, 0.92, 1.00], 0.95);
+      }
+    }
+
+    // 2. SLEEK PROCEDURAL 3D EGO AUTONOMOUS EV (at egoX, 0, 0)
+    const cyE = Math.cos(egoYaw), syE = Math.sin(egoYaw);
+    const egoPart = (lx, ly, lz, sx, sy, sz, col, em) => {
+      const wx = egoX + lx*cyE + lz*syE;
+      const wz = -lx*syE + lz*cyE;
+      addSolidBox(wx, ly, wz, egoYaw, sx, sy, sz, col, em);
+    };
+    egoPart(0, 0.44,  0.00, 1.98, 0.46, 4.65, [0.16, 0.34, 0.56], 0.24); // Metallic stealth blue-silver lower body
+    egoPart(0, 0.66, -0.05, 1.90, 0.16, 4.40, [0.08, 0.86, 1.00], 0.62); // Electric cyan aero beltline trim!
+    egoPart(0, 0.96,  0.26, 1.56, 0.48, 2.25, [0.05, 0.12, 0.24], 0.14); // Tinted panoramic fastback glass cabin
+    egoPart(0, 0.54, -2.30, 1.82, 0.10, 0.12, [0.80, 0.99, 1.00], 1.25); // Blazing front LED lightbar
+    egoPart(0, 0.54,  2.30, 1.82, 0.12, 0.12, [1.00, 0.16, 0.36], 1.35); // Blazing crimson tail lightbar
+    // Roof 64-Channel Spinning LiDAR Turret Puck + Glowing Emerald Halo
+    egoPart(0, 1.28,  0.18, 0.44, 0.20, 0.44, [0.08, 0.18, 0.30], 0.22);
+    egoPart(0, 1.34,  0.18, 0.50, 0.08, 0.50, [0.02, 1.00, 0.72], 1.25);
+    // 4 Wheels
+    for (const wx of [-0.96, 0.96]) for (const wz of [-1.44, 1.44]) {
+      egoPart(wx, 0.28, wz, 0.24, 0.56, 0.64, [0.07, 0.10, 0.16], 0.04);
+    }
+
+    // 3. SURROUNDING TRAFFIC VEHICLES + 3D NEURAL BOUNDING BOXES + OCCUPANCY VOXELS!
+    let voxCnt = 0;
+    for (const v of vehicles) {
+      const cy = Math.cos(v.yaw), sy = Math.sin(v.yaw);
+      const vp = (lx, ly, lz, sx, sy2, sz, c, em) => {
+        addSolidBox(v.x + lx*cy + lz*sy, ly, v.z - lx*sy + lz*cy, v.yaw, sx, sy2, sz, c, em);
+      };
+      const baseCol = v.isHazard ? [1.0, 0.18, 0.34] : v.col;
+      if (v.isTruck) {
+        vp(0, 1.48,  0.65, v.w, 2.35, 5.2, [0.22, 0.28, 0.38], 0.08);
+        vp(0, 1.18, -2.65, v.w * 0.94, 1.95, 1.75, baseCol, 0.22);
+      } else {
+        vp(0, 0.46, 0.0, v.w, 0.58, v.len, baseCol, v.isHazard ? 0.55 : 0.18);
+        vp(0, 0.98, 0.18, v.w * 0.84, 0.52, v.len * 0.52, [0.07, 0.12, 0.22], 0.06);
+      }
+      // Taillights & Headlights
+      vp(0, 0.56, v.len * 0.5, v.w * 0.86, 0.12, 0.10, [1.0, 0.16, 0.30], v.isHazard ? 1.5 : 0.95);
+      vp(0, 0.52, -v.len * 0.5, v.w * 0.86, 0.11, 0.10, [0.95, 0.98, 1.0], 0.9);
+
+      // 3D Neural Detection Wireframe Bounding Box!
+      const boxCol = v.isHazard ? [1.0, 0.18, 0.36] : (v.isTruck ? [0.98, 0.76, 0.18] : [0.22, 0.86, 1.0]);
+      addBBox(v.x, v.h * 0.5 + 0.04, v.z, v.w + 0.38, v.h + 0.26, v.len + 0.42, v.yaw, boxCol, v.isHazard ? 1.0 : 0.88);
+
+      // 3D Semantic Occupancy Network Voxels wrapping each detected obstacle (Modes 1, 2, 3)!
+      if (occAlpha > 0.04 && v.z > -34 && v.z < 14) {
+        const vxS = 0.62;
+        const nx = v.isTruck ? 4 : 3;
+        const ny = v.isTruck ? 4 : 2;
+        const nz = v.isTruck ? 9 : 6;
+        const vCol = v.isHazard ? [1.0, 0.16, 0.36] : (v.isTruck ? [0.98, 0.62, 0.12] : [0.96, 0.46, 0.18]);
+        for (let ix = 0; ix < nx; ix++) {
+          for (let iy = 0; iy < ny; iy++) {
+            for (let iz = 0; iz < nz; iz++) {
+              // Render exterior voxel shell for ultra-crisp volumetric legibility!
+              if (ix > 0 && ix < nx-1 && iy > 0 && iy < ny-1 && iz > 0 && iz < nz-1) continue;
+              const lx = (ix - (nx-1)*0.5) * (v.w / (nx-0.3));
+              const ly = 0.38 + iy * 0.66;
+              const lz = (iz - (nz-1)*0.5) * (v.len / (nz-0.4));
+              const wx = v.x + lx*cy + lz*sy;
+              const wz = v.z - lx*sy + lz*cy;
+              addTransBox(wx, ly, wz, v.yaw, vxS, vxS, vxS, vCol, occAlpha * 0.46, 0.55);
+              voxCnt++;
+            }
+          }
+        }
+      }
+    }
+
+    // Road-side semantic barrier occupancy voxels & drivable floor grid tiles when Occupancy Network is active!
+    if (occAlpha > 0.04) {
+      for (let iz = 0; iz < 14; iz++) {
+        const wz = -34 + iz * 3.2 + (roadScroll % 3.2);
+        addTransBox(-6.0, 0.52, wz, 0, 0.65, 0.72, 1.35, [0.68, 0.30, 0.98], occAlpha * 0.38, 0.48);
+        addTransBox( 6.0, 0.52, wz, 0, 0.65, 0.72, 1.35, [0.68, 0.30, 0.98], occAlpha * 0.38, 0.48);
+        voxCnt += 2;
+      }
+      // Translucent cyan/emerald drivable free-space tiles ahead
+      for (let ix = -1; ix <= 1; ix++) {
+        for (let iz = 0; iz < 7; iz++) {
+          const tx = ix * 3.2;
+          const tz = -4.5 - iz * 4.2 + (roadScroll % 4.2);
+          // Skip occupied cells near any vehicle
+          let blocked = false;
+          for (const v of vehicles) {
+            if (Math.abs(v.x - tx) < 1.8 && Math.abs(v.z - tz) < v.len * 0.65) { blocked = true; break; }
+          }
+          if (!blocked) {
+            addQuad([tx-1.32, 0.03, tz-1.6], [tx+1.32, 0.03, tz-1.6], [tx+1.32, 0.03, tz+1.6], [tx-1.32, 0.03, tz+1.6], [0.02, 0.88, 0.72], occAlpha * 0.14);
+          }
+        }
+      }
+    }
+    lastVoxCount = voxCnt;
+
+    // 4. 64-CHANNEL 3D LiDAR POINT CLOUD + ROTATING 360° LASER TURRET SWEEP!
+    const sweepAng = (simTime * 3.4) % (Math.PI * 2);
+    // 4a. Dense Concentric 3D Road & Guardrail Laser Scan Rings radiating from Ego EV!
+    const RINGS = 32;
+    for (let r = 0; r < RINGS; r++) {
+      const rad = 2.4 + r * 0.95 + ((simTime * 2.0) % 0.95);
+      const ptsPerRing = Math.min(120, Math.floor(38 + r * 3.4));
+      for (let k = 0; k < ptsPerRing; k++) {
+        const ang = (k / ptsPerRing) * Math.PI * 2;
+        const px = egoX + Math.sin(ang) * rad;
+        const pz = -Math.cos(ang) * rad;
+        if (Math.abs(px) > 6.8 || pz > 13.5 || pz < -38.0) continue;
+
+        let dAng = Math.abs(((ang - sweepAng + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+        const beamBoost = Math.exp(-dAng * dAng * 10.0);
+        const isRail = Math.abs(px) > 5.85;
+        const isNear = rad < 11.5;
+        const ptCol = isRail
+          ? [0.76, 0.44, 1.0]
+          : (beamBoost > 0.30 ? [0.12, 1.0, 0.78] : (isNear ? [0.06, 0.92, 0.88] : [0.20, 0.62, 1.0]));
+        const py = isRail ? 0.68 : 0.07;
+        const alpha = (0.48 + beamBoost * 0.52) * clamp(1.0 - (rad - 15.0) / 24.0, 0.24, 1.0);
+        addPt(px, py, pz, (isRail ? 3.2 : 2.8) + beamBoost * 2.6, ptCol, alpha);
+      }
+    }
+    // 4b. Dense 3D LiDAR laser surface hits painted directly across every traffic vehicle!
+    for (const v of vehicles) {
+      if (v.z < -36 || v.z > 13) continue;
+      const cy = Math.cos(v.yaw), sy = Math.sin(v.yaw);
+      const colHit = v.isHazard ? [1.0, 0.24, 0.42] : (v.isTruck ? [1.0, 0.80, 0.24] : [0.12, 0.96, 1.0]);
+      const rows = v.isTruck ? 7 : 5;
+      const cols = v.isTruck ? 12 : 9;
+      for (let ry = 0; ry < rows; ry++) {
+        for (let rx = 0; rx < cols; rx++) {
+          const u = rx / (cols - 1) - 0.5;
+          const h = 0.22 + (ry / (rows - 1)) * (v.h - 0.15);
+          // Rear face + side facing Ego EV
+          const lx = u * v.w;
+          const lz = v.len * 0.5 + 0.04;
+          addPt(v.x + lx*cy + lz*sy, h, v.z - lx*sy + lz*cy, v.isHazard ? 4.2 : 3.2, colHit, 0.92);
+          const sideX = (v.x >= egoX ? -v.w * 0.5 - 0.04 : v.w * 0.5 + 0.04);
+          const sideZ = u * v.len;
+          addPt(v.x + sideX*cy + sideZ*sy, h, v.z - sideX*sy + sideZ*cy, v.isHazard ? 3.8 : 2.9, colHit, 0.84);
+        }
+      }
+      // Live laser rangefinder lock ray from Ego roof puck to closest vehicle center!
+      const distV = Math.hypot(v.x - egoX, v.z);
+      if (distV < 24.0) {
+        addLine([egoX, 1.35, 0.15], [v.x, v.h * 0.55, v.z + v.len * 0.45], colHit, v.isHazard ? 0.72 : 0.22);
+      }
+    }
+    // 4c. Live rotating 360° laser sweep rays from roof LiDAR turret
+    for (let b = 0; b < 5; b++) {
+      const a = sweepAng - b * 0.06;
+      const rEnd = 16.0;
+      addLine([egoX, 1.35, 0.15], [egoX + Math.sin(a) * rEnd, 0.08, -Math.cos(a) * rEnd], [0.06, 1.0, 0.76], 0.45 - b * 0.08);
+    }
+    lastLidarPts = pCnt;
+
+    // 5. SMOOTH 3D MPC OPTIMAL TRAJECTORY CORRIDOR + ALTERNATIVE CANDIDATE SPLINES!
+    const SEGS = 28;
+    const planEndX = egoTargetX;
+    // Draw 4 candidate MPC trajectories (cyan/amber thin paths)
+    const candOffsets = [-1.4, -0.7, 0.7, 1.4];
+    for (const co of candOffsets) {
+      let prevC = null;
+      for (let s = 0; s <= 18; s++) {
+        const u = s / 18;
+        const z = -2.3 - u * 23.0;
+        const x = lerp(egoX, clamp(planEndX + co * 1.1, -3.5, 3.5), ease(u));
+        const p = [x, 0.09, z];
+        if (prevC) addLine(prevC, p, [0.22, 0.62, 0.96], 0.24 * (1 - u * 0.5));
+        prevC = p;
+      }
+    }
+    // Optimal glowing emerald MPC driving corridor ribbon (twin rails + translucent emerald carpet + pulsing chevrons!)
+    const pathCol = hazardActive ? [0.02, 1.0, 0.72] : [0.02, 0.94, 0.64];
+    let prevL = null, prevR = null, prevM = null;
+    for (let s = 0; s <= SEGS; s++) {
+      const u = s / SEGS;
+      const z = -2.35 - u * 25.0;
+      const cx = lerp(egoX, planEndX, ease(Math.min(1.0, u * 1.35)));
+      const halfW = 0.88;
+      const pL = [cx - halfW, 0.075, z];
+      const pR = [cx + halfW, 0.075, z];
+      const pM = [cx, 0.095, z];
+      if (prevL) {
+        const fade = (1.0 - u * 0.62);
+        const pulse = 0.65 + 0.35 * Math.sin(u * 18.0 - simTime * 11.0);
+        addQuad(prevL, prevR, pR, pL, pathCol, 0.22 * fade * pulse);
+        addLine(prevL, pL, pathCol, 0.92 * fade);
+        addLine(prevR, pR, pathCol, 0.92 * fade);
+        addLine(prevM, pM, [0.75, 1.0, 0.92], 0.85 * fade);
+        if (s % 4 === 0) {
+          addLine(pL, [cx, 0.095, z - 0.55], [0.75, 1.0, 0.92], 0.75 * fade);
+          addLine(pR, [cx, 0.095, z - 0.55], [0.75, 1.0, 0.92], 0.75 * fade);
+        }
+      }
+      prevL = pL; prevR = pR; prevM = pM;
+    }
+
+    // 6. 6-CAMERA SURROUND FOV FRUSTUM CONES (Phase 4 Sensor Fusion!)
+    if (frustAlpha > 0.04) {
+      const cams = [
+        { ang: 0.0,            fov: 0.42, rng: 14.5, col: [0.05, 0.96, 0.76] }, // Front Main
+        { ang: -0.68,          fov: 0.38, rng:  9.5, col: [0.22, 0.76, 1.00] }, // Front-Left
+        { ang:  0.68,          fov: 0.38, rng:  9.5, col: [0.22, 0.76, 1.00] }, // Front-Right
+        { ang: -Math.PI * 0.7, fov: 0.36, rng:  8.5, col: [0.68, 0.40, 1.00] }, // Side-Rear L
+        { ang:  Math.PI * 0.7, fov: 0.36, rng:  8.5, col: [0.68, 0.40, 1.00] }, // Side-Rear R
+        { ang:  Math.PI,       fov: 0.44, rng:  9.0, col: [0.98, 0.42, 0.62] }, // Rear
+      ];
+      const org = [egoX, 1.24, 0.15];
+      for (const cm of cams) {
+        const a0 = cm.ang - cm.fov + egoYaw;
+        const a1 = cm.ang + cm.fov + egoYaw;
+        const pL = [egoX + Math.sin(a0)*cm.rng, 0.12, -Math.cos(a0)*cm.rng];
+        const pR = [egoX + Math.sin(a1)*cm.rng, 0.12, -Math.cos(a1)*cm.rng];
+        addTri(org, pL, pR, cm.col, frustAlpha * 0.14);
+        addLine(org, pL, cm.col, frustAlpha * 0.62);
+        addLine(org, pR, cm.col, frustAlpha * 0.62);
+        addLine(pL, pR, cm.col, frustAlpha * 0.55);
+      }
+    }
+
+    return { sBox, tBox, pCnt, lCnt, triCnt };
+  }
+
+  function renderWebGL() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.floor(glCanvas.clientWidth * dpr);
+    const h = Math.floor(glCanvas.clientHeight * dpr);
+    if (glCanvas.width !== w || glCanvas.height !== h) { glCanvas.width = w; glCanvas.height = h; }
+
+    gl.viewport(0, 0, w, h);
+    gl.clearColor(0.014, 0.026, 0.058, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    const lookAt = [egoX * 0.55, 0.95, -5.2];
+    const eye = [
+      lookAt[0] + Math.sin(camAz) * Math.cos(camEl) * camDist,
+      lookAt[1] + Math.sin(camEl) * camDist + 0.6,
+      lookAt[2] + Math.cos(camAz) * Math.cos(camEl) * camDist
+    ];
+    const proj = mat4Persp(0.68, w / Math.max(1, h), 0.2, 120.0);
+    const view = mat4Look(eye, lookAt, [0, 1, 0]);
+    const vp = mat4Mul(proj, view);
+
+    const { sBox, tBox, pCnt, lCnt, triCnt } = populateScene();
+
+    // 1. Opaque 3D Solid Boxes (Highway, Gantries, Ego EV, Traffic Vehicles)
+    if (sBox > 0) {
+      gl.useProgram(boxProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(boxProg, 'uVP'), false, vp);
+      gl.uniform3fv(gl.getUniformLocation(boxProg, 'uCamPos'), eye);
+      gl.bindVertexArray(boxVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, boxInstVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, solidBoxBuf.subarray(0, sBox * 12));
+      gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, sBox);
+    }
+
+    // 2. Translucent Floor Ribbons, MPC Driving Corridor & 6-Cam Frustum Cones
+    if (triCnt > 0) {
+      gl.depthMask(false);
+      gl.useProgram(lineProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(lineProg, 'uVP'), false, vp);
+      gl.bindVertexArray(triVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, triVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, triBuf.subarray(0, triCnt * 7));
+      gl.drawArrays(gl.TRIANGLES, 0, triCnt);
+      gl.depthMask(true);
+    }
+
+    // 3. 3D Semantic Occupancy Network Voxels (Translucent Glass Voxels!)
+    if (tBox > 0) {
+      gl.depthMask(false);
+      gl.useProgram(boxProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(boxProg, 'uVP'), false, vp);
+      gl.uniform3fv(gl.getUniformLocation(boxProg, 'uCamPos'), eye);
+      gl.bindVertexArray(boxVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, boxInstVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, transBoxBuf.subarray(0, tBox * 12));
+      gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, tBox);
+      gl.depthMask(true);
+    }
+
+    // 4. Crisp 3D Neural Bounding Boxes, MPC Rails, Highway Boundaries & Laser Sweep Rays
+    if (lCnt > 0) {
+      gl.useProgram(lineProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(lineProg, 'uVP'), false, vp);
+      gl.bindVertexArray(lineVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, lineVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, lineBuf.subarray(0, lCnt * 7));
+      gl.drawArrays(gl.LINES, 0, lCnt);
+    }
+
+    // 5. Glowing 64-Channel 3D LiDAR Point Cloud (Additive Sparkle!)
+    if (pCnt > 0) {
+      gl.depthMask(false);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+      gl.useProgram(ptsProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(ptsProg, 'uVP'), false, vp);
+      gl.bindVertexArray(ptsVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, ptsVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, ptsBuf.subarray(0, pCnt * 8));
+      gl.drawArrays(gl.POINTS, 0, pCnt);
+      gl.depthMask(true);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    }
+
+    gl.bindVertexArray(null);
+  }
+
+  // ===== 2D CANVASES: BEV RADAR, TELEMETRY STREAM, & 6-CAM + G-FORCE METER =====
+  const bevCanvas = document.getElementById('bevCanvas');
+  const bctx = bevCanvas.getContext('2d');
+  const telCanvas = document.getElementById('telCanvas');
+  const tctx = telCanvas.getContext('2d');
+  const sensCanvas = document.getElementById('sensorCanvas');
+  const sctx = sensCanvas.getContext('2d');
+
+  function renderBEV() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = bevCanvas.clientWidth, H = bevCanvas.clientHeight;
+    if (bevCanvas.width !== Math.floor(W*dpr) || bevCanvas.height !== Math.floor(H*dpr)) {
+      bevCanvas.width = Math.floor(W*dpr); bevCanvas.height = Math.floor(H*dpr);
+    }
+    bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    bctx.clearRect(0, 0, W, H);
+
+    const cx = W * 0.5, egoY = H * 0.74;
+    const scaleX = 11.5, scaleZ = 4.6;
+    const toX = (wx) => cx + wx * scaleX;
+    const toY = (wz) => egoY + wz * scaleZ;
+
+    // Range rings around Ego
+    bctx.strokeStyle = 'rgba(56,189,248,0.14)'; bctx.lineWidth = 1;
+    for (const r of [35, 70, 105]) {
+      bctx.beginPath(); bctx.arc(toX(egoX), egoY, r, 0, Math.PI * 2); bctx.stroke();
+    }
+
+    // Highway 3-lane guides
+    bctx.strokeStyle = 'rgba(56,189,248,0.28)'; bctx.lineWidth = 1.2;
+    bctx.beginPath();
+    bctx.moveTo(toX(-5.2), 6); bctx.lineTo(toX(-5.2), H - 6);
+    bctx.moveTo(toX( 5.2), 6); bctx.lineTo(toX( 5.2), H - 6);
+    bctx.stroke();
+    bctx.save(); bctx.setLineDash([5, 5]); bctx.strokeStyle = 'rgba(148,163,184,0.28)';
+    bctx.beginPath();
+    bctx.moveTo(toX(-1.6), 6); bctx.lineTo(toX(-1.6), H - 6);
+    bctx.moveTo(toX( 1.6), 6); bctx.lineTo(toX( 1.6), H - 6);
+    bctx.stroke(); bctx.restore();
+
+    // Rotating LiDAR sweep wedge
+    const sw = (simTime * 3.4) % (Math.PI * 2);
+    const sx = toX(egoX), sy = egoY;
+    bctx.fillStyle = 'rgba(0,245,160,0.10)';
+    bctx.beginPath(); bctx.moveTo(sx, sy);
+    bctx.arc(sx, sy, 98, sw - Math.PI * 0.5 - 0.35, sw - Math.PI * 0.5);
+    bctx.closePath(); bctx.fill();
+
+    // Optimal MPC path spline on BEV
+    bctx.strokeStyle = '#00f5a0'; bctx.lineWidth = 2.4;
+    bctx.beginPath();
+    for (let i = 0; i <= 20; i++) {
+      const u = i / 20;
+      const px = toX(lerp(egoX, egoTargetX, ease(Math.min(1, u * 1.35))));
+      const py = toY(-2.0 - u * 26.0);
+      if (i === 0) bctx.moveTo(px, py); else bctx.lineTo(px, py);
+    }
+    bctx.stroke();
+
+    // Traffic bounding boxes on BEV
+    for (const v of vehicles) {
+      const vx = toX(v.x), vy = toY(v.z);
+      if (vy < 4 || vy > H - 4) continue;
+      const bw = v.w * scaleX * 0.85, bh = v.len * scaleZ * 0.92;
+      bctx.fillStyle = v.isHazard ? 'rgba(255,51,102,0.45)' : (v.isTruck ? 'rgba(251,191,36,0.32)' : 'rgba(56,189,248,0.28)');
+      bctx.strokeStyle = v.isHazard ? '#ff3366' : (v.isTruck ? '#fbbf24' : '#38bdf8');
+      bctx.lineWidth = v.isHazard ? 1.8 : 1.2;
+      bctx.fillRect(vx - bw*0.5, vy - bh*0.5, bw, bh);
+      bctx.strokeRect(vx - bw*0.5, vy - bh*0.5, bw, bh);
+    }
+
+    // Ego EV Marker
+    bctx.fillStyle = '#00f5a0';
+    bctx.strokeStyle = '#ecfdf5'; bctx.lineWidth = 1.4;
+    bctx.fillRect(sx - 8, sy - 11, 16, 22);
+    bctx.strokeRect(sx - 8, sy - 11, 16, 22);
+
+    bctx.font = '8px "Cascadia Code", Consolas, monospace';
+    bctx.fillStyle = '#7dd3fc'; bctx.fillText('L1', toX(-3.2) - 5, 14);
+    bctx.fillStyle = '#00f5a0'; bctx.fillText('L2', toX(0.0) - 5, 14);
+    bctx.fillStyle = '#7dd3fc'; bctx.fillText('L3', toX(3.2) - 5, 14);
+  }
+
+  function renderTelemetry() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = telCanvas.clientWidth, H = telCanvas.clientHeight;
+    if (telCanvas.width !== Math.floor(W*dpr) || telCanvas.height !== Math.floor(H*dpr)) {
+      telCanvas.width = Math.floor(W*dpr); telCanvas.height = Math.floor(H*dpr);
+    }
+    tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    tctx.clearRect(0, 0, W, H);
+
+    const padL = 8, padR = 8, padT = 10, padB = 18;
+    const cw = W - padL - padR, ch = H - padT - padB;
+    const xOf = (i) => padL + (i / (steerHist.length - 1)) * cw;
+
+    // Zero center reference
+    tctx.strokeStyle = 'rgba(148,163,184,0.16)'; tctx.lineWidth = 1;
+    tctx.beginPath(); tctx.moveTo(padL, padT + ch * 0.5); tctx.lineTo(W - padR, padT + ch * 0.5); tctx.stroke();
+
+    // Safety Margin % (Emerald)
+    tctx.beginPath();
+    marginHist.forEach((v, i) => {
+      const y = padT + (1 - clamp(v / 100, 0, 1)) * ch;
+      if (i === 0) tctx.moveTo(xOf(i), y); else tctx.lineTo(xOf(i), y);
+    });
+    tctx.strokeStyle = '#00f5a0'; tctx.lineWidth = 1.7; tctx.stroke();
+
+    // Steering Angle (Cyan/Amber)
+    tctx.beginPath();
+    steerHist.forEach((v, i) => {
+      const y = padT + (0.5 - clamp(v / 36, -0.48, 0.48)) * ch;
+      if (i === 0) tctx.moveTo(xOf(i), y); else tctx.lineTo(xOf(i), y);
+    });
+    tctx.strokeStyle = '#38bdf8'; tctx.lineWidth = 1.7; tctx.stroke();
+
+    tctx.font = '8px "Cascadia Code", Consolas, monospace';
+    tctx.fillStyle = '#00f5a0'; tctx.fillText('● SAFETY MARGIN', 10, H - 5);
+    tctx.fillStyle = '#38bdf8'; tctx.fillText('● STEER °', 132, H - 5);
+  }
+
+  function renderSensorGForce() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = sensCanvas.clientWidth, H = sensCanvas.clientHeight;
+    if (sensCanvas.width !== Math.floor(W*dpr) || sensCanvas.height !== Math.floor(H*dpr)) {
+      sensCanvas.width = Math.floor(W*dpr); sensCanvas.height = Math.floor(H*dpr);
+    }
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    sctx.clearRect(0, 0, W, H);
+
+    // Left Half: 6-Camera 360° Surround Rosette
+    const rcx = W * 0.28, rcy = H * 0.50, rad = Math.min(W * 0.22, H * 0.36);
+    const camAngles = [-Math.PI/2, -Math.PI/2 - 0.72, -Math.PI/2 + 0.72, Math.PI/2 + 0.65, Math.PI/2 - 0.65, Math.PI/2];
+    const camCols = ['#00f5a0','#38bdf8','#38bdf8','#a855f7','#a855f7','#ff5c85'];
+    for (let i = 0; i < 6; i++) {
+      const a = camAngles[i];
+      sctx.fillStyle = mode === 3 ? camCols[i] + '44' : camCols[i] + '26';
+      sctx.strokeStyle = camCols[i]; sctx.lineWidth = 1.1;
+      sctx.beginPath(); sctx.moveTo(rcx, rcy);
+      sctx.arc(rcx, rcy, rad, a - 0.30, a + 0.30); sctx.closePath();
+      sctx.fill(); sctx.stroke();
+    }
+    sctx.fillStyle = '#071426'; sctx.strokeStyle = '#38bdf8'; sctx.lineWidth = 1.4;
+    sctx.fillRect(rcx - 7, rcy - 11, 14, 22); sctx.strokeRect(rcx - 7, rcy - 11, 14, 22);
+    sctx.font = '8px "Cascadia Code", Consolas, monospace';
+    sctx.textAlign = 'center'; sctx.fillStyle = '#9cb4d4';
+    sctx.fillText('6-CAM 360° FOV', rcx, H - 7);
+
+    // Right Half: Live Friction-Circle G-Force Meter!
+    const gcx = W * 0.74, gcy = H * 0.50, grad = Math.min(W * 0.20, H * 0.35);
+    sctx.strokeStyle = 'rgba(56,189,248,0.24)'; sctx.lineWidth = 1;
+    sctx.beginPath(); sctx.arc(gcx, gcy, grad, 0, Math.PI * 2); sctx.stroke();
+    sctx.beginPath(); sctx.arc(gcx, gcy, grad * 0.55, 0, Math.PI * 2); sctx.stroke();
+    sctx.beginPath();
+    sctx.moveTo(gcx - grad, gcy); sctx.lineTo(gcx + grad, gcy);
+    sctx.moveTo(gcx, gcy - grad); sctx.lineTo(gcx, gcy + grad);
+    sctx.stroke();
+
+    // Live G-ball shifting during evasive cut-in avoidance!
+    const gx = gcx + clamp(egoSteerDeg / 24.0, -0.82, 0.82) * grad;
+    const gy = gcy + (hazardActive ? 0.32 : -0.08) * grad;
+    sctx.strokeStyle = hazardActive ? '#ff3366' : '#00f5a0'; sctx.lineWidth = 1.8;
+    sctx.beginPath(); sctx.moveTo(gcx, gcy); sctx.lineTo(gx, gy); sctx.stroke();
+    sctx.fillStyle = hazardActive ? '#ff3366' : '#00f5a0';
+    sctx.beginPath(); sctx.arc(gx, gy, 5.2, 0, Math.PI * 2); sctx.fill();
+    sctx.fillStyle = '#9cb4d4';
+    sctx.fillText(`LAT ${egoLatG.toFixed(2)}g`, gcx, H - 7);
+    sctx.textAlign = 'left';
+  }
+
+  // Build Neural Object Tracker Rows
+  const trackList = document.getElementById('trackList');
+  const trackEls = vehicles.map((v) => {
+    const row = document.createElement('div');
+    row.className = 'trow';
+    row.innerHTML = `<span class="tbadge tb-car">${v.type}</span><span class="tcls">${v.id}</span><span class="tdist">12.0m</span><span class="tconf">${v.conf.toFixed(1)}%</span>`;
+    trackList.appendChild(row);
+    return row;
+  });
+
+  function renderDOM() {
+    document.getElementById('liveDot').className = hazardActive ? 'dot-live warn' : 'dot-live';
+    document.getElementById('heroPanel').className = hazardActive ? 'panel hero-panel warn-border' : 'panel hero-panel';
+
+    document.getElementById('kSpeed').textContent = `${Math.round(egoSpeed)} km/h`;
+    document.getElementById('kPts').textContent = `${lastLidarPts.toLocaleString()}/f`;
+    const kTtc = document.getElementById('kTtc');
+    kTtc.textContent = hazardActive ? `WARN ${currentTtc.toFixed(1)}s` : `SAFE ${currentTtc.toFixed(1)}s`;
+    kTtc.className = hazardActive ? 'v red' : 'v gold';
+
+    document.getElementById('mSpd').textContent = `${Math.round(egoSpeed)} km/h`;
+    document.getElementById('mSpdSub').textContent = hazardActive ? 'EVASIVE AVOID' : (mode === 3 ? 'FUSION CRUISE' : 'AUTOPILOT ACTIVE');
+    document.getElementById('mSpdSub').style.color = hazardActive ? '#ff5c85' : '#00f5a0';
+
+    const sSign = egoSteerDeg >= 0 ? '+' : '';
+    document.getElementById('mSteer').textContent = `${sSign}${egoSteerDeg.toFixed(1)}°`;
+    document.getElementById('mSteerSub').textContent = Math.abs(egoSteerDeg) > 3.5 ? 'LANE CHANGE' : 'LANE CENTERED';
+    document.getElementById('mLatG').textContent = `${egoLatG.toFixed(2)} g`;
+    document.getElementById('mLatSub').textContent = egoLatG > 0.28 ? 'HIGH LATERAL' : 'SMOOTH RIDE';
+    document.getElementById('mVox').textContent = lastVoxCount.toLocaleString();
+
+    document.getElementById('clockEl').textContent = `GEMINI 4 NEON · ${simTime.toFixed(1).padStart(4, '0')}s`;
+    document.getElementById('gCam').textContent = `AZ ${Math.round(((camAz*180/Math.PI)%360+360)%360)}° · EL ${Math.round(camEl*180/Math.PI)}°`;
+
+    document.getElementById('tabLidar').className = mode === 0 ? 'tbtn act-cyan' : 'tbtn';
+    document.getElementById('tabOcc').className   = mode === 1 ? 'tbtn act-vio'  : 'tbtn';
+    document.getElementById('tabCut').className   = mode === 2 ? 'tbtn act-red'  : 'tbtn';
+    document.getElementById('tabFuse').className  = mode === 3 ? 'tbtn act-em'   : 'tbtn';
+
+    const titles = [
+      '64-CHANNEL 3D LiDAR SWEEP // NEURAL BOUNDING BOXES',
+      '3D SEMANTIC OCCUPANCY NETWORK // VOLUMETRIC VOXEL GRID',
+      'EMERGENCY CUT-IN AVOIDANCE // REAL-TIME MPC RE-PLANNER',
+      'FULL 360° SENSOR FUSION // LiDAR + VOXELS + 6-CAM FOV'
+    ];
+    document.getElementById('glTitle').textContent = titles[mode];
+    document.getElementById('gStack').textContent = ['64-CH LiDAR + BBOX','OCCUPANCY VOXEL NET','MPC HAZARD SOLVER','FULL 360° FUSION'][mode];
+    document.getElementById('gPlan').textContent = hazardActive ? 'EVASIVE PASS' : (Math.abs(egoX - egoTargetX) > 0.35 ? 'LANE MERGE' : 'CRUISE LOCK');
+    document.getElementById('gPlan').style.color = hazardActive ? '#ff5c85' : '#00f5a0';
+    document.getElementById('gLane').textContent = egoX < -1.6 ? 'LEFT PASS (L1)' : (egoX > 1.6 ? 'RIGHT (L3)' : 'CENTER (L2)');
+
+    // Update Object Tracker Rows
+    vehicles.forEach((v, i) => {
+      const el = trackEls[i];
+      const dist = Math.hypot(v.x - egoX, v.z);
+      el.className = v.isHazard ? 'trow hazard' : 'trow';
+      const badge = el.querySelector('.tbadge');
+      badge.className = v.isHazard ? 'tbadge tb-haz' : (v.isTruck ? 'tbadge tb-trk' : 'tbadge tb-car');
+      badge.textContent = v.isHazard ? 'CUT-IN!' : v.type;
+      el.querySelector('.tdist').textContent = `${dist.toFixed(1)}m`;
+    });
+
+    for (const id of ['btnLidar','btnOcc','btnCut','btnFuse']) {
+      document.getElementById(id).classList.toggle('pressed', pressedId === id);
+    }
+
+    const elB = document.getElementById('glBanner');
+    if (banner.ttl > 0) { elB.textContent = banner.text; elB.className = `gl-banner ${banner.cls}`; }
+    else elB.className = 'gl-banner';
+
+    const phs = [
+      { id:'ph0', pr:'pr0', s:0,  e:6,  c:'act-cyan' },
+      { id:'ph1', pr:'pr1', s:6,  e:12, c:'act-vio' },
+      { id:'ph2', pr:'pr2', s:12, e:18, c:'act-red' },
+      { id:'ph3', pr:'pr3', s:18, e:24, c:'act-em' },
+    ];
+    for (const p of phs) {
+      const el = document.getElementById(p.id), pr = document.getElementById(p.pr);
+      const act = simTime >= p.s && simTime < p.e;
+      const pct = simTime < p.s ? 0 : (simTime >= p.e ? 100 : ((simTime - p.s)/(p.e - p.s))*100);
+      el.className = act ? `ppill ${p.c}` : 'ppill';
+      pr.style.width = `${pct.toFixed(1)}%`;
+    }
+
+    const vc = document.getElementById('vCursor'), cr = document.getElementById('cRing');
+    vc.style.left = `${curX.toFixed(1)}px`; vc.style.top = `${curY.toFixed(1)}px`; vc.style.opacity = curOp.toFixed(2);
+    if (cPulse > 0.02) {
+      cr.style.left = `${curX.toFixed(1)}px`; cr.style.top = `${curY.toFixed(1)}px`;
+      cr.style.opacity = (cPulse * 0.9).toFixed(2);
+      cr.style.transform = `translate(-50%,-50%) scale(${(0.6 + (1-cPulse)*1.1).toFixed(2)})`;
+    } else cr.style.opacity = '0';
+  }
+
+  // Interactive Controls
+  document.getElementById('tabLidar').addEventListener('click', () => setMode(0));
+  document.getElementById('tabOcc').addEventListener('click',   () => setMode(1));
+  document.getElementById('tabCut').addEventListener('click',   () => setMode(2));
+  document.getElementById('tabFuse').addEventListener('click',  () => setMode(3));
+  document.getElementById('btnLidar').addEventListener('click', () => setMode(0));
+  document.getElementById('btnOcc').addEventListener('click',   () => setMode(1));
+  document.getElementById('btnCut').addEventListener('click',   () => setMode(2));
+  document.getElementById('btnFuse').addEventListener('click',  () => setMode(3));
+
+  glCanvas.addEventListener('mousedown', (e) => { dragging = true; lastMX = e.clientX; lastMY = e.clientY; });
+  window.addEventListener('mouseup', () => { dragging = false; });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    camAz -= (e.clientX - lastMX) * 0.008;
+    camEl = clamp(camEl + (e.clientY - lastMY) * 0.006, 0.10, 1.15);
+    lastMX = e.clientX; lastMY = e.clientY;
+  });
+  glCanvas.addEventListener('wheel', (e) => {
+    camDist = clamp(camDist + e.deltaY * 0.008, 8.0, 28.0);
+  }, { passive: true });
+
+  // Initial Draw
+  renderWebGL();
+  renderDOM();
+  renderBEV();
+  renderTelemetry();
+  renderSensorGForce();
+
+  window.stepFsd = function(dt, drawAll = true) {
+    stepSim(dt);
+    if (drawAll) {
+      renderWebGL();
+      renderDOM();
+      renderBEV();
+      renderTelemetry();
+      renderSensorGForce();
+    }
+  };
+
+  if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.addControl('▶ 自動ツアー', (btn) => {
+        autoTour = !autoTour;
+        btn.classList.toggle('active', autoTour);
+        if (autoTour) { simTime = 0; for (const k in trig) trig[k] = false; setMode(0); }
+      });
+    });
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (autoTour && simTime >= 24.0) { simTime = 0; for (const k in trig) trig[k] = false; setMode(0); }
+      window.stepFsd(dt, true);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+<script src="../demo-shell.js"></script>
+</body>
+</html>

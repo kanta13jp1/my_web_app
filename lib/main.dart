@@ -4,6 +4,7 @@ import 'package:my_web_app/pages/jwenv_lab_page.dart';
 import 'dart:async';
 
 import 'package:my_web_app/pages/aero_lab_page.dart';
+import 'package:my_web_app/pages/neon_showcase_page.dart';
 import 'package:my_web_app/pages/sound_bloom_page.dart';
 import 'package:my_web_app/pages/lumen_path_page.dart';
 import 'package:my_web_app/pages/kinetic_forge_page.dart';
@@ -1503,6 +1504,11 @@ Route<dynamic> generateAppRoute(
     case '/aero-lab':
       return MaterialPageRoute(
         builder: (_) => const AeroLabPage(),
+        settings: settings,
+      );
+    case '/neon-showcase':
+      return MaterialPageRoute(
+        builder: (_) => const NeonShowcasePage(),
         settings: settings,
       );
     case '/video-studio':

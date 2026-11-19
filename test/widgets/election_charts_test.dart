@@ -104,6 +104,8 @@ void main() {
     );
     expect(find.text('現職維持目標'), findsOneWidget);
     expect(find.textContaining('新人擁立目標'), findsWidgets);
+    expect(find.textContaining('擁立計 50人'), findsOneWidget);
+    expect(find.textContaining('議席目標 700人'), findsOneWidget);
     expect(find.text('東京'), findsOneWidget);
     expect(find.text('愛知'), findsOneWidget);
     // 合計・不足警告は棒グラフの部分集合ではなく全県連が母数になる。

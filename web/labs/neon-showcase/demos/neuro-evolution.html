@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #050811; }
+  canvas { display: block; width: 1280px; height: 720px; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="algo">
+<canvas id="c" width="1280" height="720"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 1280, H = 720;
+
+// Deterministic PRNG
+function mulberry32(a) {
+  return function() {
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const SEED = 202611;
+let rng = mulberry32(SEED);
+function randn() {
+  const u1 = Math.max(1e-7, rng());
+  const u2 = rng();
+  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+}
+
+// Track Centerline (Smooth Closed Catmull-Rom Spline inside x: 20..920, y: 74..700)
+const ctrlPts = [
+  [190, 615], // Start straight
+  [440, 630],
+  [725, 610],
+  [845, 515], // Turn 1
+  [820, 380],
+  [650, 355], // Chicane entry
+  [540, 445],
+  [400, 430], // Inner hairpin
+  [370, 295],
+  [520, 225],
+  [735, 230], // Upper right sweep
+  [825, 155],
+  [675, 105], // Top straight
+  [360, 115],
+  [160, 155], // Top-left corner
+  [135, 310],
+  [210, 420], // Left S-curve
+  [115, 535],
+];
+
+function catmullRom(p0, p1, p2, p3, t) {
+  const t2 = t * t, t3 = t2 * t;
+  return [
+    0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
+    0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
+  ];
+}
+
+const TRACK_SAMPLES = 240;
+const centerPts = [];
+const nCtrl = ctrlPts.length;
+for (let i = 0; i < TRACK_SAMPLES; i++) {
+  const u = (i / TRACK_SAMPLES) * nCtrl;
+  const idx = Math.floor(u);
+  const t = u - idx;
+  const p0 = ctrlPts[(idx - 1 + nCtrl) % nCtrl];
+  const p1 = ctrlPts[idx % nCtrl];
+  const p2 = ctrlPts[(idx + 1) % nCtrl];
+  const p3 = ctrlPts[(idx + 2) % nCtrl];
+  centerPts.push(catmullRom(p0, p1, p2, p3, t));
+}
+
+const TRACK_HALF_W = 31;
+const outerWall = [];
+const innerWall = [];
+for (let i = 0; i < TRACK_SAMPLES; i++) {
+  const prev = centerPts[(i - 1 + TRACK_SAMPLES) % TRACK_SAMPLES];
+  const next = centerPts[(i + 1) % TRACK_SAMPLES];
+  const dx = next[0] - prev[0], dy = next[1] - prev[1];
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len;
+  outerWall.push([centerPts[i][0] + nx * TRACK_HALF_W, centerPts[i][1] + ny * TRACK_HALF_W]);
+  innerWall.push([centerPts[i][0] - nx * TRACK_HALF_W, centerPts[i][1] - ny * TRACK_HALF_W]);
+}
+
+// Wall segments for raycasting & collision
+const wallSegments = [];
+for (let i = 0; i < TRACK_SAMPLES; i++) {
+  const j = (i + 1) % TRACK_SAMPLES;
+  wallSegments.push([outerWall[i][0], outerWall[i][1], outerWall[j][0], outerWall[j][1]]);
+  wallSegments.push([innerWall[i][0], innerWall[i][1], innerWall[j][0], innerWall[j][1]]);
+}
+
+function raycast(ox, oy, ang, maxDist) {
+  const dx = Math.cos(ang), dy = Math.sin(ang);
+  let best = maxDist;
+  for (let i = 0; i < wallSegments.length; i++) {
+    const [x1, y1, x2, y2] = wallSegments[i];
+    const sx = x2 - x1, sy = y2 - y1;
+    const denom = dx * sy - dy * sx;
+    if (Math.abs(denom) < 1e-6) continue;
+    const qpx = x1 - ox, qpy = y1 - oy;
+    const t = (qpx * sy - qpy * sx) / denom;
+    const u = (qpx * dy - qpy * dx) / denom;
+    if (t >= 0 && t < best && u >= 0 && u <= 1) {
+      best = t;
+    }
+  }
+  return best;
+}
+
+// Nearest centerline index for progress
+function nearestTrackIdx(x, y, hintIdx) {
+  let bestIdx = hintIdx;
+  let bestD = Infinity;
+  // Search window around hintIdx (forward bias + small backward)
+  for (let off = -12; off <= 28; off++) {
+    const idx = (hintIdx + off + TRACK_SAMPLES) % TRACK_SAMPLES;
+    const d = (centerPts[idx][0] - x) ** 2 + (centerPts[idx][1] - y) ** 2;
+    if (d < bestD) { bestD = d; bestIdx = idx; }
+  }
+  return { idx: bestIdx, dist: Math.sqrt(bestD) };
+}
+
+// Neural Network: 5 inputs -> 6 hidden (tanh) -> 2 outputs (steer, throttle)
+const IN_N = 5, HID_N = 6, OUT_N = 2;
+const GENOME_LEN = IN_N * HID_N + HID_N + HID_N * OUT_N + OUT_N;
+
+class NeuralNet {
+  constructor(weights) {
+    if (weights) {
+      this.w = new Float32Array(weights);
+    } else {
+      this.w = new Float32Array(GENOME_LEN);
+      for (let i = 0; i < GENOME_LEN; i++) this.w[i] = randn() * 0.8;
+    }
+    this.lastIn = new Float32Array(IN_N);
+    this.lastHid = new Float32Array(HID_N);
+    this.lastOut = new Float32Array(OUT_N);
+  }
+  forward(inputs) {
+    let k = 0;
+    for (let i = 0; i < IN_N; i++) this.lastIn[i] = inputs[i];
+    for (let h = 0; h < HID_N; h++) {
+      let sum = 0;
+      for (let i = 0; i < IN_N; i++) sum += inputs[i] * this.w[k++];
+      sum += this.w[k++]; // bias
+      this.lastHid[h] = Math.tanh(sum);
+    }
+    for (let o = 0; o < OUT_N; o++) {
+      let sum = 0;
+      for (let h = 0; h < HID_N; h++) sum += this.lastHid[h] * this.w[k++];
+      sum += this.w[k++]; // bias
+      this.lastOut[o] = Math.tanh(sum);
+    }
+    return this.lastOut;
+  }
+}
+
+const RAY_ANGLES = [-1.05, -0.5, 0, 0.5, 1.05];
+const MAX_RAY = 150;
+const START_ANG = Math.atan2(centerPts[1][1] - centerPts[0][1], centerPts[1][0] - centerPts[0][0]);
+
+class Car {
+  constructor(brain, color) {
+    this.brain = brain;
+    this.color = color;
+    this.reset();
+  }
+  reset() {
+    this.x = centerPts[0][0];
+    this.y = centerPts[0][1];
+    this.ang = START_ANG;
+    this.speed = 110;
+    this.alive = true;
+    this.finishedLap = false;
+    this.progress = 0;
+    this.maxProgress = 0;
+    this.lastIdx = 0;
+    this.age = 0;
+    this.stallTimer = 0;
+    this.rays = new Float32Array(IN_N);
+    this.trail = [[this.x, this.y]];
+  }
+  update(dt) {
+    if (!this.alive || this.finishedLap) return false;
+    this.age += dt;
+    for (let i = 0; i < IN_N; i++) {
+      this.rays[i] = raycast(this.x, this.y, this.ang + RAY_ANGLES[i], MAX_RAY) / MAX_RAY;
+    }
+    const out = this.brain.forward(this.rays);
+    const steer = out[0] * 3.6;
+    const targetSpeed = 125 + (out[1] * 0.5 + 0.5) * 145; // 125 .. 270 px/s
+    this.speed += (targetSpeed - this.speed) * Math.min(1, dt * 6);
+    this.ang += steer * dt;
+    this.x += Math.cos(this.ang) * this.speed * dt;
+    this.y += Math.sin(this.ang) * this.speed * dt;
+
+    if (this.trail.length === 0 || Math.hypot(this.x - this.trail[this.trail.length - 1][0], this.y - this.trail[this.trail.length - 1][1]) > 5) {
+      this.trail.push([this.x, this.y]);
+      if (this.trail.length > 55) this.trail.shift();
+    }
+
+    const near = nearestTrackIdx(this.x, this.y, this.lastIdx);
+    if (near.dist > TRACK_HALF_W - 4.5) {
+      this.alive = false;
+      return true; // crashed
+    }
+    // Compute forward delta
+    let diff = near.idx - this.lastIdx;
+    if (diff < -TRACK_SAMPLES / 2) diff += TRACK_SAMPLES;
+    if (diff > TRACK_SAMPLES / 2) diff -= TRACK_SAMPLES;
+    this.progress += diff;
+    this.lastIdx = near.idx;
+
+    if (this.progress > this.maxProgress) {
+      this.maxProgress = this.progress;
+      this.stallTimer = 0;
+    } else {
+      this.stallTimer += dt;
+      if (this.stallTimer > 1.2) {
+        this.alive = false;
+        return true;
+      }
+    }
+
+    if (this.progress >= TRACK_SAMPLES - 2) {
+      this.finishedLap = true;
+    }
+    return false;
+  }
+  fitness() {
+    const progNorm = Math.max(0, this.progress / TRACK_SAMPLES);
+    const speedBonus = this.finishedLap ? Math.max(0, (12.0 - this.age) * 0.08) : 0;
+    return progNorm + speedBonus;
+  }
+}
+
+const POP_SIZE = 32;
+let generation = 1;
+let cars = [];
+const sparks = [];
+const historyBest = [];
+const historyAvg = [];
+let simT = 0;
+let genTime = 0;
+const TOTAL_T = 24.0;
+const eventsLog = [];
+
+function spawnCars(brains) {
+  cars = brains.map((b, i) => new Car(b, i === 0 ? '#00FF9D' : '#00E5FF'));
+}
+
+// Initialize Gen 1
+spawnCars(Array.from({ length: POP_SIZE }, () => new NeuralNet()));
+
+function evolveNextGeneration() {
+  const sorted = [...cars].sort((a, b) => b.fitness() - a.fitness());
+  const bestFit = Math.min(1.0, sorted[0].maxProgress / TRACK_SAMPLES);
+  const avgFit = Math.min(1.0, cars.reduce((s, c) => s + Math.max(0, c.maxProgress / TRACK_SAMPLES), 0) / POP_SIZE);
+  historyBest.push(bestFit);
+  historyAvg.push(avgFit);
+  eventsLog.push({ gen: generation, time: simT, bestPct: Math.round(bestFit * 100), lapDone: sorted[0].finishedLap });
+
+  generation++;
+  const nextBrains = [];
+  // Keep top 4 elites untouched
+  for (let e = 0; e < 4; e++) {
+    nextBrains.push(new NeuralNet(sorted[e].brain.w));
+  }
+  // Rest via tournament selection + crossover + mutation
+  while (nextBrains.length < POP_SIZE) {
+    const p1 = sorted[Math.floor(Math.pow(rng(), 2.2) * 10)].brain.w;
+    const p2 = sorted[Math.floor(Math.pow(rng(), 2.2) * 10)].brain.w;
+    const child = new Float32Array(GENOME_LEN);
+    const mutRate = bestFit > 0.75 ? 0.08 : 0.16;
+    const mutScale = bestFit > 0.75 ? 0.22 : 0.42;
+    for (let i = 0; i < GENOME_LEN; i++) {
+      let g = rng() < 0.5 ? p1[i] : p2[i];
+      if (rng() < mutRate) g += randn() * mutScale;
+      child[i] = g;
+    }
+    nextBrains.push(new NeuralNet(child));
+  }
+  spawnCars(nextBrains);
+  genTime = 0;
+}
+
+function addSparks(x, y) {
+  for (let i = 0; i < 10; i++) {
+    const a = rng() * Math.PI * 2;
+    const sp = 35 + rng() * 90;
+    sparks.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.45 });
+  }
+}
+
+function drawTrack() {
+  // Track surface
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Outer glow border
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.28)';
+  ctx.lineWidth = TRACK_HALF_W * 2 + 5;
+  ctx.beginPath();
+  centerPts.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+  ctx.closePath();
+  ctx.stroke();
+
+  // Asphalt surface
+  ctx.strokeStyle = '#0D1526';
+  ctx.lineWidth = TRACK_HALF_W * 2 - 2;
+  ctx.stroke();
+
+  // Center dashed line
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.16)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([8, 10]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Crisp inner & outer walls
+  ctx.strokeStyle = '#1E3A5F';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  outerWall.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+  ctx.closePath();
+  ctx.stroke();
+
+  ctx.beginPath();
+  innerWall.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+  ctx.closePath();
+  ctx.stroke();
+
+  // Start/Finish Line
+  const p0 = outerWall[0], p1 = innerWall[0];
+  ctx.strokeStyle = '#FACC15';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(p0[0], p0[1]);
+  ctx.lineTo(p1[0], p1[1]);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawNeuralNet(brain, rx, ry, rw, rh) {
+  ctx.save();
+  ctx.fillStyle = '#09101F';
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(rx, ry, rw, rh, 10); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = '#00E5FF';
+  ctx.font = '700 13px "Consolas", monospace';
+  ctx.fillText('LIVE NEURAL NETWORK (5 -> 6 -> 2)', rx + 14, ry + 24);
+
+  const layers = [IN_N, HID_N, OUT_N];
+  const xs = [rx + 52, rx + rw / 2, rx + rw - 52];
+  const nodePos = [[], [], []];
+  for (let l = 0; l < 3; l++) {
+    const count = layers[l];
+    const span = rh - 75;
+    for (let i = 0; i < count; i++) {
+      const ny = ry + 48 + (count === 1 ? span / 2 : (i / (count - 1)) * span);
+      nodePos[l].push([xs[l], ny]);
+    }
+  }
+
+  // Connections In -> Hid
+  let k = 0;
+  for (let h = 0; h < HID_N; h++) {
+    for (let i = 0; i < IN_N; i++) {
+      const w = brain.w[k++];
+      const act = Math.abs(brain.lastIn[i] * w);
+      ctx.strokeStyle = w >= 0 ? `rgba(0, 255, 157, ${Math.min(0.85, 0.12 + act * 0.55)})` : `rgba(255, 59, 154, ${Math.min(0.85, 0.12 + act * 0.55)})`;
+      ctx.lineWidth = Math.min(2.6, 0.6 + Math.abs(w) * 0.9);
+      ctx.beginPath();
+      ctx.moveTo(nodePos[0][i][0], nodePos[0][i][1]);
+      ctx.lineTo(nodePos[1][h][0], nodePos[1][h][1]);
+      ctx.stroke();
+    }
+    k++; // skip bias
+  }
+  // Connections Hid -> Out
+  for (let o = 0; o < OUT_N; o++) {
+    for (let h = 0; h < HID_N; h++) {
+      const w = brain.w[k++];
+      const act = Math.abs(brain.lastHid[h] * w);
+      ctx.strokeStyle = w >= 0 ? `rgba(0, 255, 157, ${Math.min(0.9, 0.15 + act * 0.6)})` : `rgba(255, 59, 154, ${Math.min(0.9, 0.15 + act * 0.6)})`;
+      ctx.lineWidth = Math.min(2.8, 0.7 + Math.abs(w) * 0.9);
+      ctx.beginPath();
+      ctx.moveTo(nodePos[1][h][0], nodePos[1][h][1]);
+      ctx.lineTo(nodePos[2][o][0], nodePos[2][o][1]);
+      ctx.stroke();
+    }
+    k++;
+  }
+
+  // Draw Nodes
+  const vals = [brain.lastIn, brain.lastHid, brain.lastOut];
+  const outLabels = ['STEER', 'SPEED'];
+  for (let l = 0; l < 3; l++) {
+    for (let i = 0; i < nodePos[l].length; i++) {
+      const [nx, ny] = nodePos[l][i];
+      const v = vals[l][i];
+      ctx.fillStyle = l === 0 ? `rgba(56, 189, 248, ${0.3 + 0.7 * v})`
+        : v >= 0 ? `rgba(0, 255, 157, ${0.25 + 0.75 * Math.min(1, v)})`
+        : `rgba(255, 59, 154, ${0.25 + 0.75 * Math.min(1, -v)})`;
+      ctx.beginPath(); ctx.arc(nx, ny, 7.5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#E2E8F0'; ctx.lineWidth = 1.2; ctx.stroke();
+
+      if (l === 2) {
+        ctx.fillStyle = '#CBD5E1';
+        ctx.font = '600 10px "Consolas", monospace';
+        ctx.fillText(outLabels[i], nx + 12, ny + 4);
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function drawEvolutionGraph(rx, ry, rw, rh) {
+  ctx.save();
+  ctx.fillStyle = '#09101F';
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(rx, ry, rw, rh, 10); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = '#00E5FF';
+  ctx.font = '700 13px "Consolas", monospace';
+  ctx.fillText('EVOLUTION PROGRESS (BEST LAP %)', rx + 14, ry + 24);
+
+  const gx = rx + 18, gy = ry + 40, gw = rw - 36, gh = rh - 58;
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.18)';
+  ctx.beginPath();
+  ctx.moveTo(gx, gy); ctx.lineTo(gx, gy + gh); ctx.lineTo(gx + gw, gy + gh);
+  ctx.stroke();
+
+  if (historyBest.length > 0) {
+    const n = Math.max(10, historyBest.length);
+    // Avg curve
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.5)';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    historyAvg.forEach((v, i) => {
+      const px = gx + (i / (n - 1)) * gw;
+      const py = gy + gh - v * gh;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+
+    // Best curve
+    ctx.strokeStyle = '#00FF9D';
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    historyBest.forEach((v, i) => {
+      const px = gx + (i / (n - 1)) * gw;
+      const py = gy + gh - v * gh;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function render() {
+  ctx.fillStyle = '#050811';
+  ctx.fillRect(0, 0, W, H);
+
+  // Header
+  ctx.fillStyle = '#0B1222';
+  ctx.fillRect(0, 0, W, 56);
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, 56); ctx.lineTo(W, 56); ctx.stroke();
+
+  ctx.fillStyle = '#00E5FF';
+  ctx.font = '700 16px "Consolas", monospace';
+  ctx.fillText('NEUROEVOLUTION AUTONOMOUS DRIVING  |  32 AGENTS  |  ASSETS: 0', 22, 25);
+
+  const leader = [...cars].sort((a, b) => b.maxProgress - a.maxProgress)[0];
+  const bestPct = leader.finishedLap ? 100 : Math.min(99, Math.round((leader.maxProgress / TRACK_SAMPLES) * 100));
+  const phaseStr = leader.finishedLap ? 'PHASE 03: CHAMPION LAP COMPLETED!'
+    : generation <= 3 ? 'PHASE 01: RANDOM EXPLORATION & CRASHES'
+    : 'PHASE 02: GENETIC SELECTION & CORNER LEARNING';
+  ctx.fillStyle = leader.finishedLap ? '#00FF9D' : '#E2E8F0';
+  ctx.font = '600 13px "Consolas", monospace';
+  ctx.fillText(phaseStr, 22, 45);
+
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '700 15px "Consolas", monospace';
+  ctx.fillText(`GEN ${String(generation).padStart(2, '0')}  |  ${simT.toFixed(2)}s / ${TOTAL_T.toFixed(2)}s`, W - 265, 34);
+
+  // Track Area
+  drawTrack();
+
+  // Draw dead/other cars first, then leader
+  for (const car of cars) {
+    if (car === leader) continue;
+    if (car.trail.length > 1) {
+      ctx.strokeStyle = car.alive ? 'rgba(0, 229, 255, 0.20)' : 'rgba(255, 59, 154, 0.10)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      car.trail.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+      ctx.stroke();
+    }
+    ctx.save();
+    ctx.translate(car.x, car.y);
+    ctx.rotate(car.ang);
+    ctx.fillStyle = car.alive ? 'rgba(0, 229, 255, 0.65)' : 'rgba(255, 59, 154, 0.35)';
+    ctx.fillRect(-6, -3.5, 12, 7);
+    ctx.restore();
+  }
+
+  // Leader Rays & Trail
+  if (leader.trail.length > 1) {
+    ctx.save();
+    ctx.strokeStyle = '#00FF9D';
+    ctx.shadowColor = '#00FF9D';
+    ctx.shadowBlur = 10;
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    leader.trail.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  if (leader.alive) {
+    for (let i = 0; i < IN_N; i++) {
+      const dist = leader.rays[i] * MAX_RAY;
+      const a = leader.ang + RAY_ANGLES[i];
+      const ex = leader.x + Math.cos(a) * dist;
+      const ey = leader.y + Math.sin(a) * dist;
+      ctx.strokeStyle = 'rgba(0, 255, 157, 0.48)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(leader.x, leader.y); ctx.lineTo(ex, ey); ctx.stroke();
+      ctx.fillStyle = '#FACC15';
+      ctx.beginPath(); ctx.arc(ex, ey, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // Leader Car Body
+  ctx.save();
+  ctx.translate(leader.x, leader.y);
+  ctx.rotate(leader.ang);
+  ctx.fillStyle = '#00FF9D';
+  ctx.shadowColor = '#00FF9D';
+  ctx.shadowBlur = 12;
+  ctx.fillRect(-8, -4.5, 16, 9);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(3, -3, 4, 6);
+  ctx.restore();
+
+  // Sparks
+  for (const sp of sparks) {
+    ctx.fillStyle = `rgba(255, 184, 0, ${Math.max(0, sp.life * 2)})`;
+    ctx.fillRect(sp.x - 1.5, sp.y - 1.5, 3, 3);
+  }
+
+  // Right Telemetry Column
+  const rx = 930, rw = 330;
+  // Stats Card
+  ctx.fillStyle = '#09101F';
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(rx, 72, rw, 130, 10); ctx.fill(); ctx.stroke();
+
+  const aliveCount = cars.filter(c => c.alive).length;
+  ctx.fillStyle = '#94A3B8'; ctx.font = '600 12px "Consolas", monospace';
+  ctx.fillText('GENERATION', rx + 18, 98);
+  ctx.fillText('ALIVE AGENTS', rx + 175, 98);
+  ctx.fillStyle = '#F8FAFC'; ctx.font = '700 28px "Consolas", monospace';
+  ctx.fillText(`#${String(generation).padStart(2, '0')}`, rx + 18, 130);
+  ctx.fillText(`${String(aliveCount).padStart(2, '0')}/${POP_SIZE}`, rx + 175, 130);
+
+  ctx.fillStyle = '#94A3B8'; ctx.font = '600 12px "Consolas", monospace';
+  ctx.fillText(`TRACK COMPLETION: ${bestPct}%`, rx + 18, 162);
+  ctx.fillStyle = '#1E293B';
+  ctx.beginPath(); ctx.roundRect(rx + 18, 172, rw - 36, 12, 6); ctx.fill();
+  ctx.fillStyle = leader.finishedLap ? '#00FF9D' : '#00E5FF';
+  ctx.beginPath(); ctx.roundRect(rx + 18, 172, Math.max(6, (rw - 36) * (bestPct / 100)), 12, 6); ctx.fill();
+
+  drawNeuralNet(leader.brain, rx, 218, rw, 270);
+  drawEvolutionGraph(rx, 504, rw, 198);
+}
+
+let championMode = false;
+window.stepNeuro = (dt) => {
+  simT += dt;
+  const hasWinner = cars.some(c => c.finishedLap);
+  if (simT >= 14.5 && !championMode) {
+    championMode = true;
+  }
+  // Speed up mid-generations (timelapse) so 15+ generations evolve rapidly before champion run
+  const timeScale = simT < 3.0 ? 2.2 : simT < 14.2 ? 15.0 : 1.75;
+  const subSteps = Math.max(2, Math.round(timeScale * 2.5));
+  const subDt = (dt * timeScale) / subSteps;
+
+  for (let s = 0; s < subSteps; s++) {
+    genTime += subDt;
+    let anyAlive = false;
+    for (const car of cars) {
+      if (car.alive && !car.finishedLap) {
+        anyAlive = true;
+        const crashed = car.update(subDt);
+        if (crashed) addSparks(car.x, car.y);
+      }
+    }
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      sparks[i].x += sparks[i].vx * subDt;
+      sparks[i].y += sparks[i].vy * subDt;
+      sparks[i].life -= subDt;
+      if (sparks[i].life <= 0) sparks.splice(i, 1);
+    }
+    if (!anyAlive || genTime > 18.0) {
+      if (!(simT >= 14.2 && hasWinner)) {
+        evolveNextGeneration();
+      }
+    }
+  }
+
+  render();
+};
+
+window.getNeuroEvents = () => ({
+  generations: generation,
+  historyBest,
+  eventsLog
+});
+
+render();
+
+if (!window.__RECORDING__) {
+  let paused = false;
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.addControl('⏸ 一時停止', (btn) => {
+      paused = !paused;
+      btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+      btn.classList.toggle('active', paused);
+    });
+    window.NeonShell.addControl('↻ 世代やり直し', () => window.location.reload());
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!paused && simT < TOTAL_T) {
+      window.stepNeuro(dt);
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+<script src="../demo-shell.js"></script>
+</body>
+</html>

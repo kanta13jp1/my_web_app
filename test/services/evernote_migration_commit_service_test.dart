@@ -533,6 +533,57 @@ void main() {
         EvernoteMigrationTransferState.failed,
       );
     });
+
+    test('streamed commit allows unresolved warnings only when override is set',
+        () async {
+      const enex = '''<?xml version="1.0" encoding="UTF-8"?>
+<en-export export-date="20260823T040000Z" application="Evernote" version="10">
+  <note>
+    <title>Warning override fixture</title>
+    <created>20240102T030405Z</created>
+    <updated>20240203T040506Z</updated>
+    <content><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
+<en-note>Hello<en-media type="image/gif" hash="deadbeefdeadbeefdeadbeefdeadbeef"/></en-note>]]></content>
+  </note>
+</en-export>''';
+      final fixture = _fixtureFromEnex(enex);
+      expect(fixture.preview.warnings, isNotEmpty);
+
+      final storage = _FakeStorageGateway();
+      final archivePath =
+          '$_userId/evernote/${fixture.export.exportSha256}/source.enex';
+      storage.objects['$evernoteArchiveBucket/$archivePath'] =
+          Uint8List.fromList(fixture.bytes);
+      final database = _FakeDatabaseGateway();
+      final service = EvernoteMigrationCommitService(
+        ledger: _FakeLedgerGateway(),
+        storage: storage,
+        database: database,
+      );
+
+      await expectLater(
+        service.commitFromArchive(
+          userId: _userId,
+          archiveBytes: fixture.bytes.length,
+          preview: fixture.preview,
+          sourceContext: _sourceContext,
+          allowBlockedWarnings: false,
+        ),
+        throwsA(isA<StateError>()),
+      );
+      expect(database.commitCalls, isEmpty);
+
+      final result = await service.commitFromArchive(
+        userId: _userId,
+        archiveBytes: fixture.bytes.length,
+        preview: fixture.preview,
+        sourceContext: _sourceContext,
+        allowBlockedWarnings: true,
+      );
+      expect(result.importedNoteCount, 1);
+      expect(result.verifiedNoteCount, 1);
+    });
   });
 }
 
@@ -630,6 +681,7 @@ _Fixture _fixtureFromEnex(String enex) {
         ),
     ],
     previewMode: 'local-fallback',
+    warnings: export.warnings,
     sourceExportSha256: export.exportSha256,
     resourceCount: export.resourceCount,
   );
