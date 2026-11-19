@@ -35,21 +35,24 @@ class GrowTogetherShareCard extends StatelessWidget {
     if (!context.mounted) return;
     if (!opened) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Xの投稿画面を開けませんでした。本文をコピーして共有してください。')),
+        const SnackBar(
+          content: Text('Xの投稿画面を開けませんでした。本文をコピーして共有してください。'),
+        ),
       );
     }
   }
 
   Future<void> _handleCopy(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
-    final copy =
-        onCopyMessage ??
+    final copy = onCopyMessage ??
         () => Clipboard.setData(
-          const ClipboardData(text: GrowTogetherShare.fullShareMessage),
-        );
+              const ClipboardData(text: GrowTogetherShare.fullShareMessage),
+            );
     await copy();
     if (!context.mounted) return;
-    messenger.showSnackBar(const SnackBar(content: Text('共有用の本文をコピーしました')));
+    messenger.showSnackBar(
+      const SnackBar(content: Text('共有用の本文をコピーしました')),
+    );
   }
 
   @override
@@ -57,12 +60,9 @@ class GrowTogetherShareCard extends StatelessWidget {
     final theme = Theme.of(context);
     final titleColor = isDark ? Colors.white : const Color(0xFF0F172A);
     final bodyColor = isDark ? Colors.white70 : const Color(0xFF475569);
-    final messageColor = isDark
-        ? const Color(0xFFE2E8F0)
-        : const Color(0xFF1E293B);
-    final copyButtonForeground = isDark
-        ? Colors.white
-        : const Color(0xFF1E293B);
+    final messageColor =
+        isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B);
+    final copyButtonForeground = isDark ? Colors.white : const Color(0xFF1E293B);
     final copyButtonBorder = isDark
         ? Colors.white.withValues(alpha: 0.24)
         : const Color(0xFFCBD5E1);
