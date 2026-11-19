@@ -1,12 +1,13 @@
-import { renderBlenderArtwork, renderDemoArtwork } from './artworks.js';
+import { renderBlenderArtwork, renderDemoArtwork } from './artworks.js?v=20261120-32';
 import {
   BLENDER_WORKS,
   CONCEPT_PLANS,
   LIVE_DEMOS,
   VIRAL_LAWS,
   X_BENCHMARKS,
-} from './catalog.js';
+} from './catalog.js?v=20261120-32';
 
+const ASSET_VER = '20261120-32';
 const SAFE_SLUG = /^[a-z0-9-]+$/;
 const SAFE_X_URL = /^https:\/\/x\.com\/[A-Za-z0-9_]+\/status\/[0-9]+(?:\/[A-Za-z0-9_/-]*)?$/;
 
@@ -84,7 +85,7 @@ function syncModalFullscreenLabel() {
 function openDemoModal(slug) {
   const demo = LIVE_DEMOS.find((d) => d.slug === slug);
   if (!demo || !SAFE_SLUG.test(demo.slug)) return;
-  const url = `./demos/${demo.slug}.html`;
+  const url = `./demos/${demo.slug}.html?v=${ASSET_VER}`;
   modalTitle.textContent = demo.title;
   modalSub.textContent = `${demo.model} · ${demo.categoryLabel} · ${demo.sizeKb} KB · 外部ライブラリ 0`;
   modalOpenTab.href = url;
@@ -161,7 +162,7 @@ function renderDemos() {
             <div class="tag-list">${(d.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
             <div class="card-actions">
               <button type="button" class="btn btn-primary" data-launch-demo="${esc(safeSlug)}">今すぐ体験</button>
-              <a class="btn btn-ghost" href="./demos/${esc(safeSlug)}.html" target="_blank" rel="noopener noreferrer">別タブ</a>
+              <a class="btn btn-ghost" href="./demos/${esc(safeSlug)}.html?v=${ASSET_VER}" target="_blank" rel="noopener noreferrer">別タブ</a>
             </div>
           </div>
         </article>
@@ -218,7 +219,7 @@ function renderBlender() {
               b.demoSlug && SAFE_SLUG.test(b.demoSlug)
                 ? `<div class="card-actions">
                      <button type="button" class="btn btn-primary" data-launch-demo="${esc(b.demoSlug)}">今すぐライブ体験（WebGL2）</button>
-                     <a class="btn btn-ghost" href="./demos/${esc(b.demoSlug)}.html" target="_blank" rel="noopener noreferrer">別タブ</a>
+                     <a class="btn btn-ghost" href="./demos/${esc(b.demoSlug)}.html?v=${ASSET_VER}" target="_blank" rel="noopener noreferrer">別タブ</a>
                    </div>`
                 : ''
             }
@@ -272,7 +273,7 @@ function renderPlans() {
         p.statusTone === 'done' ? 'status-done' : p.statusTone === 'live' ? 'status-live' : 'status-next';
       let actionHtml = '';
       if (p.demoSlug && SAFE_SLUG.test(p.demoSlug)) {
-        actionHtml = `<div class="card-actions"><button type="button" class="btn btn-primary" data-launch-demo="${esc(p.demoSlug)}">${esc(p.actionLabel || '今すぐライブ体験')}</button><a class="btn btn-ghost" href="./demos/${esc(p.demoSlug)}.html" target="_blank" rel="noopener noreferrer">別タブ</a></div>`;
+        actionHtml = `<div class="card-actions"><button type="button" class="btn btn-primary" data-launch-demo="${esc(p.demoSlug)}">${esc(p.actionLabel || '今すぐライブ体験')}</button><a class="btn btn-ghost" href="./demos/${esc(p.demoSlug)}.html?v=${ASSET_VER}" target="_blank" rel="noopener noreferrer">別タブ</a></div>`;
       } else if (p.actionTab) {
         actionHtml = `<div class="card-actions"><button type="button" class="btn btn-ghost" data-jump-tab="${esc(p.actionTab)}">${esc(p.actionLabel)}</button></div>`;
       }
