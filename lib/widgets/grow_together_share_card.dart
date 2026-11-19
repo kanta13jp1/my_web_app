@@ -60,12 +60,12 @@ class GrowTogetherShareCard extends StatelessWidget {
     final theme = Theme.of(context);
     final titleColor = isDark ? Colors.white : const Color(0xFF0F172A);
     final bodyColor = isDark ? Colors.white70 : const Color(0xFF475569);
-    final messageColor =
-        isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B);
-    final copyButtonForeground = isDark ? Colors.white : const Color(0xFF1E293B);
-    final copyButtonBorder = isDark
-        ? Colors.white.withValues(alpha: 0.24)
-        : const Color(0xFFCBD5E1);
+    const darkMsgColor = Color(0xFFE2E8F0);
+    const lightMsgColor = Color(0xFF1E293B);
+    final messageColor = isDark ? darkMsgColor : lightMsgColor;
+    final copyButtonForeground = isDark ? Colors.white : lightMsgColor;
+    final darkBorder = Colors.white.withValues(alpha: 0.24);
+    final copyButtonBorder = isDark ? darkBorder : const Color(0xFFCBD5E1);
 
     return Card(
       key: const Key('grow_together_share_card'),
