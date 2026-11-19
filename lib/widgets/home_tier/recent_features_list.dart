@@ -41,8 +41,9 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
       final seen = <String>{};
       final deduped = <Map<String, dynamic>>[];
       for (final row in rows) {
-        final rawRoute = _normalizeRoute(row['feature_route'] as String? ?? '');
-        if (rawRoute.isEmpty) continue;
+        final trimmed = (row['feature_route'] as String? ?? '').trim();
+        if (trimmed.isEmpty) continue;
+        final rawRoute = trimmed.startsWith('/') ? trimmed : '/$trimmed';
         final route = canonicalFeatureRoutePath(rawRoute);
         if (seen.add(route)) {
           final storedLabel = row['feature_label'] as String? ?? '';
