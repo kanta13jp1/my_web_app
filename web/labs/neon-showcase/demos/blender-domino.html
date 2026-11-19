@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>RIGID-BODY DOMINO CASCADE // Pure WebGL2</title>
+<style>
+  :root { --mono: ui-monospace, "Cascadia Code", Consolas, monospace; --gold: #fbbf24; --cyan: #38bdf8; }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #050812; color: #f8fafc; font-family: var(--mono); }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; cursor: grab; }
+  #gl:active { cursor: grabbing; }
+  .hud-tl {
+    position: absolute; top: 14px; left: 16px;
+    background: rgba(6, 10, 22, 0.78); border: 1px solid rgba(251, 191, 36, 0.36);
+    border-radius: 8px; padding: 8px 13px; backdrop-filter: blur(6px);
+  }
+  .hud-tl h1 { font-size: 13px; font-weight: 800; letter-spacing: 1.2px; }
+  .hud-tl h1 span { color: var(--gold); }
+  .hud-tl p { font-size: 9.5px; color: #94a3b8; margin-top: 2px; }
+  .hud-tr {
+    position: absolute; top: 14px; right: 16px;
+    background: rgba(6, 10, 22, 0.78); border: 1px solid rgba(56, 189, 248, 0.32);
+    border-radius: 8px; padding: 8px 12px; display: flex; gap: 14px;
+    backdrop-filter: blur(6px); font-variant-numeric: tabular-nums;
+  }
+  .st { display: flex; flex-direction: column; }
+  .st .k { font-size: 8px; color: #94a3b8; }
+  .st .v { font-size: 12.5px; font-weight: 800; color: var(--gold); }
+  .st .v.cy { color: var(--cyan); }
+  .hud-bl {
+    position: absolute; bottom: 14px; left: 16px;
+    display: flex; flex-wrap: wrap; gap: 7px;
+    background: rgba(6, 10, 22, 0.84); border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 8px; padding: 7px 10px; backdrop-filter: blur(6px);
+  }
+  .cbtn {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 800;
+    color: #cbd5e1; background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 6px;
+    padding: 6px 10px; cursor: pointer;
+  }
+  .cbtn:hover { border-color: var(--gold); color: #fff; }
+  .cbtn.act { background: linear-gradient(90deg, #f59e0b, #fbbf24); border-color: #fde68a; color: #111827; }
+  .cbtn.act-cy { background: linear-gradient(90deg, #0284c7, #38bdf8); border-color: #bae6fd; color: #04101c; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="algo">
+<canvas id="gl" width="1280" height="720"></canvas>
+
+<div class="hud-tl">
+  <h1>RIGID-BODY DOMINO CASCADE <span>// FPV TRACKER</span></h1>
+  <p>PURE WEBGL2 · 衝突同期クリック音響 · 3コース切替＆FPV追跡カメラ</p>
+</div>
+<div class="hud-tr">
+  <div class="st"><span class="k">TOPPLED</span><span class="v" id="sTop">0 / 88</span></div>
+  <div class="st"><span class="k">WAVE SPEED</span><span class="v cy" id="sSpd">0.0 /s</span></div>
+  <div class="st"><span class="k">CAMERA</span><span class="v" id="sCam">FPV CHASE</span></div>
+</div>
+<div class="hud-bl">
+  <button class="cbtn act" id="btnStart">▶ 連鎖スタート (Space)</button>
+  <button class="cbtn act-cy" id="c0">01 S字コース</button>
+  <button class="cbtn" id="c1">02 螺旋スパイラル</button>
+  <button class="cbtn" id="c2">03 分岐ツリー</button>
+  <button class="cbtn act-cy" id="btnFpv">🎥 FPV追跡</button>
+  <button class="cbtn" id="btnSlow">⏱ スロー</button>
+  <button class="cbtn" id="btnReset">↻ 並べ直し</button>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('gl');
+  const gl = canvas.getContext('webgl2', { antialias: true, preserveDrawingBuffer: true });
+  if (!gl) return;
+
+  const VS = `#version 300 es
+  layout(location=0) in vec3 aPos;
+  layout(location=1) in vec3 aNorm;
+  uniform mat4 uVP;
+  uniform mat4 uModel;
+  out vec3 vWPos;
+  out vec3 vNorm;
+  out vec3 vLocal;
+  void main() {
+    vLocal = aPos;
+    vec4 wp = uModel * vec4(aPos, 1.0);
+    vWPos = wp.xyz;
+    vNorm = normalize(mat3(uModel) * aNorm);
+    gl_Position = uVP * wp;
+  }`;
+
+  const FS = `#version 300 es
+  precision highp float;
+  in vec3 vWPos;
+  in vec3 vNorm;
+  in vec3 vLocal;
+  uniform vec3 uCam;
+  uniform vec3 uCol;
+  uniform float uFloor;
+  uniform float uLit;
+  out vec4 outCol;
+  void main() {
+    vec3 N = normalize(vNorm);
+    vec3 V = normalize(uCam - vWPos);
+    if (uFloor > 0.5) {
+      vec2 g = abs(fract(vWPos.xz * 0.5 - 0.5) - 0.5) / max(fwidth(vWPos.xz * 0.5), vec2(0.002));
+      float line = 1.0 - min(min(g.x, g.y), 1.0);
+      float fade = exp(-length(vWPos.xz) * 0.032);
+      vec3 col = vec3(0.018, 0.024, 0.044) + vec3(0.08, 0.42, 0.72) * line * fade * 0.5;
+      outCol = vec4(pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2)), 1.0);
+      return;
+    }
+    vec3 L1 = normalize(vec3(10.0, 22.0, 12.0));
+    vec3 L2 = normalize(vec3(-12.0, 14.0, -10.0));
+    float d1 = max(dot(N, L1), 0.0);
+    float d2 = max(dot(N, L2), 0.0);
+    float sp = pow(max(dot(N, normalize(L1 + V)), 0.0), 64.0);
+    float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+    // Crisp bevel/pip stripe across domino face
+    float stripe = smoothstep(0.04, 0.0, abs(vLocal.y - 0.5));
+    vec3 col = uCol * (0.24 + d1 * 0.88 + d2 * 0.34)
+      + vec3(1.0, 0.98, 0.94) * sp * 0.78
+      + uCol * (rim * 0.6 + uLit * 0.95)
+      + vec3(0.95, 0.98, 1.0) * stripe * 0.28;
+    col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+    outCol = vec4(pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2)), 1.0);
+  }`;
+
+  function sh(t, s) { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); return x; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  const uVP = gl.getUniformLocation(prog, 'uVP');
+  const uModel = gl.getUniformLocation(prog, 'uModel');
+  const uCam = gl.getUniformLocation(prog, 'uCam');
+  const uCol = gl.getUniformLocation(prog, 'uCol');
+  const uFloor = gl.getUniformLocation(prog, 'uFloor');
+  const uLit = gl.getUniformLocation(prog, 'uLit');
+
+  function makeVAO(v, n) {
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    const b0 = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b0);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(v), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    const b1 = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b1);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(n), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+    return { vao, count: v.length / 3 };
+  }
+  function pushQ(v, n, a, b, c, d, nm) {
+    v.push(...a, ...b, ...c, ...a, ...c, ...d);
+    for (let i = 0; i < 6; i++) n.push(...nm);
+  }
+  // Pivot at bottom center (y in [0, 1]) so tipping tilts cleanly around base!
+  const dv = [], dn = [];
+  const hx = 0.085, hz = 0.31, hy = 1.38;
+  pushQ(dv,dn,[-hx,0,hz],[hx,0,hz],[hx,hy,hz],[-hx,hy,hz],[0,0,1]);
+  pushQ(dv,dn,[hx,0,-hz],[-hx,0,-hz],[-hx,hy,-hz],[hx,hy,-hz],[0,0,-1]);
+  pushQ(dv,dn,[-hx,hy,hz],[hx,hy,hz],[hx,hy,-hz],[-hx,hy,-hz],[0,1,0]);
+  pushQ(dv,dn,[-hx,0,-hz],[hx,0,-hz],[hx,0,hz],[-hx,0,hz],[0,-1,0]);
+  pushQ(dv,dn,[hx,0,hz],[hx,0,-hz],[hx,hy,-hz],[hx,hy,hz],[1,0,0]);
+  pushQ(dv,dn,[-hx,0,-hz],[-hx,0,hz],[-hx,hy,hz],[-hx,hy,-hz],[-1,0,0]);
+  const dominoMesh = makeVAO(dv, dn);
+
+  const fv = [-65,0,-65, 65,0,-65, 65,0,65, -65,0,-65, 65,0,65, -65,0,65];
+  const fn = [0,1,0, 0,1,0, 0,1,0, 0,1,0, 0,1,0, 0,1,0];
+  const floorMesh = makeVAO(fv, fn);
+
+  function hsv(h, s, v) {
+    const i = Math.floor(h * 6), f = h * 6 - i, p = v*(1-s), q = v*(1-f*s), t = v*(1-(1-f)*s);
+    const m = [[v,t,p],[q,v,p],[p,v,t],[p,q,v],[t,p,v],[v,p,q]][i % 6];
+    return m;
+  }
+  function m4Mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++)
+      o[c*4+r] = a[r]*b[c*4] + a[4+r]*b[c*4+1] + a[8+r]*b[c*4+2] + a[12+r]*b[c*4+3];
+    return o;
+  }
+  function m4Persp(fov, asp, n, f) {
+    const t = 1 / Math.tan(fov * 0.5), nf = 1 / (n - f);
+    return new Float32Array([t/asp,0,0,0, 0,t,0,0, 0,0,(f+n)*nf,-1, 0,0,2*f*n*nf,0]);
+  }
+  function m4Look(e, t) {
+    let zx=e[0]-t[0], zy=e[1]-t[1], zz=e[2]-t[2], zl=Math.hypot(zx,zy,zz)||1;
+    zx/=zl; zy/=zl; zz/=zl;
+    let xx=zz, xy=0, xz=-zx, xl=Math.hypot(xx,xy,xz)||1; xx/=xl; xz/=xl;
+    let yx=zy*xz, yy=zz*xx-zx*xz, yz=-zy*xx;
+    return new Float32Array([
+      xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+      -(xx*e[0]+xy*e[1]+xz*e[2]), -(yx*e[0]+yy*e[1]+yz*e[2]), -(zx*e[0]+zy*e[1]+zz*e[2]), 1
+    ]);
+  }
+  function m4Domino(x, z, yaw, tilt) {
+    // Rotate around local Z by -tilt (fall forward along +X), then rotate around Y by yaw, then translate (x,0,z)
+    const cy = Math.cos(yaw), sy = Math.sin(yaw);
+    const ct = Math.cos(-tilt), st = Math.sin(-tilt);
+    return new Float32Array([
+      cy*ct, st, -sy*ct, 0,
+      -cy*st, ct, sy*st, 0,
+      sy, 0, cy, 0,
+      x, 0, z, 1
+    ]);
+  }
+
+  let dominoes = [];
+  let courseIdx = 0;
+  let fpvChase = true;
+  let slowMo = false;
+  let running = false;
+  let orbYaw = 0.5, orbPitch = 0.45, orbDist = 18;
+  let dragging = false, lx = 0, ly = 0;
+  let camPos = [-4, 4.2, 6], camTgt = [2, 1, 0];
+  let recentHits = [];
+
+  function addChain(pts, hueOffset = 0, parentIdx = -1) {
+    const startIdx = dominoes.length;
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      const next = pts[Math.min(pts.length - 1, i + 1)];
+      const prev = pts[Math.max(0, i - 1)];
+      const dx = next[0] - prev[0], dz = next[1] - prev[1];
+      const yaw = Math.atan2(-dz, dx);
+      const frac = i / Math.max(1, pts.length - 1);
+      dominoes.push({
+        x: p[0], z: p[1], yaw,
+        tilt: 0, omega: 0,
+        falling: false, hitNext: false, flash: 0,
+        col: hsv((hueOffset + frac * 0.82) % 1, 0.85, 0.98),
+        nextIds: [],
+        hueFrac: frac
+      });
+      if (i > 0) dominoes[startIdx + i - 1].nextIds.push(startIdx + i);
+    }
+    if (parentIdx >= 0 && startIdx < dominoes.length) {
+      dominoes[parentIdx].nextIds.push(startIdx);
+    }
+  }
+
+  function buildCourse(idx) {
+    courseIdx = idx;
+    dominoes = [];
+    running = false;
+    recentHits = [];
+    [0, 1, 2].forEach((i) => document.getElementById(`c${i}`).classList.toggle('act-cy', i === idx));
+
+    if (idx === 0) {
+      // Classic S-curve cascade (faithful to build_domino.py!)
+      const pts = [];
+      let s = 0;
+      for (let i = 0; i < 88; i++) {
+        const x = -18 + s;
+        const z = 4.6 * Math.sin(s * 0.16);
+        pts.push([x, z]);
+        const slope = 4.6 * 0.16 * Math.cos(s * 0.16);
+        s += 0.56 / Math.hypot(1, slope);
+      }
+      addChain(pts, 0.02);
+    } else if (idx === 1) {
+      // Golden Spiral cascade
+      const pts = [];
+      let theta = 0.6;
+      for (let i = 0; i < 104; i++) {
+        const r = 1.6 + theta * 0.68;
+        pts.push([Math.cos(theta) * r, Math.sin(theta) * r]);
+        theta += 0.56 / Math.hypot(r, 0.68);
+      }
+      addChain(pts, 0.52);
+    } else {
+      // Branching Tree cascade (splits into 3 glowing paths!)
+      const trunk = [];
+      for (let i = 0; i < 20; i++) trunk.push([-14 + i * 0.56, 0]);
+      addChain(trunk, 0.08);
+      const splitIdx = dominoes.length - 1;
+      for (const dir of [-1, 0, 1]) {
+        const br = [];
+        for (let i = 1; i <= 28; i++) {
+          const t = i / 28;
+          const x = -14 + 19 * 0.56 + i * 0.58;
+          const z = dir * (Math.pow(t, 0.85) * 7.8 + Math.sin(t * Math.PI * 2) * 1.1);
+          br.push([x, z]);
+        }
+        addChain(br, dir === -1 ? 0.55 : dir === 0 ? 0.12 : 0.84, splitIdx);
+      }
+    }
+    const d0 = dominoes[0];
+    camPos = [d0.x - 4.5, 4.2, d0.z + 5.5];
+    camTgt = [d0.x + 2.5, 0.8, d0.z];
+    document.getElementById('sTop').textContent = `0 / ${dominoes.length}`;
+  }
+
+  function startCascade() {
+    const done = dominoes.filter((d) => d.falling).length;
+    if (done >= dominoes.length - 2) buildCourse(courseIdx);
+    running = true;
+    const first = dominoes[0];
+    if (first && !first.falling) {
+      first.falling = true;
+      first.omega = 4.6;
+      first.flash = 1.0;
+      window.NeonAudio?.sfx('clack', 0.72);
+    }
+  }
+
+  document.getElementById('btnStart').addEventListener('click', startCascade);
+  document.getElementById('c0').addEventListener('click', () => { buildCourse(0); setTimeout(startCascade, 220); });
+  document.getElementById('c1').addEventListener('click', () => { buildCourse(1); setTimeout(startCascade, 220); });
+  document.getElementById('c2').addEventListener('click', () => { buildCourse(2); setTimeout(startCascade, 220); });
+  document.getElementById('btnFpv').addEventListener('click', (e) => {
+    fpvChase = !fpvChase;
+    e.currentTarget.classList.toggle('act-cy', fpvChase);
+    document.getElementById('sCam').textContent = fpvChase ? 'FPV CHASE' : 'FREE ORBIT';
+  });
+  document.getElementById('btnSlow').addEventListener('click', (e) => {
+    slowMo = !slowMo;
+    e.currentTarget.classList.toggle('act', slowMo);
+  });
+  document.getElementById('btnReset').addEventListener('click', () => buildCourse(courseIdx));
+
+  canvas.addEventListener('pointerdown', (e) => { dragging = true; lx = e.clientX; ly = e.clientY; });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    fpvChase = false;
+    document.getElementById('btnFpv').classList.remove('act-cy');
+    document.getElementById('sCam').textContent = 'FREE ORBIT';
+    orbYaw += (e.clientX - lx) * 0.007;
+    orbPitch = Math.max(0.1, Math.min(1.25, orbPitch + (e.clientY - ly) * 0.006));
+    lx = e.clientX; ly = e.clientY;
+  });
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    orbDist = Math.max(6, Math.min(34, orbDist + e.deltaY * 0.01));
+  }, { passive: false });
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') { e.preventDefault(); startCascade(); }
+    if (e.code === 'KeyR') buildCourse(courseIdx);
+  });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    window.NeonShell?.setHint('Space / ▶ 連鎖スタート · 3コース切替 · ドラッグで自由回転 · 衝突同期クリック音');
+  });
+
+  buildCourse(0);
+  setTimeout(startCascade, 550);
+
+  let last = performance.now();
+  function loop(now) {
+    const rawDt = Math.min(0.04, (now - last) / 1000);
+    last = now;
+    const dt = rawDt * (slowMo ? 0.32 : 1.0);
+
+    let toppled = 0;
+    let lead = dominoes[0];
+    for (let i = 0; i < dominoes.length; i++) {
+      const d = dominoes[i];
+      d.flash = Math.max(0, d.flash - rawDt * 2.5);
+      if (d.falling) {
+        toppled++;
+        const maxTilt = d.nextIds.length > 0 ? 1.24 : 1.48;
+        if (d.tilt < maxTilt) {
+          d.omega += 24.0 * Math.sin(Math.max(0.18, d.tilt)) * dt;
+          d.tilt = Math.min(maxTilt, d.tilt + d.omega * dt);
+          lead = d;
+        }
+        if (!d.hitNext && d.tilt >= 0.44) {
+          d.hitNext = true;
+          for (const nid of d.nextIds) {
+            const nxt = dominoes[nid];
+            if (nxt && !nxt.falling) {
+              nxt.falling = true;
+              nxt.omega = 5.2;
+              nxt.flash = 1.0;
+              recentHits.push(now);
+              window.NeonAudio?.sfx('clack', 0.72 + nxt.hueFrac * 0.82);
+            }
+          }
+        }
+      }
+    }
+    while (recentHits.length && now - recentHits[0] > 1000) recentHits.shift();
+    document.getElementById('sTop').textContent = `${toppled} / ${dominoes.length}`;
+    document.getElementById('sSpd').textContent = `${recentHits.length.toFixed(1)} /s`;
+
+    // Smooth FPV chase or free orbit camera
+    let desiredPos, desiredTgt;
+    if (fpvChase && lead) {
+      const bx = Math.cos(lead.yaw), bz = -Math.sin(lead.yaw);
+      const sx = -bz, sz = bx;
+      desiredPos = [lead.x - bx * 4.6 + sx * 2.8, 3.6, lead.z - bz * 4.6 + sz * 2.8];
+      desiredTgt = [lead.x + bx * 2.8, 0.85, lead.z + bz * 2.8];
+    } else {
+      desiredTgt = [0, 0.7, 0];
+      desiredPos = [
+        Math.sin(orbYaw) * Math.cos(orbPitch) * orbDist,
+        Math.sin(orbPitch) * orbDist,
+        Math.cos(orbYaw) * Math.cos(orbPitch) * orbDist
+      ];
+    }
+    const sm = Math.min(1, rawDt * 4.5);
+    for (let k = 0; k < 3; k++) {
+      camPos[k] += (desiredPos[k] - camPos[k]) * sm;
+      camTgt[k] += (desiredTgt[k] - camTgt[k]) * sm;
+    }
+
+    gl.viewport(0, 0, 1280, 720);
+    gl.clearColor(0.016, 0.022, 0.038, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.useProgram(prog);
+
+    const vp = m4Mul(m4Persp(0.74, 1280 / 720, 0.1, 160), m4Look(camPos, camTgt));
+    gl.uniformMatrix4fv(uVP, false, vp);
+    gl.uniform3fv(uCam, camPos);
+
+    gl.uniform1f(uFloor, 1.0);
+    gl.uniformMatrix4fv(uModel, false, new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]));
+    gl.bindVertexArray(floorMesh.vao);
+    gl.drawArrays(gl.TRIANGLES, 0, floorMesh.count);
+
+    gl.uniform1f(uFloor, 0.0);
+    gl.bindVertexArray(dominoMesh.vao);
+    for (const d of dominoes) {
+      gl.uniformMatrix4fv(uModel, false, m4Domino(d.x, d.z, d.yaw, d.tilt));
+      gl.uniform3fv(uCol, d.col);
+      gl.uniform1f(uLit, d.flash);
+      gl.drawArrays(gl.TRIANGLES, 0, dominoMesh.count);
+    }
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../demo-shell.js"></script>
+</body>
+</html>

@@ -250,6 +250,103 @@ export function renderDemoArtwork(demo) {
     );
   }
 
+  if (['tourbillon-watch-3d', 'neon-tower-smash', 'cyberpunk-city', 'blender-domino', 'blender-loop'].includes(slug)) {
+    return renderBlenderArtwork({ id: slug }, slug === 'tourbillon-watch-3d' ? 'dial' : 'main');
+  }
+
+  if (slug === 'pagoda-clouds-3d') {
+    return wrapSvg(
+      slug,
+      '#241030',
+      '#6b2747',
+      '#fda4af',
+      `
+        <circle cx="492" cy="112" r="42" fill="#fffbeb" opacity="0.94" />
+        <ellipse cx="320" cy="322" rx="340" ry="64" fill="#fbcfe8" opacity="0.22" />
+        <polygon points="210,276 430,276 382,318 258,318" fill="#4c3d5c" />
+        <rect x="266" y="220" width="108" height="54" fill="#dc2626" />
+        <rect x="278" y="176" width="84" height="44" fill="#dc2626" />
+        <rect x="290" y="136" width="60" height="40" fill="#dc2626" />
+        <rect x="300" y="100" width="40" height="36" fill="#dc2626" />
+        <g fill="#1e293b">
+          <rect x="242" y="216" width="156" height="10" rx="2" />
+          <rect x="256" y="172" width="128" height="10" rx="2" />
+          <rect x="270" y="132" width="100" height="10" rx="2" />
+          <rect x="284" y="96" width="72" height="10" rx="2" />
+        </g>
+        <rect x="316" y="54" width="8" height="44" fill="#fbbf24" />
+        <g fill="#fde68a">
+          <rect x="304" y="236" width="32" height="22" />
+          <rect x="306" y="190" width="28" height="18" />
+          <rect x="309" y="148" width="22" height="16" />
+        </g>
+        <g fill="#fda4af" opacity="0.9">
+          <circle cx="196" cy="242" r="24" />
+          <circle cx="446" cy="246" r="22" />
+          <circle cx="156" cy="144" r="3" />
+          <circle cx="422" cy="116" r="3" />
+          <circle cx="240" cy="96" r="2.5" />
+        </g>
+      `,
+      'LIVE WEBGL2 · 5-TIER EXPLODED PAGODA · MOONLIT SAKURA',
+    );
+  }
+
+  if (slug === 'solarpunk-canal-2d') {
+    return wrapSvg(
+      slug,
+      '#311d4d',
+      '#c26243',
+      '#fbbf24',
+      `
+        <circle cx="320" cy="108" r="34" fill="#fde68a" opacity="0.92" />
+        <rect x="0" y="236" width="640" height="124" fill="#2d2642" />
+        <g fill="#e6c49e">
+          <rect x="44" y="146" width="124" height="90" />
+          <rect x="234" y="128" width="172" height="108" />
+          <rect x="472" y="140" width="124" height="96" />
+        </g>
+        <path d="M 268 128 A 52 44 0 0 1 372 128 Z" fill="#facc15" fill-opacity="0.45" stroke="#fef3c7" stroke-width="2" />
+        <path d="M 70 146 A 36 30 0 0 1 142 146 Z" fill="#38bdf8" fill-opacity="0.35" stroke="#fef3c7" stroke-width="2" />
+        <g fill="#22c55e">
+          <rect x="42" y="140" width="128" height="10" />
+          <rect x="230" y="122" width="180" height="10" />
+          <rect x="468" y="134" width="132" height="10" />
+        </g>
+        <ellipse cx="144" cy="64" rx="34" ry="11" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" />
+        <ellipse cx="492" cy="84" rx="28" ry="9" fill="#e0f2fe" stroke="#10b981" stroke-width="2" />
+        <rect x="206" y="166" width="16" height="72" fill="#7dd3fc" opacity="0.82" />
+        <rect x="422" y="166" width="16" height="72" fill="#7dd3fc" opacity="0.82" />
+        <g stroke="#fde68a" stroke-width="2" opacity="0.6">
+          <line x1="286" y1="262" x2="354" y2="262" />
+          <line x1="274" y1="286" x2="366" y2="286" />
+          <line x1="292" y1="312" x2="348" y2="312" />
+        </g>
+      `,
+      'LIVE PIXEL ART · SOLARPUNK GARDENS · AIRSHIPS & LANTERNS',
+    );
+  }
+
+  if (slug === 'red-fuji-flight-3d') {
+    return wrapSvg(
+      slug,
+      '#28183b',
+      '#b86b52',
+      '#fb923c',
+      `
+        <circle cx="482" cy="108" r="34" fill="#ffedd5" opacity="0.88" />
+        <polygon points="80,214 272,114 368,114 560,214" fill="#5e3a42" />
+        <polygon points="222,140 272,114 368,114 418,140 370,152 320,144 270,154" fill="#ffe4e6" />
+        <rect x="0" y="214" width="640" height="146" fill="#2e233e" opacity="0.88" />
+        <polygon points="104,214 276,298 364,298 536,214" fill="#7c4c57" opacity="0.58" />
+        <polygon points="234,276 276,298 364,298 406,276" fill="#fecdd3" opacity="0.55" />
+        <line x1="0" y1="214" x2="640" y2="214" stroke="#fed7aa" stroke-opacity="0.45" stroke-width="1.5" />
+        <text x="582" y="74" text-anchor="end" fill="#fff7ed" font-family="Georgia,serif" font-size="26" letter-spacing="6">紅富士</text>
+      `,
+      'LIVE WEBGL2 RAYMARCHER · RED FUJI · LAKE ASHI MIRROR',
+    );
+  }
+
   if (slug === 'aegis-zero-3d') {
     return wrapSvg(
       slug,

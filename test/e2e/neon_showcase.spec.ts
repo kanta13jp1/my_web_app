@@ -15,12 +15,16 @@ test('catalog tabs, live 3D modal playback, and 20 X benchmarks render cleanly',
   await page.goto(path);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('NEON SHOWCASE');
   const demoTotal = Number((await page.locator('#stat-demos').textContent())?.trim() || '0');
-  expect(demoTotal).toBeGreaterThanOrEqual(2);
+  expect(demoTotal).toBeGreaterThanOrEqual(32);
   await expect(page.locator('#result-count')).toHaveText(`${demoTotal} / ${demoTotal} 作品`);
   await expect(page.locator('[data-demo-slug="neon-fluid"]')).toBeVisible();
   await expect(page.locator('[data-demo-slug="helix-bio-3d"]')).toBeVisible();
   await expect(page.locator('[data-demo-slug="sentinel-earth-3d"]')).toBeVisible();
   await expect(page.locator('[data-demo-slug="quant-terminal-3d"]')).toBeVisible();
+  await expect(page.locator('[data-demo-slug="tourbillon-watch-3d"]')).toBeVisible();
+  await expect(page.locator('[data-demo-slug="pagoda-clouds-3d"]')).toBeVisible();
+  await expect(page.locator('[data-demo-slug="solarpunk-canal-2d"]')).toBeVisible();
+  await expect(page.locator('[data-demo-slug="red-fuji-flight-3d"]')).toBeVisible();
 
   // Filter live demos by category and launch a standalone interactive 3D demo modal
   await page.locator('[data-demo-cat="cinema"]').click();
@@ -43,10 +47,13 @@ test('catalog tabs, live 3D modal playback, and 20 X benchmarks render cleanly',
   await expect(
     page.locator('[data-blender-card="tourbillon-watch-3d"][data-art-angle="exploded"]'),
   ).toBeVisible();
+  await expect(page.locator('[data-launch-demo="tourbillon-watch-3d"]')).toBeVisible();
+  await expect(page.locator('[data-launch-demo="blender-domino"]')).toBeVisible();
 
-  // Switch to Concept Plans tab
+  // Switch to Concept Plans tab & confirm all 6 plans have live launch buttons
   await page.locator('#tab-plans').click();
   await expect(page.locator('#result-count')).toHaveText('6 / 6 企画');
+  await expect(page.locator('[data-launch-demo]')).toHaveCount(6);
 
   // Switch to 20 Referenced X Benchmarks tab & sort by bookmarks
   await page.locator('#tab-benchmarks').click();
