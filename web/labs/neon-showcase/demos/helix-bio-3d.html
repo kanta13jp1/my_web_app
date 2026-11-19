@@ -240,7 +240,7 @@
   .cring { position: absolute; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #00f5a0; pointer-events: none; z-index: 49; opacity: 0; }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="workstation">
 <div class="app" id="appRoot">
   <header class="topbar">
     <div class="brand">
@@ -788,10 +788,12 @@
     }
   }
 
+  let autoTour = isRecording;
   function runChoreography(t, dt) {
     pressedId = null;
     cPulse = Math.max(0, cPulse - dt * 2.8);
 
+    if (autoTour) {
     const pDock = btnCenter('btnDock');
     const pEsp  = btnCenter('btnEsp');
     const pFold = btnCenter('btnFold');
@@ -826,6 +828,7 @@
     } else {
       curOp = Math.max(0, curOp - dt * 1.4);
     }
+    } else { curOp = 0; }
 
     // Smooth Mode-Specific Animations
     if (mode === 1) dockProg = Math.min(1.0, dockProg + dt * 0.28);
@@ -1450,11 +1453,19 @@
   };
 
   if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.addControl('▶ 自動ツアー', (btn) => {
+        autoTour = !autoTour;
+        btn.classList.toggle('active', autoTour);
+        if (autoTour) { simTime = 0; for (const k in trig) trig[k] = false; setMode(0); }
+      });
+    });
     let last = performance.now();
     function loop(now) {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      if (simTime >= 24.0) { simTime = 0; for (const k in trig) trig[k] = false; setMode(0); }
+      if (autoTour && simTime >= 24.0) { simTime = 0; for (const k in trig) trig[k] = false; setMode(0); }
       window.stepHelix(dt, true);
       requestAnimationFrame(loop);
     }
@@ -1462,5 +1473,6 @@
   }
 })();
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>
