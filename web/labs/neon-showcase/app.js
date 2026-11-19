@@ -30,6 +30,7 @@ const modal = document.getElementById('demo-modal');
 const modalTitle = document.getElementById('modal-title');
 const modalSub = document.getElementById('modal-sub');
 const modalOpenTab = document.getElementById('modal-open-tab');
+const modalFullscreen = document.getElementById('modal-fullscreen');
 const modalClose = document.getElementById('modal-close');
 const modalStageWrap = document.getElementById('modal-stage-wrap');
 const modalScaler = document.getElementById('modal-scaler');
@@ -78,8 +79,9 @@ function matchesQuery(fields) {
 function updateModalScale() {
   if (modal.hidden) return;
   const w = modalStageWrap.clientWidth || 1280;
-  const scale = w / 1280;
-  modalScaler.style.transform = `scale(${scale})`;
+  const h = modalStageWrap.clientHeight || (w * 720) / 1280;
+  const scale = Math.min(w / 1280, h / 720);
+  modalScaler.style.transform = `translate(-50%, -50%) scale(${scale})`;
 }
 
 function openDemoModal(slug) {
@@ -97,6 +99,9 @@ function openDemoModal(slug) {
 
 function closeDemoModal() {
   if (modal.hidden) return;
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.().catch(() => {});
+  }
   modalIframe.src = 'about:blank';
   modal.hidden = true;
 }
@@ -413,11 +418,28 @@ contentRoot.addEventListener('click', (e) => {
 });
 
 modalClose.addEventListener('click', closeDemoModal);
+if (modalFullscreen) {
+  modalFullscreen.addEventListener('click', () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => {});
+    } else {
+      modalStageWrap.requestFullscreen?.().catch(() => {});
+    }
+  });
+}
+modalIframe.addEventListener('load', () => {
+  if (!modal.hidden) {
+    try {
+      modalIframe.focus();
+    } catch (_) {}
+  }
+});
+document.addEventListener('fullscreenchange', updateModalScale);
 modal.addEventListener('click', (e) => {
   if (e.target === modal) closeDemoModal();
 });
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeDemoModal();
+  if (e.key === 'Escape' && !document.fullscreenElement) closeDemoModal();
 });
 window.addEventListener('resize', updateModalScale);
 

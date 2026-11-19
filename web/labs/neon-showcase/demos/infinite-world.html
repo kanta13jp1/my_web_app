@@ -9,7 +9,7 @@
   #hud { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; pointer-events: none; }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="cinema">
 <canvas id="gl" width="1280" height="720"></canvas>
 <canvas id="hud" width="1280" height="720"></canvas>
 <script>
@@ -324,6 +324,40 @@ window.renderWorld = (t) => {
   ctx.fillText(`BIOME: ${biome}  |  ${t.toFixed(1)}s`, 40, 65);
   ctx.restore();
 };
+
+if (!window.__RECORDING__) {
+  let simT = 0;
+  let paused = false;
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    const jumps = [
+      ['01 雪山', 0.5],
+      ['02 森と湖', 8.0],
+      ['03 渓谷', 16.5],
+      ['04 砂漠', 25.0],
+      ['05 夕海', 32.0],
+    ];
+    for (const [lbl, sec] of jumps) {
+      window.NeonShell.addControl(lbl, () => { simT = sec; });
+    }
+    window.NeonShell.addControl('⏸ 一時停止', (btn) => {
+      paused = !paused;
+      btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+      btn.classList.toggle('active', paused);
+    });
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!paused) simT = (simT + dt) % 44.0;
+    window.renderWorld(simT);
+    requestAnimationFrame(loop);
+  }
+  window.renderWorld(0);
+  requestAnimationFrame(loop);
+}
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>

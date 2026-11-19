@@ -58,7 +58,9 @@ class _NeonShowcaseSurfaceState extends State<NeonShowcaseSurface>
               ..title = 'Gemini 4 作品館 · NEON SHOWCASE'
               ..src = '/labs/neon-showcase/index.html'
               ..referrerPolicy = 'no-referrer'
-              ..allow = "camera 'none'; microphone 'none'; geolocation 'none'"
+              ..allowFullscreen = true
+              ..allow =
+                  "fullscreen; camera 'none'; microphone 'none'; geolocation 'none'"
               ..style.border = 'none'
               ..style.width = '100%'
               ..style.height = '100%';

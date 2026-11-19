@@ -31,7 +31,7 @@
   }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="shooter">
 <div class="stage">
   <canvas id="glCanvas" width="1280" height="720"></canvas>
   <canvas id="hudCanvas" width="1280" height="720"></canvas>
@@ -681,9 +681,9 @@
     trailL: [], trailR: []
   };
 
-  // Interactive Keyboard Controls (User can take over immediately in browser!)
+  // Interactive Keyboard Controls (Playable immediately in browser!)
   const keys = {};
-  let manualControl = false;
+  let manualControl = !isRecording;
   window.addEventListener('keydown', (e) => {
     keys[e.code] = true;
     if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight','KeyQ','KeyE'].includes(e.code)) {
@@ -695,6 +695,7 @@
     if ((e.code === 'KeyQ' || e.code === 'KeyE') && player.barrelTimer <= 0) {
       player.barrelTimer = 0.72;
       player.barrelDir = e.code === 'KeyQ' ? 1 : -1;
+      window.NeonAudio?.sfx('roll');
     }
   });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
@@ -775,9 +776,11 @@
         life: 0.9
       });
     }
+    window.NeonAudio?.sfx('laser');
   }
 
   function fireHomingSalvo(count, overdrive = false, targetSubset = null) {
+    window.NeonAudio?.sfx('missile');
     const aliveP = targetSubset
       ? targetSubset.filter(p => p.alive)
       : boss.pylons.filter(p => p.alive);
@@ -812,6 +815,7 @@
     camShake = 0.58;
     screenFlash = 0.35;
     spawnExplosion(py.wx, py.wy, py.wz, 95, 1.35, 'fire');
+    window.NeonAudio?.sfx('explosion');
     shockwaves.push({ x: py.wx, y: py.wy, z: py.wz, r: 0.6, maxR: 7.5, life: 0.55, maxLife: 0.55, col: [1.0, 0.72, 0.2] });
     for (let d = 0; d < 12; d++) {
       debris.push({
@@ -1650,6 +1654,29 @@
   };
 
   if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.setHint('手動プレイ中: WASD/矢印:移動 · Space:レーザー · Shift:誘導ミサイル · Q/E:バレルロール');
+      const autoBtn = window.NeonShell.addControl('🤖 オートデモ', (btn) => {
+        manualControl = !manualControl;
+        btn.classList.toggle('active', !manualControl);
+        window.NeonShell.setHint(manualControl ? '手動プレイ中: WASD/矢印:移動 · Space:レーザー · Shift:誘導ミサイル · Q/E:ロール' : 'オートデモ再生中（キーまたは下ボタンで手動操縦）');
+      });
+      window.NeonShell.addControl('↻ リスタート', () => window.location.reload());
+      const setK = (code, val) => {
+        if (val) { manualControl = true; autoBtn.classList.remove('active'); }
+        keys[code] = val;
+      };
+      window.NeonShell.addPads([
+        { label: '◀ 左', onDown: () => setK('ArrowLeft', true), onUp: () => setK('ArrowLeft', false) },
+        { label: '▲ 上', onDown: () => setK('ArrowUp', true), onUp: () => setK('ArrowUp', false) },
+        { label: '▼ 下', onDown: () => setK('ArrowDown', true), onUp: () => setK('ArrowDown', false) },
+        { label: '▶ 右', onDown: () => setK('ArrowRight', true), onUp: () => setK('ArrowRight', false) },
+        { label: '🔥 レーザー', onDown: () => setK('Space', true), onUp: () => setK('Space', false) },
+        { label: '🚀 ミサイル', onDown: () => { manualControl = true; autoBtn.classList.remove('active'); fireHomingSalvo(4); } },
+        { label: '🌀 ロール', onDown: () => { manualControl = true; autoBtn.classList.remove('active'); if (player.barrelTimer <= 0) { player.barrelTimer = 0.72; player.barrelDir = 1; window.NeonAudio?.sfx('roll'); } } },
+      ]);
+    });
     let last = performance.now();
     function loop(now) {
       const dt = Math.min(0.05, (now - last) / 1000);
@@ -1665,5 +1692,6 @@
   }
 })();
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>

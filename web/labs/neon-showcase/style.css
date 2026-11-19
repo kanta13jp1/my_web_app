@@ -727,13 +727,23 @@ a:focus-visible {
   overflow: hidden;
 }
 
+.stage-wrap:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  aspect-ratio: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #020611;
+}
+
 .stage-scaler {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
   width: 1280px;
   height: 720px;
-  transform-origin: top left;
+  transform-origin: center center;
 }
 
 .stage-scaler iframe {
