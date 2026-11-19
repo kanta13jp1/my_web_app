@@ -681,6 +681,7 @@ _Fixture _fixtureFromEnex(String enex) {
         ),
     ],
     previewMode: 'local-fallback',
+    warnings: export.warnings,
     sourceExportSha256: export.exportSha256,
     resourceCount: export.resourceCount,
   );
