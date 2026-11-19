@@ -1279,7 +1279,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               child: ListView(
                 controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
                 children: [
                   if (_isPublicView) ...[
                     _buildPublicTrackerCtaCard(),
@@ -3566,13 +3566,23 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 ),
                 childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
                 title: Text(
-                  _formatScheduleDate(date),
+                  items.length >= 10 &&
+                          items.every(
+                            (item) => item.announcementDate.trim().isEmpty,
+                          )
+                      ? '${_formatScheduleDate(date)}（仮日程・告示日未定）'
+                      : _formatScheduleDate(date),
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 subtitle: Text(
-                  '${items.length}件の選挙',
+                  items.length >= 10 &&
+                          items.every(
+                            (item) => item.announcementDate.trim().isEmpty,
+                          )
+                      ? '${items.length}件の選挙（任期満了等に基づく見込日）'
+                      : '${items.length}件の選挙',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
