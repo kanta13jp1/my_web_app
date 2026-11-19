@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../pages/aero_lab_page.dart';
+import '../pages/neon_showcase_page.dart';
 import '../pages/sound_bloom_page.dart';
 import '../pages/lumen_path_page.dart';
 import '../pages/kinetic_forge_page.dart';
@@ -158,6 +159,7 @@ import '../pages/landing_ab_test_page.dart';
 import '../pages/loyalty_points_page.dart';
 import '../pages/market_intelligence_page.dart';
 import '../pages/meeting_manager_page.dart';
+import '../pages/diet_debates_page.dart';
 import '../pages/news_rss_aggregator_page.dart';
 import '../pages/parking_reservation_page.dart';
 import '../pages/qr_code_generator_page.dart';
@@ -1934,6 +1936,36 @@ List<HomeToolEntry> buildHomeToolCatalog({
           Navigator.of(context).pushNamed('/proactive-form-check'),
     ),
     HomeToolEntry(
+      id: 'echo-pump',
+      sectionId: 'personal',
+      title: '残響ポンプ室',
+      subtitle: '電源と音で敵を誘導する、短い脱出ホラーの見取り図版',
+      icon: Icons.flashlight_on,
+      color: const Color(0xFF26796C),
+      keywords: const <String>['ゲーム', 'ホラー', '脱出', 'ポンプ', '残響', 'echo'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/echo-pump'),
+    ),
+    HomeToolEntry(
+      id: 'sea-shelter',
+      sectionId: 'personal',
+      title: '潮灯のシェルター',
+      subtitle: '漂流物を集め、住民と海上拠点を育てるサバイバル試作',
+      icon: Icons.sailing_outlined,
+      color: const Color(0xFF287D70),
+      keywords: const <String>['ゲーム', '海', 'サバイバル', '拠点', '住民', 'sea shelter'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/sea-shelter'),
+    ),
+    HomeToolEntry(
+      id: 'typing-game',
+      sectionId: 'personal',
+      title: 'ことばのタイピング',
+      subtitle: '60秒のローマ字チャレンジで、入力の速さと正確さを練習',
+      icon: Icons.keyboard_outlined,
+      color: const Color(0xFF2563EB),
+      keywords: const <String>['ゲーム', 'タイピング', 'ローマ字', 'キーボード', 'typing'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/typing-game'),
+    ),
+    HomeToolEntry(
       id: 'focus-capture',
       sectionId: 'personal',
       title: 'フォーカス捕獲ゲーム',
@@ -2165,6 +2197,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF00796B),
       keywords: const <String>['外部ファイル', 'MCP', '検索', 'コンテキスト', 'file search'],
       onOpen: (context) => _pushPage(context, const McpFileSearchPage()),
+    ),
+    HomeToolEntry(
+      id: 'diet-debates',
+      sectionId: 'knowledge',
+      title: '国会の質疑を読む',
+      subtitle: 'テーマ・発言者・開催日から会議録を探す',
+      icon: Icons.account_balance_outlined,
+      color: const Color(0xFF175B65),
+      keywords: const <String>['国会', '質疑', '政策', '議員', '国会会議録', '法案'],
+      onOpen: (context) => _pushPage(context, const DietDebatesPage()),
     ),
     HomeToolEntry(
       id: 'news-rss',
@@ -2459,6 +2501,24 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF00838F),
       keywords: const <String>['3D', 'AERO LAB', 'エンジン', '実験', 'Astra'],
       onOpen: (context) => _pushPage(context, const AeroLabPage()),
+    ),
+    HomeToolEntry(
+      id: 'neon-showcase',
+      sectionId: 'growth',
+      title: 'Gemini 4 作品館 · NEON SHOWCASE',
+      subtitle: '単一HTML 24作品・Blender 3D・企画案・参照バズ投稿20選',
+      icon: Icons.auto_awesome_outlined,
+      color: const Color(0xFFD97706),
+      keywords: const <String>[
+        'Gemini 4',
+        'Neon',
+        'NEON SHOWCASE',
+        '作品館',
+        'WebGL',
+        'Blender',
+        'ベンチマーク',
+      ],
+      onOpen: (context) => _pushPage(context, const NeonShowcasePage()),
     ),
     HomeToolEntry(
       id: 'video-studio',

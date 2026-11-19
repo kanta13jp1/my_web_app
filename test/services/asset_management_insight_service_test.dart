@@ -10,6 +10,70 @@ void main() {
     const service = AssetManagementInsightService();
     const planner = AssetLiabilityPlanningService();
 
+    test('advice dates match the cashflow salary cycle across boundaries', () {
+      for (final baseDate in <DateTime>[
+        DateTime(2026, 10, 8),
+        DateTime(2026, 10, 25),
+        DateTime(2027, 1, 8),
+        DateTime(2026, 2, 26),
+      ]) {
+        for (final salaryDay in <int?>[null, 25]) {
+          final workbook = planner.buildWorkbook(
+            latestSnapshot: const <String, double>{
+              'bank': 50000,
+              'Custom Card': -10000,
+            },
+            baseDate: baseDate,
+            salaryDay: salaryDay,
+            paymentDayOverrides: const <String, int>{'Custom Card': 31},
+          );
+          final debt = workbook.currentDebtRows.singleWhere(
+            (row) => row.name == 'Custom Card',
+          );
+          final payment = workbook.cashflowRows.singleWhere(
+            (row) => row.isPayment && row.accountId == debt.id,
+          );
+          final report = service.buildReport(workbook: workbook);
+          final prompt = const AssetManagementInsightPromptBuilder()
+              .buildDetailedAdvicePrompt(report);
+          final date = payment.paymentDate;
+          final formatted = '${date.year}/'
+              '${date.month.toString().padLeft(2, '0')}/'
+              '${date.day.toString().padLeft(2, '0')}';
+          final detail = prompt.split('\n').singleWhere(
+                (line) =>
+                    line.startsWith('- Custom Card / 種別:') &&
+                    line.contains('今月支払予定日:'),
+              );
+          expect(detail, contains('今月支払予定日:$formatted'));
+          for (final action in report.actionItems.where(
+            (item) => item.relatedAccountId == debt.id && item.dueDate != null,
+          )) {
+            expect(action.dueDate, date);
+          }
+        }
+      }
+    });
+
+    test('repayment simulation uses fractional annual rates', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'auPAYカード': -505608,
+        },
+        baseDate: DateTime(2026, 10, 8),
+        monthlyPaymentOverrides: const <String, double>{'auPAYカード': 10000},
+      );
+      final report = service.buildReport(workbook: workbook);
+      final warning = report.actionItems.singleWhere(
+        (item) =>
+            item.type == AssetManagementInsightActionType.debtSpiralWarning,
+      );
+      // 15% APR, monthly compounding, no new borrowing: 81 payments.
+      expect(warning.description, contains('約81ヶ月'));
+      expect(warning.suggestedAction, contains('24ヶ月完済目標額24,516円'));
+    });
+
     test('does not present inferred discipline results as facts', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000},
@@ -216,7 +280,7 @@ void main() {
           '財布': 50000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
       );
 
@@ -238,7 +302,7 @@ void main() {
           '財布': 3000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
         paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
       );
@@ -262,7 +326,7 @@ void main() {
           '財布': 50000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
         paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
       );
@@ -287,7 +351,7 @@ void main() {
           'モビット': -300000,
           'auPayカード': -200000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{
           'mobit': 30000,
           AssetLiabilityPlanningService.auPayCardAccountId: 30000,
@@ -320,7 +384,7 @@ void main() {
           '財布': 50000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
         paymentSourceAccountIds: const <String, String>{
           'mobit': 'ghost_account',
@@ -1094,6 +1158,134 @@ void main() {
       final item = warnings.single;
       expect(item.description, contains('月返済15,000円'));
       expect(item.description, contains('元金返済は3,051円'));
+    });
+
+    test('emits overdueIncome reminder for unreceived past-due income plans',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 50000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        incomePlans: <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'salary_short_overdue',
+            date: DateTime(2026, 5, 8),
+            name: '副業入金',
+            amount: 50000,
+            destinationAccountId: 'smbc_otsuka_branch',
+            destinationAccountName: '三井住友銀行大塚支店',
+            received: false,
+          ),
+          AssetLiabilityIncomePlan(
+            id: 'salary_long_overdue',
+            date: DateTime(2026, 5, 5),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: 'smbc_otsuka_branch',
+            destinationAccountName: '三井住友銀行大塚支店',
+            received: false,
+          ),
+          AssetLiabilityIncomePlan(
+            id: 'salary_received',
+            date: DateTime(2026, 5, 1),
+            name: '入金済み賞与',
+            amount: 100000,
+            destinationAccountId: 'smbc_otsuka_branch',
+            destinationAccountName: '三井住友銀行大塚支店',
+            received: true,
+          ),
+        ],
+      );
+
+      final report = service.buildReport(workbook: workbook);
+      final overdueIncomes = report.actionItems
+          .where(
+            (item) =>
+                item.type == AssetManagementInsightActionType.overdueIncome,
+          )
+          .toList();
+
+      expect(overdueIncomes.length, 2);
+      expect(
+        overdueIncomes[0].severity,
+        AssetManagementInsightSeverity.critical,
+      );
+      expect(overdueIncomes[0].title, contains('給料'));
+      expect(overdueIncomes[0].title, contains('5日過ぎています'));
+      expect(overdueIncomes[0].suggestedAction, contains('問い合わせ'));
+
+      expect(
+        overdueIncomes[1].severity,
+        AssetManagementInsightSeverity.warning,
+      );
+      expect(overdueIncomes[1].title, contains('副業入金'));
+      expect(overdueIncomes[1].title, contains('2日過ぎています'));
+      expect(overdueIncomes[1].suggestedAction, contains('入金済み'));
+      // 画面からその場で受取済みにできるよう、対象の収入予定 ID を持つ。
+      expect(overdueIncomes[0].relatedIncomeId, 'salary_long_overdue');
+      expect(overdueIncomes[1].relatedIncomeId, 'salary_short_overdue');
+    });
+
+    test(
+        'predicts source account shortfall before due date and suggests alternative',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 1000,
+          '三井住友銀行大塚支店': 300000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+      );
+
+      final upcoming = report.actionItems.firstWhere(
+        (item) =>
+            item.type == AssetManagementInsightActionType.upcomingPayment &&
+            item.relatedAccountId == 'mobit',
+      );
+      expect(upcoming.severity, AssetManagementInsightSeverity.critical);
+      expect(upcoming.title, contains('残高不足が予測されます'));
+      expect(upcoming.description, contains('不足します'));
+      expect(upcoming.suggestedAction, contains('三井住友銀行大塚支店'));
+    });
+
+    test(
+        'flags missing source balance before due date and suggests alternative',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 300000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        paymentSourceAccountIds: const <String, String>{
+          'mobit': 'paypay_card_missing',
+        },
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+      );
+
+      final upcoming = report.actionItems.firstWhere(
+        (item) =>
+            item.type == AssetManagementInsightActionType.upcomingPayment &&
+            item.relatedAccountId == 'mobit',
+      );
+      expect(upcoming.severity, AssetManagementInsightSeverity.critical);
+      expect(upcoming.title, contains('原資口座を確認してください'));
+      expect(upcoming.suggestedAction, contains('三井住友銀行大塚支店'));
+>>>>>>> origin/main
     });
   });
 }

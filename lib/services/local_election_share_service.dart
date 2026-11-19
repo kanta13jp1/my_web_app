@@ -3,7 +3,9 @@
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../data/kokumin_source_verification.dart';
 import '../data/repositories/official_endorsement_repository.dart';
+import '../models/election_intelligence.dart';
 import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
@@ -19,15 +21,6 @@ typedef LocalElectionMemoPublisher = Future<PublicMemo?> Function({
 
 typedef LocalElectionMemoLoader = Future<PublicMemo?> Function(
     {required int noteId, required String userId});
-
-typedef _OfficialEndorsementTotals = ({
-  int total,
-  int incumbent,
-  int newcomer,
-  int former,
-  int prefectures,
-  String asOf,
-});
 
 class LocalElectionShareDraft {
   final int noteId;
@@ -106,21 +99,19 @@ class LocalElectionShareService {
   final OfficialEndorsementRepository _officialEndorsementRepository;
   final DateFormat _dateOnlyFormat = DateFormat('yyyy/MM/dd', 'ja_JP');
 
-  _OfficialEndorsementTotals _officialEndorsementTotals(
+  OfficialEndorsementSnapshot _officialEndorsements(
     LocalElectionRealitySnapshot? snapshot,
-  ) {
-    final resolved = _officialEndorsementRepository.resolve(
-      snapshot?.electionIntelligence,
-    );
-    return (
-      total: resolved.totalCount,
-      incumbent: resolved.incumbentCount,
-      newcomer: resolved.newcomerCount,
-      former: resolved.formerCount,
-      prefectures: resolved.prefectureCount,
-      asOf: resolved.sourceAsOf,
-    );
-  }
+  ) =>
+      _officialEndorsementRepository.resolve(snapshot?.electionIntelligence);
+
+  String _officialSourceVerificationLabel(
+    OfficialEndorsementSnapshot snapshot,
+  ) =>
+      kokuminSourceVerificationLabel(
+        sourceUrl: snapshot.sourceUrl,
+        sourceDate: snapshot.sourceAsOf,
+        sourceDocumentSha256: snapshot.sourceDocumentSha256,
+      );
 
   LocalElectionShareService(
     this._supabase, {
@@ -422,9 +413,10 @@ class LocalElectionShareService {
 
   String buildPlanDashboardXShareText({
     required LocalElectionPlanDashboard plan,
+    LocalElectionRealitySnapshot? snapshot,
     required String publicUrl,
   }) {
-    final body = buildPlanDashboardXShareBody(plan: plan);
+    final body = buildPlanDashboardXShareBody(plan: plan, snapshot: snapshot);
     if (publicUrl.isEmpty) {
       return body;
     }
@@ -433,9 +425,10 @@ class LocalElectionShareService {
 
   String buildPlanDashboardXShareBody({
     required LocalElectionPlanDashboard plan,
+    LocalElectionRealitySnapshot? snapshot,
   }) {
     // X は文字数制限があるため、公認予定候補は掲載がある場合だけ1行足す。
-    final endorsements = _officialEndorsementRepository.fallbackSnapshot;
+    final endorsements = _officialEndorsements(snapshot);
     final hasOfficialEndorsement = endorsements.hasData;
     return [
       '統一地方選700 県連KPI一覧',
@@ -445,7 +438,9 @@ class LocalElectionShareService {
         '公認予定候補 ${endorsements.totalCount}件'
             '(現職${endorsements.incumbentCount}/'
             '新人${endorsements.newcomerCount}/'
-            '元職${endorsements.formerCount})',
+            '元職${endorsements.formerCount}、${endorsements.sourceAsOf}現在、'
+            '推薦${endorsements.recommendationCount}件を除く) / '
+            '${_officialSourceVerificationLabel(endorsements)}',
       buildNextUnifiedLocalElectionCountdownLine(now: plan.updatedAt.toLocal()),
       '純増目標 ${plan.allocatedNetIncrease}人 / 新人 ${plan.totalNewCandidateTarget}人',
       '#統一地方選 #国民民主党',
@@ -474,10 +469,11 @@ class LocalElectionShareService {
 
   Uri buildPlanDashboardXShareIntentUri({
     required LocalElectionPlanDashboard plan,
+    LocalElectionRealitySnapshot? snapshot,
     required String publicUrl,
   }) {
     return Uri.https('x.com', '/intent/tweet', <String, String>{
-      'text': buildPlanDashboardXShareBody(plan: plan),
+      'text': buildPlanDashboardXShareBody(plan: plan, snapshot: snapshot),
       if (publicUrl.isNotEmpty) 'url': publicUrl,
     });
   }
@@ -743,12 +739,14 @@ class LocalElectionShareService {
     required List<LocalElectionLegislatorProfile> members,
     LocalElectionPlanDashboard? plan,
   }) {
-    final endorsementTotals = _officialEndorsementTotals(snapshot);
-    final dpjOfficialEndorsementTotal = endorsementTotals.total;
-    final dpjOfficialEndorsementIncumbentTotal = endorsementTotals.incumbent;
-    final dpjOfficialEndorsementNewcomerTotal = endorsementTotals.newcomer;
-    final dpjOfficialEndorsementFormerTotal = endorsementTotals.former;
-    final dpjOfficialEndorsementPrefectureCount = endorsementTotals.prefectures;
+    final endorsementTotals = _officialEndorsements(snapshot);
+    final dpjOfficialEndorsementTotal = endorsementTotals.totalCount;
+    final dpjOfficialEndorsementIncumbentTotal =
+        endorsementTotals.incumbentCount;
+    final dpjOfficialEndorsementNewcomerTotal = endorsementTotals.newcomerCount;
+    final dpjOfficialEndorsementFormerTotal = endorsementTotals.formerCount;
+    final dpjOfficialEndorsementPrefectureCount =
+        endorsementTotals.prefectureCount;
     final cdpByPrefecture = _cdpByPrefecture(plan);
     final missing =
         prefectures.where((item) => item.currentMembers == 0).toList();
@@ -789,8 +787,10 @@ class LocalElectionShareService {
         '(現職$dpjOfficialEndorsementIncumbentTotal / '
         '新人$dpjOfficialEndorsementNewcomerTotal / '
         '元職$dpjOfficialEndorsementFormerTotal) '
-        '※$dpjOfficialEndorsementPrefectureCount/47都道府県に掲載',
+        '※$dpjOfficialEndorsementPrefectureCount/47都道府県に掲載、'
+        '${endorsementTotals.sourceAsOf}現在（推薦${endorsementTotals.recommendationCount}件を除く）',
       );
+      buffer.writeln(_officialSourceVerificationLabel(endorsementTotals));
     }
     final ldpTotal = plan?.totalLdpLocalMembers ?? 0;
     if (ldpTotal > 0) {
@@ -922,8 +922,14 @@ class LocalElectionShareService {
       'electionAchievements': snapshot.electionIntelligence.achievements
           .map((item) => item.toJson())
           .toList(),
+      // sourceAsOf is the candidate-list date; snapshotDate/fetchedAt
+      // refer to the separately fetched election snapshot.
       'officialEndorsements':
-          snapshot.electionIntelligence.officialEndorsements.toJson(),
+          snapshot.electionIntelligence.selectedMode == ElectionModeId.local
+              ? _officialEndorsementRepository
+                  .resolve(snapshot.electionIntelligence)
+                  .toJson()
+              : snapshot.electionIntelligence.officialEndorsements.toJson(),
       'cdpLocalMembers': prefectures.fold<int>(
         0,
         (sum, item) => sum + _resolveCdpLocalMembers(item, cdpByPrefecture),
@@ -955,12 +961,14 @@ class LocalElectionShareService {
     required LocalElectionRealitySnapshot? snapshot,
     required String publicDashboardUrl,
   }) {
-    final endorsementTotals = _officialEndorsementTotals(snapshot);
-    final dpjOfficialEndorsementTotal = endorsementTotals.total;
-    final dpjOfficialEndorsementIncumbentTotal = endorsementTotals.incumbent;
-    final dpjOfficialEndorsementNewcomerTotal = endorsementTotals.newcomer;
-    final dpjOfficialEndorsementFormerTotal = endorsementTotals.former;
-    final dpjOfficialEndorsementPrefectureCount = endorsementTotals.prefectures;
+    final endorsementTotals = _officialEndorsements(snapshot);
+    final dpjOfficialEndorsementTotal = endorsementTotals.totalCount;
+    final dpjOfficialEndorsementIncumbentTotal =
+        endorsementTotals.incumbentCount;
+    final dpjOfficialEndorsementNewcomerTotal = endorsementTotals.newcomerCount;
+    final dpjOfficialEndorsementFormerTotal = endorsementTotals.formerCount;
+    final dpjOfficialEndorsementPrefectureCount =
+        endorsementTotals.prefectureCount;
     final fetchedAt = snapshot?.fetchedAt.toLocal();
     final realityByPrefecture = <String, LocalElectionPrefectureReality>{
       if (snapshot != null)
@@ -1005,8 +1013,10 @@ class LocalElectionShareService {
         '(現職$dpjOfficialEndorsementIncumbentTotal / '
         '新人$dpjOfficialEndorsementNewcomerTotal / '
         '元職$dpjOfficialEndorsementFormerTotal) '
-        '※$dpjOfficialEndorsementPrefectureCount/47都道府県に掲載',
-      );
+        '※$dpjOfficialEndorsementPrefectureCount/47都道府県に掲載、'
+        '${endorsementTotals.sourceAsOf}現在（推薦${endorsementTotals.recommendationCount}件を除く）',
+      )
+      ..writeln(_officialSourceVerificationLabel(endorsementTotals));
 
     buffer
       ..writeln()
@@ -1038,13 +1048,15 @@ class LocalElectionShareService {
     required LocalElectionRealitySnapshot? snapshot,
     required String publicDashboardUrl,
   }) {
-    final endorsementTotals = _officialEndorsementTotals(snapshot);
-    final dpjOfficialEndorsementTotal = endorsementTotals.total;
-    final dpjOfficialEndorsementIncumbentTotal = endorsementTotals.incumbent;
-    final dpjOfficialEndorsementNewcomerTotal = endorsementTotals.newcomer;
-    final dpjOfficialEndorsementFormerTotal = endorsementTotals.former;
-    final dpjOfficialEndorsementPrefectureCount = endorsementTotals.prefectures;
-    final dpjLocalElectionOfficialListAsOf = endorsementTotals.asOf;
+    final endorsementTotals = _officialEndorsements(snapshot);
+    final dpjOfficialEndorsementTotal = endorsementTotals.totalCount;
+    final dpjOfficialEndorsementIncumbentTotal =
+        endorsementTotals.incumbentCount;
+    final dpjOfficialEndorsementNewcomerTotal = endorsementTotals.newcomerCount;
+    final dpjOfficialEndorsementFormerTotal = endorsementTotals.formerCount;
+    final dpjOfficialEndorsementPrefectureCount =
+        endorsementTotals.prefectureCount;
+    final dpjLocalElectionOfficialListAsOf = endorsementTotals.sourceAsOf;
     return <String, dynamic>{
       'type': planDashboardMetadataType,
       'publicDashboardUrl': publicDashboardUrl,
@@ -1064,6 +1076,7 @@ class LocalElectionShareService {
       'confirmedEndorsementCount': plan.confirmedEndorsementCount,
       'totalCdpLocalMembers': plan.totalCdpLocalMembers,
       'totalLdpLocalMembers': plan.totalLdpLocalMembers,
+      'officialEndorsements': endorsementTotals.toJson(),
       'officialEndorsementTotal': dpjOfficialEndorsementTotal,
       'officialEndorsementIncumbent': dpjOfficialEndorsementIncumbentTotal,
       'officialEndorsementNewcomer': dpjOfficialEndorsementNewcomerTotal,

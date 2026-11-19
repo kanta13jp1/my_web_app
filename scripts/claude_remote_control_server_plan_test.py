@@ -20,18 +20,22 @@ class ServerPlanTest(unittest.TestCase):
             requested_capacity=None,
             security_review_recorded=False,
             resources=HEALTHY,
+            host_system="Linux",
+            sandbox_config_confirmed=True,
         )
 
         self.assertEqual(plan.status, "blocked")
         self.assertEqual(plan.command, [])
         self.assertTrue(any("security/legal" in item for item in plan.blockers))
 
-    def test_single_mode_enables_sandbox_without_capacity(self) -> None:
+    def test_single_mode_requires_confirmed_sandbox_without_capacity(self) -> None:
         plan = build_server_plan(
             mode="single",
             requested_capacity=None,
             security_review_recorded=True,
             resources=HEALTHY,
+            host_system="Linux",
+            sandbox_config_confirmed=True,
         )
 
         self.assertEqual(plan.status, "ready")
@@ -41,7 +45,6 @@ class ServerPlanTest(unittest.TestCase):
             [
                 "claude",
                 "remote-control",
-                "--sandbox",
                 "--spawn",
                 "session",
                 "--permission-mode",
@@ -55,11 +58,13 @@ class ServerPlanTest(unittest.TestCase):
             requested_capacity=2,
             security_review_recorded=True,
             resources=HEALTHY,
+            host_system="Linux",
+            sandbox_config_confirmed=True,
         )
 
         self.assertEqual(plan.status, "ready")
         self.assertEqual(plan.capacity, 2)
-        self.assertIn("--sandbox", plan.command)
+        self.assertNotIn("--sandbox", plan.command)
         self.assertIn("worktree", plan.command)
         self.assertIn("--no-create-session-in-dir", plan.command)
 
@@ -69,12 +74,16 @@ class ServerPlanTest(unittest.TestCase):
             requested_capacity=32,
             security_review_recorded=True,
             resources=HEALTHY,
+            host_system="Linux",
+            sandbox_config_confirmed=True,
         )
         shared = build_server_plan(
             mode="same-dir",
             requested_capacity=None,
             security_review_recorded=True,
             resources=HEALTHY,
+            host_system="Linux",
+            sandbox_config_confirmed=True,
         )
 
         self.assertEqual(excessive.status, "blocked")
@@ -104,12 +113,31 @@ class ServerPlanTest(unittest.TestCase):
         self.assertEqual(unknown.status, "blocked")
         self.assertTrue(any("could not be measured" in item for item in unknown.blockers))
 
+    def test_blocks_windows_unknown_and_unconfirmed_sandbox(self) -> None:
+        for host, confirmed in (("Windows", True), ("unknown", True), ("Linux", False)):
+            with self.subTest(host=host, confirmed=confirmed):
+                plan = build_server_plan(
+                    mode="single", requested_capacity=None,
+                    security_review_recorded=True, resources=HEALTHY,
+                    host_system=host, sandbox_config_confirmed=confirmed,
+                )
+                self.assertEqual(plan.status, "blocked")
+                self.assertEqual(plan.command, [])
+        allowed = build_server_plan(
+            mode="single", requested_capacity=None, security_review_recorded=True,
+            resources=HEALTHY, host_system="Darwin", sandbox_config_confirmed=True,
+        )
+        self.assertEqual(allowed.status, "ready")
+        self.assertNotIn("--sandbox", allowed.command)
+
     def test_rejects_capacity_with_single_session_mode(self) -> None:
         plan = build_server_plan(
             mode="single",
             requested_capacity=1,
             security_review_recorded=True,
             resources=HEALTHY,
+            host_system="Linux",
+            sandbox_config_confirmed=True,
         )
 
         self.assertEqual(plan.status, "blocked")
