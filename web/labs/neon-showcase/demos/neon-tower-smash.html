@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>NEON CRYSTAL TOWER SMASH // 144 Rigid-Body Blocks (Pure WebGL2)</title>
+<style>
+  :root { --mono: ui-monospace, "Cascadia Code", Consolas, monospace; --cyan: #22d3ee; --pink: #f43f5e; --gold: #fbbf24; }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #040712; color: #f8fafc; font-family: var(--mono); }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; cursor: crosshair; }
+  .hud-tl {
+    position: absolute; top: 14px; left: 16px;
+    background: rgba(5, 10, 24, 0.78); border: 1px solid rgba(34, 211, 238, 0.36);
+    border-radius: 8px; padding: 8px 13px; backdrop-filter: blur(6px);
+  }
+  .hud-tl h1 { font-size: 13px; font-weight: 800; letter-spacing: 1.2px; }
+  .hud-tl h1 span { color: var(--cyan); }
+  .hud-tl p { font-size: 9.5px; color: #94a3b8; margin-top: 2px; }
+  .hud-tr {
+    position: absolute; top: 14px; right: 16px;
+    background: rgba(5, 10, 24, 0.78); border: 1px solid rgba(244, 63, 94, 0.34);
+    border-radius: 8px; padding: 8px 12px; display: flex; gap: 14px;
+    backdrop-filter: blur(6px); font-variant-numeric: tabular-nums;
+  }
+  .st { display: flex; flex-direction: column; }
+  .st .k { font-size: 8px; color: #94a3b8; }
+  .st .v { font-size: 12.5px; font-weight: 800; color: var(--cyan); }
+  .st .v.pk { color: var(--pink); }
+  .st .v.gd { color: var(--gold); }
+  .hud-bl {
+    position: absolute; bottom: 14px; left: 16px;
+    display: flex; flex-wrap: wrap; gap: 7px;
+    background: rgba(5, 10, 24, 0.82); border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 8px; padding: 7px 10px; backdrop-filter: blur(6px);
+  }
+  .cbtn {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 800;
+    color: #cbd5e1; background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 6px;
+    padding: 6px 11px; cursor: pointer;
+  }
+  .cbtn:hover { border-color: var(--cyan); color: #fff; }
+  .cbtn.act { background: linear-gradient(90deg, #06b6d4, #22d3ee); border-color: #a5f3fc; color: #04101a; }
+  .cbtn.act-pk { background: linear-gradient(90deg, #e11d48, #fb7185); border-color: #fecdd3; color: #fff; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="shooter">
+<canvas id="gl" width="1280" height="720"></canvas>
+
+<div class="hud-tl">
+  <h1>NEON CRYSTAL TOWER SMASH <span>// 144 RIGID BODIES</span></h1>
+  <p>PURE WEBGL2 PHYSICS · CLICK / SPACE: プラズマ砲発射 · DRAG: 視点回転</p>
+</div>
+<div class="hud-tr">
+  <div class="st"><span class="k">BLOCKS</span><span class="v">144</span></div>
+  <div class="st"><span class="k">SHATTERED</span><span class="v pk" id="sShat">0%</span></div>
+  <div class="st"><span class="k">IMPACTS</span><span class="v gd" id="sImp">0</span></div>
+  <div class="st"><span class="k">TIME</span><span class="v" id="sTime">1.0x</span></div>
+</div>
+<div class="hud-bl">
+  <button class="cbtn act-pk" id="btnSmash">💥 2段階プラズマクラッシュ</button>
+  <button class="cbtn" id="btnFire">⚡ 単発ショット (Space)</button>
+  <button class="cbtn" id="btnSlow">⏱ スローモーション</button>
+  <button class="cbtn" id="btnCam">🎥 FPVオービット</button>
+  <button class="cbtn" id="btnReset">↻ タワー再建</button>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('gl');
+  const gl = canvas.getContext('webgl2', { antialias: true, preserveDrawingBuffer: true });
+  if (!gl) return;
+
+  const VS = `#version 300 es
+  layout(location=0) in vec3 aPos;
+  layout(location=1) in vec3 aNorm;
+  uniform mat4 uVP;
+  uniform mat4 uModel;
+  out vec3 vWPos;
+  out vec3 vNorm;
+  out vec3 vLocal;
+  void main() {
+    vLocal = aPos;
+    vec4 wp = uModel * vec4(aPos, 1.0);
+    vWPos = wp.xyz;
+    vNorm = normalize(mat3(uModel) * aNorm);
+    gl_Position = uVP * wp;
+  }`;
+
+  const FS = `#version 300 es
+  precision highp float;
+  in vec3 vWPos;
+  in vec3 vNorm;
+  in vec3 vLocal;
+  uniform vec3 uCam;
+  uniform vec3 uCol;
+  uniform vec3 uEmit;
+  uniform float uMode; // 0=block, 1=floor, 2=sphere
+  out vec4 outCol;
+  void main() {
+    vec3 N = normalize(vNorm);
+    vec3 V = normalize(uCam - vWPos);
+    if (uMode > 0.5 && uMode < 1.5) {
+      vec2 g = abs(fract(vWPos.xz * 0.5 - 0.5) - 0.5) / max(fwidth(vWPos.xz * 0.5), vec2(0.002));
+      float line = 1.0 - min(min(g.x, g.y), 1.0);
+      float dist = length(vWPos.xz);
+      float fade = exp(-dist * 0.045);
+      vec3 base = vec3(0.014, 0.020, 0.042);
+      vec3 grid = vec3(0.0, 0.68, 0.96) * line * fade * 0.85;
+      float glow = exp(-dist * 0.14) * 0.18;
+      vec3 col = base + grid + vec3(0.18, 0.06, 0.28) * glow;
+      outCol = vec4(pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2)), 1.0);
+      return;
+    }
+    vec3 L1 = normalize(vec3(12.0, 20.0, 14.0));
+    vec3 L2 = normalize(vec3(-14.0, 10.0, -8.0));
+    float d1 = max(dot(N, L1), 0.0);
+    float d2 = max(dot(N, L2), 0.0);
+    float sp = pow(max(dot(N, normalize(L1 + V)), 0.0), 48.0);
+    float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+    float edge = 0.0;
+    if (uMode < 0.5) {
+      vec3 ae = abs(vLocal);
+      float m = max(max(ae.x, ae.y), ae.z);
+      float m2 = ae.x + ae.y + ae.z - m - min(min(ae.x, ae.y), ae.z);
+      edge = smoothstep(0.41, 0.49, m2);
+    }
+    vec3 col = uCol * (0.22 + d1 * 0.85 + d2 * 0.35) + vec3(0.85, 0.95, 1.0) * sp * 0.9
+      + uEmit * (0.45 + edge * 1.45 + fres * 1.15);
+    col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+    outCol = vec4(pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2)), 1.0);
+  }`;
+
+  function sh(t, s) { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); return x; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  const uVP = gl.getUniformLocation(prog, 'uVP');
+  const uModel = gl.getUniformLocation(prog, 'uModel');
+  const uCam = gl.getUniformLocation(prog, 'uCam');
+  const uCol = gl.getUniformLocation(prog, 'uCol');
+  const uEmit = gl.getUniformLocation(prog, 'uEmit');
+  const uMode = gl.getUniformLocation(prog, 'uMode');
+
+  function makeVAO(v, n) {
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    const b0 = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b0);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(v), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    const b1 = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b1);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(n), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+    return { vao, count: v.length / 3 };
+  }
+  function pushQ(v, n, a, b, c, d, nm) {
+    v.push(...a, ...b, ...c, ...a, ...c, ...d);
+    for (let i = 0; i < 6; i++) n.push(...nm);
+  }
+  // Unit cube [-0.5, 0.5]
+  const cv = [], cn = [];
+  pushQ(cv,cn,[-.5,-.5,.5],[.5,-.5,.5],[.5,.5,.5],[-.5,.5,.5],[0,0,1]);
+  pushQ(cv,cn,[.5,-.5,-.5],[-.5,-.5,-.5],[-.5,.5,-.5],[.5,.5,-.5],[0,0,-1]);
+  pushQ(cv,cn,[-.5,.5,.5],[.5,.5,.5],[.5,.5,-.5],[-.5,.5,-.5],[0,1,0]);
+  pushQ(cv,cn,[-.5,-.5,-.5],[.5,-.5,-.5],[.5,-.5,.5],[-.5,-.5,.5],[0,-1,0]);
+  pushQ(cv,cn,[.5,-.5,.5],[.5,-.5,-.5],[.5,.5,-.5],[.5,.5,.5],[1,0,0]);
+  pushQ(cv,cn,[-.5,-.5,-.5],[-.5,-.5,.5],[-.5,.5,.5],[-.5,.5,-.5],[-1,0,0]);
+  const boxMesh = makeVAO(cv, cn);
+
+  // Floor quad
+  const fv = [-45,0,-45, 45,0,-45, 45,0,45, -45,0,-45, 45,0,45, -45,0,45];
+  const fn = [0,1,0, 0,1,0, 0,1,0, 0,1,0, 0,1,0, 0,1,0];
+  const floorMesh = makeVAO(fv, fn);
+
+  // Icosphere approximation (UV sphere)
+  const sv = [], sn = [];
+  const latN = 12, lonN = 18;
+  for (let i = 0; i < latN; i++) {
+    const t0 = (i / latN) * Math.PI, t1 = ((i + 1) / latN) * Math.PI;
+    for (let j = 0; j < lonN; j++) {
+      const p0 = (j / lonN) * Math.PI * 2, p1 = ((j + 1) / lonN) * Math.PI * 2;
+      const pt = (t, p) => [Math.sin(t)*Math.cos(p), Math.cos(t), Math.sin(t)*Math.sin(p)];
+      const a = pt(t0,p0), b = pt(t1,p0), c = pt(t1,p1), d = pt(t0,p1);
+      sv.push(...a,...b,...c, ...a,...c,...d);
+      sn.push(...a,...b,...c, ...a,...c,...d);
+    }
+  }
+  const sphereMesh = makeVAO(sv, sn);
+
+  function m4Mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++)
+      o[c*4+r] = a[r]*b[c*4] + a[4+r]*b[c*4+1] + a[8+r]*b[c*4+2] + a[12+r]*b[c*4+3];
+    return o;
+  }
+  function m4Persp(fov, asp, n, f) {
+    const t = 1 / Math.tan(fov * 0.5), nf = 1 / (n - f);
+    return new Float32Array([t/asp,0,0,0, 0,t,0,0, 0,0,(f+n)*nf,-1, 0,0,2*f*n*nf,0]);
+  }
+  function m4Look(e, t) {
+    let zx=e[0]-t[0], zy=e[1]-t[1], zz=e[2]-t[2], zl=Math.hypot(zx,zy,zz)||1;
+    zx/=zl; zy/=zl; zz/=zl;
+    let xx=zz, xy=0, xz=-zx, xl=Math.hypot(xx,xy,xz)||1; xx/=xl; xz/=xl;
+    let yx=zy*xz, yy=zz*xx-zx*xz, yz=-zy*xx;
+    return new Float32Array([
+      xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+      -(xx*e[0]+xy*e[1]+xz*e[2]), -(yx*e[0]+yy*e[1]+yz*e[2]), -(zx*e[0]+zy*e[1]+zz*e[2]), 1
+    ]);
+  }
+  function m4TRS(px, py, pz, rx, ry, rz, sx, sy, sz) {
+    const cx=Math.cos(rx), sxr=Math.sin(rx), cy=Math.cos(ry), syr=Math.sin(ry), cz=Math.cos(rz), szr=Math.sin(rz);
+    const m00 = cy*cz, m01 = sxr*syr*cz - cx*szr, m02 = cx*syr*cz + sxr*szr;
+    const m10 = cy*szr, m11 = sxr*syr*szr + cx*cz, m12 = cx*syr*szr - sxr*cz;
+    const m20 = -syr, m21 = sxr*cy, m22 = cx*cy;
+    return new Float32Array([
+      m00*sx, m10*sx, m20*sx, 0,
+      m01*sy, m11*sy, m21*sy, 0,
+      m02*sz, m12*sz, m22*sz, 0,
+      px, py, pz, 1
+    ]);
+  }
+
+  // ---- 144 Rigid-Body Crystal Blocks (16 floors x 9 blocks = 144!) ----
+  const PAL = [
+    [[0.06, 0.55, 0.78], [0.06, 0.85, 1.0]],
+    [[0.62, 0.12, 0.54], [1.0, 0.22, 0.68]],
+    [[0.36, 0.16, 0.78], [0.65, 0.35, 1.0]],
+    [[0.78, 0.48, 0.08], [1.0, 0.75, 0.18]],
+  ];
+  let blocks = [];
+  let spheres = [];
+  let sparks = [];
+  let impactCount = 0;
+  let shake = 0;
+  let slowMo = false;
+  let autoCam = true;
+  let camYaw = 0.62, camPitch = 0.28, camDist = 17.5;
+  let dragging = false, lx = 0, ly = 0, dragMoved = false;
+
+  function buildTower() {
+    blocks = [];
+    spheres = [];
+    sparks = [];
+    impactCount = 0;
+    shake = 0;
+    const bw = 1.05, bh = 0.62, bd = 1.05, gap = 1.08;
+    for (let fl = 0; fl < 16; fl++) {
+      const y = bh * 0.5 + fl * bh;
+      const pIdx = Math.floor(fl / 4) % PAL.length;
+      const rot = (fl % 2) * 0.08;
+      for (let gx = -1; gx <= 1; gx++) {
+        for (let gz = -1; gz <= 1; gz++) {
+          const x = gx * gap, z = gz * gap;
+          const cr = Math.cos(rot), sr = Math.sin(rot);
+          blocks.push({
+            x: x * cr - z * sr, y, z: x * sr + z * cr,
+            vx: 0, vy: 0, vz: 0,
+            rx: 0, ry: rot, rz: 0,
+            wx: 0, wy: 0, wz: 0,
+            sx: bw, sy: bh, sz: bd,
+            col: PAL[pIdx][0], emit: PAL[pIdx][1],
+            awake: false, dist0: Math.hypot(x, z), y0: y
+          });
+        }
+      }
+    }
+    document.getElementById('sImp').textContent = '0';
+  }
+
+  function spawnSparks(x, y, z, col, count = 16) {
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2, sp = 4 + Math.random() * 11;
+      sparks.push({
+        x, y, z,
+        vx: Math.cos(a) * sp, vy: 2 + Math.random() * 9, vz: Math.sin(a) * sp,
+        col, life: 0.7 + Math.random() * 0.6
+      });
+    }
+  }
+
+  function firePlasma(targetY = 3.8, fromAngle = null, isPink = false) {
+    const ang = fromAngle !== null ? fromAngle : camYaw + (Math.random() - 0.5) * 0.25;
+    const dist = 13.5;
+    const sx = Math.sin(ang) * dist, sy = targetY + 1.4, sz = Math.cos(ang) * dist;
+    const dx = -sx, dy = targetY - sy, dz = -sz;
+    const l = Math.hypot(dx, dy, dz) || 1;
+    const spd = 25.5;
+    spheres.push({
+      x: sx, y: sy, z: sz,
+      vx: (dx / l) * spd, vy: (dy / l) * spd + 1.6, vz: (dz / l) * spd,
+      r: 0.88,
+      col: isPink ? [1.0, 0.22, 0.62] : [0.15, 0.92, 1.0],
+      emit: isPink ? [1.6, 0.25, 0.78] : [0.2, 1.45, 1.8],
+      life: 4.5, hitDone: false
+    });
+    window.NeonAudio?.sfx('missile', isPink ? 0.85 : 1.15);
+  }
+
+  function triggerTwoStageCrash() {
+    if (blocks.filter((b) => b.awake).length > 100) buildTower();
+    firePlasma(3.4, camYaw - 0.22, false);
+    setTimeout(() => firePlasma(6.8, camYaw + 0.55, true), 950);
+  }
+
+  document.getElementById('btnSmash').addEventListener('click', triggerTwoStageCrash);
+  document.getElementById('btnFire').addEventListener('click', () => firePlasma(2.4 + Math.random() * 5.8, null, impactCount % 2 === 1));
+  document.getElementById('btnSlow').addEventListener('click', (e) => {
+    slowMo = !slowMo;
+    e.currentTarget.classList.toggle('act', slowMo);
+    document.getElementById('sTime').textContent = slowMo ? '0.25x' : '1.0x';
+  });
+  document.getElementById('btnCam').addEventListener('click', (e) => {
+    autoCam = !autoCam;
+    e.currentTarget.classList.toggle('act', autoCam);
+  });
+  document.getElementById('btnReset').addEventListener('click', buildTower);
+
+  canvas.addEventListener('pointerdown', (e) => { dragging = true; dragMoved = false; lx = e.clientX; ly = e.clientY; });
+  window.addEventListener('pointerup', (e) => {
+    if (dragging && !dragMoved && e.target === canvas) {
+      const r = canvas.getBoundingClientRect();
+      const ny = 1 - (e.clientY - r.top) / r.height;
+      firePlasma(1.2 + ny * 8.5, null, impactCount % 2 === 1);
+    }
+    dragging = false;
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    if (Math.hypot(e.clientX - lx, e.clientY - ly) > 4) dragMoved = true;
+    autoCam = false;
+    document.getElementById('btnCam').classList.remove('act');
+    camYaw += (e.clientX - lx) * 0.007;
+    camPitch = Math.max(0.06, Math.min(1.1, camPitch + (e.clientY - ly) * 0.006));
+    lx = e.clientX; ly = e.clientY;
+  });
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    camDist = Math.max(8.5, Math.min(28, camDist + e.deltaY * 0.01));
+  }, { passive: false });
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') { e.preventDefault(); firePlasma(2.5 + Math.random() * 5.5, null, impactCount % 2 === 1); }
+    if (e.code === 'KeyR') buildTower();
+  });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    window.NeonShell?.setHint('画面クリック / Space: プラズマ球発射 · ドラッグ: 360°回転 · R: タワー再建');
+  });
+
+  buildTower();
+  // Opening dramatic first shot at 0.9s so live preview immediately showcases physics impact
+  setTimeout(() => firePlasma(3.6, 0.45, false), 850);
+
+  let last = performance.now();
+  function loop(now) {
+    const rawDt = Math.min(0.04, (now - last) / 1000);
+    last = now;
+    const dt = rawDt * (slowMo ? 0.25 : 1.0);
+
+    if (autoCam) camYaw += rawDt * 0.26;
+    shake = Math.max(0, shake - rawDt * 2.4);
+
+    // Step Plasma Spheres & Radial Blast Impulse
+    for (let i = spheres.length - 1; i >= 0; i--) {
+      const s = spheres[i];
+      s.vy -= 9.8 * dt;
+      s.x += s.vx * dt; s.y += s.vy * dt; s.z += s.vz * dt;
+      if (s.y < s.r) { s.y = s.r; s.vy = -s.vy * 0.55; s.vx *= 0.85; s.vz *= 0.85; }
+      s.life -= dt;
+
+      let hitThisStep = false;
+      for (const b of blocks) {
+        const dx = b.x - s.x, dy = b.y - s.y, dz = b.z - s.z;
+        const dist = Math.hypot(dx, dy, dz);
+        if (dist < s.r + 0.92) {
+          hitThisStep = true;
+          const inv = 1 / (dist || 0.1);
+          const push = 16.5;
+          b.awake = true;
+          b.vx += dx * inv * push + s.vx * 0.48;
+          b.vy += dy * inv * push * 0.75 + 4.2;
+          b.vz += dz * inv * push + s.vz * 0.48;
+          b.wx += (Math.random() - 0.5) * 11;
+          b.wy += (Math.random() - 0.5) * 11;
+          b.wz += (Math.random() - 0.5) * 11;
+        }
+      }
+      if (hitThisStep && !s.hitDone) {
+        s.hitDone = true;
+        impactCount += 1;
+        shake = 0.62;
+        document.getElementById('sImp').textContent = String(impactCount);
+        spawnSparks(s.x, s.y, s.z, s.emit, 24);
+        window.NeonAudio?.sfx('explosion');
+        setTimeout(() => window.NeonAudio?.sfx('shatter', 0.9 + Math.random() * 0.3), 50);
+        // Cascade shockwave to nearby blocks & upper stories
+        for (const b of blocks) {
+          const dx = b.x - s.x, dy = b.y - s.y, dz = b.z - s.z;
+          const d = Math.hypot(dx, dy, dz);
+          if (d < 4.6) {
+            const f = (1 - d / 4.6) * 14.5;
+            b.awake = true;
+            b.vx += (dx / (d || 1)) * f + s.vx * 0.18;
+            b.vy += (dy / (d || 1)) * f * 0.5 + 2.8;
+            b.vz += (dz / (d || 1)) * f + s.vz * 0.18;
+            b.wx += (Math.random() - 0.5) * 7;
+            b.wz += (Math.random() - 0.5) * 7;
+          } else if (b.y > s.y && Math.hypot(b.x, b.z) < 2.2) {
+            // Lose support from below -> topple naturally!
+            b.awake = true;
+            b.vx += (Math.random() - 0.5) * 2.2;
+            b.vz += (Math.random() - 0.5) * 2.2;
+          }
+        }
+        s.vx *= 0.45; s.vz *= 0.45;
+      }
+      if (s.life <= 0) spheres.splice(i, 1);
+    }
+
+    // Step 144 Rigid-Body Blocks
+    let displaced = 0;
+    for (const b of blocks) {
+      if (b.awake) {
+        b.vy -= 18.5 * dt;
+        b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt;
+        b.rx += b.wx * dt; b.ry += b.wy * dt; b.rz += b.wz * dt;
+        const floorY = 0.34;
+        if (b.y < floorY) {
+          b.y = floorY;
+          if (Math.abs(b.vy) > 3.2 && Math.random() < 0.12) {
+            window.NeonAudio?.sfx('shatter', 0.75 + Math.random() * 0.6);
+          }
+          b.vy = -b.vy * 0.36;
+          b.vx *= 0.84; b.vz *= 0.84;
+          b.wx *= 0.78; b.wy *= 0.78; b.wz *= 0.78;
+        }
+        if (Math.abs(b.y - b.y0) > 0.4 || Math.hypot(b.x, b.z) > 2.4) displaced++;
+      }
+    }
+    // Lightweight block-to-block separation for tumbling pile realism
+    for (let i = 0; i < blocks.length; i++) {
+      const a = blocks[i];
+      if (!a.awake) continue;
+      for (let j = i + 1; j < blocks.length; j++) {
+        const b = blocks[j];
+        const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+        const d2 = dx*dx + dy*dy + dz*dz;
+        if (d2 < 0.76 && d2 > 0.0001) {
+          const d = Math.sqrt(d2), pen = (0.87 - d) * 0.35;
+          const nx = dx / d, ny = dy / d, nz = dz / d;
+          b.awake = true;
+          a.x -= nx * pen; a.y = Math.max(0.34, a.y - ny * pen); a.z -= nz * pen;
+          b.x += nx * pen; b.y = Math.max(0.34, b.y + ny * pen); b.z += nz * pen;
+          const rvx = b.vx - a.vx, rvy = b.vy - a.vy, rvz = b.vz - a.vz;
+          const vn = rvx*nx + rvy*ny + rvz*nz;
+          if (vn < 0) {
+            const imp = -vn * 0.55;
+            a.vx -= nx * imp; a.vy -= ny * imp; a.vz -= nz * imp;
+            b.vx += nx * imp; b.vy += ny * imp; b.vz += nz * imp;
+          }
+        }
+      }
+    }
+    document.getElementById('sShat').textContent = `${Math.round((displaced / 144) * 100)}%`;
+
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const sp = sparks[i];
+      sp.vy -= 16 * dt; sp.x += sp.vx * dt; sp.y = Math.max(0.08, sp.y + sp.vy * dt); sp.z += sp.vz * dt;
+      sp.life -= rawDt;
+      if (sp.life <= 0) sparks.splice(i, 1);
+    }
+
+    // Render WebGL2 Scene
+    gl.viewport(0, 0, 1280, 720);
+    gl.clearColor(0.015, 0.022, 0.048, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.useProgram(prog);
+
+    const sxk = (Math.random() - 0.5) * shake * 0.55;
+    const syk = (Math.random() - 0.5) * shake * 0.42;
+    const eye = [
+      Math.sin(camYaw) * Math.cos(camPitch) * camDist + sxk,
+      Math.max(1.2, 4.6 + Math.sin(camPitch) * camDist) + syk,
+      Math.cos(camYaw) * Math.cos(camPitch) * camDist,
+    ];
+    const vp = m4Mul(m4Persp(0.76, 1280 / 720, 0.1, 140), m4Look(eye, [0, 4.4, 0]));
+    gl.uniformMatrix4fv(uVP, false, vp);
+    gl.uniform3fv(uCam, eye);
+
+    // Cyber Grid Floor
+    gl.uniform1f(uMode, 1.0);
+    gl.uniformMatrix4fv(uModel, false, m4TRS(0, 0, 0, 0, 0, 0, 1, 1, 1));
+    gl.bindVertexArray(floorMesh.vao);
+    gl.drawArrays(gl.TRIANGLES, 0, floorMesh.count);
+
+    // 144 Neon Crystal Blocks
+    gl.uniform1f(uMode, 0.0);
+    gl.bindVertexArray(boxMesh.vao);
+    for (const b of blocks) {
+      gl.uniformMatrix4fv(uModel, false, m4TRS(b.x, b.y, b.z, b.rx, b.ry, b.rz, b.sx, b.sy, b.sz));
+      gl.uniform3fv(uCol, b.col);
+      gl.uniform3fv(uEmit, b.emit);
+      gl.drawArrays(gl.TRIANGLES, 0, boxMesh.count);
+    }
+
+    // Glowing Crystal Sparks
+    for (const sp of sparks) {
+      const sz = 0.16 * sp.life;
+      gl.uniformMatrix4fv(uModel, false, m4TRS(sp.x, sp.y, sp.z, sp.life * 6, sp.life * 4, 0, sz, sz, sz));
+      gl.uniform3fv(uCol, sp.col);
+      gl.uniform3fv(uEmit, sp.col);
+      gl.drawArrays(gl.TRIANGLES, 0, boxMesh.count);
+    }
+
+    // Plasma Cannon Spheres
+    gl.uniform1f(uMode, 2.0);
+    gl.bindVertexArray(sphereMesh.vao);
+    for (const s of spheres) {
+      gl.uniformMatrix4fv(uModel, false, m4TRS(s.x, s.y, s.z, 0, 0, 0, s.r, s.r, s.r));
+      gl.uniform3fv(uCol, s.col);
+      gl.uniform3fv(uEmit, s.emit);
+      gl.drawArrays(gl.TRIANGLES, 0, sphereMesh.count);
+    }
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../demo-shell.js?v=20261120-32"></script>
+</body>
+</html>

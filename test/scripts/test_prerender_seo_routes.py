@@ -112,6 +112,8 @@ class HomepageSocialPreviewTest(unittest.TestCase):
         self.assertIn('<dt>利益</dt>', self.index_html)
         self.assertIn('個人のP/L・B/S、6部署、30日運営サイクルを読む', self.index_html)
         self.assertIn('href="/philosophy"', self.index_html)
+        self.assertIn('.seo-card [data-prerender]', self.index_html)
+        self.assertIn('text-align: left;', self.index_html)
         self.assertIn(
             '"@id": "https://my-web-app-b67f4.web.app/#software-application"',
             self.index_html,
@@ -455,6 +457,7 @@ class PublicRouteTest(unittest.TestCase):
         )
 
         self.assertIn('data-prerender="markdown-source"', out)
+        self.assertIn("<h2>プライバシーポリシー原文</h2>", out)
         self.assertIn(
             'data-source="assets/legal/privacy_policy.md"',
             out,
@@ -468,6 +471,51 @@ class PublicRouteTest(unittest.TestCase):
         )
         self.assertNotIn("<https://stripe.com/privacy>", out)
         self.assertIn("&lt;https://stripe.com/privacy&gt;", out)
+
+    def test_legal_routes_use_route_specific_markdown_headings(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        routes = json.loads(
+            (repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        expected_headings = {
+            "/privacy": "プライバシーポリシー原文",
+            "/terms": "利用規約原文",
+            "/tokusho": "特定商取引法に基づく表記原文",
+        }
+        for path, expected_heading in expected_headings.items():
+            route = next(
+                item for item in routes["routes"] if item["path"] == path
+            )
+            markdown_text = (repo_root / route["markdown_source"]).read_text(
+                encoding="utf-8"
+            )
+            out = build_public_route_html(
+                TEMPLATE,
+                {**route, "_markdown_text": markdown_text},
+                BASE,
+            )
+            with self.subTest(path=path):
+                self.assertIn(f"<h2>{expected_heading}</h2>", out)
+                if path != "/privacy":
+                    self.assertNotIn("<h2>プライバシーポリシー原文</h2>", out)
+
+        custom = build_public_route_html(
+            TEMPLATE,
+            {
+                "path": "/custom-legal",
+                "title": "カスタム法務",
+                "description": "説明",
+                "h1": "カスタム法務",
+                "points": ["要点"],
+                "markdown_source": "assets/legal/terms.md",
+                "markdown_heading": "承認済み <原文>",
+                "_markdown_text": "# Custom",
+            },
+            BASE,
+        )
+        self.assertIn("<h2>承認済み &lt;原文&gt;</h2>", custom)
 
 
 class SitemapTest(unittest.TestCase):

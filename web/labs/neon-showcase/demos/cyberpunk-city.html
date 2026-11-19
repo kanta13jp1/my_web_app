@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>BLENDER CYBERPUNK CITY + FPV // Rainy Neon Metropolis (Pure WebGL2)</title>
+<style>
+  :root { --mono: ui-monospace, "Cascadia Code", Consolas, monospace; --pink: #f472b6; --cyan: #22d3ee; --gold: #fbbf24; }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #070312; color: #f8fafc; font-family: var(--mono); }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; cursor: grab; }
+  #gl:active { cursor: grabbing; }
+  .hud-tl {
+    position: absolute; top: 14px; left: 16px;
+    background: rgba(10, 5, 22, 0.78); border: 1px solid rgba(244, 114, 182, 0.42);
+    border-radius: 8px; padding: 8px 13px; backdrop-filter: blur(6px);
+  }
+  .hud-tl h1 { font-size: 13px; font-weight: 800; letter-spacing: 1.2px; }
+  .hud-tl h1 span { color: var(--pink); }
+  .hud-tl p { font-size: 9.5px; color: #cbd5e1; margin-top: 2px; }
+  .hud-tr {
+    position: absolute; top: 14px; right: 16px;
+    background: rgba(10, 5, 22, 0.78); border: 1px solid rgba(34, 211, 238, 0.36);
+    border-radius: 8px; padding: 8px 12px; display: flex; gap: 14px;
+    backdrop-filter: blur(6px); font-variant-numeric: tabular-nums;
+  }
+  .st { display: flex; flex-direction: column; }
+  .st .k { font-size: 8px; color: #94a3b8; }
+  .st .v { font-size: 12px; font-weight: 800; color: var(--cyan); }
+  .st .v.pk { color: var(--pink); }
+  .hud-bl {
+    position: absolute; bottom: 14px; left: 16px;
+    display: flex; flex-wrap: wrap; gap: 7px;
+    background: rgba(10, 5, 22, 0.82); border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 8px; padding: 7px 10px; backdrop-filter: blur(6px);
+  }
+  .cbtn {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 800;
+    color: #cbd5e1; background: rgba(18, 12, 36, 0.92);
+    border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px;
+    padding: 6px 10px; cursor: pointer;
+  }
+  .cbtn:hover { border-color: var(--pink); color: #fff; }
+  .cbtn.act { background: linear-gradient(90deg, #ec4899, #f472b6); border-color: #fbcfe8; color: #190414; }
+  .cbtn.act-cy { background: linear-gradient(90deg, #06b6d4, #22d3ee); border-color: #a5f3fc; color: #04101c; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="cinema">
+<canvas id="gl" width="1280" height="720"></canvas>
+
+<div class="hud-tl">
+  <h1>BLENDER CYBERPUNK CITY + FPV <span>// RAINY METROPOLIS</span></h1>
+  <p>PURE WEBGL2 · ウェット路面ミラー反射・ネオン窓シェーダー・立体雨・WASD自由飛行</p>
+</div>
+<div class="hud-tr">
+  <div class="st"><span class="k">TOWERS</span><span class="v">186</span></div>
+  <div class="st"><span class="k">ALTITUDE</span><span class="v pk" id="sAlt">42 m</span></div>
+  <div class="st"><span class="k">SPEED</span><span class="v" id="sSpd">148 km/h</span></div>
+</div>
+<div class="hud-bl">
+  <button class="cbtn act" id="m0">01 ネオン峡谷FPV</button>
+  <button class="cbtn" id="m1">02 高層ダイブ</button>
+  <button class="cbtn" id="m2">03 ウェット路面</button>
+  <button class="cbtn" id="m3">04 WASD自由飛行</button>
+  <button class="cbtn act-cy" id="btnRain">🌧 ネオン雨 ON</button>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('gl');
+  const gl = canvas.getContext('webgl2', { antialias: true, preserveDrawingBuffer: true });
+  if (!gl) return;
+
+  // Procedural wet-asphalt + neon-windowed skyscrapers + glowing signs + rain streaks
+  const VS = `#version 300 es
+  layout(location=0) in vec3 aPos;
+  layout(location=1) in vec3 aNorm;
+  layout(location=2) in vec3 aCol;
+  layout(location=3) in float aKind; // 0=building, 1=road, 2=sign, 3=car/rain
+  uniform mat4 uVP;
+  out vec3 vWPos;
+  out vec3 vNorm;
+  out vec3 vCol;
+  out float vKind;
+  void main() {
+    vWPos = aPos;
+    vNorm = aNorm;
+    vCol = aCol;
+    vKind = aKind;
+    gl_Position = uVP * vec4(aPos, 1.0);
+  }`;
+
+  const FS = `#version 300 es
+  precision highp float;
+  in vec3 vWPos;
+  in vec3 vNorm;
+  in vec3 vCol;
+  in float vKind;
+  uniform vec3 uCam;
+  uniform float uTime;
+  out vec4 outCol;
+
+  float hash21(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+  }
+
+  void main() {
+    vec3 N = normalize(vNorm);
+    vec3 V = normalize(uCam - vWPos);
+    float dist = length(uCam - vWPos);
+    float fog = 1.0 - exp(-dist * 0.0115);
+    vec3 fogCol = vec3(0.055, 0.022, 0.115);
+
+    vec3 col = vec3(0.0);
+    if (vKind > 2.5) {
+      col = vCol * 2.1;
+    } else if (vKind > 1.5) {
+      float pulse = 0.78 + 0.22 * sin(uTime * 3.8 + vWPos.x + vWPos.z);
+      float scan = 0.85 + 0.15 * sin(vWPos.y * 18.0 - uTime * 8.0);
+      col = vCol * pulse * scan * 1.9;
+    } else if (vKind > 0.5) {
+      // Wet asphalt puddle mirror reflections (matching build_cyberpunk_city.py!)
+      vec2 uv = vWPos.xz;
+      float puddle = smoothstep(0.35, 0.65, sin(uv.x * 0.32) * cos(uv.y * 0.28) * 0.5 + 0.5);
+      float laneX = smoothstep(0.18, 0.02, abs(mod(uv.x + 6.0, 12.0) - 6.0));
+      float laneZ = smoothstep(0.18, 0.02, abs(mod(uv.y + 6.0, 12.0) - 6.0));
+      float reflPink = pow(max(0.0, sin(uv.x * 0.28 + uTime * 0.4) * cos(uv.y * 0.22)), 2.0);
+      float reflCyan = pow(max(0.0, cos(uv.x * 0.24 - uTime * 0.3) * sin(uv.y * 0.31)), 2.0);
+      col = vec3(0.015, 0.018, 0.032)
+        + (vec3(0.95, 0.18, 0.58) * reflPink + vec3(0.08, 0.85, 1.0) * reflCyan) * (0.28 + puddle * 0.62)
+        + vec3(0.12, 0.82, 1.0) * max(laneX, laneZ) * 0.35;
+    } else {
+      // Procedural glowing skyscraper window grid
+      float wallU = abs(N.x) > 0.5 ? vWPos.z : vWPos.x;
+      vec2 cell = vec2(floor(wallU * 1.35), floor(vWPos.y * 0.95));
+      vec2 f = fract(vec2(wallU * 1.35, vWPos.y * 0.95));
+      float winMask = step(0.18, f.x) * step(f.x, 0.82) * step(0.24, f.y) * step(f.y, 0.78);
+      float rnd = hash21(cell + floor(vWPos.xz * 0.08));
+      float lit = step(0.46, rnd) * winMask * (1.0 - abs(N.y));
+      vec3 winCol = rnd > 0.82 ? vec3(1.0, 0.32, 0.72) : rnd > 0.64 ? vec3(0.18, 0.92, 1.0) : vec3(1.0, 0.82, 0.46);
+      float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+      col = vec3(0.022, 0.028, 0.055) + vCol * rim * 0.45 + winCol * lit * 1.25;
+      if (N.y > 0.5) col += vCol * 0.28;
+    }
+
+    col = mix(col, fogCol, clamp(fog, 0.0, 0.95));
+    col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+    outCol = vec4(pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2)), 1.0);
+  }`;
+
+  function sh(t, s) { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); return x; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  const uVP = gl.getUniformLocation(prog, 'uVP');
+  const uCam = gl.getUniformLocation(prog, 'uCam');
+  const uTime = gl.getUniformLocation(prog, 'uTime');
+
+  // Build static city geometry (186 towers + neon signs + wet road)
+  const verts = [];
+  function pushQuad(a, b, c, d, n, col, kind) {
+    const pts = [a, b, c, a, c, d];
+    for (const p of pts) verts.push(p[0],p[1],p[2], n[0],n[1],n[2], col[0],col[1],col[2], kind);
+  }
+  function addBox(cx, cy, cz, sx, sy, sz, col, kind) {
+    const x0=cx-sx/2, x1=cx+sx/2, y0=cy-sy/2, y1=cy+sy/2, z0=cz-sz/2, z1=cz+sz/2;
+    pushQuad([x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1],[0,0,1],col,kind);
+    pushQuad([x1,y0,z0],[x0,y0,z0],[x0,y1,z0],[x1,y1,z0],[0,0,-1],col,kind);
+    pushQuad([x0,y1,z1],[x1,y1,z1],[x1,y1,z0],[x0,y1,z0],[0,1,0],col,kind);
+    pushQuad([x1,y0,z1],[x1,y0,z0],[x1,y1,z0],[x1,y1,z1],[1,0,0],col,kind);
+    pushQuad([x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0],[-1,0,0],col,kind);
+  }
+
+  // Wet street plane
+  pushQuad([-120,0,-120],[120,0,-120],[120,0,120],[-120,0,120],[0,1,0],[0,0,0],1);
+
+  let seed = 409;
+  const rand = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const neons = [[0.08, 0.92, 1.0], [1.0, 0.16, 0.62], [0.68, 0.25, 1.0], [1.0, 0.72, 0.18]];
+
+  for (let gx = -6; gx <= 6; gx++) {
+    for (let gz = -7; gz <= 7; gz++) {
+      if (gx === 0) continue; // Main neon canyon avenue down X=0!
+      const bx = gx * 12 + (rand() - 0.5) * 1.4;
+      const bz = gz * 12 + (rand() - 0.5) * 1.4;
+      const w = 5.4 + rand() * 3.8, d = 5.4 + rand() * 3.8;
+      const h = (Math.abs(gx) <= 2 ? 18 : 10) + rand() * 32;
+      const nc = neons[Math.floor(rand() * neons.length)];
+      addBox(bx, h / 2, bz, w, h, d, nc, 0);
+      // Rooftop neon spire / trim
+      addBox(bx, h + 0.35, bz, w * 0.94, 0.55, d * 0.94, nc, 2);
+      // Canyon-facing holographic billboard
+      if (Math.abs(gx) === 1 && rand() > 0.28) {
+        const side = gx > 0 ? -1 : 1;
+        addBox(bx + side * (w * 0.5 + 0.45), 6 + rand() * (h * 0.55), bz, 0.25, 3.6 + rand() * 4.2, 2.8 + rand() * 2.2, neons[Math.floor(rand() * neons.length)], 2);
+      }
+    }
+  }
+
+  const cityVao = gl.createVertexArray(); gl.bindVertexArray(cityVao);
+  const cityVbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, cityVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+  const stride = 10 * 4;
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, stride, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 12);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, stride, 24);
+  gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 1, gl.FLOAT, false, stride, 36);
+  const cityCount = verts.length / 10;
+
+  // Dynamic traffic & neon rain lines buffer
+  const MAX_DYN = 1200;
+  const dynData = new Float32Array(MAX_DYN * 2 * 10);
+  const dynVao = gl.createVertexArray(); gl.bindVertexArray(dynVao);
+  const dynVbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, dynVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, dynData.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, stride, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 12);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, stride, 24);
+  gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 1, gl.FLOAT, false, stride, 36);
+
+  const cars = Array.from({ length: 140 }, () => ({
+    x: (rand() - 0.5) * 8.2,
+    y: 4 + rand() * 26,
+    z: (rand() - 0.5) * 160,
+    dir: rand() > 0.5 ? 1 : -1,
+    spd: 22 + rand() * 26
+  }));
+  const drops = Array.from({ length: 420 }, () => ({
+    x: (rand() - 0.5) * 70, y: rand() * 42, z: (rand() - 0.5) * 70, spd: 28 + rand() * 16
+  }));
+
+  function m4Mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c=0;c<4;c++) for (let r=0;r<4;r++) o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
+    return o;
+  }
+  function m4Persp(fov, asp, n, f) {
+    const t=1/Math.tan(fov*0.5), nf=1/(n-f);
+    return new Float32Array([t/asp,0,0,0, 0,t,0,0, 0,0,(f+n)*nf,-1, 0,0,2*f*n*nf,0]);
+  }
+  function m4Look(e, t) {
+    let zx=e[0]-t[0], zy=e[1]-t[1], zz=e[2]-t[2], zl=Math.hypot(zx,zy,zz)||1; zx/=zl; zy/=zl; zz/=zl;
+    let xx=zz, xy=0, xz=-zx, xl=Math.hypot(xx,xy,xz)||1; xx/=xl; xz/=xl;
+    let yx=zy*xz, yy=zz*xx-zx*xz, yz=-zy*xx;
+    return new Float32Array([xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0, -(xx*e[0]+xy*e[1]+xz*e[2]),-(yx*e[0]+yy*e[1]+yz*e[2]),-(zx*e[0]+zy*e[1]+zz*e[2]),1]);
+  }
+
+  let mode = 0, rainOn = true, simT = 0;
+  let camPos = [0, 12, 48], yaw = 0, pitch = -0.05;
+  const keys = {};
+  let dragging = false, lx = 0, ly = 0;
+
+  const modeBtns = [0,1,2,3].map(i => document.getElementById(`m${i}`));
+  function setMode(m) {
+    mode = m;
+    modeBtns.forEach((b, i) => b.classList.toggle('act', i === m));
+    if (m === 3) { camPos = [0, 14, 42]; yaw = 0; pitch = -0.08; }
+  }
+  modeBtns.forEach((b, i) => b.addEventListener('click', () => setMode(i)));
+  document.getElementById('btnRain').addEventListener('click', (e) => {
+    rainOn = !rainOn;
+    e.currentTarget.textContent = rainOn ? '🌧 ネオン雨 ON' : '🌧 ネオン雨 OFF';
+    e.currentTarget.classList.toggle('act-cy', rainOn);
+  });
+
+  window.addEventListener('keydown', (e) => {
+    keys[e.code] = true;
+    if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) setMode(3);
+  });
+  window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+  canvas.addEventListener('pointerdown', (e) => { dragging = true; lx = e.clientX; ly = e.clientY; });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    if (mode !== 3) setMode(3);
+    yaw += (e.clientX - lx) * 0.006;
+    pitch = Math.max(-1.0, Math.min(1.0, pitch - (e.clientY - ly) * 0.005));
+    lx = e.clientX; ly = e.clientY;
+  });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    window.NeonShell?.setHint('WASD/矢印: FPV飛行 · ドラッグ: 視点操作 · モード切替で雨夜のネオン峡谷を探索');
+  });
+
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+    last = now;
+    simT += dt;
+
+    let tgt;
+    let speedKmh = 148;
+    if (mode === 0) {
+      const z = 58 - ((simT * 14) % 116);
+      camPos = [Math.sin(simT * 0.7) * 2.2, 11 + Math.sin(simT * 0.5) * 3.5, z];
+      tgt = [Math.sin(simT * 0.7 + 0.5) * 1.8, 9.5, z - 24];
+      speedKmh = 162;
+    } else if (mode === 1) {
+      const a = simT * 0.28;
+      camPos = [Math.sin(a) * 34, 34 + Math.sin(simT * 0.6) * 8, Math.cos(a) * 34];
+      tgt = [0, 12, 0];
+      speedKmh = 195;
+    } else if (mode === 2) {
+      const z = 55 - ((simT * 11) % 110);
+      camPos = [Math.sin(simT * 0.4) * 1.4, 2.3, z];
+      tgt = [0, 5.2, z - 22];
+      speedKmh = 124;
+    } else {
+      const fx = Math.sin(yaw) * Math.cos(pitch), fy = Math.sin(pitch), fz = -Math.cos(yaw) * Math.cos(pitch);
+      const rx = Math.cos(yaw), rz = Math.sin(yaw);
+      const sp = 22 * dt;
+      if (keys['KeyW'] || keys['ArrowUp']) { camPos[0]+=fx*sp; camPos[1]+=fy*sp; camPos[2]+=fz*sp; speedKmh = 210; }
+      if (keys['KeyS'] || keys['ArrowDown']) { camPos[0]-=fx*sp; camPos[1]-=fy*sp; camPos[2]-=fz*sp; speedKmh = 95; }
+      if (keys['KeyD'] || keys['ArrowRight']) { camPos[0]+=rx*sp; camPos[2]+=rz*sp; }
+      if (keys['KeyA'] || keys['ArrowLeft']) { camPos[0]-=rx*sp; camPos[2]-=rz*sp; }
+      camPos[1] = Math.max(1.8, Math.min(58, camPos[1]));
+      tgt = [camPos[0] + fx * 20, camPos[1] + fy * 20, camPos[2] + fz * 20];
+    }
+    document.getElementById('sAlt').textContent = `${Math.round(camPos[1] * 3)} m`;
+    document.getElementById('sSpd').textContent = `${speedKmh} km/h`;
+
+    // Update dynamic traffic trails & rain streaks
+    let dv = 0;
+    const pushLine = (x0,y0,z0, x1,y1,z1, col) => {
+      if (dv + 2 > MAX_DYN * 2) return;
+      let o = dv * 10;
+      dynData[o++]=x0; dynData[o++]=y0; dynData[o++]=z0; dynData[o++]=0; dynData[o++]=1; dynData[o++]=0;
+      dynData[o++]=col[0]; dynData[o++]=col[1]; dynData[o++]=col[2]; dynData[o++]=3;
+      dynData[o++]=x1; dynData[o++]=y1; dynData[o++]=z1; dynData[o++]=0; dynData[o++]=1; dynData[o++]=0;
+      dynData[o++]=col[0]*0.3; dynData[o++]=col[1]*0.3; dynData[o++]=col[2]*0.3; dynData[o++]=3;
+      dv += 2;
+    };
+    for (const c of cars) {
+      c.z += c.dir * c.spd * dt;
+      if (c.z > 82) c.z = -82;
+      if (c.z < -82) c.z = 82;
+      const col = c.dir > 0 ? [0.15, 0.95, 1.0] : [1.0, 0.18, 0.45];
+      pushLine(c.x, c.y, c.z, c.x, c.y, c.z - c.dir * 3.6, col);
+    }
+    if (rainOn) {
+      for (const r of drops) {
+        r.y -= r.spd * dt;
+        if (r.y < 0.2) { r.y = 40; r.x = camPos[0] + (Math.random()-0.5)*56; r.z = camPos[2] + (Math.random()-0.5)*56; }
+        pushLine(r.x, r.y, r.z, r.x, r.y + 1.15, r.z, [0.42, 0.78, 1.0]);
+      }
+    }
+
+    gl.viewport(0, 0, 1280, 720);
+    gl.clearColor(0.032, 0.014, 0.072, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.useProgram(prog);
+
+    const vp = m4Mul(m4Persp(0.84, 1280 / 720, 0.2, 220), m4Look(camPos, tgt));
+    gl.uniformMatrix4fv(uVP, false, vp);
+    gl.uniform3fv(uCam, camPos);
+    gl.uniform1f(uTime, simT);
+
+    gl.bindVertexArray(cityVao);
+    gl.drawArrays(gl.TRIANGLES, 0, cityCount);
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+    gl.bindVertexArray(dynVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, dynVbo);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, dynData.subarray(0, dv * 10));
+    gl.drawArrays(gl.LINES, 0, dv);
+    gl.disable(gl.BLEND);
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../demo-shell.js?v=20261120-32"></script>
+</body>
+</html>

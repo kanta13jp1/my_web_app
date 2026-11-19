@@ -305,13 +305,6 @@ class ThemeService extends ChangeNotifier {
         centerTitle: false,
         shadowColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: TextStyle(
-          fontFamily: _appFontFamily,
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          height: 1.4,
-          color: _lightText,
-        ),
       ),
     );
 
@@ -482,13 +475,6 @@ class ThemeService extends ChangeNotifier {
         centerTitle: false,
         shadowColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: TextStyle(
-          fontFamily: _appFontFamily,
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          height: 1.4,
-          color: _darkText,
-        ),
       ),
     );
 

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #050811; }
+  canvas { display: block; width: 1280px; height: 720px; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="algo">
+<canvas id="c" width="1280" height="720"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 1280, H = 720;
+
+function mulberry32(a) {
+  return function() {
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const N = 64;
+const SEED = 7777;
+const rng = mulberry32(SEED);
+const baseArray = Array.from({ length: N }, (_, i) => i + 1);
+for (let i = N - 1; i > 0; i--) {
+  const j = Math.floor(rng() * (i + 1));
+  [baseArray[i], baseArray[j]] = [baseArray[j], baseArray[i]];
+}
+
+// Operation recorder using generator functions for exact step-by-step playback
+function* quickSortGen(arr, stats) {
+  function* qs(lo, hi) {
+    if (lo >= hi) return;
+    const pivot = arr[hi];
+    let i = lo;
+    for (let j = lo; j < hi; j++) {
+      stats.comps++;
+      yield { type: 'cmp', a: j, b: hi, val: arr[j] };
+      if (arr[j] < pivot) {
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+        stats.writes += 2;
+        yield { type: 'swap', a: i, b: j, val: arr[i] };
+        i++;
+      }
+    }
+    [arr[i], arr[hi]] = [arr[hi], arr[i]];
+    stats.writes += 2;
+    yield { type: 'swap', a: i, b: hi, val: arr[i] };
+    yield* qs(lo, i - 1);
+    yield* qs(i + 1, hi);
+  }
+  yield* qs(0, arr.length - 1);
+}
+
+function* mergeSortGen(arr, stats) {
+  function* ms(lo, hi) {
+    if (lo >= hi) return;
+    const mid = (lo + hi) >> 1;
+    yield* ms(lo, mid);
+    yield* ms(mid + 1, hi);
+    const tmp = [];
+    let i = lo, j = mid + 1;
+    while (i <= mid && j <= hi) {
+      stats.comps++;
+      yield { type: 'cmp', a: i, b: j, val: arr[i] };
+      if (arr[i] <= arr[j]) tmp.push(arr[i++]);
+      else tmp.push(arr[j++]);
+    }
+    while (i <= mid) tmp.push(arr[i++]);
+    while (j <= hi) tmp.push(arr[j++]);
+    for (let k = 0; k < tmp.length; k++) {
+      arr[lo + k] = tmp[k];
+      stats.writes++;
+      yield { type: 'write', a: lo + k, b: lo + k, val: arr[lo + k] };
+    }
+  }
+  yield* ms(0, arr.length - 1);
+}
+
+function* heapSortGen(arr, stats) {
+  const n = arr.length;
+  function* heapify(size, i) {
+    while (true) {
+      let largest = i;
+      const l = 2 * i + 1, r = 2 * i + 2;
+      if (l < size) {
+        stats.comps++;
+        yield { type: 'cmp', a: l, b: largest, val: arr[l] };
+        if (arr[l] > arr[largest]) largest = l;
+      }
+      if (r < size) {
+        stats.comps++;
+        yield { type: 'cmp', a: r, b: largest, val: arr[r] };
+        if (arr[r] > arr[largest]) largest = r;
+      }
+      if (largest === i) break;
+      [arr[i], arr[largest]] = [arr[largest], arr[i]];
+      stats.writes += 2;
+      yield { type: 'swap', a: i, b: largest, val: arr[i] };
+      i = largest;
+    }
+  }
+  for (let i = (n >> 1) - 1; i >= 0; i--) yield* heapify(n, i);
+  for (let i = n - 1; i > 0; i--) {
+    [arr[0], arr[i]] = [arr[i], arr[0]];
+    stats.writes += 2;
+    yield { type: 'swap', a: 0, b: i, val: arr[i] };
+    yield* heapify(i, 0);
+  }
+}
+
+function* shellSortGen(arr, stats) {
+  const n = arr.length;
+  for (let gap = n >> 1; gap > 0; gap >>= 1) {
+    for (let i = gap; i < n; i++) {
+      const temp = arr[i];
+      let j = i;
+      while (j >= gap) {
+        stats.comps++;
+        yield { type: 'cmp', a: j - gap, b: j, val: arr[j - gap] };
+        if (arr[j - gap] > temp) {
+          arr[j] = arr[j - gap];
+          stats.writes++;
+          yield { type: 'write', a: j, b: j - gap, val: arr[j] };
+          j -= gap;
+        } else break;
+      }
+      arr[j] = temp;
+      stats.writes++;
+      yield { type: 'write', a: j, b: i, val: arr[j] };
+    }
+  }
+}
+
+function* radixSortGen(arr, stats) {
+  // Base-4 LSD Radix Sort
+  const maxVal = Math.max(...arr);
+  for (let exp = 1; Math.floor(maxVal / exp) > 0; exp *= 4) {
+    const buckets = [[], [], [], []];
+    for (let i = 0; i < arr.length; i++) {
+      const digit = Math.floor(arr[i] / exp) % 4;
+      buckets[digit].push(arr[i]);
+      stats.comps++;
+      yield { type: 'cmp', a: i, b: i, val: arr[i] };
+    }
+    let idx = 0;
+    for (let d = 0; d < 4; d++) {
+      for (const v of buckets[d]) {
+        arr[idx] = v;
+        stats.writes++;
+        yield { type: 'write', a: idx, b: idx, val: v };
+        idx++;
+      }
+    }
+  }
+}
+
+function* insertionSortGen(arr, stats) {
+  for (let i = 1; i < arr.length; i++) {
+    const key = arr[i];
+    let j = i - 1;
+    while (j >= 0) {
+      stats.comps++;
+      yield { type: 'cmp', a: j, b: j + 1, val: arr[j] };
+      if (arr[j] > key) {
+        arr[j + 1] = arr[j];
+        stats.writes++;
+        yield { type: 'write', a: j + 1, b: j, val: arr[j + 1] };
+        j--;
+      } else break;
+    }
+    arr[j + 1] = key;
+    stats.writes++;
+    yield { type: 'write', a: j + 1, b: i, val: key };
+  }
+}
+
+class Sorter {
+  constructor(name, complexity, color, genFn) {
+    this.name = name;
+    this.complexity = complexity;
+    this.color = color;
+    this.arr = [...baseArray];
+    this.stats = { comps: 0, writes: 0 };
+    this.gen = genFn(this.arr, this.stats);
+    this.activeA = -1;
+    this.activeB = -1;
+    this.done = false;
+    this.finishTime = null;
+    this.rank = null;
+    this.verifyIdx = -1;
+  }
+  step(simT) {
+    if (this.done) {
+      if (this.verifyIdx < N) {
+        this.verifyIdx += 2;
+        const idx = Math.min(N - 1, this.verifyIdx);
+        return { event: 'verify', val: this.arr[idx] };
+      }
+      return null;
+    }
+    const res = this.gen.next();
+    if (res.done) {
+      this.done = true;
+      this.finishTime = simT;
+      this.activeA = -1;
+      this.activeB = -1;
+      this.verifyIdx = 0;
+      return { event: 'finish', val: N };
+    }
+    this.activeA = res.value.a;
+    this.activeB = res.value.b;
+    return { event: res.value.type, val: res.value.val };
+  }
+}
+
+const sorters = [
+  new Sorter('01 / RADIX SORT', 'O(nk)', '#00E5FF', radixSortGen),
+  new Sorter('02 / QUICK SORT', 'O(n log n)', '#00FF9D', quickSortGen),
+  new Sorter('03 / MERGE SORT', 'O(n log n)', '#A855F7', mergeSortGen),
+  new Sorter('04 / HEAP SORT', 'O(n log n)', '#FFB800', heapSortGen),
+  new Sorter('05 / SHELL SORT', 'O(n log² n)', '#38BDF8', shellSortGen),
+  new Sorter('06 / INSERTION SORT', 'O(n²)', '#FF3B9A', insertionSortGen),
+];
+
+let finishedCount = 0;
+let simT = 0;
+const RACE_START = 1.2;
+const TOTAL_T = 24.0;
+const OPS_PER_SEC = 105; // ~105 ops/sec -> Radix ~2.5s, Quick/Merge ~5-7s, Heap ~9s, Insertion ~19s!
+let opAccum = 0;
+const audioEvents = [];
+
+function hexToRgba(hex, a) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function drawPanel(sorter, px, py, pw, ph) {
+  ctx.save();
+  ctx.fillStyle = '#090F1E';
+  ctx.strokeStyle = sorter.done ? sorter.color : 'rgba(148, 163, 184, 0.22)';
+  ctx.lineWidth = sorter.done ? 1.8 : 1.0;
+  ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 10); ctx.fill(); ctx.stroke();
+
+  // Header
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  ctx.beginPath(); ctx.roundRect(px + 1, py + 1, pw - 2, 32, [9, 9, 0, 0]); ctx.fill();
+
+  ctx.fillStyle = sorter.color;
+  ctx.font = '700 13px "Consolas", monospace';
+  ctx.fillText(sorter.name, px + 12, py + 22);
+
+  // Rank Badge
+  let badge = simT < RACE_START ? 'READY' : 'SORTING...';
+  let bBg = 'rgba(148, 163, 184, 0.14)';
+  let bFg = '#CBD5E1';
+  if (sorter.done) {
+    const ranks = ['1ST', '2ND', '3RD', '4TH', '5TH', '6TH'];
+    badge = `${ranks[sorter.rank - 1]}  (${(sorter.finishTime - RACE_START).toFixed(2)}s)`;
+    bBg = hexToRgba(sorter.color, 0.20);
+    bFg = sorter.color;
+  }
+  ctx.font = '700 11px "Consolas", monospace';
+  const bw = ctx.measureText(badge).width + 14;
+  ctx.fillStyle = bBg;
+  ctx.beginPath(); ctx.roundRect(px + pw - bw - 10, py + 6, bw, 20, 5); ctx.fill();
+  ctx.fillStyle = bFg;
+  ctx.fillText(badge, px + pw - bw - 3, py + 20);
+
+  // Bars Area
+  const bx = px + 14, by = py + 44, bwArea = pw - 28, bhArea = ph - 82;
+  const barW = bwArea / N;
+  for (let i = 0; i < N; i++) {
+    const val = sorter.arr[i];
+    const norm = val / N;
+    const h = Math.max(4, norm * bhArea);
+    const x = bx + i * barW;
+    const y = by + bhArea - h;
+
+    const isActive = (i === sorter.activeA || i === sorter.activeB);
+    const isVerified = sorter.done && i <= sorter.verifyIdx;
+
+    if (isActive) {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.shadowColor = '#FFFFFF';
+      ctx.shadowBlur = 8;
+    } else if (isVerified) {
+      ctx.fillStyle = '#00FF9D';
+      ctx.shadowBlur = 0;
+    } else {
+      const hue = 190 + norm * 145; // Cyan -> Blue -> Violet -> Magenta
+      ctx.fillStyle = `hsl(${hue}, 92%, 58%)`;
+      ctx.shadowBlur = 0;
+    }
+    ctx.fillRect(x + 0.5, y, Math.max(1.5, barW - 1.2), h);
+  }
+  ctx.shadowBlur = 0;
+
+  // Footer Telemetry
+  const fy = py + ph - 11;
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '600 11px "Consolas", monospace';
+  ctx.fillText(`CMP: ${String(sorter.stats.comps).padStart(4, '0')}`, px + 14, fy);
+  ctx.fillText(`WRT: ${String(sorter.stats.writes).padStart(4, '0')}`, px + 115, fy);
+  ctx.fillStyle = sorter.color;
+  ctx.fillText(sorter.complexity, px + pw - ctx.measureText(sorter.complexity).width - 14, fy);
+
+  ctx.restore();
+}
+
+function render() {
+  ctx.fillStyle = '#050811';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#0B1222';
+  ctx.fillRect(0, 0, W, 54);
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, 54); ctx.lineTo(W, 54); ctx.stroke();
+
+  ctx.fillStyle = '#00E5FF';
+  ctx.font = '700 16px "Consolas", monospace';
+  ctx.fillText('SORTING ALGORITHM SYMPHONY  |  64 ELEMENTS  |  ASSETS: 0', 22, 24);
+
+  const phase = simT < RACE_START ? 'PHASE 01: UNSORTED ARRAY INITIALIZED'
+    : finishedCount < 6 ? `PHASE 02: LIVE COMPARISON & POLYPHONIC AUDIO (${finishedCount}/6 DONE)`
+    : 'PHASE 03: ALL 6 ALGORITHMS SORTED & VERIFIED!';
+  ctx.fillStyle = finishedCount === 6 ? '#00FF9D' : '#E2E8F0';
+  ctx.font = '500 13px "Consolas", monospace';
+  ctx.fillText(phase, 22, 44);
+
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '700 15px "Consolas", monospace';
+  ctx.fillText(`SEED: #${SEED}  |  ${simT.toFixed(2)}s / ${TOTAL_T.toFixed(2)}s`, W - 290, 33);
+
+  // 3 columns x 2 rows
+  const pw = 402, ph = 314;
+  const xs = [20, 439, 858];
+  const ys = [68, 394];
+  for (let i = 0; i < 6; i++) {
+    drawPanel(sorters[i], xs[i % 3], ys[Math.floor(i / 3)], pw, ph);
+  }
+}
+
+window.stepSort = (dt) => {
+  simT += dt;
+  if (simT >= RACE_START) {
+    opAccum += dt * OPS_PER_SEC;
+    while (opAccum >= 1) {
+      opAccum -= 1;
+      for (let i = 0; i < sorters.length; i++) {
+        const s = sorters[i];
+        const wasDone = s.done;
+        const ev = s.step(simT);
+        if (!wasDone && s.done) {
+          finishedCount++;
+          s.rank = finishedCount;
+        }
+        if (ev) {
+          // Record sparse audio events (avoid overwhelming audio buffer)
+          if (ev.event === 'finish' || (ev.event === 'verify' && s.verifyIdx % 4 === 0) || Math.floor(opAccum * 10) % 2 === 0) {
+            audioEvents.push({ t: Number(simT.toFixed(4)), lane: i, type: ev.event, val: ev.val });
+            if (!window.__RECORDING__ && window.NeonAudio?.isEnabled?.()) {
+              const freq = 220 + ((ev.val || 1) / N) * 840;
+              window.NeonAudio.playTone(freq, ev.event === 'finish' ? 0.14 : 0.045, 'triangle', ev.event === 'finish' ? 0.09 : 0.032);
+            }
+          }
+        }
+      }
+    }
+  }
+  render();
+};
+
+window.getSortEvents = () => ({
+  seed: SEED,
+  n: N,
+  raceStart: RACE_START,
+  results: sorters.map(s => ({
+    name: s.name,
+    rank: s.rank,
+    finishTime: s.finishTime,
+    comps: s.stats.comps,
+    writes: s.stats.writes
+  })),
+  audioEvents
+});
+
+render();
+
+if (!window.__RECORDING__) {
+  let paused = false;
+  let speedMult = 1;
+  let doneHold = 0;
+  function resetSorters() {
+    simT = 0;
+    opAccum = 0;
+    finishedCount = 0;
+    doneHold = 0;
+    const specs = [
+      ['01 / RADIX SORT', 'O(nk)', '#00E5FF', radixSortGen],
+      ['02 / QUICK SORT', 'O(n log n)', '#00FF9D', quickSortGen],
+      ['03 / MERGE SORT', 'O(n log n)', '#A855F7', mergeSortGen],
+      ['04 / HEAP SORT', 'O(n log n)', '#FFB800', heapSortGen],
+      ['05 / SHELL SORT', 'O(n log² n)', '#38BDF8', shellSortGen],
+      ['06 / INSERTION SORT', 'O(n²)', '#FF3B9A', insertionSortGen],
+    ];
+    for (let i = 0; i < specs.length; i++) sorters[i] = new Sorter(...specs[i]);
+    render();
+  }
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.setHint('6種のソートを同時比較 · 完了後は自動ループ（音ONで配列値ピッチ再生）');
+    window.NeonShell.addControl('⚡ 2x速', (btn) => {
+      speedMult = speedMult === 1 ? 2.2 : 1;
+      btn.classList.toggle('active', speedMult > 1);
+    });
+    window.NeonShell.addControl('⏸ 一時停止', (btn) => {
+      paused = !paused;
+      btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+      btn.classList.toggle('active', paused);
+    });
+    window.NeonShell.addControl('↻ もう一度整列', resetSorters);
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!paused) {
+      if (finishedCount >= sorters.length || simT >= TOTAL_T) {
+        doneHold += dt;
+        if (doneHold >= 3.2) resetSorters();
+      } else {
+        window.stepSort(dt * speedMult);
+      }
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+<script src="../demo-shell.js?v=20261120-32"></script>
+</body>
+</html>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #03050A; }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; }
+  #hud { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; pointer-events: none; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="cinema">
+<canvas id="gl" width="1280" height="720"></canvas>
+<canvas id="hud" width="1280" height="720"></canvas>
+<script>
+const glCanvas = document.getElementById('gl');
+const gl = glCanvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
+const hudCanvas = document.getElementById('hud');
+const hctx = hudCanvas.getContext('2d');
+const W = 1280, H = 720;
+
+const vsSrc = `#version 300 es
+in vec2 aPos;
+out vec2 vUv;
+void main() {
+  vUv = aPos * 0.5 + 0.5;
+  gl_Position = vec4(aPos, 0.0, 1.0);
+}`;
+
+const fsSrc = `#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform float uTime;
+uniform vec2 uRes;
+out vec4 fragColor;
+
+mat2 rot(float a) {
+  float c = cos(a), s = sin(a);
+  return mat2(c, -s, s, c);
+}
+
+// Triangular prism SDF (extruded along Z, apex pointing +Y)
+float sdTriPrism(vec3 p, vec2 h) {
+  vec3 q = abs(p);
+  return max(q.z - h.y, max(q.x * 0.866025 + p.y * 0.5, -p.y) - h.x * 0.5);
+}
+
+vec3 spectralColor(int idx) {
+  if (idx == 0) return vec3(1.00, 0.10, 0.08); // Red
+  if (idx == 1) return vec3(1.00, 0.45, 0.04); // Orange
+  if (idx == 2) return vec3(1.00, 0.92, 0.08); // Yellow
+  if (idx == 3) return vec3(0.10, 1.00, 0.35); // Green
+  if (idx == 4) return vec3(0.04, 0.90, 1.00); // Cyan
+  if (idx == 5) return vec3(0.18, 0.40, 1.00); // Blue
+  return vec3(0.72, 0.14, 1.00);               // Violet
+}
+
+float spectralIOR(int idx) {
+  return 1.30 + float(idx) * 0.095; // Wide dramatic spectral dispersion: 1.30 -> 1.87
+}
+
+// Scene glass objects only (for clean raytracing & glass transparency)
+vec2 mapGlass(vec3 p) {
+  vec2 res = vec2(1e5, -1.0);
+
+  // Main prism centered at (-0.8, 0.15, 0.0)
+  float pAngle = 0.06 * sin(uTime * 0.65);
+  vec3 p1 = p - vec3(-0.8, 0.15, 0.0);
+  p1.xy *= rot(pAngle);
+  float dPrism1 = sdTriPrism(p1, vec2(1.45, 0.85)) - 0.02;
+  if (dPrism1 < res.x) res = vec2(dPrism1, 1.0);
+
+  // Crystal sphere lens (slides in smoothly for Phase 2 & 3)
+  float lensIn = smoothstep(7.0, 9.5, uTime);
+  if (lensIn > 0.01) {
+    vec3 lensPos = mix(vec3(1.4, 3.8, 0.0), vec3(1.45, -0.28 + 0.08 * sin(uTime * 1.1), 0.0), lensIn);
+    float dSphere = length(p - lensPos) - 0.62;
+    if (dSphere < res.x) res = vec2(dSphere, 2.0);
+  }
+
+  // Secondary prism (slides in smoothly for Phase 3)
+  float p2In = smoothstep(15.0, 17.5, uTime);
+  if (p2In > 0.01) {
+    vec3 p2Pos = mix(vec3(3.1, 4.2, 0.0), vec3(3.1, -0.35, 0.0), p2In);
+    vec3 p2 = p - p2Pos;
+    p2.xy *= rot(3.14159 + 0.25 * sin(uTime * 0.7));
+    float dPrism2 = sdTriPrism(p2, vec2(1.10, 0.80)) - 0.02;
+    if (dPrism2 < res.x) res = vec2(dPrism2, 3.0);
+  }
+
+  return res;
+}
+
+float mapFloor(vec3 p) {
+  return p.y + 1.35;
+}
+
+vec2 mapAll(vec3 p) {
+  vec2 g = mapGlass(p);
+  float df = mapFloor(p);
+  return (df < g.x) ? vec2(df, 0.0) : g;
+}
+
+vec3 calcGlassNormal(vec3 p) {
+  vec2 e = vec2(0.0015, 0.0);
+  return normalize(vec3(
+    mapGlass(p + e.xyy).x - mapGlass(p - e.xyy).x,
+    mapGlass(p + e.yxy).x - mapGlass(p - e.yxy).x,
+    mapGlass(p + e.yyx).x - mapGlass(p - e.yyx).x
+  ));
+}
+
+float beamGlow(vec3 ro, vec3 rd, float maxT, vec3 a, vec3 b, float radius) {
+  vec3 ba = b - a;
+  float lenBa = length(ba);
+  if (lenBa < 1e-4) return 0.0;
+  vec3 v = ba / lenBa;
+  vec3 w0 = ro - a;
+  float bDot = dot(rd, v);
+  float dDot = dot(rd, w0);
+  float eDot = dot(v, w0);
+  float denom = max(1e-5, 1.0 - bDot * bDot);
+  float sDist = clamp((eDot - bDot * dDot) / denom, 0.0, lenBa);
+  vec3 pSeg = a + v * sDist;
+  float tRay = dot(pSeg - ro, rd);
+  if (tRay < 0.05 || tRay > maxT) return 0.0;
+  float d = length((ro + rd * tRay) - pSeg);
+  return exp(-(d * d) / (radius * radius)) + 0.35 * exp(-d / (radius * 4.2));
+}
+
+vec3 evaluateSpectralBeams(vec3 camRo, vec3 camRd, float camMaxT, vec3 floorPos, bool hasFloorHit) {
+  vec3 accum = vec3(0.0);
+  vec3 emitter = vec3(-4.5, 0.12, 0.0);
+  vec3 initDir = normalize(vec3(1.0, 0.06, 0.0));
+
+  // March incoming white beam to Prism 1
+  float tIn = 0.0;
+  vec3 hit1 = emitter + initDir * 4.0;
+  for (int k = 0; k < 48; k++) {
+    vec2 m = mapGlass(emitter + initDir * tIn);
+    if (m.x < 0.004) { hit1 = emitter + initDir * tIn; break; }
+    tIn += m.x;
+    if (tIn > 6.5) break;
+  }
+
+  accum += vec3(1.0, 0.98, 0.95) * beamGlow(camRo, camRd, camMaxT, emitter, hit1, 0.028) * 1.9;
+
+  vec3 n1 = calcGlassNormal(hit1);
+  for (int w = 0; w < 7; w++) {
+    float ior = spectralIOR(w);
+    vec3 col = spectralColor(w);
+
+    vec3 dirIn = refract(initDir, n1, 1.0 / ior);
+    if (length(dirIn) < 0.01) dirIn = reflect(initDir, n1);
+
+    vec3 curP = hit1 + dirIn * 0.04;
+    float tExit = 0.0;
+    for (int s = 0; s < 36; s++) {
+      vec2 m = mapGlass(curP + dirIn * tExit);
+      if (m.x > 0.004) break;
+      tExit += max(0.025, -m.x);
+      if (tExit > 3.0) break;
+    }
+    vec3 exitP = curP + dirIn * tExit;
+    vec3 nExit = -calcGlassNormal(exitP);
+    vec3 dirOut = refract(dirIn, nExit, ior);
+    if (length(dirOut) < 0.01) dirOut = reflect(dirIn, nExit);
+
+    // Internal prism rainbow beam
+    accum += col * beamGlow(camRo, camRd, camMaxT, hit1, exitP, 0.020) * 0.75;
+
+    // March exiting rainbow beam in air
+    vec3 pStart = exitP + dirOut * 0.05;
+    float tAir = 0.0;
+    vec3 pEnd = pStart + dirOut * 7.5;
+    float hitMat = -1.0;
+    for (int s = 0; s < 56; s++) {
+      vec2 m = mapAll(pStart + dirOut * tAir);
+      if (m.x < 0.005) { pEnd = pStart + dirOut * tAir; hitMat = m.y; break; }
+      tAir += m.x;
+      if (tAir > 7.5) break;
+    }
+
+    accum += col * beamGlow(camRo, camRd, camMaxT, exitP, pEnd, 0.025) * 1.05;
+
+    if (hitMat == 0.0 && hasFloorHit) {
+      float dc = length(floorPos - pEnd);
+      accum += col * exp(-(dc * dc) / 0.16) * 1.15;
+    }
+
+    // Secondary refraction through Crystal Lens or Prism 2
+    if (hitMat > 0.5) {
+      vec3 n2 = calcGlassNormal(pEnd);
+      vec3 dir2 = refract(dirOut, n2, 1.0 / ior);
+      if (length(dir2) < 0.01) dir2 = reflect(dirOut, n2);
+
+      vec3 p2Start = pEnd + dir2 * 0.04;
+      float t2 = 0.0;
+      for (int s = 0; s < 28; s++) {
+        vec2 m = mapGlass(p2Start + dir2 * t2);
+        if (m.x > 0.004) break;
+        t2 += max(0.025, -m.x);
+        if (t2 > 2.5) break;
+      }
+      vec3 p2Exit = p2Start + dir2 * t2;
+      vec3 n2Out = -calcGlassNormal(p2Exit);
+      vec3 dir3 = refract(dir2, n2Out, ior);
+      if (length(dir3) < 0.01) dir3 = reflect(dir2, n2Out);
+
+      accum += col * beamGlow(camRo, camRd, camMaxT, pEnd, p2Exit, 0.018) * 0.65;
+
+      vec3 p3Start = p2Exit + dir3 * 0.05;
+      float t3 = 0.0;
+      vec3 p3End = p3Start + dir3 * 7.0;
+      float hit3 = -1.0;
+      for (int s = 0; s < 42; s++) {
+        vec2 m = mapAll(p3Start + dir3 * t3);
+        if (m.x < 0.006) { p3End = p3Start + dir3 * t3; hit3 = m.y; break; }
+        t3 += m.x;
+        if (t3 > 7.0) break;
+      }
+      accum += col * beamGlow(camRo, camRd, camMaxT, p2Exit, p3End, 0.023) * 1.0;
+
+      if (hit3 == 0.0 && hasFloorHit) {
+        float dc3 = length(floorPos - p3End);
+        accum += col * exp(-(dc3 * dc3) / 0.14) * 1.35;
+      }
+    }
+  }
+  return accum;
+}
+
+void main() {
+  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
+
+  // Smooth cinematic front-orbital camera (never occluded by objects)
+  float camAng = -0.18 + 0.36 * sin(uTime * 0.18);
+  vec3 ro = vec3(sin(camAng) * 6.2, 1.35 + 0.30 * sin(uTime * 0.25), cos(camAng) * 6.2);
+  vec3 ta = vec3(0.45, -0.25, 0.0);
+  vec3 fw = normalize(ta - ro);
+  vec3 rt = normalize(cross(fw, vec3(0.0, 1.0, 0.0)));
+  vec3 up = cross(rt, fw);
+  vec3 rd = normalize(fw + uv.x * rt * 1.15 + uv.y * up * 1.15);
+
+  // 1. Background + Floor pass (ignoring glass so beams & floor show THROUGH transparent glass!)
+  vec3 bgCol = vec3(0.010, 0.014, 0.028);
+  float tFloor = -1.0;
+  vec3 floorPos = vec3(0.0);
+  bool hasFloor = false;
+  if (rd.y < -0.001) {
+    tFloor = (-1.35 - ro.y) / rd.y;
+    if (tFloor > 0.0 && tFloor < 28.0) {
+      hasFloor = true;
+      floorPos = ro + rd * tFloor;
+      vec2 grid = abs(fract(floorPos.xz * 0.8 - 0.5) - 0.5) / fwidth(floorPos.xz * 0.8);
+      float line = 1.0 - min(min(grid.x, grid.y), 1.0);
+      float fade = exp(-0.065 * length(floorPos.xz));
+      bgCol = vec3(0.014, 0.020, 0.036) + vec3(0.03, 0.07, 0.13) * line * fade;
+    }
+  }
+
+  float bgMaxT = hasFloor ? tFloor : 28.0;
+  vec3 beams = evaluateSpectralBeams(ro, rd, bgMaxT, floorPos, hasFloor);
+  vec3 col = bgCol + beams;
+
+  // 2. Transparent Glass Overlay pass
+  float tg = 0.0;
+  float gMat = -1.0;
+  for (int i = 0; i < 80; i++) {
+    vec2 m = mapGlass(ro + rd * tg);
+    if (m.x < 0.002) { gMat = m.y; break; }
+    tg += m.x;
+    if (tg > bgMaxT) break;
+  }
+
+  if (gMat > 0.5 && tg < bgMaxT) {
+    vec3 gp = ro + rd * tg;
+    vec3 gn = calcGlassNormal(gp);
+    float fresnel = pow(1.0 - max(0.0, dot(-rd, gn)), 2.8);
+    vec3 refl = reflect(rd, gn);
+    float spec = pow(max(0.0, dot(refl, normalize(vec3(-0.5, 0.9, 0.4)))), 64.0);
+    float spec2 = pow(max(0.0, dot(refl, normalize(vec3(0.6, 0.5, 0.7)))), 32.0);
+    // Crystal edge & subtle tint, keeping background + internal rainbow beams 85% transparent!
+    vec3 glassRim = vec3(0.35, 0.72, 1.00) * fresnel * 0.65;
+    vec3 glassSpec = vec3(0.95, 0.98, 1.00) * (spec * 1.4 + spec2 * 0.45);
+    col = col * 0.88 + vec3(0.02, 0.05, 0.09) + glassRim + glassSpec;
+  }
+
+  // Emitter glow
+  vec3 emitter = vec3(-4.5, 0.12, 0.0);
+  if (dot(emitter - ro, rd) > 0.0) {
+    float dEm = length(cross(rd, emitter - ro));
+    col += vec3(0.95, 0.97, 1.0) * exp(-dEm * 4.2) * 0.95;
+  }
+
+  // ACES Filmic Tone Mapping + Gamma
+  col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+  col = pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2));
+  fragColor = vec4(col, 1.0);
+}`;
+
+function compile(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSrc));
+gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSrc));
+gl.linkProgram(prog);
+
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(prog, 'aPos');
+gl.enableVertexAttribArray(loc);
+gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+let simT = 0;
+function drawFrame(t) {
+  gl.viewport(0, 0, W, H);
+  gl.useProgram(prog);
+  gl.uniform1f(gl.getUniformLocation(prog, 'uTime'), t);
+  gl.uniform2f(gl.getUniformLocation(prog, 'uRes'), W, H);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+  // HUD
+  hctx.clearRect(0, 0, W, H);
+  hctx.save();
+  hctx.fillStyle = 'rgba(4, 8, 18, 0.62)';
+  hctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
+  hctx.lineWidth = 1.2;
+  hctx.beginPath(); hctx.roundRect(22, 20, 520, 56, 10); hctx.fill(); hctx.stroke();
+
+  const phase = t < 8.0 ? '01 PRISM SPECTRAL DISPERSION'
+    : t < 16.0 ? '02 CRYSTAL LENS CAUSTICS'
+    : '03 DUAL PRISM RESONANCE';
+  hctx.fillStyle = '#00E5FF';
+  hctx.font = '700 13px "Consolas", monospace';
+  hctx.fillText('SPECTRAL RAYTRACER  |  7 WAVELENGTHS (380-740nm)  |  ASSETS: 0', 38, 42);
+  hctx.fillStyle = '#F8FAFC';
+  hctx.fillText(`MODE: ${phase}  |  ${t.toFixed(2)}s / 24.00s`, 38, 63);
+  hctx.restore();
+}
+
+window.stepPrism = (dt) => {
+  simT += dt;
+  drawFrame(simT);
+};
+
+drawFrame(0);
+if (!window.__RECORDING__) {
+  let paused = false;
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.addControl('⏸ 一時停止', (btn) => {
+      paused = !paused;
+      btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+      btn.classList.toggle('active', paused);
+    });
+    window.NeonShell.addControl('↻ 最初から', () => { simT = 0; });
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!paused) window.stepPrism(dt);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+<script src="../demo-shell.js?v=20261120-32"></script>
+</body>
+</html>
