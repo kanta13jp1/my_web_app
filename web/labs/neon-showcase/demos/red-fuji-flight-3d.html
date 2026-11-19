@@ -42,7 +42,7 @@
 </style>
 </head>
 <body data-stage="1280x720" data-sound="koto">
-<canvas id="gl" width="1280" height="720"></canvas>
+<canvas id="gl" width="960" height="540"></canvas>
 
 <div class="title-card" id="titleCard">
   <h1>紅富士</h1>
@@ -87,10 +87,14 @@
     vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
     return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y);
   }
+  float fbm2(vec2 p) {
+    mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
+    return 0.62 * noise(p) + 0.38 * noise(rot * p * 2.08);
+  }
   float fbm(vec2 p) {
     float v = 0.0, a = 0.5;
     mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
-    for (int i = 0; i < 4; i++) { v += a * noise(p); p = rot * p * 2.05; a *= 0.5; }
+    for (int i = 0; i < 3; i++) { v += a * noise(p); p = rot * p * 2.05; a *= 0.5; }
     return v;
   }
 
@@ -101,12 +105,13 @@
     // Iconic hyperbolic volcanic cone with flat summit crater & subtle Hoei flank shoulder
     float cone = 7.4 * exp(-pow(r * 0.095, 1.48));
     float crater = smoothstep(0.95, 0.0, r) * 0.55;
-    float ridges = (fbm(fp * 0.42) - 0.5) * 0.42 * smoothstep(0.4, 3.0, r) * exp(-r * 0.06);
+    float ridges = (fbm2(fp * 0.42) - 0.5) * 0.42 * smoothstep(0.4, 3.0, r) * exp(-r * 0.06);
     float hoei = 0.55 * exp(-length(fp - vec2(2.8, 2.2)) * 0.72);
     float fuji = max(0.0, cone - crater + ridges + hoei);
 
     // Hakone caldera ridges framing Lake Ashi mirror basin on left & right foreground
-    float bank = smoothstep(4.2, 13.5, abs(p.x)) * (0.55 + 0.95 * fbm(p * 0.16 + vec2(3.1, 1.4))) * smoothstep(-10.0, 2.0, p.y);
+    float hWave = 0.55 + 0.45 * sin(p.x * 0.28 + p.y * 0.16) * cos(p.y * 0.21 - p.x * 0.14);
+    float bank = smoothstep(4.2, 13.5, abs(p.x)) * (0.48 + 0.88 * hWave) * smoothstep(-10.0, 2.0, p.y);
     return max(fuji, bank);
   }
 
@@ -170,17 +175,21 @@
     return mix(col, skyColor(rd, phase, uTime), clamp(fog, 0.0, 0.88));
   }
 
-  float raymarch(vec3 ro, vec3 rd, out float hitDist) {
-    float t = 0.5;
-    for (int i = 0; i < 68; i++) {
+  float raymarch(vec3 ro, vec3 rd, out float hitDist, bool fast) {
+    float t = 0.6;
+    int maxSteps = fast ? 30 : 48;
+    float minStep = fast ? 0.34 : 0.22;
+    float stepScale = fast ? 0.64 : 0.54;
+    for (int i = 0; i < 48; i++) {
+      if (i >= maxSteps) break;
       vec3 p = ro + rd * t;
       float h = terrainH(p.xz);
       float d = p.y - h;
-      if (d < 0.03) { hitDist = t; return 1.0; }
-      t += max(0.14, d * 0.42);
-      if (t > 48.0) break;
+      if (d < 0.04) { hitDist = t; return 1.0; }
+      t += max(minStep, d * stepScale);
+      if (t > 44.0) break;
     }
-    hitDist = 48.0;
+    hitDist = 44.0;
     return 0.0;
   }
 
@@ -195,7 +204,7 @@
 
     vec3 col = skyColor(rd, uPhase, uTime);
     float hd;
-    float hit = raymarch(ro, rd, hd);
+    float hit = raymarch(ro, rd, hd, false);
     if (hit > 0.5) {
       col = shadeTerrain(ro + rd * hd, rd, hd, uPhase);
     }
@@ -205,11 +214,11 @@
       float wt = (0.56 - ro.y) / rd.y;
       if (wt > 0.0 && wt < hd) {
         vec3 wp = ro + rd * wt;
-        float rip = (fbm(wp.xz * 2.6 + vec2(uTime * 0.5, -uTime * 0.35)) - 0.5) * 0.028;
+        float rip = (fbm2(wp.xz * 2.6 + vec2(uTime * 0.5, -uTime * 0.35)) - 0.5) * 0.028;
         vec3 rrd = normalize(vec3(rd.x + rip, abs(rd.y) + 0.012, rd.z + rip));
         vec3 rcol = skyColor(rrd, uPhase, uTime);
         float rhd;
-        if (raymarch(wp + vec3(0.0, 0.08, 0.0), rrd, rhd) > 0.5) {
+        if (raymarch(wp + vec3(0.0, 0.08, 0.0), rrd, rhd, true) > 0.5) {
           rcol = shadeTerrain(wp + rrd * rhd, rrd, rhd, uPhase);
         }
         float fres = 0.42 + 0.58 * pow(1.0 - max(0.0, -rd.y), 2.5);
@@ -310,7 +319,7 @@
     if (keys['KeyA'] || keys['ArrowLeft']) camOff[0] = Math.max(-6, camOff[0] - spd);
     if (keys['KeyD'] || keys['ArrowRight']) camOff[0] = Math.min(6, camOff[0] + spd);
 
-    gl.viewport(0, 0, 1280, 720);
+    gl.viewport(0, 0, canvas.width, canvas.height);
     gl.useProgram(prog);
     gl.uniform1f(uTime, simT);
     gl.uniform1f(uPhase, phase);
