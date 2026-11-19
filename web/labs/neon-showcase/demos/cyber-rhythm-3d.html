@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #03050C; }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; }
+  #hud { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; pointer-events: none; }
+</style>
+</head>
+<body>
+<canvas id="gl" width="1280" height="720"></canvas>
+<canvas id="hud" width="1280" height="720"></canvas>
+<script>
+const glCanvas = document.getElementById('gl');
+const gl = glCanvas.getContext('webgl2', { antialias: true, preserveDrawingBuffer: true });
+const hudCanvas = document.getElementById('hud');
+const hctx = hudCanvas.getContext('2d');
+const W = 1280, H = 720;
+
+const CHART = {"bpm": 128, "notes": [{"t": 1.40625, "lane": 2, "type": "beat", "pts": 500}, {"t": 1.875, "lane": 1, "type": "beat", "pts": 500}, {"t": 2.34375, "lane": 2, "type": "beat", "pts": 500}, {"t": 2.8125, "lane": 0, "type": "beat", "pts": 500}, {"t": 3.28125, "lane": 1, "type": "beat", "pts": 500}, {"t": 3.75, "lane": 0, "type": "beat", "pts": 500}, {"t": 4.21875, "lane": 2, "type": "beat", "pts": 500}, {"t": 4.6875, "lane": 1, "type": "beat", "pts": 500}, {"t": 5.15625, "lane": 0, "type": "beat", "pts": 500}, {"t": 5.625, "lane": 2, "type": "beat", "pts": 500}, {"t": 6.09375, "lane": 1, "type": "beat", "pts": 500}, {"t": 6.5625, "lane": 2, "type": "beat", "pts": 500}, {"t": 7.03125, "lane": 0, "type": "beat", "pts": 500}, {"t": 7.5, "lane": 1, "type": "beat", "pts": 500}, {"t": 7.96875, "lane": 0, "type": "beat", "pts": 500}, {"t": 8.4375, "lane": 1, "type": "beat", "pts": 500}, {"t": 8.90625, "lane": 2, "type": "beat", "pts": 500}, {"t": 9.375, "lane": 1, "type": "beat", "pts": 500}, {"t": 9.84375, "lane": 2, "type": "beat", "pts": 500}, {"t": 10.3125, "lane": 0, "type": "beat", "pts": 500}, {"t": 10.78125, "lane": 1, "type": "beat", "pts": 500}, {"t": 11.25, "lane": 0, "type": "beat", "pts": 500}, {"t": 11.71875, "lane": 2, "type": "beat", "pts": 500}, {"t": 11.95312, "lane": 0, "type": "sub", "pts": 300}, {"t": 12.1875, "lane": 1, "type": "beat", "pts": 500}, {"t": 12.65625, "lane": 0, "type": "beat", "pts": 500}, {"t": 12.89062, "lane": 1, "type": "sub", "pts": 300}, {"t": 13.125, "lane": 2, "type": "beat", "pts": 500}, {"t": 13.59375, "lane": 1, "type": "beat", "pts": 500}, {"t": 13.82812, "lane": 2, "type": "sub", "pts": 300}, {"t": 14.0625, "lane": 2, "type": "beat", "pts": 500}, {"t": 14.53125, "lane": 0, "type": "beat", "pts": 500}, {"t": 14.76562, "lane": 1, "type": "sub", "pts": 300}, {"t": 15.0, "lane": 1, "type": "beat", "pts": 500}, {"t": 15.46875, "lane": 0, "type": "beat", "pts": 500}, {"t": 15.70312, "lane": 1, "type": "sub", "pts": 300}, {"t": 15.9375, "lane": 1, "type": "beat", "pts": 500}, {"t": 16.40625, "lane": 2, "type": "beat", "pts": 500}, {"t": 16.64062, "lane": 0, "type": "sub", "pts": 300}, {"t": 16.875, "lane": 1, "type": "beat", "pts": 500}, {"t": 17.34375, "lane": 2, "type": "beat", "pts": 500}, {"t": 17.57812, "lane": 0, "type": "sub", "pts": 300}, {"t": 17.8125, "lane": 0, "type": "beat", "pts": 500}, {"t": 18.28125, "lane": 1, "type": "beat", "pts": 500}, {"t": 18.51562, "lane": 2, "type": "sub", "pts": 300}, {"t": 18.75, "lane": 0, "type": "beat", "pts": 500}, {"t": 19.21875, "lane": 2, "type": "beat", "pts": 500}, {"t": 19.45312, "lane": 0, "type": "sub", "pts": 300}, {"t": 19.6875, "lane": 1, "type": "beat", "pts": 500}, {"t": 20.15625, "lane": 0, "type": "beat", "pts": 500}, {"t": 20.625, "lane": 2, "type": "beat", "pts": 500}, {"t": 21.09375, "lane": 1, "type": "beat", "pts": 500}, {"t": 21.5625, "lane": 2, "type": "beat", "pts": 500}, {"t": 22.03125, "lane": 0, "type": "beat", "pts": 500}, {"t": 22.5, "lane": 1, "type": "beat", "pts": 500}]};
+const notes = CHART.notes.map(n => ({ ...n, hit: false, missed: false }));
+
+function mat4Perspective(fov, aspect, near, far) {
+  const f = 1.0 / Math.tan(fov / 2), nf = 1 / (near - far);
+  return new Float32Array([f / aspect,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,(2*far*near)*nf,0]);
+}
+function mat4LookAt(eye, center, up) {
+  let zx = eye[0]-center[0], zy = eye[1]-center[1], zz = eye[2]-center[2];
+  let l = Math.hypot(zx,zy,zz)||1; zx/=l; zy/=l; zz/=l;
+  let xx = up[1]*zz-up[2]*zy, xy = up[2]*zx-up[0]*zz, xz = up[0]*zy-up[1]*zx;
+  l = Math.hypot(xx,xy,xz)||1; xx/=l; xy/=l; xz/=l;
+  let yx = zy*xz-zz*xy, yy = zz*xx-zx*xz, yz = zx*xy-zy*xx;
+  return new Float32Array([
+    xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+    -(xx*eye[0]+xy*eye[1]+xz*eye[2]), -(yx*eye[0]+yy*eye[1]+yz*eye[2]), -(zx*eye[0]+zy*eye[1]+zz*eye[2]), 1
+  ]);
+}
+function mat4Mul(a, b) {
+  const out = new Float32Array(16);
+  for (let c = 0; c < 4; c++)
+    for (let r = 0; r < 4; r++)
+      out[c*4+r] = a[r]*b[c*4] + a[r+4]*b[c*4+1] + a[r+8]*b[c*4+2] + a[r+12]*b[c*4+3];
+  return out;
+}
+
+const vsSrc = `#version 300 es
+in vec3 aPos;
+in vec3 aCol;
+uniform mat4 uMVP;
+out vec3 vCol;
+out float vZ;
+void main() {
+  gl_Position = uMVP * vec4(aPos, 1.0);
+  vCol = aCol;
+  vZ = -aPos.z;
+}`;
+const fsSrc = `#version 300 es
+precision highp float;
+in vec3 vCol;
+in float vZ;
+out vec4 fragColor;
+void main() {
+  float fog = exp(-0.011 * max(0.0, vZ - 15.0));
+  vec3 bg = vec3(0.014, 0.020, 0.048);
+  fragColor = vec4(mix(bg, vCol, clamp(fog, 0.0, 1.0)), 1.0);
+}`;
+
+function compile(type, src) {
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSrc));
+gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSrc));
+gl.linkProgram(prog);
+
+const vbo = gl.createBuffer();
+const LANES_X = [-3.2, 0.0, 3.2];
+const NOTE_SPEED = 78.0; // units/sec
+const BEAT_SEC = 60.0 / CHART.bpm;
+
+let simT = 0;
+let playerLane = 1;
+let playerX = 0.0;
+let playerBank = 0.0;
+let score = 0;
+let combo = 0;
+let hitFlash = 0;
+let lastJudge = '';
+let judgeTimer = 0;
+const sparks = [];
+let autoPilot = true;
+
+window.addEventListener('keydown', e => {
+  if (window.__RECORDING__) return;
+  autoPilot = false;
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') playerLane = Math.max(0, playerLane - 1);
+  if (e.code === 'ArrowRight' || e.code === 'KeyD') playerLane = Math.min(2, playerLane + 1);
+});
+
+function pushTri(verts, a, b, c, col) {
+  verts.push(a[0],a[1],a[2],col[0],col[1],col[2], b[0],b[1],b[2],col[0],col[1],col[2], c[0],c[1],c[2],col[0],col[1],col[2]);
+}
+function pushQuad(verts, a, b, c, d, col) {
+  pushTri(verts, a, b, c, col);
+  pushTri(verts, a, c, d, col);
+}
+function pushBox(verts, cx, cy, cz, sx, sy, sz, col) {
+  const x0=cx-sx, x1=cx+sx, y0=cy-sy, y1=cy+sy, z0=cz-sz, z1=cz+sz;
+  pushQuad(verts,[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1], col);
+  pushQuad(verts,[x1,y0,z0],[x0,y0,z0],[x0,y1,z0],[x1,y1,z0], col);
+  pushQuad(verts,[x0,y1,z1],[x1,y1,z1],[x1,y1,z0],[x0,y1,z0], [col[0]*1.15,col[1]*1.15,col[2]*1.15]);
+  pushQuad(verts,[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1], col);
+  pushQuad(verts,[x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0], [col[0]*0.8,col[1]*0.8,col[2]*0.8]);
+  pushQuad(verts,[x1,y0,z1],[x1,y0,z0],[x1,y1,z0],[x1,y1,z1], [col[0]*0.8,col[1]*0.8,col[2]*0.8]);
+}
+
+function addBurst(x, y, col) {
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2;
+    const sp = 5.5 + (i % 3) * 3.5;
+    sparks.push({ x, y, z: 0, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp + 2.5, vz: (i % 2 ? -6 : 4), col, life: 0.42 });
+  }
+}
+
+function update(dt) {
+  simT += dt;
+  if (autoPilot) {
+    // Look ahead to the next upcoming unhit note to smoothly slide into its lane
+    const nextNote = notes.find(n => !n.hit && n.t >= simT - 0.04);
+    if (nextNote && (nextNote.t - simT) < 0.36) {
+      playerLane = nextNote.lane;
+    }
+  }
+
+  const targetX = LANES_X[playerLane];
+  const dx = targetX - playerX;
+  playerX += dx * Math.min(1, dt * 16.0);
+  playerBank = Math.max(-0.45, Math.min(0.45, -dx * 0.16));
+
+  // Hit detection at z = 0
+  for (const n of notes) {
+    if (!n.hit && !n.missed) {
+      if (Math.abs(n.t - simT) < 0.08 && Math.abs(playerX - LANES_X[n.lane]) < 1.45) {
+        n.hit = true;
+        combo++;
+        score += n.pts + combo * 25;
+        hitFlash = 1.0;
+        lastJudge = 'PERFECT!';
+        judgeTimer = 0.45;
+        addBurst(LANES_X[n.lane], 0.85, n.type === 'beat' ? [0.0, 0.95, 1.0] : [1.0, 0.82, 0.1]);
+      } else if (simT - n.t > 0.12) {
+        n.missed = true;
+        combo = 0;
+        lastJudge = 'MISS';
+        judgeTimer = 0.4;
+      }
+    }
+  }
+
+  hitFlash = Math.max(0, hitFlash - dt * 3.5);
+  judgeTimer = Math.max(0, judgeTimer - dt);
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i];
+    s.x += s.vx * dt; s.y += s.vy * dt; s.z += s.vz * dt;
+    s.vy -= 14.0 * dt;
+    s.life -= dt;
+    if (s.life <= 0) sparks.splice(i, 1);
+  }
+}
+
+function render() {
+  const beatPhase = (simT % BEAT_SEC) / BEAT_SEC;
+  const pulse = Math.exp(-beatPhase * 5.0);
+
+  gl.viewport(0, 0, W, H);
+  gl.clearColor(0.014 + pulse * 0.015, 0.020, 0.048 + pulse * 0.03, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST);
+
+  const proj = mat4Perspective((66 + hitFlash * 3.0) * Math.PI / 180, W / H, 0.5, 220);
+  const view = mat4LookAt([playerX * 0.42, 4.2, 8.2], [playerX * 0.25, 1.2, -32.0], [0, 1, 0]);
+  const mvp = mat4Mul(proj, view);
+
+  const verts = [];
+
+  // Highway Floor & 3 Lane Dividers
+  pushQuad(verts, [-5.4, 0, 12], [5.4, 0, 12], [5.4, 0, -160], [-5.4, 0, -160], [0.03, 0.05, 0.11]);
+  for (const lx of [-4.9, -1.6, 1.6, 4.9]) {
+    const col = Math.abs(lx) > 4 ? [0.95, 0.18, 0.65] : [0.05, 0.72, 0.95];
+    pushQuad(verts, [lx-0.08, 0.02, 12], [lx+0.08, 0.02, 12], [lx+0.08, 0.02, -160], [lx-0.08, 0.02, -160], col);
+  }
+
+  // Hit Line Bar at z = 0
+  const hitCol = hitFlash > 0.2 ? [0.0, 1.0, 0.65] : [0.0, 0.85, 1.0];
+  pushQuad(verts, [-5.2, 0.04, 0.28], [5.2, 0.04, 0.28], [5.2, 0.04, -0.28], [-5.2, 0.04, -0.28], hitCol);
+
+  // Scrolling Neon Tunnel Arches synced to speed & beat pulse
+  const scrollOff = (simT * NOTE_SPEED) % 16.0;
+  for (let i = 0; i < 11; i++) {
+    const z = 8 - i * 16 + scrollOff;
+    const archH = 7.2 + pulse * 0.5;
+    const ac = (i % 2 === 0) ? [0.0, 0.85 + pulse * 0.15, 1.0] : [0.95, 0.18, 0.68];
+    pushBox(verts, -5.8, archH * 0.5, z, 0.18, archH * 0.5, 0.18, ac);
+    pushBox(verts,  5.8, archH * 0.5, z, 0.18, archH * 0.5, 0.18, ac);
+    pushBox(verts,  0.0, archH,       z, 5.98, 0.18,        0.18, ac);
+  }
+
+  // Incoming 3D Beat Notes
+  for (const n of notes) {
+    if (n.hit) continue;
+    const z = (simT - n.t) * NOTE_SPEED;
+    if (z < -150 || z > 10) continue;
+    const x = LANES_X[n.lane];
+    const col = n.type === 'beat' ? [0.0, 0.95, 1.0] : [1.0, 0.78, 0.08];
+    const sz = n.type === 'beat' ? 0.95 : 0.72;
+    pushBox(verts, x, 0.95, z, sz, sz * 0.65, sz * 0.65, col);
+    // White inner core highlight
+    pushBox(verts, x, 0.95, z + 0.1, sz * 0.45, sz * 0.3, sz * 0.62, [1.0, 1.0, 1.0]);
+  }
+
+  // Player Cyber Craft at z = 0
+  const cb = Math.cos(playerBank), sb = Math.sin(playerBank);
+  const rotPt = (lx, ly, lz) => [playerX + lx * cb - ly * sb, 0.75 + lx * sb + ly * cb, lz];
+  const nose = rotPt(0, 0.1, -1.9), tailL = rotPt(-1.15, 0, 1.1), tailR = rotPt(1.15, 0, 1.1), top = rotPt(0, 0.52, 0.2);
+  const pCol = [0.05, 1.0, 0.68];
+  pushTri(verts, nose, tailR, top, pCol);
+  pushTri(verts, nose, top, tailL, pCol);
+  pushTri(verts, tailL, tailR, top, [1.0, 0.95, 0.4]);
+
+  // Burst Sparks
+  for (const s of sparks) {
+    const r = 0.22 * (s.life / 0.42);
+    pushBox(verts, s.x, s.y, s.z, r, r, r, s.col);
+  }
+
+  gl.useProgram(prog);
+  gl.uniformMatrix4fv(gl.getUniformLocation(prog, 'uMVP'), false, mvp);
+  gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.DYNAMIC_DRAW);
+  const posLoc = gl.getAttribLocation(prog, 'aPos');
+  const colLoc = gl.getAttribLocation(prog, 'aCol');
+  gl.enableVertexAttribArray(posLoc); gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 24, 0);
+  gl.enableVertexAttribArray(colLoc); gl.vertexAttribPointer(colLoc, 3, gl.FLOAT, false, 24, 12);
+  gl.drawArrays(gl.TRIANGLES, 0, verts.length / 6);
+
+  // --- 2D Cyber Rhythm HUD ---
+  hctx.clearRect(0, 0, W, H);
+  hctx.save();
+
+  // Top-Left Info
+  hctx.fillStyle = 'rgba(4, 8, 18, 0.68)';
+  hctx.strokeStyle = 'rgba(0, 229, 255, 0.38)';
+  hctx.lineWidth = 1.2;
+  hctx.beginPath(); hctx.roundRect(22, 20, 490, 56, 10); hctx.fill(); hctx.stroke();
+  hctx.fillStyle = '#00E5FF'; hctx.font = '700 13px "Consolas", monospace';
+  hctx.fillText('CYBER RHYTHM 3D  |  128 BPM SYNCED  |  ASSETS: 0', 38, 42);
+  hctx.fillStyle = '#F8FAFC';
+  hctx.fillText(`CONTROLS: <- / -> OR A / D  |  ${simT.toFixed(2)}s / 24.00s`, 38, 63);
+
+  // Top-Right Score & Combo
+  hctx.fillStyle = 'rgba(4, 8, 18, 0.68)';
+  hctx.strokeStyle = combo > 10 ? '#00FF9D' : 'rgba(0, 229, 255, 0.38)';
+  hctx.beginPath(); hctx.roundRect(W - 245, 20, 223, 86, 10); hctx.fill(); hctx.stroke();
+  hctx.fillStyle = '#94A3B8'; hctx.font = '700 11px "Consolas", monospace';
+  hctx.fillText('SCORE', W - 225, 40);
+  hctx.fillStyle = '#F8FAFC'; hctx.font = '700 26px "Consolas", monospace';
+  hctx.fillText(String(score).padStart(6, '0'), W - 225, 68);
+  hctx.fillStyle = '#00FF9D'; hctx.font = '700 15px "Consolas", monospace';
+  hctx.fillText(`COMBO: ${combo}x`, W - 225, 94);
+
+  // Center-Top Judge Banner on Hit
+  if (judgeTimer > 0) {
+    hctx.globalAlpha = Math.min(1, judgeTimer * 3);
+    hctx.fillStyle = lastJudge === 'PERFECT!' ? '#00FF9D' : '#FB7185';
+    hctx.font = '700 26px "Consolas", monospace';
+    hctx.textAlign = 'center';
+    hctx.fillText(lastJudge, W / 2, 130);
+    hctx.textAlign = 'left';
+  }
+
+  hctx.restore();
+}
+
+const compCanvas = document.createElement('canvas');
+compCanvas.width = W; compCanvas.height = H;
+const compCtx = compCanvas.getContext('2d');
+window.getCompositeFrame = () => {
+  compCtx.drawImage(glCanvas, 0, 0);
+  compCtx.drawImage(hudCanvas, 0, 0);
+  return compCanvas.toDataURL('image/png');
+};
+
+window.stepRhythm = (dt) => {
+  update(dt);
+  render();
+};
+
+render();
+if (!window.__RECORDING__) {
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    window.stepRhythm(dt);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
