@@ -232,4 +232,52 @@ void main() {
       expect(result.first.revolvingBilling!.newUsageAmount, 15000);
     });
   });
+
+  group('safetyEnvelope', () {
+    test('封印有効時は安全余裕に封印額を加算し、解除時は元の安全余裕に戻る', () {
+      expect(
+        effectiveSafetyReserve(
+          minimumSafetyBalance: 10000,
+          safetyEnvelopeEnabled: true,
+          safetyEnvelopeAmount: 15000,
+        ),
+        25000,
+      );
+      expect(
+        effectiveSafetyReserve(
+          minimumSafetyBalance: 10000,
+          safetyEnvelopeEnabled: false,
+          safetyEnvelopeAmount: 15000,
+        ),
+        10000,
+      );
+    });
+
+    test('封印中は支払可能残高から封印額を除外し、解除時は元の残高に戻る', () {
+      expect(
+        availableBalanceAfterSafetyEnvelope(
+          balance: 20000,
+          safetyEnvelopeEnabled: true,
+          safetyEnvelopeAmount: 15000,
+        ),
+        5000,
+      );
+      expect(
+        availableBalanceAfterSafetyEnvelope(
+          balance: 12000,
+          safetyEnvelopeEnabled: true,
+          safetyEnvelopeAmount: 15000,
+        ),
+        -3000,
+      );
+      expect(
+        availableBalanceAfterSafetyEnvelope(
+          balance: 12000,
+          safetyEnvelopeEnabled: false,
+          safetyEnvelopeAmount: 15000,
+        ),
+        12000,
+      );
+    });
+  });
 }
