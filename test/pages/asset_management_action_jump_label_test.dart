@@ -187,4 +187,49 @@ void main() {
       expect(breakdown[1].amount, 27013);
     });
   });
+
+  group('revolvingStatementGroups', () {
+    test('リボ払い設定を持つ照合グループのみを抽出する', () {
+      const data = AssetLiabilityCardStatementReconciliationData(
+        groups: <AssetLiabilityCardStatementReconciliationGroup>[
+          AssetLiabilityCardStatementReconciliationGroup(
+            billingAccountId: 'aupay_card',
+            billingAccountName: 'auPAYカード',
+            billedAmount: 25000,
+            configuredDetailTotal: 0,
+            statementLineTotal: 15000,
+            configuredItems: <AssetLiabilityCardBillingReviewItem>[],
+            statementLines: <AssetLiabilityCardStatementLine>[],
+            alerts: <String>[],
+            revolvingBilling: AssetLiabilityRevolvingCreditBilling(
+              balance: 100000,
+              creditLimit: 300000,
+              monthlyAmount: 10000,
+              newUsageAmount: 15000,
+              existingBalanceAmount: 85000,
+              paymentDay: 25,
+              overLimitAmount: 0,
+              billedAmount: 25000,
+            ),
+          ),
+          AssetLiabilityCardStatementReconciliationGroup(
+            billingAccountId: 'famipay',
+            billingAccountName: 'ファミペイ',
+            billedAmount: 12000,
+            configuredDetailTotal: 12000,
+            statementLineTotal: 12000,
+            configuredItems: <AssetLiabilityCardBillingReviewItem>[],
+            statementLines: <AssetLiabilityCardStatementLine>[],
+            alerts: <String>[],
+          ),
+        ],
+        unmatchedStatementLines: <AssetLiabilityCardStatementLine>[],
+      );
+
+      final result = revolvingStatementGroups(data);
+      expect(result.length, 1);
+      expect(result.first.billingAccountId, 'aupay_card');
+      expect(result.first.revolvingBilling!.newUsageAmount, 15000);
+    });
+  });
 }
