@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #000; }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; }
+  #hud { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; pointer-events: none; }
+</style>
+</head>
+<body>
+<canvas id="gl" width="1280" height="720"></canvas>
+<canvas id="hud" width="1280" height="720"></canvas>
+<script>
+const glCanvas = document.getElementById('gl');
+const gl = glCanvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
+const hudCanvas = document.getElementById('hud');
+const ctx = hudCanvas.getContext('2d');
+
+const vsSrc = `#version 300 es
+in vec2 aPos;
+void main() { gl_Position = vec4(aPos, 0.0, 1.0); }`;
+
+const fsSrc = `#version 300 es
+precision highp float;
+
+uniform vec2 uRes;
+uniform float uTime;
+out vec4 fragColor;
+
+// ---------------------------------------------------------------------------
+// Noise & fBm utilities
+// ---------------------------------------------------------------------------
+float hash(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+    mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+    u.y
+  );
+}
+
+const mat2 m2 = mat2(0.80, 0.60, -0.60, 0.80);
+
+float fbm(vec2 p, int octaves) {
+  float f = 0.0;
+  float amp = 0.5;
+  for (int i = 0; i < 6; i++) {
+    if (i >= octaves) break;
+    f += amp * noise(p);
+    p = m2 * p * 2.03;
+    amp *= 0.5;
+  }
+  return f;
+}
+
+float ridgedFbm(vec2 p) {
+  float f = 0.0;
+  float amp = 0.5;
+  for (int i = 0; i < 5; i++) {
+    float n = 1.0 - abs(noise(p) * 2.0 - 1.0);
+    f += amp * n * n;
+    p = m2 * p * 2.07;
+    amp *= 0.5;
+  }
+  return f;
+}
+
+// Biome weights along Z flight (0..36s)
+// z roughly advances ~7.5 units/sec -> z in [0 .. 270]
+vec4 getBiomeWeights(float z) {
+  // w0: snow, w1: forest/lake, w2: red canyon, w3: dunes, remainder: ocean
+  float wSnow   = 1.0 - smoothstep(42.0, 72.0, z);
+  float wForest = smoothstep(42.0, 72.0, z) * (1.0 - smoothstep(105.0, 135.0, z));
+  float wCanyon = smoothstep(105.0, 135.0, z) * (1.0 - smoothstep(168.0, 198.0, z));
+  float wDunes  = smoothstep(168.0, 198.0, z) * (1.0 - smoothstep(220.0, 248.0, z));
+  return vec4(wSnow, wForest, wCanyon, wDunes);
+}
+
+float terrainHeight(vec2 p) {
+  vec4 bw = getBiomeWeights(p.y);
+  float wOcean = clamp(1.0 - (bw.x + bw.y + bw.z + bw.w), 0.0, 1.0);
+
+  // 1. Alpine Snow Peaks: dramatic ridges
+  float hSnow = ridgedFbm(p * 0.048) * 16.0 - 0.5;
+
+  // 2. Emerald Forest & Winding Valley Lake
+  float hForest = fbm(p * 0.042, 5) * 12.5 + 0.8;
+  float river = exp(-pow((p.x - sin(p.y * 0.04) * 6.0) / 4.8, 2.0)) * 5.2;
+  hForest -= river;
+
+  // 3. Red Rock Canyon: smooth stratified plateaus + deep gorge
+  float baseC = fbm(p * 0.040, 5) * 13.0 + 1.2;
+  float terraced = baseC + 0.55 * sin(baseC * 1.8);
+  float canyonCut = exp(-pow((p.x - cos(p.y * 0.035) * 5.0) / 4.2, 2.0)) * 7.2;
+  float hCanyon = mix(baseC, terraced, 0.70) - canyonCut;
+
+  // 4. Golden Dunes: smooth wind-swept desert waves (no sharp cusps)
+  float dWarp = fbm(p * 0.045, 3) * 2.2;
+  float duneWave = 0.5 + 0.5 * sin(p.x * 0.14 + p.y * 0.06 + dWarp);
+  float hDunes = pow(duneWave, 1.35) * 6.0 + fbm(p * 0.025, 3) * 4.5 + 1.2;
+
+  // 5. Ocean floor below water level (water level = 0.0)
+  float hOcean = -3.5;
+
+  return hSnow * bw.x + hForest * bw.y + hCanyon * bw.z + hDunes * bw.w + hOcean * wOcean;
+}
+
+vec3 terrainNormal(vec2 p, float t) {
+  float eps = max(0.04, 0.002 * t);
+  float hL = terrainHeight(p - vec2(eps, 0.0));
+  float hR = terrainHeight(p + vec2(eps, 0.0));
+  float hD = terrainHeight(p - vec2(0.0, eps));
+  float hU = terrainHeight(p + vec2(0.0, eps));
+  return normalize(vec3(hL - hR, 2.0 * eps, hD - hU));
+}
+
+vec3 getSky(vec3 rd, vec3 sunDir, float z) {
+  float sunset = smoothstep(140.0, 260.0, z);
+  vec3 zenith = mix(vec3(0.04, 0.18, 0.54), vec3(0.08, 0.10, 0.30), sunset);
+  vec3 horizon = mix(vec3(0.42, 0.68, 0.92), vec3(0.98, 0.45, 0.18), sunset);
+  float h = clamp(rd.y, 0.0, 1.0);
+  vec3 sky = mix(horizon, zenith, pow(h, 0.45));
+
+  // Procedural clouds
+  if (rd.y > 0.02) {
+    vec2 cuv = rd.xz / (rd.y + 0.14) * 0.45 + vec2(0.0, z * 0.004);
+    float cl = fbm(cuv, 4);
+    float cMask = smoothstep(0.50, 0.78, cl) * smoothstep(0.02, 0.20, rd.y);
+    vec3 cCol = mix(vec3(0.98, 0.99, 1.0), vec3(1.0, 0.62, 0.32), sunset);
+    sky = mix(sky, cCol, cMask * 0.72);
+  }
+
+  // Sun disc + glow
+  float sunAmt = max(dot(rd, sunDir), 0.0);
+  vec3 sunCol = mix(vec3(1.0, 0.96, 0.86), vec3(1.0, 0.55, 0.18), sunset);
+  sky += sunCol * pow(sunAmt, 18.0) * 0.28;
+  sky += sunCol * pow(sunAmt, 260.0) * 1.6;
+  return sky;
+}
+
+void main() {
+  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
+
+  // Camera flight forward along +Z
+  float camZ = uTime * 7.5;
+  float camX = sin(camZ * 0.035) * 4.0;
+  float groundH = terrainHeight(vec2(camX, camZ));
+  float camY = max(groundH + 4.8, 9.2 + sin(uTime * 0.3) * 1.2);
+  // Lower altitude gently over ocean sunset
+  float oceanBlend = smoothstep(215.0, 255.0, camZ);
+  camY = mix(camY, 4.2, oceanBlend);
+
+  vec3 ro = vec3(camX, camY, camZ);
+  float lookZ = camZ + 18.0;
+  float lookX = sin(lookZ * 0.035) * 4.0;
+  float lookY = mix(camY - 2.2, 1.6, oceanBlend);
+  vec3 ta = vec3(lookX, lookY, lookZ);
+
+  vec3 ww = normalize(ta - ro);
+  vec3 uu = normalize(cross(ww, vec3(0.0, 1.0, 0.0)));
+  vec3 vv = cross(uu, ww);
+
+  // Subtle banking roll into turns
+  float bank = cos(camZ * 0.035) * 0.12;
+  float cb = cos(bank), sb = sin(bank);
+  vec2 ruv = vec2(uv.x * cb - uv.y * sb, uv.x * sb + uv.y * cb);
+  vec3 rd = normalize(ruv.x * uu + ruv.y * vv + 1.45 * ww);
+
+  // Sun lowers gradually toward horizon for sunset finale
+  float sunset = smoothstep(130.0, 265.0, camZ);
+  vec3 sunDir = normalize(vec3(0.25, mix(0.42, 0.09, sunset), 0.88));
+  vec3 sunCol = mix(vec3(1.0, 0.94, 0.84), vec3(1.0, 0.60, 0.28), sunset);
+
+  // Raymarch terrain & water plane (y = 0)
+  float t = 0.5;
+  float maxT = 220.0;
+  bool hitTerrain = false;
+  vec3 hitP = vec3(0.0);
+
+  for (int i = 0; i < 120; i++) {
+    vec3 p = ro + rd * t;
+    float h = terrainHeight(p.xz);
+    if (p.y < h) {
+      // Binary refine
+      float stepSize = max(0.25, 0.055 * t);
+      float t0 = t - stepSize;
+      float t1 = t;
+      for (int j = 0; j < 6; j++) {
+        float tm = 0.5 * (t0 + t1);
+        vec3 pm = ro + rd * tm;
+        if (pm.y < terrainHeight(pm.xz)) t1 = tm; else t0 = tm;
+      }
+      t = 0.5 * (t0 + t1);
+      hitP = ro + rd * t;
+      hitTerrain = true;
+      break;
+    }
+    if (t > maxT) break;
+    t += max(0.25, 0.055 * t);
+  }
+
+  // Water intersection check (y = 0)
+  float tWater = (ro.y > 0.0 && rd.y < -0.001) ? (-ro.y / rd.y) : 1e9;
+  bool hitWater = (tWater > 0.0 && tWater < maxT && (!hitTerrain || tWater < t));
+
+  vec3 skyCol = getSky(rd, sunDir, camZ);
+  vec3 col = skyCol;
+
+  if (hitWater) {
+    vec3 wp = ro + rd * tWater;
+    // Animated procedural water ripples
+    float wave1 = sin(wp.x * 1.4 + uTime * 2.2) * cos(wp.z * 1.2 - uTime * 1.8);
+    float wave2 = fbm(wp.xz * 0.85 + vec2(0.0, -uTime * 0.9), 3);
+    vec3 wn = normalize(vec3((wave2 - 0.5) * 0.14 + wave1 * 0.03, 1.0, (wave2 - 0.5) * 0.14));
+    vec3 refRd = reflect(rd, wn);
+    refRd.y = max(refRd.y, 0.01);
+    vec3 refSky = getSky(refRd, sunDir, camZ);
+
+    float fres = 0.04 + 0.96 * pow(1.0 - max(dot(wn, -rd), 0.0), 4.5);
+    vec3 deepWater = mix(vec3(0.02, 0.12, 0.18), vec3(0.03, 0.07, 0.14), sunset);
+    col = mix(deepWater, refSky, fres);
+
+    // Sun specular path on water
+    float spec = pow(max(dot(refRd, sunDir), 0.0), 90.0);
+    col += sunCol * spec * 1.4;
+
+    float fog = 1.0 - exp(-0.000038 * tWater * tWater);
+    col = mix(col, skyCol, fog);
+  } else if (hitTerrain) {
+    vec3 n = terrainNormal(hitP.xz, t);
+    vec4 bw = getBiomeWeights(hitP.z);
+    float wOcean = clamp(1.0 - (bw.x + bw.y + bw.z + bw.w), 0.0, 1.0);
+
+    // Material colors per biome
+    // Snow
+    float slope = 1.0 - n.y;
+    vec3 colSnow = mix(vec3(0.92, 0.96, 1.0), vec3(0.24, 0.28, 0.36), smoothstep(0.26, 0.52, slope));
+    // Forest canopy micro-detail
+    float fNoise = fbm(hitP.xz * 0.35, 3);
+    float canopy = fbm(hitP.xz * 2.4, 3);
+    vec3 colForest = mix(vec3(0.03, 0.18, 0.07), vec3(0.14, 0.36, 0.12), fNoise * 0.55 + canopy * 0.45);
+    if (hitP.y < 0.45) colForest = vec3(0.32, 0.28, 0.20); // shoreline
+    // Red Canyon
+    float strata = 0.5 + 0.5 * sin(hitP.y * 3.2 + fbm(hitP.xz * 0.2, 2) * 2.0);
+    vec3 colCanyon = mix(vec3(0.55, 0.20, 0.10), vec3(0.86, 0.44, 0.20), strata);
+    // Dunes
+    vec3 colDunes = mix(vec3(0.82, 0.62, 0.32), vec3(0.95, 0.78, 0.46), n.y);
+
+    vec3 albedo = colSnow * bw.x + colForest * bw.y + colCanyon * bw.z + colDunes * bw.w + vec3(0.2) * wOcean;
+
+    float diff = max(dot(n, sunDir), 0.0);
+    vec3 ambCol = mix(vec3(0.22, 0.36, 0.58), vec3(0.32, 0.18, 0.28), sunset);
+    vec3 lit = albedo * (sunCol * diff * 1.25 + ambCol * (0.42 + 0.58 * n.y));
+
+    // Distance atmospheric scattering fog
+    float fog = 1.0 - exp(-0.000024 * t * t);
+    col = mix(lit, skyCol, fog);
+  }
+
+  // ACES Filmic tone mapping + gamma
+  col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+  col = pow(max(col, 0.0), vec3(0.4545));
+  fragColor = vec4(col, 1.0);
+}`;
+
+function compile(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSrc));
+gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSrc));
+gl.linkProgram(prog);
+gl.useProgram(prog);
+
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(prog, 'aPos');
+gl.enableVertexAttribArray(loc);
+gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+const uRes = gl.getUniformLocation(prog, 'uRes');
+const uTime = gl.getUniformLocation(prog, 'uTime');
+
+window.renderWorld = (t) => {
+  gl.viewport(0, 0, 1280, 720);
+  gl.uniform2f(uRes, 1280, 720);
+  gl.uniform1f(uTime, t);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+  const z = t * 7.5;
+  let biome = '01 / ALPINE SNOW PEAKS';
+  if (z >= 235) biome = '05 / OCEAN SUNSET';
+  else if (z >= 182) biome = '04 / GOLDEN DUNES';
+  else if (z >= 120) biome = '03 / RED ROCK CANYON';
+  else if (z >= 57) biome = '02 / EMERALD FOREST & LAKE';
+
+  ctx.clearRect(0, 0, 1280, 720);
+  ctx.save();
+  ctx.fillStyle = 'rgba(5, 10, 20, 0.52)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.roundRect(24, 22, 430, 56, 10); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = '#38BDF8';
+  ctx.font = '700 13px "Consolas", monospace';
+  ctx.fillText(`INFINITE PROCEDURAL WORLD  |  POLYGONS: 0  |  ASSETS: 0`, 40, 44);
+  ctx.fillStyle = '#F8FAFC';
+  ctx.font = '700 13px "Consolas", monospace';
+  ctx.fillText(`BIOME: ${biome}  |  ${t.toFixed(1)}s`, 40, 65);
+  ctx.restore();
+};
+</script>
+</body>
+</html>
