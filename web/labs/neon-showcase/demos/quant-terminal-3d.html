@@ -1,0 +1,2675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>HYPERION // Institutional 3D Quant Trading Terminal (Single HTML · Pure WebGL2)</title>
+<style>
+  :root {
+    --bg-0: #050811;
+    --bg-1: #090e1c;
+    --bg-2: #0d1527;
+    --panel: rgba(11, 18, 34, 0.92);
+    --border: rgba(56, 189, 248, 0.16);
+    --border-bright: rgba(56, 189, 248, 0.42);
+    --text-0: #eef6ff;
+    --text-1: #9cb3d1;
+    --text-2: #5b7294;
+    --bid: #00f5a0;
+    --bid-soft: rgba(0, 245, 160, 0.14);
+    --ask: #ff3366;
+    --ask-soft: rgba(255, 51, 102, 0.14);
+    --cyan: #38bdf8;
+    --gold: #fbbf24;
+    --violet: #a855f7;
+    --mono: "Cascadia Code", "JetBrains Mono", "Consolas", "SFMono-Regular", monospace;
+    --sans: "Segoe UI", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+  }
+
+  html, body {
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+    background: radial-gradient(circle at 52% 28%, #0e1a36 0%, #050811 70%);
+    color: var(--text-0);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    width: 1280px;
+    height: 720px;
+    display: grid;
+    grid-template-rows: 44px 1fr 28px;
+    padding: 6px;
+    gap: 6px;
+    position: relative;
+  }
+
+  /* ===== TOP BAR ===== */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(90deg, rgba(10, 18, 36, 0.96), rgba(13, 22, 42, 0.96));
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0 12px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  .brand-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--bid);
+    box-shadow: 0 0 10px var(--bid), 0 0 18px rgba(0, 245, 160, 0.55);
+  }
+
+  .brand-title {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1.2px;
+    color: #f4faff;
+  }
+
+  .brand-title span {
+    color: var(--cyan);
+  }
+
+  .chip-tag {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.6px;
+    color: var(--cyan);
+    background: rgba(56, 189, 248, 0.11);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .ticker-strip {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pair-box {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    padding-right: 12px;
+    border-right: 1px solid rgba(148, 163, 184, 0.16);
+  }
+
+  .pair-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-1);
+    letter-spacing: 0.6px;
+  }
+
+  .pair-price {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--bid);
+    text-shadow: 0 0 12px rgba(0, 245, 160, 0.38);
+    min-width: 78px;
+  }
+
+  .pair-chg {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--bid-soft);
+    color: var(--bid);
+  }
+
+  .kpi-mini {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+  }
+
+  .kpi-mini .lbl {
+    font-size: 8.5px;
+    color: var(--text-2);
+    letter-spacing: 0.6px;
+  }
+
+  .kpi-mini .val {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-0);
+  }
+
+  .kpi-mini .val.up { color: var(--bid); }
+  .kpi-mini .val.cyan { color: var(--cyan); }
+  .kpi-mini .val.gold { color: var(--gold); }
+
+  .mode-tabs {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .mode-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: var(--text-1);
+    background: rgba(15, 25, 48, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 5px;
+    padding: 5px 9px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .mode-btn.active {
+    color: #04101d;
+    background: linear-gradient(90deg, #38bdf8, #00f5a0);
+    border-color: #67e8f9;
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.42);
+  }
+
+  .mode-btn.iv-active {
+    color: #fff;
+    background: linear-gradient(90deg, #7c3aed, #ec4899);
+    border-color: #d8b4fe;
+    box-shadow: 0 0 14px rgba(168, 85, 247, 0.5);
+  }
+
+  /* ===== MAIN WORKSPACE ===== */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 446px 550px 260px;
+    gap: 6px;
+    min-height: 0;
+  }
+
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+
+  .panel-hdr {
+    height: 27px;
+    min-height: 27px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.12);
+    background: rgba(8, 14, 28, 0.72);
+    font-family: var(--mono);
+  }
+
+  .panel-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.9px;
+    color: #cce3ff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .panel-title .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+  }
+
+  .panel-meta {
+    font-size: 9.5px;
+    color: var(--text-1);
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Left Column Panels */
+  .candle-panel {
+    flex: 1.38;
+    min-height: 0;
+  }
+
+  .canvas-wrap {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+  }
+
+  canvas.fill {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .bot-panel {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .bot-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 236px 1fr;
+    gap: 6px;
+    padding: 6px 8px 7px 8px;
+    min-height: 0;
+  }
+
+  .bot-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    justify-content: space-between;
+  }
+
+  .bot-card {
+    background: rgba(15, 24, 44, 0.84);
+    border: 1px solid rgba(56, 189, 248, 0.14);
+    border-radius: 5px;
+    padding: 5px 8px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--mono);
+  }
+
+  .bot-card.hot {
+    border-color: rgba(0, 245, 160, 0.55);
+    background: rgba(0, 245, 160, 0.08);
+    box-shadow: inset 0 0 12px rgba(0, 245, 160, 0.12);
+  }
+
+  .bot-card.alert {
+    border-color: rgba(168, 85, 247, 0.65);
+    background: rgba(168, 85, 247, 0.1);
+  }
+
+  .bot-name {
+    font-size: 10px;
+    font-weight: 800;
+    color: #e6f2ff;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .bot-badge {
+    font-size: 8px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--cyan);
+  }
+
+  .bot-sub {
+    font-size: 8.5px;
+    color: var(--text-2);
+    margin-top: 1px;
+  }
+
+  .bot-pnl {
+    text-align: right;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--bid);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bot-sharpe {
+    text-align: right;
+    font-size: 8.5px;
+    color: var(--text-1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .equity-box {
+    background: rgba(8, 14, 28, 0.78);
+    border: 1px solid rgba(56, 189, 248, 0.14);
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    padding: 5px 7px;
+    min-height: 0;
+  }
+
+  .equity-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--mono);
+    margin-bottom: 3px;
+  }
+
+  .equity-head .lbl {
+    font-size: 8.5px;
+    color: var(--text-2);
+    letter-spacing: 0.6px;
+  }
+
+  .equity-head .val {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--bid);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .equity-sub {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 8.5px;
+    color: var(--text-1);
+    margin-top: 3px;
+  }
+
+  /* Center 3D WebGL2 Hero Panel */
+  .hero-3d-panel {
+    flex: 1;
+    border-color: rgba(56, 189, 248, 0.3);
+    box-shadow: 0 0 28px rgba(14, 165, 233, 0.12), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+
+  .gl-overlay-top {
+    position: absolute;
+    top: 34px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  .gl-hud-card {
+    background: rgba(5, 10, 22, 0.78);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: var(--mono);
+    backdrop-filter: blur(4px);
+  }
+
+  .gl-hud-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: #f0f9ff;
+    letter-spacing: 0.7px;
+  }
+
+  .gl-hud-sub {
+    font-size: 9px;
+    color: var(--cyan);
+    margin-top: 2px;
+  }
+
+  .gl-legend {
+    display: flex;
+    gap: 10px;
+    background: rgba(5, 10, 22, 0.78);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 6px;
+    padding: 5px 9px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-1);
+  }
+
+  .leg-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .leg-swatch {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+
+  .gl-overlay-bottom {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  .gl-metrics-row {
+    display: flex;
+    gap: 7px;
+  }
+
+  .gl-metric-pill {
+    background: rgba(5, 10, 22, 0.82);
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-family: var(--mono);
+  }
+
+  .gl-metric-pill .k {
+    font-size: 8px;
+    color: var(--text-2);
+    display: block;
+  }
+
+  .gl-metric-pill .v {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-0);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gl-event-banner {
+    position: absolute;
+    top: 86px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.7px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .gl-event-banner.show-gold {
+    opacity: 1;
+    color: #fef3c7;
+    background: rgba(12, 16, 28, 0.90);
+    border: 1.5px solid rgba(251, 191, 36, 0.92);
+    box-shadow: 0 0 24px rgba(251, 191, 36, 0.45), inset 0 0 14px rgba(245, 158, 11, 0.25);
+  }
+
+  .gl-event-banner.show-violet {
+    opacity: 1;
+    color: #faf5ff;
+    background: rgba(14, 10, 30, 0.90);
+    border: 1.5px solid rgba(192, 132, 252, 0.92);
+    box-shadow: 0 0 24px rgba(168, 85, 247, 0.48), inset 0 0 14px rgba(147, 51, 234, 0.28);
+  }
+
+  .gl-event-banner.show-red {
+    opacity: 1;
+    color: #fff1f2;
+    background: rgba(24, 8, 16, 0.90);
+    border: 1.5px solid rgba(255, 51, 102, 0.94);
+    box-shadow: 0 0 24px rgba(255, 51, 102, 0.5), inset 0 0 14px rgba(225, 29, 72, 0.28);
+  }
+
+  .gl-event-banner.show-cyan {
+    opacity: 1;
+    color: #ecfeff;
+    background: rgba(6, 16, 28, 0.90);
+    border: 1.5px solid rgba(56, 189, 248, 0.94);
+    box-shadow: 0 0 24px rgba(56, 189, 248, 0.48), inset 0 0 14px rgba(6, 182, 212, 0.26);
+  }
+
+  /* Right Column Panels */
+  .ob-panel {
+    flex: 1.55;
+    min-height: 0;
+  }
+
+  .ob-cols {
+    display: grid;
+    grid-template-columns: 76px 76px 1fr;
+    padding: 4px 9px 3px 9px;
+    font-family: var(--mono);
+    font-size: 8.5px;
+    color: var(--text-2);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  }
+
+  .ob-cols span:nth-child(2),
+  .ob-cols span:nth-child(3) {
+    text-align: right;
+  }
+
+  .ob-rows {
+    display: flex;
+    flex-direction: column;
+    padding: 2px 6px;
+    gap: 1.5px;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ob-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 76px 76px 1fr;
+    align-items: center;
+    height: 13.5px;
+    padding: 0 4px;
+    font-size: 9.5px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .ob-bar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+  }
+
+  .ob-row.ask .ob-bar { background: rgba(255, 51, 102, 0.2); }
+  .ob-row.bid .ob-bar { background: rgba(0, 245, 160, 0.18); }
+
+  .ob-row span {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ob-row.ask .p { color: #ff5c85; font-weight: 700; }
+  .ob-row.bid .p { color: #00f5a0; font-weight: 700; }
+  .ob-row .s { text-align: right; color: #dbeafe; }
+  .ob-row .t { text-align: right; color: var(--text-1); font-size: 9.5px; }
+
+  .ob-mid {
+    margin: 2px 6px;
+    padding: 2.5px 8px;
+    border-radius: 4px;
+    background: rgba(15, 27, 50, 0.92);
+    border: 1px solid rgba(56, 189, 248, 0.24);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ob-mid-price {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--bid);
+  }
+
+  .ob-mid-spread {
+    font-size: 8.5px;
+    color: var(--text-1);
+  }
+
+  .imbalance-wrap {
+    padding: 3px 9px 5px 9px;
+    margin-top: auto;
+    border-top: 1px solid rgba(148, 163, 184, 0.08);
+    font-family: var(--mono);
+  }
+
+  .imb-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+
+  .imb-track {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 51, 102, 0.65);
+    overflow: hidden;
+  }
+
+  .imb-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00f5a0, #38bdf8);
+    width: 56%;
+  }
+
+  .tape-panel {
+    flex: 0.85;
+    min-height: 0;
+  }
+
+  .tape-list {
+    padding: 3px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+  }
+
+  .tape-row {
+    display: grid;
+    grid-template-columns: 52px 68px 54px 1fr;
+    font-size: 9.5px;
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+
+  .tape-row.buy .tp { color: var(--bid); font-weight: 700; }
+  .tape-row.sell .tp { color: var(--ask); font-weight: 700; }
+  .tape-row.whale-buy {
+    background: rgba(0, 245, 160, 0.16);
+    border: 1px solid rgba(0, 245, 160, 0.45);
+  }
+  .tape-row.whale-sell {
+    background: rgba(255, 51, 102, 0.18);
+    border: 1px solid rgba(255, 51, 102, 0.48);
+  }
+  .tape-row .tt { color: var(--text-2); }
+  .tape-row .ts { text-align: right; color: #e2e8f0; }
+  .tape-row .tv { text-align: right; color: var(--gold); font-weight: 700; }
+
+  .exec-panel {
+    height: 92px;
+    min-height: 92px;
+  }
+
+  .exec-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 5px;
+    padding: 6px 8px;
+  }
+
+  .exec-btn {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .exec-btn.buy {
+    background: rgba(0, 245, 160, 0.14);
+    border-color: rgba(0, 245, 160, 0.45);
+    color: var(--bid);
+  }
+
+  .exec-btn.sell {
+    background: rgba(255, 51, 102, 0.14);
+    border-color: rgba(255, 51, 102, 0.45);
+    color: #ff5c85;
+  }
+
+  .exec-btn.whale {
+    background: rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.55);
+    color: var(--gold);
+  }
+
+  .exec-btn.cascade {
+    background: rgba(168, 85, 247, 0.16);
+    border-color: rgba(168, 85, 247, 0.55);
+    color: #d8b4fe;
+  }
+
+  .exec-btn.pressed {
+    transform: scale(0.95);
+    filter: brightness(1.45);
+    box-shadow: 0 0 18px currentColor;
+  }
+
+  /* ===== BOTTOM PHASE BAR ===== */
+  .bottombar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) 156px;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .phase-pill {
+    height: 26px;
+    background: rgba(10, 17, 33, 0.92);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 5px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--text-2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .phase-pill .prog {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(56, 189, 248, 0.14);
+    width: 0%;
+    z-index: 0;
+  }
+
+  .phase-pill span {
+    position: relative;
+    z-index: 1;
+  }
+
+  .phase-pill.active {
+    border-color: rgba(56, 189, 248, 0.65);
+    color: #f0f9ff;
+    font-weight: 700;
+  }
+
+  .phase-pill.active-gold {
+    border-color: rgba(251, 191, 36, 0.78);
+    color: #fef3c7;
+    font-weight: 700;
+  }
+  .phase-pill.active-gold .prog { background: rgba(251, 191, 36, 0.2); }
+
+  .phase-pill.active-violet {
+    border-color: rgba(192, 132, 252, 0.78);
+    color: #f3e8ff;
+    font-weight: 700;
+  }
+  .phase-pill.active-violet .prog { background: rgba(168, 85, 247, 0.22); }
+
+  .phase-pill.active-red {
+    border-color: rgba(255, 51, 102, 0.78);
+    color: #ffe4e6;
+    font-weight: 700;
+  }
+  .phase-pill.active-red .prog { background: rgba(255, 51, 102, 0.22); }
+
+  .clock-box {
+    height: 26px;
+    background: rgba(10, 17, 33, 0.92);
+    border: 1px solid rgba(56, 189, 248, 0.24);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--cyan);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Virtual Interactive Cursor for Demo */
+  .virtual-cursor {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    z-index: 50;
+    transform: translate(-2px, -2px);
+    opacity: 0;
+  }
+
+  .cursor-ring {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    left: -17px;
+    top: -17px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 49;
+  }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="workstation">
+<div class="app" id="appRoot">
+  <!-- TOP HEADER -->
+  <header class="topbar">
+    <div class="brand-group">
+      <div class="brand-dot" id="engineDot"></div>
+      <div class="brand-title">HYPERION <span>// QUANT 3D</span></div>
+      <div class="chip-tag">SINGLE HTML · 0 LIBS · WEBGL2</div>
+    </div>
+
+    <div class="ticker-strip">
+      <div class="pair-box">
+        <span class="pair-name">NVX-PERP</span>
+        <span class="pair-price" id="topPrice">$142.84</span>
+        <span class="pair-chg" id="topChg">+4.82%</span>
+      </div>
+      <div class="kpi-mini">
+        <span class="lbl">MATCH ENGINE</span>
+        <span class="val cyan" id="kpiOps">148,420 ops/s</span>
+      </div>
+      <div class="kpi-mini">
+        <span class="lbl">LATENCY</span>
+        <span class="val" id="kpiLat">0.14 ms</span>
+      </div>
+      <div class="kpi-mini">
+        <span class="lbl">NET EQUITY</span>
+        <span class="val up" id="kpiEquity">$1,248,920</span>
+      </div>
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-btn active" id="btnModeDepth">3D ORDER BOOK</button>
+      <button class="mode-btn" id="btnModeIV">3D IV SURFACE</button>
+    </div>
+  </header>
+
+  <!-- MAIN 3-COLUMN WORKSPACE -->
+  <main class="main-grid">
+    <!-- LEFT COLUMN: CANDLESTICK + BOTS & EQUITY -->
+    <section class="col">
+      <div class="panel candle-panel">
+        <div class="panel-hdr">
+          <div class="panel-title"><span class="dot"></span>LIVE OHLCV MICROSTRUCTURE &amp; BOLLINGER</div>
+          <div class="panel-meta">
+            <span style="color:#38bdf8">EMA9</span>
+            <span style="color:#fbbf24">EMA21</span>
+            <span id="candleVwap">VWAP $142.61</span>
+          </div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="candleCanvas" class="fill"></canvas>
+        </div>
+      </div>
+
+      <div class="panel bot-panel">
+        <div class="panel-hdr">
+          <div class="panel-title"><span class="dot" style="background:var(--bid);box-shadow:0 0 8px var(--bid)"></span>AUTONOMOUS QUANT STRATEGY MATRIX</div>
+          <div class="panel-meta" id="botStatusMeta">4 ACTIVE · AUTO-HEDGE ON</div>
+        </div>
+        <div class="bot-body">
+          <div class="bot-list" id="botList"></div>
+          <div class="equity-box">
+            <div class="equity-head">
+              <span class="lbl">PORTFOLIO EQUITY</span>
+              <span class="val" id="eqTotal">$1,248,920</span>
+            </div>
+            <div class="canvas-wrap">
+              <canvas id="equityCanvas" class="fill"></canvas>
+            </div>
+            <div class="equity-sub">
+              <span id="eqSharpe">SHARPE 3.84</span>
+              <span id="eqDrawdown" style="color:#38bdf8">DD -0.62%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CENTER HERO: PURE WEBGL2 3D LIQUIDITY & IV SURFACE -->
+    <section class="col">
+      <div class="panel hero-3d-panel">
+        <div class="panel-hdr">
+          <div class="panel-title"><span class="dot" style="background:var(--gold);box-shadow:0 0 8px var(--gold)"></span><span id="glHeaderTitle">PURE WEBGL2 3D ORDER-BOOK DEPTH TOPOGRAPHY</span></div>
+          <div class="panel-meta"><span id="glVertexInfo">3,840 VERTS · 320 PARTICLES</span></div>
+        </div>
+        <div class="canvas-wrap" id="glContainer">
+          <canvas id="glCanvas" class="fill"></canvas>
+
+          <div class="gl-overlay-top">
+            <div class="gl-hud-card">
+              <div class="gl-hud-title" id="glHudTitle">L2 LIQUIDITY TERRAIN // LIVE LOB</div>
+              <div class="gl-hud-sub" id="glHudSub">X: PRICE TICKS · Y: CUMULATIVE DEPTH · Z: TIME FLOW</div>
+            </div>
+            <div class="gl-legend" id="glLegend">
+              <div class="leg-item"><span class="leg-swatch" style="background:#00f5a0;box-shadow:0 0 6px #00f5a0"></span>BID WALL</div>
+              <div class="leg-item"><span class="leg-swatch" style="background:#ff3366;box-shadow:0 0 6px #ff3366"></span>ASK WALL</div>
+              <div class="leg-item"><span class="leg-swatch" style="background:#fbbf24;box-shadow:0 0 6px #fbbf24"></span>FILLS</div>
+            </div>
+          </div>
+
+          <div class="gl-event-banner" id="glBanner">⚡ WHALE BUY SWEEP EXECUTED · +$4.82M MARKET IMPACT</div>
+
+          <div class="gl-overlay-bottom">
+            <div class="gl-metrics-row">
+              <div class="gl-metric-pill">
+                <span class="k" id="m1k">BID DEPTH (2%)</span>
+                <span class="v" id="m1v" style="color:#00f5a0">$18.42M</span>
+              </div>
+              <div class="gl-metric-pill">
+                <span class="k" id="m2k">ASK DEPTH (2%)</span>
+                <span class="v" id="m2v" style="color:#ff5c85">$14.91M</span>
+              </div>
+              <div class="gl-metric-pill">
+                <span class="k" id="m3k">ORDERFLOW DELTA</span>
+                <span class="v" id="m3v" style="color:#fbbf24">+$3.51M</span>
+              </div>
+            </div>
+            <div class="gl-metric-pill" style="border-color:rgba(148,163,184,0.22)">
+              <span class="k">CAMERA ORBIT</span>
+              <span class="v" id="camDeg" style="color:#9cb3d1">AZ 24° · EL 31°</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: L2 ORDER BOOK + TAPE + EXECUTION PAD -->
+    <section class="col">
+      <div class="panel ob-panel">
+        <div class="panel-hdr">
+          <div class="panel-title"><span class="dot" style="background:var(--ask);box-shadow:0 0 8px var(--ask)"></span>L2 ORDER BOOK</div>
+          <div class="panel-meta" id="obSpreadBps">0.14 bps</div>
+        </div>
+        <div class="ob-cols">
+          <span>PRICE</span>
+          <span>SIZE</span>
+          <span>TOTAL</span>
+        </div>
+        <div class="ob-rows" id="askRows"></div>
+        <div class="ob-mid">
+          <span class="ob-mid-price" id="obMidPrice">$142.84 ▲</span>
+          <span class="ob-mid-spread" id="obMidSpread">SPREAD 0.02</span>
+        </div>
+        <div class="ob-rows" id="bidRows"></div>
+        <div class="imbalance-wrap">
+          <div class="imb-labels">
+            <span style="color:var(--bid)" id="imbBidLbl">BID 58%</span>
+            <span style="color:var(--text-2)">DEPTH IMBALANCE</span>
+            <span style="color:#ff5c85" id="imbAskLbl">42% ASK</span>
+          </div>
+          <div class="imb-track"><div class="imb-fill" id="imbFill"></div></div>
+        </div>
+      </div>
+
+      <div class="panel tape-panel">
+        <div class="panel-hdr">
+          <div class="panel-title"><span class="dot" style="background:var(--cyan)"></span>LIVE EXECUTION TAPE</div>
+          <div class="panel-meta" id="tapeRate">42 fills/s</div>
+        </div>
+        <div class="tape-list" id="tapeList"></div>
+      </div>
+
+      <div class="panel exec-panel">
+        <div class="panel-hdr">
+          <div class="panel-title"><span class="dot" style="background:var(--gold)"></span>INSTITUTIONAL EXECUTION</div>
+          <div class="panel-meta">LIVE LOB</div>
+        </div>
+        <div class="exec-grid">
+          <button class="exec-btn buy" id="btnBuyMkt">BUY MKT +$2M</button>
+          <button class="exec-btn sell" id="btnSellMkt">SELL MKT -$2M</button>
+          <button class="exec-btn whale" id="btnWhale">⚡ WHALE SWEEP</button>
+          <button class="exec-btn cascade" id="btnCascade">🔻 CASCADE TEST</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- BOTTOM PHASE TIMELINE -->
+  <footer class="bottombar">
+    <div class="phase-pill active" id="phase0"><div class="prog" id="prog0"></div><span>01 LIVE MARKET MAKING</span><span>0–5s</span></div>
+    <div class="phase-pill" id="phase1"><div class="prog" id="prog1"></div><span>02 WHALE BUY SWEEP</span><span>5–11.5s</span></div>
+    <div class="phase-pill" id="phase2"><div class="prog" id="prog2"></div><span>03 3D IV VOL SURFACE</span><span>11.5–17.5s</span></div>
+    <div class="phase-pill" id="phase3"><div class="prog" id="prog3"></div><span>04 CASCADE &amp; AUTO-HEDGE</span><span>17.5–24s</span></div>
+    <div class="clock-box" id="clockBox">GEMINI 4 NEON · 00.0s</div>
+  </footer>
+
+  <!-- VIRTUAL CURSOR FOR SCRIPTED DEMO -->
+  <div class="cursor-ring" id="cursorRing"></div>
+  <svg class="virtual-cursor" id="virtualCursor" viewBox="0 0 24 24" fill="none">
+    <path d="M4 3L19 11.5L12.2 13.4L9.8 20L4 3Z" fill="#f8fafc" stroke="#020617" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ===== DETERMINISTIC PRNG =====
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function() {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(20261119);
+  const randn = () => (rng() + rng() + rng() - 1.5) * 1.15;
+
+  // ===== GLOBAL STATE =====
+  const TOTAL_DEMO_SEC = 24.0;
+  let simTime = 0.0;
+  let frameCount = 0;
+  let isRecording = Boolean(window.__RECORDING__);
+
+  // 3D Mode: 0 = Order Book Depth Terrain, 1 = Black-Scholes IV Surface
+  let targetMorph = 0.0;
+  let surfaceMorph = 0.0;
+
+  // Camera Orbit State (interactive + scripted — wide institutional framing)
+  let camAz = 0.44;
+  let camEl = 0.56;
+  let camDist = 4.55;
+  let userDragging = false;
+  let lastMouseX = 0, lastMouseY = 0;
+  let camShake = 0.0;
+
+  // Smooth PnL streaming accumulators (realistic HFT curve instead of 1-frame step)
+  const pendingBotPnl = [0, 0, 0, 0];
+  let pendingDrawdown = 0;
+
+  // Matching Engine & Market State
+  const OPEN_PRICE = 136.28;
+  let midPrice = 142.84;
+  let prevMidPrice = 142.84;
+  let priceVel = 0.0;
+  let volRegime = 1.0;
+  let orderflowDelta = 3.51;
+  let opsPerSec = 148420;
+  let latencyMs = 0.14;
+  let fillRate = 42;
+  let totalEquity = 1248920;
+  let peakEquity = 1248920;
+  let maxDrawdown = 0.62;
+  let bidImbalance = 0.58;
+  let activeAlert = { text: '', cls: '', ttl: 0 };
+
+  const GRID_X = 48; // 24 bids (left) + 24 asks (right)
+  const GRID_Z = 40; // 40 depth time slices
+  // History of 2D depth rows (each row has GRID_X normalized heights in 0..1.5)
+  const depthHistory = [];
+  let currentBids = [];
+  let currentAsks = [];
+
+  // Candlesticks (keep 58 visible)
+  const MAX_CANDLES = 58;
+  const candles = [];
+  let currentCandle = null;
+  let candleTickAccum = 0;
+  const chartAnnotations = []; // { candleIdx, text, color }
+
+  // Equity curve history
+  const equityHistory = [];
+
+  // Bots
+  const bots = [
+    { id: 'MM-ALPHA', tag: 'MKT-MKR', sub: 'Skewed L2 Quote', pnl: 68420, sharpe: 3.84, hot: 0, alert: 0 },
+    { id: 'STAT-ARB', tag: 'COINT',   sub: 'Cross-Venue Spread', pnl: 41290, sharpe: 3.12, hot: 0, alert: 0 },
+    { id: 'MOM-BREAK', tag: 'OFI-MOM', sub: 'Orderflow Impulse', pnl: 89140, sharpe: 2.95, hot: 0, alert: 0 },
+    { id: 'VOL-GAMMA', tag: 'DELTA-H', sub: 'Dynamic IV Hedge', pnl: 50070, sharpe: 4.21, hot: 0, alert: 0 },
+  ];
+
+  // Execution Tape
+  const tape = [];
+
+  // 3D Execution Fill Particles
+  const MAX_PARTICLES = 360;
+  const particles = [];
+  for (let i = 0; i < MAX_PARTICLES; i++) {
+    particles.push({
+      x: 0, y: -10, z: 0,
+      vx: 0, vy: 0, vz: 0,
+      r: 0, g: 1, b: 0.6,
+      life: 0, maxLife: 1, size: 4
+    });
+  }
+  let particleCursor = 0;
+
+  function spawnParticles(count, originX, originZ, type) {
+    for (let i = 0; i < count; i++) {
+      const p = particles[particleCursor];
+      particleCursor = (particleCursor + 1) % MAX_PARTICLES;
+      const spread = type === 'whale' ? 0.65 : (type === 'cascade' ? 0.72 : 0.28);
+      p.x = originX + (rng() - 0.5) * spread;
+      p.y = 0.14 + rng() * 0.34;
+      p.z = originZ + (rng() - 0.5) * 0.55;
+      const speed = type === 'whale' ? (1.15 + rng() * 1.65) : (type === 'cascade' ? (1.0 + rng() * 1.5) : (0.45 + rng() * 0.75));
+      const ang = rng() * Math.PI * 2;
+      p.vx = Math.cos(ang) * speed * 0.65;
+      p.vy = speed * (1.05 + rng() * 0.78);
+      p.vz = Math.sin(ang) * speed * 0.65;
+      p.maxLife = type === 'normal' ? (0.55 + rng() * 0.45) : (1.1 + rng() * 1.1);
+      p.life = p.maxLife;
+      p.size = type === 'normal' ? (5.5 + rng() * 4.0) : (9.5 + rng() * 8.5);
+      if (type === 'whale') {
+        if (rng() > 0.38) { p.r = 1.0; p.g = 0.85; p.b = 0.22; } // bright gold
+        else { p.r = 0.05; p.g = 1.0; p.b = 0.68; } // neon emerald
+      } else if (type === 'cascade') {
+        if (rng() > 0.32) { p.r = 1.0; p.g = 0.22; p.b = 0.46; } // neon crimson
+        else { p.r = 1.0; p.g = 0.58; p.b = 0.18; } // amber-red
+      } else if (type === 'hedge') {
+        p.r = 0.25; p.g = 0.90; p.b = 1.0; // luminous cyan
+      } else {
+        if (rng() > 0.5) { p.r = 0.05; p.g = 0.98; p.b = 0.68; }
+        else { p.r = 1.0; p.g = 0.28; p.b = 0.48; }
+      }
+    }
+  }
+
+  // ===== REAL-TIME LIMIT ORDER BOOK ENGINE =====
+  // 24 levels per side; track dynamic liquidity walls that get eaten & replenished
+  const bidBookQty = new Float32Array(24);
+  const askBookQty = new Float32Array(24);
+
+  function initOrderBook() {
+    for (let i = 0; i < 24; i++) {
+      // Natural institutional liquidity curve: thinner near mid, thick walls deeper
+      const wall = (i === 5 || i === 12 || i === 18) ? 2.1 : 1.0;
+      bidBookQty[i] = (32 + i * 7.2 + rng() * 24) * wall;
+      askBookQty[i] = (30 + i * 6.8 + rng() * 24) * wall;
+    }
+  }
+
+  function snapshotDepthRow() {
+    const row = new Float32Array(GRID_X);
+    let cumBid = 0;
+    for (let i = 0; i < 24; i++) {
+      cumBid += bidBookQty[i];
+      // left half: index 23 (near mid) down to 0 (deepest bid)
+      const col = 23 - i;
+      row[col] = Math.min(1.45, Math.pow(cumBid / 2400.0, 0.72) * 1.12);
+    }
+    let cumAsk = 0;
+    for (let i = 0; i < 24; i++) {
+      cumAsk += askBookQty[i];
+      // right half: index 24 (near mid) up to 47 (deepest ask)
+      const col = 24 + i;
+      row[col] = Math.min(1.45, Math.pow(cumAsk / 2400.0, 0.72) * 1.12);
+    }
+    return row;
+  }
+
+  function formatTimeStamp(t) {
+    const baseSec = 8 * 3600 + 42 * 60 + 10 + t;
+    const h = Math.floor(baseSec / 3600) % 24;
+    const m = Math.floor((baseSec % 3600) / 60);
+    const s = Math.floor(baseSec % 60);
+    const ms = Math.floor((baseSec * 10) % 10);
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${ms}`;
+  }
+
+  function pushTape(price, size, side, whale = false) {
+    const notional = price * size;
+    tape.unshift({
+      time: formatTimeStamp(simTime),
+      price,
+      size,
+      notional,
+      side,
+      whale
+    });
+    if (tape.length > 9) tape.pop();
+  }
+
+  // Execute an actual market order that sweeps through LOB levels!
+  function executeMarketSweep(side, totalNotionalUSD, label = '') {
+    let remainingQty = totalNotionalUSD / midPrice;
+    let filledQty = 0;
+    let weightedSum = 0;
+    const book = side === 'buy' ? askBookQty : bidBookQty;
+    const dir = side === 'buy' ? 1 : -1;
+
+    for (let i = 0; i < 24 && remainingQty > 0; i++) {
+      const take = Math.min(book[i] * 0.88, remainingQty);
+      book[i] = Math.max(4, book[i] - take);
+      const lvlPrice = midPrice + dir * (0.02 + i * 0.09);
+      weightedSum += take * lvlPrice;
+      filledQty += take;
+      remainingQty -= take;
+    }
+
+    // Immediate price impact + balanced realistic momentum impulse
+    const impact = dir * Math.min(1.35, (totalNotionalUSD / 2800000) * 0.68);
+    priceVel += impact * 1.45;
+    midPrice += impact * 0.28;
+    orderflowDelta += dir * (totalNotionalUSD / 1e6);
+
+    // Opposite wall strengthens defensively after big sweep
+    const oppBook = side === 'buy' ? bidBookQty : askBookQty;
+    for (let i = 0; i < 10; i++) {
+      oppBook[i] += 26 + rng() * 35;
+    }
+
+    const avgFill = filledQty > 0 ? weightedSum / filledQty : midPrice;
+    const isWhale = totalNotionalUSD >= 1500000;
+    pushTape(avgFill, Math.round(totalNotionalUSD / avgFill), side, isWhale);
+
+    if (side === 'buy') {
+      spawnParticles(isWhale ? 185 : 48, 0.16, 0.55, isWhale ? 'whale' : 'normal');
+      if (isWhale) {
+        camShake = 0.045;
+        pendingBotPnl[2] += 48500; bots[2].hot = 2.6;
+        pendingBotPnl[0] += 21800; bots[0].hot = 2.0;
+        pendingBotPnl[1] += 13400; bots[1].hot = 1.6;
+        activeAlert = {
+          text: label || `⚡ WHALE BUY SWEEP · +$${(totalNotionalUSD/1e6).toFixed(2)}M FILLED @ $${avgFill.toFixed(2)}`,
+          cls: 'show-gold',
+          ttl: 4.0
+        };
+        chartAnnotations.push({
+          idx: candles.length,
+          price: midPrice,
+          text: `⚡ WHALE +$${(totalNotionalUSD/1e6).toFixed(1)}M`,
+          color: '#fbbf24',
+          above: true
+        });
+      }
+    } else {
+      spawnParticles(isWhale ? 190 : 48, -0.16, 0.55, isWhale ? 'cascade' : 'normal');
+      if (isWhale) {
+        camShake = 0.052;
+        bots[3].alert = 2.5;
+        pendingDrawdown += 26800;
+        activeAlert = {
+          text: label || `🔻 LIQUIDATION CASCADE · -$${(totalNotionalUSD/1e6).toFixed(2)}M FORCED SELL`,
+          cls: 'show-red',
+          ttl: 2.3
+        };
+        chartAnnotations.push({
+          idx: candles.length,
+          price: midPrice,
+          text: `🔻 CASCADE -$${(totalNotionalUSD/1e6).toFixed(1)}M`,
+          color: '#ff3366',
+          above: false
+        });
+      }
+    }
+  }
+
+  function triggerAutoHedge() {
+    // Institutional liquidity absorption + hedge profit capture
+    for (let i = 0; i < 18; i++) {
+      bidBookQty[i] += 54 + i * 5.0;
+    }
+    priceVel += 1.65;
+    midPrice += 0.65;
+    orderflowDelta += 4.2;
+    pendingBotPnl[3] += 56200; bots[3].hot = 3.2; bots[3].alert = 0;
+    pendingBotPnl[0] += 27400; bots[0].hot = 2.8;
+    pendingBotPnl[1] += 17800; bots[1].hot = 2.4;
+    spawnParticles(165, 0.0, 0.45, 'hedge');
+    pushTape(midPrice, 24800, 'buy', true);
+    activeAlert = {
+      text: '🛡 AUTO-HEDGE CIRCUIT ENGAGED · GAMMA CAPTURE +$101.4K · NEW ATH',
+      cls: 'show-cyan',
+      ttl: 3.8
+    };
+    chartAnnotations.push({
+      idx: candles.length,
+      price: midPrice,
+      text: '🛡 AUTO-HEDGE ATH',
+      color: '#38bdf8',
+      above: true
+    });
+  }
+
+  // ===== PRE-WARM SIMULATION SO FRAME 0 IS ALREADY RICH & ALIVE =====
+  function prewarm() {
+    initOrderBook();
+    let p = 138.60;
+    for (let c = 0; c < MAX_CANDLES - 1; c++) {
+      const drift = 0.072 + Math.sin(c * 0.24) * 0.22 + randn() * 0.42;
+      const open = p;
+      const close = Math.max(134.5, p + drift);
+      const high = Math.max(open, close) + 0.14 + rng() * 0.42;
+      const low = Math.min(open, close) - 0.14 - rng() * 0.38;
+      const vol = 180 + rng() * 420 + Math.abs(close - open) * 260;
+      candles.push({ open, high, low, close, vol });
+      p = close;
+    }
+    midPrice = p;
+    prevMidPrice = p;
+    currentCandle = { open: p, high: p + 0.12, low: p - 0.10, close: p, vol: 140 };
+
+    // Pre-fill 40 3D depth history rows with rich breathing undulations
+    for (let z = 0; z < GRID_Z; z++) {
+      for (let i = 0; i < 24; i++) {
+        bidBookQty[i] = Math.max(12, bidBookQty[i] + Math.sin(z * 0.28 + i * 0.4) * 14 + randn() * 8);
+        askBookQty[i] = Math.max(12, askBookQty[i] + Math.cos(z * 0.25 + i * 0.35) * 14 + randn() * 8);
+      }
+      depthHistory.push(snapshotDepthRow());
+    }
+
+    // Pre-fill equity curve
+    let eq = 1142000;
+    for (let i = 0; i < 65; i++) {
+      eq += 1645 + Math.sin(i * 0.26) * 1800 + randn() * 1400;
+      equityHistory.push(eq);
+    }
+    totalEquity = eq;
+    peakEquity = eq;
+
+    // Pre-fill tape
+    for (let i = 0; i < 9; i++) {
+      const side = rng() > 0.45 ? 'buy' : 'sell';
+      pushTape(midPrice + (rng() - 0.5) * 0.12, Math.round(120 + rng() * 1600), side, false);
+    }
+    updateBookSnapshot();
+  }
+
+  const OB_LEVELS = 7;
+
+  function updateBookSnapshot() {
+    currentAsks = [];
+    currentBids = [];
+    let cumA = 0, cumB = 0;
+    for (let i = 0; i < OB_LEVELS; i++) {
+      const qtyA = Math.round(askBookQty[i] * 4.5);
+      cumA += qtyA;
+      currentAsks.push({ price: midPrice + 0.01 + i * 0.03, size: qtyA, total: cumA });
+
+      const qtyB = Math.round(bidBookQty[i] * 4.5);
+      cumB += qtyB;
+      currentBids.push({ price: midPrice - 0.01 - i * 0.03, size: qtyB, total: cumB });
+    }
+    const tot = cumA + cumB;
+    bidImbalance = tot > 0 ? cumB / tot : 0.5;
+  }
+
+  // ===== SCRIPTED 24-SECOND CHOREOGRAPHY =====
+  const triggers = {
+    whale1: false,
+    whale2: false,
+    ivOn: false,
+    ivOff: false,
+    cascade1: false,
+    hedge1: false,
+  };
+
+  function getButtonCenter(el) {
+    const r = el.getBoundingClientRect();
+    const rootR = document.getElementById('appRoot').getBoundingClientRect();
+    return { x: r.left - rootR.left + r.width * 0.5, y: r.top - rootR.top + r.height * 0.5 };
+  }
+
+  let cursorX = 320, cursorY = 230, cursorOpacity = 0, clickPulse = 0;
+  let pressedBtnId = null;
+
+  let autoTour = isRecording;
+  function runChoreography(t, dt) {
+    pressedBtnId = null;
+    clickPulse = Math.max(0, clickPulse - dt * 2.8);
+
+    if (autoTour) {
+    // Waypoints for smooth institutional cursor demo
+    const whalePos = getButtonCenter(document.getElementById('btnWhale'));
+    const ivPos = getButtonCenter(document.getElementById('btnModeIV'));
+    const depthPos = getButtonCenter(document.getElementById('btnModeDepth'));
+    const cascPos = getButtonCenter(document.getElementById('btnCascade'));
+
+    const ease = (u) => u < 0 ? 0 : (u > 1 ? 1 : (u * u * (3 - 2 * u)));
+
+    if (t < 3.6) {
+      cursorOpacity = ease((t - 0.6) / 0.8);
+      // Glide smoothly across the live candlestick chart inspecting levels
+      const u = ease(t / 3.6);
+      cursorX = 180 + u * 185;
+      cursorY = 240 - Math.sin(u * Math.PI) * 55;
+    } else if (t < 5.0) {
+      cursorOpacity = 1;
+      const u = ease((t - 3.6) / 1.35);
+      cursorX = 365 + (whalePos.x - 365) * u;
+      cursorY = 240 + (whalePos.y - 240) * u;
+    } else if (t < 5.45) {
+      cursorOpacity = 1;
+      cursorX = whalePos.x; cursorY = whalePos.y;
+      pressedBtnId = 'btnWhale';
+      if (!triggers.whale1) {
+        triggers.whale1 = true;
+        clickPulse = 1.0;
+        executeMarketSweep('buy', 4820000, '⚡ WHALE BUY SWEEP · +$4.82M ASK WALL SHATTERED');
+      }
+    } else if (t < 7.8) {
+      if (t >= 6.45 && !triggers.whale2) {
+        triggers.whale2 = true;
+        executeMarketSweep('buy', 2450000, '⚡ FOLLOW-THROUGH MOMENTUM · +$2.45M GAMMA BREAKOUT');
+      }
+      const u = ease((t - 5.45) / 2.2);
+      cursorX = whalePos.x + (760 - whalePos.x) * u;
+      cursorY = whalePos.y + (360 - whalePos.y) * u;
+      cursorOpacity = 1 - u * 0.7;
+    } else if (t < 11.45) {
+      const u = ease((t - 9.8) / 1.55);
+      cursorOpacity = 0.3 + u * 0.7;
+      cursorX = 760 + (ivPos.x - 760) * u;
+      cursorY = 360 + (ivPos.y - 360) * u;
+    } else if (t < 11.95) {
+      cursorOpacity = 1;
+      cursorX = ivPos.x; cursorY = ivPos.y;
+      pressedBtnId = 'btnModeIV';
+      if (!triggers.ivOn) {
+        triggers.ivOn = true;
+        clickPulse = 1.0;
+        targetMorph = 1.0;
+        bots[3].hot = 4.2;
+        activeAlert = {
+          text: '◈ 3D BLACK-SCHOLES IMPLIED VOLATILITY SURFACE · ATM IV 64.2%',
+          cls: 'show-violet',
+          ttl: 3.6
+        };
+      }
+    } else if (t < 16.0) {
+      const u = ease((t - 12.2) / 2.0);
+      cursorOpacity = Math.max(0.2, 1 - u * 0.8);
+      cursorX = ivPos.x - u * 160;
+      cursorY = ivPos.y + u * 180;
+    } else if (t < 17.35) {
+      const u = ease((t - 16.0) / 1.3);
+      cursorOpacity = 0.2 + u * 0.8;
+      cursorX = (ivPos.x - 160) + (depthPos.x - (ivPos.x - 160)) * u;
+      cursorY = (ivPos.y + 180) + (depthPos.y - (ivPos.y + 180)) * u;
+    } else if (t < 17.85) {
+      cursorOpacity = 1;
+      cursorX = depthPos.x; cursorY = depthPos.y;
+      pressedBtnId = 'btnModeDepth';
+      if (!triggers.ivOff) {
+        triggers.ivOff = true;
+        clickPulse = 1.0;
+        targetMorph = 0.0;
+      }
+    } else if (t < 18.25) {
+      const u = ease((t - 17.85) / 0.4);
+      cursorX = depthPos.x + (cascPos.x - depthPos.x) * u;
+      cursorY = depthPos.y + (cascPos.y - depthPos.y) * u;
+      if (t >= 18.0 && !triggers.cascade1) {
+        triggers.cascade1 = true;
+        clickPulse = 1.0;
+        pressedBtnId = 'btnCascade';
+        executeMarketSweep('sell', 6200000, '🔻 LIQUIDATION CASCADE · -$6.20M FORCED SELL WAVE');
+      }
+    } else {
+      if (t >= 20.1 && !triggers.hedge1) {
+        triggers.hedge1 = true;
+        triggerAutoHedge();
+      }
+      cursorOpacity = Math.max(0, cursorOpacity - dt * 1.4);
+    }
+    } else { cursorOpacity = 0; }
+
+    // Cinematic orbital camera choreography (wide framing so entire 3D terrain & IV smile fit cleanly!)
+    if (!userDragging) {
+      if (t < 5.0) {
+        camAz = 0.42 + Math.sin(t * 0.42) * 0.22;
+        camEl = 0.56 + Math.cos(t * 0.35) * 0.05;
+        camDist = 4.60 - t * 0.03;
+      } else if (t < 11.5) {
+        // Dramatic dynamic orbit into the shattered Ask canyon!
+        const u = ease((t - 5.0) / 1.6);
+        camAz = 0.56 - (t - 5.0) * 0.14;
+        camEl = 0.53 - u * 0.10 + Math.sin(t * 0.9) * 0.03;
+        camDist = 4.42 - u * 0.34;
+      } else if (t < 17.5) {
+        // Graceful 3D rotation around the full Black-Scholes IV Smile Surface
+        const u = (t - 11.5) / 6.0;
+        camAz = -0.35 + u * 1.15;
+        camEl = 0.48 + Math.sin(u * Math.PI) * 0.14;
+        camDist = 4.52;
+      } else {
+        // Tense crash angle then heroic pull-back overview
+        const u = ease((t - 17.5) / 6.5);
+        camAz = 0.78 - u * 0.46;
+        camEl = 0.46 + u * 0.12;
+        camDist = 4.28 + u * 0.36;
+      }
+    }
+  }
+
+  // ===== STEP SIMULATION =====
+  let depthPushAccum = 0;
+
+  function stepSimulation(dt) {
+    simTime += dt;
+    frameCount++;
+
+    runChoreography(simTime, dt);
+
+    // Smooth morph between 3D Depth Terrain & 3D IV Surface
+    surfaceMorph += (targetMorph - surfaceMorph) * Math.min(1.0, dt * 4.2);
+
+    // Decay camera shake & bot highlights
+    camShake *= Math.pow(0.06, dt);
+    if (activeAlert.ttl > 0) activeAlert.ttl = Math.max(0, activeAlert.ttl - dt);
+
+    // Natural mean-reverting order-book replenishment + micro order arrivals
+    volRegime = (simTime >= 5.0 && simTime < 9.5) || (simTime >= 17.8 && simTime < 22.0) ? 2.4 : 1.0;
+
+    for (let i = 0; i < 24; i++) {
+      const targetWall = (i === 5 || i === 12 || i === 18) ? 2.0 : 1.0;
+      const baseB = (36 + i * 7.4) * targetWall * (simTime > 19.8 ? 1.28 : 1.0);
+      const baseA = (32 + i * 7.0) * targetWall * (simTime >= 5.0 && simTime < 9.0 ? 0.62 : 1.0);
+      bidBookQty[i] += (baseB - bidBookQty[i]) * dt * 0.85 + randn() * 5.2 * volRegime;
+      askBookQty[i] += (baseA - askBookQty[i]) * dt * 0.85 + randn() * 5.2 * volRegime;
+      bidBookQty[i] = Math.max(5, bidBookQty[i]);
+      askBookQty[i] = Math.max(5, askBookQty[i]);
+    }
+
+    // Price dynamics
+    priceVel *= Math.pow(0.18, dt);
+    const microNoise = randn() * 0.16 * volRegime;
+    const subtleBias = (simTime >= 11.5 && simTime < 17.5) ? 0.04 : (simTime > 20.1 ? 0.12 : 0.01);
+    prevMidPrice = midPrice;
+    midPrice = Math.max(135.0, midPrice + (priceVel + microNoise + subtleBias) * dt * 3.5);
+
+    // Update active candlestick & roll candles every 0.42s
+    candleTickAccum += dt;
+    currentCandle.close = midPrice;
+    if (midPrice > currentCandle.high) currentCandle.high = midPrice;
+    if (midPrice < currentCandle.low) currentCandle.low = midPrice;
+    currentCandle.vol += (28 + Math.abs(midPrice - prevMidPrice) * 620) * dt;
+
+    if (candleTickAccum >= 0.42) {
+      candleTickAccum -= 0.42;
+      candles.push({ ...currentCandle });
+      if (candles.length > MAX_CANDLES) {
+        candles.shift();
+        for (const a of chartAnnotations) a.idx--;
+      }
+      currentCandle = { open: midPrice, high: midPrice, low: midPrice, close: midPrice, vol: 45 };
+    }
+
+    // Push 3D depth history slice every 0.09s so the 3D terrain visibly streams backward!
+    depthPushAccum += dt;
+    if (depthPushAccum >= 0.09) {
+      depthPushAccum -= 0.09;
+      depthHistory.pop();
+      depthHistory.unshift(snapshotDepthRow());
+    }
+
+    // Ambient micro fills on tape + small sparkles
+    if (rng() < dt * (7.5 * volRegime)) {
+      const buyProb = 0.5 + (bidImbalance - 0.5) * 0.65;
+      const side = rng() < buyProb ? 'buy' : 'sell';
+      const sz = Math.round((45 + rng() * 480) * volRegime);
+      pushTape(midPrice + (side === 'buy' ? 0.01 : -0.01), sz, side, false);
+      spawnParticles(3, side === 'buy' ? 0.06 : -0.06, 0.72, 'normal');
+    }
+
+    // Update bots & equity continuously (smooth algorithmic PnL streaming!)
+    const drainRate = Math.min(1.0, dt * 2.2);
+    for (let i = 0; i < bots.length; i++) {
+      bots[i].hot = Math.max(0, bots[i].hot - dt);
+      bots[i].alert = Math.max(0, bots[i].alert - dt);
+      const streamed = pendingBotPnl[i] * drainRate;
+      pendingBotPnl[i] -= streamed;
+      const tickGain = (140 + rng() * 210) * dt * (volRegime > 1.5 ? 1.5 : 1.0) + streamed;
+      bots[i].pnl += tickGain;
+      totalEquity += tickGain;
+    }
+    if (pendingDrawdown > 10) {
+      const ddChunk = pendingDrawdown * Math.min(1.0, dt * 3.8);
+      pendingDrawdown -= ddChunk;
+      totalEquity -= ddChunk;
+      const dd = ((peakEquity - totalEquity) / peakEquity) * 100;
+      if (dd > maxDrawdown) maxDrawdown = dd;
+    }
+    if (totalEquity > peakEquity) peakEquity = totalEquity;
+    if (frameCount % 3 === 0) {
+      equityHistory.push(totalEquity);
+      if (equityHistory.length > 90) equityHistory.shift();
+    }
+
+    // Update telemetry numbers
+    opsPerSec = Math.round(146000 + Math.sin(simTime * 3.1) * 8400 + (volRegime > 1.5 ? 64000 : 0) + rng() * 2100);
+    latencyMs = Math.max(0.09, 0.14 + Math.sin(simTime * 5.2) * 0.02 + (volRegime > 1.5 ? 0.04 : 0));
+    fillRate = Math.round(38 + (volRegime > 1.5 ? 86 : 0) + Math.sin(simTime * 4.4) * 9);
+
+    // Step 3D fill particles
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const p = particles[i];
+      if (p.life > 0) {
+        p.life -= dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.z += p.vz * dt;
+        p.vy -= 2.15 * dt; // gravity arc
+        if (p.y < 0.02) {
+          p.y = 0.02;
+          p.vy *= -0.35;
+          p.vx *= 0.75;
+          p.vz *= 0.75;
+        }
+      }
+    }
+
+    updateBookSnapshot();
+  }
+
+  // ===== PURE WEBGL2 3D ENGINE (ZERO LIBRARIES) =====
+  const glCanvas = document.getElementById('glCanvas');
+  const gl = glCanvas.getContext('webgl2', {
+    antialias: true,
+    alpha: false,
+    preserveDrawingBuffer: true
+  });
+
+  if (!gl) {
+    console.error('WebGL2 not available');
+  }
+
+  function compileShader(type, src) {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+      console.error(gl.getShaderInfoLog(sh));
+    }
+    return sh;
+  }
+
+  function createProgram(vsSrc, fsSrc) {
+    const prog = gl.createProgram();
+    gl.attachShader(prog, compileShader(gl.VERTEX_SHADER, vsSrc));
+    gl.attachShader(prog, compileShader(gl.FRAGMENT_SHADER, fsSrc));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      console.error(gl.getProgramInfoLog(prog));
+    }
+    return prog;
+  }
+
+  // Matrix math helpers (Pure JS, Zero Libraries)
+  function mat4Perspective(fovy, aspect, near, far) {
+    const f = 1.0 / Math.tan(fovy * 0.5);
+    const nf = 1.0 / (near - far);
+    return new Float32Array([
+      f / aspect, 0, 0, 0,
+      0, f, 0, 0,
+      0, 0, (far + near) * nf, -1,
+      0, 0, 2 * far * near * nf, 0
+    ]);
+  }
+
+  function mat4LookAt(eye, center, up) {
+    let zx = eye[0] - center[0], zy = eye[1] - center[1], zz = eye[2] - center[2];
+    let len = Math.hypot(zx, zy, zz) || 1; zx /= len; zy /= len; zz /= len;
+    let xx = up[1] * zz - up[2] * zy;
+    let xy = up[2] * zx - up[0] * zz;
+    let xz = up[0] * zy - up[1] * zx;
+    len = Math.hypot(xx, xy, xz) || 1; xx /= len; xy /= len; xz /= len;
+    const yx = zy * xz - zz * xy;
+    const yy = zz * xx - zx * xz;
+    const yz = zx * xy - zy * xx;
+    return new Float32Array([
+      xx, yx, zx, 0,
+      xy, yy, zy, 0,
+      xz, yz, zz, 0,
+      -(xx*eye[0] + xy*eye[1] + xz*eye[2]),
+      -(yx*eye[0] + yy*eye[1] + yz*eye[2]),
+      -(zx*eye[0] + zy*eye[1] + zz*eye[2]),
+      1
+    ]);
+  }
+
+  function mat4Mul(a, b) {
+    const out = new Float32Array(16);
+    for (let c = 0; c < 4; c++) {
+      for (let r = 0; r < 4; r++) {
+        out[c*4+r] = a[0*4+r]*b[c*4+0] + a[1*4+r]*b[c*4+1] + a[2*4+r]*b[c*4+2] + a[3*4+r]*b[c*4+3];
+      }
+    }
+    return out;
+  }
+
+  // 1) 3D Surface Shader (Dual-mode: Order-Book Topography + Black-Scholes IV Surface)
+  const surfaceProg = createProgram(`#version 300 es
+    precision highp float;
+    layout(location = 0) in vec3 aPos;
+    layout(location = 1) in vec3 aNormal;
+    layout(location = 2) in vec3 aColor;
+    layout(location = 3) in vec2 aUv;
+
+    uniform mat4 uMVP;
+    uniform vec3 uCamPos;
+    out vec3 vPos;
+    out vec3 vNorm;
+    out vec3 vCol;
+    out vec2 vUv;
+
+    void main() {
+      vPos = aPos;
+      vNorm = normalize(aNormal);
+      vCol = aColor;
+      vUv = aUv;
+      gl_Position = uMVP * vec4(aPos, 1.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec3 vPos;
+    in vec3 vNorm;
+    in vec3 vCol;
+    in vec2 vUv;
+
+    uniform vec3 uCamPos;
+    uniform float uTime;
+    uniform float uMorph;
+    out vec4 fragColor;
+
+    void main() {
+      vec3 N = normalize(vNorm);
+      vec3 V = normalize(uCamPos - vPos);
+      vec3 L1 = normalize(vec3(1.4, 2.5, 1.8));
+      vec3 L2 = normalize(vec3(-1.8, 1.6, -1.2));
+
+      float diff1 = max(dot(N, L1), 0.0);
+      float diff2 = max(dot(N, L2), 0.0) * 0.45;
+      vec3 H = normalize(L1 + V);
+      float spec = pow(max(dot(N, H), 0.0), 36.0) * 0.55;
+      float fresnel = pow(1.0 - max(dot(N, V), 0.0), 2.6);
+
+      // Luminous elevation contour lines + subtle grid lines
+      float contour = smoothstep(0.90, 0.985, abs(sin(vPos.y * 28.0)));
+      float gridX = smoothstep(0.94, 0.99, abs(sin(vUv.x * 3.14159265 * 24.0)));
+      float gridZ = smoothstep(0.94, 0.99, abs(sin(vUv.y * 3.14159265 * 20.0)));
+      float wire = max(gridX, gridZ) * 0.32 + contour * 0.55;
+
+      // Subtle holographic scanline sweeping along Z
+      float scan = exp(-pow(fract(vUv.y - uTime * 0.22) * 14.0, 2.0)) * 0.28;
+
+      vec3 base = vCol * (0.26 + diff1 * 0.78 + diff2);
+      vec3 rim = mix(vCol, vec3(0.75, 0.95, 1.0), 0.55) * fresnel * 0.85;
+      vec3 glow = (vCol + vec3(0.28, 0.42, 0.52)) * (wire * 0.65 + scan);
+
+      // Mid-price laser highlight along center canyon in Order Book mode
+      float canyon = exp(-abs(vPos.x) * 26.0) * (1.0 - uMorph);
+      vec3 laser = vec3(1.0, 0.84, 0.28) * canyon * 0.85;
+
+      vec3 col = base + rim + vec3(spec) * mix(vCol, vec3(1.0), 0.6) + glow + laser;
+
+      // Subtle distance depth fade into midnight obsidian
+      float distFade = clamp(1.0 - (vPos.z + 1.6) * 0.14, 0.58, 1.0);
+      col *= distFade;
+
+      fragColor = vec4(col, 0.94);
+    }
+  `);
+
+  // 2) Floor Cyber-Grid & Axis Lines Shader
+  const lineProg = createProgram(`#version 300 es
+    precision highp float;
+    layout(location = 0) in vec3 aPos;
+    layout(location = 1) in vec4 aCol;
+    uniform mat4 uMVP;
+    out vec4 vCol;
+    void main() {
+      vCol = aCol;
+      gl_Position = uMVP * vec4(aPos, 1.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vCol;
+    out vec4 fragColor;
+    void main() {
+      fragColor = vCol;
+    }
+  `);
+
+  // 3) Glowing Additive 3D Fill Particles Shader
+  const partProg = createProgram(`#version 300 es
+    precision highp float;
+    layout(location = 0) in vec3 aPos;
+    layout(location = 1) in vec4 aCol;
+    layout(location = 2) in float aSize;
+    uniform mat4 uMVP;
+    out vec4 vCol;
+    void main() {
+      vCol = aCol;
+      gl_Position = uMVP * vec4(aPos, 1.0);
+      gl_PointSize = aSize * (4.2 / max(0.8, gl_Position.w));
+    }
+  `, `#version 300 es
+    precision highp float;
+    in vec4 vCol;
+    out vec4 fragColor;
+    void main() {
+      vec2 d = gl_PointCoord - 0.5;
+      float r2 = dot(d, d);
+      if (r2 > 0.25) discard;
+      float core = exp(-r2 * 24.0);
+      float halo = exp(-r2 * 7.5);
+      vec3 c = vCol.rgb * (0.9 + halo * 0.9) + vec3(core * 0.95);
+      fragColor = vec4(c, vCol.a * clamp(halo * 1.15, 0.0, 1.0));
+    }
+  `);
+
+  // Build Static Index Buffer for GRID_X x GRID_Z surface
+  const numVerts = GRID_X * GRID_Z;
+  const numQuads = (GRID_X - 1) * (GRID_Z - 1);
+  const surfIndices = new Uint16Array(numQuads * 6);
+  let idxPtr = 0;
+  for (let z = 0; z < GRID_Z - 1; z++) {
+    for (let x = 0; x < GRID_X - 1; x++) {
+      const i0 = z * GRID_X + x;
+      const i1 = i0 + 1;
+      const i2 = i0 + GRID_X;
+      const i3 = i2 + 1;
+      surfIndices[idxPtr++] = i0; surfIndices[idxPtr++] = i2; surfIndices[idxPtr++] = i1;
+      surfIndices[idxPtr++] = i1; surfIndices[idxPtr++] = i2; surfIndices[idxPtr++] = i3;
+    }
+  }
+
+  // Vertex buffer layout: 11 floats per vertex (pos3, norm3, col3, uv2)
+  const surfVerts = new Float32Array(numVerts * 11);
+  const surfVao = gl.createVertexArray();
+  const surfVbo = gl.createBuffer();
+  const surfIbo = gl.createBuffer();
+
+  gl.bindVertexArray(surfVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, surfVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, surfVerts.byteLength, gl.DYNAMIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, surfIbo);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, surfIndices, gl.STATIC_DRAW);
+  const STRIDE = 11 * 4;
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, STRIDE, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, STRIDE, 12);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, STRIDE, 24);
+  gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 2, gl.FLOAT, false, STRIDE, 36);
+  gl.bindVertexArray(null);
+
+  // Build Cyber-Grid Floor + Center Canyon Laser Line
+  const gridLines = [];
+  function pushLine(x1,y1,z1, x2,y2,z2, r,g,b,a) {
+    gridLines.push(x1,y1,z1, r,g,b,a, x2,y2,z2, r,g,b,a);
+  }
+  const G_SPAN = 1.95;
+  for (let i = -10; i <= 10; i++) {
+    const t = (i / 10) * G_SPAN;
+    const isCenter = i === 0;
+    const c = isCenter ? [0.98, 0.78, 0.22, 0.72] : [0.22, 0.56, 0.92, 0.22];
+    pushLine(t, -0.02, -G_SPAN, t, -0.02, G_SPAN, c[0], c[1], c[2], c[3]);
+    pushLine(-G_SPAN, -0.02, t, G_SPAN, -0.02, t, 0.22, 0.56, 0.92, isCenter ? 0.35 : 0.2);
+  }
+  // Vertical corner scale pillars
+  pushLine(-1.45, -0.02, -1.25, -1.45, 1.25, -1.25, 0.0, 0.95, 0.62, 0.35);
+  pushLine( 1.45, -0.02, -1.25,  1.45, 1.25, -1.25, 1.0, 0.20, 0.42, 0.35);
+  // Floating reference height rings at back
+  for (let h = 1; h <= 4; h++) {
+    const yy = h * 0.28;
+    pushLine(-1.45, yy, -1.25, 1.45, yy, -1.25, 0.35, 0.65, 0.95, 0.16);
+  }
+
+  const gridData = new Float32Array(gridLines);
+  const gridVao = gl.createVertexArray();
+  const gridVbo = gl.createBuffer();
+  gl.bindVertexArray(gridVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gridVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, gridData, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 28, 12);
+  gl.bindVertexArray(null);
+
+  // Particle Buffers (pos3, col4, size1 = 8 floats)
+  const partData = new Float32Array(MAX_PARTICLES * 8);
+  const partVao = gl.createVertexArray();
+  const partVbo = gl.createBuffer();
+  gl.bindVertexArray(partVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, partVbo);
+  gl.bufferData(gl.ARRAY_BUFFER, partData.byteLength, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 32, 12);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 32, 28);
+  gl.bindVertexArray(null);
+
+  // Scientific color ramp for 3D Black-Scholes IV Surface (deep cyan -> electric blue -> violet -> neon magenta -> gold peak)
+  function ivColorRamp(v) {
+    const t = Math.max(0, Math.min(1, v));
+    if (t < 0.33) {
+      const k = t / 0.33;
+      return [0.06 + k * 0.14, 0.65 + k * 0.22, 0.95];
+    } else if (t < 0.66) {
+      const k = (t - 0.33) / 0.33;
+      return [0.20 + k * 0.56, 0.87 - k * 0.54, 0.95 + k * 0.03];
+    } else {
+      const k = (t - 0.66) / 0.34;
+      return [0.76 + k * 0.24, 0.33 + k * 0.45, 0.98 - k * 0.68];
+    }
+  }
+
+  // Temporary height field array for fast normal computation
+  const heights = new Float32Array(numVerts);
+
+  function updateSurfaceGeometry() {
+    const halfX = 1.42;
+    const halfZ = 1.22;
+    const m = surfaceMorph;
+
+    // 1. Compute vertex positions & dual-mode morphed height + color
+    for (let z = 0; z < GRID_Z; z++) {
+      const vz = z / (GRID_Z - 1); // 0 = front (now), 1 = back (older)
+      const wz = halfZ - vz * (halfZ * 2.0);
+      const row = depthHistory[z];
+
+      for (let x = 0; x < GRID_X; x++) {
+        const vx = x / (GRID_X - 1);
+        const wx = (vx - 0.5) * 2.0 * halfX;
+        const idx = z * GRID_X + x;
+
+        // Mode 0: Order Book Depth Height
+        // Create clean sharp center gap at mid-price (x = 23..24)
+        let hOB = row[x];
+        if (x === 23 || x === 24) hOB *= 0.38;
+
+        // Mode 1: Dramatic Black-Scholes Implied Volatility Smile & Skew Term-Structure Surface
+        const moneyness = (vx - 0.5) * 2.0; // -1..+1 (OTM Put to OTM Call)
+        const tenor = 0.14 + vz * 1.25;     // Maturity T
+        // Steep OTM Put Skew + Call Wing Smile decaying over longer maturities
+        const smile = 0.16 + (0.96 * moneyness * moneyness - 0.34 * moneyness + 0.14 * Math.exp(-tenor * 2.4)) / Math.sqrt(tenor + 0.28);
+        const pulse = Math.sin(moneyness * 5.0 - simTime * 2.6) * Math.cos(vz * 4.2 + simTime * 1.8) * 0.065;
+        const hIV = Math.max(0.10, Math.min(1.38, smile * 0.72 + pulse + (volRegime - 1.0) * 0.06));
+
+        const h = hOB * (1.0 - m) + hIV * m;
+        heights[idx] = h;
+
+        // Mode 0 Color (Bid emerald-cyan vs Ask crimson-magenta)
+        let rOB, gOB, bOB;
+        const elev = Math.min(1.0, hOB / 1.15);
+        if (x < 24) {
+          rOB = 0.02 + elev * 0.18;
+          gOB = 0.72 + elev * 0.28;
+          bOB = 0.52 + (1.0 - elev) * 0.38;
+        } else {
+          rOB = 0.92 + elev * 0.08;
+          gOB = 0.12 + elev * 0.34;
+          bOB = 0.38 + (1.0 - elev) * 0.22;
+        }
+
+        // Mode 1 Color (Full-dynamic-range Scientific IV Smile Ramp: cyan trough -> violet mid -> magenta/gold skew peaks!)
+        const [rIV, gIV, bIV] = ivColorRamp((hIV - 0.18) / 0.86);
+
+        const base = idx * 11;
+        surfVerts[base + 0] = wx;
+        surfVerts[base + 1] = h;
+        surfVerts[base + 2] = wz;
+        surfVerts[base + 6] = rOB * (1.0 - m) + rIV * m;
+        surfVerts[base + 7] = gOB * (1.0 - m) + gIV * m;
+        surfVerts[base + 8] = bOB * (1.0 - m) + bIV * m;
+        surfVerts[base + 9] = vx;
+        surfVerts[base + 10] = vz;
+      }
+    }
+
+    // 2. Compute smooth analytical finite-difference normals
+    const dx = (halfX * 2.0) / (GRID_X - 1);
+    const dz = (halfZ * 2.0) / (GRID_Z - 1);
+    for (let z = 0; z < GRID_Z; z++) {
+      for (let x = 0; x < GRID_X; x++) {
+        const xm = Math.max(0, x - 1), xp = Math.min(GRID_X - 1, x + 1);
+        const zm = Math.max(0, z - 1), zp = Math.min(GRID_Z - 1, z + 1);
+        const hL = heights[z * GRID_X + xm];
+        const hR = heights[z * GRID_X + xp];
+        const hF = heights[zm * GRID_X + x];
+        const hB = heights[zp * GRID_X + x];
+        let nx = -(hR - hL) / (2.0 * dx);
+        let ny = 1.0;
+        let nz = (hB - hF) / (2.0 * dz);
+        const inv = 1.0 / Math.hypot(nx, ny, nz);
+        const base = (z * GRID_X + x) * 11;
+        surfVerts[base + 3] = nx * inv;
+        surfVerts[base + 4] = ny * inv;
+        surfVerts[base + 5] = nz * inv;
+      }
+    }
+  }
+
+  function renderWebGL() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.floor(glCanvas.clientWidth * dpr);
+    const h = Math.floor(glCanvas.clientHeight * dpr);
+    if (glCanvas.width !== w || glCanvas.height !== h) {
+      glCanvas.width = w;
+      glCanvas.height = h;
+    }
+
+    gl.viewport(0, 0, w, h);
+    gl.clearColor(0.022, 0.036, 0.075, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    const shakeX = (rng() - 0.5) * camShake;
+    const shakeY = (rng() - 0.5) * camShake;
+    const eye = [
+      Math.sin(camAz) * Math.cos(camEl) * camDist + shakeX,
+      Math.sin(camEl) * camDist + 0.36 + shakeY,
+      Math.cos(camAz) * Math.cos(camEl) * camDist
+    ];
+    const center = [0.0, 0.42, 0.0];
+    const proj = mat4Perspective(0.68, w / Math.max(1, h), 0.1, 30.0);
+    const view = mat4LookAt(eye, center, [0, 1, 0]);
+    const mvp = mat4Mul(proj, view);
+
+    // 1. Draw Cyber-Grid Floor
+    gl.useProgram(lineProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(lineProg, 'uMVP'), false, mvp);
+    gl.bindVertexArray(gridVao);
+    gl.drawArrays(gl.LINES, 0, gridData.length / 7);
+
+    // 2. Draw Dynamic 3D Depth / IV Surface
+    updateSurfaceGeometry();
+    gl.useProgram(surfaceProg);
+    gl.uniformMatrix4fv(gl.getUniformLocation(surfaceProg, 'uMVP'), false, mvp);
+    gl.uniform3fv(gl.getUniformLocation(surfaceProg, 'uCamPos'), eye);
+    gl.uniform1f(gl.getUniformLocation(surfaceProg, 'uTime'), simTime);
+    gl.uniform1f(gl.getUniformLocation(surfaceProg, 'uMorph'), surfaceMorph);
+    gl.bindVertexArray(surfVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, surfVbo);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, surfVerts);
+    gl.drawElements(gl.TRIANGLES, surfIndices.length, gl.UNSIGNED_SHORT, 0);
+
+    // 3. Draw Additive 3D Execution Fill Sparks
+    let activeCount = 0;
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const p = particles[i];
+      if (p.life > 0) {
+        const a = Math.min(1.0, p.life / p.maxLife);
+        const o = activeCount * 8;
+        partData[o + 0] = p.x;
+        partData[o + 1] = p.y;
+        partData[o + 2] = p.z;
+        partData[o + 3] = p.r;
+        partData[o + 4] = p.g;
+        partData[o + 5] = p.b;
+        partData[o + 6] = a;
+        partData[o + 7] = p.size * (0.5 + 0.5 * a) * dpr;
+        activeCount++;
+      }
+    }
+
+    if (activeCount > 0) {
+      gl.depthMask(false);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+      gl.useProgram(partProg);
+      gl.uniformMatrix4fv(gl.getUniformLocation(partProg, 'uMVP'), false, mvp);
+      gl.bindVertexArray(partVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, partVbo);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, partData.subarray(0, activeCount * 8));
+      gl.drawArrays(gl.POINTS, 0, activeCount);
+      gl.depthMask(true);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    }
+
+    gl.bindVertexArray(null);
+  }
+
+  // ===== 2D CANVAS: LIVE CANDLESTICK + EMA + BOLLINGER + VOLUME PROFILE =====
+  const candleCanvas = document.getElementById('candleCanvas');
+  const cctx = candleCanvas.getContext('2d');
+
+  function renderCandles() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = candleCanvas.clientWidth;
+    const H = candleCanvas.clientHeight;
+    if (candleCanvas.width !== Math.floor(W * dpr) || candleCanvas.height !== Math.floor(H * dpr)) {
+      candleCanvas.width = Math.floor(W * dpr);
+      candleCanvas.height = Math.floor(H * dpr);
+    }
+    cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cctx.clearRect(0, 0, W, H);
+
+    const all = [...candles, currentCandle];
+    const padL = 8, padR = 56, padT = 14, padB = 46;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+
+    let minP = Infinity, maxP = -Infinity, maxVol = 1;
+    for (const c of all) {
+      if (c.low < minP) minP = c.low;
+      if (c.high > maxP) maxP = c.high;
+      if (c.vol > maxVol) maxVol = c.vol;
+    }
+    const margin = Math.max(0.6, (maxP - minP) * 0.14);
+    minP -= margin; maxP += margin;
+
+    const yOf = (p) => padT + ((maxP - p) / (maxP - minP)) * chartH;
+    const stepX = chartW / MAX_CANDLES;
+    const xOf = (i) => padL + (i + 0.5) * stepX;
+
+    // Horizontal price grid + right labels
+    cctx.font = '9.5px "Cascadia Code", Consolas, monospace';
+    cctx.textAlign = 'left';
+    const gridLevels = 5;
+    for (let i = 0; i <= gridLevels; i++) {
+      const p = minP + ((maxP - minP) * i) / gridLevels;
+      const y = yOf(p);
+      cctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+      cctx.lineWidth = 1;
+      cctx.beginPath(); cctx.moveTo(padL, y); cctx.lineTo(W - padR, y); cctx.stroke();
+      cctx.fillStyle = '#6c84a6';
+      cctx.fillText(p.toFixed(2), W - padR + 5, y + 3);
+    }
+
+    // Compute EMA9, EMA21, Bollinger Bands (20-period)
+    const ema9 = [], ema21 = [], bbUp = [], bbLo = [];
+    let e9 = all[0].close, e21 = all[0].close;
+    for (let i = 0; i < all.length; i++) {
+      const cl = all[i].close;
+      e9 = e9 + (cl - e9) * (2 / 10);
+      e21 = e21 + (cl - e21) * (2 / 22);
+      ema9.push(e9); ema21.push(e21);
+      const winStart = Math.max(0, i - 14);
+      let sum = 0, cnt = i - winStart + 1;
+      for (let j = winStart; j <= i; j++) sum += all[j].close;
+      const mean = sum / cnt;
+      let varSum = 0;
+      for (let j = winStart; j <= i; j++) varSum += (all[j].close - mean) ** 2;
+      const std = Math.sqrt(varSum / cnt);
+      bbUp.push(mean + std * 2.0);
+      bbLo.push(mean - std * 2.0);
+    }
+
+    // Right-side Volume Profile (Point of Control bars)
+    const vpBins = 16;
+    const vpArr = new Float32Array(vpBins);
+    let maxVp = 1;
+    for (const c of all) {
+      const b = Math.max(0, Math.min(vpBins - 1, Math.floor(((c.close - minP) / (maxP - minP)) * vpBins)));
+      vpArr[b] += c.vol;
+      if (vpArr[b] > maxVp) maxVp = vpArr[b];
+    }
+    const binH = chartH / vpBins;
+    for (let b = 0; b < vpBins; b++) {
+      const bw = (vpArr[b] / maxVp) * 44;
+      const by = padT + chartH - (b + 1) * binH;
+      cctx.fillStyle = vpArr[b] === maxVp ? 'rgba(251, 191, 36, 0.24)' : 'rgba(56, 189, 248, 0.11)';
+      cctx.fillRect(W - padR - bw, by + 1, bw, binH - 2);
+    }
+
+    // Draw Bollinger Band Translucent Envelope
+    cctx.beginPath();
+    for (let i = 0; i < all.length; i++) {
+      const x = xOf(i), y = yOf(bbUp[i]);
+      if (i === 0) cctx.moveTo(x, y); else cctx.lineTo(x, y);
+    }
+    for (let i = all.length - 1; i >= 0; i--) {
+      cctx.lineTo(xOf(i), yOf(bbLo[i]));
+    }
+    cctx.closePath();
+    cctx.fillStyle = 'rgba(56, 189, 248, 0.065)';
+    cctx.fill();
+
+    // BB Borders
+    const drawLine = (arr, color, width = 1.2, dash = []) => {
+      cctx.save();
+      cctx.strokeStyle = color;
+      cctx.lineWidth = width;
+      cctx.setLineDash(dash);
+      cctx.beginPath();
+      for (let i = 0; i < arr.length; i++) {
+        const x = xOf(i), y = yOf(arr[i]);
+        if (i === 0) cctx.moveTo(x, y); else cctx.lineTo(x, y);
+      }
+      cctx.stroke();
+      cctx.restore();
+    };
+    drawLine(bbUp, 'rgba(56, 189, 248, 0.28)', 1, [3, 3]);
+    drawLine(bbLo, 'rgba(56, 189, 248, 0.28)', 1, [3, 3]);
+    drawLine(ema9, 'rgba(56, 189, 248, 0.85)', 1.4);
+    drawLine(ema21, 'rgba(251, 191, 36, 0.78)', 1.3);
+
+    // Bottom Volume Histogram
+    const volBaseY = H - 6;
+    const volMaxH = 34;
+    for (let i = 0; i < all.length; i++) {
+      const c = all[i];
+      const up = c.close >= c.open;
+      const vh = Math.max(2, (c.vol / maxVol) * volMaxH);
+      cctx.fillStyle = up ? 'rgba(0, 245, 160, 0.28)' : 'rgba(255, 51, 102, 0.28)';
+      cctx.fillRect(xOf(i) - stepX * 0.34, volBaseY - vh, stepX * 0.68, vh);
+    }
+
+    // Draw Candlesticks
+    const cw = Math.max(2.6, stepX * 0.64);
+    for (let i = 0; i < all.length; i++) {
+      const c = all[i];
+      const x = xOf(i);
+      const up = c.close >= c.open;
+      const col = up ? '#00f5a0' : '#ff3366';
+      cctx.strokeStyle = col;
+      cctx.lineWidth = 1.1;
+      cctx.beginPath();
+      cctx.moveTo(x, yOf(c.high));
+      cctx.lineTo(x, yOf(c.low));
+      cctx.stroke();
+
+      const yO = yOf(c.open), yC = yOf(c.close);
+      const top = Math.min(yO, yC);
+      const bh = Math.max(1.8, Math.abs(yC - yO));
+      cctx.fillStyle = col;
+      cctx.fillRect(x - cw * 0.5, top, cw, bh);
+    }
+
+    // Live Price Dashed Laser + Right Axis Tag
+    const curY = yOf(midPrice);
+    const isUp = midPrice >= prevMidPrice;
+    const pCol = isUp ? '#00f5a0' : '#ff3366';
+    cctx.save();
+    cctx.strokeStyle = isUp ? 'rgba(0, 245, 160, 0.55)' : 'rgba(255, 51, 102, 0.55)';
+    cctx.setLineDash([4, 3]);
+    cctx.beginPath(); cctx.moveTo(padL, curY); cctx.lineTo(W - padR, curY); cctx.stroke();
+    cctx.restore();
+
+    cctx.fillStyle = pCol;
+    cctx.fillRect(W - padR + 1, curY - 8, padR - 3, 16);
+    cctx.fillStyle = '#04101d';
+    cctx.font = 'bold 9.5px "Cascadia Code", Consolas, monospace';
+    cctx.fillText(midPrice.toFixed(2), W - padR + 5, curY + 3.5);
+
+    // Event Callout Pins
+    for (const ann of chartAnnotations) {
+      if (ann.idx < 1 || ann.idx >= all.length) continue;
+      const ax = xOf(ann.idx);
+      const ay = yOf(ann.price);
+      cctx.save();
+      cctx.strokeStyle = ann.color;
+      cctx.lineWidth = 1;
+      cctx.setLineDash([2, 2]);
+      cctx.beginPath(); cctx.moveTo(ax, padT); cctx.lineTo(ax, padT + chartH); cctx.stroke();
+      cctx.setLineDash([]);
+
+      cctx.font = 'bold 9px "Cascadia Code", Consolas, monospace';
+      const tw = cctx.measureText(ann.text).width + 10;
+      const bx = Math.max(padL + 2, Math.min(W - padR - tw - 4, ax - tw * 0.5));
+      const by = ann.above ? Math.max(padT + 2, ay - 26) : Math.min(padT + chartH - 18, ay + 10);
+      cctx.fillStyle = 'rgba(5, 10, 22, 0.9)';
+      cctx.fillRect(bx, by, tw, 16);
+      cctx.strokeStyle = ann.color;
+      cctx.strokeRect(bx, by, tw, 16);
+      cctx.fillStyle = ann.color;
+      cctx.fillText(ann.text, bx + 5, by + 11);
+      cctx.restore();
+    }
+  }
+
+  // ===== 2D CANVAS: CUMULATIVE EQUITY CURVE =====
+  const eqCanvas = document.getElementById('equityCanvas');
+  const ectx = eqCanvas.getContext('2d');
+
+  function renderEquity() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = eqCanvas.clientWidth;
+    const H = eqCanvas.clientHeight;
+    if (eqCanvas.width !== Math.floor(W * dpr) || eqCanvas.height !== Math.floor(H * dpr)) {
+      eqCanvas.width = Math.floor(W * dpr);
+      eqCanvas.height = Math.floor(H * dpr);
+    }
+    ectx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ectx.clearRect(0, 0, W, H);
+
+    let minE = Infinity, maxE = -Infinity;
+    for (const v of equityHistory) {
+      if (v < minE) minE = v;
+      if (v > maxE) maxE = v;
+    }
+    const span = Math.max(20000, maxE - minE);
+    minE -= span * 0.1; maxE += span * 0.12;
+
+    const pad = 4;
+    const xOf = (i) => pad + (i / Math.max(1, equityHistory.length - 1)) * (W - pad * 2);
+    const yOf = (v) => pad + ((maxE - v) / (maxE - minE)) * (H - pad * 2);
+
+    // Subtle horizontal guide lines
+    ectx.strokeStyle = 'rgba(56, 189, 248, 0.09)';
+    ectx.lineWidth = 1;
+    for (let i = 1; i <= 3; i++) {
+      const y = (H * i) / 4;
+      ectx.beginPath(); ectx.moveTo(0, y); ectx.lineTo(W, y); ectx.stroke();
+    }
+
+    // Gradient Fill
+    const grad = ectx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, 'rgba(0, 245, 160, 0.34)');
+    grad.addColorStop(1, 'rgba(0, 245, 160, 0.01)');
+    ectx.beginPath();
+    for (let i = 0; i < equityHistory.length; i++) {
+      const x = xOf(i), y = yOf(equityHistory[i]);
+      if (i === 0) ectx.moveTo(x, y); else ectx.lineTo(x, y);
+    }
+    ectx.lineTo(xOf(equityHistory.length - 1), H);
+    ectx.lineTo(xOf(0), H);
+    ectx.closePath();
+    ectx.fillStyle = grad;
+    ectx.fill();
+
+    // Glowing Stroke
+    ectx.beginPath();
+    for (let i = 0; i < equityHistory.length; i++) {
+      const x = xOf(i), y = yOf(equityHistory[i]);
+      if (i === 0) ectx.moveTo(x, y); else ectx.lineTo(x, y);
+    }
+    ectx.strokeStyle = '#00f5a0';
+    ectx.lineWidth = 1.8;
+    ectx.stroke();
+
+    // Live endpoint dot
+    const lx = xOf(equityHistory.length - 1);
+    const ly = yOf(equityHistory[equityHistory.length - 1]);
+    ectx.fillStyle = '#00f5a0';
+    ectx.beginPath(); ectx.arc(lx, ly, 3.2, 0, Math.PI * 2); ectx.fill();
+  }
+
+  // ===== DOM SYNC (ZERO LAYOUT THRASH) =====
+  const elTopPrice = document.getElementById('topPrice');
+  const elTopChg = document.getElementById('topChg');
+  const elKpiOps = document.getElementById('kpiOps');
+  const elKpiLat = document.getElementById('kpiLat');
+  const elKpiEq = document.getElementById('kpiEquity');
+  const elEqTotal = document.getElementById('eqTotal');
+  const elEqDD = document.getElementById('eqDrawdown');
+  const elVwap = document.getElementById('candleVwap');
+  const elAskRows = document.getElementById('askRows');
+  const elBidRows = document.getElementById('bidRows');
+  const elObMidPrice = document.getElementById('obMidPrice');
+  const elImbBid = document.getElementById('imbBidLbl');
+  const elImbAsk = document.getElementById('imbAskLbl');
+  const elImbFill = document.getElementById('imbFill');
+  const elTapeList = document.getElementById('tapeList');
+  const elTapeRate = document.getElementById('tapeRate');
+  const elBotList = document.getElementById('botList');
+  const elBanner = document.getElementById('glBanner');
+  const elClock = document.getElementById('clockBox');
+  const elCamDeg = document.getElementById('camDeg');
+  const elCursor = document.getElementById('virtualCursor');
+  const elRing = document.getElementById('cursorRing');
+
+  // Pre-build static DOM nodes for order book, bots, and tape
+  const askNodes = [], bidNodes = [], botNodes = [], tapeNodes = [];
+  for (let i = 0; i < OB_LEVELS; i++) {
+    const a = document.createElement('div');
+    a.className = 'ob-row ask';
+    a.innerHTML = '<div class="ob-bar"></div><span class="p"></span><span class="s"></span><span class="t"></span>';
+    elAskRows.appendChild(a);
+    askNodes.push(a);
+
+    const b = document.createElement('div');
+    b.className = 'ob-row bid';
+    b.innerHTML = '<div class="ob-bar"></div><span class="p"></span><span class="s"></span><span class="t"></span>';
+    elBidRows.appendChild(b);
+    bidNodes.push(b);
+  }
+  for (let i = 0; i < 4; i++) {
+    const d = document.createElement('div');
+    d.className = 'bot-card';
+    d.innerHTML = `<div><div class="bot-name">${bots[i].id}<span class="bot-badge">${bots[i].tag}</span></div><div class="bot-sub">${bots[i].sub}</div></div><div><div class="bot-pnl"></div><div class="bot-sharpe">SR ${bots[i].sharpe.toFixed(2)}</div></div>`;
+    elBotList.appendChild(d);
+    botNodes.push(d);
+  }
+  for (let i = 0; i < 8; i++) {
+    const r = document.createElement('div');
+    r.className = 'tape-row';
+    r.innerHTML = '<span class="tt"></span><span class="tp"></span><span class="ts"></span><span class="tv"></span>';
+    elTapeList.appendChild(r);
+    tapeNodes.push(r);
+  }
+
+  function renderDOM() {
+    const chgPct = ((midPrice - OPEN_PRICE) / OPEN_PRICE) * 100;
+    const isPos = chgPct >= 0;
+    const upTick = midPrice >= prevMidPrice;
+
+    elTopPrice.textContent = `$${midPrice.toFixed(2)}`;
+    elTopPrice.style.color = upTick ? '#00f5a0' : '#ff5c85';
+    elTopChg.textContent = `${isPos ? '+' : ''}${chgPct.toFixed(2)}%`;
+    elKpiOps.textContent = `${opsPerSec.toLocaleString()} ops/s`;
+    elKpiLat.textContent = `${latencyMs.toFixed(2)} ms`;
+    elKpiEq.textContent = `$${Math.round(totalEquity).toLocaleString()}`;
+    elEqTotal.textContent = `$${Math.round(totalEquity).toLocaleString()}`;
+    elEqDD.textContent = `DD -${maxDrawdown.toFixed(2)}%`;
+    elVwap.textContent = `VWAP $${(midPrice - 0.31).toFixed(2)}`;
+    elTapeRate.textContent = `${fillRate} fills/s`;
+    elClock.textContent = `GEMINI 4 NEON · ${simTime.toFixed(1).padStart(4, '0')}s`;
+    elCamDeg.textContent = `AZ ${Math.round((camAz * 180) / Math.PI)}° · EL ${Math.round((camEl * 180) / Math.PI)}°`;
+
+    // Mode Buttons & 3D HUD Labels
+    const isIV = surfaceMorph > 0.45;
+    document.getElementById('btnModeDepth').className = isIV ? 'mode-btn' : 'mode-btn active';
+    document.getElementById('btnModeIV').className = isIV ? 'mode-btn iv-active' : 'mode-btn';
+
+    document.getElementById('glHeaderTitle').textContent = isIV
+      ? 'WEBGL2 3D BLACK-SCHOLES IV SURFACE'
+      : 'PURE WEBGL2 3D ORDER-BOOK DEPTH TOPOGRAPHY';
+    document.getElementById('glHudTitle').textContent = isIV
+      ? 'IV SMILE & TERM STRUCTURE // σ(K, T)'
+      : 'L2 LIQUIDITY TERRAIN // LIVE LOB';
+    document.getElementById('glHudSub').textContent = isIV
+      ? 'X: STRIKE MONEYNESS (K/S) · Y: IMPLIED VOL · Z: MATURITY'
+      : 'X: PRICE TICKS · Y: CUMULATIVE DEPTH · Z: TIME FLOW';
+    document.getElementById('glLegend').innerHTML = isIV
+      ? '<div class="leg-item"><span class="leg-swatch" style="background:#38bdf8;box-shadow:0 0 6px #38bdf8"></span>LOW IV</div><div class="leg-item"><span class="leg-swatch" style="background:#c084fc;box-shadow:0 0 6px #c084fc"></span>MID</div><div class="leg-item"><span class="leg-swatch" style="background:#fbbf24;box-shadow:0 0 6px #fbbf24"></span>SKEW PEAK</div>'
+      : '<div class="leg-item"><span class="leg-swatch" style="background:#00f5a0;box-shadow:0 0 6px #00f5a0"></span>BID WALL</div><div class="leg-item"><span class="leg-swatch" style="background:#ff3366;box-shadow:0 0 6px #ff3366"></span>ASK WALL</div><div class="leg-item"><span class="leg-swatch" style="background:#fbbf24;box-shadow:0 0 6px #fbbf24"></span>FILLS</div>';
+
+    const m1k = document.getElementById('m1k'), m1v = document.getElementById('m1v');
+    const m2k = document.getElementById('m2k'), m2v = document.getElementById('m2v');
+    const m3k = document.getElementById('m3k'), m3v = document.getElementById('m3v');
+    if (isIV) {
+      m1k.textContent = 'ATM IMPLIED VOL';
+      m1v.textContent = `${(62.4 + Math.sin(simTime * 2.2) * 2.1).toFixed(1)}%`;
+      m1v.style.color = '#38bdf8';
+      m2k.textContent = '25Δ PUT-CALL SKEW';
+      m2v.textContent = '+8.42%';
+      m2v.style.color = '#d8b4fe';
+      m3k.textContent = 'NET PORT GAMMA';
+      m3v.textContent = '+0.0418';
+      m3v.style.color = '#fbbf24';
+    } else {
+      const bidDepthM = (currentBids[OB_LEVELS - 1]?.total || 2000) * midPrice / 1e5;
+      const askDepthM = (currentAsks[OB_LEVELS - 1]?.total || 1800) * midPrice / 1e5;
+      m1k.textContent = 'BID DEPTH (2%)';
+      m1v.textContent = `$${bidDepthM.toFixed(2)}M`;
+      m1v.style.color = '#00f5a0';
+      m2k.textContent = 'ASK DEPTH (2%)';
+      m2v.textContent = `$${askDepthM.toFixed(2)}M`;
+      m2v.style.color = '#ff5c85';
+      m3k.textContent = 'ORDERFLOW DELTA';
+      m3v.textContent = `${orderflowDelta >= 0 ? '+' : ''}$${orderflowDelta.toFixed(2)}M`;
+      m3v.style.color = orderflowDelta >= 0 ? '#fbbf24' : '#ff5c85';
+    }
+
+    // Event Banner
+    if (activeAlert.ttl > 0) {
+      elBanner.textContent = activeAlert.text;
+      elBanner.className = `gl-event-banner ${activeAlert.cls}`;
+    } else {
+      elBanner.className = 'gl-event-banner';
+    }
+
+    // Order Book Rows (Symmetric 7 Asks + 7 Bids with clean Imbalance Bar)
+    const maxAskTot = Math.max(1, currentAsks[OB_LEVELS - 1].total);
+    for (let i = 0; i < OB_LEVELS; i++) {
+      const lvl = currentAsks[OB_LEVELS - 1 - i];
+      const n = askNodes[i];
+      n.children[0].style.width = `${Math.min(100, (lvl.total / maxAskTot) * 100).toFixed(1)}%`;
+      n.children[1].textContent = lvl.price.toFixed(2);
+      n.children[2].textContent = lvl.size.toLocaleString();
+      n.children[3].textContent = (lvl.total / 1000).toFixed(1) + 'K';
+    }
+    const maxBidTot = Math.max(1, currentBids[OB_LEVELS - 1].total);
+    for (let i = 0; i < OB_LEVELS; i++) {
+      const lvl = currentBids[i];
+      const n = bidNodes[i];
+      n.children[0].style.width = `${Math.min(100, (lvl.total / maxBidTot) * 100).toFixed(1)}%`;
+      n.children[1].textContent = lvl.price.toFixed(2);
+      n.children[2].textContent = lvl.size.toLocaleString();
+      n.children[3].textContent = (lvl.total / 1000).toFixed(1) + 'K';
+    }
+
+    elObMidPrice.textContent = `$${midPrice.toFixed(2)} ${upTick ? '▲' : '▼'}`;
+    elObMidPrice.style.color = upTick ? '#00f5a0' : '#ff5c85';
+    const bidPct = Math.round(bidImbalance * 100);
+    elImbBid.textContent = `BID ${bidPct}%`;
+    elImbAsk.textContent = `${100 - bidPct}% ASK`;
+    elImbFill.style.width = `${bidPct}%`;
+
+    // Bots
+    for (let i = 0; i < 4; i++) {
+      const b = bots[i];
+      const n = botNodes[i];
+      n.className = b.hot > 0 ? 'bot-card hot' : (b.alert > 0 ? 'bot-card alert' : 'bot-card');
+      n.querySelector('.bot-pnl').textContent = `+$${Math.round(b.pnl).toLocaleString()}`;
+    }
+
+    // Tape
+    for (let i = 0; i < 8; i++) {
+      const row = tape[i];
+      const n = tapeNodes[i];
+      if (!row) continue;
+      const cls = row.whale
+        ? (row.side === 'buy' ? 'tape-row buy whale-buy' : 'tape-row sell whale-sell')
+        : (row.side === 'buy' ? 'tape-row buy' : 'tape-row sell');
+      n.className = cls;
+      n.children[0].textContent = row.time.slice(3);
+      n.children[1].textContent = `$${row.price.toFixed(2)}`;
+      n.children[2].textContent = row.size >= 1000 ? (row.size / 1000).toFixed(1) + 'K' : String(row.size);
+      n.children[3].textContent = row.notional >= 1e6 ? `$${(row.notional / 1e6).toFixed(1)}M` : `$${Math.round(row.notional / 1e3)}K`;
+    }
+
+    // Button press state for scripted clicks
+    for (const id of ['btnWhale', 'btnCascade', 'btnBuyMkt', 'btnSellMkt']) {
+      document.getElementById(id).classList.toggle('pressed', pressedBtnId === id);
+    }
+
+    // Phase Timeline Pills
+    const phases = [
+      { id: 'phase0', prog: 'prog0', s: 0,    e: 5.0,  cls: 'active' },
+      { id: 'phase1', prog: 'prog1', s: 5.0,  e: 11.5, cls: 'active-gold' },
+      { id: 'phase2', prog: 'prog2', s: 11.5, e: 17.5, cls: 'active-violet' },
+      { id: 'phase3', prog: 'prog3', s: 17.5, e: 24.0, cls: 'active-red' },
+    ];
+    for (const ph of phases) {
+      const el = document.getElementById(ph.id);
+      const pr = document.getElementById(ph.prog);
+      const active = simTime >= ph.s && simTime < ph.e;
+      const pct = simTime < ph.s ? 0 : (simTime >= ph.e ? 100 : ((simTime - ph.s) / (ph.e - ph.s)) * 100);
+      el.className = active ? `phase-pill ${ph.cls}` : 'phase-pill';
+      pr.style.width = `${pct.toFixed(1)}%`;
+    }
+
+    // Virtual Demo Cursor
+    elCursor.style.left = `${cursorX.toFixed(1)}px`;
+    elCursor.style.top = `${cursorY.toFixed(1)}px`;
+    elCursor.style.opacity = cursorOpacity.toFixed(2);
+    if (clickPulse > 0.02) {
+      const sc = 0.6 + (1.0 - clickPulse) * 1.1;
+      elRing.style.left = `${cursorX.toFixed(1)}px`;
+      elRing.style.top = `${cursorY.toFixed(1)}px`;
+      elRing.style.opacity = (clickPulse * 0.9).toFixed(2);
+      elRing.style.transform = `translate(-50%, -50%) scale(${sc.toFixed(2)})`;
+    } else {
+      elRing.style.opacity = '0';
+    }
+  }
+
+  // ===== INTERACTIVE CONTROLS (PLAYABLE WHEN OPENED IN BROWSER) =====
+  document.getElementById('btnModeDepth').addEventListener('click', () => { targetMorph = 0.0; });
+  document.getElementById('btnModeIV').addEventListener('click', () => { targetMorph = 1.0; });
+  document.getElementById('btnBuyMkt').addEventListener('click', () => executeMarketSweep('buy', 2000000));
+  document.getElementById('btnSellMkt').addEventListener('click', () => executeMarketSweep('sell', 2000000));
+  document.getElementById('btnWhale').addEventListener('click', () => executeMarketSweep('buy', 4820000));
+  document.getElementById('btnCascade').addEventListener('click', () => executeMarketSweep('sell', 6200000));
+
+  glCanvas.addEventListener('mousedown', (e) => {
+    userDragging = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
+  window.addEventListener('mouseup', () => { userDragging = false; });
+  window.addEventListener('mousemove', (e) => {
+    if (!userDragging) return;
+    camAz -= (e.clientX - lastMouseX) * 0.008;
+    camEl = Math.max(0.18, Math.min(1.25, camEl + (e.clientY - lastMouseY) * 0.006));
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
+  glCanvas.addEventListener('wheel', (e) => {
+    camDist = Math.max(2.0, Math.min(4.6, camDist + e.deltaY * 0.002));
+  }, { passive: true });
+
+  // ===== INITIALIZE & MAIN LOOP =====
+  prewarm();
+  renderDOM();
+  renderCandles();
+  renderEquity();
+  renderWebGL();
+
+  // Deterministic step function for Playwright video capture
+  window.stepTerminal = function(dt) {
+    stepSimulation(dt);
+    renderDOM();
+    renderCandles();
+    renderEquity();
+    renderWebGL();
+  };
+
+  if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.addControl('▶ 自動ツアー', (btn) => {
+        autoTour = !autoTour;
+        btn.classList.toggle('active', autoTour);
+        if (autoTour) { simTime = 0; for (const k in triggers) triggers[k] = false; }
+      });
+    });
+    let lastTs = performance.now();
+    function loop(now) {
+      const dt = Math.min(0.05, (now - lastTs) / 1000);
+      lastTs = now;
+      if (autoTour && simTime >= TOTAL_DEMO_SEC) {
+        // Loop seamlessly when auto tour is enabled
+        simTime = 0;
+        for (const k in triggers) triggers[k] = false;
+      }
+      window.stepTerminal(dt);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+})();
+</script>
+<script src="../demo-shell.js?v=20261120-32"></script>
+</body>
+</html>
