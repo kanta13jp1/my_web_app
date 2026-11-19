@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>雲海と桜の浮遊・日本五重塔 // 5-Layer Exploded Voxel Pagoda (Pure WebGL2)</title>
+<style>
+  :root { --mono: ui-monospace, "Cascadia Code", Consolas, monospace; --gold: #fbbf24; --sakura: #fda4af; --cyan: #38bdf8; }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #140a1a; color: #fff; font-family: var(--mono); }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; cursor: grab; }
+  #gl:active { cursor: grabbing; }
+  .hud-tl {
+    position: absolute; top: 14px; left: 16px;
+    background: rgba(16, 8, 22, 0.72); border: 1px solid rgba(253, 164, 175, 0.42);
+    border-radius: 8px; padding: 8px 13px; backdrop-filter: blur(6px);
+  }
+  .hud-tl h1 { font-size: 13px; font-weight: 800; letter-spacing: 1px; color: #fff1f2; }
+  .hud-tl h1 span { color: var(--sakura); }
+  .hud-tl p { font-size: 9.5px; color: #e2e8f0; margin-top: 2px; }
+  .hud-bl {
+    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-wrap: nowrap; align-items: center; gap: 6px;
+    background: rgba(14, 8, 22, 0.78); border: 1px solid rgba(253, 164, 175, 0.34);
+    border-radius: 999px; padding: 5px 12px; backdrop-filter: blur(8px);
+    white-space: nowrap;
+  }
+  .cbtn {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 800;
+    color: #f1f5f9; background: rgba(30, 20, 44, 0.88);
+    border: 1px solid rgba(253, 164, 175, 0.32); border-radius: 999px;
+    padding: 5px 11px; cursor: pointer;
+  }
+  .cbtn:hover { border-color: var(--gold); color: #fff; }
+  .cbtn.act { background: linear-gradient(90deg, #f43f5e, #fb7185); border-color: #fecdd3; color: #fff; }
+  .cbtn.act-nt { background: linear-gradient(90deg, #4f46e5, #818cf8); border-color: #c7d2fe; color: #fff; }
+  .sl { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #fde68a; padding-left: 4px; }
+  input[type="range"] { width: 96px; accent-color: #fb7185; cursor: pointer; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="koto">
+<canvas id="gl" width="1280" height="720"></canvas>
+
+<div class="hud-tl">
+  <h1>雲海と桜の浮遊・日本五重塔 <span>// 5-TIER VOXEL PAGODA</span></h1>
+  <p>PURE WEBGL2 · 5階層空中分解 × 夕焼け⇄満月夜桜ライトアップ × 桜吹雪＆滝</p>
+</div>
+
+<div class="hud-bl">
+  <button class="cbtn act" id="btnExplode">🏯 5階層分解</button>
+  <div class="sl"><span>展開</span><input type="range" id="expSlider" min="0" max="100" value="0" aria-label="5階層分解" /></div>
+  <button class="cbtn" id="btnNight">🌕 満月夜桜へ切替</button>
+  <button class="cbtn" id="cam0">01 全体</button>
+  <button class="cbtn" id="cam1">02 五重塔接写</button>
+  <button class="cbtn" id="cam2">03 太鼓橋＆滝</button>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('gl');
+  const gl = canvas.getContext('webgl2', { antialias: true, preserveDrawingBuffer: true });
+  if (!gl) return;
+
+  // Sky & Volumetric Sea of Clouds backdrop shader
+  const SKY_VS = `#version 300 es
+  out vec2 vUV;
+  void main() {
+    vec2 p = vec2((gl_VertexID & 1) * 4 - 1, (gl_VertexID & 2) * 2 - 1);
+    vUV = p * 0.5 + 0.5;
+    gl_Position = vec4(p, 0.999, 1.0);
+  }`;
+  const SKY_FS = `#version 300 es
+  precision highp float;
+  in vec2 vUV;
+  uniform float uTime;
+  uniform float uNight;
+  out vec4 outCol;
+  float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float noise(vec2 p){
+    vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+    return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y);
+  }
+  float fbm(vec2 p){
+    float v = 0.0, a = 0.5;
+    for (int i = 0; i < 4; i++) { v += a * noise(p); p = p * 2.04 + vec2(3.1, 1.7); a *= 0.5; }
+    return v;
+  }
+  void main() {
+    vec2 uv = vUV;
+    vec3 sunTop = vec3(0.24, 0.14, 0.42), sunMid = vec3(0.92, 0.42, 0.44), sunHor = vec3(1.0, 0.78, 0.52);
+    vec3 ngtTop = vec3(0.02, 0.04, 0.12), ngtMid = vec3(0.07, 0.11, 0.28), ngtHor = vec3(0.16, 0.24, 0.42);
+    vec3 top = mix(sunTop, ngtTop, uNight);
+    vec3 mid = mix(sunMid, ngtMid, uNight);
+    vec3 hor = mix(sunHor, ngtHor, uNight);
+    vec3 col = mix(hor, mid, smoothstep(0.18, 0.58, uv.y));
+    col = mix(col, top, smoothstep(0.54, 0.98, uv.y));
+
+    // Sun / Full Moon disc
+    vec2 celPos = mix(vec2(0.76, 0.54), vec2(0.74, 0.74), uNight);
+    float dCel = length((uv - celPos) * vec2(1280.0/720.0, 1.0));
+    vec3 celCol = mix(vec3(1.0, 0.85, 0.55), vec3(0.96, 0.97, 1.0), uNight);
+    col += celCol * smoothstep(0.11, 0.085, dCel) * 1.15;
+    col += celCol * exp(-dCel * 6.5) * 0.42;
+
+    // Stars at night
+    if (uNight > 0.15 && uv.y > 0.35) {
+      vec2 sc = floor(uv * vec2(240.0, 135.0));
+      float st = step(0.994, hash(sc)) * (0.55 + 0.45 * sin(uTime * 3.0 + hash(sc) * 40.0));
+      col += vec3(0.85, 0.92, 1.0) * st * uNight;
+    }
+
+    // Layered Sea of Clouds in lower 42%
+    float cloudMask = smoothstep(0.46, 0.16, uv.y);
+    float c1 = fbm(vec2(uv.x * 4.2 + uTime * 0.035, uv.y * 6.5));
+    float c2 = fbm(vec2(uv.x * 8.0 - uTime * 0.05, uv.y * 10.0 + 3.0));
+    float cl = smoothstep(0.32, 0.78, c1 * 0.65 + c2 * 0.35) * cloudMask;
+    vec3 clColDay = mix(vec3(0.86, 0.54, 0.62), vec3(1.0, 0.88, 0.78), c1);
+    vec3 clColNgt = mix(vec3(0.12, 0.18, 0.34), vec3(0.48, 0.58, 0.82), c1);
+    col = mix(col, mix(clColDay, clColNgt, uNight), cl * 0.92);
+
+    outCol = vec4(col, 1.0);
+  }`;
+
+  // Instanced Voxel + Sakura Petal Shader
+  const VOX_VS = `#version 300 es
+  layout(location=0) in vec3 aPos;
+  layout(location=1) in vec3 aNorm;
+  layout(location=2) in vec4 iPosTier;   // xyz = base pos, w = tier (0=island/bridge, 1..5=pagoda tiers, 6=spire, 7=water, 8=sakura)
+  layout(location=3) in vec4 iScaleEmit; // xyz = scale, w = emit strength
+  layout(location=4) in vec3 iCol;
+  uniform mat4 uVP;
+  uniform float uExplode;
+  uniform float uTime;
+  out vec3 vWPos;
+  out vec3 vNorm;
+  out vec3 vCol;
+  out float vEmit;
+  out float vTier;
+  void main() {
+    float tier = iPosTier.w;
+    vec3 p = aPos * iScaleEmit.xyz;
+    vec3 center = iPosTier.xyz;
+    if (tier >= 1.0 && tier <= 6.0) {
+      center.y += uExplode * tier * 1.15;
+    } else if (tier > 7.5) {
+      // Drifting sakura petals
+      float id = center.x * 13.7 + center.z * 29.3;
+      center.x += sin(uTime * 0.8 + id) * 2.2 - mod(uTime * 0.7 + id, 12.0) + 6.0;
+      center.y = mod(center.y - uTime * 0.85 + 16.0, 14.0) - 2.0;
+      center.z += cos(uTime * 0.6 + id * 1.3) * 1.8;
+      float ca = cos(uTime * 2.5 + id), sa = sin(uTime * 2.5 + id);
+      p = vec3(p.x * ca - p.y * sa, p.x * sa + p.y * ca, p.z);
+    } else if (tier > 6.5) {
+      // Waterfall shimmer
+      center.y -= mod(uTime * 3.8 + center.x * 2.1, 4.8);
+    }
+    vec3 wp = center + p;
+    vWPos = wp;
+    vNorm = aNorm;
+    vCol = iCol;
+    vEmit = iScaleEmit.w;
+    vTier = tier;
+    gl_Position = uVP * vec4(wp, 1.0);
+  }`;
+
+  const VOX_FS = `#version 300 es
+  precision highp float;
+  in vec3 vWPos;
+  in vec3 vNorm;
+  in vec3 vCol;
+  in float vEmit;
+  in float vTier;
+  uniform vec3 uCam;
+  uniform float uNight;
+  out vec4 outCol;
+  void main() {
+    vec3 N = normalize(vNorm);
+    vec3 L = normalize(mix(vec3(10.0, 12.0, 8.0), vec3(6.0, 16.0, 10.0), uNight));
+    vec3 lightCol = mix(vec3(1.25, 0.84, 0.68), vec3(0.55, 0.72, 1.18), uNight);
+    vec3 ambCol = mix(vec3(0.45, 0.28, 0.38), vec3(0.16, 0.22, 0.40), uNight);
+    float diff = max(dot(N, L), 0.0);
+    float nightGlow = vEmit * mix(0.45, 2.2, uNight);
+    vec3 col = vCol * (ambCol + lightCol * diff) + vCol * nightGlow;
+    if (vTier > 7.5 && uNight > 0.2) col += vec3(0.35, 0.14, 0.22) * uNight;
+    col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+    outCol = vec4(pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2)), 1.0);
+  }`;
+
+  function mkProg(vs, fs) {
+    const c = (t, s) => { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); return x; };
+    const p = gl.createProgram();
+    gl.attachShader(p, c(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, c(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    return p;
+  }
+  const skyProg = mkProg(SKY_VS, SKY_FS);
+  const voxProg = mkProg(VOX_VS, VOX_FS);
+  const emptyVao = gl.createVertexArray();
+
+  // Unit cube geometry
+  const cv = [], cn = [];
+  const q = (a,b,c,d,nm) => { cv.push(...a,...b,...c,...a,...c,...d); for(let i=0;i<6;i++) cn.push(...nm); };
+  q([-.5,-.5,.5],[.5,-.5,.5],[.5,.5,.5],[-.5,.5,.5],[0,0,1]);
+  q([.5,-.5,-.5],[-.5,-.5,-.5],[-.5,.5,-.5],[.5,.5,-.5],[0,0,-1]);
+  q([-.5,.5,.5],[.5,.5,.5],[.5,.5,-.5],[-.5,.5,-.5],[0,1,0]);
+  q([-.5,-.5,-.5],[.5,-.5,-.5],[.5,-.5,.5],[-.5,-.5,.5],[0,-1,0]);
+  q([.5,-.5,.5],[.5,-.5,-.5],[.5,.5,-.5],[.5,.5,.5],[1,0,0]);
+  q([-.5,-.5,-.5],[-.5,-.5,.5],[-.5,.5,.5],[-.5,.5,-.5],[-1,0,0]);
+
+  // Build Floating Island + 5-Tier Japanese Pagoda + Taiko Bridge + Cherry Trees + Waterfall + Sakura Petals
+  const posTier = [], scaleEmit = [], cols = [];
+  function addBox(x, y, z, sx, sy, sz, col, tier = 0, emit = 0) {
+    posTier.push(x, y, z, tier);
+    scaleEmit.push(sx, sy, sz, emit);
+    cols.push(col[0], col[1], col[2]);
+  }
+
+  let seed = 881;
+  const rand = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+
+  // 1. Floating Rock Island (tiered voxel cliff + moss top + pond)
+  for (let gx = -9; gx <= 9; gx++) {
+    for (let gz = -9; gz <= 9; gz++) {
+      const r = Math.hypot(gx, gz);
+      if (r > 8.6 + Math.sin(gx * 0.7) * 0.8) continue;
+      const depth = Math.max(0.6, (8.8 - r) * 0.62 + rand() * 1.1);
+      addBox(gx * 0.68, -depth * 0.5, gz * 0.68, 0.70, depth, 0.70, [0.24 + rand()*0.06, 0.22 + rand()*0.05, 0.28 + rand()*0.06], 0, 0);
+      const isPond = (gx >= 2 && gx <= 6 && gz >= -2 && gz <= 5);
+      addBox(gx * 0.68, 0.14, gz * 0.68, 0.70, 0.28, 0.70, isPond ? [0.16, 0.56, 0.82] : [0.22 + rand()*0.08, 0.44 + rand()*0.1, 0.26], 0, isPond ? 0.35 : 0);
+    }
+  }
+
+  // 2. Stone Foundation Plinth (Ishigaki)
+  addBox(0, 0.58, 0, 4.4, 0.65, 4.4, [0.42, 0.42, 0.46], 0, 0);
+  addBox(0, 0.96, 0, 3.8, 0.22, 3.8, [0.55, 0.53, 0.52], 0, 0);
+
+  // 3. Central Golden Heart Pillar (Shinbashira - revealed on 5-tier explode!)
+  addBox(0, 5.2, 0, 0.42, 8.6, 0.42, [1.0, 0.78, 0.24], 0, 0.75);
+
+  // 4. Five Pagoda Tiers (tier 1..5, each with vermilion walls, glowing shoji windows, upturned dark-slate eaves, golden corner bells!)
+  const VERM = [0.84, 0.18, 0.16];
+  const SHOJI = [1.0, 0.86, 0.52];
+  const ROOF = [0.14, 0.18, 0.26];
+  const GOLD = [1.0, 0.78, 0.24];
+  let curY = 1.15;
+  for (let t = 1; t <= 5; t++) {
+    const w = 3.2 - (t - 1) * 0.38;
+    const h = 1.38 - (t - 1) * 0.08;
+    // Main vermilion core + 4 corner pillars
+    addBox(0, curY + h * 0.5, 0, w, h, w, VERM, t, 0.05);
+    // Glowing shoji windows on all 4 sides
+    addBox(0, curY + h * 0.5, 0, w + 0.06, h * 0.58, w * 0.62, SHOJI, t, 0.95);
+    addBox(0, curY + h * 0.5, 0, w * 0.62, h * 0.58, w + 0.06, SHOJI, t, 0.95);
+    // Balcony rail
+    addBox(0, curY + 0.16, 0, w + 0.52, 0.14, w + 0.52, VERM, t, 0);
+    // Layered upturned dark-slate roof eaves
+    const rw = w + 1.55;
+    addBox(0, curY + h + 0.10, 0, rw, 0.22, rw, ROOF, t, 0);
+    addBox(0, curY + h + 0.30, 0, rw - 0.55, 0.22, rw - 0.55, ROOF, t, 0);
+    addBox(0, curY + h + 0.48, 0, rw - 1.1, 0.20, rw - 1.1, ROOF, t, 0);
+    // Upturned corner eave tips + hanging gold bells
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      addBox(sx * (rw * 0.48), curY + h + 0.24, sz * (rw * 0.48), 0.36, 0.22, 0.36, ROOF, t, 0);
+      addBox(sx * (rw * 0.48), curY + h - 0.04, sz * (rw * 0.48), 0.12, 0.24, 0.12, GOLD, t, 0.65);
+    }
+    curY += h + 0.56;
+  }
+  // Tier 6: Golden Sorin Spire
+  addBox(0, curY + 0.35, 0, 0.56, 0.55, 0.56, GOLD, 6, 0.6);
+  addBox(0, curY + 1.55, 0, 0.18, 2.3, 0.18, GOLD, 6, 0.85);
+  for (let r = 0; r < 6; r++) addBox(0, curY + 0.8 + r * 0.26, 0, 0.44 - r * 0.03, 0.09, 0.44 - r * 0.03, GOLD, 6, 0.7);
+
+  // 5. Vermilion Taiko Arched Bridge over Pond
+  for (let i = 0; i < 11; i++) {
+    const f = i / 10, x = 1.6 + f * 3.1, y = 0.32 + Math.sin(f * Math.PI) * 0.72;
+    addBox(x, y, 2.4, 0.38, 0.16, 1.05, [0.48, 0.26, 0.18], 0, 0);
+    addBox(x, y + 0.32, 1.92, 0.34, 0.12, 0.10, VERM, 0, 0.12);
+    addBox(x, y + 0.32, 2.88, 0.34, 0.12, 0.10, VERM, 0, 0.12);
+  }
+  // Stone Lanterns (Toro)
+  for (const [lx, lz] of [[1.4, 3.3], [4.7, 1.5], [-3.2, 2.6]]) {
+    addBox(lx, 0.65, lz, 0.28, 0.9, 0.28, [0.55, 0.54, 0.56], 0, 0);
+    addBox(lx, 1.25, lz, 0.34, 0.34, 0.34, SHOJI, 0, 1.2);
+    addBox(lx, 1.52, lz, 0.54, 0.16, 0.54, [0.42, 0.42, 0.46], 0, 0);
+  }
+
+  // 6. Lush Sakura Trees (Voxel trunks + layered pink blossom clusters)
+  for (const [tx, tz, sc] of [[-3.8, -1.8, 1.15], [-3.1, 3.2, 0.95], [3.8, -3.2, 1.05], [0.5, -4.4, 0.9]]) {
+    addBox(tx, 1.25 * sc, tz, 0.34 * sc, 2.3 * sc, 0.34 * sc, [0.30, 0.18, 0.14], 0, 0);
+    for (let k = 0; k < 28; k++) {
+      const a = rand() * Math.PI * 2, rad = rand() * 1.6 * sc, h = (1.8 + rand() * 1.6) * sc;
+      const pk = [0.98, 0.56 + rand() * 0.24, 0.70 + rand() * 0.2];
+      addBox(tx + Math.cos(a) * rad, h, tz + Math.sin(a) * rad, 0.55 * sc, 0.48 * sc, 0.55 * sc, pk, 0, 0.18);
+    }
+  }
+
+  // 7. Cascading Animated Waterfall off Island Edge (tier=7)
+  for (let i = 0; i < 65; i++) {
+    addBox(3.4 + (rand() - 0.5) * 1.4, 0.0 - rand() * 4.8, 4.95 + rand() * 0.35, 0.24, 0.62, 0.22, [0.68, 0.92, 1.0], 7, 0.7);
+  }
+
+  // 8. 420 Drifting Sakura Petals (tier=8)
+  for (let i = 0; i < 420; i++) {
+    addBox((rand() - 0.5) * 14, rand() * 14, (rand() - 0.5) * 14, 0.13, 0.08, 0.04, [1.0, 0.72 + rand()*0.18, 0.84], 8, 0.55);
+  }
+
+  const instCount = posTier.length / 4;
+  const voxVao = gl.createVertexArray(); gl.bindVertexArray(voxVao);
+  const mkBuf = (arr, loc, size, div = 0) => {
+    const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
+    if (div) gl.vertexAttribDivisor(loc, div);
+  };
+  mkBuf(cv, 0, 3, 0);
+  mkBuf(cn, 1, 3, 0);
+  mkBuf(posTier, 2, 4, 1);
+  mkBuf(scaleEmit, 3, 4, 1);
+  mkBuf(cols, 4, 3, 1);
+
+  function m4Mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c=0;c<4;c++) for (let r=0;r<4;r++) o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
+    return o;
+  }
+  function m4Persp(fov, asp, n, f) {
+    const t=1/Math.tan(fov*0.5), nf=1/(n-f);
+    return new Float32Array([t/asp,0,0,0, 0,t,0,0, 0,0,(f+n)*nf,-1, 0,0,2*f*n*nf,0]);
+  }
+  function m4Look(e, t) {
+    let zx=e[0]-t[0], zy=e[1]-t[1], zz=e[2]-t[2], zl=Math.hypot(zx,zy,zz)||1; zx/=zl; zy/=zl; zz/=zl;
+    let xx=zz, xy=0, xz=-zx, xl=Math.hypot(xx,xy,xz)||1; xx/=xl; xz/=xl;
+    let yx=zy*xz, yy=zz*xx-zx*xz, yz=-zy*xx;
+    return new Float32Array([xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0, -(xx*e[0]+xy*e[1]+xz*e[2]),-(yx*e[0]+yy*e[1]+yz*e[2]),-(zx*e[0]+zy*e[1]+zz*e[2]),1]);
+  }
+
+  let camYaw = 0.58, camPitch = 0.20, camDist = 20.5, tgtYaw = 0.58, tgtPitch = 0.20, tgtDist = 20.5, tgtY = 5.4, curYCam = 5.4;
+  let explode = 0, tgtExplode = 0, night = 0, tgtNight = 0, simT = 0;
+  let autoSpin = true, dragging = false, lx = 0, ly = 0;
+
+  const expSlider = document.getElementById('expSlider');
+  const btnExplode = document.getElementById('btnExplode');
+  const btnNight = document.getElementById('btnNight');
+
+  btnExplode.addEventListener('click', () => {
+    tgtExplode = tgtExplode > 0.5 ? 0 : 1;
+    expSlider.value = String(Math.round(tgtExplode * 100));
+    btnExplode.classList.toggle('act', tgtExplode > 0.5);
+    tgtY = tgtExplode > 0.5 ? 6.8 : 4.5;
+    tgtDist = tgtExplode > 0.5 ? 21.5 : 17.5;
+    window.NeonAudio?.sfx('chime', tgtExplode > 0.5 ? 1.25 : 0.85);
+  });
+  expSlider.addEventListener('input', () => {
+    tgtExplode = Number(expSlider.value) / 100;
+    btnExplode.classList.toggle('act', tgtExplode > 0.5);
+    tgtY = 4.5 + tgtExplode * 2.3;
+  });
+  btnNight.addEventListener('click', () => {
+    tgtNight = tgtNight > 0.5 ? 0 : 1;
+    btnNight.textContent = tgtNight > 0.5 ? '🌅 夕焼けへ戻す' : '🌕 満月夜桜へ切替';
+    btnNight.classList.toggle('act-nt', tgtNight > 0.5);
+    window.NeonAudio?.sfx('chime', tgtNight > 0.5 ? 0.78 : 1.15);
+  });
+  document.getElementById('cam0').addEventListener('click', () => { autoSpin = true; tgtPitch = 0.24; tgtDist = 17.5; tgtY = 4.5 + tgtExplode * 2.3; });
+  document.getElementById('cam1').addEventListener('click', () => { autoSpin = false; tgtYaw = 0.35; tgtPitch = 0.16; tgtDist = 11.5; tgtY = 5.8 + tgtExplode * 2.2; });
+  document.getElementById('cam2').addEventListener('click', () => { autoSpin = false; tgtYaw = 1.05; tgtPitch = 0.32; tgtDist = 11.2; tgtY = 1.5; });
+
+  canvas.addEventListener('pointerdown', (e) => { dragging = true; autoSpin = false; lx = e.clientX; ly = e.clientY; });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    tgtYaw += (e.clientX - lx) * 0.007;
+    tgtPitch = Math.max(-0.2, Math.min(1.1, tgtPitch + (e.clientY - ly) * 0.006));
+    lx = e.clientX; ly = e.clientY;
+  });
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    tgtDist = Math.max(8, Math.min(30, tgtDist + e.deltaY * 0.01));
+  }, { passive: false });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    window.NeonShell?.setHint('5階層分解スライダーで五重塔が空中展開 · 夕焼け⇄満月夜桜切替 · ドラッグで360°回転');
+  });
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+    last = now;
+    simT += dt;
+    if (autoSpin) tgtYaw += dt * 0.16;
+
+    const sm = Math.min(1, dt * 5);
+    camYaw += (tgtYaw - camYaw) * sm;
+    camPitch += (tgtPitch - camPitch) * sm;
+    camDist += (tgtDist - camDist) * sm;
+    curYCam += (tgtY - curYCam) * sm;
+    explode += (tgtExplode - explode) * sm;
+    night += (tgtNight - night) * Math.min(1, dt * 2.6);
+
+    gl.viewport(0, 0, 1280, 720);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // 1. Sky & Volumetric Sea of Clouds
+    gl.disable(gl.DEPTH_TEST);
+    gl.useProgram(skyProg);
+    gl.uniform1f(gl.getUniformLocation(skyProg, 'uTime'), simT);
+    gl.uniform1f(gl.getUniformLocation(skyProg, 'uNight'), night);
+    gl.bindVertexArray(emptyVao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // 2. Instanced Voxel Pagoda, Island, Bridge, Waterfall & Sakura Petals
+    gl.enable(gl.DEPTH_TEST);
+    gl.useProgram(voxProg);
+    const eye = [
+      Math.sin(camYaw) * Math.cos(camPitch) * camDist,
+      curYCam + Math.sin(camPitch) * camDist,
+      Math.cos(camYaw) * Math.cos(camPitch) * camDist,
+    ];
+    const vp = m4Mul(m4Persp(0.68, 1280 / 720, 0.2, 160), m4Look(eye, [0, curYCam, 0]));
+    gl.uniformMatrix4fv(gl.getUniformLocation(voxProg, 'uVP'), false, vp);
+    gl.uniform3fv(gl.getUniformLocation(voxProg, 'uCam'), eye);
+    gl.uniform1f(gl.getUniformLocation(voxProg, 'uExplode'), explode);
+    gl.uniform1f(gl.getUniformLocation(voxProg, 'uTime'), simT);
+    gl.uniform1f(gl.getUniformLocation(voxProg, 'uNight'), night);
+    gl.bindVertexArray(voxVao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, instCount);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+<script src="../demo-shell.js"></script>
+</body>
+</html>
