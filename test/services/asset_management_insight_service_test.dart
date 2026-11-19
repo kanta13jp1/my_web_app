@@ -1285,7 +1285,6 @@ void main() {
       expect(upcoming.severity, AssetManagementInsightSeverity.critical);
       expect(upcoming.title, contains('原資口座を確認してください'));
       expect(upcoming.suggestedAction, contains('三井住友銀行大塚支店'));
->>>>>>> origin/main
     });
   });
 }
