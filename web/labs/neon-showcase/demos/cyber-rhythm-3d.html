@@ -9,7 +9,7 @@
   #hud { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; pointer-events: none; }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="rhythm">
 <canvas id="gl" width="1280" height="720"></canvas>
 <canvas id="hud" width="1280" height="720"></canvas>
 <script>
@@ -92,13 +92,18 @@ let hitFlash = 0;
 let lastJudge = '';
 let judgeTimer = 0;
 const sparks = [];
-let autoPilot = true;
+let autoPilot = Boolean(window.__RECORDING__);
 
 window.addEventListener('keydown', e => {
   if (window.__RECORDING__) return;
-  autoPilot = false;
+  if (['ArrowLeft','ArrowRight','ArrowDown','KeyA','KeyS','KeyD','Digit1','Digit2','Digit3','KeyJ','KeyK','KeyL'].includes(e.code)) {
+    autoPilot = false;
+  }
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') playerLane = Math.max(0, playerLane - 1);
   if (e.code === 'ArrowRight' || e.code === 'KeyD') playerLane = Math.min(2, playerLane + 1);
+  if (e.code === 'Digit1' || e.code === 'KeyJ') playerLane = 0;
+  if (e.code === 'Digit2' || e.code === 'KeyS' || e.code === 'ArrowDown' || e.code === 'KeyK') playerLane = 1;
+  if (e.code === 'Digit3' || e.code === 'KeyL') playerLane = 2;
 });
 
 function pushTri(verts, a, b, c, col) {
@@ -152,11 +157,13 @@ function update(dt) {
         lastJudge = 'PERFECT!';
         judgeTimer = 0.45;
         addBurst(LANES_X[n.lane], 0.85, n.type === 'beat' ? [0.0, 0.95, 1.0] : [1.0, 0.82, 0.1]);
+        window.NeonAudio?.sfx('hit');
       } else if (simT - n.t > 0.12) {
         n.missed = true;
         combo = 0;
         lastJudge = 'MISS';
         judgeTimer = 0.4;
+        window.NeonAudio?.sfx('miss');
       }
     }
   }
@@ -301,15 +308,37 @@ window.stepRhythm = (dt) => {
 
 render();
 if (!window.__RECORDING__) {
+  const maxNoteT = notes.reduce((m, n) => Math.max(m, n.t), 20);
+  const resetTrack = () => {
+    simT = 0;
+    for (const n of notes) { n.hit = false; n.missed = false; }
+  };
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.setHint('手動プレイ中: ←/→ または 1/2/3 または下ボタンで3レーン切替（128 BPM）');
+    const autoBtn = window.NeonShell.addControl('🤖 オートデモ', (btn) => {
+      autoPilot = !autoPilot;
+      btn.classList.toggle('active', autoPilot);
+      window.NeonShell.setHint(autoPilot ? 'オートデモ再生中（キーまたは下ボタンで手動プレイ復帰）' : '手動プレイ中: ←/→ または 1/2/3 または下ボタンで3レーン切替');
+    });
+    window.NeonShell.addControl('↻ 最初から', () => { score = 0; combo = 0; resetTrack(); });
+    window.NeonShell.addPads([
+      { label: '◀ 左レーン (1)', onDown: () => { autoPilot = false; autoBtn.classList.remove('active'); playerLane = 0; } },
+      { label: '◆ 中央 (2)', onDown: () => { autoPilot = false; autoBtn.classList.remove('active'); playerLane = 1; } },
+      { label: '▶ 右レーン (3)', onDown: () => { autoPilot = false; autoBtn.classList.remove('active'); playerLane = 2; } },
+    ]);
+  });
   let last = performance.now();
   function loop(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
+    if (simT > maxNoteT + 2.0) resetTrack();
     window.stepRhythm(dt);
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
 }
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>
