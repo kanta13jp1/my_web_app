@@ -56,7 +56,7 @@ class _NeonShowcaseSurfaceState extends State<NeonShowcaseSurface>
             _frame = frame;
             frame
               ..title = 'Gemini 4 作品館 · NEON SHOWCASE'
-              ..src = '/labs/neon-showcase/index.html'
+              ..src = '/labs/neon-showcase/index.html?v=20261120-32'
               ..referrerPolicy = 'no-referrer'
               ..allowFullscreen = true
               ..allow =
