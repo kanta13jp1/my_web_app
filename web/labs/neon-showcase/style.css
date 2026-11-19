@@ -728,12 +728,49 @@ a:focus-visible {
   overflow: hidden;
 }
 
-.stage-wrap:fullscreen {
+.stage-wrap:fullscreen,
+.stage-wrap:-webkit-full-screen {
   width: 100vw;
   height: 100vh;
   max-height: none;
   aspect-ratio: auto;
   background: #020611;
+}
+
+.modal-panel:fullscreen,
+.modal-panel:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+}
+
+.modal-panel:fullscreen .stage-wrap,
+.modal-panel:-webkit-full-screen .stage-wrap {
+  flex: 1;
+  aspect-ratio: auto;
+  max-height: none;
+  height: 100%;
+}
+
+.modal-backdrop.modal-expanded {
+  padding: 0;
+}
+
+.modal-backdrop.modal-expanded .modal-panel {
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+}
+
+.modal-backdrop.modal-expanded .stage-wrap {
+  flex: 1;
+  aspect-ratio: auto;
+  max-height: none;
+  height: 100%;
 }
 
 .stage-wrap iframe {

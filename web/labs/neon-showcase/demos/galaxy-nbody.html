@@ -270,6 +270,10 @@ function stepPhysics(dt) {
   }
 }
 
+let camYawOff = 0.0;
+let camElevOff = 0.0;
+let camZoom = 1.0;
+
 function renderGalaxy() {
   gl.viewport(0, 0, W, H);
   gl.enable(gl.BLEND);
@@ -282,12 +286,12 @@ function renderGalaxy() {
   const my = (cores[0].y + cores[1].y) * 0.5;
   const mz = (cores[0].z + cores[1].z) * 0.5;
 
-  // Sweeping orbital camera
-  const ang = -0.35 + simTime * 0.055;
-  const dist = 41.0 - Math.sin(Math.min(1, simTime / 28.0) * Math.PI) * 9.0;
+  // Sweeping orbital camera + live user drag orbit & zoom
+  const ang = -0.35 + simTime * 0.055 + camYawOff;
+  const dist = (41.0 - Math.sin(Math.min(1, simTime / 28.0) * Math.PI) * 9.0) * camZoom;
   const eye = [
     mx + Math.sin(ang) * dist,
-    my + 13.5 - simTime * 0.15,
+    my + Math.max(-24, Math.min(34, 13.5 - simTime * 0.15 + camElevOff)),
     mz + Math.cos(ang) * dist
   ];
 
@@ -328,8 +332,29 @@ window.stepGalaxy = (dt) => {
 
 if (!window.__RECORDING__) {
   let paused = false;
+  let speedMult = 1;
+  let dragging = false, lx = 0, ly = 0;
+  glCanvas.addEventListener('pointerdown', (e) => { dragging = true; lx = e.clientX; ly = e.clientY; });
+  window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    camYawOff += (e.clientX - lx) * 0.008;
+    camElevOff += (e.clientY - ly) * 0.08;
+    lx = e.clientX; ly = e.clientY;
+    renderGalaxy();
+  });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  glCanvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    camZoom = Math.max(0.55, Math.min(1.85, camZoom + e.deltaY * 0.0008));
+    renderGalaxy();
+  }, { passive: false });
   window.addEventListener('DOMContentLoaded', () => {
     if (!window.NeonShell) return;
+    window.NeonShell.setHint('ドラッグで3D銀河カメラを自由回転 · ホイールでズーム · 2x速で衝突加速');
+    window.NeonShell.addControl('⚡ 2x速', (btn) => {
+      speedMult = speedMult === 1 ? 2 : 1;
+      btn.classList.toggle('active', speedMult === 2);
+    });
     window.NeonShell.addControl('⏸ 一時停止', (btn) => {
       paused = !paused;
       btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
@@ -339,15 +364,15 @@ if (!window.__RECORDING__) {
   });
   let last = performance.now();
   function loop(now) {
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
-    if (!paused) window.stepGalaxy(dt);
+    if (!paused) window.stepGalaxy(dt * speedMult);
     requestAnimationFrame(loop);
   }
   window.stepGalaxy(0.016);
   requestAnimationFrame(loop);
 }
 </script>
-<script src="../demo-shell.js?v=20261120-32"></script>
+<script src="../demo-shell.js?v=20261120-33"></script>
 </body>
 </html>

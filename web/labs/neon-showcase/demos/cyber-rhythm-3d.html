@@ -266,7 +266,7 @@ function render() {
   hctx.fillStyle = '#00E5FF'; hctx.font = '700 13px "Consolas", monospace';
   hctx.fillText('CYBER RHYTHM 3D  |  128 BPM SYNCED  |  ASSETS: 0', 38, 42);
   hctx.fillStyle = '#F8FAFC';
-  hctx.fillText(`CONTROLS: <- / -> OR A / D  |  ${simT.toFixed(2)}s / 24.00s`, 38, 63);
+  hctx.fillText(`CONTROLS: <- / -> / TAP LANE  |  ${autoPilot ? 'AUTO DEMO' : 'LIVE PLAY'} · ${simT.toFixed(1)}s`, 38, 63);
 
   // Top-Right Score & Combo
   hctx.fillStyle = 'rgba(4, 8, 18, 0.68)';
@@ -315,11 +315,19 @@ if (!window.__RECORDING__) {
   };
   window.addEventListener('DOMContentLoaded', () => {
     if (!window.NeonShell) return;
-    window.NeonShell.setHint('手動プレイ中: ←/→ または 1/2/3 または下ボタンで3レーン切替（128 BPM）');
+    window.NeonShell.setHint('手動プレイ中: 画面左/中/右タップ · ←/→ · 1/2/3 · 下ボタンで3レーン切替（128 BPM）');
     const autoBtn = window.NeonShell.addControl('🤖 オートデモ', (btn) => {
       autoPilot = !autoPilot;
       btn.classList.toggle('active', autoPilot);
-      window.NeonShell.setHint(autoPilot ? 'オートデモ再生中（キーまたは下ボタンで手動プレイ復帰）' : '手動プレイ中: ←/→ または 1/2/3 または下ボタンで3レーン切替');
+      window.NeonShell.setHint(autoPilot ? 'オートデモ再生中（タップ/キー/下ボタンで手動プレイ復帰）' : '手動プレイ中: 画面左/中/右タップ · ←/→ · 1/2/3 · 下ボタンで3レーン切替');
+    });
+    glCanvas.addEventListener('pointerdown', (e) => {
+      if (window.__RECORDING__) return;
+      const rect = glCanvas.getBoundingClientRect();
+      const rx = (e.clientX - rect.left) / Math.max(1, rect.width);
+      autoPilot = false;
+      autoBtn.classList.remove('active');
+      playerLane = rx < 0.36 ? 0 : rx > 0.64 ? 2 : 1;
     });
     window.NeonShell.addControl('↻ 最初から', () => { score = 0; combo = 0; resetTrack(); });
     window.NeonShell.addPads([
@@ -330,7 +338,7 @@ if (!window.__RECORDING__) {
   });
   let last = performance.now();
   function loop(now) {
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
     if (simT > maxNoteT + 2.0) resetTrack();
     window.stepRhythm(dt);
@@ -339,6 +347,6 @@ if (!window.__RECORDING__) {
   requestAnimationFrame(loop);
 }
 </script>
-<script src="../demo-shell.js?v=20261120-32"></script>
+<script src="../demo-shell.js?v=20261120-33"></script>
 </body>
 </html>

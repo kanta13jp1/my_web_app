@@ -240,7 +240,7 @@ window.renderFrame = (t, kick, arp, energy) => {
   hctx.fillStyle = '#E2E8F0';
   hctx.font = '600 12px "Consolas", monospace';
   const secLabel = t < 8 ? '01 INTRO' : t < 16 ? '02 BUILD-UP' : t < 24 ? '03 DROP' : '04 OUTRO';
-  hctx.fillText(`BPM: 120  |  ${secLabel}  |  ${t.toFixed(2)}s / 32.00s`, 42, 70);
+  hctx.fillText(`BPM: 120  |  ${secLabel}  |  LIVE GLSL · ${t.toFixed(1)}s`, 42, 70);
 
   // Beat spectrum bars bottom-right
   const bars = 12;
@@ -255,31 +255,48 @@ window.renderFrame = (t, kick, arp, energy) => {
 if (!window.__RECORDING__) {
   let simT = 0;
   let paused = false;
+  let dragging = false;
+  let dragX = 0;
+  const renderAt = (t) => {
+    const beat = (t * 2.0) % 1.0;
+    const kick = Math.pow(1.0 - beat, 4.0);
+    const arp = 0.5 + 0.5 * Math.sin(t * 8.0);
+    const energy = t >= 16 && t < 24 ? 1.0 : t >= 8 && t < 16 ? 0.65 : 0.35;
+    window.renderFrame(t, kick, arp, energy);
+  };
+  glCanvas.addEventListener('pointerdown', (e) => { dragging = true; dragX = e.clientX; });
+  window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    simT = (simT + (e.clientX - dragX) * 0.05 + 32.0) % 32.0;
+    dragX = e.clientX;
+    renderAt(simT);
+  });
+  window.addEventListener('pointerup', () => { dragging = false; });
   window.addEventListener('DOMContentLoaded', () => {
     if (!window.NeonShell) return;
+    window.NeonShell.setHint('左右ドラッグで3Dフラクタル大聖堂を探索 · 上ボタンで4セクションへジャンプ');
+    window.NeonShell.addControl('01 Intro', () => { simT = 0.5; renderAt(simT); });
+    window.NeonShell.addControl('02 Build-Up', () => { simT = 9.0; renderAt(simT); });
+    window.NeonShell.addControl('03 Drop', () => { simT = 17.0; renderAt(simT); });
+    window.NeonShell.addControl('04 Outro', () => { simT = 25.0; renderAt(simT); });
     window.NeonShell.addControl('⏸ 一時停止', (btn) => {
       paused = !paused;
       btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
       btn.classList.toggle('active', paused);
     });
-    window.NeonShell.addControl('↻ 最初から', () => { simT = 0; });
   });
   let last = performance.now();
   function loop(now) {
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
-    if (!paused) simT = (simT + dt) % 32.0;
-    const beat = (simT * 2.0) % 1.0;
-    const kick = Math.pow(1.0 - beat, 4.0);
-    const arp = 0.5 + 0.5 * Math.sin(simT * 8.0);
-    const energy = simT >= 16 && simT < 24 ? 1.0 : simT >= 8 && simT < 16 ? 0.65 : 0.35;
-    window.renderFrame(simT, kick, arp, energy);
+    if (!paused && !dragging) simT = (simT + dt) % 32.0;
+    renderAt(simT);
     requestAnimationFrame(loop);
   }
   window.renderFrame(0, 0.5, 0.5, 0.5);
   requestAnimationFrame(loop);
 }
 </script>
-<script src="../demo-shell.js?v=20261120-32"></script>
+<script src="../demo-shell.js?v=20261120-33"></script>
 </body>
 </html>
