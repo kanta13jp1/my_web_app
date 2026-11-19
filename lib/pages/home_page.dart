@@ -5161,7 +5161,7 @@ abstinence_slip_details: $slipDetailsText
                       contentHorizontalPadding,
                       16,
                       contentHorizontalPadding,
-                      24,
+                      96,
                     ),
                     child: Center(
                       child: ConstrainedBox(

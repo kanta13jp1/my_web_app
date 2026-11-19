@@ -268,6 +268,31 @@ void main() {
     expect(listFinder, findsWidgets);
     expect(tester.getSize(listFinder.first).height, lessThanOrEqualTo(340));
   });
+
+  testWidgets(
+      'ElectionJapanMap allows tapping surrounded tiles (群馬, 山梨, 熊本) without occlusion',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ElectionJapanMap(
+              prefectures: _samplePrefecturePlans(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    for (final shortName in <String>['群馬', '山梨', '熊本']) {
+      final target = find.text(shortName).first;
+      await tester.ensureVisible(target);
+      await tester.pumpAndSettle();
+      await tester.tap(target);
+      await tester.pumpAndSettle();
+      expect(find.text('$shortName 選択中'), findsOneWidget);
+    }
+  });
 }
 
 List<LocalElectionPrefecturePlan> _samplePrefecturePlans() {

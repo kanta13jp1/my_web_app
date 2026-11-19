@@ -328,8 +328,19 @@ window.renderWorld = (t) => {
 if (!window.__RECORDING__) {
   let simT = 0;
   let paused = false;
+  let speedMult = 1;
+  let dragging = false, dragX = 0;
+  glCanvas.addEventListener('pointerdown', (e) => { dragging = true; dragX = e.clientX; });
+  window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    simT = (simT + (e.clientX - dragX) * 0.045 + 44.0) % 44.0;
+    dragX = e.clientX;
+    window.renderWorld(simT);
+  });
+  window.addEventListener('pointerup', () => { dragging = false; });
   window.addEventListener('DOMContentLoaded', () => {
     if (!window.NeonShell) return;
+    window.NeonShell.setHint('左右ドラッグで5バイオームを自在に飛行移動 · 上ボタンで即ジャンプ＆2x速');
     const jumps = [
       ['01 雪山', 0.5],
       ['02 森と湖', 8.0],
@@ -338,8 +349,12 @@ if (!window.__RECORDING__) {
       ['05 夕海', 32.0],
     ];
     for (const [lbl, sec] of jumps) {
-      window.NeonShell.addControl(lbl, () => { simT = sec; });
+      window.NeonShell.addControl(lbl, () => { simT = sec; window.renderWorld(simT); });
     }
+    window.NeonShell.addControl('⚡ 2x速', (btn) => {
+      speedMult = speedMult === 1 ? 2 : 1;
+      btn.classList.toggle('active', speedMult === 2);
+    });
     window.NeonShell.addControl('⏸ 一時停止', (btn) => {
       paused = !paused;
       btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
@@ -348,9 +363,9 @@ if (!window.__RECORDING__) {
   });
   let last = performance.now();
   function loop(now) {
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
-    if (!paused) simT = (simT + dt) % 44.0;
+    if (!paused && !dragging) simT = (simT + dt * speedMult) % 44.0;
     window.renderWorld(simT);
     requestAnimationFrame(loop);
   }
@@ -358,6 +373,6 @@ if (!window.__RECORDING__) {
   requestAnimationFrame(loop);
 }
 </script>
-<script src="../demo-shell.js?v=20261120-32"></script>
+<script src="../demo-shell.js?v=20261120-33"></script>
 </body>
 </html>
