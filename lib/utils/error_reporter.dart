@@ -48,7 +48,19 @@ class ErrorReporter {
 
   bool get sentryEnabled => _sentryEnabled;
 
-  bool get _hasSentryDsn => _sentryDsn.trim().isNotEmpty;
+  bool get _hasSentryDsn => isValidSentryDsn(_sentryDsn);
+
+  static bool isValidSentryDsn(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty || trimmed.contains(RegExp(r'\s'))) {
+      return false;
+    }
+    final uri = Uri.tryParse(trimmed);
+    if (uri == null) return false;
+    if (uri.scheme != 'https' && uri.scheme != 'http') return false;
+    if (uri.host.isEmpty || uri.userInfo.isEmpty) return false;
+    return uri.pathSegments.any((segment) => segment.isNotEmpty);
+  }
 
   SupabaseClient? get _supabaseOrNull {
     try {
