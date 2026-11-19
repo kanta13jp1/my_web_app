@@ -9,7 +9,7 @@
   #hud { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; pointer-events: none; }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="racer">
 <canvas id="gl" width="1280" height="720"></canvas>
 <canvas id="hud" width="1280" height="720"></canvas>
 <script>
@@ -262,8 +262,12 @@ window.addEventListener('keydown', e => { keys[e.code] = true; });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
 let simT = 0;
-let autoPilot = true; // Used for deterministic 24s video demo; disabled if user presses keys
-window.addEventListener('keydown', () => { if (!window.__RECORDING__) autoPilot = false; });
+let autoPilot = Boolean(window.__RECORDING__);
+window.addEventListener('keydown', (e) => {
+  if (!window.__RECORDING__ && ['ArrowLeft','ArrowRight','ArrowUp','KeyA','KeyD','KeyW','Space'].includes(e.code)) {
+    autoPilot = false;
+  }
+});
 
 function updateSimulation(dt) {
   simT += dt;
@@ -282,13 +286,17 @@ function updateSimulation(dt) {
         if (keys['ArrowLeft'] || keys['KeyA']) steer -= 1;
         if (keys['ArrowRight'] || keys['KeyD']) steer += 1;
         r.targetLane = Math.max(-TRACK_W + 1.8, Math.min(TRACK_W - 1.8, r.lane + steer * 10 * dt));
-        if (keys['Space']) r.boostT = Math.max(r.boostT, 0.3);
+        if (keys['Space'] || keys['ArrowUp'] || keys['KeyW']) {
+          if (r.boostT <= 0.05) window.NeonAudio?.sfx('boost');
+          r.boostT = Math.max(r.boostT, 0.35);
+        }
       }
       const laneDiff = r.targetLane - r.lane;
       r.lane += laneDiff * Math.min(1, dt * 4.5);
       r.bank = Math.max(-0.45, Math.min(0.45, -laneDiff * 0.14));
       const targetSpd = r.boostT > 0 ? 52.5 : 41.5;
       r.speed += (targetSpd - r.speed) * Math.min(1, dt * 4.0);
+      window.NeonAudio?.setPitch(0.85 + (r.speed - 38) / 22);
     } else {
       r.lane += Math.sin(simT * 0.7 + r.s * 0.05) * 1.2 * dt;
       r.lane = Math.max(-TRACK_W + 2, Math.min(TRACK_W - 2, r.lane));
@@ -446,6 +454,21 @@ window.stepRacer = (dt) => {
 
 drawScene();
 if (!window.__RECORDING__) {
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.setHint('手動プレイ中: A/D または ←/→ でステア · W/↑/Space でブースト');
+    const autoBtn = window.NeonShell.addControl('🤖 オートデモ', (btn) => {
+      autoPilot = !autoPilot;
+      btn.classList.toggle('active', autoPilot);
+      window.NeonShell.setHint(autoPilot ? 'オートデモ再生中（キーまたは下ボタンで手動操縦）' : '手動プレイ中: A/D または ←/→ でステア · W/↑/Space でブースト');
+    });
+    window.NeonShell.addControl('↻ リスタート', () => window.location.reload());
+    window.NeonShell.addPads([
+      { label: '◀ 左ステア', onDown: () => { autoPilot = false; autoBtn.classList.remove('active'); keys['ArrowLeft'] = true; }, onUp: () => { keys['ArrowLeft'] = false; } },
+      { label: '⚡ ブースト', onDown: () => { autoPilot = false; autoBtn.classList.remove('active'); keys['Space'] = true; }, onUp: () => { keys['Space'] = false; } },
+      { label: '▶ 右ステア', onDown: () => { autoPilot = false; autoBtn.classList.remove('active'); keys['ArrowRight'] = true; }, onUp: () => { keys['ArrowRight'] = false; } },
+    ]);
+  });
   let last = performance.now();
   function loop(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
@@ -456,5 +479,6 @@ if (!window.__RECORDING__) {
   requestAnimationFrame(loop);
 }
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>

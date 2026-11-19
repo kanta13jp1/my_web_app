@@ -37,7 +37,7 @@
   }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="workstation">
 <div id="stage">
   <!-- 01: AI AGENT CONTROL ROOM -->
   <div id="s0" class="screen active" style="background: radial-gradient(circle at 80% 10%, #0F172A, #050811);">
@@ -402,7 +402,7 @@ function drawSaaSAnalytics(ctx, t) {
 
 window.stepDashboards = (dt) => {
   simT += dt;
-  const activeIdx = manualTab !== null ? manualTab : Math.min(3, Math.floor(simT / 6.0));
+  const activeIdx = manualTab !== null ? manualTab : Math.floor((simT % 24.0) / 6.0);
   const phasePct = manualTab !== null ? 100 : ((simT % 6.0) / 6.0) * 100;
   updateActiveUI(activeIdx, phasePct);
 
@@ -414,17 +414,29 @@ window.stepDashboards = (dt) => {
 
 drawAgentControl(ctxs[0], 0);
 if (!window.__RECORDING__) {
+  manualTab = 0;
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.addControl('▶ 自動切替', (btn) => {
+      if (manualTab === null) {
+        manualTab = Math.floor((simT % 24.0) / 6.0);
+        btn.classList.remove('active');
+      } else {
+        manualTab = null;
+        btn.classList.add('active');
+      }
+    });
+  });
   let last = performance.now();
   function loop(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (simT < 24.0 || manualTab !== null) {
-      window.stepDashboards(dt);
-    }
+    window.stepDashboards(dt);
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
 }
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>
