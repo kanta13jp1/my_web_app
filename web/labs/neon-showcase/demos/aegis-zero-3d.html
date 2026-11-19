@@ -1619,7 +1619,7 @@
     ctx.fillText(`MACH ${(4.2 + Math.sin(simTime * 2.1) * 0.35).toFixed(1)} · 60 FPS`, W - 224, H - 39);
     ctx.fillStyle = '#9cb3d1';
     ctx.font = '9.5px "Cascadia Code", Consolas, monospace';
-    ctx.fillText(`GEMINI 4 NEON · ${simTime.toFixed(1).padStart(4, '0')}s / 24.0s`, W - 224, H - 23);
+    ctx.fillText(manualControl ? `LIVE PLAY · ${simTime.toFixed(1).padStart(4, '0')}s` : `AUTO DEMO · ${simTime.toFixed(1).padStart(4, '0')}s / 24.0s`, W - 224, H - 23);
 
     // 8. Center Cinematic Event Banner
     if (banner.ttl > 0) {

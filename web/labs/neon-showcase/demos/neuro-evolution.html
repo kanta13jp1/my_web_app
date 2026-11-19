@@ -653,7 +653,7 @@ if (!window.__RECORDING__) {
   function loop(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (!paused && simT < TOTAL_T) {
+    if (!paused) {
       window.stepNeuro(dt);
     }
     requestAnimationFrame(loop);
