@@ -8,7 +8,7 @@
   canvas { display: block; width: 1280px; height: 720px; }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="algo">
 <canvas id="c" width="1280" height="720"></canvas>
 <script>
 const canvas = document.getElementById('c');
@@ -394,17 +394,28 @@ window.getSortEvents = () => ({
 render();
 
 if (!window.__RECORDING__) {
+  let paused = false;
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.addControl('⏸ 一時停止', (btn) => {
+      paused = !paused;
+      btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+      btn.classList.toggle('active', paused);
+    });
+    window.NeonShell.addControl('↻ もう一度整列', () => window.location.reload());
+  });
   let last = performance.now();
   function loop(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (simT < TOTAL_T) {
+    if (!paused && simT < TOTAL_T) {
       window.stepSort(dt);
-      requestAnimationFrame(loop);
     }
+    requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
 }
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>

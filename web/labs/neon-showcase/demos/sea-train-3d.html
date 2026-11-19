@@ -108,7 +108,7 @@
   .cring { position: absolute; width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fde68a; pointer-events: none; z-index: 39; opacity: 0; }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="sea-train">
 <div id="stage">
   <canvas id="glCanvas"></canvas>
 
@@ -827,7 +827,8 @@
 
   let camMode = 0; // 0=Parallel, 1=Water Skim, 2=Sea Station (0:15 Climax!), 3=Headlamp Hero, 4=Moonlit Orbit
   let nightMix = 0.0;
-  let manualNight = null;
+  let manualNight = isRecording ? null : 0.0;
+  let autoTour = isRecording;
 
   let curEye = [12.8, 3.8, -11.5];
   let curCtr = [0.0, 1.85, 1.2];
@@ -890,31 +891,35 @@
     pressedId = null;
     cPulse = Math.max(0, cPulse - dt * 3.0);
 
-    // Subtle bottom-bar button click beats for camera & twilight transition
-    const clickEvents = [
-      { t0: 5.2, tc: 5.95, id: 'cam1', key: 'c1', fn: () => setCamMode(1) },
-      { t0: 10.7, tc: 11.45, id: 'cam2', key: 'c2', fn: () => setCamMode(2) },
-      { t0: 13.0, tc: 13.75, id: 'btnSky', key: 'sky', fn: () => { manualNight = null; } },
-      { t0: 16.8, tc: 17.45, id: 'cam3', key: 'c3', fn: () => setCamMode(3) },
-      { t0: 22.3, tc: 22.95, id: 'cam4', key: 'c4', fn: () => setCamMode(4) },
-    ];
-    let activeEv = null;
-    for (const ev of clickEvents) {
-      if (t >= ev.t0 && t < ev.tc + 0.35) { activeEv = ev; break; }
-    }
-    if (activeEv) {
-      const p = btnCenter(activeEv.id);
-      if (t < activeEv.tc) {
-        curOp = smoothstep(activeEv.t0, activeEv.t0 + 0.35, t);
-        const u = smoothstep(activeEv.t0, activeEv.tc, t);
-        curX = lerp(p.x - 42, p.x, u);
-        curY = lerp(p.y - 36, p.y, u);
+    if (autoTour) {
+      // Subtle bottom-bar button click beats for camera & twilight transition
+      const clickEvents = [
+        { t0: 5.2, tc: 5.95, id: 'cam1', key: 'c1', fn: () => setCamMode(1) },
+        { t0: 10.7, tc: 11.45, id: 'cam2', key: 'c2', fn: () => setCamMode(2) },
+        { t0: 13.0, tc: 13.75, id: 'btnSky', key: 'sky', fn: () => { manualNight = null; } },
+        { t0: 16.8, tc: 17.45, id: 'cam3', key: 'c3', fn: () => setCamMode(3) },
+        { t0: 22.3, tc: 22.95, id: 'cam4', key: 'c4', fn: () => setCamMode(4) },
+      ];
+      let activeEv = null;
+      for (const ev of clickEvents) {
+        if (t >= ev.t0 && t < ev.tc + 0.35) { activeEv = ev; break; }
+      }
+      if (activeEv) {
+        const p = btnCenter(activeEv.id);
+        if (t < activeEv.tc) {
+          curOp = smoothstep(activeEv.t0, activeEv.t0 + 0.35, t);
+          const u = smoothstep(activeEv.t0, activeEv.tc, t);
+          curX = lerp(p.x - 42, p.x, u);
+          curY = lerp(p.y - 36, p.y, u);
+        } else {
+          curOp = 1.0; curX = p.x; curY = p.y; pressedId = activeEv.id;
+          if (!trig[activeEv.key]) { trig[activeEv.key] = true; cPulse = 1.0; activeEv.fn(); }
+        }
       } else {
-        curOp = 1.0; curX = p.x; curY = p.y; pressedId = activeEv.id;
-        if (!trig[activeEv.key]) { trig[activeEv.key] = true; cPulse = 1.0; activeEv.fn(); }
+        curOp = Math.max(0, curOp - dt * 2.4);
       }
     } else {
-      curOp = Math.max(0, curOp - dt * 2.4);
+      curOp = 0;
     }
 
     // Automatic breathtaking Sunset -> Twilight -> Moonlit Night transformation peaking right at 0:15!
@@ -1550,11 +1555,27 @@
   };
 
   if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.addControl('▶ 自動ツアー', (btn) => {
+        autoTour = !autoTour;
+        btn.classList.toggle('active', autoTour);
+        if (autoTour) {
+          simTime = 0;
+          manualNight = null;
+          userOrbit = false;
+          for (const k in trig) trig[k] = false;
+          setCamMode(0);
+        } else {
+          manualNight = nightMix > 0.5 ? 1.0 : 0.0;
+        }
+      });
+    });
     let last = performance.now();
     function loop(now) {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      if (simTime >= 30.0) { simTime = 0; for (const k in trig) trig[k] = false; manualNight = null; setCamMode(0); }
+      if (autoTour && simTime >= 30.0) { simTime = 0; for (const k in trig) trig[k] = false; manualNight = null; setCamMode(0); }
       window.stepSeaTrain(dt, true);
       requestAnimationFrame(loop);
     }
@@ -1562,5 +1583,6 @@
   }
 })();
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>

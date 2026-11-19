@@ -32,6 +32,7 @@ test('catalog tabs, live 3D modal playback, and 20 X benchmarks render cleanly',
   await expect(page.locator('#modal-iframe')).toHaveAttribute('sandbox', 'allow-scripts');
   await expect(page.locator('#modal-iframe')).toHaveAttribute('allow', 'fullscreen');
   await expect(page.locator('#modal-fullscreen')).toBeVisible();
+  await expect(page.locator('#modal-open-tab')).toHaveAttribute('href', './demos/sea-train-3d.html');
   await page.locator('#modal-close').click();
   await expect(page.locator('#demo-modal')).toBeHidden();
 

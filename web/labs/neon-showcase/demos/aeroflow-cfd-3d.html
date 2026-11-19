@@ -357,7 +357,7 @@
   .cring { position: absolute; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fbbf24; pointer-events: none; z-index: 49; opacity: 0; }
 </style>
 </head>
-<body>
+<body data-stage="1280x720" data-sound="wind">
 <div class="app" id="appRoot">
   <header class="topbar">
     <div class="brand">
@@ -1061,10 +1061,12 @@
     }
   }
 
+  let autoTour = isRecording;
   function runChoreography(t, dt) {
     pressedId = null;
     cPulse = Math.max(0, cPulse - dt * 2.8);
 
+    if (autoTour) {
     const pHeat = btnCenter('btnHeatmap');
     const pJet  = btnCenter('tabJet');
     const pShip = btnCenter('tabShip');
@@ -1109,6 +1111,7 @@
     } else {
       curOp = Math.max(0, curOp - dt * 1.4);
     }
+    } else { curOp = 0; }
 
     // Iconic Front-3/4 Wind Tunnel Inspection Orbit across all 3 Crafts!
     if (!dragging) {
@@ -1603,11 +1606,19 @@
   };
 
   if (!isRecording) {
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!window.NeonShell) return;
+      window.NeonShell.addControl('▶ 自動ツアー', (btn) => {
+        autoTour = !autoTour;
+        btn.classList.toggle('active', autoTour);
+        if (autoTour) { simTime = 0; for (const k in trig) trig[k] = false; targetHeat = 0; selectCraft(0); }
+      });
+    });
     let last = performance.now();
     function loop(now) {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      if (simTime >= 24.0) { simTime = 0; for (const k in trig) trig[k] = false; targetHeat = 0; selectCraft(0); }
+      if (autoTour && simTime >= 24.0) { simTime = 0; for (const k in trig) trig[k] = false; targetHeat = 0; selectCraft(0); }
       window.stepAero(dt);
       requestAnimationFrame(loop);
     }
@@ -1615,5 +1626,6 @@
   }
 })();
 </script>
+<script src="../demo-shell.js"></script>
 </body>
 </html>
