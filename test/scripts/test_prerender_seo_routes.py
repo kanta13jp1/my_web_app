@@ -112,6 +112,8 @@ class HomepageSocialPreviewTest(unittest.TestCase):
         self.assertIn('<dt>利益</dt>', self.index_html)
         self.assertIn('個人のP/L・B/S、6部署、30日運営サイクルを読む', self.index_html)
         self.assertIn('href="/philosophy"', self.index_html)
+        self.assertIn('.seo-card [data-prerender]', self.index_html)
+        self.assertIn('text-align: left;', self.index_html)
         self.assertIn(
             '"@id": "https://my-web-app-b67f4.web.app/#software-application"',
             self.index_html,
