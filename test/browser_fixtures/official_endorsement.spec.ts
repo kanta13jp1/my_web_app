@@ -88,24 +88,24 @@ async function clickButton(page: Page, name: string, direction = 1): Promise<voi
 
 async function baselineCard(page: Page): Promise<void> {
   await reveal(page, label(page, /^合成データ専用・localhost画面試験$/), -1);
-  await reveal(page, label(page, /^公認掲載 435件$/));
+  await reveal(page, label(page, /^公認掲載 462件$/));
   for (const text of [
-    /^掲載内の現職 176件$/,
-    /^掲載内の新人 246件$/,
-    /^掲載内の元職 13件$/,
-    /^掲載地域 42\/47都道府県$/,
-    /^都道府県議 118件$/,
-    /^市区町村議 317件$/,
-    /推薦18件は公認の集計から除いています。推薦件数の集計対象には首長選挙も含まれます。/,
+    /^掲載内の現職 183件$/,
+    /^掲載内の新人 267件$/,
+    /^掲載内の元職 12件$/,
+    /^掲載地域 44\/47都道府県$/,
+    /^都道府県議 129件$/,
+    /^市区町村議 333件$/,
+    /推薦23件は公認の集計から除いています。推薦件数の集計対象には首長選挙も含まれます。/,
   ]) {
     await reveal(page, label(page, text));
   }
   await expect(label(page, /^公認掲載 412件$/)).toHaveCount(0);
   await reveal(page, page.getByRole('button', {
-    name: /都道府県別の公認掲載件数[\s\S]*\D42都道府県(?:\D|$)/,
+    name: /都道府県別の公認掲載件数[\s\S]*\D44都道府県(?:\D|$)/,
   }));
   const source = page.getByRole('button', {
-    name: '党公式の公認予定候補一覧を開く(2026/11/11現在)', exact: true,
+    name: '党公式の公認予定候補一覧を開く(2026/11/18現在)', exact: true,
   });
   await reveal(page, source);
 }
@@ -151,7 +151,7 @@ async function legacyStorage(page: Page): Promise<{ key: string; raw: string }> 
   return { key: rows[0][0], raw: rows[0][1] };
 }
 
-test('旧412件キャッシュを読み、実カードの435件・出典・地域を再読込後も維持する', async ({ page }, info) => {
+test('旧412件キャッシュを読み、実カードの462件・出典・地域を再読込後も維持する', async ({ page }, info) => {
   const stored = await legacyStorage(page);
   await announcementCard(page);
   await captureAnnouncement(page, '党代表の元投稿を開く', originalAnnouncementUrl);
@@ -159,7 +159,7 @@ test('旧412件キャッシュを読み、実カードの435件・出典・地�
   await captureAnnouncement(page, '党代表公式サイトの掲載を開く', officialAnnouncementSite);
   await page.screenshot({ path: info.outputPath('representative-announcement.png') });
   await baselineCard(page);
-  await reveal(page, label(page, /^公認掲載 435件$/), -1);
+  await reveal(page, label(page, /^公認掲載 462件$/), -1);
   await page.screenshot({ path: info.outputPath('legacy-cache-summary.png') });
 
   const regions = page.getByRole('button', { name: /都道府県別の公認掲載件数/ });
@@ -168,7 +168,7 @@ test('旧412件キャッシュを読み、実カードの435件・出典・地�
   for (const region of [
     /^北海道 11件 \(現職2 \/ 新人8 \/ 元職1\) \[都道府県議1 \/ 市区町村議10\]$/,
     /^青森 4件 \(現職1 \/ 新人2 \/ 元職1\) \[都道府県議2 \/ 市区町村議2\]$/,
-    /^東京 49件 \(現職31 \/ 新人16 \/ 元職2\) \[市区町村議49\]$/,
+    /^東京 53件 \(現職31 \/ 新人20 \/ 元職2\) \[市区町村議53\]$/,
   ]) {
     await reveal(page, label(page, region));
   }
@@ -177,7 +177,7 @@ test('旧412件キャッシュを読み、実カードの435件・出典・地�
   await reveal(page, regions, -1);
   await regions.click();
 
-  await captureCandidate(page, '2026/11/11', sourceUrl);
+  await captureCandidate(page, '2026/11/18', sourceUrl);
   await page.screenshot({ path: info.outputPath('captured-source.png') });
 
   await clickButton(page, 'キャッシュを再読込', -1);
@@ -190,7 +190,7 @@ test('旧412件キャッシュを読み、実カードの435件・出典・地�
   expect(await legacyStorage(page)).toEqual(stored);
   await announcementCard(page);
   await baselineCard(page);
-  await reveal(page, label(page, /^公認掲載 435件$/), -1);
+  await reveal(page, label(page, /^公認掲載 462件$/), -1);
   await page.screenshot({ path: info.outputPath('reloaded-legacy-cache.png') });
 });
 
@@ -198,7 +198,7 @@ test('検証済みでも古いEdgeは退け、新しい完全な合成Edgeへカ
   await clickButton(page, '旧Edgeを反映');
   await expect(label(page, /^入力: 旧Edge（合成412件・検証済み・2026-10-21）$/)).toBeVisible();
   await baselineCard(page);
-  await reveal(page, label(page, /^公認掲載 435件$/), -1);
+  await reveal(page, label(page, /^公認掲載 462件$/), -1);
   await page.screenshot({ path: info.outputPath('verified-stale-edge.png') });
 
   await announcementCard(page);
