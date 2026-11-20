@@ -3,9 +3,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
+import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+class _ConfirmedPaymentRepository
+    extends SharedPreferencesAssetLiabilityRepository {
+  @override
+  Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
+    return const AssetLiabilityMonthlyState(
+      confirmedPaymentDays: <String, double>{'aupay_card': 13},
+    );
+  }
+}
 
 Future<void> _unmount(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
@@ -37,8 +49,10 @@ void main() {
         ),
       },
     );
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1': 'full',
+    });
+    await tester.binding.setSurfaceSize(const Size(1200, 4000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     // 1. 違反あり: バナーが表示され、停止ToDo作成で対象口座に使用停止中タグが付く
@@ -48,6 +62,7 @@ void main() {
           debugNow: now,
           debugCalendarNow: now,
           debugRevolvingConfigsMirror: mirrorValue,
+          assetLiabilityRepository: _ConfirmedPaymentRepository(),
           debugInitialAssetData: <String, Map<String, double>>{
             dateKey: const <String, double>{
               '三井住友銀行大塚支店': 50000,
@@ -60,6 +75,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300));
 
+    expect(
+      find.byKey(const Key('asset_liability_workbook_board')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const Key('asset_discipline_violation_banner')),
       findsOneWidget,
@@ -81,7 +100,9 @@ void main() {
     await _unmount(tester);
 
     // 2. 違反なし: バナーは表示されない
-    SharedPreferences.setMockInitialValues(<String, Object>{});
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1': 'full',
+    });
     await tester.pumpWidget(
       MaterialApp(
         home: AssetManagementPage(
@@ -99,6 +120,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300));
 
+    expect(
+      find.byKey(const Key('asset_liability_workbook_board')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const Key('asset_discipline_violation_banner')),
       findsNothing,
