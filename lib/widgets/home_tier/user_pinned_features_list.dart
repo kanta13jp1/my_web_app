@@ -113,8 +113,7 @@ class _UserPinnedFeaturesListState extends State<UserPinnedFeaturesList> {
               size: 14,
               color: Color(0xFF6366F1),
             ),
-            onDeleted:
-                storedRoute.isEmpty ? null : () => _unpin(storedRoute),
+            onDeleted: storedRoute.isEmpty ? null : () => _unpin(storedRoute),
             onPressed: route.isEmpty
                 ? null
                 : () => openHomeFeature(context, route, label),
