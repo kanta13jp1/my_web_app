@@ -117,6 +117,34 @@ a:focus-visible {
   max-width: 780px;
 }
 
+.hero-links {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hero-x-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #bae6fd;
+  background: rgba(14, 165, 233, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.42);
+  border-radius: 999px;
+  padding: 5px 13px;
+  text-decoration: none;
+  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+
+.hero-x-link:hover {
+  background: rgba(56, 189, 248, 0.24);
+  border-color: rgba(125, 211, 252, 0.85);
+  color: #ffffff;
+}
+
 .hero-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(90px, 1fr));
@@ -438,6 +466,7 @@ a:focus-visible {
 
 .card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 4px;
 }
