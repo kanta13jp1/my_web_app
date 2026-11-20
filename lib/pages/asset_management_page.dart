@@ -4286,8 +4286,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     bool paid,
   ) async {
     if (paid && (_latestInsightReport?.shouldBlockPaymentExecution ?? false)) {
+      final owner = _supabase.auth.currentUser?.id;
+      final monthKey = _assetLiabilityStateMonthKey(_now);
       final proceed = await _confirmLivingExpensePriorityGuard(row);
-      if (proceed != true || !mounted) {
+      if (proceed != true ||
+          !mounted ||
+          _supabase.auth.currentUser?.id != owner ||
+          _assetLiabilityStateMonthKey(_now) != monthKey ||
+          _loadedAssetLiabilityMonthKey != monthKey) {
         return;
       }
     }
