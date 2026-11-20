@@ -92,4 +92,35 @@ void main() {
       expect(canonicalFeatureRoutePath('/unknown-feature'), '/unknown-feature');
     });
   });
+
+  group('resolveRecentFeatureLabel', () {
+    test('正規ラベルがあるルートは旧英語保存ラベルより日本語ラベルを優先する', () {
+      expect(
+        resolveRecentFeatureLabel(
+          '/local-election-schedule',
+          'Local Election 700',
+        ),
+        '2027 統一地方選 700必達管理室',
+      );
+      expect(
+        resolveRecentFeatureLabel('/ai-observability', 'Ai Observability'),
+        'AI 可観測性',
+      );
+      expect(
+        resolveRecentFeatureLabel('/profile-settings', 'Profile Settings'),
+        'プロフィール設定',
+      );
+      expect(
+        resolveRecentFeatureLabel('/import', 'Import'),
+        'データインポート',
+      );
+    });
+
+    test('未知ルートは保存済みラベルを活かす', () {
+      expect(
+        resolveRecentFeatureLabel('/custom-tool', 'カスタムツール'),
+        'カスタムツール',
+      );
+    });
+  });
 }

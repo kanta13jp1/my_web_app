@@ -1,13 +1,13 @@
-import { renderBlenderArtwork, renderDemoArtwork } from './artworks.js?v=20261120-32';
+import { renderBlenderArtwork, renderDemoArtwork } from './artworks.js?v=20261120-33';
 import {
   BLENDER_WORKS,
   CONCEPT_PLANS,
   LIVE_DEMOS,
   VIRAL_LAWS,
   X_BENCHMARKS,
-} from './catalog.js?v=20261120-32';
+} from './catalog.js?v=20261120-33';
 
-const ASSET_VER = '20261120-32';
+const ASSET_VER = '20261120-33';
 const SAFE_SLUG = /^[a-z0-9-]+$/;
 const SAFE_X_URL = /^https:\/\/x\.com\/[A-Za-z0-9_]+\/status\/[0-9]+(?:\/[A-Za-z0-9_/-]*)?$/;
 
@@ -76,9 +76,16 @@ function matchesQuery(fields) {
   return fields.some((f) => String(f ?? '').toLowerCase().includes(q));
 }
 
+let modalExpanded = false;
+
+function isModalNativeFs() {
+  return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
 function syncModalFullscreenLabel() {
   if (!modalFullscreen) return;
-  const active = Boolean(document.fullscreenElement);
+  const active = isModalNativeFs() || modalExpanded;
+  modal.classList.toggle('modal-expanded', modalExpanded);
   modalFullscreen.textContent = active ? '⛶ フル画面解除' : '⛶ フル画面';
 }
 
@@ -86,6 +93,7 @@ function openDemoModal(slug) {
   const demo = LIVE_DEMOS.find((d) => d.slug === slug);
   if (!demo || !SAFE_SLUG.test(demo.slug)) return;
   const url = `./demos/${demo.slug}.html?v=${ASSET_VER}`;
+  modalExpanded = false;
   modalTitle.textContent = demo.title;
   modalSub.textContent = `${demo.model} · ${demo.categoryLabel} · ${demo.sizeKb} KB · 外部ライブラリ 0`;
   modalOpenTab.href = url;
@@ -97,9 +105,12 @@ function openDemoModal(slug) {
 
 function closeDemoModal() {
   if (modal.hidden) return;
-  if (document.fullscreenElement) {
-    document.exitFullscreen?.().catch(() => {});
+  modalExpanded = false;
+  if (isModalNativeFs()) {
+    const exitFn = document.exitFullscreen || document.webkitExitFullscreen;
+    Promise.resolve(exitFn?.call(document)).catch(() => {});
   }
+  syncModalFullscreenLabel();
   modalIframe.src = 'about:blank';
   modal.hidden = true;
 }
@@ -426,10 +437,37 @@ contentRoot.addEventListener('click', (e) => {
 modalClose.addEventListener('click', closeDemoModal);
 if (modalFullscreen) {
   modalFullscreen.addEventListener('click', () => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen?.().catch(() => {});
+    if (isModalNativeFs()) {
+      const exitFn = document.exitFullscreen || document.webkitExitFullscreen;
+      Promise.resolve(exitFn?.call(document)).finally(() => {
+        modalExpanded = false;
+        setTimeout(syncModalFullscreenLabel, 40);
+      });
+    } else if (modalExpanded) {
+      modalExpanded = false;
+      syncModalFullscreenLabel();
     } else {
-      modalStageWrap.requestFullscreen?.().catch(() => {});
+      const fsTarget = modal.querySelector('.modal-panel') || modalStageWrap;
+      const reqFn = fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen;
+      if (typeof reqFn === 'function') {
+        try {
+          const p = reqFn.call(fsTarget);
+          if (p && typeof p.then === 'function') {
+            p.then(() => setTimeout(syncModalFullscreenLabel, 40)).catch(() => {
+              modalExpanded = true;
+              syncModalFullscreenLabel();
+            });
+          } else {
+            setTimeout(syncModalFullscreenLabel, 80);
+          }
+        } catch (_) {
+          modalExpanded = true;
+          syncModalFullscreenLabel();
+        }
+      } else {
+        modalExpanded = true;
+        syncModalFullscreenLabel();
+      }
     }
   });
 }
@@ -440,12 +478,26 @@ modalIframe.addEventListener('load', () => {
     } catch (_) {}
   }
 });
-document.addEventListener('fullscreenchange', syncModalFullscreenLabel);
+document.addEventListener('fullscreenchange', () => {
+  if (!isModalNativeFs()) modalExpanded = false;
+  syncModalFullscreenLabel();
+});
+document.addEventListener('webkitfullscreenchange', () => {
+  if (!isModalNativeFs()) modalExpanded = false;
+  syncModalFullscreenLabel();
+});
 modal.addEventListener('click', (e) => {
   if (e.target === modal) closeDemoModal();
 });
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !document.fullscreenElement) closeDemoModal();
+  if (e.key === 'Escape' && !isModalNativeFs()) {
+    if (modalExpanded) {
+      modalExpanded = false;
+      syncModalFullscreenLabel();
+    } else {
+      closeDemoModal();
+    }
+  }
 });
 
 // Support deep-link query ?tab=benchmarks or ?demo=sea-train-3d

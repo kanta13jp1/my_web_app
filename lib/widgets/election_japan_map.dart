@@ -380,16 +380,21 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                   top: headerHeight,
                   width: width,
                   height: height,
-                  child: Stack(
-                    children: [
-                      for (final tile in _japanTiles)
-                        _buildPrefectureTile(
-                          context: context,
-                          tile: tile,
-                          cell: cell,
-                          maxLoad: maxLoad,
-                        ),
-                    ],
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Stack(
+                      children: [
+                        for (final tile in _japanTiles)
+                          _buildPrefectureTile(
+                            context: context,
+                            tile: tile,
+                            cell: cell,
+                            maxLoad: maxLoad,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ],
