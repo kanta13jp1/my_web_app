@@ -135,7 +135,10 @@ void main() {
           'モビット': -45000,
         },
     };
-    SharedPreferences.setMockInitialValues(<String, Object>{});
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_section_overrides_v1':
+          '{"subscriptionFixedCost":"hidden"}',
+    });
     await tester.binding.setSurfaceSize(const Size(1200, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     addTearDown(clock.dispose);
