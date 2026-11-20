@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../utils/feature_route_labels.dart';
 import '../../utils/home_feature_actions.dart';
 import 'home_tier_styles.dart';
 
@@ -89,9 +90,11 @@ class _UserPinnedFeaturesListState extends State<UserPinnedFeaturesList> {
         spacing: 8,
         runSpacing: 8,
         children: _items.map((item) {
-          final route = _normalizeRoute(item['feature_route'] as String? ?? '');
-          final label =
+          final storedRoute = item['feature_route'] as String? ?? '';
+          final route = canonicalFeatureRoutePath(_normalizeRoute(storedRoute));
+          final storedLabel =
               item['feature_label'] as String? ?? _fallbackLabel(route);
+          final label = resolveRecentFeatureLabel(route, storedLabel);
           return InputChip(
             label: Text(
               label,
@@ -110,7 +113,8 @@ class _UserPinnedFeaturesListState extends State<UserPinnedFeaturesList> {
               size: 14,
               color: Color(0xFF6366F1),
             ),
-            onDeleted: route.isEmpty ? null : () => _unpin(route),
+            onDeleted:
+                storedRoute.isEmpty ? null : () => _unpin(storedRoute),
             onPressed: route.isEmpty
                 ? null
                 : () => openHomeFeature(context, route, label),
