@@ -25,6 +25,9 @@ class EvernoteHistoryReviewPanel extends StatefulWidget {
     this.busyItemId,
     this.error,
     this.stageProgress,
+    this.onBulkImportRevisions,
+    this.isBulkImporting = false,
+    this.bulkImportStatus,
   });
 
   final List<EvernoteMigrationItem> items;
@@ -35,6 +38,9 @@ class EvernoteHistoryReviewPanel extends StatefulWidget {
   final Future<void> Function() onRefresh;
   final EvernoteHistoryReviewCallback onReviewInventory;
   final EvernoteHistoryImportCallback onImportRevision;
+  final Future<void> Function()? onBulkImportRevisions;
+  final bool isBulkImporting;
+  final String? bulkImportStatus;
 
   @override
   State<EvernoteHistoryReviewPanel> createState() =>
@@ -165,7 +171,37 @@ class _EvernoteHistoryReviewPanelState
                 '履歴確認の対象はまだありません。先に通常のENEXノートを取り込んでください。',
                 key: Key('evernote-history-empty'),
               )
-            else
+            else ...[
+              if (widget.onBulkImportRevisions != null) ...[
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    FilledButton.tonalIcon(
+                      key: const Key('evernote-history-bulk-import-button'),
+                      onPressed: (widget.isBulkImporting ||
+                              widget.busyItemId != null)
+                          ? null
+                          : widget.onBulkImportRevisions,
+                      icon: widget.isBulkImporting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.upload_file),
+                      label: const Text('履歴ENEXを一括取り込み（複数選択）'),
+                    ),
+                    if (widget.bulkImportStatus != null)
+                      Text(
+                        widget.bulkImportStatus!,
+                        key: const Key('evernote-history-bulk-import-status'),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
               ListView.builder(
                 key: const Key('evernote-history-item-list'),
                 shrinkWrap: true,
@@ -181,6 +217,7 @@ class _EvernoteHistoryReviewPanelState
                   );
                 },
               ),
+            ],
           ],
         ),
       ),
