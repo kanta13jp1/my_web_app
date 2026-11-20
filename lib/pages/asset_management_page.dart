@@ -286,6 +286,32 @@ List<AssetLiabilityCardStatementReconciliationGroup> revolvingStatementGroups(
       .toList(growable: false);
 }
 
+/// 生活防衛予算（仮想エンベロープ）が有効な場合、通常の安全余裕に封印額を加算する。
+@visibleForTesting
+double effectiveSafetyReserve({
+  required double minimumSafetyBalance,
+  required bool safetyEnvelopeEnabled,
+  required double safetyEnvelopeAmount,
+}) {
+  if (!safetyEnvelopeEnabled || safetyEnvelopeAmount <= 0) {
+    return minimumSafetyBalance;
+  }
+  return minimumSafetyBalance + safetyEnvelopeAmount;
+}
+
+/// 封印中の生活防衛予算を差し引いた後の支払可能見込み残高を返す。
+@visibleForTesting
+double availableBalanceAfterSafetyEnvelope({
+  required double balance,
+  required bool safetyEnvelopeEnabled,
+  required double safetyEnvelopeAmount,
+}) {
+  if (!safetyEnvelopeEnabled || safetyEnvelopeAmount <= 0) {
+    return balance;
+  }
+  return balance - safetyEnvelopeAmount;
+}
+
 /// 収入予定・定期収入の「入金先」候補口座を返す純関数。
 /// 入金先は資産口座 (現金/預金) であればよく、支払原資 (_paymentSourceAccountOptions)
 /// と違い残高が 0 以下でも選べる。給料日前に残高が尽きた口座や、当座マイナスの口座
@@ -1261,6 +1287,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementInsightService.defaultMinimumSafetyBalance;
   late final TextEditingController _minimumSafetyBalanceController =
       TextEditingController(text: _minimumSafetyBalance.round().toString());
+  static const String _safetyEnvelopeEnabledPrefsKey =
+      'asset_safety_envelope_enabled_v1';
+  static const String _safetyEnvelopeAmountPrefsKey =
+      'asset_safety_envelope_amount_v1';
+  static const double _safetyEnvelopeFloor = 1000;
+  static const double _safetyEnvelopeCeiling = 50000;
+  bool _safetyEnvelopeEnabled = false;
+  double _safetyEnvelopeAmount = 10000;
+  late final TextEditingController _safetyEnvelopeAmountController =
+      TextEditingController(text: _safetyEnvelopeAmount.round().toString());
   // 既定 OFF。ON の間だけ行動リストを生活防衛ルール順へ並べ替える。
   bool _livingExpensePriorityMode = false;
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
@@ -1558,6 +1594,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _assetCsvRestoreController.dispose();
     _repaymentSimulationExtraPaymentController.dispose();
     _minimumSafetyBalanceController.dispose();
+    _safetyEnvelopeAmountController.dispose();
     _flowMemoController.dispose();
     _flowAmountController.dispose();
     _deadlineTimer?.cancel();
@@ -3758,17 +3795,58 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _loadMinimumSafetyBalance() async {
     final store = await SharedPreferences.getInstance();
     final saved = store.getDouble(_minimumSafetyBalancePrefsKey);
-    if (saved == null || !mounted) {
+    final savedEnvelopeEnabled = store.getBool(_safetyEnvelopeEnabledPrefsKey);
+    final savedEnvelopeAmount = store.getDouble(_safetyEnvelopeAmountPrefsKey);
+    if (!mounted) {
       return;
     }
-    final normalized = saved.clamp(
-      _minimumSafetyBalanceFloor,
-      _minimumSafetyBalanceCeiling,
-    );
     setState(() {
-      _minimumSafetyBalance = normalized;
-      _minimumSafetyBalanceController.text = normalized.round().toString();
+      if (saved != null) {
+        final normalized = saved.clamp(
+          _minimumSafetyBalanceFloor,
+          _minimumSafetyBalanceCeiling,
+        );
+        _minimumSafetyBalance = normalized;
+        _minimumSafetyBalanceController.text = normalized.round().toString();
+      }
+      if (savedEnvelopeEnabled != null) {
+        _safetyEnvelopeEnabled = savedEnvelopeEnabled;
+      }
+      if (savedEnvelopeAmount != null) {
+        final normalizedEnvelope = savedEnvelopeAmount.clamp(
+          _safetyEnvelopeFloor,
+          _safetyEnvelopeCeiling,
+        );
+        _safetyEnvelopeAmount = normalizedEnvelope;
+        _safetyEnvelopeAmountController.text =
+            normalizedEnvelope.round().toString();
+      }
     });
+  }
+
+  Future<void> _toggleSafetyEnvelope(bool enabled) async {
+    setState(() {
+      _safetyEnvelopeEnabled = enabled;
+    });
+    final store = await SharedPreferences.getInstance();
+    await store.setBool(_safetyEnvelopeEnabledPrefsKey, enabled);
+  }
+
+  Future<void> _updateSafetyEnvelopeAmount(String rawValue) async {
+    final normalized = rawValue.replaceAll(',', '').trim();
+    final parsed = double.tryParse(normalized);
+    if (parsed == null) {
+      _safetyEnvelopeAmountController.text =
+          _safetyEnvelopeAmount.round().toString();
+      return;
+    }
+    final clamped = parsed.clamp(_safetyEnvelopeFloor, _safetyEnvelopeCeiling);
+    setState(() {
+      _safetyEnvelopeAmount = clamped;
+      _safetyEnvelopeAmountController.text = clamped.round().toString();
+    });
+    final store = await SharedPreferences.getInstance();
+    await store.setDouble(_safetyEnvelopeAmountPrefsKey, clamped);
   }
 
   Future<void> _updateMinimumSafetyBalance(String rawValue) async {
@@ -22495,7 +22573,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       workbook: workbook,
       userProfile: _assetManagementUserProfile,
       mainAccountId: _assetManagementMainAccountId,
-      minimumSafetyBalance: _minimumSafetyBalance,
+      minimumSafetyBalance: effectiveSafetyReserve(
+        minimumSafetyBalance: _minimumSafetyBalance,
+        safetyEnvelopeEnabled: _safetyEnvelopeEnabled,
+        safetyEnvelopeAmount: _safetyEnvelopeAmount,
+      ),
       livingExpensePriorityMode: _livingExpensePriorityMode,
       priorMonthAccountBalances: priorMonthAccountBalances,
       dailyTodoDigest: _currentDailyTodoDigest(),
@@ -23750,6 +23832,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             },
           ),
           const SizedBox(height: 8),
+          _buildSafetyEnvelopeControl(),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -23801,6 +23885,87 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _combinedDeveloperRequests(report),
             report,
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSafetyEnvelopeControl() {
+    final sealed = _safetyEnvelopeEnabled;
+    final formattedAmount = _formatManagementYen(_safetyEnvelopeAmount);
+    return Container(
+      key: const Key('asset_safety_envelope_card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: sealed ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: sealed
+              ? const Color(0xFF0D9488).withValues(alpha: 0.35)
+              : const Color(0xFFD97706).withValues(alpha: 0.3),
+        ),
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Icon(
+            sealed ? Icons.lock_outline : Icons.shield_outlined,
+            size: 18,
+            color: sealed ? const Color(0xFF0F766E) : const Color(0xFFB45309),
+          ),
+          Text(
+            sealed
+                ? '生活防衛予算を封印中 ($formattedAmount を支払原資から除外)'
+                : '食費・移動費などの生活防衛予算を封印:',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: sealed ? const Color(0xFF0F766E) : const Color(0xFF92400E),
+            ),
+          ),
+          SizedBox(
+            width: 100,
+            child: TextField(
+              key: const Key('asset_safety_envelope_amount_field'),
+              controller: _safetyEnvelopeAmountController,
+              keyboardType: TextInputType.number,
+              enabled: !sealed,
+              style: const TextStyle(fontSize: 12),
+              decoration: const InputDecoration(
+                isDense: true,
+                suffixText: '円',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 6,
+                ),
+              ),
+              onSubmitted: (value) =>
+                  unawaited(_updateSafetyEnvelopeAmount(value)),
+            ),
+          ),
+          if (sealed)
+            OutlinedButton.icon(
+              key: const Key('asset_safety_envelope_release_button'),
+              onPressed: () => unawaited(_toggleSafetyEnvelope(false)),
+              icon: const Icon(Icons.lock_open_outlined, size: 16),
+              label: const Text('封印を解除'),
+            )
+          else
+            FilledButton.tonalIcon(
+              key: const Key('asset_safety_envelope_seal_button'),
+              onPressed: () async {
+                await _updateSafetyEnvelopeAmount(
+                  _safetyEnvelopeAmountController.text,
+                );
+                await _toggleSafetyEnvelope(true);
+              },
+              icon: const Icon(Icons.lock_outline, size: 16),
+              label: const Text('生活防衛に取り分け'),
+            ),
         ],
       ),
     );
@@ -26412,7 +26577,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       workbook: workbook,
       userProfile: _assetManagementUserProfile,
       mainAccountId: _assetManagementMainAccountId,
-      minimumSafetyBalance: _minimumSafetyBalance,
+      minimumSafetyBalance: effectiveSafetyReserve(
+        minimumSafetyBalance: _minimumSafetyBalance,
+        safetyEnvelopeEnabled: _safetyEnvelopeEnabled,
+        safetyEnvelopeAmount: _safetyEnvelopeAmount,
+      ),
       priorMonthAccountBalances: priorMonthAccountBalances,
     );
     await _postHouseholdTracker(report.debtTrendInsights);
@@ -29723,7 +29892,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final candidates = <_PaymentSourceCandidate>[];
     for (final account in _paymentSourceAccountOptions(workbook)) {
       final summary = summariesById[account.id];
-      final projectedBefore = summary?.projectedBalance ?? account.balance;
+      final rawProjectedBefore = summary?.projectedBalance ?? account.balance;
+      final projectedBefore = availableBalanceAfterSafetyEnvelope(
+        balance: rawProjectedBefore,
+        safetyEnvelopeEnabled: _safetyEnvelopeEnabled,
+        safetyEnvelopeAmount: _safetyEnvelopeAmount,
+      );
+      if (_safetyEnvelopeEnabled && projectedBefore <= 0) {
+        continue;
+      }
       final projectedAfter = projectedBefore - row.scheduledPaymentAmount;
       candidates.add(
         _PaymentSourceCandidate(
