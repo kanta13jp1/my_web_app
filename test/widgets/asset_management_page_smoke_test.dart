@@ -1611,6 +1611,25 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('desktop chat reserves space outside the scrolling content', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await _pumpAssetPage(tester);
+      final dock = find.byKey(const Key('asset_chat_docked_bar'));
+      expect(dock, findsOneWidget);
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
+      expect(scaffold.floatingActionButton, isNull);
+      expect(
+        tester.getRect(find.byWidget(scaffold.body!)).bottom,
+        lessThanOrEqualTo(tester.getRect(dock).top),
+      );
+      await _unmount(tester);
+    });
+
     testWidgets('sticky asset chat entry opens and closes the panel', (
       tester,
     ) async {
