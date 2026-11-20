@@ -3923,56 +3923,54 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(height: 8),
           for (final violation in violations)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    '・${violation.accountName} '
-                    '(${violation.type == AssetDebtDisciplineViolationType.newBorrowing ? '新規借入' : 'リボ繰越'}): '
-                    '${_formatManagementYen(violation.amount)}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF7F1D1D),
-                    ),
-                  ),
-                  FilledButton.tonal(
-                    key: Key(
-                      'discipline_banner_suspend_todo_${violation.accountId}',
-                    ),
-                    onPressed:
-                        _suspendedDebtAccountIds.contains(violation.accountId)
-                        ? null
-                        : () => unawaited(_suspendDebtAccount(violation)),
-                    child: Text(
-                      _suspendedDebtAccountIds.contains(violation.accountId)
-                          ? '使用停止中'
-                          : '停止ToDo作成',
-                    ),
-                  ),
-                  OutlinedButton(
-                    key: Key(
-                      'discipline_banner_lump_sum_${violation.accountId}',
-                    ),
-                    onPressed:
-                        _lumpSumRequestedAccountIds.contains(
-                          violation.accountId,
-                        )
-                        ? null
-                        : () => unawaited(_requestLumpSumSetting(violation)),
-                    child: Text(
-                      _lumpSumRequestedAccountIds.contains(violation.accountId)
-                          ? '一括依頼済み'
-                          : '一括払い設定依頼',
-                    ),
-                  ),
-                ],
-              ),
+            _buildDisciplineViolationRow(violation),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDisciplineViolationRow(AssetDebtDisciplineViolation violation) {
+    final isSuspended = _suspendedDebtAccountIds.contains(violation.accountId);
+    final isLumpSum = _lumpSumRequestedAccountIds.contains(violation.accountId);
+    final isNewBorrowing =
+        violation.type == AssetDebtDisciplineViolationType.newBorrowing;
+    final typeLabel = isNewBorrowing ? '新規借入' : 'リボ繰越';
+    final amountLabel = _formatManagementYen(violation.amount);
+    final suspendKey = Key(
+      'discipline_banner_suspend_todo_${violation.accountId}',
+    );
+    final lumpSumKey = Key('discipline_banner_lump_sum_${violation.accountId}');
+    final VoidCallback? onSuspend = isSuspended
+        ? null
+        : () => unawaited(_suspendDebtAccount(violation));
+    final VoidCallback? onLumpSum = isLumpSum
+        ? null
+        : () => unawaited(_requestLumpSumSetting(violation));
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            '・${violation.accountName} ($typeLabel): $amountLabel',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF7F1D1D),
             ),
+          ),
+          FilledButton.tonal(
+            key: suspendKey,
+            onPressed: onSuspend,
+            child: Text(isSuspended ? '使用停止中' : '停止ToDo作成'),
+          ),
+          OutlinedButton(
+            key: lumpSumKey,
+            onPressed: onLumpSum,
+            child: Text(isLumpSum ? '一括依頼済み' : '一括払い設定依頼'),
+          ),
         ],
       ),
     );
