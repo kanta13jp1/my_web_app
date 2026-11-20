@@ -3803,7 +3803,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final saved = store.getDouble(_minimumSafetyBalancePrefsKey);
     final savedEnvelopeEnabled = store.getBool(_safetyEnvelopeEnabledPrefsKey);
     final savedEnvelopeAmount = store.getDouble(_safetyEnvelopeAmountPrefsKey);
-    final savedSuspendedIds = store.getStringList(_suspendedDebtAccountsPrefsKey);
+    final savedSuspendedIds =
+        store.getStringList(_suspendedDebtAccountsPrefsKey);
     final savedLumpSumIds = store.getStringList(
       _lumpSumRequestedAccountsPrefsKey,
     );
@@ -3940,12 +3941,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       'discipline_banner_suspend_todo_${violation.accountId}',
     );
     final lumpSumKey = Key('discipline_banner_lump_sum_${violation.accountId}');
-    final VoidCallback? onSuspend = isSuspended
-        ? null
-        : () => unawaited(_suspendDebtAccount(violation));
-    final VoidCallback? onLumpSum = isLumpSum
-        ? null
-        : () => unawaited(_requestLumpSumSetting(violation));
+    final VoidCallback? onSuspend =
+        isSuspended ? null : () => unawaited(_suspendDebtAccount(violation));
+    final VoidCallback? onLumpSum =
+        isLumpSum ? null : () => unawaited(_requestLumpSumSetting(violation));
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Wrap(

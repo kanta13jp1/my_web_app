@@ -26,7 +26,7 @@ void main() {
   testWidgets('借金しない宣言違反がある月は上部赤バナーが表示され、停止ToDo作成で使用停止中タグが付く (#4217)', (
     tester,
   ) async {
-    final now = DateTime.now();
+    final now = DateTime(2026, 7, 10);
     final dateKey = DateFormat('yyyy-MM-dd').format(now);
     final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
       <String, AssetLiabilityRevolvingCreditConfig>{
@@ -45,7 +45,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: AssetManagementPage(
-          debugCalendarNow: DateTime(2026, 7, 10),
+          debugNow: now,
+          debugCalendarNow: now,
           debugRevolvingConfigsMirror: mirrorValue,
           debugInitialAssetData: <String, Map<String, double>>{
             dateKey: const <String, double>{
@@ -84,7 +85,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: AssetManagementPage(
-          debugCalendarNow: DateTime(2026, 7, 10),
+          debugNow: now,
+          debugCalendarNow: now,
           debugInitialAssetData: <String, Map<String, double>>{
             dateKey: const <String, double>{
               '三井住友銀行大塚支店': 200000,
