@@ -1294,7 +1294,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   static const double _safetyEnvelopeFloor = 1000;
   static const double _safetyEnvelopeCeiling = 50000;
   bool _safetyEnvelopeEnabled = false;
-  double _safetyEnvelopeAmount = 15000;
+  double _safetyEnvelopeAmount = 10000;
   late final TextEditingController _safetyEnvelopeAmountController =
       TextEditingController(text: _safetyEnvelopeAmount.round().toString());
   // 既定 OFF。ON の間だけ行動リストを生活防衛ルール順へ並べ替える。
@@ -3818,9 +3818,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _safetyEnvelopeCeiling,
         );
         _safetyEnvelopeAmount = normalizedEnvelope;
-        _safetyEnvelopeAmountController.text = normalizedEnvelope
-            .round()
-            .toString();
+        _safetyEnvelopeAmountController.text =
+            normalizedEnvelope.round().toString();
       }
     });
   }
@@ -3837,9 +3836,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final normalized = rawValue.replaceAll(',', '').trim();
     final parsed = double.tryParse(normalized);
     if (parsed == null) {
-      _safetyEnvelopeAmountController.text = _safetyEnvelopeAmount
-          .round()
-          .toString();
+      _safetyEnvelopeAmountController.text =
+          _safetyEnvelopeAmount.round().toString();
       return;
     }
     final clamped = parsed.clamp(_safetyEnvelopeFloor, _safetyEnvelopeCeiling);
