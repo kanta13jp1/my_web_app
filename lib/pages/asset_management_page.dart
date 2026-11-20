@@ -4186,9 +4186,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     };
   }
 
-  Future<bool?> _confirmLivingExpensePriorityGuard(
-    AssetLiabilityDebtRow row,
-  ) {
+  Future<bool?> _confirmLivingExpensePriorityGuard(AssetLiabilityDebtRow row) {
     final report = _latestInsightReport;
     if (report == null || !report.shouldBlockPaymentExecution) {
       return Future<bool?>.value(true);
@@ -4199,9 +4197,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final todayText = _formatManagementYen(
       report.todayAvailable.availableAmount,
     );
-    final weekText = _formatManagementYen(
-      report.weekAvailable.availableAmount,
-    );
+    final weekText = _formatManagementYen(report.weekAvailable.availableAmount);
     return showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
