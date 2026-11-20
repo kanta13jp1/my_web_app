@@ -26,6 +26,12 @@ test('catalog tabs, live 3D modal playback, and 20 X benchmarks render cleanly',
   await expect(page.locator('[data-demo-slug="solarpunk-canal-2d"]')).toBeVisible();
   await expect(page.locator('[data-demo-slug="red-fuji-flight-3d"]')).toBeVisible();
 
+  await expect(page.locator('#hero-x-thread')).toHaveAttribute(
+    'href',
+    'https://x.com/kanta13jp1/status/2123532429545906405',
+  );
+  await expect(page.locator('[data-demo-x]')).toHaveCount(demoTotal);
+
   // Filter live demos by category and launch a standalone interactive 3D demo modal
   await page.locator('[data-demo-cat="cinema"]').click();
   await expect(page.locator('[data-demo-slug="sea-train-3d"]')).toBeVisible();
@@ -34,14 +40,19 @@ test('catalog tabs, live 3D modal playback, and 20 X benchmarks render cleanly',
   await expect(page.locator('#modal-title')).toContainText('SHIOKAZE EXPRESS');
   await expect(page.locator('#modal-iframe')).toHaveAttribute(
     'src',
-    './demos/sea-train-3d.html?v=20261120-33',
+    './demos/sea-train-3d.html?v=20261120-34',
   );
   await expect(page.locator('#modal-iframe')).toHaveAttribute('sandbox', 'allow-scripts');
   await expect(page.locator('#modal-iframe')).toHaveAttribute('allow', 'fullscreen');
   await expect(page.locator('#modal-fullscreen')).toBeVisible();
+  await expect(page.locator('#modal-copy-link')).toBeVisible();
+  await expect(page.locator('#modal-x-link')).toHaveAttribute(
+    'href',
+    'https://x.com/kanta13jp1/status/2123332856516845606',
+  );
   await expect(page.locator('#modal-open-tab')).toHaveAttribute(
     'href',
-    './demos/sea-train-3d.html?v=20261120-33',
+    './demos/sea-train-3d.html?v=20261120-34',
   );
   await page.locator('#modal-close').click();
   await expect(page.locator('#demo-modal')).toBeHidden();

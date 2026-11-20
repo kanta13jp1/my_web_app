@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gemini 4 作品館 · NEON SHOWCASE | my_web_app</title>
-  <link rel="stylesheet" href="./style.css?v=20261120-33" />
+  <link rel="stylesheet" href="./style.css?v=20261120-34" />
 </head>
 <body>
   <div class="shell">
@@ -17,6 +17,17 @@
             外部ライブラリ・3Dモデル素材ゼロの単一HTMLライブ作品（全32本：既存24本＋Blender 5.3作品のWebGL2移植5本＋次回作企画案3本）、
             バズ4法則分析、および参照したX投稿20選ベンチマークをすべてブラウザ上でライブ体験できます。
           </p>
+          <div class="hero-links">
+            <a
+              class="hero-x-link"
+              id="hero-x-thread"
+              href="https://x.com/kanta13jp1/status/2123532429545906405"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              𝕏 @kanta13jp1 全32作品まとめ投稿を見る ↗
+            </a>
+          </div>
         </div>
         <div class="hero-stats" aria-label="アーカイブ統計">
           <div class="stat-box">
@@ -89,6 +100,8 @@
           <div class="modal-sub" id="modal-sub"></div>
         </div>
         <div class="modal-actions">
+          <button type="button" id="modal-copy-link" class="btn btn-ghost">🔗 URLコピー</button>
+          <a id="modal-x-link" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer" hidden>𝕏 投稿 ↗</a>
           <button type="button" id="modal-fullscreen" class="btn btn-ghost">⛶ フル画面</button>
           <a id="modal-open-tab" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer">別タブで開く</a>
           <button type="button" id="modal-close" class="btn btn-primary">閉じる</button>
@@ -107,6 +120,6 @@
     </div>
   </div>
 
-  <script type="module" src="./app.js?v=20261120-33"></script>
+  <script type="module" src="./app.js?v=20261120-34"></script>
 </body>
 </html>
