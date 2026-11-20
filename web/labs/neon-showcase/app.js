@@ -1,13 +1,13 @@
-import { renderBlenderArtwork, renderDemoArtwork } from './artworks.js?v=20261120-33';
+import { renderBlenderArtwork, renderDemoArtwork } from './artworks.js?v=20261120-34';
 import {
   BLENDER_WORKS,
   CONCEPT_PLANS,
   LIVE_DEMOS,
   VIRAL_LAWS,
   X_BENCHMARKS,
-} from './catalog.js?v=20261120-33';
+} from './catalog.js?v=20261120-34';
 
-const ASSET_VER = '20261120-33';
+const ASSET_VER = '20261120-34';
 const SAFE_SLUG = /^[a-z0-9-]+$/;
 const SAFE_X_URL = /^https:\/\/x\.com\/[A-Za-z0-9_]+\/status\/[0-9]+(?:\/[A-Za-z0-9_/-]*)?$/;
 
@@ -30,6 +30,8 @@ const tabButtons = Array.from(document.querySelectorAll('[data-tab]'));
 const modal = document.getElementById('demo-modal');
 const modalTitle = document.getElementById('modal-title');
 const modalSub = document.getElementById('modal-sub');
+const modalCopyLink = document.getElementById('modal-copy-link');
+const modalXLink = document.getElementById('modal-x-link');
 const modalOpenTab = document.getElementById('modal-open-tab');
 const modalFullscreen = document.getElementById('modal-fullscreen');
 const modalClose = document.getElementById('modal-close');
@@ -77,6 +79,8 @@ function matchesQuery(fields) {
 }
 
 let modalExpanded = false;
+let currentModalShareUrl = '';
+let copyResetTimer = null;
 
 function isModalNativeFs() {
   return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
@@ -93,10 +97,26 @@ function openDemoModal(slug) {
   const demo = LIVE_DEMOS.find((d) => d.slug === slug);
   if (!demo || !SAFE_SLUG.test(demo.slug)) return;
   const url = `./demos/${demo.slug}.html?v=${ASSET_VER}`;
+  currentModalShareUrl = new URL(`./demos/${demo.slug}.html`, window.location.href).href;
   modalExpanded = false;
   modalTitle.textContent = demo.title;
   modalSub.textContent = `${demo.model} · ${demo.categoryLabel} · ${demo.sizeKb} KB · 外部ライブラリ 0`;
   modalOpenTab.href = url;
+  if (modalCopyLink) {
+    if (copyResetTimer) {
+      clearTimeout(copyResetTimer);
+      copyResetTimer = null;
+    }
+    modalCopyLink.textContent = '🔗 URLコピー';
+  }
+  if (modalXLink) {
+    if (demo.xUrl && SAFE_X_URL.test(demo.xUrl)) {
+      modalXLink.href = demo.xUrl;
+      modalXLink.hidden = false;
+    } else {
+      modalXLink.hidden = true;
+    }
+  }
   modal.hidden = false;
   syncModalFullscreenLabel();
   modalIframe.src = url;
@@ -174,6 +194,11 @@ function renderDemos() {
             <div class="card-actions">
               <button type="button" class="btn btn-primary" data-launch-demo="${esc(safeSlug)}">今すぐ体験</button>
               <a class="btn btn-ghost" href="./demos/${esc(safeSlug)}.html?v=${ASSET_VER}" target="_blank" rel="noopener noreferrer">別タブ</a>
+              ${
+                d.xUrl && SAFE_X_URL.test(d.xUrl)
+                  ? `<a class="btn btn-ghost" data-demo-x="${esc(safeSlug)}" href="${esc(safeXUrl(d.xUrl))}" target="_blank" rel="noopener noreferrer">𝕏 投稿 ↗</a>`
+                  : ''
+              }
             </div>
           </div>
         </article>
@@ -231,6 +256,11 @@ function renderBlender() {
                 ? `<div class="card-actions">
                      <button type="button" class="btn btn-primary" data-launch-demo="${esc(b.demoSlug)}">今すぐライブ体験（WebGL2）</button>
                      <a class="btn btn-ghost" href="./demos/${esc(b.demoSlug)}.html?v=${ASSET_VER}" target="_blank" rel="noopener noreferrer">別タブ</a>
+                     ${
+                       b.xUrl && SAFE_X_URL.test(b.xUrl)
+                         ? `<a class="btn btn-ghost" href="${esc(safeXUrl(b.xUrl))}" target="_blank" rel="noopener noreferrer">𝕏 投稿 ↗</a>`
+                         : ''
+                     }
                    </div>`
                 : ''
             }
@@ -435,6 +465,37 @@ contentRoot.addEventListener('click', (e) => {
 });
 
 modalClose.addEventListener('click', closeDemoModal);
+if (modalCopyLink) {
+  modalCopyLink.addEventListener('click', async () => {
+    if (!currentModalShareUrl) return;
+    let copied = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(currentModalShareUrl);
+        copied = true;
+      }
+    } catch (_) {}
+    if (!copied) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = currentModalShareUrl;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        copied = document.execCommand('copy');
+        ta.remove();
+      } catch (_) {}
+    }
+    modalCopyLink.textContent = copied ? '✓ コピー済み' : 'コピー不可';
+    if (copyResetTimer) clearTimeout(copyResetTimer);
+    copyResetTimer = setTimeout(() => {
+      modalCopyLink.textContent = '🔗 URLコピー';
+      copyResetTimer = null;
+    }, 2000);
+  });
+}
 if (modalFullscreen) {
   modalFullscreen.addEventListener('click', () => {
     if (isModalNativeFs()) {

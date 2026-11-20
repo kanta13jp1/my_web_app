@@ -1,9 +1,12 @@
 // Gemini 4 Interactive 3D Showcase, Concept Roadmap & 20 Viral X Benchmarks
 // Self-hosted first-party data (observed metrics recorded 2026-11-19 JST).
 
+export const PORTAL_X_URL = 'https://x.com/kanta13jp1/status/2123532429545906405';
+
 export const LIVE_DEMOS = [
   {
     slug: 'tourbillon-watch-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123344051852525650',
     title: 'CALIBRE N-04 // 3軸フライング・トゥールビヨン機械式時計 (WebGL2版)',
     enTitle: 'Interactive 3D Swiss 3-Axis Tourbillon + 5-Layer Exploded View',
     category: 'cinema',
@@ -18,6 +21,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'pagoda-clouds-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123531540995142035',
     title: '雲海と桜の浮遊・日本五重塔 // ボクセル × 5階層空中分解',
     enTitle: 'Floating Japanese 5-Story Voxel Pagoda + Sunset to Moonlit Sakura',
     category: 'cinema',
@@ -32,6 +36,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'solarpunk-canal-2d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123531816477102286',
     title: 'ソーラーパンク空中庭園都市 // 高密度ピクセルアート運河',
     enTitle: 'High-Density Pixel Art Solarpunk Hanging Gardens & Airships',
     category: 'cinema',
@@ -46,6 +51,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'red-fuji-flight-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123532204043276659',
     title: '紅富士と雲海・芦ノ湖フライトシネマ // 逆さ富士レイマーチング',
     enTitle: 'Procedural Mt. Fuji + Lake Ashi Mirror Reflection & Volumetric Clouds',
     category: 'cinema',
@@ -60,6 +66,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'sea-train-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123332856516845606',
     title: 'SHIOKAZE EXPRESS // 3D海上蒸気列車',
     enTitle: 'Interactive 3D Sea Railway (5 Cameras + Sunset → Moonlit Night)',
     category: 'cinema',
@@ -74,6 +81,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'blackhole-gr-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123260905014374776',
     title: 'GARGANTUA // 一般相対性理論ブラックホール・レイトレーサー',
     enTitle: '164-Step Schwarzschild/Kerr Geodesic GLSL Shader (0 Polygons)',
     category: 'physics',
@@ -89,6 +97,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'quant-terminal-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123203940598915121',
     title: 'HYPERION // 機関投資家向け3Dクオンツ取引ワークステーション',
     enTitle: 'Live Order Book + 3D Liquidity Depth Terrain & IV Surface',
     category: 'workstation',
@@ -104,12 +113,13 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'fsd-lidar-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123531203051765871',
     title: 'DRIVE AI // 3D FSD & LiDAR Perception Studio',
     enTitle: '64-CH LiDAR + 3D Occupancy Voxels + MPC Cut-In Avoidance',
     category: 'workstation',
     categoryLabel: '3Dワークステーション',
     model: 'Gemini 4 Neon',
-    episode: 'プロトタイプ',
+    episode: '第11弾',
     sizeKb: 72,
     featured: true,
     summary:
@@ -118,6 +128,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'sf-game',
+    xUrl: 'https://x.com/kanta13jp1/status/2122438252317843561',
     title: 'VOID RUNNER // プレイアブル3D SFフライトシューター',
     enTitle: 'All-Time #1 Most Viewed Single-HTML 3D Flight Shooter',
     category: 'game',
@@ -132,6 +143,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'lp-showcase',
+    xUrl: 'https://x.com/kanta13jp1/status/2122530467337605206',
     title: 'AI LP SHOWCASE // 4テイスト・ランディングページ比較',
     enTitle: '4 Distinct Landing Page Design Concepts in One HTML',
     category: 'ui',
@@ -146,6 +158,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'sentinel-earth-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123250740693184940',
     title: 'SENTINEL EARTH // 3Dデジタルツイン地球儀 & サイバー防衛',
     enTitle: 'Procedural 2K Globe + 72 LEO Satellites + DDoS Shield + Aurora',
     category: 'workstation',
@@ -161,6 +174,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'aeroflow-cfd-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123277585497157863',
     title: 'AEROFLOW // 3D風洞 & 空力CFDスタジオ',
     enTitle: 'F1 Ground-Effect Cp Heatmap + Mach 2.4 Shock + Starship Re-entry',
     category: 'workstation',
@@ -175,6 +189,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'neocity-fpv-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123283238194184638',
     title: 'NEOCITY // 3Dサイバーパンク都市建設 & FPVドローン',
     enTitle: '284 Procedural Skyscrapers + WASD Playable FPV Flight',
     category: 'cinema',
@@ -189,6 +204,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'neon-racer-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123006403124285562',
     title: 'NEON HOVER RACER 3D // 3Dホバーレーサー',
     enTitle: 'Playable 3D Synthwave Hover Racer',
     category: 'game',
@@ -202,6 +218,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'helix-bio-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123299455076331859',
     title: 'HELIX LAB // 3D分子ドッキング & AlphaFold風フォールディング',
     enTitle: '3D Molecular Docking & Real-Time Protein Folding Studio',
     category: 'workstation',
@@ -217,6 +234,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'aegis-zero-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123237076586160374',
     title: 'AEGIS ZERO // プレイアブル3D軌道戦艦ボスレイド',
     enTitle: 'Playable Pure WebGL2 3D Starfighter Boss Battle',
     category: 'game',
@@ -231,6 +249,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'explainer-video',
+    xUrl: 'https://x.com/kanta13jp1/status/2122405979686080761',
     title: 'HOW LLM WORKS // 1分で分かるLLM仕組みアニメーション',
     enTitle: 'Interactive Transformer / Tokenization Explainer Scene',
     category: 'ui',
@@ -244,6 +263,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'neuro-evolution',
+    xUrl: 'https://x.com/kanta13jp1/status/2122723741621002385',
     title: 'NEURO EVOLUTION RACE // ニューロ進化・自律走行AI学習',
     enTitle: 'Genetic Algorithm + Neural Network Car Evolution',
     category: 'physics',
@@ -257,6 +277,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'dashboard-ui-4styles',
+    xUrl: 'https://x.com/kanta13jp1/status/2123156606661833123',
     title: '4 LIVE INTERACTIVE DASHBOARDS // 実務UI 4種統合',
     enTitle: 'AI Agent Control, Quant Terminal, EV Cockpit, SaaS Analytics',
     category: 'ui',
@@ -271,6 +292,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'neon-fluid',
+    xUrl: 'https://x.com/kanta13jp1/status/2122710250562396505',
     title: 'NEON FLUID ART // リアルタイム2Dナビエ・ストークス流体',
     enTitle: 'Interactive Real-Time Fluid Dynamics Canvas',
     category: 'physics',
@@ -284,6 +306,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'maze-race',
+    xUrl: 'https://x.com/kanta13jp1/status/2122715696224440702',
     title: 'PATHFINDING RACE // A* / Dijkstra / BFS 迷路探索対決',
     enTitle: 'Visual Pathfinding Algorithm Race',
     category: 'physics',
@@ -297,6 +320,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'cyber-rhythm-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123193438653047201',
     title: 'CYBER RHYTHM 3D // 128 BPM 音ハメ3Dリズムゲーム',
     enTitle: 'Playable 128 BPM Procedural WebGL2 Rhythm Game',
     category: 'game',
@@ -311,6 +335,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'sort-symphony',
+    xUrl: 'https://x.com/kanta13jp1/status/2122750016351797285',
     title: 'SORTING SYMPHONY // ソートアルゴリズム可視化',
     enTitle: 'Multi-Algorithm Visual Sorting Benchmark',
     category: 'physics',
@@ -324,6 +349,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'prism-raytracer',
+    xUrl: 'https://x.com/kanta13jp1/status/2122756830472606037',
     title: 'PRISM SPECTRAL RAYTRACER // 分光プリズム・レイトレーサー',
     enTitle: 'Real-Time Spectral Dispersion & Caustics Raytracer',
     category: 'physics',
@@ -337,6 +363,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'physarum-100k',
+    xUrl: 'https://x.com/kanta13jp1/status/2122770443736424570',
     title: 'PHYSARUM 100K // 10万エージェント粘菌ネットワーク',
     enTitle: '100,000-Agent Slime Mold Transport Network Simulation',
     category: 'physics',
@@ -350,6 +377,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'infinite-world',
+    xUrl: 'https://x.com/kanta13jp1/status/2122518262307303931',
     title: 'INFINITE HORIZON FLIGHT // 無限プロシージャル地形フライト',
     enTitle: 'Procedural Terrain Flyover Shader',
     category: 'cinema',
@@ -363,6 +391,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'galaxy-nbody',
+    xUrl: 'https://x.com/kanta13jp1/status/2122623212991513035',
     title: 'GALAXY COLLISION 12K // 12,000粒子 銀河衝突N体シミュレーション',
     enTitle: '12,000-Particle Real-Time Spiral Galaxy Collision',
     category: 'physics',
@@ -377,6 +406,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'fractal-mv',
+    xUrl: 'https://x.com/kanta13jp1/status/2122419996450267570',
     title: 'GLSL FRACTAL MV // 3Dレイマーチング・フラクタル映像',
     enTitle: 'Audio-Reactive 3D Mandelbulb / Raymarched Fractal',
     category: 'cinema',
@@ -390,6 +420,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'neon-tower-smash',
+    xUrl: 'https://x.com/kanta13jp1/status/2123198210760179891',
     title: 'NEON CRYSTAL TOWER SMASH // 144ブロック剛体物理クラッシュ (WebGL2版)',
     enTitle: 'Interactive 144-Block 3D Rigid-Body Plasma Cannon Sandbox',
     category: 'physics',
@@ -404,6 +435,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'cyberpunk-city',
+    xUrl: 'https://x.com/kanta13jp1/status/2122953602411233716',
     title: 'BLENDER CYBERPUNK CITY + FPV // 雨夜のネオン都市＆FPV飛行 (WebGL2版)',
     enTitle: 'Rainy Reflective Cyberpunk Metropolis + Playable WASD FPV',
     category: 'cinema',
@@ -418,6 +450,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'blender-domino',
+    xUrl: 'https://x.com/kanta13jp1/status/2122613015396880536',
     title: 'RIGID-BODY DOMINO CASCADE // 剛体物理ドミノ連鎖 (WebGL2版)',
     enTitle: 'Interactive 3-Course 3D Domino Cascade with FPV Chase Camera',
     category: 'physics',
@@ -432,6 +465,7 @@ export const LIVE_DEMOS = [
   },
   {
     slug: 'blender-loop',
+    xUrl: 'https://x.com/kanta13jp1/status/2122398621333418163',
     title: 'CRYSTAL KINETIC LOOP // 観覧車ギア＆シーソー・マーブルループ (WebGL2版)',
     enTitle: 'Perpetual Crystal Twin-Rail Marble Elevator & Tilting Seesaw',
     category: 'physics',
@@ -448,6 +482,7 @@ export const LIVE_DEMOS = [
 export const BLENDER_WORKS = [
   {
     id: 'tourbillon-watch-3d',
+    xUrl: 'https://x.com/kanta13jp1/status/2123344051852525650',
     demoSlug: 'tourbillon-watch-3d',
     title: 'CALIBRE N-04 // スイス超高級・3軸フライング・トゥールビヨン機械式時計',
     model: 'Gemini 4 Neon × Blender 5.3',
@@ -470,6 +505,7 @@ export const BLENDER_WORKS = [
   },
   {
     id: 'neon-tower-smash',
+    xUrl: 'https://x.com/kanta13jp1/status/2123198210760179891',
     demoSlug: 'neon-tower-smash',
     title: 'NEON CRYSTAL TOWER SMASH // 144ブロック剛体物理2段階クラッシュ',
     model: 'Gemini 4 Neon × Blender 5.3',
@@ -487,6 +523,7 @@ export const BLENDER_WORKS = [
   },
   {
     id: 'cyberpunk-city',
+    xUrl: 'https://x.com/kanta13jp1/status/2122953602411233716',
     demoSlug: 'cyberpunk-city',
     title: 'BLENDER CYBERPUNK CITY + FPV // サイバーパンク都市＆FPV飛行',
     model: 'Blender Python Procedural',
@@ -501,6 +538,7 @@ export const BLENDER_WORKS = [
   },
   {
     id: 'blender-domino',
+    xUrl: 'https://x.com/kanta13jp1/status/2122613015396880536',
     demoSlug: 'blender-domino',
     title: 'RIGID-BODY DOMINO CASCADE // 剛体物理ドミノ連鎖',
     model: 'Blender Python Physics',
@@ -515,6 +553,7 @@ export const BLENDER_WORKS = [
   },
   {
     id: 'blender-loop',
+    xUrl: 'https://x.com/kanta13jp1/status/2122398621333418163',
     demoSlug: 'blender-loop',
     title: 'CRYSTAL KINETIC LOOP // クリスタル・キネティックループ',
     model: 'Blender Python Motion',
@@ -578,7 +617,7 @@ export const CONCEPT_PLANS = [
   },
   {
     id: 'plan-fsd',
-    status: 'プロトタイプ実装済み・体験可',
+    status: '実装済み・ライブ体験可',
     statusTone: 'live',
     title: 'DRIVE AI // 3D FSD自動運転 & 64ch LiDAR スタジオ',
     benchmark: '@kanta13jp1 ワークステーション系1位 (122 Views) 進化版',
