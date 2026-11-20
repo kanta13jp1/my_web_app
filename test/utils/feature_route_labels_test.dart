@@ -138,6 +138,14 @@ void main() {
         resolveRecentFeatureLabel('/asset-management', 'Asset Management'),
         '資産・家計管理',
       );
+      expect(
+        resolveRecentFeatureLabel('/cfo-office', 'Cfo Office'),
+        '財務・資産管理 (CFO)',
+      );
+      expect(
+        resolveRecentFeatureLabel('/reading-list', 'Reading List'),
+        '読書リスト',
+      );
     });
 
     test('未知ルートは保存済みラベルを活かす', () {
