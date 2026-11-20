@@ -4191,12 +4191,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (report == null || !report.shouldBlockPaymentExecution) {
       return Future<bool?>.value(true);
     }
-    final suggestions = report.workbook.transferSuggestions
-        .take(3)
-        .toList(growable: false);
-    final todayText = _formatManagementYen(
-      report.todayAvailable.availableAmount,
-    );
+    final suggestions = report.workbook.transferSuggestions.take(3).toList();
+    final todayAmount = report.todayAvailable.availableAmount;
+    final todayText = _formatManagementYen(todayAmount);
     final weekText = _formatManagementYen(report.weekAvailable.availableAmount);
     return showDialog<bool>(
       context: context,
