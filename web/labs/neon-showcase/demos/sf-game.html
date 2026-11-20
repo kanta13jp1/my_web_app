@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>VOID RUNNER - 3D SF Flight Shooter (Single HTML)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #03060E; font-family: "Consolas", "Meiryo", sans-serif; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #hud { pointer-events: none; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="shooter">
+<canvas id="gl" width="1280" height="720"></canvas>
+<canvas id="hud" width="1280" height="720"></canvas>
+<script>
+const glCanvas = document.getElementById('gl');
+const gl = glCanvas.getContext('webgl2', { antialias: true, preserveDrawingBuffer: true });
+const hudCanvas = document.getElementById('hud');
+const ctx = hudCanvas.getContext('2d');
+
+const W = 1280, H = 720;
+
+// ---------------------------------------------------------------------------
+// Minimal 3D Math
+// ---------------------------------------------------------------------------
+function mat4Identity() {
+  return new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+}
+function mat4Mul(a, b) {
+  const o = new Float32Array(16);
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      o[j*4+i] = a[i]*b[j*4] + a[4+i]*b[j*4+1] + a[8+i]*b[j*4+2] + a[12+i]*b[j*4+3];
+    }
+  }
+  return o;
+}
+function mat4Perspective(fovRad, aspect, near, far) {
+  const f = 1.0 / Math.tan(fovRad / 2);
+  const nf = 1 / (near - far);
+  return new Float32Array([
+    f/aspect, 0, 0, 0,
+    0, f, 0, 0,
+    0, 0, (far+near)*nf, -1,
+    0, 0, (2*far*near)*nf, 0
+  ]);
+}
+function mat4LookAt(eye, target, up) {
+  let zx = eye[0]-target[0], zy = eye[1]-target[1], zz = eye[2]-target[2];
+  let len = Math.hypot(zx, zy, zz) || 1; zx/=len; zy/=len; zz/=len;
+  let xx = up[1]*zz - up[2]*zy, xy = up[2]*zx - up[0]*zz, xz = up[0]*zy - up[1]*zx;
+  len = Math.hypot(xx, xy, xz) || 1; xx/=len; xy/=len; xz/=len;
+  let yx = zy*xz - zz*xy, yy = zz*xx - zx*xz, yz = zx*xy - zy*xx;
+  return new Float32Array([
+    xx, yx, zx, 0,
+    xy, yy, zy, 0,
+    xz, yz, zz, 0,
+    -(xx*eye[0]+xy*eye[1]+xz*eye[2]),
+    -(yx*eye[0]+yy*eye[1]+yz*eye[2]),
+    -(zx*eye[0]+zy*eye[1]+zz*eye[2]),
+    1
+  ]);
+}
+function mat4TRS(pos, rx, ry, rz, scale) {
+  const cx=Math.cos(rx), sx=Math.sin(rx);
+  const cy=Math.cos(ry), sy=Math.sin(ry);
+  const cz=Math.cos(rz), sz=Math.sin(rz);
+  const [px,py,pz] = pos;
+  const [kx,ky,kz] = Array.isArray(scale) ? scale : [scale,scale,scale];
+  // R = Ry * Rx * Rz
+  const m = new Float32Array(16);
+  m[0] = (cy*cz + sy*sx*sz)*kx;
+  m[1] = (cx*sz)*kx;
+  m[2] = (-sy*cz + cy*sx*sz)*kx;
+  m[3] = 0;
+  m[4] = (-cy*sz + sy*sx*cz)*ky;
+  m[5] = (cx*cz)*ky;
+  m[6] = (sy*sz + cy*sx*cz)*ky;
+  m[7] = 0;
+  m[8] = (sy*cx)*kz;
+  m[9] = (-sx)*kz;
+  m[10]= (cy*cx)*kz;
+  m[11]= 0;
+  m[12]= px; m[13]= py; m[14]= pz; m[15]= 1;
+  return m;
+}
+function project3D(p, vp) {
+  const x = vp[0]*p[0] + vp[4]*p[1] + vp[8]*p[2] + vp[12];
+  const y = vp[1]*p[0] + vp[5]*p[1] + vp[9]*p[2] + vp[13];
+  const w = vp[3]*p[0] + vp[7]*p[1] + vp[11]*p[2] + vp[15];
+  if (w <= 0.1) return null;
+  return { x: (x / w * 0.5 + 0.5) * W, y: (1.0 - (y / w * 0.5 + 0.5)) * H, w };
+}
+
+// ---------------------------------------------------------------------------
+// WebGL2 Shaders
+// ---------------------------------------------------------------------------
+const vsSrc = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNorm;
+uniform mat4 uMVP;
+uniform mat4 uModel;
+out vec3 vNorm;
+out vec3 vWorld;
+void main() {
+  vec4 wp = uModel * vec4(aPos, 1.0);
+  vWorld = wp.xyz;
+  vNorm = mat3(uModel) * aNorm;
+  gl_Position = uMVP * vec4(aPos, 1.0);
+}`;
+
+const fsSrc = `#version 300 es
+precision highp float;
+in vec3 vNorm;
+in vec3 vWorld;
+uniform vec3 uColor;
+uniform vec3 uEmissive;
+uniform vec3 uCamPos;
+uniform float uGrid;
+out vec4 fragColor;
+void main() {
+  vec3 n = normalize(vNorm);
+  vec3 ld = normalize(vec3(0.4, 0.8, 0.5));
+  vec3 vd = normalize(uCamPos - vWorld);
+  float diff = max(dot(n, ld), 0.0);
+  float rim = pow(1.0 - max(dot(n, vd), 0.0), 3.0);
+
+  vec3 col = uColor * (0.28 + 0.72 * diff) + uEmissive + uColor * rim * 0.55;
+
+  if (uGrid > 0.5) {
+    float gx = abs(fract(vWorld.x * 0.25 - 0.5) - 0.5) / fwidth(vWorld.x * 0.25);
+    float gz = abs(fract(vWorld.z * 0.25 - 0.5) - 0.5) / fwidth(vWorld.z * 0.25);
+    float line = 1.0 - min(min(gx, gz), 1.0);
+    col += vec3(0.0, 0.75, 1.0) * line * 0.55;
+  }
+
+  float dist = length(vWorld - uCamPos);
+  float fog = exp(-0.00018 * dist * dist);
+  vec3 bg = vec3(0.012, 0.020, 0.045);
+  col = mix(bg, col, clamp(fog, 0.0, 1.0));
+  fragColor = vec4(col, 1.0);
+}`;
+
+function compileShader(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, compileShader(gl.VERTEX_SHADER, vsSrc));
+gl.attachShader(prog, compileShader(gl.FRAGMENT_SHADER, fsSrc));
+gl.linkProgram(prog);
+gl.useProgram(prog);
+
+const uMVP = gl.getUniformLocation(prog, 'uMVP');
+const uModel = gl.getUniformLocation(prog, 'uModel');
+const uColor = gl.getUniformLocation(prog, 'uColor');
+const uEmissive = gl.getUniformLocation(prog, 'uEmissive');
+const uCamPos = gl.getUniformLocation(prog, 'uCamPos');
+const uGrid = gl.getUniformLocation(prog, 'uGrid');
+
+// ---------------------------------------------------------------------------
+// Procedural 3D Mesh Builders
+// ---------------------------------------------------------------------------
+function createMesh(positions, normals) {
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const vb = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+
+  const nb = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, nb);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(1);
+  gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+  return { vao, count: positions.length / 3 };
+}
+
+function pushTri(pos, norm, a, b, c) {
+  const ux=b[0]-a[0], uy=b[1]-a[1], uz=b[2]-a[2];
+  const vx=c[0]-a[0], vy=c[1]-a[1], vz=c[2]-a[2];
+  let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
+  const l = Math.hypot(nx, ny, nz) || 1;
+  nx/=l; ny/=l; nz/=l;
+  pos.push(...a, ...b, ...c);
+  norm.push(nx,ny,nz, nx,ny,nz, nx,ny,nz);
+}
+
+function makeBoxMesh(sx=1, sy=1, sz=1) {
+  const p=[], n=[];
+  const hx=sx*0.5, hy=sy*0.5, hz=sz*0.5;
+  const v = [
+    [-hx,-hy, hz],[ hx,-hy, hz],[ hx, hy, hz],[-hx, hy, hz],
+    [-hx,-hy,-hz],[-hx, hy,-hz],[ hx, hy,-hz],[ hx,-hy,-hz]
+  ];
+  const faces = [[0,1,2,3],[4,5,6,7],[3,2,6,5],[0,4,7,1],[1,7,6,2],[0,3,5,4]];
+  faces.forEach(([a,b,c,d]) => { pushTri(p,n,v[a],v[b],v[c]); pushTri(p,n,v[a],v[c],v[d]); });
+  return createMesh(p, n);
+}
+
+function makeShipMesh() {
+  const p=[], n=[];
+  // Sleek delta-wing SF fighter pointing -Z
+  const nose = [0, 0.08, -1.8];
+  const top = [0, 0.42, 0.4];
+  const bot = [0, -0.22, 0.4];
+  const lw = [-1.45, -0.08, 0.95];
+  const rw = [ 1.45, -0.08, 0.95];
+  const tail = [0, 0.12, 1.1];
+
+  pushTri(p,n, nose, lw, top);
+  pushTri(p,n, nose, top, rw);
+  pushTri(p,n, nose, bot, lw);
+  pushTri(p,n, nose, rw, bot);
+  pushTri(p,n, lw, tail, top);
+  pushTri(p,n, top, tail, rw);
+  pushTri(p,n, bot, tail, lw);
+  pushTri(p,n, rw, tail, bot);
+  return createMesh(p, n);
+}
+
+function makeRingMesh(radius=5.0, tube=0.35, segs=28) {
+  const p=[], n=[];
+  for (let i = 0; i < segs; i++) {
+    const a0 = (i / segs) * Math.PI * 2;
+    const a1 = ((i + 1) / segs) * Math.PI * 2;
+    const c0=Math.cos(a0), s0=Math.sin(a0), c1=Math.cos(a1), s1=Math.sin(a1);
+    const ri = radius - tube, ro = radius + tube;
+    const p00=[ri*c0, ri*s0, -tube], p01=[ro*c0, ro*s0, -tube], p02=[ro*c0, ro*s0, tube], p03=[ri*c0, ri*s0, tube];
+    const p10=[ri*c1, ri*s1, -tube], p11=[ro*c1, ro*s1, -tube], p12=[ro*c1, ro*s1, tube], p13=[ri*c1, ri*s1, tube];
+    pushTri(p,n,p00,p01,p11); pushTri(p,n,p00,p11,p10);
+    pushTri(p,n,p01,p02,p12); pushTri(p,n,p01,p12,p11);
+    pushTri(p,n,p02,p03,p13); pushTri(p,n,p02,p13,p12);
+    pushTri(p,n,p03,p00,p10); pushTri(p,n,p03,p10,p13);
+  }
+  return createMesh(p, n);
+}
+
+function terrainHeight(x, z) {
+  // Canyon corridor: flat center, rising crystalline walls on |x| > 11
+  const wall = Math.max(0, Math.abs(x) - 10.5);
+  const h = -6.5 + Math.pow(wall, 1.35) * 0.48 + Math.sin(x * 0.35 + z * 0.12) * 0.9 + Math.cos(z * 0.18) * 0.6;
+  return h;
+}
+
+function makeTerrainChunkMesh(zLen=220, xSpan=36, nx=28, nz=44) {
+  const p=[], n=[];
+  for (let iz = 0; iz < nz; iz++) {
+    const z0 = -(iz / nz) * zLen;
+    const z1 = -((iz + 1) / nz) * zLen;
+    for (let ix = 0; ix < nx; ix++) {
+      const x0 = -xSpan + (ix / nx) * (2 * xSpan);
+      const x1 = -xSpan + ((ix + 1) / nx) * (2 * xSpan);
+      const a=[x0, terrainHeight(x0, z0), z0];
+      const b=[x1, terrainHeight(x1, z0), z0];
+      const c=[x1, terrainHeight(x1, z1), z1];
+      const d=[x0, terrainHeight(x0, z1), z1];
+      pushTri(p,n,a,b,c);
+      pushTri(p,n,a,c,d);
+    }
+  }
+  return createMesh(p, n);
+}
+
+const meshShip = makeShipMesh();
+const meshBox = makeBoxMesh(1, 1, 1);
+const meshRing = makeRingMesh(4.2, 0.25, 24);
+const meshMegaRing = makeRingMesh(42.0, 2.2, 48);
+const meshTerrain = makeTerrainChunkMesh();
+
+function drawMesh(mesh, model, vp, color, emissive=[0,0,0], grid=0.0) {
+  const mvp = mat4Mul(vp, model);
+  gl.uniformMatrix4fv(uMVP, false, mvp);
+  gl.uniformMatrix4fv(uModel, false, model);
+  gl.uniform3fv(uColor, color);
+  gl.uniform3fv(uEmissive, emissive);
+  gl.uniform1f(uGrid, grid);
+  gl.bindVertexArray(mesh.vao);
+  gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+}
+
+// ---------------------------------------------------------------------------
+// Game State & Deterministic Simulation
+// ---------------------------------------------------------------------------
+const state = {
+  t: 0,
+  score: 0,
+  combo: 1,
+  shield: 100,
+  boost: 100,
+  speed: 48.0,
+  shake: 0,
+  player: { x: 0, y: 1.5, z: 0, vx: 0, vy: 0, roll: 0, pitch: 0 },
+  lasers: [],
+  enemies: [],
+  rings: [],
+  particles: [],
+  stars: [],
+  popups: [],
+  events: [],
+  fireCooldown: 0,
+  nextWaveZ: -55,
+  waveIdx: 0,
+};
+
+for (let i = 0; i < 140; i++) {
+  state.stars.push({
+    x: (Math.sin(i * 19.3) * 0.5) * 90,
+    y: 4 + ((i * 7.1) % 38),
+    z: -((i * 13.7) % 180)
+  });
+}
+
+function spawnWave(zPos, idx) {
+  // Spawn a boost ring + 2..3 enemy drones in front
+  const rx = Math.sin(idx * 1.45) * 6.5;
+  const ry = 1.6 + Math.cos(idx * 1.1) * 1.8;
+  state.rings.push({ x: rx, y: ry, z: zPos, hit: false });
+
+  const count = (idx % 2 === 0) ? 2 : 3;
+  for (let k = 0; k < count; k++) {
+    const ex = rx + (k - (count - 1) * 0.5) * 4.5;
+    const ey = ry + Math.sin(idx + k * 2.1) * 1.6;
+    state.enemies.push({
+      id: `${idx}_${k}`,
+      x: ex, y: ey, z: zPos - 24 - k * 8,
+      hp: 1, alive: true, phase: k * 1.5
+    });
+  }
+}
+
+spawnWave(-55, 0);
+spawnWave(-105, 1);
+spawnWave(-155, 2);
+state.nextWaveZ = -205;
+state.waveIdx = 3;
+
+// Keyboard & Pointer input for interactive play
+const keys = {};
+let pointerFire = false;
+window.addEventListener('keydown', e => { keys[e.code] = true; });
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+glCanvas.addEventListener('pointerdown', () => {
+  if (window.__RECORDING__) return;
+  autoPilot = false;
+  pointerFire = true;
+});
+window.addEventListener('pointerup', () => { pointerFire = false; });
+window.addEventListener('pointercancel', () => { pointerFire = false; });
+
+// Real-time WebAudio SFX for live browser play
+let actx = null;
+function playLiveSfx(kind) {
+  if (window.__RECORDING__) return;
+  if (window.NeonAudio) {
+    if (kind === 'fire') window.NeonAudio.sfx('laser');
+    else if (kind === 'explode') window.NeonAudio.sfx('explosion');
+    else if (kind === 'ring') window.NeonAudio.sfx('ring');
+    return;
+  }
+}
+
+function recordEvent(kind) {
+  state.events.push({ time: Number(state.t.toFixed(4)), kind });
+  playLiveSfx(kind);
+}
+
+function stepGame(dt, autopilot=true) {
+  state.t += dt;
+  const pl = state.player;
+  pl.z -= state.speed * dt;
+
+  // Steering: manual keys or smart autopilot targeting rings & enemies
+  let tx = 0, ty = 1.8, wantFire = false;
+  if (!autopilot) {
+    if (keys['KeyA'] || keys['ArrowLeft']) tx -= 9;
+    if (keys['KeyD'] || keys['ArrowRight']) tx += 9;
+    if (keys['KeyW'] || keys['ArrowUp']) ty += 4;
+    if (keys['KeyS'] || keys['ArrowDown']) ty -= 3;
+    wantFire = !!(keys['Space'] || keys['KeyJ'] || pointerFire);
+  } else {
+    // Find nearest upcoming enemy or ring
+    let targetEnemy = null;
+    let bestEz = -1e9;
+    for (const en of state.enemies) {
+      if (en.alive && en.z < pl.z - 6 && en.z > pl.z - 85 && en.z > bestEz) {
+        bestEz = en.z; targetEnemy = en;
+      }
+    }
+    let targetRing = null;
+    let bestRz = -1e9;
+    for (const rg of state.rings) {
+      if (!rg.hit && rg.z < pl.z && rg.z > pl.z - 65 && rg.z > bestRz) {
+        bestRz = rg.z; targetRing = rg;
+      }
+    }
+
+    if (targetRing && (!targetEnemy || targetRing.z > targetEnemy.z - 12)) {
+      tx = targetRing.x;
+      ty = targetRing.y;
+    } else if (targetEnemy) {
+      tx = targetEnemy.x;
+      ty = targetEnemy.y;
+    } else {
+      tx = Math.sin(state.t * 1.1) * 4.5;
+      ty = 2.0 + Math.cos(state.t * 0.9) * 1.0;
+    }
+
+    if (targetEnemy && Math.hypot(targetEnemy.x - pl.x, targetEnemy.y - pl.y) < 3.2) {
+      wantFire = true;
+    }
+  }
+
+  const dx = tx - pl.x;
+  const dy = ty - pl.y;
+  pl.vx += (dx * 5.2 - pl.vx) * Math.min(1, dt * 6.0);
+  pl.vy += (dy * 5.2 - pl.vy) * Math.min(1, dt * 6.0);
+  pl.x = Math.max(-8.8, Math.min(8.8, pl.x + pl.vx * dt));
+  pl.y = Math.max(-1.2, Math.min(7.5, pl.y + pl.vy * dt));
+  pl.roll += (-pl.vx * 0.055 - pl.roll) * Math.min(1, dt * 8.0);
+  pl.pitch += (pl.vy * 0.035 - pl.pitch) * Math.min(1, dt * 8.0);
+
+  // Fire twin lasers
+  state.fireCooldown -= dt;
+  if (wantFire && state.fireCooldown <= 0) {
+    state.fireCooldown = 0.16;
+    state.lasers.push({ x: pl.x - 0.85, y: pl.y - 0.05, z: pl.z - 1.5, life: 1.0 });
+    state.lasers.push({ x: pl.x + 0.85, y: pl.y - 0.05, z: pl.z - 1.5, life: 1.0 });
+    recordEvent('fire');
+  }
+
+  // Update lasers & check hits
+  for (const lz of state.lasers) {
+    lz.z -= 210 * dt;
+    lz.life -= dt;
+    for (const en of state.enemies) {
+      if (!en.alive) continue;
+      if (Math.abs(lz.z - en.z) < 4.5 && Math.hypot(lz.x - en.x, lz.y - en.y) < 2.2) {
+        en.alive = false;
+        lz.life = 0;
+        state.score += 250 * state.combo;
+        state.combo = Math.min(8, state.combo + 1);
+        state.shake = 0.45;
+        recordEvent('explode');
+        state.popups.push({ x: en.x, y: en.y + 1.2, z: en.z, text: `+${250 * state.combo}`, life: 0.9 });
+        for (let k = 0; k < 22; k++) {
+          const a = k * 1.7, b = k * 2.3;
+          state.particles.push({
+            x: en.x, y: en.y, z: en.z,
+            vx: Math.cos(a) * Math.sin(b) * (10 + (k%5)*4),
+            vy: Math.sin(a) * (8 + (k%4)*3),
+            vz: Math.cos(b) * 10 - state.speed * 0.3,
+            life: 0.55 + (k % 3) * 0.15,
+            col: k % 2 === 0 ? [1.0, 0.45, 0.08] : [0.0, 0.92, 1.0]
+          });
+        }
+      }
+    }
+  }
+  state.lasers = state.lasers.filter(l => l.life > 0);
+
+  // Update enemies
+  for (const en of state.enemies) {
+    if (!en.alive) continue;
+    en.x += Math.sin(state.t * 2.2 + en.phase) * 2.0 * dt;
+  }
+
+  // Check boost rings
+  for (const rg of state.rings) {
+    if (!rg.hit && Math.abs(rg.z - pl.z) < 2.6 && Math.hypot(rg.x - pl.x, rg.y - pl.y) < 4.6) {
+      rg.hit = true;
+      state.score += 100;
+      state.speed = Math.min(68, state.speed + 4);
+      recordEvent('ring');
+      state.popups.push({ x: rg.x, y: rg.y + 2.5, z: rg.z, text: 'BOOST +100', life: 0.85 });
+    }
+  }
+
+  // Spawn ahead
+  while (state.nextWaveZ > pl.z - 210) {
+    spawnWave(state.nextWaveZ, state.waveIdx++);
+    state.nextWaveZ -= 48;
+  }
+
+  // Cleanup behind
+  state.enemies = state.enemies.filter(e => e.z < pl.z + 15);
+  state.rings = state.rings.filter(r => r.z < pl.z + 15);
+
+  // Particles
+  for (const pt of state.particles) {
+    pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.z += pt.vz * dt;
+    pt.life -= dt;
+  }
+  state.particles = state.particles.filter(p => p.life > 0);
+
+  for (const pp of state.popups) { pp.y += 2.0 * dt; pp.life -= dt; }
+  state.popups = state.popups.filter(p => p.life > 0);
+
+  // Stars recycle
+  for (const st of state.stars) {
+    if (st.z > pl.z + 10) st.z -= 185;
+  }
+
+  state.shake = Math.max(0, state.shake - dt * 2.5);
+  state.speed += (48.0 - state.speed) * dt * 0.4;
+}
+
+// ---------------------------------------------------------------------------
+// Render Frame (WebGL2 + 2D HUD)
+// ---------------------------------------------------------------------------
+function renderScene() {
+  const pl = state.player;
+  gl.viewport(0, 0, W, H);
+  gl.enable(gl.DEPTH_TEST);
+  gl.clearColor(0.012, 0.020, 0.045, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  const sx = Math.sin(state.t * 45) * state.shake * 0.35;
+  const sy = Math.cos(state.t * 53) * state.shake * 0.35;
+  const camPos = [pl.x * 0.65 + sx, pl.y * 0.75 + 2.4 + sy, pl.z + 8.5];
+  const camTarget = [pl.x * 0.85, pl.y + 0.3, pl.z - 22.0];
+
+  gl.uniform3fv(uCamPos, camPos);
+  const proj = mat4Perspective(58 * Math.PI / 180, W / H, 0.2, 260.0);
+  const view = mat4LookAt(camPos, camTarget, [0, 1, 0]);
+  const vp = mat4Mul(proj, view);
+
+  // 1. Infinite Canyon Terrain (2 tiled chunks)
+  const chunkLen = 220;
+  const baseZ = Math.floor(pl.z / chunkLen) * chunkLen + chunkLen;
+  for (let c = 0; c < 2; c++) {
+    const cz = baseZ - c * chunkLen;
+    drawMesh(meshTerrain, mat4TRS([0, 0, cz], 0, 0, 0, 1), vp, [0.06, 0.11, 0.22], [0, 0, 0], 1.0);
+  }
+
+  // 2. Giant Orbital Megastructure Rings in background sky
+  drawMesh(meshMegaRing, mat4TRS([18, 22, pl.z - 155], 0.25, 0.35, 0.1, 1), vp, [0.18, 0.25, 0.40], [0.02, 0.05, 0.10]);
+
+  // 3. Stars / warp streaks
+  for (const st of state.stars) {
+    drawMesh(meshBox, mat4TRS([st.x, st.y, st.z], 0, 0, 0, [0.12, 0.12, 2.2]), vp, [0.7, 0.9, 1.0], [0.5, 0.8, 1.0]);
+  }
+
+  // 4. Boost Rings
+  for (const rg of state.rings) {
+    const col = rg.hit ? [0.2, 1.0, 0.5] : [0.0, 0.88, 1.0];
+    drawMesh(meshRing, mat4TRS([rg.x, rg.y, rg.z], 0, 0, state.t * 1.2, 1), vp, col, [col[0]*0.6, col[1]*0.6, col[2]*0.6]);
+  }
+
+  // 5. Enemies (Red/Orange SF Drones)
+  for (const en of state.enemies) {
+    if (!en.alive) continue;
+    drawMesh(meshBox, mat4TRS([en.x, en.y, en.z], state.t*2, state.t*1.5, 0, [1.5, 0.7, 1.5]), vp, [0.25, 0.28, 0.35], [0.1, 0.02, 0.02]);
+    drawMesh(meshBox, mat4TRS([en.x, en.y, en.z], 0, state.t*3, 0, [0.8, 0.8, 0.8]), vp, [1.0, 0.22, 0.15], [0.9, 0.18, 0.05]);
+    // Wings
+    drawMesh(meshBox, mat4TRS([en.x - 1.3, en.y, en.z], 0, 0, 0.3, [1.1, 0.15, 0.9]), vp, [0.15, 0.18, 0.25]);
+    drawMesh(meshBox, mat4TRS([en.x + 1.3, en.y, en.z], 0, 0, -0.3, [1.1, 0.15, 0.9]), vp, [0.15, 0.18, 0.25]);
+  }
+
+  // 6. Lasers
+  for (const lz of state.lasers) {
+    drawMesh(meshBox, mat4TRS([lz.x, lz.y, lz.z], 0, 0, 0, [0.14, 0.14, 3.8]), vp, [0.0, 1.0, 1.0], [0.2, 1.0, 1.0]);
+  }
+
+  // 7. Explosion Particles
+  for (const pt of state.particles) {
+    const s = Math.max(0.05, pt.life * 0.65);
+    drawMesh(meshBox, mat4TRS([pt.x, pt.y, pt.z], pt.life*8, pt.life*6, 0, s), vp, pt.col, pt.col);
+  }
+
+  // 8. Player Starfighter + Thruster Glow
+  drawMesh(meshShip, mat4TRS([pl.x, pl.y, pl.z], pl.pitch, 0, pl.roll, 1.0), vp, [0.75, 0.85, 0.98], [0.05, 0.10, 0.18]);
+  const thrScale = 0.24 + 0.06 * Math.sin(state.t * 40);
+  drawMesh(meshBox, mat4TRS([pl.x - 0.32, pl.y, pl.z + 1.0], 0, 0, pl.roll, [thrScale, thrScale, 0.8]), vp, [0.0, 0.9, 1.0], [0.2, 0.95, 1.0]);
+  drawMesh(meshBox, mat4TRS([pl.x + 0.32, pl.y, pl.z + 1.0], 0, 0, pl.roll, [thrScale, thrScale, 0.8]), vp, [0.0, 0.9, 1.0], [0.2, 0.95, 1.0]);
+
+  // -------------------------------------------------------------------------
+  // 2D Tactical HUD Overlay
+  // -------------------------------------------------------------------------
+  ctx.clearRect(0, 0, W, H);
+
+  // Target Lock-on Reticles
+  for (const en of state.enemies) {
+    if (!en.alive) continue;
+    const sp = project3D([en.x, en.y, en.z], vp);
+    if (!sp || sp.w > 110) continue;
+    const dist = Math.round(pl.z - en.z);
+    if (dist < 2) continue;
+    const locked = Math.hypot(en.x - pl.x, en.y - pl.y) < 3.4;
+    ctx.save();
+    ctx.strokeStyle = locked ? '#FACC15' : '#FF3B30';
+    ctx.lineWidth = locked ? 2.5 : 1.8;
+    const sz = Math.max(16, Math.min(44, 520 / sp.w));
+    ctx.strokeRect(sp.x - sz, sp.y - sz, sz * 2, sz * 2);
+    ctx.fillStyle = locked ? '#FACC15' : '#FF6B6B';
+    ctx.font = '700 12px "Consolas", monospace';
+    ctx.fillText(`${locked ? 'LOCK ' : ''}${dist}m`, sp.x - sz, sp.y - sz - 6);
+    ctx.restore();
+  }
+
+  // Score Popups
+  for (const pp of state.popups) {
+    const sp = project3D([pp.x, pp.y, pp.z], vp);
+    if (!sp) continue;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, pp.life * 1.5);
+    ctx.fillStyle = '#00E5FF';
+    ctx.font = '800 22px "Consolas", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(pp.text, sp.x, sp.y);
+    ctx.restore();
+  }
+
+  // Top-left Badge
+  ctx.save();
+  ctx.fillStyle = 'rgba(4, 10, 22, 0.65)';
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.45)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(24, 22, 390, 58, 10); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#00E5FF';
+  ctx.font = '700 14px "Consolas", monospace';
+  ctx.fillText('VOID RUNNER // PLAYABLE SINGLE HTML', 40, 44);
+  ctx.fillStyle = '#CBD5E1';
+  ctx.font = '600 12px "Consolas", monospace';
+  ctx.fillText('WASD / ARROWS: STEER  |  SPACE: LASER', 40, 65);
+  ctx.restore();
+
+  // Bottom-left Shield & Boost
+  ctx.save();
+  ctx.fillStyle = 'rgba(4, 10, 22, 0.65)';
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
+  ctx.beginPath(); ctx.roundRect(24, H - 88, 250, 64, 10); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#38BDF8';
+  ctx.font = '700 13px "Consolas", monospace';
+  ctx.fillText('SHIELD 100%', 40, H - 64);
+  ctx.fillStyle = '#00E5FF';
+  ctx.fillRect(40, H - 54, 210, 8);
+  ctx.fillStyle = '#FBBF24';
+  ctx.fillText(`SPEED ${Math.round(state.speed * 18)} KT`, 40, H - 33);
+  ctx.restore();
+
+  // Bottom-right Score & Combo
+  ctx.save();
+  ctx.fillStyle = 'rgba(4, 10, 22, 0.65)';
+  ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
+  ctx.beginPath(); ctx.roundRect(W - 264, H - 88, 240, 64, 10); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#FDE047';
+  ctx.font = '800 22px "Consolas", monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(`SCORE ${String(state.score).padStart(5, '0')}`, W - 40, H - 54);
+  ctx.fillStyle = '#34D399';
+  ctx.font = '700 13px "Consolas", monospace';
+  ctx.fillText(`COMBO x${state.combo}`, W - 40, H - 32);
+  ctx.restore();
+}
+
+// Deterministic step hook for headless video capture
+window.stepDemo = (dt) => {
+  window.__RECORDING__ = true;
+  stepGame(dt, true);
+  renderScene();
+};
+window.getEvents = () => state.events;
+
+// Interactive loop when opened directly in browser
+let autoPilot = Boolean(window.__RECORDING__);
+window.addEventListener('keydown', (e) => {
+  if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyJ'].includes(e.code)) {
+    autoPilot = false;
+  }
+});
+window.addEventListener('DOMContentLoaded', () => {
+  if (!window.NeonShell) return;
+  window.NeonShell.setHint('手動プレイ中: WASD/矢印で操縦 · Space/クリックでレーザー発射');
+  const autoBtn = window.NeonShell.addControl('🤖 オートデモ', (btn) => {
+    autoPilot = !autoPilot;
+    btn.classList.toggle('active', autoPilot);
+    window.NeonShell.setHint(autoPilot ? 'オートデモ再生中（キーまたは下ボタンで手動操縦）' : '手動プレイ中: WASD/矢印で操縦 · Space/クリックでレーザー発射');
+  });
+  window.NeonShell.addControl('↻ リスタート', () => window.location.reload());
+  const setKey = (code, val) => {
+    if (val) { autoPilot = false; autoBtn.classList.remove('active'); }
+    keys[code] = val;
+  };
+  window.NeonShell.addPads([
+    { label: '◀ 左', onDown: () => setKey('ArrowLeft', true), onUp: () => setKey('ArrowLeft', false) },
+    { label: '▲ 上', onDown: () => setKey('ArrowUp', true), onUp: () => setKey('ArrowUp', false) },
+    { label: '▼ 下', onDown: () => setKey('ArrowDown', true), onUp: () => setKey('ArrowDown', false) },
+    { label: '▶ 右', onDown: () => setKey('ArrowRight', true), onUp: () => setKey('ArrowRight', false) },
+    { label: '🔥 射撃', onDown: () => setKey('Space', true), onUp: () => setKey('Space', false) },
+  ]);
+});
+let last = performance.now();
+function loop(now) {
+  if (window.__RECORDING__) return;
+  const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+  last = now;
+  stepGame(dt, autoPilot);
+  renderScene();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+<script src="../demo-shell.js?v=20261120-33"></script>
+</body>
+</html>

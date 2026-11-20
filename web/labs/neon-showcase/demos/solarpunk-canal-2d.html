@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>夕暮れ運河と飛行船のソーラーパンク空中庭園都市 // High-Density Pixel Art</title>
+<style>
+  :root { --mono: ui-monospace, "Cascadia Code", Consolas, monospace; --gold: #fbbf24; --emerald: #34d399; }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #0c0a18; color: #fff; font-family: var(--mono); }
+  #c { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; image-rendering: pixelated; cursor: pointer; }
+  .pill-bar {
+    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-wrap: nowrap; gap: 6px; align-items: center;
+    background: rgba(10, 12, 24, 0.76); border: 1px solid rgba(251, 191, 36, 0.34);
+    border-radius: 999px; padding: 5px 12px; backdrop-filter: blur(6px);
+    white-space: nowrap;
+  }
+  .cbtn {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 800;
+    color: #e2e8f0; background: rgba(20, 26, 44, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 999px;
+    padding: 4px 10px; cursor: pointer; white-space: nowrap;
+  }
+  .cbtn:hover { border-color: var(--gold); color: #fff; }
+  .cbtn.act { background: linear-gradient(90deg, #f59e0b, #fbbf24); border-color: #fde68a; color: #111827; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="solarpunk">
+<canvas id="c" width="1280" height="720"></canvas>
+
+<div class="pill-bar">
+  <button class="cbtn" id="tDay">☀ 蒼天の昼</button>
+  <button class="cbtn act" id="tSunset">🌇 黄金の夕暮れ</button>
+  <button class="cbtn" id="tNight">✨ ホタルの夜</button>
+  <button class="cbtn" id="btnCycle">↻ 時間自動循環</button>
+  <button class="cbtn" id="btnShip">🎈 飛行船発進</button>
+  <button class="cbtn" id="btnGrid">📺 CRT網目</button>
+</div>
+
+<script>
+(() => {
+  const out = document.getElementById('c');
+  const octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = false;
+
+  // Authentic high-density pixel art canvas (320x180 -> crisp 4x upscale to 1280x720!)
+  const PW = 320, PH = 180, WATER_Y = 126;
+  const buf = document.createElement('canvas');
+  buf.width = PW; buf.height = PH;
+  const ctx = buf.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const rgb = (c, a = 1) => `rgba(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${a})`;
+  const mixC = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+  function px(x, y, col) { ctx.fillStyle = col; ctx.fillRect(Math.floor(x), Math.floor(y), 1, 1); }
+  function rect(x, y, w, h, col) { ctx.fillStyle = col; ctx.fillRect(Math.floor(x), Math.floor(y), Math.floor(w), Math.floor(h)); }
+
+  // Entities
+  const clouds = Array.from({ length: 12 }, (_, i) => ({ x: i * 32, y: 12 + (i % 4) * 11, w: 26 + (i % 3) * 14, spd: 2.2 + (i % 3) * 1.1 }));
+  const airships = [
+    { x: 52, y: 26, spd: 8.5, dir: 1, col: '#fef3c7', stripe: '#f59e0b', scale: 1.0 },
+    { x: 242, y: 42, spd: 6.2, dir: -1, col: '#e0f2fe', stripe: '#10b981', scale: 0.78 },
+  ];
+  const boats = [
+    { x: 40, y: 142, spd: 7.5, dir: 1 },
+    { x: 255, y: 156, spd: 6.0, dir: -1 },
+  ];
+  const lanterns = [
+    { x: 118, y: 148, ph: 0.4 },
+    { x: 192, y: 162, ph: 1.8 },
+    { x: 152, y: 138, ph: 3.1 },
+  ];
+  const birds = Array.from({ length: 9 }, (_, i) => ({ x: i * 38, y: 20 + (i % 5) * 9, spd: 14 + (i % 3) * 4, ph: i * 1.1 }));
+  const fireflies = Array.from({ length: 34 }, (_, i) => ({ x: (i * 47) % PW, y: 66 + (i * 29) % 74, ph: i * 0.9 }));
+  const stars = Array.from({ length: 58 }, (_, i) => ({ x: (i * 53 + 17) % PW, y: 3 + (i * 31) % 72, ph: i * 0.7 }));
+
+  // Time phase: 0 = Day, 1 = Golden Sunset, 2 = Firefly Night
+  let timePhase = 1.0, targetPhase = 1.0, autoCycle = false, crtGrid = false, simT = 0;
+
+  const btns = [document.getElementById('tDay'), document.getElementById('tSunset'), document.getElementById('tNight')];
+  function setPhase(p) {
+    autoCycle = false;
+    document.getElementById('btnCycle').classList.remove('act');
+    targetPhase = p;
+    btns.forEach((b, i) => b.classList.toggle('act', i === p));
+  }
+  btns[0].addEventListener('click', () => setPhase(0));
+  btns[1].addEventListener('click', () => setPhase(1));
+  btns[2].addEventListener('click', () => setPhase(2));
+  document.getElementById('btnCycle').addEventListener('click', (e) => {
+    autoCycle = !autoCycle;
+    e.currentTarget.classList.toggle('act', autoCycle);
+  });
+  document.getElementById('btnShip').addEventListener('click', () => {
+    spawnAirship(20 + Math.random() * 280, 18 + Math.random() * 34);
+  });
+  document.getElementById('btnGrid').addEventListener('click', (e) => {
+    crtGrid = !crtGrid;
+    e.currentTarget.classList.toggle('act', crtGrid);
+  });
+
+  function spawnAirship(x, y) {
+    if (airships.length > 7) airships.shift();
+    const dir = Math.random() > 0.5 ? 1 : -1;
+    airships.push({
+      x, y: Math.max(12, Math.min(54, y)), spd: 6 + Math.random() * 6, dir,
+      col: dir > 0 ? '#fef3c7' : '#e0f2fe',
+      stripe: dir > 0 ? '#f59e0b' : '#34d399',
+      scale: 0.72 + Math.random() * 0.35
+    });
+    window.NeonAudio?.sfx('chime', 1.15);
+  }
+
+  out.addEventListener('click', (e) => {
+    const r = out.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * PW;
+    const y = ((e.clientY - r.top) / r.height) * PH;
+    if (y >= WATER_Y) {
+      if (lanterns.length > 18) lanterns.shift();
+      lanterns.push({ x, y: Math.min(PH - 8, y), ph: Math.random() * 6.28 });
+      window.NeonAudio?.sfx('chime', 0.92);
+    } else {
+      spawnAirship(x, y);
+    }
+  });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    window.NeonShell?.setHint('空をクリック: 飛行船発進 · 運河をクリック: 灯籠流し · 昼/夕暮れ/ホタルの夜を切替');
+  });
+
+  function getPalette(p) {
+    // Interpolate 0=Day, 1=Golden Sunset, 2=Firefly Night
+    const day = { sky0:[68,158,238], sky1:[164,224,252], sun:[255,248,214], bld:[242,236,218], shd:[175,184,198], fol:[48,162,92], folHi:[106,214,124], glass:[124,220,248], win:[214,242,255] };
+    const set = { sky0:[58,42,102], sky1:[246,142,84], sun:[255,222,126], bld:[232,196,158], shd:[128,88,96], fol:[44,128,82], folHi:[148,196,94], glass:[250,192,138], win:[255,226,126] };
+    const ngt = { sky0:[10,16,42], sky1:[32,48,96], sun:[236,244,255], bld:[64,76,112], shd:[32,38,62], fol:[20,66,64], folHi:[46,118,98], glass:[82,158,208], win:[255,214,108] };
+    const [A, B, t] = p <= 1 ? [day, set, p] : [set, ngt, p - 1];
+    const outP = {};
+    for (const k of Object.keys(day)) outP[k] = mixC(A[k], B[k], t);
+    return outP;
+  }
+
+  function drawDome(cx, cy, r, pal, nightAmt) {
+    for (let dy = -r; dy <= 0; dy++) {
+      const hw = Math.floor(Math.sqrt(r * r - dy * dy));
+      rect(cx - hw, cy + dy, hw * 2, 1, rgb(pal.glass, 0.72));
+      // Specular highlight & ribs
+      if (hw > 3) px(cx - Math.floor(hw * 0.55), cy + dy, 'rgba(255,255,255,0.65)');
+      if (Math.abs(dy) % 4 === 0) rect(cx - hw, cy + dy, hw * 2, 1, rgb(pal.bld, 0.35));
+    }
+    // Interior botanical glow
+    rect(cx - r + 3, cy - 3, r * 2 - 6, 3, rgb(pal.folHi));
+    if (nightAmt > 0.2) rect(cx - Math.floor(r * 0.5), cy - Math.floor(r * 0.45), Math.floor(r), 2, rgb(pal.win, nightAmt * 0.8));
+    rect(cx - r - 1, cy, r * 2 + 2, 2, rgb(pal.bld));
+  }
+
+  function drawWindmill(x, y, len, ang, pal) {
+    rect(x - 1, y, 3, 18, rgb(pal.bld));
+    rect(x, y, 1, 18, rgb(pal.shd));
+    for (let k = 0; k < 4; k++) {
+      const a = ang + k * Math.PI * 0.5;
+      for (let s = 1; s <= len; s++) {
+        const bx = x + Math.cos(a) * s, by = y + Math.sin(a) * s;
+        px(bx, by, '#fffbeb');
+        px(bx - Math.sin(a), by + Math.cos(a), rgb(pal.shd));
+      }
+    }
+    rect(x - 1, y - 1, 2, 2, '#fbbf24');
+  }
+
+  function drawAirship(s, pal, nightAmt) {
+    const x = Math.floor(s.x), y = Math.floor(s.y), w = Math.floor(24 * s.scale), h = Math.floor(9 * s.scale);
+    for (let dy = -Math.floor(h / 2); dy <= Math.floor(h / 2); dy++) {
+      const f = 1 - (dy * dy) / ((h * 0.58) * (h * 0.58));
+      const hw = Math.max(1, Math.floor(w * 0.5 * Math.sqrt(Math.max(0, f))));
+      rect(x - hw, y + dy, hw * 2, 1, dy === 0 ? s.stripe : s.col);
+    }
+    // Tail fin & cabin gondola
+    rect(x - s.dir * (Math.floor(w * 0.5) + 1), y - 2, 3, 5, s.stripe);
+    rect(x - 4, y + Math.floor(h / 2) + 1, 8, 3, rgb(pal.shd));
+    if (nightAmt > 0.25) rect(x - 2, y + Math.floor(h / 2) + 2, 4, 1, '#fde047');
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+    last = now;
+    simT += dt;
+
+    if (autoCycle) {
+      timePhase = (Math.sin(simT * 0.28 - 0.5) * 0.5 + 0.5) * 2.0;
+    } else {
+      timePhase += (targetPhase - timePhase) * Math.min(1, dt * 3.5);
+    }
+    const nightAmt = Math.max(0, timePhase - 0.85) / 1.15;
+    const pal = getPalette(timePhase);
+
+    // 1. Pixel-banded Atmospheric Sky Gradient
+    for (let y = 0; y < WATER_Y; y++) {
+      const f = y / WATER_Y;
+      rect(0, y, PW, 1, rgb(mixC(pal.sky0, pal.sky1, Math.pow(f, 0.85))));
+    }
+
+    // 2. Twinkling Pixel Stars at Night
+    if (nightAmt > 0.15) {
+      for (const st of stars) {
+        const tw = 0.45 + 0.55 * Math.sin(simT * 3.2 + st.ph);
+        px(st.x, st.y, `rgba(240,248,255,${(tw * nightAmt).toFixed(2)})`);
+      }
+    }
+
+    // 3. Sun / Full Moon
+    const sunX = 160 + (timePhase - 1) * 32, sunY = 48 + Math.abs(timePhase - 1) * 8;
+    for (let dy = -12; dy <= 12; dy++) for (let dx = -12; dx <= 12; dx++) {
+      const d = Math.hypot(dx, dy);
+      if (d <= 9.5) px(sunX + dx, sunY + dy, rgb(pal.sun));
+      else if (d <= 12 && (dx + dy) % 2 === 0) px(sunX + dx, sunY + dy, rgb(pal.sun, 0.4));
+    }
+
+    // 4. Drifting Pixel Clouds
+    for (const cl of clouds) {
+      cl.x = (cl.x + cl.spd * dt) % (PW + 50);
+      const cx = cl.x - 25;
+      rect(cx, cl.y, cl.w, 4, rgb(mixC(pal.sky1, pal.sun, 0.45), 0.72));
+      rect(cx + 4, cl.y - 3, cl.w - 8, 3, rgb(pal.sun, 0.55));
+    }
+
+    // 5. Distant Mountain Ridges
+    for (let x = 0; x < PW; x++) {
+      const mh = 22 + Math.sin(x * 0.03) * 11 + Math.sin(x * 0.08 + 1.2) * 6;
+      rect(x, WATER_Y - mh, 1, mh, rgb(mixC(pal.sky1, pal.shd, 0.65)));
+    }
+
+    // 6. Solarpunk Tiered Terraces, Glass Biodomes, Hanging Gardens & Waterfalls
+    const terraces = [
+      { x: 6, y: 74, w: 68, h: 52 },
+      { x: 62, y: 88, w: 54, h: 38 },
+      { x: 118, y: 66, w: 84, h: 60 },
+      { x: 204, y: 82, w: 56, h: 44 },
+      { x: 252, y: 68, w: 64, h: 58 },
+    ];
+    for (const tr of terraces) {
+      rect(tr.x, tr.y, tr.w, tr.h, rgb(pal.bld));
+      rect(tr.x + tr.w - 10, tr.y, 10, tr.h, rgb(pal.shd));
+      // Warm arched windows
+      for (let wx = tr.x + 6; wx < tr.x + tr.w - 12; wx += 9) {
+        for (let wy = tr.y + 8; wy < WATER_Y - 8; wy += 12) {
+          const lit = nightAmt > 0.2 || ((wx + wy) % 3 === 0);
+          rect(wx, wy, 4, 6, lit ? rgb(pal.win, 0.75 + nightAmt * 0.25) : rgb(pal.shd));
+        }
+      }
+      // Lush hanging rooftop garden vines
+      rect(tr.x - 1, tr.y - 3, tr.w + 2, 4, rgb(pal.fol));
+      rect(tr.x + 2, tr.y - 5, tr.w - 6, 3, rgb(pal.folHi));
+      for (let vx = tr.x + 3; vx < tr.x + tr.w - 3; vx += 7) {
+        const vl = 4 + ((vx * 7) % 11);
+        rect(vx, tr.y + 1, 2, vl, rgb(pal.fol));
+      }
+    }
+
+    // Iconic Glass Biodomes & Rotating Solar Windmills
+    drawDome(40, 72, 18, pal, nightAmt);
+    drawDome(160, 64, 24, pal, nightAmt);
+    drawDome(282, 66, 17, pal, nightAmt);
+    drawWindmill(92, 68, 12, simT * 1.4, pal);
+    drawWindmill(228, 62, 13, -simT * 1.2 + 0.8, pal);
+
+    // Canal Aqueduct Arches + Animated Cliff Waterfalls
+    rect(0, WATER_Y - 12, PW, 12, rgb(pal.shd));
+    for (let ax = 12; ax < PW; ax += 26) {
+      rect(ax, WATER_Y - 9, 14, 9, rgb(mixC(pal.sky0, [14, 24, 42], 0.6)));
+    }
+    for (const wfx of [106, 206]) {
+      rect(wfx, 86, 8, WATER_Y - 86, 'rgba(154, 232, 255, 0.78)');
+      for (let wy = 86; wy < WATER_Y; wy += 5) {
+        const oy = Math.floor(simT * 28 + wy) % (WATER_Y - 86);
+        rect(wfx + 1, 86 + oy, 6, 2, '#ffffff');
+      }
+      // Mist splash
+      const sp = 2 + Math.floor(Math.sin(simT * 8 + wfx) * 1.5);
+      rect(wfx - 3, WATER_Y - 2, 14, sp, 'rgba(255,255,255,0.68)');
+    }
+
+    // Airships & Birds
+    for (const s of airships) {
+      s.x += s.dir * s.spd * dt;
+      if (s.x > PW + 26) s.x = -24;
+      if (s.x < -26) s.x = PW + 24;
+      drawAirship(s, pal, nightAmt);
+    }
+    for (const b of birds) {
+      b.x = (b.x + b.spd * dt) % (PW + 20);
+      const wing = Math.sin(simT * 9 + b.ph) > 0 ? -1 : 1;
+      px(b.x, b.y, rgb(pal.shd));
+      px(b.x - 1, b.y + wing, rgb(pal.shd));
+      px(b.x + 1, b.y + wing, rgb(pal.shd));
+    }
+
+    // 7. Shimmering Mirrored Canal Water Reflection (authentic row-wave distortion!)
+    const skyImg = ctx.getImageData(0, 0, PW, WATER_Y);
+    const outImg = ctx.createImageData(PW, PH - WATER_Y);
+    for (let y = 0; y < PH - WATER_Y; y++) {
+      const sy = Math.max(0, WATER_Y - 1 - Math.floor(y * 1.45));
+      const wave = Math.round(Math.sin(y * 0.42 + simT * 4.5) * (1.2 + y * 0.045));
+      const tint = 0.72 - (y / (PH - WATER_Y)) * 0.22;
+      for (let x = 0; x < PW; x++) {
+        const sx = Math.max(0, Math.min(PW - 1, x + wave));
+        const si = (sy * PW + sx) * 4;
+        const di = (y * PW + x) * 4;
+        outImg.data[di]   = skyImg.data[si] * tint * 0.95;
+        outImg.data[di+1] = skyImg.data[si+1] * tint * 0.98;
+        outImg.data[di+2] = Math.min(255, skyImg.data[si+2] * tint * 1.12 + 12);
+        outImg.data[di+3] = 255;
+      }
+    }
+    ctx.putImageData(outImg, 0, WATER_Y);
+
+    // Sun/Moon water shimmer lines
+    for (let y = WATER_Y + 2; y < PH; y += 3) {
+      const w = Math.max(3, 24 - (y - WATER_Y) * 0.32 + Math.sin(simT * 4 + y) * 5);
+      rect(sunX - w * 0.5, y, w, 1, rgb(pal.sun, 0.52));
+    }
+
+    // Gliding Canal Gondola Boats & Floating Paper Lanterns
+    for (const bt of boats) {
+      bt.x += bt.dir * bt.spd * dt;
+      if (bt.x > PW + 18) bt.x = -16;
+      if (bt.x < -18) bt.x = PW + 16;
+      rect(bt.x - 7, bt.y, 14, 3, '#78350f');
+      rect(bt.x - 4, bt.y - 3, 8, 3, '#fef3c7');
+      px(bt.x + bt.dir * 5, bt.y - 2, '#fde047');
+      rect(bt.x - bt.dir * 11, bt.y + 2, 6, 1, 'rgba(255,255,255,0.45)');
+    }
+    for (const lt of lanterns) {
+      lt.x = (lt.x + 2.4 * dt) % PW;
+      const ly = lt.y + Math.sin(simT * 2.2 + lt.ph) * 0.7;
+      rect(lt.x - 1, ly - 2, 3, 3, '#fde047');
+      rect(lt.x - 2, ly + 2, 5, 1, 'rgba(251, 191, 36, 0.45)');
+    }
+
+    // Glowing Fireflies in Twilight & Night
+    if (nightAmt > 0.12) {
+      for (const ff of fireflies) {
+        const fx = ff.x + Math.sin(simT * 1.3 + ff.ph) * 5;
+        const fy = ff.y + Math.cos(simT * 1.7 + ff.ph) * 4;
+        const g = (0.35 + 0.65 * Math.abs(Math.sin(simT * 3.4 + ff.ph))) * nightAmt;
+        px(fx, fy, `rgba(253, 240, 138, ${g.toFixed(2)})`);
+      }
+    }
+
+    // Crisp 4x Pixel Upscale to 1280x720
+    octx.imageSmoothingEnabled = false;
+    octx.drawImage(buf, 0, 0, 1280, 720);
+
+    // Optional Retro CRT Pixel Grid Overlay
+    if (crtGrid) {
+      octx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+      for (let y = 0; y < 720; y += 4) octx.fillRect(0, y, 1280, 1);
+      for (let x = 0; x < 1280; x += 4) octx.fillRect(x, 0, 1, 720);
+    }
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+<script src="../demo-shell.js?v=20261120-33"></script>
+</body>
+</html>

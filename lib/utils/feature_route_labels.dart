@@ -52,6 +52,8 @@ const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/lumen-path': '光の道 · LUMEN PATH',
   '/sound-bloom': '音と光の庭 · SOUND BLOOM',
   '/aero-lab': '3D実験室 · AERO LAB',
+  '/neon-showcase': 'Gemini 4 作品館 · NEON SHOWCASE',
+  '/ai-observability': 'AI 可観測性',
   '/ai-writing-assistant': 'AI文章・要約アシスタント',
   '/ai-university-toeic': 'AI大学 TOEIC対策',
   '/art-museums': '全国の美術館',
@@ -59,13 +61,17 @@ const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/autonomous-ops-console': '自律オペレーションコンソール',
   '/custom-task-list': 'AI カスタムタスクリスト',
   '/focus-timer': '集中タイマー',
+  '/import': 'データインポート',
   '/life-goals': '人生目標管理',
   '/local-election-700': '2027 統一地方選 700必達管理室',
   '/daily-habits': '毎日の習慣',
   '/mind-map': 'マインドマップ',
+  '/note-navigation': 'ノートナビゲーション',
   '/one-in-two-out-assist': '1 In 2 Out UI整理アシスト',
   '/procrastination-reset': '先延ばしリセット',
   '/proactive-form-check': '入力チェックアシスタント',
+  '/profile-settings': 'プロフィール設定',
+  '/public-memos': '公開メモ',
   '/referral': '友達招待・紹介プログラム',
   '/rewards': '実績・リワード',
   '/social-feed': 'MUSUBI ソーシャル',
@@ -102,6 +108,20 @@ String featureLabelForRoute(String route) {
   final path = parsedPath == null || parsedPath.isEmpty ? route : parsedPath;
   final canonicalPath = canonicalFeatureRoutePath(path);
   return _featureRouteLabels()[canonicalPath] ?? _titleFromRoute(canonicalPath);
+}
+
+/// 利用履歴のチップ表示用ラベルを解決する。
+///
+/// DB に過去の英語ラベルが残っていても、正規辞書に日本語ラベルがある場合は
+/// そちらを優先して表記ゆれや日英混在を防ぐ。
+String resolveRecentFeatureLabel(String route, String storedLabel) {
+  final parsedPath = Uri.tryParse(route)?.path;
+  final path = parsedPath == null || parsedPath.isEmpty ? route : parsedPath;
+  final canonicalPath = canonicalFeatureRoutePath(path);
+  final canonicalLabel = _featureRouteLabels()[canonicalPath];
+  if (canonicalLabel != null) return canonicalLabel;
+  final trimmed = storedLabel.trim();
+  return trimmed.isNotEmpty ? trimmed : _titleFromRoute(canonicalPath);
 }
 
 String _titleFromRoute(String route) {

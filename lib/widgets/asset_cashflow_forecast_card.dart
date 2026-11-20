@@ -480,6 +480,39 @@ class AssetCashflowForecastScenariosCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    Widget noticeBanner(Widget child) => Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: scheme.outlineVariant),
+          ),
+          child: DefaultTextStyle.merge(
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurface,
+              height: 1.4,
+            ),
+            child: child,
+          ),
+        );
+    Widget sectionLabel(String label) => Container(
+          margin: const EdgeInsets.only(top: 8, bottom: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: scheme.secondaryContainer,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: scheme.onSecondaryContainer,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        );
     Widget card(
       AssetCashflowForecast forecast, {
       bool allowHorizon = true,
@@ -498,7 +531,17 @@ class AssetCashflowForecastScenariosCard extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('予定が重複して計上される場合があります。'),
+          noticeBanner(
+            const Row(
+              children: [
+                Icon(Icons.info_outline, size: 16),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text('予定が重複して計上される場合があります。'),
+                ),
+              ],
+            ),
+          ),
           card(scenarios.notYetReflected),
         ],
       );
@@ -506,21 +549,23 @@ class AssetCashflowForecastScenariosCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          '当日予定入金の残高反映は未確認のため、2つの条件で比較します。'
-          '一部だけ反映済みの可能性もあり、実際の上下限や確定額ではありません。'
-          '予定が重複して計上される場合があります。未登録の入出金、古い・不足した口座残高、'
-          '同日内の入出金順序は考慮できません。'
-          'この間、参謀室の資金繰り判定は保留します。',
-          key: Key('asset_cashflow_forecast_conditional_notice'),
+        noticeBanner(
+          const Text(
+            '当日予定入金の残高反映は未確認のため、2つの条件で比較します。'
+            '一部だけ反映済みの可能性もあり、実際の上下限や確定額ではありません。'
+            '予定が重複して計上される場合があります。未登録の入出金、古い・不足した口座残高、'
+            '同日内の入出金順序は考慮できません。'
+            'この間、参謀室の資金繰り判定は保留します。',
+            key: Key('asset_cashflow_forecast_conditional_notice'),
+          ),
         ),
-        const Text('条件A：当日予定入金がすべて起点残高に反映済み'),
+        sectionLabel('条件A：当日予定入金がすべて起点残高に反映済み'),
         Semantics(
           container: true,
           label: '条件A：当日予定入金がすべて起点残高に反映済み',
           child: card(scenarios.alreadyReflected, scenarioLabel: '条件A'),
         ),
-        const Text('条件B：当日予定入金がすべて起点残高に未反映'),
+        sectionLabel('条件B：当日予定入金がすべて起点残高に未反映'),
         Semantics(
           container: true,
           label: '条件B：当日予定入金がすべて起点残高に未反映',

@@ -754,8 +754,8 @@ jobs:
             --build-name=${{ steps.version.outputs.version }} \
             --build-number=${{ github.run_number }} \
             --dart-define=ENVIRONMENT=production \
-            --dart-define=SUPABASE_URL=$SUPABASE_URL \
-            --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY \
+            "--dart-define=SUPABASE_URL=$SUPABASE_URL" \
+            "--dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY" \
             --dart-define=APP_VERSION=${{ steps.version.outputs.version }} \
             --dart-define=BUILD_NUMBER=${{ github.run_number }} \
             --dart-define=AI_UNIVERSITY_PROVIDER_COUNT=${{ steps.ai_university_catalog.outputs.provider_count }} \
@@ -763,14 +763,18 @@ jobs:
             --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true \
             --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true \
             --dart-define=ASSET_MANAGEMENT_AI_PROVIDER_ROUTING_ENABLED=true \
-            --dart-define=POSTHOG_PROJECT_TOKEN=$POSTHOG_PROJECT_TOKEN \
-            --dart-define=POSTHOG_HOST=$POSTHOG_HOST \
+            "--dart-define=POSTHOG_PROJECT_TOKEN=$POSTHOG_PROJECT_TOKEN" \
+            "--dart-define=POSTHOG_HOST=$POSTHOG_HOST" \
+            "--dart-define=SENTRY_DSN=$SENTRY_DSN" \
+            --dart-define=SENTRY_ENVIRONMENT=production \
+            --dart-define=SENTRY_RELEASE=${{ steps.version.outputs.version }}+${{ github.run_number }} \
             --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
           POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
           POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://us.i.posthog.com' }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
       - name: Render public Supabase URL into web shell
         if: steps.changes.outputs.web == 'true'
