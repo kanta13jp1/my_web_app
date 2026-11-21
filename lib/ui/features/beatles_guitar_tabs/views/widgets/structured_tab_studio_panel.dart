@@ -218,7 +218,7 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
     if (imported == null || !mounted) return;
     if (reservedIds.contains(imported.id)) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showSnackBar(
         SnackBar(
           content: Text('同梱譜面と同じID（${imported.id}）は保存できません。'),
           backgroundColor: DesignTokens.red,
@@ -240,7 +240,7 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
         );
       });
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showSnackBar(
         SnackBar(
           content: Text('「${imported.title}」をこの端末に保存しました（非公開）。'),
           backgroundColor: DesignTokens.green,
@@ -251,7 +251,7 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
       final message = error is FormatException
           ? error.message
           : '端末ローカルへの保存に失敗しました。空き容量やブラウザ設定を確認してください。';
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showSnackBar(
         SnackBar(
           content: Text(message),
           backgroundColor: DesignTokens.red,
@@ -282,14 +282,14 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
         }
       });
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showSnackBar(
         const SnackBar(
           content: Text('端末ローカルのマイ譜面を削除しました。'),
         ),
       );
     } catch (_) {
       if (!mounted || !context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showSnackBar(
         const SnackBar(
           content: Text('マイ譜面の削除に失敗しました。'),
           backgroundColor: DesignTokens.red,
@@ -303,7 +303,7 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
     if (selected == null) return;
     await Clipboard.setData(ClipboardData(text: selected.toPrettyJson()));
     if (!mounted || !context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    _showSnackBar(
       const SnackBar(
         content: Text('構造化TABのJSONをクリップボードへコピーしました。'),
       ),
@@ -320,7 +320,7 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
       await _pdfService.printScore(selected);
     } catch (_) {
       if (!mounted || !context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showSnackBar(
         const SnackBar(
           content: Text('PDF印刷またはプレビューを開けませんでした。'),
           backgroundColor: DesignTokens.red,
@@ -333,6 +333,13 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
         });
       }
     }
+  }
+
+  void _showSnackBar(SnackBar snackBar) {
+    if (!mounted || !context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(snackBar);
   }
 
   @override

@@ -392,6 +392,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('端末ローカルへの保存に失敗しました'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
 
       final userChip =
           find.byKey(const Key('structured_score_chip_existing-user-score'));
