@@ -1299,6 +1299,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       TextEditingController(text: _safetyEnvelopeAmount.round().toString());
   // 既定 OFF。ON の間だけ行動リストを生活防衛ルール順へ並べ替える。
   bool _livingExpensePriorityMode = false;
+  AssetManagementInsightReport? _latestInsightReport;
   static const String _suspendedDebtAccountsPrefsKey =
       'asset_suspended_debt_accounts_v1';
   static const String _lumpSumRequestedAccountsPrefsKey =
@@ -4336,10 +4337,111 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     };
   }
 
+  Future<bool?> _confirmLivingExpensePriorityGuard(AssetLiabilityDebtRow row) {
+    final report = _latestInsightReport;
+    if (report == null || !report.shouldBlockPaymentExecution) {
+      return Future<bool?>.value(true);
+    }
+    final suggestions = report.workbook.transferSuggestions.take(3).toList();
+    final todayAmount = report.todayAvailable.availableAmount;
+    final todayText = _formatManagementYen(todayAmount);
+    final weekText = _formatManagementYen(report.weekAvailable.availableAmount);
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        key: const Key('asset_living_expense_guard_dialog'),
+        title: const Row(
+          children: [
+            Icon(Icons.shield_outlined, color: Color(0xFFB91C1C)),
+            SizedBox(width: 8),
+            Expanded(child: Text('生活費優先ガード')),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '使用可能額がマイナスのため「${row.name}」'
+                '(${_formatManagementYen(row.scheduledPaymentAmount)}) の'
+                '支払い実行前に生活費の確保を優先してください。',
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '本日の使用可能額: $todayText / 今週の使用可能額: $weekText',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFB91C1C),
+                ),
+              ),
+              if (suggestions.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  '推奨口座移動 (先に移動タスクを作成):',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                for (final suggestion in suggestions)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${suggestion.fromAccountName} → '
+                            '${suggestion.toAccountName}: '
+                            '${_formatManagementYen(suggestion.amount)}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton.tonal(
+                          key: Key(
+                            'living_guard_create_transfer_'
+                            '${suggestion.fromAccountId}_'
+                            '${suggestion.toAccountId}',
+                          ),
+                          onPressed: () {
+                            _createTransferTaskFromSuggestion(suggestion);
+                            Navigator.of(dialogContext).pop(false);
+                          },
+                          child: const Text('移動タスク作成'),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            key: const Key('living_guard_cancel_button'),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          OutlinedButton(
+            key: const Key('living_guard_force_execute_button'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('それでも実行'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _toggleMonthlyPaymentPaid(
     AssetLiabilityDebtRow row,
     bool paid,
   ) async {
+    if (paid && (_latestInsightReport?.shouldBlockPaymentExecution ?? false)) {
+      final proceed = await _confirmLivingExpensePriorityGuard(row);
+      if (proceed != true || !mounted) {
+        return;
+      }
+    }
     final previousPaidAccountNames = Set<String>.from(_monthlyPaidAccountNames);
     final previousBillingConfirmedAccountIds = Set<String>.from(
       _billingConfirmedAccountIds,
@@ -22741,6 +22843,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       priorMonthAccountBalances: priorMonthAccountBalances,
       dailyTodoDigest: _currentDailyTodoDigest(),
     );
+    _latestInsightReport = insightReport;
     final warningColor = workbook.cashAfterScheduledPayments < 0
         ? const Color(0xFFB91C1C)
         : const Color(0xFF0D9488);
@@ -33484,6 +33587,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     }
     return Checkbox(
+      key: Key('debt_paid_checkbox_${row.id}'),
       value: row.paid,
       onChanged: (value) {
         unawaited(_toggleMonthlyPaymentPaid(row, value ?? false));
