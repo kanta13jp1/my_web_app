@@ -479,9 +479,8 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
       avatar: Icon(
         score.isUserImported ? Icons.lock_outline : Icons.music_note,
         size: 16,
-        color: isSelected
-            ? DesignTokens.orangeLight
-            : DesignTokens.textSecondary,
+        color:
+            isSelected ? DesignTokens.orangeLight : DesignTokens.textSecondary,
       ),
       label: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 240),
@@ -499,9 +498,8 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
         color: isSelected ? DesignTokens.orange : DesignTokens.divider,
       ),
       labelStyle: TextStyle(
-        color: isSelected
-            ? DesignTokens.orangeLight
-            : DesignTokens.textSecondary,
+        color:
+            isSelected ? DesignTokens.orangeLight : DesignTokens.textSecondary,
         fontSize: 12,
         fontWeight: FontWeight.w600,
       ),
@@ -905,8 +903,7 @@ class _ImportStructuredTabDialogState
       );
       if (widget.reservedIds.contains(parsed.id)) {
         setState(() {
-          _errorText =
-              '同梱譜面と同じid「${parsed.id}」は使用できません。別のidを指定してください。';
+          _errorText = '同梱譜面と同じid「${parsed.id}」は使用できません。別のidを指定してください。';
         });
         return;
       }
