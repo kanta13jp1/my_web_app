@@ -750,6 +750,46 @@ List<WbsTask> filterWbsTasksForAssignmentBoard(
   }).toList();
 }
 
+/// `/project-gantt` のヘッダータイトルスタイル。
+/// モバイル幅（`< 600px`）で `開発ロードマ…` と省略されないようフォントサイズを調整する。
+TextStyle buildProjectGanttTitleStyle(
+  BuildContext context, {
+  required bool isCompact,
+}) {
+  final base = isCompact
+      ? Theme.of(context).textTheme.titleMedium
+      : Theme.of(context).textTheme.headlineMedium;
+  return (base ?? const TextStyle()).copyWith(
+    color: Colors.white,
+    fontSize: isCompact ? 16 : 22,
+    fontWeight: FontWeight.bold,
+  );
+}
+
+/// `/project-gantt` の 4 タブバー。
+/// モバイル幅では `isScrollable: true` で全タブラベルの見切れを防ぎ、
+/// 非選択タブ色もダーク背景上で視認しやすい `#B0B8C4` に引き上げる。
+TabBar buildProjectGanttTabBar({
+  required TabController controller,
+  required bool isCompact,
+}) {
+  return TabBar(
+    controller: controller,
+    isScrollable: isCompact,
+    tabAlignment: isCompact ? TabAlignment.start : TabAlignment.fill,
+    labelPadding: EdgeInsets.symmetric(horizontal: isCompact ? 14 : 16),
+    indicatorColor: const Color(0xFFFF6B35),
+    labelColor: const Color(0xFFFF6B35),
+    unselectedLabelColor: const Color(0xFFB0B8C4),
+    tabs: const [
+      Tab(icon: Icon(Icons.account_tree_outlined), text: '開発WBS'),
+      Tab(icon: Icon(Icons.timeline), text: 'タイムライン'),
+      Tab(icon: Icon(Icons.folder_outlined), text: 'マイプロジェクト'),
+      Tab(icon: Icon(Icons.health_and_safety_outlined), text: 'セッション衛生'),
+    ],
+  );
+}
+
 class ProjectGanttPage extends StatefulWidget {
   const ProjectGanttPage({super.key});
 
@@ -967,16 +1007,16 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width < 600;
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212),
         title: Text(
           '開発ロードマップ & WBS',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: buildProjectGanttTitleStyle(context, isCompact: isCompact),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -994,17 +1034,9 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             },
           ),
         ],
-        bottom: TabBar(
+        bottom: buildProjectGanttTabBar(
           controller: _tabs,
-          indicatorColor: const Color(0xFFFF6B35),
-          labelColor: const Color(0xFFFF6B35),
-          unselectedLabelColor: const Color(0xFF707070),
-          tabs: const [
-            Tab(icon: Icon(Icons.account_tree_outlined), text: '開発WBS'),
-            Tab(icon: Icon(Icons.timeline), text: 'タイムライン'),
-            Tab(icon: Icon(Icons.folder_outlined), text: 'マイプロジェクト'),
-            Tab(icon: Icon(Icons.health_and_safety_outlined), text: 'セッション衛生'),
-          ],
+          isCompact: isCompact,
         ),
       ),
       body: TabBarView(
