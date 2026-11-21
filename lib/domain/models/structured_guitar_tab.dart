@@ -470,7 +470,8 @@ List<StructuredTabPlaybackStep> expandStructuredTabTimeline(
   final steps = <StructuredTabPlaybackStep>[];
   final completedRepeatEnds = <int>{};
   var repeatReturnIndex = 0;
-  var skippingFirstVolta = false;
+  var shouldSkipFirstVolta = false;
+  var skippedFirstVoltaInPass = false;
   var inDsPass = false;
   var hasUsedDaCoda = false;
   var idx = 0;
@@ -482,16 +483,22 @@ List<StructuredTabPlaybackStep> expandStructuredTabTimeline(
     final volta = measure.volta?.trim();
     final isFirstVolta = volta != null && volta.startsWith('1');
 
-    if (measure.repeatStart && !inDsPass) {
+    if (measure.repeatStart && (!inDsPass || hasUsedDaCoda)) {
+      if (idx != repeatReturnIndex) {
+        shouldSkipFirstVolta = false;
+        skippedFirstVoltaInPass = false;
+      }
       repeatReturnIndex = idx;
     }
 
-    if (isFirstVolta && (skippingFirstVolta || inDsPass)) {
+    if (isFirstVolta && (shouldSkipFirstVolta || inDsPass)) {
+      skippedFirstVoltaInPass = true;
       idx++;
       continue;
     }
-    if (skippingFirstVolta && !isFirstVolta) {
-      skippingFirstVolta = false;
+    if (!isFirstVolta && skippedFirstVoltaInPass) {
+      shouldSkipFirstVolta = false;
+      skippedFirstVoltaInPass = false;
     }
 
     for (var beatIdx = 0; beatIdx < measure.beats.length; beatIdx++) {
@@ -520,7 +527,8 @@ List<StructuredTabPlaybackStep> expandStructuredTabTimeline(
           measures.indexWhere((StructuredTabMeasure m) => m.hasSegno);
       if (segnoIdx >= 0) {
         inDsPass = true;
-        skippingFirstVolta = false;
+        shouldSkipFirstVolta = false;
+        skippedFirstVoltaInPass = false;
         idx = segnoIdx;
         continue;
       }
@@ -531,7 +539,8 @@ List<StructuredTabPlaybackStep> expandStructuredTabTimeline(
       if (!inDsPass || isFadeRepeat) {
         completedRepeatEnds.add(idx);
         if (!isFadeRepeat) {
-          skippingFirstVolta = true;
+          shouldSkipFirstVolta = true;
+          skippedFirstVoltaInPass = false;
         }
         idx = repeatReturnIndex;
         continue;
