@@ -87,8 +87,8 @@ class _PublicMemoDirectoryPageState extends State<PublicMemoDirectoryPage> {
   @override
   Widget build(BuildContext context) {
     final formatter = DateFormat('yyyy/MM/dd');
-    final hasActiveFilter = _selectedCategory != null ||
-        _searchController.text.trim().isNotEmpty;
+    final hasQuery = _searchController.text.trim().isNotEmpty;
+    final hasActiveFilter = _selectedCategory != null || hasQuery;
     return Scaffold(
       appBar: AppBar(
         title: const Text('公開メモ'),
