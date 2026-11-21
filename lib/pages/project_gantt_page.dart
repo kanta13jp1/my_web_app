@@ -1048,7 +1048,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             onSave: _saveProject,
             onUpdateStatus: _updateProjectStatus,
           ),
-          const _SessionHygieneTab(),
+          const SessionHygieneTab(),
         ],
       ),
     );
@@ -1060,44 +1060,67 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
 // データソース実装待ち: session_hygiene_log table + ef ai_hub.session_hygiene_kpi
 // 実 KPI 追加までは empty state のみ表示 ([REAL-DATA] 適合).
 
-class _SessionHygieneTab extends StatelessWidget {
-  const _SessionHygieneTab();
+class SessionHygieneTab extends StatelessWidget {
+  const SessionHygieneTab({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
-      children: const [
-        _HygieneKpiPlaceholder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+      children: [
+        const _HygieneKpiPlaceholder(
           icon: Icons.memory,
-          title: 'RAM peak / min / avg per session',
-          subtitle: 'v24 SS hard exit 14+ 例 / 90% breach 監視',
+          title: 'メモリ使用量の推移',
+          subtitle: 'セッションごとの RAM ピーク・平均使用率と高負荷アラートを計測予定',
         ),
-        SizedBox(height: 12),
-        _HygieneKpiPlaceholder(
+        const SizedBox(height: 12),
+        const _HygieneKpiPlaceholder(
           icon: Icons.sd_storage_outlined,
-          title: 'C: free drift trend',
-          subtitle: '25 GB threshold + 12.7 GB/h idle drift 観測',
+          title: 'ディスク空き容量の推移',
+          subtitle: '作業領域の空き容量ドリフトとしきい値超過を監視予定',
         ),
-        SizedBox(height: 12),
-        _HygieneKpiPlaceholder(
+        const SizedBox(height: 12),
+        const _HygieneKpiPlaceholder(
           icon: Icons.timer_outlined,
-          title: 'lefthook hang count',
-          subtitle: '部 217-b 集積教訓 / push skip 検出',
+          title: 'ローカルフック・同期の応答時間',
+          subtitle: 'コミット前検証やプッシュ時の遅延・タイムアウト回数を集計予定',
         ),
-        SizedBox(height: 12),
-        _HygieneKpiPlaceholder(
+        const SizedBox(height: 12),
+        const _HygieneKpiPlaceholder(
           icon: Icons.history,
-          title: 'v24 SS / v26 YY hit history',
-          subtitle: 'cron-based mandatory compression layer 履歴',
+          title: 'コンテキスト圧縮・切替履歴',
+          subtitle: '長時間セッションの自動圧縮と安定運用メトリクスを記録予定',
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: 20),
         Card(
-          child: Padding(
+          color: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: const BorderSide(color: Color(0xFF2E2E2E)),
+          ),
+          child: const Padding(
             padding: EdgeInsets.all(16),
-            child: Text(
-              'データソース実装待ち: session_hygiene_log table + ef ai_hub.session_hygiene_kpi',
-              style: TextStyle(color: Color(0xFF707070)),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: Color(0xFFFF6B35),
+                  size: 20,
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '現在、セッション衛生メトリクスの自動収集パイプラインを整備中です。'
+                    '計測データの連携が完了次第、このタブに実測値と推移が表示されます。',
+                    style: TextStyle(
+                      color: Color(0xFFD1D5DB),
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -1120,13 +1143,45 @@ class _HygieneKpiPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: const Color(0xFF1E1E1E),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: Color(0xFF2E2E2E)),
+      ),
       child: ListTile(
         leading: Icon(icon, color: const Color(0xFFFF6B35)),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: const Text(
-          'TBD',
-          style: TextStyle(color: Color(0xFF707070), fontSize: 12),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            height: 1.4,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(
+            color: Color(0xFF9CA3AF),
+            fontSize: 12,
+            height: 1.5,
+          ),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2A2A2A),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF4B5563)),
+          ),
+          child: const Text(
+            '計測準備中',
+            style: TextStyle(
+              color: Color(0xFFD1D5DB),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ),
     );
