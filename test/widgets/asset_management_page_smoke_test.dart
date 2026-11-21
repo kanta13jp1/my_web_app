@@ -287,8 +287,8 @@ void main() {
     const ownerA = 'synthetic-points-owner-a';
     const ownerB = 'synthetic-points-owner-b';
     final now = DateTime(2026, 6, 20);
-    final storeA = AssetExternalPointsStore.forOwner(ownerA);
-    final storeB = AssetExternalPointsStore.forOwner(ownerB);
+    const storeA = AssetExternalPointsStore.forOwner(ownerA);
+    const storeB = AssetExternalPointsStore.forOwner(ownerB);
     final pointA = AssetExternalPointRecord(
       id: 'fixture-a',
       programName: 'サンプルポイントA',

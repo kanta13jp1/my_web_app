@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:my_web_app/models/asset_external_points.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'business_execution_lock.dart';
 
@@ -140,6 +141,46 @@ class AssetExternalPointsStore {
       'version': 1,
       'records': sorted.map((e) => e.toJson()).toList(),
     };
+  }
+
+  /// Replaces the mirror only when its revision still matches the loaded row.
+  static Future<String> saveMirrorIfUnchanged(
+    SupabaseClient client, {
+    required String owner,
+    required List<AssetExternalPointRecord> records,
+    required String? revision,
+    required DateTime now,
+  }) async {
+    final table = client.from('asset_pref_mirror');
+    final previous = revision == null ? null : DateTime.parse(revision);
+    final updateTime = now.toUtc();
+    final updatedAt = previous != null && !updateTime.isAfter(previous)
+        ? previous.toUtc().add(const Duration(microseconds: 1))
+        : updateTime;
+    final values = <String, dynamic>{
+      'value': encodeMirrorValue(records),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+    final rows = await (revision == null
+            ? table.insert(<String, dynamic>{
+                ...values,
+                'user_id': owner,
+                'pref_key': mirrorPrefKey,
+              }).select('updated_at')
+            : table
+                .update(values)
+                .eq('user_id', owner)
+                .eq('pref_key', mirrorPrefKey)
+                .eq('updated_at', revision)
+                .select('updated_at'))
+        .timeout(const Duration(seconds: 10));
+    final confirmedRevision =
+        rows.length == 1 ? rows.single['updated_at'] : null;
+    if (confirmedRevision is! String ||
+        DateTime.tryParse(confirmedRevision) == null) {
+      throw StateError('External points mirror changed or was not confirmed');
+    }
+    return confirmedRevision;
   }
 
   /// `asset_pref_mirror` 行から所有者一致を確認した上で外部ポイント記録を復元する。

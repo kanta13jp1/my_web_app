@@ -12638,36 +12638,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     int saveEpoch,
   ) async {
     try {
-      final table = _supabase.from('asset_pref_mirror');
-      final revision = _externalPointsMirrorRevision;
-      final previous = revision == null ? null : DateTime.parse(revision);
-      final now = DateTime.now().toUtc();
-      final updatedAt = previous != null && !now.isAfter(previous)
-          ? previous.toUtc().add(const Duration(microseconds: 1))
-          : now;
-      final values = <String, dynamic>{
-        'value': AssetExternalPointsStore.encodeMirrorValue(sorted),
-        'updated_at': updatedAt.toIso8601String(),
-      };
-      final rows = await (revision == null
-              ? table.insert(<String, dynamic>{
-                  ...values,
-                  'user_id': owner,
-                  'pref_key': _externalPointsMirrorKey,
-                }).select('updated_at')
-              : table
-                  .update(values)
-                  .eq('user_id', owner)
-                  .eq('pref_key', _externalPointsMirrorKey)
-                  .eq('updated_at', revision)
-                  .select('updated_at'))
-          .timeout(const Duration(seconds: 10));
       final confirmedRevision =
-          rows.length == 1 ? rows.single['updated_at'] : null;
-      if (confirmedRevision is! String ||
-          DateTime.tryParse(confirmedRevision) == null) {
-        throw StateError('External points mirror changed or was not confirmed');
-      }
+          await AssetExternalPointsStore.saveMirrorIfUnchanged(
+        _supabase,
+        owner: owner,
+        records: sorted,
+        revision: _externalPointsMirrorRevision,
+        now: DateTime.now(),
+      );
       if (_isExternalPointsOwner(owner) &&
           saveEpoch == _externalPointsMutationEpoch) {
         setState(() {

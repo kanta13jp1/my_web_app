@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:my_web_app/models/asset_external_points.dart';
 import 'package:my_web_app/services/asset_external_points_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _FailingSavePrefs extends Fake implements SharedPreferences {
   @override
@@ -199,6 +204,88 @@ void main() {
       expect(saved, isFalse);
       expect(prefs.getString(store.storageKey), '{not-valid-json');
     });
+  });
+
+  test('mirror writes cannot replace a newer revision', () async {
+    const owner = 'synthetic-owner';
+    final submittedAt = DateTime.utc(2026, 6, 20);
+    Map<String, dynamic>? stored;
+    final client = SupabaseClient(
+      'https://example.invalid',
+      'test-key',
+      accessToken: () async => 'synthetic-token',
+      httpClient: MockClient((request) async {
+        const headers = {'content-type': 'application/json'};
+        expect(request.url.path, '/rest/v1/asset_pref_mirror');
+        expect(request.url.queryParameters['select'], 'updated_at');
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        if (request.method == 'POST') {
+          final preferHeader = request.headers['prefer'];
+          expect(preferHeader, isNot(contains('merge-duplicates')));
+          expect(body['user_id'], owner);
+          expect(body['pref_key'], AssetExternalPointsStore.mirrorPrefKey);
+          if (stored != null) {
+            return http.Response(
+              '{"code":"23505","message":"duplicate"}',
+              409,
+              headers: headers,
+              request: request,
+            );
+          }
+        } else {
+          expect(request.method, 'PATCH');
+          expect(request.url.queryParameters['user_id'], 'eq.$owner');
+          expect(
+            request.url.queryParameters['pref_key'],
+            'eq.${AssetExternalPointsStore.mirrorPrefKey}',
+          );
+          if (request.url.queryParameters['updated_at'] !=
+              'eq.${stored!['updated_at']}') {
+            return http.Response('[]', 200, headers: headers, request: request);
+          }
+        }
+        stored = body;
+        return http.Response(
+          jsonEncode([
+            {'updated_at': body['updated_at']},
+          ]),
+          200,
+          headers: headers,
+          request: request,
+        );
+      }),
+    );
+    addTearDown(client.dispose);
+
+    Future<String> save(
+      AssetExternalPointRecord record, {
+      String? revision,
+    }) =>
+        AssetExternalPointsStore.saveMirrorIfUnchanged(
+          client,
+          owner: owner,
+          records: [record],
+          revision: revision,
+          now: submittedAt,
+        );
+
+    final original = _keioRecord();
+    final firstRevision = await save(original);
+    final duplicateInsert = save(_vPointRecord());
+    await expectLater(duplicateInsert, throwsA(isA<PostgrestException>()));
+
+    final updated = _vPointRecord();
+    final newRevision = await save(updated, revision: firstRevision);
+    final firstUpdatedAt = DateTime.parse(firstRevision);
+    expect(DateTime.parse(newRevision).isAfter(firstUpdatedAt), isTrue);
+
+    final staleUpdate = save(original, revision: firstRevision);
+    await expectLater(staleUpdate, throwsStateError);
+    expect(stored!['updated_at'], newRevision);
+    final persisted = AssetExternalPointsStore.decodeMirrorValue(
+      stored!['value'],
+    );
+    expect(persisted.single.id, updated.id);
   });
 
   group('AssetExternalPointsStore encodeMirrorValue / decodeMirrorValue', () {
