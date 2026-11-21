@@ -217,4 +217,96 @@ void main() {
 
     await _unmount(tester);
   });
+
+  testWidgets('ファミペイの返済不足を月別バナーに表示し、利用者が目印を保存できる (#4217)', (
+    tester,
+  ) async {
+    await _setSyntheticOwner(_firstOwner);
+    final now = DateTime(2026, 7, 10);
+    final dateKey = DateFormat('yyyy-MM-dd').format(now);
+    const fn = AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey;
+    final monthKey = fn(now);
+    final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+      <String, AssetLiabilityRevolvingCreditConfig>{
+        'famipay_card': const AssetLiabilityRevolvingCreditConfig(
+          monthlyAmount: 5000,
+          newUsageAmount: 30000,
+        ),
+      },
+    );
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1': 'full',
+      AssetLiabilityMonthlyStateStore.actualPaymentPrefsKey: jsonEncode(
+        <String, Map<String, double>>{
+          monthKey: <String, double>{'famipay_card': 5000},
+        },
+      ),
+      AssetLiabilityMonthlyStateStore.paidPrefsKey: jsonEncode(
+        <String, List<String>>{
+          monthKey: <String>['famipay_card'],
+        },
+      ),
+    });
+    await tester.binding.setSurfaceSize(const Size(1200, 4000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    // 1. 違反あり: バナーが表示され、対象口座に使用停止の目印を付けられる
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: now,
+          debugCalendarNow: now,
+          debugRevolvingConfigsMirror: mirrorValue,
+          debugInitialAssetData: <String, Map<String, double>>{
+            dateKey: const <String, double>{'財布(現金)': 50000, 'ファミペイ': -100000},
+          },
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.byKey(const Key('asset_discipline_violation_banner')),
+      findsOneWidget,
+    );
+    final suspendButton = find.byKey(
+      const Key('discipline_banner_suspend_todo_famipay_card'),
+    );
+    expect(suspendButton, findsOneWidget);
+
+    await tester.ensureVisible(suspendButton);
+    await tester.tap(suspendButton);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('debt_suspended_tag_famipay_card')),
+      findsOneWidget,
+    );
+
+    await _unmount(tester);
+
+    // 2. 違反なし: バナーは表示されない
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          debugNow: now,
+          debugCalendarNow: now,
+          debugInitialAssetData: <String, Map<String, double>>{
+            dateKey: const <String, double>{'財布(現金)': 200000, 'ファミペイ': 0},
+          },
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.byKey(const Key('asset_discipline_violation_banner')),
+      findsNothing,
+    );
+
+    await _unmount(tester);
+  });
 }
