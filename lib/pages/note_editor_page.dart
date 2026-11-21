@@ -29,6 +29,7 @@ import '../widgets/markdown_preview.dart';
 import '../widgets/note_comments_panel.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
+import '../widgets/note_editor/note_range_select_page.dart';
 import '../widgets/note_tags_field.dart';
 import '../widgets/note_version_history_sheet.dart';
 import '../widgets/note_tasks_panel.dart';
@@ -2425,6 +2426,42 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _showMessage('貼り付けました');
   }
 
+  void _selectTokenOrValue() {
+    _contentController.value = NoteClipboardHelper.selectTokenOrValue(
+      _contentController.value,
+    );
+    _contentFocusNode.requestFocus();
+  }
+
+  Future<void> _openRangeSelectPage() async {
+    final text = _contentController.text;
+    if (text.isEmpty) {
+      _showMessage('コピーする本文がありません');
+      return;
+    }
+    final initialSelection = _contentController.selection;
+    _contentFocusNode.unfocus();
+    final selected = await openNoteRangeSelectPage(
+      context: context,
+      text: text,
+      initialSelection: initialSelection,
+    );
+    if (!mounted || selected == null || selected.isCollapsed) {
+      return;
+    }
+    final maxLen = _contentController.text.length;
+    final start = selected.start.clamp(0, maxLen);
+    final end = selected.end.clamp(start, maxLen);
+    if (end <= start) {
+      return;
+    }
+    _contentController.value = _contentController.value.copyWith(
+      selection: TextSelection(baseOffset: start, extentOffset: end),
+      composing: TextRange.empty,
+    );
+    _contentFocusNode.requestFocus();
+  }
+
   void _selectCurrentLine() {
     _contentController.value = NoteClipboardHelper.selectCurrentLine(
       _contentController.value,
@@ -2447,7 +2484,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       editableTextState.contextMenuButtonItems,
     );
     if (_contentController.text.isNotEmpty) {
-      items.add(
+      items.addAll([
+        ContextMenuButtonItem(
+          label: '値を選択',
+          onPressed: () {
+            _selectTokenOrValue();
+            editableTextState.hideToolbar();
+          },
+        ),
         ContextMenuButtonItem(
           label: '行を選択',
           onPressed: () {
@@ -2455,7 +2499,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             editableTextState.hideToolbar();
           },
         ),
-      );
+        ContextMenuButtonItem(
+          label: '範囲を選択',
+          onPressed: () {
+            editableTextState.hideToolbar();
+            unawaited(_openRangeSelectPage());
+          },
+        ),
+      ]);
     }
     return AdaptiveTextSelectionToolbar.buttonItems(
       anchors: editableTextState.contextMenuAnchors,
@@ -2471,6 +2522,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   void _triggerCopyAll() => unawaited(_copyFullNoteText());
   void _triggerCut() => unawaited(_cutNoteText());
   void _triggerPaste() => unawaited(_pasteIntoNote());
+  void _triggerRangeSelect() => unawaited(_openRangeSelectPage());
 
   Widget _buildClipboardActionButton({
     required Key key,
@@ -2478,16 +2530,22 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     required String label,
     required VoidCallback? onPressed,
   }) {
-    return OutlinedButton.icon(
+    return OutlinedButton(
       key: key,
       onPressed: onPressed,
-      icon: Icon(icon, size: 15),
-      label: Text(label, style: const TextStyle(fontSize: 12)),
       style: OutlinedButton.styleFrom(
         visualDensity: VisualDensity.compact,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
         minimumSize: const Size(0, 30),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14),
+          const SizedBox(width: 4),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
       ),
     );
   }
@@ -2526,6 +2584,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                             label: '全文コピー',
                             onPressed: hasText ? _triggerCopyAll : null,
                           ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_range_select_button'),
+                            icon: Icons.crop_free_outlined,
+                            label: '範囲選択',
+                            onPressed: hasText ? _triggerRangeSelect : null,
+                          ),
                         ]
                       : [
                           _buildClipboardActionButton(
@@ -2534,40 +2599,54 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                             label: copyLabel,
                             onPressed: hasText ? _triggerCopy : null,
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_range_select_button'),
+                            icon: Icons.crop_free_outlined,
+                            label: '範囲選択',
+                            onPressed: hasText ? _triggerRangeSelect : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_select_value_button'),
+                            icon: Icons.vpn_key_outlined,
+                            label: '値を選択',
+                            onPressed: hasText ? _selectTokenOrValue : null,
+                          ),
+                          const SizedBox(width: 4),
                           _buildClipboardActionButton(
                             key: const Key('note_editor_paste_button'),
                             icon: Icons.content_paste_outlined,
                             label: '貼り付け',
                             onPressed: _triggerPaste,
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                           _buildClipboardActionButton(
                             key: const Key('note_editor_select_line_button'),
                             icon: Icons.format_align_left_outlined,
                             label: '行を選択',
                             onPressed: hasText ? _selectCurrentLine : null,
                           ),
-                          const SizedBox(width: 6),
-                          _buildClipboardActionButton(
-                            key: const Key('note_editor_select_all_button'),
-                            icon: Icons.select_all_outlined,
-                            label: '全選択',
-                            onPressed: hasText ? _selectAllNoteText : null,
-                          ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                           _buildClipboardActionButton(
                             key: const Key('note_editor_cut_button'),
                             icon: Icons.content_cut_outlined,
                             label: '切り取り',
                             onPressed: hasText ? _triggerCut : null,
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                           _buildClipboardActionButton(
                             key: const Key('note_editor_copy_all_button'),
                             icon: Icons.copy_all_outlined,
                             label: '全文コピー',
                             onPressed: hasText ? _triggerCopyAll : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_select_all_button'),
+                            icon: Icons.select_all_outlined,
+                            label: '全選択',
+                            onPressed: hasText ? _selectAllNoteText : null,
                           ),
                         ],
                 ),

@@ -1055,7 +1055,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
                 setState(() => _hideCompleted = v ?? false),
             onMoveTaskOwner: _queueWbsTaskOwnerMove,
           ),
-          _GanttTimelineTab(
+          GanttTimelineTab(
             milestones: _milestones,
             tasks: _tasks,
             loading: _loadingWbs,
@@ -1363,8 +1363,17 @@ class _WbsTab extends StatelessWidget {
           onMoveTaskOwner: onMoveTaskOwner,
         ),
         const SizedBox(height: 16),
-        if (grouped.isEmpty)
-          const _EmptyCard(message: 'WBSデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
+        if (grouped.isEmpty && tasks.isNotEmpty)
+          GanttFilteredEmptyState(
+            totalCount: tasks.length,
+            onResetFilters: () {
+              onFilterInstance(null);
+              onFilterMilestone(null);
+              onToggleHideCompleted(false);
+            },
+          )
+        else if (grouped.isEmpty)
+          const _EmptyCard(message: 'WBSタスクがまだ登録されていません')
         else
           ...grouped.entries.map(
             (entry) => _CategorySection(
@@ -2703,6 +2712,78 @@ class _MyProjectsTab extends StatelessWidget {
 
 // ── MS Project 風ガントチャートタイムライン ─────────────────────────────────
 
+/// フィルター適用結果が 0 件のときに表示する空状態カード。
+/// ツールバーやフィルターバーを残したままワンクリックで全件表示へ戻せるようにする。
+class GanttFilteredEmptyState extends StatelessWidget {
+  final int totalCount;
+  final VoidCallback onResetFilters;
+
+  const GanttFilteredEmptyState({
+    super.key,
+    required this.totalCount,
+    required this.onResetFilters,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 420),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF2E2E2E)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.filter_alt_off_outlined,
+                color: Color(0xFFFF6B35),
+                size: 28,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '条件に一致するタスクはありません（全 $totalCount 件中 0 件）',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                '担当・マイルストーン・未完了フィルターを解除すると全タスクを再表示できます。',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF9CA3AF),
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                onPressed: onResetFilters,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('フィルターをリセット'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFFF6B35),
+                  side: const BorderSide(color: Color(0xFFFF6B35)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class GanttColumnToggleBar extends StatelessWidget {
   final Map<String, bool> colVisible;
   final String? filterInstance;
@@ -2887,7 +2968,281 @@ class GanttMilestoneRiskBanner extends StatelessWidget {
   }
 }
 
-class _GanttTimelineTab extends StatefulWidget {
+class GanttTimelineHeader extends StatelessWidget {
+  final int taskCount;
+  final int totalCount;
+  final int invertedCount;
+  final String? filterInstance;
+  final bool hideCompleted;
+  final bool aiReportLoading;
+  final bool repairLoading;
+  final ValueChanged<bool?> onToggleHideCompleted;
+  final VoidCallback onScrollToGraph;
+  final VoidCallback onShowAiReport;
+  final VoidCallback onAutoRepair;
+  final VoidCallback onExportCsv;
+
+  const GanttTimelineHeader({
+    super.key,
+    required this.taskCount,
+    required this.totalCount,
+    this.invertedCount = 0,
+    this.filterInstance,
+    required this.hideCompleted,
+    this.aiReportLoading = false,
+    this.repairLoading = false,
+    required this.onToggleHideCompleted,
+    required this.onScrollToGraph,
+    required this.onShowAiReport,
+    required this.onAutoRepair,
+    required this.onExportCsv,
+  });
+
+  static const _panelColor = Color(0xFF1A1A24);
+  static const _todayColor = Color(0xFFFF6B35);
+
+  @override
+  Widget build(BuildContext context) {
+    final hasInstanceFilter = filterInstance != null;
+    final filtered =
+        (hideCompleted || hasInstanceFilter) && totalCount > taskCount;
+    final String countLabel;
+    if (hideCompleted && !hasInstanceFilter && totalCount > taskCount) {
+      countLabel = '未完了 $taskCount / 全体 $totalCount 件';
+    } else if (filtered) {
+      countLabel = '表示 $taskCount / 全体 $totalCount 件';
+    } else {
+      countLabel = '$taskCount タスク';
+    }
+    return Container(
+      width: double.infinity,
+      color: _panelColor,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.table_chart_outlined,
+                color: Color(0xFFFF6B35),
+                size: 20,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'プロジェクトタイムライン',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            countLabel,
+            style: TextStyle(
+              color:
+                  filtered ? const Color(0xFFFF6B35) : const Color(0xFF808090),
+              fontSize: 12,
+              fontWeight: filtered ? FontWeight.w600 : FontWeight.normal,
+              height: 1.5,
+            ),
+          ),
+          if (invertedCount > 0)
+            Tooltip(
+              message: '開始予定が完了予定より後の元データを、画面では開始≦完了に補正表示しています。',
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFBBF24).withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: const Color(0xFFFBBF24).withValues(alpha: 0.55),
+                  ),
+                ),
+                child: Text(
+                  '日付補正 $invertedCount件',
+                  style: const TextStyle(
+                    color: Color(0xFFFBBF24),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ),
+          // Win版#131 part 12: 未完了 only toggle
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onToggleHideCompleted(!hideCompleted),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Checkbox(
+                  value: hideCompleted,
+                  onChanged: onToggleHideCompleted,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  activeColor: const Color(0xFFFF6B35),
+                  visualDensity: VisualDensity.compact,
+                ),
+                const Text(
+                  '未完了のみ',
+                  style: TextStyle(
+                    color: Color(0xFFE2E8F0),
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Tooltip(
+            message: '表が広くてグラフが隠れている場合、右側のガント領域へ移動します。',
+            child: SizedBox(
+              height: 28,
+              child: OutlinedButton.icon(
+                onPressed: onScrollToGraph,
+                icon: const Icon(Icons.timeline, size: 14),
+                label: const Text(
+                  'グラフへ',
+                  style: TextStyle(fontSize: 11, height: 1.5),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF60A5FA),
+                  side: const BorderSide(color: Color(0xFF60A5FA)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+            ),
+          ),
+          // Win版#131 part 20: AI 概観 + 自動修復 button
+          Tooltip(
+            message: '表示中WBSをローカル診断し、可能ならAI補足も取得します。',
+            child: SizedBox(
+              height: 28,
+              child: OutlinedButton.icon(
+                onPressed: aiReportLoading ? null : onShowAiReport,
+                icon: aiReportLoading
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.psychology_alt, size: 14),
+                label: Text(
+                  aiReportLoading ? '分析中' : 'AI 概観',
+                  style: const TextStyle(fontSize: 11, height: 1.5),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFA855F7),
+                  disabledForegroundColor: const Color(
+                    0xFFA855F7,
+                  ).withValues(alpha: 0.45),
+                  side: const BorderSide(color: Color(0xFFA855F7)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+            ),
+          ),
+          Tooltip(
+            message: '依存関係由来の日程矛盾を検査し、修復後にWBSを再読み込みします。',
+            child: SizedBox(
+              height: 28,
+              child: OutlinedButton.icon(
+                onPressed: repairLoading ? null : onAutoRepair,
+                icon: repairLoading
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.auto_fix_high, size: 14),
+                label: Text(
+                  repairLoading ? '修復中' : '依存修復',
+                  style: const TextStyle(fontSize: 11, height: 1.5),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF22C55E),
+                  disabledForegroundColor: const Color(
+                    0xFF22C55E,
+                  ).withValues(alpha: 0.45),
+                  side: const BorderSide(color: Color(0xFF22C55E)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 28,
+            child: OutlinedButton.icon(
+              onPressed: onExportCsv,
+              icon: const Icon(Icons.download, size: 14),
+              label: const Text(
+                'CSV',
+                style: TextStyle(fontSize: 11, height: 1.5),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF38BDF8),
+                side: const BorderSide(color: Color(0xFF38BDF8)),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 10, height: 10, color: _todayColor),
+              const SizedBox(width: 6),
+              const Text(
+                '今日',
+                style: TextStyle(
+                  color: Color(0xFFB0B0C0),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          _legendSwatch(const Color(0xFF4CAF50), '完了'),
+          _legendSwatch(const Color(0xFFFF6B35), '進行中'),
+          _legendSwatch(const Color(0xFF707080), '未着手'),
+        ],
+      ),
+    );
+  }
+
+  Widget _legendSwatch(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 18,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFFB0B0C0),
+            fontSize: 11,
+            height: 1.5,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class GanttTimelineTab extends StatefulWidget {
   final List<WbsMilestone> milestones;
   final List<WbsTask> tasks;
   final bool loading;
@@ -2900,7 +3255,8 @@ class _GanttTimelineTab extends StatefulWidget {
   final List<Map<String, dynamic>> milestoneRisks;
   final Future<void> Function()? onRefreshWbs;
 
-  const _GanttTimelineTab({
+  const GanttTimelineTab({
+    super.key,
     required this.milestones,
     required this.tasks,
     required this.loading,
@@ -2913,10 +3269,10 @@ class _GanttTimelineTab extends StatefulWidget {
   });
 
   @override
-  State<_GanttTimelineTab> createState() => _GanttTimelineTabState();
+  State<GanttTimelineTab> createState() => _GanttTimelineTabState();
 }
 
-class _GanttTimelineTabState extends State<_GanttTimelineTab> {
+class _GanttTimelineTabState extends State<GanttTimelineTab> {
   // Win版#131 part 12: 開始/完了/リカバリー列追加で 340 → 700 に拡張
   // Win版#131 part 22: 列表示制御 (左パネル幅は表示列の合計から動的算出)
   // Win版#132 part 83: Notion 風 column resize 化 — static const → final + min/max + persistence
@@ -3254,9 +3610,31 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       );
     }
     final tasks = _orderedTasks;
-    if (tasks.isEmpty) {
+    if (widget.tasks.isEmpty) {
       return const _EmptyCard(
-        message: 'タスクデータがありません\n(WBS migration 適用後に表示されます)',
+        message: '表示できるタスクがまだありません',
+      );
+    }
+    if (tasks.isEmpty) {
+      return Container(
+        color: _bgColor,
+        child: Column(
+          children: [
+            _buildHeader(0, widget.tasks.length),
+            _buildColumnToggleBar(),
+            if (_riskWarnings.isNotEmpty)
+              GanttMilestoneRiskBanner(warnings: _riskWarnings),
+            Expanded(
+              child: GanttFilteredEmptyState(
+                totalCount: widget.tasks.length,
+                onResetFilters: () {
+                  widget.onFilterInstance(null);
+                  widget.onToggleHideCompleted(false);
+                },
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -3739,229 +4117,21 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   }
 
   Widget _buildHeader(int taskCount, int totalCount) {
-    final filtered = widget.hideCompleted && totalCount > taskCount;
-    final countLabel =
-        filtered ? '未完了 $taskCount / 全体 $totalCount 件' : '$taskCount タスク';
     final invertedCount =
         widget.tasks.where((t) => t.hasInvertedSchedule).length;
-    return Container(
-      color: _panelColor,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.table_chart_outlined,
-            color: Color(0xFFFF6B35),
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'プロジェクトタイムライン',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            countLabel,
-            style: TextStyle(
-              color:
-                  filtered ? const Color(0xFFFF6B35) : const Color(0xFF808090),
-              fontSize: 12,
-              fontWeight: filtered ? FontWeight.w600 : FontWeight.normal,
-              height: 1.5,
-            ),
-          ),
-          if (invertedCount > 0) ...[
-            const SizedBox(width: 8),
-            Tooltip(
-              message: '開始予定が完了予定より後の元データを、画面では開始≦完了に補正表示しています。',
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFBBF24).withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: const Color(0xFFFBBF24).withValues(alpha: 0.55),
-                  ),
-                ),
-                child: Text(
-                  '日付補正 $invertedCount件',
-                  style: const TextStyle(
-                    color: Color(0xFFFBBF24),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    height: 1.3,
-                  ),
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(width: 16),
-          // Win版#131 part 12: 未完了 only toggle
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Checkbox(
-                value: widget.hideCompleted,
-                onChanged: widget.onToggleHideCompleted,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                activeColor: const Color(0xFFFF6B35),
-                visualDensity: VisualDensity.compact,
-              ),
-              const Text(
-                '未完了のみ',
-                style: TextStyle(
-                  color: Color(0xFFE2E8F0),
-                  fontSize: 11,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          Tooltip(
-            message: '表が広くてグラフが隠れている場合、右側のガント領域へ移動します。',
-            child: SizedBox(
-              height: 28,
-              child: OutlinedButton.icon(
-                onPressed: _scrollWholeGridToGraph,
-                icon: const Icon(Icons.timeline, size: 14),
-                label: const Text(
-                  'グラフへ',
-                  style: TextStyle(fontSize: 11, height: 1.5),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF60A5FA),
-                  side: const BorderSide(color: Color(0xFF60A5FA)),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          // Win版#131 part 20: AI 概観 + 自動修復 button
-          Tooltip(
-            message: '表示中WBSをローカル診断し、可能ならAI補足も取得します。',
-            child: SizedBox(
-              height: 28,
-              child: OutlinedButton.icon(
-                onPressed: _aiReportLoading ? null : _showAiReport,
-                icon: _aiReportLoading
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.psychology_alt, size: 14),
-                label: Text(
-                  _aiReportLoading ? '分析中' : 'AI 概観',
-                  style: const TextStyle(fontSize: 11, height: 1.5),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFA855F7),
-                  disabledForegroundColor: const Color(
-                    0xFFA855F7,
-                  ).withValues(alpha: 0.45),
-                  side: const BorderSide(color: Color(0xFFA855F7)),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Tooltip(
-            message: '依存関係由来の日程矛盾を検査し、修復後にWBSを再読み込みします。',
-            child: SizedBox(
-              height: 28,
-              child: OutlinedButton.icon(
-                onPressed: _repairLoading ? null : _autoRepairDependencies,
-                icon: _repairLoading
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.auto_fix_high, size: 14),
-                label: Text(
-                  _repairLoading ? '修復中' : '依存修復',
-                  style: const TextStyle(fontSize: 11, height: 1.5),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF22C55E),
-                  disabledForegroundColor: const Color(
-                    0xFF22C55E,
-                  ).withValues(alpha: 0.45),
-                  side: const BorderSide(color: Color(0xFF22C55E)),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          SizedBox(
-            height: 28,
-            child: OutlinedButton.icon(
-              onPressed: _exportCsv,
-              icon: const Icon(Icons.download, size: 14),
-              label: const Text(
-                'CSV',
-                style: TextStyle(fontSize: 11, height: 1.5),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF38BDF8),
-                side: const BorderSide(color: Color(0xFF38BDF8)),
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Container(width: 10, height: 10, color: _todayColor),
-          const SizedBox(width: 6),
-          const Text(
-            '今日',
-            style: TextStyle(
-              color: Color(0xFFB0B0C0),
-              fontSize: 11,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(width: 16),
-          _legendSwatch(const Color(0xFF4CAF50), '完了'),
-          const SizedBox(width: 8),
-          _legendSwatch(const Color(0xFFFF6B35), '進行中'),
-          const SizedBox(width: 8),
-          _legendSwatch(const Color(0xFF707080), '未着手'),
-        ],
-      ),
-    );
-  }
-
-  Widget _legendSwatch(Color color, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 18,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFFB0B0C0),
-            fontSize: 11,
-            height: 1.5,
-          ),
-        ),
-      ],
+    return GanttTimelineHeader(
+      taskCount: taskCount,
+      totalCount: totalCount,
+      invertedCount: invertedCount,
+      filterInstance: widget.filterInstance,
+      hideCompleted: widget.hideCompleted,
+      aiReportLoading: _aiReportLoading,
+      repairLoading: _repairLoading,
+      onToggleHideCompleted: widget.onToggleHideCompleted,
+      onScrollToGraph: _scrollWholeGridToGraph,
+      onShowAiReport: _showAiReport,
+      onAutoRepair: _autoRepairDependencies,
+      onExportCsv: _exportCsv,
     );
   }
 
