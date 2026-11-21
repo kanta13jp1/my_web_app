@@ -130,5 +130,126 @@ void main() {
       expect(selected.selection.start, 0);
       expect(selected.selection.end, 7);
     });
+
+    test('selectTokenOrValue selects full hyphenated password value', () {
+      const text = 'パスワード: t-C22P7VKxxhCyRB7a3kZyG5K-6ihKPuWJ';
+      final partialStart = text.indexOf('6ihKPuWJ');
+      final partial = NoteClipboardHelper.selectTokenOrValue(
+        TextEditingValue(
+          text: text,
+          selection: TextSelection(
+            baseOffset: partialStart,
+            extentOffset: partialStart + 8,
+          ),
+        ),
+      );
+      expect(
+        partial.selection.textInside(text),
+        't-C22P7VKxxhCyRB7a3kZyG5K-6ihKPuWJ',
+      );
+
+      final onLabel = NoteClipboardHelper.selectTokenOrValue(
+        const TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: 2),
+        ),
+      );
+      expect(
+        onLabel.selection.textInside(text),
+        't-C22P7VKxxhCyRB7a3kZyG5K-6ihKPuWJ',
+      );
+    });
+
+    test('selectTokenOrValue handles full-width colon, URL, and prose', () {
+      const fullWidth = 'ユーザー名：ml_user-123';
+      expect(
+        NoteClipboardHelper.selectTokenOrValue(
+          const TextEditingValue(
+            text: fullWidth,
+            selection: TextSelection.collapsed(offset: 8),
+          ),
+        ).selection.textInside(fullWidth),
+        'ml_user-123',
+      );
+
+      const urlOnly = 'https://mightylink-app.com/a-b';
+      expect(
+        NoteClipboardHelper.selectTokenOrValue(
+          const TextEditingValue(
+            text: urlOnly,
+            selection: TextSelection.collapsed(offset: 12),
+          ),
+        ).selection.textInside(urlOnly),
+        urlOnly,
+      );
+
+      const prose = 'コメント: Hello world-wide test';
+      final offsetInWord = prose.indexOf('wide');
+      expect(
+        NoteClipboardHelper.selectTokenOrValue(
+          TextEditingValue(
+            text: prose,
+            selection: TextSelection.collapsed(offset: offsetInWord),
+          ),
+        ).selection.textInside(prose),
+        'world-wide',
+      );
+    });
+
+    test('extractCopyableItems extracts keyValues, URLs, and lines', () {
+      const text = '18:28 メモ\n'
+          'ユーザー名: ml_user_1\n'
+          'パスワード: pass-123-xyz\n'
+          '詳細（https://mightylink-app.com/login）。\n'
+          'https://example.com/\n'
+          '末尾メモ';
+      final items = NoteClipboardHelper.extractCopyableItems(text);
+      final primaries = items
+          .where((e) => e.kind != NoteCopyableItemKind.line)
+          .toList();
+      final lines = items
+          .where((e) => e.kind == NoteCopyableItemKind.line)
+          .toList();
+
+      expect(
+        primaries.map((e) => '${e.label}=${e.value}').toList(),
+        const [
+          'ユーザー名=ml_user_1',
+          'パスワード=pass-123-xyz',
+          'URL=https://mightylink-app.com/login',
+          'URL=https://example.com/',
+        ],
+      );
+      expect(
+        lines.map((e) => e.value).toList(),
+        const [
+          '18:28 メモ',
+          'ユーザー名: ml_user_1',
+          'パスワード: pass-123-xyz',
+          '詳細（https://mightylink-app.com/login）。',
+          '末尾メモ',
+        ],
+      );
+    });
+
+    test('adjustSelection moves boundaries safely without inversion', () {
+      const text = 'abcdef';
+      final moved = NoteClipboardHelper.adjustSelection(
+        text,
+        const TextSelection(baseOffset: 1, extentOffset: 4),
+        startDelta: 1,
+        endDelta: 2,
+      );
+      expect(moved.start, 2);
+      expect(moved.end, 6);
+
+      final clamped = NoteClipboardHelper.adjustSelection(
+        text,
+        const TextSelection(baseOffset: 2, extentOffset: 3),
+        startDelta: 5,
+      );
+      expect(clamped.start, 2);
+      expect(clamped.end, 3);
+    });
   });
 }

@@ -1186,5 +1186,78 @@ void main() {
       );
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('値を選択ボタンでハイフン付きパスワード全体を選択・コピーできる', (tester) async {
+      installClipboardMock();
+      const body = 'ユーザー名: ml_user\nパスワード: t-C22P7VKxxh-6ihKPuWJ';
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(content: body),
+      );
+      await _pumpPage(tester, client);
+      await clearSnackBars(tester);
+
+      final controller = _contentController(tester);
+      final partIdx = body.indexOf('6ihKPuWJ');
+      controller.selection = TextSelection(
+        baseOffset: partIdx,
+        extentOffset: partIdx + 8,
+      );
+      await tester.pump();
+
+      final selectValueBtn = find.byKey(
+        const Key('note_editor_select_value_button'),
+      );
+      await tester.tap(selectValueBtn);
+      await tester.pump();
+      expect(
+        controller.selection.textInside(controller.text),
+        't-C22P7VKxxh-6ihKPuWJ',
+      );
+
+      await tester.tap(find.byKey(const Key('note_editor_copy_button')));
+      await tester.pumpAndSettle();
+      expect(mockClipboard, 't-C22P7VKxxh-6ihKPuWJ');
+    });
+
+    testWidgets('範囲選択ボタンから範囲選択画面を開き調整範囲を反映できる', (tester) async {
+      installClipboardMock();
+      const body = 'パスワード: abcdef-xyz';
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(content: body),
+      );
+      await _pumpPage(tester, client);
+      await clearSnackBars(tester);
+
+      final controller = _contentController(tester);
+      controller.selection = const TextSelection(
+        baseOffset: 7,
+        extentOffset: 17,
+      );
+      await tester.pump();
+
+      final rangeBtn = find.byKey(
+        const Key('note_editor_range_select_button'),
+      );
+      await tester.tap(rangeBtn);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('note_range_select_page')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('note_range_mode_precision')));
+      await tester.pumpAndSettle();
+
+      final startPlus = find.byKey(const Key('note_range_start_plus_1'));
+      await tester.ensureVisible(startPlus);
+      await tester.tap(startPlus);
+      await tester.pump();
+
+      final applyBtn = find.byKey(
+        const Key('note_range_precision_apply_button'),
+      );
+      await tester.ensureVisible(applyBtn);
+      await tester.tap(applyBtn);
+      await tester.pumpAndSettle();
+
+      expect(controller.selection.textInside(controller.text), 'bcdef-xyz');
+    });
   });
 }
