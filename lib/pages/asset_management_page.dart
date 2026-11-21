@@ -3886,7 +3886,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _debtMarkersLoaded = true;
       });
     } catch (_) {
-      if (!_debtMarkerContextIsCurrent(epoch, owner)) return;
+      if (!mounted || !_debtMarkerContextIsCurrent(epoch, owner)) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('端末内の記録を読み込めませんでした。')),
       );
@@ -3915,7 +3915,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         next.toList(growable: false),
       );
       if (!saved) throw StateError('Debt marker could not be saved');
-      if (!_debtMarkerContextIsCurrent(epoch, owner)) return;
+      if (!mounted || !_debtMarkerContextIsCurrent(epoch, owner)) return;
       setState(() {
         if (suspend) {
           _suspendedDebtAccountIds = next;
@@ -3926,10 +3926,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final label = suspend ? '使用停止の目印' : '一括払い設定依頼メモ';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('${violation.accountName} の${label}をこのブラウザに保存しました。')),
+            content: Text('${violation.accountName} の$labelをこのブラウザに保存しました。')),
       );
     } catch (_) {
-      if (!_debtMarkerContextIsCurrent(epoch, owner)) return;
+      if (!mounted || !_debtMarkerContextIsCurrent(epoch, owner)) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('端末内に記録できませんでした。再試行してください。')),
       );

@@ -141,12 +141,16 @@ void main() {
     await _setSyntheticOwner(_secondOwner);
     await tester.pumpAndSettle();
     expect(
-        find.byKey(const Key('debt_suspended_tag_aupay_card')), findsNothing);
+      find.byKey(const Key('debt_suspended_tag_aupay_card')),
+      findsNothing,
+    );
 
     await _setSyntheticOwner(_firstOwner);
     await tester.pumpAndSettle();
     expect(
-        find.byKey(const Key('debt_suspended_tag_aupay_card')), findsOneWidget);
+      find.byKey(const Key('debt_suspended_tag_aupay_card')),
+      findsOneWidget,
+    );
 
     await _unmount(tester);
 
