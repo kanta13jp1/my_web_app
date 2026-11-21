@@ -8,11 +8,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/asset_obsidian_vault_import.dart';
+import 'package:my_web_app/models/asset_external_points.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_card_usage_policy_store.dart';
 import 'package:my_web_app/services/asset_category_budget_store.dart';
 import 'package:my_web_app/services/asset_chat_privacy_settings_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
+import 'package:my_web_app/services/asset_external_points_store.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
@@ -260,6 +262,66 @@ void main() {
     // (= 将来ログイン状態の編集 smoke が write 経路を踏んでも orphan-hang しない)。
     AssetSyncDirtyKeysStore.resetWriteLockForTest();
     AssetRecurringTombstoneSyncService.resetSharedForTest();
+  });
+
+  testWidgets('external points follow the asset page account switch', (
+    tester,
+  ) async {
+    const ownerA = 'synthetic-points-owner-a';
+    const ownerB = 'synthetic-points-owner-b';
+    final now = DateTime(2026, 6, 20);
+    final storeA = AssetExternalPointsStore.forOwner(ownerA);
+    final storeB = AssetExternalPointsStore.forOwner(ownerB);
+    final pointA = AssetExternalPointRecord(
+      id: 'fixture-a',
+      programName: 'サンプルポイントA',
+      observedAt: now,
+      balanceAfter: 105,
+    );
+    final pointB = AssetExternalPointRecord(
+      id: 'fixture-b',
+      programName: 'サンプルポイントB',
+      observedAt: now,
+      balanceAfter: 207,
+    );
+    SharedPreferences.setMockInitialValues({
+      'asset_management_display_mode_v1':
+          AssetManagementDisplayMode.full.storageId,
+      storeA.storageKey:
+          jsonEncode(AssetExternalPointsStore.encodeMirrorValue([pointA])),
+      storeB.storageKey:
+          jsonEncode(AssetExternalPointsStore.encodeMirrorValue([pointB])),
+    });
+
+    Future<void> showOwner(String owner) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugExternalPointsOwnerId: owner,
+            debugNow: now,
+            debugCalendarNow: now,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    Finder point(String name) => find.descendant(
+      of: find.byKey(const Key('asset_external_points_card')),
+      matching: find.text(name),
+    );
+
+    await showOwner(ownerA);
+    expect(point(pointA.programName), findsWidgets);
+    expect(point(pointB.programName), findsNothing);
+
+    await showOwner(ownerB);
+    expect(point(pointA.programName), findsNothing);
+    expect(point(pointB.programName), findsWidgets);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 300));
   });
 
   testWidgets('CSV edits require a fresh preview before applying',

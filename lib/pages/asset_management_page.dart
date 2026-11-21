@@ -12488,6 +12488,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _externalPoints = records;
         _externalPointsStatus = null;
       });
+      // A test owner can read its local fixture, but only the authenticated
+      // owner can read and update the server mirror.
+      if (_supabase.auth.currentUser?.id != owner) {
+        setState(() => _externalPointsReady = true);
+        return;
+      }
       final rows = await _supabase
           .from('asset_pref_mirror')
           .select('user_id,pref_key,value,updated_at')
