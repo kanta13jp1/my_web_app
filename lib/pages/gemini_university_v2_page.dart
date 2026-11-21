@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:math' show Random;
 import 'dart:ui' as ui;
 
@@ -11,7 +10,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:web/web.dart' as web_api;
 
 import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
@@ -28,6 +26,7 @@ import '../services/ai_university_x_post_service.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
+import '../utils/web_image_downloader.dart';
 import '../widgets/ai_university_latest_info_task_card.dart';
 import '../widgets/ai_university_firefly_api_task_card.dart';
 import '../widgets/ai_university_firefly_latest_info_task_card.dart';
@@ -5684,6 +5683,17 @@ class AiUniversityPage extends StatefulWidget {
   final AiUniversityFuyuLabAnalytics? fuyuLabAnalytics;
   final AiUniversityAgentlessLabAnalytics? agentlessLabAnalytics;
 
+  static PreferredSizeWidget buildLoadingAppBar() {
+    return AppBar(
+      title: const Text(
+        'AI 大学',
+        style: TextStyle(color: Color(0xFFE5E7EB)),
+      ),
+      backgroundColor: const Color(0xFF1A1A1A),
+      foregroundColor: const Color(0xFFE5E7EB),
+    );
+  }
+
   @override
   State<AiUniversityPage> createState() => _AiUniversityPageState();
 }
@@ -6259,13 +6269,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) return;
       final pngBytes = byteData.buffer.asUint8List();
-      final b64 = base64Encode(pngBytes);
-      final a = web_api.HTMLAnchorElement()
-        ..href = 'data:image/png;base64,$b64'
-        ..download = 'ai-university-card.png';
-      web_api.document.body?.append(a);
-      a.click();
-      a.remove();
+      downloadImageFile(pngBytes, 'ai-university-card.png');
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('画像を保存しました')));
@@ -6955,12 +6959,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
     if (_loading || tc == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'AI 大学',
-            style: TextStyle(color: Color(0xFFE5E7EB)),
-          ),
-        ),
+        appBar: AiUniversityPage.buildLoadingAppBar(),
         body: Center(
           child: Semantics(
             label: 'AI大学のコンテンツを読み込んでいます',
@@ -7128,96 +7127,22 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     // モバイルは次カードがちらっと見える幅、Web は固定幅でカルーセル感を出す。
     final cardWidth = width < 600 ? (width * 0.82).clamp(220.0, 320.0) : 300.0;
 
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ヘッダー行: タップで棚全体を開閉し、本来のコンテンツ領域を確保する。
-          InkWell(
-            onTap: _toggleGenreShelf,
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.auto_awesome,
-                    size: 16,
-                    color: Color(0xFFFFC107),
-                  ),
-                  const SizedBox(width: 6),
-                  const Text(
-                    '新ジャンル',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      '${genres.length}',
-                      style: const TextStyle(
-                        color: Color(0xFFB0B0B0),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    _genreShelfCollapsed ? '開く' : '隠す',
-                    style: const TextStyle(
-                      color: Color(0xFFB0B0B0),
-                      fontSize: 11,
-                      height: 1.4,
-                    ),
-                  ),
-                  Icon(
-                    _genreShelfCollapsed
-                        ? Icons.expand_more
-                        : Icons.expand_less,
-                    size: 20,
-                    color: const Color(0xFFB0B0B0),
-                  ),
-                ],
-              ),
-            ),
+    return AiUniversityGenreShelf(
+      genresCount: genres.length,
+      collapsed: _genreShelfCollapsed,
+      onToggle: _toggleGenreShelf,
+      child: SizedBox(
+        height: 158,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.only(right: 12),
+          itemCount: genres.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          itemBuilder: (context, i) => SizedBox(
+            width: cardWidth.toDouble(),
+            child: _buildGenreCard(genres[i]),
           ),
-          if (!_genreShelfCollapsed) ...[
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 158,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.only(right: 12),
-                itemCount: genres.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (context, i) => SizedBox(
-                  width: cardWidth.toDouble(),
-                  child: _buildGenreCard(genres[i]),
-                ),
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -8501,5 +8426,105 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+}
+
+class AiUniversityGenreShelf extends StatelessWidget {
+  const AiUniversityGenreShelf({
+    super.key,
+    required this.genresCount,
+    required this.collapsed,
+    required this.onToggle,
+    this.child,
+  });
+
+  final int genresCount;
+  final bool collapsed;
+  final VoidCallback onToggle;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('ai_university_genre_shelf'),
+      decoration: BoxDecoration(
+        color: const Color(0xFF161A24),
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ヘッダー行: タップで棚全体を開閉し、本来のコンテンツ領域を確保する。
+          InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome,
+                    size: 16,
+                    color: Color(0xFFFFC107),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    '新ジャンル',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '$genresCount',
+                      style: const TextStyle(
+                        color: Color(0xFFB0B0B0),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    collapsed ? '開く' : '隠す',
+                    style: const TextStyle(
+                      color: Color(0xFFB0B0B0),
+                      fontSize: 11,
+                      height: 1.4,
+                    ),
+                  ),
+                  Icon(
+                    collapsed ? Icons.expand_more : Icons.expand_less,
+                    size: 20,
+                    color: const Color(0xFFB0B0B0),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (!collapsed && child != null) ...[
+            const SizedBox(height: 8),
+            child!,
+          ],
+        ],
+      ),
+    );
   }
 }

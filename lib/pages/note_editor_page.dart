@@ -20,6 +20,7 @@ import '../services/note_tag_service.dart';
 import '../services/note_task_service.dart';
 import '../services/public_memo_service.dart';
 import '../services/undo_redo_service.dart';
+import '../utils/note_clipboard_helper.dart';
 import '../utils/note_image_clipboard.dart';
 import '../utils/note_image_drop.dart';
 import '../widgets/attachment_list_widget.dart';
@@ -28,6 +29,7 @@ import '../widgets/markdown_preview.dart';
 import '../widgets/note_comments_panel.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
+import '../widgets/note_editor/note_range_select_page.dart';
 import '../widgets/note_tags_field.dart';
 import '../widgets/note_version_history_sheet.dart';
 import '../widgets/note_tasks_panel.dart';
@@ -238,6 +240,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         TextEditingController(text: widget.initialContent ?? '');
     _slashCommandController = TextEditingController();
     _contentFocusNode = FocusNode();
+    _contentFocusNode.addListener(_onContentFocusChanged);
     _autoSaveService = AutoSaveService();
     _undoRedoService = UndoRedoService();
     _imagePasteRegistration = registerNoteImagePasteListener(
@@ -617,9 +620,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(message)),
+      );
   }
 
   Future<bool> _showUpgradeDialogIfNeeded(Object error) async {
@@ -2185,7 +2190,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     return Container(
       key: const Key('note_editor_slash_command_bar'),
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -2316,11 +2321,353 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
   }
 
+  Future<void> _copyNoteText() async {
+    final target = NoteClipboardHelper.extractCopyTarget(
+      _contentController.value,
+    );
+    if (target == null) {
+      _showMessage('コピーする本文がありません');
+      return;
+    }
+    try {
+      await Clipboard.setData(ClipboardData(text: target.text));
+      if (!mounted) return;
+      final msg = switch (target.scope) {
+        NoteCopyScope.selection => '選択範囲をコピーしました',
+        NoteCopyScope.currentLine => '現在の行をコピーしました',
+        NoteCopyScope.fullText => '本文をコピーしました',
+      };
+      _showMessage(msg);
+    } catch (_) {
+      _showMessage('コピーに失敗しました');
+    }
+  }
+
+  Future<void> _copyFullNoteText() async {
+    final text = _contentController.text;
+    if (text.isEmpty) {
+      _showMessage('コピーする本文がありません');
+      return;
+    }
+    try {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!mounted) return;
+      _showMessage('全文をコピーしました');
+    } catch (_) {
+      _showMessage('コピーに失敗しました');
+    }
+  }
+
+  Future<void> _cutNoteText() async {
+    final cut = NoteClipboardHelper.cutTarget(_contentController.value);
+    if (cut == null) {
+      _showMessage('切り取るテキストがありません');
+      return;
+    }
+    try {
+      await Clipboard.setData(ClipboardData(text: cut.cutText));
+      if (!mounted) return;
+      _contentController.value = cut.nextValue;
+      _contentFocusNode.requestFocus();
+      final msg = cut.scope == NoteCopyScope.selection
+          ? '選択範囲を切り取りました'
+          : '現在の行を切り取りました';
+      _showMessage(msg);
+    } catch (_) {
+      _showMessage('切り取りに失敗しました');
+    }
+  }
+
+  Future<void> _pasteIntoNote() async {
+    final currentValue = _contentController.value;
+    String? pasted;
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      pasted = data?.text;
+    } catch (_) {
+      pasted = null;
+    }
+    if (!mounted) return;
+    if (pasted != null && pasted.isNotEmpty) {
+      _contentController.value = NoteClipboardHelper.insertPastedText(
+        currentValue,
+        pasted,
+      );
+      _contentFocusNode.requestFocus();
+      _showMessage('貼り付けました');
+      return;
+    }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: const Text('クリップボードを読み取れませんでした'),
+          action: SnackBarAction(
+            label: '手動貼り付け',
+            onPressed: () => unawaited(_showManualPasteDialog()),
+          ),
+        ),
+      );
+  }
+
+  Future<void> _showManualPasteDialog() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => const _ManualPasteDialog(),
+    );
+    if (!mounted || result == null || result.isEmpty) {
+      return;
+    }
+    _contentController.value = NoteClipboardHelper.insertPastedText(
+      _contentController.value,
+      result,
+    );
+    _contentFocusNode.requestFocus();
+    _showMessage('貼り付けました');
+  }
+
+  void _selectTokenOrValue() {
+    _contentController.value = NoteClipboardHelper.selectTokenOrValue(
+      _contentController.value,
+    );
+    _contentFocusNode.requestFocus();
+  }
+
+  Future<void> _openRangeSelectPage() async {
+    final text = _contentController.text;
+    if (text.isEmpty) {
+      _showMessage('コピーする本文がありません');
+      return;
+    }
+    final initialSelection = _contentController.selection;
+    _contentFocusNode.unfocus();
+    final selected = await openNoteRangeSelectPage(
+      context: context,
+      text: text,
+      initialSelection: initialSelection,
+    );
+    if (!mounted || selected == null || selected.isCollapsed) {
+      return;
+    }
+    final maxLen = _contentController.text.length;
+    final start = selected.start.clamp(0, maxLen);
+    final end = selected.end.clamp(start, maxLen);
+    if (end <= start) {
+      return;
+    }
+    _contentController.value = _contentController.value.copyWith(
+      selection: TextSelection(baseOffset: start, extentOffset: end),
+      composing: TextRange.empty,
+    );
+    _contentFocusNode.requestFocus();
+  }
+
+  void _selectCurrentLine() {
+    _contentController.value = NoteClipboardHelper.selectCurrentLine(
+      _contentController.value,
+    );
+    _contentFocusNode.requestFocus();
+  }
+
+  void _selectAllNoteText() {
+    _contentController.value = NoteClipboardHelper.selectAll(
+      _contentController.value,
+    );
+    _contentFocusNode.requestFocus();
+  }
+
+  Widget _buildContentContextMenu(
+    BuildContext context,
+    EditableTextState editableTextState,
+  ) {
+    final items = List<ContextMenuButtonItem>.from(
+      editableTextState.contextMenuButtonItems,
+    );
+    if (_contentController.text.isNotEmpty) {
+      items.addAll([
+        ContextMenuButtonItem(
+          label: '値を選択',
+          onPressed: () {
+            _selectTokenOrValue();
+            editableTextState.hideToolbar();
+          },
+        ),
+        ContextMenuButtonItem(
+          label: '行を選択',
+          onPressed: () {
+            _selectCurrentLine();
+            editableTextState.hideToolbar();
+          },
+        ),
+        ContextMenuButtonItem(
+          label: '範囲を選択',
+          onPressed: () {
+            editableTextState.hideToolbar();
+            unawaited(_openRangeSelectPage());
+          },
+        ),
+      ]);
+    }
+    return AdaptiveTextSelectionToolbar.buttonItems(
+      anchors: editableTextState.contextMenuAnchors,
+      buttonItems: items,
+    );
+  }
+
+  void _onContentFocusChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _triggerCopy() => unawaited(_copyNoteText());
+  void _triggerCopyAll() => unawaited(_copyFullNoteText());
+  void _triggerCut() => unawaited(_cutNoteText());
+  void _triggerPaste() => unawaited(_pasteIntoNote());
+  void _triggerRangeSelect() => unawaited(_openRangeSelectPage());
+
+  Widget _buildClipboardActionButton({
+    required Key key,
+    required IconData icon,
+    required String label,
+    required VoidCallback? onPressed,
+  }) {
+    return OutlinedButton(
+      key: key,
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+        minimumSize: const Size(0, 30),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14),
+          const SizedBox(width: 4),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClipboardActionBar(BuildContext context) {
+    final theme = Theme.of(context);
+    final borderColor = theme.colorScheme.outline.withValues(alpha: 0.16);
+    return TextFieldTapRegion(
+      child: Focus(
+        canRequestFocus: false,
+        descendantsAreFocusable: false,
+        child: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _contentController,
+          builder: (context, value, _) {
+            final hasText = value.text.isNotEmpty;
+            final hasSelection =
+                value.selection.isValid && !value.selection.isCollapsed;
+            final copyLabel = hasSelection ? '選択をコピー' : 'コピー';
+            return Container(
+              key: const Key('note_editor_clipboard_bar'),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: borderColor),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _showMarkdownPreview
+                      ? [
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_copy_all_button'),
+                            icon: Icons.copy_all_outlined,
+                            label: '全文コピー',
+                            onPressed: hasText ? _triggerCopyAll : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_range_select_button'),
+                            icon: Icons.crop_free_outlined,
+                            label: '範囲選択',
+                            onPressed: hasText ? _triggerRangeSelect : null,
+                          ),
+                        ]
+                      : [
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_copy_button'),
+                            icon: Icons.content_copy_outlined,
+                            label: copyLabel,
+                            onPressed: hasText ? _triggerCopy : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_range_select_button'),
+                            icon: Icons.crop_free_outlined,
+                            label: '範囲選択',
+                            onPressed: hasText ? _triggerRangeSelect : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_select_value_button'),
+                            icon: Icons.vpn_key_outlined,
+                            label: '値を選択',
+                            onPressed: hasText ? _selectTokenOrValue : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_paste_button'),
+                            icon: Icons.content_paste_outlined,
+                            label: '貼り付け',
+                            onPressed: _triggerPaste,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_select_line_button'),
+                            icon: Icons.format_align_left_outlined,
+                            label: '行を選択',
+                            onPressed: hasText ? _selectCurrentLine : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_cut_button'),
+                            icon: Icons.content_cut_outlined,
+                            label: '切り取り',
+                            onPressed: hasText ? _triggerCut : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_copy_all_button'),
+                            icon: Icons.copy_all_outlined,
+                            label: '全文コピー',
+                            onPressed: hasText ? _triggerCopyAll : null,
+                          ),
+                          const SizedBox(width: 4),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_select_all_button'),
+                            icon: Icons.select_all_outlined,
+                            label: '全選択',
+                            onPressed: hasText ? _selectAllNoteText : null,
+                          ),
+                        ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildEditorSurface() {
     final theme = Theme.of(context);
     final isNarrow = MediaQuery.of(context).size.width < 600;
-    final outerPadding =
-        isNarrow ? const EdgeInsets.all(8.0) : const EdgeInsets.all(16.0);
+    final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final compactForKeyboard = isNarrow && isKeyboardOpen;
+    final showSlashBar = !(compactForKeyboard && _contentFocusNode.hasFocus) &&
+        (!compactForKeyboard || (_isSlashCommandBarExpanded == true));
+    final outerPadding = isNarrow
+        ? const EdgeInsets.fromLTRB(8, 6, 8, 6)
+        : const EdgeInsets.fromLTRB(16, 10, 16, 8);
     final titleFontSize = isNarrow ? 20.0 : 24.0;
     final String attachLabel;
     if (_isUploadingAttachment) {
@@ -2335,164 +2682,221 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       previewLabel = 'プレビュー';
     }
 
-    return Stack(
-      children: [
-        Padding(
-          padding: outerPadding,
-          child: Column(
-            children: [
-              _buildReminderBanner(context),
-              _buildSlashCommandBar(context),
-              TextField(
-                key: const Key('note_editor_title_field'),
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  hintText: 'タイトル',
-                  border: InputBorder.none,
-                ),
-                style: TextStyle(
-                  fontSize: titleFontSize,
-                  fontWeight: FontWeight.bold,
-                  height: 1.5,
-                ),
-              ),
-              const Divider(),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  FilledButton.icon(
-                    onPressed: _isUploadingAttachment
-                        ? null
-                        : _insertAttachmentFromPicker,
-                    icon: _isUploadingAttachment
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.image_outlined),
-                    label: Text(attachLabel),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _showMarkdownPreview = !_showMarkdownPreview;
-                      });
-                    },
-                    icon: Icon(
-                      _showMarkdownPreview
-                          ? Icons.edit_note_outlined
-                          : Icons.visibility_outlined,
-                    ),
-                    label: Text(previewLabel),
-                  ),
-                  OutlinedButton.icon(
-                    key: const Key('note_editor_tags_button'),
-                    onPressed: _showTagsEditor,
-                    icon: const Icon(Icons.sell_outlined),
-                    label: Text(isNarrow ? 'タグ' : 'タグ (${_tags.length})'),
-                  ),
-                  if (_currentNoteId != null)
-                    OutlinedButton.icon(
-                      key: const Key('note_editor_tasks_button'),
-                      onPressed: _showTasksPanel,
-                      icon: const Icon(Icons.checklist_rtl_outlined),
-                      label: Text(isNarrow ? 'タスク' : 'タスクを管理'),
-                    ),
-                ],
-              ),
-              if (!isNarrow) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Ctrl+V / Cmd+V で画像を貼り付け、または画像ファイルをドラッグ&ドロップすると自動でアップロードします。',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-              if (_isLoadingAttachments) ...[
-                const SizedBox(height: 12),
-                const LinearProgressIndicator(minHeight: 2),
-              ],
-              if (_attachments.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                AttachmentListWidget(
-                  attachments: _attachments,
-                  onDelete: _deleteAttachment,
-                ),
-              ],
-              const SizedBox(height: 12),
-              Expanded(
-                child: NoteImageDropZone(
-                  onImageDropped: (bytes, fileName, mimeType) =>
-                      _handlePastedImage(
-                    Uint8List.fromList(bytes),
-                    fileName,
-                    mimeType,
-                  ),
-                  child: _showMarkdownPreview
-                      ? ValueListenableBuilder<TextEditingValue>(
-                          valueListenable: _contentController,
-                          builder: (context, value, _) {
-                            if (value.text.trim().isEmpty) {
-                              return Center(
-                                child: Text(
-                                  '本文や画像を追加すると、ここにプレビューが表示されます。',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              );
-                            }
-                            return SingleChildScrollView(
-                              child: MarkdownPreview(data: value.text),
-                            );
-                          },
-                        )
-                      : TextField(
-                          key: const Key('note_editor_content_field'),
-                          controller: _contentController,
-                          focusNode: _contentFocusNode,
-                          decoration: const InputDecoration(
-                            hintText: 'Write your note here...',
-                            border: InputBorder.none,
-                          ),
-                          maxLines: null,
-                          expands: true,
+    return Padding(
+      padding: outerPadding,
+      child: Column(
+        children: [
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final bodyMinHeight =
+                    (constraints.maxHeight - (isNarrow ? 160 : 210))
+                        .clamp(80.0, 480.0);
+                return SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.manual,
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildReminderBanner(context),
+                      if (showSlashBar) _buildSlashCommandBar(context),
+                      TextField(
+                        key: const Key('note_editor_title_field'),
+                        controller: _titleController,
+                        decoration: const InputDecoration(
+                          hintText: 'タイトル',
+                          border: InputBorder.none,
                         ),
+                        style: TextStyle(
+                          fontSize: titleFontSize,
+                          fontWeight: FontWeight.bold,
+                          height: 1.5,
+                        ),
+                      ),
+                      Divider(height: compactForKeyboard ? 1 : 8),
+                      Wrap(
+                        spacing: compactForKeyboard ? 8 : 10,
+                        runSpacing: compactForKeyboard ? 6 : 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          FilledButton.icon(
+                            onPressed: _isUploadingAttachment
+                                ? null
+                                : _insertAttachmentFromPicker,
+                            icon: _isUploadingAttachment
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.image_outlined),
+                            label: Text(attachLabel),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _showMarkdownPreview = !_showMarkdownPreview;
+                              });
+                            },
+                            icon: Icon(
+                              _showMarkdownPreview
+                                  ? Icons.edit_note_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                            label: Text(previewLabel),
+                          ),
+                          OutlinedButton.icon(
+                            key: const Key('note_editor_tags_button'),
+                            onPressed: _showTagsEditor,
+                            icon: const Icon(Icons.sell_outlined),
+                            label: Text(
+                              isNarrow ? 'タグ' : 'タグ (${_tags.length})',
+                            ),
+                          ),
+                          if (_currentNoteId != null)
+                            OutlinedButton.icon(
+                              key: const Key('note_editor_tasks_button'),
+                              onPressed: _showTasksPanel,
+                              icon: const Icon(Icons.checklist_rtl_outlined),
+                              label: Text(isNarrow ? 'タスク' : 'タスクを管理'),
+                            ),
+                        ],
+                      ),
+                      if (!isNarrow) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Ctrl+V / Cmd+V で画像を貼り付け、または画像ファイルをドラッグ&ドロップすると自動でアップロードします。',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                      if (_isLoadingAttachments) ...[
+                        const SizedBox(height: 12),
+                        const LinearProgressIndicator(minHeight: 2),
+                      ],
+                      if (_attachments.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        AttachmentListWidget(
+                          attachments: _attachments,
+                          onDelete: _deleteAttachment,
+                        ),
+                      ],
+                      SizedBox(height: compactForKeyboard ? 6 : 8),
+                      NoteImageDropZone(
+                        onImageDropped: (bytes, fileName, mimeType) =>
+                            _handlePastedImage(
+                          Uint8List.fromList(bytes),
+                          fileName,
+                          mimeType,
+                        ),
+                        child: _showMarkdownPreview
+                            ? ValueListenableBuilder<TextEditingValue>(
+                                valueListenable: _contentController,
+                                builder: (context, value, _) {
+                                  if (value.text.trim().isEmpty) {
+                                    return ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        minHeight: bodyMinHeight,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '本文や画像を追加すると、ここにプレビューが表示されます。',
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                            color: theme
+                                                .colorScheme.onSurfaceVariant,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      minHeight: bodyMinHeight,
+                                    ),
+                                    child: MarkdownPreview(data: value.text),
+                                  );
+                                },
+                              )
+                            : ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: bodyMinHeight,
+                                ),
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onTap: _contentFocusNode.requestFocus,
+                                  child: Align(
+                                    alignment: Alignment.topLeft,
+                                    child: TextField(
+                                      key: const Key(
+                                        'note_editor_content_field',
+                                      ),
+                                      controller: _contentController,
+                                      focusNode: _contentFocusNode,
+                                      enableInteractiveSelection: true,
+                                      scrollPadding: const EdgeInsets.only(
+                                        bottom: 100,
+                                      ),
+                                      contextMenuBuilder:
+                                          _buildContentContextMenu,
+                                      decoration: const InputDecoration(
+                                        hintText: 'Write your note here...',
+                                        border: InputBorder.none,
+                                      ),
+                                      minLines: 1,
+                                      maxLines: null,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(child: _buildClipboardActionBar(context)),
+              if (!compactForKeyboard) ...[
+                const SizedBox(width: 6),
+                AiAssistantMenu(
+                  contentController: _contentController,
+                  onApply: (text) => _contentController.text = text,
+                  model: _selectedAiModel,
+                  styleName: _selectedAiStyle.instruction == null
+                      ? null
+                      : _selectedAiStyle.commandValue,
+                  styleInstruction: _selectedAiStyle.instruction,
+                  compact: true,
                 ),
-              ),
+              ],
             ],
           ),
-        ),
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: AiAssistantMenu(
-            contentController: _contentController,
-            onApply: (text) => _contentController.text = text,
-            model: _selectedAiModel,
-            styleName: _selectedAiStyle.instruction == null
-                ? null
-                : _selectedAiStyle.commandValue,
-            styleInstruction: _selectedAiStyle.instruction,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildEditorBody() {
+    final isNarrow = MediaQuery.of(context).size.width < 600;
+    final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final showRelatedNotes =
+        _currentNoteId != null && !(isNarrow && isKeyboardOpen);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compactRelatedNotes = constraints.maxHeight < 620;
+        final compactRelatedNotes = constraints.maxHeight < 620 || isNarrow;
         return Column(
           children: [
             Expanded(child: _buildEditorSurface()),
-            if (_currentNoteId != null)
+            if (showRelatedNotes)
               RelatedNotesStrip(
                 notes: _relatedNotes,
                 isLoading: _isLoadingRelatedNotes,
@@ -2555,6 +2959,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   void dispose() {
     _flushPendingSaveOnExit();
     _imagePasteRegistration?.dispose();
+    _contentFocusNode.removeListener(_onContentFocusChanged);
     _contentFocusNode.dispose();
     _detachTextListeners();
     _autoSaveService.dispose();
@@ -2738,4 +3143,50 @@ class _RedoIntent extends Intent {
 
 class _SaveIntent extends Intent {
   const _SaveIntent();
+}
+
+class _ManualPasteDialog extends StatefulWidget {
+  const _ManualPasteDialog();
+
+  @override
+  State<_ManualPasteDialog> createState() => _ManualPasteDialogState();
+}
+
+class _ManualPasteDialogState extends State<_ManualPasteDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      key: const Key('note_editor_manual_paste_dialog'),
+      title: const Text('手動で貼り付け'),
+      content: TextField(
+        key: const Key('note_editor_manual_paste_field'),
+        controller: _controller,
+        autofocus: true,
+        maxLines: 5,
+        decoration: const InputDecoration(
+          hintText: 'ここを長押しして「ペースト」してください',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton(
+          key: const Key('note_editor_manual_paste_confirm'),
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: const Text('本文へ挿入'),
+        ),
+      ],
+    );
+  }
 }
