@@ -357,6 +357,7 @@ const List<String> kAllAppRoutes = <String>[
   '/user-manual',
   '/user-tasks',
   '/vehicle-fleet',
+  '/vibe-sim-lab',
   '/video-ad-generator',
   '/video-meeting',
   '/video-studio',
