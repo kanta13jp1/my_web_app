@@ -20,6 +20,7 @@ import '../services/note_tag_service.dart';
 import '../services/note_task_service.dart';
 import '../services/public_memo_service.dart';
 import '../services/undo_redo_service.dart';
+import '../utils/note_clipboard_helper.dart';
 import '../utils/note_image_clipboard.dart';
 import '../utils/note_image_drop.dart';
 import '../widgets/attachment_list_widget.dart';
@@ -2316,9 +2317,297 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
   }
 
+  Future<void> _copyNoteText() async {
+    final target = NoteClipboardHelper.extractCopyTarget(
+      _contentController.value,
+    );
+    if (target == null) {
+      _showMessage('コピーする本文がありません');
+      return;
+    }
+    try {
+      await Clipboard.setData(ClipboardData(text: target.text));
+      if (!mounted) return;
+      final msg = switch (target.scope) {
+        NoteCopyScope.selection => '選択範囲をコピーしました',
+        NoteCopyScope.currentLine => '現在の行をコピーしました',
+        NoteCopyScope.fullText => '本文をコピーしました',
+      };
+      _showMessage(msg);
+    } catch (_) {
+      _showMessage('コピーに失敗しました');
+    }
+  }
+
+  Future<void> _copyFullNoteText() async {
+    final text = _contentController.text;
+    if (text.isEmpty) {
+      _showMessage('コピーする本文がありません');
+      return;
+    }
+    try {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!mounted) return;
+      _showMessage('全文をコピーしました');
+    } catch (_) {
+      _showMessage('コピーに失敗しました');
+    }
+  }
+
+  Future<void> _cutNoteText() async {
+    final cut = NoteClipboardHelper.cutTarget(_contentController.value);
+    if (cut == null) {
+      _showMessage('切り取るテキストがありません');
+      return;
+    }
+    try {
+      await Clipboard.setData(ClipboardData(text: cut.cutText));
+      if (!mounted) return;
+      _contentController.value = cut.nextValue;
+      _contentFocusNode.requestFocus();
+      final msg = cut.scope == NoteCopyScope.selection
+          ? '選択範囲を切り取りました'
+          : '現在の行を切り取りました';
+      _showMessage(msg);
+    } catch (_) {
+      _showMessage('切り取りに失敗しました');
+    }
+  }
+
+  Future<void> _pasteIntoNote() async {
+    final currentValue = _contentController.value;
+    String? pasted;
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      pasted = data?.text;
+    } catch (_) {
+      pasted = null;
+    }
+    if (!mounted) return;
+    if (pasted != null && pasted.isNotEmpty) {
+      _contentController.value = NoteClipboardHelper.insertPastedText(
+        currentValue,
+        pasted,
+      );
+      _contentFocusNode.requestFocus();
+      _showMessage('貼り付けました');
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('クリップボードを読み取れませんでした'),
+        action: SnackBarAction(
+          label: '手動貼り付け',
+          onPressed: () => unawaited(_showManualPasteDialog()),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showManualPasteDialog() async {
+    final pasteController = TextEditingController();
+    String? result;
+    try {
+      result = await showDialog<String>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          key: const Key('note_editor_manual_paste_dialog'),
+          title: const Text('手動で貼り付け'),
+          content: TextField(
+            key: const Key('note_editor_manual_paste_field'),
+            controller: pasteController,
+            autofocus: true,
+            maxLines: 5,
+            decoration: const InputDecoration(
+              hintText: 'ここを長押しして「ペースト」してください',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              key: const Key('note_editor_manual_paste_confirm'),
+              onPressed: () => Navigator.of(dialogContext).pop(
+                pasteController.text,
+              ),
+              child: const Text('本文へ挿入'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      pasteController.dispose();
+    }
+    if (!mounted || result == null || result.isEmpty) {
+      return;
+    }
+    _contentController.value = NoteClipboardHelper.insertPastedText(
+      _contentController.value,
+      result,
+    );
+    _contentFocusNode.requestFocus();
+    _showMessage('貼り付けました');
+  }
+
+  void _selectCurrentLine() {
+    _contentController.value = NoteClipboardHelper.selectCurrentLine(
+      _contentController.value,
+    );
+    _contentFocusNode.requestFocus();
+  }
+
+  void _selectAllNoteText() {
+    _contentController.value = NoteClipboardHelper.selectAll(
+      _contentController.value,
+    );
+    _contentFocusNode.requestFocus();
+  }
+
+  Widget _buildContentContextMenu(
+    BuildContext context,
+    EditableTextState editableTextState,
+  ) {
+    final items = List<ContextMenuButtonItem>.from(
+      editableTextState.contextMenuButtonItems,
+    );
+    if (_contentController.text.isNotEmpty) {
+      items.add(
+        ContextMenuButtonItem(
+          label: '行を選択',
+          onPressed: () {
+            _selectCurrentLine();
+            editableTextState.hideToolbar();
+          },
+        ),
+      );
+    }
+    return AdaptiveTextSelectionToolbar.buttonItems(
+      anchors: editableTextState.contextMenuAnchors,
+      buttonItems: items,
+    );
+  }
+
+  void _triggerCopy() => unawaited(_copyNoteText());
+  void _triggerCopyAll() => unawaited(_copyFullNoteText());
+  void _triggerCut() => unawaited(_cutNoteText());
+  void _triggerPaste() => unawaited(_pasteIntoNote());
+
+  Widget _buildClipboardActionButton({
+    required Key key,
+    required IconData icon,
+    required String label,
+    required VoidCallback? onPressed,
+  }) {
+    return OutlinedButton.icon(
+      key: key,
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      style: OutlinedButton.styleFrom(
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        minimumSize: const Size(0, 34),
+      ),
+    );
+  }
+
+  Widget _buildClipboardActionBar(BuildContext context) {
+    final theme = Theme.of(context);
+    final borderColor = theme.colorScheme.outline.withValues(alpha: 0.16);
+    return TextFieldTapRegion(
+      child: Focus(
+        canRequestFocus: false,
+        descendantsAreFocusable: false,
+        child: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _contentController,
+          builder: (context, value, _) {
+            final hasText = value.text.isNotEmpty;
+            final hasSelection =
+                value.selection.isValid && !value.selection.isCollapsed;
+            final copyLabel = hasSelection ? '選択をコピー' : 'コピー';
+            return Container(
+              key: const Key('note_editor_clipboard_bar'),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: borderColor),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _showMarkdownPreview
+                      ? [
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_copy_all_button'),
+                            icon: Icons.copy_all_outlined,
+                            label: '全文コピー',
+                            onPressed: hasText ? _triggerCopyAll : null,
+                          ),
+                        ]
+                      : [
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_copy_button'),
+                            icon: Icons.content_copy_outlined,
+                            label: copyLabel,
+                            onPressed: hasText ? _triggerCopy : null,
+                          ),
+                          const SizedBox(width: 6),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_paste_button'),
+                            icon: Icons.content_paste_outlined,
+                            label: '貼り付け',
+                            onPressed: _triggerPaste,
+                          ),
+                          const SizedBox(width: 6),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_select_line_button'),
+                            icon: Icons.format_align_left_outlined,
+                            label: '行を選択',
+                            onPressed: hasText ? _selectCurrentLine : null,
+                          ),
+                          const SizedBox(width: 6),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_select_all_button'),
+                            icon: Icons.select_all_outlined,
+                            label: '全選択',
+                            onPressed: hasText ? _selectAllNoteText : null,
+                          ),
+                          const SizedBox(width: 6),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_cut_button'),
+                            icon: Icons.content_cut_outlined,
+                            label: '切り取り',
+                            onPressed: hasText ? _triggerCut : null,
+                          ),
+                          const SizedBox(width: 6),
+                          _buildClipboardActionButton(
+                            key: const Key('note_editor_copy_all_button'),
+                            icon: Icons.copy_all_outlined,
+                            label: '全文コピー',
+                            onPressed: hasText ? _triggerCopyAll : null,
+                          ),
+                        ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildEditorSurface() {
     final theme = Theme.of(context);
     final isNarrow = MediaQuery.of(context).size.width < 600;
+    final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final compactForKeyboard = isNarrow && isKeyboardOpen;
+    final showSlashBar =
+        !compactForKeyboard || (_isSlashCommandBarExpanded == true);
     final outerPadding =
         isNarrow ? const EdgeInsets.all(8.0) : const EdgeInsets.all(16.0);
     final titleFontSize = isNarrow ? 20.0 : 24.0;
@@ -2342,7 +2631,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           child: Column(
             children: [
               _buildReminderBanner(context),
-              _buildSlashCommandBar(context),
+              if (showSlashBar) _buildSlashCommandBar(context),
               TextField(
                 key: const Key('note_editor_title_field'),
                 controller: _titleController,
@@ -2356,10 +2645,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   height: 1.5,
                 ),
               ),
-              const Divider(),
+              Divider(height: compactForKeyboard ? 1 : null),
               Wrap(
-                spacing: 12,
-                runSpacing: 12,
+                spacing: compactForKeyboard ? 8 : 12,
+                runSpacing: compactForKeyboard ? 6 : 12,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   FilledButton.icon(
@@ -2423,7 +2712,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   onDelete: _deleteAttachment,
                 ),
               ],
-              const SizedBox(height: 12),
+              SizedBox(height: compactForKeyboard ? 6 : 12),
               Expanded(
                 child: NoteImageDropZone(
                   onImageDropped: (bytes, fileName, mimeType) =>
@@ -2456,6 +2745,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           key: const Key('note_editor_content_field'),
                           controller: _contentController,
                           focusNode: _contentFocusNode,
+                          enableInteractiveSelection: true,
+                          scrollPadding: const EdgeInsets.only(bottom: 80),
+                          contextMenuBuilder: _buildContentContextMenu,
                           decoration: const InputDecoration(
                             hintText: 'Write your note here...',
                             border: InputBorder.none,
@@ -2465,34 +2757,41 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                         ),
                 ),
               ),
+              const SizedBox(height: 6),
+              _buildClipboardActionBar(context),
             ],
           ),
         ),
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: AiAssistantMenu(
-            contentController: _contentController,
-            onApply: (text) => _contentController.text = text,
-            model: _selectedAiModel,
-            styleName: _selectedAiStyle.instruction == null
-                ? null
-                : _selectedAiStyle.commandValue,
-            styleInstruction: _selectedAiStyle.instruction,
+        if (!compactForKeyboard)
+          Positioned(
+            bottom: 56,
+            right: 16,
+            child: AiAssistantMenu(
+              contentController: _contentController,
+              onApply: (text) => _contentController.text = text,
+              model: _selectedAiModel,
+              styleName: _selectedAiStyle.instruction == null
+                  ? null
+                  : _selectedAiStyle.commandValue,
+              styleInstruction: _selectedAiStyle.instruction,
+            ),
           ),
-        ),
       ],
     );
   }
 
   Widget _buildEditorBody() {
+    final isNarrow = MediaQuery.of(context).size.width < 600;
+    final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final showRelatedNotes =
+        _currentNoteId != null && !(isNarrow && isKeyboardOpen);
     return LayoutBuilder(
       builder: (context, constraints) {
         final compactRelatedNotes = constraints.maxHeight < 620;
         return Column(
           children: [
             Expanded(child: _buildEditorSurface()),
-            if (_currentNoteId != null)
+            if (showRelatedNotes)
               RelatedNotesStrip(
                 notes: _relatedNotes,
                 isLoading: _isLoadingRelatedNotes,
