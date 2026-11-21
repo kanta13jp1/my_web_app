@@ -837,6 +837,7 @@ jobs:
         continue-on-error: true
         shell: bash
         env:
+          SENTRY_URL: ${{ vars.SENTRY_URL || 'https://us.sentry.io' }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
@@ -846,9 +847,17 @@ jobs:
             echo "::notice::Sentry release/sourcemap upload skipped (SENTRY_AUTH_TOKEN / SENTRY_ORG / SENTRY_PROJECT not fully configured)."
             exit 0
           fi
+          shopt -s nullglob
+          SENTRY_BUNDLE_FILES=(
+            build/web/main.dart.js
+            build/web/main.dart.js.map
+            build/web/main.dart.js_*.part.js
+            build/web/main.dart.js_*.part.js.map
+          )
+          shopt -u nullglob
           npx --yes @sentry/cli releases new "$SENTRY_RELEASE"
-          npx --yes @sentry/cli sourcemaps inject build/web
-          npx --yes @sentry/cli sourcemaps upload --release="$SENTRY_RELEASE" build/web
+          npx --yes @sentry/cli sourcemaps inject "${SENTRY_BUNDLE_FILES[@]}"
+          npx --yes @sentry/cli sourcemaps upload --release="$SENTRY_RELEASE" "${SENTRY_BUNDLE_FILES[@]}"
           npx --yes @sentry/cli releases set-commits "$SENTRY_RELEASE" --auto || true
           npx --yes @sentry/cli releases finalize "$SENTRY_RELEASE"
           npx --yes @sentry/cli releases deploys "$SENTRY_RELEASE" new -e production
