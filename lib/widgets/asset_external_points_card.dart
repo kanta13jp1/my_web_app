@@ -742,7 +742,7 @@ class _AssetExternalPointEditorDialogState
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: '残高（ポイント）',
-                    hintText: '例: 94（全角数字可）',
+                    hintText: '例: 105（全角数字可）',
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
@@ -766,7 +766,7 @@ class _AssetExternalPointEditorDialogState
                   ),
                   decoration: const InputDecoration(
                     labelText: '増減（+付与 / -利用 / 0確認のみ）',
-                    hintText: '例: +28 / -50（空欄は0）',
+                    hintText: '例: +25 / -50（空欄は0）',
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
@@ -776,7 +776,7 @@ class _AssetExternalPointEditorDialogState
                     }
                     if (parseFlexiblePointInt(value, allowNegative: true) ==
                         null) {
-                      return '整数で入力してください（例: +28, -50）';
+                      return '整数で入力してください（例: +25, -50）';
                     }
                     return null;
                   },
@@ -788,7 +788,7 @@ class _AssetExternalPointEditorDialogState
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: '付与前残高',
-                    hintText: '任意（例: 66）',
+                    hintText: '任意（例: 80）',
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
@@ -852,7 +852,7 @@ class _AssetExternalPointEditorDialogState
                   controller: _merchantController,
                   decoration: const InputDecoration(
                     labelText: '加盟店',
-                    hintText: '例: 紀伊國屋書店 府中店',
+                    hintText: '例: サンプル書店',
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
@@ -940,7 +940,7 @@ class _AssetExternalPointEditorDialogState
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'ポイント対象金額（円・参考値）',
-                    hintText: '例: 970',
+                    hintText: '例: 840',
                     helperText: '支出・残高には加算されません',
                     border: OutlineInputBorder(),
                     isDense: true,

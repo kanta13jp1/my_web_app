@@ -980,6 +980,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const <AssetExternalPointRecord>[];
   String? _externalPointsLoadedOwnerId;
   String? _externalPointsStatus;
+  String? _externalPointsObservedOwnerId;
+  StreamSubscription<AuthState>? _externalPointsAuthSubscription;
+  bool _externalPointsReloadAfterSave = false;
+  bool _externalPointsReady = false;
+  bool _externalPointsSaving = false;
+  bool _externalPointsMirrorWritable = false;
+  String? _externalPointsMirrorRevision;
   int _externalPointsMutationEpoch = 0;
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
   // アクションアイテムからジャンプした直後に、対処すべき支払済みチェックボックスへ
@@ -1525,6 +1532,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCardUsagePolicies());
     unawaited(_loadCategoryBudgets());
+    _externalPointsObservedOwnerId = _externalPointsOwnerId;
+    _externalPointsAuthSubscription = _supabase.auth.onAuthStateChange.listen(
+      (event) {
+        final owner =
+            widget.debugExternalPointsOwnerId ?? event.session?.user.id;
+        if (mounted && owner != _externalPointsObservedOwnerId) {
+          setState(() => _resetExternalPointsOwner(owner));
+        }
+      },
+      onError: (Object _) {
+        if (mounted && widget.debugExternalPointsOwnerId == null) {
+          setState(() => _resetExternalPointsOwner(null));
+        }
+      },
+    );
     unawaited(_loadExternalPoints());
     unawaited(_loadRecurringFixedCosts());
     // ドル建てサブスクの円換算に使う USD/JPY を取得し、最新レートで再計算する。
@@ -1596,16 +1618,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (oldWidget.debugExternalPointsOwnerId !=
             widget.debugExternalPointsOwnerId ||
         oldWidget.externalPointsStore != widget.externalPointsStore) {
-      _externalPointsMutationEpoch++;
-      _externalPoints = const <AssetExternalPointRecord>[];
-      _externalPointsLoadedOwnerId = null;
-      _externalPointsStatus = null;
-      unawaited(_loadExternalPoints());
+      _resetExternalPointsOwner(_externalPointsOwnerId);
     }
   }
 
   @override
   void dispose() {
+    unawaited(_externalPointsAuthSubscription?.cancel());
     _payslipPreviewEpoch++;
     unawaited(_payslipPreviewSubscription?.cancel());
     _payslipPreviewSubscription = null;
@@ -12366,7 +12385,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       mounted && _categoryBudgetOwnerId == owner;
 
   bool _isExternalPointsOwner(String owner) =>
-      mounted && _externalPointsOwnerId == owner;
+      mounted &&
+      _externalPointsOwnerId == owner &&
+      _externalPointsObservedOwnerId == owner;
+
+  void _resetExternalPointsOwner(String? owner) {
+    _externalPointsObservedOwnerId = owner;
+    _externalPointsMutationEpoch++;
+    _externalPoints = const <AssetExternalPointRecord>[];
+    _externalPointsLoadedOwnerId = null;
+    _externalPointsStatus = null;
+    _externalPointsReady = false;
+    _externalPointsMirrorWritable = false;
+    _externalPointsMirrorRevision = null;
+    if (_externalPointsSaving) {
+      _externalPointsReloadAfterSave = true;
+    } else {
+      unawaited(_loadExternalPoints());
+    }
+  }
 
   Future<void> _loadCategoryBudgets() async {
     final owner = _categoryBudgetOwnerId;
@@ -12433,14 +12470,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _loadExternalPoints() async {
-    final owner = _externalPointsOwnerId;
-    if (owner == null || owner.trim().isEmpty) {
+    final owner = _externalPointsObservedOwnerId;
+    if (owner == null || owner.trim().isEmpty || !_isExternalPointsOwner(owner)) {
       return;
     }
     final loadEpoch = _externalPointsMutationEpoch;
     final store = _externalPointsStore;
     try {
-      final records = await store.load();
+      final records = await store.load(refresh: true);
       final saved = await store.hasSavedSetting();
       if (!_isExternalPointsOwner(owner) ||
           loadEpoch != _externalPointsMutationEpoch) {
@@ -12451,22 +12488,62 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _externalPoints = records;
         _externalPointsStatus = null;
       });
-      final rows = await _bootSelectPrefMirror(_externalPointsMirrorKey);
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select('user_id,pref_key,value,updated_at')
+          .eq('user_id', owner)
+          .eq('pref_key', _externalPointsMirrorKey)
+          .timeout(const Duration(seconds: 10));
       if (!_isExternalPointsOwner(owner) ||
           loadEpoch != _externalPointsMutationEpoch) {
         return;
       }
-      if (saved || rows.isEmpty) {
+      if (rows.isEmpty) {
+        setState(() {
+          _externalPointsReady = true;
+          _externalPointsMirrorWritable = true;
+        });
         return;
       }
       final restored = AssetExternalPointsStore.decodeOwnedMirrorRow(
         rows.first,
         owner,
       );
-      if (restored == null) {
+      final revision = rows.first['updated_at'];
+      final payload = rows.first['value'];
+      if (restored == null ||
+          revision is! String ||
+          DateTime.tryParse(revision) == null ||
+          payload is! Map ||
+          payload['version'] != 1 ||
+          payload['records'] is! List ||
+          (payload['records'] as List).length != restored.length) {
+        throw StateError('Invalid external points mirror record');
+      }
+      if (saved) {
+        final matches = jsonEncode(AssetExternalPointsStore.encodeMirrorValue(records)) ==
+            jsonEncode(AssetExternalPointsStore.encodeMirrorValue(restored));
+        setState(() {
+          _externalPointsReady = true;
+          _externalPointsMirrorRevision = revision;
+          _externalPointsMirrorWritable = matches;
+          _externalPointsStatus = matches
+              ? null
+              : '端末とサーバの記録に差があるため、サーバへの保存を保留しています。';
+        });
         return;
       }
-      await store.save(restored);
+      final restoredLocally = await store.saveIfUnchanged(
+        restored,
+        expected: records,
+        requireMissing: true,
+        isCurrent: () =>
+            _isExternalPointsOwner(owner) &&
+            loadEpoch == _externalPointsMutationEpoch,
+      );
+      if (!restoredLocally) {
+        throw StateError('External points were changed in another tab');
+      }
       if (!_isExternalPointsOwner(owner) ||
           loadEpoch != _externalPointsMutationEpoch) {
         return;
@@ -12474,6 +12551,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _externalPointsLoadedOwnerId = owner;
         _externalPoints = restored;
+        _externalPointsReady = true;
+        _externalPointsMirrorRevision = revision;
+        _externalPointsMirrorWritable = true;
       });
     } catch (_) {
       if (_isExternalPointsOwner(owner) &&
@@ -12489,6 +12569,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  bool _canEditExternalPoints(String owner) =>
+      _isExternalPointsOwner(owner) &&
+      _externalPointsLoadedOwnerId == owner &&
+      _externalPointsReady &&
+      !_externalPointsSaving;
+
   Future<void> _saveExternalPoints(
     List<AssetExternalPointRecord> next,
   ) async {
@@ -12500,33 +12586,99 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final saveEpoch = _externalPointsMutationEpoch;
     final sorted = sortExternalPointRecords(next);
     final store = _externalPointsStore;
-    await store.save(sorted);
-    if (!_isExternalPointsOwner(owner)) {
-      throw StateError('Account changed');
-    }
-    setState(() {
-      _externalPointsLoadedOwnerId = owner;
-      _externalPoints = sorted;
-      _externalPointsStatus = 'この利用者の端末内に保存済み。サーバ同期は確認中です。';
-    });
+    final expected = _externalPoints;
+    setState(() => _externalPointsSaving = true);
     try {
-      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
-        'user_id': owner,
-        'pref_key': _externalPointsMirrorKey,
+      final savedLocally = await store.saveIfUnchanged(
+        sorted,
+        expected: expected,
+        isCurrent: () =>
+            _isExternalPointsOwner(owner) &&
+            saveEpoch == _externalPointsMutationEpoch,
+      );
+      if (!_isExternalPointsOwner(owner) ||
+          saveEpoch != _externalPointsMutationEpoch) {
+        return;
+      }
+      if (!savedLocally) {
+        setState(() {
+          _externalPointsReady = false;
+          _externalPointsStatus =
+              '端末内の記録を照合できませんでした。ページを開き直して確認してください。';
+        });
+        return;
+      }
+      setState(() {
+        _externalPoints = sorted;
+        _externalPointsStatus = _externalPointsMirrorWritable
+            ? '端末内に保存済み。サーバ保存を確認しています。'
+            : '端末内に保存済み。サーバへの保存を保留しています。';
+      });
+      if (_externalPointsMirrorWritable) {
+        await _mirrorExternalPoints(owner, sorted, saveEpoch);
+      }
+    } finally {
+      if (mounted) {
+        final reload = _externalPointsReloadAfterSave;
+        setState(() {
+          _externalPointsSaving = false;
+          _externalPointsReloadAfterSave = false;
+        });
+        if (reload) {
+          unawaited(_loadExternalPoints());
+        }
+      }
+    }
+  }
+
+  Future<void> _mirrorExternalPoints(
+    String owner,
+    List<AssetExternalPointRecord> sorted,
+    int saveEpoch,
+  ) async {
+    try {
+      final table = _supabase.from('asset_pref_mirror');
+      final revision = _externalPointsMirrorRevision;
+      final previous = revision == null ? null : DateTime.parse(revision);
+      final now = DateTime.now().toUtc();
+      final updatedAt = previous != null && !now.isAfter(previous)
+          ? previous.toUtc().add(const Duration(microseconds: 1))
+          : now;
+      final values = <String, dynamic>{
         'value': AssetExternalPointsStore.encodeMirrorValue(sorted),
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      }).timeout(const Duration(seconds: 10));
+        'updated_at': updatedAt.toIso8601String(),
+      };
+      final rows = await (revision == null
+              ? table.insert(<String, dynamic>{
+                  ...values,
+                  'user_id': owner,
+                  'pref_key': _externalPointsMirrorKey,
+                }).select('updated_at')
+              : table
+                  .update(values)
+                  .eq('user_id', owner)
+                  .eq('pref_key', _externalPointsMirrorKey)
+                  .eq('updated_at', revision)
+                  .select('updated_at'))
+          .timeout(const Duration(seconds: 10));
+      final confirmedRevision = rows.length == 1 ? rows.single['updated_at'] : null;
+      if (confirmedRevision is! String ||
+          DateTime.tryParse(confirmedRevision) == null) {
+        throw StateError('External points mirror changed or was not confirmed');
+      }
       if (_isExternalPointsOwner(owner) &&
           saveEpoch == _externalPointsMutationEpoch) {
         setState(() {
-          _externalPointsStatus = 'この利用者の端末内保存・サーバ同期を確認しました。';
+          _externalPointsMirrorRevision = confirmedRevision;
+          _externalPointsStatus = '端末内とサーバへの保存を確認しました。';
         });
       }
     } catch (_) {
       if (_isExternalPointsOwner(owner) &&
           saveEpoch == _externalPointsMutationEpoch) {
         setState(() {
-          _externalPointsStatus = '端末内には保存済みですが、サーバ同期は未確認です。';
+          _externalPointsMirrorWritable = false;
+          _externalPointsStatus = '端末内に保存済み。サーバへの上書きを保留しています。';
         });
       }
     }
@@ -12534,26 +12686,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _addExternalPointRecord() async {
     final owner = _externalPointsOwnerId;
-    if (owner == null || owner.trim().isEmpty) {
+    if (owner == null || !_canEditExternalPoints(owner)) {
       return;
     }
+    final editorEpoch = _externalPointsMutationEpoch;
     final created = await showAssetExternalPointEditorDialog(context);
-    if (created == null || !_isExternalPointsOwner(owner)) {
+    if (created == null ||
+        editorEpoch != _externalPointsMutationEpoch ||
+        !_canEditExternalPoints(owner)) {
       return;
     }
-    final current = _externalPointsLoadedOwnerId == owner
-        ? _externalPoints
-        : const <AssetExternalPointRecord>[];
     final next = <AssetExternalPointRecord>[
       created,
-      for (final item in current)
+      for (final item in _externalPoints)
         if (item.id != created.id) item,
     ];
     try {
       await _saveExternalPoints(next);
     } catch (error) {
       debugPrint('Error saving external points: $error');
-      if (_isExternalPointsOwner(owner)) {
+      if (_isExternalPointsOwner(owner) &&
+          editorEpoch + 1 == _externalPointsMutationEpoch) {
         setState(() {
           _externalPointsStatus = '外部ポイントの保存に失敗しました。';
         });
@@ -12565,9 +12718,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetExternalPointRecord target,
   ) async {
     final owner = _externalPointsOwnerId;
-    if (owner == null || owner.trim().isEmpty) {
+    if (owner == null || !_canEditExternalPoints(owner)) {
       return;
     }
+    final editorEpoch = _externalPointsMutationEpoch;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -12588,20 +12742,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
-    if (confirmed != true || !_isExternalPointsOwner(owner)) {
+    if (confirmed != true ||
+        editorEpoch != _externalPointsMutationEpoch ||
+        !_canEditExternalPoints(owner)) {
       return;
     }
-    final current = _externalPointsLoadedOwnerId == owner
-        ? _externalPoints
-        : const <AssetExternalPointRecord>[];
-    final next = current
+    final next = _externalPoints
         .where((item) => item.id != target.id)
         .toList(growable: false);
     try {
       await _saveExternalPoints(next);
     } catch (error) {
       debugPrint('Error deleting external point: $error');
-      if (_isExternalPointsOwner(owner)) {
+      if (_isExternalPointsOwner(owner) &&
+          editorEpoch + 1 == _externalPointsMutationEpoch) {
         setState(() {
           _externalPointsStatus = '外部ポイントの削除保存に失敗しました。';
         });
@@ -12615,10 +12769,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return const SizedBox.shrink();
     }
     final isOwnerLoaded = _externalPointsLoadedOwnerId == owner;
+    final canEdit = _canEditExternalPoints(owner);
     final records = isOwnerLoaded
         ? _externalPoints
         : const <AssetExternalPointRecord>[];
-    final statusMessage = isOwnerLoaded ? _externalPointsStatus : null;
+    final statusMessage = isOwnerLoaded && _externalPointsStatus != null
+        ? _externalPointsStatus
+        : (_externalPointsReady ? null : '外部ポイントを読み込んでいます。');
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: KeyedSubtree(
@@ -12626,8 +12783,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         child: AssetExternalPointsCard(
           records: records,
           statusMessage: statusMessage,
-          onAddRecord: _addExternalPointRecord,
-          onDeleteRecord: _deleteExternalPointRecord,
+          onAddRecord: canEdit ? _addExternalPointRecord : null,
+          onDeleteRecord: canEdit ? _deleteExternalPointRecord : null,
           now: _now,
         ),
       ),

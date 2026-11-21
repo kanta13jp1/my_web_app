@@ -86,13 +86,13 @@ void main() {
             id: 'ep_keio_1',
             programName: AssetExternalPointPresets.keio,
             observedAt: DateTime(2026, 11, 21, 14, 30),
-            balanceAfter: 94,
-            deltaPoints: 28,
-            balanceBefore: 66,
-            expiringPoints: 30,
-            expiresOn: DateTime(2027, 4, 30),
-            merchant: '紀伊國屋書店 府中店',
-            pointTargetAmountYen: 970,
+            balanceAfter: 105,
+            deltaPoints: 25,
+            balanceBefore: 80,
+            expiringPoints: 20,
+            expiresOn: DateTime(2027, 4, 29),
+            merchant: 'サンプル書店',
+            pointTargetAmountYen: 840,
             memo: '書籍購入',
           ),
           AssetExternalPointRecord(
@@ -120,18 +120,18 @@ void main() {
         );
         expect(find.text('ローカル保存済み（オフライン）'), findsOneWidget);
         expect(find.text('京王ポイント'), findsWidgets);
-        expect(find.text('94 P'), findsOneWidget);
-        expect(find.textContaining('30 P'), findsWidgets);
-        expect(find.textContaining('2027/04/30'), findsWidgets);
+        expect(find.text('105 P'), findsOneWidget);
+        expect(find.textContaining('20 P'), findsWidgets);
+        expect(find.textContaining('2027/04/29'), findsWidgets);
         expect(find.text('Vポイント'), findsWidgets);
         expect(find.text('951 P'), findsOneWidget);
-        expect(find.text('+28 P'), findsOneWidget);
+        expect(find.text('+25 P'), findsOneWidget);
         expect(find.text('-50 P'), findsOneWidget);
-        expect(find.text('66 P → 94 P'), findsOneWidget);
+        expect(find.text('80 P → 105 P'), findsOneWidget);
         expect(find.text('1,001 P → 951 P'), findsOneWidget);
-        expect(find.text('加盟店: 紀伊國屋書店 府中店'), findsOneWidget);
+        expect(find.text('加盟店: サンプル書店'), findsOneWidget);
         expect(
-          find.text('ポイント対象額: 970円（参考・支出計上外）'),
+          find.text('ポイント対象額: 840円（参考・支出計上外）'),
           findsOneWidget,
         );
         expect(find.text('メモ: 書籍購入'), findsOneWidget);
@@ -147,7 +147,7 @@ void main() {
             programName: AssetExternalPointPresets.keio,
             observedAt: DateTime(2026, 11, 21, 9, 0),
             balanceAfter: 120,
-            expiringPoints: 30,
+            expiringPoints: 20,
             expiresOn: DateTime(2026, 12, 1),
           ),
           AssetExternalPointRecord(
@@ -187,9 +187,9 @@ void main() {
         id: 'ep_del_1',
         programName: AssetExternalPointPresets.keio,
         observedAt: DateTime(2026, 11, 21, 12, 0),
-        balanceAfter: 94,
-        deltaPoints: 28,
-        balanceBefore: 66,
+        balanceAfter: 105,
+        deltaPoints: 25,
+        balanceBefore: 80,
       );
 
       await _pumpCard(
@@ -285,55 +285,60 @@ void main() {
           const Key('asset_external_point_balance_after_field'),
         );
         await tester.ensureVisible(balanceAfterField);
-        await tester.enterText(balanceAfterField, '９４');
+        await tester.enterText(balanceAfterField, '１０５');
 
         final deltaField = find.byKey(
           const Key('asset_external_point_delta_field'),
         );
         await tester.ensureVisible(deltaField);
-        await tester.enterText(deltaField, '＋２８');
+        await tester.enterText(deltaField, '＋２５');
 
         final balanceBeforeField = find.byKey(
           const Key('asset_external_point_balance_before_field'),
         );
         await tester.ensureVisible(balanceBeforeField);
-        await tester.enterText(balanceBeforeField, '６６');
+        await tester.enterText(balanceBeforeField, '８０');
 
         final merchantField = find.byKey(
           const Key('asset_external_point_merchant_field'),
         );
         await tester.ensureVisible(merchantField);
-        await tester.enterText(merchantField, '紀伊國屋書店 府中店');
+        await tester.enterText(merchantField, 'サンプル書店');
 
         final expiringPointsField = find.byKey(
           const Key('asset_external_point_expiring_points_field'),
         );
         await tester.ensureVisible(expiringPointsField);
-        await tester.enterText(expiringPointsField, '30');
+        await tester.enterText(expiringPointsField, '20');
 
         final expiresOnPicker = find.byKey(
           const Key('asset_external_point_expires_on_picker'),
         );
-        await tester.ensureVisible(expiresOnPicker);
-        await tester.tap(expiresOnPicker);
+        await tester.pumpAndSettle();
+        await Scrollable.ensureVisible(
+          tester.element(expiresOnPicker),
+          alignment: 0.5,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(expiresOnPicker.hitTestable());
         await tester.pumpAndSettle();
 
         final datePicker = find.byType(DatePickerDialog);
         expect(datePicker, findsOneWidget);
         await tester.tap(
-          find.descendant(of: datePicker, matching: find.text('30')),
+          find.descendant(of: datePicker, matching: find.text('29')),
         );
         await tester.tap(
           find.descendant(of: datePicker, matching: find.text('OK')),
         );
         await tester.pumpAndSettle();
-        expect(find.text('2027/04/30'), findsOneWidget);
+        expect(find.text('2027/04/29'), findsOneWidget);
 
         final targetAmountField = find.byKey(
           const Key('asset_external_point_target_amount_field'),
         );
         await tester.ensureVisible(targetAmountField);
-        await tester.enterText(targetAmountField, '970');
+        await tester.enterText(targetAmountField, '840');
 
         final memoField = find.byKey(
           const Key('asset_external_point_memo_field'),
@@ -353,14 +358,14 @@ void main() {
         }
         expect(record.id, startsWith('ep_'));
         expect(record.programName, '京王ポイント');
-        expect(record.balanceAfter, 94);
-        expect(record.deltaPoints, 28);
-        expect(record.balanceBefore, 66);
+        expect(record.balanceAfter, 105);
+        expect(record.deltaPoints, 25);
+        expect(record.balanceBefore, 80);
         expect(record.observedAt, DateTime(2027, 4, 15, 18, 5));
-        expect(record.merchant, '紀伊國屋書店 府中店');
-        expect(record.expiringPoints, 30);
-        expect(record.expiresOn, DateTime(2027, 4, 30));
-        expect(record.pointTargetAmountYen, 970);
+        expect(record.merchant, 'サンプル書店');
+        expect(record.expiringPoints, 20);
+        expect(record.expiresOn, DateTime(2027, 4, 29));
+        expect(record.pointTargetAmountYen, 840);
         expect(record.memo, 'レシート記録');
       },
     );
@@ -404,13 +409,13 @@ void main() {
 
         final datePicker = find.byType(DatePickerDialog);
         await tester.tap(
-          find.descendant(of: datePicker, matching: find.text('30')),
+          find.descendant(of: datePicker, matching: find.text('29')),
         );
         await tester.tap(
           find.descendant(of: datePicker, matching: find.text('OK')),
         );
         await tester.pumpAndSettle();
-        expect(find.text('2027/04/30'), findsOneWidget);
+        expect(find.text('2027/04/29'), findsOneWidget);
 
         final clearButton = find.byKey(
           const Key('asset_external_point_expires_on_clear'),

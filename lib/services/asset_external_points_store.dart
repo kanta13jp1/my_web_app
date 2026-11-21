@@ -1,7 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:my_web_app/models/asset_external_points.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'business_execution_lock.dart';
 
 /// 外部ポイント記録（京王ポイント・Vポイント等）を端末内へ永続化する。
 ///
@@ -44,9 +47,13 @@ class AssetExternalPointsStore {
 
   Future<List<AssetExternalPointRecord>> load({
     SharedPreferences? prefs,
+    bool refresh = false,
   }) async {
     final key = storageKey;
     final store = prefs ?? await SharedPreferences.getInstance();
+    if (refresh) {
+      await store.reload();
+    }
     final raw = store.getString(key);
     if (raw == null || raw.isEmpty) {
       return <AssetExternalPointRecord>[];
@@ -68,6 +75,60 @@ class AssetExternalPointsStore {
     if (!await store.setString(key, jsonEncode(encoded))) {
       throw StateError('Could not save external points');
     }
+  }
+
+  /// Writes only if the device still holds the records used by the editor.
+  /// Web tabs share the account's storage key and the same exclusive lock.
+  Future<bool> saveIfUnchanged(
+    List<AssetExternalPointRecord> records, {
+    required List<AssetExternalPointRecord> expected,
+    bool requireMissing = false,
+    bool Function()? isCurrent,
+  }) async {
+    final key = storageKey;
+    final prefs = await SharedPreferences.getInstance();
+    var saved = false;
+
+    Future<void> compareAndSave() async {
+      await prefs.reload();
+      var current = const <AssetExternalPointRecord>[];
+      if (prefs.containsKey(key)) {
+        final raw = prefs.get(key);
+        if (requireMissing || raw is! String) {
+          return;
+        }
+        final Object? payload;
+        try {
+          payload = jsonDecode(raw);
+        } on FormatException {
+          return;
+        }
+        if (payload is! Map || payload['version'] != 1) {
+          return;
+        }
+        final entries = payload['records'];
+        current = decodeMirrorValue(payload);
+        if (entries is! List || entries.length != current.length) {
+          return;
+        }
+      }
+      if (jsonEncode(encodeMirrorValue(current)) !=
+          jsonEncode(encodeMirrorValue(expected))) {
+        return;
+      }
+      if (isCurrent != null && !isCurrent()) {
+        return;
+      }
+      await save(records, prefs: prefs);
+      saved = true;
+    }
+
+    if (kIsWeb) {
+      await withBusinessExecutionLock(key, compareAndSave);
+    } else {
+      await compareAndSave();
+    }
+    return saved;
   }
 
   /// 外部ポイント記録リストを `asset_pref_mirror.value` (jsonb) 形へ変換する。

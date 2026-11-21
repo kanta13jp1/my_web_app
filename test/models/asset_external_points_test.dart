@@ -29,14 +29,14 @@ void main() {
           id: 'keio-20261121-1',
           programName: AssetExternalPointPresets.keio,
           observedAt: DateTime(2026, 11, 21, 18, 30),
-          balanceAfter: 94,
-          deltaPoints: 28,
-          balanceBefore: 66,
-          expiringPoints: 30,
-          expiresOn: DateTime(2027, 4, 30, 15, 45),
-          merchant: '紀伊國屋書店 府中店',
-          pointTargetAmountYen: 970,
-          memo: '前年度30P期限確認',
+          balanceAfter: 105,
+          deltaPoints: 25,
+          balanceBefore: 80,
+          expiringPoints: 20,
+          expiresOn: DateTime(2027, 4, 29, 15, 45),
+          merchant: 'サンプル書店',
+          pointTargetAmountYen: 840,
+          memo: '前年度20P期限確認',
         );
 
         final json = record.toJson();
@@ -44,15 +44,15 @@ void main() {
 
         expect(restored, isNotNull);
         expect(restored, record);
-        expect(restored!.balanceAfter, 94);
-        expect(restored.balanceBefore, 66);
-        expect(restored.deltaPoints, 28);
-        expect(restored.expiringPoints, 30);
-        expect(restored.expiresOn, DateTime(2027, 4, 30));
-        expect(restored.merchant, '紀伊國屋書店 府中店');
-        expect(restored.pointTargetAmountYen, 970);
-        expect(restored.memo, '前年度30P期限確認');
-        expect(json['expiresOn'], '2027-04-30');
+        expect(restored!.balanceAfter, 105);
+        expect(restored.balanceBefore, 80);
+        expect(restored.deltaPoints, 25);
+        expect(restored.expiringPoints, 20);
+        expect(restored.expiresOn, DateTime(2027, 4, 29));
+        expect(restored.merchant, 'サンプル書店');
+        expect(restored.pointTargetAmountYen, 840);
+        expect(restored.memo, '前年度20P期限確認');
+        expect(json['expiresOn'], '2027-04-29');
       },
     );
 
@@ -61,12 +61,12 @@ void main() {
         id: 'keio-1',
         programName: AssetExternalPointPresets.keio,
         observedAt: DateTime(2026, 11, 21, 18, 30),
-        balanceAfter: 94,
-        deltaPoints: 28,
-        balanceBefore: 66,
-        expiringPoints: 30,
-        expiresOn: DateTime(2027, 4, 30),
-        pointTargetAmountYen: 970,
+        balanceAfter: 105,
+        deltaPoints: 25,
+        balanceBefore: 80,
+        expiringPoints: 20,
+        expiresOn: DateTime(2027, 4, 29),
+        pointTargetAmountYen: 840,
       );
 
       final updated = initial.copyWith(
@@ -77,7 +77,7 @@ void main() {
       expect(updated.balanceAfter, 104);
       expect(updated.balanceBefore, isNull);
       expect(updated.expiresOn, DateTime(2027, 5, 1));
-      expect(updated.pointTargetAmountYen, 970);
+      expect(updated.pointTargetAmountYen, 840);
 
       final cleared = updated.copyWith(
         clearExpiringPoints: true,
@@ -195,17 +195,17 @@ void main() {
         id: 'b-keio-old',
         programName: AssetExternalPointPresets.keio,
         observedAt: DateTime(2026, 11, 20, 10, 0),
-        balanceAfter: 66,
+        balanceAfter: 80,
       );
       final keioNew = AssetExternalPointRecord(
         id: 'a-keio-new',
         programName: AssetExternalPointPresets.keio,
         observedAt: DateTime(2026, 11, 21, 18, 30),
-        balanceAfter: 94,
-        deltaPoints: 28,
-        balanceBefore: 66,
-        expiringPoints: 30,
-        expiresOn: DateTime(2027, 4, 30),
+        balanceAfter: 105,
+        deltaPoints: 25,
+        balanceBefore: 80,
+        expiringPoints: 20,
+        expiresOn: DateTime(2027, 4, 29),
       );
       final vPoint = AssetExternalPointRecord(
         id: 'c-vpoint',
@@ -258,7 +258,7 @@ void main() {
       expect(summaries[0].expiryStatus, AssetExternalPointExpiryStatus.none);
 
       expect(summaries[1].programName, AssetExternalPointPresets.keio);
-      expect(summaries[1].latestRecord.balanceAfter, 94);
+      expect(summaries[1].latestRecord.balanceAfter, 105);
       expect(summaries[1].recordCount, 2);
       expect(summaries[1].expiryStatus, AssetExternalPointExpiryStatus.active);
 
@@ -281,7 +281,7 @@ void main() {
               id: 'test-1',
               programName: AssetExternalPointPresets.keio,
               observedAt: DateTime(2026, 11, 21, 18, 0),
-              balanceAfter: 94,
+              balanceAfter: 105,
               expiringPoints: expiringPoints,
               expiresOn: expiresOn,
             ),
@@ -296,7 +296,7 @@ void main() {
         AssetExternalPointExpiryStatus.none,
       );
       expect(
-        statusFor(expiringPoints: 30, expiresOn: null),
+        statusFor(expiringPoints: 20, expiresOn: null),
         AssetExternalPointExpiryStatus.none,
       );
       expect(
@@ -305,19 +305,19 @@ void main() {
       );
 
       expect(
-        statusFor(expiringPoints: 30, expiresOn: DateTime(2026, 11, 20)),
+        statusFor(expiringPoints: 20, expiresOn: DateTime(2026, 11, 20)),
         AssetExternalPointExpiryStatus.expired,
       );
       expect(
-        statusFor(expiringPoints: 30, expiresOn: DateTime(2026, 11, 21)),
+        statusFor(expiringPoints: 20, expiresOn: DateTime(2026, 11, 21)),
         AssetExternalPointExpiryStatus.expiringSoon,
       );
       expect(
-        statusFor(expiringPoints: 30, expiresOn: DateTime(2026, 12, 21)),
+        statusFor(expiringPoints: 20, expiresOn: DateTime(2026, 12, 21)),
         AssetExternalPointExpiryStatus.expiringSoon,
       );
       expect(
-        statusFor(expiringPoints: 30, expiresOn: DateTime(2026, 12, 22)),
+        statusFor(expiringPoints: 20, expiresOn: DateTime(2026, 12, 22)),
         AssetExternalPointExpiryStatus.active,
       );
     });
@@ -325,17 +325,17 @@ void main() {
 
   group('parseFlexiblePointInt and formatters', () {
     test('parses full-width digits, commas, whitespace, and units', () {
-      expect(parseFlexiblePointInt('94'), 94);
-      expect(parseFlexiblePointInt('９４'), 94);
+      expect(parseFlexiblePointInt('105'), 105);
+      expect(parseFlexiblePointInt('１０５'), 105);
       expect(parseFlexiblePointInt('0'), 0);
       expect(parseFlexiblePointInt('1,250'), 1250);
       expect(parseFlexiblePointInt('１，２５０'), 1250);
       expect(parseFlexiblePointInt('　951 P　'), 951);
-      expect(parseFlexiblePointInt('＋２８pt'), 28);
+      expect(parseFlexiblePointInt('＋２５pt'), 25);
       expect(parseFlexiblePointInt('＋ 1,250 Ｐ'), 1250);
-      expect(parseFlexiblePointInt('２８ｐｔ'), 28);
-      expect(parseFlexiblePointInt('970円'), 970);
-      expect(parseFlexiblePointInt('９７０ 円'), 970);
+      expect(parseFlexiblePointInt('２５ｐｔ'), 25);
+      expect(parseFlexiblePointInt('840円'), 840);
+      expect(parseFlexiblePointInt('８４０ 円'), 840);
     });
 
     test('handles negative sign according to allowNegative flag', () {
@@ -371,13 +371,13 @@ void main() {
     });
 
     test('formats dates, datetimes, and comma-separated counts', () {
-      expect(formatExternalPointDate(DateTime(2027, 4, 30)), '2027/04/30');
+      expect(formatExternalPointDate(DateTime(2027, 4, 29)), '2027/04/29');
       expect(
         formatExternalPointDateTime(DateTime(2026, 11, 21, 9, 5)),
         '2026/11/21 09:05',
       );
       expect(formatExternalPointsCount(0), '0');
-      expect(formatExternalPointsCount(94), '94');
+      expect(formatExternalPointsCount(105), '105');
       expect(formatExternalPointsCount(951), '951');
       expect(formatExternalPointsCount(1250), '1,250');
       expect(formatExternalPointsCount(1234567), '1,234,567');

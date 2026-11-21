@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_external_points.dart';
 import 'package:my_web_app/services/asset_external_points_store.dart';
@@ -16,13 +17,13 @@ AssetExternalPointRecord _keioRecord({
     id: id,
     programName: AssetExternalPointPresets.keio,
     observedAt: observedAt ?? DateTime(2026, 11, 21, 14, 30),
-    balanceAfter: 94,
-    deltaPoints: 28,
-    balanceBefore: 66,
-    expiringPoints: 30,
-    expiresOn: DateTime(2027, 4, 30),
-    merchant: '紀伊國屋書店 府中店',
-    pointTargetAmountYen: 970,
+    balanceAfter: 105,
+    deltaPoints: 25,
+    balanceBefore: 80,
+    expiringPoints: 20,
+    expiresOn: DateTime(2027, 4, 29),
+    merchant: 'サンプル書店',
+    pointTargetAmountYen: 840,
     memo: 'レシート控え',
   );
 }
@@ -103,7 +104,7 @@ void main() {
       expect(loadedA, hasLength(1));
       expect(loadedA.first.id, 'ep_keio_1');
       expect(loadedA.first.programName, AssetExternalPointPresets.keio);
-      expect(loadedA.first.balanceAfter, 94);
+      expect(loadedA.first.balanceAfter, 105);
 
       expect(loadedB, hasLength(1));
       expect(loadedB.first.id, 'ep_vpoint_1');
@@ -137,6 +138,46 @@ void main() {
       );
     });
 
+    test('rejects a stale editor and preserves an explicit empty list', () async {
+      const store = AssetExternalPointsStore.forOwner('owner-a');
+      final keio = _keioRecord();
+      final updated = _vPointRecord();
+
+      expect(await store.saveIfUnchanged([keio], expected: []), isTrue);
+      expect(await store.saveIfUnchanged([updated], expected: []), isFalse);
+      expect(
+        await store.saveIfUnchanged(
+          [updated],
+          expected: [keio],
+          isCurrent: () => false,
+        ),
+        isFalse,
+      );
+      expect((await store.load()).single.id, keio.id);
+
+      expect(await store.saveIfUnchanged([], expected: [keio]), isTrue);
+      expect(
+        await store.saveIfUnchanged([keio], expected: [], requireMissing: true),
+        isFalse,
+      );
+      expect(await store.load(), isEmpty);
+    });
+
+    test('serializes competing browser writes for the same owner', () async {
+      const firstStore = AssetExternalPointsStore.forOwner('owner-a');
+      const secondStore = AssetExternalPointsStore.forOwner('owner-a');
+      final candidates = [_keioRecord(), _vPointRecord()];
+
+      final results = await Future.wait([
+        firstStore.saveIfUnchanged([candidates[0]], expected: []),
+        secondStore.saveIfUnchanged([candidates[1]], expected: []),
+      ]);
+
+      expect(results.where((saved) => saved), hasLength(1));
+      final winner = candidates[results.indexOf(true)];
+      expect((await firstStore.load(refresh: true)).single.id, winner.id);
+    }, skip: !kIsWeb);
+
     test('tolerates corrupted local storage payload', () async {
       const store = AssetExternalPointsStore.forOwner('owner-a');
       final prefs = await SharedPreferences.getInstance();
@@ -144,6 +185,8 @@ void main() {
 
       expect(await store.hasSavedSetting(prefs: prefs), isFalse);
       expect(await store.load(prefs: prefs), isEmpty);
+      expect(await store.saveIfUnchanged([_keioRecord()], expected: []), isFalse);
+      expect(prefs.getString(store.storageKey), '{not-valid-json');
     });
   });
 
@@ -188,15 +231,15 @@ void main() {
         decodedKeio.observedAt.isAtSameMomentAs(keio.observedAt),
         isTrue,
       );
-      expect(decodedKeio.balanceAfter, 94);
-      expect(decodedKeio.deltaPoints, 28);
-      expect(decodedKeio.balanceBefore, 66);
-      expect(decodedKeio.expiringPoints, 30);
+      expect(decodedKeio.balanceAfter, 105);
+      expect(decodedKeio.deltaPoints, 25);
+      expect(decodedKeio.balanceBefore, 80);
+      expect(decodedKeio.expiringPoints, 20);
       expect(decodedKeio.expiresOn?.year, 2027);
       expect(decodedKeio.expiresOn?.month, 4);
-      expect(decodedKeio.expiresOn?.day, 30);
-      expect(decodedKeio.merchant, '紀伊國屋書店 府中店');
-      expect(decodedKeio.pointTargetAmountYen, 970);
+      expect(decodedKeio.expiresOn?.day, 29);
+      expect(decodedKeio.merchant, 'サンプル書店');
+      expect(decodedKeio.pointTargetAmountYen, 840);
       expect(decodedKeio.memo, 'レシート控え');
     });
 
@@ -222,7 +265,7 @@ void main() {
               'id': '',
               'programName': AssetExternalPointPresets.keio,
               'observedAt': '2026-11-21T14:30:00',
-              'balanceAfter': 94,
+              'balanceAfter': 105,
             },
             <String, dynamic>{
               'id': 'negative-balance',
