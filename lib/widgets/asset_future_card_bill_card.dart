@@ -116,6 +116,8 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
       return;
     }
     final month = _month;
+    final repository = widget.repository;
+    final ownsRead = repository.captureMonthAiOwnership(month);
     final cardId = _cardId!;
     final note = _note.text;
     final account = widget.accounts.singleWhere((a) => a.id == _accountId);
@@ -124,13 +126,16 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
       _message = null;
     });
     try {
-      final base = await widget.repository.loadMonth(month);
-      if (!mounted || _month != month) return;
-      if (!widget.repository.isMonthVerifiedForAi(month) ||
-          !widget.repository.supabaseWritesEnabled) {
+      final base = await repository.loadMonth(month);
+      if (!mounted ||
+          _month != month ||
+          !identical(widget.repository, repository)) {
+        return;
+      }
+      if (!repository.isMonthVerifiedForAi(month) ||
+          !repository.supabaseWritesEnabled) {
         throw StateError('サーバ保存が有効ではありません');
       }
-      final ownsRead = widget.repository.captureMonthAiOwnership(month);
       final edited = AssetFutureCardBill.apply(
         state: base,
         accountId: account.id,
@@ -143,10 +148,10 @@ class _AssetFutureCardBillCardState extends State<AssetFutureCardBillCard> {
       if (!ownsRead()) {
         throw StateError('保存対象のユーザーが変わりました');
       }
-      await widget.repository.saveMonth(month: month, state: edited);
-      final restored = await widget.repository.loadMonth(month);
+      await repository.saveMonth(month: month, state: edited);
+      final restored = await repository.loadMonth(month);
       if (!ownsRead() ||
-          await widget.repository.hasPendingMonthEdits(month) ||
+          await repository.hasPendingMonthEdits(month) ||
           restored.paymentOverrides[account.id] != amount.toDouble() ||
           restored.cardBillingAccountIds[account.id] != cardId ||
           restored.paidAccountNames.contains(account.id) ||
