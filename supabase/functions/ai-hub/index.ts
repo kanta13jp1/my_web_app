@@ -7128,10 +7128,12 @@ serve(async (req: Request) => {
           body,
           userId: userId ?? "",
           invokeProvider: async (request) => {
-            const usage = await checkAndRecordAiUsage(
-              supabaseUsageStore(admin),
-              userId ?? "",
-            );
+            const usage = request.isFallback
+              ? { allowed: true }
+              : await checkAndRecordAiUsage(
+                supabaseUsageStore(admin),
+                userId ?? "",
+              );
             if (!usage.allowed) {
               return {
                 ok: false,
