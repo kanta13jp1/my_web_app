@@ -3,14 +3,14 @@ import 'package:my_web_app/services/vibe_sim_diagnostic_service.dart';
 
 void main() {
   group('VibeSimDiagnosticService presets', () {
-    test('v1_naive returns score 100 danger with 8 findings', () {
+    test('v1_naive returns score 100 danger with 9 findings', () {
       final res = VibeSimDiagnosticService.evaluate(
         VibeSimDiagnosticService.presetInput(VibeSimPreset.v1Naive),
       );
       expect(res.isValid, isTrue);
       expect(res.riskScore, 100);
       expect(res.riskLevel, VibeSimRiskLevel.danger);
-      expect(res.findings.length, 8);
+      expect(res.findings.length, 9);
       expect(
         res.findings
             .where((final f) => f.severity == VibeSimSeverity.critical)
@@ -28,6 +28,12 @@ void main() {
             .where((final f) => f.severity == VibeSimSeverity.warning)
             .length,
         2,
+      );
+      expect(
+        res.findings
+            .where((final f) => f.severity == VibeSimSeverity.info)
+            .length,
+        1,
       );
     });
 
@@ -53,8 +59,10 @@ void main() {
       expect(res.riskScore, 0);
       expect(res.riskLevel, VibeSimRiskLevel.safe);
       expect(res.findings, isEmpty);
-      expect(res.snippet,
-          contains('spec.default.joint.damping = [0.1, 0.0, 0.0]'));
+      expect(
+        res.snippet,
+        contains('spec.default.joint.damping = [0.1, 0.0, 0.0]'),
+      );
       expect(res.snippet, contains('imgui.Selectable'));
     });
   });
@@ -87,35 +95,39 @@ void main() {
     });
 
     test(
-        'rejects empty, non-numeric, NaN, Infinity, and out-of-range inputs cleanly',
-        () {
-      const baseRaw = VibeSimRawFormValues(
-        timestepText: '',
-        integrator: VibeSimIntegrator.implicitFast,
-        condim: 6,
-        cone: VibeSimCone.elliptic,
-        impratioText: 'abc',
-        trayGeometryMode: VibeSimTrayGeometryMode.fiveWallVisColSplit,
-        rootOffsetMmText: 'NaN',
-        rootMatchesModelName: true,
-        geomMarginMmText: 'Infinity',
-        solrefTimeconstText: '-0.01',
-        solrefDampratioText: '99.0',
-        mujoco401Compat: true,
-      );
-      final res = VibeSimDiagnosticService.evaluateRaw(baseRaw);
-      expect(res.isValid, isFalse);
-      expect(res.input, isNull);
-      expect(
+      'rejects empty, non-numeric, NaN, Infinity, and out-of-range inputs',
+      () {
+        const baseRaw = VibeSimRawFormValues(
+          timestepText: '',
+          integrator: VibeSimIntegrator.implicitFast,
+          condim: 6,
+          cone: VibeSimCone.elliptic,
+          impratioText: 'abc',
+          trayGeometryMode: VibeSimTrayGeometryMode.fiveWallVisColSplit,
+          rootOffsetMmText: 'NaN',
+          rootMatchesModelName: true,
+          geomMarginMmText: 'Infinity',
+          solrefTimeconstText: '-0.01',
+          solrefDampratioText: '99.0',
+          mujoco401Compat: true,
+        );
+        final res = VibeSimDiagnosticService.evaluateRaw(baseRaw);
+        expect(res.isValid, isFalse);
+        expect(res.input, isNull);
+        expect(
           res.validationErrors.keys,
-          containsAll(<String>[
-            'timestep',
-            'impratio',
-            'rootOffsetMm',
-            'geomMarginMm',
-            'solrefTimeconst',
-            'solrefDampratio',
-          ]));
-    });
+          containsAll(
+            const <String>[
+              'timestep',
+              'impratio',
+              'rootOffsetMm',
+              'geomMarginMm',
+              'solrefTimeconst',
+              'solrefDampratio',
+            ],
+          ),
+        );
+      },
+    );
   });
 }
