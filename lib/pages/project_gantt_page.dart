@@ -1296,7 +1296,7 @@ class _WbsTab extends StatelessWidget {
     final overallProgress = _overallProgress(progressBase);
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
         // ── 全体進捗 ──────────────────────────────────────────────────────
         _OverallProgressCard(
@@ -1336,7 +1336,7 @@ class _WbsTab extends StatelessWidget {
           icon: Icons.account_tree_outlined,
         ),
         const SizedBox(height: 8),
-        _FilterRow(
+        WbsFilterBar(
           filterInstance: filterInstance,
           filterMilestone: filterMilestone,
           milestones: milestones,
@@ -1965,7 +1965,7 @@ class _MilestoneCard extends StatelessWidget {
   }
 }
 
-class _FilterRow extends StatelessWidget {
+class WbsFilterBar extends StatelessWidget {
   final String? filterInstance;
   final String? filterMilestone;
   final List<WbsMilestone> milestones;
@@ -1974,7 +1974,8 @@ class _FilterRow extends StatelessWidget {
   final ValueChanged<String?> onFilterMilestone;
   final ValueChanged<bool?> onToggleHideCompleted;
 
-  const _FilterRow({
+  const WbsFilterBar({
+    super.key,
     required this.filterInstance,
     required this.filterMilestone,
     required this.milestones,
@@ -1986,219 +1987,66 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _chip(
-            '全て',
-            null,
+    return Wrap(
+      spacing: 6,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        ..._activeWbsInstanceFilters.map(
+          (filter) => _chip(
+            filter.label,
+            filter.value,
             filterInstance,
             onFilterInstance,
-            const Color(0xFFFF6B35),
+            filter.color,
           ),
-          const SizedBox(width: 6),
-          _chip(
-            'Claude Code',
-            'claude',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF2563EB),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Automation',
-            'automation',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFEAB308),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Codex',
-            'codex',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF10B981),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Gemini',
-            'gemini',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF4285F4),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Co-pilot',
-            'co-pilot',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF111827),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'User',
-            'user',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFEF4444),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'VSCode',
-            'vscode',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF007ACC),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Win',
-            'win',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF00BCF2),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#1',
-            'ps1',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF4B0082),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#2',
-            'ps2',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF6A0DAD),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#3',
-            'ps3',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF8B5CF6),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#4',
-            'ps4',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFA855F7),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#5',
-            'ps5',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFC084FC),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#6',
-            'ps6',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFDAB6FC),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'WEB',
-            'web',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF22C55E),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            '📱',
-            'mobile',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFF97316),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            '⏰Schedule',
-            'schedule',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFF59E0B),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            '🤖GHA',
-            'gha',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF10B981),
-          ),
-          const SizedBox(width: 12),
-          // 未完了のみフィルタ
-          GestureDetector(
-            onTap: () => onToggleHideCompleted(!hideCompleted),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
+        ),
+        GestureDetector(
+          onTap: () => onToggleHideCompleted(!hideCompleted),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: hideCompleted
+                  ? const Color(0xFFFF6B35).withValues(alpha: 0.2)
+                  : const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
                 color: hideCompleted
-                    ? const Color(0xFFFF6B35).withValues(alpha: 0.2)
-                    : const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: hideCompleted
-                      ? const Color(0xFFFF6B35)
-                      : const Color(0xFF333333),
-                ),
+                    ? const Color(0xFFFF6B35)
+                    : const Color(0xFF4B5563),
               ),
-              child: Text(
-                hideCompleted ? '☑ 未完了のみ' : '☐ 未完了のみ',
-                style: TextStyle(
-                  color: hideCompleted
-                      ? const Color(0xFFFF6B35)
-                      : const Color(0xFFD1D5DB),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  height: 1.5,
-                ),
+            ),
+            child: Text(
+              hideCompleted ? '☑ 未完了のみ' : '☐ 未完了のみ',
+              style: TextStyle(
+                color: hideCompleted
+                    ? const Color(0xFFFF6B35)
+                    : const Color(0xFFD1D5DB),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          const Text(
-            '│',
-            style: TextStyle(color: Color(0xFF333333), height: 1.5),
-          ),
-          const SizedBox(width: 12),
-          _chip(
-            '全版',
-            null,
+        ),
+        _chip(
+          '全版',
+          null,
+          filterMilestone,
+          onFilterMilestone,
+          const Color(0xFFD1D5DB),
+        ),
+        ...milestones.map(
+          (m) => _chip(
+            m.name,
+            m.code,
             filterMilestone,
             onFilterMilestone,
-            const Color(0xFFD1D5DB),
+            m.color,
           ),
-          ...milestones.map((m) {
-            return Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: _chip(
-                m.name,
-                m.code,
-                filterMilestone,
-                onFilterMilestone,
-                m.color,
-              ),
-            );
-          }),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -2209,23 +2057,20 @@ class _FilterRow extends StatelessWidget {
     ValueChanged<String?> onTap,
     Color color,
   ) {
-    final isInstanceFilter = identical(onTap, onFilterInstance);
-    final isVisibleInstanceChip = value == null ||
-        _activeWbsInstanceFilters.any((filter) => filter.value == value);
-    if (isInstanceFilter && !isVisibleInstanceChip) {
-      return const SizedBox.shrink();
-    }
     final selected = current == value;
+    final bgColor =
+        selected ? color.withValues(alpha: 0.2) : const Color(0xFF1E1E1E);
     return GestureDetector(
       onTap: () => onTap(selected ? null : value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color:
-              selected ? color.withValues(alpha: 0.2) : const Color(0xFF1E1E1E),
+          color: bgColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: selected ? color : const Color(0xFF333333)),
+          border: Border.all(
+            color: selected ? color : const Color(0xFF4B5563),
+          ),
         ),
         child: Text(
           label,
