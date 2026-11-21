@@ -325,9 +325,9 @@ void main() {
     }
 
     Finder point(String name) => find.descendant(
-      of: find.byKey(const Key('asset_external_points_card')),
-      matching: find.text(name),
-    );
+          of: find.byKey(const Key('asset_external_points_card')),
+          matching: find.text(name),
+        );
 
     await showOwner(ownerA);
     expect(point(pointA.programName), findsWidgets);
