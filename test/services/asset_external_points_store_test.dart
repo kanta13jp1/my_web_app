@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:my_web_app/models/asset_external_points.dart';
 import 'package:my_web_app/services/asset_external_points_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _FailingSavePrefs extends Fake implements SharedPreferences {
   @override
@@ -52,7 +57,8 @@ void main() {
   });
 
   group('AssetExternalPointsStore sign-in guard and isolation', () {
-    test('throws StateError when ownerId is null, empty, or whitespace', () async {
+    test('throws StateError when ownerId is null, empty, or whitespace',
+        () async {
       final prefs = await SharedPreferences.getInstance();
       const stores = <AssetExternalPointsStore>[
         AssetExternalPointsStore.forOwner(null),
@@ -62,7 +68,8 @@ void main() {
 
       for (final store in stores) {
         expect(() => store.storageKey, throwsStateError);
-        await expectLater(store.hasSavedSetting(prefs: prefs), throwsStateError);
+        await expectLater(
+            store.hasSavedSetting(prefs: prefs), throwsStateError);
         await expectLater(store.load(prefs: prefs), throwsStateError);
         await expectLater(
           store.save(const <AssetExternalPointRecord>[], prefs: prefs),
@@ -87,7 +94,8 @@ void main() {
       const storeA = AssetExternalPointsStore.forOwner('owner-a');
       const storeB = AssetExternalPointsStore.forOwner('owner-b');
 
-      await storeA.save(<AssetExternalPointRecord>[_keioRecord()], prefs: prefs);
+      await storeA
+          .save(<AssetExternalPointRecord>[_keioRecord()], prefs: prefs);
 
       expect(await storeA.hasSavedSetting(prefs: prefs), isTrue);
       expect(await storeB.hasSavedSetting(prefs: prefs), isFalse);
@@ -112,7 +120,8 @@ void main() {
       expect(loadedB.first.balanceAfter, 951);
     });
 
-    test('preserves empty list deletion with hasSavedSetting == true', () async {
+    test('preserves empty list deletion with hasSavedSetting == true',
+        () async {
       final prefs = await SharedPreferences.getInstance();
       const store = AssetExternalPointsStore.forOwner('owner-a');
 
@@ -127,7 +136,8 @@ void main() {
       expect(await store.load(prefs: prefs), isEmpty);
     });
 
-    test('throws StateError when SharedPreferences.setString returns false', () async {
+    test('throws StateError when SharedPreferences.setString returns false',
+        () async {
       const store = AssetExternalPointsStore.forOwner('owner-a');
       await expectLater(
         store.save(
@@ -138,7 +148,8 @@ void main() {
       );
     });
 
-    test('rejects a stale editor and preserves an explicit empty list', () async {
+    test('rejects a stale editor and preserves an explicit empty list',
+        () async {
       const store = AssetExternalPointsStore.forOwner('owner-a');
       final keio = _keioRecord();
       final updated = _vPointRecord();
@@ -185,9 +196,89 @@ void main() {
 
       expect(await store.hasSavedSetting(prefs: prefs), isFalse);
       expect(await store.load(prefs: prefs), isEmpty);
-      expect(await store.saveIfUnchanged([_keioRecord()], expected: []), isFalse);
+      expect(
+          await store.saveIfUnchanged([_keioRecord()], expected: []), isFalse);
       expect(prefs.getString(store.storageKey), '{not-valid-json');
     });
+  });
+
+  test('mirror writes cannot replace a newer revision', () async {
+    const owner = 'synthetic-owner';
+    final submittedAt = DateTime.utc(2026, 6, 20);
+    Map<String, dynamic>? stored;
+    final client = SupabaseClient(
+      'https://example.invalid',
+      'test-key',
+      accessToken: () async => 'synthetic-token',
+      httpClient: MockClient((request) async {
+        const headers = {'content-type': 'application/json'};
+        expect(request.url.path, '/rest/v1/asset_pref_mirror');
+        expect(request.url.queryParameters['select'], 'updated_at');
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        if (request.method == 'POST') {
+          expect(
+              request.headers['prefer'], isNot(contains('merge-duplicates')));
+          expect(body['user_id'], owner);
+          expect(body['pref_key'], AssetExternalPointsStore.mirrorPrefKey);
+          if (stored != null) {
+            return http.Response(
+              '{"code":"23505","message":"duplicate"}',
+              409,
+              headers: headers,
+            );
+          }
+        } else {
+          expect(request.method, 'PATCH');
+          expect(request.url.queryParameters['user_id'], 'eq.$owner');
+          expect(
+            request.url.queryParameters['pref_key'],
+            'eq.${AssetExternalPointsStore.mirrorPrefKey}',
+          );
+          if (request.url.queryParameters['updated_at'] !=
+              'eq.${stored!['updated_at']}') {
+            return http.Response('[]', 200, headers: headers);
+          }
+        }
+        stored = body;
+        return http.Response(
+          jsonEncode([
+            {'updated_at': body['updated_at']},
+          ]),
+          200,
+          headers: headers,
+        );
+      }),
+    );
+    addTearDown(client.dispose);
+
+    Future<String> save(
+      AssetExternalPointRecord record, {
+      String? revision,
+    }) =>
+        AssetExternalPointsStore.saveMirrorIfUnchanged(
+          client,
+          owner: owner,
+          records: [record],
+          revision: revision,
+          now: submittedAt,
+        );
+
+    final original = _keioRecord();
+    final firstRevision = await save(original);
+    await expectLater(
+        save(_vPointRecord()), throwsA(isA<PostgrestException>()));
+
+    final updated = _vPointRecord();
+    final newRevision = await save(updated, revision: firstRevision);
+    expect(DateTime.parse(newRevision).isAfter(DateTime.parse(firstRevision)),
+        isTrue);
+
+    await expectLater(
+        save(original, revision: firstRevision), throwsStateError);
+    expect(stored!['updated_at'], newRevision);
+    expect(
+        AssetExternalPointsStore.decodeMirrorValue(stored!['value']).single.id,
+        updated.id);
   });
 
   group('AssetExternalPointsStore encodeMirrorValue / decodeMirrorValue', () {
@@ -284,7 +375,9 @@ void main() {
   });
 
   group('AssetExternalPointsStore decodeOwnedMirrorRow', () {
-    test('returns decoded records only when row user_id matches non-empty owner', () {
+    test(
+        'returns decoded records only when row user_id matches non-empty owner',
+        () {
       final row = <String, dynamic>{
         'user_id': 'owner-a',
         'value': AssetExternalPointsStore.encodeMirrorValue(
