@@ -453,9 +453,8 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
                         parentId: goalId,
                       )
                   : null,
-              onProgressChanged: level == 'small'
-                  ? (v) => _updateProgress(goalId, v)
-                  : null,
+              onProgressChanged:
+                  level == 'small' ? (v) => _updateProgress(goalId, v) : null,
               onDelete: () => _deleteGoal(goalId),
             );
           },
