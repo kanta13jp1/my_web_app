@@ -9,7 +9,22 @@ import 'package:my_web_app/pages/public_memo_directory_page.dart';
 import 'package:my_web_app/services/public_memo_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+late Future<http.Response> Function(http.Request request) _handler;
+late SupabaseClient _client;
+
 void main() {
+  setUpAll(() {
+    // Keep isolate initialization outside the widget test's fake async zone.
+    _client = SupabaseClient(
+      'https://example.supabase.co',
+      'test-anon-key',
+      authOptions: const AuthClientOptions(autoRefreshToken: false),
+      httpClient: MockClient((request) => _handler(request)),
+    );
+  });
+
+  tearDownAll(() => _client.dispose());
+
   testWidgets(
     'shows retry error state on HTTP 500 and reloads memos on retry',
     (tester) async {
@@ -227,14 +242,8 @@ void main() {
 PublicMemoService _createService(
   Future<http.Response> Function(http.Request request) handler,
 ) {
-  final client = SupabaseClient(
-    'https://example.supabase.co',
-    'test-anon-key',
-    authOptions: const AuthClientOptions(autoRefreshToken: false),
-    httpClient: MockClient(handler),
-  );
-  addTearDown(client.dispose);
-  return PublicMemoService(client);
+  _handler = handler;
+  return PublicMemoService(_client);
 }
 
 http.Response _jsonResponse(http.Request request, Object body) {
