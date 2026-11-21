@@ -1,3 +1,4 @@
+import { auditArgumentMetadata } from "./mcp_audit_metadata.ts";
 // MCP Auth Guard — 自分株式会社 MCP server 公開時の認可・スコープ検証
 //
 // docs/MCP_AUTH_SECURITY_PRINCIPLES.md 10 原則のうち以下を実装する基盤層:
@@ -334,14 +335,6 @@ function normalizeRequestIp(raw: string): string | null {
   return null;
 }
 
-function toAuditJson(value: unknown): unknown {
-  if (value == null) return null;
-  try {
-    return JSON.parse(JSON.stringify(value));
-  } catch {
-    return { unserializable: String(value).slice(0, 500) };
-  }
-}
 
 export async function logMcpInvocation(
   ctx: McpAuthContext | null,
@@ -350,6 +343,7 @@ export async function logMcpInvocation(
   responseStatus: number,
   req: Request,
 ): Promise<void> {
+  const sanitizedArgs = auditArgumentMetadata(requestArgs);
   const ip = req.headers.get("x-forwarded-for") ??
     req.headers.get("cf-connecting-ip") ?? "";
   const admin = getAdminClient();
@@ -357,12 +351,12 @@ export async function logMcpInvocation(
     const { error } = await admin.from("mcp_audit_log").insert({
       client_id: ctx?.client_id ?? "anonymous",
       tool_name: toolName || "unknown",
-      request_args: toAuditJson(requestArgs),
+      request_args: sanitizedArgs,
       response_status: responseStatus,
       request_ip: normalizeRequestIp(ip),
     });
     if (!error) return;
-    console.warn("[mcp-audit] insert failed", error.message);
+    console.warn("[mcp-audit] insert failed");
   }
 
   console.log(
@@ -372,9 +366,7 @@ export async function logMcpInvocation(
       tool_name: toolName,
       response_status: responseStatus,
       ip: normalizeRequestIp(ip),
-      args_preview: typeof requestArgs === "string"
-        ? requestArgs.slice(0, 200)
-        : JSON.stringify(requestArgs).slice(0, 200),
+      args_metadata: sanitizedArgs,
     }),
   );
 }
