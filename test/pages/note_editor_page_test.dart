@@ -1153,5 +1153,28 @@ void main() {
       );
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('スラッシュ欄展開+キーボード表示でも本文が表示されオーバーフローしない', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'note_editor_slash_bar_expanded': true,
+      });
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      addTearDown(tester.view.resetViewInsets);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await _pumpEditor(tester);
+      expect(
+        find.byKey(const Key('note_editor_content_field')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('note_editor_clipboard_bar')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
   });
 }

@@ -375,7 +375,7 @@ class _UniversalAiShareFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = _isLoggedIn;
-    final showInbox = isLoggedIn;
+    final showInbox = isLoggedIn && page.routePath != '/note-editor';
     final showShareAction = showShare &&
         shouldShowUniversalAiShareFab(
           routePath: page.routePath,
