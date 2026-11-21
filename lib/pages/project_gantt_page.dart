@@ -750,6 +750,46 @@ List<WbsTask> filterWbsTasksForAssignmentBoard(
   }).toList();
 }
 
+/// `/project-gantt` のヘッダータイトルスタイル。
+/// モバイル幅（`< 600px`）で `開発ロードマ…` と省略されないようフォントサイズを調整する。
+TextStyle buildProjectGanttTitleStyle(
+  BuildContext context, {
+  required bool isCompact,
+}) {
+  final base = isCompact
+      ? Theme.of(context).textTheme.titleMedium
+      : Theme.of(context).textTheme.headlineMedium;
+  return (base ?? const TextStyle()).copyWith(
+    color: Colors.white,
+    fontSize: isCompact ? 16 : 22,
+    fontWeight: FontWeight.bold,
+  );
+}
+
+/// `/project-gantt` の 4 タブバー。
+/// モバイル幅では `isScrollable: true` で全タブラベルの見切れを防ぎ、
+/// 非選択タブ色もダーク背景上で視認しやすい `#B0B8C4` に引き上げる。
+TabBar buildProjectGanttTabBar({
+  required TabController controller,
+  required bool isCompact,
+}) {
+  return TabBar(
+    controller: controller,
+    isScrollable: isCompact,
+    tabAlignment: isCompact ? TabAlignment.start : TabAlignment.fill,
+    labelPadding: EdgeInsets.symmetric(horizontal: isCompact ? 14 : 16),
+    indicatorColor: const Color(0xFFFF6B35),
+    labelColor: const Color(0xFFFF6B35),
+    unselectedLabelColor: const Color(0xFFB0B8C4),
+    tabs: const [
+      Tab(icon: Icon(Icons.account_tree_outlined), text: '開発WBS'),
+      Tab(icon: Icon(Icons.timeline), text: 'タイムライン'),
+      Tab(icon: Icon(Icons.folder_outlined), text: 'マイプロジェクト'),
+      Tab(icon: Icon(Icons.health_and_safety_outlined), text: 'セッション衛生'),
+    ],
+  );
+}
+
 class ProjectGanttPage extends StatefulWidget {
   const ProjectGanttPage({super.key});
 
@@ -967,16 +1007,16 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width < 600;
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212),
         title: Text(
           '開発ロードマップ & WBS',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: buildProjectGanttTitleStyle(context, isCompact: isCompact),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -994,17 +1034,9 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             },
           ),
         ],
-        bottom: TabBar(
+        bottom: buildProjectGanttTabBar(
           controller: _tabs,
-          indicatorColor: const Color(0xFFFF6B35),
-          labelColor: const Color(0xFFFF6B35),
-          unselectedLabelColor: const Color(0xFF707070),
-          tabs: const [
-            Tab(icon: Icon(Icons.account_tree_outlined), text: '開発WBS'),
-            Tab(icon: Icon(Icons.timeline), text: 'タイムライン'),
-            Tab(icon: Icon(Icons.folder_outlined), text: 'マイプロジェクト'),
-            Tab(icon: Icon(Icons.health_and_safety_outlined), text: 'セッション衛生'),
-          ],
+          isCompact: isCompact,
         ),
       ),
       body: TabBarView(
@@ -1048,7 +1080,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             onSave: _saveProject,
             onUpdateStatus: _updateProjectStatus,
           ),
-          const _SessionHygieneTab(),
+          const SessionHygieneTab(),
         ],
       ),
     );
@@ -1060,44 +1092,67 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
 // データソース実装待ち: session_hygiene_log table + ef ai_hub.session_hygiene_kpi
 // 実 KPI 追加までは empty state のみ表示 ([REAL-DATA] 適合).
 
-class _SessionHygieneTab extends StatelessWidget {
-  const _SessionHygieneTab();
+class SessionHygieneTab extends StatelessWidget {
+  const SessionHygieneTab({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
-      children: const [
-        _HygieneKpiPlaceholder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+      children: [
+        const _HygieneKpiPlaceholder(
           icon: Icons.memory,
-          title: 'RAM peak / min / avg per session',
-          subtitle: 'v24 SS hard exit 14+ 例 / 90% breach 監視',
+          title: 'メモリ使用量の推移',
+          subtitle: 'セッションごとの RAM ピーク・平均使用率と高負荷アラートを計測予定',
         ),
-        SizedBox(height: 12),
-        _HygieneKpiPlaceholder(
+        const SizedBox(height: 12),
+        const _HygieneKpiPlaceholder(
           icon: Icons.sd_storage_outlined,
-          title: 'C: free drift trend',
-          subtitle: '25 GB threshold + 12.7 GB/h idle drift 観測',
+          title: 'ディスク空き容量の推移',
+          subtitle: '作業領域の空き容量ドリフトとしきい値超過を監視予定',
         ),
-        SizedBox(height: 12),
-        _HygieneKpiPlaceholder(
+        const SizedBox(height: 12),
+        const _HygieneKpiPlaceholder(
           icon: Icons.timer_outlined,
-          title: 'lefthook hang count',
-          subtitle: '部 217-b 集積教訓 / push skip 検出',
+          title: 'ローカルフック・同期の応答時間',
+          subtitle: 'コミット前検証やプッシュ時の遅延・タイムアウト回数を集計予定',
         ),
-        SizedBox(height: 12),
-        _HygieneKpiPlaceholder(
+        const SizedBox(height: 12),
+        const _HygieneKpiPlaceholder(
           icon: Icons.history,
-          title: 'v24 SS / v26 YY hit history',
-          subtitle: 'cron-based mandatory compression layer 履歴',
+          title: 'コンテキスト圧縮・切替履歴',
+          subtitle: '長時間セッションの自動圧縮と安定運用メトリクスを記録予定',
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: 20),
         Card(
-          child: Padding(
+          color: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: const BorderSide(color: Color(0xFF2E2E2E)),
+          ),
+          child: const Padding(
             padding: EdgeInsets.all(16),
-            child: Text(
-              'データソース実装待ち: session_hygiene_log table + ef ai_hub.session_hygiene_kpi',
-              style: TextStyle(color: Color(0xFF707070)),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: Color(0xFFFF6B35),
+                  size: 20,
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '現在、セッション衛生メトリクスの自動収集パイプラインを整備中です。'
+                    '計測データの連携が完了次第、このタブに実測値と推移が表示されます。',
+                    style: TextStyle(
+                      color: Color(0xFFD1D5DB),
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -1120,13 +1175,45 @@ class _HygieneKpiPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: const Color(0xFF1E1E1E),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: Color(0xFF2E2E2E)),
+      ),
       child: ListTile(
         leading: Icon(icon, color: const Color(0xFFFF6B35)),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: const Text(
-          'TBD',
-          style: TextStyle(color: Color(0xFF707070), fontSize: 12),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            height: 1.4,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(
+            color: Color(0xFF9CA3AF),
+            fontSize: 12,
+            height: 1.5,
+          ),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2A2A2A),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF4B5563)),
+          ),
+          child: const Text(
+            '計測準備中',
+            style: TextStyle(
+              color: Color(0xFFD1D5DB),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ),
     );
@@ -1209,7 +1296,7 @@ class _WbsTab extends StatelessWidget {
     final overallProgress = _overallProgress(progressBase);
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
         // ── 全体進捗 ──────────────────────────────────────────────────────
         _OverallProgressCard(
@@ -1249,7 +1336,7 @@ class _WbsTab extends StatelessWidget {
           icon: Icons.account_tree_outlined,
         ),
         const SizedBox(height: 8),
-        _FilterRow(
+        WbsFilterBar(
           filterInstance: filterInstance,
           filterMilestone: filterMilestone,
           milestones: milestones,
@@ -1878,7 +1965,7 @@ class _MilestoneCard extends StatelessWidget {
   }
 }
 
-class _FilterRow extends StatelessWidget {
+class WbsFilterBar extends StatelessWidget {
   final String? filterInstance;
   final String? filterMilestone;
   final List<WbsMilestone> milestones;
@@ -1887,7 +1974,8 @@ class _FilterRow extends StatelessWidget {
   final ValueChanged<String?> onFilterMilestone;
   final ValueChanged<bool?> onToggleHideCompleted;
 
-  const _FilterRow({
+  const WbsFilterBar({
+    super.key,
     required this.filterInstance,
     required this.filterMilestone,
     required this.milestones,
@@ -1899,219 +1987,66 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _chip(
-            '全て',
-            null,
+    return Wrap(
+      spacing: 6,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        ..._activeWbsInstanceFilters.map(
+          (filter) => _chip(
+            filter.label,
+            filter.value,
             filterInstance,
             onFilterInstance,
-            const Color(0xFFFF6B35),
+            filter.color,
           ),
-          const SizedBox(width: 6),
-          _chip(
-            'Claude Code',
-            'claude',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF2563EB),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Automation',
-            'automation',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFEAB308),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Codex',
-            'codex',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF10B981),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Gemini',
-            'gemini',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF4285F4),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Co-pilot',
-            'co-pilot',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF111827),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'User',
-            'user',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFEF4444),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'VSCode',
-            'vscode',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF007ACC),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Win',
-            'win',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF00BCF2),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#1',
-            'ps1',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF4B0082),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#2',
-            'ps2',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF6A0DAD),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#3',
-            'ps3',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF8B5CF6),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#4',
-            'ps4',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFA855F7),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#5',
-            'ps5',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFC084FC),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#6',
-            'ps6',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFDAB6FC),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'WEB',
-            'web',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF22C55E),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            '📱',
-            'mobile',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFF97316),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            '⏰Schedule',
-            'schedule',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFF59E0B),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            '🤖GHA',
-            'gha',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF10B981),
-          ),
-          const SizedBox(width: 12),
-          // 未完了のみフィルタ
-          GestureDetector(
-            onTap: () => onToggleHideCompleted(!hideCompleted),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
+        ),
+        GestureDetector(
+          onTap: () => onToggleHideCompleted(!hideCompleted),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: hideCompleted
+                  ? const Color(0xFFFF6B35).withValues(alpha: 0.2)
+                  : const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
                 color: hideCompleted
-                    ? const Color(0xFFFF6B35).withValues(alpha: 0.2)
-                    : const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: hideCompleted
-                      ? const Color(0xFFFF6B35)
-                      : const Color(0xFF333333),
-                ),
+                    ? const Color(0xFFFF6B35)
+                    : const Color(0xFF4B5563),
               ),
-              child: Text(
-                hideCompleted ? '☑ 未完了のみ' : '☐ 未完了のみ',
-                style: TextStyle(
-                  color: hideCompleted
-                      ? const Color(0xFFFF6B35)
-                      : const Color(0xFFD1D5DB),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  height: 1.5,
-                ),
+            ),
+            child: Text(
+              hideCompleted ? '☑ 未完了のみ' : '☐ 未完了のみ',
+              style: TextStyle(
+                color: hideCompleted
+                    ? const Color(0xFFFF6B35)
+                    : const Color(0xFFD1D5DB),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          const Text(
-            '│',
-            style: TextStyle(color: Color(0xFF333333), height: 1.5),
-          ),
-          const SizedBox(width: 12),
-          _chip(
-            '全版',
-            null,
+        ),
+        _chip(
+          '全版',
+          null,
+          filterMilestone,
+          onFilterMilestone,
+          const Color(0xFFD1D5DB),
+        ),
+        ...milestones.map(
+          (m) => _chip(
+            m.name,
+            m.code,
             filterMilestone,
             onFilterMilestone,
-            const Color(0xFFD1D5DB),
+            m.color,
           ),
-          ...milestones.map((m) {
-            return Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: _chip(
-                m.name,
-                m.code,
-                filterMilestone,
-                onFilterMilestone,
-                m.color,
-              ),
-            );
-          }),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -2122,23 +2057,20 @@ class _FilterRow extends StatelessWidget {
     ValueChanged<String?> onTap,
     Color color,
   ) {
-    final isInstanceFilter = identical(onTap, onFilterInstance);
-    final isVisibleInstanceChip = value == null ||
-        _activeWbsInstanceFilters.any((filter) => filter.value == value);
-    if (isInstanceFilter && !isVisibleInstanceChip) {
-      return const SizedBox.shrink();
-    }
     final selected = current == value;
+    final bgColor =
+        selected ? color.withValues(alpha: 0.2) : const Color(0xFF1E1E1E);
     return GestureDetector(
       onTap: () => onTap(selected ? null : value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color:
-              selected ? color.withValues(alpha: 0.2) : const Color(0xFF1E1E1E),
+          color: bgColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: selected ? color : const Color(0xFF333333)),
+          border: Border.all(
+            color: selected ? color : const Color(0xFF4B5563),
+          ),
         ),
         child: Text(
           label,
@@ -2529,6 +2461,30 @@ class _TaskRow extends StatelessWidget {
 
 // ── マイプロジェクト タブ ─────────────────────────────────────────────────────
 
+/// `マイプロジェクト` タブの入力欄装飾。
+/// Light テーマの `InputDecorationTheme(fillColor: Colors.white)` に上書きされて
+/// 白背景に白文字・薄いヒント文字にならないよう、ダーク背景と高コントラストなヒント色を明示する。
+InputDecoration buildMyProjectInputDecoration(String hint) {
+  return InputDecoration(
+    hintText: hint,
+    hintStyle: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+    filled: true,
+    fillColor: const Color(0xFF121212),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Color(0xFF4B5563)),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Color(0xFF4B5563)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Color(0xFFFF6B35)),
+    ),
+  );
+}
+
 class _MyProjectsTab extends StatelessWidget {
   final List<Map<String, dynamic>> projects;
   final bool loading;
@@ -2580,14 +2536,16 @@ class _MyProjectsTab extends StatelessWidget {
                   const SizedBox(height: 8),
                   TextField(
                     controller: nameCtrl,
+                    cursorColor: const Color(0xFFFF6B35),
                     style: const TextStyle(color: Colors.white, height: 1.5),
-                    decoration: _inputDec('プロジェクト名'),
+                    decoration: buildMyProjectInputDecoration('プロジェクト名'),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: descCtrl,
+                    cursorColor: const Color(0xFFFF6B35),
                     style: const TextStyle(color: Colors.white, height: 1.5),
-                    decoration: _inputDec('説明 (任意)'),
+                    decoration: buildMyProjectInputDecoration('説明 (任意)'),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -2596,12 +2554,14 @@ class _MyProjectsTab extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFF333333)),
+                            color: const Color(0xFF121212),
+                            border: Border.all(color: const Color(0xFF4B5563)),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: DropdownButton<String>(
                             value: status,
                             dropdownColor: const Color(0xFF1E1E1E),
+                            iconEnabledColor: const Color(0xFFD1D5DB),
                             style: const TextStyle(
                               color: Colors.white,
                               height: 1.5,
@@ -2654,7 +2614,10 @@ class _MyProjectsTab extends StatelessWidget {
                     ? const Center(
                         child: Text(
                           'プロジェクトはまだありません',
-                          style: TextStyle(color: Colors.white38, height: 1.5),
+                          style: TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            height: 1.5,
+                          ),
                         ),
                       )
                     : ListView.builder(
@@ -2685,7 +2648,7 @@ class _MyProjectsTab extends StatelessWidget {
                               subtitle: Text(
                                 p['description'] as String? ?? '',
                                 style: const TextStyle(
-                                  color: Colors.white54,
+                                  color: Color(0xFFD1D5DB),
                                   fontSize: 12,
                                   height: 1.5,
                                 ),
@@ -2736,23 +2699,6 @@ class _MyProjectsTab extends StatelessWidget {
       ),
     );
   }
-
-  InputDecoration _inputDec(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white38, height: 1.5),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF333333)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF333333)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFFF6B35)),
-        ),
-      );
 }
 
 // ── MS Project 風ガントチャートタイムライン ─────────────────────────────────
