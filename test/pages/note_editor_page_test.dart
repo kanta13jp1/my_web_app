@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/note_editor_page.dart';
 import 'package:my_web_app/pages/ai_search_page.dart';
@@ -1035,6 +1036,155 @@ void main() {
         findsNothing,
         reason: 'メモを開き直すたびにスラッシュ欄が再展開している',
       );
+    });
+  });
+
+  group('note editor mobile clipboard bar', () {
+    String? mockClipboard;
+
+    void installClipboardMock() {
+      mockClipboard = null;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final args = call.arguments as Map<dynamic, dynamic>?;
+          mockClipboard = args?['text'] as String?;
+          return null;
+        }
+        if (call.method == 'Clipboard.getData') {
+          if (mockClipboard == null) return null;
+          return <String, dynamic>{'text': mockClipboard};
+        }
+        return null;
+      });
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null);
+      });
+    }
+
+    Future<void> clearSnackBars(WidgetTester tester) async {
+      final scaffold = tester.element(
+        find.byKey(const Key('note_editor_page_scaffold')),
+      );
+      ScaffoldMessenger.of(scaffold).clearSnackBars();
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('行選択→コピーと選択切り取り・全文コピーが動作する', (tester) async {
+      installClipboardMock();
+      const body = 'line1\nhttps://mightylink-app.com/\nline3';
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(content: body),
+      );
+      await _pumpPage(tester, client);
+      await clearSnackBars(tester);
+
+      final controller = _contentController(tester);
+      final comIndex = body.indexOf('com/');
+      controller.selection = TextSelection(
+        baseOffset: comIndex,
+        extentOffset: comIndex + 4,
+      );
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('note_editor_select_line_button')));
+      await tester.pump();
+      expect(
+        controller.selection.textInside(controller.text),
+        'https://mightylink-app.com/',
+      );
+
+      await tester.tap(find.byKey(const Key('note_editor_copy_button')));
+      await tester.pumpAndSettle();
+      expect(mockClipboard, 'https://mightylink-app.com/');
+
+      await tester.tap(find.byKey(const Key('note_editor_cut_button')));
+      await tester.pumpAndSettle();
+      expect(mockClipboard, 'https://mightylink-app.com/');
+      expect(controller.text, 'line1\n\nline3');
+
+      await tester.tap(find.byKey(const Key('note_editor_copy_all_button')));
+      await tester.pumpAndSettle();
+      expect(mockClipboard, 'line1\n\nline3');
+    });
+
+    testWidgets('貼り付けボタンおよび空クリップボード時の手動貼り付けが動作する', (tester) async {
+      installClipboardMock();
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(content: '先頭 '),
+      );
+      await _pumpPage(tester, client);
+      await clearSnackBars(tester);
+
+      final controller = _contentController(tester);
+      controller.selection = const TextSelection.collapsed(offset: 3);
+      mockClipboard = '貼り付けテスト';
+      await tester.tap(find.byKey(const Key('note_editor_paste_button')));
+      await tester.pumpAndSettle();
+      expect(controller.text, '先頭 貼り付けテスト');
+
+      // クリップボードが空/取得不可の場合は手動貼り付けダイアログへフォールバック
+      mockClipboard = null;
+      await tester.tap(find.byKey(const Key('note_editor_paste_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('手動貼り付け'), findsOneWidget);
+
+      await tester.tap(find.text('手動貼り付け'));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('note_editor_manual_paste_dialog')),
+        findsOneWidget,
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('note_editor_manual_paste_field')),
+        '・追記テキスト',
+      );
+      await tester.tap(
+        find.byKey(const Key('note_editor_manual_paste_confirm')),
+      );
+      await tester.pumpAndSettle();
+      expect(controller.text, '先頭 貼り付けテスト・追記テキスト');
+    });
+
+    testWidgets('狭幅かつキーボード表示中でもオーバーフローせず操作バーが見える', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      addTearDown(tester.view.resetViewInsets);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await _pumpEditor(tester);
+      expect(
+        find.byKey(const Key('note_editor_clipboard_bar')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('スラッシュ欄展開+キーボード表示でも本文が表示されオーバーフローしない', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'note_editor_slash_bar_expanded': true,
+      });
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      addTearDown(tester.view.resetViewInsets);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await _pumpEditor(tester);
+      expect(
+        find.byKey(const Key('note_editor_content_field')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('note_editor_clipboard_bar')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
     });
   });
 }
