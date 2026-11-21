@@ -22,6 +22,8 @@ class SharedPreferencesUserStructuredTabStorageService
             preferencesProvider ?? SharedPreferences.getInstance;
 
   static const String storageKey = 'my_web_app.user_structured_tabs.v1';
+  static const int maxSavedScores = 50;
+  static const int maxStorageBytes = 1024 * 1024;
 
   final Future<SharedPreferences> Function() _preferencesProvider;
 
@@ -71,6 +73,11 @@ class SharedPreferencesUserStructuredTabStorageService
       for (final existing in current)
         if (existing.id != normalized.id) existing,
     ];
+    if (updated.length > maxSavedScores) {
+      throw const FormatException(
+        '端末ローカルに保存できるマイ譜面は最大$maxSavedScores件までです。',
+      );
+    }
     await _persistList(updated);
   }
 
@@ -87,6 +94,15 @@ class SharedPreferencesUserStructuredTabStorageService
     final prefs = await _preferencesProvider();
     final payload =
         scores.map((StructuredGuitarTabScore score) => score.toJson()).toList();
-    await prefs.setString(storageKey, jsonEncode(payload));
+    final encoded = jsonEncode(payload);
+    if (encoded.length > maxStorageBytes) {
+      throw const FormatException(
+        '端末ローカルの保存容量上限を超えたため保存できません。',
+      );
+    }
+    final saved = await prefs.setString(storageKey, encoded);
+    if (!saved) {
+      throw StateError('端末ローカルへの保存に失敗しました。');
+    }
   }
 }

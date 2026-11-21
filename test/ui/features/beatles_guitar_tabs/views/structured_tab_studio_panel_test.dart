@@ -1,12 +1,16 @@
 import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/data/repositories/guitar_tab_repository.dart';
 import 'package:my_web_app/data/services/guitar_tab_catalog_service.dart';
+import 'package:my_web_app/data/services/structured_tab_catalog_service.dart';
 import 'package:my_web_app/data/services/structured_tab_pdf_service.dart';
+import 'package:my_web_app/data/services/user_structured_tab_storage_service.dart';
 import 'package:my_web_app/domain/models/structured_guitar_tab.dart';
 import 'package:my_web_app/ui/features/beatles_guitar_tabs/beatles_guitar_tabs_feature.dart';
+import 'package:my_web_app/ui/features/beatles_guitar_tabs/views/widgets/structured_tab_studio_panel.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -234,6 +238,259 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'handles empty catalog cleanly without throwing StateError',
+    (WidgetTester tester) async {
+      await _setSurfaceSize(tester, const Size(800, 700));
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: StructuredTabStudioPanel(
+              catalogService: _EmptyCatalogService(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('structured_tab_score_canvas')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'rejects oversized file, invalid UTF-8 file, and bundled ID collisions',
+    (WidgetTester tester) async {
+      await _setSurfaceSize(tester, const Size(1200, 900));
+      FilePickerResult? nextPickResult = FilePickerResult(<PlatformFile>[
+        PlatformFile(
+          name: 'too_big.json',
+          size: StructuredGuitarTabScore.maxJsonLength + 1,
+          bytes: Uint8List(0),
+        ),
+      ]);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StructuredTabStudioPanel(
+              jsonFilePicker: () async => nextPickResult,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('structured_tab_import_button')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('structured_tab_pick_file')));
+      await tester.pumpAndSettle();
+      final sizeError = tester.widget<Text>(
+        find.byKey(const Key('structured_tab_json_error')),
+      );
+      expect(sizeError.data, contains('256KB以下'));
+
+      nextPickResult = FilePickerResult(<PlatformFile>[
+        PlatformFile(
+          name: 'invalid_utf8.json',
+          size: 3,
+          bytes: Uint8List.fromList(const <int>[0xFF, 0xFE, 0xFD]),
+        ),
+      ]);
+      await tester.tap(find.byKey(const Key('structured_tab_pick_file')));
+      await tester.pumpAndSettle();
+      final utf8Error = tester.widget<Text>(
+        find.byKey(const Key('structured_tab_json_error')),
+      );
+      expect(utf8Error.data, contains('UTF-8'));
+
+      const collidingJson = '''
+{
+  "id": "offbeat-pop-stroke-etude",
+  "title": "衝突テスト",
+  "bpm": 120,
+  "measures": [{"number": 1, "beats": [{"kind": "rest", "duration": "quarter"}]}]
+}
+''';
+      await tester.enterText(
+        find.byKey(const Key('structured_tab_json_input')),
+        collidingJson,
+      );
+      await tester.tap(find.byKey(const Key('structured_tab_json_save')));
+      await tester.pump();
+
+      final idError = tester.widget<Text>(
+        find.byKey(const Key('structured_tab_json_error')),
+      );
+      expect(idError.data, contains('同梱譜面と同じid'));
+    },
+  );
+
+  testWidgets(
+    'surfaces SnackBar on storage save and delete failures',
+    (WidgetTester tester) async {
+      await _setSurfaceSize(tester, const Size(1200, 900));
+      final existingUserScore = StructuredGuitarTabScore(
+        id: 'existing-user-score',
+        title: '既存ユーザー譜面',
+        artist: 'Test',
+        tuning: 'Standard tuning',
+        capo: 'なし',
+        bpm: 120,
+        isOriginalPractice: false,
+        isUserImported: true,
+        chords: const <StructuredChordDiagram>[],
+        measures: <StructuredTabMeasure>[
+          StructuredTabMeasure(
+            number: 1,
+            beats: <StructuredTabBeat>[
+              StructuredTabBeat(
+                kind: StructuredTabBeatKind.rest,
+                duration: StructuredTabDuration.quarter,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final failingStorage = _FailingUserStorageService(
+        <StructuredGuitarTabScore>[existingUserScore],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StructuredTabStudioPanel(
+              userStorageService: failingStorage,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('structured_tab_import_button')));
+      await tester.pumpAndSettle();
+
+      const newValidJson = '''
+{
+  "id": "save-fail-test",
+  "title": "保存失敗テスト",
+  "bpm": 120,
+  "measures": [{"number": 1, "beats": [{"kind": "rest", "duration": "quarter"}]}]
+}
+''';
+      await tester.enterText(
+        find.byKey(const Key('structured_tab_json_input')),
+        newValidJson,
+      );
+      await tester.tap(find.byKey(const Key('structured_tab_json_save')));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('端末ローカルへの保存に失敗しました'), findsOneWidget);
+
+      final userChip =
+          find.byKey(const Key('structured_score_chip_existing-user-score'));
+      await tester.ensureVisible(userChip);
+      await tester.pumpAndSettle();
+      await tester.tap(userChip);
+      await tester.pumpAndSettle();
+
+      final deleteButton =
+          find.byKey(const Key('structured_tab_delete_user_score'));
+      await tester.ensureVisible(deleteButton);
+      await tester.pumpAndSettle();
+      await tester.tap(deleteButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('マイ譜面の削除に失敗しました。'), findsOneWidget);
+    },
+  );
+
+  test(
+    'SharedPreferencesUserStructuredTabStorageService throws when setString fails',
+    () async {
+      final service = SharedPreferencesUserStructuredTabStorageService(
+        preferencesProvider: () async => _FailingSetStringPrefs(),
+      );
+      final score = StructuredGuitarTabScore(
+        id: 'fail-persist',
+        title: 'Persist Fail',
+        artist: 'Test',
+        tuning: 'Standard',
+        capo: 'なし',
+        bpm: 120,
+        chords: const <StructuredChordDiagram>[],
+        measures: <StructuredTabMeasure>[
+          StructuredTabMeasure(
+            number: 1,
+            beats: <StructuredTabBeat>[
+              StructuredTabBeat(
+                kind: StructuredTabBeatKind.rest,
+                duration: StructuredTabDuration.quarter,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      await expectLater(service.saveScore(score), throwsStateError);
+    },
+  );
+
+  testWidgets(
+    'renders duplicate chord names and long titles on 390px without overflow',
+    (WidgetTester tester) async {
+      await _setSurfaceSize(tester, const Size(390, 844));
+      final score = StructuredGuitarTabScore(
+        id: 'dup-chord-long-title',
+        title: '非常に長いオリジナル練習譜タイトルが390px画面でもオーバーフローしない確認テスト',
+        artist: 'Test',
+        tuning: 'Standard tuning',
+        capo: 'なし',
+        bpm: 45,
+        chords: const <StructuredChordDiagram>[
+          StructuredChordDiagram(name: 'C', frets: <int>[-1, 3, 2, 0, 1, 0]),
+          StructuredChordDiagram(
+            name: 'C',
+            frets: <int>[-1, 3, 5, 5, 5, 3],
+            baseFret: 3,
+          ),
+        ],
+        measures: <StructuredTabMeasure>[
+          StructuredTabMeasure(
+            number: 1,
+            beats: <StructuredTabBeat>[
+              StructuredTabBeat(
+                kind: StructuredTabBeatKind.rest,
+                duration: StructuredTabDuration.whole,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StructuredTabStudioPanel(
+              catalogService: _SingleScoreCatalogService(score),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('structured_chord_C')), findsOneWidget);
+      expect(find.byKey(const Key('structured_chord_C_1')), findsOneWidget);
+      expect(find.text('45 BPM'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 Future<void> _setSurfaceSize(WidgetTester tester, Size size) async {
@@ -241,6 +498,53 @@ Future<void> _setSurfaceSize(WidgetTester tester, Size size) async {
   tester.view.physicalSize = size;
   addTearDown(tester.view.resetDevicePixelRatio);
   addTearDown(tester.view.resetPhysicalSize);
+}
+
+class _EmptyCatalogService extends StructuredTabCatalogService {
+  const _EmptyCatalogService();
+
+  @override
+  Future<List<StructuredGuitarTabScore>> loadCatalog() async {
+    return const <StructuredGuitarTabScore>[];
+  }
+}
+
+class _SingleScoreCatalogService extends StructuredTabCatalogService {
+  const _SingleScoreCatalogService(this.score);
+
+  final StructuredGuitarTabScore score;
+
+  @override
+  Future<List<StructuredGuitarTabScore>> loadCatalog() async {
+    return <StructuredGuitarTabScore>[score];
+  }
+}
+
+class _FailingUserStorageService implements UserStructuredTabStorageService {
+  _FailingUserStorageService(this.scores);
+
+  final List<StructuredGuitarTabScore> scores;
+
+  @override
+  Future<List<StructuredGuitarTabScore>> loadScores() async => scores;
+
+  @override
+  Future<void> saveScore(StructuredGuitarTabScore score) async {
+    throw StateError('save failed');
+  }
+
+  @override
+  Future<void> deleteScore(String id) async {
+    throw StateError('delete failed');
+  }
+}
+
+class _FailingSetStringPrefs extends Fake implements SharedPreferences {
+  @override
+  String? getString(String key) => null;
+
+  @override
+  Future<bool> setString(String key, String value) async => false;
 }
 
 class _RecordingPdfService implements StructuredTabPdfService {

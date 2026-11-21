@@ -22,6 +22,7 @@ class StructuredChordDiagramStrip extends StatelessWidget {
 
     final textColor =
         lightSheet ? const Color(0xFF111827) : DesignTokens.textPrimary;
+    final seenNames = <String>{};
 
     return Wrap(
       key: const Key('structured_chord_strip'),
@@ -29,12 +30,12 @@ class StructuredChordDiagramStrip extends StatelessWidget {
       spacing: DesignTokens.space16,
       runSpacing: DesignTokens.space12,
       children: <Widget>[
-        for (final chord in chords)
+        for (var i = 0; i < chords.length; i++)
           Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                chord.name,
+                chords[i].name,
                 style: TextStyle(
                   color: textColor,
                   fontSize: 13,
@@ -44,10 +45,12 @@ class StructuredChordDiagramStrip extends StatelessWidget {
               ),
               const SizedBox(height: DesignTokens.space2),
               CustomPaint(
-                key: Key('structured_chord_${chord.name}'),
+                key: seenNames.add(chords[i].name)
+                    ? Key('structured_chord_${chords[i].name}')
+                    : Key('structured_chord_${chords[i].name}_$i'),
                 size: const Size(68, 66),
                 painter: StructuredChordDiagramPainter(
-                  chord: chord,
+                  chord: chords[i],
                   lightSheet: lightSheet,
                 ),
               ),

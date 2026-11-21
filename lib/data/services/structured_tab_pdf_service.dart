@@ -42,53 +42,53 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(28),
+        maxPages: 40,
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
         theme: pw.ThemeData.withFont(base: font, bold: font),
         build: (pw.Context context) {
           return <pw.Widget>[
-            pw.Center(
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.center,
-                children: <pw.Widget>[
-                  pw.Text(
-                    score.title,
-                    style: pw.TextStyle(
-                      font: font,
-                      fontSize: 18,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.black,
-                    ),
-                  ),
-                  pw.SizedBox(height: 3),
-                  pw.Text(
-                    score.artist,
-                    style: pw.TextStyle(
-                      font: font,
-                      fontSize: 11,
-                      color: PdfColors.grey800,
-                    ),
-                  ),
-                  if (score.chords.isNotEmpty) ...<pw.Widget>[
-                    pw.SizedBox(height: 10),
-                    pw.Wrap(
-                      alignment: pw.WrapAlignment.center,
-                      spacing: 14,
-                      runSpacing: 8,
-                      children: <pw.Widget>[
-                        for (final chord in score.chords)
-                          _buildChordDiagramWidget(chord, font),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            pw.SizedBox(height: 10),
             pw.Text(
-              '${score.tuning}   |   Tempo = ${score.bpm} BPM   |   Capo: ${score.capo}',
+              score.title,
+              textAlign: pw.TextAlign.center,
               style: pw.TextStyle(
                 font: font,
-                fontSize: 9.5,
+                fontSize: 18,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.black,
+              ),
+            ),
+            pw.SizedBox(height: 3),
+            pw.Text(
+              score.artist,
+              textAlign: pw.TextAlign.center,
+              style: pw.TextStyle(
+                font: font,
+                fontSize: 11,
                 color: PdfColors.grey800,
+              ),
+            ),
+            if (score.chords.isNotEmpty) ...<pw.Widget>[
+              pw.SizedBox(height: 10),
+              pw.Wrap(
+                alignment: pw.WrapAlignment.center,
+                spacing: 14,
+                runSpacing: 8,
+                children: <pw.Widget>[
+                  for (final chord in score.chords)
+                    _buildChordDiagramWidget(chord, font),
+                ],
+              ),
+            ],
+            pw.SizedBox(height: 10),
+            pw.Align(
+              alignment: pw.Alignment.centerLeft,
+              child: pw.Text(
+                '${score.tuning}   |   Tempo = ${score.bpm} BPM   |   Capo: ${score.capo}',
+                style: pw.TextStyle(
+                  font: font,
+                  fontSize: 9.5,
+                  color: PdfColors.grey800,
+                ),
               ),
             ),
             pw.SizedBox(height: 8),
@@ -111,9 +111,15 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
   @override
   Future<bool> printScore(StructuredGuitarTabScore score) async {
     return Printing.layoutPdf(
-      name: '${score.id}.pdf',
+      name: '${sanitizePdfFileName(score.id)}.pdf',
       onLayout: (PdfPageFormat format) => buildScorePdf(score),
     );
+  }
+
+  /// PDF保存ファイル名向けにスコアIDを安全なASCII識別子へサニタイズする。
+  static String sanitizePdfFileName(String rawId) {
+    final sanitized = rawId.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+    return sanitized.isEmpty ? 'structured-tab' : sanitized;
   }
 
   Future<pw.Font> _loadBundledFont() async {

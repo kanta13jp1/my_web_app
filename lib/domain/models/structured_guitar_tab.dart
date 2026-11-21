@@ -89,7 +89,12 @@ class StructuredChordDiagram {
 
   static StructuredChordDiagram fromJson(Object? raw, int index) {
     final map = _asJsonMap(raw, 'chords[$index]');
-    final name = _readRequiredString(map, 'name', context: 'chords[$index]');
+    final name = _readRequiredString(
+      map,
+      'name',
+      context: 'chords[$index]',
+      maxLength: 32,
+    );
     final rawFrets = _asJsonList(map['frets'], 'chords[$index].frets');
     if (rawFrets.length != 6) {
       throw FormatException('chords[$index].frets は6弦分の長さ6である必要があります。');
@@ -194,8 +199,18 @@ class StructuredTabBeat {
     final pickRaw = _readOptionalString(map, 'pickDirection', ctx);
     final pickDirection =
         pickRaw == null ? null : _parsePickDirection(pickRaw, ctx);
-    final beamGroup = _readOptionalString(map, 'beamGroup', ctx);
-    final chordSymbol = _readOptionalString(map, 'chordSymbol', ctx);
+    final beamGroup = _readOptionalString(
+      map,
+      'beamGroup',
+      ctx,
+      maxLength: 32,
+    );
+    final chordSymbol = _readOptionalString(
+      map,
+      'chordSymbol',
+      ctx,
+      maxLength: 32,
+    );
 
     return StructuredTabBeat(
       kind: kind,
@@ -255,6 +270,8 @@ class StructuredTabMeasure {
     };
   }
 
+  static const int maxBeatsPerMeasure = 64;
+
   static StructuredTabMeasure fromJson(Object? raw, int index) {
     final ctx = 'measures[$index]';
     final map = _asJsonMap(raw, ctx);
@@ -263,22 +280,37 @@ class StructuredTabMeasure {
     if (rawBeats.isEmpty) {
       throw FormatException('$ctx.beats には1つ以上の拍イベントが必要です。');
     }
+    if (rawBeats.length > maxBeatsPerMeasure) {
+      throw FormatException(
+        '$ctx.beats は最大 $maxBeatsPerMeasure 件までです。',
+      );
+    }
     final beats = <StructuredTabBeat>[
       for (var i = 0; i < rawBeats.length; i++)
         StructuredTabBeat.fromJson(rawBeats[i], index, i),
     ];
     return StructuredTabMeasure(
       number: number,
-      chordSymbol: _readOptionalString(map, 'chordSymbol', ctx),
-      rehearsalMark: _readOptionalString(map, 'rehearsalMark', ctx),
+      chordSymbol: _readOptionalString(
+        map,
+        'chordSymbol',
+        ctx,
+        maxLength: 32,
+      ),
+      rehearsalMark: _readOptionalString(
+        map,
+        'rehearsalMark',
+        ctx,
+        maxLength: 32,
+      ),
       boxedRehearsalMark:
           _readOptionalBool(map, 'boxedRehearsalMark', ctx) ?? true,
       repeatStart: _readOptionalBool(map, 'repeatStart', ctx) ?? false,
       repeatEnd: _readOptionalBool(map, 'repeatEnd', ctx) ?? false,
-      volta: _readOptionalString(map, 'volta', ctx),
+      volta: _readOptionalString(map, 'volta', ctx, maxLength: 16),
       hasSegno: _readOptionalBool(map, 'hasSegno', ctx) ?? false,
       hasCoda: _readOptionalBool(map, 'hasCoda', ctx) ?? false,
-      topNote: _readOptionalString(map, 'topNote', ctx),
+      topNote: _readOptionalString(map, 'topNote', ctx, maxLength: 64),
       beats: beats,
     );
   }
@@ -361,16 +393,47 @@ class StructuredGuitarTabScore {
     return const JsonEncoder.withIndent('  ').convert(toJson());
   }
 
+  static const int maxJsonLength = 256 * 1024;
+  static const int maxChordsCount = 64;
+  static const int maxMeasuresCount = 256;
+
   static StructuredGuitarTabScore fromJson(
     Map<String, Object?> map, {
     bool forceUserImported = false,
   }) {
-    final id = _readRequiredString(map, 'id', context: 'score');
-    final title = _readRequiredString(map, 'title', context: 'score');
-    final artist = _readOptionalString(map, 'artist', 'score') ?? 'オリジナル練習譜';
-    final tuning =
-        _readOptionalString(map, 'tuning', 'score') ?? 'Standard tuning';
-    final capo = _readOptionalString(map, 'capo', 'score') ?? 'なし';
+    final id = _readRequiredString(
+      map,
+      'id',
+      context: 'score',
+      maxLength: 100,
+    );
+    final title = _readRequiredString(
+      map,
+      'title',
+      context: 'score',
+      maxLength: 120,
+    );
+    final artist = _readOptionalString(
+          map,
+          'artist',
+          'score',
+          maxLength: 120,
+        ) ??
+        'オリジナル練習譜';
+    final tuning = _readOptionalString(
+          map,
+          'tuning',
+          'score',
+          maxLength: 80,
+        ) ??
+        'Standard tuning';
+    final capo = _readOptionalString(
+          map,
+          'capo',
+          'score',
+          maxLength: 40,
+        ) ??
+        'なし';
     final bpm = _readInt(map, 'bpm', min: 30, max: 260);
     final beatsPerMeasure =
         _readOptionalInt(map, 'beatsPerMeasure', min: 1, max: 12) ?? 4;
@@ -378,7 +441,13 @@ class StructuredGuitarTabScore {
     if (beatUnit != 2 && beatUnit != 4 && beatUnit != 8 && beatUnit != 16) {
       throw const FormatException('beatUnit は 2, 4, 8, 16 のいずれかである必要があります。');
     }
-    final summary = _readOptionalString(map, 'summary', 'score') ?? '';
+    final summary = _readOptionalString(
+          map,
+          'summary',
+          'score',
+          maxLength: 500,
+        ) ??
+        '';
     final isOriginalPractice = forceUserImported
         ? false
         : (_readOptionalBool(map, 'isOriginalPractice', 'score') ?? true);
@@ -389,6 +458,11 @@ class StructuredGuitarTabScore {
     final chords = <StructuredChordDiagram>[];
     if (rawChords != null) {
       final chordList = _asJsonList(rawChords, 'chords');
+      if (chordList.length > maxChordsCount) {
+        throw const FormatException(
+          'chords は最大 $maxChordsCount 件までです。',
+        );
+      }
       for (var i = 0; i < chordList.length; i++) {
         chords.add(StructuredChordDiagram.fromJson(chordList[i], i));
       }
@@ -397,6 +471,11 @@ class StructuredGuitarTabScore {
     final rawMeasures = _asJsonList(map['measures'], 'measures');
     if (rawMeasures.isEmpty) {
       throw const FormatException('measures には1小節以上のデータが必要です。');
+    }
+    if (rawMeasures.length > maxMeasuresCount) {
+      throw const FormatException(
+        'measures は最大 $maxMeasuresCount 小節までです。',
+      );
     }
     final measures = <StructuredTabMeasure>[
       for (var i = 0; i < rawMeasures.length; i++)
@@ -424,6 +503,11 @@ class StructuredGuitarTabScore {
     String rawJson, {
     bool forceUserImported = false,
   }) {
+    if (rawJson.length > maxJsonLength) {
+      throw const FormatException(
+        'JSONテキストが大きすぎます（256KB以下にしてください）。',
+      );
+    }
     final trimmed = rawJson.trim();
     if (trimmed.isEmpty) {
       throw const FormatException('JSONテキストが空です。');
@@ -480,7 +564,7 @@ List<StructuredTabPlaybackStep> expandStructuredTabTimeline(
     final volta = measure.volta?.trim();
     final isFirstVolta = volta != null && volta.startsWith('1');
 
-    if (measure.repeatStart && (!inDsPass || hasUsedDaCoda)) {
+    if (measure.repeatStart) {
       if (idx != repeatReturnIndex) {
         shouldSkipFirstVolta = false;
         skippedFirstVoltaInPass = false;
@@ -488,7 +572,8 @@ List<StructuredTabPlaybackStep> expandStructuredTabTimeline(
       repeatReturnIndex = idx;
     }
 
-    if (isFirstVolta && (shouldSkipFirstVolta || inDsPass)) {
+    if (isFirstVolta &&
+        (shouldSkipFirstVolta || (inDsPass && !hasUsedDaCoda))) {
       skippedFirstVoltaInPass = true;
       idx++;
       continue;
@@ -532,16 +617,21 @@ List<StructuredTabPlaybackStep> expandStructuredTabTimeline(
       }
     }
 
-    if (measure.repeatEnd && !completedRepeatEnds.contains(idx)) {
-      final isFadeRepeat = _isFadeOutRepeat(measure.topNote);
-      if (!inDsPass || isFadeRepeat) {
-        completedRepeatEnds.add(idx);
-        if (!isFadeRepeat) {
-          shouldSkipFirstVolta = true;
-          skippedFirstVoltaInPass = false;
+    if (measure.repeatEnd) {
+      if (completedRepeatEnds.contains(idx)) {
+        shouldSkipFirstVolta = false;
+        skippedFirstVoltaInPass = false;
+      } else {
+        final isFadeRepeat = _isFadeOutRepeat(measure.topNote);
+        if (!inDsPass || isFadeRepeat) {
+          completedRepeatEnds.add(idx);
+          if (!isFadeRepeat) {
+            shouldSkipFirstVolta = true;
+            skippedFirstVoltaInPass = false;
+          }
+          idx = repeatReturnIndex;
+          continue;
         }
-        idx = repeatReturnIndex;
-        continue;
       }
     }
 
@@ -615,26 +705,36 @@ String _readRequiredString(
   Map<String, Object?> map,
   String key, {
   required String context,
+  int maxLength = 256,
 }) {
   final raw = map[key];
   if (raw is! String || raw.trim().isEmpty) {
     throw FormatException('$context.$key は空でない文字列である必要があります。');
   }
-  return raw.trim();
+  final trimmed = raw.trim();
+  if (trimmed.length > maxLength) {
+    throw FormatException('$context.$key は $maxLength 文字以内である必要があります。');
+  }
+  return trimmed;
 }
 
 String? _readOptionalString(
   Map<String, Object?> map,
   String key,
-  String context,
-) {
+  String context, {
+  int maxLength = 256,
+}) {
   final raw = map[key];
   if (raw == null) return null;
   if (raw is! String) {
     throw FormatException('$context.$key は文字列である必要があります。');
   }
   final trimmed = raw.trim();
-  return trimmed.isEmpty ? null : trimmed;
+  if (trimmed.isEmpty) return null;
+  if (trimmed.length > maxLength) {
+    throw FormatException('$context.$key は $maxLength 文字以内である必要があります。');
+  }
+  return trimmed;
 }
 
 int _readInt(

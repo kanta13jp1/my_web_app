@@ -178,5 +178,194 @@ void main() {
         hasLength(2),
       );
     });
+
+    test('enforces JSON size, element count, and string length limits', () {
+      expect(
+        () => StructuredGuitarTabScore.parseJsonString(
+          ' ' * (StructuredGuitarTabScore.maxJsonLength + 1),
+        ),
+        throwsFormatException,
+      );
+
+      final tooManyChords = <Map<String, Object?>>[
+        for (var i = 0; i <= StructuredGuitarTabScore.maxChordsCount; i++)
+          <String, Object?>{
+            'name': 'C$i',
+            'frets': <int>[-1, 3, 2, 0, 1, 0],
+          },
+      ];
+      expect(
+        () => StructuredGuitarTabScore.fromJson(<String, Object?>{
+          'id': 'too-many-chords',
+          'title': 'Too Many Chords',
+          'bpm': 120,
+          'chords': tooManyChords,
+          'measures': <Map<String, Object?>>[
+            <String, Object?>{
+              'number': 1,
+              'beats': <Map<String, Object?>>[
+                <String, Object?>{'kind': 'rest', 'duration': 'quarter'},
+              ],
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
+
+      final tooManyMeasures = <Map<String, Object?>>[
+        for (var i = 0; i <= StructuredGuitarTabScore.maxMeasuresCount; i++)
+          <String, Object?>{
+            'number': i + 1,
+            'beats': <Map<String, Object?>>[
+              <String, Object?>{'kind': 'rest', 'duration': 'quarter'},
+            ],
+          },
+      ];
+      expect(
+        () => StructuredGuitarTabScore.fromJson(<String, Object?>{
+          'id': 'too-many-measures',
+          'title': 'Too Many Measures',
+          'bpm': 120,
+          'measures': tooManyMeasures,
+        }),
+        throwsFormatException,
+      );
+
+      final tooManyBeats = <Map<String, Object?>>[
+        for (var i = 0; i <= StructuredTabMeasure.maxBeatsPerMeasure; i++)
+          <String, Object?>{'kind': 'rest', 'duration': 'sixteenth'},
+      ];
+      expect(
+        () => StructuredGuitarTabScore.fromJson(<String, Object?>{
+          'id': 'too-many-beats',
+          'title': 'Too Many Beats',
+          'bpm': 120,
+          'measures': <Map<String, Object?>>[
+            <String, Object?>{
+              'number': 1,
+              'beats': tooManyBeats,
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
+
+      expect(
+        () => StructuredGuitarTabScore.fromJson(<String, Object?>{
+          'id': 'long-title',
+          'title': 'a' * 121,
+          'bpm': 120,
+          'measures': <Map<String, Object?>>[
+            <String, Object?>{
+              'number': 1,
+              'beats': <Map<String, Object?>>[
+                <String, Object?>{'kind': 'rest', 'duration': 'quarter'},
+              ],
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test(
+      'handles 1st/2nd voltas inside Coda and resets volta skip after non-volta repeat',
+      () {
+        List<int> visitOrderOf(StructuredGuitarTabScore score) {
+          final order = <int>[];
+          for (final step in expandStructuredTabTimeline(score)) {
+            if (order.isEmpty || order.last != step.measureNumber) {
+              order.add(step.measureNumber);
+            }
+          }
+          return order;
+        }
+
+        StructuredTabMeasure bar(
+          int number, {
+          bool repeatStart = false,
+          bool repeatEnd = false,
+          String? volta,
+          bool hasSegno = false,
+          bool hasCoda = false,
+          String? topNote,
+        }) {
+          return StructuredTabMeasure(
+            number: number,
+            repeatStart: repeatStart,
+            repeatEnd: repeatEnd,
+            volta: volta,
+            hasSegno: hasSegno,
+            hasCoda: hasCoda,
+            topNote: topNote,
+            beats: <StructuredTabBeat>[
+              StructuredTabBeat(
+                kind: StructuredTabBeatKind.rest,
+                duration: StructuredTabDuration.quarter,
+              ),
+            ],
+          );
+        }
+
+        final nonVoltaLeakCheck = StructuredGuitarTabScore(
+          id: 'non-volta-reset',
+          title: 'Non-volta Reset',
+          artist: 'Test',
+          tuning: 'Standard',
+          capo: 'なし',
+          bpm: 120,
+          chords: const <StructuredChordDiagram>[],
+          measures: <StructuredTabMeasure>[
+            bar(1, repeatStart: true),
+            bar(2, repeatEnd: true),
+            bar(3, volta: '1.'),
+            bar(4, volta: '2.'),
+          ],
+        );
+        expect(visitOrderOf(nonVoltaLeakCheck), <int>[1, 2, 1, 2, 3, 4]);
+
+        final codaVoltaScore = StructuredGuitarTabScore(
+          id: 'coda-volta',
+          title: 'Coda Volta',
+          artist: 'Test',
+          tuning: 'Standard',
+          capo: 'なし',
+          bpm: 120,
+          chords: const <StructuredChordDiagram>[],
+          measures: <StructuredTabMeasure>[
+            bar(1, hasSegno: true),
+            bar(2, topNote: 'Da Coda'),
+            bar(3, topNote: 'D.S. al Coda'),
+            bar(4, hasCoda: true, repeatStart: true),
+            bar(5, volta: '1.', repeatEnd: true),
+            bar(6, volta: '2.'),
+          ],
+        );
+        expect(
+          visitOrderOf(codaVoltaScore),
+          <int>[1, 2, 3, 1, 2, 4, 5, 4, 6],
+        );
+
+        final dsWithoutCodaFade = StructuredGuitarTabScore(
+          id: 'ds-fade-no-coda',
+          title: 'DS Fade',
+          artist: 'Test',
+          tuning: 'Standard',
+          capo: 'なし',
+          bpm: 120,
+          chords: const <StructuredChordDiagram>[],
+          measures: <StructuredTabMeasure>[
+            bar(1, hasSegno: true),
+            bar(2, topNote: 'D.S.'),
+            bar(3, repeatStart: true),
+            bar(4, repeatEnd: true, topNote: 'Repeat & Fade Out.'),
+          ],
+        );
+        expect(
+          visitOrderOf(dsWithoutCodaFade),
+          <int>[1, 2, 1, 2, 3, 4, 3, 4],
+        );
+      },
+    );
   });
 }

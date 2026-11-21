@@ -20,11 +20,13 @@ class StructuredTabStudioPanel extends StatefulWidget {
     this.catalogService,
     this.userStorageService,
     this.pdfService,
+    this.jsonFilePicker,
   });
 
   final StructuredTabCatalogService? catalogService;
   final UserStructuredTabStorageService? userStorageService;
   final StructuredTabPdfService? pdfService;
+  final Future<FilePickerResult?> Function()? jsonFilePicker;
 
   @override
   State<StructuredTabStudioPanel> createState() =>
@@ -43,6 +45,7 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
   List<StructuredGuitarTabScore> _userScores =
       const <StructuredGuitarTabScore>[];
   String? _selectedScoreId;
+  bool? _selectedIsUserImported;
 
   List<StructuredTabPlaybackStep> _timeline =
       const <StructuredTabPlaybackStep>[];
@@ -57,6 +60,13 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
       <StructuredGuitarTabScore>[..._bundledScores, ..._userScores];
 
   StructuredGuitarTabScore? get _selectedScore {
+    for (final score in _allScores) {
+      if (score.id == _selectedScoreId &&
+          (_selectedIsUserImported == null ||
+              score.isUserImported == _selectedIsUserImported)) {
+        return score;
+      }
+    }
     for (final score in _allScores) {
       if (score.id == _selectedScoreId) {
         return score;
@@ -92,6 +102,20 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
       final user = await _userStorageService.loadScores();
       if (!mounted) return;
       final combined = <StructuredGuitarTabScore>[...bundled, ...user];
+      if (combined.isEmpty) {
+        setState(() {
+          _bundledScores = bundled;
+          _userScores = user;
+          _isLoading = false;
+          _playbackTimer?.cancel();
+          _isPlaying = false;
+          _selectedScoreId = null;
+          _selectedIsUserImported = null;
+          _timeline = const <StructuredTabPlaybackStep>[];
+          _cursorIndex = 0;
+        });
+        return;
+      }
       final targetId = selectId ?? _selectedScoreId;
       final selected = combined.firstWhere(
         (StructuredGuitarTabScore s) => s.id == targetId,
@@ -116,7 +140,8 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
     _playbackTimer?.cancel();
     _isPlaying = false;
     _selectedScoreId = score.id;
-    _bpm = score.bpm.clamp(60, 200);
+    _selectedIsUserImported = score.isUserImported;
+    _bpm = score.bpm.clamp(30, 260);
     _timeline = expandStructuredTabTimeline(score);
     _cursorIndex = 0;
   }
@@ -178,56 +203,99 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
 
   Future<void> _openImportDialog() async {
     final current = _selectedScore;
+    final reservedIds =
+        _bundledScores.map((StructuredGuitarTabScore s) => s.id).toSet();
     final imported = await showDialog<StructuredGuitarTabScore>(
       context: context,
       builder: (BuildContext dialogContext) {
-        return _ImportStructuredTabDialog(templateScore: current);
+        return _ImportStructuredTabDialog(
+          templateScore: current,
+          reservedIds: reservedIds,
+          jsonFilePicker: widget.jsonFilePicker,
+        );
       },
     );
     if (imported == null || !mounted) return;
-    await _userStorageService.saveScore(imported);
-    final updatedUser = await _userStorageService.loadScores();
-    if (!mounted) return;
-    setState(() {
-      _userScores = updatedUser;
-      _applySelectedScore(
-        updatedUser.firstWhere(
-          (StructuredGuitarTabScore s) => s.id == imported.id,
-          orElse: () => imported,
+    if (reservedIds.contains(imported.id)) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('同梱譜面と同じID（${imported.id}）は保存できません。'),
+          backgroundColor: DesignTokens.red,
         ),
       );
-    });
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('「${imported.title}」をこの端末に保存しました（非公開）。'),
-        backgroundColor: DesignTokens.green,
-      ),
-    );
+      return;
+    }
+    try {
+      await _userStorageService.saveScore(imported);
+      final updatedUser = await _userStorageService.loadScores();
+      if (!mounted) return;
+      setState(() {
+        _userScores = updatedUser;
+        _applySelectedScore(
+          updatedUser.firstWhere(
+            (StructuredGuitarTabScore s) => s.id == imported.id,
+            orElse: () => imported,
+          ),
+        );
+      });
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('「${imported.title}」をこの端末に保存しました（非公開）。'),
+          backgroundColor: DesignTokens.green,
+        ),
+      );
+    } catch (error) {
+      if (!mounted || !context.mounted) return;
+      final message = error is FormatException
+          ? error.message
+          : '端末ローカルへの保存に失敗しました。空き容量やブラウザ設定を確認してください。';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: DesignTokens.red,
+        ),
+      );
+    }
   }
 
   Future<void> _deleteSelectedUserScore() async {
     final selected = _selectedScore;
     if (selected == null || !selected.isUserImported) return;
-    await _userStorageService.deleteScore(selected.id);
-    final updatedUser = await _userStorageService.loadScores();
-    if (!mounted) return;
-    setState(() {
-      _userScores = updatedUser;
-      final remaining = _allScores;
-      if (remaining.isNotEmpty) {
-        _applySelectedScore(remaining.first);
-      } else {
-        _selectedScoreId = null;
-        _timeline = const <StructuredTabPlaybackStep>[];
-      }
-    });
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('端末ローカルのマイ譜面を削除しました。'),
-      ),
-    );
+    try {
+      await _userStorageService.deleteScore(selected.id);
+      final updatedUser = await _userStorageService.loadScores();
+      if (!mounted) return;
+      setState(() {
+        _userScores = updatedUser;
+        final remaining = _allScores;
+        if (remaining.isNotEmpty) {
+          _applySelectedScore(remaining.first);
+        } else {
+          _playbackTimer?.cancel();
+          _isPlaying = false;
+          _selectedScoreId = null;
+          _selectedIsUserImported = null;
+          _timeline = const <StructuredTabPlaybackStep>[];
+          _cursorIndex = 0;
+        }
+      });
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('端末ローカルのマイ譜面を削除しました。'),
+        ),
+      );
+    } catch (_) {
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('マイ譜面の削除に失敗しました。'),
+          backgroundColor: DesignTokens.red,
+        ),
+      );
+    }
   }
 
   Future<void> _copyJsonToClipboard() async {
@@ -380,40 +448,64 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
   }
 
   Widget _buildScoreSelector(StructuredGuitarTabScore selected) {
+    final scores = _allScores;
+    final seenIds = <String>{};
     return Wrap(
       spacing: DesignTokens.space8,
       runSpacing: DesignTokens.space8,
       children: <Widget>[
-        for (final score in _allScores)
-          ChoiceChip(
-            key: Key('structured_score_chip_${score.id}'),
-            avatar: Icon(
-              score.isUserImported ? Icons.lock_outline : Icons.music_note,
-              size: 16,
-              color: selected.id == score.id
-                  ? DesignTokens.orangeLight
-                  : DesignTokens.textSecondary,
-            ),
-            label: Text(score.title),
-            selected: selected.id == score.id,
-            onSelected: (_) => _selectScore(score),
-            selectedColor: DesignTokens.orange.withValues(alpha: 0.22),
-            backgroundColor: DesignTokens.surface2,
-            side: BorderSide(
-              color: selected.id == score.id
-                  ? DesignTokens.orange
-                  : DesignTokens.divider,
-            ),
-            labelStyle: TextStyle(
-              color: selected.id == score.id
-                  ? DesignTokens.orangeLight
-                  : DesignTokens.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-            showCheckmark: false,
+        for (var i = 0; i < scores.length; i++)
+          _buildScoreChip(
+            score: scores[i],
+            selected: selected,
+            chipKey: seenIds.add(scores[i].id)
+                ? Key('structured_score_chip_${scores[i].id}')
+                : Key('structured_score_chip_${scores[i].id}_dup_$i'),
           ),
       ],
+    );
+  }
+
+  Widget _buildScoreChip({
+    required StructuredGuitarTabScore score,
+    required StructuredGuitarTabScore selected,
+    required Key chipKey,
+  }) {
+    final isSelected = identical(score, selected) ||
+        (score.id == selected.id &&
+            score.isUserImported == selected.isUserImported);
+    return ChoiceChip(
+      key: chipKey,
+      avatar: Icon(
+        score.isUserImported ? Icons.lock_outline : Icons.music_note,
+        size: 16,
+        color: isSelected
+            ? DesignTokens.orangeLight
+            : DesignTokens.textSecondary,
+      ),
+      label: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 240),
+        child: Text(
+          score.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+      selected: isSelected,
+      onSelected: (_) => _selectScore(score),
+      selectedColor: DesignTokens.orange.withValues(alpha: 0.22),
+      backgroundColor: DesignTokens.surface2,
+      side: BorderSide(
+        color: isSelected ? DesignTokens.orange : DesignTokens.divider,
+      ),
+      labelStyle: TextStyle(
+        color: isSelected
+            ? DesignTokens.orangeLight
+            : DesignTokens.textSecondary,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+      showCheckmark: false,
     );
   }
 
@@ -571,15 +663,15 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
                 child: Slider(
                   key: const Key('structured_tab_bpm_slider'),
                   value: _bpm.toDouble(),
-                  min: 60,
-                  max: 200,
-                  divisions: 140,
+                  min: 30,
+                  max: 260,
+                  divisions: 230,
                   activeColor: DesignTokens.orange,
                   inactiveColor: DesignTokens.surface3,
                   label: '$_bpm BPM',
                   onChanged: (double value) {
                     setState(() {
-                      _bpm = value.round().clamp(60, 200);
+                      _bpm = value.round().clamp(30, 260);
                     });
                   },
                 ),
@@ -706,9 +798,15 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
 }
 
 class _ImportStructuredTabDialog extends StatefulWidget {
-  const _ImportStructuredTabDialog({required this.templateScore});
+  const _ImportStructuredTabDialog({
+    required this.templateScore,
+    required this.reservedIds,
+    this.jsonFilePicker,
+  });
 
   final StructuredGuitarTabScore? templateScore;
+  final Set<String> reservedIds;
+  final Future<FilePickerResult?> Function()? jsonFilePicker;
 
   @override
   State<_ImportStructuredTabDialog> createState() =>
@@ -729,8 +827,12 @@ class _ImportStructuredTabDialogState
   void _fillTemplate() {
     final template = widget.templateScore;
     if (template == null) return;
+    var nextId = '${template.id}-custom';
+    while (widget.reservedIds.contains(nextId)) {
+      nextId = '$nextId-user';
+    }
     final customTemplate = template.copyWith(
-      id: '${template.id}-custom',
+      id: nextId,
       isOriginalPractice: false,
       isUserImported: true,
     );
@@ -742,13 +844,22 @@ class _ImportStructuredTabDialogState
 
   Future<void> _pickJsonFile() async {
     try {
-      final result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: const <String>['json'],
-        withData: true,
-      );
+      final result = await (widget.jsonFilePicker?.call() ??
+          FilePicker.pickFiles(
+            type: FileType.custom,
+            allowedExtensions: const <String>['json'],
+            withData: true,
+          ));
       if (result == null || result.files.isEmpty) return;
-      final bytes = result.files.first.bytes;
+      final picked = result.files.first;
+      if (picked.size > StructuredGuitarTabScore.maxJsonLength) {
+        if (!mounted) return;
+        setState(() {
+          _errorText = 'ファイルサイズが大きすぎます（256KB以下のJSONファイルを選択してください）。';
+        });
+        return;
+      }
+      final bytes = picked.bytes;
       if (bytes == null) {
         if (!mounted) return;
         setState(() {
@@ -756,7 +867,23 @@ class _ImportStructuredTabDialogState
         });
         return;
       }
-      final text = utf8.decode(bytes);
+      if (bytes.length > StructuredGuitarTabScore.maxJsonLength) {
+        if (!mounted) return;
+        setState(() {
+          _errorText = 'ファイルサイズが大きすぎます（256KB以下のJSONファイルを選択してください）。';
+        });
+        return;
+      }
+      final String text;
+      try {
+        text = utf8.decode(bytes);
+      } on FormatException {
+        if (!mounted) return;
+        setState(() {
+          _errorText = 'UTF-8形式のJSONファイルとして読み取れませんでした。文字コードを確認してください。';
+        });
+        return;
+      }
       if (!mounted) return;
       setState(() {
         _errorText = null;
@@ -776,6 +903,13 @@ class _ImportStructuredTabDialogState
         _controller.text,
         forceUserImported: true,
       );
+      if (widget.reservedIds.contains(parsed.id)) {
+        setState(() {
+          _errorText =
+              '同梱譜面と同じid「${parsed.id}」は使用できません。別のidを指定してください。';
+        });
+        return;
+      }
       Navigator.of(context).pop(parsed);
     } on FormatException catch (error) {
       setState(() {
