@@ -129,6 +129,40 @@ void main() {
     expect(find.text('0以上の履歴件数を入力してください。'), findsOneWidget);
     expect(reviewCalls, 0);
   });
+
+  testWidgets('triggers bulk history import button and renders status',
+      (tester) async {
+    var bulkCalls = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: EvernoteHistoryReviewPanel(
+              items: <EvernoteMigrationItem>[_item()],
+              isLoading: false,
+              onRefresh: () async {},
+              onReviewInventory: (_, __) async {},
+              onImportRevision: (_) async {},
+              onBulkImportRevisions: () async {
+                bulkCalls += 1;
+              },
+              bulkImportStatus: '1/2 件目処理中',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const Key('evernote-history-bulk-import-status')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const Key('evernote-history-bulk-import-button')),
+    );
+    await tester.pump();
+    expect(bulkCalls, 1);
+  });
 }
 
 EvernoteMigrationItem _item({

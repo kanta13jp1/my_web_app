@@ -11038,35 +11038,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
       backgroundColor: const Color(0xFF64748B),
-      floatingActionButton: MediaQuery.sizeOf(context).width < 600
-          ? null
-          : AssetChatWidget(service: _aiHubChatService),
-      bottomNavigationBar: MediaQuery.sizeOf(context).width < 600
-          ? SafeArea(
-              top: false,
-              child: Padding(
-                key: const Key('asset_chat_docked_bar'),
-                padding: const EdgeInsets.all(8),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  heightFactor: 1,
-                  child: AssetChatWidget(service: _aiHubChatService),
-                ),
-              ),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          key: const Key('asset_chat_docked_bar'),
+          padding: const EdgeInsets.all(8),
+          child: Align(
+            alignment: Alignment.centerRight,
+            heightFactor: 1,
+            child: AssetChatWidget(service: _aiHubChatService),
+          ),
+        ),
+      ),
       body: AssetPageScrollFrame(
         controller: _scrollController,
         compact: isCompact,
         child: SingleChildScrollView(
           controller: _scrollController,
-          padding: EdgeInsets.fromLTRB(
-            isCompact ? 12.0 : 16.0,
-            isCompact ? 12.0 : 16.0,
-            isCompact ? 12.0 : 16.0,
-            88.0,
-          ),
+          padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
