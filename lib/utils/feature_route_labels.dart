@@ -89,6 +89,7 @@ const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/viral-ad-generator': 'バイラル広告ジェネレーター',
   '/digest-queue': '消化してから次へ',
   '/jwenv-lab': 'Jwenv WebGPU Lab',
+  '/vibe-sim-lab': 'Vibe Sim 物理破綻診断ラボ',
 };
 
 /// 別名 route を、履歴・おすすめ・表示名で共通利用する正規 route に変換する。
