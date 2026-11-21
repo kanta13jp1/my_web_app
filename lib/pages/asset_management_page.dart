@@ -58,6 +58,7 @@ import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/services/asset_auto_debit_confirmation_service.dart';
 import 'package:my_web_app/services/asset_balance_timestamp_service.dart';
 import 'package:my_web_app/models/asset_balance_observation.dart';
+import 'package:my_web_app/models/asset_external_points.dart';
 import 'package:my_web_app/widgets/asset_balance_history_control.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
@@ -124,6 +125,7 @@ import 'package:my_web_app/services/asset_cashflow_statement_service.dart';
 import 'package:my_web_app/services/asset_net_worth_panel_service.dart';
 import 'package:my_web_app/services/asset_category_budget_service.dart';
 import 'package:my_web_app/services/asset_category_budget_store.dart';
+import 'package:my_web_app/services/asset_external_points_store.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_mirror_read_policy.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
@@ -166,6 +168,7 @@ import 'package:my_web_app/widgets/asset_dashboard_grid.dart';
 import 'package:my_web_app/widgets/asset_net_worth_panel_card.dart';
 import 'package:my_web_app/widgets/asset_obsidian_vault_import_dialog.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
+import 'package:my_web_app/widgets/asset_external_points_card.dart';
 import 'package:my_web_app/widgets/asset_subscription_statement_scan_dialog.dart';
 import 'package:my_web_app/widgets/asset_subscription_login_dialog.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
@@ -401,9 +404,12 @@ class AssetManagementPage extends StatefulWidget {
   final AssetWatchlistService watchlistService;
   final AssetLiabilityRepository? assetLiabilityRepository;
   final AssetCategoryBudgetStore? categoryBudgetStore;
+  final AssetExternalPointsStore? externalPointsStore;
   final AssetAlertDismissalStore? alertDismissalStore;
   @visibleForTesting
   final String? debugCategoryBudgetOwnerId;
+  @visibleForTesting
+  final String? debugExternalPointsOwnerId;
   final InvestmentAssetRepository? investmentAssetRepository;
   final AssetAnomalyDetectionRepository? anomalyDetectionRepository;
   final AssetManagementAiSummaryService? aiSummaryService;
@@ -540,8 +546,10 @@ class AssetManagementPage extends StatefulWidget {
     this.watchlistService = const AssetWatchlistService(),
     this.assetLiabilityRepository,
     this.categoryBudgetStore,
+    this.externalPointsStore,
     this.alertDismissalStore,
     this.debugCategoryBudgetOwnerId,
+    this.debugExternalPointsOwnerId,
     this.investmentAssetRepository,
     this.anomalyDetectionRepository,
     this.aiSummaryService,
@@ -652,6 +660,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyIncomePlanSection = GlobalKey();
   final _keyRecurringIncomeEditorButton = GlobalKey();
   final _keyCategoryBudgetCard = GlobalKey();
+  final _keyExternalPointsCard = GlobalKey();
   // 負債コントロールレビュー (原資未設定一覧) へのスクロール用 (原資未設定バナーからのジャンプ)。
   final _keyDebtControlReviewSection = GlobalKey();
   // セクション検索(アプリバーの🔍)からの各カードへのジャンプ用アンカー。
@@ -966,6 +975,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, double> _categoryBudgets = <String, double>{};
   String? _categoryBudgetsOwnerId;
   String? _categoryBudgetStatus;
+  // 外部ポイント記録 (京王ポイント・Vポイント等)。純資産・手元現金・月次支出とは分離。
+  List<AssetExternalPointRecord> _externalPoints =
+      const <AssetExternalPointRecord>[];
+  String? _externalPointsLoadedOwnerId;
+  String? _externalPointsStatus;
+  int _externalPointsMutationEpoch = 0;
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
   // アクションアイテムからジャンプした直後に、対処すべき支払済みチェックボックスへ
   // 視線誘導するため一時的に点滅ハイライトする負債マスタ行ID (2.6 秒で自動解除)。
@@ -1272,6 +1287,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   AssetCategoryBudgetStore get _categoryBudgetStore =>
       widget.categoryBudgetStore ??
       AssetCategoryBudgetStore.forOwner(_categoryBudgetOwnerId);
+  String? get _externalPointsOwnerId =>
+      widget.debugExternalPointsOwnerId ?? _supabase.auth.currentUser?.id;
+  AssetExternalPointsStore get _externalPointsStore =>
+      widget.externalPointsStore ??
+      AssetExternalPointsStore.forOwner(_externalPointsOwnerId);
   // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
   final DrinkChallengeStore _drinkChallengeStore = const DrinkChallengeStore();
   Map<String, DrinkRecordStatus> _drinkRecords = <String, DrinkRecordStatus>{};
@@ -1505,6 +1525,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCardUsagePolicies());
     unawaited(_loadCategoryBudgets());
+    unawaited(_loadExternalPoints());
     unawaited(_loadRecurringFixedCosts());
     // ドル建てサブスクの円換算に使う USD/JPY を取得し、最新レートで再計算する。
     unawaited(_loadUsdJpyRate());
@@ -1567,6 +1588,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) return;
       _scrollToInitialFocus();
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant AssetManagementPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.debugExternalPointsOwnerId !=
+            widget.debugExternalPointsOwnerId ||
+        oldWidget.externalPointsStore != widget.externalPointsStore) {
+      _externalPointsMutationEpoch++;
+      _externalPoints = const <AssetExternalPointRecord>[];
+      _externalPointsLoadedOwnerId = null;
+      _externalPointsStatus = null;
+      unawaited(_loadExternalPoints());
+    }
   }
 
   @override
@@ -6791,6 +6826,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     }
 
+    if (_keyExternalPointsCard.currentContext != null &&
+        matches('京王ポイント ポイント 外部ポイント Vポイント 楽天ポイント ポイント残高 ポイント記録')) {
+      entries.add(
+        _AssetSectionSearchEntry(
+          label: '外部ポイント記録（京王・Vポイント等）',
+          sublabel: '外部ポイント残高・履歴へ移動',
+          icon: Icons.stars_outlined,
+          onTap: () => _scrollTo(_keyExternalPointsCard),
+        ),
+      );
+    }
+
     // The payroll card is nested in the workbook. Offer a jump only while
     // its authenticated, visible destination is actually mounted.
     if (_isSectionShown(AssetManagementSectionId.workbookBoard) &&
@@ -11207,6 +11254,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     _buildSalarySpendingBreakdownCard(),
                     const SizedBox(height: 16),
                     _buildCategoryBudgetCard(),
+                    _buildExternalPointsCard(),
                   ],
                   if (_isSectionShown(
                     AssetManagementSectionId.recurringFixedCost,
@@ -12311,9 +12359,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// リボ設定の集約ミラー pref_key (1 行 jsonb / MIRROR_PREF_SCHEMA.md)。
   static const String _revolvingConfigsMirrorKey = 'revolving_credit_configs';
   static const String _categoryBudgetsMirrorKey = 'category_budgets';
+  static const String _externalPointsMirrorKey =
+      AssetExternalPointsStore.mirrorPrefKey;
 
   bool _isBudgetOwner(String owner) =>
       mounted && _categoryBudgetOwnerId == owner;
+
+  bool _isExternalPointsOwner(String owner) =>
+      mounted && _externalPointsOwnerId == owner;
 
   Future<void> _loadCategoryBudgets() async {
     final owner = _categoryBudgetOwnerId;
@@ -12377,6 +12430,208 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         setState(() => _categoryBudgetStatus = '端末内には保存済みですが、サーバ同期は未確認です。');
       }
     }
+  }
+
+  Future<void> _loadExternalPoints() async {
+    final owner = _externalPointsOwnerId;
+    if (owner == null || owner.trim().isEmpty) {
+      return;
+    }
+    final loadEpoch = _externalPointsMutationEpoch;
+    final store = _externalPointsStore;
+    try {
+      final records = await store.load();
+      final saved = await store.hasSavedSetting();
+      if (!_isExternalPointsOwner(owner) ||
+          loadEpoch != _externalPointsMutationEpoch) {
+        return;
+      }
+      setState(() {
+        _externalPointsLoadedOwnerId = owner;
+        _externalPoints = records;
+        _externalPointsStatus = null;
+      });
+      final rows = await _bootSelectPrefMirror(_externalPointsMirrorKey);
+      if (!_isExternalPointsOwner(owner) ||
+          loadEpoch != _externalPointsMutationEpoch) {
+        return;
+      }
+      if (saved || rows.isEmpty) {
+        return;
+      }
+      final restored = AssetExternalPointsStore.decodeOwnedMirrorRow(
+        rows.first,
+        owner,
+      );
+      if (restored == null) {
+        return;
+      }
+      await store.save(restored);
+      if (!_isExternalPointsOwner(owner) ||
+          loadEpoch != _externalPointsMutationEpoch) {
+        return;
+      }
+      setState(() {
+        _externalPointsLoadedOwnerId = owner;
+        _externalPoints = restored;
+      });
+    } catch (_) {
+      if (_isExternalPointsOwner(owner) &&
+          loadEpoch == _externalPointsMutationEpoch) {
+        setState(() {
+          if (_externalPointsLoadedOwnerId != owner) {
+            _externalPointsLoadedOwnerId = owner;
+            _externalPoints = const <AssetExternalPointRecord>[];
+          }
+          _externalPointsStatus = '外部ポイントの取得・同期を確認できませんでした。';
+        });
+      }
+    }
+  }
+
+  Future<void> _saveExternalPoints(
+    List<AssetExternalPointRecord> next,
+  ) async {
+    final owner = _externalPointsOwnerId;
+    if (owner == null || owner.trim().isEmpty) {
+      throw StateError('Sign in required');
+    }
+    _externalPointsMutationEpoch++;
+    final saveEpoch = _externalPointsMutationEpoch;
+    final sorted = sortExternalPointRecords(next);
+    final store = _externalPointsStore;
+    await store.save(sorted);
+    if (!_isExternalPointsOwner(owner)) {
+      throw StateError('Account changed');
+    }
+    setState(() {
+      _externalPointsLoadedOwnerId = owner;
+      _externalPoints = sorted;
+      _externalPointsStatus = 'この利用者の端末内に保存済み。サーバ同期は確認中です。';
+    });
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': owner,
+        'pref_key': _externalPointsMirrorKey,
+        'value': AssetExternalPointsStore.encodeMirrorValue(sorted),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).timeout(const Duration(seconds: 10));
+      if (_isExternalPointsOwner(owner) &&
+          saveEpoch == _externalPointsMutationEpoch) {
+        setState(() {
+          _externalPointsStatus = 'この利用者の端末内保存・サーバ同期を確認しました。';
+        });
+      }
+    } catch (_) {
+      if (_isExternalPointsOwner(owner) &&
+          saveEpoch == _externalPointsMutationEpoch) {
+        setState(() {
+          _externalPointsStatus = '端末内には保存済みですが、サーバ同期は未確認です。';
+        });
+      }
+    }
+  }
+
+  Future<void> _addExternalPointRecord() async {
+    final owner = _externalPointsOwnerId;
+    if (owner == null || owner.trim().isEmpty) {
+      return;
+    }
+    final created = await showAssetExternalPointEditorDialog(context);
+    if (created == null || !_isExternalPointsOwner(owner)) {
+      return;
+    }
+    final current = _externalPointsLoadedOwnerId == owner
+        ? _externalPoints
+        : const <AssetExternalPointRecord>[];
+    final next = <AssetExternalPointRecord>[
+      created,
+      for (final item in current)
+        if (item.id != created.id) item,
+    ];
+    try {
+      await _saveExternalPoints(next);
+    } catch (error) {
+      debugPrint('Error saving external points: $error');
+      if (_isExternalPointsOwner(owner)) {
+        setState(() {
+          _externalPointsStatus = '外部ポイントの保存に失敗しました。';
+        });
+      }
+    }
+  }
+
+  Future<void> _deleteExternalPointRecord(
+    AssetExternalPointRecord target,
+  ) async {
+    final owner = _externalPointsOwnerId;
+    if (owner == null || owner.trim().isEmpty) {
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('外部ポイント記録を削除'),
+        content: Text(
+          '${target.programName}（${formatExternalPointsCount(target.balanceAfter)} P・'
+          '${formatExternalPointDateTime(target.observedAt)}）の記録を削除しますか？',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !_isExternalPointsOwner(owner)) {
+      return;
+    }
+    final current = _externalPointsLoadedOwnerId == owner
+        ? _externalPoints
+        : const <AssetExternalPointRecord>[];
+    final next = current
+        .where((item) => item.id != target.id)
+        .toList(growable: false);
+    try {
+      await _saveExternalPoints(next);
+    } catch (error) {
+      debugPrint('Error deleting external point: $error');
+      if (_isExternalPointsOwner(owner)) {
+        setState(() {
+          _externalPointsStatus = '外部ポイントの削除保存に失敗しました。';
+        });
+      }
+    }
+  }
+
+  Widget _buildExternalPointsCard() {
+    final owner = _externalPointsOwnerId;
+    if (owner == null || owner.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final isOwnerLoaded = _externalPointsLoadedOwnerId == owner;
+    final records = isOwnerLoaded
+        ? _externalPoints
+        : const <AssetExternalPointRecord>[];
+    final statusMessage = isOwnerLoaded ? _externalPointsStatus : null;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: KeyedSubtree(
+        key: _keyExternalPointsCard,
+        child: AssetExternalPointsCard(
+          records: records,
+          statusMessage: statusMessage,
+          onAddRecord: _addExternalPointRecord,
+          onDeleteRecord: _deleteExternalPointRecord,
+          now: _now,
+        ),
+      ),
+    );
   }
 
   Future<void> _loadRevolvingConfigs() async {
