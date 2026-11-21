@@ -14,6 +14,7 @@ Future<TextSelection?> openNoteRangeSelectPage({
 }) {
   return Navigator.of(context).push<TextSelection?>(
     MaterialPageRoute<TextSelection?>(
+      settings: const RouteSettings(name: '/note-editor'),
       fullscreenDialog: true,
       builder: (_) => NoteRangeSelectPage(
         text: text,
@@ -52,12 +53,10 @@ class _NoteRangeSelectPageState extends State<NoteRangeSelectPage> {
   void initState() {
     super.initState();
     _items = NoteClipboardHelper.extractCopyableItems(widget.text);
-    _primaryItems = _items
-        .where((item) => item.kind != NoteCopyableItemKind.line)
-        .toList();
-    _lineItems = _items
-        .where((item) => item.kind == NoteCopyableItemKind.line)
-        .toList();
+    _primaryItems =
+        _items.where((item) => item.kind != NoteCopyableItemKind.line).toList();
+    _lineItems =
+        _items.where((item) => item.kind == NoteCopyableItemKind.line).toList();
     final len = widget.text.length;
     final sel = widget.initialSelection;
     if (len > 0 && sel.isValid && !sel.isCollapsed) {

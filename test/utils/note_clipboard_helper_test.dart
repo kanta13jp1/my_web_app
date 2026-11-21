@@ -204,12 +204,10 @@ void main() {
           'https://example.com/\n'
           '末尾メモ';
       final items = NoteClipboardHelper.extractCopyableItems(text);
-      final primaries = items
-          .where((e) => e.kind != NoteCopyableItemKind.line)
-          .toList();
-      final lines = items
-          .where((e) => e.kind == NoteCopyableItemKind.line)
-          .toList();
+      final primaries =
+          items.where((e) => e.kind != NoteCopyableItemKind.line).toList();
+      final lines =
+          items.where((e) => e.kind == NoteCopyableItemKind.line).toList();
 
       expect(
         primaries.map((e) => '${e.label}=${e.value}').toList(),

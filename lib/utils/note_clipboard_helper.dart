@@ -212,8 +212,7 @@ class NoteClipboardHelper {
     return false;
   }
 
-  static bool _isTrailingUrlPunctuation(String ch) =>
-      '。、)）]」,.'.contains(ch);
+  static bool _isTrailingUrlPunctuation(String ch) => '。、)）]」,.'.contains(ch);
 
   static _KeyValueSpan? _extractKeyValueOnLine(String line) {
     final trimmed = line.trim();
@@ -252,13 +251,11 @@ class NoteClipboardHelper {
       return null;
     }
     var valStart = sepIndex + 1;
-    while (valStart < line.length &&
-        _isWhitespace(line.codeUnitAt(valStart))) {
+    while (valStart < line.length && _isWhitespace(line.codeUnitAt(valStart))) {
       valStart++;
     }
     var valEnd = line.length;
-    while (valEnd > valStart &&
-        _isWhitespace(line.codeUnitAt(valEnd - 1))) {
+    while (valEnd > valStart && _isWhitespace(line.codeUnitAt(valEnd - 1))) {
       valEnd--;
     }
     if (valEnd <= valStart) {
