@@ -1,0 +1,22 @@
+-- REVIEW ONLY. NEVER RUN. Same disposable DB, separate actual session.
+\set ON_ERROR_STOP on
+do $stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $stop$;
+select 1 / ((count(*) = 1)::int)
+from public.payroll_transport_fixture_guard where token = :'fixture_token'::uuid;
+set application_name = 'synthetic_payroll_account_b';
+begin isolation level read committed;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-0000-4000-8000-000000000001', true);
+-- Must block while A is open. After A commits, this stale distinct request
+-- must raise 40001. A normal return (including no-op status) is a failure.
+do $test$ begin
+  begin
+    perform public.payroll_account_create_initial_v1(
+      'aaaaaaaa-3333-4333-8333-333333333333',
+      'aaaaaaaa-4444-4444-8444-444444444444', 0, 'synthetic B', true);
+    raise exception 'stale distinct request unexpectedly returned';
+  exception when serialization_failure then null;
+  end;
+end $test$;
+commit;
+\echo SYNTHETIC_B_SAW_40001

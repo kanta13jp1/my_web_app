@@ -1,0 +1,14 @@
+-- REVIEW ONLY. NEVER RUN. Execute from an isolated third observer session.
+\set ON_ERROR_STOP on
+do $stop$ begin raise exception 'REVIEW ONLY: execution prohibited'; end $stop$;
+select 1 / ((count(*) = 1)::int)
+from public.payroll_transport_fixture_guard where token = :'fixture_token'::uuid;
+do $blocked$ declare n integer; begin
+  select count(*) into n
+  from pg_catalog.pg_stat_activity b
+  join pg_catalog.pg_stat_activity a on a.pid = any(pg_catalog.pg_blocking_pids(b.pid))
+  where a.application_name = 'synthetic_payroll_account_a'
+    and b.application_name = 'synthetic_payroll_account_b'
+    and b.wait_event_type = 'Lock';
+  if n <> 1 then raise exception 'session B not observed blocked by session A'; end if;
+end $blocked$;
