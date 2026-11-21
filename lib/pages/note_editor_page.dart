@@ -619,9 +619,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(message)),
+      );
   }
 
   Future<bool> _showUpgradeDialogIfNeeded(Object error) async {
@@ -2394,15 +2396,17 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       _showMessage('貼り付けました');
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('クリップボードを読み取れませんでした'),
-        action: SnackBarAction(
-          label: '手動貼り付け',
-          onPressed: () => unawaited(_showManualPasteDialog()),
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: const Text('クリップボードを読み取れませんでした'),
+          action: SnackBarAction(
+            label: '手動貼り付け',
+            onPressed: () => unawaited(_showManualPasteDialog()),
+          ),
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _showManualPasteDialog() async {

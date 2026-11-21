@@ -1063,6 +1063,14 @@ void main() {
       });
     }
 
+    Future<void> clearSnackBars(WidgetTester tester) async {
+      final scaffold = tester.element(
+        find.byKey(const Key('note_editor_page_scaffold')),
+      );
+      ScaffoldMessenger.of(scaffold).clearSnackBars();
+      await tester.pumpAndSettle();
+    }
+
     testWidgets('行選択→コピーと選択切り取り・全文コピーが動作する', (tester) async {
       installClipboardMock();
       const body = 'line1\nhttps://mightylink-app.com/\nline3';
@@ -1070,6 +1078,7 @@ void main() {
         noteRow: _noteRow(content: body),
       );
       await _pumpPage(tester, client);
+      await clearSnackBars(tester);
 
       final controller = _contentController(tester);
       final comIndex = body.indexOf('com/');
@@ -1106,6 +1115,7 @@ void main() {
         noteRow: _noteRow(content: '先頭 '),
       );
       await _pumpPage(tester, client);
+      await clearSnackBars(tester);
 
       final controller = _contentController(tester);
       controller.selection = const TextSelection.collapsed(offset: 3);
