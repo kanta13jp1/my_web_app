@@ -163,20 +163,24 @@ void main() {
       expect(await store.load(), isEmpty);
     });
 
-    test('serializes competing browser writes for the same owner', () async {
-      const firstStore = AssetExternalPointsStore.forOwner('owner-a');
-      const secondStore = AssetExternalPointsStore.forOwner('owner-a');
-      final candidates = [_keioRecord(), _vPointRecord()];
+    test(
+      'serializes competing browser writes for the same owner',
+      () async {
+        const firstStore = AssetExternalPointsStore.forOwner('owner-a');
+        const secondStore = AssetExternalPointsStore.forOwner('owner-a');
+        final candidates = [_keioRecord(), _vPointRecord()];
 
-      final results = await Future.wait([
-        firstStore.saveIfUnchanged([candidates[0]], expected: []),
-        secondStore.saveIfUnchanged([candidates[1]], expected: []),
-      ]);
+        final results = await Future.wait([
+          firstStore.saveIfUnchanged([candidates[0]], expected: []),
+          secondStore.saveIfUnchanged([candidates[1]], expected: []),
+        ]);
 
-      expect(results.where((saved) => saved), hasLength(1));
-      final winner = candidates[results.indexOf(true)];
-      expect((await firstStore.load(refresh: true)).single.id, winner.id);
-    }, skip: !kIsWeb);
+        expect(results.where((saved) => saved), hasLength(1));
+        final winner = candidates[results.indexOf(true)];
+        expect((await firstStore.load(refresh: true)).single.id, winner.id);
+      },
+      skip: !kIsWeb,
+    );
 
     test('tolerates corrupted local storage payload', () async {
       const store = AssetExternalPointsStore.forOwner('owner-a');
