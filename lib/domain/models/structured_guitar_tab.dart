@@ -111,9 +111,8 @@ class StructuredChordDiagram {
         ) ??
         1;
     final rawBarre = map['barre'];
-    final barre = rawBarre == null
-        ? null
-        : StructuredChordBarre.fromJson(rawBarre);
+    final barre =
+        rawBarre == null ? null : StructuredChordBarre.fromJson(rawBarre);
     return StructuredChordDiagram(
       name: name,
       frets: frets,
@@ -368,16 +367,14 @@ class StructuredGuitarTabScore {
   }) {
     final id = _readRequiredString(map, 'id', context: 'score');
     final title = _readRequiredString(map, 'title', context: 'score');
-    final artist =
-        _readOptionalString(map, 'artist', 'score') ?? 'オリジナル練習譜';
+    final artist = _readOptionalString(map, 'artist', 'score') ?? 'オリジナル練習譜';
     final tuning =
         _readOptionalString(map, 'tuning', 'score') ?? 'Standard tuning';
     final capo = _readOptionalString(map, 'capo', 'score') ?? 'なし';
     final bpm = _readInt(map, 'bpm', min: 30, max: 260);
     final beatsPerMeasure =
         _readOptionalInt(map, 'beatsPerMeasure', min: 1, max: 12) ?? 4;
-    final beatUnit =
-        _readOptionalInt(map, 'beatUnit', min: 2, max: 16) ?? 4;
+    final beatUnit = _readOptionalInt(map, 'beatUnit', min: 2, max: 16) ?? 4;
     if (beatUnit != 2 && beatUnit != 4 && beatUnit != 8 && beatUnit != 16) {
       throw const FormatException('beatUnit は 2, 4, 8, 16 のいずれかである必要があります。');
     }
@@ -514,7 +511,8 @@ List<StructuredTabPlaybackStep> expandStructuredTabTimeline(
     }
 
     if (inDsPass && !hasUsedDaCoda && _isDaCoda(measure.topNote)) {
-      final codaIdx = measures.indexWhere((StructuredTabMeasure m) => m.hasCoda);
+      final codaIdx =
+          measures.indexWhere((StructuredTabMeasure m) => m.hasCoda);
       if (codaIdx >= 0) {
         hasUsedDaCoda = true;
         idx = codaIdx;

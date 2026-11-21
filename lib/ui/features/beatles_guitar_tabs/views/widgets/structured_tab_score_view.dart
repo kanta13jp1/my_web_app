@@ -171,8 +171,8 @@ class _SystemRowGeometry {
     required int slotCount,
     required double width,
   }) {
-    final hasTimeSig =
-        measureIndices.isNotEmpty && score.measures[measureIndices.first].number == 1;
+    final hasTimeSig = measureIndices.isNotEmpty &&
+        score.measures[measureIndices.first].number == 1;
     final prefixWidth = clefWidth + (hasTimeSig ? timeSigWidth : 0.0);
     final safeWidth = width > prefixWidth + 40 ? width : prefixWidth + 40;
     final totalMeasureArea = safeWidth - prefixWidth - 4.0;
@@ -272,7 +272,8 @@ class _StructuredTabRowPainter extends CustomPainter {
       ..strokeWidth = 0.85;
     for (var s = 0; s < 6; s++) {
       final y = _staffTop + s * _stringSpacing;
-      canvas.drawLine(Offset(0, y), Offset(geometry.staffRight, y), stringPaint);
+      canvas.drawLine(
+          Offset(0, y), Offset(geometry.staffRight, y), stringPaint);
     }
 
     // 左端閉じる線
@@ -303,7 +304,8 @@ class _StructuredTabRowPainter extends CustomPainter {
     for (var sIdx = 0; sIdx < slots.length; sIdx++) {
       final slot = slots[sIdx];
       final measure = score.measures[slot.globalMeasureIndex];
-      final isLastMeasure = slot.globalMeasureIndex == score.measures.length - 1;
+      final isLastMeasure =
+          slot.globalMeasureIndex == score.measures.length - 1;
 
       // 小節左端の線またはリピート開始
       if (measure.repeatStart) {
@@ -339,7 +341,8 @@ class _StructuredTabRowPainter extends CustomPainter {
         text: '${measure.number}',
         offset: Offset(slot.left + 3, _staffTop - 13),
         style: TextStyle(
-          color: lightSheet ? const Color(0xFF4B5563) : DesignTokens.textTertiary,
+          color:
+              lightSheet ? const Color(0xFF4B5563) : DesignTokens.textTertiary,
           fontSize: 9,
           fontWeight: FontWeight.w600,
         ),
@@ -364,8 +367,9 @@ class _StructuredTabRowPainter extends CustomPainter {
 
       // 上部注記（Da Coda / D.S. al Coda / Repeat & Fade Out.）
       if (measure.topNote != null) {
-        final noteX =
-            (measure.hasSegno || measure.hasCoda) ? slot.left + 26 : slot.left + 6;
+        final noteX = (measure.hasSegno || measure.hasCoda)
+            ? slot.left + 26
+            : slot.left + 6;
         final noteY = measure.volta != null ? 4.0 : 20.0;
         _paintText(
           canvas,
@@ -448,13 +452,14 @@ class _StructuredTabRowPainter extends CustomPainter {
     for (var bIdx = 0; bIdx < beats.length; bIdx++) {
       final beat = beats[bIdx];
       final x = beatXs[bIdx];
-      final isActiveBeat =
-          slot.globalMeasureIndex == activeMeasureIndex && bIdx == activeBeatIndex;
+      final isActiveBeat = slot.globalMeasureIndex == activeMeasureIndex &&
+          bIdx == activeBeatIndex;
 
       if (isActiveBeat) {
         canvas.drawRRect(
           RRect.fromRectAndRadius(
-            Rect.fromLTWH(x - 9, _staffTop - 6, 18, _staffBottom - _staffTop + 12),
+            Rect.fromLTWH(
+                x - 9, _staffTop - 6, 18, _staffBottom - _staffTop + 12),
             const Radius.circular(4),
           ),
           Paint()..color = accentColor.withValues(alpha: 0.30),

@@ -85,9 +85,8 @@ class SharedPreferencesUserStructuredTabStorageService
 
   Future<void> _persistList(List<StructuredGuitarTabScore> scores) async {
     final prefs = await _preferencesProvider();
-    final payload = scores
-        .map((StructuredGuitarTabScore score) => score.toJson())
-        .toList();
+    final payload =
+        scores.map((StructuredGuitarTabScore score) => score.toJson()).toList();
     await prefs.setString(storageKey, jsonEncode(payload));
   }
 }

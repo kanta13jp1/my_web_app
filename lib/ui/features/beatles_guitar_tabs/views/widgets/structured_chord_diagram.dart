@@ -157,8 +157,10 @@ class StructuredChordDiagramPainter extends CustomPainter {
       if (fret == -1) {
         const double r = 2.4;
         final cy = topPad - 7.5;
-        canvas.drawLine(Offset(x - r, cy - r), Offset(x + r, cy + r), mutePaint);
-        canvas.drawLine(Offset(x - r, cy + r), Offset(x + r, cy - r), mutePaint);
+        canvas.drawLine(
+            Offset(x - r, cy - r), Offset(x + r, cy + r), mutePaint);
+        canvas.drawLine(
+            Offset(x - r, cy + r), Offset(x + r, cy - r), mutePaint);
       } else if (fret == 0) {
         canvas.drawCircle(Offset(x, topPad - 7.5), 2.5, openPaint);
       } else {

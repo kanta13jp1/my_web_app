@@ -37,8 +37,7 @@ class StructuredTabCatalogService {
           duration: StructuredTabDuration.quarter,
           frets: frets,
           staccato: true,
-          pickDirection:
-              includePickMarks ? StructuredPickDirection.down : null,
+          pickDirection: includePickMarks ? StructuredPickDirection.down : null,
         ),
         StructuredTabBeat(
           kind: StructuredTabBeatKind.rest,
@@ -103,8 +102,7 @@ class StructuredTabCatalogService {
           kind: StructuredTabBeatKind.rhythmSlash,
           duration: StructuredTabDuration.eighth,
           beamGroup: 'b2',
-          pickDirection:
-              includePickMarks ? StructuredPickDirection.down : null,
+          pickDirection: includePickMarks ? StructuredPickDirection.down : null,
         ),
         StructuredTabBeat(
           kind: StructuredTabBeatKind.rhythmSlash,
@@ -116,8 +114,7 @@ class StructuredTabCatalogService {
           kind: StructuredTabBeatKind.rhythmSlash,
           duration: StructuredTabDuration.eighth,
           beamGroup: 'b34',
-          pickDirection:
-              includePickMarks ? StructuredPickDirection.down : null,
+          pickDirection: includePickMarks ? StructuredPickDirection.down : null,
         ),
         StructuredTabBeat(
           kind: StructuredTabBeatKind.rhythmSlash,
@@ -129,8 +126,7 @@ class StructuredTabCatalogService {
           kind: StructuredTabBeatKind.rhythmSlash,
           duration: StructuredTabDuration.eighth,
           beamGroup: 'b34',
-          pickDirection:
-              includePickMarks ? StructuredPickDirection.down : null,
+          pickDirection: includePickMarks ? StructuredPickDirection.down : null,
         ),
         StructuredTabBeat(
           kind: StructuredTabBeatKind.rhythmSlash,
@@ -422,8 +418,7 @@ class StructuredTabCatalogService {
       beatsPerMeasure: 4,
       beatUnit: 4,
       isOriginalPractice: true,
-      summary:
-          'Em・C・G・D の基本コードで低音弦から高音弦へ均一に鳴らす8分音符アルペジオ練習です。',
+      summary: 'Em・C・G・D の基本コードで低音弦から高音弦へ均一に鳴らす8分音符アルペジオ練習です。',
       chords: const <StructuredChordDiagram>[
         StructuredChordDiagram(name: 'Em', frets: <int>[0, 2, 2, 0, 0, 0]),
         StructuredChordDiagram(name: 'C', frets: <int>[-1, 3, 2, 0, 1, 0]),

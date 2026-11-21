@@ -153,9 +153,8 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
   void _scheduleNextStep() {
     if (!mounted || !_isPlaying || _timeline.isEmpty) return;
     final step = _timeline[_cursorIndex];
-    final delayMs = ((60000.0 / _bpm) * step.durationBeats)
-        .round()
-        .clamp(60, 4000);
+    final delayMs =
+        ((60000.0 / _bpm) * step.durationBeats).round().clamp(60, 4000);
     _playbackTimer?.cancel();
     _playbackTimer = Timer(Duration(milliseconds: delayMs), () {
       if (!mounted || !_isPlaying || _timeline.isEmpty) return;
@@ -283,7 +282,8 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Icon(Icons.error_outline, color: DesignTokens.red, size: 42),
+              const Icon(Icons.error_outline,
+                  color: DesignTokens.red, size: 42),
               const SizedBox(height: DesignTokens.space12),
               Text(
                 _loadError!,
@@ -550,7 +550,8 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
           const SizedBox(height: DesignTokens.space12),
           Row(
             children: <Widget>[
-              const Icon(Icons.speed, size: 18, color: DesignTokens.indigoLight),
+              const Icon(Icons.speed,
+                  size: 18, color: DesignTokens.indigoLight),
               const SizedBox(width: DesignTokens.space8),
               const Text(
                 '練習テンポ',
@@ -836,7 +837,8 @@ class _ImportStructuredTabDialogState
                   fontSize: 12,
                 ),
                 decoration: InputDecoration(
-                  hintText: '{"id": "my-score", "title": "...", "bpm": 120, ...}',
+                  hintText:
+                      '{"id": "my-score", "title": "...", "bpm": 120, ...}',
                   hintStyle: const TextStyle(color: DesignTokens.textTertiary),
                   filled: true,
                   fillColor: DesignTokens.background,

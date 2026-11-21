@@ -95,15 +95,52 @@ void main() {
       expect(
         measureVisitOrder,
         <int>[
-          1, 2, 3, 4,
-          1, 2, 3, 4,
-          5, 6, 7, 8, 9, 10, 11,
-          5, 6, 7, 8, 9, 10, 12,
-          13, 14, 15, 16,
-          17, 18, 19, 20,
-          5, 6, 7, 8, 9, 10, 12, 13, 14, 15,
-          21, 22, 23, 24,
-          23, 24,
+          1,
+          2,
+          3,
+          4,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15,
+          21,
+          22,
+          23,
+          24,
+          23,
+          24,
         ],
       );
     });
@@ -132,8 +169,10 @@ void main() {
         ],
       );
 
-      expect(expandStructuredTabTimeline(score, maxMeasureVisits: 1), hasLength(1));
-      expect(expandStructuredTabTimeline(score, maxMeasureVisits: 5), hasLength(2));
+      expect(expandStructuredTabTimeline(score, maxMeasureVisits: 1),
+          hasLength(1));
+      expect(expandStructuredTabTimeline(score, maxMeasureVisits: 5),
+          hasLength(2));
     });
   });
 }

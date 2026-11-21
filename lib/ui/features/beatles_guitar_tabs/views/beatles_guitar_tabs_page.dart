@@ -81,8 +81,7 @@ class _BeatlesGuitarTabsPageState extends State<BeatlesGuitarTabsPage> {
                               ),
                             ),
                           BeatlesGuitarTabsStatus.failure => _ErrorState(
-                              message:
-                                  viewModel.errorMessage ?? '読み込みに失敗しました。',
+                              message: viewModel.errorMessage ?? '読み込みに失敗しました。',
                               onRetry: viewModel.load,
                             ),
                           BeatlesGuitarTabsStatus.ready => LayoutBuilder(

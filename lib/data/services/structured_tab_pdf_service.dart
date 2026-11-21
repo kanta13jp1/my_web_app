@@ -93,7 +93,8 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
             ),
             pw.SizedBox(height: 8),
             for (var r = 0; r < rows.length; r++) ...<pw.Widget>[
-              _buildSystemRow(score: score, measureIndices: rows[r], font: font),
+              _buildSystemRow(
+                  score: score, measureIndices: rows[r], font: font),
               if (r != rows.length - 1) pw.SizedBox(height: 8),
             ],
           ];
@@ -114,7 +115,8 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
 
   Future<pw.Font> _loadBundledFont() async {
     try {
-      final data = await rootBundle.load('web/assets/fonts/NotoSansJP-Regular.ttf');
+      final data =
+          await rootBundle.load('web/assets/fonts/NotoSansJP-Regular.ttf');
       return pw.Font.ttf(data);
     } catch (_) {
       return pw.Font.helvetica();
@@ -166,7 +168,8 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
                   final y = topPad + f * rowH;
                   final isNut = f == 0 && chord.baseFret == 1;
                   canvas
-                    ..setStrokeColor(isNut ? PdfColors.black : PdfColors.grey700)
+                    ..setStrokeColor(
+                        isNut ? PdfColors.black : PdfColors.grey700)
                     ..setLineWidth(isNut ? 2.2 : 0.7)
                     ..drawLine(leftPad, py(y), rightX, py(y))
                     ..strokePath();
@@ -176,7 +179,8 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
                 if (barre != null) {
                   final rel = barre.fret - chord.baseFret + 1;
                   if (rel >= 1 && rel < fretWireCount) {
-                    final xStart = leftPad + barre.startStringIndex * colW - 2.4;
+                    final xStart =
+                        leftPad + barre.startStringIndex * colW - 2.4;
                     final xEnd = leftPad + barre.endStringIndex * colW + 2.4;
                     final cy = topPad + (rel - 0.5) * rowH;
                     canvas
@@ -193,7 +197,9 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
                   }
                 }
 
-                for (var s = 0; s < chord.frets.length && s < stringCount; s++) {
+                for (var s = 0;
+                    s < chord.frets.length && s < stringCount;
+                    s++) {
                   final fret = chord.frets[s];
                   final x = leftPad + s * colW;
                   if (fret == -1) {
@@ -493,7 +499,8 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
               final isLastMeasure = globalIdx == score.measures.length - 1;
 
               if (measure.repeatStart) {
-                _pdfRepeatStart(canvas, py, left, staffTop, staffBottom, stringSpacing);
+                _pdfRepeatStart(
+                    canvas, py, left, staffTop, staffBottom, stringSpacing);
               } else if (sIdx > 0 || hasTimeSig) {
                 canvas
                   ..setStrokeColor(PdfColors.black)
@@ -503,7 +510,8 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
               }
 
               if (measure.repeatEnd) {
-                _pdfRepeatEnd(canvas, py, right, staffTop, staffBottom, stringSpacing);
+                _pdfRepeatEnd(
+                    canvas, py, right, staffTop, staffBottom, stringSpacing);
               } else if (isLastMeasure) {
                 _pdfFinalDoubleBar(canvas, py, right, staffTop, staffBottom);
               } else {
@@ -609,7 +617,8 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
                         stemBottomY,
                         drawFlag: !isBeamed &&
                             (beat.duration == StructuredTabDuration.eighth ||
-                                beat.duration == StructuredTabDuration.sixteenth),
+                                beat.duration ==
+                                    StructuredTabDuration.sixteenth),
                       );
                     }
                 }
@@ -633,11 +642,10 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
                       measure.beats[i].kind == StructuredTabBeatKind.rhythmSlash
                           ? xs[i] - 3.0
                           : xs[i];
-                  final ex =
-                      measure.beats[end].kind ==
-                              StructuredTabBeatKind.rhythmSlash
-                          ? xs[end] - 3.0
-                          : xs[end];
+                  final ex = measure.beats[end].kind ==
+                          StructuredTabBeatKind.rhythmSlash
+                      ? xs[end] - 3.0
+                      : xs[end];
                   canvas
                     ..setStrokeColor(PdfColors.black)
                     ..setLineWidth(2.6)
@@ -860,7 +868,8 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
       ..setLineWidth(1.2)
       ..moveTo(cx + 2.5, py(cy - 4.5))
       ..curveTo(cx - 3.0, py(cy - 5.0), cx - 2.5, py(cy - 1.0), cx, py(cy))
-      ..curveTo(cx + 2.5, py(cy + 1.0), cx + 3.0, py(cy + 5.0), cx - 2.5, py(cy + 4.5))
+      ..curveTo(cx + 2.5, py(cy + 1.0), cx + 3.0, py(cy + 5.0), cx - 2.5,
+          py(cy + 4.5))
       ..strokePath()
       ..drawLine(cx - 4.5, py(cy + 4.5), cx + 4.5, py(cy - 4.5))
       ..strokePath()
