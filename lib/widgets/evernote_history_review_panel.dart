@@ -180,10 +180,10 @@ class _EvernoteHistoryReviewPanelState
                   children: [
                     FilledButton.tonalIcon(
                       key: const Key('evernote-history-bulk-import-button'),
-                      onPressed: (widget.isBulkImporting ||
-                              widget.busyItemId != null)
-                          ? null
-                          : widget.onBulkImportRevisions,
+                      onPressed:
+                          (widget.isBulkImporting || widget.busyItemId != null)
+                              ? null
+                              : widget.onBulkImportRevisions,
                       icon: widget.isBulkImporting
                           ? const SizedBox(
                               width: 16,
