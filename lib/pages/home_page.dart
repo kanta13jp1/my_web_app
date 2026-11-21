@@ -150,6 +150,8 @@ class _HomePageState extends State<HomePage> with RouteAware {
   DateTime? _calendarMonthAnchor;
   DateTime? _selectedCalendarDate;
   int _notifUnreadCount = 0;
+  static const _reqBtnKey = Key('home_site_guide_open_feature_request_button');
+  bool _showFeatureRequestForm = false;
   final _featureRequestFormKey = GlobalKey<FormState>();
   final _featureRequestTitleController = TextEditingController();
   final _featureRequestDescriptionController = TextEditingController();
@@ -410,6 +412,12 @@ class _HomePageState extends State<HomePage> with RouteAware {
     setState(() {
       _featureRequestAttachment = null;
       _featureRequestAttachmentAnalysis = null;
+    });
+  }
+
+  void _toggleFeatureRequestForm() {
+    setState(() {
+      _showFeatureRequestForm = !_showFeatureRequestForm;
     });
   }
 
@@ -5205,16 +5213,6 @@ abstinence_slip_details: $slipDetailsText
                               isCompact: isCompact,
                               showInternalOperations: showInternalOperations,
                             ),
-                            if (!showInternalOperations) ...[
-                              const SizedBox(height: 24),
-                              _buildSectionHeader(
-                                '改善を送る',
-                                Icons.add_task_outlined,
-                                const Color(0xFF0F766E),
-                                key: const Key('home_section_feature_request'),
-                              ),
-                              _buildHomeFeatureRequestForm(isDark, isCompact),
-                            ],
                             if (showInternalOperations) ...[
                               const SizedBox(height: 40),
                               _buildHopsonInspiredHomeHero(
@@ -5827,6 +5825,16 @@ abstinence_slip_details: $slipDetailsText
         key: const Key('home_section_site_guide_ai'),
       ),
       _buildSiteGuideAiCard(isDark, isCompact),
+      if (!showInternalOperations && _showFeatureRequestForm) ...[
+        const SizedBox(height: 12),
+        _buildSectionHeader(
+          '改善を送る',
+          Icons.add_task_outlined,
+          const Color(0xFF0F766E),
+          key: const Key('home_section_feature_request'),
+        ),
+        _buildHomeFeatureRequestForm(isDark, isCompact),
+      ],
       if (showInternalOperations) ...[
         const SizedBox(height: 8),
         const GaReadinessGatePanel(),
@@ -6852,6 +6860,16 @@ abstinence_slip_details: $slipDetailsText
                 ),
               ),
               const SizedBox(width: 8),
+              IconButton(
+                key: _reqBtnKey,
+                tooltip: _showFeatureRequestForm ? '追加要望を閉じる' : '追加要望',
+                onPressed: _toggleFeatureRequestForm,
+                icon: Icon(
+                  _showFeatureRequestForm
+                      ? Icons.expand_less
+                      : Icons.add_task_outlined,
+                ),
+              ),
               FilledButton(
                 onPressed: () => _runTrackedAction(
                   'site-guide-ai',
@@ -6984,6 +7002,16 @@ abstinence_slip_details: $slipDetailsText
                   style: OutlinedButton.styleFrom(
                     foregroundColor: theme.colorScheme.primary,
                   ),
+                ),
+                OutlinedButton.icon(
+                  key: _reqBtnKey,
+                  onPressed: _toggleFeatureRequestForm,
+                  icon: Icon(
+                    _showFeatureRequestForm
+                        ? Icons.expand_less
+                        : Icons.add_task_outlined,
+                  ),
+                  label: Text(_showFeatureRequestForm ? '追加要望を閉じる' : '追加要望'),
                 ),
               ],
             ),
