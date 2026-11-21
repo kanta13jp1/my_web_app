@@ -2154,6 +2154,103 @@ class _FilterRow extends StatelessWidget {
   }
 }
 
+const Map<String, IconData> _wbsCategoryMaterialIcons = <String, IconData>{
+  'movie': Icons.movie_outlined,
+  'person_add': Icons.person_add_outlined,
+  'query_stats': Icons.query_stats,
+  'trending_up': Icons.trending_up,
+  'campaign': Icons.campaign_outlined,
+  'analytics': Icons.analytics_outlined,
+  'rocket_launch': Icons.rocket_launch_outlined,
+  'account_balance': Icons.account_balance_outlined,
+  'build': Icons.build_outlined,
+  'code': Icons.code,
+  'security': Icons.security_outlined,
+  'speed': Icons.speed,
+  'auto_awesome': Icons.auto_awesome,
+  'lightbulb': Icons.lightbulb_outline,
+  'description': Icons.description_outlined,
+  'checklist': Icons.checklist,
+  'flag': Icons.flag_outlined,
+  'groups': Icons.groups_outlined,
+  'shopping_cart': Icons.shopping_cart_outlined,
+  'payments': Icons.payments_outlined,
+  'store': Icons.store_outlined,
+  'videocam': Icons.videocam_outlined,
+  'article': Icons.article_outlined,
+  'share': Icons.share_outlined,
+  'star': Icons.star_outline,
+  'schedule': Icons.schedule,
+  'task_alt': Icons.task_alt,
+  'folder': Icons.folder_outlined,
+  'settings': Icons.settings_outlined,
+  'hub': Icons.hub_outlined,
+  'terminal': Icons.terminal,
+  'bug_report': Icons.bug_report_outlined,
+  'cloud': Icons.cloud_outlined,
+  'storage': Icons.storage_outlined,
+  'api': Icons.api,
+  'school': Icons.school_outlined,
+  'work': Icons.work_outline,
+  'public': Icons.public,
+  'mail': Icons.mail_outline,
+  'chat': Icons.chat_bubble_outline,
+  'notifications': Icons.notifications_none,
+  'search': Icons.search,
+  'edit': Icons.edit_outlined,
+  'check_circle': Icons.check_circle_outline,
+  'warning': Icons.warning_amber_outlined,
+  'info': Icons.info_outline,
+};
+
+final RegExp _materialIconNamePattern = RegExp(r'^[a-z][a-z0-9_]{2,}$');
+
+/// DB の `category_icon` が Material Icons 識別子文字列なら対応する [IconData] を返す。
+/// 絵文字や 1〜2 文字記号（`X`, `$` など）は `null` を返しテキスト表示へフォールバックする。
+IconData? resolveWbsCategoryIconData(String rawIcon) {
+  final trimmed = rawIcon.trim();
+  if (trimmed.isEmpty) return null;
+  final mapped = _wbsCategoryMaterialIcons[trimmed];
+  if (mapped != null) return mapped;
+  if (_materialIconNamePattern.hasMatch(trimmed)) {
+    return Icons.label_outline;
+  }
+  return null;
+}
+
+/// WBS カテゴリ・タイムライン行で `category_icon` をアイコンまたは高コントラスト記号として描画する。
+class WbsCategoryIconBadge extends StatelessWidget {
+  final String iconValue;
+  final double size;
+
+  const WbsCategoryIconBadge({
+    super.key,
+    required this.iconValue,
+    this.size = 14,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final iconData = resolveWbsCategoryIconData(iconValue);
+    if (iconData != null) {
+      return Icon(
+        iconData,
+        size: size,
+        color: const Color(0xFF93C5FD),
+      );
+    }
+    final display = iconValue.trim().isEmpty ? '📋' : iconValue.trim();
+    return Text(
+      display,
+      style: TextStyle(
+        fontSize: size,
+        height: 1.5,
+        color: const Color(0xFFE5E7EB),
+      ),
+    );
+  }
+}
+
 class _CategorySection extends StatelessWidget {
   final String category;
   final String categoryIcon;
@@ -2185,9 +2282,9 @@ class _CategorySection extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Text(
-                categoryIcon,
-                style: const TextStyle(fontSize: 18, height: 1.5),
+              WbsCategoryIconBadge(
+                iconValue: categoryIcon,
+                size: 18,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -4218,9 +4315,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                           : const Color(0xFF606070),
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      task.categoryIcon,
-                      style: const TextStyle(fontSize: 12, height: 1.5),
+                    WbsCategoryIconBadge(
+                      iconValue: task.categoryIcon,
+                      size: 14,
                     ),
                     const SizedBox(width: 6),
                     Expanded(

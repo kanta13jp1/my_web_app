@@ -64,6 +64,8 @@ class _ImportPageState extends State<_ImportOwnerPage> {
       const <EvernoteMigrationItem>[];
   int? _evernoteHistoryBusyItemId;
   EvernoteCloudStageProgress? _evernoteHistoryStageProgress;
+  bool _isBulkHistoryImporting = false;
+  String? _bulkHistoryImportStatus;
   ImportPreviewResult? _preview;
   final BusinessCsvImportService _businessCsvService =
       const BusinessCsvImportService();
@@ -299,6 +301,167 @@ class _ImportPageState extends State<_ImportOwnerPage> {
     } finally {
       if (mounted) {
         setState(() => _evernoteHistoryBusyItemId = null);
+      }
+    }
+  }
+
+  EvernoteMigrationItem? _matchHistoryTargetItem(
+    ImportedNoteDraft draft,
+    List<EvernoteMigrationItem> importedItems,
+  ) {
+    final createdAt = draft.sourceCreatedAt?.toUtc();
+    if (createdAt != null) {
+      final byCreated = importedItems
+          .where((item) => item.noteCreatedAt?.toUtc() == createdAt)
+          .toList(growable: false);
+      if (byCreated.length == 1) return byCreated.single;
+      if (byCreated.length > 1) {
+        final byCreatedAndTitle = byCreated
+            .where((item) => item.noteTitle?.trim() == draft.title.trim())
+            .toList(growable: false);
+        if (byCreatedAndTitle.length == 1) return byCreatedAndTitle.single;
+      }
+    }
+    final byTitle = importedItems
+        .where((item) => item.noteTitle?.trim() == draft.title.trim())
+        .toList(growable: false);
+    if (byTitle.length == 1) return byTitle.single;
+    return null;
+  }
+
+  Future<void> _bulkImportEvernoteHistoryRevisions() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      _showMessage('履歴を取り込む前にログインしてください。');
+      return;
+    }
+    final importedItems = _evernoteMigrationItems
+        .where((item) => item.isImported)
+        .toList(growable: false);
+    if (importedItems.isEmpty) {
+      _showMessage('先に通常のENEXノートを取り込んでください。');
+      return;
+    }
+
+    setState(() {
+      _isBulkHistoryImporting = true;
+      _evernoteHistoryStageProgress = null;
+      _bulkHistoryImportStatus = 'ファイル選択待ち...';
+      _migrationLedgerError = null;
+    });
+    try {
+      final selection = await FilePicker.pickFiles(
+        allowMultiple: true,
+        withData: false,
+        withReadStream: true,
+        type: FileType.custom,
+        allowedExtensions: const <String>['enex', 'xml'],
+      );
+      if (!isEvernoteOwnerActive(
+        mounted: mounted,
+        currentOwnerId: Supabase.instance.client.auth.currentUser?.id,
+        expectedOwnerId: user.id,
+      )) {
+        return;
+      }
+      if (selection == null || selection.files.isEmpty) {
+        setState(() => _bulkHistoryImportStatus = null);
+        return;
+      }
+
+      final files = selection.files;
+      final reviewedCounts = <int, int>{
+        for (final item in importedItems)
+          item.id: item.sourceHistoryVersionCount,
+      };
+      final importedCounts = <int, int>{
+        for (final item in importedItems)
+          item.id: item.importedHistoryVersionCount,
+      };
+      var successCount = 0;
+      var failCount = 0;
+      String? firstError;
+
+      for (var index = 0; index < files.length; index += 1) {
+        if (!isEvernoteOwnerActive(
+          mounted: mounted,
+          currentOwnerId: Supabase.instance.client.auth.currentUser?.id,
+          expectedOwnerId: user.id,
+        )) {
+          return;
+        }
+        final file = files[index];
+        if (mounted) {
+          setState(() {
+            _bulkHistoryImportStatus =
+                '${index + 1}/${files.length} 件目 (${file.name}) 処理中... '
+                '成功: $successCount / 失敗: $failCount';
+          });
+        }
+        try {
+          final source = file.readStream;
+          if (source == null) {
+            throw StateError('ストリームを開けませんでした。');
+          }
+          final staged = await _evernoteCloudStageService.stage(
+            userId: user.id,
+            fileName: file.name,
+            source: source,
+            totalBytes: file.size,
+            historyRevision: true,
+            onProgress: (progress) {
+              if (!mounted) return;
+              setState(() => _evernoteHistoryStageProgress = progress);
+            },
+          );
+          final archiveHash = staged.preview.sourceExportSha256;
+          if (archiveHash == null || staged.preview.notes.length != 1) {
+            throw StateError('単一ノートの履歴ENEXとして検証できませんでした。');
+          }
+          final item = _matchHistoryTargetItem(
+            staged.preview.notes.single,
+            importedItems,
+          );
+          if (item == null) {
+            throw StateError('対応する取り込み済みノートが見つかりませんでした。');
+          }
+          final neededCount = (importedCounts[item.id] ?? 0) + 1;
+          if ((reviewedCounts[item.id] ?? 0) < neededCount) {
+            await _evernoteNoteHistoryMigrationService.reviewInventory(
+              batchId: item.batchId,
+              sourceItemKey: item.sourceItemKey,
+              sourceVersionCount: neededCount,
+            );
+            reviewedCounts[item.id] = neededCount;
+          }
+          await _evernoteNoteHistoryMigrationService.migrateFromArchive(
+            userId: user.id,
+            batchId: item.batchId,
+            sourceItemKey: item.sourceItemKey,
+            archiveBytes: staged.totalBytes,
+            archiveSha256: archiveHash,
+          );
+          importedCounts[item.id] = neededCount;
+          successCount += 1;
+        } catch (error) {
+          failCount += 1;
+          firstError ??= '${file.name}: $error';
+        }
+      }
+
+      await _loadEvernoteMigrationLedger();
+      if (!mounted) return;
+      final summary = '一括取り込み完了: 成功 $successCount 件 / 失敗・スキップ $failCount 件'
+          '${firstError != null ? ' ($firstError)' : ''}';
+      setState(() => _bulkHistoryImportStatus = summary);
+      _showMessage(summary);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _migrationLedgerError = error.toString());
+      _showMessage('履歴一括取り込みに失敗しました: $error');
+    } finally {
+      if (mounted) {
+        setState(() => _isBulkHistoryImporting = false);
       }
     }
   }
@@ -796,6 +959,9 @@ class _ImportPageState extends State<_ImportOwnerPage> {
             onRefresh: _loadEvernoteMigrationLedger,
             onReviewInventory: _reviewEvernoteHistoryInventory,
             onImportRevision: _pickEvernoteHistoryRevision,
+            onBulkImportRevisions: _bulkImportEvernoteHistoryRevisions,
+            isBulkImporting: _isBulkHistoryImporting,
+            bulkImportStatus: _bulkHistoryImportStatus,
           ),
           const SizedBox(height: 20),
           Wrap(
