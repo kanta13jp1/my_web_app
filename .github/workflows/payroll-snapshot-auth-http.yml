@@ -1,0 +1,100 @@
+name: Payroll synthetic authenticated HTTP isolation
+on:
+  pull_request:
+    paths:
+      - docs/proposals/payroll_snapshot/**
+      - supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
+      - .github/workflows/payroll-snapshot-auth-http.yml
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: payroll-snapshot-auth-http-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  synthetic-postgrest-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: synthetic-contract-only
+          POSTGRES_DB: payroll_contract
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: synthetic-contract-only
+      PGDATABASE: payroll_contract
+      SYNTHETIC_JWT_SECRET: synthetic-payroll-test-secret-0123456789
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Guard reviewed SQL and initialize disposable database
+        working-directory: docs/proposals/payroll_snapshot
+        env:
+          PG_SERVICE_ID: ${{ job.services.postgres.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmp DRAFT_PAYROLL_SCHEMA.sql ../../..//supabase/migrations/20261015235500_payroll_confirmed_balance_observations.sql
+          [[ "$PG_SERVICE_ID" =~ ^[0-9a-f]{64}$ ]] || { echo 'Missing PostgreSQL service identity' >&2; exit 1; }
+          service_info="$(docker inspect --format '{{.Id}}|{{.Config.Image}}|{{.State.Running}}' "$PG_SERVICE_ID")"
+          [[ "$service_info" == "$PG_SERVICE_ID|postgres:17-alpine|true" ]] || { echo 'Unexpected PostgreSQL service' >&2; exit 1; }
+          fixture_nonce="$(docker exec "$PG_SERVICE_ID" sh -c "od -An -N32 -tx1 /dev/urandom | tr -d '[:space:]'")"
+          [[ "$fixture_nonce" =~ ^[0-9a-f]{64}$ ]] || { echo 'Invalid fixture nonce' >&2; exit 1; }
+          echo "::add-mask::$fixture_nonce"
+          # This write is inside the GitHub-created disposable service container.
+          # Check the host-side psql connection reaches the same database BEFORE
+          # contract.sql or any setup changes are applied through that connection.
+          docker exec -i "$PG_SERVICE_ID" psql -U postgres -d payroll_contract -X -v ON_ERROR_STOP=1 -v fixture_nonce="$fixture_nonce" <<'SQL'
+          create schema payroll_http_control;
+          create table payroll_http_control.fixture_marker(nonce text not null);
+          insert into payroll_http_control.fixture_marker values (:'fixture_nonce');
+          SQL
+          actual_nonce="$(psql -X -A -t -v ON_ERROR_STOP=1 -c 'select nonce from payroll_http_control.fixture_marker')"
+          [[ "$actual_nonce" == "$fixture_nonce" ]] || { echo 'Host PostgreSQL connection is not the disposable service' >&2; exit 1; }
+          printf 'PAYROLL_HTTP_NONCE=%s\n' "$fixture_nonce" >> "$GITHUB_ENV"
+          psql -X -v ON_ERROR_STOP=1 -f contract.sql
+          if guard_output=$(psql -X -v ON_ERROR_STOP=1 -f http_isolation_setup.sql 2>&1); then
+            echo 'Standalone setup unexpectedly accepted' >&2; exit 1
+          fi
+          case "$guard_output" in
+            *'Explicit disposable HTTP fixture opt-in required'*) echo 'PASS: setup rejects missing opt-in' ;;
+            *) printf '%s\n' "$guard_output" >&2; exit 1 ;;
+          esac
+          psql -X -v ON_ERROR_STOP=1 \
+            -c "SET payroll_test.disposable_http = 'explicit-synthetic-http-fixture'" \
+            -v fixture_nonce="$fixture_nonce" \
+            -f http_isolation_setup.sql
+      - name: Exercise synthetic authenticated HTTP isolation
+        working-directory: docs/proposals/payroll_snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          container="payroll-http-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
+          docker run --rm -d --name "$container" --network host \
+            -e PGRST_DB_URI='postgres://payroll_http_authenticator:synthetic-http-only@localhost:5432/payroll_contract' \
+            -e PGRST_DB_SCHEMAS=public -e PGRST_DB_ANON_ROLE=anon \
+            -e PGRST_SERVER_HOST=127.0.0.1 -e PGRST_SERVER_PORT=31337 \
+            -e PGRST_JWT_SECRET="$SYNTHETIC_JWT_SECRET" \
+            postgrest/postgrest@sha256:5f4ce744539bbba786b4e24dbbd95bdb2a956dcf568c5374995a0ff4a68f5bd2 >/dev/null
+          export PAYROLL_HTTP_ISOLATION=explicit-synthetic-http-fixture
+          export PAYROLL_HTTP_CONTAINER="$container"
+          # An optimized Python must not silently strip isolation assertions.
+          if python -O -B http_isolation.py; then
+            echo 'Optimized execution was not rejected' >&2
+            exit 1
+          fi
+          python -B http_isolation.py
