@@ -1055,7 +1055,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
                 setState(() => _hideCompleted = v ?? false),
             onMoveTaskOwner: _queueWbsTaskOwnerMove,
           ),
-          _GanttTimelineTab(
+          GanttTimelineTab(
             milestones: _milestones,
             tasks: _tasks,
             loading: _loadingWbs,
@@ -1363,8 +1363,17 @@ class _WbsTab extends StatelessWidget {
           onMoveTaskOwner: onMoveTaskOwner,
         ),
         const SizedBox(height: 16),
-        if (grouped.isEmpty)
-          const _EmptyCard(message: 'WBSデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
+        if (grouped.isEmpty && tasks.isNotEmpty)
+          GanttFilteredEmptyState(
+            totalCount: tasks.length,
+            onResetFilters: () {
+              onFilterInstance(null);
+              onFilterMilestone(null);
+              onToggleHideCompleted(false);
+            },
+          )
+        else if (grouped.isEmpty)
+          const _EmptyCard(message: 'WBSタスクがまだ登録されていません')
         else
           ...grouped.entries.map(
             (entry) => _CategorySection(
@@ -2703,6 +2712,78 @@ class _MyProjectsTab extends StatelessWidget {
 
 // ── MS Project 風ガントチャートタイムライン ─────────────────────────────────
 
+/// フィルター適用結果が 0 件のときに表示する空状態カード。
+/// ツールバーやフィルターバーを残したままワンクリックで全件表示へ戻せるようにする。
+class GanttFilteredEmptyState extends StatelessWidget {
+  final int totalCount;
+  final VoidCallback onResetFilters;
+
+  const GanttFilteredEmptyState({
+    super.key,
+    required this.totalCount,
+    required this.onResetFilters,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 420),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF2E2E2E)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.filter_alt_off_outlined,
+                color: Color(0xFFFF6B35),
+                size: 28,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '条件に一致するタスクはありません（全 $totalCount 件中 0 件）',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                '担当・マイルストーン・未完了フィルターを解除すると全タスクを再表示できます。',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF9CA3AF),
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                onPressed: onResetFilters,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('フィルターをリセット'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFFF6B35),
+                  side: const BorderSide(color: Color(0xFFFF6B35)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class GanttColumnToggleBar extends StatelessWidget {
   final Map<String, bool> colVisible;
   final String? filterInstance;
@@ -2887,7 +2968,7 @@ class GanttMilestoneRiskBanner extends StatelessWidget {
   }
 }
 
-class _GanttTimelineTab extends StatefulWidget {
+class GanttTimelineTab extends StatefulWidget {
   final List<WbsMilestone> milestones;
   final List<WbsTask> tasks;
   final bool loading;
@@ -2900,7 +2981,8 @@ class _GanttTimelineTab extends StatefulWidget {
   final List<Map<String, dynamic>> milestoneRisks;
   final Future<void> Function()? onRefreshWbs;
 
-  const _GanttTimelineTab({
+  const GanttTimelineTab({
+    super.key,
     required this.milestones,
     required this.tasks,
     required this.loading,
@@ -2913,10 +2995,10 @@ class _GanttTimelineTab extends StatefulWidget {
   });
 
   @override
-  State<_GanttTimelineTab> createState() => _GanttTimelineTabState();
+  State<GanttTimelineTab> createState() => _GanttTimelineTabState();
 }
 
-class _GanttTimelineTabState extends State<_GanttTimelineTab> {
+class _GanttTimelineTabState extends State<GanttTimelineTab> {
   // Win版#131 part 12: 開始/完了/リカバリー列追加で 340 → 700 に拡張
   // Win版#131 part 22: 列表示制御 (左パネル幅は表示列の合計から動的算出)
   // Win版#132 part 83: Notion 風 column resize 化 — static const → final + min/max + persistence
@@ -3254,9 +3336,31 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       );
     }
     final tasks = _orderedTasks;
-    if (tasks.isEmpty) {
+    if (widget.tasks.isEmpty) {
       return const _EmptyCard(
-        message: 'タスクデータがありません\n(WBS migration 適用後に表示されます)',
+        message: '表示できるタスクがまだありません',
+      );
+    }
+    if (tasks.isEmpty) {
+      return Container(
+        color: _bgColor,
+        child: Column(
+          children: [
+            _buildHeader(0, widget.tasks.length),
+            _buildColumnToggleBar(),
+            if (_riskWarnings.isNotEmpty)
+              GanttMilestoneRiskBanner(warnings: _riskWarnings),
+            Expanded(
+              child: GanttFilteredEmptyState(
+                totalCount: widget.tasks.length,
+                onResetFilters: () {
+                  widget.onFilterInstance(null);
+                  widget.onToggleHideCompleted(false);
+                },
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -3739,9 +3843,17 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   }
 
   Widget _buildHeader(int taskCount, int totalCount) {
-    final filtered = widget.hideCompleted && totalCount > taskCount;
-    final countLabel =
-        filtered ? '未完了 $taskCount / 全体 $totalCount 件' : '$taskCount タスク';
+    final hasInstanceFilter = widget.filterInstance != null;
+    final filtered =
+        (widget.hideCompleted || hasInstanceFilter) && totalCount > taskCount;
+    final String countLabel;
+    if (widget.hideCompleted && !hasInstanceFilter && totalCount > taskCount) {
+      countLabel = '未完了 $taskCount / 全体 $totalCount 件';
+    } else if (filtered) {
+      countLabel = '表示 $taskCount / 全体 $totalCount 件';
+    } else {
+      countLabel = '$taskCount タスク';
+    }
     final invertedCount =
         widget.tasks.where((t) => t.hasInvertedSchedule).length;
     return Container(
