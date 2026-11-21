@@ -623,7 +623,7 @@ List<StructuredTabPlaybackStep> expandStructuredTabTimeline(
         skippedFirstVoltaInPass = false;
       } else {
         final isFadeRepeat = _isFadeOutRepeat(measure.topNote);
-        if (!inDsPass || isFadeRepeat) {
+        if (!inDsPass || hasUsedDaCoda || isFadeRepeat) {
           completedRepeatEnds.add(idx);
           if (!isFadeRepeat) {
             shouldSkipFirstVolta = true;
