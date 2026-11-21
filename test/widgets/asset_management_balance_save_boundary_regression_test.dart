@@ -9,6 +9,27 @@ import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+Future<void> submitBalance(
+  WidgetTester tester, {
+  required bool bulk,
+  required Finder singleAction,
+}) async {
+  if (!bulk) {
+    await tester.ensureVisible(singleAction);
+    await tester.tap(singleAction);
+    return;
+  }
+
+  final saveAll = find.ancestor(
+    of: find.text('全体状況を保存'),
+    matching: find.byWidgetPredicate((widget) => widget is ElevatedButton),
+  );
+  await Scrollable.ensureVisible(tester.element(saveAll), alignment: 0.5);
+  await tester.pump();
+  expect(saveAll.hitTestable(), findsOneWidget);
+  await tester.tap(saveAll);
+}
+
 // Diagnostic only: no production endpoint, credentials, or persisted user data.
 void main() {
   var balanceWrites = 0;
@@ -280,9 +301,11 @@ void main() {
         await tester.ensureVisible(fields.at(1));
         await tester.enterText(fields.at(1), '4000');
       }
-      final action = bulk ? find.text('全体状況を保存') : find.text('記録').first;
-      await tester.ensureVisible(action);
-      await tester.tap(action);
+      await submitBalance(
+        tester,
+        bulk: bulk,
+        singleAction: find.text('記録').first,
+      );
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
@@ -323,9 +346,11 @@ void main() {
         await tester.ensureVisible(fields.at(1));
         await tester.enterText(fields.at(1), '4000');
       }
-      final action = bulk ? find.text('全体状況を保存') : find.text('記録').first;
-      await tester.ensureVisible(action);
-      await tester.tap(action);
+      await submitBalance(
+        tester,
+        bulk: bulk,
+        singleAction: find.text('記録').first,
+      );
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
@@ -366,9 +391,11 @@ void main() {
         await tester.ensureVisible(fields.at(1));
         await tester.enterText(fields.at(1), '500');
       }
-      final action = bulk ? find.text('全体状況を保存') : find.text('記録').last;
-      await tester.ensureVisible(action);
-      await tester.tap(action);
+      await submitBalance(
+        tester,
+        bulk: bulk,
+        singleAction: find.text('記録').last,
+      );
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
@@ -425,9 +452,11 @@ void main() {
       if (bulk) {
         expect(tester.widget<TextField>(fields.at(1)).controller!.text, '500');
       }
-      final action = bulk ? find.text('全体状況を保存') : find.text('記録').last;
-      await tester.ensureVisible(action);
-      await tester.tap(action);
+      await submitBalance(
+        tester,
+        bulk: bulk,
+        singleAction: find.text('記録').last,
+      );
       await tester.pump(const Duration(milliseconds: 100));
       expect(balanceWrites, 1);
       syntheticUserId = '00000000-0000-4000-8000-000000000002';
