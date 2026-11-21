@@ -1,3 +1,4 @@
+import 'package:my_web_app/services/asset_debt_payment_day_override.dart';
 import 'dart:math';
 
 import 'package:my_web_app/services/debt_lockdown_service.dart';
@@ -545,12 +546,12 @@ class AssetLiabilityPlanningService {
     if (!account.isLiability) {
       return account;
     }
-    final override = paymentDayOverrides[account.id] ??
-        paymentDayOverrides[account.name.trim()] ??
-        paymentDayOverrides[account.name];
-    if (override == null || override < 1 || override > 31) {
-      return account;
-    }
+    final override = resolveAssetDebtPaymentDayOverride(
+      overrides: paymentDayOverrides,
+      accountId: account.id,
+      accountName: account.name,
+    );
+    if (override == null) return account;
     return account.copyWith(paymentDay: override);
   }
 
