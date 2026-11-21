@@ -69,7 +69,9 @@ void main() {
       for (final store in stores) {
         expect(() => store.storageKey, throwsStateError);
         await expectLater(
-            store.hasSavedSetting(prefs: prefs), throwsStateError);
+          store.hasSavedSetting(prefs: prefs),
+          throwsStateError,
+        );
         await expectLater(store.load(prefs: prefs), throwsStateError);
         await expectLater(
           store.save(const <AssetExternalPointRecord>[], prefs: prefs),
@@ -197,7 +199,9 @@ void main() {
       expect(await store.hasSavedSetting(prefs: prefs), isFalse);
       expect(await store.load(prefs: prefs), isEmpty);
       expect(
-          await store.saveIfUnchanged([_keioRecord()], expected: []), isFalse);
+        await store.saveIfUnchanged([_keioRecord()], expected: []),
+        isFalse,
+      );
       expect(prefs.getString(store.storageKey), '{not-valid-json');
     });
   });
@@ -225,6 +229,7 @@ void main() {
               '{"code":"23505","message":"duplicate"}',
               409,
               headers: headers,
+              request: request,
             );
           }
         } else {
@@ -236,7 +241,7 @@ void main() {
           );
           if (request.url.queryParameters['updated_at'] !=
               'eq.${stored!['updated_at']}') {
-            return http.Response('[]', 200, headers: headers);
+            return http.Response('[]', 200, headers: headers, request: request);
           }
         }
         stored = body;
@@ -246,6 +251,7 @@ void main() {
           ]),
           200,
           headers: headers,
+          request: request,
         );
       }),
     );
