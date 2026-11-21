@@ -1,3 +1,6 @@
+import 'debt_guard_emotion.dart';
+import 'debt_guard_stall_thought.dart';
+
 enum DebtGuardCategory {
   debt,
   food,
@@ -401,6 +404,8 @@ class DebtGuardEvent {
     required this.eventDate,
     required this.createdAt,
     this.note,
+    this.emotion,
+    this.stallThought,
   });
 
   final int id;
@@ -409,6 +414,12 @@ class DebtGuardEvent {
   final DateTime eventDate;
   final DateTime createdAt;
   final String? note;
+
+  /// The feeling the user named behind this urge or violation, if any.
+  final DebtGuardEmotion? emotion;
+
+  /// The thought that was holding the user back from starting, if named.
+  final DebtGuardStallThought? stallThought;
 }
 
 enum DebtGuardRuleStatus { unrecorded, kept, violated }
@@ -464,9 +475,7 @@ class DebtGuardDailySnapshot {
       .length;
 
   int get requiredActionStartedCount => events
-      .where(
-        (event) => event.type == DebtGuardEventType.requiredActionStarted,
-      )
+      .where((event) => event.type == DebtGuardEventType.requiredActionStarted)
       .length;
 
   int get bugWeakenedCount => resistedUrgeCount + requiredActionStartedCount;
