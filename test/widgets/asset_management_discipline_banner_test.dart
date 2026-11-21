@@ -12,7 +12,21 @@ import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+class _RejectingMarkerStore extends InMemorySharedPreferencesStore {
+  _RejectingMarkerStore()
+      : super.withData({'flutter.asset_management_display_mode_v1': 'full'});
+
+  @override
+  Future<bool> setValue(String valueType, String key, Object value) {
+    if (key.startsWith('flutter.asset_suspended_debt_accounts_v1_')) {
+      return Future<bool>.value(false);
+    }
+    return super.setValue(valueType, key, value);
+  }
+}
 
 class _ConfirmedPaymentRepository
     extends SharedPreferencesAssetLiabilityRepository {
@@ -93,6 +107,9 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{
       'asset_management_display_mode_v1': 'full',
     });
+    final workingStore = SharedPreferencesStorePlatform.instance;
+    SharedPreferencesStorePlatform.instance = _RejectingMarkerStore();
+    addTearDown(() => SharedPreferencesStorePlatform.instance = workingStore);
     await tester.binding.setSurfaceSize(const Size(1200, 4000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -129,6 +146,20 @@ void main() {
     );
     expect(suspendButton, findsOneWidget);
 
+    final savedTag = find.byKey(const Key('debt_suspended_tag_aupay_card'));
+    await tester.ensureVisible(suspendButton);
+    await tester.tap(suspendButton);
+    await tester.pump();
+    expect(find.text('端末内に記録できませんでした。再試行してください。'), findsOneWidget);
+    expect(savedTag, findsNothing);
+
+    await _setSyntheticOwner(_secondOwner);
+    await tester.pumpAndSettle();
+    await _setSyntheticOwner(_firstOwner);
+    await tester.pumpAndSettle();
+    expect(savedTag, findsNothing);
+
+    SharedPreferencesStorePlatform.instance = workingStore;
     await tester.ensureVisible(suspendButton);
     await tester.tap(suspendButton);
     await tester.pumpAndSettle();

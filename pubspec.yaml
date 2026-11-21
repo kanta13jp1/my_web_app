@@ -81,6 +81,7 @@ dev_dependencies:
 
   supabase: 2.12.2
   image_picker_platform_interface: any
+  shared_preferences_platform_interface: ^2.4.2
 
 flutter_launcher_icons:
   android: true

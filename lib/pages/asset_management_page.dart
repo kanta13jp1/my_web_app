@@ -3872,6 +3872,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       final store = await SharedPreferences.getInstance();
       if (!_debtMarkerContextIsCurrent(epoch, owner)) return;
+      // The preferences cache can contain writes that failed to persist.
+      await store.reload();
+      if (!_debtMarkerContextIsCurrent(epoch, owner)) return;
       setState(() {
         _suspendedDebtAccountIds = store
                 .getStringList(
