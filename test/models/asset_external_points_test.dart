@@ -56,7 +56,8 @@ void main() {
       },
     );
 
-    test('copyWith updates fields and clears nullable fields when requested', () {
+    test('copyWith updates fields and clears nullable fields when requested',
+        () {
       final initial = AssetExternalPointRecord(
         id: 'keio-1',
         programName: AssetExternalPointPresets.keio,
@@ -89,7 +90,9 @@ void main() {
       expect(cleared.pointTargetAmountYen, isNull);
     });
 
-    test('fromJson tolerates invalid root, missing/invalid fields, and negative balance', () {
+    test(
+        'fromJson tolerates invalid root, missing/invalid fields, and negative balance',
+        () {
       const invalidRoots = <dynamic>[null, 'oops', 123, <dynamic>[]];
       for (final root in invalidRoots) {
         expect(AssetExternalPointRecord.fromJson(root), isNull);

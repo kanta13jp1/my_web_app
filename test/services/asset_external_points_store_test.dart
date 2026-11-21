@@ -52,7 +52,8 @@ void main() {
   });
 
   group('AssetExternalPointsStore sign-in guard and isolation', () {
-    test('throws StateError when ownerId is null, empty, or whitespace', () async {
+    test('throws StateError when ownerId is null, empty, or whitespace',
+        () async {
       final prefs = await SharedPreferences.getInstance();
       const stores = <AssetExternalPointsStore>[
         AssetExternalPointsStore.forOwner(null),
@@ -62,7 +63,8 @@ void main() {
 
       for (final store in stores) {
         expect(() => store.storageKey, throwsStateError);
-        await expectLater(store.hasSavedSetting(prefs: prefs), throwsStateError);
+        await expectLater(
+            store.hasSavedSetting(prefs: prefs), throwsStateError);
         await expectLater(store.load(prefs: prefs), throwsStateError);
         await expectLater(
           store.save(const <AssetExternalPointRecord>[], prefs: prefs),
@@ -87,7 +89,8 @@ void main() {
       const storeA = AssetExternalPointsStore.forOwner('owner-a');
       const storeB = AssetExternalPointsStore.forOwner('owner-b');
 
-      await storeA.save(<AssetExternalPointRecord>[_keioRecord()], prefs: prefs);
+      await storeA
+          .save(<AssetExternalPointRecord>[_keioRecord()], prefs: prefs);
 
       expect(await storeA.hasSavedSetting(prefs: prefs), isTrue);
       expect(await storeB.hasSavedSetting(prefs: prefs), isFalse);
@@ -112,7 +115,8 @@ void main() {
       expect(loadedB.first.balanceAfter, 951);
     });
 
-    test('preserves empty list deletion with hasSavedSetting == true', () async {
+    test('preserves empty list deletion with hasSavedSetting == true',
+        () async {
       final prefs = await SharedPreferences.getInstance();
       const store = AssetExternalPointsStore.forOwner('owner-a');
 
@@ -127,7 +131,8 @@ void main() {
       expect(await store.load(prefs: prefs), isEmpty);
     });
 
-    test('throws StateError when SharedPreferences.setString returns false', () async {
+    test('throws StateError when SharedPreferences.setString returns false',
+        () async {
       const store = AssetExternalPointsStore.forOwner('owner-a');
       await expectLater(
         store.save(
@@ -138,7 +143,8 @@ void main() {
       );
     });
 
-    test('rejects a stale editor and preserves an explicit empty list', () async {
+    test('rejects a stale editor and preserves an explicit empty list',
+        () async {
       const store = AssetExternalPointsStore.forOwner('owner-a');
       final keio = _keioRecord();
       final updated = _vPointRecord();
@@ -189,7 +195,8 @@ void main() {
 
       expect(await store.hasSavedSetting(prefs: prefs), isFalse);
       expect(await store.load(prefs: prefs), isEmpty);
-      expect(await store.saveIfUnchanged([_keioRecord()], expected: []), isFalse);
+      expect(
+          await store.saveIfUnchanged([_keioRecord()], expected: []), isFalse);
       expect(prefs.getString(store.storageKey), '{not-valid-json');
     });
   });
@@ -288,7 +295,9 @@ void main() {
   });
 
   group('AssetExternalPointsStore decodeOwnedMirrorRow', () {
-    test('returns decoded records only when row user_id matches non-empty owner', () {
+    test(
+        'returns decoded records only when row user_id matches non-empty owner',
+        () {
       final row = <String, dynamic>{
         'user_id': 'owner-a',
         'value': AssetExternalPointsStore.encodeMirrorValue(

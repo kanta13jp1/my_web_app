@@ -12471,7 +12471,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _loadExternalPoints() async {
     final owner = _externalPointsObservedOwnerId;
-    if (owner == null || owner.trim().isEmpty || !_isExternalPointsOwner(owner)) {
+    if (owner == null ||
+        owner.trim().isEmpty ||
+        !_isExternalPointsOwner(owner)) {
       return;
     }
     final loadEpoch = _externalPointsMutationEpoch;
@@ -12521,15 +12523,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         throw StateError('Invalid external points mirror record');
       }
       if (saved) {
-        final matches = jsonEncode(AssetExternalPointsStore.encodeMirrorValue(records)) ==
+        final matches = jsonEncode(
+                AssetExternalPointsStore.encodeMirrorValue(records)) ==
             jsonEncode(AssetExternalPointsStore.encodeMirrorValue(restored));
         setState(() {
           _externalPointsReady = true;
           _externalPointsMirrorRevision = revision;
           _externalPointsMirrorWritable = matches;
-          _externalPointsStatus = matches
-              ? null
-              : '端末とサーバの記録に差があるため、サーバへの保存を保留しています。';
+          _externalPointsStatus =
+              matches ? null : '端末とサーバの記録に差があるため、サーバへの保存を保留しています。';
         });
         return;
       }
@@ -12603,8 +12605,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!savedLocally) {
         setState(() {
           _externalPointsReady = false;
-          _externalPointsStatus =
-              '端末内の記録を照合できませんでした。ページを開き直して確認してください。';
+          _externalPointsStatus = '端末内の記録を照合できませんでした。ページを開き直して確認してください。';
         });
         return;
       }
@@ -12661,7 +12662,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   .eq('updated_at', revision)
                   .select('updated_at'))
           .timeout(const Duration(seconds: 10));
-      final confirmedRevision = rows.length == 1 ? rows.single['updated_at'] : null;
+      final confirmedRevision =
+          rows.length == 1 ? rows.single['updated_at'] : null;
       if (confirmedRevision is! String ||
           DateTime.tryParse(confirmedRevision) == null) {
         throw StateError('External points mirror changed or was not confirmed');
@@ -12770,9 +12772,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final isOwnerLoaded = _externalPointsLoadedOwnerId == owner;
     final canEdit = _canEditExternalPoints(owner);
-    final records = isOwnerLoaded
-        ? _externalPoints
-        : const <AssetExternalPointRecord>[];
+    final records =
+        isOwnerLoaded ? _externalPoints : const <AssetExternalPointRecord>[];
     final statusMessage = isOwnerLoaded && _externalPointsStatus != null
         ? _externalPointsStatus
         : (_externalPointsReady ? null : '外部ポイントを読み込んでいます。');
