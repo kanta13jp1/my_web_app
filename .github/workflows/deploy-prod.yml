@@ -855,6 +855,10 @@ jobs:
             build/web/main.dart.js_*.part.js.map
           )
           shopt -u nullglob
+          if [ "${#SENTRY_BUNDLE_FILES[@]}" -eq 0 ]; then
+            echo "::notice::Sentry sourcemap upload skipped (no Flutter JS/sourcemap artifacts matched in build/web)."
+            exit 0
+          fi
           npx --yes @sentry/cli releases new "$SENTRY_RELEASE"
           npx --yes @sentry/cli sourcemaps inject "${SENTRY_BUNDLE_FILES[@]}"
           npx --yes @sentry/cli sourcemaps upload --release="$SENTRY_RELEASE" "${SENTRY_BUNDLE_FILES[@]}"
