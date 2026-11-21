@@ -63,8 +63,8 @@ void main() {
 
       for (final store in stores) {
         expect(() => store.storageKey, throwsStateError);
-        await expectLater(
-            store.hasSavedSetting(prefs: prefs), throwsStateError);
+        final hasSavedSetting = store.hasSavedSetting(prefs: prefs);
+        await expectLater(hasSavedSetting, throwsStateError);
         await expectLater(store.load(prefs: prefs), throwsStateError);
         await expectLater(
           store.save(const <AssetExternalPointRecord>[], prefs: prefs),
@@ -195,8 +195,8 @@ void main() {
 
       expect(await store.hasSavedSetting(prefs: prefs), isFalse);
       expect(await store.load(prefs: prefs), isEmpty);
-      expect(
-          await store.saveIfUnchanged([_keioRecord()], expected: []), isFalse);
+      final saved = await store.saveIfUnchanged([_keioRecord()], expected: []);
+      expect(saved, isFalse);
       expect(prefs.getString(store.storageKey), '{not-valid-json');
     });
   });
