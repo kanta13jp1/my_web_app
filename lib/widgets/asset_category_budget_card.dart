@@ -28,9 +28,6 @@ class AssetCategoryBudgetCard extends StatelessWidget {
   final String? periodLabel;
 
   static const Color _accent = Color(0xFF4F46E5);
-  static const Color _danger = Color(0xFFDC2626);
-  static const Color _muted = Color(0xFF6B7280);
-  static const Color _track = Color(0xFFE5E7EB);
 
   String _yen(double value) {
     final formatter = currencyFormatter;
@@ -40,8 +37,14 @@ class AssetCategoryBudgetCard extends StatelessWidget {
     return '¥${value.round()}';
   }
 
+  Color _accentColor(ColorScheme scheme) {
+    return scheme.brightness == Brightness.dark ? scheme.primary : _accent;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final accent = _accentColor(scheme);
     return Card(
       key: const Key('asset_category_budget_card'),
       elevation: 2,
@@ -50,33 +53,48 @@ class AssetCategoryBudgetCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.donut_small, color: _accent),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    '予算/カテゴリ予実',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      height: 1.4,
+            SizedBox(
+              width: double.infinity,
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.donut_small, color: accent),
+                      const SizedBox(width: 8),
+                      const Flexible(
+                        child: Text(
+                          '予算/カテゴリ予実',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (onEditBudgets != null)
+                    TextButton(
+                      key: const Key('asset_category_budget_edit'),
+                      onPressed: onEditBudgets,
+                      child: const Text('予算を設定'),
                     ),
-                  ),
-                ),
-                if (onEditBudgets != null)
-                  TextButton(
-                    key: const Key('asset_category_budget_edit'),
-                    onPressed: onEditBudgets,
-                    child: const Text('予算を設定'),
-                  ),
-              ],
+                ],
+              ),
             ),
             if (periodLabel != null)
               Text(
                 periodLabel!,
-                style:
-                    const TextStyle(fontSize: 12, color: _muted, height: 1.4),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: scheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
               ),
             const SizedBox(height: 8),
             if (!report.hasAnyBudget)
@@ -89,9 +107,9 @@ class AssetCategoryBudgetCard extends StatelessWidget {
                 ),
               )
             else ...[
-              _buildTotalRow(),
+              _buildTotalRow(scheme),
               const SizedBox(height: 12),
-              for (final row in report.rows) _buildCategoryRow(row),
+              for (final row in report.rows) _buildCategoryRow(scheme, row),
             ],
           ],
         ),
@@ -99,11 +117,16 @@ class AssetCategoryBudgetCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTotalRow() {
+  Widget _buildTotalRow(ColorScheme scheme) {
     final over = report.totalActual > report.totalBudget;
     final value = report.totalBudget > 0
         ? (report.totalActual / report.totalBudget).clamp(0.0, 1.0).toDouble()
         : 0.0;
+    final pct = report.totalBudget > 0
+        ? (report.totalActual / report.totalBudget * 100).round()
+        : null;
+    final accent = _accentColor(scheme);
+    final statusColor = over ? scheme.error : scheme.onSurfaceVariant;
     return Semantics(
       container: true,
       liveRegion: over,
@@ -113,30 +136,37 @@ class AssetCategoryBudgetCard extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: (over ? _danger : _accent).withValues(alpha: 0.06),
+            color: (over ? scheme.error : accent).withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
+              SizedBox(
+                width: double.infinity,
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 2,
+                  children: [
+                    const Text(
                       '合計',
-                      style:
-                          TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  Text(
-                    '${_yen(report.totalActual)} / ${_yen(report.totalBudget)}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: over ? _danger : null,
+                    Text(
+                      '${_yen(report.totalActual)} / ${_yen(report.totalBudget)}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: over ? scheme.error : null,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 6),
               ClipRRect(
@@ -144,20 +174,42 @@ class AssetCategoryBudgetCard extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: value,
                   minHeight: 8,
-                  backgroundColor: _track,
-                  color: over ? _danger : _accent,
+                  backgroundColor: scheme.surfaceContainerHighest,
+                  color: over ? scheme.error : accent,
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                over
-                    ? '予算を ${_yen(report.totalActual - report.totalBudget)} 超過しています'
-                    : '残り予算 ${_yen(report.totalRemaining)}',
-                style: TextStyle(
-                  fontSize: 12,
-                  height: 1.4,
-                  color: over ? _danger : _muted,
-                  fontWeight: FontWeight.w600,
+              SizedBox(
+                width: double.infinity,
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 2,
+                  children: [
+                    Text(
+                      over
+                          ? '予算を ${_yen(report.totalActual - report.totalBudget)} 超過しています'
+                          : '残り予算 ${_yen(report.totalRemaining)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.4,
+                        color: statusColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (pct != null)
+                      Text(
+                        '消化率 $pct%',
+                        key: const Key('asset_category_budget_total_percent'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.4,
+                          color: statusColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],
@@ -167,41 +219,59 @@ class AssetCategoryBudgetCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryRow(CategoryBudgetRow row) {
+  Widget _buildCategoryRow(ColorScheme scheme, CategoryBudgetRow row) {
     final ratio = row.ratio;
     final over = row.isOver;
+    final accent = _accentColor(scheme);
+    final statusColor = over ? scheme.error : scheme.onSurfaceVariant;
     return MergeSemantics(
       child: Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                if (over) ...[
-                  const Icon(Icons.warning_amber, color: _danger, size: 14),
-                  const SizedBox(width: 3),
-                ],
-                Expanded(
-                  child: Text(
-                    row.category,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
+            SizedBox(
+              width: double.infinity,
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 2,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (over) ...[
+                        Icon(
+                          Icons.warning_amber,
+                          color: scheme.error,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 3),
+                      ],
+                      Flexible(
+                        child: Text(
+                          row.category,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    row.hasBudget
+                        ? '${_yen(row.actual)} / ${_yen(row.budget)}'
+                        : '${_yen(row.actual)}(予算未設定)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: statusColor,
                     ),
                   ),
-                ),
-                Text(
-                  row.hasBudget
-                      ? '${_yen(row.actual)} / ${_yen(row.budget)}'
-                      : '${_yen(row.actual)}(予算未設定)',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: over ? _danger : _muted,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
             if (ratio != null) ...[
               const SizedBox(height: 4),
@@ -210,8 +280,8 @@ class AssetCategoryBudgetCard extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: ratio.clamp(0.0, 1.0).toDouble(),
                   minHeight: 6,
-                  backgroundColor: _track,
-                  color: over ? _danger : _accent,
+                  backgroundColor: scheme.surfaceContainerHighest,
+                  color: over ? scheme.error : accent,
                 ),
               ),
               const SizedBox(height: 2),
@@ -222,7 +292,7 @@ class AssetCategoryBudgetCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   height: 1.4,
-                  color: over ? _danger : _muted,
+                  color: statusColor,
                 ),
               ),
             ],
