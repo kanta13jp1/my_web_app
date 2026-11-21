@@ -25,6 +25,8 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
   final _supabase = Supabase.instance.client;
   late TabController _tabs;
   bool _loading = true;
+  bool _requiresLogin = false;
+  String? _errorMessage;
   List<Map<String, dynamic>> _goals = [];
 
   static const _levels = ['dream', 'big', 'medium', 'small'];
@@ -56,11 +58,22 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
   }
 
   Future<void> _loadGoals() async {
-    setState(() => _loading = true);
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+      _requiresLogin = false;
+    });
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) {
-        if (mounted) setState(() => _loading = false);
+        if (mounted) {
+          setState(() {
+            _requiresLogin = true;
+            _goals = [];
+            _loading = false;
+          });
+        }
         return;
       }
       final data = await _supabase
@@ -77,7 +90,12 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _errorMessage = '目標の読み込みに失敗しました。通信状況を確認して再試行してください。';
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -106,6 +124,12 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
     required String level,
     String? parentId,
   }) async {
+    if (_supabase.auth.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('目標を追加するにはログインしてください。')),
+      );
+      return;
+    }
     final titleCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     String selectedCategory = 'career';
@@ -295,6 +319,7 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
         'status': progress >= 100 ? 'completed' : 'active',
         if (progress >= 100) 'completed_at': DateTime.now().toIso8601String(),
       }).eq('id', goalId);
+      if (!mounted) return;
       setState(() {
         final idx = _goals.indexWhere((g) => g['id'] == goalId);
         if (idx >= 0) {
@@ -303,7 +328,16 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
             ..['status'] = progress >= 100 ? 'completed' : 'active';
         }
       });
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('進捗の更新に失敗しました。'),
+            backgroundColor: Color(0xFFE53935),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _deleteGoal(String goalId) async {
@@ -327,11 +361,22 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
         ],
       ),
     );
-    if (confirmed != true) return;
-    await _supabase.from('life_goals').update({
-      'status': 'abandoned',
-    }).eq('id', goalId);
-    await _loadGoals();
+    if (confirmed != true || !mounted) return;
+    try {
+      await _supabase.from('life_goals').update({
+        'status': 'abandoned',
+      }).eq('id', goalId);
+      await _loadGoals();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('目標の削除に失敗しました。'),
+            backgroundColor: Color(0xFFE53935),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -359,46 +404,63 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
         icon: const Icon(Icons.add),
         label: const Text('追加'),
         backgroundColor: const Color(0xFF6366F1),
+        foregroundColor: Colors.white,
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabs,
-              children: _levels.asMap().entries.map((entry) {
-                final level = entry.value;
-                final levelGoals = _goalsForLevel(level);
+      body: _buildBody(isDark),
+    );
+  }
 
-                if (levelGoals.isEmpty) {
-                  return _buildEmptyState(level, isDark);
-                }
+  Widget _buildBody(bool isDark) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_requiresLogin) {
+      return LifeGoalsSignedOutState(
+        onLogin: () => Navigator.of(context).pushNamed('/login'),
+      );
+    }
+    if (_errorMessage != null) {
+      return LifeGoalsErrorState(
+        message: _errorMessage!,
+        onRetry: _loadGoals,
+      );
+    }
+    return TabBarView(
+      controller: _tabs,
+      children: _levels.asMap().entries.map((entry) {
+        final level = entry.value;
+        final levelGoals = _goalsForLevel(level);
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: levelGoals.length,
-                  itemBuilder: (ctx, i) => _GoalCard(
-                    goal: levelGoals[i],
-                    children: _childrenOf(levelGoals[i]['id'] as String),
-                    isDark: isDark,
-                    levelColor: _levelColor(level),
-                    categoryLabel:
-                        _categories[levelGoals[i]['category']] ?? '📎 その他',
-                    onAddChild: level != 'small'
-                        ? () => _showAddGoalDialog(
-                              level: _levels[_levels.indexOf(level) + 1],
-                              parentId: levelGoals[i]['id'] as String,
-                            )
-                        : null,
-                    onProgressChanged: level == 'small'
-                        ? (v) => _updateProgress(
-                              levelGoals[i]['id'] as String,
-                              v,
-                            )
-                        : null,
-                    onDelete: () => _deleteGoal(levelGoals[i]['id'] as String),
-                  ),
-                );
-              }).toList(),
-            ),
+        if (levelGoals.isEmpty) {
+          return _buildEmptyState(level, isDark);
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: levelGoals.length,
+          itemBuilder: (ctx, i) {
+            final goal = levelGoals[i];
+            final goalId = goal['id'] as String;
+            return LifeGoalCard(
+              goal: goal,
+              children: _childrenOf(goalId),
+              isDark: isDark,
+              levelColor: _levelColor(level),
+              categoryLabel: _categories[goal['category']] ?? '📎 その他',
+              onAddChild: level != 'small'
+                  ? () => _showAddGoalDialog(
+                        level: _levels[_levels.indexOf(level) + 1],
+                        parentId: goalId,
+                      )
+                  : null,
+              onProgressChanged: level == 'small'
+                  ? (v) => _updateProgress(goalId, v)
+                  : null,
+              onDelete: () => _deleteGoal(goalId),
+            );
+          },
+        );
+      }).toList(),
     );
   }
 
@@ -444,6 +506,7 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
               label: Text('${_levelLabels[idx]}を追加'),
               style: FilledButton.styleFrom(
                 backgroundColor: _levelColor(level),
+                foregroundColor: Colors.white,
               ),
               onPressed: () => _showAddGoalDialog(level: level),
             ),
@@ -470,10 +533,115 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
 }
 
 // ---------------------------------------------------------------------------
+// Signed-Out & Error States
+// ---------------------------------------------------------------------------
+
+class LifeGoalsSignedOutState extends StatelessWidget {
+  final VoidCallback onLogin;
+
+  const LifeGoalsSignedOutState({
+    super.key,
+    required this.onLogin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Center(
+      key: const Key('life_goals_signed_out_state'),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.lock_outline,
+              size: 48,
+              color: Color(0xFF6366F1),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'ログインすると人生目標を保存・管理できます。',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: onLogin,
+              icon: const Icon(Icons.login),
+              label: const Text('ログイン'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF6366F1),
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class LifeGoalsErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const LifeGoalsErrorState({
+    super.key,
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Center(
+      key: const Key('life_goals_error_state'),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 48,
+              color: Color(0xFFE53935),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('再試行'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Goal Card Widget
 // ---------------------------------------------------------------------------
 
-class _GoalCard extends StatelessWidget {
+class LifeGoalCard extends StatelessWidget {
   final Map<String, dynamic> goal;
   final List<Map<String, dynamic>> children;
   final bool isDark;
@@ -483,7 +651,8 @@ class _GoalCard extends StatelessWidget {
   final void Function(int)? onProgressChanged;
   final VoidCallback onDelete;
 
-  const _GoalCard({
+  const LifeGoalCard({
+    super.key,
     required this.goal,
     required this.children,
     required this.isDark,
@@ -562,7 +731,10 @@ class _GoalCard extends StatelessWidget {
                           height: 1.5,
                         ),
                       ),
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
                             categoryLabel,
@@ -574,29 +746,31 @@ class _GoalCard extends StatelessWidget {
                               height: 1.5,
                             ),
                           ),
-                          if (targetDate != null) ...[
-                            const SizedBox(width: 8),
-                            Icon(
-                              Icons.calendar_today,
-                              size: 10,
-                              color: isDark
-                                  ? const Color(0xFF9CA3AF)
-                                  : const Color(0xFF4B5563),
+                          if (targetDate != null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: 10,
+                                  color: isDark
+                                      ? const Color(0xFF9CA3AF)
+                                      : const Color(0xFF4B5563),
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  DateFormat('yyyy/MM/dd').format(targetDate),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? const Color(0xFF9CA3AF)
+                                        : const Color(0xFF4B5563),
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 2),
-                            Text(
-                              DateFormat('yyyy/MM/dd').format(targetDate),
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark
-                                    ? const Color(0xFF9CA3AF)
-                                    : const Color(0xFF4B5563),
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
-                          if (recurrence != 'once') ...[
-                            const SizedBox(width: 8),
+                          if (recurrence != 'once')
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 6,
@@ -620,7 +794,6 @@ class _GoalCard extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          ],
                         ],
                       ),
                     ],
