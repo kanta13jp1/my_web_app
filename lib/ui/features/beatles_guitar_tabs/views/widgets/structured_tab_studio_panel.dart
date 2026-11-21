@@ -282,8 +282,11 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Icon(Icons.error_outline,
-                  color: DesignTokens.red, size: 42),
+              const Icon(
+                Icons.error_outline,
+                color: DesignTokens.red,
+                size: 42,
+              ),
               const SizedBox(height: DesignTokens.space12),
               Text(
                 _loadError!,
@@ -550,8 +553,11 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
           const SizedBox(height: DesignTokens.space12),
           Row(
             children: <Widget>[
-              const Icon(Icons.speed,
-                  size: 18, color: DesignTokens.indigoLight),
+              const Icon(
+                Icons.speed,
+                size: 18,
+                color: DesignTokens.indigoLight,
+              ),
               const SizedBox(width: DesignTokens.space8),
               const Text(
                 '練習テンポ',
@@ -736,7 +742,7 @@ class _ImportStructuredTabDialogState
 
   Future<void> _pickJsonFile() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: const <String>['json'],
         withData: true,

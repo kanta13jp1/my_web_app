@@ -87,8 +87,8 @@ class StructuredChordDiagramPainter extends CustomPainter {
       ..color = wireColor
       ..strokeWidth = 0.9;
 
-    final rightX = leftPad + (stringCount - 1) * colW;
-    final bottomY = topPad + (fretWireCount - 1) * rowH;
+    const rightX = leftPad + (stringCount - 1) * colW;
+    const bottomY = topPad + (fretWireCount - 1) * rowH;
 
     // 縦線（6弦〜1弦）
     for (var s = 0; s < stringCount; s++) {
@@ -119,7 +119,7 @@ class StructuredChordDiagramPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      tp.paint(canvas, Offset(2, topPad + 1));
+      tp.paint(canvas, const Offset(2, topPad + 1));
     }
 
     // バレー（セーハ）横棒
@@ -156,11 +156,17 @@ class StructuredChordDiagramPainter extends CustomPainter {
       final x = leftPad + s * colW;
       if (fret == -1) {
         const double r = 2.4;
-        final cy = topPad - 7.5;
+        const cy = topPad - 7.5;
         canvas.drawLine(
-            Offset(x - r, cy - r), Offset(x + r, cy + r), mutePaint);
+          Offset(x - r, cy - r),
+          Offset(x + r, cy + r),
+          mutePaint,
+        );
         canvas.drawLine(
-            Offset(x - r, cy + r), Offset(x + r, cy - r), mutePaint);
+          Offset(x - r, cy + r),
+          Offset(x + r, cy - r),
+          mutePaint,
+        );
       } else if (fret == 0) {
         canvas.drawCircle(Offset(x, topPad - 7.5), 2.5, openPaint);
       } else {

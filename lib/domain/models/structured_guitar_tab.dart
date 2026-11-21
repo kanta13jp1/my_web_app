@@ -379,9 +379,9 @@ class StructuredGuitarTabScore {
       throw const FormatException('beatUnit は 2, 4, 8, 16 のいずれかである必要があります。');
     }
     final summary = _readOptionalString(map, 'summary', 'score') ?? '';
-    final isOriginalPractice =
-        _readOptionalBool(map, 'isOriginalPractice', 'score') ??
-            !forceUserImported;
+    final isOriginalPractice = forceUserImported
+        ? false
+        : (_readOptionalBool(map, 'isOriginalPractice', 'score') ?? true);
     final isUserImported = forceUserImported ||
         (_readOptionalBool(map, 'isUserImported', 'score') ?? false);
 
@@ -559,7 +559,10 @@ bool _isDaCoda(String? note) {
 
 bool _isDalSegno(String? note) {
   if (note == null) return false;
-  final normalized = note.toLowerCase();
+  final normalized = note.toLowerCase().trim();
+  if (normalized.startsWith('(') || normalized.contains('straight')) {
+    return false;
+  }
   return normalized.contains('d.s.') || normalized.contains('dal segno');
 }
 

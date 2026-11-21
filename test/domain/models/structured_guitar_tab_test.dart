@@ -169,10 +169,14 @@ void main() {
         ],
       );
 
-      expect(expandStructuredTabTimeline(score, maxMeasureVisits: 1),
-          hasLength(1));
-      expect(expandStructuredTabTimeline(score, maxMeasureVisits: 5),
-          hasLength(2));
+      expect(
+        expandStructuredTabTimeline(score, maxMeasureVisits: 1),
+        hasLength(1),
+      );
+      expect(
+        expandStructuredTabTimeline(score, maxMeasureVisits: 5),
+        hasLength(2),
+      );
     });
   });
 }

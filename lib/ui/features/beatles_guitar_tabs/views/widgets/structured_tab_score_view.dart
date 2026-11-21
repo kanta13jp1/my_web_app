@@ -241,7 +241,7 @@ class _StructuredTabRowPainter extends CustomPainter {
         lightSheet ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563);
     final barlineColor =
         lightSheet ? const Color(0xFF111827) : DesignTokens.textSecondary;
-    final accentColor = DesignTokens.orange;
+    const accentColor = DesignTokens.orange;
     final markTextColor =
         lightSheet ? const Color(0xFF111827) : DesignTokens.textPrimary;
 
@@ -273,7 +273,10 @@ class _StructuredTabRowPainter extends CustomPainter {
     for (var s = 0; s < 6; s++) {
       final y = _staffTop + s * _stringSpacing;
       canvas.drawLine(
-          Offset(0, y), Offset(geometry.staffRight, y), stringPaint);
+        Offset(0, y),
+        Offset(geometry.staffRight, y),
+        stringPaint,
+      );
     }
 
     // 左端閉じる線
@@ -459,7 +462,11 @@ class _StructuredTabRowPainter extends CustomPainter {
         canvas.drawRRect(
           RRect.fromRectAndRadius(
             Rect.fromLTWH(
-                x - 9, _staffTop - 6, 18, _staffBottom - _staffTop + 12),
+              x - 9,
+              _staffTop - 6,
+              18,
+              _staffBottom - _staffTop + 12,
+            ),
             const Radius.circular(4),
           ),
           Paint()..color = accentColor.withValues(alpha: 0.30),

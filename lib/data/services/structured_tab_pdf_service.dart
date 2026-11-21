@@ -94,7 +94,10 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
             pw.SizedBox(height: 8),
             for (var r = 0; r < rows.length; r++) ...<pw.Widget>[
               _buildSystemRow(
-                  score: score, measureIndices: rows[r], font: font),
+                score: score,
+                measureIndices: rows[r],
+                font: font,
+              ),
               if (r != rows.length - 1) pw.SizedBox(height: 8),
             ],
           ];
@@ -152,8 +155,8 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
                 const double rowH = 9.0;
                 const int stringCount = 6;
                 const int fretWireCount = 5;
-                final rightX = leftPad + (stringCount - 1) * colW;
-                final bottomY = topPad + (fretWireCount - 1) * rowH;
+                const rightX = leftPad + (stringCount - 1) * colW;
+                const bottomY = topPad + (fretWireCount - 1) * rowH;
 
                 canvas
                   ..setStrokeColor(PdfColors.grey700)
@@ -169,7 +172,8 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
                   final isNut = f == 0 && chord.baseFret == 1;
                   canvas
                     ..setStrokeColor(
-                        isNut ? PdfColors.black : PdfColors.grey700)
+                      isNut ? PdfColors.black : PdfColors.grey700,
+                    )
                     ..setLineWidth(isNut ? 2.2 : 0.7)
                     ..drawLine(leftPad, py(y), rightX, py(y))
                     ..strokePath();
@@ -204,7 +208,7 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
                   final x = leftPad + s * colW;
                   if (fret == -1) {
                     const double r = 2.0;
-                    final cy = topPad - 6.0;
+                    const cy = topPad - 6.0;
                     canvas
                       ..setStrokeColor(PdfColors.black)
                       ..setLineWidth(0.9)
@@ -500,7 +504,13 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
 
               if (measure.repeatStart) {
                 _pdfRepeatStart(
-                    canvas, py, left, staffTop, staffBottom, stringSpacing);
+                  canvas,
+                  py,
+                  left,
+                  staffTop,
+                  staffBottom,
+                  stringSpacing,
+                );
               } else if (sIdx > 0 || hasTimeSig) {
                 canvas
                   ..setStrokeColor(PdfColors.black)
@@ -511,7 +521,13 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
 
               if (measure.repeatEnd) {
                 _pdfRepeatEnd(
-                    canvas, py, right, staffTop, staffBottom, stringSpacing);
+                  canvas,
+                  py,
+                  right,
+                  staffTop,
+                  staffBottom,
+                  stringSpacing,
+                );
               } else if (isLastMeasure) {
                 _pdfFinalDoubleBar(canvas, py, right, staffTop, staffBottom);
               } else {
@@ -868,8 +884,14 @@ class LocalStructuredTabPdfService implements StructuredTabPdfService {
       ..setLineWidth(1.2)
       ..moveTo(cx + 2.5, py(cy - 4.5))
       ..curveTo(cx - 3.0, py(cy - 5.0), cx - 2.5, py(cy - 1.0), cx, py(cy))
-      ..curveTo(cx + 2.5, py(cy + 1.0), cx + 3.0, py(cy + 5.0), cx - 2.5,
-          py(cy + 4.5))
+      ..curveTo(
+        cx + 2.5,
+        py(cy + 1.0),
+        cx + 3.0,
+        py(cy + 5.0),
+        cx - 2.5,
+        py(cy + 4.5),
+      )
       ..strokePath()
       ..drawLine(cx - 4.5, py(cy + 4.5), cx + 4.5, py(cy - 4.5))
       ..strokePath()
