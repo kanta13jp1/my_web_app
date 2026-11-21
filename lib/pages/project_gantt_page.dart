@@ -2703,6 +2703,190 @@ class _MyProjectsTab extends StatelessWidget {
 
 // ── MS Project 風ガントチャートタイムライン ─────────────────────────────────
 
+class GanttColumnToggleBar extends StatelessWidget {
+  final Map<String, bool> colVisible;
+  final String? filterInstance;
+  final void Function(String key, bool visible) onToggleColumn;
+  final ValueChanged<String?> onFilterInstance;
+
+  const GanttColumnToggleBar({
+    super.key,
+    required this.colVisible,
+    required this.filterInstance,
+    required this.onToggleColumn,
+    required this.onFilterInstance,
+  });
+
+  static const Map<String, String> _labels = <String, String>{
+    '#': '#',
+    'task': 'タスク',
+    'startDate': '開始',
+    'endDate': '完了',
+    'instance': '担当',
+    'progress': '進捗',
+    'remaining': '次作業',
+    'depends': 'ブロック',
+    'recovery': '状態/対処',
+    'flags': '注意',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFF0F0F18),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          const Text(
+            '列表示:',
+            style: TextStyle(
+              color: Color(0xFFB0B0C0),
+              fontSize: 10,
+              height: 1.5,
+            ),
+          ),
+          ..._labels.entries.map((e) {
+            final on = colVisible[e.key] ?? true;
+            return FilterChip(
+              label: Text(
+                e.value,
+                style: TextStyle(
+                  color: on ? Colors.white : const Color(0xFF9CA3AF),
+                  fontSize: 10,
+                  height: 1.3,
+                ),
+              ),
+              selected: on,
+              onSelected: (v) => onToggleColumn(e.key, v),
+              selectedColor: const Color(0xFF3D5AFE).withValues(alpha: 0.4),
+              backgroundColor: const Color(0xFF1A1A24),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+            );
+          }),
+          const SizedBox(width: 8),
+          const Text(
+            '担当:',
+            style: TextStyle(
+              color: Color(0xFFB0B0C0),
+              fontSize: 10,
+              height: 1.5,
+            ),
+          ),
+          ..._activeWbsInstanceFilters.map((filter) {
+            final on = filterInstance == filter.value;
+            return FilterChip(
+              label: Text(
+                filter.value == null ? '全て' : filter.label,
+                style: TextStyle(
+                  color: on ? Colors.black : filter.color,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  height: 1.3,
+                ),
+              ),
+              selected: on,
+              onSelected: (_) => onFilterInstance(on ? null : filter.value),
+              selectedColor: filter.color,
+              backgroundColor: filter.color.withValues(alpha: 0.08),
+              side: BorderSide(color: filter.color.withValues(alpha: 0.4)),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class GanttMilestoneRiskBanner extends StatelessWidget {
+  final List<Map<String, dynamic>> warnings;
+
+  const GanttMilestoneRiskBanner({
+    super.key,
+    required this.warnings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFF1A0A0A),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.warning_amber, color: Color(0xFFEF4444), size: 18),
+              SizedBox(width: 8),
+              Text(
+                'マイルストーン警告',
+                style: TextStyle(
+                  color: Color(0xFFEF4444),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          ...warnings.map(_riskChip),
+        ],
+      ),
+    );
+  }
+
+  Widget _riskChip(Map<String, dynamic> r) {
+    final code = r['code'] as String? ?? '?';
+    final status = r['risk_status'] as String? ?? '';
+    final daysLeft = (r['days_left'] as num?)?.toInt() ?? 0;
+    final remaining = (r['remaining_hours'] as num?)?.toDouble() ?? 0.0;
+    final available = (r['available_hours'] as num?)?.toDouble() ?? 0.0;
+    final overdue = (r['overdue_tasks'] as num?)?.toInt() ?? 0;
+    final color = switch (status) {
+      'critical_overdue' => const Color(0xFFEF4444),
+      'over_capacity' => const Color(0xFFF97316),
+      'tight' => const Color(0xFFEAB308),
+      _ => const Color(0xFF6B7280),
+    };
+    final label = switch (status) {
+      'critical_overdue' => '🚨 期限超過 ($overdue 件)',
+      'over_capacity' =>
+        '⚠ 工数超過 ${remaining.toInt()}h > 利用可能 ${available.toInt()}h',
+      'tight' => '⏳ 残 $daysLeft 日 (タイト)',
+      _ => 'OK',
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        '$code: $label',
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          height: 1.5,
+        ),
+      ),
+    );
+  }
+}
+
 class _GanttTimelineTab extends StatefulWidget {
   final List<WbsMilestone> milestones;
   final List<WbsTask> tasks;
@@ -3084,7 +3268,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           // Win版#131 part 22: 列表示制御 + Gantt instance filter
           _buildColumnToggleBar(),
           // Win版#131 part 13: マイルストーン risk warning banner
-          if (_riskWarnings.isNotEmpty) _buildRiskBanner(),
+          if (_riskWarnings.isNotEmpty)
+            GanttMilestoneRiskBanner(warnings: _riskWarnings),
           Expanded(
             child: ScrollConfiguration(
               behavior: const _GanttDragScrollBehavior(),
@@ -3243,77 +3428,6 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             r['risk_status'] == 'tight',
       )
       .toList();
-
-  Widget _buildRiskBanner() {
-    return Container(
-      color: const Color(0xFF1A0A0A),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_amber, color: Color(0xFFEF4444), size: 18),
-          const SizedBox(width: 8),
-          const Text(
-            'マイルストーン警告',
-            style: TextStyle(
-              color: Color(0xFFEF4444),
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(children: _riskWarnings.map(_riskChip).toList()),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _riskChip(Map<String, dynamic> r) {
-    final code = r['code'] as String? ?? '?';
-    final status = r['risk_status'] as String? ?? '';
-    final daysLeft = (r['days_left'] as num?)?.toInt() ?? 0;
-    final remaining = (r['remaining_hours'] as num?)?.toDouble() ?? 0.0;
-    final available = (r['available_hours'] as num?)?.toDouble() ?? 0.0;
-    final overdue = (r['overdue_tasks'] as num?)?.toInt() ?? 0;
-    final color = switch (status) {
-      'critical_overdue' => const Color(0xFFEF4444),
-      'over_capacity' => const Color(0xFFF97316),
-      'tight' => const Color(0xFFEAB308),
-      _ => const Color(0xFF6B7280),
-    };
-    final label = switch (status) {
-      'critical_overdue' => '🚨 期限超過 ($overdue 件)',
-      'over_capacity' =>
-        '⚠ 工数超過 ${remaining.toInt()}h > 利用可能 ${available.toInt()}h',
-      'tight' => '⏳ 残 $daysLeft 日 (タイト)',
-      _ => 'OK',
-    };
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.5)),
-        ),
-        child: Text(
-          '$code: $label',
-          style: TextStyle(
-            color: color,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            height: 1.5,
-          ),
-        ),
-      ),
-    );
-  }
 
   String _buildLocalAiReport() {
     final tasks = _orderedTasks;
@@ -3615,145 +3729,12 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
 
   // Win版#131 part 22: 列表示制御 + Gantt instance filter chips
   Widget _buildColumnToggleBar() {
-    final labels = {
-      '#': '#',
-      'task': 'タスク',
-      'startDate': '開始',
-      'endDate': '完了',
-      'instance': '担当',
-      'progress': '進捗',
-      'remaining': '次作業',
-      'depends': 'ブロック',
-      'recovery': '状態/対処',
-      'flags': '注意',
-    };
-    return Container(
-      color: const Color(0xFF0F0F18),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            const Text(
-              '列表示:',
-              style: TextStyle(
-                color: Color(0xFFB0B0C0),
-                fontSize: 10,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(width: 6),
-            ...labels.entries.map((e) {
-              final on = _colVisible[e.key] ?? true;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: FilterChip(
-                  label: Text(
-                    e.value,
-                    style: TextStyle(
-                      color: on ? Colors.white : const Color(0xFF707080),
-                      fontSize: 10,
-                      height: 1.3,
-                    ),
-                  ),
-                  selected: on,
-                  onSelected: (v) => setState(() => _colVisible[e.key] = v),
-                  selectedColor: const Color(0xFF3D5AFE).withValues(alpha: 0.4),
-                  backgroundColor: const Color(0xFF1A1A24),
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                ),
-              );
-            }),
-            const SizedBox(width: 12),
-            const Text(
-              '担当:',
-              style: TextStyle(
-                color: Color(0xFFB0B0C0),
-                fontSize: 10,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(width: 6),
-            ..._activeWbsInstanceFilters.map((filter) {
-              final on = widget.filterInstance == filter.value;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: FilterChip(
-                  label: Text(
-                    filter.value == null ? '全て' : filter.label,
-                    style: TextStyle(
-                      color: on ? Colors.black : filter.color,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3,
-                    ),
-                  ),
-                  selected: on,
-                  onSelected: (_) =>
-                      widget.onFilterInstance(on ? null : filter.value),
-                  selectedColor: filter.color,
-                  backgroundColor: filter.color.withValues(alpha: 0.08),
-                  side: BorderSide(color: filter.color.withValues(alpha: 0.4)),
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                ),
-              );
-            }),
-            ...[
-              ('全', null, const Color(0xFFFF6B35)),
-              ('VS', 'vscode', const Color(0xFF007ACC)),
-              ('Codex', 'codex', const Color(0xFF10B981)),
-              ('Gemini', 'gemini', const Color(0xFF4285F4)),
-              ('Co-pilot', 'co-pilot', const Color(0xFF111827)),
-              ('User', 'user', const Color(0xFFEF4444)),
-              ('Win', 'win', const Color(0xFF00BCF2)),
-              ('PS#1', 'ps1', const Color(0xFF4B0082)),
-              ('PS#2', 'ps2', const Color(0xFF6A0DAD)),
-              ('PS#3', 'ps3', const Color(0xFF8B5CF6)),
-              ('PS#4', 'ps4', const Color(0xFFA855F7)),
-              ('PS#5', 'ps5', const Color(0xFFC084FC)),
-              ('PS#6', 'ps6', const Color(0xFFDAB6FC)),
-              ('WEB', 'web', const Color(0xFF22C55E)),
-              ('📱', 'mobile', const Color(0xFFF97316)),
-              ('⏰', 'schedule', const Color(0xFFEAB308)),
-              ('🔧', 'gha', const Color(0xFF6B7280)),
-            ].where((_) => false).map((t) {
-              if (t.$2 != null &&
-                  !_activeWbsInstanceFilters.any(
-                    (filter) => filter.value == t.$2,
-                  )) {
-                return const SizedBox.shrink();
-              }
-              final on = widget.filterInstance == t.$2;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: FilterChip(
-                  label: Text(
-                    t.$1,
-                    style: TextStyle(
-                      color: on ? Colors.black : t.$3,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3,
-                    ),
-                  ),
-                  selected: on,
-                  onSelected: (_) => widget.onFilterInstance(on ? null : t.$2),
-                  selectedColor: t.$3,
-                  backgroundColor: t.$3.withValues(alpha: 0.08),
-                  side: BorderSide(color: t.$3.withValues(alpha: 0.4)),
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
+    return GanttColumnToggleBar(
+      colVisible: _colVisible,
+      filterInstance: widget.filterInstance,
+      onToggleColumn: (key, visible) =>
+          setState(() => _colVisible[key] = visible),
+      onFilterInstance: widget.onFilterInstance,
     );
   }
 
@@ -3797,7 +3778,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           if (invertedCount > 0) ...[
             const SizedBox(width: 8),
             Tooltip(
-              message: '開始予定が完了予定より後の元データを、画面では開始<=完了に補正表示しています。',
+              message: '開始予定が完了予定より後の元データを、画面では開始≦完了に補正表示しています。',
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
