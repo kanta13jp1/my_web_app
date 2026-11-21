@@ -18116,6 +18116,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         child: InvestmentAssetManagementPanel(
           repository: _investmentAssetRepository,
           userId: _supabase.auth.currentUser?.id,
+          currentOwnerId: () => _supabase.auth.currentUser?.id,
+          ownerChanges: _supabase.auth.onAuthStateChange
+              .map((event) => event.session?.user.id),
           currencyFormatter: (value) => _formatYen(value),
         ),
       ),
