@@ -2529,6 +2529,30 @@ class _TaskRow extends StatelessWidget {
 
 // ── マイプロジェクト タブ ─────────────────────────────────────────────────────
 
+/// `マイプロジェクト` タブの入力欄装飾。
+/// Light テーマの `InputDecorationTheme(fillColor: Colors.white)` に上書きされて
+/// 白背景に白文字・薄いヒント文字にならないよう、ダーク背景と高コントラストなヒント色を明示する。
+InputDecoration buildMyProjectInputDecoration(String hint) {
+  return InputDecoration(
+    hintText: hint,
+    hintStyle: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+    filled: true,
+    fillColor: const Color(0xFF121212),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Color(0xFF4B5563)),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Color(0xFF4B5563)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Color(0xFFFF6B35)),
+    ),
+  );
+}
+
 class _MyProjectsTab extends StatelessWidget {
   final List<Map<String, dynamic>> projects;
   final bool loading;
@@ -2580,14 +2604,16 @@ class _MyProjectsTab extends StatelessWidget {
                   const SizedBox(height: 8),
                   TextField(
                     controller: nameCtrl,
+                    cursorColor: const Color(0xFFFF6B35),
                     style: const TextStyle(color: Colors.white, height: 1.5),
-                    decoration: _inputDec('プロジェクト名'),
+                    decoration: buildMyProjectInputDecoration('プロジェクト名'),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: descCtrl,
+                    cursorColor: const Color(0xFFFF6B35),
                     style: const TextStyle(color: Colors.white, height: 1.5),
-                    decoration: _inputDec('説明 (任意)'),
+                    decoration: buildMyProjectInputDecoration('説明 (任意)'),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -2596,12 +2622,14 @@ class _MyProjectsTab extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFF333333)),
+                            color: const Color(0xFF121212),
+                            border: Border.all(color: const Color(0xFF4B5563)),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: DropdownButton<String>(
                             value: status,
                             dropdownColor: const Color(0xFF1E1E1E),
+                            iconEnabledColor: const Color(0xFFD1D5DB),
                             style: const TextStyle(
                               color: Colors.white,
                               height: 1.5,
@@ -2654,7 +2682,10 @@ class _MyProjectsTab extends StatelessWidget {
                     ? const Center(
                         child: Text(
                           'プロジェクトはまだありません',
-                          style: TextStyle(color: Colors.white38, height: 1.5),
+                          style: TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            height: 1.5,
+                          ),
                         ),
                       )
                     : ListView.builder(
@@ -2685,7 +2716,7 @@ class _MyProjectsTab extends StatelessWidget {
                               subtitle: Text(
                                 p['description'] as String? ?? '',
                                 style: const TextStyle(
-                                  color: Colors.white54,
+                                  color: Color(0xFFD1D5DB),
                                   fontSize: 12,
                                   height: 1.5,
                                 ),
@@ -2736,23 +2767,6 @@ class _MyProjectsTab extends StatelessWidget {
       ),
     );
   }
-
-  InputDecoration _inputDec(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white38, height: 1.5),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF333333)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF333333)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFFF6B35)),
-        ),
-      );
 }
 
 // ── MS Project 風ガントチャートタイムライン ─────────────────────────────────
