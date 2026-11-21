@@ -341,7 +341,7 @@ function drawFrame(t) {
   hctx.font = '700 13px "Consolas", monospace';
   hctx.fillText('SPECTRAL RAYTRACER  |  7 WAVELENGTHS (380-740nm)  |  ASSETS: 0', 38, 42);
   hctx.fillStyle = '#F8FAFC';
-  hctx.fillText(`MODE: ${phase}  |  ${t.toFixed(2)}s / 24.00s`, 38, 63);
+  hctx.fillText(`MODE: ${phase}  |  LIVE OPTICS · ${t.toFixed(1)}s`, 38, 63);
   hctx.restore();
 }
 
@@ -353,25 +353,42 @@ window.stepPrism = (dt) => {
 drawFrame(0);
 if (!window.__RECORDING__) {
   let paused = false;
+  let dragging = false;
+  let dragX = 0;
+  glCanvas.addEventListener('pointerdown', (e) => { dragging = true; dragX = e.clientX; });
+  window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    simT = (simT + (e.clientX - dragX) * 0.04 + 24.0) % 24.0;
+    dragX = e.clientX;
+    drawFrame(simT);
+  });
+  window.addEventListener('pointerup', () => { dragging = false; });
   window.addEventListener('DOMContentLoaded', () => {
     if (!window.NeonShell) return;
+    window.NeonShell.setHint('左右ドラッグで分光角度・光学フェーズを操作 · 上ボタンで3光学モード切替');
+    window.NeonShell.addControl('01 プリズム', () => { simT = 2.0; drawFrame(simT); });
+    window.NeonShell.addControl('02 結晶レンズ', () => { simT = 11.0; drawFrame(simT); });
+    window.NeonShell.addControl('03 デュアル共鳴', () => { simT = 19.0; drawFrame(simT); });
     window.NeonShell.addControl('⏸ 一時停止', (btn) => {
       paused = !paused;
       btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
       btn.classList.toggle('active', paused);
     });
-    window.NeonShell.addControl('↻ 最初から', () => { simT = 0; });
+    window.NeonShell.addControl('↻ 最初から', () => { simT = 0; drawFrame(simT); });
   });
   let last = performance.now();
   function loop(now) {
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
-    if (!paused) window.stepPrism(dt);
+    if (!paused && !dragging) {
+      simT = (simT + dt) % 24.0;
+      drawFrame(simT);
+    }
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
 }
 </script>
-<script src="../demo-shell.js?v=20261120-32"></script>
+<script src="../demo-shell.js?v=20261120-33"></script>
 </body>
 </html>

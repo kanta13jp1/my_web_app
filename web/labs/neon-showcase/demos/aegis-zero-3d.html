@@ -681,16 +681,19 @@
     trailL: [], trailR: []
   };
 
-  // Interactive Keyboard Controls (Playable immediately in browser!)
+  // Interactive Keyboard & Pointer Controls (Playable immediately in browser!)
   const keys = {};
   let manualControl = !isRecording;
+  let pointerFire = false;
   window.addEventListener('keydown', (e) => {
     keys[e.code] = true;
     if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight','KeyQ','KeyE'].includes(e.code)) {
       manualControl = true;
     }
-    if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !isRecording) {
-      fireHomingSalvo(4);
+    if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !isRecording && boss.alive) {
+      const isOd = player.overdrive >= 99;
+      if (isOd) player.overdrive = 0;
+      fireHomingSalvo(isOd ? 8 : 4, isOd);
     }
     if ((e.code === 'KeyQ' || e.code === 'KeyE') && player.barrelTimer <= 0) {
       player.barrelTimer = 0.72;
@@ -699,6 +702,22 @@
     }
   });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+  glCanvas.addEventListener('pointerdown', (e) => {
+    if (isRecording) return;
+    manualControl = true;
+    if (e.button === 2) {
+      if (boss.alive) {
+        const isOd = player.overdrive >= 99;
+        if (isOd) player.overdrive = 0;
+        fireHomingSalvo(isOd ? 8 : 4, isOd);
+      }
+    } else {
+      pointerFire = true;
+    }
+  });
+  window.addEventListener('pointerup', () => { pointerFire = false; });
+  window.addEventListener('pointercancel', () => { pointerFire = false; });
+  glCanvas.addEventListener('contextmenu', (e) => { e.preventDefault(); });
 
   // Boss Dreadnought ("LEVIATHAN-IX") State
   const boss = {
@@ -851,6 +870,7 @@
     screenFlash = 1.0;
     player.score += 25000;
     player.combo += 12;
+    window.NeonAudio?.sfx('explosion');
     spawnExplosion(boss.x, boss.y, boss.z, 380, 2.8, 'supernova');
     shockwaves.push({ x: boss.x, y: boss.y, z: boss.z, r: 1.5, maxR: 34.0, life: 1.55, maxLife: 1.55, col: [1.0, 0.85, 0.35] });
     shockwaves.push({ x: boss.x, y: boss.y, z: boss.z, r: 0.8, maxR: 22.0, life: 1.15, maxLife: 1.15, col: [0.22, 0.92, 1.0] });
@@ -930,29 +950,30 @@
 
     // Boss Attack Choreography (Sweeping Death Beams & Plasma Orbs)
     if (boss.alive) {
-      if (simTime >= 5.7 && simTime < 6.6) {
-        boss.beamCharge = (simTime - 5.7) / 0.9;
+      const atkT = (manualControl && !isRecording) ? (simTime % 18.0) : simTime;
+      if (atkT >= 5.7 && atkT < 6.6) {
+        boss.beamCharge = (atkT - 5.7) / 0.9;
         boss.beamActive = 0;
         boss.dualBeam = false;
-      } else if (simTime >= 6.6 && simTime < 8.8) {
+      } else if (atkT >= 6.6 && atkT < 8.8) {
         boss.beamCharge = 1.0;
-        boss.beamActive = smoothstep(6.6, 6.8, simTime) * (1.0 - smoothstep(8.5, 8.8, simTime));
-        boss.beamSweep = lerp(-12.5, 12.5, (simTime - 6.6) / 2.2);
-      } else if (simTime >= 12.6 && simTime < 13.4) {
-        boss.beamCharge = (simTime - 12.6) / 0.8;
+        boss.beamActive = smoothstep(6.6, 6.8, atkT) * (1.0 - smoothstep(8.5, 8.8, atkT));
+        boss.beamSweep = lerp(-12.5, 12.5, (atkT - 6.6) / 2.2);
+      } else if (atkT >= 12.6 && atkT < 13.4) {
+        boss.beamCharge = (atkT - 12.6) / 0.8;
         boss.beamActive = 0;
         boss.dualBeam = true;
-      } else if (simTime >= 13.4 && simTime < 16.2) {
+      } else if (atkT >= 13.4 && atkT < 16.2) {
         boss.beamCharge = 1.0;
-        boss.beamActive = smoothstep(13.4, 13.6, simTime) * (1.0 - smoothstep(15.9, 16.2, simTime));
-        boss.beamSweep = Math.sin((simTime - 13.4) * 1.9) * 10.5;
+        boss.beamActive = smoothstep(13.4, 13.6, atkT) * (1.0 - smoothstep(15.9, 16.2, atkT));
+        boss.beamSweep = Math.sin((atkT - 13.4) * 1.9) * 10.5;
       } else {
         boss.beamCharge = Math.max(0, boss.beamCharge - dt * 3.0);
         boss.beamActive = 0;
       }
 
       // Boss fires glowing crimson plasma orbs periodically
-      if (simTime < 19.5 && rng() < dt * 2.2) {
+      if (((manualControl && !isRecording) || simTime < 19.5) && rng() < dt * 2.2) {
         enemyOrbs.push({
           x: boss.x + (rng() - 0.5) * 6.0,
           y: boss.y + (rng() - 0.5) * 3.0,
@@ -976,7 +997,7 @@
       player.vy = lerp(player.vy, iy * 9.5, dt * 7);
       player.x = clamp(player.x + player.vx * dt, -8.5, 8.5);
       player.y = clamp(player.y + player.vy * dt, -4.2, 4.8);
-      if (keys['Space'] && player.fireCooldown <= 0 && boss.alive) {
+      if ((keys['Space'] || pointerFire) && player.fireCooldown <= 0 && boss.alive) {
         firePlayerTwinLaser();
         player.fireCooldown = 0.13;
       }
@@ -1048,8 +1069,8 @@
     }
 
     player.fireCooldown = Math.max(0, player.fireCooldown - dt);
-    if (boss.alive && simTime < 19.5) {
-      player.overdrive = Math.min(100, player.overdrive + dt * 2.15);
+    if (boss.alive && ((manualControl && !isRecording) || simTime < 19.5)) {
+      player.overdrive = Math.min(100, player.overdrive + dt * (manualControl && !isRecording ? 4.2 : 2.15));
     }
 
     // Smooth starfighter banking + 360° barrel roll
@@ -1096,9 +1117,8 @@
           for (const py of boss.pylons) {
             if (!py.alive) continue;
             if (Math.hypot(b.x - py.wx, b.y - py.wy, b.z - py.wz) < 2.2) {
-              // Keep Pylons 2 & 3 alive until Salvo #2 (~9.6s) for tight music-synced destruction!
-              const floorHp = (py.id >= 2 && simTime < 9.5) ? 45 : 0;
-              py.hp = Math.max(floorHp, py.hp - 6.5);
+              const floorHp = (manualControl && !isRecording) ? 0 : ((py.id >= 2 && simTime < 9.5) ? 45 : 0);
+              py.hp = Math.max(floorHp, py.hp - (manualControl && !isRecording ? 11.5 : 6.5));
               py.flash = 1.0;
               player.score += 120;
               spawnExplosion(b.x, b.y, b.z, 10, 0.55, 'cyan');
@@ -1108,14 +1128,14 @@
           }
         } else if (boss.phase === 2) {
           if (Math.hypot(b.x - boss.x, b.y - boss.y, b.z - (boss.z + 1.2)) < 3.4) {
-            // Smooth continuous Phase 2 HP drain from 540 -> 140 leading into 19.55s Overdrive finisher!
-            const phase2Floor = simTime < 19.5 ? Math.max(150, 540 - (simTime - 10.6) * 42) : 20;
-            boss.hp = Math.max(phase2Floor, boss.hp - 5.2);
+            const phase2Floor = (manualControl && !isRecording) ? 0 : (simTime < 19.5 ? Math.max(150, 540 - (simTime - 10.6) * 42) : 20);
+            boss.hp = Math.max(phase2Floor, boss.hp - (manualControl && !isRecording ? 9.5 : 5.2));
             boss.hitFlash = 0.72;
             player.score += 250;
             player.combo = Math.min(48, player.combo + 1);
             spawnExplosion(b.x, b.y, b.z, 14, 0.65, 'fire');
             if (rng() < 0.16) addPopup(b.x, b.y + 0.8, b.z, '+450 CRIT', '#fbbf24');
+            if (manualControl && !isRecording && boss.hp <= 0) detonateBoss();
             hit = true;
           }
         }
@@ -1157,12 +1177,14 @@
           spawnExplosion(m.x, m.y, m.z, 36, 0.95, 'fire');
           if (m.targetPylon.hp <= 0) destroyPylon(m.targetPylon);
         } else {
-          boss.hp = Math.max(m.overdrive ? 8 : 140, boss.hp - (m.overdrive ? 26 : 24));
+          const missileFloor = (manualControl && !isRecording) ? 0 : (m.overdrive ? 8 : 140);
+          boss.hp = Math.max(missileFloor, boss.hp - (m.overdrive ? 36 : 28));
           boss.hitFlash = 1.0;
           camShake = Math.max(camShake, 0.35);
           spawnExplosion(m.x, m.y, m.z, 45, 1.1, 'fire');
           player.score += 1250;
           if (rng() < 0.45) addPopup(m.x, m.y + 1.0, m.z, m.overdrive ? 'OVERDRIVE +1,250' : '+800 HIT', '#fbbf24');
+          if (manualControl && !isRecording && boss.hp <= 0) detonateBoss();
         }
         missiles.splice(i, 1);
       } else if (m.life <= 0) {
@@ -1656,11 +1678,11 @@
   if (!isRecording) {
     window.addEventListener('DOMContentLoaded', () => {
       if (!window.NeonShell) return;
-      window.NeonShell.setHint('手動プレイ中: WASD/矢印:移動 · Space:レーザー · Shift:誘導ミサイル · Q/E:バレルロール');
+      window.NeonShell.setHint('手動プレイ中: WASD/矢印:移動 · Space/クリック:レーザー · Shift/右クリック:誘導ミサイル · Q/E:ロール');
       const autoBtn = window.NeonShell.addControl('🤖 オートデモ', (btn) => {
         manualControl = !manualControl;
         btn.classList.toggle('active', !manualControl);
-        window.NeonShell.setHint(manualControl ? '手動プレイ中: WASD/矢印:移動 · Space:レーザー · Shift:誘導ミサイル · Q/E:ロール' : 'オートデモ再生中（キーまたは下ボタンで手動操縦）');
+        window.NeonShell.setHint(manualControl ? '手動プレイ中: WASD/矢印:移動 · Space/クリック:レーザー · Shift/右クリック:誘導ミサイル · Q/E:ロール' : 'オートデモ再生中（キー/クリックまたは下ボタンで手動操縦）');
       });
       window.NeonShell.addControl('↻ リスタート', () => window.location.reload());
       const setK = (code, val) => {
@@ -1673,13 +1695,13 @@
         { label: '▼ 下', onDown: () => setK('ArrowDown', true), onUp: () => setK('ArrowDown', false) },
         { label: '▶ 右', onDown: () => setK('ArrowRight', true), onUp: () => setK('ArrowRight', false) },
         { label: '🔥 レーザー', onDown: () => setK('Space', true), onUp: () => setK('Space', false) },
-        { label: '🚀 ミサイル', onDown: () => { manualControl = true; autoBtn.classList.remove('active'); fireHomingSalvo(4); } },
+        { label: '🚀 ミサイル', onDown: () => { manualControl = true; autoBtn.classList.remove('active'); if (boss.alive) { const isOd = player.overdrive >= 99; if (isOd) player.overdrive = 0; fireHomingSalvo(isOd ? 8 : 4, isOd); } } },
         { label: '🌀 ロール', onDown: () => { manualControl = true; autoBtn.classList.remove('active'); if (player.barrelTimer <= 0) { player.barrelTimer = 0.72; player.barrelDir = 1; window.NeonAudio?.sfx('roll'); } } },
       ]);
     });
     let last = performance.now();
     function loop(now) {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
       last = now;
       if (!manualControl && simTime >= TOTAL_DEMO) {
         location.reload();
@@ -1692,6 +1714,6 @@
   }
 })();
 </script>
-<script src="../demo-shell.js?v=20261120-32"></script>
+<script src="../demo-shell.js?v=20261120-33"></script>
 </body>
 </html>

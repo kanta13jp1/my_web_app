@@ -53,25 +53,38 @@ const Map<String, String> _consolidatedFeatureLabels = <String, String>{
   '/sound-bloom': '音と光の庭 · SOUND BLOOM',
   '/aero-lab': '3D実験室 · AERO LAB',
   '/neon-showcase': 'Gemini 4 作品館 · NEON SHOWCASE',
+  '/ai-observability': 'AI 可観測性',
   '/ai-writing-assistant': 'AI文章・要約アシスタント',
   '/ai-university-toeic': 'AI大学 TOEIC対策',
   '/art-museums': '全国の美術館',
   '/asset-management': '資産・家計管理',
   '/autonomous-ops-console': '自律オペレーションコンソール',
+  '/cfo-office': '財務・資産管理 (CFO)',
   '/custom-task-list': 'AI カスタムタスクリスト',
   '/focus-timer': '集中タイマー',
+  '/import': 'データインポート',
   '/life-goals': '人生目標管理',
   '/local-election-700': '2027 統一地方選 700必達管理室',
   '/daily-habits': '毎日の習慣',
   '/mind-map': 'マインドマップ',
+  '/note-editor': 'ノート作成',
+  '/note-navigation': 'ノートナビゲーション',
   '/one-in-two-out-assist': '1 In 2 Out UI整理アシスト',
+  '/philosophy': '自分株式会社とは',
+  '/privacy': 'プライバシーポリシー',
   '/procrastination-reset': '先延ばしリセット',
   '/proactive-form-check': '入力チェックアシスタント',
+  '/profile-settings': 'プロフィール設定',
+  '/project-gantt': 'WBS ガントチャート',
+  '/public-memos': '公開メモ',
+  '/reading-list': '読書リスト',
   '/referral': '友達招待・紹介プログラム',
   '/rewards': '実績・リワード',
   '/social-feed': 'MUSUBI ソーシャル',
   '/social-scheduler': 'SNS投稿スケジューラー',
   '/subscription-billing': 'サブスクリプション管理',
+  '/terms': '利用規約',
+  '/tokusho': '特定商取引法に基づく表記',
   '/travel-planner': '旅行プランナー',
   '/viral-ad-generator': 'バイラル広告ジェネレーター',
   '/digest-queue': '消化してから次へ',
@@ -103,6 +116,20 @@ String featureLabelForRoute(String route) {
   final path = parsedPath == null || parsedPath.isEmpty ? route : parsedPath;
   final canonicalPath = canonicalFeatureRoutePath(path);
   return _featureRouteLabels()[canonicalPath] ?? _titleFromRoute(canonicalPath);
+}
+
+/// 利用履歴のチップ表示用ラベルを解決する。
+///
+/// DB に過去の英語ラベルが残っていても、正規辞書に日本語ラベルがある場合は
+/// そちらを優先して表記ゆれや日英混在を防ぐ。
+String resolveRecentFeatureLabel(String route, String storedLabel) {
+  final parsedPath = Uri.tryParse(route)?.path;
+  final path = parsedPath == null || parsedPath.isEmpty ? route : parsedPath;
+  final canonicalPath = canonicalFeatureRoutePath(path);
+  final canonicalLabel = _featureRouteLabels()[canonicalPath];
+  if (canonicalLabel != null) return canonicalLabel;
+  final trimmed = storedLabel.trim();
+  return trimmed.isNotEmpty ? trimmed : _titleFromRoute(canonicalPath);
 }
 
 String _titleFromRoute(String route) {

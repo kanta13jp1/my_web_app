@@ -347,7 +347,7 @@
 
   let last = performance.now();
   function loop(now) {
-    const rawDt = Math.min(0.04, (now - last) / 1000);
+    const rawDt = Math.max(0, Math.min(0.04, (now - last) / 1000));
     last = now;
     const dt = rawDt * (slowMo ? 0.32 : 1.0);
 
@@ -433,6 +433,6 @@
   requestAnimationFrame(loop);
 })();
 </script>
-<script src="../demo-shell.js?v=20261120-32"></script>
+<script src="../demo-shell.js?v=20261120-33"></script>
 </body>
 </html>

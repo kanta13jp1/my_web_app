@@ -1,13 +1,13 @@
-import { renderBlenderArtwork, renderDemoArtwork } from './artworks.js?v=20261120-32';
+import { renderBlenderArtwork, renderDemoArtwork } from './artworks.js?v=20261120-34';
 import {
   BLENDER_WORKS,
   CONCEPT_PLANS,
   LIVE_DEMOS,
   VIRAL_LAWS,
   X_BENCHMARKS,
-} from './catalog.js?v=20261120-32';
+} from './catalog.js?v=20261120-34';
 
-const ASSET_VER = '20261120-32';
+const ASSET_VER = '20261120-34';
 const SAFE_SLUG = /^[a-z0-9-]+$/;
 const SAFE_X_URL = /^https:\/\/x\.com\/[A-Za-z0-9_]+\/status\/[0-9]+(?:\/[A-Za-z0-9_/-]*)?$/;
 
@@ -30,6 +30,8 @@ const tabButtons = Array.from(document.querySelectorAll('[data-tab]'));
 const modal = document.getElementById('demo-modal');
 const modalTitle = document.getElementById('modal-title');
 const modalSub = document.getElementById('modal-sub');
+const modalCopyLink = document.getElementById('modal-copy-link');
+const modalXLink = document.getElementById('modal-x-link');
 const modalOpenTab = document.getElementById('modal-open-tab');
 const modalFullscreen = document.getElementById('modal-fullscreen');
 const modalClose = document.getElementById('modal-close');
@@ -76,9 +78,18 @@ function matchesQuery(fields) {
   return fields.some((f) => String(f ?? '').toLowerCase().includes(q));
 }
 
+let modalExpanded = false;
+let currentModalShareUrl = '';
+let copyResetTimer = null;
+
+function isModalNativeFs() {
+  return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
 function syncModalFullscreenLabel() {
   if (!modalFullscreen) return;
-  const active = Boolean(document.fullscreenElement);
+  const active = isModalNativeFs() || modalExpanded;
+  modal.classList.toggle('modal-expanded', modalExpanded);
   modalFullscreen.textContent = active ? '⛶ フル画面解除' : '⛶ フル画面';
 }
 
@@ -86,9 +97,26 @@ function openDemoModal(slug) {
   const demo = LIVE_DEMOS.find((d) => d.slug === slug);
   if (!demo || !SAFE_SLUG.test(demo.slug)) return;
   const url = `./demos/${demo.slug}.html?v=${ASSET_VER}`;
+  currentModalShareUrl = new URL(`./demos/${demo.slug}.html`, window.location.href).href;
+  modalExpanded = false;
   modalTitle.textContent = demo.title;
   modalSub.textContent = `${demo.model} · ${demo.categoryLabel} · ${demo.sizeKb} KB · 外部ライブラリ 0`;
   modalOpenTab.href = url;
+  if (modalCopyLink) {
+    if (copyResetTimer) {
+      clearTimeout(copyResetTimer);
+      copyResetTimer = null;
+    }
+    modalCopyLink.textContent = '🔗 URLコピー';
+  }
+  if (modalXLink) {
+    if (demo.xUrl && SAFE_X_URL.test(demo.xUrl)) {
+      modalXLink.href = demo.xUrl;
+      modalXLink.hidden = false;
+    } else {
+      modalXLink.hidden = true;
+    }
+  }
   modal.hidden = false;
   syncModalFullscreenLabel();
   modalIframe.src = url;
@@ -97,9 +125,12 @@ function openDemoModal(slug) {
 
 function closeDemoModal() {
   if (modal.hidden) return;
-  if (document.fullscreenElement) {
-    document.exitFullscreen?.().catch(() => {});
+  modalExpanded = false;
+  if (isModalNativeFs()) {
+    const exitFn = document.exitFullscreen || document.webkitExitFullscreen;
+    Promise.resolve(exitFn?.call(document)).catch(() => {});
   }
+  syncModalFullscreenLabel();
   modalIframe.src = 'about:blank';
   modal.hidden = true;
 }
@@ -163,6 +194,11 @@ function renderDemos() {
             <div class="card-actions">
               <button type="button" class="btn btn-primary" data-launch-demo="${esc(safeSlug)}">今すぐ体験</button>
               <a class="btn btn-ghost" href="./demos/${esc(safeSlug)}.html?v=${ASSET_VER}" target="_blank" rel="noopener noreferrer">別タブ</a>
+              ${
+                d.xUrl && SAFE_X_URL.test(d.xUrl)
+                  ? `<a class="btn btn-ghost" data-demo-x="${esc(safeSlug)}" href="${esc(safeXUrl(d.xUrl))}" target="_blank" rel="noopener noreferrer">𝕏 投稿 ↗</a>`
+                  : ''
+              }
             </div>
           </div>
         </article>
@@ -220,6 +256,11 @@ function renderBlender() {
                 ? `<div class="card-actions">
                      <button type="button" class="btn btn-primary" data-launch-demo="${esc(b.demoSlug)}">今すぐライブ体験（WebGL2）</button>
                      <a class="btn btn-ghost" href="./demos/${esc(b.demoSlug)}.html?v=${ASSET_VER}" target="_blank" rel="noopener noreferrer">別タブ</a>
+                     ${
+                       b.xUrl && SAFE_X_URL.test(b.xUrl)
+                         ? `<a class="btn btn-ghost" href="${esc(safeXUrl(b.xUrl))}" target="_blank" rel="noopener noreferrer">𝕏 投稿 ↗</a>`
+                         : ''
+                     }
                    </div>`
                 : ''
             }
@@ -424,12 +465,70 @@ contentRoot.addEventListener('click', (e) => {
 });
 
 modalClose.addEventListener('click', closeDemoModal);
+if (modalCopyLink) {
+  modalCopyLink.addEventListener('click', async () => {
+    if (!currentModalShareUrl) return;
+    let copied = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(currentModalShareUrl);
+        copied = true;
+      }
+    } catch (_) {}
+    if (!copied) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = currentModalShareUrl;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        copied = document.execCommand('copy');
+        ta.remove();
+      } catch (_) {}
+    }
+    modalCopyLink.textContent = copied ? '✓ コピー済み' : 'コピー不可';
+    if (copyResetTimer) clearTimeout(copyResetTimer);
+    copyResetTimer = setTimeout(() => {
+      modalCopyLink.textContent = '🔗 URLコピー';
+      copyResetTimer = null;
+    }, 2000);
+  });
+}
 if (modalFullscreen) {
   modalFullscreen.addEventListener('click', () => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen?.().catch(() => {});
+    if (isModalNativeFs()) {
+      const exitFn = document.exitFullscreen || document.webkitExitFullscreen;
+      Promise.resolve(exitFn?.call(document)).finally(() => {
+        modalExpanded = false;
+        setTimeout(syncModalFullscreenLabel, 40);
+      });
+    } else if (modalExpanded) {
+      modalExpanded = false;
+      syncModalFullscreenLabel();
     } else {
-      modalStageWrap.requestFullscreen?.().catch(() => {});
+      const fsTarget = modal.querySelector('.modal-panel') || modalStageWrap;
+      const reqFn = fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen;
+      if (typeof reqFn === 'function') {
+        try {
+          const p = reqFn.call(fsTarget);
+          if (p && typeof p.then === 'function') {
+            p.then(() => setTimeout(syncModalFullscreenLabel, 40)).catch(() => {
+              modalExpanded = true;
+              syncModalFullscreenLabel();
+            });
+          } else {
+            setTimeout(syncModalFullscreenLabel, 80);
+          }
+        } catch (_) {
+          modalExpanded = true;
+          syncModalFullscreenLabel();
+        }
+      } else {
+        modalExpanded = true;
+        syncModalFullscreenLabel();
+      }
     }
   });
 }
@@ -440,12 +539,26 @@ modalIframe.addEventListener('load', () => {
     } catch (_) {}
   }
 });
-document.addEventListener('fullscreenchange', syncModalFullscreenLabel);
+document.addEventListener('fullscreenchange', () => {
+  if (!isModalNativeFs()) modalExpanded = false;
+  syncModalFullscreenLabel();
+});
+document.addEventListener('webkitfullscreenchange', () => {
+  if (!isModalNativeFs()) modalExpanded = false;
+  syncModalFullscreenLabel();
+});
 modal.addEventListener('click', (e) => {
   if (e.target === modal) closeDemoModal();
 });
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !document.fullscreenElement) closeDemoModal();
+  if (e.key === 'Escape' && !isModalNativeFs()) {
+    if (modalExpanded) {
+      modalExpanded = false;
+      syncModalFullscreenLabel();
+    } else {
+      closeDemoModal();
+    }
+  }
 });
 
 // Support deep-link query ?tab=benchmarks or ?demo=sea-train-3d

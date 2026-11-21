@@ -44,6 +44,7 @@ uniform float uSensorAngle;
 uniform float uSensorDist;
 uniform float uTurnSpeed;
 uniform float uMoveSpeed;
+uniform vec3 uMouse;
 out vec4 fragColor;
 
 float hash(vec2 p) {
@@ -81,6 +82,16 @@ void main() {
     angle -= uTurnSpeed;
   }
   angle += (rnd - 0.5) * 0.14;
+
+  if (uMouse.z > 0.5) {
+    vec2 toM = uMouse.xy - pos;
+    float md = length(toM);
+    if (md > 6.0 && md < 320.0) {
+      float targetA = atan(toM.y, toM.x);
+      float diffA = atan(sin(targetA - angle), cos(targetA - angle));
+      angle += clamp(diffA, -uTurnSpeed * 1.4, uTurnSpeed * 1.4);
+    }
+  }
 
   pos += vec2(cos(angle), sin(angle)) * uMoveSpeed;
 
@@ -236,6 +247,8 @@ const trails = [
 
 let agIdx = 0, trIdx = 0;
 let simT = 0;
+let mouseState = [W * 0.5, H * 0.5, 0.0];
+let speedMult = 1;
 
 function stepOnce(dt) {
   simT += dt;
@@ -243,8 +256,9 @@ function stepOnce(dt) {
   const trRead = trails[trIdx], trWrite = trails[1 - trIdx];
 
   // Dynamic Physarum parameters across 3 phases
-  const p2 = Math.min(1, Math.max(0, (simT - 8.0) / 3.0));
-  const p3 = Math.min(1, Math.max(0, (simT - 16.0) / 3.0));
+  const phaseT = simT % 24.0;
+  const p2 = Math.min(1, Math.max(0, (phaseT - 8.0) / 3.0));
+  const p3 = Math.min(1, Math.max(0, (phaseT - 16.0) / 3.0));
   const sensorAngle = 0.48 + p2 * 0.25 - p3 * 0.18; // radians
   const sensorDist  = 9.0 + p2 * 8.0 + p3 * 5.0;   // px
   const turnSpeed   = 0.30 + p2 * 0.12;
@@ -265,6 +279,7 @@ function stepOnce(dt) {
   gl.uniform1f(gl.getUniformLocation(pAgent, 'uSensorDist'), sensorDist);
   gl.uniform1f(gl.getUniformLocation(pAgent, 'uTurnSpeed'), turnSpeed);
   gl.uniform1f(gl.getUniformLocation(pAgent, 'uMoveSpeed'), moveSpeed);
+  gl.uniform3f(gl.getUniformLocation(pAgent, 'uMouse'), mouseState[0], mouseState[1], mouseState[2]);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
   agIdx = 1 - agIdx;
 
@@ -302,7 +317,7 @@ function drawScreen() {
   bindQuad(pDisplay);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, trails[trIdx].tex);
   gl.uniform1i(gl.getUniformLocation(pDisplay, 'uTrail'), 0);
-  gl.uniform1f(gl.getUniformLocation(pDisplay, 'uTime'), simT);
+  gl.uniform1f(gl.getUniformLocation(pDisplay, 'uTime'), simT % 24.0);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 
   // HUD
@@ -313,14 +328,15 @@ function drawScreen() {
   hctx.lineWidth = 1.2;
   hctx.beginPath(); hctx.roundRect(22, 20, 520, 56, 10); hctx.fill(); hctx.stroke();
 
-  const phase = simT < 8.0 ? '01 RADIAL EMERGENCE'
-    : simT < 16.0 ? '02 SYNAPTIC FILAMENTS'
+  const phaseT = simT % 24.0;
+  const phase = phaseT < 8.0 ? '01 RADIAL EMERGENCE'
+    : phaseT < 16.0 ? '02 SYNAPTIC FILAMENTS'
     : '03 GOLDEN MYCELIUM';
   hctx.fillStyle = '#00E5FF';
   hctx.font = '700 13px "Consolas", monospace';
   hctx.fillText('PHYSARUM SLIME MOLD  |  100,000 GPU AGENTS  |  ASSETS: 0', 38, 42);
   hctx.fillStyle = '#F8FAFC';
-  hctx.fillText(`PHASE: ${phase}  |  ${simT.toFixed(2)}s / 24.00s`, 38, 63);
+  hctx.fillText(`PHASE: ${phase}  |  LIVE GPU · ${mouseState[2] > 0.5 ? 'ATTRACTING' : 'DRAG TO ATTRACT'}`, 38, 63);
   hctx.restore();
 }
 
@@ -343,8 +359,26 @@ window.stepPhysarum = (dt) => {
 drawScreen();
 if (!window.__RECORDING__) {
   let paused = false;
+  const updateMouse = (e, down) => {
+    const r = glCanvas.getBoundingClientRect();
+    mouseState[0] = ((e.clientX - r.left) / Math.max(1, r.width)) * W;
+    mouseState[1] = (1.0 - (e.clientY - r.top) / Math.max(1, r.height)) * H;
+    if (down !== undefined) mouseState[2] = down ? 1.0 : 0.0;
+  };
+  glCanvas.addEventListener('pointerdown', (e) => updateMouse(e, true));
+  glCanvas.addEventListener('pointermove', (e) => { if (mouseState[2] > 0.5) updateMouse(e); });
+  window.addEventListener('pointerup', () => { mouseState[2] = 0.0; });
+  window.addEventListener('pointercancel', () => { mouseState[2] = 0.0; });
   window.addEventListener('DOMContentLoaded', () => {
     if (!window.NeonShell) return;
+    window.NeonShell.setHint('キャンバス長押し/ドラッグで10万粘菌エージェントを誘引 · 上ボタンでフェーズ切替');
+    window.NeonShell.addControl('01 シアン網', () => { simT = 1.0; });
+    window.NeonShell.addControl('02 シナプス', () => { simT = 10.5; });
+    window.NeonShell.addControl('03 黄金菌糸', () => { simT = 18.5; });
+    window.NeonShell.addControl('⚡ 2x速', (btn) => {
+      speedMult = speedMult === 1 ? 2 : 1;
+      btn.classList.toggle('active', speedMult === 2);
+    });
     window.NeonShell.addControl('⏸ 一時停止', (btn) => {
       paused = !paused;
       btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
@@ -353,12 +387,14 @@ if (!window.__RECORDING__) {
     window.NeonShell.addControl('↻ 初期配置へ', () => window.location.reload());
   });
   function loop() {
-    if (!paused) window.stepPhysarum(1 / 30);
+    if (!paused) {
+      for (let k = 0; k < speedMult; k++) window.stepPhysarum(1 / 30);
+    }
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
 }
 </script>
-<script src="../demo-shell.js?v=20261120-32"></script>
+<script src="../demo-shell.js?v=20261120-33"></script>
 </body>
 </html>

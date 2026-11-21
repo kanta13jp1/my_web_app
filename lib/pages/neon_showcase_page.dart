@@ -8,7 +8,7 @@ class NeonShowcasePage extends StatelessWidget {
   const NeonShowcasePage({super.key});
 
   static const assetPath = '/labs/neon-showcase/index.html';
-  static const assetVersion = '20261120-32';
+  static const assetVersion = '20261120-34';
   static const assetUrl = '$assetPath?v=$assetVersion';
 
   @override
