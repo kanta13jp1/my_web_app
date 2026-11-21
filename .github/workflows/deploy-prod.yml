@@ -750,6 +750,7 @@ jobs:
         run: |
           flutter build web \
             --release \
+            --source-maps \
             --pwa-strategy=none \
             --build-name=${{ steps.version.outputs.version }} \
             --build-number=${{ github.run_number }} \
@@ -830,6 +831,32 @@ jobs:
         with:
           node-version: "24"
           cache: npm
+
+      - name: Upload Sentry sourcemaps and register release
+        if: steps.changes.outputs.web == 'true'
+        continue-on-error: true
+        shell: bash
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+          SENTRY_RELEASE: ${{ steps.version.outputs.version }}+${{ github.run_number }}
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ] || [ -z "$SENTRY_ORG" ] || [ -z "$SENTRY_PROJECT" ]; then
+            echo "::notice::Sentry release/sourcemap upload skipped (SENTRY_AUTH_TOKEN / SENTRY_ORG / SENTRY_PROJECT not fully configured)."
+            exit 0
+          fi
+          npx --yes @sentry/cli releases new "$SENTRY_RELEASE"
+          npx --yes @sentry/cli sourcemaps inject build/web
+          npx --yes @sentry/cli sourcemaps upload --release="$SENTRY_RELEASE" build/web
+          npx --yes @sentry/cli releases set-commits "$SENTRY_RELEASE" --auto || true
+          npx --yes @sentry/cli releases finalize "$SENTRY_RELEASE"
+          npx --yes @sentry/cli releases deploys "$SENTRY_RELEASE" new -e production
+
+      - name: Strip sourcemap files before Firebase deploy
+        if: steps.changes.outputs.web == 'true'
+        shell: bash
+        run: find build/web -name "*.map" -type f -delete
 
       - name: Deploy to Firebase Hosting (Production)
         if: steps.changes.outputs.web == 'true'
