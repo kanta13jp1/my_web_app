@@ -1303,6 +1303,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       'asset_suspended_debt_accounts_v1';
   static const String _lumpSumRequestedAccountsPrefsKey =
       'asset_lump_sum_requested_accounts_v1';
+  StreamSubscription<AuthState>? _debtMarkerSubscription;
+  String? _debtMarkerOwner;
+  bool _debtMarkersLoaded = false;
+  bool _debtMarkersSaving = false;
+  int _debtMarkerEpoch = 0;
+
+  bool get _canSaveDebtMarkers =>
+      _debtMarkersLoaded &&
+      !_debtMarkersSaving &&
+      _debtMarkerOwner != null &&
+      _debtMarkerOwner == _supabase.auth.currentUser?.id;
+
   Set<String> _suspendedDebtAccountIds = <String>{};
   Set<String> _lumpSumRequestedAccountIds = <String>{};
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
@@ -1481,6 +1493,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _anomalyDetectionRepository = widget.anomalyDetectionRepository ??
         SupabaseAssetAnomalyDetectionRepository(client: _supabase);
     unawaited(_loadMinimumSafetyBalance());
+    _debtMarkerSubscription = _supabase.auth.onAuthStateChange.listen((_) {
+      final owner = _supabase.auth.currentUser?.id;
+      if (_debtMarkerOwner != owner) {
+        unawaited(_loadDebtMarkers(owner));
+      }
+    });
+    unawaited(_loadDebtMarkers(_supabase.auth.currentUser?.id));
     // 起動時の asset_pref_mirror 個別読み取りを 1 回のバッチ取得へ集約する
     // (端末跨ぎ同期の多数 REST が ERR_INSUFFICIENT_RESOURCES を誘発するのを緩和)。
     // 起動バーストが収束したらキャッシュを失効させ、以降は最新を個別取得する。
@@ -1571,6 +1590,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   @override
   void dispose() {
+    unawaited(_debtMarkerSubscription?.cancel());
     _payslipPreviewEpoch++;
     unawaited(_payslipPreviewSubscription?.cancel());
     _payslipPreviewSubscription = null;
@@ -3803,11 +3823,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final saved = store.getDouble(_minimumSafetyBalancePrefsKey);
     final savedEnvelopeEnabled = store.getBool(_safetyEnvelopeEnabledPrefsKey);
     final savedEnvelopeAmount = store.getDouble(_safetyEnvelopeAmountPrefsKey);
-    final savedSuspendedIds =
-        store.getStringList(_suspendedDebtAccountsPrefsKey);
-    final savedLumpSumIds = store.getStringList(
-      _lumpSumRequestedAccountsPrefsKey,
-    );
     if (!mounted) {
       return;
     }
@@ -3832,53 +3847,97 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _safetyEnvelopeAmountController.text =
             normalizedEnvelope.round().toString();
       }
-      if (savedSuspendedIds != null) {
-        _suspendedDebtAccountIds = savedSuspendedIds.toSet();
-      }
-      if (savedLumpSumIds != null) {
-        _lumpSumRequestedAccountIds = savedLumpSumIds.toSet();
-      }
     });
   }
 
-  Future<void> _suspendDebtAccount(
-    AssetDebtDisciplineViolation violation,
-  ) async {
-    final nextIds = Set<String>.from(_suspendedDebtAccountIds)
-      ..add(violation.accountId);
-    setState(() {
-      _suspendedDebtAccountIds = nextIds;
-    });
-    final store = await SharedPreferences.getInstance();
-    await store.setStringList(
-      _suspendedDebtAccountsPrefsKey,
-      nextIds.toList(growable: false),
-    );
+  String _debtMarkerKey(String key, String owner) =>
+      '${key}_${Uri.encodeComponent(owner)}';
+
+  bool _debtMarkerContextIsCurrent(int epoch, String owner) =>
+      mounted &&
+      _debtMarkerEpoch == epoch &&
+      _supabase.auth.currentUser?.id == owner;
+
+  Future<void> _loadDebtMarkers(String? owner) async {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${violation.accountName} の使用停止ToDoを作成し「使用停止中」に設定しました。'),
-      ),
-    );
+    final epoch = ++_debtMarkerEpoch;
+    setState(() {
+      _debtMarkerOwner = owner;
+      _debtMarkersLoaded = false;
+      _debtMarkersSaving = false;
+      _suspendedDebtAccountIds = <String>{};
+      _lumpSumRequestedAccountIds = <String>{};
+    });
+    if (owner == null) return;
+    try {
+      final store = await SharedPreferences.getInstance();
+      if (!_debtMarkerContextIsCurrent(epoch, owner)) return;
+      setState(() {
+        _suspendedDebtAccountIds = store
+                .getStringList(
+                    _debtMarkerKey(_suspendedDebtAccountsPrefsKey, owner))
+                ?.toSet() ??
+            <String>{};
+        _lumpSumRequestedAccountIds = store
+                .getStringList(
+                    _debtMarkerKey(_lumpSumRequestedAccountsPrefsKey, owner))
+                ?.toSet() ??
+            <String>{};
+        _debtMarkersLoaded = true;
+      });
+    } catch (_) {
+      if (!_debtMarkerContextIsCurrent(epoch, owner)) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('端末内の記録を読み込めませんでした。')),
+      );
+    }
   }
 
-  Future<void> _requestLumpSumSetting(
-    AssetDebtDisciplineViolation violation,
-  ) async {
-    final nextIds = Set<String>.from(_lumpSumRequestedAccountIds)
-      ..add(violation.accountId);
-    setState(() {
-      _lumpSumRequestedAccountIds = nextIds;
-    });
-    final store = await SharedPreferences.getInstance();
-    await store.setStringList(
-      _lumpSumRequestedAccountsPrefsKey,
-      nextIds.toList(growable: false),
-    );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${violation.accountName} の一括払い設定依頼メモを記録しました。')),
-    );
+  Future<void> _saveDebtMarker(
+    AssetDebtDisciplineViolation violation, {
+    required bool suspend,
+  }) async {
+    final owner = _debtMarkerOwner;
+    if (owner == null || !_canSaveDebtMarkers) return;
+    final epoch = _debtMarkerEpoch;
+    final key = suspend
+        ? _suspendedDebtAccountsPrefsKey
+        : _lumpSumRequestedAccountsPrefsKey;
+    final markers =
+        suspend ? _suspendedDebtAccountIds : _lumpSumRequestedAccountIds;
+    final next = <String>{...markers, violation.accountId};
+    setState(() => _debtMarkersSaving = true);
+    try {
+      final store = await SharedPreferences.getInstance();
+      if (!_debtMarkerContextIsCurrent(epoch, owner)) return;
+      final saved = await store.setStringList(
+        _debtMarkerKey(key, owner),
+        next.toList(growable: false),
+      );
+      if (!saved) throw StateError('Debt marker could not be saved');
+      if (!_debtMarkerContextIsCurrent(epoch, owner)) return;
+      setState(() {
+        if (suspend) {
+          _suspendedDebtAccountIds = next;
+        } else {
+          _lumpSumRequestedAccountIds = next;
+        }
+      });
+      final label = suspend ? '使用停止の目印' : '一括払い設定依頼メモ';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('${violation.accountName} の${label}をこのブラウザに保存しました。')),
+      );
+    } catch (_) {
+      if (!_debtMarkerContextIsCurrent(epoch, owner)) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('端末内に記録できませんでした。再試行してください。')),
+      );
+    } finally {
+      if (_debtMarkerContextIsCurrent(epoch, owner)) {
+        setState(() => _debtMarkersSaving = false);
+      }
+    }
   }
 
   Widget _buildDisciplineViolationMonthlyBanner(
@@ -3931,8 +3990,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildDisciplineViolationRow(AssetDebtDisciplineViolation violation) {
-    final isSuspended = _suspendedDebtAccountIds.contains(violation.accountId);
-    final isLumpSum = _lumpSumRequestedAccountIds.contains(violation.accountId);
+    final sameOwner = _debtMarkerOwner == _supabase.auth.currentUser?.id;
+    final isSuspended =
+        sameOwner && _suspendedDebtAccountIds.contains(violation.accountId);
+    final isLumpSum =
+        sameOwner && _lumpSumRequestedAccountIds.contains(violation.accountId);
     final isNewBorrowing =
         violation.type == AssetDebtDisciplineViolationType.newBorrowing;
     final typeLabel = isNewBorrowing ? '新規借入' : 'リボ繰越';
@@ -3941,10 +4003,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       'discipline_banner_suspend_todo_${violation.accountId}',
     );
     final lumpSumKey = Key('discipline_banner_lump_sum_${violation.accountId}');
-    final VoidCallback? onSuspend =
-        isSuspended ? null : () => unawaited(_suspendDebtAccount(violation));
-    final VoidCallback? onLumpSum =
-        isLumpSum ? null : () => unawaited(_requestLumpSumSetting(violation));
+    final VoidCallback? onSuspend = isSuspended || !_canSaveDebtMarkers
+        ? null
+        : () => unawaited(_saveDebtMarker(violation, suspend: true));
+    final VoidCallback? onLumpSum = isLumpSum || !_canSaveDebtMarkers
+        ? null
+        : () => unawaited(_saveDebtMarker(violation, suspend: false));
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Wrap(
@@ -3963,7 +4027,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           FilledButton.tonal(
             key: suspendKey,
             onPressed: onSuspend,
-            child: Text(isSuspended ? '使用停止中' : '停止ToDo作成'),
+            child: Text(isSuspended ? '記録済み' : '使用停止の目印を付ける'),
           ),
           OutlinedButton(
             key: lumpSumKey,
@@ -32696,11 +32760,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       spacing: 6,
                       runSpacing: 6,
                       children: [
-                        if (_suspendedDebtAccountIds.contains(row.id))
+                        if (_debtMarkerOwner ==
+                                _supabase.auth.currentUser?.id &&
+                            _suspendedDebtAccountIds.contains(row.id))
                           Container(
                             key: Key('debt_suspended_tag_${row.id}'),
                             child: _buildTextStatusChip(
-                              label: '使用停止中',
+                              label: '使用停止の目印あり',
                               color: const Color(0xFFB91C1C),
                             ),
                           ),
