@@ -2410,42 +2410,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   Future<void> _showManualPasteDialog() async {
-    final pasteController = TextEditingController();
-    String? result;
-    try {
-      result = await showDialog<String>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          key: const Key('note_editor_manual_paste_dialog'),
-          title: const Text('手動で貼り付け'),
-          content: TextField(
-            key: const Key('note_editor_manual_paste_field'),
-            controller: pasteController,
-            autofocus: true,
-            maxLines: 5,
-            decoration: const InputDecoration(
-              hintText: 'ここを長押しして「ペースト」してください',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('キャンセル'),
-            ),
-            FilledButton(
-              key: const Key('note_editor_manual_paste_confirm'),
-              onPressed: () => Navigator.of(dialogContext).pop(
-                pasteController.text,
-              ),
-              child: const Text('本文へ挿入'),
-            ),
-          ],
-        ),
-      );
-    } finally {
-      pasteController.dispose();
-    }
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => const _ManualPasteDialog(),
+    );
     if (!mounted || result == null || result.isEmpty) {
       return;
     }
@@ -3096,4 +3064,50 @@ class _RedoIntent extends Intent {
 
 class _SaveIntent extends Intent {
   const _SaveIntent();
+}
+
+class _ManualPasteDialog extends StatefulWidget {
+  const _ManualPasteDialog();
+
+  @override
+  State<_ManualPasteDialog> createState() => _ManualPasteDialogState();
+}
+
+class _ManualPasteDialogState extends State<_ManualPasteDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      key: const Key('note_editor_manual_paste_dialog'),
+      title: const Text('手動で貼り付け'),
+      content: TextField(
+        key: const Key('note_editor_manual_paste_field'),
+        controller: _controller,
+        autofocus: true,
+        maxLines: 5,
+        decoration: const InputDecoration(
+          hintText: 'ここを長押しして「ペースト」してください',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton(
+          key: const Key('note_editor_manual_paste_confirm'),
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: const Text('本文へ挿入'),
+        ),
+      ],
+    );
+  }
 }
