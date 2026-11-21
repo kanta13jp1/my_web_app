@@ -42,8 +42,9 @@ void main() {
     final reload = find.widgetWithText(TextButton, '対象月を再読込');
     await showMonth(DateTime(2026, 7));
     expect(
-        tester.widget<DropdownButtonFormField<DateTime>>(dropdown).initialValue,
-        DateTime(2026, 8));
+      tester.widget<DropdownButtonFormField<DateTime>>(dropdown).initialValue,
+      DateTime(2026, 8),
+    );
     await tester.tap(reload);
     await tester.pump();
     expect(repository.loadedMonths, [DateTime(2026, 8)]);
@@ -51,8 +52,9 @@ void main() {
     await showMonth(DateTime(2026, 8));
     expect(tester.takeException(), isNull);
     expect(
-        tester.widget<DropdownButtonFormField<DateTime>>(dropdown).initialValue,
-        DateTime(2026, 9));
+      tester.widget<DropdownButtonFormField<DateTime>>(dropdown).initialValue,
+      DateTime(2026, 9),
+    );
 
     repository.pending.complete(
       const AssetLiabilityMonthlyState(
