@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -28,16 +31,28 @@ void main() {
   ) async {
     final now = DateTime.now();
     final dateKey = DateFormat('yyyy-MM-dd').format(now);
+    const fn = AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey;
+    final monthKey = fn(now);
     final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
       <String, AssetLiabilityRevolvingCreditConfig>{
-        'aupay_card': const AssetLiabilityRevolvingCreditConfig(
-          monthlyAmount: 0,
-          newUsageAmount: 15000,
-          creditLimit: 100000,
+        'famipay_card': const AssetLiabilityRevolvingCreditConfig(
+          monthlyAmount: 5000,
+          newUsageAmount: 30000,
         ),
       },
     );
-    SharedPreferences.setMockInitialValues(<String, Object>{});
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      AssetLiabilityMonthlyStateStore.actualPaymentPrefsKey: jsonEncode(
+        <String, Map<String, double>>{
+          monthKey: <String, double>{'famipay_card': 5000},
+        },
+      ),
+      AssetLiabilityMonthlyStateStore.paidPrefsKey: jsonEncode(
+        <String, List<String>>{
+          monthKey: <String>['famipay_card'],
+        },
+      ),
+    });
     await tester.binding.setSurfaceSize(const Size(1200, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -48,10 +63,7 @@ void main() {
           debugCalendarNow: DateTime(2026, 7, 10),
           debugRevolvingConfigsMirror: mirrorValue,
           debugInitialAssetData: <String, Map<String, double>>{
-            dateKey: const <String, double>{
-              '三井住友銀行大塚支店': 50000,
-              'auPayカード': -100000,
-            },
+            dateKey: const <String, double>{'財布(現金)': 50000, 'ファミペイ': -100000},
           },
         ),
       ),
@@ -64,7 +76,7 @@ void main() {
       findsOneWidget,
     );
     final suspendButton = find.byKey(
-      const Key('discipline_banner_suspend_todo_aupay_card'),
+      const Key('discipline_banner_suspend_todo_famipay_card'),
     );
     expect(suspendButton, findsOneWidget);
 
@@ -73,7 +85,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.byKey(const Key('debt_suspended_tag_aupay_card')),
+      find.byKey(const Key('debt_suspended_tag_famipay_card')),
       findsOneWidget,
     );
 
@@ -86,10 +98,7 @@ void main() {
         home: AssetManagementPage(
           debugCalendarNow: DateTime(2026, 7, 10),
           debugInitialAssetData: <String, Map<String, double>>{
-            dateKey: const <String, double>{
-              '三井住友銀行大塚支店': 200000,
-              'auPayカード': 0,
-            },
+            dateKey: const <String, double>{'財布(現金)': 200000, 'ファミペイ': 0},
           },
         ),
       ),
