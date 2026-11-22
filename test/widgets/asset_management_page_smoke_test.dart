@@ -3302,6 +3302,87 @@ void main() {
     });
 
     testWidgets(
+      'revolving debt renders total interest warning and opens simulator',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        final monthKey =
+            AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(now);
+        final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+          <String, AssetLiabilityRevolvingCreditConfig>{
+            'famipay_card': const AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 30000,
+            ),
+          },
+        );
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetLiabilityMonthlyStateStore.actualPaymentPrefsKey: jsonEncode(
+            <String, Map<String, double>>{
+              monthKey: <String, double>{'famipay_card': 5000},
+            },
+          ),
+          AssetLiabilityMonthlyStateStore.paidPrefsKey: jsonEncode(
+            <String, List<String>>{
+              monthKey: <String>['famipay_card'],
+            },
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugCalendarNow: DateTime(2026, 7, 10),
+              debugRevolvingConfigsMirror: mirrorValue,
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 50000,
+                  'ファミペイ': -250000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_discipline_total_interest_famipay_card')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_trend_total_interest_famipay_card')),
+          findsOneWidget,
+        );
+        expect(find.textContaining('24ヶ月完済ライン'), findsWidgets);
+        expect(
+          find.byKey(
+            const Key('asset_debt_trend_interest_warning_famipay_card'),
+          ),
+          findsOneWidget,
+        );
+
+        final simulateButton = find.byKey(
+          const Key('asset_debt_trend_simulate_famipay_card'),
+        );
+        expect(simulateButton, findsOneWidget);
+        await tester.ensureVisible(simulateButton);
+        await tester.tap(simulateButton);
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('revolving_extra_payment_input')),
+          findsOneWidget,
+        );
+        await tester.tap(find.text('閉じる'));
+        await tester.pump(const Duration(milliseconds: 200));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
       'overdue bulk confirm dialog marks selected overdue debts paid',
       (tester) async {
         final now = DateTime(2026, 9, 5);
