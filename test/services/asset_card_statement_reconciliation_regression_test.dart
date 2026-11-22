@@ -50,7 +50,8 @@ void main() {
 
         final beforeReport =
             insightService.buildReport(workbook: beforeWorkbook);
-        final beforePrompt = insightService.buildPrompt(beforeReport);
+        final beforePrompt = const AssetManagementInsightPromptBuilder()
+            .buildPrompt(beforeReport);
         expect(beforePrompt, contains('カード明細の取り込みが未実施です'));
         expect(beforePrompt, contains('設定済みカード内訳合計が請求額と一致しません'));
 
@@ -102,7 +103,8 @@ void main() {
         );
 
         final afterReport = insightService.buildReport(workbook: afterWorkbook);
-        final afterPrompt = insightService.buildPrompt(afterReport);
+        final afterPrompt = const AssetManagementInsightPromptBuilder()
+            .buildPrompt(afterReport);
         expect(afterPrompt, isNot(contains('カード明細の取り込みが未実施です')));
         expect(afterPrompt, isNot(contains('設定済みカード内訳合計が請求額と一致しません')));
       },
@@ -150,7 +152,8 @@ void main() {
           workbook: beforeWorkbook,
           priorMonthAccountBalances: priorBalances,
         );
-        final beforePrompt = insightService.buildPrompt(beforeReport);
+        final beforePrompt = const AssetManagementInsightPromptBuilder()
+            .buildPrompt(beforeReport);
         expect(beforePrompt, contains('カード明細の取り込みが未実施'));
 
         final afterWorkbook = planner.buildWorkbook(
@@ -203,7 +206,8 @@ void main() {
           workbook: afterWorkbook,
           priorMonthAccountBalances: priorBalances,
         );
-        final afterPrompt = insightService.buildPrompt(afterReport);
+        final afterPrompt = const AssetManagementInsightPromptBuilder()
+            .buildPrompt(afterReport);
         expect(afterPrompt, contains('新規利用内訳(2件 / 合計14,000円)'));
         expect(afterPrompt, isNot(contains('カード明細の取り込みが未実施')));
       },
