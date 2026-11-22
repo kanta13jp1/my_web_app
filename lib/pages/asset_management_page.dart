@@ -86,6 +86,7 @@ import 'package:my_web_app/services/asset_pref_mirror_prefetch.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
 import 'package:my_web_app/services/asset_debt_trend_analyzer.dart';
 import 'package:my_web_app/widgets/revolving_extra_payment_dialog.dart';
+import 'package:my_web_app/services/asset_revolving_extra_payment_simulator.dart';
 import 'package:my_web_app/services/asset_advisory_briefing_service.dart';
 import 'package:my_web_app/services/advisory_briefing_share_service.dart';
 import 'package:my_web_app/services/household_tracker_share_service.dart';
@@ -33615,7 +33616,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               color: const Color(0xFF0F766E),
                             ),
                           ),
-                        if (revolvingHint != null)
+                        if (revolvingHint != null ||
+                            AssetRevolvingExtraPaymentSimulator
+                                .isHighInterestCandidate(row))
                           TextButton.icon(
                             key: Key('asset_revolving_simulate_${row.id}'),
                             onPressed: () =>
