@@ -57,6 +57,7 @@ import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/services/asset_auto_debit_confirmation_service.dart';
 import 'package:my_web_app/services/asset_balance_timestamp_service.dart';
+import 'package:my_web_app/services/asset_input_row_state.dart';
 import 'package:my_web_app/models/asset_balance_observation.dart';
 import 'package:my_web_app/models/asset_external_points.dart';
 import 'package:my_web_app/widgets/asset_balance_history_control.dart';
@@ -35469,161 +35470,194 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ],
     );
 
-    final amountField = TextField(
-      controller: _controllers[type],
-      keyboardType: const TextInputType.numberWithOptions(
-        decimal: true,
-        signed: true,
-      ),
-      decoration: InputDecoration(
-        labelText: '今日の残高',
-        hintText: '負債はマイナス(-)をつける',
-        prefixIcon: const Icon(Icons.edit_outlined, size: 18),
-        suffixIcon: IconButton(
-          tooltip: '符号切替 (資産⇔負債)',
-          onPressed: () => _toggleMinusForType(type),
-          // exposure_neg_1 (「-1」) は文字カウンタの残数表示に見えて
-          // 誤解を招いたため ± アイコンにする。
-          icon: const Icon(Icons.exposure),
-        ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: accentColor, width: 1.6),
-        ),
-        isDense: true,
-        filled: true,
-        fillColor:
-            isUpdatedToday ? const Color(0xFFECFDF5) : const Color(0xFFF8FAFC),
-      ),
-    );
+    final controller = _controllers[type];
 
-    final actions = Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      alignment: WrapAlignment.end,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        IconButton(
-          tooltip:
-              watchlistEntry == null ? 'Add to watchlist' : 'Edit watchlist',
-          onPressed: () => _showWatchlistDialog(type),
-          icon: Icon(
-            watchlistEntry == null ? Icons.star_border : Icons.star,
-            color: watchlistEntry == null
-                ? const Color(0xFF64748B)
-                : const Color(0xFF92400E),
-          ),
-        ),
-        if (canQuickUpdate)
-          OutlinedButton.icon(
-            onPressed: () => _quickUpdateAssetData(type),
-            icon: const Icon(Icons.history_toggle_off, size: 16),
-            label: const Text('同額'),
-          ),
-        FilledButton.icon(
-          onPressed: () => _saveSingleAssetData(type),
-          icon: Icon(isUpdatedToday ? Icons.check : Icons.save_outlined),
-          label: Text(isUpdatedToday ? '保存済' : '記録'),
-          style: FilledButton.styleFrom(
-            backgroundColor:
-                isUpdatedToday ? const Color(0xFF94A3B8) : accentColor,
-            foregroundColor: Colors.white,
-            visualDensity: VisualDensity.compact,
-          ),
-        ),
-        if (type != '現金')
-          IconButton(
-            tooltip: '削除',
-            icon: const Icon(Icons.delete_outline, color: Color(0xFF94A3B8)),
-            onPressed: () => _showRemoveAssetDialog(type),
-          ),
-      ],
-    );
+    Widget buildRowContainer(String rawInput) {
+      final editState = resolveAssetInputRowEditState(
+        isUpdatedToday: isUpdatedToday,
+        recordedAmount: lastAmount,
+        rawInput: rawInput,
+      );
+      final isSavedClean = editState == AssetInputRowEditState.savedToday;
+      final isDirtyEdit = editState == AssetInputRowEditState.dirtyEdit;
 
-    return Container(
-      key: _assetRowKeyForType(type),
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isLiability ? const Color(0xFFFFFBFB) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isUpdatedToday
-              ? const Color(0xFF86EFAC)
-              : accentColor.withValues(alpha: isLiability ? 0.35 : 0.16),
+      final amountField = TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(
+          decimal: true,
+          signed: true,
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F172A),
-            blurRadius: 10,
-            offset: Offset(0, 4),
+        decoration: InputDecoration(
+          labelText: '今日の残高',
+          hintText: '負債はマイナス(-)をつける',
+          prefixIcon: const Icon(Icons.edit_outlined, size: 18),
+          suffixIcon: IconButton(
+            tooltip: '符号切替 (資産⇔負債)',
+            onPressed: () => _toggleMinusForType(type),
+            // exposure_neg_1 (「-1」) は文字カウンタの残数表示に見えて
+            // 誤解を招いたため ± アイコンにする。
+            icon: const Icon(Icons.exposure),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: accentColor, width: 1.6),
+          ),
+          isDense: true,
+          filled: true,
+          fillColor: isSavedClean
+              ? const Color(0xFFECFDF5)
+              : isDirtyEdit
+                  ? const Color(0xFFFFFBEB)
+                  : const Color(0xFFF8FAFC),
+        ),
+      );
+
+      final actions = Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        alignment: WrapAlignment.end,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          if (watchlistEntry != null) ...[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildWatchlistMetaChip(
-                  icon: Icons.star,
-                  label: watchlistEntry.group.isEmpty
-                      ? 'Watching'
-                      : 'Watch: ${watchlistEntry.group}',
-                  iconColor: const Color(0xFF92400E),
-                ),
-                if (watchlistEntry.memo.isNotEmpty)
-                  _buildWatchlistMetaChip(
-                    icon: Icons.sticky_note_2_outlined,
-                    label: watchlistEntry.memo,
-                  ),
-              ],
+          IconButton(
+            tooltip:
+                watchlistEntry == null ? 'Add to watchlist' : 'Edit watchlist',
+            onPressed: () => _showWatchlistDialog(type),
+            icon: Icon(
+              watchlistEntry == null ? Icons.star_border : Icons.star,
+              color: watchlistEntry == null
+                  ? const Color(0xFF64748B)
+                  : const Color(0xFF92400E),
             ),
-            const SizedBox(height: 10),
-          ],
-          if (isCompact)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                titleBlock,
-                const SizedBox(height: 10),
-                amountField,
-                const SizedBox(height: 10),
-                Align(alignment: Alignment.centerRight, child: actions),
-              ],
-            )
-          else
-            Row(
-              children: [
-                Expanded(flex: 3, child: titleBlock),
-                const SizedBox(width: 12),
-                Expanded(flex: 2, child: amountField),
-                const SizedBox(width: 10),
-                Flexible(flex: 2, child: actions),
-              ],
+          ),
+          if (canQuickUpdate)
+            OutlinedButton.icon(
+              onPressed: () => _quickUpdateAssetData(type),
+              icon: const Icon(Icons.history_toggle_off, size: 16),
+              label: const Text('同額'),
             ),
-          if (canQuickUpdate) ...[
-            const SizedBox(height: 8),
-            const Text(
-              '残高が変わっていなければ「同額」で前回と同じ額をすぐ記録できます。',
-              style: TextStyle(
-                fontSize: 11,
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w600,
-                height: 1.5,
-              ),
+          FilledButton.icon(
+            onPressed: () => _saveSingleAssetData(type),
+            icon: Icon(isSavedClean ? Icons.check : Icons.save_outlined),
+            label: Text(
+              isSavedClean
+                  ? '保存済'
+                  : isDirtyEdit
+                      ? '再記録'
+                      : '記録',
             ),
-          ],
+            style: FilledButton.styleFrom(
+              backgroundColor:
+                  isSavedClean ? const Color(0xFF047857) : accentColor,
+              foregroundColor: Colors.white,
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+          if (type != '現金')
+            IconButton(
+              tooltip: '削除',
+              icon: const Icon(Icons.delete_outline, color: Color(0xFF94A3B8)),
+              onPressed: () => _showRemoveAssetDialog(type),
+            ),
         ],
-      ),
+      );
+
+      return Container(
+        key: _assetRowKeyForType(type),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isLiability ? const Color(0xFFFFFBFB) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSavedClean
+                ? const Color(0xFF86EFAC)
+                : isDirtyEdit
+                    ? accentColor
+                    : accentColor.withValues(alpha: isLiability ? 0.35 : 0.16),
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0A0F172A),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (watchlistEntry != null) ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildWatchlistMetaChip(
+                    icon: Icons.star,
+                    label: watchlistEntry.group.isEmpty
+                        ? 'Watching'
+                        : 'Watch: ${watchlistEntry.group}',
+                    iconColor: const Color(0xFF92400E),
+                  ),
+                  if (watchlistEntry.memo.isNotEmpty)
+                    _buildWatchlistMetaChip(
+                      icon: Icons.sticky_note_2_outlined,
+                      label: watchlistEntry.memo,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (isCompact)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  titleBlock,
+                  const SizedBox(height: 10),
+                  amountField,
+                  const SizedBox(height: 10),
+                  Align(alignment: Alignment.centerRight, child: actions),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  Expanded(flex: 3, child: titleBlock),
+                  const SizedBox(width: 12),
+                  Expanded(flex: 2, child: amountField),
+                  const SizedBox(width: 10),
+                  Flexible(flex: 2, child: actions),
+                ],
+              ),
+            if (canQuickUpdate) ...[
+              const SizedBox(height: 8),
+              const Text(
+                '残高が変わっていなければ「同額」で前回と同じ額をすぐ記録できます。',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    if (controller == null) {
+      return buildRowContainer('');
+    }
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (BuildContext context, TextEditingValue value, Widget? child) {
+        return buildRowContainer(value.text);
+      },
     );
   }
 
