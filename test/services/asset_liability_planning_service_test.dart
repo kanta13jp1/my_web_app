@@ -165,6 +165,50 @@ void main() {
       );
     });
 
+    test('uses the recorded actual payment for principal when the row is paid',
+        () {
+      // 今月支払予定額は 0 円のまま、実際には 15,000 円を支払済みとして記録した月。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -100000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        annualRateOverrides: const <String, double>{'mobit': 0.15},
+        monthlyPaymentOverrides: const <String, double>{'モビット': 0},
+        actualPaymentAmounts: const <String, double>{'モビット': 15000},
+        paidAccountNames: const <String>{'モビット'},
+      );
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+
+      expect(mobit.scheduledPaymentAmount, 0);
+      expect(mobit.monthlyInterestEstimate, closeTo(1250, 0.001));
+      expect(mobit.principalPaymentEstimate, closeTo(13750, 0.001));
+      expect(mobit.balanceAfterPaymentEstimate, closeTo(-86250, 0.001));
+      expect(mobit.effectiveMonthlyPaymentAmount, 15000);
+    });
+
+    test('keeps the scheduled payment for principal while unpaid', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -100000,
+        },
+        baseDate: DateTime(2026, 9, 14),
+        annualRateOverrides: const <String, double>{'mobit': 0.15},
+        monthlyPaymentOverrides: const <String, double>{'モビット': 5000},
+        actualPaymentAmounts: const <String, double>{'モビット': 15000},
+      );
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+
+      expect(mobit.principalPaymentEstimate, closeTo(3750, 0.001));
+      expect(mobit.effectiveMonthlyPaymentAmount, 5000);
+    });
+
     test('uses annual rate overrides for interest and priority signals', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
@@ -1289,7 +1333,7 @@ void main() {
       expect(cashflowRow.paid, isTrue);
     });
 
-    test('marks unpaid payments due today or earlier as overdue', () {
+    test('keeps unpaid payments due today separate from overdue', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{
           '財布': 50000,
@@ -1310,10 +1354,10 @@ void main() {
         (row) => row.accountId == 'paypay_card',
       );
 
-      expect(mobit.overdue, isTrue);
+      expect(mobit.overdue, isFalse);
       expect(payPay.overdue, isFalse);
-      expect(workbook.hasOverduePayments, isTrue);
-      expect(workbook.overdueCashflowRows, hasLength(1));
+      expect(workbook.hasOverduePayments, isFalse);
+      expect(workbook.overdueCashflowRows, isEmpty);
     });
 
     test('builds cashflow rows by payment day with risk levels', () {

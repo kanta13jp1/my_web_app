@@ -229,6 +229,79 @@ void main() {
   });
 
   group('AssetRecurringFixedCostStore', () {
+    test('rejects a false save result and permits an explicit retry', () async {
+      final prefs = _ControlledFixedCostPreferences();
+      const store = AssetRecurringFixedCostStore();
+      const cost = AssetRecurringFixedCost(
+        id: 'synthetic_fixed_cost',
+        name: 'Synthetic fixed cost',
+        amount: 100,
+        paymentDay: 15,
+      );
+
+      await expectLater(
+        store.save(const [cost], prefs: prefs),
+        throwsA(isA<StateError>()),
+      );
+      expect(prefs.writeCount, 1);
+      expect(prefs.lastKey, AssetRecurringFixedCostStore.prefsKey);
+
+      prefs.accept = true;
+      await store.save(const [cost], prefs: prefs);
+      expect(prefs.writeCount, 2);
+      expect(prefs.lastValue, contains('synthetic_fixed_cost'));
+    });
+
+    test('rejects a false removal result and permits an explicit retry',
+        () async {
+      final prefs = _ControlledFixedCostPreferences();
+      const store = AssetRecurringFixedCostStore();
+
+      await expectLater(
+        store.save(const [], prefs: prefs),
+        throwsA(isA<StateError>()),
+      );
+      expect(prefs.removeCount, 1);
+      expect(prefs.lastKey, AssetRecurringFixedCostStore.prefsKey);
+      expect(prefs.writeCount, 0);
+
+      prefs.accept = true;
+      await store.save(const [], prefs: prefs);
+      expect(prefs.removeCount, 2);
+    });
+
+    test('propagates a thrown save failure without retrying', () async {
+      final failure = StateError('synthetic storage failure');
+      final prefs = _ControlledFixedCostPreferences(failure: failure);
+      const store = AssetRecurringFixedCostStore();
+      const cost = AssetRecurringFixedCost(
+        id: 'synthetic_fixed_cost',
+        name: 'Synthetic fixed cost',
+        amount: 100,
+        paymentDay: 15,
+      );
+
+      await expectLater(
+        store.save(const [cost], prefs: prefs),
+        throwsA(same(failure)),
+      );
+      expect(prefs.writeCount, 1);
+      expect(prefs.removeCount, 0);
+    });
+
+    test('propagates a thrown removal failure without retrying', () async {
+      final failure = StateError('synthetic storage failure');
+      final prefs = _ControlledFixedCostPreferences(failure: failure);
+      const store = AssetRecurringFixedCostStore();
+
+      await expectLater(
+        store.save(const [], prefs: prefs),
+        throwsA(same(failure)),
+      );
+      expect(prefs.removeCount, 1);
+      expect(prefs.writeCount, 0);
+    });
+
     const store = AssetRecurringFixedCostStore();
 
     test('round-trips a list through SharedPreferences sorted by day',
@@ -417,4 +490,33 @@ Map<String, dynamic> _validJson() {
     'paymentDay': 27,
     'cadence': 'monthly',
   };
+}
+
+class _ControlledFixedCostPreferences extends Fake
+    implements SharedPreferences {
+  _ControlledFixedCostPreferences({this.failure});
+
+  final Error? failure;
+  bool accept = false;
+  int writeCount = 0;
+  int removeCount = 0;
+  String? lastKey;
+  String? lastValue;
+
+  @override
+  Future<bool> setString(String key, String value) async {
+    writeCount += 1;
+    lastKey = key;
+    lastValue = value;
+    if (failure != null) throw failure!;
+    return accept;
+  }
+
+  @override
+  Future<bool> remove(String key) async {
+    removeCount += 1;
+    lastKey = key;
+    if (failure != null) throw failure!;
+    return accept;
+  }
 }

@@ -280,7 +280,7 @@ void main() {
           '財布': 50000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
       );
 
@@ -302,7 +302,7 @@ void main() {
           '財布': 3000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
         paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
       );
@@ -326,7 +326,7 @@ void main() {
           '財布': 50000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
         paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
       );
@@ -351,7 +351,7 @@ void main() {
           'モビット': -300000,
           'auPayカード': -200000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{
           'mobit': 30000,
           AssetLiabilityPlanningService.auPayCardAccountId: 30000,
@@ -384,7 +384,7 @@ void main() {
           '財布': 50000,
           'モビット': -300000,
         },
-        baseDate: DateTime(2026, 5, 15),
+        baseDate: DateTime(2026, 5, 16),
         monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
         paymentSourceAccountIds: const <String, String>{
           'mobit': 'ghost_account',
@@ -1095,11 +1095,352 @@ void main() {
       expect(slowItem.description, contains('完済まで約'));
       expect(slowItem.description, contains('追加利息'));
       expect(slowItem.suggestedAction, contains('24ヶ月完済目標額'));
+      // 年利 0.15 (=15%) を小数のまま月利へ換算する。旧実装は /100 を重ねて
+      // 月利を 1/100 に過小評価し、24ヶ月完済額を約 21,900 円と誤算していた。
+      expect(slowItem.suggestedAction, contains('24ヶ月完済目標額25,4'));
 
       expect(
         spiralWarnings.any((item) => item.relatedAccountId == 'healthy_loan'),
         false,
       );
+    });
+
+    test(
+        'does not report zero principal when the payment was recorded as paid with an actual amount',
+        () {
+      // 今月支払予定額は 0 円のままだが、実際には 15,000 円を支払済みとして
+      // 記録した月。元金返済見込みは planning service が実額から算出する。
+      const paidJibunLoan = AssetLiabilityDebtRow(
+        id: 'jibun_loan',
+        name: 'じぶんローン',
+        kind: AssetLiabilityAccountKind.cardLoan,
+        balance: -988878,
+        paymentDay: 10,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.145,
+        minimumPaymentEstimate: 15000,
+        manualPaymentAmount: 0,
+        scheduledPaymentAmount: 0,
+        actualPaymentAmount: 15000,
+        monthlyInterestEstimate: 11949,
+        principalPaymentEstimate: 3051,
+        balanceAfterPaymentEstimate: -985827,
+        liabilityShare: 0.6,
+        priorityLabel: '高金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: true,
+        requiresAction: false,
+      );
+
+      final report = service.buildReport(
+        workbook: _workbook(debtRows: const [paidJibunLoan]),
+      );
+      final warnings = report.actionItems
+          .where(
+            (item) =>
+                item.type == AssetManagementInsightActionType.debtSpiralWarning,
+          )
+          .toList();
+
+      expect(
+        warnings.any((item) => item.title.contains('元金返済0円')),
+        false,
+      );
+      final item = warnings.single;
+      expect(item.description, contains('月返済15,000円'));
+      expect(item.description, contains('元金返済は3,051円'));
+    });
+
+    test('emits overdueIncome reminder for unreceived past-due income plans',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 50000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        incomePlans: <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'salary_short_overdue',
+            date: DateTime(2026, 5, 8),
+            name: '副業入金',
+            amount: 50000,
+            destinationAccountId: 'smbc_otsuka_branch',
+            destinationAccountName: '三井住友銀行大塚支店',
+            received: false,
+          ),
+          AssetLiabilityIncomePlan(
+            id: 'salary_long_overdue',
+            date: DateTime(2026, 5, 5),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: 'smbc_otsuka_branch',
+            destinationAccountName: '三井住友銀行大塚支店',
+            received: false,
+          ),
+          AssetLiabilityIncomePlan(
+            id: 'salary_received',
+            date: DateTime(2026, 5, 1),
+            name: '入金済み賞与',
+            amount: 100000,
+            destinationAccountId: 'smbc_otsuka_branch',
+            destinationAccountName: '三井住友銀行大塚支店',
+            received: true,
+          ),
+        ],
+      );
+
+      final report = service.buildReport(workbook: workbook);
+      final overdueIncomes = report.actionItems
+          .where(
+            (item) =>
+                item.type == AssetManagementInsightActionType.overdueIncome,
+          )
+          .toList();
+
+      expect(overdueIncomes.length, 2);
+      expect(
+        overdueIncomes[0].severity,
+        AssetManagementInsightSeverity.critical,
+      );
+      expect(overdueIncomes[0].title, contains('給料'));
+      expect(overdueIncomes[0].title, contains('5日過ぎています'));
+      expect(overdueIncomes[0].suggestedAction, contains('問い合わせ'));
+
+      expect(
+        overdueIncomes[1].severity,
+        AssetManagementInsightSeverity.warning,
+      );
+      expect(overdueIncomes[1].title, contains('副業入金'));
+      expect(overdueIncomes[1].title, contains('2日過ぎています'));
+      expect(overdueIncomes[1].suggestedAction, contains('入金済み'));
+      // 画面からその場で受取済みにできるよう、対象の収入予定 ID を持つ。
+      expect(overdueIncomes[0].relatedIncomeId, 'salary_long_overdue');
+      expect(overdueIncomes[1].relatedIncomeId, 'salary_short_overdue');
+    });
+
+    test(
+        'predicts source account shortfall before due date and suggests alternative',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 1000,
+          '三井住友銀行大塚支店': 300000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+      );
+
+      final upcoming = report.actionItems.firstWhere(
+        (item) =>
+            item.type == AssetManagementInsightActionType.upcomingPayment &&
+            item.relatedAccountId == 'mobit',
+      );
+      expect(upcoming.severity, AssetManagementInsightSeverity.critical);
+      expect(upcoming.title, contains('残高不足が予測されます'));
+      expect(upcoming.description, contains('不足します'));
+      expect(upcoming.suggestedAction, contains('三井住友銀行大塚支店'));
+    });
+
+    test(
+        'flags missing source balance before due date and suggests alternative',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 300000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        paymentSourceAccountIds: const <String, String>{
+          'mobit': 'paypay_card_missing',
+        },
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        upcomingPaymentWarningDays: 20,
+      );
+
+      final upcoming = report.actionItems.firstWhere(
+        (item) =>
+            item.type == AssetManagementInsightActionType.upcomingPayment &&
+            item.relatedAccountId == 'mobit',
+      );
+      expect(upcoming.severity, AssetManagementInsightSeverity.critical);
+      expect(upcoming.title, contains('原資口座を確認してください'));
+      expect(upcoming.suggestedAction, contains('三井住友銀行大塚支店'));
+    });
+
+    test('shouldBlockPaymentExecution は使用可能額が負の時のみ true を返す (#4219)', () {
+      const planningService = AssetLiabilityPlanningService();
+      const service = AssetManagementInsightService();
+
+      final negativeWorkbook = planningService.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 5000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+      );
+      final negativeReport = service.buildReport(
+        workbook: negativeWorkbook,
+        minimumSafetyBalance: 10000,
+      );
+      expect(negativeReport.todayAvailable.availableAmount, lessThan(0));
+      expect(negativeReport.shouldBlockPaymentExecution, isTrue);
+
+      final positiveWorkbook = planningService.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 200000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+      );
+      final positiveReport = service.buildReport(
+        workbook: positiveWorkbook,
+        minimumSafetyBalance: 10000,
+      );
+      expect(
+        positiveReport.todayAvailable.availableAmount,
+        greaterThanOrEqualTo(0),
+      );
+      expect(
+        positiveReport.weekAvailable.availableAmount,
+        greaterThanOrEqualTo(0),
+      );
+      expect(positiveReport.shouldBlockPaymentExecution, isFalse);
+    });
+
+    test('buildRevolvingInlineHint returns null for non-revolving debt', () {
+      final nonRevolving = _debtRow(
+        annualRate: 0.15,
+        kind: AssetLiabilityAccountKind.cardLoan,
+      );
+      expect(
+        AssetManagementInsightService.buildRevolvingInlineHint(nonRevolving),
+        isNull,
+      );
+    });
+
+    test(
+        'buildRevolvingInlineHint computes exit months and principal for revolving debt',
+        () {
+      const revolving = AssetLiabilityDebtRow(
+        id: 'aupay_card',
+        name: 'auPayカード',
+        kind: AssetLiabilityAccountKind.creditCard,
+        balance: -100000,
+        paymentDay: 25,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.15,
+        minimumPaymentEstimate: 10000,
+        manualPaymentAmount: null,
+        scheduledPaymentAmount: 10000,
+        monthlyInterestEstimate: 1250,
+        principalPaymentEstimate: 8750,
+        balanceAfterPaymentEstimate: -91250,
+        liabilityShare: 1,
+        priorityLabel: '高金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+        revolvingBilling: AssetLiabilityRevolvingCreditBilling(
+          balance: 100000,
+          monthlyAmount: 10000,
+          newUsageAmount: 0,
+          existingBalanceAmount: 100000,
+          creditLimit: 500000,
+          paymentDay: 25,
+          overLimitAmount: 0,
+          billedAmount: 10000,
+        ),
+      );
+
+      final hint =
+          AssetManagementInsightService.buildRevolvingInlineHint(revolving);
+      expect(hint, isNotNull);
+      expect(hint!.everPaysOff, isTrue);
+      expect(hint.revolvingExitHintMonths, isNotNull);
+      expect(hint.revolvingExitHintMonths, greaterThan(0));
+      expect(hint.currentPrincipalEstimate, 8750);
+    });
+
+    test(
+        'buildRevolvingInlineHint marks stagnant revolving debt as never paying off',
+        () {
+      const stagnant = AssetLiabilityDebtRow(
+        id: 'aupay_card',
+        name: 'auPayカード',
+        kind: AssetLiabilityAccountKind.creditCard,
+        balance: -500000,
+        paymentDay: 25,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.18,
+        minimumPaymentEstimate: 5000,
+        manualPaymentAmount: null,
+        scheduledPaymentAmount: 5000,
+        monthlyInterestEstimate: 7500,
+        principalPaymentEstimate: 0,
+        balanceAfterPaymentEstimate: -502500,
+        liabilityShare: 1,
+        priorityLabel: '高金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+        revolvingBilling: AssetLiabilityRevolvingCreditBilling(
+          balance: 500000,
+          monthlyAmount: 5000,
+          newUsageAmount: 0,
+          existingBalanceAmount: 500000,
+          creditLimit: 500000,
+          paymentDay: 25,
+          overLimitAmount: 0,
+          billedAmount: 5000,
+        ),
+      );
+
+      final hint =
+          AssetManagementInsightService.buildRevolvingInlineHint(stagnant);
+      expect(hint, isNotNull);
+      expect(hint!.everPaysOff, isFalse);
+      expect(hint.revolvingExitHintMonths, isNull);
+      expect(hint.currentPrincipalEstimate, 0);
     });
   });
 }

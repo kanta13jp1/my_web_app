@@ -317,6 +317,8 @@ abstract class AssetLiabilityRepository {
 
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month);
 
+  Future<bool> hasPendingMonthEdits(DateTime month) async => false;
+
   Future<void> saveMonth({
     required DateTime month,
     required AssetLiabilityMonthlyState state,
@@ -702,6 +704,17 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     ).toState();
   }
 
+  @override
+  Future<bool> hasPendingMonthEdits(DateTime month) async {
+    final userId = _userIdOrNull();
+    if (userId == null) return true;
+    return await _loadPendingMonthBase(
+          userId,
+          AssetLiabilityMonthlyStateStore.formatMonthKey(month),
+        ) !=
+        null;
+  }
+
   final Map<String, AssetLiabilityMonthlyState> _pendingMonthBases =
       <String, AssetLiabilityMonthlyState>{};
 
@@ -741,6 +754,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     final userId = _userIdOrNull();
     final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
     final key = '$userId:$monthKey';
+    // A read requested after this save must wait for it, not reuse an older read.
+    _inFlightMonthLoads.remove(key);
     return _runMonthMutation<void>(month, userId, () async {
       if (_userIdOrNull() != userId) return;
       final previousLocal = await localRepository.loadMonth(month);
@@ -1166,6 +1181,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   @override
   Future<AssetLiabilityManualSyncResult> syncMonth(DateTime month) {
     final userId = _userIdOrNull();
+    final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    _inFlightMonthLoads.remove('$userId:$monthKey');
     return _runMonthMutation<AssetLiabilityManualSyncResult>(month, userId, () {
       if (_userIdOrNull() != userId) {
         return Future.value(
@@ -1879,7 +1896,11 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     AssetLiabilityMonthlyState local,
     AssetLiabilityMonthlyState remote,
   ) {
-    return _doubleMapEquals(local.paymentOverrides, remote.paymentOverrides) &&
+    return _doubleMapEquals(
+          local.confirmedPaymentDays,
+          remote.confirmedPaymentDays,
+        ) &&
+        _doubleMapEquals(local.paymentOverrides, remote.paymentOverrides) &&
         _doubleMapEquals(
           local.actualPaymentAmounts,
           remote.actualPaymentAmounts,

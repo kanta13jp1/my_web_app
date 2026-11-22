@@ -36,76 +36,82 @@ class KgiCsfKpiPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(dense ? 10 : 12),
         border: Border.all(color: borderColor),
       ),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          initiallyExpanded: initiallyExpanded,
-          tilePadding: EdgeInsets.symmetric(
-            horizontal: dense ? 10 : 12,
-            vertical: dense ? 0 : 2,
-          ),
-          childrenPadding: EdgeInsets.fromLTRB(
-            dense ? 10 : 12,
-            0,
-            dense ? 10 : 12,
-            dense ? 10 : 12,
-          ),
-          leading: Icon(
-            Icons.account_tree_outlined,
-            color: accentColor,
-            size: dense ? 18 : 22,
-          ),
-          title: Text(
-            'KGI: ${plan.kgi}',
-            maxLines: dense ? 1 : 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: titleColor,
-              fontSize: dense ? 12 : 14,
-              fontWeight: FontWeight.w800,
-              height: 1.35,
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: BorderRadius.circular(dense ? 10 : 12),
+        textStyle: DefaultTextStyle.of(context).style,
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            initiallyExpanded: initiallyExpanded,
+            tilePadding: EdgeInsets.symmetric(
+              horizontal: dense ? 10 : 12,
+              vertical: dense ? 0 : 2,
             ),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${plan.domain}: ${plan.actualLabel} / ${plan.targetLabel}',
-                  maxLines: dense ? 1 : 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: labelColor,
-                    fontSize: dense ? 10 : 12,
-                    fontWeight: FontWeight.w600,
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: dense ? 5 : 7,
-                    backgroundColor: accentColor.withValues(alpha: 0.14),
-                    valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-                  ),
-                ),
-              ],
+            childrenPadding: EdgeInsets.fromLTRB(
+              dense ? 10 : 12,
+              0,
+              dense ? 10 : 12,
+              dense ? 10 : 12,
             ),
-          ),
-          children: [
-            for (final metric in plan.metrics) ...[
-              _CsfKpiMetricRow(
-                metric: metric,
-                accentColor: accentColor,
-                dense: dense,
-                dark: dark,
+            leading: Icon(
+              Icons.account_tree_outlined,
+              color: accentColor,
+              size: dense ? 18 : 22,
+            ),
+            title: Text(
+              'KGI: ${plan.kgi}',
+              maxLines: dense ? 1 : 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: titleColor,
+                fontSize: dense ? 12 : 14,
+                fontWeight: FontWeight.w800,
+                height: 1.35,
               ),
-              if (metric != plan.metrics.last) SizedBox(height: dense ? 8 : 10),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${plan.domain}: ${plan.actualLabel} / ${plan.targetLabel}',
+                    maxLines: dense ? 1 : 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: labelColor,
+                      fontSize: dense ? 10 : 12,
+                      fontWeight: FontWeight.w600,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: dense ? 5 : 7,
+                      backgroundColor: accentColor.withValues(alpha: 0.14),
+                      valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            children: [
+              for (final metric in plan.metrics) ...[
+                _CsfKpiMetricRow(
+                  metric: metric,
+                  accentColor: accentColor,
+                  dense: dense,
+                  dark: dark,
+                ),
+                if (metric != plan.metrics.last)
+                  SizedBox(height: dense ? 8 : 10),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

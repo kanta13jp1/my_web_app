@@ -363,6 +363,7 @@ class PublicMemoService implements MemoReactionService {
     String? category,
     String? searchQuery,
     String sortBy = 'published_at', // published_at, like_count, view_count
+    bool throwOnError = false,
   }) async {
     try {
       var builder =
@@ -374,10 +375,16 @@ class PublicMemoService implements MemoReactionService {
 
       final normalizedQuery = searchQuery?.trim();
       if (normalizedQuery != null && normalizedQuery.isNotEmpty) {
-        final escaped = normalizedQuery.replaceAll(',', ' ');
-        builder = builder.or(
-          'title.ilike.%$escaped%,content.ilike.%$escaped%,category.ilike.%$escaped%',
-        );
+        final escaped =
+            normalizedQuery.replaceAll(RegExp(r'[,()]'), ' ').trim();
+        if (escaped.isNotEmpty) {
+          final filter = <String>[
+            'title.ilike.%$escaped%',
+            'content.ilike.%$escaped%',
+            'category.ilike.%$escaped%',
+          ].join(',');
+          builder = builder.or(filter);
+        }
       }
 
       final response = await builder
@@ -393,6 +400,9 @@ class PublicMemoService implements MemoReactionService {
         error: e,
         stackTrace: stackTrace,
       );
+      if (throwOnError) {
+        rethrow;
+      }
       return [];
     }
   }

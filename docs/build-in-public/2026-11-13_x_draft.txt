@@ -1,0 +1,6 @@
+自分株式会社 (= Jibun Inc.) 最近 7 日:
+- 資産ページのMaterial境界を補う修正
+- 国会会議録の閲覧機能・最新main同期と合成画面確認
+- 地方選の集計母集団と出典確認日の分離
+
+#buildinpublic #flutter #supabase #claudecode #aifleet
