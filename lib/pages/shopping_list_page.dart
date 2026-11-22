@@ -972,9 +972,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                   ),
                                   const SizedBox(width: 2),
                                   Text(
-                                    recurDays != null
-                                        ? '$recurDays日ごと'
-                                        : '定期',
+                                    recurDays != null ? '$recurDays日ごと' : '定期',
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -1084,9 +1082,8 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                         minimumSize: const Size(48, 48),
                         tapTargetSize: MaterialTapTargetSize.padded,
                       ),
-                      onPressed: isSavingPurchase
-                          ? null
-                          : () => _markPurchased(item),
+                      onPressed:
+                          isSavingPurchase ? null : () => _markPurchased(item),
                       icon: isSavingPurchase
                           ? const SizedBox(
                               width: 16,
