@@ -70,6 +70,7 @@ import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_payment_reminder_service.dart';
 import 'package:my_web_app/services/asset_bulk_payment_source_assigner.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
+import 'package:my_web_app/services/asset_liability_workbook_memoizer.dart';
 import 'package:my_web_app/services/asset_liability_repayment_simulation_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_ai_analysis_history_service.dart';
@@ -1147,6 +1148,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   late final AssetAnomalyDetectionRepository _anomalyDetectionRepository;
   final AssetLiabilityPlanningService _assetLiabilityPlanner =
       const AssetLiabilityPlanningService();
+  final AssetLiabilityWorkbookMemoizer _workbookMemoizer =
+      AssetLiabilityWorkbookMemoizer();
   final AssetLiabilityPaymentReminderService _assetLiabilityReminderService =
       const AssetLiabilityPaymentReminderService();
   final AssetAlertCenterService _assetAlertCenterService =
@@ -11012,10 +11015,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   AssetLiabilityWorkbook? _buildCurrentAssetLiabilityWorkbook() {
     final latestSnapshot = _latestSnapshotForDisplay();
     if (latestSnapshot.isEmpty) {
+      _workbookMemoizer.clear();
       return null;
     }
 
-    return _assetLiabilityPlanner.buildWorkbook(
+    return _workbookMemoizer.resolve(
+      planner: _assetLiabilityPlanner,
       latestSnapshot: latestSnapshot,
       baseDate: _now,
       confirmedPaymentDays: _confirmedPaymentDays,
@@ -34245,191 +34250,199 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildAssetRepaymentSimulationPanel(AssetLiabilityWorkbook workbook) {
-    final extraMonthlyPayment = _parseRepaymentSimulationExtraPayment();
-    final simulation =
-        _assetLiabilityRepaymentSimulationService.buildPanelComparison(
-      workbook: workbook,
-      extraMonthlyPayment: extraMonthlyPayment,
-    );
-    const scopeExplanation =
-        '直接払い・今月未払いの対象だけの試算です。今月支払済みの元本、カード請求に内包する明細、定期支出として追加した固定費は対象外です。全負債の完済時期ではありません。予定返済額を毎月確保し、新規利用・将来の定期請求がない前提で計算します。';
-    if (!simulation.hasEligibleDebt || simulation.plans.isEmpty) {
-      final hasExcludedScheduledExpenses = workbook.debtMasterRows.any(
-        (row) =>
-            workbook.scheduledExpenseAccountIds.contains(row.id) &&
-            row.balance < -0.01 &&
-            !row.paid &&
-            row.isDirectCashflowTarget,
-      );
-      if (!hasExcludedScheduledExpenses) return const SizedBox.shrink();
-      return const Padding(
-        padding: EdgeInsets.all(12),
-        child: Text(
-          '返済試算の対象元本はありません。\n$scopeExplanation',
-          style: TextStyle(fontSize: 12, height: 1.5),
-        ),
-      );
-    }
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter panelSetState) {
+        final extraMonthlyPayment = _parseRepaymentSimulationExtraPayment();
+        final simulation =
+            _assetLiabilityRepaymentSimulationService.buildPanelComparison(
+          workbook: workbook,
+          extraMonthlyPayment: extraMonthlyPayment,
+        );
+        const scopeExplanation =
+            '直接払い・今月未払いの対象だけの試算です。今月支払済みの元本、カード請求に内包する明細、定期支出として追加した固定費は対象外です。全負債の完済時期ではありません。予定返済額を毎月確保し、新規利用・将来の定期請求がない前提で計算します。';
+        if (!simulation.hasEligibleDebt || simulation.plans.isEmpty) {
+          final hasExcludedScheduledExpenses = workbook.debtMasterRows.any(
+            (row) =>
+                workbook.scheduledExpenseAccountIds.contains(row.id) &&
+                row.balance < -0.01 &&
+                !row.paid &&
+                row.isDirectCashflowTarget,
+          );
+          if (!hasExcludedScheduledExpenses) return const SizedBox.shrink();
+          return const Padding(
+            padding: EdgeInsets.all(12),
+            child: Text(
+              '返済試算の対象元本はありません。\n$scopeExplanation',
+              style: TextStyle(fontSize: 12, height: 1.5),
+            ),
+          );
+        }
 
-    final selectedPlan = simulation.planFor(_repaymentSimulationStrategy) ??
-        simulation.plans.first;
-    final baselinePlan = simulation.baselinePlanFor(
-      _repaymentSimulationStrategy,
-    );
-    final firstMonth = selectedPlan.monthSnapshots.isEmpty
-        ? null
-        : selectedPlan.monthSnapshots.first;
+        final selectedPlan = simulation.planFor(_repaymentSimulationStrategy) ??
+            simulation.plans.first;
+        final baselinePlan = simulation.baselinePlanFor(
+          _repaymentSimulationStrategy,
+        );
+        final firstMonth = selectedPlan.monthSnapshots.isEmpty
+            ? null
+            : selectedPlan.monthSnapshots.first;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: const Color(0xFF2563EB).withValues(alpha: 0.25),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.calculate_outlined, color: Color(0xFF2563EB)),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '今月未払いの対象元本の返済試算',
-                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            scopeExplanation,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: 12,
-              height: 1.5,
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: const Color(0xFF2563EB).withValues(alpha: 0.25),
             ),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: 190,
-                child: TextField(
-                  controller: _repaymentSimulationExtraPaymentController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
-                  ],
-                  onChanged: (_) => setState(() {}),
-                  decoration: const InputDecoration(
-                    labelText: '毎月の追加返済額',
-                    prefixText: '¥',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                ),
-              ),
-              for (final strategy
-                  in AssetLiabilityRepaymentSimulationStrategy.values)
-                ChoiceChip(
-                  selected: _repaymentSimulationStrategy == strategy,
-                  label: Text(_repaymentSimulationStrategyLabel(strategy)),
-                  onSelected: (_) {
-                    setState(() {
-                      _repaymentSimulationStrategy = strategy;
-                    });
-                  },
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildRepaymentSimulationMetric(
-                label: '対象件数・元本',
-                value:
-                    '${simulation.eligibleDebtCount}件 / ${_formatManagementYen(selectedPlan.startingBalanceTotal)}',
-              ),
-              _buildRepaymentSimulationMetric(
-                label: '毎月の予定返済額',
-                value: _formatManagementYen(selectedPlan.monthlyPaymentBudget),
-              ),
-              _buildRepaymentSimulationMetric(
-                label: '対象元本の返済回数（月）',
-                value: _formatRepaymentSimulationMonths(
-                  selectedPlan.estimatedPayoffMonths,
-                ),
-              ),
-              _buildRepaymentSimulationMetric(
-                label: '追加返済による差',
-                value: _formatRepaymentSimulationDelta(
-                  selectedPlan: selectedPlan,
-                  baselinePlan: baselinePlan,
-                ),
-              ),
-              _buildRepaymentSimulationMetric(
-                label: '対象元本の推定利息',
-                value: selectedPlan.hasInterestEstimate
-                    ? _formatManagementYen(selectedPlan.estimatedInterestTotal)
-                    : '未算出（予定返済額が0円）',
-              ),
-            ],
-          ),
-          if (firstMonth != null) ...[
-            const SizedBox(height: 10),
-            Text(
-              '1回目の優先先: ${firstMonth.focusDebtName ?? '-'} / 予定支払額 ${_formatManagementYen(firstMonth.paymentTotal)} / 推定利息 ${_formatManagementYen(firstMonth.interestTotal)} / 対象残元本 ${_formatManagementYen(firstMonth.remainingDebt)}',
-              style: const TextStyle(fontSize: 12, height: 1.5),
-            ),
-          ],
-          const SizedBox(height: 10),
-          for (final entry
-              in selectedPlan.priorityRows.take(4).toList().asMap().entries)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const Row(
                 children: [
-                  Text(
-                    '${entry.key + 1}.',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
+                  Icon(Icons.calculate_outlined, color: Color(0xFF2563EB)),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${entry.value.name} / ${_formatManagementYen(entry.value.balance)} / 年利 ${_formatManagementPercent(entry.value.annualRate)} / 支払日 ${entry.value.paymentDay ?? '-'} / 月額 ${_formatManagementYen(entry.value.monthlyPayment)}',
-                      style: const TextStyle(fontSize: 12, height: 1.5),
+                      '今月未払いの対象元本の返済試算',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, height: 1.4),
                     ),
                   ),
                 ],
               ),
-            ),
-          if (selectedPlan.warnings.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              selectedPlan.warnings.join(' / '),
-              style: const TextStyle(
-                color: Color(0xFFB91C1C),
-                fontSize: 12,
-                height: 1.5,
+              const SizedBox(height: 8),
+              Text(
+                scopeExplanation,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
               ),
-            ),
-          ],
-        ],
-      ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 190,
+                    child: TextField(
+                      controller: _repaymentSimulationExtraPaymentController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+                      ],
+                      onChanged: (_) => panelSetState(() {}),
+                      decoration: const InputDecoration(
+                        labelText: '毎月の追加返済額',
+                        prefixText: '¥',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                  for (final strategy
+                      in AssetLiabilityRepaymentSimulationStrategy.values)
+                    ChoiceChip(
+                      selected: _repaymentSimulationStrategy == strategy,
+                      label: Text(_repaymentSimulationStrategyLabel(strategy)),
+                      onSelected: (_) {
+                        panelSetState(() {
+                          _repaymentSimulationStrategy = strategy;
+                        });
+                      },
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildRepaymentSimulationMetric(
+                    label: '対象件数・元本',
+                    value:
+                        '${simulation.eligibleDebtCount}件 / ${_formatManagementYen(selectedPlan.startingBalanceTotal)}',
+                  ),
+                  _buildRepaymentSimulationMetric(
+                    label: '毎月の予定返済額',
+                    value:
+                        _formatManagementYen(selectedPlan.monthlyPaymentBudget),
+                  ),
+                  _buildRepaymentSimulationMetric(
+                    label: '対象元本の返済回数（月）',
+                    value: _formatRepaymentSimulationMonths(
+                      selectedPlan.estimatedPayoffMonths,
+                    ),
+                  ),
+                  _buildRepaymentSimulationMetric(
+                    label: '追加返済による差',
+                    value: _formatRepaymentSimulationDelta(
+                      selectedPlan: selectedPlan,
+                      baselinePlan: baselinePlan,
+                    ),
+                  ),
+                  _buildRepaymentSimulationMetric(
+                    label: '対象元本の推定利息',
+                    value: selectedPlan.hasInterestEstimate
+                        ? _formatManagementYen(
+                            selectedPlan.estimatedInterestTotal,
+                          )
+                        : '未算出（予定返済額が0円）',
+                  ),
+                ],
+              ),
+              if (firstMonth != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  '1回目の優先先: ${firstMonth.focusDebtName ?? '-'} / 予定支払額 ${_formatManagementYen(firstMonth.paymentTotal)} / 推定利息 ${_formatManagementYen(firstMonth.interestTotal)} / 対象残元本 ${_formatManagementYen(firstMonth.remainingDebt)}',
+                  style: const TextStyle(fontSize: 12, height: 1.5),
+                ),
+              ],
+              const SizedBox(height: 10),
+              for (final entry
+                  in selectedPlan.priorityRows.take(4).toList().asMap().entries)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${entry.key + 1}.',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${entry.value.name} / ${_formatManagementYen(entry.value.balance)} / 年利 ${_formatManagementPercent(entry.value.annualRate)} / 支払日 ${entry.value.paymentDay ?? '-'} / 月額 ${_formatManagementYen(entry.value.monthlyPayment)}',
+                          style: const TextStyle(fontSize: 12, height: 1.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (selectedPlan.warnings.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  selectedPlan.warnings.join(' / '),
+                  style: const TextStyle(
+                    color: Color(0xFFB91C1C),
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 
