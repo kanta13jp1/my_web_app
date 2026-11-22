@@ -850,7 +850,7 @@ class _DailyCoursePanelState extends State<_DailyCoursePanel> {
 
   Future<void> _completeDay(BuildContext context, int dayNumber) async {
     final completed = await widget.viewModel.completeCurrentCourseDay();
-    if (!mounted || !completed) return;
+    if (!context.mounted || !completed) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(

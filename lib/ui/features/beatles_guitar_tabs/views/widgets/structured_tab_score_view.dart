@@ -445,7 +445,7 @@ class _StructuredTabRowPainter extends CustomPainter {
           );
         } else {
           final tp = TextPainter(
-            text: TextSpan(text: measure.topNote!, style: topStyle),
+            text: TextSpan(text: measure.topNote, style: topStyle),
             textDirection: TextDirection.ltr,
           )..layout();
           final desiredX = slot.right - 4.0 - tp.width;
