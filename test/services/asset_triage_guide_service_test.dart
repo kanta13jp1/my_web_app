@@ -62,6 +62,7 @@ void main() {
       // ③ 止血 (カード新規利用停止)。
       expect(plan.todaySteps[2].kind, AssetTriageStepKind.stopNewCardUsage);
       expect(plan.todaySteps[2].detail.contains('ファミペイ'), isTrue);
+      expect(plan.todaySteps[2].detail.contains('利用停止'), isTrue);
       // 今週: 期限超過処理 + 新規利用分の25日返済確保。期限超過は昨日以前の支払のみ
       // (本日期日のモビット10,000円は②に載せ、④へは二重計上しない)。
       expect(
@@ -484,6 +485,9 @@ void main() {
       expect(step.detail.contains('電気代'), isFalse);
       // 合計 (30,000 + 36,000 = 66,000) を提示。
       expect(step.detail.contains('66,000円'), isTrue);
+      // 解約以外の選択肢 (一時停止・ダウングレード) も提示する。
+      expect(step.detail.contains('一時停止'), isTrue);
+      expect(step.detail.contains('ダウングレード'), isTrue);
     });
 
     test('no cancelSubscriptions step when there are no subscriptions', () {

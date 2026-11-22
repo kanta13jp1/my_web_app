@@ -123,7 +123,7 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
     final versionBadgeFg =
         isDark ? Colors.white.withValues(alpha: 0.85) : accent;
 
-    return Container(
+    final bar = Container(
       key: const Key('global_header_clock_bar'),
       width: double.infinity,
       decoration: BoxDecoration(
@@ -257,5 +257,6 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
         ),
       ),
     );
+    return Material(type: MaterialType.transparency, child: bar);
   }
 }

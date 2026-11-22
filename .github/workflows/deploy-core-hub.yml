@@ -41,7 +41,7 @@ jobs:
 
   deploy:
     name: Deploy only core-hub public blog repair
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: vars.PRODUCTION_DEPLOY_HOLD == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: contract
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -94,14 +94,14 @@ jobs:
           python scripts/testcontainers_supabase_smoke.py --artifacts-dir .testcontainers-logs
       - name: Upload production DB and Edge smoke artifacts
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: core-hub-production-testcontainers-smoke-logs
           path: .testcontainers-logs/
           if-no-files-found: ignore
           include-hidden-files: true
       - name: Setup pinned Supabase CLI
-        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3
         with:
           version: 2.84.2
       - name: Verify supported deploy flags

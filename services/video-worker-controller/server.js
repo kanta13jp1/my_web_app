@@ -64,7 +64,7 @@ async function accessToken(fetchImpl = fetch) {
   return body.access_token;
 }
 
-async function wakeInstance(config, dependencies = {}) {
+async function inspectInstance(config, dependencies = {}) {
   const fetchImpl = dependencies.fetchImpl || fetch;
   const token = dependencies.accessToken || await accessToken(fetchImpl);
   const instanceUrl =
@@ -78,6 +78,12 @@ async function wakeInstance(config, dependencies = {}) {
   if (!current.ok) throw new Error(`compute_get_${current.status}`);
   const instance = await current.json();
   const state = String(instance.status || '').toUpperCase();
+  return { state, instanceUrl, headers, fetchImpl };
+}
+
+async function wakeInstance(config, dependencies = {}) {
+  const { state, instanceUrl, headers, fetchImpl } =
+    await inspectInstance(config, dependencies);
   if (READY_STATES.has(state)) return { state, started: false };
   if (state !== 'TERMINATED') {
     throw new Error('compute_instance_transitioning');
@@ -118,16 +124,24 @@ function sendJson(res, status, body) {
 function createServer(config, dependencies = {}) {
   return http.createServer(async (req, res) => {
     const path = String(req.url || '').split('?')[0];
-    if (req.method === 'GET' && path === '/healthz') {
+    if (req.method === 'GET' && (path === '/health' || path === '/healthz')) {
       return sendJson(res, 200, { status: 'ok' });
     }
-    if (req.method !== 'POST' || path !== '/wake') {
+    const targetStatus = req.method === 'GET' && path === '/target-status';
+    if (!targetStatus && (req.method !== 'POST' || path !== '/wake')) {
       return sendJson(res, 404, { error: 'not_found' });
     }
     if (!safeEqual(bearerToken(req), config.wakeToken)) {
       return sendJson(res, 401, { error: 'unauthorized' });
     }
     try {
+      if (targetStatus) {
+        const { state } = await inspectInstance(config, dependencies);
+        if (!READY_STATES.has(state) && state !== 'TERMINATED') {
+          throw new Error('compute_instance_transitioning');
+        }
+        return sendJson(res, 200, { target: 'present', state });
+      }
       const body = await readJson(req);
       if (!body || !JOB_ID_RE.test(String(body.job_id || ''))) {
         return sendJson(res, 400, { error: 'invalid_job_id' });
@@ -139,7 +153,9 @@ function createServer(config, dependencies = {}) {
       console.error('[video-worker-controller]', /^[a-z0-9_]+$/i.test(code)
         ? code
         : 'internal_error');
-      return sendJson(res, 503, { error: 'worker_wake_unavailable' });
+      return sendJson(res, 503, {
+        error: targetStatus ? 'worker_target_unavailable' : 'worker_wake_unavailable',
+      });
     }
   });
 }

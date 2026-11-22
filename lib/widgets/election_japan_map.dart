@@ -369,23 +369,32 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                   Positioned(
                     left: horizontalPadding + label.col * cell,
                     top: headerHeight + label.row * cell,
-                    child: _RegionMapLabel(label: label.label),
+                    child: IgnorePointer(
+                      child: ExcludeSemantics(
+                        child: _RegionMapLabel(label: label.label),
+                      ),
+                    ),
                   ),
                 Positioned(
                   left: horizontalPadding,
                   top: headerHeight,
                   width: width,
                   height: height,
-                  child: Stack(
-                    children: [
-                      for (final tile in _japanTiles)
-                        _buildPrefectureTile(
-                          context: context,
-                          tile: tile,
-                          cell: cell,
-                          maxLoad: maxLoad,
-                        ),
-                    ],
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Stack(
+                      children: [
+                        for (final tile in _sortedJapanTiles)
+                          _buildPrefectureTile(
+                            context: context,
+                            tile: tile,
+                            cell: cell,
+                            maxLoad: maxLoad,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -421,30 +430,35 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     final borderRadius = BorderRadius.circular(cell >= 42 ? 8 : 6);
     final nameFontSize = math.min(16.0, math.max(11.0, cell * 0.34));
     final valueFontSize = math.min(14.0, math.max(10.0, cell * 0.30));
+    final onTileTap =
+        plan == null ? null : () => setState(() => _selectedIndex = tile.index);
 
     return Positioned(
       left: tile.col * cell,
       top: tile.row * cell,
       width: cell * tile.width - tileGap,
       height: cell - tileGap,
-      child: Tooltip(
-        message: plan == null
+      child: Semantics(
+        container: true,
+        button: true,
+        enabled: onTileTap != null,
+        selected: selected,
+        excludeSemantics: true,
+        onTap: onTileTap,
+        label: plan == null
             ? tile.name
-            : '${tile.name}: KGI${plan.kgiTargetLocalMembers} / KPI${plan.kpiActualLocalMembers} / 期限${formatMonthKey(plan.endorsementDeadlineMonth)}',
-        child: Semantics(
-          button: true,
-          selected: selected,
-          label: plan == null
+            : '${tile.name} KGI${plan.kgiTargetLocalMembers} KPI${plan.kpiActualLocalMembers}',
+        child: Tooltip(
+          excludeFromSemantics: true,
+          message: plan == null
               ? tile.name
-              : '${tile.name} KGI${plan.kgiTargetLocalMembers} KPI${plan.kpiActualLocalMembers}',
+              : '${tile.name}: KGI${plan.kgiTargetLocalMembers} / KPI${plan.kpiActualLocalMembers} / 期限${formatMonthKey(plan.endorsementDeadlineMonth)}',
           child: Material(
             color: color,
             borderRadius: borderRadius,
             child: InkWell(
               borderRadius: borderRadius,
-              onTap: plan == null
-                  ? null
-                  : () => setState(() => _selectedIndex = tile.index),
+              onTap: onTileTap,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
                 decoration: BoxDecoration(
@@ -908,6 +922,31 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     return '$dateKey|${electionName.trim()}';
   }
 
+  Widget _buildScrollableBreakdownList({
+    required BuildContext context,
+    required int itemCount,
+    required double maxHeight,
+    required IndexedWidgetBuilder itemBuilder,
+  }) {
+    final theme = Theme.of(context);
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: Scrollbar(
+        child: ListView.separated(
+          shrinkWrap: true,
+          primary: false,
+          padding: const EdgeInsets.only(right: 8),
+          itemCount: itemCount,
+          separatorBuilder: (_, __) => Divider(
+            height: 14,
+            color: theme.colorScheme.outlineVariant,
+          ),
+          itemBuilder: itemBuilder,
+        ),
+      ),
+    );
+  }
+
   Widget _buildScheduleBreakdown(
     BuildContext context,
     List<LocalElectionScheduleEntry> schedules,
@@ -916,22 +955,34 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '予定選挙内訳',
-          style: theme.textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            height: 1.4,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '予定選挙内訳',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            Text(
+              '${schedules.length}件',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
-        for (var index = 0; index < schedules.length; index++) ...[
-          if (index > 0)
-            Divider(
-              height: 14,
-              color: theme.colorScheme.outlineVariant,
-            ),
-          _ScheduleBreakdownRow(schedule: schedules[index]),
-        ],
+        _buildScrollableBreakdownList(
+          context: context,
+          itemCount: schedules.length,
+          maxHeight: 340,
+          itemBuilder: (_, index) =>
+              _ScheduleBreakdownRow(schedule: schedules[index]),
+        ),
       ],
     );
   }
@@ -977,14 +1028,13 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
           ],
         ),
         const SizedBox(height: 8),
-        for (var index = 0; index < entries.length; index++) ...[
-          if (index > 0)
-            Divider(
-              height: 14,
-              color: theme.colorScheme.outlineVariant,
-            ),
-          _PostConventionBreakdownRow(entry: entries[index]),
-        ],
+        _buildScrollableBreakdownList(
+          context: context,
+          itemCount: entries.length,
+          maxHeight: 280,
+          itemBuilder: (_, index) =>
+              _PostConventionBreakdownRow(entry: entries[index]),
+        ),
       ],
     );
   }
@@ -1727,14 +1777,14 @@ const int _mapColumns = 10;
 const int _mapRows = 15;
 
 const List<_RegionLabel> _regionLabels = <_RegionLabel>[
-  _RegionLabel('北海道', 1.15, 7.05),
-  _RegionLabel('東北', 2.65, 7.10),
-  _RegionLabel('関東', 6.75, 6.85),
-  _RegionLabel('中部', 5.25, 4.80),
-  _RegionLabel('近畿', 7.00, 2.85),
-  _RegionLabel('中国', 6.55, 0.20),
-  _RegionLabel('四国', 9.70, 1.35),
-  _RegionLabel('九州', 11.55, 2.15),
+  _RegionLabel('北海道', 1.15, 8.05),
+  _RegionLabel('東北', 2.15, 7.05),
+  _RegionLabel('関東', 5.15, 9.05),
+  _RegionLabel('中部', 5.15, 5.55),
+  _RegionLabel('近畿', 7.15, 3.15),
+  _RegionLabel('中国', 6.15, 0.10),
+  _RegionLabel('四国', 9.15, 1.35),
+  _RegionLabel('九州', 12.15, 2.15),
 ];
 
 const List<_JapanTile> _japanTiles = <_JapanTile>[
@@ -1786,3 +1836,14 @@ const List<_JapanTile> _japanTiles = <_JapanTile>[
   _JapanTile(index: 45, name: '鹿児島県', shortName: '鹿児島', row: 13, col: 1),
   _JapanTile(index: 46, name: '沖縄県', shortName: '沖縄', row: 14, col: 0),
 ];
+
+final List<_JapanTile> _sortedJapanTiles = List<_JapanTile>.unmodifiable(
+  List<_JapanTile>.from(_japanTiles)
+    ..sort((a, b) {
+      final rowCompare = a.row.compareTo(b.row);
+      if (rowCompare != 0) {
+        return rowCompare;
+      }
+      return a.col.compareTo(b.col);
+    }),
+);

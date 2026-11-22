@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/services/asset_flow_request.dart';
 import 'package:intl/intl.dart';
 
 // Services
@@ -55,6 +56,15 @@ import '../widgets/feature_strategy_monitor_panel.dart';
 import '../widgets/grow_together_share_card.dart';
 import '../widgets/home_billing_nudge.dart';
 import '../widgets/home_primary_action_card.dart';
+import '../widgets/home_calendar_month_header.dart';
+import '../widgets/home_calendar_summary_pill.dart';
+import '../widgets/home_calendar_cashflow_line.dart';
+import '../widgets/home_calendar_day_indicators.dart';
+import '../widgets/home_calendar_day_surface.dart';
+import '../widgets/home_ops_snapshot_view.dart';
+import '../models/home_daily_cashflow_summary.dart';
+import '../widgets/home_calendar_day_number.dart';
+import '../widgets/home_today_priority_goal.dart';
 import '../widgets/home_visibility_policy.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 import '../widgets/life_waste_elimination_panel.dart';
@@ -72,6 +82,7 @@ import '../widgets/home_tier/ai_recommended_features_list.dart';
 import '../widgets/home_tier/popular_features_list.dart';
 import '../utils/feature_tap_logger.dart';
 import '../utils/home_feature_request_failure.dart';
+import '../utils/home_calendar_visible_range.dart';
 import '../services/route_visibility_observer.dart';
 
 class HomePage extends StatefulWidget {
@@ -139,6 +150,8 @@ class _HomePageState extends State<HomePage> with RouteAware {
   DateTime? _calendarMonthAnchor;
   DateTime? _selectedCalendarDate;
   int _notifUnreadCount = 0;
+  static const _reqBtnKey = Key('home_site_guide_open_feature_request_button');
+  bool _showFeatureRequestForm = false;
   final _featureRequestFormKey = GlobalKey<FormState>();
   final _featureRequestTitleController = TextEditingController();
   final _featureRequestDescriptionController = TextEditingController();
@@ -402,6 +415,12 @@ class _HomePageState extends State<HomePage> with RouteAware {
     });
   }
 
+  void _toggleFeatureRequestForm() {
+    setState(() {
+      _showFeatureRequestForm = !_showFeatureRequestForm;
+    });
+  }
+
   Future<void> _analyzeFeatureRequestAttachment() async {
     if (Supabase.instance.client.auth.currentUser == null) {
       ScaffoldMessenger.of(
@@ -589,61 +608,211 @@ class _HomePageState extends State<HomePage> with RouteAware {
     return 'home_ai_nudge_${_todayKey}_${type.name}_$token';
   }
 
-  Future<int> _fetchPendingCriticalTaskCount() async {
-    final dateStr = DateFormat('yyyy-MM-dd').format(_now());
-    return _fetchPendingCriticalTaskCountForDateKey(dateStr);
-  }
+  DateTime _minDate(DateTime a, DateTime b) => a.isBefore(b) ? a : b;
 
-  Future<int> _fetchPendingCriticalTaskCountForDateKey(String dateStr) async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) return 0;
+  DateTime _maxDate(DateTime a, DateTime b) => a.isAfter(b) ? a : b;
 
-    try {
-      final dynamic rowsRaw = await Supabase.instance.client
-          .from('mindless_tasks')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('task_date', dateStr)
-          .eq('is_completed', false)
-          .ilike('content', '%必須:%');
-      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
-      return rows.length;
-    } catch (e) {
-      debugPrint('Error fetching critical task count: $e');
-      return 0;
-    }
-  }
-
-  Future<Map<String, int>> _fetchPendingCriticalTaskCountMap({
-    required DateTime startDate,
-    required DateTime endDate,
+  Future<
+      ({
+        DailyCompletionGoalSnapshot completionGoalSnapshot,
+        Map<String, int> pendingCriticalTaskMap,
+        int todayPendingCriticalCount,
+        Map<String, List<_HomeCalendarTask>> tasksByDate,
+      })> _loadTaskAndGoalBundle({
+    required DateTime now,
+    required DateTime calendarStart,
+    required DateTime calendarEnd,
   }) async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) return <String, int>{};
+    final today = _startOfDay(now);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final tomorrow = today.add(const Duration(days: 1));
+    final yesterdayKey = _statusDateKey(yesterday);
+    final todayKey = _statusDateKey(today);
+    final yesterdayIso = yesterday.toIso8601String();
+    final tomorrowIso = tomorrow.toIso8601String();
 
-    final startKey = _statusDateKey(startDate);
-    final endKey = _statusDateKey(endDate);
-    try {
-      final dynamic rowsRaw = await Supabase.instance.client
-          .from('mindless_tasks')
-          .select('task_date')
-          .eq('user_id', userId)
-          .eq('is_completed', false)
-          .gte('task_date', startKey)
-          .lte('task_date', endKey)
-          .ilike('content', '%必須:%');
-      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
-      final counts = <String, int>{};
-      for (final row in rows.whereType<Map<String, dynamic>>()) {
-        final dateKey = row['task_date']?.toString();
-        if (dateKey == null || dateKey.isEmpty) continue;
-        counts.update(dateKey, (value) => value + 1, ifAbsent: () => 1);
-      }
-      return counts;
-    } catch (e) {
-      debugPrint('Error fetching critical task map: $e');
-      return <String, int>{};
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      return (
+        completionGoalSnapshot: CompletionGoalService.buildSnapshot(
+          todos: const <Map<String, dynamic>>[],
+          now: now,
+        ),
+        pendingCriticalTaskMap: <String, int>{},
+        todayPendingCriticalCount: 0,
+        tasksByDate: <String, List<_HomeCalendarTask>>{},
+      );
     }
+
+    final taskStart = _minDate(yesterday, _startOfDay(calendarStart));
+    final taskEnd = _maxDate(today, _startOfDay(calendarEnd));
+    final taskStartKey = _statusDateKey(taskStart);
+    final taskEndKey = _statusDateKey(taskEnd);
+    final calStartKey = _statusDateKey(calendarStart);
+    final calEndKey = _statusDateKey(calendarEnd);
+
+    Future<dynamic> safeQuery(
+      Future<dynamic> Function() fn,
+      String label,
+    ) async {
+      try {
+        return await fn();
+      } catch (e) {
+        debugPrint('Error $label: $e');
+        return const <dynamic>[];
+      }
+    }
+
+    final results = await Future.wait<dynamic>([
+      safeQuery(
+        () => Supabase.instance.client
+            .from('daily_todos')
+            .select(
+              'id,task_date,task,is_completed,is_important,category,order_index,completed_at',
+            )
+            .eq('user_id', userId)
+            .gte('task_date', taskStartKey)
+            .lte('task_date', taskEndKey)
+            .order('task_date', ascending: true)
+            .order('order_index', ascending: true),
+        'fetching daily todo map',
+      ),
+      safeQuery(
+        () => Supabase.instance.client
+            .from('daily_todos')
+            .select('id,is_completed,completed_at,task_date')
+            .eq('user_id', userId)
+            .gte('completed_at', yesterdayIso)
+            .lt('completed_at', tomorrowIso),
+        'loading completion goal snapshot',
+      ),
+      safeQuery(
+        () => Supabase.instance.client
+            .from('mindless_tasks')
+            .select('id,task_date,hour_slot,content,is_completed')
+            .eq('user_id', userId)
+            .gte('task_date', taskStartKey)
+            .lte('task_date', taskEndKey)
+            .order('task_date', ascending: true)
+            .order('hour_slot', ascending: true),
+        'fetching mindless task map',
+      ),
+    ]);
+
+    final todoRows =
+        results[0] is List ? results[0] as List : const <dynamic>[];
+    final completedTodoRows =
+        results[1] is List ? results[1] as List : const <dynamic>[];
+    final mindlessRows =
+        results[2] is List ? results[2] as List : const <dynamic>[];
+
+    final goalRowsById = <String, Map<String, dynamic>>{};
+    final tasksByDate = <String, List<_HomeCalendarTask>>{};
+    final pendingCriticalTaskMap = <String, int>{};
+
+    void appendTask(String dateKey, _HomeCalendarTask task) {
+      tasksByDate.putIfAbsent(dateKey, () => <_HomeCalendarTask>[]).add(task);
+    }
+
+    for (final row in todoRows.whereType<Map<String, dynamic>>()) {
+      final dateKey = row['task_date']?.toString();
+      final id = row['id']?.toString();
+      if (id != null &&
+          id.isNotEmpty &&
+          dateKey != null &&
+          dateKey.compareTo(yesterdayKey) >= 0 &&
+          dateKey.compareTo(todayKey) <= 0) {
+        goalRowsById[id] = row;
+      }
+
+      if (dateKey == null ||
+          dateKey.isEmpty ||
+          dateKey.compareTo(calStartKey) < 0 ||
+          dateKey.compareTo(calEndKey) > 0) {
+        continue;
+      }
+      final title = (row['task'] as String? ?? '').trim();
+      if (title.isEmpty) continue;
+
+      appendTask(
+        dateKey,
+        _HomeCalendarTask(
+          id: 'daily_${row['id']}',
+          title: title,
+          isCompleted: row['is_completed'] == true,
+          isImportant: row['is_important'] == true,
+          source: _HomeCalendarTaskSource.dailyTodo,
+          secondaryLabel: _dailyTodoCategoryLabel(
+            row['category']?.toString(),
+          ),
+          sortOrder: (row['order_index'] as num?)?.toInt() ?? 0,
+        ),
+      );
+    }
+
+    for (final row in completedTodoRows.whereType<Map<String, dynamic>>()) {
+      final id = row['id']?.toString();
+      if (id == null || id.isEmpty) continue;
+      goalRowsById[id] = row;
+    }
+
+    for (final row in mindlessRows.whereType<Map<String, dynamic>>()) {
+      final dateKey = row['task_date']?.toString();
+      if (dateKey == null || dateKey.isEmpty) continue;
+
+      final rawContent = row['content'] as String? ?? '';
+      final isCompleted = row['is_completed'] == true;
+      if (!isCompleted && rawContent.contains('必須:')) {
+        pendingCriticalTaskMap.update(
+          dateKey,
+          (value) => value + 1,
+          ifAbsent: () => 1,
+        );
+      }
+
+      if (dateKey.compareTo(calStartKey) < 0 ||
+          dateKey.compareTo(calEndKey) > 0) {
+        continue;
+      }
+      final title = rawContent.trim();
+      if (title.isEmpty) continue;
+
+      final hourSlot = (row['hour_slot'] as num?)?.toInt();
+      appendTask(
+        dateKey,
+        _HomeCalendarTask(
+          id: 'mindless_${row['id']}',
+          title: title,
+          isCompleted: isCompleted,
+          isImportant: false,
+          source: _HomeCalendarTaskSource.mindless,
+          secondaryLabel: _hourSlotLabel(hourSlot),
+          sortOrder: 1000 + (hourSlot ?? 0),
+        ),
+      );
+    }
+
+    for (final tasks in tasksByDate.values) {
+      tasks.sort((a, b) {
+        final completedCompare = (a.isCompleted ? 1 : 0).compareTo(
+          b.isCompleted ? 1 : 0,
+        );
+        if (completedCompare != 0) return completedCompare;
+        final sortCompare = a.sortOrder.compareTo(b.sortOrder);
+        if (sortCompare != 0) return sortCompare;
+        return a.title.compareTo(b.title);
+      });
+    }
+
+    return (
+      completionGoalSnapshot: CompletionGoalService.buildSnapshot(
+        todos: goalRowsById.values.toList(),
+        now: now,
+      ),
+      pendingCriticalTaskMap: pendingCriticalTaskMap,
+      todayPendingCriticalCount: pendingCriticalTaskMap[todayKey] ?? 0,
+      tasksByDate: tasksByDate,
+    );
   }
 
   Future<int> _fetchPendingStockTaskCount() async {
@@ -664,9 +833,15 @@ class _HomePageState extends State<HomePage> with RouteAware {
     }
   }
 
-  Future<_HomeMonthlyCashflowSummary> _loadMonthlyCashflowSummary({
+  Future<
+      ({
+        _HomeMonthlyCashflowSummary monthlySummary,
+        Map<String, HomeDailyCashflowSummary> dailyByDate,
+      })> _loadCashflowBundle({
     required SharedPreferences prefs,
     required DateTime month,
+    required DateTime calendarStart,
+    required DateTime calendarEnd,
   }) async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     final monthStart = DateTime(month.year, month.month, 1);
@@ -675,20 +850,30 @@ class _HomePageState extends State<HomePage> with RouteAware {
         prefs.getBool(_monthlyFlowReviewDoneKeyFor(monthStart)) ?? false;
 
     if (userId == null) {
-      return _HomeMonthlyCashflowSummary(
-        month: monthStart,
-        reviewDone: reviewDone,
+      return (
+        monthlySummary: _HomeMonthlyCashflowSummary(
+          month: monthStart,
+          reviewDone: reviewDone,
+        ),
+        dailyByDate: <String, HomeDailyCashflowSummary>{},
       );
     }
 
+    final normalizedCalStart = _startOfDay(calendarStart);
+    final normalizedCalEndExclusive =
+        _startOfDay(calendarEnd).add(const Duration(days: 1));
+    final queryStart = _minDate(monthStart, normalizedCalStart);
+    final queryEndExclusive = _maxDate(nextMonth, normalizedCalEndExclusive);
+
     try {
-      final dynamic rowsRaw = await Supabase.instance.client
-          .from('wealth_struggles')
+      final dynamic rowsRaw = await AssetFlowRequest.table(
+        Supabase.instance.client,
+      )
           .select('action_type,amount,occurred_at')
           .eq('user_id', userId)
-          .gte('occurred_at', monthStart.toUtc().toIso8601String())
-          .lt('occurred_at', nextMonth.toUtc().toIso8601String())
-          .order('occurred_at', ascending: false);
+          .gte('occurred_at', queryStart.toUtc().toIso8601String())
+          .lt('occurred_at', queryEndExclusive.toUtc().toIso8601String())
+          .order('occurred_at', ascending: true);
       final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
 
       var incomeTotal = 0;
@@ -696,270 +881,75 @@ class _HomePageState extends State<HomePage> with RouteAware {
       var incomeCount = 0;
       var expenseCount = 0;
       DateTime? lastRecordedAt;
+      final dailyByDate = <String, HomeDailyCashflowSummary>{};
 
       for (final row in rows.whereType<Map<String, dynamic>>()) {
         final actionType = row['action_type']?.toString() ?? '';
-        final amount = (row['amount'] as num?)?.toInt() ?? 0;
-        final occurredAt = DateTime.tryParse(
-          row['occurred_at']?.toString() ?? '',
-        )?.toLocal();
-        if (occurredAt != null &&
-            (lastRecordedAt == null || occurredAt.isAfter(lastRecordedAt))) {
-          lastRecordedAt = occurredAt;
-        }
-
-        if (actionType == 'conquer') {
-          incomeTotal += amount;
-          incomeCount += 1;
-        } else if (actionType == 'expense') {
-          expenseTotal += amount;
-          expenseCount += 1;
-        }
-      }
-
-      return _HomeMonthlyCashflowSummary(
-        month: monthStart,
-        incomeTotal: incomeTotal,
-        expenseTotal: expenseTotal,
-        incomeCount: incomeCount,
-        expenseCount: expenseCount,
-        reviewDone: reviewDone,
-        lastRecordedAt: lastRecordedAt,
-      );
-    } catch (e) {
-      debugPrint('Error loading monthly cashflow summary: $e');
-      return _HomeMonthlyCashflowSummary(
-        month: monthStart,
-        reviewDone: reviewDone,
-      );
-    }
-  }
-
-  Future<Map<String, _HomeDailyCashflowSummary>> _loadCalendarCashflowMap({
-    required DateTime startDate,
-    required DateTime endDate,
-  }) async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) {
-      return <String, _HomeDailyCashflowSummary>{};
-    }
-
-    final normalizedStart = _startOfDay(startDate);
-    final normalizedEndExclusive = _startOfDay(
-      endDate,
-    ).add(const Duration(days: 1));
-
-    try {
-      final dynamic rowsRaw = await Supabase.instance.client
-          .from('wealth_struggles')
-          .select('action_type,amount,occurred_at')
-          .eq('user_id', userId)
-          .gte('occurred_at', normalizedStart.toUtc().toIso8601String())
-          .lt('occurred_at', normalizedEndExclusive.toUtc().toIso8601String())
-          .order('occurred_at', ascending: true);
-      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
-      final result = <String, _HomeDailyCashflowSummary>{};
-
-      for (final row in rows.whereType<Map<String, dynamic>>()) {
+        final amount = _toIntValue(row['amount']);
         final occurredAt = DateTime.tryParse(
           row['occurred_at']?.toString() ?? '',
         )?.toLocal();
         if (occurredAt == null) continue;
 
-        final dateKey = _statusDateKey(occurredAt);
-        final current = result[dateKey] ?? const _HomeDailyCashflowSummary();
-        final actionType = row['action_type']?.toString() ?? '';
-        final amount = _toIntValue(row['amount']);
+        if (!occurredAt.isBefore(monthStart) &&
+            occurredAt.isBefore(nextMonth)) {
+          if (lastRecordedAt == null || occurredAt.isAfter(lastRecordedAt)) {
+            lastRecordedAt = occurredAt;
+          }
+          if (actionType == 'conquer') {
+            incomeTotal += amount;
+            incomeCount += 1;
+          } else if (actionType == 'expense') {
+            expenseTotal += amount;
+            expenseCount += 1;
+          }
+        }
 
-        result[dateKey] = switch (actionType) {
-          'conquer' => current.copyWith(
-              incomeTotal: current.incomeTotal + amount,
-              incomeCount: current.incomeCount + 1,
-            ),
-          'expense' => current.copyWith(
-              expenseTotal: current.expenseTotal + amount,
-              expenseCount: current.expenseCount + 1,
-            ),
-          'transfer' => current.copyWith(
-              transferTotal: current.transferTotal + amount,
-              transferCount: current.transferCount + 1,
-            ),
-          _ => current,
-        };
+        if (!occurredAt.isBefore(normalizedCalStart) &&
+            occurredAt.isBefore(normalizedCalEndExclusive)) {
+          final dateKey = _statusDateKey(occurredAt);
+          final current =
+              dailyByDate[dateKey] ?? const HomeDailyCashflowSummary();
+          dailyByDate[dateKey] = switch (actionType) {
+            'conquer' => current.copyWith(
+                incomeTotal: current.incomeTotal + amount,
+                incomeCount: current.incomeCount + 1,
+              ),
+            'expense' => current.copyWith(
+                expenseTotal: current.expenseTotal + amount,
+                expenseCount: current.expenseCount + 1,
+              ),
+            'transfer' => current.copyWith(
+                transferTotal: current.transferTotal + amount,
+                transferCount: current.transferCount + 1,
+              ),
+            _ => current,
+          };
+        }
       }
 
-      return result;
+      return (
+        monthlySummary: _HomeMonthlyCashflowSummary(
+          month: monthStart,
+          incomeTotal: incomeTotal,
+          expenseTotal: expenseTotal,
+          incomeCount: incomeCount,
+          expenseCount: expenseCount,
+          reviewDone: reviewDone,
+          lastRecordedAt: lastRecordedAt,
+        ),
+        dailyByDate: dailyByDate,
+      );
     } catch (e) {
-      debugPrint('Error loading calendar cashflow map: $e');
-      return <String, _HomeDailyCashflowSummary>{};
-    }
-  }
-
-  Future<DailyCompletionGoalSnapshot> _loadDailyCompletionGoalSnapshot({
-    required DateTime now,
-  }) async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) {
-      return CompletionGoalService.buildSnapshot(
-        todos: const <Map<String, dynamic>>[],
-        now: now,
+      debugPrint('Error loading cashflow bundle: $e');
+      return (
+        monthlySummary: _HomeMonthlyCashflowSummary(
+          month: monthStart,
+          reviewDone: reviewDone,
+        ),
+        dailyByDate: <String, HomeDailyCashflowSummary>{},
       );
     }
-
-    final today = _startOfDay(now);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final tomorrow = today.add(const Duration(days: 1));
-    final yesterdayKey = _statusDateKey(yesterday);
-    final todayKey = _statusDateKey(today);
-    final yesterdayIso = yesterday.toIso8601String();
-    final tomorrowIso = tomorrow.toIso8601String();
-    final rowsById = <String, Map<String, dynamic>>{};
-
-    void mergeRows(dynamic rowsRaw) {
-      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
-      for (final row in rows.whereType<Map<String, dynamic>>()) {
-        final id = row['id']?.toString();
-        if (id == null || id.isEmpty) continue;
-        rowsById[id] = row;
-      }
-    }
-
-    try {
-      final byTaskDate = await Supabase.instance.client
-          .from('daily_todos')
-          .select('id,is_completed,completed_at,task_date')
-          .eq('user_id', userId)
-          .gte('task_date', yesterdayKey)
-          .lte('task_date', todayKey);
-      mergeRows(byTaskDate);
-
-      final byCompletedAt = await Supabase.instance.client
-          .from('daily_todos')
-          .select('id,is_completed,completed_at,task_date')
-          .eq('user_id', userId)
-          .gte('completed_at', yesterdayIso)
-          .lt('completed_at', tomorrowIso);
-      mergeRows(byCompletedAt);
-    } catch (e) {
-      debugPrint('Error loading completion goal snapshot: $e');
-    }
-
-    return CompletionGoalService.buildSnapshot(
-      todos: rowsById.values.toList(),
-      now: now,
-    );
-  }
-
-  Future<Map<String, List<_HomeCalendarTask>>> _fetchHomeCalendarTaskMap({
-    required DateTime startDate,
-    required DateTime endDate,
-  }) async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) return <String, List<_HomeCalendarTask>>{};
-
-    final startKey = _statusDateKey(startDate);
-    final endKey = _statusDateKey(endDate);
-    final tasksByDate = <String, List<_HomeCalendarTask>>{};
-
-    void appendTask(String dateKey, _HomeCalendarTask task) {
-      tasksByDate.putIfAbsent(dateKey, () => <_HomeCalendarTask>[]).add(task);
-    }
-
-    try {
-      final dynamic todoRowsRaw = await Supabase.instance.client
-          .from('daily_todos')
-          .select(
-            'id,task_date,task,is_completed,is_important,category,order_index',
-          )
-          .eq('user_id', userId)
-          .gte('task_date', startKey)
-          .lte('task_date', endKey)
-          .order('task_date', ascending: true)
-          .order('order_index', ascending: true);
-      final todoRows = todoRowsRaw is List ? todoRowsRaw : const <dynamic>[];
-
-      for (final row in todoRows.whereType<Map<String, dynamic>>()) {
-        final dateKey = row['task_date']?.toString();
-        final title = (row['task'] as String? ?? '').trim();
-        if (dateKey == null || dateKey.isEmpty || title.isEmpty) {
-          continue;
-        }
-
-        appendTask(
-          dateKey,
-          _HomeCalendarTask(
-            id: 'daily_${row['id']}',
-            title: title,
-            isCompleted: row['is_completed'] == true,
-            isImportant: row['is_important'] == true,
-            source: _HomeCalendarTaskSource.dailyTodo,
-            secondaryLabel: _dailyTodoCategoryLabel(
-              row['category']?.toString(),
-            ),
-            sortOrder: (row['order_index'] as num?)?.toInt() ?? 0,
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('Error fetching daily todo map: $e');
-    }
-
-    try {
-      final dynamic mindlessRowsRaw = await Supabase.instance.client
-          .from('mindless_tasks')
-          .select('id,task_date,hour_slot,content,is_completed')
-          .eq('user_id', userId)
-          .gte('task_date', startKey)
-          .lte('task_date', endKey)
-          .order('task_date', ascending: true)
-          .order('hour_slot', ascending: true);
-      final mindlessRows =
-          mindlessRowsRaw is List ? mindlessRowsRaw : const <dynamic>[];
-
-      for (final row in mindlessRows.whereType<Map<String, dynamic>>()) {
-        final dateKey = row['task_date']?.toString();
-        final title = (row['content'] as String? ?? '').trim();
-        if (dateKey == null || dateKey.isEmpty || title.isEmpty) {
-          continue;
-        }
-
-        final hourSlot = (row['hour_slot'] as num?)?.toInt();
-        appendTask(
-          dateKey,
-          _HomeCalendarTask(
-            id: 'mindless_${row['id']}',
-            title: title,
-            isCompleted: row['is_completed'] == true,
-            isImportant: false,
-            source: _HomeCalendarTaskSource.mindless,
-            secondaryLabel: _hourSlotLabel(hourSlot),
-            sortOrder: 1000 + (hourSlot ?? 0),
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('Error fetching mindless task map: $e');
-    }
-
-    for (final tasks in tasksByDate.values) {
-      tasks.sort((a, b) {
-        final completedCompare = (a.isCompleted ? 1 : 0).compareTo(
-          b.isCompleted ? 1 : 0,
-        );
-        if (completedCompare != 0) {
-          return completedCompare;
-        }
-
-        final sortCompare = a.sortOrder.compareTo(b.sortOrder);
-        if (sortCompare != 0) {
-          return sortCompare;
-        }
-
-        return a.title.compareTo(b.title);
-      });
-    }
-
-    return tasksByDate;
   }
 
   String _dailyTodoCategoryLabel(String? category) {
@@ -994,8 +984,9 @@ class _HomePageState extends State<HomePage> with RouteAware {
             .select('title,amount,created_at')
             .eq('user_id', userId)
             .order('created_at', ascending: true),
-        Supabase.instance.client
-            .from('wealth_struggles')
+        AssetFlowRequest.table(
+          Supabase.instance.client,
+        )
             .select('amount,description,occurred_at,action_type')
             .eq('user_id', userId)
             .order('occurred_at', ascending: true),
@@ -1343,46 +1334,56 @@ class _HomePageState extends State<HomePage> with RouteAware {
       final prefs = await SharedPreferences.getInstance();
       final today = _startOfDay(_now());
       final calendarRange = _calendarVisibleRange();
-      final abstinenceStart = today.isBefore(calendarRange.startDay)
-          ? today
-          : calendarRange.startDay;
-      final abstinenceEnd =
-          today.isAfter(calendarRange.endDay) ? today : calendarRange.endDay;
-      final abstinenceSnapshotsByDate =
-          await AbstinenceGuardStore.loadSnapshotsByDate(
-        startDate: abstinenceStart,
-        endDate: abstinenceEnd,
+      final statusStart = _minDate(today, calendarRange.startDay);
+      final statusEnd = _maxDate(today, calendarRange.endDay);
+
+      final abstinenceFuture = AbstinenceGuardStore.loadSnapshotsByDate(
+        startDate: statusStart,
+        endDate: statusEnd,
       );
-      final monthlyCashflowSummary = await _loadMonthlyCashflowSummary(
+      final cashflowFuture = _loadCashflowBundle(
         prefs: prefs,
         month: today,
+        calendarStart: calendarRange.startDay,
+        calendarEnd: calendarRange.endDay,
       );
-      final pendingCriticalTaskCount = await _fetchPendingCriticalTaskCount();
-      final pendingStockTaskCount = await _fetchPendingStockTaskCount();
-      final homeDailyMap = await _loadHomeDailyStatusMap(
+      final stockTaskCountFuture = _fetchPendingStockTaskCount();
+      final homeDailyMapFuture = _loadHomeDailyStatusMap(
         prefs: prefs,
-        startDate: today,
-        endDate: today,
+        startDate: statusStart,
+        endDate: statusEnd,
       );
+      final taskGoalFuture = _loadTaskAndGoalBundle(
+        now: today,
+        calendarStart: calendarRange.startDay,
+        calendarEnd: calendarRange.endDay,
+      );
+
+      final abstinenceSnapshotsByDate = await abstinenceFuture;
+      final cashflowBundle = await cashflowFuture;
+      final pendingStockTaskCount = await stockTaskCountFuture;
+      final homeDailyMap = await homeDailyMapFuture;
+      final taskGoalBundle = await taskGoalFuture;
+
       final todayStatus =
           homeDailyMap[_statusDateKey(today)] ?? const _HomeDailyStatusRecord();
       final abstinenceSnapshot =
           abstinenceSnapshotsByDate[_statusDateKey(today)] ??
               _emptyAbstinenceSnapshot();
-      final completionGoalSnapshot = await _loadDailyCompletionGoalSnapshot(
-        now: today,
-      );
       final primaryInterference = abstinenceSnapshot.primaryInterference;
       final calendarDays = await _loadCalendarDays(
-        prefs: prefs,
         calendarRange: calendarRange,
+        homeDailyMap: homeDailyMap,
+        pendingCriticalTaskMap: taskGoalBundle.pendingCriticalTaskMap,
+        cashflowByDate: cashflowBundle.dailyByDate,
+        tasksByDate: taskGoalBundle.tasksByDate,
         abstinenceSnapshotsByDate: abstinenceSnapshotsByDate,
       );
 
       return _HomeOpsSnapshot(
         morningBriefingDone: todayStatus.morningBriefingDone,
         balanceCheckDone: todayStatus.balanceCheckDone,
-        pendingCriticalTaskCount: pendingCriticalTaskCount,
+        pendingCriticalTaskCount: taskGoalBundle.todayPendingCriticalCount,
         pendingStockTaskCount: pendingStockTaskCount,
         abstinenceFocusCount: abstinenceSnapshot.enabledCount,
         abstinenceSlipCount: abstinenceSnapshot.totalSlipCount,
@@ -1401,9 +1402,9 @@ class _HomePageState extends State<HomePage> with RouteAware {
             abstinenceSnapshot.disciplineSnapshot.streakDays,
         abstinenceDisciplineStageLabel:
             abstinenceSnapshot.disciplineSnapshot.mindsetStageLabel,
-        completionGoalSnapshot: completionGoalSnapshot,
+        completionGoalSnapshot: taskGoalBundle.completionGoalSnapshot,
         calendarDays: calendarDays,
-        monthlyCashflowSummary: monthlyCashflowSummary,
+        monthlyCashflowSummary: cashflowBundle.monthlySummary,
       );
     } catch (error, stackTrace) {
       debugPrint('Home ops snapshot load failed: $error');
@@ -1426,25 +1427,15 @@ class _HomePageState extends State<HomePage> with RouteAware {
     );
   }
 
-  _HomeCalendarVisibleRange _calendarVisibleRange() {
-    final monthAnchor = _calendarAnchorMonth();
-    final firstDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month, 1);
-    final lastDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month + 1, 0);
-    final startOffset = firstDayOfMonth.weekday % 7;
-    final startDay = firstDayOfMonth.subtract(Duration(days: startOffset));
-    final endOffset = 6 - (lastDayOfMonth.weekday % 7);
-    final endDay = lastDayOfMonth.add(Duration(days: endOffset));
-
-    return _HomeCalendarVisibleRange(
-      monthAnchor: monthAnchor,
-      startDay: startDay,
-      endDay: endDay,
-    );
-  }
+  HomeCalendarVisibleRange _calendarVisibleRange() =>
+      HomeCalendarVisibleRange.forMonth(_calendarAnchorMonth());
 
   Future<List<_HomeCalendarDay>> _loadCalendarDays({
-    required SharedPreferences prefs,
-    _HomeCalendarVisibleRange? calendarRange,
+    HomeCalendarVisibleRange? calendarRange,
+    required Map<String, _HomeDailyStatusRecord> homeDailyMap,
+    required Map<String, int> pendingCriticalTaskMap,
+    required Map<String, HomeDailyCashflowSummary> cashflowByDate,
+    required Map<String, List<_HomeCalendarTask>> tasksByDate,
     Map<String, AbstinenceGuardSnapshot>? abstinenceSnapshotsByDate,
   }) async {
     final now = _now();
@@ -1452,23 +1443,6 @@ class _HomePageState extends State<HomePage> with RouteAware {
     final monthAnchor = range.monthAnchor;
     final startDay = range.startDay;
     final endDay = range.endDay;
-    final homeDailyMap = await _loadHomeDailyStatusMap(
-      prefs: prefs,
-      startDate: startDay,
-      endDate: endDay,
-    );
-    final pendingCriticalTaskMap = await _fetchPendingCriticalTaskCountMap(
-      startDate: startDay,
-      endDate: endDay,
-    );
-    final cashflowByDate = await _loadCalendarCashflowMap(
-      startDate: startDay,
-      endDate: endDay,
-    );
-    final tasksByDate = await _fetchHomeCalendarTaskMap(
-      startDate: startDay,
-      endDate: endDay,
-    );
     final abstinenceByDate = abstinenceSnapshotsByDate ??
         await AbstinenceGuardStore.loadSnapshotsByDate(
           startDate: startDay,
@@ -1495,7 +1469,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
         tasksByDate[dateKey] ?? const <_HomeCalendarTask>[],
       );
       final cashflow =
-          cashflowByDate[dateKey] ?? const _HomeDailyCashflowSummary();
+          cashflowByDate[dateKey] ?? const HomeDailyCashflowSummary();
       final hasProtection = abstinence.enabledCount > 0;
       final hasSlip = abstinence.totalSlipCount > 0;
       final isFuture = day.isAfter(DateTime(now.year, now.month, now.day));
@@ -2945,36 +2919,10 @@ abstinence_slip_details: $slipDetailsText
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.calendar_month, color: Color(0xFFB0B0B0)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '継続カレンダー $currentMonthLabel',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                key: const Key('home_calendar_month_prev'),
-                tooltip: '前月',
-                visualDensity: VisualDensity.compact,
-                onPressed: _showPreviousCalendarMonth,
-                icon: const Icon(Icons.chevron_left),
-              ),
-              IconButton(
-                key: const Key('home_calendar_month_next'),
-                tooltip: '翌月',
-                visualDensity: VisualDensity.compact,
-                onPressed: _showNextCalendarMonth,
-                icon: const Icon(Icons.chevron_right),
-              ),
-            ],
+          HomeCalendarMonthHeader(
+            currentMonthLabel: currentMonthLabel,
+            onPreviousMonth: _showPreviousCalendarMonth,
+            onNextMonth: _showNextCalendarMonth,
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -3107,19 +3055,6 @@ abstinence_slip_details: $slipDetailsText
               final matchesFilter = _matchesCalendarHighlightFilter(day);
               final accentColor =
                   day.isCurrentMonth ? status.color : const Color(0xFFB0B0B0);
-              final backgroundColor = day.isCurrentMonth
-                  ? matchesFilter
-                      ? accentColor.withValues(
-                          alpha: day.hasAbstinenceSlip
-                              ? 0.18
-                              : status.label == '無傷'
-                                  ? 0.14
-                                  : status.label == '未設定'
-                                      ? 0.08
-                                      : 0.1,
-                        )
-                      : const Color(0xFFB0B0B0).withValues(alpha: 0.035)
-                  : const Color(0xFFB0B0B0).withValues(alpha: 0.05);
 
               return Material(
                 color: Colors.transparent,
@@ -3134,53 +3069,32 @@ abstinence_slip_details: $slipDetailsText
                     });
                     await _showCalendarDayDetails(context, day);
                   },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: backgroundColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: day.isToday
-                            ? const Color(0xFF6366F1)
-                            : day.isCurrentMonth
-                                ? matchesFilter
-                                    ? accentColor.withValues(alpha: 0.22)
-                                    : const Color(
-                                        0xFFB0B0B0,
-                                      ).withValues(alpha: 0.08)
-                                : Colors.transparent,
-                        width: day.isToday ? 1.6 : 1,
-                      ),
-                    ),
+                  child: HomeCalendarDaySurface(
+                    accentColor: accentColor,
+                    isToday: day.isToday,
+                    isCurrentMonth: day.isCurrentMonth,
+                    matchesFilter: matchesFilter,
+                    hasSlip: day.hasAbstinenceSlip,
+                    isClean: status.label == '無傷',
+                    isUnset: status.label == '未設定',
                     child: Padding(
                       padding: const EdgeInsets.all(6),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '${day.date.day}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: day.isCurrentMonth
-                                  ? matchesFilter
-                                      ? (status.label == '未設定'
-                                          ? (isDark
-                                              ? Colors.white.withValues(
-                                                  alpha: 0.7,
-                                                )
-                                              : const Color(0xDE000000))
-                                          : accentColor)
-                                      : isDark
-                                          ? const Color(0xFF666666)
-                                          : const Color(0xFFB0B0B0)
-                                  : const Color(0xFFB0B0B0),
-                              height: 1.5,
-                            ),
+                          HomeCalendarDayNumber(
+                            day: day.date.day,
+                            isCurrentMonth: day.isCurrentMonth,
+                            matchesFilter: matchesFilter,
+                            isUnset: status.label == '未設定',
+                            isDark: isDark,
+                            accentColor: accentColor,
                           ),
                           if (day.isCurrentMonth && day.hasCashflow) ...[
                             const SizedBox(height: 4),
                             if (day.cashflow.incomeCount > 0)
-                              _buildCalendarCashflowLine(
-                                key: Key(
+                              HomeCalendarCashflowLine(
+                                textKey: Key(
                                   'calendar_day_income_${DateFormat('yyyy-MM-dd').format(day.date)}',
                                 ),
                                 label: '収',
@@ -3190,8 +3104,8 @@ abstinence_slip_details: $slipDetailsText
                                 isEmphasized: matchesFilter,
                               ),
                             if (day.cashflow.expenseCount > 0)
-                              _buildCalendarCashflowLine(
-                                key: Key(
+                              HomeCalendarCashflowLine(
+                                textKey: Key(
                                   'calendar_day_expense_${DateFormat('yyyy-MM-dd').format(day.date)}',
                                 ),
                                 label: '支',
@@ -3202,47 +3116,18 @@ abstinence_slip_details: $slipDetailsText
                               ),
                           ],
                           const Spacer(),
-                          Wrap(
-                            spacing: 3,
-                            runSpacing: 3,
-                            children: [
-                              if (day.morningDone)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFFFC107),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
-                              if (day.balanceDone)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFF4CAF50),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                          HomeCalendarDayIndicators(
+                            colors: [
+                              if (day.morningDone) const Color(0xFFFFC107),
+                              if (day.balanceDone) const Color(0xFF4CAF50),
                               if (day.hasAbstinenceProtection &&
                                   !day.hasAbstinenceSlip)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFE53935),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                                const Color(0xFFE53935),
                               if (day.hasAbstinenceSlip)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFFFF6B35),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
-                              if (day.isSaturday)
-                                _buildCalendarDot(
-                                  _calendarDotDisplayColor(
-                                    const Color(0xFF009688),
-                                    isEmphasized: matchesFilter,
-                                  ),
-                                ),
+                                const Color(0xFFFF6B35),
+                              if (day.isSaturday) const Color(0xFF009688),
                             ],
+                            isEmphasized: matchesFilter,
                           ),
                         ],
                       ),
@@ -3798,46 +3683,6 @@ abstinence_slip_details: $slipDetailsText
     return '[$sourceLabel/$stateLabel]$secondary$important ${task.title}';
   }
 
-  Widget _buildCalendarDot(Color color) {
-    return Container(
-      width: 7,
-      height: 7,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
-
-  Color _calendarDotDisplayColor(Color color, {required bool isEmphasized}) {
-    if (isEmphasized) return color;
-    return color.withValues(alpha: 0.22);
-  }
-
-  Widget _buildCalendarCashflowLine({
-    required Key key,
-    required String label,
-    required int amount,
-    required Color color,
-    required String sign,
-    required bool isEmphasized,
-  }) {
-    final textColor = isEmphasized ? color : color.withValues(alpha: 0.74);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 1),
-      child: Text(
-        '$label $sign${_formatCalendarCashflowAmount(amount)}',
-        key: key,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: textColor,
-          height: 1.6,
-        ),
-      ),
-    );
-  }
-
   Widget _buildCalendarSummaryPill({
     required String label,
     required String value,
@@ -3846,51 +3691,18 @@ abstinence_slip_details: $slipDetailsText
   }) {
     final isSelected = _calendarHighlightFilter == filter;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.14),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          key: Key('home_calendar_summary_${filter.name}'),
-          borderRadius: BorderRadius.circular(999),
-          onTap: () {
-            setState(() {
-              _calendarHighlightFilter =
-                  isSelected ? _CalendarHighlightFilter.all : filter;
-            });
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: isSelected ? 0.24 : 0.12),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: color.withValues(alpha: isSelected ? 0.38 : 0.18),
-              ),
-            ),
-            child: Text(
-              '$label $value',
-              style: TextStyle(
-                fontSize: 11,
-                color: color,
-                fontWeight: FontWeight.w700,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ),
-      ),
+    return HomeCalendarSummaryPill(
+      label: label,
+      value: value,
+      color: color,
+      isSelected: isSelected,
+      interactionKey: 'home_calendar_summary_${filter.name}',
+      onTap: () {
+        setState(() {
+          _calendarHighlightFilter =
+              isSelected ? _CalendarHighlightFilter.all : filter;
+        });
+      },
     );
   }
 
@@ -5299,10 +5111,10 @@ abstinence_slip_details: $slipDetailsText
         ),
         child: RefreshIndicator(
           onRefresh: _refreshKpis,
-          child: FutureBuilder<_HomeOpsSnapshot>(
+          child: HomeOpsSnapshotView<_HomeOpsSnapshot>(
             future: _opsSnapshotFuture,
-            builder: (context, snapshot) {
-              final opsSnapshot = snapshot.data ?? const _HomeOpsSnapshot();
+            emptyValue: const _HomeOpsSnapshot(),
+            builder: (context, opsSnapshot) {
               final nextAction = _resolveNextAction(opsSnapshot);
               final highlightMonthlyFlow =
                   nextAction.type == _HomeActionType.monthlyFlowReview;
@@ -5357,7 +5169,7 @@ abstinence_slip_details: $slipDetailsText
                       contentHorizontalPadding,
                       16,
                       contentHorizontalPadding,
-                      24,
+                      96,
                     ),
                     child: Center(
                       child: ConstrainedBox(
@@ -5365,6 +5177,7 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const HomeTodayPriorityGoal(),
                             if (!showInternalOperations) ...[
                               _buildSectionHeader(
                                 '今日の1件',
@@ -5400,16 +5213,6 @@ abstinence_slip_details: $slipDetailsText
                               isCompact: isCompact,
                               showInternalOperations: showInternalOperations,
                             ),
-                            if (!showInternalOperations) ...[
-                              const SizedBox(height: 24),
-                              _buildSectionHeader(
-                                '改善を送る',
-                                Icons.add_task_outlined,
-                                const Color(0xFF0F766E),
-                                key: const Key('home_section_feature_request'),
-                              ),
-                              _buildHomeFeatureRequestForm(isDark, isCompact),
-                            ],
                             if (showInternalOperations) ...[
                               const SizedBox(height: 40),
                               _buildHopsonInspiredHomeHero(
@@ -5744,7 +5547,7 @@ abstinence_slip_details: $slipDetailsText
                                 'SITE GUIDE AI',
                                 Icons.support_agent_outlined,
                                 const Color(0xFF4F46E5),
-                                key: const Key('home_section_site_guide_ai'),
+                                key: const Key('home_legacy_site_guide_ai'),
                               ),
                               _buildSiteGuideAiCard(isDark, isCompact),
                               const SizedBox(height: 24),
@@ -6022,6 +5825,16 @@ abstinence_slip_details: $slipDetailsText
         key: const Key('home_section_site_guide_ai'),
       ),
       _buildSiteGuideAiCard(isDark, isCompact),
+      if (!showInternalOperations && _showFeatureRequestForm) ...[
+        const SizedBox(height: 12),
+        _buildSectionHeader(
+          '改善を送る',
+          Icons.add_task_outlined,
+          const Color(0xFF0F766E),
+          key: const Key('home_section_feature_request'),
+        ),
+        _buildHomeFeatureRequestForm(isDark, isCompact),
+      ],
       if (showInternalOperations) ...[
         const SizedBox(height: 8),
         const GaReadinessGatePanel(),
@@ -7047,6 +6860,16 @@ abstinence_slip_details: $slipDetailsText
                 ),
               ),
               const SizedBox(width: 8),
+              IconButton(
+                key: _reqBtnKey,
+                tooltip: _showFeatureRequestForm ? '追加要望を閉じる' : '追加要望',
+                onPressed: _toggleFeatureRequestForm,
+                icon: Icon(
+                  _showFeatureRequestForm
+                      ? Icons.expand_less
+                      : Icons.add_task_outlined,
+                ),
+              ),
               FilledButton(
                 onPressed: () => _runTrackedAction(
                   'site-guide-ai',
@@ -7179,6 +7002,16 @@ abstinence_slip_details: $slipDetailsText
                   style: OutlinedButton.styleFrom(
                     foregroundColor: theme.colorScheme.primary,
                   ),
+                ),
+                OutlinedButton.icon(
+                  key: _reqBtnKey,
+                  onPressed: _toggleFeatureRequestForm,
+                  icon: Icon(
+                    _showFeatureRequestForm
+                        ? Icons.expand_less
+                        : Icons.add_task_outlined,
+                  ),
+                  label: Text(_showFeatureRequestForm ? '追加要望を閉じる' : '追加要望'),
                 ),
               ],
             ),
@@ -9109,16 +8942,6 @@ abstinence_slip_details: $slipDetailsText
     return '${NumberFormat('#,##0', 'ja_JP').format(value.round())}円';
   }
 
-  String _formatCalendarCashflowAmount(int value) {
-    final absValue = value.abs();
-    if (absValue >= 10000) {
-      final man = absValue / 10000;
-      final digits = man >= 100 ? 0 : 1;
-      return '${man.toStringAsFixed(digits)}万';
-    }
-    return NumberFormat('#,##0', 'ja_JP').format(absValue);
-  }
-
   String _formatPercentRatio(double part, double total) {
     if (total == 0) return '--';
     return '${(part / total * 100).toStringAsFixed(2)}%';
@@ -9313,18 +9136,6 @@ class _HomeDailyStatusRecord {
   const _HomeDailyStatusRecord({
     this.morningBriefingDone = false,
     this.balanceCheckDone = false,
-  });
-}
-
-class _HomeCalendarVisibleRange {
-  final DateTime monthAnchor;
-  final DateTime startDay;
-  final DateTime endDay;
-
-  const _HomeCalendarVisibleRange({
-    required this.monthAnchor,
-    required this.startDay,
-    required this.endDay,
   });
 }
 
@@ -9748,7 +9559,7 @@ class _HomeCalendarDay {
   final List<String> slipDetails;
   final List<String> missingItems;
   final String relapsePreventionAction;
-  final _HomeDailyCashflowSummary cashflow;
+  final HomeDailyCashflowSummary cashflow;
   final List<_HomeCalendarTask> tasks;
 
   const _HomeCalendarDay({
@@ -9766,7 +9577,7 @@ class _HomeCalendarDay {
     required this.slipDetails,
     required this.missingItems,
     required this.relapsePreventionAction,
-    this.cashflow = const _HomeDailyCashflowSummary(),
+    this.cashflow = const HomeDailyCashflowSummary(),
     this.tasks = const <_HomeCalendarTask>[],
   });
 
@@ -9775,50 +9586,6 @@ class _HomeCalendarDay {
   int get totalTaskCount => tasks.length;
 
   int get completedTaskCount => tasks.where((task) => task.isCompleted).length;
-}
-
-class _HomeDailyCashflowSummary {
-  final int incomeTotal;
-  final int expenseTotal;
-  final int transferTotal;
-  final int incomeCount;
-  final int expenseCount;
-  final int transferCount;
-
-  const _HomeDailyCashflowSummary({
-    this.incomeTotal = 0,
-    this.expenseTotal = 0,
-    this.transferTotal = 0,
-    this.incomeCount = 0,
-    this.expenseCount = 0,
-    this.transferCount = 0,
-  });
-
-  _HomeDailyCashflowSummary copyWith({
-    int? incomeTotal,
-    int? expenseTotal,
-    int? transferTotal,
-    int? incomeCount,
-    int? expenseCount,
-    int? transferCount,
-  }) {
-    return _HomeDailyCashflowSummary(
-      incomeTotal: incomeTotal ?? this.incomeTotal,
-      expenseTotal: expenseTotal ?? this.expenseTotal,
-      transferTotal: transferTotal ?? this.transferTotal,
-      incomeCount: incomeCount ?? this.incomeCount,
-      expenseCount: expenseCount ?? this.expenseCount,
-      transferCount: transferCount ?? this.transferCount,
-    );
-  }
-
-  int get recordCount => incomeCount + expenseCount;
-
-  int get netTotal => incomeTotal - expenseTotal;
-
-  bool get hasCashflow => recordCount > 0;
-
-  bool get hasAnyEntry => hasCashflow || transferCount > 0;
 }
 
 enum _HomeCalendarTaskSource { dailyTodo, mindless }

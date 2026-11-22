@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import platform
 import shutil
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -88,9 +89,16 @@ def build_server_plan(
     requested_capacity: int | None,
     security_review_recorded: bool,
     resources: HostResources,
+    host_system: str = "unknown",
+    sandbox_config_confirmed: bool = False,
 ) -> ServerPlan:
     blockers = _resource_blockers(resources)
     capacity: int | None = None
+
+    if host_system not in ("Linux", "Darwin"):
+        blockers.append("sandboxed shell requires macOS, Linux, or WSL2; native Windows and unknown hosts are blocked")
+    if not sandbox_config_confirmed:
+        blockers.append("effective sandbox settings and runtime isolation have not been confirmed")
 
     if not security_review_recorded:
         blockers.append(
@@ -120,7 +128,7 @@ def build_server_plan(
 
     command: list[str] = []
     if not blockers:
-        command = ["claude", "remote-control", "--sandbox"]
+        command = ["claude", "remote-control"]
         if mode == "single":
             command.extend(["--spawn", "session", "--permission-mode", "default"])
         else:
@@ -172,7 +180,7 @@ def render_markdown(plan: ServerPlan, resources: HostResources) -> str:
     lines.extend(
         [
             "",
-            "This is a plan only. The script never starts Claude Code or changes settings.",
+            "This is a plan only. Sandbox confirmation is an operator assertion, not runtime verification. The script never starts Claude Code or changes settings.",
         ]
     )
     return "\n".join(lines)
@@ -187,6 +195,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--capacity", type=int)
     parser.add_argument("--security-review-recorded", action="store_true")
+    parser.add_argument("--sandbox-config-confirmed", action="store_true", help="Operator confirmed effective strict sandbox settings and runtime isolation; this flag does not verify them")
     parser.add_argument("--json", action="store_true")
     return parser.parse_args()
 
@@ -200,6 +209,8 @@ def main() -> int:
         requested_capacity=args.capacity,
         security_review_recorded=args.security_review_recorded,
         resources=resources,
+        host_system=platform.system(),
+        sandbox_config_confirmed=args.sandbox_config_confirmed,
     )
     if args.json:
         payload: dict[str, Any] = asdict(plan)

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../utils/feature_route_labels.dart';
 import '../../utils/home_feature_actions.dart';
 import 'home_tier_styles.dart';
 
@@ -80,10 +81,14 @@ class _PopularFeaturesListState extends State<PopularFeaturesList> {
         spacing: 8,
         runSpacing: 8,
         children: _items.map((item) {
-          final route = _normalizeRoute(item['feature_route'] as String? ?? '');
-          final label = (item['feature_label'] as String?) ??
+          final rawRoute = _normalizeRoute(
+            item['feature_route'] as String? ?? '',
+          );
+          final route = canonicalFeatureRoutePath(rawRoute);
+          final storedLabel = (item['feature_label'] as String?) ??
               (item['label'] as String?) ??
               _fallbackLabel(route);
+          final label = resolveRecentFeatureLabel(route, storedLabel);
           final countValue = item['use_count'];
           final count = countValue is num ? countValue.toInt() : 0;
           return GestureDetector(

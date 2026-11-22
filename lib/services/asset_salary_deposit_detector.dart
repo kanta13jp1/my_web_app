@@ -47,6 +47,38 @@ class MainAccountBalanceWindow {
     this.peakBalanceInCycle,
   });
 
+  /// Preserve an observed deposit after subsequent spending.
+  /// Only same-account observations within the current cycle, through [asOf],
+  /// may supplement the current balance. Missing baselines remain unknown.
+  static MainAccountBalanceWindow fromHistory({
+    required double? previousCycleEndBalance,
+    required double? currentBalance,
+    required Map<DateTime, double> observations,
+    required DateTime cycleStart,
+    required DateTime asOf,
+  }) {
+    final start = DateTime(cycleStart.year, cycleStart.month, cycleStart.day);
+    final end = DateTime(asOf.year, asOf.month, asOf.day);
+    final safeCurrent = currentBalance != null && currentBalance.isFinite
+        ? currentBalance
+        : null;
+    var peak = safeCurrent;
+    for (final entry in observations.entries) {
+      final date = DateTime(entry.key.year, entry.key.month, entry.key.day);
+      if (date.isBefore(start) || date.isAfter(end) || !entry.value.isFinite) {
+        continue;
+      }
+      if (peak == null || entry.value > peak) {
+        peak = entry.value;
+      }
+    }
+    return MainAccountBalanceWindow(
+      previousCycleEndBalance: previousCycleEndBalance,
+      currentBalance: safeCurrent,
+      peakBalanceInCycle: peak,
+    );
+  }
+
   final double? previousCycleEndBalance;
   final double? currentBalance;
 
@@ -59,11 +91,12 @@ class MainAccountBalanceWindow {
   double? get delta {
     final prev = previousCycleEndBalance;
     final cur = currentBalance;
-    if (prev == null || cur == null) {
+    if (prev == null || cur == null || !prev.isFinite || !cur.isFinite) {
       return null;
     }
     final peak = peakBalanceInCycle;
-    return (peak != null && peak > cur ? peak : cur) - prev;
+    final effective = peak != null && peak.isFinite && peak > cur ? peak : cur;
+    return effective - prev;
   }
 
   static const MainAccountBalanceWindow unknown = MainAccountBalanceWindow(
@@ -107,6 +140,36 @@ class AssetSalaryDepositDetector {
   ///   - (C2) 残高が [heuristicFloor] 以上 **増加** → medium (heuristicBalance)
   /// - いずれも該当しなければ none(=未検知)。
   ///
+  /// 支給日を迎えた現サイクルの給与明細(登録給料額があれば許容帯一致、
+  /// 無ければ [heuristicFloor] 以上)が存在するかを判定する。
+  static bool hasQualifiedPaidPayslip({
+    required List<double> paidPayslipAmounts,
+    double? expectedSalaryAmount,
+    double amountTolerance = 0.15,
+    double heuristicFloor = 100000,
+  }) {
+    final hasExpected =
+        expectedSalaryAmount != null && expectedSalaryAmount > 0;
+    if (hasExpected) {
+      final expected = expectedSalaryAmount;
+      final tolerance = expected * amountTolerance;
+      for (final amount in paidPayslipAmounts) {
+        if (amount.isFinite &&
+            amount > 0 &&
+            (amount - expected).abs() <= tolerance) {
+          return true;
+        }
+      }
+      return false;
+    }
+    for (final amount in paidPayslipAmounts) {
+      if (amount.isFinite && amount >= heuristicFloor) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// - (D) 支給日を迎えた現サイクルの給与明細 → medium (payslipPaid)
   ///   ([paidPayslipAmounts] は呼び出し側が pay_date <= 今日 で絞る)。
   ///
@@ -119,7 +182,7 @@ class AssetSalaryDepositDetector {
     double? expectedSalaryAmount,
     double amountTolerance = 0.15,
     double heuristicFloor = 100000,
-    List<double> paidPayslipAmounts = const [],
+    List<double> paidPayslipAmounts = const <double>[],
   }) {
     final hasExpected =
         expectedSalaryAmount != null && expectedSalaryAmount > 0;
@@ -147,7 +210,9 @@ class AssetSalaryDepositDetector {
       }
       // (D) 支給日を迎えた現サイクルの給与明細。口座残高を更新していなくても検知する。
       for (final amount in paidPayslipAmounts) {
-        if (amount > 0 && (amount - expected).abs() <= tolerance) {
+        if (amount.isFinite &&
+            amount > 0 &&
+            (amount - expected).abs() <= tolerance) {
           return SalaryDepositDetection(
             confidence: SalaryDepositConfidence.medium,
             signal: SalaryDepositSignal.payslipPaid,
@@ -177,7 +242,7 @@ class AssetSalaryDepositDetector {
       );
     }
     for (final amount in paidPayslipAmounts) {
-      if (amount >= heuristicFloor) {
+      if (amount.isFinite && amount >= heuristicFloor) {
         return SalaryDepositDetection(
           confidence: SalaryDepositConfidence.medium,
           signal: SalaryDepositSignal.payslipPaid,
