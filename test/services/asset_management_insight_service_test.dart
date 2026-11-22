@@ -1443,6 +1443,81 @@ void main() {
       expect(hint.currentPrincipalEstimate, 0);
     });
   });
+
+  group('AssetManagementInsightService subscription excess alert', () {
+    test('populates subscriptionExcessAlert and warning action when excessive',
+        () {
+      final workbook =
+          _workbook(debtRows: const <AssetLiabilityDebtRow>[]).copyWith(
+        recurringFixedCosts: const <AssetRecurringFixedCost>[
+          AssetRecurringFixedCost(
+            id: 's1',
+            name: 'Sub A',
+            amount: 5000,
+            paymentDay: 10,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+          AssetRecurringFixedCost(
+            id: 's2',
+            name: 'Sub B',
+            amount: 6000,
+            paymentDay: 12,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+          AssetRecurringFixedCost(
+            id: 's3',
+            name: 'Sub C',
+            amount: 5000,
+            paymentDay: 15,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+        ],
+      );
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+      );
+      expect(report.subscriptionExcessAlert, isNotNull);
+      expect(report.subscriptionExcessAlert!.activeCount, 3);
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type ==
+                  AssetManagementInsightActionType.subscriptionExcess &&
+              item.severity == AssetManagementInsightSeverity.warning,
+        ),
+        isTrue,
+      );
+    });
+
+    test('returns null subscriptionExcessAlert for only zero/utility entries',
+        () {
+      final workbook =
+          _workbook(debtRows: const <AssetLiabilityDebtRow>[]).copyWith(
+        recurringFixedCosts: const <AssetRecurringFixedCost>[
+          AssetRecurringFixedCost(
+            id: 'zero',
+            name: 'Free Zero',
+            amount: 0,
+            paymentDay: 10,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+          AssetRecurringFixedCost(
+            id: 'utility',
+            name: '家賃',
+            amount: 80000,
+            paymentDay: 25,
+            category: AssetRecurringFixedCostCategory.utility,
+          ),
+        ],
+      );
+      final report = const AssetManagementInsightService().buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+      );
+      expect(report.subscriptionExcessAlert, isNull);
+    });
+  });
 }
 
 AssetLiabilityWorkbook _workbook({
