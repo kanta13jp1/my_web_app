@@ -851,11 +851,10 @@ void main() {
           'https://x.com/tamakiyuichiro/status/2124504534995341736',
     );
     final openedUrls = <String>[];
-    for (final testCase
-        in <({
-          KokuminRepresentativeAnnouncement announcement,
-          String expectedLabel,
-        })>[
+    for (final testCase in <({
+      KokuminRepresentativeAnnouncement announcement,
+      String expectedLabel,
+    })>[
       (
         announcement: kokuminRepresentativeAnnouncement20261122,
         expectedLabel: '出典確認日: 2026/11/22',
