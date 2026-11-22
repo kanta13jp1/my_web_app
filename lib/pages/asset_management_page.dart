@@ -1318,6 +1318,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       'asset_minimum_safety_balance_v1';
   static const double _minimumSafetyBalanceFloor = 1000;
   static const double _minimumSafetyBalanceCeiling = 100000;
+  static const double _minimumSafetyBalanceLowWarningThreshold = 5000;
   double _minimumSafetyBalance =
       AssetManagementInsightService.defaultMinimumSafetyBalance;
   late final TextEditingController _minimumSafetyBalanceController =
@@ -24790,6 +24791,42 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               );
             },
           ),
+          if (_minimumSafetyBalance <
+              _minimumSafetyBalanceLowWarningThreshold) ...[
+            const SizedBox(height: 6),
+            Container(
+              key: const Key('asset_safety_balance_low_warning'),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFFCA5A5)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    size: 16,
+                    color: Color(0xFFB91C1C),
+                  ),
+                  SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '安全残高が5,000円未満に設定されています。急な出費で生活費が不足する恐れがあるため、最低でも5,000円以上の確保を推奨します。',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF991B1B),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           _buildSafetyEnvelopeControl(),
           const SizedBox(height: 8),
