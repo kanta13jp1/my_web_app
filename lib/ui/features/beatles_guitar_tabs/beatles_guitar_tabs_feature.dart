@@ -6,6 +6,7 @@ import '../../../data/repositories/guitar_tab_repository.dart';
 import '../../../data/services/guitar_course_progress_service.dart';
 import '../../../data/services/guitar_daily_course_catalog_service.dart';
 import '../../../data/services/guitar_lesson_link_service.dart';
+import '../../../data/services/guitar_metronome_audio_service.dart';
 import '../../../data/services/guitar_tab_catalog_service.dart';
 import '../../../data/services/structured_tab_catalog_service.dart';
 import '../../../data/services/structured_tab_pdf_service.dart';
@@ -23,6 +24,7 @@ class BeatlesGuitarTabsFeature extends StatelessWidget {
     this.structuredCatalogService,
     this.userTabStorageService,
     this.pdfService,
+    this.metronomeAudioService,
   });
 
   final GuitarTabRepository? repository;
@@ -31,6 +33,7 @@ class BeatlesGuitarTabsFeature extends StatelessWidget {
   final StructuredTabCatalogService? structuredCatalogService;
   final UserStructuredTabStorageService? userTabStorageService;
   final StructuredTabPdfService? pdfService;
+  final GuitarMetronomeAudioService? metronomeAudioService;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +60,7 @@ class BeatlesGuitarTabsFeature extends StatelessWidget {
         structuredCatalogService: structuredCatalogService,
         userTabStorageService: userTabStorageService,
         pdfService: pdfService,
+        metronomeAudioService: metronomeAudioService,
       ),
     );
   }
