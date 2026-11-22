@@ -3325,9 +3325,14 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
         expect(find.text('選択した1件を支払済みにする'), findsOneWidget);
 
-        await tester.tap(
-          find.byKey(const Key('asset_overdue_bulk_apply_button')),
+        final applyButton = find.byKey(
+          const Key('asset_overdue_bulk_apply_button'),
         );
+        await tester.ensureVisible(applyButton);
+        await tester.tap(applyButton);
+        // Allow the dialog dismissal animation and async state persistence to finish.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
         await tester.pump(const Duration(milliseconds: 300));
 
         expect(
@@ -3350,7 +3355,8 @@ void main() {
         );
 
         await tester.tap(find.byKey(const Key('overdue_bulk_cancel_button')));
-        await tester.pump(const Duration(milliseconds: 200));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
 
         await _unmount(tester);
       },
