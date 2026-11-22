@@ -4530,6 +4530,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _actualPaymentAmounts[row.id]!.round().toString();
       } else {
         _monthlyPaidAccountNames.remove(row.id);
+        _monthlyPaidAccountNames.remove(row.name);
+        _monthlyPaidAccountNames.remove(row.name.trim());
       }
     });
     try {
@@ -33604,9 +33606,269 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
         ],
         const SizedBox(height: 6),
+        if (workbook.paymentInconsistencies.isNotEmpty) ...[
+          _buildPaymentInconsistencySection(workbook),
+          const SizedBox(height: 10),
+        ],
         for (final row in rows) _buildDebtMasterCard(row, workbook),
       ],
     );
+  }
+
+  Widget _buildPaymentInconsistencySection(AssetLiabilityWorkbook workbook) {
+    final items = workbook.paymentInconsistencies;
+    final summary = workbook.paymentInconsistencySummary;
+    final batchTargets = items
+        .where(
+          (item) =>
+              item.paid &&
+              item.actualPaymentAmount == null &&
+              item.scheduledPaymentAmount > 0,
+        )
+        .toList(growable: false);
+    return Container(
+      key: const Key('asset_payment_inconsistency_section'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFD97706).withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Icon(
+                Icons.rule_folder_outlined,
+                color: Color(0xFFB45309),
+                size: 18,
+              ),
+              Text(
+                '支払記録の不整合（${items.length}件）',
+                style: const TextStyle(
+                  color: Color(0xFFB45309),
+                  fontWeight: FontWeight.bold,
+                  height: 1.4,
+                ),
+              ),
+              _buildTextStatusChip(
+                label:
+                    'R1/R3: ${summary.r1Count}件 / R2: ${summary.r2Count}件 (超過R3: ${summary.r3Count}件)',
+                color: const Color(0xFFD97706),
+              ),
+              if (batchTargets.isNotEmpty)
+                OutlinedButton.icon(
+                  key: const Key('asset_inconsistency_batch_button'),
+                  style: OutlinedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    foregroundColor: const Color(0xFFB45309),
+                    side: const BorderSide(color: Color(0xFFD97706)),
+                  ),
+                  onPressed: () => _showPaymentInconsistencyBatchDialog(
+                    workbook,
+                    batchTargets,
+                  ),
+                  icon: const Icon(Icons.playlist_add_check, size: 16),
+                  label: const Text('一括で実支払額を修正'),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '支払済みフラグ・今月支払予定額・実支払額の組み合わせに不整合があります。実支払額の入力または支払済み取消で解消できます。',
+            style: TextStyle(fontSize: 12, height: 1.4),
+          ),
+          const SizedBox(height: 8),
+          for (final item in items) ...[
+            Container(
+              key: Key('asset_inconsistency_row_${item.accountId}'),
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: item.matchesR3
+                      ? const Color(0xFFB91C1C).withValues(alpha: 0.35)
+                      : const Color(0xFFD97706).withValues(alpha: 0.3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      _buildTextStatusChip(
+                        label: item.ruleCode,
+                        color: item.matchesR3
+                            ? const Color(0xFFB91C1C)
+                            : const Color(0xFFD97706),
+                      ),
+                      Text(
+                        item.accountName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(
+                        '予定: ${_formatManagementYen(item.scheduledPaymentAmount)} / 実支払: ${item.actualPaymentAmount == null ? '未入力' : _formatManagementYen(item.actualPaymentAmount!)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.reasonLabel,
+                    style: const TextStyle(fontSize: 12, height: 1.4),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      TextButton.icon(
+                        key: Key(
+                          'asset_inconsistency_edit_actual_${item.accountId}',
+                        ),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          foregroundColor: const Color(0xFF0F766E),
+                        ),
+                        onPressed: () =>
+                            _showPaymentInconsistencyFixDialog(item, workbook),
+                        icon: const Icon(Icons.edit_note_outlined, size: 16),
+                        label: const Text('実支払額を入力'),
+                      ),
+                      if (item.paid)
+                        TextButton.icon(
+                          key: Key(
+                            'asset_inconsistency_unmark_paid_${item.accountId}',
+                          ),
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            foregroundColor: const Color(0xFFB91C1C),
+                          ),
+                          onPressed: () {
+                            AssetLiabilityDebtRow? targetRow;
+                            for (final candidate in workbook.debtMasterRows) {
+                              if (candidate.id == item.accountId) {
+                                targetRow = candidate;
+                                break;
+                              }
+                            }
+                            if (targetRow != null) {
+                              unawaited(
+                                _toggleMonthlyPaymentPaid(targetRow, false),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.undo, size: 16),
+                          label: const Text('支払済み取消'),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showPaymentInconsistencyFixDialog(
+    AssetPaymentInconsistency item,
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    final result = await showDialog<_PaymentInconsistencyFixResult>(
+      context: context,
+      builder: (dialogContext) => _PaymentInconsistencyFixDialog(
+        item: item,
+        initialMemo: _paymentDifferenceReasons[item.accountId] ?? '',
+        formatYen: _formatManagementYen,
+      ),
+    );
+
+    if (result == null || !mounted) {
+      return;
+    }
+    final parsedAmount = result.actualAmount;
+    final memoText = result.memo;
+    setState(() {
+      _actualPaymentAmounts[item.accountId] = parsedAmount;
+      _actualPaymentControllers[item.accountId]?.text =
+          parsedAmount.round().toString();
+      if (memoText.isEmpty) {
+        _paymentDifferenceReasons.remove(item.accountId);
+      } else {
+        _paymentDifferenceReasons[item.accountId] = memoText;
+      }
+      if (result.syncScheduledFromActual && parsedAmount > 0) {
+        _monthlyPaymentOverrides[item.accountId] = parsedAmount;
+        _billingConfirmedAccountIds.add(item.accountId);
+        _monthlyPaymentControllers[item.accountId]?.text =
+            parsedAmount.round().toString();
+      }
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  Future<void> _showPaymentInconsistencyBatchDialog(
+    AssetLiabilityWorkbook workbook,
+    List<AssetPaymentInconsistency> targets,
+  ) async {
+    if (targets.isEmpty) {
+      return;
+    }
+    final result = await showDialog<_PaymentInconsistencyBatchResult>(
+      context: context,
+      builder: (dialogContext) => _PaymentInconsistencyBatchDialog(
+        targets: targets,
+        formatYen: _formatManagementYen,
+      ),
+    );
+
+    if (result == null || !mounted || result.selectedIds.isEmpty) {
+      return;
+    }
+    final selectedIds = result.selectedIds;
+    final memoText = result.memo;
+    setState(() {
+      for (final item in targets) {
+        if (!selectedIds.contains(item.accountId)) {
+          continue;
+        }
+        final amount = item.scheduledPaymentAmount;
+        _actualPaymentAmounts[item.accountId] = amount;
+        _actualPaymentControllers[item.accountId]?.text =
+            amount.round().toString();
+        if (memoText.isNotEmpty) {
+          _paymentDifferenceReasons[item.accountId] = memoText;
+        }
+      }
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
   }
 
   GlobalKey _debtMasterCardKeyFor(String accountId) {
@@ -38204,6 +38466,297 @@ class _DebtPaidCheckboxHighlightState extends State<_DebtPaidCheckboxHighlight>
         );
       },
       child: widget.child,
+    );
+  }
+}
+
+class _PaymentInconsistencyFixResult {
+  const _PaymentInconsistencyFixResult({
+    required this.actualAmount,
+    required this.memo,
+    required this.syncScheduledFromActual,
+  });
+
+  final double actualAmount;
+  final String memo;
+  final bool syncScheduledFromActual;
+}
+
+class _PaymentInconsistencyFixDialog extends StatefulWidget {
+  const _PaymentInconsistencyFixDialog({
+    required this.item,
+    required this.initialMemo,
+    required this.formatYen,
+  });
+
+  final AssetPaymentInconsistency item;
+  final String initialMemo;
+  final String Function(double) formatYen;
+
+  @override
+  State<_PaymentInconsistencyFixDialog> createState() =>
+      _PaymentInconsistencyFixDialogState();
+}
+
+class _PaymentInconsistencyFixDialogState
+    extends State<_PaymentInconsistencyFixDialog> {
+  late final TextEditingController _actualController;
+  late final TextEditingController _memoController;
+  late bool _syncScheduledFromActual;
+  String? _errorText;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialActual = widget.item.actualPaymentAmount != null
+        ? widget.item.actualPaymentAmount!.round().toString()
+        : '';
+    _actualController = TextEditingController(text: initialActual);
+    _memoController = TextEditingController(text: widget.initialMemo);
+    _syncScheduledFromActual = widget.item.matchesR2;
+  }
+
+  @override
+  void dispose() {
+    _actualController.dispose();
+    _memoController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    return AlertDialog(
+      key: const Key('asset_inconsistency_fix_dialog'),
+      title: Text('${item.accountName} の不整合を修正 (${item.ruleCode})'),
+      content: SizedBox(
+        width: 420,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.reasonLabel,
+                style: const TextStyle(fontSize: 12, height: 1.5),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '現在の予定額: ${widget.formatYen(item.scheduledPaymentAmount)}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                key: const Key('asset_inconsistency_actual_field'),
+                controller: _actualController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: '実支払額 (円)',
+                  hintText: '例: 15000',
+                  errorText: _errorText,
+                  border: const OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+              if (item.scheduledPaymentAmount > 0) ...[
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const Key(
+                      'asset_inconsistency_use_scheduled_button',
+                    ),
+                    onPressed: () {
+                      final scheduledText =
+                          item.scheduledPaymentAmount.round().toString();
+                      setState(() {
+                        _actualController.text = scheduledText;
+                        _errorText = null;
+                      });
+                    },
+                    icon: const Icon(Icons.content_copy, size: 15),
+                    label: Text(
+                      '予定額 (${widget.formatYen(item.scheduledPaymentAmount)}) を実支払額へ反映',
+                    ),
+                  ),
+                ),
+              ],
+              if (item.matchesR2) ...[
+                const SizedBox(height: 6),
+                CheckboxListTile(
+                  key: const Key(
+                    'asset_inconsistency_sync_scheduled_button',
+                  ),
+                  value: _syncScheduledFromActual,
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: const Text('この実支払額を今月支払予定額へも反映する'),
+                  onChanged: (checked) {
+                    setState(() {
+                      _syncScheduledFromActual = checked ?? false;
+                    });
+                  },
+                ),
+              ],
+              const SizedBox(height: 8),
+              TextField(
+                key: const Key('asset_inconsistency_memo_field'),
+                controller: _memoController,
+                decoration: const InputDecoration(
+                  labelText: '差分・確認メモ (任意)',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton(
+          key: const Key('asset_inconsistency_save_button'),
+          onPressed: () {
+            final normalized =
+                _actualController.text.replaceAll(',', '').trim();
+            final parsed = double.tryParse(normalized);
+            if (parsed == null || parsed < 0) {
+              setState(() {
+                _errorText = '0以上の金額を入力してください';
+              });
+              return;
+            }
+            Navigator.of(context).pop(
+              _PaymentInconsistencyFixResult(
+                actualAmount: parsed,
+                memo: _memoController.text.trim(),
+                syncScheduledFromActual: _syncScheduledFromActual,
+              ),
+            );
+          },
+          child: const Text('保存'),
+        ),
+      ],
+    );
+  }
+}
+
+class _PaymentInconsistencyBatchResult {
+  const _PaymentInconsistencyBatchResult({
+    required this.selectedIds,
+    required this.memo,
+  });
+
+  final Set<String> selectedIds;
+  final String memo;
+}
+
+class _PaymentInconsistencyBatchDialog extends StatefulWidget {
+  const _PaymentInconsistencyBatchDialog({
+    required this.targets,
+    required this.formatYen,
+  });
+
+  final List<AssetPaymentInconsistency> targets;
+  final String Function(double) formatYen;
+
+  @override
+  State<_PaymentInconsistencyBatchDialog> createState() =>
+      _PaymentInconsistencyBatchDialogState();
+}
+
+class _PaymentInconsistencyBatchDialogState
+    extends State<_PaymentInconsistencyBatchDialog> {
+  late final Set<String> _selectedIds;
+  late final TextEditingController _memoController;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIds = <String>{for (final item in widget.targets) item.accountId};
+    _memoController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _memoController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      key: const Key('asset_inconsistency_batch_dialog'),
+      title: const Text('予定額を実支払額として一括反映'),
+      content: SizedBox(
+        width: 440,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '選択した行について、現在の今月支払予定額を実支払額としてまとめて記録します。',
+                style: TextStyle(fontSize: 12, height: 1.5),
+              ),
+              const SizedBox(height: 8),
+              for (final item in widget.targets)
+                CheckboxListTile(
+                  value: _selectedIds.contains(item.accountId),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: Text('${item.accountName} (${item.ruleCode})'),
+                  subtitle: Text(
+                    '予定額: ${widget.formatYen(item.scheduledPaymentAmount)}',
+                  ),
+                  onChanged: (checked) {
+                    setState(() {
+                      if (checked == true) {
+                        _selectedIds.add(item.accountId);
+                      } else {
+                        _selectedIds.remove(item.accountId);
+                      }
+                    });
+                  },
+                ),
+              const SizedBox(height: 8),
+              TextField(
+                key: const Key('asset_inconsistency_batch_memo_field'),
+                controller: _memoController,
+                decoration: const InputDecoration(
+                  labelText: '一括確認メモ (任意)',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton(
+          key: const Key('asset_inconsistency_batch_apply_scheduled'),
+          onPressed: _selectedIds.isEmpty
+              ? null
+              : () => Navigator.of(context).pop(
+                    _PaymentInconsistencyBatchResult(
+                      selectedIds: Set<String>.from(_selectedIds),
+                      memo: _memoController.text.trim(),
+                    ),
+                  ),
+          child: const Text('選択行へ予定額を実支払額として反映'),
+        ),
+      ],
     );
   }
 }

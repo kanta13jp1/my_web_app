@@ -1490,6 +1490,75 @@ class AssetLiabilityCsvExportBundle {
   });
 }
 
+enum AssetPaymentInconsistencyRule {
+  paidWithoutActual,
+  zeroScheduledWithActual,
+  pastDuePaidWithoutActual,
+}
+
+/// R1〜R3 に該当する支払フラグ・予定額・実支払額の不整合 1 件。
+class AssetPaymentInconsistency {
+  final String accountId;
+  final String accountName;
+  final AssetPaymentInconsistencyRule rule;
+  final int? paymentDay;
+  final DateTime? paymentDate;
+  final double scheduledPaymentAmount;
+  final double? actualPaymentAmount;
+  final bool paid;
+  final bool isPastDue;
+  final String reasonLabel;
+  final String suggestedAction;
+
+  const AssetPaymentInconsistency({
+    required this.accountId,
+    required this.accountName,
+    required this.rule,
+    required this.paymentDay,
+    required this.paymentDate,
+    required this.scheduledPaymentAmount,
+    required this.actualPaymentAmount,
+    required this.paid,
+    required this.isPastDue,
+    required this.reasonLabel,
+    required this.suggestedAction,
+  });
+
+  String get ruleCode {
+    return switch (rule) {
+      AssetPaymentInconsistencyRule.paidWithoutActual => 'R1',
+      AssetPaymentInconsistencyRule.zeroScheduledWithActual => 'R2',
+      AssetPaymentInconsistencyRule.pastDuePaidWithoutActual => 'R3',
+    };
+  }
+
+  bool get matchesR1 =>
+      rule == AssetPaymentInconsistencyRule.paidWithoutActual ||
+      rule == AssetPaymentInconsistencyRule.pastDuePaidWithoutActual;
+
+  bool get matchesR2 =>
+      rule == AssetPaymentInconsistencyRule.zeroScheduledWithActual;
+
+  bool get matchesR3 =>
+      rule == AssetPaymentInconsistencyRule.pastDuePaidWithoutActual;
+}
+
+class AssetPaymentInconsistencySummary {
+  final int totalCount;
+  final int r1Count;
+  final int r2Count;
+  final int r3Count;
+
+  const AssetPaymentInconsistencySummary({
+    required this.totalCount,
+    required this.r1Count,
+    required this.r2Count,
+    required this.r3Count,
+  });
+
+  bool get hasInconsistencies => totalCount > 0;
+}
+
 class AssetLiabilityWorkbook {
   final DateTime baseDate;
 
@@ -1544,6 +1613,9 @@ class AssetLiabilityWorkbook {
   /// 抑止するために insight 層へ渡す。
   final Map<String, AssetCardUsagePolicy> cardUsagePolicies;
 
+  /// paid / actual_payment_amount / scheduled_payment_amount の R1〜R3 不整合一覧。
+  final List<AssetPaymentInconsistency> paymentInconsistencies;
+
   const AssetLiabilityWorkbook({
     required this.baseDate,
     this.recurringFixedCosts = const <AssetRecurringFixedCost>[],
@@ -1579,7 +1651,17 @@ class AssetLiabilityWorkbook {
     this.scheduledExpenseAccountIds = const <String>{},
     this.subscriptionFixedCostAccountIds = const <String>{},
     this.cardUsagePolicies = const <String, AssetCardUsagePolicy>{},
+    this.paymentInconsistencies = const <AssetPaymentInconsistency>[],
   });
+
+  AssetPaymentInconsistencySummary get paymentInconsistencySummary {
+    return AssetPaymentInconsistencySummary(
+      totalCount: paymentInconsistencies.length,
+      r1Count: paymentInconsistencies.where((item) => item.matchesR1).length,
+      r2Count: paymentInconsistencies.where((item) => item.matchesR2).length,
+      r3Count: paymentInconsistencies.where((item) => item.matchesR3).length,
+    );
+  }
 
   /// 直接観測した残高だけで構成する現在口座一覧。
   List<AssetLiabilityAccount> get currentAccounts => accounts
@@ -1789,6 +1871,7 @@ class AssetLiabilityWorkbook {
     Set<String>? scheduledExpenseAccountIds,
     Set<String>? subscriptionFixedCostAccountIds,
     Map<String, AssetCardUsagePolicy>? cardUsagePolicies,
+    List<AssetPaymentInconsistency>? paymentInconsistencies,
   }) {
     return AssetLiabilityWorkbook(
       baseDate: baseDate ?? this.baseDate,
@@ -1840,6 +1923,8 @@ class AssetLiabilityWorkbook {
       subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds ??
           this.subscriptionFixedCostAccountIds,
       cardUsagePolicies: cardUsagePolicies ?? this.cardUsagePolicies,
+      paymentInconsistencies:
+          paymentInconsistencies ?? this.paymentInconsistencies,
     );
   }
 }

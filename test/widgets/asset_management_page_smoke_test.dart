@@ -5726,6 +5726,94 @@ void main() {
         await _unmount(tester);
       },
     );
+
+    testWidgets(
+      'Issue #3308: payment flag inconsistency section fixes R3 row via actual payment dialog',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'mobit': 1},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  paidAccountNames: <String>{'mobit'},
+                  paymentOverrides: <String, double>{'mobit': 15000},
+                  paymentSourceAccountIds: <String, String>{
+                    'mobit': 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -300000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final section = find.byKey(
+          const Key('asset_payment_inconsistency_section'),
+        );
+        expect(section, findsOneWidget);
+        expect(find.text('支払記録の不整合（1件）'), findsOneWidget);
+        expect(
+          find.byKey(const Key('asset_inconsistency_row_mobit')),
+          findsOneWidget,
+        );
+
+        final editBtn = find.byKey(
+          const Key('asset_inconsistency_edit_actual_mobit'),
+        );
+        await tester.ensureVisible(editBtn);
+        await tester.pump();
+        await tester.tap(editBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_inconsistency_fix_dialog')),
+          findsOneWidget,
+        );
+        final useScheduledBtn = find.byKey(
+          const Key('asset_inconsistency_use_scheduled_button'),
+        );
+        expect(useScheduledBtn, findsOneWidget);
+        await tester.tap(useScheduledBtn);
+        await tester.pump();
+
+        final saveBtn = find.byKey(
+          const Key('asset_inconsistency_save_button'),
+        );
+        await tester.tap(saveBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_inconsistency_fix_dialog')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_inconsistency_section')),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
   });
   testWidgets(
     'anonymous unconfirmed read never claims empty income or offers empty CTA',

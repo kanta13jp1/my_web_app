@@ -1473,6 +1473,38 @@ class AssetManagementInsightService {
         ),
       );
     }
+    if (workbook.paymentInconsistencies.isNotEmpty) {
+      final summary = workbook.paymentInconsistencySummary;
+      requests.add(
+        AssetManagementDeveloperRequest(
+          title: '支払記録の不整合（R1〜R3）の解消',
+          description: '現状では支払済みフラグ・支払予定額・実支払額に不整合のある項目が'
+              '${summary.totalCount}件あり、延滞判定や口座別見込み残高の精度が低下する恐れがあります。'
+              '支払記録の不整合リストから実支払額入力または支払済み取消を行い、'
+              '不整合件数を0にしてください。',
+          severity: AssetManagementInsightSeverity.warning,
+          evidence: <String>[
+            '支払フラグ不整合件数: ${summary.totalCount}件 '
+                '(R1/R3=${summary.r1Count}件, R2=${summary.r2Count}件, '
+                'うち期日超過R3=${summary.r3Count}件)',
+            '対象: ${workbook.paymentInconsistencies.map((item) => '${item.accountName}(${item.ruleCode})').join('、')}',
+          ],
+          implementationSteps: const <String>[
+            'AssetPaymentInconsistencyServiceでR1〜R3不整合を検知しWorkbookへ保持する。',
+            '負債マスタ上部の「支払記録の不整合」セクションから実支払額入力または支払済み取消を実行する。',
+          ],
+          acceptanceCriteria: const <String>[
+            'R1〜R3に該当する行と件数が画面に表示されること。',
+            '実支払額の保存または支払済み取消後に再計算で不整合件数が0になること。',
+          ],
+          sourceReferences: const <String>[
+            'lib/services/asset_payment_inconsistency_service.dart',
+            'lib/services/asset_liability_planning_service.dart',
+            'lib/pages/asset_management_page.dart',
+          ],
+        ),
+      );
+    }
     if (requests.isEmpty) {
       requests.add(
         const AssetManagementDeveloperRequest(
