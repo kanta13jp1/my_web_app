@@ -1,0 +1,23 @@
+name: AI University provider accounting tests
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/ai-university-update.yml'
+      - '.github/workflows/ai-university-accounting-check.yml'
+      - 'scripts/ai_university_providers.json'
+      - 'scripts/ai_university_update_report.py'
+      - 'scripts/test_ai_university_update_report.py'
+concurrency:
+  group: ai-university-accounting-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+permissions: {}
+jobs:
+  accounting:
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - run: python3 -m unittest discover -s scripts -p test_ai_university_update_report.py -v
+      - run: python3 scripts/ai_university_update_report.py list > /dev/null
