@@ -1409,6 +1409,7 @@ class AssetManagementAiSummaryService {
       AssetManagementInsightActionType.accountShortfallRisk => '口座別見込み残高の不足',
       AssetManagementInsightActionType.debtSpiralWarning => '利息スパイラル警告',
       AssetManagementInsightActionType.overdueIncome => '期限超過の未着金収入',
+      AssetManagementInsightActionType.subscriptionExcess => 'サブスク過多の整理',
     };
   }
 

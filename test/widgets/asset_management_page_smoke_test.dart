@@ -3160,6 +3160,55 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets(
+        'safety balance below 5,000 shows and hides low reserve warning',
+        (tester) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{'財布(現金)': 50000},
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_safety_balance_low_warning')),
+        findsNothing,
+      );
+
+      final field = find.byKey(const Key('asset_safety_balance_field'));
+      await tester.ensureVisible(field);
+      await tester.enterText(field, '3000');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_safety_balance_low_warning')),
+        findsOneWidget,
+      );
+
+      await tester.enterText(field, '10000');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_safety_balance_low_warning')),
+        findsNothing,
+      );
+
+      await _unmount(tester);
+    });
+
     testWidgets('living expense priority toggle immediately reorders actions', (
       tester,
     ) async {
@@ -5518,6 +5567,162 @@ void main() {
         expect(find.text('資産/負債 管理ボード'), findsOneWidget);
         expect(find.text('①資産・②負債の全容把握'), findsOneWidget);
 
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #3623: missing card statement shows critical action item and direct import jump',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final defaultBills =
+            const AssetLiabilityPlanningService().buildWorkbook(
+          latestSnapshot: const <String, double>{},
+          baseDate: now,
+          includeDefaultFixedPayments: true,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'paypay_card': 2},
+                monthlyState: AssetLiabilityMonthlyState(
+                  paidAccountNames: <String>{
+                    for (final row in defaultBills.cashflowRows)
+                      row.accountName,
+                  },
+                  paymentOverrides: const <String, double>{
+                    'paypay_card': 20000,
+                    AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+                  },
+                  paymentSourceAccountIds: const <String, String>{
+                    'paypay_card': 'wallet_cash',
+                  },
+                  cardBillingAccountIds: const <String, String>{
+                    AssetLiabilityPlanningService.kddiProviderAccountId:
+                        'paypay_card',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'PayPayカード': -20000,
+                  'KDDI': -5764,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.text('要確認：PayPayカードのカード明細の取り込みが必要です'),
+          findsOneWidget,
+        );
+        final importActionBtn = find.byKey(
+          const Key('asset_action_import_statement_paypay_card'),
+        );
+        expect(importActionBtn, findsOneWidget);
+        expect(find.textContaining('を選択しました'), findsNothing);
+
+        await tester.ensureVisible(importActionBtn);
+        await tester.tap(importActionBtn);
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.textContaining(
+            'PayPayカードを選択しました。カード明細を貼り付けて「明細を取り込む」を押してください。',
+          ),
+          findsOneWidget,
+        );
+
+        await _unmount(tester);
+      },
+    );
+    testWidgets(
+      'subscription excess alert card renders active list and jumps on tap',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{'財布(現金)': 50000},
+              },
+              debugInitialRecurringFixedCosts: const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'sub_1',
+                  name: 'Claude',
+                  amount: 3000,
+                  paymentDay: 10,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_2',
+                  name: 'Notion',
+                  amount: 2000,
+                  paymentDay: 12,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_3',
+                  name: 'Netflix',
+                  amount: 1500,
+                  paymentDay: 15,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_4',
+                  name: 'iCloud+',
+                  amount: 1300,
+                  paymentDay: 18,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_5',
+                  name: 'Google AI Pro',
+                  amount: 8000,
+                  paymentDay: 20,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final card = find.byKey(
+          const Key('asset_subscription_excess_alert_card'),
+        );
+        expect(card, findsOneWidget);
+        expect(find.textContaining('サブスクリプション過多アラート（5件）'), findsOneWidget);
+        expect(find.textContaining('Google AI Pro'), findsWidgets);
+
+        final reviewButton = find.byKey(
+          const Key('asset_subscription_excess_review_button'),
+        );
+        expect(reviewButton, findsOneWidget);
+        await tester.ensureVisible(reviewButton);
+        await tester.tap(reviewButton);
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(tester.takeException(), isNull);
         await _unmount(tester);
       },
     );

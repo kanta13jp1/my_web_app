@@ -114,6 +114,7 @@ import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_salary_reconciliation_service.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
+import 'package:my_web_app/services/asset_subscription_excess_alert_service.dart';
 import 'package:my_web_app/widgets/weekly_habit_card.dart';
 import 'package:my_web_app/models/daily_todo.dart';
 import 'package:my_web_app/services/daily_todo_store.dart';
@@ -1317,6 +1318,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       'asset_minimum_safety_balance_v1';
   static const double _minimumSafetyBalanceFloor = 1000;
   static const double _minimumSafetyBalanceCeiling = 100000;
+  static const double _minimumSafetyBalanceLowWarningThreshold = 5000;
   double _minimumSafetyBalance =
       AssetManagementInsightService.defaultMinimumSafetyBalance;
   late final TextEditingController _minimumSafetyBalanceController =
@@ -1757,6 +1759,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 設定を直せるようにする。
   void _jumpToIncomePlanSection() {
     _scrollTo(_keyIncomePlanSection);
+  }
+
+  void _jumpToSubscriptionFixedCostSection() {
+    _scrollTo(
+        _sectionAnchorKey(AssetManagementSectionId.subscriptionFixedCost));
   }
 
   List<String> _paymentSourceCandidates() {
@@ -24784,6 +24791,42 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               );
             },
           ),
+          if (_minimumSafetyBalance <
+              _minimumSafetyBalanceLowWarningThreshold) ...[
+            const SizedBox(height: 6),
+            Container(
+              key: const Key('asset_safety_balance_low_warning'),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFFCA5A5)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    size: 16,
+                    color: Color(0xFFB91C1C),
+                  ),
+                  SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '安全残高が5,000円未満に設定されています。急な出費で生活費が不足する恐れがあるため、最低でも5,000円以上の確保を推奨します。',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF991B1B),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           _buildSafetyEnvelopeControl(),
           const SizedBox(height: 8),
@@ -24818,6 +24861,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 12),
           if (report.disciplineReport?.isRelevant ?? false) ...[
             _buildAssetManagementDisciplineCard(report.disciplineReport!),
+            const SizedBox(height: 12),
+          ],
+          if (report.subscriptionExcessAlert case final subAlert?) ...[
+            _buildSubscriptionExcessAlertCard(subAlert),
             const SizedBox(height: 12),
           ],
           _buildAssetManagementAdvisoryBriefingCard(report),
@@ -28376,6 +28423,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _monthlyIncomePlans.any(
               (plan) => plan.id == incomeId && !plan.received,
             );
+    AssetLiabilityCardStatementReconciliationGroup? importTargetGroup;
+    if (workbook != null &&
+        item.type ==
+            AssetManagementInsightActionType.cardBillingConfiguration &&
+        item.severity == AssetManagementInsightSeverity.critical &&
+        item.relatedAccountId != null &&
+        item.description.contains(
+          AssetLiabilityPlanningService.cardStatementMissingImportAlert,
+        )) {
+      final selectableCardIds = <String>{
+        for (final account in _cardBillingAccountOptions(
+          workbook,
+          includeShoppingDebt: true,
+        ))
+          account.id,
+      };
+      if (selectableCardIds.contains(item.relatedAccountId)) {
+        for (final group in workbook.cardStatementReconciliation.groups) {
+          if (group.billingAccountId == item.relatedAccountId &&
+              group.alerts.contains(
+                AssetLiabilityPlanningService.cardStatementMissingImportAlert,
+              ) &&
+              group.fixActions.any(
+                (action) =>
+                    action.kind ==
+                    AssetLiabilityCardStatementFixActionKind.importStatement,
+              )) {
+            importTargetGroup = group;
+            break;
+          }
+        }
+      }
+    }
 
     return Container(
       width: double.infinity,
@@ -28440,11 +28520,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   item.suggestedAction,
                   style: const TextStyle(fontSize: 12, height: 1.5),
                 ),
-                if (canJump || canChangePaymentSource || canMarkReceived)
+                if (canJump ||
+                    canChangePaymentSource ||
+                    canMarkReceived ||
+                    importTargetGroup != null)
                   Wrap(
                     spacing: 4,
                     runSpacing: 4,
                     children: [
+                      if (importTargetGroup case final targetGroup?)
+                        TextButton.icon(
+                          key: Key(
+                            'asset_action_import_statement_${targetGroup.billingAccountId}',
+                          ),
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            foregroundColor: const Color(0xFFB91C1C),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _selectedCardStatementBillingAccountId =
+                                  targetGroup.billingAccountId;
+                              _cardStatementImportMessage =
+                                  '${targetGroup.billingAccountName}を選択しました。カード明細を貼り付けて「明細を取り込む」を押してください。';
+                            });
+                            _jumpToCardStatementReconciliation();
+                          },
+                          icon: const Icon(Icons.upload_file, size: 16),
+                          label: Text(
+                            '${targetGroup.billingAccountName}の明細を取り込む',
+                          ),
+                        ),
                       if (canMarkReceived)
                         TextButton.icon(
                           key: Key('asset_action_mark_received_$incomeId'),
@@ -29002,7 +29109,111 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         Icons.trending_up_rounded,
       AssetManagementInsightActionType.overdueIncome =>
         Icons.schedule_send_outlined,
+      AssetManagementInsightActionType.subscriptionExcess =>
+        Icons.subscriptions_outlined,
     };
+  }
+
+  Widget _buildSubscriptionExcessAlertCard(
+    AssetSubscriptionExcessAlert alert,
+  ) {
+    final visibleItems = alert.items.take(6).toList(growable: false);
+    final hiddenCount = alert.items.length - visibleItems.length;
+    return Container(
+      key: const Key('asset_subscription_excess_alert_card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFD97706).withValues(alpha: 0.45),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.subscriptions_outlined,
+                color: Color(0xFFB45309),
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'サブスクリプション過多アラート（${alert.activeCount}件）',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF92400E),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            alert.summaryMessage,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF78350F),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final trigger in alert.triggers)
+                _buildAssetLiabilitySyncChip(
+                  label: '基準超過',
+                  value: trigger,
+                  color: const Color(0xFFB45309),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          for (final item in visibleItems)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(
+                '・${item.name}: ${_formatManagementYen(item.monthlyAmount)}/月',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF78350F),
+                  height: 1.4,
+                ),
+              ),
+            ),
+          if (hiddenCount > 0)
+            Text(
+              'ほか $hiddenCount件',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF92400E),
+              ),
+            ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              key: const Key('asset_subscription_excess_review_button'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFB45309),
+                side: const BorderSide(color: Color(0xFFD97706)),
+              ),
+              onPressed: _jumpToSubscriptionFixedCostSection,
+              icon: const Icon(Icons.subscriptions_outlined, size: 16),
+              label: const Text('サブスク一覧で解約を検討する'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String _assetLiabilityManualSyncStatusLabel(
