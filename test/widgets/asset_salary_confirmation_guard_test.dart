@@ -14,6 +14,7 @@ Future<void> pumpSalaryCandidate(
   WidgetTester tester, {
   required bool balanceJump,
   bool payslipOnly = false,
+  List<Map<String, dynamic>>? payslipSalaryIncomes,
 }) async {
   SharedPreferences.setMockInitialValues(<String, Object>{
     AssetSalaryResetMarkerStore.prefsKey: '2026-04',
@@ -53,22 +54,27 @@ Future<void> pumpSalaryCandidate(
           '2026-05-24': const {'銀行A': 1000, '現金': 0},
           '2026-06-20': {'銀行A': balanceJump ? 201000 : 1000, '現金': 0},
         },
-        debugInitialPayslipSalaryIncomes: payslipOnly
-            ? const [
-                {'pay_date': '2026-05-25', 'amount': 200000},
-              ]
-            : const [],
-        debugInitialRecentFlows: balanceJump || payslipOnly
-            ? const []
-            : const [
-                {
-                  'id': 1,
-                  'action_type': 'conquer',
-                  'amount': 200000,
-                  'description': '給与とは未確認の別種入金',
-                  'occurred_at': '2026-06-10T04:00:00Z',
-                },
-              ],
+        debugInitialPayslipSalaryIncomes: payslipSalaryIncomes ??
+            (payslipOnly
+                ? const <Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'pay_date': '2026-05-25',
+                      'amount': 200000,
+                    },
+                  ]
+                : const <Map<String, dynamic>>[]),
+        debugInitialRecentFlows:
+            balanceJump || payslipOnly || payslipSalaryIncomes != null
+                ? const <Map<String, dynamic>>[]
+                : const [
+                    {
+                      'id': 1,
+                      'action_type': 'conquer',
+                      'amount': 200000,
+                      'description': '給与とは未確認の別種入金',
+                      'occurred_at': '2026-06-10T04:00:00Z',
+                    },
+                  ],
       ),
     ),
   );
@@ -149,21 +155,47 @@ void main() {
     await tester.pump();
   });
 
-  testWidgets('payslip accounting does not confirm a bank deposit',
+  testWidgets(
+      'paid payslip switches payment cycle marker without blocking banner',
       (tester) async {
     await pumpSalaryCandidate(tester, balanceJump: false, payslipOnly: true);
-    expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
-    expect(await const AssetSalaryResetMarkerStore().load(), '2026-04');
+    expect(find.text('給与の口座入金は未確認です'), findsNothing);
+    expect(await const AssetSalaryResetMarkerStore().load(), '2026-05');
+    const store = AssetLiabilityMonthlyStateStore();
+    expect(
+      (await store.loadMonth(DateTime(2026, 4))).paidAccountNames,
+      contains('synthetic_rent'),
+    );
     final accounting = AssetSalaryReconciliationService.reconcile(
-      monthlyIncomePlans: const [],
-      payslipRows: const [],
-      payslipSalaryIncomes: const [
-        {'pay_date': '2026-05-25', 'amount': 200000},
+      monthlyIncomePlans: const <AssetLiabilityIncomePlan>[],
+      payslipRows: const <Map<String, dynamic>>[],
+      payslipSalaryIncomes: const <Map<String, dynamic>>[
+        <String, dynamic>{'pay_date': '2026-05-25', 'amount': 200000},
       ],
       baseDate: DateTime(2026, 6, 20),
     );
     expect(accounting.single.received, isTrue);
     expect(accounting.single.amount, 200000);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('future or unreceived payslip keeps the salary deposit warning',
+      (tester) async {
+    await pumpSalaryCandidate(
+      tester,
+      balanceJump: false,
+      payslipSalaryIncomes: const <Map<String, dynamic>>[
+        <String, dynamic>{'pay_date': '2026-06-25', 'amount': 200000},
+        <String, dynamic>{
+          'pay_date': '2026-05-25',
+          'amount': 200000,
+          'received': false,
+        },
+      ],
+    );
+    expect(find.text('給与の口座入金は未確認です'), findsOneWidget);
+    await expectUnconfirmedState();
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });
