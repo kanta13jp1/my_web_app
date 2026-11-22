@@ -347,11 +347,39 @@ class AssetManagementInsightReport {
   }
 }
 
+/// リボ払いカード行にインライン表示する概算残り月数・元金減少見込み。
+class AssetRevolvingInlineHint {
+  final int? revolvingExitHintMonths;
+  final double currentPrincipalEstimate;
+  final bool everPaysOff;
+
+  const AssetRevolvingInlineHint({
+    required this.revolvingExitHintMonths,
+    required this.currentPrincipalEstimate,
+    required this.everPaysOff,
+  });
+}
+
 class AssetManagementInsightService {
   static const double defaultMinimumSafetyBalance = 10000;
   static const int defaultUpcomingPaymentWarningDays = 3;
 
   const AssetManagementInsightService();
+
+  /// リボ払い行向けの概算残り月数・今月元金見込みを返す（非リボは null）。
+  static AssetRevolvingInlineHint? buildRevolvingInlineHint(
+    AssetLiabilityDebtRow row,
+  ) {
+    if (!row.isRevolving) {
+      return null;
+    }
+    final estimate = AssetDebtTrendAnalyzer.estimateForRow(row);
+    return AssetRevolvingInlineHint(
+      revolvingExitHintMonths: estimate.everPaysOff ? estimate.months : null,
+      currentPrincipalEstimate: row.principalPaymentEstimate,
+      everPaysOff: estimate.everPaysOff,
+    );
+  }
 
   AssetManagementInsightReport buildReport({
     required AssetLiabilityWorkbook workbook,
