@@ -261,10 +261,10 @@ void main() {
         paymentDay: 5,
         paymentSourceAccountId: 'zero_scheduled_debt',
         paymentSourceAccountName: '予定0実額ありカード',
-        paymentMethod: AssetLiabilityPaymentMethod.includedInBillingAccount,
+        paymentMethod: AssetLiabilityPaymentMethod.includedInCard,
         paymentMethodLabel: 'カード合算',
         paymentMethodSettingSource:
-            AssetLiabilityPaymentMethodSettingSource.userConfigured,
+            AssetLiabilityPaymentMethodSettingSource.defaultSetting,
         billingAccountId: 'zero_scheduled_debt',
         billingAccountName: '予定0実額ありカード',
         includedInBillingAccount: true,
