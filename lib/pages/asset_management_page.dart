@@ -28288,6 +28288,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _monthlyIncomePlans.any(
               (plan) => plan.id == incomeId && !plan.received,
             );
+    AssetLiabilityCardStatementReconciliationGroup? importTargetGroup;
+    if (workbook != null &&
+        item.type ==
+            AssetManagementInsightActionType.cardBillingConfiguration &&
+        item.severity == AssetManagementInsightSeverity.critical &&
+        item.relatedAccountId != null &&
+        item.description.contains(
+          AssetLiabilityPlanningService.cardStatementMissingImportAlert,
+        )) {
+      final selectableCardIds = <String>{
+        for (final account in _cardBillingAccountOptions(
+          workbook,
+          includeShoppingDebt: true,
+        ))
+          account.id,
+      };
+      if (selectableCardIds.contains(item.relatedAccountId)) {
+        for (final group in workbook.cardStatementReconciliation.groups) {
+          if (group.billingAccountId == item.relatedAccountId &&
+              group.alerts.contains(
+                AssetLiabilityPlanningService.cardStatementMissingImportAlert,
+              ) &&
+              group.fixActions.any(
+                (action) =>
+                    action.kind ==
+                    AssetLiabilityCardStatementFixActionKind.importStatement,
+              )) {
+            importTargetGroup = group;
+            break;
+          }
+        }
+      }
+    }
 
     return Container(
       width: double.infinity,
@@ -28352,11 +28385,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   item.suggestedAction,
                   style: const TextStyle(fontSize: 12, height: 1.5),
                 ),
-                if (canJump || canChangePaymentSource || canMarkReceived)
+                if (canJump ||
+                    canChangePaymentSource ||
+                    canMarkReceived ||
+                    importTargetGroup != null)
                   Wrap(
                     spacing: 4,
                     runSpacing: 4,
                     children: [
+                      if (importTargetGroup case final targetGroup?)
+                        TextButton.icon(
+                          key: Key(
+                            'asset_action_import_statement_${targetGroup.billingAccountId}',
+                          ),
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            foregroundColor: const Color(0xFFB91C1C),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _selectedCardStatementBillingAccountId =
+                                  targetGroup.billingAccountId;
+                              _cardStatementImportMessage =
+                                  '${targetGroup.billingAccountName}を選択しました。カード明細を貼り付けて「明細を取り込む」を押してください。';
+                            });
+                            _jumpToCardStatementReconciliation();
+                          },
+                          icon: const Icon(Icons.upload_file, size: 16),
+                          label: Text(
+                            '${targetGroup.billingAccountName}の明細を取り込む',
+                          ),
+                        ),
                       if (canMarkReceived)
                         TextButton.icon(
                           key: Key('asset_action_mark_received_$incomeId'),

@@ -8,6 +8,7 @@ import 'asset_debt_trend_analyzer.dart';
 import 'asset_management_available_money.dart';
 import 'asset_triage_guide_service.dart';
 import 'asset_payment_status_summary.dart';
+import 'asset_liability_planning_service.dart';
 
 // Use the planner's resolved salary-cycle date throughout advice and prompts.
 // Rows omitted from cashflow (for example card-billed items) have no independent
@@ -925,10 +926,51 @@ class AssetManagementInsightService {
       );
     }
 
+    final debtRowsById = <String, AssetLiabilityDebtRow>{
+      for (final row in workbook.debtMasterRows) row.id: row,
+    };
+
+    for (final group in workbook.cardStatementReconciliation.groups) {
+      if (!group.alerts.contains(
+        AssetLiabilityPlanningService.cardStatementMissingImportAlert,
+      )) {
+        continue;
+      }
+      final billingRow = debtRowsById[group.billingAccountId];
+      final paymentDay = billingRow?.paymentDay;
+      final dueDate = billingRow != null
+          ? (_workbookPaymentDateFor(billingRow, workbook) ??
+              (paymentDay == null
+                  ? null
+                  : _paymentDateFromDay(workbook.baseDate, paymentDay)))
+          : null;
+      final hasImportFixAction = group.fixActions.any(
+        (action) =>
+            action.kind ==
+            AssetLiabilityCardStatementFixActionKind.importStatement,
+      );
+      actions.add(
+        AssetManagementInsightActionItem(
+          type: AssetManagementInsightActionType.cardBillingConfiguration,
+          severity: AssetManagementInsightSeverity.critical,
+          title: '要確認：${group.billingAccountName}のカード明細の取り込みが必要です',
+          description:
+              '${AssetLiabilityPlanningService.cardStatementMissingImportAlert}。'
+              '請求額 ${_formatYen(group.billedAmount)} と'
+              'カード内訳合計 ${_formatYen(group.configuredDetailTotal)} の照合が'
+              '完了していないため、データ不一致リスクがあります。',
+          relatedAccountId: group.billingAccountId,
+          amount: group.billedAmount > 0 ? group.billedAmount : null,
+          dueDate: dueDate,
+          paymentDay: paymentDay,
+          suggestedAction: hasImportFixAction
+              ? '${group.billingAccountName}のカード明細取り込み欄へ移動し、当月の明細を貼り付けて取り込んでください。'
+              : '負債マスタで${group.billingAccountName}の請求先カード設定を確認した後、カード明細を取り込んでください。',
+        ),
+      );
+    }
+
     if (livingExpensePriorityMode) {
-      final debtRowsById = <String, AssetLiabilityDebtRow>{
-        for (final row in workbook.debtMasterRows) row.id: row,
-      };
       actions.sort(
         (a, b) => _compareLivingExpensePriorityActionItems(
           a,
