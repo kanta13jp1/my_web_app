@@ -243,7 +243,11 @@ class _GuitarTabGridPainter extends CustomPainter {
           i == lastTabRow ? cy : yTop + _GuitarTabGridMetrics.stringRowHeight;
       for (final pipeCol in pipeCols) {
         final bx = _colCenterX(pipeCol);
-        canvas.drawLine(Offset(bx, barTop), Offset(bx, barBottom), barlinePaint);
+        canvas.drawLine(
+          Offset(bx, barTop),
+          Offset(bx, barBottom),
+          barlinePaint,
+        );
       }
 
       final firstPipe = pipeCols.isNotEmpty ? pipeCols.first : line.length;
@@ -327,7 +331,10 @@ class _GuitarTabGridPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    tp.paint(canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
+    tp.paint(
+      canvas,
+      Offset(center.dx - tp.width / 2, center.dy - tp.height / 2),
+    );
   }
 
   @override

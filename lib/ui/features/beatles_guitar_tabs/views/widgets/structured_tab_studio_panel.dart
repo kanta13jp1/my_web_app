@@ -609,8 +609,7 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
               ),
               OutlinedButton.icon(
                 key: const Key('structured_tab_audio_toggle'),
-                onPressed: () =>
-                    setState(() => _soundEnabled = !_soundEnabled),
+                onPressed: () => setState(() => _soundEnabled = !_soundEnabled),
                 icon: Icon(
                   _soundEnabled
                       ? Icons.volume_up_outlined

@@ -537,7 +537,10 @@ void main() {
 
       await _setSurfaceSize(tester, const Size(390, 844));
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('structured_tab_score_canvas')), findsOneWidget);
+      expect(
+        find.byKey(const Key('structured_tab_score_canvas')),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     },
   );

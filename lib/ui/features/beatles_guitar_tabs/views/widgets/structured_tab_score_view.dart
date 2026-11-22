@@ -449,8 +449,7 @@ class _StructuredTabRowPainter extends CustomPainter {
             textDirection: TextDirection.ltr,
           )..layout();
           final desiredX = slot.right - 4.0 - tp.width;
-          final safeX =
-              desiredX > slot.left + 4.0 ? desiredX : slot.left + 4.0;
+          final safeX = desiredX > slot.left + 4.0 ? desiredX : slot.left + 4.0;
           tp.paint(canvas, Offset(safeX, 27));
         }
       }
@@ -475,8 +474,7 @@ class _StructuredTabRowPainter extends CustomPainter {
         text: '${measure.number}',
         offset: Offset(slot.left + 3, _staffTop - 16),
         style: TextStyle(
-          color:
-              lightSheet ? const Color(0xFF4B5563) : const Color(0xFF9CA3AF),
+          color: lightSheet ? const Color(0xFF4B5563) : const Color(0xFF9CA3AF),
           fontSize: 9,
           fontWeight: FontWeight.w600,
         ),

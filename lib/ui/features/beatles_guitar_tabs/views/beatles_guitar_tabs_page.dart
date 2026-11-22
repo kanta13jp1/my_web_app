@@ -361,9 +361,9 @@ class _CompactLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textScale = MediaQuery.textScalerOf(context).scale(1.0).clamp(
-      1.0,
-      2.0,
-    );
+          1.0,
+          2.0,
+        );
     return ListView(
       key: const Key('beatles_tabs_compact_layout'),
       padding: const EdgeInsets.fromLTRB(
@@ -632,8 +632,7 @@ class _DailyCoursePanelState extends State<_DailyCoursePanel> {
                     ),
                     TextButton.icon(
                       key: const Key('guitar_course_collapse_toggle'),
-                      onPressed: () =>
-                          setState(() => _collapsed = !_collapsed),
+                      onPressed: () => setState(() => _collapsed = !_collapsed),
                       icon: Icon(
                         _collapsed ? Icons.expand_more : Icons.expand_less,
                         size: 18,
@@ -854,7 +853,9 @@ class _DailyCoursePanelState extends State<_DailyCoursePanel> {
     if (!mounted || !completed) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('Day $dayNumber 完了！次の課題が解放されました。')));
+      ..showSnackBar(
+        SnackBar(content: Text('Day $dayNumber 完了！次の課題が解放されました。')),
+      );
   }
 
   String _phaseLabel(GuitarCoursePhase phase) {
@@ -909,9 +910,8 @@ class _DailyTaskCard extends StatelessWidget {
                     completed
                         ? Icons.check_circle
                         : Icons.radio_button_unchecked,
-                    color: completed
-                        ? DesignTokens.orange
-                        : _mutedAccessibleText,
+                    color:
+                        completed ? DesignTokens.orange : _mutedAccessibleText,
                     size: 22,
                   ),
                   const Spacer(),
@@ -2011,7 +2011,8 @@ class _TempoControlState extends State<_TempoControl> {
                             beatIndex: b,
                             active: _isPlaying && _beatIndex == b,
                           ),
-                          if (b != 3) const SizedBox(width: DesignTokens.space4),
+                          if (b != 3)
+                            const SizedBox(width: DesignTokens.space4),
                         ],
                         const SizedBox(width: DesignTokens.space8),
                         Text(
