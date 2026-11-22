@@ -8,6 +8,7 @@ import 'asset_debt_trend_analyzer.dart';
 import 'asset_management_available_money.dart';
 import 'asset_triage_guide_service.dart';
 import 'asset_payment_status_summary.dart';
+import 'asset_subscription_excess_alert_service.dart';
 
 // Use the planner's resolved salary-cycle date throughout advice and prompts.
 // Rows omitted from cashflow (for example card-billed items) have no independent
@@ -38,6 +39,7 @@ enum AssetManagementInsightActionType {
   accountShortfallRisk,
   debtSpiralWarning,
   overdueIncome,
+  subscriptionExcess,
 }
 
 enum AssetManagementInsightSeverity { info, warning, critical }
@@ -298,6 +300,9 @@ class AssetManagementInsightReport {
   /// null=ToDo 未使用。細木数子AI が金銭の負債と並べて行動へ助言するための入力。
   final DailyTodoDigest? dailyTodoDigest;
 
+  /// アクティブなサブスクリプション契約が基準を超過した場合の警告。
+  final AssetSubscriptionExcessAlert? subscriptionExcessAlert;
+
   const AssetManagementInsightReport({
     required this.workbook,
     this.userProfile,
@@ -316,6 +321,7 @@ class AssetManagementInsightReport {
     this.disciplineReport,
     this.triagePlan,
     this.dailyTodoDigest,
+    this.subscriptionExcessAlert,
   });
 
   bool get hasAccountShortfallAlerts => accountShortfallAlerts.isNotEmpty;
@@ -462,11 +468,33 @@ class AssetManagementInsightService {
       todayAvailableAmount: today.availableAmount,
       userProfile: userProfile,
     );
+    final subscriptionExcessAlert =
+        AssetSubscriptionExcessAlertService.evaluate(
+      workbook: workbook,
+      userProfile: userProfile,
+    );
+    final allActions = subscriptionExcessAlert == null
+        ? actions
+        : <AssetManagementInsightActionItem>[
+            ...actions,
+            AssetManagementInsightActionItem(
+              type: AssetManagementInsightActionType.subscriptionExcess,
+              severity: AssetManagementInsightSeverity.warning,
+              title: 'サブスク契約が過多です（${subscriptionExcessAlert.activeCount}件）',
+              description: subscriptionExcessAlert.summaryMessage,
+              relatedAccountId: null,
+              dueDate: null,
+              paymentDay: null,
+              suggestedAction: '不要・重複しているサブスクを解約候補へ振り分け、固定費を圧縮してください。',
+            ),
+          ];
 
     return AssetManagementInsightReport(
       workbook: workbook,
       userProfile: userProfile,
-      actionItems: actions,
+      actionItems: List<AssetManagementInsightActionItem>.unmodifiable(
+        allActions,
+      ),
       todayAvailable: today,
       weekAvailable: week,
       monthAvailable: month,
@@ -479,6 +507,7 @@ class AssetManagementInsightService {
       disciplineReport: disciplineReport,
       triagePlan: triagePlan,
       dailyTodoDigest: dailyTodoDigest,
+      subscriptionExcessAlert: subscriptionExcessAlert,
     );
   }
 
@@ -2411,6 +2440,7 @@ class AssetManagementInsightPromptBuilder {
       AssetManagementInsightActionType.accountShortfallRisk => '口座別見込み残高の不足',
       AssetManagementInsightActionType.debtSpiralWarning => '利息スパイラル警告',
       AssetManagementInsightActionType.overdueIncome => '期限超過の未着金収入',
+      AssetManagementInsightActionType.subscriptionExcess => 'サブスク過多の整理',
     };
   }
 

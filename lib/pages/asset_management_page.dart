@@ -114,6 +114,7 @@ import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_salary_reconciliation_service.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
+import 'package:my_web_app/services/asset_subscription_excess_alert_service.dart';
 import 'package:my_web_app/widgets/weekly_habit_card.dart';
 import 'package:my_web_app/models/daily_todo.dart';
 import 'package:my_web_app/services/daily_todo_store.dart';
@@ -1757,6 +1758,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 設定を直せるようにする。
   void _jumpToIncomePlanSection() {
     _scrollTo(_keyIncomePlanSection);
+  }
+
+  void _jumpToSubscriptionFixedCostSection() {
+    _scrollTo(
+        _sectionAnchorKey(AssetManagementSectionId.subscriptionFixedCost));
   }
 
   List<String> _paymentSourceCandidates() {
@@ -24820,6 +24826,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAssetManagementDisciplineCard(report.disciplineReport!),
             const SizedBox(height: 12),
           ],
+          if (report.subscriptionExcessAlert case final subAlert?) ...[
+            _buildSubscriptionExcessAlertCard(subAlert),
+            const SizedBox(height: 12),
+          ],
           _buildAssetManagementAdvisoryBriefingCard(report),
           const SizedBox(height: 12),
           _buildAssetManagementAssistantActionList(
@@ -29002,7 +29012,111 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         Icons.trending_up_rounded,
       AssetManagementInsightActionType.overdueIncome =>
         Icons.schedule_send_outlined,
+      AssetManagementInsightActionType.subscriptionExcess =>
+        Icons.subscriptions_outlined,
     };
+  }
+
+  Widget _buildSubscriptionExcessAlertCard(
+    AssetSubscriptionExcessAlert alert,
+  ) {
+    final visibleItems = alert.items.take(6).toList(growable: false);
+    final hiddenCount = alert.items.length - visibleItems.length;
+    return Container(
+      key: const Key('asset_subscription_excess_alert_card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFD97706).withValues(alpha: 0.45),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.subscriptions_outlined,
+                color: Color(0xFFB45309),
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'サブスクリプション過多アラート（${alert.activeCount}件）',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF92400E),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            alert.summaryMessage,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF78350F),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final trigger in alert.triggers)
+                _buildAssetLiabilitySyncChip(
+                  label: '基準超過',
+                  value: trigger,
+                  color: const Color(0xFFB45309),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          for (final item in visibleItems)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(
+                '・${item.name}: ${_formatManagementYen(item.monthlyAmount)}/月',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF78350F),
+                  height: 1.4,
+                ),
+              ),
+            ),
+          if (hiddenCount > 0)
+            Text(
+              'ほか $hiddenCount件',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF92400E),
+              ),
+            ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              key: const Key('asset_subscription_excess_review_button'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFB45309),
+                side: const BorderSide(color: Color(0xFFD97706)),
+              ),
+              onPressed: _jumpToSubscriptionFixedCostSection,
+              icon: const Icon(Icons.subscriptions_outlined, size: 16),
+              label: const Text('サブスク一覧で解約を検討する'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String _assetLiabilityManualSyncStatusLabel(
