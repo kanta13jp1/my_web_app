@@ -4,9 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 typedef PaymentReminderLoader = Future<List<Map<String, dynamic>>> Function(
-    String userId);
+  String userId,
+);
 typedef PaymentReminderInserter = Future<void> Function(
-    Map<String, dynamic> payload);
+  Map<String, dynamic> payload,
+);
 typedef PaymentReminderMarker = Future<bool> Function(
   String userId,
   Map<String, dynamic> reminder,
