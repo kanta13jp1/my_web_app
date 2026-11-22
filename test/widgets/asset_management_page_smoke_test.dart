@@ -3382,6 +3382,134 @@ void main() {
       },
     );
 
+    testWidgets(
+      'overdue bulk confirm dialog marks selected overdue debts paid',
+      (tester) async {
+        final now = DateTime(2026, 9, 5);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final defaultBills =
+            const AssetLiabilityPlanningService().buildWorkbook(
+          latestSnapshot: const <String, double>{},
+          baseDate: now,
+          includeDefaultFixedPayments: true,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{
+                  'mobit': 1,
+                  'acom_card_loan': 2,
+                },
+                monthlyState: AssetLiabilityMonthlyState(
+                  paidAccountNames: <String>{
+                    for (final row in defaultBills.cashflowRows) row.accountId,
+                    for (final row in defaultBills.cashflowRows)
+                      row.accountName,
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -100000,
+                  'アコムカードローン': -80000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final openButton = find.byKey(
+          const Key('asset_overdue_bulk_confirm_button'),
+        );
+        expect(openButton, findsOneWidget);
+        expect(find.text('超過未払いをまとめて確認 (2件)'), findsOneWidget);
+
+        await tester.ensureVisible(openButton);
+        await tester.tap(openButton);
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_overdue_bulk_confirm_dialog')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('overdue_bulk_item_mobit')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('overdue_bulk_item_acom_card_loan')),
+          findsOneWidget,
+        );
+        expect(find.text('選択した2件を支払済みにする'), findsOneWidget);
+
+        await tester
+            .tap(find.byKey(const Key('overdue_bulk_clear_all_button')));
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          tester
+              .widget<FilledButton>(
+                find.byKey(const Key('asset_overdue_bulk_apply_button')),
+              )
+              .onPressed,
+          isNull,
+        );
+
+        await tester.tap(
+          find.byKey(const Key('overdue_bulk_select_all_button')),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.tap(
+          find.byKey(const Key('overdue_bulk_item_acom_card_loan')),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.text('選択した1件を支払済みにする'), findsOneWidget);
+
+        final applyButton = find.byKey(
+          const Key('asset_overdue_bulk_apply_button'),
+        );
+        await tester.ensureVisible(applyButton);
+        await tester.tap(applyButton);
+        // Allow the dialog dismissal animation and async state persistence to finish.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_overdue_bulk_confirm_dialog')),
+          findsNothing,
+        );
+        expect(find.text('✅ 超過未払い1件を支払済みにしました'), findsOneWidget);
+        expect(find.text('超過未払いをまとめて確認 (1件)'), findsOneWidget);
+
+        await tester.ensureVisible(openButton);
+        await tester.tap(openButton);
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(
+          find.byKey(const Key('overdue_bulk_item_mobit')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('overdue_bulk_item_acom_card_loan')),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.byKey(const Key('overdue_bulk_cancel_button')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        await _unmount(tester);
+      },
+    );
+
     testWidgets('triage guide card shows staged first steps in crisis', (
       tester,
     ) async {
