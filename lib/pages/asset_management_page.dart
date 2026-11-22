@@ -9032,7 +9032,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _isLoadingPayslipFinance = false;
         _payslipIngestionMessage = null;
       });
-      _maybeDetectSalaryDeposit();
+      _maybeDetectSalaryDeposit(fromPayslipReload: true);
       if (!reconciliationReadOnly) {
         _reconcileAndSaveSalaryIncomePlansIfPending();
       }
@@ -11789,6 +11789,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _acknowledgeSalaryReset(
     String cycleKey, {
     bool reloadMonthlyState = true,
+    bool mirrorRemote = true,
   }) async {
     final merged = AssetSalaryResetMarkerStore.mergeLater(
       _ackedResetCycleKey,
@@ -11796,7 +11797,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     if (merged == _ackedResetCycleKey) {
       // Explicit confirmation also repairs a previously local-only marker.
-      await _mirrorSalaryResetMarker();
+      if (mirrorRemote) {
+        await _mirrorSalaryResetMarker();
+      }
       if (reloadMonthlyState) await _loadAssetLiabilityMonthlyState();
       return;
     }
@@ -11809,7 +11812,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _salaryResetMarkerStore.save(merged),
       'salary reset marker save',
     );
-    unawaited(_mirrorSalaryResetMarker());
+    if (mirrorRemote) {
+      unawaited(_mirrorSalaryResetMarker());
+    }
     if (reloadMonthlyState) {
       await _loadAssetLiabilityMonthlyState();
     }
@@ -11818,7 +11823,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 推定は表示用の候補だけ更新する。
   /// ただし本人承認仕様に基づき、支給日を迎えた現サイクルの給与明細がある場合は
   /// 支払チェックのサイクル切り替えだけを行う(口座着金確認自体は別途行う)。
-  void _maybeDetectSalaryDeposit() {
+  void _maybeDetectSalaryDeposit({bool fromPayslipReload = false}) {
     if (!mounted || !_assetLiabilityBootStateLoaded) return;
     final workbook = _buildCurrentAssetLiabilityWorkbook();
     final paidPayslips = _salaryResetPending && workbook != null
@@ -11842,7 +11847,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (_salaryDepositCandidate.detected) {
         setState(() => _salaryDepositCandidate = SalaryDepositDetection.none);
       }
-      unawaited(_acknowledgeSalaryReset(_currentSalaryCycleKey()));
+      unawaited(
+        _acknowledgeSalaryReset(
+          _currentSalaryCycleKey(),
+          reloadMonthlyState: !fromPayslipReload,
+          mirrorRemote: !fromPayslipReload,
+        ),
+      );
       return;
     }
     if (_salaryDepositCandidate.confidence == detection.confidence &&
