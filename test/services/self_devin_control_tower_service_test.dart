@@ -110,4 +110,208 @@ void main() {
       expect(infraLoop.status, 'configured');
     });
   });
+
+  group('SelfDevinControlTowerService.buildSnapshotFromLaneSummaries', () {
+    test('produces exact snapshot parity with raw buildSnapshot', () {
+      final now = DateTime(2026, 4, 24, 12);
+      final rawTasks = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'title': '[追加要望] VSCode lane task',
+          'category': 'ユーザー要望',
+          'instance': 'vscode',
+          'owner_instance': 'vscode',
+          'status': 'in_progress',
+          'progress': 60,
+          'end_date': '2026-04-25',
+          'priority': 'high',
+          'updated_at': '2026-04-24T09:00:00Z',
+        },
+        <String, dynamic>{
+          'title': 'WEB blocked task',
+          'category': 'AI戦略',
+          'instance': 'web',
+          'owner_instance': 'web',
+          'status': 'blocked',
+          'progress': 30,
+          'end_date': '2026-04-23',
+          'priority': 'high',
+          'updated_at': '2026-04-20T09:00:00Z',
+        },
+        <String, dynamic>{
+          'title': 'PowerShell task A',
+          'category': '運用・自動化',
+          'instance': 'ps3',
+          'owner_instance': 'ps3',
+          'status': 'in_progress',
+          'progress': 80,
+          'end_date': '2026-04-26',
+          'priority': 'medium',
+          'updated_at': '2026-04-24T07:00:00Z',
+        },
+        <String, dynamic>{
+          'title': 'PowerShell task B',
+          'category': '運用・自動化',
+          'instance': 'ps5',
+          'owner_instance': 'ps5',
+          'status': 'completed',
+          'progress': 100,
+          'end_date': '2026-04-22',
+          'priority': 'medium',
+          'updated_at': '2026-04-22T07:00:00Z',
+        },
+      ];
+      final rawRuns = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'task_id': 'cs-check',
+          'status': 'success',
+          'started_at': '2026-04-24T11:15:00Z',
+          'summary': 'hourly check clean',
+          'error_message': null,
+        },
+        <String, dynamic>{
+          'task_id': 'github-issue-fix',
+          'status': 'error',
+          'started_at': '2026-04-24T01:00:00Z',
+          'summary': null,
+          'error_message': 'branch bootstrap failed',
+        },
+        <String, dynamic>{
+          'task_id': 'ci-auto-fix',
+          'status': 'skipped',
+          'started_at': '2026-04-23T23:00:00Z',
+          'summary': 'no CI failure',
+          'error_message': null,
+        },
+      ];
+
+      final rawSnapshot = SelfDevinControlTowerService.buildSnapshot(
+        rawTasks: rawTasks,
+        rawRuns: rawRuns,
+        now: now,
+      );
+
+      final rpcSnapshot =
+          SelfDevinControlTowerService.buildSnapshotFromLaneSummaries(
+        now: now,
+        rawRuns: rawRuns,
+        rawLaneSummaries: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'lane_id': 'vscode',
+            'active_tasks': 1,
+            'blocked_tasks': 0,
+            'overdue_tasks': 0,
+            'stale_tasks': 0,
+            'feature_request_tasks': 1,
+            'high_priority_tasks': 1,
+            'average_progress': 60,
+          },
+          <String, dynamic>{
+            'lane_id': 'web',
+            'active_tasks': 1,
+            'blocked_tasks': 1,
+            'overdue_tasks': 1,
+            'stale_tasks': 1,
+            'feature_request_tasks': 0,
+            'high_priority_tasks': 1,
+            'average_progress': 30,
+          },
+          <String, dynamic>{
+            'lane_id': 'windows',
+            'active_tasks': 0,
+            'blocked_tasks': 0,
+            'overdue_tasks': 0,
+            'stale_tasks': 0,
+            'feature_request_tasks': 0,
+            'high_priority_tasks': 0,
+            'average_progress': 0,
+          },
+          <String, dynamic>{
+            'lane_id': 'powershell',
+            'active_tasks': 1,
+            'blocked_tasks': 0,
+            'overdue_tasks': 0,
+            'stale_tasks': 0,
+            'feature_request_tasks': 0,
+            'high_priority_tasks': 0,
+            'average_progress': 80,
+          },
+        ],
+      );
+
+      expect(rpcSnapshot.readiness, rawSnapshot.readiness);
+      expect(
+        rpcSnapshot.openFeatureRequestCount,
+        rawSnapshot.openFeatureRequestCount,
+      );
+      expect(rpcSnapshot.blockedTaskCount, rawSnapshot.blockedTaskCount);
+      expect(rpcSnapshot.activeLaneCount, rawSnapshot.activeLaneCount);
+      expect(rpcSnapshot.healthyLoopCount, rawSnapshot.healthyLoopCount);
+      expect(rpcSnapshot.totalLoopCount, rawSnapshot.totalLoopCount);
+      expect(rpcSnapshot.nextActionTitle, rawSnapshot.nextActionTitle);
+      expect(rpcSnapshot.nextActionDetail, rawSnapshot.nextActionDetail);
+      expect(rpcSnapshot.lanes.length, rawSnapshot.lanes.length);
+      for (var i = 0; i < rawSnapshot.lanes.length; i++) {
+        final actual = rpcSnapshot.lanes[i];
+        final expected = rawSnapshot.lanes[i];
+        expect(actual.id, expected.id);
+        expect(actual.label, expected.label);
+        expect(actual.activeTasks, expected.activeTasks);
+        expect(actual.blockedTasks, expected.blockedTasks);
+        expect(actual.overdueTasks, expected.overdueTasks);
+        expect(actual.staleTasks, expected.staleTasks);
+        expect(actual.featureRequestTasks, expected.featureRequestTasks);
+        expect(actual.highPriorityTasks, expected.highPriorityTasks);
+        expect(actual.averageProgress, expected.averageProgress);
+        expect(actual.healthLabel, expected.healthLabel);
+      }
+    });
+
+    test('zero-fills missing lanes and ignores unknown lane ids', () {
+      final snapshot =
+          SelfDevinControlTowerService.buildSnapshotFromLaneSummaries(
+        now: DateTime(2026, 4, 24, 12),
+        rawRuns: const <Map<String, dynamic>>[],
+        rawLaneSummaries: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'lane_id': 'unknown_lane',
+            'active_tasks': 99,
+            'blocked_tasks': 9,
+          },
+          <String, dynamic>{
+            'lane_id': 'web',
+            'active_tasks': 2,
+            'blocked_tasks': 0,
+            'overdue_tasks': 0,
+            'stale_tasks': 0,
+            'feature_request_tasks': 1,
+            'high_priority_tasks': 1,
+            'average_progress': 55,
+          },
+        ],
+      );
+
+      expect(
+        snapshot.lanes.map((lane) => lane.id).toList(),
+        <String>['vscode', 'web', 'windows', 'powershell'],
+      );
+      expect(snapshot.lanes[0].activeTasks, 0);
+      expect(snapshot.lanes[0].healthLabel, 'Idle');
+      expect(snapshot.lanes[1].activeTasks, 2);
+      expect(snapshot.lanes[1].healthLabel, 'Stable');
+      expect(snapshot.lanes[2].healthLabel, 'Idle');
+      expect(snapshot.lanes[3].healthLabel, 'Idle');
+      expect(snapshot.activeLaneCount, 1);
+      expect(snapshot.blockedTaskCount, 0);
+      expect(snapshot.openFeatureRequestCount, 1);
+    });
+
+    test('formatLocalDate formats padded YYYY-MM-DD', () {
+      expect(
+        SelfDevinControlTowerService.formatLocalDate(
+          DateTime(2026, 4, 5, 23, 59),
+        ),
+        '2026-04-05',
+      );
+    });
+  });
 }

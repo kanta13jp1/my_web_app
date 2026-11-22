@@ -98,6 +98,48 @@ void main() {
     );
   });
 
+  test('2026-11-22代表投稿2件の確認日は発表日と一致しキー不一致時は未記録', () {
+    const latestPost =
+        'https://x.com/tamakiyuichiro/status/2124507662427856990';
+    const milestonePost =
+        'https://x.com/tamakiyuichiro/status/2124504534995341736';
+
+    for (final postUrl in [latestPost, milestonePost]) {
+      expect(
+        kokuminSourceVerifiedOn(sourceUrl: postUrl, sourceDate: '2026-11-22'),
+        '2026-11-22',
+      );
+      expect(
+        kokuminSourceVerificationLabel(
+          sourceUrl: postUrl,
+          sourceDate: '2026-11-22',
+        ),
+        '出典確認日: 2026/11/22',
+      );
+    }
+
+    for (final invalidKey in <({String url, String date, String digest})>[
+      (url: 'https://tamakinet.jp/', date: '2026-11-22', digest: ''),
+      (
+        url: 'https://x.com/tamakiyuichiro/status/unknown',
+        date: '2026-11-22',
+        digest: '',
+      ),
+      (url: latestPost, date: '2026-11-09', digest: ''),
+      (url: milestonePost, date: '', digest: ''),
+      (url: latestPost, date: '2026-11-22', digest: digest),
+    ]) {
+      expect(
+        kokuminSourceVerificationLabel(
+          sourceUrl: invalidKey.url,
+          sourceDate: invalidKey.date,
+          sourceDocumentSha256: invalidKey.digest,
+        ),
+        '出典確認日: 未記録',
+      );
+    }
+  });
+
   test('代表元投稿もURL・発表日・source種別が変われば未記録', () {
     for (final key in [
       ('https://tamakinet.jp/', '2026-11-09', ''),

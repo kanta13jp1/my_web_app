@@ -50,6 +50,11 @@ class ErrorReporter {
 
   bool get _hasSentryDsn => isValidSentryDsn(_sentryDsn);
 
+  @visibleForTesting
+  static SentryUser buildSentryUser(String userId) {
+    return SentryUser(id: userId);
+  }
+
   static bool isValidSentryDsn(String raw) {
     final trimmed = raw.trim();
     if (trimmed.isEmpty || trimmed.contains(RegExp(r'\s'))) {
@@ -390,12 +395,7 @@ class ErrorReporter {
             await scope.setUser(null);
             return;
           }
-          await scope.setUser(
-            SentryUser(
-              id: user.id,
-              email: user.email,
-            ),
-          );
+          await scope.setUser(buildSentryUser(user.id));
         }),
       ),
     );

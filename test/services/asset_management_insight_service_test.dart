@@ -1328,6 +1328,120 @@ void main() {
       );
       expect(positiveReport.shouldBlockPaymentExecution, isFalse);
     });
+
+    test('buildRevolvingInlineHint returns null for non-revolving debt', () {
+      final nonRevolving = _debtRow(
+        annualRate: 0.15,
+        kind: AssetLiabilityAccountKind.cardLoan,
+      );
+      expect(
+        AssetManagementInsightService.buildRevolvingInlineHint(nonRevolving),
+        isNull,
+      );
+    });
+
+    test(
+        'buildRevolvingInlineHint computes exit months and principal for revolving debt',
+        () {
+      const revolving = AssetLiabilityDebtRow(
+        id: 'aupay_card',
+        name: 'auPayカード',
+        kind: AssetLiabilityAccountKind.creditCard,
+        balance: -100000,
+        paymentDay: 25,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.15,
+        minimumPaymentEstimate: 10000,
+        manualPaymentAmount: null,
+        scheduledPaymentAmount: 10000,
+        monthlyInterestEstimate: 1250,
+        principalPaymentEstimate: 8750,
+        balanceAfterPaymentEstimate: -91250,
+        liabilityShare: 1,
+        priorityLabel: '高金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+        revolvingBilling: AssetLiabilityRevolvingCreditBilling(
+          balance: 100000,
+          monthlyAmount: 10000,
+          newUsageAmount: 0,
+          existingBalanceAmount: 100000,
+          creditLimit: 500000,
+          paymentDay: 25,
+          overLimitAmount: 0,
+          billedAmount: 10000,
+        ),
+      );
+
+      final hint =
+          AssetManagementInsightService.buildRevolvingInlineHint(revolving);
+      expect(hint, isNotNull);
+      expect(hint!.everPaysOff, isTrue);
+      expect(hint.revolvingExitHintMonths, isNotNull);
+      expect(hint.revolvingExitHintMonths, greaterThan(0));
+      expect(hint.currentPrincipalEstimate, 8750);
+    });
+
+    test(
+        'buildRevolvingInlineHint marks stagnant revolving debt as never paying off',
+        () {
+      const stagnant = AssetLiabilityDebtRow(
+        id: 'aupay_card',
+        name: 'auPayカード',
+        kind: AssetLiabilityAccountKind.creditCard,
+        balance: -500000,
+        paymentDay: 25,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.18,
+        minimumPaymentEstimate: 5000,
+        manualPaymentAmount: null,
+        scheduledPaymentAmount: 5000,
+        monthlyInterestEstimate: 7500,
+        principalPaymentEstimate: 0,
+        balanceAfterPaymentEstimate: -502500,
+        liabilityShare: 1,
+        priorityLabel: '高金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+        revolvingBilling: AssetLiabilityRevolvingCreditBilling(
+          balance: 500000,
+          monthlyAmount: 5000,
+          newUsageAmount: 0,
+          existingBalanceAmount: 500000,
+          creditLimit: 500000,
+          paymentDay: 25,
+          overLimitAmount: 0,
+          billedAmount: 5000,
+        ),
+      );
+
+      final hint =
+          AssetManagementInsightService.buildRevolvingInlineHint(stagnant);
+      expect(hint, isNotNull);
+      expect(hint!.everPaysOff, isFalse);
+      expect(hint.revolvingExitHintMonths, isNull);
+      expect(hint.currentPrincipalEstimate, 0);
+    });
   });
 }
 
