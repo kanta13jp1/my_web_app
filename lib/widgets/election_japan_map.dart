@@ -21,6 +21,81 @@ class ElectionJapanMap extends StatefulWidget {
     this.members = const <LocalElectionLegislatorProfile>[],
   });
 
+  static final Map<String, int> _tileIndexByPrefectureKey = <String, int>{
+    for (final tile in _japanTiles) tile.shortName: tile.index,
+  };
+
+  /// Normalizes Japanese prefecture names (e.g. `東京都` -> `東京`, `大阪府` -> `大阪`,
+  /// `青森県` -> `青森`, keeping `北海道` intact) so map binding never relies on
+  /// brittle positional array indices.
+  static String normalizePrefectureKey(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return '';
+    }
+    if (trimmed == '北海道') {
+      return trimmed;
+    }
+    if (trimmed.length >= 2 &&
+        (trimmed.endsWith('都') ||
+            trimmed.endsWith('府') ||
+            trimmed.endsWith('県'))) {
+      return trimmed.substring(0, trimmed.length - 1);
+    }
+    return trimmed;
+  }
+
+  /// Binds [LocalElectionPrefecturePlan] entries to canonical map tile indices
+  /// by prefecture name, preventing silent wrong-prefecture display when lists
+  /// are reordered or filtered.
+  static Map<int, LocalElectionPrefecturePlan> buildPlanByTileIndex(
+    List<LocalElectionPrefecturePlan> prefectures,
+  ) {
+    final mapped = <int, LocalElectionPrefecturePlan>{};
+    for (final plan in prefectures) {
+      final key = normalizePrefectureKey(plan.prefecture);
+      final tileIndex = _tileIndexByPrefectureKey[key];
+      if (tileIndex != null) {
+        mapped.putIfAbsent(tileIndex, () => plan);
+      }
+    }
+    // Preserve positional binding only for full 47-item synthetic fixtures
+    // (e.g. 'prefecture-0') whose labels are not canonical prefecture names.
+    if (prefectures.length == _japanTiles.length) {
+      for (var i = 0; i < prefectures.length; i++) {
+        if (mapped.containsKey(i)) {
+          continue;
+        }
+        final key = normalizePrefectureKey(prefectures[i].prefecture);
+        if (!_tileIndexByPrefectureKey.containsKey(key)) {
+          mapped[i] = prefectures[i];
+        }
+      }
+    }
+    return mapped;
+  }
+
+  /// Returns a non-color status marker matching the tile/legend palette
+  /// (WCAG 1.4.1 Use of Color): `!` overdue, `△` due soon, `✓` confirmed.
+  static String? statusSymbolForPlan(
+    LocalElectionPrefecturePlan? plan,
+    DateTime now,
+  ) {
+    if (plan == null) {
+      return null;
+    }
+    if (plan.isEndorsementOverdue(now)) {
+      return '!';
+    }
+    if (plan.isEndorsementDueSoon(now)) {
+      return '△';
+    }
+    if (plan.endorsementConfirmed) {
+      return '✓';
+    }
+    return null;
+  }
+
   @override
   State<ElectionJapanMap> createState() => _ElectionJapanMapState();
 }
@@ -31,34 +106,49 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
   @override
   void initState() {
     super.initState();
-    _selectedIndex = _firstPriorityIndex();
+    _selectedIndex = _firstPriorityIndex(
+      ElectionJapanMap.buildPlanByTileIndex(widget.prefectures),
+    );
   }
 
   @override
   void didUpdateWidget(covariant ElectionJapanMap oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_selectedIndex >= widget.prefectures.length) {
-      _selectedIndex = _firstPriorityIndex();
+    final planByTileIndex =
+        ElectionJapanMap.buildPlanByTileIndex(widget.prefectures);
+    if (!planByTileIndex.containsKey(_selectedIndex)) {
+      _selectedIndex = _firstPriorityIndex(planByTileIndex);
     }
   }
 
-  int _firstPriorityIndex() {
-    if (widget.prefectures.isEmpty) {
+  int _firstPriorityIndex(
+    Map<int, LocalElectionPrefecturePlan> planByTileIndex,
+  ) {
+    if (planByTileIndex.isEmpty) {
       return 0;
     }
-    var index = 0;
+    var bestTileIndex = 0;
     var score = -1;
-    for (var i = 0; i < widget.prefectures.length; i++) {
-      final item = widget.prefectures[i];
+    for (final entry in planByTileIndex.entries) {
+      final item = entry.value;
       final currentScore = item.kgiTargetLocalMembers * 2 +
           item.kpiActualLocalMembers +
           item.closeRaceSupportRounds;
       if (currentScore > score) {
         score = currentScore;
-        index = i;
+        bestTileIndex = entry.key;
       }
     }
-    return index;
+    return bestTileIndex;
+  }
+
+  int _resolvedSelectedTileIndex(
+    Map<int, LocalElectionPrefecturePlan> planByTileIndex,
+  ) {
+    if (planByTileIndex.containsKey(_selectedIndex)) {
+      return _selectedIndex;
+    }
+    return _firstPriorityIndex(planByTileIndex);
   }
 
   @override
@@ -265,8 +355,10 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
               builder: (context, constraints) {
                 final wide = constraints.maxWidth >= 720;
                 final captureWide = constraints.maxWidth >= 1120;
-                final map = _buildMap(context);
-                final detail = _buildDetailPanel(context);
+                final planByTileIndex =
+                    ElectionJapanMap.buildPlanByTileIndex(widget.prefectures);
+                final map = _buildMap(context, planByTileIndex);
+                final detail = _buildDetailPanel(context, planByTileIndex);
                 if (!wide) {
                   return Column(
                     children: [
@@ -294,7 +386,10 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     );
   }
 
-  Widget _buildMap(BuildContext context) {
+  Widget _buildMap(
+    BuildContext context,
+    Map<int, LocalElectionPrefecturePlan> planByTileIndex,
+  ) {
     final maxLoad = widget.prefectures.fold<int>(
       1,
       (max, item) => math.max(
@@ -302,9 +397,12 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
         item.kgiTargetLocalMembers,
       ),
     );
-    final safeIndex = math.min(_selectedIndex, widget.prefectures.length - 1);
-    final selectedPlan = widget.prefectures[safeIndex];
-    final selectedTile = _tileForIndex(safeIndex, selectedPlan);
+    final selectedIndex = _resolvedSelectedTileIndex(planByTileIndex);
+    final selectedPlan = planByTileIndex[selectedIndex];
+    final selectedTile = selectedPlan == null
+        ? null
+        : _tileForIndex(selectedIndex, selectedPlan);
+    final now = DateTime.now();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -358,9 +456,12 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                       ),
                       const SizedBox(width: 8),
                       _SelectedMapBadge(
-                        label: '${selectedTile.shortName} 選択中',
-                        value:
-                            'KGI ${selectedPlan.kgiTargetLocalMembers} / KPI ${selectedPlan.kpiActualLocalMembers}',
+                        label: selectedTile == null
+                            ? '都道府県未一致'
+                            : '${selectedTile.shortName} 選択中',
+                        value: selectedPlan == null
+                            ? 'KGI 0 / KPI 0'
+                            : 'KGI ${selectedPlan.kgiTargetLocalMembers} / KPI ${selectedPlan.kpiActualLocalMembers}',
                       ),
                     ],
                   ),
@@ -390,6 +491,10 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                           _buildPrefectureTile(
                             context: context,
                             tile: tile,
+                            plan: planByTileIndex[tile.index],
+                            selected: planByTileIndex[tile.index] != null &&
+                                tile.index == selectedIndex,
+                            now: now,
                             cell: cell,
                             maxLoad: maxLoad,
                           ),
@@ -408,15 +513,22 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
   Widget _buildPrefectureTile({
     required BuildContext context,
     required _JapanTile tile,
+    required LocalElectionPrefecturePlan? plan,
+    required bool selected,
+    required DateTime now,
     required double cell,
     required int maxLoad,
   }) {
-    final plan = tile.index < widget.prefectures.length
-        ? widget.prefectures[tile.index]
-        : null;
-    final selected = tile.index == _selectedIndex;
     final total = plan == null ? 0 : plan.kgiTargetLocalMembers;
     final color = _tileColor(context, plan, maxLoad);
+    final statusSymbol = ElectionJapanMap.statusSymbolForPlan(plan, now);
+    final statusText = statusSymbol == '!'
+        ? ' / 期限超過'
+        : statusSymbol == '△'
+            ? ' / 期限接近'
+            : statusSymbol == '✓'
+                ? ' / 公認確認済み'
+                : '';
     final foreground =
         ThemeData.estimateBrightnessForColor(color) == Brightness.dark
             ? Colors.white
@@ -452,7 +564,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
           excludeFromSemantics: true,
           message: plan == null
               ? tile.name
-              : '${tile.name}: KGI${plan.kgiTargetLocalMembers} / KPI${plan.kpiActualLocalMembers} / 期限${formatMonthKey(plan.endorsementDeadlineMonth)}',
+              : '${tile.name}: KGI${plan.kgiTargetLocalMembers} / KPI${plan.kpiActualLocalMembers} / 期限${formatMonthKey(plan.endorsementDeadlineMonth)}$statusText',
           child: Material(
             color: color,
             borderRadius: borderRadius,
@@ -493,14 +605,31 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                         ),
                       ),
                       if (plan != null)
-                        Text(
-                          total.toString(),
-                          style: TextStyle(
-                            color: foreground.withValues(alpha: 0.86),
-                            fontWeight: FontWeight.w700,
-                            fontSize: valueFontSize,
-                            height: 1.2,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              total.toString(),
+                              style: TextStyle(
+                                color: foreground.withValues(alpha: 0.86),
+                                fontWeight: FontWeight.w700,
+                                fontSize: valueFontSize,
+                                height: 1.2,
+                              ),
+                            ),
+                            if (statusSymbol != null) ...[
+                              const SizedBox(width: 2),
+                              Text(
+                                statusSymbol,
+                                style: TextStyle(
+                                  color: foreground,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: valueFontSize,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                     ],
                   ),
@@ -513,11 +642,17 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     );
   }
 
-  Widget _buildDetailPanel(BuildContext context) {
+  Widget _buildDetailPanel(
+    BuildContext context,
+    Map<int, LocalElectionPrefecturePlan> planByTileIndex,
+  ) {
     final theme = Theme.of(context);
-    final safeIndex = math.min(_selectedIndex, widget.prefectures.length - 1);
-    final plan = widget.prefectures[safeIndex];
-    final tile = _tileForIndex(safeIndex, plan);
+    final selectedIndex = _resolvedSelectedTileIndex(planByTileIndex);
+    final plan = planByTileIndex[selectedIndex];
+    if (plan == null) {
+      return const SizedBox.shrink();
+    }
+    final tile = _tileForIndex(selectedIndex, plan);
     final schedules = _schedulesForPlan(plan);
     final postConventionResults = _postConventionBreakdownForPlan(plan);
     final incumbentMembers = _incumbentMembersForPlan(plan);
@@ -1218,9 +1353,9 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
       children: [
         _LegendItem(color: Color(0xFFBFDBFE), label: '低負荷'),
         _LegendItem(color: Color(0xFF2563EB), label: '高負荷'),
-        _LegendItem(color: Color(0xFF16A34A), label: '公認確認済み'),
-        _LegendItem(color: Color(0xFFF59E0B), label: '期限接近'),
-        _LegendItem(color: Color(0xFFDC2626), label: '期限超過'),
+        _LegendItem(color: Color(0xFF16A34A), label: '公認確認済み', symbol: '✓'),
+        _LegendItem(color: Color(0xFFF59E0B), label: '期限接近', symbol: '△'),
+        _LegendItem(color: Color(0xFFDC2626), label: '期限超過', symbol: '!'),
       ],
     );
   }
@@ -1483,20 +1618,28 @@ class _MetricChip extends StatelessWidget {
 class _LegendItem extends StatelessWidget {
   final Color color;
   final String label;
+  final String? symbol;
 
   const _LegendItem({
     required this.color,
     required this.label,
+    this.symbol,
   });
 
   @override
   Widget build(BuildContext context) {
+    final marker = symbol;
+    final symbolColor =
+        ThemeData.estimateBrightnessForColor(color) == Brightness.dark
+            ? Colors.white
+            : const Color(0xFF111827);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 12,
-          height: 12,
+          width: marker == null ? 12 : 16,
+          height: marker == null ? 12 : 16,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(3),
@@ -1504,6 +1647,17 @@ class _LegendItem extends StatelessWidget {
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
           ),
+          child: marker == null
+              ? null
+              : Text(
+                  marker,
+                  style: TextStyle(
+                    color: symbolColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    height: 1.0,
+                  ),
+                ),
         ),
         const SizedBox(width: 5),
         Text(
@@ -1689,19 +1843,8 @@ class _ScheduleDateLabel extends StatelessWidget {
   }
 }
 
-String _prefectureKey(String value) {
-  final trimmed = value.trim();
-  if (trimmed == '北海道') {
-    return trimmed;
-  }
-  if (trimmed == '東京都') {
-    return '東京';
-  }
-  if (trimmed.endsWith('府') || trimmed.endsWith('県')) {
-    return trimmed.substring(0, trimmed.length - 1);
-  }
-  return trimmed;
-}
+String _prefectureKey(String value) =>
+    ElectionJapanMap.normalizePrefectureKey(value);
 
 String _fullPrefectureName(String key) {
   if (key == '北海道') {

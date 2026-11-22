@@ -168,6 +168,112 @@ void main() {
       }
     },
   );
+
+  testWidgets(
+    'ElectionJapanMap binds prefectures by name when list order is reversed',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final semanticsHandle = tester.ensureSemantics();
+      try {
+        final plans = _canonicalNamedPlans();
+        await _pumpMap(tester, plans.reversed.toList());
+
+        final hokkaidoLabel = _expectedTileLabel('北海道', plans[0]);
+        final tokyoLabel = _expectedTileLabel('東京都', plans[12]);
+        expect(_findTileSemanticsNode(hokkaidoLabel), isNotNull);
+        expect(_findTileSemanticsNode(tokyoLabel), isNotNull);
+
+        final osakaPlan = plans[26];
+        await tester.ensureVisible(find.text('大阪'));
+        await tester.tap(find.text('大阪'));
+        await tester.pumpAndSettle();
+        expect(find.text('大阪 選択中'), findsOneWidget);
+        expect(find.text('大阪府 KGI/KPI'), findsOneWidget);
+        expect(
+          find.text(
+            'KGI ${osakaPlan.kgiTargetLocalMembers} / KPI ${osakaPlan.kpiActualLocalMembers}',
+          ),
+          findsOneWidget,
+        );
+      } finally {
+        semanticsHandle.dispose();
+      }
+    },
+  );
+
+  testWidgets(
+    'ElectionJapanMap does not misbind shortened list onto unrelated positional tiles',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final semanticsHandle = tester.ensureSemantics();
+      try {
+        final subset = <LocalElectionPrefecturePlan>[
+          _buildNamedPlan(prefecture: '大阪府', seatTarget: 30, memberCount: 7),
+          _buildNamedPlan(prefecture: '東京都', seatTarget: 42, memberCount: 14),
+        ];
+        await _pumpMap(tester, subset);
+
+        expect(
+          _findTileSemanticsNode(_expectedTileLabel('大阪府', subset[0])),
+          isNotNull,
+        );
+        expect(
+          _findTileSemanticsNode(_expectedTileLabel('東京都', subset[1])),
+          isNotNull,
+        );
+        final hokkaidoNode = _findTileSemanticsNode('北海道');
+        expect(hokkaidoNode.label, '北海道');
+      } finally {
+        semanticsHandle.dispose();
+      }
+    },
+  );
+
+  testWidgets(
+    'ElectionJapanMap renders non-color status symbols on tiles and legend',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 2000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final now = DateTime.now();
+      final dueSoonDate = DateTime(now.year, now.month, now.day + 25);
+      final dueSoonMonth =
+          '${dueSoonDate.year}-${dueSoonDate.month.toString().padLeft(2, '0')}';
+
+      final plans = <LocalElectionPrefecturePlan>[
+        _buildNamedPlan(
+          prefecture: '北海道',
+          seatTarget: 15,
+          memberCount: 3,
+          deadlineMonth: '2020-01',
+          endorsementConfirmed: false,
+        ),
+        _buildNamedPlan(
+          prefecture: '東京都',
+          seatTarget: 24,
+          memberCount: 14,
+          deadlineMonth: dueSoonMonth,
+          endorsementConfirmed: false,
+        ),
+        _buildNamedPlan(
+          prefecture: '大阪府',
+          seatTarget: 20,
+          memberCount: 8,
+          deadlineMonth: '2030-12',
+          endorsementConfirmed: true,
+        ),
+      ];
+      await _pumpMap(tester, plans);
+
+      expect(find.text('!'), findsAtLeastNWidgets(2));
+      expect(find.text('△'), findsAtLeastNWidgets(2));
+      expect(find.text('✓'), findsAtLeastNWidgets(2));
+    },
+  );
 }
 
 Future<void> _pumpMap(
@@ -252,4 +358,93 @@ List<LocalElectionPrefecturePlan> _samplePrefecturePlans() {
       notes: isTokyo ? '重点自治体から先に月次レビューする' : '',
     );
   });
+}
+
+const List<String> _canonicalPrefectureNames = <String>[
+  '北海道',
+  '青森県',
+  '岩手県',
+  '宮城県',
+  '秋田県',
+  '山形県',
+  '福島県',
+  '茨城県',
+  '栃木県',
+  '群馬県',
+  '埼玉県',
+  '千葉県',
+  '東京都',
+  '神奈川県',
+  '新潟県',
+  '富山県',
+  '石川県',
+  '福井県',
+  '山梨県',
+  '長野県',
+  '岐阜県',
+  '静岡県',
+  '愛知県',
+  '三重県',
+  '滋賀県',
+  '京都府',
+  '大阪府',
+  '兵庫県',
+  '奈良県',
+  '和歌山県',
+  '鳥取県',
+  '島根県',
+  '岡山県',
+  '広島県',
+  '山口県',
+  '徳島県',
+  '香川県',
+  '愛媛県',
+  '高知県',
+  '福岡県',
+  '佐賀県',
+  '長崎県',
+  '熊本県',
+  '大分県',
+  '宮崎県',
+  '鹿児島県',
+  '沖縄県',
+];
+
+LocalElectionPrefecturePlan _buildNamedPlan({
+  required String prefecture,
+  required int seatTarget,
+  required int memberCount,
+  String deadlineMonth = '2030-12',
+  bool endorsementConfirmed = false,
+}) {
+  return LocalElectionPrefecturePlan(
+    prefecture: prefecture,
+    region: 'region',
+    additionalSeatTarget: seatTarget,
+    incumbentRetentionTarget: 0,
+    focusMunicipalityCount: 2,
+    newCandidateTarget: 1,
+    endorsementDeadlineMonth: deadlineMonth,
+    closeRaceSupportRounds: 1,
+    currentMembers: memberCount,
+    scheduledElectionCount: 1,
+    postConventionBattleCount: 0,
+    postConventionWinCount: 0,
+    postConventionLossCount: 0,
+    cdpLocalMembers: 0,
+    cdpSourceUrl: '',
+    endorsementConfirmed: endorsementConfirmed,
+    notes: '',
+  );
+}
+
+List<LocalElectionPrefecturePlan> _canonicalNamedPlans() {
+  return List<LocalElectionPrefecturePlan>.generate(
+    _canonicalPrefectureNames.length,
+    (index) => _buildNamedPlan(
+      prefecture: _canonicalPrefectureNames[index],
+      seatTarget: index + 10,
+      memberCount: index + 1,
+    ),
+  );
 }
