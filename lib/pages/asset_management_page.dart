@@ -11101,7 +11101,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 style: TextStyle(
                   color: foreground,
                   fontSize: 12.5,
-                  height: 1.3,
+                  height: 1.4,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -16877,7 +16877,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     }
     return SizedBox(
-      height: 60,
+      height: 72,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -16890,7 +16890,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   children: [
                     Text(
                       '${(week['initials'] as num?)?.toInt() ?? 0}/${(week['switches'] as num?)?.toInt() ?? 0}',
-                      style: const TextStyle(fontSize: 8, height: 1.2),
+                      style: const TextStyle(fontSize: 10, height: 1.4),
                     ),
                     Container(
                       height: 2 +
@@ -16918,7 +16918,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       (week['week_start']?.toString() ?? '').length >= 10
                           ? week['week_start'].toString().substring(5, 10)
                           : '',
-                      style: const TextStyle(fontSize: 7, height: 1.2),
+                      style: const TextStyle(fontSize: 10, height: 1.4),
                     ),
                   ],
                 ),
@@ -17405,7 +17405,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: scheme.onTertiaryContainer,
-                        height: 1.3,
+                        height: 1.4,
                       ),
                     ),
                   ),
@@ -19454,7 +19454,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       12,
                   textWidth(
                         '不明',
-                        const TextStyle(fontSize: 9, color: Color(0xFF92400E)),
+                        const TextStyle(fontSize: 10, color: Color(0xFF92400E)),
                       ) +
                       24,
                 ].reduce(max);
@@ -19692,7 +19692,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     bool expandedText = false,
   }) {
     if (day == null) {
-      return const SizedBox(height: 84);
+      return const SizedBox(height: 92);
     }
     final isToday = day.date.year == today.year &&
         day.date.month == today.month &&
@@ -19736,8 +19736,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         });
       },
       child: Container(
-        height: expandedText ? null : 84,
-        constraints: expandedText ? const BoxConstraints(minHeight: 84) : null,
+        height: expandedText ? null : 92,
+        constraints: expandedText ? const BoxConstraints(minHeight: 92) : null,
         margin: const EdgeInsets.all(1),
         padding: const EdgeInsets.symmetric(vertical: 3),
         decoration: BoxDecoration(
@@ -19766,17 +19766,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
-                height: 1.2,
+                height: 1.4,
               ),
             ),
             if (day.expenseTotal > 0)
               Text(
                 _formatCalendarAmount(day.expenseTotal),
                 style: const TextStyle(
-                  fontSize: 9,
+                  fontSize: 10,
                   color: Color(0xFFB91C1C),
                   fontWeight: FontWeight.w700,
-                  height: 1.2,
+                  height: 1.4,
                 ),
               ),
             if (day.hasUnreconciledExpense)
@@ -19949,7 +19949,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             color: Color(0xFF115E59),
-                            height: 1.2,
+                            height: 1.4,
                           ),
                         ),
                       ),
@@ -24066,7 +24066,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           color: color,
           fontSize: 12,
           fontWeight: FontWeight.w700,
-          height: 1.2,
+          height: 1.4,
         ),
       ),
     );
@@ -24830,7 +24830,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       color: color,
       fontWeight: FontWeight.w800,
       fontSize: 13,
-      height: 1.35,
+      height: 1.4,
     );
 
     return SelectionArea(
@@ -25655,7 +25655,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            height: 1.3,
+            height: 1.4,
           ),
         ),
         const SizedBox(width: 8),
@@ -25723,7 +25723,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               color: color,
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              height: 1.3,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 4),
@@ -26101,7 +26101,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       color: Colors.white,
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      height: 1.3,
+                      height: 1.4,
                     ),
                   ),
                 ),
@@ -26261,7 +26261,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 color: color,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                height: 1.2,
+                height: 1.4,
               ),
             ),
           ),
@@ -29106,7 +29106,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     color: color,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    height: 1.2,
+                    height: 1.4,
                   ),
                 ),
               ),
@@ -30611,7 +30611,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
-                    height: 1.3,
+                    height: 1.4,
                   ),
                 ),
               ),
@@ -30848,7 +30848,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   style: TextStyle(
                     color: color,
                     fontWeight: FontWeight.bold,
-                    height: 1.2,
+                    height: 1.4,
                   ),
                 ),
                 Text(
@@ -30858,7 +30858,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     color: color,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    height: 1.2,
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -31014,7 +31014,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.bold,
-                height: 1.3,
+                height: 1.4,
               ),
             ),
           ),
@@ -31043,7 +31043,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       color: color,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      height: 1.3,
+                      height: 1.4,
                     ),
                   ),
                 ),
@@ -31441,7 +31441,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           color: color,
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          height: 1.2,
+          height: 1.4,
         ),
       ),
     );
@@ -31477,7 +31477,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           color: color,
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          height: 1.2,
+          height: 1.4,
         ),
       ),
     );
@@ -31522,7 +31522,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           color: color,
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          height: 1.2,
+          height: 1.4,
         ),
       ),
     );
@@ -33469,7 +33469,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 11,
-              height: 1.3,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 4),
@@ -33478,7 +33478,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.bold,
-              height: 1.3,
+              height: 1.4,
             ),
           ),
         ],
@@ -33503,7 +33503,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              height: 1.3,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 4),
@@ -33715,7 +33715,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const Flexible(
               child: Text(
                 'リボ返済 (最低返済＋新規利用を25日に返済)',
-                style: TextStyle(fontSize: 11, height: 1.3),
+                style: TextStyle(fontSize: 11, height: 1.4),
               ),
             ),
           ],
@@ -33751,7 +33751,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const Text(
             '返済日: 毎月25日（給料日）／明細を取り込むと新規利用額を自動反映。'
             '利用限度額は返済額ではなく与信枠不足の確認だけに使用',
-            style: TextStyle(fontSize: 11, height: 1.3),
+            style: TextStyle(fontSize: 11, height: 1.4),
           ),
           if (row.revolvingBilling != null) ...[
             const SizedBox(height: 6),
@@ -33760,7 +33760,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               '（既存残高の一括返済なし）',
               style: const TextStyle(
                 fontSize: 11,
-                height: 1.3,
+                height: 1.4,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -33781,7 +33781,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       children: [
         SizedBox(
           width: 64,
-          child: Text(label, style: const TextStyle(fontSize: 11, height: 1.3)),
+          child: Text(label, style: const TextStyle(fontSize: 11, height: 1.4)),
         ),
         Expanded(
           child: TextField(
@@ -33824,7 +33824,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               value: completed,
               title: const Text(
                 '完了（今後の新規利用は1回払い）',
-                style: TextStyle(fontSize: 12, height: 1.3),
+                style: TextStyle(fontSize: 12, height: 1.4),
               ),
               onChanged: (value) =>
                   _toggleCardOneShotCompleted(row.id, value ?? false),
@@ -33837,7 +33837,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               padding: const EdgeInsets.only(bottom: 6),
               child: Text(
                 '変更記録: ${DateFormat('yyyy/MM/dd HH:mm').format(policy!.changedAt!.toLocal())}',
-                style: const TextStyle(fontSize: 11, height: 1.3),
+                style: const TextStyle(fontSize: 11, height: 1.4),
               ),
             ),
           TextFormField(
@@ -33858,7 +33858,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 4),
           const Text(
             'この記録に関係なく、新規利用分の25日返済不足は継続監視します。',
-            style: TextStyle(fontSize: 11, height: 1.3),
+            style: TextStyle(fontSize: 11, height: 1.4),
           ),
         ],
       ],
@@ -33930,7 +33930,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           color: color,
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          height: 1.2,
+          height: 1.4,
         ),
       ),
     );
@@ -34418,13 +34418,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 11,
-              height: 1.3,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(fontWeight: FontWeight.bold, height: 1.3),
+            style: const TextStyle(fontWeight: FontWeight.bold, height: 1.4),
           ),
         ],
       ),
@@ -34942,7 +34942,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       fontSize: 16,
                       color: color,
                       fontWeight: FontWeight.w900,
-                      height: 1.35,
+                      height: 1.4,
                     ),
                   ),
                   if (supporting != null)
@@ -35376,7 +35376,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF0F172A),
-                  height: 1.35,
+                  height: 1.4,
                 ),
               ),
               const SizedBox(height: 4),
@@ -35391,7 +35391,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
                       color: accentColor,
-                      height: 1.35,
+                      height: 1.4,
                     ),
                   ),
                   _buildAssetStatusPill(
