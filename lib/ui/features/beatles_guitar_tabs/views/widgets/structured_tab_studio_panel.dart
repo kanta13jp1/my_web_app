@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../../data/services/guitar_metronome_audio_service.dart';
 import '../../../../../data/services/structured_tab_catalog_service.dart';
 import '../../../../../data/services/structured_tab_pdf_service.dart';
 import '../../../../../data/services/user_structured_tab_storage_service.dart';
@@ -21,12 +22,14 @@ class StructuredTabStudioPanel extends StatefulWidget {
     this.userStorageService,
     this.pdfService,
     this.jsonFilePicker,
+    this.metronomeAudioService,
   });
 
   final StructuredTabCatalogService? catalogService;
   final UserStructuredTabStorageService? userStorageService;
   final StructuredTabPdfService? pdfService;
   final Future<FilePickerResult?> Function()? jsonFilePicker;
+  final GuitarMetronomeAudioService? metronomeAudioService;
 
   @override
   State<StructuredTabStudioPanel> createState() =>
@@ -37,6 +40,9 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
   late final StructuredTabCatalogService _catalogService;
   late final UserStructuredTabStorageService _userStorageService;
   late final StructuredTabPdfService _pdfService;
+  late final GuitarMetronomeAudioService _audioService;
+  late final bool _ownsAudioService;
+  final Stopwatch _tickStopwatch = Stopwatch();
 
   bool _isLoading = true;
   String? _loadError;
@@ -52,8 +58,10 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
   int _cursorIndex = 0;
   int _bpm = 120;
   bool _isPlaying = false;
+  bool _soundEnabled = true;
   bool _lightSheet = true;
   bool _isPrintingPdf = false;
+  int _scheduledDelayMs = 500;
   Timer? _playbackTimer;
 
   List<StructuredGuitarTabScore> get _allScores =>
@@ -83,12 +91,19 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
     _userStorageService = widget.userStorageService ??
         SharedPreferencesUserStructuredTabStorageService();
     _pdfService = widget.pdfService ?? const LocalStructuredTabPdfService();
+    _ownsAudioService = widget.metronomeAudioService == null;
+    _audioService =
+        widget.metronomeAudioService ?? createGuitarMetronomeAudioService();
     _loadScores();
   }
 
   @override
   void dispose() {
     _playbackTimer?.cancel();
+    _tickStopwatch.stop();
+    if (_ownsAudioService) {
+      _audioService.dispose();
+    }
     super.dispose();
   }
 
@@ -108,6 +123,7 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
           _userScores = user;
           _isLoading = false;
           _playbackTimer?.cancel();
+          _tickStopwatch.stop();
           _isPlaying = false;
           _selectedScoreId = null;
           _selectedIsUserImported = null;
@@ -138,6 +154,7 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
 
   void _applySelectedScore(StructuredGuitarTabScore score) {
     _playbackTimer?.cancel();
+    _tickStopwatch.stop();
     _isPlaying = false;
     _selectedScoreId = score.id;
     _selectedIsUserImported = score.isUserImported;
@@ -156,6 +173,7 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
     if (_timeline.isEmpty) return;
     if (_isPlaying) {
       _playbackTimer?.cancel();
+      _tickStopwatch.stop();
       setState(() {
         _isPlaying = false;
       });
@@ -164,29 +182,44 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
     setState(() {
       _isPlaying = true;
     });
-    _scheduleNextStep();
+    if (_soundEnabled) {
+      _audioService.playClick(accent: _timeline[_cursorIndex].beatIndex == 0);
+    }
+    _scheduleNextStep(overdueMs: 0);
   }
 
   void _resetCursor() {
     _playbackTimer?.cancel();
+    _tickStopwatch.stop();
     setState(() {
       _isPlaying = false;
       _cursorIndex = 0;
     });
   }
 
-  void _scheduleNextStep() {
+  void _scheduleNextStep({required int overdueMs}) {
     if (!mounted || !_isPlaying || _timeline.isEmpty) return;
     final step = _timeline[_cursorIndex];
-    final delayMs =
+    final rawDelayMs =
         ((60000.0 / _bpm) * step.durationBeats).round().clamp(60, 4000);
+    final delayMs = (rawDelayMs - overdueMs).clamp(30, rawDelayMs);
+    _scheduledDelayMs = delayMs;
+    _tickStopwatch
+      ..reset()
+      ..start();
     _playbackTimer?.cancel();
     _playbackTimer = Timer(Duration(milliseconds: delayMs), () {
       if (!mounted || !_isPlaying || _timeline.isEmpty) return;
+      final elapsed = _tickStopwatch.elapsedMilliseconds;
+      final lag = elapsed > _scheduledDelayMs ? elapsed - _scheduledDelayMs : 0;
+      final nextIndex = (_cursorIndex + 1) % _timeline.length;
       setState(() {
-        _cursorIndex = (_cursorIndex + 1) % _timeline.length;
+        _cursorIndex = nextIndex;
       });
-      _scheduleNextStep();
+      if (_soundEnabled) {
+        _audioService.playClick(accent: _timeline[nextIndex].beatIndex == 0);
+      }
+      _scheduleNextStep(overdueMs: lag);
     });
   }
 
@@ -575,6 +608,29 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
                 ),
               ),
               OutlinedButton.icon(
+                key: const Key('structured_tab_audio_toggle'),
+                onPressed: () =>
+                    setState(() => _soundEnabled = !_soundEnabled),
+                icon: Icon(
+                  _soundEnabled
+                      ? Icons.volume_up_outlined
+                      : Icons.volume_off_outlined,
+                  size: 18,
+                ),
+                label: Text(_soundEnabled ? 'クリック音 ON' : 'クリック音 OFF'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _soundEnabled
+                      ? DesignTokens.orangeLight
+                      : DesignTokens.textSecondary,
+                  side: BorderSide(
+                    color: _soundEnabled
+                        ? DesignTokens.orange.withValues(alpha: 0.45)
+                        : DesignTokens.divider,
+                  ),
+                  minimumSize: const Size(48, 44),
+                ),
+              ),
+              OutlinedButton.icon(
                 key: const Key('structured_tab_theme_toggle'),
                 onPressed: () => setState(() => _lightSheet = !_lightSheet),
                 icon: Icon(
@@ -678,6 +734,9 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
                     setState(() {
                       _bpm = value.round().clamp(30, 260);
                     });
+                    if (_isPlaying) {
+                      _scheduleNextStep(overdueMs: 0);
+                    }
                   },
                 ),
               ),
@@ -795,6 +854,7 @@ class _StructuredTabStudioPanelState extends State<StructuredTabStudioPanel> {
             activeMeasureIndex: currentStep?.measureIndex,
             activeBeatIndex: currentStep?.beatIndex,
             onMeasureTap: _jumpToMeasure,
+            autoScrollToActive: _isPlaying,
           ),
         ],
       ),
@@ -983,7 +1043,7 @@ class _ImportStructuredTabDialogState
                 decoration: InputDecoration(
                   hintText:
                       '{"id": "my-score", "title": "...", "bpm": 120, ...}',
-                  hintStyle: const TextStyle(color: DesignTokens.textTertiary),
+                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
                   filled: true,
                   fillColor: DesignTokens.background,
                   border: OutlineInputBorder(

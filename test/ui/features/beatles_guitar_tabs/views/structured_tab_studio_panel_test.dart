@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/data/repositories/guitar_tab_repository.dart';
+import 'package:my_web_app/data/services/guitar_metronome_audio_service.dart';
 import 'package:my_web_app/data/services/guitar_tab_catalog_service.dart';
 import 'package:my_web_app/data/services/structured_tab_catalog_service.dart';
 import 'package:my_web_app/data/services/structured_tab_pdf_service.dart';
@@ -493,6 +494,68 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'plays click audio per beat and supports mute toggle and narrow layout cleanly (D6/D7)',
+    (WidgetTester tester) async {
+      final audioService = _RecordingMetronomeAudioService();
+      await _setSurfaceSize(tester, const Size(1200, 900));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StructuredTabStudioPanel(
+              metronomeAudioService: audioService,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final playToggle = find.byKey(const Key('structured_tab_play_toggle'));
+      await tester.ensureVisible(playToggle);
+      await tester.pumpAndSettle();
+      await tester.tap(playToggle);
+      await tester.pump();
+      expect(audioService.accents.length, 1);
+
+      await tester.pump(const Duration(milliseconds: 520));
+      expect(audioService.accents.length, 2);
+
+      final audioToggle = find.byKey(const Key('structured_tab_audio_toggle'));
+      await tester.ensureVisible(audioToggle);
+      await tester.pumpAndSettle();
+      await tester.tap(audioToggle);
+      await tester.pump();
+      expect(find.text('クリック音 OFF'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 520));
+      expect(audioService.accents.length, 2);
+
+      await tester.tap(playToggle);
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+
+      await _setSurfaceSize(tester, const Size(390, 844));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('structured_tab_score_canvas')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+}
+
+class _RecordingMetronomeAudioService implements GuitarMetronomeAudioService {
+  final List<bool> accents = <bool>[];
+
+  @override
+  bool get isAudioSupported => true;
+
+  @override
+  void playClick({required bool accent}) {
+    accents.add(accent);
+  }
+
+  @override
+  void dispose() {}
 }
 
 Future<void> _setSurfaceSize(WidgetTester tester, Size size) async {

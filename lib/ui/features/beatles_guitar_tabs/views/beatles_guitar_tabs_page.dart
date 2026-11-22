@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../data/services/guitar_metronome_audio_service.dart';
 import '../../../../data/services/structured_tab_catalog_service.dart';
 import '../../../../data/services/structured_tab_pdf_service.dart';
 import '../../../../data/services/user_structured_tab_storage_service.dart';
@@ -11,17 +14,22 @@ import '../view_models/beatles_guitar_tabs_view_model.dart';
 import 'widgets/guitar_tab_staff.dart';
 import 'widgets/structured_tab_studio_panel.dart';
 
+/// dark surface2(#1E1E1E)・surface3(#2A2A2A) 上で WCAG 2.1 AA (4.5:1 以上) を満たす補助文字色。
+const Color _mutedAccessibleText = Color(0xFF9CA3AF);
+
 class BeatlesGuitarTabsPage extends StatefulWidget {
   const BeatlesGuitarTabsPage({
     super.key,
     this.structuredCatalogService,
     this.userTabStorageService,
     this.pdfService,
+    this.metronomeAudioService,
   });
 
   final StructuredTabCatalogService? structuredCatalogService;
   final UserStructuredTabStorageService? userTabStorageService;
   final StructuredTabPdfService? pdfService;
+  final GuitarMetronomeAudioService? metronomeAudioService;
 
   static const double _wideBreakpoint = 860;
 
@@ -68,6 +76,7 @@ class _BeatlesGuitarTabsPageState extends State<BeatlesGuitarTabsPage> {
                       catalogService: widget.structuredCatalogService,
                       userStorageService: widget.userTabStorageService,
                       pdfService: widget.pdfService,
+                      metronomeAudioService: widget.metronomeAudioService,
                     )
                   : ListenableBuilder(
                       listenable: viewModel,
@@ -91,9 +100,17 @@ class _BeatlesGuitarTabsPageState extends State<BeatlesGuitarTabsPage> {
                               ) {
                                 if (constraints.maxWidth >=
                                     BeatlesGuitarTabsPage._wideBreakpoint) {
-                                  return _WideLayout(viewModel: viewModel);
+                                  return _WideLayout(
+                                    viewModel: viewModel,
+                                    metronomeAudioService:
+                                        widget.metronomeAudioService,
+                                  );
                                 }
-                                return _CompactLayout(viewModel: viewModel);
+                                return _CompactLayout(
+                                  viewModel: viewModel,
+                                  metronomeAudioService:
+                                      widget.metronomeAudioService,
+                                );
                               },
                             ),
                         };
@@ -189,7 +206,7 @@ class _ModeTabButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
         child: Container(
-          height: 40,
+          height: 44,
           padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
@@ -230,48 +247,99 @@ class _ModeTabButton extends StatelessWidget {
   }
 }
 
-class _WideLayout extends StatelessWidget {
-  const _WideLayout({required this.viewModel});
+class _WideLayout extends StatefulWidget {
+  const _WideLayout({
+    required this.viewModel,
+    this.metronomeAudioService,
+  });
 
   final BeatlesGuitarTabsViewModel viewModel;
+  final GuitarMetronomeAudioService? metronomeAudioService;
+
+  @override
+  State<_WideLayout> createState() => _WideLayoutState();
+}
+
+class _WideLayoutState extends State<_WideLayout> {
+  final GlobalKey _songSectionKey = GlobalKey();
+
+  void _scrollToSelectedSong() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final targetContext = _songSectionKey.currentContext;
+      if (targetContext == null || !targetContext.mounted) return;
+      Scrollable.ensureVisible(
+        targetContext,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        alignment: 0.04,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1440),
-        child: Column(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+            SizedBox(
+              width: 320,
               child: Column(
                 children: <Widget>[
-                  const _HeroPanel(),
-                  const SizedBox(height: DesignTokens.space16),
-                  _CatalogControls(viewModel: viewModel),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  SizedBox(
-                    width: 340,
-                    child: _SongLibrary(
-                      viewModel: viewModel,
-                      horizontal: false,
-                    ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                    child: _CatalogControls(viewModel: widget.viewModel),
                   ),
-                  const VerticalDivider(
-                    width: 1,
+                  const Divider(
+                    height: 1,
                     thickness: 1,
                     color: DesignTokens.divider,
                   ),
                   Expanded(
-                    child: _SongDetail(viewModel: viewModel, scrollable: true),
+                    child: _SongLibrary(
+                      viewModel: widget.viewModel,
+                      horizontal: false,
+                      onSongSelected: _scrollToSelectedSong,
+                    ),
                   ),
                 ],
+              ),
+            ),
+            const VerticalDivider(
+              width: 1,
+              thickness: 1,
+              color: DesignTokens.divider,
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                key: const Key('beatles_song_detail_scroll'),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 96),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1080),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        const _HeroPanel(compact: true),
+                        const SizedBox(height: DesignTokens.space16),
+                        _DailyCoursePanel(
+                          viewModel: widget.viewModel,
+                          onOpenPractice: _scrollToSelectedSong,
+                        ),
+                        const SizedBox(height: DesignTokens.space24),
+                        _SongDetail(
+                          viewModel: widget.viewModel,
+                          headerKey: _songSectionKey,
+                          metronomeAudioService: widget.metronomeAudioService,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -282,12 +350,20 @@ class _WideLayout extends StatelessWidget {
 }
 
 class _CompactLayout extends StatelessWidget {
-  const _CompactLayout({required this.viewModel});
+  const _CompactLayout({
+    required this.viewModel,
+    this.metronomeAudioService,
+  });
 
   final BeatlesGuitarTabsViewModel viewModel;
+  final GuitarMetronomeAudioService? metronomeAudioService;
 
   @override
   Widget build(BuildContext context) {
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0).clamp(
+      1.0,
+      2.0,
+    );
     return ListView(
       key: const Key('beatles_tabs_compact_layout'),
       padding: const EdgeInsets.fromLTRB(
@@ -304,18 +380,23 @@ class _CompactLayout extends StatelessWidget {
         _CatalogControls(viewModel: viewModel),
         const SizedBox(height: DesignTokens.space16),
         SizedBox(
-          height: 164,
+          height: 164 + (textScale - 1.0) * 80,
           child: _SongLibrary(viewModel: viewModel, horizontal: true),
         ),
         const SizedBox(height: DesignTokens.space24),
-        _SongDetail(viewModel: viewModel, scrollable: false),
+        _SongDetail(
+          viewModel: viewModel,
+          metronomeAudioService: metronomeAudioService,
+        ),
       ],
     );
   }
 }
 
 class _HeroPanel extends StatelessWidget {
-  const _HeroPanel();
+  const _HeroPanel({this.compact = false});
+
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -330,12 +411,17 @@ class _HeroPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.radiusLarge),
         border: Border.all(color: DesignTokens.indigo.withValues(alpha: 0.3)),
       ),
-      padding: const EdgeInsets.all(DesignTokens.space20),
-      child: const Row(
+      padding: compact
+          ? const EdgeInsets.symmetric(
+              horizontal: DesignTokens.space16,
+              vertical: DesignTokens.space12,
+            )
+          : const EdgeInsets.all(DesignTokens.space20),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _HeroIcon(),
-          SizedBox(width: DesignTokens.space16),
+          const _HeroIcon(),
+          const SizedBox(width: DesignTokens.space16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,23 +430,27 @@ class _HeroPanel extends StatelessWidget {
                   '毎日ひとつ、ギターが弾ける自分へ。',
                   style: TextStyle(
                     color: DesignTokens.textPrimary,
-                    fontSize: 24,
+                    fontSize: compact ? 18 : 24,
                     fontWeight: FontWeight.w700,
                     height: 1.4,
-                    letterSpacing: 0.96,
+                    letterSpacing: compact ? 0.4 : 0.96,
                   ),
                 ),
-                SizedBox(height: DesignTokens.space8),
+                SizedBox(
+                  height: compact ? DesignTokens.space4 : DesignTokens.space8,
+                ),
                 Text(
                   '今日の3課題を順番にクリアして、基礎からフィンガースタイル演奏まで14日間で積み上げます。',
                   style: TextStyle(
-                    color: DesignTokens.textSecondary,
-                    fontSize: 14,
-                    height: 1.7,
+                    color: DesignTokens.textOnDark,
+                    fontSize: compact ? 13 : 14,
+                    height: 1.6,
                   ),
                 ),
-                SizedBox(height: DesignTokens.space12),
-                Wrap(
+                SizedBox(
+                  height: compact ? DesignTokens.space8 : DesignTokens.space12,
+                ),
+                const Wrap(
                   spacing: DesignTokens.space8,
                   runSpacing: DesignTokens.space8,
                   children: <Widget>[
@@ -431,13 +521,25 @@ class _HeroBadge extends StatelessWidget {
   }
 }
 
-class _DailyCoursePanel extends StatelessWidget {
-  const _DailyCoursePanel({required this.viewModel});
+class _DailyCoursePanel extends StatefulWidget {
+  const _DailyCoursePanel({
+    required this.viewModel,
+    this.onOpenPractice,
+  });
 
   final BeatlesGuitarTabsViewModel viewModel;
+  final VoidCallback? onOpenPractice;
+
+  @override
+  State<_DailyCoursePanel> createState() => _DailyCoursePanelState();
+}
+
+class _DailyCoursePanelState extends State<_DailyCoursePanel> {
+  bool _collapsed = false;
 
   @override
   Widget build(BuildContext context) {
+    final viewModel = widget.viewModel;
     final snapshot = viewModel.courseSnapshot;
     if (snapshot == null) return const SizedBox.shrink();
     if (snapshot.isCourseCompleted) {
@@ -457,72 +559,97 @@ class _DailyCoursePanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: DesignTokens.space12,
-                  vertical: DesignTokens.space8,
-                ),
-                decoration: BoxDecoration(
-                  color: DesignTokens.orange.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
-                ),
-                child: Text(
-                  'DAY ${day.dayNumber}',
-                  key: const Key('guitar_current_course_day'),
-                  style: const TextStyle(
-                    color: DesignTokens.orangeLight,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ),
-              const SizedBox(width: DesignTokens.space12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              spacing: DesignTokens.space12,
+              runSpacing: DesignTokens.space8,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(
-                      _phaseLabel(day.phase),
-                      style: const TextStyle(
-                        color: DesignTokens.indigoLight,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.space12,
+                        vertical: DesignTokens.space8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: DesignTokens.orange.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(
+                          DesignTokens.radiusSmall,
+                        ),
+                      ),
+                      child: Text(
+                        'DAY ${day.dayNumber}',
+                        key: const Key('guitar_current_course_day'),
+                        style: const TextStyle(
+                          color: DesignTokens.orangeLight,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: DesignTokens.space4),
-                    Text(
-                      day.title,
-                      style: const TextStyle(
-                        color: DesignTokens.textPrimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        height: 1.4,
+                    const SizedBox(width: DesignTokens.space12),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            _phaseLabel(day.phase),
+                            style: const TextStyle(
+                              color: DesignTokens.indigoLight,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                          const SizedBox(height: DesignTokens.space4),
+                          Text(
+                            day.title,
+                            style: const TextStyle(
+                              color: DesignTokens.textPrimary,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              _CourseMetric(
-                icon: Icons.local_fire_department_outlined,
-                label: '${snapshot.currentStreak}日連続',
-              ),
-            ],
-          ),
-          const SizedBox(height: DesignTokens.space12),
-          Text(
-            day.objective,
-            style: const TextStyle(
-              color: DesignTokens.textSecondary,
-              fontSize: 13,
-              height: 1.7,
+                Wrap(
+                  spacing: DesignTokens.space8,
+                  runSpacing: DesignTokens.space8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: <Widget>[
+                    _CourseMetric(
+                      icon: Icons.local_fire_department_outlined,
+                      label: '${snapshot.currentStreak}日連続',
+                    ),
+                    TextButton.icon(
+                      key: const Key('guitar_course_collapse_toggle'),
+                      onPressed: () =>
+                          setState(() => _collapsed = !_collapsed),
+                      icon: Icon(
+                        _collapsed ? Icons.expand_more : Icons.expand_less,
+                        size: 18,
+                      ),
+                      label: Text(_collapsed ? '課題を開く' : '折りたたむ'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: DesignTokens.textSecondary,
+                        minimumSize: const Size(48, 44),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: DesignTokens.space16),
+          const SizedBox(height: DesignTokens.space12),
           Row(
             children: <Widget>[
               Expanded(
@@ -548,148 +675,186 @@ class _DailyCoursePanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: DesignTokens.space12),
-          _CourseDayRail(snapshot: snapshot),
-          const SizedBox(height: DesignTokens.space16),
-          Row(
-            children: <Widget>[
-              const Icon(
-                Icons.today_outlined,
-                color: DesignTokens.orange,
-                size: 18,
+          if (!_collapsed) ...<Widget>[
+            const SizedBox(height: DesignTokens.space12),
+            Text(
+              day.objective,
+              style: const TextStyle(
+                color: DesignTokens.textSecondary,
+                fontSize: 13,
+                height: 1.7,
               ),
-              const SizedBox(width: DesignTokens.space8),
-              Expanded(
-                child: Text(
-                  '今日の3課題  ${snapshot.completedCurrentTaskCount}/${day.tasks.length}',
-                  maxLines: 2,
-                  style: const TextStyle(
-                    color: DesignTokens.textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const SizedBox(width: DesignTokens.space8),
-              Text(
-                '${day.totalMinutes}分  •  ${day.recommendedBpm} BPM',
-                style: const TextStyle(
-                  color: DesignTokens.textTertiary,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: DesignTokens.space12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              const gap = DesignTokens.space12;
-              final columns = constraints.maxWidth >= 900
-                  ? 3
-                  : constraints.maxWidth >= 560
-                      ? 2
-                      : 1;
-              final width =
-                  (constraints.maxWidth - gap * (columns - 1)) / columns;
-              return Wrap(
-                spacing: gap,
-                runSpacing: gap,
-                children: <Widget>[
-                  for (final task in day.tasks)
-                    SizedBox(
-                      width: width,
-                      child: _DailyTaskCard(
-                        task: task,
-                        completed: viewModel.isDailyTaskCompleted(task.id),
-                        enabled: !viewModel.courseActionInProgress,
-                        onTap: () => viewModel.toggleDailyTask(task.id),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: DesignTokens.space12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(DesignTokens.space12),
-            decoration: BoxDecoration(
-              color: DesignTokens.indigo.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: DesignTokens.space12),
+            _CourseDayRail(snapshot: snapshot),
+            const SizedBox(height: DesignTokens.space16),
+            Row(
               children: <Widget>[
                 const Icon(
-                  Icons.lightbulb_outline,
-                  color: DesignTokens.indigoLight,
+                  Icons.today_outlined,
+                  color: DesignTokens.orange,
                   size: 18,
                 ),
                 const SizedBox(width: DesignTokens.space8),
                 Expanded(
                   child: Text(
-                    day.coachNote,
+                    '今日の3課題  ${snapshot.completedCurrentTaskCount}/${day.tasks.length}',
+                    maxLines: 2,
                     style: const TextStyle(
-                      color: DesignTokens.textSecondary,
-                      fontSize: 12,
-                      height: 1.6,
+                      color: DesignTokens.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
                     ),
+                  ),
+                ),
+                const SizedBox(width: DesignTokens.space8),
+                Text(
+                  '${day.totalMinutes}分  •  ${day.recommendedBpm} BPM',
+                  style: const TextStyle(
+                    color: _mutedAccessibleText,
+                    fontSize: 11,
                   ),
                 ),
               ],
             ),
-          ),
-          if (viewModel.courseActionError != null) ...<Widget>[
-            const SizedBox(height: DesignTokens.space8),
-            Text(
-              viewModel.courseActionError!,
-              style: const TextStyle(color: DesignTokens.red, fontSize: 12),
+            const SizedBox(height: DesignTokens.space12),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const gap = DesignTokens.space12;
+                final columns = constraints.maxWidth >= 680
+                    ? 3
+                    : constraints.maxWidth >= 460
+                        ? 2
+                        : 1;
+                final width =
+                    (constraints.maxWidth - gap * (columns - 1)) / columns;
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: <Widget>[
+                    for (final task in day.tasks)
+                      SizedBox(
+                        width: width,
+                        child: _DailyTaskCard(
+                          task: task,
+                          completed: viewModel.isDailyTaskCompleted(task.id),
+                          enabled: !viewModel.courseActionInProgress,
+                          onTap: () => viewModel.toggleDailyTask(task.id),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
-          ],
-          const SizedBox(height: DesignTokens.space16),
-          Wrap(
-            spacing: DesignTokens.space12,
-            runSpacing: DesignTokens.space8,
-            children: <Widget>[
-              FilledButton.icon(
-                key: const Key('guitar_complete_course_day'),
-                onPressed: snapshot.canCompleteCurrentDay &&
-                        !viewModel.courseActionInProgress
-                    ? () => _completeDay(context, day.dayNumber)
-                    : null,
-                style: FilledButton.styleFrom(
-                  backgroundColor: DesignTokens.orange,
-                  foregroundColor: DesignTokens.textPrimary,
-                ),
-                icon: viewModel.courseActionInProgress
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.check_circle_outline),
-                label: Text('Day ${day.dayNumber}を完了'),
+            const SizedBox(height: DesignTokens.space12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(DesignTokens.space12),
+              decoration: BoxDecoration(
+                color: DesignTokens.indigo.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
               ),
-              if (day.relatedSongId != null)
-                OutlinedButton.icon(
-                  key: const Key('guitar_open_course_practice'),
-                  onPressed: viewModel.openCurrentCoursePractice,
-                  icon: const Icon(Icons.queue_music),
-                  label: const Text('関連TABを選択'),
-                ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Icon(
+                    Icons.lightbulb_outline,
+                    color: DesignTokens.indigoLight,
+                    size: 18,
+                  ),
+                  const SizedBox(width: DesignTokens.space8),
+                  Expanded(
+                    child: Text(
+                      day.coachNote,
+                      style: const TextStyle(
+                        color: DesignTokens.textSecondary,
+                        fontSize: 12,
+                        height: 1.6,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (viewModel.courseActionError != null) ...<Widget>[
+              const SizedBox(height: DesignTokens.space8),
+              Text(
+                viewModel.courseActionError!,
+                style: const TextStyle(color: DesignTokens.red, fontSize: 12),
+              ),
             ],
-          ),
+            const SizedBox(height: DesignTokens.space16),
+            Wrap(
+              spacing: DesignTokens.space12,
+              runSpacing: DesignTokens.space8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                FilledButton.icon(
+                  key: const Key('guitar_complete_course_day'),
+                  onPressed: snapshot.canCompleteCurrentDay &&
+                          !viewModel.courseActionInProgress
+                      ? () => _completeDay(context, day.dayNumber)
+                      : null,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: DesignTokens.orange,
+                    foregroundColor: DesignTokens.textPrimary,
+                    disabledBackgroundColor: DesignTokens.surface3,
+                    disabledForegroundColor: DesignTokens.textSecondary,
+                    minimumSize: const Size(48, 44),
+                    side: snapshot.canCompleteCurrentDay
+                        ? null
+                        : const BorderSide(color: Color(0xFF4B5563)),
+                  ),
+                  icon: viewModel.courseActionInProgress
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check_circle_outline),
+                  label: Text('Day ${day.dayNumber}を完了'),
+                ),
+                if (day.relatedSongId != null)
+                  OutlinedButton.icon(
+                    key: const Key('guitar_open_course_practice'),
+                    onPressed: () {
+                      viewModel.openCurrentCoursePractice();
+                      widget.onOpenPractice?.call();
+                    },
+                    icon: const Icon(Icons.queue_music),
+                    label: const Text('関連TABを選択'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: DesignTokens.orangeLight,
+                      side: BorderSide(
+                        color: DesignTokens.orange.withValues(alpha: 0.65),
+                      ),
+                      minimumSize: const Size(48, 44),
+                    ),
+                  ),
+              ],
+            ),
+            if (!snapshot.canCompleteCurrentDay) ...<Widget>[
+              const SizedBox(height: DesignTokens.space8),
+              const Text(
+                '今日の3課題をすべてチェックすると完了できます',
+                style: TextStyle(
+                  color: DesignTokens.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ],
         ],
       ),
     );
   }
 
   Future<void> _completeDay(BuildContext context, int dayNumber) async {
-    final completed = await viewModel.completeCurrentCourseDay();
-    if (!context.mounted || !completed) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Day $dayNumber 完了！次の課題が解放されました。')));
+    final completed = await widget.viewModel.completeCurrentCourseDay();
+    if (!mounted || !completed) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text('Day $dayNumber 完了！次の課題が解放されました。')));
   }
 
   String _phaseLabel(GuitarCoursePhase phase) {
@@ -727,7 +892,7 @@ class _DailyTaskCard extends StatelessWidget {
         onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 176),
+          constraints: const BoxConstraints(minHeight: 156),
           padding: const EdgeInsets.all(DesignTokens.space16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
@@ -746,14 +911,14 @@ class _DailyTaskCard extends StatelessWidget {
                         : Icons.radio_button_unchecked,
                     color: completed
                         ? DesignTokens.orange
-                        : DesignTokens.textTertiary,
+                        : _mutedAccessibleText,
                     size: 22,
                   ),
                   const Spacer(),
                   Text(
                     '${task.minutes}分',
                     style: const TextStyle(
-                      color: DesignTokens.textTertiary,
+                      color: _mutedAccessibleText,
                       fontSize: 11,
                     ),
                   ),
@@ -784,7 +949,7 @@ class _DailyTaskCard extends StatelessWidget {
               Text(
                 '完了条件：${task.completionCriteria}',
                 style: const TextStyle(
-                  color: DesignTokens.textTertiary,
+                  color: _mutedAccessibleText,
                   fontSize: 11,
                   height: 1.5,
                 ),
@@ -842,7 +1007,7 @@ class _CourseDayMarker extends StatelessWidget {
         ? DesignTokens.orange
         : current
             ? DesignTokens.indigoLight
-            : DesignTokens.textTertiary;
+            : _mutedAccessibleText;
     return Container(
       key: Key('guitar_course_day_$dayNumber'),
       width: 34,
@@ -958,7 +1123,7 @@ class _CatalogControls extends StatelessWidget {
           style: const TextStyle(color: DesignTokens.textPrimary),
           decoration: InputDecoration(
             hintText: '曲名・アルバム・奏法で検索',
-            hintStyle: const TextStyle(color: DesignTokens.textTertiary),
+            hintStyle: const TextStyle(color: _mutedAccessibleText),
             prefixIcon: const Icon(
               Icons.search,
               color: DesignTokens.textSecondary,
@@ -1023,6 +1188,8 @@ class _DifficultyChip extends StatelessWidget {
       side: BorderSide(
         color: selected ? DesignTokens.orange : DesignTokens.divider,
       ),
+      labelPadding: const EdgeInsets.symmetric(horizontal: DesignTokens.space8),
+      materialTapTargetSize: MaterialTapTargetSize.padded,
       labelStyle: TextStyle(
         color: selected ? DesignTokens.orangeLight : DesignTokens.textSecondary,
         fontSize: 12,
@@ -1033,10 +1200,15 @@ class _DifficultyChip extends StatelessWidget {
 }
 
 class _SongLibrary extends StatelessWidget {
-  const _SongLibrary({required this.viewModel, required this.horizontal});
+  const _SongLibrary({
+    required this.viewModel,
+    required this.horizontal,
+    this.onSongSelected,
+  });
 
   final BeatlesGuitarTabsViewModel viewModel;
   final bool horizontal;
+  final VoidCallback? onSongSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -1050,10 +1222,14 @@ class _SongLibrary extends StatelessWidget {
         horizontal ? 'beatles_song_list_horizontal' : 'beatles_song_list',
       ),
       scrollDirection: horizontal ? Axis.horizontal : Axis.vertical,
-      padding: EdgeInsets.symmetric(
-        horizontal: horizontal ? 0 : DesignTokens.space16,
-        vertical: horizontal ? 0 : DesignTokens.space8,
-      ),
+      padding: horizontal
+          ? EdgeInsets.zero
+          : const EdgeInsets.fromLTRB(
+              DesignTokens.space16,
+              DesignTokens.space8,
+              DesignTokens.space16,
+              96,
+            ),
       itemCount: songs.length,
       separatorBuilder: (_, __) => SizedBox(
         width: horizontal ? DesignTokens.space12 : 0,
@@ -1066,7 +1242,10 @@ class _SongLibrary extends StatelessWidget {
           child: _SongCard(
             song: song,
             selected: viewModel.selectedSong?.id == song.id,
-            onTap: () => viewModel.selectSong(song.id),
+            onTap: () {
+              viewModel.selectSong(song.id);
+              onSongSelected?.call();
+            },
           ),
         );
       },
@@ -1137,19 +1316,20 @@ class _SongCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  color: DesignTokens.textTertiary,
+                  color: _mutedAccessibleText,
                   fontSize: 11,
                   height: 1.5,
                 ),
               ),
               const SizedBox(height: DesignTokens.space12),
-              Row(
+              Wrap(
+                spacing: DesignTokens.space8,
+                runSpacing: DesignTokens.space4,
                 children: <Widget>[
                   _MetaChip(
                     icon: Icons.equalizer,
                     label: _difficultyLabel(song.difficulty),
                   ),
-                  const SizedBox(width: DesignTokens.space8),
                   _MetaChip(
                     icon: Icons.speed,
                     label: '${song.practiceBpm} BPM',
@@ -1165,125 +1345,106 @@ class _SongCard extends StatelessWidget {
 }
 
 class _SongDetail extends StatelessWidget {
-  const _SongDetail({required this.viewModel, required this.scrollable});
+  const _SongDetail({
+    required this.viewModel,
+    this.headerKey,
+    this.metronomeAudioService,
+  });
 
   final BeatlesGuitarTabsViewModel viewModel;
-  final bool scrollable;
+  final GlobalKey? headerKey;
+  final GuitarMetronomeAudioService? metronomeAudioService;
 
   @override
   Widget build(BuildContext context) {
     final song = viewModel.selectedSong;
     if (song == null) return const _EmptyLibrary();
 
-    final children = <Widget>[
-      if (scrollable) ...<Widget>[
-        _DailyCoursePanel(viewModel: viewModel),
-        const SizedBox(height: DesignTokens.space24),
-      ],
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  song.title,
-                  key: const Key('beatles_selected_song_title'),
-                  style: const TextStyle(
-                    color: DesignTokens.textPrimary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    height: 1.4,
-                    letterSpacing: 0.96,
-                  ),
+    final titleHeader = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                song.title,
+                key: const Key('beatles_selected_song_title'),
+                style: const TextStyle(
+                  color: DesignTokens.textPrimary,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  height: 1.4,
+                  letterSpacing: 0.96,
                 ),
-                const SizedBox(height: DesignTokens.space4),
-                Text(
-                  'The Beatles • ${song.album} • ${song.year}',
-                  style: const TextStyle(
-                    color: DesignTokens.textSecondary,
-                    fontSize: 12,
-                    height: 1.6,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.graphic_eq, color: DesignTokens.orange, size: 32),
-        ],
-      ),
-      const SizedBox(height: DesignTokens.space16),
-      Text(
-        song.summary,
-        style: const TextStyle(
-          color: DesignTokens.textOnDark,
-          fontSize: 14,
-          height: 1.7,
-        ),
-      ),
-      const SizedBox(height: DesignTokens.space16),
-      Wrap(
-        spacing: DesignTokens.space8,
-        runSpacing: DesignTokens.space8,
-        children: <Widget>[
-          _MetaChip(icon: Icons.tune, label: song.tuning),
-          _MetaChip(
-            icon: Icons.vertical_align_top,
-            label: 'Capo: ${song.capo}',
-          ),
-          for (final technique in song.techniques)
-            _MetaChip(icon: Icons.auto_awesome, label: technique),
-        ],
-      ),
-      const SizedBox(height: DesignTokens.space20),
-      const _RightsNotice(),
-      if (song.practiceSteps.isNotEmpty) ...<Widget>[
-        const SizedBox(height: DesignTokens.space24),
-        _PracticeRoadmap(viewModel: viewModel, song: song),
-      ],
-      const SizedBox(height: DesignTokens.space20),
-      _TempoControl(viewModel: viewModel),
-      const SizedBox(height: DesignTokens.space24),
-      for (var index = 0; index < song.sections.length; index++) ...<Widget>[
-        GuitarTabStaff(section: song.sections[index]),
-        if (index != song.sections.length - 1)
-          const SizedBox(height: DesignTokens.space16),
-      ],
-      if (song.resources.isNotEmpty) ...<Widget>[
-        const SizedBox(height: DesignTokens.space24),
-        _LearningResources(viewModel: viewModel, resources: song.resources),
-      ],
-      const SizedBox(height: DesignTokens.space24),
-      const _PracticeTip(),
-    ];
-
-    if (scrollable) {
-      return ListView(
-        key: const Key('beatles_song_detail_scroll'),
-        padding: const EdgeInsets.fromLTRB(
-          DesignTokens.space24,
-          DesignTokens.space24,
-          DesignTokens.space24,
-          96,
-        ),
-        children: <Widget>[
-          Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 860),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: children,
               ),
-            ),
+              const SizedBox(height: DesignTokens.space4),
+              Text(
+                'The Beatles • ${song.album} • ${song.year}',
+                style: const TextStyle(
+                  color: DesignTokens.textSecondary,
+                  fontSize: 12,
+                  height: 1.6,
+                ),
+              ),
+            ],
           ),
-        ],
-      );
-    }
+        ),
+        const Icon(Icons.graphic_eq, color: DesignTokens.orange, size: 32),
+      ],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: children,
+      children: <Widget>[
+        KeyedSubtree(key: headerKey, child: titleHeader),
+        const SizedBox(height: DesignTokens.space16),
+        Text(
+          song.summary,
+          style: const TextStyle(
+            color: DesignTokens.textOnDark,
+            fontSize: 14,
+            height: 1.7,
+          ),
+        ),
+        const SizedBox(height: DesignTokens.space16),
+        Wrap(
+          spacing: DesignTokens.space8,
+          runSpacing: DesignTokens.space8,
+          children: <Widget>[
+            _MetaChip(icon: Icons.tune, label: song.tuning),
+            _MetaChip(
+              icon: Icons.vertical_align_top,
+              label: 'Capo: ${song.capo}',
+            ),
+            for (final technique in song.techniques)
+              _MetaChip(icon: Icons.auto_awesome, label: technique),
+          ],
+        ),
+        const SizedBox(height: DesignTokens.space20),
+        const _RightsNotice(),
+        if (song.practiceSteps.isNotEmpty) ...<Widget>[
+          const SizedBox(height: DesignTokens.space24),
+          _PracticeRoadmap(viewModel: viewModel, song: song),
+        ],
+        const SizedBox(height: DesignTokens.space20),
+        _TempoControl(
+          viewModel: viewModel,
+          metronomeAudioService: metronomeAudioService,
+        ),
+        const SizedBox(height: DesignTokens.space24),
+        for (var index = 0; index < song.sections.length; index++) ...<Widget>[
+          GuitarTabStaff(section: song.sections[index]),
+          if (index != song.sections.length - 1)
+            const SizedBox(height: DesignTokens.space16),
+        ],
+        if (song.resources.isNotEmpty) ...<Widget>[
+          const SizedBox(height: DesignTokens.space24),
+          _LearningResources(viewModel: viewModel, resources: song.resources),
+        ],
+        const SizedBox(height: DesignTokens.space24),
+        const _PracticeTip(),
+      ],
     );
   }
 }
@@ -1308,9 +1469,9 @@ class _PracticeRoadmap extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             const gap = DesignTokens.space12;
-            final columns = constraints.maxWidth >= 760
+            final columns = constraints.maxWidth >= 680
                 ? 3
-                : constraints.maxWidth >= 520
+                : constraints.maxWidth >= 460
                     ? 2
                     : 1;
             final cardWidth =
@@ -1364,7 +1525,7 @@ class _PracticeStepCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 188),
+          constraints: const BoxConstraints(minHeight: 164),
           padding: const EdgeInsets.all(DesignTokens.space16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
@@ -1406,7 +1567,7 @@ class _PracticeStepCard extends StatelessWidget {
                     style: TextStyle(
                       color: selected
                           ? DesignTokens.orangeLight
-                          : DesignTokens.textTertiary,
+                          : _mutedAccessibleText,
                       fontSize: 11,
                       height: 1.5,
                     ),
@@ -1436,7 +1597,7 @@ class _PracticeStepCard extends StatelessWidget {
               Text(
                 step.cue,
                 style: const TextStyle(
-                  color: DesignTokens.textTertiary,
+                  color: _mutedAccessibleText,
                   fontSize: 11,
                   height: 1.6,
                 ),
@@ -1469,9 +1630,9 @@ class _LearningResources extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             const gap = DesignTokens.space12;
-            final columns = constraints.maxWidth >= 760
+            final columns = constraints.maxWidth >= 680
                 ? 3
-                : constraints.maxWidth >= 520
+                : constraints.maxWidth >= 460
                     ? 2
                     : 1;
             final cardWidth =
@@ -1535,7 +1696,7 @@ class _ResourceCard extends StatelessWidget {
     };
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 236),
+      constraints: const BoxConstraints(minHeight: 204),
       padding: const EdgeInsets.all(DesignTokens.space16),
       decoration: BoxDecoration(
         color: DesignTokens.surface2,
@@ -1597,7 +1758,7 @@ class _ResourceCard extends StatelessWidget {
               icon: const Icon(Icons.open_in_new, size: 16),
               label: Text(resource.actionLabel),
               style: OutlinedButton.styleFrom(
-                foregroundColor: DesignTokens.orange,
+                foregroundColor: DesignTokens.orangeLight,
                 side: const BorderSide(color: DesignTokens.orange),
                 minimumSize: const Size(48, 44),
                 shape: RoundedRectangleBorder(
@@ -1665,13 +1826,110 @@ class _SectionHeading extends StatelessWidget {
   }
 }
 
-class _TempoControl extends StatelessWidget {
-  const _TempoControl({required this.viewModel});
+class _TempoControl extends StatefulWidget {
+  const _TempoControl({
+    required this.viewModel,
+    this.metronomeAudioService,
+  });
 
   final BeatlesGuitarTabsViewModel viewModel;
+  final GuitarMetronomeAudioService? metronomeAudioService;
+
+  @override
+  State<_TempoControl> createState() => _TempoControlState();
+}
+
+class _TempoControlState extends State<_TempoControl> {
+  late final GuitarMetronomeAudioService _audioService;
+  late final bool _ownsAudioService;
+  final Stopwatch _tickStopwatch = Stopwatch();
+  Timer? _timer;
+  bool _isPlaying = false;
+  int _beatIndex = 0;
+  int _scheduledDelayMs = 500;
+
+  @override
+  void initState() {
+    super.initState();
+    _ownsAudioService = widget.metronomeAudioService == null;
+    _audioService =
+        widget.metronomeAudioService ?? createGuitarMetronomeAudioService();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _timer = null;
+    _tickStopwatch.stop();
+    if (_ownsAudioService) {
+      _audioService.dispose();
+    }
+    super.dispose();
+  }
+
+  int _intervalMsForCurrentBpm() {
+    final bpm = widget.viewModel.practiceBpm.clamp(30, 260);
+    return (60000.0 / bpm).round().clamp(150, 2500);
+  }
+
+  void _toggleMetronome() {
+    if (_isPlaying) {
+      _stopMetronome();
+      return;
+    }
+    setState(() {
+      _isPlaying = true;
+      _beatIndex = 0;
+    });
+    _audioService.playClick(accent: true);
+    _scheduleNextTick(overdueMs: 0);
+  }
+
+  void _scheduleNextTick({required int overdueMs}) {
+    if (!mounted || !_isPlaying) return;
+    final rawIntervalMs = _intervalMsForCurrentBpm();
+    final nextDelayMs = (rawIntervalMs - overdueMs).clamp(20, rawIntervalMs);
+    _scheduledDelayMs = nextDelayMs;
+    _tickStopwatch
+      ..reset()
+      ..start();
+    _timer?.cancel();
+    _timer = Timer(Duration(milliseconds: nextDelayMs), () {
+      if (!mounted || !_isPlaying) return;
+      final elapsed = _tickStopwatch.elapsedMilliseconds;
+      final lag = elapsed > _scheduledDelayMs ? elapsed - _scheduledDelayMs : 0;
+      final nextBeat = (_beatIndex + 1) % 4;
+      setState(() {
+        _beatIndex = nextBeat;
+      });
+      _audioService.playClick(accent: nextBeat == 0);
+      _scheduleNextTick(overdueMs: lag);
+    });
+  }
+
+  void _stopMetronome() {
+    _timer?.cancel();
+    _timer = null;
+    _tickStopwatch.stop();
+    if (!mounted) return;
+    setState(() {
+      _isPlaying = false;
+      _beatIndex = 0;
+    });
+  }
+
+  void _onBpmChanged(double value) {
+    widget.viewModel.setPracticeBpm(value);
+    if (_isPlaying) {
+      _scheduleNextTick(overdueMs: 0);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final viewModel = widget.viewModel;
+    final isAtRecommended =
+        viewModel.practiceBpm == viewModel.recommendedPracticeBpm;
     return Container(
       decoration: BoxDecoration(
         color: DesignTokens.surface2,
@@ -1716,24 +1974,102 @@ class _TempoControl extends StatelessWidget {
             activeColor: DesignTokens.orange,
             inactiveColor: DesignTokens.surface3,
             label: '${viewModel.practiceBpm} BPM',
-            onChanged: viewModel.setPracticeBpm,
+            onChanged: _onBpmChanged,
           ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed:
-                  viewModel.practiceBpm == viewModel.recommendedPracticeBpm
-                      ? null
-                      : viewModel.resetPracticeBpm,
-              icon: const Icon(Icons.restart_alt, size: 18),
-              label: Text('推奨 ${viewModel.recommendedPracticeBpm} BPM に戻す'),
-              style: TextButton.styleFrom(
-                foregroundColor: DesignTokens.orange,
-                disabledForegroundColor: DesignTokens.textDisabled,
-              ),
+          const SizedBox(height: DesignTokens.space8),
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              spacing: DesignTokens.space12,
+              runSpacing: DesignTokens.space8,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                Wrap(
+                  spacing: DesignTokens.space12,
+                  runSpacing: DesignTokens.space8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: <Widget>[
+                    FilledButton.icon(
+                      key: const Key('beatles_metronome_toggle'),
+                      onPressed: _toggleMetronome,
+                      icon: Icon(_isPlaying ? Icons.stop : Icons.play_arrow),
+                      label: Text(_isPlaying ? 'メトロノーム停止' : 'メトロノーム再生'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _isPlaying
+                            ? DesignTokens.indigo
+                            : DesignTokens.orange,
+                        foregroundColor: DesignTokens.textPrimary,
+                        minimumSize: const Size(48, 44),
+                      ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        for (var b = 0; b < 4; b++) ...<Widget>[
+                          _MetronomeBeatDot(
+                            beatIndex: b,
+                            active: _isPlaying && _beatIndex == b,
+                          ),
+                          if (b != 3) const SizedBox(width: DesignTokens.space4),
+                        ],
+                        const SizedBox(width: DesignTokens.space8),
+                        Text(
+                          _isPlaying ? '${_beatIndex + 1}/4拍' : '待機中',
+                          style: const TextStyle(
+                            color: _mutedAccessibleText,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                TextButton.icon(
+                  onPressed:
+                      isAtRecommended ? null : viewModel.resetPracticeBpm,
+                  icon: const Icon(Icons.restart_alt, size: 18),
+                  label: Text('推奨 ${viewModel.recommendedPracticeBpm} BPM に戻す'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: DesignTokens.orangeLight,
+                    disabledForegroundColor: _mutedAccessibleText,
+                    minimumSize: const Size(48, 44),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MetronomeBeatDot extends StatelessWidget {
+  const _MetronomeBeatDot({
+    required this.beatIndex,
+    required this.active,
+  });
+
+  final int beatIndex;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final activeColor =
+        beatIndex == 0 ? DesignTokens.orange : DesignTokens.indigoLight;
+    return Container(
+      key: Key('beatles_metronome_beat_$beatIndex'),
+      width: 12,
+      height: 12,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: active ? activeColor : DesignTokens.surface3,
+        border: Border.all(
+          color: active ? activeColor : _mutedAccessibleText,
+          width: 1.2,
+        ),
       ),
     );
   }
