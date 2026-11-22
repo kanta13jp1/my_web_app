@@ -207,7 +207,7 @@ test('検証済みでも古いEdgeは退け、新しい完全な合成Edgeへカ
 
   await announcementCard(page);
   await clickButton(page, '新しい合成Edgeを反映', -1);
-  await expect(label(page, /^入力: 新Edge（合成431件・検証済み・2026-11-12）$/)).toBeVisible();
+  await expect(label(page, /^入力: 新Edge（合成431件・検証済み・2026-11-19）$/)).toBeVisible();
   for (const text of [
     /^公認掲載 431件$/,
     /^掲載内の現職 177件$/,
@@ -224,7 +224,7 @@ test('検証済みでも古いEdgeは退け、新しい完全な合成Edgeへカ
   await reveal(page, page.getByRole('button', {
     name: /都道府県別の公認掲載件数[\s\S]*\D1都道府県(?:\D|$)/,
   }));
-  await captureCandidate(page, '2026/11/12', newerSourceUrl);
+  await captureCandidate(page, '2026/11/19', newerSourceUrl);
   await reveal(page, label(page, /^公認掲載 431件$/), -1);
   await page.screenshot({ path: info.outputPath('newer-complete-synthetic-edge.png') });
 
@@ -232,7 +232,7 @@ test('検証済みでも古いEdgeは退け、新しい完全な合成Edgeへカ
   await clickButton(page, 'キャッシュを再読込', -1);
   await expect(label(page, /^キャッシュ読取: 2回（合成412件）$/)).toBeVisible();
   await baselineCard(page);
-  await captureCandidate(page, '2026/11/11', sourceUrl);
+  await captureCandidate(page, '2026/11/18', sourceUrl);
   await announcementCard(page);
   await legacyStorage(page);
 });
