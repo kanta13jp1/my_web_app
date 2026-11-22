@@ -58,6 +58,7 @@ import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/services/asset_auto_debit_confirmation_service.dart';
 import 'package:my_web_app/services/asset_balance_timestamp_service.dart';
 import 'package:my_web_app/models/asset_balance_observation.dart';
+import 'package:my_web_app/models/asset_external_points.dart';
 import 'package:my_web_app/widgets/asset_balance_history_control.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
@@ -124,6 +125,7 @@ import 'package:my_web_app/services/asset_cashflow_statement_service.dart';
 import 'package:my_web_app/services/asset_net_worth_panel_service.dart';
 import 'package:my_web_app/services/asset_category_budget_service.dart';
 import 'package:my_web_app/services/asset_category_budget_store.dart';
+import 'package:my_web_app/services/asset_external_points_store.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_mirror_read_policy.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
@@ -166,6 +168,7 @@ import 'package:my_web_app/widgets/asset_dashboard_grid.dart';
 import 'package:my_web_app/widgets/asset_net_worth_panel_card.dart';
 import 'package:my_web_app/widgets/asset_obsidian_vault_import_dialog.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
+import 'package:my_web_app/widgets/asset_external_points_card.dart';
 import 'package:my_web_app/widgets/asset_subscription_statement_scan_dialog.dart';
 import 'package:my_web_app/widgets/asset_subscription_login_dialog.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
@@ -401,9 +404,12 @@ class AssetManagementPage extends StatefulWidget {
   final AssetWatchlistService watchlistService;
   final AssetLiabilityRepository? assetLiabilityRepository;
   final AssetCategoryBudgetStore? categoryBudgetStore;
+  final AssetExternalPointsStore? externalPointsStore;
   final AssetAlertDismissalStore? alertDismissalStore;
   @visibleForTesting
   final String? debugCategoryBudgetOwnerId;
+  @visibleForTesting
+  final String? debugExternalPointsOwnerId;
   final InvestmentAssetRepository? investmentAssetRepository;
   final AssetAnomalyDetectionRepository? anomalyDetectionRepository;
   final AssetManagementAiSummaryService? aiSummaryService;
@@ -540,8 +546,10 @@ class AssetManagementPage extends StatefulWidget {
     this.watchlistService = const AssetWatchlistService(),
     this.assetLiabilityRepository,
     this.categoryBudgetStore,
+    this.externalPointsStore,
     this.alertDismissalStore,
     this.debugCategoryBudgetOwnerId,
+    this.debugExternalPointsOwnerId,
     this.investmentAssetRepository,
     this.anomalyDetectionRepository,
     this.aiSummaryService,
@@ -652,6 +660,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyIncomePlanSection = GlobalKey();
   final _keyRecurringIncomeEditorButton = GlobalKey();
   final _keyCategoryBudgetCard = GlobalKey();
+  final _keyExternalPointsCard = GlobalKey();
   // 負債コントロールレビュー (原資未設定一覧) へのスクロール用 (原資未設定バナーからのジャンプ)。
   final _keyDebtControlReviewSection = GlobalKey();
   // セクション検索(アプリバーの🔍)からの各カードへのジャンプ用アンカー。
@@ -966,6 +975,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, double> _categoryBudgets = <String, double>{};
   String? _categoryBudgetsOwnerId;
   String? _categoryBudgetStatus;
+  // 外部ポイント記録 (京王ポイント・Vポイント等)。純資産・手元現金・月次支出とは分離。
+  List<AssetExternalPointRecord> _externalPoints =
+      const <AssetExternalPointRecord>[];
+  String? _externalPointsLoadedOwnerId;
+  String? _externalPointsStatus;
+  String? _externalPointsObservedOwnerId;
+  StreamSubscription<AuthState>? _externalPointsAuthSubscription;
+  bool _externalPointsReloadAfterSave = false;
+  bool _externalPointsReady = false;
+  bool _externalPointsSaving = false;
+  bool _externalPointsMirrorWritable = false;
+  String? _externalPointsMirrorRevision;
+  int _externalPointsMutationEpoch = 0;
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
   // アクションアイテムからジャンプした直後に、対処すべき支払済みチェックボックスへ
   // 視線誘導するため一時的に点滅ハイライトする負債マスタ行ID (2.6 秒で自動解除)。
@@ -1272,6 +1294,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   AssetCategoryBudgetStore get _categoryBudgetStore =>
       widget.categoryBudgetStore ??
       AssetCategoryBudgetStore.forOwner(_categoryBudgetOwnerId);
+  String? get _externalPointsOwnerId =>
+      widget.debugExternalPointsOwnerId ?? _supabase.auth.currentUser?.id;
+  AssetExternalPointsStore get _externalPointsStore =>
+      widget.externalPointsStore ??
+      AssetExternalPointsStore.forOwner(_externalPointsOwnerId);
   // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
   final DrinkChallengeStore _drinkChallengeStore = const DrinkChallengeStore();
   Map<String, DrinkRecordStatus> _drinkRecords = <String, DrinkRecordStatus>{};
@@ -1299,6 +1326,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       TextEditingController(text: _safetyEnvelopeAmount.round().toString());
   // 既定 OFF。ON の間だけ行動リストを生活防衛ルール順へ並べ替える。
   bool _livingExpensePriorityMode = false;
+  AssetManagementInsightReport? _latestInsightReport;
   static const String _suspendedDebtAccountsPrefsKey =
       'asset_suspended_debt_accounts_v1';
   static const String _lumpSumRequestedAccountsPrefsKey =
@@ -1505,6 +1533,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCardUsagePolicies());
     unawaited(_loadCategoryBudgets());
+    _externalPointsObservedOwnerId = _externalPointsOwnerId;
+    _externalPointsAuthSubscription = _supabase.auth.onAuthStateChange.listen(
+      (event) {
+        final owner =
+            widget.debugExternalPointsOwnerId ?? event.session?.user.id;
+        if (mounted && owner != _externalPointsObservedOwnerId) {
+          setState(() => _resetExternalPointsOwner(owner));
+        }
+      },
+      onError: (Object _) {
+        if (mounted && widget.debugExternalPointsOwnerId == null) {
+          setState(() => _resetExternalPointsOwner(null));
+        }
+      },
+    );
+    unawaited(_loadExternalPoints());
     unawaited(_loadRecurringFixedCosts());
     // ドル建てサブスクの円換算に使う USD/JPY を取得し、最新レートで再計算する。
     unawaited(_loadUsdJpyRate());
@@ -1570,7 +1614,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   @override
+  void didUpdateWidget(covariant AssetManagementPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.debugExternalPointsOwnerId !=
+            widget.debugExternalPointsOwnerId ||
+        oldWidget.externalPointsStore != widget.externalPointsStore) {
+      _resetExternalPointsOwner(_externalPointsOwnerId);
+    }
+  }
+
+  @override
   void dispose() {
+    unawaited(_externalPointsAuthSubscription?.cancel());
     _payslipPreviewEpoch++;
     unawaited(_payslipPreviewSubscription?.cancel());
     _payslipPreviewSubscription = null;
@@ -4336,10 +4391,111 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     };
   }
 
+  Future<bool?> _confirmLivingExpensePriorityGuard(AssetLiabilityDebtRow row) {
+    final report = _latestInsightReport;
+    if (report == null || !report.shouldBlockPaymentExecution) {
+      return Future<bool?>.value(true);
+    }
+    final suggestions = report.workbook.transferSuggestions.take(3).toList();
+    final todayAmount = report.todayAvailable.availableAmount;
+    final todayText = _formatManagementYen(todayAmount);
+    final weekText = _formatManagementYen(report.weekAvailable.availableAmount);
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        key: const Key('asset_living_expense_guard_dialog'),
+        title: const Row(
+          children: [
+            Icon(Icons.shield_outlined, color: Color(0xFFB91C1C)),
+            SizedBox(width: 8),
+            Expanded(child: Text('生活費優先ガード')),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '使用可能額がマイナスのため「${row.name}」'
+                '(${_formatManagementYen(row.scheduledPaymentAmount)}) の'
+                '支払い実行前に生活費の確保を優先してください。',
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '本日の使用可能額: $todayText / 今週の使用可能額: $weekText',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFB91C1C),
+                ),
+              ),
+              if (suggestions.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  '推奨口座移動 (先に移動タスクを作成):',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                for (final suggestion in suggestions)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${suggestion.fromAccountName} → '
+                            '${suggestion.toAccountName}: '
+                            '${_formatManagementYen(suggestion.amount)}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton.tonal(
+                          key: Key(
+                            'living_guard_create_transfer_'
+                            '${suggestion.fromAccountId}_'
+                            '${suggestion.toAccountId}',
+                          ),
+                          onPressed: () {
+                            _createTransferTaskFromSuggestion(suggestion);
+                            Navigator.of(dialogContext).pop(false);
+                          },
+                          child: const Text('移動タスク作成'),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            key: const Key('living_guard_cancel_button'),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          OutlinedButton(
+            key: const Key('living_guard_force_execute_button'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('それでも実行'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _toggleMonthlyPaymentPaid(
     AssetLiabilityDebtRow row,
     bool paid,
   ) async {
+    if (paid && (_latestInsightReport?.shouldBlockPaymentExecution ?? false)) {
+      final proceed = await _confirmLivingExpensePriorityGuard(row);
+      if (proceed != true || !mounted) {
+        return;
+      }
+    }
     final previousPaidAccountNames = Set<String>.from(_monthlyPaidAccountNames);
     final previousBillingConfirmedAccountIds = Set<String>.from(
       _billingConfirmedAccountIds,
@@ -6787,6 +6943,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           sublabel: '予算/カテゴリ予実へ移動',
           icon: Icons.pie_chart_outline,
           onTap: () => _scrollTo(_keyCategoryBudgetCard),
+        ),
+      );
+    }
+
+    if (_keyExternalPointsCard.currentContext != null &&
+        matches('京王ポイント ポイント 外部ポイント Vポイント 楽天ポイント ポイント残高 ポイント記録')) {
+      entries.add(
+        _AssetSectionSearchEntry(
+          label: '外部ポイント記録（京王・Vポイント等）',
+          sublabel: '外部ポイント残高・履歴へ移動',
+          icon: Icons.stars_outlined,
+          onTap: () => _scrollTo(_keyExternalPointsCard),
         ),
       );
     }
@@ -11207,6 +11375,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     _buildSalarySpendingBreakdownCard(),
                     const SizedBox(height: 16),
                     _buildCategoryBudgetCard(),
+                    _buildExternalPointsCard(),
                   ],
                   if (_isSectionShown(
                     AssetManagementSectionId.recurringFixedCost,
@@ -12311,9 +12480,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// リボ設定の集約ミラー pref_key (1 行 jsonb / MIRROR_PREF_SCHEMA.md)。
   static const String _revolvingConfigsMirrorKey = 'revolving_credit_configs';
   static const String _categoryBudgetsMirrorKey = 'category_budgets';
+  static const String _externalPointsMirrorKey =
+      AssetExternalPointsStore.mirrorPrefKey;
 
   bool _isBudgetOwner(String owner) =>
       mounted && _categoryBudgetOwnerId == owner;
+
+  bool _isExternalPointsOwner(String owner) =>
+      mounted &&
+      _externalPointsOwnerId == owner &&
+      _externalPointsObservedOwnerId == owner;
+
+  void _resetExternalPointsOwner(String? owner) {
+    _externalPointsObservedOwnerId = owner;
+    _externalPointsMutationEpoch++;
+    _externalPoints = const <AssetExternalPointRecord>[];
+    _externalPointsLoadedOwnerId = null;
+    _externalPointsStatus = null;
+    _externalPointsReady = false;
+    _externalPointsMirrorWritable = false;
+    _externalPointsMirrorRevision = null;
+    if (_externalPointsSaving) {
+      _externalPointsReloadAfterSave = true;
+    } else {
+      unawaited(_loadExternalPoints());
+    }
+  }
 
   Future<void> _loadCategoryBudgets() async {
     final owner = _categoryBudgetOwnerId;
@@ -12377,6 +12569,307 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         setState(() => _categoryBudgetStatus = '端末内には保存済みですが、サーバ同期は未確認です。');
       }
     }
+  }
+
+  Future<void> _loadExternalPoints() async {
+    final owner = _externalPointsObservedOwnerId;
+    if (owner == null ||
+        owner.trim().isEmpty ||
+        !_isExternalPointsOwner(owner)) {
+      return;
+    }
+    final loadEpoch = _externalPointsMutationEpoch;
+    final store = _externalPointsStore;
+    try {
+      final records = await store.load(refresh: true);
+      final saved = await store.hasSavedSetting();
+      if (!_isExternalPointsOwner(owner) ||
+          loadEpoch != _externalPointsMutationEpoch) {
+        return;
+      }
+      setState(() {
+        _externalPointsLoadedOwnerId = owner;
+        _externalPoints = records;
+        _externalPointsStatus = null;
+      });
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select('user_id,pref_key,value,updated_at')
+          .eq('user_id', owner)
+          .eq('pref_key', _externalPointsMirrorKey)
+          .timeout(const Duration(seconds: 10));
+      if (!_isExternalPointsOwner(owner) ||
+          loadEpoch != _externalPointsMutationEpoch) {
+        return;
+      }
+      if (rows.isEmpty) {
+        setState(() {
+          _externalPointsReady = true;
+          _externalPointsMirrorWritable = true;
+        });
+        return;
+      }
+      final restored = AssetExternalPointsStore.decodeOwnedMirrorRow(
+        rows.first,
+        owner,
+      );
+      final revision = rows.first['updated_at'];
+      final payload = rows.first['value'];
+      if (restored == null ||
+          revision is! String ||
+          DateTime.tryParse(revision) == null ||
+          payload is! Map ||
+          payload['version'] != 1 ||
+          payload['records'] is! List ||
+          (payload['records'] as List).length != restored.length) {
+        throw StateError('Invalid external points mirror record');
+      }
+      if (saved) {
+        final matches = jsonEncode(
+                AssetExternalPointsStore.encodeMirrorValue(records)) ==
+            jsonEncode(AssetExternalPointsStore.encodeMirrorValue(restored));
+        setState(() {
+          _externalPointsReady = true;
+          _externalPointsMirrorRevision = revision;
+          _externalPointsMirrorWritable = matches;
+          _externalPointsStatus =
+              matches ? null : '端末とサーバの記録に差があるため、サーバへの保存を保留しています。';
+        });
+        return;
+      }
+      final restoredLocally = await store.saveIfUnchanged(
+        restored,
+        expected: records,
+        requireMissing: true,
+        isCurrent: () =>
+            _isExternalPointsOwner(owner) &&
+            loadEpoch == _externalPointsMutationEpoch,
+      );
+      if (!restoredLocally) {
+        throw StateError('External points were changed in another tab');
+      }
+      if (!_isExternalPointsOwner(owner) ||
+          loadEpoch != _externalPointsMutationEpoch) {
+        return;
+      }
+      setState(() {
+        _externalPointsLoadedOwnerId = owner;
+        _externalPoints = restored;
+        _externalPointsReady = true;
+        _externalPointsMirrorRevision = revision;
+        _externalPointsMirrorWritable = true;
+      });
+    } catch (_) {
+      if (_isExternalPointsOwner(owner) &&
+          loadEpoch == _externalPointsMutationEpoch) {
+        setState(() {
+          if (_externalPointsLoadedOwnerId != owner) {
+            _externalPointsLoadedOwnerId = owner;
+            _externalPoints = const <AssetExternalPointRecord>[];
+          }
+          _externalPointsStatus = '外部ポイントの取得・同期を確認できませんでした。';
+        });
+      }
+    }
+  }
+
+  bool _canEditExternalPoints(String owner) =>
+      _isExternalPointsOwner(owner) &&
+      _externalPointsLoadedOwnerId == owner &&
+      _externalPointsReady &&
+      !_externalPointsSaving;
+
+  Future<void> _saveExternalPoints(
+    List<AssetExternalPointRecord> next,
+  ) async {
+    final owner = _externalPointsOwnerId;
+    if (owner == null || owner.trim().isEmpty) {
+      throw StateError('Sign in required');
+    }
+    _externalPointsMutationEpoch++;
+    final saveEpoch = _externalPointsMutationEpoch;
+    final sorted = sortExternalPointRecords(next);
+    final store = _externalPointsStore;
+    final expected = _externalPoints;
+    setState(() => _externalPointsSaving = true);
+    try {
+      final savedLocally = await store.saveIfUnchanged(
+        sorted,
+        expected: expected,
+        isCurrent: () =>
+            _isExternalPointsOwner(owner) &&
+            saveEpoch == _externalPointsMutationEpoch,
+      );
+      if (!_isExternalPointsOwner(owner) ||
+          saveEpoch != _externalPointsMutationEpoch) {
+        return;
+      }
+      if (!savedLocally) {
+        setState(() {
+          _externalPointsReady = false;
+          _externalPointsStatus = '端末内の記録を照合できませんでした。ページを開き直して確認してください。';
+        });
+        return;
+      }
+      setState(() {
+        _externalPoints = sorted;
+        _externalPointsStatus = _externalPointsMirrorWritable
+            ? '端末内に保存済み。サーバ保存を確認しています。'
+            : '端末内に保存済み。サーバへの保存を保留しています。';
+      });
+      if (_externalPointsMirrorWritable) {
+        await _mirrorExternalPoints(owner, sorted, saveEpoch);
+      }
+    } finally {
+      if (mounted) {
+        final reload = _externalPointsReloadAfterSave;
+        setState(() {
+          _externalPointsSaving = false;
+          _externalPointsReloadAfterSave = false;
+        });
+        if (reload) {
+          unawaited(_loadExternalPoints());
+        }
+      }
+    }
+  }
+
+  Future<void> _mirrorExternalPoints(
+    String owner,
+    List<AssetExternalPointRecord> sorted,
+    int saveEpoch,
+  ) async {
+    try {
+      final confirmedRevision =
+          await AssetExternalPointsStore.saveMirrorIfUnchanged(
+        _supabase,
+        owner: owner,
+        records: sorted,
+        revision: _externalPointsMirrorRevision,
+        now: DateTime.now(),
+      );
+      if (_isExternalPointsOwner(owner) &&
+          saveEpoch == _externalPointsMutationEpoch) {
+        setState(() {
+          _externalPointsMirrorRevision = confirmedRevision;
+          _externalPointsStatus = '端末内とサーバへの保存を確認しました。';
+        });
+      }
+    } catch (_) {
+      if (_isExternalPointsOwner(owner) &&
+          saveEpoch == _externalPointsMutationEpoch) {
+        setState(() {
+          _externalPointsMirrorWritable = false;
+          _externalPointsStatus = '端末内に保存済み。サーバへの上書きを保留しています。';
+        });
+      }
+    }
+  }
+
+  Future<void> _addExternalPointRecord() async {
+    final owner = _externalPointsOwnerId;
+    if (owner == null || !_canEditExternalPoints(owner)) {
+      return;
+    }
+    final editorEpoch = _externalPointsMutationEpoch;
+    final created = await showAssetExternalPointEditorDialog(context);
+    if (created == null ||
+        editorEpoch != _externalPointsMutationEpoch ||
+        !_canEditExternalPoints(owner)) {
+      return;
+    }
+    final next = <AssetExternalPointRecord>[
+      created,
+      for (final item in _externalPoints)
+        if (item.id != created.id) item,
+    ];
+    try {
+      await _saveExternalPoints(next);
+    } catch (error) {
+      debugPrint('Error saving external points: $error');
+      if (_isExternalPointsOwner(owner) &&
+          editorEpoch + 1 == _externalPointsMutationEpoch) {
+        setState(() {
+          _externalPointsStatus = '外部ポイントの保存に失敗しました。';
+        });
+      }
+    }
+  }
+
+  Future<void> _deleteExternalPointRecord(
+    AssetExternalPointRecord target,
+  ) async {
+    final owner = _externalPointsOwnerId;
+    if (owner == null || !_canEditExternalPoints(owner)) {
+      return;
+    }
+    final editorEpoch = _externalPointsMutationEpoch;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('外部ポイント記録を削除'),
+        content: Text(
+          '${target.programName}（${formatExternalPointsCount(target.balanceAfter)} P・'
+          '${formatExternalPointDateTime(target.observedAt)}）の記録を削除しますか？',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true ||
+        editorEpoch != _externalPointsMutationEpoch ||
+        !_canEditExternalPoints(owner)) {
+      return;
+    }
+    final next = _externalPoints
+        .where((item) => item.id != target.id)
+        .toList(growable: false);
+    try {
+      await _saveExternalPoints(next);
+    } catch (error) {
+      debugPrint('Error deleting external point: $error');
+      if (_isExternalPointsOwner(owner) &&
+          editorEpoch + 1 == _externalPointsMutationEpoch) {
+        setState(() {
+          _externalPointsStatus = '外部ポイントの削除保存に失敗しました。';
+        });
+      }
+    }
+  }
+
+  Widget _buildExternalPointsCard() {
+    final owner = _externalPointsOwnerId;
+    if (owner == null || owner.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final isOwnerLoaded = _externalPointsLoadedOwnerId == owner;
+    final canEdit = _canEditExternalPoints(owner);
+    final records =
+        isOwnerLoaded ? _externalPoints : const <AssetExternalPointRecord>[];
+    final statusMessage = isOwnerLoaded && _externalPointsStatus != null
+        ? _externalPointsStatus
+        : (_externalPointsReady ? null : '外部ポイントを読み込んでいます。');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: KeyedSubtree(
+        key: _keyExternalPointsCard,
+        child: AssetExternalPointsCard(
+          records: records,
+          statusMessage: statusMessage,
+          onAddRecord: canEdit ? _addExternalPointRecord : null,
+          onDeleteRecord: canEdit ? _deleteExternalPointRecord : null,
+          now: _now,
+        ),
+      ),
+    );
   }
 
   Future<void> _loadRevolvingConfigs() async {
@@ -22741,6 +23234,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       priorMonthAccountBalances: priorMonthAccountBalances,
       dailyTodoDigest: _currentDailyTodoDigest(),
     );
+    _latestInsightReport = insightReport;
     final warningColor = workbook.cashAfterScheduledPayments < 0
         ? const Color(0xFFB91C1C)
         : const Color(0xFF0D9488);
@@ -33484,6 +33978,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     }
     return Checkbox(
+      key: Key('debt_paid_checkbox_${row.id}'),
       value: row.paid,
       onChanged: (value) {
         unawaited(_toggleMonthlyPaymentPaid(row, value ?? false));

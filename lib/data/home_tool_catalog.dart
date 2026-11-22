@@ -3145,6 +3145,22 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => Navigator.of(context).pushNamed('/jwenv-lab'),
     ),
     HomeToolEntry(
+      id: 'vibe-sim-lab',
+      sectionId: 'ai',
+      title: 'Vibe Sim 物理破綻診断ラボ',
+      subtitle: 'MuJoCoの物理設定ミスを診断し、MjSpec修正コードを試算',
+      icon: Icons.precision_manufacturing_outlined,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        'MuJoCo',
+        'Vibe Sim',
+        '物理シミュレーション',
+        'MjSpec',
+        'ロボット',
+      ],
+      onOpen: (context) => Navigator.of(context).pushNamed('/vibe-sim-lab'),
+    ),
+    HomeToolEntry(
       id: 'agi-fireworks',
       sectionId: 'ai',
       title: 'AGI Fireworks',
