@@ -862,7 +862,7 @@ jobs:
           npx --yes @sentry/cli releases new "$SENTRY_RELEASE"
           npx --yes @sentry/cli sourcemaps inject "${SENTRY_BUNDLE_FILES[@]}"
           npx --yes @sentry/cli sourcemaps upload --release="$SENTRY_RELEASE" "${SENTRY_BUNDLE_FILES[@]}"
-          npx --yes @sentry/cli releases set-commits "$SENTRY_RELEASE" --auto || true
+          npx --yes @sentry/cli releases set-commits "$SENTRY_RELEASE" --auto --ignore-missing || true
           npx --yes @sentry/cli releases finalize "$SENTRY_RELEASE"
           npx --yes @sentry/cli releases deploys "$SENTRY_RELEASE" new -e production
 
