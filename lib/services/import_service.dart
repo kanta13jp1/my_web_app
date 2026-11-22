@@ -869,8 +869,28 @@ class ImportService {
         i,
         i + chunkSize > rows.length ? rows.length : i + chunkSize,
       );
-      await _client.from('notes').insert(chunk);
-      inserted += chunk.length;
+      final withKey = chunk
+          .where((row) => row.containsKey('source_key'))
+          .toList(growable: false);
+      final withoutKey = chunk
+          .where((row) => !row.containsKey('source_key'))
+          .toList(growable: false);
+      if (withKey.isNotEmpty) {
+        final insertedWithKey = await _client
+            .from('notes')
+            .upsert(
+              withKey,
+              onConflict: 'user_id,source_key',
+              ignoreDuplicates: true,
+            )
+            .select('id');
+        inserted += insertedWithKey.length;
+        skippedDuplicates += withKey.length - insertedWithKey.length;
+      }
+      if (withoutKey.isNotEmpty) {
+        await _client.from('notes').insert(withoutKey);
+        inserted += withoutKey.length;
+      }
     }
 
     await _awardImportPoints(inserted);
@@ -1001,19 +1021,26 @@ class ImportService {
         });
       }
 
-      final insertedRows =
-          await _client.from('notes').insert(rows).select('id, source_key');
+      final insertedRows = await _client
+          .from('notes')
+          .upsert(
+            rows,
+            onConflict: 'user_id,source_key',
+            ignoreDuplicates: true,
+          )
+          .select('id, source_key');
       final idBySourceKey = <String, int>{};
-      final fallbackIds = <int>[];
       for (final row in insertedRows) {
         final id = _toIntValue(row['id']);
-        fallbackIds.add(id);
         final key = row['source_key']?.toString().trim() ?? '';
         if (key.isNotEmpty && id > 0) {
           idBySourceKey[key] = id;
         }
       }
       insertedCount += insertedRows.length;
+      if (draftChunk.length > insertedRows.length) {
+        skippedDuplicates += draftChunk.length - insertedRows.length;
+      }
 
       if (!shouldUploadAttachments) {
         continue;
@@ -1022,9 +1049,8 @@ class ImportService {
       for (var j = 0; j < draftChunk.length; j += 1) {
         final draft = draftChunk[j];
         final sourceKey = draft.sourceId?.trim() ?? '';
-        final noteId = idBySourceKey[sourceKey] ??
-            (j < fallbackIds.length ? fallbackIds[j] : 0);
-        if (noteId <= 0 || sourceKey.isEmpty) {
+        final noteId = idBySourceKey[sourceKey];
+        if (noteId == null || noteId <= 0 || sourceKey.isEmpty) {
           continue;
         }
         final links = bundle.noteAttachmentLinks[sourceKey] ??

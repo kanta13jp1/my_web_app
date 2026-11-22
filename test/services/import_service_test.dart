@@ -413,6 +413,7 @@ void main() {
 
         var nextCollectionId = 10;
         final updatedNoteContents = <String>[];
+        final notesPostRequests = <http.Request>[];
         final client = SupabaseClient(
           'http://localhost:9999',
           'synthetic-public-key',
@@ -443,6 +444,7 @@ void main() {
             }
             if (request.url.path.endsWith('/rest/v1/notes')) {
               if (request.method == 'POST') {
+                notesPostRequests.add(request);
                 final decoded = jsonDecode(request.body) as List<dynamic>;
                 final firstRow = Map<String, dynamic>.from(
                   decoded.first as Map,
@@ -527,6 +529,11 @@ void main() {
         expect(result.insertedCount, 1);
         expect(result.uploadedAttachmentCount, 1);
         expect(result.importMode, 'notion-zip-lossless');
+        expect(notesPostRequests, hasLength(1));
+        expect(
+          notesPostRequests.single.url.queryParameters['on_conflict'],
+          'user_id,source_key',
+        );
         expect(uploadGateway.paths, hasLength(1));
         expect(metadataStore.rows.single['note_id'], 501);
         expect(metadataStore.rows.single['source_system'], 'notion');

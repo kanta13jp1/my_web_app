@@ -451,6 +451,21 @@ class NotionExportZipService {
       return;
     }
 
+    final remainingEntries = maxEntryCount - state.entryCount;
+    final remainingBytes =
+        maxTotalUncompressedBytes - state.totalUncompressedBytes;
+    final rejectReason = _inspectZipHeadersBeforeDecode(
+      bytes,
+      remainingEntries: remainingEntries,
+      remainingUncompressedBytes: remainingBytes,
+    );
+    if (rejectReason != null) {
+      warnings.add(
+        '展開前のヘッダー検査で制限を超過したため、Zip Bomb 保護としてアーカイブ展開を中止しました: $rejectReason',
+      );
+      return;
+    }
+
     final Archive archive;
     try {
       archive = ZipDecoder().decodeBytes(bytes, verify: false);
@@ -1054,6 +1069,80 @@ class NotionExportZipService {
     }
 
     return rows;
+  }
+
+  String? _inspectZipHeadersBeforeDecode(
+    final Uint8List bytes, {
+    required final int remainingEntries,
+    required final int remainingUncompressedBytes,
+  }) {
+    if (bytes.length < 22) {
+      return 'ZIP ファイルが最小長 (22 bytes) 未満です。';
+    }
+    final view = ByteData.sublistView(bytes);
+    final minSearch = bytes.length > 65557 ? bytes.length - 65557 : 0;
+    var eocdOffset = -1;
+    for (var i = bytes.length - 22; i >= minSearch; i -= 1) {
+      if (view.getUint32(i, Endian.little) == 0x06054b50) {
+        final commentLen = view.getUint16(i + 20, Endian.little);
+        if (i + 22 + commentLen == bytes.length) {
+          eocdOffset = i;
+          break;
+        }
+      }
+    }
+    if (eocdOffset < 0) {
+      return '有効な ZIP End of Central Directory ヘッダーが見つかりませんでした。';
+    }
+
+    final totalEntries = view.getUint16(eocdOffset + 10, Endian.little);
+    final cdSize = view.getUint32(eocdOffset + 12, Endian.little);
+    final cdOffset = view.getUint32(eocdOffset + 16, Endian.little);
+    if (totalEntries == 0xFFFF ||
+        cdSize == 0xFFFFFFFF ||
+        cdOffset == 0xFFFFFFFF) {
+      return 'ZIP64 大容量アーカイブはブラウザ安全上限を超えています。';
+    }
+    if (totalEntries > remainingEntries) {
+      return 'エントリ数 ($totalEntries 件) が許容上限 ($remainingEntries 件) を超過しています。';
+    }
+    if (cdOffset + cdSize > eocdOffset) {
+      return 'セントラルディレクトリの範囲が不正です。';
+    }
+
+    final cdEnd = cdOffset + cdSize;
+    var pos = cdOffset;
+    var declaredUncompressedBytes = 0;
+    for (var entryIndex = 0; entryIndex < totalEntries; entryIndex += 1) {
+      if (pos + 46 > cdEnd) {
+        return 'セントラルディレクトリヘッダーが破損しています。';
+      }
+      if (view.getUint32(pos, Endian.little) != 0x02014b50) {
+        return '不正なセントラルディレクトリシグネチャです。';
+      }
+      final compressedSize = view.getUint32(pos + 20, Endian.little);
+      final uncompressedSize = view.getUint32(pos + 24, Endian.little);
+      final nameLen = view.getUint16(pos + 28, Endian.little);
+      final extraLen = view.getUint16(pos + 30, Endian.little);
+      final commentLen = view.getUint16(pos + 32, Endian.little);
+
+      if (uncompressedSize == 0xFFFFFFFF) {
+        return 'ZIP64 単一ファイル (>4 GB) は拒否されました。';
+      }
+      declaredUncompressedBytes += uncompressedSize;
+      if (declaredUncompressedBytes > remainingUncompressedBytes) {
+        return '展開後サイズ (${formatStorageBytes(declaredUncompressedBytes)}) が'
+            '許容上限 (${formatStorageBytes(remainingUncompressedBytes)}) を超過しています。';
+      }
+      if (compressedSize > 0 &&
+          uncompressedSize > 10 * 1024 * 1024 &&
+          uncompressedSize > compressedSize * 100) {
+        return '異常な高圧縮率エントリが検出されました。';
+      }
+
+      pos += 46 + nameLen + extraLen + commentLen;
+    }
+    return null;
   }
 }
 

@@ -195,5 +195,39 @@ void main() {
         expect(enexShare, isNot(contains('my-evernote.enex')));
       },
     );
+
+    test(
+      'rejects zip bomb header declaring oversized uncompressedSize before decode',
+      () {
+        final rawZip = _buildZip(
+          textFiles: <String, String>{
+            'note.md': '# Safe Payload\n\nTiny compressed content',
+          },
+        );
+        final patched = Uint8List.fromList(rawZip);
+        final view = ByteData.sublistView(patched);
+        var eocdOffset = -1;
+        for (var i = patched.length - 22; i >= 0; i -= 1) {
+          if (view.getUint32(i, Endian.little) == 0x06054b50) {
+            eocdOffset = i;
+            break;
+          }
+        }
+        expect(eocdOffset, greaterThanOrEqualTo(0));
+        final cdOffset = view.getUint32(eocdOffset + 16, Endian.little);
+        expect(view.getUint32(cdOffset, Endian.little), 0x02014b50);
+
+        // 展開前に 600 MiB を主張する Zip Bomb ヘッダーへ書き換える
+        view.setUint32(cdOffset + 24, 600 * 1024 * 1024, Endian.little);
+
+        final bundle = service.parseZipBytes(
+          fileName: 'zip-bomb.zip',
+          bytes: patched,
+        );
+        expect(bundle.notes, isEmpty);
+        expect(bundle.attachments, isEmpty);
+        expect(bundle.warnings, contains(contains('Zip Bomb')));
+      },
+    );
   });
 }
