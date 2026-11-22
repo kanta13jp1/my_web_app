@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'storage_quota_service.dart';
+
 typedef DirectUploadMetadataBuilder = Map<String, dynamic> Function(
   DirectStorageUploadObject object,
 );
@@ -98,17 +100,23 @@ class DirectStorageUploadService {
   DirectStorageUploadService({
     required this.storage,
     required this.metadataStore,
+    this.quotaService,
   });
 
-  factory DirectStorageUploadService.supabase(final SupabaseClient client) {
+  factory DirectStorageUploadService.supabase(
+    final SupabaseClient client, {
+    final StorageQuotaService? quotaService,
+  }) {
     return DirectStorageUploadService(
       storage: SupabaseDirectStorageUploadGateway(client),
       metadataStore: SupabaseDirectUploadMetadataStore(client),
+      quotaService: quotaService,
     );
   }
 
   final DirectStorageUploadGateway storage;
   final DirectUploadMetadataStore metadataStore;
+  final StorageQuotaService? quotaService;
 
   Future<DirectStorageUploadResult> uploadAndInsertMetadata({
     required final String bucketId,
@@ -148,6 +156,15 @@ class DirectStorageUploadService {
         metadataValues['user_id'],
         'metadataBuilder',
         'must set user_id to the authenticated owner id',
+      );
+    }
+
+    final quota = quotaService;
+    if (quota != null) {
+      await quota.assertCanUpload(
+        userId: ownerId,
+        incomingBytes: bytes.length,
+        singleFileBytes: bytes.length,
       );
     }
 

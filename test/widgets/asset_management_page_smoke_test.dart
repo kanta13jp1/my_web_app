@@ -5600,6 +5600,83 @@ void main() {
         await _unmount(tester);
       },
     );
+    testWidgets(
+      'subscription excess alert card renders active list and jumps on tap',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{'財布(現金)': 50000},
+              },
+              debugInitialRecurringFixedCosts: const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'sub_1',
+                  name: 'Claude',
+                  amount: 3000,
+                  paymentDay: 10,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_2',
+                  name: 'Notion',
+                  amount: 2000,
+                  paymentDay: 12,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_3',
+                  name: 'Netflix',
+                  amount: 1500,
+                  paymentDay: 15,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_4',
+                  name: 'iCloud+',
+                  amount: 1300,
+                  paymentDay: 18,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_5',
+                  name: 'Google AI Pro',
+                  amount: 8000,
+                  paymentDay: 20,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final card = find.byKey(
+          const Key('asset_subscription_excess_alert_card'),
+        );
+        expect(card, findsOneWidget);
+        expect(find.textContaining('サブスクリプション過多アラート（5件）'), findsOneWidget);
+        expect(find.textContaining('Google AI Pro'), findsWidgets);
+
+        final reviewButton = find.byKey(
+          const Key('asset_subscription_excess_review_button'),
+        );
+        expect(reviewButton, findsOneWidget);
+        await tester.ensureVisible(reviewButton);
+        await tester.tap(reviewButton);
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(tester.takeException(), isNull);
+        await _unmount(tester);
+      },
+    );
   });
   testWidgets(
     'anonymous unconfirmed read never claims empty income or offers empty CTA',
