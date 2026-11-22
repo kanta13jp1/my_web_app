@@ -507,12 +507,14 @@ class _HeroBadge extends StatelessWidget {
         children: <Widget>[
           Icon(icon, size: 13, color: DesignTokens.indigoLight),
           const SizedBox(width: DesignTokens.space4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: DesignTokens.textSecondary,
-              fontSize: 11,
-              height: 1.5,
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: DesignTokens.textSecondary,
+                fontSize: 11,
+                height: 1.5,
+              ),
             ),
           ),
         ],

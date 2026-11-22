@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../../../domain/models/structured_guitar_tab.dart';
 import '../../../../../theme/design_tokens.dart';
@@ -33,6 +34,14 @@ class _StructuredTabScoreViewState extends State<StructuredTabScoreView> {
   final Map<int, GlobalKey> _internalRowKeys = <int, GlobalKey>{};
   int? _lastAutoScrolledRow;
 
+  @override
+  void didUpdateWidget(covariant StructuredTabScoreView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.score.id != widget.score.id) {
+      _lastAutoScrolledRow = null;
+    }
+  }
+
   GlobalKey _keyForRow(int rowIdx) {
     final external = widget.rowKeys?[rowIdx];
     if (external != null) return external;
@@ -45,13 +54,31 @@ class _StructuredTabScoreViewState extends State<StructuredTabScoreView> {
       return;
     }
     if (activeRowIdx == null || rowKey == null) return;
+    if (_lastAutoScrolledRow == null) {
+      // Do not hijack scroll on the initial Play tap so playback controls stay
+      // reachable; begin following once the active cursor advances across rows.
+      _lastAutoScrolledRow = activeRowIdx;
+      return;
+    }
     if (_lastAutoScrolledRow == activeRowIdx) return;
     _lastAutoScrolledRow = activeRowIdx;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final rowContext = rowKey.currentContext;
       if (rowContext == null || !rowContext.mounted) return;
-      if (Scrollable.maybeOf(rowContext) == null) return;
+      final renderObject = rowContext.findRenderObject();
+      final scrollable = Scrollable.maybeOf(rowContext);
+      if (renderObject == null || scrollable == null) return;
+      final viewport = RenderAbstractViewport.maybeOf(renderObject);
+      if (viewport != null) {
+        final revealTop = viewport.getOffsetToReveal(renderObject, 0.0).offset;
+        final revealBottom =
+            viewport.getOffsetToReveal(renderObject, 1.0).offset;
+        final pixels = scrollable.position.pixels;
+        if (pixels <= revealTop && pixels >= revealBottom) {
+          return;
+        }
+      }
       Scrollable.ensureVisible(
         rowContext,
         duration: const Duration(milliseconds: 220),

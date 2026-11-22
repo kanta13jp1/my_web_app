@@ -202,18 +202,6 @@ void main() {
         greaterThanOrEqualTo(4.5),
       );
 
-      final openTabButton = tester.widget<OutlinedButton>(
-        find.byKey(const Key('guitar_open_course_practice')),
-      );
-      final openTabFg = openTabButton.style?.foregroundColor?.resolve(
-        <WidgetState>{},
-      );
-      expect(openTabFg, isNotNull);
-      expect(
-        _contrastRatio(openTabFg!, DesignTokens.surface1),
-        greaterThanOrEqualTo(4.5),
-      );
-
       final searchField = tester.widget<TextField>(
         find.byKey(const Key('beatles_tabs_search')),
       );
@@ -235,6 +223,30 @@ void main() {
       expect(resetDisabledFg, isNotNull);
       expect(
         _contrastRatio(resetDisabledFg!, DesignTokens.surface2),
+        greaterThanOrEqualTo(4.5),
+      );
+
+      // Unlock Day 4 (first course day with relatedSongId) to verify the CTA.
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'guitar_course_v1_completed_day_numbers': <String>['1', '2', '3'],
+      });
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: BeatlesGuitarTabsFeature(repository: repository),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final openTabButton = tester.widget<OutlinedButton>(
+        find.byKey(const Key('guitar_open_course_practice')),
+      );
+      final openTabFg = openTabButton.style?.foregroundColor?.resolve(
+        <WidgetState>{},
+      );
+      expect(openTabFg, isNotNull);
+      expect(
+        _contrastRatio(openTabFg!, DesignTokens.surface1),
         greaterThanOrEqualTo(4.5),
       );
     },
