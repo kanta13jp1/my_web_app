@@ -19,7 +19,15 @@ class _SkipChildLayoutRenderBox extends RenderProxyBox {
   }
 
   @override
+  bool paintsChild(RenderBox child) {
+    return false;
+  }
+
+  @override
   void paint(PaintingContext context, Offset offset) {}
+
+  @override
+  void visitChildrenForSemantics(RenderObjectVisitor visitor) {}
 
   @override
   bool hitTestChildren(
@@ -51,6 +59,7 @@ void main() {
                 _SkipChildLayout(
                   child: Focus(
                     focusNode: unlaidOutNode,
+                    includeSemantics: false,
                     child: const SizedBox(width: 80, height: 32),
                   ),
                 ),
