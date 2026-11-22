@@ -7,3 +7,9 @@ Future<AssetObsidianVaultSelection?> pickAssetObsidianVault() async {
     'Obsidian保管庫の選択はWeb版で利用できます。',
   );
 }
+
+Future<AssetObsidianVaultSelection?> pickAssetObsidianFiles() async {
+  throw const AssetObsidianVaultPickerException(
+    'Markdownファイルの選択はWeb版で利用できます。',
+  );
+}

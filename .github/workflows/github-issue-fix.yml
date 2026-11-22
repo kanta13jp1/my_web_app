@@ -188,7 +188,7 @@ jobs:
             printf '%s\n' '1. Reproduce the smallest failing path for this issue.'
             printf '%s\n' '2. Apply the minimum safe fix on this branch.'
             printf '%s\n' '3. Let normal CI run on the draft PR.'
-            printf '%s\n' '4. If CI fails on mechanical issues, `ci-auto-fix.yml` attempts `dart fix --apply` and `deno fmt`.'
+            printf '%s\n' '4. For formatting failures, a human may manually dispatch `ci-auto-fix.yml` with review acknowledgement; it formats changed Dart/Deno files only.'
             printf '%s\n\n' '5. Merge only after CI is green and the issue scope is satisfied.'
             printf '## Checklist\n\n'
             printf '%s\n' '- [ ] Reproduction is clear'
@@ -225,7 +225,7 @@ jobs:
             printf '%s\n' "1. \`github-issue-fix.yml\` created branch \`$BRANCH\`"
             printf '%s\n' '2. make the smallest fix needed for the issue'
             printf '%s\n' '3. let CI run normally'
-            printf '%s\n' '4. if CI fails on mechanical fixes, `ci-auto-fix.yml` will try `dart fix --apply` and `deno fmt`'
+            printf '%s\n' '4. For formatting failures, a human may manually dispatch `ci-auto-fix.yml` with review acknowledgement; it formats changed Dart/Deno files only.'
             printf '%s\n\n' '5. merge after green CI and issue-scope confirmation'
             printf '## Plan File\n\n'
             printf '%s\n' "- \`$PLAN_FILE\`"

@@ -197,9 +197,12 @@ class ThemeService extends ChangeNotifier {
 
   void setThemeMode(ThemeMode mode) async {
     _themeMode = mode;
+    _selectedThemeCode = 'dark_ai';
+    _overrideTheme = null;
     notifyListeners();
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('theme_mode', mode.toString());
+    await prefs.setString('catalog_theme_code', 'dark_ai');
   }
 
   void setPrimaryColor(Color color) {
@@ -305,13 +308,6 @@ class ThemeService extends ChangeNotifier {
         centerTitle: false,
         shadowColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: TextStyle(
-          fontFamily: _appFontFamily,
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          height: 1.4,
-          color: _lightText,
-        ),
       ),
     );
 
@@ -482,13 +478,6 @@ class ThemeService extends ChangeNotifier {
         centerTitle: false,
         shadowColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: TextStyle(
-          fontFamily: _appFontFamily,
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          height: 1.4,
-          color: _darkText,
-        ),
       ),
     );
 

@@ -40,6 +40,13 @@ export function plan(g,raw=null,failures=[],itemAvoidance=[]){
  const target=isWater(g.stage)?null:itemTargets(g).filter(t=>{if(g.room!=='castle'||!t.block||g.power===0)return true;const [x,y]=t.key.split(',').map(Number);return ![x-1,x+1].some(c=>g.solid(c,y+2));}).find(t=>!itemAvoidance.some(r=>r.stage===g.stage&&r.room===g.room&&Math.abs(t.x-r.x)<128)),level=retryLevel(g,failures),depthLimit=Math.max(target?12:8,8+level*2,g.room==='overworld'&&p.grounded&&foot<12?14:0);
  const descent=itemDescent(g,target);if(descent)return {retry_level:level,search_depth:0,action:descent,accepted:false,score:null,raw_score:null};
  const actions=[...new Set([...(isWater(g.stage)||level>=2||target?['left',...(g.room==='castle'||(!isWater(g.stage)&&level>=2)?['left_jump']:[])]:[]),raw,'right_run','right_run_jump','right','right_jump','jump','noop'].filter(Boolean))];
+ // Prefer a nearby exposed pickup only when a continuous short trajectory
+ // actually collects it safely. A later replan must not be assumed for this.
+ if(target&&!target.block){
+  const pickupPaths=actions.map(action=>({action,g:advance(clone(g),action,32)})).filter(path=>path.g.phase!=='dead'&&path.g.pickups[target.kind]>g.pickups[target.kind]);
+  pickupPaths.sort((a,b)=>score(b.g,g,failures,target)-score(a.g,g,failures,target));
+  if(pickupPaths.length){const best=pickupPaths[0];return {retry_level:level,search_depth:4,action:best.action,accepted:raw===best.action,score:score(best.g,g,failures,target),raw_score:null};}
+ }
  let beam=[{g,first:null,value:0}],byFirst={};
  for(let depth=0;depth<depthLimit;depth++){
   const expanded=[];
@@ -49,7 +56,7 @@ export function plan(g,raw=null,failures=[],itemAvoidance=[]){
   }
   expanded.sort((a,b)=>b.value-a.value);
   const seen=new Set();beam=[];
-  for(const b of expanded){const p=b.g.p,k=[Math.round(p.x/3),Math.round(p.y/3),Math.round(p.vx),Math.round(p.vy),+b.g.wasJump,b.g.power,b.g.lives,b.g.star>0,+!!b.g.p.climbing,JSON.stringify(b.g.pickups),b.g.room,b.first].join(':');if(!seen.has(k)){seen.add(k);beam.push(b);}if(beam.length===12)break;}
+  for(const b of expanded){const p=b.g.p,k=[Math.round(p.x/3),Math.round(p.y/3),Math.round(p.vx),Math.round(p.vy),+b.g.wasJump,b.g.jumpBuffer??0,b.g.coyote??0,b.g.power,b.g.lives,b.g.star>0,+!!b.g.p.climbing,JSON.stringify(b.g.pickups),b.g.room,b.first].join(':');if(!seen.has(k)){seen.add(k);beam.push(b);}if(beam.length===12)break;}
   if(depth===depthLimit-1)for(const b of expanded)byFirst[b.first]=Math.max(byFirst[b.first]??-Infinity,b.value);
  }
  const best=beam[0];

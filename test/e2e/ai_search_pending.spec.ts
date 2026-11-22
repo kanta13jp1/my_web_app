@@ -4,7 +4,10 @@ const input = (page: Page) => page.getByRole('textbox', { name: /^ノートの�
 async function search(page: Page, query: string) {
   await input(page).focus();
   await expect(input(page)).toBeFocused();
-  await input(page).fill(query);
+  // Exercise Flutter's native editing pipeline, including replacement of the
+  // previous query, rather than assigning the semantics input's DOM value.
+  await input(page).press('ControlOrMeta+A');
+  await input(page).pressSequentially(query);
   await expect(input(page)).toHaveValue(query);
   await input(page).press('Enter');
 }
@@ -96,6 +99,7 @@ test('a guest can search a sample and open it without logging in', async ({ page
   await expect(page.getByText('ログイン入口', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: /Back|戻る/ }).click();
   await page.getByRole('button', { name: 'サンプルで試す', exact: true }).click();
+  await expect(page.getByRole('button', { name: '自分のノートに戻る', exact: true })).toBeVisible();
   await search(page, '買い物');
   await expect(page.getByRole('button').filter({ hasText: '週末の買い物' })).toBeVisible();
   await page.screenshot({ path: info.outputPath('guest-sample-search.png') });

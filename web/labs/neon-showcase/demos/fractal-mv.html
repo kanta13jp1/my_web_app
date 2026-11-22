@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #000; }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; }
+  #hud { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; pointer-events: none; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="cinema">
+<canvas id="gl" width="1280" height="720"></canvas>
+<canvas id="hud" width="1280" height="720"></canvas>
+<script>
+const glCanvas = document.getElementById('gl');
+const gl = glCanvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
+const hudCanvas = document.getElementById('hud');
+const hctx = hudCanvas.getContext('2d');
+
+const vsSource = `#version 300 es
+in vec2 aPos;
+void main() {
+  gl_Position = vec4(aPos, 0.0, 1.0);
+}`;
+
+const fsSource = `#version 300 es
+precision highp float;
+
+uniform vec2 uRes;
+uniform float uTime;
+uniform float uKick;
+uniform float uArp;
+uniform float uEnergy;
+
+out vec4 fragColor;
+
+mat2 rot(float a) {
+  float c = cos(a), s = sin(a);
+  return mat2(c, -s, s, c);
+}
+
+vec3 palette(float t, float e) {
+  vec3 a = vec3(0.5, 0.5, 0.5);
+  vec3 b = vec3(0.5, 0.5, 0.5);
+  vec3 c = vec3(1.0, 1.0, 1.0);
+  vec3 d = mix(vec3(0.55, 0.72, 0.90), vec3(0.10, 0.42, 0.78), e);
+  return a + b * cos(6.28318 * (c * t + d));
+}
+
+float sdBox(vec3 p, vec3 b) {
+  vec3 q = abs(p) - b;
+  return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+// Kaleidoscopic IFS 3D Fractal Cathedral
+vec2 map(vec3 p) {
+  vec3 q = p;
+  q.xy += vec2(sin(p.z * 0.16) * 0.45, cos(p.z * 0.14) * 0.35);
+  // Repeating architectural fractal cells along Z
+  q.z = mod(q.z + 2.5, 5.0) - 2.5;
+
+  // Symmetric 4-quadrant offset creates a clean central cathedral corridor without radial stretching
+  q.xy = abs(q.xy) - vec2(1.35, 1.15);
+
+  float scale = 1.0;
+  float trap = 1e9;
+  float foldAngle = 0.42 + 0.10 * sin(uTime * 0.25) + 0.04 * uKick * uEnergy;
+
+  for (int i = 0; i < 6; i++) {
+    q = abs(q) - vec3(0.85 + 0.08 * uEnergy, 0.82, 0.90);
+    if (q.x < q.y) q.xy = q.yx;
+    if (q.x < q.z) q.xz = q.zx;
+    if (q.y < q.z) q.yz = q.zy;
+
+    q.xy *= rot(foldAngle);
+    q.yz *= rot(0.30 + 0.05 * cos(uTime * 0.22));
+
+    float s = 1.72;
+    q = q * s - vec3(0.95, 0.52, 0.68);
+    scale *= s;
+
+    trap = min(trap, length(q.xz));
+  }
+
+  float d = (sdBox(q, vec3(0.38, 0.38, 0.38)) - 0.025) / scale;
+  return vec2(d, trap);
+}
+
+vec3 calcNormal(vec3 p) {
+  vec2 e = vec2(0.002, 0.0);
+  return normalize(vec3(
+    map(p + e.xyy).x - map(p - e.xyy).x,
+    map(p + e.yxy).x - map(p - e.yxy).x,
+    map(p + e.yyx).x - map(p - e.yyx).x
+  ));
+}
+
+void main() {
+  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
+
+  float camZ = uTime * 2.1 + sin(uTime * 0.35) * 0.5;
+  vec3 ro = vec3(
+    -sin(camZ * 0.16) * 0.45,
+    -cos(camZ * 0.14) * 0.35,
+    camZ
+  );
+
+  float lookZ = camZ + 2.4;
+  vec3 ta = vec3(
+    -sin(lookZ * 0.16) * 0.45,
+    -cos(lookZ * 0.14) * 0.35,
+    lookZ
+  );
+
+  vec3 ww = normalize(ta - ro);
+  vec3 uu = normalize(cross(ww, vec3(0.0, 1.0, 0.0)));
+  vec3 vv = cross(uu, ww);
+
+  uv *= rot(sin(uTime * 0.25) * 0.18);
+  float fov = 1.35 - 0.10 * uKick * uEnergy;
+  vec3 rd = normalize(uv.x * uu + uv.y * vv + fov * ww);
+
+  float t = 0.0;
+  float glow = 0.0;
+  float minTrap = 1e9;
+  bool hit = false;
+  int steps = 0;
+
+  for (int i = 0; i < 90; i++) {
+    steps = i;
+    vec3 p = ro + rd * t;
+    vec2 res = map(p);
+    float d = res.x;
+    minTrap = min(minTrap, res.y);
+
+    // Controlled subtle neon edge glow
+    glow += exp(-abs(d) * 42.0) * (0.00025 + 0.00045 * uKick * uEnergy);
+
+    if (d < 0.002) {
+      hit = true;
+      break;
+    }
+    if (t > 22.0) break;
+    t += max(d * 0.85, 0.002);
+  }
+
+  vec3 bgCol = vec3(0.004, 0.006, 0.015);
+  vec3 col = bgCol;
+
+  if (hit) {
+    vec3 p = ro + rd * t;
+    vec3 n = calcNormal(p);
+    vec3 ld = normalize(vec3(0.5, 0.8, -0.4));
+    vec3 ref = reflect(rd, n);
+
+    float diff = max(dot(n, ld), 0.0);
+    float spec = pow(max(dot(ref, ld), 0.0), 32.0);
+    float fres = pow(1.0 - max(dot(n, -rd), 0.0), 4.0);
+    float ao = 1.0 - float(steps) / 90.0;
+
+    vec3 neon = palette(minTrap * 0.4 + uTime * 0.05, uEnergy);
+    // Dark obsidian metallic body + sharp neon rim & fine trap circuits
+    float lineGlow = exp(-minTrap * 10.0);
+    vec3 body = vec3(0.04, 0.05, 0.09) * (0.20 + 0.80 * diff) * pow(ao, 2.0);
+    col = body + neon * (fres * (0.35 + 0.55 * uKick) + lineGlow * (0.55 + 0.85 * uArp)) * ao + vec3(0.85, 0.94, 1.0) * spec * 0.55;
+
+    float fog = exp(-0.025 * t * t);
+    col = mix(bgCol, col, fog);
+  }
+
+  // Subtle volumetric neon haze
+  vec3 glowCol = palette(uTime * 0.06 + 0.2, uEnergy);
+  col += glowCol * min(glow, 0.45) * (0.35 + 0.45 * uArp);
+
+  float vig = 1.0 - 0.38 * dot(uv, uv);
+  col *= vig;
+  // ACES Filmic tone mapping for rich blacks and vivid highlights
+  col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+  col = pow(max(col, 0.0), vec3(0.4545));
+
+  fragColor = vec4(col, 1.0);
+}`;
+
+function compile(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    throw new Error(gl.getShaderInfoLog(s));
+  }
+  return s;
+}
+
+const prog = gl.createProgram();
+gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSource));
+gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSource));
+gl.linkProgram(prog);
+if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+  throw new Error(gl.getProgramInfoLog(prog));
+}
+gl.useProgram(prog);
+
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(prog, 'aPos');
+gl.enableVertexAttribArray(loc);
+gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+const uRes = gl.getUniformLocation(prog, 'uRes');
+const uTime = gl.getUniformLocation(prog, 'uTime');
+const uKick = gl.getUniformLocation(prog, 'uKick');
+const uArp = gl.getUniformLocation(prog, 'uArp');
+const uEnergy = gl.getUniformLocation(prog, 'uEnergy');
+
+window.renderFrame = (t, kick, arp, energy) => {
+  gl.viewport(0, 0, 1280, 720);
+  gl.uniform2f(uRes, 1280, 720);
+  gl.uniform1f(uTime, t);
+  gl.uniform1f(uKick, kick);
+  gl.uniform1f(uArp, arp);
+  gl.uniform1f(uEnergy, energy);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+  // Draw minimal crisp HUD
+  hctx.clearRect(0, 0, 1280, 720);
+  hctx.save();
+  hctx.fillStyle = 'rgba(5, 10, 20, 0.58)';
+  hctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
+  hctx.lineWidth = 1.5;
+  hctx.beginPath();
+  hctx.roundRect(24, 24, 420, 64, 12);
+  hctx.fill();
+  hctx.stroke();
+
+  hctx.fillStyle = '#00E5FF';
+  hctx.font = '700 13px "Consolas", monospace';
+  hctx.fillText('GLSL RAYMARCHING  |  POLYGONS: 0  |  ASSETS: 0', 42, 48);
+  hctx.fillStyle = '#E2E8F0';
+  hctx.font = '600 12px "Consolas", monospace';
+  const secLabel = t < 8 ? '01 INTRO' : t < 16 ? '02 BUILD-UP' : t < 24 ? '03 DROP' : '04 OUTRO';
+  hctx.fillText(`BPM: 120  |  ${secLabel}  |  LIVE GLSL · ${t.toFixed(1)}s`, 42, 70);
+
+  // Beat spectrum bars bottom-right
+  const bars = 12;
+  for (let i = 0; i < bars; i++) {
+    const h = 6 + (kick * 28 * (1.0 - i / bars) + arp * 18 * Math.abs(Math.sin(t * 7 + i))) * (0.4 + 0.6 * energy);
+    hctx.fillStyle = i < 4 ? '#00E5FF' : i < 8 ? '#A78BFA' : '#FBBF24';
+    hctx.fillRect(1280 - 24 - (bars - i) * 12, 720 - 24 - h, 8, h);
+  }
+  hctx.restore();
+};
+
+if (!window.__RECORDING__) {
+  let simT = 0;
+  let paused = false;
+  let dragging = false;
+  let dragX = 0;
+  const renderAt = (t) => {
+    const beat = (t * 2.0) % 1.0;
+    const kick = Math.pow(1.0 - beat, 4.0);
+    const arp = 0.5 + 0.5 * Math.sin(t * 8.0);
+    const energy = t >= 16 && t < 24 ? 1.0 : t >= 8 && t < 16 ? 0.65 : 0.35;
+    window.renderFrame(t, kick, arp, energy);
+  };
+  glCanvas.addEventListener('pointerdown', (e) => { dragging = true; dragX = e.clientX; });
+  window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    simT = (simT + (e.clientX - dragX) * 0.05 + 32.0) % 32.0;
+    dragX = e.clientX;
+    renderAt(simT);
+  });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!window.NeonShell) return;
+    window.NeonShell.setHint('左右ドラッグで3Dフラクタル大聖堂を探索 · 上ボタンで4セクションへジャンプ');
+    window.NeonShell.addControl('01 Intro', () => { simT = 0.5; renderAt(simT); });
+    window.NeonShell.addControl('02 Build-Up', () => { simT = 9.0; renderAt(simT); });
+    window.NeonShell.addControl('03 Drop', () => { simT = 17.0; renderAt(simT); });
+    window.NeonShell.addControl('04 Outro', () => { simT = 25.0; renderAt(simT); });
+    window.NeonShell.addControl('⏸ 一時停止', (btn) => {
+      paused = !paused;
+      btn.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+      btn.classList.toggle('active', paused);
+    });
+  });
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+    last = now;
+    if (!paused && !dragging) simT = (simT + dt) % 32.0;
+    renderAt(simT);
+    requestAnimationFrame(loop);
+  }
+  window.renderFrame(0, 0.5, 0.5, 0.5);
+  requestAnimationFrame(loop);
+}
+</script>
+<script src="../demo-shell.js?v=20261120-33"></script>
+</body>
+</html>
