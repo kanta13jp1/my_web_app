@@ -168,6 +168,7 @@ jobs:
           python scripts/wbs_notify_privacy_test.py
           python scripts/test_paid_ai_policy.py
           python scripts/paid_ai_policy.py audit --workflows-dir .github/workflows
+          python scripts/ai_university_rss_manifest_test.py
 
       - name: Test high-risk dual security review
         run: >-
