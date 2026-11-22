@@ -960,7 +960,6 @@ class AssetManagementInsightService {
               'カード内訳合計 ${_formatYen(group.configuredDetailTotal)} の照合が'
               '完了していないため、データ不一致リスクがあります。',
           relatedAccountId: group.billingAccountId,
-          amount: group.billedAmount > 0 ? group.billedAmount : null,
           dueDate: dueDate,
           paymentDay: paymentDay,
           suggestedAction: hasImportFixAction
