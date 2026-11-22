@@ -9031,6 +9031,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _isLoadingPayslipFinance = false;
         _payslipIngestionMessage = null;
       });
+      _maybeDetectSalaryDeposit();
       if (!reconciliationReadOnly) {
         _reconcileAndSaveSalaryIncomePlansIfPending();
       }
