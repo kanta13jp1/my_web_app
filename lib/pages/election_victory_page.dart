@@ -2150,33 +2150,18 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   List<LocalElectionRealityHistoryPoint> _historyPointsForDisplay(
     LocalElectionRealitySnapshot snapshot,
   ) {
-    final history = List<LocalElectionRealityHistoryPoint>.from(_realityHistory)
-      ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
-
-    if (!snapshot.hasData) {
-      return history;
-    }
-
-    final currentPoint = LocalElectionRealityHistoryPoint(
-      fetchedAt: snapshot.fetchedAt,
-      officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
-      actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
+    final currentPoint = snapshot.hasData
+        ? LocalElectionRealityHistoryPoint(
+            fetchedAt: snapshot.fetchedAt,
+            officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
+            actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
+          )
+        : null;
+    return LocalElectionRealityService.mergeSnapshotHistory(
+      serverHistory: snapshot.history,
+      localHistory: _realityHistory,
+      currentPoint: currentPoint,
     );
-    final currentDay = _normalizeDate(currentPoint.fetchedAt.toLocal());
-
-    if (history.isEmpty) {
-      return <LocalElectionRealityHistoryPoint>[currentPoint];
-    }
-
-    final hasCurrentDay = history.any(
-      (item) => _normalizeDate(item.fetchedAt.toLocal()) == currentDay,
-    );
-    if (!hasCurrentDay) {
-      history.add(currentPoint);
-      history.sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
-    }
-
-    return history;
   }
 
   Widget _buildRealityHistorySection(LocalElectionRealitySnapshot snapshot) {
@@ -2205,7 +2190,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ),
         const SizedBox(height: 6),
         Text(
-          'ネット取得した公式地方議員数をこの端末で日次履歴として蓄積し、時系列で表示します。取得回数が増えるほど推移グラフが育ちます。',
+          snapshot.history.isNotEmpty
+              ? 'サーバ側で日次蓄積した公式地方議員数（この端末の履歴とも統合）を時系列で表示します。初回訪問時から推移を確認できます。'
+              : 'ネット取得した公式地方議員数をこの端末で日次履歴として蓄積し、時系列で表示します。取得回数が増えるほど推移グラフが育ちます。',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 12),
@@ -2290,6 +2277,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final minY = minCount <= 10 ? 0.0 : (minCount - 5).toDouble();
     final maxY = (maxCount + 5).toDouble();
     final maxX = history.length <= 1 ? 1.0 : (history.length - 1).toDouble();
+    final bottomInterval =
+        history.length <= 7 ? 1.0 : ((history.length - 1) / 6).ceilToDouble();
 
     return LineChart(
       LineChartData(
@@ -2327,16 +2316,23 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 32,
+              interval: bottomInterval,
               getTitlesWidget: (value, meta) {
-                final index = value.toInt();
+                if ((value - value.roundToDouble()).abs() > 0.001) {
+                  return const SizedBox.shrink();
+                }
+                final index = value.round();
                 if (index < 0 || index >= history.length) {
                   return const SizedBox.shrink();
                 }
                 final point = history[index];
+                final jst = point.fetchedAt.toUtc().add(
+                      const Duration(hours: 9),
+                    );
                 return Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    DateFormat('M/d').format(point.fetchedAt.toLocal()),
+                    DateFormat('M/d').format(jst),
                     style: Theme.of(context).textTheme.labelSmall,
                   ),
                 );
@@ -2366,8 +2362,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   return null;
                 }
                 final point = history[index];
+                final jst = point.fetchedAt.toUtc().add(
+                      const Duration(hours: 9),
+                    );
                 return LineTooltipItem(
-                  '${_dateOnlyFormat.format(point.fetchedAt.toLocal())}\n'
+                  '${_dateOnlyFormat.format(jst)}\n'
                   '${_formatInt(point.officialCurrentLocalMembers)} 人',
                   const TextStyle(
                     color: Color(0xFFE5E7EB),
@@ -2386,7 +2385,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             color: const Color(0xFF0891B2),
             barWidth: 3,
             dotData: FlDotData(
-              show: true,
+              show: history.length <= 35,
               getDotPainter: (spot, percent, barData, index) {
                 return FlDotCirclePainter(
                   radius: 4,

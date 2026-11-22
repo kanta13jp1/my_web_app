@@ -555,4 +555,117 @@ void main() {
     expect(result.dppCandidates.last.status, '次点');
     expect(result.dppCandidates.last.votes, 2122);
   });
+
+  test('round-trips server history on LocalElectionRealitySnapshot JSON', () {
+    final snapshot = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-11-23T01:00:00.000Z',
+      'officialCurrentLocalMembers': 421,
+      'actualNetIncreaseRequired': 279,
+      'history': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'fetchedAt': '2026-11-21T01:00:00.000Z',
+          'officialCurrentLocalMembers': 418,
+          'actualNetIncreaseRequired': 282,
+        },
+        <String, dynamic>{
+          'fetchedAt': '2026-11-20T01:00:00.000Z',
+          'officialCurrentLocalMembers': 0,
+          'actualNetIncreaseRequired': 700,
+        },
+        <String, dynamic>{
+          'fetchedAt': '2026-11-22T01:00:00.000Z',
+          'officialCurrentLocalMembers': 420,
+          'actualNetIncreaseRequired': 280,
+        },
+      ],
+    });
+
+    expect(snapshot.history, hasLength(2));
+    expect(snapshot.history.first.officialCurrentLocalMembers, 418);
+    expect(snapshot.history.last.officialCurrentLocalMembers, 420);
+
+    final decoded = LocalElectionRealitySnapshot.fromJson(snapshot.toJson());
+    expect(decoded.history, hasLength(2));
+    expect(decoded.history.last.officialCurrentLocalMembers, 420);
+  });
+
+  test('mergeSnapshotHistory merges server and local points by JST date', () {
+    final server = <LocalElectionRealityHistoryPoint>[
+      LocalElectionRealityHistoryPoint(
+        fetchedAt: DateTime.parse('2026-11-20T01:00:00.000Z'),
+        officialCurrentLocalMembers: 418,
+        actualNetIncreaseRequired: 282,
+      ),
+      LocalElectionRealityHistoryPoint(
+        fetchedAt: DateTime.parse('2026-11-21T12:00:00.000Z'),
+        officialCurrentLocalMembers: 420,
+        actualNetIncreaseRequired: 280,
+      ),
+    ];
+    final local = <LocalElectionRealityHistoryPoint>[
+      LocalElectionRealityHistoryPoint(
+        fetchedAt: DateTime.parse('2026-11-21T01:00:00.000Z'),
+        officialCurrentLocalMembers: 419,
+        actualNetIncreaseRequired: 281,
+      ),
+      LocalElectionRealityHistoryPoint(
+        fetchedAt: DateTime.parse('2026-11-22T01:00:00.000Z'),
+        officialCurrentLocalMembers: 0,
+        actualNetIncreaseRequired: 700,
+      ),
+    ];
+    final current = LocalElectionRealityHistoryPoint(
+      fetchedAt: DateTime.parse('2026-11-22T16:00:00.000Z'), // JST 2026-11-23
+      officialCurrentLocalMembers: 421,
+      actualNetIncreaseRequired: 279,
+    );
+
+    final merged = LocalElectionRealityService.mergeSnapshotHistory(
+      serverHistory: server,
+      localHistory: local,
+      currentPoint: current,
+    );
+
+    expect(merged, hasLength(3));
+    expect(merged[0].officialCurrentLocalMembers, 418);
+    expect(merged[1].officialCurrentLocalMembers, 420);
+    expect(merged[2].officialCurrentLocalMembers, 421);
+
+    final brandNewVisitor = LocalElectionRealityService.mergeSnapshotHistory(
+      serverHistory: server,
+      localHistory: const <LocalElectionRealityHistoryPoint>[],
+      currentPoint: current,
+    );
+    expect(brandNewVisitor, hasLength(3));
+  });
+
+  test('cacheSnapshot persists merged server and local history', () async {
+    const service = LocalElectionRealityService();
+    final prefs = await SharedPreferences.getInstance();
+    final snapshot = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-11-23T01:00:00.000Z',
+      'officialCurrentLocalMembers': 421,
+      'actualNetIncreaseRequired': 279,
+      'history': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'fetchedAt': '2026-11-20T01:00:00.000Z',
+          'officialCurrentLocalMembers': 418,
+          'actualNetIncreaseRequired': 282,
+        },
+        <String, dynamic>{
+          'fetchedAt': '2026-11-21T01:00:00.000Z',
+          'officialCurrentLocalMembers': 419,
+          'actualNetIncreaseRequired': 281,
+        },
+      ],
+    });
+
+    await service.cacheSnapshot(snapshot, prefs: prefs);
+    final history = await service.loadSnapshotHistory(prefs: prefs);
+    expect(history, hasLength(3));
+    expect(
+      history.map((item) => item.officialCurrentLocalMembers).toList(),
+      <int>[418, 419, 421],
+    );
+  });
 }

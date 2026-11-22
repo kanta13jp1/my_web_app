@@ -113,7 +113,11 @@ class LocalElectionRealityService {
               Map<String, dynamic>.from(item),
             ),
           )
-          .where((item) => item.officialCurrentLocalMembers > 0)
+          .where(
+            (item) =>
+                item.fetchedAt.millisecondsSinceEpoch > 0 &&
+                item.officialCurrentLocalMembers > 0,
+          )
           .toList()
         ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
       return points;
@@ -121,6 +125,52 @@ class LocalElectionRealityService {
       debugPrint('Local election history parse failed: $error');
       return const <LocalElectionRealityHistoryPoint>[];
     }
+  }
+
+  /// Combines server-persisted history, client-local history, and the live
+  /// current snapshot point into a JST-daily deduplicated ascending series.
+  static List<LocalElectionRealityHistoryPoint> mergeSnapshotHistory({
+    List<LocalElectionRealityHistoryPoint> serverHistory =
+        const <LocalElectionRealityHistoryPoint>[],
+    List<LocalElectionRealityHistoryPoint> localHistory =
+        const <LocalElectionRealityHistoryPoint>[],
+    LocalElectionRealityHistoryPoint? currentPoint,
+    int maxPoints = 180,
+  }) {
+    final byDay = <String, LocalElectionRealityHistoryPoint>{};
+    final candidates = <LocalElectionRealityHistoryPoint>[
+      ...localHistory,
+      ...serverHistory,
+      if (currentPoint != null) currentPoint,
+    ];
+
+    for (final point in candidates) {
+      if (point.fetchedAt.millisecondsSinceEpoch <= 0 ||
+          point.officialCurrentLocalMembers <= 0) {
+        continue;
+      }
+      final dayKey = historyDayKey(point.fetchedAt);
+      final existing = byDay[dayKey];
+      if (existing == null || !point.fetchedAt.isBefore(existing.fetchedAt)) {
+        byDay[dayKey] = point;
+      }
+    }
+
+    final sorted = byDay.values.toList()
+      ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
+    if (maxPoints > 0 && sorted.length > maxPoints) {
+      return sorted.sublist(sorted.length - maxPoints);
+    }
+    return sorted;
+  }
+
+  /// Returns the canonical JST (`UTC+9`) calendar date key (`YYYY-MM-DD`).
+  static String historyDayKey(DateTime date) {
+    final jst = date.toUtc().add(const Duration(hours: 9));
+    final year = jst.year.toString().padLeft(4, '0');
+    final month = jst.month.toString().padLeft(2, '0');
+    final day = jst.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
   }
 
   Future<LocalElectionLegislatorProfile?> loadCachedMemberProfile(
@@ -309,7 +359,11 @@ class LocalElectionRealityService {
       );
     }
 
-    return LocalElectionRealitySnapshot.fromJson(_toMap(data['snapshot']));
+    final snapshotMap = _toMap(data['snapshot']);
+    if (!snapshotMap.containsKey('history') && data['history'] is List) {
+      snapshotMap['history'] = data['history'];
+    }
+    return LocalElectionRealitySnapshot.fromJson(snapshotMap);
   }
 
   bool _isSnapshotFresh(LocalElectionRealitySnapshot snapshot) {
@@ -410,28 +464,15 @@ class LocalElectionRealityService {
     );
 
     final history = await loadSnapshotHistory(prefs: store);
-    final currentDayKey = _historyDayKey(currentPoint.fetchedAt.toLocal());
-    final updated = history
-        .where(
-          (item) => _historyDayKey(item.fetchedAt.toLocal()) != currentDayKey,
-        )
-        .toList()
-      ..add(currentPoint)
-      ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
-
-    const maxPoints = 180;
-    final trimmed = updated.length > maxPoints
-        ? updated.sublist(updated.length - maxPoints)
-        : updated;
+    final merged = mergeSnapshotHistory(
+      serverHistory: snapshot.history,
+      localHistory: history,
+      currentPoint: currentPoint,
+    );
 
     await store.setString(
       _historyStorageKey,
-      jsonEncode(trimmed.map((item) => item.toJson()).toList()),
+      jsonEncode(merged.map((item) => item.toJson()).toList()),
     );
-  }
-
-  String _historyDayKey(DateTime date) {
-    final normalized = DateTime(date.year, date.month, date.day);
-    return normalized.toIso8601String();
   }
 }

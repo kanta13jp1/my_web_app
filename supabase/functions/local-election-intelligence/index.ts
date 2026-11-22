@@ -12,6 +12,14 @@ import {
   type ScheduleSourceFetchHealth,
   X_POST_CANDIDATE_HUB_SOURCE,
 } from "./snapshot_history.ts";
+import {
+  buildHistoryPointFromSnapshot,
+  LOCAL_ELECTION_MEMBER_HISTORY_TABLE,
+  type LocalElectionMemberHistoryPoint,
+  type LocalElectionMemberHistoryStore,
+  type LocalElectionMemberHistoryUpsertRow,
+  recordAndLoadMemberHistory,
+} from "./member_history.ts";
 import { normalizeCdpBenchmark } from "./party_gap_ranking.ts";
 import {
   buildElectionIntelligenceSnapshot,
@@ -787,6 +795,18 @@ serve(async (req) => {
         }`,
       );
     }
+    const history = await recordAndLoadMemberHistory({
+      store: createLocalElectionMemberHistoryStore(),
+      snapshot: snapshotBase,
+      persistDailyPoint: parsedRequest.action === "snapshotAndQueue" &&
+        collectionQualityIssues.length === 0,
+      includeCurrentPoint: memberCollectionQualityIssues.length === 0 &&
+        officialCurrentLocalMembers > 0,
+    });
+    const snapshotWithHistory = {
+      ...snapshot,
+      history,
+    };
     // R28: 立憲実数(週次 update_cdp_benchmark.mjs が正本の repo asset)を
     // EF 側で取得して地力差系列へ渡す。この EF の snapshot は cdpLocalMembers
     // を 0 ハードコードするため、これが本番で唯一の立憲実数源(レビュー F1:
@@ -806,7 +826,7 @@ serve(async (req) => {
     const persistence = parsedRequest.action === "snapshotAndQueue"
       ? await persistLocalElectionSnapshot(
         createLocalElectionHubStore(),
-        snapshot,
+        snapshotWithHistory,
         new Date().toISOString(),
         { cdpByPrefecture },
       )
@@ -814,7 +834,7 @@ serve(async (req) => {
 
     return jsonResponse({
       success: true,
-      snapshot,
+      snapshot: snapshotWithHistory,
       ...(persistence
         ? {
           persistence: {
@@ -1072,6 +1092,70 @@ function createLocalElectionHubStore(): LocalElectionHubStore {
         const raced = await findCandidateByKey(candidateKey);
         if (!raced) throw error;
         return { row: raced, created: false };
+      }
+    },
+  };
+}
+
+function createLocalElectionMemberHistoryStore():
+  | LocalElectionMemberHistoryStore
+  | null {
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+    return null;
+  }
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  return {
+    async listHistory(
+      limit: number,
+    ): Promise<LocalElectionMemberHistoryPoint[]> {
+      const { data, error } = await admin
+        .from(LOCAL_ELECTION_MEMBER_HISTORY_TABLE)
+        .select(
+          "snapshot_date, fetched_at, official_current_local_members, actual_net_increase_required",
+        )
+        .order("snapshot_date", { ascending: false })
+        .limit(limit);
+      if (error) {
+        throw new Error(error.message);
+      }
+      const points: LocalElectionMemberHistoryPoint[] = [];
+      for (const rawRow of data ?? []) {
+        const row = rawRow && typeof rawRow === "object"
+          ? rawRow as Record<string, unknown>
+          : {};
+        const point = buildHistoryPointFromSnapshot({
+          fetchedAt: row.fetched_at,
+          officialCurrentLocalMembers: row.official_current_local_members,
+          actualNetIncreaseRequired: row.actual_net_increase_required,
+        });
+        if (point) {
+          points.push(point);
+        }
+      }
+      return points;
+    },
+    async upsertDailyPoint(
+      row: LocalElectionMemberHistoryUpsertRow,
+    ): Promise<void> {
+      const { error } = await admin
+        .from(LOCAL_ELECTION_MEMBER_HISTORY_TABLE)
+        .upsert(
+          {
+            snapshot_date: row.snapshot_date,
+            fetched_at: row.fetched_at,
+            official_current_local_members:
+              row.official_current_local_members,
+            actual_net_increase_required: row.actual_net_increase_required,
+            source: row.source,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "snapshot_date" },
+        );
+      if (error) {
+        throw new Error(error.message);
       }
     },
   };
