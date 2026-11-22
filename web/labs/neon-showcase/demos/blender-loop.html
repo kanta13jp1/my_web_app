@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>CRYSTAL KINETIC LOOP // Marble Elevator &amp; Seesaw (Pure WebGL2)</title>
+<style>
+  :root { --mono: ui-monospace, "Cascadia Code", Consolas, monospace; --cyan: #38bdf8; --gold: #fbbf24; --pink: #f43f5e; }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; background: #040814; color: #f8fafc; font-family: var(--mono); }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; cursor: grab; }
+  #gl:active { cursor: grabbing; }
+  .hud-tl {
+    position: absolute; top: 14px; left: 16px;
+    background: rgba(5, 11, 24, 0.78); border: 1px solid rgba(56, 189, 248, 0.36);
+    border-radius: 8px; padding: 8px 13px; backdrop-filter: blur(6px);
+  }
+  .hud-tl h1 { font-size: 13px; font-weight: 800; letter-spacing: 1.2px; }
+  .hud-tl h1 span { color: var(--cyan); }
+  .hud-tl p { font-size: 9.5px; color: #94a3b8; margin-top: 2px; }
+  .hud-tr {
+    position: absolute; top: 14px; right: 16px;
+    background: rgba(5, 11, 24, 0.78); border: 1px solid rgba(251, 191, 36, 0.32);
+    border-radius: 8px; padding: 8px 12px; display: flex; gap: 14px;
+    backdrop-filter: blur(6px); font-variant-numeric: tabular-nums;
+  }
+  .st { display: flex; flex-direction: column; }
+  .st .k { font-size: 8px; color: #94a3b8; }
+  .st .v { font-size: 12.5px; font-weight: 800; color: var(--cyan); }
+  .st .v.gd { color: var(--gold); }
+  .hud-bl {
+    position: absolute; bottom: 14px; left: 16px;
+    display: flex; flex-wrap: wrap; gap: 7px;
+    background: rgba(5, 11, 24, 0.82); border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 8px; padding: 7px 10px; backdrop-filter: blur(6px);
+  }
+  .cbtn {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 800;
+    color: #cbd5e1; background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 6px;
+    padding: 6px 10px; cursor: pointer;
+  }
+  .cbtn:hover { border-color: var(--cyan); color: #fff; }
+  .cbtn.act { background: linear-gradient(90deg, #0284c7, #38bdf8); border-color: #bae6fd; color: #04101c; }
+  .cbtn.act-gd { background: linear-gradient(90deg, #f59e0b, #fbbf24); border-color: #fde68a; color: #111827; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="crystal">
+<canvas id="gl" width="1280" height="720"></canvas>
+
+<div class="hud-tl">
+  <h1>CRYSTAL KINETIC LOOP <span>// MARBLE ELEVATOR &amp; SEESAW</span></h1>
+  <p>PURE WEBGL2 · ガラス複線レール・観覧車ギア・放物線ジャンプ・シーソー完全同期</p>
+</div>
+<div class="hud-tr">
+  <div class="st"><span class="k">MARBLES</span><span class="v" id="sBalls">3</span></div>
+  <div class="st"><span class="k">CYCLE</span><span class="v gd" id="sCyc">0%</span></div>
+  <div class="st"><span class="k">SPEED</span><span class="v" id="sSpd">1.0x</span></div>
+</div>
+<div class="hud-bl">
+  <button class="cbtn act" id="cam0">01 スタジオ全体</button>
+  <button class="cbtn" id="cam1">02 観覧車ギア接写</button>
+  <button class="cbtn" id="cam2">03 シーソー追跡</button>
+  <button class="cbtn act-gd" id="btnAdd">＋ ボール追加</button>
+  <button class="cbtn" id="btnSpd">⚡ 速度: 1x</button>
+  <button class="cbtn" id="btnPause">⏸ 一時停止</button>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('gl');
+  const gl = canvas.getContext('webgl2', { antialias: true, preserveDrawingBuffer: true });
+  if (!gl) return;
+
+  const VS = `#version 300 es
+  layout(location=0) in vec3 aPos;
+  layout(location=1) in vec3 aNorm;
+  uniform mat4 uVP;
+  uniform mat4 uModel;
+  out vec3 vWPos;
+  out vec3 vNorm;
+  void main() {
+    vec4 wp = uModel * vec4(aPos, 1.0);
+    vWPos = wp.xyz;
+    vNorm = normalize(mat3(uModel) * aNorm);
+    gl_Position = uVP * wp;
+  }`;
+
+  const FS = `#version 300 es
+  precision highp float;
+  in vec3 vWPos;
+  in vec3 vNorm;
+  uniform vec3 uCam;
+  uniform vec3 uCol;
+  uniform vec3 uEmit;
+  uniform float uGlass;
+  uniform float uFloor;
+  out vec4 outCol;
+  void main() {
+    vec3 N = normalize(vNorm);
+    vec3 V = normalize(uCam - vWPos);
+    if (uFloor > 0.5) {
+      float r = length(vWPos.xz);
+      float ring = smoothstep(0.05, 0.0, abs(fract(r * 0.5) - 0.5)) * exp(-r * 0.09);
+      vec3 base = vec3(0.014, 0.024, 0.048) + vec3(0.10, 0.45, 0.85) * ring * 0.55;
+      outCol = vec4(pow(clamp(base, 0.0, 1.0), vec3(1.0 / 2.2)), 1.0);
+      return;
+    }
+    vec3 L1 = normalize(vec3(6.0, 12.0, 9.0));
+    vec3 L2 = normalize(vec3(-8.0, 6.0, 5.0));
+    float d1 = max(dot(N, L1), 0.0);
+    float d2 = max(dot(N, L2), 0.0);
+    float sp = pow(max(dot(N, normalize(L1 + V)), 0.0), 96.0);
+    float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+    vec3 col = uCol * (0.24 + d1 * 0.82 + d2 * 0.38) + vec3(0.95, 0.98, 1.0) * sp * 1.1
+      + mix(vec3(0.28, 0.72, 1.0), uCol + vec3(0.4), 0.4) * fres * (uGlass > 0.5 ? 1.25 : 0.55)
+      + uEmit;
+    col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+    outCol = vec4(pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2)), uGlass > 0.5 ? 0.68 : 1.0);
+  }`;
+
+  function sh(t, s) { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); return x; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  const uVP = gl.getUniformLocation(prog, 'uVP');
+  const uModel = gl.getUniformLocation(prog, 'uModel');
+  const uCam = gl.getUniformLocation(prog, 'uCam');
+  const uCol = gl.getUniformLocation(prog, 'uCol');
+  const uEmit = gl.getUniformLocation(prog, 'uEmit');
+  const uGlass = gl.getUniformLocation(prog, 'uGlass');
+  const uFloor = gl.getUniformLocation(prog, 'uFloor');
+
+  function makeVAO(v, n) {
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    const b0 = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b0);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(v), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    const b1 = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b1);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(n), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+    return { vao, count: v.length / 3 };
+  }
+  function pushTri(v, n, a, b, c) {
+    const ux=b[0]-a[0], uy=b[1]-a[1], uz=b[2]-a[2], vx=c[0]-a[0], vy=c[1]-a[1], vz=c[2]-a[2];
+    let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx; const l=Math.hypot(nx,ny,nz)||1;
+    v.push(...a,...b,...c); n.push(nx/l,ny/l,nz/l, nx/l,ny/l,nz/l, nx/l,ny/l,nz/l);
+  }
+  function pushQ(v, n, a, b, c, d) { pushTri(v,n,a,b,c); pushTri(v,n,a,c,d); }
+
+  function buildBox(sx, sy, sz) {
+    const v=[], n=[], x=sx/2, y=sy/2, z=sz/2;
+    pushQ(v,n,[-x,-y,z],[x,-y,z],[x,y,z],[-x,y,z]);
+    pushQ(v,n,[x,-y,-z],[-x,-y,-z],[-x,y,-z],[x,y,-z]);
+    pushQ(v,n,[-x,y,z],[x,y,z],[x,y,-z],[-x,y,-z]);
+    pushQ(v,n,[-x,-y,-z],[x,-y,-z],[x,-y,z],[-x,-y,z]);
+    pushQ(v,n,[x,-y,z],[x,-y,-z],[x,y,-z],[x,y,z]);
+    pushQ(v,n,[-x,-y,-z],[-x,-y,z],[-x,y,z],[-x,y,-z]);
+    return makeVAO(v, n);
+  }
+  function buildSphere(r = 1, lat = 14, lon = 22) {
+    const v=[], n=[];
+    const pt = (t, p) => [Math.sin(t)*Math.cos(p)*r, Math.cos(t)*r, Math.sin(t)*Math.sin(p)*r];
+    for (let i=0;i<lat;i++) for (let j=0;j<lon;j++) {
+      const t0=i/lat*Math.PI, t1=(i+1)/lat*Math.PI, p0=j/lon*Math.PI*2, p1=(j+1)/lon*Math.PI*2;
+      const a=pt(t0,p0), b=pt(t1,p0), c=pt(t1,p1), d=pt(t0,p1);
+      v.push(...a,...b,...c, ...a,...c,...d);
+      const rn = (p) => [p[0]/r, p[1]/r, p[2]/r];
+      n.push(...rn(a),...rn(b),...rn(c), ...rn(a),...rn(c),...rn(d));
+    }
+    return makeVAO(v, n);
+  }
+  function buildRingZ(rIn, rOut, depth, segs = 56) {
+    const v=[], n=[], hz=depth/2;
+    for (let i=0;i<segs;i++) {
+      const a0=i/segs*Math.PI*2, a1=(i+1)/segs*Math.PI*2;
+      const c0=Math.cos(a0), s0=Math.sin(a0), c1=Math.cos(a1), s1=Math.sin(a1);
+      pushQ(v,n,[c0*rOut,s0*rOut,-hz],[c1*rOut,s1*rOut,-hz],[c1*rOut,s1*rOut,hz],[c0*rOut,s0*rOut,hz]);
+      pushQ(v,n,[c1*rIn,s1*rIn,-hz],[c0*rIn,s0*rIn,-hz],[c0*rIn,s0*rIn,hz],[c1*rIn,s1*rIn,hz]);
+      pushQ(v,n,[c0*rIn,s0*rIn,hz],[c0*rOut,s0*rOut,hz],[c1*rOut,s1*rOut,hz],[c1*rIn,s1*rIn,hz]);
+      pushQ(v,n,[c0*rOut,s0*rOut,-hz],[c0*rIn,s0*rIn,-hz],[c1*rIn,s1*rIn,-hz],[c1*rOut,s1*rOut,-hz]);
+    }
+    return makeVAO(v, n);
+  }
+
+  // ---- Faithful Path Equations from blender_loop/generate_scene.py (Y-up WebGL2) ----
+  // Blender (x, y, z) -> WebGL (x, z, -y)
+  const WHEEL_CX = -2.5, WHEEL_CY = 2.7, WHEEL_R = 1.90;
+  const UPPER_PTS = [[-2.50, 4.60, 0.0], [-1.55, 4.38, -0.12], [-0.60, 4.02, -0.34], [0.35, 3.65, -0.48]];
+  const LOWER_PTS = [[2.55, 2.28, -0.48], [3.10, 1.85, 0.30], [2.20, 1.42, 1.05], [0.60, 1.12, 0.95], [-0.85, 0.88, 0.35], [-1.75, 0.81, 0.05], [-2.50, 0.80, 0.0]];
+  const P_DROP = [0.35, 3.65, -0.48], P_LAND = [1.55, 2.68, -0.48], P_EXIT = [2.55, 2.28, -0.48];
+
+  function catmull(pts, t) {
+    const n = pts.length, sc = Math.max(0, Math.min(1, t)) * (n - 1);
+    const idx = Math.min(Math.floor(sc), n - 2), lt = sc - idx;
+    const p0 = pts[Math.max(0, idx - 1)], p1 = pts[idx], p2 = pts[idx + 1], p3 = pts[Math.min(n - 1, idx + 2)];
+    const t2 = lt*lt, t3 = t2*lt;
+    return [0,1,2].map(k => 0.5*(2*p1[k]+(-p0[k]+p2[k])*lt+(2*p0[k]-5*p1[k]+4*p2[k]-p3[k])*t2+(-p0[k]+3*p1[k]-3*p2[k]+p3[k])*t3));
+  }
+
+  function evalBall(u) {
+    u = ((u % 1) + 1) % 1;
+    if (u < 0.16) {
+      const s = u / 0.16;
+      return catmull(UPPER_PTS, 0.55 * s + 0.45 * s * s);
+    } else if (u < 0.22) {
+      const s = (u - 0.16) / 0.06;
+      const x = P_DROP[0] + (P_LAND[0] - P_DROP[0]) * s;
+      const z = P_DROP[2] + (P_LAND[2] - P_DROP[2]) * s;
+      const y = P_DROP[1] + (P_LAND[1] - P_DROP[1]) * s + Math.sin(s * Math.PI) * 0.36;
+      return [x, y, z];
+    } else if (u < 0.26) {
+      const s = (u - 0.22) / 0.04;
+      const bounce = Math.abs(Math.sin(s * Math.PI * 2.0)) * (1 - s) * 0.16;
+      return [P_LAND[0] + (P_EXIT[0] - P_LAND[0]) * s, P_LAND[1] + (P_EXIT[1] - P_LAND[1]) * s + bounce, P_LAND[2]];
+    } else if (u < 0.50) {
+      const s = (u - 0.26) / 0.24;
+      return catmull(LOWER_PTS, s);
+    } else {
+      // Ferris-wheel gear elevator: 180 deg clockwise lift from bottom (-PI/2) to top (+PI/2) via left (-PI)!
+      const s = (u - 0.50) / 0.50;
+      const ang = -Math.PI * 0.5 - s * Math.PI;
+      return [WHEEL_CX + Math.cos(ang) * WHEEL_R, WHEEL_CY + Math.sin(ang) * WHEEL_R, 0.0];
+    }
+  }
+
+  function buildTubeRail(pts, steps = 40, offsetZ = 0) {
+    const v=[], n=[], rad = 0.048, seg = 8;
+    const rings = [];
+    for (let i = 0; i <= steps; i++) {
+      const p = catmull(pts, i / steps);
+      const pNext = catmull(pts, Math.min(1, (i + 0.5) / steps));
+      const pPrev = catmull(pts, Math.max(0, (i - 0.5) / steps));
+      let tx = pNext[0]-pPrev[0], ty = pNext[1]-pPrev[1], tz = pNext[2]-pPrev[2];
+      const tl = Math.hypot(tx,ty,tz)||1; tx/=tl; ty/=tl; tz/=tl;
+      // Side vector approx cross(tangent, up)
+      let sx = -tz, sy = 0, sz = tx;
+      const sl = Math.hypot(sx,sz)||1; sx/=sl; sz/=sl;
+      let ux = ty*sz - tz*sy, uy = tz*sx - tx*sz, uz = tx*sy - ty*sx;
+      const ul = Math.hypot(ux,uy,uz)||1; ux/=ul; uy/=ul; uz/=ul;
+      const cx = p[0] + sx * offsetZ, cy = p[1] - 0.22, cz = p[2] + sz * offsetZ;
+      const ring = [];
+      for (let j = 0; j < seg; j++) {
+        const a = (j / seg) * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+        ring.push([cx + (sx*ca + ux*sa)*rad, cy + (sy*ca + uy*sa)*rad, cz + (sz*ca + uz*sa)*rad]);
+      }
+      rings.push(ring);
+    }
+    for (let i = 0; i < steps; i++) {
+      for (let j = 0; j < seg; j++) {
+        const jn = (j + 1) % seg;
+        pushQ(v, n, rings[i][j], rings[i+1][j], rings[i+1][jn], rings[i][jn]);
+      }
+    }
+    return makeVAO(v, n);
+  }
+
+  const railUpperL = buildTubeRail(UPPER_PTS, 32, -0.17);
+  const railUpperR = buildTubeRail(UPPER_PTS, 32,  0.17);
+  const railLowerL = buildTubeRail(LOWER_PTS, 56, -0.17);
+  const railLowerR = buildTubeRail(LOWER_PTS, 56,  0.17);
+  const wheelOuter = buildRingZ(WHEEL_R - 0.08, WHEEL_R + 0.09, 0.34, 60);
+  const wheelInner = buildRingZ(0.42, 0.56, 0.38, 32);
+  const spokeMesh = buildBox(WHEEL_R * 2.0, 0.08, 0.14);
+  const toothMesh = buildBox(0.18, 0.20, 0.32);
+  const seesawPlank = buildBox(1.45, 0.09, 0.52);
+  const pillarMesh = buildBox(0.14, 1.0, 0.14);
+  const sphereMesh = buildSphere(0.26, 14, 22);
+  const floorMesh = makeVAO([-35,0,-35, 35,0,-35, 35,0,35, -35,0,-35, 35,0,35, -35,0,35], [0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0]);
+
+  function m4Id() { return new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]); }
+  function m4Mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c=0;c<4;c++) for (let r=0;r<4;r++) o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
+    return o;
+  }
+  function m4T(x,y,z) { const m=m4Id(); m[12]=x; m[13]=y; m[14]=z; return m; }
+  function m4RZ(a) { const c=Math.cos(a),s=Math.sin(a),m=m4Id(); m[0]=c;m[1]=s;m[4]=-s;m[5]=c; return m; }
+  function m4Persp(fov, asp, n, f) {
+    const t=1/Math.tan(fov*0.5), nf=1/(n-f);
+    return new Float32Array([t/asp,0,0,0, 0,t,0,0, 0,0,(f+n)*nf,-1, 0,0,2*f*n*nf,0]);
+  }
+  function m4Look(e, t) {
+    let zx=e[0]-t[0], zy=e[1]-t[1], zz=e[2]-t[2], zl=Math.hypot(zx,zy,zz)||1; zx/=zl; zy/=zl; zz/=zl;
+    let xx=zz, xy=0, xz=-zx, xl=Math.hypot(xx,xy,xz)||1; xx/=xl; xz/=xl;
+    let yx=zy*xz, yy=zz*xx-zx*xz, yz=-zy*xx;
+    return new Float32Array([xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0, -(xx*e[0]+xy*e[1]+xz*e[2]),-(yx*e[0]+yy*e[1]+yz*e[2]),-(zx*e[0]+zy*e[1]+zz*e[2]),1]);
+  }
+
+  const BALL_COLS = [
+    [[0.0, 0.88, 1.0], [0.08, 0.72, 1.0]],
+    [[1.0, 0.65, 0.1], [1.0, 0.55, 0.08]],
+    [[1.0, 0.16, 0.58], [0.95, 0.12, 0.52]],
+    [[0.22, 1.0, 0.56], [0.16, 0.85, 0.44]],
+    [[0.72, 0.35, 1.0], [0.62, 0.25, 1.0]],
+  ];
+  let balls = [
+    { u: 0.0, prevU: 0.0, ci: 0 },
+    { u: 0.333, prevU: 0.333, ci: 1 },
+    { u: 0.666, prevU: 0.666, ci: 2 },
+  ];
+  let simU = 0, speedMult = 1.0, paused = false;
+  let camYaw = 0.22, camPitch = 0.26, camDist = 9.2, camTgt = [0.0, 2.35, -0.1];
+  let tgtYaw = 0.22, tgtPitch = 0.26, tgtDist = 9.2, tgtTgt = [0.0, 2.35, -0.1];
+  let dragging = false, lx = 0, ly = 0;
+
+  const camBtns = [document.getElementById('cam0'), document.getElementById('cam1'), document.getElementById('cam2')];
+  function setCam(i) {
+    camBtns.forEach((b, k) => b.classList.toggle('act', k === i));
+    if (i === 0) { tgtYaw = 0.22; tgtPitch = 0.24; tgtDist = 9.4; tgtTgt = [0.1, 2.4, -0.1]; }
+    else if (i === 1) { tgtYaw = -0.32; tgtPitch = 0.16; tgtDist = 5.4; tgtTgt = [-2.4, 2.7, 0.0]; }
+    else { tgtYaw = 0.55; tgtPitch = 0.32; tgtDist = 4.6; tgtTgt = [1.85, 2.45, -0.45]; }
+  }
+  camBtns.forEach((b, i) => b.addEventListener('click', () => setCam(i)));
+  document.getElementById('btnAdd').addEventListener('click', () => {
+    if (balls.length >= 9) balls.splice(3);
+    balls.push({ u: 0.02, prevU: 0.02, ci: balls.length % BALL_COLS.length });
+    document.getElementById('sBalls').textContent = String(balls.length);
+    window.NeonAudio?.sfx('chime', 1.1 + balls.length * 0.08);
+  });
+  const speeds = [1.0, 2.0, 0.5]; let spI = 0;
+  document.getElementById('btnSpd').addEventListener('click', (e) => {
+    spI = (spI + 1) % speeds.length; speedMult = speeds[spI];
+    e.currentTarget.textContent = `⚡ 速度: ${speedMult}x`;
+    document.getElementById('sSpd').textContent = `${speedMult.toFixed(1)}x`;
+  });
+  document.getElementById('btnPause').addEventListener('click', (e) => {
+    paused = !paused;
+    e.currentTarget.textContent = paused ? '▶ 再開' : '⏸ 一時停止';
+    e.currentTarget.classList.toggle('act', paused);
+  });
+
+  canvas.addEventListener('pointerdown', (e) => { dragging = true; lx = e.clientX; ly = e.clientY; });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    tgtYaw += (e.clientX - lx) * 0.008;
+    tgtPitch = Math.max(0.04, Math.min(1.15, tgtPitch + (e.clientY - ly) * 0.007));
+    lx = e.clientX; ly = e.clientY;
+  });
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    tgtDist = Math.max(3.8, Math.min(16, tgtDist + e.deltaY * 0.006));
+  }, { passive: false });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    window.NeonShell?.setHint('ドラッグ: 3D回転 · スクロール: ズーム · ＋ ボール追加で多重ループ体験');
+  });
+
+  function draw(mesh, model, col, emit, glass = 0, floor = 0) {
+    gl.uniformMatrix4fv(uModel, false, model);
+    gl.uniform3fv(uCol, col);
+    gl.uniform3fv(uEmit, emit);
+    gl.uniform1f(uGlass, glass);
+    gl.uniform1f(uFloor, floor);
+    gl.bindVertexArray(mesh.vao);
+    gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+    last = now;
+    if (!paused) {
+      const du = (dt * speedMult) / 8.0; // 8.0s seamless cycle (240 frames @ 30fps)
+      simU = (simU + du) % 1.0;
+      for (const b of balls) {
+        b.prevU = b.u;
+        b.u = (b.u + du) % 1.0;
+        // Chime triggers on seesaw landing (0.22) and wheel catch (0.50)
+        if (b.prevU < 0.22 && b.u >= 0.22) window.NeonAudio?.sfx('chime', 0.95 + b.ci * 0.14);
+        if (b.prevU < 0.50 && b.u >= 0.50) window.NeonAudio?.sfx('clack', 1.15);
+      }
+    }
+    document.getElementById('sCyc').textContent = `${Math.round(simU * 100)}%`;
+
+    const sm = Math.min(1, dt * 6);
+    camYaw += (tgtYaw - camYaw) * sm;
+    camPitch += (tgtPitch - camPitch) * sm;
+    camDist += (tgtDist - camDist) * sm;
+    for (let k = 0; k < 3; k++) camTgt[k] += (tgtTgt[k] - camTgt[k]) * sm;
+
+    gl.viewport(0, 0, 1280, 720);
+    gl.clearColor(0.015, 0.025, 0.052, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.disable(gl.BLEND);
+    gl.useProgram(prog);
+
+    const eye = [
+      camTgt[0] + Math.sin(camYaw) * Math.cos(camPitch) * camDist,
+      camTgt[1] + Math.sin(camPitch) * camDist,
+      camTgt[2] + Math.cos(camYaw) * Math.cos(camPitch) * camDist,
+    ];
+    const vp = m4Mul(m4Persp(0.68, 1280 / 720, 0.1, 100), m4Look(eye, camTgt));
+    gl.uniformMatrix4fv(uVP, false, vp);
+    gl.uniform3fv(uCam, eye);
+
+    // Floor
+    draw(floorMesh, m4Id(), [0,0,0], [0,0,0], 0, 1);
+
+    // Support pillars
+    for (const [px, ph, pz] of [[-2.5, 2.7, -0.35], [1.95, 2.35, -0.48], [0.35, 3.4, -0.48], [2.55, 2.05, -0.48]]) {
+      const m = m4T(px, ph * 0.5, pz); m[5] = ph;
+      draw(pillarMesh, m, [0.16, 0.22, 0.34], [0.02, 0.06, 0.12]);
+    }
+
+    // Giant Ferris-Wheel Gear Elevator (rotates clockwise at -2*PI per cycle)
+    const wheelAng = -simU * Math.PI * 2;
+    const mWheel = m4Mul(m4T(WHEEL_CX, WHEEL_CY, 0), m4RZ(wheelAng));
+    draw(wheelOuter, mWheel, [0.85, 0.65, 0.35], [0.08, 0.05, 0.01]);
+    draw(wheelInner, mWheel, [0.22, 0.52, 0.88], [0.02, 0.08, 0.18]);
+    for (let s = 0; s < 6; s++) {
+      draw(spokeMesh, m4Mul(mWheel, m4RZ((s / 6) * Math.PI)), [0.72, 0.78, 0.88], [0,0,0]);
+    }
+    for (let t = 0; t < 24; t++) {
+      const a = (t / 24) * Math.PI * 2;
+      const mt = m4Mul(mWheel, m4Mul(m4RZ(a), m4T(WHEEL_R + 0.12, 0, 0)));
+      draw(toothMesh, mt, [0.95, 0.72, 0.32], [0.06, 0.04, 0]);
+    }
+
+    // Glowing Marbles
+    for (const b of balls) {
+      const pos = evalBall(b.u);
+      const [col, emit] = BALL_COLS[b.ci];
+      draw(sphereMesh, m4T(pos[0], pos[1], pos[2]), col, emit);
+    }
+
+    // Translucent Crystal Glass Rails & Live Tilting Seesaw
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    let seesawTilt = -0.22;
+    for (const b of balls) {
+      if (b.u >= 0.21 && b.u <= 0.28) {
+        const s = (b.u - 0.21) / 0.07;
+        seesawTilt = Math.max(seesawTilt, -0.34 + s * 0.24);
+      }
+    }
+    const mSee = m4Mul(m4T(2.02, 2.34, -0.48), m4RZ(seesawTilt));
+    draw(seesawPlank, mSee, [0.55, 0.88, 1.0], [0.12, 0.32, 0.55], 1);
+    for (const rail of [railUpperL, railUpperR, railLowerL, railLowerR]) {
+      draw(rail, m4Id(), [0.55, 0.86, 1.0], [0.08, 0.26, 0.45], 1);
+    }
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+<script src="../demo-shell.js?v=20261120-33"></script>
+</body>
+</html>

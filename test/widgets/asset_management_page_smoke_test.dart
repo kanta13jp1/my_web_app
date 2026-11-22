@@ -5,14 +5,18 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/asset_obsidian_vault_import.dart';
+import 'package:my_web_app/models/asset_external_points.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_card_usage_policy_store.dart';
 import 'package:my_web_app/services/asset_category_budget_store.dart';
 import 'package:my_web_app/services/asset_chat_privacy_settings_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
+import 'package:my_web_app/services/asset_external_points_store.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
@@ -161,6 +165,87 @@ class _BudgetSaveProbe extends AssetCategoryBudgetStore {
   }
 }
 
+class _CsvRestoreProbeRepository
+    extends SharedPreferencesAssetLiabilityRepository {
+  final snapshots = <AssetLiabilityMonthlySnapshot>[];
+  Completer<void>? pending;
+  int attempts = 0;
+  bool failBeforePersist = false;
+  bool failAfterPersist = false;
+
+  @override
+  Future<List<AssetLiabilityMonthlySnapshot>> loadMonthlySnapshots() async {
+    return List<AssetLiabilityMonthlySnapshot>.from(snapshots);
+  }
+
+  @override
+  Future<void> saveMonthlySnapshot(
+    AssetLiabilityMonthlySnapshot snapshot,
+  ) async {
+    attempts++;
+    if (failBeforePersist) {
+      throw StateError('synthetic restore failure before persistence');
+    }
+    await pending?.future;
+    snapshots.add(snapshot);
+    if (failAfterPersist) {
+      throw StateError('synthetic restore failure after persistence');
+    }
+  }
+}
+
+Finder _csvRestoreInput() => find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField && widget.decoration?.labelText == 'Exported CSV',
+    );
+
+Finder _csvRestoreButton(String label, bool filled) => find.ancestor(
+      of: find.text(label),
+      matching: find.byWidgetPredicate(
+        (widget) => filled ? widget is FilledButton : widget is OutlinedButton,
+      ),
+    );
+
+String _syntheticRestoreCsv(String month) =>
+    'month_key,saved_at,assets,liabilities,net_worth,cash,scheduled,paid,'
+    'unpaid,overdue,actual_paid_payment_total,payment_difference_total\n'
+    '$month,2026-05-31 20:00:00,100,0,100,100,0,0,0,0,0,0';
+
+Future<void> _pumpCsvRestorePage(
+  WidgetTester tester,
+  _CsvRestoreProbeRepository repository,
+) async {
+  await tester.binding.setSurfaceSize(const Size(1200, 2400));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: AssetManagementPage(
+        assetLiabilityRepository: repository,
+        debugCalendarNow: DateTime(2026, 5, 15),
+        debugInitialAssetData: const {
+          '2026-05-15': {'現金': 1000.0},
+        },
+        debugInitialRecentFlows: const [],
+      ),
+    ),
+  );
+  for (var i = 0; i < 5; i++) {
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+  expect(_csvRestoreInput(), findsOneWidget);
+  expect(repository.attempts, 0);
+  await tester.ensureVisible(_csvRestoreInput());
+  await tester.pump(const Duration(milliseconds: 200));
+}
+
+Future<void> _previewSyntheticRestore(WidgetTester tester, String month) async {
+  await tester.enterText(_csvRestoreInput(), _syntheticRestoreCsv(month));
+  final preview = _csvRestoreButton('Preview', false);
+  await tester.ensureVisible(preview);
+  await tester.tap(preview);
+  await tester.pump();
+}
+
 void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -169,6 +254,21 @@ void main() {
       url: 'http://127.0.0.1:9999',
       publishableKey: 'test-publishable-key',
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
+      httpClient: MockClient((request) async {
+        const headers = {'content-type': 'application/json'};
+        final isExternalPointsRead = request.method == 'GET' &&
+            request.url.path == '/rest/v1/asset_pref_mirror' &&
+            request.url.queryParameters['pref_key'] == 'eq.external_points_v1';
+        if (isExternalPointsRead) {
+          return http.Response('[]', 200, headers: headers, request: request);
+        }
+        return http.Response(
+          '{"message":"Unexpected HTTP request during asset management smoke test"}',
+          400,
+          headers: headers,
+          request: request,
+        );
+      }),
     );
   });
 
@@ -180,6 +280,165 @@ void main() {
     AssetSyncDirtyKeysStore.resetWriteLockForTest();
     AssetRecurringTombstoneSyncService.resetSharedForTest();
   });
+
+  testWidgets('external points follow the asset page account switch', (
+    tester,
+  ) async {
+    const ownerA = 'synthetic-points-owner-a';
+    const ownerB = 'synthetic-points-owner-b';
+    final now = DateTime(2026, 6, 20);
+    const storeA = AssetExternalPointsStore.forOwner(ownerA);
+    const storeB = AssetExternalPointsStore.forOwner(ownerB);
+    final pointA = AssetExternalPointRecord(
+      id: 'fixture-a',
+      programName: 'サンプルポイントA',
+      observedAt: now,
+      balanceAfter: 105,
+    );
+    final pointB = AssetExternalPointRecord(
+      id: 'fixture-b',
+      programName: 'サンプルポイントB',
+      observedAt: now,
+      balanceAfter: 207,
+    );
+    SharedPreferences.setMockInitialValues({
+      'asset_management_display_mode_v1':
+          AssetManagementDisplayMode.full.storageId,
+      storeA.storageKey:
+          jsonEncode(AssetExternalPointsStore.encodeMirrorValue([pointA])),
+      storeB.storageKey:
+          jsonEncode(AssetExternalPointsStore.encodeMirrorValue([pointB])),
+    });
+
+    Future<void> showOwner(String owner) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugExternalPointsOwnerId: owner,
+            debugNow: now,
+            debugCalendarNow: now,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    Finder point(String name) => find.descendant(
+          of: find.byKey(const Key('asset_external_points_card')),
+          matching: find.text(name),
+        );
+
+    await showOwner(ownerA);
+    expect(point(pointA.programName), findsWidgets);
+    expect(point(pointB.programName), findsNothing);
+
+    await showOwner(ownerB);
+    expect(point(pointA.programName), findsNothing);
+    expect(point(pointB.programName), findsWidgets);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 300));
+  });
+
+  testWidgets('CSV edits require a fresh preview before applying',
+      (tester) async {
+    final repository = _CsvRestoreProbeRepository();
+    await _pumpCsvRestorePage(tester, repository);
+    await _previewSyntheticRestore(tester, '2026-04');
+    final apply = _csvRestoreButton('Apply append-only', true);
+    expect(tester.widget<FilledButton>(apply).onPressed, isNotNull);
+
+    await tester.enterText(_csvRestoreInput(), _syntheticRestoreCsv('2026-05'));
+    await tester.pump();
+    expect(tester.widget<FilledButton>(apply).onPressed, isNull);
+    expect(repository.attempts, 0);
+
+    await _previewSyntheticRestore(tester, '2026-05');
+    await tester.ensureVisible(apply);
+    await tester.tap(apply);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(repository.attempts, 1);
+    expect(repository.snapshots.single.monthKey, '2026-05');
+    await _unmount(tester);
+  });
+
+  testWidgets('CSV programmatic edits cannot apply a cached preview',
+      (tester) async {
+    final repository = _CsvRestoreProbeRepository();
+    await _pumpCsvRestorePage(tester, repository);
+    await _previewSyntheticRestore(tester, '2026-04');
+    final input = tester.widget<TextField>(_csvRestoreInput());
+    input.controller!.text = _syntheticRestoreCsv('2026-05');
+    final apply = _csvRestoreButton('Apply append-only', true);
+    await tester.ensureVisible(apply);
+    await tester.tap(apply);
+    await tester.pump();
+    expect(repository.attempts, 0);
+    expect(tester.widget<FilledButton>(apply).onPressed, isNull);
+    expect(find.textContaining('Preview again before applying.'), findsWidgets);
+    await _unmount(tester);
+  });
+
+  testWidgets('CSV pending apply blocks input preview and repeated callbacks',
+      (tester) async {
+    final repository = _CsvRestoreProbeRepository()
+      ..pending = Completer<void>();
+    await _pumpCsvRestorePage(tester, repository);
+    await _previewSyntheticRestore(tester, '2026-05');
+    final apply = _csvRestoreButton('Apply append-only', true);
+    await tester.ensureVisible(apply);
+    await tester.tap(apply);
+    await tester.tap(apply);
+    await tester.pump();
+    expect(repository.attempts, 1);
+    expect(tester.widget<TextField>(_csvRestoreInput()).enabled, isFalse);
+    final preview = _csvRestoreButton('Preview', false);
+    expect(tester.widget<OutlinedButton>(preview).onPressed, isNull);
+    expect(tester.widget<FilledButton>(apply).onPressed, isNull);
+
+    repository.pending!.complete();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(repository.attempts, 1);
+    expect(repository.snapshots.single.monthKey, '2026-05');
+    expect(tester.widget<TextField>(_csvRestoreInput()).enabled, isTrue);
+    expect(tester.widget<OutlinedButton>(preview).onPressed, isNotNull);
+    await _unmount(tester);
+  });
+
+  for (final persistedBeforeFailure in <bool>[false, true]) {
+    testWidgets(
+      'CSV failure after persistence=$persistedBeforeFailure requires new preview',
+      (tester) async {
+        final repository = _CsvRestoreProbeRepository()
+          ..failBeforePersist = !persistedBeforeFailure
+          ..failAfterPersist = persistedBeforeFailure;
+        await _pumpCsvRestorePage(tester, repository);
+        await _previewSyntheticRestore(tester, '2026-05');
+        final inputBefore =
+            tester.widget<TextField>(_csvRestoreInput()).controller!.text;
+        final apply = _csvRestoreButton('Apply append-only', true);
+        await tester.ensureVisible(apply);
+        await tester.tap(apply);
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(repository.attempts, 1);
+        expect(repository.snapshots, hasLength(persistedBeforeFailure ? 1 : 0));
+        expect(tester.widget<FilledButton>(apply).onPressed, isNull);
+        expect(tester.widget<TextField>(_csvRestoreInput()).enabled, isTrue);
+        expect(
+          tester.widget<TextField>(_csvRestoreInput()).controller!.text,
+          inputBefore,
+        );
+        expect(find.textContaining('一部が保存済みの可能性'), findsOneWidget);
+        expect(find.textContaining('再プレビューしてください'), findsOneWidget);
+        final preview = _csvRestoreButton('Preview', false);
+        expect(tester.widget<OutlinedButton>(preview).onPressed, isNotNull);
+        expect(tester.takeException(), isNull);
+        await _unmount(tester);
+      },
+    );
+  }
 
   for (final width in <double>[1200, 390]) {
     testWidgets('balance change explains recorded-date difference at $width', (
@@ -1431,6 +1690,25 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('desktop chat reserves space outside the scrolling content', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await _pumpAssetPage(tester);
+      final dock = find.byKey(const Key('asset_chat_docked_bar'));
+      expect(dock, findsOneWidget);
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
+      expect(scaffold.floatingActionButton, isNull);
+      expect(
+        tester.getRect(find.byWidget(scaffold.body!)).bottom,
+        lessThanOrEqualTo(tester.getRect(dock).top),
+      );
+      await _unmount(tester);
+    });
+
     testWidgets('sticky asset chat entry opens and closes the panel', (
       tester,
     ) async {
@@ -1819,7 +2097,10 @@ void main() {
     testWidgets('manual prune button cleans expired tombstones', (
       tester,
     ) async {
+      const debtRaw =
+          '[{"id":"unknown-owner","at":"2020-01-01T00:00:00.000Z"}]';
       SharedPreferences.setMockInitialValues(<String, Object>{
+        'debt_payment_day_override_deleted_v1': debtRaw,
         'asset_expected_inflow_rules_v1': jsonEncode(<Map<String, dynamic>>[
           <String, dynamic>{
             'id': 'seeded_rule',
@@ -1862,13 +2143,41 @@ void main() {
       await tester.tap(find.byKey(const Key('asset_tombstone_gc_edit')));
       await tester.pump(const Duration(milliseconds: 100));
 
+      final preferences = await SharedPreferences.getInstance();
+      // 起動時の一括掃除は、帰属未確認の元データを変更しない。
+      expect(
+        preferences.getString('debt_payment_day_override_deleted_v1'),
+        debtRaw,
+      );
+      final inflowAfterBoot =
+          preferences.getString('asset_expected_inflow_deleted_ids_v1');
+      expect(inflowAfterBoot, isNotNull);
+      expect(inflowAfterBoot, isNot(contains('old1')));
+      // 起動後に別ドメインの古い記録を追加し、手動掃除を個別に確認する。
+      await preferences.setString(
+        'asset_expected_inflow_deleted_ids_v1',
+        jsonEncode(<Map<String, String>>[
+          <String, String>{
+            'id': 'manual-old',
+            'at': '2020-01-01T00:00:00.000Z',
+          },
+        ]),
+      );
       await tester.tap(find.byKey(const Key('asset_tombstone_gc_prune')));
       await tester.pump(const Duration(milliseconds: 200));
       await tester.pump(const Duration(milliseconds: 200));
+      expect(
+        preferences.getString('debt_payment_day_override_deleted_v1'),
+        debtRaw,
+      );
+      final inflowAfterManual =
+          preferences.getString('asset_expected_inflow_deleted_ids_v1');
+      expect(inflowAfterManual, isNotNull);
+      expect(inflowAfterManual, isNot(contains('manual-old')));
+      expect(find.textContaining('古い削除記録を1件 掃除しました'), findsOneWidget);
+      expect(find.textContaining('今回の一括掃除では対象外'), findsOneWidget);
 
-      // ボタン→prune→SnackBar の配線を検証 (件数は boot 自動 prune が先に
-      // 期限切れを掃除するため非依存にする / #part296)。実際の物理削除は
-      // 「boot auto-prune」テストと store 単体テストで担保。
+      // 操作案内の既存文言も維持する。上で追加した1件は手動で掃除済み。
       expect(find.textContaining('件 掃除しました'), findsOneWidget);
 
       await _unmount(tester);
@@ -2331,6 +2640,94 @@ void main() {
       );
       expect(reviewBadgeText.style?.color, const Color(0xFF64748B));
 
+      await _unmount(tester);
+    });
+
+    for (final width in <double>[1200, 390]) {
+      testWidgets('forecast search reaches its visible card at $width',
+          (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.standard.storageId,
+        });
+        await tester.binding.setSurfaceSize(Size(width, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: DateTime(2026, 6, 20),
+              debugCalendarNow: DateTime(2026, 6, 20),
+              debugInitialAssetData: const {
+                '2026-06-20': {'synthetic cash': 10000.0},
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(
+          find.byKey(const Key('asset_section_search_appbar_button')),
+        );
+        await tester.pump(const Duration(milliseconds: 400));
+        final search = find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField &&
+              widget.decoration?.hintText?.startsWith('カード名・項目名') == true,
+        );
+        await tester.enterText(search, '将来');
+        await tester.pump(const Duration(milliseconds: 100));
+        final result = find.text('将来残高予測');
+        expect(result, findsOneWidget);
+        await tester.tap(result);
+        await tester.pump();
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pump();
+        expect(search, findsNothing);
+        final title = find.textContaining('将来残高予測(今後');
+        expect(title, findsOneWidget);
+        final rect = tester.getRect(title);
+        expect(rect.bottom, greaterThan(0));
+        expect(rect.top, lessThan(844));
+        expect(tester.takeException(), isNull);
+        await _unmount(tester);
+      });
+    }
+
+    testWidgets('forecast search omits the card when there is no data',
+        (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1':
+            AssetManagementDisplayMode.standard.storageId,
+      });
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugNow: DateTime(2026, 6, 20),
+            debugCalendarNow: DateTime(2026, 6, 20),
+            debugInitialAssetData: const {},
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.textContaining('将来残高予測(今後'), findsNothing);
+      await tester.tap(
+        find.byKey(const Key('asset_section_search_appbar_button')),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      final search = find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField &&
+            widget.decoration?.hintText?.startsWith('カード名・項目名') == true,
+      );
+      await tester.enterText(search, '将来');
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('将来残高予測'), findsNothing);
+      expect(find.textContaining('一致するカード・項目がありません'), findsOneWidget);
+      expect(tester.takeException(), isNull);
       await _unmount(tester);
     });
 

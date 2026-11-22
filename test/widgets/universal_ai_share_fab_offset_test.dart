@@ -57,6 +57,23 @@ void main() {
     );
   });
 
+  test('デスクトップの資産管理画面では右下の資産AI FABの上に退避する', () {
+    expect(
+      resolveAiShareFabBottomOffset(
+        routePath: '/asset-management',
+        screenWidth: 1280,
+      ),
+      kAiShareFabMusubiBottomOffset,
+    );
+    expect(
+      resolveAiShareFabBottomOffset(
+        routePath: '/asset-management',
+        screenWidth: 390,
+      ),
+      kAiShareFabDefaultBottomOffset,
+    );
+  });
+
   test('anonymous landing hides only the universal share FAB', () {
     expect(
       shouldShowUniversalAiShareFab(routePath: '/', isLoggedIn: false),

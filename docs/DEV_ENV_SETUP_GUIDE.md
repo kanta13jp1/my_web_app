@@ -5,6 +5,8 @@
 > **scope**: 設計 + 手順書 (Win Claude territory / docs) / 実装 script は Win Codex (= scripts/setup-dev-env.ps1) ハンドオフ
 > **NotebookLM source**: `55a65bf0` Winget Local Environment Configuration for Windows 11
 
+> **現行手順:** この文書は過去の設計案です。列挙した `setup-dev-env.ps1` と `_setup_steps` は実行可能な完成済み手順として扱わず、未確認の `Google.Flutter` ID も使わないでください。現在のクラウド優先・任意ローカル導入手順は [Windows 開発環境セットアップ](setup/windows-dev-setup.md#optional-flutter-and-supabase-setup-issue-2805) を参照してください。
+
 ## 1. 思想
 
 新規参画メンバーが proxy / ENOTFOUND ループで初日を浪費 = 機会損失. **「git clone → 1 script → 動く」**

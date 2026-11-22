@@ -9,6 +9,27 @@ import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+Future<void> submitBalance(
+  WidgetTester tester, {
+  required bool bulk,
+  required Finder singleAction,
+}) async {
+  if (!bulk) {
+    await tester.ensureVisible(singleAction);
+    await tester.tap(singleAction);
+    return;
+  }
+
+  final saveAll = find.ancestor(
+    of: find.text('全体状況を保存'),
+    matching: find.byWidgetPredicate((widget) => widget is ElevatedButton),
+  );
+  await Scrollable.ensureVisible(tester.element(saveAll), alignment: 0.5);
+  await tester.pump();
+  expect(saveAll.hitTestable(), findsOneWidget);
+  await tester.tap(saveAll);
+}
+
 // Diagnostic only: no production endpoint, credentials, or persisted user data.
 void main() {
   var balanceWrites = 0;
@@ -33,7 +54,9 @@ void main() {
   Map<String, dynamic>? serverClosing;
   Map<String, dynamic>? lastClosingWrite;
   setUp(() async {
-    if (Supabase.instance.client.auth.currentUser == null) {
+    // Restore the synthetic owner even if a previous test stopped early.
+    syntheticUserId = '00000000-0000-4000-8000-000000000001';
+    if (Supabase.instance.client.auth.currentUser?.id != syntheticUserId) {
       await Supabase.instance.client.auth.signInWithPassword(
         email: 'probe@example.invalid',
         password: 'synthetic-only',
@@ -278,9 +301,11 @@ void main() {
         await tester.ensureVisible(fields.at(1));
         await tester.enterText(fields.at(1), '4000');
       }
-      final action = bulk ? find.text('全体状況を保存') : find.text('記録').first;
-      await tester.ensureVisible(action);
-      await tester.tap(action);
+      await submitBalance(
+        tester,
+        bulk: bulk,
+        singleAction: find.text('記録').first,
+      );
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
@@ -321,9 +346,11 @@ void main() {
         await tester.ensureVisible(fields.at(1));
         await tester.enterText(fields.at(1), '4000');
       }
-      final action = bulk ? find.text('全体状況を保存') : find.text('記録').first;
-      await tester.ensureVisible(action);
-      await tester.tap(action);
+      await submitBalance(
+        tester,
+        bulk: bulk,
+        singleAction: find.text('記録').first,
+      );
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
@@ -364,9 +391,11 @@ void main() {
         await tester.ensureVisible(fields.at(1));
         await tester.enterText(fields.at(1), '500');
       }
-      final action = bulk ? find.text('全体状況を保存') : find.text('記録').last;
-      await tester.ensureVisible(action);
-      await tester.tap(action);
+      await submitBalance(
+        tester,
+        bulk: bulk,
+        singleAction: find.text('記録').last,
+      );
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
@@ -415,9 +444,19 @@ void main() {
         await tester.ensureVisible(fields.at(1));
         await tester.enterText(fields.at(1), '500');
       }
-      final action = bulk ? find.text('全体状況を保存') : find.text('記録').last;
-      await tester.ensureVisible(action);
-      await tester.tap(action);
+      // Verify both fields before save so a focus/scroll issue is not hidden.
+      expect(
+        tester.widget<TextField>(fields.at(bulk ? 0 : 1)).controller!.text,
+        '500',
+      );
+      if (bulk) {
+        expect(tester.widget<TextField>(fields.at(1)).controller!.text, '500');
+      }
+      await submitBalance(
+        tester,
+        bulk: bulk,
+        singleAction: find.text('記録').last,
+      );
       await tester.pump(const Duration(milliseconds: 100));
       expect(balanceWrites, 1);
       syntheticUserId = '00000000-0000-4000-8000-000000000002';
@@ -442,7 +481,13 @@ void main() {
         '500',
       );
       expect(relatedWrites, 0);
-      expect(find.textContaining('保存済み'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.textContaining(RegExp('保存済み|を記録し|一括記録し')),
+        ),
+        findsNothing,
+      );
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(seconds: 2));
       syntheticUserId = '00000000-0000-4000-8000-000000000001';

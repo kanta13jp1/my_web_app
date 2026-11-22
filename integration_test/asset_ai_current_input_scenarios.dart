@@ -14,6 +14,7 @@ import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
+import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -225,6 +226,52 @@ void main({
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
     );
   });
+
+  for (final paid in <bool>[false, true]) {
+    testWidgets('paid actual amount reaches AI report: $paid', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1': 'full',
+      });
+      AssetSyncDirtyKeysStore.resetWriteLockForTest();
+      AssetRecurringTombstoneSyncService.resetSharedForTest();
+      await tester.binding.setSurfaceSize(const Size(1600, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final repository = _MonthlyRepository()
+        ..state = AssetLiabilityMonthlyState(
+          paymentOverrides: const <String, double>{'モビット': 5000},
+          actualPaymentAmounts: const <String, double>{'モビット': 15000},
+          annualRateOverrides: const <String, double>{'mobit': 0.15},
+          paidAccountNames: paid ? const <String>{'モビット'} : const <String>{},
+        );
+      final ai = _ControlledAi();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repository,
+            aiSummaryService: ai,
+            aiAnalysisHistoryService: _EmptyHistory(),
+            debugNow: DateTime(2026, 9, 14, 12),
+            debugInitialAssetData: const <String, Map<String, double>>{
+              '2026-09-14': <String, double>{'bank': 500000, 'モビット': -100000},
+            },
+          ),
+        ),
+      );
+      await _pumpUntil(tester, () => ai.requests.isNotEmpty);
+      final row = ai.requests.last.workbook.debtMasterRows
+          .singleWhere((row) => row.name == 'モビット');
+      expect(row.scheduledPaymentAmount, 5000);
+      expect(row.monthlyInterestEstimate, closeTo(1250, 0.001));
+      expect(row.principalPaymentEstimate, closeTo(paid ? 13750 : 3750, 0.001));
+      expect(
+        row.balanceAfterPaymentEstimate,
+        closeTo(paid ? -86250 : -96250, 0.001),
+      );
+      ai.complete(0, 'Synthetic paid amount report');
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 3));
+    });
+  }
 
   for (final mode in <int>[0, 1, 2]) {
     final failRestoration = mode == 1;
@@ -968,4 +1015,100 @@ void main({
       }
     });
   }
+  testWidgets(
+      'last billing edit persists, excludes plans and clear restores them',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1': 'full',
+    });
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    const cost = AssetRecurringFixedCost(
+      id: 'synthetic-billing',
+      name: 'Synthetic recurring bill',
+      amount: 600,
+      paymentDay: 20,
+      sourceAccountId: 'bank',
+    );
+    const store = AssetRecurringFixedCostStore();
+    final repository = _MonthlyRepository();
+    final ai = _ControlledAi();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: repository,
+          aiSummaryService: ai,
+          aiAnalysisHistoryService: _EmptyHistory(),
+          debugNow: DateTime(2026, 9, 6, 12),
+          debugInitialRecurringFixedCosts: const <AssetRecurringFixedCost>[
+            cost,
+          ],
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-09-06': <String, double>{'bank': 30000},
+          },
+        ),
+      ),
+    );
+    await _pumpUntil(tester, () => ai.requests.isNotEmpty);
+    expect(
+      ai.requests.first.workbook.debtMasterRows.map((row) => row.name),
+      contains('Synthetic recurring bill'),
+    );
+    ai.complete(0, 'Synthetic bill is currently planned');
+    await tester.pump(const Duration(milliseconds: 100));
+    final edit = find.byTooltip('Synthetic recurring bill を編集');
+    await tester.ensureVisible(edit);
+    await tester.tap(edit);
+    await _pumpUntil(
+      tester,
+      () => find
+          .byKey(const Key('recurring_last_billing_date'))
+          .evaluate()
+          .isNotEmpty,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    final date = find.byKey(const Key('recurring_last_billing_date'));
+    await tester.enterText(date, '2026-08-20');
+    await tester.tap(find.widgetWithText(FilledButton, '保存'));
+    await _pumpUntil(tester, () => ai.requests.length == 2);
+    expect(
+      ai.requests.last.workbook.debtMasterRows.map((row) => row.name),
+      isNot(contains('Synthetic recurring bill')),
+    );
+    final saved = await store.load();
+    expect(
+      saved.singleWhere((row) => row.id == cost.id).lastBillingDate,
+      DateTime(2026, 8, 20),
+    );
+    ai.complete(1, 'Synthetic bill ended before this cycle');
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.ensureVisible(edit);
+    await tester.tap(edit);
+    await _pumpUntil(
+      tester,
+      () => find
+          .byKey(const Key('recurring_last_billing_date'))
+          .evaluate()
+          .isNotEmpty,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.widget<TextFormField>(date).controller!.text, '2026-08-20');
+    await tester.enterText(date, '');
+    await tester.tap(find.widgetWithText(FilledButton, '保存'));
+    await _pumpUntil(tester, () => ai.requests.length == 3);
+    expect(
+      ai.requests.last.workbook.debtMasterRows.map((row) => row.name),
+      contains('Synthetic recurring bill'),
+    );
+    final cleared = await store.load();
+    expect(
+      cleared.singleWhere((row) => row.id == cost.id).lastBillingDate,
+      isNull,
+    );
+    ai.complete(2, 'Synthetic planned billing restored');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
 }

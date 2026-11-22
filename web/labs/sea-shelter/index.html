@@ -64,11 +64,23 @@
           </section>
           <section class="panel" data-panel="residents" aria-label="住民">
             <h2>仲間を迎える</h2>
+            <p>
+              <a class="training-entry" href="arena/index.html"
+              >灯守の3D訓練へ（資材消費なし）</a>
+            </p>
             <p>住居1軒で定員+2。住民3人ごとに回収木材+1。</p>
             <button id="invite">住民を迎える 木材3 / 金属1</button>
             <p>
               定員不足なら住居を、資材不足なら漂流物を回収しましょう。
             </p>
+            <div
+              id="crew-roster"
+              class="crew-roster"
+              role="group"
+              aria-label="集落の仲間"
+            >
+            </div>
+            <p id="resident-art-note" hidden></p>
           </section>
           <section
             class="panel"
@@ -147,6 +159,7 @@
             </p>
           </section>
         </aside>
+        <div id="crew-feedback" class="crew-feedback" aria-hidden="true"></div>
       </div>
       <p id="status" tabindex="-1" role="status" aria-live="polite">
         船長、漂流物の回収から始めましょう。

@@ -369,6 +369,9 @@ class LocalElectionRealityService {
   LocalElectionRealitySnapshot _rejectSuspiciousSnapshot(
     LocalElectionRealitySnapshot snapshot,
   ) {
+    if (!snapshot.hasData) {
+      throw Exception('Local election snapshot returned empty member data.');
+    }
     if (snapshot.hasSuspiciousEmptyOfficialPrefecture) {
       throw Exception(
         'Official prefecture pages parsed as zero members: '
