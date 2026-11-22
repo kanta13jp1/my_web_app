@@ -750,6 +750,46 @@ List<WbsTask> filterWbsTasksForAssignmentBoard(
   }).toList();
 }
 
+/// `/project-gantt` のヘッダータイトルスタイル。
+/// モバイル幅（`< 600px`）で `開発ロードマ…` と省略されないようフォントサイズを調整する。
+TextStyle buildProjectGanttTitleStyle(
+  BuildContext context, {
+  required bool isCompact,
+}) {
+  final base = isCompact
+      ? Theme.of(context).textTheme.titleMedium
+      : Theme.of(context).textTheme.headlineMedium;
+  return (base ?? const TextStyle()).copyWith(
+    color: Colors.white,
+    fontSize: isCompact ? 16 : 22,
+    fontWeight: FontWeight.bold,
+  );
+}
+
+/// `/project-gantt` の 4 タブバー。
+/// モバイル幅では `isScrollable: true` で全タブラベルの見切れを防ぎ、
+/// 非選択タブ色もダーク背景上で視認しやすい `#B0B8C4` に引き上げる。
+TabBar buildProjectGanttTabBar({
+  required TabController controller,
+  required bool isCompact,
+}) {
+  return TabBar(
+    controller: controller,
+    isScrollable: isCompact,
+    tabAlignment: isCompact ? TabAlignment.start : TabAlignment.fill,
+    labelPadding: EdgeInsets.symmetric(horizontal: isCompact ? 14 : 16),
+    indicatorColor: const Color(0xFFFF6B35),
+    labelColor: const Color(0xFFFF6B35),
+    unselectedLabelColor: const Color(0xFFB0B8C4),
+    tabs: const [
+      Tab(icon: Icon(Icons.account_tree_outlined), text: '開発WBS'),
+      Tab(icon: Icon(Icons.timeline), text: 'タイムライン'),
+      Tab(icon: Icon(Icons.folder_outlined), text: 'マイプロジェクト'),
+      Tab(icon: Icon(Icons.health_and_safety_outlined), text: 'セッション衛生'),
+    ],
+  );
+}
+
 class ProjectGanttPage extends StatefulWidget {
   const ProjectGanttPage({super.key});
 
@@ -967,16 +1007,16 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width < 600;
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212),
         title: Text(
           '開発ロードマップ & WBS',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: buildProjectGanttTitleStyle(context, isCompact: isCompact),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -994,17 +1034,9 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             },
           ),
         ],
-        bottom: TabBar(
+        bottom: buildProjectGanttTabBar(
           controller: _tabs,
-          indicatorColor: const Color(0xFFFF6B35),
-          labelColor: const Color(0xFFFF6B35),
-          unselectedLabelColor: const Color(0xFF707070),
-          tabs: const [
-            Tab(icon: Icon(Icons.account_tree_outlined), text: '開発WBS'),
-            Tab(icon: Icon(Icons.timeline), text: 'タイムライン'),
-            Tab(icon: Icon(Icons.folder_outlined), text: 'マイプロジェクト'),
-            Tab(icon: Icon(Icons.health_and_safety_outlined), text: 'セッション衛生'),
-          ],
+          isCompact: isCompact,
         ),
       ),
       body: TabBarView(
@@ -1023,7 +1055,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
                 setState(() => _hideCompleted = v ?? false),
             onMoveTaskOwner: _queueWbsTaskOwnerMove,
           ),
-          _GanttTimelineTab(
+          GanttTimelineTab(
             milestones: _milestones,
             tasks: _tasks,
             loading: _loadingWbs,
@@ -1048,7 +1080,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             onSave: _saveProject,
             onUpdateStatus: _updateProjectStatus,
           ),
-          const _SessionHygieneTab(),
+          const SessionHygieneTab(),
         ],
       ),
     );
@@ -1060,44 +1092,67 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
 // データソース実装待ち: session_hygiene_log table + ef ai_hub.session_hygiene_kpi
 // 実 KPI 追加までは empty state のみ表示 ([REAL-DATA] 適合).
 
-class _SessionHygieneTab extends StatelessWidget {
-  const _SessionHygieneTab();
+class SessionHygieneTab extends StatelessWidget {
+  const SessionHygieneTab({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
-      children: const [
-        _HygieneKpiPlaceholder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+      children: [
+        const _HygieneKpiPlaceholder(
           icon: Icons.memory,
-          title: 'RAM peak / min / avg per session',
-          subtitle: 'v24 SS hard exit 14+ 例 / 90% breach 監視',
+          title: 'メモリ使用量の推移',
+          subtitle: 'セッションごとの RAM ピーク・平均使用率と高負荷アラートを計測予定',
         ),
-        SizedBox(height: 12),
-        _HygieneKpiPlaceholder(
+        const SizedBox(height: 12),
+        const _HygieneKpiPlaceholder(
           icon: Icons.sd_storage_outlined,
-          title: 'C: free drift trend',
-          subtitle: '25 GB threshold + 12.7 GB/h idle drift 観測',
+          title: 'ディスク空き容量の推移',
+          subtitle: '作業領域の空き容量ドリフトとしきい値超過を監視予定',
         ),
-        SizedBox(height: 12),
-        _HygieneKpiPlaceholder(
+        const SizedBox(height: 12),
+        const _HygieneKpiPlaceholder(
           icon: Icons.timer_outlined,
-          title: 'lefthook hang count',
-          subtitle: '部 217-b 集積教訓 / push skip 検出',
+          title: 'ローカルフック・同期の応答時間',
+          subtitle: 'コミット前検証やプッシュ時の遅延・タイムアウト回数を集計予定',
         ),
-        SizedBox(height: 12),
-        _HygieneKpiPlaceholder(
+        const SizedBox(height: 12),
+        const _HygieneKpiPlaceholder(
           icon: Icons.history,
-          title: 'v24 SS / v26 YY hit history',
-          subtitle: 'cron-based mandatory compression layer 履歴',
+          title: 'コンテキスト圧縮・切替履歴',
+          subtitle: '長時間セッションの自動圧縮と安定運用メトリクスを記録予定',
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: 20),
         Card(
-          child: Padding(
+          color: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: const BorderSide(color: Color(0xFF2E2E2E)),
+          ),
+          child: const Padding(
             padding: EdgeInsets.all(16),
-            child: Text(
-              'データソース実装待ち: session_hygiene_log table + ef ai_hub.session_hygiene_kpi',
-              style: TextStyle(color: Color(0xFF707070)),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: Color(0xFFFF6B35),
+                  size: 20,
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '現在、セッション衛生メトリクスの自動収集パイプラインを整備中です。'
+                    '計測データの連携が完了次第、このタブに実測値と推移が表示されます。',
+                    style: TextStyle(
+                      color: Color(0xFFD1D5DB),
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -1120,13 +1175,45 @@ class _HygieneKpiPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: const Color(0xFF1E1E1E),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: Color(0xFF2E2E2E)),
+      ),
       child: ListTile(
         leading: Icon(icon, color: const Color(0xFFFF6B35)),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: const Text(
-          'TBD',
-          style: TextStyle(color: Color(0xFF707070), fontSize: 12),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            height: 1.4,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(
+            color: Color(0xFF9CA3AF),
+            fontSize: 12,
+            height: 1.5,
+          ),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2A2A2A),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF4B5563)),
+          ),
+          child: const Text(
+            '計測準備中',
+            style: TextStyle(
+              color: Color(0xFFD1D5DB),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ),
     );
@@ -1209,7 +1296,7 @@ class _WbsTab extends StatelessWidget {
     final overallProgress = _overallProgress(progressBase);
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
         // ── 全体進捗 ──────────────────────────────────────────────────────
         _OverallProgressCard(
@@ -1249,7 +1336,7 @@ class _WbsTab extends StatelessWidget {
           icon: Icons.account_tree_outlined,
         ),
         const SizedBox(height: 8),
-        _FilterRow(
+        WbsFilterBar(
           filterInstance: filterInstance,
           filterMilestone: filterMilestone,
           milestones: milestones,
@@ -1259,31 +1346,14 @@ class _WbsTab extends StatelessWidget {
           onToggleHideCompleted: onToggleHideCompleted,
         ),
         const SizedBox(height: 8),
-        // Win版#131 part 12 / PS#2 S17 VSCode handoff: WBS タブにも未完了 filter
-        Row(
-          children: [
-            Checkbox(
-              value: hideCompleted,
-              onChanged: onToggleHideCompleted,
-              side: const BorderSide(color: Color(0xFF707070)),
-              activeColor: const Color(0xFFFF6B35),
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            Text(
-              '未完了のみ',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF9CA3AF)),
-            ),
-            const SizedBox(width: 16),
-            Text(
-              '表示: ${_filtered.length} / ${tasks.length} 件',
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: const Color(0xFF707070)),
-            ),
-          ],
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            '表示: ${_filtered.length} / ${tasks.length} 件',
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: const Color(0xFF9CA3AF)),
+          ),
         ),
         const SizedBox(height: 12),
 
@@ -1293,8 +1363,17 @@ class _WbsTab extends StatelessWidget {
           onMoveTaskOwner: onMoveTaskOwner,
         ),
         const SizedBox(height: 16),
-        if (grouped.isEmpty)
-          const _EmptyCard(message: 'WBSデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
+        if (grouped.isEmpty && tasks.isNotEmpty)
+          GanttFilteredEmptyState(
+            totalCount: tasks.length,
+            onResetFilters: () {
+              onFilterInstance(null);
+              onFilterMilestone(null);
+              onToggleHideCompleted(false);
+            },
+          )
+        else if (grouped.isEmpty)
+          const _EmptyCard(message: 'WBSタスクがまだ登録されていません')
         else
           ...grouped.entries.map(
             (entry) => _CategorySection(
@@ -1895,7 +1974,7 @@ class _MilestoneCard extends StatelessWidget {
   }
 }
 
-class _FilterRow extends StatelessWidget {
+class WbsFilterBar extends StatelessWidget {
   final String? filterInstance;
   final String? filterMilestone;
   final List<WbsMilestone> milestones;
@@ -1904,7 +1983,8 @@ class _FilterRow extends StatelessWidget {
   final ValueChanged<String?> onFilterMilestone;
   final ValueChanged<bool?> onToggleHideCompleted;
 
-  const _FilterRow({
+  const WbsFilterBar({
+    super.key,
     required this.filterInstance,
     required this.filterMilestone,
     required this.milestones,
@@ -1916,219 +1996,66 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _chip(
-            '全て',
-            null,
+    return Wrap(
+      spacing: 6,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        ..._activeWbsInstanceFilters.map(
+          (filter) => _chip(
+            filter.label,
+            filter.value,
             filterInstance,
             onFilterInstance,
-            const Color(0xFFFF6B35),
+            filter.color,
           ),
-          const SizedBox(width: 6),
-          _chip(
-            'Claude Code',
-            'claude',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF2563EB),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Automation',
-            'automation',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFEAB308),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Codex',
-            'codex',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF10B981),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Gemini',
-            'gemini',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF4285F4),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Co-pilot',
-            'co-pilot',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF111827),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'User',
-            'user',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFEF4444),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'VSCode',
-            'vscode',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF007ACC),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'Win',
-            'win',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF00BCF2),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#1',
-            'ps1',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF4B0082),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#2',
-            'ps2',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF6A0DAD),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#3',
-            'ps3',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF8B5CF6),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#4',
-            'ps4',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFA855F7),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#5',
-            'ps5',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFC084FC),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'PS#6',
-            'ps6',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFDAB6FC),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            'WEB',
-            'web',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF22C55E),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            '📱',
-            'mobile',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFF97316),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            '⏰Schedule',
-            'schedule',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFFF59E0B),
-          ),
-          const SizedBox(width: 6),
-          _chip(
-            '🤖GHA',
-            'gha',
-            filterInstance,
-            onFilterInstance,
-            const Color(0xFF10B981),
-          ),
-          const SizedBox(width: 12),
-          // 未完了のみフィルタ
-          GestureDetector(
-            onTap: () => onToggleHideCompleted(!hideCompleted),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
+        ),
+        GestureDetector(
+          onTap: () => onToggleHideCompleted(!hideCompleted),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: hideCompleted
+                  ? const Color(0xFFFF6B35).withValues(alpha: 0.2)
+                  : const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
                 color: hideCompleted
-                    ? const Color(0xFFFF6B35).withValues(alpha: 0.2)
-                    : const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: hideCompleted
-                      ? const Color(0xFFFF6B35)
-                      : const Color(0xFF333333),
-                ),
+                    ? const Color(0xFFFF6B35)
+                    : const Color(0xFF4B5563),
               ),
-              child: Text(
-                hideCompleted ? '☑ 未完了のみ' : '☐ 未完了のみ',
-                style: TextStyle(
-                  color: hideCompleted
-                      ? const Color(0xFFFF6B35)
-                      : const Color(0xFF707070),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  height: 1.5,
-                ),
+            ),
+            child: Text(
+              hideCompleted ? '☑ 未完了のみ' : '☐ 未完了のみ',
+              style: TextStyle(
+                color: hideCompleted
+                    ? const Color(0xFFFF6B35)
+                    : const Color(0xFFD1D5DB),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          const Text(
-            '│',
-            style: TextStyle(color: Color(0xFF333333), height: 1.5),
-          ),
-          const SizedBox(width: 12),
-          _chip(
-            '全版',
-            null,
+        ),
+        _chip(
+          '全版',
+          null,
+          filterMilestone,
+          onFilterMilestone,
+          const Color(0xFFD1D5DB),
+        ),
+        ...milestones.map(
+          (m) => _chip(
+            m.name,
+            m.code,
             filterMilestone,
             onFilterMilestone,
-            const Color(0xFF707070),
+            m.color,
           ),
-          ...milestones.map((m) {
-            return Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: _chip(
-                m.name,
-                m.code,
-                filterMilestone,
-                onFilterMilestone,
-                m.color,
-              ),
-            );
-          }),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -2139,33 +2066,127 @@ class _FilterRow extends StatelessWidget {
     ValueChanged<String?> onTap,
     Color color,
   ) {
-    final isInstanceFilter = identical(onTap, onFilterInstance);
-    final isVisibleInstanceChip = value == null ||
-        _activeWbsInstanceFilters.any((filter) => filter.value == value);
-    if (isInstanceFilter && !isVisibleInstanceChip) {
-      return const SizedBox.shrink();
-    }
     final selected = current == value;
+    final bgColor =
+        selected ? color.withValues(alpha: 0.2) : const Color(0xFF1E1E1E);
     return GestureDetector(
       onTap: () => onTap(selected ? null : value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color:
-              selected ? color.withValues(alpha: 0.2) : const Color(0xFF1E1E1E),
+          color: bgColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: selected ? color : const Color(0xFF333333)),
+          border: Border.all(
+            color: selected ? color : const Color(0xFF4B5563),
+          ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? color : const Color(0xFF707070),
+            color: selected ? color : const Color(0xFFD1D5DB),
             fontSize: 12,
             fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
             height: 1.5,
           ),
         ),
+      ),
+    );
+  }
+}
+
+const Map<String, IconData> _wbsCategoryMaterialIcons = <String, IconData>{
+  'movie': Icons.movie_outlined,
+  'person_add': Icons.person_add_outlined,
+  'query_stats': Icons.query_stats,
+  'trending_up': Icons.trending_up,
+  'campaign': Icons.campaign_outlined,
+  'analytics': Icons.analytics_outlined,
+  'rocket_launch': Icons.rocket_launch_outlined,
+  'account_balance': Icons.account_balance_outlined,
+  'build': Icons.build_outlined,
+  'code': Icons.code,
+  'security': Icons.security_outlined,
+  'speed': Icons.speed,
+  'auto_awesome': Icons.auto_awesome,
+  'lightbulb': Icons.lightbulb_outline,
+  'description': Icons.description_outlined,
+  'checklist': Icons.checklist,
+  'flag': Icons.flag_outlined,
+  'groups': Icons.groups_outlined,
+  'shopping_cart': Icons.shopping_cart_outlined,
+  'payments': Icons.payments_outlined,
+  'store': Icons.store_outlined,
+  'videocam': Icons.videocam_outlined,
+  'article': Icons.article_outlined,
+  'share': Icons.share_outlined,
+  'star': Icons.star_outline,
+  'schedule': Icons.schedule,
+  'task_alt': Icons.task_alt,
+  'folder': Icons.folder_outlined,
+  'settings': Icons.settings_outlined,
+  'hub': Icons.hub_outlined,
+  'terminal': Icons.terminal,
+  'bug_report': Icons.bug_report_outlined,
+  'cloud': Icons.cloud_outlined,
+  'storage': Icons.storage_outlined,
+  'api': Icons.api,
+  'school': Icons.school_outlined,
+  'work': Icons.work_outline,
+  'public': Icons.public,
+  'mail': Icons.mail_outline,
+  'chat': Icons.chat_bubble_outline,
+  'notifications': Icons.notifications_none,
+  'search': Icons.search,
+  'edit': Icons.edit_outlined,
+  'check_circle': Icons.check_circle_outline,
+  'warning': Icons.warning_amber_outlined,
+  'info': Icons.info_outline,
+};
+
+final RegExp _materialIconNamePattern = RegExp(r'^[a-z][a-z0-9_]{2,}$');
+
+/// DB の `category_icon` が Material Icons 識別子文字列なら対応する [IconData] を返す。
+/// 絵文字や 1〜2 文字記号（`X`, `$` など）は `null` を返しテキスト表示へフォールバックする。
+IconData? resolveWbsCategoryIconData(String rawIcon) {
+  final trimmed = rawIcon.trim();
+  if (trimmed.isEmpty) return null;
+  final mapped = _wbsCategoryMaterialIcons[trimmed];
+  if (mapped != null) return mapped;
+  if (_materialIconNamePattern.hasMatch(trimmed)) {
+    return Icons.label_outline;
+  }
+  return null;
+}
+
+/// WBS カテゴリ・タイムライン行で `category_icon` をアイコンまたは高コントラスト記号として描画する。
+class WbsCategoryIconBadge extends StatelessWidget {
+  final String iconValue;
+  final double size;
+
+  const WbsCategoryIconBadge({
+    super.key,
+    required this.iconValue,
+    this.size = 14,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final iconData = resolveWbsCategoryIconData(iconValue);
+    if (iconData != null) {
+      return Icon(
+        iconData,
+        size: size,
+        color: const Color(0xFF93C5FD),
+      );
+    }
+    final display = iconValue.trim().isEmpty ? '📋' : iconValue.trim();
+    return Text(
+      display,
+      style: TextStyle(
+        fontSize: size,
+        height: 1.5,
+        color: const Color(0xFFE5E7EB),
       ),
     );
   }
@@ -2202,9 +2223,9 @@ class _CategorySection extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Text(
-                categoryIcon,
-                style: const TextStyle(fontSize: 18, height: 1.5),
+              WbsCategoryIconBadge(
+                iconValue: categoryIcon,
+                size: 18,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -2449,6 +2470,30 @@ class _TaskRow extends StatelessWidget {
 
 // ── マイプロジェクト タブ ─────────────────────────────────────────────────────
 
+/// `マイプロジェクト` タブの入力欄装飾。
+/// Light テーマの `InputDecorationTheme(fillColor: Colors.white)` に上書きされて
+/// 白背景に白文字・薄いヒント文字にならないよう、ダーク背景と高コントラストなヒント色を明示する。
+InputDecoration buildMyProjectInputDecoration(String hint) {
+  return InputDecoration(
+    hintText: hint,
+    hintStyle: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+    filled: true,
+    fillColor: const Color(0xFF121212),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Color(0xFF4B5563)),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Color(0xFF4B5563)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Color(0xFFFF6B35)),
+    ),
+  );
+}
+
 class _MyProjectsTab extends StatelessWidget {
   final List<Map<String, dynamic>> projects;
   final bool loading;
@@ -2500,14 +2545,16 @@ class _MyProjectsTab extends StatelessWidget {
                   const SizedBox(height: 8),
                   TextField(
                     controller: nameCtrl,
+                    cursorColor: const Color(0xFFFF6B35),
                     style: const TextStyle(color: Colors.white, height: 1.5),
-                    decoration: _inputDec('プロジェクト名'),
+                    decoration: buildMyProjectInputDecoration('プロジェクト名'),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: descCtrl,
+                    cursorColor: const Color(0xFFFF6B35),
                     style: const TextStyle(color: Colors.white, height: 1.5),
-                    decoration: _inputDec('説明 (任意)'),
+                    decoration: buildMyProjectInputDecoration('説明 (任意)'),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -2516,12 +2563,14 @@ class _MyProjectsTab extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFF333333)),
+                            color: const Color(0xFF121212),
+                            border: Border.all(color: const Color(0xFF4B5563)),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: DropdownButton<String>(
                             value: status,
                             dropdownColor: const Color(0xFF1E1E1E),
+                            iconEnabledColor: const Color(0xFFD1D5DB),
                             style: const TextStyle(
                               color: Colors.white,
                               height: 1.5,
@@ -2574,7 +2623,10 @@ class _MyProjectsTab extends StatelessWidget {
                     ? const Center(
                         child: Text(
                           'プロジェクトはまだありません',
-                          style: TextStyle(color: Colors.white38, height: 1.5),
+                          style: TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            height: 1.5,
+                          ),
                         ),
                       )
                     : ListView.builder(
@@ -2605,7 +2657,7 @@ class _MyProjectsTab extends StatelessWidget {
                               subtitle: Text(
                                 p['description'] as String? ?? '',
                                 style: const TextStyle(
-                                  color: Colors.white54,
+                                  color: Color(0xFFD1D5DB),
                                   fontSize: 12,
                                   height: 1.5,
                                 ),
@@ -2656,28 +2708,541 @@ class _MyProjectsTab extends StatelessWidget {
       ),
     );
   }
-
-  InputDecoration _inputDec(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white38, height: 1.5),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF333333)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF333333)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFFF6B35)),
-        ),
-      );
 }
 
 // ── MS Project 風ガントチャートタイムライン ─────────────────────────────────
 
-class _GanttTimelineTab extends StatefulWidget {
+/// フィルター適用結果が 0 件のときに表示する空状態カード。
+/// ツールバーやフィルターバーを残したままワンクリックで全件表示へ戻せるようにする。
+class GanttFilteredEmptyState extends StatelessWidget {
+  final int totalCount;
+  final VoidCallback onResetFilters;
+
+  const GanttFilteredEmptyState({
+    super.key,
+    required this.totalCount,
+    required this.onResetFilters,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 420),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF2E2E2E)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.filter_alt_off_outlined,
+                color: Color(0xFFFF6B35),
+                size: 28,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '条件に一致するタスクはありません（全 $totalCount 件中 0 件）',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                '担当・マイルストーン・未完了フィルターを解除すると全タスクを再表示できます。',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF9CA3AF),
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                onPressed: onResetFilters,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('フィルターをリセット'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFFF6B35),
+                  side: const BorderSide(color: Color(0xFFFF6B35)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class GanttColumnToggleBar extends StatelessWidget {
+  final Map<String, bool> colVisible;
+  final String? filterInstance;
+  final void Function(String key, bool visible) onToggleColumn;
+  final ValueChanged<String?> onFilterInstance;
+
+  const GanttColumnToggleBar({
+    super.key,
+    required this.colVisible,
+    required this.filterInstance,
+    required this.onToggleColumn,
+    required this.onFilterInstance,
+  });
+
+  static const Map<String, String> _labels = <String, String>{
+    '#': '#',
+    'task': 'タスク',
+    'startDate': '開始',
+    'endDate': '完了',
+    'instance': '担当',
+    'progress': '進捗',
+    'remaining': '次作業',
+    'depends': 'ブロック',
+    'recovery': '状態/対処',
+    'flags': '注意',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFF0F0F18),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          const Text(
+            '列表示:',
+            style: TextStyle(
+              color: Color(0xFFB0B0C0),
+              fontSize: 10,
+              height: 1.5,
+            ),
+          ),
+          ..._labels.entries.map((e) {
+            final on = colVisible[e.key] ?? true;
+            return FilterChip(
+              label: Text(
+                e.value,
+                style: TextStyle(
+                  color: on ? Colors.white : const Color(0xFF9CA3AF),
+                  fontSize: 10,
+                  height: 1.3,
+                ),
+              ),
+              selected: on,
+              onSelected: (v) => onToggleColumn(e.key, v),
+              selectedColor: const Color(0xFF3D5AFE).withValues(alpha: 0.4),
+              backgroundColor: const Color(0xFF1A1A24),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+            );
+          }),
+          const SizedBox(width: 8),
+          const Text(
+            '担当:',
+            style: TextStyle(
+              color: Color(0xFFB0B0C0),
+              fontSize: 10,
+              height: 1.5,
+            ),
+          ),
+          ..._activeWbsInstanceFilters.map((filter) {
+            final on = filterInstance == filter.value;
+            return FilterChip(
+              label: Text(
+                filter.value == null ? '全て' : filter.label,
+                style: TextStyle(
+                  color: on ? Colors.black : filter.color,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  height: 1.3,
+                ),
+              ),
+              selected: on,
+              onSelected: (_) => onFilterInstance(on ? null : filter.value),
+              selectedColor: filter.color,
+              backgroundColor: filter.color.withValues(alpha: 0.08),
+              side: BorderSide(color: filter.color.withValues(alpha: 0.4)),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class GanttMilestoneRiskBanner extends StatelessWidget {
+  final List<Map<String, dynamic>> warnings;
+
+  const GanttMilestoneRiskBanner({
+    super.key,
+    required this.warnings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFF1A0A0A),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.warning_amber, color: Color(0xFFEF4444), size: 18),
+              SizedBox(width: 8),
+              Text(
+                'マイルストーン警告',
+                style: TextStyle(
+                  color: Color(0xFFEF4444),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          ...warnings.map(_riskChip),
+        ],
+      ),
+    );
+  }
+
+  Widget _riskChip(Map<String, dynamic> r) {
+    final code = r['code'] as String? ?? '?';
+    final status = r['risk_status'] as String? ?? '';
+    final daysLeft = (r['days_left'] as num?)?.toInt() ?? 0;
+    final remaining = (r['remaining_hours'] as num?)?.toDouble() ?? 0.0;
+    final available = (r['available_hours'] as num?)?.toDouble() ?? 0.0;
+    final overdue = (r['overdue_tasks'] as num?)?.toInt() ?? 0;
+    final color = switch (status) {
+      'critical_overdue' => const Color(0xFFEF4444),
+      'over_capacity' => const Color(0xFFF97316),
+      'tight' => const Color(0xFFEAB308),
+      _ => const Color(0xFF6B7280),
+    };
+    final label = switch (status) {
+      'critical_overdue' => '🚨 期限超過 ($overdue 件)',
+      'over_capacity' =>
+        '⚠ 工数超過 ${remaining.toInt()}h > 利用可能 ${available.toInt()}h',
+      'tight' => '⏳ 残 $daysLeft 日 (タイト)',
+      _ => 'OK',
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        '$code: $label',
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          height: 1.5,
+        ),
+      ),
+    );
+  }
+}
+
+class GanttTimelineHeader extends StatelessWidget {
+  final int taskCount;
+  final int totalCount;
+  final int invertedCount;
+  final String? filterInstance;
+  final bool hideCompleted;
+  final bool aiReportLoading;
+  final bool repairLoading;
+  final ValueChanged<bool?> onToggleHideCompleted;
+  final VoidCallback onScrollToGraph;
+  final VoidCallback onShowAiReport;
+  final VoidCallback onAutoRepair;
+  final VoidCallback onExportCsv;
+
+  const GanttTimelineHeader({
+    super.key,
+    required this.taskCount,
+    required this.totalCount,
+    this.invertedCount = 0,
+    this.filterInstance,
+    required this.hideCompleted,
+    this.aiReportLoading = false,
+    this.repairLoading = false,
+    required this.onToggleHideCompleted,
+    required this.onScrollToGraph,
+    required this.onShowAiReport,
+    required this.onAutoRepair,
+    required this.onExportCsv,
+  });
+
+  static const _panelColor = Color(0xFF1A1A24);
+  static const _todayColor = Color(0xFFFF6B35);
+
+  @override
+  Widget build(BuildContext context) {
+    final hasInstanceFilter = filterInstance != null;
+    final filtered =
+        (hideCompleted || hasInstanceFilter) && totalCount > taskCount;
+    final String countLabel;
+    if (hideCompleted && !hasInstanceFilter && totalCount > taskCount) {
+      countLabel = '未完了 $taskCount / 全体 $totalCount 件';
+    } else if (filtered) {
+      countLabel = '表示 $taskCount / 全体 $totalCount 件';
+    } else {
+      countLabel = '$taskCount タスク';
+    }
+    return Container(
+      width: double.infinity,
+      color: _panelColor,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.table_chart_outlined,
+                color: Color(0xFFFF6B35),
+                size: 20,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'プロジェクトタイムライン',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            countLabel,
+            style: TextStyle(
+              color:
+                  filtered ? const Color(0xFFFF6B35) : const Color(0xFF808090),
+              fontSize: 12,
+              fontWeight: filtered ? FontWeight.w600 : FontWeight.normal,
+              height: 1.5,
+            ),
+          ),
+          if (invertedCount > 0)
+            Tooltip(
+              message: '開始予定が完了予定より後の元データを、画面では開始≦完了に補正表示しています。',
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFBBF24).withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: const Color(0xFFFBBF24).withValues(alpha: 0.55),
+                  ),
+                ),
+                child: Text(
+                  '日付補正 $invertedCount件',
+                  style: const TextStyle(
+                    color: Color(0xFFFBBF24),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ),
+          // Win版#131 part 12: 未完了 only toggle
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onToggleHideCompleted(!hideCompleted),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Checkbox(
+                  value: hideCompleted,
+                  onChanged: onToggleHideCompleted,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  activeColor: const Color(0xFFFF6B35),
+                  visualDensity: VisualDensity.compact,
+                ),
+                const Text(
+                  '未完了のみ',
+                  style: TextStyle(
+                    color: Color(0xFFE2E8F0),
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Tooltip(
+            message: '表が広くてグラフが隠れている場合、右側のガント領域へ移動します。',
+            child: SizedBox(
+              height: 28,
+              child: OutlinedButton.icon(
+                onPressed: onScrollToGraph,
+                icon: const Icon(Icons.timeline, size: 14),
+                label: const Text(
+                  'グラフへ',
+                  style: TextStyle(fontSize: 11, height: 1.5),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF60A5FA),
+                  side: const BorderSide(color: Color(0xFF60A5FA)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+            ),
+          ),
+          // Win版#131 part 20: AI 概観 + 自動修復 button
+          Tooltip(
+            message: '表示中WBSをローカル診断し、可能ならAI補足も取得します。',
+            child: SizedBox(
+              height: 28,
+              child: OutlinedButton.icon(
+                onPressed: aiReportLoading ? null : onShowAiReport,
+                icon: aiReportLoading
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.psychology_alt, size: 14),
+                label: Text(
+                  aiReportLoading ? '分析中' : 'AI 概観',
+                  style: const TextStyle(fontSize: 11, height: 1.5),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFA855F7),
+                  disabledForegroundColor: const Color(
+                    0xFFA855F7,
+                  ).withValues(alpha: 0.45),
+                  side: const BorderSide(color: Color(0xFFA855F7)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+            ),
+          ),
+          Tooltip(
+            message: '依存関係由来の日程矛盾を検査し、修復後にWBSを再読み込みします。',
+            child: SizedBox(
+              height: 28,
+              child: OutlinedButton.icon(
+                onPressed: repairLoading ? null : onAutoRepair,
+                icon: repairLoading
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.auto_fix_high, size: 14),
+                label: Text(
+                  repairLoading ? '修復中' : '依存修復',
+                  style: const TextStyle(fontSize: 11, height: 1.5),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF22C55E),
+                  disabledForegroundColor: const Color(
+                    0xFF22C55E,
+                  ).withValues(alpha: 0.45),
+                  side: const BorderSide(color: Color(0xFF22C55E)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 28,
+            child: OutlinedButton.icon(
+              onPressed: onExportCsv,
+              icon: const Icon(Icons.download, size: 14),
+              label: const Text(
+                'CSV',
+                style: TextStyle(fontSize: 11, height: 1.5),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF38BDF8),
+                side: const BorderSide(color: Color(0xFF38BDF8)),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 10, height: 10, color: _todayColor),
+              const SizedBox(width: 6),
+              const Text(
+                '今日',
+                style: TextStyle(
+                  color: Color(0xFFB0B0C0),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          _legendSwatch(const Color(0xFF4CAF50), '完了'),
+          _legendSwatch(const Color(0xFFFF6B35), '進行中'),
+          _legendSwatch(const Color(0xFF707080), '未着手'),
+        ],
+      ),
+    );
+  }
+
+  Widget _legendSwatch(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 18,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFFB0B0C0),
+            fontSize: 11,
+            height: 1.5,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class GanttTimelineTab extends StatefulWidget {
   final List<WbsMilestone> milestones;
   final List<WbsTask> tasks;
   final bool loading;
@@ -2690,7 +3255,8 @@ class _GanttTimelineTab extends StatefulWidget {
   final List<Map<String, dynamic>> milestoneRisks;
   final Future<void> Function()? onRefreshWbs;
 
-  const _GanttTimelineTab({
+  const GanttTimelineTab({
+    super.key,
     required this.milestones,
     required this.tasks,
     required this.loading,
@@ -2703,10 +3269,10 @@ class _GanttTimelineTab extends StatefulWidget {
   });
 
   @override
-  State<_GanttTimelineTab> createState() => _GanttTimelineTabState();
+  State<GanttTimelineTab> createState() => _GanttTimelineTabState();
 }
 
-class _GanttTimelineTabState extends State<_GanttTimelineTab> {
+class _GanttTimelineTabState extends State<GanttTimelineTab> {
   // Win版#131 part 12: 開始/完了/リカバリー列追加で 340 → 700 に拡張
   // Win版#131 part 22: 列表示制御 (左パネル幅は表示列の合計から動的算出)
   // Win版#132 part 83: Notion 風 column resize 化 — static const → final + min/max + persistence
@@ -3044,9 +3610,31 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       );
     }
     final tasks = _orderedTasks;
-    if (tasks.isEmpty) {
+    if (widget.tasks.isEmpty) {
       return const _EmptyCard(
-        message: 'タスクデータがありません\n(WBS migration 適用後に表示されます)',
+        message: '表示できるタスクがまだありません',
+      );
+    }
+    if (tasks.isEmpty) {
+      return Container(
+        color: _bgColor,
+        child: Column(
+          children: [
+            _buildHeader(0, widget.tasks.length),
+            _buildColumnToggleBar(),
+            if (_riskWarnings.isNotEmpty)
+              GanttMilestoneRiskBanner(warnings: _riskWarnings),
+            Expanded(
+              child: GanttFilteredEmptyState(
+                totalCount: widget.tasks.length,
+                onResetFilters: () {
+                  widget.onFilterInstance(null);
+                  widget.onToggleHideCompleted(false);
+                },
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -3058,7 +3646,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           // Win版#131 part 22: 列表示制御 + Gantt instance filter
           _buildColumnToggleBar(),
           // Win版#131 part 13: マイルストーン risk warning banner
-          if (_riskWarnings.isNotEmpty) _buildRiskBanner(),
+          if (_riskWarnings.isNotEmpty)
+            GanttMilestoneRiskBanner(warnings: _riskWarnings),
           Expanded(
             child: ScrollConfiguration(
               behavior: const _GanttDragScrollBehavior(),
@@ -3217,77 +3806,6 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             r['risk_status'] == 'tight',
       )
       .toList();
-
-  Widget _buildRiskBanner() {
-    return Container(
-      color: const Color(0xFF1A0A0A),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_amber, color: Color(0xFFEF4444), size: 18),
-          const SizedBox(width: 8),
-          const Text(
-            'マイルストーン警告',
-            style: TextStyle(
-              color: Color(0xFFEF4444),
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(children: _riskWarnings.map(_riskChip).toList()),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _riskChip(Map<String, dynamic> r) {
-    final code = r['code'] as String? ?? '?';
-    final status = r['risk_status'] as String? ?? '';
-    final daysLeft = (r['days_left'] as num?)?.toInt() ?? 0;
-    final remaining = (r['remaining_hours'] as num?)?.toDouble() ?? 0.0;
-    final available = (r['available_hours'] as num?)?.toDouble() ?? 0.0;
-    final overdue = (r['overdue_tasks'] as num?)?.toInt() ?? 0;
-    final color = switch (status) {
-      'critical_overdue' => const Color(0xFFEF4444),
-      'over_capacity' => const Color(0xFFF97316),
-      'tight' => const Color(0xFFEAB308),
-      _ => const Color(0xFF6B7280),
-    };
-    final label = switch (status) {
-      'critical_overdue' => '🚨 期限超過 ($overdue 件)',
-      'over_capacity' =>
-        '⚠ 工数超過 ${remaining.toInt()}h > 利用可能 ${available.toInt()}h',
-      'tight' => '⏳ 残 $daysLeft 日 (タイト)',
-      _ => 'OK',
-    };
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.5)),
-        ),
-        child: Text(
-          '$code: $label',
-          style: TextStyle(
-            color: color,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            height: 1.5,
-          ),
-        ),
-      ),
-    );
-  }
 
   String _buildLocalAiReport() {
     final tasks = _orderedTasks;
@@ -3589,372 +4107,31 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
 
   // Win版#131 part 22: 列表示制御 + Gantt instance filter chips
   Widget _buildColumnToggleBar() {
-    final labels = {
-      '#': '#',
-      'task': 'タスク',
-      'startDate': '開始',
-      'endDate': '完了',
-      'instance': '担当',
-      'progress': '進捗',
-      'remaining': '次作業',
-      'depends': 'ブロック',
-      'recovery': '状態/対処',
-      'flags': '注意',
-    };
-    return Container(
-      color: const Color(0xFF0F0F18),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            const Text(
-              '列表示:',
-              style: TextStyle(
-                color: Color(0xFFB0B0C0),
-                fontSize: 10,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(width: 6),
-            ...labels.entries.map((e) {
-              final on = _colVisible[e.key] ?? true;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: FilterChip(
-                  label: Text(
-                    e.value,
-                    style: TextStyle(
-                      color: on ? Colors.white : const Color(0xFF707080),
-                      fontSize: 10,
-                      height: 1.3,
-                    ),
-                  ),
-                  selected: on,
-                  onSelected: (v) => setState(() => _colVisible[e.key] = v),
-                  selectedColor: const Color(0xFF3D5AFE).withValues(alpha: 0.4),
-                  backgroundColor: const Color(0xFF1A1A24),
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                ),
-              );
-            }),
-            const SizedBox(width: 12),
-            const Text(
-              '担当:',
-              style: TextStyle(
-                color: Color(0xFFB0B0C0),
-                fontSize: 10,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(width: 6),
-            ..._activeWbsInstanceFilters.map((filter) {
-              final on = widget.filterInstance == filter.value;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: FilterChip(
-                  label: Text(
-                    filter.value == null ? '全て' : filter.label,
-                    style: TextStyle(
-                      color: on ? Colors.black : filter.color,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3,
-                    ),
-                  ),
-                  selected: on,
-                  onSelected: (_) =>
-                      widget.onFilterInstance(on ? null : filter.value),
-                  selectedColor: filter.color,
-                  backgroundColor: filter.color.withValues(alpha: 0.08),
-                  side: BorderSide(color: filter.color.withValues(alpha: 0.4)),
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                ),
-              );
-            }),
-            ...[
-              ('全', null, const Color(0xFFFF6B35)),
-              ('VS', 'vscode', const Color(0xFF007ACC)),
-              ('Codex', 'codex', const Color(0xFF10B981)),
-              ('Gemini', 'gemini', const Color(0xFF4285F4)),
-              ('Co-pilot', 'co-pilot', const Color(0xFF111827)),
-              ('User', 'user', const Color(0xFFEF4444)),
-              ('Win', 'win', const Color(0xFF00BCF2)),
-              ('PS#1', 'ps1', const Color(0xFF4B0082)),
-              ('PS#2', 'ps2', const Color(0xFF6A0DAD)),
-              ('PS#3', 'ps3', const Color(0xFF8B5CF6)),
-              ('PS#4', 'ps4', const Color(0xFFA855F7)),
-              ('PS#5', 'ps5', const Color(0xFFC084FC)),
-              ('PS#6', 'ps6', const Color(0xFFDAB6FC)),
-              ('WEB', 'web', const Color(0xFF22C55E)),
-              ('📱', 'mobile', const Color(0xFFF97316)),
-              ('⏰', 'schedule', const Color(0xFFEAB308)),
-              ('🔧', 'gha', const Color(0xFF6B7280)),
-            ].where((_) => false).map((t) {
-              if (t.$2 != null &&
-                  !_activeWbsInstanceFilters.any(
-                    (filter) => filter.value == t.$2,
-                  )) {
-                return const SizedBox.shrink();
-              }
-              final on = widget.filterInstance == t.$2;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: FilterChip(
-                  label: Text(
-                    t.$1,
-                    style: TextStyle(
-                      color: on ? Colors.black : t.$3,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3,
-                    ),
-                  ),
-                  selected: on,
-                  onSelected: (_) => widget.onFilterInstance(on ? null : t.$2),
-                  selectedColor: t.$3,
-                  backgroundColor: t.$3.withValues(alpha: 0.08),
-                  side: BorderSide(color: t.$3.withValues(alpha: 0.4)),
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
+    return GanttColumnToggleBar(
+      colVisible: _colVisible,
+      filterInstance: widget.filterInstance,
+      onToggleColumn: (key, visible) =>
+          setState(() => _colVisible[key] = visible),
+      onFilterInstance: widget.onFilterInstance,
     );
   }
 
   Widget _buildHeader(int taskCount, int totalCount) {
-    final filtered = widget.hideCompleted && totalCount > taskCount;
-    final countLabel =
-        filtered ? '未完了 $taskCount / 全体 $totalCount 件' : '$taskCount タスク';
     final invertedCount =
         widget.tasks.where((t) => t.hasInvertedSchedule).length;
-    return Container(
-      color: _panelColor,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.table_chart_outlined,
-            color: Color(0xFFFF6B35),
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'プロジェクトタイムライン',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            countLabel,
-            style: TextStyle(
-              color:
-                  filtered ? const Color(0xFFFF6B35) : const Color(0xFF808090),
-              fontSize: 12,
-              fontWeight: filtered ? FontWeight.w600 : FontWeight.normal,
-              height: 1.5,
-            ),
-          ),
-          if (invertedCount > 0) ...[
-            const SizedBox(width: 8),
-            Tooltip(
-              message: '開始予定が完了予定より後の元データを、画面では開始<=完了に補正表示しています。',
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFBBF24).withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: const Color(0xFFFBBF24).withValues(alpha: 0.55),
-                  ),
-                ),
-                child: Text(
-                  '日付補正 $invertedCount件',
-                  style: const TextStyle(
-                    color: Color(0xFFFBBF24),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    height: 1.3,
-                  ),
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(width: 16),
-          // Win版#131 part 12: 未完了 only toggle
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Checkbox(
-                value: widget.hideCompleted,
-                onChanged: widget.onToggleHideCompleted,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                activeColor: const Color(0xFFFF6B35),
-                visualDensity: VisualDensity.compact,
-              ),
-              const Text(
-                '未完了のみ',
-                style: TextStyle(
-                  color: Color(0xFFE2E8F0),
-                  fontSize: 11,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          Tooltip(
-            message: '表が広くてグラフが隠れている場合、右側のガント領域へ移動します。',
-            child: SizedBox(
-              height: 28,
-              child: OutlinedButton.icon(
-                onPressed: _scrollWholeGridToGraph,
-                icon: const Icon(Icons.timeline, size: 14),
-                label: const Text(
-                  'グラフへ',
-                  style: TextStyle(fontSize: 11, height: 1.5),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF60A5FA),
-                  side: const BorderSide(color: Color(0xFF60A5FA)),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          // Win版#131 part 20: AI 概観 + 自動修復 button
-          Tooltip(
-            message: '表示中WBSをローカル診断し、可能ならAI補足も取得します。',
-            child: SizedBox(
-              height: 28,
-              child: OutlinedButton.icon(
-                onPressed: _aiReportLoading ? null : _showAiReport,
-                icon: _aiReportLoading
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.psychology_alt, size: 14),
-                label: Text(
-                  _aiReportLoading ? '分析中' : 'AI 概観',
-                  style: const TextStyle(fontSize: 11, height: 1.5),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFA855F7),
-                  disabledForegroundColor: const Color(
-                    0xFFA855F7,
-                  ).withValues(alpha: 0.45),
-                  side: const BorderSide(color: Color(0xFFA855F7)),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Tooltip(
-            message: '依存関係由来の日程矛盾を検査し、修復後にWBSを再読み込みします。',
-            child: SizedBox(
-              height: 28,
-              child: OutlinedButton.icon(
-                onPressed: _repairLoading ? null : _autoRepairDependencies,
-                icon: _repairLoading
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.auto_fix_high, size: 14),
-                label: Text(
-                  _repairLoading ? '修復中' : '依存修復',
-                  style: const TextStyle(fontSize: 11, height: 1.5),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF22C55E),
-                  disabledForegroundColor: const Color(
-                    0xFF22C55E,
-                  ).withValues(alpha: 0.45),
-                  side: const BorderSide(color: Color(0xFF22C55E)),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          SizedBox(
-            height: 28,
-            child: OutlinedButton.icon(
-              onPressed: _exportCsv,
-              icon: const Icon(Icons.download, size: 14),
-              label: const Text(
-                'CSV',
-                style: TextStyle(fontSize: 11, height: 1.5),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF38BDF8),
-                side: const BorderSide(color: Color(0xFF38BDF8)),
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Container(width: 10, height: 10, color: _todayColor),
-          const SizedBox(width: 6),
-          const Text(
-            '今日',
-            style: TextStyle(
-              color: Color(0xFFB0B0C0),
-              fontSize: 11,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(width: 16),
-          _legendSwatch(const Color(0xFF4CAF50), '完了'),
-          const SizedBox(width: 8),
-          _legendSwatch(const Color(0xFFFF6B35), '進行中'),
-          const SizedBox(width: 8),
-          _legendSwatch(const Color(0xFF707080), '未着手'),
-        ],
-      ),
-    );
-  }
-
-  Widget _legendSwatch(Color color, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 18,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFFB0B0C0),
-            fontSize: 11,
-            height: 1.5,
-          ),
-        ),
-      ],
+    return GanttTimelineHeader(
+      taskCount: taskCount,
+      totalCount: totalCount,
+      invertedCount: invertedCount,
+      filterInstance: widget.filterInstance,
+      hideCompleted: widget.hideCompleted,
+      aiReportLoading: _aiReportLoading,
+      repairLoading: _repairLoading,
+      onToggleHideCompleted: widget.onToggleHideCompleted,
+      onScrollToGraph: _scrollWholeGridToGraph,
+      onShowAiReport: _showAiReport,
+      onAutoRepair: _autoRepairDependencies,
+      onExportCsv: _exportCsv,
     );
   }
 
@@ -4235,9 +4412,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                           : const Color(0xFF606070),
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      task.categoryIcon,
-                      style: const TextStyle(fontSize: 12, height: 1.5),
+                    WbsCategoryIconBadge(
+                      iconValue: task.categoryIcon,
+                      size: 14,
                     ),
                     const SizedBox(width: 6),
                     Expanded(

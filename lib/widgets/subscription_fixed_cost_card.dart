@@ -96,6 +96,66 @@ class SubscriptionFixedCostCard extends StatelessWidget {
     };
   }
 
+  /// 登録済みサブスクの見直し判定（解約候補・保留・高額未判定）に基づく削減提案を返す。
+  static List<String> buildSavingsSuggestions(
+    List<AssetRecurringFixedCost> costs,
+  ) {
+    final suggestions = <String>[];
+    final cancelItems = costs
+        .where(
+          (cost) =>
+              cost.subscriptionReviewDecision ==
+              AssetSubscriptionReviewDecision.cancelCandidate,
+        )
+        .toList()
+      ..sort((a, b) => b.amount.compareTo(a.amount));
+    if (cancelItems.isNotEmpty) {
+      final cancelMonthly =
+          cancelItems.fold<double>(0, (sum, cost) => sum + cost.amount);
+      final names = cancelItems.take(3).map((cost) => cost.name).join('・');
+      suggestions.add(
+        '解約候補 (${cancelItems.length}件) の解約で月 ¥${_yen.format(cancelMonthly)}'
+        '（年 ¥${_yen.format(cancelMonthly * 12)}）を削減できます: $names',
+      );
+    }
+
+    final holdItems = costs
+        .where(
+          (cost) =>
+              cost.subscriptionReviewDecision ==
+              AssetSubscriptionReviewDecision.hold,
+        )
+        .toList()
+      ..sort((a, b) => b.amount.compareTo(a.amount));
+    if (holdItems.isNotEmpty) {
+      final holdMonthly =
+          holdItems.fold<double>(0, (sum, cost) => sum + cost.amount);
+      final names = holdItems.take(3).map((cost) => cost.name).join('・');
+      suggestions.add(
+        '保留 (${holdItems.length}件・月 ¥${_yen.format(holdMonthly)}) は利用頻度を確認し、'
+        '一時停止または下位プランへの変更を検討してください: $names',
+      );
+    }
+
+    final highUnreviewed = costs
+        .where(
+          (cost) =>
+              cost.subscriptionReviewDecision ==
+                  AssetSubscriptionReviewDecision.unreviewed &&
+              cost.amount >= 3000,
+        )
+        .toList()
+      ..sort((a, b) => b.amount.compareTo(a.amount));
+    if (highUnreviewed.isNotEmpty) {
+      final names = highUnreviewed.take(3).map((cost) => cost.name).join('・');
+      suggestions.add(
+        '月額 ¥3,000 以上の未判定サブスク (${highUnreviewed.length}件) の利用頻度を確認し、'
+        '「残す / 保留 / 解約候補」を選択してください: $names',
+      );
+    }
+    return suggestions;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -119,6 +179,7 @@ class SubscriptionFixedCostCard extends StatelessWidget {
               AssetSubscriptionReviewDecision.unreviewed,
         )
         .length;
+    final savingsSuggestions = buildSavingsSuggestions(costs);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
@@ -207,6 +268,41 @@ class SubscriptionFixedCostCard extends StatelessWidget {
                   style: TextStyle(fontSize: 11, height: 1.5),
                 ),
               ),
+              if (savingsSuggestions.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Container(
+                  key: const Key('subscription_savings_suggestions'),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: scheme.tertiaryContainer.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: scheme.tertiary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '見直し・削減提案',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      for (final suggestion in savingsSuggestions)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            '• $suggestion',
+                            style: const TextStyle(fontSize: 12, height: 1.45),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
               if (availablePresets.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(

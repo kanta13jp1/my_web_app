@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, initial-scale=1.0" />
+<title>CALIBRE N-04 // 3-Axis Flying Tourbillon (Pure WebGL2)</title>
+<style>
+  :root {
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --gold: #fbbf24;
+    --rose: #f59e0b;
+    --cyan: #38bdf8;
+    --ruby: #fb7185;
+    --text0: #f8fafc;
+    --text1: #cbd5e1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 1280px; height: 720px; overflow: hidden;
+    background: #040408; color: var(--text0); font-family: var(--mono);
+  }
+  #gl { position: absolute; inset: 0; width: 1280px; height: 720px; display: block; cursor: grab; }
+  #gl:active { cursor: grabbing; }
+  .hud-tl {
+    position: absolute; top: 14px; left: 16px;
+    background: rgba(6, 7, 14, 0.76); border: 1px solid rgba(251, 191, 36, 0.36);
+    border-radius: 8px; padding: 8px 13px; backdrop-filter: blur(6px);
+  }
+  .hud-title { font-size: 13px; font-weight: 800; letter-spacing: 1.3px; color: #fef3c7; }
+  .hud-title span { color: var(--gold); }
+  .hud-sub { font-size: 9.5px; color: #94a3b8; margin-top: 2px; letter-spacing: 0.5px; }
+  .hud-tr {
+    position: absolute; top: 14px; right: 16px;
+    background: rgba(6, 7, 14, 0.76); border: 1px solid rgba(56, 189, 248, 0.28);
+    border-radius: 8px; padding: 8px 12px; display: flex; gap: 14px;
+    backdrop-filter: blur(6px); font-variant-numeric: tabular-nums;
+  }
+  .stat { display: flex; flex-direction: column; }
+  .stat .k { font-size: 8px; color: #94a3b8; letter-spacing: 0.6px; }
+  .stat .v { font-size: 12px; font-weight: 800; color: var(--gold); }
+  .stat .v.cy { color: var(--cyan); }
+  .stat .v.rb { color: var(--ruby); }
+  .hud-bl {
+    position: absolute; bottom: 14px; left: 16px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    background: rgba(6, 7, 14, 0.8); border: 1px solid rgba(148, 163, 184, 0.26);
+    border-radius: 8px; padding: 7px 10px; backdrop-filter: blur(6px);
+  }
+  .cbtn {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 800;
+    color: var(--text1); background: rgba(15, 23, 42, 0.88);
+    border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 6px;
+    padding: 6px 10px; cursor: pointer;
+  }
+  .cbtn:hover { border-color: var(--gold); color: #fff; }
+  .cbtn.act {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    border-color: #fde68a; color: #111827;
+  }
+  .cbtn.act-cy {
+    background: linear-gradient(90deg, #0284c7, #38bdf8);
+    border-color: #bae6fd; color: #04111d;
+  }
+  .slider-wrap {
+    display: flex; align-items: center; gap: 7px; padding-left: 6px;
+    border-left: 1px solid rgba(148, 163, 184, 0.25);
+    font-size: 10px; color: #fde68a;
+  }
+  input[type="range"] { width: 112px; accent-color: #fbbf24; cursor: pointer; }
+  .hud-br {
+    position: absolute; bottom: 14px; right: 16px;
+    background: rgba(6, 7, 14, 0.76); border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: 8px; padding: 7px 12px; text-align: right;
+    font-size: 9.5px; color: #94a3b8;
+  }
+  .hud-br b { color: #fde68a; display: block; font-size: 10.5px; }
+</style>
+</head>
+<body data-stage="1280x720" data-sound="watch">
+<canvas id="gl" width="1280" height="720"></canvas>
+
+<div class="hud-tl">
+  <div class="hud-title">CALIBRE N-04 <span>// 3-AXIS FLYING TOURBILLON</span></div>
+  <div class="hud-sub">PURE WEBGL2 HOROLOGY · 18-GEAR PHASE LOCK · ZERO EXTERNAL ASSETS</div>
+</div>
+
+<div class="hud-tr">
+  <div class="stat"><span class="k">BEAT RATE</span><span class="v" id="sBeat">28,800 vph</span></div>
+  <div class="stat"><span class="k">EXPLODE</span><span class="v cy" id="sExp">0%</span></div>
+  <div class="stat"><span class="k">JEWELS</span><span class="v rb">29 RUBY</span></div>
+  <div class="stat"><span class="k">SPEED</span><span class="v" id="sSpd">1.0x</span></div>
+</div>
+
+<div class="hud-bl">
+  <button class="cbtn act" id="camDial">01 文字盤フル俯瞰</button>
+  <button class="cbtn" id="camMacro">02 ウルトラマクロ</button>
+  <button class="cbtn" id="camExploded">03 5層立体分解</button>
+  <button class="cbtn" id="btnExplode">💥 5層分解 / 🧲 吸着</button>
+  <button class="cbtn" id="btnSpeed">⏱ 速度: 1x</button>
+  <div class="slider-wrap">
+    <span>分解</span>
+    <input type="range" id="expSlider" min="0" max="100" value="0" aria-label="5層分解スライダー" />
+  </div>
+</div>
+
+<div class="hud-br">
+  <b id="layerLbl">ASSEMBLED · 5 LAYERS LOCKED</b>
+  <span>DRAG: 3D回転 · SCROLL: ズーム · 音ON: 8ビート/秒 脱進機</span>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('gl');
+  const gl = canvas.getContext('webgl2', { antialias: true, alpha: false, preserveDrawingBuffer: true });
+  if (!gl) return;
+
+  const VS = `#version 300 es
+  layout(location=0) in vec3 aPos;
+  layout(location=1) in vec3 aNorm;
+  uniform mat4 uMVP;
+  uniform mat4 uModel;
+  out vec3 vWPos;
+  out vec3 vWNorm;
+  void main() {
+    vec4 wp = uModel * vec4(aPos, 1.0);
+    vWPos = wp.xyz;
+    vWNorm = normalize(mat3(uModel) * aNorm);
+    gl_Position = uMVP * vec4(aPos, 1.0);
+  }`;
+
+  const FS = `#version 300 es
+  precision highp float;
+  in vec3 vWPos;
+  in vec3 vWNorm;
+  uniform vec3 uCamPos;
+  uniform vec3 uBaseCol;
+  uniform float uMetal;
+  uniform float uRough;
+  uniform vec3 uEmit;
+  uniform float uAlpha;
+  out vec4 outCol;
+
+  vec3 studioEnv(vec3 r) {
+    // Velvet black background with crisp overhead & rim softbox reflections for horology metal
+    float topBox = smoothstep(0.55, 0.92, r.y) * smoothstep(0.65, 0.0, abs(r.x));
+    float warmRim = smoothstep(0.35, 0.92, dot(r, normalize(vec3(0.82, 0.36, 0.45))));
+    float coolRim = smoothstep(0.45, 0.94, dot(r, normalize(vec3(-0.78, 0.42, 0.46))));
+    float stripe = smoothstep(0.86, 0.96, abs(sin(r.x * 7.0 + r.z * 3.0))) * max(0.0, r.y);
+    return vec3(0.05, 0.055, 0.075)
+      + vec3(1.55, 1.44, 1.28) * topBox
+      + vec3(1.25, 0.85, 0.48) * warmRim * 0.95
+      + vec3(0.52, 0.84, 1.35) * coolRim * 0.85
+      + vec3(0.85, 0.82, 0.78) * stripe * 0.35;
+  }
+
+  void main() {
+    vec3 N = normalize(vWNorm);
+    vec3 V = normalize(uCamPos - vWPos);
+    vec3 R = reflect(-V, N);
+    float NoV = max(dot(N, V), 0.001);
+
+    vec3 L1 = normalize(vec3(4.5, 6.5, 5.2));
+    vec3 L2 = normalize(vec3(-5.0, 3.8, 3.5));
+    vec3 L3 = normalize(vec3(0.5, -3.5, 6.0));
+    vec3 cL1 = vec3(1.45, 1.28, 1.05);
+    vec3 cL2 = vec3(0.58, 0.86, 1.32);
+    vec3 cL3 = vec3(0.95, 0.62, 0.38);
+
+    vec3 F0 = mix(vec3(0.04), uBaseCol, uMetal);
+    vec3 F = F0 + (1.0 - F0) * pow(1.0 - NoV, 5.0);
+    float shininess = mix(160.0, 14.0, clamp(uRough, 0.02, 1.0));
+
+    vec3 col = uBaseCol * (1.0 - uMetal) * 0.18;
+    vec3 ls[3] = vec3[3](L1, L2, L3);
+    vec3 lc[3] = vec3[3](cL1, cL2, cL3);
+    for (int i = 0; i < 3; i++) {
+      vec3 H = normalize(ls[i] + V);
+      float NoL = max(dot(N, ls[i]), 0.0);
+      float NoH = max(dot(N, H), 0.0);
+      float spec = pow(NoH, shininess) * (shininess + 8.0) / 28.0;
+      col += (uBaseCol * (1.0 - uMetal) * 0.65 + F * spec * 1.15) * lc[i] * NoL;
+    }
+
+    vec3 env = studioEnv(R);
+    col += env * mix(F * 0.65, uBaseCol * 0.85 + F * 0.35, uMetal) * (1.0 - uRough * 0.68);
+    // Anisotropic brushed radial shimmer
+    float brush = 0.94 + 0.06 * sin(atan(vWPos.y, vWPos.x) * 48.0 + length(vWPos.xy) * 18.0);
+    col = col * brush + uEmit;
+
+    // ACES Filmic tone mapping
+    col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+    col = pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2));
+    outCol = vec4(col, uAlpha);
+  }`;
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+
+  const loc = {
+    uMVP: gl.getUniformLocation(prog, 'uMVP'),
+    uModel: gl.getUniformLocation(prog, 'uModel'),
+    uCamPos: gl.getUniformLocation(prog, 'uCamPos'),
+    uBaseCol: gl.getUniformLocation(prog, 'uBaseCol'),
+    uMetal: gl.getUniformLocation(prog, 'uMetal'),
+    uRough: gl.getUniformLocation(prog, 'uRough'),
+    uEmit: gl.getUniformLocation(prog, 'uEmit'),
+    uAlpha: gl.getUniformLocation(prog, 'uAlpha'),
+  };
+
+  // ---- Minimal Mat4 Math ----
+  function m4Id() { return new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]); }
+  function m4Mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+      o[c*4+r] = a[r]*b[c*4] + a[4+r]*b[c*4+1] + a[8+r]*b[c*4+2] + a[12+r]*b[c*4+3];
+    }
+    return o;
+  }
+  function m4Trans(x, y, z) { const m = m4Id(); m[12]=x; m[13]=y; m[14]=z; return m; }
+  function m4Scale(x, y, z) { const m = m4Id(); m[0]=x; m[5]=y; m[10]=z; return m; }
+  function m4RotX(a) { const c=Math.cos(a),s=Math.sin(a),m=m4Id(); m[5]=c;m[6]=s;m[9]=-s;m[10]=c; return m; }
+  function m4RotY(a) { const c=Math.cos(a),s=Math.sin(a),m=m4Id(); m[0]=c;m[2]=-s;m[8]=s;m[10]=c; return m; }
+  function m4RotZ(a) { const c=Math.cos(a),s=Math.sin(a),m=m4Id(); m[0]=c;m[1]=s;m[4]=-s;m[5]=c; return m; }
+  function m4Persp(fov, aspect, n, f) {
+    const t = 1 / Math.tan(fov * 0.5), nf = 1 / (n - f);
+    return new Float32Array([t/aspect,0,0,0, 0,t,0,0, 0,0,(f+n)*nf,-1, 0,0,2*f*n*nf,0]);
+  }
+  function m4LookAt(eye, tgt, up) {
+    let zx=eye[0]-tgt[0], zy=eye[1]-tgt[1], zz=eye[2]-tgt[2];
+    let zl=Math.hypot(zx,zy,zz)||1; zx/=zl; zy/=zl; zz/=zl;
+    let xx=up[1]*zz-up[2]*zy, xy=up[2]*zx-up[0]*zz, xz=up[0]*zy-up[1]*zx;
+    let xl=Math.hypot(xx,xy,xz)||1; xx/=xl; xy/=xl; xz/=xl;
+    let yx=zy*xz-zz*xy, yy=zz*xx-zx*xz, yz=zx*xy-zy*xx;
+    return new Float32Array([
+      xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+      -(xx*eye[0]+xy*eye[1]+xz*eye[2]),
+      -(yx*eye[0]+yy*eye[1]+yz*eye[2]),
+      -(zx*eye[0]+zy*eye[1]+zz*eye[2]), 1
+    ]);
+  }
+
+  // ---- Procedural Horology Mesh Builders ----
+  function makeMesh(verts, norms) {
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const vb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    const nb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, nb);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(norms), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+    return { vao, count: verts.length / 3 };
+  }
+
+  function pushTri(v, n, a, b, c) {
+    const ux=b[0]-a[0], uy=b[1]-a[1], uz=b[2]-a[2];
+    const vx=c[0]-a[0], vy=c[1]-a[1], vz=c[2]-a[2];
+    let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
+    const l=Math.hypot(nx,ny,nz)||1; nx/=l; ny/=l; nz/=l;
+    v.push(...a, ...b, ...c);
+    n.push(nx,ny,nz, nx,ny,nz, nx,ny,nz);
+  }
+  function pushQuad(v, n, a, b, c, d) { pushTri(v, n, a, b, c); pushTri(v, n, a, c, d); }
+
+  function buildGear(teeth, mod, thickness, boreFrac = 0.25, spokes = 5) {
+    const v = [], n = [];
+    const rPitch = (teeth * mod) * 0.5;
+    const rOut = rPitch + mod * 0.92;
+    const rRoot = Math.max(0.05, rPitch - mod * 1.05);
+    const rRim = Math.max(rRoot * 0.72, rRoot - mod * 1.4);
+    const rHub = Math.max(0.06, rRoot * boreFrac);
+    const hz = thickness * 0.5;
+
+    // Outer gear teeth profile (4 points per tooth)
+    const pts = [];
+    for (let i = 0; i < teeth; i++) {
+      const a0 = (i / teeth) * Math.PI * 2;
+      const step = (Math.PI * 2) / teeth;
+      const angles = [a0, a0 + step * 0.22, a0 + step * 0.34, a0 + step * 0.62, a0 + step * 0.74];
+      const radii = [rRoot, rRoot, rOut, rOut, rRoot];
+      for (let k = 0; k < 5; k++) pts.push([Math.cos(angles[k]) * radii[k], Math.sin(angles[k]) * radii[k]]);
+    }
+    const len = pts.length;
+    for (let i = 0; i < len; i++) {
+      const p0 = pts[i], p1 = pts[(i + 1) % len];
+      const a0 = Math.atan2(p0[1], p0[0]), a1 = Math.atan2(p1[1], p1[0]);
+      const ir0 = [Math.cos(a0) * rRim, Math.sin(a0) * rRim];
+      const ir1 = [Math.cos(a1) * rRim, Math.sin(a1) * rRim];
+      // Outer side wall
+      pushQuad(v, n, [p0[0], p0[1], -hz], [p1[0], p1[1], -hz], [p1[0], p1[1], hz], [p0[0], p0[1], hz]);
+      // Front rim face
+      pushQuad(v, n, [ir0[0], ir0[1], hz], [p0[0], p0[1], hz], [p1[0], p1[1], hz], [ir1[0], ir1[1], hz]);
+      // Back rim face
+      pushQuad(v, n, [p0[0], p0[1], -hz], [ir0[0], ir0[1], -hz], [ir1[0], ir1[1], -hz], [p1[0], p1[1], -hz]);
+    }
+    // Hub cylinder + spokes
+    const hSeg = 20;
+    for (let i = 0; i < hSeg; i++) {
+      const a0 = (i / hSeg) * Math.PI * 2, a1 = ((i + 1) / hSeg) * Math.PI * 2;
+      const c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1);
+      pushQuad(v, n, [c0*rHub,s0*rHub,-hz], [c1*rHub,s1*rHub,-hz], [c1*rHub,s1*rHub,hz], [c0*rHub,s0*rHub,hz]);
+      pushTri(v, n, [0,0,hz], [c0*rHub,s0*rHub,hz], [c1*rHub,s1*rHub,hz]);
+      pushTri(v, n, [0,0,-hz], [c1*rHub,s1*rHub,-hz], [c0*rHub,s0*rHub,-hz]);
+    }
+    const sw = Math.max(0.025, rRim * 0.085);
+    for (let s = 0; s < spokes; s++) {
+      const a = (s / spokes) * Math.PI * 2;
+      const ca = Math.cos(a), sa = Math.sin(a), px = -sa * sw, py = ca * sw;
+      const r0 = rHub * 0.85, r1 = rRim * 1.03;
+      const p00=[ca*r0-px,sa*r0-py], p01=[ca*r0+px,sa*r0+py], p11=[ca*r1+px,sa*r1+py], p10=[ca*r1-px,sa*r1-py];
+      const shz = hz * 0.68;
+      pushQuad(v, n, [...p00,shz], [...p10,shz], [...p11,shz], [...p01,shz]);
+      pushQuad(v, n, [...p01,-shz], [...p11,-shz], [...p10,-shz], [...p00,-shz]);
+      pushQuad(v, n, [...p00,-shz], [...p10,-shz], [...p10,shz], [...p00,shz]);
+      pushQuad(v, n, [...p11,-shz], [...p01,-shz], [...p01,shz], [...p11,shz]);
+    }
+    return makeMesh(v, n);
+  }
+
+  function buildRing(rIn, rOut, thickness, segs = 64) {
+    const v = [], n = [], hz = thickness * 0.5;
+    for (let i = 0; i < segs; i++) {
+      const a0 = (i / segs) * Math.PI * 2, a1 = ((i + 1) / segs) * Math.PI * 2;
+      const c0=Math.cos(a0), s0=Math.sin(a0), c1=Math.cos(a1), s1=Math.sin(a1);
+      pushQuad(v, n, [c0*rOut,s0*rOut,-hz], [c1*rOut,s1*rOut,-hz], [c1*rOut,s1*rOut,hz], [c0*rOut,s0*rOut,hz]);
+      pushQuad(v, n, [c1*rIn,s1*rIn,-hz], [c0*rIn,s0*rIn,-hz], [c0*rIn,s0*rIn,hz], [c1*rIn,s1*rIn,hz]);
+      pushQuad(v, n, [c0*rIn,s0*rIn,hz], [c0*rOut,s0*rOut,hz], [c1*rOut,s1*rOut,hz], [c1*rIn,s1*rIn,hz]);
+      pushQuad(v, n, [c0*rOut,s0*rOut,-hz], [c0*rIn,s0*rIn,-hz], [c1*rIn,s1*rIn,-hz], [c1*rOut,s1*rOut,-hz]);
+    }
+    return makeMesh(v, n);
+  }
+
+  function buildCylinder(r, h, segs = 24) {
+    const v = [], n = [], hz = h * 0.5;
+    for (let i = 0; i < segs; i++) {
+      const a0 = (i / segs) * Math.PI * 2, a1 = ((i + 1) / segs) * Math.PI * 2;
+      const c0=Math.cos(a0), s0=Math.sin(a0), c1=Math.cos(a1), s1=Math.sin(a1);
+      pushQuad(v, n, [c0*r,s0*r,-hz], [c1*r,s1*r,-hz], [c1*r,s1*r,hz], [c0*r,s0*r,hz]);
+      pushTri(v, n, [0,0,hz], [c0*r,s0*r,hz], [c1*r,s1*r,hz]);
+      pushTri(v, n, [0,0,-hz], [c1*r,s1*r,-hz], [c0*r,s0*r,-hz]);
+    }
+    return makeMesh(v, n);
+  }
+
+  function buildBox(sx, sy, sz) {
+    const v = [], n = [], x = sx/2, y = sy/2, z = sz/2;
+    pushQuad(v,n, [-x,-y,z],[x,-y,z],[x,y,z],[-x,y,z]);
+    pushQuad(v,n, [x,-y,-z],[-x,-y,-z],[-x,y,-z],[x,y,-z]);
+    pushQuad(v,n, [-x,y,z],[x,y,z],[x,y,-z],[-x,y,-z]);
+    pushQuad(v,n, [-x,-y,-z],[x,-y,-z],[x,-y,z],[-x,-y,z]);
+    pushQuad(v,n, [x,-y,z],[x,-y,-z],[x,y,-z],[x,y,z]);
+    pushQuad(v,n, [-x,-y,-z],[-x,-y,z],[-x,y,z],[-x,y,-z]);
+    return makeMesh(v, n);
+  }
+
+  function buildSpiral(turns = 4.2, rMin = 0.08, rMax = 0.44, thickness = 0.016) {
+    const v = [], n = [], steps = 110;
+    for (let i = 0; i < steps; i++) {
+      const t0 = i / steps, t1 = (i + 1) / steps;
+      const a0 = t0 * turns * Math.PI * 2, a1 = t1 * turns * Math.PI * 2;
+      const r0 = rMin + (rMax - rMin) * t0, r1 = rMin + (rMax - rMin) * t1;
+      const w = thickness, hz = thickness * 0.9;
+      const p0i = [Math.cos(a0)*(r0-w), Math.sin(a0)*(r0-w)], p0o = [Math.cos(a0)*(r0+w), Math.sin(a0)*(r0+w)];
+      const p1i = [Math.cos(a1)*(r1-w), Math.sin(a1)*(r1-w)], p1o = [Math.cos(a1)*(r1+w), Math.sin(a1)*(r1+w)];
+      pushQuad(v,n, [...p0i,hz],[...p0o,hz],[...p1o,hz],[...p1i,hz]);
+      pushQuad(v,n, [...p0o,-hz],[...p0o,hz],[...p1o,hz],[...p1o,-hz]);
+    }
+    return makeMesh(v, n);
+  }
+
+  // ---- Build Horology Parts ----
+  const caseRing = buildRing(2.15, 2.52, 0.56, 72);
+  const bezelRing = buildRing(2.10, 2.46, 0.24, 72);
+  const sapphireRing = buildRing(0.02, 2.18, 0.06, 56);
+  const backPlate = buildCylinder(2.26, 0.14, 64);
+  const dialRing = buildRing(1.56, 2.14, 0.08, 64);
+  const rubyMesh = buildCylinder(0.11, 0.16, 12);
+  const pivotPin = buildCylinder(0.045, 0.24, 12);
+  const indexBar = buildBox(0.08, 0.28, 0.07);
+  const lumeBar = buildBox(0.036, 0.22, 0.085);
+  const handHour = buildBox(0.12, 1.18, 0.045);
+  const handMin = buildBox(0.085, 1.68, 0.045);
+  const handSec = buildBox(0.028, 1.88, 0.035);
+  const bridgeBar = buildBox(2.25, 0.22, 0.08);
+  const cageRingOuter = buildRing(0.68, 0.78, 0.08, 48);
+  const cageRingMid = buildRing(0.54, 0.62, 0.07, 40);
+  const balanceRim = buildRing(0.41, 0.48, 0.065, 36);
+  const hairspring = buildSpiral(4.0, 0.08, 0.36, 0.015);
+  const crownCyl = buildCylinder(0.26, 0.32, 20);
+  const lugMesh = buildBox(0.32, 0.72, 0.26);
+
+  // Mathematically exact meshing gear train (module m = 0.048, d = m*(N1+N2)/2, all 100% inside watch bezel!)
+  const MOD = 0.048;
+  const gearSpecs = [
+    { n: 24, x: 0.0, y: 0.12, z: -0.04, mat: 'gold', dir: 1, spd: 1.0, phase: 0 },
+    { n: 18, x: 0.0, y: 0.0, z: -0.04, mat: 'blue', dir: -1, spd: 24/18, parent: 0, ang: 0.52 },
+    { n: 14, x: 0.0, y: 0.0, z: -0.04, mat: 'gold', dir: 1, spd: 24/14, parent: 1, ang: -0.82 },
+    { n: 20, x: 0.0, y: 0.0, z: -0.04, mat: 'steel', dir: -1, spd: 24/20, parent: 0, ang: 2.48 },
+    { n: 14, x: 0.0, y: 0.0, z: -0.04, mat: 'gold', dir: 1, spd: 24/14, parent: 3, ang: -1.42 },
+    { n: 18, x: 0.0, y: 0.0, z: -0.18, mat: 'blue', dir: -1, spd: 24/18, parent: 0, ang: -0.78 },
+    { n: 14, x: 0.0, y: 0.0, z: -0.18, mat: 'gold', dir: 1, spd: 24/14, parent: 5, ang: 1.42 },
+    { n: 16, x: 0.0, y: 0.0, z: -0.18, mat: 'steel', dir: -1, spd: 24/16, parent: 0, ang: -2.35 },
+  ];
+  for (let i = 1; i < gearSpecs.length; i++) {
+    const g = gearSpecs[i], p = gearSpecs[g.parent];
+    const dist = MOD * (p.n + g.n) * 0.5;
+    g.x = p.x + Math.cos(g.ang) * dist;
+    g.y = p.y + Math.sin(g.ang) * dist;
+    g.phase = Math.PI / g.n + g.ang * (1 + p.n / g.n);
+  }
+  const gearMeshes = gearSpecs.map((g) => buildGear(g.n, MOD, 0.11, 0.24, g.n >= 20 ? 6 : 5));
+  const pinionMesh = buildGear(10, MOD * 0.72, 0.18, 0.3, 4);
+
+  const MATS = {
+    gold:    { c: [0.95, 0.68, 0.42], m: 0.96, r: 0.14, e: [0.03, 0.015, 0.0], a: 1.0 },
+    goldDk:  { c: [0.76, 0.50, 0.28], m: 0.94, r: 0.22, e: [0.0, 0.0, 0.0], a: 1.0 },
+    blue:    { c: [0.10, 0.34, 0.88], m: 0.95, r: 0.12, e: [0.01, 0.05, 0.14], a: 1.0 },
+    steel:   { c: [0.78, 0.84, 0.92], m: 0.96, r: 0.15, e: [0.0, 0.0, 0.0], a: 1.0 },
+    slate:   { c: [0.09, 0.11, 0.16], m: 0.55, r: 0.32, e: [0.0, 0.0, 0.0], a: 1.0 },
+    ruby:    { c: [0.85, 0.03, 0.14], m: 0.25, r: 0.05, e: [0.38, 0.02, 0.08], a: 1.0 },
+    lume:    { c: [0.65, 0.96, 1.00], m: 0.10, r: 0.18, e: [0.35, 0.88, 1.05], a: 1.0 },
+    sapph:   { c: [0.55, 0.82, 1.00], m: 0.15, r: 0.04, e: [0.04, 0.08, 0.14], a: 0.18 },
+  };
+
+  // ---- Interactive Camera & Exploded State ----
+  let camYaw = 0.24, camPitch = 0.28, camDist = 7.8;
+  let tgtYaw = 0.24, tgtPitch = 0.28, tgtDist = 7.8, tgtX = 0, tgtY = 0;
+  let curX = 0, curY = 0;
+  let explode = 0.0, tgtExplode = 0.0;
+  let speedMult = 1.0;
+  let simT = 0;
+  let camMode = 0;
+  let dragging = false, lx = 0, ly = 0;
+
+  const expSlider = document.getElementById('expSlider');
+  const btnExplode = document.getElementById('btnExplode');
+  const btnSpeed = document.getElementById('btnSpeed');
+  const camBtns = [
+    document.getElementById('camDial'),
+    document.getElementById('camMacro'),
+    document.getElementById('camExploded'),
+  ];
+
+  function setCamPreset(idx) {
+    camMode = idx;
+    camBtns.forEach((b, i) => b.classList.toggle('act', i === idx));
+    if (idx === 0) {
+      tgtYaw = 0.22; tgtPitch = 0.26; tgtDist = 6.5; tgtX = 0; tgtY = 0; tgtExplode = 0.0;
+    } else if (idx === 1) {
+      tgtYaw = -0.35; tgtPitch = 0.48; tgtDist = 3.25; tgtX = 0.0; tgtY = -0.78; tgtExplode = 0.18;
+    } else {
+      tgtYaw = 0.88; tgtPitch = 0.42; tgtDist = 7.5; tgtX = 0; tgtY = 0; tgtExplode = 1.0;
+    }
+    expSlider.value = String(Math.round(tgtExplode * 100));
+    btnExplode.classList.toggle('act-cy', tgtExplode > 0.5);
+  }
+
+  camBtns.forEach((b, i) => b.addEventListener('click', () => setCamPreset(i)));
+  btnExplode.addEventListener('click', () => {
+    const next = tgtExplode > 0.5 ? 0.0 : 1.0;
+    tgtExplode = next;
+    expSlider.value = String(Math.round(next * 100));
+    btnExplode.classList.toggle('act-cy', next > 0.5);
+    if (next > 0.5) { tgtYaw = 0.86; tgtPitch = 0.40; tgtDist = 7.4; }
+    else {
+      // 5-stage magnetic lock chimes on reassembly!
+      for (let k = 0; k < 5; k++) {
+        setTimeout(() => window.NeonAudio?.sfx('chime', 0.85 + k * 0.14), k * 90);
+      }
+    }
+  });
+  expSlider.addEventListener('input', () => {
+    tgtExplode = Number(expSlider.value) / 100;
+    btnExplode.classList.toggle('act-cy', tgtExplode > 0.5);
+  });
+  const speedSteps = [1.0, 0.25, 3.0];
+  let spIdx = 0;
+  btnSpeed.addEventListener('click', () => {
+    spIdx = (spIdx + 1) % speedSteps.length;
+    speedMult = speedSteps[spIdx];
+    btnSpeed.textContent = `⏱ 速度: ${speedMult}x`;
+    document.getElementById('sSpd').textContent = `${speedMult.toFixed(speedMult < 1 ? 2 : 1)}x`;
+  });
+
+  canvas.addEventListener('pointerdown', (e) => { dragging = true; lx = e.clientX; ly = e.clientY; });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  window.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    tgtYaw += (e.clientX - lx) * 0.008;
+    tgtPitch = Math.max(-1.15, Math.min(1.15, tgtPitch + (e.clientY - ly) * 0.007));
+    lx = e.clientX; ly = e.clientY;
+  });
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    tgtDist = Math.max(2.6, Math.min(11.5, tgtDist + e.deltaY * 0.004));
+  }, { passive: false });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    window.NeonShell?.setHint('ドラッグ: 3D回転 · スクロール: 拡大 · スライダーで5層立体分解＆磁気吸着');
+  });
+
+  function draw(mesh, model, mat, vp) {
+    gl.uniformMatrix4fv(loc.uModel, false, model);
+    gl.uniformMatrix4fv(loc.uMVP, false, m4Mul(vp, model));
+    gl.uniform3fv(loc.uBaseCol, mat.c);
+    gl.uniform1f(loc.uMetal, mat.m);
+    gl.uniform1f(loc.uRough, mat.r);
+    gl.uniform3fv(loc.uEmit, mat.e);
+    gl.uniform1f(loc.uAlpha, mat.a);
+    gl.bindVertexArray(mesh.vao);
+    gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+    last = now;
+    simT += dt * speedMult;
+
+    camYaw += (tgtYaw - camYaw) * Math.min(1, dt * 6);
+    camPitch += (tgtPitch - camPitch) * Math.min(1, dt * 6);
+    camDist += (tgtDist - camDist) * Math.min(1, dt * 6);
+    curX += (tgtX - curX) * Math.min(1, dt * 6);
+    curY += (tgtY - curY) * Math.min(1, dt * 6);
+    explode += (tgtExplode - explode) * Math.min(1, dt * 5.5);
+
+    document.getElementById('sExp').textContent = `${Math.round(explode * 100)}%`;
+    document.getElementById('layerLbl').textContent =
+      explode > 0.65 ? '5-LAYER EXPLODED VIEW // L1-L5 SEPARATED'
+      : explode > 0.08 ? 'TRANSITIONING HOROLOGY STACK...'
+      : 'ASSEMBLED · 5 LAYERS MAGNETICALLY LOCKED';
+
+    gl.viewport(0, 0, 1280, 720);
+    gl.clearColor(0.016, 0.018, 0.032, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.disable(gl.BLEND);
+    gl.useProgram(prog);
+
+    const eye = [
+      curX + Math.sin(camYaw) * Math.cos(camPitch) * camDist,
+      curY + Math.sin(camPitch) * camDist,
+      Math.cos(camYaw) * Math.cos(camPitch) * camDist,
+    ];
+    const vp = m4Mul(m4Persp(0.68, 1280 / 720, 0.1, 60), m4LookAt(eye, [curX, curY, 0], [0, 1, 0]));
+    gl.uniform3fv(loc.uCamPos, eye);
+
+    // 5 Exploded Z-layers (L1 Caseback, L2 3-Axis Tourbillon, L3 18-Gear Train, L4 Blued Hands, L5 Sapphire)
+    const zL1 = -0.35 - explode * 1.45;
+    const zL2 = -0.06 - explode * 0.55;
+    const zL3 =  0.04 + explode * 0.25;
+    const zL4 =  0.28 + explode * 1.05;
+    const zL5 =  0.46 + explode * 1.85;
+
+    // L1: Caseback, Rose-Gold Case, Lugs & Crown
+    draw(backPlate, m4Trans(0, 0, zL1 - 0.12), MATS.slate, vp);
+    draw(caseRing, m4Trans(0, 0, zL1 + 0.18), MATS.gold, vp);
+    draw(crownCyl, m4Mul(m4Trans(2.62, 0, zL1 + 0.18), m4RotY(Math.PI * 0.5)), MATS.gold, vp);
+    for (const sx of [-1.25, 1.25]) for (const sy of [-2.42, 2.42]) {
+      draw(lugMesh, m4Trans(sx, sy, zL1 + 0.14), MATS.goldDk, vp);
+    }
+
+    // L3: Skeleton Bridges & Mathematically Phase-Locked Gear Train
+    draw(bridgeBar, m4Mul(m4Trans(0, 0.72, zL3 - 0.16), m4RotZ(0.18)), MATS.goldDk, vp);
+    draw(bridgeBar, m4Mul(m4Trans(0, -0.78, zL2 - 0.24), m4RotZ(-0.12)), MATS.steel, vp);
+    const omega = simT * 0.55;
+    for (let i = 0; i < gearSpecs.length; i++) {
+      const g = gearSpecs[i];
+      const mG = m4Mul(m4Trans(g.x, g.y, zL3 + g.z), m4RotZ(g.dir * omega * g.spd + g.phase));
+      draw(gearMeshes[i], mG, MATS[g.mat], vp);
+      draw(pinionMesh, m4Mul(m4Trans(g.x, g.y, zL3 + g.z + 0.06), m4RotZ(g.dir * omega * g.spd)), MATS.steel, vp);
+      draw(rubyMesh, m4Trans(g.x, g.y, zL3 + g.z + 0.11), MATS.ruby, vp);
+      draw(pivotPin, m4Trans(g.x, g.y, zL3 + g.z + 0.12), MATS.gold, vp);
+    }
+
+    // L2: 3-Axis Flying Tourbillon at 6 o'clock (0, -0.86)
+    const tBase = m4Trans(0.0, -0.86, zL2 + 0.12);
+    const rotZ = m4RotZ(simT * 0.85);
+    const rotX = m4RotX(simT * 1.45);
+    const oscBal = m4RotZ(Math.sin(simT * Math.PI * 8.0) * 1.15); // 4Hz = 28,800 vph!
+    const mOuter = m4Mul(tBase, rotZ);
+    const mMid = m4Mul(mOuter, rotX);
+    const mBal = m4Mul(mMid, oscBal);
+    draw(cageRingOuter, mOuter, MATS.gold, vp);
+    draw(cageRingMid, mMid, MATS.blue, vp);
+    draw(balanceRim, mBal, MATS.gold, vp);
+    const springPulse = 1.0 + 0.08 * Math.sin(simT * Math.PI * 8.0);
+    draw(hairspring, m4Mul(mMid, m4Scale(springPulse, springPulse, 1.0)), MATS.blue, vp);
+    draw(rubyMesh, mMid, MATS.ruby, vp);
+
+    // L4: Dial Chapter Ring, 12 Gold Indices + Cyan Lume + Blued Dauphine Hands
+    draw(dialRing, m4Trans(0, 0, zL4 - 0.10), MATS.slate, vp);
+    draw(bezelRing, m4Trans(0, 0, zL4 - 0.04), MATS.gold, vp);
+    for (let h = 0; h < 12; h++) {
+      const a = (h / 12) * Math.PI * 2;
+      const mIdx = m4Mul(m4Trans(Math.sin(a) * 1.85, Math.cos(a) * 1.85, zL4), m4RotZ(-a));
+      draw(indexBar, mIdx, MATS.gold, vp);
+      draw(lumeBar, m4Mul(mIdx, m4Trans(0, 0, 0.03)), MATS.lume, vp);
+    }
+    const secAng = -simT * (Math.PI * 2 / 60) * 4.0;
+    const minAng = -0.82 + secAng / 60;
+    const hrAng = 0.58 + secAng / 720;
+    draw(handHour, m4Mul(m4Mul(m4Trans(0, 0, zL4 + 0.06), m4RotZ(hrAng)), m4Trans(0, 0.44, 0)), MATS.blue, vp);
+    draw(handMin, m4Mul(m4Mul(m4Trans(0, 0, zL4 + 0.12), m4RotZ(minAng)), m4Trans(0, 0.68, 0)), MATS.blue, vp);
+    draw(handSec, m4Mul(m4Mul(m4Trans(0, 0, zL4 + 0.18), m4RotZ(secAng)), m4Trans(0, 0.72, 0)), MATS.gold, vp);
+    draw(rubyMesh, m4Trans(0, 0, zL4 + 0.21), MATS.ruby, vp);
+
+    // L5: Translucent Sapphire Crystal Dome Ring
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    draw(sapphireRing, m4Trans(0, 0, zL5), MATS.sapph, vp);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+<script src="../demo-shell.js?v=20261120-33"></script>
+</body>
+</html>

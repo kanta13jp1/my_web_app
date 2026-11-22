@@ -6,6 +6,13 @@ String? kokuminSourceVerifiedOn({
   required String sourceDate,
   String sourceDocumentSha256 = '',
 }) {
+  // Public PDF review on 2026-11-18 JST; document dated 2026-11-18.
+  if (sourceUrl == 'https://new-kokumin.jp/local-election-list' &&
+      sourceDate == '2026-11-18' &&
+      sourceDocumentSha256 ==
+          'cf5caad9b1faa9df6bb3c1b2aa6ed25799c0a3818c1c8b06831229a8dc6bad7a') {
+    return '2026-11-18';
+  }
   // Public PDF reviews on 2026-11-12 JST; documents dated 2026-11-11.
   // The newer digest was fetched and matched against main independently.
   const reviewedPdfDigests = <String>{
