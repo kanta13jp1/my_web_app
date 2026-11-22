@@ -1286,6 +1286,48 @@ void main() {
       expect(upcoming.title, contains('原資口座を確認してください'));
       expect(upcoming.suggestedAction, contains('三井住友銀行大塚支店'));
     });
+
+    test('shouldBlockPaymentExecution は使用可能額が負の時のみ true を返す (#4219)', () {
+      const planningService = AssetLiabilityPlanningService();
+      const service = AssetManagementInsightService();
+
+      final negativeWorkbook = planningService.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 5000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+      );
+      final negativeReport = service.buildReport(
+        workbook: negativeWorkbook,
+        minimumSafetyBalance: 10000,
+      );
+      expect(negativeReport.todayAvailable.availableAmount, lessThan(0));
+      expect(negativeReport.shouldBlockPaymentExecution, isTrue);
+
+      final positiveWorkbook = planningService.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 200000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+      );
+      final positiveReport = service.buildReport(
+        workbook: positiveWorkbook,
+        minimumSafetyBalance: 10000,
+      );
+      expect(
+        positiveReport.todayAvailable.availableAmount,
+        greaterThanOrEqualTo(0),
+      );
+      expect(
+        positiveReport.weekAvailable.availableAmount,
+        greaterThanOrEqualTo(0),
+      );
+      expect(positiveReport.shouldBlockPaymentExecution, isFalse);
+    });
   });
 }
 

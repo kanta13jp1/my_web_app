@@ -197,9 +197,12 @@ class ThemeService extends ChangeNotifier {
 
   void setThemeMode(ThemeMode mode) async {
     _themeMode = mode;
+    _selectedThemeCode = 'dark_ai';
+    _overrideTheme = null;
     notifyListeners();
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('theme_mode', mode.toString());
+    await prefs.setString('catalog_theme_code', 'dark_ai');
   }
 
   void setPrimaryColor(Color color) {
