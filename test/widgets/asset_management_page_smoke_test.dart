@@ -5572,6 +5572,84 @@ void main() {
     );
 
     testWidgets(
+      'Issue #3623: missing card statement shows critical action item and direct import jump',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final defaultBills =
+            const AssetLiabilityPlanningService().buildWorkbook(
+          latestSnapshot: const <String, double>{},
+          baseDate: now,
+          includeDefaultFixedPayments: true,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'paypay_card': 2},
+                monthlyState: AssetLiabilityMonthlyState(
+                  paidAccountNames: <String>{
+                    for (final row in defaultBills.cashflowRows)
+                      row.accountName,
+                  },
+                  paymentOverrides: const <String, double>{
+                    'paypay_card': 20000,
+                    AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+                  },
+                  paymentSourceAccountIds: const <String, String>{
+                    'paypay_card': 'wallet_cash',
+                  },
+                  cardBillingAccountIds: const <String, String>{
+                    AssetLiabilityPlanningService.kddiProviderAccountId:
+                        'paypay_card',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'PayPayカード': -20000,
+                  'KDDI': -5764,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.text('要確認：PayPayカードのカード明細の取り込みが必要です'),
+          findsOneWidget,
+        );
+        final importActionBtn = find.byKey(
+          const Key('asset_action_import_statement_paypay_card'),
+        );
+        expect(importActionBtn, findsOneWidget);
+        expect(find.textContaining('を選択しました'), findsNothing);
+
+        await tester.ensureVisible(importActionBtn);
+        await tester.tap(importActionBtn);
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.textContaining(
+            'PayPayカードを選択しました。カード明細を貼り付けて「明細を取り込む」を押してください。',
+          ),
+          findsOneWidget,
+        );
+
+        await _unmount(tester);
+      },
+    );
+    testWidgets(
       'subscription excess alert card renders active list and jumps on tap',
       (tester) async {
         final now = DateTime.now();
