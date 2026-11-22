@@ -1388,7 +1388,7 @@ void main() {
       expect(hint, isNotNull);
       expect(hint!.everPaysOff, isTrue);
       expect(hint.revolvingExitHintMonths, isNotNull);
-      expect(hint.revolvingExitHintMonths!, greaterThan(0));
+      expect(hint.revolvingExitHintMonths, greaterThan(0));
       expect(hint.currentPrincipalEstimate, 8750);
     });
 
