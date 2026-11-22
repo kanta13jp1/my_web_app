@@ -371,14 +371,16 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
   HabitResourceEntry _defaultResourceEntry(Map<String, dynamic> habit) {
     final goalId = habit['goal_id']?.toString();
     final goalTitle = habit['goal_title']?.toString();
+    final defaultTime =
+        DailyHabitsPage.safeInt(habit['default_time_cost_minutes']);
+    final defaultFatigue =
+        DailyHabitsPage.safeDouble(habit['default_fatigue_score']);
+    final defaultContrib =
+        DailyHabitsPage.safeDouble(habit['default_goal_contribution_score']);
     return HabitResourceEntry(
-      timeCostMinutes:
-          DailyHabitsPage.safeInt(habit['default_time_cost_minutes']) ?? 15,
-      fatigueScore:
-          DailyHabitsPage.safeDouble(habit['default_fatigue_score']) ?? 3,
-      goalContributionScore: DailyHabitsPage.safeDouble(
-              habit['default_goal_contribution_score']) ??
-          50,
+      timeCostMinutes: defaultTime ?? 15,
+      fatigueScore: defaultFatigue ?? 3,
+      goalContributionScore: defaultContrib ?? 50,
       goalId: (goalId?.isEmpty ?? true) ? null : goalId,
       goalTitle: (goalTitle?.isEmpty ?? true) ? null : goalTitle,
     );
