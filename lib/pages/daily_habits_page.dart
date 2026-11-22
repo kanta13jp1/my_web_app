@@ -209,8 +209,8 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
     DateTime today,
   ) async {
     final todayStr = DateFormat('yyyy-MM-dd').format(today);
-    final sinceStr =
-        DateFormat('yyyy-MM-dd').format(today.subtract(const Duration(days: 365)));
+    final sinceStr = DateFormat('yyyy-MM-dd')
+        .format(today.subtract(const Duration(days: 365)));
 
     final results = await Future.wait<dynamic>(<Future<dynamic>>[
       _supabase
@@ -376,9 +376,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
           DailyHabitsPage.safeInt(habit['default_time_cost_minutes']) ?? 15,
       fatigueScore:
           DailyHabitsPage.safeDouble(habit['default_fatigue_score']) ?? 3,
-      goalContributionScore:
-          DailyHabitsPage.safeDouble(habit['default_goal_contribution_score']) ??
-              50,
+      goalContributionScore: DailyHabitsPage.safeDouble(
+              habit['default_goal_contribution_score']) ??
+          50,
       goalId: (goalId?.isEmpty ?? true) ? null : goalId,
       goalTitle: (goalTitle?.isEmpty ?? true) ? null : goalTitle,
     );
@@ -1233,8 +1233,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final habitId = habit['id']?.toString() ?? '';
-    final isCompleted =
-        habitId.isNotEmpty && _completedToday.contains(habitId);
+    final isCompleted = habitId.isNotEmpty && _completedToday.contains(habitId);
     final isSaving = habitId.isNotEmpty && _savingHabitIds.contains(habitId);
     final title = habit['title']?.toString() ?? '';
     final desc = habit['description']?.toString().trim() ?? '';
@@ -1247,10 +1246,8 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
         isDark ? const Color(0xFFA5D6A7) : const Color(0xFF1B5E20);
     final completedBg =
         isDark ? const Color(0xFF14331B) : const Color(0xFFE8F5E9);
-    final streakFg =
-        isDark ? const Color(0xFFFFCC80) : const Color(0xFF9A3412);
-    final streakBg =
-        isDark ? const Color(0xFF3E2209) : const Color(0xFFFFF3E0);
+    final streakFg = isDark ? const Color(0xFFFFCC80) : const Color(0xFF9A3412);
+    final streakBg = isDark ? const Color(0xFF3E2209) : const Color(0xFFFFF3E0);
     final metricsFg =
         isDark ? const Color(0xFF81C784) : const Color(0xFF166534);
 

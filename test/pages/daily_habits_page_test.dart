@@ -53,7 +53,8 @@ double _contrastRatio(Color fg, Color bg) {
 }
 
 void main() {
-  test('pure helpers parse values and compute all-clear streak without gaps', () {
+  test('pure helpers parse values and compute all-clear streak without gaps',
+      () {
     expect(DailyHabitsPage.safeInt(5), 5);
     expect(DailyHabitsPage.safeInt(15.0), 15);
     expect(DailyHabitsPage.safeInt('1,200'), 1200);
@@ -276,7 +277,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final editBtn = find.byKey(const ValueKey<String>('edit_habit_resource_hab-2'));
+      final editBtn =
+          find.byKey(const ValueKey<String>('edit_habit_resource_hab-2'));
       await tester.ensureVisible(editBtn);
       await tester.tap(editBtn);
       await tester.pumpAndSettle();
