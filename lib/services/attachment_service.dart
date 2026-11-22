@@ -2,9 +2,10 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:mime/mime.dart';
-import 'supabase_client_provider.dart';
 import '../models/attachment.dart';
 import 'direct_storage_upload_service.dart';
+import 'storage_quota_service.dart';
+import 'supabase_client_provider.dart';
 
 class AttachmentService {
   static const int maxFileSize = 5 * 1024 * 1024; // 5MB
@@ -94,7 +95,10 @@ class AttachmentService {
       // ファイル情報
       final mimeType = lookupMimeType(file.name) ?? 'application/octet-stream';
       final fileType = _getFileType(mimeType);
-      final uploadService = DirectStorageUploadService.supabase(supabase);
+      final uploadService = DirectStorageUploadService.supabase(
+        supabase,
+        quotaService: StorageQuotaService.supabase(supabase),
+      );
 
       // ファイル名をURLセーフな形式にサニタイズ
       final uploadResult = await uploadService.uploadAndInsertMetadata(
