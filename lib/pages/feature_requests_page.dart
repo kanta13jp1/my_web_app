@@ -127,8 +127,9 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
       final rows = await loader();
       if (!mounted) return;
       setState(() {
-        _requests =
-            rows.map((e) => Map<String, dynamic>.from(e)).toList(growable: false);
+        _requests = rows
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(growable: false);
       });
     } catch (e) {
       debugPrint('FeatureRequestsPage load error: $e');
@@ -475,8 +476,7 @@ class _FeatureRequestSubmitDialogState
     final title = _titleController.text.trim();
     final description = _descriptionController.text.trim();
     final titleErr = title.length < 3 ? 'タイトルは3文字以上で入力してください。' : null;
-    final descErr =
-        description.length < 10 ? '詳細は10文字以上で入力してください。' : null;
+    final descErr = description.length < 10 ? '詳細は10文字以上で入力してください。' : null;
     if (titleErr != null || descErr != null) {
       setState(() {
         _titleError = titleErr;

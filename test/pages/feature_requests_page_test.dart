@@ -69,7 +69,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final voteBtn = find.byKey(const Key('feature_request_vote_button_req-1'));
+      final voteBtn =
+          find.byKey(const Key('feature_request_vote_button_req-1'));
       await tester.ensureVisible(voteBtn);
       await tester.tap(voteBtn);
       await tester.pump();
