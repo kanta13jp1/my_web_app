@@ -822,7 +822,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends fonts-noto-cjk python3-pil
-          python3 scripts/generate_ogp_cards.py --output-dir build/web
+          /usr/bin/python3 scripts/generate_ogp_cards.py --output-dir build/web
 
       - name: Cache-bust OGP image URLs
         if: steps.changes.outputs.web == 'true'

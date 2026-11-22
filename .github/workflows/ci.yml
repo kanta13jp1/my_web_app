@@ -407,10 +407,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends fonts-noto-cjk python3-pil
-          python -m unittest discover -s test/scripts -p 'test_generate_ogp_cards.py'
-          python -m unittest discover -s test/scripts -p 'test_prerender_seo_routes.py'
-          python -m unittest discover -s test/scripts -p 'test_first_user_x_candidate.py'
-          python -m unittest discover -s test/scripts -p 'test_growth_pdca_audit.py'
+          /usr/bin/python3 -m unittest discover -s test/scripts -p 'test_generate_ogp_cards.py'
+          /usr/bin/python3 -m unittest discover -s test/scripts -p 'test_prerender_seo_routes.py'
+          /usr/bin/python3 -m unittest discover -s test/scripts -p 'test_first_user_x_candidate.py'
+          /usr/bin/python3 -m unittest discover -s test/scripts -p 'test_growth_pdca_audit.py'
           node --test test/web/seo_shell_handoff.test.cjs
 
       - name: Verify acquisition measurement audit
@@ -546,16 +546,17 @@ jobs:
       - name: Generate OGP assets and verify prerendered SEO routes
         if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
         run: |
-          python3 scripts/generate_ogp_cards.py --output-dir build/web
+          if ! dpkg -s fonts-noto-cjk python3-pil >/dev/null 2>&1; then sudo apt-get update && sudo apt-get install -y --no-install-recommends fonts-noto-cjk python3-pil; fi
+          /usr/bin/python3 scripts/generate_ogp_cards.py --output-dir build/web
           mkdir -p .ci-logs
           printf '{"provider_count":259}\n' > .ci-logs/ci-ai-catalog.json
-          python3 scripts/prerender_seo_routes.py \
+          /usr/bin/python3 scripts/prerender_seo_routes.py \
             --template build/web/index.html \
             --outdir build/web \
             --routes web/seo/comparison-routes.json \
             --public-routes web/seo/public-routes.json \
             --ai-university-catalog .ci-logs/ci-ai-catalog.json
-          python3 scripts/production_journey_probe.py \
+          /usr/bin/python3 scripts/production_journey_probe.py \
             --root-dir build/web \
             --public-routes web/seo/public-routes.json
 

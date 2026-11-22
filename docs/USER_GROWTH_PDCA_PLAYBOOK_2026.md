@@ -15,7 +15,7 @@
 | AI Trial 稼働 (`landing_trial_ai_quota`) | **51日間 0回** | `2026-10-03` 以降ゼロ（Issue #5457: OpenAI 429 単一障害点） |
 | X → LP 帰属流入 (`first_user_acquisition_events`) | **view 9 / trial 2** | `2026-08-25` 以降 0件、確定登録 0件 |
 | X 投稿計測 (`x_post_metric_snapshot` 69件) | **最大 44,555 imp** | `local_election_tracker` (文字のみ) 平均 1,127.8 imp / prof click 99 / URL click 14。一方アプリ改善投稿は 12 views・データ定期報告は平均 30.8 imp / 0 click |
-| 既存 OGP 画像 (`lp-og-first-action`, `ogp-image-gen2`, `ogp.png`) | **不整合・誤字** | 白背景見切れ旧LP・AI誤字（「草礎」「遂捗」「Levl 3」）・2025年の「総登録者3」残骸が混在 |
+| 既存 OGP 画像 (`lp-og-first-action`, `ogp-image-gen2`, `ogp.png`) | **不整合・誤字** | 白背景見切れ旧LP・AI誤字（「草礎」「遂捗」・英語レベル表記崩れ）・2025年の「総登録者3」残骸が混在 |
 
 ---
 
