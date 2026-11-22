@@ -19,7 +19,7 @@ void main() {
 
       expect(find.text('Vibe Sim 物理破綻診断ラボ'), findsOneWidget);
       expect(find.byKey(const Key('vibe-sim-risk-summary')), findsOneWidget);
-      expect(find.textContaining('危険'), findsWidgets);
+      expect(find.textContaining('Tier 1'), findsWidgets);
       expect(tester.takeException(), isNull);
     }
   });
