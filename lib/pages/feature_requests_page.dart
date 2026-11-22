@@ -691,7 +691,7 @@ class _StatusMessage extends StatelessWidget {
           ),
           if (action != null) ...<Widget>[
             const SizedBox(height: 12),
-            Align(alignment: Alignment.centerRight, child: action!),
+            Align(alignment: Alignment.centerRight, child: action),
           ],
         ],
       ),
