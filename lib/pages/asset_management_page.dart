@@ -9232,6 +9232,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _isLoadingPayslipFinance = false;
         _payslipIngestionMessage = null;
       });
+      _maybeDetectSalaryDeposit(fromPayslipReload: true);
       if (!reconciliationReadOnly) {
         _reconcileAndSaveSalaryIncomePlansIfPending();
       }
@@ -11988,6 +11989,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _acknowledgeSalaryReset(
     String cycleKey, {
     bool reloadMonthlyState = true,
+    bool mirrorRemote = true,
   }) async {
     final merged = AssetSalaryResetMarkerStore.mergeLater(
       _ackedResetCycleKey,
@@ -11995,7 +11997,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     if (merged == _ackedResetCycleKey) {
       // Explicit confirmation also repairs a previously local-only marker.
-      await _mirrorSalaryResetMarker();
+      if (mirrorRemote) {
+        await _mirrorSalaryResetMarker();
+      }
       if (reloadMonthlyState) await _loadAssetLiabilityMonthlyState();
       return;
     }
@@ -12008,19 +12012,50 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _salaryResetMarkerStore.save(merged),
       'salary reset marker save',
     );
-    unawaited(_mirrorSalaryResetMarker());
+    if (mirrorRemote) {
+      unawaited(_mirrorSalaryResetMarker());
+    }
     if (reloadMonthlyState) {
       await _loadAssetLiabilityMonthlyState();
     }
   }
 
-  /// 推定は表示用の候補だけ更新する。受取確認・サイクル承認は本人操作で行う。
-  void _maybeDetectSalaryDeposit() {
+  /// 推定は表示用の候補だけ更新する。
+  /// ただし本人承認仕様に基づき、支給日を迎えた現サイクルの給与明細がある場合は
+  /// 支払チェックのサイクル切り替えだけを行う(口座着金確認自体は別途行う)。
+  void _maybeDetectSalaryDeposit({bool fromPayslipReload = false}) {
     if (!mounted || !_assetLiabilityBootStateLoaded) return;
     final workbook = _buildCurrentAssetLiabilityWorkbook();
+    final paidPayslips = _salaryResetPending && workbook != null
+        ? _paidPayslipAmountsInCurrentCycle()
+        : const <double>[];
+    final expectedSalary = _registeredSalaryAmount();
     final detection = _salaryResetPending && workbook != null
-        ? _computeSalaryDepositDetection(workbook)
+        ? _computeSalaryDepositDetection(
+            workbook,
+            paidPayslipAmounts: paidPayslips,
+            expectedSalaryAmount: expectedSalary,
+          )
         : SalaryDepositDetection.none;
+    if (_salaryResetPending &&
+        workbook != null &&
+        (detection.signal == SalaryDepositSignal.payslipPaid ||
+            AssetSalaryDepositDetector.hasQualifiedPaidPayslip(
+              paidPayslipAmounts: paidPayslips,
+              expectedSalaryAmount: expectedSalary,
+            ))) {
+      if (_salaryDepositCandidate.detected) {
+        setState(() => _salaryDepositCandidate = SalaryDepositDetection.none);
+      }
+      unawaited(
+        _acknowledgeSalaryReset(
+          _currentSalaryCycleKey(),
+          reloadMonthlyState: !fromPayslipReload,
+          mirrorRemote: !fromPayslipReload,
+        ),
+      );
+      return;
+    }
     if (_salaryDepositCandidate.confidence == detection.confidence &&
         _salaryDepositCandidate.signal == detection.signal &&
         _salaryDepositCandidate.matchedAmount == detection.matchedAmount) {
@@ -12031,8 +12066,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 現サイクルにメインバンクへの給料振込があったかを推定する。
   SalaryDepositDetection _computeSalaryDepositDetection(
-    AssetLiabilityWorkbook workbook,
-  ) {
+    AssetLiabilityWorkbook workbook, {
+    List<double> paidPayslipAmounts = const <double>[],
+    double? expectedSalaryAmount,
+  }) {
     final incomeFlows = <SalaryDepositFlowObservation>[
       for (final flow in _flowsForCycle(_now))
         if (_isIncomeActionType(flow['action_type']?.toString() ?? ''))
@@ -12047,12 +12084,55 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return AssetSalaryDepositDetector.detect(
       cycleIncomeFlows: incomeFlows,
       balances: _mainAccountBalanceWindow(workbook),
-      expectedSalaryAmount: _registeredSalaryAmount(),
+      expectedSalaryAmount: expectedSalaryAmount ?? _registeredSalaryAmount(),
+      paidPayslipAmounts: paidPayslipAmounts,
     );
   }
 
-  /// メインバンク口座の「前サイクル末 → 現在」の残高窓。残高更新だけでは入金フローが
-  /// 生成されないため(残高ドロップ時のみ自動記録)、給料反映の検知はこの残高増に依る。
+  /// 支給日(pay_date)が今日以前で、現サイクルに属する未受取フラグ無しの給与明細手取額。
+  List<double> _paidPayslipAmountsInCurrentCycle() {
+    final currentCycleKey = _currentSalaryCycleKey();
+    final today = DateTime(_now.year, _now.month, _now.day);
+    final amounts = <double>[];
+    void collect(List<Map<String, dynamic>> rows, List<String> amountKeys) {
+      for (final row in rows) {
+        if (row['received'] == false) {
+          continue;
+        }
+        final payDate = DateTime.tryParse(
+          row['pay_date']?.toString() ?? '',
+        )?.toLocal();
+        if (payDate == null ||
+            DateTime(payDate.year, payDate.month, payDate.day).isAfter(today)) {
+          continue;
+        }
+        final cycleKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+          AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+            payDate,
+            salaryDay: _salaryDay,
+          ),
+        );
+        if (cycleKey != currentCycleKey) {
+          continue;
+        }
+        for (final key in amountKeys) {
+          final amount = (row[key] as num?)?.toDouble() ?? 0;
+          if (amount.isFinite && amount > 0) {
+            amounts.add(amount);
+            break;
+          }
+        }
+      }
+    }
+
+    collect(_payslipRows, const <String>['net_amount', 'amount']);
+    collect(_payslipSalaryIncomes, const <String>['amount']);
+    return amounts;
+  }
+
+  /// メインバンク口座の「前サイクル末 → 現サイクル内の最大残高」の残高窓。
+  /// 残高更新だけでは入金フローが生成されないため(残高ドロップ時のみ自動記録)、
+  /// 当サイクル内・今日までの履歴で補完し、過去/未来日・非有限値は除外する。
   MainAccountBalanceWindow _mainAccountBalanceWindow(
     AssetLiabilityWorkbook workbook,
   ) {
@@ -12064,12 +12144,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _now,
       salaryDay: _salaryDay,
     );
-    return MainAccountBalanceWindow(
+    return MainAccountBalanceWindow.fromHistory(
       previousCycleEndBalance: _historicalAccountBalanceBefore(
         mainAccount.name,
         cycleStart,
       ),
       currentBalance: mainAccount.balance,
+      observations: <DateTime, double>{
+        for (final entry in _assetData.entries)
+          if (DateTime.tryParse(entry.key) != null &&
+              entry.value.containsKey(mainAccount.name))
+            DateTime.parse(entry.key): entry.value[mainAccount.name]!,
+      },
+      cycleStart: cycleStart,
+      asOf: _now,
     );
   }
 
