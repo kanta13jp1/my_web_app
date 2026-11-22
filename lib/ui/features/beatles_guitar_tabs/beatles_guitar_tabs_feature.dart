@@ -5,8 +5,11 @@ import '../../../data/repositories/guitar_course_repository.dart';
 import '../../../data/repositories/guitar_tab_repository.dart';
 import '../../../data/services/guitar_course_progress_service.dart';
 import '../../../data/services/guitar_daily_course_catalog_service.dart';
-import '../../../data/services/guitar_tab_catalog_service.dart';
 import '../../../data/services/guitar_lesson_link_service.dart';
+import '../../../data/services/guitar_tab_catalog_service.dart';
+import '../../../data/services/structured_tab_catalog_service.dart';
+import '../../../data/services/structured_tab_pdf_service.dart';
+import '../../../data/services/user_structured_tab_storage_service.dart';
 import '../../../domain/use_cases/build_guitar_course_snapshot_use_case.dart';
 import 'view_models/beatles_guitar_tabs_view_model.dart';
 import 'views/beatles_guitar_tabs_page.dart';
@@ -17,11 +20,17 @@ class BeatlesGuitarTabsFeature extends StatelessWidget {
     this.repository,
     this.courseRepository,
     this.linkService,
+    this.structuredCatalogService,
+    this.userTabStorageService,
+    this.pdfService,
   });
 
   final GuitarTabRepository? repository;
   final GuitarCourseRepository? courseRepository;
   final GuitarLessonLinkService? linkService;
+  final StructuredTabCatalogService? structuredCatalogService;
+  final UserStructuredTabStorageService? userTabStorageService;
+  final StructuredTabPdfService? pdfService;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +53,11 @@ class BeatlesGuitarTabsFeature extends StatelessWidget {
         linkService: resolvedLinkService,
         buildCourseSnapshot: const BuildGuitarCourseSnapshotUseCase(),
       )..load(),
-      child: const BeatlesGuitarTabsPage(),
+      child: BeatlesGuitarTabsPage(
+        structuredCatalogService: structuredCatalogService,
+        userTabStorageService: userTabStorageService,
+        pdfService: pdfService,
+      ),
     );
   }
 }

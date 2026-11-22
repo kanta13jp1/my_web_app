@@ -1095,11 +1095,69 @@ void main() {
       expect(slowItem.description, contains('完済まで約'));
       expect(slowItem.description, contains('追加利息'));
       expect(slowItem.suggestedAction, contains('24ヶ月完済目標額'));
+      // 年利 0.15 (=15%) を小数のまま月利へ換算する。旧実装は /100 を重ねて
+      // 月利を 1/100 に過小評価し、24ヶ月完済額を約 21,900 円と誤算していた。
+      expect(slowItem.suggestedAction, contains('24ヶ月完済目標額25,4'));
 
       expect(
         spiralWarnings.any((item) => item.relatedAccountId == 'healthy_loan'),
         false,
       );
+    });
+
+    test(
+        'does not report zero principal when the payment was recorded as paid with an actual amount',
+        () {
+      // 今月支払予定額は 0 円のままだが、実際には 15,000 円を支払済みとして
+      // 記録した月。元金返済見込みは planning service が実額から算出する。
+      const paidJibunLoan = AssetLiabilityDebtRow(
+        id: 'jibun_loan',
+        name: 'じぶんローン',
+        kind: AssetLiabilityAccountKind.cardLoan,
+        balance: -988878,
+        paymentDay: 10,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.145,
+        minimumPaymentEstimate: 15000,
+        manualPaymentAmount: 0,
+        scheduledPaymentAmount: 0,
+        actualPaymentAmount: 15000,
+        monthlyInterestEstimate: 11949,
+        principalPaymentEstimate: 3051,
+        balanceAfterPaymentEstimate: -985827,
+        liabilityShare: 0.6,
+        priorityLabel: '高金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: true,
+        requiresAction: false,
+      );
+
+      final report = service.buildReport(
+        workbook: _workbook(debtRows: const [paidJibunLoan]),
+      );
+      final warnings = report.actionItems
+          .where(
+            (item) =>
+                item.type == AssetManagementInsightActionType.debtSpiralWarning,
+          )
+          .toList();
+
+      expect(
+        warnings.any((item) => item.title.contains('元金返済0円')),
+        false,
+      );
+      final item = warnings.single;
+      expect(item.description, contains('月返済15,000円'));
+      expect(item.description, contains('元金返済は3,051円'));
     });
 
     test('emits overdueIncome reminder for unreceived past-due income plans',
@@ -1227,6 +1285,162 @@ void main() {
       expect(upcoming.severity, AssetManagementInsightSeverity.critical);
       expect(upcoming.title, contains('原資口座を確認してください'));
       expect(upcoming.suggestedAction, contains('三井住友銀行大塚支店'));
+    });
+
+    test('shouldBlockPaymentExecution は使用可能額が負の時のみ true を返す (#4219)', () {
+      const planningService = AssetLiabilityPlanningService();
+      const service = AssetManagementInsightService();
+
+      final negativeWorkbook = planningService.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 5000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+      );
+      final negativeReport = service.buildReport(
+        workbook: negativeWorkbook,
+        minimumSafetyBalance: 10000,
+      );
+      expect(negativeReport.todayAvailable.availableAmount, lessThan(0));
+      expect(negativeReport.shouldBlockPaymentExecution, isTrue);
+
+      final positiveWorkbook = planningService.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 200000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 10),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+      );
+      final positiveReport = service.buildReport(
+        workbook: positiveWorkbook,
+        minimumSafetyBalance: 10000,
+      );
+      expect(
+        positiveReport.todayAvailable.availableAmount,
+        greaterThanOrEqualTo(0),
+      );
+      expect(
+        positiveReport.weekAvailable.availableAmount,
+        greaterThanOrEqualTo(0),
+      );
+      expect(positiveReport.shouldBlockPaymentExecution, isFalse);
+    });
+
+    test('buildRevolvingInlineHint returns null for non-revolving debt', () {
+      final nonRevolving = _debtRow(
+        annualRate: 0.15,
+        kind: AssetLiabilityAccountKind.cardLoan,
+      );
+      expect(
+        AssetManagementInsightService.buildRevolvingInlineHint(nonRevolving),
+        isNull,
+      );
+    });
+
+    test(
+        'buildRevolvingInlineHint computes exit months and principal for revolving debt',
+        () {
+      const revolving = AssetLiabilityDebtRow(
+        id: 'aupay_card',
+        name: 'auPayカード',
+        kind: AssetLiabilityAccountKind.creditCard,
+        balance: -100000,
+        paymentDay: 25,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.15,
+        minimumPaymentEstimate: 10000,
+        manualPaymentAmount: null,
+        scheduledPaymentAmount: 10000,
+        monthlyInterestEstimate: 1250,
+        principalPaymentEstimate: 8750,
+        balanceAfterPaymentEstimate: -91250,
+        liabilityShare: 1,
+        priorityLabel: '高金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+        revolvingBilling: AssetLiabilityRevolvingCreditBilling(
+          balance: 100000,
+          monthlyAmount: 10000,
+          newUsageAmount: 0,
+          existingBalanceAmount: 100000,
+          creditLimit: 500000,
+          paymentDay: 25,
+          overLimitAmount: 0,
+          billedAmount: 10000,
+        ),
+      );
+
+      final hint =
+          AssetManagementInsightService.buildRevolvingInlineHint(revolving);
+      expect(hint, isNotNull);
+      expect(hint!.everPaysOff, isTrue);
+      expect(hint.revolvingExitHintMonths, isNotNull);
+      expect(hint.revolvingExitHintMonths, greaterThan(0));
+      expect(hint.currentPrincipalEstimate, 8750);
+    });
+
+    test(
+        'buildRevolvingInlineHint marks stagnant revolving debt as never paying off',
+        () {
+      const stagnant = AssetLiabilityDebtRow(
+        id: 'aupay_card',
+        name: 'auPayカード',
+        kind: AssetLiabilityAccountKind.creditCard,
+        balance: -500000,
+        paymentDay: 25,
+        paymentSourceAccountId: 'bank',
+        paymentSourceAccountName: 'bank',
+        paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodLabel: '直接支払い',
+        paymentMethodSettingSource:
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+        billingAccountId: null,
+        billingAccountName: null,
+        includedInBillingAccount: false,
+        annualRate: 0.18,
+        minimumPaymentEstimate: 5000,
+        manualPaymentAmount: null,
+        scheduledPaymentAmount: 5000,
+        monthlyInterestEstimate: 7500,
+        principalPaymentEstimate: 0,
+        balanceAfterPaymentEstimate: -502500,
+        liabilityShare: 1,
+        priorityLabel: '高金利',
+        paymentAmountEstimated: false,
+        billingConfirmed: true,
+        paid: false,
+        requiresAction: true,
+        revolvingBilling: AssetLiabilityRevolvingCreditBilling(
+          balance: 500000,
+          monthlyAmount: 5000,
+          newUsageAmount: 0,
+          existingBalanceAmount: 500000,
+          creditLimit: 500000,
+          paymentDay: 25,
+          overLimitAmount: 0,
+          billedAmount: 5000,
+        ),
+      );
+
+      final hint =
+          AssetManagementInsightService.buildRevolvingInlineHint(stagnant);
+      expect(hint, isNotNull);
+      expect(hint!.everPaysOff, isFalse);
+      expect(hint.revolvingExitHintMonths, isNull);
+      expect(hint.currentPrincipalEstimate, 0);
     });
   });
 }

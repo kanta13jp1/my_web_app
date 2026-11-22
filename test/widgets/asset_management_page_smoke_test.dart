@@ -5,14 +5,18 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/asset_obsidian_vault_import.dart';
+import 'package:my_web_app/models/asset_external_points.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_card_usage_policy_store.dart';
 import 'package:my_web_app/services/asset_category_budget_store.dart';
 import 'package:my_web_app/services/asset_chat_privacy_settings_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
+import 'package:my_web_app/services/asset_external_points_store.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
@@ -250,6 +254,21 @@ void main() {
       url: 'http://127.0.0.1:9999',
       publishableKey: 'test-publishable-key',
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
+      httpClient: MockClient((request) async {
+        const headers = {'content-type': 'application/json'};
+        final isExternalPointsRead = request.method == 'GET' &&
+            request.url.path == '/rest/v1/asset_pref_mirror' &&
+            request.url.queryParameters['pref_key'] == 'eq.external_points_v1';
+        if (isExternalPointsRead) {
+          return http.Response('[]', 200, headers: headers, request: request);
+        }
+        return http.Response(
+          '{"message":"Unexpected HTTP request during asset management smoke test"}',
+          400,
+          headers: headers,
+          request: request,
+        );
+      }),
     );
   });
 
@@ -260,6 +279,66 @@ void main() {
     // (= 将来ログイン状態の編集 smoke が write 経路を踏んでも orphan-hang しない)。
     AssetSyncDirtyKeysStore.resetWriteLockForTest();
     AssetRecurringTombstoneSyncService.resetSharedForTest();
+  });
+
+  testWidgets('external points follow the asset page account switch', (
+    tester,
+  ) async {
+    const ownerA = 'synthetic-points-owner-a';
+    const ownerB = 'synthetic-points-owner-b';
+    final now = DateTime(2026, 6, 20);
+    const storeA = AssetExternalPointsStore.forOwner(ownerA);
+    const storeB = AssetExternalPointsStore.forOwner(ownerB);
+    final pointA = AssetExternalPointRecord(
+      id: 'fixture-a',
+      programName: 'サンプルポイントA',
+      observedAt: now,
+      balanceAfter: 105,
+    );
+    final pointB = AssetExternalPointRecord(
+      id: 'fixture-b',
+      programName: 'サンプルポイントB',
+      observedAt: now,
+      balanceAfter: 207,
+    );
+    SharedPreferences.setMockInitialValues({
+      'asset_management_display_mode_v1':
+          AssetManagementDisplayMode.full.storageId,
+      storeA.storageKey:
+          jsonEncode(AssetExternalPointsStore.encodeMirrorValue([pointA])),
+      storeB.storageKey:
+          jsonEncode(AssetExternalPointsStore.encodeMirrorValue([pointB])),
+    });
+
+    Future<void> showOwner(String owner) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugExternalPointsOwnerId: owner,
+            debugNow: now,
+            debugCalendarNow: now,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    Finder point(String name) => find.descendant(
+          of: find.byKey(const Key('asset_external_points_card')),
+          matching: find.text(name),
+        );
+
+    await showOwner(ownerA);
+    expect(point(pointA.programName), findsWidgets);
+    expect(point(pointB.programName), findsNothing);
+
+    await showOwner(ownerB);
+    expect(point(pointA.programName), findsNothing);
+    expect(point(pointB.programName), findsWidgets);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 300));
   });
 
   testWidgets('CSV edits require a fresh preview before applying',
@@ -1611,6 +1690,25 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('desktop chat reserves space outside the scrolling content', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await _pumpAssetPage(tester);
+      final dock = find.byKey(const Key('asset_chat_docked_bar'));
+      expect(dock, findsOneWidget);
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
+      expect(scaffold.floatingActionButton, isNull);
+      expect(
+        tester.getRect(find.byWidget(scaffold.body!)).bottom,
+        lessThanOrEqualTo(tester.getRect(dock).top),
+      );
+      await _unmount(tester);
+    });
+
     testWidgets('sticky asset chat entry opens and closes the panel', (
       tester,
     ) async {
@@ -2903,6 +3001,73 @@ void main() {
     });
 
     testWidgets(
+        'revolving inline chips show months, principal estimate, and tooltip only for revolving debt',
+        (tester) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            newUsageAmount: 20000,
+            creditLimit: 500000,
+          ),
+        },
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugRevolvingConfigsMirror: mirrorValue,
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'auPayカード': -100000,
+                'モビット': -80000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final payoffTooltipFinder = find.byKey(
+        const Key('asset_revolving_payoff_chip_aupay_card'),
+      );
+      final principalTooltipFinder = find.byKey(
+        const Key('asset_revolving_principal_chip_aupay_card'),
+      );
+      expect(payoffTooltipFinder, findsOneWidget);
+      expect(principalTooltipFinder, findsOneWidget);
+      expect(find.textContaining('リボ: 概算残り'), findsOneWidget);
+      expect(find.textContaining('今月元金 '), findsOneWidget);
+
+      final payoffTooltip = tester.widget<Tooltip>(payoffTooltipFinder);
+      final principalTooltip = tester.widget<Tooltip>(principalTooltipFinder);
+      expect(payoffTooltip.message, contains('概算'));
+      expect(payoffTooltip.message, contains('請求=リボ設定額'));
+      expect(principalTooltip.message, contains('概算'));
+      expect(principalTooltip.message, contains('請求=リボ設定額'));
+
+      expect(find.text('モビット'), findsWidgets);
+      expect(
+        find.byKey(const Key('asset_revolving_payoff_chip_mobit')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('asset_revolving_principal_chip_mobit')),
+        findsNothing,
+      );
+
+      await _unmount(tester);
+    });
+
+    testWidgets(
         'typed revolving field values survive the rebuild their own '
         'onChanged triggers', (tester) async {
       // 最低返済額/新規利用額/利用限度額はTextFormField(initialValue:)ではなく
@@ -3135,6 +3300,87 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets(
+      'revolving debt renders total interest warning and opens simulator',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        final monthKey =
+            AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(now);
+        final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+          <String, AssetLiabilityRevolvingCreditConfig>{
+            'famipay_card': const AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 30000,
+            ),
+          },
+        );
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetLiabilityMonthlyStateStore.actualPaymentPrefsKey: jsonEncode(
+            <String, Map<String, double>>{
+              monthKey: <String, double>{'famipay_card': 5000},
+            },
+          ),
+          AssetLiabilityMonthlyStateStore.paidPrefsKey: jsonEncode(
+            <String, List<String>>{
+              monthKey: <String>['famipay_card'],
+            },
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugCalendarNow: DateTime(2026, 7, 10),
+              debugRevolvingConfigsMirror: mirrorValue,
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 50000,
+                  'ファミペイ': -250000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_discipline_total_interest_famipay_card')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_trend_total_interest_famipay_card')),
+          findsOneWidget,
+        );
+        expect(find.textContaining('24ヶ月完済ライン'), findsWidgets);
+        expect(
+          find.byKey(
+            const Key('asset_debt_trend_interest_warning_famipay_card'),
+          ),
+          findsOneWidget,
+        );
+
+        final simulateButton = find.byKey(
+          const Key('asset_debt_trend_simulate_famipay_card'),
+        );
+        expect(simulateButton, findsOneWidget);
+        await tester.ensureVisible(simulateButton);
+        await tester.tap(simulateButton);
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('revolving_extra_payment_input')),
+          findsOneWidget,
+        );
+        await tester.tap(find.text('閉じる'));
+        await tester.pump(const Duration(milliseconds: 200));
+
+        await _unmount(tester);
+      },
+    );
 
     testWidgets('triage guide card shows staged first steps in crisis', (
       tester,

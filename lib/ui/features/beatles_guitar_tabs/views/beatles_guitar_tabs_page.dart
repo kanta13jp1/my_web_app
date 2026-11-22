@@ -1,16 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../data/services/structured_tab_catalog_service.dart';
+import '../../../../data/services/structured_tab_pdf_service.dart';
+import '../../../../data/services/user_structured_tab_storage_service.dart';
 import '../../../../domain/models/guitar_daily_course.dart';
 import '../../../../domain/models/guitar_tab_song.dart';
 import '../../../../theme/design_tokens.dart';
 import '../view_models/beatles_guitar_tabs_view_model.dart';
 import 'widgets/guitar_tab_staff.dart';
+import 'widgets/structured_tab_studio_panel.dart';
 
-class BeatlesGuitarTabsPage extends StatelessWidget {
-  const BeatlesGuitarTabsPage({super.key});
+class BeatlesGuitarTabsPage extends StatefulWidget {
+  const BeatlesGuitarTabsPage({
+    super.key,
+    this.structuredCatalogService,
+    this.userTabStorageService,
+    this.pdfService,
+  });
+
+  final StructuredTabCatalogService? structuredCatalogService;
+  final UserStructuredTabStorageService? userTabStorageService;
+  final StructuredTabPdfService? pdfService;
 
   static const double _wideBreakpoint = 860;
+
+  @override
+  State<BeatlesGuitarTabsPage> createState() => _BeatlesGuitarTabsPageState();
+}
+
+class _BeatlesGuitarTabsPageState extends State<BeatlesGuitarTabsPage> {
+  bool _showStructuredScore = false;
 
   @override
   Widget build(BuildContext context) {
@@ -31,29 +51,179 @@ class BeatlesGuitarTabsPage extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: ListenableBuilder(
-          listenable: viewModel,
-          builder: (context, _) {
-            return switch (viewModel.status) {
-              BeatlesGuitarTabsStatus.initial ||
-              BeatlesGuitarTabsStatus.loading =>
-                const Center(
-                  child: CircularProgressIndicator(color: DesignTokens.orange),
+        child: Column(
+          children: <Widget>[
+            _GuitarModeSwitcher(
+              showStructuredScore: _showStructuredScore,
+              onChanged: (bool next) {
+                if (_showStructuredScore == next) return;
+                setState(() {
+                  _showStructuredScore = next;
+                });
+              },
+            ),
+            Expanded(
+              child: _showStructuredScore
+                  ? StructuredTabStudioPanel(
+                      catalogService: widget.structuredCatalogService,
+                      userStorageService: widget.userTabStorageService,
+                      pdfService: widget.pdfService,
+                    )
+                  : ListenableBuilder(
+                      listenable: viewModel,
+                      builder: (BuildContext context, _) {
+                        return switch (viewModel.status) {
+                          BeatlesGuitarTabsStatus.initial ||
+                          BeatlesGuitarTabsStatus.loading =>
+                            const Center(
+                              child: CircularProgressIndicator(
+                                color: DesignTokens.orange,
+                              ),
+                            ),
+                          BeatlesGuitarTabsStatus.failure => _ErrorState(
+                              message: viewModel.errorMessage ?? '読み込みに失敗しました。',
+                              onRetry: viewModel.load,
+                            ),
+                          BeatlesGuitarTabsStatus.ready => LayoutBuilder(
+                              builder: (
+                                BuildContext context,
+                                BoxConstraints constraints,
+                              ) {
+                                if (constraints.maxWidth >=
+                                    BeatlesGuitarTabsPage._wideBreakpoint) {
+                                  return _WideLayout(viewModel: viewModel);
+                                }
+                                return _CompactLayout(viewModel: viewModel);
+                              },
+                            ),
+                        };
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GuitarModeSwitcher extends StatelessWidget {
+  const _GuitarModeSwitcher({
+    required this.showStructuredScore,
+    required this.onChanged,
+  });
+
+  final bool showStructuredScore;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: DesignTokens.surface1,
+        border: Border(
+          bottom: BorderSide(color: DesignTokens.divider),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: DesignTokens.space16,
+        vertical: DesignTokens.space8,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1440),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: _ModeTabButton(
+                  buttonKey: const Key('guitar_mode_catalog'),
+                  icon: Icons.library_music_outlined,
+                  label: '練習カタログ',
+                  selected: !showStructuredScore,
+                  onTap: () => onChanged(false),
                 ),
-              BeatlesGuitarTabsStatus.failure => _ErrorState(
-                  message: viewModel.errorMessage ?? '読み込みに失敗しました。',
-                  onRetry: viewModel.load,
+              ),
+              const SizedBox(width: DesignTokens.space8),
+              Expanded(
+                child: _ModeTabButton(
+                  buttonKey: const Key('guitar_mode_structured_score'),
+                  icon: Icons.queue_music,
+                  label: '構造化TABスコア',
+                  selected: showStructuredScore,
+                  onTap: () => onChanged(true),
                 ),
-              BeatlesGuitarTabsStatus.ready => LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (constraints.maxWidth >= _wideBreakpoint) {
-                      return _WideLayout(viewModel: viewModel);
-                    }
-                    return _CompactLayout(viewModel: viewModel);
-                  },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeTabButton extends StatelessWidget {
+  const _ModeTabButton({
+    required this.buttonKey,
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Key buttonKey;
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected
+          ? DesignTokens.orange.withValues(alpha: 0.18)
+          : DesignTokens.surface2,
+      borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+      child: InkWell(
+        key: buttonKey,
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+            border: Border.all(
+              color: selected ? DesignTokens.orange : DesignTokens.divider,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(
+                icon,
+                size: 16,
+                color: selected
+                    ? DesignTokens.orangeLight
+                    : DesignTokens.textSecondary,
+              ),
+              const SizedBox(width: DesignTokens.space8),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: selected
+                        ? DesignTokens.orangeLight
+                        : DesignTokens.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-            };
-          },
+              ),
+            ],
+          ),
         ),
       ),
     );

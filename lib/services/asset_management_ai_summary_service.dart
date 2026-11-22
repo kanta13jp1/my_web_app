@@ -1571,43 +1571,102 @@ class AssetManagementAiSummaryService {
     for (final row in workbook.currentDebtRows.where(
       (row) => row.annualRate > 0,
     )) {
-      final ratePattern = RegExp(
+      final postfixRatePattern = RegExp(
         r'^(.*?)(?:年利|金利)[^0-9]{0,12}([0-9]+(?:\.[0-9]+)?)\s*%',
       );
+      final prefixRatePattern = RegExp(
+        r'(?:年利|金利)[^0-9]{0,12}([0-9]+(?:\.[0-9]+)?)\s*%([^。、;；\r\n]{0,20})$',
+      );
+      final clauseBoundaryPattern = RegExp(r'[。、;；\r\n]');
+      final predicateParticlePattern = RegExp(r'(?:で(?!ある)|[はがをにとより])');
+      final namePattern = RegExp(RegExp.escape(row.name));
+      final longerDebtPatterns = allDebtNames
+          .where((other) => other != row.name && other.contains(row.name))
+          .map((other) => RegExp(RegExp.escape(other)))
+          .toList(growable: false);
+      final expectedPercent = row.annualRate * 100;
+      final matchingAccount = workbook.accounts.firstWhere(
+        (a) => a.id == row.id || a.name == row.name,
+        orElse: () => const AssetLiabilityAccount(
+          id: '',
+          name: '',
+          kind: AssetLiabilityAccountKind.otherLiability,
+          balance: 0,
+        ),
+      );
+      final accountPercent = matchingAccount.annualRate * 100;
+      bool isRateMatched(double? actualPercent) {
+        return actualPercent != null &&
+            ((actualPercent - expectedPercent).abs() <= 0.011 ||
+                (accountPercent > 0 &&
+                    (actualPercent - accountPercent).abs() <= 0.011));
+      }
+
+      var mismatched = false;
       for (final segment in segments) {
         if (!segment.contains(row.name)) continue;
-        final nameIndex = segment.indexOf(row.name);
-        final afterName = segment.substring(nameIndex + row.name.length);
-        final match = ratePattern.firstMatch(afterName);
-        if (match != null) {
-          final between = match.group(1)!;
-          final hasInterveningDebt = allDebtNames.any(
-            (other) => other != row.name && between.contains(other),
+        final longerMatches = <RegExpMatch>[
+          for (final pattern in longerDebtPatterns)
+            ...pattern.allMatches(segment),
+        ];
+        for (final nameMatch in namePattern.allMatches(segment)) {
+          final insideLongerName = longerMatches.any(
+            (m) => nameMatch.start >= m.start && nameMatch.end <= m.end,
           );
-          if (hasInterveningDebt || between.length > 60) {
-            continue;
+          if (insideLongerName) continue;
+
+          final afterName = segment.substring(nameMatch.end);
+          final postfixMatch = postfixRatePattern.firstMatch(afterName);
+          if (postfixMatch != null) {
+            final between = postfixMatch.group(1)!;
+            final hasInterveningDebt = allDebtNames.any(
+              (other) => other != row.name && between.contains(other),
+            );
+            final afterRate = afterName.substring(postfixMatch.end);
+            final beforeNextClause =
+                afterRate.split(clauseBoundaryPattern).first;
+            final isPrefixOfOtherDebt = allDebtNames.any((other) {
+              if (other == row.name) return false;
+              final otherIndex = beforeNextClause.indexOf(other);
+              if (otherIndex < 0 || otherIndex > 20) return false;
+              if (row.name.contains(other) &&
+                  beforeNextClause.indexOf(row.name) == otherIndex) {
+                return false;
+              }
+              final bridge = beforeNextClause.substring(0, otherIndex);
+              return !predicateParticlePattern.hasMatch(bridge);
+            });
+            if (!hasInterveningDebt &&
+                !isPrefixOfOtherDebt &&
+                between.length <= 60) {
+              final actualPercent = double.tryParse(postfixMatch.group(2)!);
+              if (!isRateMatched(actualPercent)) {
+                errors.add('${row.name}の年利が確定値と不一致');
+                mismatched = true;
+                break;
+              }
+            }
           }
-          final actualPercent = double.tryParse(match.group(2)!);
-          final expectedPercent = row.annualRate * 100;
-          final matchingAccount = workbook.accounts.firstWhere(
-            (a) => a.id == row.id || a.name == row.name,
-            orElse: () => const AssetLiabilityAccount(
-              id: '',
-              name: '',
-              kind: AssetLiabilityAccountKind.otherLiability,
-              balance: 0,
-            ),
-          );
-          final accountPercent = matchingAccount.annualRate * 100;
-          final matchesExpected = actualPercent != null &&
-              ((actualPercent - expectedPercent).abs() <= 0.011 ||
-                  (accountPercent > 0 &&
-                      (actualPercent - accountPercent).abs() <= 0.011));
-          if (!matchesExpected) {
-            errors.add('${row.name}の年利が確定値と不一致');
-            break;
+
+          final beforeName = segment.substring(0, nameMatch.start);
+          final prefixMatch = prefixRatePattern.firstMatch(beforeName);
+          if (prefixMatch != null) {
+            final between = prefixMatch.group(2)!;
+            final hasInterveningDebt = allDebtNames.any(
+              (other) => other != row.name && between.contains(other),
+            );
+            if (!hasInterveningDebt &&
+                !predicateParticlePattern.hasMatch(between)) {
+              final actualPercent = double.tryParse(prefixMatch.group(1)!);
+              if (!isRateMatched(actualPercent)) {
+                errors.add('${row.name}の年利が確定値と不一致');
+                mismatched = true;
+                break;
+              }
+            }
           }
         }
+        if (mismatched) break;
       }
     }
     final effectivelyPaidRows = workbook.currentDebtRows.where((row) {

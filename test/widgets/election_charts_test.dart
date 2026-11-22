@@ -104,6 +104,8 @@ void main() {
     );
     expect(find.text('現職維持目標'), findsOneWidget);
     expect(find.textContaining('新人擁立目標'), findsWidgets);
+    expect(find.textContaining('擁立計 50人'), findsOneWidget);
+    expect(find.textContaining('議席目標 700人'), findsOneWidget);
     expect(find.text('東京'), findsOneWidget);
     expect(find.text('愛知'), findsOneWidget);
     // 合計・不足警告は棒グラフの部分集合ではなく全県連が母数になる。
@@ -265,6 +267,31 @@ void main() {
     final listFinder = find.byType(ListView);
     expect(listFinder, findsWidgets);
     expect(tester.getSize(listFinder.first).height, lessThanOrEqualTo(340));
+  });
+
+  testWidgets(
+      'ElectionJapanMap allows tapping surrounded tiles (群馬, 山梨, 熊本) without occlusion',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ElectionJapanMap(
+              prefectures: _samplePrefecturePlans(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    for (final shortName in <String>['群馬', '山梨', '熊本']) {
+      final target = find.text(shortName).first;
+      await tester.ensureVisible(target);
+      await tester.pumpAndSettle();
+      await tester.tap(target);
+      await tester.pumpAndSettle();
+      expect(find.text('$shortName 選択中'), findsOneWidget);
+    }
   });
 }
 

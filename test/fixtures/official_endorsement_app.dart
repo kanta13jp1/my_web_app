@@ -135,7 +135,7 @@ class _FixtureState extends State<_Fixture> {
   void _applyNewEdge() {
     final newer = {
       ..._oldEndorsements(verified: true),
-      'sourceAsOf': '2026-11-12',
+      'sourceAsOf': '2026-11-19',
       'sourceUrl': 'https://example.invalid/official-endorsements-newer',
       'sourceDocumentSha256': List.filled(64, 'b').join(),
       'totalCount': 431,
@@ -158,7 +158,7 @@ class _FixtureState extends State<_Fixture> {
     };
     widget.model.updateFromIntelligence(_intelligence(newer));
     setState(() {
-      _input = '新Edge（合成431件・検証済み・2026-11-12）';
+      _input = '新Edge（合成431件・検証済み・2026-11-19）';
       _openedCandidateSource = '';
     });
   }

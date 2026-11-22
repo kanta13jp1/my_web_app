@@ -320,6 +320,10 @@ class AssetManagementInsightReport {
 
   bool get hasAccountShortfallAlerts => accountShortfallAlerts.isNotEmpty;
 
+  /// today/week の使用可能額がマイナスで生活費が未確保の場合、支払い実行前にガードを挟む。
+  bool get shouldBlockPaymentExecution =>
+      todayAvailable.availableAmount < 0 || weekAvailable.availableAmount < 0;
+
   bool get hasDebtTrendInsights => debtTrendInsights.isNotEmpty;
 
   List<AssetDebtTrendInsight> get criticalDebtTrendInsights {
@@ -343,11 +347,39 @@ class AssetManagementInsightReport {
   }
 }
 
+/// リボ払いカード行にインライン表示する概算残り月数・元金減少見込み。
+class AssetRevolvingInlineHint {
+  final int? revolvingExitHintMonths;
+  final double currentPrincipalEstimate;
+  final bool everPaysOff;
+
+  const AssetRevolvingInlineHint({
+    required this.revolvingExitHintMonths,
+    required this.currentPrincipalEstimate,
+    required this.everPaysOff,
+  });
+}
+
 class AssetManagementInsightService {
   static const double defaultMinimumSafetyBalance = 10000;
   static const int defaultUpcomingPaymentWarningDays = 3;
 
   const AssetManagementInsightService();
+
+  /// リボ払い行向けの概算残り月数・今月元金見込みを返す（非リボは null）。
+  static AssetRevolvingInlineHint? buildRevolvingInlineHint(
+    AssetLiabilityDebtRow row,
+  ) {
+    if (!row.isRevolving) {
+      return null;
+    }
+    final estimate = AssetDebtTrendAnalyzer.estimateForRow(row);
+    return AssetRevolvingInlineHint(
+      revolvingExitHintMonths: estimate.everPaysOff ? estimate.months : null,
+      currentPrincipalEstimate: row.principalPaymentEstimate,
+      everPaysOff: estimate.everPaysOff,
+    );
+  }
 
   AssetManagementInsightReport buildReport({
     required AssetLiabilityWorkbook workbook,
@@ -572,9 +604,13 @@ class AssetManagementInsightService {
           row.annualRate > 0 &&
           row.monthlyInterestEstimate > 0) {
         final balance = row.balance.abs();
+        // annualRate は小数 (0.146 = 年14.6%) で保持している
+        // (planning service の利息計算・負債トレンド分析と同じ単位)。
         final monthlyRate = row.annualRate / 12.0;
-        final isZeroPrincipal = row.scheduledPaymentAmount <= 0 ||
-            row.principalPaymentEstimate <= 0;
+        // 支払済みで実支払額が記録されていれば実額を今月の返済額として扱う。
+        final payment = row.effectiveMonthlyPaymentAmount;
+        final isZeroPrincipal =
+            payment <= 0 || row.principalPaymentEstimate <= 0;
         final isInterestExceedsPrincipal =
             row.principalPaymentEstimate <= row.monthlyInterestEstimate;
 
@@ -587,7 +623,7 @@ class AssetManagementInsightService {
 
           final baseDoubleCandidate = math.max(
             row.minimumPaymentEstimate,
-            row.scheduledPaymentAmount,
+            payment,
           );
           final doublePayment = baseDoubleCandidate > 0
               ? (baseDoubleCandidate * 2).ceilToDouble()
@@ -612,7 +648,7 @@ class AssetManagementInsightService {
             while (simBalance > 0 && months < maxMonths) {
               final interest = simBalance * monthlyRate;
               totalInterest += interest;
-              final principal = row.scheduledPaymentAmount - interest;
+              final principal = payment - interest;
               if (principal <= 0) {
                 months = maxMonths;
                 break;
@@ -628,7 +664,7 @@ class AssetManagementInsightService {
 
             title = '${row.name}の利息負担が元金返済を上回っています';
             description =
-                '月返済${_formatYen(row.scheduledPaymentAmount)}のうち、利息が${_formatYen(row.monthlyInterestEstimate)}を占め、'
+                '月返済${_formatYen(payment)}のうち、利息が${_formatYen(row.monthlyInterestEstimate)}を占め、'
                 '元金返済は${_formatYen(row.principalPaymentEstimate)}に留まります。現行ペースでは$durationText発生します。';
             suggestedAction =
                 '24ヶ月完済目標額${_formatYen(target24Payment)}（または月${_formatYen(doublePayment)}への増額）を検討し、総利息を大幅に圧縮してください。';

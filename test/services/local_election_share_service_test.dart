@@ -756,7 +756,7 @@ void main() {
 
   testWidgets('選択済み公認の出典確認日をcardと共有3経路で揃える', (tester) async {
     for (final entry in [
-      (buildSnapshot(), '出典確認日: 2026/11/12'),
+      (buildSnapshot(), '出典確認日: 2026/11/18'),
       (buildSnapshotWithLiveIntelligence(), '出典確認日: 未記録'),
     ]) {
       final snapshot = entry.$1;
@@ -792,7 +792,7 @@ void main() {
       for (final content in [memo.content, planMemo.content, xBody]) {
         expect(content, contains(entry.$2));
         if (entry.$2.endsWith('未記録')) {
-          expect(content, isNot(contains('出典確認日: 2026/11/12')));
+          expect(content, isNot(contains('出典確認日: 2026/11/18')));
         }
       }
       // Keep the selected source and unrelated page-fetch date unchanged.
@@ -831,6 +831,68 @@ void main() {
       expect(find.text(entry.$2), findsOneWidget);
       if (entry.$2.endsWith('未記録')) {
         expect(find.text('出典確認日: 2026/11/12'), findsNothing);
+      }
+    }
+  });
+
+  testWidgets('2026-11-22代表cardは現職421人・新人元職292人・空白県解消と出典確認日を表示する', (
+    tester,
+  ) async {
+    const unknownLatestPost = KokuminRepresentativeAnnouncement(
+      publishedOn: '2026-11-22',
+      incumbentCount: 421,
+      newcomerNominationCount: 292,
+      nominationMetricLabel: '新人・元職',
+      nationwideMemberTarget: 700,
+      originalPostUrl: 'https://x.com/tamakiyuichiro/status/unknown',
+      officialSiteUrl: 'https://tamakinet.jp/',
+      milestoneSummary: '空白県解消・47都道府県達成（鳥取市議選 村尾まさひこ候補 当確）',
+      milestonePostUrl:
+          'https://x.com/tamakiyuichiro/status/2124504534995341736',
+    );
+    final openedUrls = <String>[];
+    for (final testCase in <({
+      KokuminRepresentativeAnnouncement announcement,
+      String expectedLabel,
+    })>[
+      (
+        announcement: kokuminRepresentativeAnnouncement20261122,
+        expectedLabel: '出典確認日: 2026/11/22',
+      ),
+      (
+        announcement: unknownLatestPost,
+        expectedLabel: '出典確認日: 未記録',
+      ),
+    ]) {
+      openedUrls.clear();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: KokuminRepresentativeAnnouncementCard(
+                announcement: testCase.announcement,
+                onOpenSource: openedUrls.add,
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('党代表発表（2026/11/22）'), findsOneWidget);
+      expect(find.text('現職 421人'), findsOneWidget);
+      expect(find.text('新人・元職 292人'), findsOneWidget);
+      expect(
+        find.text('空白県解消・47都道府県達成（鳥取市議選 村尾まさひこ候補 当確）'),
+        findsOneWidget,
+      );
+      expect(find.text(testCase.expectedLabel), findsOneWidget);
+      expect(find.text('空白県解消の元投稿を開く'), findsOneWidget);
+      if (testCase.expectedLabel.endsWith('未記録')) {
+        expect(find.text('出典確認日: 2026/11/22'), findsNothing);
+      } else {
+        await tester.tap(find.text('空白県解消の元投稿を開く'));
+        expect(openedUrls, <String>[
+          'https://x.com/tamakiyuichiro/status/2124504534995341736',
+        ]);
       }
     }
   });
