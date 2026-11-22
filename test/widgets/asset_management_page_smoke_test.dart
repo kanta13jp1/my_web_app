@@ -3001,6 +3001,73 @@ void main() {
     });
 
     testWidgets(
+        'revolving inline chips show months, principal estimate, and tooltip only for revolving debt',
+        (tester) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            newUsageAmount: 20000,
+            creditLimit: 500000,
+          ),
+        },
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugRevolvingConfigsMirror: mirrorValue,
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'auPayカード': -100000,
+                'モビット': -80000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final payoffTooltipFinder = find.byKey(
+        const Key('asset_revolving_payoff_chip_aupay_card'),
+      );
+      final principalTooltipFinder = find.byKey(
+        const Key('asset_revolving_principal_chip_aupay_card'),
+      );
+      expect(payoffTooltipFinder, findsOneWidget);
+      expect(principalTooltipFinder, findsOneWidget);
+      expect(find.textContaining('リボ: 概算残り'), findsOneWidget);
+      expect(find.textContaining('今月元金 '), findsOneWidget);
+
+      final payoffTooltip = tester.widget<Tooltip>(payoffTooltipFinder);
+      final principalTooltip = tester.widget<Tooltip>(principalTooltipFinder);
+      expect(payoffTooltip.message, contains('概算'));
+      expect(payoffTooltip.message, contains('請求=リボ設定額'));
+      expect(principalTooltip.message, contains('概算'));
+      expect(principalTooltip.message, contains('請求=リボ設定額'));
+
+      expect(find.text('モビット'), findsWidgets);
+      expect(
+        find.byKey(const Key('asset_revolving_payoff_chip_mobit')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('asset_revolving_principal_chip_mobit')),
+        findsNothing,
+      );
+
+      await _unmount(tester);
+    });
+
+    testWidgets(
         'typed revolving field values survive the rebuild their own '
         'onChanged triggers', (tester) async {
       // 最低返済額/新規利用額/利用限度額はTextFormField(initialValue:)ではなく
