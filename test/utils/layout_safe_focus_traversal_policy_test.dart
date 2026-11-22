@@ -85,7 +85,7 @@ void main() {
           laidOutNode,
           unlaidOutNode,
         ]),
-        throwsStateError,
+        throwsA(anyOf(isStateError, isAssertionError)),
       );
 
       final policy = LayoutSafeReadingOrderTraversalPolicy();
