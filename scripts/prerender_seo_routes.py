@@ -319,6 +319,7 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
     markdown_html = _render_markdown_source(
         route.get("_markdown_text"),
         route.get("markdown_source"),
+        heading=route.get("markdown_heading") or f"{h1}原文",
     )
     updated_html = ""
     if route.get("date_modified"):
@@ -393,7 +394,11 @@ def _render_public_links(links: list[dict]) -> str:
     )
 
 
-def _render_markdown_source(markdown_text: str | None, source: str | None) -> str:
+def _render_markdown_source(
+    markdown_text: str | None,
+    source: str | None,
+    heading: str = "承認済み原文",
+) -> str:
     """Expose an approved Markdown source verbatim without re-authoring it.
 
     Legal copy is deliberately not interpreted as arbitrary HTML. A pre-wrapped,
@@ -405,9 +410,10 @@ def _render_markdown_source(markdown_text: str | None, source: str | None) -> st
     source_attr = (
         f' data-source="{html.escape(source, quote=True)}"' if source else ""
     )
+    heading_text = html.escape(heading or "承認済み原文")
     return (
         '<article aria-label="承認済み原文" data-prerender="markdown-source"'
-        f'{source_attr}><h2>プライバシーポリシー原文</h2>'
+        f'{source_attr}><h2>{heading_text}</h2>'
         '<pre style="white-space:pre-wrap;overflow-wrap:anywhere">'
         f"{html.escape(markdown_text)}</pre></article>"
     )

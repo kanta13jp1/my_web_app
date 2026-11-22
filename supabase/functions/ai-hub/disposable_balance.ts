@@ -57,7 +57,7 @@ export type DisposableBalanceAction = {
   priority: number;
   title: string;
   instruction: string;
-  estimated_seconds: number;
+  estimated_seconds: number | null;
   amount_impact: number;
   category: string;
 };
@@ -188,7 +188,6 @@ export function buildDisposableBalance(params: {
     asOfDate,
     cycleStart,
     currentPayslip,
-    fallbackPayslip,
     recurringExpenses: activeRecurring,
     debts: activeDebts,
   });
@@ -248,8 +247,10 @@ export async function handleDisposableBalanceAction(options: {
     let provider: string | null = null;
     let model: string | null = null;
 
-    const aiEnabled = options.body.enable_ai_actions === true ||
-      Deno.env.get("DISPOSABLE_BALANCE_AI_ENABLED") === "true";
+    const aiEnabled = options.body.enable_ai_actions === false
+      ? false
+      : options.body.enable_ai_actions === true ||
+        Deno.env.get("DISPOSABLE_BALANCE_AI_ENABLED") === "true";
     if (aiEnabled && options.invokeProvider) {
       const providerResult = await options.invokeProvider({
         provider: "google",
@@ -416,7 +417,6 @@ function buildRequiredActions(params: {
   asOfDate: string;
   cycleStart: string;
   currentPayslip: PayslipRow | null;
-  fallbackPayslip: PayslipRow | null;
   recurringExpenses: RecurringExpenseRow[];
   debts: DebtRow[];
 }): DisposableBalanceAction[] {
@@ -425,11 +425,10 @@ function buildRequiredActions(params: {
     actions.push({
       action_key: "upload_current_payslip",
       priority: 1,
-      title: "今月の給与明細が未登録です",
-      instruction:
-        "最新の給与明細PDFをアップロードして、収入を明細データで計算してください（約10秒）。",
-      estimated_seconds: 10,
-      amount_impact: params.fallbackPayslip?.net_amount ?? 0,
+      title: "今月の給与明細",
+      instruction: "給与明細と給与収入の登録状況を確認してください。",
+      estimated_seconds: null,
+      amount_impact: 0,
       category: "data_gap",
     });
   }
@@ -567,7 +566,11 @@ function parseProviderActions(text: string): DisposableBalanceAction[] {
       ),
       category: readString(entry.category) || "mentor",
     }))
-    .filter((entry) => entry.title !== "" && entry.instruction !== "");
+    // This registration notice is derived only from the current salary cycle.
+    .filter((entry) =>
+      entry.action_key !== "upload_current_payslip" &&
+      entry.title !== "" && entry.instruction !== ""
+    );
 }
 
 function mergeActions(

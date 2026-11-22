@@ -1,0 +1,84 @@
+{
+  "format": "PCM WAV, mono, 22050Hz, 16bit",
+  "origin": "Original mathematical synthesis; no third-party samples",
+  "files": {
+    "bgm.wav": {
+      "seconds": 16.0,
+      "peak": 0.1610461745048372,
+      "rms": 0.05504876215360099,
+      "sha256": "da9deee7c009f2f842bd5d5d6ee6b85e18b7f72392080d2769f0857c5767c72a"
+    },
+    "start.wav": {
+      "seconds": 0.5500226757369614,
+      "peak": 0.4845118564409314,
+      "rms": 0.12284574536689967,
+      "sha256": "60b7ce1b356098c90ac57cc0dfdd9a09d9b1a2c96514fc61227354bd29ed60c4"
+    },
+    "step.wav": {
+      "seconds": 0.24,
+      "peak": 0.4653462324900052,
+      "rms": 0.08022667485906,
+      "sha256": "289d5563f8cb40d4f78132817ae0e939cde7e6f8a4ccd010359d593dd89e5035"
+    },
+    "power.wav": {
+      "seconds": 0.34,
+      "peak": 0.46757408368175296,
+      "rms": 0.11649988238573052,
+      "sha256": "65e04ee4b33f7b4c004d45f498e1a3c0ad2a61c6c64ce95e6b30619cf6ebb6ec"
+    },
+    "collect.wav": {
+      "seconds": 0.46,
+      "peak": 0.47108371227149265,
+      "rms": 0.1217858681920606,
+      "sha256": "49c5bf3f1a8019d488a1098cfdf7e552e5579ab67fe3d1a53ef34302a1f809d5"
+    },
+    "repair.wav": {
+      "seconds": 0.6499773242630386,
+      "peak": 0.5342875453962829,
+      "rms": 0.12441375988156954,
+      "sha256": "4b38ec62e33d47c681cce30f8aeae21610207b5a705b78f40fed87bb03c6fe86"
+    },
+    "seal.wav": {
+      "seconds": 0.5500226757369614,
+      "peak": 0.5187841425824763,
+      "rms": 0.09144501879476175,
+      "sha256": "a01ba85edd249168e99bced28a985145706c9c6da03db3cd3c19e52b40dd4790"
+    },
+    "drain.wav": {
+      "seconds": 0.9500226757369614,
+      "peak": 0.5728629413739433,
+      "rms": 0.12490216387733438,
+      "sha256": "db875ea4628ebe69f20d04eda59fa6bec6c1333a0b86b740d6a06bb3ad1b1a43"
+    },
+    "damage.wav": {
+      "seconds": 0.42,
+      "peak": 0.5622119815668203,
+      "rms": 0.08709396462053173,
+      "sha256": "a7d506b365b578cf8301f3640bcaaca9d9a921c0b38ae10a9715d0d0a99adda7"
+    },
+    "escape.wav": {
+      "seconds": 1.2499773242630385,
+      "peak": 0.4966887417218543,
+      "rms": 0.12477087788153514,
+      "sha256": "27ed726fad7ce9acac14bfbb383c1ee0abcbf779f9523180399f91fe2a296b5a"
+    },
+    "fail.wav": {
+      "seconds": 1.1499773242630384,
+      "peak": 0.37025055696279796,
+      "rms": 0.08176325596044427,
+      "sha256": "e0414d553e11c954eee50185e6b455849271cae0e5133dfd6477414d9158877c"
+    },
+    "doorOpen.wav": {
+      "seconds": 0.42,
+      "peak": 0.5246436964018677,
+      "rms": 0.12009693939192503,
+      "sha256": "3669b6c03eb5b65445e187a08c040334a671a36a1798add77317609f4735ace4"
+    },
+    "doorClose.wav": {
+      "seconds": 0.44997732426303855,
+      "peak": 0.6038392284920805,
+      "rms": 0.12785314089118463,
+      "sha256": "a8685a4d876949614517d9f9ba5047a39039dda922e46a2fa98083ae50535376"
+    }
+  }
+}

@@ -5,7 +5,7 @@ import '../services/asset_net_worth_panel_service.dart';
 /// 純資産パネル (Issue #2473)。
 ///
 /// 純サービス [AssetNetWorthPanelService] の結果 ([AssetNetWorthPanel]) を受け取り、
-/// 「純資産」「前月比 ±¥ / ±%」「直近6月のミニスパークライン」を描画する
+/// 「純資産」「前月比 ±¥ / ±%」「最大6点の月次スパークライン」を描画する
 /// 自己完結ウィジェット。ページ状態へ依存しないため単体検証できる。
 class AssetNetWorthPanelCard extends StatelessWidget {
   const AssetNetWorthPanelCard({
@@ -148,10 +148,11 @@ class AssetNetWorthPanelCard extends StatelessWidget {
   }
 
   Widget _buildBreakdown(ThemeData theme) {
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: [
         _chip(theme, '資産', _yen(panel.positiveAssetTotal!), _positive),
-        const SizedBox(width: 8),
         _chip(theme, '負債', _yen(panel.liabilityTotal!), _negative),
       ],
     );
@@ -164,8 +165,7 @@ class AssetNetWorthPanelCard extends StatelessWidget {
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Wrap(
         children: [
           Text(
             '$label ',
@@ -189,7 +189,7 @@ class AssetNetWorthPanelCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '直近${panel.sparkline.length}か月の推移',
+          '月次データ${panel.sparkline.length}点の推移',
           style: theme.textTheme.labelSmall?.copyWith(color: _muted),
         ),
         const SizedBox(height: 6),

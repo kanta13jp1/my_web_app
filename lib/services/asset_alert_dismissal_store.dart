@@ -27,7 +27,9 @@ class AssetAlertDismissalStore {
       return current;
     }
     final next = {...current, id};
-    await store.setStringList(prefsKey, next.toList());
+    if (!await store.setStringList(prefsKey, next.toList())) {
+      throw StateError('Alert dismissal persistence was not confirmed.');
+    }
     return next;
   }
 
@@ -38,8 +40,17 @@ class AssetAlertDismissalStore {
       return current;
     }
     final next = {...current}..remove(id);
-    await store.setStringList(prefsKey, next.toList());
+    if (!await store.setStringList(prefsKey, next.toList())) {
+      throw StateError('Alert dismissal persistence was not confirmed.');
+    }
     return next;
+  }
+
+  Future<void> restoreAll({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    if (!await store.remove(prefsKey)) {
+      throw StateError('Alert dismissal restoration was not confirmed.');
+    }
   }
 
   /// [liveIds] に含まれない dismiss 済み id を削除する (集合の肥大防止)。
@@ -54,7 +65,9 @@ class AssetAlertDismissalStore {
     if (next.length == current.length) {
       return current;
     }
-    await store.setStringList(prefsKey, next.toList());
+    if (!await store.setStringList(prefsKey, next.toList())) {
+      throw StateError('Alert dismissal persistence was not confirmed.');
+    }
     return next;
   }
 }
