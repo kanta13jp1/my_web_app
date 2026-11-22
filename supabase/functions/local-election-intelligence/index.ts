@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
+  buildDailyRealityHistory,
   evaluateScheduleCollectionQuality,
   type HubDataRow,
   type HubInsertResult,
@@ -8,6 +9,8 @@ import {
   LOCAL_ELECTION_SNAPSHOT_HUB_SOURCE,
   type LocalElectionHubStore,
   persistLocalElectionSnapshot,
+  REALITY_HISTORY_MAX_POINTS,
+  type RealityHistoryPoint,
   type ScheduleCollectionQuality,
   type ScheduleSourceFetchHealth,
   X_POST_CANDIDATE_HUB_SOURCE,
@@ -812,9 +815,22 @@ serve(async (req) => {
       )
       : null;
 
+    const currentHistoryPoint: RealityHistoryPoint | null =
+      snapshot.officialCurrentLocalMembers > 0
+        ? {
+          fetchedAt: snapshot.fetchedAt,
+          officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
+          actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
+        }
+        : null;
+    const history = await loadServerRealityHistory(currentHistoryPoint);
+
     return jsonResponse({
       success: true,
-      snapshot,
+      snapshot: {
+        ...snapshot,
+        history,
+      },
       ...(persistence
         ? {
           persistence: {
@@ -1075,6 +1091,68 @@ function createLocalElectionHubStore(): LocalElectionHubStore {
       }
     },
   };
+}
+
+const REALITY_HISTORY_SELECT = [
+  "created_at",
+  "observed_at:metadata->>observed_at",
+  "official_current_local_members:metadata->snapshot->metrics->>officialCurrentLocalMembers",
+  "actual_net_increase_required:metadata->snapshot->metrics->>actualNetIncreaseRequired",
+  "legacy_official_current_local_members:metadata->snapshot->>officialCurrentLocalMembers",
+  "legacy_actual_net_increase_required:metadata->snapshot->>actualNetIncreaseRequired",
+].join(",");
+
+/**
+ * Loads sanitized daily local-election history points from persisted `hub_data`
+ * snapshots. Fails open so request-time live snapshot delivery never breaks
+ * when history queries are unavailable.
+ */
+async function loadServerRealityHistory(
+  currentPoint: RealityHistoryPoint | null,
+): Promise<RealityHistoryPoint[]> {
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+    return buildDailyRealityHistory([], {
+      currentPoint,
+      maxPoints: REALITY_HISTORY_MAX_POINTS,
+      targetMembers: TARGET_LOCAL_MEMBERS,
+    });
+  }
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data, error } = await admin
+      .from("hub_data")
+      .select(REALITY_HISTORY_SELECT)
+      .eq("source", LOCAL_ELECTION_SNAPSHOT_HUB_SOURCE)
+      .filter("metadata->>dataset", "eq", LOCAL_ELECTION_DATASET)
+      .order("created_at", { ascending: false })
+      .limit(400);
+    if (error) {
+      console.warn(
+        "Failed to load local-election server history:",
+        error.message,
+      );
+      return buildDailyRealityHistory([], {
+        currentPoint,
+        maxPoints: REALITY_HISTORY_MAX_POINTS,
+        targetMembers: TARGET_LOCAL_MEMBERS,
+      });
+    }
+    return buildDailyRealityHistory(Array.isArray(data) ? data : [], {
+      currentPoint,
+      maxPoints: REALITY_HISTORY_MAX_POINTS,
+      targetMembers: TARGET_LOCAL_MEMBERS,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn("Failed to load local-election server history:", message);
+    return buildDailyRealityHistory([], {
+      currentPoint,
+      maxPoints: REALITY_HISTORY_MAX_POINTS,
+      targetMembers: TARGET_LOCAL_MEMBERS,
+    });
+  }
 }
 
 function jsonResponse(body: unknown, init?: ResponseInit): Response {
