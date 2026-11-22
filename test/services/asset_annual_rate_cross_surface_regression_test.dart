@@ -172,8 +172,7 @@ void main() {
           chatService: AiHubChatService(
             invoker: (_) async => <String, dynamic>{
               'success': true,
-              'text':
-                  '純資産は-1,900,000円、負債合計は2,200,000円です。'
+              'text': '純資産は-1,900,000円、負債合計は2,200,000円です。'
                   '年利18.0%のアコムカードローンを最優先で返済してください。',
               'provider': 'openai',
             },
@@ -217,8 +216,7 @@ void main() {
           chatService: AiHubChatService(
             invoker: (_) async => <String, dynamic>{
               'success': true,
-              'text':
-                  '純資産は-1,900,000円、負債合計は2,200,000円です。'
+              'text': '純資産は-1,900,000円、負債合計は2,200,000円です。'
                   '年利15.00%のアコムカードローン、年利13.40%のじぶんローン、'
                   '年利14.60%のアコムショッピングの順で優先管理します。',
               'provider': 'openai',
@@ -232,6 +230,94 @@ void main() {
         expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
         expect(result.usedExternalAi, isTrue);
         expect(result.errorMessage, isNull);
+      },
+    );
+
+    test(
+      'accepts valid postfix comparison without misattributing rate to the following debt',
+      () async {
+        const planner = AssetLiabilityPlanningService();
+        final workbook = planner.buildWorkbook(
+          baseDate: DateTime(2026, 9, 3),
+          latestSnapshot: const <String, double>{
+            'bank': 300000,
+            'アコムカードローン': -1200000,
+            'じぶんローン': -600000,
+            'アコムショッピング': -400000,
+          },
+          annualRateOverrides: const <String, double>{
+            'acom_card_loan': 0.15,
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId: 0.134,
+            AssetLiabilityPlanningService.acomShoppingAccountId: 0.146,
+          },
+        );
+        final report = const AssetManagementInsightService().buildReport(
+          workbook: workbook,
+          userProfile: _syntheticProfile(),
+          minimumSafetyBalance: 10000,
+        );
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (_) async => <String, dynamic>{
+              'success': true,
+              'text': '純資産は-1,900,000円、負債合計は2,200,000円です。'
+                  'アコムカードローンは年利15.0%でじぶんローンより高いです。',
+              'provider': 'openai',
+            },
+          ),
+          now: () => DateTime(2026, 9, 3, 12),
+        );
+
+        final result = await service.generateSummary(report: report);
+
+        expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+        expect(result.usedExternalAi, isTrue);
+        expect(result.errorMessage, isNull);
+      },
+    );
+
+    test(
+      'rejects stale postfix rate even when another debt follows a predicate particle',
+      () async {
+        const planner = AssetLiabilityPlanningService();
+        final workbook = planner.buildWorkbook(
+          baseDate: DateTime(2026, 9, 3),
+          latestSnapshot: const <String, double>{
+            'bank': 300000,
+            'アコムカードローン': -1200000,
+            'じぶんローン': -600000,
+            'アコムショッピング': -400000,
+          },
+          annualRateOverrides: const <String, double>{
+            'acom_card_loan': 0.15,
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId: 0.134,
+            AssetLiabilityPlanningService.acomShoppingAccountId: 0.146,
+          },
+        );
+        final report = const AssetManagementInsightService().buildReport(
+          workbook: workbook,
+          userProfile: _syntheticProfile(),
+          minimumSafetyBalance: 10000,
+        );
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (_) async => <String, dynamic>{
+              'success': true,
+              'text': '純資産は-1,900,000円、負債合計は2,200,000円です。'
+                  'アコムカードローンは年利18.0%でじぶんローンより高いです。',
+              'provider': 'openai',
+            },
+          ),
+          now: () => DateTime(2026, 9, 3, 12),
+        );
+
+        final result = await service.generateSummary(report: report);
+
+        expect(result.status, AssetManagementAiSummaryStatus.fallback);
+        expect(result.usedExternalAi, isFalse);
+        expect(result.errorMessage, contains('アコムカードローンの年利が確定値と不一致'));
       },
     );
   });

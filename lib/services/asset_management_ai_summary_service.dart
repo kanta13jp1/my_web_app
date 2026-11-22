@@ -1533,6 +1533,8 @@ class AssetManagementAiSummaryService {
       final prefixRatePattern = RegExp(
         r'(?:年利|金利)[^0-9]{0,12}([0-9]+(?:\.[0-9]+)?)\s*%([^。、;；\r\n]{0,20})$',
       );
+      final clauseBoundaryPattern = RegExp(r'[。、;；\r\n]');
+      final predicateParticlePattern = RegExp(r'(?:で(?!ある)|[はがをにとより])');
       final namePattern = RegExp(RegExp.escape(row.name));
       final longerDebtPatterns = allDebtNames
           .where((other) => other != row.name && other.contains(row.name))
@@ -1576,7 +1578,23 @@ class AssetManagementAiSummaryService {
             final hasInterveningDebt = allDebtNames.any(
               (other) => other != row.name && between.contains(other),
             );
-            if (!hasInterveningDebt && between.length <= 60) {
+            final afterRate = afterName.substring(postfixMatch.end);
+            final beforeNextClause =
+                afterRate.split(clauseBoundaryPattern).first;
+            final isPrefixOfOtherDebt = allDebtNames.any((other) {
+              if (other == row.name) return false;
+              final otherIndex = beforeNextClause.indexOf(other);
+              if (otherIndex < 0 || otherIndex > 20) return false;
+              if (row.name.contains(other) &&
+                  beforeNextClause.indexOf(row.name) == otherIndex) {
+                return false;
+              }
+              final bridge = beforeNextClause.substring(0, otherIndex);
+              return !predicateParticlePattern.hasMatch(bridge);
+            });
+            if (!hasInterveningDebt &&
+                !isPrefixOfOtherDebt &&
+                between.length <= 60) {
               final actualPercent = double.tryParse(postfixMatch.group(2)!);
               if (!isRateMatched(actualPercent)) {
                 errors.add('${row.name}の年利が確定値と不一致');
@@ -1593,7 +1611,8 @@ class AssetManagementAiSummaryService {
             final hasInterveningDebt = allDebtNames.any(
               (other) => other != row.name && between.contains(other),
             );
-            if (!hasInterveningDebt) {
+            if (!hasInterveningDebt &&
+                !predicateParticlePattern.hasMatch(between)) {
               final actualPercent = double.tryParse(prefixMatch.group(1)!);
               if (!isRateMatched(actualPercent)) {
                 errors.add('${row.name}の年利が確定値と不一致');
