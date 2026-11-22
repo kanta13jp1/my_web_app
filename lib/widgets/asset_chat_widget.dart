@@ -23,6 +23,12 @@ class AssetChatWidget extends StatefulWidget {
 }
 
 class _AssetChatWidgetState extends State<AssetChatWidget> {
+  static const List<String> _quickPrompts = <String>[
+    '今月の支払いで注意すべき点は？',
+    '固定費の見直し候補を教えて',
+    '残高不足のリスクはある？',
+  ];
+
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _messageScrollController = ScrollController();
 
@@ -60,6 +66,13 @@ class _AssetChatWidgetState extends State<AssetChatWidget> {
     if (!_messageScrollController.hasClients) return;
     _messageScrollController.jumpTo(
       _messageScrollController.position.maxScrollExtent,
+    );
+  }
+
+  void _applyQuickPrompt(String prompt) {
+    _inputController.text = prompt;
+    _inputController.selection = TextSelection.collapsed(
+      offset: prompt.length,
     );
   }
 
@@ -176,30 +189,49 @@ class _AssetChatWidgetState extends State<AssetChatWidget> {
   }
 
   Widget _buildConversation() {
+    final scheme = Theme.of(context).colorScheme;
     final messages = _viewModel.messages;
     if (messages.isEmpty && !_viewModel.isSending) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
+      return Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.account_balance_wallet_outlined,
                 size: 38,
-                color: Color(0xFF2E7D32),
+                color: scheme.brightness == Brightness.dark
+                    ? scheme.primary
+                    : const Color(0xFF2E7D32),
               ),
-              SizedBox(height: 12),
-              Text(
+              const SizedBox(height: 12),
+              const Text(
                 '資産・負債・支払い予定について相談できます。',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontWeight: FontWeight.w700, height: 1.45),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 '入力内容と資産スナップショットをAIへ送信します。',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Colors.black54),
+                style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (var i = 0; i < _quickPrompts.length; i++)
+                    ActionChip(
+                      key: Key('asset_chat_prompt_chip_$i'),
+                      label: Text(_quickPrompts[i]),
+                      labelStyle: const TextStyle(fontSize: 12),
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () => _applyQuickPrompt(_quickPrompts[i]),
+                    ),
+                ],
               ),
             ],
           ),
@@ -233,6 +265,7 @@ class _AssetChatWidgetState extends State<AssetChatWidget> {
   }
 
   Widget _buildMessageBubble(AssetChatMessage message, int index) {
+    final scheme = Theme.of(context).colorScheme;
     final isUser = message.isUser;
     final usage = message.usage;
     return Align(
@@ -243,7 +276,8 @@ class _AssetChatWidgetState extends State<AssetChatWidget> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isUser ? const Color(0xFF2E7D32) : const Color(0xFFF1F5F9),
+          color:
+              isUser ? const Color(0xFF2E7D32) : scheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
@@ -252,7 +286,7 @@ class _AssetChatWidgetState extends State<AssetChatWidget> {
             SelectableText(
               message.text,
               style: TextStyle(
-                color: isUser ? Colors.white : const Color(0xFF0F172A),
+                color: isUser ? Colors.white : scheme.onSurface,
                 height: 1.45,
               ),
             ),
@@ -262,8 +296,8 @@ class _AssetChatWidgetState extends State<AssetChatWidget> {
                 '入力 ${usage.tokensIn} / 出力 ${usage.tokensOut} tokens'
                 ' · ${_formatCost(usage.estimatedCostUsd)}',
                 key: Key('asset_chat_usage_$index'),
-                style: const TextStyle(
-                  color: Color(0xFF64748B),
+                style: TextStyle(
+                  color: isUser ? Colors.white70 : scheme.onSurfaceVariant,
                   fontSize: 10,
                   height: 1.3,
                 ),
@@ -282,25 +316,27 @@ class _AssetChatWidgetState extends State<AssetChatWidget> {
   }
 
   Widget _buildError(String error) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       key: const Key('asset_chat_error'),
       width: double.infinity,
-      color: const Color(0xFFFEF2F2),
+      color: scheme.errorContainer,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Text(
         error,
-        style: const TextStyle(color: Color(0xFFB91C1C), fontSize: 12),
+        style: TextStyle(color: scheme.onErrorContainer, fontSize: 12),
       ),
     );
   }
 
   Widget _buildInput() {
+    final scheme = Theme.of(context).colorScheme;
     return SafeArea(
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 8, 8, 10),
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: scheme.outlineVariant)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
