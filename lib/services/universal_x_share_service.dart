@@ -211,7 +211,7 @@ class UniversalXShareService {
   // なので不採用にして retry/fallback へ回す。
   static const int maxLeadDraftLength = 3000;
   static const String defaultHedraStartImageUrl =
-      'https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png';
+      'https://my-web-app-b67f4.web.app/ogp-ai-university-v2.png';
   static const String firstUserGrowthCampaign = 'first_user_growth';
   static const String aiShareMedium = 'ai_share';
   static const String profileMedium = 'profile';

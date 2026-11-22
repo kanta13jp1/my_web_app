@@ -82,7 +82,7 @@ class FirstUserXCandidateTest(unittest.TestCase):
         self.assertEqual(
             post["mediaUrl"],
             "https://my-web-app-b67f4.web.app/"
-            "lp-og-first-action-20260720.png",
+            "ogp-lp-v2.png",
         )
         self.assertEqual(post["replyTexts"], [first_user_x_candidate.REPLY_TEXT])
         self.assertEqual(post["utmContent"], "outcome_first_a")

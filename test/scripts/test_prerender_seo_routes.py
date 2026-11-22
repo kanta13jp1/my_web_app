@@ -9,6 +9,7 @@ import unittest
 import xml.dom.minidom
 from pathlib import Path
 
+from scripts import generate_ogp_cards
 from scripts.generate_sitemap import PUBLIC_ROUTES, build_sitemap
 from scripts.prerender_seo_routes import (
     build_public_route_html,
@@ -70,9 +71,6 @@ class HomepageSocialPreviewTest(unittest.TestCase):
         cls.index_html = (cls.repo_root / "web" / "index.html").read_text(
             encoding="utf-8"
         )
-        cls.og_image = (
-            cls.repo_root / "web" / "lp-og-first-action-20260720.png"
-        )
 
     def test_home_meta_matches_brand_search_intent(self) -> None:
         self.assertIn(
@@ -119,8 +117,8 @@ class HomepageSocialPreviewTest(unittest.TestCase):
             self.index_html,
         )
 
-    def test_home_og_image_is_real_lp_screenshot(self) -> None:
-        image_url = f"{BASE}/lp-og-first-action-20260720.png"
+    def test_home_og_image_uses_generated_lp_v2_card(self) -> None:
+        image_url = f"{BASE}/ogp-lp-v2.png"
         self.assertIn(
             f'property="og:image"\n    content="{image_url}"',
             self.index_html,
@@ -129,22 +127,40 @@ class HomepageSocialPreviewTest(unittest.TestCase):
             f'property="twitter:image"\n    content="{image_url}"',
             self.index_html,
         )
-        self.assertTrue(self.og_image.is_file())
-        png = self.og_image.read_bytes()
-        self.assertEqual(png[:8], b"\x89PNG\r\n\x1a\n")
-        self.assertEqual(struct.unpack(">II", png[16:24]), (1200, 630))
+        self.assertIn("ogp-lp-v2.png", generate_ogp_cards.GENERATED_OGP_FILES)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            out_dir = Path(temp_dir)
+            generate_ogp_cards.generate_all_cards(out_dir)
+            png = (out_dir / "ogp-lp-v2.png").read_bytes()
+            self.assertEqual(png[:8], b"\x89PNG\r\n\x1a\n")
+            self.assertEqual(struct.unpack(">II", png[16:24]), (1200, 630))
 
-    def test_default_and_ai_university_images_remain_route_specific(self) -> None:
-        self.assertIn(
-            "var defaultOgImageUrl = "
-            "'https://my-web-app-b67f4.web.app/lp-og-first-action-20260720.png';",
-            self.index_html,
-        )
-        self.assertIn(
-            "var aiUniversityOgImageUrl = "
-            "'https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png';",
-            self.index_html,
-        )
+    def test_default_and_route_ogp_images_are_generated_and_wired(self) -> None:
+        expected_vars = {
+            "defaultOgImageUrl": "ogp-lp-v2.png",
+            "aiUniversityOgImageUrl": "ogp-ai-university-v2.png",
+            "competitorsOgImageUrl": "ogp-competitors-v2.png",
+            "philosophyOgImageUrl": "ogp-philosophy-v2.png",
+            "growthOgImageUrl": "ogp-growth-v2.png",
+        }
+        for js_var, filename in expected_vars.items():
+            self.assertIn(
+                f"var {js_var} = '{BASE}/{filename}';",
+                self.index_html,
+            )
+            self.assertIn(filename, generate_ogp_cards.GENERATED_OGP_FILES)
+        routes = json.loads(
+            (self.repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )["routes"]
+        for route in routes:
+            image = route.get("image")
+            if image:
+                self.assertIn(
+                    image.lstrip("/"),
+                    generate_ogp_cards.GENERATED_OGP_FILES,
+                )
         self.assertIn(
             '"url": "https://my-web-app-b67f4.web.app/icons/Icon-512.png"',
             self.index_html,
@@ -208,6 +224,14 @@ class PrerenderRouteTest(unittest.TestCase):
         # BreadcrumbList の最終要素が自 URL
         bc = next(g for g in parsed["@graph"] if g["@type"] == "BreadcrumbList")
         self.assertEqual(bc["itemListElement"][-1]["item"], f"{BASE}/vs-notion")
+
+    def test_comparison_route_uses_dedicated_competitors_social_image(self) -> None:
+        expected = f"{BASE}/ogp-competitors-v2.png"
+        self.assertIn(f'<meta property="og:image" content="{expected}">', self.out)
+        self.assertIn(
+            f'<meta property="twitter:image" content="{expected}">',
+            self.out,
+        )
 
 
 PUBLIC_ROUTE = {
@@ -390,8 +414,8 @@ class PublicRouteTest(unittest.TestCase):
         )
 
         out = build_public_route_html(index_html, route, BASE)
-        image_url = f"{BASE}/ogp-image-gen2-20260428.png"
-        homepage_image_url = f"{BASE}/lp-og-first-action-20260720.png"
+        image_url = f"{BASE}/ogp-ai-university-v2.png"
+        homepage_image_url = f"{BASE}/ogp-lp-v2.png"
 
         self.assertRegex(
             out,

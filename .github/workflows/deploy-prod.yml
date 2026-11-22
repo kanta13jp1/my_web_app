@@ -817,10 +817,17 @@ jobs:
           cp web/release-notes.json build/web/release-notes.json
           cp .ci-generated/ai-university-catalog.json build/web/ai-university-catalog.json
 
+      - name: Generate deterministic OGP and X cards
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk python3-pil
+          python3 scripts/generate_ogp_cards.py --output-dir build/web
+
       - name: Cache-bust OGP image URLs
         if: steps.changes.outputs.web == 'true'
         run: |
-          sed -i 's|/ogp\.png"|/ogp.png?v=${{ steps.version.outputs.version }}"|g' build/web/index.html
+          sed -E -i 's|/(ogp(\.png|-(lp|ai-university|competitors|philosophy|growth)-v2\.png))(["'\''])|/\1?v=${{ steps.version.outputs.version }}\4|g' build/web/index.html
 
       - name: Prerender per-route static HTML + sitemap (SEO)
         if: steps.changes.outputs.web == 'true'

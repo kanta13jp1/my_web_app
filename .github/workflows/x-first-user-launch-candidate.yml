@@ -26,7 +26,7 @@ jobs:
     env:
       SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      MEDIA_URL: https://my-web-app-b67f4.web.app/lp-og-first-action-20260720.png
+      MEDIA_URL: https://my-web-app-b67f4.web.app/ogp-lp-v2.png
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

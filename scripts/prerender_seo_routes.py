@@ -56,6 +56,33 @@ def replace_attr_content(html_text: str, selector_regex: str, new_value: str) ->
                  html_text, count=1)
 
 
+def replace_social_image(
+    html_text: str,
+    image: str | None,
+    image_alt: str,
+    base_url: str,
+) -> str:
+    """Replace og:image / twitter:image and their alt attributes when given."""
+    if not image:
+        return html_text
+    image_url = image if image.startswith("http") else f"{base_url}{image}"
+    out = replace_attr_content(
+        html_text, r'(<meta\s+property="og:image"\s+content=")([^"]*)(")',
+        image_url)
+    out = replace_attr_content(
+        out,
+        r'(<meta\s+(?:property|name)="twitter:image"\s+content=")([^"]*)(")',
+        image_url)
+    out = replace_attr_content(
+        out, r'(<meta\s+property="og:image:alt"\s+content=")([^"]*)(")',
+        image_alt)
+    out = replace_attr_content(
+        out,
+        r'(<meta\s+(?:property|name)="twitter:image:alt"\s+content=")([^"]*)(")',
+        image_alt)
+    return out
+
+
 def remove_homepage_faq_schema(html_text: str) -> str:
     """公開サブルートに引き継がれたホーム専用 FAQPage を除去する。"""
     return re.sub(
@@ -101,11 +128,17 @@ def build_route_html(template: str, route: dict, base_url: str) -> str:
     out = replace_attr_content(
         out, r'(<meta property="og:type" content=")([^"]*)(")', "article")
     out = replace_attr_content(
-        out, r'(<meta property="twitter:title" content=")([^"]*)(")', title)
+        out, r'(<meta\s+(?:property|name)="twitter:title"\s+content=")([^"]*)(")', title)
     out = replace_attr_content(
-        out, r'(<meta\s+property="twitter:description"\s+content=")([^"]*)(")', desc)
+        out, r'(<meta\s+(?:property|name)="twitter:description"\s+content=")([^"]*)(")', desc)
     out = replace_attr_content(
-        out, r'(<meta property="twitter:url" content=")([^"]*)(")', url)
+        out, r'(<meta\s+(?:property|name)="twitter:url"\s+content=")([^"]*)(")', url)
+    out = replace_social_image(
+        out,
+        route.get("image") or "/ogp-competitors-v2.png",
+        route.get("image_alt") or f"{competitor}と自分株式会社の比較 - 散らばるツールをひとつの仕事OSへ",
+        base_url,
+    )
 
     # ルート固有 JSON-LD (WebPage + BreadcrumbList + FAQPage) を </head> 直前に注入
     faq = [
@@ -217,28 +250,17 @@ def build_public_route_html(template: str, route: dict, base_url: str) -> str:
     out = replace_attr_content(
         out, r'(<meta property="og:url" content=")([^"]*)(")', url)
     out = replace_attr_content(
-        out, r'(<meta property="twitter:title" content=")([^"]*)(")', title)
+        out, r'(<meta\s+(?:property|name)="twitter:title"\s+content=")([^"]*)(")', title)
     out = replace_attr_content(
-        out, r'(<meta\s+property="twitter:description"\s+content=")([^"]*)(")', desc)
+        out, r'(<meta\s+(?:property|name)="twitter:description"\s+content=")([^"]*)(")', desc)
     out = replace_attr_content(
-        out, r'(<meta property="twitter:url" content=")([^"]*)(")', url)
-
-    image = route.get("image")
-    if image:
-        image_url = image if image.startswith("http") else f"{base_url}{image}"
-        image_alt = route.get("image_alt", title)
-        out = replace_attr_content(
-            out, r'(<meta\s+property="og:image"\s+content=")([^"]*)(")',
-            image_url)
-        out = replace_attr_content(
-            out, r'(<meta\s+property="twitter:image"\s+content=")([^"]*)(")',
-            image_url)
-        out = replace_attr_content(
-            out, r'(<meta property="og:image:alt" content=")([^"]*)(")',
-            image_alt)
-        out = replace_attr_content(
-            out, r'(<meta property="twitter:image:alt" content=")([^"]*)(")',
-            image_alt)
+        out, r'(<meta\s+(?:property|name)="twitter:url"\s+content=")([^"]*)(")', url)
+    out = replace_social_image(
+        out,
+        route.get("image"),
+        route.get("image_alt", title),
+        base_url,
+    )
 
     web_page = {
         "@context": "https://schema.org",

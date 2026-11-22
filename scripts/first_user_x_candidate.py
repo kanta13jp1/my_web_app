@@ -17,7 +17,7 @@ VARIANT = "outcome_first_b_failure_numbers_hook"
 PROMPT_PROFILE = "first_user_failure_numbers_hook_v2"
 MEDIA_URL = (
     "https://my-web-app-b67f4.web.app/"
-    "lp-og-first-action-20260720.png"
+    "ogp-lp-v2.png"
 )
 TARGET_URL = (
     "https://my-web-app-b67f4.web.app/"

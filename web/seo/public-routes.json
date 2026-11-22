@@ -4,6 +4,8 @@
   "routes": [
     {
       "path": "/shop",
+      "image": "/ogp-growth-v2.png",
+      "image_alt": "自分株式会社 デジタル作品ストア - 公開開発とストア",
       "title": "デジタル作品ストア | 画像・音声・動画・ゲーム・テンプレート",
       "description": "画像、音声、動画、デザイン、文章、プロンプト、アイデア、ゲーム、テンプレートを買い切りで購入できるデジタル作品ストア。購入後は同じアカウントから再ダウンロードできます。",
       "h1": "デジタル作品ストア",
@@ -11,6 +13,8 @@
     },
     {
       "path": "/competitors",
+      "image": "/ogp-competitors-v2.png",
+      "image_alt": "自分株式会社 - 散らばるツールをひとつの仕事OSへ統合",
       "title": "競合比較 174社一覧 | 自分株式会社",
       "description": "Notion・Slack・MoneyForwardなど174社以上のSaaSと自分株式会社を比較。AI大学×財務×習慣×タスクを無料コア+Pro対応で一元管理する唯一のAI統合ライフOS。",
       "h1": "競合174社との比較",
@@ -18,8 +22,8 @@
     },
     {
       "path": "/ai-university",
-      "image": "/ogp-image-gen2-20260428.png",
-      "image_alt": "AI大学 - 主要AI企業と実務活用を体系的に学ぶ",
+      "image": "/ogp-ai-university-v2.png",
+      "image_alt": "自分株式会社 AI大学 - 主要AI企業と実務活用を体系的に学ぶ",
       "title": "AI大学 | 無料でAIツール・AIプロバイダーを学ぶ",
       "description": "AIツール・AIプロバイダー・実務ユースケースを学べる無料のAI大学。クイズ・ランキング・バッジで継続学習でき、200社以上のAIを体系的に習得できます。",
       "h1": "AI大学 — 無料でAIを体系的に学ぶ",
@@ -27,6 +31,8 @@
     },
     {
       "path": "/gemini-university",
+      "image": "/ogp-ai-university-v2.png",
+      "image_alt": "自分株式会社 AI大学 - 主要AI {provider_count}社を体系的に学ぶ",
       "title": "AI大学 {provider_count}社 | Google・OpenAI・Anthropicを学ぶ",
       "description": "Google / OpenAI / Anthropic など{provider_count}社を体系的に学ぶ無料のAI大学。クイズ・ランキング・バッジで、最新のAIプロバイダーを継続的に習得できます。",
       "h1": "AI大学 — {provider_count}社のAIを学ぶ",
@@ -37,6 +43,8 @@
     },
     {
       "path": "/project-gantt",
+      "image": "/ogp-growth-v2.png",
+      "image_alt": "自分株式会社 WBSガントチャート - AI駆動の公開開発",
       "title": "WBSガントチャート | 自分株式会社の開発を公開",
       "description": "自分株式会社の開発WBS・マイルストーン・担当・進捗を公開するプロジェクトガントチャート。Claude・Codex・PowerShell・VSCodeの並行開発状況を確認できます。",
       "h1": "WBSガントチャート — 開発を公開",
@@ -44,6 +52,8 @@
     },
     {
       "path": "/development-achievements",
+      "image": "/ogp-growth-v2.png",
+      "image_alt": "自分株式会社 開発実績 - 毎日の進化ログを公開",
       "title": "開発実績 | 自分株式会社の実装ログ",
       "description": "自分株式会社の開発履歴・実装済み機能・改善ログを公開する開発実績ページ。AI駆動開発でどの機能がいつ実装されたかを追跡できます。",
       "h1": "開発実績 — 実装ログの公開",
@@ -65,6 +75,8 @@
     },
     {
       "path": "/referral",
+      "image": "/ogp-growth-v2.png",
+      "image_alt": "自分株式会社 友達紹介プログラム - Pro月額1か月分クレジット特典",
       "title": "友達紹介プログラム | 自分株式会社",
       "description": "自分株式会社の紹介プログラム。招待リンクから友達が登録してPro課金すると、招待した人と招待された人のStripe請求残高へPro月額1か月分のクレジットを付与します。登録だけでは付与されません。",
       "h1": "友達を招待",
@@ -160,6 +172,8 @@
     },
     {
       "path": "/philosophy",
+      "image": "/ogp-philosophy-v2.png",
+      "image_alt": "自分株式会社とは - 自分の人生をひとつの会社として経営する自己経営OS",
       "title": "自分株式会社とは？人生を経営する9原則と実践方法",
       "description": "自分株式会社とは、自分の人生を会社に見立て、自分がCEOとして時間・お金・健康・スキルを経営する考え方です。9原則、個人のP/L・B/S、6部署、30日運営サイクルを解説します。",
       "h1": "自分株式会社とは — 人生を会社として経営する方法",

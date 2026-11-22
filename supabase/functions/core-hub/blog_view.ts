@@ -98,7 +98,7 @@ export function renderBlogArticleJsonLd(row: BlogPostRow): string {
       name: BLOG_SITE_NAME,
       logo: {
         "@type": "ImageObject",
-        url: "https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png",
+        url: "https://my-web-app-b67f4.web.app/ogp-lp-v2.png",
       },
     },
   };
