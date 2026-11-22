@@ -901,6 +901,112 @@ void main() {
       );
     });
 
+    test(
+        'emits critical action item when card statement import is missing and clears after import',
+        () {
+      final beforeWorkbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'PayPayカード': -20000,
+          'KDDI': -5764,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          'paypay_card': 20000,
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+      );
+
+      final beforeReport = service.buildReport(workbook: beforeWorkbook);
+      final missingImportItem = beforeReport.actionItems.firstWhere(
+        (item) =>
+            item.type ==
+                AssetManagementInsightActionType.cardBillingConfiguration &&
+            item.severity == AssetManagementInsightSeverity.critical &&
+            item.relatedAccountId == 'paypay_card',
+      );
+      expect(missingImportItem.title, startsWith('要確認：'));
+      expect(missingImportItem.title, contains('カード明細の取り込みが必要です'));
+      expect(
+        missingImportItem.description,
+        contains(AssetLiabilityPlanningService.cardStatementMissingImportAlert),
+      );
+      expect(missingImportItem.suggestedAction, contains('カード明細取り込み欄'));
+
+      final afterWorkbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'PayPayカード': -20000,
+          'KDDI': -5764,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          'paypay_card': 20000,
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+        cardStatementLines: const <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_paypay_1',
+            billingAccountId: 'paypay_card',
+            billingAccountName: 'PayPayカード',
+            postedAt: null,
+            description: 'KDDI利用分',
+            amount: 5764,
+          ),
+        ],
+      );
+
+      final afterReport = service.buildReport(workbook: afterWorkbook);
+      expect(
+        afterReport.actionItems.any(
+          (item) =>
+              item.type ==
+                  AssetManagementInsightActionType.cardBillingConfiguration &&
+              item.severity == AssetManagementInsightSeverity.critical &&
+              item.relatedAccountId == 'paypay_card',
+        ),
+        isFalse,
+      );
+    });
+
+    test(
+        'suppresses critical missing statement action item for revolving cards',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'auPayカード': -100000,
+          'au': -12000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+        cardBillingAccountIds: const <String, String>{'au': 'aupay_card'},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type ==
+                  AssetManagementInsightActionType.cardBillingConfiguration &&
+              item.severity == AssetManagementInsightSeverity.critical &&
+              item.relatedAccountId == 'aupay_card',
+        ),
+        isFalse,
+      );
+    });
+
     test('keeps zero-yen unpaid debt in review-only prompt data', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
