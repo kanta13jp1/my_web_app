@@ -745,6 +745,31 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_ANON_KEY_PROD }}
+      - name: Validate Sentry DSN before build
+        if: steps.changes.outputs.web == 'true'
+        shell: bash
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        run: |
+          python3 - <<'PY'
+          import os, sys
+          from urllib.parse import urlparse
+
+          raw = os.environ.get("SENTRY_DSN", "").strip()
+          if not raw:
+              print("::warning::SENTRY_DSN is empty; Flutter Web will build with Sentry disabled.")
+              sys.exit(0)
+          if any(ch.isspace() for ch in raw):
+              print("::error::SENTRY_DSN contains whitespace and is malformed (check GitHub Secret SENTRY_DSN).")
+              sys.exit(1)
+          parsed = urlparse(raw)
+          path_ok = any(seg for seg in parsed.path.split("/"))
+          if parsed.scheme not in ("http", "https") or not parsed.hostname or not parsed.username or not path_ok:
+              print("::error::SENTRY_DSN is not a valid Sentry DSN URI (check GitHub Secret SENTRY_DSN).")
+              sys.exit(1)
+          print(f"OK: SENTRY_DSN URI structure validated (scheme={parsed.scheme}, host={parsed.hostname}).")
+          PY
+
       - name: Build Flutter Web (Production)
         if: steps.changes.outputs.web == 'true'
         run: |
@@ -769,6 +794,7 @@ jobs:
             "--dart-define=SENTRY_DSN=$SENTRY_DSN" \
             --dart-define=SENTRY_ENVIRONMENT=production \
             --dart-define=SENTRY_RELEASE=${{ steps.version.outputs.version }}+${{ github.run_number }} \
+            "--dart-define=SENTRY_TRACES_SAMPLE_RATE_PERCENT=$SENTRY_TRACES_SAMPLE_RATE_PERCENT" \
             --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
@@ -776,6 +802,7 @@ jobs:
           POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
           POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://us.i.posthog.com' }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE_PERCENT: ${{ vars.SENTRY_TRACES_SAMPLE_RATE_PERCENT || '10' }}
 
       - name: Render public Supabase URL into web shell
         if: steps.changes.outputs.web == 'true'
@@ -862,7 +889,7 @@ jobs:
           npx --yes @sentry/cli releases new "$SENTRY_RELEASE"
           npx --yes @sentry/cli sourcemaps inject "${SENTRY_BUNDLE_FILES[@]}"
           npx --yes @sentry/cli sourcemaps upload --release="$SENTRY_RELEASE" "${SENTRY_BUNDLE_FILES[@]}"
-          npx --yes @sentry/cli releases set-commits "$SENTRY_RELEASE" --auto || true
+          npx --yes @sentry/cli releases set-commits "$SENTRY_RELEASE" --auto --ignore-missing || echo "::warning::Sentry releases set-commits failed for $SENTRY_RELEASE"
           npx --yes @sentry/cli releases finalize "$SENTRY_RELEASE"
           npx --yes @sentry/cli releases deploys "$SENTRY_RELEASE" new -e production
 

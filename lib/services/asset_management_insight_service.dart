@@ -320,6 +320,10 @@ class AssetManagementInsightReport {
 
   bool get hasAccountShortfallAlerts => accountShortfallAlerts.isNotEmpty;
 
+  /// today/week の使用可能額がマイナスで生活費が未確保の場合、支払い実行前にガードを挟む。
+  bool get shouldBlockPaymentExecution =>
+      todayAvailable.availableAmount < 0 || weekAvailable.availableAmount < 0;
+
   bool get hasDebtTrendInsights => debtTrendInsights.isNotEmpty;
 
   List<AssetDebtTrendInsight> get criticalDebtTrendInsights {
