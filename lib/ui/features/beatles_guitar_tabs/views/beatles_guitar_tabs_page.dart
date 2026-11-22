@@ -2030,6 +2030,7 @@ class _TempoControlState extends State<_TempoControl> {
                   ],
                 ),
                 TextButton.icon(
+                  key: const Key('guitar_reset_recommended_bpm'),
                   onPressed:
                       isAtRecommended ? null : viewModel.resetPracticeBpm,
                   icon: const Icon(Icons.restart_alt, size: 18),

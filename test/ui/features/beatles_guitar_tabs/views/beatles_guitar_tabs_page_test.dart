@@ -214,8 +214,9 @@ void main() {
         greaterThanOrEqualTo(4.5),
       );
 
-      final resetFinder = find.widgetWithText(TextButton, '推奨 60 BPM に戻す');
+      final resetFinder = find.byKey(const Key('guitar_reset_recommended_bpm'));
       expect(resetFinder, findsOneWidget);
+      expect(find.text('推奨 60 BPM に戻す'), findsOneWidget);
       final resetButton = tester.widget<TextButton>(resetFinder);
       final resetDisabledFg = resetButton.style?.foregroundColor?.resolve(
         <WidgetState>{WidgetState.disabled},
