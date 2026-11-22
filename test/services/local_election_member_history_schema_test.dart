@@ -20,7 +20,8 @@ void main() {
       expect(
         sql,
         contains(
-            'create table if not exists public.local_election_member_history'),
+          'create table if not exists public.local_election_member_history',
+        ),
       );
       expect(sql, contains('snapshot_date date primary key'));
       expect(sql, contains('fetched_at timestamptz not null'));
