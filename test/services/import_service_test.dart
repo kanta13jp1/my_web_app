@@ -400,10 +400,10 @@ void main() {
         final zip = _zipBytes(
           <String, String>{
             'Wiki $folderId/Design $pageId.md':
-                '# Design Doc\n\nSee ![wireframe](wire%201.png)\n',
+                '# Design Doc\n\nSee ![wireframe](wire%20%5B1%5D+a.png) and literal (wire%20%5B1%5D+a.png)\n',
           },
           binaryFiles: <String, List<int>>{
-            'Wiki $folderId/wire 1.png': const <int>[1, 2, 3, 4],
+            'Wiki $folderId/wire [1]+a.png': const <int>[1, 2, 3, 4],
           },
         );
         final bundle = service.parseNotionZipBytes(
@@ -531,7 +531,11 @@ void main() {
         expect(metadataStore.rows.single['note_id'], 501);
         expect(metadataStore.rows.single['source_system'], 'notion');
         expect(updatedNoteContents, hasLength(1));
-        expect(updatedNoteContents.single, contains('(attachment:'));
+        expect(updatedNoteContents.single, contains('![wireframe](attachment:'));
+        expect(
+          updatedNoteContents.single,
+          contains('literal (wire%20%5B1%5D+a.png)'),
+        );
       },
     );
   });

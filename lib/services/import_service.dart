@@ -1082,9 +1082,17 @@ class ImportService {
           }
 
           final replacementUrl = AttachmentService.getMarkdownUrl(storagePath);
-          final nextContent = updatedContent
-              .replaceAll('(${link.rawTarget})', '($replacementUrl)')
-              .replaceAll('(<${link.rawTarget}>)', '($replacementUrl)');
+          final escapedTarget = RegExp.escape(link.rawTarget);
+          final linkPattern = RegExp(
+            '(!?\\[[^\\]]*\\])\\((?:<$escapedTarget>|$escapedTarget)(?:\\s+"[^"]*")?\\)',
+          );
+          final nextContent = updatedContent.replaceAllMapped(
+            linkPattern,
+            (final match) {
+              final prefix = match.group(1) ?? '';
+              return '$prefix($replacementUrl)';
+            },
+          );
           if (nextContent != updatedContent) {
             updatedContent = nextContent;
             contentChanged = true;

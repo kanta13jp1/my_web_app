@@ -977,11 +977,13 @@ class NotionExportZipService {
   }
 
   String _safeDecodeUri(final String value) {
-    try {
-      return Uri.decodeFull(value);
-    } catch (_) {
-      return value;
-    }
+    return value.split('/').map((final segment) {
+      try {
+        return Uri.decodeComponent(segment);
+      } catch (_) {
+        return segment;
+      }
+    }).join('/');
   }
 
   String _formatCsvHeaderCell(final String raw, final int index) {
