@@ -386,7 +386,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                     ),
                     child: Stack(
                       children: [
-                        for (final tile in _japanTiles)
+                        for (final tile in _sortedJapanTiles)
                           _buildPrefectureTile(
                             context: context,
                             tile: tile,
@@ -430,30 +430,36 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     final borderRadius = BorderRadius.circular(cell >= 42 ? 8 : 6);
     final nameFontSize = math.min(16.0, math.max(11.0, cell * 0.34));
     final valueFontSize = math.min(14.0, math.max(10.0, cell * 0.30));
+    final onTileTap = plan == null
+        ? null
+        : () => setState(() => _selectedIndex = tile.index);
 
     return Positioned(
       left: tile.col * cell,
       top: tile.row * cell,
       width: cell * tile.width - tileGap,
       height: cell - tileGap,
-      child: Tooltip(
-        message: plan == null
+      child: Semantics(
+        container: true,
+        button: true,
+        enabled: onTileTap != null,
+        selected: selected,
+        excludeSemantics: true,
+        onTap: onTileTap,
+        label: plan == null
             ? tile.name
-            : '${tile.name}: KGI${plan.kgiTargetLocalMembers} / KPI${plan.kpiActualLocalMembers} / 期限${formatMonthKey(plan.endorsementDeadlineMonth)}',
-        child: Semantics(
-          button: true,
-          selected: selected,
-          label: plan == null
+            : '${tile.name} KGI${plan.kgiTargetLocalMembers} KPI${plan.kpiActualLocalMembers}',
+        child: Tooltip(
+          excludeFromSemantics: true,
+          message: plan == null
               ? tile.name
-              : '${tile.name} KGI${plan.kgiTargetLocalMembers} KPI${plan.kpiActualLocalMembers}',
+              : '${tile.name}: KGI${plan.kgiTargetLocalMembers} / KPI${plan.kpiActualLocalMembers} / 期限${formatMonthKey(plan.endorsementDeadlineMonth)}',
           child: Material(
             color: color,
             borderRadius: borderRadius,
             child: InkWell(
               borderRadius: borderRadius,
-              onTap: plan == null
-                  ? null
-                  : () => setState(() => _selectedIndex = tile.index),
+              onTap: onTileTap,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
                 decoration: BoxDecoration(
@@ -1831,3 +1837,14 @@ const List<_JapanTile> _japanTiles = <_JapanTile>[
   _JapanTile(index: 45, name: '鹿児島県', shortName: '鹿児島', row: 13, col: 1),
   _JapanTile(index: 46, name: '沖縄県', shortName: '沖縄', row: 14, col: 0),
 ];
+
+final List<_JapanTile> _sortedJapanTiles = List<_JapanTile>.unmodifiable(
+  List<_JapanTile>.from(_japanTiles)
+    ..sort((a, b) {
+      final rowCompare = a.row.compareTo(b.row);
+      if (rowCompare != 0) {
+        return rowCompare;
+      }
+      return a.col.compareTo(b.col);
+    }),
+);
