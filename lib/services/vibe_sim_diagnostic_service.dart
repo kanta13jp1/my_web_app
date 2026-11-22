@@ -1,7 +1,7 @@
-/// MuJoCo Vibe Sim 3段階検証の一次知見に基づく決定論的設定診断エンジン。
+/// MuJoCo Vibe Sim 3段階検証および mujoco-audit 基準に基づく決定論的設定診断エンジン。
 ///
 /// 外部サーバーや Supabase・AI API に依存せず、ブラウザ内で完結して
-/// 物理破綻リスクと `MjSpec` / MuJoCo Studio 修正スニペットを試算する。
+/// Tier 1（無条件 FAIL）・Tier 2（工学判断 INFO）と `MjSpec` 修正スニペットを試算する。
 library;
 
 enum VibeSimPreset {
@@ -13,6 +13,7 @@ enum VibeSimPreset {
 enum VibeSimIntegrator {
   euler,
   implicitFast,
+  discrete,
   rk4,
 }
 
@@ -32,6 +33,11 @@ enum VibeSimSeverity {
   high,
   warning,
   info,
+}
+
+enum VibeSimAuditTier {
+  tier1Fail,
+  tier2Info,
 }
 
 enum VibeSimRiskLevel {
@@ -133,6 +139,7 @@ class VibeSimRawFormValues {
 class VibeSimFinding {
   const VibeSimFinding({
     required this.id,
+    required this.tier,
     required this.severity,
     required this.title,
     required this.detail,
@@ -140,6 +147,7 @@ class VibeSimFinding {
   });
 
   final String id;
+  final VibeSimAuditTier tier;
   final VibeSimSeverity severity;
   final String title;
   final String detail;
@@ -149,7 +157,8 @@ class VibeSimFinding {
 class VibeSimDiagnosticResult {
   const VibeSimDiagnosticResult({
     required this.input,
-    required this.riskScore,
+    required this.tier1FailCount,
+    required this.tier2InfoCount,
     required this.riskLevel,
     required this.findings,
     required this.snippet,
@@ -157,7 +166,8 @@ class VibeSimDiagnosticResult {
   });
 
   final VibeSimInput? input;
-  final int riskScore;
+  final int tier1FailCount;
+  final int tier2InfoCount;
   final VibeSimRiskLevel riskLevel;
   final List<VibeSimFinding> findings;
   final String snippet;
@@ -175,7 +185,7 @@ class VibeSimBenchmarkRow {
     required this.tiltRetentionLabel,
     required this.settledTimeLabel,
     required this.restingPenetrationLabel,
-    required this.qaccWarningsLabel,
+    required this.peakPenetrationLabel,
     required this.auditLabel,
   });
 
@@ -186,7 +196,7 @@ class VibeSimBenchmarkRow {
   final String tiltRetentionLabel;
   final String settledTimeLabel;
   final String restingPenetrationLabel;
-  final String qaccWarningsLabel;
+  final String peakPenetrationLabel;
   final String auditLabel;
 }
 
@@ -195,7 +205,8 @@ class VibeSimDiagnosticService {
 
   static const Set<int> allowedCondimValues = <int>{1, 3, 4, 6};
 
-  /// REPORT.md（evidence/results.json 2026-11-22T03:46:31+09:00 / audit_summary.json）の一次実測値。
+  /// 再構築版 evidence/results.json（2026-11-22 夜・4構成×3シード）および
+  /// mujoco-audit --scenarios=all の一次実測値。
   static const List<VibeSimBenchmarkRow> benchmarkRows = <VibeSimBenchmarkRow>[
     VibeSimBenchmarkRow(
       stageLabel: 'v1_naive（破綻ベースライン）',
@@ -204,9 +215,9 @@ class VibeSimDiagnosticService {
       captureRateLabel: '0.0 (0/4個)',
       tiltRetentionLabel: '0.0 (0/4個)',
       settledTimeLabel: '未収束 (null)',
-      restingPenetrationLabel: '0.0 mm（飛散消滅）',
-      qaccWarningsLabel: '3 回',
-      auditLabel: 'FAIL (+14.936 mm 浮き)',
+      restingPenetrationLabel: '118.74 mm',
+      peakPenetrationLabel: '918.67 mm',
+      auditLabel: 'FAIL (+14.94 mm 浮き / 400本閉塞)',
     ),
     VibeSimBenchmarkRow(
       stageLabel: 'v2_spec_tuned（仕様調整）',
@@ -214,21 +225,32 @@ class VibeSimDiagnosticService {
       integratorLabel: 'implicitfast',
       captureRateLabel: '1.0 (4/4個)',
       tiltRetentionLabel: '4.0 (4/4個)',
-      settledTimeLabel: '0.416 s',
-      restingPenetrationLabel: '0.0649 mm',
-      qaccWarningsLabel: '0 回',
-      auditLabel: '—（分離未適用）',
+      settledTimeLabel: '0.356 s',
+      restingPenetrationLabel: '0.0315 mm',
+      peakPenetrationLabel: '4.712 mm',
+      auditLabel: '—（group=2/3・.mjz 未分離）',
     ),
     VibeSimBenchmarkRow(
-      stageLabel: 'v3_audited（監査準拠）',
+      stageLabel: 'v3_audited（監査準拠・推奨）',
+      timestepLabel: '0.002 s',
+      integratorLabel: 'discrete',
+      captureRateLabel: '1.0 (4/4個)',
+      tiltRetentionLabel: '4.0 (4/4個)',
+      settledTimeLabel: '0.3807 s',
+      restingPenetrationLabel: '0.0214 mm',
+      peakPenetrationLabel: '7.6045 mm',
+      auditLabel: 'PASS (10シナリオ Tier1 FAIL 0件)',
+    ),
+    VibeSimBenchmarkRow(
+      stageLabel: 'v3_audited_implicitfast（比較）',
       timestepLabel: '0.002 s',
       integratorLabel: 'implicitfast',
       captureRateLabel: '1.0 (4/4個)',
       tiltRetentionLabel: '4.0 (4/4個)',
-      settledTimeLabel: '0.418 s',
-      restingPenetrationLabel: '0.3729 mm',
-      qaccWarningsLabel: '0 回',
-      auditLabel: 'PASS (-0.016 mm)',
+      settledTimeLabel: '0.354 s',
+      restingPenetrationLabel: '0.0214 mm',
+      peakPenetrationLabel: '4.9615 mm',
+      auditLabel: 'PASS（同一 .mjz アセット構成）',
     ),
   ];
 
@@ -240,8 +262,9 @@ class VibeSimDiagnosticService {
 
   static String integratorLabel(final VibeSimIntegrator integrator) =>
       switch (integrator) {
-        VibeSimIntegrator.euler => 'mjINT_EULER（標準）',
-        VibeSimIntegrator.implicitFast => 'mjINT_IMPLICITFAST（推奨）',
+        VibeSimIntegrator.euler => 'mjINT_EULER（旧既定）',
+        VibeSimIntegrator.implicitFast => 'mjINT_IMPLICITFAST（一般剛体推奨）',
+        VibeSimIntegrator.discrete => 'mjINT_DISCRETE（サーボ・高剛性推奨）',
         VibeSimIntegrator.rk4 => 'mjINT_RK4',
       };
 
@@ -255,7 +278,7 @@ class VibeSimDiagnosticService {
         VibeSimTrayGeometryMode.solidSingleBox => 'solid_single_box（単一箱）',
         VibeSimTrayGeometryMode.fiveWallCombined => 'five_wall_combined（5壁統合）',
         VibeSimTrayGeometryMode.fiveWallVisColSplit =>
-          'five_wall_vis_col_split（5壁＋描画/衝突分離）',
+          'five_wall_vis_col_split（.mjz準拠・group=2/3分離）',
       };
 
   static String severityLabel(final VibeSimSeverity severity) =>
@@ -266,10 +289,15 @@ class VibeSimDiagnosticService {
         VibeSimSeverity.info => 'Info',
       };
 
+  static String tierLabel(final VibeSimAuditTier tier) => switch (tier) {
+        VibeSimAuditTier.tier1Fail => 'Tier 1 FAIL',
+        VibeSimAuditTier.tier2Info => 'Tier 2 INFO',
+      };
+
   static String riskLevelLabel(final VibeSimRiskLevel level) => switch (level) {
         VibeSimRiskLevel.safe => '安全（監査基準準拠レベル）',
-        VibeSimRiskLevel.caution => '要注意（一部パラメータ要調整）',
-        VibeSimRiskLevel.danger => '危険（物理破綻リスク高）',
+        VibeSimRiskLevel.caution => '要注意（Tier 2 工学判断・調整推奨）',
+        VibeSimRiskLevel.danger => '危険（物理破綻リスク高・Tier 1 要修正）',
       };
 
   static VibeSimInput presetInput(final VibeSimPreset preset) =>
@@ -298,13 +326,13 @@ class VibeSimDiagnosticService {
             rootOffsetMm: 0.0,
             rootMatchesModelName: true,
             geomMarginMm: 0.0,
-            solrefTimeconst: 0.02,
+            solrefTimeconst: 0.005,
             solrefDampratio: 1.0,
             mujoco401Compat: true,
           ),
         VibeSimPreset.v3Audited => const VibeSimInput(
             timestep: 0.002,
-            integrator: VibeSimIntegrator.implicitFast,
+            integrator: VibeSimIntegrator.discrete,
             condim: 6,
             cone: VibeSimCone.elliptic,
             impratio: 10.0,
@@ -312,7 +340,7 @@ class VibeSimDiagnosticService {
             rootOffsetMm: 0.0,
             rootMatchesModelName: true,
             geomMarginMm: 0.0,
-            solrefTimeconst: 0.02,
+            solrefTimeconst: 0.005,
             solrefDampratio: 1.0,
             mujoco401Compat: true,
           ),
@@ -420,7 +448,8 @@ class VibeSimDiagnosticService {
     if (errors.isNotEmpty) {
       return VibeSimDiagnosticResult(
         input: null,
-        riskScore: 0,
+        tier1FailCount: 0,
+        tier2InfoCount: 0,
         riskLevel: VibeSimRiskLevel.danger,
         findings: const <VibeSimFinding>[],
         snippet: '',
@@ -454,18 +483,20 @@ class VibeSimDiagnosticService {
       findings.add(
         const VibeSimFinding(
           id: 'integrator_euler_coarse_timestep',
+          tier: VibeSimAuditTier.tier1Fail,
           severity: VibeSimSeverity.critical,
           title: 'Euler 積分 × 粗い時間刻みによる数値発散リスク',
           detail:
-              'v1_naive（timestep=0.01 s, Euler）では全3シードで QACC 異常警告が発生し、瞬間最大めり込み 14,515.57 mm・3.0秒未収束となりました。',
+              'v1_naive（timestep=0.01 s, Euler）では瞬間最大めり込み 918.67 mm・終了時 KE 2.69×10⁷ J・3.0秒未収束となりました。',
           recommendation:
-              'timestep を 0.002 s 以下へ細かくし、mjINT_IMPLICITFAST へ切り替えてください。',
+              'timestep を 0.002 s 以下へ細かくし、mjINT_DISCRETE（または mjINT_IMPLICITFAST）へ切り替えてください。',
         ),
       );
     } else if (input.timestep > 0.005) {
       findings.add(
         const VibeSimFinding(
           id: 'coarse_timestep',
+          tier: VibeSimAuditTier.tier1Fail,
           severity: VibeSimSeverity.high,
           title: '時間刻み (timestep) が 0.005 s を超過',
           detail: '剛体の落下衝突で接触の立ち上がりを捉えきれず、反発や貫通が増大しやすくなります。',
@@ -476,11 +507,25 @@ class VibeSimDiagnosticService {
       findings.add(
         const VibeSimFinding(
           id: 'integrator_euler',
+          tier: VibeSimAuditTier.tier2Info,
           severity: VibeSimSeverity.warning,
-          title: '陰的積分法（mjINT_IMPLICITFAST）への切替推奨',
-          detail: 'Euler 積分は接触剛性が高い場面でエネルギーが発散しやすいため、接触を伴う操作環境では暗黙積分が有利です。',
+          title: '暗黙積分法（mjINT_DISCRETE / mjINT_IMPLICITFAST）への切替推奨',
+          detail: 'Euler 積分は高剛性接触やサーボを含む場面でエネルギーが発散しやすくなります。',
           recommendation:
-              'spec.option.integrator = mujoco.mjtIntegrator.mjINT_IMPLICITFAST を指定してください。',
+              'spec.option.integrator = mujoco.mjtIntegrator.mjINT_DISCRETE を指定してください。',
+        ),
+      );
+    } else if (input.integrator == VibeSimIntegrator.implicitFast) {
+      findings.add(
+        const VibeSimFinding(
+          id: 'integrator_implicitfast_for_stiff_servo',
+          tier: VibeSimAuditTier.tier2Info,
+          severity: VibeSimSeverity.info,
+          title: '位置サーボ・高剛性接触シーンでは mjINT_DISCRETE が推奨',
+          detail:
+              'implicitfast は一般剛体で安定ですが、mujoco_asset_standards.md では位置サーボや高剛性接触に対して discrete を推奨しています。',
+          recommendation:
+              'spec.option.integrator = mujoco.mjtIntegrator.mjINT_DISCRETE との比較検証を推奨します。',
         ),
       );
     }
@@ -490,11 +535,12 @@ class VibeSimDiagnosticService {
       findings.add(
         const VibeSimFinding(
           id: 'solid_box_cavity_blocked',
+          tier: VibeSimAuditTier.tier1Fail,
           severity: VibeSimSeverity.critical,
           title: '中空トレイの単一ボックス化によるキャビティ閉塞',
           detail:
-              '1個の直方体ジオムでトレイを作ると内側の空間が存在せず、v1_naive 実測では捕獲率 0%（0/4個）・Scenario 4 開口判定 false となりました。',
-          recommendation: '底板 1 枚＋側面 4 枚の 5 壁ジオム（または凸包分解）で構成してください。',
+              '1個の直方体コライダで中空メッシュを覆うと Scenario 4（400/400 レイ閉塞）・捕獲率 0%（0/4個）となります。',
+          recommendation: '底板 1 枚＋側面 4 枚の 5 壁ジオム（または <=64 頂点凸包分解）で構成してください。',
         ),
       );
     } else if (input.trayGeometryMode ==
@@ -502,12 +548,13 @@ class VibeSimDiagnosticService {
       findings.add(
         const VibeSimFinding(
           id: 'vis_col_group_not_split',
+          tier: VibeSimAuditTier.tier2Info,
           severity: VibeSimSeverity.info,
-          title: '描画用 (group=2) と衝突用 (group=3) のジオム分離が未適用',
+          title: '描画 (group=2) / 衝突 (group=3) 分離および .mjz 構成が未適用',
           detail:
-              '物理動作自体は 5 壁構成で安定しますが、mujoco-audit 基準の再利用可能アセットでは描画無質量（contype=0, conaffinity=0）と衝突ジオムの分離が推奨されます。',
+              '5 壁構成で物理動作は安定しますが、再利用可能な .mjz アセットでは無質量 visual (group=2) と半透明 collision (group=3) の分離、および <option>/<freejoint/> 除外が必要です。',
           recommendation:
-              '描画用 group=2 と衝突用 group=3 を分け、collision_alignment を点検してください。',
+              'model.xml を純アセット化し、MjSpec.attach() で警告 0 件合成を行ってください。',
         ),
       );
     }
@@ -517,12 +564,13 @@ class VibeSimDiagnosticService {
       findings.add(
         const VibeSimFinding(
           id: 'low_condim_friction',
+          tier: VibeSimAuditTier.tier2Info,
           severity: VibeSimSeverity.warning,
-          title: '接触摩擦次元 (condim < 6) によるねじれ・転がり摩擦の欠落',
+          title: '接触摩擦次元 (condim < 6) によるねじれ・転がり摩擦の不足',
           detail:
-              'condim=3 では並進滑り摩擦のみが計算され、球体や円柱が傾斜時に止まりにくくなります（v2/v3 では condim=6 で 10度傾斜保持 4/4個）。',
+              'condim=3 では並進滑り摩擦のみ有効です。把持には condim>=4、球体や円柱の転がり減衰には condim=6 が必要です。',
           recommendation:
-              'spec.default.geom.condim = 6 と適切な friction=[0.7, 0.01, 0.005] を設定してください。',
+              'spec.default.geom.condim = 6 と friction=[0.7, 0.015, 0.005] を設定してください。',
         ),
       );
     }
@@ -530,6 +578,7 @@ class VibeSimDiagnosticService {
       findings.add(
         const VibeSimFinding(
           id: 'pyramidal_cone_or_low_impratio',
+          tier: VibeSimAuditTier.tier2Info,
           severity: VibeSimSeverity.info,
           title: '摩擦円錐設定（ELLIPTIC ＋ impratio=10.0）の最適化余地',
           detail:
@@ -545,10 +594,11 @@ class VibeSimDiagnosticService {
       findings.add(
         const VibeSimFinding(
           id: 'nonzero_root_offset',
-          severity: VibeSimSeverity.high,
+          tier: VibeSimAuditTier.tier1Fail,
+          severity: VibeSimSeverity.critical,
           title: 'ルートボディの非ゼロ座標オフセット',
           detail:
-              'v1_naive（pos=[0.02, -0.01, 0.05]）は mujoco-audit --static_only で即座に ERROR となり、モデル再利用時に位置ずれや浮きを起こします。',
+              'v1_naive（pos=[0.02, -0.01, 0.05]）は mujoco-audit --static_only で即座に ERROR となり、MjSpec.attach() 時に位置ずれを起こします。',
           recommendation:
               'ルートボディは pos=[0.0, 0.0, 0.0], quat=[1, 0, 0, 0] に固定してください。',
         ),
@@ -558,10 +608,11 @@ class VibeSimDiagnosticService {
       findings.add(
         const VibeSimFinding(
           id: 'root_modelname_mismatch',
+          tier: VibeSimAuditTier.tier2Info,
           severity: VibeSimSeverity.warning,
           title: 'ルートボディ名と modelname の不一致',
           detail:
-              'v1_naive（root と tray_v1）では静的監査が WARNING を報告し、アタッチ時の識別性を損ねます。',
+              'v1_naive（root と vibe_sim_tray_naive）では --static_only が WARNING を報告し、アタッチ時の識別性を損ねます。',
           recommendation:
               'spec.modelname とルートボディ名を同一の snake_case（例: vibe_sim_tray）に揃えてください。',
         ),
@@ -571,10 +622,11 @@ class VibeSimDiagnosticService {
       findings.add(
         const VibeSimFinding(
           id: 'nonzero_geom_margin',
+          tier: VibeSimAuditTier.tier1Fail,
           severity: VibeSimSeverity.high,
           title: '非ゼロの接触 margin による見かけの浮き・キャビティ狭小化',
           detail:
-              'v1_naive（margin=0.015 m）の Scenario 1 では +14.936 mm の浮き（許容 ±2.0 mm 超過）として FAIL しました。',
+              'v1_naive（margin=0.015 m）の Scenario 1 では +14.94 mm の浮き（許容 ±2.1 mm 超過）として FAIL しました。',
           recommendation: 'spec.default.geom.margin = 0.0 に設定してください。',
         ),
       );
@@ -585,12 +637,13 @@ class VibeSimDiagnosticService {
       findings.add(
         const VibeSimFinding(
           id: 'solref_timeconst_below_2dt',
+          tier: VibeSimAuditTier.tier1Fail,
           severity: VibeSimSeverity.critical,
           title: 'solref 時定数が 2 × timestep 未満',
           detail:
-              'v1_naive（solrefTimeconst=0.005 s < 2×0.01 s）のように時間刻みの2倍を下回ると、数値積分が接触バネを減衰できず爆発・跳ね過多（バウンス比 3125.09）を起こします。',
+              'timeconst < 2 * timestep は refsafe クランプや不安定化を招き、v1_naive ではバウンス比 3051.56 の跳ね過多を起こしました。',
           recommendation:
-              'solref[0]（時定数）を 2 * timestep 以上（例: 0.02 s）へ引き上げてください。',
+              'solref[0]（時定数）を 2 * timestep 以上（標準推奨 0.005 s）に設定してください。',
         ),
       );
     }
@@ -598,11 +651,12 @@ class VibeSimDiagnosticService {
       findings.add(
         const VibeSimFinding(
           id: 'solref_underdamped',
+          tier: VibeSimAuditTier.tier1Fail,
           severity: VibeSimSeverity.high,
           title: 'solref 減衰比が過小（跳ね返り過多リスク）',
           detail:
-              '減衰比 0.2 の v1_naive に対し、臨界減衰（1.0）を採用した v2/v3 ではバウンス比が 0.0357–0.0367、静止めり込みが 0.0649–0.3729 mm（< 1.0 mm）に収束しました（0.35 m 落下時の瞬間ピーク 18.76–19.42 mm とは分離して評価）。',
-          recommendation: 'spec.default.geom.solref = [0.02, 1.0] を設定してください。',
+              '減衰比 0.2 の v1_naive に対し、臨界減衰 solref=[0.005, 1.0] を採用した v3_audited ではバウンス比 0.0098・静止めり込み 0.0214 mm に収束しました。',
+          recommendation: 'spec.default.geom.solref = [0.005, 1.0] を設定してください。',
         ),
       );
     }
@@ -611,25 +665,25 @@ class VibeSimDiagnosticService {
       (final a, final b) => a.severity.index.compareTo(b.severity.index),
     );
 
-    var rawScore = 0;
-    for (final f in findings) {
-      rawScore += switch (f.severity) {
-        VibeSimSeverity.critical => 30,
-        VibeSimSeverity.high => 15,
-        VibeSimSeverity.warning => 8,
-        VibeSimSeverity.info => 3,
-      };
+    final tier1Count = findings
+        .where((final f) => f.tier == VibeSimAuditTier.tier1Fail)
+        .length;
+    final tier2Count = findings
+        .where((final f) => f.tier == VibeSimAuditTier.tier2Info)
+        .length;
+    final VibeSimRiskLevel level;
+    if (tier1Count > 0) {
+      level = VibeSimRiskLevel.danger;
+    } else if (tier2Count > 0) {
+      level = VibeSimRiskLevel.caution;
+    } else {
+      level = VibeSimRiskLevel.safe;
     }
-    final clampedScore = rawScore.clamp(0, 100);
-    final level = clampedScore <= 10
-        ? VibeSimRiskLevel.safe
-        : (clampedScore <= 39
-            ? VibeSimRiskLevel.caution
-            : VibeSimRiskLevel.danger);
 
     return VibeSimDiagnosticResult(
       input: input,
-      riskScore: clampedScore,
+      tier1FailCount: tier1Count,
+      tier2InfoCount: tier2Count,
       riskLevel: level,
       findings: List<VibeSimFinding>.unmodifiable(findings),
       snippet: buildMjSpecSnippet(input: input, findings: findings),
@@ -645,19 +699,21 @@ class VibeSimDiagnosticService {
     final buf = StringBuffer()
       ..writeln('import mujoco')
       ..writeln()
-      ..writeln('spec = mujoco.MjSpec()');
+      ..writeln('spec = mujoco.MjSpec()')
+      ..writeln('spec.compiler.degree = False  # angle="radian" と一致');
 
     if (ids.contains('root_modelname_mismatch') || ids.isEmpty) {
-      buf.writeln("spec.modelname = 'vibe_sim_tray'");
+      buf.writeln("spec.modelname = 'vibe_sim_scene'");
     }
     if (ids.contains('integrator_euler_coarse_timestep') ||
         ids.contains('coarse_timestep') ||
         ids.contains('integrator_euler') ||
+        ids.contains('integrator_implicitfast_for_stiff_servo') ||
         ids.isEmpty) {
       buf
         ..writeln('spec.option.timestep = 0.002')
         ..writeln(
-          'spec.option.integrator = mujoco.mjtIntegrator.mjINT_IMPLICITFAST',
+          'spec.option.integrator = mujoco.mjtIntegrator.mjINT_DISCRETE',
         );
     }
     if (ids.contains('pyramidal_cone_or_low_impratio') || ids.isEmpty) {
@@ -668,7 +724,7 @@ class VibeSimDiagnosticService {
     if (ids.contains('low_condim_friction') || ids.isEmpty) {
       buf
         ..writeln('spec.default.geom.condim = 6')
-        ..writeln('spec.default.geom.friction = [0.7, 0.01, 0.005]');
+        ..writeln('spec.default.geom.friction = [0.7, 0.015, 0.005]');
     }
     if (ids.contains('nonzero_geom_margin') || ids.isEmpty) {
       buf.writeln('spec.default.geom.margin = 0.0');
@@ -676,26 +732,26 @@ class VibeSimDiagnosticService {
     if (ids.contains('solref_timeconst_below_2dt') ||
         ids.contains('solref_underdamped') ||
         ids.isEmpty) {
-      buf.writeln('spec.default.geom.solref = [0.02, 1.0]');
+      buf.writeln('spec.default.geom.solref = [0.005, 1.0]');
     }
     if (ids.contains('nonzero_root_offset') ||
         ids.contains('root_modelname_mismatch') ||
+        ids.contains('solid_box_cavity_blocked') ||
+        ids.contains('vis_col_group_not_split') ||
         ids.isEmpty) {
-      buf.writeln(
-        "root = spec.worldbody.add_body(name='vibe_sim_tray', pos=[0.0, 0.0, 0.0], quat=[1.0, 0.0, 0.0, 0.0])",
-      );
-    }
-    if (ids.contains('solid_box_cavity_blocked') ||
-        ids.contains('vis_col_group_not_split')) {
       buf
+        ..writeln()
         ..writeln(
-          '# 中空トレイは底板+4壁の5ジオムで組む（group=2 描画 / group=3 衝突を分離）',
+          '# .mjz 準拠の純 model.xml（<option>/<freejoint/> なし）を MjSpec.attach() で合成',
         )
         ..writeln(
-          "root.add_geom(name='tray_base_vis', type=mujoco.mjtGeom.mjGEOM_BOX, size=[0.18, 0.14, 0.008], pos=[0.0, 0.0, 0.008], group=2, contype=0, conaffinity=0, mass=0.0)",
+          "child = mujoco.MjSpec.from_file('assets/vibe_sim_tray/model.xml')",
         )
+        ..writeln("child.worldbody.first_body().add_freejoint(name='free')")
+        ..writeln('frame = spec.worldbody.add_frame(pos=[0.0, 0.0, 0.20])')
+        ..writeln("spec.attach(child, frame=frame, prefix='tray_')")
         ..writeln(
-          "root.add_geom(name='tray_base_col', type=mujoco.mjtGeom.mjGEOM_BOX, size=[0.18, 0.14, 0.008], pos=[0.0, 0.0, 0.008], group=3, density=800.0)",
+          '# 実行時は mj_name2id ではなく data.body("tray_vibe_sim_tray").xpos を使用',
         );
     }
     if (input.mujoco401Compat) {
