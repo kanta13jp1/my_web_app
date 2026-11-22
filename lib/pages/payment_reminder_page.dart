@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-typedef PaymentReminderLoader =
-    Future<List<Map<String, dynamic>>> Function(String userId);
-typedef PaymentReminderInserter =
-    Future<void> Function(Map<String, dynamic> payload);
+typedef PaymentReminderLoader = Future<List<Map<String, dynamic>>> Function(
+    String userId);
+typedef PaymentReminderInserter = Future<void> Function(
+    Map<String, dynamic> payload);
 typedef PaymentReminderMarker = Future<bool> Function(
   String userId,
   Map<String, dynamic> reminder,
@@ -642,10 +642,8 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
 
   Widget _buildDueSoonBanner(int count) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bannerBg =
-        isDark ? const Color(0xFF3A1010) : const Color(0xFFFFEBEE);
-    final bannerFg =
-        isDark ? const Color(0xFFFFCDD2) : const Color(0xFF7F1D1D);
+    final bannerBg = isDark ? const Color(0xFF3A1010) : const Color(0xFFFFEBEE);
+    final bannerFg = isDark ? const Color(0xFFFFCDD2) : const Color(0xFF7F1D1D);
     final iconColor =
         isDark ? const Color(0xFFFF8A80) : const Color(0xFFB71C1C);
 
