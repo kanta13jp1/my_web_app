@@ -82,4 +82,10 @@ at RenderFlex.performLayout (main.dart.js:3:1)
       isFalse,
     );
   });
+
+  test('buildSentryUser includes only opaque user ID and omits email PII', () {
+    final user = ErrorReporter.buildSentryUser('synthetic-user-id');
+    expect(user.id, 'synthetic-user-id');
+    expect(user.email, isNull);
+  });
 }
