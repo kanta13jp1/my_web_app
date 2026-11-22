@@ -493,7 +493,8 @@ class NotionExportZipService {
       if (combinedPath.toLowerCase().endsWith('.zip')) {
         if (depth >= maxNestedZipDepth) {
           warnings.add(
-              '入れ子 ZIP の深度上限 ($maxNestedZipDepth) を超えたため $combinedPath をスキップしました。');
+            '入れ子 ZIP の深度上限 ($maxNestedZipDepth) を超えたため $combinedPath をスキップしました。',
+          );
           continue;
         }
         state.nestedZipCount += 1;

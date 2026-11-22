@@ -121,7 +121,9 @@ void main() {
           bytes: outerZip,
         );
         expect(
-            bundleSecondRun.notes.first.sourceId, bundle.notes.first.sourceId);
+          bundleSecondRun.notes.first.sourceId,
+          bundle.notes.first.sourceId,
+        );
       },
     );
 
