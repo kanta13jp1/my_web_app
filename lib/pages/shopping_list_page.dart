@@ -1232,169 +1232,166 @@ class _AddShoppingItemDialogState extends State<_AddShoppingItemDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 380 ||
+        MediaQuery.textScalerOf(context).scale(16) > 22;
+    final qtyField = TextField(
+      controller: _qtyCtrl,
+      decoration: const InputDecoration(
+        labelText: '数量',
+        prefixIcon: Icon(Icons.numbers),
+      ),
+      keyboardType: TextInputType.number,
+      inputFormatters: <TextInputFormatter>[
+        FilteringTextInputFormatter.digitsOnly,
+      ],
+    );
+    final unitField = TextField(
+      controller: _unitCtrl,
+      decoration: const InputDecoration(
+        labelText: '単位',
+        hintText: '個, 箱, 本',
+      ),
+    );
+    final priceField = TextField(
+      controller: _priceCtrl,
+      decoration: const InputDecoration(
+        labelText: '目安金額',
+        prefixIcon: Icon(Icons.currency_yen),
+      ),
+      keyboardType: TextInputType.number,
+      inputFormatters: <TextInputFormatter>[
+        FilteringTextInputFormatter.digitsOnly,
+      ],
+    );
+    final shopField = TextField(
+      controller: _shopCtrl,
+      decoration: const InputDecoration(
+        labelText: '購入店',
+        hintText: 'Amazon, ドラッグストア',
+      ),
+    );
+
     return AlertDialog(
       title: const Text('買い物リストに追加'),
       content: SingleChildScrollView(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxWidth < 300;
-            final qtyField = TextField(
-              controller: _qtyCtrl,
-              decoration: const InputDecoration(
-                labelText: '数量',
-                prefixIcon: Icon(Icons.numbers),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextField(
+              controller: _nameCtrl,
+              decoration: InputDecoration(
+                labelText: '品名 *',
+                hintText: '箱ティッシュ、コーヒー など',
+                errorText: _nameError,
+                prefixIcon: const Icon(Icons.shopping_cart),
               ),
-              keyboardType: TextInputType.number,
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.digitsOnly,
-              ],
-            );
-            final unitField = TextField(
-              controller: _unitCtrl,
-              decoration: const InputDecoration(
-                labelText: '単位',
-                hintText: '個, 箱, 本',
+              autofocus: widget.presetName == null,
+              onChanged: (_) {
+                if (_nameError != null) {
+                  setState(() => _nameError = null);
+                }
+              },
+            ),
+            const SizedBox(height: 10),
+            if (compact) ...<Widget>[
+              qtyField,
+              const SizedBox(height: 10),
+              unitField,
+            ] else
+              Row(
+                children: <Widget>[
+                  Expanded(flex: 2, child: qtyField),
+                  const SizedBox(width: 8),
+                  Expanded(flex: 2, child: unitField),
+                ],
               ),
-            );
-            final priceField = TextField(
-              controller: _priceCtrl,
+            const SizedBox(height: 10),
+            DropdownButtonFormField<String>(
+              initialValue: _selectedCategory,
               decoration: const InputDecoration(
-                labelText: '目安金額',
-                prefixIcon: Icon(Icons.currency_yen),
+                labelText: 'カテゴリ',
+                prefixIcon: Icon(Icons.category),
               ),
-              keyboardType: TextInputType.number,
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.digitsOnly,
-              ],
-            );
-            final shopField = TextField(
-              controller: _shopCtrl,
-              decoration: const InputDecoration(
-                labelText: '購入店',
-                hintText: 'Amazon, ドラッグストア',
-              ),
-            );
-
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                TextField(
-                  controller: _nameCtrl,
-                  decoration: InputDecoration(
-                    labelText: '品名 *',
-                    hintText: '箱ティッシュ、コーヒー など',
-                    errorText: _nameError,
-                    prefixIcon: const Icon(Icons.shopping_cart),
-                  ),
-                  autofocus: widget.presetName == null,
-                  onChanged: (_) {
-                    if (_nameError != null) {
-                      setState(() => _nameError = null);
-                    }
-                  },
-                ),
-                const SizedBox(height: 10),
-                if (compact) ...<Widget>[
-                  qtyField,
-                  const SizedBox(height: 10),
-                  unitField,
-                ] else
-                  Row(
+              items: widget.categories.map((c) {
+                return DropdownMenuItem<String>(
+                  value: c.$1,
+                  child: Row(
                     children: <Widget>[
-                      Expanded(flex: 2, child: qtyField),
+                      Icon(c.$3, size: 18, color: c.$4),
                       const SizedBox(width: 8),
-                      Expanded(flex: 2, child: unitField),
+                      Text(c.$2),
                     ],
                   ),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedCategory,
-                  decoration: const InputDecoration(
-                    labelText: 'カテゴリ',
-                    prefixIcon: Icon(Icons.category),
-                  ),
-                  items: widget.categories.map((c) {
-                    return DropdownMenuItem<String>(
-                      value: c.$1,
-                      child: Row(
-                        children: <Widget>[
-                          Icon(c.$3, size: 18, color: c.$4),
-                          const SizedBox(width: 8),
-                          Text(c.$2),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (v) {
-                    if (v != null) {
-                      setState(() => _selectedCategory = v);
-                    }
-                  },
-                ),
-                const SizedBox(height: 10),
-                if (compact) ...<Widget>[
-                  priceField,
-                  const SizedBox(height: 10),
-                  shopField,
-                ] else
-                  Row(
-                    children: <Widget>[
-                      Expanded(child: priceField),
-                      const SizedBox(width: 8),
-                      Expanded(child: shopField),
-                    ],
-                  ),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedPriority,
-                  decoration: const InputDecoration(
-                    labelText: '優先度',
-                    prefixIcon: Icon(Icons.flag),
-                  ),
-                  items: const <DropdownMenuItem<String>>[
-                    DropdownMenuItem<String>(value: 'urgent', child: Text('緊急')),
-                    DropdownMenuItem<String>(value: 'high', child: Text('高')),
-                    DropdownMenuItem<String>(value: 'normal', child: Text('普通')),
-                    DropdownMenuItem<String>(value: 'low', child: Text('低')),
-                  ],
-                  onChanged: (v) {
-                    if (v != null) {
-                      setState(() => _selectedPriority = v);
-                    }
-                  },
-                ),
-                const SizedBox(height: 10),
-                SwitchListTile(
-                  title: const Text('定期リマインド'),
-                  subtitle: const Text('一定日数ごとにリマインド'),
-                  value: _isRecurring,
-                  onChanged: (v) => setState(() => _isRecurring = v),
-                  contentPadding: EdgeInsets.zero,
-                ),
-                if (_isRecurring)
-                  TextField(
-                    controller: _recurringCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'リマインド間隔 (日)',
-                      hintText: '30',
-                      prefixIcon: Icon(Icons.repeat),
-                    ),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: <TextInputFormatter>[
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                  ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _noteCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'メモ',
-                    prefixIcon: Icon(Icons.note),
-                  ),
-                ),
+                );
+              }).toList(),
+              onChanged: (v) {
+                if (v != null) {
+                  setState(() => _selectedCategory = v);
+                }
+              },
+            ),
+            const SizedBox(height: 10),
+            if (compact) ...<Widget>[
+              priceField,
+              const SizedBox(height: 10),
+              shopField,
+            ] else
+              Row(
+                children: <Widget>[
+                  Expanded(child: priceField),
+                  const SizedBox(width: 8),
+                  Expanded(child: shopField),
+                ],
+              ),
+            const SizedBox(height: 10),
+            DropdownButtonFormField<String>(
+              initialValue: _selectedPriority,
+              decoration: const InputDecoration(
+                labelText: '優先度',
+                prefixIcon: Icon(Icons.flag),
+              ),
+              items: const <DropdownMenuItem<String>>[
+                DropdownMenuItem<String>(value: 'urgent', child: Text('緊急')),
+                DropdownMenuItem<String>(value: 'high', child: Text('高')),
+                DropdownMenuItem<String>(value: 'normal', child: Text('普通')),
+                DropdownMenuItem<String>(value: 'low', child: Text('低')),
               ],
-            );
-          },
+              onChanged: (v) {
+                if (v != null) {
+                  setState(() => _selectedPriority = v);
+                }
+              },
+            ),
+            const SizedBox(height: 10),
+            SwitchListTile(
+              title: const Text('定期リマインド'),
+              subtitle: const Text('一定日数ごとにリマインド'),
+              value: _isRecurring,
+              onChanged: (v) => setState(() => _isRecurring = v),
+              contentPadding: EdgeInsets.zero,
+            ),
+            if (_isRecurring)
+              TextField(
+                controller: _recurringCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'リマインド間隔 (日)',
+                  hintText: '30',
+                  prefixIcon: Icon(Icons.repeat),
+                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+              ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _noteCtrl,
+              decoration: const InputDecoration(
+                labelText: 'メモ',
+                prefixIcon: Icon(Icons.note),
+              ),
+            ),
+          ],
         ),
       ),
       actions: <Widget>[
