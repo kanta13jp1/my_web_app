@@ -33289,6 +33289,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             : const Color(0xFF0D9488);
     final paymentDayLabel =
         row.paymentDay == null ? '支払日未設定' : '${row.paymentDay}日支払';
+    final revolvingHint =
+        AssetManagementInsightService.buildRevolvingInlineHint(row);
 
     return Container(
       key: _debtMasterCardKeyFor(row.id),
@@ -33343,21 +33345,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             label: '支払元: ${row.paymentSourceAccountName}',
                             color: const Color(0xFF0F766E),
                           ),
-                        if (row.isRevolving)
+                        if (revolvingHint != null)
                           Tooltip(
                             key: Key('asset_revolving_payoff_chip_${row.id}'),
                             message: 'リボ払いの概算です（Dart計算値準拠）。'
+                                '請求=リボ設定額+新規利用/限度超過。'
                                 '25日の返済予定は最低返済額＋当月の新規利用額です。'
                                 '既存残高の一括返済は求めません。'
                                 '今月の元金返済見込みは'
-                                '${_formatManagementYen(row.principalPaymentEstimate)}です。',
+                                '${_formatManagementYen(revolvingHint.currentPrincipalEstimate)}です。',
                             triggerMode: TooltipTriggerMode.tap,
                             child: _buildTextStatusChip(
                               label: _revolvingPayoffChipLabel(row),
                               color: const Color(0xFFD97706),
                             ),
                           ),
-                        if (row.isRevolving)
+                        if (revolvingHint != null)
+                          Tooltip(
+                            key: Key(
+                              'asset_revolving_principal_chip_${row.id}',
+                            ),
+                            message: 'リボ払いの概算です（Dart計算値準拠）。'
+                                '請求=リボ設定額+新規利用/限度超過。'
+                                '今月の元金返済見込みは'
+                                '${_formatManagementYen(revolvingHint.currentPrincipalEstimate)}です。',
+                            triggerMode: TooltipTriggerMode.tap,
+                            child: _buildTextStatusChip(
+                              label:
+                                  '今月元金 ${_formatManagementYen(revolvingHint.currentPrincipalEstimate)}',
+                              color: const Color(0xFF0F766E),
+                            ),
+                          ),
+                        if (revolvingHint != null)
                           TextButton.icon(
                             key: Key('asset_revolving_simulate_${row.id}'),
                             onPressed: () =>
