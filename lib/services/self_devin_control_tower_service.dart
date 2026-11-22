@@ -494,7 +494,8 @@ class SelfDevinControlTowerService {
     if (value == 'vscode') return 'vscode';
     if (value == 'web') return 'web';
     if (value == 'win' || value == 'windows') return 'windows';
-    if (value == 'ps' ||
+    if (value == 'powershell' ||
+        value == 'ps' ||
         value == 'ps1' ||
         value == 'ps2' ||
         value == 'ps3' ||

@@ -37,6 +37,7 @@ AS $$
         WHEN 'web' THEN 'web'
         WHEN 'win' THEN 'windows'
         WHEN 'windows' THEN 'windows'
+        WHEN 'powershell' THEN 'powershell'
         WHEN 'ps' THEN 'powershell'
         WHEN 'ps1' THEN 'powershell'
         WHEN 'ps2' THEN 'powershell'
