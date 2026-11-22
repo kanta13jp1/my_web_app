@@ -1,5 +1,6 @@
-name: Notion Mirror Sync (hourly)
+name: Notion Mirror Sync (manual only)
 
+# 2026-11-22 Notion offboarding: 定期 cron を停止し手動 workflow_dispatch のみ保持。
 # Multi-AI resilience / Win#132 part 7 (Backlog N5 消化)
 #
 # Supabase wbs_tasks / ROADMAP / memory index → Notion mirror に 1h 毎同期。
@@ -11,8 +12,6 @@ name: Notion Mirror Sync (hourly)
 #   - EF schedule-hub notion.sync_{wbs,roadmap,memory_index}
 
 on:
-  schedule:
-    - cron: "10 */4 * * *" # 4時間ごと10分 (2026-06-10 ci-audit: 毎時→2時間 / 2026-07-21 ci-audit: 2時間→4時間, 180runs/月削減)
   workflow_dispatch:
     inputs:
       offset:
