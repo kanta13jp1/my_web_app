@@ -120,7 +120,8 @@ void main() {
           fileName: 'notion-export.zip',
           bytes: outerZip,
         );
-        expect(bundleSecondRun.notes.first.sourceId, bundle.notes.first.sourceId);
+        expect(
+            bundleSecondRun.notes.first.sourceId, bundle.notes.first.sourceId);
       },
     );
 

@@ -365,9 +365,9 @@ class NotionExportZipService {
         decodedPathLookup: decodedPathLookup,
         basenameLookup: basenameLookup,
       );
-      final hierarchy = parsed.draft.sourceMetadata['notion_hierarchy_path']
-              ?.toString() ??
-          '';
+      final hierarchy =
+          parsed.draft.sourceMetadata['notion_hierarchy_path']?.toString() ??
+              '';
       if (hierarchy.isNotEmpty) {
         folderPaths.add(hierarchy);
       }
@@ -492,7 +492,8 @@ class NotionExportZipService {
       final entryBytes = Uint8List.fromList(file.content);
       if (combinedPath.toLowerCase().endsWith('.zip')) {
         if (depth >= maxNestedZipDepth) {
-          warnings.add('入れ子 ZIP の深度上限 ($maxNestedZipDepth) を超えたため $combinedPath をスキップしました。');
+          warnings.add(
+              '入れ子 ZIP の深度上限 ($maxNestedZipDepth) を超えたため $combinedPath をスキップしました。');
           continue;
         }
         state.nestedZipCount += 1;
@@ -766,8 +767,7 @@ class NotionExportZipService {
     }
     final dir = p.posix.dirname(rawPath);
     final stem = _stripExtension(p.posix.basename(rawPath));
-    final expectedAll =
-        dir == '.' ? '${stem}_all.csv' : '$dir/${stem}_all.csv';
+    final expectedAll = dir == '.' ? '${stem}_all.csv' : '$dir/${stem}_all.csv';
     if (allPaths.contains(expectedAll)) {
       return true;
     }
@@ -791,8 +791,9 @@ class NotionExportZipService {
     required final List<String> extraTags,
   }) {
     final segments = rawPath.split('/').where((s) => s.isNotEmpty).toList();
-    final rawDirSegments =
-        segments.length > 1 ? segments.sublist(0, segments.length - 1) : <String>[];
+    final rawDirSegments = segments.length > 1
+        ? segments.sublist(0, segments.length - 1)
+        : <String>[];
     final cleanDirs = rawDirSegments
         .map(_cleanNotionName)
         .where((name) => name.isNotEmpty)
@@ -801,12 +802,10 @@ class NotionExportZipService {
     final rawFile = segments.isNotEmpty ? segments.last : rawPath;
     final ext = p.posix.extension(rawFile);
     final stem = _stripExtension(rawFile);
-    final stemBase = stem.endsWith('_all')
-        ? stem.substring(0, stem.length - 4)
-        : stem;
+    final stemBase =
+        stem.endsWith('_all') ? stem.substring(0, stem.length - 4) : stem;
     final cleanFile = _cleanNotionName(stemBase);
-    final cleanFileWithExt =
-        ext.isEmpty ? cleanFile : '$cleanFile$ext';
+    final cleanFileWithExt = ext.isEmpty ? cleanFile : '$cleanFile$ext';
     final cleanRelativePath = <String>[
       ...cleanDirs,
       if (cleanFileWithExt.isNotEmpty) cleanFileWithExt,

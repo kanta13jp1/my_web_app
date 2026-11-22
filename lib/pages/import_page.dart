@@ -764,8 +764,7 @@ class _ImportPageState extends State<_ImportOwnerPage> {
         result = await _importService.importNotionZipBundle(
           userId: user.id,
           bundle: bundle,
-          skipAttachmentsOnQuotaExceeded:
-              _skipNotionAttachmentsOnQuotaExceeded,
+          skipAttachmentsOnQuotaExceeded: _skipNotionAttachmentsOnQuotaExceeded,
         );
         unawaited(_loadStorageQuotaStatus());
       } else {
