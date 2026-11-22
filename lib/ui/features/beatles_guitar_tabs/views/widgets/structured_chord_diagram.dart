@@ -48,7 +48,7 @@ class StructuredChordDiagramStrip extends StatelessWidget {
                 key: seenNames.add(chords[i].name)
                     ? Key('structured_chord_${chords[i].name}')
                     : Key('structured_chord_${chords[i].name}_$i'),
-                size: const Size(68, 66),
+                size: const Size(74, 68),
                 painter: StructuredChordDiagramPainter(
                   chord: chords[i],
                   lightSheet: lightSheet,
@@ -74,8 +74,8 @@ class StructuredChordDiagramPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     const double leftPad = 16.0;
-    const double topPad = 15.0;
-    const double colW = 8.0;
+    const double topPad = 16.0;
+    const double colW = 9.0;
     const double rowH = 11.0;
     const int stringCount = 6;
     const int fretWireCount = 5;
@@ -174,9 +174,13 @@ class StructuredChordDiagramPainter extends CustomPainter {
         canvas.drawCircle(Offset(x, topPad - 7.5), 2.5, openPaint);
       } else {
         final rel = fret - chord.baseFret + 1;
-        if (rel >= 1 && rel < fretWireCount) {
+        final coveredByBarre = barre != null &&
+            fret == barre.fret &&
+            s >= barre.startStringIndex &&
+            s <= barre.endStringIndex;
+        if (!coveredByBarre && rel >= 1 && rel < fretWireCount) {
           final cy = topPad + (rel - 0.5) * rowH;
-          canvas.drawCircle(Offset(x, cy), 3.0, dotPaint);
+          canvas.drawCircle(Offset(x, cy), 2.6, dotPaint);
         }
       }
     }

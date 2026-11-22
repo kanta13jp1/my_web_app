@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../../../domain/models/structured_guitar_tab.dart';
 import '../../../../../theme/design_tokens.dart';
 
 /// 構造化TAB譜をレスポンシブ段組みで描画するウィジェット。
 /// 音符・休符・スラッシュ・反復・セーニョ・コーダ等はすべてベクター図形で描画します。
-class StructuredTabScoreView extends StatelessWidget {
+class StructuredTabScoreView extends StatefulWidget {
   const StructuredTabScoreView({
     super.key,
     required this.score,
@@ -13,6 +14,8 @@ class StructuredTabScoreView extends StatelessWidget {
     this.activeMeasureIndex,
     this.activeBeatIndex,
     this.onMeasureTap,
+    this.rowKeys,
+    this.autoScrollToActive = false,
   });
 
   final StructuredGuitarTabScore score;
@@ -20,10 +23,74 @@ class StructuredTabScoreView extends StatelessWidget {
   final int? activeMeasureIndex;
   final int? activeBeatIndex;
   final ValueChanged<int>? onMeasureTap;
+  final Map<int, GlobalKey>? rowKeys;
+  final bool autoScrollToActive;
+
+  @override
+  State<StructuredTabScoreView> createState() => _StructuredTabScoreViewState();
+}
+
+class _StructuredTabScoreViewState extends State<StructuredTabScoreView> {
+  final Map<int, GlobalKey> _internalRowKeys = <int, GlobalKey>{};
+  int? _lastAutoScrolledRow;
+
+  @override
+  void didUpdateWidget(covariant StructuredTabScoreView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.score.id != widget.score.id) {
+      _lastAutoScrolledRow = null;
+    }
+  }
+
+  GlobalKey _keyForRow(int rowIdx) {
+    final external = widget.rowKeys?[rowIdx];
+    if (external != null) return external;
+    return _internalRowKeys.putIfAbsent(rowIdx, GlobalKey.new);
+  }
+
+  void _maybeScrollToActiveRow(int? activeRowIdx, GlobalKey? rowKey) {
+    if (!widget.autoScrollToActive) {
+      _lastAutoScrolledRow = null;
+      return;
+    }
+    if (activeRowIdx == null || rowKey == null) return;
+    if (_lastAutoScrolledRow == null) {
+      // Do not hijack scroll on the initial Play tap so playback controls stay
+      // reachable; begin following once the active cursor advances across rows.
+      _lastAutoScrolledRow = activeRowIdx;
+      return;
+    }
+    if (_lastAutoScrolledRow == activeRowIdx) return;
+    _lastAutoScrolledRow = activeRowIdx;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final rowContext = rowKey.currentContext;
+      if (rowContext == null || !rowContext.mounted) return;
+      final renderObject = rowContext.findRenderObject();
+      final scrollable = Scrollable.maybeOf(rowContext);
+      if (renderObject == null || scrollable == null) return;
+      final viewport = RenderAbstractViewport.maybeOf(renderObject);
+      if (viewport != null) {
+        final revealTop = viewport.getOffsetToReveal(renderObject, 0.0).offset;
+        final revealBottom =
+            viewport.getOffsetToReveal(renderObject, 1.0).offset;
+        final pixels = scrollable.position.pixels;
+        if (pixels <= revealTop && pixels >= revealBottom) {
+          return;
+        }
+      }
+      Scrollable.ensureVisible(
+        rowContext,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        alignment: 0.25,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (score.measures.isEmpty) {
+    if (widget.score.measures.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -38,12 +105,23 @@ class StructuredTabScoreView extends StatelessWidget {
                 : 1;
 
         final rows = <List<int>>[];
-        for (var i = 0; i < score.measures.length; i += measuresPerRow) {
-          final end = (i + measuresPerRow < score.measures.length)
+        int? activeRowIdx;
+        GlobalKey? activeRowKey;
+        for (var i = 0; i < widget.score.measures.length; i += measuresPerRow) {
+          final end = (i + measuresPerRow < widget.score.measures.length)
               ? i + measuresPerRow
-              : score.measures.length;
-          rows.add(<int>[for (var idx = i; idx < end; idx++) idx]);
+              : widget.score.measures.length;
+          final rowIdx = rows.length;
+          final slice = <int>[for (var idx = i; idx < end; idx++) idx];
+          if (widget.activeMeasureIndex != null &&
+              slice.contains(widget.activeMeasureIndex)) {
+            activeRowIdx = rowIdx;
+            activeRowKey = _keyForRow(rowIdx);
+          }
+          rows.add(slice);
         }
+
+        _maybeScrollToActiveRow(activeRowIdx, activeRowKey);
 
         return Column(
           key: const Key('structured_tab_score_canvas'),
@@ -51,14 +129,17 @@ class StructuredTabScoreView extends StatelessWidget {
           children: <Widget>[
             for (var rowIdx = 0; rowIdx < rows.length; rowIdx++) ...<Widget>[
               _StructuredTabRow(
-                score: score,
+                key: widget.autoScrollToActive || widget.rowKeys != null
+                    ? _keyForRow(rowIdx)
+                    : null,
+                score: widget.score,
                 measureIndices: rows[rowIdx],
                 measuresPerRow: measuresPerRow,
                 width: availableWidth,
-                lightSheet: lightSheet,
-                activeMeasureIndex: activeMeasureIndex,
-                activeBeatIndex: activeBeatIndex,
-                onMeasureTap: onMeasureTap,
+                lightSheet: widget.lightSheet,
+                activeMeasureIndex: widget.activeMeasureIndex,
+                activeBeatIndex: widget.activeBeatIndex,
+                onMeasureTap: widget.onMeasureTap,
               ),
               if (rowIdx != rows.length - 1)
                 const SizedBox(height: DesignTokens.space12),
@@ -72,6 +153,7 @@ class StructuredTabScoreView extends StatelessWidget {
 
 class _StructuredTabRow extends StatelessWidget {
   const _StructuredTabRow({
+    super.key,
     required this.score,
     required this.measureIndices,
     required this.measuresPerRow,
@@ -82,7 +164,7 @@ class _StructuredTabRow extends StatelessWidget {
     this.onMeasureTap,
   });
 
-  static const double _rowHeight = 168.0;
+  static const double _rowHeight = 196.0;
 
   final StructuredGuitarTabScore score;
   final List<int> measureIndices;
@@ -216,10 +298,10 @@ class _StructuredTabRowPainter extends CustomPainter {
     this.activeBeatIndex,
   });
 
-  static const double _staffTop = 70.0;
+  static const double _staffTop = 96.0;
   static const double _stringSpacing = 10.0;
   static const double _staffBottom = _staffTop + 5 * _stringSpacing;
-  static const double _stemBottomY = _staffBottom + 32.0;
+  static const double _stemBottomY = _staffBottom + 34.0;
 
   final StructuredGuitarTabScore score;
   final _SystemRowGeometry geometry;
@@ -303,12 +385,17 @@ class _StructuredTabRowPainter extends CustomPainter {
       );
     }
 
-    // 5. 各小節の描画
+    // 5. 各小節の描画（垂直レーン分離で重なりを防止）
     for (var sIdx = 0; sIdx < slots.length; sIdx++) {
       final slot = slots[sIdx];
       final measure = score.measures[slot.globalMeasureIndex];
       final isLastMeasure =
           slot.globalMeasureIndex == score.measures.length - 1;
+      final nextMeasureIndex = slot.globalMeasureIndex + 1;
+      final nextStartsSection = nextMeasureIndex < score.measures.length &&
+          ((score.measures[nextMeasureIndex].boxedRehearsalMark &&
+                  score.measures[nextMeasureIndex].rehearsalMark != null) ||
+              score.measures[nextMeasureIndex].hasCoda);
 
       // 小節左端の線またはリピート開始
       if (measure.repeatStart) {
@@ -323,11 +410,13 @@ class _StructuredTabRowPainter extends CustomPainter {
         );
       }
 
-      // 小節右端の線・リピート終了・終止複縦線
+      // 小節右端の線・リピート終了・セクション複縦線・終止複縦線
       if (measure.repeatEnd) {
         _drawRepeatEnd(canvas, slot.right, barlineColor);
       } else if (isLastMeasure) {
         _drawFinalDoubleBar(canvas, slot.right, barlineColor);
+      } else if (nextStartsSection) {
+        _drawSectionDoubleBar(canvas, slot.right, barlineColor);
       } else {
         canvas.drawLine(
           Offset(slot.right, _staffTop),
@@ -338,20 +427,7 @@ class _StructuredTabRowPainter extends CustomPainter {
         );
       }
 
-      // 小節番号
-      _paintText(
-        canvas,
-        text: '${measure.number}',
-        offset: Offset(slot.left + 3, _staffTop - 13),
-        style: TextStyle(
-          color:
-              lightSheet ? const Color(0xFF4B5563) : DesignTokens.textTertiary,
-          fontSize: 9,
-          fontWeight: FontWeight.w600,
-        ),
-      );
-
-      // セーニョ・コーダ・リハーサルマーク
+      // Lane 1 (y=4..24): リハーサルマーク・1/2番カッコ
       if (measure.rehearsalMark != null) {
         _drawRehearsalMark(
           canvas,
@@ -361,48 +437,56 @@ class _StructuredTabRowPainter extends CustomPainter {
           color: markTextColor,
         );
       }
-      if (measure.hasSegno) {
-        _drawSegno(canvas, center: Offset(slot.left + 12, 24), color: inkColor);
-      }
-      if (measure.hasCoda) {
-        _drawCoda(canvas, center: Offset(slot.left + 14, 24), color: inkColor);
-      }
-
-      // 上部注記（Da Coda / D.S. al Coda / Repeat & Fade Out.）
-      if (measure.topNote != null) {
-        final noteX = (measure.hasSegno || measure.hasCoda)
-            ? slot.left + 26
-            : slot.left + 6;
-        final noteY = measure.volta != null ? 4.0 : 20.0;
-        _paintText(
-          canvas,
-          text: measure.topNote!,
-          offset: Offset(noteX, noteY),
-          style: TextStyle(
-            color: markTextColor,
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-          ),
-        );
-      }
-
-      // 1番・2番カッコ
       if (measure.volta != null) {
         _drawVoltaBracket(
           canvas,
           left: slot.left,
           right: slot.right,
           label: measure.volta!,
+          drawRightHook:
+              measure.repeatEnd || measure.volta!.trim().startsWith('1'),
           color: barlineColor,
         );
       }
 
-      // 小節頭コード名
+      // Lane 2 (y=26..42): セーニョ・コーダ・ナビゲーション指示
+      if (measure.hasSegno) {
+        _drawSegno(canvas, center: Offset(slot.left + 12, 33), color: inkColor);
+      }
+      if (measure.hasCoda) {
+        _drawCoda(canvas, center: Offset(slot.left + 14, 33), color: inkColor);
+      }
+      if (measure.topNote != null) {
+        final hasSymbolPrefix = measure.hasSegno || measure.hasCoda;
+        final topStyle = TextStyle(
+          color: markTextColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        );
+        if (hasSymbolPrefix) {
+          _paintText(
+            canvas,
+            text: measure.topNote!,
+            offset: Offset(slot.left + 26, 27),
+            style: topStyle,
+          );
+        } else {
+          final tp = TextPainter(
+            text: TextSpan(text: measure.topNote, style: topStyle),
+            textDirection: TextDirection.ltr,
+          )..layout();
+          final desiredX = slot.right - 4.0 - tp.width;
+          final safeX = desiredX > slot.left + 4.0 ? desiredX : slot.left + 4.0;
+          tp.paint(canvas, Offset(safeX, 27));
+        }
+      }
+
+      // Lane 3 (y=46..60): 小節頭コード名
       if (measure.chordSymbol != null) {
         _paintText(
           canvas,
           text: measure.chordSymbol!,
-          offset: Offset(slot.left + 6, 36),
+          offset: Offset(slot.left + 6, 46),
           style: TextStyle(
             color: markTextColor,
             fontSize: 12,
@@ -410,6 +494,18 @@ class _StructuredTabRowPainter extends CustomPainter {
           ),
         );
       }
+
+      // Lane 5 (y=78..92): 小節番号
+      _paintText(
+        canvas,
+        text: '${measure.number}',
+        offset: Offset(slot.left + 3, _staffTop - 16),
+        style: TextStyle(
+          color: lightSheet ? const Color(0xFF4B5563) : const Color(0xFF9CA3AF),
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+        ),
+      );
 
       // 小節内の拍イベント配置（音価に応じた横幅配分）
       _drawMeasureBeats(
@@ -473,12 +569,12 @@ class _StructuredTabRowPainter extends CustomPainter {
         );
       }
 
-      // 拍途中コード変更（例: C -> G/B）
+      // Lane 3 (y=46..60): 拍途中コード変更（例: C -> G/B）
       if (beat.chordSymbol != null) {
         _paintText(
           canvas,
           text: beat.chordSymbol!,
-          offset: Offset(x - 8, 36),
+          offset: Offset(x - 8, 46),
           style: TextStyle(
             color: inkColor,
             fontSize: 12,
@@ -487,21 +583,21 @@ class _StructuredTabRowPainter extends CustomPainter {
         );
       }
 
-      // ピッキング記号（ダウン⊓ / アップ∨）
+      // Lane 4 (y=63..74): ピッキング記号（ダウン⊓ / アップ∨）
       if (beat.pickDirection != null) {
         _drawPickDirection(
           canvas,
           x: x,
-          y: 51.0,
+          y: 68.0,
           direction: beat.pickDirection!,
           color: inkColor,
         );
       }
 
-      // スタッカート点
+      // Lane 5 (y=78..92): スタッカート点
       if (beat.staccato) {
         canvas.drawCircle(
-          Offset(x, _staffTop - 5.5),
+          Offset(x, _staffTop - 6.0),
           1.7,
           Paint()..color = inkColor,
         );
@@ -908,22 +1004,42 @@ class _StructuredTabRowPainter extends CustomPainter {
     required double left,
     required double right,
     required String label,
+    required bool drawRightHook,
     required Color color,
   }) {
     final paint = Paint()
       ..color = color
       ..strokeWidth = 1.1;
-    canvas.drawLine(Offset(left, 28), Offset(left, 19), paint);
-    canvas.drawLine(Offset(left, 19), Offset(right - 2, 19), paint);
+    canvas.drawLine(Offset(left, 24), Offset(left, 14), paint);
+    canvas.drawLine(Offset(left, 14), Offset(right - 2, 14), paint);
+    if (drawRightHook) {
+      canvas.drawLine(Offset(right - 2, 14), Offset(right - 2, 24), paint);
+    }
     _paintText(
       canvas,
       text: label,
-      offset: Offset(left + 4, 21),
+      offset: Offset(left + 4, 15),
       style: TextStyle(
         color: color,
         fontSize: 10,
         fontWeight: FontWeight.w700,
       ),
+    );
+  }
+
+  void _drawSectionDoubleBar(Canvas canvas, double x, Color color) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.0;
+    canvas.drawLine(
+      Offset(x - 4.5, _staffTop),
+      Offset(x - 4.5, _staffBottom),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(x - 1.0, _staffTop),
+      Offset(x - 1.0, _staffBottom),
+      paint,
     );
   }
 

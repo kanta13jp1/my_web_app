@@ -8,6 +8,8 @@ import 'asset_debt_trend_analyzer.dart';
 import 'asset_management_available_money.dart';
 import 'asset_triage_guide_service.dart';
 import 'asset_payment_status_summary.dart';
+import 'asset_liability_planning_service.dart';
+import 'asset_subscription_excess_alert_service.dart';
 
 // Use the planner's resolved salary-cycle date throughout advice and prompts.
 // Rows omitted from cashflow (for example card-billed items) have no independent
@@ -38,6 +40,7 @@ enum AssetManagementInsightActionType {
   accountShortfallRisk,
   debtSpiralWarning,
   overdueIncome,
+  subscriptionExcess,
 }
 
 enum AssetManagementInsightSeverity { info, warning, critical }
@@ -298,6 +301,9 @@ class AssetManagementInsightReport {
   /// null=ToDo 未使用。細木数子AI が金銭の負債と並べて行動へ助言するための入力。
   final DailyTodoDigest? dailyTodoDigest;
 
+  /// アクティブなサブスクリプション契約が基準を超過した場合の警告。
+  final AssetSubscriptionExcessAlert? subscriptionExcessAlert;
+
   const AssetManagementInsightReport({
     required this.workbook,
     this.userProfile,
@@ -316,6 +322,7 @@ class AssetManagementInsightReport {
     this.disciplineReport,
     this.triagePlan,
     this.dailyTodoDigest,
+    this.subscriptionExcessAlert,
   });
 
   bool get hasAccountShortfallAlerts => accountShortfallAlerts.isNotEmpty;
@@ -347,11 +354,39 @@ class AssetManagementInsightReport {
   }
 }
 
+/// リボ払いカード行にインライン表示する概算残り月数・元金減少見込み。
+class AssetRevolvingInlineHint {
+  final int? revolvingExitHintMonths;
+  final double currentPrincipalEstimate;
+  final bool everPaysOff;
+
+  const AssetRevolvingInlineHint({
+    required this.revolvingExitHintMonths,
+    required this.currentPrincipalEstimate,
+    required this.everPaysOff,
+  });
+}
+
 class AssetManagementInsightService {
   static const double defaultMinimumSafetyBalance = 10000;
   static const int defaultUpcomingPaymentWarningDays = 3;
 
   const AssetManagementInsightService();
+
+  /// リボ払い行向けの概算残り月数・今月元金見込みを返す（非リボは null）。
+  static AssetRevolvingInlineHint? buildRevolvingInlineHint(
+    AssetLiabilityDebtRow row,
+  ) {
+    if (!row.isRevolving) {
+      return null;
+    }
+    final estimate = AssetDebtTrendAnalyzer.estimateForRow(row);
+    return AssetRevolvingInlineHint(
+      revolvingExitHintMonths: estimate.everPaysOff ? estimate.months : null,
+      currentPrincipalEstimate: row.principalPaymentEstimate,
+      everPaysOff: estimate.everPaysOff,
+    );
+  }
 
   AssetManagementInsightReport buildReport({
     required AssetLiabilityWorkbook workbook,
@@ -434,11 +469,33 @@ class AssetManagementInsightService {
       todayAvailableAmount: today.availableAmount,
       userProfile: userProfile,
     );
+    final subscriptionExcessAlert =
+        AssetSubscriptionExcessAlertService.evaluate(
+      workbook: workbook,
+      userProfile: userProfile,
+    );
+    final allActions = subscriptionExcessAlert == null
+        ? actions
+        : <AssetManagementInsightActionItem>[
+            ...actions,
+            AssetManagementInsightActionItem(
+              type: AssetManagementInsightActionType.subscriptionExcess,
+              severity: AssetManagementInsightSeverity.warning,
+              title: 'サブスク契約が過多です（${subscriptionExcessAlert.activeCount}件）',
+              description: subscriptionExcessAlert.summaryMessage,
+              relatedAccountId: null,
+              dueDate: null,
+              paymentDay: null,
+              suggestedAction: '不要・重複しているサブスクを解約候補へ振り分け、固定費を圧縮してください。',
+            ),
+          ];
 
     return AssetManagementInsightReport(
       workbook: workbook,
       userProfile: userProfile,
-      actionItems: actions,
+      actionItems: List<AssetManagementInsightActionItem>.unmodifiable(
+        allActions,
+      ),
       todayAvailable: today,
       weekAvailable: week,
       monthAvailable: month,
@@ -451,6 +508,7 @@ class AssetManagementInsightService {
       disciplineReport: disciplineReport,
       triagePlan: triagePlan,
       dailyTodoDigest: dailyTodoDigest,
+      subscriptionExcessAlert: subscriptionExcessAlert,
     );
   }
 
@@ -897,10 +955,50 @@ class AssetManagementInsightService {
       );
     }
 
+    final debtRowsById = <String, AssetLiabilityDebtRow>{
+      for (final row in workbook.debtMasterRows) row.id: row,
+    };
+
+    for (final group in workbook.cardStatementReconciliation.groups) {
+      if (!group.alerts.contains(
+        AssetLiabilityPlanningService.cardStatementMissingImportAlert,
+      )) {
+        continue;
+      }
+      final billingRow = debtRowsById[group.billingAccountId];
+      final paymentDay = billingRow?.paymentDay;
+      final dueDate = billingRow != null
+          ? (_workbookPaymentDateFor(billingRow, workbook) ??
+              (paymentDay == null
+                  ? null
+                  : _paymentDateFromDay(workbook.baseDate, paymentDay)))
+          : null;
+      final hasImportFixAction = group.fixActions.any(
+        (action) =>
+            action.kind ==
+            AssetLiabilityCardStatementFixActionKind.importStatement,
+      );
+      actions.add(
+        AssetManagementInsightActionItem(
+          type: AssetManagementInsightActionType.cardBillingConfiguration,
+          severity: AssetManagementInsightSeverity.critical,
+          title: '要確認：${group.billingAccountName}のカード明細の取り込みが必要です',
+          description:
+              '${AssetLiabilityPlanningService.cardStatementMissingImportAlert}。'
+              '請求額 ${_formatYen(group.billedAmount)} と'
+              'カード内訳合計 ${_formatYen(group.configuredDetailTotal)} の照合が'
+              '完了していないため、データ不一致リスクがあります。',
+          relatedAccountId: group.billingAccountId,
+          dueDate: dueDate,
+          paymentDay: paymentDay,
+          suggestedAction: hasImportFixAction
+              ? '${group.billingAccountName}のカード明細取り込み欄へ移動し、当月の明細を貼り付けて取り込んでください。'
+              : '負債マスタで${group.billingAccountName}の請求先カード設定を確認した後、カード明細を取り込んでください。',
+        ),
+      );
+    }
+
     if (livingExpensePriorityMode) {
-      final debtRowsById = <String, AssetLiabilityDebtRow>{
-        for (final row in workbook.debtMasterRows) row.id: row,
-      };
       actions.sort(
         (a, b) => _compareLivingExpensePriorityActionItems(
           a,
@@ -2383,6 +2481,7 @@ class AssetManagementInsightPromptBuilder {
       AssetManagementInsightActionType.accountShortfallRisk => '口座別見込み残高の不足',
       AssetManagementInsightActionType.debtSpiralWarning => '利息スパイラル警告',
       AssetManagementInsightActionType.overdueIncome => '期限超過の未着金収入',
+      AssetManagementInsightActionType.subscriptionExcess => 'サブスク過多の整理',
     };
   }
 

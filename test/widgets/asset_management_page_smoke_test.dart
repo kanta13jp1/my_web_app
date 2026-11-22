@@ -3001,6 +3001,73 @@ void main() {
     });
 
     testWidgets(
+        'revolving inline chips show months, principal estimate, and tooltip only for revolving debt',
+        (tester) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            newUsageAmount: 20000,
+            creditLimit: 500000,
+          ),
+        },
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugRevolvingConfigsMirror: mirrorValue,
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'auPayカード': -100000,
+                'モビット': -80000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final payoffTooltipFinder = find.byKey(
+        const Key('asset_revolving_payoff_chip_aupay_card'),
+      );
+      final principalTooltipFinder = find.byKey(
+        const Key('asset_revolving_principal_chip_aupay_card'),
+      );
+      expect(payoffTooltipFinder, findsOneWidget);
+      expect(principalTooltipFinder, findsOneWidget);
+      expect(find.textContaining('リボ: 概算残り'), findsOneWidget);
+      expect(find.textContaining('今月元金 '), findsOneWidget);
+
+      final payoffTooltip = tester.widget<Tooltip>(payoffTooltipFinder);
+      final principalTooltip = tester.widget<Tooltip>(principalTooltipFinder);
+      expect(payoffTooltip.message, contains('概算'));
+      expect(payoffTooltip.message, contains('請求=リボ設定額'));
+      expect(principalTooltip.message, contains('概算'));
+      expect(principalTooltip.message, contains('請求=リボ設定額'));
+
+      expect(find.text('モビット'), findsWidgets);
+      expect(
+        find.byKey(const Key('asset_revolving_payoff_chip_mobit')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('asset_revolving_principal_chip_mobit')),
+        findsNothing,
+      );
+
+      await _unmount(tester);
+    });
+
+    testWidgets(
         'typed revolving field values survive the rebuild their own '
         'onChanged triggers', (tester) async {
       // 最低返済額/新規利用額/利用限度額はTextFormField(initialValue:)ではなく
@@ -3089,6 +3156,55 @@ void main() {
       expect(store.getDouble('asset_minimum_safety_balance_v1'), 30000);
       // 使用可能額カードの安全余裕表示にも反映される。
       expect(find.textContaining('安全余裕 ¥30,000'), findsWidgets);
+
+      await _unmount(tester);
+    });
+
+    testWidgets(
+        'safety balance below 5,000 shows and hides low reserve warning',
+        (tester) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{'財布(現金)': 50000},
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_safety_balance_low_warning')),
+        findsNothing,
+      );
+
+      final field = find.byKey(const Key('asset_safety_balance_field'));
+      await tester.ensureVisible(field);
+      await tester.enterText(field, '3000');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_safety_balance_low_warning')),
+        findsOneWidget,
+      );
+
+      await tester.enterText(field, '10000');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_safety_balance_low_warning')),
+        findsNothing,
+      );
 
       await _unmount(tester);
     });
@@ -3233,6 +3349,215 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets(
+      'revolving debt renders total interest warning and opens simulator',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        final monthKey =
+            AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(now);
+        final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+          <String, AssetLiabilityRevolvingCreditConfig>{
+            'famipay_card': const AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 30000,
+            ),
+          },
+        );
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetLiabilityMonthlyStateStore.actualPaymentPrefsKey: jsonEncode(
+            <String, Map<String, double>>{
+              monthKey: <String, double>{'famipay_card': 5000},
+            },
+          ),
+          AssetLiabilityMonthlyStateStore.paidPrefsKey: jsonEncode(
+            <String, List<String>>{
+              monthKey: <String>['famipay_card'],
+            },
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugCalendarNow: DateTime(2026, 7, 10),
+              debugRevolvingConfigsMirror: mirrorValue,
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 50000,
+                  'ファミペイ': -250000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_discipline_total_interest_famipay_card')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_trend_total_interest_famipay_card')),
+          findsOneWidget,
+        );
+        expect(find.textContaining('24ヶ月完済ライン'), findsWidgets);
+        expect(
+          find.byKey(
+            const Key('asset_debt_trend_interest_warning_famipay_card'),
+          ),
+          findsOneWidget,
+        );
+
+        final simulateButton = find.byKey(
+          const Key('asset_debt_trend_simulate_famipay_card'),
+        );
+        expect(simulateButton, findsOneWidget);
+        await tester.ensureVisible(simulateButton);
+        await tester.tap(simulateButton);
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('revolving_extra_payment_input')),
+          findsOneWidget,
+        );
+        await tester.tap(find.text('閉じる'));
+        await tester.pump(const Duration(milliseconds: 200));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'overdue bulk confirm dialog marks selected overdue debts paid',
+      (tester) async {
+        final now = DateTime(2026, 9, 5);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final defaultBills =
+            const AssetLiabilityPlanningService().buildWorkbook(
+          latestSnapshot: const <String, double>{},
+          baseDate: now,
+          includeDefaultFixedPayments: true,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{
+                  'mobit': 1,
+                  'acom_card_loan': 2,
+                },
+                monthlyState: AssetLiabilityMonthlyState(
+                  paidAccountNames: <String>{
+                    for (final row in defaultBills.cashflowRows) row.accountId,
+                    for (final row in defaultBills.cashflowRows)
+                      row.accountName,
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -100000,
+                  'アコムカードローン': -80000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final openButton = find.byKey(
+          const Key('asset_overdue_bulk_confirm_button'),
+        );
+        expect(openButton, findsOneWidget);
+        expect(find.text('超過未払いをまとめて確認 (2件)'), findsOneWidget);
+
+        await tester.ensureVisible(openButton);
+        await tester.tap(openButton);
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_overdue_bulk_confirm_dialog')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('overdue_bulk_item_mobit')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('overdue_bulk_item_acom_card_loan')),
+          findsOneWidget,
+        );
+        expect(find.text('選択した2件を支払済みにする'), findsOneWidget);
+
+        await tester
+            .tap(find.byKey(const Key('overdue_bulk_clear_all_button')));
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          tester
+              .widget<FilledButton>(
+                find.byKey(const Key('asset_overdue_bulk_apply_button')),
+              )
+              .onPressed,
+          isNull,
+        );
+
+        await tester.tap(
+          find.byKey(const Key('overdue_bulk_select_all_button')),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.tap(
+          find.byKey(const Key('overdue_bulk_item_acom_card_loan')),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.text('選択した1件を支払済みにする'), findsOneWidget);
+
+        final applyButton = find.byKey(
+          const Key('asset_overdue_bulk_apply_button'),
+        );
+        await tester.ensureVisible(applyButton);
+        await tester.tap(applyButton);
+        // Allow the dialog dismissal animation and async state persistence to finish.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_overdue_bulk_confirm_dialog')),
+          findsNothing,
+        );
+        expect(find.text('✅ 超過未払い1件を支払済みにしました'), findsOneWidget);
+        expect(find.text('超過未払いをまとめて確認 (1件)'), findsOneWidget);
+
+        await tester.ensureVisible(openButton);
+        await tester.tap(openButton);
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(
+          find.byKey(const Key('overdue_bulk_item_mobit')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('overdue_bulk_item_acom_card_loan')),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.byKey(const Key('overdue_bulk_cancel_button')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        await _unmount(tester);
+      },
+    );
 
     testWidgets('triage guide card shows staged first steps in crisis', (
       tester,
@@ -5242,6 +5567,162 @@ void main() {
         expect(find.text('資産/負債 管理ボード'), findsOneWidget);
         expect(find.text('①資産・②負債の全容把握'), findsOneWidget);
 
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #3623: missing card statement shows critical action item and direct import jump',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final defaultBills =
+            const AssetLiabilityPlanningService().buildWorkbook(
+          latestSnapshot: const <String, double>{},
+          baseDate: now,
+          includeDefaultFixedPayments: true,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'paypay_card': 2},
+                monthlyState: AssetLiabilityMonthlyState(
+                  paidAccountNames: <String>{
+                    for (final row in defaultBills.cashflowRows)
+                      row.accountName,
+                  },
+                  paymentOverrides: const <String, double>{
+                    'paypay_card': 20000,
+                    AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+                  },
+                  paymentSourceAccountIds: const <String, String>{
+                    'paypay_card': 'wallet_cash',
+                  },
+                  cardBillingAccountIds: const <String, String>{
+                    AssetLiabilityPlanningService.kddiProviderAccountId:
+                        'paypay_card',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'PayPayカード': -20000,
+                  'KDDI': -5764,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.text('要確認：PayPayカードのカード明細の取り込みが必要です'),
+          findsOneWidget,
+        );
+        final importActionBtn = find.byKey(
+          const Key('asset_action_import_statement_paypay_card'),
+        );
+        expect(importActionBtn, findsOneWidget);
+        expect(find.textContaining('を選択しました'), findsNothing);
+
+        await tester.ensureVisible(importActionBtn);
+        await tester.tap(importActionBtn);
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.textContaining(
+            'PayPayカードを選択しました。カード明細を貼り付けて「明細を取り込む」を押してください。',
+          ),
+          findsOneWidget,
+        );
+
+        await _unmount(tester);
+      },
+    );
+    testWidgets(
+      'subscription excess alert card renders active list and jumps on tap',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{'財布(現金)': 50000},
+              },
+              debugInitialRecurringFixedCosts: const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'sub_1',
+                  name: 'Claude',
+                  amount: 3000,
+                  paymentDay: 10,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_2',
+                  name: 'Notion',
+                  amount: 2000,
+                  paymentDay: 12,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_3',
+                  name: 'Netflix',
+                  amount: 1500,
+                  paymentDay: 15,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_4',
+                  name: 'iCloud+',
+                  amount: 1300,
+                  paymentDay: 18,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'sub_5',
+                  name: 'Google AI Pro',
+                  amount: 8000,
+                  paymentDay: 20,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final card = find.byKey(
+          const Key('asset_subscription_excess_alert_card'),
+        );
+        expect(card, findsOneWidget);
+        expect(find.textContaining('サブスクリプション過多アラート（5件）'), findsOneWidget);
+        expect(find.textContaining('Google AI Pro'), findsWidgets);
+
+        final reviewButton = find.byKey(
+          const Key('asset_subscription_excess_review_button'),
+        );
+        expect(reviewButton, findsOneWidget);
+        await tester.ensureVisible(reviewButton);
+        await tester.tap(reviewButton);
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(tester.takeException(), isNull);
         await _unmount(tester);
       },
     );
