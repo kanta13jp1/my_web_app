@@ -1174,6 +1174,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Text(
                 '${(progress * 100).round()}%',
                 style: const TextStyle(
@@ -1212,13 +1213,15 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                     size: 16,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    '前日全達成ストリーク: $_allClearStreak日連続',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      height: 1.5,
+                  Flexible(
+                    child: Text(
+                      '前日全達成ストリーク: $_allClearStreak日連続',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ],
