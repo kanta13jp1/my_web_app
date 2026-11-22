@@ -76,6 +76,7 @@ import 'package:my_web_app/pages/note_collections_page.dart';
 import 'package:my_web_app/pages/note_tags_page.dart';
 import 'package:my_web_app/pages/space_sharing_page.dart';
 import 'package:my_web_app/utils/note_route_parameters.dart';
+import 'package:my_web_app/utils/layout_safe_focus_traversal_policy.dart';
 import 'package:my_web_app/pages/note_tasks_page.dart';
 import 'package:my_web_app/pages/philosophy_page.dart';
 import 'package:my_web_app/pages/legal_document_page.dart';
@@ -2113,6 +2114,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   final _navigatorKey = GlobalKey<NavigatorState>();
   final _versionCheckService = VersionCheckService();
+  final _focusTraversalPolicy = LayoutSafeReadingOrderTraversalPolicy();
   bool _showUpdateBanner = false;
 
   @override
@@ -2157,25 +2159,28 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             ? ThemeMode.light
             : themeService.getFlutterThemeMode(),
         builder: (context, child) {
-          return GlobalHeaderClockShell(
-            navigatorKey: _navigatorKey,
-            // 時計とビルド番号はログイン後の業務用クロームに限定する。
-            // 公開LPに内部ステータス風の帯を出すと、未完成・デバッグ中に
-            // 見えるうえ、狭幅ではラベルが切れて信頼を損なう。
-            showClockBar: supabase.auth.currentSession != null,
-            child: UniversalAiShareShell(
+          return FocusTraversalGroup(
+            policy: _focusTraversalPolicy,
+            child: GlobalHeaderClockShell(
               navigatorKey: _navigatorKey,
-              child: MaintenanceShell(
-                routeListenable: universalAiShareRouteObserver.currentPage,
-                child: Column(
-                  children: [
-                    if (_showUpdateBanner)
-                      UpdateBanner(
-                        onDismiss: () =>
-                            setState(() => _showUpdateBanner = false),
-                      ),
-                    Expanded(child: child ?? const SizedBox.shrink()),
-                  ],
+              // 時計とビルド番号はログイン後の業務用クロームに限定する。
+              // 公開LPに内部ステータス風の帯を出すと、未完成・デバッグ中に
+              // 見えるうえ、狭幅ではラベルが切れて信頼を損なう。
+              showClockBar: supabase.auth.currentSession != null,
+              child: UniversalAiShareShell(
+                navigatorKey: _navigatorKey,
+                child: MaintenanceShell(
+                  routeListenable: universalAiShareRouteObserver.currentPage,
+                  child: Column(
+                    children: [
+                      if (_showUpdateBanner)
+                        UpdateBanner(
+                          onDismiss: () =>
+                              setState(() => _showUpdateBanner = false),
+                        ),
+                      Expanded(child: child ?? const SizedBox.shrink()),
+                    ],
+                  ),
                 ),
               ),
             ),
