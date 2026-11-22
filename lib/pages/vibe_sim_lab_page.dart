@@ -570,7 +570,7 @@ class _VibeSimLabPageState extends State<VibeSimLabPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'リスクスコア: ${_result.riskScore} / 100 点（検出 ${_result.findings.length} 件）',
+                    'Tier 1 (無条件 FAIL): ${_result.tier1FailCount} 件 / Tier 2 (工学判断 INFO): ${_result.tier2InfoCount} 件',
                     style: theme.textTheme.bodyLarge,
                   ),
                 ],
@@ -617,7 +617,7 @@ class _VibeSimLabPageState extends State<VibeSimLabPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          '[${VibeSimDiagnosticService.severityLabel(finding.severity)}] ${finding.title}',
+                          '[${VibeSimDiagnosticService.tierLabel(finding.tier)} / ${VibeSimDiagnosticService.severityLabel(finding.severity)}] ${finding.title}',
                           style: theme.textTheme.titleSmall?.copyWith(
                             color: _colorForSeverity(finding.severity),
                             fontWeight: FontWeight.bold,
@@ -727,7 +727,7 @@ class _VibeSimLabPageState extends State<VibeSimLabPage> {
                   DataColumn(label: Text('10度傾斜保持')),
                   DataColumn(label: Text('収束時間')),
                   DataColumn(label: Text('静止めり込み')),
-                  DataColumn(label: Text('QACC警告')),
+                  DataColumn(label: Text('瞬間最大めり込み')),
                   DataColumn(label: Text('自動監査')),
                 ],
                 rows: VibeSimDiagnosticService.benchmarkRows
@@ -741,7 +741,7 @@ class _VibeSimLabPageState extends State<VibeSimLabPage> {
                           DataCell(Text(row.tiltRetentionLabel)),
                           DataCell(Text(row.settledTimeLabel)),
                           DataCell(Text(row.restingPenetrationLabel)),
-                          DataCell(Text(row.qaccWarningsLabel)),
+                          DataCell(Text(row.peakPenetrationLabel)),
                           DataCell(Text(row.auditLabel)),
                         ],
                       ),
