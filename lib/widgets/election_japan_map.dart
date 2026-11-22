@@ -430,9 +430,8 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     final borderRadius = BorderRadius.circular(cell >= 42 ? 8 : 6);
     final nameFontSize = math.min(16.0, math.max(11.0, cell * 0.34));
     final valueFontSize = math.min(14.0, math.max(10.0, cell * 0.30));
-    final onTileTap = plan == null
-        ? null
-        : () => setState(() => _selectedIndex = tile.index);
+    final onTileTap =
+        plan == null ? null : () => setState(() => _selectedIndex = tile.index);
 
     return Positioned(
       left: tile.col * cell,

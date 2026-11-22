@@ -82,8 +82,7 @@ void main() {
           expect(
             globalTileRects[i].overlaps(globalTileRects[j]),
             isFalse,
-            reason:
-                '${tileNodes[i].label} (${globalTileRects[i]}) overlaps '
+            reason: '${tileNodes[i].label} (${globalTileRects[i]}) overlaps '
                 '${tileNodes[j].label} (${globalTileRects[j]})',
           );
         }

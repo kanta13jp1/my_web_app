@@ -219,7 +219,11 @@ void main() {
       expect(find.text('北海道'), findsNothing);
       expect(find.text('国民 6 / 立憲 57'), findsNothing);
       expect(
-        tester.getSemantics(headerFinder).getSemanticsData().flagsCollection.isExpanded,
+        tester
+            .getSemantics(headerFinder)
+            .getSemanticsData()
+            .flagsCollection
+            .isExpanded,
         Tristate.isFalse,
       );
 
@@ -229,7 +233,11 @@ void main() {
       expect(find.text('北海道'), findsOneWidget);
       expect(find.text('国民 6 / 立憲 57'), findsOneWidget);
       expect(
-        tester.getSemantics(headerFinder).getSemanticsData().flagsCollection.isExpanded,
+        tester
+            .getSemantics(headerFinder)
+            .getSemanticsData()
+            .flagsCollection
+            .isExpanded,
         Tristate.isTrue,
       );
     },
@@ -264,7 +272,11 @@ void main() {
       final headerFinder = find.text('自民地方議員ベンチマーク');
       expect(find.text('出典(総務省 所属党派別人員調)を開く'), findsNothing);
       expect(
-        tester.getSemantics(headerFinder).getSemanticsData().flagsCollection.isExpanded,
+        tester
+            .getSemantics(headerFinder)
+            .getSemanticsData()
+            .flagsCollection
+            .isExpanded,
         Tristate.isFalse,
       );
 
