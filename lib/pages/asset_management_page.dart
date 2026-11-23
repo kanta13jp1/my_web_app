@@ -4085,15 +4085,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          alreadyExists
-              ? '${violation.accountName}の返済タスクは既に登録済みです'
-              : '${violation.accountName}の返済タスクを作成しました',
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            alreadyExists
+                ? '${violation.accountName}の返済タスクは既に登録済みです'
+                : '${violation.accountName}の返済タスクを作成しました',
+          ),
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _showDisciplineViolationsModal(
@@ -11858,9 +11860,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                   icon: const Icon(Icons.warning_amber_rounded, size: 15),
                   label: Text(
-                    '違反 ${currentDisciplineReport.allViolations.length}件',
+                    '未照合 ${currentDisciplineReport.allViolations.length}件',
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w800,
                     ),
                   ),

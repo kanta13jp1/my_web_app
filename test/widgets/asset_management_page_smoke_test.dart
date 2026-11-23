@@ -6402,7 +6402,7 @@ void main() {
         );
         expect(headerBadge, findsOneWidget);
         expect(
-          find.descendant(of: headerBadge, matching: find.text('違反 1件')),
+          find.descendant(of: headerBadge, matching: find.text('未照合 1件')),
           findsOneWidget,
         );
 
@@ -6415,7 +6415,8 @@ void main() {
         );
         expect(
           find.byKey(
-              const Key('asset_discipline_modal_escape_plan_famipay_card')),
+            const Key('asset_discipline_modal_escape_plan_famipay_card'),
+          ),
           findsOneWidget,
         );
         expect(
@@ -6434,7 +6435,7 @@ void main() {
           find.byKey(const Key('asset_discipline_apply_plan_confirm_dialog')),
           findsOneWidget,
         );
-        expect(find.textContaining('+30,000円'), findsOneWidget);
+        expect(find.textContaining('+¥30,000'), findsOneWidget);
 
         await tester.tap(
           find.byKey(const Key('asset_discipline_confirm_apply_famipay_card')),

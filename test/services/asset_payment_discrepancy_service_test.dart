@@ -6,6 +6,7 @@ void main() {
   AssetLiabilityDebtRow buildRow({
     required String id,
     required String name,
+    double minimumPaymentEstimate = 10000,
     double scheduledPaymentAmount = 10000,
     double? actualPaymentAmount,
     String? paymentDifferenceReason,
@@ -29,7 +30,7 @@ void main() {
       billingAccountName: includedInBillingAccount ? '親カード' : null,
       includedInBillingAccount: includedInBillingAccount,
       annualRate: 0.145,
-      minimumPaymentEstimate: 10000,
+      minimumPaymentEstimate: minimumPaymentEstimate,
       manualPaymentAmount: scheduledPaymentAmount,
       scheduledPaymentAmount: scheduledPaymentAmount,
       actualPaymentAmount: actualPaymentAmount,
@@ -182,6 +183,7 @@ void main() {
           buildRow(
             id: 'under_sched',
             name: '予定不足ローン',
+            minimumPaymentEstimate: 5000,
             scheduledPaymentAmount: 10000,
             actualPaymentAmount: 7000,
           ),

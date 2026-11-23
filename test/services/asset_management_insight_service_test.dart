@@ -1702,7 +1702,8 @@ void main() {
               creditLimit: 500000,
             ),
           },
-          monthlyPaymentOverrides: const <String, double>{'aupay_card': 5000},
+          paidAccountNames: const <String>{'auPayカード'},
+          actualPaymentAmounts: const <String, double>{'aupay_card': 5000},
         );
         final report = const AssetManagementInsightService().buildReport(
           workbook: workbook,

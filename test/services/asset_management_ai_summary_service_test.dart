@@ -2209,11 +2209,12 @@ void main() {
               creditLimit: 500000,
             ),
           },
-          monthlyPaymentOverrides: const <String, double>{
+          monthlyPaymentOverrides: const <String, double>{'mobit': 12000},
+          paidAccountNames: const <String>{'auPayカード'},
+          actualPaymentAmounts: const <String, double>{
             'aupay_card': 5000,
-            'mobit': 12000,
+            'mobit': 5000,
           },
-          actualPaymentAmounts: const <String, double>{'mobit': 5000},
         );
         final report = const AssetManagementInsightService().buildReport(
           workbook: workbook,
@@ -2242,8 +2243,10 @@ void main() {
         expect(payload['payment_discrepancies'], isList);
         expect(detailedPayload['payment_discrepancies'], isList);
         final discrepancies = payload['payment_discrepancies'] as List<dynamic>;
-        expect(discrepancies, hasLength(1));
-        final mobitDiff = discrepancies.single as Map<String, dynamic>;
+        expect(discrepancies, hasLength(2));
+        final mobitDiff = discrepancies.firstWhere(
+          (item) => (item as Map<String, dynamic>)['account_id'] == 'mobit',
+        ) as Map<String, dynamic>;
         expect(mobitDiff['account_id'], 'mobit');
         expect(mobitDiff['difference_amount'], -7000);
         expect(mobitDiff['needs_top_up'], isTrue);
