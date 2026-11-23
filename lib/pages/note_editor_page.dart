@@ -189,6 +189,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool _relatedNotesHasError = false;
   int _relatedNotesRequestId = 0;
   static const String _draftKeyPrefix = 'note_editor_draft_';
+  static const String _newDraftKey = '${_draftKeyPrefix}new';
+  int _draftWriteEpoch = 0;
+  Future<void> _draftStorageQueue = Future<void>.value();
+  String? _latestDraftPayloadJson;
   static const String _aiStylePreferenceKey = 'note_editor_ai_style';
   static const String _slashBarExpandedKey = 'note_editor_slash_bar_expanded';
   static const List<String> _slashCommandSuggestions = <String>[
@@ -292,7 +296,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   String _currentDraftKey() {
-    return '$_draftKeyPrefix${_currentNoteId ?? 'new'}';
+    return _currentNoteId == null
+        ? _newDraftKey
+        : '$_draftKeyPrefix$_currentNoteId';
   }
 
   bool get _hasPersistableState =>
@@ -305,25 +311,43 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   bool _boolFromValue(dynamic value) => value == true;
 
-  Future<void> _persistDraftToLocal() async {
-    final prefs = await SharedPreferences.getInstance();
-    final title = _titleController.text;
-    final content = _contentController.text;
-    if (!_hasPersistableState) {
-      await prefs.remove(_currentDraftKey());
-      return;
-    }
+  Future<void> _enqueueDraftStorageOp(Future<void> Function() operation) {
+    final next = _draftStorageQueue.then((_) => operation());
+    _draftStorageQueue = next.catchError((Object _) {});
+    return next;
+  }
+
+  String _encodeCurrentDraftPayload() {
     final payload = <String, dynamic>{
-      'title': title,
-      'content': content,
+      'title': _titleController.text,
+      'content': _contentController.text,
       'reminder_date': _reminderDate?.toIso8601String(),
       'is_favorite': _isFavorite,
       'is_pinned': _isPinned,
-      'tags': _tags,
+      'tags': List<String>.from(_tags),
       // サーバーの updated_at と比較するため UTC で保存する。
       'saved_at': DateTime.now().toUtc().toIso8601String(),
     };
-    await prefs.setString(_currentDraftKey(), jsonEncode(payload));
+    return jsonEncode(payload);
+  }
+
+  Future<void> _persistDraftToLocal() {
+    if (!mounted) return Future<void>.value();
+    final epoch = ++_draftWriteEpoch;
+    final draftKey = _currentDraftKey();
+    final payloadJson =
+        _hasPersistableState ? _encodeCurrentDraftPayload() : null;
+    _latestDraftPayloadJson = payloadJson;
+    return _enqueueDraftStorageOp(() async {
+      if (epoch != _draftWriteEpoch) return;
+      final prefs = await SharedPreferences.getInstance();
+      if (epoch != _draftWriteEpoch) return;
+      if (payloadJson == null) {
+        await prefs.remove(draftKey);
+        return;
+      }
+      await prefs.setString(draftKey, payloadJson);
+    });
   }
 
   Future<void> _restoreDraftFromLocal() async {
@@ -426,9 +450,38 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
-  Future<void> _clearDraftFromLocal() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_currentDraftKey());
+  Future<void> _clearDraftFromLocal({bool alsoClearNewDraft = false}) {
+    final epoch = ++_draftWriteEpoch;
+    final draftKey = _currentDraftKey();
+    final clearObsoleteNewDraft = alsoClearNewDraft || widget.noteId == null;
+    _latestDraftPayloadJson = null;
+    return _enqueueDraftStorageOp(() async {
+      final prefs = await SharedPreferences.getInstance();
+      if (clearObsoleteNewDraft && draftKey != _newDraftKey) {
+        await prefs.remove(_newDraftKey);
+      }
+      if (epoch != _draftWriteEpoch) return;
+      await prefs.remove(draftKey);
+    });
+  }
+
+  Future<void> _migrateNewDraftToNoteId(
+    String noteId,
+    String? payloadJson,
+  ) {
+    final epoch = ++_draftWriteEpoch;
+    final targetKey = '$_draftKeyPrefix$noteId';
+    _latestDraftPayloadJson = payloadJson;
+    return _enqueueDraftStorageOp(() async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_newDraftKey);
+      if (epoch != _draftWriteEpoch) return;
+      if (payloadJson == null) {
+        await prefs.remove(targetKey);
+      } else {
+        await prefs.setString(targetKey, payloadJson);
+      }
+    });
   }
 
   void _attachTextListeners() {
@@ -1546,6 +1599,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   // Call only from the AutoSaveService lane, including attachment flows.
   Future<void> _saveNoteWithoutClosing({bool allowEmpty = false}) async {
     if (!mounted) return;
+    final wasNewNote = _currentNoteId == null;
+    final requestDraftEpoch = _draftWriteEpoch;
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
     final reminderIso = _reminderDate?.toUtc().toIso8601String();
@@ -1575,6 +1630,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         tags: tags,
       )) {
         _autoSaveService.markAsSaved();
+        await _clearDraftFromLocal(alsoClearNewDraft: widget.noteId == null);
         return;
       }
       await _supabase
@@ -1608,12 +1664,23 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           .select('id')
           .maybeSingle();
 
-      if (!mounted) return;
+      final insertedId = inserted is Map && inserted['id'] != null
+          ? inserted['id'].toString()
+          : null;
+      if (!mounted) {
+        if (insertedId != null && _supabase.auth.currentUser?.id == user.id) {
+          final pendingDraftJson = _draftWriteEpoch == requestDraftEpoch
+              ? null
+              : _latestDraftPayloadJson;
+          await _migrateNewDraftToNoteId(insertedId, pendingDraftJson);
+        }
+        return;
+      }
       if (_supabase.auth.currentUser?.id != user.id) {
         throw StateError('Session changed during save');
       }
-      if (inserted is Map && inserted['id'] != null) {
-        _currentNoteId = inserted['id'].toString();
+      if (insertedId != null) {
+        _currentNoteId = insertedId;
         unawaited(_loadCommentCount());
         if (mounted) {
           setState(() {});
@@ -1644,9 +1711,17 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
     if (currentMatchesSavedRequest) {
       _autoSaveService.markAsSaved();
-      await _clearDraftFromLocal();
+      await _clearDraftFromLocal(
+        alsoClearNewDraft: wasNewNote || widget.noteId == null,
+      );
     } else {
       _autoSaveService.markAsModified();
+      if (wasNewNote && _currentNoteId != null) {
+        await _migrateNewDraftToNoteId(
+          _currentNoteId!,
+          _hasPersistableState ? _encodeCurrentDraftPayload() : null,
+        );
+      }
     }
   }
 
