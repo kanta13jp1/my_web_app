@@ -249,3 +249,12 @@ Current open pinned work starts here:
   - `PaymentFundingRule` により優先順位・最低維持残高・除外対象を満たす支払原資口座を自動解決して未設定負債へ割り当て、`buildWorkbook(transferBufferAmount: ...)` で不足額＋バッファを複数移動元にまたがって提案できるようにする。
   - `AssetLiabilityTransferSuggestion` / `AssetLiabilityTransferTask` に `targetPaymentName` / `targetPaymentDate` / `dedupeKey` を追加して月次状態ストア・メモ化キー・比較関数へ永続化し、同一 `dedupeKey` の重複タスク起票を防止する。
   - 不足バナー・振替セクションの操作ラベルを「振替起票」「振替提案」へ日本語統一し、原資未設定行には「期日優先 / 要確認」バッジと `MissingPaymentSourceGuideDialog`（1タップ原資設定）を追加する。
+
+### 債権者連絡テンプレ・送信ログ・カード明細再取得監視 (#3292 / #3288 / #3299) 仕様
+
+- **債権者連絡テンプレートと連絡・合意記録 (#3292 / #3288)**:
+  - `lib/models/contact_log.dart` および `AssetCreditorContactService` により、期限超過・期日接近・高金利（年利15%以上）の負債先に対して `CreditorContactTask`（`pending` / `contacted`）を自動組み立てし、「支払日変更」「最低額減額」「分割・一時猶予」の3種類のテンプレート文面を生成する。
+  - 負債行の「連絡・記録」から `CreditorContactTemplateAndLogDialog`、「一括連絡テンプレ」から `BulkCreditorContactDialog` を開き、送信失敗時はエラー表示・再送を提示する。保存成功後は「連絡済み」バッジ・次回フォロー日・上部合意内容リマインダーバナー（`asset_creditor_contact_reminder_banner`）および AI 詳細ペイロード（`creditor_contact_tasks` / `contact_log_ids`）へ反映する。
+- **カード明細再取得導線と失敗監視 (#3299)**:
+  - `CardStatementRefetchService` により要確認カードグループごとに「明細再取得」を実行し、最終試行時刻・成功/失敗状態・失敗理由（`CardStatementImportStatus`）を UI（`asset_card_statement_import_status_<id>`）および AI 詳細ペイロード（`card_statement_reconciliation.statement_import_status`）へ記録する。
+  - 再取得失敗時は失敗理由を表示しつつ「手動で明細を入力」から `CardManualStatementEntryDialog` へ即遷移できるようにし、取込成功時は明細行を取り込んで要確認状態を更新する。

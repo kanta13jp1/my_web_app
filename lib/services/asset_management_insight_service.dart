@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 
 import '../models/asset_liability_workbook.dart';
+import '../models/contact_log.dart';
 import '../models/daily_todo.dart';
 import '../models/user_profile.dart';
+import 'asset_creditor_contact_service.dart';
 import 'asset_debt_discipline_monitor.dart';
 import 'asset_debt_trend_analyzer.dart';
 import 'asset_emergency_defense_service.dart';
@@ -313,6 +315,12 @@ class AssetManagementInsightReport {
   /// アクティブなサブスクリプション契約が基準を超過した場合の警告。
   final AssetSubscriptionExcessAlert? subscriptionExcessAlert;
 
+  /// 債権者との前回合意内容に基づく期日前リマインダー (#3292)。
+  final List<CreditorContactReminder> creditorContactReminders;
+
+  /// 未連絡の期限超過・高金利先があり連絡テンプレ利用を推奨するか (#3292 / #3288)。
+  final bool recommendCreditorContactTemplate;
+
   const AssetManagementInsightReport({
     required this.workbook,
     this.userProfile,
@@ -334,6 +342,8 @@ class AssetManagementInsightReport {
     this.triagePlan,
     this.dailyTodoDigest,
     this.subscriptionExcessAlert,
+    this.creditorContactReminders = const <CreditorContactReminder>[],
+    this.recommendCreditorContactTemplate = false,
   });
 
   bool get hasAccountShortfallAlerts => accountShortfallAlerts.isNotEmpty;
@@ -433,6 +443,7 @@ class AssetManagementInsightService {
     AssetTriageGuideService triageGuideService =
         const AssetTriageGuideService(),
     DailyTodoDigest? dailyTodoDigest,
+    List<CreditorContactLog> contactLogs = const <CreditorContactLog>[],
   }) {
     final breakdown = _availableMoneyBreakdown(
       workbook: workbook,
@@ -508,6 +519,14 @@ class AssetManagementInsightService {
       workbook: workbook,
       userProfile: userProfile,
     );
+    final creditorContactReminders =
+        AssetCreditorContactService.buildDueReminders(
+      rows: workbook.debtMasterRows,
+      baseDate: workbook.baseDate,
+      logs: contactLogs,
+    );
+    final recommendCreditorContactTemplate =
+        workbook.creditorContactTasks.any((task) => !task.isContacted);
     final allActions = <AssetManagementInsightActionItem>[
       if (emergencyMode || workbook.emergencyMode) ...[
         () {
@@ -561,6 +580,8 @@ class AssetManagementInsightService {
       triagePlan: triagePlan,
       dailyTodoDigest: dailyTodoDigest,
       subscriptionExcessAlert: subscriptionExcessAlert,
+      creditorContactReminders: creditorContactReminders,
+      recommendCreditorContactTemplate: recommendCreditorContactTemplate,
     );
   }
 

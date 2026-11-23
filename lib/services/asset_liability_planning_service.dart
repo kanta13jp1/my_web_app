@@ -1,6 +1,9 @@
 import 'dart:math';
 
+import 'package:my_web_app/models/contact_log.dart';
 import 'package:my_web_app/models/payment_funding_rule.dart';
+import 'package:my_web_app/services/asset_creditor_contact_service.dart';
+import 'package:my_web_app/services/card_statement_refetch_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/asset_revolving_credit_service.dart';
 import 'package:my_web_app/services/payment_confirmation_gate.dart';
@@ -228,6 +231,9 @@ class AssetLiabilityPlanningService {
     int? salaryDay,
     double transferBufferAmount = 0,
     PaymentFundingRule? paymentFundingRule,
+    List<CreditorContactLog> contactLogs = const <CreditorContactLog>[],
+    Map<String, CardStatementImportStatus> statementImportStatuses =
+        const <String, CardStatementImportStatus>{},
   }) {
     // 既定固定費 (家賃/KDDI/水道/ガス) を当月該当の周期かつ未計上 (残高<0 の同 ID
     // 負債が無い) のものだけ抽出する。残高<0 限定の判定で正残高の同名資産
@@ -609,6 +615,11 @@ class AssetLiabilityPlanningService {
       monthlyUnreceivedIncomeTotal: monthlyUnreceivedIncomeTotal,
       cashflowRows: cashflowRows,
     );
+    final creditorContactTasks = AssetCreditorContactService.buildContactTasks(
+      rows: debtMasterRows,
+      baseDate: baseDate,
+      logs: contactLogs,
+    );
 
     return AssetLiabilityWorkbook(
       baseDate: baseDate,
@@ -656,6 +667,11 @@ class AssetLiabilityPlanningService {
       paymentInconsistencies: paymentInconsistencies,
       cashAfterEssentials: emergencyDefenseSummary.cashAfterEssentials,
       collisionTransfers: collisionTransfers,
+      creditorContactTasks: creditorContactTasks,
+      statementImportStatuses:
+          Map<String, CardStatementImportStatus>.unmodifiable(
+        statementImportStatuses,
+      ),
     );
   }
 
