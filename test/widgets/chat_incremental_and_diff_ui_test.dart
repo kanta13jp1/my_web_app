@@ -94,7 +94,9 @@ void main() {
         expect(appliedText, '予算 1500円');
         expect(find.text('適用済み'), findsOneWidget);
         expect(
-            find.byKey(const Key('ai_inline_diff_apply_button')), findsNothing);
+          find.byKey(const Key('ai_inline_diff_apply_button')),
+          findsNothing,
+        );
         expect(tester.takeException(), isNull);
       } finally {
         handle.dispose();
