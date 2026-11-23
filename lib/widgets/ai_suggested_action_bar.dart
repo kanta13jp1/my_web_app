@@ -30,6 +30,8 @@ class AiSuggestedActionBar extends StatefulWidget {
     this.onActionHandled,
     this.monitorService = const AiSuggestedActionMonitorService(),
     this.recordImpressions = true,
+    this.suppressed = false,
+    this.suppressionReason,
   });
 
   final List<AiSuggestedAction> actions;
@@ -40,6 +42,8 @@ class AiSuggestedActionBar extends StatefulWidget {
   final ValueChanged<AiSuggestedActionExecutionResult>? onActionHandled;
   final AiSuggestedActionMonitorService monitorService;
   final bool recordImpressions;
+  final bool suppressed;
+  final String? suppressionReason;
 
   @override
   State<AiSuggestedActionBar> createState() => _AiSuggestedActionBarState();
@@ -64,7 +68,9 @@ class _AiSuggestedActionBarState extends State<AiSuggestedActionBar> {
   }
 
   void _recordNewImpressions() {
-    if (!widget.recordImpressions || widget.actions.isEmpty) {
+    if (widget.suppressed ||
+        !widget.recordImpressions ||
+        widget.actions.isEmpty) {
       return;
     }
     for (final action in widget.actions) {
@@ -209,6 +215,29 @@ class _AiSuggestedActionBarState extends State<AiSuggestedActionBar> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.suppressed) {
+      final reason = widget.suppressionReason;
+      if (reason == null || reason.trim().isEmpty) {
+        return const SizedBox.shrink();
+      }
+      final scheme = Theme.of(context).colorScheme;
+      return Container(
+        key: const Key('ai_suggested_action_suppressed_notice'),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHighest.withAlpha(90),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          reason,
+          style: TextStyle(
+            fontSize: 12,
+            color: scheme.onSurfaceVariant,
+            height: 1.4,
+          ),
+        ),
+      );
+    }
     if (widget.actions.isEmpty) {
       return const SizedBox.shrink();
     }
