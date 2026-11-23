@@ -2329,4 +2329,90 @@ void main() {
       }
     },
   );
+
+  testWidgets(
+    'dark hero sample preview harmonizes with dark surface and keeps 44px mobile target',
+    (tester) async {
+      for (final size in <Size>[
+        const Size(1440, 1000),
+        const Size(390, 844),
+      ]) {
+        await pumpLanding(
+          tester,
+          assignment: _assignment('h04', LandingExperimentVariant.treatment),
+          size: size,
+        );
+
+        final previewFinder = find.byKey(
+          const Key('landing_h11_answer_preview'),
+        );
+        expect(previewFinder, findsOneWidget);
+        final preview = tester.widget<Container>(previewFinder);
+        final decoration = preview.decoration! as BoxDecoration;
+        expect(decoration.color, const Color(0xFF0E1B27));
+        expect(decoration.borderRadius, isNotNull);
+
+        final actionFinder = find.byKey(
+          const Key('landing_h11_answer_preview_action'),
+        );
+        expect(tester.widget(actionFinder), isA<OutlinedButton>());
+        expect(tester.getSize(actionFinder).height, greaterThanOrEqualTo(44));
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+      }
+
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h03', LandingExperimentVariant.control),
+        size: const Size(1200, 900),
+      );
+      final lightPreviewFinder = find.byKey(
+        const Key('landing_h11_answer_preview'),
+      );
+      await Scrollable.ensureVisible(tester.element(lightPreviewFinder));
+      await tester.pump();
+      final lightPreview = tester.widget<Container>(lightPreviewFinder);
+      final lightDecoration = lightPreview.decoration! as BoxDecoration;
+      expect(lightDecoration.color, const Color(0xFFF6FAFE));
+      expect(lightDecoration.borderRadius, isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    },
+  );
+
+  testWidgets(
+    'first-user hero sample preview uses dark-harmonized primary CTA',
+    (tester) async {
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h01', LandingExperimentVariant.treatment),
+        size: const Size(390, 844),
+        landingUri: Uri.parse(
+          'https://example.com/?lp_intent=trial'
+          '&utm_source=x&utm_medium=organic&utm_campaign=first_user_growth',
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      final previewFinder = find.byKey(
+        const Key('landing_h11_answer_preview'),
+      );
+      expect(previewFinder, findsOneWidget);
+      final preview = tester.widget<Container>(previewFinder);
+      final decoration = preview.decoration! as BoxDecoration;
+      expect(decoration.color, const Color(0xFF0E1B27));
+
+      final ctaFinder = find.byKey(
+        const Key('first_user_growth_one_tap_trial'),
+      );
+      expect(ctaFinder, findsOneWidget);
+      expect(tester.widget(ctaFinder), isA<FilledButton>());
+      expect(tester.getSize(ctaFinder).height, greaterThanOrEqualTo(44));
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    },
+  );
 }
