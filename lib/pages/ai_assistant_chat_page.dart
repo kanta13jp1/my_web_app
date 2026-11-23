@@ -11,7 +11,9 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:web/web.dart' as web;
+import 'package:web/web.dart'
+    // ignore: uri_does_not_exist
+    if (dart.library.io) 'package:my_web_app/utils/web_stub.dart' as web;
 
 import '../models/chat_incremental_rendering_config.dart';
 import '../services/generated_ui_sandbox_policy.dart';
