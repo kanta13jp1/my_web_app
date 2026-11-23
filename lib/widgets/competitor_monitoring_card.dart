@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/competitor_discovery_log_service.dart';
+
 class CompetitiveIntelNotebook {
   const CompetitiveIntelNotebook({
     required this.shortId,
@@ -76,7 +78,14 @@ const competitiveIntelNotebookQueue = <CompetitiveIntelNotebook>[
 /// 管理者ダッシュボード用: 競合サイト可用性モニタリングカード。
 /// get-competitor-monitoring Edge Function からデータを取得して表示。
 class CompetitorMonitoringCard extends StatefulWidget {
-  const CompetitorMonitoringCard({super.key});
+  const CompetitorMonitoringCard({
+    super.key,
+    this.discoveryLogService,
+    this.initialDiscoveryLogs,
+  });
+
+  final CompetitorDiscoveryLogService? discoveryLogService;
+  final List<CompetitorDiscoveryLogEntry>? initialDiscoveryLogs;
 
   @override
   State<CompetitorMonitoringCard> createState() =>
@@ -97,6 +106,9 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
   }
 
   Future<void> _runCheck() async {
+    if (widget.initialDiscoveryLogs != null) {
+      return;
+    }
     if (Supabase.instance.client.auth.currentUser == null) {
       setState(() => _checking = false);
       return;
@@ -113,6 +125,10 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
   }
 
   Future<void> _load() async {
+    if (widget.initialDiscoveryLogs != null) {
+      setState(() => _loading = false);
+      return;
+    }
     if (Supabase.instance.client.auth.currentUser == null) {
       setState(() => _loading = false);
       return;
@@ -257,6 +273,11 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
               )
             else
               ..._competitors.map(_buildRow),
+            const SizedBox(height: 16),
+            CompetitorDiscoveryLogsPanel(
+              service: widget.discoveryLogService,
+              initialLogs: widget.initialDiscoveryLogs,
+            ),
           ],
         ),
       ),
@@ -491,6 +512,295 @@ class _SummaryChip extends StatelessWidget {
               height: 1.5,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 競合発掘ワークフロー (`competitor-discovery.yml`) の検索・応答・0件アラートログ閲覧パネル (#2696)。
+class CompetitorDiscoveryLogsPanel extends StatefulWidget {
+  const CompetitorDiscoveryLogsPanel({
+    super.key,
+    this.service,
+    this.initialLogs,
+  });
+
+  final CompetitorDiscoveryLogService? service;
+  final List<CompetitorDiscoveryLogEntry>? initialLogs;
+
+  @override
+  State<CompetitorDiscoveryLogsPanel> createState() =>
+      _CompetitorDiscoveryLogsPanelState();
+}
+
+class _CompetitorDiscoveryLogsPanelState
+    extends State<CompetitorDiscoveryLogsPanel> {
+  final TextEditingController _searchCtrl = TextEditingController();
+  late final CompetitorDiscoveryLogService _service =
+      widget.service ?? const CompetitorDiscoveryLogService();
+
+  bool _loading = false;
+  bool _onlyZeroAlerts = false;
+  String? _error;
+  List<CompetitorDiscoveryLogEntry> _logs =
+      const <CompetitorDiscoveryLogEntry>[];
+
+  @override
+  void initState() {
+    super.initState();
+    final seeded = widget.initialLogs;
+    if (seeded != null) {
+      _logs = seeded;
+    } else if (widget.service != null) {
+      _loadLogs();
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadLogs() async {
+    if (widget.initialLogs != null && widget.service == null) {
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final fetched = await _service.fetchLogs();
+      if (mounted) {
+        setState(() => _logs = fetched);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = '発掘ログ読込エラー: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final filtered = CompetitorDiscoveryLogService.filterLogs(
+      _logs,
+      query: _searchCtrl.text,
+      onlyZeroResultAlerts: _onlyZeroAlerts,
+    );
+
+    return Container(
+      key: const ValueKey<String>('competitor_discovery_logs_panel'),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.manage_search, size: 18, color: scheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '競合発掘ログ・0件アラート履歴',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: scheme.onSurface,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              IconButton(
+                key:
+                    const ValueKey<String>('competitor_discovery_refresh_logs'),
+                onPressed: _loading ? null : _loadLogs,
+                icon: const Icon(Icons.refresh, size: 18),
+                tooltip: '発掘ログを再読み込み',
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            key: const ValueKey<String>('competitor_discovery_log_search'),
+            controller: _searchCtrl,
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(
+              labelText: 'ログ検索（週・カテゴリ・エラー・クエリ）',
+              prefixIcon: Icon(Icons.search),
+              isDense: true,
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: FilterChip(
+                  key: const ValueKey<String>(
+                    'competitor_discovery_zero_alert_filter',
+                  ),
+                  label: const Text('0件アラートのみ'),
+                  selected: _onlyZeroAlerts,
+                  materialTapTargetSize: MaterialTapTargetSize.padded,
+                  onSelected: (value) =>
+                      setState(() => _onlyZeroAlerts = value),
+                ),
+              ),
+              Text(
+                '表示件数: ${filtered.length}件',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: scheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_error != null)
+            Text(
+              _error!,
+              style: TextStyle(color: scheme.error, fontSize: 13, height: 1.4),
+            )
+          else if (filtered.isEmpty)
+            Text(
+              '条件に一致する発掘ログはありません。',
+              style: TextStyle(
+                color: scheme.onSurfaceVariant,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            )
+          else
+            for (final entry in filtered) _DiscoveryLogTile(entry: entry),
+        ],
+      ),
+    );
+  }
+}
+
+class _DiscoveryLogTile extends StatelessWidget {
+  const _DiscoveryLogTile({required this.entry});
+
+  final CompetitorDiscoveryLogEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      key: ValueKey<String>('competitor_discovery_log_item_${entry.id}'),
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        title: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: <Widget>[
+            Text(
+              'Week ${entry.discoveryWeek}',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: scheme.onSurface,
+              ),
+            ),
+            if (entry.zeroResultAlertTriggered)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: scheme.errorContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '0件アラート',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: scheme.onErrorContainer,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        subtitle: Text(
+          '候補 ${entry.totalCandidates} / 追加 ${entry.stagedCount} / エラー ${entry.errorCount}',
+          style: TextStyle(
+            fontSize: 12,
+            color: scheme.onSurfaceVariant,
+            height: 1.4,
+          ),
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        children: <Widget>[
+          if (entry.alertSummary != null &&
+              entry.alertSummary!.isNotEmpty) ...<Widget>[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                entry.alertSummary!,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: scheme.error,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+          ],
+          if (entry.errorLogs.isNotEmpty) ...<Widget>[
+            for (final err in entry.errorLogs)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'エラー: $err',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: scheme.onSurface,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 6),
+          ],
+          for (final q in entry.queries)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'カテゴリ ${q.category} (HTTP ${q.httpStatus ?? '-'} / 候補 ${q.candidateCount}): ${q.promptPreview}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: scheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
