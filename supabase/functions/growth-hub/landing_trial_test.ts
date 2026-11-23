@@ -1,10 +1,13 @@
 import {
   assertEquals,
+  assertRejects,
   assertStringIncludes,
   assertThrows,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
+  DEFAULT_LANDING_TRIAL_GEMINI_MODEL,
   generateLandingTrialSuggestion,
+  generateLandingTrialSuggestionWithFallback,
   hashLandingTrialClient,
   LandingTrialInputError,
   landingTrialQualityIssues,
@@ -235,4 +238,107 @@ Deno.test("landing trial retries one generic response and returns repaired outpu
     content: string;
   }>;
   assertStringIncludes(repairMessages[2].content, "generic_action");
+});
+
+Deno.test("landing trial falls back to Gemini when OpenAI returns 429", async () => {
+  const calledUrls: string[] = [];
+  let geminiHeaderKey = "";
+
+  const suggestion = await generateLandingTrialSuggestionWithFallback({
+    openAiApiKey: "openai-key",
+    geminiApiKey: "gemini-key",
+    prompt: "毎月の支出が増えていて、どこから見直すべきか分かりません",
+    fetchImpl: (input, init) => {
+      const url = String(input);
+      calledUrls.push(url);
+      if (url.includes("api.openai.com")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ error: "rate_limited" }), {
+            status: 429,
+          }),
+        );
+      }
+      const headers = new Headers(init?.headers);
+      geminiHeaderKey = headers.get("x-goog-api-key") ?? "";
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      text:
+                        '{"action":"先月の明細で最大の固定費を1件特定","reason":"固定費の最大項目を先に決めると削減効果が見えるため"}',
+                    },
+                  ],
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    },
+  });
+
+  assertEquals(calledUrls.length, 2);
+  assertEquals(calledUrls[0], "https://api.openai.com/v1/chat/completions");
+  assertStringIncludes(calledUrls[1], DEFAULT_LANDING_TRIAL_GEMINI_MODEL);
+  assertEquals(calledUrls[1].includes("gemini-key"), false);
+  assertEquals(geminiHeaderKey, "gemini-key");
+  assertEquals(suggestion.action, "先月の明細で最大の固定費を1件特定");
+  assertEquals(suggestion.provider, "gemini");
+  assertEquals(suggestion.model, DEFAULT_LANDING_TRIAL_GEMINI_MODEL);
+});
+
+Deno.test("landing trial uses Gemini directly when OpenAI key is missing", async () => {
+  const calledUrls: string[] = [];
+  const suggestion = await generateLandingTrialSuggestionWithFallback({
+    openAiApiKey: "",
+    geminiApiKey: "gemini-only-key",
+    geminiModel: "gemini-2.5-flash",
+    prompt: "仕事が多すぎて優先順位を決められない",
+    fetchImpl: (input) => {
+      calledUrls.push(String(input));
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      text:
+                        '{"action":"今日締切の仕事を1件開き次の操作を書く","reason":"対象と次の動作を固定すると迷いを止めて着手できるため"}',
+                    },
+                  ],
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    },
+  });
+
+  assertEquals(calledUrls.length, 1);
+  assertStringIncludes(calledUrls[0], "generativelanguage.googleapis.com");
+  assertEquals(suggestion.provider, "gemini");
+});
+
+Deno.test("landing trial fails when both OpenAI and Gemini fail", async () => {
+  await assertRejects(
+    () =>
+      generateLandingTrialSuggestionWithFallback({
+        openAiApiKey: "openai-key",
+        geminiApiKey: "gemini-key",
+        prompt: "仕事が多すぎて優先順位を決められない",
+        fetchImpl: () =>
+          Promise.resolve(new Response("upstream error", { status: 503 })),
+      }),
+    Error,
+    "Gemini landing trial failed (503)",
+  );
 });

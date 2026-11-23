@@ -817,6 +817,15 @@ jobs:
           cp web/release-notes.json build/web/release-notes.json
           cp .ci-generated/ai-university-catalog.json build/web/ai-university-catalog.json
 
+      - name: Optimize bundled web fonts (subset NotoSansJP & NotoColorEmoji)
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          if ! dpkg -s python3-fonttools >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends python3-fonttools
+          fi
+          /usr/bin/python3 scripts/optimize_web_fonts.py --build-dir build/web --repo-root . --require-fonts
+
       - name: Cache-bust OGP image URLs
         if: steps.changes.outputs.web == 'true'
         run: |
