@@ -176,10 +176,12 @@ void main() {
 
       // Add an acquisition target (#1392 / #2770).
       final targetCard = find.byKey(const Key('self_skill_target_form_card'));
-      final targetNameField = find.descendant(
-        of: targetCard,
-        matching: find.byType(FocusBlurTextField).first,
-      );
+      final targetNameField = find
+          .descendant(
+            of: targetCard,
+            matching: find.byType(FocusBlurTextField),
+          )
+          .first;
       await tester.ensureVisible(targetNameField);
       await tester.enterText(targetNameField, '法務・知財戦略');
       final targetSubmitBtn = find.byKey(
@@ -210,7 +212,8 @@ void main() {
           home: CareerMonthlyKpiPage(skillAssetService: service),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
       await tester.scrollUntilVisible(
         find.byKey(const Key('self_skill_asset_portfolio_card')),
         300,
