@@ -4463,11 +4463,14 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
       // ignore: unused_local_variable_for_now (= expanded は API 互換性のため残置)
       // if (expanded) return Expanded(child: t);  // = 旧動作: タスク名列が flex で resize 不可だった
       // resize handle を右端に併設 (= _colNonResizable は SizedBox.shrink 返却)
+      // 列全体幅を w に一致させ、handle 5px 分の header overflow を防ぐ。
+      final labelWidth =
+          _colNonResizable.contains(key) ? w : math.max(0.0, w - 5);
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            width: w,
+            width: labelWidth,
             child: align == null ? t : Center(child: t),
           ),
           _buildResizeHandle(key),
@@ -4622,7 +4625,10 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
                   : BorderSide.none,
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: EdgeInsets.only(
+        left: (isDelayedNoPlan || isDelayed) ? 5 : 8,
+        right: 8,
+      ),
       child: Row(
         children: [
           // # 列
