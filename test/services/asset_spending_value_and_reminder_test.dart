@@ -269,7 +269,9 @@ invalid-line
       expect(schedule.overdueItems.first.overdueDays, 5);
       // 36500 * 0.20 / 365 = 20 yen/day -> 5 days = 100 yen.
       expect(
-          schedule.overdueItems.first.dailyLateFeeAmount, closeTo(20.0, 0.1));
+        schedule.overdueItems.first.dailyLateFeeAmount,
+        closeTo(20.0, 0.1),
+      );
       expect(
         schedule.overdueItems.first.estimatedLateFeeAmount,
         closeTo(100.0, 0.1),

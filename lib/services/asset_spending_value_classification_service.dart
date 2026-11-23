@@ -307,7 +307,8 @@ class AssetSpendingValueClassificationService {
     final fingerprint = fingerprintFor(entry);
     final rawText = (entry.categoryDescription ?? entry.description).trim();
     final normalized = rawText.toLowerCase();
-    final rawCategory = SalarySpendingBreakdownService.categorize(rawText);
+    final rawCategory =
+        const SalarySpendingBreakdownService().categorize(rawText);
 
     final userOverride = overrides[fingerprint] ?? explicitCategory;
     if (userOverride != null) {
