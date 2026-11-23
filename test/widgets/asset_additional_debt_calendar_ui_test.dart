@@ -90,8 +90,7 @@ void main() {
                         context: context,
                         builder: (_) => AssetAdditionalDebtCalendarDialog(
                           initialDate: DateTime(2026, 7, 10),
-                          accountOptions:
-                              const <AssetAdditionalDebtAccountOption>[
+                          accountOptions: const <AssetAdditionalDebtAccountOption>[
                             AssetAdditionalDebtAccountOption(
                               id: 'mobit',
                               name: 'モビット',
