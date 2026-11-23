@@ -7,6 +7,7 @@ import {
   mcpActionToToolName,
   mcpConfirmationPhrase,
   mcpRequestedScopes,
+  resolveMcpLifecycleJsonRpc,
 } from "./mcp_my_web_app_tools.ts";
 
 Deno.test("MCP tool catalog exposes the prototype + notes CRUD tools", () => {
@@ -87,4 +88,78 @@ Deno.test("feature request payload normalizes WBS fields", () => {
     assertEquals(result.payload.status, "pending");
     assertEquals(result.payload.planned_end_date, "2026-05-10");
   }
+});
+
+Deno.test("MCP lifecycle resolver handles initialize, notifications, ping, and unknown methods", () => {
+  const initRes = resolveMcpLifecycleJsonRpc({
+    jsonrpc: "2.0",
+    id: 1,
+    method: "initialize",
+    params: { protocolVersion: "2025-03-26" },
+  });
+  assertEquals(initRes?.kind, "response");
+  if (initRes?.kind === "response") {
+    assertEquals(initRes.status, 200);
+    const result = initRes.payload.result as Record<string, unknown>;
+    assertEquals(result.protocolVersion, "2025-03-26");
+  }
+
+  assertEquals(
+    resolveMcpLifecycleJsonRpc({
+      jsonrpc: "2.0",
+      method: "notifications/initialized",
+    }),
+    { kind: "notification" },
+  );
+
+  const pingRes = resolveMcpLifecycleJsonRpc({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "ping",
+  });
+  assertEquals(pingRes, {
+    kind: "response",
+    status: 200,
+    payload: { jsonrpc: "2.0", id: 2, result: {} },
+  });
+
+  assertEquals(
+    resolveMcpLifecycleJsonRpc({
+      jsonrpc: "2.0",
+      id: 3,
+      method: "tools/list",
+    }),
+    null,
+  );
+  assertEquals(
+    resolveMcpLifecycleJsonRpc({
+      jsonrpc: "2.0",
+      id: 4,
+      method: "tools/call",
+    }),
+    null,
+  );
+
+  const unknownRes = resolveMcpLifecycleJsonRpc({
+    jsonrpc: "2.0",
+    id: 5,
+    method: "resources/list",
+  });
+  assertEquals(unknownRes, {
+    kind: "response",
+    status: 200,
+    payload: {
+      jsonrpc: "2.0",
+      id: 5,
+      error: { code: -32601, message: "Method not found: resources/list" },
+    },
+  });
+
+  assertEquals(
+    resolveMcpLifecycleJsonRpc({
+      jsonrpc: "2.0",
+      method: "notifications/unknown",
+    }),
+    { kind: "notification" },
+  );
 });

@@ -49,6 +49,7 @@ import {
   mcpConfirmationPhrase,
   type McpMyWebAppToolName,
   mcpRequestedScopes,
+  resolveMcpLifecycleJsonRpc,
 } from "../_shared/mcp_my_web_app_tools.ts";
 import {
   connectorsAvailableToUser,
@@ -865,7 +866,7 @@ function mcpActionFromJsonRpc(body: Record<string, unknown>): string {
   const method = String(body.method);
   if (method === "tools/list") return "mcp.tools.list";
   if (method === "tools/call") return "mcp.tool.call";
-  return "";
+  return "mcp.lifecycle";
 }
 
 function mcpJsonRpcId(body: Record<string, unknown>): unknown {
@@ -890,6 +891,8 @@ function mcpProtocolToolCatalog(): Array<Record<string, unknown>> {
     description: tool.description,
     inputSchema: tool.input_schema,
     annotations: {
+      readOnlyHint: !tool.write_confirmation_required,
+      destructiveHint: false,
       requested_scopes: tool.requested_scopes,
       write_confirmation_required: tool.write_confirmation_required,
       invoke_action: tool.invoke_action,
@@ -1025,6 +1028,16 @@ async function handleMcpFacade(
   body: Record<string, unknown>,
   admin: SupabaseClient,
 ): Promise<Response | null> {
+  if (action === "mcp.lifecycle" && isMcpJsonRpcRequest(body)) {
+    const lifecycle = resolveMcpLifecycleJsonRpc(body);
+    if (lifecycle) {
+      if (lifecycle.kind === "notification") {
+        return new Response(null, { status: 202, headers: corsHeaders });
+      }
+      return json(lifecycle.payload, lifecycle.status);
+    }
+  }
+
   if (action === "mcp.tools.list") {
     if (isMcpJsonRpcRequest(body)) {
       return json(mcpJsonRpcResult(body, { tools: mcpProtocolToolCatalog() }));

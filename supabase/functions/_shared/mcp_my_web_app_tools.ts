@@ -82,6 +82,74 @@ export function hasMcpWriteConfirmation(
     String(body.confirmation_phrase ?? "").trim() === phrase;
 }
 
+export const MCP_PROTOCOL_VERSION = "2025-03-26";
+export const MCP_SERVER_INFO = {
+  name: "my-web-app-tools-hub",
+  version: "1.0.0",
+} as const;
+
+export type McpLifecycleResolution =
+  | { kind: "notification" }
+  | { kind: "response"; status: number; payload: Record<string, unknown> };
+
+export function resolveMcpLifecycleJsonRpc(
+  body: Record<string, unknown>,
+): McpLifecycleResolution | null {
+  if (body.jsonrpc !== "2.0" || typeof body.method !== "string") {
+    return null;
+  }
+  const method = body.method;
+  if (method === "tools/list" || method === "tools/call") {
+    return null;
+  }
+  const isNotification = !("id" in body) ||
+    body.id === undefined ||
+    body.id === null;
+  if (
+    method === "notifications/initialized" ||
+    method === "notifications/cancelled"
+  ) {
+    return { kind: "notification" };
+  }
+  if (method === "initialize") {
+    if (isNotification) return { kind: "notification" };
+    return {
+      kind: "response",
+      status: 200,
+      payload: {
+        jsonrpc: "2.0",
+        id: body.id,
+        result: {
+          protocolVersion: MCP_PROTOCOL_VERSION,
+          capabilities: { tools: { listChanged: false } },
+          serverInfo: MCP_SERVER_INFO,
+        },
+      },
+    };
+  }
+  if (method === "ping") {
+    if (isNotification) return { kind: "notification" };
+    return {
+      kind: "response",
+      status: 200,
+      payload: { jsonrpc: "2.0", id: body.id, result: {} },
+    };
+  }
+  if (isNotification) return { kind: "notification" };
+  return {
+    kind: "response",
+    status: 200,
+    payload: {
+      jsonrpc: "2.0",
+      id: body.id,
+      error: {
+        code: -32601,
+        message: `Method not found: ${method}`,
+      },
+    },
+  };
+}
+
 export function buildMcpToolCatalog(): McpToolDefinition[] {
   return [
     {
