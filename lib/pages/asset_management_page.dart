@@ -1,4 +1,5 @@
 import '../services/asset_high_interest_highlight_service.dart';
+import '../services/asset_payment_discrepancy_service.dart';
 import '../services/asset_subscription_audit_mutation_queue.dart';
 import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
 import '../widgets/asset_recorded_change_details.dart';
@@ -33627,6 +33628,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     final isHighInterestSort =
         _debtMasterSortMode == AssetDebtSortMode.highInterestPriority;
+    final discrepancies = AssetPaymentDiscrepancyService.detectDiscrepancies(
+      workbook,
+    );
+    final discrepancyById = <String, AssetPaymentDiscrepancyItem>{
+      for (final discrepancy in discrepancies)
+        discrepancy.accountId: discrepancy,
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -33707,7 +33715,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _buildPaymentInconsistencySection(workbook),
           const SizedBox(height: 10),
         ],
-        for (final row in rows) _buildDebtMasterCard(row, workbook),
+        if (discrepancies.isNotEmpty) ...[
+          _buildPaymentDiscrepancySection(discrepancies),
+          const SizedBox(height: 10),
+        ],
+        for (final row in rows)
+          _buildDebtMasterCard(
+            row,
+            workbook,
+            discrepancy: discrepancyById[row.id],
+          ),
       ],
     );
   }
@@ -34113,6 +34130,253 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_saveAssetLiabilityMonthlyState());
   }
 
+  Widget _buildPaymentDiscrepancySection(
+    List<AssetPaymentDiscrepancyItem> items,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      key: const Key('asset_payment_discrepancy_card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF422006) : const Color(0xFFFEF3C7),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFD97706).withValues(alpha: 0.45),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Icon(
+                Icons.compare_arrows_outlined,
+                color: Color(0xFFB45309),
+                size: 18,
+              ),
+              Text(
+                '実績と予定の乖離（${items.length}件）',
+                style: TextStyle(
+                  color: isDark
+                      ? const Color(0xFFFCD34D)
+                      : const Color(0xFF92400E),
+                  fontWeight: FontWeight.bold,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '今月支払予定額と実支払額に乖離があります。予定額への反映または差分理由メモを保存できます。',
+            style: TextStyle(fontSize: 12, height: 1.4),
+          ),
+          const SizedBox(height: 8),
+          for (final item in items) ...[
+            Container(
+              key: Key('asset_discrepancy_row_${item.accountId}'),
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color:
+                    isDark ? const Color(0xFF451A03) : const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.55),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (item.missingReason)
+                        _buildTextStatusChip(
+                          label: '差分あり',
+                          color: const Color(0xFFB45309),
+                        ),
+                      Text(
+                        item.accountName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(
+                        '予定: ${_formatManagementYen(item.scheduledPaymentAmount)} / 実支払: ${_formatManagementYen(item.actualPaymentAmount)}（差額 ${item.differenceAmount >= 0 ? '+${_formatManagementYen(item.differenceAmount)}' : _formatManagementYen(item.differenceAmount)}）',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (item.reason != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '理由メモ: ${item.reason}',
+                      style: const TextStyle(fontSize: 12, height: 1.4),
+                    ),
+                  ],
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      OutlinedButton.icon(
+                        key: Key('asset_discrepancy_sync_${item.accountId}'),
+                        style: OutlinedButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          foregroundColor: isDark
+                              ? const Color(0xFFFCD34D)
+                              : const Color(0xFF92400E),
+                          side: const BorderSide(color: Color(0xFFD97706)),
+                        ),
+                        onPressed: () => _showPaymentDiscrepancyFixDialog(
+                          item,
+                          defaultToSync: true,
+                        ),
+                        icon: const Icon(Icons.sync_alt, size: 16),
+                        label: const Text('予定へ反映'),
+                      ),
+                      TextButton.icon(
+                        key: Key('asset_discrepancy_fix_${item.accountId}'),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          foregroundColor: const Color(0xFF0F766E),
+                        ),
+                        onPressed: () => _showPaymentDiscrepancyFixDialog(item),
+                        icon: const Icon(Icons.edit_note_outlined, size: 16),
+                        label: const Text('差分確認・修正'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showPaymentDiscrepancyFixDialog(
+    AssetPaymentDiscrepancyItem item, {
+    bool defaultToSync = false,
+  }) async {
+    final result = await showDialog<_PaymentDiscrepancyFixResult>(
+      context: context,
+      builder: (dialogContext) => _PaymentDiscrepancyFixDialog(
+        item: item,
+        initialReason:
+            _paymentDifferenceReasons[item.accountId] ?? item.reason ?? '',
+        formatYen: _formatManagementYen,
+        defaultToSync: defaultToSync,
+      ),
+    );
+    if (result == null || !mounted) {
+      return;
+    }
+    if (result.syncScheduled) {
+      _applyDiscrepancySyncToScheduled(item, reason: result.reason);
+      return;
+    }
+    final normalized = result.reason.trim();
+    setState(() {
+      if (normalized.isEmpty) {
+        _paymentDifferenceReasons.remove(item.accountId);
+        _paymentDifferenceReasonControllers[item.accountId]?.clear();
+      } else {
+        _paymentDifferenceReasons[item.accountId] = normalized;
+        _paymentDifferenceReasonControllers[item.accountId]?.text = normalized;
+      }
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _applyDiscrepancySyncToScheduled(
+    AssetPaymentDiscrepancyItem item, {
+    String? reason,
+  }) {
+    final prevHasOverride =
+        _monthlyPaymentOverrides.containsKey(item.accountId);
+    final prevOverride = _monthlyPaymentOverrides[item.accountId];
+    final prevConfirmed = _billingConfirmedAccountIds.contains(item.accountId);
+    final prevHasReason = _paymentDifferenceReasons.containsKey(item.accountId);
+    final prevReason = _paymentDifferenceReasons[item.accountId];
+    final normalizedReason = reason?.trim() ?? '';
+
+    setState(() {
+      _monthlyPaymentOverrides[item.accountId] = item.actualPaymentAmount;
+      _monthlyPaymentControllers[item.accountId]?.text =
+          item.actualPaymentAmount.round().toString();
+      _billingConfirmedAccountIds.add(item.accountId);
+      if (normalizedReason.isNotEmpty) {
+        _paymentDifferenceReasons[item.accountId] = normalizedReason;
+        _paymentDifferenceReasonControllers[item.accountId]?.text =
+            normalizedReason;
+      }
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 6),
+          content: Text('${item.accountName}の予定額を実支払額に反映しました'),
+          action: SnackBarAction(
+            label: '元に戻す',
+            onPressed: () {
+              if (!mounted) {
+                return;
+              }
+              setState(() {
+                if (prevHasOverride && prevOverride != null) {
+                  _monthlyPaymentOverrides[item.accountId] = prevOverride;
+                  _monthlyPaymentControllers[item.accountId]?.text =
+                      prevOverride.round().toString();
+                } else {
+                  _monthlyPaymentOverrides.remove(item.accountId);
+                  _monthlyPaymentControllers[item.accountId]?.clear();
+                }
+                if (prevConfirmed) {
+                  _billingConfirmedAccountIds.add(item.accountId);
+                } else {
+                  _billingConfirmedAccountIds.remove(item.accountId);
+                }
+                if (prevHasReason && prevReason != null) {
+                  _paymentDifferenceReasons[item.accountId] = prevReason;
+                  _paymentDifferenceReasonControllers[item.accountId]?.text =
+                      prevReason;
+                } else {
+                  _paymentDifferenceReasons.remove(item.accountId);
+                  _paymentDifferenceReasonControllers[item.accountId]?.clear();
+                }
+              });
+              unawaited(_saveAssetLiabilityMonthlyState());
+            },
+          ),
+        ),
+      );
+  }
+
   GlobalKey _debtMasterCardKeyFor(String accountId) {
     return _debtMasterCardKeys.putIfAbsent(
       accountId,
@@ -34322,8 +34586,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildDebtMasterCard(
     AssetLiabilityDebtRow row,
-    AssetLiabilityWorkbook workbook,
-  ) {
+    AssetLiabilityWorkbook workbook, {
+    AssetPaymentDiscrepancyItem? discrepancy,
+  }) {
     final difference = row.paymentDifferenceAmount;
     final differenceColor = difference == null || difference == 0
         ? const Color(0xFF64748B)
@@ -34378,6 +34643,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             child: _buildTextStatusChip(
                               label: '使用停止中',
                               color: const Color(0xFFB91C1C),
+                            ),
+                          ),
+                        if (discrepancy != null)
+                          InkWell(
+                            key: Key('asset_debt_diff_badge_${row.id}'),
+                            borderRadius: BorderRadius.circular(999),
+                            onTap: () =>
+                                _showPaymentDiscrepancyFixDialog(discrepancy),
+                            child: _buildTextStatusChip(
+                              label: '差分あり',
+                              color: const Color(0xFFB45309),
                             ),
                           ),
                         if (rateTier != AssetDebtRateTier.normal &&
@@ -39016,6 +39292,132 @@ class _PaymentInconsistencyBatchDialogState
                     ),
                   ),
           child: const Text('選択行へ予定額を実支払額として反映'),
+        ),
+      ],
+    );
+  }
+}
+
+class _PaymentDiscrepancyFixResult {
+  const _PaymentDiscrepancyFixResult({
+    required this.syncScheduled,
+    required this.reason,
+  });
+
+  final bool syncScheduled;
+  final String reason;
+}
+
+class _PaymentDiscrepancyFixDialog extends StatefulWidget {
+  const _PaymentDiscrepancyFixDialog({
+    required this.item,
+    required this.initialReason,
+    required this.formatYen,
+    this.defaultToSync = false,
+  });
+
+  final AssetPaymentDiscrepancyItem item;
+  final String initialReason;
+  final String Function(double) formatYen;
+  final bool defaultToSync;
+
+  @override
+  State<_PaymentDiscrepancyFixDialog> createState() =>
+      _PaymentDiscrepancyFixDialogState();
+}
+
+class _PaymentDiscrepancyFixDialogState
+    extends State<_PaymentDiscrepancyFixDialog> {
+  late final TextEditingController _reasonController;
+
+  @override
+  void initState() {
+    super.initState();
+    _reasonController = TextEditingController(text: widget.initialReason);
+  }
+
+  @override
+  void dispose() {
+    _reasonController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    final diff = item.differenceAmount;
+    final signedDiff =
+        diff >= 0 ? '+${widget.formatYen(diff)}' : widget.formatYen(diff);
+    return AlertDialog(
+      key: const Key('asset_discrepancy_fix_dialog'),
+      title: Text('${item.accountName} の乖離を確認・修正'),
+      content: SizedBox(
+        width: 420,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '予定額 ${widget.formatYen(item.scheduledPaymentAmount)} に対し、'
+                '実支払額 ${widget.formatYen(item.actualPaymentAmount)}'
+                '（差額 $signedDiff）',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                widget.defaultToSync
+                    ? 'この実支払額を今月の支払予定額へ反映します。必要に応じて差分理由メモも残せます。'
+                    : '「予定額を実額に更新」または「差分理由のみ保存」を選択してください。反映直後は「元に戻す」から取り消せます。',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                key: const Key('asset_discrepancy_reason_field'),
+                controller: _reasonController,
+                decoration: const InputDecoration(
+                  labelText: '差分理由メモ (任意)',
+                  hintText: '例: 引落実額に確定 / 端数調整',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('キャンセル'),
+        ),
+        OutlinedButton(
+          key: const Key('asset_discrepancy_save_reason_button'),
+          onPressed: () => Navigator.of(context).pop(
+            _PaymentDiscrepancyFixResult(
+              syncScheduled: false,
+              reason: _reasonController.text.trim(),
+            ),
+          ),
+          child: const Text('差分理由のみ保存'),
+        ),
+        FilledButton(
+          key: const Key('asset_discrepancy_sync_confirm_button'),
+          onPressed: () => Navigator.of(context).pop(
+            _PaymentDiscrepancyFixResult(
+              syncScheduled: true,
+              reason: _reasonController.text.trim(),
+            ),
+          ),
+          child: const Text('予定額を実額に更新'),
         ),
       ],
     );
