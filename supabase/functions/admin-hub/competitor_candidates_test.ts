@@ -15,7 +15,9 @@ class InMemoryCandidateStore implements CompetitorCandidateStore {
   rows: CompetitorCandidateReviewRow[] = [];
   profiles = new Map<string, AdminProfileRow>();
 
-  getAdminProfile(userId: string): Promise<CandidateStoreResult<AdminProfileRow>> {
+  getAdminProfile(
+    userId: string,
+  ): Promise<CandidateStoreResult<AdminProfileRow>> {
     return Promise.resolve({
       data: this.profiles.get(userId) ?? null,
       error: null,
@@ -56,11 +58,14 @@ const ADMIN_CALLER: CandidateCallerContext = {
   isServiceRole: false,
 };
 
-Deno.test("verifyCandidateUrl flags 404 and SSRF private IPs while passing 200", async () => {
+const PUBLIC_DNS = () => Promise.resolve(["93.184.216.34"]);
+
+Deno.test("verifyCandidateUrl blocks IPv6, DNS rebinding, and SSRF redirects while allowing safe URLs", async () => {
   const okRes = await verifyCandidateUrl(
     "https://example.com/about",
     () => Promise.resolve(new Response(null, { status: 200 })),
     "2026-11-24T00:00:00Z",
+    PUBLIC_DNS,
   );
   assertEquals(okRes.statusCode, 200);
   assertEquals(okRes.needsManualReview, false);
@@ -69,13 +74,88 @@ Deno.test("verifyCandidateUrl flags 404 and SSRF private IPs while passing 200",
     "https://example.com/fake-404",
     () => Promise.resolve(new Response(null, { status: 404 })),
     "2026-11-24T00:00:00Z",
+    PUBLIC_DNS,
   );
   assertEquals(notFound.statusCode, 404);
   assertEquals(notFound.needsManualReview, true);
 
-  const blocked = await verifyCandidateUrl("http://127.0.0.1:8080/internal");
-  assertEquals(blocked.statusCode, null);
-  assertEquals(blocked.needsManualReview, true);
+  for (
+    const literal of [
+      "http://127.0.0.1:8080/internal",
+      "http://[::1]/admin",
+      "http://[fc00::1]/meta",
+      "http://[fe80::1]/meta",
+      "http://[::ffff:127.0.0.1]/local",
+      "http://[::ffff:a9fe:a9fe]/latest/meta-data",
+    ]
+  ) {
+    const blocked = await verifyCandidateUrl(
+      literal,
+      () => {
+        throw new Error("must not fetch blocked IP");
+      },
+      "2026-11-24T00:00:00Z",
+      PUBLIC_DNS,
+    );
+    assertEquals(blocked.statusCode, null);
+    assertEquals(blocked.needsManualReview, true);
+  }
+
+  // DNS resolving to private/metadata IP must block before fetch
+  let fetchCalls = 0;
+  const dnsRebindBlocked = await verifyCandidateUrl(
+    "https://rebind.example.com/secret",
+    () => {
+      fetchCalls += 1;
+      return Promise.resolve(new Response(null, { status: 200 }));
+    },
+    "2026-11-24T00:00:00Z",
+    () => Promise.resolve(["169.254.169.254"]),
+  );
+  assertEquals(fetchCalls, 0);
+  assertEquals(dnsRebindBlocked.needsManualReview, true);
+
+  // Redirect to internal metadata IP must block before following 2nd hop
+  let hopCount = 0;
+  const redirectSsrf = await verifyCandidateUrl(
+    "https://public.example.com/start",
+    () => {
+      hopCount += 1;
+      return Promise.resolve(
+        new Response(null, {
+          status: 302,
+          headers: { location: "http://169.254.169.254/latest/meta-data" },
+        }),
+      );
+    },
+    "2026-11-24T00:00:00Z",
+    PUBLIC_DNS,
+  );
+  assertEquals(hopCount, 1);
+  assertEquals(redirectSsrf.needsManualReview, true);
+
+  // Valid redirect to another public URL succeeds
+  let okHops = 0;
+  const validRedirect = await verifyCandidateUrl(
+    "https://public.example.com/old",
+    () => {
+      okHops += 1;
+      if (okHops === 1) {
+        return Promise.resolve(
+          new Response(null, {
+            status: 301,
+            headers: { location: "https://public.example.com/new" },
+          }),
+        );
+      }
+      return Promise.resolve(new Response(null, { status: 200 }));
+    },
+    "2026-11-24T00:00:00Z",
+    PUBLIC_DNS,
+  );
+  assertEquals(okHops, 2);
+  assertEquals(validRedirect.statusCode, 200);
+  assertEquals(validRedirect.needsManualReview, false);
 });
 
 Deno.test("competitor_candidate actions reject unauthenticated (401) and non-admin (403) callers", async () => {
@@ -100,6 +180,9 @@ Deno.test("competitor_candidate actions reject unauthenticated (401) and non-adm
     store,
     { userId: "non-admin", isServiceRole: false },
     { candidate_id: "cand-1" },
+    undefined,
+    undefined,
+    PUBLIC_DNS,
   );
   assertEquals(nonAdminVerify.status, 403);
 });
@@ -129,7 +212,10 @@ Deno.test("handleCompetitorCandidateVerifyUrl and handleCompetitorCandidateRevie
     { only_manual_review: true },
   );
   assertEquals(list.status, 200);
-  assertEquals((list.body.candidates as CompetitorCandidateReviewRow[]).length, 1);
+  assertEquals(
+    (list.body.candidates as CompetitorCandidateReviewRow[]).length,
+    1,
+  );
 
   const reverified = await handleCompetitorCandidateVerifyUrl(
     store,
@@ -137,10 +223,12 @@ Deno.test("handleCompetitorCandidateVerifyUrl and handleCompetitorCandidateRevie
     { candidate_id: "cand-404" },
     () => Promise.resolve(new Response(null, { status: 200 })),
     "2026-11-24T01:00:00Z",
+    PUBLIC_DNS,
   );
   assertEquals(reverified.status, 200);
   assertEquals(
-    (reverified.body.candidate as CompetitorCandidateReviewRow).needs_manual_review,
+    (reverified.body.candidate as CompetitorCandidateReviewRow)
+      .needs_manual_review,
     false,
   );
 

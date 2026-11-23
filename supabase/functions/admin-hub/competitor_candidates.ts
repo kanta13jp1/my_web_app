@@ -118,64 +118,121 @@ export interface UrlCheckResult {
   checkedAt: string;
 }
 
-function isBlockedPrivateIpv4(host: string): boolean {
-  const clean = host.replace(/:\d+$/, "");
-  const parts = clean.split(".");
-  if (parts.length !== 4 || parts.some((p) => !/^\d{1,3}$/.test(p))) {
-    return false;
-  }
-  const nums = parts.map((p) => Number(p));
-  if (nums.some((n) => n < 0 || n > 255)) return true;
-  const [a, b] = nums;
-  if (a === 10 || a === 127 || a === 0) return true;
-  if (a === 169 && b === 254) return true;
-  if (a === 192 && b === 168) return true;
-  if (a === 172 && b >= 16 && b <= 31) return true;
-  if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT 100.64.0.0/10
-  return false;
-}
+const MAX_REDIRECT_HOPS = 5;
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
-function isBlockedPrivateIpv6(host: string): boolean {
-  let clean = host.toLowerCase();
+function stripBracketsAndZone(host: string): string {
+  let clean = host.trim().toLowerCase();
   if (clean.startsWith("[") && clean.endsWith("]")) {
     clean = clean.slice(1, -1);
   }
   const zoneIdx = clean.indexOf("%");
-  if (zoneIdx >= 0) clean = clean.slice(0, zoneIdx);
-  if (!clean.includes(":")) return false;
-  if (clean === "::" || clean === "::1" || clean === "0:0:0:0:0:0:0:1") {
-    return true;
+  if (zoneIdx !== -1) {
+    clean = clean.slice(0, zoneIdx);
   }
-  // IPv4-mapped IPv6 (e.g. ::ffff:127.0.0.1 or ::ffff:7f00:1)
-  if (clean.startsWith("::ffff:")) {
-    const rest = clean.slice("::ffff:".length);
-    if (isBlockedPrivateIpv4(rest)) return true;
-    const hexParts = rest.split(":");
-    if (hexParts.length === 2 && hexParts.every((h) => /^[0-9a-f]{1,4}$/.test(h))) {
-      const hi = parseInt(hexParts[0], 16);
-      const lo = parseInt(hexParts[1], 16);
-      const ipv4 = `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`;
-      if (isBlockedPrivateIpv4(ipv4)) return true;
-    }
+  return clean;
+}
+
+function parseIpv4Octets(host: string): number[] | null {
+  const parts = host.split(".");
+  if (parts.length !== 4 || parts.some((p) => !/^\d{1,3}$/.test(p))) {
+    return null;
   }
-  const firstSeg = clean.split(":")[0];
-  if (firstSeg && /^[0-9a-f]{1,4}$/.test(firstSeg)) {
-    const val = parseInt(firstSeg.padStart(4, "0"), 16);
-    // fc00::/7 (Unique local) or fe80::/10 (Link-local)
-    if ((val & 0xfe00) === 0xfc00 || (val & 0xffc0) === 0xfe80) {
-      return true;
-    }
-  }
+  const nums = parts.map((p) => Number(p));
+  if (nums.some((n) => n < 0 || n > 255)) return null;
+  return nums;
+}
+
+function isBlockedIpv4Octets(nums: number[]): boolean {
+  const [a, b, c] = nums;
+  if (a === 0 || a === 10 || a === 127) return true;
+  if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT 100.64.0.0/10
+  if (a === 169 && b === 254) return true; // link-local & cloud metadata
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 192 && b === 0 && (c === 0 || c === 2)) return true;
+  if (a === 192 && b === 168) return true;
+  if (a === 198 && (b === 18 || b === 19)) return true;
+  if (a === 198 && b === 51 && c === 100) return true;
+  if (a === 203 && b === 0 && c === 113) return true;
+  if (a >= 224) return true; // multicast + reserved + broadcast
   return false;
 }
 
-function isBlockedIpLiteral(host: string): boolean {
-  return isBlockedPrivateIpv4(host) || isBlockedPrivateIpv6(host);
+function expandIpv6Groups(raw: string): number[] | null {
+  let addr = raw;
+  const lastColon = addr.lastIndexOf(":");
+  if (lastColon !== -1 && addr.slice(lastColon + 1).includes(".")) {
+    const ipv4 = parseIpv4Octets(addr.slice(lastColon + 1));
+    if (!ipv4) return null;
+    const hi = ((ipv4[0] << 8) | ipv4[1]).toString(16);
+    const lo = ((ipv4[2] << 8) | ipv4[3]).toString(16);
+    addr = `${addr.slice(0, lastColon)}:${hi}:${lo}`;
+  }
+  const doubleColonParts = addr.split("::");
+  if (doubleColonParts.length > 2) return null;
+  if (doubleColonParts.length === 2) {
+    const left = doubleColonParts[0] === ""
+      ? []
+      : doubleColonParts[0].split(":");
+    const right = doubleColonParts[1] === ""
+      ? []
+      : doubleColonParts[1].split(":");
+    const fill = 8 - (left.length + right.length);
+    if (fill < 0) return null;
+    const full = [...left, ...Array<string>(fill).fill("0"), ...right];
+    if (full.length !== 8 || full.some((g) => !/^[0-9a-f]{1,4}$/i.test(g))) {
+      return null;
+    }
+    return full.map((g) => parseInt(g, 16));
+  }
+  const groups = addr.split(":");
+  if (groups.length !== 8 || groups.some((g) => !/^[0-9a-f]{1,4}$/i.test(g))) {
+    return null;
+  }
+  return groups.map((g) => parseInt(g, 16));
+}
+
+export function isBlockedIpAddress(rawHostOrIp: string): boolean {
+  const clean = stripBracketsAndZone(rawHostOrIp);
+  if (!clean) return true;
+  const ipv4 = parseIpv4Octets(clean);
+  if (ipv4) {
+    return isBlockedIpv4Octets(ipv4);
+  }
+  if (!clean.includes(":")) {
+    return false;
+  }
+  const g = expandIpv6Groups(clean);
+  if (!g) return true; // Malformed IPv6 fails closed
+  const isAllZeroPrefix = g[0] === 0 && g[1] === 0 && g[2] === 0 && g[3] === 0 &&
+    g[4] === 0;
+  // :: and ::1
+  if (isAllZeroPrefix && g[5] === 0 && g[6] === 0 && (g[7] === 0 || g[7] === 1)) {
+    return true;
+  }
+  // ::ffff:0:0/96 IPv4-mapped IPv6
+  if (isAllZeroPrefix && g[5] === 0xffff) {
+    return isBlockedIpv4Octets([
+      (g[6] >> 8) & 0xff,
+      g[6] & 0xff,
+      (g[7] >> 8) & 0xff,
+      g[7] & 0xff,
+    ]);
+  }
+  // fc00::/7 (Unique Local Addresses)
+  if ((g[0] & 0xfe00) === 0xfc00) return true;
+  // fe80::/10 (Link-local) & fec0::/10 (Site-local)
+  if ((g[0] & 0xffc0) === 0xfe80 || (g[0] & 0xffc0) === 0xfec0) return true;
+  // ff00::/8 (Multicast)
+  if ((g[0] & 0xff00) === 0xff00) return true;
+  // 2001:db8::/32 (Documentation)
+  if (g[0] === 0x2001 && g[1] === 0x0db8) return true;
+  return false;
 }
 
 export function validatePublicHttpUrl(
   rawUrl: string | null | undefined,
-): { ok: true; url: string } | { ok: false; error: string } {
+): { ok: true; url: string; hostname: string } | { ok: false; error: string } {
   const candidate = (rawUrl ?? "").trim();
   if (!candidate) {
     return { ok: false, error: "Empty source URL" };
@@ -192,18 +249,63 @@ export function validatePublicHttpUrl(
   if (parsed.username !== "" || parsed.password !== "") {
     return { ok: false, error: "Credentials in URL are not allowed" };
   }
-  const host = parsed.hostname.toLowerCase();
+  const host = stripBracketsAndZone(parsed.hostname);
   if (
     host === "" ||
     host === "localhost" ||
+    host === "localhost.localdomain" ||
     host.endsWith(".localhost") ||
     host.endsWith(".local") ||
     host.endsWith(".internal") ||
-    isBlockedIpLiteral(host)
+    isBlockedIpAddress(host)
   ) {
-    return { ok: false, error: `Blocked non-public host: ${host}` };
+    return { ok: false, error: `Blocked non-public host: ${host || "empty"}` };
   }
-  return { ok: true, url: parsed.toString() };
+  return { ok: true, url: parsed.toString(), hostname: host };
+}
+
+export type DnsResolver = (hostname: string) => Promise<string[]>;
+
+export async function defaultResolveDns(hostname: string): Promise<string[]> {
+  const [v4Res, v6Res] = await Promise.allSettled([
+    Deno.resolveDns(hostname, "A"),
+    Deno.resolveDns(hostname, "AAAA"),
+  ]);
+  const ips: string[] = [];
+  if (v4Res.status === "fulfilled") ips.push(...v4Res.value);
+  if (v6Res.status === "fulfilled") ips.push(...v6Res.value);
+  return ips;
+}
+
+export async function validateResolvedPublicUrl(
+  rawUrl: string | null | undefined,
+  resolveDnsFn: DnsResolver = defaultResolveDns,
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const checked = validatePublicHttpUrl(rawUrl);
+  if (!checked.ok) {
+    return checked;
+  }
+  const isIpLiteral = parseIpv4Octets(checked.hostname) !== null ||
+    checked.hostname.includes(":");
+  if (!isIpLiteral) {
+    let resolvedIps: string[];
+    try {
+      resolvedIps = await resolveDnsFn(checked.hostname);
+    } catch {
+      return { ok: false, error: `DNS lookup failed for ${checked.hostname}` };
+    }
+    if (resolvedIps.length === 0) {
+      return { ok: false, error: `DNS returned no records for ${checked.hostname}` };
+    }
+    const blockedIp = resolvedIps.find((ip) => isBlockedIpAddress(ip));
+    if (blockedIp) {
+      return {
+        ok: false,
+        error: `DNS resolved to blocked non-public IP: ${blockedIp}`,
+      };
+    }
+  }
+  return { ok: true, url: checked.url };
 }
 
 export type FetchLike = (
@@ -211,90 +313,80 @@ export type FetchLike = (
   init?: RequestInit,
 ) => Promise<Response>;
 
-async function resolveAndValidateHostDns(hostname: string): Promise<string | null> {
-  if (isBlockedIpLiteral(hostname)) {
-    return `Blocked non-public IP: ${hostname}`;
-  }
-  const isIp =
-    /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || hostname.includes(":");
-  if (isIp) return null;
-  try {
-    const resolveDns = (Deno as unknown as {
-      resolveDns?: (q: string, r: "A" | "AAAA") => Promise<string[]>;
-    })?.resolveDns;
-    if (typeof resolveDns !== "function") return null;
-    const [v4, v6] = await Promise.all([
-      resolveDns(hostname, "A").catch(() => [] as string[]),
-      resolveDns(hostname, "AAAA").catch(() => [] as string[]),
-    ]);
-    for (const ip of [...v4, ...v6]) {
-      if (isBlockedIpLiteral(ip)) {
-        return `Blocked resolved non-public IP: ${ip}`;
-      }
-    }
-  } catch {
-    // Fail open only if Deno.resolveDns is unavailable in unit-test runtime.
-  }
-  return null;
-}
-
 export async function verifyCandidateUrl(
   rawUrl: string | null | undefined,
   fetchFn: FetchLike = fetch,
   nowIso: string = new Date().toISOString(),
+  resolveDnsFn: DnsResolver = defaultResolveDns,
 ): Promise<UrlCheckResult> {
-  const checked = validatePublicHttpUrl(rawUrl);
-  if (!checked.ok) {
-    return {
-      statusCode: null,
-      needsManualReview: true,
-      error: checked.error,
-      checkedAt: nowIso,
-    };
-  }
+  let currentUrl = rawUrl ?? "";
+  let method: "HEAD" | "GET" = "HEAD";
 
-  const shouldCheckDns = fetchFn === fetch;
+  for (let hop = 0; hop <= MAX_REDIRECT_HOPS; hop += 1) {
+    const validated = await validateResolvedPublicUrl(currentUrl, resolveDnsFn);
+    if (!validated.ok) {
+      return {
+        statusCode: null,
+        needsManualReview: true,
+        error: validated.error,
+        checkedAt: nowIso,
+      };
+    }
 
-  async function probeWithRedirects(
-    initialUrl: string,
-    method: "HEAD" | "GET",
-  ): Promise<Response> {
-    let currentUrl = initialUrl;
-    for (let hop = 0; hop <= 3; hop++) {
-      if (shouldCheckDns) {
-        const dnsErr = await resolveAndValidateHostDns(
-          new URL(currentUrl).hostname.toLowerCase(),
-        );
-        if (dnsErr) {
-          throw new Error(dnsErr);
-        }
-      }
-      const resp = await fetchFn(currentUrl, {
+    let resp: Response;
+    try {
+      resp = await fetchFn(validated.url, {
         method,
         redirect: "manual",
         signal: AbortSignal.timeout(5000),
       });
-      if (resp.status >= 300 && resp.status < 400) {
-        const location = resp.headers.get("location");
-        if (!location) return resp;
-        const resolvedNext = new URL(location, currentUrl).toString();
-        const nextChecked = validatePublicHttpUrl(resolvedNext);
-        if (!nextChecked.ok) {
-          throw new Error(nextChecked.error);
-        }
-        currentUrl = nextChecked.url;
-        continue;
-      }
-      return resp;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        statusCode: null,
+        needsManualReview: true,
+        error: msg.slice(0, 200),
+        checkedAt: nowIso,
+      };
     }
-    throw new Error("Too many redirects");
-  }
 
-  try {
-    let resp = await probeWithRedirects(checked.url, "HEAD");
-    if (resp.status === 405 || resp.status === 501) {
-      resp = await probeWithRedirects(checked.url, "GET");
+    if (method === "HEAD" && (resp.status === 405 || resp.status === 501)) {
+      method = "GET";
+      hop -= 1;
+      continue;
     }
+
+    if (REDIRECT_STATUSES.has(resp.status)) {
+      const location = resp.headers.get("location")?.trim() ?? "";
+      if (!location) {
+        return {
+          statusCode: resp.status,
+          needsManualReview: true,
+          error: `HTTP ${resp.status} missing Location header`,
+          checkedAt: nowIso,
+        };
+      }
+      if (hop >= MAX_REDIRECT_HOPS) {
+        return {
+          statusCode: resp.status,
+          needsManualReview: true,
+          error: "Too many redirects",
+          checkedAt: nowIso,
+        };
+      }
+      try {
+        currentUrl = new URL(location, validated.url).toString();
+      } catch {
+        return {
+          statusCode: resp.status,
+          needsManualReview: true,
+          error: "Malformed redirect Location",
+          checkedAt: nowIso,
+        };
+      }
+      continue;
+    }
+
     const ok = resp.status >= 200 && resp.status < 400;
     return {
       statusCode: resp.status,
@@ -302,15 +394,14 @@ export async function verifyCandidateUrl(
       error: ok ? null : `HTTP ${resp.status}`,
       checkedAt: nowIso,
     };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return {
-      statusCode: null,
-      needsManualReview: true,
-      error: msg.slice(0, 200),
-      checkedAt: nowIso,
-    };
   }
+
+  return {
+    statusCode: null,
+    needsManualReview: true,
+    error: "Too many redirects",
+    checkedAt: nowIso,
+  };
 }
 
 export interface CandidateServiceResponse {
@@ -372,6 +463,7 @@ export async function handleCompetitorCandidateVerifyUrl(
   input: Record<string, unknown>,
   fetchFn: FetchLike = fetch,
   nowIso: string = new Date().toISOString(),
+  resolveDnsFn: DnsResolver = defaultResolveDns,
 ): Promise<CandidateServiceResponse> {
   const denied = await authorizeCandidateAdmin(store, caller);
   if (denied) return denied;
@@ -393,7 +485,7 @@ export async function handleCompetitorCandidateVerifyUrl(
       input.website.trim() !== ""
     ? input.website.trim()
     : existing.data.website;
-  const check = await verifyCandidateUrl(targetUrl, fetchFn, nowIso);
+  const check = await verifyCandidateUrl(targetUrl, fetchFn, nowIso, resolveDnsFn);
   const updated = await store.updateCandidate(id, {
     source_url_status_code: check.statusCode,
     source_url_checked_at: check.checkedAt,

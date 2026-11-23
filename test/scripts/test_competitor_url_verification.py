@@ -12,10 +12,13 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 import competitor_stage as cs  # noqa: E402
 import competitor_url_verifier as cuv  # noqa: E402
 
+PUBLIC_RESOLVER = lambda _host: ["93.184.216.34"]  # noqa: E731
+
 
 class _FakeResp:
-    def __init__(self, status: int) -> None:
+    def __init__(self, status: int, headers: dict[str, str] | None = None) -> None:
         self.status = status
+        self.headers = headers or {}
 
     def __enter__(self) -> "_FakeResp":
         return self
@@ -35,6 +38,7 @@ class CompetitorUrlVerificationTest(unittest.TestCase):
         res = cuv.verify_source_url(
             "https://example.com/pricing",
             opener=fake_opener,
+            resolver=PUBLIC_RESOLVER,
             checked_at="2026-11-24T00:00:00Z",
         )
         self.assertEqual(methods, ["HEAD"])
@@ -51,6 +55,7 @@ class CompetitorUrlVerificationTest(unittest.TestCase):
         res = cuv.verify_source_url(
             "https://example.com/missing-hallucinated-page",
             opener=fake_opener,
+            resolver=PUBLIC_RESOLVER,
             checked_at="2026-11-24T00:00:00Z",
         )
         self.assertEqual(res["source_url_status_code"], 404)
@@ -69,22 +74,55 @@ class CompetitorUrlVerificationTest(unittest.TestCase):
                 )
             return _FakeResp(200)
 
-        res = cuv.verify_source_url("https://example.com/docs", opener=fake_opener)
+        res = cuv.verify_source_url(
+            "https://example.com/docs",
+            opener=fake_opener,
+            resolver=PUBLIC_RESOLVER,
+        )
         self.assertEqual(methods, ["HEAD", "GET"])
         self.assertEqual(res["source_url_status_code"], 200)
         self.assertFalse(res["needs_manual_review"])
 
-    def test_verify_source_url_blocks_private_and_non_http_urls(self) -> None:
+    def test_verify_source_url_blocks_private_ipv6_dns_rebinding_and_ssrf_redirects(self) -> None:
         for bad_url in (
             "",
             "ftp://example.com/file",
             "http://localhost:8080/admin",
             "http://127.0.0.1/internal",
             "http://169.254.169.254/latest/meta-data",
+            "http://[::1]/admin",
+            "http://[fc00::1]/secret",
+            "http://[fe80::1]/meta",
+            "http://[::ffff:127.0.0.1]/local",
         ):
-            res = cuv.verify_source_url(bad_url)
+            res = cuv.verify_source_url(bad_url, resolver=PUBLIC_RESOLVER)
             self.assertTrue(res["needs_manual_review"], msg=bad_url)
             self.assertIsNone(res["source_url_status_code"], msg=bad_url)
+
+        # DNS rebinding to metadata/private IP must fail before opening connection
+        opened: list[str] = []
+        dns_blocked = cuv.verify_source_url(
+            "https://rebind.example.com",
+            opener=lambda req, timeout=5.0: opened.append(req.full_url),
+            resolver=lambda _host: ["169.254.169.254"],
+        )
+        self.assertEqual(opened, [])
+        self.assertTrue(dns_blocked["needs_manual_review"])
+
+        # Redirect to metadata IP must abort before fetching 2nd hop
+        hops: list[str] = []
+
+        def redirect_opener(req, timeout=5.0):
+            hops.append(req.full_url)
+            return _FakeResp(302, headers={"Location": "http://169.254.169.254/latest/meta-data"})
+
+        redir_blocked = cuv.verify_source_url(
+            "https://public.example.com/start",
+            opener=redirect_opener,
+            resolver=PUBLIC_RESOLVER,
+        )
+        self.assertEqual(len(hops), 1)
+        self.assertTrue(redir_blocked["needs_manual_review"])
 
     def test_stage_candidates_attaches_url_verification_payload(self) -> None:
         captured: list[dict[str, object]] = []
