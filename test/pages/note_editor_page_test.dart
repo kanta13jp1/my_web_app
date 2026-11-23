@@ -829,8 +829,7 @@ void main() {
       );
     });
 
-    testWidgets(
-        '新規メモを自動保存して閉じると note_editor_draft_new と移行先下書きが残らない',
+    testWidgets('新規メモを自動保存して閉じると note_editor_draft_new と移行先下書きが残らない',
         (tester) async {
       final client = _RecordingSupabaseClient(noteRow: _noteRow());
       await _pumpPage(tester, client, noteId: null);
@@ -856,9 +855,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets(
-        '新規メモを手動保存して閉じるとローカル下書きが残らない',
-        (tester) async {
+    testWidgets('新規メモを手動保存して閉じるとローカル下書きが残らない', (tester) async {
       final client = _RecordingSupabaseClient(noteRow: _noteRow());
       final semanticSearch = _RecordingSemanticSearchService();
       await _pumpPage(
@@ -890,9 +887,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets(
-        '復元した note_editor_draft_new を保存して閉じると下書きが消える',
-        (tester) async {
+    testWidgets('復元した note_editor_draft_new を保存して閉じると下書きが消える', (tester) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         'note_editor_draft_new': jsonEncode(<String, dynamic>{
           'title': '書きかけの新規メモ',
@@ -929,9 +924,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets(
-        '新規メモの初回保存中に追加入力すると new 下書きを移行し2回目保存で両方消える',
-        (tester) async {
+    testWidgets('新規メモの初回保存中に追加入力すると new 下書きを移行し2回目保存で両方消える', (tester) async {
       final insertGate = Completer<void>();
       final updateGate = Completer<void>();
       final client = _RecordingSupabaseClient(
@@ -978,9 +971,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets(
-        '新規メモを手動保存した直後に保存完了前に閉じても完了後に下書きが残らない',
-        (tester) async {
+    testWidgets('新規メモを手動保存した直後に保存完了前に閉じても完了後に下書きが残らない', (tester) async {
       final insertGate = Completer<void>();
       final client = _RecordingSupabaseClient(
         noteRow: _noteRow(),
