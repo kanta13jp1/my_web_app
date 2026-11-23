@@ -538,7 +538,8 @@ void main() {
                           ProjectGanttTechDebtView(items: techDebt),
                         ProjectGanttFocusView.githubIssues =>
                           ProjectGanttGitHubIssueView(
-                              summary: issueLinkSummary),
+                            summary: issueLinkSummary,
+                          ),
                         ProjectGanttFocusView.risk =>
                           ProjectGanttRiskView(summary: riskSummary),
                         ProjectGanttFocusView.testTargets =>
@@ -684,17 +685,23 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(find.byType(ProjectGanttGitHubIssueView), findsOneWidget);
-        expect(find.byKey(const Key('gantt_github_issue_card_t1')),
-            findsOneWidget);
+        expect(
+          find.byKey(const Key('gantt_github_issue_card_t1')),
+          findsOneWidget,
+        );
         await tester.ensureVisible(
           find.byKey(const Key('gantt_github_filter_unlinked')),
         );
         await tester.tap(find.byKey(const Key('gantt_github_filter_unlinked')));
         await tester.pumpAndSettle();
-        expect(find.byKey(const Key('gantt_github_issue_card_t2')),
-            findsOneWidget);
         expect(
-            find.byKey(const Key('gantt_github_issue_card_t1')), findsNothing);
+          find.byKey(const Key('gantt_github_issue_card_t2')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('gantt_github_issue_card_t1')),
+          findsNothing,
+        );
 
         await tester.ensureVisible(
           find.byKey(const Key('gantt_focus_view_risk')),
@@ -703,8 +710,10 @@ void main() {
         await tester.tap(find.byKey(const Key('gantt_focus_view_risk')));
         await tester.pumpAndSettle();
         expect(find.byType(ProjectGanttRiskView), findsOneWidget);
-        expect(find.byKey(const Key('gantt_risk_load_error_banner')),
-            findsOneWidget);
+        expect(
+          find.byKey(const Key('gantt_risk_load_error_banner')),
+          findsOneWidget,
+        );
         expect(find.byKey(const Key('gantt_milestone_risk_0')), findsOneWidget);
         expect(find.byKey(const Key('gantt_risk_card_t2')), findsOneWidget);
 
@@ -717,7 +726,9 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(ProjectGanttTestTargetView), findsOneWidget);
         expect(
-            find.byKey(const Key('gantt_test_target_card_t2')), findsOneWidget);
+          find.byKey(const Key('gantt_test_target_card_t2')),
+          findsOneWidget,
+        );
 
         expect(tester.takeException(), isNull);
       }
