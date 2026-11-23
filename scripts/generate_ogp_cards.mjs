@@ -494,8 +494,9 @@ async function renderWithPlaywright(repoRoot, outDir, manifest, cardsWithArt, ch
     console.log(`Using system Chrome executable: ${executablePath}`);
   }
 
-  const browser = await chromium.launch(launchOptions);
+  let browser = null;
   try {
+    browser = await chromium.launch(launchOptions);
     for (const card of cardsWithArt) {
       const outPath = resolveInside(outDir, card.output);
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
@@ -514,7 +515,9 @@ async function renderWithPlaywright(repoRoot, outDir, manifest, cardsWithArt, ch
       }
     }
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close();
+    }
     server.close();
   }
 }
@@ -542,7 +545,20 @@ async function main() {
   verifyOutputs(manifest, opts.outDir);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exitCode = 1;
-});
+function isCliEntrypoint() {
+  if (!process.argv[1]) {
+    return false;
+  }
+  try {
+    return fs.realpathSync(process.argv[1]) === fs.realpathSync(__filename);
+  } catch {
+    return path.resolve(process.argv[1]) === __filename;
+  }
+}
+
+if (isCliEntrypoint()) {
+  main().catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+  });
+}
