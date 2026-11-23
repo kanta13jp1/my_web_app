@@ -7,8 +7,6 @@ import '../services/agent_org_service.dart';
 import '../services/gamification_service.dart';
 import '../widgets/agent_workspace_panel.dart';
 import '../widgets/chro_gamification_summary_card.dart';
-import 'people_help_page.dart';
-import 'rewards_page.dart';
 
 class ChroOfficePage extends StatefulWidget {
   final GamificationService? gamificationService;
@@ -196,7 +194,6 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
               'Achievements & Rewards',
               'Review points, levels, badges, and recognition in one place.',
               Icons.card_giftcard,
-              const RewardsPage(),
               '/rewards',
             ),
             _buildMenuCard(
@@ -204,7 +201,6 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
               'People Help',
               'Keep onboarding and support notes for team operations.',
               Icons.menu_book,
-              const PeopleHelpPage(),
               '/people-help',
               tileKey: const Key('chro_menu_people_help'),
             ),
@@ -214,14 +210,13 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
     );
   }
 
-  /// [routeName] は遷移先画面の URL。`RouteSettings.name` を付けないと
-  /// Flutter Web でブラウザの URL が更新されないため必須にしている。
+  /// [routeName] は名前付きルート先 (`main.dart` 定義)。
+  /// Web 専用インポートを避けるため名前付きルート遷移で VM テスト互換性を保つ。
   Widget _buildMenuCard(
     BuildContext context,
     String title,
     String subtitle,
     IconData icon,
-    Widget? page,
     String routeName, {
     Key? tileKey,
   }) {
@@ -244,15 +239,7 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
         ),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: page == null
-            ? null
-            : () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    settings: RouteSettings(name: routeName),
-                    builder: (_) => page,
-                  ),
-                ),
+        onTap: () => Navigator.of(context).pushNamed(routeName),
       ),
     );
   }
