@@ -11,6 +11,8 @@ import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/widgets/asset_card_statement_reconciliation_dialogs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+const _bannerKey = Key('asset_card_reconciliation_needs_review_banner');
+
 class _InMemoryCardReconRepository
     extends SharedPreferencesAssetLiabilityRepository {
   _InMemoryCardReconRepository(this._state);
@@ -290,8 +292,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
 
         expect(
-          find.byKey(
-              const Key('asset_card_reconciliation_needs_review_banner')),
+          find.byKey(_bannerKey),
           findsOneWidget,
         );
 
@@ -315,8 +316,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
 
         expect(
-          find.byKey(
-              const Key('asset_card_reconciliation_needs_review_banner')),
+          find.byKey(_bannerKey),
           findsNothing,
         );
 
@@ -382,8 +382,7 @@ void main() {
         expect(find.text('仮内訳'), findsOneWidget);
         expect(find.text('正式内訳へ昇格'), findsOneWidget);
         expect(
-          find.byKey(
-              const Key('asset_card_reconciliation_needs_review_banner')),
+          find.byKey(_bannerKey),
           findsOneWidget,
         );
 
@@ -394,8 +393,7 @@ void main() {
 
         expect(find.text('正式内訳へ昇格'), findsNothing);
         expect(
-          find.byKey(
-              const Key('asset_card_reconciliation_needs_review_banner')),
+          find.byKey(_bannerKey),
           findsNothing,
         );
 

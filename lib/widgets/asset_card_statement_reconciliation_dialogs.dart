@@ -82,7 +82,8 @@ class _CardStatementManualReconciliationWizardDialogState
     _selectedAccountId = initialGroup.billingAccountId;
     final suggested =
         CardStatementReconciliationPlanner.suggestedBalancingAmount(
-            initialGroup);
+      initialGroup,
+    );
     _amountController = TextEditingController(
       text: suggested > 0 ? suggested.round().toString() : '',
     );
@@ -359,12 +360,12 @@ class _ManualStatementEntryRowControllers {
 
   _ManualStatementEntryRowControllers({
     required DateTime initialDate,
-    this.category = 'その他',
   })  : dateController = TextEditingController(
           text: DateFormat('yyyy-MM-dd').format(initialDate),
         ),
         amountController = TextEditingController(),
-        descriptionController = TextEditingController();
+        descriptionController = TextEditingController(),
+        category = 'その他';
 
   void dispose() {
     dateController.dispose();
