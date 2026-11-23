@@ -1716,6 +1716,52 @@ void main() {
         expect(prompt, contains('解消目標プラン: 12ヶ月以内に毎月'));
       },
     );
+
+    test(
+      'emits cashShortageRisk for payment-day minimum shortage and late-fee note on overdue (#3342, #3442)',
+      () {
+        final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 200000,
+            'モビット': -500000,
+          },
+          baseDate: DateTime(2026, 9, 15),
+          paymentDayOverrides: const <String, int>{'mobit': 5},
+          annualRateOverrides: const <String, double>{'mobit': 0.18},
+          monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        );
+        final report = const AssetManagementInsightService().buildReport(
+          workbook: workbook,
+          userProfile: _userProfile(),
+        );
+
+        final shortageActions = report.actionItems
+            .where(
+              (item) =>
+                  item.type ==
+                      AssetManagementInsightActionType.cashShortageRisk &&
+                  item.paymentDay == 5,
+            )
+            .toList(growable: false);
+        expect(shortageActions, hasLength(1));
+        expect(
+          shortageActions.single.title,
+          contains('最低支払額より'),
+        );
+        expect(
+          shortageActions.single.suggestedAction,
+          contains('支払予定の増額入力'),
+        );
+
+        final overdue = report.actionItems.firstWhere(
+          (item) =>
+              item.type == AssetManagementInsightActionType.overduePayment &&
+              item.relatedAccountId == 'mobit',
+        );
+        expect(overdue.description, contains('遅延損害金(概算)'));
+        expect(overdue.description, contains('元の負債残高に加算見込み'));
+      },
+    );
   });
 }
 

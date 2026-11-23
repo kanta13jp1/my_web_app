@@ -6467,6 +6467,148 @@ void main() {
         await _unmount(tester);
       },
     );
+
+    testWidgets(
+      'Issue #3342 & #3442: displays overdue late-fee alerts and payment-day shortage fire-drill recalculation',
+      (tester) async {
+        String? copiedClipboard;
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              final args = call.arguments as Map<dynamic, dynamic>?;
+              copiedClipboard = args?['text'] as String?;
+              return null;
+            }
+            if (call.method == 'Clipboard.getData') {
+              if (copiedClipboard == null) return null;
+              return <String, dynamic>{'text': copiedClipboard};
+            }
+            return null;
+          },
+        );
+        addTearDown(() {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(SystemChannels.platform, null);
+        });
+
+        final now = DateTime(2026, 9, 15);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 5600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'mobit': 5},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  paymentOverrides: <String, double>{'mobit': 5000},
+                  annualRateOverrides: <String, double>{'mobit': 0.18},
+                  paymentSourceAccountIds: <String, String>{
+                    'mobit': 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 200000,
+                  'モビット': -500000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // #3442: 遅延損害金・延滞金バナー、支払日リスクチップ、負債個別チップ表示
+        final lateFeeBanner = find.byKey(
+          const Key('asset_overdue_late_fee_alert_banner'),
+        );
+        expect(lateFeeBanner, findsOneWidget);
+        expect(
+          find.descendant(
+            of: lateFeeBanner,
+            matching: find.textContaining('元の負債残高に加算されます'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_risk_late_fee_5')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_late_fee_mobit')),
+          findsOneWidget,
+        );
+
+        // #3342: 不足額バナーと 3 即応アクション
+        final shortageBanner = find.byKey(
+          const Key('asset_payment_risk_shortage_banner_5'),
+        );
+        expect(shortageBanner, findsOneWidget);
+        expect(
+          find.descendant(
+            of: shortageBanner,
+            matching: find.textContaining('不足: ¥15,000'),
+          ),
+          findsOneWidget,
+        );
+        final increaseBtn = find.byKey(
+          const Key('asset_payment_risk_increase_btn_5'),
+        );
+        final sourceBtn = find.byKey(
+          const Key('asset_payment_risk_source_btn_5'),
+        );
+        final contactBtn = find.byKey(
+          const Key('asset_payment_risk_contact_btn_5'),
+        );
+        expect(increaseBtn, findsOneWidget);
+        expect(sourceBtn, findsOneWidget);
+        expect(contactBtn, findsOneWidget);
+
+        await tester.ensureVisible(contactBtn);
+        await tester.pump();
+        await tester.tap(contactBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(copiedClipboard, contains('モビット'));
+        expect(copiedClipboard, contains('支払予定日: 2026/09/05'));
+        expect(
+          find.text('5日の債権者連絡メモを起票し相談文をコピーしました'),
+          findsOneWidget,
+        );
+
+        await tester.ensureVisible(increaseBtn);
+        await tester.pump();
+        await tester.tap(increaseBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_payment_risk_increase_dialog_5')),
+          findsOneWidget,
+        );
+        await tester.tap(
+          find.byKey(const Key('asset_payment_risk_increase_save_5')),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_payment_risk_shortage_banner_5')),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
   });
   testWidgets(
     'anonymous unconfirmed read never claims empty income or offers empty CTA',

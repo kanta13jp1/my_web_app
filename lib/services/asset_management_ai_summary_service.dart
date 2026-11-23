@@ -1094,6 +1094,9 @@ class AssetManagementAiSummaryService {
       'payment_amount_estimated': row.paymentAmountEstimated,
       'paid': row.paid,
       'effective_paid_payment_amount': row.effectivePaidPaymentAmount,
+      'late_fee_annual_rate': row.lateFeeAnnualRate,
+      'overdue_days': row.overdueDays,
+      'estimated_late_fee_amount': row.estimatedLateFeeAmount,
     };
   }
 
@@ -1114,6 +1117,8 @@ class AssetManagementAiSummaryService {
       'is_past': risk.isPast,
       'is_today': risk.isToday,
       'is_upcoming': risk.isUpcoming,
+      'shortage_amount': risk.shortageAmount,
+      'estimated_late_fee_total': risk.estimatedLateFeeTotal,
     };
   }
 
