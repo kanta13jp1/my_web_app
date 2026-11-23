@@ -369,9 +369,11 @@ class _ChordLyricsStudioPanelState extends State<ChordLyricsStudioPanel> {
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space12),
       decoration: BoxDecoration(
-        color: DesignTokens.indigo.withValues(alpha: 0.12),
+        color: const Color(0xFF161D36),
         borderRadius: BorderRadius.circular(DesignTokens.radiusMedium),
-        border: Border.all(color: DesignTokens.indigo.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: DesignTokens.indigoLight.withValues(alpha: 0.45),
+        ),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,7 +388,7 @@ class _ChordLyricsStudioPanelState extends State<ChordLyricsStudioPanel> {
             child: Text(
               '同梱曲は著作権保護のためオリジナル練習譜面のみを収録しています。個人練習用の ChordPro（.cho / .crd / .txt）譜面は「ChordPro読込」からこの端末内のみに非公開保存できます。',
               style: TextStyle(
-                color: DesignTokens.textSecondary,
+                color: DesignTokens.textOnDark,
                 fontSize: 12,
                 height: 1.6,
               ),
@@ -437,8 +439,9 @@ class _ChordLyricsStudioPanelState extends State<ChordLyricsStudioPanel> {
                   selected: sheet.id == selected.id &&
                       sheet.isUserImported == selected.isUserImported,
                   onSelected: (_) => _selectSheet(sheet),
-                  selectedColor: DesignTokens.orange.withValues(alpha: 0.22),
+                  selectedColor: const Color(0xFF3A1D12),
                   backgroundColor: DesignTokens.surface2,
+                  surfaceTintColor: Colors.transparent,
                   side: BorderSide(
                     color: (sheet.id == selected.id &&
                             sheet.isUserImported == selected.isUserImported)

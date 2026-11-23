@@ -71,6 +71,13 @@ test('renders horizontal U-FRET style chord diagrams, Capo 3 conversion, dark sh
   await page
     .getByRole('button', { name: '自動スクロール停止', exact: true })
     .click();
+  const isMobile = (page.viewportSize()?.width ?? 1440) < 600;
+  const wheelSteps = isMobile ? 8 : 5;
+  await page.mouse.move(200, 420);
+  for (let i = 0; i < wheelSteps; i++) {
+    await page.mouse.wheel(0, 120);
+    await page.waitForTimeout(80);
+  }
   await page.mouse.move(4, 4);
   await page.waitForTimeout(450);
   await page.screenshot({ path: info.outputPath('04-scrolled-chorus.png') });
