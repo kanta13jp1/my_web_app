@@ -1,3 +1,5 @@
+import '../services/asset_ai_history_diff_service.dart';
+import '../services/asset_emergency_defense_service.dart';
 import '../services/asset_high_interest_highlight_service.dart';
 import '../services/asset_late_fee_service.dart';
 import '../services/asset_payment_discrepancy_service.dart';
@@ -549,6 +551,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final DateTime? debugCalendarNow;
 
+  /// テスト専用: AI要約の比較対象となる過去AI分析履歴リストを初期注入する (#3395)。
+  @visibleForTesting
+  final List<AssetManagementAiAnalysisHistoryEntry>?
+      debugInitialAiSummaryReferencedHistory;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -591,6 +598,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugInitialPayslipRows,
     this.debugInitialDisposableBalanceResult,
     this.debugCalendarNow,
+    this.debugInitialAiSummaryReferencedHistory,
   });
 
   @override
@@ -1391,6 +1399,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<AssetManagementAiAnalysisHistoryEntry>
       _assetManagementAiSummaryReferencedHistory =
       const <AssetManagementAiAnalysisHistoryEntry>[];
+  bool _emergencyDefenseMode = false;
   // 同日 (基準日) の「保存済み最新分析」を再利用判定に使うためのセッション内
   // キャッシュ。プローブ (loadLatestForBaseDate) は指紋が変わる度 (残高編集・
   // 引落確認など) に走るが、同一基準日では結果が保存されるまで不変なので、
@@ -1503,6 +1512,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _serverDisposableBalanceResult = Map<String, dynamic>.from(
         debugDisposableBalanceResult,
       );
+    }
+    final debugHistory = widget.debugInitialAiSummaryReferencedHistory;
+    if (debugHistory != null) {
+      _assetManagementAiSummaryReferencedHistory =
+          List<AssetManagementAiAnalysisHistoryEntry>.from(debugHistory);
     }
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
@@ -5772,6 +5786,124 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ]..sort(_compareTransferTasksByDueDate);
     });
     unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _applyTransferConflictTaskResolution({
+    required AssetTransferConflict conflict,
+    required String action,
+  }) {
+    final now = _now;
+    final task = conflict.task;
+    final suggestion = conflict.suggestion;
+    late final AssetLiabilityTransferTask updated;
+    late final String feedback;
+
+    if (action == 'cancel') {
+      updated = task.copyWith(
+        canceled: true,
+        canceledAt: now,
+        cancellationReason: '逆方向提案との衝突解消のためキャンセル',
+      );
+      feedback = '逆方向タスク（${task.fromAccountName} → '
+          '${task.toAccountName}）をキャンセルしました';
+    } else if (action == 'postpone') {
+      final baseDue = task.dueDate ?? now;
+      final nextDue = DateTime(
+        baseDue.year,
+        baseDue.month,
+        baseDue.day,
+      ).add(const Duration(days: 3));
+      updated = task.copyWith(dueDate: nextDue);
+      feedback = 'タスクの期日を ${DateFormat('M/d').format(nextDue)} へ延期しました';
+    } else {
+      final diff = (task.amount - suggestion.amount).abs();
+      if (diff < 1) {
+        updated = task.copyWith(
+          canceled: true,
+          canceledAt: now,
+          cancellationReason: '逆方向移動との相殺差額が0円のためキャンセル',
+        );
+        feedback = '逆方向移動が相殺されるためタスクをキャンセルしました';
+      } else if (task.amount >= suggestion.amount) {
+        updated = task.copyWith(amount: diff);
+        feedback = '差額 ${_formatManagementYen(diff)} へ金額調整しました';
+      } else {
+        updated = task.copyWith(
+          fromAccountId: suggestion.fromAccountId,
+          fromAccountName: suggestion.fromAccountName,
+          toAccountId: suggestion.toAccountId,
+          toAccountName: suggestion.toAccountName,
+          amount: diff,
+          dueDate: suggestion.neededBy ?? task.dueDate,
+        );
+        feedback = '${suggestion.fromAccountName} → '
+            '${suggestion.toAccountName} ${_formatManagementYen(diff)} に差額調整しました';
+      }
+    }
+
+    setState(() {
+      _transferTasks = [
+        for (final current in _transferTasks)
+          if (current.id == task.id) updated else current,
+      ]..sort(_compareTransferTasksByDueDate);
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(feedback)));
+  }
+
+  Future<void> _showTransferConflictResolutionDialog(
+    AssetTransferConflict conflict,
+  ) async {
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          key: const Key('asset_transfer_conflict_dialog'),
+          title: const Text('資金移動の衝突を解消'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(conflict.summary),
+              const SizedBox(height: 8),
+              Text(
+                '無意味な資金の往復を防ぐため、対処方法を選択してください。'
+                '差額調整時は ${_formatManagementYen(conflict.recommendedDifferenceAmount)} になります。',
+                style: Theme.of(dialogContext).textTheme.bodySmall,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('閉じる'),
+            ),
+            TextButton(
+              key: const Key('asset_transfer_conflict_cancel_button'),
+              onPressed: () => Navigator.of(dialogContext).pop('cancel'),
+              child: const Text('タスクをキャンセル'),
+            ),
+            TextButton(
+              key: const Key('asset_transfer_conflict_postpone_button'),
+              onPressed: () => Navigator.of(dialogContext).pop('postpone'),
+              child: const Text('期日を+3日延期'),
+            ),
+            FilledButton(
+              key: const Key('asset_transfer_conflict_adjust_button'),
+              onPressed: () => Navigator.of(dialogContext).pop('adjust'),
+              child: const Text('差額へ金額調整'),
+            ),
+          ],
+        );
+      },
+    );
+    if (choice == null || !mounted) {
+      return;
+    }
+    _applyTransferConflictTaskResolution(conflict: conflict, action: choice);
   }
 
   void _restoreCanceledTransferTask(AssetLiabilityTransferTask task) {
@@ -23971,6 +24103,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         safetyEnvelopeAmount: _safetyEnvelopeAmount,
       ),
       livingExpensePriorityMode: _livingExpensePriorityMode,
+      emergencyMode: _emergencyDefenseMode,
       priorMonthAccountBalances: priorMonthAccountBalances,
       dailyTodoDigest: _currentDailyTodoDigest(),
     );
@@ -25593,6 +25726,111 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               fontSize: 11,
               height: 1.4,
             ),
+          ),
+          if (_assetManagementAiSummaryReferencedHistory.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _buildAssetAiHistoryComparisonSection(report),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetAiHistoryComparisonSection(
+    AssetManagementInsightReport report,
+  ) {
+    final comparison = AssetAiHistoryDiffService.compare(
+      history: _assetManagementAiSummaryReferencedHistory,
+      currentWorkbook: report.workbook,
+      currentReport: report,
+    );
+    if (comparison == null) {
+      return const SizedBox.shrink();
+    }
+    final scheme = Theme.of(context).colorScheme;
+    Widget buildGroup({
+      required String title,
+      required List<String> items,
+      required Color accent,
+    }) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: accent,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                height: 1.4,
+              ),
+            ),
+            if (items.isEmpty)
+              Text(
+                '・該当なし',
+                style: TextStyle(
+                  color: scheme.onSurfaceVariant,
+                  fontSize: 11,
+                  height: 1.4,
+                ),
+              )
+            else
+              for (final item in items)
+                Text(
+                  '・$item',
+                  style: const TextStyle(fontSize: 11, height: 1.4),
+                ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      key: const Key('asset_ai_history_comparison_card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '過去AI分析履歴との比較（'
+            '${DateFormat('yyyy/MM/dd HH:mm').format(comparison.previousGeneratedAt.toLocal())} 基準）',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '前回の要約: ${comparison.previousSummaryExcerpt}',
+            style: TextStyle(
+              color: scheme.onSurfaceVariant,
+              fontSize: 11,
+              height: 1.4,
+            ),
+          ),
+          buildGroup(
+            title: '前回からの改善点',
+            items: comparison.improvedItems,
+            accent: const Color(0xFF0D9488),
+          ),
+          buildGroup(
+            title: '前回から悪化した点',
+            items: comparison.worsenedItems,
+            accent: const Color(0xFFB91C1C),
+          ),
+          buildGroup(
+            title: '前回から未解決のままの事項',
+            items: comparison.unresolvedItems,
+            accent: const Color(0xFFD97706),
           ),
         ],
       ),
@@ -29550,6 +29788,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         Icons.subscriptions_outlined,
       AssetManagementInsightActionType.paymentDiscrepancy =>
         Icons.compare_arrows_outlined,
+      AssetManagementInsightActionType.transferConflict =>
+        Icons.swap_horiz_outlined,
     };
   }
 
@@ -32780,13 +33020,77 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return const SizedBox.shrink();
     }
 
+    final defenseSummary = AssetEmergencyDefenseService.summarize(workbook);
+    final visibleRows = _emergencyDefenseMode
+        ? workbook.cashflowRows
+            .where(AssetEmergencyDefenseService.isEssentialCashflowRow)
+            .toList(growable: false)
+        : workbook.cashflowRows;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '支払日順 資金繰り',
-          style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            const Text(
+              '支払日順 資金繰り',
+              style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+            ),
+            FilterChip(
+              key: const Key('asset_emergency_defense_mode_toggle'),
+              label: const Text('生活防衛モード'),
+              selected: _emergencyDefenseMode,
+              onSelected: (selected) {
+                setState(() => _emergencyDefenseMode = selected);
+              },
+            ),
+          ],
         ),
+        if (_emergencyDefenseMode) ...[
+          const SizedBox(height: 8),
+          Container(
+            key: const Key('asset_emergency_defense_summary'),
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: defenseSummary.hasShortage
+                  ? const Color(0xFFFEF2F2)
+                  : const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: defenseSummary.hasShortage
+                    ? const Color(0xFFB91C1C).withValues(alpha: 0.35)
+                    : const Color(0xFF0D9488).withValues(alpha: 0.35),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '生活防衛モード中: 必須支出（家賃・通信・光熱・食費・医療等）のみ表示しています（'
+                  '対象 ${visibleRows.length} 件 / 全体 ${workbook.cashflowRows.length} 件）。',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '今月の必要最低限合計: '
+                  '${_formatManagementYen(defenseSummary.essentialTotal)}'
+                  ' / 必須支出後の手元残高: '
+                  '${_formatManagementYen(defenseSummary.cashAfterEssentials)}'
+                  '${defenseSummary.hasShortage ? '（不足額: ${_formatManagementYen(defenseSummary.shortageAmount)}）' : ''}',
+                  style: const TextStyle(fontSize: 12, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 4),
         Text(
           '入金済み・支払済みにした項目は、現在の口座残高に反映済みとして扱います。まだ残高を更新していない場合はチェックしないでください。',
@@ -32823,7 +33127,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               DataColumn(label: SizedBox(width: 80, child: Text('危険度'))),
             ],
             rows: [
-              for (final row in workbook.cashflowRows)
+              for (final row in visibleRows)
                 DataRow(
                   cells: [
                     DataCell(Text('${row.paymentDay}日')),
@@ -34308,6 +34612,62 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               height: 1.5,
             ),
           ),
+          if (workbook.collisionTransfers.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              key: const Key('asset_transfer_conflict_banner'),
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFFB91C1C).withValues(alpha: 0.35),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '逆方向の資金移動衝突を検知（${workbook.collisionTransfers.length}件）',
+                    style: const TextStyle(
+                      color: Color(0xFFB91C1C),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  for (var i = 0; i < workbook.collisionTransfers.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            workbook.collisionTransfers[i].summary,
+                            style: const TextStyle(fontSize: 12, height: 1.4),
+                          ),
+                          FilledButton.tonalIcon(
+                            key: Key(
+                                'asset_transfer_conflict_resolve_button_$i'),
+                            onPressed: () => unawaited(
+                              _showTransferConflictResolutionDialog(
+                                workbook.collisionTransfers[i],
+                              ),
+                            ),
+                            icon: const Icon(Icons.merge_type, size: 16),
+                            label: const Text('衝突を解消'),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
           if (activeTasks.isNotEmpty) ...[
             const SizedBox(height: 10),
             const Text(

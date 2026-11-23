@@ -958,6 +958,7 @@ class AssetLiabilityCashflowRow {
   final double cashBeforePayment;
   final double cashAfterPayment;
   final AssetLiabilityCashRiskLevel riskLevel;
+  final bool essential;
 
   const AssetLiabilityCashflowRow({
     required this.eventType,
@@ -986,10 +987,12 @@ class AssetLiabilityCashflowRow {
     required this.cashBeforePayment,
     required this.cashAfterPayment,
     required this.riskLevel,
+    this.essential = false,
   });
 
   bool get isPayment => eventType == AssetLiabilityCashflowEventType.payment;
   bool get isIncome => eventType == AssetLiabilityCashflowEventType.income;
+  bool get deferrable => isPayment && !essential;
   bool get isDirectCashflowTarget =>
       !includedInBillingAccount &&
       paymentMethod == AssetLiabilityPaymentMethod.direct;
@@ -1102,6 +1105,25 @@ class AssetLiabilityTransferTask {
       cancellationReason: cancellationReason ?? this.cancellationReason,
     );
   }
+}
+
+/// 登録済み口座間移動タスクと自動提案の逆方向衝突情報 (#3298)。
+class AssetTransferConflict {
+  final String id;
+  final AssetLiabilityTransferTask task;
+  final AssetLiabilityTransferSuggestion suggestion;
+  final int dayGap;
+  final double recommendedDifferenceAmount;
+  final String summary;
+
+  const AssetTransferConflict({
+    required this.id,
+    required this.task,
+    required this.suggestion,
+    required this.dayGap,
+    required this.recommendedDifferenceAmount,
+    required this.summary,
+  });
 }
 
 class AssetLiabilityMonthlySnapshot {
@@ -1637,6 +1659,13 @@ class AssetLiabilityWorkbook {
   /// paid / actual_payment_amount / scheduled_payment_amount の R1〜R3 不整合一覧。
   final List<AssetPaymentInconsistency> paymentInconsistencies;
 
+  /// 生活防衛モード既定フラグおよび必須支出後の手元残高 (#3289)。
+  final bool emergencyMode;
+  final double? cashAfterEssentials;
+
+  /// 登録済み移動タスクと移動提案の逆方向衝突一覧 (#3298)。
+  final List<AssetTransferConflict> collisionTransfers;
+
   const AssetLiabilityWorkbook({
     required this.baseDate,
     this.recurringFixedCosts = const <AssetRecurringFixedCost>[],
@@ -1673,6 +1702,9 @@ class AssetLiabilityWorkbook {
     this.subscriptionFixedCostAccountIds = const <String>{},
     this.cardUsagePolicies = const <String, AssetCardUsagePolicy>{},
     this.paymentInconsistencies = const <AssetPaymentInconsistency>[],
+    this.emergencyMode = false,
+    this.cashAfterEssentials,
+    this.collisionTransfers = const <AssetTransferConflict>[],
   });
 
   AssetPaymentInconsistencySummary get paymentInconsistencySummary {
