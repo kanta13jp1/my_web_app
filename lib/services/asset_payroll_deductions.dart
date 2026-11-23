@@ -72,8 +72,7 @@ class PayrollDeductions {
     'care_insurance': 'long_term_care_insurance',
     '介護保険': 'long_term_care_insurance',
     '介護保険料': 'long_term_care_insurance',
-    'employee_pension_fund_contribution':
-        'employees_pension_fund_contribution',
+    'employee_pension_fund_contribution': 'employees_pension_fund_contribution',
     'employees_pension_fund': 'employees_pension_fund_contribution',
     'employee_pension_fund': 'employees_pension_fund_contribution',
     'pension_fund_contribution': 'employees_pension_fund_contribution',
@@ -136,8 +135,9 @@ class PayrollDeductions {
           ...socialKeys,
           ...optionalSocialKeys,
         ]);
-  int? get socialTotalYen =>
-      conflictingSocialAliases ? null : (reportedSocialYen ?? socialPartsTotalYen);
+  int? get socialTotalYen => conflictingSocialAliases
+      ? null
+      : (reportedSocialYen ?? socialPartsTotalYen);
   int? get socialMismatchYen =>
       reportedSocialYen == null || socialPartsTotalYen == null
           ? null
@@ -238,8 +238,7 @@ class PayrollDeductions {
       final canonical = entry.key;
       final values = entry.value;
       if (values.length > 1 &&
-          (values.any((value) => value == null) ||
-              values.toSet().length > 1)) {
+          (values.any((value) => value == null) || values.toSet().length > 1)) {
         conflictingAliases.add(canonical);
         continue;
       }

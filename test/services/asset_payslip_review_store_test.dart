@@ -192,8 +192,10 @@ void main() {
         requests.add(request);
         final objectResponse =
             request.headers['accept']?.contains('vnd.pgrst.object') ?? false;
+        final payload =
+            objectResponse ? currentRow : <Map<String, dynamic>>[currentRow];
         return http.Response(
-          jsonEncode(objectResponse ? currentRow : <Map<String, dynamic>>[currentRow]),
+          jsonEncode(payload),
           200,
           headers: const <String, String>{'content-type': 'application/json'},
           request: request,

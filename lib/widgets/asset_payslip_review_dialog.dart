@@ -279,12 +279,10 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
           child: const Text('閉じる'),
         ),
         FilledButton(
-          onPressed: enabled &&
-                  blockingReason == null &&
-                  row != null &&
-                  _acknowledged
-              ? _save
-              : null,
+          onPressed:
+              enabled && blockingReason == null && row != null && _acknowledged
+                  ? _save
+                  : null,
           child: const Text('記載内容を本人確認済みにする'),
         ),
       ],
