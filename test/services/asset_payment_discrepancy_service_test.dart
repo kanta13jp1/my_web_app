@@ -58,16 +58,17 @@ void main() {
       transferTasks: const <AssetLiabilityTransferTask>[],
       accountCashflowSummaries: const <AssetLiabilityAccountCashflowSummary>[],
       transferSuggestions: const <AssetLiabilityTransferSuggestion>[],
-      cardBillingReview: const AssetLiabilityCardBillingReview(
-        configuredCount: 0,
-        pendingAccountCount: 0,
-        missingStatementCount: 0,
-        missingAccountNames: <String>[],
-        pendingAccountNames: <String>[],
+      cardBillingReview: const AssetLiabilityCardBillingReviewData(
+        directPaymentItems: <AssetLiabilityCardBillingReviewItem>[],
+        cardBillingGroups: <AssetLiabilityCardBillingGroup>[],
+        missingBillingAccountItems: <AssetLiabilityCardBillingReviewItem>[],
+        needsReviewItems: <AssetLiabilityCardBillingReviewItem>[],
+        doubleCountingRiskItems: <AssetLiabilityCardBillingReviewItem>[],
       ),
       cardStatementReconciliation:
-          const AssetLiabilityCardReconciliationSummary(
-        groups: <AssetLiabilityCardReconciliationGroup>[],
+          const AssetLiabilityCardStatementReconciliationData(
+        groups: <AssetLiabilityCardStatementReconciliationGroup>[],
+        unmatchedStatementLines: <AssetLiabilityCardStatementLine>[],
       ),
       cashLikeTotal: 100000,
       securitiesTotal: 0,
