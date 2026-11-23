@@ -33697,12 +33697,163 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
         ],
         const SizedBox(height: 6),
+        if (AssetHighInterestHighlightService.topMonthlyInterestRows(
+          workbook.debtMasterRows,
+        ).isNotEmpty) ...[
+          _buildTopMonthlyInterestCard(workbook),
+          const SizedBox(height: 10),
+        ],
         if (workbook.paymentInconsistencies.isNotEmpty) ...[
           _buildPaymentInconsistencySection(workbook),
           const SizedBox(height: 10),
         ],
         for (final row in rows) _buildDebtMasterCard(row, workbook),
       ],
+    );
+  }
+
+  Widget _buildTopMonthlyInterestCard(AssetLiabilityWorkbook workbook) {
+    final topRows = AssetHighInterestHighlightService.topMonthlyInterestRows(
+      workbook.debtMasterRows,
+    );
+    if (topRows.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      key: const Key('asset_top_monthly_interest_card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFB91C1C).withValues(alpha: 0.35),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Icon(
+                Icons.local_fire_department_outlined,
+                color: Color(0xFFB91C1C),
+                size: 18,
+              ),
+              const Text(
+                '今月の利息トップ5',
+                style: TextStyle(
+                  color: Color(0xFFB91C1C),
+                  fontWeight: FontWeight.bold,
+                  height: 1.4,
+                ),
+              ),
+              Container(
+                key: const Key('asset_top_interest_total_badge'),
+                child: _buildTextStatusChip(
+                  label:
+                      '今月の利息合計（概算）: ${_formatManagementYen(workbook.monthlyScheduledInterestEstimateTotal)}',
+                  color: const Color(0xFFB91C1C),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '月利息負担の大きい上位5口座です。高金利先の返済優先・条件交渉にご活用ください。',
+            style: TextStyle(fontSize: 12, height: 1.4),
+          ),
+          const SizedBox(height: 8),
+          for (var index = 0; index < topRows.length; index++) ...[
+            _buildTopMonthlyInterestRow(index, topRows[index], workbook),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopMonthlyInterestRow(
+    int index,
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final paymentDayLabel =
+        row.paymentDay == null ? '未設定' : '${row.paymentDay}日';
+    return Container(
+      key: Key('asset_top_interest_row_${row.id}'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '#${index + 1} ${row.name}  '
+                '月利息 ${_formatManagementYen(row.monthlyInterestEstimate)}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '年利 ${(row.annualRate * 100).toStringAsFixed(1)}% / '
+                '支払日 $paymentDayLabel / '
+                '最低推定 ${_formatManagementYen(row.minimumPaymentEstimate)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              TextButton.icon(
+                key: Key('asset_top_interest_consult_${row.id}'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                onPressed: () =>
+                    unawaited(_copyPaymentConsultationText(row, workbook)),
+                icon: const Icon(Icons.content_copy, size: 15),
+                label: const Text('相談文をコピー'),
+              ),
+              TextButton.icon(
+                key: Key('asset_top_interest_jump_${row.id}'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                onPressed: () => _jumpToDebtMasterCard(row.id),
+                icon: const Icon(Icons.arrow_downward, size: 15),
+                label: const Text('詳細へ'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
