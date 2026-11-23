@@ -260,7 +260,7 @@ class SensitiveLogFilter extends LogFilter {
 
   @override
   bool shouldLog(LogEvent event) {
-    final threshold = level ?? minimumLevel ?? Logger.level;
+    final threshold = minimumLevel ?? level ?? Logger.level;
     return event.level.value >= threshold.value;
   }
 }

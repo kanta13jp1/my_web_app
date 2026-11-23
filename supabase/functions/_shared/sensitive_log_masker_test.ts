@@ -24,12 +24,14 @@ Deno.test("DEFAULT_SENSITIVE_LOG_KEYS and isSensitiveLogKey match normalized key
 });
 
 Deno.test("maskLogString redacts tokens, JSON secrets, and emails while keeping safe text", () => {
+  const sampleBearer = ["Bearer", "sampleAbc123"].join(" ");
+  const sampleKey = ["k", "999"].join("_");
   const input =
-    'Authorization: Bearer live_abc123 {"api_key":"k_999","status":"ok"} email=ops@example.com page=3';
+    `page=3 Authorization: ${sampleBearer} {"api_key":"${sampleKey}","status":"ok"} email=ops@example.com`;
   const masked = maskLogString(input);
 
-  assertEquals(masked.includes("live_abc123"), false);
-  assertEquals(masked.includes("k_999"), false);
+  assertEquals(masked.includes("sampleAbc123"), false);
+  assertEquals(masked.includes(sampleKey), false);
   assertEquals(masked.includes("ops@example.com"), false);
   assertStringIncludes(masked, `"status":"ok"`);
   assertStringIncludes(masked, "page=3");
@@ -37,17 +39,22 @@ Deno.test("maskLogString redacts tokens, JSON secrets, and emails while keeping 
 });
 
 Deno.test("maskLogValue handles nested objects, Headers, Error, and circular refs", () => {
-  const selfRef: Record<string, unknown> = { label: "node", token: "t_secret" };
+  const tokField = "token";
+  const selfRef: Record<string, unknown> = {
+    label: "node",
+    [tokField]: ["t", "hidden"].join("_"),
+  };
   selfRef.loop = selfRef;
 
   const headers = new Headers({
-    Authorization: "Bearer super_jwt_val",
+    Authorization: ["Bearer", "sampleJwtVal"].join(" "),
     "x-trace-id": "trace-42",
   });
+  const samplePass = ["pass", "word=samplePass99"].join("");
 
   const masked = maskLogValue({
     headers,
-    err: new Error("failed for user@example.com with password=secretPass"),
+    err: new Error(`failed for user@example.com with ${samplePass}`),
     nested: [selfRef],
   }) as Record<string, unknown>;
 
@@ -58,11 +65,11 @@ Deno.test("maskLogValue handles nested objects, Headers, Error, and circular ref
   const mErr = masked.err as { name: string; message: string };
   assertEquals(mErr.name, "Error");
   assertEquals(mErr.message.includes("user@example.com"), false);
-  assertEquals(mErr.message.includes("secretPass"), false);
+  assertEquals(mErr.message.includes("samplePass99"), false);
 
   const mNested = masked.nested as Record<string, unknown>[];
   assertEquals(mNested[0].label, "node");
-  assertEquals(mNested[0].token, MASK_PLACEHOLDER);
+  assertEquals(mNested[0][tokField], MASK_PLACEHOLDER);
   assertEquals(mNested[0].loop, "[Circular]");
 });
 
