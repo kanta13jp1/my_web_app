@@ -29788,6 +29788,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         Icons.subscriptions_outlined,
       AssetManagementInsightActionType.paymentDiscrepancy =>
         Icons.compare_arrows_outlined,
+      AssetManagementInsightActionType.transferConflict =>
+        Icons.swap_horiz_outlined,
     };
   }
 

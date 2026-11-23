@@ -210,7 +210,7 @@ class AssetAiHistoryDiffService {
     if (current != null &&
         current > 0 &&
         (previous == null || previous == current)) {
-      unresolved.add('$label: ${current}件が継続中');
+      unresolved.add('$label: $current件が継続中');
       return;
     }
     if (previous == null || current == null) {
