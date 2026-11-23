@@ -1,0 +1,70 @@
+name: Career Monthly KPI Closing Report
+
+on:
+  schedule:
+    # Run at 14:00 UTC (23:00 JST) on month-end candidate days 28-31.
+    - cron: '0 14 28-31 * *'
+  workflow_dispatch:
+    inputs:
+      month_key:
+        description: 'Optional YYYY-MM override'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  monthly-closing-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify deterministic KPI closing calculator
+        run: python -B -m unittest scripts/career_kpi_closing_report_test.py
+
+      - name: Generate monthly KPI closing report
+        id: close
+        run: |
+          mkdir -p artifacts
+          EXTRA_ARGS=""
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            EXTRA_ARGS="--check-month-end"
+          fi
+          if [ -n "${{ inputs.month_key }}" ]; then
+            EXTRA_ARGS="$EXTRA_ARGS --month ${{ inputs.month_key }}"
+          fi
+          SUMMARY=$(python -B scripts/career_kpi_closing_report.py \
+            --self-check \
+            $EXTRA_ARGS \
+            --output-json artifacts/career-monthly-close.json \
+            --output-md artifacts/career-monthly-close.md)
+          echo "$SUMMARY"
+          echo "summary=$SUMMARY" >> "$GITHUB_OUTPUT"
+
+      - name: Write monitoring summary
+        if: always()
+        run: |
+          {
+            echo "## Career Monthly KPI Closing Report"
+            echo '```json'
+            echo '${{ steps.close.outputs.summary }}'
+            echo '```'
+            if [ -f artifacts/career-monthly-close.md ]; then
+              cat artifacts/career-monthly-close.md
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload closing report artifacts
+        if: always() && hashFiles('artifacts/career-monthly-close.*') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: career-monthly-kpi-closing-report
+          path: artifacts/career-monthly-close.*
+          retention-days: 30
