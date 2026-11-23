@@ -14,6 +14,9 @@ import '../services/payment_confirmation_gate.dart';
 import '../widgets/asset_card_statement_reconciliation_dialogs.dart';
 import '../widgets/asset_creditor_contact_dialogs.dart';
 import '../widgets/asset_safety_transfer_and_income_dialogs.dart';
+import '../services/asset_debt_danger_service.dart';
+import '../services/asset_debt_simulation_service.dart';
+import '../widgets/asset_debt_simulation_and_guide_dialogs.dart';
 import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
 import '../widgets/asset_recorded_change_details.dart';
 import '../models/asset_income_source_evidence.dart';
@@ -573,6 +576,14 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final CardStatementRefetchHandler? debugCardStatementRefetchHandler;
 
+  /// テスト専用: 月次スナップショット履歴を初期注入する (#1370)。
+  @visibleForTesting
+  final List<AssetLiabilityMonthlySnapshot>? debugInitialMonthlySnapshots;
+
+  /// テスト専用: 外部相談窓口URL起動フック (#1370)。
+  @visibleForTesting
+  final Future<bool> Function(Uri uri)? debugOpenExternalUrl;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -618,6 +629,8 @@ class AssetManagementPage extends StatefulWidget {
     this.debugInitialAiSummaryReferencedHistory,
     this.debugContactLogSubmitter,
     this.debugCardStatementRefetchHandler,
+    this.debugInitialMonthlySnapshots,
+    this.debugOpenExternalUrl,
   });
 
   @override
@@ -1055,6 +1068,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       <AssetLiabilityRecurringIncomeTemplate>[];
   List<AssetLiabilityMonthlySnapshot> _monthlySnapshots =
       <AssetLiabilityMonthlySnapshot>[];
+  DebtDangerSettings _debtDangerSettings = const DebtDangerSettings();
   List<AssetLiabilityMonthlyReport> _monthlyReports =
       <AssetLiabilityMonthlyReport>[];
   String? _selectedMonthlyReportMonthKey;
@@ -1542,6 +1556,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _assetManagementAiSummaryReferencedHistory =
           List<AssetManagementAiAnalysisHistoryEntry>.from(debugHistory);
     }
+    final debugMonthlySnapshots = widget.debugInitialMonthlySnapshots;
+    if (debugMonthlySnapshots != null) {
+      _monthlySnapshots =
+          List<AssetLiabilityMonthlySnapshot>.from(debugMonthlySnapshots);
+    }
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
@@ -1564,6 +1583,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         SupabaseAssetAnomalyDetectionRepository(client: _supabase);
     unawaited(_loadMinimumSafetyBalance());
     unawaited(_loadCreditorContactLogs());
+    unawaited(_loadDebtDangerSettings());
     // 起動時の asset_pref_mirror 個別読み取りを 1 回のバッチ取得へ集約する
     // (端末跨ぎ同期の多数 REST が ERR_INSUFFICIENT_RESOURCES を誘発するのを緩和)。
     // 起動バーストが収束したらキャッシュを失効させ、以降は最新を個別取得する。
@@ -5536,6 +5556,74 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     setState(() {
       _creditorContactLogs = updated;
     });
+  }
+
+  Future<void> _loadDebtDangerSettings() async {
+    final loaded = await AssetDebtDangerSettingsStore.load();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _debtDangerSettings = loaded;
+    });
+  }
+
+  void _saveDebtDangerSettings(DebtDangerSettings next) {
+    setState(() {
+      _debtDangerSettings = next;
+    });
+    unawaited(AssetDebtDangerSettingsStore.save(next));
+  }
+
+  List<AssetLiabilityMonthlySnapshot> _effectiveDangerSnapshots() {
+    if (_monthlySnapshots.isNotEmpty) {
+      return _monthlySnapshots;
+    }
+    return widget.debugInitialMonthlySnapshots ??
+        const <AssetLiabilityMonthlySnapshot>[];
+  }
+
+  Future<void> _openMultiDebtSimulatorDialog(
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    final initialDebts = AssetDebtSimulationService.extractDefaultDebts(
+      workbook.debtMasterRows,
+      baseDate: workbook.baseDate,
+    );
+    await MultiDebtPrepaymentSimulatorDialog.show(
+      context,
+      initialDebts: initialDebts,
+      onOpenConsolidation: () => unawaited(
+        _openDebtConsolidationDialog(workbook),
+      ),
+    );
+  }
+
+  Future<void> _openDebtConsolidationDialog(
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    final initialDebts = AssetDebtSimulationService.extractDefaultDebts(
+      workbook.debtMasterRows,
+      baseDate: workbook.baseDate,
+    );
+    await DebtConsolidationSimulatorDialog.show(
+      context,
+      initialDebts: initialDebts,
+    );
+  }
+
+  Future<void> _openDebtDangerGuideDialog(
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    await DebtDangerConsultationGuideDialog.show(
+      context,
+      workbook: workbook,
+      monthlyIncome: _savingsPlanNetIncome()?.toDouble(),
+      monthlySnapshots: _effectiveDangerSnapshots(),
+      initialSettings: _debtDangerSettings,
+      onSettingsChanged: _saveDebtDangerSettings,
+      onOpenUrl: widget.debugOpenExternalUrl,
+    );
   }
 
   Future<void> _openCreditorContactDialog(
@@ -12612,6 +12700,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     assetLiabilityWorkbook,
                   ),
                   _buildCreditorContactAgreementBanner(assetLiabilityWorkbook),
+                  _buildDebtDangerConsultationBanner(assetLiabilityWorkbook),
                   _buildPaymentSourceMissingBanner(assetLiabilityWorkbook),
                   _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
                   _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
@@ -19370,6 +19459,110 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 style: const TextStyle(fontSize: 11, height: 1.4),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  /// 返済比率・残高非減少の連続月数に応じて、過度な不安を与えない控えめなトーンで
+  /// 債務整理・公的相談窓口への導線を案内するバナー (#1370)。
+  Widget _buildDebtDangerConsultationBanner(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null || _debtDangerSettings.bannerDismissed) {
+      return const SizedBox.shrink();
+    }
+    final assessment = AssetDebtDangerService.evaluate(
+      workbook: workbook,
+      monthlyIncome: _savingsPlanNetIncome()?.toDouble(),
+      monthlySnapshots: _effectiveDangerSnapshots(),
+      settings: _debtDangerSettings,
+    );
+    if (!assessment.isAlertTriggered) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      key: const Key('asset_debt_danger_consultation_banner'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 4, bottom: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEF2FF),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFC7D2FE)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.support_agent_outlined,
+                size: 16,
+                color: Color(0xFF3730A3),
+              ),
+              SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '無理のない返済計画の見直し・専門家への相談をご検討ください',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF312E81),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          for (final reason in assessment.reasons.take(2))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(
+                '・$reason',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF334155),
+                  height: 1.4,
+                ),
+              ),
+            ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              OutlinedButton.icon(
+                key: const Key('asset_debt_danger_open_guide_button'),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+                onPressed: () =>
+                    unawaited(_openDebtDangerGuideDialog(workbook)),
+                icon: const Icon(Icons.menu_book_outlined, size: 16),
+                label: const Text('相談窓口・債務整理ガイド'),
+              ),
+              TextButton.icon(
+                key: const Key('asset_debt_danger_open_consolidation_button'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+                onPressed: () => unawaited(
+                  _openDebtConsolidationDialog(workbook),
+                ),
+                icon: const Icon(Icons.compare_arrows, size: 16),
+                label: const Text('おまとめ比較'),
+              ),
+              TextButton.icon(
+                key: const Key('asset_debt_danger_settings_button'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+                onPressed: () =>
+                    unawaited(_openDebtDangerGuideDialog(workbook)),
+                icon: const Icon(Icons.tune, size: 16),
+                label: const Text('基準を変更'),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -36110,6 +36303,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   _debtMasterSortMode = AssetDebtSortMode.paymentDay;
                 });
               },
+            ),
+            OutlinedButton.icon(
+              key: const Key('asset_open_multi_debt_simulator_button'),
+              style: OutlinedButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+              ),
+              onPressed: () =>
+                  unawaited(_openMultiDebtSimulatorDialog(workbook)),
+              icon: const Icon(Icons.calculate_outlined, size: 16),
+              label: const Text('複数借入・繰り上げ試算'),
+            ),
+            OutlinedButton.icon(
+              key: const Key('asset_open_consolidation_simulator_button'),
+              style: OutlinedButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+              ),
+              onPressed: () =>
+                  unawaited(_openDebtConsolidationDialog(workbook)),
+              icon: const Icon(Icons.compare_arrows, size: 16),
+              label: const Text('おまとめローン比較'),
+            ),
+            OutlinedButton.icon(
+              key: const Key('asset_open_debt_consultation_guide_button'),
+              style: OutlinedButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+              ),
+              onPressed: () => unawaited(_openDebtDangerGuideDialog(workbook)),
+              icon: const Icon(Icons.support_agent_outlined, size: 16),
+              label: const Text('返済危険度・相談ガイド'),
             ),
           ],
         ),
