@@ -404,6 +404,15 @@ jobs:
           fi
         continue-on-error: false  # migration 構文エラーはCIブロック
 
+      - name: Verify web font subsetting and SEO shell handoff tests
+        run: |
+          if ! dpkg -s python3-fonttools >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends python3-fonttools
+          fi
+          /usr/bin/python3 -m unittest discover -s test/scripts -p 'test_optimize_web_fonts.py'
+          node --test test/web/seo_shell_handoff.test.cjs
+
       - name: Verify acquisition measurement audit
         run: |
           python -m unittest discover -s test/scripts -p 'test_seo_measurement_audit.py'
@@ -533,6 +542,15 @@ jobs:
           fi
           echo "Build successful!"
           ls -la build/web
+
+      - name: Optimize bundled web fonts
+        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        run: |
+          if ! dpkg -s python3-fonttools >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends python3-fonttools
+          fi
+          /usr/bin/python3 scripts/optimize_web_fonts.py --build-dir build/web --repo-root . --require-fonts
 
       - name: Build business execution browser fixture
         if: steps.changes.outputs.business_execution == 'true'
