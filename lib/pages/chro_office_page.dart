@@ -1,32 +1,113 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../models/achievement.dart';
 import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
+import '../services/gamification_service.dart';
 import '../widgets/agent_workspace_panel.dart';
+import '../widgets/chro_gamification_summary_card.dart';
 import 'people_help_page.dart';
 import 'rewards_page.dart';
 
 class ChroOfficePage extends StatefulWidget {
-  const ChroOfficePage({super.key});
+  final GamificationService? gamificationService;
+  final AgentOrgService? agentOrgService;
+  final AgentWorkspaceSnapshot? initialWorkspace;
+
+  const ChroOfficePage({
+    super.key,
+    this.gamificationService,
+    this.agentOrgService,
+    this.initialWorkspace,
+  });
 
   @override
   State<ChroOfficePage> createState() => _ChroOfficePageState();
 }
 
 class _ChroOfficePageState extends State<ChroOfficePage> {
-  final AgentOrgService _agentOrgService = AgentOrgService();
+  AgentOrgService? _ownedAgentOrgService;
+  GamificationService? _ownedGamificationService;
+  late GamificationService _gamificationService;
+  bool _gamificationResolved = false;
+
   AgentWorkspaceSnapshot? _workspace;
   bool _isLoadingWorkspace = true;
+  bool _isEvaluatingAchievements = false;
+  List<Achievement> _unlockedAchievements = <Achievement>[];
+
+  AgentOrgService get _resolvedAgentOrgService =>
+      widget.agentOrgService ?? (_ownedAgentOrgService ??= AgentOrgService());
 
   @override
   void initState() {
     super.initState();
-    _loadWorkspace();
+    if (widget.initialWorkspace != null) {
+      _workspace = widget.initialWorkspace;
+      _isLoadingWorkspace = false;
+    } else {
+      _loadWorkspace();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_gamificationResolved) {
+      _gamificationResolved = true;
+      if (widget.gamificationService != null) {
+        _gamificationService = widget.gamificationService!;
+      } else {
+        try {
+          _gamificationService =
+              Provider.of<GamificationService>(context, listen: false);
+        } catch (_) {
+          _ownedGamificationService = GamificationService();
+          _gamificationService = _ownedGamificationService!;
+        }
+      }
+      _unlockedAchievements = _gamificationService.recentUnlocked;
+      _refreshAchievements();
+    }
+  }
+
+  @override
+  void dispose() {
+    _ownedGamificationService?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refreshAchievements({bool evaluateNow = false}) async {
+    if (evaluateNow && mounted) {
+      setState(() => _isEvaluatingAchievements = true);
+    }
+    try {
+      if (evaluateNow) {
+        await _gamificationService.checkAchievements(
+          contextNote: 'CHROオフィスでの再評価',
+        );
+      }
+      final unlocked = await _gamificationService.getUserAchievements();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _unlockedAchievements = unlocked;
+        _isEvaluatingAchievements = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isEvaluatingAchievements = false);
+    }
   }
 
   Future<void> _loadWorkspace() async {
     try {
-      final workspace = await _agentOrgService.loadWorkspaceBySlug('chro');
+      final workspace =
+          await _resolvedAgentOrgService.loadWorkspaceBySlug('chro');
       if (!mounted) {
         return;
       }
@@ -44,7 +125,13 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
 
   Future<void> _processTask(AgentTask task, String status) async {
     try {
-      await _agentOrgService.processTask(task: task, status: status);
+      await _resolvedAgentOrgService.processTask(task: task, status: status);
+      if (status == 'completed') {
+        await _gamificationService.recordActivity(
+          tasksCompletedDelta: 1,
+          contextNote: task.title,
+        );
+      }
       if (!mounted) {
         return;
       }
@@ -52,6 +139,7 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
         context,
       ).showSnackBar(SnackBar(content: Text('CHRO task updated: $status')));
       await _loadWorkspace();
+      await _refreshAchievements();
     } catch (error) {
       if (!mounted) {
         return;
@@ -72,7 +160,10 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
         foregroundColor: Colors.white,
       ),
       body: RefreshIndicator(
-        onRefresh: _loadWorkspace,
+        onRefresh: () async {
+          await _loadWorkspace();
+          await _refreshAchievements();
+        },
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -82,6 +173,22 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
               isLoading: _isLoadingWorkspace,
               workspace: _workspace,
               onProcessTask: _processTask,
+            ),
+            const SizedBox(height: 16),
+            ListenableBuilder(
+              listenable: _gamificationService,
+              builder: (context, _) {
+                final summary = _gamificationService.buildChroSummary();
+                final unlocked = _gamificationService.recentUnlocked.isNotEmpty
+                    ? _gamificationService.recentUnlocked
+                    : _unlockedAchievements;
+                return ChroGamificationSummaryCard(
+                  summary: summary,
+                  unlockedAchievements: unlocked,
+                  isEvaluating: _isEvaluatingAchievements,
+                  onEvaluate: () => _refreshAchievements(evaluateNow: true),
+                );
+              },
             ),
             const SizedBox(height: 16),
             _buildMenuCard(
