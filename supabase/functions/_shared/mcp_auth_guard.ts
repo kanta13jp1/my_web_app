@@ -45,6 +45,8 @@ export interface McpAuthContext {
 export const MCP_RESOURCE_PREFIX = "urn:jibun:tool:";
 export const OAUTH_PROTECTED_RESOURCE_PATH =
   "/.well-known/oauth-protected-resource";
+const OAUTH_PROTECTED_RESOURCE_MCP_PATH =
+  `${OAUTH_PROTECTED_RESOURCE_PATH}/mcp`;
 
 export function toolResourceUrn(tool: string): string {
   return `${MCP_RESOURCE_PREFIX}${tool}`;
@@ -105,9 +107,29 @@ function getAuthKitAuthorizationServers(): string[] {
   ]);
 }
 
-function protectedResourceUrl(reqUrl: string): string {
+function normalizeSupabaseFunctionUrl(url: URL): void {
+  if (url.hostname.endsWith(".supabase.co")) {
+    url.protocol = "https:";
+    if (!url.pathname.startsWith("/functions/v1/")) {
+      const normalizedPath = url.pathname.startsWith("/")
+        ? url.pathname
+        : `/${url.pathname}`;
+      url.pathname = `/functions/v1${normalizedPath}`;
+    }
+  }
+}
+
+export function protectedResourceUrl(reqUrl: string): string {
   const url = new URL(reqUrl);
-  if (url.pathname.endsWith(`${OAUTH_PROTECTED_RESOURCE_PATH}/`)) {
+  if (url.pathname.endsWith(`${OAUTH_PROTECTED_RESOURCE_MCP_PATH}/`)) {
+    url.pathname = `${
+      url.pathname.slice(0, -(OAUTH_PROTECTED_RESOURCE_MCP_PATH.length + 1))
+    }/mcp`;
+  } else if (url.pathname.endsWith(OAUTH_PROTECTED_RESOURCE_MCP_PATH)) {
+    url.pathname = `${
+      url.pathname.slice(0, -OAUTH_PROTECTED_RESOURCE_MCP_PATH.length)
+    }/mcp`;
+  } else if (url.pathname.endsWith(`${OAUTH_PROTECTED_RESOURCE_PATH}/`)) {
     url.pathname = url.pathname.slice(
       0,
       -(OAUTH_PROTECTED_RESOURCE_PATH.length + 1),
@@ -115,15 +137,31 @@ function protectedResourceUrl(reqUrl: string): string {
   } else if (url.pathname.endsWith(OAUTH_PROTECTED_RESOURCE_PATH)) {
     url.pathname = url.pathname.slice(0, -OAUTH_PROTECTED_RESOURCE_PATH.length);
   }
+  normalizeSupabaseFunctionUrl(url);
   url.search = "";
   url.hash = "";
   return trimTrailingSlash(url.toString());
 }
 
+export function buildWwwAuthenticateHeader(
+  reqUrl: string,
+  toolName: string,
+): string {
+  const resource = protectedResourceUrl(reqUrl);
+  const base = resource.endsWith("/mcp")
+    ? resource.slice(0, -"/mcp".length)
+    : resource;
+  return `Bearer resource_metadata="${base}${OAUTH_PROTECTED_RESOURCE_PATH}", resource="${
+    toolResourceUrn(toolName)
+  }"`;
+}
+
 export function isOAuthProtectedResourceMetadataRequest(req: Request): boolean {
   const { pathname } = new URL(req.url);
   return pathname.endsWith(OAUTH_PROTECTED_RESOURCE_PATH) ||
-    pathname.endsWith(`${OAUTH_PROTECTED_RESOURCE_PATH}/`);
+    pathname.endsWith(`${OAUTH_PROTECTED_RESOURCE_PATH}/`) ||
+    pathname.endsWith(OAUTH_PROTECTED_RESOURCE_MCP_PATH) ||
+    pathname.endsWith(`${OAUTH_PROTECTED_RESOURCE_MCP_PATH}/`);
 }
 
 export function buildOAuthProtectedResourceMetadata(
