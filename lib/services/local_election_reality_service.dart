@@ -280,7 +280,9 @@ class LocalElectionRealityService {
       await cacheSnapshot(snapshot, prefs: store);
       return snapshot;
     } catch (error) {
-      if (fallbackSnapshot != null && fallbackSnapshot.hasData) {
+      if (!forceRefresh &&
+          fallbackSnapshot != null &&
+          fallbackSnapshot.hasData) {
         debugPrint(
           'Local election fetch failed, using cached snapshot instead: $error',
         );
