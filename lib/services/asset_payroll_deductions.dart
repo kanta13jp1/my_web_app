@@ -44,8 +44,7 @@ class PayrollDeductions {
     '雇用保険': 'employment_insurance',
     '介護保険料': 'long_term_care_insurance',
     '介護保険': 'long_term_care_insurance',
-    'employee_pension_fund_contribution':
-        'employees_pension_fund_contribution',
+    'employee_pension_fund_contribution': 'employees_pension_fund_contribution',
     '厚生年金基金掛金': 'employees_pension_fund_contribution',
     'IDECO': 'ideco',
     'iDeCo': 'ideco',

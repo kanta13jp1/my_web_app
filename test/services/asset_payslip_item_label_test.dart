@@ -116,7 +116,8 @@ void main() {
       'その他（overtime_hours_legal）',
     );
   });
-  test('labels observed May Japanese and August English earning/attendance keys',
+  test(
+      'labels observed May Japanese and August English earning/attendance keys',
       () {
     const newEarnings = {
       'base_salary_monthly': '月額基本給',
