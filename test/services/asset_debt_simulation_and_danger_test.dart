@@ -52,8 +52,16 @@ void main() {
     });
 
     test('allocates lump-sum extra to highest-rate debt first (avalanche)', () {
+      const shortBankLow = MultiDebtInputItem(
+        id: 'bank_loan',
+        name: '銀行フリーローン',
+        balance: 200000,
+        annualRate: 0.12,
+        monthlyPayment: 15000,
+        daysUntilNextPayment: 30,
+      );
       final summary = AssetDebtSimulationService.simulateMultiDebtAvalanche(
-        items: const <MultiDebtInputItem>[bankLow, mobitHigh],
+        items: const <MultiDebtInputItem>[shortBankLow, mobitHigh],
         extraAmount: 100000,
       );
 
@@ -147,7 +155,7 @@ void main() {
         latestSnapshot: const <String, double>{
           '三井住友銀行大塚支店': 50000,
           'モビット': -300000,
-          'アコム': -300000,
+          'アコムカードローン': -300000,
         },
         monthlyPaymentOverrides: const <String, double>{
           'mobit': 40000,
