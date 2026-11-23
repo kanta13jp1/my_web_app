@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/asset_payroll_deductions.dart';
+import 'package:my_web_app/widgets/asset_payslip_review_dialog.dart';
 import '../../integration_test/payslip_review_fixture.dart';
 
 Finder saveButton() => find.widgetWithText(FilledButton, '記載内容を本人確認済みにする');

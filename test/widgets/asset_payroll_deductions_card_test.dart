@@ -142,6 +142,10 @@ void main() {
   testWidgets(
       'Japanese keys classify cleanly and future pay_date stays outside confirmed totals',
       (tester) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -205,6 +209,7 @@ void main() {
     expect(find.text('記載済み控除小計との差：0円'), findsOneWidget);
 
     await tester.ensureVisible(find.text('11月'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('11月'));
     await tester.pumpAndSettle();
     expect(
