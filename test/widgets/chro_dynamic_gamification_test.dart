@@ -123,6 +123,7 @@ void main() {
 
           await tester.pumpWidget(
             MaterialApp(
+              key: ValueKey<Size>(viewport),
               home: ChroOfficePage(
                 gamificationService: service,
                 initialWorkspace: _dummyChroWorkspace(),
@@ -135,11 +136,13 @@ void main() {
             find.byKey(const Key('chro_office_page_scaffold')),
             findsOneWidget,
           );
-          expect(find.byType(ChroGamificationSummaryCard), findsOneWidget);
-          expect(
-            find.byKey(const Key('chro_menu_people_help')),
-            findsOneWidget,
+          await tester.scrollUntilVisible(
+            find.byType(ChroGamificationSummaryCard),
+            200,
+            scrollable: find.byType(Scrollable).first,
           );
+          await tester.pumpAndSettle();
+          expect(find.byType(ChroGamificationSummaryCard), findsOneWidget);
           expect(find.text('0 pt'), findsOneWidget);
           expect(
             find.byKey(const Key('chro_achievements_empty_text')),
@@ -172,6 +175,17 @@ void main() {
 
           await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
           await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+
+          await tester.scrollUntilVisible(
+            find.byKey(const Key('chro_menu_people_help')),
+            200,
+            scrollable: find.byType(Scrollable).first,
+          );
+          await tester.pumpAndSettle();
+          expect(
+            find.byKey(const Key('chro_menu_people_help')),
+            findsOneWidget,
+          );
           expect(tester.takeException(), isNull);
         }
       } finally {
