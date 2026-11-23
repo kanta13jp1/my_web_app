@@ -551,7 +551,8 @@ class _FurusatoTaxCalculatorDialogState
                       ),
                       onChanged: (value) {
                         setState(
-                            () => _socialOverride = _parseTaxNumber(value));
+                          () => _socialOverride = _parseTaxNumber(value),
+                        );
                       },
                     ),
                   ),

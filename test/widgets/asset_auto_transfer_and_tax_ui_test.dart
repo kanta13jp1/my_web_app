@@ -164,8 +164,10 @@ void main() {
 
       expect(saved, hasLength(2));
       expect(find.textContaining('15,000円'), findsWidgets);
-      expect(find.byKey(const Key('medical_expense_category_breakdown')),
-          findsOneWidget);
+      expect(
+        find.byKey(const Key('medical_expense_category_breakdown')),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
   });

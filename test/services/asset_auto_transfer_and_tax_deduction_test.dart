@@ -42,10 +42,14 @@ void main() {
         (c) => c.suggestion.toAccountId == 'jibun_bank',
       );
       expect(candidate.suggestion.fromAccountId, 'smbc_otsuka_branch');
-      expect(candidate.donorRemainingProjectedBalance,
-          greaterThanOrEqualTo(50000));
       expect(
-          candidate.projectedBalanceAfterTransfer, greaterThanOrEqualTo(50000));
+        candidate.donorRemainingProjectedBalance,
+        greaterThanOrEqualTo(50000),
+      );
+      expect(
+        candidate.projectedBalanceAfterTransfer,
+        greaterThanOrEqualTo(50000),
+      );
       expect(candidate.alreadyTracked, isFalse);
 
       final bundle = AssetAutoTransferService.buildTransferTaskAndAudit(
