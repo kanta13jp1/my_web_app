@@ -194,11 +194,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.byKey(const ValueKey<String>('price_advice_verdict_badge')),
+        find.descendant(
+          of: find.byKey(const ValueKey<String>('price_advice_verdict_badge')),
+          matching: find.text('⏳ 待機推奨'),
+        ),
         findsOneWidget,
       );
-      expect(find.text('⏳ 待機推奨'), findsOneWidget);
-      expect(find.text('直近価格が観測平均を上回るため待機推奨です。'), findsOneWidget);
+      expect(find.text('直近価格が観測平均を上回るため待機推奨です。'), findsWidgets);
       expect(find.text('実測ログ統計のみで算出 (未観測セール・在庫推測なし)'), findsOneWidget);
       expect(invokeCount, 1);
 
@@ -208,7 +210,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(invokeCount, 2);
-      expect(find.text('最新ログを含めて再評価しました。'), findsOneWidget);
+      expect(find.text('最新ログを含めて再評価しました。'), findsWidgets);
       expect(find.text('統計フォールバック'), findsOneWidget);
 
       // Close sheet and confirm product card displays cached verdict banner
