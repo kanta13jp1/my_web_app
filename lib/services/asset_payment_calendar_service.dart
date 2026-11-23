@@ -783,9 +783,8 @@ class AssetPaymentCalendarService {
       }
       final account = usage.accountName.trim();
       final desc = usage.description.trim();
-      final baseLabel = account.isEmpty
-          ? 'リボ利用（現金引落なし）'
-          : 'リボ利用（現金引落なし）: $account';
+      final baseLabel =
+          account.isEmpty ? 'リボ利用（現金引落なし）' : 'リボ利用（現金引落なし）: $account';
       final label = desc.isEmpty ? baseLabel : '$baseLabel / $desc';
       addEvent(
         date,

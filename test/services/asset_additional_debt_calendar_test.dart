@@ -102,17 +102,15 @@ void main() {
             'モビット': -200000,
           },
           baseDate: DateTime(2026, 7, 10),
-          revolvingConfigs:
-              const <String, AssetLiabilityRevolvingCreditConfig>{
+          revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
             'famipay_card': AssetLiabilityRevolvingCreditConfig(
               monthlyAmount: 5000,
               newUsageAmount: 8000,
             ),
           },
         );
-        final famipayId = workbook.debtMasterRows
-            .firstWhere((row) => row.isRevolving)
-            .id;
+        final famipayId =
+            workbook.debtMasterRows.firstWhere((row) => row.isRevolving).id;
 
         final extracted = AssetPaymentCalendarService.extractRevolvingUsages(
           workbook: workbook,

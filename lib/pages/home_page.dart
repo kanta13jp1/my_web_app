@@ -3131,7 +3131,8 @@ abstinence_slip_details: $slipDetailsText
                             accentColor: accentColor,
                           ),
                           if (day.isCurrentMonth &&
-                              (day.hasCashflow || day.cashflow.hasBorrowing)) ...[
+                              (day.hasCashflow ||
+                                  day.cashflow.hasBorrowing)) ...[
                             const SizedBox(height: 4),
                             if (day.cashflow.incomeCount > 0)
                               HomeCalendarCashflowLine(

@@ -72,8 +72,7 @@ void main() {
                 amount: 4500,
               ),
             ],
-            debugInitialDebtGuardViolations:
-                <AssetCalendarDebtGuardViolationInput>[
+            debugInitialDebtGuardViolations: <AssetCalendarDebtGuardViolationInput>[
               AssetCalendarDebtGuardViolationInput(
                 date: DateTime(2026, 7, 9),
                 note: 'ファミペイ: コンビニリボ利用',
@@ -245,8 +244,7 @@ void main() {
             debugInitialAssetData: const <String, Map<String, double>>{
               '2026-07-10': <String, double>{'財布(現金)': 50000},
             },
-            debugInitialDebtGuardViolations:
-                const <AssetCalendarDebtGuardViolationInput>[],
+            debugInitialDebtGuardViolations: const <AssetCalendarDebtGuardViolationInput>[],
             debugRecordAdditionalDebtFlow: (draft) async {
               savedDraft = draft;
             },

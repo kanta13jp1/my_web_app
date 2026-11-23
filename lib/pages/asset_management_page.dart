@@ -4249,8 +4249,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String _buildAdditionalDebtDaySummaryText(AssetCalendarDaySummary day) {
     final parts = <String>[
-      if (day.hasBorrowing)
-        '借入受取 ${_formatYen(day.borrowingTotal)}（収入集計外）',
+      if (day.hasBorrowing) '借入受取 ${_formatYen(day.borrowingTotal)}（収入集計外）',
       if (day.hasRevolvingUsage)
         'リボ利用 ${_formatYen(day.revolvingUsageTotal)}（現金引落なし）',
       if (day.hasDebtGuardBorrowingViolation) '追加借金ルール違反（Debt Guard）の記録あり',
@@ -21029,12 +21028,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       workbook: workbook,
       statementLines: _cardStatementLines,
     );
-    final effectiveDebtGuardViolations = (_calendarDebtGuardViolationsOwner ==
-                debtGuardUserId ||
-            widget.debugInitialDebtGuardViolations != null ||
-            widget.debugRecordDebtGuardViolation != null)
-        ? _calendarDebtGuardViolations
-        : const <AssetCalendarDebtGuardViolationInput>[];
+    final effectiveDebtGuardViolations =
+        (_calendarDebtGuardViolationsOwner == debtGuardUserId ||
+                widget.debugInitialDebtGuardViolations != null ||
+                widget.debugRecordDebtGuardViolation != null)
+            ? _calendarDebtGuardViolations
+            : const <AssetCalendarDebtGuardViolationInput>[];
     final calendar = AssetPaymentCalendarService.buildRange(
       start: cycleStart,
       endExclusive: cycleEndExclusive,
