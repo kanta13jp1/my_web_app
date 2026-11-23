@@ -683,15 +683,15 @@ const TIER_PROVIDERS: Record<Tier, string[]> = {
     "moonshot",
   ],
   performance: [
-    "openai",
     "google",
+    "openai",
     "mistral",
     "cohere",
     "perplexity",
     "nebius",
     "qwen",
   ],
-  premium: ["anthropic", "openai", "google"],
+  premium: ["anthropic", "google", "openai"],
 };
 
 const TIER_ORDER: Tier[] = ["free", "budget", "performance", "premium"];
