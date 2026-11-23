@@ -133,6 +133,9 @@ class WbsTask {
   // github_issue_state == 'CLOSED' を併用すれば close 反映を即時取得可.
   final String githubIssueState;
 
+  /// WBS 階層ツリー構築用の親タスク ID (`parent_task_id` / `parent_id`) (#2222)。
+  final String? parentTaskId;
+
   const WbsTask({
     required this.id,
     required this.category,
@@ -159,6 +162,7 @@ class WbsTask {
     this.createdAt,
     this.updatedAt,
     this.githubIssueState = '',
+    this.parentTaskId,
   });
 
   WbsTask copyWith({
@@ -187,6 +191,7 @@ class WbsTask {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? githubIssueState,
+    String? parentTaskId,
   }) =>
       WbsTask(
         id: id ?? this.id,
@@ -214,6 +219,7 @@ class WbsTask {
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         githubIssueState: githubIssueState ?? this.githubIssueState,
+        parentTaskId: parentTaskId ?? this.parentTaskId,
       );
 
   bool get isEffectivelyCompleted =>
@@ -276,6 +282,11 @@ class WbsTask {
             ? DateTime.tryParse(m['updated_at'] as String)
             : null,
         githubIssueState: (m['github_issue_state'] as String?) ?? '',
+        parentTaskId: () {
+          final raw =
+              (m['parent_task_id'] ?? m['parent_id'])?.toString().trim();
+          return (raw == null || raw.isEmpty) ? null : raw;
+        }(),
       );
 
   DateTime? get rawScheduleStartDate => plannedStartDate ?? startDate;
@@ -1376,7 +1387,7 @@ class _WbsTab extends StatelessWidget {
           const _EmptyCard(message: 'WBSタスクがまだ登録されていません')
         else
           ...grouped.entries.map(
-            (entry) => _CategorySection(
+            (entry) => WbsCategoryHierarchySection(
               category: entry.key,
               tasks: entry.value,
               categoryIcon: entry.value.isNotEmpty
@@ -2192,25 +2203,191 @@ class WbsCategoryIconBadge extends StatelessWidget {
   }
 }
 
-class _CategorySection extends StatelessWidget {
+class WbsHierarchyNode {
+  final WbsTask task;
+  final int depth;
+  final int directChildCount;
+  final int totalDescendantCount;
+  final bool isOrphanFallback;
+  final bool brokeCycle;
+
+  const WbsHierarchyNode({
+    required this.task,
+    required this.depth,
+    required this.directChildCount,
+    required this.totalDescendantCount,
+    this.isOrphanFallback = false,
+    this.brokeCycle = false,
+  });
+}
+
+/// 親タスク ID (`parentTaskId`) に基づく循環安全・孤立安全な階層リストを構築する (#2222)。
+///
+/// タイトルからの推測は行わず、親タスクが入力一覧に存在しない場合はルートに
+/// フォールバックする。循環参照はエッジを切って無限ループを防止する。
+List<WbsHierarchyNode> buildWbsHierarchyNodes(
+  List<WbsTask> tasks, {
+  Set<String> collapsedParentIds = const <String>{},
+}) {
+  if (tasks.isEmpty) {
+    return const <WbsHierarchyNode>[];
+  }
+  final n = tasks.length;
+  final idToIndex = <String, int>{};
+  for (var i = 0; i < n; i++) {
+    idToIndex.putIfAbsent(tasks[i].id, () => i);
+  }
+
+  final decidedParent = List<int?>.filled(n, null);
+  final isDecided = List<bool>.filled(n, false);
+  final orphanFlags = List<bool>.filled(n, false);
+  final cycleFlags = List<bool>.filled(n, false);
+
+  for (var i = 0; i < n; i++) {
+    final pid = tasks[i].parentTaskId?.trim();
+    if (pid == null || pid.isEmpty) {
+      isDecided[i] = true;
+      continue;
+    }
+    final pIdx = idToIndex[pid];
+    if (pIdx == null) {
+      orphanFlags[i] = true;
+      isDecided[i] = true;
+      continue;
+    }
+    if (pIdx == i) {
+      cycleFlags[i] = true;
+      isDecided[i] = true;
+      continue;
+    }
+
+    final seen = <int>{i};
+    var cur = pIdx;
+    var hitCycle = false;
+    while (true) {
+      if (seen.contains(cur)) {
+        hitCycle = true;
+        break;
+      }
+      seen.add(cur);
+      final nextIdx = isDecided[cur]
+          ? decidedParent[cur]
+          : () {
+              final curPid = tasks[cur].parentTaskId?.trim();
+              return (curPid == null || curPid.isEmpty)
+                  ? null
+                  : idToIndex[curPid];
+            }();
+      if (nextIdx == null) {
+        break;
+      }
+      cur = nextIdx;
+    }
+    if (hitCycle) {
+      cycleFlags[i] = true;
+      decidedParent[i] = null;
+    } else {
+      decidedParent[i] = pIdx;
+    }
+    isDecided[i] = true;
+  }
+
+  final roots = <int>[];
+  final childrenByIndex = List<List<int>>.generate(n, (_) => <int>[]);
+  for (var i = 0; i < n; i++) {
+    final p = decidedParent[i];
+    if (p == null) {
+      roots.add(i);
+    } else {
+      childrenByIndex[p].add(i);
+    }
+  }
+
+  final descendantCounts = List<int>.filled(n, 0);
+  int countDescendants(int index) {
+    var total = 0;
+    for (final childIdx in childrenByIndex[index]) {
+      total += 1 + countDescendants(childIdx);
+    }
+    descendantCounts[index] = total;
+    return total;
+  }
+
+  for (final rootIdx in roots) {
+    countDescendants(rootIdx);
+  }
+
+  final result = <WbsHierarchyNode>[];
+  void visit(int index, int depth) {
+    final task = tasks[index];
+    final children = childrenByIndex[index];
+    result.add(
+      WbsHierarchyNode(
+        task: task,
+        depth: depth,
+        directChildCount: children.length,
+        totalDescendantCount: descendantCounts[index],
+        isOrphanFallback: orphanFlags[index],
+        brokeCycle: cycleFlags[index],
+      ),
+    );
+    if (collapsedParentIds.contains(task.id)) {
+      return;
+    }
+    for (final childIdx in children) {
+      visit(childIdx, depth + 1);
+    }
+  }
+
+  for (final rootIdx in roots) {
+    visit(rootIdx, 0);
+  }
+  return List<WbsHierarchyNode>.unmodifiable(result);
+}
+
+class WbsCategoryHierarchySection extends StatefulWidget {
   final String category;
   final String categoryIcon;
   final List<WbsTask> tasks;
 
-  const _CategorySection({
+  const WbsCategoryHierarchySection({
+    super.key,
     required this.category,
     required this.categoryIcon,
     required this.tasks,
   });
 
+  @override
+  State<WbsCategoryHierarchySection> createState() =>
+      _WbsCategoryHierarchySectionState();
+}
+
+class _WbsCategoryHierarchySectionState
+    extends State<WbsCategoryHierarchySection> {
+  bool _categoryCollapsed = false;
+  final Set<String> _collapsedParentIds = <String>{};
+
   double get _avgProgress {
-    if (tasks.isEmpty) return 0;
-    return tasks.map((t) => t.progress).reduce((a, b) => a + b) / tasks.length;
+    if (widget.tasks.isEmpty) return 0;
+    return widget.tasks.map((t) => t.progress).reduce((a, b) => a + b) /
+        widget.tasks.length;
   }
 
   @override
   Widget build(BuildContext context) {
     final avg = _avgProgress;
+    final fullNodes = buildWbsHierarchyNodes(widget.tasks);
+    final allParentIds = <String>{
+      for (final node in fullNodes)
+        if (node.directChildCount > 0) node.task.id,
+    };
+    final visibleNodes = _categoryCollapsed
+        ? const <WbsHierarchyNode>[]
+        : buildWbsHierarchyNodes(
+            widget.tasks,
+            collapsedParentIds: _collapsedParentIds,
+          );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2221,53 +2398,136 @@ class _CategorySection extends StatelessWidget {
             color: const Color(0xFF1E1E1E),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              WbsCategoryIconBadge(
-                iconValue: categoryIcon,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  category,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                width: 80,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(
-                    value: avg / 100,
-                    backgroundColor: const Color(0xFF2A2A2A),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFFFF6B35),
+              Row(
+                children: [
+                  IconButton(
+                    key: Key('wbs_toggle_category_${widget.category}'),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 28,
                     ),
-                    minHeight: 6,
+                    icon: Icon(
+                      _categoryCollapsed
+                          ? Icons.chevron_right
+                          : Icons.expand_more,
+                      color: const Color(0xFFD1D5DB),
+                      size: 18,
+                    ),
+                    tooltip: _categoryCollapsed ? 'カテゴリを展開' : 'カテゴリを折り畳む',
+                    onPressed: () {
+                      setState(() => _categoryCollapsed = !_categoryCollapsed);
+                    },
+                  ),
+                  WbsCategoryIconBadge(
+                    iconValue: widget.categoryIcon,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.category,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 72,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        value: avg / 100,
+                        backgroundColor: const Color(0xFF2A2A2A),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Color(0xFFFF6B35),
+                        ),
+                        minHeight: 6,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${avg.toStringAsFixed(0)}%',
+                    style: const TextStyle(
+                      color: Color(0xFFFF6B35),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+              if (allParentIds.isNotEmpty && !_categoryCollapsed)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      TextButton.icon(
+                        key: Key('wbs_expand_all_${widget.category}'),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        onPressed: _collapsedParentIds.isEmpty
+                            ? null
+                            : () => setState(_collapsedParentIds.clear),
+                        icon: const Icon(Icons.unfold_more, size: 14),
+                        label:
+                            const Text('全展開', style: TextStyle(fontSize: 11)),
+                      ),
+                      TextButton.icon(
+                        key: Key('wbs_collapse_all_${widget.category}'),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        onPressed: _collapsedParentIds.length >=
+                                allParentIds.length
+                            ? null
+                            : () => setState(
+                                  () =>
+                                      _collapsedParentIds.addAll(allParentIds),
+                                ),
+                        icon: const Icon(Icons.unfold_less, size: 14),
+                        label:
+                            const Text('全折畳', style: TextStyle(fontSize: 11)),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '${avg.toStringAsFixed(0)}%',
-                style: const TextStyle(
-                  color: Color(0xFFFF6B35),
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  height: 1.5,
-                ),
-              ),
             ],
           ),
         ),
-        ...tasks.map((t) => _TaskRow(task: t)),
+        for (final node in visibleNodes)
+          _TaskRow(
+            key: ValueKey('wbs_task_${node.task.id}'),
+            task: node.task,
+            depth: node.depth,
+            childCount: node.totalDescendantCount,
+            directChildCount: node.directChildCount,
+            collapsed: _collapsedParentIds.contains(node.task.id),
+            onToggleCollapse: node.directChildCount > 0
+                ? () {
+                    setState(() {
+                      if (_collapsedParentIds.contains(node.task.id)) {
+                        _collapsedParentIds.remove(node.task.id);
+                      } else {
+                        _collapsedParentIds.add(node.task.id);
+                      }
+                    });
+                  }
+                : null,
+          ),
         const SizedBox(height: 12),
       ],
     );
@@ -2276,24 +2536,63 @@ class _CategorySection extends StatelessWidget {
 
 class _TaskRow extends StatelessWidget {
   final WbsTask task;
+  final int depth;
+  final int childCount;
+  final int directChildCount;
+  final bool collapsed;
+  final VoidCallback? onToggleCollapse;
 
-  const _TaskRow({required this.task});
+  const _TaskRow({
+    super.key,
+    required this.task,
+    this.depth = 0,
+    this.childCount = 0,
+    this.directChildCount = 0,
+    this.collapsed = false,
+    this.onToggleCollapse,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final indentPx = 8.0 + (depth.clamp(0, 5) * 18.0);
     return Container(
-      margin: const EdgeInsets.only(bottom: 6, left: 8),
+      margin: EdgeInsets.only(bottom: 6, left: indentPx),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
         color: const Color(0xFF141414),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF222222)),
+        border: depth > 0
+            ? const Border(
+                top: BorderSide(color: Color(0xFF222222)),
+                right: BorderSide(color: Color(0xFF222222)),
+                bottom: BorderSide(color: Color(0xFF222222)),
+                left: BorderSide(color: Color(0xFF38BDF8), width: 2),
+              )
+            : Border.all(color: const Color(0xFF222222)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              if (directChildCount > 0) ...[
+                IconButton(
+                  key: Key('wbs_toggle_children_${task.id}'),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 24,
+                    minHeight: 24,
+                  ),
+                  icon: Icon(
+                    collapsed ? Icons.chevron_right : Icons.expand_more,
+                    size: 16,
+                    color: const Color(0xFF38BDF8),
+                  ),
+                  tooltip: collapsed ? '子タスクを展開' : '子タスクを折り畳む',
+                  onPressed: onToggleCollapse,
+                ),
+                const SizedBox(width: 4),
+              ],
               Expanded(
                 child: Text(
                   task.title,
@@ -2330,7 +2629,34 @@ class _TaskRow extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(width: 8),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (childCount > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '子$childCount件',
+                    style: const TextStyle(
+                      color: Color(0xFF38BDF8),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
@@ -2347,8 +2673,7 @@ class _TaskRow extends StatelessWidget {
                   ),
                 ),
               ),
-              if (task.ownerInstance != task.instance) ...[
-                const SizedBox(width: 4),
+              if (task.ownerInstance != task.instance)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 6,
@@ -2368,8 +2693,6 @@ class _TaskRow extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
-              const SizedBox(width: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
@@ -2420,14 +2743,16 @@ class _TaskRow extends StatelessWidget {
           if (task.scheduleStartDate != null ||
               task.scheduleEndDate != null) ...[
             const SizedBox(height: 4),
-            Row(
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6,
+              runSpacing: 2,
               children: [
                 const Icon(
                   Icons.calendar_today_outlined,
                   size: 10,
                   color: Color(0xFF505050),
                 ),
-                const SizedBox(width: 4),
                 Text(
                   [
                     if (task.scheduleStartDate != null)
@@ -2445,8 +2770,7 @@ class _TaskRow extends StatelessWidget {
                     height: 1.5,
                   ),
                 ),
-                if (task.delayDays > 0) ...[
-                  const SizedBox(width: 6),
+                if (task.delayDays > 0)
                   Text(
                     '(${task.delayDays}日遅延${task.recoveryPlan.trim().isEmpty ? " · 案未記入" : ""})',
                     style: TextStyle(
@@ -2458,7 +2782,6 @@ class _TaskRow extends StatelessWidget {
                       height: 1.5,
                     ),
                   ),
-                ],
               ],
             ),
           ],
