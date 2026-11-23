@@ -9,6 +9,7 @@ import 'asset_management_available_money.dart';
 import 'asset_triage_guide_service.dart';
 import 'asset_payment_status_summary.dart';
 import 'asset_liability_planning_service.dart';
+import 'asset_payment_discrepancy_service.dart';
 import 'asset_subscription_excess_alert_service.dart';
 
 // Use the planner's resolved salary-cycle date throughout advice and prompts.
@@ -41,6 +42,7 @@ enum AssetManagementInsightActionType {
   debtSpiralWarning,
   overdueIncome,
   subscriptionExcess,
+  paymentDiscrepancy,
 }
 
 enum AssetManagementInsightSeverity { info, warning, critical }
@@ -994,6 +996,35 @@ class AssetManagementInsightService {
           suggestedAction: hasImportFixAction
               ? '${group.billingAccountName}のカード明細取り込み欄へ移動し、当月の明細を貼り付けて取り込んでください。'
               : '負債マスタで${group.billingAccountName}の請求先カード設定を確認した後、カード明細を取り込んでください。',
+        ),
+      );
+    }
+
+    for (final item
+        in AssetPaymentDiscrepancyService.detectAllForInsight(workbook)) {
+      final row = debtRowsById[item.accountId];
+      final diffAbs = item.effectiveDifferenceForInsight.abs();
+      final hint = AssetPaymentDiscrepancyService.inferReasonHint(item);
+      final needsTopUp = AssetPaymentDiscrepancyService.needsTopUp(item);
+      final recordedReason =
+          item.reason == null ? '' : ' / 記録メモ: ${item.reason}';
+      actions.add(
+        AssetManagementInsightActionItem(
+          type: AssetManagementInsightActionType.paymentDiscrepancy,
+          severity: needsTopUp
+              ? AssetManagementInsightSeverity.critical
+              : AssetManagementInsightSeverity.warning,
+          title:
+              '${item.accountName}に支払差額${_formatYen(diffAbs)}が発生（原因確認・補填要検討）',
+          description: '予定${_formatYen(item.scheduledPaymentAmount)} / '
+              '推定最低${_formatYen(item.minimumPaymentEstimate)} / '
+              '実支払${_formatYen(item.actualPaymentAmount)}。'
+              '差額${_formatYen(diffAbs)}発生、原因確認・補填の必要あり。'
+              '推定理由: $hint$recordedReason',
+          relatedAccountId: item.accountId,
+          dueDate: row == null ? null : _workbookPaymentDateFor(row, workbook),
+          paymentDay: item.paymentDay,
+          suggestedAction: 'なぜ差額があるのか確認し、不足がある場合は補填または今月支払予定額を修正してください。',
         ),
       );
     }
@@ -2342,7 +2373,17 @@ class AssetManagementInsightPromptBuilder {
           '金額:${_formatAmount(violation.amount)} / '
           '残高:${_formatAmount(violation.currentBalance)}',
         )
-        ..writeln('  - 対応: 明細・支払実績との照合が必要。違反として断定しない。');
+        ..writeln('  - 対応: 明細・支払実績との照合が必要。違反として断定しない。')
+        ..writeln('  - 推奨アクション: ${violation.action}');
+      if (violation.hasEscapePlan) {
+        final p24Note = violation.payoffIn24MonthsPayment == null
+            ? ''
+            : '（24ヶ月完済ライン: 毎月${_formatAmount(violation.payoffIn24MonthsPayment!)}）';
+        buffer.writeln(
+          '  - 解消目標プラン: ${violation.escapeMonths}ヶ月以内に毎月'
+          '${_formatAmount(violation.escapeMonthlyPayment!)}返済で完済目安$p24Note',
+        );
+      }
       if (violation.type == AssetDebtDisciplineViolationType.revolvingCard) {
         if (violation.hasImportedStatement && violation.usageItems.isNotEmpty) {
           buffer.writeln(
@@ -2514,6 +2555,7 @@ class AssetManagementInsightPromptBuilder {
       AssetManagementInsightActionType.debtSpiralWarning => '利息スパイラル警告',
       AssetManagementInsightActionType.overdueIncome => '期限超過の未着金収入',
       AssetManagementInsightActionType.subscriptionExcess => 'サブスク過多の整理',
+      AssetManagementInsightActionType.paymentDiscrepancy => '支払差額・未払いの穴確認',
     };
   }
 
