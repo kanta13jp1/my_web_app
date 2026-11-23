@@ -24,7 +24,7 @@ class ProfileSettingsPage extends StatefulWidget {
 
 class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   final _formKey = GlobalKey<FormState>();
-  final _profileService = ProfileService();
+  late final ProfileService _profileService = ProfileService();
 
   // Form controllers
   final _displayNameController = TextEditingController();
