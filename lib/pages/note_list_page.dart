@@ -1464,7 +1464,8 @@ class _NoteListPageState extends State<NoteListPage> {
       child: ListTile(
         leading: showLeadingPinButton
             ? IconButton(
-                key: ValueKey<String>('note_list_unpin_leading_${_noteId(note)}'),
+                key: ValueKey<String>(
+                    'note_list_unpin_leading_${_noteId(note)}'),
                 tooltip: 'ピン留め解除',
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(
