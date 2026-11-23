@@ -903,7 +903,22 @@ class AssetManagementAiSummaryService {
             workbook.cardStatementReconciliation.importedLineCount,
         'imported_line_total':
             workbook.cardStatementReconciliation.importedLineTotal,
+        'manual_statement_pending':
+            workbook.cardStatementReconciliation.hasManualStatementPending,
+        'provisional_detail_count': workbook
+            .cardStatementReconciliation.provisionalBillingDetails.length,
+        'statement_import_status': <String, dynamic>{
+          for (final entry in workbook.statementImportStatuses.entries)
+            entry.key: entry.value.toJson(),
+        },
       },
+      'creditor_contact_tasks': workbook.creditorContactTasks
+          .map((task) => task.toJson())
+          .toList(growable: false),
+      'contact_log_ids': workbook.creditorContactTasks
+          .where((task) => task.latestLog != null)
+          .map((task) => task.latestLog!.id)
+          .toList(growable: false),
     };
   }
 
@@ -1094,6 +1109,9 @@ class AssetManagementAiSummaryService {
       'payment_amount_estimated': row.paymentAmountEstimated,
       'paid': row.paid,
       'effective_paid_payment_amount': row.effectivePaidPaymentAmount,
+      'late_fee_annual_rate': row.lateFeeAnnualRate,
+      'overdue_days': row.overdueDays,
+      'estimated_late_fee_amount': row.estimatedLateFeeAmount,
     };
   }
 
@@ -1114,6 +1132,8 @@ class AssetManagementAiSummaryService {
       'is_past': risk.isPast,
       'is_today': risk.isToday,
       'is_upcoming': risk.isUpcoming,
+      'shortage_amount': risk.shortageAmount,
+      'estimated_late_fee_total': risk.estimatedLateFeeTotal,
     };
   }
 
@@ -1489,6 +1509,7 @@ class AssetManagementAiSummaryService {
       AssetManagementInsightActionType.overdueIncome => '期限超過の未着金収入',
       AssetManagementInsightActionType.subscriptionExcess => 'サブスク過多の整理',
       AssetManagementInsightActionType.paymentDiscrepancy => '支払差額・未払いの穴確認',
+      AssetManagementInsightActionType.transferConflict => '逆方向資金移動の衝突',
     };
   }
 

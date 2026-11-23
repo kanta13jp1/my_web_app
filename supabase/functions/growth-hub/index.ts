@@ -106,7 +106,7 @@ import {
 } from "./roadmap_share_stats.ts";
 import {
   DEFAULT_LANDING_TRIAL_MODEL,
-  generateLandingTrialSuggestion,
+  generateLandingTrialSuggestionWithFallback,
   hashLandingTrialClient,
   LandingTrialInputError,
   normalizeLandingTrialPrompt,
@@ -134,7 +134,10 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const LANDING_TRIAL_AI_MODEL = Deno.env.get("LANDING_TRIAL_AI_MODEL") ?? "";
+const LANDING_TRIAL_GEMINI_MODEL =
+  Deno.env.get("LANDING_TRIAL_GEMINI_MODEL") ?? "";
 const LANDING_TRIAL_RATE_LIMIT_SALT =
   Deno.env.get("LANDING_TRIAL_RATE_LIMIT_SALT") ?? SERVICE_ROLE_KEY;
 // x.post 近似重複ガードの調整用 env (未設定時は既定 0.9 / 直近 5 件)。
@@ -2520,7 +2523,7 @@ serve(async (req: Request) => {
         }
 
         if (
-          !OPENAI_API_KEY || !SERVICE_ROLE_KEY ||
+          (!OPENAI_API_KEY && !GEMINI_API_KEY) || !SERVICE_ROLE_KEY ||
           !LANDING_TRIAL_RATE_LIMIT_SALT
         ) {
           return json({
@@ -2557,15 +2560,18 @@ serve(async (req: Request) => {
         }
 
         try {
-          const suggestion = await generateLandingTrialSuggestion({
-            apiKey: OPENAI_API_KEY,
+          const suggestion = await generateLandingTrialSuggestionWithFallback({
+            openAiApiKey: OPENAI_API_KEY,
+            geminiApiKey: GEMINI_API_KEY,
             prompt,
-            model: LANDING_TRIAL_AI_MODEL,
+            openAiModel: LANDING_TRIAL_AI_MODEL,
+            geminiModel: LANDING_TRIAL_GEMINI_MODEL,
           });
           return json({
             success: true,
             ...suggestion,
-            model: LANDING_TRIAL_AI_MODEL || DEFAULT_LANDING_TRIAL_MODEL,
+            model: suggestion.model || LANDING_TRIAL_AI_MODEL ||
+              DEFAULT_LANDING_TRIAL_MODEL,
             remainingAttempts: quota.remaining_client,
           });
         } catch (error) {

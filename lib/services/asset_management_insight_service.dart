@@ -1,16 +1,21 @@
 import 'dart:math' as math;
 
 import '../models/asset_liability_workbook.dart';
+import '../models/contact_log.dart';
 import '../models/daily_todo.dart';
 import '../models/user_profile.dart';
+import 'asset_creditor_contact_service.dart';
 import 'asset_debt_discipline_monitor.dart';
 import 'asset_debt_trend_analyzer.dart';
+import 'asset_emergency_defense_service.dart';
 import 'asset_management_available_money.dart';
 import 'asset_triage_guide_service.dart';
 import 'asset_payment_status_summary.dart';
 import 'asset_liability_planning_service.dart';
 import 'asset_payment_discrepancy_service.dart';
+import 'asset_safety_transfer_suggestion_service.dart';
 import 'asset_subscription_excess_alert_service.dart';
+import 'payment_confirmation_gate.dart';
 
 // Use the planner's resolved salary-cycle date throughout advice and prompts.
 // Rows omitted from cashflow (for example card-billed items) have no independent
@@ -43,6 +48,7 @@ enum AssetManagementInsightActionType {
   overdueIncome,
   subscriptionExcess,
   paymentDiscrepancy,
+  transferConflict,
 }
 
 enum AssetManagementInsightSeverity { info, warning, critical }
@@ -285,6 +291,9 @@ class AssetManagementInsightReport {
 
   /// 口座別見込み残高が不足する口座の先読み警告（不足額の大きい順）。
   final List<AssetManagementAccountShortfallAlert> accountShortfallAlerts;
+
+  /// 安全残高割れを予防する事前振替提案 (#3350)。
+  final List<AssetSafetyTransferSuggestion> safetyBalanceTransferSuggestions;
   final List<AssetManagementEmergencyAdvice> emergencyAdvices;
   final List<AssetManagementDeveloperRequest> developerRequests;
   final List<AssetManagementImplementationContext> implementationContexts;
@@ -306,6 +315,12 @@ class AssetManagementInsightReport {
   /// アクティブなサブスクリプション契約が基準を超過した場合の警告。
   final AssetSubscriptionExcessAlert? subscriptionExcessAlert;
 
+  /// 債権者との前回合意内容に基づく期日前リマインダー (#3292)。
+  final List<CreditorContactReminder> creditorContactReminders;
+
+  /// 未連絡の期限超過・高金利先があり連絡テンプレ利用を推奨するか (#3292 / #3288)。
+  final bool recommendCreditorContactTemplate;
+
   const AssetManagementInsightReport({
     required this.workbook,
     this.userProfile,
@@ -316,6 +331,8 @@ class AssetManagementInsightReport {
     required this.movementSuggestions,
     this.accountShortfallAlerts =
         const <AssetManagementAccountShortfallAlert>[],
+    this.safetyBalanceTransferSuggestions =
+        const <AssetSafetyTransferSuggestion>[],
     required this.emergencyAdvices,
     required this.developerRequests,
     this.implementationContexts =
@@ -325,6 +342,8 @@ class AssetManagementInsightReport {
     this.triagePlan,
     this.dailyTodoDigest,
     this.subscriptionExcessAlert,
+    this.creditorContactReminders = const <CreditorContactReminder>[],
+    this.recommendCreditorContactTemplate = false,
   });
 
   bool get hasAccountShortfallAlerts => accountShortfallAlerts.isNotEmpty;
@@ -354,6 +373,23 @@ class AssetManagementInsightReport {
         )
         .toList(growable: false);
   }
+
+  /// カード明細照合で要確認グループが存在するか (#3329)。
+  bool get cardStatementNeedsReview =>
+      workbook.cardStatementReconciliation.hasNeedsReview;
+
+  List<AssetLiabilityCardStatementReconciliationGroup>
+      get cardStatementNeedsReviewGroups =>
+          workbook.cardStatementReconciliation.needsReviewGroups;
+
+  bool get hasSafetyBalanceTransferSuggestions =>
+      safetyBalanceTransferSuggestions.isNotEmpty;
+
+  PaymentConfirmationGateResult get incomePlanGate =>
+      PaymentConfirmationGate.evaluate(
+        incomePlanCount: workbook.incomePlans.length,
+        monthlyAvailableAmount: monthAvailable.availableAmount,
+      );
 }
 
 /// リボ払いカード行にインライン表示する概算残り月数・元金減少見込み。
@@ -398,6 +434,7 @@ class AssetManagementInsightService {
     double minimumSafetyBalance = defaultMinimumSafetyBalance,
     int upcomingPaymentWarningDays = defaultUpcomingPaymentWarningDays,
     bool livingExpensePriorityMode = false,
+    bool emergencyMode = false,
     String? mainAccountId,
     Map<String, double> priorMonthAccountBalances = const <String, double>{},
     AssetDebtTrendAnalyzer debtTrendAnalyzer = const AssetDebtTrendAnalyzer(),
@@ -406,6 +443,7 @@ class AssetManagementInsightService {
     AssetTriageGuideService triageGuideService =
         const AssetTriageGuideService(),
     DailyTodoDigest? dailyTodoDigest,
+    List<CreditorContactLog> contactLogs = const <CreditorContactLog>[],
   }) {
     final breakdown = _availableMoneyBreakdown(
       workbook: workbook,
@@ -443,6 +481,11 @@ class AssetManagementInsightService {
       workbook: workbook,
       movementSuggestions: movementSuggestions,
     );
+    final safetyBalanceTransferSuggestions =
+        AssetSafetyTransferSuggestionService.buildSuggestions(
+      workbook: workbook,
+      minimumSafetyBalance: minimumSafetyBalance,
+    );
     final emergencyAdvices = _buildEmergencyAdvices(
       workbook: workbook,
       today: today,
@@ -476,21 +519,46 @@ class AssetManagementInsightService {
       workbook: workbook,
       userProfile: userProfile,
     );
-    final allActions = subscriptionExcessAlert == null
-        ? actions
-        : <AssetManagementInsightActionItem>[
-            ...actions,
-            AssetManagementInsightActionItem(
-              type: AssetManagementInsightActionType.subscriptionExcess,
-              severity: AssetManagementInsightSeverity.warning,
-              title: 'サブスク契約が過多です（${subscriptionExcessAlert.activeCount}件）',
-              description: subscriptionExcessAlert.summaryMessage,
-              relatedAccountId: null,
-              dueDate: null,
-              paymentDay: null,
-              suggestedAction: '不要・重複しているサブスクを解約候補へ振り分け、固定費を圧縮してください。',
-            ),
-          ];
+    final creditorContactReminders =
+        AssetCreditorContactService.buildDueReminders(
+      rows: workbook.debtMasterRows,
+      baseDate: workbook.baseDate,
+      logs: contactLogs,
+    );
+    final recommendCreditorContactTemplate =
+        workbook.creditorContactTasks.any((task) => !task.isContacted);
+    final allActions = <AssetManagementInsightActionItem>[
+      if (emergencyMode || workbook.emergencyMode) ...[
+        () {
+          final defense = AssetEmergencyDefenseService.summarize(workbook);
+          return AssetManagementInsightActionItem(
+            type: AssetManagementInsightActionType.emergencyLivingExpense,
+            severity: AssetManagementInsightSeverity.critical,
+            title: '生活防衛モード: 必須支出を最優先で確保',
+            description: '生活防衛モード中です。今月の必要最低限合計は '
+                '${_formatYen(defense.essentialTotal)}、必須支出後の手元残高は '
+                '${_formatYen(defense.cashAfterEssentials)} です。',
+            relatedAccountId: null,
+            dueDate: null,
+            paymentDay: null,
+            suggestedAction:
+                '生活防衛モード中: 必須支出（家賃・通信・光熱・食費・医療等）を最優先し、支払順を組み替えてください。',
+          );
+        }(),
+      ],
+      ...actions,
+      if (subscriptionExcessAlert != null)
+        AssetManagementInsightActionItem(
+          type: AssetManagementInsightActionType.subscriptionExcess,
+          severity: AssetManagementInsightSeverity.warning,
+          title: 'サブスク契約が過多です（${subscriptionExcessAlert.activeCount}件）',
+          description: subscriptionExcessAlert.summaryMessage,
+          relatedAccountId: null,
+          dueDate: null,
+          paymentDay: null,
+          suggestedAction: '不要・重複しているサブスクを解約候補へ振り分け、固定費を圧縮してください。',
+        ),
+    ];
 
     return AssetManagementInsightReport(
       workbook: workbook,
@@ -503,6 +571,7 @@ class AssetManagementInsightService {
       monthAvailable: month,
       movementSuggestions: movementSuggestions,
       accountShortfallAlerts: accountShortfallAlerts,
+      safetyBalanceTransferSuggestions: safetyBalanceTransferSuggestions,
       emergencyAdvices: emergencyAdvices,
       developerRequests: developerRequests,
       implementationContexts: implementationContexts,
@@ -511,6 +580,8 @@ class AssetManagementInsightService {
       triagePlan: triagePlan,
       dailyTodoDigest: dailyTodoDigest,
       subscriptionExcessAlert: subscriptionExcessAlert,
+      creditorContactReminders: creditorContactReminders,
+      recommendCreditorContactTemplate: recommendCreditorContactTemplate,
     );
   }
 
@@ -532,6 +603,9 @@ class AssetManagementInsightService {
     final summariesByAccountId = <String, AssetLiabilityAccountCashflowSummary>{
       for (final summary in workbook.accountCashflowSummaries)
         summary.accountId: summary,
+    };
+    final debtRowsById = <String, AssetLiabilityDebtRow>{
+      for (final row in workbook.debtMasterRows) row.id: row,
     };
     // 原資未設定の負債に提示する引落口座候補。ページ上部バナーの候補一覧と
     // 同じ順位付け (支払後見込み残高の大きい順) で最有力を 1 件だけ本文に載せる。
@@ -756,17 +830,25 @@ class AssetManagementInsightService {
               '${sourceSummary.accountName}へ移動してから、'
               '${_formatYen(row.paymentAmount)}を支払ってください。';
         }
+        final debtRow = debtRowsById[row.accountId];
+        final lateFeeNote =
+            (debtRow != null && debtRow.estimatedLateFeeAmount > 0)
+                ? ' 遅延${debtRow.overdueDays}日・遅延損害金(概算) '
+                    '+${_formatYen(debtRow.estimatedLateFeeAmount)} が'
+                    '元の負債残高に加算見込みです。'
+                : '';
         actions.add(
           AssetManagementInsightActionItem(
             type: AssetManagementInsightActionType.overduePayment,
             severity: AssetManagementInsightSeverity.critical,
             title: '${row.accountName}が期限超過です',
-            description: overdueDays <= 0
-                ? '本日${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
-                    '${_formatYen(row.paymentAmount)}が未払いです。'
-                : '${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
-                    '${_formatYen(row.paymentAmount)}が未払いのまま'
-                    '$overdueDays日経過しています。',
+            description: (overdueDays <= 0
+                    ? '本日${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
+                        '${_formatYen(row.paymentAmount)}が未払いです。'
+                    : '${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
+                        '${_formatYen(row.paymentAmount)}が未払いのまま'
+                        '$overdueDays日経過しています。') +
+                lateFeeNote,
             relatedAccountId: row.accountId,
             dueDate: row.paymentDate,
             paymentDay: row.paymentDay,
@@ -957,10 +1039,6 @@ class AssetManagementInsightService {
       );
     }
 
-    final debtRowsById = <String, AssetLiabilityDebtRow>{
-      for (final row in workbook.debtMasterRows) row.id: row,
-    };
-
     for (final group in workbook.cardStatementReconciliation.groups) {
       if (!group.alerts.contains(
         AssetLiabilityPlanningService.cardStatementMissingImportAlert,
@@ -1025,6 +1103,48 @@ class AssetManagementInsightService {
           dueDate: row == null ? null : _workbookPaymentDateFor(row, workbook),
           paymentDay: item.paymentDay,
           suggestedAction: 'なぜ差額があるのか確認し、不足がある場合は補填または今月支払予定額を修正してください。',
+        ),
+      );
+    }
+
+    for (final risk in workbook.paymentDayRisks) {
+      if (!risk.requiresAction || !risk.hasShortage) {
+        continue;
+      }
+      actions.add(
+        AssetManagementInsightActionItem(
+          type: AssetManagementInsightActionType.cashShortageRisk,
+          severity: risk.isPast || risk.isToday
+              ? AssetManagementInsightSeverity.critical
+              : AssetManagementInsightSeverity.warning,
+          title: '${risk.paymentDay}日の支払予定が最低支払額より'
+              '${_formatYen(risk.shortageAmount)}不足',
+          description: '対象: ${risk.accountNames.join('、')} / '
+              '推定最低 ${_formatYen(risk.minimumPaymentEstimateTotal)} に対し'
+              '支払予定 ${_formatYen(risk.scheduledPaymentTotal)}'
+              '（不足 ${_formatYen(risk.shortageAmount)}）。',
+          relatedAccountId: null,
+          dueDate: risk.paymentDate,
+          paymentDay: risk.paymentDay,
+          suggestedAction: '「支払予定の増額入力」「支払原資口座の変更」「債権者への連絡メモ起票」で'
+              '不足を解消してください。',
+        ),
+      );
+    }
+
+    for (final conflict in workbook.collisionTransfers) {
+      actions.add(
+        AssetManagementInsightActionItem(
+          type: AssetManagementInsightActionType.transferConflict,
+          severity: AssetManagementInsightSeverity.warning,
+          title: '逆方向の資金移動が衝突しています: '
+              '${conflict.task.fromAccountName} ⇄ ${conflict.task.toAccountName}',
+          description: conflict.summary,
+          relatedAccountId: conflict.task.toAccountId,
+          dueDate: conflict.task.dueDate ?? conflict.suggestion.neededBy,
+          paymentDay:
+              (conflict.task.dueDate ?? conflict.suggestion.neededBy)?.day,
+          suggestedAction: '登録済みタスクのキャンセル・期日延期・差額調整のいずれかで逆方向の資金移動を一本化してください。',
         ),
       );
     }
@@ -1121,7 +1241,11 @@ class AssetManagementInsightService {
           toAccountName: suggestion.toAccountName,
           amount: suggestion.amount,
           neededBy: suggestion.neededBy,
-          reason: '口座別資金繰りで不足が見込まれています。',
+          reason: suggestion.targetPaymentName == null
+              ? '口座別資金繰りで不足が見込まれています。'
+              : '${suggestion.targetPaymentName}'
+                  '${suggestion.targetPaymentDate == null ? '' : '（${suggestion.targetPaymentDate!.month}/${suggestion.targetPaymentDate!.day}）'}'
+                  'の引き落としに向けて不足が見込まれています。',
         ),
     ];
 
@@ -2556,6 +2680,7 @@ class AssetManagementInsightPromptBuilder {
       AssetManagementInsightActionType.overdueIncome => '期限超過の未着金収入',
       AssetManagementInsightActionType.subscriptionExcess => 'サブスク過多の整理',
       AssetManagementInsightActionType.paymentDiscrepancy => '支払差額・未払いの穴確認',
+      AssetManagementInsightActionType.transferConflict => '逆方向資金移動の衝突',
     };
   }
 

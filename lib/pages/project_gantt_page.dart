@@ -133,6 +133,9 @@ class WbsTask {
   // github_issue_state == 'CLOSED' を併用すれば close 反映を即時取得可.
   final String githubIssueState;
 
+  /// WBS 階層ツリー構築用の親タスク ID (`parent_task_id` / `parent_id`) (#2222)。
+  final String? parentTaskId;
+
   const WbsTask({
     required this.id,
     required this.category,
@@ -159,6 +162,7 @@ class WbsTask {
     this.createdAt,
     this.updatedAt,
     this.githubIssueState = '',
+    this.parentTaskId,
   });
 
   WbsTask copyWith({
@@ -187,6 +191,7 @@ class WbsTask {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? githubIssueState,
+    String? parentTaskId,
   }) =>
       WbsTask(
         id: id ?? this.id,
@@ -214,6 +219,7 @@ class WbsTask {
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         githubIssueState: githubIssueState ?? this.githubIssueState,
+        parentTaskId: parentTaskId ?? this.parentTaskId,
       );
 
   bool get isEffectivelyCompleted =>
@@ -276,6 +282,11 @@ class WbsTask {
             ? DateTime.tryParse(m['updated_at'] as String)
             : null,
         githubIssueState: (m['github_issue_state'] as String?) ?? '',
+        parentTaskId: () {
+          final raw =
+              (m['parent_task_id'] ?? m['parent_id'])?.toString().trim();
+          return (raw == null || raw.isEmpty) ? null : raw;
+        }(),
       );
 
   DateTime? get rawScheduleStartDate => plannedStartDate ?? startDate;
@@ -1376,7 +1387,7 @@ class _WbsTab extends StatelessWidget {
           const _EmptyCard(message: 'WBSタスクがまだ登録されていません')
         else
           ...grouped.entries.map(
-            (entry) => _CategorySection(
+            (entry) => WbsCategoryHierarchySection(
               category: entry.key,
               tasks: entry.value,
               categoryIcon: entry.value.isNotEmpty
@@ -2192,25 +2203,191 @@ class WbsCategoryIconBadge extends StatelessWidget {
   }
 }
 
-class _CategorySection extends StatelessWidget {
+class WbsHierarchyNode {
+  final WbsTask task;
+  final int depth;
+  final int directChildCount;
+  final int totalDescendantCount;
+  final bool isOrphanFallback;
+  final bool brokeCycle;
+
+  const WbsHierarchyNode({
+    required this.task,
+    required this.depth,
+    required this.directChildCount,
+    required this.totalDescendantCount,
+    this.isOrphanFallback = false,
+    this.brokeCycle = false,
+  });
+}
+
+/// 親タスク ID (`parentTaskId`) に基づく循環安全・孤立安全な階層リストを構築する (#2222)。
+///
+/// タイトルからの推測は行わず、親タスクが入力一覧に存在しない場合はルートに
+/// フォールバックする。循環参照はエッジを切って無限ループを防止する。
+List<WbsHierarchyNode> buildWbsHierarchyNodes(
+  List<WbsTask> tasks, {
+  Set<String> collapsedParentIds = const <String>{},
+}) {
+  if (tasks.isEmpty) {
+    return const <WbsHierarchyNode>[];
+  }
+  final n = tasks.length;
+  final idToIndex = <String, int>{};
+  for (var i = 0; i < n; i++) {
+    idToIndex.putIfAbsent(tasks[i].id, () => i);
+  }
+
+  final decidedParent = List<int?>.filled(n, null);
+  final isDecided = List<bool>.filled(n, false);
+  final orphanFlags = List<bool>.filled(n, false);
+  final cycleFlags = List<bool>.filled(n, false);
+
+  for (var i = 0; i < n; i++) {
+    final pid = tasks[i].parentTaskId?.trim();
+    if (pid == null || pid.isEmpty) {
+      isDecided[i] = true;
+      continue;
+    }
+    final pIdx = idToIndex[pid];
+    if (pIdx == null) {
+      orphanFlags[i] = true;
+      isDecided[i] = true;
+      continue;
+    }
+    if (pIdx == i) {
+      cycleFlags[i] = true;
+      isDecided[i] = true;
+      continue;
+    }
+
+    final seen = <int>{i};
+    var cur = pIdx;
+    var hitCycle = false;
+    while (true) {
+      if (seen.contains(cur)) {
+        hitCycle = true;
+        break;
+      }
+      seen.add(cur);
+      final nextIdx = isDecided[cur]
+          ? decidedParent[cur]
+          : () {
+              final curPid = tasks[cur].parentTaskId?.trim();
+              return (curPid == null || curPid.isEmpty)
+                  ? null
+                  : idToIndex[curPid];
+            }();
+      if (nextIdx == null) {
+        break;
+      }
+      cur = nextIdx;
+    }
+    if (hitCycle) {
+      cycleFlags[i] = true;
+      decidedParent[i] = null;
+    } else {
+      decidedParent[i] = pIdx;
+    }
+    isDecided[i] = true;
+  }
+
+  final roots = <int>[];
+  final childrenByIndex = List<List<int>>.generate(n, (_) => <int>[]);
+  for (var i = 0; i < n; i++) {
+    final p = decidedParent[i];
+    if (p == null) {
+      roots.add(i);
+    } else {
+      childrenByIndex[p].add(i);
+    }
+  }
+
+  final descendantCounts = List<int>.filled(n, 0);
+  int countDescendants(int index) {
+    var total = 0;
+    for (final childIdx in childrenByIndex[index]) {
+      total += 1 + countDescendants(childIdx);
+    }
+    descendantCounts[index] = total;
+    return total;
+  }
+
+  for (final rootIdx in roots) {
+    countDescendants(rootIdx);
+  }
+
+  final result = <WbsHierarchyNode>[];
+  void visit(int index, int depth) {
+    final task = tasks[index];
+    final children = childrenByIndex[index];
+    result.add(
+      WbsHierarchyNode(
+        task: task,
+        depth: depth,
+        directChildCount: children.length,
+        totalDescendantCount: descendantCounts[index],
+        isOrphanFallback: orphanFlags[index],
+        brokeCycle: cycleFlags[index],
+      ),
+    );
+    if (collapsedParentIds.contains(task.id)) {
+      return;
+    }
+    for (final childIdx in children) {
+      visit(childIdx, depth + 1);
+    }
+  }
+
+  for (final rootIdx in roots) {
+    visit(rootIdx, 0);
+  }
+  return List<WbsHierarchyNode>.unmodifiable(result);
+}
+
+class WbsCategoryHierarchySection extends StatefulWidget {
   final String category;
   final String categoryIcon;
   final List<WbsTask> tasks;
 
-  const _CategorySection({
+  const WbsCategoryHierarchySection({
+    super.key,
     required this.category,
     required this.categoryIcon,
     required this.tasks,
   });
 
+  @override
+  State<WbsCategoryHierarchySection> createState() =>
+      _WbsCategoryHierarchySectionState();
+}
+
+class _WbsCategoryHierarchySectionState
+    extends State<WbsCategoryHierarchySection> {
+  bool _categoryCollapsed = false;
+  final Set<String> _collapsedParentIds = <String>{};
+
   double get _avgProgress {
-    if (tasks.isEmpty) return 0;
-    return tasks.map((t) => t.progress).reduce((a, b) => a + b) / tasks.length;
+    if (widget.tasks.isEmpty) return 0;
+    return widget.tasks.map((t) => t.progress).reduce((a, b) => a + b) /
+        widget.tasks.length;
   }
 
   @override
   Widget build(BuildContext context) {
     final avg = _avgProgress;
+    final fullNodes = buildWbsHierarchyNodes(widget.tasks);
+    final allParentIds = <String>{
+      for (final node in fullNodes)
+        if (node.directChildCount > 0) node.task.id,
+    };
+    final visibleNodes = _categoryCollapsed
+        ? const <WbsHierarchyNode>[]
+        : buildWbsHierarchyNodes(
+            widget.tasks,
+            collapsedParentIds: _collapsedParentIds,
+          );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2221,53 +2398,142 @@ class _CategorySection extends StatelessWidget {
             color: const Color(0xFF1E1E1E),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              WbsCategoryIconBadge(
-                iconValue: categoryIcon,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  category,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                width: 80,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(
-                    value: avg / 100,
-                    backgroundColor: const Color(0xFF2A2A2A),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFFFF6B35),
+              Row(
+                children: [
+                  IconButton(
+                    key: Key('wbs_toggle_category_${widget.category}'),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 28,
                     ),
-                    minHeight: 6,
+                    icon: Icon(
+                      _categoryCollapsed
+                          ? Icons.chevron_right
+                          : Icons.expand_more,
+                      color: const Color(0xFFD1D5DB),
+                      size: 18,
+                    ),
+                    tooltip: _categoryCollapsed ? 'カテゴリを展開' : 'カテゴリを折り畳む',
+                    onPressed: () {
+                      setState(() => _categoryCollapsed = !_categoryCollapsed);
+                    },
+                  ),
+                  WbsCategoryIconBadge(
+                    iconValue: widget.categoryIcon,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.category,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 72,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        value: avg / 100,
+                        backgroundColor: const Color(0xFF2A2A2A),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Color(0xFFFF6B35),
+                        ),
+                        minHeight: 6,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${avg.toStringAsFixed(0)}%',
+                    style: const TextStyle(
+                      color: Color(0xFFFF6B35),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+              if (allParentIds.isNotEmpty && !_categoryCollapsed)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      TextButton.icon(
+                        key: Key('wbs_expand_all_${widget.category}'),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        onPressed: _collapsedParentIds.isEmpty
+                            ? null
+                            : () => setState(_collapsedParentIds.clear),
+                        icon: const Icon(Icons.unfold_more, size: 14),
+                        label:
+                            const Text('全展開', style: TextStyle(fontSize: 11)),
+                      ),
+                      TextButton.icon(
+                        key: Key('wbs_collapse_all_${widget.category}'),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        onPressed: _collapsedParentIds.length >=
+                                allParentIds.length
+                            ? null
+                            : () => setState(
+                                  () =>
+                                      _collapsedParentIds.addAll(allParentIds),
+                                ),
+                        icon: const Icon(Icons.unfold_less, size: 14),
+                        label:
+                            const Text('全折畳', style: TextStyle(fontSize: 11)),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '${avg.toStringAsFixed(0)}%',
-                style: const TextStyle(
-                  color: Color(0xFFFF6B35),
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  height: 1.5,
-                ),
-              ),
             ],
           ),
         ),
-        ...tasks.map((t) => _TaskRow(task: t)),
+        for (final node in visibleNodes)
+          Padding(
+            padding: EdgeInsets.only(
+              bottom: 6,
+              left: 8.0 + (node.depth.clamp(0, 5) * 18.0),
+            ),
+            child: _TaskRow(
+              key: ValueKey('wbs_task_${node.task.id}'),
+              task: node.task,
+              depth: node.depth,
+              childCount: node.totalDescendantCount,
+              directChildCount: node.directChildCount,
+              collapsed: _collapsedParentIds.contains(node.task.id),
+              onToggleCollapse: node.directChildCount > 0
+                  ? () {
+                      setState(() {
+                        if (_collapsedParentIds.contains(node.task.id)) {
+                          _collapsedParentIds.remove(node.task.id);
+                        } else {
+                          _collapsedParentIds.add(node.task.id);
+                        }
+                      });
+                    }
+                  : null,
+            ),
+          ),
         const SizedBox(height: 12),
       ],
     );
@@ -2276,24 +2542,58 @@ class _CategorySection extends StatelessWidget {
 
 class _TaskRow extends StatelessWidget {
   final WbsTask task;
+  final int depth;
+  final int childCount;
+  final int directChildCount;
+  final bool collapsed;
+  final VoidCallback? onToggleCollapse;
 
-  const _TaskRow({required this.task});
+  const _TaskRow({
+    super.key,
+    required this.task,
+    this.depth = 0,
+    this.childCount = 0,
+    this.directChildCount = 0,
+    this.collapsed = false,
+    this.onToggleCollapse,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 6, left: 8),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
         color: const Color(0xFF141414),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF222222)),
+        border: Border.all(
+          color: depth > 0
+              ? const Color(0xFF38BDF8).withValues(alpha: 0.55)
+              : const Color(0xFF222222),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              if (directChildCount > 0) ...[
+                IconButton(
+                  key: Key('wbs_toggle_children_${task.id}'),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 24,
+                    minHeight: 24,
+                  ),
+                  icon: Icon(
+                    collapsed ? Icons.chevron_right : Icons.expand_more,
+                    size: 16,
+                    color: const Color(0xFF38BDF8),
+                  ),
+                  tooltip: collapsed ? '子タスクを展開' : '子タスクを折り畳む',
+                  onPressed: onToggleCollapse,
+                ),
+                const SizedBox(width: 4),
+              ],
               Expanded(
                 child: Text(
                   task.title,
@@ -2330,7 +2630,34 @@ class _TaskRow extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(width: 8),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (childCount > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '子$childCount件',
+                    style: const TextStyle(
+                      color: Color(0xFF38BDF8),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
@@ -2347,8 +2674,7 @@ class _TaskRow extends StatelessWidget {
                   ),
                 ),
               ),
-              if (task.ownerInstance != task.instance) ...[
-                const SizedBox(width: 4),
+              if (task.ownerInstance != task.instance)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 6,
@@ -2368,8 +2694,6 @@ class _TaskRow extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
-              const SizedBox(width: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
@@ -2420,14 +2744,16 @@ class _TaskRow extends StatelessWidget {
           if (task.scheduleStartDate != null ||
               task.scheduleEndDate != null) ...[
             const SizedBox(height: 4),
-            Row(
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6,
+              runSpacing: 2,
               children: [
                 const Icon(
                   Icons.calendar_today_outlined,
                   size: 10,
                   color: Color(0xFF505050),
                 ),
-                const SizedBox(width: 4),
                 Text(
                   [
                     if (task.scheduleStartDate != null)
@@ -2445,8 +2771,7 @@ class _TaskRow extends StatelessWidget {
                     height: 1.5,
                   ),
                 ),
-                if (task.delayDays > 0) ...[
-                  const SizedBox(width: 6),
+                if (task.delayDays > 0)
                   Text(
                     '(${task.delayDays}日遅延${task.recoveryPlan.trim().isEmpty ? " · 案未記入" : ""})',
                     style: TextStyle(
@@ -2458,7 +2783,6 @@ class _TaskRow extends StatelessWidget {
                       height: 1.5,
                     ),
                   ),
-                ],
               ],
             ),
           ],
@@ -2784,11 +3108,102 @@ class GanttFilteredEmptyState extends StatelessWidget {
   }
 }
 
+enum GanttTimelineZoomLevel {
+  quarter(3.5, '四半期'),
+  month(7.0, '月'),
+  week(14.0, '週'),
+  day(24.0, '日');
+
+  final double dayWidth;
+  final String label;
+
+  const GanttTimelineZoomLevel(this.dayWidth, this.label);
+}
+
+enum GanttTimelinePeriodFilter {
+  all('全期間'),
+  thisMonth('今月'),
+  next30Days('30日以内'),
+  next90Days('90日以内'),
+  overdue('期限超過');
+
+  final String label;
+
+  const GanttTimelinePeriodFilter(this.label);
+}
+
+double ganttTimelineDateToX({
+  required DateTime date,
+  required DateTime timelineStart,
+  required double dayWidth,
+}) {
+  final startDay = DateTime.utc(
+    timelineStart.year,
+    timelineStart.month,
+    timelineStart.day,
+  );
+  final targetDay = DateTime.utc(date.year, date.month, date.day);
+  return targetDay.difference(startDay).inDays * dayWidth;
+}
+
+bool ganttTimelineMatchesPeriodFilter(
+  WbsTask task,
+  GanttTimelinePeriodFilter filter, {
+  DateTime? now,
+}) {
+  if (filter == GanttTimelinePeriodFilter.all) return true;
+  final base = now ?? DateTime.now();
+  final today = DateTime(base.year, base.month, base.day);
+  final rawStart = task.scheduleStartDate;
+  final rawEnd = task.scheduleEndDate;
+  final startDay = rawStart == null
+      ? null
+      : DateTime(rawStart.year, rawStart.month, rawStart.day);
+  final endDay =
+      rawEnd == null ? null : DateTime(rawEnd.year, rawEnd.month, rawEnd.day);
+
+  if (filter == GanttTimelinePeriodFilter.overdue) {
+    return !task.isEffectivelyCompleted &&
+        endDay != null &&
+        endDay.isBefore(today);
+  }
+
+  final effectiveStart = startDay ?? endDay;
+  final effectiveEnd = endDay ?? startDay;
+  if (effectiveStart == null || effectiveEnd == null) {
+    return false;
+  }
+
+  final DateTime windowStart;
+  final DateTime windowEnd;
+  switch (filter) {
+    case GanttTimelinePeriodFilter.thisMonth:
+      windowStart = DateTime(today.year, today.month, 1);
+      windowEnd = DateTime(today.year, today.month + 1, 0);
+    case GanttTimelinePeriodFilter.next30Days:
+      windowStart = today;
+      windowEnd = today.add(const Duration(days: 30));
+    case GanttTimelinePeriodFilter.next90Days:
+      windowStart = today;
+      windowEnd = today.add(const Duration(days: 90));
+    case GanttTimelinePeriodFilter.all:
+    case GanttTimelinePeriodFilter.overdue:
+      return true;
+  }
+
+  return !effectiveEnd.isBefore(windowStart) &&
+      !effectiveStart.isAfter(windowEnd);
+}
+
 class GanttColumnToggleBar extends StatelessWidget {
   final Map<String, bool> colVisible;
   final String? filterInstance;
   final void Function(String key, bool visible) onToggleColumn;
   final ValueChanged<String?> onFilterInstance;
+  final GanttTimelineZoomLevel? zoomLevel;
+  final ValueChanged<GanttTimelineZoomLevel>? onZoomLevelChanged;
+  final GanttTimelinePeriodFilter? periodFilter;
+  final ValueChanged<GanttTimelinePeriodFilter>? onPeriodFilterChanged;
 
   const GanttColumnToggleBar({
     super.key,
@@ -2796,6 +3211,10 @@ class GanttColumnToggleBar extends StatelessWidget {
     required this.filterInstance,
     required this.onToggleColumn,
     required this.onFilterInstance,
+    this.zoomLevel,
+    this.onZoomLevelChanged,
+    this.periodFilter,
+    this.onPeriodFilterChanged,
   });
 
   static const Map<String, String> _labels = <String, String>{
@@ -2881,6 +3300,78 @@ class GanttColumnToggleBar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4),
             );
           }),
+          if (onZoomLevelChanged != null) ...[
+            const SizedBox(width: 8),
+            const Text(
+              'ズーム:',
+              style: TextStyle(
+                color: Color(0xFFB0B0C0),
+                fontSize: 10,
+                height: 1.5,
+              ),
+            ),
+            ...GanttTimelineZoomLevel.values.map((level) {
+              final on = zoomLevel == level;
+              return FilterChip(
+                key: Key('gantt_zoom_chip_${level.name}'),
+                label: Text(
+                  level.label,
+                  style: TextStyle(
+                    color: on ? Colors.black : const Color(0xFFE0E0EA),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                  ),
+                ),
+                selected: on,
+                onSelected: (_) => onZoomLevelChanged!(level),
+                selectedColor: const Color(0xFFFF6B35),
+                backgroundColor: const Color(0xFF1A1A24),
+                side: BorderSide(
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.4),
+                ),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+              );
+            }),
+          ],
+          if (onPeriodFilterChanged != null) ...[
+            const SizedBox(width: 8),
+            const Text(
+              '期間:',
+              style: TextStyle(
+                color: Color(0xFFB0B0C0),
+                fontSize: 10,
+                height: 1.5,
+              ),
+            ),
+            ...GanttTimelinePeriodFilter.values.map((period) {
+              final on = periodFilter == period;
+              return FilterChip(
+                key: Key('gantt_period_chip_${period.name}'),
+                label: Text(
+                  period.label,
+                  style: TextStyle(
+                    color: on ? Colors.black : const Color(0xFFD1D5DB),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                  ),
+                ),
+                selected: on,
+                onSelected: (_) => onPeriodFilterChanged!(period),
+                selectedColor: const Color(0xFF38BDF8),
+                backgroundColor: const Color(0xFF1A1A24),
+                side: BorderSide(
+                  color: const Color(0xFF38BDF8).withValues(alpha: 0.4),
+                ),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+              );
+            }),
+          ],
         ],
       ),
     );
@@ -2973,6 +3464,7 @@ class GanttTimelineHeader extends StatelessWidget {
   final int totalCount;
   final int invertedCount;
   final String? filterInstance;
+  final bool hasPeriodFilter;
   final bool hideCompleted;
   final bool aiReportLoading;
   final bool repairLoading;
@@ -2988,6 +3480,7 @@ class GanttTimelineHeader extends StatelessWidget {
     required this.totalCount,
     this.invertedCount = 0,
     this.filterInstance,
+    this.hasPeriodFilter = false,
     required this.hideCompleted,
     this.aiReportLoading = false,
     this.repairLoading = false,
@@ -3004,10 +3497,13 @@ class GanttTimelineHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasInstanceFilter = filterInstance != null;
-    final filtered =
-        (hideCompleted || hasInstanceFilter) && totalCount > taskCount;
+    final filtered = (hideCompleted || hasInstanceFilter || hasPeriodFilter) &&
+        totalCount > taskCount;
     final String countLabel;
-    if (hideCompleted && !hasInstanceFilter && totalCount > taskCount) {
+    if (hideCompleted &&
+        !hasInstanceFilter &&
+        !hasPeriodFilter &&
+        totalCount > taskCount) {
       countLabel = '未完了 $taskCount / 全体 $totalCount 件';
     } else if (filtered) {
       countLabel = '表示 $taskCount / 全体 $totalCount 件';
@@ -3254,6 +3750,8 @@ class GanttTimelineTab extends StatefulWidget {
   // Win版#131 part 13: マイルストーン risk
   final List<Map<String, dynamic>> milestoneRisks;
   final Future<void> Function()? onRefreshWbs;
+  final DateTime? clockNow;
+  final GanttTimelineZoomLevel initialZoomLevel;
 
   const GanttTimelineTab({
     super.key,
@@ -3266,6 +3764,8 @@ class GanttTimelineTab extends StatefulWidget {
     required this.onFilterInstance,
     required this.milestoneRisks,
     this.onRefreshWbs,
+    this.clockNow,
+    this.initialZoomLevel = GanttTimelineZoomLevel.month,
   });
 
   @override
@@ -3345,11 +3845,17 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
       16; // padding
   static const _rowHeight = 32.0;
   static const _headerHeight = 72.0;
-  static const _dayWidth = 7.0;
+  static const _zoomPrefsKey = 'gantt_timeline_zoom';
   static const _bgColor = Color(0xFF0F0F14);
   static const _panelColor = Color(0xFF1A1A24);
   static const _gridLine = Color(0xFF2A2A36);
   static const _todayColor = Color(0xFFFF6B35);
+
+  late GanttTimelineZoomLevel _zoomLevel;
+  GanttTimelinePeriodFilter _periodFilter = GanttTimelinePeriodFilter.all;
+
+  double get _dayWidth => _zoomLevel.dayWidth;
+  DateTime get _now => widget.clockNow ?? DateTime.now();
 
   final _leftScroll = ScrollController();
   final _rightScroll = ScrollController();
@@ -3481,8 +3987,10 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
   @override
   void initState() {
     super.initState();
+    _zoomLevel = widget.initialZoomLevel;
     // Win版#132 part 83: 保存済み列幅を非同期 load
     _loadColumnWidths();
+    _loadZoomLevel();
     // 左右の垂直スクロールを同期
     _leftScroll.addListener(() {
       if (_rightScroll.hasClients &&
@@ -3497,13 +4005,58 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
     });
     // 初期表示で本日線を画面中央付近に配置 (todayX - viewportWidth / 3)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_timelineHScroll.hasClients) return;
-      final todayX = _dateToX(DateTime.now());
+      if (!mounted || !_timelineHScroll.hasClients) return;
+      final todayX = _dateToX(_now);
       final viewport = _timelineHScroll.position.viewportDimension;
       final maxScroll = _timelineHScroll.position.maxScrollExtent;
       final target = (todayX - viewport / 3).clamp(0.0, maxScroll);
       _timelineHScroll.jumpTo(target);
     });
+  }
+
+  Future<void> _loadZoomLevel() async {
+    if (widget.initialZoomLevel != GanttTimelineZoomLevel.month) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(_zoomPrefsKey);
+      if (saved == null) return;
+      for (final level in GanttTimelineZoomLevel.values) {
+        if (level.name == saved) {
+          if (mounted && _zoomLevel != level) {
+            setState(() => _zoomLevel = level);
+          }
+          break;
+        }
+      }
+    } catch (_) {
+      // shared_preferences 失敗時は default 値 fallback (= サイレント)
+    }
+  }
+
+  Future<void> _saveZoomLevel(GanttTimelineZoomLevel level) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_zoomPrefsKey, level.name);
+    } catch (_) {
+      // サイレント (= 保存失敗で UX を邪魔しない)
+    }
+  }
+
+  void _setZoomLevel(GanttTimelineZoomLevel next) {
+    if (_zoomLevel == next) return;
+    final prevDayWidth = _dayWidth;
+    final prevOffset =
+        _timelineHScroll.hasClients ? _timelineHScroll.offset : null;
+    setState(() => _zoomLevel = next);
+    unawaited(_saveZoomLevel(next));
+    if (prevOffset != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_timelineHScroll.hasClients) return;
+        final maxScroll = _timelineHScroll.position.maxScrollExtent;
+        final scaled = prevOffset * (next.dayWidth / prevDayWidth);
+        _timelineHScroll.jumpTo(scaled.clamp(0.0, maxScroll));
+      });
+    }
   }
 
   @override
@@ -3536,7 +4089,7 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
 
   DateTime get _timelineStart {
     // 今日の 30日前を基準に、表示中タスクの最古日も必ず含める。
-    final now = DateTime.now();
+    final now = _now;
     final fallback = DateTime(
       now.year,
       now.month,
@@ -3552,7 +4105,9 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
   }
 
   DateTime get _timelineEnd {
-    final fallback = DateTime.now().add(const Duration(days: 210));
+    final now = _now;
+    final fallback =
+        DateTime(now.year, now.month, now.day).add(const Duration(days: 210));
     final dates = [
       ...widget.milestones.map((m) => m.targetDate),
       ...widget.tasks
@@ -3569,10 +4124,11 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
   double get _timelineWidth => _totalDays * _dayWidth;
 
   /// 指定日付のタイムライン上の X 座標
-  double _dateToX(DateTime date) {
-    final days = date.difference(_timelineStart).inDays;
-    return days * _dayWidth;
-  }
+  double _dateToX(DateTime date) => ganttTimelineDateToX(
+        date: date,
+        timelineStart: _timelineStart,
+        dayWidth: _dayWidth,
+      );
 
   void _scrollWholeGridToGraph() {
     if (!_overallHScroll.hasClients) return;
@@ -3596,6 +4152,17 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
     if (widget.filterInstance != null) {
       list = list
           .where((t) => t.matchesActiveInstanceFilter(widget.filterInstance!))
+          .toList();
+    }
+    if (_periodFilter != GanttTimelinePeriodFilter.all) {
+      list = list
+          .where(
+            (t) => ganttTimelineMatchesPeriodFilter(
+              t,
+              _periodFilter,
+              now: _now,
+            ),
+          )
           .toList();
     }
     list.sort(_compareTasksForCurrentSort);
@@ -3630,6 +4197,11 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
                 onResetFilters: () {
                   widget.onFilterInstance(null);
                   widget.onToggleHideCompleted(false);
+                  if (_periodFilter != GanttTimelinePeriodFilter.all) {
+                    setState(
+                      () => _periodFilter = GanttTimelinePeriodFilter.all,
+                    );
+                  }
                 },
               ),
             ),
@@ -3712,6 +4284,7 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
                                   scrollDirection: Axis.horizontal,
                                   primary: false,
                                   child: SizedBox(
+                                    key: const Key('gantt_timeline_canvas'),
                                     width: _timelineWidth,
                                     child: Column(
                                       children: [
@@ -3726,9 +4299,7 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
                                                     start: _timelineStart,
                                                     end: _timelineEnd,
                                                     dayWidth: _dayWidth,
-                                                    todayX: _dateToX(
-                                                      DateTime.now(),
-                                                    ),
+                                                    todayX: _dateToX(_now),
                                                   ),
                                                 ),
                                               ),
@@ -3758,7 +4329,7 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
                                                         rowHeight: _rowHeight,
                                                         timelineStart:
                                                             _timelineStart,
-                                                        today: DateTime.now(),
+                                                        today: _now,
                                                         verticalOffset:
                                                             _rightScroll
                                                                     .hasClients
@@ -3824,7 +4395,7 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
     final dueSoon = open.where((t) {
       final end = t.scheduleEndDate;
       if (end == null) return false;
-      final days = end.difference(DateTime.now()).inDays;
+      final days = end.difference(_now).inDays;
       return days >= 0 && days <= 7;
     }).toList();
     final byOwner = <String, int>{};
@@ -4113,6 +4684,10 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
       onToggleColumn: (key, visible) =>
           setState(() => _colVisible[key] = visible),
       onFilterInstance: widget.onFilterInstance,
+      zoomLevel: _zoomLevel,
+      onZoomLevelChanged: _setZoomLevel,
+      periodFilter: _periodFilter,
+      onPeriodFilterChanged: (next) => setState(() => _periodFilter = next),
     );
   }
 
@@ -4124,6 +4699,7 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
       totalCount: totalCount,
       invertedCount: invertedCount,
       filterInstance: widget.filterInstance,
+      hasPeriodFilter: _periodFilter != GanttTimelinePeriodFilter.all,
       hideCompleted: widget.hideCompleted,
       aiReportLoading: _aiReportLoading,
       repairLoading: _repairLoading,
@@ -4211,11 +4787,14 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
       // ignore: unused_local_variable_for_now (= expanded は API 互換性のため残置)
       // if (expanded) return Expanded(child: t);  // = 旧動作: タスク名列が flex で resize 不可だった
       // resize handle を右端に併設 (= _colNonResizable は SizedBox.shrink 返却)
+      // 列全体幅を w に一致させ、handle 5px 分の header overflow を防ぐ。
+      final labelWidth =
+          _colNonResizable.contains(key) ? w : math.max(0.0, w - 5);
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            width: w,
+            width: labelWidth,
             child: align == null ? t : Center(child: t),
           ),
           _buildResizeHandle(key),
@@ -4370,7 +4949,10 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
                   : BorderSide.none,
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: EdgeInsets.only(
+        left: (isDelayedNoPlan || isDelayed) ? 5 : 8,
+        right: 8,
+      ),
       child: Row(
         children: [
           // # 列
@@ -4875,6 +5457,7 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
 
   Widget _buildMonthHeader() {
     return Container(
+      width: double.infinity,
       height: _headerHeight,
       color: _panelColor,
       child: CustomPaint(
@@ -4882,7 +5465,7 @@ class _GanttTimelineTabState extends State<GanttTimelineTab> {
           start: _timelineStart,
           end: _timelineEnd,
           dayWidth: _dayWidth,
-          today: DateTime.now(),
+          today: _now,
         ),
       ),
     );
@@ -5111,7 +5694,20 @@ class _MonthHeaderPainter extends CustomPainter {
     DateTime day = start;
     double x = 0;
     while (day.isBefore(end)) {
-      if (day.weekday == DateTime.monday && dayWidth >= 5) {
+      if (dayWidth >= 20) {
+        final tp = TextPainter(
+          text: TextSpan(
+            text: '${day.day}',
+            style: weekLabelStyle.copyWith(
+              color: day.day == 1
+                  ? const Color(0xFFE0E0EA)
+                  : const Color(0xFFB8B8C8),
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, Offset(x + 3, 43));
+      } else if (day.weekday == DateTime.monday && dayWidth >= 5) {
         final tp = TextPainter(
           text: TextSpan(
             text:
@@ -5132,7 +5728,9 @@ class _MonthHeaderPainter extends CustomPainter {
     DateTime tickDay = start;
     double tickX = 0;
     while (tickDay.isBefore(end)) {
-      if (tickDay.weekday == DateTime.monday || tickDay.day == 1) {
+      if (dayWidth >= 20 ||
+          tickDay.weekday == DateTime.monday ||
+          tickDay.day == 1) {
         canvas.drawLine(
           Offset(tickX, 36),
           Offset(tickX, size.height - 1),
