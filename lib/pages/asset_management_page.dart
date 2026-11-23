@@ -1,5 +1,6 @@
 import '../services/asset_high_interest_highlight_service.dart';
 import '../services/asset_payment_discrepancy_service.dart';
+import '../services/asset_principal_interest_breakdown_service.dart';
 import '../services/asset_subscription_audit_mutation_queue.dart';
 import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
 import '../widgets/asset_recorded_change_details.dart';
@@ -31027,6 +31028,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(width: 8),
           TextButton.icon(
+            key: Key('asset_payment_consultation_copy_${row.id}'),
             onPressed: () =>
                 unawaited(_copyPaymentConsultationText(row, workbook)),
             icon: const Icon(Icons.content_copy, size: 16),
@@ -31059,15 +31061,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final dueDate = _debtRowPaymentDate(row, workbook.baseDate);
     final dueLabel =
         dueDate == null ? '未設定' : DateFormat('yyyy/MM/dd').format(dueDate);
+    final billingTarget = row.billingAccountName?.trim();
     return [
       '${row.name} ご担当者様',
       '',
       '今月の支払いについて相談させてください。',
       '支払予定日: $dueLabel',
+      '推定最低支払額: ${_formatManagementYen(row.minimumPaymentEstimate)}',
       '支払予定額: ${_formatManagementYen(row.scheduledPaymentAmount)}',
       '残高: ${_formatManagementYen(row.balance)}',
       '年利: ${(row.annualRate * 100).toStringAsFixed(1)}%',
       '月利息見込み: ${_formatManagementYen(row.monthlyInterestEstimate)}',
+      if (billingTarget != null && billingTarget.isNotEmpty)
+        '請求先: $billingTarget',
       '',
       '生活費と他の支払いを確認したうえで、支払日変更、分割、猶予、または最低支払額の調整が可能か相談したいです。',
       '現時点で支払える金額と支払可能日は、確認して折り返します。',
@@ -34603,6 +34609,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         AssetHighInterestHighlightService.classifyRateTier(row.annualRate);
     final rateBadgeLabel =
         AssetHighInterestHighlightService.rateBadgeLabel(row.annualRate);
+    final piBreakdown = AssetPrincipalInterestBreakdownService.build(row);
 
     return Container(
       key: _debtMasterCardKeyFor(row.id),
@@ -34668,6 +34675,30 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               color: rateTier == AssetDebtRateTier.critical
                                   ? const Color(0xFFB91C1C)
                                   : const Color(0xFFD97706),
+                            ),
+                          ),
+                        if (piBreakdown != null)
+                          KeyedSubtree(
+                            key: Key('asset_debt_principal_interest_${row.id}'),
+                            child: _buildTextStatusChip(
+                              label: AssetPrincipalInterestBreakdownService
+                                  .summaryLabel(
+                                piBreakdown,
+                                _formatManagementYen,
+                              ),
+                              color: const Color(0xFF0F766E),
+                            ),
+                          ),
+                        if (piBreakdown != null &&
+                            piBreakdown.isLowPrincipalEfficiency)
+                          KeyedSubtree(
+                            key: Key(
+                              'asset_debt_low_principal_warning_${row.id}',
+                            ),
+                            child: _buildTextStatusChip(
+                              label: AssetPrincipalInterestBreakdownService
+                                  .lowEfficiencyWarningLabel(piBreakdown),
+                              color: const Color(0xFFB45309),
                             ),
                           ),
                         _buildTextStatusChip(
@@ -35657,6 +35688,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 8),
           for (var index = 0; index < rows.length; index++)
             Padding(
+              key: Key('asset_repayment_priority_row_${rows[index].id}'),
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -35671,7 +35703,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${rows[index].name} / ${_formatManagementYen(rows[index].balance)} / 年利 ${_formatManagementPercent(rows[index].annualRate)} / ${rows[index].priorityLabel}',
+                      '${rows[index].name} / '
+                      '残高 ${_formatManagementYen(rows[index].balance)} / '
+                      '年利 ${_formatManagementPercent(rows[index].annualRate)} / '
+                      '予定 ${_formatManagementYen(rows[index].scheduledPaymentAmount)} / '
+                      '月利息 ${_formatManagementYen(rows[index].monthlyInterestEstimate)} / '
+                      '${rows[index].priorityLabel}'
+                      '${rows[index].annualRate >= 0.14 ? '（推奨上乗せ目安 +¥5,000）' : ''}',
                       style: const TextStyle(height: 1.5),
                     ),
                   ),

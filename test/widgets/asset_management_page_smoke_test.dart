@@ -6214,6 +6214,141 @@ void main() {
         await _unmount(tester);
       },
     );
+
+    testWidgets(
+      'Issue #3406, #3358 & #3375: displays principal/interest efficiency, consultation copy template, and dynamic priority list amounts',
+      (tester) async {
+        String? copiedClipboard;
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              final args = call.arguments as Map<dynamic, dynamic>?;
+              copiedClipboard = args?['text'] as String?;
+              return null;
+            }
+            if (call.method == 'Clipboard.getData') {
+              if (copiedClipboard == null) return null;
+              return <String, dynamic>{'text': copiedClipboard};
+            }
+            return null;
+          },
+        );
+        addTearDown(() {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(SystemChannels.platform, null);
+        });
+
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 5600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'mobit': 1, 'yokohama_bank': 15},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  paymentOverrides: <String, double>{
+                    'mobit': 25000,
+                    'yokohama_bank': 15000,
+                  },
+                  annualRateOverrides: <String, double>{
+                    'mobit': 0.18,
+                    'yokohama_bank': 0.145,
+                  },
+                  paymentSourceAccountIds: <String, String>{
+                    'mobit': 'wallet_cash',
+                    'yokohama_bank': 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -1500000,
+                  '横浜銀行': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // #3406: 元金・利息内訳チップと元金充当率低警告
+        final mobitPi = find.byKey(
+          const Key('asset_debt_principal_interest_mobit'),
+        );
+        final yokohamaPi = find.byKey(
+          const Key('asset_debt_principal_interest_yokohama_bank'),
+        );
+        expect(mobitPi, findsOneWidget);
+        expect(yokohamaPi, findsOneWidget);
+        expect(
+          find.descendant(of: mobitPi, matching: find.textContaining('元金')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: mobitPi, matching: find.textContaining('利息')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_low_principal_warning_mobit')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(
+            const Key('asset_debt_low_principal_warning_yokohama_bank'),
+          ),
+          findsNothing,
+        );
+
+        // #3375: 返済優先リストに利率・残高順＋予定額・月利息・上乗せ目安
+        final mobitPriority = find.byKey(
+          const Key('asset_repayment_priority_row_mobit'),
+        );
+        final yokohamaPriority = find.byKey(
+          const Key('asset_repayment_priority_row_yokohama_bank'),
+        );
+        expect(mobitPriority, findsOneWidget);
+        expect(yokohamaPriority, findsOneWidget);
+        expect(
+          tester.getTopLeft(mobitPriority).dy,
+          lessThan(tester.getTopLeft(yokohamaPriority).dy),
+        );
+        expect(
+          find.descendant(
+            of: mobitPriority,
+            matching: find.textContaining('推奨上乗せ目安 +¥5,000'),
+          ),
+          findsOneWidget,
+        );
+
+        // #3358: 支払相談優先先のワンクリックコピーテンプレ
+        final copyConsultBtn = find.byKey(
+          const Key('asset_payment_consultation_copy_mobit'),
+        );
+        await tester.ensureVisible(copyConsultBtn);
+        await tester.pump();
+        await tester.tap(copyConsultBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(copiedClipboard, contains('モビット'));
+        expect(copiedClipboard, contains('支払予定日: 2026/09/01'));
+        expect(copiedClipboard, contains('推定最低支払額:'));
+        expect(copiedClipboard, contains('年利: 18.0%'));
+        expect(find.text('モビットへの相談文をコピーしました。'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
   });
   testWidgets(
     'anonymous unconfirmed read never claims empty income or offers empty CTA',
