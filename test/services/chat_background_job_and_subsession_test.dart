@@ -103,8 +103,10 @@ void main() {
       final restored = await store.loadSessions();
       expect(restored.length, 2);
       expect(restored[1].parentSessionId, 'root');
-      expect(restored[1].inheritedContextTitles,
-          const <String>['月次レポート', 'タスク設計']);
+      expect(
+        restored[1].inheritedContextTitles,
+        const <String>['月次レポート', 'タスク設計'],
+      );
     });
   });
 }

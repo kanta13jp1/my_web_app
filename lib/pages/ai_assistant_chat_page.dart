@@ -15,7 +15,6 @@ import 'package:web/web.dart'
     // ignore: uri_does_not_exist
     if (dart.library.io) 'package:my_web_app/utils/web_stub.dart' as web;
 
-import '../models/chat_background_job.dart';
 import '../models/chat_incremental_rendering_config.dart';
 import '../models/chat_subsession.dart';
 import '../services/chat_background_job_center.dart';
