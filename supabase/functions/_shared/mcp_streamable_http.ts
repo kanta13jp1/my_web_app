@@ -147,14 +147,11 @@ export function formatMcpToolText(
   } catch {
     serialized = String(structuredContent ?? "");
   }
-  const combined = serialized ? `${summary}
-
-${serialized}` : summary;
+  const combined = serialized ? `${summary}\n\n${serialized}` : summary;
   if (combined.length <= maxChars) {
     return [{ type: "text", text: combined }];
   }
-  const suffix = "
-...(truncated)";
+  const suffix = "\n...(truncated)";
   const sliceLen = Math.max(0, maxChars - suffix.length);
   return [{ type: "text", text: `${combined.slice(0, sliceLen)}${suffix}` }];
 }
