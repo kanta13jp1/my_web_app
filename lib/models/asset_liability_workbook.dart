@@ -1032,6 +1032,8 @@ class AssetLiabilityTransferSuggestion {
   final String toAccountName;
   final double amount;
   final DateTime? neededBy;
+  final String? targetPaymentName;
+  final DateTime? targetPaymentDate;
 
   const AssetLiabilityTransferSuggestion({
     required this.fromAccountId,
@@ -1040,7 +1042,12 @@ class AssetLiabilityTransferSuggestion {
     required this.toAccountName,
     required this.amount,
     required this.neededBy,
+    this.targetPaymentName,
+    this.targetPaymentDate,
   });
+
+  String get dedupeKey =>
+      '${fromAccountId}__${toAccountId}__${amount.round()}__${neededBy?.toIso8601String().split('T').first ?? 'any'}';
 }
 
 class AssetLiabilityTransferTask {
@@ -1057,6 +1064,7 @@ class AssetLiabilityTransferTask {
   final bool canceled;
   final DateTime? canceledAt;
   final String cancellationReason;
+  final String? dedupeKey;
 
   const AssetLiabilityTransferTask({
     required this.id,
@@ -1072,6 +1080,7 @@ class AssetLiabilityTransferTask {
     this.canceled = false,
     this.canceledAt,
     this.cancellationReason = '',
+    this.dedupeKey,
   });
 
   AssetLiabilityTransferTask copyWith({
@@ -1088,6 +1097,7 @@ class AssetLiabilityTransferTask {
     bool? canceled,
     DateTime? canceledAt,
     String? cancellationReason,
+    String? dedupeKey,
   }) {
     return AssetLiabilityTransferTask(
       id: id ?? this.id,
@@ -1103,6 +1113,7 @@ class AssetLiabilityTransferTask {
       canceled: canceled ?? this.canceled,
       canceledAt: canceledAt ?? this.canceledAt,
       cancellationReason: cancellationReason ?? this.cancellationReason,
+      dedupeKey: dedupeKey ?? this.dedupeKey,
     );
   }
 }

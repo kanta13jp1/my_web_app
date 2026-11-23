@@ -236,3 +236,16 @@ Current open pinned work starts here:
 - **仮内訳の登録・昇格・削除 (#3349)**:
   - 照合差分がある場合「仮内訳として追加」ボタンから差額を一時記録でき、`isProvisional=true` 行は正式内訳合計（`configuredDetailTotal`）・明細合計（`statementLineTotal`）・給与サイクル支出集計のすべてから除外して二重計上を防止する。
   - UI上は薄色カード＋「仮内訳」バッジで区別し、前月以前の作成日（`createdAt`）を持つ繰越行には「翌月繰越・要確認」バッジを表示する。各行から「正式内訳へ昇格」または「削除」をワンタップで実行できる。
+
+### 安全残高事前振替・入金予定ゲート・資金繰り自動割当 (#3350 / #3291 / #4059) 仕様
+
+- **安全残高割れの事前振替提案・編集ウィザード (#3350)**:
+  - `AssetSafetyTransferSuggestionService` で `projectedBalance < minimumSafetyBalance` の口座を検出し、1口座1件の概算振替提案（移動元の現在残高と `minimumSafetyBalance` / `PaymentFundingRule.minimumReserve` の両立、同一銀行・無料振替優先、未完了振替タスク登録で自動解消）を画面上部の `asset_safety_transfer_suggestions_card` に提示する。
+  - 各提案の「振替タスク作成」ボタンから `AssetSafetyTransferWizardDialog` を開き、振替元・金額・振替期限を調整して即座に未完了タスクへ起票・見込み残高再計算できる。
+- **入金予定未設定トップバナー・給料日ウィザード・確定前ゲート (#3291)**:
+  - `PaymentConfirmationGate.evaluate` により `workbook.incomePlans.isEmpty` のとき画面上部へ警告バナー（`asset_income_plan_missing_banner`）を表示し、給料日・金額・入金先・毎月定期登録を一括入力できる `AssetIncomePlanPaydayWizardDialog`（`AssetLiabilityPlanningService.validateIncomePlan` 検証付き）を起動できる。
+  - 既存の即座支払チェック（`debt_paid_checkbox_*`）は妨げず、「この額で確定」「推定額を一括確定」および「請求確認済み」ON 操作の直前に、入金予定未登録または支払後使用可能額がマイナスになる場合はキャンセル可能な確認ダイアログ（`asset_income_missing_confirm_dialog`）で事前確認する。
+- **支払原資ルール自動割当・振替バッファ・重複防止・日本語導線統一 (#4059)**:
+  - `PaymentFundingRule` により優先順位・最低維持残高・除外対象を満たす支払原資口座を自動解決して未設定負債へ割り当て、`buildWorkbook(transferBufferAmount: ...)` で不足額＋バッファを複数移動元にまたがって提案できるようにする。
+  - `AssetLiabilityTransferSuggestion` / `AssetLiabilityTransferTask` に `targetPaymentName` / `targetPaymentDate` / `dedupeKey` を追加して月次状態ストア・メモ化キー・比較関数へ永続化し、同一 `dedupeKey` の重複タスク起票を防止する。
+  - 不足バナー・振替セクションの操作ラベルを「振替起票」「振替提案」へ日本語統一し、原資未設定行には「期日優先 / 要確認」バッジと `MissingPaymentSourceGuideDialog`（1タップ原資設定）を追加する。

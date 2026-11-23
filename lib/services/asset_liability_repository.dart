@@ -2080,7 +2080,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           left.completionMemo != right.completionMemo ||
           left.canceled != right.canceled ||
           left.canceledAt != right.canceledAt ||
-          left.cancellationReason != right.cancellationReason) {
+          left.cancellationReason != right.cancellationReason ||
+          left.dedupeKey != right.dedupeKey) {
         return false;
       }
     }

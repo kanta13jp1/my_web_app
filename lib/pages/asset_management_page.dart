@@ -6,7 +6,10 @@ import '../services/asset_payment_discrepancy_service.dart';
 import '../services/asset_principal_interest_breakdown_service.dart';
 import '../services/asset_subscription_audit_mutation_queue.dart';
 import '../services/card_statement_reconciliation_planner.dart';
+import '../services/asset_safety_transfer_suggestion_service.dart';
+import '../services/payment_confirmation_gate.dart';
 import '../widgets/asset_card_statement_reconciliation_dialogs.dart';
+import '../widgets/asset_safety_transfer_and_income_dialogs.dart';
 import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
 import '../widgets/asset_recorded_change_details.dart';
 import '../models/asset_income_source_evidence.dart';
@@ -4527,7 +4530,67 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_saveAssetLiabilityMonthlyState());
   }
 
-  void _confirmEstimatedPaymentAmount(AssetLiabilityDebtRow row) {
+  Future<bool> _confirmIncomePlanGateBeforePaymentConfirmation({
+    double? paymentAmount,
+  }) async {
+    final report = _latestInsightReport;
+    final workbook = report?.workbook;
+    final incomePlanCount =
+        workbook?.incomePlans.length ?? _monthlyIncomePlans.length;
+    final monthlyAvailable = report?.monthAvailable.availableAmount ?? 0;
+    final gate = PaymentConfirmationGate.evaluate(
+      incomePlanCount: incomePlanCount,
+      monthlyAvailableAmount: monthlyAvailable,
+      paymentAmount: paymentAmount,
+    );
+    if (!gate.requiresConfirmationDialog) {
+      return true;
+    }
+    final action = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        key: const Key('asset_income_missing_confirm_dialog'),
+        title: Text(gate.dialogTitle),
+        content: Text(gate.dialogMessage),
+        actions: [
+          TextButton(
+            key: const Key('asset_income_missing_cancel_button'),
+            onPressed: () => Navigator.of(dialogContext).pop('cancel'),
+            child: const Text('キャンセル'),
+          ),
+          if (gate.showIncomeMissingBanner && workbook != null)
+            OutlinedButton(
+              key: const Key('asset_income_missing_register_button'),
+              onPressed: () => Navigator.of(dialogContext).pop('register'),
+              child: const Text('入金予定を登録'),
+            ),
+          FilledButton(
+            key: const Key('asset_income_missing_proceed_button'),
+            onPressed: () => Navigator.of(dialogContext).pop('proceed'),
+            child: const Text('このまま支払確定'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) {
+      return false;
+    }
+    if (action == 'register' && workbook != null) {
+      await _openIncomePlanPaydayWizard(workbook);
+      return false;
+    }
+    return action == 'proceed';
+  }
+
+  Future<void> _confirmEstimatedPaymentAmount(
+    AssetLiabilityDebtRow row,
+  ) async {
+    final allowed = await _confirmIncomePlanGateBeforePaymentConfirmation(
+      paymentAmount: row.scheduledPaymentAmount,
+    );
+    if (!allowed || !mounted) {
+      return;
+    }
     final amount = row.scheduledPaymentAmount.round();
     _monthlyPaymentControllers[row.id]?.text = amount.toString();
     setState(() {
@@ -4537,11 +4600,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_saveAssetLiabilityMonthlyState());
   }
 
-  void _confirmAllEstimatedPaymentAmounts(
+  Future<void> _confirmAllEstimatedPaymentAmounts(
     Iterable<AssetLiabilityDebtRow> rows,
-  ) {
+  ) async {
     final targets = rows.where((row) => row.paymentAmountEstimated).toList();
     if (targets.isEmpty) {
+      return;
+    }
+    final totalAmount = targets.fold<double>(
+      0,
+      (sum, row) => sum + row.scheduledPaymentAmount,
+    );
+    final allowed = await _confirmIncomePlanGateBeforePaymentConfirmation(
+      paymentAmount: totalAmount,
+    );
+    if (!allowed || !mounted) {
       return;
     }
     setState(() {
@@ -4555,7 +4628,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_saveAssetLiabilityMonthlyState());
   }
 
-  void _toggleBillingConfirmed(String accountId, bool confirmed) {
+  Future<void> _toggleBillingConfirmed(
+    String accountId,
+    bool confirmed,
+  ) async {
+    if (confirmed) {
+      double? scheduledAmount;
+      final rows = _latestInsightReport?.workbook.debtMasterRows;
+      if (rows != null) {
+        for (final row in rows) {
+          if (row.id == accountId) {
+            scheduledAmount = row.scheduledPaymentAmount;
+            break;
+          }
+        }
+      }
+      final allowed = await _confirmIncomePlanGateBeforePaymentConfirmation(
+        paymentAmount: scheduledAmount,
+      );
+      if (!allowed || !mounted) {
+        return;
+      }
+    }
     setState(() {
       if (confirmed) {
         _billingConfirmedAccountIds.add(accountId);
@@ -5780,6 +5874,88 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return a.id.compareTo(b.id);
   }
 
+  Future<void> _openIncomePlanPaydayWizard(
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    final destinationOptions = incomeDestinationAccountOptions(
+      workbook.accounts,
+    );
+    final draft = await showDialog<AssetIncomePlanPaydayDraft>(
+      context: context,
+      builder: (_) => AssetIncomePlanPaydayWizardDialog(
+        destinationOptions: destinationOptions,
+        baseDate: workbook.baseDate,
+      ),
+    );
+    if (!mounted || draft == null) {
+      return;
+    }
+    final month = _assetLiabilityStateMonth(_now);
+    final lastDay = DateTime(month.year, month.month + 1, 0).day;
+    final clampedDay = draft.dayOfMonth.clamp(1, lastDay).toInt();
+    final planDate = DateTime(month.year, month.month, clampedDay);
+    final nowMicros = DateTime.now().microsecondsSinceEpoch;
+    final plan = AssetLiabilityIncomePlan(
+      id: 'income_wizard_$nowMicros',
+      date: planDate,
+      name: draft.name,
+      amount: draft.amount,
+      destinationAccountId: draft.destinationAccountId,
+      destinationAccountName: draft.destinationAccountName,
+      received: false,
+    );
+    setState(() {
+      _monthlyIncomePlans = <AssetLiabilityIncomePlan>[
+        ..._monthlyIncomePlans,
+        plan,
+      ]..sort((a, b) => a.date.compareTo(b.date));
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+    if (draft.registerAsRecurring) {
+      final template = AssetLiabilityRecurringIncomeTemplate(
+        id: 'income_tpl_$nowMicros',
+        dayOfMonth: draft.dayOfMonth,
+        name: draft.name,
+        amount: draft.amount,
+        destinationAccountId: draft.destinationAccountId,
+        destinationAccountName: draft.destinationAccountName,
+      );
+      final nextTemplates = <AssetLiabilityRecurringIncomeTemplate>[
+        ..._recurringIncomeTemplates,
+        template,
+      ]..sort((a, b) => a.dayOfMonth.compareTo(b.dayOfMonth));
+      if (mounted) {
+        setState(() {
+          _recurringIncomeTemplates = nextTemplates;
+        });
+      }
+      unawaited(
+        _assetLiabilityRepository.saveRecurringIncomeTemplates(nextTemplates),
+      );
+    }
+  }
+
+  Future<void> _openSafetyTransferWizard(
+    AssetLiabilityWorkbook workbook,
+    AssetSafetyTransferSuggestion suggestion,
+  ) async {
+    final donors = _paymentSourceAccountOptions(workbook)
+        .where((account) => account.id != suggestion.toAccountId)
+        .toList(growable: false);
+    final edited = await showDialog<AssetLiabilityTransferSuggestion>(
+      context: context,
+      builder: (_) => AssetSafetyTransferWizardDialog(
+        suggestion: suggestion,
+        donorOptions: donors,
+        baseDate: workbook.baseDate,
+      ),
+    );
+    if (!mounted || edited == null) {
+      return;
+    }
+    _createTransferTaskFromSuggestion(edited);
+  }
+
   void _createTransferTaskFromSuggestion(
     AssetLiabilityTransferSuggestion suggestion,
   ) {
@@ -5790,14 +5966,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             suggestion.neededBy!.month,
             suggestion.neededBy!.day,
           );
+    final dedupeKey = suggestion.dedupeKey;
     final duplicate = _transferTasks.any(
       (task) =>
           !task.completed &&
           !task.canceled &&
-          task.fromAccountId == suggestion.fromAccountId &&
-          task.toAccountId == suggestion.toAccountId &&
-          task.amount == suggestion.amount &&
-          task.dueDate?.toIso8601String() == dueDate?.toIso8601String(),
+          ((task.dedupeKey != null && task.dedupeKey == dedupeKey) ||
+              (task.fromAccountId == suggestion.fromAccountId &&
+                  task.toAccountId == suggestion.toAccountId &&
+                  task.amount == suggestion.amount &&
+                  task.dueDate?.toIso8601String() ==
+                      dueDate?.toIso8601String())),
     );
     if (duplicate) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -5817,6 +5996,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           toAccountName: suggestion.toAccountName,
           amount: suggestion.amount,
           dueDate: dueDate,
+          dedupeKey: dedupeKey,
         ),
       )
       ..sort(_compareTransferTasksByDueDate);
@@ -12290,6 +12470,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   _buildSyncStatusBanner(),
                   _buildUnsyncedBadgeRow(),
                   _buildAccountShortfallAlertBanner(assetLiabilityWorkbook),
+                  _buildSafetyBalanceTransferSuggestionsCard(
+                    assetLiabilityWorkbook,
+                  ),
                   _buildPaymentSourceMissingBanner(assetLiabilityWorkbook),
                   _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
                   _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
@@ -18697,7 +18880,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     onPressed: () =>
                         _createTransferTaskFromSuggestion(suggestion),
                     icon: const Icon(Icons.swap_horiz_rounded, size: 16),
-                    label: const Text('移動タスクを作成'),
+                    label: const Text('振替起票'),
                   ),
                 ],
               )
@@ -18847,6 +19030,120 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 label: const Text('収入予定を確認・登録'),
               ),
             ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// 安全残高割れを予防する事前振替提案カードを表示する (#3350)。
+  Widget _buildSafetyBalanceTransferSuggestionsCard(
+    AssetLiabilityWorkbook? workbook,
+  ) {
+    if (workbook == null) {
+      return const SizedBox.shrink();
+    }
+    final reserve = effectiveSafetyReserve(
+      minimumSafetyBalance: _minimumSafetyBalance,
+      safetyEnvelopeEnabled: _safetyEnvelopeEnabled,
+      safetyEnvelopeAmount: _safetyEnvelopeAmount,
+    );
+    final suggestions = AssetSafetyTransferSuggestionService.buildSuggestions(
+      workbook: workbook,
+      minimumSafetyBalance: reserve,
+    );
+    if (suggestions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      key: const Key('asset_safety_transfer_suggestions_card'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 4, bottom: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDFA),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF99F6E4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.shield_outlined,
+                size: 16,
+                color: Color(0xFF0F766E),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '安全残高割れの事前振替提案（${suggestions.length}件・基準 ${_formatManagementYen(reserve)}）',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F766E),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          for (final suggestion in suggestions) ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  '${suggestion.fromAccountName} → ${suggestion.toAccountName} '
+                  '（概算 ${_formatManagementYen(suggestion.amount)}）',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF134E4A),
+                    height: 1.4,
+                  ),
+                ),
+                if (suggestion.isSameBankFreeTransfer)
+                  const Chip(
+                    visualDensity: VisualDensity.compact,
+                    label: Text(
+                      '同一銀行/無料優遇',
+                      style: TextStyle(fontSize: 10),
+                    ),
+                  ),
+                FilledButton.icon(
+                  key: Key(
+                    'asset_safety_transfer_wizard_open_${suggestion.toAccountId}',
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F766E),
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                  ),
+                  onPressed: () => unawaited(
+                    _openSafetyTransferWizard(workbook, suggestion),
+                  ),
+                  icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                  label: const Text('振替タスク作成'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              suggestion.reason,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF115E59),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 6),
           ],
         ],
       ),
@@ -25540,6 +25837,72 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
           ],
+          if (report.incomePlanGate.showIncomeMissingBanner) ...[
+            const SizedBox(height: 8),
+            Container(
+              key: const Key('asset_income_plan_missing_banner'),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: report.incomePlanGate.severity ==
+                        PaymentConfirmationGateSeverity.critical
+                    ? const Color(0xFFFEF2F2)
+                    : const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: report.incomePlanGate.severity ==
+                          PaymentConfirmationGateSeverity.critical
+                      ? const Color(0xFFFCA5A5)
+                      : const Color(0xFFF59E0B),
+                ),
+              ),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Icon(
+                    Icons.payments_outlined,
+                    size: 18,
+                    color: report.incomePlanGate.severity ==
+                            PaymentConfirmationGateSeverity.critical
+                        ? const Color(0xFFB91C1C)
+                        : const Color(0xFFD97706),
+                  ),
+                  Text(
+                    report.incomePlanGate.bannerMessage,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: report.incomePlanGate.severity ==
+                              PaymentConfirmationGateSeverity.critical
+                          ? const Color(0xFF991B1B)
+                          : const Color(0xFF92400E),
+                    ),
+                  ),
+                  FilledButton.icon(
+                    key: const Key('asset_income_plan_open_wizard_button'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: report.incomePlanGate.severity ==
+                              PaymentConfirmationGateSeverity.critical
+                          ? const Color(0xFFB91C1C)
+                          : const Color(0xFFD97706),
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                    ),
+                    onPressed: () => unawaited(
+                      _openIncomePlanPaydayWizard(report.workbook),
+                    ),
+                    icon: const Icon(Icons.event_available_outlined, size: 16),
+                    label: const Text('入金予定を登録'),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           _buildMainAccountSelector(report.workbook),
           const SizedBox(height: 8),
@@ -31966,8 +32329,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               if (billingRows.isNotEmpty)
                 OutlinedButton.icon(
-                  onPressed: () =>
-                      _confirmAllEstimatedPaymentAmounts(billingRows),
+                  onPressed: () => unawaited(
+                    _confirmAllEstimatedPaymentAmounts(billingRows),
+                  ),
                   icon: const Icon(Icons.done_all, size: 18),
                   label: const Text('推定額を一括確定'),
                 ),
@@ -32203,7 +32567,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(width: 8),
           TextButton.icon(
-            onPressed: () => _confirmEstimatedPaymentAmount(row),
+            onPressed: () => unawaited(_confirmEstimatedPaymentAmount(row)),
             icon: const Icon(Icons.check_circle_outline, size: 16),
             label: const Text('この額で確定'),
           ),
@@ -32212,11 +32576,44 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Future<void> _openMissingPaymentSourceGuide(
+    AssetLiabilityDebtRow row,
+    List<_PaymentSourceCandidate> candidates,
+  ) async {
+    final options = [
+      for (final candidate in candidates)
+        MissingPaymentSourceGuideOption(
+          accountId: candidate.account.id,
+          accountName: candidate.account.name,
+          currentBalance: candidate.currentBalance,
+          projectedAfterPayment: candidate.projectedAfterPayment,
+          recommended:
+              candidate.projectedAfterPayment >= _paymentSourceSafetyBalance,
+        ),
+    ];
+    final selectedAccountId = await showDialog<String>(
+      context: context,
+      builder: (_) => MissingPaymentSourceGuideDialog(
+        accountName: row.name,
+        paymentDay: row.paymentDay,
+        scheduledAmount: row.scheduledPaymentAmount,
+        options: options,
+      ),
+    );
+    if (!mounted || selectedAccountId == null) {
+      return;
+    }
+    _updatePaymentSourceAccount(row.id, selectedAccountId);
+  }
+
   Widget _buildMissingPaymentSourceReviewRow(
     AssetLiabilityDebtRow row,
     AssetLiabilityWorkbook workbook,
   ) {
     final candidates = _paymentSourceCandidatesForRow(row, workbook);
+    final isUrgent = row.paymentDay != null &&
+        ((row.paymentDay! - workbook.baseDate.day).abs() <= 5 ||
+            row.paymentDay! <= workbook.baseDate.day);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -32229,11 +32626,57 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 children: [
                   const Icon(Icons.account_balance_outlined, size: 18),
                   const SizedBox(width: 8),
+                  Tooltip(
+                    message: isUrgent
+                        ? '引き落とし日が近いため優先して支払原資を設定してください'
+                        : '支払原資が未設定のため口座別資金繰りに反映されていません',
+                    child: Container(
+                      key: Key('asset_missing_source_severity_${row.id}'),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isUrgent
+                            ? const Color(0xFFFEF2F2)
+                            : const Color(0xFFFFFBEB),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: isUrgent
+                              ? const Color(0xFFFCA5A5)
+                              : const Color(0xFFFDE68A),
+                        ),
+                      ),
+                      child: Text(
+                        isUrgent ? '期日優先' : '要確認',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: isUrgent
+                              ? const Color(0xFFB91C1C)
+                              : const Color(0xFFB45309),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       '${row.name} / 支払日 ${row.paymentDay ?? '-'}日 / '
                       '予定 ${_formatManagementYen(row.scheduledPaymentAmount)}',
                       style: const TextStyle(fontSize: 12, height: 1.5),
+                    ),
+                  ),
+                  IconButton(
+                    key: Key('asset_missing_source_guide_${row.id}'),
+                    tooltip: '設定手順ガイド',
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.help_outline, size: 18),
+                    onPressed: () => unawaited(
+                      _openMissingPaymentSourceGuide(
+                        row,
+                        candidates,
+                      ),
                     ),
                   ),
                 ],
@@ -35138,7 +35581,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           if (workbook.transferSuggestions.isNotEmpty) ...[
             const SizedBox(height: 10),
             const Text(
-              'Suggestions',
+              '振替提案',
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
             ),
             const SizedBox(height: 4),
@@ -35149,7 +35592,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               child: TextButton.icon(
                 icon: const Icon(Icons.add_task, size: 16),
                 label: Text(
-                  'Create task: ${suggestion.fromAccountName} -> '
+                  '振替起票: ${suggestion.fromAccountName} → '
                   '${suggestion.toAccountName}',
                 ),
                 onPressed: () => _createTransferTaskFromSuggestion(suggestion),
@@ -37025,7 +37468,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           Checkbox(
             value: effectiveConfirmed,
             onChanged: canToggle
-                ? (value) => _toggleBillingConfirmed(row.id, value ?? false)
+                ? (value) => unawaited(
+                      _toggleBillingConfirmed(row.id, value ?? false),
+                    )
                 : null,
           ),
           Flexible(
