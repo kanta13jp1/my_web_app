@@ -4,6 +4,7 @@ import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/asset_revolving_credit_service.dart';
 
 import '../models/asset_liability_workbook.dart';
+import 'asset_late_fee_service.dart';
 import 'asset_payment_calendar_service.dart';
 import 'asset_payment_inconsistency_service.dart';
 
@@ -383,6 +384,8 @@ class AssetLiabilityPlanningService {
             cardStatementTotalsByBillingId: cardStatementTotalsByBillingId,
             cardStatementLinesByBillingId: cardStatementLinesByBillingId,
             accountsById: accountsById,
+            baseDate: baseDate,
+            salaryDay: salaryDay,
           ),
         )
         .toList()
@@ -853,6 +856,8 @@ class AssetLiabilityPlanningService {
     Map<String, List<AssetLiabilityCardStatementLine>> cardStatementLinesByBillingId =
         const <String, List<AssetLiabilityCardStatementLine>>{},
     required Map<String, AssetLiabilityAccount> accountsById,
+    DateTime? baseDate,
+    int? salaryDay,
   }) {
     final principal = account.liabilityBalance;
     final annualRate = _annualRateFor(
@@ -963,6 +968,24 @@ class AssetLiabilityPlanningService {
       accountsById: accountsById,
     );
     final requiresAction = minimumPayment > 0 && scheduledPayment > 0 && !paid;
+    final resolvedPaymentDay =
+        revolvingBilling?.paymentDay ?? account.paymentDay;
+    final isDirectCashflowTarget = !paymentRouting.includedInBillingAccount &&
+        paymentRouting.paymentMethod == AssetLiabilityPaymentMethod.direct;
+    final resolvedPaymentDate = (baseDate != null && resolvedPaymentDay != null)
+        ? _resolveCyclePaymentDate(baseDate, salaryDay, resolvedPaymentDay)
+        : null;
+    final lateFee = AssetLateFeeService.estimate(
+      kind: account.kind,
+      annualRate: annualRate,
+      balance: account.balance,
+      scheduledPaymentAmount: scheduledPayment,
+      paid: paid,
+      requiresAction: requiresAction,
+      isDirectCashflowTarget: isDirectCashflowTarget,
+      baseDate: baseDate,
+      paymentDate: resolvedPaymentDate,
+    );
 
     return AssetLiabilityDebtRow(
       id: account.id,
@@ -970,7 +993,7 @@ class AssetLiabilityPlanningService {
       name: account.name,
       kind: account.kind,
       balance: account.balance,
-      paymentDay: revolvingBilling?.paymentDay ?? account.paymentDay,
+      paymentDay: resolvedPaymentDay,
       paymentSourceAccountId: paymentSourceAccountId,
       paymentSourceAccountName: paymentSourceAccountName,
       paymentMethod: paymentRouting.paymentMethod,
@@ -1000,6 +1023,9 @@ class AssetLiabilityPlanningService {
       ),
       paid: paid,
       requiresAction: requiresAction,
+      lateFeeAnnualRate: lateFee.lateFeeAnnualRate,
+      overdueDays: lateFee.overdueDays,
+      estimatedLateFeeAmount: lateFee.estimatedLateFeeAmount,
     );
   }
 
@@ -1546,6 +1572,19 @@ class AssetLiabilityPlanningService {
       final paymentDate = _resolveCyclePaymentDate(baseDate, salaryDay, day);
       final rowsForDay = entry.value
         ..sort((a, b) => b.balance.abs().compareTo(a.balance.abs()));
+      final minimumTotal = rowsForDay.fold<double>(
+        0,
+        (sum, row) => sum + row.minimumPaymentEstimate,
+      );
+      final scheduledTotal = rowsForDay.fold<double>(
+        0,
+        (sum, row) => sum + row.scheduledPaymentAmount,
+      );
+      final lateFeeTotal = rowsForDay.fold<double>(
+        0,
+        (sum, row) => sum + row.estimatedLateFeeAmount,
+      );
+      final shortageAmount = max(0.0, minimumTotal - scheduledTotal);
       result.add(
         AssetLiabilityPaymentDayRisk(
           paymentDay: day,
@@ -1555,14 +1594,8 @@ class AssetLiabilityPlanningService {
             0,
             (sum, row) => sum + row.balance,
           ),
-          minimumPaymentEstimateTotal: rowsForDay.fold<double>(
-            0,
-            (sum, row) => sum + row.minimumPaymentEstimate,
-          ),
-          scheduledPaymentTotal: rowsForDay.fold<double>(
-            0,
-            (sum, row) => sum + row.scheduledPaymentAmount,
-          ),
+          minimumPaymentEstimateTotal: minimumTotal,
+          scheduledPaymentTotal: scheduledTotal,
           manualPaymentTotal: rowsForDay.fold<double>(
             0,
             (sum, row) => sum + (row.manualPaymentAmount ?? 0),
@@ -1578,6 +1611,8 @@ class AssetLiabilityPlanningService {
           requiresAction: requiresAction,
           isPast: paymentDate.isBefore(_dateOnly(baseDate)),
           isToday: paymentDate == _dateOnly(baseDate),
+          shortageAmount: shortageAmount,
+          estimatedLateFeeTotal: lateFeeTotal,
         ),
       );
     }
