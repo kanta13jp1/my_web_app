@@ -5964,6 +5964,128 @@ void main() {
         await _unmount(tester);
       },
     );
+
+    testWidgets(
+      'Issue #3290: displays top 5 monthly interest card, total badge matching Dart calculation, and copy shortcut',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        const jibunId =
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId;
+        const acomShopId = AssetLiabilityPlanningService.acomShoppingAccountId;
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 5600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  annualRateOverrides: <String, double>{
+                    'mobit': 0.18,
+                    acomShopId: 0.16,
+                    'acom_card_loan': 0.15,
+                    'yokohama_bank': 0.145,
+                    'smbc_card_loan': 0.145,
+                    jibunId: 0.05,
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -800000,
+                  'アコムショッピング': -600000,
+                  'アコムカードローン': -500000,
+                  '横浜銀行': -400000,
+                  '三井住友銀行CL': -300000,
+                  'じぶん銀行カードローン': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_top_monthly_interest_card')),
+          findsOneWidget,
+        );
+        expect(find.text('今月の利息トップ5'), findsOneWidget);
+
+        final totalBadge = find.byKey(
+          const Key('asset_top_interest_total_badge'),
+        );
+        expect(totalBadge, findsOneWidget);
+        expect(
+          find.descendant(
+            of: totalBadge,
+            matching: find.textContaining('今月の利息合計（概算）:'),
+          ),
+          findsOneWidget,
+        );
+
+        final headerInterestText = tester
+            .widget<Text>(
+              find.descendant(
+                of: find.byKey(
+                  const Key('asset_debt_monthly_interest_header_chip'),
+                ),
+                matching: find.byType(Text),
+              ),
+            )
+            .data!;
+        final totalBadgeText = tester
+            .widget<Text>(
+              find.descendant(of: totalBadge, matching: find.byType(Text)),
+            )
+            .data!;
+        final expectedAmountSuffix = headerInterestText.split(': ').last;
+        expect(totalBadgeText, endsWith(expectedAmountSuffix));
+
+        expect(
+          find.byKey(const Key('asset_top_interest_row_mobit')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_$acomShopId')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_acom_card_loan')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_yokohama_bank')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_smbc_card_loan')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_$jibunId')),
+          findsNothing,
+        );
+
+        final consultBtn = find.byKey(
+          const Key('asset_top_interest_consult_mobit'),
+        );
+        await tester.ensureVisible(consultBtn);
+        await tester.pump();
+        await tester.tap(consultBtn);
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(find.text('モビットへの相談文をコピーしました。'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
   });
   testWidgets(
     'anonymous unconfirmed read never claims empty income or offers empty CTA',
