@@ -2509,24 +2509,30 @@ class _WbsCategoryHierarchySectionState
           ),
         ),
         for (final node in visibleNodes)
-          _TaskRow(
-            key: ValueKey('wbs_task_${node.task.id}'),
-            task: node.task,
-            depth: node.depth,
-            childCount: node.totalDescendantCount,
-            directChildCount: node.directChildCount,
-            collapsed: _collapsedParentIds.contains(node.task.id),
-            onToggleCollapse: node.directChildCount > 0
-                ? () {
-                    setState(() {
-                      if (_collapsedParentIds.contains(node.task.id)) {
-                        _collapsedParentIds.remove(node.task.id);
-                      } else {
-                        _collapsedParentIds.add(node.task.id);
-                      }
-                    });
-                  }
-                : null,
+          Padding(
+            padding: EdgeInsets.only(
+              bottom: 6,
+              left: 8.0 + (node.depth.clamp(0, 5) * 18.0),
+            ),
+            child: _TaskRow(
+              key: ValueKey('wbs_task_${node.task.id}'),
+              task: node.task,
+              depth: node.depth,
+              childCount: node.totalDescendantCount,
+              directChildCount: node.directChildCount,
+              collapsed: _collapsedParentIds.contains(node.task.id),
+              onToggleCollapse: node.directChildCount > 0
+                  ? () {
+                      setState(() {
+                        if (_collapsedParentIds.contains(node.task.id)) {
+                          _collapsedParentIds.remove(node.task.id);
+                        } else {
+                          _collapsedParentIds.add(node.task.id);
+                        }
+                      });
+                    }
+                  : null,
+            ),
           ),
         const SizedBox(height: 12),
       ],
@@ -2554,21 +2560,16 @@ class _TaskRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final indentPx = 8.0 + (depth.clamp(0, 5) * 18.0);
     return Container(
-      margin: EdgeInsets.only(bottom: 6, left: indentPx),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
         color: const Color(0xFF141414),
         borderRadius: BorderRadius.circular(8),
-        border: depth > 0
-            ? const Border(
-                top: BorderSide(color: Color(0xFF222222)),
-                right: BorderSide(color: Color(0xFF222222)),
-                bottom: BorderSide(color: Color(0xFF222222)),
-                left: BorderSide(color: Color(0xFF38BDF8), width: 2),
-              )
-            : Border.all(color: const Color(0xFF222222)),
+        border: Border.all(
+          color: depth > 0
+              ? const Color(0xFF38BDF8).withValues(alpha: 0.55)
+              : const Color(0xFF222222),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
