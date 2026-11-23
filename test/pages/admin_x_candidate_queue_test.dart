@@ -15,6 +15,11 @@ void main() {
       expect(xTrackerSeriesLabel('ai_tool_tracker'), 'AIツール定点観測');
       // R28: 両党地力差ランキング系列(playbook step 4)。
       expect(xTrackerSeriesLabel('party_gap_ranking'), '選挙: 両党地力差');
+      // Issue #4026: 公明党 地方議員トラッカー MVP (playbook step 4)。
+      expect(
+        xTrackerSeriesLabel('komeito_member_tracker'),
+        '選挙: 公明党 地方議員',
+      );
     });
 
     test('collapses daily_briefing variants and passes unknown through', () {
