@@ -70,7 +70,7 @@ void main() {
           FsrsCardState(
             questionId: 'q_future',
             provider: 'gemini',
-            dueDate: now.add(const Duration(days: 5)),
+            dueDate: now.add(const Duration(hours: 12)),
           ),
           FsrsCardState(
             questionId: 'q_due',
