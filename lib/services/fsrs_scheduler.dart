@@ -165,7 +165,9 @@ class FsrsScheduler {
 
     if (g == 1 || !correct) {
       final decayed = math.max(
-          0.4, card.stability * 0.35 * math.exp(-0.08 * nextDifficulty));
+        0.4,
+        card.stability * 0.35 * math.exp(-0.08 * nextDifficulty),
+      );
       nextStability = double.parse(decayed.toStringAsFixed(4));
       scheduledDays = 1;
       nextState = 'relearning';

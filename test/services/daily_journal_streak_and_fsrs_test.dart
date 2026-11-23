@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:my_web_app/models/daily_journal_entry.dart';
 import 'package:my_web_app/services/ai_fsrs_service.dart';
 import 'package:my_web_app/services/daily_journal_streak_service.dart';
 import 'package:my_web_app/services/fsrs_scheduler.dart';
