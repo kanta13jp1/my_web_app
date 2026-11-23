@@ -229,5 +229,86 @@ void main() {
         handle.dispose();
       }
     });
+
+    testWidgets(
+        'collapses suppressed AiSuggestedActionBar and shows dynamic suppression tile in dashboard (#1367)',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+      try {
+        tester.view.physicalSize = const Size(1280, 2200);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: Column(
+                children: [
+                  AiSuggestedActionBar(
+                    suppressed: true,
+                    suppressionReason: '直近5回連続で未選択のため提案ボタンを非表示にしました',
+                    actions: <AiSuggestedAction>[
+                      AiSuggestedAction(
+                        id: 'hidden_act',
+                        type: AiSuggestedActionType.narrativeChoice,
+                        rawActionType: 'narrative_choice',
+                        label: '隠されるべき選択肢',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('隠されるべき選択肢'), findsNothing);
+        expect(
+          find.byKey(const Key('ai_suggested_action_suppressed_notice')),
+          findsOneWidget,
+        );
+
+        final ignoredEvents = <AiSuggestedActionEvent>[
+          for (var i = 0; i < 5; i++)
+            AiSuggestedActionEvent(
+              id: 'ign_$i',
+              actionId: 'a_$i',
+              label: '提案ボタン $i',
+              actionType: AiSuggestedActionType.narrativeChoice,
+              rawActionType: 'narrative_choice',
+              eventKind: 'impression',
+              contextExcerpt: '履歴 $i',
+              flaggedDeception: false,
+              recordedAt: DateTime.utc(2026, 11, 24, 0, i),
+            ),
+        ];
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: AiSuggestedActionAuditDashboard(
+                  initialEvents: ignoredEvents,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const Key('ai_action_audit_suppression_status')),
+          findsOneWidget,
+        );
+        expect(find.text('動的ツール抑制中'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      } finally {
+        handle.dispose();
+      }
+    });
   });
 }
