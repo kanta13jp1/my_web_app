@@ -1217,6 +1217,9 @@ class AssetLiabilityMonthlyStateStore {
                   rawTask['canceled'] == true || rawTask['cancelled'] == true,
               canceledAt: canceledAt,
               cancellationReason: cancellationReason,
+              dedupeKey: _cleanNullableString(
+                rawTask['dedupeKey'] ?? rawTask['dedupe_key'],
+              ),
             ),
           );
         }
@@ -1808,6 +1811,8 @@ class AssetLiabilityMonthlyStateStore {
             'canceled': task.canceled,
             'canceledAt': task.canceledAt?.toIso8601String(),
             'cancellationReason': task.cancellationReason,
+            if (task.dedupeKey != null && task.dedupeKey!.isNotEmpty)
+              'dedupeKey': task.dedupeKey,
           },
       ]);
     });

@@ -11,7 +11,9 @@ import 'asset_triage_guide_service.dart';
 import 'asset_payment_status_summary.dart';
 import 'asset_liability_planning_service.dart';
 import 'asset_payment_discrepancy_service.dart';
+import 'asset_safety_transfer_suggestion_service.dart';
 import 'asset_subscription_excess_alert_service.dart';
+import 'payment_confirmation_gate.dart';
 
 // Use the planner's resolved salary-cycle date throughout advice and prompts.
 // Rows omitted from cashflow (for example card-billed items) have no independent
@@ -287,6 +289,9 @@ class AssetManagementInsightReport {
 
   /// 口座別見込み残高が不足する口座の先読み警告（不足額の大きい順）。
   final List<AssetManagementAccountShortfallAlert> accountShortfallAlerts;
+
+  /// 安全残高割れを予防する事前振替提案 (#3350)。
+  final List<AssetSafetyTransferSuggestion> safetyBalanceTransferSuggestions;
   final List<AssetManagementEmergencyAdvice> emergencyAdvices;
   final List<AssetManagementDeveloperRequest> developerRequests;
   final List<AssetManagementImplementationContext> implementationContexts;
@@ -318,6 +323,8 @@ class AssetManagementInsightReport {
     required this.movementSuggestions,
     this.accountShortfallAlerts =
         const <AssetManagementAccountShortfallAlert>[],
+    this.safetyBalanceTransferSuggestions =
+        const <AssetSafetyTransferSuggestion>[],
     required this.emergencyAdvices,
     required this.developerRequests,
     this.implementationContexts =
@@ -364,6 +371,15 @@ class AssetManagementInsightReport {
   List<AssetLiabilityCardStatementReconciliationGroup>
       get cardStatementNeedsReviewGroups =>
           workbook.cardStatementReconciliation.needsReviewGroups;
+
+  bool get hasSafetyBalanceTransferSuggestions =>
+      safetyBalanceTransferSuggestions.isNotEmpty;
+
+  PaymentConfirmationGateResult get incomePlanGate =>
+      PaymentConfirmationGate.evaluate(
+        incomePlanCount: workbook.incomePlans.length,
+        monthlyAvailableAmount: monthAvailable.availableAmount,
+      );
 }
 
 /// リボ払いカード行にインライン表示する概算残り月数・元金減少見込み。
@@ -454,6 +470,11 @@ class AssetManagementInsightService {
       workbook: workbook,
       movementSuggestions: movementSuggestions,
     );
+    final safetyBalanceTransferSuggestions =
+        AssetSafetyTransferSuggestionService.buildSuggestions(
+      workbook: workbook,
+      minimumSafetyBalance: minimumSafetyBalance,
+    );
     final emergencyAdvices = _buildEmergencyAdvices(
       workbook: workbook,
       today: today,
@@ -531,6 +552,7 @@ class AssetManagementInsightService {
       monthAvailable: month,
       movementSuggestions: movementSuggestions,
       accountShortfallAlerts: accountShortfallAlerts,
+      safetyBalanceTransferSuggestions: safetyBalanceTransferSuggestions,
       emergencyAdvices: emergencyAdvices,
       developerRequests: developerRequests,
       implementationContexts: implementationContexts,
@@ -1198,7 +1220,11 @@ class AssetManagementInsightService {
           toAccountName: suggestion.toAccountName,
           amount: suggestion.amount,
           neededBy: suggestion.neededBy,
-          reason: '口座別資金繰りで不足が見込まれています。',
+          reason: suggestion.targetPaymentName == null
+              ? '口座別資金繰りで不足が見込まれています。'
+              : '${suggestion.targetPaymentName}'
+                  '${suggestion.targetPaymentDate == null ? '' : '（${suggestion.targetPaymentDate!.month}/${suggestion.targetPaymentDate!.day}）'}'
+                  'の引き落としに向けて不足が見込まれています。',
         ),
     ];
 

@@ -217,6 +217,7 @@ class AssetLiabilityWorkbookMemoizer {
       buf.write(item.canceled ? '1' : '0');
       _writeNullableInt(buf, item.canceledAt?.millisecondsSinceEpoch);
       _writeStr(buf, item.cancellationReason);
+      _writeNullableStr(buf, item.dedupeKey);
     }
 
     buf.write('|rfc:${recurringFixedCosts.length}:');
