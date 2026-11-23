@@ -1,3 +1,6 @@
+import 'package:my_web_app/models/contact_log.dart';
+import 'package:my_web_app/services/card_statement_refetch_service.dart';
+
 enum AssetLiabilityAccountKind {
   cash,
   deposit,
@@ -1723,6 +1726,12 @@ class AssetLiabilityWorkbook {
   /// 登録済み移動タスクと移動提案の逆方向衝突一覧 (#3298)。
   final List<AssetTransferConflict> collisionTransfers;
 
+  /// 期限超過・高金利先への債権者連絡タスク一覧 (#3288)。
+  final List<CreditorContactTask> creditorContactTasks;
+
+  /// カード請求ホスト単位の明細再取得・失敗監視ステータス (#3299)。
+  final Map<String, CardStatementImportStatus> statementImportStatuses;
+
   const AssetLiabilityWorkbook({
     required this.baseDate,
     this.recurringFixedCosts = const <AssetRecurringFixedCost>[],
@@ -1762,6 +1771,8 @@ class AssetLiabilityWorkbook {
     this.emergencyMode = false,
     this.cashAfterEssentials,
     this.collisionTransfers = const <AssetTransferConflict>[],
+    this.creditorContactTasks = const <CreditorContactTask>[],
+    this.statementImportStatuses = const <String, CardStatementImportStatus>{},
   });
 
   AssetPaymentInconsistencySummary get paymentInconsistencySummary {
