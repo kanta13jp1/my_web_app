@@ -2938,6 +2938,14 @@ const HORSE_BASE_PROVIDER_CHAIN: HorseProviderConfig[] = [
     family: "Gemini",
   },
   {
+    provider: "openai",
+    model: "gpt-4o-mini",
+    apiKeyEnv: "OPENAI_API_KEY",
+    estimatedCostUsd: 0.002,
+    tier: "base",
+    family: "GPT",
+  },
+  {
     provider: "anthropic",
     model: "claude-haiku-4-5-20251001",
     apiKeyEnv: "ANTHROPIC_API_KEY",
@@ -2961,14 +2969,6 @@ const HORSE_BASE_PROVIDER_CHAIN: HorseProviderConfig[] = [
     tier: "base",
     family: "DeepSeek",
   },
-  {
-    provider: "openai",
-    model: "gpt-4o-mini",
-    apiKeyEnv: "OPENAI_API_KEY",
-    estimatedCostUsd: 0.002,
-    tier: "base",
-    family: "GPT",
-  },
 ];
 
 const HORSE_PREMIUM_PROVIDER_CHAIN: HorseProviderConfig[] = [
@@ -2989,6 +2989,14 @@ const HORSE_PREMIUM_PROVIDER_CHAIN: HorseProviderConfig[] = [
     family: "Opus",
   },
   {
+    provider: "openai",
+    model: Deno.env.get("HORSE_OPENAI_PREMIUM_MODEL") ?? "gpt-4.1",
+    apiKeyEnv: "OPENAI_API_KEY",
+    estimatedCostUsd: 0.01,
+    tier: "premium",
+    family: "GPT",
+  },
+  {
     provider: "xai",
     model: Deno.env.get("HORSE_XAI_PREMIUM_MODEL") ?? "grok-4",
     apiKeyEnv: "XAI_API_KEY",
@@ -3004,14 +3012,6 @@ const HORSE_PREMIUM_PROVIDER_CHAIN: HorseProviderConfig[] = [
     estimatedCostUsd: 0.006,
     tier: "premium",
     family: "DeepSeek",
-  },
-  {
-    provider: "openai",
-    model: Deno.env.get("HORSE_OPENAI_PREMIUM_MODEL") ?? "gpt-4.1",
-    apiKeyEnv: "OPENAI_API_KEY",
-    estimatedCostUsd: 0.01,
-    tier: "premium",
-    family: "GPT",
   },
 ];
 

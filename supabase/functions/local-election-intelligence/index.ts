@@ -17,7 +17,8 @@ import {
 } from "./snapshot_history.ts";
 import { normalizeCdpBenchmark } from "./party_gap_ranking.ts";
 import {
-  fetchKomeitoMemberSnapshot,
+  KOMEITO_MEMBER_PAGE_URL,
+  parseKomeitoMemberSummaryHtml,
   persistKomeitoSnapshot,
 } from "./komeito_tracker.ts";
 import {
@@ -71,7 +72,6 @@ import {
   stripTags,
   toAsciiDigits,
 } from "./official_site_parsers.ts";
-import { generateJsonWithGeminiFirst } from "../_shared/gemini_json_client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -81,7 +81,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
@@ -538,7 +537,17 @@ serve(async (req) => {
       if (parsedRequest.action === "komeitoSnapshotAndQueue") {
         requireServiceRole(req);
       }
-      const komeitoSnapshot = await fetchKomeitoMemberSnapshot(fetchText);
+      const html = await fetchText(KOMEITO_MEMBER_PAGE_URL);
+      const komeitoSnapshot = parseKomeitoMemberSummaryHtml(
+        html,
+        KOMEITO_MEMBER_PAGE_URL,
+      );
+      if (!komeitoSnapshot) {
+        throw new HttpError(
+          503,
+          "Komeito official member summary could not be parsed.",
+        );
+      }
       const komeitoPersistence =
         parsedRequest.action === "komeitoSnapshotAndQueue"
           ? await persistKomeitoSnapshot(
@@ -2595,44 +2604,79 @@ async function buildAiAnalysis(snapshot: {
   members: LocalLegislatorProfile[];
   upcomingSchedules?: LocalElectionScheduleEntry[];
 }): Promise<AiAnalysis> {
-  const fallback = buildFallbackAnalysis(snapshot);
-  const parsed = await generateJsonWithGeminiFirst({
-    systemPrompt:
-      "You analyze a Japanese local election dashboard. Reply in concise Japanese. Return JSON with keys summary, alerts, strategicNotes, scheduleSummary, scheduleAlerts.",
-    userPrompt: JSON.stringify({
-      officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
-      actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
-      official2023TotalWins: snapshot.official2023TotalWins,
-      topPrefectures: [...snapshot.prefectures].sort((a, b) =>
-        b.currentMembers - a.currentMembers
-      ).slice(0, 10),
-      topCdpGaps: [...snapshot.prefectures].sort((a, b) =>
-        (b.cdpLocalMembers - b.currentMembers) -
-        (a.cdpLocalMembers - a.currentMembers)
-      ).slice(0, 10),
-      rosterCount: snapshot.members.length,
-      upcomingSchedules: snapshot.upcomingSchedules?.slice(0, 10) ?? [],
-    }),
-    geminiApiKey: GEMINI_API_KEY,
-    openAiApiKey: OPENAI_API_KEY,
-    temperature: 0.2,
-    maxOutputTokens: 768,
-    timeoutMs: AI_ANALYSIS_TIMEOUT_MS,
-  });
-  if (!parsed) {
-    return fallback;
+  if (OPENAI_API_KEY === "") {
+    return buildFallbackAnalysis(snapshot);
   }
-  const parsedScheduleAlerts = sanitizeLines(parsed.scheduleAlerts, 4);
-  return {
-    summary: sanitizeLine(parsed.summary) || fallback.summary,
-    alerts: sanitizeLines(parsed.alerts, 3),
-    strategicNotes: sanitizeLines(parsed.strategicNotes, 3),
-    scheduleSummary: sanitizeLine(parsed.scheduleSummary) ||
-      fallback.scheduleSummary,
-    scheduleAlerts: parsedScheduleAlerts.length > 0
-      ? parsedScheduleAlerts
-      : fallback.scheduleAlerts,
-  };
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    AI_ANALYSIS_TIMEOUT_MS,
+  );
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        temperature: 0.2,
+        max_tokens: 500,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content:
+              "You analyze a Japanese local election dashboard. Reply in concise Japanese. Return JSON with keys summary, alerts, strategicNotes, scheduleSummary, scheduleAlerts.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
+              actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
+              official2023TotalWins: snapshot.official2023TotalWins,
+              topPrefectures: [...snapshot.prefectures].sort((a, b) =>
+                b.currentMembers - a.currentMembers
+              ).slice(0, 10),
+              topCdpGaps: [...snapshot.prefectures].sort((a, b) =>
+                (b.cdpLocalMembers - b.currentMembers) -
+                (a.cdpLocalMembers - a.currentMembers)
+              ).slice(0, 10),
+              rosterCount: snapshot.members.length,
+              upcomingSchedules: snapshot.upcomingSchedules?.slice(0, 10) ?? [],
+            }),
+          },
+        ],
+      }),
+    });
+    if (!response.ok) {
+      return buildFallbackAnalysis(snapshot);
+    }
+    const json = await response.json();
+    const content = json.choices?.[0]?.message?.content;
+    if (typeof content !== "string" || content.trim() === "") {
+      return buildFallbackAnalysis(snapshot);
+    }
+    const parsed = JSON.parse(content);
+    const fallback = buildFallbackAnalysis(snapshot);
+    const parsedScheduleAlerts = sanitizeLines(parsed.scheduleAlerts, 4);
+    return {
+      summary: sanitizeLine(parsed.summary) || fallback.summary,
+      alerts: sanitizeLines(parsed.alerts, 3),
+      strategicNotes: sanitizeLines(parsed.strategicNotes, 3),
+      scheduleSummary: sanitizeLine(parsed.scheduleSummary) ||
+        fallback.scheduleSummary,
+      scheduleAlerts: parsedScheduleAlerts.length > 0
+        ? parsedScheduleAlerts
+        : fallback.scheduleAlerts,
+    };
+  } catch {
+    return buildFallbackAnalysis(snapshot);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 function buildFallbackAnalysis(snapshot: {

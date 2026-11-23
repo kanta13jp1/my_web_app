@@ -23,9 +23,9 @@ const KEYS = {
 };
 
 const FALLBACK_MODELS = [
-  { provider: "gemini", model: "gemini-2.5-flash" },
-  { provider: "anthropic", model: "claude-haiku-4-5-20251001" },
   { provider: "openai", model: "gpt-4o-mini" },
+  { provider: "anthropic", model: "claude-haiku-4-5-20251001" },
+  { provider: "gemini", model: "gemini-2.5-flash" },
   { provider: "deepseek", model: "deepseek-v4-flash" },
 ];
 

@@ -135,17 +135,21 @@ void main() {
 
       Future<void> addSkill(String name, String category, String level) async {
         final formCard = find.byKey(const Key('self_skill_asset_form_card'));
-        final nameField = find.descendant(
-          of: formCard,
-          matching: find.byType(FocusBlurTextField).first,
-        );
+        final nameField = find
+            .descendant(
+              of: formCard,
+              matching: find.byType(FocusBlurTextField),
+            )
+            .first;
         await tester.ensureVisible(nameField);
         await tester.enterText(nameField, name);
 
-        final levelField = find.descendant(
-          of: formCard,
-          matching: find.byType(FocusBlurTextField).at(1),
-        );
+        final levelField = find
+            .descendant(
+              of: formCard,
+              matching: find.byType(FocusBlurTextField),
+            )
+            .at(1);
         await tester.ensureVisible(levelField);
         await tester.enterText(levelField, level);
 
@@ -214,15 +218,20 @@ void main() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
       await tester.scrollUntilVisible(
         find.byKey(const Key('self_skill_asset_portfolio_card')),
         300,
+        scrollable: find.byType(Scrollable).first,
       );
+      await tester.pump(const Duration(milliseconds: 200));
       expect(
         find.byKey(const Key('self_skill_asset_portfolio_card')),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 200));
     });
   });
 }
