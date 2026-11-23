@@ -142,5 +142,70 @@ void main() {
       expect(flaggedOnly.length, 1);
       expect(flaggedOnly.first.flaggedDeception, isTrue);
     });
+
+    test(
+        'evaluates CTR, detects consecutive ignore streak, and dynamically filters LLM action tools (#1367)',
+        () async {
+      const service = AiSuggestedActionMonitorService();
+      const action = AiSuggestedAction(
+        id: 'act_nav',
+        type: AiSuggestedActionType.narrativeChoice,
+        rawActionType: 'narrative_choice',
+        label: '選択肢を続ける',
+        contextExcerpt: '進行相談',
+      );
+
+      for (var i = 0; i < 5; i++) {
+        await service.recordActionEvent(
+          action: action,
+          eventKind: 'impression',
+          now: DateTime.utc(2026, 11, 24, 0, i),
+        );
+      }
+
+      final suppressedEval = await service.fetchUserEngagementSummary(
+        userId: 'user_a',
+        consecutiveIgnoreThreshold: 5,
+      );
+      expect(suppressedEval.userId, 'user_a');
+      expect(suppressedEval.impressionCount, 5);
+      expect(suppressedEval.clickCount, 0);
+      expect(suppressedEval.ctr, 0.0);
+      expect(suppressedEval.consecutiveIgnoredImpressions, 5);
+      expect(suppressedEval.shouldSuppressActionTools, isTrue);
+
+      const candidateTools = <Map<String, dynamic>>[
+        <String, dynamic>{'name': 'suggested_actions', 'type': 'function'},
+        <String, dynamic>{'name': 'search_notes', 'type': 'function'},
+        <String, dynamic>{
+          'type': 'function',
+          'function': <String, dynamic>{'name': 'narrative_choice'},
+        },
+      ];
+      final filteredTools = service.filterLlmToolsForEngagement(
+        candidateTools,
+        suppressedEval,
+      );
+      expect(filteredTools.length, 1);
+      expect(filteredTools.single['name'], 'search_notes');
+
+      // A click breaks the ignored streak and re-enables action tools.
+      await service.recordActionEvent(
+        action: action,
+        eventKind: 'click',
+        now: DateTime.utc(2026, 11, 24, 0, 10),
+      );
+      final restoredEval = await service.fetchUserEngagementSummary(
+        userId: 'user_a',
+        consecutiveIgnoreThreshold: 5,
+      );
+      expect(restoredEval.consecutiveIgnoredImpressions, 0);
+      expect(restoredEval.shouldSuppressActionTools, isFalse);
+      final restoredTools = service.filterLlmToolsForEngagement(
+        candidateTools,
+        restoredEval,
+      );
+      expect(restoredTools.length, 3);
+    });
   });
 }

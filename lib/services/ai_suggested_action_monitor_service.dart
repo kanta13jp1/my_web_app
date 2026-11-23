@@ -8,9 +8,48 @@ typedef AiActionTelemetryRecorder = Future<bool> Function(
   AiSuggestedActionEvent event,
 );
 
+class AiActionEngagementEvaluation {
+  const AiActionEngagementEvaluation({
+    required this.userId,
+    required this.impressionCount,
+    required this.clickCount,
+    required this.ctr,
+    required this.consecutiveIgnoredImpressions,
+    required this.suppressionThreshold,
+    required this.shouldSuppressActionTools,
+  });
+
+  final String userId;
+  final int impressionCount;
+  final int clickCount;
+  final double ctr;
+  final int consecutiveIgnoredImpressions;
+  final int suppressionThreshold;
+  final bool shouldSuppressActionTools;
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'user_id': userId,
+      'impression_count': impressionCount,
+      'click_count': clickCount,
+      'ctr': ctr,
+      'consecutive_ignored_impressions': consecutiveIgnoredImpressions,
+      'suppression_threshold': suppressionThreshold,
+      'should_suppress_action_tools': shouldSuppressActionTools,
+    };
+  }
+}
+
 class AiSuggestedActionMonitorService {
   static const String defaultPrefsKey = 'ai_suggested_action_events_v1';
   static const int maxRetainedEvents = 200;
+  static const Set<String> defaultActionToolNames = <String>{
+    'suggested_actions',
+    'ui_action',
+    'narrative_choice',
+    'scene_transition',
+    'generic_narrative_choice',
+  };
 
   final String prefsKey;
   final AiActionTelemetryRecorder? _telemetryRecorder;
@@ -157,6 +196,73 @@ class AiSuggestedActionMonitorService {
         event.deceptionReason ?? '',
       ].join('\n').toLowerCase();
       return haystack.contains(normalizedQuery);
+    }).toList(growable: false);
+  }
+
+  AiActionEngagementEvaluation evaluateUserEngagement(
+    List<AiSuggestedActionEvent> events, {
+    String userId = 'local',
+    int consecutiveIgnoreThreshold = 5,
+  }) {
+    final sorted = List<AiSuggestedActionEvent>.from(events)
+      ..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+    var impressions = 0;
+    var clicks = 0;
+    var consecutiveIgnored = 0;
+    var streakBroken = false;
+
+    for (final event in sorted) {
+      if (event.eventKind == 'click') {
+        clicks += 1;
+        streakBroken = true;
+      } else {
+        impressions += 1;
+        if (!streakBroken) {
+          consecutiveIgnored += 1;
+        }
+      }
+    }
+
+    final ctr = impressions == 0 ? 0.0 : clicks / impressions;
+    final shouldSuppress =
+        consecutiveIgnored >= consecutiveIgnoreThreshold && impressions > 0;
+    return AiActionEngagementEvaluation(
+      userId: userId,
+      impressionCount: impressions,
+      clickCount: clicks,
+      ctr: ctr,
+      consecutiveIgnoredImpressions: consecutiveIgnored,
+      suppressionThreshold: consecutiveIgnoreThreshold,
+      shouldSuppressActionTools: shouldSuppress,
+    );
+  }
+
+  Future<AiActionEngagementEvaluation> fetchUserEngagementSummary({
+    String userId = 'local',
+    int consecutiveIgnoreThreshold = 5,
+  }) async {
+    final events = await loadEvents();
+    return evaluateUserEngagement(
+      events,
+      userId: userId,
+      consecutiveIgnoreThreshold: consecutiveIgnoreThreshold,
+    );
+  }
+
+  List<Map<String, dynamic>> filterLlmToolsForEngagement(
+    List<Map<String, dynamic>> tools,
+    AiActionEngagementEvaluation evaluation, {
+    Set<String> actionToolNames = defaultActionToolNames,
+  }) {
+    if (!evaluation.shouldSuppressActionTools) {
+      return List<Map<String, dynamic>>.from(tools);
+    }
+    return tools.where((tool) {
+      final topName = tool['name']?.toString().trim() ?? '';
+      final fn = tool['function'];
+      final nestedName = fn is Map ? (fn['name']?.toString().trim() ?? '') : '';
+      final resolvedName = topName.isNotEmpty ? topName : nestedName;
+      return !actionToolNames.contains(resolvedName);
     }).toList(growable: false);
   }
 }
