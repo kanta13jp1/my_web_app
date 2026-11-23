@@ -375,6 +375,39 @@ foreach ($scope in @("read", "create", "wbs.tasks.list", "feature_request.create
   Assert-True ($scopes -contains $scope) "metadata scopes include $scope"
 }
 
+Write-Step "Streamable HTTP lifecycle (Antigravity compatibility)"
+$mcpUrl = if ($BaseUrl.EndsWith("/mcp")) { $BaseUrl } else { Join-SmokeUrl $BaseUrl "mcp" }
+$initBody = New-JsonRpcRequest -Id "init-probe" -Method "initialize" -Params @{
+  protocolVersion = "2025-03-26"
+  capabilities = @{}
+  clientInfo = @{
+    name = "tools-hub-mcp-smoke"
+    version = "1.0.0"
+  }
+}
+$initRes = Invoke-SmokeRequest -Method "POST" -Url $mcpUrl -Body $initBody
+Assert-True ($initRes.StatusCode -eq 200) "initialize returns HTTP 200"
+$initResult = Get-JsonProperty $initRes.Json "result"
+$initProtocol = [string](Get-JsonProperty $initResult "protocolVersion")
+Assert-True (-not [string]::IsNullOrWhiteSpace($initProtocol)) "initialize returns protocolVersion"
+$initCaps = Get-JsonProperty $initResult "capabilities"
+Assert-True ($null -ne (Get-JsonProperty $initCaps "tools")) "initialize advertises tools capability"
+Assert-True ($null -eq (Get-JsonProperty $initCaps "sampling")) "initialize does not advertise sampling capability"
+
+$notifBody = @{
+  jsonrpc = "2.0"
+  method = "notifications/initialized"
+}
+$notifRes = Invoke-SmokeRequest -Method "POST" -Url $mcpUrl -Body $notifBody
+Assert-True ($notifRes.StatusCode -eq 202) "notifications/initialized returns HTTP 202"
+
+$pingBody = New-JsonRpcRequest -Id "ping-probe" -Method "ping"
+$pingRes = Invoke-SmokeRequest -Method "POST" -Url $mcpUrl -Body $pingBody
+Assert-True ($pingRes.StatusCode -eq 200) "ping returns HTTP 200"
+
+$getMcp = Invoke-SmokeRequest -Method "GET" -Url $mcpUrl -Headers @{ Accept = "text/event-stream" }
+Assert-True ($getMcp.StatusCode -eq 405) "GET /mcp returns HTTP 405 Method Not Allowed"
+
 Write-Step "MCP tools/list"
 $toolsListBody = New-JsonRpcRequest -Id "tools-list" -Method "tools/list"
 $toolsList = Invoke-SmokeRequest -Method "POST" -Url $BaseUrl -Body $toolsListBody
