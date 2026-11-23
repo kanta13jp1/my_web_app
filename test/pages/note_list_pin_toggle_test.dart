@@ -445,9 +445,9 @@ void main() {
   );
 
   testWidgets(
-    'unpins via leading pin icon with >=44px tap target at 320x568 2.0x scale',
+    'unpins via leading pin icon with >=44px tap target at 320x800 2.0x scale',
     (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(320, 568);
+      tester.view.physicalSize = const Size(320, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
