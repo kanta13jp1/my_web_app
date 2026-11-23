@@ -62,9 +62,9 @@ void main() {
       expect(summary.allocations.first.appliedAmount, 100000);
       expect(summary.allocations.first.remainingBalanceAfterExtra, 400000);
       expect(summary.monthsSaved, isNotNull);
-      expect(summary.monthsSaved!, greaterThan(0));
+      expect(summary.monthsSaved, greaterThan(0));
       expect(summary.interestSaved, isNotNull);
-      expect(summary.interestSaved!, greaterThan(0));
+      expect(summary.interestSaved, greaterThan(0));
     });
 
     test('supports monthly recurring extra payment mode (#1369)', () {
@@ -78,8 +78,8 @@ void main() {
       expect(summary.allocations, hasLength(1));
       expect(summary.allocations.first.debtId, 'mobit');
       expect(summary.monthsSaved, isNotNull);
-      expect(summary.monthsSaved!, greaterThan(0));
-      expect(summary.interestSaved!, greaterThan(0));
+      expect(summary.monthsSaved, greaterThan(0));
+      expect(summary.interestSaved, greaterThan(0));
     });
 
     test(
@@ -95,7 +95,7 @@ void main() {
       expect(goodPlan.weightedAverageAnnualRate, closeTo(0.15333, 0.001));
       expect(goodPlan.monthlyPaymentSavings, greaterThan(0));
       expect(goodPlan.totalInterestSavings, isNotNull);
-      expect(goodPlan.totalInterestSavings!, greaterThan(0));
+      expect(goodPlan.totalInterestSavings, greaterThan(0));
       expect(goodPlan.increasesTotalInterest, isFalse);
 
       final longTermPlan = AssetDebtSimulationService.simulateConsolidation(
@@ -104,7 +104,7 @@ void main() {
         consolidatedTermMonths: 120,
       );
       expect(longTermPlan.increasesTotalInterest, isTrue);
-      expect(longTermPlan.totalInterestDiff!, greaterThan(0));
+      expect(longTermPlan.totalInterestDiff, greaterThan(0));
 
       final zeroRatePlan = AssetDebtSimulationService.simulateConsolidation(
         items: const <MultiDebtInputItem>[mobitHigh],
@@ -149,7 +149,7 @@ void main() {
           'モビット': -300000,
           'アコム': -300000,
         },
-        paymentOverrides: const <String, double>{
+        monthlyPaymentOverrides: const <String, double>{
           'mobit': 40000,
           'acom_card_loan': 40000,
         },
@@ -183,7 +183,7 @@ void main() {
           '三井住友銀行大塚支店': 50000,
           'モビット': -520000,
         },
-        paymentOverrides: const <String, double>{'mobit': 20000},
+        monthlyPaymentOverrides: const <String, double>{'mobit': 20000},
         baseDate: DateTime(2026, 6, 15),
       );
 

@@ -946,7 +946,8 @@ class _DebtConsolidationSimulatorDialogState
                       const SizedBox(height: 8),
                       Container(
                         key: const Key(
-                            'consolidation_interest_increase_warning'),
+                          'consolidation_interest_increase_warning',
+                        ),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 6,

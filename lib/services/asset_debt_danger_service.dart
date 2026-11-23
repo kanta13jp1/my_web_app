@@ -291,8 +291,8 @@ class AssetDebtDangerService {
         );
 
     final reasons = <String>[];
-    if (exceedsRatio && ratio != null) {
-      final pct = (ratio * 100).toStringAsFixed(0);
+    if (exceedsRatio) {
+      final pct = (ratio! * 100).toStringAsFixed(0);
       final thresholdPct =
           (settings.repaymentToIncomeThreshold * 100).toStringAsFixed(0);
       reasons.add(

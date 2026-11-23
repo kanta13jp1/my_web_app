@@ -244,7 +244,9 @@ void main() {
         final now = DateTime(2026, 6, 10);
         final dateKey = DateFormat('yyyy-MM-dd').format(now);
         final repo = _InMemoryDebtGuideRepository(
-          const AssetLiabilityMonthlyState(),
+          const AssetLiabilityMonthlyState(
+            paymentOverrides: <String, double>{'mobit': 25000},
+          ),
         );
         final openedUrls = <Uri>[];
         final snapshots = <AssetLiabilityMonthlySnapshot>[
