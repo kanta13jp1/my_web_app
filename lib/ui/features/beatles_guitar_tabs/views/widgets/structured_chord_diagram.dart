@@ -191,3 +191,185 @@ class StructuredChordDiagramPainter extends CustomPainter {
     return oldDelegate.chord != chord || oldDelegate.lightSheet != lightSheet;
   }
 }
+
+/// 弾き語りコード譜（U-FRET 型）で歌詞の直上に表示する横向き 6弦コードダイアグラム。
+class HorizontalChordDiagramCard extends StatelessWidget {
+  const HorizontalChordDiagramCard({
+    super.key,
+    required this.chord,
+    required this.lightSheet,
+    this.isNoChord = false,
+  });
+
+  final StructuredChordDiagram chord;
+  final bool lightSheet;
+  final bool isNoChord;
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor =
+        lightSheet ? const Color(0xFF111827) : DesignTokens.textPrimary;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Text(
+          chord.name,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            height: 1.15,
+          ),
+        ),
+        const SizedBox(height: 1),
+        CustomPaint(
+          size: const Size(64, 54),
+          painter: HorizontalChordDiagramPainter(
+            chord: chord,
+            lightSheet: lightSheet,
+            isNoChord: isNoChord,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 1弦(上)〜6弦(下)・左が低フレット（ナット）となる横向きコードダイアグラム描画ペインター。
+class HorizontalChordDiagramPainter extends CustomPainter {
+  const HorizontalChordDiagramPainter({
+    required this.chord,
+    required this.lightSheet,
+    this.isNoChord = false,
+  });
+
+  final StructuredChordDiagram chord;
+  final bool lightSheet;
+  final bool isNoChord;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const double leftPad = 14.0;
+    const double topPad = 6.0;
+    const double fretW = 11.0;
+    const double stringH = 7.2;
+    const int stringCount = 6;
+    const int fretWireCount = 5;
+
+    final inkColor =
+        lightSheet ? const Color(0xFF111827) : DesignTokens.textOnDark;
+    final wireColor =
+        lightSheet ? const Color(0xFF4B5563) : DesignTokens.textSecondary;
+    final dotColor = lightSheet ? const Color(0xFF111827) : DesignTokens.orange;
+
+    final wirePaint = Paint()
+      ..color = wireColor
+      ..strokeWidth = 0.9;
+
+    const rightX = leftPad + (fretWireCount - 1) * fretW;
+    const bottomY = topPad + (stringCount - 1) * stringH;
+
+    // 横線（上から 1弦高音e 〜 下が 6弦低音E）
+    for (var row = 0; row < stringCount; row++) {
+      final y = topPad + row * stringH;
+      canvas.drawLine(Offset(leftPad, y), Offset(rightX, y), wirePaint);
+    }
+
+    // 縦線（左ナット〜4フレット先）
+    for (var f = 0; f < fretWireCount; f++) {
+      final x = leftPad + f * fretW;
+      final isNut = f == 0 && chord.baseFret == 1;
+      final linePaint = Paint()
+        ..color = isNut ? inkColor : wireColor
+        ..strokeWidth = isNut ? 2.6 : 0.9;
+      canvas.drawLine(Offset(x, topPad), Offset(x, bottomY), linePaint);
+    }
+
+    // 2フレット以上から開始する場合の開始フレットラベル
+    if (!isNoChord && chord.baseFret > 1) {
+      final tp = TextPainter(
+        text: TextSpan(
+          text: '${chord.baseFret}',
+          style: TextStyle(
+            color: inkColor,
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, const Offset(leftPad + 1.0, bottomY + 1.0));
+    }
+
+    // バレー（セーハ）縦棒
+    final barre = chord.barre;
+    if (!isNoChord && barre != null) {
+      final rel = barre.fret - chord.baseFret + 1;
+      if (rel >= 1 && rel < fretWireCount) {
+        final cx = leftPad + (rel - 0.5) * fretW;
+        final topRow = (stringCount - 1) - barre.endStringIndex;
+        final bottomRow = (stringCount - 1) - barre.startStringIndex;
+        final topY = topPad + topRow * stringH - 2.6;
+        final botY = topPad + bottomRow * stringH + 2.6;
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTRB(cx - 2.6, topY, cx + 2.6, botY),
+            const Radius.circular(2.6),
+          ),
+          Paint()..color = dotColor,
+        );
+      }
+    }
+
+    // ミュート(x)・開放(o)・押弦ドット
+    final openPaint = Paint()
+      ..color = inkColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.05;
+    final mutePaint = Paint()
+      ..color = inkColor
+      ..strokeWidth = 1.15
+      ..strokeCap = StrokeCap.round;
+    final dotPaint = Paint()..color = dotColor;
+
+    for (var s = 0; s < chord.frets.length && s < stringCount; s++) {
+      final fret = isNoChord ? -1 : chord.frets[s];
+      final row = (stringCount - 1) - s;
+      final cy = topPad + row * stringH;
+      if (fret == -1) {
+        const double r = 2.1;
+        const cx = leftPad - 6.5;
+        canvas.drawLine(
+          Offset(cx - r, cy - r),
+          Offset(cx + r, cy + r),
+          mutePaint,
+        );
+        canvas.drawLine(
+          Offset(cx - r, cy + r),
+          Offset(cx + r, cy - r),
+          mutePaint,
+        );
+      } else if (fret == 0) {
+        canvas.drawCircle(Offset(leftPad - 6.5, cy), 2.3, openPaint);
+      } else {
+        final rel = fret - chord.baseFret + 1;
+        final coveredByBarre = barre != null &&
+            fret == barre.fret &&
+            s >= barre.startStringIndex &&
+            s <= barre.endStringIndex;
+        if (!coveredByBarre && rel >= 1 && rel < fretWireCount) {
+          final cx = leftPad + (rel - 0.5) * fretW;
+          canvas.drawCircle(Offset(cx, cy), 2.5, dotPaint);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(HorizontalChordDiagramPainter oldDelegate) {
+    return oldDelegate.chord != chord ||
+        oldDelegate.lightSheet != lightSheet ||
+        oldDelegate.isNoChord != isNoChord;
+  }
+}

@@ -426,6 +426,27 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'switches to ChordLyricsStudioPanel from mode bar cleanly',
+    (tester) async {
+      await _setSurfaceSize(tester, const Size(1200, 900));
+      await tester.pumpWidget(
+        const MaterialApp(home: BeatlesGuitarTabsFeature(repository: repository)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('guitar_mode_chord_lyrics')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('chord_lyrics_selected_title')),
+        findsOneWidget,
+      );
+      expect(find.text('D#/D'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 double _channelLuminance(int channel8Bit) {
