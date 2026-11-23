@@ -189,9 +189,7 @@ void main() {
                           controller: controller,
                           labelText: '件名',
                           validator: (value) =>
-                              (value == null || value.trim().isEmpty)
-                                  ? '必須です'
-                                  : null,
+                              value.trim().isEmpty ? '必須です' : null,
                         ),
                       ],
                     ),
