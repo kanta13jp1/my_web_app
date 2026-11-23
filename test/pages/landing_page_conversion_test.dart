@@ -12,6 +12,8 @@ import 'package:my_web_app/services/landing_signup_completion_service.dart';
 import 'package:my_web_app/services/pending_landing_trial_service.dart';
 import 'package:my_web_app/services/route_visibility_observer.dart';
 import 'package:my_web_app/utils/route_document_title.dart';
+import 'package:my_web_app/widgets/landing_page_content.dart'
+    show LandingPostTrialSaveCard;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -2139,4 +2141,192 @@ void main() {
       lessThanOrEqualTo(727),
     );
   });
+
+  testWidgets(
+    'dark hero post-trial save card preserves WCAG AA contrast and CTA hierarchy',
+    (tester) async {
+      await pumpLanding(
+        tester,
+        assignment: _assignment('h04', LandingExperimentVariant.treatment),
+        size: const Size(1440, 1000),
+        googleLoginEnabled: true,
+      );
+
+      await tester.tap(find.byKey(const Key('landing_trial_sample_priority')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+
+      final cardFinder = find.byKey(
+        const Key('landing_h04_inline_magic_capture'),
+      );
+      expect(cardFinder, findsOneWidget);
+      final card = tester.widget<Container>(cardFinder);
+      final decoration = card.decoration! as BoxDecoration;
+      expect(decoration.color, const Color(0xFF14212B));
+
+      final googleButtonFinder = find.byKey(
+        const Key('landing_h04_inline_google'),
+      );
+      final magicLinkButtonFinder = find.byKey(
+        const Key('landing_h04_inline_magic_link'),
+      );
+      expect(tester.widget(googleButtonFinder), isA<FilledButton>());
+      expect(tester.widget(magicLinkButtonFinder), isA<OutlinedButton>());
+      expect(
+        tester.getSize(googleButtonFinder).height,
+        greaterThanOrEqualTo(44),
+      );
+      expect(
+        tester.getSize(magicLinkButtonFinder).height,
+        greaterThanOrEqualTo(44),
+      );
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    },
+  );
+
+  testWidgets(
+    'mobile post-trial exposes one-tap Google save before expanding email',
+    (tester) async {
+      final adapter = await pumpLanding(
+        tester,
+        assignment: _assignment('h04', LandingExperimentVariant.treatment),
+        size: const Size(390, 844),
+        googleLoginEnabled: true,
+      );
+
+      await tester.tap(
+        find.byKey(const Key('landing_h11_answer_preview_action')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+
+      final googleButtonFinder = find.byKey(
+        const Key('landing_h04_inline_google'),
+      );
+      final emailExpandFinder = find.byKey(
+        const Key('landing_h04_inline_save_expansion'),
+      );
+      final emailFieldFinder = find.byKey(
+        const Key('landing_h04_inline_email'),
+      );
+      expect(googleButtonFinder, findsOneWidget);
+      expect(emailExpandFinder, findsOneWidget);
+      expect(emailFieldFinder, findsNothing);
+
+      await Scrollable.ensureVisible(
+        tester.element(googleButtonFinder),
+        alignment: 0.5,
+      );
+      await tester.pump();
+      await tester.tap(googleButtonFinder);
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(adapter.googleLaunches, 1);
+      expect(adapter.saveCtas, 1);
+      expect(
+        adapter.conversionEvents,
+        containsAll(<String>[
+          'lp_exp_h04_treatment_save_cta',
+          'lp_exp_h04_treatment_signup_submit',
+          'lp_exp_h04_treatment_mobile_signup_submit',
+        ]),
+      );
+
+      await Scrollable.ensureVisible(
+        tester.element(emailExpandFinder),
+        alignment: 0.5,
+      );
+      await tester.pump();
+      await tester.tap(emailExpandFinder);
+      await tester.pumpAndSettle();
+
+      expect(emailFieldFinder, findsOneWidget);
+      expect(
+        tester.widget<TextField>(emailFieldFinder).focusNode?.hasFocus,
+        isFalse,
+      );
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    },
+  );
+
+  testWidgets(
+    'narrow 320x568 post-trial save card at 2x text scale meets semantics guidelines',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 568);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final emailController = TextEditingController();
+      addTearDown(emailController.dispose);
+      final emailFocusNode = FocusNode();
+      addTearDown(emailFocusNode.dispose);
+
+      final semantics = tester.ensureSemantics();
+      try {
+        for (final heroMode in <bool>[true, false]) {
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: heroMode
+                  ? ThemeData.dark(useMaterial3: true)
+                  : ThemeData.light(useMaterial3: true),
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: const TextScaler.linear(2.0),
+                ),
+                child: child ?? const SizedBox.shrink(),
+              ),
+              home: Scaffold(
+                body: SingleChildScrollView(
+                  child: LandingPostTrialSaveCard(
+                    compact: heroMode,
+                    heroMode: heroMode,
+                    showCompactForm: !heroMode,
+                    googleLoginEnabled: true,
+                    isLoading: false,
+                    isMagicLinkCoolingDown: false,
+                    showInboxShortcut: false,
+                    emailController: emailController,
+                    emailFocusNode: emailFocusNode,
+                    onSaveWithGoogle: () {},
+                    onSaveWithMagicLink: () {},
+                    onShowCompactOptions: () {},
+                    onCollapseCompactOptions: () {},
+                    onOpenInbox: () {},
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+
+          expect(tester.takeException(), isNull);
+          final card = tester.widget<Container>(
+            find.byKey(const Key('landing_h04_inline_magic_capture')),
+          );
+          final decoration = card.decoration! as BoxDecoration;
+          expect(
+            decoration.color,
+            heroMode ? const Color(0xFF14212B) : Colors.white,
+          );
+          final googleButton = find.byKey(
+            const Key('landing_h04_inline_google'),
+          );
+          expect(googleButton, findsOneWidget);
+          expect(tester.getSize(googleButton).height, greaterThanOrEqualTo(44));
+          await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+          await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
+        }
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+      } finally {
+        semantics.dispose();
+      }
+    },
+  );
 }
