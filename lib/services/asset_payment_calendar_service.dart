@@ -109,6 +109,8 @@ enum AssetCalendarEventKind {
   income,
   borrowing,
   transfer,
+  revolvingUsage,
+  debtGuardBorrowingViolation,
 }
 
 /// 入金予定の入力(ストアのモデルから必要項目だけ写す)。
@@ -122,6 +124,38 @@ class AssetCalendarInflowInput {
   final DateTime date;
   final double amount;
   final String label;
+}
+
+/// リボ払いカードの利用明細入力(利用日は現金見込みを減算しない)。
+class AssetCalendarRevolvingUsageInput {
+  const AssetCalendarRevolvingUsageInput({
+    required this.date,
+    required this.accountName,
+    required this.description,
+    required this.amount,
+    this.sourceId,
+    this.isUncoveredShortfall = false,
+  });
+
+  final DateTime date;
+  final String accountName;
+  final String description;
+  final double amount;
+  final String? sourceId;
+  final bool isUncoveredShortfall;
+}
+
+/// Debt Guard (`additional_borrowing`) 違反日次イベント入力。
+class AssetCalendarDebtGuardViolationInput {
+  const AssetCalendarDebtGuardViolationInput({
+    required this.date,
+    required this.note,
+    this.sourceId,
+  });
+
+  final DateTime date;
+  final String note;
+  final String? sourceId;
 }
 
 /// カレンダー1イベント。amount は不明な場合 null。
@@ -202,6 +236,22 @@ class AssetCalendarDaySummary {
   bool get hasBorrowing => _has(AssetCalendarEventKind.borrowing);
 
   bool get hasTransfer => _has(AssetCalendarEventKind.transfer);
+
+  bool get hasRevolvingUsage => _has(AssetCalendarEventKind.revolvingUsage);
+
+  bool get hasDebtGuardBorrowingViolation =>
+      _has(AssetCalendarEventKind.debtGuardBorrowingViolation);
+
+  bool get hasAdditionalDebtActivity =>
+      hasBorrowing || hasRevolvingUsage || hasDebtGuardBorrowingViolation;
+
+  double get borrowingTotal => events
+      .where((event) => event.kind == AssetCalendarEventKind.borrowing)
+      .fold<double>(0, (sum, event) => sum + (event.amount ?? 0));
+
+  double get revolvingUsageTotal => events
+      .where((event) => event.kind == AssetCalendarEventKind.revolvingUsage)
+      .fold<double>(0, (sum, event) => sum + (event.amount ?? 0));
 
   bool get hasUnreconciledExpense => events.any(
         (event) =>
@@ -343,6 +393,62 @@ class AssetPaymentCalendarService {
     return max(1, min(day, lastDay));
   }
 
+  static List<AssetCalendarRevolvingUsageInput> extractRevolvingUsages({
+    required AssetLiabilityWorkbook? workbook,
+    required List<AssetLiabilityCardStatementLine> statementLines,
+  }) {
+    final revolvingAccountIds = <String>{};
+    final accountNamesById = <String, String>{};
+    final uncoveredIds = <String>{};
+    if (workbook != null) {
+      for (final row in workbook.debtMasterRows) {
+        accountNamesById[row.id] = row.name;
+        if (row.isRevolving) {
+          revolvingAccountIds.add(row.id);
+          for (final item in row.revolvingBilling?.usageItems ??
+              const <AssetLiabilityRevolvingUsageItem>[]) {
+            if (item.status ==
+                AssetLiabilityRevolvingUsageStatus.uncoveredShortfall) {
+              uncoveredIds.add(item.id);
+            }
+          }
+        }
+      }
+    }
+
+    final results = <AssetCalendarRevolvingUsageInput>[];
+    for (final line in statementLines) {
+      final postedAt = line.postedAt;
+      if (postedAt == null ||
+          line.isProvisional ||
+          line.isConfiguredAdjustment ||
+          line.amount <= _epsilon) {
+        continue;
+      }
+      final isRevolvingLine =
+          revolvingAccountIds.contains(line.billingAccountId) ||
+              line.id.startsWith('revolving_cal_');
+      if (!isRevolvingLine) {
+        continue;
+      }
+      final rawAccountName = line.billingAccountName?.trim() ?? '';
+      final resolvedName = rawAccountName.isNotEmpty
+          ? rawAccountName
+          : (accountNamesById[line.billingAccountId] ?? 'リボカード');
+      results.add(
+        AssetCalendarRevolvingUsageInput(
+          date: DateTime(postedAt.year, postedAt.month, postedAt.day),
+          accountName: resolvedName,
+          description: line.description.trim(),
+          amount: line.amount,
+          sourceId: line.id,
+          isUncoveredShortfall: uncoveredIds.contains(line.id),
+        ),
+      );
+    }
+    return results;
+  }
+
   static AssetPaymentCalendarMonth buildMonth({
     required DateTime month,
     required List<Map<String, dynamic>> flows,
@@ -353,6 +459,10 @@ class AssetPaymentCalendarService {
     double? startingCashBalance,
     List<AssetCalendarInflowInput> expectedInflows =
         const <AssetCalendarInflowInput>[],
+    List<AssetCalendarRevolvingUsageInput> revolvingUsages =
+        const <AssetCalendarRevolvingUsageInput>[],
+    List<AssetCalendarDebtGuardViolationInput> debtGuardViolations =
+        const <AssetCalendarDebtGuardViolationInput>[],
   }) {
     return buildRange(
       start: DateTime(month.year, month.month),
@@ -364,6 +474,8 @@ class AssetPaymentCalendarService {
       salaryDay: salaryDay,
       startingCashBalance: startingCashBalance,
       expectedInflows: expectedInflows,
+      revolvingUsages: revolvingUsages,
+      debtGuardViolations: debtGuardViolations,
     );
   }
 
@@ -385,6 +497,10 @@ class AssetPaymentCalendarService {
     double? startingCashBalance,
     List<AssetCalendarInflowInput> expectedInflows =
         const <AssetCalendarInflowInput>[],
+    List<AssetCalendarRevolvingUsageInput> revolvingUsages =
+        const <AssetCalendarRevolvingUsageInput>[],
+    List<AssetCalendarDebtGuardViolationInput> debtGuardViolations =
+        const <AssetCalendarDebtGuardViolationInput>[],
   }) {
     final rangeStart = DateTime(start.year, start.month, start.day);
     final rangeEnd = DateTime(
@@ -658,6 +774,53 @@ class AssetPaymentCalendarService {
           ),
         );
       }
+    }
+
+    for (final usage in revolvingUsages) {
+      final date = DateTime(usage.date.year, usage.date.month, usage.date.day);
+      if (!inRange(date) || usage.amount <= _epsilon) {
+        continue;
+      }
+      final account = usage.accountName.trim();
+      final desc = usage.description.trim();
+      final baseLabel = account.isEmpty
+          ? 'リボ利用（現金引落なし）'
+          : 'リボ利用（現金引落なし）: $account';
+      final label = desc.isEmpty ? baseLabel : '$baseLabel / $desc';
+      addEvent(
+        date,
+        AssetCalendarEvent(
+          kind: AssetCalendarEventKind.revolvingUsage,
+          label: label,
+          amount: usage.amount.abs(),
+          sourceId: usage.sourceId,
+          affectsCashProjection: false,
+        ),
+      );
+    }
+
+    for (final violation in debtGuardViolations) {
+      final date = DateTime(
+        violation.date.year,
+        violation.date.month,
+        violation.date.day,
+      );
+      if (!inRange(date)) {
+        continue;
+      }
+      final note = violation.note.trim();
+      addEvent(
+        date,
+        AssetCalendarEvent(
+          kind: AssetCalendarEventKind.debtGuardBorrowingViolation,
+          label: note.isEmpty
+              ? '追加借金ルール違反（Debt Guard）'
+              : '追加借金ルール違反（Debt Guard）: $note',
+          amount: null,
+          sourceId: violation.sourceId,
+          affectsCashProjection: false,
+        ),
+      );
     }
 
     var runningBalance = startingCashBalance;
