@@ -686,4 +686,67 @@ void main() {
       <int>[419, 421],
     );
   });
+
+  test(
+      'accepts snapshot whose linked prefecture has member parsed from generic section (other category)',
+      () async {
+    const service = LocalElectionRealityService();
+    final prefs = await SharedPreferences.getInstance();
+    final snapshot = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-11-23T02:52:40.818Z',
+      'officialCurrentLocalMembers': 421,
+      'actualNetIncreaseRequired': 279,
+      'prefectures': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'prefecture': '鳥取県',
+          'sourceUrl': 'https://new-kokumin.jp/member_tag/tottori',
+          'currentMembers': 1,
+          'prefecturalAssemblyMembers': 0,
+          'municipalAssemblyMembers': 0,
+        },
+      ],
+      'members': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'prefecture': '鳥取県',
+          'sourceUrl': 'https://new-kokumin.jp/member_tag/tottori',
+          'detailUrl': 'https://new-kokumin.jp/member/murao-masahiko',
+          'name': '村尾 昌彦',
+          'kana': 'むらお まさひこ',
+          'constituency': '',
+          'municipality': '鳥取県',
+          'assemblyLabel': '地方自治体議員',
+          'assemblyCategory': 'other',
+          'electionCountLabel': '当選1回',
+        },
+      ],
+    });
+
+    expect(snapshot.hasSuspiciousEmptyOfficialPrefecture, isFalse);
+    await service.cacheSnapshot(snapshot, prefs: prefs);
+    final reloaded = await service.loadCachedSnapshot(prefs: prefs);
+    expect(reloaded, isNotNull);
+    expect(reloaded!.officialCurrentLocalMembers, 421);
+    expect(reloaded.members.single.name, '村尾 昌彦');
+  });
+
+  test('flags linked prefecture with zero parsed members as suspicious', () {
+    final snapshot = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-11-23T02:52:40.818Z',
+      'officialCurrentLocalMembers': 420,
+      'actualNetIncreaseRequired': 280,
+      'prefectures': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'prefecture': '鳥取県',
+          'sourceUrl': 'https://new-kokumin.jp/member_tag/tottori',
+          'currentMembers': 0,
+          'prefecturalAssemblyMembers': 0,
+          'municipalAssemblyMembers': 0,
+        },
+      ],
+      'members': const <Map<String, dynamic>>[],
+    });
+
+    expect(snapshot.hasSuspiciousEmptyOfficialPrefecture, isTrue);
+    expect(snapshot.suspiciousEmptyOfficialPrefectures, <String>['鳥取県']);
+  });
 }
