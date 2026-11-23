@@ -18,6 +18,8 @@ WbsTask _sampleTask({
   String ownerInstance = 'codex',
   List<String> dependsOnTitles = const <String>[],
   int? githubIssueNumber,
+  String githubIssueState = '',
+  String githubIssueUrl = '',
   String recoveryPlan = '',
   int rescheduledCount = 0,
   String remainingWork = '',
@@ -39,6 +41,8 @@ WbsTask _sampleTask({
     ownerInstance: ownerInstance,
     dependsOnTitles: dependsOnTitles,
     githubIssueNumber: githubIssueNumber,
+    githubIssueState: githubIssueState,
+    githubIssueUrl: githubIssueUrl,
     recoveryPlan: recoveryPlan,
     rescheduledCount: rescheduledCount,
     remainingWork: remainingWork,
@@ -330,6 +334,112 @@ void main() {
       expect(items.first.isRescheduled, isTrue);
       expect(items.last.classificationReason, contains('リファクタ'));
     });
+
+    test('buildGitHubIssueLinkSummary groups open, closed, and unlinked tasks',
+        () {
+      final tasks = [
+        _sampleTask(
+          id: 'gh1',
+          title: 'Open linked issue',
+          githubIssueNumber: 2235,
+          githubIssueState: 'OPEN',
+        ),
+        _sampleTask(
+          id: 'gh2',
+          title: 'Closed linked issue',
+          status: 'completed',
+          progress: 100,
+          githubIssueNumber: 2230,
+          githubIssueState: 'CLOSED',
+        ),
+        _sampleTask(
+          id: 'gh3',
+          title: 'Local WBS only',
+        ),
+      ];
+
+      final summary =
+          ProjectGanttFocusViewService.buildGitHubIssueLinkSummary(tasks);
+      expect(summary.linkedTasks.map((t) => t.id), <String>['gh2', 'gh1']);
+      expect(summary.openIssueTasks.map((t) => t.id), <String>['gh1']);
+      expect(summary.closedIssueTasks.map((t) => t.id), <String>['gh2']);
+      expect(summary.unlinkedTasks.map((t) => t.id), <String>['gh3']);
+    });
+
+    test(
+        'buildRiskSummary reuses milestone warnings, flags load failure, and scores tasks',
+        () {
+      final tasks = [
+        _sampleTask(
+          id: 'r1',
+          title: '仕様未確定のまま遅延中の課題',
+          priority: 'p0',
+          plannedEndDate: DateTime(2026, 11, 20),
+          rescheduledCount: 2,
+          dependsOnTitles: const <String>['#2230'],
+        ),
+        _sampleTask(
+          id: 'r2',
+          title: '正常進行タスク',
+          priority: 'low',
+          plannedEndDate: DateTime(2026, 12, 20),
+        ),
+      ];
+      final summary = ProjectGanttFocusViewService.buildRiskSummary(
+        tasks,
+        milestoneRisks: const <Map<String, dynamic>>[
+          <String, dynamic>{
+            'milestone_code': 'v1.1',
+            'risk_status': 'over_capacity',
+          },
+          <String, dynamic>{
+            'milestone_code': 'v1.2',
+            'risk_status': 'healthy',
+          },
+        ],
+        milestoneRiskLoadFailed: true,
+        now: fixedNow,
+      );
+
+      expect(summary.milestoneRiskLoadFailed, isTrue);
+      expect(summary.milestoneWarnings, hasLength(1));
+      expect(summary.taskRisks.map((e) => e.task.id), <String>['r1']);
+      expect(summary.taskRisks.first.severity, 'high');
+      expect(
+        summary.taskRisks.first.reasons,
+        containsAll(<String>['期限超過 (5日)', '遅延＋復旧計画未記入', '再計画 2回']),
+      );
+    });
+
+    test(
+        'buildTestTargetSummary separates explicit test scope and unevaluated tasks',
+        () {
+      final tasks = [
+        _sampleTask(
+          id: 'tt1',
+          title: 'FocusView 単体テストとE2E検証',
+          priority: 'p1',
+        ),
+        _sampleTask(
+          id: 'tt2',
+          title: '未評価のまま残っている実装タスク',
+          priority: 'p0',
+          githubIssueNumber: 2241,
+        ),
+        _sampleTask(
+          id: 'ttDone',
+          title: '完了済み項目',
+          status: 'completed',
+          progress: 100,
+        ),
+      ];
+
+      final summary =
+          ProjectGanttFocusViewService.buildTestTargetSummary(tasks);
+      expect(summary.explicitTestItems.map((e) => e.task.id), <String>['tt1']);
+      expect(summary.unevaluatedItems.map((e) => e.task.id), <String>['tt2']);
+      expect(summary.unevaluatedItems.first.evaluationLabel, contains('未評価'));
+    });
   });
 
   group('ProjectGantt focus views widget & a11y', () {
@@ -338,6 +448,9 @@ void main() {
       required Size viewport,
       required List<WbsTask> tasks,
       required List<WbsMilestone> milestones,
+      List<Map<String, dynamic>> milestoneRisks =
+          const <Map<String, dynamic>>[],
+      bool milestoneRiskLoadFailed = false,
     }) async {
       tester.view.physicalSize = viewport;
       tester.view.devicePixelRatio = 1.0;
@@ -347,6 +460,7 @@ void main() {
       var selected = ProjectGanttFocusView.wbs;
       await tester.pumpWidget(
         MaterialApp(
+          key: ValueKey<Size>(viewport),
           theme: ThemeData.dark(),
           home: Scaffold(
             backgroundColor: const Color(0xFF0A0A0A),
@@ -376,6 +490,19 @@ void main() {
                 );
                 final techDebt =
                     ProjectGanttFocusViewService.buildTechDebtItems(tasks);
+                final issueLinkSummary =
+                    ProjectGanttFocusViewService.buildGitHubIssueLinkSummary(
+                  tasks,
+                );
+                final riskSummary =
+                    ProjectGanttFocusViewService.buildRiskSummary(
+                  tasks,
+                  milestoneRisks: milestoneRisks,
+                  milestoneRiskLoadFailed: milestoneRiskLoadFailed,
+                  now: fixedNow,
+                );
+                final testTargetSummary =
+                    ProjectGanttFocusViewService.buildTestTargetSummary(tasks);
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -390,6 +517,9 @@ void main() {
                         ownerCount: ownerGroups.length,
                         dashboardCount: tasks.length,
                         techDebtCount: techDebt.length,
+                        githubIssueCount: issueLinkSummary.linkedTasks.length,
+                        riskCount: riskSummary.totalRiskCount,
+                        testTargetCount: testTargetSummary.totalCount,
                       ),
                       const SizedBox(height: 12),
                       switch (selected) {
@@ -406,6 +536,16 @@ void main() {
                           ProjectGanttProgressDashboardView(summary: dashboard),
                         ProjectGanttFocusView.techDebt =>
                           ProjectGanttTechDebtView(items: techDebt),
+                        ProjectGanttFocusView.githubIssues =>
+                          ProjectGanttGitHubIssueView(
+                            summary: issueLinkSummary,
+                          ),
+                        ProjectGanttFocusView.risk =>
+                          ProjectGanttRiskView(summary: riskSummary),
+                        ProjectGanttFocusView.testTargets =>
+                          ProjectGanttTestTargetView(
+                            summary: testTargetSummary,
+                          ),
                       },
                     ],
                   ),
@@ -418,7 +558,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('switches all 7 focus views on desktop and mobile',
+    testWidgets('switches all 10 focus views on desktop and mobile',
         (tester) async {
       final tasks = [
         _sampleTask(
@@ -431,12 +571,15 @@ void main() {
           milestoneCode: 'v1.1',
           ownerInstance: 'codex',
           githubIssueNumber: 2230,
+          githubIssueState: 'OPEN',
         ),
         _sampleTask(
           id: 't2',
           title: '後続リリース作業',
           status: 'pending',
           progress: 0,
+          priority: 'p0',
+          plannedEndDate: DateTime(2026, 11, 20),
           milestoneCode: 'v1.1',
           ownerInstance: 'claude',
           dependsOnTitles: const ['#2230'],
@@ -452,6 +595,12 @@ void main() {
           color: const Color(0xFFFF6B35),
         ),
       ];
+      const risks = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'milestone_code': 'v1.1',
+          'risk_status': 'tight',
+        },
+      ];
 
       for (final size in const [Size(1280, 900), Size(390, 844)]) {
         await pumpFocusHarness(
@@ -459,6 +608,8 @@ void main() {
           viewport: size,
           tasks: tasks,
           milestones: milestones,
+          milestoneRisks: risks,
+          milestoneRiskLoadFailed: true,
         );
 
         expect(find.text('開発WBS本体'), findsOneWidget);
@@ -525,6 +676,60 @@ void main() {
           findsOneWidget,
         );
 
+        await tester.ensureVisible(
+          find.byKey(const Key('gantt_focus_view_github_issues')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const Key('gantt_focus_view_github_issues')),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(ProjectGanttGitHubIssueView), findsOneWidget);
+        expect(
+          find.byKey(const Key('gantt_github_issue_card_t1')),
+          findsOneWidget,
+        );
+        await tester.ensureVisible(
+          find.byKey(const Key('gantt_github_filter_unlinked')),
+        );
+        await tester.tap(find.byKey(const Key('gantt_github_filter_unlinked')));
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const Key('gantt_github_issue_card_t2')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('gantt_github_issue_card_t1')),
+          findsNothing,
+        );
+
+        await tester.ensureVisible(
+          find.byKey(const Key('gantt_focus_view_risk')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('gantt_focus_view_risk')));
+        await tester.pumpAndSettle();
+        expect(find.byType(ProjectGanttRiskView), findsOneWidget);
+        expect(
+          find.byKey(const Key('gantt_risk_load_error_banner')),
+          findsOneWidget,
+        );
+        expect(find.byKey(const Key('gantt_milestone_risk_0')), findsOneWidget);
+        expect(find.byKey(const Key('gantt_risk_card_t2')), findsOneWidget);
+
+        await tester.ensureVisible(
+          find.byKey(const Key('gantt_focus_view_test_targets')),
+        );
+        await tester.pumpAndSettle();
+        await tester
+            .tap(find.byKey(const Key('gantt_focus_view_test_targets')));
+        await tester.pumpAndSettle();
+        expect(find.byType(ProjectGanttTestTargetView), findsOneWidget);
+        expect(
+          find.byKey(const Key('gantt_test_target_card_t2')),
+          findsOneWidget,
+        );
+
         expect(tester.takeException(), isNull);
       }
     });
@@ -536,20 +741,26 @@ void main() {
         await pumpFocusHarness(
           tester,
           viewport: const Size(390, 844),
-          tasks: const <WbsTask>[],
+          tasks: <WbsTask>[
+            _sampleTask(
+              id: 'a11y1',
+              title: '連携済み課題',
+              githubIssueNumber: 2235,
+              githubIssueState: 'OPEN',
+            ),
+          ],
           milestones: const <WbsMilestone>[],
         );
 
         await tester.ensureVisible(
-          find.byKey(const Key('gantt_focus_view_sprint')),
+          find.byKey(const Key('gantt_focus_view_github_issues')),
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.byKey(const Key('gantt_focus_view_sprint')));
-        await tester.pumpAndSettle();
-        expect(
-          find.text('今スプリント期間に該当する未完了のWBSタスクはありません。'),
-          findsOneWidget,
+        await tester.tap(
+          find.byKey(const Key('gantt_focus_view_github_issues')),
         );
+        await tester.pumpAndSettle();
+        expect(find.byType(ProjectGanttGitHubIssueView), findsOneWidget);
 
         await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));

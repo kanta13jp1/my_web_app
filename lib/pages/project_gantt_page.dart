@@ -826,6 +826,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
   List<WbsMilestone> _milestones = [];
   // Win版#131 part 13: マイルストーン risk
   List<Map<String, dynamic>> _milestoneRisks = [];
+  bool _milestoneRiskLoadFailed = false;
   List<WbsTask> _tasks = [];
   bool _loadingWbs = true;
 
@@ -898,16 +899,22 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
           )..sort(_compareWbsTasks);
         });
       }
-      // Win版#131 part 13: マイルストーン risk view (failures は silent)
+      // Win版#131 part 13: マイルストーン risk view (失敗状態を #2240 リスクView へ通知)
       try {
         final rData = await _supabase.from('wbs_milestone_risk_view').select();
         if (mounted) {
           setState(() {
             _milestoneRisks = (rData as List).cast<Map<String, dynamic>>();
+            _milestoneRiskLoadFailed = false;
           });
         }
       } catch (_) {
-        // view 未作成時は無視
+        if (mounted) {
+          setState(() {
+            _milestoneRisks = [];
+            _milestoneRiskLoadFailed = true;
+          });
+        }
       }
     } catch (_) {
       // テーブル未作成時はフォールバック表示
@@ -1064,6 +1071,8 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             filterMilestone: _filterMilestone,
             hideCompleted: _hideCompleted,
             focusView: _focusView,
+            milestoneRisks: _milestoneRisks,
+            milestoneRiskLoadFailed: _milestoneRiskLoadFailed,
             onSelectFocusView: (v) => setState(() => _focusView = v),
             onFilterInstance: (v) => setState(() => _filterInstance = v),
             onFilterMilestone: (v) => setState(() => _filterMilestone = v),
@@ -1246,6 +1255,8 @@ class _WbsTab extends StatelessWidget {
   final String? filterMilestone;
   final bool hideCompleted;
   final ProjectGanttFocusView focusView;
+  final List<Map<String, dynamic>> milestoneRisks;
+  final bool milestoneRiskLoadFailed;
   final ValueChanged<ProjectGanttFocusView> onSelectFocusView;
   final ValueChanged<String?> onFilterInstance;
   final ValueChanged<String?> onFilterMilestone;
@@ -1260,6 +1271,8 @@ class _WbsTab extends StatelessWidget {
     required this.filterMilestone,
     required this.hideCompleted,
     required this.focusView,
+    this.milestoneRisks = const <Map<String, dynamic>>[],
+    this.milestoneRiskLoadFailed = false,
     required this.onSelectFocusView,
     required this.onFilterInstance,
     required this.onFilterMilestone,
@@ -1336,6 +1349,16 @@ class _WbsTab extends StatelessWidget {
     );
     final techDebtItems =
         ProjectGanttFocusViewService.buildTechDebtItems(tasks);
+    final issueLinkSummary =
+        ProjectGanttFocusViewService.buildGitHubIssueLinkSummary(tasks);
+    final riskSummary = ProjectGanttFocusViewService.buildRiskSummary(
+      tasks,
+      milestoneRisks: milestoneRisks,
+      milestoneRiskLoadFailed: milestoneRiskLoadFailed,
+      now: now,
+    );
+    final testTargetSummary =
+        ProjectGanttFocusViewService.buildTestTargetSummary(tasks);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
@@ -1357,6 +1380,9 @@ class _WbsTab extends StatelessWidget {
           ownerCount: ownerGroups.length,
           dashboardCount: tasks.length,
           techDebtCount: techDebtItems.length,
+          githubIssueCount: issueLinkSummary.linkedTasks.length,
+          riskCount: riskSummary.totalRiskCount,
+          testTargetCount: testTargetSummary.totalCount,
         ),
         const SizedBox(height: 16),
 
@@ -1372,6 +1398,12 @@ class _WbsTab extends StatelessWidget {
           ProjectGanttProgressDashboardView(summary: dashboardSummary),
         ] else if (focusView == ProjectGanttFocusView.techDebt) ...[
           ProjectGanttTechDebtView(items: techDebtItems),
+        ] else if (focusView == ProjectGanttFocusView.githubIssues) ...[
+          ProjectGanttGitHubIssueView(summary: issueLinkSummary),
+        ] else if (focusView == ProjectGanttFocusView.risk) ...[
+          ProjectGanttRiskView(summary: riskSummary),
+        ] else if (focusView == ProjectGanttFocusView.testTargets) ...[
+          ProjectGanttTestTargetView(summary: testTargetSummary),
         ] else ...[
           // ── マイルストーン ─────────────────────────────────────────────────
           const _SectionHeader(

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../pages/project_gantt_page.dart';
 import '../services/project_gantt_focus_view_service.dart';
 
-/// `/project-gantt` の WBS タブ上部セグメント切替バー (#2230 #2231 #2233 #2234 #2237 #2242)。
+/// `/project-gantt` の WBS タブ上部セグメント切替バー (#2230 #2231 #2233 #2234 #2235 #2237 #2240 #2241 #2242)。
 class ProjectGanttFocusViewBar extends StatelessWidget {
   final ProjectGanttFocusView selectedView;
   final ValueChanged<ProjectGanttFocusView> onSelect;
@@ -13,6 +13,9 @@ class ProjectGanttFocusViewBar extends StatelessWidget {
   final int ownerCount;
   final int dashboardCount;
   final int techDebtCount;
+  final int githubIssueCount;
+  final int riskCount;
+  final int testTargetCount;
 
   const ProjectGanttFocusViewBar({
     super.key,
@@ -24,6 +27,9 @@ class ProjectGanttFocusViewBar extends StatelessWidget {
     this.ownerCount = 0,
     this.dashboardCount = 0,
     this.techDebtCount = 0,
+    this.githubIssueCount = 0,
+    this.riskCount = 0,
+    this.testTargetCount = 0,
   });
 
   int? _badgeCountFor(ProjectGanttFocusView view) => switch (view) {
@@ -35,6 +41,9 @@ class ProjectGanttFocusViewBar extends StatelessWidget {
         ProjectGanttFocusView.dashboard =>
           dashboardCount > 0 ? dashboardCount : null,
         ProjectGanttFocusView.techDebt => techDebtCount,
+        ProjectGanttFocusView.githubIssues => githubIssueCount,
+        ProjectGanttFocusView.risk => riskCount,
+        ProjectGanttFocusView.testTargets => testTargetCount,
       };
 
   @override
@@ -1102,6 +1111,501 @@ class ProjectGanttTechDebtView extends StatelessWidget {
                       ),
                     ),
                   ],
+                ],
+              ),
+            );
+          }),
+      ],
+    );
+  }
+}
+
+enum _GitHubIssueFilterMode { all, open, closed, unlinked }
+
+/// GitHub Issue 連携 View パネル (#2235)。
+class ProjectGanttGitHubIssueView extends StatefulWidget {
+  final GitHubIssueLinkSummary summary;
+
+  const ProjectGanttGitHubIssueView({
+    super.key,
+    required this.summary,
+  });
+
+  @override
+  State<ProjectGanttGitHubIssueView> createState() =>
+      _ProjectGanttGitHubIssueViewState();
+}
+
+class _ProjectGanttGitHubIssueViewState
+    extends State<ProjectGanttGitHubIssueView> {
+  _GitHubIssueFilterMode _filterMode = _GitHubIssueFilterMode.all;
+
+  List<WbsTask> get _visibleTasks => switch (_filterMode) {
+        _GitHubIssueFilterMode.all => <WbsTask>[
+            ...widget.summary.linkedTasks,
+            ...widget.summary.unlinkedTasks,
+          ],
+        _GitHubIssueFilterMode.open => widget.summary.openIssueTasks,
+        _GitHubIssueFilterMode.closed => widget.summary.closedIssueTasks,
+        _GitHubIssueFilterMode.unlinked => widget.summary.unlinkedTasks,
+      };
+
+  String _filterLabel(_GitHubIssueFilterMode mode) => switch (mode) {
+        _GitHubIssueFilterMode.all => 'すべて (${widget.summary.totalCount})',
+        _GitHubIssueFilterMode.open =>
+          'OPEN (${widget.summary.openIssueTasks.length})',
+        _GitHubIssueFilterMode.closed =>
+          'CLOSED (${widget.summary.closedIssueTasks.length})',
+        _GitHubIssueFilterMode.unlinked =>
+          '未紐付け (${widget.summary.unlinkedTasks.length})',
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = _visibleTasks;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFF2A2F3A)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.link_outlined,
+                    color: Color(0xFF38BDF8),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'GitHub Issue連携View (連携済 ${widget.summary.linkedTasks.length}件 / 未紐付け ${widget.summary.unlinkedTasks.length}件)',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _GitHubIssueFilterMode.values.map((mode) {
+                  final selected = mode == _filterMode;
+                  return ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 48,
+                    ),
+                    child: ChoiceChip(
+                      key: Key('gantt_github_filter_${mode.name}'),
+                      label: Text(
+                        _filterLabel(mode),
+                        style: TextStyle(
+                          color: selected
+                              ? const Color(0xFF121212)
+                              : const Color(0xFFE5E7EB),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                      selected: selected,
+                      showCheckmark: false,
+                      materialTapTargetSize: MaterialTapTargetSize.padded,
+                      selectedColor: const Color(0xFF38BDF8),
+                      backgroundColor: const Color(0xFF1E2430),
+                      side: BorderSide(
+                        color: selected
+                            ? const Color(0xFF38BDF8)
+                            : const Color(0xFF334155),
+                      ),
+                      onSelected: (_) => setState(() => _filterMode = mode),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (visible.isEmpty)
+          const _FocusEmptyCard(
+            icon: Icons.link_off_outlined,
+            message: '選択した条件に該当するWBSタスクはありません。',
+          )
+        else
+          ...visible.map((task) {
+            final issueNumber = task.linkedGithubIssueNumber;
+            final issueState = task.githubIssueState.trim().toUpperCase();
+            final stateLabel = issueNumber == null
+                ? 'Issue未紐付け'
+                : (issueState.isNotEmpty
+                    ? issueState
+                    : (task.isEffectivelyCompleted ? 'CLOSED' : 'OPEN/未同期'));
+            final stateColor = issueNumber == null
+                ? const Color(0xFF94A3B8)
+                : (stateLabel == 'CLOSED'
+                    ? const Color(0xFF22C55E)
+                    : const Color(0xFF38BDF8));
+            return Container(
+              key: Key('gantt_github_issue_card_${task.id}'),
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF2A2F3A)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      if (issueNumber != null) ...[
+                        _KpiTag(
+                          label: '#$issueNumber',
+                          color: const Color(0xFF38BDF8),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Expanded(
+                        child: Text(
+                          task.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      _KpiTag(label: stateLabel, color: stateColor),
+                      _KpiTag(
+                        label: '担当: ${task.activeOwnerLabel}',
+                        color: const Color(0xFF94A3B8),
+                      ),
+                      _KpiTag(
+                        label: '${task.category} / ${task.priority}',
+                        color: const Color(0xFFCBD5E1),
+                      ),
+                      _KpiTag(
+                        label: task.statusLabel,
+                        color: task.statusColor,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }),
+      ],
+    );
+  }
+}
+
+/// リスク View パネル (#2240)。
+class ProjectGanttRiskView extends StatelessWidget {
+  final RiskViewSummary summary;
+
+  const ProjectGanttRiskView({
+    super.key,
+    required this.summary,
+  });
+
+  Color _severityColor(String severity) => switch (severity) {
+        'high' => const Color(0xFFEF4444),
+        'medium' => const Color(0xFFF59E0B),
+        _ => const Color(0xFF38BDF8),
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final hasAny =
+        summary.milestoneWarnings.isNotEmpty || summary.taskRisks.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFF2A2F3A)),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_outlined,
+                color: Color(0xFFEF4444),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'リスクView: マイルストーン警告 ${summary.milestoneWarnings.length}件 / タスクリスク ${summary.taskRisks.length}件',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (summary.milestoneRiskLoadFailed) ...[
+          const SizedBox(height: 10),
+          Container(
+            key: const Key('gantt_risk_load_error_banner'),
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2B1B1B),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFEF4444)),
+            ),
+            child: const Text(
+              'wbs_milestone_risk_view の取得に失敗したため、マイルストーン別の過負荷リスクは未確認です。',
+              style: TextStyle(color: Color(0xFFFCA5A5), fontSize: 12),
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        if (!hasAny)
+          const _FocusEmptyCard(
+            icon: Icons.verified_user_outlined,
+            message: '検知された期限・依存・技術リスクはありません。',
+          )
+        else ...[
+          ...summary.milestoneWarnings.asMap().entries.map((entry) {
+            final row = entry.value;
+            final code = (row['milestone_code'] ?? row['code'] ?? 'milestone')
+                .toString();
+            final riskStatus = (row['risk_status'] ?? 'warning').toString();
+            return Container(
+              key: Key('gantt_milestone_risk_${entry.key}'),
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF251A17),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFF97316)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.flag_outlined,
+                    color: Color(0xFFF97316),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'マイルストーン $code ($riskStatus)',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          ...summary.taskRisks.map((item) {
+            final task = item.task;
+            final color = _severityColor(item.severity);
+            return Container(
+              key: Key('gantt_risk_card_${task.id}'),
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: color.withValues(alpha: 0.55)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      _KpiTag(
+                        label: item.severity.toUpperCase(),
+                        color: color,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          task.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      ...item.reasons.map(
+                        (r) => _KpiTag(label: r, color: color),
+                      ),
+                      _KpiTag(
+                        label: '担当: ${task.activeOwnerLabel}',
+                        color: const Color(0xFF94A3B8),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ],
+    );
+  }
+}
+
+/// テスト対象 View パネル (#2241)。
+class ProjectGanttTestTargetView extends StatelessWidget {
+  final TestTargetSummary summary;
+
+  const ProjectGanttTestTargetView({
+    super.key,
+    required this.summary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final allItems = <TestTargetTaskItem>[
+      ...summary.unevaluatedItems,
+      ...summary.explicitTestItems,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFF2A2F3A)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.science_outlined,
+                    color: Color(0xFFA855F7),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'テスト対象View: テスト明記 ${summary.explicitTestItems.length}件 / 未評価 ${summary.unevaluatedItems.length}件',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '※ 件数のみで「テスト十分」とは判定せず、テスト条件の紐付けが確認できない未完了タスクは「未評価」として独立表示します。',
+                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (allItems.isEmpty)
+          const _FocusEmptyCard(
+            icon: Icons.check_circle_outline,
+            message: '未完了のテスト対象評価タスクはありません。',
+          )
+        else
+          ...allItems.map((item) {
+            final task = item.task;
+            final tagColor = item.hasExplicitTestScope
+                ? const Color(0xFF22C55E)
+                : const Color(0xFFF59E0B);
+            return Container(
+              key: Key('gantt_test_target_card_${task.id}'),
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: tagColor.withValues(alpha: 0.45)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      _KpiTag(label: item.evaluationLabel, color: tagColor),
+                      _KpiTag(
+                        label: '担当: ${task.activeOwnerLabel}',
+                        color: const Color(0xFF94A3B8),
+                      ),
+                      _KpiTag(
+                        label: '${task.category} / ${task.priority}',
+                        color: const Color(0xFFCBD5E1),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    item.reason,
+                    style: const TextStyle(
+                      color: Color(0xFFCBD5E1),
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
             );
