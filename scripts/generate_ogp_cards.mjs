@@ -444,7 +444,15 @@ async function renderWithChromeCli(chromeBin, htmlDir, outDir, manifest, cardsWi
 }
 
 async function renderWithPlaywright(repoRoot, outDir, manifest, cardsWithArt, chromeBin = null) {
-  const { chromium } = await import("@playwright/test");
+  let chromium;
+  try {
+    ({ chromium } = await import("@playwright/test"));
+  } catch (err) {
+    throw new Error(
+      "@playwright/test is required to render OGP cards; run `npm ci` before generate_ogp_cards.mjs.",
+      { cause: err },
+    );
+  }
   const repoFontPath = path.join(repoRoot, "web", "assets", "fonts", "NotoSansJP-Regular.ttf");
   const hasRepoFont = fs.existsSync(repoFontPath);
   const cardByPath = new Map();

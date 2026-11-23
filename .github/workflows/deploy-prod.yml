@@ -861,9 +861,19 @@ jobs:
         with:
           web-root: build/web
 
+      - name: Setup Node for Firebase CLI
+        if: steps.changes.outputs.web == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "24"
+          cache: npm
+
       - name: Generate and verify build-time OGP and X social cards
         if: steps.changes.outputs.web == 'true'
         run: |
+          if [ ! -d node_modules/@playwright/test ]; then
+            npm ci --ignore-scripts
+          fi
           if ! dpkg -s fonts-noto-cjk >/dev/null 2>&1; then
             sudo apt-get update
             sudo apt-get install -y --no-install-recommends fonts-noto-cjk
@@ -872,13 +882,6 @@ jobs:
             npx playwright install --with-deps chromium
           fi
           node scripts/generate_ogp_cards.mjs --out-dir build/web
-
-      - name: Setup Node for Firebase CLI
-        if: steps.changes.outputs.web == 'true'
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: "24"
-          cache: npm
 
       - name: Upload Sentry sourcemaps and register release
         if: steps.changes.outputs.web == 'true'
