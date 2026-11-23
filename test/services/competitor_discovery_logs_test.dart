@@ -107,42 +107,50 @@ void main() {
 
       expect(
         find.byKey(
-            const ValueKey<String>('competitor_discovery_log_item_log-zero-1')),
+          const ValueKey<String>('competitor_discovery_log_item_log-zero-1'),
+        ),
         findsOneWidget,
       );
       expect(
         find.byKey(
-            const ValueKey<String>('competitor_discovery_log_item_log-ok-2')),
+          const ValueKey<String>('competitor_discovery_log_item_log-ok-2'),
+        ),
         findsOneWidget,
       );
 
       // Filter by zero-alert chip
       await tester.tap(
         find.byKey(
-            const ValueKey<String>('competitor_discovery_zero_alert_filter')),
+          const ValueKey<String>('competitor_discovery_zero_alert_filter'),
+        ),
       );
       await tester.pumpAndSettle();
       expect(
         find.byKey(
-            const ValueKey<String>('competitor_discovery_log_item_log-zero-1')),
+          const ValueKey<String>('competitor_discovery_log_item_log-zero-1'),
+        ),
         findsOneWidget,
       );
       expect(
         find.byKey(
-            const ValueKey<String>('competitor_discovery_log_item_log-ok-2')),
+          const ValueKey<String>('competitor_discovery_log_item_log-ok-2'),
+        ),
         findsNothing,
       );
 
       // Expand alert log entry to verify query/error details
       await tester.tap(find.text('Week 2026-48'));
       await tester.pumpAndSettle();
-      expect(find.text('エラー: [productivity] HTTP 429 rate limited'),
-          findsOneWidget);
+      expect(
+        find.text('エラー: [productivity] HTTP 429 rate limited'),
+        findsOneWidget,
+      );
 
       // Clear filter and test keyword search
       await tester.tap(
         find.byKey(
-            const ValueKey<String>('competitor_discovery_zero_alert_filter')),
+          const ValueKey<String>('competitor_discovery_zero_alert_filter'),
+        ),
       );
       await tester.pumpAndSettle();
       await tester.enterText(
@@ -152,12 +160,14 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.byKey(
-            const ValueKey<String>('competitor_discovery_log_item_log-ok-2')),
+          const ValueKey<String>('competitor_discovery_log_item_log-ok-2'),
+        ),
         findsOneWidget,
       );
       expect(
         find.byKey(
-            const ValueKey<String>('competitor_discovery_log_item_log-zero-1')),
+          const ValueKey<String>('competitor_discovery_log_item_log-zero-1'),
+        ),
         findsNothing,
       );
     });
@@ -202,7 +212,8 @@ void main() {
           expect(tester.takeException(), isNull);
           expect(
             find.byKey(
-                const ValueKey<String>('competitor_discovery_logs_panel')),
+              const ValueKey<String>('competitor_discovery_logs_panel'),
+            ),
             findsOneWidget,
           );
 
