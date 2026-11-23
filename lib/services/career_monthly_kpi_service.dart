@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -230,7 +229,20 @@ class CareerMonthlyKpiService {
   }
 
   static String computeReportChecksum(String markdown) {
-    return sha256.convert(utf8.encode(markdown)).toString().substring(0, 16);
+    // 64-bit FNV-1a implemented via two 32-bit halves so Web & VM behave identically.
+    const int mask32 = 0xFFFFFFFF;
+    int hashLow = 0x84222325;
+    int hashHigh = 0xcbf29ce4;
+    for (final unit in utf8.encode(markdown)) {
+      hashLow ^= unit;
+      final int lo = (hashLow * 0x01b3) & mask32;
+      final int hiCarry = (hashLow * 0x0100000193) >> 32;
+      hashLow = lo;
+      hashHigh = (hashHigh ^ (hiCarry & mask32)) & mask32;
+      hashHigh = (hashHigh * 0x01000193) & mask32;
+    }
+    return '${hashHigh.toRadixString(16).padLeft(8, '0')}'
+        '${hashLow.toRadixString(16).padLeft(8, '0')}';
   }
 
   static CareerMonthlyClosingSnapshot buildClosingSnapshot(

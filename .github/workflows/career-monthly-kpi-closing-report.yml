@@ -11,24 +11,18 @@ on:
         required: false
         default: ''
 
-permissions: {}
-
-concurrency:
-  group: career-monthly-kpi-closing-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: true
+permissions:
+  contents: read
 
 jobs:
   monthly-closing-report:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
@@ -37,35 +31,30 @@ jobs:
 
       - name: Generate monthly KPI closing report
         id: close
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          INPUT_MONTH_KEY: ${{ inputs.month_key }}
         run: |
           mkdir -p artifacts
-          ARGS=(--self-check --output-json artifacts/career-monthly-close.json --output-md artifacts/career-monthly-close.md)
-          if [ "$EVENT_NAME" = "schedule" ]; then
-            ARGS+=(--check-month-end)
+          EXTRA_ARGS=""
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            EXTRA_ARGS="--check-month-end"
           fi
-          if [ -n "$INPUT_MONTH_KEY" ]; then
-            ARGS+=(--month "$INPUT_MONTH_KEY")
+          if [ -n "${{ inputs.month_key }}" ]; then
+            EXTRA_ARGS="$EXTRA_ARGS --month ${{ inputs.month_key }}"
           fi
-          SUMMARY=$(python -B scripts/career_kpi_closing_report.py "${ARGS[@]}")
-          printf '%s\n' "$SUMMARY"
-          {
-            echo "summary<<EOF_KPI_SUMMARY"
-            printf '%s\n' "$SUMMARY"
-            echo "EOF_KPI_SUMMARY"
-          } >> "$GITHUB_OUTPUT"
+          SUMMARY=$(python -B scripts/career_kpi_closing_report.py \
+            --self-check \
+            $EXTRA_ARGS \
+            --output-json artifacts/career-monthly-close.json \
+            --output-md artifacts/career-monthly-close.md)
+          echo "$SUMMARY"
+          echo "summary=$SUMMARY" >> "$GITHUB_OUTPUT"
 
       - name: Write monitoring summary
         if: always()
-        env:
-          SUMMARY_OUTPUT: ${{ steps.close.outputs.summary }}
         run: |
           {
             echo "## Career Monthly KPI Closing Report"
             echo '```json'
-            printf '%s\n' "$SUMMARY_OUTPUT"
+            echo '${{ steps.close.outputs.summary }}'
             echo '```'
             if [ -f artifacts/career-monthly-close.md ]; then
               cat artifacts/career-monthly-close.md
