@@ -5,10 +5,18 @@ import 'package:mime/mime.dart';
 import 'package:my_web_app/services/supabase_client_provider.dart';
 import '../models/user_profile.dart';
 import '../services/profile_service.dart';
+import '../widgets/inclusive_gender_selector.dart';
 
 /// プロフィール設定ページ
 class ProfileSettingsPage extends StatefulWidget {
-  const ProfileSettingsPage({super.key});
+  const ProfileSettingsPage({
+    super.key,
+    this.debugInitialProfile,
+    this.onDebugSave,
+  });
+
+  final UserProfile? debugInitialProfile;
+  final Future<void> Function(UserProfile profile)? onDebugSave;
 
   @override
   State<ProfileSettingsPage> createState() => _ProfileSettingsPageState();
@@ -53,7 +61,13 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    final debugProfile = widget.debugInitialProfile;
+    if (debugProfile != null) {
+      _applyProfileToControllers(debugProfile);
+      _isLoading = false;
+    } else {
+      _loadProfile();
+    }
   }
 
   @override
@@ -79,6 +93,39 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     super.dispose();
   }
 
+  void _applyProfileToControllers(UserProfile profile) {
+    _currentProfile = profile;
+    _displayNameController.text = profile.displayName ?? '';
+    _bioController.text = profile.bio ?? '';
+    _websiteUrlController.text = profile.websiteUrl ?? '';
+    _locationController.text = profile.location ?? '';
+    _twitterHandleController.text = profile.twitterHandle ?? '';
+    _githubHandleController.text = profile.githubHandle ?? '';
+    _genderController.text = profile.gender ?? '';
+    _occupationController.text = profile.occupation ?? '';
+    _annualIncomeController.text = profile.annualIncome == null
+        ? ''
+        : profile.annualIncome!.round().toString();
+    _addressController.text = profile.address ?? '';
+    _educationController.text = profile.education ?? '';
+    _careerHistoryController.text = profile.careerHistory ?? '';
+    _hobbiesController.text = profile.hobbies ?? '';
+    _alcoholUseController.text = profile.alcoholUse ?? '';
+    _smokingUseController.text = profile.smokingUse ?? '';
+    _favoriteFoodsController.text = profile.favoriteFoods ?? '';
+    _isPublic = profile.isPublic;
+    _avatarUrl = profile.avatarUrl;
+
+    final birth = profile.birthDate;
+    if (birth != null) {
+      _birthDate = birth;
+      _birthDateController.text =
+          '${birth.year}/${birth.month.toString().padLeft(2, '0')}/${birth.day.toString().padLeft(2, '0')}';
+    }
+
+    _targetDeathAgeController.text = (profile.targetDeathAge ?? 80).toString();
+  }
+
   Future<void> _loadProfile() async {
     setState(() {
       _isLoading = true;
@@ -91,39 +138,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       if (profile != null && mounted) {
         if (!mounted) return;
         setState(() {
-          _currentProfile = profile;
-          _displayNameController.text = profile.displayName ?? '';
-          _bioController.text = profile.bio ?? '';
-          _websiteUrlController.text = profile.websiteUrl ?? '';
-          _locationController.text = profile.location ?? '';
-          _twitterHandleController.text = profile.twitterHandle ?? '';
-          _githubHandleController.text = profile.githubHandle ?? '';
-          _genderController.text = profile.gender ?? '';
-          _occupationController.text = profile.occupation ?? '';
-          _annualIncomeController.text = profile.annualIncome == null
-              ? ''
-              : profile.annualIncome!.round().toString();
-          _addressController.text = profile.address ?? '';
-          _educationController.text = profile.education ?? '';
-          _careerHistoryController.text = profile.careerHistory ?? '';
-          _hobbiesController.text = profile.hobbies ?? '';
-          _alcoholUseController.text = profile.alcoholUse ?? '';
-          _smokingUseController.text = profile.smokingUse ?? '';
-          _favoriteFoodsController.text = profile.favoriteFoods ?? '';
-          _isPublic = profile.isPublic;
-          _avatarUrl = profile.avatarUrl;
-
-          // ✅ 追加: 生年月日の読み込みとフォーマット
-          if (profile.birthDate != null) {
-            _birthDate = profile.birthDate;
-            _birthDateController.text =
-                "${_birthDate!.year}/${_birthDate!.month.toString().padLeft(2, '0')}/${_birthDate!.day.toString().padLeft(2, '0')}";
-          }
-
-          // ✅ 追加: 目標寿命の読み込み（デフォルト80）
-          _targetDeathAgeController.text =
-              (profile.targetDeathAge ?? 80).toString();
-
+          _applyProfileToControllers(profile);
           _isLoading = false;
         });
       }
@@ -290,7 +305,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     });
 
     try {
-      final userId = supabase.auth.currentUser!.id;
+      final debugProfile = widget.debugInitialProfile;
+      final userId = debugProfile?.userId ?? supabase.auth.currentUser!.id;
       // ✅ 追加: 目標寿命のパース
       final targetAge = int.tryParse(_targetDeathAgeController.text) ?? 80;
       final annualIncome = _parseOptionalYen(_annualIncomeController.text);
@@ -335,7 +351,12 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         updatedAt: DateTime.now(),
       );
 
-      await _profileService.updateProfile(updatedProfile);
+      final debugSaver = widget.onDebugSave;
+      if (debugSaver != null) {
+        await debugSaver(updatedProfile);
+      } else {
+        await _profileService.updateProfile(updatedProfile);
+      }
 
       if (mounted) {
         setState(() {
@@ -347,7 +368,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             backgroundColor: Color(0xFF4CAF50),
           ),
         );
-        Navigator.of(context).pop(true);
+        if (debugSaver == null) {
+          Navigator.of(context).pop(true);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -362,7 +385,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   }
 
   Widget _buildShareProfileCard() {
-    final userId = supabase.auth.currentUser?.id ?? '';
+    final userId = widget.debugInitialProfile?.userId ??
+        supabase.auth.currentUser?.id ??
+        '';
     final url = 'https://my-web-app-b67f4.web.app/u?id=$userId';
     return Card(
       color: const Color(0xFF6366F1).withAlpha(15),
@@ -589,12 +614,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
 
                     const SizedBox(height: 16),
 
-                    _buildOptionalProfileField(
+                    InclusiveGenderSelector(
                       controller: _genderController,
-                      labelText: '性別',
-                      hintText: '男 / 女 / その他 / 未回答 など',
-                      icon: Icons.wc_outlined,
-                      maxLength: 30,
                     ),
 
                     const SizedBox(height: 16),
