@@ -14,6 +14,12 @@ import {
   runTaskBudgetAssistant,
 } from "../_shared/task_budget_assistant.ts";
 import { mapAutoErrorReports } from "./auto_error_reports.ts";
+import {
+  createSupabaseCompetitorCandidateStore,
+  handleCompetitorCandidateList,
+  handleCompetitorCandidateReview,
+  handleCompetitorCandidateVerifyUrl,
+} from "./competitor_candidates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -847,6 +853,30 @@ serve(async (req: Request) => {
           })) ?? [],
           total: data?.total ?? 0,
         });
+      }
+
+      case "competitor_candidate.list": {
+        const res = await handleCompetitorCandidateList(
+          createSupabaseCompetitorCandidateStore(admin),
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "competitor_candidate.verify_url": {
+        const res = await handleCompetitorCandidateVerifyUrl(
+          createSupabaseCompetitorCandidateStore(admin),
+          body,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "competitor_candidate.review": {
+        const res = await handleCompetitorCandidateReview(
+          createSupabaseCompetitorCandidateStore(admin),
+          body,
+        );
+        return json(res.body, res.status);
       }
 
       default:

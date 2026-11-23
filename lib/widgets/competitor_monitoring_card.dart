@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/competitor_candidate_review_service.dart';
 import '../services/competitor_discovery_log_service.dart';
 
 class CompetitiveIntelNotebook {
@@ -82,10 +83,14 @@ class CompetitorMonitoringCard extends StatefulWidget {
     super.key,
     this.discoveryLogService,
     this.initialDiscoveryLogs,
+    this.candidateReviewRepository,
+    this.initialReviewCandidates,
   });
 
   final CompetitorDiscoveryLogService? discoveryLogService;
   final List<CompetitorDiscoveryLogEntry>? initialDiscoveryLogs;
+  final CompetitorCandidateReviewRepository? candidateReviewRepository;
+  final List<CompetitorCandidateReviewItem>? initialReviewCandidates;
 
   @override
   State<CompetitorMonitoringCard> createState() =>
@@ -277,6 +282,11 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
             CompetitorDiscoveryLogsPanel(
               service: widget.discoveryLogService,
               initialLogs: widget.initialDiscoveryLogs,
+            ),
+            const SizedBox(height: 16),
+            CompetitorCandidateReviewPanel(
+              repository: widget.candidateReviewRepository,
+              initialCandidates: widget.initialReviewCandidates,
             ),
           ],
         ),
@@ -802,6 +812,332 @@ class _DiscoveryLogTile extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// 競合候補 AI 情報源 URL の自動 HTTP 検証結果・手動承認/却下パネル (#2698)。
+class CompetitorCandidateReviewPanel extends StatefulWidget {
+  const CompetitorCandidateReviewPanel({
+    super.key,
+    this.repository,
+    this.initialCandidates,
+  });
+
+  final CompetitorCandidateReviewRepository? repository;
+  final List<CompetitorCandidateReviewItem>? initialCandidates;
+
+  @override
+  State<CompetitorCandidateReviewPanel> createState() =>
+      _CompetitorCandidateReviewPanelState();
+}
+
+class _CompetitorCandidateReviewPanelState
+    extends State<CompetitorCandidateReviewPanel> {
+  CompetitorCandidateReviewRepository? _repo;
+  bool _loading = false;
+  bool _onlyManualReview = false;
+  String? _error;
+  List<CompetitorCandidateReviewItem> _items =
+      const <CompetitorCandidateReviewItem>[];
+
+  CompetitorCandidateReviewRepository _resolveRepo() {
+    return _repo ??=
+        widget.repository ?? SupabaseCompetitorCandidateReviewRepository();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _repo = widget.repository;
+    final seeded = widget.initialCandidates;
+    if (seeded != null) {
+      _items = seeded;
+    } else if (widget.repository != null) {
+      _loadCandidates();
+    }
+  }
+
+  Future<void> _loadCandidates() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final fetched = await _resolveRepo().listCandidates();
+      if (!mounted) return;
+      setState(() {
+        _items = fetched;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = '競合候補一覧の取得に失敗しました: $e';
+      });
+    }
+  }
+
+  Future<void> _verifyUrl(CompetitorCandidateReviewItem item) async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final updated = await _resolveRepo().verifyCandidateUrl(item.id);
+      if (!mounted) return;
+      setState(() {
+        _items = _items
+            .map((c) => c.id == updated.id ? updated : c)
+            .toList(growable: false);
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'URL 再検証に失敗しました: $e';
+      });
+    }
+  }
+
+  Future<void> _submitDecision(
+    CompetitorCandidateReviewItem item,
+    CandidateReviewDecision decision,
+  ) async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final updated = await _resolveRepo().submitReviewDecision(
+        candidateId: item.id,
+        decision: decision,
+        rejectedReason: decision == CandidateReviewDecision.rejected
+            ? (item.sourceUrlError ?? 'Manual verification failed')
+            : null,
+      );
+      if (!mounted) return;
+      setState(() {
+        _items = _items
+            .map((c) => c.id == updated.id ? updated : c)
+            .toList(growable: false);
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = '承認・却下の保存に失敗しました: $e';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final visible = _items
+        .where((c) => !_onlyManualReview || c.needsManualReview)
+        .toList(growable: false);
+    final flaggedCount = _items.where((c) => c.needsManualReview).length;
+
+    return Column(
+      key: const ValueKey<String>('competitor_candidate_review_panel'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              'AI発見候補 URL検証・手動レビュー ($flaggedCount件要確認)',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            FilterChip(
+              key: const ValueKey<String>('candidate_manual_review_filter'),
+              label: const Text('要手動確認のみ'),
+              selected: _onlyManualReview,
+              onSelected: (selected) {
+                setState(() {
+                  _onlyManualReview = selected;
+                });
+              },
+            ),
+            IconButton(
+              key: const ValueKey<String>('candidate_review_refresh'),
+              tooltip: '候補一覧を再読込',
+              constraints: const BoxConstraints(
+                minWidth: 48,
+                minHeight: 48,
+              ),
+              onPressed: _loading ? null : _loadCandidates,
+              icon: const Icon(Icons.refresh),
+            ),
+          ],
+        ),
+        if (_loading) ...[
+          const SizedBox(height: 8),
+          const LinearProgressIndicator(),
+        ],
+        if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _error!,
+            style: TextStyle(color: theme.colorScheme.error),
+          ),
+        ],
+        const SizedBox(height: 8),
+        if (visible.isEmpty)
+          const Text(
+            'レビュー対象の競合候補はありません',
+            key: ValueKey<String>('candidate_review_empty'),
+          )
+        else
+          Column(
+            children: visible
+                .map((item) => _buildCandidateTile(context, item, isDark))
+                .toList(growable: false),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCandidateTile(
+    BuildContext context,
+    CompetitorCandidateReviewItem item,
+    bool isDark,
+  ) {
+    final theme = Theme.of(context);
+    final flagFg = isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C);
+    final flagBg = isDark ? const Color(0xFF450A0A) : const Color(0xFFFEE2E2);
+    final okFg = isDark ? const Color(0xFF6EE7B7) : const Color(0xFF047857);
+    final okBg = isDark ? const Color(0xFF022C22) : const Color(0xFFD1FAE5);
+    final badgeFg = item.needsManualReview ? flagFg : okFg;
+    final badgeBg = item.needsManualReview ? flagBg : okBg;
+    final statusLabel = item.needsManualReview
+        ? '要手動確認 (${item.sourceUrlStatusCode ?? 'エラー'})'
+        : '${item.reviewDecision.label} (HTTP ${item.sourceUrlStatusCode ?? '-'})';
+
+    return Card(
+      key: ValueKey<String>('candidate_review_item_${item.id}'),
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  item.displayName,
+                  style: theme.textTheme.titleSmall,
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: badgeBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        item.needsManualReview
+                            ? Icons.warning_amber_rounded
+                            : Icons.verified_outlined,
+                        size: 16,
+                        color: badgeFg,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        statusLabel,
+                        style: TextStyle(
+                          color: badgeFg,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (item.website != null && item.website!.trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                'URL: ${item.website}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+            if (item.sourceUrlError != null &&
+                item.sourceUrlError!.trim().isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                '検証詳細: ${item.sourceUrlError}',
+                style: TextStyle(
+                  color: theme.colorScheme.error,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    key: ValueKey<String>('candidate_verify_${item.id}'),
+                    onPressed: _loading ? null : () => _verifyUrl(item),
+                    icon: const Icon(Icons.link),
+                    label: const Text('URL再検証'),
+                  ),
+                ),
+                SizedBox(
+                  height: 48,
+                  child: FilledButton.icon(
+                    key: ValueKey<String>('candidate_approve_${item.id}'),
+                    onPressed: _loading
+                        ? null
+                        : () => _submitDecision(
+                              item,
+                              CandidateReviewDecision.approved,
+                            ),
+                    icon: const Icon(Icons.check),
+                    label: const Text('承認'),
+                  ),
+                ),
+                SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    key: ValueKey<String>('candidate_reject_${item.id}'),
+                    onPressed: _loading
+                        ? null
+                        : () => _submitDecision(
+                              item,
+                              CandidateReviewDecision.rejected,
+                            ),
+                    icon: const Icon(Icons.close),
+                    label: const Text('却下'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
