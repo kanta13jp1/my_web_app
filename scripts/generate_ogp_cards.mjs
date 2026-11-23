@@ -467,6 +467,7 @@ async function renderWithChromeCli(chromeBin, htmlDir, outDir, manifest, cardsWi
     }
   } finally {
     server.close();
+    fs.rmSync(profileDir, { recursive: true, force: true });
   }
 }
 
