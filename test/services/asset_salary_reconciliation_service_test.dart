@@ -371,5 +371,102 @@ void main() {
         isFalse,
       );
     });
+
+    test(
+      'excludes future payslipRows and payslipSalaryIncomes before pay_date',
+      () {
+        final plans = <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'plan-oct',
+            date: DateTime(2026, 10, 23),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: 'smbc',
+            destinationAccountName: '三井住友銀行大塚支店',
+            received: false,
+          ),
+          AssetLiabilityIncomePlan(
+            id: 'plan-nov-unpaid',
+            date: DateTime(2026, 11, 24),
+            name: '給料予定',
+            amount: 450000,
+            destinationAccountId: 'smbc',
+            destinationAccountName: '三井住友銀行大塚支店',
+            received: false,
+          ),
+        ];
+
+        final payslipRows = [
+          {
+            'id': 'ps-oct',
+            'pay_date': '2026-10-23',
+            'company_name': 'マイティリンク',
+            'net_amount': 421286,
+          },
+          {
+            'id': 'ps-nov-same-cycle-future',
+            'pay_date': '2026-11-24',
+            'company_name': 'Future Same Cycle',
+            'net_amount': 419000,
+          },
+          {
+            'id': 'ps-nov-next-cycle-future',
+            'pay_date': '2026-11-25',
+            'company_name': 'Future Next Cycle',
+            'net_amount': 420000,
+          },
+        ];
+
+        final salaryIncomes = [
+          {
+            'id': 'si-nov-future',
+            'pay_date': '2026-11-24',
+            'description': 'Future Salary Income',
+            'amount': 419000,
+          },
+        ];
+
+        final beforePayday = AssetSalaryReconciliationService.reconcile(
+          monthlyIncomePlans: plans,
+          payslipRows: payslipRows,
+          payslipSalaryIncomes: salaryIncomes,
+          salaryDay: 25,
+          baseDate: DateTime(2026, 11, 23, 23, 59),
+        );
+
+        expect(
+          beforePayday.any((p) => p.name.contains('Future')),
+          isFalse,
+        );
+        final novPlan = beforePayday.singleWhere(
+          (p) => p.id == 'plan-nov-unpaid',
+        );
+        expect(novPlan.received, isFalse);
+        expect(novPlan.amount, 450000);
+
+        final onPayday = AssetSalaryReconciliationService.reconcile(
+          monthlyIncomePlans: <AssetLiabilityIncomePlan>[
+            AssetLiabilityIncomePlan(
+              id: 'plan-nov-payday',
+              date: DateTime(2026, 11, 25),
+              name: '給料',
+              amount: 450000,
+              destinationAccountId: 'smbc',
+              destinationAccountName: '三井住友銀行大塚支店',
+              received: false,
+            ),
+          ],
+          payslipRows: payslipRows,
+          payslipSalaryIncomes: const [],
+          salaryDay: 25,
+          baseDate: DateTime(2026, 11, 25, 9, 0),
+        );
+
+        expect(onPayday, hasLength(1));
+        expect(onPayday.single.amount, 420000);
+        expect(onPayday.single.received, isTrue);
+        expect(onPayday.single.name, 'Future Next Cycle給与');
+      },
+    );
   });
 }

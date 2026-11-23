@@ -8,6 +8,7 @@ class PayrollDeductions {
     this.netYen,
     this.reportedSocialYen,
     this.items,
+    this.conflictingCanonicalKeys,
   );
 
   final String sourceId;
@@ -17,6 +18,7 @@ class PayrollDeductions {
   final int? netYen;
   final int? reportedSocialYen;
   final Map<String, int?> items;
+  final Set<String> conflictingCanonicalKeys;
 
   static const taxKeys = ['income_tax', 'resident_tax'];
   static const socialKeys = [
@@ -28,20 +30,66 @@ class PayrollDeductions {
     'long_term_care_insurance',
     'employees_pension_fund_contribution',
   ];
+  static const Map<String, String> deductionAliases = {
+    '所得税': 'income_tax',
+    '住民税': 'resident_tax',
+    '健康保険料': 'health_insurance',
+    '健康保険': 'health_insurance',
+    'employees_pension_insurance': 'pension',
+    'employee_pension_insurance': 'pension',
+    '厚生年金保険料': 'pension',
+    '厚生年金保険': 'pension',
+    '厚生年金': 'pension',
+    '雇用保険料': 'employment_insurance',
+    '雇用保険': 'employment_insurance',
+    '介護保険料': 'long_term_care_insurance',
+    '介護保険': 'long_term_care_insurance',
+    'employee_pension_fund_contribution':
+        'employees_pension_fund_contribution',
+    '厚生年金基金掛金': 'employees_pension_fund_contribution',
+    'IDECO': 'ideco',
+    'iDeCo': 'ideco',
+  };
   static const knownKeys = {
     ...taxKeys,
     ...socialKeys,
     ...optionalSocialKeys,
-    'employees_pension_insurance',
     'ideco',
+    '所得税',
+    '住民税',
+    '健康保険料',
+    '健康保険',
+    'employees_pension_insurance',
+    'employee_pension_insurance',
+    '厚生年金保険料',
+    '厚生年金保険',
+    '厚生年金',
+    '雇用保険料',
+    '雇用保険',
+    '介護保険料',
+    '介護保険',
+    'employee_pension_fund_contribution',
+    '厚生年金基金掛金',
+    'IDECO',
+    'iDeCo',
   };
 
+  static String canonicalKey(String key) => deductionAliases[key] ?? key;
+
+  bool isFuturePayDate(DateTime asOfDate) {
+    final today = DateTime(asOfDate.year, asOfDate.month, asOfDate.day);
+    return payDate.isAfter(today);
+  }
+
   bool get conflictingPensionAliases =>
-      items.containsKey('pension') &&
-      items.containsKey('employees_pension_insurance') &&
-      (items['pension'] == null ||
-          items['employees_pension_insurance'] == null ||
-          items['pension'] != items['employees_pension_insurance']);
+      conflictingCanonicalKeys.contains('pension');
+  bool get conflictingTaxAliases =>
+      taxKeys.any(conflictingCanonicalKeys.contains);
+  bool get conflictingSocialAliases =>
+      conflictingPensionAliases ||
+      socialKeys.any(conflictingCanonicalKeys.contains) ||
+      optionalSocialKeys.any(conflictingCanonicalKeys.contains);
+  bool get conflictingDeductionAliases => conflictingCanonicalKeys.isNotEmpty;
 
   bool get confirmed => reviewStatus == 'confirmed';
   bool get rejected => reviewStatus == 'rejected';
@@ -56,10 +104,9 @@ class PayrollDeductions {
     return sum;
   }
 
-  int? get taxTotalYen => _completeTotal(
-        taxKeys,
-      );
-  int? get socialPartsTotalYen => conflictingPensionAliases
+  int? get taxTotalYen =>
+      conflictingTaxAliases ? null : _completeTotal(taxKeys);
+  int? get socialPartsTotalYen => conflictingSocialAliases
       ? null
       : _completeTotal([
           ...socialKeys,
@@ -81,13 +128,16 @@ class PayrollDeductions {
   int? get identifiedSubtotalYen {
     final values = <int>[
       for (final key in taxKeys)
-        if (items[key] != null) items[key]!,
+        if (!conflictingCanonicalKeys.contains(key) && items[key] != null)
+          items[key]!,
       if (socialTotalYen != null)
         socialTotalYen!
       else
         for (final key in [...socialKeys, ...optionalSocialKeys])
-          if (items[key] != null) items[key]!,
-      if (items['ideco'] != null) items['ideco']!,
+          if (!conflictingCanonicalKeys.contains(key) && items[key] != null)
+            items[key]!,
+      if (!conflictingCanonicalKeys.contains('ideco') && items['ideco'] != null)
+        items['ideco']!,
     ];
     return values.isEmpty
         ? null
@@ -152,11 +202,33 @@ class PayrollDeductions {
         }
       }
     }
-    // AI extraction can preserve the longer source key while the deterministic
-    // parser emits pension. Normalize only when the canonical key is absent.
-    if (!items.containsKey('pension') &&
-        items.containsKey('employees_pension_insurance')) {
-      items['pension'] = items['employees_pension_insurance'];
+    // AI extraction can preserve Japanese labels or singular/longer English
+    // aliases while the deterministic parser emits canonical snake_case keys.
+    // Normalize aliases only when all non-null values for a canonical key
+    // agree, and preserve missing/null fields as unknown.
+    final grouped = <String, List<MapEntry<String, int?>>>{};
+    for (final entry in items.entries) {
+      grouped.putIfAbsent(canonicalKey(entry.key), () => []).add(entry);
+    }
+    final conflicts = <String>{};
+    for (final group in grouped.entries) {
+      final canonical = group.key;
+      final candidates = group.value;
+      if (candidates.length > 1) {
+        final firstValue = candidates.first.value;
+        final hasConflict = firstValue == null ||
+            candidates.any((candidate) => candidate.value != firstValue);
+        if (hasConflict) {
+          conflicts.add(canonical);
+        } else if (!items.containsKey(canonical)) {
+          items[canonical] = firstValue;
+        }
+      } else {
+        final only = candidates.single;
+        if (only.key != canonical && !items.containsKey(canonical)) {
+          items[canonical] = only.value;
+        }
+      }
     }
     return PayrollDeductions._(
       sourceId,
@@ -168,6 +240,7 @@ class PayrollDeductions {
       readYen(row['net_amount']),
       readYen(row['social_insurance_total']),
       Map.unmodifiable(items),
+      Set.unmodifiable(conflicts),
     );
   }
 }
@@ -176,13 +249,19 @@ class PayrollMonthDeductions {
   const PayrollMonthDeductions(
     this.month,
     this.statements,
-    this.conflicting,
-  );
+    this.conflicting, {
+    this.asOfDate,
+  });
   final DateTime month;
   final List<PayrollDeductions> statements;
 
   /// Repeated source with different content must be corrected before totals.
   final bool conflicting;
+  final DateTime? asOfDate;
+
+  bool get hasFuturePayDate =>
+      asOfDate != null &&
+      statements.any((row) => row.isFuturePayDate(asOfDate!));
 
   bool get confirmed =>
       !conflicting &&
@@ -192,7 +271,7 @@ class PayrollMonthDeductions {
       );
 
   int? _sum(int? Function(PayrollDeductions) read) {
-    if (!confirmed) return null;
+    if (!confirmed || hasFuturePayDate) return null;
     var sum = 0;
     for (final row in statements) {
       final amount = read(
@@ -205,7 +284,7 @@ class PayrollMonthDeductions {
   }
 
   int? get confirmedTaxYen => _sum(
-        (row) => row.taxTotalYen,
+        _taxForComparison,
       );
   int? get confirmedSocialYen => _sum(
         _socialForComparison,
@@ -217,8 +296,15 @@ class PayrollMonthDeductions {
     if (conflicting) return '同じ明細の内容が競合・要確認';
     final reasons = <String>[];
     if (!confirmed) reasons.add('取得済み・本人未確認');
+    if (hasFuturePayDate) reasons.add('支給日未到来');
+    if (!social && statements.any((row) => row.conflictingTaxAliases)) {
+      reasons.add('税金の項目名違いが競合');
+    }
     if (social && statements.any((row) => row.conflictingPensionAliases)) {
       reasons.add('厚生年金の項目名違いが競合');
+    } else if (social &&
+        statements.any((row) => row.conflictingSocialAliases)) {
+      reasons.add('社会保険の項目名違いが競合');
     }
     if (social &&
         statements.any(
@@ -238,8 +324,13 @@ class PayrollMonthDeductions {
     return '本人確認済み';
   }
 
+  static int? _taxForComparison(PayrollDeductions row) {
+    if (row.conflictingTaxAliases) return null;
+    return row.taxTotalYen;
+  }
+
   static int? _socialForComparison(PayrollDeductions row) {
-    if (row.conflictingPensionAliases) return null;
+    if (row.conflictingSocialAliases) return null;
     if (row.socialMismatchYen != null && row.socialMismatchYen != 0) {
       return null;
     }
@@ -256,6 +347,7 @@ class AssetPayrollDeductions {
     required String ownerId,
     required int year,
     required Iterable<Map<String, dynamic>> rows,
+    DateTime? asOfDate,
   }) {
     if (ownerId.trim().isEmpty) {
       throw ArgumentError(
@@ -298,6 +390,7 @@ class AssetPayrollDeductions {
           DateTime(year, month),
           List.unmodifiable(byMonth[month] ?? const <PayrollDeductions>[]),
           conflictMonths.contains(month),
+          asOfDate: asOfDate,
         );
       },
     );
@@ -309,6 +402,8 @@ class AssetPayrollDeductions {
       a.grossYen == b.grossYen &&
       a.netYen == b.netYen &&
       a.reportedSocialYen == b.reportedSocialYen &&
+      a.conflictingCanonicalKeys.length == b.conflictingCanonicalKeys.length &&
+      a.conflictingCanonicalKeys.every(b.conflictingCanonicalKeys.contains) &&
       a.items.length == b.items.length &&
       a.items.entries.every(
         (e) => b.items.containsKey(e.key) && b.items[e.key] == e.value,

@@ -197,10 +197,14 @@ class DisposableBalanceService {
     final daysRemaining =
         (nextPayday.difference(normalizedAsOf).inDays - 1).clamp(1, 366);
 
-    final sortedPayslips = payslips.toList(growable: false)
+    final eligiblePayslips = payslips
+        .where(
+          (payslip) => !_dateOnly(payslip.payDate).isAfter(normalizedAsOf),
+        )
+        .toList(growable: false)
       ..sort((a, b) => b.payDate.compareTo(a.payDate));
     DisposableBalancePayslip? currentPayslip;
-    for (final payslip in sortedPayslips) {
+    for (final payslip in eligiblePayslips) {
       final payDate = _dateOnly(payslip.payDate);
       if (!payDate.isBefore(cycleStart) && payDate.isBefore(nextPayday)) {
         currentPayslip = payslip;
@@ -208,7 +212,7 @@ class DisposableBalanceService {
       }
     }
     final fallbackPayslip =
-        sortedPayslips.isEmpty ? null : sortedPayslips.first;
+        eligiblePayslips.isEmpty ? null : eligiblePayslips.first;
     final income = (currentPayslip ?? fallbackPayslip)?.netAmount ?? 0;
     final activeRecurring = recurringExpenses
         .where((expense) => expense.pausedAt == null)

@@ -336,4 +336,162 @@ void main() {
       );
     },
   );
+  test(
+    'normalizes Japanese deduction keys and avoids unknown-key inflation',
+    () {
+      final raw = fixture(id: 'synthetic-jp-may', date: '2030-05-25');
+      raw['gross_amount'] = 600000;
+      raw['net_amount'] = 455000;
+      raw['social_insurance_total'] = 86500;
+      raw['deductions'] = <String, dynamic>{
+        '所得税': 29500,
+        '住民税': 29000,
+        '健康保険料': 28000,
+        '介護保険料': 4500,
+        '厚生年金保険料': 51000,
+        '雇用保険料': 3000,
+        '厚生年金基金掛金': 0,
+        'IDECO': 0,
+      };
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(row.taxTotalYen, 58500);
+      expect(row.socialTotalYen, 86500);
+      expect(row.socialPartsTotalYen, 86500);
+      expect(row.socialMismatchYen, 0);
+      expect(row.unclassified, isEmpty);
+      expect(row.identifiedSubtotalYen, 145000);
+      expect(row.unidentifiedDifferenceYen, 0);
+      expect(row.conflictingDeductionAliases, isFalse);
+
+      final months = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [raw],
+        asOfDate: DateTime(2030, 5, 25),
+      );
+      expect(months[4].confirmedTaxYen, 58500);
+      expect(months[4].confirmedSocialYen, 86500);
+      expect(months[4].summaryStatus(social: false), '本人確認済み');
+    },
+  );
+  test(
+    'normalizes singular English social aliases and classifies them as known',
+    () {
+      final raw = fixture(id: 'synthetic-aug-singular', date: '2030-08-25');
+      raw['gross_amount'] = 560000;
+      raw['net_amount'] = 420000;
+      raw['social_insurance_total'] = 86400;
+      raw['deductions'] = <String, dynamic>{
+        'income_tax': 23800,
+        'resident_tax': 29800,
+        'health_insurance': 28200,
+        'employment_insurance': 2800,
+        'long_term_care_insurance': 4500,
+        'employee_pension_insurance': 50900,
+        'employee_pension_fund_contribution': 0,
+        'ideco': 0,
+      };
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(row.taxTotalYen, 53600);
+      expect(row.socialTotalYen, 86400);
+      expect(row.socialPartsTotalYen, 86400);
+      expect(row.socialMismatchYen, 0);
+      expect(row.unclassified, isEmpty);
+      expect(row.unidentifiedDifferenceYen, 0);
+    },
+  );
+  test(
+    'matching Japanese and English aliases count once without conflict',
+    () {
+      final raw = fixture();
+      (raw['deductions'] as Map)['所得税'] = 50;
+      (raw['deductions'] as Map)['住民税'] = 40;
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(row.conflictingDeductionAliases, isFalse);
+      expect(row.taxTotalYen, 90);
+      expect(row.unclassified, isEmpty);
+    },
+  );
+  test(
+    'conflicting tax and social aliases exclude sums and stay unconfirmed',
+    () {
+      final raw = fixture();
+      (raw['deductions'] as Map)['所得税'] = 55;
+      final row = PayrollDeductions.fromRow(raw)!;
+      expect(row.conflictingTaxAliases, isTrue);
+      expect(row.conflictingDeductionAliases, isTrue);
+      expect(row.taxTotalYen, isNull);
+      final months = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [raw],
+      );
+      expect(months[1].confirmedTaxYen, isNull);
+      expect(
+        months[1].summaryStatus(social: false),
+        contains('税金の項目名違いが競合'),
+      );
+
+      final socialConflict = fixture();
+      (socialConflict['deductions'] as Map)['健康保険料'] = 79;
+      final socialRow = PayrollDeductions.fromRow(socialConflict)!;
+      expect(socialRow.conflictingSocialAliases, isTrue);
+      expect(socialRow.socialPartsTotalYen, isNull);
+      final socialMonths = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [socialConflict],
+      );
+      expect(socialMonths[1].confirmedSocialYen, isNull);
+      expect(
+        socialMonths[1].summaryStatus(social: true),
+        contains('社会保険の項目名違いが競合'),
+      );
+    },
+  );
+  test(
+    'null or invalid Japanese alias values remain unknown and never zero',
+    () {
+      final nullTax = fixture();
+      nullTax['deductions'] = <String, dynamic>{
+        '所得税': null,
+        '住民税': 40,
+      };
+      expect(PayrollDeductions.fromRow(nullTax)!.taxTotalYen, isNull);
+
+      final invalidTax = fixture();
+      invalidTax['deductions'] = <String, dynamic>{
+        '所得税': '50',
+        '住民税': 40,
+      };
+      expect(PayrollDeductions.fromRow(invalidTax)!.taxTotalYen, isNull);
+    },
+  );
+  test(
+    'future pay_date payslips are excluded from confirmed totals until payday',
+    () {
+      final raw = fixture(id: 'synthetic-nov-future', date: '2030-11-25');
+      final beforePayday = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [raw],
+        asOfDate: DateTime(2030, 11, 24, 23, 59),
+      );
+      expect(beforePayday[10].hasFuturePayDate, isTrue);
+      expect(beforePayday[10].confirmedTaxYen, isNull);
+      expect(beforePayday[10].confirmedSocialYen, isNull);
+      expect(beforePayday[10].summaryStatus(social: false), contains('支給日未到来'));
+
+      final onPayday = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [raw],
+        asOfDate: DateTime(2030, 11, 25),
+      );
+      expect(onPayday[10].hasFuturePayDate, isFalse);
+      expect(onPayday[10].confirmedTaxYen, 90);
+      expect(onPayday[10].confirmedSocialYen, 200);
+      expect(onPayday[10].summaryStatus(social: false), '本人確認済み');
+    },
+  );
 }

@@ -32,6 +32,7 @@ class AssetSalaryReconciliationService {
     final confirmedPayslips = _extractConfirmedPayslips(
       payslipRows: payslipRows,
       payslipSalaryIncomes: payslipSalaryIncomes,
+      baseDate: baseDate,
     );
 
     if (confirmedPayslips.isEmpty) {
@@ -140,16 +141,20 @@ class AssetSalaryReconciliationService {
   static List<_ConfirmedSalaryPayslip> _extractConfirmedPayslips({
     required List<Map<String, dynamic>> payslipRows,
     required List<Map<String, dynamic>> payslipSalaryIncomes,
+    DateTime? baseDate,
   }) {
     final list = <_ConfirmedSalaryPayslip>[];
     final seenDates = <String>{};
+    final baseDateOnly = baseDate != null ? _dateOnly(baseDate) : null;
 
     for (final row in payslipRows) {
       final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
       final rawAmount = row['net_amount'] ?? row['amount'];
       final amount = _num(rawAmount);
       if (payDate == null || amount <= 0) continue;
-      final dateKey = _dateKey(payDate);
+      final payDateOnly = _dateOnly(payDate);
+      if (baseDateOnly != null && payDateOnly.isAfter(baseDateOnly)) continue;
+      final dateKey = _dateKey(payDateOnly);
       if (seenDates.contains(dateKey)) continue;
       seenDates.add(dateKey);
       final company = row['company_name']?.toString().trim() ?? '';
@@ -166,7 +171,9 @@ class AssetSalaryReconciliationService {
       final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
       final amount = _num(row['amount']);
       if (payDate == null || amount <= 0) continue;
-      final dateKey = _dateKey(payDate);
+      final payDateOnly = _dateOnly(payDate);
+      if (baseDateOnly != null && payDateOnly.isAfter(baseDateOnly)) continue;
+      final dateKey = _dateKey(payDateOnly);
       if (seenDates.contains(dateKey)) continue;
       seenDates.add(dateKey);
       final desc = row['description']?.toString().trim() ?? '';
@@ -242,6 +249,9 @@ class AssetSalaryReconciliationService {
   static String _cleanLabel(String label) {
     return label.toLowerCase().replaceAll(RegExp(r'[\s　・_\-]'), '');
   }
+
+  static DateTime _dateOnly(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
 
   static String _dateKey(DateTime date) {
     return '${date.year.toString().padLeft(4, '0')}-'

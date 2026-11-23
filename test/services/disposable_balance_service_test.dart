@@ -175,6 +175,65 @@ void main() {
         contains('cancel_duplicate_music'),
       );
     });
+
+    test('excludes future payslips from current cycle and fallback income', () {
+      final beforePayday = service.build(
+        asOfDate: DateTime(2026, 11, 23),
+        payslips: <DisposableBalancePayslip>[
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 11, 25),
+            netAmount: 420000,
+            companyName: 'Future Corp',
+          ),
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 11, 24),
+            netAmount: 419000,
+            companyName: 'Same Cycle Future Corp',
+          ),
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 10, 23),
+            netAmount: 415000,
+            companyName: 'Past Corp',
+          ),
+        ],
+      );
+
+      expect(beforePayday.income, 415000);
+      expect(
+        beforePayday.requiredActions.map((action) => action.actionKey),
+        contains('upload_current_payslip'),
+      );
+
+      final futureOnly = service.build(
+        asOfDate: DateTime(2026, 11, 23),
+        payslips: <DisposableBalancePayslip>[
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 11, 25),
+            netAmount: 420000,
+          ),
+        ],
+      );
+      expect(futureOnly.income, 0);
+      expect(
+        futureOnly.requiredActions.map((action) => action.actionKey),
+        contains('upload_current_payslip'),
+      );
+
+      final onPayday = service.build(
+        asOfDate: DateTime(2026, 11, 25),
+        payslips: <DisposableBalancePayslip>[
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 11, 25),
+            netAmount: 420000,
+          ),
+        ],
+      );
+      expect(onPayday.income, 420000);
+      expect(
+        onPayday.requiredActions.map((action) => action.actionKey),
+        isNot(contains('upload_current_payslip')),
+      );
+    });
   });
 
   group('DisposableBalanceActionMergeService', () {

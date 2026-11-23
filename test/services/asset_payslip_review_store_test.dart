@@ -169,4 +169,38 @@ void main() {
     expect(requests.where((r) => r.method == 'PATCH').length, patchCount);
     expect(requests.every((r) => r.url.path == '/rest/v1/payslips'), isTrue);
   });
+  test('blockingReasonAt enforces alias conflicts and future pay_date guard',
+      () {
+    final jpRow = syntheticPayslip()
+      ..['pay_date'] = '2030-05-25'
+      ..['social_insurance_total'] = 86500
+      ..['deductions'] = {
+        '所得税': 29500,
+        '住民税': 29000,
+        '健康保険料': 28000,
+        '介護保険料': 4500,
+        '厚生年金保険料': 51000,
+        '雇用保険料': 3000,
+        '厚生年金基金掛金': 0,
+        'IDECO': 0,
+      };
+    final jpSnapshot = PayslipReviewSnapshot(jpRow);
+    expect(jpSnapshot.blockingReason, isNull);
+    expect(
+      jpSnapshot.blockingReasonAt(asOfDate: DateTime(2030, 5, 25)),
+      isNull,
+    );
+    expect(
+      jpSnapshot.blockingReasonAt(asOfDate: DateTime(2030, 5, 24, 23, 59)),
+      contains('支給日（2030-05-25）が未到来'),
+    );
+
+    final taxConflictRow = syntheticPayslip();
+    (taxConflictRow['deductions'] as Map)['所得税'] = 55;
+    final conflictSnapshot = PayslipReviewSnapshot(taxConflictRow);
+    expect(
+      conflictSnapshot.blockingReason,
+      '控除の項目名違いが競合しています。元値の訂正が必要です。',
+    );
+  });
 }

@@ -47,15 +47,25 @@ class PayslipReviewSnapshot {
   String get status => raw['review_status'] as String? ?? 'unknown';
   PayrollDeductions? get projection => PayrollDeductions.fromRow(raw);
   bool get unreviewed => status == 'auto' || status == 'needs_review';
-  String? get blockingReason {
+  String? get blockingReason => blockingReasonAt();
+
+  String? blockingReasonAt({DateTime? asOfDate}) {
     final row = projection;
     if (!unreviewed) {
       return status == 'confirmed' ? '現在は本人確認済みです。' : 'この確認状態では保存できません。';
     }
     if (row == null) return '明細の識別や日付が不完全です。';
-    if (row.conflictingPensionAliases) return '厚生年金の項目名違いが競合しています。元値の訂正が必要です。';
+    if (row.conflictingPensionAliases) {
+      return '厚生年金の項目名違いが競合しています。元値の訂正が必要です。';
+    }
+    if (row.conflictingDeductionAliases) {
+      return '控除の項目名違いが競合しています。元値の訂正が必要です。';
+    }
     if (row.socialMismatchYen != null && row.socialMismatchYen != 0) {
       return '社会保険の記載合計と既知内訳が一致しません。元値の訂正が必要です。';
+    }
+    if (asOfDate != null && row.isFuturePayDate(asOfDate)) {
+      return '支給日（${raw['pay_date']}）が未到来のため本人確認できません。';
     }
     return null;
   }
