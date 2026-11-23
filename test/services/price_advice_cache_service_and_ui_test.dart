@@ -189,7 +189,8 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(
-          find.byKey(const ValueKey<String>('price_advice_button_prod-1')));
+        find.byKey(const ValueKey<String>('price_advice_button_prod-1')),
+      );
       await tester.pumpAndSettle();
 
       expect(
@@ -221,7 +222,8 @@ void main() {
 
       // Re-open hits 24h cache without extra invocation
       await tester.tap(
-          find.byKey(const ValueKey<String>('price_advice_button_prod-1')));
+        find.byKey(const ValueKey<String>('price_advice_button_prod-1')),
+      );
       await tester.pumpAndSettle();
       expect(invokeCount, 2);
     });
