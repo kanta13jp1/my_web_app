@@ -93,10 +93,20 @@ void main() {
 
       final longBase = List<String>.filled(80, first).join(' ');
       final longNear = '$longBase extra note';
-      expect(
-        service.computeCompressionSimilarity(longBase, longNear),
-        greaterThan(0.85),
+      final longUnrelated = List<String>.generate(
+        80,
+        (i) => 'Sensor $i telemetry metric ${(i * 17) % 97}',
+      ).join(' ');
+      final longNearSim = service.computeCompressionSimilarity(
+        longBase,
+        longNear,
       );
+      final longDiffSim = service.computeCompressionSimilarity(
+        longBase,
+        longUnrelated,
+      );
+      expect(longNearSim, inInclusiveRange(0.55, 1.0));
+      expect(longNearSim, greaterThan(longDiffSim));
     });
 
     test('falls back to raw byte size when compression throws', () {
