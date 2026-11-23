@@ -3,6 +3,7 @@ export const LANDING_TRIAL_ACTION_MAX_LENGTH = 40;
 export const LANDING_TRIAL_REASON_MAX_LENGTH = 100;
 export const DEFAULT_LANDING_TRIAL_MODEL = "gpt-4o-mini";
 export const DEFAULT_LANDING_TRIAL_GEMINI_MODEL = "gemini-2.5-flash";
+export const LANDING_TRIAL_GEMINI_MAX_OUTPUT_TOKENS = 512;
 
 export class LandingTrialInputError extends Error {}
 
@@ -281,6 +282,64 @@ async function runWithQualityRepair(
   return { ...repaired, qualityRetryUsed: true };
 }
 
+function sanitizeDiagnosticValue(value: unknown, maxLength = 64): string {
+  return String(value ?? "")
+    .trim()
+    .replace(/[^a-zA-Z0-9_.:-]/g, "")
+    .slice(0, maxLength);
+}
+
+async function formatProviderErrorDetails(
+  provider: "openai" | "gemini",
+  response: Response,
+): Promise<string> {
+  const parts: string[] = [];
+  const requestId = sanitizeDiagnosticValue(
+    response.headers.get("x-request-id") ??
+      response.headers.get("x-goog-request-id"),
+  );
+  const retryAfter = sanitizeDiagnosticValue(
+    response.headers.get("retry-after"),
+    24,
+  );
+
+  let status = "";
+  let code = "";
+  let errorType = "";
+  try {
+    const bodyText = await response.text();
+    if (bodyText.trim()) {
+      const parsed = JSON.parse(bodyText) as { error?: unknown };
+      const err = parsed?.error;
+      if (typeof err === "string") {
+        code = sanitizeDiagnosticValue(err);
+      } else if (err && typeof err === "object") {
+        const errObj = err as Record<string, unknown>;
+        if (provider === "openai") {
+          code = sanitizeDiagnosticValue(errObj.code);
+          errorType = sanitizeDiagnosticValue(errObj.type);
+        } else {
+          status = sanitizeDiagnosticValue(errObj.status);
+          code = sanitizeDiagnosticValue(errObj.code);
+        }
+      }
+    }
+  } catch {
+    // Non-JSON or unreadable error bodies must not mask the HTTP status.
+  }
+
+  if (status) parts.push(`status=${status}`);
+  if (code) parts.push(`code=${code}`);
+  if (errorType) parts.push(`type=${errorType}`);
+  if (requestId) parts.push(`request_id=${requestId}`);
+  if (retryAfter) parts.push(`retry_after=${retryAfter}`);
+  return parts.length > 0 ? ` [${parts.join(" ")}]` : "";
+}
+
+function shouldDisableGeminiThinking(model: string): boolean {
+  return /^gemini-2\.5-flash(?:-\d+)?$/i.test(model.trim());
+}
+
 export async function generateLandingTrialSuggestion(args: {
   apiKey: string;
   prompt: string;
@@ -326,7 +385,8 @@ export async function generateLandingTrialSuggestion(args: {
       },
     );
     if (!response.ok) {
-      throw new Error(`OpenAI landing trial failed (${response.status})`);
+      const detail = await formatProviderErrorDetails("openai", response);
+      throw new Error(`OpenAI landing trial failed (${response.status})${detail}`);
     }
     const data = await response.json() as {
       choices?: Array<{ message?: { content?: unknown } }>;
@@ -370,6 +430,14 @@ export async function generateLandingTrialSuggestionWithGemini(args: {
       `https://generativelanguage.googleapis.com/v1beta/models/${
         encodeURIComponent(model)
       }:generateContent`;
+    const generationConfig: Record<string, unknown> = {
+      temperature: 0.15,
+      maxOutputTokens: LANDING_TRIAL_GEMINI_MAX_OUTPUT_TOKENS,
+      responseMimeType: "application/json",
+    };
+    if (shouldDisableGeminiThinking(model)) {
+      generationConfig.thinkingConfig = { thinkingBudget: 0 };
+    }
     const response = await fetchImpl(endpoint, {
       method: "POST",
       headers: {
@@ -381,26 +449,35 @@ export async function generateLandingTrialSuggestionWithGemini(args: {
           parts: [{ text: LANDING_TRIAL_SYSTEM_PROMPT }],
         },
         contents,
-        generationConfig: {
-          temperature: 0.15,
-          maxOutputTokens: 256,
-          responseMimeType: "application/json",
-        },
+        generationConfig,
       }),
       signal: AbortSignal.timeout(12_000),
     });
     if (!response.ok) {
-      throw new Error(`Gemini landing trial failed (${response.status})`);
+      const detail = await formatProviderErrorDetails("gemini", response);
+      throw new Error(`Gemini landing trial failed (${response.status})${detail}`);
     }
     const data = await response.json() as {
       candidates?: Array<{
-        content?: { parts?: Array<{ text?: unknown }> };
+        finishReason?: unknown;
+        content?: { parts?: Array<{ text?: unknown; thought?: unknown }> };
       }>;
     };
-    const rawText = (data.candidates?.[0]?.content?.parts ?? [])
+    const candidate = data.candidates?.[0];
+    const rawText = (candidate?.content?.parts ?? [])
+      .filter((part) => part?.thought !== true)
       .map((part) => String(part?.text ?? ""))
       .join("");
-    return parseLandingTrialSuggestion(rawText);
+    try {
+      return parseLandingTrialSuggestion(rawText);
+    } catch (error) {
+      const finishReason = sanitizeDiagnosticValue(candidate?.finishReason);
+      if (finishReason) {
+        const base = error instanceof Error ? error.message : String(error);
+        throw new Error(`${base} [finish_reason=${finishReason}]`);
+      }
+      throw error;
+    }
   };
 
   const suggestion = await runWithQualityRepair(
@@ -422,6 +499,7 @@ export async function generateLandingTrialSuggestionWithFallback(args: {
   openAiModel?: string;
   geminiModel?: string;
   fetchImpl?: FetchLike;
+  onPrimaryFailure?: (detail: string) => void;
 }): Promise<LandingTrialSuggestion> {
   const openAiKey = args.openAiApiKey?.trim() ?? "";
   const geminiKey = args.geminiApiKey?.trim() ?? "";
@@ -443,7 +521,11 @@ export async function generateLandingTrialSuggestionWithFallback(args: {
         model: resolvedOpenAiModel,
       };
     } catch (error) {
-      errors.push(error instanceof Error ? error.message : String(error));
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push(message);
+      if (geminiKey) {
+        args.onPrimaryFailure?.(message);
+      }
     }
   }
 

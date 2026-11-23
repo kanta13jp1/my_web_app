@@ -9,6 +9,7 @@ import {
   generateLandingTrialSuggestion,
   generateLandingTrialSuggestionWithFallback,
   hashLandingTrialClient,
+  LANDING_TRIAL_GEMINI_MAX_OUTPUT_TOKENS,
   LandingTrialInputError,
   landingTrialQualityIssues,
   normalizeLandingTrialPrompt,
@@ -341,4 +342,199 @@ Deno.test("landing trial fails when both OpenAI and Gemini fail", async () => {
     Error,
     "Gemini landing trial failed (503)",
   );
+});
+
+Deno.test("landing trial reports sanitized OpenAI 429 metadata before Gemini fallback", async () => {
+  const primaryFailures: string[] = [];
+
+  const suggestion = await generateLandingTrialSuggestionWithFallback({
+    openAiApiKey: "openai-key",
+    geminiApiKey: "gemini-key",
+    prompt: "毎月の支出が増えていて、どこから見直すべきか分かりません",
+    onPrimaryFailure: (detail) => {
+      primaryFailures.push(detail);
+    },
+    fetchImpl: (input) => {
+      const url = String(input);
+      if (url.includes("api.openai.com")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              error: {
+                code: "insufficient_quota",
+                type: "insufficient_quota",
+                message: "You exceeded your current quota",
+              },
+            }),
+            {
+              status: 429,
+              headers: {
+                "Content-Type": "application/json",
+                "x-request-id": "req_test123",
+                "retry-after": "60",
+              },
+            },
+          ),
+        );
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      text:
+                        '{"action":"先月の明細で最大の固定費を1件特定","reason":"固定費の最大項目を先に決めると削減効果が見えるため"}',
+                    },
+                  ],
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    },
+  });
+
+  assertEquals(primaryFailures.length, 1);
+  assertStringIncludes(primaryFailures[0], "OpenAI landing trial failed (429)");
+  assertStringIncludes(primaryFailures[0], "code=insufficient_quota");
+  assertStringIncludes(primaryFailures[0], "type=insufficient_quota");
+  assertStringIncludes(primaryFailures[0], "request_id=req_test123");
+  assertStringIncludes(primaryFailures[0], "retry_after=60");
+  assertEquals(primaryFailures[0].includes("exceeded"), false);
+  assertEquals(suggestion.provider, "gemini");
+});
+
+Deno.test("landing trial disables thinking budget and skips thought parts for gemini-2.5-flash", async () => {
+  let sentBody: Record<string, unknown> = {};
+
+  const suggestion = await generateLandingTrialSuggestionWithFallback({
+    openAiApiKey: "",
+    geminiApiKey: "gemini-key",
+    prompt: "仕事が多すぎて優先順位を決められない",
+    fetchImpl: (_input, init) => {
+      sentBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                finishReason: "STOP",
+                content: {
+                  parts: [
+                    { text: "internal thought", thought: true },
+                    {
+                      text:
+                        '{"action":"今日締切の仕事を1件開き次の操作を書く","reason":"対象と次の動作を固定すると迷いを止めて着手できるため"}',
+                    },
+                  ],
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    },
+  });
+
+  const generationConfig = sentBody.generationConfig as Record<string, unknown>;
+  const thinkingConfig = generationConfig.thinkingConfig as Record<
+    string,
+    unknown
+  >;
+  assertEquals(
+    generationConfig.maxOutputTokens,
+    LANDING_TRIAL_GEMINI_MAX_OUTPUT_TOKENS,
+  );
+  assertEquals(thinkingConfig.thinkingBudget, 0);
+  assertEquals(suggestion.action, "今日締切の仕事を1件開き次の操作を書く");
+  assertEquals(suggestion.provider, "gemini");
+});
+
+Deno.test("landing trial omits thinkingConfig for models outside gemini-2.5-flash", async () => {
+  const sentConfigs: Array<Record<string, unknown>> = [];
+
+  for (const geminiModel of ["gemini-2.0-flash", "gemini-2.5-pro"]) {
+    await generateLandingTrialSuggestionWithFallback({
+      openAiApiKey: "",
+      geminiApiKey: "gemini-key",
+      geminiModel,
+      prompt: "仕事が多すぎて優先順位を決められない",
+      fetchImpl: (_input, init) => {
+        const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+        sentConfigs.push(body.generationConfig as Record<string, unknown>);
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              candidates: [
+                {
+                  content: {
+                    parts: [
+                      {
+                        text:
+                          '{"action":"今日締切の仕事を1件開き次の操作を書く","reason":"対象と次の動作を固定すると迷いを止めて着手できるため"}',
+                      },
+                    ],
+                  },
+                },
+              ],
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          ),
+        );
+      },
+    });
+  }
+
+  assertEquals(sentConfigs.length, 2);
+  for (const config of sentConfigs) {
+    assertEquals("thinkingConfig" in config, false);
+    assertEquals(
+      config.maxOutputTokens,
+      LANDING_TRIAL_GEMINI_MAX_OUTPUT_TOKENS,
+    );
+  }
+});
+
+Deno.test("landing trial sanitizes Gemini 429 metadata and hides raw error message", async () => {
+  let caughtMessage = "";
+  try {
+    await generateLandingTrialSuggestionWithFallback({
+      openAiApiKey: "",
+      geminiApiKey: "gemini-key",
+      prompt: "仕事が多すぎて優先順位を決められない",
+      fetchImpl: () =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              error: {
+                code: 429,
+                status: "RESOURCE_EXHAUSTED",
+                message: "secret-like text",
+              },
+            }),
+            {
+              status: 429,
+              headers: {
+                "Content-Type": "application/json",
+                "x-goog-request-id": "goog_req_999",
+              },
+            },
+          ),
+        ),
+    });
+  } catch (error) {
+    caughtMessage = error instanceof Error ? error.message : String(error);
+  }
+
+  assertStringIncludes(caughtMessage, "Gemini landing trial failed (429)");
+  assertStringIncludes(caughtMessage, "status=RESOURCE_EXHAUSTED");
+  assertStringIncludes(caughtMessage, "code=429");
+  assertStringIncludes(caughtMessage, "request_id=goog_req_999");
+  assertEquals(caughtMessage.includes("secret-like text"), false);
 });
