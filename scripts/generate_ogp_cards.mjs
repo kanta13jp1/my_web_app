@@ -452,10 +452,11 @@ async function renderWithChromeCli(chromeBin, htmlDir, outDir, manifest, cardsWi
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
       const winW = card.width + 200;
       const winH = card.height + 170;
+      const isCi = process.env.CI === "true" || process.env.CI === "1";
       execFileSync(chromeBin, [
         "--headless=new",
         "--disable-gpu",
-        "--no-sandbox",
+        ...(isCi ? ["--no-sandbox"] : []),
         "--hide-scrollbars",
         `--user-data-dir=${profileDir}`,
         `--window-size=${winW},${winH}`,
@@ -513,9 +514,14 @@ async function renderWithPlaywright(repoRoot, outDir, manifest, cardsWithArt, ch
     );
   }
 
+  const isCi = process.env.CI === "true" || process.env.CI === "1";
   const executablePath = detectChromeExecutable(chromeBin);
   const launchOptions = executablePath
-    ? { executablePath, headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
+    ? {
+        executablePath,
+        headless: true,
+        args: isCi ? ["--no-sandbox", "--disable-dev-shm-usage"] : [],
+      }
     : { headless: true };
   if (executablePath) {
     console.log(`Using system Chrome executable: ${executablePath}`);
