@@ -98,7 +98,7 @@ function diagnostics() {
   if (!scene) return;
   const m = scene.diagnostics();
   $("metrics").textContent =
-    `Three.js 0.186.0 / DPR ${m.dpr} / 最大三角形 ${m.peakTriangles} / 最大描画回数 ${m.peakDrawCalls} / 粒子 ${m.particles}`;
+    `Three.js 0.187.0 / DPR ${m.dpr} / 最大三角形 ${m.peakTriangles} / 最大描画回数 ${m.peakDrawCalls} / 粒子 ${m.particles}`;
 }
 function draw(events = [], now = performance.now()) {
   try {
