@@ -546,6 +546,21 @@ serve(async (req) => {
     const failedPrefectureFetches = prefectureResults
       .filter((item) => item.fetchStatus === "failed")
       .map((item) => item.prefecture);
+    const expectedMembersByPrefecture = new Map(
+      prefectureDirectoryEntries.map((entry) => [
+        entry.prefecture,
+        entry.expectedMembers ?? null,
+      ]),
+    );
+    const emptyExpectedPrefectures = prefectureResults
+      .filter((item) => {
+        const expected = expectedMembersByPrefecture.get(item.prefecture);
+        return item.fetchStatus === "success" &&
+          item.currentMembers === 0 &&
+          expected != null &&
+          expected > 0;
+      })
+      .map((item) => item.prefecture);
     const officialCurrentLocalMembers = members.length;
     const linkedPrefectureCount = prefectureDirectoryEntries.filter((item) =>
       item.sourceUrl !== ""
@@ -556,6 +571,9 @@ serve(async (req) => {
     const memberCollectionQualityIssues = [
       ...(failedPrefectureFetches.length > 0
         ? [`prefecture_fetch_failed:${failedPrefectureFetches.join(",")}`]
+        : []),
+      ...(emptyExpectedPrefectures.length > 0
+        ? [`prefecture_members_parsed_zero:${emptyExpectedPrefectures.join(",")}`]
         : []),
       ...(linkedPrefectureCount < 10
         ? [`member_directory_links_too_low:${linkedPrefectureCount}`]
