@@ -133,7 +133,8 @@ class AssetLateFeeService {
 
   /// ワークブック内の遅延発生行を集計して残高加算影響を含むサマリを返す。
   static AssetLateFeeSummary summarizeWorkbook(
-      AssetLiabilityWorkbook workbook) {
+    AssetLiabilityWorkbook workbook,
+  ) {
     final items = <AssetLateFeeItem>[];
     var totalLateFee = 0.0;
 
