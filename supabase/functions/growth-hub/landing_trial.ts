@@ -5,6 +5,18 @@ export const DEFAULT_LANDING_TRIAL_MODEL = "gpt-4o-mini";
 export const DEFAULT_LANDING_TRIAL_GEMINI_MODEL = "gemini-2.5-flash";
 export const LANDING_TRIAL_GEMINI_MAX_OUTPUT_TOKENS = 512;
 
+export type LandingTrialPrimaryProvider = "gemini" | "openai";
+export const DEFAULT_LANDING_TRIAL_PRIMARY_PROVIDER:
+  LandingTrialPrimaryProvider = "gemini";
+
+export function resolveLandingTrialPrimaryProvider(
+  value?: string | null,
+): LandingTrialPrimaryProvider {
+  const normalized = value?.trim().toLowerCase();
+  if (normalized === "openai") return "openai";
+  return DEFAULT_LANDING_TRIAL_PRIMARY_PROVIDER;
+}
+
 export class LandingTrialInputError extends Error {}
 
 export type LandingTrialSuggestion = {
@@ -498,6 +510,7 @@ export async function generateLandingTrialSuggestionWithFallback(args: {
   prompt: string;
   openAiModel?: string;
   geminiModel?: string;
+  primaryProvider?: LandingTrialPrimaryProvider;
   fetchImpl?: FetchLike;
   onPrimaryFailure?: (detail: string) => void;
 }): Promise<LandingTrialSuggestion> {
@@ -505,40 +518,59 @@ export async function generateLandingTrialSuggestionWithFallback(args: {
   const geminiKey = args.geminiApiKey?.trim() ?? "";
   const resolvedOpenAiModel =
     args.openAiModel?.trim() || DEFAULT_LANDING_TRIAL_MODEL;
+  const primaryProvider = args.primaryProvider ??
+    DEFAULT_LANDING_TRIAL_PRIMARY_PROVIDER;
+  const order: LandingTrialPrimaryProvider[] =
+    primaryProvider === "openai"
+      ? ["openai", "gemini"]
+      : ["gemini", "openai"];
   const errors: string[] = [];
 
-  if (openAiKey) {
-    try {
-      const suggestion = await generateLandingTrialSuggestion({
-        apiKey: openAiKey,
-        prompt: args.prompt,
-        model: resolvedOpenAiModel,
-        fetchImpl: args.fetchImpl,
-      });
-      return {
-        ...suggestion,
-        provider: "openai",
-        model: resolvedOpenAiModel,
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      errors.push(message);
-      if (geminiKey) {
-        args.onPrimaryFailure?.(message);
-      }
-    }
-  }
+  for (let index = 0; index < order.length; index += 1) {
+    const provider = order[index];
+    const hasFallbackRemaining = order
+      .slice(index + 1)
+      .some((next) =>
+        next === "openai" ? Boolean(openAiKey) : Boolean(geminiKey)
+      );
 
-  if (geminiKey) {
-    try {
-      return await generateLandingTrialSuggestionWithGemini({
-        apiKey: geminiKey,
-        prompt: args.prompt,
-        model: args.geminiModel,
-        fetchImpl: args.fetchImpl,
-      });
-    } catch (error) {
-      errors.push(error instanceof Error ? error.message : String(error));
+    if (provider === "openai") {
+      if (!openAiKey) continue;
+      try {
+        const suggestion = await generateLandingTrialSuggestion({
+          apiKey: openAiKey,
+          prompt: args.prompt,
+          model: resolvedOpenAiModel,
+          fetchImpl: args.fetchImpl,
+        });
+        return {
+          ...suggestion,
+          provider: "openai",
+          model: resolvedOpenAiModel,
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        errors.push(message);
+        if (hasFallbackRemaining) {
+          args.onPrimaryFailure?.(message);
+        }
+      }
+    } else {
+      if (!geminiKey) continue;
+      try {
+        return await generateLandingTrialSuggestionWithGemini({
+          apiKey: geminiKey,
+          prompt: args.prompt,
+          model: args.geminiModel,
+          fetchImpl: args.fetchImpl,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        errors.push(message);
+        if (hasFallbackRemaining) {
+          args.onPrimaryFailure?.(message);
+        }
+      }
     }
   }
 

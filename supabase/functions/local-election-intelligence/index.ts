@@ -17,8 +17,7 @@ import {
 } from "./snapshot_history.ts";
 import { normalizeCdpBenchmark } from "./party_gap_ranking.ts";
 import {
-  KOMEITO_MEMBER_PAGE_URL,
-  parseKomeitoMemberSummaryHtml,
+  fetchKomeitoMemberSnapshot,
   persistKomeitoSnapshot,
 } from "./komeito_tracker.ts";
 import {
@@ -537,17 +536,7 @@ serve(async (req) => {
       if (parsedRequest.action === "komeitoSnapshotAndQueue") {
         requireServiceRole(req);
       }
-      const html = await fetchText(KOMEITO_MEMBER_PAGE_URL);
-      const komeitoSnapshot = parseKomeitoMemberSummaryHtml(
-        html,
-        KOMEITO_MEMBER_PAGE_URL,
-      );
-      if (!komeitoSnapshot) {
-        throw new HttpError(
-          503,
-          "Komeito official member summary could not be parsed.",
-        );
-      }
+      const komeitoSnapshot = await fetchKomeitoMemberSnapshot(fetchText);
       const komeitoPersistence =
         parsedRequest.action === "komeitoSnapshotAndQueue"
           ? await persistKomeitoSnapshot(
