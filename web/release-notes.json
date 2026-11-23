@@ -1,17 +1,17 @@
 {
   "current": {
-    "build": "0",
+    "build": "1",
     "category": "release",
     "date": "2026-11-23",
     "links": [
       {
-        "title": "GitHub Release v0.0.0",
+        "title": "GitHub Release v1.0.0",
         "type": "release",
-        "url": "https://github.com/kanta13jp1/my_web_app/releases/tag/v0.0.0"
+        "url": "https://github.com/kanta13jp1/my_web_app/releases/tag/v1.0.0"
       }
     ],
-    "summary": "Release 0.0.0",
-    "version": "0.0.0"
+    "summary": "Release 1.0.0",
+    "version": "1.0.0"
   },
   "generatedAt": "2026-11-23T00:00:00Z",
   "schemaVersion": 1,
@@ -22,13 +22,26 @@
   },
   "versions": [
     {
-      "build": "0",
+      "build": "1",
       "category": "release",
       "changeCategories": [
         "feature",
         "fix"
       ],
       "changes": [
+        {
+          "category": "feature",
+          "id": "pr-6260",
+          "links": [
+            {
+              "title": "PR #6260",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/6260"
+            }
+          ],
+          "mergedAt": "2026-11-23T23:03:48Z",
+          "summary": "#6260 feat(セキュリティ): AI入出力のPII・有害性ガードレールと違反監査ログ・Flutter警告UIを統合"
+        },
         {
           "category": "feature",
           "id": "pr-6259",
@@ -405,34 +418,25 @@
           ],
           "mergedAt": "2026-11-23T11:33:51Z",
           "summary": "#6227 feat(local-election): 公明党トラッカーに47都道府県別ライブ差分検知を追加 (#4026)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-6226",
-          "links": [
-            {
-              "title": "PR #6226",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/6226"
-            }
-          ],
-          "mergedAt": "2026-11-23T11:24:08Z",
-          "summary": "#6226 perf(growth): landing.trialの既定プロバイダーをGemini第1優先に変更しOpenAI 429待機を解消"
         }
       ],
       "date": "2026-11-23",
       "extensions": {
-        "aiToolWatch": null
+        "aiToolWatch": {
+          "changedSourceCount": 5,
+          "signalCount": 0,
+          "source": "docs/ai-tool-watch/latest-report.json"
+        }
       },
       "links": [
         {
-          "title": "GitHub Release v0.0.0",
+          "title": "GitHub Release v1.0.0",
           "type": "release",
-          "url": "https://github.com/kanta13jp1/my_web_app/releases/tag/v0.0.0"
+          "url": "https://github.com/kanta13jp1/my_web_app/releases/tag/v1.0.0"
         }
       ],
-      "summary": "Release 0.0.0",
-      "version": "0.0.0"
+      "summary": "Release 1.0.0",
+      "version": "1.0.0"
     }
   ]
 }
