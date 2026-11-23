@@ -120,6 +120,7 @@ void main() {
           'アコム': -200000,
         },
         baseDate: DateTime(2026, 6, 15),
+        paymentDayOverrides: const <String, int>{'アコム': 27},
         includeDefaultFixedPayments: true,
         salaryDay: 25,
       );
