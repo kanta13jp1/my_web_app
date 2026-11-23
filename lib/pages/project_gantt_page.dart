@@ -1325,6 +1325,17 @@ class _WbsTab extends StatelessWidget {
       now: now,
     );
     final blockerItems = ProjectGanttFocusViewService.buildBlockerItems(tasks);
+    final ownerGroups = ProjectGanttFocusViewService.buildOwnerGroups(
+      tasks,
+      now: now,
+    );
+    final dashboardSummary =
+        ProjectGanttFocusViewService.buildProgressDashboard(
+      tasks,
+      now: now,
+    );
+    final techDebtItems =
+        ProjectGanttFocusViewService.buildTechDebtItems(tasks);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
@@ -1343,6 +1354,9 @@ class _WbsTab extends StatelessWidget {
           sprintCount: sprintData.activeTasks.length,
           milestoneCount: milestoneGroups.length,
           blockerCount: blockerItems.length,
+          ownerCount: ownerGroups.length,
+          dashboardCount: tasks.length,
+          techDebtCount: techDebtItems.length,
         ),
         const SizedBox(height: 16),
 
@@ -1352,6 +1366,12 @@ class _WbsTab extends StatelessWidget {
           ProjectGanttMilestoneView(groups: milestoneGroups),
         ] else if (focusView == ProjectGanttFocusView.blocker) ...[
           ProjectGanttBlockerView(items: blockerItems),
+        ] else if (focusView == ProjectGanttFocusView.owner) ...[
+          ProjectGanttOwnerView(groups: ownerGroups),
+        ] else if (focusView == ProjectGanttFocusView.dashboard) ...[
+          ProjectGanttProgressDashboardView(summary: dashboardSummary),
+        ] else if (focusView == ProjectGanttFocusView.techDebt) ...[
+          ProjectGanttTechDebtView(items: techDebtItems),
         ] else ...[
           // ── マイルストーン ─────────────────────────────────────────────────
           const _SectionHeader(
