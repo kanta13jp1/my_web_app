@@ -17,16 +17,43 @@ import {
 } from "./snapshot_history.ts";
 
 export const KOMEITO_MEMBER_PAGE_URL = "https://www.komei.or.jp/member/";
+export const KOMEITO_SHUGIIN_RESULT_URL =
+  "https://www.komei.or.jp/member/result/kokai:1/";
+export const KOMEITO_SANGIIN_RESULT_URL =
+  "https://www.komei.or.jp/member/result/kokai:2/";
+export const KOMEITO_EXPECTED_PREFECTURES = 47;
+export const KOMEITO_MINIMUM_LIVE_TOTAL = 2000;
 export const KOMEITO_DATASET = "komeito_local_members";
 export const KOMEITO_DATASET_SOURCE = "local-election-intelligence";
 export const KOMEITO_TRACKER_VARIANT = "komeito_member_tracker";
-export const KOMEITO_SNAPSHOT_SCHEMA_VERSION = 1;
+export const KOMEITO_SNAPSHOT_SCHEMA_VERSION = 2;
 
 export interface KomeitoGenderBreakdown {
   male: number;
   female: number;
   total: number;
   recommended: number;
+}
+
+export interface KomeitoPrefectureDirectoryEntry {
+  code: string;
+  prefecture: string;
+  sourceUrl: string;
+}
+
+export interface KomeitoPrefectureLiveTally {
+  code: string;
+  prefecture: string;
+  sourceUrl: string;
+  totalMembers: number;
+}
+
+export interface KomeitoLiveDirectorySummary {
+  totalMembers: number;
+  houseOfRepresentatives: number;
+  houseOfCouncillors: number;
+  estimatedLocalMembers: number;
+  prefectures: KomeitoPrefectureLiveTally[];
 }
 
 export interface KomeitoMemberSnapshot {
@@ -48,6 +75,7 @@ export interface KomeitoMemberSnapshot {
     townVillage: KomeitoGenderBreakdown;
     subtotal: KomeitoGenderBreakdown;
   };
+  liveDirectory?: KomeitoLiveDirectorySummary;
 }
 
 export interface KomeitoTierDelta {
@@ -57,15 +85,28 @@ export interface KomeitoTierDelta {
   delta: number;
 }
 
+export interface KomeitoPrefectureDelta {
+  code: string;
+  prefecture: string;
+  before: number;
+  after: number;
+  delta: number;
+}
+
 export interface KomeitoSnapshotDiff {
   hasChanges: boolean;
+  summaryChanged: boolean;
+  liveDirectoryChanged: boolean;
   asOfDateChanged: boolean;
   totalDelta: number;
   localTotalDelta: number;
   nationalTotalDelta: number;
   localFemaleDelta: number;
   recommendedDelta: number;
+  liveTotalDelta: number;
+  liveEstimatedLocalDelta: number;
   tierDeltas: KomeitoTierDelta[];
+  prefectureDeltas: KomeitoPrefectureDelta[];
 }
 
 export interface PersistKomeitoSnapshotResult {
@@ -284,6 +325,163 @@ export function parseKomeitoMemberSummaryHtml(
   };
 }
 
+export function parseKomeitoPrefectureDirectory(
+  rootHtml: string,
+): KomeitoPrefectureDirectoryEntry[] {
+  const selectMatch = rootHtml.match(
+    /<select\b[^>]*name=["']data\[Member\]\[pref\]["'][^>]*>([\s\S]*?)<\/select>/i,
+  );
+  if (!selectMatch?.[1]) return [];
+  const entries: KomeitoPrefectureDirectoryEntry[] = [];
+  const seenCodes = new Set<string>();
+  const optionRe = /<option\b[^>]*value=["'](\d{2})["'][^>]*>([\s\S]*?)<\/option>/gi;
+  for (const match of selectMatch[1].matchAll(optionRe)) {
+    const code = (match[1] ?? "").trim();
+    const prefecture = normalizeCellText(match[2] ?? "");
+    if (!code || !prefecture || seenCodes.has(code)) continue;
+    seenCodes.add(code);
+    entries.push({
+      code,
+      prefecture,
+      sourceUrl: `https://www.komei.or.jp/member/result/pref:${code}/`,
+    });
+  }
+  if (entries.length !== KOMEITO_EXPECTED_PREFECTURES) {
+    return [];
+  }
+  return entries;
+}
+
+export function parseKomeitoSearchResultCount(resultHtml: string): number | null {
+  const match = resultHtml.match(
+    /検索結果\s*(?:<em\b[^>]*>)?\s*([0-9０-９,]+)\s*人/i,
+  );
+  if (!match?.[1]) return null;
+  const asciiDigits = toAsciiDigits(match[1]);
+  return parseIntegerWithComma(asciiDigits);
+}
+
+export function buildKomeitoLiveDirectorySummary(
+  tallies: readonly KomeitoPrefectureLiveTally[],
+  houseOfRepresentatives: number,
+  houseOfCouncillors: number,
+): KomeitoLiveDirectorySummary | null {
+  if (tallies.length !== KOMEITO_EXPECTED_PREFECTURES) return null;
+  if (
+    !Number.isSafeInteger(houseOfRepresentatives) ||
+    houseOfRepresentatives < 0 ||
+    !Number.isSafeInteger(houseOfCouncillors) ||
+    houseOfCouncillors < 0
+  ) {
+    return null;
+  }
+  const seen = new Set<string>();
+  let totalMembers = 0;
+  for (const item of tallies) {
+    if (seen.has(item.code)) return null;
+    if (!Number.isSafeInteger(item.totalMembers) || item.totalMembers < 0) {
+      return null;
+    }
+    seen.add(item.code);
+    totalMembers += item.totalMembers;
+  }
+  if (totalMembers < KOMEITO_MINIMUM_LIVE_TOTAL) return null;
+  const estimatedLocalMembers = totalMembers - houseOfRepresentatives -
+    houseOfCouncillors;
+  if (estimatedLocalMembers < 1500) return null;
+
+  return {
+    totalMembers,
+    houseOfRepresentatives,
+    houseOfCouncillors,
+    estimatedLocalMembers,
+    prefectures: tallies.map((item) => ({ ...item })),
+  };
+}
+
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  limit: number,
+  worker: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  async function runWorker(): Promise<void> {
+    while (nextIndex < items.length) {
+      const idx = nextIndex;
+      nextIndex += 1;
+      results[idx] = await worker(items[idx]);
+    }
+  }
+  const workerCount = Math.max(1, Math.min(limit, items.length));
+  await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
+  return results;
+}
+
+export async function fetchKomeitoMemberSnapshot(
+  fetchTextFn: (url: string) => Promise<string>,
+): Promise<KomeitoMemberSnapshot> {
+  const rootHtml = await fetchTextFn(KOMEITO_MEMBER_PAGE_URL);
+  const summary = parseKomeitoMemberSummaryHtml(
+    rootHtml,
+    KOMEITO_MEMBER_PAGE_URL,
+  );
+  if (!summary) {
+    throw new Error("Komeito official member summary could not be parsed.");
+  }
+
+  const directory = parseKomeitoPrefectureDirectory(rootHtml);
+  if (directory.length !== KOMEITO_EXPECTED_PREFECTURES) {
+    throw new Error(
+      `Komeito prefecture directory invalid (${directory.length} entries).`,
+    );
+  }
+
+  const [shugiinHtml, sangiinHtml] = await Promise.all([
+    fetchTextFn(KOMEITO_SHUGIIN_RESULT_URL),
+    fetchTextFn(KOMEITO_SANGIIN_RESULT_URL),
+  ]);
+  const shugiinCount = parseKomeitoSearchResultCount(shugiinHtml);
+  const sangiinCount = parseKomeitoSearchResultCount(sangiinHtml);
+  if (shugiinCount === null || sangiinCount === null) {
+    throw new Error("Komeito Diet result counts could not be parsed.");
+  }
+
+  const tallies = await mapWithConcurrency(
+    directory,
+    8,
+    async (entry): Promise<KomeitoPrefectureLiveTally> => {
+      const pageHtml = await fetchTextFn(entry.sourceUrl);
+      const count = parseKomeitoSearchResultCount(pageHtml);
+      if (count === null) {
+        throw new Error(
+          `Komeito prefecture count could not be parsed for ${entry.prefecture} (${entry.code}).`,
+        );
+      }
+      return {
+        code: entry.code,
+        prefecture: entry.prefecture,
+        sourceUrl: entry.sourceUrl,
+        totalMembers: count,
+      };
+    },
+  );
+
+  const liveDirectory = buildKomeitoLiveDirectorySummary(
+    tallies,
+    shugiinCount,
+    sangiinCount,
+  );
+  if (!liveDirectory) {
+    throw new Error("Komeito live directory summary failed integrity checks.");
+  }
+
+  return {
+    ...summary,
+    liveDirectory,
+  };
+}
+
 export async function hashKomeitoSnapshot(
   snapshot: KomeitoMemberSnapshot,
 ): Promise<string> {
@@ -334,17 +532,69 @@ export function computeKomeitoDiff(
     previous.local.subtotal.female;
   const recommendedDelta = current.recommendedCount - previous.recommendedCount;
 
-  const hasChanges = stableStringify(previous) !== stableStringify(current);
+  const summaryProjection = (s: KomeitoMemberSnapshot) => ({
+    sourceUrl: s.sourceUrl,
+    asOfDate: s.asOfDate,
+    asOfLabel: s.asOfLabel,
+    totalMembers: s.totalMembers,
+    recommendedCount: s.recommendedCount,
+    national: s.national,
+    local: s.local,
+  });
+  const summaryChanged = stableStringify(summaryProjection(previous)) !==
+    stableStringify(summaryProjection(current));
+
+  const hasBothLiveDirectories = previous.liveDirectory != null &&
+    current.liveDirectory != null;
+  let prefectureDeltas: KomeitoPrefectureDelta[] = [];
+  let liveTotalDelta = 0;
+  let liveEstimatedLocalDelta = 0;
+  let liveDirectoryChanged = false;
+
+  if (hasBothLiveDirectories) {
+    const prevLive = previous.liveDirectory!;
+    const currLive = current.liveDirectory!;
+    liveDirectoryChanged = stableStringify(prevLive) !==
+      stableStringify(currLive);
+    liveTotalDelta = currLive.totalMembers - prevLive.totalMembers;
+    liveEstimatedLocalDelta = currLive.estimatedLocalMembers -
+      prevLive.estimatedLocalMembers;
+    const prevByCode = new Map(
+      prevLive.prefectures.map((p) => [p.code, p.totalMembers]),
+    );
+    prefectureDeltas = currLive.prefectures
+      .map((p) => {
+        const before = prevByCode.get(p.code) ?? 0;
+        return {
+          code: p.code,
+          prefecture: p.prefecture,
+          before,
+          after: p.totalMembers,
+          delta: p.totalMembers - before,
+        };
+      })
+      .filter((d) => d.delta !== 0)
+      .sort((a, b) =>
+        Math.abs(b.delta) - Math.abs(a.delta) || a.code.localeCompare(b.code)
+      );
+  }
+
+  const hasChanges = summaryChanged || liveDirectoryChanged;
 
   return {
     hasChanges,
+    summaryChanged,
+    liveDirectoryChanged,
     asOfDateChanged,
     totalDelta,
     localTotalDelta,
     nationalTotalDelta,
     localFemaleDelta,
     recommendedDelta,
+    liveTotalDelta,
+    liveEstimatedLocalDelta,
     tierDeltas,
+    prefectureDeltas,
   };
 }
 
@@ -378,19 +628,40 @@ export function buildKomeitoTrackerCandidateMetadata(
       `・地方議員内訳: 都道府県会 ${formatCount(current.local.prefectural.total)}人 / 政令市会 ${formatCount(current.local.designatedCity.total)}人 / 一般市会 ${formatCount(current.local.generalCity.total)}人`,
     ];
 
-  const lead = [
+  const prefLeadLines = diff.prefectureDeltas.slice(0, 5).map((item) =>
+    `・${item.prefecture}: ${formatCount(item.before)}→${formatCount(item.after)}人 (${signed(item.delta)})`
+  );
+
+  const leadLines = [
     `公明党 地方議員データ更新（${current.asOfLabel}）`,
     "",
     `取得日時: ${options.observedAt}`,
-    `地方議員数: ${formatCount(prevLocal)}→${formatCount(currLocal)}人 (${signed(diff.localTotalDelta)})`,
-    `所属議員総数: ${formatCount(previous.totalMembers)}→${formatCount(current.totalMembers)}人 (${signed(diff.totalDelta)} / 国会議員 ${formatCount(current.national.subtotal.total)}人・推薦 ${formatCount(current.recommendedCount)}人)`,
-    `地方議員の女性比率: ${femalePct}%（女性 ${formatCount(current.local.subtotal.female)}人 / 男性 ${formatCount(current.local.subtotal.male)}人）`,
+  ];
+  if (diff.summaryChanged || diff.localTotalDelta !== 0 || diff.totalDelta !== 0) {
+    leadLines.push(
+      `地方議員数: ${formatCount(prevLocal)}→${formatCount(currLocal)}人 (${signed(diff.localTotalDelta)})`,
+      `所属議員総数: ${formatCount(previous.totalMembers)}→${formatCount(current.totalMembers)}人 (${signed(diff.totalDelta)} / 国会議員 ${formatCount(current.national.subtotal.total)}人・推薦 ${formatCount(current.recommendedCount)}人)`,
+      `地方議員の女性比率: ${femalePct}%（女性 ${formatCount(current.local.subtotal.female)}人 / 男性 ${formatCount(current.local.subtotal.male)}人）`,
+      "",
+      "変化のあった議会区分:",
+      ...tierLines,
+    );
+  }
+  if (
+    diff.liveDirectoryChanged && previous.liveDirectory && current.liveDirectory
+  ) {
+    leadLines.push(
+      `ライブ名簿総数(47県): ${formatCount(previous.liveDirectory.totalMembers)}→${formatCount(current.liveDirectory.totalMembers)}人 (${signed(diff.liveTotalDelta)} / 推計地方 ${formatCount(current.liveDirectory.estimatedLocalMembers)}人 ${signed(diff.liveEstimatedLocalDelta)})`,
+    );
+    if (prefLeadLines.length > 0) {
+      leadLines.push("", "変化のあった都道府県:", ...prefLeadLines);
+    }
+  }
+  leadLines.push(
     "",
-    "変化のあった議会区分:",
-    ...tierLines,
-    "",
-    "数字は公明党公式サイト掲載の所属議員集計から自動取得した実測値です。",
-  ].join("\n");
+    "数字は公明党公式サイト掲載の所属議員集計・県別検索から自動取得した実測値です。",
+  );
+  const lead = leadLines.join("\n");
 
   const recommendedNote = (value: number): string =>
     value > 0 ? `（推薦${value}）` : "";
@@ -405,11 +676,27 @@ export function buildKomeitoTrackerCandidateMetadata(
     `国会議員小計: ${formatCount(current.national.subtotal.total)}人（衆 ${current.national.houseOfRepresentatives.total} / 参 ${current.national.houseOfCouncillors.total}）`,
   ];
 
-  const reply1 = [
-    `公明党 所属議員 議会別内訳（${current.asOfLabel}）`,
+  const reply1Lines = [
+    `公明党 所属議員 議会別・県別内訳（${current.asOfLabel}）`,
     "",
     ...tierBreakdownLines,
-  ].join("\n");
+  ];
+  if (current.liveDirectory) {
+    reply1Lines.push(
+      "",
+      `ライブ名簿47県合計: ${formatCount(current.liveDirectory.totalMembers)}人（衆 ${current.liveDirectory.houseOfRepresentatives} / 参 ${current.liveDirectory.houseOfCouncillors} / 地方推計 ${formatCount(current.liveDirectory.estimatedLocalMembers)}人）`,
+    );
+  }
+  if (diff.prefectureDeltas.length > 0) {
+    reply1Lines.push(
+      "",
+      "都道府県別差分:",
+      ...diff.prefectureDeltas.slice(0, 15).map((item) =>
+        `・${item.prefecture}: ${formatCount(item.before)}→${formatCount(item.after)}人 (${signed(item.delta)})`
+      ),
+    );
+  }
+  const reply1 = reply1Lines.join("\n");
 
   const targetUrl = options.targetUrl ??
     "https://my-web-app-b67f4.web.app/local-election-700?utm_source=x&utm_medium=data_report&utm_campaign=first_user_growth&utm_content=komeito_member_tracker";
@@ -481,6 +768,60 @@ function asBreakdown(value: unknown): KomeitoGenderBreakdown | null {
   };
 }
 
+function parseKomeitoLiveDirectoryRecord(
+  value: unknown,
+): KomeitoLiveDirectorySummary | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+  const r = value as JsonRecord;
+  if (
+    typeof r.totalMembers !== "number" ||
+    !Number.isFinite(r.totalMembers) ||
+    typeof r.houseOfRepresentatives !== "number" ||
+    !Number.isFinite(r.houseOfRepresentatives) ||
+    typeof r.houseOfCouncillors !== "number" ||
+    !Number.isFinite(r.houseOfCouncillors) ||
+    typeof r.estimatedLocalMembers !== "number" ||
+    !Number.isFinite(r.estimatedLocalMembers) ||
+    !Array.isArray(r.prefectures) ||
+    r.prefectures.length === 0
+  ) {
+    return undefined;
+  }
+
+  const prefectures: KomeitoPrefectureLiveTally[] = [];
+  for (const item of r.prefectures) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      return undefined;
+    }
+    const p = item as JsonRecord;
+    if (
+      typeof p.code !== "string" ||
+      typeof p.prefecture !== "string" ||
+      typeof p.sourceUrl !== "string" ||
+      typeof p.totalMembers !== "number" ||
+      !Number.isFinite(p.totalMembers)
+    ) {
+      return undefined;
+    }
+    prefectures.push({
+      code: p.code,
+      prefecture: p.prefecture,
+      sourceUrl: p.sourceUrl,
+      totalMembers: p.totalMembers,
+    });
+  }
+
+  return {
+    totalMembers: r.totalMembers,
+    houseOfRepresentatives: r.houseOfRepresentatives,
+    houseOfCouncillors: r.houseOfCouncillors,
+    estimatedLocalMembers: r.estimatedLocalMembers,
+    prefectures,
+  };
+}
+
 function parseKomeitoSnapshotRecord(
   value: unknown,
 ): KomeitoMemberSnapshot | null {
@@ -510,6 +851,8 @@ function parseKomeitoSnapshotRecord(
     return null;
   }
 
+  const liveDirectory = parseKomeitoLiveDirectoryRecord(r.liveDirectory);
+
   return {
     sourceUrl: r.sourceUrl,
     asOfDate: r.asOfDate,
@@ -531,6 +874,7 @@ function parseKomeitoSnapshotRecord(
       townVillage,
       subtotal: localSubtotal,
     },
+    ...(liveDirectory ? { liveDirectory } : {}),
   };
 }
 
