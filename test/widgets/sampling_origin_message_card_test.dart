@@ -81,7 +81,9 @@ void main() {
               meetsGuideline(androidTapTargetGuideline),
             );
             await expectLater(
-                tester, meetsGuideline(labeledTapTargetGuideline));
+              tester,
+              meetsGuideline(labeledTapTargetGuideline),
+            );
             expect(tester.takeException(), isNull);
           }
         }

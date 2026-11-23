@@ -44,7 +44,7 @@ class AiInputDeduplicationService {
   final List<AiDeduplicationLogEntry> _logs = <AiDeduplicationLogEntry>[];
 
   AiInputDeduplicationService({GZipEncoder? encoder})
-      : _encoder = encoder ?? GZipEncoder();
+      : _encoder = encoder ?? const GZipEncoder();
 
   List<AiDeduplicationLogEntry> get logs =>
       List<AiDeduplicationLogEntry>.unmodifiable(_logs);
