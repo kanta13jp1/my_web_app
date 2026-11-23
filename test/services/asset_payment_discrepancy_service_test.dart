@@ -6,6 +6,7 @@ void main() {
   AssetLiabilityDebtRow buildRow({
     required String id,
     required String name,
+    double minimumPaymentEstimate = 10000,
     double scheduledPaymentAmount = 10000,
     double? actualPaymentAmount,
     String? paymentDifferenceReason,
@@ -29,7 +30,7 @@ void main() {
       billingAccountName: includedInBillingAccount ? '親カード' : null,
       includedInBillingAccount: includedInBillingAccount,
       annualRate: 0.145,
-      minimumPaymentEstimate: 10000,
+      minimumPaymentEstimate: minimumPaymentEstimate,
       manualPaymentAmount: scheduledPaymentAmount,
       scheduledPaymentAmount: scheduledPaymentAmount,
       actualPaymentAmount: actualPaymentAmount,
@@ -166,6 +167,68 @@ void main() {
         expect(items[2].differenceAmount, 500);
         expect(items[2].exceedsThreshold, isFalse);
         expect(items[2].missingReason, isTrue);
+      },
+    );
+
+    test(
+      'detectAllForInsight captures minimum-payment shortfall and infers reasons (#3393)',
+      () {
+        final workbook = buildWorkbook(<AssetLiabilityDebtRow>[
+          buildRow(
+            id: 'under_min',
+            name: '最低額不足カード',
+            scheduledPaymentAmount: 5000,
+            actualPaymentAmount: 5000,
+          ),
+          buildRow(
+            id: 'under_sched',
+            name: '予定不足ローン',
+            minimumPaymentEstimate: 5000,
+            scheduledPaymentAmount: 10000,
+            actualPaymentAmount: 7000,
+          ),
+          buildRow(
+            id: 'over_sched',
+            name: '過払いローン',
+            scheduledPaymentAmount: 10000,
+            actualPaymentAmount: 15000,
+            paymentDifferenceReason: '繰上返済',
+          ),
+          buildRow(
+            id: 'exact_match',
+            name: '完全一致ローン',
+            scheduledPaymentAmount: 10000,
+            actualPaymentAmount: 10000,
+          ),
+        ]);
+
+        final items = AssetPaymentDiscrepancyService.detectAllForInsight(
+          workbook,
+        );
+        expect(
+          items.map((e) => e.accountId).toList(),
+          <String>['under_min', 'over_sched', 'under_sched'],
+        );
+
+        expect(items[0].differenceAmount, 0);
+        expect(items[0].effectiveDifferenceForInsight, -5000);
+        expect(AssetPaymentDiscrepancyService.needsTopUp(items[0]), isTrue);
+        expect(
+          AssetPaymentDiscrepancyService.inferReasonHint(items[0]),
+          contains('推定最低支払額を下回る実支払'),
+        );
+
+        expect(AssetPaymentDiscrepancyService.needsTopUp(items[1]), isFalse);
+        expect(
+          AssetPaymentDiscrepancyService.inferReasonHint(items[1]),
+          contains('支払予定額より多い実支払'),
+        );
+
+        expect(AssetPaymentDiscrepancyService.needsTopUp(items[2]), isTrue);
+        expect(
+          AssetPaymentDiscrepancyService.inferReasonHint(items[2]),
+          contains('支払予定額より少ない実支払'),
+        );
       },
     );
   });
