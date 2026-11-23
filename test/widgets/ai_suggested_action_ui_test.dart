@@ -185,22 +185,29 @@ void main() {
           find.byKey(const Key('ai_action_audit_search_input')),
           '',
         );
-        await tester.tap(
-          find.byKey(const Key('ai_action_audit_deception_only_chip')),
+        await tester.pumpAndSettle();
+        final deceptionChip = find.byKey(
+          const Key('ai_action_audit_deception_only_chip'),
         );
+        await tester.ensureVisible(deceptionChip);
+        await tester.pumpAndSettle();
+        await tester.tap(deceptionChip);
         await tester.pumpAndSettle();
         expect(find.text('ラベル: 「お金を呼び込む決済ページ」'), findsOneWidget);
         expect(find.text('ラベル: 「次の章へ進む」'), findsNothing);
 
-        await tester.tap(
-          find.byKey(const Key('ai_action_audit_deception_only_chip')),
-        );
+        await tester.ensureVisible(deceptionChip);
+        await tester.pumpAndSettle();
+        await tester.tap(deceptionChip);
         await tester.pumpAndSettle();
 
         // Tap sandbox action to verify live logging updates event count 2 -> 3
-        await tester.tap(
-          find.byKey(const Key('ai_suggested_action_sandbox_narrative')),
+        final sandboxNarrative = find.byKey(
+          const Key('ai_suggested_action_sandbox_narrative'),
         );
+        await tester.ensureVisible(sandboxNarrative);
+        await tester.pumpAndSettle();
+        await tester.tap(sandboxNarrative);
         await tester.pumpAndSettle();
         expect(find.text('3 件'), findsOneWidget);
 
