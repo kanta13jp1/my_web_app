@@ -17,14 +17,18 @@ import {
 } from "./snapshot_history.ts";
 import { normalizeCdpBenchmark } from "./party_gap_ranking.ts";
 import {
-  KOMEITO_MEMBER_PAGE_URL,
-  parseKomeitoMemberSummaryHtml,
+  fetchKomeitoMemberSnapshot,
   persistKomeitoSnapshot,
 } from "./komeito_tracker.ts";
 import {
   fetchIshinMemberSnapshot,
   persistIshinSnapshot,
 } from "./ishin_tracker.ts";
+import {
+  parseReiwaMemberPageHtml,
+  persistReiwaSnapshot,
+  REIWA_MEMBER_PAGE_URL,
+} from "./reiwa_tracker.ts";
 import {
   buildElectionIntelligenceSnapshot,
   type ElectionModeId,
@@ -67,6 +71,7 @@ import {
   stripTags,
   toAsciiDigits,
 } from "./official_site_parsers.ts";
+import { generateJsonWithGeminiFirst } from "../_shared/gemini_json_client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -76,6 +81,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
@@ -496,11 +502,16 @@ interface IshinSnapshotRequest {
   action: "ishinSnapshot" | "ishinSnapshotAndQueue";
 }
 
+interface ReiwaSnapshotRequest {
+  action: "reiwaSnapshot" | "reiwaSnapshotAndQueue";
+}
+
 type ParsedRequest =
   | SnapshotRequest
   | MemberDetailRequest
   | KomeitoSnapshotRequest
-  | IshinSnapshotRequest;
+  | IshinSnapshotRequest
+  | ReiwaSnapshotRequest;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -527,17 +538,7 @@ serve(async (req) => {
       if (parsedRequest.action === "komeitoSnapshotAndQueue") {
         requireServiceRole(req);
       }
-      const html = await fetchText(KOMEITO_MEMBER_PAGE_URL);
-      const komeitoSnapshot = parseKomeitoMemberSummaryHtml(
-        html,
-        KOMEITO_MEMBER_PAGE_URL,
-      );
-      if (!komeitoSnapshot) {
-        throw new HttpError(
-          503,
-          "Komeito official member summary could not be parsed.",
-        );
-      }
+      const komeitoSnapshot = await fetchKomeitoMemberSnapshot(fetchText);
       const komeitoPersistence =
         parsedRequest.action === "komeitoSnapshotAndQueue"
           ? await persistKomeitoSnapshot(
@@ -607,6 +608,56 @@ serve(async (req) => {
               candidatesCreated: ishinPersistence.candidatesCreated,
               snapshotId: ishinPersistence.snapshotRow.id,
               candidateIds: ishinPersistence.candidateRows.map((row) => row.id),
+            },
+          }
+          : {}),
+      });
+    }
+    if (
+      parsedRequest.action === "reiwaSnapshot" ||
+      parsedRequest.action === "reiwaSnapshotAndQueue"
+    ) {
+      if (parsedRequest.action === "reiwaSnapshotAndQueue") {
+        requireServiceRole(req);
+      }
+      const html = await fetchText(REIWA_MEMBER_PAGE_URL);
+      const reiwaSnapshot = parseReiwaMemberPageHtml(
+        html,
+        REIWA_MEMBER_PAGE_URL,
+      );
+      if (!reiwaSnapshot) {
+        throw new HttpError(
+          503,
+          "Reiwa official member directory could not be parsed.",
+        );
+      }
+      const reiwaPersistence =
+        parsedRequest.action === "reiwaSnapshotAndQueue"
+          ? await persistReiwaSnapshot(
+            createLocalElectionHubStore(),
+            reiwaSnapshot,
+            new Date().toISOString(),
+          )
+          : null;
+      return jsonResponse({
+        success: true,
+        snapshot: reiwaSnapshot,
+        ...(reiwaPersistence
+          ? {
+            persistence: {
+              dataset: reiwaPersistence.dataset,
+              datasetVersion: reiwaPersistence.datasetVersion,
+              snapshotHash: reiwaPersistence.snapshotHash,
+              previousSnapshotId: reiwaPersistence.previousSnapshotId,
+              previousSnapshotHash: reiwaPersistence.previousSnapshotHash,
+              baselineCreated: reiwaPersistence.baselineCreated,
+              snapshotCreated: reiwaPersistence.snapshotCreated,
+              deduplicated: reiwaPersistence.deduplicated,
+              hasChanges: reiwaPersistence.hasChanges,
+              candidateCount: reiwaPersistence.candidateCount,
+              candidatesCreated: reiwaPersistence.candidatesCreated,
+              snapshotId: reiwaPersistence.snapshotRow.id,
+              candidateIds: reiwaPersistence.candidateRows.map((row) => row.id),
             },
           }
           : {}),
@@ -1042,6 +1093,18 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
   ) {
     return { action: "ishinSnapshotAndQueue" };
   }
+  if (
+    requestedAction === "reiwaSnapshot" ||
+    requestedAction === "reiwa_snapshot"
+  ) {
+    return { action: "reiwaSnapshot" };
+  }
+  if (
+    requestedAction === "reiwaSnapshotAndQueue" ||
+    requestedAction === "reiwa_snapshot_and_queue"
+  ) {
+    return { action: "reiwaSnapshotAndQueue" };
+  }
 
   if (req.method === "GET") {
     const url = new URL(req.url);
@@ -1057,6 +1120,12 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
       queryAction === "ishin_snapshot"
     ) {
       return { action: "ishinSnapshot" };
+    }
+    if (
+      queryAction === "reiwaSnapshot" ||
+      queryAction === "reiwa_snapshot"
+    ) {
+      return { action: "reiwaSnapshot" };
     }
     return {
       action: "snapshot",
@@ -2526,79 +2595,44 @@ async function buildAiAnalysis(snapshot: {
   members: LocalLegislatorProfile[];
   upcomingSchedules?: LocalElectionScheduleEntry[];
 }): Promise<AiAnalysis> {
-  if (OPENAI_API_KEY === "") {
-    return buildFallbackAnalysis(snapshot);
+  const fallback = buildFallbackAnalysis(snapshot);
+  const parsed = await generateJsonWithGeminiFirst({
+    systemPrompt:
+      "You analyze a Japanese local election dashboard. Reply in concise Japanese. Return JSON with keys summary, alerts, strategicNotes, scheduleSummary, scheduleAlerts.",
+    userPrompt: JSON.stringify({
+      officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
+      actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
+      official2023TotalWins: snapshot.official2023TotalWins,
+      topPrefectures: [...snapshot.prefectures].sort((a, b) =>
+        b.currentMembers - a.currentMembers
+      ).slice(0, 10),
+      topCdpGaps: [...snapshot.prefectures].sort((a, b) =>
+        (b.cdpLocalMembers - b.currentMembers) -
+        (a.cdpLocalMembers - a.currentMembers)
+      ).slice(0, 10),
+      rosterCount: snapshot.members.length,
+      upcomingSchedules: snapshot.upcomingSchedules?.slice(0, 10) ?? [],
+    }),
+    geminiApiKey: GEMINI_API_KEY,
+    openAiApiKey: OPENAI_API_KEY,
+    temperature: 0.2,
+    maxOutputTokens: 768,
+    timeoutMs: AI_ANALYSIS_TIMEOUT_MS,
+  });
+  if (!parsed) {
+    return fallback;
   }
-  const controller = new AbortController();
-  const timeoutId = setTimeout(
-    () => controller.abort(),
-    AI_ANALYSIS_TIMEOUT_MS,
-  );
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        temperature: 0.2,
-        max_tokens: 500,
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content:
-              "You analyze a Japanese local election dashboard. Reply in concise Japanese. Return JSON with keys summary, alerts, strategicNotes, scheduleSummary, scheduleAlerts.",
-          },
-          {
-            role: "user",
-            content: JSON.stringify({
-              officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
-              actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
-              official2023TotalWins: snapshot.official2023TotalWins,
-              topPrefectures: [...snapshot.prefectures].sort((a, b) =>
-                b.currentMembers - a.currentMembers
-              ).slice(0, 10),
-              topCdpGaps: [...snapshot.prefectures].sort((a, b) =>
-                (b.cdpLocalMembers - b.currentMembers) -
-                (a.cdpLocalMembers - a.currentMembers)
-              ).slice(0, 10),
-              rosterCount: snapshot.members.length,
-              upcomingSchedules: snapshot.upcomingSchedules?.slice(0, 10) ?? [],
-            }),
-          },
-        ],
-      }),
-    });
-    if (!response.ok) {
-      return buildFallbackAnalysis(snapshot);
-    }
-    const json = await response.json();
-    const content = json.choices?.[0]?.message?.content;
-    if (typeof content !== "string" || content.trim() === "") {
-      return buildFallbackAnalysis(snapshot);
-    }
-    const parsed = JSON.parse(content);
-    const fallback = buildFallbackAnalysis(snapshot);
-    const parsedScheduleAlerts = sanitizeLines(parsed.scheduleAlerts, 4);
-    return {
-      summary: sanitizeLine(parsed.summary) || fallback.summary,
-      alerts: sanitizeLines(parsed.alerts, 3),
-      strategicNotes: sanitizeLines(parsed.strategicNotes, 3),
-      scheduleSummary: sanitizeLine(parsed.scheduleSummary) ||
-        fallback.scheduleSummary,
-      scheduleAlerts: parsedScheduleAlerts.length > 0
-        ? parsedScheduleAlerts
-        : fallback.scheduleAlerts,
-    };
-  } catch {
-    return buildFallbackAnalysis(snapshot);
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  const parsedScheduleAlerts = sanitizeLines(parsed.scheduleAlerts, 4);
+  return {
+    summary: sanitizeLine(parsed.summary) || fallback.summary,
+    alerts: sanitizeLines(parsed.alerts, 3),
+    strategicNotes: sanitizeLines(parsed.strategicNotes, 3),
+    scheduleSummary: sanitizeLine(parsed.scheduleSummary) ||
+      fallback.scheduleSummary,
+    scheduleAlerts: parsedScheduleAlerts.length > 0
+      ? parsedScheduleAlerts
+      : fallback.scheduleAlerts,
+  };
 }
 
 function buildFallbackAnalysis(snapshot: {

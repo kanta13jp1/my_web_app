@@ -778,7 +778,7 @@ export interface JibunApiHandlerDeps {
   now?: () => Date;
 }
 
-function keyToSafeJson(row: ApiKeyRow): Record<string, unknown> {
+export function keyToSafeJson(row: ApiKeyRow): Record<string, unknown> {
   return {
     id: row.id,
     name: row.name,
@@ -791,7 +791,7 @@ function keyToSafeJson(row: ApiKeyRow): Record<string, unknown> {
   };
 }
 
-function workerToSafeJson(row: WorkerRow): Record<string, unknown> {
+export function workerToSafeJson(row: WorkerRow): Record<string, unknown> {
   return {
     id: row.id,
     name: row.name,
@@ -822,7 +822,7 @@ function webhookToSafeJson(row: WebhookRow): Record<string, unknown> {
 // Outbound webhook dispatch — fire-and-forget / best-effort.
 // 呼び出し側は await しない。Supabase Edge Functions では Response 返却後に
 // バックグラウンド Promise が完了するか保証されないが、MVP では best-effort とする。
-function fireWebhooks(
+export function fireWebhooks(
   store: JibunApiStore,
   userId: string,
   event: JibunApiWebhookEvent,
@@ -874,7 +874,7 @@ function clampLimit(raw: unknown, fallback: number, max: number): number {
   return Math.min(Math.max(Math.floor(value), 1), max);
 }
 
-function requestIp(req: Request): string | null {
+export function requestIp(req: Request): string | null {
   const forwarded = req.headers.get("x-forwarded-for") ?? "";
   const first = forwarded.split(",")[0]?.trim() ?? "";
   return parseInetOrNull(first);
@@ -883,7 +883,7 @@ function requestIp(req: Request): string | null {
 // Worker レスポンス body を最大 maxBytes バイトまでストリーム読みして打ち切る。
 // text() で全体をメモリに載せると悪意ある Worker が数百MB を返してメモリを
 // 枯渇させられるため、上限に達したらリーダーを cancel する。
-async function readBoundedBody(
+export async function readBoundedBody(
   response: Response,
   maxBytes: number,
 ): Promise<{ text: string; truncated: boolean }> {
@@ -1248,27 +1248,134 @@ interface ApiKeyContext {
   key: ApiKeyRow;
 }
 
+export type JibunMcpAuthResult =
+  | { ok: true; key: ApiKeyRow }
+  | {
+    ok: false;
+    status: 401 | 429;
+    error: string;
+    details?: Record<string, unknown>;
+  };
+
+async function verifyBearerKeyRow(
+  req: Request,
+  store: JibunApiStore,
+  now?: () => Date,
+): Promise<{ ok: true; key: ApiKeyRow } | { ok: false; error: string }> {
+  const header = req.headers.get("authorization") ?? "";
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  const bearer = match ? match[1].trim() : "";
+  if (bearer === "" || !bearer.startsWith(JIBUN_API_KEY_PREFIX)) {
+    return {
+      ok: false,
+      error: "Unauthorized: provide 'Authorization: Bearer jibun_sk_...'",
+    };
+  }
+  const keyHash = await sha256Hex(bearer);
+  const row = await store.findKeyByHash(keyHash);
+  if (!row) return { ok: false, error: "Unauthorized: unknown API key" };
+  if (row.revoked) return { ok: false, error: "Unauthorized: key revoked" };
+  if (row.expires_at !== null) {
+    const current = now ? now() : new Date();
+    if (new Date(row.expires_at).getTime() <= current.getTime()) {
+      return { ok: false, error: "Unauthorized: key expired" };
+    }
+  }
+  return { ok: true, key: row };
+}
+
+async function checkApiKeyRateLimit(
+  store: JibunApiStore,
+  keyId: string,
+  actionLabel: string,
+  now?: () => Date,
+): Promise<Record<string, unknown> | null> {
+  const current = now ? now() : new Date();
+  const minuteAgo = new Date(current.getTime() - 60_000).toISOString();
+  const dayAgo = new Date(current.getTime() - 86_400_000).toISOString();
+  const perMinute = await store.countAuditSince(keyId, minuteAgo);
+  if (perMinute >= API_RATE_LIMIT_PER_MINUTE) {
+    return {
+      error: "rate_limited",
+      limit: API_RATE_LIMIT_PER_MINUTE,
+      window_seconds: 60,
+    };
+  }
+  const perDay = await store.countAuditSince(keyId, dayAgo);
+  if (perDay >= API_RATE_LIMIT_PER_DAY) {
+    return {
+      error: "rate_limited",
+      limit: API_RATE_LIMIT_PER_DAY,
+      window_seconds: 86_400,
+    };
+  }
+  if (actionLabel === "api.workers.invoke") {
+    const invokesPerMinute = await store.countAuditSince(
+      keyId,
+      minuteAgo,
+      "api.workers.invoke",
+    );
+    if (invokesPerMinute >= WORKER_INVOKE_LIMIT_PER_MINUTE) {
+      return {
+        error: "rate_limited",
+        limit: WORKER_INVOKE_LIMIT_PER_MINUTE,
+        window_seconds: 60,
+        detail: "worker invocation limit",
+      };
+    }
+  } else if (actionLabel === "mcp.workers.invoke") {
+    const [mcpInvokes, apiInvokes] = await Promise.all([
+      store.countAuditSince(keyId, minuteAgo, "mcp.workers.invoke"),
+      store.countAuditSince(keyId, minuteAgo, "api.workers.invoke"),
+    ]);
+    if (mcpInvokes + apiInvokes >= WORKER_INVOKE_LIMIT_PER_MINUTE) {
+      return {
+        error: "rate_limited",
+        limit: WORKER_INVOKE_LIMIT_PER_MINUTE,
+        window_seconds: 60,
+        detail: "worker invocation limit",
+      };
+    }
+  }
+  return null;
+}
+
+export async function authenticateJibunApiBearerForMcp(
+  req: Request,
+  store: JibunApiStore,
+  actionLabel: string,
+  now?: () => Date,
+): Promise<JibunMcpAuthResult> {
+  const verified = await verifyBearerKeyRow(req, store, now);
+  if (!verified.ok) {
+    return { ok: false, status: 401, error: verified.error };
+  }
+  const limited = await checkApiKeyRateLimit(
+    store,
+    verified.key.id,
+    actionLabel,
+    now,
+  );
+  if (limited) {
+    const { error, ...details } = limited;
+    return {
+      ok: false,
+      status: 429,
+      error: String(error),
+      details,
+    };
+  }
+  return { ok: true, key: verified.key };
+}
+
 async function authenticateApiKey(
   deps: JibunApiHandlerDeps,
 ): Promise<ApiKeyContext | Response> {
-  const header = deps.req.headers.get("authorization") ?? "";
-  const bearer = header.replace(/^Bearer\s+/i, "").trim();
-  if (bearer === "" || !bearer.startsWith(JIBUN_API_KEY_PREFIX)) {
-    return json({
-      error: "Unauthorized: provide 'Authorization: Bearer jibun_sk_...'",
-    }, 401);
+  const verified = await verifyBearerKeyRow(deps.req, deps.store, deps.now);
+  if (!verified.ok) {
+    return json({ error: verified.error }, 401);
   }
-  const keyHash = await sha256Hex(bearer);
-  const row = await deps.store.findKeyByHash(keyHash);
-  if (!row) return json({ error: "Unauthorized: unknown API key" }, 401);
-  if (row.revoked) return json({ error: "Unauthorized: key revoked" }, 401);
-  if (row.expires_at !== null) {
-    const now = deps.now ? deps.now() : new Date();
-    if (new Date(row.expires_at).getTime() <= now.getTime()) {
-      return json({ error: "Unauthorized: key expired" }, 401);
-    }
-  }
-  return { key: row };
+  return { key: verified.key };
 }
 
 function requireApiScope(
@@ -1286,41 +1393,13 @@ async function checkRateLimit(
   deps: JibunApiHandlerDeps,
   ctx: ApiKeyContext,
 ): Promise<Response | null> {
-  const now = deps.now ? deps.now() : new Date();
-  const minuteAgo = new Date(now.getTime() - 60_000).toISOString();
-  const dayAgo = new Date(now.getTime() - 86_400_000).toISOString();
-  const perMinute = await deps.store.countAuditSince(ctx.key.id, minuteAgo);
-  if (perMinute >= API_RATE_LIMIT_PER_MINUTE) {
-    return json({
-      error: "rate_limited",
-      limit: API_RATE_LIMIT_PER_MINUTE,
-      window_seconds: 60,
-    }, 429);
-  }
-  const perDay = await deps.store.countAuditSince(ctx.key.id, dayAgo);
-  if (perDay >= API_RATE_LIMIT_PER_DAY) {
-    return json({
-      error: "rate_limited",
-      limit: API_RATE_LIMIT_PER_DAY,
-      window_seconds: 86_400,
-    }, 429);
-  }
-  if (deps.action === "api.workers.invoke") {
-    const invokesPerMinute = await deps.store.countAuditSince(
-      ctx.key.id,
-      minuteAgo,
-      "api.workers.invoke",
-    );
-    if (invokesPerMinute >= WORKER_INVOKE_LIMIT_PER_MINUTE) {
-      return json({
-        error: "rate_limited",
-        limit: WORKER_INVOKE_LIMIT_PER_MINUTE,
-        window_seconds: 60,
-        detail: "worker invocation limit",
-      }, 429);
-    }
-  }
-  return null;
+  const limited = await checkApiKeyRateLimit(
+    deps.store,
+    ctx.key.id,
+    deps.action,
+    deps.now,
+  );
+  return limited ? json(limited, 429) : null;
 }
 
 async function handleExternalApiAction(

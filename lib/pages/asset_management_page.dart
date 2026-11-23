@@ -18,8 +18,12 @@ import '../services/asset_debt_danger_service.dart';
 import '../services/asset_debt_simulation_service.dart';
 import '../widgets/asset_debt_simulation_and_guide_dialogs.dart';
 import '../services/asset_auto_transfer_service.dart';
+import '../services/asset_payment_reminder_service.dart';
+import '../services/asset_spending_value_classification_service.dart';
 import '../services/asset_tax_deduction_service.dart';
 import '../widgets/asset_auto_transfer_and_tax_dialogs.dart';
+import '../widgets/asset_payment_reminder_and_late_fee_card.dart';
+import '../widgets/asset_spending_value_ratio_dashboard.dart';
 import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
 import '../widgets/asset_recorded_change_details.dart';
 import '../models/asset_income_source_evidence.dart';
@@ -41,6 +45,9 @@ import '../widgets/asset_calendar_reflection_panel.dart';
 import '../services/asset_spending_attention_calendar.dart';
 import '../widgets/asset_attention_day_label.dart';
 import '../widgets/asset_calendar_refresh_control.dart';
+import '../services/asset_debt_guard_calendar_service.dart';
+import '../widgets/asset_additional_debt_calendar_dialog.dart';
+import '../widgets/asset_borrowing_calendar_badge.dart';
 import '../widgets/asset_future_card_bill_card.dart';
 import 'package:my_web_app/widgets/expense_semantic_search.dart';
 import 'package:my_web_app/widgets/expense_classification_review.dart';
@@ -587,6 +594,29 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Future<bool> Function(Uri uri)? debugOpenExternalUrl;
 
+  /// テスト専用: 返済期日リマインダー通知フック (#2749)。
+  @visibleForTesting
+  final AssetPaymentReminderNotifier? debugPaymentReminderNotifier;
+
+  /// テスト専用: カード明細行を初期注入してカレンダー投影を検証する。
+  @visibleForTesting
+  final List<AssetLiabilityCardStatementLine>? debugInitialCardStatementLines;
+
+  /// テスト専用: Debt Guard (`additional_borrowing`) 違反履歴を初期注入する。
+  @visibleForTesting
+  final List<AssetCalendarDebtGuardViolationInput>?
+      debugInitialDebtGuardViolations;
+
+  /// テスト専用: 追加借入・リボ記録ダイアログ確定時のフロー保存フック。
+  @visibleForTesting
+  final Future<void> Function(AssetAdditionalDebtCalendarDraft draft)?
+      debugRecordAdditionalDebtFlow;
+
+  /// テスト専用: Debt Guard 違反追記フック。
+  @visibleForTesting
+  final Future<void> Function(DateTime date, String note)?
+      debugRecordDebtGuardViolation;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -634,6 +664,11 @@ class AssetManagementPage extends StatefulWidget {
     this.debugCardStatementRefetchHandler,
     this.debugInitialMonthlySnapshots,
     this.debugOpenExternalUrl,
+    this.debugPaymentReminderNotifier,
+    this.debugInitialCardStatementLines,
+    this.debugInitialDebtGuardViolations,
+    this.debugRecordAdditionalDebtFlow,
+    this.debugRecordDebtGuardViolation,
   });
 
   @override
@@ -1078,6 +1113,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final Set<String> _autoExecutedTransferDedupeKeys = <String>{};
   bool _taxDeductionToolsEnabled = false;
   List<MedicalExpenseEntry> _medicalExpenseEntries = <MedicalExpenseEntry>[];
+  Map<String, SpendingValueCategory> _spendingValueOverrides =
+      <String, SpendingValueCategory>{};
+  List<AssetSpendingValueCustomEntry> _spendingValueCustomEntries =
+      <AssetSpendingValueCustomEntry>[];
+  AssetPaymentReminderSettings _paymentReminderSettings =
+      const AssetPaymentReminderSettings();
+  Set<String> _deliveredPaymentReminderKeys = <String>{};
   List<AssetLiabilityMonthlyReport> _monthlyReports =
       <AssetLiabilityMonthlyReport>[];
   String? _selectedMonthlyReportMonthKey;
@@ -1428,10 +1470,57 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<AssetCalendarReflection> _calendarReflections = const [];
   String? _calendarReflectionOwner;
   int _calendarReflectionRevision = 0;
+  List<AssetCalendarDebtGuardViolationInput> _calendarDebtGuardViolations =
+      const <AssetCalendarDebtGuardViolationInput>[];
+  String? _calendarDebtGuardViolationsOwner;
+  String? _calendarDebtGuardViolationsRangeKey;
   List<AssetCalendarReflection> get _calendarFlowReflections {
     final owner = _supabase.auth.currentUser?.id;
     if (owner == null || _recentFlowsOwnerId != owner) return const [];
     return AssetCalendarReflection.fromFlows(_recentFlows);
+  }
+
+  Future<void> _ensureCalendarDebtGuardViolationsLoaded(
+    DateTime start,
+    DateTime endExclusive, {
+    bool force = false,
+  }) async {
+    if (widget.debugInitialDebtGuardViolations != null) {
+      return;
+    }
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      if (_calendarDebtGuardViolationsOwner != null && mounted) {
+        setState(() {
+          _calendarDebtGuardViolations =
+              const <AssetCalendarDebtGuardViolationInput>[];
+          _calendarDebtGuardViolationsOwner = null;
+          _calendarDebtGuardViolationsRangeKey = null;
+        });
+      }
+      return;
+    }
+    final rangeKey =
+        '$userId:${start.toIso8601String()}:${endExclusive.toIso8601String()}';
+    if (!force && _calendarDebtGuardViolationsRangeKey == rangeKey) {
+      return;
+    }
+    _calendarDebtGuardViolationsRangeKey = rangeKey;
+    final loaded = await AssetDebtGuardCalendarService.loadBorrowingViolations(
+      client: _supabase,
+      userId: userId,
+      start: start,
+      endExclusive: endExclusive,
+    );
+    if (!mounted ||
+        _supabase.auth.currentUser?.id != userId ||
+        _calendarDebtGuardViolationsRangeKey != rangeKey) {
+      return;
+    }
+    setState(() {
+      _calendarDebtGuardViolations = loaded;
+      _calendarDebtGuardViolationsOwner = userId;
+    });
   }
 
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
@@ -1569,6 +1658,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (debugMonthlySnapshots != null) {
       _monthlySnapshots =
           List<AssetLiabilityMonthlySnapshot>.from(debugMonthlySnapshots);
+    }
+    final debugCardStatementLines = widget.debugInitialCardStatementLines;
+    if (debugCardStatementLines != null) {
+      _cardStatementLines = List<AssetLiabilityCardStatementLine>.from(
+        debugCardStatementLines,
+      );
+    }
+    final debugDebtGuardViolations = widget.debugInitialDebtGuardViolations;
+    if (debugDebtGuardViolations != null) {
+      _calendarDebtGuardViolations =
+          List<AssetCalendarDebtGuardViolationInput>.from(
+        debugDebtGuardViolations,
+      );
     }
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
@@ -2677,9 +2779,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ...defaultCardBillingAccounts,
           ...state.cardBillingAccountIds,
         };
-        _cardStatementLines = List<AssetLiabilityCardStatementLine>.from(
-          state.cardStatementLines,
-        );
+        if (state.cardStatementLines.isNotEmpty ||
+            widget.debugInitialCardStatementLines == null) {
+          _cardStatementLines = List<AssetLiabilityCardStatementLine>.from(
+            state.cardStatementLines,
+          );
+        }
         _defaultPaymentSourceAccountIds = Map<String, String>.from(
           defaultSources,
         );
@@ -4168,6 +4273,204 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
   }
 
+  String _buildAdditionalDebtDaySummaryText(AssetCalendarDaySummary day) {
+    final parts = <String>[
+      if (day.hasBorrowing) '借入受取 ${_formatYen(day.borrowingTotal)}（収入集計外）',
+      if (day.hasRevolvingUsage)
+        'リボ利用 ${_formatYen(day.revolvingUsageTotal)}（現金引落なし）',
+      if (day.hasDebtGuardBorrowingViolation) '追加借金ルール違反（Debt Guard）の記録あり',
+    ];
+    return parts.join(' / ');
+  }
+
+  Future<void> _openRecordAdditionalDebtOnCalendarDialog({
+    required AssetLiabilityWorkbook? workbook,
+    required DateTime initialDate,
+    AssetAdditionalDebtRecordKind initialKind =
+        AssetAdditionalDebtRecordKind.cashing,
+    double? initialAmount,
+    String? initialAccountId,
+    String? initialAccountName,
+    String? helperNotice,
+  }) async {
+    final accountOptions = <AssetAdditionalDebtAccountOption>[
+      for (final row
+          in workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[])
+        if (AssetDebtDisciplineMonitor.isBorrowingKind(row.kind) &&
+            !row.fullPaymentEstimate)
+          AssetAdditionalDebtAccountOption(
+            id: row.id,
+            name: row.name,
+            isRevolvingCard: row.isRevolving ||
+                AssetDebtDisciplineMonitor.isLumpSumCardKind(row.kind),
+          ),
+    ];
+    final draft = await showDialog<AssetAdditionalDebtCalendarDraft>(
+      context: context,
+      builder: (_) => AssetAdditionalDebtCalendarDialog(
+        initialKind: initialKind,
+        initialDate: initialDate,
+        initialAmount: initialAmount,
+        initialAccountId: initialAccountId,
+        initialAccountName: initialAccountName,
+        accountOptions: accountOptions,
+        helperNotice: helperNotice,
+      ),
+    );
+    if (!mounted || draft == null) {
+      return;
+    }
+
+    final userId = _supabase.auth.currentUser?.id;
+    if (draft.kind == AssetAdditionalDebtRecordKind.cashing &&
+        widget.debugRecordAdditionalDebtFlow == null &&
+        userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('記録にはログインが必要です。再ログインしてください。')),
+      );
+      return;
+    }
+
+    final targetDate = DateTime(
+      draft.date.year,
+      draft.date.month,
+      draft.date.day,
+    );
+
+    try {
+      if (draft.kind == AssetAdditionalDebtRecordKind.cashing) {
+        final description = '[${draft.accountName}] ${draft.memo}';
+        final occurredAtIso = DateTime(
+          targetDate.year,
+          targetDate.month,
+          targetDate.day,
+          12,
+        ).toUtc().toIso8601String();
+        if (widget.debugRecordAdditionalDebtFlow != null) {
+          await widget.debugRecordAdditionalDebtFlow!(draft);
+          if (!mounted) return;
+          setState(() {
+            _recentFlows = <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 'debug_borrow_${DateTime.now().microsecondsSinceEpoch}',
+                'action_type': 'borrowing',
+                'amount': draft.amount,
+                'description': description,
+                'occurred_at': occurredAtIso,
+              },
+              ..._recentFlows,
+            ];
+          });
+        } else {
+          await AssetFlowRequest.table(_supabase).insert(<String, dynamic>{
+            'user_id': userId,
+            'action_type': 'borrowing',
+            'amount': draft.amount,
+            'description': description,
+            'occurred_at': occurredAtIso,
+          });
+          if (!mounted || _supabase.auth.currentUser?.id != userId) {
+            return;
+          }
+          await _fetchRecentFlows();
+        }
+      } else {
+        final line = AssetLiabilityCardStatementLine(
+          id: 'revolving_cal_${draft.accountId}_${DateTime.now().microsecondsSinceEpoch}',
+          billingAccountId: draft.accountId,
+          billingAccountName: draft.accountName,
+          postedAt: targetDate,
+          description: draft.memo,
+          amount: draft.amount.toDouble(),
+        );
+        if (!mounted) return;
+        setState(() {
+          _cardStatementLines = <AssetLiabilityCardStatementLine>[
+            ..._cardStatementLines,
+            line,
+          ];
+        });
+        await _saveAssetLiabilityMonthlyState();
+      }
+
+      if (draft.recordDebtGuardViolation) {
+        final note =
+            '${draft.accountName}: ${draft.memo} (${_formatManagementYen(draft.amount.toDouble())})';
+        if (widget.debugRecordDebtGuardViolation != null) {
+          await widget.debugRecordDebtGuardViolation!(targetDate, note);
+          if (!mounted) return;
+          setState(() {
+            _calendarDebtGuardViolations =
+                <AssetCalendarDebtGuardViolationInput>[
+              ..._calendarDebtGuardViolations,
+              AssetCalendarDebtGuardViolationInput(
+                date: targetDate,
+                note: note,
+                sourceId: 'debug_${DateTime.now().microsecondsSinceEpoch}',
+              ),
+            ];
+          });
+        } else if (userId != null) {
+          final recorded = await AssetDebtGuardCalendarService.recordViolation(
+            client: _supabase,
+            userId: userId,
+            eventDate: targetDate,
+            note: note,
+          );
+          if (!mounted || _supabase.auth.currentUser?.id != userId) {
+            return;
+          }
+          if (recorded != null) {
+            setState(() {
+              _calendarDebtGuardViolations =
+                  <AssetCalendarDebtGuardViolationInput>[
+                ..._calendarDebtGuardViolations,
+                recorded,
+              ];
+              _calendarDebtGuardViolationsOwner = userId;
+            });
+          }
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _calendarSelectedDate = targetDate;
+        if (targetDate.isBefore(_calendarCycleStart) ||
+            !targetDate.isBefore(_calendarCycleEndExclusive)) {
+          _calendarCycleAnchor = targetDate;
+        }
+      });
+
+      final dateLabel = DateFormat('M月d日').format(targetDate);
+      final kindLabel = draft.kind == AssetAdditionalDebtRecordKind.cashing
+          ? '借入受取（収入集計外）'
+          : 'リボ払い利用（現金引落なし）';
+      final guardSuffix =
+          draft.recordDebtGuardViolation ? ' + Debt Guard違反' : '';
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              '$dateLabel に ${draft.accountName} の$kindLabel'
+              '（${_formatManagementYen(draft.amount.toDouble())}）$guardSuffixをカレンダーへ記録しました',
+            ),
+          ),
+        );
+    } catch (e) {
+      debugPrint('Error recording additional debt on calendar: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('カレンダーへの記録に失敗しました。履歴を確認してから再試行してください。'),
+          ),
+        );
+    }
+  }
+
   Future<void> _showDisciplineViolationsModal(
     AssetDebtDisciplineReport disciplineReport,
     AssetLiabilityWorkbook workbook,
@@ -4382,6 +4685,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                         size: 16,
                                       ),
                                       label: const Text('返済タスクを作成'),
+                                    ),
+                                    OutlinedButton.icon(
+                                      key: Key(
+                                        'asset_discipline_record_calendar_'
+                                        '${violation.accountId}',
+                                      ),
+                                      onPressed: () async {
+                                        await _openRecordAdditionalDebtOnCalendarDialog(
+                                          workbook: workbook,
+                                          initialDate: _calendarNow,
+                                          initialKind: violation.type ==
+                                                  AssetDebtDisciplineViolationType
+                                                      .revolvingCard
+                                              ? AssetAdditionalDebtRecordKind
+                                                  .revolvingUsage
+                                              : AssetAdditionalDebtRecordKind
+                                                  .cashing,
+                                          initialAmount: violation.amount,
+                                          initialAccountId: violation.accountId,
+                                          initialAccountName:
+                                              violation.accountName,
+                                          helperNotice:
+                                              '残高差分からは利用日が特定できないため、実際に借りた・利用した日付を確認して登録してください。',
+                                        );
+                                        if (dialogContext.mounted) {
+                                          setModalState(() {});
+                                        }
+                                      },
+                                      icon: const Icon(
+                                        Icons.edit_calendar,
+                                        size: 16,
+                                      ),
+                                      label: const Text('発生日をカレンダーに記録'),
                                     ),
                                   ],
                                 ),
@@ -5641,6 +5977,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final auditLogs = await AssetAutoTransferStore.loadAuditLogs();
     final taxEnabled = await AssetTaxToolsFeatureFlagStore.load();
     final medEntries = await AssetMedicalExpenseStore.load();
+    final spendingOverrides =
+        await AssetSpendingValueOverrideStore.loadOverrides();
+    final customEntries =
+        await AssetSpendingValueOverrideStore.loadCustomEntries();
+    final reminderSettings = await AssetPaymentReminderStore.loadSettings();
+    final deliveredReminderKeys =
+        await AssetPaymentReminderStore.loadDeliveredKeys();
     if (!mounted) {
       return;
     }
@@ -5649,7 +5992,94 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _autoTransferAuditLogs = auditLogs;
       _taxDeductionToolsEnabled = taxEnabled;
       _medicalExpenseEntries = medEntries;
+      _spendingValueOverrides = Map<String, SpendingValueCategory>.from(
+        spendingOverrides,
+      );
+      _spendingValueCustomEntries =
+          List<AssetSpendingValueCustomEntry>.from(customEntries);
+      _paymentReminderSettings = reminderSettings;
+      _deliveredPaymentReminderKeys = Set<String>.from(deliveredReminderKeys);
     });
+  }
+
+  void _reclassifySpendingValueEntry(
+    String fingerprint,
+    SpendingValueCategory category,
+  ) {
+    final nextOverrides = Map<String, SpendingValueCategory>.from(
+      _spendingValueOverrides,
+    )..[fingerprint] = category;
+    setState(() {
+      _spendingValueOverrides = nextOverrides;
+    });
+    unawaited(AssetSpendingValueOverrideStore.saveOverrides(nextOverrides));
+  }
+
+  void _addSpendingValueCustomEntries(
+    List<AssetSpendingValueCustomEntry> added,
+  ) {
+    if (added.isEmpty) {
+      return;
+    }
+    final nextEntries = <AssetSpendingValueCustomEntry>[
+      ...added,
+      ..._spendingValueCustomEntries,
+    ];
+    setState(() {
+      _spendingValueCustomEntries = nextEntries;
+    });
+    unawaited(AssetSpendingValueOverrideStore.saveCustomEntries(nextEntries));
+  }
+
+  void _removeSpendingValueCustomEntry(String id) {
+    final nextEntries = _spendingValueCustomEntries
+        .where((entry) => entry.id != id)
+        .toList(growable: false);
+    setState(() {
+      _spendingValueCustomEntries = nextEntries;
+    });
+    unawaited(AssetSpendingValueOverrideStore.saveCustomEntries(nextEntries));
+  }
+
+  void _savePaymentReminderSettings(AssetPaymentReminderSettings next) {
+    setState(() {
+      _paymentReminderSettings = next;
+    });
+    unawaited(AssetPaymentReminderStore.saveSettings(next));
+  }
+
+  Future<void> _dispatchPaymentReminders(
+    AssetPaymentReminderSchedule schedule,
+  ) async {
+    final notifier = widget.debugPaymentReminderNotifier ??
+        ((AssetPaymentReminderItem _) async => true);
+    final delivered = await AssetPaymentReminderService.dispatchUndelivered(
+      schedule: schedule,
+      alreadyDeliveredKeys: _deliveredPaymentReminderKeys,
+      notifier: notifier,
+    );
+    if (!mounted) {
+      return;
+    }
+    if (delivered.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('本日の返済期日リマインダーはすべて記録・通知済みです。'),
+        ),
+      );
+      return;
+    }
+    final nextKeys = Set<String>.from(_deliveredPaymentReminderKeys)
+      ..addAll(delivered);
+    setState(() {
+      _deliveredPaymentReminderKeys = nextKeys;
+    });
+    unawaited(AssetPaymentReminderStore.saveDeliveredKeys(nextKeys));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('返済期日リマインダー ${delivered.length}件を記録・通知しました。'),
+      ),
+    );
   }
 
   void _saveAutoTransferSettings(AutoTransferSettings next) {
@@ -12926,6 +13356,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       AssetManagementSectionId.salaryBreakdown)) ...[
                     _sectionAnchor(AssetManagementSectionId.salaryBreakdown),
                     _buildSalarySpendingBreakdownCard(),
+                    const SizedBox(height: 16),
+                    AssetSpendingValueRatioDashboard(
+                      report: _buildSpendingValueRatioReport(),
+                      onReclassifyEntry: _reclassifySpendingValueEntry,
+                      onAddCustomEntries: _addSpendingValueCustomEntries,
+                      onRemoveCustomEntry: _removeSpendingValueCustomEntry,
+                    ),
                     const SizedBox(height: 16),
                     _buildCategoryBudgetCard(),
                     _buildExternalPointsCard(),
@@ -20897,6 +21334,34 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           label: inflow.label,
         ),
     ];
+    final debtGuardUserId = _supabase.auth.currentUser?.id;
+    if (debtGuardUserId != null &&
+        widget.debugInitialDebtGuardViolations == null) {
+      final expectedRangeKey =
+          '$debtGuardUserId:${cycleStart.toIso8601String()}:${cycleEndExclusive.toIso8601String()}';
+      if (_calendarDebtGuardViolationsRangeKey != expectedRangeKey) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            unawaited(
+              _ensureCalendarDebtGuardViolationsLoaded(
+                cycleStart,
+                cycleEndExclusive,
+              ),
+            );
+          }
+        });
+      }
+    }
+    final revolvingUsages = AssetPaymentCalendarService.extractRevolvingUsages(
+      workbook: workbook,
+      statementLines: _cardStatementLines,
+    );
+    final effectiveDebtGuardViolations =
+        (_calendarDebtGuardViolationsOwner == debtGuardUserId ||
+                widget.debugInitialDebtGuardViolations != null ||
+                widget.debugRecordDebtGuardViolation != null)
+            ? _calendarDebtGuardViolations
+            : const <AssetCalendarDebtGuardViolationInput>[];
     final calendar = AssetPaymentCalendarService.buildRange(
       start: cycleStart,
       endExclusive: cycleEndExclusive,
@@ -20907,6 +21372,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       asOf: _calendarNow,
       startingCashBalance: startingCashBalance,
       expectedInflows: inflowInputs,
+      revolvingUsages: revolvingUsages,
+      debtGuardViolations: effectiveDebtGuardViolations,
     );
     final selectedDate = _calendarSelectedDate;
     final selectedDay =
@@ -21039,10 +21506,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             AssetCalendarRefreshControl(
               onRefresh: () async {
-                await _fetchRecentFlows(
-                  runSalaryReconciliation: false,
-                  reportErrors: true,
-                );
+                await Future.wait<void>(<Future<void>>[
+                  _fetchRecentFlows(
+                    runSalaryReconciliation: false,
+                    reportErrors: true,
+                  ),
+                  _ensureCalendarDebtGuardViolationsLoaded(
+                    cycleStart,
+                    cycleEndExclusive,
+                    force: true,
+                  ),
+                ]);
                 if (mounted) setState(() => _calendarReflectionRevision++);
               },
             ),
@@ -21459,6 +21933,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         const TextStyle(fontSize: 10, color: Color(0xFF92400E)),
                       ) +
                       24,
+                  textWidth(
+                        '借金違反',
+                        const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ) +
+                      20,
                 ].reduce(max);
                 final viewportWidth = constraints.hasBoundedWidth
                     ? constraints.maxWidth
@@ -21528,6 +22010,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildCalendarLegendItem(const Color(0xFF0EA5E9), '入金予定'),
                 _buildCalendarLegendItem(
                     const Color(0xFF92400E), '不明: 使途不明金（内訳未照合）'),
+                _buildCalendarLegendItem(
+                    const Color(0xFFB45309), '借入受取（キャッシング・収入集計外）'),
+                _buildCalendarLegendItem(
+                    const Color(0xFFE11D48), 'リボ利用（現金引落なし）'),
+                _buildCalendarLegendItem(
+                    const Color(0xFF991B1B), '追加借金違反（Debt Guard）'),
               ],
             ),
             const SizedBox(height: 4),
@@ -21603,6 +22091,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     icon: const Icon(Icons.savings, size: 16),
                     label: const Text('入金予定'),
                   ),
+                  OutlinedButton.icon(
+                    key: const Key('asset_calendar_record_debt_button'),
+                    onPressed: () => _openRecordAdditionalDebtOnCalendarDialog(
+                      workbook: workbook,
+                      initialDate: selectedDay.date,
+                    ),
+                    icon: const Icon(Icons.account_balance_outlined, size: 16),
+                    label: const Text('借入・リボ記録'),
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
@@ -21620,6 +22117,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   '残高差分からの自動記録を含みます。消費の確定ではありません。',
                   style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
                 ),
+              if (selectedDay.hasAdditionalDebtActivity) ...[
+                Container(
+                  key: const Key('asset_calendar_additional_debt_summary'),
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFFCD34D)),
+                  ),
+                  child: Text(
+                    _buildAdditionalDebtDaySummaryText(selectedDay),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF78350F),
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
               if (!selectedDay.hasAnyEvent)
                 Text(
                   'この日の収支・支払イベントはありません。',
@@ -21630,7 +22148,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 )
               else
-                for (final event in selectedDay.events.take(10))
+                for (final event in selectedDay.events.take(20))
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Column(
@@ -21719,13 +22237,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final kinds = reflections.expand((e) => e.kinds).toSet();
     final reflectionColor = AssetReflectionDayBadge.backgroundFor(kinds);
     final attention = AssetSpendingAttentionCalendar.forDate(day.date);
+    final additionalDebtBg = AssetBorrowingCalendarBadge.cellBackgroundFor(
+      hasBorrowing: day.hasBorrowing,
+      hasRevolvingUsage: day.hasRevolvingUsage,
+      hasDebtGuardViolation: day.hasDebtGuardBorrowingViolation,
+    );
     final markers = <Color>[
+      if (day.hasDebtGuardBorrowingViolation) const Color(0xFF991B1B),
+      if (day.hasRevolvingUsage) const Color(0xFFE11D48),
+      if (day.hasBorrowing) const Color(0xFFB45309),
       if (day.hasDebtPayment) const Color(0xFFB91C1C),
       if (day.hasSubscription) const Color(0xFF9333EA),
       if (day.hasSalary) const Color(0xFF0D9488),
       if (day.hasExpectedInflow) const Color(0xFF0EA5E9),
       if (day.hasIncome) const Color(0xFF2563EB),
-      if (day.hasBorrowing) const Color(0xFFB45309),
       if (day.hasTransfer) const Color(0xFF64748B),
     ];
 
@@ -21748,9 +22273,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ? const Color(0xFF7C3AED).withValues(alpha: 0.14)
                   : day.isShortfall
                       ? const Color(0xFFFEE2E2)
-                      : attention.isAttentionDay
-                          ? AssetAttentionDayLabel.background
-                          : null),
+                      : additionalDebtBg ??
+                          (attention.isAttentionDay
+                              ? AssetAttentionDayLabel.background
+                              : null)),
           borderRadius: BorderRadius.circular(6),
           border: isSelected || isToday
               ? Border.all(
@@ -21786,6 +22312,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 preserveTextScale: expandedText,
                 key: Key(
                   'asset_calendar_unreconciled_${day.date.year}_${day.date.month}_${day.date.day}',
+                ),
+              ),
+            if (day.hasAdditionalDebtActivity)
+              AssetBorrowingCalendarBadge(
+                hasBorrowing: day.hasBorrowing,
+                hasRevolvingUsage: day.hasRevolvingUsage,
+                hasDebtGuardViolation: day.hasDebtGuardBorrowingViolation,
+                preserveTextScale: expandedText,
+                key: Key(
+                  'asset_calendar_debt_badge_${day.date.year}_${day.date.month}_${day.date.day}',
                 ),
               ),
             AssetAttentionDayLabel(day: attention),
@@ -21869,6 +22405,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return Icons.account_balance_outlined;
       case AssetCalendarEventKind.transfer:
         return Icons.swap_horiz;
+      case AssetCalendarEventKind.revolvingUsage:
+        return Icons.credit_card_outlined;
+      case AssetCalendarEventKind.debtGuardBorrowingViolation:
+        return Icons.gpp_bad_outlined;
     }
   }
 
@@ -21890,6 +22430,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return const Color(0xFFB45309);
       case AssetCalendarEventKind.transfer:
         return const Color(0xFF64748B);
+      case AssetCalendarEventKind.revolvingUsage:
+        return const Color(0xFFE11D48);
+      case AssetCalendarEventKind.debtGuardBorrowingViolation:
+        return const Color(0xFF991B1B);
     }
   }
 
@@ -22169,8 +22713,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  SalarySpendingBreakdown _buildSalarySpendingBreakdown() {
-    final entries = AssetSalarySpendingEntries.build(
+  AssetSalarySpendingEntries _buildSalarySpendingEntries() {
+    return AssetSalarySpendingEntries.build(
       cardStatementLines: _cardStatementLines,
       recentFlows: _recentFlows,
       monthlyIncomePlans: _monthlyIncomePlans,
@@ -22182,11 +22726,30 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         actionType: flow['action_type']?.toString() ?? '',
       ).memo,
     );
+  }
+
+  SalarySpendingBreakdown _buildSalarySpendingBreakdown() {
+    final entries = _buildSalarySpendingEntries();
     return _salarySpendingBreakdownService.build(
       referenceDate: _now,
       expenses: entries.expenses,
       incomeEvidence: _cycleIncomeEvidence(_now),
       salaryDay: _salaryDay,
+    );
+  }
+
+  SpendingValueRatioReport _buildSpendingValueRatioReport() {
+    final breakdown = _buildSalarySpendingBreakdown();
+    final entries = _buildSalarySpendingEntries();
+    final cycleExpenses = entries.expenses.where((entry) {
+      final d = DateTime(entry.date.year, entry.date.month, entry.date.day);
+      return !d.isBefore(breakdown.periodStart) &&
+          d.isBefore(breakdown.periodEndExclusive);
+    });
+    return AssetSpendingValueClassificationService.buildReport(
+      entries: cycleExpenses,
+      customEntries: _spendingValueCustomEntries,
+      overrides: _spendingValueOverrides,
     );
   }
 
@@ -33942,9 +34505,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final overdueItems =
         AssetOverdueBulkConfirmService.collectOverdueUnpaidItems(workbook);
     final lateFeeSummary = AssetLateFeeService.summarizeWorkbook(workbook);
+    final reminderReady = _assetLiabilityBootStateLoaded &&
+        !_assetLiabilityMonthlyStateLoadFailed &&
+        _assetLiabilityMonthlyStateInFlight == null &&
+        _loadedAssetLiabilityMonthKey == _assetLiabilityStateMonthKey(_now);
+    final reminderSchedule = AssetPaymentReminderService.buildSchedule(
+      workbook: workbook,
+      salaryDay: _salaryDay,
+      settings: _paymentReminderSettings,
+    );
+    final showReminderBanner = reminderReady &&
+        (reminderSchedule.hasAny || !_paymentReminderSettings.enabled);
     if (workbook.paymentDayRisks.isEmpty &&
         overdueItems.isEmpty &&
-        lateFeeSummary.overdueCount == 0) {
+        lateFeeSummary.overdueCount == 0 &&
+        !showReminderBanner) {
       return const SizedBox.shrink();
     }
 
@@ -33966,8 +34541,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (showReminderBanner)
+          AssetPaymentReminderBanner(
+            workbook: workbook,
+            schedule: reminderSchedule,
+            settings: _paymentReminderSettings,
+            deliveredKeys: _deliveredPaymentReminderKeys,
+            onSettingsChanged: _savePaymentReminderSettings,
+            onTriggerNotifications: () =>
+                _dispatchPaymentReminders(reminderSchedule),
+            onOpenCreditorContact: () =>
+                _openBulkCreditorContactDialog(workbook),
+            onOpenConsultationGuide: () => _openDebtDangerGuideDialog(workbook),
+          ),
         if (lateFeeSummary.overdueCount > 0) ...[
-          _buildOverdueLateFeeAlertBanner(lateFeeSummary),
+          _buildOverdueLateFeeAlertBanner(lateFeeSummary, workbook),
           const SizedBox(height: 12),
         ],
         if (actionRisks.isNotEmpty)
@@ -33998,7 +34586,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildOverdueLateFeeAlertBanner(AssetLateFeeSummary summary) {
+  Widget _buildOverdueLateFeeAlertBanner(
+    AssetLateFeeSummary summary,
+    AssetLiabilityWorkbook workbook,
+  ) {
     final visibleItems = summary.items.take(5).toList(growable: false);
     final hiddenCount = summary.items.length - visibleItems.length;
     return Container(
@@ -34073,6 +34664,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               color: Color(0xFF991B1B),
               height: 1.4,
             ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              OutlinedButton.icon(
+                key: const Key('overdue_late_fee_creditor_contact_button'),
+                onPressed: () => _openBulkCreditorContactDialog(workbook),
+                icon: const Icon(Icons.phone_in_talk_outlined, size: 16),
+                label: const Text('債権者へ早期連絡・交渉記録を開く'),
+              ),
+              OutlinedButton.icon(
+                key: const Key('overdue_late_fee_consultation_button'),
+                onPressed: () => _openDebtDangerGuideDialog(workbook),
+                icon: const Icon(Icons.support_agent_outlined, size: 16),
+                label: const Text('専門機関の相談窓口を確認'),
+              ),
+            ],
           ),
         ],
       ),

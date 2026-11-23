@@ -9,12 +9,14 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
     required this.year,
     required this.rows,
     this.onReview,
+    this.asOfDate,
   });
 
   final String ownerId;
   final int year;
   final List<Map<String, dynamic>> rows;
   final ValueChanged<String>? onReview;
+  final DateTime? asOfDate;
 
   static String amount(int? value) => value == null ? '未取得' : '$value円';
 
@@ -35,6 +37,7 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
       ownerId: ownerId,
       year: year,
       rows: rows,
+      asOfDate: asOfDate,
     );
     final taxMonths = months.where((m) => m.confirmedTaxYen != null).toList();
     final socialMonths =
@@ -117,6 +120,8 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
               onPressed: () => onReview!(row.sourceId),
               child: const Text('元明細と照合して確認'),
             ),
+          if (asOfDate != null && row.isFuturePayDate(asOfDate!))
+            const Text('支給日が未来日のため、着金確認前は確定累計・本人確認の対象外です'),
           Text('総支給 ${amount(row.grossYen)} / 手取り ${amount(row.netYen)}'),
           for (final entry in labels.entries)
             Text('${entry.value}：${amount(row.items[entry.key])}'),
@@ -126,6 +131,8 @@ class AssetPayrollDeductionsCard extends StatelessWidget {
             Text('社会保険の記載合計と内訳に差：${amount(row.socialMismatchYen)}・要確認'),
           if (row.conflictingPensionAliases)
             const Text('厚生年金の項目名違いで金額が競合・要確認（累計から除外）'),
+          if (row.hasConflictingAliases && !row.conflictingPensionAliases)
+            const Text('控除の項目名違いで金額が競合・要確認（累計から除外）'),
           Text('内訳の分類状態：未分類 ${row.unclassified.length}項目'),
           for (final entry in row.unclassified.entries)
             Text('未分類控除（${entry.key}）：${amount(entry.value)}'),
