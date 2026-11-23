@@ -75,17 +75,22 @@ void main() {
       final controller = tester.widget<ListView>(scrollFinder).controller!;
       expect(controller.offset, 0.0);
 
-      final tapArea = find.byKey(const Key('chord_lyrics_score_tap_area'));
-      await tester.tapAt(tester.getCenter(tapArea));
+      const bannerKey = Key('chord_lyrics_autoscroll_banner');
+      final bannerFinder = find.byKey(bannerKey);
+      await tester.ensureVisible(bannerFinder);
+      await tester.pumpAndSettle();
+      final initialOffset = controller.offset;
+
+      await tester.tap(bannerFinder);
       await tester.pump();
 
       expect(find.text('自動スクロール中 — 楽譜タップで停止'), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 220));
-      expect(controller.offset, greaterThan(0.0));
+      expect(controller.offset, greaterThan(initialOffset));
 
       // 再度タップして自動スクロール停止（未解決タイマーが残らないことを確認）
-      await tester.tapAt(tester.getCenter(tapArea));
+      await tester.tap(bannerFinder);
       await tester.pump();
       expect(find.text('楽譜タップで自動スクロール開始'), findsOneWidget);
       expect(tester.takeException(), isNull);

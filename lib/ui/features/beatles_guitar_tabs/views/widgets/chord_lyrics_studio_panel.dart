@@ -376,8 +376,11 @@ class _ChordLyricsStudioPanelState extends State<ChordLyricsStudioPanel> {
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.verified_user_outlined,
-              color: DesignTokens.indigoLight, size: 18),
+          Icon(
+            Icons.verified_user_outlined,
+            color: DesignTokens.indigoLight,
+            size: 18,
+          ),
           SizedBox(width: DesignTokens.space8),
           Expanded(
             child: Text(
@@ -892,7 +895,7 @@ class _ChordLyricsStudioPanelState extends State<ChordLyricsStudioPanel> {
 
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.end,
-      spacing: line.hasLyrics ? 2 : 6,
+      spacing: line.hasLyrics ? 4 : 10,
       runSpacing: 12,
       children: <Widget>[
         for (final cluster in line.clusters)
@@ -1013,15 +1016,21 @@ class _StepperBadge extends StatelessWidget {
             disabledColor: _mutedOnDarkSurface.withValues(alpha: 0.45),
             constraints: const BoxConstraints(minWidth: 48, minHeight: 44),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Text(
-              labelText,
-              key: labelKey,
-              style: const TextStyle(
-                color: DesignTokens.orangeLight,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  labelText,
+                  key: labelKey,
+                  maxLines: 1,
+                  style: const TextStyle(
+                    color: DesignTokens.orangeLight,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ),
           ),

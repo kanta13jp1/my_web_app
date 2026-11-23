@@ -25,7 +25,13 @@ async function openFixture(page: Page, errors: string[]) {
   await expect(
     page.getByRole('button', { name: '自動スクロール開始', exact: true }),
   ).toBeVisible({ timeout: 30_000 });
-  await page.waitForTimeout(400);
+  await expect(page.locator('#seo-shell')).toHaveCount(0, {
+    timeout: 15_000,
+  });
+  await expect(
+    page.getByRole('group', { name: /表示キー: D#/ }),
+  ).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(350);
 }
 
 test('renders horizontal U-FRET style chord diagrams, Capo 3 conversion, dark sheet, and scroll', async ({
@@ -40,16 +46,21 @@ test('renders horizontal U-FRET style chord diagrams, Capo 3 conversion, dark sh
   await capoPlus.click();
   await capoPlus.click();
   await capoPlus.click();
-  await expect(page.getByText('Capo 3', { exact: false }).first()).toBeVisible();
-  await expect(page.getByText('表示キー: C', { exact: false }).first()).toBeVisible();
-  await page.waitForTimeout(300);
+  await expect(page.getByRole('group', { name: /Capo 3/ })).toBeVisible();
+  await expect(
+    page.getByRole('group', { name: /表示キー: C/ }),
+  ).toBeVisible();
+  await expect(page.getByRole('group', { name: /C\/B/ })).toBeVisible();
+  await page.mouse.move(4, 4);
+  await page.waitForTimeout(450);
   await page.screenshot({ path: info.outputPath('02-capo3-light.png') });
 
   await page.getByRole('button', { name: 'ダーク表示', exact: true }).click();
   await expect(
     page.getByRole('button', { name: '白紙譜面', exact: true }),
   ).toBeVisible();
-  await page.waitForTimeout(300);
+  await page.mouse.move(4, 4);
+  await page.waitForTimeout(450);
   await page.screenshot({ path: info.outputPath('03-capo3-dark.png') });
 
   // Test auto-scroll motion via start -> pause button
@@ -60,7 +71,8 @@ test('renders horizontal U-FRET style chord diagrams, Capo 3 conversion, dark sh
   await page
     .getByRole('button', { name: '自動スクロール停止', exact: true })
     .click();
-  await page.waitForTimeout(250);
+  await page.mouse.move(4, 4);
+  await page.waitForTimeout(450);
   await page.screenshot({ path: info.outputPath('04-scrolled-chorus.png') });
 
   expect(errors, `Unexpected browser errors: ${errors.join('; ')}`).toEqual([]);
