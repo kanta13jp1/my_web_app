@@ -89,7 +89,10 @@ void main() {
         .map((c) => c.chordLabel)
         .whereType<String>()
         .toList();
-    expect(capo0Chords, containsAll(<String>['N.C.', 'D#', 'Cm', 'G#', 'A#', 'D#/D']));
+    expect(
+      capo0Chords,
+      containsAll(<String>['N.C.', 'D#', 'Cm', 'G#', 'A#', 'D#/D']),
+    );
 
     final capo3 = parseChordLyricsDocument(original, capoFret: 3);
     expect(capo3.effectiveKeyLabel, 'C');
@@ -99,7 +102,10 @@ void main() {
         .map((c) => c.chordLabel)
         .whereType<String>()
         .toList();
-    expect(capo3Chords, containsAll(<String>['N.C.', 'C', 'Am', 'F', 'G', 'C/B']));
+    expect(
+      capo3Chords,
+      containsAll(<String>['N.C.', 'C', 'Am', 'F', 'G', 'C/B']),
+    );
 
     final lyrics = capo3.sections
         .expand((s) => s.lines)

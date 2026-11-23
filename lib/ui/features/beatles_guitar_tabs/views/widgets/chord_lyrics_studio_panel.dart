@@ -93,9 +93,8 @@ class _ChordLyricsStudioPanelState extends State<ChordLyricsStudioPanel> {
       _loadError = null;
     });
     try {
-      final results = await Future.wait<List<ChordLyricsSheetDocument>>(<
-        Future<List<ChordLyricsSheetDocument>>
-      >[
+      final results = await Future.wait<List<ChordLyricsSheetDocument>>(<Future<
+          List<ChordLyricsSheetDocument>>>[
         _catalogService.fetchPresetSheets(),
         _userStorageService.loadSheets(),
       ]);
@@ -552,8 +551,7 @@ class _ChordLyricsStudioPanelState extends State<ChordLyricsStudioPanel> {
               ),
               OutlinedButton.icon(
                 key: const Key('chord_lyrics_diagram_toggle'),
-                onPressed: () =>
-                    setState(() => _showDiagrams = !_showDiagrams),
+                onPressed: () => setState(() => _showDiagrams = !_showDiagrams),
                 icon: Icon(
                   _showDiagrams
                       ? Icons.grid_view_outlined
@@ -759,7 +757,8 @@ class _ChordLyricsStudioPanelState extends State<ChordLyricsStudioPanel> {
                         ? Icons.pause_circle_outline
                         : Icons.touch_app_outlined,
                     size: 16,
-                    color: _isAutoScrolling ? DesignTokens.orange : subtitleColor,
+                    color:
+                        _isAutoScrolling ? DesignTokens.orange : subtitleColor,
                   ),
                   const SizedBox(width: DesignTokens.space8),
                   Expanded(
@@ -769,8 +768,9 @@ class _ChordLyricsStudioPanelState extends State<ChordLyricsStudioPanel> {
                           : '楽譜タップで自動スクロール開始',
                       key: const Key('chord_lyrics_autoscroll_banner'),
                       style: TextStyle(
-                        color:
-                            _isAutoScrolling ? DesignTokens.orange : subtitleColor,
+                        color: _isAutoScrolling
+                            ? DesignTokens.orange
+                            : subtitleColor,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),

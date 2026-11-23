@@ -343,8 +343,9 @@ String _resolveEffectiveKey({
   if (effectiveSong.metadata.keys.isNotEmpty) {
     return effectiveSong.metadata.keys.first;
   }
-  final sourceKey =
-      rawSong.metadata.keys.isNotEmpty ? rawSong.metadata.keys.first : fallbackKey;
+  final sourceKey = rawSong.metadata.keys.isNotEmpty
+      ? rawSong.metadata.keys.first
+      : fallbackKey;
   if (netShift == 0 && !preferFlats) return sourceKey;
   final parsedKey = Chord.tryParse(sourceKey);
   if (parsedKey == null || parsedKey.system != ChordSystem.letter) {

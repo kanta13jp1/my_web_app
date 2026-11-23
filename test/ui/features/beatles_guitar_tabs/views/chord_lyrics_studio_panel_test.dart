@@ -103,7 +103,10 @@ void main() {
 
       await tester.tap(find.byKey(const Key('chord_lyrics_import_button')));
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('chord_lyrics_import_dialog')), findsOneWidget);
+      expect(
+        find.byKey(const Key('chord_lyrics_import_dialog')),
+        findsOneWidget,
+      );
 
       await tester.enterText(
         find.byKey(const Key('chord_lyrics_source_input')),
@@ -111,7 +114,10 @@ void main() {
       );
       await tester.tap(find.byKey(const Key('chord_lyrics_source_save')));
       await tester.pump();
-      expect(find.byKey(const Key('chord_lyrics_import_error')), findsOneWidget);
+      expect(
+        find.byKey(const Key('chord_lyrics_import_error')),
+        findsOneWidget,
+      );
 
       const customSource = '''
 {title: ローカル保存テスト曲}

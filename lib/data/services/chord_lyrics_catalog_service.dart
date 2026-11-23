@@ -54,8 +54,7 @@ class LocalChordLyricsCatalogService implements ChordLyricsCatalogService {
       artist: 'Original Study',
       keyLabel: 'G',
       defaultCapo: 0,
-      description:
-          '開放コードとオンコード（G/B → C → Am7 → D7）をベースにした弾き語り入門練習曲です。',
+      description: '開放コードとオンコード（G/B → C → Am7 → D7）をベースにした弾き語り入門練習曲です。',
       sourceChordPro: '''{title: 日曜の朝のストローク練習曲}
 {subtitle: Original Study}
 {key: G}

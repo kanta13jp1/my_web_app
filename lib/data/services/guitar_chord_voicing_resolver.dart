@@ -131,7 +131,8 @@ class GuitarChordVoicingResolver {
   static String _canonicalLookupKey(String normalizedChord) {
     final slashIdx = normalizedChord.indexOf('/');
     if (slashIdx > 0 && slashIdx < normalizedChord.length - 1) {
-      final head = _canonicalSimpleChord(normalizedChord.substring(0, slashIdx));
+      final head =
+          _canonicalSimpleChord(normalizedChord.substring(0, slashIdx));
       final bass = _normalizeRootToken(normalizedChord.substring(slashIdx + 1));
       return '$head/$bass';
     }
@@ -229,12 +230,7 @@ class GuitarChordVoicingResolver {
     final baseFret = chosen.baseFret.clamp(1, 24);
     final absFrets = <int>[
       for (final f in rawFrets)
-        if (f < 0)
-          -1
-        else if (f == 0)
-          0
-        else
-          f + (baseFret - 1),
+        if (f < 0) -1 else if (f == 0) 0 else f + (baseFret - 1),
     ];
     final barre = _inferBarreFromFingers(
       absFrets: absFrets,

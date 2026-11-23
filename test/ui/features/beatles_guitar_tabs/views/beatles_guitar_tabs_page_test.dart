@@ -432,7 +432,9 @@ void main() {
     (tester) async {
       await _setSurfaceSize(tester, const Size(1200, 900));
       await tester.pumpWidget(
-        const MaterialApp(home: BeatlesGuitarTabsFeature(repository: repository)),
+        const MaterialApp(
+          home: BeatlesGuitarTabsFeature(repository: repository),
+        ),
       );
       await tester.pumpAndSettle();
 
