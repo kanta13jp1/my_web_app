@@ -364,6 +364,7 @@ class _RecordingSemanticSearchService implements NoteSemanticSearchDataSource {
 Map<String, dynamic> _noteRow({
   String title = '読書について',
   String content = '思索\n\n1\n\n数量がいかに豊かでも',
+  bool isPinned = false,
 }) {
   return <String, dynamic>{
     'id': '429',
@@ -372,6 +373,7 @@ Map<String, dynamic> _noteRow({
     'content': content,
     'reminder_date': null,
     'is_favorite': false,
+    'is_pinned': isPinned,
     'tags': <String>['Evernote'],
     'created_at': '2026-07-19T09:00:00.000Z',
     'updated_at': '2026-07-19T09:00:00.000Z',
@@ -1258,6 +1260,100 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(controller.selection.textInside(controller.text), 'bcdef-xyz');
+    });
+  });
+
+  group('note editor pin toggle', () {
+    testWidgets('スマホ幅でピン留め済みメモをピンボタンから解除・再保存できる', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(isPinned: true),
+      );
+      await _pumpPage(tester, client);
+      client.updates.clear();
+
+      final pinButton = find.byKey(const Key('note_editor_pin_button'));
+      expect(pinButton, findsOneWidget);
+      expect(
+        find.descendant(of: pinButton, matching: find.text('ピン留め解除')),
+        findsOneWidget,
+      );
+      final size = tester.getSize(pinButton);
+      expect(size.width, greaterThanOrEqualTo(44.0));
+      expect(size.height, greaterThanOrEqualTo(44.0));
+
+      await tester.ensureVisible(pinButton);
+      await tester.tap(pinButton);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      expect(client.updates, hasLength(1));
+      expect(client.updates.single['is_pinned'], isFalse);
+      expect(
+        find.descendant(of: pinButton, matching: find.text('ピン留め')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('/pin スラッシュコマンドでピン留めを切り替えて保存できる', (tester) async {
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(isPinned: false),
+      );
+      await _pumpPage(tester, client);
+      client.updates.clear();
+
+      await tester.enterText(
+        find.byKey(const Key('note_editor_slash_command_field')),
+        '/pin',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      expect(client.updates, hasLength(1));
+      expect(client.updates.single['is_pinned'], isTrue);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('note_editor_pin_button')),
+          matching: find.text('ピン留め解除'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('is_pinned を含まない旧形式ローカル下書きの復元でピン留め状態を維持する', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'note_editor_draft_429': jsonEncode(<String, dynamic>{
+          'title': '読書について',
+          'content': '下書きから復元した本文',
+          'reminder_date': null,
+          'is_favorite': false,
+          'saved_at': '2026-07-20T00:00:00.000Z',
+        }),
+      });
+
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(isPinned: true),
+      );
+      await _pumpPage(tester, client);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      expect(_contentController(tester).text, '下書きから復元した本文');
+      expect(client.updates, hasLength(1));
+      expect(client.updates.single['is_pinned'], isTrue);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('note_editor_pin_button')),
+          matching: find.text('ピン留め解除'),
+        ),
+        findsOneWidget,
+      );
     });
   });
 }
