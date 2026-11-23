@@ -866,7 +866,7 @@ Deno.test(
     assertEquals(meta.auto_publish, false);
     assertEquals(meta.variant, ISHIN_TRACKER_VARIANT);
     assertEquals(meta.content_archetype, "data_report");
-    assertEquals(meta.link_in_reply, true);
+    assertEquals((meta.post_payload as JsonRecord).linkInReply, true);
 
     const lead = String(meta.text ?? "");
     const replies = (meta.reply_texts ?? []) as string[];
