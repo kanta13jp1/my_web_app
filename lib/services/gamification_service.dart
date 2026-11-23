@@ -2,13 +2,16 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/achievement.dart';
 import '../models/chro_achievement_evaluation.dart';
 import '../models/user_stats.dart';
 
 typedef ChroAiEvaluator = Future<String?> Function(
-    Achievement achievement, UserStats stats);
+  Achievement achievement,
+  UserStats stats,
+);
 
 class _AchievementSpec {
   final String id;
@@ -99,7 +102,7 @@ class GamificationService extends ChangeNotifier {
     ),
   ];
 
-  final dynamic _client;
+  final Object? _client;
   final ChroAiEvaluator? _aiEvaluator;
   final DateTime Function()? _nowProvider;
 
@@ -220,11 +223,12 @@ class GamificationService extends ChangeNotifier {
 
   String _resolveUserId() {
     try {
-      final auth = _client?.auth;
-      final dynamic user = auth?.currentUser;
-      final id = user?.id?.toString();
-      if (id != null && id.isNotEmpty) {
-        return id;
+      final client = _client;
+      if (client is SupabaseClient) {
+        final id = client.auth.currentUser?.id;
+        if (id != null && id.isNotEmpty) {
+          return id;
+        }
       }
     } catch (_) {
       // Uninitialized Supabase or Mockito mock without stubs.
@@ -350,12 +354,12 @@ class GamificationService extends ChangeNotifier {
       } catch (_) {
         // Fail open to deterministic CHRO evaluation message.
       }
-    } else if (_client != null) {
+    } else if (_client is SupabaseClient) {
       try {
-        final dynamic response = await _client.functions.invoke(
-          'analyze_note_text',
+        final response = await _client.functions.invoke(
+          'ai-hub',
           body: <String, dynamic>{
-            'mode': 'chro_achievement_evaluation',
+            'action': 'chro_achievement_evaluation',
             'achievement_id': spec.id,
             'achievement_title': spec.title,
             'executive_role': spec.executiveRole,
@@ -365,7 +369,7 @@ class GamificationService extends ChangeNotifier {
               'context': contextNote.trim(),
           },
         );
-        final dynamic data = response?.data;
+        final Object? data = response.data;
         if (data is Map<String, dynamic>) {
           final text =
               (data['evaluation'] ?? data['message'] ?? data['summary'] ?? '')

@@ -68,7 +68,8 @@ void main() {
       expect(
         declutter.map((a) => a.id),
         containsAll(
-            <String>['declutter_quest_success', 'points_milestone_100']),
+          <String>['declutter_quest_success', 'points_milestone_100'],
+        ),
       );
       expect(service.totalPoints, 250);
 
