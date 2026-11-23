@@ -22,6 +22,10 @@ import {
   persistKomeitoSnapshot,
 } from "./komeito_tracker.ts";
 import {
+  fetchIshinMemberSnapshot,
+  persistIshinSnapshot,
+} from "./ishin_tracker.ts";
+import {
   buildElectionIntelligenceSnapshot,
   type ElectionModeId,
   type ElectionModeRegistry,
@@ -488,10 +492,15 @@ interface KomeitoSnapshotRequest {
   action: "komeitoSnapshot" | "komeitoSnapshotAndQueue";
 }
 
+interface IshinSnapshotRequest {
+  action: "ishinSnapshot" | "ishinSnapshotAndQueue";
+}
+
 type ParsedRequest =
   | SnapshotRequest
   | MemberDetailRequest
-  | KomeitoSnapshotRequest;
+  | KomeitoSnapshotRequest
+  | IshinSnapshotRequest;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -558,6 +567,46 @@ serve(async (req) => {
               candidateIds: komeitoPersistence.candidateRows.map((row) =>
                 row.id
               ),
+            },
+          }
+          : {}),
+      });
+    }
+    if (
+      parsedRequest.action === "ishinSnapshot" ||
+      parsedRequest.action === "ishinSnapshotAndQueue"
+    ) {
+      if (parsedRequest.action === "ishinSnapshotAndQueue") {
+        requireServiceRole(req);
+      }
+      const ishinSnapshot = await fetchIshinMemberSnapshot(fetchText);
+      const ishinPersistence =
+        parsedRequest.action === "ishinSnapshotAndQueue"
+          ? await persistIshinSnapshot(
+            createLocalElectionHubStore(),
+            ishinSnapshot,
+            new Date().toISOString(),
+          )
+          : null;
+      return jsonResponse({
+        success: true,
+        snapshot: ishinSnapshot,
+        ...(ishinPersistence
+          ? {
+            persistence: {
+              dataset: ishinPersistence.dataset,
+              datasetVersion: ishinPersistence.datasetVersion,
+              snapshotHash: ishinPersistence.snapshotHash,
+              previousSnapshotId: ishinPersistence.previousSnapshotId,
+              previousSnapshotHash: ishinPersistence.previousSnapshotHash,
+              baselineCreated: ishinPersistence.baselineCreated,
+              snapshotCreated: ishinPersistence.snapshotCreated,
+              deduplicated: ishinPersistence.deduplicated,
+              hasChanges: ishinPersistence.hasChanges,
+              candidateCount: ishinPersistence.candidateCount,
+              candidatesCreated: ishinPersistence.candidatesCreated,
+              snapshotId: ishinPersistence.snapshotRow.id,
+              candidateIds: ishinPersistence.candidateRows.map((row) => row.id),
             },
           }
           : {}),
@@ -981,6 +1030,18 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
   ) {
     return { action: "komeitoSnapshotAndQueue" };
   }
+  if (
+    requestedAction === "ishinSnapshot" ||
+    requestedAction === "ishin_snapshot"
+  ) {
+    return { action: "ishinSnapshot" };
+  }
+  if (
+    requestedAction === "ishinSnapshotAndQueue" ||
+    requestedAction === "ishin_snapshot_and_queue"
+  ) {
+    return { action: "ishinSnapshotAndQueue" };
+  }
 
   if (req.method === "GET") {
     const url = new URL(req.url);
@@ -990,6 +1051,12 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
       queryAction === "komeito_snapshot"
     ) {
       return { action: "komeitoSnapshot" };
+    }
+    if (
+      queryAction === "ishinSnapshot" ||
+      queryAction === "ishin_snapshot"
+    ) {
+      return { action: "ishinSnapshot" };
     }
     return {
       action: "snapshot",
