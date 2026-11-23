@@ -4676,7 +4676,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           )
         : const BoxDecoration(
             color: Color(0xFFF6FAFE),
-            border: Border(left: BorderSide(color: Color(0xFF1F7AE0), width: 3)),
+            border:
+                Border(left: BorderSide(color: Color(0xFF1F7AE0), width: 3)),
           );
     final eyebrowColor =
         heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1D4ED8);
