@@ -216,5 +216,20 @@ Related to #
 - [ ] ブラウザ互換性を確認しました
 - [ ] モバイル対応を確認しました（該当する場合）
 
+### 内部レビュー観点（仕様・セキュリティ・UIUX）と品質メトリクス
+
+- [ ] **仕様整合**: Acceptance Criteria・既存設計・境界値・エラー時挙動を確認した
+- [ ] **セキュリティ**: 認証/認可（RLS・権限境界）・入力検証・機密情報保護を確認した
+- [ ] **UI/UX・アクセシビリティ**: 操作導線・状態表示・レスポンシブ/コントラストを確認した
+- [ ] **自動バリデーション**: PR 上の Lint / Test（CI ゲート）の通過を確認した
+
+| 項目 | 値 / 内訳 | 基準・備考 |
+| --- | --- | --- |
+| 対象規模 (`scope_size`) | `<!-- 例: 0.25 KLOC / 4 変更箇所 -->` | レビュー密度算出母数 |
+| レビュー所要時間 (`review_minutes`) | `<!-- 例: 30 分 -->` | 正味レビュー時間 |
+| 指摘件数内訳 | `spec:0 / design:0 / security:0 / uiux:0 / test:0` | 分類別カウント |
+| レビュー密度 (`review_minutes / scope_size`) | `<!-- python scripts/internal_review_metrics.py -->` | `minimum_review_density` と比較 |
+| 指摘密度 (`finding_count / scope_size`) | `<!-- python scripts/internal_review_metrics.py -->` | `minimum_finding_density` と比較 |
+
 ## 💬 追加コメント
 <!-- その他、レビュアーに伝えたい情報があれば記載してください -->
