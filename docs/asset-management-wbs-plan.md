@@ -222,3 +222,39 @@ Current open pinned work starts here:
   - 保存失敗時は追加したタスクのみを取り消し（ロールバック）、エラー通知と再試行を提供。
 - **クラウド検証**:
   - VMテスト、E2Eテスト（`integration_test/asset_triage_withdrawal_test.dart`）、および Chrome 視覚回帰検証（デスクトップ・モバイル）で挙動を担保。
+
+### カード明細手動照合ウィザード・手動明細入力・仮内訳 (#3329 / #3326 / #3349) 仕様
+
+- **3ステップ手動照合ウィザード (#3329)**:
+  - `card_statement_reconciliation.needs_review` が true のときのみ上部に専用警告バナー（`asset_card_reconciliation_needs_review_banner`）および「手動照合を開始」ボタンを表示する。
+  - ステップ1（請求額・内訳・差分確認）→ ステップ2（不足差分プレフィル入力 + `CardStatementReconciliationPlanner.previewAdjustment` によるライブ整合/超過判定）→ ステップ3（反映前後確認・保存）の3段階で `configuredDetailTotal` と `billedAmount` を一致させ、完了後はバナーを非表示化する。
+  - 暫定保存先は `AssetLiabilityMonthlyState.cardStatementLines` の月次オーバーライドとし、専用のサーバーテーブル正規化同期は将来の追加調査項目として扱う。
+- **手動明細入力ウィザードと整合チェック (#3326)**:
+  - 明細取り込みが無い／失敗した場合に「手動で明細を追加」モーダルから複数行（利用日・金額・摘要・カテゴリ）を入力し、リアルタイムで請求額との一致を検証する。
+  - 差分が残る場合は警告を表示して保存ボタンをブロックし、明示的な許可チェック（`card_manual_entry_allow_mismatch_checkbox`）がある場合のみ部分保存を許可する。
+  - AI要約ペイロードの `card_statement_reconciliation` に `manual_statement_pending` / `provisional_detail_count` を含め、未取込時の手動入力誘導を支援する。
+- **仮内訳の登録・昇格・削除 (#3349)**:
+  - 照合差分がある場合「仮内訳として追加」ボタンから差額を一時記録でき、`isProvisional=true` 行は正式内訳合計（`configuredDetailTotal`）・明細合計（`statementLineTotal`）・給与サイクル支出集計のすべてから除外して二重計上を防止する。
+  - UI上は薄色カード＋「仮内訳」バッジで区別し、前月以前の作成日（`createdAt`）を持つ繰越行には「翌月繰越・要確認」バッジを表示する。各行から「正式内訳へ昇格」または「削除」をワンタップで実行できる。
+
+### 安全残高事前振替・入金予定ゲート・資金繰り自動割当 (#3350 / #3291 / #4059) 仕様
+
+- **安全残高割れの事前振替提案・編集ウィザード (#3350)**:
+  - `AssetSafetyTransferSuggestionService` で `projectedBalance < minimumSafetyBalance` の口座を検出し、1口座1件の概算振替提案（移動元の現在残高と `minimumSafetyBalance` / `PaymentFundingRule.minimumReserve` の両立、同一銀行・無料振替優先、未完了振替タスク登録で自動解消）を画面上部の `asset_safety_transfer_suggestions_card` に提示する。
+  - 各提案の「振替タスク作成」ボタンから `AssetSafetyTransferWizardDialog` を開き、振替元・金額・振替期限を調整して即座に未完了タスクへ起票・見込み残高再計算できる。
+- **入金予定未設定トップバナー・給料日ウィザード・確定前ゲート (#3291)**:
+  - `PaymentConfirmationGate.evaluate` により `workbook.incomePlans.isEmpty` のとき画面上部へ警告バナー（`asset_income_plan_missing_banner`）を表示し、給料日・金額・入金先・毎月定期登録を一括入力できる `AssetIncomePlanPaydayWizardDialog`（`AssetLiabilityPlanningService.validateIncomePlan` 検証付き）を起動できる。
+  - 既存の即座支払チェック（`debt_paid_checkbox_*`）は妨げず、「この額で確定」「推定額を一括確定」および「請求確認済み」ON 操作の直前に、入金予定未登録または支払後使用可能額がマイナスになる場合はキャンセル可能な確認ダイアログ（`asset_income_missing_confirm_dialog`）で事前確認する。
+- **支払原資ルール自動割当・振替バッファ・重複防止・日本語導線統一 (#4059)**:
+  - `PaymentFundingRule` により優先順位・最低維持残高・除外対象を満たす支払原資口座を自動解決して未設定負債へ割り当て、`buildWorkbook(transferBufferAmount: ...)` で不足額＋バッファを複数移動元にまたがって提案できるようにする。
+  - `AssetLiabilityTransferSuggestion` / `AssetLiabilityTransferTask` に `targetPaymentName` / `targetPaymentDate` / `dedupeKey` を追加して月次状態ストア・メモ化キー・比較関数へ永続化し、同一 `dedupeKey` の重複タスク起票を防止する。
+  - 不足バナー・振替セクションの操作ラベルを「振替起票」「振替提案」へ日本語統一し、原資未設定行には「期日優先 / 要確認」バッジと `MissingPaymentSourceGuideDialog`（1タップ原資設定）を追加する。
+
+### 債権者連絡テンプレ・送信ログ・カード明細再取得監視 (#3292 / #3288 / #3299) 仕様
+
+- **債権者連絡テンプレートと連絡・合意記録 (#3292 / #3288)**:
+  - `lib/models/contact_log.dart` および `AssetCreditorContactService` により、期限超過・期日接近・高金利（年利15%以上）の負債先に対して `CreditorContactTask`（`pending` / `contacted`）を自動組み立てし、「支払日変更」「最低額減額」「分割・一時猶予」の3種類のテンプレート文面を生成する。
+  - 負債行の「連絡・記録」から `CreditorContactTemplateAndLogDialog`、「一括連絡テンプレ」から `BulkCreditorContactDialog` を開き、送信失敗時はエラー表示・再送を提示する。保存成功後は「連絡済み」バッジ・次回フォロー日・上部合意内容リマインダーバナー（`asset_creditor_contact_reminder_banner`）および AI 詳細ペイロード（`creditor_contact_tasks` / `contact_log_ids`）へ反映する。
+- **カード明細再取得導線と失敗監視 (#3299)**:
+  - `CardStatementRefetchService` により要確認カードグループごとに「明細再取得」を実行し、最終試行時刻・成功/失敗状態・失敗理由（`CardStatementImportStatus`）を UI（`asset_card_statement_import_status_<id>`）および AI 詳細ペイロード（`card_statement_reconciliation.statement_import_status`）へ記録する。
+  - 再取得失敗時は失敗理由を表示しつつ「手動で明細を入力」から `CardManualStatementEntryDialog` へ即遷移できるようにし、取込成功時は明細行を取り込んで要確認状態を更新する。

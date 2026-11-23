@@ -4,9 +4,11 @@ import 'package:flutter/foundation.dart' show debugPrintSynchronously;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/ai_hub_chat_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_ai_analysis_history_service.dart';
@@ -226,6 +228,106 @@ void main({
       authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
     );
   });
+
+  testWidgets('provider failure displays the fallback in the real summary',
+      (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'asset_management_display_mode_v1': 'full',
+    });
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
+    AssetRecurringTombstoneSyncService.resetSharedForTest();
+    AiHubChatQuotaGuard.resetForTesting();
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    var calls = 0;
+    final service = AssetManagementAiSummaryService(
+      aiEnabled: true,
+      chatService: AiHubChatService(
+        invoker: (_) async {
+          calls++;
+          throw StateError('synthetic provider failure');
+        },
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AssetManagementPage(
+          assetLiabilityRepository: _MonthlyRepository(),
+          aiSummaryService: service,
+          aiAnalysisHistoryService: _EmptyHistory(),
+          debugNow: DateTime(2026, 9, 6, 12),
+          debugInitialAssetData: const <String, Map<String, double>>{
+            '2026-09-06': <String, double>{
+              'bank': 30000,
+              'synthetic debt': -10000,
+            },
+          },
+        ),
+      ),
+    );
+    final summary = find.byWidgetPredicate(
+      (widget) => widget is MarkdownBody && widget.data.startsWith('## 1. 現状'),
+    );
+    await _pumpUntil(tester, () => calls > 0 && summary.evaluate().isNotEmpty);
+    final markdown = tester.widget<MarkdownBody>(summary);
+    for (var section = 1; section <= 8; section++) {
+      expect(markdown.data, contains('## $section. '));
+    }
+    expect(
+      find.descendant(of: summary, matching: find.byType(RichText)),
+      findsWidgets,
+    );
+    expect(find.textContaining('使用可能額', findRichText: true), findsWidgets);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  for (final paid in <bool>[false, true]) {
+    testWidgets('paid actual amount reaches AI report: $paid', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1': 'full',
+      });
+      AssetSyncDirtyKeysStore.resetWriteLockForTest();
+      AssetRecurringTombstoneSyncService.resetSharedForTest();
+      await tester.binding.setSurfaceSize(const Size(1600, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final repository = _MonthlyRepository()
+        ..state = AssetLiabilityMonthlyState(
+          paymentOverrides: const <String, double>{'モビット': 5000},
+          actualPaymentAmounts: const <String, double>{'モビット': 15000},
+          annualRateOverrides: const <String, double>{'mobit': 0.15},
+          paidAccountNames: paid ? const <String>{'モビット'} : const <String>{},
+        );
+      final ai = _ControlledAi();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repository,
+            aiSummaryService: ai,
+            aiAnalysisHistoryService: _EmptyHistory(),
+            debugNow: DateTime(2026, 9, 14, 12),
+            debugInitialAssetData: const <String, Map<String, double>>{
+              '2026-09-14': <String, double>{'bank': 500000, 'モビット': -100000},
+            },
+          ),
+        ),
+      );
+      await _pumpUntil(tester, () => ai.requests.isNotEmpty);
+      final row = ai.requests.last.workbook.debtMasterRows
+          .singleWhere((row) => row.name == 'モビット');
+      expect(row.scheduledPaymentAmount, 5000);
+      expect(row.monthlyInterestEstimate, closeTo(1250, 0.001));
+      expect(row.principalPaymentEstimate, closeTo(paid ? 13750 : 3750, 0.001));
+      expect(
+        row.balanceAfterPaymentEstimate,
+        closeTo(paid ? -86250 : -96250, 0.001),
+      );
+      ai.complete(0, 'Synthetic paid amount report');
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 3));
+    });
+  }
 
   for (final mode in <int>[0, 1, 2]) {
     final failRestoration = mode == 1;
