@@ -163,8 +163,9 @@ void main() {
       );
 
       final payload = aiSummaryService.buildAiDetailedPayload(report);
-      expect(payload['contact_log_ids'], contains('log_mobit_1'));
-      expect(payload['creditor_contact_tasks'], isA<List<dynamic>>());
+      final workbookJson = payload['workbook'] as Map<String, dynamic>;
+      expect(workbookJson['contact_log_ids'], contains('log_mobit_1'));
+      expect(workbookJson['creditor_contact_tasks'], isA<List<dynamic>>());
     });
   });
 
@@ -226,8 +227,9 @@ void main() {
       );
       final report = insightService.buildReport(workbook: workbook);
       final payload = aiSummaryService.buildAiDetailedPayload(report);
+      final workbookJson = payload['workbook'] as Map<String, dynamic>;
       final recon =
-          payload['card_statement_reconciliation'] as Map<String, dynamic>;
+          workbookJson['card_statement_reconciliation'] as Map<String, dynamic>;
       final importStatus =
           recon['statement_import_status'] as Map<String, dynamic>;
       expect(importStatus.containsKey('aupay_card'), isTrue);
