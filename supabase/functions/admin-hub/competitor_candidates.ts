@@ -23,7 +23,18 @@ export interface CandidateStoreResult<T> {
   error: { message: string } | null;
 }
 
+export interface AdminProfileRow {
+  is_admin?: boolean | null;
+  role?: string | null;
+}
+
+export interface CandidateCallerContext {
+  userId: string | null;
+  isServiceRole: boolean;
+}
+
 export interface CompetitorCandidateStore {
+  getAdminProfile(userId: string): Promise<CandidateStoreResult<AdminProfileRow>>;
   listCandidates(
     onlyManualReview: boolean,
     limit: number,
@@ -41,6 +52,17 @@ export function createSupabaseCompetitorCandidateStore(
   admin: SupabaseClient,
 ): CompetitorCandidateStore {
   return {
+    async getAdminProfile(userId) {
+      const { data, error } = await admin
+        .from("user_profiles")
+        .select("is_admin, role")
+        .eq("user_id", userId)
+        .maybeSingle();
+      return {
+        data: data ? (data as AdminProfileRow) : null,
+        error: error ? { message: error.message } : null,
+      };
+    },
     async listCandidates(onlyManualReview, limit) {
       let query = admin
         .from("competitor_candidates")
@@ -201,10 +223,34 @@ export interface CandidateServiceResponse {
   body: Record<string, unknown>;
 }
 
+export async function authorizeCandidateAdmin(
+  store: CompetitorCandidateStore,
+  caller: CandidateCallerContext,
+): Promise<CandidateServiceResponse | null> {
+  if (!caller.userId && !caller.isServiceRole) {
+    return { status: 401, body: { error: "Unauthorized" } };
+  }
+  if (caller.isServiceRole) {
+    return null;
+  }
+  const profileRes = await store.getAdminProfile(caller.userId!);
+  if (profileRes.error) {
+    return { status: 500, body: { error: profileRes.error.message } };
+  }
+  const profile = profileRes.data;
+  if (profile?.is_admin !== true && profile?.role !== "admin") {
+    return { status: 403, body: { error: "admin_required" } };
+  }
+  return null;
+}
+
 export async function handleCompetitorCandidateList(
   store: CompetitorCandidateStore,
+  caller: CandidateCallerContext,
   input: Record<string, unknown>,
 ): Promise<CandidateServiceResponse> {
+  const denied = await authorizeCandidateAdmin(store, caller);
+  if (denied) return denied;
   const onlyManual = input.only_manual_review === true;
   const rawLimit = typeof input.limit === "number"
     ? input.limit
@@ -227,10 +273,13 @@ export async function handleCompetitorCandidateList(
 
 export async function handleCompetitorCandidateVerifyUrl(
   store: CompetitorCandidateStore,
+  caller: CandidateCallerContext,
   input: Record<string, unknown>,
   fetchFn: FetchLike = fetch,
   nowIso: string = new Date().toISOString(),
 ): Promise<CandidateServiceResponse> {
+  const denied = await authorizeCandidateAdmin(store, caller);
+  if (denied) return denied;
   const id = typeof input.candidate_id === "string"
     ? input.candidate_id.trim()
     : "";
@@ -273,9 +322,12 @@ export async function handleCompetitorCandidateVerifyUrl(
 
 export async function handleCompetitorCandidateReview(
   store: CompetitorCandidateStore,
+  caller: CandidateCallerContext,
   input: Record<string, unknown>,
   nowIso: string = new Date().toISOString(),
 ): Promise<CandidateServiceResponse> {
+  const denied = await authorizeCandidateAdmin(store, caller);
+  if (denied) return denied;
   const id = typeof input.candidate_id === "string"
     ? input.candidate_id.trim()
     : "";

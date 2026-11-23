@@ -858,6 +858,7 @@ serve(async (req: Request) => {
       case "competitor_candidate.list": {
         const res = await handleCompetitorCandidateList(
           createSupabaseCompetitorCandidateStore(admin),
+          { userId, isServiceRole },
           body,
         );
         return json(res.body, res.status);
@@ -866,6 +867,7 @@ serve(async (req: Request) => {
       case "competitor_candidate.verify_url": {
         const res = await handleCompetitorCandidateVerifyUrl(
           createSupabaseCompetitorCandidateStore(admin),
+          { userId, isServiceRole },
           body,
         );
         return json(res.body, res.status);
@@ -874,6 +876,7 @@ serve(async (req: Request) => {
       case "competitor_candidate.review": {
         const res = await handleCompetitorCandidateReview(
           createSupabaseCompetitorCandidateStore(admin),
+          { userId, isServiceRole },
           body,
         );
         return json(res.body, res.status);
