@@ -118,6 +118,21 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
             "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/analytics/endpoints/metrics" \
             > supabase-metrics.prom
+          LT_START=$(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%SZ)
+          LT_SQL="select timestamp from logs where source = 'function_logs' and position(event_message, 'landing.trial provider failed') > 0 limit 50"
+          if curl --fail --silent --show-error --max-time 30 --get \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --data-urlencode "sql=$LT_SQL" \
+            --data-urlencode "iso_timestamp_start=$LT_START" \
+            --data-urlencode "iso_timestamp_end=$END" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/analytics/endpoints/logs" \
+            > landing-trial-logs.json && jq -e '.result | type == "array"' landing-trial-logs.json >/dev/null; then
+            echo "LANDING_TRIAL_STATUS=configured" >> "$GITHUB_ENV"
+          else
+            echo '{"result":[]}' > landing-trial-logs.json
+            echo "LANDING_TRIAL_STATUS=unavailable" >> "$GITHUB_ENV"
+            echo "::notice::landing.trial log check unavailable; continuing with core observability telemetry."
+          fi
 
           SENTRY_CONFIG_COUNT=0
           for value in "$SENTRY_AUTH_TOKEN" "$SENTRY_ORG" "$SENTRY_PROJECT"; do
@@ -204,6 +219,9 @@ jobs:
             --ai-hub-json ai-hub-health.json \
             --supabase-metrics supabase-metrics.prom \
             --sentry-json sentry-stats.json \
+            --landing-trial-logs-json landing-trial-logs.json \
+            --landing-trial-failure-alert 1 \
+            --landing-trial-status "$LANDING_TRIAL_STATUS" \
             --output-json production-observability.json \
             --output-md production-observability.md \
             --p95-alert-ms "$P95_ALERT_MS" \
@@ -267,3 +285,4 @@ jobs:
             production-observability.json
             production-observability.md
             trace-correlation.json
+            landing-trial-logs.json
