@@ -4668,21 +4668,46 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     bool firstUserGrowthMode = false,
   }) {
     const samplePrompt = '仕事が多すぎて、何から始めるか決められない';
+    final decoration = heroMode
+        ? BoxDecoration(
+            color: const Color(0xFF0E1B27),
+            borderRadius: const BorderRadius.all(Radius.circular(8)),
+            border: Border.all(color: const Color(0x4DF0E5D0)),
+          )
+        : const BoxDecoration(
+            color: Color(0xFFF6FAFE),
+            border:
+                Border(left: BorderSide(color: Color(0xFF1F7AE0), width: 3)),
+          );
+    final eyebrowColor =
+        heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1D4ED8);
+    final titleColor =
+        heroMode ? const Color(0xFFF6F0E5) : const Color(0xFF172033);
+    final bodyColor =
+        heroMode ? const Color(0xFFC9D1D7) : const Color(0xFF475569);
+    final noteColor =
+        heroMode ? const Color(0xFFB8C4CE) : const Color(0xFF475569);
+    final primaryCtaBackground =
+        heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1F7AE0);
+    final primaryCtaForeground =
+        heroMode ? const Color(0xFF101A24) : Colors.white;
+    final secondaryCtaColor =
+        heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1D4ED8);
+    final secondaryCtaBorderColor =
+        heroMode ? const Color(0x80F0E5D0) : const Color(0xFF93C5FD);
+
     return Container(
       key: const Key('landing_h11_answer_preview'),
       width: double.infinity,
       padding: EdgeInsets.all(compact ? 10 : 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF6FAFE),
-        border: Border(left: BorderSide(color: Color(0xFF1F7AE0), width: 3)),
-      ),
+      decoration: decoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             '入力例と提案サンプル',
             style: TextStyle(
-              color: Color(0xFF1D4ED8),
+              color: eyebrowColor,
               fontSize: 11,
               fontWeight: FontWeight.w800,
               height: 1.4,
@@ -4690,10 +4715,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           if (!compact) ...[
             const SizedBox(height: 4),
-            const Text(
+            Text(
               '入力例: 「$samplePrompt」',
               style: TextStyle(
-                color: Color(0xFF64748B),
+                color: bodyColor,
                 fontSize: 12,
                 height: 1.45,
               ),
@@ -4704,7 +4729,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           Text(
             '提案例: 止まっている案件を1つ選ぶ',
             style: TextStyle(
-              color: const Color(0xFF172033),
+              color: titleColor,
               fontSize: compact ? 13 : 14,
               fontWeight: FontWeight.w800,
               height: 1.4,
@@ -4712,10 +4737,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           if (!compact) ...[
             const SizedBox(height: 2),
-            const Text(
+            Text(
               '次の一手例: 確認先を1人決め、連絡文の下書きを作る',
               style: TextStyle(
-                color: Color(0xFF475569),
+                color: bodyColor,
                 fontSize: 12,
                 height: 1.45,
               ),
@@ -4725,7 +4750,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           Text(
             '実際の提案は、入力内容によって変わります。',
             style: TextStyle(
-              color: const Color(0xFF64748B),
+              color: noteColor,
               fontSize: compact ? 10 : 11,
               height: 1.45,
             ),
@@ -4743,8 +4768,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               icon: const Icon(Icons.bolt, size: 17),
               label: const Text('1タップで「今日やる1件」を出す'),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF1F7AE0),
-                foregroundColor: Colors.white,
+                backgroundColor: primaryCtaBackground,
+                foregroundColor: primaryCtaForeground,
                 minimumSize: Size.fromHeight(compact ? 44 : 48),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
@@ -4763,9 +4788,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               icon: const Icon(Icons.bolt, size: 17),
               label: const Text('この入力例でAIに提案させる'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1F7AE0),
-                minimumSize: Size.fromHeight(compact ? 40 : 44),
-                side: const BorderSide(color: Color(0xFF93C5FD)),
+                foregroundColor: secondaryCtaColor,
+                minimumSize: const Size.fromHeight(44),
+                side: BorderSide(color: secondaryCtaBorderColor),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -4773,8 +4798,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             ),
           if (firstUserGrowthMode) ...[
             const SizedBox(height: 8),
-            const Wrap(
-              key: Key('first_user_growth_trial_reassurance'),
+            Wrap(
+              key: const Key('first_user_growth_trial_reassurance'),
               alignment: WrapAlignment.center,
               spacing: 14,
               runSpacing: 6,
@@ -4782,10 +4807,12 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 _TrustPoint(
                   icon: Icons.visibility_outlined,
                   label: '登録は結果を見てから',
+                  dark: heroMode,
                 ),
                 _TrustPoint(
                   icon: Icons.credit_card_off_outlined,
                   label: '無料登録時カード不要',
+                  dark: heroMode,
                 ),
               ],
             ),
