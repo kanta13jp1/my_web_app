@@ -109,68 +109,71 @@ void main() {
     testWidgets('shows points, unlocked achievements, and live AI evaluation',
         (tester) async {
       final SemanticsHandle handle = tester.ensureSemantics();
-      addTearDown(handle.dispose);
+      try {
+        for (final viewport in const <Size>[Size(1280, 900), Size(390, 844)]) {
+          final service = GamificationService.configured(
+            aiEvaluator: (achievement, stats) async =>
+                'CHRO称賛: ${achievement.title} 達成により ${stats.totalPoints}pt 到達！',
+            nowProvider: () => DateTime.utc(2026, 11, 24, 3, 0),
+          );
+          tester.view.physicalSize = viewport;
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
 
-      for (final viewport in const <Size>[Size(1280, 900), Size(390, 844)]) {
-        final service = GamificationService.configured(
-          aiEvaluator: (achievement, stats) async =>
-              'CHRO称賛: ${achievement.title} 達成により ${stats.totalPoints}pt 到達！',
-          nowProvider: () => DateTime.utc(2026, 11, 24, 3, 0),
-        );
-        tester.view.physicalSize = viewport;
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: ChroOfficePage(
-              gamificationService: service,
-              initialWorkspace: _dummyChroWorkspace(),
+          await tester.pumpWidget(
+            MaterialApp(
+              home: ChroOfficePage(
+                gamificationService: service,
+                initialWorkspace: _dummyChroWorkspace(),
+              ),
             ),
-          ),
-        );
-        await tester.pumpAndSettle();
+          );
+          await tester.pumpAndSettle();
 
-        expect(
-          find.byKey(const Key('chro_office_page_scaffold')),
-          findsOneWidget,
-        );
-        expect(find.byType(ChroGamificationSummaryCard), findsOneWidget);
-        expect(find.byKey(const Key('chro_menu_people_help')), findsOneWidget);
-        expect(find.text('0 pt'), findsOneWidget);
-        expect(
-          find.byKey(const Key('chro_achievements_empty_text')),
-          findsOneWidget,
-        );
+          expect(
+            find.byKey(const Key('chro_office_page_scaffold')),
+            findsOneWidget,
+          );
+          expect(find.byType(ChroGamificationSummaryCard), findsOneWidget);
+          expect(
+              find.byKey(const Key('chro_menu_people_help')), findsOneWidget);
+          expect(find.text('0 pt'), findsOneWidget);
+          expect(
+            find.byKey(const Key('chro_achievements_empty_text')),
+            findsOneWidget,
+          );
 
-        await service.recordActivity(
-          tasksCompletedDelta: 1,
-          declutterCompletedDelta: 1,
-          contextNote: 'リアル断捨離クエスト',
-        );
-        await tester.pumpAndSettle();
+          await service.recordActivity(
+            tasksCompletedDelta: 1,
+            declutterCompletedDelta: 1,
+            contextNote: 'リアル断捨離クエスト',
+          );
+          await tester.pumpAndSettle();
 
-        expect(find.text('250 pt'), findsOneWidget);
-        expect(
-          find.byKey(
-            const Key('chro_unlocked_achievement_declutter_quest_success'),
-          ),
-          findsOneWidget,
-        );
-        expect(find.textContaining('CHRO称賛:'), findsOneWidget);
+          expect(find.text('250 pt'), findsOneWidget);
+          expect(
+            find.byKey(
+              const Key('chro_unlocked_achievement_declutter_quest_success'),
+            ),
+            findsOneWidget,
+          );
+          expect(find.textContaining('CHRO称賛:'), findsOneWidget);
 
-        await tester.ensureVisible(
-          find.byKey(const Key('chro_gamification_evaluate_btn')),
-        );
-        await tester.tap(
-          find.byKey(const Key('chro_gamification_evaluate_btn')),
-        );
-        await tester.pumpAndSettle();
+          await tester.ensureVisible(
+            find.byKey(const Key('chro_gamification_evaluate_btn')),
+          );
+          await tester.tap(
+            find.byKey(const Key('chro_gamification_evaluate_btn')),
+          );
+          await tester.pumpAndSettle();
 
-        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-        expect(tester.takeException(), isNull);
+          await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+          await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+          expect(tester.takeException(), isNull);
+        }
+      } finally {
+        handle.dispose();
       }
     });
   });
