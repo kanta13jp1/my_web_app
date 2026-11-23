@@ -76,6 +76,17 @@ void main() {
       expect(find.byKey(const Key('home_tier_new')), findsOneWidget);
       expect(find.byKey(const Key('home_tier_recommend')), findsOneWidget);
       expect(
+        find.byKey(const Key('home_curated_operations_calendar')),
+        findsOneWidget,
+      );
+      expect(find.text('借入/違反'), findsOneWidget);
+      expect(
+        find.byKey(
+          const Key('home_curated_calendar_open_asset_management_button'),
+        ),
+        findsOneWidget,
+      );
+      expect(
         find.byKey(const Key('home_section_feature_request')),
         findsNothing,
       );
@@ -115,6 +126,10 @@ void main() {
         find.byKey(const Key('home_tier_recent')),
       );
       expect(recentSection.initiallyExpanded, isFalse);
+      final calendarSection = tester.widget<CollapsibleHomeSection>(
+        find.byKey(const Key('home_curated_operations_calendar')),
+      );
+      expect(calendarSection.initiallyExpanded, isFalse);
       expect(tester.takeException(), isNull);
     });
 
@@ -412,6 +427,10 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+      expect(
+        find.byKey(const Key('home_curated_operations_calendar')),
+        findsNothing,
+      );
       for (final key in [
         'home_section_site_guide_ai',
         'home_legacy_site_guide_ai',
