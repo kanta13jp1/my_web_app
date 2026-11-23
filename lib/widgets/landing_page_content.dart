@@ -7577,6 +7577,7 @@ class _LandingMainBadge extends StatelessWidget {
     );
   }
 }
+
 class LandingPostTrialSaveCard extends StatelessWidget {
   final bool compact;
   final bool heroMode;
@@ -7640,8 +7641,9 @@ class LandingPostTrialSaveCard extends StatelessWidget {
     final Widget emailMagicLinkButton = googleLoginEnabled
         ? OutlinedButton.icon(
             key: const Key('landing_h04_inline_magic_link'),
-            onPressed:
-                (isLoading || isMagicLinkCoolingDown) ? null : onSaveWithMagicLink,
+            onPressed: (isLoading || isMagicLinkCoolingDown)
+                ? null
+                : onSaveWithMagicLink,
             icon: Icon(
               showInboxShortcut
                   ? Icons.check_circle_outline
@@ -7655,8 +7657,9 @@ class LandingPostTrialSaveCard extends StatelessWidget {
           )
         : FilledButton.icon(
             key: const Key('landing_h04_inline_magic_link'),
-            onPressed:
-                (isLoading || isMagicLinkCoolingDown) ? null : onSaveWithMagicLink,
+            onPressed: (isLoading || isMagicLinkCoolingDown)
+                ? null
+                : onSaveWithMagicLink,
             icon: Icon(
               showInboxShortcut
                   ? Icons.check_circle_outline
