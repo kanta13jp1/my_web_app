@@ -20,6 +20,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:my_web_app/data/home_tool_catalog.dart';
 import 'package:my_web_app/utils/feature_route_labels.dart';
 import 'package:my_web_app/utils/route_url_sync.dart';
+import 'package:my_web_app/utils/route_document_title.dart';
 import 'package:my_web_app/services/spa_route_title_observer.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
