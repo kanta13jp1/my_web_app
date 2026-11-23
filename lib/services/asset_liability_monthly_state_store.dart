@@ -1040,6 +1040,10 @@ class AssetLiabilityMonthlyStateStore {
               amount == null) {
             continue;
           }
+          final createdAtText = rawLine['createdAt']?.toString() ??
+              rawLine['created_at']?.toString();
+          final createdAt =
+              createdAtText == null ? null : DateTime.tryParse(createdAtText);
           lines.add(
             AssetLiabilityCardStatementLine(
               id: id,
@@ -1051,6 +1055,16 @@ class AssetLiabilityMonthlyStateStore {
               postedAt: postedAt,
               description: description,
               amount: amount,
+              category: _cleanNullableString(rawLine['category']),
+              isProvisional: rawLine['isProvisional'] == true ||
+                  rawLine['is_provisional'] == true,
+              isConfiguredAdjustment:
+                  rawLine['isConfiguredAdjustment'] == true ||
+                      rawLine['is_configured_adjustment'] == true,
+              excludeFromStatementTotal:
+                  rawLine['excludeFromStatementTotal'] == true ||
+                      rawLine['exclude_from_statement_total'] == true,
+              createdAt: createdAt,
             ),
           );
         }
@@ -1814,6 +1828,13 @@ class AssetLiabilityMonthlyStateStore {
             'postedAt': line.postedAt?.toIso8601String(),
             'description': line.description,
             'amount': line.amount,
+            if (line.category != null) 'category': line.category,
+            if (line.isProvisional) 'isProvisional': true,
+            if (line.isConfiguredAdjustment) 'isConfiguredAdjustment': true,
+            if (line.excludeFromStatementTotal)
+              'excludeFromStatementTotal': true,
+            if (line.createdAt != null)
+              'createdAt': line.createdAt!.toIso8601String(),
           },
       ]);
     });

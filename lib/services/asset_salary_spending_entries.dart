@@ -59,6 +59,9 @@ class AssetSalarySpendingEntries {
     }
 
     for (final line in cardStatementLines) {
+      if (line.isProvisional || line.excludeFromStatementTotal) {
+        continue;
+      }
       final postedAt = line.postedAt;
       if (postedAt == null) {
         continue;

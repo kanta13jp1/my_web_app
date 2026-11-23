@@ -222,3 +222,17 @@ Current open pinned work starts here:
   - 保存失敗時は追加したタスクのみを取り消し（ロールバック）、エラー通知と再試行を提供。
 - **クラウド検証**:
   - VMテスト、E2Eテスト（`integration_test/asset_triage_withdrawal_test.dart`）、および Chrome 視覚回帰検証（デスクトップ・モバイル）で挙動を担保。
+
+### カード明細手動照合ウィザード・手動明細入力・仮内訳 (#3329 / #3326 / #3349) 仕様
+
+- **3ステップ手動照合ウィザード (#3329)**:
+  - `card_statement_reconciliation.needs_review` が true のときのみ上部に専用警告バナー（`asset_card_reconciliation_needs_review_banner`）および「手動照合を開始」ボタンを表示する。
+  - ステップ1（請求額・内訳・差分確認）→ ステップ2（不足差分プレフィル入力 + `CardStatementReconciliationPlanner.previewAdjustment` によるライブ整合/超過判定）→ ステップ3（反映前後確認・保存）の3段階で `configuredDetailTotal` と `billedAmount` を一致させ、完了後はバナーを非表示化する。
+  - 暫定保存先は `AssetLiabilityMonthlyState.cardStatementLines` の月次オーバーライドとし、専用のサーバーテーブル正規化同期は将来の追加調査項目として扱う。
+- **手動明細入力ウィザードと整合チェック (#3326)**:
+  - 明細取り込みが無い／失敗した場合に「手動で明細を追加」モーダルから複数行（利用日・金額・摘要・カテゴリ）を入力し、リアルタイムで請求額との一致を検証する。
+  - 差分が残る場合は警告を表示して保存ボタンをブロックし、明示的な許可チェック（`card_manual_entry_allow_mismatch_checkbox`）がある場合のみ部分保存を許可する。
+  - AI要約ペイロードの `card_statement_reconciliation` に `manual_statement_pending` / `provisional_detail_count` を含め、未取込時の手動入力誘導を支援する。
+- **仮内訳の登録・昇格・削除 (#3349)**:
+  - 照合差分がある場合「仮内訳として追加」ボタンから差額を一時記録でき、`isProvisional=true` 行は正式内訳合計（`configuredDetailTotal`）・明細合計（`statementLineTotal`）・給与サイクル支出集計のすべてから除外して二重計上を防止する。
+  - UI上は薄色カード＋「仮内訳」バッジで区別し、前月以前の作成日（`createdAt`）を持つ繰越行には「翌月繰越・要確認」バッジを表示する。各行から「正式内訳へ昇格」または「削除」をワンタップで実行できる。

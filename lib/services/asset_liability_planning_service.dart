@@ -348,6 +348,9 @@ class AssetLiabilityPlanningService {
     final cardStatementLinesByBillingId =
         <String, List<AssetLiabilityCardStatementLine>>{};
     for (final line in cardStatementLines) {
+      if (line.isProvisional || line.excludeFromStatementTotal) {
+        continue;
+      }
       final billingAccountId = line.billingAccountId.trim();
       if (billingAccountId.isEmpty) {
         continue;
@@ -1352,7 +1355,9 @@ class AssetLiabilityPlanningService {
     for (final line in cardStatementLines) {
       final billingAccountId = line.billingAccountId.trim();
       if (billingAccountId.isEmpty) {
-        unmatchedLines.add(line);
+        if (!line.isProvisional) {
+          unmatchedLines.add(line);
+        }
         continue;
       }
       final billingAccountName = line.billingAccountName ??
@@ -1387,12 +1392,23 @@ class AssetLiabilityPlanningService {
           groupsByBillingId[billingAccountId]?.billingAccountName ??
           billingAccountId;
       final group = groupsByBillingId[billingAccountId];
-      final lines = List<AssetLiabilityCardStatementLine>.from(
+      final allLines = List<AssetLiabilityCardStatementLine>.from(
         linesByBillingId[billingAccountId] ??
             const <AssetLiabilityCardStatementLine>[],
       )..sort(_compareCardStatementLines);
+      final provisionalLines =
+          allLines.where((line) => line.isProvisional).toList(growable: false);
+      final officialLines =
+          allLines.where((line) => !line.isProvisional).toList(growable: false);
+      final lines = officialLines
+          .where((line) => !line.excludeFromStatementTotal)
+          .toList(growable: false);
+      final configuredAdjustmentTotal = officialLines
+          .where((line) => line.isConfiguredAdjustment)
+          .fold<double>(0, (sum, line) => sum + line.amount);
       final billedAmount = billingRow?.scheduledPaymentAmount ?? 0;
-      final configuredDetailTotal = group?.totalAmount ?? 0;
+      final configuredDetailTotal =
+          (group?.totalAmount ?? 0) + configuredAdjustmentTotal;
       final statementLineTotal = lines.fold<double>(
         0,
         (sum, line) => sum + line.amount,
@@ -1494,6 +1510,7 @@ class AssetLiabilityPlanningService {
           alerts: alerts,
           fixActions: fixActions,
           revolvingBilling: revolvingBilling,
+          provisionalBillingDetails: provisionalLines,
         ),
       );
     }

@@ -5,6 +5,8 @@ import '../services/asset_late_fee_service.dart';
 import '../services/asset_payment_discrepancy_service.dart';
 import '../services/asset_principal_interest_breakdown_service.dart';
 import '../services/asset_subscription_audit_mutation_queue.dart';
+import '../services/card_statement_reconciliation_planner.dart';
+import '../widgets/asset_card_statement_reconciliation_dialogs.dart';
 import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
 import '../widgets/asset_recorded_change_details.dart';
 import '../models/asset_income_source_evidence.dart';
@@ -5421,6 +5423,209 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .where((line) => line.id != lineId)
           .toList(growable: false);
       _cardStatementImportMessage = '未照合明細を 1 件削除しました。';
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  AssetLiabilityCardStatementReconciliationGroup? _findReconciliationGroup(
+    AssetLiabilityWorkbook workbook,
+    String billingAccountId,
+  ) {
+    for (final group in workbook.cardStatementReconciliation.groups) {
+      if (group.billingAccountId == billingAccountId) {
+        return group;
+      }
+    }
+    return null;
+  }
+
+  AssetLiabilityCardStatementReconciliationGroup _reconciliationGroupOrFallback(
+    AssetLiabilityWorkbook workbook,
+    String billingAccountId,
+  ) {
+    final existing = _findReconciliationGroup(workbook, billingAccountId);
+    if (existing != null) {
+      return existing;
+    }
+    AssetLiabilityDebtRow? debtRow;
+    for (final row in workbook.debtMasterRows) {
+      if (row.id == billingAccountId) {
+        debtRow = row;
+        break;
+      }
+    }
+    String? accountName = debtRow?.name;
+    if (accountName == null) {
+      for (final account in workbook.accounts) {
+        if (account.id == billingAccountId) {
+          accountName = account.name;
+          break;
+        }
+      }
+    }
+    return AssetLiabilityCardStatementReconciliationGroup(
+      billingAccountId: billingAccountId,
+      billingAccountName: accountName ?? billingAccountId,
+      billedAmount: debtRow?.scheduledPaymentAmount ?? 0,
+      configuredDetailTotal: 0,
+      statementLineTotal: 0,
+      configuredItems: const <AssetLiabilityCardBillingReviewItem>[],
+      statementLines: const <AssetLiabilityCardStatementLine>[],
+      alerts: const <String>[],
+      revolvingBilling: debtRow?.revolvingBilling,
+    );
+  }
+
+  Future<void> _openManualCardReconciliationWizard(
+    AssetLiabilityWorkbook workbook, {
+    String? initialBillingAccountId,
+  }) async {
+    final groups = workbook.cardStatementReconciliation.needsReviewGroups;
+    if (groups.isEmpty) {
+      return;
+    }
+    final result = await showDialog<CardManualReconciliationWizardResult>(
+      context: context,
+      builder: (_) => CardStatementManualReconciliationWizardDialog(
+        needsReviewGroups: groups,
+        initialBillingAccountId: initialBillingAccountId,
+      ),
+    );
+    if (!mounted || result == null) {
+      return;
+    }
+    final group = _reconciliationGroupOrFallback(
+      workbook,
+      result.billingAccountId,
+    );
+    final line = AssetLiabilityCardStatementLine(
+      id: 'manual_recon_${result.billingAccountId}_${DateTime.now().millisecondsSinceEpoch}',
+      billingAccountId: result.billingAccountId,
+      billingAccountName: result.billingAccountName,
+      postedAt: workbook.baseDate,
+      description: result.description,
+      amount: result.amount,
+      isConfiguredAdjustment: result.adjustConfiguredTotal,
+    );
+    setState(() {
+      _selectedCardStatementBillingAccountId = result.billingAccountId;
+      _cardStatementLines =
+          CardStatementReconciliationPlanner.buildReconciledStatementLines(
+        existingLines: _cardStatementLines,
+        group: group,
+        newManualLines: <AssetLiabilityCardStatementLine>[line],
+        adjustConfiguredTotal: result.adjustConfiguredTotal,
+      );
+      _cardStatementImportMessage =
+          '${result.billingAccountName} の手動照合を保存しました。';
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  Future<void> _openManualCardStatementEntryDialog(
+    AssetLiabilityWorkbook workbook,
+    String? selectedBillingAccountId,
+  ) async {
+    final billingAccountId = selectedBillingAccountId?.trim();
+    if (billingAccountId == null || billingAccountId.isEmpty) {
+      setState(() {
+        _cardStatementImportMessage = '請求先カードを選択してください。';
+      });
+      return;
+    }
+    final group = _reconciliationGroupOrFallback(workbook, billingAccountId);
+    final addedLines = await showDialog<List<AssetLiabilityCardStatementLine>>(
+      context: context,
+      builder: (_) => CardManualStatementEntryDialog(
+        group: group,
+        initialDate: workbook.baseDate,
+      ),
+    );
+    if (!mounted || addedLines == null || addedLines.isEmpty) {
+      return;
+    }
+    final addedTotal = addedLines.fold<double>(
+      0,
+      (sum, line) => sum + line.amount,
+    );
+    final adjustConfigured = group.configuredDifference <
+            -CardStatementReconciliationPlanner.balanceTolerance ||
+        (group.configuredDetailTotal == 0 && addedTotal > 0);
+    setState(() {
+      _selectedCardStatementBillingAccountId = billingAccountId;
+      _cardStatementLines =
+          CardStatementReconciliationPlanner.buildReconciledStatementLines(
+        existingLines: _cardStatementLines,
+        group: group,
+        newManualLines: addedLines,
+        adjustConfiguredTotal: adjustConfigured,
+      );
+      _cardStatementImportMessage =
+          '${group.billingAccountName} に手動明細 ${addedLines.length} 件を追加しました。';
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  Future<void> _openProvisionalCardDetailDialog(
+    AssetLiabilityCardStatementReconciliationGroup group,
+  ) async {
+    final draft = await showDialog<CardProvisionalDetailDraft>(
+      context: context,
+      builder: (_) => CardProvisionalDetailDialog(group: group),
+    );
+    if (!mounted || draft == null) {
+      return;
+    }
+    final now = DateTime.now();
+    final provisional = AssetLiabilityCardStatementLine(
+      id: 'provisional_${group.billingAccountId}_${now.millisecondsSinceEpoch}',
+      billingAccountId: group.billingAccountId,
+      billingAccountName: group.billingAccountName,
+      postedAt: null,
+      description: draft.memo,
+      amount: draft.amount,
+      isProvisional: true,
+      createdAt: now,
+    );
+    setState(() {
+      _cardStatementLines = <AssetLiabilityCardStatementLine>[
+        ..._cardStatementLines,
+        provisional,
+      ];
+      _cardStatementImportMessage =
+          '${group.billingAccountName} の仮内訳（${_formatManagementYen(draft.amount)}）を記録しました。';
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _promoteProvisionalCardDetail(
+    AssetLiabilityWorkbook workbook,
+    AssetLiabilityCardStatementLine line,
+  ) {
+    final group = _reconciliationGroupOrFallback(
+      workbook,
+      line.billingAccountId,
+    );
+    setState(() {
+      _cardStatementLines =
+          CardStatementReconciliationPlanner.promoteProvisionalLine(
+        existingLines: _cardStatementLines,
+        group: group,
+        lineId: line.id,
+        promotedAt: workbook.baseDate,
+      );
+      _cardStatementImportMessage =
+          '${group.billingAccountName} の仮内訳を正式内訳へ昇格しました。';
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _deleteProvisionalCardDetail(AssetLiabilityCardStatementLine line) {
+    setState(() {
+      _cardStatementLines = _cardStatementLines
+          .where((item) => item.id != line.id)
+          .toList(growable: false);
+      _cardStatementImportMessage = '仮内訳を 1 件削除しました。';
     });
     unawaited(_saveAssetLiabilityMonthlyState());
   }
@@ -25274,21 +25479,64 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
           ],
-          if (report.workbook.cardStatementReconciliation.hasNeedsReview) ...[
-            const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  foregroundColor: const Color(0xFFD97706),
-                ),
-                onPressed: _jumpToCardStatementReconciliation,
-                icon: const Icon(Icons.receipt_long_outlined, size: 16),
-                label: Text(
-                  _cardStatementReconciliationLinkLabel(report.workbook),
-                ),
+          if (report.cardStatementNeedsReview) ...[
+            const SizedBox(height: 8),
+            Container(
+              key: const Key('asset_card_reconciliation_needs_review_banner'),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFF59E0B)),
+              ),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    size: 18,
+                    color: Color(0xFFD97706),
+                  ),
+                  Text(
+                    _cardStatementReconciliationLinkLabel(report.workbook),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF92400E),
+                    ),
+                  ),
+                  FilledButton.icon(
+                    key: const Key(
+                      'asset_card_reconciliation_start_wizard_button',
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFD97706),
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                    ),
+                    onPressed: () => unawaited(
+                      _openManualCardReconciliationWizard(report.workbook),
+                    ),
+                    icon: const Icon(Icons.playlist_add_check, size: 16),
+                    label: const Text('手動照合を開始'),
+                  ),
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      foregroundColor: const Color(0xFFD97706),
+                    ),
+                    onPressed: _jumpToCardStatementReconciliation,
+                    icon: const Icon(Icons.receipt_long_outlined, size: 16),
+                    label: const Text('照合欄へ移動'),
+                  ),
+                ],
               ),
             ),
           ],
@@ -30706,6 +30954,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 label: const Text('明細を取り込む'),
               ),
               OutlinedButton.icon(
+                key: const Key('asset_card_manual_statement_add_button'),
+                onPressed: selectedValue == null
+                    ? null
+                    : () => unawaited(
+                          _openManualCardStatementEntryDialog(
+                            workbook,
+                            selectedValue,
+                          ),
+                        ),
+                icon: const Icon(Icons.edit_note_outlined),
+                label: const Text('手動で明細を追加'),
+              ),
+              OutlinedButton.icon(
                 onPressed: selectedValue == null
                     ? null
                     : () => _clearCardStatementLines(selectedValue),
@@ -30738,6 +30999,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ],
           const SizedBox(height: 10),
           _buildCardStatementReconciliationTable(reconciliation),
+          _buildCardProvisionalDetailsSection(workbook),
           _buildCardStatementFixActionList(reconciliation, cardOptions),
           _buildUnmatchedCardStatementSection(reconciliation, cardOptions),
           _buildRevolvingStatementBreakdownSection(reconciliation),
@@ -31049,6 +31311,175 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildCardProvisionalDetailsSection(AssetLiabilityWorkbook workbook) {
+    final reconciliation = workbook.cardStatementReconciliation;
+    final candidateGroups = reconciliation.groups
+        .where(
+          (group) =>
+              !group.isRevolving &&
+              (group.configuredDifference.abs() >
+                      CardStatementReconciliationPlanner.balanceTolerance ||
+                  group.statementDifference.abs() >
+                      CardStatementReconciliationPlanner.balanceTolerance),
+        )
+        .toList(growable: false);
+    final provisionalLines = reconciliation.provisionalBillingDetails;
+    if (candidateGroups.isEmpty && provisionalLines.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      key: const Key('asset_card_provisional_section'),
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '仮内訳（正式内訳・明細合計から除外）',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          ),
+          if (candidateGroups.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                for (final group in candidateGroups)
+                  OutlinedButton.icon(
+                    key: Key(
+                      'asset_card_provisional_add_${group.billingAccountId}',
+                    ),
+                    onPressed: () => unawaited(
+                      _openProvisionalCardDetailDialog(group),
+                    ),
+                    icon: const Icon(Icons.note_add_outlined, size: 16),
+                    label: Text('${group.billingAccountName}: 仮内訳として追加'),
+                  ),
+              ],
+            ),
+          ],
+          for (final line in provisionalLines) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Container(
+                        key: Key('asset_card_provisional_badge_${line.id}'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          '仮内訳',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      if (CardStatementReconciliationPlanner
+                          .isProvisionalCarryOver(line, workbook.baseDate))
+                        Container(
+                          key: Key(
+                            'asset_card_provisional_carryover_${line.id}',
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFFBEB),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: const Color(0xFFF59E0B)),
+                          ),
+                          child: const Text(
+                            '翌月繰越・要確認',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFB45309),
+                            ),
+                          ),
+                        ),
+                      Text(
+                        '${line.billingAccountName ?? line.billingAccountId} / '
+                        '${_formatManagementYen(line.amount)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      Text(
+                        '（${line.description}・正式集計除外）',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      TextButton.icon(
+                        key: Key('asset_card_provisional_promote_${line.id}'),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        onPressed: () =>
+                            _promoteProvisionalCardDetail(workbook, line),
+                        icon: const Icon(Icons.check_circle_outline, size: 16),
+                        label: const Text('正式内訳へ昇格'),
+                      ),
+                      TextButton.icon(
+                        key: Key('asset_card_provisional_delete_${line.id}'),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        onPressed: () => _deleteProvisionalCardDetail(line),
+                        icon: const Icon(Icons.delete_outline, size: 16),
+                        label: const Text('削除'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
