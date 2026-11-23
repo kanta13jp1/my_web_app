@@ -7,7 +7,8 @@ import 'package:my_web_app/models/contact_log.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 typedef CreditorContactSubmitter = Future<void> Function(
-    CreditorContactLog log);
+  CreditorContactLog log,
+);
 
 /// 債権者連絡テンプレート生成・タスク集約・期日前リマインドを提供する (#3292 / #3288)。
 class AssetCreditorContactService {
