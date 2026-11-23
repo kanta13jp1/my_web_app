@@ -25,6 +25,11 @@ void main() {
         xTrackerSeriesLabel('ishin_member_tracker'),
         '選挙: 日本維新の会 地方議員',
       );
+      // Issue #4026: れいわ新選組 地方議員トラッカー MVP (playbook step 4)。
+      expect(
+        xTrackerSeriesLabel('reiwa_member_tracker'),
+        '選挙: れいわ新選組 地方議員',
+      );
     });
 
     test('collapses daily_briefing variants and passes unknown through', () {
@@ -392,6 +397,16 @@ void main() {
         const Duration(hours: 72),
       );
       expect(isCandidateExpired(ishin, now), isFalse);
+      final reiwa = make(
+        archetype: '',
+        variant: 'reiwa_member_tracker',
+        generatedAt: now.subtract(const Duration(days: 2)),
+      );
+      expect(
+        candidateFreshnessWindow(reiwa),
+        const Duration(hours: 72),
+      );
+      expect(isCandidateExpired(reiwa, now), isFalse);
     });
 
     test(

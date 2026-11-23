@@ -26,6 +26,11 @@ import {
   persistIshinSnapshot,
 } from "./ishin_tracker.ts";
 import {
+  parseReiwaMemberPageHtml,
+  persistReiwaSnapshot,
+  REIWA_MEMBER_PAGE_URL,
+} from "./reiwa_tracker.ts";
+import {
   buildElectionIntelligenceSnapshot,
   type ElectionModeId,
   type ElectionModeRegistry,
@@ -496,11 +501,16 @@ interface IshinSnapshotRequest {
   action: "ishinSnapshot" | "ishinSnapshotAndQueue";
 }
 
+interface ReiwaSnapshotRequest {
+  action: "reiwaSnapshot" | "reiwaSnapshotAndQueue";
+}
+
 type ParsedRequest =
   | SnapshotRequest
   | MemberDetailRequest
   | KomeitoSnapshotRequest
-  | IshinSnapshotRequest;
+  | IshinSnapshotRequest
+  | ReiwaSnapshotRequest;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -607,6 +617,56 @@ serve(async (req) => {
               candidatesCreated: ishinPersistence.candidatesCreated,
               snapshotId: ishinPersistence.snapshotRow.id,
               candidateIds: ishinPersistence.candidateRows.map((row) => row.id),
+            },
+          }
+          : {}),
+      });
+    }
+    if (
+      parsedRequest.action === "reiwaSnapshot" ||
+      parsedRequest.action === "reiwaSnapshotAndQueue"
+    ) {
+      if (parsedRequest.action === "reiwaSnapshotAndQueue") {
+        requireServiceRole(req);
+      }
+      const html = await fetchText(REIWA_MEMBER_PAGE_URL);
+      const reiwaSnapshot = parseReiwaMemberPageHtml(
+        html,
+        REIWA_MEMBER_PAGE_URL,
+      );
+      if (!reiwaSnapshot) {
+        throw new HttpError(
+          503,
+          "Reiwa official member directory could not be parsed.",
+        );
+      }
+      const reiwaPersistence =
+        parsedRequest.action === "reiwaSnapshotAndQueue"
+          ? await persistReiwaSnapshot(
+            createLocalElectionHubStore(),
+            reiwaSnapshot,
+            new Date().toISOString(),
+          )
+          : null;
+      return jsonResponse({
+        success: true,
+        snapshot: reiwaSnapshot,
+        ...(reiwaPersistence
+          ? {
+            persistence: {
+              dataset: reiwaPersistence.dataset,
+              datasetVersion: reiwaPersistence.datasetVersion,
+              snapshotHash: reiwaPersistence.snapshotHash,
+              previousSnapshotId: reiwaPersistence.previousSnapshotId,
+              previousSnapshotHash: reiwaPersistence.previousSnapshotHash,
+              baselineCreated: reiwaPersistence.baselineCreated,
+              snapshotCreated: reiwaPersistence.snapshotCreated,
+              deduplicated: reiwaPersistence.deduplicated,
+              hasChanges: reiwaPersistence.hasChanges,
+              candidateCount: reiwaPersistence.candidateCount,
+              candidatesCreated: reiwaPersistence.candidatesCreated,
+              snapshotId: reiwaPersistence.snapshotRow.id,
+              candidateIds: reiwaPersistence.candidateRows.map((row) => row.id),
             },
           }
           : {}),
@@ -1042,6 +1102,18 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
   ) {
     return { action: "ishinSnapshotAndQueue" };
   }
+  if (
+    requestedAction === "reiwaSnapshot" ||
+    requestedAction === "reiwa_snapshot"
+  ) {
+    return { action: "reiwaSnapshot" };
+  }
+  if (
+    requestedAction === "reiwaSnapshotAndQueue" ||
+    requestedAction === "reiwa_snapshot_and_queue"
+  ) {
+    return { action: "reiwaSnapshotAndQueue" };
+  }
 
   if (req.method === "GET") {
     const url = new URL(req.url);
@@ -1057,6 +1129,12 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
       queryAction === "ishin_snapshot"
     ) {
       return { action: "ishinSnapshot" };
+    }
+    if (
+      queryAction === "reiwaSnapshot" ||
+      queryAction === "reiwa_snapshot"
+    ) {
+      return { action: "reiwaSnapshot" };
     }
     return {
       action: "snapshot",
