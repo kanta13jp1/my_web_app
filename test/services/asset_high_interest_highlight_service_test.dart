@@ -131,7 +131,7 @@ void main() {
             'acom_cl',
             'yokohama_big',
             'yokohama_small',
-            'low_rate'
+            'low_rate',
           ],
         );
       },
@@ -174,10 +174,12 @@ void main() {
         balanceTotal: -500000,
         scheduledPaymentTotal: 40000,
         minimumPaymentEstimateTotal: 40000,
-        paymentSourceSummary: '銀行',
+        manualPaymentTotal: 0,
+        interestEstimateTotal: 28030,
+        manualPaymentCount: 0,
+        estimatedPaymentCount: 2,
         isPast: true,
         isToday: false,
-        isUpcoming: false,
         requiresAction: true,
       );
       final matched =
@@ -194,10 +196,12 @@ void main() {
         balanceTotal: -10000,
         scheduledPaymentTotal: 10000,
         minimumPaymentEstimateTotal: 10000,
-        paymentSourceSummary: '現金',
+        manualPaymentTotal: 0,
+        interestEstimateTotal: 0,
+        manualPaymentCount: 0,
+        estimatedPaymentCount: 1,
         isPast: false,
         isToday: false,
-        isUpcoming: true,
         requiresAction: true,
       );
       expect(
