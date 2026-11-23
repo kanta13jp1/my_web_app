@@ -258,3 +258,25 @@ Current open pinned work starts here:
 - **カード明細再取得導線と失敗監視 (#3299)**:
   - `CardStatementRefetchService` により要確認カードグループごとに「明細再取得」を実行し、最終試行時刻・成功/失敗状態・失敗理由（`CardStatementImportStatus`）を UI（`asset_card_statement_import_status_<id>`）および AI 詳細ペイロード（`card_statement_reconciliation.statement_import_status`）へ記録する。
   - 再取得失敗時は失敗理由を表示しつつ「手動で明細を入力」から `CardManualStatementEntryDialog` へ即遷移できるようにし、取込成功時は明細行を取り込んで要確認状態を更新する。
+
+### 複数借入・おまとめローン試算と返済危険度・専門家相談ガイド (#1369 / #2750 / #1370) 仕様
+
+- **複数借入の日割り利息・高金利優先繰り上げ返済シミュレーター (#1369)**:
+  - `AssetDebtSimulationService` により複数の借入先（残高・実質年率・毎月返済額・次回返済までの日数）を登録・編集し、日割り利息（`残高 × 実質年率 ÷ 365 × 日数`）および次回元金充当額の内訳を表示する。
+  - 一括繰り上げ・毎月上乗せ入力時は高金利順（アバランチ法）に優先充当し、短縮月数と軽減総利息を比較バー表示する。
+- **おまとめローン（借り換え）効果シミュレーション (#2750)**:
+  - 合計残高・想定年利・返済期間を入力し、元利均等返済ベースで借り換え前後の毎月返済額および総支払利息額の差分を比較バーで可視化する。返済期間の長期化等で総支払利息が増える場合は注意喚起を表示する。
+  - 共通コンポーネント `DebtLegalDisclaimerBanner` を用いて、おまとめ利用による過払い金請求権の時効・和解等への中立的な法的注意喚起を併記する。
+- **返済危険度判定と専門家相談ガイド (#1370)**:
+  - `AssetDebtDangerService` で月次返済予定額の対収入比率および月次スナップショットに基づく負債残高非減少の連続月数を評価し、しきい値超過時に画面上部の控えめな案内バナー（`asset_debt_danger_consultation_banner`）および詳細ガイド（`DebtDangerConsultationGuideDialog`）を表示する。
+  - しきい値（比率・連続月数・バナー表示有無）は `AssetDebtDangerSettingsStore` で端末永続化し、任意整理・個人再生・自己破産・特定調停の概要と公的・中立的な相談窓口（法テラス・日弁連・司法書士会・全銀協・国民生活センター）への導線を提供する。
+
+### 自動口座間移動設定・監査履歴と税務控除支援ツール (#3443 / #2490 / #2491) 仕様
+
+- **支払原資不足時の自動口座間移動設定・実行・監査履歴 (#3443)**:
+  - `AssetAutoTransferService` および `AssetAutoTransferStore` により、移動元の最低維持残高・安全余裕バッファを下回らない範囲のみを補填候補として抽出し、設定（許可 ON/OFF、実行前に最終確認 vs 検知時に自動起票、画面通知、追加余裕バッファ）と実行監査履歴（`AutoTransferAuditEntry` 最大50件）を永続化する。
+  - 安全残高割れカード（`asset_safety_transfer_suggestions_card`）およびツールバーから `AutoTransferSettingsAndAuditDialog` を開き、二重起票を防ぎつつ自動/確認実行した振替タスクを追跡できる。
+- **ふるさと納税 控除上限シミュレーター (#2490・OFF-default フラグ)**:
+  - `AssetFurusatoTaxCalculator` により国税庁（給与所得控除 No.1410・所得税速算表 No.2260）および総務省の公開計算式にもとづき、給与年収・家族構成・扶養人数・社会保険料から控除上限目安を決定論的に試算する（AI説明文はOFF固定）。
+- **医療費控除トラッカー (#2491・OFF-default フラグ)**:
+  - `AssetMedicalExpenseService` および `AssetMedicalExpenseStore` により病院・薬局・通院交通費・その他の月次支出と保険補填額を記録し、年累計・基準額（10万円または総所得金額等200万円未満の5%）・200万円上限と近づき/達成アラートを表示する。`#2490` / `#2491` は `AssetTaxToolsFeatureFlagStore`（既定 OFF）により明示有効化時のみツールバーに表示する。
