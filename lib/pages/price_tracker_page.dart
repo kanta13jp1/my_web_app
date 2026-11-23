@@ -2,6 +2,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/price_advice_cache_service.dart';
+
 /// 価格トラッカー — 商品 URL を貼って目標価格まで自動追跡
 ///
 /// NotebookLM "Building a Zero-Cost Amazon Price Tracker" (d6dd44af) の知見統合 (Win版#131)
@@ -13,15 +15,26 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// - purchase_sessions: 購入後ログ (事前 wishlist なし)
 /// - tracked_products: 「目標価格 + URL + 価格推移」を持つ wishlist (本ページ)
 class PriceTrackerPage extends StatefulWidget {
-  const PriceTrackerPage({super.key});
+  const PriceTrackerPage({
+    super.key,
+    this.adviceService,
+    this.initialProducts,
+  });
+
+  final PriceAdviceCacheService? adviceService;
+  final List<Map<String, dynamic>>? initialProducts;
 
   @override
   State<PriceTrackerPage> createState() => _PriceTrackerPageState();
 }
 
 class _PriceTrackerPageState extends State<PriceTrackerPage> {
-  final _supabase = Supabase.instance.client;
+  SupabaseClient get _supabase => Supabase.instance.client;
+  late final PriceAdviceCacheService _adviceService =
+      widget.adviceService ?? PriceAdviceCacheService();
   List<Map<String, dynamic>> _products = [];
+  Map<String, PriceAdviceResult> _cachedAdviceById =
+      <String, PriceAdviceResult>{};
   bool _loading = true;
   String? _error;
 
@@ -32,6 +45,20 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
   }
 
   Future<void> _load() async {
+    final injected = widget.initialProducts;
+    if (injected != null) {
+      final items = List<Map<String, dynamic>>.from(injected);
+      final cached = await _adviceService.loadCachedMap(items);
+      if (mounted) {
+        setState(() {
+          _products = items;
+          _cachedAdviceById = cached;
+          _error = null;
+          _loading = false;
+        });
+      }
+      return;
+    }
     if (_supabase.auth.currentUser == null) {
       setState(() => _loading = false);
       return;
@@ -48,7 +75,13 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
       final data = resp.data as Map<String, dynamic>?;
       final items =
           (data?['products'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-      if (mounted) setState(() => _products = items);
+      final cached = await _adviceService.loadCachedMap(items);
+      if (mounted) {
+        setState(() {
+          _products = items;
+          _cachedAdviceById = cached;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _error = '読込失敗: $e');
     } finally {
@@ -209,10 +242,12 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
       appBar: AppBar(
         title: const Text('価格トラッカー'),
         backgroundColor: const Color(0xFF0A0A0A),
+        foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: '一覧を更新',
             onPressed: _load,
           ),
         ],
@@ -248,7 +283,7 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
                     ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _add,
-        backgroundColor: const Color(0xFFF97316),
+        backgroundColor: const Color(0xFFC2410C),
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text(
           '商品を追加',
@@ -301,6 +336,7 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
   }
 
   Widget _productCard(Map<String, dynamic> p) {
+    final productId = p['id']?.toString().trim() ?? '';
     final name = (p['product_name'] as String?)?.trim().isNotEmpty == true
         ? p['product_name'] as String
         : (p['product_url'] as String? ?? '商品');
@@ -310,6 +346,8 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
     final highest = p['highest_price'] as int?;
     final store = p['store_domain'] as String? ?? '';
     final isOnTarget = current != null && target != null && current <= target;
+    final cachedAdvice =
+        productId.isEmpty ? null : _cachedAdviceById[productId];
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -350,7 +388,7 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
                   child: const Text(
                     '🎯 買い時',
                     style: TextStyle(
-                      color: Color(0xFFF97316),
+                      color: Color(0xFFFB923C),
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       height: 1.5,
@@ -384,81 +422,83 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
             ],
           ),
           const SizedBox(height: 10),
-          Row(
+          if (cachedAdvice != null) ...[
+            _cachedAdviceBanner(productId, cachedAdvice),
+            const SizedBox(height: 10),
+          ],
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              SizedBox(
-                height: 30,
-                child: OutlinedButton.icon(
-                  onPressed: () => _logPrice(p),
-                  icon: const Icon(Icons.add_chart, size: 14),
-                  label: const Text(
-                    '価格を記録',
-                    style: TextStyle(fontSize: 11, height: 1.5),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFF97316),
-                    side: const BorderSide(color: Color(0xFFF97316)),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                  ),
+              OutlinedButton.icon(
+                onPressed: () => _logPrice(p),
+                icon: const Icon(Icons.add_chart, size: 16),
+                label: const Text(
+                  '価格を記録',
+                  style: TextStyle(fontSize: 12, height: 1.5),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFFB923C),
+                  side: const BorderSide(color: Color(0xFFFB923C)),
+                  minimumSize: const Size(48, 48),
+                  tapTargetSize: MaterialTapTargetSize.padded,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                 ),
               ),
-              const SizedBox(width: 6),
-              SizedBox(
-                height: 30,
-                child: OutlinedButton.icon(
-                  onPressed: () => _markPurchased(p),
-                  icon: const Icon(Icons.check_circle, size: 14),
-                  label: const Text(
-                    '購入済み',
-                    style: TextStyle(fontSize: 11, height: 1.5),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF22C55E),
-                    side: const BorderSide(color: Color(0xFF22C55E)),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                  ),
+              OutlinedButton.icon(
+                onPressed: () => _markPurchased(p),
+                icon: const Icon(Icons.check_circle, size: 16),
+                label: const Text(
+                  '購入済み',
+                  style: TextStyle(fontSize: 12, height: 1.5),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF4ADE80),
+                  side: const BorderSide(color: Color(0xFF4ADE80)),
+                  minimumSize: const Size(48, 48),
+                  tapTargetSize: MaterialTapTargetSize.padded,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                 ),
               ),
-              const SizedBox(width: 6),
-              SizedBox(
-                height: 30,
-                child: OutlinedButton.icon(
-                  onPressed: () => _showHistory(p),
-                  icon: const Icon(Icons.show_chart, size: 14),
-                  label: const Text(
-                    '履歴',
-                    style: TextStyle(fontSize: 11, height: 1.5),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF6366F1),
-                    side: const BorderSide(color: Color(0xFF6366F1)),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                  ),
+              OutlinedButton.icon(
+                onPressed: () => _showHistory(p),
+                icon: const Icon(Icons.show_chart, size: 16),
+                label: const Text(
+                  '履歴',
+                  style: TextStyle(fontSize: 12, height: 1.5),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFA5B4FC),
+                  side: const BorderSide(color: Color(0xFFA5B4FC)),
+                  minimumSize: const Size(48, 48),
+                  tapTargetSize: MaterialTapTargetSize.padded,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                 ),
               ),
-              const SizedBox(width: 6),
-              SizedBox(
-                height: 30,
-                child: OutlinedButton.icon(
-                  onPressed: () => _showAdvice(p),
-                  icon: const Icon(Icons.psychology_alt, size: 14),
-                  label: const Text(
-                    'AI助言',
-                    style: TextStyle(fontSize: 11, height: 1.5),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFA855F7),
-                    side: const BorderSide(color: Color(0xFFA855F7)),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                  ),
+              OutlinedButton.icon(
+                key: productId.isEmpty
+                    ? null
+                    : ValueKey<String>('price_advice_button_$productId'),
+                onPressed: () => _showAdvice(p),
+                icon: const Icon(Icons.psychology_alt, size: 16),
+                label: const Text(
+                  'AI助言',
+                  style: TextStyle(fontSize: 12, height: 1.5),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFD8B4FE),
+                  side: const BorderSide(color: Color(0xFFC084FC)),
+                  minimumSize: const Size(48, 48),
+                  tapTargetSize: MaterialTapTargetSize.padded,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                 ),
               ),
-              const Spacer(),
               IconButton(
                 onPressed: () => _delete(p),
-                icon: const Icon(Icons.delete_outline, size: 18),
-                color: const Color(0xFF6B7280),
-                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.delete_outline, size: 20),
+                color: const Color(0xFF94A3B8),
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                 tooltip: '削除',
               ),
             ],
@@ -466,6 +506,81 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
         ],
       ),
     );
+  }
+
+  Widget _cachedAdviceBanner(String productId, PriceAdviceResult advice) {
+    final badgeColor = _verdictForegroundColor(advice.verdict);
+    return Container(
+      key: ValueKey<String>('price_card_advice_$productId'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF18181B),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: badgeColor.withValues(alpha: 0.45),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0A0A0A),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: badgeColor.withValues(alpha: 0.6)),
+                ),
+                child: Text(
+                  advice.verdictLabel,
+                  style: TextStyle(
+                    color: badgeColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              const Text(
+                '24hキャッシュ',
+                style: TextStyle(
+                  color: Color(0xFFCBD5E1),
+                  fontSize: 11,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            advice.summary,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFFE2E8F0),
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Color _verdictForegroundColor(PriceAdviceVerdict verdict) {
+    switch (verdict) {
+      case PriceAdviceVerdict.buy:
+        return const Color(0xFFFB923C);
+      case PriceAdviceVerdict.wait:
+        return const Color(0xFFFBBF24);
+      case PriceAdviceVerdict.hold:
+        return const Color(0xFFC4B5FD);
+    }
   }
 
   Future<void> _showHistory(Map<String, dynamic> p) async {
@@ -481,14 +596,29 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
   }
 
   Future<void> _showAdvice(Map<String, dynamic> p) async {
-    showModalBottomSheet<void>(
+    final productId = p['id']?.toString().trim() ?? '';
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF141414),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => _PriceAdviceSheet(product: p),
+      builder: (_) => _PriceAdviceSheet(
+        product: p,
+        adviceService: _adviceService,
+        onAdviceUpdated: (res) {
+          if (!mounted || productId.isEmpty) {
+            return;
+          }
+          setState(() {
+            _cachedAdviceById = <String, PriceAdviceResult>{
+              ..._cachedAdviceById,
+              productId: res,
+            };
+          });
+        },
+      ),
     );
   }
 
@@ -509,7 +639,7 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
           Text(
             value == null ? '—' : '¥${_format(value)}',
             style: TextStyle(
-              color: value == null ? const Color(0xFF6B7280) : color,
+              color: value == null ? const Color(0xFF94A3B8) : color,
               fontSize: 13,
               fontWeight: FontWeight.w700,
               height: 1.5,
@@ -903,10 +1033,17 @@ class _PriceHistorySheetState extends State<_PriceHistorySheet> {
   }
 }
 
-/// AI 購入アドバイザー (lifestyle-hub:price.advise → ai-hub:provider.chat groq)
+/// AI 購入アドバイザー (lifestyle-hub:price.advise → ai-hub:provider.chat groq + 24h cache)
 class _PriceAdviceSheet extends StatefulWidget {
-  const _PriceAdviceSheet({required this.product});
+  const _PriceAdviceSheet({
+    required this.product,
+    required this.adviceService,
+    this.onAdviceUpdated,
+  });
+
   final Map<String, dynamic> product;
+  final PriceAdviceCacheService adviceService;
+  final ValueChanged<PriceAdviceResult>? onAdviceUpdated;
 
   @override
   State<_PriceAdviceSheet> createState() => _PriceAdviceSheetState();
@@ -914,151 +1051,378 @@ class _PriceAdviceSheet extends StatefulWidget {
 
 class _PriceAdviceSheetState extends State<_PriceAdviceSheet> {
   bool _loading = true;
-  String? _advice;
-  String? _model;
+  PriceAdviceResult? _result;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    _ask();
+    _ask(forceRefresh: false);
   }
 
-  Future<void> _ask() async {
+  Future<void> _ask({required bool forceRefresh}) async {
     setState(() {
       _loading = true;
-      _advice = null;
       _error = null;
     });
     try {
-      final resp = await Supabase.instance.client.functions.invoke(
-        'lifestyle-hub',
-        body: {'action': 'price.advise', 'product_id': widget.product['id']},
+      final result = await widget.adviceService.getAdvice(
+        product: widget.product,
+        forceRefresh: forceRefresh,
       );
-      final data = resp.data as Map<String, dynamic>?;
       if (mounted) {
         setState(() {
-          _advice = data?['advice'] as String? ?? '助言取得失敗';
-          _model = data?['model'] as String?;
+          _result = result;
         });
+        widget.onAdviceUpdated?.call(result);
       }
     } catch (e) {
-      if (mounted) setState(() => _error = 'AI助言エラー: $e');
+      if (mounted) {
+        setState(() => _error = 'AI助言エラー: $e');
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
+  }
+
+  static Color _verdictColor(PriceAdviceVerdict verdict) {
+    switch (verdict) {
+      case PriceAdviceVerdict.buy:
+        return const Color(0xFFFB923C);
+      case PriceAdviceVerdict.wait:
+        return const Color(0xFFFBBF24);
+      case PriceAdviceVerdict.hold:
+        return const Color(0xFFC4B5FD);
+    }
+  }
+
+  static String _yenOrDash(int? value) {
+    if (value == null) return '—';
+    final s = value.toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+      buf.write(s[i]);
+    }
+    return '¥$buf';
+  }
+
+  Widget _statChip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF141414),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF334155)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF94A3B8),
+              fontSize: 11,
+              height: 1.4,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            alignment: Alignment.center,
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFF6B7280),
-                borderRadius: BorderRadius.circular(4),
+    final result = _result;
+    final verdictColor = result != null
+        ? _verdictColor(result.verdict)
+        : const Color(0xFFD8B4FE);
+    final remainingHours = result == null
+        ? 24
+        : result
+            .remainingCacheDuration(
+              DateTime.now().toUtc(),
+              widget.adviceService.cacheTtl,
+            )
+            .inHours
+            .clamp(0, result.cacheTtlHours);
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              alignment: Alignment.center,
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF94A3B8),
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
             ),
-          ),
-          const Row(
-            children: [
-              Icon(Icons.psychology_alt, color: Color(0xFFA855F7)),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'AI 購入アドバイザー',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            const Row(
+              children: [
+                Icon(Icons.psychology_alt, color: Color(0xFFD8B4FE)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'AI 購入アドバイザー',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              widget.product['product_name'] as String? ?? '',
+              style: const TextStyle(
+                color: Color(0xFFCBD5E1),
+                fontSize: 13,
+                height: 1.6,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: CircularProgressIndicator(color: Color(0xFFD8B4FE)),
+                ),
+              )
+            else if (_error != null)
+              Text(
+                _error!,
+                style: const TextStyle(color: Color(0xFFFCA5A5), height: 1.5),
+              )
+            else if (result != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0A0A0A),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: verdictColor.withValues(alpha: 0.55),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Container(
+                          key: const ValueKey<String>(
+                            'price_advice_verdict_badge',
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF18181B),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: verdictColor),
+                          ),
+                          child: Text(
+                            result.verdictLabel,
+                            style: TextStyle(
+                              color: verdictColor,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          key: const ValueKey<String>(
+                            'price_advice_cache_badge',
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            result.fromCache
+                                ? 'キャッシュ利用中 (残り約$remainingHours時間)'
+                                : '新規評価 (${result.cacheTtlHours}時間キャッシュ)',
+                            style: const TextStyle(
+                              color: Color(0xFFE2E8F0),
+                              fontSize: 11,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                        if (result.isStatisticalFallback)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF27272A),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Text(
+                              '統計フォールバック',
+                              style: TextStyle(
+                                color: Color(0xFFFDE68A),
+                                fontSize: 11,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      result.summary,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        height: 1.6,
+                      ),
+                    ),
+                    if (result.reasons.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      for (final reason in result.reasons) ...[
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '• ',
+                              style: TextStyle(
+                                color: Color(0xFFCBD5E1),
+                                fontSize: 13,
+                                height: 1.5,
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                reason,
+                                style: const TextStyle(
+                                  color: Color(0xFFE2E8F0),
+                                  fontSize: 13,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                      ],
+                    ],
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _statChip(
+                          '現在',
+                          _yenOrDash(result.stats.currentPrice),
+                        ),
+                        _statChip(
+                          '平均',
+                          _yenOrDash(result.stats.avgPrice),
+                        ),
+                        _statChip(
+                          '最安 / 最高',
+                          '${_yenOrDash(result.stats.minPrice)} / ${_yenOrDash(result.stats.maxPrice)}',
+                        ),
+                        _statChip(
+                          '記録数',
+                          '${result.stats.sampleCount}件',
+                        ),
+                      ],
+                    ),
+                    if (result.groundedOnObservedLogsOnly) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        '実測ログ統計のみで算出 (未観測セール・在庫推測なし)',
+                        style: TextStyle(
+                          color: Color(0xFFCBD5E1),
+                          fontSize: 11,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (result.model != null && result.model!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'model: ${result.model}',
+                  style: const TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 11,
+                    fontFamily: 'monospace',
                     height: 1.5,
                   ),
                 ),
-              ),
+              ],
             ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            widget.product['product_name'] as String? ?? '',
-            style: const TextStyle(
-              color: Color(0xFF94A3B8),
-              fontSize: 12,
-              height: 1.7,
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (_loading)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(
-                child: CircularProgressIndicator(color: Color(0xFFA855F7)),
-              ),
-            )
-          else if (_error != null)
-            Text(
-              _error!,
-              style: const TextStyle(color: Color(0xFFEF4444), height: 1.5),
-            )
-          else
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0A0A0A),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: const Color(0xFFA855F7).withValues(alpha: 0.3),
-                ),
-              ),
-              child: Text(
-                _advice ?? '',
-                style: const TextStyle(
-                  color: Color(0xFFE2E8F0),
-                  fontSize: 13,
-                  height: 1.7,
-                ),
-              ),
-            ),
-          if (_model != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              'model: $_model',
-              style: const TextStyle(
-                color: Color(0xFF6B7280),
-                fontSize: 10,
-                fontFamily: 'monospace',
-                height: 1.5,
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _loading ? null : _ask,
-                  icon: const Icon(Icons.refresh, size: 16),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                OutlinedButton.icon(
+                  key: const ValueKey<String>('price_advice_refresh_button'),
+                  onPressed: _loading ? null : () => _ask(forceRefresh: true),
+                  icon: const Icon(Icons.refresh, size: 18),
                   label: const Text(
-                    '再質問',
+                    '再評価（キャッシュ更新）',
                     style: TextStyle(height: 1.5),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFA855F7),
-                    side: const BorderSide(color: Color(0xFFA855F7)),
+                    foregroundColor: const Color(0xFFD8B4FE),
+                    side: const BorderSide(color: Color(0xFFC084FC)),
+                    minimumSize: const Size(48, 48),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFE2E8F0),
+                    minimumSize: const Size(48, 48),
+                  ),
+                  child: const Text('閉じる', style: TextStyle(height: 1.5)),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

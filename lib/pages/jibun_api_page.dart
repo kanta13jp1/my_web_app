@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -5,12 +7,50 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// 自分API 管理ページ (Notion Developer Platform 対抗 / 2026-07-12 WEB版)
 ///
 /// tools-hub の jibunapi.* action で API キーと Worker を管理する。
+/// - Antigravity MCP: Streamable HTTP エンドポイントと mcp_config.json スニペットを提供。
 /// - API キー: 発行 (平文は1回のみ表示) / 一覧 / 失効。スコープ選択制。
 /// - Worker: ユーザー自作 Agent ツール (外部 https エンドポイント) の登録 / 一覧 / 削除。
 class JibunApiPage extends StatefulWidget {
-  const JibunApiPage({super.key, this.supabaseClient});
+  const JibunApiPage({
+    super.key,
+    this.supabaseClient,
+    this.mcpEndpointUrl,
+  });
 
   final SupabaseClient? supabaseClient;
+  final String? mcpEndpointUrl;
+
+  static const String mcpEndpointPlaceholder =
+      'https://<YOUR_SUPABASE_PROJECT_REF>.supabase.co/functions/v1/tools-hub/mcp';
+
+  static String resolveMcpEndpointUrl({String? overrideUrl}) {
+    final trimmedOverride = (overrideUrl ?? '').trim();
+    if (trimmedOverride.isNotEmpty) {
+      return trimmedOverride;
+    }
+    const configuredSupabaseUrl = String.fromEnvironment('SUPABASE_URL');
+    final trimmedBase = configuredSupabaseUrl.trim();
+    if (trimmedBase.isEmpty) {
+      return mcpEndpointPlaceholder;
+    }
+    final normalizedBase = trimmedBase.endsWith('/')
+        ? trimmedBase.substring(0, trimmedBase.length - 1)
+        : trimmedBase;
+    return '$normalizedBase/functions/v1/tools-hub/mcp';
+  }
+
+  static String buildAntigravityMcpConfigJson(String endpointUrl) {
+    return const JsonEncoder.withIndent('  ').convert(<String, Object>{
+      'mcpServers': <String, Object>{
+        'my-web-app': <String, Object>{
+          'serverUrl': endpointUrl,
+          'headers': <String, String>{
+            'Authorization': 'Bearer <YOUR_JIBUN_API_KEY>',
+          },
+        },
+      },
+    });
+  }
 
   @override
   State<JibunApiPage> createState() => _JibunApiPageState();
@@ -262,6 +302,17 @@ class _JibunApiPageState extends State<JibunApiPage> {
                 ),
               ),
             ),
+            if (label == 'APIキー') ...[
+              const SizedBox(height: 12),
+              Text(
+                'Antigravity MCP で使う場合は、このキーを mcp_config.json の <YOUR_JIBUN_API_KEY> に設定してください。',
+                style: TextStyle(
+                  height: 1.5,
+                  fontSize: 12,
+                  color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ],
         ),
         actions: [
@@ -418,6 +469,14 @@ class _JibunApiPageState extends State<JibunApiPage> {
     );
   }
 
+  Future<void> _copyText(String text, String feedbackMessage) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(feedbackMessage)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = _supabase.auth.currentUser != null;
@@ -444,6 +503,8 @@ class _JibunApiPageState extends State<JibunApiPage> {
                         padding: const EdgeInsets.all(16),
                         children: [
                           _buildIntroCard(),
+                          const SizedBox(height: 16),
+                          _buildAntigravityMcpCard(context),
                           const SizedBox(height: 24),
                           _buildSectionHeader(
                             'APIキー',
@@ -515,6 +576,176 @@ class _JibunApiPageState extends State<JibunApiPage> {
     );
   }
 
+  Widget _buildAntigravityMcpCard(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final endpointUrl = JibunApiPage.resolveMcpEndpointUrl(
+      overrideUrl: widget.mcpEndpointUrl,
+    );
+    final configJson = JibunApiPage.buildAntigravityMcpConfigJson(endpointUrl);
+    return Card(
+      key: const ValueKey<String>('antigravity_mcp_card'),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: _indigo.withValues(alpha: 0.35)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.hub_outlined, color: _indigo, size: 22),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Antigravity MCP 接続',
+                    style: TextStyle(
+                      height: 1.5,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Streamable HTTP (tools-hub/mcp) 経由で Antigravity から自分のノート・WBSタスク・開発実績・Worker を直接操作できます。',
+              style: TextStyle(
+                height: 1.6,
+                fontSize: 13,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Streamable HTTP エンドポイント',
+              style: TextStyle(
+                height: 1.5,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SelectableText(
+                endpointUrl,
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 12,
+                  height: 1.5,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Antigravity mcp_config.json スニペット',
+              style: TextStyle(
+                height: 1.5,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _indigo.withValues(alpha: 0.4)),
+              ),
+              child: SelectableText(
+                configJson,
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 12,
+                  height: 1.5,
+                  color: Color(0xFFE0E0E0),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton(
+                  key: const ValueKey<String>('copy_mcp_endpoint_button'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(48, 48),
+                  ),
+                  onPressed: () => _copyText(
+                    endpointUrl,
+                    'MCP エンドポイントをコピーしました',
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.link, size: 18),
+                      SizedBox(width: 8),
+                      Flexible(child: Text('エンドポイントをコピー')),
+                    ],
+                  ),
+                ),
+                FilledButton(
+                  key: const ValueKey<String>('copy_mcp_config_button'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _indigo,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(48, 48),
+                  ),
+                  onPressed: () => _copyText(
+                    configJson,
+                    'Antigravity MCP 設定 JSON をコピーしました',
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.copy, size: 18),
+                      SizedBox(width: 8),
+                      Flexible(child: Text('設定 JSON をコピー')),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '1. 下の「APIキー」で必要なスコープを選んで発行（Antigravity 用に最小権限を推奨）\n'
+              '2. 「設定 JSON をコピー」して Antigravity の mcp_config.json に貼り付け、<YOUR_JIBUN_API_KEY> を置換\n'
+              '3. Antigravity の MCP サーバー一覧を再読み込みして接続確認',
+              style: TextStyle(
+                height: 1.6,
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '安全設計: ノート作成/更新/削除・Worker 実行は confirm + 確認フレーズ必須。APIキー経由では feature_request.create は常に拒否されます。',
+              style: TextStyle(
+                height: 1.5,
+                fontSize: 11,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSectionHeader(
     String title,
     IconData icon,
@@ -525,15 +756,16 @@ class _JibunApiPageState extends State<JibunApiPage> {
       children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            height: 1.5,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              height: 1.5,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-        const Spacer(),
         TextButton.icon(
           icon: const Icon(Icons.add, size: 18),
           label: const Text('追加'),
