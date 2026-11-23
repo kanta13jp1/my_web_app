@@ -1,5 +1,7 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
+  type AdminProfileRow,
+  type CandidateCallerContext,
   type CandidateStoreResult,
   type CompetitorCandidateReviewRow,
   type CompetitorCandidateStore,
@@ -11,6 +13,14 @@ import {
 
 class InMemoryCandidateStore implements CompetitorCandidateStore {
   rows: CompetitorCandidateReviewRow[] = [];
+  profiles = new Map<string, AdminProfileRow>();
+
+  getAdminProfile(userId: string): Promise<CandidateStoreResult<AdminProfileRow>> {
+    return Promise.resolve({
+      data: this.profiles.get(userId) ?? null,
+      error: null,
+    });
+  }
 
   listCandidates(
     onlyManualReview: boolean,
@@ -41,6 +51,11 @@ class InMemoryCandidateStore implements CompetitorCandidateStore {
   }
 }
 
+const ADMIN_CALLER: CandidateCallerContext = {
+  userId: "admin-1",
+  isServiceRole: false,
+};
+
 Deno.test("verifyCandidateUrl flags 404 and SSRF private IPs while passing 200", async () => {
   const okRes = await verifyCandidateUrl(
     "https://example.com/about",
@@ -63,8 +78,35 @@ Deno.test("verifyCandidateUrl flags 404 and SSRF private IPs while passing 200",
   assertEquals(blocked.needsManualReview, true);
 });
 
-Deno.test("handleCompetitorCandidateVerifyUrl and handleCompetitorCandidateReview update store", async () => {
+Deno.test("competitor_candidate actions reject unauthenticated (401) and non-admin (403) callers", async () => {
   const store = new InMemoryCandidateStore();
+  store.profiles.set("non-admin", { is_admin: false, role: "user" });
+
+  const unauthList = await handleCompetitorCandidateList(
+    store,
+    { userId: null, isServiceRole: false },
+    {},
+  );
+  assertEquals(unauthList.status, 401);
+
+  const nonAdminReview = await handleCompetitorCandidateReview(
+    store,
+    { userId: "non-admin", isServiceRole: false },
+    { candidate_id: "cand-1", decision: "approved" },
+  );
+  assertEquals(nonAdminReview.status, 403);
+
+  const nonAdminVerify = await handleCompetitorCandidateVerifyUrl(
+    store,
+    { userId: "non-admin", isServiceRole: false },
+    { candidate_id: "cand-1" },
+  );
+  assertEquals(nonAdminVerify.status, 403);
+});
+
+Deno.test("handleCompetitorCandidateVerifyUrl and handleCompetitorCandidateReview update store for admin", async () => {
+  const store = new InMemoryCandidateStore();
+  store.profiles.set("admin-1", { is_admin: true, role: "admin" });
   store.rows.push({
     id: "cand-404",
     display_name: "Ghost Tool",
@@ -81,14 +123,17 @@ Deno.test("handleCompetitorCandidateVerifyUrl and handleCompetitorCandidateRevie
     reviewed_at: null,
   });
 
-  const list = await handleCompetitorCandidateList(store, {
-    only_manual_review: true,
-  });
+  const list = await handleCompetitorCandidateList(
+    store,
+    ADMIN_CALLER,
+    { only_manual_review: true },
+  );
   assertEquals(list.status, 200);
   assertEquals((list.body.candidates as CompetitorCandidateReviewRow[]).length, 1);
 
   const reverified = await handleCompetitorCandidateVerifyUrl(
     store,
+    ADMIN_CALLER,
     { candidate_id: "cand-404" },
     () => Promise.resolve(new Response(null, { status: 200 })),
     "2026-11-24T01:00:00Z",
@@ -99,14 +144,16 @@ Deno.test("handleCompetitorCandidateVerifyUrl and handleCompetitorCandidateRevie
     false,
   );
 
-  const badDecision = await handleCompetitorCandidateReview(store, {
-    candidate_id: "cand-404",
-    decision: "invalid",
-  });
+  const badDecision = await handleCompetitorCandidateReview(
+    store,
+    ADMIN_CALLER,
+    { candidate_id: "cand-404", decision: "invalid" },
+  );
   assertEquals(badDecision.status, 400);
 
   const rejected = await handleCompetitorCandidateReview(
     store,
+    { userId: null, isServiceRole: true },
     {
       candidate_id: "cand-404",
       decision: "rejected",
