@@ -65,7 +65,7 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 50));
         expect(find.byKey(const Key('bg_job_item_job_sync_1')), findsOneWidget);
-        expect(find.textContaining('実行中'), findsOneWidget);
+        expect(find.text('Edge調査タスク · 実行中'), findsOneWidget);
 
         // Live transition to completed -> detail dialog accessible
         jobCenter.completeJob(
