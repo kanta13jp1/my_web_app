@@ -56,6 +56,7 @@ import '../widgets/api_key_status_banner.dart';
 import '../widgets/feature_strategy_monitor_panel.dart';
 import '../widgets/grow_together_share_card.dart';
 import '../widgets/home_billing_nudge.dart';
+import '../widgets/home_curated_calendar_section.dart';
 import '../widgets/home_primary_action_card.dart';
 import '../widgets/home_calendar_month_header.dart';
 import '../widgets/home_calendar_summary_pill.dart';
@@ -5303,6 +5304,22 @@ abstinence_slip_details: $slipDetailsText
                               isCompact: isCompact,
                               showInternalOperations: showInternalOperations,
                             ),
+                            if (!showInternalOperations) ...[
+                              const SizedBox(height: 12),
+                              HomeCuratedCalendarSection(
+                                isCompact: isCompact,
+                                calendarChild: _buildCalendarPanel(
+                                  context,
+                                  opsSnapshot,
+                                ),
+                                onOpenAssetManagement: () => _runTrackedAction(
+                                  'asset-management-calendar',
+                                  () => Navigator.of(
+                                    context,
+                                  ).pushNamed('/asset-management'),
+                                ),
+                              ),
+                            ],
                             if (showInternalOperations) ...[
                               const SizedBox(height: 40),
                               _buildHopsonInspiredHomeHero(

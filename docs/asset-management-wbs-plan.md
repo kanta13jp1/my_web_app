@@ -280,3 +280,12 @@ Current open pinned work starts here:
   - `AssetFurusatoTaxCalculator` により国税庁（給与所得控除 No.1410・所得税速算表 No.2260）および総務省の公開計算式にもとづき、給与年収・家族構成・扶養人数・社会保険料から控除上限目安を決定論的に試算する（AI説明文はOFF固定）。
 - **医療費控除トラッカー (#2491・OFF-default フラグ)**:
   - `AssetMedicalExpenseService` および `AssetMedicalExpenseStore` により病院・薬局・通院交通費・その他の月次支出と保険補填額を記録し、年累計・基準額（10万円または総所得金額等200万円未満の5%）・200万円上限と近づき/達成アラートを表示する。`#2490` / `#2491` は `AssetTaxToolsFeatureFlagStore`（既定 OFF）により明示有効化時のみツールバーに表示する。
+
+### 消費・浪費・投資割合ダッシュボードと返済期日リマインダー (#1368 / #2749) 仕様
+
+- **「消費・浪費・投資」自動分類・CSV取込・設定目安 (70:5:25) 比較ダッシュボード (#1368)**:
+  - `AssetSpendingValueClassificationService` および `AssetSpendingValueOverrideStore` により給与サイクル支出・手入力/CSV取込（ラベル列対応）を「消費・浪費・投資」および本人確認待ちの「要確認」に分類する。使途不明の現金引出しや残高差分は推測で「浪費」確定せず「要確認」として別集計する。
+  - `AssetSpendingValueRatioDashboard` で円グラフ・実績vs目安バー・ポイント/金額差ハイライト・改善アドバイスおよびワンタップ再分類を提供する（70:5:25は参考設定値であり普遍的な最適値とは扱わない）。
+- **返済期日リマインダー・遅延損害金日割り増加表示・早期対応ガイダンス (#2749)**:
+  - `AssetPaymentReminderService` および `AssetPaymentReminderStore` により直接引落予定の未払負債に対し、設定日数（3日前・1日前・当日等）と送信済み重複防止キーに基づきリマインド対象およびメール用サマリを生成する。
+  - 期限超過時は `AssetLateFeeService`（`元金 × 利率 ÷ 365 × 延滞日数`、上限年利 20.0% 範囲で個別率設定可）で1日あたり・累計増加額を可視化し、`AssetPaymentReminderBanner` および遅延損害金バナーから債権者早期連絡記録・公的相談窓口へ直行できる。
