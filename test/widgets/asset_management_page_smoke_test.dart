@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -5968,6 +5969,27 @@ void main() {
     testWidgets(
       'Issue #3290: displays top 5 monthly interest card, total badge matching Dart calculation, and copy shortcut',
       (tester) async {
+        String? copiedClipboard;
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              final args = call.arguments as Map<dynamic, dynamic>?;
+              copiedClipboard = args?['text'] as String?;
+              return null;
+            }
+            if (call.method == 'Clipboard.getData') {
+              if (copiedClipboard == null) return null;
+              return <String, dynamic>{'text': copiedClipboard};
+            }
+            return null;
+          },
+        );
+        addTearDown(() {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(SystemChannels.platform, null);
+        });
         final now = DateTime(2026, 9, 2);
         final dateKey = DateFormat('yyyy-MM-dd').format(now);
         const jibunId =
@@ -6078,8 +6100,10 @@ void main() {
         await tester.ensureVisible(consultBtn);
         await tester.pump();
         await tester.tap(consultBtn);
-        await tester.pump(const Duration(milliseconds: 200));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
 
+        expect(copiedClipboard, contains('モビット'));
         expect(find.text('モビットへの相談文をコピーしました。'), findsOneWidget);
         expect(tester.takeException(), isNull);
 
