@@ -133,7 +133,8 @@ void main() {
 
           await tester.tap(
             find.byKey(
-                const ValueKey<String>('ai_compliance_edit_prompt_button')),
+              const ValueKey<String>('ai_compliance_edit_prompt_button'),
+            ),
           );
           await tester.tap(
             find.byKey(const ValueKey<String>('ai_compliance_dismiss_button')),
