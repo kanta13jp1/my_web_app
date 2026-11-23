@@ -33,7 +33,7 @@ Deno.test("maskLogString redacts tokens, JSON secrets, and emails while keeping 
   assertEquals(masked.includes("ops@example.com"), false);
   assertStringIncludes(masked, `"status":"ok"`);
   assertStringIncludes(masked, "page=3");
-  assertStringIncludes(masked, `Bearer ${MASK_PLACEHOLDER}`);
+  assertStringIncludes(masked, `Authorization: Bearer ${MASK_PLACEHOLDER}`);
 });
 
 Deno.test("maskLogValue handles nested objects, Headers, Error, and circular refs", () => {

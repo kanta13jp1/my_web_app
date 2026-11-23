@@ -64,7 +64,10 @@ const SENSITIVE_KEY_SUFFIXES: readonly string[] = [
 
 function normalizeKey(key: string): string {
   return key
-    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(
+      /([a-z0-9])([A-Z])/g,
+      (_match: string, prev: string, next: string) => `${prev}_${next}`,
+    )
     .replace(/[-.\s]+/g, "_")
     .toLowerCase()
     .replace(/^_+|_+$/g, "");
@@ -120,8 +123,16 @@ export function maskLogString(
   );
   result = result.replace(
     /([A-Za-z0-9_.-]+)\s*([=:])\s*([^\s,&;"')\]}]+)/g,
-    (full, key: string, sep: string, val: string) => {
-      if (!isSensitiveLogKey(key, extraKeys) || val === MASK_PLACEHOLDER) {
+    (full, key: string, sep: string, val: string, offset: number, source: string) => {
+      const lowerVal = val.toLowerCase();
+      const isAuthSchemePrefix =
+        (lowerVal === "bearer" || lowerVal === "basic") &&
+        /^\s+\*\*\*/.test(source.slice(offset + full.length));
+      if (
+        !isSensitiveLogKey(key, extraKeys) ||
+        val === MASK_PLACEHOLDER ||
+        isAuthSchemePrefix
+      ) {
         return full;
       }
       return `${key}${sep}${MASK_PLACEHOLDER}`;

@@ -83,6 +83,7 @@ final RegExp _kEmailPattern = RegExp(
 final RegExp _kCardDigitsPattern = RegExp(
   r'\b(?:\d{4}[-\s]\d{4}[-\s]\d{4}[-\s]\d{1,4}|\d{13,19})\b',
 );
+final RegExp _kBearerPlaceholderAhead = RegExp(r'^\s+\*\*\*');
 
 /// ログ出力時の機密情報マスク処理の共通ユーティリティ (#2732)。
 class SensitiveLogMasker {
@@ -155,8 +156,13 @@ class SensitiveLogMasker {
       final key = match[1] ?? '';
       final sep = match[2] ?? '=';
       final value = match[3] ?? '';
+      final lowerValue = value.toLowerCase();
+      final isAuthSchemePrefix =
+          (lowerValue == 'bearer' || lowerValue == 'basic') &&
+              _kBearerPlaceholderAhead.hasMatch(result.substring(match.end));
       if (!isSensitiveKey(key, extraKeys: extraKeys) ||
-          value == maskPlaceholder) {
+          value == maskPlaceholder ||
+          isAuthSchemePrefix) {
         return match[0] ?? '';
       }
       return '$key$sep$maskPlaceholder';
