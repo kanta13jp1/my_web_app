@@ -492,7 +492,9 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(ProjectGanttOwnerView), findsOneWidget);
         expect(
-            find.byKey(const Key('gantt_owner_group_codex')), findsOneWidget);
+          find.byKey(const Key('gantt_owner_group_codex')),
+          findsOneWidget,
+        );
 
         await tester.ensureVisible(
           find.byKey(const Key('gantt_focus_view_dashboard')),
@@ -515,7 +517,9 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(ProjectGanttTechDebtView), findsOneWidget);
         expect(
-            find.byKey(const Key('gantt_tech_debt_card_t1')), findsOneWidget);
+          find.byKey(const Key('gantt_tech_debt_card_t1')),
+          findsOneWidget,
+        );
 
         expect(tester.takeException(), isNull);
       }
