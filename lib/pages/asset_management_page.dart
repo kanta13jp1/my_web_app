@@ -1,3 +1,4 @@
+import '../services/asset_high_interest_highlight_service.dart';
 import '../services/asset_subscription_audit_mutation_queue.dart';
 import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
 import '../widgets/asset_recorded_change_details.dart';
@@ -1013,6 +1014,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final Map<String, _CardBillingSaveScope> _cardBillingSaveScopes =
       <String, _CardBillingSaveScope>{};
   _DebtMasterReviewFilter _debtMasterReviewFilter = _DebtMasterReviewFilter.all;
+  AssetDebtSortMode _debtMasterSortMode =
+      AssetDebtSortMode.highInterestPriority;
   List<AssetLiabilityIncomePlan> _monthlyIncomePlans =
       <AssetLiabilityIncomePlan>[];
   bool _isSavingTriageWithdrawal = false;
@@ -31571,6 +31574,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             key: const Key('asset_payment_risk_action_section'),
             title: '支払日別リスク（要対応）',
             risks: actionRisks,
+            debtRows: workbook.debtMasterRows,
             headerAction: bulkConfirmButton,
           )
         else if (bulkConfirmButton != null)
@@ -31587,6 +31591,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             title: '確認のみ',
             description: '今月支払予定額が0円のため、延滞ではなく確認対象として表示しています。',
             risks: reviewOnlyRisks,
+            debtRows: workbook.debtMasterRows,
           ),
       ],
     );
@@ -31596,6 +31601,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required Key key,
     required String title,
     required List<AssetLiabilityPaymentDayRisk> risks,
+    required List<AssetLiabilityDebtRow> debtRows,
     String? description,
     Widget? headerAction,
   }) {
@@ -31647,13 +31653,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ],
           const SizedBox(height: 8),
-          ...risks.map(_buildPaymentRiskRow),
+          ...risks.map((risk) => _buildPaymentRiskRow(risk, debtRows)),
         ],
       ),
     );
   }
 
-  Widget _buildPaymentRiskRow(AssetLiabilityPaymentDayRisk risk) {
+  Widget _buildPaymentRiskRow(
+    AssetLiabilityPaymentDayRisk risk,
+    List<AssetLiabilityDebtRow> debtRows,
+  ) {
     final color = !risk.requiresAction
         ? const Color(0xFF64748B)
         : risk.isPast
@@ -31661,6 +31670,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             : risk.isToday
                 ? const Color(0xFFFF6B35)
                 : const Color(0xFF2563EB);
+    final highRateRow =
+        AssetHighInterestHighlightService.highestRateRowForPaymentRisk(
+      risk,
+      debtRows,
+    );
+    final rateTier = highRateRow == null
+        ? AssetDebtRateTier.normal
+        : AssetHighInterestHighlightService.classifyRateTier(
+            highRateRow.annualRate,
+          );
+    final rateBadgeLabel = highRateRow == null
+        ? null
+        : AssetHighInterestHighlightService.rateBadgeLabel(
+            highRateRow.annualRate,
+          );
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -31688,29 +31712,53 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  key: ValueKey<String>(
-                    'asset_payment_risk_status_'
-                    '${risk.requiresAction ? 'action' : 'review'}_'
-                    '${risk.paymentDay}',
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    _paymentRiskStatusLabel(risk),
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      height: 1.4,
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      key: ValueKey<String>(
+                        'asset_payment_risk_status_'
+                        '${risk.requiresAction ? 'action' : 'review'}_'
+                        '${risk.paymentDay}',
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        _paymentRiskStatusLabel(risk),
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          height: 1.4,
+                        ),
+                      ),
                     ),
-                  ),
+                    if (highRateRow != null &&
+                        rateTier != AssetDebtRateTier.normal &&
+                        rateBadgeLabel != null)
+                      Tooltip(
+                        key: ValueKey<String>(
+                          'asset_payment_risk_rate_badge_${risk.paymentDay}',
+                        ),
+                        message: AssetHighInterestHighlightService
+                            .monthlyInterestTooltip(highRateRow),
+                        triggerMode: TooltipTriggerMode.tap,
+                        child: _buildTextStatusChip(
+                          label: rateBadgeLabel,
+                          color: rateTier == AssetDebtRateTier.critical
+                              ? const Color(0xFFB91C1C)
+                              : const Color(0xFFD97706),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -33572,13 +33620,56 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final rows = _filteredDebtMasterRows(workbook)
-      ..sort(_compareDebtRowsByPaymentDay);
+      ..sort(
+        _debtMasterSortMode == AssetDebtSortMode.highInterestPriority
+            ? AssetHighInterestHighlightService.compareByHighInterestPriority
+            : _compareDebtRowsByPaymentDay,
+      );
+    final isHighInterestSort =
+        _debtMasterSortMode == AssetDebtSortMode.highInterestPriority;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '負債マスタ（支払日順）',
-          style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              isHighInterestSort ? '負債マスタ（高金利優先）' : '負債マスタ（支払日順）',
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+            ),
+            Container(
+              key: const Key('asset_debt_monthly_interest_header_chip'),
+              child: _buildTextStatusChip(
+                label:
+                    '今月の金利負担（概算）: ${_formatManagementYen(workbook.monthlyScheduledInterestEstimateTotal)}',
+                color: workbook.monthlyScheduledInterestEstimateTotal > 0
+                    ? const Color(0xFFB91C1C)
+                    : const Color(0xFF0F766E),
+              ),
+            ),
+            ChoiceChip(
+              key: const Key('asset_debt_sort_high_interest'),
+              label: const Text('高金利優先'),
+              selected: isHighInterestSort,
+              onSelected: (_) {
+                setState(() {
+                  _debtMasterSortMode = AssetDebtSortMode.highInterestPriority;
+                });
+              },
+            ),
+            ChoiceChip(
+              key: const Key('asset_debt_sort_payment_day'),
+              label: const Text('支払日順'),
+              selected: !isHighInterestSort,
+              onSelected: (_) {
+                setState(() {
+                  _debtMasterSortMode = AssetDebtSortMode.paymentDay;
+                });
+              },
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         const Text(
@@ -33588,7 +33679,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         const SizedBox(height: 4),
         Text(
           '支払済みチェックは給料日$_salaryDay日基準のサイクルで保存されます。'
-          'カードも給料日起点の支払日順に並びます。入力欄は画面幅に合わせて折り返します。',
+          '既定では年利・月利息の高い順に表示します（支払日順に切替可）。入力欄は画面幅に合わせて折り返します。',
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 12,
@@ -34092,6 +34183,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         row.paymentDay == null ? '支払日未設定' : '${row.paymentDay}日支払';
     final revolvingHint =
         AssetManagementInsightService.buildRevolvingInlineHint(row);
+    final rateTier =
+        AssetHighInterestHighlightService.classifyRateTier(row.annualRate);
+    final rateBadgeLabel =
+        AssetHighInterestHighlightService.rateBadgeLabel(row.annualRate);
 
     return Container(
       key: _debtMasterCardKeyFor(row.id),
@@ -34115,6 +34210,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   children: [
                     Text(
                       row.name,
+                      key: Key('asset_debt_master_title_${row.id}'),
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         height: 1.4,
@@ -34131,6 +34227,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             child: _buildTextStatusChip(
                               label: '使用停止中',
                               color: const Color(0xFFB91C1C),
+                            ),
+                          ),
+                        if (rateTier != AssetDebtRateTier.normal &&
+                            rateBadgeLabel != null)
+                          Tooltip(
+                            key: Key('asset_debt_high_rate_badge_${row.id}'),
+                            message: AssetHighInterestHighlightService
+                                .monthlyInterestTooltip(row),
+                            triggerMode: TooltipTriggerMode.tap,
+                            child: _buildTextStatusChip(
+                              label: rateBadgeLabel,
+                              color: rateTier == AssetDebtRateTier.critical
+                                  ? const Color(0xFFB91C1C)
+                                  : const Color(0xFFD97706),
                             ),
                           ),
                         _buildTextStatusChip(
