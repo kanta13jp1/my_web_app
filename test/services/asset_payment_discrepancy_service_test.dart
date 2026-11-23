@@ -1,0 +1,171 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/services/asset_payment_discrepancy_service.dart';
+
+void main() {
+  AssetLiabilityDebtRow buildRow({
+    required String id,
+    required String name,
+    double scheduledPaymentAmount = 10000,
+    double? actualPaymentAmount,
+    String? paymentDifferenceReason,
+    bool includedInBillingAccount = false,
+    AssetLiabilityPaymentMethod paymentMethod =
+        AssetLiabilityPaymentMethod.direct,
+  }) {
+    return AssetLiabilityDebtRow(
+      id: id,
+      name: name,
+      kind: AssetLiabilityAccountKind.cardLoan,
+      balance: -200000,
+      paymentDay: 15,
+      paymentSourceAccountId: 'wallet_cash',
+      paymentSourceAccountName: '財布(現金)',
+      paymentMethod: paymentMethod,
+      paymentMethodLabel: includedInBillingAccount ? 'カード合算' : '直接支払い',
+      paymentMethodSettingSource:
+          AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+      billingAccountId: includedInBillingAccount ? 'parent_card' : null,
+      billingAccountName: includedInBillingAccount ? '親カード' : null,
+      includedInBillingAccount: includedInBillingAccount,
+      annualRate: 0.145,
+      minimumPaymentEstimate: 10000,
+      manualPaymentAmount: scheduledPaymentAmount,
+      scheduledPaymentAmount: scheduledPaymentAmount,
+      actualPaymentAmount: actualPaymentAmount,
+      paymentDifferenceReason: paymentDifferenceReason,
+      monthlyInterestEstimate: 2400,
+      principalPaymentEstimate: 7600,
+      balanceAfterPaymentEstimate: -192400,
+      liabilityShare: 0.2,
+      priorityLabel: '高',
+      paymentAmountEstimated: false,
+      billingConfirmed: true,
+      paid: true,
+      requiresAction: false,
+    );
+  }
+
+  AssetLiabilityWorkbook buildWorkbook(List<AssetLiabilityDebtRow> rows) {
+    return AssetLiabilityWorkbook(
+      baseDate: DateTime(2026, 9, 2),
+      accounts: const <AssetLiabilityAccount>[],
+      debtMasterRows: rows,
+      repaymentPriorityRows: const <AssetLiabilityDebtRow>[],
+      paymentDayRisks: const <AssetLiabilityPaymentDayRisk>[],
+      cashflowRows: const <AssetLiabilityCashflowRow>[],
+      incomePlans: const <AssetLiabilityIncomePlan>[],
+      transferTasks: const <AssetLiabilityTransferTask>[],
+      accountCashflowSummaries: const <AssetLiabilityAccountCashflowSummary>[],
+      transferSuggestions: const <AssetLiabilityTransferSuggestion>[],
+      cardBillingReview: const AssetLiabilityCardBillingReview(
+        configuredCount: 0,
+        pendingAccountCount: 0,
+        missingStatementCount: 0,
+        missingAccountNames: <String>[],
+        pendingAccountNames: <String>[],
+      ),
+      cardStatementReconciliation:
+          const AssetLiabilityCardReconciliationSummary(
+        groups: <AssetLiabilityCardReconciliationGroup>[],
+      ),
+      cashLikeTotal: 100000,
+      securitiesTotal: 0,
+      positiveAssetTotal: 100000,
+      liabilityTotal: -200000,
+      netWorth: -100000,
+      monthlyMinimumPaymentEstimateTotal: 10000,
+      monthlyScheduledPaymentTotal: 10000,
+      monthlyActualPaymentTotal: 10000,
+      monthlyPaymentDifferenceTotal: 0,
+      monthlyUnpaidPaymentTotal: 0,
+      monthlyUnreceivedIncomeTotal: 0,
+      cashAfterMinimumPayments: 90000,
+      cashAfterScheduledPayments: 90000,
+      debtToAssetRatio: 2.0,
+      topFourDebtShare: 1.0,
+      manualPaymentCount: 1,
+      estimatedPaymentCount: 0,
+    );
+  }
+
+  group('AssetPaymentDiscrepancyService', () {
+    test(
+      'detects >=1000 diff, <1000 missing reason, and filters noise/null/included rows',
+      () {
+        final workbook = buildWorkbook(<AssetLiabilityDebtRow>[
+          buildRow(
+            id: 'yokohama_bank',
+            name: '横浜銀行',
+            scheduledPaymentAmount: 0,
+            actualPaymentAmount: 5146,
+            paymentDifferenceReason: null,
+          ),
+          buildRow(
+            id: 'mobit',
+            name: 'モビット',
+            scheduledPaymentAmount: 10000,
+            actualPaymentAmount: 12500,
+            paymentDifferenceReason: '端数調整で追加返済',
+          ),
+          buildRow(
+            id: 'small_missing_reason',
+            name: '小額理由なし',
+            scheduledPaymentAmount: 10000,
+            actualPaymentAmount: 10500,
+            paymentDifferenceReason: '   ',
+          ),
+          buildRow(
+            id: 'small_with_reason',
+            name: '小額理由あり',
+            scheduledPaymentAmount: 10000,
+            actualPaymentAmount: 10500,
+            paymentDifferenceReason: '手数料分',
+          ),
+          buildRow(
+            id: 'sub_yen_noise',
+            name: '微小誤差',
+            scheduledPaymentAmount: 10000,
+            actualPaymentAmount: 10000.4,
+            paymentDifferenceReason: null,
+          ),
+          buildRow(
+            id: 'no_actual',
+            name: '実支払未入力',
+            scheduledPaymentAmount: 10000,
+            actualPaymentAmount: null,
+          ),
+          buildRow(
+            id: 'included_card',
+            name: 'カード合算行',
+            scheduledPaymentAmount: 0,
+            actualPaymentAmount: 9000,
+            includedInBillingAccount: true,
+            paymentMethod: AssetLiabilityPaymentMethod.includedInCard,
+          ),
+        ]);
+
+        final items = AssetPaymentDiscrepancyService.detectDiscrepancies(
+          workbook,
+        );
+        expect(
+          items.map((e) => e.accountId).toList(),
+          <String>['yokohama_bank', 'mobit', 'small_missing_reason'],
+        );
+
+        expect(items[0].differenceAmount, 5146);
+        expect(items[0].exceedsThreshold, isTrue);
+        expect(items[0].missingReason, isTrue);
+
+        expect(items[1].differenceAmount, 2500);
+        expect(items[1].exceedsThreshold, isTrue);
+        expect(items[1].missingReason, isFalse);
+        expect(items[1].reason, '端数調整で追加返済');
+
+        expect(items[2].differenceAmount, 500);
+        expect(items[2].exceedsThreshold, isFalse);
+        expect(items[2].missingReason, isTrue);
+      },
+    );
+  });
+}

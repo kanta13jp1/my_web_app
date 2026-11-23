@@ -6110,6 +6110,110 @@ void main() {
         await _unmount(tester);
       },
     );
+
+    testWidgets(
+      'Issue #3330 & #3368: displays discrepancy highlight, syncs scheduled payment with reason, and supports undo',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 4200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'yokohama_bank': 15},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  paidAccountNames: <String>{'yokohama_bank'},
+                  paymentOverrides: <String, double>{'yokohama_bank': 0},
+                  actualPaymentAmounts: <String, double>{'yokohama_bank': 5146},
+                  paymentSourceAccountIds: <String, String>{
+                    'yokohama_bank': 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  '横浜銀行': -171547,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_payment_discrepancy_card')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_discrepancy_row_yokohama_bank')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_diff_badge_yokohama_bank')),
+          findsOneWidget,
+        );
+        expect(find.text('差分あり'), findsWidgets);
+
+        final fixBtn = find.byKey(
+          const Key('asset_discrepancy_fix_yokohama_bank'),
+        );
+        await tester.ensureVisible(fixBtn);
+        await tester.pump();
+        await tester.tap(fixBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_discrepancy_fix_dialog')),
+          findsOneWidget,
+        );
+        await tester.enterText(
+          find.byKey(const Key('asset_discrepancy_reason_field')),
+          '引落実額に確定',
+        );
+        await tester.tap(
+          find.byKey(const Key('asset_discrepancy_sync_confirm_button')),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_discrepancy_fix_dialog')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_discrepancy_card')),
+          findsNothing,
+        );
+
+        final undoFinder = find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.text('元に戻す'),
+        );
+        expect(undoFinder, findsOneWidget);
+
+        await tester.tap(undoFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_payment_discrepancy_card')),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
   });
   testWidgets(
     'anonymous unconfirmed read never claims empty income or offers empty CTA',
