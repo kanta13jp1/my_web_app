@@ -81,8 +81,10 @@ void main() {
       await tester.tap(find.text('https://zenn.dev/example/articles/test'));
       await tester.tap(find.byIcon(Icons.refresh));
       await tester.pump();
-      expect(openedUris.single.toString(),
-          'https://zenn.dev/example/articles/test');
+      expect(
+        openedUris.single.toString(),
+        'https://zenn.dev/example/articles/test',
+      );
       expect(refreshCount, 1);
 
       await tester.tap(find.text('下書き'));
