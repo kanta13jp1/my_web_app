@@ -7,34 +7,41 @@ import 'package:my_web_app/widgets/project_gantt_focus_views.dart';
 WbsTask _sampleTask({
   required String id,
   required String title,
+  String category = '開発',
+  String description = '',
   String status = 'pending',
   int progress = 0,
   String priority = 'medium',
   DateTime? plannedStartDate,
   DateTime? plannedEndDate,
   String? milestoneCode,
+  String ownerInstance = 'codex',
   List<String> dependsOnTitles = const <String>[],
   int? githubIssueNumber,
   String recoveryPlan = '',
+  int rescheduledCount = 0,
+  String remainingWork = '',
 }) {
   return WbsTask(
     id: id,
-    category: '開発',
+    category: category,
     categoryIcon: '🛠️',
     categoryOrder: 1,
     title: title,
-    description: '',
-    instance: 'codex',
+    description: description,
+    instance: ownerInstance,
     status: status,
     progress: progress,
     plannedStartDate: plannedStartDate,
     plannedEndDate: plannedEndDate,
     milestoneCode: milestoneCode,
     priority: priority,
-    ownerInstance: 'codex',
+    ownerInstance: ownerInstance,
     dependsOnTitles: dependsOnTitles,
     githubIssueNumber: githubIssueNumber,
     recoveryPlan: recoveryPlan,
+    rescheduledCount: rescheduledCount,
+    remainingWork: remainingWork,
   );
 }
 
@@ -193,6 +200,138 @@ void main() {
     });
   });
 
+  group('ProjectGanttFocusViewService phase 2 (#2234 #2237 #2242)', () {
+    test(
+        'buildOwnerGroups aggregates incomplete, completed, and overdue by owner',
+        () {
+      final tasks = [
+        _sampleTask(
+          id: 'o1',
+          title: 'Codex期限超過課題',
+          ownerInstance: 'codex',
+          status: 'in_progress',
+          progress: 40,
+          plannedEndDate: DateTime(2026, 11, 20),
+        ),
+        _sampleTask(
+          id: 'o2',
+          title: 'Codex完了課題',
+          ownerInstance: 'codex',
+          status: 'completed',
+          progress: 100,
+        ),
+        _sampleTask(
+          id: 'o3',
+          title: 'Claude進行中1',
+          ownerInstance: 'claude',
+          status: 'in_progress',
+          progress: 60,
+        ),
+        _sampleTask(
+          id: 'o4',
+          title: 'Claude未着手2',
+          ownerInstance: 'claude',
+          status: 'pending',
+          progress: 0,
+        ),
+      ];
+
+      final groups = ProjectGanttFocusViewService.buildOwnerGroups(
+        tasks,
+        now: fixedNow,
+      );
+
+      expect(groups.length, 2);
+      expect(groups.first.ownerKey, 'claude');
+      expect(groups.first.incompleteCount, 2);
+      expect(groups.first.averageProgress, 30.0);
+      expect(groups.last.ownerKey, 'codex');
+      expect(groups.last.overdueCount, 1);
+      expect(groups.last.completedCount, 1);
+    });
+
+    test(
+        'buildProgressDashboard computes counts, overdue, blockers, categories',
+        () {
+      final tasks = [
+        _sampleTask(
+          id: 'd1',
+          title: '完了項目',
+          category: 'UI',
+          status: 'completed',
+          progress: 100,
+          priority: 'high',
+        ),
+        _sampleTask(
+          id: 'd2',
+          title: 'ブロック前提',
+          category: 'API',
+          status: 'in_progress',
+          progress: 50,
+          githubIssueNumber: 2237,
+          plannedEndDate: DateTime(2026, 11, 20),
+        ),
+        _sampleTask(
+          id: 'd3',
+          title: '後続待機',
+          category: 'UI',
+          status: 'pending',
+          progress: 0,
+          dependsOnTitles: const <String>['#2237'],
+        ),
+      ];
+
+      final summary = ProjectGanttFocusViewService.buildProgressDashboard(
+        tasks,
+        now: fixedNow,
+      );
+
+      expect(summary.totalCount, 3);
+      expect(summary.completedCount, 1);
+      expect(summary.incompleteCount, 2);
+      expect(summary.overdueCount, 1);
+      expect(summary.blockerCount, 1);
+      expect(summary.categoryCounts['UI'], 2);
+      expect(summary.categoryCounts['API'], 1);
+    });
+
+    test('buildTechDebtItems extracts explicit debt/rescheduled without noise',
+        () {
+      final tasks = [
+        _sampleTask(
+          id: 'td1',
+          title: '認証周りリファクタリング',
+          description: '技術的負債として分割',
+          status: 'pending',
+          remainingWork: '単体テスト分離',
+        ),
+        _sampleTask(
+          id: 'td2',
+          title: '再計画タスク',
+          rescheduledCount: 2,
+          recoveryPlan: 'テスト分割で対応',
+        ),
+        _sampleTask(
+          id: 'normal',
+          title: '通常の低優先度機能',
+          priority: 'low',
+          status: 'pending',
+        ),
+        _sampleTask(
+          id: 'doneDebt',
+          title: '完了済みリファクタ',
+          status: 'completed',
+          progress: 100,
+        ),
+      ];
+
+      final items = ProjectGanttFocusViewService.buildTechDebtItems(tasks);
+      expect(items.map((e) => e.task.id), <String>['td2', 'td1']);
+      expect(items.first.isRescheduled, isTrue);
+      expect(items.last.classificationReason, contains('リファクタ'));
+    });
+  });
+
   group('ProjectGantt focus views widget & a11y', () {
     Future<void> pumpFocusHarness(
       WidgetTester tester, {
@@ -225,6 +364,18 @@ void main() {
                 );
                 final blockers =
                     ProjectGanttFocusViewService.buildBlockerItems(tasks);
+                final ownerGroups =
+                    ProjectGanttFocusViewService.buildOwnerGroups(
+                  tasks,
+                  now: fixedNow,
+                );
+                final dashboard =
+                    ProjectGanttFocusViewService.buildProgressDashboard(
+                  tasks,
+                  now: fixedNow,
+                );
+                final techDebt =
+                    ProjectGanttFocusViewService.buildTechDebtItems(tasks);
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -236,6 +387,9 @@ void main() {
                         sprintCount: sprint.activeTasks.length,
                         milestoneCount: milestones.length,
                         blockerCount: blockers.length,
+                        ownerCount: ownerGroups.length,
+                        dashboardCount: tasks.length,
+                        techDebtCount: techDebt.length,
                       ),
                       const SizedBox(height: 12),
                       switch (selected) {
@@ -246,6 +400,12 @@ void main() {
                           ProjectGanttMilestoneView(groups: msGroups),
                         ProjectGanttFocusView.blocker =>
                           ProjectGanttBlockerView(items: blockers),
+                        ProjectGanttFocusView.owner =>
+                          ProjectGanttOwnerView(groups: ownerGroups),
+                        ProjectGanttFocusView.dashboard =>
+                          ProjectGanttProgressDashboardView(summary: dashboard),
+                        ProjectGanttFocusView.techDebt =>
+                          ProjectGanttTechDebtView(items: techDebt),
                       },
                     ],
                   ),
@@ -258,17 +418,18 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('switches all 4 focus views on desktop and mobile',
+    testWidgets('switches all 7 focus views on desktop and mobile',
         (tester) async {
       final tasks = [
         _sampleTask(
           id: 't1',
-          title: 'スプリント主課題',
+          title: 'スプリント主課題 (技術的負債解消)',
           status: 'in_progress',
           progress: 55,
           plannedStartDate: DateTime(2026, 11, 23),
           plannedEndDate: DateTime(2026, 11, 29),
           milestoneCode: 'v1.1',
+          ownerInstance: 'codex',
           githubIssueNumber: 2230,
         ),
         _sampleTask(
@@ -277,6 +438,7 @@ void main() {
           status: 'pending',
           progress: 0,
           milestoneCode: 'v1.1',
+          ownerInstance: 'claude',
           dependsOnTitles: const ['#2230'],
         ),
       ];
@@ -301,10 +463,14 @@ void main() {
 
         expect(find.text('開発WBS本体'), findsOneWidget);
 
+        await tester.ensureVisible(
+          find.byKey(const Key('gantt_focus_view_sprint')),
+        );
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('gantt_focus_view_sprint')));
         await tester.pumpAndSettle();
         expect(find.byType(ProjectGanttSprintView), findsOneWidget);
-        expect(find.text('スプリント主課題'), findsOneWidget);
+        expect(find.text('スプリント主課題 (技術的負債解消)'), findsOneWidget);
 
         await tester.ensureVisible(
           find.byKey(const Key('gantt_focus_view_milestone')),
@@ -323,6 +489,42 @@ void main() {
         expect(find.text('1件をブロック中'), findsOneWidget);
         expect(find.text('後続リリース作業'), findsOneWidget);
 
+        await tester.ensureVisible(
+          find.byKey(const Key('gantt_focus_view_owner')),
+        );
+        await tester.tap(find.byKey(const Key('gantt_focus_view_owner')));
+        await tester.pumpAndSettle();
+        expect(find.byType(ProjectGanttOwnerView), findsOneWidget);
+        expect(
+          find.byKey(const Key('gantt_owner_group_codex')),
+          findsOneWidget,
+        );
+
+        await tester.ensureVisible(
+          find.byKey(const Key('gantt_focus_view_dashboard')),
+        );
+        await tester.tap(find.byKey(const Key('gantt_focus_view_dashboard')));
+        await tester.pumpAndSettle();
+        expect(
+          find.byType(ProjectGanttProgressDashboardView),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('gantt_progress_dashboard_card')),
+          findsOneWidget,
+        );
+
+        await tester.ensureVisible(
+          find.byKey(const Key('gantt_focus_view_tech_debt')),
+        );
+        await tester.tap(find.byKey(const Key('gantt_focus_view_tech_debt')));
+        await tester.pumpAndSettle();
+        expect(find.byType(ProjectGanttTechDebtView), findsOneWidget);
+        expect(
+          find.byKey(const Key('gantt_tech_debt_card_t1')),
+          findsOneWidget,
+        );
+
         expect(tester.takeException(), isNull);
       }
     });
@@ -338,6 +540,10 @@ void main() {
           milestones: const <WbsMilestone>[],
         );
 
+        await tester.ensureVisible(
+          find.byKey(const Key('gantt_focus_view_sprint')),
+        );
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('gantt_focus_view_sprint')));
         await tester.pumpAndSettle();
         expect(
