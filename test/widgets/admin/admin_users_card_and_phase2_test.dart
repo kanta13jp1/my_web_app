@@ -13,7 +13,8 @@ void main() {
 
         var parentBuildCount = 0;
         var refreshCount = 0;
-        final savedUpdates = <(String, Map<String, dynamic>)>[];
+        final savedUpdates =
+            <({String userId, Map<String, dynamic> updates})>[];
 
         final users = <Map<String, dynamic>>[
           <String, dynamic>{
@@ -49,7 +50,7 @@ void main() {
                       loading: false,
                       onRefresh: () => refreshCount += 1,
                       onUpdateUserProfile: (userId, updates) async {
-                        savedUpdates.add((userId, updates));
+                        savedUpdates.add((userId: userId, updates: updates));
                       },
                     );
                   },
@@ -93,8 +94,8 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(savedUpdates.length, 1);
-        expect(savedUpdates.single.$1, 'u1');
-        expect(savedUpdates.single.$2['display_name'], 'Alice Tanaka');
+        expect(savedUpdates.single.userId, 'u1');
+        expect(savedUpdates.single.updates['display_name'], 'Alice Tanaka');
         expect(refreshCount, 1);
 
         await tester.tap(find.text('閉じる'));
