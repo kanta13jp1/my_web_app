@@ -761,10 +761,14 @@
       } else if (
         signal.indexOf('flow_state') !== -1 ||
         signal.indexOf('pkce') !== -1 ||
+        signal.indexOf('code verifier') !== -1 ||
+        signal.indexOf('code_verifier') !== -1 ||
         signal.indexOf('code exchange') !== -1 ||
         signal.indexOf('exchange external code') !== -1 ||
         signal.indexOf('unable to exchange') !== -1 ||
-        signal.indexOf('oauth state') !== -1
+        signal.indexOf('oauth state') !== -1 ||
+        signal.indexOf('oauth_state') !== -1 ||
+        signal.indexOf('invalid_grant') !== -1
       ) {
         category = 'callback_exchange';
       }

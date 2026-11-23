@@ -35,13 +35,15 @@ class _LandingAdapter extends Fake implements LandingPageAdapter {
   Exception? trialError;
   Exception? socialProofError;
   String? lastTrialPrompt;
+  final StreamController<AuthState> authController =
+      StreamController<AuthState>.broadcast();
   LandingSocialProofStats socialProofStats = const LandingSocialProofStats(
     totalUsers: 38,
     publicMemoCount: 12,
   );
 
   @override
-  Stream<AuthState> authStateChanges() => const Stream<AuthState>.empty();
+  Stream<AuthState> authStateChanges() => authController.stream;
 
   @override
   Future<void> recordLpView() async {
@@ -236,6 +238,9 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
     final adapter = landingAdapter ?? _LandingAdapter();
+    if (landingAdapter == null) {
+      addTearDown(adapter.authController.close);
+    }
     await tester.pumpWidget(
       MaterialApp(
         routes: {'/privacy': (_) => const Scaffold(body: Text('privacy'))},
@@ -2413,6 +2418,134 @@ void main() {
 
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
+    },
+  );
+
+  testWidgets(
+    'Google OAuth stream error shows recovery and logs callbackExchange',
+    (tester) async {
+      final adapter = _LandingAdapter();
+      addTearDown(adapter.authController.close);
+      await const LandingSignupCompletionService().markPending(
+        email: null,
+        eventKey: 'lp_exp_h04_treatment_signup_complete',
+        visitorId: '00000000-0000-4000-8000-000000000001',
+      );
+      await pumpLanding(
+        tester,
+        landingAdapter: adapter,
+        assignment: _assignment('h04', LandingExperimentVariant.treatment),
+        googleLoginEnabled: true,
+      );
+
+      adapter.authController.addError(
+        const AuthException('Code verifier could not be found in storage.'),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(
+        find.byKey(const Key('landing_google_oauth_callback_error')),
+        findsOneWidget,
+      );
+      expect(
+        adapter.googleCallbackFailures,
+        <LandingOAuthCallbackFailureCategory>[
+          LandingOAuthCallbackFailureCategory.callbackExchange,
+        ],
+      );
+      final preferences = await SharedPreferences.getInstance();
+      expect(
+        preferences.containsKey(LandingSignupCompletionService.storageKey),
+        isFalse,
+      );
+    },
+  );
+
+  testWidgets(
+    'Google login mode omits signup submit telemetry and pending state',
+    (tester) async {
+      final adapter = await pumpLanding(
+        tester,
+        assignment: _assignment('h04', LandingExperimentVariant.treatment),
+        googleLoginEnabled: true,
+      );
+
+      final selectorFinder = find.byKey(
+        const Key('landing_auth_mode_selector'),
+      );
+      await Scrollable.ensureVisible(
+        tester.element(selectorFinder),
+        alignment: 0.2,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('landing_auth_mode_login_option')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Googleでログイン'), findsOneWidget);
+
+      final googleButton = find.byKey(const Key('landing_google_primary'));
+      await Scrollable.ensureVisible(
+        tester.element(googleButton),
+        alignment: 0.2,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(googleButton);
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(adapter.googleLaunches, 1);
+      expect(
+        adapter.conversionEvents,
+        isNot(contains('lp_exp_h04_treatment_signup_submit')),
+      );
+      final preferences = await SharedPreferences.getInstance();
+      expect(
+        preferences.containsKey(LandingSignupCompletionService.storageKey),
+        isFalse,
+      );
+    },
+  );
+
+  testWidgets(
+    'Google OAuth startup error is recovered once on LandingPage mount',
+    (tester) async {
+      addTearDown(LandingOAuthCallbackFailure.resetStartupErrorForTest);
+      LandingOAuthCallbackFailure.captureStartupError(
+        const AuthException('Code verifier could not be found in storage.'),
+      );
+      await const LandingSignupCompletionService().markPending(
+        email: null,
+        eventKey: 'lp_exp_h04_treatment_signup_complete',
+        visitorId: '00000000-0000-4000-8000-000000000001',
+      );
+
+      final adapter = await pumpLanding(
+        tester,
+        assignment: _assignment('h04', LandingExperimentVariant.treatment),
+        googleLoginEnabled: true,
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(
+        find.byKey(const Key('landing_google_oauth_callback_error')),
+        findsOneWidget,
+      );
+      expect(
+        adapter.googleCallbackFailures,
+        <LandingOAuthCallbackFailureCategory>[
+          LandingOAuthCallbackFailureCategory.callbackExchange,
+        ],
+      );
+      final preferences = await SharedPreferences.getInstance();
+      expect(
+        preferences.containsKey(LandingSignupCompletionService.storageKey),
+        isFalse,
+      );
+      expect(
+        LandingOAuthCallbackFailure.takePendingStartupError(),
+        isNull,
+      );
     },
   );
 }
