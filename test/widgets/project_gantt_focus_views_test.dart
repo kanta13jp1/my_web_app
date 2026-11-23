@@ -463,6 +463,10 @@ void main() {
 
         expect(find.text('開発WBS本体'), findsOneWidget);
 
+        await tester.ensureVisible(
+          find.byKey(const Key('gantt_focus_view_sprint')),
+        );
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('gantt_focus_view_sprint')));
         await tester.pumpAndSettle();
         expect(find.byType(ProjectGanttSprintView), findsOneWidget);
@@ -536,6 +540,10 @@ void main() {
           milestones: const <WbsMilestone>[],
         );
 
+        await tester.ensureVisible(
+          find.byKey(const Key('gantt_focus_view_sprint')),
+        );
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('gantt_focus_view_sprint')));
         await tester.pumpAndSettle();
         expect(
