@@ -4623,7 +4623,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                             ),
                           )
                         else if (_hypothesisEnabled('h04'))
-                          _buildInlineTrialMagicLink(compact: compactHero)
+                          _buildInlineTrialMagicLink(
+                            compact: compactHero,
+                            heroMode: heroMode,
+                          )
                         else
                           SizedBox(
                             width: double.infinity,
@@ -4665,21 +4668,46 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     bool firstUserGrowthMode = false,
   }) {
     const samplePrompt = '仕事が多すぎて、何から始めるか決められない';
+    final decoration = heroMode
+        ? BoxDecoration(
+            color: const Color(0xFF0E1B27),
+            borderRadius: const BorderRadius.all(Radius.circular(8)),
+            border: Border.all(color: const Color(0x4DF0E5D0)),
+          )
+        : const BoxDecoration(
+            color: Color(0xFFF6FAFE),
+            border:
+                Border(left: BorderSide(color: Color(0xFF1F7AE0), width: 3)),
+          );
+    final eyebrowColor =
+        heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1D4ED8);
+    final titleColor =
+        heroMode ? const Color(0xFFF6F0E5) : const Color(0xFF172033);
+    final bodyColor =
+        heroMode ? const Color(0xFFC9D1D7) : const Color(0xFF475569);
+    final noteColor =
+        heroMode ? const Color(0xFFB8C4CE) : const Color(0xFF475569);
+    final primaryCtaBackground =
+        heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1F7AE0);
+    final primaryCtaForeground =
+        heroMode ? const Color(0xFF101A24) : Colors.white;
+    final secondaryCtaColor =
+        heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1D4ED8);
+    final secondaryCtaBorderColor =
+        heroMode ? const Color(0x80F0E5D0) : const Color(0xFF93C5FD);
+
     return Container(
       key: const Key('landing_h11_answer_preview'),
       width: double.infinity,
       padding: EdgeInsets.all(compact ? 10 : 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF6FAFE),
-        border: Border(left: BorderSide(color: Color(0xFF1F7AE0), width: 3)),
-      ),
+      decoration: decoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             '入力例と提案サンプル',
             style: TextStyle(
-              color: Color(0xFF1D4ED8),
+              color: eyebrowColor,
               fontSize: 11,
               fontWeight: FontWeight.w800,
               height: 1.4,
@@ -4687,10 +4715,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           if (!compact) ...[
             const SizedBox(height: 4),
-            const Text(
+            Text(
               '入力例: 「$samplePrompt」',
               style: TextStyle(
-                color: Color(0xFF64748B),
+                color: bodyColor,
                 fontSize: 12,
                 height: 1.45,
               ),
@@ -4701,7 +4729,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           Text(
             '提案例: 止まっている案件を1つ選ぶ',
             style: TextStyle(
-              color: const Color(0xFF172033),
+              color: titleColor,
               fontSize: compact ? 13 : 14,
               fontWeight: FontWeight.w800,
               height: 1.4,
@@ -4709,10 +4737,10 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           ),
           if (!compact) ...[
             const SizedBox(height: 2),
-            const Text(
+            Text(
               '次の一手例: 確認先を1人決め、連絡文の下書きを作る',
               style: TextStyle(
-                color: Color(0xFF475569),
+                color: bodyColor,
                 fontSize: 12,
                 height: 1.45,
               ),
@@ -4722,7 +4750,7 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
           Text(
             '実際の提案は、入力内容によって変わります。',
             style: TextStyle(
-              color: const Color(0xFF64748B),
+              color: noteColor,
               fontSize: compact ? 10 : 11,
               height: 1.45,
             ),
@@ -4740,8 +4768,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               icon: const Icon(Icons.bolt, size: 17),
               label: const Text('1タップで「今日やる1件」を出す'),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF1F7AE0),
-                foregroundColor: Colors.white,
+                backgroundColor: primaryCtaBackground,
+                foregroundColor: primaryCtaForeground,
                 minimumSize: Size.fromHeight(compact ? 44 : 48),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
@@ -4760,9 +4788,9 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
               icon: const Icon(Icons.bolt, size: 17),
               label: const Text('この入力例でAIに提案させる'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1F7AE0),
-                minimumSize: Size.fromHeight(compact ? 40 : 44),
-                side: const BorderSide(color: Color(0xFF93C5FD)),
+                foregroundColor: secondaryCtaColor,
+                minimumSize: const Size.fromHeight(44),
+                side: BorderSide(color: secondaryCtaBorderColor),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -4770,8 +4798,8 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
             ),
           if (firstUserGrowthMode) ...[
             const SizedBox(height: 8),
-            const Wrap(
-              key: Key('first_user_growth_trial_reassurance'),
+            Wrap(
+              key: const Key('first_user_growth_trial_reassurance'),
               alignment: WrapAlignment.center,
               spacing: 14,
               runSpacing: 6,
@@ -4779,10 +4807,12 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
                 _TrustPoint(
                   icon: Icons.visibility_outlined,
                   label: '登録は結果を見てから',
+                  dark: heroMode,
                 ),
                 _TrustPoint(
                   icon: Icons.credit_card_off_outlined,
                   label: '無料登録時カード不要',
+                  dark: heroMode,
                 ),
               ],
             ),
@@ -4792,191 +4822,27 @@ class _LandingPageState extends State<LandingPage> with RouteAware {
     );
   }
 
-  Widget _buildInlineTrialMagicLink({bool compact = false}) {
-    final form = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (_googleLoginEnabled) ...[
-          FilledButton.icon(
-            key: const Key('landing_h04_inline_google'),
-            onPressed: _isLoading ? null : _saveTrialWithGoogle,
-            icon: const Icon(Icons.login, size: 18),
-            label: const Text('Googleで無料登録して引き継ぐ'),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Google認証で続行します。登録時にカード入力はありません。',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFF64748B),
-              fontSize: 12,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Row(
-            children: [
-              Expanded(child: Divider()),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  'またはメールで保存',
-                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-                ),
-              ),
-              Expanded(child: Divider()),
-            ],
-          ),
-          const SizedBox(height: 10),
-        ],
-        Semantics(
-          container: true,
-          child: TextField(
-            key: const Key('landing_h04_inline_email'),
-            controller: _trialEmailController,
-            focusNode: _trialEmailFocusNode,
-            keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email],
-            onSubmitted: (_) {
-              if (!_isLoading && !_isMagicLinkCoolingDown) {
-                unawaited(_saveTrialWithMagicLink());
-              }
-            },
-            decoration: const InputDecoration(
-              labelText: 'メールアドレス',
-              hintText: 'you@example.com',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.email_outlined),
-              isDense: true,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        FilledButton.icon(
-          key: const Key('landing_h04_inline_magic_link'),
-          onPressed: (_isLoading || _isMagicLinkCoolingDown)
-              ? null
-              : _saveTrialWithMagicLink,
-          icon: Icon(
-            _showInboxShortcut
-                ? Icons.check_circle_outline
-                : Icons.bookmark_add_outlined,
-            size: 18,
-          ),
-          label: Text(
-            _showInboxShortcut ? 'ログインリンクを送信しました' : '無料登録して提案を引き継ぐ',
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          _showInboxShortcut
-              ? '受信箱のリンクを開くと、保存した提案から開始できます。'
-              : 'メールで届くログインリンクを使います。パスワード・カード入力はありません。',
-          style: const TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 12,
-            height: 1.45,
-          ),
-        ),
-        if (_showInboxShortcut) ...[
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            key: const Key('landing_h04_inline_open_inbox'),
-            onPressed: _openInbox,
-            icon: const Icon(Icons.open_in_new, size: 17),
-            label: const Text('受信箱を開く'),
-          ),
-        ],
-      ],
-    );
-
-    const decoration = BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.all(Radius.circular(8)),
-      border: Border.fromBorderSide(BorderSide(color: Color(0xFFB9D7F2))),
-    );
-
-    if (compact && !_showCompactTrialSaveForm) {
-      return Container(
-        key: const Key('landing_h04_inline_magic_capture'),
-        decoration: decoration,
-        child: InkWell(
-          key: const Key('landing_h04_inline_save_expansion'),
-          borderRadius: BorderRadius.circular(8),
-          onTap: _showCompactTrialSaveOptions,
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            child: Row(
-              children: [
-                Icon(Icons.bookmark_add_outlined, color: Color(0xFF172033)),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'この提案を保存',
-                        style: TextStyle(
-                          color: Color(0xFF172033),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          height: 1.4,
-                        ),
-                      ),
-                      Text(
-                        '必要なときだけ無料登録（カード不要）',
-                        style: TextStyle(
-                          color: Color(0xFF64748B),
-                          fontSize: 11,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.expand_more, color: Color(0xFF172033)),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      key: const Key('landing_h04_inline_magic_capture'),
-      padding: const EdgeInsets.all(12),
-      decoration: decoration,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'この提案を登録後に引き継ぐ',
-                  style: TextStyle(
-                    color: Color(0xFF172033),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    height: 1.45,
-                  ),
-                ),
-              ),
-              if (compact)
-                IconButton(
-                  key: const Key('landing_h04_inline_save_collapse'),
-                  onPressed: () {
-                    setState(() => _showCompactTrialSaveForm = false);
-                  },
-                  tooltip: '保存方法を閉じる',
-                  icon: const Icon(Icons.close, color: Color(0xFF172033)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          form,
-        ],
-      ),
+  Widget _buildInlineTrialMagicLink({
+    bool compact = false,
+    bool heroMode = false,
+  }) {
+    return LandingPostTrialSaveCard(
+      compact: compact,
+      heroMode: heroMode,
+      showCompactForm: _showCompactTrialSaveForm,
+      googleLoginEnabled: _googleLoginEnabled,
+      isLoading: _isLoading,
+      isMagicLinkCoolingDown: _isMagicLinkCoolingDown,
+      showInboxShortcut: _showInboxShortcut,
+      emailController: _trialEmailController,
+      emailFocusNode: _trialEmailFocusNode,
+      onSaveWithGoogle: () => unawaited(_saveTrialWithGoogle()),
+      onSaveWithMagicLink: () => unawaited(_saveTrialWithMagicLink()),
+      onShowCompactOptions: _showCompactTrialSaveOptions,
+      onCollapseCompactOptions: () {
+        setState(() => _showCompactTrialSaveForm = false);
+      },
+      onOpenInbox: () => unawaited(_openInbox()),
     );
   }
 
@@ -7734,6 +7600,318 @@ class _LandingMainBadge extends StatelessWidget {
           letterSpacing: 0.5,
           height: 1.5,
         ),
+      ),
+    );
+  }
+}
+
+class LandingPostTrialSaveCard extends StatelessWidget {
+  final bool compact;
+  final bool heroMode;
+  final bool showCompactForm;
+  final bool googleLoginEnabled;
+  final bool isLoading;
+  final bool isMagicLinkCoolingDown;
+  final bool showInboxShortcut;
+  final TextEditingController emailController;
+  final FocusNode emailFocusNode;
+  final VoidCallback onSaveWithGoogle;
+  final VoidCallback onSaveWithMagicLink;
+  final VoidCallback onShowCompactOptions;
+  final VoidCallback onCollapseCompactOptions;
+  final VoidCallback onOpenInbox;
+
+  const LandingPostTrialSaveCard({
+    super.key,
+    required this.compact,
+    required this.heroMode,
+    required this.showCompactForm,
+    required this.googleLoginEnabled,
+    required this.isLoading,
+    required this.isMagicLinkCoolingDown,
+    required this.showInboxShortcut,
+    required this.emailController,
+    required this.emailFocusNode,
+    required this.onSaveWithGoogle,
+    required this.onSaveWithMagicLink,
+    required this.onShowCompactOptions,
+    required this.onCollapseCompactOptions,
+    required this.onOpenInbox,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final surfaceColor = heroMode ? const Color(0xFF14212B) : Colors.white;
+    final borderColor =
+        heroMode ? const Color(0x80F0E5D0) : const Color(0xFFB9D7F2);
+    final primaryTextColor =
+        heroMode ? const Color(0xFFF6F0E5) : const Color(0xFF172033);
+    final secondaryTextColor =
+        heroMode ? const Color(0xFFC9D1D7) : const Color(0xFF475569);
+    final dividerColor =
+        heroMode ? const Color(0xFF334759) : const Color(0xFFCBD5E1);
+    final primaryButtonStyle = FilledButton.styleFrom(
+      backgroundColor:
+          heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1D4ED8),
+      foregroundColor: heroMode ? const Color(0xFF101A24) : Colors.white,
+      minimumSize: const Size.fromHeight(48),
+    );
+    final secondaryButtonStyle = OutlinedButton.styleFrom(
+      foregroundColor:
+          heroMode ? const Color(0xFFF0E5D0) : const Color(0xFF1D4ED8),
+      side: BorderSide(
+        color: heroMode ? const Color(0x99F0E5D0) : const Color(0xFF1D4ED8),
+      ),
+      minimumSize: const Size.fromHeight(44),
+    );
+
+    final Widget emailMagicLinkButton = googleLoginEnabled
+        ? OutlinedButton.icon(
+            key: const Key('landing_h04_inline_magic_link'),
+            onPressed: (isLoading || isMagicLinkCoolingDown)
+                ? null
+                : onSaveWithMagicLink,
+            icon: Icon(
+              showInboxShortcut
+                  ? Icons.check_circle_outline
+                  : Icons.bookmark_add_outlined,
+              size: 18,
+            ),
+            label: Text(
+              showInboxShortcut ? 'ログインリンクを送信しました' : 'メールで登録して引き継ぐ',
+            ),
+            style: secondaryButtonStyle,
+          )
+        : FilledButton.icon(
+            key: const Key('landing_h04_inline_magic_link'),
+            onPressed: (isLoading || isMagicLinkCoolingDown)
+                ? null
+                : onSaveWithMagicLink,
+            icon: Icon(
+              showInboxShortcut
+                  ? Icons.check_circle_outline
+                  : Icons.bookmark_add_outlined,
+              size: 18,
+            ),
+            label: Text(
+              showInboxShortcut ? 'ログインリンクを送信しました' : '無料登録して提案を引き継ぐ',
+            ),
+            style: primaryButtonStyle,
+          );
+
+    final form = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (googleLoginEnabled) ...[
+          FilledButton.icon(
+            key: const Key('landing_h04_inline_google'),
+            onPressed: isLoading ? null : onSaveWithGoogle,
+            icon: const Icon(Icons.login, size: 18),
+            label: const Text('Googleで無料登録して引き継ぐ'),
+            style: primaryButtonStyle,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Google認証で続行します。登録時にカード入力はありません。',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: secondaryTextColor,
+              fontSize: 12,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: Divider(color: dividerColor)),
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Text(
+                    'またはメールで保存',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: secondaryTextColor, fontSize: 12),
+                  ),
+                ),
+              ),
+              Expanded(child: Divider(color: dividerColor)),
+            ],
+          ),
+          const SizedBox(height: 10),
+        ],
+        Semantics(
+          container: true,
+          child: TextField(
+            key: const Key('landing_h04_inline_email'),
+            controller: emailController,
+            focusNode: emailFocusNode,
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
+            onSubmitted: (_) {
+              if (!isLoading && !isMagicLinkCoolingDown) {
+                onSaveWithMagicLink();
+              }
+            },
+            decoration: const InputDecoration(
+              labelText: 'メールアドレス',
+              hintText: 'you@example.com',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.email_outlined),
+              isDense: true,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        emailMagicLinkButton,
+        const SizedBox(height: 6),
+        Text(
+          showInboxShortcut
+              ? '受信箱のリンクを開くと、保存した提案から開始できます。'
+              : 'メールで届くログインリンクを使います。パスワード・カード入力はありません。',
+          style: TextStyle(
+            color: secondaryTextColor,
+            fontSize: 12,
+            height: 1.45,
+          ),
+        ),
+        if (showInboxShortcut) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const Key('landing_h04_inline_open_inbox'),
+            onPressed: onOpenInbox,
+            icon: const Icon(Icons.open_in_new, size: 17),
+            label: const Text('受信箱を開く'),
+            style: secondaryButtonStyle,
+          ),
+        ],
+      ],
+    );
+
+    final decoration = BoxDecoration(
+      color: surfaceColor,
+      borderRadius: const BorderRadius.all(Radius.circular(8)),
+      border: Border.fromBorderSide(BorderSide(color: borderColor)),
+    );
+
+    if (compact && !showCompactForm) {
+      if (googleLoginEnabled) {
+        return Container(
+          key: const Key('landing_h04_inline_magic_capture'),
+          padding: const EdgeInsets.all(12),
+          decoration: decoration,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FilledButton.icon(
+                key: const Key('landing_h04_inline_google'),
+                onPressed: isLoading ? null : onSaveWithGoogle,
+                icon: const Icon(Icons.login, size: 18),
+                label: const Text('Googleで無料登録して引き継ぐ'),
+                style: primaryButtonStyle,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '無料・カード不要で今回の提案を引き継げます',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: secondaryTextColor,
+                  fontSize: 11,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                key: const Key('landing_h04_inline_save_expansion'),
+                onPressed: onShowCompactOptions,
+                icon: const Icon(Icons.email_outlined, size: 17),
+                label: const Text('メールで保存する'),
+                style: secondaryButtonStyle,
+              ),
+            ],
+          ),
+        );
+      }
+      return Container(
+        key: const Key('landing_h04_inline_magic_capture'),
+        decoration: decoration,
+        child: Semantics(
+          container: true,
+          button: true,
+          child: InkWell(
+            key: const Key('landing_h04_inline_save_expansion'),
+            borderRadius: BorderRadius.circular(8),
+            onTap: onShowCompactOptions,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(Icons.bookmark_add_outlined, color: primaryTextColor),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'この提案を保存',
+                          style: TextStyle(
+                            color: primaryTextColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            height: 1.4,
+                          ),
+                        ),
+                        Text(
+                          '必要なときだけ無料登録（カード不要）',
+                          style: TextStyle(
+                            color: secondaryTextColor,
+                            fontSize: 11,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.expand_more, color: primaryTextColor),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      key: const Key('landing_h04_inline_magic_capture'),
+      padding: const EdgeInsets.all(12),
+      decoration: decoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'この提案を登録後に引き継ぐ',
+                  style: TextStyle(
+                    color: primaryTextColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    height: 1.45,
+                  ),
+                ),
+              ),
+              if (compact)
+                IconButton(
+                  key: const Key('landing_h04_inline_save_collapse'),
+                  onPressed: onCollapseCompactOptions,
+                  tooltip: '保存方法を閉じる',
+                  icon: Icon(Icons.close, color: primaryTextColor),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          form,
+        ],
       ),
     );
   }

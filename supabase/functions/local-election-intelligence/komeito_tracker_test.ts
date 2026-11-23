@@ -10,9 +10,16 @@ import type {
   LocalElectionHubStore,
 } from "./snapshot_history.ts";
 import {
+  buildKomeitoLiveDirectorySummary,
+  fetchKomeitoMemberSnapshot,
   KOMEITO_DATASET,
+  KOMEITO_MEMBER_PAGE_URL,
+  KOMEITO_SANGIIN_RESULT_URL,
+  KOMEITO_SHUGIIN_RESULT_URL,
   KOMEITO_TRACKER_VARIANT,
   parseKomeitoMemberSummaryHtml,
+  parseKomeitoPrefectureDirectory,
+  parseKomeitoSearchResultCount,
   persistKomeitoSnapshot,
 } from "./komeito_tracker.ts";
 
@@ -310,4 +317,227 @@ Deno.test("persistKomeitoSnapshot queues HITL data_report candidate when member 
   assert(fullThread.includes("2,837→2,839人 (+2)"));
   assert(fullThread.includes("一般市会: 1,871→1,873人 (+2)"));
   assertEquals(classifyPostArchetype(fullThread), "data_report");
+});
+
+// Real select + result fragments captured verbatim from https://www.komei.or.jp/member/ (2026-11-23)
+const REAL_KOMEITO_PREF_SELECT_HTML = `<select name="data[Member][pref]" id="select01">
+<option value="">選択してください</option>
+<option value="01">北海道</option>
+<option value="02">青森県</option>
+<option value="03">岩手県</option>
+<option value="04">宮城県</option>
+<option value="05">秋田県</option>
+<option value="06">山形県</option>
+<option value="07">福島県</option>
+<option value="08">茨城県</option>
+<option value="09">栃木県</option>
+<option value="10">群馬県</option>
+<option value="11">埼玉県</option>
+<option value="12">千葉県</option>
+<option value="13">東京都</option>
+<option value="14">神奈川県</option>
+<option value="15">新潟県</option>
+<option value="16">富山県</option>
+<option value="17">石川県</option>
+<option value="18">福井県</option>
+<option value="19">山梨県</option>
+<option value="20">長野県</option>
+<option value="21">岐阜県</option>
+<option value="22">静岡県</option>
+<option value="23">愛知県</option>
+<option value="24">三重県</option>
+<option value="25">滋賀県</option>
+<option value="26">京都府</option>
+<option value="27">大阪府</option>
+<option value="28">兵庫県</option>
+<option value="29">奈良県</option>
+<option value="30">和歌山県</option>
+<option value="31">鳥取県</option>
+<option value="32">島根県</option>
+<option value="33">岡山県</option>
+<option value="34">広島県</option>
+<option value="35">山口県</option>
+<option value="36">徳島県</option>
+<option value="37">香川県</option>
+<option value="38">愛媛県</option>
+<option value="39">高知県</option>
+<option value="40">福岡県</option>
+<option value="41">佐賀県</option>
+<option value="42">長崎県</option>
+<option value="43">熊本県</option>
+<option value="44">大分県</option>
+<option value="45">宮崎県</option>
+<option value="46">鹿児島県</option>
+<option value="47">沖縄県</option>
+</select>`;
+
+const REAL_KOMEITO_RESULT_P_HTML =
+  `<p>検索結果<em class="em02">315人</em>の該当する議員が見つかりました。</p>`;
+
+Deno.test("parseKomeitoPrefectureDirectory, parseKomeitoSearchResultCount, and buildKomeitoLiveDirectorySummary enforce 47-prefecture integrity", () => {
+  const entries = parseKomeitoPrefectureDirectory(REAL_KOMEITO_PREF_SELECT_HTML);
+  assertEquals(entries.length, 47);
+  assertEquals(entries[0], {
+    code: "01",
+    prefecture: "北海道",
+    sourceUrl: "https://www.komei.or.jp/member/result/pref:01/",
+  });
+  assertEquals(entries[12], {
+    code: "13",
+    prefecture: "東京都",
+    sourceUrl: "https://www.komei.or.jp/member/result/pref:13/",
+  });
+  assertEquals(entries[46], {
+    code: "47",
+    prefecture: "沖縄県",
+    sourceUrl: "https://www.komei.or.jp/member/result/pref:47/",
+  });
+
+  // Fail-closed when fewer than 47 prefectures are present
+  const missingOkinawa = REAL_KOMEITO_PREF_SELECT_HTML.replace(
+    '<option value="47">沖縄県</option>\n',
+    "",
+  );
+  assertEquals(parseKomeitoPrefectureDirectory(missingOkinawa), []);
+
+  assertEquals(parseKomeitoSearchResultCount(REAL_KOMEITO_RESULT_P_HTML), 315);
+  assertEquals(
+    parseKomeitoSearchResultCount(
+      '<p>検索結果<em class="em02">１,２３４人</em>の該当する議員が見つかりました。</p>',
+    ),
+    1234,
+  );
+  assertEquals(parseKomeitoSearchResultCount("<html>no result</html>"), null);
+
+  const validTallies = entries.map((entry) => ({
+    ...entry,
+    totalMembers: entry.code === "01"
+      ? 150
+      : entry.code === "13"
+      ? 315
+      : entry.code === "27"
+      ? 204
+      : entry.code === "02"
+      ? 68
+      : 50,
+  }));
+  const summary = buildKomeitoLiveDirectorySummary(validTallies, 28, 21);
+  assert(summary !== null);
+  assertEquals(summary.totalMembers, 2887);
+  assertEquals(summary.estimatedLocalMembers, 2838);
+
+  // Fail-closed on < 47 entries
+  assertEquals(
+    buildKomeitoLiveDirectorySummary(validTallies.slice(0, 46), 28, 21),
+    null,
+  );
+  // Fail-closed on suspiciously low total (< 2000)
+  const lowTallies = entries.map((entry) => ({
+    ...entry,
+    totalMembers: 40,
+  }));
+  assertEquals(buildKomeitoLiveDirectorySummary(lowTallies, 28, 21), null);
+});
+
+Deno.test("persistKomeitoSnapshot upgrades v1->v2 silently and queues prefecture delta candidate on v2->v2 change", async () => {
+  const store = new KomeitoMemoryStore();
+  const v1Baseline = parseKomeitoMemberSummaryHtml(REAL_KOMEITO_MEMBER_HTML);
+  assert(v1Baseline !== null);
+  assertEquals(v1Baseline.liveDirectory, undefined);
+
+  const initial = await persistKomeitoSnapshot(
+    store,
+    v1Baseline,
+    "2026-11-23T03:00:00.000Z",
+  );
+  assert(initial.baselineCreated);
+  assertEquals(initial.candidateCount, 0);
+
+  const rootWithPrefHtml =
+    `${REAL_KOMEITO_MEMBER_HTML}\n${REAL_KOMEITO_PREF_SELECT_HTML}`;
+  const directory = parseKomeitoPrefectureDirectory(REAL_KOMEITO_PREF_SELECT_HTML);
+  const makeMockFetcher = (tokyoCount: number) => {
+    const pages = new Map<string, string>([
+      [KOMEITO_MEMBER_PAGE_URL, rootWithPrefHtml],
+      [
+        KOMEITO_SHUGIIN_RESULT_URL,
+        "<p>検索結果<em class=\"em02\">28人</em>の該当する議員が見つかりました。</p>",
+      ],
+      [
+        KOMEITO_SANGIIN_RESULT_URL,
+        "<p>検索結果<em class=\"em02\">21人</em>の該当する議員が見つかりました。</p>",
+      ],
+    ]);
+    for (const entry of directory) {
+      const count = entry.code === "01"
+        ? 150
+        : entry.code === "13"
+        ? tokyoCount
+        : entry.code === "27"
+        ? 204
+        : entry.code === "02"
+        ? 68
+        : 50;
+      const html = count === 315
+        ? REAL_KOMEITO_RESULT_P_HTML
+        : `<p>検索結果<em class="em02">${count}人</em>の該当する議員が見つかりました。</p>`;
+      pages.set(entry.sourceUrl, html);
+    }
+    return (url: string): Promise<string> => {
+      const html = pages.get(url);
+      if (html === undefined) {
+        return Promise.reject(new Error(`Unexpected URL: ${url}`));
+      }
+      return Promise.resolve(html);
+    };
+  };
+
+  // v1 -> v2 upgrade: summary table unchanged, liveDirectory populated -> zero candidates
+  const v2Snapshot = await fetchKomeitoMemberSnapshot(makeMockFetcher(315));
+  assertEquals(v2Snapshot.liveDirectory?.prefectures.length, 47);
+  assertEquals(v2Snapshot.liveDirectory?.totalMembers, 2887);
+  assertEquals(v2Snapshot.liveDirectory?.estimatedLocalMembers, 2838);
+
+  const upgraded = await persistKomeitoSnapshot(
+    store,
+    v2Snapshot,
+    "2026-11-23T12:00:00.000Z",
+  );
+  assertEquals(upgraded.snapshotCreated, true);
+  assertEquals(upgraded.hasChanges, false);
+  assertEquals(upgraded.candidateCount, 0);
+  assertEquals(upgraded.candidatesCreated, 0);
+  assertEquals(store.candidates.length, 0);
+
+  // v2 -> v2 delta: Tokyo changes 315 -> 316 -> HITL data_report candidate queued
+  const v2UpdatedSnapshot = await fetchKomeitoMemberSnapshot(
+    makeMockFetcher(316),
+  );
+  assertEquals(v2UpdatedSnapshot.liveDirectory?.totalMembers, 2888);
+  assertEquals(v2UpdatedSnapshot.liveDirectory?.estimatedLocalMembers, 2839);
+
+  const queued = await persistKomeitoSnapshot(
+    store,
+    v2UpdatedSnapshot,
+    "2026-11-24T00:00:00.000Z",
+  );
+  assertEquals(queued.snapshotCreated, true);
+  assertEquals(queued.hasChanges, true);
+  assertEquals(queued.candidateCount, 1);
+  assertEquals(queued.candidatesCreated, 1);
+  assertEquals(store.candidates.length, 1);
+
+  const candidate = store.candidates[0].metadata;
+  assertEquals(candidate.requires_human_approval, true);
+  assertEquals(candidate.auto_publish, false);
+  assertEquals(candidate.content_archetype, "data_report");
+
+  const payload = candidate.post_payload as JsonRecord;
+  assertEquals(payload.linkInReply, true);
+  assertEquals(classifyPostArchetype(String(payload.text ?? "")), "data_report");
+  const thread = [
+    String(payload.text ?? ""),
+    ...((payload.replyTexts as string[]) ?? []),
+  ].join("\n");
+  assert(thread.includes("東京都: 315→316人 (+1)"));
 });

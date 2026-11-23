@@ -21,6 +21,7 @@ import 'package:my_web_app/data/home_tool_catalog.dart';
 import 'package:my_web_app/utils/feature_route_labels.dart';
 import 'package:my_web_app/utils/route_url_sync.dart';
 import 'package:my_web_app/utils/route_document_title.dart';
+import 'package:my_web_app/services/spa_route_title_observer.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
@@ -2148,7 +2149,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return ValueListenableBuilder(
       valueListenable: universalAiShareRouteObserver.currentPage,
       builder: (context, currentPage, _) => MaterialApp(
-        title: documentTitleForRoute(currentPage.routePath),
+        title: SpaRouteTitleResolver.resolve(currentPage.routePath),
         debugShowCheckedModeBanner: false,
         scaffoldMessengerKey: _scaffoldMessengerKey,
         navigatorKey: _navigatorKey,
@@ -2196,6 +2197,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         navigatorObservers: <NavigatorObserver>[
           _growthPresenceObserver,
           universalAiShareRouteObserver,
+          spaRouteTitleObserver,
           // deep link 直開き時に下へ積まれた HomePage / LandingPage の fetch・
           // LP View 計測を可視化まで遅延させる (可視化ゲート)。
           deepLinkVisibilityRouteObserver,
