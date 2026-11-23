@@ -367,7 +367,7 @@ void main() {
         'asset_management_display_mode_v1': 'full',
       });
 
-      final now = DateTime(2026, 6, 10);
+      final now = DateTime(2026, 6, 16);
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       final repo = _InMemorySpendingReminderRepository(
         const AssetLiabilityMonthlyState(
