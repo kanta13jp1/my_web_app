@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
@@ -10,6 +12,7 @@ import 'package:my_web_app/services/asset_recurring_tombstone_sync_service.dart'
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/widgets/asset_card_statement_reconciliation_dialogs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _bannerKey = Key('asset_card_reconciliation_needs_review_banner');
 
@@ -55,6 +58,31 @@ Future<void> _unmountPage(WidgetTester tester) async {
 }
 
 void main() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await Supabase.initialize(
+      url: 'http://127.0.0.1:9999',
+      publishableKey: 'test-publishable-key',
+      authOptions: const FlutterAuthClientOptions(autoRefreshToken: false),
+      httpClient: MockClient((request) async {
+        const headers = <String, String>{'content-type': 'application/json'};
+        final isExternalPointsRead = request.method == 'GET' &&
+            request.url.path == '/rest/v1/asset_pref_mirror' &&
+            request.url.queryParameters['pref_key'] == 'eq.external_points_v1';
+        if (isExternalPointsRead) {
+          return http.Response('[]', 200, headers: headers, request: request);
+        }
+        return http.Response(
+          '{"message":"Unexpected HTTP request during card reconciliation widget test"}',
+          400,
+          headers: headers,
+          request: request,
+        );
+      }),
+    );
+  });
+
   group('Card statement reconciliation dialogs & page flows', () {
     testWidgets(
       'CardStatementManualReconciliationWizardDialog completes 3 steps (#3329)',
@@ -122,6 +150,11 @@ void main() {
     testWidgets(
       'CardManualStatementEntryDialog blocks mismatch until override and saves balanced rows (#3326)',
       (tester) async {
+        await tester.binding.setSurfaceSize(const Size(1000, 1000));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        const allowMismatchKey =
+            Key('card_manual_entry_allow_mismatch_checkbox');
+        const saveBtnKey = Key('card_manual_entry_save_button');
         List<AssetLiabilityCardStatementLine>? savedLines;
         final group = _sampleMismatchGroup();
 
@@ -165,22 +198,20 @@ void main() {
           findsOneWidget,
         );
         FilledButton saveBtn = tester.widget<FilledButton>(
-          find.byKey(const Key('card_manual_entry_save_button')),
+          find.byKey(saveBtnKey),
         );
         expect(saveBtn.onPressed, isNull);
 
-        await tester.tap(
-          find.byKey(const Key('card_manual_entry_allow_mismatch_checkbox')),
-        );
+        await tester.ensureVisible(find.byKey(allowMismatchKey));
         await tester.pump();
-        saveBtn = tester.widget<FilledButton>(
-          find.byKey(const Key('card_manual_entry_save_button')),
-        );
+        await tester.tap(find.byKey(allowMismatchKey));
+        await tester.pump();
+        saveBtn = tester.widget<FilledButton>(find.byKey(saveBtnKey));
         expect(saveBtn.onPressed, isNotNull);
 
-        await tester.tap(
-          find.byKey(const Key('card_manual_entry_allow_mismatch_checkbox')),
-        );
+        await tester.ensureVisible(find.byKey(allowMismatchKey));
+        await tester.pump();
+        await tester.tap(find.byKey(allowMismatchKey));
         await tester.enterText(
           find.byKey(const Key('card_manual_entry_amount_0')),
           '8011',
@@ -191,14 +222,12 @@ void main() {
           find.byKey(const Key('card_manual_entry_mismatch_warning')),
           findsNothing,
         );
-        saveBtn = tester.widget<FilledButton>(
-          find.byKey(const Key('card_manual_entry_save_button')),
-        );
+        saveBtn = tester.widget<FilledButton>(find.byKey(saveBtnKey));
         expect(saveBtn.onPressed, isNotNull);
 
-        await tester.tap(
-          find.byKey(const Key('card_manual_entry_save_button')),
-        );
+        await tester.ensureVisible(find.byKey(saveBtnKey));
+        await tester.pump();
+        await tester.tap(find.byKey(saveBtnKey));
         await tester.pumpAndSettle();
 
         expect(savedLines, hasLength(1));
@@ -300,6 +329,7 @@ void main() {
           const Key('asset_card_reconciliation_start_wizard_button'),
         );
         await tester.ensureVisible(startBtn);
+        await tester.pump();
         await tester.tap(startBtn);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
@@ -371,6 +401,7 @@ void main() {
           const Key('asset_card_provisional_add_aupay_card'),
         );
         await tester.ensureVisible(addProvBtn);
+        await tester.pump();
         await tester.tap(addProvBtn);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
@@ -388,6 +419,7 @@ void main() {
 
         final promoteBtn = find.text('正式内訳へ昇格');
         await tester.ensureVisible(promoteBtn);
+        await tester.pump();
         await tester.tap(promoteBtn);
         await tester.pump(const Duration(milliseconds: 300));
 
