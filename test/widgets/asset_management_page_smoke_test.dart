@@ -5814,6 +5814,156 @@ void main() {
         await _unmount(tester);
       },
     );
+
+    testWidgets(
+      'Issue #3309: highlights high interest debts, shows header interest total, and toggles sort mode',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        const jibunId =
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId;
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 4800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{
+                  'mobit': 20,
+                  'yokohama_bank': 5,
+                  jibunId: 3,
+                },
+                monthlyState: const AssetLiabilityMonthlyState(
+                  annualRateOverrides: <String, double>{
+                    'mobit': 0.18,
+                    'yokohama_bank': 0.145,
+                    jibunId: 0.05,
+                  },
+                  paymentOverrides: <String, double>{
+                    'mobit': 15000,
+                    'yokohama_bank': 10000,
+                    jibunId: 5000,
+                  },
+                  paymentSourceAccountIds: <String, String>{
+                    'mobit': 'wallet_cash',
+                    'yokohama_bank': 'wallet_cash',
+                    jibunId: 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -300000,
+                  '横浜銀行': -200000,
+                  'じぶん銀行カードローン': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.text('負債マスタ（高金利優先）'), findsOneWidget);
+        final interestChip = find.byKey(
+          const Key('asset_debt_monthly_interest_header_chip'),
+        );
+        expect(interestChip, findsOneWidget);
+        expect(
+          find.descendant(
+            of: interestChip,
+            matching: find.textContaining('今月の金利負担（概算）:'),
+          ),
+          findsOneWidget,
+        );
+
+        final mobitBadge = find.byKey(
+          const Key('asset_debt_high_rate_badge_mobit'),
+        );
+        final yokohamaBadge = find.byKey(
+          const Key('asset_debt_high_rate_badge_yokohama_bank'),
+        );
+        expect(mobitBadge, findsOneWidget);
+        expect(yokohamaBadge, findsOneWidget);
+        expect(
+          find.descendant(of: mobitBadge, matching: find.text('高金利 18.0%')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: yokohamaBadge, matching: find.text('要注意 14.5%')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_high_rate_badge_$jibunId')),
+          findsNothing,
+        );
+
+        expect(
+          find.byKey(const Key('asset_payment_risk_rate_badge_20')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_risk_rate_badge_5')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_risk_rate_badge_3')),
+          findsNothing,
+        );
+
+        final mobitTitle =
+            find.byKey(const Key('asset_debt_master_title_mobit'));
+        final yokohamaTitle = find.byKey(
+          const Key('asset_debt_master_title_yokohama_bank'),
+        );
+        final jibunTitle = find.byKey(
+          const Key('asset_debt_master_title_$jibunId'),
+        );
+        expect(
+          tester.getTopLeft(mobitTitle).dy,
+          lessThan(tester.getTopLeft(yokohamaTitle).dy),
+        );
+        expect(
+          tester.getTopLeft(yokohamaTitle).dy,
+          lessThan(tester.getTopLeft(jibunTitle).dy),
+        );
+
+        final paymentDayChip = find.byKey(
+          const Key('asset_debt_sort_payment_day'),
+        );
+        await tester.ensureVisible(paymentDayChip);
+        await tester.pump();
+        await tester.tap(paymentDayChip);
+        await tester.pump();
+
+        expect(find.text('負債マスタ（支払日順）'), findsOneWidget);
+        expect(
+          tester.getTopLeft(jibunTitle).dy,
+          lessThan(tester.getTopLeft(yokohamaTitle).dy),
+        );
+        expect(
+          tester.getTopLeft(yokohamaTitle).dy,
+          lessThan(tester.getTopLeft(mobitTitle).dy),
+        );
+
+        final highInterestChip = find.byKey(
+          const Key('asset_debt_sort_high_interest'),
+        );
+        await tester.ensureVisible(highInterestChip);
+        await tester.pump();
+        await tester.tap(highInterestChip);
+        await tester.pump();
+
+        expect(find.text('負債マスタ（高金利優先）'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
   });
   testWidgets(
     'anonymous unconfirmed read never claims empty income or offers empty CTA',
