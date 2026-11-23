@@ -7,7 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../services/project_gantt_focus_view_service.dart';
 import '../utils/web_image_downloader.dart';
+import '../widgets/project_gantt_focus_views.dart';
 import 'package:my_web_app/utils/tab_route_url_sync.dart';
 
 const String _kGithubRepoUrl = 'https://github.com/kanta13jp1/my_web_app';
@@ -832,6 +834,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
   String? _filterMilestone;
   // Win版#131 part 12: 未完了タスクのみフィルタ
   bool _hideCompleted = false;
+  ProjectGanttFocusView _focusView = ProjectGanttFocusView.wbs;
 
   // My projects (tab 2)
   List<Map<String, dynamic>> _projects = [];
@@ -1060,6 +1063,8 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             filterInstance: _filterInstance,
             filterMilestone: _filterMilestone,
             hideCompleted: _hideCompleted,
+            focusView: _focusView,
+            onSelectFocusView: (v) => setState(() => _focusView = v),
             onFilterInstance: (v) => setState(() => _filterInstance = v),
             onFilterMilestone: (v) => setState(() => _filterMilestone = v),
             onToggleHideCompleted: (v) =>
@@ -1240,6 +1245,8 @@ class _WbsTab extends StatelessWidget {
   final String? filterInstance;
   final String? filterMilestone;
   final bool hideCompleted;
+  final ProjectGanttFocusView focusView;
+  final ValueChanged<ProjectGanttFocusView> onSelectFocusView;
   final ValueChanged<String?> onFilterInstance;
   final ValueChanged<String?> onFilterMilestone;
   final ValueChanged<bool?> onToggleHideCompleted;
@@ -1252,6 +1259,8 @@ class _WbsTab extends StatelessWidget {
     required this.filterInstance,
     required this.filterMilestone,
     required this.hideCompleted,
+    required this.focusView,
+    required this.onSelectFocusView,
     required this.onFilterInstance,
     required this.onFilterMilestone,
     required this.onToggleHideCompleted,
@@ -1305,6 +1314,17 @@ class _WbsTab extends StatelessWidget {
       hideCompleted: hideCompleted,
     );
     final overallProgress = _overallProgress(progressBase);
+    final sprintData = ProjectGanttFocusViewService.buildSprintSummary(
+      tasks,
+      now: now,
+    );
+    final milestoneGroups =
+        ProjectGanttFocusViewService.buildMilestoneSummaries(
+      milestones,
+      tasks,
+      now: now,
+    );
+    final blockerItems = ProjectGanttFocusViewService.buildBlockerItems(tasks);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
@@ -1316,85 +1336,104 @@ class _WbsTab extends StatelessWidget {
           totalCount: tasks.length,
           showFilteredBadge: hideCompleted,
         ),
+        const SizedBox(height: 12),
+        ProjectGanttFocusViewBar(
+          selectedView: focusView,
+          onSelect: onSelectFocusView,
+          sprintCount: sprintData.activeTasks.length,
+          milestoneCount: milestoneGroups.length,
+          blockerCount: blockerItems.length,
+        ),
         const SizedBox(height: 16),
 
-        // ── マイルストーン ─────────────────────────────────────────────────
-        const _SectionHeader(label: 'リリースマイルストーン', icon: Icons.flag_outlined),
-        const SizedBox(height: 8),
-        if (milestones.isEmpty)
-          const _EmptyCard(
-            message: 'マイルストーンデータを読み込み中...\n(DBマイグレーション適用後に表示されます)',
-          )
-        else
-          SizedBox(
-            height: 140,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: milestones.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (_, i) => _MilestoneCard(
-                milestone: milestones[i],
-                now: now,
-                tasks: tasks,
+        if (focusView == ProjectGanttFocusView.sprint) ...[
+          ProjectGanttSprintView(data: sprintData),
+        ] else if (focusView == ProjectGanttFocusView.milestone) ...[
+          ProjectGanttMilestoneView(groups: milestoneGroups),
+        ] else if (focusView == ProjectGanttFocusView.blocker) ...[
+          ProjectGanttBlockerView(items: blockerItems),
+        ] else ...[
+          // ── マイルストーン ─────────────────────────────────────────────────
+          const _SectionHeader(
+            label: 'リリースマイルストーン',
+            icon: Icons.flag_outlined,
+          ),
+          const SizedBox(height: 8),
+          if (milestones.isEmpty)
+            const _EmptyCard(
+              message: 'マイルストーンデータを読み込み中...\n(DBマイグレーション適用後に表示されます)',
+            )
+          else
+            SizedBox(
+              height: 140,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: milestones.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, i) => _MilestoneCard(
+                  milestone: milestones[i],
+                  now: now,
+                  tasks: tasks,
+                ),
               ),
             ),
-          ),
-        const SizedBox(height: 20),
+          const SizedBox(height: 20),
 
-        // ── フィルター ────────────────────────────────────────────────────
-        const _SectionHeader(
-          label: 'WBSタスク',
-          icon: Icons.account_tree_outlined,
-        ),
-        const SizedBox(height: 8),
-        WbsFilterBar(
-          filterInstance: filterInstance,
-          filterMilestone: filterMilestone,
-          milestones: milestones,
-          hideCompleted: hideCompleted,
-          onFilterInstance: onFilterInstance,
-          onFilterMilestone: onFilterMilestone,
-          onToggleHideCompleted: onToggleHideCompleted,
-        ),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            '表示: ${_filtered.length} / ${tasks.length} 件',
-            style: Theme.of(
-              context,
-            ).textTheme.labelSmall?.copyWith(color: const Color(0xFF9CA3AF)),
+          // ── フィルター ────────────────────────────────────────────────────
+          const _SectionHeader(
+            label: 'WBSタスク',
+            icon: Icons.account_tree_outlined,
           ),
-        ),
-        const SizedBox(height: 12),
-
-        // ── カテゴリ別タスク ───────────────────────────────────────────────
-        _WbsAssignmentBoard(
-          tasks: assignmentTasks,
-          onMoveTaskOwner: onMoveTaskOwner,
-        ),
-        const SizedBox(height: 16),
-        if (grouped.isEmpty && tasks.isNotEmpty)
-          GanttFilteredEmptyState(
-            totalCount: tasks.length,
-            onResetFilters: () {
-              onFilterInstance(null);
-              onFilterMilestone(null);
-              onToggleHideCompleted(false);
-            },
-          )
-        else if (grouped.isEmpty)
-          const _EmptyCard(message: 'WBSタスクがまだ登録されていません')
-        else
-          ...grouped.entries.map(
-            (entry) => WbsCategoryHierarchySection(
-              category: entry.key,
-              tasks: entry.value,
-              categoryIcon: entry.value.isNotEmpty
-                  ? entry.value.first.categoryIcon
-                  : '📋',
+          const SizedBox(height: 8),
+          WbsFilterBar(
+            filterInstance: filterInstance,
+            filterMilestone: filterMilestone,
+            milestones: milestones,
+            hideCompleted: hideCompleted,
+            onFilterInstance: onFilterInstance,
+            onFilterMilestone: onFilterMilestone,
+            onToggleHideCompleted: onToggleHideCompleted,
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '表示: ${_filtered.length} / ${tasks.length} 件',
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: const Color(0xFF9CA3AF)),
             ),
           ),
+          const SizedBox(height: 12),
+
+          // ── カテゴリ別タスク ───────────────────────────────────────────────
+          _WbsAssignmentBoard(
+            tasks: assignmentTasks,
+            onMoveTaskOwner: onMoveTaskOwner,
+          ),
+          const SizedBox(height: 16),
+          if (grouped.isEmpty && tasks.isNotEmpty)
+            GanttFilteredEmptyState(
+              totalCount: tasks.length,
+              onResetFilters: () {
+                onFilterInstance(null);
+                onFilterMilestone(null);
+                onToggleHideCompleted(false);
+              },
+            )
+          else if (grouped.isEmpty)
+            const _EmptyCard(message: 'WBSタスクがまだ登録されていません')
+          else
+            ...grouped.entries.map(
+              (entry) => WbsCategoryHierarchySection(
+                category: entry.key,
+                tasks: entry.value,
+                categoryIcon: entry.value.isNotEmpty
+                    ? entry.value.first.categoryIcon
+                    : '📋',
+              ),
+            ),
+        ],
       ],
     );
   }
