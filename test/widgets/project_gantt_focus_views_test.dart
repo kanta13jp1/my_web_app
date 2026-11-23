@@ -330,25 +330,27 @@ void main() {
     testWidgets('meets accessibility tap target and label guidelines',
         (tester) async {
       final SemanticsHandle handle = tester.ensureSemantics();
-      addTearDown(handle.dispose);
+      try {
+        await pumpFocusHarness(
+          tester,
+          viewport: const Size(390, 844),
+          tasks: const <WbsTask>[],
+          milestones: const <WbsMilestone>[],
+        );
 
-      await pumpFocusHarness(
-        tester,
-        viewport: const Size(390, 844),
-        tasks: const <WbsTask>[],
-        milestones: const <WbsMilestone>[],
-      );
+        await tester.tap(find.byKey(const Key('gantt_focus_view_sprint')));
+        await tester.pumpAndSettle();
+        expect(
+          find.text('今スプリント期間に該当する未完了のWBSタスクはありません。'),
+          findsOneWidget,
+        );
 
-      await tester.tap(find.byKey(const Key('gantt_focus_view_sprint')));
-      await tester.pumpAndSettle();
-      expect(
-        find.text('今スプリント期間に該当する未完了のWBSタスクはありません。'),
-        findsOneWidget,
-      );
-
-      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-      expect(tester.takeException(), isNull);
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        expect(tester.takeException(), isNull);
+      } finally {
+        handle.dispose();
+      }
     });
   });
 }
