@@ -95,6 +95,7 @@ void main() {
           userId: 'debug-user',
           displayName: '監査ユーザー',
           gender: '女性',
+          birthDate: DateTime.utc(1995, 5, 15),
           targetDeathAge: 80,
           createdAt: DateTime.utc(2026, 11, 23),
           updatedAt: DateTime.utc(2026, 11, 23),
