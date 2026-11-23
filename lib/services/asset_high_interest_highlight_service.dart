@@ -84,6 +84,39 @@ class AssetHighInterestHighlightService {
     return matched.first;
   }
 
+  /// 直接支出対象の負債から月利息概算の大きい上位 [limit] 件を抽出する。
+  static List<AssetLiabilityDebtRow> topMonthlyInterestRows(
+    List<AssetLiabilityDebtRow> debtRows, {
+    int limit = 5,
+  }) {
+    final candidates = debtRows
+        .where(
+          (row) =>
+              row.isDirectCashflowTarget && row.monthlyInterestEstimate > 0,
+        )
+        .toList(growable: false);
+    candidates.sort((a, b) {
+      final interest = b.monthlyInterestEstimate.compareTo(
+        a.monthlyInterestEstimate,
+      );
+      if (interest != 0) {
+        return interest;
+      }
+      final rate = b.annualRate.compareTo(a.annualRate);
+      if (rate != 0) {
+        return rate;
+      }
+      final share = b.liabilityShare.compareTo(a.liabilityShare);
+      if (share != 0) {
+        return share;
+      }
+      return a.name.compareTo(b.name);
+    });
+    return List<AssetLiabilityDebtRow>.unmodifiable(
+      candidates.take(limit < 0 ? 0 : limit),
+    );
+  }
+
   static String _formatYen(double amount) {
     final rounded = amount.round();
     final sign = rounded < 0 ? '-' : '';

@@ -212,5 +212,100 @@ void main() {
         isNull,
       );
     });
+
+    test(
+      'topMonthlyInterestRows picks top 5 direct rows and skips zero/included rows',
+      () {
+        final rows = <AssetLiabilityDebtRow>[
+          buildRow(
+            id: 'rank6',
+            name: '六位',
+            annualRate: 0.145,
+            monthlyInterestEstimate: 1000,
+            liabilityShare: 0.05,
+          ),
+          buildRow(
+            id: 'rank2',
+            name: '二位',
+            annualRate: 0.18,
+            monthlyInterestEstimate: 22884,
+            liabilityShare: 0.2,
+          ),
+          buildRow(
+            id: 'rank1',
+            name: '一位',
+            annualRate: 0.15,
+            monthlyInterestEstimate: 27900,
+            liabilityShare: 0.3,
+          ),
+          buildRow(
+            id: 'rank4',
+            name: '四位',
+            annualRate: 0.15,
+            monthlyInterestEstimate: 6309,
+            liabilityShare: 0.1,
+          ),
+          buildRow(
+            id: 'zero_interest',
+            name: '無利息',
+            annualRate: 0.0,
+            monthlyInterestEstimate: 0,
+            liabilityShare: 0.01,
+          ),
+          buildRow(
+            id: 'rank3',
+            name: '三位',
+            annualRate: 0.18,
+            monthlyInterestEstimate: 10447,
+            liabilityShare: 0.15,
+          ),
+          buildRow(
+            id: 'rank5',
+            name: '五位',
+            annualRate: 0.15,
+            monthlyInterestEstimate: 6052,
+            liabilityShare: 0.08,
+          ),
+          const AssetLiabilityDebtRow(
+            id: 'included_card_sub',
+            name: 'カード合算高利息',
+            kind: AssetLiabilityAccountKind.utility,
+            balance: -100000,
+            paymentDay: 11,
+            paymentSourceAccountId: null,
+            paymentSourceAccountName: null,
+            paymentMethod: AssetLiabilityPaymentMethod.includedInCard,
+            paymentMethodLabel: 'カード合算',
+            paymentMethodSettingSource:
+                AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+            billingAccountId: 'rank4',
+            billingAccountName: '四位',
+            includedInBillingAccount: true,
+            annualRate: 0.2,
+            minimumPaymentEstimate: 10000,
+            manualPaymentAmount: 10000,
+            scheduledPaymentAmount: 10000,
+            monthlyInterestEstimate: 99999,
+            principalPaymentEstimate: 0,
+            balanceAfterPaymentEstimate: -100000,
+            liabilityShare: 0.1,
+            priorityLabel: '高',
+            paymentAmountEstimated: false,
+            billingConfirmed: true,
+            paid: false,
+            requiresAction: true,
+          ),
+        ];
+
+        final top5 = AssetHighInterestHighlightService.topMonthlyInterestRows(
+          rows,
+        );
+        expect(top5.length, 5);
+        expect(
+          top5.map((r) => r.id).toList(),
+          <String>['rank1', 'rank2', 'rank3', 'rank4', 'rank5'],
+        );
+      },
+    );
   });
 }
