@@ -839,6 +839,7 @@ jobs:
           cache: npm
 
       - name: Cache Playwright Chromium for OGP cards
+        id: playwright_cache
         if: steps.changes.outputs.web == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
@@ -847,13 +848,19 @@ jobs:
 
       - name: Generate and verify build-time OGP and X social cards
         if: steps.changes.outputs.web == 'true'
+        env:
+          PLAYWRIGHT_CACHE_HIT: ${{ steps.playwright_cache.outputs.cache-hit }}
         run: |
           if [ ! -d node_modules/@playwright/test ]; then
             npm ci --ignore-scripts
           fi
           # ubuntu-latest ships /usr/bin/google-chrome; Playwright browser download is a cached fallback only.
           if [ ! -x /usr/bin/google-chrome ] && [ ! -x /usr/bin/google-chrome-stable ] && [ ! -x /usr/bin/chromium ] && [ ! -x /usr/bin/chromium-browser ]; then
-            npx playwright install chromium
+            if [ "$PLAYWRIGHT_CACHE_HIT" != "true" ]; then
+              npx playwright install --with-deps chromium
+            else
+              npx playwright install-deps chromium
+            fi
           fi
           node scripts/generate_ogp_cards.mjs --out-dir build/web
 

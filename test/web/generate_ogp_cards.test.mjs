@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import {
   detectChromeExecutable,
+  listenLoopback,
   renderCardHtml,
   verifyOutputs,
 } from "../../scripts/generate_ogp_cards.mjs";
@@ -117,5 +119,23 @@ test("verifyOutputs validates valid synthetic PNGs and rejects malformed or esca
     );
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test("listenLoopback resolves ephemeral address and rejects on bind error", async () => {
+  const server1 = http.createServer();
+  const server2 = http.createServer();
+  try {
+    const addr = await listenLoopback(server1);
+    assert.ok(addr && typeof addr.port === "number" && addr.port > 0);
+    await assert.rejects(
+      () => listenLoopback(server2, addr.port),
+      /EADDRINUSE|listen/i,
+    );
+  } finally {
+    await Promise.all([
+      new Promise((resolve) => server1.close(() => resolve())),
+      new Promise((resolve) => server2.close(() => resolve())),
+    ]);
   }
 });

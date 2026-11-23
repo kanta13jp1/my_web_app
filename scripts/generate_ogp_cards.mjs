@@ -87,6 +87,34 @@ export function resolveInside(root, relPath) {
 }
 
 /**
+ * Bind an HTTP server to loopback while rejecting cleanly on listen errors.
+ * @param {http.Server} server
+ * @param {number} port
+ * @param {string} host
+ */
+export function listenLoopback(server, port = 0, host = "127.0.0.1") {
+  return new Promise((resolve, reject) => {
+    const onError = (err) => {
+      server.off("listening", onListening);
+      reject(err);
+    };
+    const onListening = () => {
+      server.off("error", onError);
+      resolve(server.address());
+    };
+    server.once("error", onError);
+    server.once("listening", onListening);
+    try {
+      server.listen(port, host);
+    } catch (err) {
+      server.off("error", onError);
+      server.off("listening", onListening);
+      reject(err);
+    }
+  });
+}
+
+/**
  * Find pre-installed Chrome/Chromium executable if present on the host.
  * @param {string | null} explicitPath
  */
@@ -415,8 +443,7 @@ async function renderWithChromeCli(chromeBin, htmlDir, outDir, manifest, cardsWi
     fs.createReadStream(filePath).pipe(res);
   });
 
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const addr = server.address();
+  const addr = await listenLoopback(server);
   const baseUrl = `http://127.0.0.1:${addr.port}`;
 
   try {
@@ -474,8 +501,7 @@ async function renderWithPlaywright(repoRoot, outDir, manifest, cardsWithArt, ch
     res.end(htmlPayload);
   });
 
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const addr = server.address();
+  const addr = await listenLoopback(server);
   const baseUrl = `http://127.0.0.1:${addr.port}`;
   const fontUrl = hasRepoFont ? `${baseUrl}/fonts/NotoSansJP-Regular.ttf` : null;
 
