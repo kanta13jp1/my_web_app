@@ -74,7 +74,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   int _allowedToolExecutionCount = 0;
   int _blockedToolExecutionCount = 0;
   AdminPaidConversionMetrics _paidConversionMetrics =
-      AdminPaidConversionMetrics.empty();
+      AdminPaidConversionMetrics.empty;
   // R16: growth-hub x.today_status の結果(今日すでに投稿したか / 最新tweet+初速
   // インプレ / spend-cap ブロック中か)。取得失敗や available:false のときは null
   // に戻し、アクションカードは従来文言(「X投稿を作る」)へ degrade する。
@@ -2153,7 +2153,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(height: 12),
                     RepaintBoundary(
                       key: const Key(
-                          'admin_source_distribution_repaint_boundary'),
+                        'admin_source_distribution_repaint_boundary',
+                      ),
                       child: _buildSourceDistribution(sourceBreakdown),
                     ),
                     const SizedBox(height: 24),
@@ -2168,7 +2169,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(height: 12),
                     RepaintBoundary(
                       key: const Key(
-                          'admin_share_distribution_repaint_boundary'),
+                        'admin_share_distribution_repaint_boundary',
+                      ),
                       child: _buildSourceDistribution(shareChannelBreakdown),
                     ),
                     const SizedBox(height: 24),
