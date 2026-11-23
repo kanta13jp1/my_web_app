@@ -16,9 +16,13 @@ import 'package:web/web.dart'
     if (dart.library.io) 'package:my_web_app/utils/web_stub.dart' as web;
 
 import '../models/chat_incremental_rendering_config.dart';
+import '../models/chat_subsession.dart';
+import '../services/chat_background_job_center.dart';
 import '../services/generated_ui_sandbox_policy.dart';
 import '../services/inline_text_diff_service.dart';
 import '../widgets/ai_inline_diff_card.dart';
+import '../widgets/chat_background_job_notification_banner.dart';
+import '../widgets/chat_subsession_tab_bar.dart';
 import '../widgets/generated_ui_sandbox_preview.dart';
 import '../widgets/incremental_chat_text_view.dart';
 
@@ -40,6 +44,9 @@ class AiAssistantChatPage extends StatefulWidget {
     this.debugInitialConfig,
     this.debugInitialMessages,
     this.onApplyProposal,
+    this.debugJobCenter,
+    this.debugInitialSubsessions,
+    this.subsessionStore = const ChatSubsessionStore(),
   });
 
   final List<String> initialContextIds;
@@ -47,6 +54,9 @@ class AiAssistantChatPage extends StatefulWidget {
   final ChatIncrementalRenderingConfig? debugInitialConfig;
   final List<AiAssistantChatDebugMessage>? debugInitialMessages;
   final Future<void> Function(String proposedText)? onApplyProposal;
+  final ChatBackgroundJobCenter? debugJobCenter;
+  final List<ChatSubsession>? debugInitialSubsessions;
+  final ChatSubsessionStore subsessionStore;
 
   @override
   State<AiAssistantChatPage> createState() => _AiAssistantChatPageState();
@@ -72,6 +82,10 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
   web.SpeechRecognition? _recognition;
   late List<String> _contextIds;
   late List<String> _contextTitles;
+  late final ChatBackgroundJobCenter _jobCenter;
+  bool _ownsJobCenter = false;
+  List<ChatSubsession> _subsessions = <ChatSubsession>[];
+  String _activeSubsessionId = 'root';
 
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
@@ -89,6 +103,14 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
     _contextTitles = widget.initialContextTitles
         .take(_contextIds.length)
         .toList(growable: false);
+    final injectedCenter = widget.debugJobCenter;
+    if (injectedCenter != null) {
+      _jobCenter = injectedCenter;
+      _ownsJobCenter = false;
+    } else {
+      _jobCenter = ChatBackgroundJobCenter();
+      _ownsJobCenter = true;
+    }
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -111,9 +133,141 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
             (item) => _ChatMessage(role: item.role, content: item.content),
           )
           .toList();
-    } else {
+    }
+    _initSubsessions();
+    if (debugMessages == null && widget.debugInitialSubsessions == null) {
       _loadHistory();
     }
+  }
+
+  void _initSubsessions() {
+    final now = DateTime.now().toUtc();
+    final seeded = widget.debugInitialSubsessions;
+    if (seeded != null && seeded.isNotEmpty) {
+      _subsessions = List<ChatSubsession>.from(seeded);
+      final active = _subsessions.first;
+      _activeSubsessionId = active.id;
+      if (widget.debugInitialMessages == null) {
+        _messages = active.messages
+            .map(
+              (m) => _ChatMessage(
+                role: m.role,
+                content: m.content,
+                attachmentName: m.attachmentName,
+              ),
+            )
+            .toList();
+      }
+      if (active.inheritedContextIds.isNotEmpty) {
+        _contextIds = List<String>.from(active.inheritedContextIds);
+        _contextTitles = List<String>.from(active.inheritedContextTitles);
+      }
+      return;
+    }
+
+    _subsessions = <ChatSubsession>[
+      ChatSubsession(
+        id: 'root',
+        title: 'メインセッション',
+        inheritedContextIds: List<String>.from(_contextIds),
+        inheritedContextTitles: List<String>.from(_contextTitles),
+        messages: _messages
+            .map(
+              (m) => ChatSubsessionMessage(
+                role: m.role,
+                content: m.content,
+                attachmentName: m.attachmentName,
+              ),
+            )
+            .toList(growable: false),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ];
+    _activeSubsessionId = 'root';
+  }
+
+  void _syncCurrentMessagesToActiveSubsession() {
+    final idx = _subsessions.indexWhere((s) => s.id == _activeSubsessionId);
+    if (idx < 0) return;
+    final current = _subsessions[idx];
+    _subsessions[idx] = current.copyWith(
+      inheritedContextIds: List<String>.from(_contextIds),
+      inheritedContextTitles: List<String>.from(_contextTitles),
+      messages: _messages
+          .map(
+            (m) => ChatSubsessionMessage(
+              role: m.role,
+              content: m.content,
+              attachmentName: m.attachmentName,
+            ),
+          )
+          .toList(growable: false),
+      updatedAt: DateTime.now().toUtc(),
+    );
+  }
+
+  Future<void> _persistSubsessionsSafely() async {
+    try {
+      await widget.subsessionStore.saveSessions(_subsessions);
+    } catch (_) {
+      // Fail-open in tests or constrained environments.
+    }
+  }
+
+  void _createSubsession() {
+    _syncCurrentMessagesToActiveSubsession();
+    final activeIdx =
+        _subsessions.indexWhere((s) => s.id == _activeSubsessionId);
+    if (activeIdx < 0) return;
+    final parent = _subsessions[activeIdx];
+    final ordinal = _subsessions.where((s) => s.isChildSession).length + 1;
+    final child = widget.subsessionStore.createChildSubsession(
+      parent: parent,
+      childOrdinal: ordinal,
+    );
+    setState(() {
+      _subsessions = <ChatSubsession>[..._subsessions, child];
+      _activeSubsessionId = child.id;
+      _contextIds = List<String>.from(child.inheritedContextIds);
+      _contextTitles = List<String>.from(child.inheritedContextTitles);
+      _streamingMessageIndexes.clear();
+      _messages = child.messages
+          .map(
+            (m) => _ChatMessage(
+              role: m.role,
+              content: m.content,
+              attachmentName: m.attachmentName,
+            ),
+          )
+          .toList();
+    });
+    unawaited(_persistSubsessionsSafely());
+    _scrollToBottom();
+  }
+
+  void _selectSubsession(String sessionId) {
+    if (sessionId == _activeSubsessionId) return;
+    _syncCurrentMessagesToActiveSubsession();
+    final targetIdx = _subsessions.indexWhere((s) => s.id == sessionId);
+    if (targetIdx < 0) return;
+    final target = _subsessions[targetIdx];
+    setState(() {
+      _activeSubsessionId = target.id;
+      _contextIds = List<String>.from(target.inheritedContextIds);
+      _contextTitles = List<String>.from(target.inheritedContextTitles);
+      _streamingMessageIndexes.clear();
+      _messages = target.messages
+          .map(
+            (m) => _ChatMessage(
+              role: m.role,
+              content: m.content,
+              attachmentName: m.attachmentName,
+            ),
+          )
+          .toList();
+    });
+    _scrollToBottom();
   }
 
   Future<void> _loadRenderingConfig() async {
@@ -141,6 +295,9 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
     _scrollCtrl.dispose();
     _pulseCtrl.dispose();
     _recognition?.abort();
+    if (_ownsJobCenter) {
+      _jobCenter.dispose();
+    }
     super.dispose();
   }
 
@@ -245,7 +402,12 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
             );
           }
         }
-        if (mounted) setState(() => _messages = msgs);
+        if (mounted) {
+          setState(() {
+            _messages = msgs;
+            _syncCurrentMessagesToActiveSubsession();
+          });
+        }
         _scrollToBottom();
       }
     } catch (e) {
@@ -258,6 +420,10 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
     final image = _selectedImage;
     if ((text.isEmpty && image == null) || _isLoading) return;
     final displayText = text.isEmpty ? 'この画像を分析してください' : text;
+    final job = _jobCenter.startJob(
+      title: 'AI応答生成 (${_preferVideoResponse ? '動画' : _selectedAgentProvider})',
+      summary: 'メッセージを送信してバックグラウンド処理中です',
+    );
 
     setState(() {
       _messages.add(
@@ -268,6 +434,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
           imageBytes: image?.bytes,
         ),
       );
+      _syncCurrentMessagesToActiveSubsession();
       _inputCtrl.clear();
       _selectedImage = null;
       _isLoading = true;
@@ -294,6 +461,11 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
       final video = data?['video'] as Map<String, dynamic>?;
       final manus = data?['manus'] as Map<String, dynamic>?;
       final response = data?['response'] as String? ?? 'エラーが発生しました。';
+      _jobCenter.completeJob(
+        job.id,
+        summary: 'AI応答を受信しました',
+        resultDetail: response,
+      );
       if (mounted) {
         setState(() {
           _streamingMessageIndexes.add(_messages.length);
@@ -314,16 +486,23 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
               manusTaskUrl: manus?['task_url']?.toString(),
             ),
           );
+          _syncCurrentMessagesToActiveSubsession();
           _isLoading = false;
         });
         _scrollToBottom();
       }
     } catch (e) {
+      _jobCenter.failJob(
+        job.id,
+        summary: 'AI応答の取得に失敗しました',
+        errorMessage: e.toString(),
+      );
       if (mounted) {
         setState(() {
           _messages.add(
             _ChatMessage(role: 'assistant', content: 'エラーが発生しました: $e'),
           );
+          _syncCurrentMessagesToActiveSubsession();
           _isLoading = false;
         });
         _scrollToBottom();
@@ -466,6 +645,15 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
+            key: const Key('ai_chat_appbar_add_subsession_button'),
+            icon: const Icon(
+              Icons.add_comment_outlined,
+              color: Colors.white70,
+            ),
+            tooltip: 'サブセッションを作成',
+            onPressed: _createSubsession,
+          ),
+          IconButton(
             key: const Key('ai_chat_rendering_settings_button'),
             icon: const Icon(Icons.tune, color: Colors.white70),
             tooltip: '表示設定',
@@ -477,12 +665,20 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
             onPressed: () => setState(() {
               _streamingMessageIndexes.clear();
               _messages.clear();
+              _syncCurrentMessagesToActiveSubsession();
             }),
           ),
         ],
       ),
       body: Column(
         children: [
+          ChatSubsessionTabBar(
+            sessions: _subsessions,
+            activeSessionId: _activeSubsessionId,
+            onSelectSession: _selectSubsession,
+            onCreateSubsession: _createSubsession,
+          ),
+          ChatBackgroundJobNotificationBanner(jobCenter: _jobCenter),
           if (_isListening)
             Container(
               width: double.infinity,
