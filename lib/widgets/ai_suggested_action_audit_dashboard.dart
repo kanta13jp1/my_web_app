@@ -146,6 +146,7 @@ class _AiSuggestedActionAuditDashboardState
     final clickCount = _events.where((e) => e.eventKind == 'click').length;
     final ctrPercent =
         impressionCount == 0 ? 0.0 : (clickCount / impressionCount) * 100.0;
+    final engagement = widget.service.evaluateUserEngagement(_events);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,6 +156,7 @@ class _AiSuggestedActionAuditDashboardState
           flaggedCount: flaggedCount,
           flaggedPercent: flaggedPercent,
           ctrPercent: ctrPercent,
+          engagement: engagement,
         ),
         const SizedBox(height: 16),
         _buildSandboxCard(),
@@ -176,6 +178,7 @@ class _AiSuggestedActionAuditDashboardState
     required int flaggedCount,
     required double flaggedPercent,
     required double ctrPercent,
+    required AiActionEngagementEvaluation engagement,
   }) {
     return Wrap(
       spacing: 12,
@@ -200,6 +203,15 @@ class _AiSuggestedActionAuditDashboardState
           label: '全体クリック率 (CTR)',
           value: '${ctrPercent.toStringAsFixed(1)}%',
           accent: const Color(0xFF0284C7),
+        ),
+        _KpiTile(
+          tileKey: const Key('ai_action_audit_suppression_status'),
+          label:
+              '提案ツール動的制御 (連続無視 ${engagement.consecutiveIgnoredImpressions}回)',
+          value: engagement.shouldSuppressActionTools ? '動的ツール抑制中' : 'ツール提示中',
+          accent: engagement.shouldSuppressActionTools
+              ? const Color(0xFFDC2626)
+              : const Color(0xFF047857),
         ),
       ],
     );
