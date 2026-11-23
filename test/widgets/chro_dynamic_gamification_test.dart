@@ -137,7 +137,9 @@ void main() {
           );
           expect(find.byType(ChroGamificationSummaryCard), findsOneWidget);
           expect(
-              find.byKey(const Key('chro_menu_people_help')), findsOneWidget);
+            find.byKey(const Key('chro_menu_people_help')),
+            findsOneWidget,
+          );
           expect(find.text('0 pt'), findsOneWidget);
           expect(
             find.byKey(const Key('chro_achievements_empty_text')),
