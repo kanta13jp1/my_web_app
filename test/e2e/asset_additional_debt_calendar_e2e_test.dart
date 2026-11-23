@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/widgets/asset_additional_debt_calendar_dialog.dart';
@@ -28,7 +31,22 @@ void main() {
   testWidgets(
     'Case 1 (happy path): Money Calendar displays borrowing, revolving, and Debt Guard badges and records from violation modal',
     (tester) async {
-      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final monthKey =
+          AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
+        DateTime(2026, 7, 10),
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        AssetLiabilityMonthlyStateStore.actualPaymentPrefsKey: jsonEncode(
+          <String, Map<String, int>>{
+            monthKey: <String, int>{'famipay_card': 5000},
+          },
+        ),
+        AssetLiabilityMonthlyStateStore.paidPrefsKey: jsonEncode(
+          <String, List<String>>{
+            monthKey: <String>['famipay_card'],
+          },
+        ),
+      });
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
