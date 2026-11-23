@@ -6,6 +6,7 @@ import {
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   DEFAULT_LANDING_TRIAL_GEMINI_MODEL,
+  DEFAULT_LANDING_TRIAL_PRIMARY_PROVIDER,
   generateLandingTrialSuggestion,
   generateLandingTrialSuggestionWithFallback,
   hashLandingTrialClient,
@@ -15,6 +16,7 @@ import {
   normalizeLandingTrialPrompt,
   parseLandingTrialSuggestion,
   resolveLandingTrialClientAddress,
+  resolveLandingTrialPrimaryProvider,
 } from "./landing_trial.ts";
 
 Deno.test("landing trial prompt is compacted and bounded", () => {
@@ -248,6 +250,7 @@ Deno.test("landing trial falls back to Gemini when OpenAI returns 429", async ()
   const suggestion = await generateLandingTrialSuggestionWithFallback({
     openAiApiKey: "openai-key",
     geminiApiKey: "gemini-key",
+    primaryProvider: "openai",
     prompt: "毎月の支出が増えていて、どこから見直すべきか分かりません",
     fetchImpl: (input, init) => {
       const url = String(input);
@@ -350,6 +353,7 @@ Deno.test("landing trial reports sanitized OpenAI 429 metadata before Gemini fal
   const suggestion = await generateLandingTrialSuggestionWithFallback({
     openAiApiKey: "openai-key",
     geminiApiKey: "gemini-key",
+    primaryProvider: "openai",
     prompt: "毎月の支出が増えていて、どこから見直すべきか分かりません",
     onPrimaryFailure: (detail) => {
       primaryFailures.push(detail);
@@ -537,4 +541,108 @@ Deno.test("landing trial sanitizes Gemini 429 metadata and hides raw error messa
   assertStringIncludes(caughtMessage, "code=429");
   assertStringIncludes(caughtMessage, "request_id=goog_req_999");
   assertEquals(caughtMessage.includes("secret-like text"), false);
+});
+
+Deno.test("resolveLandingTrialPrimaryProvider defaults to gemini and accepts openai", () => {
+  assertEquals(resolveLandingTrialPrimaryProvider(), DEFAULT_LANDING_TRIAL_PRIMARY_PROVIDER);
+  assertEquals(resolveLandingTrialPrimaryProvider(""), "gemini");
+  assertEquals(resolveLandingTrialPrimaryProvider("gemini"), "gemini");
+  assertEquals(resolveLandingTrialPrimaryProvider(" OpenAI "), "openai");
+  assertEquals(resolveLandingTrialPrimaryProvider("unknown"), "gemini");
+});
+
+Deno.test("landing trial defaults to Gemini first without calling OpenAI", async () => {
+  const calledUrls: string[] = [];
+  const primaryFailures: string[] = [];
+
+  const suggestion = await generateLandingTrialSuggestionWithFallback({
+    openAiApiKey: "openai-key",
+    geminiApiKey: "gemini-key",
+    prompt: "仕事が多すぎて優先順位を決められない",
+    onPrimaryFailure: (detail) => {
+      primaryFailures.push(detail);
+    },
+    fetchImpl: (input) => {
+      calledUrls.push(String(input));
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      text:
+                        '{"action":"今日締切の仕事を1件開き次の操作を書く","reason":"対象と次の動作を固定すると迷いを止めて着手できるため"}',
+                    },
+                  ],
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    },
+  });
+
+  assertEquals(calledUrls.length, 1);
+  assertStringIncludes(calledUrls[0], "generativelanguage.googleapis.com");
+  assertEquals(calledUrls[0].includes("api.openai.com"), false);
+  assertEquals(primaryFailures.length, 0);
+  assertEquals(suggestion.provider, "gemini");
+});
+
+Deno.test("landing trial falls back to OpenAI when Gemini primary fails", async () => {
+  const calledUrls: string[] = [];
+  const primaryFailures: string[] = [];
+
+  const suggestion = await generateLandingTrialSuggestionWithFallback({
+    openAiApiKey: "openai-key",
+    geminiApiKey: "gemini-key",
+    prompt: "仕事が多すぎて優先順位を決められない",
+    onPrimaryFailure: (detail) => {
+      primaryFailures.push(detail);
+    },
+    fetchImpl: (input) => {
+      const url = String(input);
+      calledUrls.push(url);
+      if (url.includes("generativelanguage.googleapis.com")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              error: {
+                code: 429,
+                status: "RESOURCE_EXHAUSTED",
+              },
+            }),
+            { status: 429, headers: { "Content-Type": "application/json" } },
+          ),
+        );
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content:
+                    '{"action":"今日締切の仕事を1件開き次の操作を書く","reason":"対象と次の動作を固定すると迷いを止めて着手できるため"}',
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    },
+  });
+
+  assertEquals(calledUrls.length, 2);
+  assertStringIncludes(calledUrls[0], "generativelanguage.googleapis.com");
+  assertEquals(calledUrls[1], "https://api.openai.com/v1/chat/completions");
+  assertEquals(primaryFailures.length, 1);
+  assertStringIncludes(primaryFailures[0], "Gemini landing trial failed (429)");
+  assertStringIncludes(primaryFailures[0], "status=RESOURCE_EXHAUSTED");
+  assertEquals(suggestion.provider, "openai");
 });
