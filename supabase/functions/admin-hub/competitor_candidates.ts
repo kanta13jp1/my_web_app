@@ -119,7 +119,8 @@ export interface UrlCheckResult {
 }
 
 function isBlockedPrivateIpv4(host: string): boolean {
-  const parts = host.split(".");
+  const clean = host.replace(/:\d+$/, "");
+  const parts = clean.split(".");
   if (parts.length !== 4 || parts.some((p) => !/^\d{1,3}$/.test(p))) {
     return false;
   }
@@ -130,7 +131,46 @@ function isBlockedPrivateIpv4(host: string): boolean {
   if (a === 169 && b === 254) return true;
   if (a === 192 && b === 168) return true;
   if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT 100.64.0.0/10
   return false;
+}
+
+function isBlockedPrivateIpv6(host: string): boolean {
+  let clean = host.toLowerCase();
+  if (clean.startsWith("[") && clean.endsWith("]")) {
+    clean = clean.slice(1, -1);
+  }
+  const zoneIdx = clean.indexOf("%");
+  if (zoneIdx >= 0) clean = clean.slice(0, zoneIdx);
+  if (!clean.includes(":")) return false;
+  if (clean === "::" || clean === "::1" || clean === "0:0:0:0:0:0:0:1") {
+    return true;
+  }
+  // IPv4-mapped IPv6 (e.g. ::ffff:127.0.0.1 or ::ffff:7f00:1)
+  if (clean.startsWith("::ffff:")) {
+    const rest = clean.slice("::ffff:".length);
+    if (isBlockedPrivateIpv4(rest)) return true;
+    const hexParts = rest.split(":");
+    if (hexParts.length === 2 && hexParts.every((h) => /^[0-9a-f]{1,4}$/.test(h))) {
+      const hi = parseInt(hexParts[0], 16);
+      const lo = parseInt(hexParts[1], 16);
+      const ipv4 = `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`;
+      if (isBlockedPrivateIpv4(ipv4)) return true;
+    }
+  }
+  const firstSeg = clean.split(":")[0];
+  if (firstSeg && /^[0-9a-f]{1,4}$/.test(firstSeg)) {
+    const val = parseInt(firstSeg.padStart(4, "0"), 16);
+    // fc00::/7 (Unique local) or fe80::/10 (Link-local)
+    if ((val & 0xfe00) === 0xfc00 || (val & 0xffc0) === 0xfe80) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isBlockedIpLiteral(host: string): boolean {
+  return isBlockedPrivateIpv4(host) || isBlockedPrivateIpv6(host);
 }
 
 export function validatePublicHttpUrl(
@@ -156,11 +196,10 @@ export function validatePublicHttpUrl(
   if (
     host === "" ||
     host === "localhost" ||
-    host === "::1" ||
-    host === "[::1]" ||
+    host.endsWith(".localhost") ||
     host.endsWith(".local") ||
     host.endsWith(".internal") ||
-    isBlockedPrivateIpv4(host)
+    isBlockedIpLiteral(host)
   ) {
     return { ok: false, error: `Blocked non-public host: ${host}` };
   }
@@ -171,6 +210,33 @@ export type FetchLike = (
   input: string | URL,
   init?: RequestInit,
 ) => Promise<Response>;
+
+async function resolveAndValidateHostDns(hostname: string): Promise<string | null> {
+  if (isBlockedIpLiteral(hostname)) {
+    return `Blocked non-public IP: ${hostname}`;
+  }
+  const isIp =
+    /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || hostname.includes(":");
+  if (isIp) return null;
+  try {
+    const resolveDns = (Deno as unknown as {
+      resolveDns?: (q: string, r: "A" | "AAAA") => Promise<string[]>;
+    })?.resolveDns;
+    if (typeof resolveDns !== "function") return null;
+    const [v4, v6] = await Promise.all([
+      resolveDns(hostname, "A").catch(() => [] as string[]),
+      resolveDns(hostname, "AAAA").catch(() => [] as string[]),
+    ]);
+    for (const ip of [...v4, ...v6]) {
+      if (isBlockedIpLiteral(ip)) {
+        return `Blocked resolved non-public IP: ${ip}`;
+      }
+    }
+  } catch {
+    // Fail open only if Deno.resolveDns is unavailable in unit-test runtime.
+  }
+  return null;
+}
 
 export async function verifyCandidateUrl(
   rawUrl: string | null | undefined,
@@ -187,18 +253,47 @@ export async function verifyCandidateUrl(
     };
   }
 
-  async function probe(method: "HEAD" | "GET"): Promise<Response> {
-    return await fetchFn(checked.url, {
-      method,
-      redirect: "follow",
-      signal: AbortSignal.timeout(5000),
-    });
+  const shouldCheckDns = fetchFn === fetch;
+
+  async function probeWithRedirects(
+    initialUrl: string,
+    method: "HEAD" | "GET",
+  ): Promise<Response> {
+    let currentUrl = initialUrl;
+    for (let hop = 0; hop <= 3; hop++) {
+      if (shouldCheckDns) {
+        const dnsErr = await resolveAndValidateHostDns(
+          new URL(currentUrl).hostname.toLowerCase(),
+        );
+        if (dnsErr) {
+          throw new Error(dnsErr);
+        }
+      }
+      const resp = await fetchFn(currentUrl, {
+        method,
+        redirect: "manual",
+        signal: AbortSignal.timeout(5000),
+      });
+      if (resp.status >= 300 && resp.status < 400) {
+        const location = resp.headers.get("location");
+        if (!location) return resp;
+        const resolvedNext = new URL(location, currentUrl).toString();
+        const nextChecked = validatePublicHttpUrl(resolvedNext);
+        if (!nextChecked.ok) {
+          throw new Error(nextChecked.error);
+        }
+        currentUrl = nextChecked.url;
+        continue;
+      }
+      return resp;
+    }
+    throw new Error("Too many redirects");
   }
 
   try {
-    let resp = await probe("HEAD");
+    let resp = await probeWithRedirects(checked.url, "HEAD");
     if (resp.status === 405 || resp.status === 501) {
-      resp = await probe("GET");
+      resp = await probeWithRedirects(checked.url, "GET");
     }
     const ok = resp.status >= 200 && resp.status < 400;
     return {
