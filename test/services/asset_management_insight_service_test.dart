@@ -858,6 +858,25 @@ void main() {
       expect(report.implementationContexts.isNotEmpty, true);
     });
 
+    test('includes payment inconsistency summary in developer requests', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'PayPayカード': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 0},
+        actualPaymentAmounts: const <String, double>{'paypay_card': 14617},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+      final req = report.developerRequests.firstWhere(
+        (item) => item.title == '支払記録の不整合（R1〜R3）の解消',
+      );
+      expect(req.description, contains('不整合のある項目が1件'));
+      expect(req.evidence.join(' '), contains('PayPayカード(R2)'));
+    });
+
     test('detects card billing configuration action items', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000, 'KDDI': -5764},
