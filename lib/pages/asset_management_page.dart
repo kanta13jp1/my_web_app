@@ -18,8 +18,12 @@ import '../services/asset_debt_danger_service.dart';
 import '../services/asset_debt_simulation_service.dart';
 import '../widgets/asset_debt_simulation_and_guide_dialogs.dart';
 import '../services/asset_auto_transfer_service.dart';
+import '../services/asset_payment_reminder_service.dart';
+import '../services/asset_spending_value_classification_service.dart';
 import '../services/asset_tax_deduction_service.dart';
 import '../widgets/asset_auto_transfer_and_tax_dialogs.dart';
+import '../widgets/asset_payment_reminder_and_late_fee_card.dart';
+import '../widgets/asset_spending_value_ratio_dashboard.dart';
 import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
 import '../widgets/asset_recorded_change_details.dart';
 import '../models/asset_income_source_evidence.dart';
@@ -590,6 +594,10 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Future<bool> Function(Uri uri)? debugOpenExternalUrl;
 
+  /// テスト専用: 返済期日リマインダー通知フック (#2749)。
+  @visibleForTesting
+  final AssetPaymentReminderNotifier? debugPaymentReminderNotifier;
+
   /// テスト専用: カード明細行を初期注入してカレンダー投影を検証する。
   @visibleForTesting
   final List<AssetLiabilityCardStatementLine>? debugInitialCardStatementLines;
@@ -656,6 +664,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugCardStatementRefetchHandler,
     this.debugInitialMonthlySnapshots,
     this.debugOpenExternalUrl,
+    this.debugPaymentReminderNotifier,
     this.debugInitialCardStatementLines,
     this.debugInitialDebtGuardViolations,
     this.debugRecordAdditionalDebtFlow,
@@ -1104,6 +1113,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final Set<String> _autoExecutedTransferDedupeKeys = <String>{};
   bool _taxDeductionToolsEnabled = false;
   List<MedicalExpenseEntry> _medicalExpenseEntries = <MedicalExpenseEntry>[];
+  Map<String, SpendingValueCategory> _spendingValueOverrides =
+      <String, SpendingValueCategory>{};
+  List<AssetSpendingValueCustomEntry> _spendingValueCustomEntries =
+      <AssetSpendingValueCustomEntry>[];
+  AssetPaymentReminderSettings _paymentReminderSettings =
+      const AssetPaymentReminderSettings();
+  Set<String> _deliveredPaymentReminderKeys = <String>{};
   List<AssetLiabilityMonthlyReport> _monthlyReports =
       <AssetLiabilityMonthlyReport>[];
   String? _selectedMonthlyReportMonthKey;
@@ -5961,6 +5977,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final auditLogs = await AssetAutoTransferStore.loadAuditLogs();
     final taxEnabled = await AssetTaxToolsFeatureFlagStore.load();
     final medEntries = await AssetMedicalExpenseStore.load();
+    final spendingOverrides =
+        await AssetSpendingValueOverrideStore.loadOverrides();
+    final customEntries =
+        await AssetSpendingValueOverrideStore.loadCustomEntries();
+    final reminderSettings = await AssetPaymentReminderStore.loadSettings();
+    final deliveredReminderKeys =
+        await AssetPaymentReminderStore.loadDeliveredKeys();
     if (!mounted) {
       return;
     }
@@ -5969,7 +5992,94 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _autoTransferAuditLogs = auditLogs;
       _taxDeductionToolsEnabled = taxEnabled;
       _medicalExpenseEntries = medEntries;
+      _spendingValueOverrides = Map<String, SpendingValueCategory>.from(
+        spendingOverrides,
+      );
+      _spendingValueCustomEntries =
+          List<AssetSpendingValueCustomEntry>.from(customEntries);
+      _paymentReminderSettings = reminderSettings;
+      _deliveredPaymentReminderKeys = Set<String>.from(deliveredReminderKeys);
     });
+  }
+
+  void _reclassifySpendingValueEntry(
+    String fingerprint,
+    SpendingValueCategory category,
+  ) {
+    final nextOverrides = Map<String, SpendingValueCategory>.from(
+      _spendingValueOverrides,
+    )..[fingerprint] = category;
+    setState(() {
+      _spendingValueOverrides = nextOverrides;
+    });
+    unawaited(AssetSpendingValueOverrideStore.saveOverrides(nextOverrides));
+  }
+
+  void _addSpendingValueCustomEntries(
+    List<AssetSpendingValueCustomEntry> added,
+  ) {
+    if (added.isEmpty) {
+      return;
+    }
+    final nextEntries = <AssetSpendingValueCustomEntry>[
+      ...added,
+      ..._spendingValueCustomEntries,
+    ];
+    setState(() {
+      _spendingValueCustomEntries = nextEntries;
+    });
+    unawaited(AssetSpendingValueOverrideStore.saveCustomEntries(nextEntries));
+  }
+
+  void _removeSpendingValueCustomEntry(String id) {
+    final nextEntries = _spendingValueCustomEntries
+        .where((entry) => entry.id != id)
+        .toList(growable: false);
+    setState(() {
+      _spendingValueCustomEntries = nextEntries;
+    });
+    unawaited(AssetSpendingValueOverrideStore.saveCustomEntries(nextEntries));
+  }
+
+  void _savePaymentReminderSettings(AssetPaymentReminderSettings next) {
+    setState(() {
+      _paymentReminderSettings = next;
+    });
+    unawaited(AssetPaymentReminderStore.saveSettings(next));
+  }
+
+  Future<void> _dispatchPaymentReminders(
+    AssetPaymentReminderSchedule schedule,
+  ) async {
+    final notifier = widget.debugPaymentReminderNotifier ??
+        ((AssetPaymentReminderItem _) async => true);
+    final delivered = await AssetPaymentReminderService.dispatchUndelivered(
+      schedule: schedule,
+      alreadyDeliveredKeys: _deliveredPaymentReminderKeys,
+      notifier: notifier,
+    );
+    if (!mounted) {
+      return;
+    }
+    if (delivered.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('本日の返済期日リマインダーはすべて記録・通知済みです。'),
+        ),
+      );
+      return;
+    }
+    final nextKeys = Set<String>.from(_deliveredPaymentReminderKeys)
+      ..addAll(delivered);
+    setState(() {
+      _deliveredPaymentReminderKeys = nextKeys;
+    });
+    unawaited(AssetPaymentReminderStore.saveDeliveredKeys(nextKeys));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('返済期日リマインダー ${delivered.length}件を記録・通知しました。'),
+      ),
+    );
   }
 
   void _saveAutoTransferSettings(AutoTransferSettings next) {
@@ -13246,6 +13356,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       AssetManagementSectionId.salaryBreakdown)) ...[
                     _sectionAnchor(AssetManagementSectionId.salaryBreakdown),
                     _buildSalarySpendingBreakdownCard(),
+                    const SizedBox(height: 16),
+                    AssetSpendingValueRatioDashboard(
+                      report: _buildSpendingValueRatioReport(),
+                      onReclassifyEntry: _reclassifySpendingValueEntry,
+                      onAddCustomEntries: _addSpendingValueCustomEntries,
+                      onRemoveCustomEntry: _removeSpendingValueCustomEntry,
+                    ),
                     const SizedBox(height: 16),
                     _buildCategoryBudgetCard(),
                     _buildExternalPointsCard(),
@@ -22596,8 +22713,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  SalarySpendingBreakdown _buildSalarySpendingBreakdown() {
-    final entries = AssetSalarySpendingEntries.build(
+  AssetSalarySpendingEntries _buildSalarySpendingEntries() {
+    return AssetSalarySpendingEntries.build(
       cardStatementLines: _cardStatementLines,
       recentFlows: _recentFlows,
       monthlyIncomePlans: _monthlyIncomePlans,
@@ -22609,11 +22726,30 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         actionType: flow['action_type']?.toString() ?? '',
       ).memo,
     );
+  }
+
+  SalarySpendingBreakdown _buildSalarySpendingBreakdown() {
+    final entries = _buildSalarySpendingEntries();
     return _salarySpendingBreakdownService.build(
       referenceDate: _now,
       expenses: entries.expenses,
       incomeEvidence: _cycleIncomeEvidence(_now),
       salaryDay: _salaryDay,
+    );
+  }
+
+  SpendingValueRatioReport _buildSpendingValueRatioReport() {
+    final breakdown = _buildSalarySpendingBreakdown();
+    final entries = _buildSalarySpendingEntries();
+    final cycleExpenses = entries.expenses.where((entry) {
+      final d = DateTime(entry.date.year, entry.date.month, entry.date.day);
+      return !d.isBefore(breakdown.periodStart) &&
+          d.isBefore(breakdown.periodEndExclusive);
+    });
+    return AssetSpendingValueClassificationService.buildReport(
+      entries: cycleExpenses,
+      customEntries: _spendingValueCustomEntries,
+      overrides: _spendingValueOverrides,
     );
   }
 
@@ -34369,9 +34505,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final overdueItems =
         AssetOverdueBulkConfirmService.collectOverdueUnpaidItems(workbook);
     final lateFeeSummary = AssetLateFeeService.summarizeWorkbook(workbook);
+    final reminderReady = _assetLiabilityBootStateLoaded &&
+        !_assetLiabilityMonthlyStateLoadFailed &&
+        _assetLiabilityMonthlyStateInFlight == null &&
+        _loadedAssetLiabilityMonthKey == _assetLiabilityStateMonthKey(_now);
+    final reminderSchedule = AssetPaymentReminderService.buildSchedule(
+      workbook: workbook,
+      salaryDay: _salaryDay,
+      settings: _paymentReminderSettings,
+    );
+    final showReminderBanner = reminderReady &&
+        (reminderSchedule.hasAny || !_paymentReminderSettings.enabled);
     if (workbook.paymentDayRisks.isEmpty &&
         overdueItems.isEmpty &&
-        lateFeeSummary.overdueCount == 0) {
+        lateFeeSummary.overdueCount == 0 &&
+        !showReminderBanner) {
       return const SizedBox.shrink();
     }
 
@@ -34393,8 +34541,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (showReminderBanner)
+          AssetPaymentReminderBanner(
+            workbook: workbook,
+            schedule: reminderSchedule,
+            settings: _paymentReminderSettings,
+            deliveredKeys: _deliveredPaymentReminderKeys,
+            onSettingsChanged: _savePaymentReminderSettings,
+            onTriggerNotifications: () =>
+                _dispatchPaymentReminders(reminderSchedule),
+            onOpenCreditorContact: () =>
+                _openBulkCreditorContactDialog(workbook),
+            onOpenConsultationGuide: () => _openDebtDangerGuideDialog(workbook),
+          ),
         if (lateFeeSummary.overdueCount > 0) ...[
-          _buildOverdueLateFeeAlertBanner(lateFeeSummary),
+          _buildOverdueLateFeeAlertBanner(lateFeeSummary, workbook),
           const SizedBox(height: 12),
         ],
         if (actionRisks.isNotEmpty)
@@ -34425,7 +34586,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildOverdueLateFeeAlertBanner(AssetLateFeeSummary summary) {
+  Widget _buildOverdueLateFeeAlertBanner(
+    AssetLateFeeSummary summary,
+    AssetLiabilityWorkbook workbook,
+  ) {
     final visibleItems = summary.items.take(5).toList(growable: false);
     final hiddenCount = summary.items.length - visibleItems.length;
     return Container(
@@ -34500,6 +34664,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               color: Color(0xFF991B1B),
               height: 1.4,
             ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              OutlinedButton.icon(
+                key: const Key('overdue_late_fee_creditor_contact_button'),
+                onPressed: () => _openBulkCreditorContactDialog(workbook),
+                icon: const Icon(Icons.phone_in_talk_outlined, size: 16),
+                label: const Text('債権者へ早期連絡・交渉記録を開く'),
+              ),
+              OutlinedButton.icon(
+                key: const Key('overdue_late_fee_consultation_button'),
+                onPressed: () => _openDebtDangerGuideDialog(workbook),
+                icon: const Icon(Icons.support_agent_outlined, size: 16),
+                label: const Text('専門機関の相談窓口を確認'),
+              ),
+            ],
           ),
         ],
       ),
