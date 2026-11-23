@@ -20,6 +20,11 @@ void main() {
         xTrackerSeriesLabel('komeito_member_tracker'),
         '選挙: 公明党 地方議員',
       );
+      // Issue #4026: 日本維新の会 地方議員トラッカー MVP (playbook step 4)。
+      expect(
+        xTrackerSeriesLabel('ishin_member_tracker'),
+        '選挙: 日本維新の会 地方議員',
+      );
     });
 
     test('collapses daily_briefing variants and passes unknown through', () {
@@ -377,6 +382,16 @@ void main() {
         candidateFreshnessWindow(stale),
         const Duration(hours: 72),
       );
+      final ishin = make(
+        archetype: '',
+        variant: 'ishin_member_tracker',
+        generatedAt: now.subtract(const Duration(days: 2)),
+      );
+      expect(
+        candidateFreshnessWindow(ishin),
+        const Duration(hours: 72),
+      );
+      expect(isCandidateExpired(ishin, now), isFalse);
     });
 
     test(
