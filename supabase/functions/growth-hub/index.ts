@@ -2566,6 +2566,9 @@ serve(async (req: Request) => {
             prompt,
             openAiModel: LANDING_TRIAL_AI_MODEL,
             geminiModel: LANDING_TRIAL_GEMINI_MODEL,
+            onPrimaryFailure: (detail) => {
+              console.warn("landing.trial primary provider failed", detail);
+            },
           });
           return json({
             success: true,
