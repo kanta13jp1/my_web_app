@@ -47,13 +47,19 @@ class PayslipReviewSnapshot {
   String get status => raw['review_status'] as String? ?? 'unknown';
   PayrollDeductions? get projection => PayrollDeductions.fromRow(raw);
   bool get unreviewed => status == 'auto' || status == 'needs_review';
-  String? get blockingReason {
+  String? get blockingReason => blockingReasonFor();
+
+  String? blockingReasonFor({DateTime? asOfDate}) {
     final row = projection;
     if (!unreviewed) {
       return status == 'confirmed' ? '現在は本人確認済みです。' : 'この確認状態では保存できません。';
     }
     if (row == null) return '明細の識別や日付が不完全です。';
+    if (asOfDate != null && row.isFuturePayDate(asOfDate)) {
+      return '支給日が未来日のため、着金確認前は本人確認済みにできません。';
+    }
     if (row.conflictingPensionAliases) return '厚生年金の項目名違いが競合しています。元値の訂正が必要です。';
+    if (row.hasConflictingAliases) return '控除の項目名違いが競合しています。元値の訂正が必要です。';
     if (row.socialMismatchYen != null && row.socialMismatchYen != 0) {
       return '社会保険の記載合計と既知内訳が一致しません。元値の訂正が必要です。';
     }
@@ -103,10 +109,11 @@ abstract class PayslipReviewStore {
 }
 
 class SupabasePayslipReviewStore implements PayslipReviewStore {
-  SupabasePayslipReviewStore(this.client, this.ownerId);
+  SupabasePayslipReviewStore(this.client, this.ownerId, {this.asOfDate});
   final SupabaseClient client;
   @override
   final String ownerId;
+  final DateTime? asOfDate;
   @override
   bool get isCurrentOwner =>
       ownerId.isNotEmpty && client.auth.currentUser?.id == ownerId;
@@ -145,11 +152,12 @@ class SupabasePayslipReviewStore implements PayslipReviewStore {
     _checkOwner();
     if (!confirmedDisplayedValues ||
         expected.ownerId != ownerId ||
-        expected.blockingReason != null) {
+        expected.blockingReasonFor(asOfDate: asOfDate) != null) {
       throw StateError('元明細の記載内容を明示確認してください。');
     }
     final current = await load(expected.id);
-    if (!expected.sameVersion(current)) {
+    if (!expected.sameVersion(current) ||
+        current.blockingReasonFor(asOfDate: asOfDate) != null) {
       throw StateError('元値または確認状態が変わりました。再取得して照合してください。');
     }
     _checkOwner();

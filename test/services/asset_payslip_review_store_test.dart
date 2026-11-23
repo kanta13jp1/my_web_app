@@ -169,4 +169,75 @@ void main() {
     expect(requests.where((r) => r.method == 'PATCH').length, patchCount);
     expect(requests.every((r) => r.url.path == '/rest/v1/payslips'), isTrue);
   });
+
+  test('future pay_date and conflicting tax aliases block confirmation writes',
+      () async {
+    final requests = <http.Request>[];
+    var currentRow = <String, dynamic>{
+      ...syntheticPayslip(),
+      'pay_date': '2026-11-25',
+    };
+    const owner = User(
+      id: 'synthetic-owner',
+      appMetadata: {},
+      userMetadata: {},
+      aud: 'authenticated',
+      createdAt: '2026-01-01',
+    );
+    final transport = SupabaseClient(
+      'https://example.invalid',
+      'synthetic-public-key',
+      accessToken: () async => 'synthetic-user-jwt',
+      httpClient: MockClient((request) async {
+        requests.add(request);
+        final objectResponse =
+            request.headers['accept']?.contains('vnd.pgrst.object') ?? false;
+        return http.Response(
+          jsonEncode(objectResponse ? currentRow : <Map<String, dynamic>>[currentRow]),
+          200,
+          headers: const <String, String>{'content-type': 'application/json'},
+          request: request,
+        );
+      }),
+    );
+    addTearDown(transport.dispose);
+    final client = MockSupabaseClient();
+    final auth = MockGoTrueClient();
+    when(client.auth).thenReturn(auth);
+    when(auth.currentUser).thenReturn(owner);
+    when(client.from('payslips')).thenAnswer((_) => transport.from('payslips'));
+
+    final store = SupabasePayslipReviewStore(
+      client,
+      'synthetic-owner',
+      asOfDate: DateTime(2026, 11, 23),
+    );
+    final futureSnapshot = await store.load('synthetic-statement');
+    expect(
+      futureSnapshot.blockingReasonFor(asOfDate: DateTime(2026, 11, 23)),
+      contains('未来日'),
+    );
+    await expectLater(
+      store.confirm(futureSnapshot, confirmedDisplayedValues: true),
+      throwsStateError,
+    );
+    expect(requests.where((r) => r.method == 'PATCH'), isEmpty);
+
+    currentRow = <String, dynamic>{
+      ...syntheticPayslip(),
+      'pay_date': '2026-11-20',
+      'deductions': <String, dynamic>{
+        'income_tax': 50,
+        '所得税': 60,
+        'resident_tax': 40,
+      },
+    };
+    final conflictSnapshot = await store.load('synthetic-statement');
+    expect(conflictSnapshot.blockingReason, contains('控除の項目名違いが競合'));
+    await expectLater(
+      store.confirm(conflictSnapshot, confirmedDisplayedValues: true),
+      throwsStateError,
+    );
+    expect(requests.where((r) => r.method == 'PATCH'), isEmpty);
+  });
 }

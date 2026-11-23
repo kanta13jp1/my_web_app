@@ -336,4 +336,120 @@ void main() {
       );
     },
   );
+
+  test(
+    'normalizes Japanese 8 deduction keys and singular English pension aliases',
+    () {
+      final mayLike = <String, dynamic>{
+        'id': 'synthetic-may',
+        'user_id': 'owner-a',
+        'pay_date': '2026-05-25',
+        'review_status': 'confirmed',
+        'gross_amount': 598307,
+        'net_amount': 452815,
+        'social_insurance_total': 86992,
+        'deductions': <String, dynamic>{
+          '健康保険料': 28224,
+          '介護保険料': 4536,
+          '厚生年金保険料': 51240,
+          '厚生年金基金掛金': 0,
+          '雇用保険料': 2992,
+          '所得税': 29800,
+          '住民税': 28700,
+          'iDeCo': 0,
+        },
+      };
+      final mayRow = PayrollDeductions.fromRow(mayLike)!;
+      expect(mayRow.taxTotalYen, 58500);
+      expect(mayRow.socialPartsTotalYen, 86992);
+      expect(mayRow.socialTotalYen, 86992);
+      expect(mayRow.socialMismatchYen, 0);
+      expect(mayRow.unidentifiedDifferenceYen, 0);
+      expect(mayRow.unclassified, isEmpty);
+
+      final augustLike = <String, dynamic>{
+        'id': 'synthetic-aug',
+        'user_id': 'owner-a',
+        'pay_date': '2026-08-25',
+        'review_status': 'confirmed',
+        'gross_amount': 561736,
+        'net_amount': 421277,
+        'social_insurance_total': 86809,
+        'deductions': <String, dynamic>{
+          'income_tax': 23850,
+          'resident_tax': 29800,
+          'health_insurance': 28224,
+          'long_term_care_insurance': 4536,
+          'employee_pension_insurance': 51240,
+          'employee_pension_fund_contribution': 0,
+          'employment_insurance': 2809,
+          'ideco': 0,
+        },
+      };
+      final augRow = PayrollDeductions.fromRow(augustLike)!;
+      expect(augRow.items['pension'], 51240);
+      expect(augRow.socialPartsTotalYen, 86809);
+      expect(augRow.socialMismatchYen, 0);
+      expect(augRow.unclassified, isEmpty);
+    },
+  );
+
+  test(
+    'conflicting Japanese or English aliases stay excluded from confirmed totals',
+    () {
+      final taxConflict = fixture();
+      (taxConflict['deductions'] as Map)['所得税'] = 60;
+      final taxRow = PayrollDeductions.fromRow(taxConflict)!;
+      expect(taxRow.conflictingTaxAliases, isTrue);
+      expect(taxRow.taxTotalYen, isNull);
+
+      final pensionConflict = fixture();
+      (pensionConflict['deductions'] as Map)['employee_pension_insurance'] =
+          101;
+      final pensionRow = PayrollDeductions.fromRow(pensionConflict)!;
+      expect(pensionRow.conflictingPensionAliases, isTrue);
+      expect(pensionRow.socialPartsTotalYen, isNull);
+      expect(pensionRow.socialTotalYen, isNull);
+
+      final months = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2030,
+        rows: [taxConflict],
+      );
+      expect(months[1].confirmedTaxYen, isNull);
+      expect(months[1].summaryStatus(social: false), contains('税金の項目名違いが競合'));
+    },
+  );
+
+  test(
+    'future pay_date payslip is excluded until the payday arrives',
+    () {
+      final novRow = fixture(id: 'nov-future', date: '2026-11-25');
+      final beforePayday = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2026,
+        rows: [novRow],
+        asOfDate: DateTime(2026, 11, 23),
+      )[10];
+      expect(beforePayday.hasFuturePayDate, isTrue);
+      expect(beforePayday.confirmed, isFalse);
+      expect(beforePayday.confirmedTaxYen, isNull);
+      expect(beforePayday.confirmedSocialYen, isNull);
+      expect(
+        beforePayday.summaryStatus(social: false),
+        contains('支給日が未来日（着金未確定）'),
+      );
+
+      final onPayday = AssetPayrollDeductions.months(
+        ownerId: 'owner-a',
+        year: 2026,
+        rows: [novRow],
+        asOfDate: DateTime(2026, 11, 25),
+      )[10];
+      expect(onPayday.hasFuturePayDate, isFalse);
+      expect(onPayday.confirmed, isTrue);
+      expect(onPayday.confirmedTaxYen, 90);
+      expect(onPayday.confirmedSocialYen, 200);
+    },
+  );
 }
