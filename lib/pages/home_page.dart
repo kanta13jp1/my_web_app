@@ -17,6 +17,7 @@ import 'package:intl/intl.dart';
 // Services
 import '../services/ai_service.dart';
 import '../services/abstinence_guard_store.dart';
+import '../services/asset_debt_guard_calendar_service.dart';
 import '../services/billing_service.dart';
 import '../services/completion_goal_service.dart';
 import '../services/feature_strategy_ai_review_service.dart';
@@ -923,6 +924,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
                 transferTotal: current.transferTotal + amount,
                 transferCount: current.transferCount + 1,
               ),
+            'borrowing' => current.copyWith(
+                borrowingTotal: current.borrowingTotal + amount,
+                borrowingCount: current.borrowingCount + 1,
+              ),
             _ => current,
           };
         }
@@ -1358,12 +1363,19 @@ class _HomePageState extends State<HomePage> with RouteAware {
         calendarStart: calendarRange.startDay,
         calendarEnd: calendarRange.endDay,
       );
+      final additionalDebtViolationDatesFuture =
+          _loadAdditionalDebtViolationDates(
+        startDate: calendarRange.startDay,
+        endDate: calendarRange.endDay,
+      );
 
       final abstinenceSnapshotsByDate = await abstinenceFuture;
       final cashflowBundle = await cashflowFuture;
       final pendingStockTaskCount = await stockTaskCountFuture;
       final homeDailyMap = await homeDailyMapFuture;
       final taskGoalBundle = await taskGoalFuture;
+      final additionalDebtViolationDates =
+          await additionalDebtViolationDatesFuture;
 
       final todayStatus =
           homeDailyMap[_statusDateKey(today)] ?? const _HomeDailyStatusRecord();
@@ -1378,6 +1390,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
         cashflowByDate: cashflowBundle.dailyByDate,
         tasksByDate: taskGoalBundle.tasksByDate,
         abstinenceSnapshotsByDate: abstinenceSnapshotsByDate,
+        additionalDebtViolationDates: additionalDebtViolationDates,
       );
 
       return _HomeOpsSnapshot(
@@ -1430,6 +1443,30 @@ class _HomePageState extends State<HomePage> with RouteAware {
   HomeCalendarVisibleRange _calendarVisibleRange() =>
       HomeCalendarVisibleRange.forMonth(_calendarAnchorMonth());
 
+  Future<Set<String>> _loadAdditionalDebtViolationDates({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      return const <String>{};
+    }
+    final normalizedStart = _startOfDay(startDate);
+    final normalizedEndExclusive =
+        _startOfDay(endDate).add(const Duration(days: 1));
+    final violations =
+        await AssetDebtGuardCalendarService.loadBorrowingViolations(
+      client: Supabase.instance.client,
+      userId: userId,
+      start: normalizedStart,
+      endExclusive: normalizedEndExclusive,
+    );
+    return <String>{
+      for (final violation in violations)
+        AssetDebtGuardCalendarService.formatDateKey(violation.date),
+    };
+  }
+
   Future<List<_HomeCalendarDay>> _loadCalendarDays({
     HomeCalendarVisibleRange? calendarRange,
     required Map<String, _HomeDailyStatusRecord> homeDailyMap,
@@ -1437,6 +1474,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
     required Map<String, HomeDailyCashflowSummary> cashflowByDate,
     required Map<String, List<_HomeCalendarTask>> tasksByDate,
     Map<String, AbstinenceGuardSnapshot>? abstinenceSnapshotsByDate,
+    Set<String> additionalDebtViolationDates = const <String>{},
   }) async {
     final now = _now();
     final range = calendarRange ?? _calendarVisibleRange();
@@ -1500,6 +1538,8 @@ class _HomePageState extends State<HomePage> with RouteAware {
           pendingCriticalTaskCount: pendingCriticalTaskCountForDay,
           hasAbstinenceProtection: hasProtection,
           hasAbstinenceSlip: hasSlip,
+          hasAdditionalDebtViolation:
+              additionalDebtViolationDates.contains(dateKey),
           isSaturday: day.weekday == DateTime.saturday,
           enabledLabels: abstinence.enabledLabels,
           slipDetails: abstinence.slipDetails,
@@ -3090,7 +3130,9 @@ abstinence_slip_details: $slipDetailsText
                             isDark: isDark,
                             accentColor: accentColor,
                           ),
-                          if (day.isCurrentMonth && day.hasCashflow) ...[
+                          if (day.isCurrentMonth &&
+                              (day.hasCashflow ||
+                                  day.cashflow.hasBorrowing)) ...[
                             const SizedBox(height: 4),
                             if (day.cashflow.incomeCount > 0)
                               HomeCalendarCashflowLine(
@@ -3114,6 +3156,17 @@ abstinence_slip_details: $slipDetailsText
                                 sign: '-',
                                 isEmphasized: matchesFilter,
                               ),
+                            if (day.cashflow.borrowingCount > 0)
+                              HomeCalendarCashflowLine(
+                                textKey: Key(
+                                  'calendar_day_borrowing_${DateFormat('yyyy-MM-dd').format(day.date)}',
+                                ),
+                                label: '借',
+                                amount: day.cashflow.borrowingTotal,
+                                color: const Color(0xFFB45309),
+                                sign: '+',
+                                isEmphasized: matchesFilter,
+                              ),
                           ],
                           const Spacer(),
                           HomeCalendarDayIndicators(
@@ -3125,6 +3178,9 @@ abstinence_slip_details: $slipDetailsText
                                 const Color(0xFFE53935),
                               if (day.hasAbstinenceSlip)
                                 const Color(0xFFFF6B35),
+                              if (day.cashflow.hasBorrowing ||
+                                  day.hasAdditionalDebtViolation)
+                                const Color(0xFFB45309),
                               if (day.isSaturday) const Color(0xFF009688),
                             ],
                             isEmphasized: matchesFilter,
@@ -3157,6 +3213,7 @@ abstinence_slip_details: $slipDetailsText
               _CalendarLegend(color: Color(0xFF4CAF50), label: '残高'),
               _CalendarLegend(color: Color(0xFFE53935), label: '禁欲安定'),
               _CalendarLegend(color: Color(0xFFFF6B35), label: '逸脱'),
+              _CalendarLegend(color: Color(0xFFB45309), label: '借入/違反'),
               _CalendarLegend(color: Color(0xFF009688), label: '土曜'),
             ],
           ),
@@ -4071,12 +4128,45 @@ abstinence_slip_details: $slipDetailsText
             const SizedBox(height: 10),
             Text(
               '入出金 ${cashflow.recordCount} 件'
-              '${cashflow.transferCount > 0 ? ' / 振替 ${cashflow.transferCount} 件 (${_formatYen(cashflow.transferTotal.toDouble())})' : ''}',
+              '${cashflow.transferCount > 0 ? ' / 振替 ${cashflow.transferCount} 件 (${_formatYen(cashflow.transferTotal.toDouble())})' : ''}'
+              '${cashflow.borrowingCount > 0 ? ' / 借入受取 ${cashflow.borrowingCount} 件 (${_formatYen(cashflow.borrowingTotal.toDouble())})' : ''}',
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF666666),
                 height: 1.5,
+              ),
+            ),
+            if (cashflow.borrowingCount > 0) ...[
+              const SizedBox(height: 4),
+              const Text(
+                '※ 借入受取は収入・支出の合計には含まれません。',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF92400E),
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ],
+          if (day.hasAdditionalDebtViolation) ...[
+            const SizedBox(height: 8),
+            Container(
+              key: Key('calendar_day_detail_debt_violation_$dateKey'),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFD97706)),
+              ),
+              child: const Text(
+                '追加借金ルール違反（Debt Guard）の記録あり',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF92400E),
+                ),
               ),
             ),
           ],
@@ -9554,6 +9644,7 @@ class _HomeCalendarDay {
   final int pendingCriticalTaskCount;
   final bool hasAbstinenceProtection;
   final bool hasAbstinenceSlip;
+  final bool hasAdditionalDebtViolation;
   final bool isSaturday;
   final List<String> enabledLabels;
   final List<String> slipDetails;
@@ -9572,6 +9663,7 @@ class _HomeCalendarDay {
     required this.pendingCriticalTaskCount,
     required this.hasAbstinenceProtection,
     required this.hasAbstinenceSlip,
+    this.hasAdditionalDebtViolation = false,
     required this.isSaturday,
     required this.enabledLabels,
     required this.slipDetails,
