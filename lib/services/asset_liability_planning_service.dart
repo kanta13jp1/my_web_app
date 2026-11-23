@@ -4,9 +4,11 @@ import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/asset_revolving_credit_service.dart';
 
 import '../models/asset_liability_workbook.dart';
+import 'asset_emergency_defense_service.dart';
 import 'asset_late_fee_service.dart';
 import 'asset_payment_calendar_service.dart';
 import 'asset_payment_inconsistency_service.dart';
+import 'asset_transfer_conflict_service.dart';
 
 /// ハードコードされた既定固定費 (家賃/KDDI/水道/ガス) をデータ駆動で表す内部記述子。
 ///
@@ -439,6 +441,11 @@ class AssetLiabilityPlanningService {
       summaries: accountCashflowSummaries,
       cashflowRows: cashflowRows,
     );
+    final collisionTransfers =
+        AssetTransferConflictService.detectReverseConflicts(
+      tasks: resolvedTransferTasks,
+      suggestions: transferSuggestions,
+    );
     final cardBillingReview = _buildCardBillingReview(
       rows: debtMasterRows,
       accountsById: accountsById,
@@ -500,6 +507,11 @@ class AssetLiabilityPlanningService {
       cashflowRows: cashflowRows,
       baseDate: baseDate,
     );
+    final emergencyDefenseSummary = AssetEmergencyDefenseService.summarizeRows(
+      cashLikeTotal: cashLikeTotal,
+      monthlyUnreceivedIncomeTotal: monthlyUnreceivedIncomeTotal,
+      cashflowRows: cashflowRows,
+    );
 
     return AssetLiabilityWorkbook(
       baseDate: baseDate,
@@ -545,6 +557,8 @@ class AssetLiabilityPlanningService {
       subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds,
       cardUsagePolicies: cardUsagePolicies,
       paymentInconsistencies: paymentInconsistencies,
+      cashAfterEssentials: emergencyDefenseSummary.cashAfterEssentials,
+      collisionTransfers: collisionTransfers,
     );
   }
 
@@ -1820,6 +1834,7 @@ class AssetLiabilityPlanningService {
             cashBeforePayment: before,
             cashAfterPayment: after,
             riskLevel: _cashRiskLevel(after),
+            essential: AssetEmergencyDefenseService.isEssentialCashflowRow(row),
           );
         }(),
     ];

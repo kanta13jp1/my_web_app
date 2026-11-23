@@ -5,6 +5,7 @@ import '../models/daily_todo.dart';
 import '../models/user_profile.dart';
 import 'asset_debt_discipline_monitor.dart';
 import 'asset_debt_trend_analyzer.dart';
+import 'asset_emergency_defense_service.dart';
 import 'asset_management_available_money.dart';
 import 'asset_triage_guide_service.dart';
 import 'asset_payment_status_summary.dart';
@@ -43,6 +44,7 @@ enum AssetManagementInsightActionType {
   overdueIncome,
   subscriptionExcess,
   paymentDiscrepancy,
+  transferConflict,
 }
 
 enum AssetManagementInsightSeverity { info, warning, critical }
@@ -398,6 +400,7 @@ class AssetManagementInsightService {
     double minimumSafetyBalance = defaultMinimumSafetyBalance,
     int upcomingPaymentWarningDays = defaultUpcomingPaymentWarningDays,
     bool livingExpensePriorityMode = false,
+    bool emergencyMode = false,
     String? mainAccountId,
     Map<String, double> priorMonthAccountBalances = const <String, double>{},
     AssetDebtTrendAnalyzer debtTrendAnalyzer = const AssetDebtTrendAnalyzer(),
@@ -476,21 +479,38 @@ class AssetManagementInsightService {
       workbook: workbook,
       userProfile: userProfile,
     );
-    final allActions = subscriptionExcessAlert == null
-        ? actions
-        : <AssetManagementInsightActionItem>[
-            ...actions,
-            AssetManagementInsightActionItem(
-              type: AssetManagementInsightActionType.subscriptionExcess,
-              severity: AssetManagementInsightSeverity.warning,
-              title: 'サブスク契約が過多です（${subscriptionExcessAlert.activeCount}件）',
-              description: subscriptionExcessAlert.summaryMessage,
-              relatedAccountId: null,
-              dueDate: null,
-              paymentDay: null,
-              suggestedAction: '不要・重複しているサブスクを解約候補へ振り分け、固定費を圧縮してください。',
-            ),
-          ];
+    final allActions = <AssetManagementInsightActionItem>[
+      if (emergencyMode || workbook.emergencyMode) ...[
+        () {
+          final defense = AssetEmergencyDefenseService.summarize(workbook);
+          return AssetManagementInsightActionItem(
+            type: AssetManagementInsightActionType.emergencyLivingExpense,
+            severity: AssetManagementInsightSeverity.critical,
+            title: '生活防衛モード: 必須支出を最優先で確保',
+            description: '生活防衛モード中です。今月の必要最低限合計は '
+                '${_formatYen(defense.essentialTotal)}、必須支出後の手元残高は '
+                '${_formatYen(defense.cashAfterEssentials)} です。',
+            relatedAccountId: null,
+            dueDate: null,
+            paymentDay: null,
+            suggestedAction:
+                '生活防衛モード中: 必須支出（家賃・通信・光熱・食費・医療等）を最優先し、支払順を組み替えてください。',
+          );
+        }(),
+      ],
+      ...actions,
+      if (subscriptionExcessAlert != null)
+        AssetManagementInsightActionItem(
+          type: AssetManagementInsightActionType.subscriptionExcess,
+          severity: AssetManagementInsightSeverity.warning,
+          title: 'サブスク契約が過多です（${subscriptionExcessAlert.activeCount}件）',
+          description: subscriptionExcessAlert.summaryMessage,
+          relatedAccountId: null,
+          dueDate: null,
+          paymentDay: null,
+          suggestedAction: '不要・重複しているサブスクを解約候補へ振り分け、固定費を圧縮してください。',
+        ),
+    ];
 
     return AssetManagementInsightReport(
       workbook: workbook,
@@ -1057,6 +1077,23 @@ class AssetManagementInsightService {
           paymentDay: risk.paymentDay,
           suggestedAction: '「支払予定の増額入力」「支払原資口座の変更」「債権者への連絡メモ起票」で'
               '不足を解消してください。',
+        ),
+      );
+    }
+
+    for (final conflict in workbook.collisionTransfers) {
+      actions.add(
+        AssetManagementInsightActionItem(
+          type: AssetManagementInsightActionType.transferConflict,
+          severity: AssetManagementInsightSeverity.warning,
+          title: '逆方向の資金移動が衝突しています: '
+              '${conflict.task.fromAccountName} ⇄ ${conflict.task.toAccountName}',
+          description: conflict.summary,
+          relatedAccountId: conflict.task.toAccountId,
+          dueDate: conflict.task.dueDate ?? conflict.suggestion.neededBy,
+          paymentDay:
+              (conflict.task.dueDate ?? conflict.suggestion.neededBy)?.day,
+          suggestedAction: '登録済みタスクのキャンセル・期日延期・差額調整のいずれかで逆方向の資金移動を一本化してください。',
         ),
       );
     }
@@ -2588,6 +2625,7 @@ class AssetManagementInsightPromptBuilder {
       AssetManagementInsightActionType.overdueIncome => '期限超過の未着金収入',
       AssetManagementInsightActionType.subscriptionExcess => 'サブスク過多の整理',
       AssetManagementInsightActionType.paymentDiscrepancy => '支払差額・未払いの穴確認',
+      AssetManagementInsightActionType.transferConflict => '逆方向資金移動の衝突',
     };
   }
 
