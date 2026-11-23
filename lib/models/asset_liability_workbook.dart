@@ -771,6 +771,15 @@ class AssetLiabilityDebtRow {
   /// null なら通常の負債 (請求額は手入力 or 推定)。
   final AssetLiabilityRevolvingCreditBilling? revolvingBilling;
 
+  /// 遅延損害金計算に用いた年利（期限超過の未払直接対象のみ非 null）。
+  final double? lateFeeAnnualRate;
+
+  /// 当サイクル支払日からの超過日数（期限前・支払済は 0）。
+  final int overdueDays;
+
+  /// 日割り概算の遅延損害金・延滞金見込み額（円）。
+  final double estimatedLateFeeAmount;
+
   const AssetLiabilityDebtRow({
     required this.id,
     this.recurringFixedCostId,
@@ -803,7 +812,14 @@ class AssetLiabilityDebtRow {
     required this.requiresAction,
     this.fullPaymentEstimate = false,
     this.revolvingBilling,
+    this.lateFeeAnnualRate,
+    this.overdueDays = 0,
+    this.estimatedLateFeeAmount = 0,
   });
+
+  /// 遅延損害金・延滞金見込みを加算した負債残高（絶対値）。
+  double get projectedBalanceWithLateFee =>
+      balance.abs() + estimatedLateFeeAmount;
 
   /// リボ払いカードか (= 最低返済額 + 新規利用額を25日に返すか)。
   bool get isRevolving => revolvingBilling != null;
@@ -846,6 +862,8 @@ class AssetLiabilityPaymentDayRisk {
   final bool requiresAction;
   final bool isPast;
   final bool isToday;
+  final double shortageAmount;
+  final double estimatedLateFeeTotal;
 
   const AssetLiabilityPaymentDayRisk({
     required this.paymentDay,
@@ -861,11 +879,14 @@ class AssetLiabilityPaymentDayRisk {
     required this.requiresAction,
     required this.isPast,
     required this.isToday,
+    this.shortageAmount = 0,
+    this.estimatedLateFeeTotal = 0,
   });
 
   bool get isUpcoming => !isPast && !isToday;
   bool get hasManualPayments => manualPaymentCount > 0;
   bool get hasEstimatedPayments => estimatedPaymentCount > 0;
+  bool get hasShortage => shortageAmount >= 1;
 }
 
 enum AssetLiabilityCashRiskLevel { normal, watch, caution, short }

@@ -2503,5 +2503,40 @@ void main() {
       expect(acomShopping.kind, AssetLiabilityAccountKind.shoppingDebt);
       expect(acomShopping.paymentDay, 26);
     });
+
+    test(
+      'computes PaymentDayRisk.shortageAmount and overdue late-fee estimates (#3342, #3442)',
+      () {
+        final workbook = service.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            '現金': 200000,
+            'モビット': -500000,
+          },
+          baseDate: DateTime(2026, 9, 15),
+          paymentDayOverrides: const <String, int>{'mobit': 5},
+          annualRateOverrides: const <String, double>{'mobit': 0.18},
+          monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        );
+
+        final mobit = workbook.debtMasterRows.firstWhere(
+          (row) => row.id == 'mobit',
+        );
+        expect(mobit.overdueDays, 10);
+        expect(mobit.lateFeeAnnualRate, 0.18);
+        // 5000 * 0.18 * 10 / 365 = 24.65 -> 25
+        expect(mobit.estimatedLateFeeAmount, 25);
+        expect(mobit.projectedBalanceWithLateFee, 500025);
+
+        final risk5 = workbook.paymentDayRisks.firstWhere(
+          (risk) => risk.paymentDay == 5 && risk.requiresAction,
+        );
+        expect(risk5.hasShortage, isTrue);
+        expect(
+          risk5.shortageAmount,
+          mobit.minimumPaymentEstimate - mobit.scheduledPaymentAmount,
+        );
+        expect(risk5.estimatedLateFeeTotal, 25);
+      },
+    );
   });
 }

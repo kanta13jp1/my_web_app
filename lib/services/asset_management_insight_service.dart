@@ -533,6 +533,9 @@ class AssetManagementInsightService {
       for (final summary in workbook.accountCashflowSummaries)
         summary.accountId: summary,
     };
+    final debtRowsById = <String, AssetLiabilityDebtRow>{
+      for (final row in workbook.debtMasterRows) row.id: row,
+    };
     // 原資未設定の負債に提示する引落口座候補。ページ上部バナーの候補一覧と
     // 同じ順位付け (支払後見込み残高の大きい順) で最有力を 1 件だけ本文に載せる。
     final paymentSourceCandidateSummaries = workbook.accountCashflowSummaries
@@ -756,17 +759,25 @@ class AssetManagementInsightService {
               '${sourceSummary.accountName}へ移動してから、'
               '${_formatYen(row.paymentAmount)}を支払ってください。';
         }
+        final debtRow = debtRowsById[row.accountId];
+        final lateFeeNote =
+            (debtRow != null && debtRow.estimatedLateFeeAmount > 0)
+                ? ' 遅延${debtRow.overdueDays}日・遅延損害金(概算) '
+                    '+${_formatYen(debtRow.estimatedLateFeeAmount)} が'
+                    '元の負債残高に加算見込みです。'
+                : '';
         actions.add(
           AssetManagementInsightActionItem(
             type: AssetManagementInsightActionType.overduePayment,
             severity: AssetManagementInsightSeverity.critical,
             title: '${row.accountName}が期限超過です',
-            description: overdueDays <= 0
-                ? '本日${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
-                    '${_formatYen(row.paymentAmount)}が未払いです。'
-                : '${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
-                    '${_formatYen(row.paymentAmount)}が未払いのまま'
-                    '$overdueDays日経過しています。',
+            description: (overdueDays <= 0
+                    ? '本日${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
+                        '${_formatYen(row.paymentAmount)}が未払いです。'
+                    : '${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
+                        '${_formatYen(row.paymentAmount)}が未払いのまま'
+                        '$overdueDays日経過しています。') +
+                lateFeeNote,
             relatedAccountId: row.accountId,
             dueDate: row.paymentDate,
             paymentDay: row.paymentDay,
@@ -957,10 +968,6 @@ class AssetManagementInsightService {
       );
     }
 
-    final debtRowsById = <String, AssetLiabilityDebtRow>{
-      for (final row in workbook.debtMasterRows) row.id: row,
-    };
-
     for (final group in workbook.cardStatementReconciliation.groups) {
       if (!group.alerts.contains(
         AssetLiabilityPlanningService.cardStatementMissingImportAlert,
@@ -1025,6 +1032,31 @@ class AssetManagementInsightService {
           dueDate: row == null ? null : _workbookPaymentDateFor(row, workbook),
           paymentDay: item.paymentDay,
           suggestedAction: 'なぜ差額があるのか確認し、不足がある場合は補填または今月支払予定額を修正してください。',
+        ),
+      );
+    }
+
+    for (final risk in workbook.paymentDayRisks) {
+      if (!risk.requiresAction || !risk.hasShortage) {
+        continue;
+      }
+      actions.add(
+        AssetManagementInsightActionItem(
+          type: AssetManagementInsightActionType.cashShortageRisk,
+          severity: risk.isPast || risk.isToday
+              ? AssetManagementInsightSeverity.critical
+              : AssetManagementInsightSeverity.warning,
+          title: '${risk.paymentDay}日の支払予定が最低支払額より'
+              '${_formatYen(risk.shortageAmount)}不足',
+          description: '対象: ${risk.accountNames.join('、')} / '
+              '推定最低 ${_formatYen(risk.minimumPaymentEstimateTotal)} に対し'
+              '支払予定 ${_formatYen(risk.scheduledPaymentTotal)}'
+              '（不足 ${_formatYen(risk.shortageAmount)}）。',
+          relatedAccountId: null,
+          dueDate: risk.paymentDate,
+          paymentDay: risk.paymentDay,
+          suggestedAction: '「支払予定の増額入力」「支払原資口座の変更」「債権者への連絡メモ起票」で'
+              '不足を解消してください。',
         ),
       );
     }
