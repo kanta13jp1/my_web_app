@@ -17,6 +17,9 @@ import '../widgets/asset_safety_transfer_and_income_dialogs.dart';
 import '../services/asset_debt_danger_service.dart';
 import '../services/asset_debt_simulation_service.dart';
 import '../widgets/asset_debt_simulation_and_guide_dialogs.dart';
+import '../services/asset_auto_transfer_service.dart';
+import '../services/asset_tax_deduction_service.dart';
+import '../widgets/asset_auto_transfer_and_tax_dialogs.dart';
 import 'package:my_web_app/widgets/asset_waste_observation_status.dart';
 import '../widgets/asset_recorded_change_details.dart';
 import '../models/asset_income_source_evidence.dart';
@@ -1095,6 +1098,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<AssetLiabilityMonthlySnapshot> _monthlySnapshots =
       <AssetLiabilityMonthlySnapshot>[];
   DebtDangerSettings _debtDangerSettings = const DebtDangerSettings();
+  AutoTransferSettings _autoTransferSettings = const AutoTransferSettings();
+  List<AutoTransferAuditEntry> _autoTransferAuditLogs =
+      <AutoTransferAuditEntry>[];
+  final Set<String> _autoExecutedTransferDedupeKeys = <String>{};
+  bool _taxDeductionToolsEnabled = false;
+  List<MedicalExpenseEntry> _medicalExpenseEntries = <MedicalExpenseEntry>[];
   List<AssetLiabilityMonthlyReport> _monthlyReports =
       <AssetLiabilityMonthlyReport>[];
   String? _selectedMonthlyReportMonthKey;
@@ -1670,6 +1679,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadMinimumSafetyBalance());
     unawaited(_loadCreditorContactLogs());
     unawaited(_loadDebtDangerSettings());
+    unawaited(_loadAutoTransferAndTaxState());
     // 起動時の asset_pref_mirror 個別読み取りを 1 回のバッチ取得へ集約する
     // (端末跨ぎ同期の多数 REST が ERR_INSUFFICIENT_RESOURCES を誘発するのを緩和)。
     // 起動バーストが収束したらキャッシュを失効させ、以降は最新を個別取得する。
@@ -5943,6 +5953,148 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       initialSettings: _debtDangerSettings,
       onSettingsChanged: _saveDebtDangerSettings,
       onOpenUrl: widget.debugOpenExternalUrl,
+    );
+  }
+
+  Future<void> _loadAutoTransferAndTaxState() async {
+    final autoSettings = await AssetAutoTransferStore.loadSettings();
+    final auditLogs = await AssetAutoTransferStore.loadAuditLogs();
+    final taxEnabled = await AssetTaxToolsFeatureFlagStore.load();
+    final medEntries = await AssetMedicalExpenseStore.load();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _autoTransferSettings = autoSettings;
+      _autoTransferAuditLogs = auditLogs;
+      _taxDeductionToolsEnabled = taxEnabled;
+      _medicalExpenseEntries = medEntries;
+    });
+  }
+
+  void _saveAutoTransferSettings(AutoTransferSettings next) {
+    setState(() {
+      _autoTransferSettings = next;
+    });
+    unawaited(AssetAutoTransferStore.saveSettings(next));
+  }
+
+  List<AutoTransferPlanCandidate> _effectiveAutoTransferCandidates(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final reserve = effectiveSafetyReserve(
+      minimumSafetyBalance: _minimumSafetyBalance,
+      safetyEnvelopeEnabled: _safetyEnvelopeEnabled,
+      safetyEnvelopeAmount: _safetyEnvelopeAmount,
+    );
+    return AssetAutoTransferService.buildCandidates(
+      workbook: workbook,
+      minimumSafetyBalance: reserve,
+      settings: _autoTransferSettings,
+    );
+  }
+
+  void _executeAutoTransferCandidate(
+    AutoTransferPlanCandidate candidate,
+    AutoTransferExecutionMode mode,
+  ) {
+    final s = candidate.suggestion;
+    final duplicate = _transferTasks.any(
+      (task) =>
+          !task.completed &&
+          !task.canceled &&
+          ((task.dedupeKey != null && task.dedupeKey == s.dedupeKey) ||
+              (task.fromAccountId == s.fromAccountId &&
+                  task.toAccountId == s.toAccountId &&
+                  (task.amount - s.amount).abs() < 1)),
+    );
+    if (duplicate) {
+      return;
+    }
+
+    final bundle = AssetAutoTransferService.buildTransferTaskAndAudit(
+      candidate: candidate,
+      mode: mode,
+      now: DateTime.now(),
+    );
+    final nextTasks = List<AssetLiabilityTransferTask>.from(_transferTasks)
+      ..add(bundle.task)
+      ..sort(_compareTransferTasksByDueDate);
+    setState(() {
+      _transferTasks = nextTasks;
+      _autoTransferAuditLogs = <AutoTransferAuditEntry>[
+        bundle.audit,
+        ..._autoTransferAuditLogs,
+      ];
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+    unawaited(() async {
+      final persisted = await AssetAutoTransferStore.appendAuditLog(
+        bundle.audit,
+      );
+      if (!mounted) return;
+      setState(() {
+        _autoTransferAuditLogs = persisted;
+      });
+    }());
+    if (_autoTransferSettings.notifyOnExecution) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '自動口座間移動タスクを起票しました: ${s.fromAccountName} → ${s.toAccountName} '
+            '(${_formatManagementYen(s.amount)})',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _openAutoTransferSettingsDialog(
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    final candidates = _effectiveAutoTransferCandidates(workbook);
+    await AutoTransferSettingsAndAuditDialog.show(
+      context,
+      initialSettings: _autoTransferSettings,
+      candidates: candidates,
+      auditLogs: _autoTransferAuditLogs,
+      onSettingsChanged: _saveAutoTransferSettings,
+      onExecuteCandidate: (candidate) => _executeAutoTransferCandidate(
+        candidate,
+        _autoTransferSettings.executionMode,
+      ),
+    );
+  }
+
+  Future<void> _openFurusatoCalculatorDialog(
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    final netIncome = _savingsPlanNetIncome();
+    final annual =
+        (netIncome != null && netIncome > 0) ? netIncome.toDouble() * 12 : null;
+    await FurusatoTaxCalculatorDialog.show(
+      context,
+      initialAnnualSalary: annual,
+    );
+  }
+
+  Future<void> _openMedicalExpenseTrackerDialog(
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    final netIncome = _savingsPlanNetIncome();
+    final annual =
+        (netIncome != null && netIncome > 0) ? netIncome.toDouble() * 12 : null;
+    await MedicalExpenseTrackerDialog.show(
+      context,
+      initialEntries: _medicalExpenseEntries,
+      taxYear: workbook.baseDate.year,
+      annualTotalIncome: annual,
+      onEntriesChanged: (next) {
+        setState(() {
+          _medicalExpenseEntries = next;
+        });
+        unawaited(AssetMedicalExpenseStore.save(next));
+      },
     );
   }
 
@@ -19600,6 +19752,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       workbook: workbook,
       minimumSafetyBalance: reserve,
     );
+    final autoCandidates = _effectiveAutoTransferCandidates(workbook);
+    if (_autoTransferSettings.enabled &&
+        _autoTransferSettings.executionMode ==
+            AutoTransferExecutionMode.autoCreateTask) {
+      for (final candidate in autoCandidates) {
+        final key = candidate.suggestion.dedupeKey;
+        if (!candidate.alreadyTracked &&
+            !_autoExecutedTransferDedupeKeys.contains(key)) {
+          _autoExecutedTransferDedupeKeys.add(key);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _executeAutoTransferCandidate(
+              candidate,
+              AutoTransferExecutionMode.autoCreateTask,
+            );
+          });
+        }
+      }
+    }
+    final promptCandidatesByToId = <String, AutoTransferPlanCandidate>{
+      for (final candidate in autoCandidates)
+        candidate.suggestion.toAccountId: candidate,
+    };
     if (suggestions.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -19616,23 +19791,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               const Icon(
                 Icons.shield_outlined,
                 size: 16,
                 color: Color(0xFF0F766E),
               ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  '安全残高割れの事前振替提案（${suggestions.length}件・基準 ${_formatManagementYen(reserve)}）',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F766E),
-                    height: 1.4,
-                  ),
+              Text(
+                '安全残高割れの事前振替提案（${suggestions.length}件・基準 ${_formatManagementYen(reserve)}）',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F766E),
+                  height: 1.4,
+                ),
+              ),
+              TextButton.icon(
+                key: const Key('asset_auto_transfer_settings_button'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                onPressed: () =>
+                    unawaited(_openAutoTransferSettingsDialog(workbook)),
+                icon: const Icon(Icons.auto_mode_outlined, size: 16),
+                label: Text(
+                  _autoTransferSettings.enabled
+                      ? '自動移動設定・履歴 (ON)'
+                      : '自動移動設定・履歴',
                 ),
               ),
             ],
@@ -19680,6 +19870,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   icon: const Icon(Icons.swap_horiz_rounded, size: 16),
                   label: const Text('振替タスク作成'),
                 ),
+                if (_autoTransferSettings.enabled &&
+                    _autoTransferSettings.executionMode ==
+                        AutoTransferExecutionMode.promptConfirmation &&
+                    promptCandidatesByToId[suggestion.toAccountId] != null &&
+                    !promptCandidatesByToId[suggestion.toAccountId]!
+                        .alreadyTracked)
+                  OutlinedButton.icon(
+                    key: Key(
+                      'asset_auto_transfer_prompt_execute_${suggestion.toAccountId}',
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    onPressed: () => _executeAutoTransferCandidate(
+                      promptCandidatesByToId[suggestion.toAccountId]!,
+                      AutoTransferExecutionMode.promptConfirmation,
+                    ),
+                    icon: const Icon(Icons.bolt_outlined, size: 16),
+                    label: const Text('確認して自動振替'),
+                  ),
               ],
             ),
             const SizedBox(height: 2),
@@ -35819,6 +36029,44 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   icon: const Icon(Icons.receipt_long_outlined),
                   label: const Text('確定申告出力'),
                 ),
+                OutlinedButton.icon(
+                  key: const Key(
+                    'asset_open_auto_transfer_settings_toolbar_button',
+                  ),
+                  onPressed: () =>
+                      unawaited(_openAutoTransferSettingsDialog(workbook)),
+                  icon: const Icon(Icons.auto_mode_outlined),
+                  label: const Text('自動振替設定・履歴'),
+                ),
+                FilterChip(
+                  key: const Key('asset_tax_tools_feature_flag_toggle'),
+                  label: const Text('税務・控除ツール (Beta)'),
+                  selected: _taxDeductionToolsEnabled,
+                  onSelected: (enabled) {
+                    setState(() {
+                      _taxDeductionToolsEnabled = enabled;
+                    });
+                    unawaited(AssetTaxToolsFeatureFlagStore.save(enabled));
+                  },
+                ),
+                if (_taxDeductionToolsEnabled) ...[
+                  OutlinedButton.icon(
+                    key: const Key('asset_open_furusato_calculator_button'),
+                    onPressed: () =>
+                        unawaited(_openFurusatoCalculatorDialog(workbook)),
+                    icon: const Icon(Icons.volunteer_activism_outlined),
+                    label: const Text('ふるさと納税上限計算'),
+                  ),
+                  OutlinedButton.icon(
+                    key: const Key(
+                      'asset_open_medical_expense_tracker_button',
+                    ),
+                    onPressed: () =>
+                        unawaited(_openMedicalExpenseTrackerDialog(workbook)),
+                    icon: const Icon(Icons.local_hospital_outlined),
+                    label: const Text('医療費控除トラッカー'),
+                  ),
+                ],
               ],
             ),
           ),

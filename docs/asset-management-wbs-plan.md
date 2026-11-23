@@ -270,3 +270,13 @@ Current open pinned work starts here:
 - **返済危険度判定と専門家相談ガイド (#1370)**:
   - `AssetDebtDangerService` で月次返済予定額の対収入比率および月次スナップショットに基づく負債残高非減少の連続月数を評価し、しきい値超過時に画面上部の控えめな案内バナー（`asset_debt_danger_consultation_banner`）および詳細ガイド（`DebtDangerConsultationGuideDialog`）を表示する。
   - しきい値（比率・連続月数・バナー表示有無）は `AssetDebtDangerSettingsStore` で端末永続化し、任意整理・個人再生・自己破産・特定調停の概要と公的・中立的な相談窓口（法テラス・日弁連・司法書士会・全銀協・国民生活センター）への導線を提供する。
+
+### 自動口座間移動設定・監査履歴と税務控除支援ツール (#3443 / #2490 / #2491) 仕様
+
+- **支払原資不足時の自動口座間移動設定・実行・監査履歴 (#3443)**:
+  - `AssetAutoTransferService` および `AssetAutoTransferStore` により、移動元の最低維持残高・安全余裕バッファを下回らない範囲のみを補填候補として抽出し、設定（許可 ON/OFF、実行前に最終確認 vs 検知時に自動起票、画面通知、追加余裕バッファ）と実行監査履歴（`AutoTransferAuditEntry` 最大50件）を永続化する。
+  - 安全残高割れカード（`asset_safety_transfer_suggestions_card`）およびツールバーから `AutoTransferSettingsAndAuditDialog` を開き、二重起票を防ぎつつ自動/確認実行した振替タスクを追跡できる。
+- **ふるさと納税 控除上限シミュレーター (#2490・OFF-default フラグ)**:
+  - `AssetFurusatoTaxCalculator` により国税庁（給与所得控除 No.1410・所得税速算表 No.2260）および総務省の公開計算式にもとづき、給与年収・家族構成・扶養人数・社会保険料から控除上限目安を決定論的に試算する（AI説明文はOFF固定）。
+- **医療費控除トラッカー (#2491・OFF-default フラグ)**:
+  - `AssetMedicalExpenseService` および `AssetMedicalExpenseStore` により病院・薬局・通院交通費・その他の月次支出と保険補填額を記録し、年累計・基準額（10万円または総所得金額等200万円未満の5%）・200万円上限と近づき/達成アラートを表示する。`#2490` / `#2491` は `AssetTaxToolsFeatureFlagStore`（既定 OFF）により明示有効化時のみツールバーに表示する。
