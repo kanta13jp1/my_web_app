@@ -110,6 +110,7 @@ import {
   hashLandingTrialClient,
   LandingTrialInputError,
   normalizeLandingTrialPrompt,
+  resolveLandingTrialPrimaryProvider,
 } from "./landing_trial.ts";
 import {
   buildFirstUserFunnelReport,
@@ -138,6 +139,9 @@ const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const LANDING_TRIAL_AI_MODEL = Deno.env.get("LANDING_TRIAL_AI_MODEL") ?? "";
 const LANDING_TRIAL_GEMINI_MODEL =
   Deno.env.get("LANDING_TRIAL_GEMINI_MODEL") ?? "";
+const LANDING_TRIAL_PRIMARY_PROVIDER = resolveLandingTrialPrimaryProvider(
+  Deno.env.get("LANDING_TRIAL_PRIMARY_PROVIDER"),
+);
 const LANDING_TRIAL_RATE_LIMIT_SALT =
   Deno.env.get("LANDING_TRIAL_RATE_LIMIT_SALT") ?? SERVICE_ROLE_KEY;
 // x.post 近似重複ガードの調整用 env (未設定時は既定 0.9 / 直近 5 件)。
@@ -2566,6 +2570,7 @@ serve(async (req: Request) => {
             prompt,
             openAiModel: LANDING_TRIAL_AI_MODEL,
             geminiModel: LANDING_TRIAL_GEMINI_MODEL,
+            primaryProvider: LANDING_TRIAL_PRIMARY_PROVIDER,
             onPrimaryFailure: (detail) => {
               console.warn("landing.trial primary provider failed", detail);
             },
