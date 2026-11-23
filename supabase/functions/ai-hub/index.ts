@@ -49,6 +49,12 @@ import {
   normalizeAiRoutingTask,
 } from "../_shared/ai_router_cost_optimization.ts";
 import {
+  buildGuardrailBlockedPayload,
+  evaluateComplianceGuardrail,
+  evaluateMessagesGuardrail,
+  type GuardrailMode,
+} from "./compliance_guardrails.ts";
+import {
   buildTaskClarityPrompt,
   evaluateTaskClarityHeuristically,
   normalizeTaskClarityResult,
@@ -7311,6 +7317,8 @@ serve(async (req: Request) => {
             fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
           }
           const requestedModel = String(body.model ?? cfg.defaultModel);
+          const guardrailMode: GuardrailMode =
+            body.guardrail_mode === "strict_block" ? "strict_block" : "default";
           const logProviderChat = async (
             params: {
               success: boolean;
@@ -7344,6 +7352,31 @@ serve(async (req: Request) => {
               // ignore logging errors
             }
           };
+          const inputCheck = evaluateMessagesGuardrail(
+            finalMessages,
+            guardrailMode,
+          );
+          if (!inputCheck.allowed) {
+            await logProviderChat({
+              success: false,
+              statusCode: 422,
+              model: requestedModel,
+              errorMessage: inputCheck.auditSummary,
+            });
+            return json(
+              buildGuardrailBlockedPayload(inputCheck, {
+                provider: providerId,
+                traceId,
+                action: "provider.chat",
+              }),
+              422,
+            );
+          }
+          finalMessages.splice(
+            0,
+            finalMessages.length,
+            ...inputCheck.sanitizedMessages,
+          );
           const resp = await fetchWithProviderTimeout(fetchUrl, {
             method: "POST",
             headers: {
@@ -7394,7 +7427,30 @@ serve(async (req: Request) => {
           try {
             data = JSON.parse(respText);
           } catch {
-            const outputChars = respText.slice(0, 2000).length;
+            const rawPlainText = respText.slice(0, 2000);
+            const plainOutputCheck = evaluateComplianceGuardrail(rawPlainText, {
+              stage: "output",
+              mode: guardrailMode,
+            });
+            if (!plainOutputCheck.allowed) {
+              await logProviderChat({
+                success: false,
+                statusCode: 422,
+                model: requestedModel,
+                outputChars: rawPlainText.length,
+                errorMessage: plainOutputCheck.auditSummary,
+              });
+              return json(
+                buildGuardrailBlockedPayload(plainOutputCheck, {
+                  provider: providerId,
+                  traceId,
+                  action: "provider.chat",
+                }),
+                422,
+              );
+            }
+            const safePlainText = plainOutputCheck.sanitizedText;
+            const outputChars = safePlainText.length;
             const estimatedCost = calculateApiCost(
               requestedModel,
               estimateTokensFromChars(inputChars),
@@ -7406,13 +7462,28 @@ serve(async (req: Request) => {
               model: requestedModel,
               outputChars,
               estimatedCostUsd: estimatedCost,
+              errorMessage: plainOutputCheck.action === "masked"
+                ? plainOutputCheck.auditSummary
+                : null,
             });
             await recordSpend("ef", "ai-hub", estimatedCost);
             return json({
               success: true,
               provider: providerId,
               status: "implemented",
-              text: respText.slice(0, 2000),
+              text: safePlainText,
+              guardrail: {
+                checked: true,
+                action: plainOutputCheck.action !== "allowed"
+                  ? plainOutputCheck.action
+                  : inputCheck.action,
+                categories: [
+                  ...new Set([
+                    ...inputCheck.categories,
+                    ...plainOutputCheck.categories,
+                  ]),
+                ],
+              },
               observability: {
                 provider: providerId,
                 model: requestedModel,
@@ -7459,25 +7530,63 @@ serve(async (req: Request) => {
                 "AI応答が空、または出力上限で途中終了しました。max_tokens を増やすか、別プロバイダーを試してください。",
             }, 502);
           }
+          const outputCheck = evaluateComplianceGuardrail(content, {
+            stage: "output",
+            mode: guardrailMode,
+          });
+          if (!outputCheck.allowed) {
+            await logProviderChat({
+              success: false,
+              statusCode: 422,
+              model: usedModel,
+              outputChars,
+              errorMessage: outputCheck.auditSummary,
+            });
+            return json(
+              buildGuardrailBlockedPayload(outputCheck, {
+                provider: providerId,
+                traceId,
+                action: "provider.chat",
+              }),
+              422,
+            );
+          }
+          const safeContent = outputCheck.sanitizedText;
+          const safeOutputChars = safeContent.length;
           const estimatedCost = calculateApiCost(
             usedModel,
             estimateTokensFromChars(inputChars),
-            estimateTokensFromChars(outputChars),
+            estimateTokensFromChars(safeOutputChars),
           );
           await logProviderChat({
             success: true,
             statusCode: 200,
             model: usedModel,
-            outputChars,
+            outputChars: safeOutputChars,
             estimatedCostUsd: estimatedCost,
+            errorMessage: outputCheck.action === "masked"
+              ? outputCheck.auditSummary
+              : null,
           });
           await recordSpend("ef", "ai-hub", estimatedCost);
           return json({
             success: true,
             provider: providerId,
             status: "implemented",
-            text: content,
+            text: safeContent,
             model: usedModel,
+            guardrail: {
+              checked: true,
+              action: outputCheck.action !== "allowed"
+                ? outputCheck.action
+                : inputCheck.action,
+              categories: [
+                ...new Set([
+                  ...inputCheck.categories,
+                  ...outputCheck.categories,
+                ]),
+              ],
+            },
             observability: {
               provider: providerId,
               model: usedModel,
@@ -7485,7 +7594,7 @@ serve(async (req: Request) => {
               trace_id: traceId,
               session_id: sessionId,
               input_chars: inputChars,
-              output_chars: outputChars,
+              output_chars: safeOutputChars,
               action: "provider.chat",
               status_code: 200,
               provider_choice_reason: providerChoiceReason,
