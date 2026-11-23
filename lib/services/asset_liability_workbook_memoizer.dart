@@ -1,5 +1,7 @@
 import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/models/contact_log.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
+import 'package:my_web_app/services/card_statement_refetch_service.dart';
 
 /// [AssetLiabilityPlanningService.buildWorkbook] の入力値を構造的に
 /// フィンガープリント化し、入力が不変な build() 再呼び出しで直前の
@@ -45,6 +47,9 @@ class AssetLiabilityWorkbookMemoizer {
     required List<AssetRecurringFixedCost> recurringFixedCosts,
     required bool includeDefaultFixedPayments,
     required int? salaryDay,
+    List<CreditorContactLog> contactLogs = const <CreditorContactLog>[],
+    Map<String, CardStatementImportStatus> statementImportStatuses =
+        const <String, CardStatementImportStatus>{},
   }) {
     if (latestSnapshot.isEmpty) {
       clear();
@@ -74,6 +79,8 @@ class AssetLiabilityWorkbookMemoizer {
       recurringFixedCosts: recurringFixedCosts,
       includeDefaultFixedPayments: includeDefaultFixedPayments,
       salaryDay: salaryDay,
+      contactLogs: contactLogs,
+      statementImportStatuses: statementImportStatuses,
     );
 
     if (signature == _lastSignature && _lastWorkbook != null) {
@@ -106,6 +113,8 @@ class AssetLiabilityWorkbookMemoizer {
       recurringFixedCosts: recurringFixedCosts,
       includeDefaultFixedPayments: includeDefaultFixedPayments,
       salaryDay: salaryDay,
+      contactLogs: contactLogs,
+      statementImportStatuses: statementImportStatuses,
     );
     return _lastWorkbook;
   }
@@ -133,6 +142,8 @@ class AssetLiabilityWorkbookMemoizer {
     required List<AssetRecurringFixedCost> recurringFixedCosts,
     required bool includeDefaultFixedPayments,
     required int? salaryDay,
+    required List<CreditorContactLog> contactLogs,
+    required Map<String, CardStatementImportStatus> statementImportStatuses,
   }) {
     final buf = StringBuffer();
     buf.write('b:');
@@ -234,6 +245,27 @@ class AssetLiabilityWorkbookMemoizer {
       _writeStr(buf, item.billingGateway.name);
       _writeStr(buf, item.currency.name);
       _writeNullableDouble(buf, item.usdAmount);
+    }
+
+    buf.write('|ccl:${contactLogs.length}:');
+    for (final item in contactLogs) {
+      _writeStr(buf, item.id);
+      _writeStr(buf, item.accountId);
+      _writeInt(buf, item.contactedAt.millisecondsSinceEpoch);
+      _writeStr(buf, item.agreedSummary);
+      _writeNullableInt(buf, item.nextFollowUpDate?.millisecondsSinceEpoch);
+      _writeStr(buf, item.note);
+    }
+
+    final statusKeys = statementImportStatuses.keys.toList()..sort();
+    buf.write('|csis:${statusKeys.length}:');
+    for (final key in statusKeys) {
+      final status = statementImportStatuses[key]!;
+      _writeStr(buf, key);
+      _writeStr(buf, status.lastResult.name);
+      _writeInt(buf, status.lastAttemptAt.millisecondsSinceEpoch);
+      _writeStr(buf, status.failureReason);
+      _writeInt(buf, status.importedCount);
     }
 
     return buf.toString();

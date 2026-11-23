@@ -907,7 +907,18 @@ class AssetManagementAiSummaryService {
             workbook.cardStatementReconciliation.hasManualStatementPending,
         'provisional_detail_count': workbook
             .cardStatementReconciliation.provisionalBillingDetails.length,
+        'statement_import_status': <String, dynamic>{
+          for (final entry in workbook.statementImportStatuses.entries)
+            entry.key: entry.value.toJson(),
+        },
       },
+      'creditor_contact_tasks': workbook.creditorContactTasks
+          .map((task) => task.toJson())
+          .toList(growable: false),
+      'contact_log_ids': workbook.creditorContactTasks
+          .where((task) => task.latestLog != null)
+          .map((task) => task.latestLog!.id)
+          .toList(growable: false),
     };
   }
 
