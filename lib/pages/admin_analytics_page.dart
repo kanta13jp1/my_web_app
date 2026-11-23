@@ -7,10 +7,12 @@ import '../services/growth_mission_service.dart';
 import '../widgets/admin/admin_automation_ops_card.dart';
 import '../widgets/admin/admin_blog_posts_card.dart';
 import '../widgets/admin/admin_comparison_cvr_card.dart';
+import '../widgets/admin/admin_daily_stats_aggregate.dart';
 import '../widgets/admin/admin_feature_requests_card.dart';
 import '../widgets/admin/admin_growth_achievement_summary_card.dart';
 import '../widgets/admin/admin_user_feedback_card.dart';
 import '../widgets/admin/admin_waitlist_card.dart';
+import '../widgets/admin/admin_users_card.dart';
 import '../widgets/admin/admin_weekly_digest_card.dart';
 import '../widgets/admin_billing_overview.dart';
 import '../widgets/admin_growth_evidence_section.dart';
@@ -31,20 +33,6 @@ import 'admin/quota_dashboard_page.dart';
 import 'admin/blog_management_page.dart';
 import 'cmo_page.dart';
 import 'note_list_page.dart';
-
-class _FunnelMetrics {
-  final int trialRuns;
-  final int saveClicks;
-  final int magicLinkSends;
-  final int inboxOpens;
-
-  const _FunnelMetrics({
-    required this.trialRuns,
-    required this.saveClicks,
-    required this.magicLinkSends,
-    required this.inboxOpens,
-  });
-}
 
 class _GrowthActionPlan {
   final String bottleneckLabel;
@@ -81,13 +69,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   List<Map<String, dynamic>> _toolExecutionLogs = [];
   Map<String, int> _blockedReasonBreakdown = {};
   int _actualUserCount = 0;
-  int _lpTodayViews = 0;
-  int _lpTotalViews = 0;
+  AdminDailyStatsAggregate _dailyStatsAggregate =
+      AdminDailyStatsAggregate.empty();
   int _allowedToolExecutionCount = 0;
   int _blockedToolExecutionCount = 0;
   AdminPaidConversionMetrics _paidConversionMetrics =
       AdminPaidConversionMetrics.empty;
-  bool _hasLpViewStats = false;
   // R16: growth-hub x.today_status の結果(今日すでに投稿したか / 最新tweet+初速
   // インプレ / spend-cap ブロック中か)。取得失敗や available:false のときは null
   // に戻し、アクションカードは従来文言(「X投稿を作る」)へ degrade する。
@@ -128,9 +115,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   bool _automationPostingX = false;
   Map<String, dynamic>? _automationDigest;
   String? _automationError;
-
-  // admin user search
-  String _userSearchQuery = '';
 
   // growth-achievement-summary
   Map<String, dynamic>? _growthSummary;
@@ -225,26 +209,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  _FunnelMetrics _extractFunnelMetrics(Map<String, int> sources) {
-    return _FunnelMetrics(
-      trialRuns: sources['funnel_trial_run'] ?? 0,
-      saveClicks: sources['funnel_save_cta'] ?? 0,
-      magicLinkSends: sources['funnel_magic_link_send'] ?? 0,
-      inboxOpens: sources['funnel_inbox_open'] ?? 0,
-    );
-  }
-
-  AdminBillingFunnelMetrics _extractBillingFunnelMetrics(
-    Map<String, int> sources,
-  ) {
-    return AdminBillingFunnelMetrics(
-      billingViews: sources['funnel_billing_view'] ?? 0,
-      upgradeClicks: sources['funnel_upgrade_click'] ?? 0,
-      checkoutSuccesses: sources['funnel_checkout_success'] ?? 0,
-      checkoutCancels: sources['funnel_checkout_cancel'] ?? 0,
-    );
-  }
-
   Map<String, int> _extractSourceCounts(dynamic rawSourceDetails) {
     final counts = <String, int>{};
     _mergeSourceCounts(counts, rawSourceDetails);
@@ -309,29 +273,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       return remainingRegistrations;
     }
     return (remainingRegistrations / completionRate).ceil();
-  }
-
-  int _countConsecutiveNoRegistrationDays(List<Map<String, dynamic>> stats) {
-    var streak = 0;
-    for (final stat in stats) {
-      if (_toInt(stat['conversions']) > 0) {
-        break;
-      }
-      streak += 1;
-    }
-    return streak;
-  }
-
-  double _averageViews(List<Map<String, dynamic>> stats, {int days = 7}) {
-    final window = stats.take(days).toList();
-    if (window.isEmpty) {
-      return 0;
-    }
-    final total = window.fold<int>(
-      0,
-      (sum, stat) => sum + _toInt(stat['landing_views']),
-    );
-    return total / window.length;
   }
 
   /// R16: growth-hub x.today_status を fail-safe に取得する。今日境界はブラウザ
@@ -700,7 +641,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     required bool achieved,
     required int todayViews,
     required int todayRegistrations,
-    required _FunnelMetrics todayFunnel,
+    required AdminFunnelMetrics todayFunnel,
     required String? priorityChannelKey,
     required String? priorityChannelLabel,
   }) {
@@ -1918,13 +1859,19 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         for (final entry in sortedBlockedReasons) entry.key: entry.value,
       };
 
+      final dailyStatsAggregate = computeAdminDailyStatsAggregate(
+        dailyStats: mergedDailyStats,
+        lpTodayViews: _toInt(lpStats['today']),
+        lpTotalViews: _toInt(lpStats['total']),
+        hasLpViewStats: hasLpViewStats,
+        now: DateTime.now(),
+      );
+
       if (mounted) {
         setState(() {
           _dailyStats = mergedDailyStats;
+          _dailyStatsAggregate = dailyStatsAggregate;
           _actualUserCount = totalUsers;
-          _lpTodayViews = _toInt(lpStats['today']);
-          _lpTotalViews = _toInt(lpStats['total']);
-          _hasLpViewStats = hasLpViewStats;
           _toolExecutionLogs = toolExecutionLogs;
           _blockedReasonBreakdown = normalizedBlockedReasons;
           _allowedToolExecutionCount = allowedExecutionCount;
@@ -1945,87 +1892,26 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // データ集計
-    int analyticsViews = 0;
-    int totalShares = 0;
-    final Map<String, int> sourceBreakdown = {};
-    final Map<String, int> shareChannelBreakdown = {};
-    final Map<String, int> funnelBreakdown = {};
-    final Map<String, int> todaySourceDetails = {};
-    final todayKey = _dateKey(DateTime.now());
-    var todayViews = 0;
-    var todayRegistrations = 0;
-
-    int maxDailyViews = 0;
-
-    for (var stat in _dailyStats) {
-      final views = _toInt(stat['landing_views']);
-      final conv = _toInt(stat['conversions']);
-      final statDateKey = _normalizeDateKey(stat['date']);
-
-      analyticsViews += views;
-      totalShares += _toInt(stat['share_count']);
-
-      if (statDateKey == todayKey) {
-        todayViews = views;
-        todayRegistrations = conv;
-      }
-      if (views > maxDailyViews) maxDailyViews = views;
-
-      final sources = stat['source_details'];
-      if (sources != null && sources is Map) {
-        sources.forEach((key, value) {
-          final count = _toInt(value);
-          if (count > 0) {
-            final sourceKey = key.toString();
-            if (statDateKey == todayKey) {
-              todaySourceDetails[sourceKey] =
-                  (todaySourceDetails[sourceKey] ?? 0) + count;
-            }
-            final target = _isFunnelEventKey(sourceKey)
-                ? funnelBreakdown
-                : _isShareActionKey(sourceKey)
-                    ? shareChannelBreakdown
-                    : sourceBreakdown;
-            target[sourceKey] = (target[sourceKey] ?? 0) + count;
-          }
-        });
-      }
-    }
-
-    final acquisitionEvidence = adminAcquisitionEvidenceFromAggregateSignals(
-      sourceBreakdown,
-    );
-    final chartData = _dailyStats.reversed.toList();
-    final effectiveTodayViews = _hasLpViewStats ? _lpTodayViews : todayViews;
-    final effectiveTotalLpViews =
-        _hasLpViewStats ? _lpTotalViews : analyticsViews;
-    final double todaySummaryCvr = effectiveTodayViews == 0
-        ? 0
-        : (todayRegistrations / effectiveTodayViews * 100);
-    final todayFunnel = _extractFunnelMetrics(todaySourceDetails);
-    final totalFunnel = _extractFunnelMetrics(funnelBreakdown);
-    final totalBillingFunnel = _extractBillingFunnelMetrics(funnelBreakdown);
-    final total30DayRegistrations = _dailyStats.fold<int>(
-      0,
-      (sum, stat) => sum + _toInt(stat['conversions']),
-    );
-    final todayDropBeforeTrial = effectiveTodayViews > todayFunnel.trialRuns
-        ? effectiveTodayViews - todayFunnel.trialRuns
-        : 0;
-    final totalDropBeforeTrial = effectiveTotalLpViews > totalFunnel.trialRuns
-        ? effectiveTotalLpViews - totalFunnel.trialRuns
-        : 0;
-    final zeroRegistrationStreakDays = _countConsecutiveNoRegistrationDays(
-      _dailyStats,
-    );
-    // R18: streak が集計窓(_dailyStats)を使い切っていると値は下限。実際はそれ以上
-    // なので「N日以上」と正直に出す(30 をちょうどの安心値に見せない)。
-    final zeroStreakAtCap = streakAtWindowCap(
-      zeroRegistrationStreakDays,
-      _dailyStats.length,
-    );
-    final averageViewsLast7Days = _averageViews(_dailyStats);
+    final agg = _dailyStatsAggregate;
+    final totalShares = agg.totalShares;
+    final sourceBreakdown = agg.sourceBreakdown;
+    final shareChannelBreakdown = agg.shareChannelBreakdown;
+    final acquisitionEvidence = agg.acquisitionEvidence;
+    final chartData = agg.chartData;
+    final maxDailyViews = agg.maxDailyViews;
+    final todayRegistrations = agg.todayRegistrations;
+    final effectiveTodayViews = agg.effectiveTodayViews;
+    final effectiveTotalLpViews = agg.effectiveTotalLpViews;
+    final todaySummaryCvr = agg.todaySummaryCvr;
+    final todayFunnel = agg.todayFunnel;
+    final totalFunnel = agg.totalFunnel;
+    final totalBillingFunnel = agg.totalBillingFunnel;
+    final total30DayRegistrations = agg.total30DayRegistrations;
+    final todayDropBeforeTrial = agg.todayDropBeforeTrial;
+    final totalDropBeforeTrial = agg.totalDropBeforeTrial;
+    final zeroRegistrationStreakDays = agg.zeroRegistrationStreakDays;
+    final zeroStreakAtCap = agg.zeroStreakAtCap;
+    final averageViewsLast7Days = agg.averageViewsLast7Days;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -2250,7 +2136,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           ),
                         ],
                       ),
-                      child: _buildTrendChart(chartData, maxDailyViews),
+                      child: RepaintBoundary(
+                        key: const Key('admin_trend_chart_repaint_boundary'),
+                        child: _buildTrendChart(chartData, maxDailyViews),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     const Text(
@@ -2262,7 +2151,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildSourceDistribution(sourceBreakdown),
+                    RepaintBoundary(
+                      key: const Key(
+                        'admin_source_distribution_repaint_boundary',
+                      ),
+                      child: _buildSourceDistribution(sourceBreakdown),
+                    ),
                     const SizedBox(height: 24),
                     const Text(
                       'シェアチャネル (Share Actions)',
@@ -2273,7 +2167,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildSourceDistribution(shareChannelBreakdown),
+                    RepaintBoundary(
+                      key: const Key(
+                        'admin_share_distribution_repaint_boundary',
+                      ),
+                      child: _buildSourceDistribution(shareChannelBreakdown),
+                    ),
                     const SizedBox(height: 24),
                     _buildFunnelOverviewCard(
                       title: '過去30日の登録ファネル',
@@ -2322,7 +2221,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildAdminUsersCard(),
+                    AdminUsersCard(
+                      users: _adminUsers,
+                      totalUsers: _adminUsersTotal,
+                      loading: _adminUsersLoading,
+                      onRefresh: _loadAdminUsers,
+                      onUpdateUserProfile: _adminUpdateUserProfile,
+                    ),
                     const SizedBox(height: 24),
                     const Text(
                       '機能リクエスト・自動化・ウェイトリスト',
@@ -2428,7 +2333,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     required int todayViews,
     required int todayRegistrations,
     required Map<String, int> sourceBreakdown,
-    required _FunnelMetrics todayFunnel,
+    required AdminFunnelMetrics todayFunnel,
   }) {
     const dailyTarget = 1;
     final achieved = todayRegistrations >= dailyTarget;
@@ -2520,7 +2425,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     required String title,
     required int lpViews,
     required int registrations,
-    required _FunnelMetrics funnel,
+    required AdminFunnelMetrics funnel,
     required int remainingRegistrations,
   }) {
     final neededMagicLinks = _estimateNeededMagicLinks(
@@ -2558,7 +2463,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     int totalRegistrations,
     int shares,
     int totalLpViews,
-    _FunnelMetrics todayFunnel,
+    AdminFunnelMetrics todayFunnel,
   ) {
     return Card(
       elevation: 4,
@@ -2900,27 +2805,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
-  bool _isFunnelEventKey(String key) {
-    return key.startsWith('funnel_') ||
-        key.startsWith('lp_exp_') ||
-        key.startsWith('activation_exp_');
-  }
-
-  bool _isShareActionKey(String key) {
-    switch (key) {
-      case 'share_x':
-      case 'share_line':
-      case 'share_facebook':
-      case 'share_copy':
-      case 'share_note':
-      case 'public_memo_share':
-      case 'public_memo_copy':
-        return true;
-      default:
-        return false;
-    }
-  }
-
   String _formatSourceName(String key) {
     switch (key) {
       case 'direct':
@@ -3070,7 +2954,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         final cvrBadgeColor =
             views == 0 ? const Color(0xFF9CA3AF) : _getCvrColor(cvr);
         final cvrBadgeText = formatRatePercent(conv, views);
-        final dayFunnel = _extractFunnelMetrics(
+        final dayFunnel = extractAdminFunnelMetrics(
           _extractSourceCounts(stat['source_details']),
         );
 
@@ -3175,387 +3059,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
-  Widget _buildProfileCompletionSummary() {
-    // R19: 旧サマリは未fetch の completionPct(全員0)で「0完成/0途中/44未設定」を
-    // 捏造していた。email 空=匿名 auth を信頼プロキシに「実ユーザー/匿名テスト」へ
-    // 誠実に分割する(合計44 vs 実CVR4 の乖離=匿名を実登録と誤認する虚栄を防ぐ)。
-    final split = summarizeAdminUsers(_adminUsers);
-    return Row(
-      children: [
-        _profileStatChip(
-          Icons.verified_user_outlined,
-          '実ユーザー ${split.real}人',
-          const Color(0xFF0D9488),
-        ),
-        const SizedBox(width: 8),
-        _profileStatChip(
-          Icons.help_outline,
-          '匿名テスト ${split.anon}人',
-          const Color(0xFF9CA3AF),
-        ),
-      ],
-    );
-  }
-
-  Widget _profileStatChip(IconData icon, String label, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 13, color: color),
-        const SizedBox(width: 3),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: color,
-            fontWeight: FontWeight.w600,
-            height: 1.5,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAdminUsersCard() {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.people_alt_outlined, color: Color(0xFF3949AB)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _adminUsers.isEmpty
-                        ? '登録ユーザー管理 (合計 $_adminUsersTotal 人)'
-                        : '登録ユーザー管理 (合計 $_adminUsersTotal 人 / '
-                            '実 ${summarizeAdminUsers(_adminUsers).real}・'
-                            '匿名 ${summarizeAdminUsers(_adminUsers).anon})',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 20),
-                  onPressed: _loadAdminUsers,
-                  tooltip: '更新',
-                ),
-              ],
-            ),
-            if (_adminUsers.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              _buildProfileCompletionSummary(),
-            ],
-            const SizedBox(height: 8),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'メール・表示名で検索...',
-                prefixIcon: const Icon(Icons.search, size: 18),
-                suffixIcon: _userSearchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 16),
-                        onPressed: () => setState(() => _userSearchQuery = ''),
-                      )
-                    : null,
-                isDense: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 12,
-                ),
-              ),
-              style: const TextStyle(fontSize: 13, height: 1.6),
-              onChanged: (v) => setState(() => _userSearchQuery = v),
-            ),
-            const SizedBox(height: 8),
-            if (_adminUsersLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (_adminUsers.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  'ユーザーが取得できませんでした',
-                  style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
-                ),
-              )
-            else
-              Builder(
-                builder: (context) {
-                  final filteredUsers = _userSearchQuery.isEmpty
-                      ? _adminUsers
-                      : _adminUsers.where((u) {
-                          final q = _userSearchQuery.toLowerCase();
-                          final email =
-                              u['email']?.toString().toLowerCase() ?? '';
-                          final name =
-                              u['displayName']?.toString().toLowerCase() ?? '';
-                          return email.contains(q) || name.contains(q);
-                        }).toList();
-                  if (filteredUsers.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Text(
-                        '該当するユーザーが見つかりません',
-                        style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
-                      ),
-                    );
-                  }
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredUsers.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final user = filteredUsers[index];
-                      final email = user['email']?.toString() ?? '';
-                      final displayName = user['displayName']?.toString();
-                      final bio = user['bio']?.toString();
-                      final location = user['location']?.toString();
-                      final provider = user['provider']?.toString() ?? 'email';
-                      // R19: edge は created_at(snake)を返すのに旧UIは createdAt
-                      // (camel)を読み全行の登録日が空だった。snake 優先で吸収する。
-                      final createdAt = adminUserCreatedRaw(user);
-                      final lastSignIn = user['lastSignInAt']?.toString() ?? '';
-                      // R19: email 空 = Supabase 匿名 auth(headless 検証)の信頼プロキシ。
-                      final isAnonymous = adminUserIsAnonymous(user);
-
-                      // R19: 登録日=parse 不可なら「日付なし」、最終ログインは edge が
-                      // 未送出のため「ログイン記録なし」と正直に出す(空欄で誤魔化さない)。
-                      String createdStr = '日付なし';
-                      String lastSignInStr = 'ログイン記録なし';
-                      try {
-                        createdStr = DateFormat(
-                          'yyyy/MM/dd',
-                        ).format(DateTime.parse(createdAt).toLocal());
-                      } catch (_) {}
-                      try {
-                        lastSignInStr = DateFormat(
-                          'MM/dd HH:mm',
-                        ).format(DateTime.parse(lastSignIn).toLocal());
-                      } catch (_) {}
-
-                      final isGoogle = provider.contains('google');
-                      final isDark =
-                          Theme.of(context).brightness == Brightness.dark;
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CircleAvatar(
-                              radius: 18,
-                              backgroundColor: isGoogle
-                                  ? (isDark
-                                      ? const Color(0xFF0D2E1A)
-                                      : const Color(0xFFE8F5E9))
-                                  : (isDark
-                                      ? const Color(0xFF1A1E3A)
-                                      : const Color(0xFFE8EAF6)),
-                              child: Text(
-                                email.isNotEmpty
-                                    ? email[0].toUpperCase()
-                                    : (isAnonymous ? '匿' : '?'),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: isGoogle
-                                      ? const Color(0xFF388E3C)
-                                      : const Color(0xFF3949AB),
-                                  height: 1.5,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          displayName != null &&
-                                                  displayName.isNotEmpty
-                                              ? displayName
-                                              : (email.isNotEmpty
-                                                  ? email
-                                                  : '匿名ユーザー'),
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            height: 1.5,
-                                          ),
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: isGoogle
-                                              ? (isDark
-                                                  ? const Color(0xFF0D2E1A)
-                                                  : const Color(0xFFE8F5E9))
-                                              : (isDark
-                                                  ? const Color(0xFF1A1E3A)
-                                                  : const Color(0xFFE8EAF6)),
-                                          borderRadius: BorderRadius.circular(
-                                            6,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          // R30: edge users.list は provider を
-                                          // 返さない → isGoogle は常に false で
-                                          // 全員 'Email' と誤表示していた。
-                                          // 判別不能なので中立の '登録済' にする。
-                                          isAnonymous ? '匿名' : '登録済',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                            color: isGoogle
-                                                ? const Color(0xFF388E3C)
-                                                : const Color(0xFF3949AB),
-                                            height: 1.5,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  if (displayName != null &&
-                                      displayName.isNotEmpty)
-                                    Text(
-                                      email,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Color(0xFF9CA3AF),
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                  if (bio != null && bio.isNotEmpty)
-                                    Text(
-                                      bio,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                        height: 1.5,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  if (location != null && location.isNotEmpty)
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.location_on_outlined,
-                                          size: 11,
-                                          color: Color(0xFF9CA3AF),
-                                        ),
-                                        Text(
-                                          location,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: Color(0xFF9CA3AF),
-                                            height: 1.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  const SizedBox(height: 4),
-                                  // R19: completionPct は users.list が未送出で常に0。
-                                  // 「プロフィール 0%」バーは捏造なので出さず、未取得を
-                                  // 正直に表示する(R17 の display-truthfulness 規律)。
-                                  const Row(
-                                    children: [
-                                      Icon(
-                                        Icons.info_outline,
-                                        size: 11,
-                                        color: Color(0xFF9CA3AF),
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'プロフィール情報 未取得',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: Color(0xFF9CA3AF),
-                                          height: 1.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Text(
-                                    '登録: $createdStr　最終ログイン: $lastSignInStr',
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: Color(0xFF9CA3AF),
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton.icon(
-                                      onPressed: () =>
-                                          _showUserProfileDialog(user),
-                                      icon: const Icon(
-                                        Icons.person_outline,
-                                        size: 13,
-                                      ),
-                                      label: const Text(
-                                        'プロフィール詳細',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          height: 1.5,
-                                        ),
-                                      ),
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: const Color(
-                                          0xFF3949AB,
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 2,
-                                        ),
-                                        minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _adminUpdateUserProfile(
     String userId,
     Map<String, dynamic> updates,
@@ -3565,528 +3068,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     await _supabase.functions.invoke(
       'core-hub',
       body: <String, dynamic>{'action': 'user.update', ...body},
-    );
-  }
-
-  void _showUserProfileDialog(Map<String, dynamic> user) {
-    final email = user['email']?.toString() ?? '';
-    final displayName = user['displayName']?.toString() ?? '';
-    final bio = user['bio']?.toString() ?? '';
-    final location = user['location']?.toString() ?? '';
-    final twitterHandle = user['twitterHandle']?.toString() ?? '';
-    final githubHandle = user['githubHandle']?.toString() ?? '';
-    final websiteUrl = user['websiteUrl']?.toString() ?? '';
-    final avatarUrl = user['avatarUrl']?.toString() ?? '';
-    final isPublic = user['isPublic'] as bool? ?? true;
-    final completionPct = _toInt(user['completionPct']);
-    final hasProfile = user['hasProfile'] as bool? ?? false;
-    final provider = user['provider']?.toString() ?? 'email';
-    final isGoogle = provider.contains('google');
-    // R19: 行と同じ契約バグ。edge の created_at(snake)を優先で拾う。
-    final createdAt = adminUserCreatedRaw(user);
-    final lastSignIn = user['lastSignInAt']?.toString() ?? '';
-
-    String createdStr = '';
-    String lastSignInStr = '';
-    try {
-      createdStr = DateFormat(
-        'yyyy/MM/dd HH:mm',
-      ).format(DateTime.parse(createdAt).toLocal());
-    } catch (_) {}
-    try {
-      lastSignInStr = DateFormat(
-        'yyyy/MM/dd HH:mm',
-      ).format(DateTime.parse(lastSignIn).toLocal());
-    } catch (_) {}
-
-    Color profileColor;
-    if (!hasProfile || completionPct < 34) {
-      profileColor = const Color(0xFFB91C1C);
-    } else if (completionPct < 67) {
-      profileColor = const Color(0xFFFF6B35);
-    } else {
-      profileColor = const Color(0xFF0D9488);
-    }
-
-    // Build list of missing fields for the warning
-    final missingFields = <String>[];
-    if (displayName.isEmpty) missingFields.add('表示名');
-    if (bio.isEmpty) missingFields.add('自己紹介');
-    if (avatarUrl.isEmpty) missingFields.add('アバター');
-    if (location.isEmpty) missingFields.add('場所');
-    if (twitterHandle.isEmpty) missingFields.add('Twitter/X');
-    if (githubHandle.isEmpty) missingFields.add('GitHub');
-    if (websiteUrl.isEmpty) missingFields.add('ウェブサイト');
-
-    final userId = user['id']?.toString() ?? '';
-    final nameCtrl = TextEditingController(text: displayName);
-    final bioCtrl = TextEditingController(text: bio);
-    final locationCtrl = TextEditingController(text: location);
-    final twitterCtrl = TextEditingController(text: twitterHandle);
-    final githubCtrl = TextEditingController(text: githubHandle);
-    final websiteCtrl = TextEditingController(text: websiteUrl);
-
-    bool editMode = false;
-    bool saving = false;
-    bool editIsPublic = isPublic;
-
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx2, setInner) {
-          final isDark = Theme.of(ctx2).brightness == Brightness.dark;
-          Future<void> saveProfile() async {
-            setInner(() => saving = true);
-            try {
-              await _adminUpdateUserProfile(userId, {
-                'display_name': nameCtrl.text.trim(),
-                'bio': bioCtrl.text.trim(),
-                'location': locationCtrl.text.trim(),
-                'twitter_handle': twitterCtrl.text.trim(),
-                'github_handle': githubCtrl.text.trim(),
-                'website_url': websiteCtrl.text.trim(),
-                'is_public': editIsPublic,
-              });
-              if (ctx2.mounted) {
-                setInner(() {
-                  editMode = false;
-                  saving = false;
-                });
-                _loadAdminUsers();
-                ScaffoldMessenger.of(
-                  ctx2,
-                ).showSnackBar(const SnackBar(content: Text('プロフィールを更新しました')));
-              }
-            } catch (e) {
-              if (ctx2.mounted) {
-                setInner(() => saving = false);
-                ScaffoldMessenger.of(
-                  ctx2,
-                ).showSnackBar(SnackBar(content: Text('更新失敗: $e')));
-              }
-            }
-          }
-
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: Row(
-              children: [
-                if (avatarUrl.isNotEmpty)
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundImage: NetworkImage(avatarUrl),
-                    onBackgroundImageError: (_, __) {},
-                  )
-                else
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: isGoogle
-                        ? (isDark
-                            ? const Color(0xFF0D2E1A)
-                            : const Color(0xFFE8F5E9))
-                        : (isDark
-                            ? const Color(0xFF1A1E3A)
-                            : const Color(0xFFE8EAF6)),
-                    child: Text(
-                      email.isNotEmpty ? email[0].toUpperCase() : '?',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isGoogle
-                            ? const Color(0xFF388E3C)
-                            : const Color(0xFF3949AB),
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        displayName.isNotEmpty ? displayName : email,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          height: 1.5,
-                        ),
-                      ),
-                      if (displayName.isNotEmpty)
-                        Text(
-                          email,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF9CA3AF),
-                            height: 1.5,
-                          ),
-                        ),
-                      Row(
-                        children: [
-                          Icon(
-                            isPublic ? Icons.public : Icons.lock_outlined,
-                            size: 12,
-                            color: const Color(0xFF9CA3AF),
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            isPublic ? '公開プロフィール' : '非公開プロフィール',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Color(0xFF9CA3AF),
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                if (editMode)
-                  Chip(
-                    label: const Text(
-                      '編集中',
-                      style: TextStyle(fontSize: 10, height: 1.5),
-                    ),
-                    backgroundColor: isDark
-                        ? const Color(0xFF0A1A2E)
-                        : const Color(0xFFE3F2FD),
-                    visualDensity: VisualDensity.compact,
-                  ),
-              ],
-            ),
-            content: SizedBox(
-              width: 400,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: completionPct / 100,
-                              minHeight: 6,
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                profileColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'プロフィール $completionPct%',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: profileColor,
-                            fontWeight: FontWeight.w600,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Divider(height: 1),
-                    const SizedBox(height: 12),
-                    if (!editMode) ...[
-                      _profileDetailRow(
-                        Icons.person_outlined,
-                        '表示名',
-                        displayName,
-                      ),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(Icons.notes_outlined, '自己紹介', bio),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(
-                        Icons.image_outlined,
-                        'アバター画像',
-                        avatarUrl,
-                      ),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(
-                        Icons.location_on_outlined,
-                        '場所',
-                        location,
-                      ),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(
-                        Icons.alternate_email,
-                        'Twitter/X',
-                        twitterHandle.isNotEmpty ? '@$twitterHandle' : '',
-                      ),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(
-                        Icons.code,
-                        'GitHub',
-                        githubHandle.isNotEmpty ? '@$githubHandle' : '',
-                      ),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(
-                        Icons.link_outlined,
-                        'ウェブサイト',
-                        websiteUrl,
-                      ),
-                      const SizedBox(height: 8),
-                      _profileDetailRow(
-                        isPublic ? Icons.public : Icons.lock_outlined,
-                        '公開設定',
-                        isPublic ? '公開' : '非公開',
-                      ),
-                      if (!hasProfile || missingFields.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF64748B),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFFDE68A)),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(
-                                Icons.warning_amber_outlined,
-                                size: 16,
-                                color: Color(0xFFB45309),
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  !hasProfile
-                                      ? 'プロフィールが未作成です。'
-                                      : '未設定の項目: ${missingFields.join('、')}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Color(0xFF92400E),
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ] else ...[
-                      TextField(
-                        controller: nameCtrl,
-                        decoration: const InputDecoration(
-                          labelText: '表示名',
-                          prefixIcon: Icon(Icons.person_outlined, size: 18),
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        style: const TextStyle(fontSize: 13, height: 1.6),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: bioCtrl,
-                        decoration: const InputDecoration(
-                          labelText: '自己紹介',
-                          prefixIcon: Icon(Icons.notes_outlined, size: 18),
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        maxLines: 2,
-                        style: const TextStyle(fontSize: 13, height: 1.6),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: locationCtrl,
-                        decoration: const InputDecoration(
-                          labelText: '場所',
-                          prefixIcon: Icon(
-                            Icons.location_on_outlined,
-                            size: 18,
-                          ),
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        style: const TextStyle(fontSize: 13, height: 1.6),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: twitterCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Twitter/X (@なし)',
-                          prefixIcon: Icon(Icons.alternate_email, size: 18),
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        style: const TextStyle(fontSize: 13, height: 1.6),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: githubCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'GitHub (@なし)',
-                          prefixIcon: Icon(Icons.code, size: 18),
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        style: const TextStyle(fontSize: 13, height: 1.6),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: websiteCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'ウェブサイト URL',
-                          prefixIcon: Icon(Icons.link_outlined, size: 18),
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        style: const TextStyle(fontSize: 13, height: 1.6),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.public,
-                            size: 16,
-                            color: Color(0xFF9CA3AF),
-                          ),
-                          const SizedBox(width: 6),
-                          const Text(
-                            '公開プロフィール',
-                            style: TextStyle(fontSize: 13, height: 1.6),
-                          ),
-                          const Spacer(),
-                          Switch(
-                            value: editIsPublic,
-                            onChanged: (v) => setInner(() => editIsPublic = v),
-                          ),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    const Divider(height: 1),
-                    const SizedBox(height: 8),
-                    _profileFieldRow(
-                      Icons.calendar_today_outlined,
-                      '登録日',
-                      createdStr,
-                    ),
-                    const SizedBox(height: 4),
-                    _profileFieldRow(
-                      Icons.login_outlined,
-                      '最終ログイン',
-                      lastSignInStr,
-                    ),
-                    const SizedBox(height: 4),
-                    _profileFieldRow(
-                      isGoogle ? Icons.g_mobiledata : Icons.email_outlined,
-                      '認証方法',
-                      isGoogle ? 'Google OAuth' : 'メール/パスワード',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  if (editMode) {
-                    setInner(() => editMode = false);
-                  } else {
-                    Navigator.pop(ctx2);
-                  }
-                },
-                child: Text(editMode ? 'キャンセル' : '閉じる'),
-              ),
-              if (!editMode)
-                TextButton.icon(
-                  onPressed: () => setInner(() => editMode = true),
-                  icon: const Icon(Icons.edit_outlined, size: 16),
-                  label: const Text('編集'),
-                )
-              else
-                FilledButton.icon(
-                  onPressed: saving ? null : saveProfile,
-                  icon: saving
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Color(0xFFE5E7EB),
-                          ),
-                        )
-                      : const Icon(Icons.save_outlined, size: 16),
-                  label: Text(saving ? '保存中...' : '保存'),
-                ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _profileFieldRow(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 14, color: const Color(0xFF9CA3AF)),
-        const SizedBox(width: 6),
-        Text(
-          '$label: ',
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF9CA3AF),
-            height: 1.5,
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 12, height: 1.5),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 3,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Profile detail row that shows "未設定" with a muted style for empty values.
-  Widget _profileDetailRow(IconData icon, String label, String value) {
-    final isEmpty = value.isEmpty;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          icon,
-          size: 14,
-          color: isEmpty ? const Color(0xFFF87171) : const Color(0xFF9CA3AF),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          '$label: ',
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF9CA3AF),
-            height: 1.5,
-          ),
-        ),
-        Expanded(
-          child: Text(
-            isEmpty ? '未設定' : value,
-            style: TextStyle(
-              fontSize: 12,
-              color: isEmpty ? const Color(0xFFF87171) : null,
-              fontStyle: isEmpty ? FontStyle.italic : FontStyle.normal,
-              height: 1.5,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 3,
-          ),
-        ),
-      ],
     );
   }
 
