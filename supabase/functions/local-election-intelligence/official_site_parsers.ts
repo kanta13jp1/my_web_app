@@ -92,6 +92,7 @@ export interface OfficialScheduledCandidate {
 export interface PrefectureDirectoryEntry {
   prefecture: string;
   sourceUrl: string;
+  expectedMembers?: number | null;
 }
 
 export function stripTags(value: string): string {
@@ -288,29 +289,71 @@ export function extractMunicipality(
   return normalizedConstituency;
 }
 
+function extractDirectoryExpectedMembers(
+  anchorAttributes: string,
+  innerHtml: string,
+): number | null {
+  const countBadgeMatch = innerHtml.match(
+    /<span[^>]*class="[^"]*\blocal_list_count\b[^"]*"[^>]*>([\s\S]*?)<\/span>/i,
+  );
+  if (countBadgeMatch?.[1]) {
+    const digits = toAsciiDigits(decodeHtml(stripTags(countBadgeMatch[1])))
+      .trim();
+    if (/^\d+$/.test(digits)) {
+      return Number.parseInt(digits, 10);
+    }
+  }
+  const ariaMatch = anchorAttributes.match(
+    /aria-label="[^"]*[（(]\s*([0-9０-９]+)\s*\u540d\s*[）)]"/i,
+  );
+  if (ariaMatch?.[1]) {
+    const digits = toAsciiDigits(ariaMatch[1]).trim();
+    if (/^\d+$/.test(digits)) {
+      return Number.parseInt(digits, 10);
+    }
+  }
+  return null;
+}
+
+function isGenericLocalMembersSection(heading: string): boolean {
+  return heading.includes(JP_LOCAL_ASSEMBLY_MEMBERS) &&
+    !heading.includes(JP_PLANNED_CANDIDATES);
+}
+
 export function parsePrefectureDirectoryEntries(
   html: string,
 ): PrefectureDirectoryEntry[] {
   const links = new Map<string, string>();
+  const expectedCounts = new Map<string, number>();
   const linkRegex =
-    /<a[^>]+href="([^"]*\/member_tag\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/gsi;
+    /<a([^>]*\bhref="([^"]*\/member_tag\/[^"]+)"[^>]*)>([\s\S]*?)<\/a>/gsi;
   for (const match of html.matchAll(linkRegex)) {
-    const rawLabel = normalizeWhitespace(decodeHtml(stripTags(match[2] ?? "")))
+    const rawAttributes = match[1] ?? "";
+    const rawHref = match[2]?.trim() ?? "";
+    const innerHtml = match[3] ?? "";
+    const rawLabel = normalizeWhitespace(decodeHtml(stripTags(innerHtml)))
       .trim();
     const label = extractPrefectureLabel(rawLabel);
-    const rawHref = match[1]?.trim() ?? "";
     if (!isPrefectureName(label) || rawHref === "") {
       continue;
     }
     const sourceUrl = new URL(rawHref, OFFICIAL_MEMBER_PAGE_URL).toString();
+    const expected = extractDirectoryExpectedMembers(rawAttributes, innerHtml);
     links.set(label, sourceUrl);
     links.set(prefectureLookupKey(label), sourceUrl);
+    if (expected !== null) {
+      expectedCounts.set(label, expected);
+      expectedCounts.set(prefectureLookupKey(label), expected);
+    }
   }
   return PREFECTURES.map((prefecture) => ({
     prefecture,
     sourceUrl: links.get(prefecture) ??
       links.get(prefectureLookupKey(prefecture)) ??
       "",
+    expectedMembers: expectedCounts.get(prefecture) ??
+      expectedCounts.get(prefectureLookupKey(prefecture)) ??
+      null,
   }));
 }
 
@@ -320,10 +363,7 @@ export function parsePrefectureMembers(
   html: string,
 ): LocalLegislatorProfile[] {
   const sections = matchMemberListSections(html).filter((section) => {
-    if (
-      section.heading.includes(prefecture) &&
-      section.heading.includes(JP_LOCAL_ASSEMBLY_MEMBERS)
-    ) {
+    if (isGenericLocalMembersSection(section.heading)) {
       return true;
     }
     const headingLabel = stripMemberCountSuffix(section.heading);
@@ -333,11 +373,15 @@ export function parsePrefectureMembers(
 
   for (const section of sections) {
     const headingLabel = stripMemberCountSuffix(section.heading);
+    const isGenericLocalSection = isGenericLocalMembersSection(section.heading);
     for (const cardHtml of extractListItems(section.listHtml)) {
       const card = parseMemberCard(cardHtml, sourceUrl);
       const assemblyLabel = card.assemblyLabel || headingLabel;
       const assemblyCategory = inferAssemblyCategory(assemblyLabel);
-      if (card.name === "" || assemblyCategory === "other") {
+      if (
+        card.name === "" ||
+        (!isGenericLocalSection && assemblyCategory === "other")
+      ) {
         continue;
       }
       members.push({

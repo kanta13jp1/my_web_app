@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -5723,6 +5724,746 @@ void main() {
         await tester.pump(const Duration(milliseconds: 400));
 
         expect(tester.takeException(), isNull);
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #3308: payment flag inconsistency section fixes R3 row via actual payment dialog',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 3600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'mobit': 1},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  paidAccountNames: <String>{'mobit'},
+                  paymentOverrides: <String, double>{'mobit': 15000},
+                  paymentSourceAccountIds: <String, String>{
+                    'mobit': 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -300000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final section = find.byKey(
+          const Key('asset_payment_inconsistency_section'),
+        );
+        expect(section, findsOneWidget);
+        expect(find.text('支払記録の不整合（1件）'), findsOneWidget);
+        expect(
+          find.byKey(const Key('asset_inconsistency_row_mobit')),
+          findsOneWidget,
+        );
+
+        final editBtn = find.byKey(
+          const Key('asset_inconsistency_edit_actual_mobit'),
+        );
+        await tester.ensureVisible(editBtn);
+        await tester.pump();
+        await tester.tap(editBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_inconsistency_fix_dialog')),
+          findsOneWidget,
+        );
+        final useScheduledBtn = find.byKey(
+          const Key('asset_inconsistency_use_scheduled_button'),
+        );
+        expect(useScheduledBtn, findsOneWidget);
+        await tester.tap(useScheduledBtn);
+        await tester.pump();
+
+        final saveBtn = find.byKey(
+          const Key('asset_inconsistency_save_button'),
+        );
+        await tester.tap(saveBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_inconsistency_fix_dialog')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_inconsistency_section')),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #3309: highlights high interest debts, shows header interest total, and toggles sort mode',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        const jibunId =
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId;
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 4800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{
+                  'mobit': 20,
+                  'yokohama_bank': 5,
+                  jibunId: 3,
+                },
+                monthlyState: const AssetLiabilityMonthlyState(
+                  annualRateOverrides: <String, double>{
+                    'mobit': 0.18,
+                    'yokohama_bank': 0.145,
+                    jibunId: 0.05,
+                  },
+                  paymentOverrides: <String, double>{
+                    'mobit': 15000,
+                    'yokohama_bank': 10000,
+                    jibunId: 5000,
+                  },
+                  paymentSourceAccountIds: <String, String>{
+                    'mobit': 'wallet_cash',
+                    'yokohama_bank': 'wallet_cash',
+                    jibunId: 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -300000,
+                  '横浜銀行': -200000,
+                  'じぶん銀行カードローン': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.text('負債マスタ（高金利優先）'), findsOneWidget);
+        final interestChip = find.byKey(
+          const Key('asset_debt_monthly_interest_header_chip'),
+        );
+        expect(interestChip, findsOneWidget);
+        expect(
+          find.descendant(
+            of: interestChip,
+            matching: find.textContaining('今月の金利負担（概算）:'),
+          ),
+          findsOneWidget,
+        );
+
+        final mobitBadge = find.byKey(
+          const Key('asset_debt_high_rate_badge_mobit'),
+        );
+        final yokohamaBadge = find.byKey(
+          const Key('asset_debt_high_rate_badge_yokohama_bank'),
+        );
+        expect(mobitBadge, findsOneWidget);
+        expect(yokohamaBadge, findsOneWidget);
+        expect(
+          find.descendant(of: mobitBadge, matching: find.text('高金利 18.0%')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: yokohamaBadge, matching: find.text('要注意 14.5%')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_high_rate_badge_$jibunId')),
+          findsNothing,
+        );
+
+        expect(
+          find.byKey(const Key('asset_payment_risk_rate_badge_20')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_risk_rate_badge_5')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_risk_rate_badge_3')),
+          findsNothing,
+        );
+
+        final mobitTitle =
+            find.byKey(const Key('asset_debt_master_title_mobit'));
+        final yokohamaTitle = find.byKey(
+          const Key('asset_debt_master_title_yokohama_bank'),
+        );
+        final jibunTitle = find.byKey(
+          const Key('asset_debt_master_title_$jibunId'),
+        );
+        expect(
+          tester.getTopLeft(mobitTitle).dy,
+          lessThan(tester.getTopLeft(yokohamaTitle).dy),
+        );
+        expect(
+          tester.getTopLeft(yokohamaTitle).dy,
+          lessThan(tester.getTopLeft(jibunTitle).dy),
+        );
+
+        final paymentDayChip = find.byKey(
+          const Key('asset_debt_sort_payment_day'),
+        );
+        await tester.ensureVisible(paymentDayChip);
+        await tester.pump();
+        await tester.tap(paymentDayChip);
+        await tester.pump();
+
+        expect(find.text('負債マスタ（支払日順）'), findsOneWidget);
+        expect(
+          tester.getTopLeft(jibunTitle).dy,
+          lessThan(tester.getTopLeft(yokohamaTitle).dy),
+        );
+        expect(
+          tester.getTopLeft(yokohamaTitle).dy,
+          lessThan(tester.getTopLeft(mobitTitle).dy),
+        );
+
+        final highInterestChip = find.byKey(
+          const Key('asset_debt_sort_high_interest'),
+        );
+        await tester.ensureVisible(highInterestChip);
+        await tester.pump();
+        await tester.tap(highInterestChip);
+        await tester.pump();
+
+        expect(find.text('負債マスタ（高金利優先）'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #3290: displays top 5 monthly interest card, total badge matching Dart calculation, and copy shortcut',
+      (tester) async {
+        String? copiedClipboard;
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              final args = call.arguments as Map<dynamic, dynamic>?;
+              copiedClipboard = args?['text'] as String?;
+              return null;
+            }
+            if (call.method == 'Clipboard.getData') {
+              if (copiedClipboard == null) return null;
+              return <String, dynamic>{'text': copiedClipboard};
+            }
+            return null;
+          },
+        );
+        addTearDown(() {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(SystemChannels.platform, null);
+        });
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        const jibunId =
+            AssetLiabilityPlanningService.jibunBankCardLoanAccountId;
+        const acomShopId = AssetLiabilityPlanningService.acomShoppingAccountId;
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 5600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  annualRateOverrides: <String, double>{
+                    'mobit': 0.18,
+                    acomShopId: 0.16,
+                    'acom_card_loan': 0.15,
+                    'yokohama_bank': 0.145,
+                    'smbc_card_loan': 0.145,
+                    jibunId: 0.05,
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -800000,
+                  'アコムショッピング': -600000,
+                  'アコムカードローン': -500000,
+                  '横浜銀行': -400000,
+                  '三井住友銀行CL': -300000,
+                  'じぶん銀行カードローン': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_top_monthly_interest_card')),
+          findsOneWidget,
+        );
+        expect(find.text('今月の利息トップ5'), findsOneWidget);
+
+        final totalBadge = find.byKey(
+          const Key('asset_top_interest_total_badge'),
+        );
+        expect(totalBadge, findsOneWidget);
+        expect(
+          find.descendant(
+            of: totalBadge,
+            matching: find.textContaining('今月の利息合計（概算）:'),
+          ),
+          findsOneWidget,
+        );
+
+        final headerInterestText = tester
+            .widget<Text>(
+              find.descendant(
+                of: find.byKey(
+                  const Key('asset_debt_monthly_interest_header_chip'),
+                ),
+                matching: find.byType(Text),
+              ),
+            )
+            .data!;
+        final totalBadgeText = tester
+            .widget<Text>(
+              find.descendant(of: totalBadge, matching: find.byType(Text)),
+            )
+            .data!;
+        final expectedAmountSuffix = headerInterestText.split(': ').last;
+        expect(totalBadgeText, endsWith(expectedAmountSuffix));
+
+        expect(
+          find.byKey(const Key('asset_top_interest_row_mobit')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_$acomShopId')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_acom_card_loan')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_yokohama_bank')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_smbc_card_loan')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_top_interest_row_$jibunId')),
+          findsNothing,
+        );
+
+        final consultBtn = find.byKey(
+          const Key('asset_top_interest_consult_mobit'),
+        );
+        await tester.ensureVisible(consultBtn);
+        await tester.pump();
+        await tester.tap(consultBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(copiedClipboard, contains('モビット'));
+        expect(find.text('モビットへの相談文をコピーしました。'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #3330 & #3368: displays discrepancy highlight, syncs scheduled payment with reason, and supports undo',
+      (tester) async {
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 4200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'yokohama_bank': 15},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  paidAccountNames: <String>{'yokohama_bank'},
+                  paymentOverrides: <String, double>{'yokohama_bank': 0},
+                  actualPaymentAmounts: <String, double>{'yokohama_bank': 5146},
+                  paymentSourceAccountIds: <String, String>{
+                    'yokohama_bank': 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  '横浜銀行': -171547,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_payment_discrepancy_card')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_discrepancy_row_yokohama_bank')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_diff_badge_yokohama_bank')),
+          findsOneWidget,
+        );
+        expect(find.text('差分あり'), findsWidgets);
+
+        final fixBtn = find.byKey(
+          const Key('asset_discrepancy_fix_yokohama_bank'),
+        );
+        await tester.ensureVisible(fixBtn);
+        await tester.pump();
+        await tester.tap(fixBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_discrepancy_fix_dialog')),
+          findsOneWidget,
+        );
+        await tester.enterText(
+          find.byKey(const Key('asset_discrepancy_reason_field')),
+          '引落実額に確定',
+        );
+        await tester.tap(
+          find.byKey(const Key('asset_discrepancy_sync_confirm_button')),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_discrepancy_fix_dialog')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const Key('asset_payment_discrepancy_card')),
+          findsNothing,
+        );
+
+        final undoFinder = find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.text('元に戻す'),
+        );
+        expect(undoFinder, findsOneWidget);
+
+        await tester.tap(undoFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.byKey(const Key('asset_payment_discrepancy_card')),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #3406, #3358 & #3375: displays principal/interest efficiency, consultation copy template, and dynamic priority list amounts',
+      (tester) async {
+        String? copiedClipboard;
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              final args = call.arguments as Map<dynamic, dynamic>?;
+              copiedClipboard = args?['text'] as String?;
+              return null;
+            }
+            if (call.method == 'Clipboard.getData') {
+              if (copiedClipboard == null) return null;
+              return <String, dynamic>{'text': copiedClipboard};
+            }
+            return null;
+          },
+        );
+        addTearDown(() {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(SystemChannels.platform, null);
+        });
+
+        final now = DateTime(2026, 9, 2);
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 5600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugNow: now,
+              assetLiabilityRepository: _FakeDebtOverrideRepository(
+                const <String, int>{'mobit': 1, 'yokohama_bank': 15},
+                monthlyState: const AssetLiabilityMonthlyState(
+                  paymentOverrides: <String, double>{
+                    'mobit': 25000,
+                    'yokohama_bank': 15000,
+                  },
+                  annualRateOverrides: <String, double>{
+                    'mobit': 0.18,
+                    'yokohama_bank': 0.145,
+                  },
+                  paymentSourceAccountIds: <String, String>{
+                    'mobit': 'wallet_cash',
+                    'yokohama_bank': 'wallet_cash',
+                  },
+                ),
+              ),
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 500000,
+                  'モビット': -1500000,
+                  '横浜銀行': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // #3406: 元金・利息内訳チップと元金充当率低警告
+        final mobitPi = find.byKey(
+          const Key('asset_debt_principal_interest_mobit'),
+        );
+        final yokohamaPi = find.byKey(
+          const Key('asset_debt_principal_interest_yokohama_bank'),
+        );
+        expect(mobitPi, findsOneWidget);
+        expect(yokohamaPi, findsOneWidget);
+        expect(
+          find.descendant(of: mobitPi, matching: find.textContaining('元金')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: mobitPi, matching: find.textContaining('利息')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('asset_debt_low_principal_warning_mobit')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(
+            const Key('asset_debt_low_principal_warning_yokohama_bank'),
+          ),
+          findsNothing,
+        );
+
+        // #3375: 返済優先リストに利率・残高順＋予定額・月利息・上乗せ目安
+        final mobitPriority = find.byKey(
+          const Key('asset_repayment_priority_row_mobit'),
+        );
+        final yokohamaPriority = find.byKey(
+          const Key('asset_repayment_priority_row_yokohama_bank'),
+        );
+        expect(mobitPriority, findsOneWidget);
+        expect(yokohamaPriority, findsOneWidget);
+        expect(
+          tester.getTopLeft(mobitPriority).dy,
+          lessThan(tester.getTopLeft(yokohamaPriority).dy),
+        );
+        expect(
+          find.descendant(
+            of: mobitPriority,
+            matching: find.textContaining('推奨上乗せ目安 +¥5,000'),
+          ),
+          findsOneWidget,
+        );
+
+        // #3358: 支払相談優先先のワンクリックコピーテンプレ
+        final copyConsultBtn = find.byKey(
+          const Key('asset_payment_consultation_copy_mobit'),
+        );
+        await tester.ensureVisible(copyConsultBtn);
+        await tester.pump();
+        await tester.tap(copyConsultBtn);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(copiedClipboard, contains('モビット'));
+        expect(copiedClipboard, contains('支払予定日: 2026/09/01'));
+        expect(copiedClipboard, contains('推定最低支払額:'));
+        expect(copiedClipboard, contains('年利: 18.0%'));
+        expect(find.text('モビットへの相談文をコピーしました。'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Issue #4103 & #4086: displays red AppBar discipline badge, modal roadmap, confirmed schedule override, and task creation',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        final monthKey =
+            AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(now);
+        final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+          <String, AssetLiabilityRevolvingCreditConfig>{
+            'famipay_card': const AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 30000,
+            ),
+          },
+        );
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetLiabilityMonthlyStateStore.actualPaymentPrefsKey: jsonEncode(
+            <String, Map<String, double>>{
+              monthKey: <String, double>{'famipay_card': 5000},
+            },
+          ),
+          AssetLiabilityMonthlyStateStore.paidPrefsKey: jsonEncode(
+            <String, List<String>>{
+              monthKey: <String>['famipay_card'],
+            },
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugCalendarNow: DateTime(2026, 7, 10),
+              debugRevolvingConfigsMirror: mirrorValue,
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 50000,
+                  'ファミペイ': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final headerBadge = find.byKey(
+          const Key('asset_discipline_header_badge'),
+        );
+        expect(headerBadge, findsOneWidget);
+        expect(
+          find.descendant(of: headerBadge, matching: find.text('未照合 1件')),
+          findsOneWidget,
+        );
+
+        await tester.tap(headerBadge);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const Key('asset_discipline_violations_modal')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(
+            const Key('asset_discipline_modal_escape_plan_famipay_card'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('解消目標: 12ヶ月以内に毎月'),
+          findsOneWidget,
+        );
+
+        final applyPlanBtn = find.byKey(
+          const Key('asset_discipline_apply_plan_famipay_card'),
+        );
+        expect(applyPlanBtn, findsOneWidget);
+        await tester.tap(applyPlanBtn);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const Key('asset_discipline_apply_plan_confirm_dialog')),
+          findsOneWidget,
+        );
+        expect(find.textContaining('+¥30,000'), findsOneWidget);
+
+        await tester.tap(
+          find.byKey(const Key('asset_discipline_confirm_apply_famipay_card')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('ファミペイの支払予定額を'), findsOneWidget);
+
+        final createTaskBtn = find.byKey(
+          const Key('asset_discipline_create_task_famipay_card'),
+        );
+        await tester.tap(createTaskBtn);
+        await tester.pumpAndSettle();
+        expect(find.text('ファミペイの返済タスクを作成しました'), findsOneWidget);
+
+        final closeModalBtn = find.descendant(
+          of: find.byKey(const Key('asset_discipline_violations_modal')),
+          matching: find.text('閉じる'),
+        );
+        await tester.tap(closeModalBtn);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.textContaining('ファミペイ 解消計画: 12ヶ月以内に毎月'),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+
         await _unmount(tester);
       },
     );

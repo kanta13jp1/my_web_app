@@ -34,6 +34,7 @@
 | デイリーブリーフィング | `daily_briefing_v2_*` | `x-daily-briefing-post.yml` (日次 22:00 UTC) | 日次 | 候補作成→publish op |
 | AIツール定点観測 | `ai_tool_tracker` | `x-ai-tool-tracker-queue.yml` (日次 21:45 UTC / R27) | 更新検知日のみ | 候補キュー(HITL) |
 | 選挙: 両党地力差 | `party_gap_ranking` | `local-election-snapshot-queue.yml` 内 (ISO週キー冪等 / R28) | 週次(日次cronから週1生成) | 候補キュー(HITL) |
+| 選挙: 公明党 地方議員 | `komeito_member_tracker` | `komeito-member-tracker-queue.yml` (日次 08:15 JST / #4026) | 有意差分時のみ | 候補キュー(HITL) |
 
 ラベルの表示用対応は `lib/pages/admin_x_candidate_queue.dart` の
 `kXTrackerSeriesLabels`(系列追加時にここも更新)。
@@ -87,6 +88,7 @@
 | 系列 | 出現契機 |
 |---|---|
 | 選挙 delta (member/candidate/schedule) | 公式データに有意差分が出た日のみ |
+| 公明党 地方議員 (komeito_member_tracker) | 公式集計に有意差分が出た日のみ |
 | 両党地力差 (party_gap_ranking) | 週1(ISO週キーで週1候補) |
 | AIツール定点観測 (ai_tool_tracker) | 公式changelog更新検知日のみ |
 | デイリーブリーフィング | 毎日 |

@@ -858,6 +858,25 @@ void main() {
       expect(report.implementationContexts.isNotEmpty, true);
     });
 
+    test('includes payment inconsistency summary in developer requests', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'PayPayカード': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 0},
+        actualPaymentAmounts: const <String, double>{'paypay_card': 14617},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+      final req = report.developerRequests.firstWhere(
+        (item) => item.title == '支払記録の不整合（R1〜R3）の解消',
+      );
+      expect(req.description, contains('不整合のある項目が1件'));
+      expect(req.evidence.join(' '), contains('PayPayカード(R2)'));
+    });
+
     test('detects card billing configuration action items', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000, 'KDDI': -5764},
@@ -1623,6 +1642,80 @@ void main() {
       );
       expect(report.subscriptionExcessAlert, isNull);
     });
+  });
+
+  group('Issue #3393 & #4086 payment discrepancy & escape plan prompts', () {
+    test(
+      'adds paymentDiscrepancy critical action when actual < minimum/scheduled (#3393)',
+      () {
+        final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'bank': 50000,
+            'モビット': -200000,
+          },
+          baseDate: DateTime(2026, 6, 15),
+          monthlyPaymentOverrides: const <String, double>{'mobit': 12000},
+          actualPaymentAmounts: const <String, double>{'mobit': 5000},
+        );
+        final report = const AssetManagementInsightService().buildReport(
+          workbook: workbook,
+          userProfile: _userProfile(),
+        );
+
+        final discrepancyActions = report.actionItems
+            .where(
+              (item) =>
+                  item.type ==
+                  AssetManagementInsightActionType.paymentDiscrepancy,
+            )
+            .toList(growable: false);
+        expect(discrepancyActions, hasLength(1));
+        expect(
+          discrepancyActions.single.severity,
+          AssetManagementInsightSeverity.critical,
+        );
+        expect(discrepancyActions.single.title, contains('差額7,000円が発生'));
+        expect(
+          discrepancyActions.single.description,
+          contains('原因確認・補填の必要あり'),
+        );
+        expect(
+          discrepancyActions.single.suggestedAction,
+          contains('なぜ差額があるのか確認'),
+        );
+      },
+    );
+
+    test(
+      'prompt includes escape target period & monthly payment for revolving violation (#4086)',
+      () {
+        final workbook = const AssetLiabilityPlanningService().buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'cash': 50000,
+            'auPayカード': -500000,
+          },
+          baseDate: DateTime(2026, 6, 10),
+          revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+            'aupay_card': AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 20000,
+              creditLimit: 500000,
+            ),
+          },
+          paidAccountNames: const <String>{'auPayカード'},
+          actualPaymentAmounts: const <String, double>{'aupay_card': 5000},
+        );
+        final report = const AssetManagementInsightService().buildReport(
+          workbook: workbook,
+          userProfile: _userProfile(),
+        );
+        final prompt = const AssetManagementInsightPromptBuilder()
+            .buildDetailedAdvicePrompt(report);
+
+        expect(prompt, contains('推奨アクション:'));
+        expect(prompt, contains('解消目標プラン: 12ヶ月以内に毎月'));
+      },
+    );
   });
 }
 

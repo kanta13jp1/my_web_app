@@ -5,6 +5,7 @@ import 'package:my_web_app/services/asset_revolving_credit_service.dart';
 
 import '../models/asset_liability_workbook.dart';
 import 'asset_payment_calendar_service.dart';
+import 'asset_payment_inconsistency_service.dart';
 
 /// ハードコードされた既定固定費 (家賃/KDDI/水道/ガス) をデータ駆動で表す内部記述子。
 ///
@@ -491,6 +492,11 @@ class AssetLiabilityPlanningService {
     final cashAfterScheduledPayments = cashLikeTotal -
         monthlyUnpaidPaymentTotal +
         monthlyUnreceivedIncomeTotal;
+    final paymentInconsistencies = AssetPaymentInconsistencyService.detect(
+      debtRows: debtMasterRows,
+      cashflowRows: cashflowRows,
+      baseDate: baseDate,
+    );
 
     return AssetLiabilityWorkbook(
       baseDate: baseDate,
@@ -535,6 +541,7 @@ class AssetLiabilityPlanningService {
       scheduledExpenseAccountIds: scheduledExpenseAccountIds,
       subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds,
       cardUsagePolicies: cardUsagePolicies,
+      paymentInconsistencies: paymentInconsistencies,
     );
   }
 

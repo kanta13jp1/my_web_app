@@ -2189,6 +2189,92 @@ void main() {
       expect(payload.containsKey('daily_todo'), isFalse);
     });
   });
+
+  group('Issue #3393 & #4086 AI payload, rules, and deterministic summary', () {
+    test(
+      'emits payment_discrepancies and discipline escape plan in payload, prompt, and fallback summary',
+      () async {
+        const planner = AssetLiabilityPlanningService();
+        final workbook = planner.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'cash': 80000,
+            'auPayカード': -500000,
+            'モビット': -200000,
+          },
+          baseDate: DateTime(2026, 6, 15),
+          revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+            'aupay_card': AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 25000,
+              creditLimit: 500000,
+            ),
+          },
+          monthlyPaymentOverrides: const <String, double>{'mobit': 12000},
+          paidAccountNames: const <String>{'auPayカード'},
+          actualPaymentAmounts: const <String, double>{
+            'aupay_card': 5000,
+            'mobit': 5000,
+          },
+        );
+        final report = const AssetManagementInsightService().buildReport(
+          workbook: workbook,
+          userProfile: _userProfile(),
+          minimumSafetyBalance: 10000,
+        );
+
+        String? capturedMessage;
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (body) async {
+              capturedMessage = body['message']?.toString();
+              return <String, dynamic>{
+                'success': true,
+                'text': '## 1. 現状\n- 日本語の要約テストです。',
+                'provider': 'groq',
+              };
+            },
+          ),
+          now: () => DateTime(2026, 6, 15, 12),
+        );
+
+        final payload = service.buildPayload(report);
+        final detailedPayload = service.buildAiDetailedPayload(report);
+        expect(payload['payment_discrepancies'], isList);
+        expect(detailedPayload['payment_discrepancies'], isList);
+        final discrepancies = payload['payment_discrepancies'] as List<dynamic>;
+        expect(discrepancies, hasLength(2));
+        final mobitDiff = discrepancies.firstWhere(
+          (item) => (item as Map<String, dynamic>)['account_id'] == 'mobit',
+        ) as Map<String, dynamic>;
+        expect(mobitDiff['account_id'], 'mobit');
+        expect(mobitDiff['difference_amount'], -7000);
+        expect(mobitDiff['needs_top_up'], isTrue);
+
+        final disciplineMap =
+            payload['discipline_report'] as Map<String, dynamic>;
+        final violations = disciplineMap['violations'] as List<dynamic>;
+        expect(violations, isNotEmpty);
+        final aupayViolation = violations.single as Map<String, dynamic>;
+        expect(aupayViolation['escape_months'], 12);
+        expect(aupayViolation['escape_monthly_payment'], isA<num>());
+        expect(
+          aupayViolation['escape_plan_label'],
+          contains('12ヶ月以内に毎月'),
+        );
+
+        final deterministic = service.buildDeterministicSummary(report);
+        expect(deterministic, contains('支払差額確認: モビット'));
+        expect(deterministic, contains('原因確認・補填の必要あり'));
+        expect(deterministic, contains('リボ解消目標: auPayカード'));
+        expect(deterministic, contains('12ヶ月以内に毎月'));
+
+        await service.generateSummary(report: report);
+        expect(capturedMessage, contains('支払差額ルール'));
+        expect(capturedMessage, contains('リボ解消目標ルール'));
+      },
+    );
+  });
 }
 
 AssetManagementInsightReport _reportWithDailyTodo({DailyTodoDigest? digest}) {

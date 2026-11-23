@@ -17,6 +17,11 @@ import {
 } from "./snapshot_history.ts";
 import { normalizeCdpBenchmark } from "./party_gap_ranking.ts";
 import {
+  KOMEITO_MEMBER_PAGE_URL,
+  parseKomeitoMemberSummaryHtml,
+  persistKomeitoSnapshot,
+} from "./komeito_tracker.ts";
+import {
   buildElectionIntelligenceSnapshot,
   type ElectionModeId,
   type ElectionModeRegistry,
@@ -479,7 +484,14 @@ interface MemberDetailRequest {
   prefectureHint: string;
 }
 
-type ParsedRequest = SnapshotRequest | MemberDetailRequest;
+interface KomeitoSnapshotRequest {
+  action: "komeitoSnapshot" | "komeitoSnapshotAndQueue";
+}
+
+type ParsedRequest =
+  | SnapshotRequest
+  | MemberDetailRequest
+  | KomeitoSnapshotRequest;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -498,6 +510,58 @@ serve(async (req) => {
         parsedRequest.prefectureHint,
       );
       return jsonResponse({ success: true, profile });
+    }
+    if (
+      parsedRequest.action === "komeitoSnapshot" ||
+      parsedRequest.action === "komeitoSnapshotAndQueue"
+    ) {
+      if (parsedRequest.action === "komeitoSnapshotAndQueue") {
+        requireServiceRole(req);
+      }
+      const html = await fetchText(KOMEITO_MEMBER_PAGE_URL);
+      const komeitoSnapshot = parseKomeitoMemberSummaryHtml(
+        html,
+        KOMEITO_MEMBER_PAGE_URL,
+      );
+      if (!komeitoSnapshot) {
+        throw new HttpError(
+          503,
+          "Komeito official member summary could not be parsed.",
+        );
+      }
+      const komeitoPersistence =
+        parsedRequest.action === "komeitoSnapshotAndQueue"
+          ? await persistKomeitoSnapshot(
+            createLocalElectionHubStore(),
+            komeitoSnapshot,
+            new Date().toISOString(),
+          )
+          : null;
+      return jsonResponse({
+        success: true,
+        snapshot: komeitoSnapshot,
+        ...(komeitoPersistence
+          ? {
+            persistence: {
+              dataset: komeitoPersistence.dataset,
+              datasetVersion: komeitoPersistence.datasetVersion,
+              snapshotHash: komeitoPersistence.snapshotHash,
+              previousSnapshotId: komeitoPersistence.previousSnapshotId,
+              previousSnapshotHash: komeitoPersistence.previousSnapshotHash,
+              baselineCreated: komeitoPersistence.baselineCreated,
+              snapshotCreated: komeitoPersistence.snapshotCreated,
+              deduplicated: komeitoPersistence.deduplicated,
+              hasChanges: komeitoPersistence.hasChanges,
+              candidateCount: komeitoPersistence.candidateCount,
+              candidatesCreated: komeitoPersistence.candidatesCreated,
+              snapshotId: komeitoPersistence.snapshotRow.id,
+              candidateIds: komeitoPersistence.candidateRows.map((row) =>
+                row.id
+              ),
+            },
+          }
+          : {}),
+      });
     }
     if (parsedRequest.action === "snapshotAndQueue") {
       requireServiceRole(req);
@@ -546,6 +610,21 @@ serve(async (req) => {
     const failedPrefectureFetches = prefectureResults
       .filter((item) => item.fetchStatus === "failed")
       .map((item) => item.prefecture);
+    const expectedMembersByPrefecture = new Map(
+      prefectureDirectoryEntries.map((entry) => [
+        entry.prefecture,
+        entry.expectedMembers ?? null,
+      ]),
+    );
+    const emptyExpectedPrefectures = prefectureResults
+      .filter((item) => {
+        const expected = expectedMembersByPrefecture.get(item.prefecture);
+        return item.fetchStatus === "success" &&
+          item.currentMembers === 0 &&
+          expected != null &&
+          expected > 0;
+      })
+      .map((item) => item.prefecture);
     const officialCurrentLocalMembers = members.length;
     const linkedPrefectureCount = prefectureDirectoryEntries.filter((item) =>
       item.sourceUrl !== ""
@@ -556,6 +635,9 @@ serve(async (req) => {
     const memberCollectionQualityIssues = [
       ...(failedPrefectureFetches.length > 0
         ? [`prefecture_fetch_failed:${failedPrefectureFetches.join(",")}`]
+        : []),
+      ...(emptyExpectedPrefectures.length > 0
+        ? [`prefecture_members_parsed_zero:${emptyExpectedPrefectures.join(",")}`]
         : []),
       ...(linkedPrefectureCount < 10
         ? [`member_directory_links_too_low:${linkedPrefectureCount}`]
@@ -887,8 +969,28 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
     };
   }
 
+  if (
+    requestedAction === "komeitoSnapshot" ||
+    requestedAction === "komeito_snapshot"
+  ) {
+    return { action: "komeitoSnapshot" };
+  }
+  if (
+    requestedAction === "komeitoSnapshotAndQueue" ||
+    requestedAction === "komeito_snapshot_and_queue"
+  ) {
+    return { action: "komeitoSnapshotAndQueue" };
+  }
+
   if (req.method === "GET") {
     const url = new URL(req.url);
+    const queryAction = (url.searchParams.get("action") ?? "").trim();
+    if (
+      queryAction === "komeitoSnapshot" ||
+      queryAction === "komeito_snapshot"
+    ) {
+      return { action: "komeitoSnapshot" };
+    }
     return {
       action: "snapshot",
       includeAiSummary: url.searchParams.get("includeAiSummary") !== "false",
@@ -1044,13 +1146,17 @@ function createLocalElectionHubStore(): LocalElectionHubStore {
     async insertSnapshot(
       metadata: Record<string, unknown>,
     ): Promise<HubInsertResult> {
+      const dataset = typeof metadata.dataset === "string" &&
+          metadata.dataset.trim() !== ""
+        ? metadata.dataset.trim()
+        : LOCAL_ELECTION_DATASET;
       const snapshotHash = String(metadata.snapshot_hash ?? "");
       const previousSnapshotId = typeof metadata.previous_snapshot_id ===
             "string" && metadata.previous_snapshot_id
         ? metadata.previous_snapshot_id
         : null;
       const existing = await findSnapshotTransition(
-        LOCAL_ELECTION_DATASET,
+        dataset,
         previousSnapshotId,
         snapshotHash,
       );
@@ -1063,7 +1169,7 @@ function createLocalElectionHubStore(): LocalElectionHubStore {
       } catch (error) {
         if ((error as { code?: string }).code !== "23505") throw error;
         const raced = await findSnapshotTransition(
-          LOCAL_ELECTION_DATASET,
+          dataset,
           previousSnapshotId,
           snapshotHash,
         );
