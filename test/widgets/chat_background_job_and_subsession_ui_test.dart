@@ -61,7 +61,9 @@ void main() {
           title: 'Edge調査タスク',
           summary: 'バックグラウンド集計を実行中',
         );
-        await tester.pumpAndSettle();
+        // Indeterminate progress indicator animates continuously while running.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
         expect(find.byKey(const Key('bg_job_item_job_sync_1')), findsOneWidget);
         expect(find.textContaining('実行中'), findsOneWidget);
 
