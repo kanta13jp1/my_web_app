@@ -411,6 +411,7 @@ jobs:
             sudo apt-get install -y --no-install-recommends python3-fonttools
           fi
           /usr/bin/python3 -m unittest discover -s test/scripts -p 'test_optimize_web_fonts.py'
+          /usr/bin/python3 -m unittest discover -s test/scripts -p 'test_prerender_seo_routes.py'
           node --test test/web/seo_shell_handoff.test.cjs
 
       - name: Verify acquisition measurement audit
@@ -531,6 +532,18 @@ jobs:
         uses: ./.github/actions/prepare-sea-shelter-arena
         with:
           web-root: build/web
+
+      - name: Generate and verify build-time OGP and X social cards
+        if: github.event_name != 'workflow_call' && steps.changes.outputs.web == 'true'
+        run: |
+          if ! dpkg -s fonts-noto-cjk >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+          fi
+          if [ ! -x /usr/bin/google-chrome ] && [ ! -x /usr/bin/chromium ] && [ ! -x /usr/bin/chromium-browser ]; then
+            npx playwright install --with-deps chromium
+          fi
+          node scripts/generate_ogp_cards.mjs --out-dir build/web
 
       - name: Check build output
         id: web_build_output
