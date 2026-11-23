@@ -903,6 +903,10 @@ class AssetManagementAiSummaryService {
             workbook.cardStatementReconciliation.importedLineCount,
         'imported_line_total':
             workbook.cardStatementReconciliation.importedLineTotal,
+        'manual_statement_pending':
+            workbook.cardStatementReconciliation.hasManualStatementPending,
+        'provisional_detail_count': workbook
+            .cardStatementReconciliation.provisionalBillingDetails.length,
       },
     };
   }

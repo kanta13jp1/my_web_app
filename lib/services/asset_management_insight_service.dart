@@ -356,6 +356,14 @@ class AssetManagementInsightReport {
         )
         .toList(growable: false);
   }
+
+  /// カード明細照合で要確認グループが存在するか (#3329)。
+  bool get cardStatementNeedsReview =>
+      workbook.cardStatementReconciliation.hasNeedsReview;
+
+  List<AssetLiabilityCardStatementReconciliationGroup>
+      get cardStatementNeedsReviewGroups =>
+          workbook.cardStatementReconciliation.needsReviewGroups;
 }
 
 /// リボ払いカード行にインライン表示する概算残り月数・元金減少見込み。

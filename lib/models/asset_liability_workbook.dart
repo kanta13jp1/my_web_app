@@ -1320,6 +1320,19 @@ class AssetLiabilityCardStatementLine {
   final DateTime? postedAt;
   final String description;
   final double amount;
+  final String? category;
+
+  /// 仮内訳フラグ (#3349)。正式内訳合計・明細合計から除外し二重計上を防ぐ。
+  final bool isProvisional;
+
+  /// 手動照合・昇格で設定内訳合計へ加算する調整行か (#3329 / #3326 / #3349)。
+  final bool isConfiguredAdjustment;
+
+  /// 明細合計が既に請求額と一致している場合に設定内訳側のみを合わせるフラグ。
+  final bool excludeFromStatementTotal;
+
+  /// 仮内訳の作成日時（翌月繰越の要確認バッジ判定に使用）。
+  final DateTime? createdAt;
 
   const AssetLiabilityCardStatementLine({
     required this.id,
@@ -1328,6 +1341,11 @@ class AssetLiabilityCardStatementLine {
     required this.postedAt,
     required this.description,
     required this.amount,
+    this.category,
+    this.isProvisional = false,
+    this.isConfiguredAdjustment = false,
+    this.excludeFromStatementTotal = false,
+    this.createdAt,
   });
 
   AssetLiabilityCardStatementLine copyWith({
@@ -1337,6 +1355,11 @@ class AssetLiabilityCardStatementLine {
     DateTime? postedAt,
     String? description,
     double? amount,
+    String? category,
+    bool? isProvisional,
+    bool? isConfiguredAdjustment,
+    bool? excludeFromStatementTotal,
+    DateTime? createdAt,
   }) {
     return AssetLiabilityCardStatementLine(
       id: id ?? this.id,
@@ -1345,6 +1368,13 @@ class AssetLiabilityCardStatementLine {
       postedAt: postedAt ?? this.postedAt,
       description: description ?? this.description,
       amount: amount ?? this.amount,
+      category: category ?? this.category,
+      isProvisional: isProvisional ?? this.isProvisional,
+      isConfiguredAdjustment:
+          isConfiguredAdjustment ?? this.isConfiguredAdjustment,
+      excludeFromStatementTotal:
+          excludeFromStatementTotal ?? this.excludeFromStatementTotal,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }
@@ -1426,6 +1456,9 @@ class AssetLiabilityCardStatementReconciliationGroup {
   /// リボ払いでは 請求額 ≠ 明細合計 が正常なため、不一致アラートは抑止する。
   final AssetLiabilityRevolvingCreditBilling? revolvingBilling;
 
+  /// 仮内訳行一覧 (#3349)。正式内訳合計・明細合計からは除外される。
+  final List<AssetLiabilityCardStatementLine> provisionalBillingDetails;
+
   const AssetLiabilityCardStatementReconciliationGroup({
     required this.billingAccountId,
     required this.billingAccountName,
@@ -1437,11 +1470,17 @@ class AssetLiabilityCardStatementReconciliationGroup {
     required this.alerts,
     this.fixActions = const <AssetLiabilityCardStatementFixAction>[],
     this.revolvingBilling,
+    this.provisionalBillingDetails = const <AssetLiabilityCardStatementLine>[],
   });
 
   double get statementDifference => statementLineTotal - billedAmount;
   double get configuredDifference => configuredDetailTotal - billedAmount;
   bool get hasStatementLines => statementLines.isNotEmpty;
+  bool get hasProvisionalDetails => provisionalBillingDetails.isNotEmpty;
+  double get provisionalTotal => provisionalBillingDetails.fold<double>(
+        0,
+        (sum, line) => sum + line.amount,
+      );
   bool get needsReview => alerts.isNotEmpty;
   bool get hasFixActions => fixActions.isNotEmpty;
 
@@ -1489,6 +1528,13 @@ class AssetLiabilityCardStatementReconciliationData {
   }
 
   bool get hasNeedsReview => needsReviewGroups.isNotEmpty;
+
+  List<AssetLiabilityCardStatementLine> get provisionalBillingDetails => [
+        for (final group in groups) ...group.provisionalBillingDetails,
+      ];
+
+  bool get hasManualStatementPending =>
+      needsReviewGroups.any((group) => !group.hasStatementLines);
 }
 
 class AssetLiabilityCardBillingReviewData {
@@ -1888,6 +1934,9 @@ class AssetLiabilityWorkbook {
                   .toDouble(),
         );
   }
+
+  List<AssetLiabilityCardStatementLine> get provisionalBillingDetails =>
+      cardStatementReconciliation.provisionalBillingDetails;
 
   AssetLiabilityWorkbook copyWith({
     DateTime? baseDate,

@@ -195,6 +195,11 @@ class AssetLiabilityWorkbookMemoizer {
       _writeNullableInt(buf, item.postedAt?.millisecondsSinceEpoch);
       _writeStr(buf, item.description);
       _writeDouble(buf, item.amount);
+      _writeNullableStr(buf, item.category);
+      buf.write(item.isProvisional ? '1' : '0');
+      buf.write(item.isConfiguredAdjustment ? '1' : '0');
+      buf.write(item.excludeFromStatementTotal ? '1' : '0');
+      _writeNullableInt(buf, item.createdAt?.millisecondsSinceEpoch);
     }
 
     buf.write('|tt:${transferTasks.length}:');
