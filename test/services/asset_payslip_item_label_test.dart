@@ -139,7 +139,7 @@ void main() {
       'overtime_hours_non_statutory': '残業時間（法定外）',
       'actual_working_hours_statutory': '実働時間（法定内）',
       '出勤日数': '出勤日数',
-      '実働時間(法定内)': '実働時間（法定内）',
+      '実働時間(法定内)': '実働時間(法定内)',
     };
     for (final entry in newAttendance.entries) {
       expect(
