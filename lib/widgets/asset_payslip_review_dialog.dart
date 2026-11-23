@@ -1,3 +1,4 @@
+import '../services/asset_payroll_deductions.dart';
 import '../services/asset_payslip_item_label.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -11,10 +12,12 @@ class AssetPayslipReviewDialog extends StatefulWidget {
     required this.store,
     required this.payslipId,
     this.openPdf,
+    this.asOfDate,
   });
   final PayslipReviewStore store;
   final String payslipId;
   final Future<bool> Function(Uri)? openPdf;
+  final DateTime? asOfDate;
   @override
   State<AssetPayslipReviewDialog> createState() =>
       _AssetPayslipReviewDialogState();
@@ -73,7 +76,7 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
         _pending ||
         !_acknowledged ||
         row == null ||
-        row.blockingReason != null) {
+        row.blockingReasonFor(asOfDate: widget.asOfDate) != null) {
       return;
     }
     setState(() {
@@ -145,6 +148,21 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
     }
   }
 
+  String _deductionLabel(String rawKey) {
+    final direct = AssetPayrollDeductionsCard.labels[rawKey];
+    if (direct != null) return direct;
+    final canonical = PayrollDeductions.canonicalKeyFor(rawKey);
+    if (canonical != null) {
+      final canonicalLabel = AssetPayrollDeductionsCard.labels[canonical];
+      if (canonicalLabel != null) {
+        return rawKey == canonicalLabel
+            ? canonicalLabel
+            : '$canonicalLabel（別名）';
+      }
+    }
+    return 'その他（$rawKey）';
+  }
+
   Widget _originalItems(String title, Object? raw, PayslipItemGroup group) =>
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,7 +172,7 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
           if (raw is Map)
             for (final entry in raw.entries)
               Text(
-                '${group == PayslipItemGroup.deduction ? AssetPayrollDeductionsCard.labels[entry.key] ?? (entry.key == 'employees_pension_insurance' ? '厚生年金（別名）' : 'その他（${entry.key}）') : PayslipItemLabel.label(group, entry.key as String)}：${PayslipItemLabel.value(group, entry.key as String, entry.value)}',
+                '${group == PayslipItemGroup.deduction ? _deductionLabel(entry.key as String) : PayslipItemLabel.label(group, entry.key as String)}：${PayslipItemLabel.value(group, entry.key as String, entry.value)}',
               ),
         ],
       );
@@ -163,6 +181,7 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
   Widget build(BuildContext context) {
     final row = _snapshot;
     final projection = row?.projection;
+    final blockingReason = row?.blockingReasonFor(asOfDate: widget.asOfDate);
     final active = widget.store.isCurrentOwner;
     final enabled = active && !_busy && !_loading && !_pending;
     return AlertDialog(
@@ -220,7 +239,7 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
                 const Text(
                   '差額は未取得・未分類項目などが原因の可能性があります。差が0円でも全項目取得済みとは限りません。欠落は0円として保存・集計しません。',
                 ),
-                if (row.blockingReason != null) Text(row.blockingReason!),
+                if (blockingReason != null) Text(blockingReason),
                 TextButton(
                   onPressed: enabled ? _openOriginal : null,
                   child: const Text('保存済みの元PDFを開く'),
@@ -230,7 +249,7 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
                   value: _acknowledged,
-                  onChanged: enabled && row.blockingReason == null
+                  onChanged: enabled && blockingReason == null
                       ? (value) =>
                           setState(() => _acknowledged = value ?? false)
                       : null,
@@ -260,12 +279,10 @@ class _AssetPayslipReviewDialogState extends State<AssetPayslipReviewDialog> {
           child: const Text('閉じる'),
         ),
         FilledButton(
-          onPressed: enabled &&
-                  row?.blockingReason == null &&
-                  row != null &&
-                  _acknowledged
-              ? _save
-              : null,
+          onPressed:
+              enabled && blockingReason == null && row != null && _acknowledged
+                  ? _save
+                  : null,
           child: const Text('記載内容を本人確認済みにする'),
         ),
       ],
