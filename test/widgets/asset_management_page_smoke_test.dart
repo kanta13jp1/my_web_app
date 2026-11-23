@@ -6349,6 +6349,123 @@ void main() {
         await _unmount(tester);
       },
     );
+
+    testWidgets(
+      'Issue #4103 & #4086: displays red AppBar discipline badge, modal roadmap, confirmed schedule override, and task creation',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        final monthKey =
+            AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(now);
+        final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+          <String, AssetLiabilityRevolvingCreditConfig>{
+            'famipay_card': const AssetLiabilityRevolvingCreditConfig(
+              monthlyAmount: 5000,
+              newUsageAmount: 30000,
+            ),
+          },
+        );
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetLiabilityMonthlyStateStore.actualPaymentPrefsKey: jsonEncode(
+            <String, Map<String, double>>{
+              monthKey: <String, double>{'famipay_card': 5000},
+            },
+          ),
+          AssetLiabilityMonthlyStateStore.paidPrefsKey: jsonEncode(
+            <String, List<String>>{
+              monthKey: <String>['famipay_card'],
+            },
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 3200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugCalendarNow: DateTime(2026, 7, 10),
+              debugRevolvingConfigsMirror: mirrorValue,
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 50000,
+                  'ファミペイ': -100000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final headerBadge = find.byKey(
+          const Key('asset_discipline_header_badge'),
+        );
+        expect(headerBadge, findsOneWidget);
+        expect(
+          find.descendant(of: headerBadge, matching: find.text('違反 1件')),
+          findsOneWidget,
+        );
+
+        await tester.tap(headerBadge);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const Key('asset_discipline_violations_modal')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(
+              const Key('asset_discipline_modal_escape_plan_famipay_card')),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('解消目標: 12ヶ月以内に毎月'),
+          findsOneWidget,
+        );
+
+        final applyPlanBtn = find.byKey(
+          const Key('asset_discipline_apply_plan_famipay_card'),
+        );
+        expect(applyPlanBtn, findsOneWidget);
+        await tester.tap(applyPlanBtn);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const Key('asset_discipline_apply_plan_confirm_dialog')),
+          findsOneWidget,
+        );
+        expect(find.textContaining('+30,000円'), findsOneWidget);
+
+        await tester.tap(
+          find.byKey(const Key('asset_discipline_confirm_apply_famipay_card')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('ファミペイの支払予定額を'), findsOneWidget);
+
+        final createTaskBtn = find.byKey(
+          const Key('asset_discipline_create_task_famipay_card'),
+        );
+        await tester.tap(createTaskBtn);
+        await tester.pumpAndSettle();
+        expect(find.text('ファミペイの返済タスクを作成しました'), findsOneWidget);
+
+        final closeModalBtn = find.descendant(
+          of: find.byKey(const Key('asset_discipline_violations_modal')),
+          matching: find.text('閉じる'),
+        );
+        await tester.tap(closeModalBtn);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.textContaining('ファミペイ 解消計画: 12ヶ月以内に毎月'),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
   });
   testWidgets(
     'anonymous unconfirmed read never claims empty income or offers empty CTA',

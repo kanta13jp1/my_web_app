@@ -3956,9 +3956,389 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildDisciplineViolationMonthlyBanner(
-    AssetDebtDisciplineReport? disciplineReport,
+  AssetDebtDisciplineReport? _buildCurrentDisciplineReport(
+    AssetLiabilityWorkbook? workbook,
   ) {
+    if (workbook == null) {
+      return null;
+    }
+    final currentMonthKey = AssetAccountBalanceHistoryStore.formatMonthKey(
+      workbook.baseDate,
+    );
+    final priorMonthAccountBalances =
+        _assetDebtTrendPriorBalancesMonth == currentMonthKey
+            ? _assetDebtTrendPriorBalances
+            : const <String, double>{};
+    return const AssetDebtDisciplineMonitor().evaluate(
+      workbook: workbook,
+      priorBalancesByAccountId: priorMonthAccountBalances,
+      cardUsagePolicies: workbook.cardUsagePolicies,
+    );
+  }
+
+  ({double currentScheduled, double topUpDelta, double proposedScheduled})
+      _resolveDisciplinePlanProposal(
+    AssetDebtDisciplineViolation violation,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    AssetLiabilityDebtRow? matchedRow;
+    for (final row in workbook.debtMasterRows) {
+      if (row.id == violation.accountId) {
+        matchedRow = row;
+        break;
+      }
+    }
+    final currentScheduled = matchedRow?.scheduledPaymentAmount ?? 0.0;
+    final topUpDelta = violation.amount >= 1
+        ? violation.amount
+        : (violation.escapeMonthlyPayment != null
+            ? max(0.0, violation.escapeMonthlyPayment! - currentScheduled)
+            : 0.0);
+    return (
+      currentScheduled: currentScheduled,
+      topUpDelta: topUpDelta,
+      proposedScheduled: currentScheduled + topUpDelta,
+    );
+  }
+
+  Future<void> _applyDisciplinePlanOverride(
+    AssetDebtDisciplineViolation violation,
+    double nextAmount,
+  ) async {
+    final prevHasOverride =
+        _monthlyPaymentOverrides.containsKey(violation.accountId);
+    final prevOverride = _monthlyPaymentOverrides[violation.accountId];
+    final prevConfirmed =
+        _billingConfirmedAccountIds.contains(violation.accountId);
+
+    setState(() {
+      _monthlyPaymentOverrides[violation.accountId] = nextAmount;
+      _monthlyPaymentControllers[violation.accountId]?.text =
+          nextAmount.round().toString();
+      _billingConfirmedAccountIds.add(violation.accountId);
+    });
+    await _saveAssetLiabilityMonthlyState();
+
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 6),
+          content: Text(
+            '${violation.accountName}の支払予定額を'
+            '${_formatManagementYen(nextAmount)}に反映しました',
+          ),
+          action: SnackBarAction(
+            label: '元に戻す',
+            onPressed: () {
+              if (!mounted) {
+                return;
+              }
+              setState(() {
+                if (prevHasOverride && prevOverride != null) {
+                  _monthlyPaymentOverrides[violation.accountId] = prevOverride;
+                  _monthlyPaymentControllers[violation.accountId]?.text =
+                      prevOverride.round().toString();
+                } else {
+                  _monthlyPaymentOverrides.remove(violation.accountId);
+                  _monthlyPaymentControllers[violation.accountId]?.clear();
+                }
+                if (prevConfirmed) {
+                  _billingConfirmedAccountIds.add(violation.accountId);
+                } else {
+                  _billingConfirmedAccountIds.remove(violation.accountId);
+                }
+              });
+              unawaited(_saveAssetLiabilityMonthlyState());
+            },
+          ),
+        ),
+      );
+  }
+
+  Future<void> _createDisciplineRepaymentTask(
+    AssetDebtDisciplineViolation violation,
+  ) async {
+    final title = violation.hasEscapePlan
+        ? '${violation.accountName} 解消計画: '
+            '${violation.escapeMonths}ヶ月以内に毎月'
+            '${_formatManagementYen(violation.escapeMonthlyPayment!)}返済'
+        : '${violation.accountName} 規律対応: '
+            '${_formatManagementYen(violation.amount)}の返済予定を確認';
+    final alreadyExists = _dailyTodos.any(
+      (task) => !task.completed && task.title == title,
+    );
+    if (!alreadyExists) {
+      final task = DailyTodoTask(
+        id: 'todo_${DateTime.now().microsecondsSinceEpoch}',
+        title: title,
+        plannedDate: DateTime(_now.year, _now.month, _now.day),
+      );
+      setState(() {
+        _dailyTodos = _orderedDailyTodos(<DailyTodoTask>[..._dailyTodos, task]);
+      });
+      await _persistDailyTodos();
+    }
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          alreadyExists
+              ? '${violation.accountName}の返済タスクは既に登録済みです'
+              : '${violation.accountName}の返済タスクを作成しました',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showDisciplineViolationsModal(
+    AssetDebtDisciplineReport disciplineReport,
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setModalState) {
+          final violations = disciplineReport.allViolations;
+          return AlertDialog(
+            key: const Key('asset_discipline_violations_modal'),
+            title: Text('借金しない宣言・違反詳細 (${violations.length}件)'),
+            content: SizedBox(
+              width: 560,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '口座別の要因・推奨アクション・解消目安を確認し、確認の上で支払予定や返済タスクへ反映できます。',
+                      style: TextStyle(fontSize: 12, height: 1.5),
+                    ),
+                    const SizedBox(height: 12),
+                    for (final violation in violations) ...[
+                      Builder(
+                        builder: (itemContext) {
+                          final proposal = _resolveDisciplinePlanProposal(
+                            violation,
+                            workbook,
+                          );
+                          return Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF2F2),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: const Color(0xFFFCA5A5),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${violation.accountName} '
+                                  '(${_assetDisciplineTypeLabel(violation.type)})',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF991B1B),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '金額: ${_formatManagementYen(violation.amount)} / '
+                                  '残高: ${_formatManagementYen(violation.currentBalance)}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  violation.problem,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '推奨アクション: ${violation.action}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    height: 1.4,
+                                    color: Color(0xFF1F2937),
+                                  ),
+                                ),
+                                if (violation.hasEscapePlan) ...[
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    key: Key(
+                                      'asset_discipline_modal_escape_plan_'
+                                      '${violation.accountId}',
+                                    ),
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFECFDF5),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: const Color(0xFF6EE7B7),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      '解消目標: ${violation.escapeMonths}ヶ月以内に毎月'
+                                      '${_formatManagementYen(violation.escapeMonthlyPayment!)}返済',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF065F46),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 6,
+                                  children: [
+                                    FilledButton.icon(
+                                      key: Key(
+                                        'asset_discipline_apply_plan_'
+                                        '${violation.accountId}',
+                                      ),
+                                      onPressed: proposal.topUpDelta < 1
+                                          ? null
+                                          : () async {
+                                              final confirmed =
+                                                  await showDialog<bool>(
+                                                context: dialogContext,
+                                                builder: (confirmContext) =>
+                                                    AlertDialog(
+                                                  key: const Key(
+                                                    'asset_discipline_apply_plan_confirm_dialog',
+                                                  ),
+                                                  title: Text(
+                                                    '${violation.accountName}の支払予定を更新',
+                                                  ),
+                                                  content: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        '現在予定額: '
+                                                        '${_formatManagementYen(proposal.currentScheduled)}',
+                                                      ),
+                                                      Text(
+                                                        '上乗せ目安額: '
+                                                        '+${_formatManagementYen(proposal.topUpDelta)}',
+                                                      ),
+                                                      const SizedBox(height: 6),
+                                                      Text(
+                                                        '反映後の今月予定額: '
+                                                        '${_formatManagementYen(proposal.proposedScheduled)}',
+                                                        style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () =>
+                                                          Navigator.of(
+                                                        confirmContext,
+                                                      ).pop(false),
+                                                      child: const Text(
+                                                        'キャンセル',
+                                                      ),
+                                                    ),
+                                                    FilledButton(
+                                                      key: Key(
+                                                        'asset_discipline_confirm_apply_'
+                                                        '${violation.accountId}',
+                                                      ),
+                                                      onPressed: () =>
+                                                          Navigator.of(
+                                                        confirmContext,
+                                                      ).pop(true),
+                                                      child: const Text('反映する'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                              if (confirmed == true) {
+                                                await _applyDisciplinePlanOverride(
+                                                  violation,
+                                                  proposal.proposedScheduled,
+                                                );
+                                                if (dialogContext.mounted) {
+                                                  setModalState(() {});
+                                                }
+                                              }
+                                            },
+                                      icon: const Icon(
+                                        Icons.playlist_add_check,
+                                        size: 16,
+                                      ),
+                                      label: const Text('次回の支払い計画に反映'),
+                                    ),
+                                    OutlinedButton.icon(
+                                      key: Key(
+                                        'asset_discipline_create_task_'
+                                        '${violation.accountId}',
+                                      ),
+                                      onPressed: () async {
+                                        await _createDisciplineRepaymentTask(
+                                          violation,
+                                        );
+                                        if (dialogContext.mounted) {
+                                          setModalState(() {});
+                                        }
+                                      },
+                                      icon: const Icon(
+                                        Icons.add_task,
+                                        size: 16,
+                                      ),
+                                      label: const Text('返済タスクを作成'),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('閉じる'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDisciplineViolationMonthlyBanner(
+    AssetDebtDisciplineReport? disciplineReport, {
+    AssetLiabilityWorkbook? workbook,
+  }) {
     if (disciplineReport == null || !disciplineReport.hasViolations) {
       return const SizedBox.shrink();
     }
@@ -3995,6 +4375,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 ),
               ),
+              if (workbook != null)
+                OutlinedButton(
+                  key: const Key('asset_discipline_banner_open_modal_button'),
+                  onPressed: () => _showDisciplineViolationsModal(
+                    disciplineReport,
+                    workbook,
+                  ),
+                  child: const Text('詳細・計画反映'),
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -11435,12 +11824,49 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget build(BuildContext context) {
     final isCompact = _isCompact;
     final assetLiabilityWorkbook = _buildCurrentAssetLiabilityWorkbook();
+    final currentDisciplineReport = _buildCurrentDisciplineReport(
+      assetLiabilityWorkbook,
+    );
     return Scaffold(
       appBar: AppBar(
         title: const Text('資産管理闘争'),
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
         actions: [
+          if (assetLiabilityWorkbook != null &&
+              currentDisciplineReport != null &&
+              currentDisciplineReport.hasViolations)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: TextButton.icon(
+                  key: const Key('asset_discipline_header_badge'),
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: const StadiumBorder(),
+                  ),
+                  onPressed: () => _showDisciplineViolationsModal(
+                    currentDisciplineReport,
+                    assetLiabilityWorkbook,
+                  ),
+                  icon: const Icon(Icons.warning_amber_rounded, size: 15),
+                  label: Text(
+                    '違反 ${currentDisciplineReport.allViolations.length}件',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           // カード/項目をカード名や項目名で検索して飛ぶ。縦長ページで目的の
           // カードを探すのが大変で、Flutter Web は CanvasKit 描画のため
           // ブラウザ検索(Ctrl+F)が効かない。
@@ -23586,6 +24012,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 12),
             _buildDisciplineViolationMonthlyBanner(
               insightReport.disciplineReport,
+              workbook: workbook,
             ),
             _buildAssetLiabilitySyncPanel(),
             const SizedBox(height: 12),
@@ -29118,6 +29545,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         Icons.schedule_send_outlined,
       AssetManagementInsightActionType.subscriptionExcess =>
         Icons.subscriptions_outlined,
+      AssetManagementInsightActionType.paymentDiscrepancy =>
+        Icons.compare_arrows_outlined,
     };
   }
 
