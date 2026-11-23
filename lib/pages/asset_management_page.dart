@@ -4270,7 +4270,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final accountOptions = <AssetAdditionalDebtAccountOption>[
       for (final row
           in workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[])
-        if (AssetDebtDisciplineMonitor.isBorrowingKind(row.kind))
+        if (AssetDebtDisciplineMonitor.isBorrowingKind(row.kind) &&
+            !row.fullPaymentEstimate)
           AssetAdditionalDebtAccountOption(
             id: row.id,
             name: row.name,
@@ -21608,7 +21609,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   textWidth(
                         '借金違反',
                         const TextStyle(
-                          fontSize: 9,
+                          fontSize: 10,
                           fontWeight: FontWeight.w800,
                         ),
                       ) +

@@ -106,7 +106,10 @@ void main() {
         find.byKey(const Key('asset_calendar_additional_debt_summary')),
         findsOneWidget,
       );
-      expect(find.textContaining('コンビニリボ利用'), findsOneWidget);
+      expect(
+        find.text('リボ利用（現金引落なし）: ファミペイ / コンビニリボ利用'),
+        findsOneWidget,
+      );
       expect(
         find.text('追加借金ルール違反（Debt Guard）: ファミペイ: コンビニリボ利用'),
         findsOneWidget,
@@ -292,7 +295,8 @@ void main() {
       expect(savedDraft, isNotNull);
       expect(savedDraft!.amount, 15000);
       expect(savedViolationDate, DateTime(2026, 7, 10));
-      expect(savedViolationNote, contains('15,000円'));
+      expect(savedViolationNote, contains('¥15,000'));
+      expect(savedViolationNote, contains('キャッシング・借入'));
       expect(
         find.byKey(const Key('asset_calendar_debt_badge_2026_7_10')),
         findsOneWidget,

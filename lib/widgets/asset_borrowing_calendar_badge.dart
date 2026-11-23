@@ -131,10 +131,10 @@ class _DebtBadgePill extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 9,
+          fontSize: 10,
           fontWeight: FontWeight.w800,
           color: textColor,
-          height: 1.3,
+          height: 1.4,
         ),
       ),
     );
