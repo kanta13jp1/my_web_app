@@ -40,23 +40,35 @@ class AiDeduplicationResult {
 
 /// GZip 圧縮距離 (NCD) を用いて AI 入力テキストの重複を排除するサービス (#2697)。
 class AiInputDeduplicationService {
-  final GZipEncoder _encoder;
+  final List<int> Function(List<int> bytes)? _compressor;
   final List<AiDeduplicationLogEntry> _logs = <AiDeduplicationLogEntry>[];
 
-  AiInputDeduplicationService({GZipEncoder? encoder})
-      : _encoder = encoder ?? const GZipEncoder();
+  AiInputDeduplicationService({
+    List<int> Function(List<int> bytes)? compressor,
+  }) : _compressor = compressor;
 
   List<AiDeduplicationLogEntry> get logs =>
       List<AiDeduplicationLogEntry>.unmodifiable(_logs);
 
   /// UTF-8 バイト列を GZip 圧縮した際のバイトサイズを返す。
+  /// 圧縮処理が例外を送出した場合は生バイト長へフォールバックする。
   int compressedSize(String text) {
     final raw = utf8.encode(text);
-    final compressed = _encoder.encodeBytes(raw);
-    return compressed.length;
+    if (raw.isEmpty) {
+      return 0;
+    }
+    final compressor = _compressor;
+    try {
+      final compressed = compressor != null
+          ? compressor(raw)
+          : const GZipEncoder().encodeBytes(raw);
+      return compressed.length;
+    } catch (_) {
+      return raw.length;
+    }
   }
 
-  /// Normalized Compression Distance (0.0: 同一 〜 1.0: 非類似) を算出する。
+  /// 対称 Normalized Compression Distance (0.0: 同一 〜 1.0: 非類似) を算出する。
   double computeNormalizedCompressionDistance(String a, String b) {
     if (a == b) {
       return 0.0;
@@ -66,7 +78,10 @@ class AiInputDeduplicationService {
     }
     final ca = compressedSize(a);
     final cb = compressedSize(b);
-    final cab = compressedSize('$a\n$b');
+    final cab = math.min(
+      compressedSize('$a\n$b'),
+      compressedSize('$b\n$a'),
+    );
     final minC = math.min(ca, cb);
     final maxC = math.max(ca, cb);
     if (maxC <= 0) {

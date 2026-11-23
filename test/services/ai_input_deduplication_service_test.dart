@@ -70,5 +70,46 @@ void main() {
       expect(result.logEntry.removedCount, 0);
       expect(result.logEntry.estimatedTokensSaved, 0);
     });
+
+    test('maintains symmetry, handles empty strings, and supports long text',
+        () {
+      final service = AiInputDeduplicationService();
+      const first =
+          'Quarterly engineering roadmap: Flutter Web CanvasKit selection '
+          'and CI baseline stability improvements across workspace modules.';
+      const second =
+          'Architecture summary: Supabase Edge Function consolidation and '
+          'Flutter Web selection optimization for mobile Safari users.';
+
+      expect(
+        service.computeNormalizedCompressionDistance(first, second),
+        closeTo(
+          service.computeNormalizedCompressionDistance(second, first),
+          1e-9,
+        ),
+      );
+      expect(service.computeNormalizedCompressionDistance('', ''), 0.0);
+      expect(service.computeNormalizedCompressionDistance('', first), 1.0);
+
+      final longBase = List<String>.filled(80, first).join(' ');
+      final longNear = '$longBase extra note';
+      expect(
+        service.computeCompressionSimilarity(longBase, longNear),
+        greaterThan(0.85),
+      );
+    });
+
+    test('falls back to raw byte size when compression throws', () {
+      final service = AiInputDeduplicationService(
+        compressor: (_) => throw StateError('compression unavailable'),
+      );
+
+      expect(service.compressedSize('abcd'), 4);
+      final distance = service.computeNormalizedCompressionDistance(
+        'alpha',
+        'beta',
+      );
+      expect(distance, inInclusiveRange(0.0, 1.0));
+    });
   });
 }
