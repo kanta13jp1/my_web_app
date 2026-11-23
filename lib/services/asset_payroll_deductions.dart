@@ -153,13 +153,16 @@ class PayrollDeductions {
   int? get identifiedSubtotalYen {
     final values = <int>[
       for (final key in taxKeys)
-        if (items[key] != null) items[key]!,
+        if (!conflictingAliasKeys.contains(key) && items[key] != null)
+          items[key]!,
       if (socialTotalYen != null)
         socialTotalYen!
       else
         for (final key in [...socialKeys, ...optionalSocialKeys])
-          if (items[key] != null) items[key]!,
-      if (items['ideco'] != null) items['ideco']!,
+          if (!conflictingAliasKeys.contains(key) && items[key] != null)
+            items[key]!,
+      if (!conflictingAliasKeys.contains('ideco') && items['ideco'] != null)
+        items['ideco']!,
     ];
     return values.isEmpty
         ? null

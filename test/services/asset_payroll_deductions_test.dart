@@ -402,6 +402,7 @@ void main() {
       final taxRow = PayrollDeductions.fromRow(taxConflict)!;
       expect(taxRow.conflictingTaxAliases, isTrue);
       expect(taxRow.taxTotalYen, isNull);
+      expect(taxRow.identifiedSubtotalYen, 250);
 
       final pensionConflict = fixture();
       (pensionConflict['deductions'] as Map)['employee_pension_insurance'] =
@@ -410,6 +411,13 @@ void main() {
       expect(pensionRow.conflictingPensionAliases, isTrue);
       expect(pensionRow.socialPartsTotalYen, isNull);
       expect(pensionRow.socialTotalYen, isNull);
+      expect(pensionRow.identifiedSubtotalYen, 200);
+
+      final idecoConflict = fixture();
+      (idecoConflict['deductions'] as Map)['イデコ'] = 20;
+      final idecoRow = PayrollDeductions.fromRow(idecoConflict)!;
+      expect(idecoRow.hasConflictingAliases, isTrue);
+      expect(idecoRow.identifiedSubtotalYen, 290);
 
       final months = AssetPayrollDeductions.months(
         ownerId: 'owner-a',
