@@ -17,6 +17,7 @@ import 'note_editor_page.dart';
 
 enum _NoteCardAction {
   markOrganized,
+  togglePin,
   duplicate,
   publish,
   unpublish,
@@ -41,6 +42,7 @@ class _LocalDraftEntry {
   final String title;
   final String content;
   final bool isFavorite;
+  final bool isPinned;
   final DateTime savedAt;
 
   const _LocalDraftEntry({
@@ -49,6 +51,7 @@ class _LocalDraftEntry {
     required this.title,
     required this.content,
     required this.isFavorite,
+    this.isPinned = false,
     required this.savedAt,
   });
 
@@ -643,6 +646,8 @@ class _NoteListPageState extends State<NoteListPage> {
   String _noteContent(Map<String, dynamic> note) =>
       (note['content'] as String? ?? '').trim();
 
+  bool _isPinned(Map<String, dynamic> note) => note['is_pinned'] == true;
+
   bool _isFavorite(Map<String, dynamic> note) => note['is_favorite'] == true;
 
   bool _isInbox(Map<String, dynamic> note) =>
@@ -728,7 +733,11 @@ class _NoteListPageState extends State<NoteListPage> {
         final title = (decoded['title'] ?? '').toString();
         final content = (decoded['content'] ?? '').toString();
         final isFavorite = decoded['is_favorite'] == true;
-        if (title.trim().isEmpty && content.trim().isEmpty && !isFavorite) {
+        final isPinned = decoded['is_pinned'] == true;
+        if (title.trim().isEmpty &&
+            content.trim().isEmpty &&
+            !isFavorite &&
+            !isPinned) {
           continue;
         }
 
@@ -745,6 +754,7 @@ class _NoteListPageState extends State<NoteListPage> {
             title: title,
             content: content,
             isFavorite: isFavorite,
+            isPinned: isPinned,
             savedAt: savedAt,
           ),
         );
@@ -781,6 +791,9 @@ class _NoteListPageState extends State<NoteListPage> {
     }
     if (draft.isFavorite) {
       return 'お気に入りに追加したメモをここから再開できます。';
+    }
+    if (draft.isPinned) {
+      return 'ピン留めしたメモをここから再開できます。';
     }
     if (draft.isNewNoteDraft) {
       return '途中まで書いた新規メモをここから再開できます。';
@@ -877,6 +890,61 @@ class _NoteListPageState extends State<NoteListPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('お気に入りの更新に失敗しました: $e')),
       );
+    }
+  }
+
+  Future<void> _togglePin(
+    BuildContext context,
+    Map<String, dynamic> note, {
+    bool? targetValue,
+  }) async {
+    final noteId = _noteId(note);
+    final userId = _supabase.auth.currentUser?.id;
+    if (noteId.isEmpty || userId == null) return;
+
+    final nextValue = targetValue ?? !_isPinned(note);
+    try {
+      await _supabase
+          .from('notes')
+          .update({
+            'is_pinned': nextValue,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', noteId)
+          .eq('user_id', userId);
+
+      if (!mounted || !context.mounted) return;
+      await _fetchNotes();
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              nextValue ? 'メモをピン留めしました' : 'ピン留めを解除しました',
+            ),
+            action: SnackBarAction(
+              label: '元に戻す',
+              onPressed: () {
+                if (!mounted || !context.mounted) return;
+                unawaited(
+                  _togglePin(
+                    context,
+                    <String, dynamic>{...note, 'is_pinned': nextValue},
+                    targetValue: !nextValue,
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+    } catch (e) {
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text('ピン留めの更新に失敗しました: $e')),
+        );
     }
   }
 
@@ -1117,7 +1185,7 @@ class _NoteListPageState extends State<NoteListPage> {
     final reasons = <String>[];
     var score = 0;
 
-    if ((note['is_pinned'] as bool?) == true) {
+    if (_isPinned(note)) {
       score += 3;
       reasons.add('ピン留め');
     }
@@ -1338,7 +1406,7 @@ class _NoteListPageState extends State<NoteListPage> {
   }) {
     final created = _createdAtOf(note);
     final dateStr = DateFormat('yyyy/MM/dd HH:mm').format(created);
-    final isPinned = note['is_pinned'] as bool? ?? false;
+    final isPinned = _isPinned(note);
     final isFavorite = _isFavorite(note);
     final isInbox = _isInbox(note);
     final title = _noteTitle(note);
@@ -1361,6 +1429,27 @@ class _NoteListPageState extends State<NoteListPage> {
         ? const Color(0xFFFF6B35)
         : accentColor;
 
+    final leadingAvatar = CircleAvatar(
+      backgroundColor: fallbackAccentColor.withValues(alpha: 0.12),
+      child: Icon(
+        highlightShareCandidate
+            ? Icons.campaign
+            : highlightReminder
+                ? Icons.alarm
+                : isInbox
+                    ? Icons.inbox_outlined
+                    : isPinned
+                        ? Icons.push_pin
+                        : isFavorite
+                            ? Icons.star
+                            : Icons.description,
+        color: fallbackAccentColor,
+        size: 20,
+      ),
+    );
+    final showLeadingPinButton =
+        isPinned && !highlightShareCandidate && !highlightReminder && !isInbox;
+
     return Card(
       elevation: highlightShareCandidate ? 3 : 2,
       margin: const EdgeInsets.only(bottom: 12),
@@ -1373,24 +1462,19 @@ class _NoteListPageState extends State<NoteListPage> {
         ),
       ),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: fallbackAccentColor.withValues(alpha: 0.12),
-          child: Icon(
-            highlightShareCandidate
-                ? Icons.campaign
-                : highlightReminder
-                    ? Icons.alarm
-                    : isInbox
-                        ? Icons.inbox_outlined
-                        : isPinned
-                            ? Icons.push_pin
-                            : isFavorite
-                                ? Icons.star
-                                : Icons.description,
-            color: fallbackAccentColor,
-            size: 20,
-          ),
-        ),
+        leading: showLeadingPinButton
+            ? IconButton(
+                key: ValueKey<String>('note_list_unpin_leading_${_noteId(note)}'),
+                tooltip: 'ピン留め解除',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 48,
+                  minHeight: 48,
+                ),
+                onPressed: () => _togglePin(context, note),
+                icon: leadingAvatar,
+              )
+            : leadingAvatar,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1586,11 +1670,15 @@ class _NoteListPageState extends State<NoteListPage> {
               },
             ),
             PopupMenuButton<_NoteCardAction>(
+              key: ValueKey<String>('note_list_menu_${_noteId(note)}'),
               tooltip: 'メモ操作',
               onSelected: (action) {
                 switch (action) {
                   case _NoteCardAction.markOrganized:
                     _markNoteOrganized(context, note);
+                    break;
+                  case _NoteCardAction.togglePin:
+                    _togglePin(context, note);
                     break;
                   case _NoteCardAction.duplicate:
                     _duplicateNote(context, note);
@@ -1624,6 +1712,22 @@ class _NoteListPageState extends State<NoteListPage> {
                       ],
                     ),
                   ),
+                PopupMenuItem<_NoteCardAction>(
+                  key: ValueKey<String>(
+                    'note_list_menu_toggle_pin_${_noteId(note)}',
+                  ),
+                  value: _NoteCardAction.togglePin,
+                  child: Row(
+                    children: [
+                      Icon(
+                        isPinned ? Icons.push_pin_outlined : Icons.push_pin,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(isPinned ? 'ピン留め解除' : 'ピン留め'),
+                    ],
+                  ),
+                ),
                 const PopupMenuItem<_NoteCardAction>(
                   value: _NoteCardAction.duplicate,
                   child: Row(
