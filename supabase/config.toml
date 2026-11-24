@@ -266,3 +266,10 @@ enabled = true
 # in-function auth.getUser() + row ownership / is_admin checks.
 verify_jwt = false
 entrypoint = "./functions/rlhf-feedback-webhook/index.ts"
+
+[functions.did-mcp-proxy]
+enabled = true
+# Browser preflight has no JWT; handler enforces auth.getUser() + is_admin or
+# constant-time service_role authentication before proxying to D-ID MCP/REST.
+verify_jwt = false
+entrypoint = "./functions/did-mcp-proxy/index.ts"
