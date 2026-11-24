@@ -93,7 +93,14 @@ export function requiresCeoApproval(scopes: readonly string[]): boolean {
 export function evaluateAgentToolPolicy(
   input: AgentToolPolicyInput,
 ): AgentToolPolicyDecision {
-  const requestedScopes = normalizeAgentToolScopes(input.requestedScopes);
+  // Validate the complete request before normalization can discard operations.
+  const invalidRequestedScope = !Array.isArray(input.requestedScopes) ||
+    input.requestedScopes.some((scope) =>
+      typeof scope !== "string" || !isAgentToolScope(scope.trim().toLowerCase())
+    );
+  const requestedScopes = invalidRequestedScope
+    ? []
+    : normalizeAgentToolScopes(input.requestedScopes);
   const allowedScopes = input.allowedScopes?.includes("all")
     ? [...AGENT_TOOL_SCOPES]
     : normalizeAgentToolScopes(
@@ -112,7 +119,9 @@ export function evaluateAgentToolPolicy(
     Boolean(input.approval.approvedAt?.trim());
 
   let blockedReason: string | null = null;
-  if (requestedScopes.length === 0) {
+  if (invalidRequestedScope) {
+    blockedReason = "invalid_requested_scope";
+  } else if (requestedScopes.length === 0) {
     blockedReason = "empty_requested_scope";
   } else if (missingScopes.length > 0) {
     blockedReason = "missing_scope";
@@ -151,4 +160,17 @@ export function evaluateGeneratedUiSandboxToolPolicy(
 
 function isAgentToolScope(scope: string): scope is AgentToolScope {
   return (AGENT_TOOL_SCOPES as readonly string[]).includes(scope);
+}
+
+// Preserve invalid array members so the evaluator rejects the entire request.
+// String input is retained for existing comma/space-separated API clients.
+export function parseAgentToolRequestedScopes(value: unknown): string[] {
+  if (value === undefined || value === null) return [];
+  if (typeof value === "string") {
+    return value.split(/[,\s]+/).map((scope) => scope.trim()).filter(Boolean);
+  }
+  if (!Array.isArray(value) || value.some((scope) => typeof scope !== "string")) {
+    return [""];
+  }
+  return [...value];
 }
