@@ -3,15 +3,23 @@
 
 from __future__ import annotations
 
-import io
 from pathlib import Path
+import socket
 import sys
 import unittest
 from unittest import mock
-from urllib import error as urllib_error
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 import ai_action_budget_guard as budget_guard
+
+
+class _FakeHttpResponse:
+    def __init__(self, status: int, body: bytes = b"{}") -> None:
+        self.status = status
+        self._body = body
+
+    def read(self) -> bytes:
+        return self._body
 
 
 class AiActionBudgetGuardTests(unittest.TestCase):
@@ -75,21 +83,63 @@ class AiActionBudgetGuardTests(unittest.TestCase):
         self.assertEqual(paused_eval.tier, "pre_paused")
         self.assertEqual(paused_eval.exit_code, 2)
 
-    def test_notification_http_error_sanitizes_query_and_raises_runtime_error(self) -> None:
+    def test_notification_pins_resolved_ip_and_sets_sni_host(self) -> None:
+        endpoint = "https://hooks.slack.example/services/test"
+        fake_addrinfo = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("198.51.100.24", 443))]
+        captured: dict[str, object] = {}
+
+        fake_raw_sock = mock.MagicMock()
+        fake_tls_sock = mock.MagicMock()
+        fake_ctx = mock.MagicMock()
+        fake_ctx.wrap_socket.return_value = fake_tls_sock
+
+        def fake_create_conn(address: tuple[str, int], timeout: float, source_addr: object) -> object:
+            captured["connect_address"] = address
+            return fake_raw_sock
+
+        def fake_request(self_conn: budget_guard._PinnedHTTPSConnection, method: str, target: str, body: bytes | None = None, headers: dict[str, str] | None = None) -> None:
+            captured["headers"] = dict(headers or {})
+            self_conn.connect()
+
+        with mock.patch("ai_action_budget_guard.socket.getaddrinfo", return_value=fake_addrinfo):
+            with mock.patch("ai_action_budget_guard.socket.create_connection", side_effect=fake_create_conn):
+                with mock.patch("ai_action_budget_guard.ssl.create_default_context", return_value=fake_ctx):
+                    with mock.patch.object(budget_guard._PinnedHTTPSConnection, "request", fake_request):
+                        with mock.patch.object(
+                            budget_guard._PinnedHTTPSConnection,
+                            "getresponse",
+                            lambda self_conn: _FakeHttpResponse(200),
+                        ):
+                            with mock.patch.object(budget_guard._PinnedHTTPSConnection, "close", lambda self_conn: None):
+                                status = budget_guard.post_json_notification(endpoint, {"text": "alert"})
+
+        self.assertEqual(status, 200)
+        self.assertEqual(captured["connect_address"], ("198.51.100.24", 443))
+        fake_ctx.wrap_socket.assert_called_once_with(fake_raw_sock, server_hostname="hooks.slack.example")
+        self.assertEqual(captured["headers"]["Host"], "hooks.slack.example")  # type: ignore[index]
+
+    def test_notification_http_error_redirect_and_private_dns_rejected(self) -> None:
         endpoint = "https://hooks.slack.example/services/test?sig=must_not_leak"
-        http_err = urllib_error.HTTPError(
-            url=endpoint,
-            code=500,
-            msg="Internal Server Error",
-            hdrs=None,  # type: ignore[arg-type]
-            fp=io.BytesIO(b"{}"),
-        )
-        with mock.patch("ai_action_budget_guard.urllib_request.urlopen", side_effect=http_err):
-            with self.assertRaises(RuntimeError) as ctx:
-                budget_guard.post_json_notification(endpoint, {"text": "alert"})
-        self.assertIn("500", str(ctx.exception))
-        self.assertNotIn("must_not_leak", str(ctx.exception))
-        self.assertNotIn("?", str(ctx.exception))
+        fake_addrinfo = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("198.51.100.24", 443))]
+        with mock.patch("ai_action_budget_guard.socket.getaddrinfo", return_value=fake_addrinfo):
+            for status_code in (302, 500):
+                with mock.patch.object(budget_guard._PinnedHTTPSConnection, "request", lambda *args, **kwargs: None):
+                    with mock.patch.object(
+                        budget_guard._PinnedHTTPSConnection,
+                        "getresponse",
+                        lambda *args, code=status_code: _FakeHttpResponse(code),
+                    ):
+                        with mock.patch.object(budget_guard._PinnedHTTPSConnection, "close", lambda self_conn: None):
+                            with self.assertRaises(RuntimeError) as ctx:
+                                budget_guard.post_json_notification(endpoint, {"text": "alert"})
+                self.assertIn(str(status_code), str(ctx.exception))
+                self.assertNotIn("must_not_leak", str(ctx.exception))
+                self.assertNotIn("?", str(ctx.exception))
+
+        private_dns = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", 443))]
+        with mock.patch("ai_action_budget_guard.socket.getaddrinfo", return_value=private_dns):
+            with self.assertRaises(ValueError):
+                budget_guard.resolve_and_validate_notification_url("https://rebind.slack.example/hook")
 
 
 if __name__ == "__main__":

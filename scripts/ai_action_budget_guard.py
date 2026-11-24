@@ -11,14 +11,16 @@ from __future__ import annotations
 import argparse
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
+from http import client as http_client
+import ipaddress
 import json
 import os
 from pathlib import Path
+import socket
+import ssl
 import sys
 from typing import Any
-from urllib import error as urllib_error
 from urllib import parse as urllib_parse
-from urllib import request as urllib_request
 
 MODEL_PRICING_PER_1M_USD: dict[str, tuple[float, float]] = {
     "gpt-4o-mini": (0.15, 0.60),
@@ -29,6 +31,101 @@ MODEL_PRICING_PER_1M_USD: dict[str, tuple[float, float]] = {
     "gemini-2.5-pro": (1.25, 10.00),
     "default": (1.00, 4.00),
 }
+
+
+_CGNAT_NET = ipaddress.ip_network("100.64.0.0/10")
+
+
+def _is_disallowed_ip(ip_obj: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    if isinstance(ip_obj, ipaddress.IPv6Address) and ip_obj.ipv4_mapped is not None:
+        return _is_disallowed_ip(ip_obj.ipv4_mapped)
+    return (
+        ip_obj.is_private
+        or ip_obj.is_loopback
+        or ip_obj.is_link_local
+        or ip_obj.is_multicast
+        or ip_obj.is_reserved
+        or ip_obj.is_unspecified
+        or (isinstance(ip_obj, ipaddress.IPv4Address) and ip_obj in _CGNAT_NET)
+    )
+
+
+def resolve_and_validate_notification_url(raw_url: str) -> tuple[str, str]:
+    """Enforce HTTPS and validate resolved public IPs before sending webhook notifications."""
+    clean_url = raw_url.strip()
+    parsed = urllib_parse.urlsplit(clean_url)
+    if parsed.scheme.lower() != "https" or not parsed.hostname:
+        raise ValueError("Notification endpoint must use https:// with a valid hostname")
+    if parsed.username or parsed.password:
+        raise ValueError("Notification endpoint must not contain userinfo")
+    host = parsed.hostname.lower().rstrip(".")
+    if host == "localhost" or host.endswith(".local") or host.endswith(".internal"):
+        raise ValueError("Refusing internal/localhost notification hostname")
+    try:
+        ip_literal = ipaddress.ip_address(host)
+    except ValueError:
+        ip_literal = None
+    if ip_literal is not None:
+        if _is_disallowed_ip(ip_literal):
+            raise ValueError("Refusing disallowed IP literal for notification endpoint")
+        return clean_url, str(ip_literal)
+
+    try:
+        infos = socket.getaddrinfo(host, parsed.port or 443, type=socket.SOCK_STREAM)
+    except OSError as exc:
+        raise ValueError(f"DNS lookup failed for notification host: {host}") from exc
+    if not infos:
+        raise ValueError(f"Empty DNS resolution for notification host: {host}")
+    pinned_ip: str | None = None
+    for _, _, _, _, sockaddr in infos:
+        addr_ip = ipaddress.ip_address(str(sockaddr[0]).split("%", 1)[0])
+        if _is_disallowed_ip(addr_ip):
+            raise ValueError(f"Refusing notification endpoint resolving to non-public IP: {host}")
+        if pinned_ip is None:
+            pinned_ip = str(addr_ip)
+    if pinned_ip is None:
+        raise ValueError(f"No public IP resolved for notification host: {host}")
+    return clean_url, pinned_ip
+
+
+class _PinnedHTTPSConnection(http_client.HTTPSConnection):
+    """HTTPSConnection pinned directly to pre-validated IP to prevent DNS rebinding."""
+
+    def __init__(
+        self,
+        host: str,
+        port: int | None = None,
+        *,
+        pinned_ip: str,
+        sni_hostname: str,
+        timeout: float = 15.0,
+        context: ssl.SSLContext | None = None,
+    ) -> None:
+        addr_obj = ipaddress.ip_address(pinned_ip)
+        if _is_disallowed_ip(addr_obj):
+            raise ValueError("Refusing connection to non-public pinned IP")
+        ssl_ctx = context or ssl.create_default_context()
+        ssl_ctx.check_hostname = True
+        ssl_ctx.verify_mode = ssl.CERT_REQUIRED
+        super().__init__(host, port=port, timeout=timeout, context=ssl_ctx)
+        self._pinned_ip = pinned_ip
+        self._sni_hostname = sni_hostname
+        self._ssl_ctx = ssl_ctx
+
+    def connect(self) -> None:
+        raw_sock = socket.create_connection(
+            (self._pinned_ip, self.port),
+            self.timeout,
+            self.source_address,
+        )
+        try:
+            self.sock = self._ssl_ctx.wrap_socket(
+                raw_sock,
+                server_hostname=self._sni_hostname,
+            )
+        except BaseException:
+            raw_sock.close()
+            raise
 
 
 def sanitize_url_for_log(raw_url: str) -> str:
@@ -193,28 +290,47 @@ def post_json_notification(
     payload: dict[str, Any],
     *,
     bearer_credential: str = "",
+    connection_cls: type[_PinnedHTTPSConnection] = _PinnedHTTPSConnection,
 ) -> int:
-    """Send JSON notification to Slack/GitHub endpoint with RuntimeError on HTTP failure."""
-    safe_url = sanitize_url_for_log(endpoint_url)
-    headers = {"Content-Type": "application/json"}
+    """Send JSON notification over pinned-IP HTTPS with RuntimeError on redirect/non-2xx."""
+    clean_url, pinned_ip = resolve_and_validate_notification_url(endpoint_url)
+    safe_url = sanitize_url_for_log(clean_url)
+    parsed = urllib_parse.urlsplit(clean_url)
+    hostname = (parsed.hostname or "").lower().rstrip(".")
+    request_target = parsed.path or "/"
+    if parsed.query:
+        request_target = f"{request_target}?{parsed.query}"
+
+    headers = {
+        "Host": parsed.netloc,
+        "Content-Type": "application/json",
+    }
     if bearer_credential.strip():
         headers["Authorization"] = f"Bearer {bearer_credential.strip()}"
-    req = urllib_request.Request(
-        endpoint_url,
-        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-        headers=headers,
-        method="POST",
+
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    conn = connection_cls(
+        hostname,
+        port=parsed.port or 443,
+        pinned_ip=pinned_ip,
+        sni_hostname=hostname,
+        timeout=15.0,
     )
     try:
-        with urllib_request.urlopen(req, timeout=15) as resp:
-            status = getattr(resp, "status", 200)
-            if status < 200 or status >= 300:
-                raise RuntimeError(f"Notification endpoint {safe_url} returned HTTP {status}")
-            return int(status)
-    except urllib_error.HTTPError as exc:
-        raise RuntimeError(f"Notification HTTP error {exc.code} at {safe_url}") from exc
-    except urllib_error.URLError as exc:
-        raise RuntimeError(f"Notification network error at {safe_url}: {exc.reason}") from exc
+        conn.request("POST", request_target, body=body, headers=headers)
+        resp = conn.getresponse()
+        status = int(getattr(resp, "status", 0))
+        resp.read()
+    except (http_client.HTTPException, ssl.SSLError, OSError) as exc:
+        raise RuntimeError(f"Notification transport error at {safe_url}: {exc}") from exc
+    finally:
+        conn.close()
+
+    if 300 <= status < 400:
+        raise RuntimeError(f"Notification endpoint {safe_url} attempted redirect HTTP {status} (blocked)")
+    if status < 200 or status >= 300:
+        raise RuntimeError(f"Notification endpoint {safe_url} returned HTTP {status}")
+    return status
 
 
 def build_default_sample_ledger(billing_month: str) -> list[dict[str, Any]]:
