@@ -11,6 +11,7 @@ class AiActionBudgetState {
     required this.entries,
     required this.isLoading,
     required this.isSubmitting,
+    this.callerIsAdmin = false,
     this.errorMessage,
   });
 
@@ -38,6 +39,7 @@ class AiActionBudgetState {
   final List<AiActionLedgerEntry> entries;
   final bool isLoading;
   final bool isSubmitting;
+  final bool callerIsAdmin;
   final String? errorMessage;
 
   double get totalSpentUsd {
@@ -73,6 +75,7 @@ class AiActionBudgetState {
     List<AiActionLedgerEntry>? entries,
     bool? isLoading,
     bool? isSubmitting,
+    bool? callerIsAdmin,
     String? errorMessage,
     bool clearError = false,
   }) {
@@ -82,6 +85,7 @@ class AiActionBudgetState {
       entries: entries ?? this.entries,
       isLoading: isLoading ?? this.isLoading,
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      callerIsAdmin: callerIsAdmin ?? this.callerIsAdmin,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
@@ -126,6 +130,7 @@ class AiActionBudgetController extends ChangeNotifier {
         _state.copyWith(
           config: snapshot.config,
           entries: List<AiActionLedgerEntry>.unmodifiable(snapshot.entries),
+          callerIsAdmin: snapshot.callerIsAdmin,
           isLoading: false,
           clearError: true,
         ),
@@ -148,6 +153,16 @@ class AiActionBudgetController extends ChangeNotifier {
     if (parsed == null || !parsed.isFinite || parsed <= 0) {
       _setState(
         _state.copyWith(errorMessage: '月次 USD 上限は正の数値を入力してください。'),
+      );
+      return;
+    }
+    if (_state.config.isPaused &&
+        !_state.callerIsAdmin &&
+        parsed > _state.config.monthlyUsdCap) {
+      _setState(
+        _state.copyWith(
+          errorMessage: '自動停止中の月次上限引き上げは管理者権限 (is_admin) が必要です。',
+        ),
       );
       return;
     }
@@ -178,6 +193,14 @@ class AiActionBudgetController extends ChangeNotifier {
 
   Future<void> resumeBudget() async {
     if (_isDisposed || _state.isSubmitting) {
+      return;
+    }
+    if (!_state.callerIsAdmin) {
+      _setState(
+        _state.copyWith(
+          errorMessage: '一時停止の解除には管理者権限 (is_admin) が必要です。',
+        ),
+      );
       return;
     }
     _setState(_state.copyWith(isSubmitting: true, clearError: true));
@@ -232,11 +255,6 @@ class AiActionBudgetController extends ChangeNotifier {
         promptCount: promptCount,
         completionCount: completionCount,
       );
-      final projectedTotal = _state.totalSpentUsd + estimatedUsd;
-      final projectedPct = (_state.config.monthlyUsdCap > 0)
-          ? (projectedTotal / _state.config.monthlyUsdCap) * 100.0
-          : 100.0;
-      final bool willPause = projectedPct >= _state.config.hardStopPct;
 
       final draft = AiActionLedgerEntry(
         id: 'local-${DateTime.now().toUtc().millisecondsSinceEpoch}',
@@ -248,23 +266,17 @@ class AiActionBudgetController extends ChangeNotifier {
         billingMonth: _state.billingMonth,
         createdAt: DateTime.now().toUtc(),
       );
-      final created = await _repository.recordActionUsage(
-        draft: draft,
-        triggerPauseAfterSave: willPause,
-      );
+      final result = await _repository.recordActionUsage(draft: draft);
       if (_isDisposed) {
         return;
       }
-      final updatedEntries = <AiActionLedgerEntry>[created, ..._state.entries];
-      final updatedConfig = willPause
-          ? _state.config.copyWith(
-              isPaused: true,
-              pausedAt: DateTime.now().toUtc(),
-            )
-          : _state.config;
+      final updatedEntries = <AiActionLedgerEntry>[
+        result.entry,
+        ..._state.entries,
+      ];
       _setState(
         _state.copyWith(
-          config: updatedConfig,
+          config: result.updatedConfig,
           entries: List<AiActionLedgerEntry>.unmodifiable(updatedEntries),
           isSubmitting: false,
           clearError: true,

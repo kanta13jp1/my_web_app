@@ -153,10 +153,24 @@ class AiBudgetSnapshot {
   const AiBudgetSnapshot({
     required this.config,
     required this.entries,
+    this.callerIsAdmin = false,
   });
 
   final AiActionBudgetConfig config;
   final List<AiActionLedgerEntry> entries;
+  final bool callerIsAdmin;
+}
+
+/// アクション記録および自動一時停止判定の原子実行結果 (#2609).
+@immutable
+class AiActionRecordResult {
+  const AiActionRecordResult({
+    required this.entry,
+    required this.updatedConfig,
+  });
+
+  final AiActionLedgerEntry entry;
+  final AiActionBudgetConfig updatedConfig;
 }
 
 /// アクション別 USD 単価見積と月次集計ヘルパ (#2609).
@@ -210,9 +224,8 @@ abstract interface class AiActionBudgetRepository {
     required double monthlyUsdCap,
   });
   Future<AiActionBudgetConfig> resumePausedBudget();
-  Future<AiActionLedgerEntry> recordActionUsage({
+  Future<AiActionRecordResult> recordActionUsage({
     required AiActionLedgerEntry draft,
-    required bool triggerPauseAfterSave,
   });
 }
 

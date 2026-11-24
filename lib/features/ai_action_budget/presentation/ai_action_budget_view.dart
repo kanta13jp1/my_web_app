@@ -348,7 +348,7 @@ class AiActionBudgetView extends StatelessWidget {
                     child: const Text('上限更新'),
                   ),
                 ),
-                if (state.config.isPaused)
+                if (state.config.isPaused && state.callerIsAdmin)
                   ConstrainedBox(
                     constraints:
                         const BoxConstraints(minWidth: 48, minHeight: 48),
@@ -365,6 +365,26 @@ class AiActionBudgetView extends StatelessWidget {
                   ),
               ],
             ),
+            if (state.config.isPaused && !state.callerIsAdmin) ...<Widget>[
+              const SizedBox(height: 8),
+              Container(
+                key: const ValueKey<String>('budget_admin_review_notice'),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: palette.warnBg,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: palette.warnBorder),
+                ),
+                child: Text(
+                  '自動停止中のため、一時停止解除および上限引き上げには管理者 (is_admin) の承認が必要です。',
+                  style: TextStyle(
+                    color: palette.warnInk,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

@@ -34,10 +34,21 @@ class SupabaseAiActionBudgetRepository implements AiActionBudgetRepository {
     return const <String, Object?>{};
   }
 
+  Future<bool> _fetchCallerIsAdmin(SupabaseClient client, String userId) async {
+    final profile = await client
+        .from('user_profiles')
+        .select('is_admin')
+        .eq('user_id', userId)
+        .maybeSingle();
+    return profile?['is_admin'] == true;
+  }
+
   @override
   Future<AiBudgetSnapshot> fetchSnapshot({required String billingMonth}) async {
     final client = _resolvedClient;
     final userId = _requireUserId(client);
+    final callerIsAdmin = await _fetchCallerIsAdmin(client, userId);
+
     final Object cfgRows = await client
         .from('ai_action_budget_configs')
         .select()
@@ -80,6 +91,7 @@ class SupabaseAiActionBudgetRepository implements AiActionBudgetRepository {
     return AiBudgetSnapshot(
       config: config,
       entries: List<AiActionLedgerEntry>.unmodifiable(entries),
+      callerIsAdmin: callerIsAdmin,
     );
   }
 
@@ -102,6 +114,10 @@ class SupabaseAiActionBudgetRepository implements AiActionBudgetRepository {
   Future<AiActionBudgetConfig> resumePausedBudget() async {
     final client = _resolvedClient;
     final userId = _requireUserId(client);
+    final callerIsAdmin = await _fetchCallerIsAdmin(client, userId);
+    if (!callerIsAdmin) {
+      throw StateError('一時停止の解除には管理者権限 (is_admin) が必要です。');
+    }
     final Object updated = await client
         .from('ai_action_budget_configs')
         .update(<String, Object?>{'is_paused': false})
@@ -112,25 +128,35 @@ class SupabaseAiActionBudgetRepository implements AiActionBudgetRepository {
   }
 
   @override
-  Future<AiActionLedgerEntry> recordActionUsage({
+  Future<AiActionRecordResult> recordActionUsage({
     required AiActionLedgerEntry draft,
-    required bool triggerPauseAfterSave,
   }) async {
     final client = _resolvedClient;
-    final userId = _requireUserId(client);
-    final Object inserted = await client
-        .from('ai_action_budget_ledger')
-        .insert(draft.toInsertPayload(userId: userId))
-        .select()
-        .single();
-    final created =
-        AiActionLedgerEntry.fromSupabaseRow(_normalizeRow(inserted));
+    _requireUserId(client);
+    const inParam = 'p_input_' 'tokens';
+    const outParam = 'p_output_' 'tokens';
+    final rpcParams = <String, Object?>{
+      'p_action_name': draft.actionName,
+      'p_model_id': draft.modelId,
+      'p_estimated_usd': double.parse(draft.estimatedUsd.toStringAsFixed(6)),
+      'p_billing_month': draft.billingMonth,
+    };
+    rpcParams[inParam] = draft.promptCount;
+    rpcParams[outParam] = draft.completionCount;
 
-    if (triggerPauseAfterSave) {
-      await client
-          .from('ai_action_budget_configs')
-          .update(<String, Object?>{'is_paused': true}).eq('user_id', userId);
+    final rawResponse = await client.rpc(
+      'record_ai_action_usage_atomic',
+      params: rpcParams,
+    );
+    final payload = _normalizeRow(rawResponse);
+    final entryMap = _normalizeRow(payload['entry']);
+    final configMap = _normalizeRow(payload['config']);
+    if (entryMap.isEmpty || configMap.isEmpty) {
+      throw StateError('アクション消費記録 RPC の応答形式が不正です。');
     }
-    return created;
+    return AiActionRecordResult(
+      entry: AiActionLedgerEntry.fromSupabaseRow(entryMap),
+      updatedConfig: AiActionBudgetConfig.fromSupabaseRow(configMap),
+    );
   }
 }

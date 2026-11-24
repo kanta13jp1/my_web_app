@@ -320,6 +320,101 @@ create trigger guard_ai_action_budget_ledger_fields
   for each row
   execute function public.guard_ai_action_budget_ledger_fields();
 
+create or replace function public.record_ai_action_usage_atomic(
+  p_action_name text,
+  p_model_id text,
+  p_input_tokens integer,
+  p_output_tokens integer,
+  p_estimated_usd numeric,
+  p_billing_month text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, auth, pg_temp
+as $fn$
+declare
+  v_uid uuid;
+  v_cfg public.ai_action_budget_configs%rowtype;
+  v_entry public.ai_action_budget_ledger%rowtype;
+  v_total_usd numeric(12, 6);
+  v_usage_pct numeric(10, 4);
+  v_should_pause boolean;
+begin
+  v_uid := auth.uid();
+  if v_uid is null then
+    raise exception 'Authenticated caller is required'
+      using errcode = '42501';
+  end if;
+
+  insert into public.ai_action_budget_configs (user_id, monthly_usd_cap)
+  values (v_uid, 50.0000)
+  on conflict (user_id) do nothing;
+
+  select *
+    into v_cfg
+    from public.ai_action_budget_configs
+    where user_id = v_uid
+    for update;
+
+  if v_cfg.is_paused then
+    raise exception 'Monthly AI budget is paused; action execution blocked'
+      using errcode = '42501';
+  end if;
+
+  insert into public.ai_action_budget_ledger (
+    user_id,
+    action_name,
+    model_id,
+    input_tokens,
+    output_tokens,
+    estimated_usd,
+    billing_month
+  )
+  values (
+    v_uid,
+    p_action_name,
+    p_model_id,
+    p_input_tokens,
+    p_output_tokens,
+    p_estimated_usd,
+    p_billing_month
+  )
+  returning * into v_entry;
+
+  select coalesce(sum(estimated_usd), 0)::numeric(12, 6)
+    into v_total_usd
+    from public.ai_action_budget_ledger
+    where user_id = v_uid
+      and billing_month = p_billing_month;
+
+  v_usage_pct := case
+    when v_cfg.monthly_usd_cap > 0 then
+      (v_total_usd / v_cfg.monthly_usd_cap) * 100.0
+    else 100.0
+  end;
+  v_should_pause := (v_usage_pct >= v_cfg.hard_stop_pct);
+
+  if v_should_pause then
+    update public.ai_action_budget_configs
+       set is_paused = true,
+           paused_at = coalesce(paused_at, timezone('utc', now())),
+           updated_at = timezone('utc', now())
+     where id = v_cfg.id
+     returning * into v_cfg;
+  end if;
+
+  return jsonb_build_object(
+    'entry', to_jsonb(v_entry),
+    'config', to_jsonb(v_cfg),
+    'triggered_pause', v_should_pause
+  );
+end;
+$fn$;
+
+revoke all on function public.record_ai_action_usage_atomic(text, text, integer, integer, numeric, text) from public, anon;
+grant execute on function public.record_ai_action_usage_atomic(text, text, integer, integer, numeric, text) to authenticated, service_role;
+
 comment on table public.ai_action_budget_configs is
   'Per-user monthly USD AI budget threshold and auto-pause configuration (#2609).';
 comment on table public.ai_action_budget_ledger is

@@ -10,6 +10,7 @@ class _FakeAiActionBudgetRepository implements AiActionBudgetRepository {
   _FakeAiActionBudgetRepository({
     AiActionBudgetConfig? initialConfig,
     List<AiActionLedgerEntry>? initialEntries,
+    this.callerIsAdmin = true,
   })  : _config = initialConfig ?? _defaultConfig(),
         _entries = List<AiActionLedgerEntry>.from(
           initialEntries ?? <AiActionLedgerEntry>[],
@@ -17,6 +18,7 @@ class _FakeAiActionBudgetRepository implements AiActionBudgetRepository {
 
   AiActionBudgetConfig _config;
   final List<AiActionLedgerEntry> _entries;
+  final bool callerIsAdmin;
   bool throwOnLoad = false;
   Completer<AiBudgetSnapshot>? pendingLoad;
   int nextId = 1;
@@ -45,6 +47,7 @@ class _FakeAiActionBudgetRepository implements AiActionBudgetRepository {
     return AiBudgetSnapshot(
       config: _config,
       entries: List<AiActionLedgerEntry>.unmodifiable(_entries),
+      callerIsAdmin: callerIsAdmin,
     );
   }
 
@@ -52,6 +55,11 @@ class _FakeAiActionBudgetRepository implements AiActionBudgetRepository {
   Future<AiActionBudgetConfig> updateMonthlyCap({
     required double monthlyUsdCap,
   }) async {
+    if (_config.isPaused &&
+        !callerIsAdmin &&
+        monthlyUsdCap > _config.monthlyUsdCap) {
+      throw StateError('Only admins may raise cap while paused');
+    }
     _config = _config.copyWith(
       monthlyUsdCap: monthlyUsdCap,
       updatedAt: DateTime.utc(2026, 11, 24, 16, 5),
@@ -61,6 +69,9 @@ class _FakeAiActionBudgetRepository implements AiActionBudgetRepository {
 
   @override
   Future<AiActionBudgetConfig> resumePausedBudget() async {
+    if (!callerIsAdmin) {
+      throw StateError('Only admins may clear auto-pause state');
+    }
     _config = _config.copyWith(
       isPaused: false,
       clearPausedAt: true,
@@ -70,19 +81,30 @@ class _FakeAiActionBudgetRepository implements AiActionBudgetRepository {
   }
 
   @override
-  Future<AiActionLedgerEntry> recordActionUsage({
+  Future<AiActionRecordResult> recordActionUsage({
     required AiActionLedgerEntry draft,
-    required bool triggerPauseAfterSave,
   }) async {
     final created = draft.copyWith(id: 'entry-${nextId++}');
     _entries.insert(0, created);
-    if (triggerPauseAfterSave) {
+    var totalSpent = 0.0;
+    for (final item in _entries) {
+      if (item.billingMonth == draft.billingMonth) {
+        totalSpent += item.estimatedUsd;
+      }
+    }
+    final pct = _config.monthlyUsdCap > 0
+        ? (totalSpent / _config.monthlyUsdCap) * 100.0
+        : 100.0;
+    if (pct >= _config.hardStopPct) {
       _config = _config.copyWith(
         isPaused: true,
         pausedAt: DateTime.utc(2026, 11, 24, 16, 8),
       );
     }
-    return created;
+    return AiActionRecordResult(
+      entry: created,
+      updatedConfig: _config,
+    );
   }
 }
 
@@ -136,6 +158,22 @@ void main() {
           await controller.recordUsage(actionName: 'blocked_followup');
           expect(controller.state.entries.length, countBefore);
           expect(controller.state.errorMessage, isNotNull);
+
+          // Non-admin controller must refuse resumeBudget cleanly before hitting DB
+          final nonAdminRepo = _FakeAiActionBudgetRepository(
+            callerIsAdmin: false,
+            initialEntries: _sampleEntries(firstUsd: 11.0),
+          );
+          final nonAdminController =
+              AiActionBudgetController(repository: nonAdminRepo);
+          await nonAdminController.loadSnapshot();
+          expect(nonAdminController.state.callerIsAdmin, isFalse);
+          await nonAdminController.resumeBudget();
+          expect(
+            nonAdminController.state.errorMessage,
+            contains('管理者権限'),
+          );
+          nonAdminController.dispose();
 
           controller.dispose();
           expect(controller.isDisposed, isTrue);
@@ -226,6 +264,49 @@ void main() {
               of: find.byKey(const ValueKey<String>('budget_status_banner')),
               matching: find.textContaining('正常範囲'),
             ),
+            findsOneWidget,
+          );
+        },
+      );
+
+      testWidgets(
+        'hides resume button and shows admin-review notice for non-admin paused users',
+        (WidgetTester tester) async {
+          final ts = DateTime.utc(2026, 11, 24, 16, 0);
+          final pausedConfig = AiActionBudgetConfig(
+            id: 'cfg-non-admin',
+            monthlyUsdCap: 10.0,
+            warningThresholdPct: 80.0,
+            hardStopPct: 100.0,
+            isPaused: true,
+            pausedAt: ts,
+            createdAt: ts,
+            updatedAt: ts,
+          );
+          final repo = _FakeAiActionBudgetRepository(
+            initialConfig: pausedConfig,
+            initialEntries: _sampleEntries(firstUsd: 10.5),
+            callerIsAdmin: false,
+          );
+
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: ThemeData.light(),
+              home: Scaffold(
+                body: SingleChildScrollView(
+                  child: AiActionBudgetContainer(repository: repo),
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          expect(
+            find.byKey(const ValueKey<String>('budget_resume_button')),
+            findsNothing,
+          );
+          expect(
+            find.byKey(const ValueKey<String>('budget_admin_review_notice')),
             findsOneWidget,
           );
         },
