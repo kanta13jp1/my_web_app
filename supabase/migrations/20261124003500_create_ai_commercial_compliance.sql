@@ -222,6 +222,8 @@ begin
 end;
 $guard$;
 
+revoke all on function public.guard_ai_compliance_checklist_rules() from public, anon, authenticated;
+
 drop trigger if exists guard_ai_compliance_checklist_rules
   on public.ai_compliance_checklist_rules;
 create trigger guard_ai_compliance_checklist_rules
@@ -280,6 +282,8 @@ begin
 end;
 $guard$;
 
+revoke all on function public.guard_ai_commercial_asset_submissions() from public, anon, authenticated;
+
 drop trigger if exists guard_ai_commercial_asset_submissions
   on public.ai_commercial_asset_submissions;
 create trigger guard_ai_commercial_asset_submissions
@@ -321,6 +325,8 @@ begin
   return new;
 end;
 $guard$;
+
+revoke all on function public.guard_ai_compliance_consent_audit_logs_immutable() from public, anon, authenticated;
 
 drop trigger if exists guard_ai_compliance_consent_audit_logs_immutable
   on public.ai_compliance_consent_audit_logs;

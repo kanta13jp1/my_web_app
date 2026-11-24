@@ -170,7 +170,7 @@ class _AiCommercialComplianceContainerState
       title: _adminRuleTitleController.text,
       disclaimerBody: _adminRuleBodyController.text,
     );
-    if (saved) {
+    if (saved && mounted) {
       _adminRuleKeyController.clear();
       _adminRuleTitleController.clear();
       _adminRuleBodyController.clear();
