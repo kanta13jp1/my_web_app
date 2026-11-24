@@ -6,8 +6,11 @@ import '../models/asset_management_ai_analysis_history.dart';
 import '../models/asset_liability_workbook.dart';
 import '../models/user_profile.dart';
 import 'ai_hub_chat_service.dart';
+import 'asset_debt_discipline_monitor.dart';
 import 'asset_management_ai_provider_router.dart';
 import 'asset_management_insight_service.dart';
+import 'asset_payment_calendar_service.dart';
+import 'asset_payment_discrepancy_service.dart';
 import 'asset_payment_status_summary.dart';
 
 class AssetManagementAiSummaryFeatureFlag {
@@ -364,6 +367,8 @@ class AssetManagementAiSummaryService {
             .toList(growable: false),
         'purpose': '開発者向け改善提案を、現実装のソースコード/ドキュメントに基づく具体的な実装タスクへ落とすための入力。',
       },
+      'payment_discrepancies': _paymentDiscrepanciesToJson(workbook),
+      'discipline_report': _disciplineReportToJson(report.disciplineReport),
       'guardrails': const <String, dynamic>{
         'calculation_owner': 'dart_service',
         'response_language': 'ja-JP',
@@ -456,6 +461,8 @@ class AssetManagementAiSummaryService {
       'implementation_context': report.implementationContexts
           .map(_implementationContextToJson)
           .toList(growable: false),
+      'payment_discrepancies': _paymentDiscrepanciesToJson(report.workbook),
+      'discipline_report': _disciplineReportToJson(report.disciplineReport),
       'guardrails': const <String, dynamic>{
         'calculation_owner': 'dart_service',
         'external_ai_receives_exact_account_data': true,
@@ -493,35 +500,89 @@ class AssetManagementAiSummaryService {
 
   String buildDeterministicSummary(AssetManagementInsightReport report) {
     final critical = report.criticalActions.length;
-    final actionCount = report.actionItems.length;
     final today = _formatYen(report.todayAvailable.availableAmount);
     final week = _formatYen(report.weekAvailable.availableAmount);
     final month = _formatYen(report.monthAvailable.availableAmount);
-    final movement = report.movementSuggestions.isEmpty
-        ? '現時点で口座移動・出金提案はありません。'
-        : '口座移動・出金提案を${report.movementSuggestions.length}件確認してください。';
+    // Use the same precomputed priority order and direct-payment predicate as
+    // the detailed payload. Never label paid or card-included rows as unpaid.
+    final debts = report.workbook.repaymentPriorityRows.take(5).toList();
+    final sourceKinds = {
+      for (final account in report.workbook.accounts) account.id: account.kind,
+    };
+    final cardFundedFixedCostIds = {
+      for (final row in report.workbook.debtMasterRows)
+        if (AssetCalendarDebtInput.fromDebtRow(
+          row,
+          sourceAccountKindsById: sourceKinds,
+        ).isCardFundedFixedCost)
+          row.id,
+    };
+    final unpaid = report.workbook.cashflowRows
+        .where(
+          (row) =>
+              row.isPayment &&
+              row.isDirectCashflowTarget &&
+              !cardFundedFixedCostIds.contains(row.accountId) &&
+              !row.paid &&
+              row.paymentAmount > 0,
+        )
+        .toList();
+    final discrepancies = AssetPaymentDiscrepancyService.detectAllForInsight(
+      report.workbook,
+    );
+    final escapeViolations = report.disciplineReport?.revolvingCardViolations
+            .where((violation) => violation.hasEscapePlan)
+            .toList(growable: false) ??
+        const <AssetDebtDisciplineViolation>[];
+    String safeName(String name) => name.replaceAll(RegExp(r'[\r\n]+'), ' ');
+    final status = critical > 0 ? '緊急の資金繰り項目があります。' : '緊急度の高い資金繰り項目は検出されていません。';
     final emergency = report.emergencyAdvices.isEmpty
         ? '生活費防衛の追加提案は生成されていません。要確認項目の解消を意味するものではありません。'
         : report.emergencyAdvices
             .take(3)
             .map(
-              (advice) => '${advice.title}: ${advice.description} '
-                  '${advice.suggestedAction}',
+              (advice) =>
+                  '${advice.title}: ${advice.description} ${advice.suggestedAction}',
             )
             .join(' ');
-    final status = critical > 0 ? '緊急の資金繰り項目があります。' : '緊急度の高い資金繰り項目は検出されていません。';
     return [
-      status,
-      '要対応: $actionCount件、緊急: $critical件。',
-      '使用可能額: 本日 $today、今週 $week、今月 $month。',
+      '## 1. 現状',
+      '- **$status** 要対応: ${report.actionItems.length}件、緊急: $critical件。',
+      '## 2. 使用可能額',
+      '- 使用可能額: 本日 $today、今週 $week、今月 $month。',
+      '## 3. 負債の確認（優先順上位5件）',
+      if (debts.isEmpty) '- 対象となる負債はありません。',
+      for (final row in debts)
+        '- ${safeName(row.name)}: 残高 ${_formatYen(row.balance.abs())}（支払状況は別途確認）。',
+      '## 4. 未払い項目',
+      if (unpaid.isEmpty) '- 直接支払う未払い項目はありません。',
+      for (final row in unpaid)
+        '- ${safeName(row.accountName)}: ${_formatYen(row.paymentAmount)}（${row.paymentDate.month}月${row.paymentDate.day}日予定${row.paymentAmountEstimated ? "・推定" : ""}）。',
+      if (report.workbook.billingConfirmationPendingRows.isNotEmpty)
+        '- **請求額の確認待ち**: ${report.workbook.billingConfirmationPendingRows.length}件。',
+      '## 5. 優先確認',
       if (critical > 0)
-        '優先確認: ${report.criticalActions.take(3).map((item) => item.title).join('、')}。',
-      if (critical > 3) 'ほか${critical - 3}件は下の要対応項目を確認してください。',
-      emergency,
-      movement,
-      assetPaymentStatusPrompt(report.workbook),
-      '金額はDartルールで計算済みです。AIは要約のみを行います。',
-    ].join(' ');
+        '- 優先確認: ${report.criticalActions.take(3).map((item) => safeName(item.title)).join('、')}。'
+      else
+        '- 緊急の要対応項目は検出されていません。',
+      if (critical > 3) '- ほか${critical - 3}件は下の要対応項目を確認してください。',
+      for (final item in discrepancies)
+        '- 支払差額確認: ${safeName(item.accountName)} 差額${_formatYen(item.effectiveDifferenceForInsight.abs())}発生、原因確認・補填の必要あり（${AssetPaymentDiscrepancyService.inferReasonHint(item)}）。',
+      for (final violation in escapeViolations)
+        '- リボ解消目標: ${safeName(violation.accountName)} ${violation.escapeMonths}ヶ月以内に毎月${_formatYen(violation.escapeMonthlyPayment!)}返済（残高${_formatYen(violation.currentBalance)}）。',
+      '## 6. 生活費の確保',
+      '- $emergency',
+      '## 7. 資金移動',
+      report.movementSuggestions.isEmpty
+          ? '- 現時点で口座移動・出金提案はありません。'
+          : '- 口座移動・出金提案を${report.movementSuggestions.length}件確認してください。',
+      '## 8. まとめ',
+      assetPaymentStatusPrompt(report.workbook).replaceFirst(
+        '## 支払い状態別の確定内訳',
+        '**支払い状態別の確定内訳**',
+      ),
+      '- 金額はDartルールで計算済みです。AIは要約のみを行います。',
+    ].join('\n');
   }
 
   String _buildPrompt({
@@ -550,6 +611,8 @@ class AssetManagementAiSummaryService {
       '現在データ優先ルール: 唯一の「現在の事実」は「AIに渡す詳細ペイロード」とアクションアイテムだけです。previous_ai_analyses（metrics_snapshot）は過去時点のスナップショットで、現在の事実ではありません。履歴に出てくる金額・使用可能額・未払い・期限超過を、現在のものとして断定・督促してはいけません。現在の使用可能額がプラスなら「不足」「マイナス」と言わず、現在のアクションアイテムや支払日別リスクに無い負債、または paid が true の負債を「期限超過」「未払い」と呼ばないでください。クレジットカードやショッピング枠等の請求に含まれる負債（included_in_billing_account: true、例: auなどauPayカード払いになっているもの）は、親カード（auPAYカード等）でまとめて支払われるため、個別の未払い負債として計上・督促・未払い一覧に記載しないでください。親カードが支払済み（paid: true）であれば、その含まれる負債も支払い処理済みとして扱い、「期限超過」「未払い」として扱ってはいけません。個別の未払い負債・未払い支出として言及するのは直接支払う対象（is_direct_cashflow_target: true かつ paid: false、unpaid_direct_payments に含まれるもの）のみとしてください。支払済み（paid: true）の負債（auPayカードなど）はすでに今月分の引き落とし・支払いが完了しています。支払済みの負債を「未払い」「期限超過」として扱ったり、支払うよう督促してはいけません。「auPayカードは今月分引落済みです」のように支払完了した事実としてのみ言及してください。受取済み（received: true）の給与・収入を「未受取」「期限超過」「未着金」として扱ったり、今日着金しているか確認するよう督促してはいけません。また、予定日が今日より未来の収入について、今日入金・着金を確認するよう指示してはいけません。今月支払うべき額には推定最低支払額ではなく「今月支払予定額（scheduled_payment_amount）」を用い、解約済みサブスク（金額0円または非アクティブ）を「サブスク地獄」「未払支出」と言及してはいけません。Claude（Claude AI SUBSCRIPTION）は一度解約され、現在は月額3,000円の「Claude Pro」に変更済みです。過去の明細履歴にある旧金額（36,418円など）での言及や過大なサブスク負担としての批判は行わず、月額3,000円のProプランとして扱ってください。負債の年利（annual_rate）や負債総額は、過去の記憶ではなく必ずペイロード内の確定値（annual_rate, balance）を採用してください。現在値と履歴が矛盾する場合は必ず現在値を採用してください。「専門窓口（一人で抱えない）」の案内文に出てくる「借入合計」は、住居費・通信費等の固定費を除いた借入のみの合計であり、負債総額（負債合計・借入総額）とは異なる別の数字です。この「借入合計」の金額を要約中で言い換える際は「借入合計」という言葉のまま使い、「負債総額」「負債合計」「借入総額」と呼び変えないでください。',
       '証拠区分ルール: 残高差分からの新規借入は推定であり、取引明細未照合なら新規借入・誓約違反を断定しないでください。未受取の入金予定は未入金の証拠ではありません。予定日を過ぎても自動的に受取済みとはみなしません。received: false は受取状況の記録が未確認であることとして説明してください。予定と実績の対象期間・金額を照合するよう案内し、受取済みへの変更を断定的に要求しないでください。履歴は前回の記録として日付を示し、月が異なると確認できない限り先月と呼ばないでください。完済目標の月額は返済総額か追加額かを区別し、最低返済額への上乗せを勝手に解釈しないでください。',
       '履歴利用ルール: previous_ai_analyses がある場合は、各 metrics_snapshot（純資産・未払い合計・使用可能額）の数値と今回の現在値を比較し、「前回比 純資産○円」「未払い合計が△円減/増」のように差分（改善点・悪化点・据え置き点）を述べてください。過去の本文や言い回しを引用・再掲するのではなく、必ず今回の現在値を主語にして書いてください。',
+      '支払差額ルール: payment_discrepancies に項目がある場合は、各負債について「差額〇〇円発生、原因確認・補填の必要あり」と推定理由を示し、原因確認と補填・修正アクションを具体的に促してください。',
+      'リボ解消目標ルール: discipline_report.violations に escape_months・escape_monthly_payment がある項目は、根拠データに基づき「○ヶ月以内に毎月△△円返済」という具体的な解消目標期間と返済額を提示してください。',
       '日々の行動ルール: daily_todo がある場合は、金銭の負債と同じ熱量で「行動の借金」にも言及してください。carried_over（繰り越したタスク）は具体的なタイトルと経過日数を示し、実行可能な次の一歩を提案してください。繰り越しを人格や能力の問題と決めつけないでください。active_streak_days が続いていれば必ず褒め、recent_days のこなした実績を根拠に「この調子」と背中を押してください。today_pending が残っていれば寝る前にやり切るよう促してください。daily_todo が無い、または空のときは行動の借金には触れず、金銭面の助言に集中してください（存在しない実績を捏造しないこと）。',
       '完結性ルール: 途中で切れないよう、各章は最大3〜5個の短い箇条書きに圧縮してください。必ず「8. まとめ」まで書き切り、最後の行を「以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3点を確認しましょう。」で締めてください。長くなりそうな場合は、負債明細は利息負担の大きい上位5件と合計に絞ってください。',
       '開発者向け改善提案の出力ルール: implementation_context を読んで現状の機能を実際にレビューしてから提案してください。developer_requests は定型生成の既知提案一覧で、already_issued が true のものは既にGitHub Issue起票済みです。本文の「7. 開発者向け改善提案」にも既知提案・起票済み提案やその言い換えを書かないでください。items の title と同一または類似のタイトルは本文にもJSONにも出力禁止です。まだ起票されていない新規の改善提案だけを最大3件返し、新規提案が1件も無い場合は本文には「新規提案なし（既知の提案はすべて起票済みです）」と1行だけ書いてください。各提案は「現状できること（機能レビュー）」「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず含め、実装者がそのままGitHub Issueとして着手できる粒度にしてください。現実装にない機能を断言せず、推測は「追加調査」と明記してください。',
@@ -840,7 +903,22 @@ class AssetManagementAiSummaryService {
             workbook.cardStatementReconciliation.importedLineCount,
         'imported_line_total':
             workbook.cardStatementReconciliation.importedLineTotal,
+        'manual_statement_pending':
+            workbook.cardStatementReconciliation.hasManualStatementPending,
+        'provisional_detail_count': workbook
+            .cardStatementReconciliation.provisionalBillingDetails.length,
+        'statement_import_status': <String, dynamic>{
+          for (final entry in workbook.statementImportStatuses.entries)
+            entry.key: entry.value.toJson(),
+        },
       },
+      'creditor_contact_tasks': workbook.creditorContactTasks
+          .map((task) => task.toJson())
+          .toList(growable: false),
+      'contact_log_ids': workbook.creditorContactTasks
+          .where((task) => task.latestLog != null)
+          .map((task) => task.latestLog!.id)
+          .toList(growable: false),
     };
   }
 
@@ -913,6 +991,65 @@ class AssetManagementAiSummaryService {
     };
   }
 
+  List<Map<String, dynamic>> _paymentDiscrepanciesToJson(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    return AssetPaymentDiscrepancyService.detectAllForInsight(workbook)
+        .map(
+          (item) => <String, dynamic>{
+            'account_id': item.accountId,
+            'account_name': item.accountName,
+            'payment_day': item.paymentDay,
+            'scheduled_payment_amount': item.scheduledPaymentAmount,
+            'minimum_payment_estimate': item.minimumPaymentEstimate,
+            'actual_payment_amount': item.actualPaymentAmount,
+            'difference_amount': item.differenceAmount,
+            'effective_difference_amount': item.effectiveDifferenceForInsight,
+            'recorded_reason': item.reason,
+            'inferred_reason_hint':
+                AssetPaymentDiscrepancyService.inferReasonHint(item),
+            'needs_top_up': AssetPaymentDiscrepancyService.needsTopUp(item),
+          },
+        )
+        .toList(growable: false);
+  }
+
+  Map<String, dynamic>? _disciplineReportToJson(
+    AssetDebtDisciplineReport? discipline,
+  ) {
+    if (discipline == null) {
+      return null;
+    }
+    return <String, dynamic>{
+      'has_violations': discipline.hasViolations,
+      'unresolved_violation_count': discipline.unresolvedViolationCount,
+      'total_new_borrowing': discipline.totalNewBorrowing,
+      'total_carried_over': discipline.totalCarriedOver,
+      'violations': discipline.allViolations
+          .map(
+            (violation) => <String, dynamic>{
+              'type': violation.type.name,
+              'account_id': violation.accountId,
+              'account_name': violation.accountName,
+              'amount': violation.amount,
+              'current_balance': violation.currentBalance,
+              'problem': violation.problem,
+              'recommended_action': violation.action,
+              'escape_months': violation.escapeMonths,
+              'escape_monthly_payment': violation.escapeMonthlyPayment,
+              'payoff_in_24_months_payment': violation.payoffIn24MonthsPayment,
+              'current_plan_payoff_months': violation.currentPlanPayoffMonths,
+              'current_plan_total_interest': violation.currentPlanTotalInterest,
+              'escape_plan_label': violation.hasEscapePlan
+                  ? '${violation.escapeMonths}ヶ月以内に毎月'
+                      '${_formatYen(violation.escapeMonthlyPayment!)}返済'
+                  : null,
+            },
+          )
+          .toList(growable: false),
+    };
+  }
+
   Map<String, dynamic> _accountToJson(AssetLiabilityAccount account) {
     return <String, dynamic>{
       'id': account.id,
@@ -972,6 +1109,9 @@ class AssetManagementAiSummaryService {
       'payment_amount_estimated': row.paymentAmountEstimated,
       'paid': row.paid,
       'effective_paid_payment_amount': row.effectivePaidPaymentAmount,
+      'late_fee_annual_rate': row.lateFeeAnnualRate,
+      'overdue_days': row.overdueDays,
+      'estimated_late_fee_amount': row.estimatedLateFeeAmount,
     };
   }
 
@@ -992,6 +1132,8 @@ class AssetManagementAiSummaryService {
       'is_past': risk.isPast,
       'is_today': risk.isToday,
       'is_upcoming': risk.isUpcoming,
+      'shortage_amount': risk.shortageAmount,
+      'estimated_late_fee_total': risk.estimatedLateFeeTotal,
     };
   }
 
@@ -1364,6 +1506,10 @@ class AssetManagementAiSummaryService {
       AssetManagementInsightActionType.doubleCountingRisk => '二重計上リスク',
       AssetManagementInsightActionType.accountShortfallRisk => '口座別見込み残高の不足',
       AssetManagementInsightActionType.debtSpiralWarning => '利息スパイラル警告',
+      AssetManagementInsightActionType.overdueIncome => '期限超過の未着金収入',
+      AssetManagementInsightActionType.subscriptionExcess => 'サブスク過多の整理',
+      AssetManagementInsightActionType.paymentDiscrepancy => '支払差額・未払いの穴確認',
+      AssetManagementInsightActionType.transferConflict => '逆方向資金移動の衝突',
     };
   }
 
@@ -1526,43 +1672,102 @@ class AssetManagementAiSummaryService {
     for (final row in workbook.currentDebtRows.where(
       (row) => row.annualRate > 0,
     )) {
-      final ratePattern = RegExp(
+      final postfixRatePattern = RegExp(
         r'^(.*?)(?:年利|金利)[^0-9]{0,12}([0-9]+(?:\.[0-9]+)?)\s*%',
       );
+      final prefixRatePattern = RegExp(
+        r'(?:年利|金利)[^0-9]{0,12}([0-9]+(?:\.[0-9]+)?)\s*%([^。、;；\r\n]{0,20})$',
+      );
+      final clauseBoundaryPattern = RegExp(r'[。、;；\r\n]');
+      final predicateParticlePattern = RegExp(r'(?:で(?!ある)|[はがをにとより])');
+      final namePattern = RegExp(RegExp.escape(row.name));
+      final longerDebtPatterns = allDebtNames
+          .where((other) => other != row.name && other.contains(row.name))
+          .map((other) => RegExp(RegExp.escape(other)))
+          .toList(growable: false);
+      final expectedPercent = row.annualRate * 100;
+      final matchingAccount = workbook.accounts.firstWhere(
+        (a) => a.id == row.id || a.name == row.name,
+        orElse: () => const AssetLiabilityAccount(
+          id: '',
+          name: '',
+          kind: AssetLiabilityAccountKind.otherLiability,
+          balance: 0,
+        ),
+      );
+      final accountPercent = matchingAccount.annualRate * 100;
+      bool isRateMatched(double? actualPercent) {
+        return actualPercent != null &&
+            ((actualPercent - expectedPercent).abs() <= 0.011 ||
+                (accountPercent > 0 &&
+                    (actualPercent - accountPercent).abs() <= 0.011));
+      }
+
+      var mismatched = false;
       for (final segment in segments) {
         if (!segment.contains(row.name)) continue;
-        final nameIndex = segment.indexOf(row.name);
-        final afterName = segment.substring(nameIndex + row.name.length);
-        final match = ratePattern.firstMatch(afterName);
-        if (match != null) {
-          final between = match.group(1)!;
-          final hasInterveningDebt = allDebtNames.any(
-            (other) => other != row.name && between.contains(other),
+        final longerMatches = <RegExpMatch>[
+          for (final pattern in longerDebtPatterns)
+            ...pattern.allMatches(segment),
+        ];
+        for (final nameMatch in namePattern.allMatches(segment)) {
+          final insideLongerName = longerMatches.any(
+            (m) => nameMatch.start >= m.start && nameMatch.end <= m.end,
           );
-          if (hasInterveningDebt || between.length > 60) {
-            continue;
+          if (insideLongerName) continue;
+
+          final afterName = segment.substring(nameMatch.end);
+          final postfixMatch = postfixRatePattern.firstMatch(afterName);
+          if (postfixMatch != null) {
+            final between = postfixMatch.group(1)!;
+            final hasInterveningDebt = allDebtNames.any(
+              (other) => other != row.name && between.contains(other),
+            );
+            final afterRate = afterName.substring(postfixMatch.end);
+            final beforeNextClause =
+                afterRate.split(clauseBoundaryPattern).first;
+            final isPrefixOfOtherDebt = allDebtNames.any((other) {
+              if (other == row.name) return false;
+              final otherIndex = beforeNextClause.indexOf(other);
+              if (otherIndex < 0 || otherIndex > 20) return false;
+              if (row.name.contains(other) &&
+                  beforeNextClause.indexOf(row.name) == otherIndex) {
+                return false;
+              }
+              final bridge = beforeNextClause.substring(0, otherIndex);
+              return !predicateParticlePattern.hasMatch(bridge);
+            });
+            if (!hasInterveningDebt &&
+                !isPrefixOfOtherDebt &&
+                between.length <= 60) {
+              final actualPercent = double.tryParse(postfixMatch.group(2)!);
+              if (!isRateMatched(actualPercent)) {
+                errors.add('${row.name}の年利が確定値と不一致');
+                mismatched = true;
+                break;
+              }
+            }
           }
-          final actualPercent = double.tryParse(match.group(2)!);
-          final expectedPercent = row.annualRate * 100;
-          final matchingAccount = workbook.accounts.firstWhere(
-            (a) => a.id == row.id || a.name == row.name,
-            orElse: () => const AssetLiabilityAccount(
-              id: '',
-              name: '',
-              kind: AssetLiabilityAccountKind.otherLiability,
-              balance: 0,
-            ),
-          );
-          final accountPercent = matchingAccount.annualRate * 100;
-          final matchesExpected = actualPercent != null &&
-              ((actualPercent - expectedPercent).abs() <= 0.011 ||
-                  (accountPercent > 0 &&
-                      (actualPercent - accountPercent).abs() <= 0.011));
-          if (!matchesExpected) {
-            errors.add('${row.name}の年利が確定値と不一致');
-            break;
+
+          final beforeName = segment.substring(0, nameMatch.start);
+          final prefixMatch = prefixRatePattern.firstMatch(beforeName);
+          if (prefixMatch != null) {
+            final between = prefixMatch.group(2)!;
+            final hasInterveningDebt = allDebtNames.any(
+              (other) => other != row.name && between.contains(other),
+            );
+            if (!hasInterveningDebt &&
+                !predicateParticlePattern.hasMatch(between)) {
+              final actualPercent = double.tryParse(prefixMatch.group(1)!);
+              if (!isRateMatched(actualPercent)) {
+                errors.add('${row.name}の年利が確定値と不一致');
+                mismatched = true;
+                break;
+              }
+            }
           }
         }
+        if (mismatched) break;
       }
     }
     final effectivelyPaidRows = workbook.currentDebtRows.where((row) {
@@ -1586,7 +1791,8 @@ class AssetManagementAiSummaryService {
         // must directly modify the debt without crossing clauses.
         const paidMarker =
             r'(?:(?:支払|支払い|決済|返済|引落|引き落とし|振込|口座振替|振替|処理|確認|清算|精算)'
-            r'(?:済(?:み)?|完了|終了)|済(?:み)?|完済|引き落とされ(?:た|てい(?:る|ます)|ました)?|引落とされ(?:た|てい(?:る|ます)|ました)?)';
+            r'(?:は|が)?(?:今月)?(?:既に|すでに)?(?:済(?:み)?|完了|終了)|済(?:み)?|完済|'
+            r'引き落とされ(?:た|てい(?:る|ます)|ました)?|引落とされ(?:た|てい(?:る|ます)|ました)?)';
         final paidPattern = RegExp(
           '${RegExp.escape(row.name)}([^。;；\\r\\n]{0,60}?)($paidMarker)'
           '|($paidMarker)(?:の|である)?([^。、;；\\r\\n]{0,20}?)${RegExp.escape(row.name)}',
@@ -1778,6 +1984,10 @@ class AssetManagementAiSummaryService {
     '必要はありません',
     '必要ありません',
     '必要がない',
+    'とはなりません',
+    'とはならない',
+    'にはなりません',
+    'にはならない',
   ];
 
   bool _containsUnnegatedKeyword(String context, List<String> keywords) {

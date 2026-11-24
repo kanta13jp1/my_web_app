@@ -754,6 +754,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     final userId = _userIdOrNull();
     final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
     final key = '$userId:$monthKey';
+    // A read requested after this save must wait for it, not reuse an older read.
+    _inFlightMonthLoads.remove(key);
     return _runMonthMutation<void>(month, userId, () async {
       if (_userIdOrNull() != userId) return;
       final previousLocal = await localRepository.loadMonth(month);
@@ -1179,6 +1181,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   @override
   Future<AssetLiabilityManualSyncResult> syncMonth(DateTime month) {
     final userId = _userIdOrNull();
+    final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    _inFlightMonthLoads.remove('$userId:$monthKey');
     return _runMonthMutation<AssetLiabilityManualSyncResult>(month, userId, () {
       if (_userIdOrNull() != userId) {
         return Future.value(
@@ -2038,7 +2042,12 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           left.billingAccountName != right.billingAccountName ||
           left.postedAt != right.postedAt ||
           left.description != right.description ||
-          left.amount != right.amount) {
+          left.amount != right.amount ||
+          left.category != right.category ||
+          left.isProvisional != right.isProvisional ||
+          left.isConfiguredAdjustment != right.isConfiguredAdjustment ||
+          left.excludeFromStatementTotal != right.excludeFromStatementTotal ||
+          left.createdAt != right.createdAt) {
         return false;
       }
     }
@@ -2071,7 +2080,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           left.completionMemo != right.completionMemo ||
           left.canceled != right.canceled ||
           left.canceledAt != right.canceledAt ||
-          left.cancellationReason != right.cancellationReason) {
+          left.cancellationReason != right.cancellationReason ||
+          left.dedupeKey != right.dedupeKey) {
         return false;
       }
     }

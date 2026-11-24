@@ -148,5 +148,140 @@ void main() {
       );
       expect(result.signal, SalaryDepositSignal.flowAmountMatch);
     });
+
+    test('(D) paid payslip matches expected salary → medium (payslipPaid)', () {
+      final result = AssetSalaryDepositDetector.detect(
+        cycleIncomeFlows: const <SalaryDepositFlowObservation>[],
+        balances: MainAccountBalanceWindow.unknown,
+        expectedSalaryAmount: 420000,
+        paidPayslipAmounts: const <double>[416709],
+      );
+      expect(result.confidence, SalaryDepositConfidence.medium);
+      expect(result.signal, SalaryDepositSignal.payslipPaid);
+      expect(result.matchedAmount, 416709);
+      expect(result.detected, isTrue);
+    });
+
+    test('(D) paid payslip outside expected tolerance stays none', () {
+      final result = AssetSalaryDepositDetector.detect(
+        cycleIncomeFlows: const <SalaryDepositFlowObservation>[],
+        balances: MainAccountBalanceWindow.unknown,
+        expectedSalaryAmount: 420000,
+        paidPayslipAmounts: const <double>[120000],
+      );
+      expect(result.detected, isFalse);
+      expect(result.signal, SalaryDepositSignal.none);
+    });
+
+    test('(D) paid payslip uses heuristic floor when expected unknown', () {
+      expect(
+        AssetSalaryDepositDetector.detect(
+          cycleIncomeFlows: const <SalaryDepositFlowObservation>[],
+          balances: MainAccountBalanceWindow.unknown,
+          paidPayslipAmounts: const <double>[416709],
+        ).signal,
+        SalaryDepositSignal.payslipPaid,
+      );
+      expect(
+        AssetSalaryDepositDetector.detect(
+          cycleIncomeFlows: const <SalaryDepositFlowObservation>[],
+          balances: MainAccountBalanceWindow.unknown,
+          paidPayslipAmounts: const <double>[99999],
+        ).detected,
+        isFalse,
+      );
+    });
+
+    test('peak balance in cycle detects salary after later spending', () {
+      final result = AssetSalaryDepositDetector.detect(
+        cycleIncomeFlows: const <SalaryDepositFlowObservation>[],
+        balances: const MainAccountBalanceWindow(
+          previousCycleEndBalance: 100000,
+          currentBalance: 150000,
+          peakBalanceInCycle: 500000,
+        ),
+        expectedSalaryAmount: 400000,
+      );
+      expect(result.signal, SalaryDepositSignal.balanceJump);
+      expect(result.matchedAmount, 400000);
+    });
+
+    test('peak below current balance does not shrink the delta', () {
+      const window = MainAccountBalanceWindow(
+        previousCycleEndBalance: 100000,
+        currentBalance: 500000,
+        peakBalanceInCycle: 300000,
+      );
+      expect(window.delta, 400000);
+    });
+  });
+
+  group('MainAccountBalanceWindow.fromHistory', () {
+    MainAccountBalanceWindow window(
+      Map<DateTime, double> observations, {
+      double? previous = 10000,
+    }) {
+      return MainAccountBalanceWindow.fromHistory(
+        previousCycleEndBalance: previous,
+        currentBalance: 50000,
+        observations: observations,
+        cycleStart: DateTime(2026, 9, 25),
+        asOf: DateTime(2026, 10, 5),
+      );
+    }
+
+    test('deposit remains detectable after spending', () {
+      final balances =
+          window(<DateTime, double>{DateTime(2026, 9, 25): 310000});
+      final result = AssetSalaryDepositDetector.detect(
+        cycleIncomeFlows: const <SalaryDepositFlowObservation>[],
+        balances: balances,
+        expectedSalaryAmount: 300000,
+      );
+      expect(result.signal, SalaryDepositSignal.balanceJump);
+      expect(result.matchedAmount, 300000);
+    });
+
+    test('previous cycle and future observations cannot confirm salary', () {
+      final result = AssetSalaryDepositDetector.detect(
+        cycleIncomeFlows: const <SalaryDepositFlowObservation>[],
+        balances: window(<DateTime, double>{
+          DateTime(2026, 9, 24): 310000,
+          DateTime(2026, 10, 6): 310000,
+        }),
+        expectedSalaryAmount: 300000,
+      );
+      expect(result.detected, isFalse);
+    });
+
+    test('missing baseline remains unknown', () {
+      expect(
+        window(
+          <DateTime, double>{DateTime(2026, 9, 25): 310000},
+          previous: null,
+        ).delta,
+        isNull,
+      );
+    });
+
+    test('invalid values ignored and current balance remains available', () {
+      expect(
+        window(<DateTime, double>{DateTime(2026, 9, 25): double.nan})
+            .currentBalance,
+        50000,
+      );
+      expect(
+        window(<DateTime, double>{DateTime(2026, 9, 25): double.infinity})
+            .delta,
+        40000,
+      );
+    });
+
+    test('today observations are inclusive despite time of day', () {
+      expect(
+        window(<DateTime, double>{DateTime(2026, 10, 5, 20): 310000}).delta,
+        300000,
+      );
+    });
   });
 }

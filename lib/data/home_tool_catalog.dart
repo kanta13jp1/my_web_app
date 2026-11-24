@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../pages/aero_lab_page.dart';
+import '../pages/neon_showcase_page.dart';
 import '../pages/sound_bloom_page.dart';
 import '../pages/lumen_path_page.dart';
 import '../pages/kinetic_forge_page.dart';
@@ -2502,6 +2503,24 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const AeroLabPage()),
     ),
     HomeToolEntry(
+      id: 'neon-showcase',
+      sectionId: 'growth',
+      title: 'Gemini 4 作品館 · NEON SHOWCASE',
+      subtitle: '単一HTML 24作品・Blender 3D・企画案・参照バズ投稿20選',
+      icon: Icons.auto_awesome_outlined,
+      color: const Color(0xFFD97706),
+      keywords: const <String>[
+        'Gemini 4',
+        'Neon',
+        'NEON SHOWCASE',
+        '作品館',
+        'WebGL',
+        'Blender',
+        'ベンチマーク',
+      ],
+      onOpen: (context) => _pushPage(context, const NeonShowcasePage()),
+    ),
+    HomeToolEntry(
       id: 'video-studio',
       sectionId: 'growth',
       title: 'AI動画スタジオ',
@@ -3124,6 +3143,22 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'ブラウザ内推論',
       ],
       onOpen: (context) => Navigator.of(context).pushNamed('/jwenv-lab'),
+    ),
+    HomeToolEntry(
+      id: 'vibe-sim-lab',
+      sectionId: 'ai',
+      title: 'Vibe Sim 物理破綻診断ラボ',
+      subtitle: 'MuJoCoの物理設定ミスを診断し、MjSpec修正コードを試算',
+      icon: Icons.precision_manufacturing_outlined,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        'MuJoCo',
+        'Vibe Sim',
+        '物理シミュレーション',
+        'MjSpec',
+        'ロボット',
+      ],
+      onOpen: (context) => Navigator.of(context).pushNamed('/vibe-sim-lab'),
     ),
     HomeToolEntry(
       id: 'agi-fireworks',

@@ -28,6 +28,10 @@ const EXPECTED_ACTIONS: Record<CoreHubAuthPolicy, string[]> = {
     "achievements.add",
     "achievements.list",
     "analytics.summary",
+    "async_job.enqueue",
+    "async_job.list",
+    "async_job.status",
+    "async_job.update_status",
     "design.screens.list",
     "feature_request.analyze_attachment",
     "feature_request.existing_issues",
@@ -52,13 +56,16 @@ const EXPECTED_ACTIONS: Record<CoreHubAuthPolicy, string[]> = {
     "onboarding.get",
     "page.share_generate",
     "personal.dashboard",
+    "stage_gate.decide",
+    "stage_gate.list",
+    "stage_gate.submit",
     "system.status",
     "user.profile",
     "user.update",
   ],
 };
 
-Deno.test("all 45 dispatcher actions have one explicit auth policy", async () => {
+Deno.test("all 52 dispatcher actions have one explicit auth policy", async () => {
   const actual: Record<CoreHubAuthPolicy, string[]> = {
     anonymous: [],
     service_role: [],
@@ -74,7 +81,7 @@ Deno.test("all 45 dispatcher actions have one explicit auth policy", async () =>
   for (const actions of Object.values(actual)) actions.sort();
 
   assertEquals(actual, EXPECTED_ACTIONS);
-  assertEquals(Object.keys(CORE_HUB_ACTION_REGISTRY).length, 45);
+  assertEquals(Object.keys(CORE_HUB_ACTION_REGISTRY).length, 52);
 
   const indexSource = await Deno.readTextFile(
     new URL("./index.ts", import.meta.url),

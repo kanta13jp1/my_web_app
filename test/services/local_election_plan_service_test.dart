@@ -775,4 +775,53 @@ void main() {
     expect(updatedKyoto.kpiActualLocalMembers, 11);
     expect(updatedKyoto.kgiTargetLocalMembers, 22);
   });
+
+  test(
+      'currentCandidateWinRateLabel shows 未実施 when no post-convention battles occurred',
+      () {
+    const uncontested = LocalElectionPrefecturePlan(
+      prefecture: '東京',
+      region: '関東',
+      additionalSeatTarget: 10,
+      incumbentRetentionTarget: 40,
+      focusMunicipalityCount: 10,
+      newCandidateTarget: 12,
+      endorsementDeadlineMonth: '2026-10',
+      closeRaceSupportRounds: 10,
+      currentMembers: 40,
+      announcedCandidateCount: 5,
+      postConventionBattleCount: 0,
+      postConventionWinCount: 0,
+      postConventionLossCount: 0,
+    );
+    const contested = LocalElectionPrefecturePlan(
+      prefecture: '千葉',
+      region: '関東',
+      additionalSeatTarget: 5,
+      incumbentRetentionTarget: 10,
+      focusMunicipalityCount: 5,
+      newCandidateTarget: 6,
+      endorsementDeadlineMonth: '2026-10',
+      closeRaceSupportRounds: 5,
+      currentMembers: 10,
+      announcedCandidateCount: 4,
+      postConventionBattleCount: 2,
+      postConventionWinCount: 1,
+      postConventionLossCount: 1,
+    );
+
+    expect(uncontested.currentCandidateWinRateLabel, '未実施');
+    expect(contested.currentCandidateWinRateLabel, '50%');
+
+    final uncontestedDashboard = LocalElectionPlanDashboard(
+      currentLocalMembers: 40,
+      targetLocalMembers: 700,
+      previousUnifiedElectionWins: 183,
+      previousUnifiedElectionFirstHalfWins: 62,
+      previousUnifiedElectionSecondHalfWins: 121,
+      updatedAt: DateTime(2026, 11, 18),
+      prefectures: const <LocalElectionPrefecturePlan>[uncontested],
+    );
+    expect(uncontestedDashboard.currentCandidateWinRateLabel, '未実施');
+  });
 }

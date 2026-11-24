@@ -5,7 +5,9 @@ import {
   asStringArray,
   buildUtmUrl,
 } from "./edge.ts";
+import { generateJsonWithGeminiFirst } from "./gemini_json_client.ts";
 
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 const VIDEO_PROVIDER_URL = Deno.env.get("VIRAL_VIDEO_PROVIDER_URL") ?? "";
 const VIDEO_PROVIDER_API_KEY = Deno.env.get("VIRAL_VIDEO_PROVIDER_API_KEY") ??
@@ -97,51 +99,20 @@ export async function generateViralBrief(
 ): Promise<ViralCampaignBrief> {
   const normalized = normalizeInput(input);
   const fallback = buildFallbackViralBrief(normalized);
-  if (OPENAI_API_KEY === "") {
-    return fallback;
-  }
-
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        temperature: 0.5,
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content:
-              "Create truthful short-form performance-marketing concepts for X. Make them punchy, specific, and non-deceptive. Return JSON only.",
-          },
-          {
-            role: "user",
-            content: JSON.stringify({
-              request:
-                "Generate a 15-30 second viral ad brief with scenes, captions, X post copy, and guardrails.",
-              input: normalized,
-            }),
-          },
-        ],
-      }),
-    });
-    if (!response.ok) {
-      return fallback;
-    }
-
-    const json = await response.json();
-    const content = asString(json?.choices?.[0]?.message?.content);
-    if (content === "") {
-      return fallback;
-    }
-    return sanitizeBrief(JSON.parse(content), fallback);
-  } catch {
-    return fallback;
-  }
+  const parsed = await generateJsonWithGeminiFirst({
+    systemPrompt:
+      "Create truthful short-form performance-marketing concepts for X. Make them punchy, specific, and non-deceptive. Return JSON only.",
+    userPrompt: JSON.stringify({
+      request:
+        "Generate a 15-30 second viral ad brief with scenes, captions, X post copy, and guardrails.",
+      input: normalized,
+    }),
+    geminiApiKey: GEMINI_API_KEY,
+    openAiApiKey: OPENAI_API_KEY,
+    temperature: 0.5,
+    maxOutputTokens: 1500,
+  });
+  return parsed ? sanitizeBrief(parsed, fallback) : fallback;
 }
 
 export function buildSharePack(
