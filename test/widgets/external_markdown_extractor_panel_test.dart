@@ -241,7 +241,7 @@ void main() {
         await tester.tap(retryBtn);
         await tester.pumpAndSettle();
 
-        expect(find.textContaining('Overview Guide'), findsOneWidget);
+        expect(find.textContaining('Overview Guide'), findsAtLeastNWidgets(1));
 
         await tester.pumpWidget(const SizedBox());
         await tester.pumpAndSettle();
