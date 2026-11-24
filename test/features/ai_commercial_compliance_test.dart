@@ -10,8 +10,8 @@ import 'package:my_web_app/features/ai_commercial_compliance/domain/ai_commercia
 class _FakeAiComplianceRepository implements AiCommercialComplianceRepository {
   _FakeAiComplianceRepository({
     required this.isAdmin,
-    required this.rules,
-  });
+    required final List<AiComplianceRule> rules,
+  }) : rules = List<AiComplianceRule>.from(rules);
 
   final bool isAdmin;
   final List<AiComplianceRule> rules;
@@ -420,6 +420,7 @@ void main() {
           await tester.tap(saveRuleBtn);
           await tester.pumpAndSettle();
 
+          expect(controller.state.errorMessage, isNull);
           expect(
             repo.rules.any(
               (final AiComplianceRule r) => r.ruleKey == 'elevenlabs_beta_ban',
