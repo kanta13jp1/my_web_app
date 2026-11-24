@@ -93,6 +93,12 @@ class SyntheticBackendTest(unittest.TestCase):
             self.assertEqual(errors, [400])
         self.assertEqual(fixture.COUNTS['rejected_writes'], 4)
 
+    def test_ai_hub_action_category_only_returns_fixed_labels(self):
+        self.assertEqual(fixture.ai_hub_action_category(
+            b'{"action":"provider.chat","private":"synthetic_secret"}'), 'provider_chat')
+        for body in (b'{"action":"synthetic_secret"}', b'{"action":[]}', b'['):
+            self.assertEqual(fixture.ai_hub_action_category(body), 'unknown')
+
     @patch('builtins.print')
     def test_rejection_diagnostic_uses_only_fixed_categories(self, output):
         fixture.report_rejection('POST', '/rest/v1/asset_pref_mirror?private=value', 'denied_mutation')
