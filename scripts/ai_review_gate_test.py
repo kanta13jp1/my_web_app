@@ -86,6 +86,15 @@ class GateTests(unittest.TestCase):
     def test_binary_header_mentioned_in_source_is_not_a_binary_change(self):
         gate.validate_scope(['a.py'], '+message = "Binary files are unsupported"')
 
+    def test_safe_exact_names_allows_gitattributes_only(self):
+        gate.validate_scope(
+            ['.gitattributes'],
+            'diff --git a/.gitattributes b/.gitattributes\n+docs/QUARTERLY_ROADMAP.md merge=union\n',
+        )
+        for rejected in (['Makefile'], ['.htaccess'], ['.env']):
+            with self.subTest(paths=rejected), self.assertRaises(ValueError):
+                gate.validate_scope(rejected, '+plain')
+
     def test_provider_failure_missing_evidence_and_moved_base_publish_failure(self):
         for result_kind in ('missing', 'malformed', 'moved_base', 'changes'):
             with self.subTest(kind=result_kind), tempfile.TemporaryDirectory() as temp:
@@ -719,6 +728,143 @@ class PlatformContextTests(unittest.TestCase):
             with patch.object(gate, 'request') as provider, self.assertRaisesRegex(ValueError, 'Review data changed'):
                 gate.review(directory)
             provider.assert_not_called()
+
+
+class ConfidenceAndCommentTests(unittest.TestCase):
+    def setUp(self):
+        self.state = {
+            'schema_version': 1, 'repository': 'owner/repo', 'pr': 42,
+            'head': 'a'*40, 'base': 'b'*40,
+            'input_sha256': gate.digest('example diff'),
+            'files': ['a.py', 'b.py'], 'complete_diff': True, 'redactions': 0,
+            'check_id': 12, 'run_url': 'https://example.invalid/run/99',
+        }
+        self.review = {
+            'schema_version': 1, 'head': 'a'*40, 'base': 'b'*40,
+            'input_sha256': self.state['input_sha256'], 'verdict': 'approve',
+            'summary': 'Verified all modified lines, edge cases, and regression coverage across both files.',
+            'files': [
+                {'path': 'a.py', 'assessment': 'Input boundary validation and error paths are deterministic and well-tested.'},
+                {'path': 'b.py', 'assessment': 'All unit test fixtures cover positive, negative, and boundary paths cleanly.'},
+            ],
+            'areas': [
+                {'area': area, 'assessment': 'Verified correctness, least-privilege permissions, and unit test coverage.'}
+                for area in sorted(gate.AREAS)
+            ],
+            'findings': [],
+        }
+
+    def test_confidence_tiers_high_medium_low_and_missing(self):
+        high = gate.evaluate_review_confidence(
+            self.review,
+            self.state,
+            provider={'finish_reasons': ['STOP'], 'prompt_block_reason': None},
+        )
+        self.assertEqual(high['tier'], 'high')
+        self.assertEqual(high['score'], 100)
+
+        short_review = copy.deepcopy(self.review)
+        short_review['summary'] = 'x' * 30
+        for item in short_review['files'] + short_review['areas']:
+            item['assessment'] = 'x' * 30
+        medium = gate.evaluate_review_confidence(
+            short_review,
+            dict(self.state, redactions=2),
+        )
+        self.assertEqual(medium['tier'], 'medium')
+        self.assertTrue(55 <= medium['score'] < 80, medium)
+
+        incomplete = gate.evaluate_review_confidence(
+            dict(short_review, files=[short_review['files'][0]]),
+            dict(self.state, complete_diff=False, redactions=3),
+            provider={'finish_reasons': ['MAX_TOKENS']},
+        )
+        self.assertEqual(incomplete['tier'], 'low')
+        self.assertLess(incomplete['score'], 55)
+
+        failed = gate.evaluate_evidence_confidence({'error': 'RuntimeError: API HTTP 500'})
+        self.assertEqual(failed['score'], 0)
+        self.assertEqual(failed['tier'], 'low')
+
+    def test_publish_records_confidence_and_keeps_check_run_patch_last(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            gate.write(directory/'state.json', self.state)
+            gate.write(directory/'provider.json', {'finish_reasons': ['STOP'], 'prompt_block_reason': None})
+            gate.write(directory/'result.json', {'review': self.review})
+            pr = {'state': 'open', 'draft': False, 'head': {'sha': 'a'*40}, 'base': {'sha': 'b'*40, 'ref': 'main'}}
+            summary_path = directory/'summary.md'
+            with patch.object(gate, 'github', return_value=pr) as api, patch.dict(os.environ, {'GITHUB_STEP_SUMMARY': str(summary_path)}):
+                gate.publish(directory)
+                self.assertEqual(api.call_args.args[1]['conclusion'], 'success')
+                self.assertIn('Confidence:', api.call_args.args[1]['output']['summary'])
+            evidence = json.loads((directory/'evidence.json').read_text(encoding='utf-8'))
+            self.assertEqual(evidence['confidence']['tier'], 'high')
+            self.assertIn('Confidence:', summary_path.read_text(encoding='utf-8'))
+
+    def test_post_confidence_comment_creates_updates_and_redacts(self):
+        fake_secret = 'sk-' + 'secretvalue12345678'
+        fake_assignment = 'api_' + f'key="{fake_secret}"'
+        evidence = dict(
+            self.state,
+            status='changes_requested',
+            review=dict(
+                self.review,
+                verdict='changes_requested',
+                findings=[{
+                    'path': 'a.py',
+                    'line': 10,
+                    'severity': 'high',
+                    'blocking': True,
+                    'explanation': f'Leaked credential {fake_assignment} must be removed.',
+                    'recommendation': 'Read credentials from environment variables instead.',
+                }],
+            ),
+        )
+        evidence['confidence'] = gate.evaluate_evidence_confidence(evidence)
+
+        created_calls = []
+        def api_create(path, data=None, method=None):
+            created_calls.append((path, data, method))
+            if method is None:
+                return []
+            return {'id': 501}
+
+        res_created = gate.post_confidence_comment(evidence, api=api_create)
+        self.assertEqual(res_created, {'action': 'created', 'comment_id': 501})
+        self.assertEqual(created_calls[-1][0], '/issues/42/comments')
+        self.assertEqual(created_calls[-1][2], 'POST')
+        posted_body = created_calls[-1][1]['body']
+        self.assertIn(gate.COMMENT_MARKER, posted_body)
+        self.assertNotIn(fake_secret, posted_body)
+        self.assertIn('[REDACTED]', posted_body)
+
+        updated_calls = []
+        def api_update(path, data=None, method=None):
+            updated_calls.append((path, data, method))
+            if method is None and path.endswith('&page=1'):
+                return [{'id': i, 'body': 'unrelated'} for i in range(100)]
+            if method is None and path.endswith('&page=2'):
+                return [{'id': 777, 'body': f"{gate.COMMENT_MARKER}\nold report"}]
+            return {'id': 777}
+
+        res_updated = gate.post_confidence_comment(evidence, api=api_update)
+        self.assertEqual(res_updated, {'action': 'updated', 'comment_id': 777})
+        self.assertEqual(updated_calls[-1][0], '/issues/comments/777')
+        self.assertEqual(updated_calls[-1][2], 'PATCH')
+
+    def test_comment_cli_and_self_test(self):
+        gate.run_self_test()
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            with self.assertRaises(ValueError):
+                gate.comment(directory)
+            evidence = dict(self.state, status='approved', review=self.review)
+            gate.write(directory/'evidence.json', evidence)
+            with patch.object(gate, 'github', side_effect=[[], {'id': 888}]) as api:
+                res = gate.comment(directory)
+                self.assertEqual(res['action'], 'created')
+                self.assertEqual(api.call_count, 2)
 
 
 if __name__ == '__main__':
