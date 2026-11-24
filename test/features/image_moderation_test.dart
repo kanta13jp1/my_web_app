@@ -97,6 +97,30 @@ void main() {
           expect(controller.state.filteredAssets.length, 2);
           expect(controller.state.hiddenOrFlaggedCount, 1);
 
+          final safeDraft = LocalImageModerationAnalyzer.prepareUploadDraft(
+            storageBucket: 'user-uploads',
+            storagePath: 'receipt_march.png',
+            externalTransferConsented: false,
+            now: DateTime.utc(2026, 11, 24, 16, 0),
+          );
+          expect(safeDraft.moderationStatus, ImageModerationStatus.pending);
+          expect(safeDraft.isHidden, isFalse);
+          final safePayload = safeDraft.toInsertPayload(userId: 'user-1');
+          expect(safePayload['moderation_status'], 'pending');
+          expect(safePayload['is_hidden'], isFalse);
+
+          final unsafeDraft = LocalImageModerationAnalyzer.prepareUploadDraft(
+            storageBucket: 'user-uploads',
+            storagePath: 'flagged_nsfw_sample.png',
+            externalTransferConsented: false,
+            now: DateTime.utc(2026, 11, 24, 16, 1),
+          );
+          expect(unsafeDraft.moderationStatus, ImageModerationStatus.hidden);
+          expect(unsafeDraft.isHidden, isTrue);
+          final unsafePayload = unsafeDraft.toInsertPayload(userId: 'user-1');
+          expect(unsafePayload['moderation_status'], 'hidden');
+          expect(unsafePayload['is_hidden'], isTrue);
+
           controller.selectTag('receipt');
           expect(controller.state.filteredAssets.length, 1);
           expect(controller.state.filteredAssets.first.id, 'asset-receipt');

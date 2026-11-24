@@ -16,17 +16,17 @@ import argparse
 from dataclasses import dataclass
 import hashlib
 import hmac
+from http import client as http_client
 import ipaddress
 import json
 import os
 from pathlib import Path
 import re
 import socket
+import ssl
 import sys
 from typing import Any
-from urllib import error as urllib_error
 from urllib import parse as urllib_parse
-from urllib import request as urllib_request
 
 ALLOWED_IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".webp", ".gif"})
 _TAG_CLEAN_RE = re.compile(r"[^a-z0-9_-]+")
@@ -99,9 +99,10 @@ def _is_disallowed_ip(ip_obj: ipaddress.IPv4Address | ipaddress.IPv6Address) -> 
     )
 
 
-def validate_external_vision_url(raw_url: str) -> str:
-    """Enforce HTTPS and block SSRF internal hosts before any outbound Vision request."""
-    parsed = urllib_parse.urlsplit(raw_url.strip())
+def resolve_and_validate_external_vision_url(raw_url: str) -> tuple[str, str]:
+    """Enforce HTTPS, validate public DNS IPs, and return (clean_url, pinned_ip)."""
+    clean_url = raw_url.strip()
+    parsed = urllib_parse.urlsplit(clean_url)
     if parsed.scheme.lower() != "https" or not parsed.hostname:
         raise ValueError("External Vision URL must use https:// with a valid hostname")
     if parsed.username or parsed.password:
@@ -116,7 +117,7 @@ def validate_external_vision_url(raw_url: str) -> str:
     if ip_literal is not None:
         if _is_disallowed_ip(ip_literal):
             raise ValueError("Refusing disallowed IP literal for Vision URL")
-        return raw_url.strip()
+        return clean_url, str(ip_literal)
 
     try:
         infos = socket.getaddrinfo(host, parsed.port or 443, type=socket.SOCK_STREAM)
@@ -124,11 +125,62 @@ def validate_external_vision_url(raw_url: str) -> str:
         raise ValueError(f"DNS lookup failed for Vision host: {host}") from exc
     if not infos:
         raise ValueError(f"Empty DNS resolution for Vision host: {host}")
+    pinned_ip: str | None = None
     for _, _, _, _, sockaddr in infos:
-        addr_ip = ipaddress.ip_address(sockaddr[0].split("%", 1)[0])
+        addr_text = str(sockaddr[0]).split("%", 1)[0]
+        addr_ip = ipaddress.ip_address(addr_text)
         if _is_disallowed_ip(addr_ip):
             raise ValueError(f"Refusing Vision endpoint resolving to non-public IP: {host}")
-    return raw_url.strip()
+        if pinned_ip is None:
+            pinned_ip = str(addr_ip)
+    assert pinned_ip is not None
+    return clean_url, pinned_ip
+
+
+def validate_external_vision_url(raw_url: str) -> str:
+    """Validate HTTPS and non-private DNS resolution, returning the safe URL string."""
+    safe_url, _ = resolve_and_validate_external_vision_url(raw_url)
+    return safe_url
+
+
+class _PinnedHTTPSConnection(http_client.HTTPSConnection):
+    """HTTPSConnection pinned directly to a pre-validated IP to prevent DNS rebinding."""
+
+    def __init__(
+        self,
+        host: str,
+        port: int | None = None,
+        *,
+        pinned_ip: str,
+        sni_hostname: str,
+        timeout: float = 15.0,
+        context: ssl.SSLContext | None = None,
+    ) -> None:
+        addr_obj = ipaddress.ip_address(pinned_ip)
+        if _is_disallowed_ip(addr_obj):
+            raise ValueError("Refusing connection to non-public pinned IP")
+        ssl_ctx = context or ssl.create_default_context()
+        ssl_ctx.check_hostname = True
+        ssl_ctx.verify_mode = ssl.CERT_REQUIRED
+        super().__init__(host, port=port, timeout=timeout, context=ssl_ctx)
+        self._pinned_ip = pinned_ip
+        self._sni_hostname = sni_hostname
+        self._ssl_ctx = ssl_ctx
+
+    def connect(self) -> None:
+        raw_sock = socket.create_connection(
+            (self._pinned_ip, self.port),
+            self.timeout,
+            self.source_address,
+        )
+        try:
+            self.sock = self._ssl_ctx.wrap_socket(
+                raw_sock,
+                server_hostname=self._sni_hostname,
+            )
+        except BaseException:
+            raw_sock.close()
+            raise
 
 
 def normalize_tags(raw_tags: list[str], *, limit: int = 10) -> list[str]:
@@ -214,9 +266,16 @@ def _invoke_external_vision_api(
     storage_bucket: str,
     storage_path: str,
     vision_credential: str,
+    connection_cls: type[_PinnedHTTPSConnection] = _PinnedHTTPSConnection,
 ) -> tuple[list[str], float]:
-    safe_url = validate_external_vision_url(endpoint_url)
+    safe_url, pinned_ip = resolve_and_validate_external_vision_url(endpoint_url)
     log_url = sanitize_url_for_log(safe_url)
+    parsed = urllib_parse.urlsplit(safe_url)
+    hostname = (parsed.hostname or "").lower().rstrip(".")
+    request_target = parsed.path or "/"
+    if parsed.query:
+        request_target = f"{request_target}?{parsed.query}"
+
     payload = json.dumps(
         {
             "model": os.environ.get("VIT_VISION_MODEL", "google/vit-base-patch16-224"),
@@ -224,29 +283,39 @@ def _invoke_external_vision_api(
             "storage_path": storage_path,
         }
     ).encode("utf-8")
-    req = urllib_request.Request(
-        safe_url,
-        data=payload,
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {vision_credential}",
-        },
-        method="POST",
+    headers = {
+        "Host": parsed.netloc,
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {vision_credential}",
+    }
+    conn = connection_cls(
+        hostname,
+        port=parsed.port or 443,
+        pinned_ip=pinned_ip,
+        sni_hostname=hostname,
+        timeout=15.0,
     )
     try:
-        with urllib_request.urlopen(req, timeout=15) as resp:
-            status = getattr(resp, "status", 200)
-            body = resp.read().decode("utf-8")
-            if status < 200 or status >= 300:
-                raise RuntimeError(f"Vision API {log_url} returned HTTP {status}")
-    except urllib_error.HTTPError as exc:
-        raise RuntimeError(f"Vision API HTTP error {exc.code} at {log_url}") from exc
-    except urllib_error.URLError as exc:
-        raise RuntimeError(f"Vision API network error at {log_url}: {exc.reason}") from exc
+        conn.request("POST", request_target, body=payload, headers=headers)
+        resp = conn.getresponse()
+        status = int(getattr(resp, "status", 0))
+        body = resp.read().decode("utf-8")
+    except (http_client.HTTPException, ssl.SSLError, OSError) as exc:
+        raise RuntimeError(f"Vision API transport error at {log_url}: {exc}") from exc
+    finally:
+        conn.close()
 
-    parsed = json.loads(body)
-    raw_tags = parsed.get("tags") if isinstance(parsed, dict) else []
-    raw_score = parsed.get("safety_score", 0.9) if isinstance(parsed, dict) else 0.9
+    if 300 <= status < 400:
+        raise RuntimeError(f"Vision API {log_url} attempted redirect HTTP {status} (blocked)")
+    if status < 200 or status >= 300:
+        raise RuntimeError(f"Vision API {log_url} returned HTTP {status}")
+
+    try:
+        parsed_body = json.loads(body)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Vision API invalid JSON response at {log_url}") from exc
+    raw_tags = parsed_body.get("tags") if isinstance(parsed_body, dict) else []
+    raw_score = parsed_body.get("safety_score", 0.9) if isinstance(parsed_body, dict) else 0.9
     tags = normalize_tags(raw_tags if isinstance(raw_tags, list) else [])
     return tags, max(0.0, min(1.0, float(raw_score)))
 

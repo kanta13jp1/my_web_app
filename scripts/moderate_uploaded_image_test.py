@@ -5,17 +5,25 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-import io
 import json
 import os
 from pathlib import Path
+import socket
 import sys
 import unittest
 from unittest import mock
-from urllib import error as urllib_error
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import moderate_uploaded_image as mui
+
+
+class _FakeHttpResponse:
+    def __init__(self, status: int, body: bytes) -> None:
+        self.status = status
+        self._body = body
+
+    def read(self) -> bytes:
+        return self._body
 
 
 class ModerateUploadedImageTests(unittest.TestCase):
@@ -42,7 +50,7 @@ class ModerateUploadedImageTests(unittest.TestCase):
                 mui.validate_storage_path("user-uploads", bad_path)
 
     def test_external_transfer_blocked_without_explicit_consent(self) -> None:
-        with mock.patch("moderate_uploaded_image.urllib_request.urlopen") as mocked_open:
+        with mock.patch("moderate_uploaded_image._PinnedHTTPSConnection") as mocked_conn:
             with self.assertRaises(PermissionError):
                 mui.moderate_uploaded_image(
                     storage_bucket="user-uploads",
@@ -50,7 +58,7 @@ class ModerateUploadedImageTests(unittest.TestCase):
                     external_transfer_consented=False,
                     use_external_vision=True,
                 )
-            mocked_open.assert_not_called()
+            mocked_conn.assert_not_called()
 
     def test_low_safety_score_forces_hidden_and_normalizes_tags(self) -> None:
         unsafe = mui.moderate_uploaded_image(
@@ -70,29 +78,84 @@ class ModerateUploadedImageTests(unittest.TestCase):
         ok = mui.evaluate_moderation_decision(0.92)
         self.assertEqual(ok, ("approved", False))
 
-    def test_external_vision_http_error_sanitizes_url_and_raises_runtime_error(self) -> None:
-        endpoint = "https://vision.example.com/v1/classify?key=query_param_should_strip"
-        http_err = urllib_error.HTTPError(
-            url=endpoint,
-            code=503,
-            msg="Service Unavailable",
-            hdrs=None,  # type: ignore[arg-type]
-            fp=io.BytesIO(b"{}"),
-        )
+    def test_pinned_https_connection_pins_resolved_ip_and_sets_sni_host(self) -> None:
+        endpoint = "https://vision.example.com/v1/classify"
+        fake_addrinfo = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
+        captured: dict[str, object] = {}
+
+        fake_raw_sock = mock.MagicMock()
+        fake_tls_sock = mock.MagicMock()
+        fake_ctx = mock.MagicMock()
+        fake_ctx.wrap_socket.return_value = fake_tls_sock
+
+        def fake_create_conn(address: tuple[str, int], timeout: float, source_addr: object) -> object:
+            captured["connect_address"] = address
+            return fake_raw_sock
+
+        def fake_request(self_conn: mui._PinnedHTTPSConnection, method: str, target: str, body: bytes | None = None, headers: dict[str, str] | None = None) -> None:
+            captured["method"] = method
+            captured["target"] = target
+            captured["headers"] = dict(headers or {})
+            self_conn.connect()
+
+        def fake_getresponse(self_conn: mui._PinnedHTTPSConnection) -> _FakeHttpResponse:
+            return _FakeHttpResponse(
+                200,
+                json.dumps({"tags": ["Food", "Lunch"], "safety_score": 0.94}).encode("utf-8"),
+            )
+
         env_var = "VISION_" + "API_KEY"
         with mock.patch.dict(os.environ, {env_var: "stub", "VISION_API_ENDPOINT": endpoint}):
-            with mock.patch("moderate_uploaded_image.validate_external_vision_url", return_value=endpoint):
-                with mock.patch("moderate_uploaded_image.urllib_request.urlopen", side_effect=http_err):
-                    with self.assertRaises(RuntimeError) as ctx:
-                        mui.moderate_uploaded_image(
-                            storage_bucket="user-uploads",
-                            storage_path="food_lunch.png",
-                            external_transfer_consented=True,
-                            use_external_vision=True,
-                        )
-        self.assertIn("503", str(ctx.exception))
-        self.assertNotIn("query_param_should_strip", str(ctx.exception))
-        self.assertNotIn("?", str(ctx.exception))
+            with mock.patch("moderate_uploaded_image.socket.getaddrinfo", return_value=fake_addrinfo):
+                with mock.patch("moderate_uploaded_image.socket.create_connection", side_effect=fake_create_conn):
+                    with mock.patch("moderate_uploaded_image.ssl.create_default_context", return_value=fake_ctx):
+                        with mock.patch.object(mui._PinnedHTTPSConnection, "request", fake_request):
+                            with mock.patch.object(mui._PinnedHTTPSConnection, "getresponse", fake_getresponse):
+                                with mock.patch.object(mui._PinnedHTTPSConnection, "close", lambda self_conn: None):
+                                    res = mui.moderate_uploaded_image(
+                                        storage_bucket="user-uploads",
+                                        storage_path="food_lunch.png",
+                                        external_transfer_consented=True,
+                                        use_external_vision=True,
+                                    )
+
+        self.assertEqual(captured["connect_address"], ("93.184.216.34", 443))
+        fake_ctx.wrap_socket.assert_called_once_with(fake_raw_sock, server_hostname="vision.example.com")
+        self.assertEqual(captured["headers"]["Host"], "vision.example.com")  # type: ignore[index]
+        self.assertEqual(res.tags, ["food", "lunch"])
+        self.assertEqual(res.moderation_status, "approved")
+
+    def test_external_vision_http_error_and_redirect_sanitize_url_and_block_ssrf(self) -> None:
+        endpoint = "https://vision.example.com/v1/classify?key=query_param_should_strip"
+        fake_addrinfo = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
+
+        env_var = "VISION_" + "API_KEY"
+        with mock.patch.dict(os.environ, {env_var: "stub", "VISION_API_ENDPOINT": endpoint}):
+            with mock.patch("moderate_uploaded_image.socket.getaddrinfo", return_value=fake_addrinfo):
+                for status_code in (302, 503):
+                    with mock.patch.object(mui._PinnedHTTPSConnection, "request", lambda *args, **kwargs: None):
+                        with mock.patch.object(
+                            mui._PinnedHTTPSConnection,
+                            "getresponse",
+                            lambda *args, code=status_code: _FakeHttpResponse(code, b"{}"),
+                        ):
+                            with mock.patch.object(mui._PinnedHTTPSConnection, "close", lambda self_conn: None):
+                                with self.assertRaises(RuntimeError) as ctx:
+                                    mui.moderate_uploaded_image(
+                                        storage_bucket="user-uploads",
+                                        storage_path="food_lunch.png",
+                                        external_transfer_consented=True,
+                                        use_external_vision=True,
+                                    )
+                    self.assertIn(str(status_code), str(ctx.exception))
+                    self.assertNotIn("query_param_should_strip", str(ctx.exception))
+                    self.assertNotIn("?", str(ctx.exception))
+
+        # Private/link-local DNS resolution must be rejected before connecting.
+        private_dns = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("169.254.169.254", 443))]
+        with mock.patch("moderate_uploaded_image.socket.getaddrinfo", return_value=private_dns):
+            with self.assertRaises(ValueError):
+                mui.resolve_and_validate_external_vision_url("https://rebind.example.com/v1/classify")
 
 
 if __name__ == "__main__":

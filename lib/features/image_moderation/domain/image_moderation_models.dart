@@ -79,14 +79,19 @@ class ModeratedImageAsset {
   }
 
   Map<String, Object?> toInsertPayload({required String userId}) {
+    final normalizedScore = double.parse(safetyScore.toStringAsFixed(4));
+    final effectiveUnsafe = normalizedScore < 0.5000;
+    final effectiveStatus = effectiveUnsafe
+        ? ImageModerationStatus.hidden
+        : ImageModerationStatus.pending;
     return <String, Object?>{
       'user_id': userId,
       'storage_bucket': storageBucket,
       'storage_path': storagePath,
       'tags': tags,
-      'safety_score': double.parse(safetyScore.toStringAsFixed(4)),
-      'moderation_status': ImageModerationStatus.pending.wireValue,
-      'is_hidden': false,
+      'safety_score': normalizedScore,
+      'moderation_status': effectiveStatus.wireValue,
+      'is_hidden': effectiveUnsafe,
       'external_transfer_consented': externalTransferConsented,
     };
   }
@@ -201,7 +206,7 @@ class LocalImageModerationAnalyzer {
     final double score = hasUnsafe ? 0.22 : 0.96;
     final ImageModerationStatus status = hasUnsafe
         ? ImageModerationStatus.hidden
-        : ImageModerationStatus.approved;
+        : ImageModerationStatus.pending;
     final timestamp = (now ?? DateTime.now()).toUtc();
 
     return ModeratedImageAsset(

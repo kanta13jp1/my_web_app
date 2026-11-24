@@ -145,15 +145,21 @@ begin
       raise exception 'Authenticated owner user_id is required on insert'
         using errcode = '42501';
     end if;
-    if new.moderation_status is distinct from 'pending'
-       or new.is_hidden is distinct from false
-       or new.reviewed_by is not null then
-      raise exception 'New uploaded image assets must start pending with reviewed_by null and is_hidden false'
+    if new.reviewed_by is not null then
+      raise exception 'New uploaded image assets must start with reviewed_by null'
+        using errcode = '42501';
+    end if;
+    if new.moderation_status in ('approved', 'flagged') then
+      raise exception 'Clients cannot self-approve or pre-flag uploaded image assets on insert'
         using errcode = '42501';
     end if;
     if new.safety_score < 0.5000 then
       new.is_hidden := true;
       new.moderation_status := 'hidden';
+    elsif new.moderation_status is distinct from 'pending'
+       or new.is_hidden is distinct from false then
+      raise exception 'Safe uploaded image assets must start pending with is_hidden false'
+        using errcode = '42501';
     end if;
     new.created_at := timezone('utc', now());
     new.updated_at := timezone('utc', now());
