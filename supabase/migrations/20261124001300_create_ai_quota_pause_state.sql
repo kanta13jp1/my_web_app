@@ -48,7 +48,7 @@ CREATE POLICY "quota_pause_admin_update"
       SELECT 1
       FROM public.user_profiles up
       WHERE up.user_id = (SELECT auth.uid())
-        AND (up.is_admin = true OR up.role = 'admin')
+        AND up.is_admin = true
     )
   )
   WITH CHECK (
@@ -56,7 +56,7 @@ CREATE POLICY "quota_pause_admin_update"
       SELECT 1
       FROM public.user_profiles up
       WHERE up.user_id = (SELECT auth.uid())
-        AND (up.is_admin = true OR up.role = 'admin')
+        AND up.is_admin = true
     )
   );
 
@@ -68,6 +68,52 @@ CREATE POLICY "quota_pause_write_service_role"
   TO service_role
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
+
+CREATE OR REPLACE FUNCTION public.guard_ai_quota_pause_state_admin_update()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $guard$
+BEGIN
+  IF COALESCE(NULLIF(auth.role(), ''), NULLIF(current_setting('request.jwt.claim.role', true), ''), '') = 'service_role'
+     OR (
+       session_user IN ('postgres', 'supabase_admin', 'supabase_auth_admin')
+       AND COALESCE(
+         NULLIF(auth.role(), ''),
+         NULLIF(current_setting('request.jwt.claim.role', true), ''),
+         ''
+       ) NOT IN ('anon', 'authenticated')
+     ) THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.tool IS DISTINCT FROM OLD.tool
+     OR NEW.usage_pct IS DISTINCT FROM OLD.usage_pct
+     OR NEW.warning_80_sent IS DISTINCT FROM OLD.warning_80_sent
+     OR NEW.warning_80_sent_at IS DISTINCT FROM OLD.warning_80_sent_at
+     OR NEW.paused_at IS DISTINCT FROM OLD.paused_at
+     OR NEW.silent_pause_detected IS DISTINCT FROM OLD.silent_pause_detected
+     OR NEW.admin_issue_number IS DISTINCT FROM OLD.admin_issue_number
+     OR NEW.metadata IS DISTINCT FROM OLD.metadata THEN
+    RAISE EXCEPTION
+      'Only service_role may modify quota telemetry fields'
+      USING ERRCODE = '42501';
+  END IF;
+
+  RETURN NEW;
+END;
+$guard$;
+
+DROP TRIGGER IF EXISTS trg_guard_ai_quota_pause_state_admin_update
+  ON public.ai_quota_pause_state;
+CREATE TRIGGER trg_guard_ai_quota_pause_state_admin_update
+  BEFORE UPDATE ON public.ai_quota_pause_state
+  FOR EACH ROW
+  EXECUTE FUNCTION public.guard_ai_quota_pause_state_admin_update();
+
+COMMENT ON FUNCTION public.guard_ai_quota_pause_state_admin_update() IS
+  'Restricts authenticated admin updates on ai_quota_pause_state to resume/note fields only (#2612).';
 
 COMMENT ON TABLE public.ai_quota_pause_state IS
   'Per-tool 80% warning, 100% auto-pause, silent-pause mismatch detection, and manual admin resume state (#2612).';
