@@ -98,8 +98,7 @@ class LocalElectionRosterEntry {
       municipality: (json['municipality'] as String? ?? '').trim(),
       name: (json['name'] as String? ?? '').trim(),
       kana: (json['kana'] as String? ?? '').trim(),
-      electionCountLabel:
-          (json['electionCountLabel'] as String? ?? '').trim(),
+      electionCountLabel: (json['electionCountLabel'] as String? ?? '').trim(),
     );
   }
 
@@ -249,8 +248,7 @@ PublicMemo? selectPreviousSnapshotMemo({
       continue;
     }
     final sourceKey = (memo.metadata['source_key'] as String? ?? '').trim();
-    if (normalizedExcludeKey.isNotEmpty &&
-        sourceKey == normalizedExcludeKey) {
+    if (normalizedExcludeKey.isNotEmpty && sourceKey == normalizedExcludeKey) {
       continue;
     }
     final snapshotDate = resolvePublicMemoSnapshotDate(memo);
@@ -447,7 +445,8 @@ LocalElectionRosterDiff? computeLocalElectionRosterDiff({
     unmatchedCurr.remove(currIdx);
     final before = previousEntries[prevIdx];
     final after = currentEntries[currIdx];
-    final nameChanged = _normalizeText(before.name) != _normalizeText(after.name);
+    final nameChanged =
+        _normalizeText(before.name) != _normalizeText(after.name);
     final locationChanged = _normalizeText(before.effectiveLocation) !=
         _normalizeText(after.effectiveLocation);
     final assemblyChanged = _normalizeText(before.assemblyLabel) !=
@@ -595,13 +594,9 @@ LocalElectionRosterDiff? computeLocalElectionRosterDiff({
     }
   }
 
-  final added = unmatchedCurr
-      .map((idx) => currentEntries[idx])
-      .toList()
+  final added = unmatchedCurr.map((idx) => currentEntries[idx]).toList()
     ..sort(_compareEntries);
-  final removed = unmatchedPrev
-      .map((idx) => previousEntries[idx])
-      .toList()
+  final removed = unmatchedPrev.map((idx) => previousEntries[idx]).toList()
     ..sort(_compareEntries);
 
   nameChanges.sort((a, b) => _compareEntries(a.after, b.after));
@@ -631,8 +626,8 @@ LocalElectionRosterDiff? computeLocalElectionRosterDiff({
             .where((pref) => pref.isNotEmpty)
             .toSet();
     if (previousActiveCount <= 0) {
-      previousActiveCount = localElectionAllPrefectures.length -
-          previousMissingSet.length;
+      previousActiveCount =
+          localElectionAllPrefectures.length - previousMissingSet.length;
     }
     final currentMissingSet = currentMissingList.toSet();
     for (final pref in localElectionAllPrefectures) {
@@ -859,7 +854,9 @@ String _normalizeUrl(String value) {
   if (trimmed.isEmpty) {
     return '';
   }
-  return trimmed.endsWith('/') ? trimmed.substring(0, trimmed.length - 1) : trimmed;
+  return trimmed.endsWith('/')
+      ? trimmed.substring(0, trimmed.length - 1)
+      : trimmed;
 }
 
 bool _hasConflictingDetailUrl(

@@ -353,9 +353,8 @@ class PublicMemoService implements MemoReactionService {
       if (normalizedCategory != null && normalizedCategory.isNotEmpty) {
         builder = builder.eq('category', normalizedCategory);
       }
-      final response = await builder
-          .order('created_at', ascending: false)
-          .limit(50);
+      final response =
+          await builder.order('created_at', ascending: false).limit(50);
       final candidates = (response as List)
           .whereType<Map>()
           .map((row) => PublicMemo.fromJson(Map<String, dynamic>.from(row)))
