@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/public_memo.dart';
 import '../utils/app_logger.dart';
 import 'app_share_service.dart';
+import 'local_election_roster_diff.dart';
 import 'supabase_runtime_config.dart';
 
 abstract interface class MemoReactionService {
@@ -328,6 +329,45 @@ class PublicMemoService implements MemoReactionService {
     } catch (e, stackTrace) {
       AppLogger.error(
         'Failed to load generated public memo',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return null;
+    }
+  }
+
+  Future<PublicMemo?> getLatestPreviousGeneratedPublicMemo({
+    required String userId,
+    required String metadataType,
+    required String excludeSourceKey,
+    required String beforeSnapshotDate,
+    String? category,
+  }) async {
+    try {
+      var builder = _supabase
+          .from('public_memos')
+          .select()
+          .eq('user_id', userId)
+          .eq('is_public', true);
+      final normalizedCategory = category?.trim();
+      if (normalizedCategory != null && normalizedCategory.isNotEmpty) {
+        builder = builder.eq('category', normalizedCategory);
+      }
+      final response =
+          await builder.order('created_at', ascending: false).limit(50);
+      final candidates = (response as List)
+          .whereType<Map>()
+          .map((row) => PublicMemo.fromJson(Map<String, dynamic>.from(row)))
+          .toList();
+      return selectPreviousSnapshotMemo(
+        candidates: candidates,
+        metadataType: metadataType,
+        excludeSourceKey: excludeSourceKey,
+        beforeSnapshotDate: beforeSnapshotDate,
+      );
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to load previous generated public memo',
         error: e,
         stackTrace: stackTrace,
       );
