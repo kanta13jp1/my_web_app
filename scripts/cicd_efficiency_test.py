@@ -250,6 +250,46 @@ class CicdEfficiencyTest(unittest.TestCase):
         self.assertNotIn("\n    if:", lint_job)
         self.assertNotIn("\n    if:", security_job)
 
+    def test_asset_pref_truncate_synthetic_scopes_pull_request_paths(self) -> None:
+        workflow = self.read(".github/workflows/asset-pref-truncate-synthetic.yml")
+        pull_request = workflow.split("  pull_request:", 1)[1].split("permissions:", 1)[0]
+        self.assertIn("paths:", pull_request)
+        self.assertIn("'.github/workflows/asset-pref-truncate-synthetic.yml'", pull_request)
+        self.assertIn("'scripts/asset_pref_truncate_fixture/**'", pull_request)
+        self.assertIn(
+            "'supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql'",
+            pull_request,
+        )
+        self.assertIn("types: [opened, synchronize, reopened]", pull_request)
+        self.assertIn("codex/asset-pref-truncate-migration-20261103", workflow)
+
+    def test_dependency_license_audit_scopes_pull_request_paths(self) -> None:
+        workflow = self.read(".github/workflows/dependency-license-audit.yml")
+        pull_request = workflow.split("  pull_request:", 1)[1].split("  schedule:", 1)[0]
+        self.assertIn("paths:", pull_request)
+        for required_pattern in (
+            "'pubspec.yaml'",
+            "'**/pubspec.yaml'",
+            "'pubspec.lock'",
+            "'**/pubspec.lock'",
+            "'package.json'",
+            "'**/package.json'",
+            "'package-lock.json'",
+            "'**/package-lock.json'",
+            "'deno.json'",
+            "'**/deno.json'",
+            "'deno.jsonc'",
+            "'**/deno.jsonc'",
+            "'requirements*.txt'",
+            "'**/requirements*.txt'",
+            "'scripts/audit_dependency_licenses.py'",
+            "'test/scripts/test_audit_dependency_licenses.py'",
+            "'.github/workflows/dependency-license-audit.yml'",
+        ):
+            self.assertIn(required_pattern, pull_request)
+        self.assertIn("  schedule:", workflow)
+        self.assertIn("  workflow_dispatch:", workflow)
+
 
 SHELL_SHA256 = {
     'Deploy to Firebase Hosting (Production)': 'f6114d733c4fa1b54834278237892a33c6a9eced9376ead99eca582af273016f',

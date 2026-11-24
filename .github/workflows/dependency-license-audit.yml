@@ -2,6 +2,24 @@ name: Dependency Multi-License Audit
 
 on:
   pull_request:
+    paths:
+      - 'pubspec.yaml'
+      - '**/pubspec.yaml'
+      - 'pubspec.lock'
+      - '**/pubspec.lock'
+      - 'package.json'
+      - '**/package.json'
+      - 'package-lock.json'
+      - '**/package-lock.json'
+      - 'deno.json'
+      - '**/deno.json'
+      - 'deno.jsonc'
+      - '**/deno.jsonc'
+      - 'requirements*.txt'
+      - '**/requirements*.txt'
+      - 'scripts/audit_dependency_licenses.py'
+      - 'test/scripts/test_audit_dependency_licenses.py'
+      - '.github/workflows/dependency-license-audit.yml'
   schedule:
     - cron: "15 1 * * 1" # Weekly Monday 10:15 JST
   workflow_dispatch:
