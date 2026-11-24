@@ -17,6 +17,12 @@ import {
   readDailyAiQuotaStatus,
 } from "./daily_quota_gate.ts";
 import {
+  createSupabaseCustomDataSourceStore,
+  handleDataSourceRegister,
+  handleDataSourceStatus,
+  validateMessagesContextBudget,
+} from "./context_limits.ts";
+import {
   authorizeAiHubAction,
   resolveAuthenticatedUserId,
 } from "./action_access_policy.ts";
@@ -7238,6 +7244,19 @@ serve(async (req: Request) => {
           );
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
+        const contextCheck = validateMessagesContextBudget(finalMessages);
+        if (!contextCheck.allowed) {
+          return json({
+            success: false,
+            status: "contextLimitExceeded",
+            code: "context_limit_exceeded",
+            estimated_units: contextCheck.estimatedUnits,
+            max_units: contextCheck.maxUnits,
+            exceeded_by: contextCheck.exceededBy,
+            message:
+              `リクエストの推定コンテキスト量 (${contextCheck.estimatedUnits}) が上限 (${contextCheck.maxUnits}) を超過しています。`,
+          }, 413);
+        }
         const requestStartedAt = performance.now();
         const traceId = requestTraceId(req, body.trace_id);
         const sessionId = body.session_id != null
@@ -7658,6 +7677,21 @@ serve(async (req: Request) => {
             }),
             409,
           );
+        }
+        const precheckMessages = messages ??
+          [{ role: "user", content: userMsg }];
+        const contextCheck = validateMessagesContextBudget(precheckMessages);
+        if (!contextCheck.allowed) {
+          return json({
+            success: false,
+            status: "contextLimitExceeded",
+            code: "context_limit_exceeded",
+            estimated_units: contextCheck.estimatedUnits,
+            max_units: contextCheck.maxUnits,
+            exceeded_by: contextCheck.exceededBy,
+            message:
+              `リクエストの推定コンテキスト量 (${contextCheck.estimatedUnits}) が上限 (${contextCheck.maxUnits}) を超過しています。`,
+          }, 413);
         }
         const budget = await checkBudget("ef", "ai-hub");
         if (!budget.ok) {
@@ -9339,6 +9373,29 @@ serve(async (req: Request) => {
           quota_date: status.quotaDate,
           reset_at: status.resetAt,
         });
+      }
+
+      case "data_sources.status": {
+        if (!userId) {
+          return json({ error: "Unauthorized" }, 401);
+        }
+        const res = await handleDataSourceStatus(
+          createSupabaseCustomDataSourceStore(admin),
+          userId,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "data_sources.register": {
+        if (!userId) {
+          return json({ error: "Unauthorized" }, 401);
+        }
+        const res = await handleDataSourceRegister(
+          createSupabaseCustomDataSourceStore(admin),
+          userId,
+          body,
+        );
+        return json(res.body, res.status);
       }
 
       default:
