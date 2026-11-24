@@ -131,9 +131,9 @@ class AiActionLedgerEntry {
   }
 
   static AiActionLedgerEntry fromSupabaseRow(Map<String, Object?> row) {
-    final Object? rawIn = row['input_' 'tokens'];
-    final Object? rawOut = row['output_' 'tokens'];
-    final Object? rawUsd = row['estimated_usd'];
+    final rawIn = row['input_' 'tokens'];
+    final rawOut = row['output_' 'tokens'];
+    final rawUsd = row['estimated_usd'];
     return AiActionLedgerEntry(
       id: (row['id'] as String?) ?? '',
       actionName: (row['action_name'] as String?) ?? 'action',
