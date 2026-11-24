@@ -11,13 +11,15 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import asdict, dataclass
+from http import client as http_client
+import ipaddress
 import json
 import os
 import re
+import socket
+import ssl
 import sys
-import urllib.error
 import urllib.parse
-import urllib.request
 from typing import Any
 
 
@@ -85,6 +87,100 @@ REASONING_PROFILES: dict[str, ReasoningModeProfile] = {
 _EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 _BEARER_RE = re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._\-]{8,}")
 _KEY_LIKE_RE = re.compile(r"\b(?:sk|sb|ghp|gho|AIza)[A-Za-z0-9_\-]{8,}\b")
+_CGNAT_NET = ipaddress.ip_network("100.64.0.0/10")
+
+
+def _is_disallowed_ip(ip_obj: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    if isinstance(ip_obj, ipaddress.IPv6Address) and ip_obj.ipv4_mapped is not None:
+        return _is_disallowed_ip(ip_obj.ipv4_mapped)
+    return (
+        ip_obj.is_private
+        or ip_obj.is_loopback
+        or ip_obj.is_link_local
+        or ip_obj.is_multicast
+        or ip_obj.is_reserved
+        or ip_obj.is_unspecified
+        or (isinstance(ip_obj, ipaddress.IPv4Address) and ip_obj in _CGNAT_NET)
+    )
+
+
+def resolve_and_validate_https_url(raw_url: str) -> tuple[str, str]:
+    """Validate https:// endpoint and public DNS IPs, returning (clean_url, pinned_ip)."""
+    clean_url = raw_url.strip()
+    parsed = urllib.parse.urlsplit(clean_url)
+    if parsed.scheme.lower() != "https" or not parsed.hostname:
+        raise ValueError("Remote reasoning endpoint must use https:// with a valid hostname")
+    if parsed.username or parsed.password:
+        raise ValueError("Remote reasoning endpoint must not contain userinfo")
+    host = parsed.hostname.lower().rstrip(".")
+    if host == "localhost" or host.endswith(".local") or host.endswith(".internal"):
+        raise ValueError("Refusing internal/localhost remote reasoning hostname")
+    try:
+        ip_literal = ipaddress.ip_address(host)
+    except ValueError:
+        ip_literal = None
+    if ip_literal is not None:
+        if _is_disallowed_ip(ip_literal):
+            raise ValueError("Refusing disallowed IP literal for remote reasoning endpoint")
+        return clean_url, str(ip_literal)
+
+    try:
+        infos = socket.getaddrinfo(host, parsed.port or 443, type=socket.SOCK_STREAM)
+    except OSError as exc:
+        raise ValueError(f"DNS lookup failed for remote reasoning host: {host}") from exc
+    if not infos:
+        raise ValueError(f"Empty DNS resolution for remote reasoning host: {host}")
+    pinned_ip: str | None = None
+    for _, _, _, _, sockaddr in infos:
+        addr_ip = ipaddress.ip_address(str(sockaddr[0]).split("%", 1)[0])
+        if _is_disallowed_ip(addr_ip):
+            raise ValueError(f"Refusing endpoint resolving to non-public IP: {host}")
+        if pinned_ip is None:
+            pinned_ip = str(addr_ip)
+    if pinned_ip is None:
+        raise ValueError(f"No public IP resolved for remote reasoning host: {host}")
+    return clean_url, pinned_ip
+
+
+class _PinnedHTTPSConnection(http_client.HTTPSConnection):
+    """HTTPSConnection pinned directly to pre-validated IP with TLS v1.2+."""
+
+    def __init__(
+        self,
+        host: str,
+        port: int | None = None,
+        *,
+        pinned_ip: str,
+        sni_hostname: str,
+        timeout: float = 15.0,
+        context: ssl.SSLContext | None = None,
+    ) -> None:
+        addr_obj = ipaddress.ip_address(pinned_ip)
+        if _is_disallowed_ip(addr_obj):
+            raise ValueError("Refusing connection to non-public pinned IP")
+        ssl_ctx = context or ssl.create_default_context()
+        ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+        ssl_ctx.check_hostname = True
+        ssl_ctx.verify_mode = ssl.CERT_REQUIRED
+        super().__init__(host, port=port, timeout=timeout, context=ssl_ctx)
+        self._pinned_ip = pinned_ip
+        self._sni_hostname = sni_hostname
+        self._ssl_ctx = ssl_ctx
+
+    def connect(self) -> None:
+        raw_sock = socket.create_connection(
+            (self._pinned_ip, self.port),
+            self.timeout,
+            self.source_address,
+        )
+        try:
+            self.sock = self._ssl_ctx.wrap_socket(
+                raw_sock,
+                server_hostname=self._sni_hostname,
+            )
+        except BaseException:
+            raw_sock.close()
+            raise
 
 
 def sanitize_url_for_log(raw_url: str) -> str:
@@ -264,50 +360,61 @@ def dispatch_remote_reasoning_job(
     auth_header_value: str,
     payload: dict[str, Any],
     timeout_seconds: int = 15,
+    connection_cls: type[_PinnedHTTPSConnection] = _PinnedHTTPSConnection,
 ) -> dict[str, Any]:
-    """Send job payload to an env-gated Supabase Edge endpoint cleanly."""
-    clean_url = sanitize_url_for_log(endpoint_url)
-    if not endpoint_url.strip().startswith(("https://", "http://")):
-        raise ValueError(f"Unsupported endpoint scheme: {clean_url}")
+    """Send job payload to env-gated Edge endpoint over pinned-IP TLS v1.2+ HTTPS."""
+    safe_url, pinned_ip = resolve_and_validate_https_url(endpoint_url)
+    log_url = sanitize_url_for_log(safe_url)
+    parsed = urllib.parse.urlsplit(safe_url)
+    hostname = (parsed.hostname or "").lower().rstrip(".")
+    target = parsed.path or "/"
+    if parsed.query:
+        target = f"{target}?{parsed.query}"
 
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-    request = urllib.request.Request(
-        endpoint_url.strip(),
-        data=body,
-        method="POST",
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": auth_header_value,
-        },
+    headers = {
+        "Host": parsed.netloc,
+        "Content-Type": "application/json",
+        "Authorization": auth_header_value,
+    }
+    conn = connection_cls(
+        hostname,
+        port=parsed.port or 443,
+        pinned_ip=pinned_ip,
+        sni_hostname=hostname,
+        timeout=float(timeout_seconds),
     )
     try:
-        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
-            status_code = getattr(response, "status", 200)
-            raw_text = response.read().decode("utf-8")
-    except urllib.error.HTTPError as exc:
+        conn.request("POST", target, body=body, headers=headers)
+        response = conn.getresponse()
+        status_code = int(getattr(response, "status", 0))
+        raw_text = response.read().decode("utf-8")
+    except (http_client.HTTPException, ssl.SSLError, OSError) as exc:
         raise RuntimeError(
-            f"Remote reasoning dispatch failed HTTP {exc.code} at {clean_url}"
+            f"Remote reasoning dispatch network error at {log_url}: {exc}"
         ) from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(
-            f"Remote reasoning dispatch network error at {clean_url}: {exc.reason}"
-        ) from exc
+    finally:
+        conn.close()
 
+    if 300 <= status_code < 400:
+        raise RuntimeError(
+            f"Remote reasoning dispatch attempted redirect HTTP {status_code} at {log_url} (blocked)"
+        )
     if status_code < 200 or status_code >= 300:
         raise RuntimeError(
-            f"Remote reasoning dispatch returned HTTP {status_code} at {clean_url}"
+            f"Remote reasoning dispatch failed HTTP {status_code} at {log_url}"
         )
 
     try:
         decoded = json.loads(raw_text)
     except json.JSONDecodeError as exc:
         raise RuntimeError(
-            f"Remote reasoning dispatch returned invalid JSON from {clean_url}"
+            f"Remote reasoning dispatch returned invalid JSON from {log_url}"
         ) from exc
 
     if not isinstance(decoded, dict):
         raise RuntimeError(
-            f"Remote reasoning dispatch returned unexpected JSON type from {clean_url}"
+            f"Remote reasoning dispatch returned unexpected JSON type from {log_url}"
         )
     return decoded
 

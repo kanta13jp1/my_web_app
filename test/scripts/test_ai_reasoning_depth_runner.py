@@ -1,8 +1,9 @@
 import io
 import json
+import socket
+import ssl
 import sys
 import unittest
-import urllib.error
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
@@ -10,6 +11,15 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from scripts import ai_reasoning_depth_runner as runner
+
+
+class _FakeHttpResponse:
+    def __init__(self, status: int, body: bytes = b"{}") -> None:
+        self.status = status
+        self._body = body
+
+    def read(self) -> bytes:
+        return self._body
 
 
 class AiReasoningDepthRunnerTests(unittest.TestCase):
@@ -72,7 +82,6 @@ class AiReasoningDepthRunnerTests(unittest.TestCase):
         self.assertEqual(current["tool_calls_completed"], current["max_tool_calls"])
         self.assertIn("統合完了", current["result_summary"])
 
-        # Cancelled jobs stay unchanged.
         cancelled = dict(step1)
         cancelled["job_status"] = "cancelled"
         self.assertEqual(runner.advance_job_state(cancelled), cancelled)
@@ -87,29 +96,79 @@ class AiReasoningDepthRunnerTests(unittest.TestCase):
         self.assertNotIn("xyz987654321", scrubbed)
         self.assertIn("[email-redacted]", scrubbed)
 
-    def test_remote_dispatch_sanitizes_url_on_http_error(self):
-        raw_url = "https://example.supabase.co/functions/v1/ai-assistant?auth_param=secret_value#frag"
-        http_error = urllib.error.HTTPError(
-            url=raw_url,
-            code=504,
-            msg="Gateway Timeout",
-            hdrs=None,
-            fp=None,
-        )
-        sample_auth = "-".join(["test", "header", "fixture"])
-        with mock.patch("urllib.request.urlopen", side_effect=http_error):
-            with self.assertRaises(RuntimeError) as ctx:
-                runner.dispatch_remote_reasoning_job(
-                    endpoint_url=raw_url,
-                    auth_header_value=sample_auth,
-                    payload={"reasoning_mode": "deep_research"},
-                )
+    def test_remote_dispatch_pins_ip_sets_tls_v12_sni_and_host_header(self):
+        raw_url = "https://example.supabase.co/functions/v1/ai-assistant"
+        fake_addrinfo = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
+        captured: dict[str, object] = {}
 
-        message = str(ctx.exception)
-        self.assertIn("HTTP 504", message)
-        self.assertIn("https://example.supabase.co/functions/v1/ai-assistant", message)
-        self.assertNotIn("secret_value", message)
-        self.assertNotIn("#frag", message)
+        fake_raw_sock = mock.MagicMock()
+        fake_ctx = mock.MagicMock()
+        fake_ctx.wrap_socket.return_value = mock.MagicMock()
+
+        def fake_create_conn(address: tuple[str, int], timeout: float, source_addr: object) -> object:
+            captured["connect_address"] = address
+            return fake_raw_sock
+
+        def fake_request(self_conn: runner._PinnedHTTPSConnection, method: str, target: str, body: bytes | None = None, headers: dict[str, str] | None = None) -> None:
+            captured["headers"] = dict(headers or {})
+            self_conn.connect()
+
+        sample_auth = "-".join(["test", "header", "fixture"])
+        with mock.patch("scripts.ai_reasoning_depth_runner.socket.getaddrinfo", return_value=fake_addrinfo):
+            with mock.patch("scripts.ai_reasoning_depth_runner.socket.create_connection", side_effect=fake_create_conn):
+                with mock.patch("scripts.ai_reasoning_depth_runner.ssl.create_default_context", return_value=fake_ctx):
+                    with mock.patch.object(runner._PinnedHTTPSConnection, "request", fake_request):
+                        with mock.patch.object(
+                            runner._PinnedHTTPSConnection,
+                            "getresponse",
+                            lambda self_conn: _FakeHttpResponse(200, b'{"status":"queued"}'),
+                        ):
+                            with mock.patch.object(runner._PinnedHTTPSConnection, "close", lambda self_conn: None):
+                                res = runner.dispatch_remote_reasoning_job(
+                                    endpoint_url=raw_url,
+                                    auth_header_value=sample_auth,
+                                    payload={"reasoning_mode": "deep_research"},
+                                )
+
+        self.assertEqual(res["status"], "queued")
+        self.assertEqual(captured["connect_address"], ("93.184.216.34", 443))
+        self.assertEqual(fake_ctx.minimum_version, ssl.TLSVersion.TLSv1_2)
+        fake_ctx.wrap_socket.assert_called_once_with(fake_raw_sock, server_hostname="example.supabase.co")
+        self.assertEqual(captured["headers"]["Host"], "example.supabase.co")  # type: ignore[index]
+
+    def test_remote_dispatch_sanitizes_url_blocks_redirects_and_private_dns(self):
+        raw_url = "https://example.supabase.co/functions/v1/ai-assistant?auth_param=secret_value#frag"
+        fake_addrinfo = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
+        sample_auth = "-".join(["test", "header", "fixture"])
+
+        with mock.patch("scripts.ai_reasoning_depth_runner.socket.getaddrinfo", return_value=fake_addrinfo):
+            for bad_code in (302, 504):
+                with mock.patch.object(runner._PinnedHTTPSConnection, "request", lambda *a, **kw: None):
+                    with mock.patch.object(
+                        runner._PinnedHTTPSConnection,
+                        "getresponse",
+                        lambda *a, code=bad_code: _FakeHttpResponse(code, b"{}"),
+                    ):
+                        with mock.patch.object(runner._PinnedHTTPSConnection, "close", lambda self_conn: None):
+                            with self.assertRaises(RuntimeError) as ctx:
+                                runner.dispatch_remote_reasoning_job(
+                                    endpoint_url=raw_url,
+                                    auth_header_value=sample_auth,
+                                    payload={"reasoning_mode": "deep_research"},
+                                )
+                message = str(ctx.exception)
+                self.assertIn(f"HTTP {bad_code}", message)
+                self.assertIn("https://example.supabase.co/functions/v1/ai-assistant", message)
+                self.assertNotIn("secret_value", message)
+                self.assertNotIn("#frag", message)
+
+        with self.assertRaises(ValueError):
+            runner.resolve_and_validate_https_url("http://example.supabase.co/functions/v1/ai-assistant")
+
+        private_dns = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", 443))]
+        with mock.patch("scripts.ai_reasoning_depth_runner.socket.getaddrinfo", return_value=private_dns):
+            with self.assertRaises(ValueError):
+                runner.resolve_and_validate_https_url("https://rebind.supabase.co/functions/v1/ai-assistant")
 
     def test_cli_dry_run_outputs_valid_json(self):
         buf = io.StringIO()
