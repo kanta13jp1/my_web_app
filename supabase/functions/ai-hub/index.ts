@@ -12,6 +12,11 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { checkAndRecordAiUsage, supabaseUsageStore } from "./usage_gate.ts";
 import {
+  createSupabaseDailyQuotaStore,
+  enforceDailyAiQuota,
+  readDailyAiQuotaStatus,
+} from "./daily_quota_gate.ts";
+import {
   authorizeAiHubAction,
   resolveAuthenticatedUserId,
 } from "./action_access_policy.ts";
@@ -7297,6 +7302,27 @@ serve(async (req: Request) => {
                 `Pro にアップグレードすると無制限に利用できます。`,
             }, 402);
           }
+          const dailyQuota = await enforceDailyAiQuota(
+            createSupabaseDailyQuotaStore(admin),
+            userId,
+          );
+          if (!dailyQuota.allowed) {
+            return json({
+              success: false,
+              status: "dailyQuotaExceeded",
+              code: "daily_quota_exceeded",
+              plan: dailyQuota.plan,
+              used: dailyQuota.used,
+              daily_limit: dailyQuota.dailyLimit,
+              remaining: dailyQuota.remaining ?? 0,
+              quota_date: dailyQuota.quotaDate,
+              reset_at: dailyQuota.resetAt,
+              message:
+                `本日のプラン別AI利用上限(${
+                  dailyQuota.dailyLimit ?? 0
+                }回)に達しました。`,
+            }, 429);
+          }
         }
 
         try {
@@ -7669,6 +7695,27 @@ serve(async (req: Request) => {
                 }回)に達しました。` +
                 `Pro にアップグレードすると無制限に利用できます。`,
             }, 402);
+          }
+          const dailyQuota = await enforceDailyAiQuota(
+            createSupabaseDailyQuotaStore(admin),
+            routingUserId,
+          );
+          if (!dailyQuota.allowed) {
+            return json({
+              success: false,
+              status: "dailyQuotaExceeded",
+              code: "daily_quota_exceeded",
+              plan: dailyQuota.plan,
+              used: dailyQuota.used,
+              daily_limit: dailyQuota.dailyLimit,
+              remaining: dailyQuota.remaining ?? 0,
+              quota_date: dailyQuota.quotaDate,
+              reset_at: dailyQuota.resetAt,
+              message:
+                `本日のプラン別AI利用上限(${
+                  dailyQuota.dailyLimit ?? 0
+                }回)に達しました。`,
+            }, 429);
           }
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
@@ -9271,6 +9318,27 @@ serve(async (req: Request) => {
           const msg = e instanceof Error ? e.message : String(e);
           return json({ success: false, error: msg }, 500);
         }
+      }
+
+      case "quota.daily_status": {
+        if (!userId) {
+          return json({ error: "Unauthorized" }, 401);
+        }
+        const status = await readDailyAiQuotaStatus(
+          createSupabaseDailyQuotaStore(admin),
+          userId,
+        );
+        return json({
+          success: true,
+          allowed: status.allowed,
+          reason: status.reason,
+          plan: status.plan,
+          used: status.used,
+          daily_limit: status.dailyLimit,
+          remaining: status.remaining,
+          quota_date: status.quotaDate,
+          reset_at: status.resetAt,
+        });
       }
 
       default:

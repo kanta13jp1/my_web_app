@@ -175,6 +175,22 @@ class AiComplianceGuardrailException extends AiHubChatException {
       .toList(growable: false);
 }
 
+class AiDailyQuotaExceededException extends AiHubChatException {
+  final String plan;
+  final int used;
+  final int dailyLimit;
+  final DateTime? resetAt;
+  final String userMessage;
+
+  const AiDailyQuotaExceededException({
+    required this.plan,
+    required this.used,
+    required this.dailyLimit,
+    required this.userMessage,
+    this.resetAt,
+  }) : super(userMessage);
+}
+
 class AiHubChatService {
   final SupabaseClient? _supabase;
   final AiHubChatInvoker? _invoker;
@@ -531,6 +547,28 @@ AiHubChatException _buildAiHubFailureException(
       categories: categories,
       userMessage: msg,
       traceId: traceId?.isEmpty == true ? null : traceId,
+    );
+  }
+
+  if (data['status'] == 'dailyQuotaExceeded' ||
+      data['code'] == 'daily_quota_exceeded') {
+    final plan = (data['plan'] as String?)?.trim().isNotEmpty == true
+        ? (data['plan'] as String).trim()
+        : 'free';
+    final used = _asInt(data['used']) ?? 0;
+    final limit = _asInt(data['daily_limit']) ?? 50;
+    final resetRaw = (data['reset_at'] as String?)?.trim();
+    final msg = (data['message'] as String?)?.trim().isNotEmpty == true
+        ? (data['message'] as String).trim()
+        : '本日のプラン別 AI 利用上限 ($limit 回) に達しました。';
+    return AiDailyQuotaExceededException(
+      plan: plan,
+      used: used,
+      dailyLimit: limit,
+      userMessage: msg,
+      resetAt: resetRaw != null && resetRaw.isNotEmpty
+          ? DateTime.tryParse(resetRaw)?.toUtc()
+          : null,
     );
   }
 
