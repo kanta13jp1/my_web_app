@@ -161,7 +161,6 @@ void main() {
           'passes a11y guidelines at ${viewport.width.toInt()}x${viewport.height.toInt()} $brightness 2.0x textScale',
           (WidgetTester tester) async {
             final a11yHandle = tester.ensureSemantics();
-            addTearDown(a11yHandle.dispose);
             tester.view.physicalSize = viewport;
             tester.view.devicePixelRatio = 1.0;
             try {
@@ -206,6 +205,7 @@ void main() {
                 meetsGuideline(textContrastGuideline),
               );
             } finally {
+              a11yHandle.dispose();
               tester.view.resetPhysicalSize();
               tester.view.resetDevicePixelRatio();
             }
