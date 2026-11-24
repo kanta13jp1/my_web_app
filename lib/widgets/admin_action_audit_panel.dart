@@ -85,14 +85,21 @@ class _AuditPalette {
   final Color criticalBg;
   final Color criticalFg;
 
-  (Color bg, Color fg) riskPair(AdminActionRiskLevel level) {
+  _RiskColorPair riskPair(AdminActionRiskLevel level) {
     return switch (level) {
-      AdminActionRiskLevel.low => (lowBg, lowFg),
-      AdminActionRiskLevel.medium => (mediumBg, mediumFg),
-      AdminActionRiskLevel.high => (highBg, highFg),
-      AdminActionRiskLevel.critical => (criticalBg, criticalFg),
+      AdminActionRiskLevel.low => _RiskColorPair(lowBg, lowFg),
+      AdminActionRiskLevel.medium => _RiskColorPair(mediumBg, mediumFg),
+      AdminActionRiskLevel.high => _RiskColorPair(highBg, highFg),
+      AdminActionRiskLevel.critical => _RiskColorPair(criticalBg, criticalFg),
     };
   }
+}
+
+class _RiskColorPair {
+  const _RiskColorPair(this.bg, this.fg);
+
+  final Color bg;
+  final Color fg;
 }
 
 /// 管理者アクションの監査ログ閲覧・フィルタおよび変更前影響確認UI (#2617)。
@@ -522,8 +529,8 @@ class _AdminActionAuditPanelState extends State<AdminActionAuditPanel> {
               _SummaryMetricChip(
                 label:
                     '判定: ${previewEval.riskLevel.label} (${previewEval.riskScore})',
-                bg: riskColors.$1,
-                fg: riskColors.$2,
+                bg: riskColors.bg,
+                fg: riskColors.fg,
               ),
             ],
           ),
@@ -691,8 +698,8 @@ class _AdminActionAuditPanelState extends State<AdminActionAuditPanel> {
               ),
               _SummaryMetricChip(
                 label: '${item.riskLevel.label} / ${item.status.labelJa}',
-                bg: riskColors.$1,
-                fg: riskColors.$2,
+                bg: riskColors.bg,
+                fg: riskColors.fg,
               ),
             ],
           ),
@@ -980,8 +987,8 @@ class _AdminActionAuditPanelState extends State<AdminActionAuditPanel> {
               ),
               _SummaryMetricChip(
                 label: entry.riskLevel.label,
-                bg: riskColors.$1,
-                fg: riskColors.$2,
+                bg: riskColors.bg,
+                fg: riskColors.fg,
               ),
             ],
           ),
