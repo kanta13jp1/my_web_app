@@ -76,7 +76,7 @@ DECLARE
 BEGIN
   v_jwt_role := COALESCE(
     NULLIF(auth.jwt() ->> 'role', ''),
-    NULLIF(auth.role(), ''),
+    NULLIF(current_setting('request.jwt.claim.role', true), ''),
     ''
   );
   v_is_service := (v_jwt_role = 'service_role')

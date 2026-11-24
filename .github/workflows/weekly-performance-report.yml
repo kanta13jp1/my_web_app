@@ -47,7 +47,8 @@ jobs:
       - name: Generate anonymized weekly performance report
         id: generate_report
         env:
-          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run || 'true' }}
+          EVENT_NAME: ${{ github.event_name }}
+          DRY_RUN_INPUT: ${{ github.event_name == 'schedule' && 'true' || github.event.inputs.dry_run || 'true' }}
           PERIOD_END_INPUT: ${{ github.event.inputs.period_end || '' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || '' }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || '' }}
@@ -63,7 +64,7 @@ jobs:
           if [ -n "${PERIOD_END_INPUT}" ]; then
             args+=("--period-end" "${PERIOD_END_INPUT}")
           fi
-          if [ "${DRY_RUN_INPUT}" = "true" ] || [ -z "${GEMINI_API_KEY}" ]; then
+          if [ "${EVENT_NAME}" = "schedule" ] || [ "${DRY_RUN_INPUT}" != "false" ] || [ -z "${GEMINI_API_KEY}" ]; then
             args+=("--dry-run")
           elif [ -n "${RESEND_API_KEY}" ] && [ -n "${REPORT_FROM_EMAIL}" ] && [ -n "${REPORT_TO_EMAIL}" ]; then
             args+=("--send-email")
