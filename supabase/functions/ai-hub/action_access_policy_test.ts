@@ -12,6 +12,7 @@ import {
 Deno.test("aiHubActionAccess classifies registered actions correctly", () => {
   assertEquals(aiHubActionAccess("university.content"), "public");
   assertEquals(aiHubActionAccess("judgment.get"), "authenticated");
+  assertEquals(aiHubActionAccess("quota.daily_status"), "authenticated");
   assertEquals(
     aiHubActionAccess("edge_llm.invoke"),
     "authenticated_or_service_role",
