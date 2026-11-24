@@ -54,6 +54,9 @@ export const CORE_HUB_ACTION_REGISTRY = {
   "async_job.status": { auth: "user" },
   "async_job.list": { auth: "user" },
   "async_job.update_status": { auth: "user" },
+  "stage_gate.list": { auth: "user" },
+  "stage_gate.submit": { auth: "user" },
+  "stage_gate.decide": { auth: "user" },
 } as const satisfies Record<string, CoreHubActionDefinition>;
 
 export type CoreHubAction = keyof typeof CORE_HUB_ACTION_REGISTRY;

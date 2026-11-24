@@ -1,0 +1,85 @@
+name: Stage Gate Validation
+
+on:
+  issues:
+    types:
+      - labeled
+  workflow_dispatch:
+    inputs:
+      current_stage:
+        description: "Current stage (intake, design, implementation, verification, release)"
+        required: false
+        default: "intake"
+        type: choice
+        options:
+          - intake
+          - design
+          - implementation
+          - verification
+          - release
+      target_stage:
+        description: "Target stage (design, implementation, verification, release)"
+        required: false
+        default: "design"
+        type: choice
+        options:
+          - design
+          - implementation
+          - verification
+          - release
+      source_ref:
+        description: "Issue or task reference (e.g. #2593)"
+        required: false
+        default: "#2593"
+        type: string
+      title:
+        description: "Candidate task title"
+        required: false
+        default: "Stage-gate manual validation"
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: stage-gate-validation-${{ github.event.issue.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate_stage_gate:
+    name: Validate stage-gate transition
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Run deterministic stage-gate validator
+        shell: bash
+        env:
+          STAGE_GATE_CURRENT: ${{ inputs.current_stage || '' }}
+          STAGE_GATE_TARGET: ${{ inputs.target_stage || '' }}
+          STAGE_GATE_SOURCE_REF: ${{ inputs.source_ref || '' }}
+          STAGE_GATE_TITLE: ${{ inputs.title || '' }}
+        run: |
+          set -euo pipefail
+          if [ -n "${GITHUB_EVENT_PATH:-}" ] && [ -f "${GITHUB_EVENT_PATH}" ] && [ -z "${STAGE_GATE_TARGET}" ]; then
+            python3 -B scripts/validate_stage_gate_transition.py \
+              --event-path "${GITHUB_EVENT_PATH}" \
+              --json
+          else
+            python3 -B scripts/validate_stage_gate_transition.py --json
+          fi
+
+      - name: Run stage-gate validator unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest discover -s test/scripts -p "test_validate_stage_gate*.py" -v
