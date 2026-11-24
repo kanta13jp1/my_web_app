@@ -308,9 +308,9 @@ begin
     end;
   end if;
 
-  new.dispatch_status := 'failed';
-  new.updated_at := timezone('utc', now());
-  return new;
+  -- Keep dispatch_status as 'pending' when webhook dispatch is skipped or
+  -- fails so scheduled/manual dispatchers can retry it.
+  return null;
 end;
 $webhook$;
 
