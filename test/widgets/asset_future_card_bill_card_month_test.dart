@@ -59,17 +59,17 @@ void main() {
     (tester) async {
       final repository = _DelayedRepository();
       Future<void> showMonth(DateTime month) => tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: AssetFutureCardBillCard(
-              repository: repository,
-              accounts: const [],
-              subscriptionIds: const {},
-              currentStateMonth: month,
+            MaterialApp(
+              home: Scaffold(
+                body: AssetFutureCardBillCard(
+                  repository: repository,
+                  accounts: const [],
+                  subscriptionIds: const {},
+                  currentStateMonth: month,
+                ),
+              ),
             ),
-          ),
-        ),
-      );
+          );
 
       final dropdown = find.byType(DropdownButtonFormField<DateTime>);
       final reload = find.widgetWithText(TextButton, '対象月を再読込');
