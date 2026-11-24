@@ -11,15 +11,14 @@ class _FakeAiComplianceRepository implements AiCommercialComplianceRepository {
   _FakeAiComplianceRepository({
     required this.isAdmin,
     required this.rules,
-    final List<AiCommercialAssetSubmission>? submissions,
-    final List<AiComplianceConsentAuditLog>? auditLogs,
-  })  : submissions = submissions ?? <AiCommercialAssetSubmission>[],
-        auditLogs = auditLogs ?? <AiComplianceConsentAuditLog>[];
+  });
 
   final bool isAdmin;
   final List<AiComplianceRule> rules;
-  final List<AiCommercialAssetSubmission> submissions;
-  final List<AiComplianceConsentAuditLog> auditLogs;
+  final List<AiCommercialAssetSubmission> submissions =
+      <AiCommercialAssetSubmission>[];
+  final List<AiComplianceConsentAuditLog> auditLogs =
+      <AiComplianceConsentAuditLog>[];
 
   @override
   Future<AiComplianceDashboardData> fetchDashboardData() async {
@@ -295,7 +294,7 @@ void main() {
           await tester.tap(copyrightSwitch);
           await tester.pumpAndSettle();
 
-          for (final String keyName in <String>[
+          for (final String keyName in const <String>[
             'compliance-rule-checkbox-elevenlabs_paid_at_generation',
             'compliance-rule-checkbox-copyright_non_similarity_no_reliance',
           ]) {
@@ -386,24 +385,38 @@ void main() {
             const ValueKey<String>('compliance-admin-editor'),
           );
           await tester.ensureVisible(adminEditor);
+          await tester.pumpAndSettle();
           expect(adminEditor, findsOneWidget);
 
-          await tester.enterText(
-            find.byKey(const ValueKey<String>('admin-rule-key-input')),
-            'elevenlabs_beta_ban',
+          final Finder ruleKeyField = find.byKey(
+            const ValueKey<String>('admin-rule-key-input'),
           );
-          await tester.enterText(
-            find.byKey(const ValueKey<String>('admin-rule-title-input')),
-            'Beta 音声生成機能の商用除外確認',
+          await tester.ensureVisible(ruleKeyField);
+          await tester.pumpAndSettle();
+          await tester.enterText(ruleKeyField, 'elevenlabs_beta_ban');
+
+          final Finder ruleTitleField = find.byKey(
+            const ValueKey<String>('admin-rule-title-input'),
           );
+          await tester.ensureVisible(ruleTitleField);
+          await tester.pumpAndSettle();
+          await tester.enterText(ruleTitleField, 'Beta 音声生成機能の商用除外確認');
+
+          final Finder ruleBodyField = find.byKey(
+            const ValueKey<String>('admin-rule-body-input'),
+          );
+          await tester.ensureVisible(ruleBodyField);
+          await tester.pumpAndSettle();
           await tester.enterText(
-            find.byKey(const ValueKey<String>('admin-rule-body-input')),
+            ruleBodyField,
             'ElevenLabs Beta 機能は商用本番アセットに含めません。',
           );
+
           final Finder saveRuleBtn = find.byKey(
             const ValueKey<String>('admin-save-rule-button'),
           );
           await tester.ensureVisible(saveRuleBtn);
+          await tester.pumpAndSettle();
           await tester.tap(saveRuleBtn);
           await tester.pumpAndSettle();
 
