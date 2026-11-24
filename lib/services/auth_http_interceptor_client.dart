@@ -210,10 +210,10 @@ class AuthHttpInterceptorClient extends http.BaseClient {
     final _ReplayTemplate? replayTemplate =
         request is http.Request ? _ReplayTemplate.fromRequest(request) : null;
 
-    String? tokenUsed;
+    String? initialBearer;
     if (shouldAttachAuth) {
-      tokenUsed = await _resolveActiveToken();
-      _applyAuthorizationHeader(request, tokenUsed);
+      initialBearer = await _resolveActiveToken();
+      _applyAuthorizationHeader(request, initialBearer);
     }
 
     final firstResponse = await _inner.send(request);
@@ -221,7 +221,9 @@ class AuthHttpInterceptorClient extends http.BaseClient {
       return firstResponse;
     }
 
-    final refreshed = await _refreshCoalesced(failedToken: tokenUsed);
+    final refreshed = await _refreshCoalesced(
+      failedToken: initialBearer,
+    );
     if (refreshed != null && refreshed.hasToken && replayTemplate != null) {
       await firstResponse.stream.drain<void>();
       final retryRequest = replayTemplate.buildRequest(
