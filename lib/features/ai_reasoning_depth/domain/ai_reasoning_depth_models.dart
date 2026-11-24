@@ -67,7 +67,10 @@ enum ReasoningDepthMode {
 enum ReasoningJobStatus {
   queued(wireValue: 'queued', displayLabel: '待機中 (非同期キュー)', isTerminal: false),
   running(
-      wireValue: 'running', displayLabel: '実行中 (ポーリング監視)', isTerminal: false),
+    wireValue: 'running',
+    displayLabel: '実行中 (ポーリング監視)',
+    isTerminal: false,
+  ),
   completed(wireValue: 'completed', displayLabel: '完了', isTerminal: true),
   failed(wireValue: 'failed', displayLabel: '失敗', isTerminal: true),
   cancelled(wireValue: 'cancelled', displayLabel: 'キャンセル', isTerminal: true);
