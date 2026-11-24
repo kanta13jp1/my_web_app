@@ -4,6 +4,10 @@ name: Asset preference truncate synthetic check
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/asset-pref-truncate-synthetic.yml'
+      - 'scripts/asset_pref_truncate_fixture/**'
+      - 'supabase/migrations/20261103063701_restrict_asset_pref_mirror_truncate.sql'
 permissions: {}
 concurrency:
   group: asset-pref-truncate-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
