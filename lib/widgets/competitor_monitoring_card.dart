@@ -1061,12 +1061,14 @@ class _CompetitorCandidateReviewPanelState
                         color: badgeFg,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        statusLabel,
-                        style: TextStyle(
-                          color: badgeFg,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
+                      Flexible(
+                        child: Text(
+                          statusLabel,
+                          style: TextStyle(
+                            color: badgeFg,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],
