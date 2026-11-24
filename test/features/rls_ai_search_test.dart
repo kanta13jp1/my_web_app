@@ -185,7 +185,7 @@ void main() {
         expect(controller.errorMessage, contains('所有者権限'));
 
         final RlsDocumentAclEntry parsedJoined = RlsDocumentAclEntry.fromJson(
-          <String, Object?>{
+          const <String, Object?>{
             'id': 'acl-99',
             'document_id': 'doc-99',
             'grantee_user_id': 'user-bob',
@@ -206,7 +206,7 @@ void main() {
         expect(parsedJoined.canManage, isFalse);
 
         final RlsDocumentAclEntry parsedOwner = RlsDocumentAclEntry.fromJson(
-          <String, Object?>{
+          const <String, Object?>{
             'id': 'acl-99',
             'document_id': 'doc-99',
             'grantee_user_id': 'user-bob',
