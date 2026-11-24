@@ -1804,3 +1804,32 @@ session-start-check/adaptive-model-router適用。Jev helperは現行model対応
 追跡2文書のみ更新。JSON54行・日付一意・順位null・0ページ・当日一覧空・remote再読一致を検証。Flutter tests/analyze/release build/生成HTML/起動後ブラウザー確認は未実施。既存draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604)、最新CI結果はコメントへ。rollbackは当日コミットrevert。次回は接続回復と11/15からの順位・競合・AI概要の差分確認。マージ/デプロイなし、監視継続、アーカイブ保留。
 
 session-start-check/adaptive-model-router適用、lead実行。ディスク16.60GiBのためremote API編集。元のユーザー変更は保持。ローカルtoolchainなし。
+## 2026-11-25 日次監視：1ページ目実検索復帰（上位入替確認）・2ページ目ボット認証で停止
+
+02:25 JST頃から Antigravity 内蔵ブラウザ（`webview_browser` / `flash`）で Google 検索を確認。検索語は自分株式会社、`hl=ja/gl=jp/pws=0`、ログイン済み、日本・府中市東京都（IP由来）、パーソナライズなし表示。1ページ目は CAPTCHA なしで自然検索9件を確認したが、2ページ目（「次へ」）への遷移時にボット認証（`BOT_CHECK_DETECTED`）を検知したため回避・突破・再試行を行わず即時停止した。
+
+|順位|タイトル|当日URL / ドメイン|種別|主な検索意図|
+|---:|---|---|---|---|
+|1|「自分株式会社」という考え方と、この考え方を活用するために ...|[note.com](https://note.com/famous_knot742/n/n0c1a89bc7c77)|個人ブログ記事|概念の定義、参考情報、実践方法を知る|
+|2|“自分株式会社”という考え方|[ifa-japan.co.jp](https://www.ifa-japan.co.jp/%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%84%E3%81%86%E8%80%83%E3%81%88%E6%96%B9/)|専門家ブログ記事|人的資本・資産形成として理解する|
+|3|会社に依存しない「自分株式会社」の考え方｜moto（戸塚俊介）|[note.com](https://note.com/recruit_man_note/n/n1032c32fbc36)|著者ブログ記事|会社に依存しないキャリア設計と収支管理を学ぶ|
+|4|経営支援サービスを総合的にサポートする ITベンダー M社|[solution.lmi.ne.jp](https://solution.lmi.ne.jp/hr_development/case/1180)|法人研修の導入事例|研修での活用例と成果を確認する|
+|5|サラリーマンこそ自分株式会社をつくりなさい――1000万円 ...|[amazon.co.jp](https://www.amazon.co.jp/%E3%82%B5%E3%83%A9%E3%83%AA%E3%83%BC%E3%83%9E%E3%83%B3%E3%81%93%E3%81%9D%E8%87%AA%E5%88%86%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%82%92%E3%81%A4%E3%81%8F%E3%82%8A%E3%81%AA%E3%81%95%E3%81%84%E2%80%95%E2%80%951000%E4%B8%87%E5%86%86%E7%94%9F%E6%B4%BB%E3%82%92%E8%AC%B3%E6%AD%8C%E3%81%99%E3%82%8B-%E5%90%89%E5%B7%9D-%E8%8B%B1%E4%B8%80/dp/4478067449)|書籍商品ページ|内容、著者、評価、購入条件を確認する|
+|6|なぜ自分の会社をつくるのか？人生を楽しく生きるための2つの ...|[diamond.jp](https://diamond.jp/articles/-/78525?page=3)|書籍連載・解説記事|起業の目的と法人化の判断を理解する|
+|7|「自分株式会社」を経営せよ。副業年収4000万円のmotoが ...|[r25.jp](https://r25.jp/articles/928885293145522178)|編集部記事・書籍抜粋|キャリアと副業の具体例を読む|
+|8|わたしブランド～自分株式会社を設立してみよう|[akikofujisaki.com](https://akikofujisaki.com/selfpromotion/)|専門家ブログ記事|自己ブランディングへ応用する|
+|9|NewsPicks [ニューズピックス]|[x.com](https://x.com/newspicks/status/1449692163042856961)|SNS投稿|著名人の発言と反応を見る|
+
+対象サイト（`https://my-web-app-b67f4.web.app/`）は1ページ目の自然検索9件で未検出。2ページ目以降はボット認証停止により未確認（確認範囲1ページ9件、100位圏外とは断定しない）。対象サイトの表示タイトル・スニペット・サイト名表示は当日値なし（前回値転記なし）。
+
+前日11/24（監視用Chrome未接続）から1ページ目の実検索が復帰。最後の実検索11/15比では1ページ目の9 URL集合は同一のまま、みおつくし（2→1位）、IFA（3→2位）、moto（1→3位）、Amazon（7→5位）、R25（5→7位）へ順位が入替わった（LMI 4位、Diamond 6位、akikofujisaki 8位、NewsPicks X 9位は維持）。広告・強調スニペットなし、1位のみおつくしにセクションジャンプ形式のサイトリンクあり、Amazon価格・評価表示なし。AIによる概要は定義とキャリア/資産形成2視点および折りたたみ直前の3項目目一部を示し、本文引用ラベル（IFA JAPAN / moto / Amazon）と右側カード（moto / みおつくし）を確認（全参照一覧ではない）。AI概要内画像ボタンなし。関連する質問（PAA）は4件後から3件後へ移動し、関連検索（「自分 株式会社 木下」「自分株式会社 本」等）も表示。
+
+### 分析・改善案・変更
+
+当日上位3記事（みおつくし note / IFA JAPAN / moto note）と対象サイト（`/` と `/philosophy`）のHTTP初期HTMLを当日監査し、title・H1・canonical・内部リンク数（22/85/36 vs 6/10）・JSON-LD型・`noindex`文字列・`X-Robots-Tag`をJSONLへ保存した（note HTML内の`noindex`文字列はrobots制御を意味しない）。これはFlutter起動後描画や当日全順位を証明しない。対象は定義、人的資本、P/L・B/S、架空例、FAQ、6部署と体験導線、JSON-LDを既に備えており、1ページ目内の競合順位入替と2ページ目以降未確認の現状からは新規不足テーマや技術的欠陥を確定できないため、SEO実装コードは変更せず追跡2文書のみ更新した。改善案は引き続き所有者権限下での Search Console（クエリ・掲載URL・正規URL）照合と実検索継続による2ページ目以降の再確認である（11/3権限不足は当日再照会なし、文章・画像転用やキーワード詰め込み、順位1位保証表現なし）。
+
+### 検証・PR・次回
+
+既存 draft PR [#5604](https://github.com/kanta13jp1/my_web_app/pull/5604) へ GitHub Remote API で追記。JSONL 55行・JST日付一意・1ページ9件（1〜9連番）・対象null・1ページ目スクリーンショット目視を検証。docs-only のため Flutter テスト・解析・Web リリースビルド・生成 HTML・対象起動後描画は未実施（`not_run_docs_only`）。CI 結果は新 head で確認し PR コメントへ記録。rollback は当日コミットの revert。次回は2ページ目以降のボット認証解除有無と対象順位、11/25からの順位・AI概要差分を確認する。マージ・Ready化・本番デプロイなし、draft維持・監視継続。
+
+プリフライト確認：`cloud_first_route.py`（`CLOUD_PREFERRED`・空きディスク `34.56〜42.28 GiB`・RAM `72.0〜74.9%`）、`codex_session_check.py`（`my_web_app` は `fix/salary-deposit-payslip-signal` @ `c3e1d46077ed`、9 dirty paths・38 worktrees をそのまま保護し stash/reset/clean/sync なし）、`sync_inject_rules.py --verify`（drift `False`）、`heavy-work-slot` 非追越し・token 非出力、`record_*.py` 非実行/非import、`ANTIGRAVITY_HANDOFF.md` ローカル不在のため継続会話記録と PR 正本から規約を照合。
