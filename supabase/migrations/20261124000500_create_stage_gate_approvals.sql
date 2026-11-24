@@ -118,3 +118,33 @@ create policy "stage_gate_history_select_owner_or_admin"
         )
     )
   );
+
+-- History entries are append-only via trusted Edge Functions (service_role).
+-- Explicitly deny direct INSERT/UPDATE/DELETE from client roles.
+revoke insert, update, delete on public.stage_gate_approval_history
+  from anon, authenticated;
+
+drop policy if exists "stage_gate_history_deny_client_insert"
+  on public.stage_gate_approval_history;
+create policy "stage_gate_history_deny_client_insert"
+  on public.stage_gate_approval_history
+  for insert
+  to anon, authenticated
+  with check (false);
+
+drop policy if exists "stage_gate_history_deny_client_update"
+  on public.stage_gate_approval_history;
+create policy "stage_gate_history_deny_client_update"
+  on public.stage_gate_approval_history
+  for update
+  to anon, authenticated
+  using (false)
+  with check (false);
+
+drop policy if exists "stage_gate_history_deny_client_delete"
+  on public.stage_gate_approval_history;
+create policy "stage_gate_approval_history_deny_client_delete"
+  on public.stage_gate_approval_history
+  for delete
+  to anon, authenticated
+  using (false);

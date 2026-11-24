@@ -279,12 +279,33 @@ class _StageGateApprovalPanelState extends State<StageGateApprovalPanel> {
     );
   }
 
+  String _stageBadgeLabel(StageGateReview review) {
+    if (review.status == StageGateDecision.approved &&
+        review.currentStage == review.targetStage) {
+      StageGateHistoryEntry? matched;
+      for (final entry in _history) {
+        if (entry.reviewId == review.id && entry.decision == 'approved') {
+          matched = entry;
+          break;
+        }
+      }
+      if (matched != null && matched.fromStage != review.targetStage) {
+        return '${review.status.label}: '
+            '${matched.fromStage.label} -> ${review.targetStage.label}';
+      }
+      return '承認済み (${review.targetStage.label} 到達)';
+    }
+    return '${review.status.label}: '
+        '${review.currentStage.label} -> ${review.targetStage.label}';
+  }
+
   Widget _buildReviewCard(
     BuildContext context,
     StageGateReview review,
     bool isDark,
   ) {
     final theme = Theme.of(context);
+    final badgeLabel = _stageBadgeLabel(review);
     final (Color fg, Color bg) = switch (review.status) {
       StageGateDecision.approved => isDark
           ? (const Color(0xFF6EE7B7), const Color(0xFF064E3B))
@@ -333,8 +354,7 @@ class _StageGateApprovalPanelState extends State<StageGateApprovalPanel> {
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
-                          '${review.status.label}: '
-                          '${review.currentStage.label} -> ${review.targetStage.label}',
+                          badgeLabel,
                           softWrap: true,
                           style: TextStyle(
                             color: fg,

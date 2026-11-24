@@ -136,7 +136,46 @@ void main() {
 
         expect(repo.decideCalls, 1);
         expect(find.text('#2593 を「承認」に更新しました'), findsOneWidget);
-        expect(find.textContaining('承認: 設計審査 -> 設計審査'), findsOneWidget);
+        expect(find.textContaining('承認: インテーク -> 設計審査'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'hides admin approval controls when non-admin user views panel',
+      (WidgetTester tester) async {
+        final nonAdminRepo = _FakeStageGateRepository(
+          <StageGateReview>[
+            const StageGateReview(
+              id: 'rev-readonly',
+              sourceType: 'github_issue',
+              sourceRef: '#2593',
+              title: 'Read-only check',
+              currentStage: StageGateStage.intake,
+              targetStage: StageGateStage.design,
+              status: StageGateDecision.pending,
+              feedback: '',
+            ),
+          ],
+          <StageGateHistoryEntry>[],
+          isAdmin: false,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: StageGateApprovalPanel(repository: nonAdminRepo),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('#2593 Read-only check'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey<String>('stage_gate_approve_rev-readonly')),
+          findsNothing,
+        );
       },
     );
 
