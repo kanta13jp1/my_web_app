@@ -201,8 +201,10 @@ BEGIN
     END IF;
   END IF;
 
-  IF NEW.pause_status = 'resumed' THEN
-    NEW.resumed_by := COALESCE(NEW.resumed_by, auth.uid());
+  IF NEW.pause_status = 'resumed' AND (v_is_service OR COALESCE(v_is_admin, false)) THEN
+    IF NOT v_is_service AND auth.uid() IS NOT NULL THEN
+      NEW.resumed_by := COALESCE(NEW.resumed_by, auth.uid());
+    END IF;
     NEW.resumed_at := COALESCE(NEW.resumed_at, timezone('utc', now()));
   END IF;
 

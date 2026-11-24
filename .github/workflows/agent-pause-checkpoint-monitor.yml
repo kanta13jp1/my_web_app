@@ -67,10 +67,10 @@ jobs:
             "--markdown-out" "agent_checkpoint_report.md"
             "--github-output" "${GITHUB_OUTPUT}"
           )
-          if [ "${EVENT_NAME}" = "schedule" ] || [ "${EVENT_NAME}" != "workflow_dispatch" ] || [ "${DRY_RUN_INPUT}" != "false" ]; then
-            args+=("--dry-run")
-          else
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${DRY_RUN_INPUT}" = "false" ]; then
             args+=("--live")
+          else
+            args+=("--dry-run")
           fi
           python3 -B scripts/agent_pause_state_machine.py "${args[@]}"
 
