@@ -72,6 +72,132 @@ void main() {
     expect((await repository.get('page-75'))['content'], 'a\n\n b');
   });
 
+  test('getDetail normalizes children, table rows, and truncation flags',
+      () async {
+    final repository = WikiRepository((body) async {
+      expect(body, {'action': 'wiki.get', 'id': 'root-1'});
+      return {
+        'success': true,
+        'page': {
+          'id': 'root-1',
+          'metadata': {'title': 'Root', 'content': 'Body'},
+        },
+        'children': [
+          {
+            'id': 'sub-1',
+            'metadata': {'title': 'Subpage 1', 'parent_id': 'root-1'},
+          },
+        ],
+        'children_has_more': true,
+        'table_rows': [
+          {
+            'id': 'row-1',
+            'created_at': '2026-11-25T00:00:00Z',
+            'metadata': {
+              'sheet_id': 'root-1',
+              'data': {'content': 'Row payload'},
+            },
+          },
+        ],
+        'table_rows_has_more': true,
+      };
+    });
+    final detail = await repository.getDetail('root-1');
+    expect(detail.page['title'], 'Root');
+    expect(detail.children.single['id'], 'sub-1');
+    expect(detail.children.single['title'], 'Subpage 1');
+    expect(detail.childrenHasMore, isTrue);
+    expect(detail.tableRows.single['content'], 'Row payload');
+    expect(detail.tableRows.single['createdAt'], '2026-11-25T00:00:00Z');
+    expect(detail.tableRowsHasMore, isTrue);
+    expect(() => detail.children.clear(), throwsUnsupportedError);
+    expect(() => detail.tableRows.clear(), throwsUnsupportedError);
+  });
+
+  test('getDetail rejects malformed detail lists and flags', () async {
+    final badChildren = WikiRepository(
+      (_) async => {
+        'success': true,
+        'page': {'id': 'p1'},
+        'children': 'not-a-list',
+      },
+    );
+    await expectLater(badChildren.getDetail('p1'), throwsFormatException);
+    final badFlag = WikiRepository(
+      (_) async => {
+        'success': true,
+        'page': {'id': 'p1'},
+        'children_has_more': 'yes',
+      },
+    );
+    await expectLater(badFlag.getDetail('p1'), throwsFormatException);
+  });
+
+  test('createPage sends parent_id and validates non-empty title', () async {
+    final requests = <Map<String, dynamic>>[];
+    final repository = WikiRepository((body) async {
+      requests.add(body);
+      return {
+        'success': true,
+        'page': {
+          'id': 'child-9',
+          'metadata': {'title': 'Child', 'parent_id': 'root-1'},
+        },
+      };
+    });
+    await expectLater(
+      repository.createPage(title: '   ', content: 'Body'),
+      throwsArgumentError,
+    );
+    await expectLater(
+      repository.createPage(title: 'Title', content: 'Body', parentId: ' '),
+      throwsArgumentError,
+    );
+    final created = await repository.createPage(
+      title: ' Child ',
+      content: ' Body ',
+      parentId: ' root-1 ',
+    );
+    expect(created['id'], 'child-9');
+    expect(requests.single, {
+      'action': 'wiki.create',
+      'title': 'Child',
+      'content': 'Body',
+      'parent_id': 'root-1',
+    });
+  });
+
+  test('addTableRow posts sheet.add_row and normalizes returned row', () async {
+    final requests = <Map<String, dynamic>>[];
+    final repository = WikiRepository((body) async {
+      requests.add(body);
+      return {
+        'success': true,
+        'row': {
+          'id': 'row-5',
+          'metadata': {
+            'sheet_id': 'root-1',
+            'data': {'content': 'Alpha'},
+          },
+        },
+      };
+    });
+    await expectLater(
+      repository.addTableRow(pageId: '  ', content: 'Alpha'),
+      throwsArgumentError,
+    );
+    final row = await repository.addTableRow(
+      pageId: 'root-1',
+      content: ' Alpha ',
+    );
+    expect(row['content'], 'Alpha');
+    expect(requests.single, {
+      'action': 'sheet.add_row',
+      'sheet_id': 'root-1',
+      'data': {'content': 'Alpha'},
+    });
+  });
+
   test('get rejects wrong page identity and unsuccessful responses', () async {
     final wrong = WikiRepository(
       (_) async => {

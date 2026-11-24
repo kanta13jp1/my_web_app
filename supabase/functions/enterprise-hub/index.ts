@@ -1153,19 +1153,102 @@ serve(async (req) => {
         if (typeof body.id !== "string" || body.id.trim().length === 0) {
           return json({ error: "Page id is required" }, 400);
         }
+        const pageId = body.id.trim();
         const { data, error } = await admin.from("hub_data")
           .select("id, metadata, created_at").eq("source", "wiki_page")
           .filter("metadata->>user_id", "eq", userId)
-          .eq("id", body.id).maybeSingle();
+          .eq("id", pageId).maybeSingle();
         if (error) throw new Error(error.message);
         if (!data) return json({ error: "Not found" }, 404);
-        return json({ success: true, page: data });
+        const detailLimit = 100;
+        const { data: childrenByParent, error: parentChildrenError } = await admin
+          .from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("source", "wiki_page")
+          .filter("metadata->>user_id", "eq", userId)
+          .filter("metadata->>parent_id", "eq", data.id)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .range(0, detailLimit);
+        if (parentChildrenError) throw new Error(parentChildrenError.message);
+        const { data: childrenByLegacy, error: legacyChildrenError } = await admin
+          .from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("source", "wiki_page")
+          .filter("metadata->>user_id", "eq", userId)
+          .filter("metadata->>category", "eq", data.id)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .range(0, detailLimit);
+        if (legacyChildrenError) throw new Error(legacyChildrenError.message);
+        const childMap = new Map();
+        for (const row of [...(childrenByParent ?? []), ...(childrenByLegacy ?? [])]) {
+          if (row && row.id && row.id !== data.id && !childMap.has(row.id)) {
+            childMap.set(row.id, row);
+          }
+        }
+        const mergedChildren = Array.from(childMap.values()).sort((left, right) => {
+          const leftCreated = String(left.created_at ?? "");
+          const rightCreated = String(right.created_at ?? "");
+          if (leftCreated !== rightCreated) {
+            return leftCreated < rightCreated ? 1 : -1;
+          }
+          const leftId = String(left.id ?? "");
+          const rightId = String(right.id ?? "");
+          return leftId < rightId ? 1 : leftId > rightId ? -1 : 0;
+        });
+        const childrenHasMore =
+          (childrenByParent ?? []).length > detailLimit ||
+          (childrenByLegacy ?? []).length > detailLimit ||
+          mergedChildren.length > detailLimit;
+        const children = mergedChildren.slice(0, detailLimit);
+        const { data: rowData, error: rowError } = await admin
+          .from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("source", "sheet_row")
+          .filter("metadata->>user_id", "eq", userId)
+          .filter("metadata->>sheet_id", "eq", data.id)
+          .order("created_at", { ascending: true })
+          .order("id", { ascending: true })
+          .range(0, detailLimit);
+        if (rowError) throw new Error(rowError.message);
+        const tableRowsHasMore = (rowData ?? []).length > detailLimit;
+        const tableRows = (rowData ?? []).slice(0, detailLimit);
+        return json({
+          success: true,
+          page: data,
+          children,
+          children_has_more: childrenHasMore,
+          table_rows: tableRows,
+          table_rows_has_more: tableRowsHasMore,
+        });
       }
       case "wiki.create": {
+        let parentId = null;
+        if (
+          Object.hasOwn(body, "parent_id") &&
+          body.parent_id !== null &&
+          body.parent_id !== undefined
+        ) {
+          if (typeof body.parent_id !== "string" || body.parent_id.trim().length === 0) {
+            return json({ error: "Invalid parent_id" }, 400);
+          }
+          parentId = body.parent_id.trim();
+          const { data: parentPage, error: parentError } = await admin
+            .from("hub_data")
+            .select("id")
+            .eq("source", "wiki_page")
+            .filter("metadata->>user_id", "eq", userId)
+            .eq("id", parentId)
+            .maybeSingle();
+          if (parentError) throw new Error(parentError.message);
+          if (!parentPage) return json({ error: "Parent page not found" }, 404);
+        }
         const item = await addItem(admin, "wiki_page", userId, {
           title: body.title,
           content: body.content,
           category: body.category,
+          ...(parentId ? { parent_id: parentId } : {}),
           tags: body.tags ?? [],
           is_public: body.is_public ?? false,
         });
@@ -1178,9 +1261,41 @@ serve(async (req) => {
           .filter("metadata->>user_id", "eq", userId).maybeSingle();
         if (readError) throw new Error(readError.message);
         if (!current) return json({ error: "Not found" }, 404);
+        if (Object.hasOwn(body, "expected_updated_at")) {
+          const currentUpdatedAt = current.metadata?.updated_at ?? null;
+          if (currentUpdatedAt !== body.expected_updated_at) {
+            return json({ error: "Page changed; reload before retrying" }, 409);
+          }
+        }
+        if (
+          Object.hasOwn(body, "parent_id") &&
+          body.parent_id !== null &&
+          body.parent_id !== undefined
+        ) {
+          if (typeof body.parent_id !== "string" || body.parent_id.trim().length === 0) {
+            return json({ error: "Invalid parent_id" }, 400);
+          }
+          const nextParentId = body.parent_id.trim();
+          if (nextParentId === id) {
+            return json({ error: "Page cannot be its own parent" }, 400);
+          }
+          const { data: parentPage, error: parentError } = await admin
+            .from("hub_data")
+            .select("id")
+            .eq("source", "wiki_page")
+            .filter("metadata->>user_id", "eq", userId)
+            .eq("id", nextParentId)
+            .maybeSingle();
+          if (parentError) throw new Error(parentError.message);
+          if (!parentPage) return json({ error: "Parent page not found" }, 404);
+        }
         const changes: Record<string, unknown> = {};
-        for (const key of ["title", "content", "category", "tags", "is_public"]) {
-          if (Object.hasOwn(body, key)) changes[key] = body[key];
+        for (const key of ["title", "content", "category", "parent_id", "tags", "is_public"]) {
+          if (Object.hasOwn(body, key)) {
+            changes[key] = key === "parent_id" && typeof body[key] === "string"
+              ? body[key].trim()
+              : body[key];
+          }
         }
         const { data, error } = await admin.from("hub_data")
           .update({
