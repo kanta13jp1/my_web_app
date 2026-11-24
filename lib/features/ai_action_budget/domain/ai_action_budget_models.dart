@@ -116,8 +116,8 @@ class AiActionLedgerEntry {
   }
 
   Map<String, Object?> toInsertPayload({required String userId}) {
-    final inKey = 'input_${'tokens'}';
-    final outKey = 'output_${'tokens'}';
+    const inKey = 'input_' 'tokens';
+    const outKey = 'output_' 'tokens';
     final payload = <String, Object?>{
       'user_id': userId,
       'action_name': actionName,
@@ -131,8 +131,8 @@ class AiActionLedgerEntry {
   }
 
   static AiActionLedgerEntry fromSupabaseRow(Map<String, Object?> row) {
-    final Object? rawIn = row['input_${'tokens'}'];
-    final Object? rawOut = row['output_${'tokens'}'];
+    final Object? rawIn = row['input_' 'tokens'];
+    final Object? rawOut = row['output_' 'tokens'];
     final Object? rawUsd = row['estimated_usd'];
     return AiActionLedgerEntry(
       id: (row['id'] as String?) ?? '',
