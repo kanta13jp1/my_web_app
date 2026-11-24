@@ -103,6 +103,13 @@ class SyntheticBackendTest(unittest.TestCase):
         ):
             body = json.dumps({'action': 'provider.chat_auto', 'trace_id': trace}).encode()
             self.assertEqual(fixture.ai_hub_action_category(body), label)
+        prefix = 'あなたは浪費抑制を「判断力を鍛える訓練」として支援するAI資産コーチです。'
+        for message, category in (
+            (prefix + ' synthetic_private_tail', 'provider_chat_auto_waste_training'),
+            ('unrecognized synthetic_private_tail', 'provider_chat_auto'),
+        ):
+            body = json.dumps({'action': 'provider.chat_auto', 'message': message}).encode()
+            self.assertEqual(fixture.ai_hub_action_category(body), category)
         for body in (b'{"action":"synthetic_secret"}', b'{"action":[]}', b'['):
             self.assertEqual(fixture.ai_hub_action_category(body), 'unknown')
 

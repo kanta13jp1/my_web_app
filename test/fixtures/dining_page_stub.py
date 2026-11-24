@@ -111,6 +111,10 @@ def ai_hub_action_category(body):
             return 'provider_chat_auto_asset_summary'
         if trace_id == 'savings-life-plan-proposal':
             return 'provider_chat_auto_savings_plan'
+        message = payload.get('message')
+        if isinstance(message, str) and message.startswith(
+                'あなたは浪費抑制を「判断力を鍛える訓練」として支援するAI資産コーチです。'):
+            return 'provider_chat_auto_waste_training'
     return _AI_HUB_DIAGNOSTIC_ACTIONS.get(action, 'unknown')
 
 
