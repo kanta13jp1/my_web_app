@@ -7753,19 +7753,6 @@ serve(async (req: Request) => {
           }
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
-        const contextCheck = validateMessagesContextBudget(finalMessages);
-        if (!contextCheck.allowed) {
-          return json({
-            success: false,
-            status: "contextLimitExceeded",
-            code: "context_limit_exceeded",
-            estimated_units: contextCheck.estimatedUnits,
-            max_units: contextCheck.maxUnits,
-            exceeded_by: contextCheck.exceededBy,
-            message:
-              `リクエストの推定コンテキスト量 (${contextCheck.estimatedUnits}) が上限 (${contextCheck.maxUnits}) を超過しています。`,
-          }, 413);
-        }
         const routedTier = requestedTier ??
           effortToTier(effortSelection.effort);
         const startTierIndex = TIER_ORDER.indexOf(routedTier);

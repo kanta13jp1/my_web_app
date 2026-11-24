@@ -20,19 +20,19 @@ function createFakeDataSourceStore(options: {
   const items = [...(options.seeded ?? [])];
 
   return {
-    async getPlanLimits(_userId: string) {
-      return {
+    getPlanLimits(_userId: string) {
+      return Promise.resolve({
         data: { plan, maxSources, maxContextUnits },
         error: null,
-      };
+      });
     },
-    async listSources(userId: string, limit: number) {
-      return {
+    listSources(userId: string, limit: number) {
+      return Promise.resolve({
         data: items.filter((item) => item.user_id === userId).slice(0, limit),
         error: null,
-      };
+      });
     },
-    async insertSource(row) {
+    insertSource(row) {
       const created: CustomDataSourceRow = {
         id: `src-${items.length + 1}`,
         user_id: row.user_id,
@@ -42,7 +42,7 @@ function createFakeDataSourceStore(options: {
         created_at: "2026-11-24T00:00:00Z",
       };
       items.unshift(created);
-      return { data: created, error: null };
+      return Promise.resolve({ data: created, error: null });
     },
   };
 }
