@@ -85,7 +85,7 @@ class AiActionBudgetGuardTests(unittest.TestCase):
 
     def test_notification_pins_resolved_ip_and_sets_sni_host(self) -> None:
         endpoint = "https://hooks.slack.example/services/test"
-        fake_addrinfo = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("198.51.100.24", 443))]
+        fake_addrinfo = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
         captured: dict[str, object] = {}
 
         fake_raw_sock = mock.MagicMock()
@@ -114,13 +114,13 @@ class AiActionBudgetGuardTests(unittest.TestCase):
                                 status = budget_guard.post_json_notification(endpoint, {"text": "alert"})
 
         self.assertEqual(status, 200)
-        self.assertEqual(captured["connect_address"], ("198.51.100.24", 443))
+        self.assertEqual(captured["connect_address"], ("93.184.216.34", 443))
         fake_ctx.wrap_socket.assert_called_once_with(fake_raw_sock, server_hostname="hooks.slack.example")
         self.assertEqual(captured["headers"]["Host"], "hooks.slack.example")  # type: ignore[index]
 
     def test_notification_http_error_redirect_and_private_dns_rejected(self) -> None:
         endpoint = "https://hooks.slack.example/services/test?sig=must_not_leak"
-        fake_addrinfo = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("198.51.100.24", 443))]
+        fake_addrinfo = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
         with mock.patch("ai_action_budget_guard.socket.getaddrinfo", return_value=fake_addrinfo):
             for status_code in (302, 500):
                 with mock.patch.object(budget_guard._PinnedHTTPSConnection, "request", lambda *args, **kwargs: None):
