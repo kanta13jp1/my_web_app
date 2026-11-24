@@ -25,6 +25,9 @@ const Map<String, String> kXTrackerSeriesLabels = <String, String>{
   'household_tracker': '家計トラッカー',
   'ai_tool_tracker': 'AIツール定点観測',
   'party_gap_ranking': '選挙: 両党地力差',
+  'komeito_member_tracker': '選挙: 公明党 地方議員',
+  'ishin_member_tracker': '選挙: 日本維新の会 地方議員',
+  'reiwa_member_tracker': '選挙: れいわ新選組 地方議員',
 };
 
 /// variant から系列ラベルを解決する。daily_briefing 系はバリアント名が
@@ -120,7 +123,10 @@ Duration candidateFreshnessWindow(XPostCandidateSummary candidate) {
   if (variant.startsWith('local_election') ||
       variant == 'member_delta_national_progress' ||
       variant == 'scheduled_candidate_delta' ||
-      variant == 'party_gap_ranking') {
+      variant == 'party_gap_ranking' ||
+      variant == 'komeito_member_tracker' ||
+      variant == 'ishin_member_tracker' ||
+      variant == 'reiwa_member_tracker') {
     return const Duration(hours: 72);
   }
   return kCandidateDefaultFreshnessWindow;

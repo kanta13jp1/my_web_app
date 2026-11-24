@@ -12,6 +12,17 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { checkAndRecordAiUsage, supabaseUsageStore } from "./usage_gate.ts";
 import {
+  createSupabaseDailyQuotaStore,
+  enforceDailyAiQuota,
+  readDailyAiQuotaStatus,
+} from "./daily_quota_gate.ts";
+import {
+  createSupabaseCustomDataSourceStore,
+  handleDataSourceRegister,
+  handleDataSourceStatus,
+  validateMessagesContextBudget,
+} from "./context_limits.ts";
+import {
   authorizeAiHubAction,
   resolveAuthenticatedUserId,
 } from "./action_access_policy.ts";
@@ -48,6 +59,12 @@ import {
   normalizeAiRouterPreference,
   normalizeAiRoutingTask,
 } from "../_shared/ai_router_cost_optimization.ts";
+import {
+  buildGuardrailBlockedPayload,
+  evaluateComplianceGuardrail,
+  evaluateMessagesGuardrail,
+  type GuardrailMode,
+} from "./compliance_guardrails.ts";
 import {
   buildTaskClarityPrompt,
   evaluateTaskClarityHeuristically,
@@ -683,15 +700,15 @@ const TIER_PROVIDERS: Record<Tier, string[]> = {
     "moonshot",
   ],
   performance: [
-    "openai",
     "google",
+    "openai",
     "mistral",
     "cohere",
     "perplexity",
     "nebius",
     "qwen",
   ],
-  premium: ["anthropic", "openai", "google"],
+  premium: ["anthropic", "google", "openai"],
 };
 
 const TIER_ORDER: Tier[] = ["free", "budget", "performance", "premium"];
@@ -7227,6 +7244,19 @@ serve(async (req: Request) => {
           );
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
+        const contextCheck = validateMessagesContextBudget(finalMessages);
+        if (!contextCheck.allowed) {
+          return json({
+            success: false,
+            status: "contextLimitExceeded",
+            code: "context_limit_exceeded",
+            estimated_units: contextCheck.estimatedUnits,
+            max_units: contextCheck.maxUnits,
+            exceeded_by: contextCheck.exceededBy,
+            message:
+              `リクエストの推定コンテキスト量 (${contextCheck.estimatedUnits}) が上限 (${contextCheck.maxUnits}) を超過しています。`,
+          }, 413);
+        }
         const requestStartedAt = performance.now();
         const traceId = requestTraceId(req, body.trace_id);
         const sessionId = body.session_id != null
@@ -7291,6 +7321,27 @@ serve(async (req: Request) => {
                 `Pro にアップグレードすると無制限に利用できます。`,
             }, 402);
           }
+          const dailyQuota = await enforceDailyAiQuota(
+            createSupabaseDailyQuotaStore(admin),
+            userId,
+          );
+          if (!dailyQuota.allowed) {
+            return json({
+              success: false,
+              status: "dailyQuotaExceeded",
+              code: "daily_quota_exceeded",
+              plan: dailyQuota.plan,
+              used: dailyQuota.used,
+              daily_limit: dailyQuota.dailyLimit,
+              remaining: dailyQuota.remaining ?? 0,
+              quota_date: dailyQuota.quotaDate,
+              reset_at: dailyQuota.resetAt,
+              message:
+                `本日のプラン別AI利用上限(${
+                  dailyQuota.dailyLimit ?? 0
+                }回)に達しました。`,
+            }, 429);
+          }
         }
 
         try {
@@ -7311,6 +7362,8 @@ serve(async (req: Request) => {
             fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
           }
           const requestedModel = String(body.model ?? cfg.defaultModel);
+          const guardrailMode: GuardrailMode =
+            body.guardrail_mode === "strict_block" ? "strict_block" : "default";
           const logProviderChat = async (
             params: {
               success: boolean;
@@ -7344,6 +7397,31 @@ serve(async (req: Request) => {
               // ignore logging errors
             }
           };
+          const inputCheck = evaluateMessagesGuardrail(
+            finalMessages,
+            guardrailMode,
+          );
+          if (!inputCheck.allowed) {
+            await logProviderChat({
+              success: false,
+              statusCode: 422,
+              model: requestedModel,
+              errorMessage: inputCheck.auditSummary,
+            });
+            return json(
+              buildGuardrailBlockedPayload(inputCheck, {
+                provider: providerId,
+                traceId,
+                action: "provider.chat",
+              }),
+              422,
+            );
+          }
+          finalMessages.splice(
+            0,
+            finalMessages.length,
+            ...inputCheck.sanitizedMessages,
+          );
           const resp = await fetchWithProviderTimeout(fetchUrl, {
             method: "POST",
             headers: {
@@ -7394,7 +7472,30 @@ serve(async (req: Request) => {
           try {
             data = JSON.parse(respText);
           } catch {
-            const outputChars = respText.slice(0, 2000).length;
+            const rawPlainText = respText.slice(0, 2000);
+            const plainOutputCheck = evaluateComplianceGuardrail(rawPlainText, {
+              stage: "output",
+              mode: guardrailMode,
+            });
+            if (!plainOutputCheck.allowed) {
+              await logProviderChat({
+                success: false,
+                statusCode: 422,
+                model: requestedModel,
+                outputChars: rawPlainText.length,
+                errorMessage: plainOutputCheck.auditSummary,
+              });
+              return json(
+                buildGuardrailBlockedPayload(plainOutputCheck, {
+                  provider: providerId,
+                  traceId,
+                  action: "provider.chat",
+                }),
+                422,
+              );
+            }
+            const safePlainText = plainOutputCheck.sanitizedText;
+            const outputChars = safePlainText.length;
             const estimatedCost = calculateApiCost(
               requestedModel,
               estimateTokensFromChars(inputChars),
@@ -7406,13 +7507,28 @@ serve(async (req: Request) => {
               model: requestedModel,
               outputChars,
               estimatedCostUsd: estimatedCost,
+              errorMessage: plainOutputCheck.action === "masked"
+                ? plainOutputCheck.auditSummary
+                : null,
             });
             await recordSpend("ef", "ai-hub", estimatedCost);
             return json({
               success: true,
               provider: providerId,
               status: "implemented",
-              text: respText.slice(0, 2000),
+              text: safePlainText,
+              guardrail: {
+                checked: true,
+                action: plainOutputCheck.action !== "allowed"
+                  ? plainOutputCheck.action
+                  : inputCheck.action,
+                categories: [
+                  ...new Set([
+                    ...inputCheck.categories,
+                    ...plainOutputCheck.categories,
+                  ]),
+                ],
+              },
               observability: {
                 provider: providerId,
                 model: requestedModel,
@@ -7459,25 +7575,63 @@ serve(async (req: Request) => {
                 "AI応答が空、または出力上限で途中終了しました。max_tokens を増やすか、別プロバイダーを試してください。",
             }, 502);
           }
+          const outputCheck = evaluateComplianceGuardrail(content, {
+            stage: "output",
+            mode: guardrailMode,
+          });
+          if (!outputCheck.allowed) {
+            await logProviderChat({
+              success: false,
+              statusCode: 422,
+              model: usedModel,
+              outputChars,
+              errorMessage: outputCheck.auditSummary,
+            });
+            return json(
+              buildGuardrailBlockedPayload(outputCheck, {
+                provider: providerId,
+                traceId,
+                action: "provider.chat",
+              }),
+              422,
+            );
+          }
+          const safeContent = outputCheck.sanitizedText;
+          const safeOutputChars = safeContent.length;
           const estimatedCost = calculateApiCost(
             usedModel,
             estimateTokensFromChars(inputChars),
-            estimateTokensFromChars(outputChars),
+            estimateTokensFromChars(safeOutputChars),
           );
           await logProviderChat({
             success: true,
             statusCode: 200,
             model: usedModel,
-            outputChars,
+            outputChars: safeOutputChars,
             estimatedCostUsd: estimatedCost,
+            errorMessage: outputCheck.action === "masked"
+              ? outputCheck.auditSummary
+              : null,
           });
           await recordSpend("ef", "ai-hub", estimatedCost);
           return json({
             success: true,
             provider: providerId,
             status: "implemented",
-            text: content,
+            text: safeContent,
             model: usedModel,
+            guardrail: {
+              checked: true,
+              action: outputCheck.action !== "allowed"
+                ? outputCheck.action
+                : inputCheck.action,
+              categories: [
+                ...new Set([
+                  ...inputCheck.categories,
+                  ...outputCheck.categories,
+                ]),
+              ],
+            },
             observability: {
               provider: providerId,
               model: usedModel,
@@ -7485,7 +7639,7 @@ serve(async (req: Request) => {
               trace_id: traceId,
               session_id: sessionId,
               input_chars: inputChars,
-              output_chars: outputChars,
+              output_chars: safeOutputChars,
               action: "provider.chat",
               status_code: 200,
               provider_choice_reason: providerChoiceReason,
@@ -7524,6 +7678,21 @@ serve(async (req: Request) => {
             409,
           );
         }
+        const precheckMessages = messages ??
+          [{ role: "user", content: userMsg }];
+        const contextCheck = validateMessagesContextBudget(precheckMessages);
+        if (!contextCheck.allowed) {
+          return json({
+            success: false,
+            status: "contextLimitExceeded",
+            code: "context_limit_exceeded",
+            estimated_units: contextCheck.estimatedUnits,
+            max_units: contextCheck.maxUnits,
+            exceeded_by: contextCheck.exceededBy,
+            message:
+              `リクエストの推定コンテキスト量 (${contextCheck.estimatedUnits}) が上限 (${contextCheck.maxUnits}) を超過しています。`,
+          }, 413);
+        }
         const budget = await checkBudget("ef", "ai-hub");
         if (!budget.ok) {
           return json({
@@ -7560,6 +7729,27 @@ serve(async (req: Request) => {
                 }回)に達しました。` +
                 `Pro にアップグレードすると無制限に利用できます。`,
             }, 402);
+          }
+          const dailyQuota = await enforceDailyAiQuota(
+            createSupabaseDailyQuotaStore(admin),
+            routingUserId,
+          );
+          if (!dailyQuota.allowed) {
+            return json({
+              success: false,
+              status: "dailyQuotaExceeded",
+              code: "daily_quota_exceeded",
+              plan: dailyQuota.plan,
+              used: dailyQuota.used,
+              daily_limit: dailyQuota.dailyLimit,
+              remaining: dailyQuota.remaining ?? 0,
+              quota_date: dailyQuota.quotaDate,
+              reset_at: dailyQuota.resetAt,
+              message:
+                `本日のプラン別AI利用上限(${
+                  dailyQuota.dailyLimit ?? 0
+                }回)に達しました。`,
+            }, 429);
           }
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
@@ -9162,6 +9352,50 @@ serve(async (req: Request) => {
           const msg = e instanceof Error ? e.message : String(e);
           return json({ success: false, error: msg }, 500);
         }
+      }
+
+      case "quota.daily_status": {
+        if (!userId) {
+          return json({ error: "Unauthorized" }, 401);
+        }
+        const status = await readDailyAiQuotaStatus(
+          createSupabaseDailyQuotaStore(admin),
+          userId,
+        );
+        return json({
+          success: true,
+          allowed: status.allowed,
+          reason: status.reason,
+          plan: status.plan,
+          used: status.used,
+          daily_limit: status.dailyLimit,
+          remaining: status.remaining,
+          quota_date: status.quotaDate,
+          reset_at: status.resetAt,
+        });
+      }
+
+      case "data_sources.status": {
+        if (!userId) {
+          return json({ error: "Unauthorized" }, 401);
+        }
+        const res = await handleDataSourceStatus(
+          createSupabaseCustomDataSourceStore(admin),
+          userId,
+        );
+        return json(res.body, res.status);
+      }
+
+      case "data_sources.register": {
+        if (!userId) {
+          return json({ error: "Unauthorized" }, 401);
+        }
+        const res = await handleDataSourceRegister(
+          createSupabaseCustomDataSourceStore(admin),
+          userId,
+          body,
+        );
+        return json(res.body, res.status);
       }
 
       default:

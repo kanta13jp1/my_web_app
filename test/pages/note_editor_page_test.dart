@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/note_editor_page.dart';
 import 'package:my_web_app/pages/ai_search_page.dart';
@@ -363,6 +364,7 @@ class _RecordingSemanticSearchService implements NoteSemanticSearchDataSource {
 Map<String, dynamic> _noteRow({
   String title = '読書について',
   String content = '思索\n\n1\n\n数量がいかに豊かでも',
+  bool isPinned = false,
 }) {
   return <String, dynamic>{
     'id': '429',
@@ -371,6 +373,7 @@ Map<String, dynamic> _noteRow({
     'content': content,
     'reminder_date': null,
     'is_favorite': false,
+    'is_pinned': isPinned,
     'tags': <String>['Evernote'],
     'created_at': '2026-07-19T09:00:00.000Z',
     'updated_at': '2026-07-19T09:00:00.000Z',
@@ -825,6 +828,208 @@ void main() {
         reason: 'サーバー基準値が無いまま自動保存すると既存メモを潰す',
       );
     });
+
+    testWidgets('新規メモを自動保存して閉じると note_editor_draft_new と移行先下書きが残らない',
+        (tester) async {
+      final client = _RecordingSupabaseClient(noteRow: _noteRow());
+      await _pumpPage(tester, client, noteId: null);
+
+      await tester.enterText(
+        find.byKey(const Key('note_editor_title_field')),
+        '新規自動保存タイトル',
+      );
+      await tester.enterText(
+        find.byKey(const Key('note_editor_content_field')),
+        '新規自動保存本文',
+      );
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+      await tester.pumpAndSettle();
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(client.inserts, hasLength(1));
+      expect(prefs.getString('note_editor_draft_new'), isNull);
+      expect(prefs.getString('note_editor_draft_429'), isNull);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('新規メモを手動保存して閉じるとローカル下書きが残らない', (tester) async {
+      final client = _RecordingSupabaseClient(noteRow: _noteRow());
+      final semanticSearch = _RecordingSemanticSearchService();
+      await _pumpPage(
+        tester,
+        client,
+        noteId: null,
+        semanticSearchService: semanticSearch,
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('note_editor_title_field')),
+        '手動保存タイトル',
+      );
+      await tester.enterText(
+        find.byKey(const Key('note_editor_content_field')),
+        '手動保存本文',
+      );
+      await tester.tap(find.byIcon(Icons.save));
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+      await tester.pumpAndSettle();
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(client.inserts, hasLength(1));
+      expect(semanticSearch.indexCalls, 1);
+      expect(prefs.getString('note_editor_draft_new'), isNull);
+      expect(prefs.getString('note_editor_draft_429'), isNull);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('復元した note_editor_draft_new を保存して閉じると下書きが消える', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'note_editor_draft_new': jsonEncode(<String, dynamic>{
+          'title': '書きかけの新規メモ',
+          'content': '復元して保存する本文',
+          'reminder_date': null,
+          'is_favorite': false,
+          'is_pinned': false,
+          'tags': <String>[],
+          'saved_at': '2026-11-21T04:26:00.000Z',
+        }),
+      });
+
+      final client = _RecordingSupabaseClient(noteRow: _noteRow());
+      await _pumpPage(
+        tester,
+        client,
+        noteId: null,
+        semanticSearchService: _RecordingSemanticSearchService(),
+      );
+      expect(_contentController(tester).text, '復元して保存する本文');
+
+      await tester.tap(find.byIcon(Icons.save));
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+      await tester.pumpAndSettle();
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(client.inserts, hasLength(1));
+      expect(client.inserts.single['title'], '書きかけの新規メモ');
+      expect(client.inserts.single['content'], '復元して保存する本文');
+      expect(prefs.getString('note_editor_draft_new'), isNull);
+      expect(prefs.getString('note_editor_draft_429'), isNull);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('新規メモの初回保存中に追加入力すると new 下書きを移行し2回目保存で両方消える', (tester) async {
+      final insertGate = Completer<void>();
+      final updateGate = Completer<void>();
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(),
+        noteInsertGate: insertGate,
+        updateGate: updateGate,
+      );
+      await _pumpPage(tester, client, noteId: null);
+
+      await tester.enterText(
+        find.byKey(const Key('note_editor_content_field')),
+        '初回送信中の内容',
+      );
+      await tester.pump(const Duration(seconds: 3));
+      expect(client.inserts, hasLength(1));
+
+      await tester.enterText(
+        find.byKey(const Key('note_editor_content_field')),
+        '送信中に追加入力した最新内容',
+      );
+      await tester.pump();
+
+      insertGate.complete();
+      await tester.pump();
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('note_editor_draft_new'), isNull);
+      expect(
+        prefs.getString('note_editor_draft_429'),
+        contains('送信中に追加入力した最新内容'),
+      );
+
+      await tester.pump(const Duration(seconds: 3));
+      expect(client.updates, hasLength(1));
+      updateGate.complete();
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+      await tester.pumpAndSettle();
+
+      expect(client.updates.single['content'], '送信中に追加入力した最新内容');
+      expect(prefs.getString('note_editor_draft_new'), isNull);
+      expect(prefs.getString('note_editor_draft_429'), isNull);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('新規メモを手動保存した直後に保存完了前に閉じても完了後に下書きが残らない', (tester) async {
+      final insertGate = Completer<void>();
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(),
+        noteInsertGate: insertGate,
+      );
+      await _pumpPage(
+        tester,
+        client,
+        noteId: null,
+        semanticSearchService: _RecordingSemanticSearchService(),
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('note_editor_title_field')),
+        '保存完了前に閉じるタイトル',
+      );
+      await tester.enterText(
+        find.byKey(const Key('note_editor_content_field')),
+        '保存完了前に閉じる本文',
+      );
+      await tester.tap(find.byIcon(Icons.save));
+      await tester.pump();
+      expect(client.inserts, hasLength(1));
+
+      await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+      await tester.pump();
+
+      insertGate.complete();
+      await tester.pumpAndSettle();
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('note_editor_draft_new'), isNull);
+      expect(prefs.getString('note_editor_draft_429'), isNull);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('未保存の新規メモを保存せず閉じたときは note_editor_draft_new を残す',
+        (tester) async {
+      final client = _RecordingSupabaseClient(noteRow: _noteRow());
+      await _pumpPage(tester, client, noteId: null);
+
+      await tester.enterText(
+        find.byKey(const Key('note_editor_content_field')),
+        'まだ保存しない新規メモ',
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+      await tester.pumpAndSettle();
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(client.inserts, isEmpty);
+      expect(
+        prefs.getString('note_editor_draft_new'),
+        contains('まだ保存しない新規メモ'),
+      );
+      expect(tester.takeException(), isNull);
+    });
   });
 
   group('note history restore backup', () {
@@ -1034,6 +1239,322 @@ void main() {
         find.byKey(const Key('note_editor_slash_command_field')),
         findsNothing,
         reason: 'メモを開き直すたびにスラッシュ欄が再展開している',
+      );
+    });
+  });
+
+  group('note editor mobile clipboard bar', () {
+    String? mockClipboard;
+
+    void installClipboardMock() {
+      mockClipboard = null;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final args = call.arguments as Map<dynamic, dynamic>?;
+          mockClipboard = args?['text'] as String?;
+          return null;
+        }
+        if (call.method == 'Clipboard.getData') {
+          if (mockClipboard == null) return null;
+          return <String, dynamic>{'text': mockClipboard};
+        }
+        return null;
+      });
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null);
+      });
+    }
+
+    Future<void> clearSnackBars(WidgetTester tester) async {
+      final scaffold = tester.element(
+        find.byKey(const Key('note_editor_page_scaffold')),
+      );
+      ScaffoldMessenger.of(scaffold).clearSnackBars();
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('行選択→コピーと選択切り取り・全文コピーが動作する', (tester) async {
+      installClipboardMock();
+      const body = 'line1\nhttps://mightylink-app.com/\nline3';
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(content: body),
+      );
+      await _pumpPage(tester, client);
+      await clearSnackBars(tester);
+
+      final controller = _contentController(tester);
+      final comIndex = body.indexOf('com/');
+      controller.selection = TextSelection(
+        baseOffset: comIndex,
+        extentOffset: comIndex + 4,
+      );
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('note_editor_select_line_button')));
+      await tester.pump();
+      expect(
+        controller.selection.textInside(controller.text),
+        'https://mightylink-app.com/',
+      );
+
+      await tester.tap(find.byKey(const Key('note_editor_copy_button')));
+      await tester.pumpAndSettle();
+      expect(mockClipboard, 'https://mightylink-app.com/');
+
+      await tester.tap(find.byKey(const Key('note_editor_cut_button')));
+      await tester.pumpAndSettle();
+      expect(mockClipboard, 'https://mightylink-app.com/');
+      expect(controller.text, 'line1\n\nline3');
+
+      await tester.tap(find.byKey(const Key('note_editor_copy_all_button')));
+      await tester.pumpAndSettle();
+      expect(mockClipboard, 'line1\n\nline3');
+    });
+
+    testWidgets('貼り付けボタンおよび空クリップボード時の手動貼り付けが動作する', (tester) async {
+      installClipboardMock();
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(content: '先頭 '),
+      );
+      await _pumpPage(tester, client);
+      await clearSnackBars(tester);
+
+      final controller = _contentController(tester);
+      controller.selection = const TextSelection.collapsed(offset: 3);
+      mockClipboard = '貼り付けテスト';
+      await tester.tap(find.byKey(const Key('note_editor_paste_button')));
+      await tester.pumpAndSettle();
+      expect(controller.text, '先頭 貼り付けテスト');
+
+      // クリップボードが空/取得不可の場合は手動貼り付けダイアログへフォールバック
+      mockClipboard = null;
+      await tester.tap(find.byKey(const Key('note_editor_paste_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('手動貼り付け'), findsOneWidget);
+
+      await tester.tap(find.text('手動貼り付け'));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('note_editor_manual_paste_dialog')),
+        findsOneWidget,
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('note_editor_manual_paste_field')),
+        '・追記テキスト',
+      );
+      await tester.tap(
+        find.byKey(const Key('note_editor_manual_paste_confirm')),
+      );
+      await tester.pumpAndSettle();
+      expect(controller.text, '先頭 貼り付けテスト・追記テキスト');
+    });
+
+    testWidgets('狭幅かつキーボード表示中でもオーバーフローせず操作バーが見える', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      addTearDown(tester.view.resetViewInsets);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await _pumpEditor(tester);
+      expect(
+        find.byKey(const Key('note_editor_clipboard_bar')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('スラッシュ欄展開+キーボード表示でも本文が表示されオーバーフローしない', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'note_editor_slash_bar_expanded': true,
+      });
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      addTearDown(tester.view.resetViewInsets);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await _pumpEditor(tester);
+      expect(
+        find.byKey(const Key('note_editor_content_field')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('note_editor_clipboard_bar')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('値を選択ボタンでハイフン付きパスワード全体を選択・コピーできる', (tester) async {
+      installClipboardMock();
+      const body = 'ユーザー名: ml_user\nパスワード: t-C22P7VKxxh-6ihKPuWJ';
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(content: body),
+      );
+      await _pumpPage(tester, client);
+      await clearSnackBars(tester);
+
+      final controller = _contentController(tester);
+      final partIdx = body.indexOf('6ihKPuWJ');
+      controller.selection = TextSelection(
+        baseOffset: partIdx,
+        extentOffset: partIdx + 8,
+      );
+      await tester.pump();
+
+      final selectValueBtn = find.byKey(
+        const Key('note_editor_select_value_button'),
+      );
+      await tester.tap(selectValueBtn);
+      await tester.pump();
+      expect(
+        controller.selection.textInside(controller.text),
+        't-C22P7VKxxh-6ihKPuWJ',
+      );
+
+      await tester.tap(find.byKey(const Key('note_editor_copy_button')));
+      await tester.pumpAndSettle();
+      expect(mockClipboard, 't-C22P7VKxxh-6ihKPuWJ');
+    });
+
+    testWidgets('範囲選択ボタンから範囲選択画面を開き調整範囲を反映できる', (tester) async {
+      installClipboardMock();
+      const body = 'パスワード: abcdef-xyz';
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(content: body),
+      );
+      await _pumpPage(tester, client);
+      await clearSnackBars(tester);
+
+      final controller = _contentController(tester);
+      controller.selection = const TextSelection(
+        baseOffset: 7,
+        extentOffset: 17,
+      );
+      await tester.pump();
+
+      final rangeBtn = find.byKey(
+        const Key('note_editor_range_select_button'),
+      );
+      await tester.tap(rangeBtn);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('note_range_select_page')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('note_range_mode_precision')));
+      await tester.pumpAndSettle();
+
+      final startPlus = find.byKey(const Key('note_range_start_plus_1'));
+      await tester.ensureVisible(startPlus);
+      await tester.tap(startPlus);
+      await tester.pump();
+
+      final applyBtn = find.byKey(
+        const Key('note_range_precision_apply_button'),
+      );
+      await tester.ensureVisible(applyBtn);
+      await tester.tap(applyBtn);
+      await tester.pumpAndSettle();
+
+      expect(controller.selection.textInside(controller.text), 'bcdef-xyz');
+    });
+  });
+
+  group('note editor pin toggle', () {
+    testWidgets('スマホ幅でピン留め済みメモをピンボタンから解除・再保存できる', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(isPinned: true),
+      );
+      await _pumpPage(tester, client);
+      client.updates.clear();
+
+      final pinButton = find.byKey(const Key('note_editor_pin_button'));
+      expect(pinButton, findsOneWidget);
+      expect(
+        find.descendant(of: pinButton, matching: find.text('ピン留め解除')),
+        findsOneWidget,
+      );
+      final size = tester.getSize(pinButton);
+      expect(size.width, greaterThanOrEqualTo(44.0));
+      expect(size.height, greaterThanOrEqualTo(44.0));
+
+      await tester.ensureVisible(pinButton);
+      await tester.tap(pinButton);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      expect(client.updates, hasLength(1));
+      expect(client.updates.single['is_pinned'], isFalse);
+      expect(
+        find.descendant(of: pinButton, matching: find.text('ピン留め')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('/pin スラッシュコマンドでピン留めを切り替えて保存できる', (tester) async {
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(isPinned: false),
+      );
+      await _pumpPage(tester, client);
+      client.updates.clear();
+
+      await tester.enterText(
+        find.byKey(const Key('note_editor_slash_command_field')),
+        '/pin',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      expect(client.updates, hasLength(1));
+      expect(client.updates.single['is_pinned'], isTrue);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('note_editor_pin_button')),
+          matching: find.text('ピン留め解除'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('is_pinned を含まない旧形式ローカル下書きの復元でピン留め状態を維持する', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'note_editor_draft_429': jsonEncode(<String, dynamic>{
+          'title': '読書について',
+          'content': '下書きから復元した本文',
+          'reminder_date': null,
+          'is_favorite': false,
+          'saved_at': '2026-07-20T00:00:00.000Z',
+        }),
+      });
+
+      final client = _RecordingSupabaseClient(
+        noteRow: _noteRow(isPinned: true),
+      );
+      await _pumpPage(tester, client);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      expect(_contentController(tester).text, '下書きから復元した本文');
+      expect(client.updates, hasLength(1));
+      expect(client.updates.single['is_pinned'], isTrue);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('note_editor_pin_button')),
+          matching: find.text('ピン留め解除'),
+        ),
+        findsOneWidget,
       );
     });
   });

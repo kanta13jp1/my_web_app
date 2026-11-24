@@ -9,6 +9,8 @@ import '../models/election_intelligence.dart';
 import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
+import 'local_election_roster_diff.dart';
+import 'public_memo_service.dart';
 
 typedef LocalElectionMemoPublisher = Future<PublicMemo?> Function({
   required int noteId,
@@ -21,6 +23,12 @@ typedef LocalElectionMemoPublisher = Future<PublicMemo?> Function({
 
 typedef LocalElectionMemoLoader = Future<PublicMemo?> Function(
     {required int noteId, required String userId});
+
+typedef LocalElectionPreviousMemoLoader = Future<PublicMemo?> Function({
+  required String userId,
+  required int currentNoteId,
+  required String currentSnapshotDate,
+});
 
 class LocalElectionShareDraft {
   final int noteId;
@@ -96,8 +104,10 @@ class LocalElectionShareService {
   final SupabaseClient _supabase;
   final LocalElectionMemoPublisher? _publishMemo;
   final LocalElectionMemoLoader? _loadMemo;
+  final LocalElectionPreviousMemoLoader? _loadPreviousMemo;
   final OfficialEndorsementRepository _officialEndorsementRepository;
   final DateFormat _dateOnlyFormat = DateFormat('yyyy/MM/dd', 'ja_JP');
+  final Map<int, PublicMemo?> _previousMemoCache = <int, PublicMemo?>{};
 
   OfficialEndorsementSnapshot _officialEndorsements(
     LocalElectionRealitySnapshot? snapshot,
@@ -117,23 +127,36 @@ class LocalElectionShareService {
     this._supabase, {
     LocalElectionMemoPublisher? publishMemo,
     LocalElectionMemoLoader? loadMemo,
+    LocalElectionPreviousMemoLoader? loadPreviousMemo,
     OfficialEndorsementRepository officialEndorsementRepository =
         const OfficialEndorsementRepository(),
   })  : _publishMemo = publishMemo,
         _loadMemo = loadMemo,
+        _loadPreviousMemo = loadPreviousMemo,
         _officialEndorsementRepository = officialEndorsementRepository;
 
   Future<PublicMemo?> publishSnapshot({
     required LocalElectionRealitySnapshot snapshot,
     required List<LocalElectionLegislatorProfile> members,
     LocalElectionPlanDashboard? plan,
+    PublicMemo? previousMemo,
   }) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
       return null;
     }
 
-    final draft = buildDraft(snapshot: snapshot, members: members, plan: plan);
+    final noteId = buildSyntheticNoteId(snapshot);
+    final resolvedPreviousMemo = previousMemo ??
+        (_previousMemoCache.containsKey(noteId)
+            ? _previousMemoCache[noteId]
+            : await loadPreviousPublishedSnapshot(snapshot));
+    final draft = buildDraft(
+      snapshot: snapshot,
+      members: members,
+      plan: plan,
+      previousMemo: resolvedPreviousMemo,
+    );
     final publishMemo = _publishMemo;
     if (publishMemo == null) {
       return null;
@@ -148,6 +171,39 @@ class LocalElectionShareService {
     );
   }
 
+  Future<PublicMemo?> loadPreviousPublishedSnapshot(
+    LocalElectionRealitySnapshot snapshot,
+  ) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return null;
+    }
+    final noteId = buildSyntheticNoteId(snapshot);
+    final currentSnapshotDate =
+        _dateOnlyFormat.format(snapshot.fetchedAt.toLocal());
+    try {
+      final loadPrevious = _loadPreviousMemo;
+      final memo = loadPrevious != null
+          ? await loadPrevious(
+              userId: userId,
+              currentNoteId: noteId,
+              currentSnapshotDate: currentSnapshotDate,
+            )
+          : await PublicMemoService(_supabase)
+              .getLatestPreviousGeneratedPublicMemo(
+              userId: userId,
+              metadataType: metadataType,
+              excludeSourceKey: generatedMemoSourceKey(noteId),
+              beforeSnapshotDate: currentSnapshotDate,
+              category: publicCategory,
+            );
+      _previousMemoCache[noteId] = memo;
+      return memo;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<PublicMemo?> loadPublishedSnapshot(
     LocalElectionRealitySnapshot snapshot,
   ) async {
@@ -155,6 +211,7 @@ class LocalElectionShareService {
     if (userId == null) {
       return null;
     }
+    await loadPreviousPublishedSnapshot(snapshot);
     final loadMemo = _loadMemo;
     if (loadMemo == null) {
       return null;
@@ -207,11 +264,20 @@ class LocalElectionShareService {
     required LocalElectionRealitySnapshot snapshot,
     required List<LocalElectionLegislatorProfile> members,
     LocalElectionPlanDashboard? plan,
+    PublicMemo? previousMemo,
   }) {
     final resolvedMembers = _sortedMembers(members);
     final prefectures = _prefecturesForDisplay(snapshot);
     final title =
         '国民民主党 地方議員集計 ${_dateOnlyFormat.format(snapshot.fetchedAt.toLocal())}';
+    final rosterDiff = previousMemo == null
+        ? null
+        : computeLocalElectionRosterDiff(
+            previousMemo: previousMemo,
+            currentSnapshot: snapshot,
+            currentMembers: resolvedMembers,
+            currentPrefectures: prefectures,
+          );
 
     return LocalElectionShareDraft(
       noteId: buildSyntheticNoteId(snapshot),
@@ -222,12 +288,14 @@ class LocalElectionShareService {
         prefectures: prefectures,
         members: resolvedMembers,
         plan: plan,
+        rosterDiff: rosterDiff,
       ),
       metadata: _buildMetadata(
         snapshot: snapshot,
         prefectures: prefectures,
         members: resolvedMembers,
         plan: plan,
+        rosterDiff: rosterDiff,
       ),
     );
   }
@@ -358,10 +426,18 @@ class LocalElectionShareService {
     required LocalElectionRealitySnapshot snapshot,
     required List<LocalElectionLegislatorProfile> members,
     LocalElectionPlanDashboard? plan,
+    PublicMemo? previousMemo,
     String publicUrl = '',
     int maxWeightedChars = 24000,
   }) {
-    final draft = buildDraft(snapshot: snapshot, members: members, plan: plan);
+    final resolvedPreviousMemo =
+        previousMemo ?? _previousMemoCache[buildSyntheticNoteId(snapshot)];
+    final draft = buildDraft(
+      snapshot: snapshot,
+      members: members,
+      plan: plan,
+      previousMemo: resolvedPreviousMemo,
+    );
     final suffix =
         publicUrl.isEmpty ? '' : '\n\n全都道府県の内訳と現職名簿の公開ノート:\n$publicUrl';
     final body = draft.content.trim();
@@ -738,6 +814,7 @@ class LocalElectionShareService {
     required List<LocalElectionPrefectureReality> prefectures,
     required List<LocalElectionLegislatorProfile> members,
     LocalElectionPlanDashboard? plan,
+    LocalElectionRosterDiff? rosterDiff,
   }) {
     final endorsementTotals = _officialEndorsements(snapshot);
     final dpjOfficialEndorsementTotal = endorsementTotals.totalCount;
@@ -795,6 +872,12 @@ class LocalElectionShareService {
     final ldpTotal = plan?.totalLdpLocalMembers ?? 0;
     if (ldpTotal > 0) {
       buffer.writeln('自民地方議員参考合計: $ldpTotal人(総務省 所属党派別人員調)');
+    }
+
+    if (rosterDiff != null) {
+      buffer
+        ..writeln()
+        ..writeln(formatLocalElectionRosterDiffSection(rosterDiff));
     }
 
     if (snapshot.aiSummary.trim().isNotEmpty) {
@@ -889,6 +972,7 @@ class LocalElectionShareService {
     required List<LocalElectionPrefectureReality> prefectures,
     required List<LocalElectionLegislatorProfile> members,
     LocalElectionPlanDashboard? plan,
+    LocalElectionRosterDiff? rosterDiff,
   }) {
     final cdpByPrefecture = _cdpByPrefecture(plan);
     final missing =
@@ -942,6 +1026,10 @@ class LocalElectionShareService {
       'lowPresencePrefectureCount': low.length,
       'lowPresencePrefectures': low.map((item) => item.prefecture).toList(),
       'rosterCount': members.length,
+      'rosterSnapshot': members
+          .map((item) => LocalElectionRosterEntry.fromProfile(item).toJson())
+          .toList(),
+      if (rosterDiff != null) 'previousComparison': rosterDiff.toSummaryJson(),
       'topPrefectures': snapshot
           .topPrefectures(limit: 5)
           .map(
@@ -1356,52 +1444,4 @@ class LocalElectionShareService {
   }
 }
 
-const List<String> _allPrefectures = <String>[
-  '北海道',
-  '青森県',
-  '岩手県',
-  '宮城県',
-  '秋田県',
-  '山形県',
-  '福島県',
-  '茨城県',
-  '栃木県',
-  '群馬県',
-  '埼玉県',
-  '千葉県',
-  '東京都',
-  '神奈川県',
-  '新潟県',
-  '富山県',
-  '石川県',
-  '福井県',
-  '山梨県',
-  '長野県',
-  '岐阜県',
-  '静岡県',
-  '愛知県',
-  '三重県',
-  '滋賀県',
-  '京都府',
-  '大阪府',
-  '兵庫県',
-  '奈良県',
-  '和歌山県',
-  '鳥取県',
-  '島根県',
-  '岡山県',
-  '広島県',
-  '山口県',
-  '徳島県',
-  '香川県',
-  '愛媛県',
-  '高知県',
-  '福岡県',
-  '佐賀県',
-  '長崎県',
-  '熊本県',
-  '大分県',
-  '宮崎県',
-  '鹿児島県',
-  '沖縄県',
-];
+const List<String> _allPrefectures = localElectionAllPrefectures;

@@ -71,7 +71,7 @@ class HomepageSocialPreviewTest(unittest.TestCase):
             encoding="utf-8"
         )
         cls.og_image = (
-            cls.repo_root / "web" / "lp-og-first-action-20260720.png"
+            cls.repo_root / "web" / "ogp-lp-20261123.png"
         )
 
     def test_home_meta_matches_brand_search_intent(self) -> None:
@@ -112,13 +112,15 @@ class HomepageSocialPreviewTest(unittest.TestCase):
         self.assertIn('<dt>利益</dt>', self.index_html)
         self.assertIn('個人のP/L・B/S、6部署、30日運営サイクルを読む', self.index_html)
         self.assertIn('href="/philosophy"', self.index_html)
+        self.assertIn('.seo-card [data-prerender]', self.index_html)
+        self.assertIn('text-align: left;', self.index_html)
         self.assertIn(
             '"@id": "https://my-web-app-b67f4.web.app/#software-application"',
             self.index_html,
         )
 
     def test_home_og_image_is_real_lp_screenshot(self) -> None:
-        image_url = f"{BASE}/lp-og-first-action-20260720.png"
+        image_url = f"{BASE}/ogp-lp-20261123.png"
         self.assertIn(
             f'property="og:image"\n    content="{image_url}"',
             self.index_html,
@@ -127,20 +129,28 @@ class HomepageSocialPreviewTest(unittest.TestCase):
             f'property="twitter:image"\n    content="{image_url}"',
             self.index_html,
         )
-        self.assertTrue(self.og_image.is_file())
-        png = self.og_image.read_bytes()
-        self.assertEqual(png[:8], b"\x89PNG\r\n\x1a\n")
-        self.assertEqual(struct.unpack(">II", png[16:24]), (1200, 630))
+        cards = json.loads(
+            (self.repo_root / "scripts" / "ogp_cards.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        lp_card = next(
+            (c for c in cards.get("cards", []) if c["output"] == "ogp-lp-20261123.png"),
+            None,
+        )
+        self.assertIsNotNone(lp_card)
+        self.assertEqual((lp_card["width"], lp_card["height"]), (1200, 630))
+        self.assertTrue((self.repo_root / lp_card["artwork"]).is_file())
 
     def test_default_and_ai_university_images_remain_route_specific(self) -> None:
         self.assertIn(
             "var defaultOgImageUrl = "
-            "'https://my-web-app-b67f4.web.app/lp-og-first-action-20260720.png';",
+            "'https://my-web-app-b67f4.web.app/ogp-lp-20261123.png';",
             self.index_html,
         )
         self.assertIn(
             "var aiUniversityOgImageUrl = "
-            "'https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png';",
+            "'https://my-web-app-b67f4.web.app/ogp-ai-university-20261123.png';",
             self.index_html,
         )
         self.assertIn(
@@ -388,8 +398,8 @@ class PublicRouteTest(unittest.TestCase):
         )
 
         out = build_public_route_html(index_html, route, BASE)
-        image_url = f"{BASE}/ogp-image-gen2-20260428.png"
-        homepage_image_url = f"{BASE}/lp-og-first-action-20260720.png"
+        image_url = f"{BASE}/ogp-ai-university-20261123.png"
+        homepage_image_url = f"{BASE}/ogp-lp-20261123.png"
 
         self.assertRegex(
             out,
@@ -455,6 +465,7 @@ class PublicRouteTest(unittest.TestCase):
         )
 
         self.assertIn('data-prerender="markdown-source"', out)
+        self.assertIn("<h2>プライバシーポリシー原文</h2>", out)
         self.assertIn(
             'data-source="assets/legal/privacy_policy.md"',
             out,
@@ -468,6 +479,51 @@ class PublicRouteTest(unittest.TestCase):
         )
         self.assertNotIn("<https://stripe.com/privacy>", out)
         self.assertIn("&lt;https://stripe.com/privacy&gt;", out)
+
+    def test_legal_routes_use_route_specific_markdown_headings(self) -> None:
+        repo_root = Path(__file__).resolve().parents[2]
+        routes = json.loads(
+            (repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        expected_headings = {
+            "/privacy": "プライバシーポリシー原文",
+            "/terms": "利用規約原文",
+            "/tokusho": "特定商取引法に基づく表記原文",
+        }
+        for path, expected_heading in expected_headings.items():
+            route = next(
+                item for item in routes["routes"] if item["path"] == path
+            )
+            markdown_text = (repo_root / route["markdown_source"]).read_text(
+                encoding="utf-8"
+            )
+            out = build_public_route_html(
+                TEMPLATE,
+                {**route, "_markdown_text": markdown_text},
+                BASE,
+            )
+            with self.subTest(path=path):
+                self.assertIn(f"<h2>{expected_heading}</h2>", out)
+                if path != "/privacy":
+                    self.assertNotIn("<h2>プライバシーポリシー原文</h2>", out)
+
+        custom = build_public_route_html(
+            TEMPLATE,
+            {
+                "path": "/custom-legal",
+                "title": "カスタム法務",
+                "description": "説明",
+                "h1": "カスタム法務",
+                "points": ["要点"],
+                "markdown_source": "assets/legal/terms.md",
+                "markdown_heading": "承認済み <原文>",
+                "_markdown_text": "# Custom",
+            },
+            BASE,
+        )
+        self.assertIn("<h2>承認済み &lt;原文&gt;</h2>", custom)
 
 
 class SitemapTest(unittest.TestCase):
@@ -510,6 +566,94 @@ class SitemapTest(unittest.TestCase):
         self.assertIn("<lastmod>2026-08-23</lastmod>", philosophy)
         self.assertNotIn("<lastmod>", home)
         self.assertNotIn("<lastmod>", comparison)
+
+
+class Stage2OgpAssetsTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.repo_root = Path(__file__).resolve().parents[2]
+        cls.manifest = json.loads(
+            (cls.repo_root / "scripts" / "ogp_cards.json").read_text(
+                encoding="utf-8"
+            )
+        )
+
+    def test_ogp_cards_manifest_declares_all_stage2_cards_and_existing_artworks(
+        self,
+    ) -> None:
+        expected = {
+            "ogp-lp-20261123.png": (1200, 630),
+            "ogp-ai-university-20261123.png": (1200, 630),
+            "ogp-competitors-20261123.png": (1200, 630),
+            "ogp-philosophy-20261123.png": (1200, 630),
+            "ogp-referral-20261123.png": (1200, 630),
+            "ogp-pricing-20261123.png": (1200, 630),
+            "x-card-launch-20261123.png": (1600, 900),
+        }
+        cards_by_output = {c["output"]: c for c in self.manifest.get("cards", [])}
+        self.assertEqual(set(cards_by_output.keys()), set(expected.keys()))
+
+        for rel, dims in expected.items():
+            card = cards_by_output[rel]
+            with self.subTest(asset=rel):
+                self.assertEqual((card["width"], card["height"]), dims)
+                self.assertTrue((self.repo_root / card["artwork"]).is_file())
+                self.assertRegex(card["accentPrimary"], r"^#[0-9a-fA-F]{6}$")
+                self.assertRegex(card["accentSecondary"], r"^#[0-9a-fA-F]{6}$")
+                self.assertRegex(card["headlineAccent"], r"^#[0-9a-fA-F]{6}$")
+                self.assertTrue(card.get("badge"))
+                self.assertEqual(len(card.get("headline", [])), 2)
+                self.assertEqual(len(card.get("subcopy", [])), 2)
+                self.assertGreaterEqual(len(card.get("trust", [])), 2)
+                self.assertTrue(card.get("alt"))
+
+    def test_route_manifests_resolve_to_existing_or_generated_images(self) -> None:
+        generated = {c["output"] for c in self.manifest.get("cards", [])}
+        pub = json.loads(
+            (self.repo_root / "web" / "seo" / "public-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        configured = [r for r in pub["routes"] if r.get("image")]
+        self.assertGreaterEqual(len(configured), 6)
+        for route in configured:
+            rel = route["image"].lstrip("/")
+            with self.subTest(route=route["path"]):
+                self.assertTrue(
+                    (self.repo_root / "web" / rel).is_file() or rel in generated,
+                    f"image not found in web/ or scripts/ogp_cards.json: {rel}",
+                )
+
+        comp = json.loads(
+            (self.repo_root / "web" / "seo" / "comparison-routes.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        default_img = comp.get("default_image", "")
+        self.assertTrue(default_img.startswith("/"))
+        default_rel = default_img.lstrip("/")
+        self.assertTrue(
+            (self.repo_root / "web" / default_rel).is_file()
+            or default_rel in generated,
+        )
+
+    def test_comparison_route_applies_default_social_image(self) -> None:
+        out = build_route_html(
+            TEMPLATE,
+            ROUTE,
+            BASE,
+            default_image="/ogp-competitors-20261123.png",
+            default_image_alt="競合比較カード",
+        )
+        self.assertIn(
+            f'<meta property="og:image" content="{BASE}/ogp-competitors-20261123.png">',
+            out,
+        )
+        self.assertIn(
+            f'<meta property="twitter:image" content="{BASE}/ogp-competitors-20261123.png">',
+            out,
+        )
+        self.assertIn('<meta property="og:image:alt" content="競合比較カード">', out)
 
 
 if __name__ == "__main__":

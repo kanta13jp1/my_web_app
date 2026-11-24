@@ -1,0 +1,257 @@
+import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import {
+  type AdminProfileRow,
+  type CandidateCallerContext,
+  type CandidateStoreResult,
+  type CompetitorCandidateReviewRow,
+  type CompetitorCandidateStore,
+  handleCompetitorCandidateList,
+  handleCompetitorCandidateReview,
+  handleCompetitorCandidateVerifyUrl,
+  verifyCandidateUrl,
+} from "./competitor_candidates.ts";
+
+class InMemoryCandidateStore implements CompetitorCandidateStore {
+  rows: CompetitorCandidateReviewRow[] = [];
+  profiles = new Map<string, AdminProfileRow>();
+
+  getAdminProfile(
+    userId: string,
+  ): Promise<CandidateStoreResult<AdminProfileRow>> {
+    return Promise.resolve({
+      data: this.profiles.get(userId) ?? null,
+      error: null,
+    });
+  }
+
+  listCandidates(
+    onlyManualReview: boolean,
+    limit: number,
+  ): Promise<CandidateStoreResult<CompetitorCandidateReviewRow[]>> {
+    const items = this.rows
+      .filter((r) => !onlyManualReview || r.needs_manual_review)
+      .slice(0, limit)
+      .map((r) => ({ ...r }));
+    return Promise.resolve({ data: items, error: null });
+  }
+
+  getCandidate(
+    id: string,
+  ): Promise<CandidateStoreResult<CompetitorCandidateReviewRow>> {
+    const found = this.rows.find((r) => r.id === id) ?? null;
+    return Promise.resolve({ data: found ? { ...found } : null, error: null });
+  }
+
+  updateCandidate(
+    id: string,
+    updates: Record<string, unknown>,
+  ): Promise<CandidateStoreResult<CompetitorCandidateReviewRow>> {
+    const found = this.rows.find((r) => r.id === id) ?? null;
+    if (!found) return Promise.resolve({ data: null, error: null });
+    Object.assign(found, updates);
+    return Promise.resolve({ data: { ...found }, error: null });
+  }
+}
+
+const ADMIN_CALLER: CandidateCallerContext = {
+  userId: "admin-1",
+  isServiceRole: false,
+};
+
+const PUBLIC_DNS = () => Promise.resolve(["93.184.216.34"]);
+
+Deno.test("verifyCandidateUrl blocks IPv6, DNS rebinding, and SSRF redirects while allowing safe URLs", async () => {
+  const okRes = await verifyCandidateUrl(
+    "https://example.com/about",
+    () => Promise.resolve(new Response(null, { status: 200 })),
+    "2026-11-24T00:00:00Z",
+    PUBLIC_DNS,
+  );
+  assertEquals(okRes.statusCode, 200);
+  assertEquals(okRes.needsManualReview, false);
+
+  const notFound = await verifyCandidateUrl(
+    "https://example.com/fake-404",
+    () => Promise.resolve(new Response(null, { status: 404 })),
+    "2026-11-24T00:00:00Z",
+    PUBLIC_DNS,
+  );
+  assertEquals(notFound.statusCode, 404);
+  assertEquals(notFound.needsManualReview, true);
+
+  for (
+    const literal of [
+      "http://127.0.0.1:8080/internal",
+      "http://[::1]/admin",
+      "http://[fc00::1]/meta",
+      "http://[fe80::1]/meta",
+      "http://[::ffff:127.0.0.1]/local",
+      "http://[::ffff:a9fe:a9fe]/latest/meta-data",
+    ]
+  ) {
+    const blocked = await verifyCandidateUrl(
+      literal,
+      () => {
+        throw new Error("must not fetch blocked IP");
+      },
+      "2026-11-24T00:00:00Z",
+      PUBLIC_DNS,
+    );
+    assertEquals(blocked.statusCode, null);
+    assertEquals(blocked.needsManualReview, true);
+  }
+
+  // DNS resolving to private/metadata IP must block before fetch
+  let fetchCalls = 0;
+  const dnsRebindBlocked = await verifyCandidateUrl(
+    "https://rebind.example.com/secret",
+    () => {
+      fetchCalls += 1;
+      return Promise.resolve(new Response(null, { status: 200 }));
+    },
+    "2026-11-24T00:00:00Z",
+    () => Promise.resolve(["169.254.169.254"]),
+  );
+  assertEquals(fetchCalls, 0);
+  assertEquals(dnsRebindBlocked.needsManualReview, true);
+
+  // Redirect to internal metadata IP must block before following 2nd hop
+  let hopCount = 0;
+  const redirectSsrf = await verifyCandidateUrl(
+    "https://public.example.com/start",
+    () => {
+      hopCount += 1;
+      return Promise.resolve(
+        new Response(null, {
+          status: 302,
+          headers: { location: "http://169.254.169.254/latest/meta-data" },
+        }),
+      );
+    },
+    "2026-11-24T00:00:00Z",
+    PUBLIC_DNS,
+  );
+  assertEquals(hopCount, 1);
+  assertEquals(redirectSsrf.needsManualReview, true);
+
+  // Valid redirect to another public URL succeeds
+  let okHops = 0;
+  const validRedirect = await verifyCandidateUrl(
+    "https://public.example.com/old",
+    () => {
+      okHops += 1;
+      if (okHops === 1) {
+        return Promise.resolve(
+          new Response(null, {
+            status: 301,
+            headers: { location: "https://public.example.com/new" },
+          }),
+        );
+      }
+      return Promise.resolve(new Response(null, { status: 200 }));
+    },
+    "2026-11-24T00:00:00Z",
+    PUBLIC_DNS,
+  );
+  assertEquals(okHops, 2);
+  assertEquals(validRedirect.statusCode, 200);
+  assertEquals(validRedirect.needsManualReview, false);
+});
+
+Deno.test("competitor_candidate actions reject unauthenticated (401) and non-admin (403) callers", async () => {
+  const store = new InMemoryCandidateStore();
+  store.profiles.set("non-admin", { is_admin: false, role: "user" });
+
+  const unauthList = await handleCompetitorCandidateList(
+    store,
+    { userId: null, isServiceRole: false },
+    {},
+  );
+  assertEquals(unauthList.status, 401);
+
+  const nonAdminReview = await handleCompetitorCandidateReview(
+    store,
+    { userId: "non-admin", isServiceRole: false },
+    { candidate_id: "cand-1", decision: "approved" },
+  );
+  assertEquals(nonAdminReview.status, 403);
+
+  const nonAdminVerify = await handleCompetitorCandidateVerifyUrl(
+    store,
+    { userId: "non-admin", isServiceRole: false },
+    { candidate_id: "cand-1" },
+    undefined,
+    undefined,
+    PUBLIC_DNS,
+  );
+  assertEquals(nonAdminVerify.status, 403);
+});
+
+Deno.test("handleCompetitorCandidateVerifyUrl and handleCompetitorCandidateReview update store for admin", async () => {
+  const store = new InMemoryCandidateStore();
+  store.profiles.set("admin-1", { is_admin: true, role: "admin" });
+  store.rows.push({
+    id: "cand-404",
+    display_name: "Ghost Tool",
+    category: "productivity",
+    website: "https://ghost.example.com/404",
+    source_url_status_code: 404,
+    source_url_checked_at: "2026-11-24T00:00:00Z",
+    source_url_error: "HTTP 404",
+    needs_manual_review: true,
+    review_decision: "pending",
+    reviewed: false,
+    rejected_reason: null,
+    staged_at: "2026-11-24T00:00:00Z",
+    reviewed_at: null,
+  });
+
+  const list = await handleCompetitorCandidateList(
+    store,
+    ADMIN_CALLER,
+    { only_manual_review: true },
+  );
+  assertEquals(list.status, 200);
+  assertEquals(
+    (list.body.candidates as CompetitorCandidateReviewRow[]).length,
+    1,
+  );
+
+  const reverified = await handleCompetitorCandidateVerifyUrl(
+    store,
+    ADMIN_CALLER,
+    { candidate_id: "cand-404" },
+    () => Promise.resolve(new Response(null, { status: 200 })),
+    "2026-11-24T01:00:00Z",
+    PUBLIC_DNS,
+  );
+  assertEquals(reverified.status, 200);
+  assertEquals(
+    (reverified.body.candidate as CompetitorCandidateReviewRow)
+      .needs_manual_review,
+    false,
+  );
+
+  const badDecision = await handleCompetitorCandidateReview(
+    store,
+    ADMIN_CALLER,
+    { candidate_id: "cand-404", decision: "invalid" },
+  );
+  assertEquals(badDecision.status, 400);
+
+  const rejected = await handleCompetitorCandidateReview(
+    store,
+    { userId: null, isServiceRole: true },
+    {
+      candidate_id: "cand-404",
+      decision: "rejected",
+      rejected_reason: "URL not reachable",
+    },
+    "2026-11-24T02:00:00Z",
+  );
+  assertEquals(rejected.status, 200);
+  const row = rejected.body.candidate as CompetitorCandidateReviewRow;
+  assertEquals(row.reviewed, true);
+  assertEquals(row.review_decision, "rejected");
+  assertEquals(row.needs_manual_review, false);
+});

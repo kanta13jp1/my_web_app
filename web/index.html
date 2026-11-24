@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#3949AB">
+  <meta name="theme-color" content="#07111E">
   <meta name="application-name" content="自分株式会社">
   <meta name="format-detection" content="telephone=no">
 
@@ -36,12 +36,12 @@
   >
   <meta
     property="og:image"
-    content="https://my-web-app-b67f4.web.app/lp-og-first-action-20260720.png"
+    content="https://my-web-app-b67f4.web.app/ogp-lp-20261123.png"
   >
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="自分株式会社 - 悩みを1行入れるとAIが今日やる1件を提案">
+  <meta property="og:image:alt" content="自分株式会社 - 散らばる毎日を今日やる1件へ整理するAIライフマネジメント">
   <meta property="og:site_name" content="自分株式会社">
   <meta property="og:locale" content="ja_JP">
   <meta property="og:locale:alternate" content="en_US">
@@ -55,9 +55,9 @@
   >
   <meta
     property="twitter:image"
-    content="https://my-web-app-b67f4.web.app/lp-og-first-action-20260720.png"
+    content="https://my-web-app-b67f4.web.app/ogp-lp-20261123.png"
   >
-  <meta property="twitter:image:alt" content="自分株式会社 - 悩みを1行入れるとAIが今日やる1件を提案">
+  <meta property="twitter:image:alt" content="自分株式会社 - 散らばる毎日を今日やる1件へ整理するAIライフマネジメント">
 
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
   <link rel="icon" type="image/png" href="favicon.png">
@@ -103,7 +103,7 @@
       "AIによる次の行動候補の提案",
       "提案理由の表示",
       "登録前にAI提案を1件体験",
-      "登録後に今回の提案を引き綩ぎ"
+      "登録後に今回の提案を引き継ぎ"
     ],
     "inLanguage": "ja",
     "publisher": {
@@ -212,7 +212,7 @@
 
   <style>
     :root {
-      color-scheme: light;
+      color-scheme: dark;
       font-family: system-ui, -apple-system, "Segoe UI",
         "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI",
         "Yu Gothic", Meiryo, "Noto Sans JP", "Noto Sans", sans-serif;
@@ -226,8 +226,8 @@
 
     body {
       margin: 0;
-      background: #f5f7fa;
-      color: #111827;
+      background: #07111e;
+      color: #f8f5ee;
       overflow-x: hidden;
     }
 
@@ -241,7 +241,7 @@
       justify-content: center;
       padding: 56px 24px 32px;
       overflow-y: auto;
-      background: #f5f7fa;
+      background: radial-gradient(circle at 72% 18%, rgba(239, 142, 103, 0.14), transparent 45%), #07111e;
       opacity: 1;
       transition: opacity 120ms ease-out;
     }
@@ -267,10 +267,11 @@
       margin: 0 0 16px;
       display: inline-flex;
       align-items: center;
-      padding: 7px 12px;
+      padding: 7px 14px;
       border-radius: 999px;
-      background: #e9f8ef;
-      color: #17663a;
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      color: #6ee7b7;
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0;
@@ -278,6 +279,7 @@
 
     .seo-card h1 {
       margin: 0;
+      color: #f8f5ee;
       font-family: system-ui, -apple-system, "Segoe UI",
         "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI",
         "Yu Gothic", Meiryo, "Noto Sans JP", "Noto Sans", sans-serif;
@@ -288,7 +290,7 @@
 
     .seo-kicker {
       margin: 12px auto 0;
-      color: #245078;
+      color: #ef8e67;
       font-size: 22px;
       font-weight: 800;
       line-height: 1.45;
@@ -299,7 +301,7 @@
       margin: 22px auto 0;
       font-size: 17px;
       line-height: 1.8;
-      color: #374151;
+      color: #cbd5e1;
       overflow-wrap: anywhere;
     }
 
@@ -315,11 +317,11 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 11px;
+      padding: 8px 12px;
       border-radius: 999px;
-      background: #ffffff;
-      border: 1px solid #d9e0e8;
-      color: #26364a;
+      background: #0e1b2e;
+      border: 1px solid rgba(240, 229, 208, 0.22);
+      color: #e2e8f0;
       font-size: 13px;
       font-weight: 700;
     }
@@ -339,51 +341,66 @@
       min-height: 50px;
       max-width: 100%;
       padding: 0 22px;
-      border-radius: 6px;
+      border-radius: 999px;
       text-decoration: none;
       font-weight: 700;
       transition: background-color 120ms ease;
     }
 
     .seo-links a.primary {
-      background: #1769d2;
-      color: #ffffff;
+      background: #f0e5d0;
+      color: #07111e;
       min-width: 220px;
     }
 
     .seo-links a.secondary {
-      background: #ffffff;
-      color: #172033;
-      border: 1px solid #cbd5e1;
+      background: #0e1b2e;
+      color: #f0e5d0;
+      border: 1px solid rgba(240, 229, 208, 0.28);
     }
 
     .seo-note {
       margin: 12px auto 0;
-      color: #5b6573;
+      color: #94a3b8;
       font-size: 13px;
       line-height: 1.6;
+    }
+
+    .seo-card [data-prerender] {
+      max-width: 760px;
+      margin: 20px auto 0;
+      text-align: left;
+    }
+
+    .seo-card [data-prerender] ul {
+      margin: 12px 0 0;
+      padding-left: 1.5rem;
+    }
+
+    .seo-card [data-prerender] li + li {
+      margin-top: 6px;
     }
 
     .seo-about {
       max-width: 860px;
       margin: 36px auto 0;
       padding: 24px;
-      border: 1px solid #d8e0e9;
-      border-radius: 8px;
-      background: #ffffff;
+      border: 1px solid rgba(240, 229, 208, 0.16);
+      border-radius: 12px;
+      background: #0b1829;
       text-align: left;
     }
 
     .seo-about h2 {
       margin: 0;
-      color: #172033;
+      color: #f8f5ee;
       font-size: 24px;
       line-height: 1.45;
     }
 
     .seo-about p {
       margin: 12px 0 0;
-      color: #526071;
+      color: #cbd5e1;
       font-size: 15px;
       line-height: 1.75;
     }
@@ -399,22 +416,23 @@
 
     .seo-about li {
       padding: 12px;
-      border-radius: 6px;
-      background: #eef5fb;
-      color: #26364a;
+      border-radius: 8px;
+      background: #102138;
+      border: 1px solid rgba(240, 229, 208, 0.14);
+      color: #f0e5d0;
       font-size: 14px;
       font-weight: 700;
       line-height: 1.55;
     }
 
     .seo-about a {
-      color: #1769d2;
+      color: #93c5fd;
       font-weight: 700;
     }
 
     .seo-about h3 {
       margin: 24px 0 0;
-      color: #172033;
+      color: #f8f5ee;
       font-size: 18px;
       line-height: 1.5;
     }
@@ -429,13 +447,13 @@
     .seo-business-map div {
       min-width: 0;
       padding: 12px;
-      border: 1px solid #d9e4ee;
-      border-radius: 6px;
-      background: #f8fbfe;
+      border: 1px solid rgba(240, 229, 208, 0.14);
+      border-radius: 8px;
+      background: #102138;
     }
 
     .seo-business-map dt {
-      color: #245078;
+      color: #ef8e67;
       font-size: 14px;
       font-weight: 800;
       line-height: 1.5;
@@ -443,7 +461,7 @@
 
     .seo-business-map dd {
       margin: 6px 0 0;
-      color: #526071;
+      color: #cbd5e1;
       font-size: 13px;
       line-height: 1.65;
     }
@@ -455,8 +473,8 @@
       gap: 14px;
       margin-top: 52px;
       padding: 28px 0;
-      border-top: 1px solid #d8e0e9;
-      border-bottom: 1px solid #d8e0e9;
+      border-top: 1px solid rgba(240, 229, 208, 0.16);
+      border-bottom: 1px solid rgba(240, 229, 208, 0.16);
       text-align: left;
     }
 
@@ -467,14 +485,14 @@
 
     .seo-flow-step strong {
       display: block;
-      color: #1769d2;
+      color: #ef8e67;
       font-size: 13px;
       line-height: 1.4;
     }
 
     .seo-flow-step h2 {
       margin: 8px 0 0;
-      color: #172033;
+      color: #f8f5ee;
       font-size: 19px;
       line-height: 1.45;
       letter-spacing: 0;
@@ -482,7 +500,7 @@
 
     .seo-flow-step p {
       margin: 8px 0 0;
-      color: #526071;
+      color: #cbd5e1;
       font-size: 14px;
       line-height: 1.65;
       overflow-wrap: anywhere;
@@ -490,7 +508,7 @@
 
     .seo-flow-arrow {
       align-self: center;
-      color: #d97818;
+      color: #ef8e67;
       font-size: 24px;
       font-weight: 700;
     }
@@ -498,13 +516,13 @@
     .seo-loading {
       margin: 20px auto 0;
       font-size: 13px;
-      color: #4b5563;
+      color: #94a3b8;
     }
 
     noscript {
       display: block;
       margin-top: 12px;
-      color: #6b7280;
+      color: #94a3b8;
       font-size: 13px;
       line-height: 1.6;
     }
@@ -743,10 +761,14 @@
       } else if (
         signal.indexOf('flow_state') !== -1 ||
         signal.indexOf('pkce') !== -1 ||
+        signal.indexOf('code verifier') !== -1 ||
+        signal.indexOf('code_verifier') !== -1 ||
         signal.indexOf('code exchange') !== -1 ||
         signal.indexOf('exchange external code') !== -1 ||
         signal.indexOf('unable to exchange') !== -1 ||
-        signal.indexOf('oauth state') !== -1
+        signal.indexOf('oauth state') !== -1 ||
+        signal.indexOf('oauth_state') !== -1 ||
+        signal.indexOf('invalid_grant') !== -1
       ) {
         category = 'callback_exchange';
       }
@@ -824,8 +846,12 @@
         if (link) link.setAttribute('href', url);
       }
 
-      var defaultOgImageUrl = 'https://my-web-app-b67f4.web.app/lp-og-first-action-20260720.png';
-      var aiUniversityOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png';
+      var defaultOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-lp-20261123.png';
+      var aiUniversityOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-ai-university-20261123.png';
+      var competitorsOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-competitors-20261123.png';
+      var philosophyOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-philosophy-20261123.png';
+      var referralOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-referral-20261123.png';
+      var pricingOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-pricing-20261123.png';
 
       function applyRouteMeta(meta) {
         var url = 'https://my-web-app-b67f4.web.app' + path;
@@ -884,11 +910,18 @@
         },
         '/philosophy': {
           title: '自分株式会社とは？人生を経営する9原則と実践方法',
-          desc: '自分株式会社とは、自分の人生を会社に見立て、自分がCEOとして時間・お金・健康・スキルを経営する考え方です。9原則、個人のP/L・B/S、6部署、30日運営サイクルを解説します。'
+          desc: '自分株式会社とは、自分の人生を会社に見立て、自分がCEOとして時間・お金・健康・スキルを経営する考え方です。9原則、個人のP/L・B/S、6部署、30日運営サイクルを解説します。',
+          image: philosophyOgImageUrl
         },
         '/referral': {
           title: '紹介プログラム | 自分株式会社',
-          desc: '自分株式会社の紹介コード、招待リンク、紹介実績を確認できる紹介プログラムページです。'
+          desc: '自分株式会社の紹介コード、招待リンク、紹介実績を確認できる紹介プログラムページです。',
+          image: referralOgImageUrl
+        },
+        '/subscription-billing': {
+          title: 'プランと応援 | 自分株式会社',
+          desc: '自分株式会社のFree、Pro、Teamプランと1回100円の応援を確認できます。Proは月額980円、Teamは1席あたり月額2,980円です。',
+          image: pricingOgImageUrl
         },
         '/public-guitar-gallery': {
           title: '公開ギターギャラリー | 自分株式会社',
@@ -920,7 +953,8 @@
         },
         '/competitors': {
           title: '競合比較 174社一覧 | 自分株式会社',
-          desc: 'Notion・Slack・MoneyForwardなど174社以上のSaaSと自分株式会社を比較。AI大学×財務×習慣×タスクを無料コア+Pro対応で一元管理する唯一のライフマネジメントOS。'
+          desc: 'Notion・Slack・MoneyForwardなど174社以上のSaaSと自分株式会社を比較。AI大学×財務×習慣×タスクを無料コア+Pro対応で一元管理する唯一のライフマネジメントOS。',
+          image: competitorsOgImageUrl
         },
         '/tech-blog-tracker': {
           title: 'テックブログトラッカー | 自分株式会社',
@@ -1174,6 +1208,8 @@
           setMeta('og:url', window.location.href);
           setMeta('twitter:url', window.location.href);
           setMeta('og:type', 'article');
+          setMeta('og:image', competitorsOgImageUrl);
+          setMeta('twitter:image', competitorsOgImageUrl);
           setMeta('og:image:alt', meta.title + ' 比較');
           setMeta('twitter:image:alt', meta.title + ' 比較');
           setCanonical(window.location.href);

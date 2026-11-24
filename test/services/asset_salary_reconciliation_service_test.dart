@@ -371,5 +371,61 @@ void main() {
         isFalse,
       );
     });
+
+    test(
+        'excludes future pay_date payslips (even within the same cycle), unreceived rows, and rejected rows',
+        () {
+      final plans = <AssetLiabilityIncomePlan>[
+        AssetLiabilityIncomePlan(
+          id: 'plan-oct',
+          date: DateTime(2026, 10, 23),
+          name: '給料',
+          amount: 450000,
+          destinationAccountId: null,
+          destinationAccountName: null,
+          received: false,
+        ),
+      ];
+      final reconciled = AssetSalaryReconciliationService.reconcile(
+        monthlyIncomePlans: plans,
+        payslipRows: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'ps-same-cycle-future',
+            'pay_date': '2026-11-24',
+            'company_name': 'マイティリンク',
+            'net_amount': 491120,
+          },
+          <String, dynamic>{
+            'id': 'ps-next-future',
+            'pay_date': '2026-11-25',
+            'company_name': 'マイティリンク',
+            'net_amount': 491120,
+          },
+          <String, dynamic>{
+            'id': 'ps-rejected',
+            'pay_date': '2026-10-23',
+            'company_name': 'マイティリンク',
+            'net_amount': 999999,
+            'review_status': 'rejected',
+          },
+        ],
+        payslipSalaryIncomes: const <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'si-unreceived',
+            'pay_date': '2026-10-23',
+            'description': 'マイティリンク',
+            'amount': 421286,
+            'received': false,
+          },
+        ],
+        salaryDay: 25,
+        baseDate: DateTime(2026, 11, 23),
+      );
+
+      expect(reconciled, hasLength(1));
+      expect(reconciled.single.id, 'plan-oct');
+      expect(reconciled.single.amount, 450000);
+      expect(reconciled.single.received, isFalse);
+    });
   });
 }

@@ -17,6 +17,8 @@ export const LOCAL_ELECTION_SNAPSHOT_HUB_SOURCE =
   "local_election_dataset_snapshot";
 export const X_POST_CANDIDATE_HUB_SOURCE = X_POST_CANDIDATE_SOURCE;
 export const LOCAL_ELECTION_SNAPSHOT_SCHEMA_VERSION = 2;
+export const REALITY_HISTORY_MAX_POINTS = 180;
+const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 export type JsonRecord = Record<string, unknown>;
 
@@ -127,6 +129,12 @@ export interface HubDataRow {
 export interface HubInsertResult {
   row: HubDataRow;
   created: boolean;
+}
+
+export interface RealityHistoryPoint {
+  fetchedAt: string;
+  officialCurrentLocalMembers: number;
+  actualNetIncreaseRequired: number;
 }
 
 /**
@@ -1516,4 +1524,163 @@ export async function persistLocalElectionSnapshot(
     snapshotRow,
     candidateRows: insertions.map((item) => item.row),
   };
+}
+
+function parseOptionalNonNegativeInt(value: unknown): number | null {
+  if (typeof value === "number") {
+    if (!Number.isFinite(value) || value < 0) return null;
+    return Math.trunc(value);
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!/^\d+$/.test(trimmed)) return null;
+    const parsed = Number.parseInt(trimmed, 10);
+    return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
+  }
+  return null;
+}
+
+function firstValidInt(
+  values: ReadonlyArray<unknown>,
+  minValue: number,
+): number | null {
+  for (const value of values) {
+    const parsed = parseOptionalNonNegativeInt(value);
+    if (parsed !== null && parsed >= minValue) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+function jstDayKey(timestampMs: number): string {
+  return new Date(timestampMs + JST_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+/**
+ * Extracts a daily history point from either a projected `hub_data` query row
+ * or a full `HubDataRow`. Returns null for missing/invalid timestamps or
+ * zero-member observations so broken snapshots never pollute the chart.
+ */
+export function extractRealityHistoryPoint(
+  row: unknown,
+  targetMembers = 700,
+): RealityHistoryPoint | null {
+  const record = asRecord(row);
+  const metadata = asRecord(record.metadata);
+  const nestedSnapshot = asRecord(metadata.snapshot);
+  const nestedMetrics = asRecord(nestedSnapshot.metrics);
+
+  const timestampCandidates = [
+    asString(record.observed_at),
+    asString(metadata.observed_at),
+    asString(nestedSnapshot.fetchedAt),
+    asString(record.created_at),
+  ];
+  let timestampMs = Number.NaN;
+  for (const candidate of timestampCandidates) {
+    if (!candidate) continue;
+    const parsed = Date.parse(candidate);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      timestampMs = parsed;
+      break;
+    }
+  }
+  if (!Number.isFinite(timestampMs) || timestampMs <= 0) {
+    return null;
+  }
+
+  const officialCurrentLocalMembers = firstValidInt([
+    record.official_current_local_members,
+    record.legacy_official_current_local_members,
+    nestedMetrics.officialCurrentLocalMembers,
+    nestedSnapshot.officialCurrentLocalMembers,
+  ], 1);
+  if (officialCurrentLocalMembers === null) {
+    return null;
+  }
+
+  const parsedNetIncrease = firstValidInt([
+    record.actual_net_increase_required,
+    record.legacy_actual_net_increase_required,
+    nestedMetrics.actualNetIncreaseRequired,
+    nestedSnapshot.actualNetIncreaseRequired,
+  ], 0);
+  const normalizedTarget = Number.isFinite(targetMembers) && targetMembers > 0
+    ? Math.trunc(targetMembers)
+    : 700;
+  const actualNetIncreaseRequired = parsedNetIncrease ??
+    Math.max(0, normalizedTarget - officialCurrentLocalMembers);
+
+  return {
+    fetchedAt: new Date(timestampMs).toISOString(),
+    officialCurrentLocalMembers,
+    actualNetIncreaseRequired,
+  };
+}
+
+function normalizeDirectHistoryPoint(
+  point: RealityHistoryPoint | null | undefined,
+): RealityHistoryPoint | null {
+  if (!point) return null;
+  const timestampMs = Date.parse(point.fetchedAt);
+  const members = parseOptionalNonNegativeInt(
+    point.officialCurrentLocalMembers,
+  );
+  const netIncrease = parseOptionalNonNegativeInt(
+    point.actualNetIncreaseRequired,
+  );
+  if (
+    !Number.isFinite(timestampMs) || timestampMs <= 0 || members === null ||
+    members <= 0 || netIncrease === null
+  ) {
+    return null;
+  }
+  return {
+    fetchedAt: new Date(timestampMs).toISOString(),
+    officialCurrentLocalMembers: members,
+    actualNetIncreaseRequired: netIncrease,
+  };
+}
+
+/**
+ * Builds chronologically sorted, JST-calendar-day-deduplicated reality history
+ * points capped at `maxPoints`. On same-day collisions, later observations
+ * (including `currentPoint` on tie) win.
+ */
+export function buildDailyRealityHistory(
+  rows: ReadonlyArray<unknown>,
+  options?: {
+    currentPoint?: RealityHistoryPoint | null;
+    maxPoints?: number;
+    targetMembers?: number;
+  },
+): RealityHistoryPoint[] {
+  const targetMembers = options?.targetMembers ?? 700;
+  const maxPointsRaw = options?.maxPoints ?? REALITY_HISTORY_MAX_POINTS;
+  const maxPoints = Number.isFinite(maxPointsRaw) && maxPointsRaw > 0
+    ? Math.trunc(maxPointsRaw)
+    : REALITY_HISTORY_MAX_POINTS;
+
+  const byDay = new Map<string, { ts: number; point: RealityHistoryPoint }>();
+  const upsert = (point: RealityHistoryPoint | null): void => {
+    if (!point) return;
+    const ts = Date.parse(point.fetchedAt);
+    if (!Number.isFinite(ts) || ts <= 0) return;
+    const key = jstDayKey(ts);
+    const existing = byDay.get(key);
+    if (!existing || ts >= existing.ts) {
+      byDay.set(key, { ts, point });
+    }
+  };
+
+  for (const row of rows) {
+    upsert(extractRealityHistoryPoint(row, targetMembers));
+  }
+  upsert(normalizeDirectHistoryPoint(options?.currentPoint));
+
+  const sorted = Array.from(byDay.values())
+    .sort((left, right) => left.ts - right.ts)
+    .map((item) => item.point);
+  return sorted.length > maxPoints ? sorted.slice(-maxPoints) : sorted;
 }

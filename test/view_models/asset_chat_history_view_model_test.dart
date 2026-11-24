@@ -18,20 +18,30 @@ class _FakeRepository implements AssetChatHistoryRepository {
   _FakeRepository({
     required this.threadLoader,
     required this.messageLoader,
+    this.sortedThreadLoader,
     this.onDelete,
   });
 
   final ThreadLoader threadLoader;
+  final Future<AssetChatThreadPage> Function(
+    String searchQuery,
+    AssetChatThreadSortBy sortBy,
+    int offset,
+    int limit,
+  )? sortedThreadLoader;
   final MessageLoader messageLoader;
   final Future<void> Function(String threadId)? onDelete;
 
   @override
   Future<AssetChatThreadPage> fetchThreads({
     String searchQuery = '',
+    AssetChatThreadSortBy sortBy = AssetChatThreadSortBy.updatedAt,
     int offset = 0,
     int limit = 50,
   }) =>
-      threadLoader(searchQuery, offset, limit);
+      sortedThreadLoader != null
+          ? sortedThreadLoader!(searchQuery, sortBy, offset, limit)
+          : threadLoader(searchQuery, offset, limit);
 
   @override
   Future<AssetChatMessagePage> fetchMessages({
@@ -193,5 +203,36 @@ void main() {
 
     expect(viewModel.errorMessage, contains('ログイン'));
     expect(viewModel.errorMessage, isNot(contains('jwt')));
+  });
+
+  test('passes sortBy to repository and reloads when changed (#1361)',
+      () async {
+    final recordedSorts = <AssetChatThreadSortBy>[];
+    final repository = _FakeRepository(
+      threadLoader: (_, __, ___) async =>
+          const AssetChatThreadPage(items: [], hasMore: false),
+      sortedThreadLoader: (_, sortBy, __, ___) async {
+        recordedSorts.add(sortBy);
+        return AssetChatThreadPage(
+          items: [_thread(sortBy == AssetChatThreadSortBy.createdAt ? 2 : 1)],
+          hasMore: false,
+        );
+      },
+      messageLoader: (_, __, ___) async =>
+          const AssetChatMessagePage(items: [], hasMore: false),
+    );
+    final viewModel = AssetChatHistoryViewModel(repository: repository);
+    addTearDown(viewModel.dispose);
+
+    await viewModel.initialize();
+    expect(viewModel.sortBy, AssetChatThreadSortBy.updatedAt);
+
+    await viewModel.setSortBy(AssetChatThreadSortBy.createdAt);
+    expect(viewModel.sortBy, AssetChatThreadSortBy.createdAt);
+    expect(recordedSorts, [
+      AssetChatThreadSortBy.updatedAt,
+      AssetChatThreadSortBy.createdAt,
+    ]);
+    expect(viewModel.threads.single.id, 'thread-2');
   });
 }

@@ -15,15 +15,23 @@ class _FakeHistoryRepository implements AssetChatHistoryRepository {
   @override
   Future<AssetChatThreadPage> fetchThreads({
     String searchQuery = '',
+    AssetChatThreadSortBy sortBy = AssetChatThreadSortBy.updatedAt,
     int offset = 0,
     int limit = 50,
   }) async {
     final normalized = searchQuery.trim().toLowerCase();
-    final filtered = normalized.isEmpty
-        ? _threads
+    final filtered = (normalized.isEmpty
+        ? List.of(_threads)
         : _threads
-            .where((thread) => thread.title.toLowerCase().contains(normalized))
-            .toList(growable: false);
+            .where(
+              (thread) => thread.title.toLowerCase().contains(normalized),
+            )
+            .toList())
+      ..sort(
+        (a, b) => sortBy == AssetChatThreadSortBy.createdAt
+            ? b.createdAt.compareTo(a.createdAt)
+            : b.lastMessageAt.compareTo(a.lastMessageAt),
+      );
     final end = (offset + limit).clamp(0, filtered.length);
     return AssetChatThreadPage(
       items:
@@ -234,5 +242,42 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('asset_chat_history_thread_list')), findsOne);
+  });
+
+  testWidgets('switches thread sort order between updatedAt and createdAt', (
+    tester,
+  ) async {
+    final oldCreatedRecentUpdated = AssetChatThreadSummary(
+      id: 'thread-updated-first',
+      title: '最近更新された古いセッション',
+      createdAt: DateTime.utc(2026, 8, 1),
+      lastMessageAt: DateTime.utc(2026, 8, 20),
+    );
+    final newCreatedOldUpdated = AssetChatThreadSummary(
+      id: 'thread-created-first',
+      title: '新しく作成されたセッション',
+      createdAt: DateTime.utc(2026, 8, 19),
+      lastMessageAt: DateTime.utc(2026, 8, 19),
+    );
+    final repository = _FakeHistoryRepository(
+      threads: [oldCreatedRecentUpdated, newCreatedOldUpdated],
+    );
+
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    final firstBefore = tester.getTopLeft(find.text('最近更新された古いセッション')).dy;
+    final secondBefore = tester.getTopLeft(find.text('新しく作成されたセッション')).dy;
+    expect(firstBefore, lessThan(secondBefore));
+
+    await tester.tap(
+      find.byKey(const Key('asset_chat_history_sort_created_at')),
+    );
+    await tester.pumpAndSettle();
+
+    final createdFirstAfter = tester.getTopLeft(find.text('新しく作成されたセッション')).dy;
+    final updatedFirstAfter = tester.getTopLeft(find.text('最近更新された古いセッション')).dy;
+    expect(createdFirstAfter, lessThan(updatedFirstAfter));
+    expect(tester.takeException(), isNull);
   });
 }
