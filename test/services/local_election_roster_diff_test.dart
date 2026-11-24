@@ -192,7 +192,9 @@ void main() {
       expect(diff, isNotNull);
       expect(diff!.netDelta, 1);
       expect(
-          diff.added.map((e) => e.name).toList(), <String>['白根 大輔', '村尾 昌彦']);
+        diff.added.map((e) => e.name).toList(),
+        <String>['白根 大輔', '村尾 昌彦'],
+      );
       expect(diff.removed.map((e) => e.name).toList(), <String>['田境 毅']);
       expect(diff.nameChanges, hasLength(1));
       expect(diff.nameChanges.first.before.name, 'あんざい あきら');
@@ -220,8 +222,9 @@ void main() {
       expect(section, contains('名古屋市 → 名古屋市名東区'));
       expect(section, contains('※村尾 昌彦氏は自治体名が名簿に記載されていません。'));
       expect(section, contains('※氏名・所在地等の表記変更は人数の増減に含めていません。'));
-      expect(section,
-          contains('鳥取県に初めて地方議員が掲載され、議員在籍県数は46県から47県になり、議員不在県がなくなりました。'));
+      const highlightLine =
+          '鳥取県に初めて地方議員が掲載され、議員在籍県数は46県から47県になり、議員不在県がなくなりました。';
+      expect(section, contains(highlightLine));
     },
   );
 
