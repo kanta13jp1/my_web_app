@@ -11,6 +11,7 @@ from pathlib import Path, PurePosixPath
 RECEIPT = Path(__file__).resolve().parents[1] / 'config/ai-review-public-assets.json'
 RECEIPT_5893 = RECEIPT.with_name('ai-review-public-assets-5893.json')
 RECEIPT_6244 = RECEIPT.with_name('ai-review-public-assets-6244.json')
+RECEIPT_6273 = RECEIPT.with_name('ai-review-public-assets-6273.json')
 VISUAL_BASELINE_PREFIX = 'test/e2e/visual_regression.spec.ts-snapshots/'
 BLOB_RE = re.compile(r'^[0-9a-f]{40}$')
 MAX_BYTES = 3_000_000
@@ -79,12 +80,14 @@ def load_receipt(pr):
         path = RECEIPT_5893
     elif pr == 6244:
         path = RECEIPT_6244
+    elif pr == 6273:
+        path = RECEIPT_6273
     else:
         path = RECEIPT
     receipt = json.loads(path.read_text(encoding='utf-8'))
     require(receipt.get('schema_version') == 1 and receipt.get('provider') == 'google-gemini' and receipt.get('endpoint') == ENDPOINT and receipt.get('method') == 'generateContent', 'Unsupported public asset consent')
     assets = receipt.get('assets', [])
-    expected_count = 2 if pr == 6244 else 1
+    expected_count = 2 if pr in (6244, 6273) else 1
     require(isinstance(assets, list) and len(assets) == expected_count and all(isinstance(a, dict) for a in assets), 'Unsupported approved PNG count')
     return receipt
 
